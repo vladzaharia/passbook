@@ -4,24 +4,24 @@ import { AppError, BadRequestError, UnauthenticatedError } from '../../platform/
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { redactString } from '../../platform/log.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordPassEvent, recordPassEvents } from '../events/record.ts';
-import { isOrgActive } from '../orgs/active.ts';
-import { getPassBySerial, type Pass } from '../passes/repo.ts';
+import type { Pass } from '../passes/repo.ts';
+import { getPassBySerial } from '../passes/repo-read-pass.ts';
+import { recordAppleEvents } from './events.ts';
 import { attachLogLines } from './log-events.ts';
 import {
   addRegistration,
   bumpLogCounter,
+  currentSerials,
   GLOBAL_LOG_KEY,
   identityByPassType,
   insertLogs,
-  registrationCount,
   registrationExists,
   removeRegistration,
   serialsSince,
   updatePushToken,
 } from './repo.ts';
+import { type AppleCredential, appleCredentialCurrent } from './repo-credential.ts';
 
-export const MAX_REGISTRATIONS_PER_PASS = 20;
 const MAX_SERIALS = 200;
 const MAX_LOG_LINES = 100;
 const MAX_LOG_LINE = 1000;
@@ -40,6 +40,16 @@ export interface AppleTarget {
   identity: { id: string; nfcEnabled: boolean };
 }
 
+const unauthorized = () => new UnauthenticatedError('Unauthorized.', 'APPLE_UNAUTHORIZED');
+
+/** Recheck the exact credential immediately before releasing content or reporting success. */
+export async function assertAppleCredential(
+  ctx: ServiceContext,
+  pass: AppleCredential,
+): Promise<void> {
+  if (!(await appleCredentialCurrent(ctx.env.DB, pass))) throw unauthorized();
+}
+
 /** `Authorization: ApplePass <token>` against the pass looked up by (identity, serial). */
 export async function authorizePass(
   ctx: ServiceContext,
@@ -51,10 +61,8 @@ export async function authorizePass(
   const pass = identity ? await getPassBySerial(ctx.env.DB, identity.id, serial) : null;
   const expected = pass ? `ApplePass ${pass.authToken}` : DUMMY_TOKEN;
   const ok = await safeEqual(authorization ?? '', expected);
-  // A suspended or deleted org reads as an unknown pass.
-  const active = pass ? await isOrgActive(ctx, pass.orgId) : false;
-  if (!identity || !pass || !ok || !active)
-    throw new UnauthenticatedError('Unauthorized.', 'APPLE_UNAUTHORIZED');
+  if (!identity || !pass || pass.testDataQuarantined || !ok) throw unauthorized();
+  await assertAppleCredential(ctx, pass);
   return { pass, identity };
 }
 
@@ -83,30 +91,32 @@ export async function registerDevice(
     throw new BadRequestError('Invalid push token.', 'PUSH_TOKEN_INVALID');
   const db = ctx.env.DB;
   const now = ctx.clock.now();
-  if (await registrationExists(db, input.deviceId, identity.id, pass.id)) {
-    await updatePushToken(db, {
+  if (await registrationExists(db, input.deviceId, pass)) {
+    const updated = await updatePushToken(db, {
       deviceId: input.deviceId,
-      identityId: identity.id,
-      passId: pass.id,
+      pass,
       pushToken: input.pushToken,
-      now,
     });
-    return 'existing';
+    if (updated) {
+      await assertAppleCredential(ctx, pass);
+      return 'existing';
+    }
+    // An ordinary concurrent unregister may have removed the row; a retired credential cannot retry it.
+    await assertAppleCredential(ctx, pass);
   }
   const full = new AppError(
     'REGISTRATION_LIMIT',
     429,
     'This pass has too many registered devices.',
   );
-  if ((await registrationCount(db, pass.id)) >= MAX_REGISTRATIONS_PER_PASS) throw full;
   try {
-    await addRegistration(db, {
+    const created = await addRegistration(db, {
       deviceId: input.deviceId,
-      identityId: identity.id,
-      passId: pass.id,
+      pass,
       pushToken: input.pushToken,
       now,
     });
+    if (!created) throw unauthorized();
   } catch (error) {
     // Lost the race for the last slot: the trigger aborts the batch.
     if (classifyD1Error(error)?.kind === 'abort') throw full;
@@ -119,13 +129,18 @@ export async function registerDevice(
     identityId: identity.id,
     mode: pass.mode,
   });
-  await recordPassEvent(ctx, {
-    orgId: pass.orgId,
-    passId: pass.id,
-    mode: pass.mode,
-    kind: 'device.registered',
-    device: input.deviceId,
-  });
+  await recordAppleEvents(ctx, [
+    {
+      orgId: pass.orgId,
+      passId: pass.id,
+      mode: pass.mode,
+      serial: pass.serial,
+      credentialGeneration: pass.credentialGeneration,
+      kind: 'device.registered',
+      device: input.deviceId,
+    },
+  ]);
+  await assertAppleCredential(ctx, pass);
   return 'created';
 }
 
@@ -145,8 +160,9 @@ export async function unregisterDevice(
     input.authorization,
   );
   checkDevice(input.deviceId);
-  const removed = await removeRegistration(ctx.env.DB, input.deviceId, identity.id, pass.id);
-  if (removed) {
+  const removed = await removeRegistration(ctx.env.DB, input.deviceId, pass);
+  if (removed === 'stale') throw unauthorized();
+  if (removed === 'removed') {
     writeEvent(ctx.env, {
       event: 'pass.unregistered',
       orgId: pass.orgId,
@@ -154,15 +170,20 @@ export async function unregisterDevice(
       identityId: identity.id,
       mode: pass.mode,
     });
-    await recordPassEvent(ctx, {
-      orgId: pass.orgId,
-      passId: pass.id,
-      mode: pass.mode,
-      kind: 'device.unregistered',
-      device: input.deviceId,
-      data: { reason: 'device' },
-    });
+    await recordAppleEvents(ctx, [
+      {
+        orgId: pass.orgId,
+        passId: pass.id,
+        mode: pass.mode,
+        serial: pass.serial,
+        credentialGeneration: pass.credentialGeneration,
+        kind: 'device.unregistered',
+        device: input.deviceId,
+        data: { reason: 'device' },
+      },
+    ]);
   }
+  await assertAppleCredential(ctx, pass);
 }
 
 /** Unauthenticated by protocol: keyed by the opaque device id. Unknown pass types read as empty. */
@@ -182,20 +203,25 @@ export async function updatedSerials(
     Number(input.since ?? '0'),
     MAX_SERIALS,
   );
-  const last = rows.at(-1);
-  if (!last) return null;
-  await recordPassEvents(
+  if (rows.length === 0) return null;
+  await recordAppleEvents(
     ctx,
     rows.map((r) => ({
       orgId: r.orgId,
       passId: r.passId,
       mode: r.mode,
+      serial: r.serial,
+      credentialGeneration: r.credentialGeneration,
       kind: 'device.fetched' as const,
       device: input.deviceId,
       data: { step: 'listed', version: r.version },
     })),
   );
-  return { serialNumbers: rows.map((r) => r.serial), lastUpdated: String(last.revision) };
+  const confirmed = await currentSerials(ctx.env.DB, input.deviceId, identity.id, rows);
+  const last = confirmed.at(-1);
+  return last
+    ? { serialNumbers: confirmed.map((r) => r.serial), lastUpdated: String(last.revision) }
+    : null;
 }
 
 const clean = (line: string) =>

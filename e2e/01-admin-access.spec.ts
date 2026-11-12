@@ -9,8 +9,12 @@ test('admin signs in through Pocket ID and lands on the admin overview', async (
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
 });
 
-test('a user-group account cannot open /admin', async ({ page }) => {
+test('a user-group account without memberships cannot open /admin', async ({ page }) => {
   await signInAs(page, 'user', '/');
+  // Keep this no-membership case independent of grants left in a persisted local database.
+  await page.route('**/api/v1/orgs/memberships/me', (route) =>
+    route.fulfill({ json: { items: [] } }),
+  );
   await page.goto('/admin');
   await expect(page.getByRole('heading', { name: 'You do not have access' })).toBeVisible();
   const status = await page.evaluate(async () => (await fetch('/api/v1/orgs')).status);

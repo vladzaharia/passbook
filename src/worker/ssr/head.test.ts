@@ -3,8 +3,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/index.ts';
 import { createApp } from '../app.ts';
 import { confirmPage, expiredPage } from '../modules/auth/pages.ts';
+import { jobCtxOf } from '../modules/delivery/delivery-test-fixtures.ts';
+import { type Kit, setupKit } from '../modules/passes/pass-test-fixtures.ts';
 import { voidPass } from '../modules/passes/service.ts';
-import { type Kit, setupKit } from '../modules/passes/test-kit.ts';
 import type { AppBindings } from '../platform/context.ts';
 import { ROBOTS, securityHeaders } from '../platform/security-headers.ts';
 import { renderErrorPage } from './error-page.tsx';
@@ -71,7 +72,7 @@ describe('pass page head', () => {
 
   it('previews a voided pass as voided', async () => {
     const pass = await kit.pass();
-    await voidPass(kit.ctx, { type: 'user', id: 'admin-1' }, pass.id, null);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
     const html = await page(pass.downloadToken);
     expect(content(html, 'og:description')).toBe('This pass was voided.');
   });

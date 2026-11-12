@@ -1,13 +1,26 @@
 import type { z } from 'zod';
-import type { ScanOutcome, ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
+import type { ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction, ResolvedScanManifest } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { historyPlan, readCard, readyOutcome } from './card.ts';
-import { planCounts } from './counts.ts';
+import { depsOf, overrideDeps } from '../passes/deps.ts';
+import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
+import {
+  actorCsrfAuthorityStmt,
+  actorCsrfSnapshotFence,
+  actorCsrfSnapshotFromResult,
+} from './actor-csrf.ts';
+import { type CountsPlan, planCounts } from './counts.ts';
+import {
+  type CredentialTombstoneSnapshot,
+  credentialTombstoneRefsForInput,
+  snapshotCredentialEnv,
+} from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
-import { countMiss } from './misses.ts';
-import { stopOutcome } from './outcome.ts';
-import { evaluate } from './resolve.ts';
+import { actorAuthorityPredicate } from './repo-actor-authority.ts';
+import { planCandidateReads } from './resolve-candidates.ts';
+import { resolveObserved, unknown } from './resolve-outcome-observed.ts';
+import type { ScanEvaluation } from './scan-evaluation.ts';
+import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 /** The scanner's default action, else the template's first. */
 export function defaultAction(
@@ -18,36 +31,102 @@ export function defaultAction(
   return scan.actions.find((a) => a.id === wanted) ?? scan.actions[0] ?? null;
 }
 
-/**
- * `POST /resolve`: steps 5-13 of SA 2.6 and the desk card. A read: no scan row, no idempotency
- * entry. A found pass that passes every step is `ready`; one held by a window or a stop flag is a
- * heads-up that still carries the card.
- */
+/** Resolve without creating a scan row; the original credential context stays worker-only. */
 export async function resolveOutcome(
   ctx: ServiceContext,
   actor: ScanActor,
   req: z.infer<typeof ScanResolveRequestSchema>,
-): Promise<ScanOutcome> {
-  const counts = planCounts(ctx, actor, req.dayStart);
-  const evaluated = await evaluate(ctx, actor, req.input);
-  if (!evaluated.stop) {
-    const { card, read } = await readCard(ctx, actor, evaluated.found, counts);
-    return readyOutcome(evaluated.found, card, read);
-  }
-  if (evaluated.reason === 'not_found') await countMiss(ctx, actor);
-  const found = evaluated.found;
-  if (found && evaluated.kind === 'heads_up') {
-    const { card, read } = await readCard(ctx, actor, found, counts);
-    return stopOutcome(ctx, actor, evaluated, read, {
-      action: defaultAction(actor, found.scan),
-      card,
-    });
-  }
-  const history = found ? historyPlan(ctx, actor, found) : null;
-  const results = await ctx.env.DB.batch([...counts.stmts, ...(history?.stmts ?? [])]);
-  const read = await counts.read(results.slice(0, counts.stmts.length));
-  return stopOutcome(ctx, actor, evaluated, read, {
-    action: found ? defaultAction(actor, found.scan) : null,
-    history: history?.read(results.slice(counts.stmts.length)),
+): Promise<ScanEvaluation> {
+  req = {
+    ...req,
+    input: { ...req.input },
+    ...(req.scope
+      ? {
+          scope: {
+            ...req.scope,
+            ...(req.scope.templateIds ? { templateIds: [...req.scope.templateIds] } : {}),
+          },
+        }
+      : {}),
+  };
+  const env = snapshotCredentialEnv(ctx.env);
+  overrideDeps(env, depsOf(ctx.env));
+  ctx = { ...ctx, env };
+  actor = cloneObservedScanActor(actor);
+  const observed = await credentialTombstoneRefsForInput(
+    ctx,
+    actor.orgId,
+    actor.mode,
+    req.input,
+    true,
+    'defer',
+  );
+  const credentialContext: CredentialTombstoneSnapshot = Object.freeze({
+    credentialKeysetCommitment: observed.credentialKeysetCommitment,
+    credentialTombstoneRefs: Object.freeze([...observed.credentialTombstoneRefs]),
+    otherModeCredentialTombstoneRefs: Object.freeze([...observed.otherModeCredentialTombstoneRefs]),
   });
+  actor.credentialKeysetCommitment = credentialContext.credentialKeysetCommitment;
+  const csrfStmt = actorCsrfAuthorityStmt(ctx.env.DB, actor);
+  if (!csrfStmt)
+    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
+  const [csrfResult, settingsResult] = await ctx.env.DB.batch([
+    csrfStmt,
+    platformSettingsStmt(ctx.env.DB),
+  ]);
+  const csrfSnapshot = await actorCsrfSnapshotFromResult(ctx, actor, csrfResult);
+  if (!settingsResult)
+    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
+  const settings = decodePlatformSettings(settingsResult);
+  if (!csrfSnapshot)
+    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
+  const csrfAt = (now: number) =>
+    actorCsrfSnapshotFence(
+      actor,
+      csrfSnapshot.session
+        ? { ...csrfSnapshot, session: { ...csrfSnapshot.session, now } }
+        : csrfSnapshot,
+    );
+  const plan = await planCandidateReads(ctx, actor, req.input, credentialContext, (now) => {
+    const csrf = csrfAt(now);
+    if (!csrf) return null;
+    const authority = actorAuthorityPredicate({
+      actor,
+      now,
+      event: actor.event,
+      adminEventTemplates: actor.adminEventTemplates === true,
+    });
+    return {
+      sql: `(${authority.sql}) AND (${csrf.sql})`,
+      params: [...authority.params, ...csrf.params],
+    };
+  });
+  if (!plan.stmts.length)
+    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
+  const csrf = csrfAt(plan.now);
+  if (!csrf)
+    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
+  const countPlan = planCounts(
+    { ...ctx, clock: { now: () => plan.now } },
+    actor,
+    req.dayStart,
+    actor,
+    csrf,
+  );
+  const results = await ctx.env.DB.batch([...plan.stmts, ...countPlan.stmts]);
+  const candidateRead = { candidates: plan.finish(results.slice(0, plan.stmts.length)) };
+  const countResults = results.slice(plan.stmts.length, plan.stmts.length + countPlan.stmts.length);
+  const counts: CountsPlan = { stmts: [], read: () => countPlan.read(countResults) };
+  const { unconfirmed, ...result } = await resolveObserved(
+    ctx,
+    actor,
+    req,
+    credentialContext,
+    csrfSnapshot,
+    candidateRead,
+    counts,
+    settings['scan.undoWindowMinutes'],
+    defaultAction,
+  );
+  return { ...result, credentialContext: unconfirmed ? null : credentialContext };
 }

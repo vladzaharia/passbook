@@ -25,10 +25,20 @@ export function useOpener(open: boolean | undefined) {
 /**
  * Onclose auto-focus handler: returns focus to the opener when Radix has no trigger to use. An
  * opener inside an overlay that is closing too (a discard confirm over a dirty dialog) is skipped,
- * so that overlay's own opener takes focus.
+ * so that overlay's own opener takes focus. Focus the page already moved on to (a refused save
+ * focusing its field) is left alone.
  */
 export function restoreOpener(opener: { current: HTMLElement | null } | null) {
   return (e: Event) => {
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      active !== document.body &&
+      !active.closest('[role="dialog"], [role="alertdialog"]')
+    ) {
+      e.preventDefault();
+      return;
+    }
     const el = opener?.current;
     if (el?.isConnected && !el.closest('[role="dialog"][data-state="closed"]')) {
       e.preventDefault();

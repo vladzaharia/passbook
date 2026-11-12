@@ -1,64 +1,26 @@
+import type { Json, Mode } from '../../../shared/contracts/common.ts';
 import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
-import { deleteInBatches } from '../../platform/batched.ts';
-import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
+import { rowIs } from '../../platform/authority-checks.ts';
+import type { GrantCond } from '../../platform/authority-cond.ts';
+import { all, first } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import type { AuditEntry } from '../audit/types.ts';
+import type { BundleEmailSnapshot } from '../bundles/email-binding.ts';
+import { bundleChecks } from '../bundles/repo-delivery-fence.ts';
 import { orgBrandingJson } from '../orgs/repo.ts';
-
-export type OutboxState =
-  | 'pending'
-  | 'enqueued'
-  | 'processing'
-  | 'sent'
-  | 'partial'
-  | 'failed'
-  | 'cancelled';
-
-export interface OutboxRow {
-  id: string;
-  orgId: string;
-  kind: 'push' | 'email';
-  passId: string | null;
-  payload: Record<string, unknown>;
-  state: OutboxState;
-  attempts: number;
-  maxAttempts: number;
-  lease: string | null;
-  errorCode: string | null;
-  providerId: string | null;
-  createdAt: number;
-  finishedAt: number | null;
-}
-
-interface OutboxDbRow {
-  id: string;
-  org_id: string;
-  kind: 'push' | 'email';
-  pass_id: string | null;
-  payload: string;
-  state: OutboxState;
-  attempts: number;
-  max_attempts: number;
-  lease: string | null;
-  error_code: string | null;
-  provider_id: string | null;
-  created_at: number;
-  finished_at: number | null;
-}
-
-const mapOutbox = (r: OutboxDbRow): OutboxRow => ({
-  id: r.id,
-  orgId: r.org_id,
-  kind: r.kind,
-  passId: r.pass_id,
-  payload: JSON.parse(r.payload) as Record<string, unknown>,
-  state: r.state,
-  attempts: r.attempts,
-  maxAttempts: r.max_attempts,
-  lease: r.lease,
-  errorCode: r.error_code,
-  providerId: r.provider_id,
-  createdAt: r.created_at,
-  finishedAt: r.finished_at,
-});
+import type { TenantPassWrite } from '../passes/http.ts';
+import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
+import {
+  addQueueWrites,
+  commitQueue,
+  type QueueActors,
+  type QueueRate,
+  type QueueResult,
+  queueGrants,
+  rateChecks,
+  recordQueuedEvent,
+} from './repo-email-queue.ts';
+import { mapOutbox, type OutboxDbRow, type OutboxRow } from './repo-outbox-map.ts';
 
 export async function getOutbox(db: D1Database, id: string): Promise<OutboxRow | null> {
   const row = await first<OutboxDbRow>(db, 'SELECT * FROM outbox WHERE id = ?', [id]);
@@ -78,217 +40,97 @@ export async function listOutboxForPass(
   return rows.map(mapOutbox);
 }
 
-export interface NewOutbox {
-  id: string;
-  orgId: string;
-  kind: 'push' | 'email';
-  passId: string;
-  coalesceKey: string | null;
-  payload: Record<string, unknown>;
-  now: number;
-}
-
-/** Returns false when a pending push for the same pass already exists (coalesced). */
-export async function insertOutbox(db: D1Database, row: NewOutbox): Promise<boolean> {
-  const result = await run(
+/** Tenant listing repeats current authority and binds every outbox row to its actual pass. */
+export async function listAuthorizedOutboxForPass(
+  db: D1Database,
+  passId: string,
+  authority: TenantPassWrite,
+  now: number,
+  limit = 50,
+): Promise<OutboxRow[]> {
+  if (
+    authority.kind === 'session'
+      ? authority.capability !== 'passes:read'
+      : authority.scope !== 'passes:read'
+  )
+    return [];
+  const rows = await all<OutboxDbRow>(
     db,
-    `INSERT OR IGNORE INTO outbox (id, org_id, kind, pass_id, coalesce_key, payload, state, available_at, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?)`,
+    `SELECT ob.* FROM outbox ob JOIN passes p ON p.id = ob.pass_id AND p.org_id = ob.org_id
+     WHERE p.id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
+       ${authority.kind === 'api_key' ? 'AND p.mode = ?' : ''}
+       AND ${tenantPassAuthoritySql(authority, 'p')}
+     ORDER BY ob.created_at DESC, ob.id DESC LIMIT ?`,
     [
-      row.id,
-      row.orgId,
-      row.kind,
-      row.passId,
-      row.coalesceKey,
-      JSON.stringify(row.payload),
-      row.now,
+      passId,
+      ...(authority.kind === 'api_key' ? [authority.mode] : []),
+      ...tenantPassAuthorityParams(authority, now),
+      limit,
     ],
   );
-  return result.changes === 1;
+  return rows.map(mapOutbox);
 }
 
-/** Marks due rows `enqueued` before sending, so repeated dispatches never double-send. */
-export async function markDueEnqueued(
-  db: D1Database,
-  now: number,
-  limit: number,
-  passId?: string,
-): Promise<{ id: string; kind: 'push' | 'email' }[]> {
-  return all<{ id: string; kind: 'push' | 'email' }>(
-    db,
-    `UPDATE outbox SET state = 'enqueued', enqueued_at = ?
-     WHERE id IN (SELECT id FROM outbox WHERE state = 'pending' AND available_at <= ?
-                  AND (? IS NULL OR pass_id = ?) ORDER BY available_at, created_at LIMIT ?)
-     RETURNING id, kind`,
-    [now, now, passId ?? null, passId ?? null, limit],
-  );
-}
-
-export async function revertEnqueued(db: D1Database, ids: string[]): Promise<void> {
-  for (const part of chunk(ids)) {
-    await run(
-      db,
-      `UPDATE outbox SET state = 'pending', enqueued_at = NULL WHERE state = 'enqueued' AND id IN (${placeholders(part.length)})`,
-      part,
-    );
-  }
-}
-
-/** Takes the lease. `available_at` doubles as the lease expiry while processing. */
-export async function claimOutbox(
-  db: D1Database,
-  id: string,
-  lease: string,
-  now: number,
-  leaseMs: number,
-): Promise<OutboxRow | null> {
-  const row = await first<OutboxDbRow>(
-    db,
-    `UPDATE outbox SET state = 'processing', attempts = attempts + 1, lease = ?, available_at = ?,
-       coalesce_key = NULL
-     WHERE id = ? AND attempts < max_attempts AND state IN ('pending', 'enqueued') RETURNING *`,
-    [lease, now + leaseMs, id],
-  );
-  return row ? mapOutbox(row) : null;
-}
-
-/** Back to `enqueued` so the redelivered message can claim it again. */
-export async function releaseOutbox(
-  db: D1Database,
-  id: string,
-  lease: string,
-  retryAt: number,
-  errorCode: string,
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE outbox SET state = 'enqueued', lease = NULL, enqueued_at = ?, error_code = ?
-     WHERE id = ? AND lease = ?`,
-    [retryAt, errorCode, id, lease],
-  );
-}
-
-export async function finishOutbox(
-  db: D1Database,
-  id: string,
-  lease: string,
-  state: 'sent' | 'partial' | 'failed' | 'cancelled',
-  now: number,
-  errorCode: string | null,
-  providerId: string | null = null,
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE outbox SET state = ?, lease = NULL, finished_at = ?, error_code = ?, provider_id = ?,
-       coalesce_key = NULL
-     WHERE id = ? AND lease = ?`,
-    [state, now, errorCode, providerId, id, lease],
-  );
-}
-
-/** Marks a row failed without holding its lease (DLQ, exhausted attempts). */
-export async function failOutbox(
-  db: D1Database,
-  id: string,
-  now: number,
-  errorCode: string,
-): Promise<OutboxRow | null> {
-  const row = await first<OutboxDbRow>(
-    db,
-    `UPDATE outbox SET state = 'failed', lease = NULL, finished_at = ?, error_code = ?, coalesce_key = NULL
-     WHERE id = ? AND state IN ('pending', 'enqueued', 'processing') RETURNING *`,
-    [now, errorCode, id],
-  );
-  return row ? mapOutbox(row) : null;
-}
-
-/** Fails a row only when its attempts are used up; a row another consumer released stays. */
-export async function failExhausted(db: D1Database, id: string, now: number): Promise<boolean> {
-  const result = await run(
-    db,
-    `UPDATE outbox SET state = 'failed', lease = NULL, finished_at = ?, error_code = 'MAX_ATTEMPTS',
-       coalesce_key = NULL
-     WHERE id = ? AND state IN ('pending', 'enqueued') AND attempts >= max_attempts`,
-    [now, id],
-  );
-  return result.changes > 0;
-}
-
-/** Leases that expired while processing: retry, or fail when attempts are used up. */
-export async function reclaimStaleLeases(
-  db: D1Database,
-  now: number,
-): Promise<{ retried: number; failed: number }> {
-  const failed = await run(
-    db,
-    `UPDATE outbox SET state = 'failed', lease = NULL, finished_at = ?, error_code = 'LEASE_EXPIRED', coalesce_key = NULL
-     WHERE state = 'processing' AND available_at < ? AND attempts >= max_attempts`,
-    [now, now],
-  );
-  const retried = await run(
-    db,
-    `UPDATE outbox SET state = 'pending', lease = NULL, available_at = 0
-     WHERE state = 'processing' AND available_at < ? AND attempts < max_attempts`,
-    [now],
-  );
-  return { retried: retried.changes, failed: failed.changes };
-}
-
-/** Rows marked `enqueued` whose message never arrived (send failed after commit, queue loss). */
-export async function lostEnqueues(
-  db: D1Database,
-  olderThan: number,
-  limit: number,
-): Promise<{ id: string; kind: 'push' | 'email' }[]> {
-  return all<{ id: string; kind: 'push' | 'email' }>(
-    db,
-    `SELECT id, kind FROM outbox WHERE state = 'enqueued' AND enqueued_at < ? ORDER BY enqueued_at LIMIT ?`,
-    [olderThan, limit],
-  );
-}
-
-export async function touchEnqueued(db: D1Database, ids: string[], now: number): Promise<void> {
-  for (const part of chunk(ids)) {
-    await run(
-      db,
-      `UPDATE outbox SET enqueued_at = ? WHERE state = 'enqueued' AND id IN (${placeholders(part.length)})`,
-      [now, ...part],
-    );
-  }
-}
-
-export async function deleteFinishedOutbox(
-  db: D1Database,
-  sentBefore: number,
-  failedBefore: number,
-): Promise<number> {
-  const sent = await deleteInBatches(
-    db,
-    'outbox',
-    `state IN ('sent', 'cancelled') AND finished_at < ?`,
-    [sentBefore],
-  );
-  const failed = await deleteInBatches(
-    db,
-    'outbox',
-    `state IN ('failed', 'partial') AND finished_at < ?`,
-    [failedBefore],
-  );
-  return sent + failed;
-}
-
-/** Records the provider's message id before the row is finished, so a re-run never re-sends. */
-export async function setProviderId(
-  db: D1Database,
-  id: string,
-  lease: string,
-  providerId: string,
-): Promise<void> {
-  await run(db, 'UPDATE outbox SET provider_id = ? WHERE id = ? AND lease = ?', [
-    providerId,
-    id,
-    lease,
-  ]);
+/**
+ * The outbox row, both rate counters, the event and an optional audit row are one batch under the
+ * caller's grant (an authority, or a job's system actor). The mail exists exactly when the actor,
+ * org and pass (and bundle snapshot) held in that transaction.
+ */
+export async function enqueueAuthorizedEmail(
+  ctx: ServiceContext,
+  input: {
+    orgId: string;
+    passId: string;
+    mode: Mode;
+    payload: Record<string, unknown>;
+    event: Record<string, Json>;
+    actors: QueueActors;
+    bundleSnapshot?: BundleEmailSnapshot;
+    outboxId: string;
+    rate: QueueRate;
+    audit?: { entry: AuditEntry; when?: GrantCond[] };
+  },
+): Promise<QueueResult> {
+  const snapshot = input.bundleSnapshot;
+  if (
+    snapshot &&
+    (snapshot.bundle.org_id !== input.orgId ||
+      snapshot.bundle.mode !== input.mode ||
+      snapshot.passes[0]?.id !== input.passId ||
+      snapshot.positions.length !== snapshot.passes.length)
+  )
+    return 'stale';
+  const checks = [
+    rowIs('passes', input.passId, { deleted_at: null, test_data_quarantined: 0 }),
+    ...(snapshot ? bundleChecks(snapshot) : []),
+    ...rateChecks(input.rate),
+  ];
+  const grants = queueGrants(ctx, input.actors, {
+    orgId: input.orgId,
+    mode: input.mode,
+    checks,
+    target: input.passId,
+  });
+  const primary = grants[0];
+  if (!primary) return 'denied';
+  addQueueWrites(primary, ctx, {
+    id: input.outboxId,
+    passId: input.passId,
+    payload: input.payload,
+    now: ctx.clock.now(),
+    rate: input.rate,
+    ...(input.audit ? { audit: input.audit } : {}),
+  });
+  const result = await commitQueue(ctx, grants);
+  if (result === 'queued')
+    await recordQueuedEvent(ctx, input.actors, {
+      orgId: input.orgId,
+      mode: input.mode,
+      passId: input.passId,
+      outboxId: input.outboxId,
+      data: input.event,
+    });
+  return result;
 }
 
 export interface OrgBranding {
@@ -306,5 +148,3 @@ export async function orgBranding(db: D1Database, orgId: string): Promise<OrgBra
   const parsed = OrgBrandingSchema.safeParse(JSON.parse(branding));
   return parsed.success ? parsed.data : {};
 }
-
-export { bump as bumpCounter } from '../../platform/counters.ts';

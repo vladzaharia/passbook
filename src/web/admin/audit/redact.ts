@@ -25,13 +25,19 @@ function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-/** `{ before, after }` details render as a diff; anything else as JSON. */
+/** `{ before, after }` details render as a diff, with any other recorded fields kept as context. */
 export function describeDetail(detail: unknown): DetailView {
   if (detail === null || detail === undefined) return { kind: 'none' };
   const safe = redact(detail);
   if (isObject(safe) && ('before' in safe || 'after' in safe)) {
+    const { before, after, ...context } = safe;
     const pretty = (v: unknown) => (v === undefined ? '' : JSON.stringify(v, null, 2));
-    return { kind: 'diff', before: pretty(safe.before), after: pretty(safe.after) };
+    return {
+      kind: 'diff',
+      before: pretty(before),
+      after: pretty(after),
+      ...(Object.keys(context).length ? { value: context } : {}),
+    };
   }
   return { kind: 'json', value: safe };
 }

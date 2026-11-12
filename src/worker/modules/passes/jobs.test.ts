@@ -1,15 +1,30 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { prepareScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { clearSettingsCache } from '../settings/service.ts';
+import { replaceCallbackKeysetForTest } from '../wallet-providers/callbacks-test-fixtures.ts';
+import {
+  credentialRefKeysetCommitment,
+  ensureCredentialRefKeyset,
+  requireCredentialRefKeyset,
+} from './credential-keyset.ts';
 import { diffVersions, getVersionDetail } from './detail.ts';
 import { dailyPasses } from './jobs.ts';
-import { getPass } from './repo.ts';
-import { updatePass } from './service.ts';
-import { type Kit, setupKit } from './test-kit.ts';
+import { type Kit, setupKit } from './pass-test-fixtures.ts';
+import {
+  blockedDeletedPasses,
+  deletePassRows,
+  expiredDeletedPasses,
+} from './repo-ops-retention.ts';
+import { getPass } from './repo-read-pass.ts';
+import { deletePass, updatePass } from './service.ts';
 
 let kit: Kit;
 beforeAll(async () => {
   kit = await setupKit();
+  await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
 
 const actor = { type: 'system', id: null } as const;
@@ -18,7 +33,13 @@ const DAY = 86_400_000;
 async function passWithVersions(count: number) {
   const pass = await kit.pass({ memberName: 'v1' });
   for (let i = 2; i <= count; i++)
-    await updatePass(kit.ctx, actor, pass.id, { input: { memberName: `v${i}` } }, { scope: null });
+    await updatePass(
+      jobCtxOf(kit),
+      actor,
+      pass.id,
+      { input: { memberName: `v${i}` } },
+      { scope: null },
+    );
   return pass;
 }
 
@@ -119,4 +140,156 @@ describe('version retention', () => {
       await first(kit.env.DB, "SELECT 1 FROM idempotency_keys WHERE key = 'new-key'"),
     ).not.toBeNull();
   });
+});
+
+describe('deleted-pass purge selection (W1-13)', () => {
+  it('skips a blocked pass, keeps selecting later ones with a cursor, and logs what it skipped', async () => {
+    const local = await setupKit();
+    await ensureCredentialRefKeyset(local.env.DB, local.env);
+    const blocked = await local.pass();
+    const free = await local.pass();
+    await deletePass(jobCtxOf(local), actor, blocked.id, null);
+    await deletePass(jobCtxOf(local), actor, free.id, null);
+    await stagePendingCredentialTransfer(local.env.DB, blocked.id, {
+      id: local.fx.ids.id(),
+      token: local.fx.ids.token(),
+      now: local.clock.now(),
+    });
+    local.clock.advance(8 * DAY);
+    const before = local.clock.now() - 7 * DAY;
+    const selectable = await expiredDeletedPasses(local.env.DB, before, '', 50);
+    expect(selectable.map((p) => p.id)).toEqual([free.id]);
+    // The cursor moves past what was seen.
+    expect(await expiredDeletedPasses(local.env.DB, before, free.id, 50)).toEqual([]);
+    expect((await blockedDeletedPasses(local.env.DB, before, 20)).map((p) => p.id)).toEqual([
+      blocked.id,
+    ]);
+    const warn = vi.spyOn(local.ctx.log, 'warn');
+    await dailyPasses(local.ctx);
+    expect(await getPass(local.env.DB, free.id)).toBeNull();
+    expect(
+      await first(local.env.DB, 'SELECT id FROM passes WHERE id = ?', [blocked.id]),
+    ).not.toBeNull();
+    expect(warn).toHaveBeenCalledWith(
+      'passes.purge_blocked',
+      expect.objectContaining({ code: 'PASS_PURGE_BLOCKED', count: 1, passIds: [blocked.id] }),
+    );
+  }, 60_000);
+});
+
+describe('hard deletion snapshots', () => {
+  it('requires the selected Test cutoff and lifecycle generation at the final delete', async () => {
+    const pass = await kit.pass({ mode: 'test' });
+    const credentialKeysetCommitment = await requireCredentialRefKeyset(kit.env.DB, kit.env);
+    const retention = await prepareScanRetentionDelete(kit.env, pass);
+    const untouched = { deleted: false, objectKeys: [], deviceIds: [] };
+    expect(
+      await deletePassRows(kit.env.DB, pass, retention, credentialKeysetCommitment, {
+        testBefore: pass.createdAt,
+        lifecycleGeneration: 0,
+      }),
+    ).toEqual(untouched);
+    expect(
+      await deletePassRows(kit.env.DB, pass, retention, credentialKeysetCommitment, {
+        testBefore: pass.createdAt + 1,
+        lifecycleGeneration: 1,
+      }),
+    ).toEqual(untouched);
+    expect(await getPass(kit.env.DB, pass.id)).not.toBeNull();
+    const removed = await deletePassRows(kit.env.DB, pass, retention, credentialKeysetCommitment, {
+      testBefore: pass.createdAt + 1,
+      lifecycleGeneration: 0,
+    });
+    expect(removed.deleted).toBe(true);
+    expect(removed.objectKeys).toContain(pass.objectKey);
+  }, 60_000);
+
+  it('does not delete after the selected pass revision changes', async () => {
+    const pass = await kit.pass({ mode: 'test' });
+    const credentialKeysetCommitment = await requireCredentialRefKeyset(kit.env.DB, kit.env);
+    const retention = await prepareScanRetentionDelete(kit.env, pass);
+    await run(kit.env.DB, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [pass.id]);
+    expect(
+      await deletePassRows(kit.env.DB, pass, retention, credentialKeysetCommitment, {
+        testBefore: pass.createdAt + 1,
+        lifecycleGeneration: 0,
+      }),
+    ).toEqual({ deleted: false, objectKeys: [], deviceIds: [] });
+    expect(await getPass(kit.env.DB, pass.id)).not.toBeNull();
+  }, 60_000);
+
+  it('rejects absent and malformed commitments before deleting a pass', async () => {
+    const pass = await kit.pass({ mode: 'test' });
+    const db = kit.env.DB;
+    const credentialKeysetCommitment = await requireCredentialRefKeyset(db, kit.env);
+    const retention = await prepareScanRetentionDelete(kit.env, pass);
+    const guard = { testBefore: pass.createdAt + 1, lifecycleGeneration: pass.lifecycleGeneration };
+    const untouched = { deleted: false, objectKeys: [], deviceIds: [] };
+    for (const invalid of [undefined, null, '', 'not-a-commitment']) {
+      expect(await deletePassRows(db, pass, retention, invalid as string, guard)).toEqual(
+        untouched,
+      );
+      expect(await getPass(db, pass.id)).not.toBeNull();
+      expect(await kit.env.BUCKET.head(pass.objectKey)).not.toBeNull();
+    }
+    expect(
+      (await deletePassRows(db, pass, retention, credentialKeysetCommitment, guard)).deleted,
+    ).toBe(true);
+  }, 60_000);
+
+  it.each(['changed', 'missing'] as const)(
+    'fails closed before retention when the keyset is already %s',
+    async (change) => {
+      const local = await setupKit();
+      const db = local.env.DB;
+      const pass = await local.pass();
+      await local.device(pass, 'preflight-keyset-device', 'device-token');
+      await deletePass(jobCtxOf(local), actor, pass.id, null);
+      local.clock.advance(8 * DAY);
+      const credentialKeysetCommitment = await requireCredentialRefKeyset(db, local.env);
+      const replacement = await credentialRefKeysetCommitment({ KEK_V1: btoa('q'.repeat(32)) });
+      expect(replacement).not.toBe(credentialKeysetCommitment);
+      const beforePass = await first(db, 'SELECT * FROM passes WHERE id = ?', [pass.id]);
+      const beforeVersions = await all(
+        db,
+        'SELECT * FROM pass_versions WHERE pass_id = ? ORDER BY version',
+        [pass.id],
+      );
+      const objectKeys = (await local.env.BUCKET.list({ prefix: `passes/${pass.id}/` })).objects
+        .map((object) => object.key)
+        .sort();
+      await replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null);
+      try {
+        await expect(dailyPasses(local.ctx)).rejects.toMatchObject({
+          code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
+        });
+        expect(
+          await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1'),
+        ).toEqual(change === 'changed' ? { commitment: replacement } : null);
+        expect(await first(db, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(beforePass);
+        expect(
+          await all(db, 'SELECT * FROM pass_versions WHERE pass_id = ? ORDER BY version', [
+            pass.id,
+          ]),
+        ).toEqual(beforeVersions);
+        expect(
+          await first(db, 'SELECT 1 FROM registrations WHERE pass_id = ?', [pass.id]),
+        ).not.toBeNull();
+        expect(
+          await first(db, 'SELECT 1 FROM devices WHERE device_id = ? AND identity_id = ?', [
+            'preflight-keyset-device',
+            pass.identityId,
+          ]),
+        ).not.toBeNull();
+        expect(
+          (await local.env.BUCKET.list({ prefix: `passes/${pass.id}/` })).objects
+            .map((object) => object.key)
+            .sort(),
+        ).toEqual(objectKeys);
+      } finally {
+        await replaceCallbackKeysetForTest(db, credentialKeysetCommitment);
+      }
+    },
+    120_000,
+  );
 });

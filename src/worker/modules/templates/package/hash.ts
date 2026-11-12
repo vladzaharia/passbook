@@ -1,3 +1,5 @@
+import type { TemplateManifest } from '../../../../passkit/types.ts';
+
 const TABLE = (() => {
   const table = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
@@ -55,4 +57,26 @@ export async function contentVersion(input: VersionInput): Promise<string> {
     `${canonicalJson(input.passJson)}\n${canonicalJson(input.manifest)}\n${assets}`,
   );
   return digest.slice(0, 16);
+}
+
+/** SHA-256 of the inputs that can affect an issued pass, independently of the version ID. */
+export async function buildKey(input: {
+  passJson: unknown;
+  manifest: TemplateManifest;
+  assets: readonly { name: string; sha1: string }[];
+}): Promise<string> {
+  const { description: _description, previewOnlyAssets = [], scan, ...manifest } = input.manifest;
+  const previewOnly = new Set(previewOnlyAssets);
+  const assets = input.assets
+    .filter((asset) => !previewOnly.has(asset.name))
+    .map(({ name, sha1 }) => ({ name, sha1 }))
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  const { display: _display, ...scanForPass } = scan ?? {};
+  return sha256Hex(
+    canonicalJson({
+      passJson: input.passJson,
+      manifest: scan === undefined ? manifest : { ...manifest, scan: scanForPass },
+      assets,
+    }),
+  );
 }

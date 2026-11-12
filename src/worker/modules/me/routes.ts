@@ -1,3 +1,4 @@
+import { createRoute } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import { z } from 'zod';
 import { PKPASSES_CONTENT_TYPE } from '../../../passkit/index.ts';
@@ -13,6 +14,7 @@ import {
   MySessionListSchema,
   OkSchema,
   PageQuerySchema,
+  ProblemSchema,
   RefreshResponseSchema,
   RemovePassResponseSchema,
 } from '../../../shared/contracts/index.ts';
@@ -21,21 +23,22 @@ import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requestTheme } from '../../ssr/head.ts';
+import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
 import { clearSessionCookie } from '../auth/cookies.ts';
+import { assertPassSnapshot } from '../public/snapshot.ts';
+import { myPassesBundle } from './bundle.ts';
+import { assertOwnerPass, presentationForOwner } from './presentation.ts';
+import { getMyPass, getMyRemoval, listMyPasses, refreshMyPass, removeMyPass } from './service.ts';
 import {
   addMyEmail,
-  getMyPass,
   listMyEmails,
-  listMyPasses,
   listMySessions,
   makeMyEmailPrimary,
-  myPassesBundle,
-  refreshMyPass,
   removeMyEmail,
-  removeMyPass,
   revokeAllMySessions,
   revokeMySession,
-} from './service.ts';
+} from './service-account.ts';
 
 type C = Context<AppBindings>;
 const sessionId = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessionId : '');
@@ -67,8 +70,8 @@ register(
     query: MyBundleQuerySchema,
   },
   async (c) => {
-    const { part } = c.req.valid('query');
-    const bundle = await myPassesBundle(serviceContext(c), currentUserId(c), part);
+    const { part, snapshot } = c.req.valid('query');
+    const bundle = await myPassesBundle(serviceContext(c), currentUserId(c), part, snapshot);
     return new Response(bundle.body, {
       headers: {
         'content-type': PKPASSES_CONTENT_TYPE,
@@ -97,6 +100,30 @@ register(
   meRoutes,
   'me',
   {
+    method: 'get',
+    path: '/passes/{id}/barcode',
+    summary: 'Present one of my passes',
+    params: IdParamSchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const id = c.req.valid('param').id;
+    const { model, snapshot } = await presentationForOwner(ctx, currentUserId(c), id);
+    const html = renderPresentationPage({
+      ...model,
+      backHref: `/passes/${id}`,
+      nonce: c.var.nonce,
+      theme: requestTheme(c),
+    });
+    await assertPassSnapshot(ctx, snapshot);
+    await assertOwnerPass(ctx, currentUserId(c), snapshot.pass);
+    return new Response(html, { headers: PRESENTATION_HEADERS });
+  },
+);
+register(
+  meRoutes,
+  'me',
+  {
     method: 'post',
     path: '/passes/{id}/refresh',
     summary: 'Force refresh (3/min per pass)',
@@ -107,18 +134,50 @@ register(
   async (c) =>
     c.json(await refreshMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id), 202),
 );
+meRoutes.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/passes/{id}',
+    summary: 'Remove from my passes (blocks re-attach)',
+    tags: ['me'],
+    request: { params: IdParamSchema },
+    responses: {
+      200: {
+        description: 'Removal completed',
+        content: { 'application/json': { schema: RemovePassResponseSchema } },
+      },
+      202: {
+        description: 'Removal pending wallet credential retirement',
+        content: { 'application/json': { schema: RemovePassResponseSchema } },
+      },
+      default: {
+        description: 'Error',
+        content: { 'application/problem+json': { schema: ProblemSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const result = await removeMyPass(
+      serviceContext(c),
+      currentUserId(c),
+      sessionId(c),
+      c.req.valid('param').id,
+    );
+    return result.state === 'pending' ? c.json(result, 202) : c.json(result, 200);
+  },
+);
 register(
   meRoutes,
   'me',
   {
-    method: 'delete',
-    path: '/passes/{id}',
-    summary: 'Remove from my passes (blocks re-attach)',
+    method: 'get',
+    path: '/pass-removals/{id}',
+    summary: 'Status of my pass removal',
     params: IdParamSchema,
     response: RemovePassResponseSchema,
   },
   async (c) =>
-    c.json(await removeMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
+    c.json(await getMyRemoval(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
 );
 register(
   meRoutes,

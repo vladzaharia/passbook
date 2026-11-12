@@ -1,8 +1,8 @@
 import { formatShortDate } from '../../lib/format.ts';
 
 export interface AuditSearch {
-  /** Deep links from an org page; the top-bar scope applies otherwise. */
-  orgId?: string | undefined;
+  /** Platform-wide display filter, never a tenant scope: the admin route does not retain it. */
+  filterOrgId?: string | undefined;
   actorId?: string | undefined;
   action?: string | undefined;
   targetType?: string | undefined;
@@ -20,7 +20,7 @@ const num = (v: unknown) => {
 
 export function parseAuditSearch(raw: Record<string, unknown>): AuditSearch {
   return {
-    orgId: str(raw.orgId),
+    filterOrgId: str(raw.filterOrgId),
     actorId: str(raw.actorId),
     action: str(raw.action),
     targetType: str(raw.targetType),
@@ -47,7 +47,7 @@ export type AuditSubject =
 export function auditSearchFor(subject: AuditSubject): AuditSearch {
   if ('target' in subject) return { targetType: subject.target, targetId: subject.id };
   if ('actor' in subject) return { actorId: subject.id };
-  return { orgId: subject.org };
+  return { filterOrgId: subject.org };
 }
 
 /** The same as a plain href, for menus and the palette. */

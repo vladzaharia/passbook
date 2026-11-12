@@ -29,6 +29,14 @@ override is present. Rules are re-read on every request; displays revalidate the
 session membership before delivery. Configuration refresh waits until a scan or review finishes
 and preserves the started state. Pausing or ending a session blocks new check-ins immediately.
 
+Session lists count non-revoked devices in the same organization, mode and session; a device is
+online when its last-seen timestamp is at or after two minutes before the request. **Today** counts
+completed, successful, ledger-visible scans since midnight in the session's time zone, excluding
+undo actions and scans that were undone.
+Historical scans from a device remain counted after the device is revoked. Counts are returned
+only while the captured actor, session configuration and credential keyset are still valid in the
+same database snapshot.
+
 Names and emails open a read-only preview followed by an explicit action. Codes and IDs submitted
 with Enter follow the configured scan flow, including Bluetooth/USB keyboard readers and Android
 barcode events. Customer displays follow presented codes and taps rather than people lookups.

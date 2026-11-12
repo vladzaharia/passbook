@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { scanId } from '../src/web/scan/platform/id.ts';
 import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -13,10 +14,17 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     orgId,
     name: uid('Event template'),
   });
+  const release = await publishTemplateVersion(
+    api,
+    orgId,
+    template.id,
+    template.versions[0].version,
+  );
   const scannerName = uid('Event scanner');
   const pass = await createPass(api, orgId, {
     holder: 'Admin Door Guest',
     templateId: template.id,
+    release,
     memberId: uid('ADMINDOOR'),
   });
   try {
@@ -74,10 +82,15 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
       .getByRole('button', { name: 'Undo check-in', exact: true })
       .click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    const undone = await api.get(
-      `/api/v1/scans?orgId=${orgId}&outcome=undone&q=Admin%20Door%20Guest`,
-    );
-    expect(undone.items.some((r: { id: string }) => r.id === outcome.scanId)).toBe(true);
+    // The dialog closes before the undo request settles; poll the history instead of racing it.
+    await expect
+      .poll(async () => {
+        const undone = await api.get(
+          `/api/v1/scans?orgId=${orgId}&outcome=undone&q=Admin%20Door%20Guest`,
+        );
+        return undone.items.some((r: { id: string }) => r.id === outcome.scanId);
+      })
+      .toBe(true);
   } finally {
     await api.dispose();
   }

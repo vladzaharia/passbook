@@ -1,42 +1,47 @@
+import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg, makeUser, type SessionFixture } from '../../../../test/helpers/index.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { createApp } from '../../app.ts';
+import type { AppBindings } from '../../platform/context.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { enqueuePassEmail } from '../delivery/issuance-intent.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
-import { enqueuePassEmail } from '../delivery/service.ts';
 import { eventsQuery } from '../metrics/analytics-sql.ts';
 import { setupCounts } from '../metrics/repo.ts';
-import { createPassRow } from '../passes/create.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import { inboxApp, inboxMember } from './test-tenant-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
 let kit: Kit;
-let app: ReturnType<typeof createApp>;
+let app: OpenAPIHono<AppBindings>;
 let org: { id: string };
+let session: SessionFixture;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
   org = await makeOrg(kit.fx, { name: 'Counted' });
+  const user = await makeUser(kit.fx);
+  session = (await inboxMember(kit, user.id, org.id, 'org_admin', ['admin', 'user'])).session;
+  app = inboxApp(kit);
 });
 
 const get = async (path: string, mode: Mode) =>
   (await (
-    await app.request(`${ORIGIN}/api/v1${path}`, { headers: fake.admin({ mode }) }, kit.env)
+    await app.request(
+      `${ORIGIN}/api/v1${path}`,
+      { headers: { ...session.headers, 'x-passbook-mode': mode } },
+      kit.env,
+    )
   ).json()) as {
     items: Record<string, unknown>[];
   } & Record<string, unknown>;
 
 const make = (mode: Mode, holderEmail?: string) =>
-  createPassRow(kit.ctx, {
+  kit.pass({
     orgId: org.id,
-    templateId: kit.template.id,
-    input: { memberName: `Agg ${mode}` },
-    ...(holderEmail ? { holderEmail } : {}),
-    source: 'manual',
     mode,
-    actor: { type: 'system', id: null },
+    memberName: `Agg ${mode}`,
+    ...(holderEmail ? { holderEmail } : {}),
   });
 
 beforeAll(async () => {
@@ -53,7 +58,7 @@ describe('aggregates split by mode', () => {
     ] as const) {
       const list = await get(`/templates?orgId=${org.id}&limit=200`, mode);
       expect(list.items.find((t) => t.id === kit.template.id)?.passCount).toBe(n);
-      const detail = await get(`/templates/${kit.template.id}`, mode);
+      const detail = await get(`/templates/${kit.template.id}?orgId=${org.id}`, mode);
       expect(detail.passCount).toBe(n);
       expect(
         (detail.versions as { passCount: number }[]).reduce((a, v) => a + v.passCount, 0),
@@ -89,12 +94,13 @@ describe('aggregates split by mode', () => {
     const test = await make('test');
     const live = await make('live');
     for (const pass of [test, live]) {
-      const { outboxId } = await enqueuePassEmail(kit.ctx, {
+      const { outboxId } = await enqueuePassEmail(jobCtxOf(kit), {
         passId: pass.id,
         to: 'setup@example.com',
         attach: false,
+        expected: pass,
       });
-      await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+      await handleEmailSend({ kind: 'email.send', outboxId }, jobCtxOf(kit));
     }
     expect((await setupCounts(kit.env.DB)).passEmailsSent).toBe(before + 1);
   });

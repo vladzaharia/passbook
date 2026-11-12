@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useId, useState } from 'react';
 import { cn } from '@/web/lib/cn.ts';
 import { Button, buttonVariants, EntityIcon, KeyValue, StatusPill } from '@/web/ui/index.ts';
+import { formatDateTime } from '../../lib/format.ts';
 import type { DataItem } from './data-items.ts';
 import { type Component, componentLink, pillStatus, summaryLine } from './groups.ts';
 import { componentIcon } from './icons.ts';
@@ -37,8 +38,20 @@ export function ComponentRow({ component: c, items }: { component: Component; it
       <div className="flex items-center gap-3 py-3 pr-2 pl-4">
         <EntityIcon icon={componentIcon(c)} className="max-sm:hidden" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-fg-strong">{label}</p>
-          {line ? <p className="truncate text-xs text-fg-muted">{line}</p> : null}
+          <p className="text-sm font-medium break-words text-fg-strong">{label}</p>
+          {line ? <p className="text-xs text-fg-muted">{line}</p> : null}
+          <p className="text-xs text-fg-muted">
+            {c.checkedAt > 0 ? (
+              <>
+                Checked{' '}
+                <time dateTime={new Date(c.checkedAt).toISOString()}>
+                  {formatDateTime(c.checkedAt)}
+                </time>
+              </>
+            ) : (
+              'Check time unknown'
+            )}
+          </p>
         </div>
         <StatusPill status={pillStatus(c)} className="shrink-0" />
         <div className="flex shrink-0 items-center">

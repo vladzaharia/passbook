@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { type FetchHandler, json, renderApp } from '../../lib/test-utils.tsx';
+import { type FetchHandler, json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import {
   connection,
   connectionDetail,
@@ -10,6 +10,11 @@ import {
   templateDetail,
   templateSummary,
 } from './test-fixtures.ts';
+
+const orgScope = {
+  memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
+  selectedOrg: ORG.id,
+};
 
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
 
@@ -36,6 +41,7 @@ describe('connection tab', () => {
     const bodies: unknown[] = [];
     await renderApp('/admin/passes/p1?tab=connection', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers(state, {
         '/api/v1/passes/p1/connection': (_u, init) => {
           expect(method(init)).toBe('PUT');
@@ -75,6 +81,7 @@ describe('connection tab', () => {
     const bodies: unknown[] = [];
     await renderApp('/admin/passes/p1?tab=connection', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers(state, {
         '/api/v1/connections/c1': () => json(connectionDetail()),
         '/api/v1/passes/p1/connection': (_u, init) => {
@@ -103,6 +110,7 @@ describe('delivery and images', () => {
     const bodies: unknown[] = [];
     await renderApp('/admin/passes/p1?tab=delivery', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers(state, {
         '/api/v1/passes/p1/resend-email': (_u, init) => {
           bodies.push(JSON.parse(String(init?.body)));
@@ -120,6 +128,7 @@ describe('delivery and images', () => {
     const state = { pass: passDetail() };
     await renderApp('/admin/passes/p1?tab=versions', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers(state, {
         '/api/v1/passes/p1/diff': () => json({ changes: [] }),
       }),

@@ -37,4 +37,4 @@ provision({
   writeConfig: (text) => writeFileSync(file, text),
   log: console.log,
 });
-console.log('Done. Run npm run gen, then npm run predeploy.');
+console.log('Done. Run npm run gen, then npm run deploy:check.');

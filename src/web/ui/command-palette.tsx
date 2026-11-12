@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { ActiveIndicator } from './active-indicator.tsx';
 import { Buddy } from './art/buddy.tsx';
-import { DialogOverlay } from './overlay.tsx';
+import { DialogOverlay, restoreOpener, useOpener } from './overlay.tsx';
 
 export interface CommandItem {
   id: string;
@@ -86,6 +86,7 @@ export function CommandPalette({
   empty,
 }: CommandPaletteProps) {
   const close = () => onOpenChange(false);
+  const opener = useOpener(open);
   const nothing = groups.every((g) => g.items.length === 0);
   // The first result stays selected as results arrive (server groups land after local ones),
   // until the person moves the selection themselves.
@@ -108,6 +109,7 @@ export function CommandPalette({
         <DialogOverlay />
         <DialogPrimitive.Content
           aria-describedby={undefined}
+          onCloseAutoFocus={restoreOpener(opener)}
           className="wl-dialog fixed top-[12vh] left-1/2 z-50 flex max-h-[76vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col overflow-hidden rounded-lg border border-border bg-surface-overlay shadow-[var(--wl-edge),var(--pk-elevation-3)] max-sm:top-[calc(env(safe-area-inset-top)+0.75rem)]"
         >
           <DialogPrimitive.Title className="sr-only">Command palette</DialogPrimitive.Title>

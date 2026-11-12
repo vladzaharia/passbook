@@ -8,6 +8,8 @@ import { normalize } from '@/shared/pass-view/index.ts';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import { handleStaleSave } from '@/web/lib/stale-save.ts';
 import { type Swatch, useSwatches } from '@/web/lib/swatches.ts';
 import { PassCardStage } from '@/web/pass-card/index.tsx';
 import {
@@ -23,7 +25,13 @@ import {
 } from '@/web/ui/index.ts';
 import { HEX, ImageInputError, passColorWarnings, prepareImage } from './branding.ts';
 import { ColorField } from './color-field.tsx';
-import { type BrandingSlot, brandingUrl, passUpdateNote, useBrandingImage } from './queries.ts';
+import {
+  type BrandingSlot,
+  brandingUrl,
+  passUpdateNote,
+  useBrandingImage,
+  useRefreshOrgs,
+} from './queries.ts';
 
 type Org = z.infer<typeof OrgSummarySchema>;
 
@@ -34,40 +42,48 @@ export interface PassColorsDraft {
   logoHasName: boolean;
 }
 
-/** The card a new org's "Add branding" scrolls to. */
-export const PASS_BRANDING_ID = 'pass-branding';
-
-export const PASS_COLOR_DEFAULTS = {
-  background: '#0f172a',
-  foreground: '#ffffff',
-  label: '#94a3b8',
-};
+/** Anchor for links to the pass branding editor. */
+const PASS_BRANDING_ID = 'pass-branding';
 
 const SLOT = {
   logo: { label: 'Logo', help: 'PNG at @3x, up to 480 × 150 px' },
   icon: { label: 'Icon', help: 'PNG at @3x, 114 × 114 px' },
 } as const;
 
-/**
- * Unset pass colours leave each template's own. The sample then wears the org's first template's
- * colours (else the first one it can use), so it shows what holders get.
- */
-function useTemplateColors(orgId: string): Swatch | undefined {
+/** Use template colours only when this exact organization grants template read access. */
+function useTemplateColors(orgId: string) {
+  const scope = useOrgScope();
+  const canRead = Boolean(
+    !scope.isLoading &&
+      !scope.isError &&
+      scope.membership?.orgId === orgId &&
+      scope.membership.capabilities.includes('templates:read'),
+  );
   const list = useQuery({
     queryKey: ['admin', 'templates', 'for-org', orgId],
     queryFn: ({ signal }) =>
       api.get('/api/v1/templates', TemplateListSchema, { query: { orgId, limit: 50 }, signal }),
+    enabled: canRead,
     staleTime: 60_000,
   });
-  const items = list.data?.items ?? [];
-  const pick = items.find((t) => t.orgId === orgId) ?? items[0];
-  return useSwatches(pick ? [pick.id] : []).get(pick?.id ?? '');
+  const items = canRead && !list.isError ? (list.data?.items ?? []) : [];
+  const pick = items.find((t) => t.orgId === orgId) ?? items.find((t) => t.orgId === null);
+  const swatches = useSwatches(pick ? [pick.id] : [], orgId);
+  return {
+    base: pick ? swatches.get(pick.id) : undefined,
+    canRead,
+    checking: scope.isLoading,
+    accessError: scope.isError,
+  };
 }
 
 /** A membership card in the org's colours and images, for the live preview. */
 export function samplePass(org: Org, d: PassColorsDraft, base?: Swatch): PassJson {
   const color = (v: string, key: 'background' | 'foreground' | 'label') =>
-    HEX.test(v) ? v : (base?.[key] ?? PASS_COLOR_DEFAULTS[key]);
+    HEX.test(v) ? v : base?.[key];
+  const background = color(d.background, 'background');
+  const foreground = color(d.foreground, 'foreground');
+  const label = color(d.label, 'label');
   return {
     formatVersion: 1,
     passTypeIdentifier: 'pass.example',
@@ -76,9 +92,9 @@ export function samplePass(org: Org, d: PassColorsDraft, base?: Swatch): PassJso
     organizationName: org.name,
     description: `${org.name} membership card`,
     ...(d.logoHasName ? {} : { logoText: org.name }),
-    backgroundColor: color(d.background, 'background'),
-    foregroundColor: color(d.foreground, 'foreground'),
-    labelColor: color(d.label, 'label'),
+    ...(background ? { backgroundColor: background } : {}),
+    ...(foreground ? { foregroundColor: foreground } : {}),
+    ...(label ? { labelColor: label } : {}),
     generic: {
       primaryFields: [{ key: 'name', label: 'Member', value: 'Maya Chen' }],
       secondaryFields: [
@@ -92,6 +108,7 @@ export function samplePass(org: Org, d: PassColorsDraft, base?: Swatch): PassJso
 
 function ImageSlot({ org, slot }: { org: Org; slot: BrandingSlot }) {
   const { upload, remove } = useBrandingImage(org.id);
+  const refresh = useRefreshOrgs();
   const [error, setError] = useState<string>();
   const image = org.branding[slot];
   const input = useRef<HTMLInputElement>(null);
@@ -103,9 +120,14 @@ function ImageSlot({ org, slot }: { org: Org; slot: BrandingSlot }) {
     setError(undefined);
     try {
       const prepared = await prepareImage(slot, file);
-      const saved = await upload.mutateAsync({ slot, ...prepared });
+      const saved = await upload.mutateAsync({
+        slot,
+        ...prepared,
+        ...(org.configRevision === undefined ? {} : { configRevision: org.configRevision }),
+      });
       toast.success(`${SLOT[slot].label} uploaded.${passUpdateNote(saved.passesToUpdate)}`);
     } catch (cause) {
+      if (handleStaleSave(cause, refresh)) return;
       setError(cause instanceof ImageInputError ? cause.message : errorMessage(cause));
     }
   }
@@ -194,7 +216,7 @@ export function PassBrandingCard({
   errors: Record<string, string>;
 }) {
   const warnings = passColorWarnings(draft);
-  const base = useTemplateColors(org.id);
+  const { base, canRead, checking, accessError } = useTemplateColors(org.id);
   const view = useMemo(() => {
     const assets: Record<string, string> = {};
     for (const slot of ['logo', 'icon'] as const) {
@@ -217,7 +239,7 @@ export function PassBrandingCard({
               <ColorField
                 label="Background"
                 value={draft.background}
-                fallback={base?.background ?? PASS_COLOR_DEFAULTS.background}
+                fallback={view.colors.background}
                 empty="Template"
                 error={errors.background}
                 onChange={(background) => onChange({ background })}
@@ -225,7 +247,7 @@ export function PassBrandingCard({
               <ColorField
                 label="Text"
                 value={draft.foreground}
-                fallback={base?.foreground ?? PASS_COLOR_DEFAULTS.foreground}
+                fallback={view.colors.foreground}
                 empty="Template"
                 error={errors.foreground}
                 onChange={(foreground) => onChange({ foreground })}
@@ -233,7 +255,7 @@ export function PassBrandingCard({
               <ColorField
                 label="Labels"
                 value={draft.label}
-                fallback={base?.label ?? PASS_COLOR_DEFAULTS.label}
+                fallback={view.colors.label}
                 empty="Template"
                 error={errors.label}
                 onChange={(label) => onChange({ label })}
@@ -250,6 +272,18 @@ export function PassBrandingCard({
           <div className="flex min-w-0 flex-col items-center gap-2">
             <PassCardStage view={view} tilt={false} glow className="w-full max-w-60" />
             <p className="text-xs text-fg-muted">Sample pass</p>
+            {!base ? (
+              <p className="text-center text-xs text-fg-muted">
+                {checking
+                  ? 'Checking template access.'
+                  : accessError
+                    ? 'Template access could not be checked.'
+                    : !canRead
+                      ? 'Template colours require template read access for this organization.'
+                      : 'Template colours are unavailable or still loading.'}{' '}
+                Unset colours use sample defaults, not template colours.
+              </p>
+            ) : null}
           </div>
         </div>
       </CardBody>

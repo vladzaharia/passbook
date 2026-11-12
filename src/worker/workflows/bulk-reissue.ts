@@ -1,8 +1,12 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
-import { type ReissuePageResult, type ReissueParams, reissuePage } from '../modules/passes/bulk.ts';
+import {
+  type ReissuePageResult,
+  type ReissueParams,
+  reissuePage,
+} from '../modules/passes/bulk-reissue-page.ts';
 import { setWorkflowStatus } from '../modules/passes/repo.ts';
 import type { AppEnv } from '../platform/env.ts';
-import { createServiceContext } from '../platform/service-context.ts';
+import { createJobContext } from '../platform/service-context.ts';
 
 export type BulkReissueParams = ReissueParams;
 
@@ -19,7 +23,7 @@ export async function runBulkReissue(
   step: StepLike,
   exec?: ExecutionContext,
 ): Promise<{ changed: number; unchanged: number; failed: number }> {
-  const ctx = createServiceContext(env, {
+  const ctx = createJobContext(env, 'bulk-reissue', {
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'bulk-reissue', instanceId },
   });

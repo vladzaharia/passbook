@@ -1,32 +1,36 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import {
   PassDevicesSchema,
   PassEventListSchema,
   type PassSyncDeviceDto,
 } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handlePushDeliver } from '../delivery/jobs.ts';
-import { getPass, type Pass } from '../passes/repo.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import type { Pass } from '../passes/repo.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import { updatePass } from '../passes/service.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
 import { hashDevice } from './record.ts';
+import { type EventAuth, eventAuth, eventStores } from './test-auth-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 const TYPE = 'pass.im.plrs.wallet';
-const fake = fakeAuth(ORIGIN);
+let credentials: EventAuth;
 const TOKEN = 'a'.repeat(64);
 let kit: Kit;
 let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  credentials = await eventAuth(kit);
+  app = createApp({ stores: eventStores(kit), clock: kit.clock });
 });
 
 const wallet = (path: string, init: RequestInit = {}) =>
   app.request(`${ORIGIN}/wallet/v1${path}`, init, kit.env);
-const api = (path: string, headers: Record<string, string> = fake.admin()) =>
+const api = (path: string, headers: Record<string, string> = credentials.member.session.headers) =>
   app.request(`${ORIGIN}/api/v1/passes${path}`, { headers }, kit.env);
 const auth = (pass: Pass) => ({ authorization: `ApplePass ${pass.authToken}` });
 
@@ -77,7 +81,7 @@ describe('a device from register to up to date', () => {
 
     kit.clock.advance(5000);
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { input: { memberName: 'New Name' } },
@@ -111,7 +115,7 @@ describe('a device from register to up to date', () => {
     kit.apns.results.set(TOKEN, { status: 400, reason: 'PayloadEmpty' });
     kit.clock.advance(2000);
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { input: { memberName: 'Other' } },
@@ -134,7 +138,7 @@ describe('a device from register to up to date', () => {
     await register(pass, 'dev-dead');
     kit.apns.results.set(TOKEN, { status: 410, reason: 'Unregistered' });
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { input: { memberName: 'Z' } },
@@ -164,7 +168,7 @@ describe('fetch attribution', () => {
     await register(pass, 'dev-b');
     kit.clock.advance(2000);
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { input: { memberName: 'Two Devices' } },
@@ -263,11 +267,27 @@ describe('GET /passes/{id}/devices', () => {
   it('needs passes:read, stays inside the key org and works in both modes', async () => {
     const pass = await kit.pass();
     const other = await makeOrg(kit.fx, { name: 'Elsewhere' });
+    const outsider = await makeUser(kit.fx);
+    const session = await makeSession(kit.fx, { userId: outsider.id });
+    const foreignKey = await makeApiKey(kit.fx, { orgId: other.id });
     expect((await api(`/${pass.id}/devices`, {})).status).toBe(401);
-    expect((await api(`/${pass.id}/devices`, fake.user())).status).toBe(403);
-    expect((await api(`/${pass.id}/devices`, fake.apiKey({ orgId: other.id }))).status).toBe(404);
-    for (const headers of [fake.admin({ mode: 'test' }), fake.apiKey({ orgId: kit.org.id })])
+    expect((await api(`/${pass.id}/devices`, session.headers)).status).toBe(404);
+    expect((await api(`/${pass.id}/devices`, foreignKey.headers)).status).toBe(404);
+    for (const headers of [
+      { ...credentials.member.session.headers, 'x-passbook-mode': 'test' },
+      credentials.key.headers,
+    ])
       expect((await api(`/${pass.id}/devices`, headers)).status).toBe(200);
     expect((await getPass(kit.env.DB, pass.id))?.id).toBe(pass.id);
+  });
+
+  it('does not claim a device fetched an unproven removal version', async () => {
+    const pass = await kit.pass();
+    await register(pass, 'dev-unproven-removal');
+    await kit.env.DB.prepare('UPDATE passes SET removed_at = 1 WHERE id = ?').bind(pass.id).run();
+    const result = await devices(pass);
+    expect(result.removal?.version).toBeNull();
+    expect(only(result.devices, await hashDevice('dev-unproven-removal'))?.removal).toBeNull();
+    expect(result.removal?.done).toBe(0);
   });
 });

@@ -1,37 +1,117 @@
-import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
+import { all, chunk, first, placeholders } from '../../platform/db.ts';
 
 // Passes (sync bookkeeping only; content changes go through passes/service.ts)
 
 export interface SyncPass {
   id: string;
   orgId: string;
+  mode: 'live' | 'test';
+  status: 'active' | 'voided';
+  version: number;
+  rowVersion: number;
+  identityId: string;
+  credentialGeneration: number;
+  lifecycleGeneration: number;
+  credentialKeysetCommitment: string;
+  transferPending: boolean;
+  ownerUserId: string | null;
+  linkGeneration: number;
+  deletedAt: number | null;
+  removedAt: number | null;
   connectionId: string | null;
   externalRef: string | null;
   templateId: string;
+  releaseId: string | null;
   templateVersion: string;
   personalization: Record<string, unknown>;
+}
+
+export type PassReleaseBinding = Pick<SyncPass, 'templateId' | 'templateVersion' | 'releaseId'>;
+
+export function validPassReleaseBinding(p: PassReleaseBinding): boolean {
+  return (
+    typeof p.templateId === 'string' &&
+    !!p.templateId &&
+    typeof p.templateVersion === 'string' &&
+    !!p.templateVersion &&
+    (p.releaseId === null || (typeof p.releaseId === 'string' && !!p.releaseId))
+  );
+}
+
+export function validCredentialKeysetCommitment(value: unknown): value is string {
+  return typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
 }
 
 interface SyncPassSql {
   id: string;
   org_id: string;
+  mode: 'live' | 'test';
+  status: 'active' | 'voided';
+  version: number;
+  row_version: number;
+  identity_id: unknown;
+  credential_generation: unknown;
+  lifecycle_generation: unknown;
+  credential_keyset_commitment: unknown;
+  transfer_pending: unknown;
+  owner_user_id: string | null;
+  link_generation: number;
+  deleted_at: number | null;
+  removed_at: number | null;
   connection_id: string | null;
   external_ref: string | null;
   template_id: string;
+  release_id: string | null;
   template_version: string;
   personalization: string;
 }
 
-const PASS_COLUMNS =
-  'id, org_id, connection_id, external_ref, template_id, template_version, personalization';
+const PASS_COLUMNS = `id, org_id, mode, status, version, row_version, identity_id, credential_generation, lifecycle_generation,
+  EXISTS (SELECT 1 FROM pass_credential_transfers pct
+    WHERE pct.pass_id = passes.id AND pct.state = 'pending') AS transfer_pending,
+  (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS credential_keyset_commitment,
+  owner_user_id, link_generation, deleted_at, removed_at, connection_id, external_ref,
+  template_id, template_version, release_id, personalization`;
 
-function toPass(r: SyncPassSql): SyncPass {
+function toPass(r: SyncPassSql): SyncPass | null {
+  if (
+    typeof r.identity_id !== 'string' ||
+    !r.identity_id ||
+    typeof r.credential_generation !== 'number' ||
+    !Number.isSafeInteger(r.credential_generation) ||
+    r.credential_generation < 1 ||
+    typeof r.lifecycle_generation !== 'number' ||
+    !Number.isSafeInteger(r.lifecycle_generation) ||
+    r.lifecycle_generation < 0 ||
+    !validCredentialKeysetCommitment(r.credential_keyset_commitment) ||
+    (r.transfer_pending !== 0 && r.transfer_pending !== 1) ||
+    !validPassReleaseBinding({
+      templateId: r.template_id,
+      templateVersion: r.template_version,
+      releaseId: r.release_id,
+    })
+  )
+    return null;
   return {
     id: r.id,
     orgId: r.org_id,
+    mode: r.mode,
+    status: r.status,
+    version: r.version,
+    rowVersion: r.row_version,
+    identityId: r.identity_id,
+    credentialGeneration: r.credential_generation,
+    lifecycleGeneration: r.lifecycle_generation,
+    credentialKeysetCommitment: r.credential_keyset_commitment,
+    transferPending: r.transfer_pending === 1,
+    ownerUserId: r.owner_user_id,
+    linkGeneration: r.link_generation,
+    deletedAt: r.deleted_at,
+    removedAt: r.removed_at,
     connectionId: r.connection_id,
     externalRef: r.external_ref,
     templateId: r.template_id,
+    releaseId: r.release_id,
     templateVersion: r.template_version,
     personalization: JSON.parse(r.personalization) as Record<string, unknown>,
   };
@@ -46,10 +126,28 @@ export async function getPassByRef(
   const r = await first<SyncPassSql>(
     db,
     `SELECT ${PASS_COLUMNS} FROM passes
-     WHERE org_id = ? AND connection_id = ? AND external_ref = ? AND status = 'active' LIMIT 1`,
+     WHERE org_id = ? AND mode = 'live' AND connection_id = ? AND external_ref = ?
+       AND status = 'active' AND deleted_at IS NULL AND removed_at IS NULL
+       AND test_data_quarantined = 0 LIMIT 1`,
     [orgId, connectionId, ref],
   );
   return r ? toPass(r) : null;
+}
+
+/** A legacy ineligible binding still occupies the unique (org, connection, ref) key. */
+export async function hasBinding(
+  db: D1Database,
+  orgId: string,
+  connectionId: string,
+  ref: string,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      'SELECT 1 FROM passes WHERE org_id = ? AND connection_id = ? AND external_ref = ? LIMIT 1',
+      [orgId, connectionId, ref],
+    )) !== null
+  );
 }
 
 /** Active passes linked to `refs`, keyed by ref. */
@@ -64,20 +162,25 @@ export async function listPassesByRefs(
     const rows = await all<SyncPassSql>(
       db,
       `SELECT ${PASS_COLUMNS} FROM passes
-       WHERE org_id = ? AND connection_id = ? AND status = 'active'
+       WHERE org_id = ? AND mode = 'live' AND connection_id = ? AND status = 'active'
+         AND deleted_at IS NULL AND removed_at IS NULL AND test_data_quarantined = 0
          AND external_ref IN (${placeholders(part.length)})`,
       [orgId, connectionId, ...part],
     );
-    for (const r of rows)
-      if (r.external_ref && !out.has(r.external_ref)) out.set(r.external_ref, toPass(r));
+    for (const r of rows) {
+      const pass = toPass(r);
+      if (pass?.externalRef && !out.has(pass.externalRef)) out.set(pass.externalRef, pass);
+    }
   }
   return out;
 }
 
 export async function getPassById(db: D1Database, passId: string): Promise<SyncPass | null> {
-  const r = await first<SyncPassSql>(db, `SELECT ${PASS_COLUMNS} FROM passes WHERE id = ?`, [
-    passId,
-  ]);
+  const r = await first<SyncPassSql>(
+    db,
+    `SELECT ${PASS_COLUMNS} FROM passes WHERE id = ? AND test_data_quarantined = 0`,
+    [passId],
+  );
   return r ? toPass(r) : null;
 }
 
@@ -92,40 +195,13 @@ export async function listDuePassRefs(
   const rows = await all<{ external_ref: string }>(
     db,
     `SELECT external_ref FROM passes
-     WHERE org_id = ? AND connection_id = ? AND external_ref IS NOT NULL AND status = 'active'
+     WHERE org_id = ? AND mode = 'live' AND connection_id = ? AND external_ref IS NOT NULL
+       AND status = 'active' AND deleted_at IS NULL AND removed_at IS NULL AND test_data_quarantined = 0
        AND (next_sync_at IS NULL OR next_sync_at <= ?)
      ORDER BY next_sync_at IS NOT NULL, next_sync_at LIMIT ?`,
     [orgId, connectionId, now, limit],
   );
   return rows.map((r) => r.external_ref);
-}
-
-export async function markPassSynced(
-  db: D1Database,
-  p: { passId: string; connectionId: string; now: number; nextSyncAt: number | null },
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE passes SET last_synced_at = ?, sync_error_code = NULL, sync_failures = 0, next_sync_at = ?
-     WHERE id = ? AND connection_id = ?`,
-    [p.now, p.nextSyncAt, p.passId, p.connectionId],
-  );
-}
-
-export async function markPassSyncError(
-  db: D1Database,
-  p: { passId: string; connectionId: string; code: string; nextSyncAt: number | null },
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE passes SET sync_error_code = ?, sync_failures = sync_failures + 1, next_sync_at = ?
-     WHERE id = ? AND connection_id = ?`,
-    [p.code, p.nextSyncAt, p.passId, p.connectionId],
-  );
-}
-
-export async function setLastRefreshed(db: D1Database, passId: string, now: number): Promise<void> {
-  await run(db, 'UPDATE passes SET last_refreshed_at = ? WHERE id = ?', [now, passId]);
 }
 
 export async function templateScope(
@@ -138,91 +214,4 @@ export async function templateScope(
     [templateId],
   );
   return r ? { orgId: r.org_id, status: r.status } : null;
-}
-
-// Webhook events and inbox
-
-export interface InboxItem {
-  ref: string;
-  record: Record<string, unknown> | null;
-  deleted: boolean;
-}
-
-/** False when the event id was seen before. */
-export async function insertWebhookEvent(
-  db: D1Database,
-  connectionId: string,
-  eventId: string,
-  now: number,
-): Promise<boolean> {
-  const r = await run(
-    db,
-    'INSERT OR IGNORE INTO webhook_events (connection_id, event_id, received_at) VALUES (?, ?, ?)',
-    [connectionId, eventId, now],
-  );
-  return r.changes === 1;
-}
-
-export async function insertInbox(
-  db: D1Database,
-  connectionId: string,
-  eventId: string,
-  items: InboxItem[],
-  now: number,
-): Promise<void> {
-  const statements = items.map((i) =>
-    stmt(
-      db,
-      `INSERT OR REPLACE INTO connection_inbox (connection_id, event_id, ref, record, deleted, received_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [connectionId, eventId, i.ref, i.record ? JSON.stringify(i.record) : null, i.deleted, now],
-    ),
-  );
-  for (const part of chunk(statements, 50)) await batch(db, part);
-}
-
-export async function deleteWebhookEvent(
-  db: D1Database,
-  connectionId: string,
-  eventId: string,
-): Promise<void> {
-  await run(db, 'DELETE FROM webhook_events WHERE connection_id = ? AND event_id = ?', [
-    connectionId,
-    eventId,
-  ]);
-}
-
-export async function getInbox(
-  db: D1Database,
-  connectionId: string,
-  eventId: string,
-): Promise<InboxItem[]> {
-  const rows = await all<{ ref: string; record: string | null; deleted: number }>(
-    db,
-    'SELECT ref, record, deleted FROM connection_inbox WHERE connection_id = ? AND event_id = ?',
-    [connectionId, eventId],
-  );
-  return rows.map((r) => ({
-    ref: r.ref,
-    record: r.record ? (JSON.parse(r.record) as Record<string, unknown>) : null,
-    deleted: r.deleted === 1,
-  }));
-}
-
-/** Passes bound to each connection (list rows). */
-export async function passCountsFor(
-  db: D1Database,
-  connectionIds: readonly string[],
-): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
-  for (const ids of chunk(connectionIds)) {
-    const rows = await all<{ id: string; n: number }>(
-      db,
-      `SELECT connection_id AS id, count(*) AS n FROM passes
-       WHERE connection_id IN (${placeholders(ids.length)}) GROUP BY connection_id`,
-      ids,
-    );
-    for (const r of rows) out.set(r.id, r.n);
-  }
-  return out;
 }

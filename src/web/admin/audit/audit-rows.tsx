@@ -40,7 +40,7 @@ export function ActionButton({
         onOpen();
       }}
       className={cn(
-        'inline-flex max-w-full min-w-0 items-center gap-2 rounded-sm text-left text-sm font-medium text-fg-strong wl-colors hover:text-accent-fg hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+        'inline-flex max-w-full min-w-0 items-center gap-2 rounded-sm text-left text-sm font-medium text-fg-strong wl-colors hover:text-accent-fg hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus pointer-coarse:min-h-11',
         className,
       )}
     >
@@ -55,18 +55,19 @@ export function AuditRows({
   rows,
   onOpen,
   enter,
+  orgName,
+  showOrganization,
 }: {
   rows: readonly AuditEntry[];
   onOpen: (id: number) => void;
   enter: boolean;
+  orgName: (id: string | null) => string | undefined;
+  showOrganization: boolean;
 }) {
   return (
     <ul
       aria-label="Audit log"
-      className={cn(
-        'wl-dim divide-y divide-border rounded-lg border border-border bg-surface-raised',
-        enter && 'wl-stagger [--wl-rise:4px]',
-      )}
+      className={cn('wl-dim divide-y divide-border', enter && 'wl-stagger [--wl-rise:4px]')}
     >
       {rows.map((r, i) => {
         const target = targetRef(r);
@@ -79,7 +80,7 @@ export function AuditRows({
             onClick={() => onOpen(r.id)}
             className="flex min-w-0 cursor-pointer flex-col gap-1 px-4 py-3 active:bg-state-hover-tint"
           >
-            <div className="flex min-w-0 items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <ActionButton entry={r} onOpen={() => onOpen(r.id)} />
               <time
                 dateTime={new Date(r.at).toISOString()}
@@ -98,6 +99,11 @@ export function AuditRows({
                 </>
               ) : null}
             </div>
+            {showOrganization ? (
+              <p className="min-w-0 break-words pl-6 text-xs text-fg-muted">
+                Organization: {r.orgId ? (orgName(r.orgId) ?? r.orgId) : 'Not recorded'}
+              </p>
+            ) : null}
           </li>
         );
       })}

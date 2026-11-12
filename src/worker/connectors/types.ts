@@ -45,6 +45,10 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
   /** One line for the connector picker. */
   description?: string;
   capabilities: ConnectorCapabilities;
+  /** Whether webhook refs require an embedded record or deletion instead of a source fetch.
+   * This metadata does not enable webhooks when verifyWebhook is absent.
+   */
+  webhookReferenceMode: 'embedded-required' | 'refs-only';
   /** Non-secret fields; also drives the admin form. */
   configSchema: ZodType<C>;
   /** Write-only fields; never returned by the API. */

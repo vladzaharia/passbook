@@ -5,6 +5,8 @@ import { denyAllStores } from '../../platform/auth.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { setupKit } from '../passes/pass-test-fixtures.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { createSessionStore } from './sessions.ts';
 
@@ -17,6 +19,17 @@ export interface SentMail {
   subject: string;
   html: string;
   text: string;
+}
+
+/**
+ * A pass with an approved release that waits for `email`, which attaching can transfer. Passes
+ * inserted as bare rows have no release, so a transfer refuses them.
+ */
+export async function waitingPass(email: string) {
+  const kit = await setupKit();
+  // The keyset initializes only while no credential reference exists, so it comes first.
+  await ensureCredentialRefKeyset(kit.env.DB, kit.env);
+  return kit.pass({ holderEmail: email });
 }
 
 /** Rate-limit binding that allows `max` calls per key, then refuses. */

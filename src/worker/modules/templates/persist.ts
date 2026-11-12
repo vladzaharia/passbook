@@ -7,14 +7,10 @@ import type {
 } from '../../../passkit/types.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import {
-  activateStmt,
-  findTemplateBySlug,
-  getVersion,
-  insertUploadedTemplateStmt,
-  insertVersionStmt,
-  type TemplateRow,
-} from './repo.ts';
+import type { TemplateAuthority } from './access.ts';
+import { buildKey } from './package/hash.ts';
+import { findTemplateBySlug, type TemplateRow, versionContentMatches } from './repo.ts';
+import { versionIsRetired, writeVersion } from './repo-persist.ts';
 
 export function slugify(name: string): string {
   const slug = name
@@ -62,58 +58,57 @@ export interface CommitArgs {
   description: string | null;
   createdBy: string | null;
   body: VersionBody;
-  /** Make the version active (the default). A new template always starts active. */
-  activate?: boolean;
+  /** Guard candidate insertion against concurrent organization or status changes. */
+  guardActive?: boolean;
+  /** A key already calculated for the same body, for callers which also need to compare it. */
+  buildKey?: string;
+  /** Every commit is fenced by the request's captured write authorities. */
+  authorities: TemplateAuthority[];
+  /** Source lineage and read authority for cloning a particular version. */
+  source?: {
+    id: string;
+    orgId: string | null;
+    version: string;
+    authority?: TemplateAuthority;
+  };
+  /** Queued work (an import): the authority needs no live session (owner answer 2). */
+  deferred?: boolean;
+  /** Upload record whose immutable identity must still match this import. */
+  importSource?: { uploadId: string; orgId: string | null; objectKey: string; createdBy: string };
 }
 
-/** Writes the version and makes it active, in one batch. Returns whether the version was new. */
+/** Writes a candidate version without changing the active version. */
 export async function commitVersion(
   ctx: ServiceContext,
   args: CommitArgs,
 ): Promise<{ templateId: string; versionCreated: boolean }> {
-  const db = ctx.env.DB;
-  const { plan, body } = args;
-  const now = ctx.clock.now();
-  const versionCreated = plan.isNew || !(await getVersion(db, plan.templateId, body.version));
-  const statements: D1PreparedStatement[] = [];
-  if (plan.isNew) {
-    statements.push(
-      insertUploadedTemplateStmt(db, {
-        id: plan.templateId,
-        orgId: args.orgId,
-        slug: args.slug,
-        name: args.name,
-        description: args.description,
-        activeVersion: body.version,
-        styles: body.styles,
-        createdBy: args.createdBy,
-        now,
-      }),
-    );
+  if (
+    !args.authorities?.length ||
+    args.authorities.some(
+      (authority) => authority.kind === 'session' && authority.capability !== 'templates:author',
+    )
+  ) {
+    throw new ForbiddenError();
   }
-  statements.push(
-    insertVersionStmt(db, {
-      templateId: plan.templateId,
-      version: body.version,
-      manifest: body.manifest,
-      passJson: body.passJson,
-      assets: body.assets,
-      report: body.report,
-      createdBy: args.createdBy,
-      createdAt: now,
-    }),
-  );
-  if (!plan.isNew && args.activate !== false)
-    statements.push(
-      activateStmt(db, plan.templateId, body.version, {
-        name: args.name,
-        description: args.description,
-        styles: body.styles,
-        now,
-      }),
-    );
+  const importSource = args.importSource;
+  if (
+    importSource &&
+    (args.orgId !== importSource.orgId ||
+      args.createdBy !== importSource.createdBy ||
+      args.authorities.some((authority) => authority.userId !== importSource.createdBy))
+  ) {
+    throw new ForbiddenError();
+  }
+
+  const { plan, body } = args;
+  if (!plan.isNew && args.guardActive && !plan.existing)
+    throw new ConflictError('The template changed. Retry the save.', 'TEMPLATE_VERSION_CONFLICT');
+  if (plan.isNew && (await versionIsRetired(ctx.env.DB, plan.templateId, body.version)))
+    throw new ConflictError('This template version is retired.', 'TEMPLATE_VERSION_CONFLICT');
+  const key = args.buildKey ?? (await buildKey(body));
+  let written: Awaited<ReturnType<typeof writeVersion>>;
   try {
-    await db.batch(statements);
+    written = await writeVersion(ctx, args, key, ctx.clock.now());
   } catch (error) {
     if (error instanceof Error && /UNIQUE/i.test(error.message))
       throw new ConflictError(
@@ -122,5 +117,18 @@ export async function commitVersion(
       );
     throw error;
   }
-  return { templateId: plan.templateId, versionCreated };
+  const { created: versionCreated, stored } = written;
+  if (
+    !stored ||
+    stored.version === null ||
+    (!versionCreated && !versionContentMatches(stored, { ...body, buildKey: key }))
+  )
+    throw new ConflictError(
+      'This template version is retired or already has different content.',
+      'TEMPLATE_VERSION_CONFLICT',
+    );
+  return {
+    templateId: plan.templateId,
+    versionCreated,
+  };
 }

@@ -37,15 +37,27 @@ test.describe('admin', () => {
 
   const pages: [string, () => string, RegExp][] = [
     ['overview', () => '/admin', /Overview/],
-    ['passes list', () => '/admin/passes', /Passes/],
-    ['pass detail', () => `/admin/passes/${passId}`, /Member|Name|Holder/],
-    ['templates', () => '/admin/templates', /Templates/],
-    ['connections', () => '/admin/connections', /Connections/],
-    ['status', () => '/admin/status', /Status/],
-    ['settings', () => '/admin/settings', /Settings/],
+    ['passes list', () => `/admin/passes?orgId=${encodeURIComponent(readSeed().org.id)}`, /Passes/],
+    [
+      'pass detail',
+      () => `/admin/passes/${passId}?orgId=${encodeURIComponent(readSeed().org.id)}`,
+      /Member|Name|Holder/,
+    ],
+    [
+      'templates',
+      () => `/admin/templates?orgId=${encodeURIComponent(readSeed().org.id)}`,
+      /Templates/,
+    ],
+    [
+      'connections',
+      () => `/admin/connections?orgId=${encodeURIComponent(readSeed().org.id)}`,
+      /Connections/,
+    ],
+    ['status', () => '/admin/status', /status/i],
+    ['settings', () => '/admin/settings', /settings/i],
     ['audit', () => '/admin/audit', /Audit/],
-    ['users', () => '/admin/users', /Users/],
-    ['orgs', () => '/admin/orgs', /Orgs|Organizations/],
+    ['users', () => '/admin/users', /Platform accounts/],
+    ['orgs', () => '/admin/orgs', /organization/i],
     ['identities', () => '/admin/identities', /Apple identities/],
     ['api keys', () => '/admin/api-keys', /API keys/],
   ];

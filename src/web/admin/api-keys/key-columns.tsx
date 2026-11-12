@@ -15,8 +15,7 @@ export interface KeyColumnsOptions {
   /** Revoked on this page: the glyph plays its undo turn. */
   justRevoked: ReadonlySet<string>;
   now: number;
-  /** Some listed key is not active: show the Status column. */
-  withStatus: boolean;
+  canRevoke: boolean;
   onRevoke: (key: ApiKey) => void;
 }
 
@@ -29,7 +28,7 @@ export function keyColumns({
   orgName,
   justRevoked,
   now,
-  withStatus,
+  canRevoke,
   onRevoke,
 }: KeyColumnsOptions): ColumnDef<ApiKey, never>[] {
   return [
@@ -70,21 +69,16 @@ export function keyColumns({
     {
       header: 'Organization',
       id: 'org',
-      meta: { nowrap: true, hideBelow: 'lg' },
-      // A key with no org works across all of them.
-      cell: ({ row }) =>
-        row.original.orgId === null ? 'All organizations' : orgName(row.original.orgId),
+      meta: { nowrap: true },
+      cell: ({ row }) => orgName(row.original.orgId),
     },
     {
       header: 'Scopes',
       id: 'scopes',
-      meta: { hideBelow: 'xl', stackHidden: true },
       cell: ({ row }) => {
         const scopes = row.original.scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ');
         return (
-          <span className="block max-w-64 truncate text-fg" title={scopes}>
-            {scopes}
-          </span>
+          <span className="block max-w-64 whitespace-normal break-words text-fg">{scopes}</span>
         );
       },
     },
@@ -112,24 +106,25 @@ export function keyColumns({
       },
     },
     {
+      header: 'Expiry',
+      id: 'expiry',
+      meta: { nowrap: true },
+      cell: ({ row }) => formatDay(row.original.expiresAt, 'Never'),
+    },
+    {
       header: 'Last used',
       id: 'used',
       meta: { hideBelow: 'xl', stackHidden: true, nowrap: true },
       cell: ({ row }) => formatDay(row.original.lastUsedAt, 'Never'),
     },
-    // Active is what every row says: the column shows only when another state is listed.
-    ...(withStatus
-      ? [
-          {
-            header: 'Status',
-            id: 'status',
-            cell: ({ row }: { row: { original: ApiKey } }) => {
-              const s = keyState(row.original, now);
-              return s === 'active' ? null : <StatusPill status={s} tone={STATE_TONE[s]} />;
-            },
-          } satisfies ColumnDef<ApiKey, never>,
-        ]
-      : []),
+    {
+      header: 'Status',
+      id: 'status',
+      cell: ({ row }) => {
+        const state = keyState(row.original, now);
+        return <StatusPill status={state} tone={STATE_TONE[state]} />;
+      },
+    },
     {
       header: () => <span className="sr-only">Actions</span>,
       id: 'actions',
@@ -143,7 +138,7 @@ export function keyColumns({
                 icon: Copy,
                 onSelect: () => void copyText(keyPrefix(row.original), 'prefix'),
               },
-              ...(row.original.revokedAt === null
+              ...(canRevoke && row.original.revokedAt === null
                 ? [
                     {
                       label: 'Revoke',

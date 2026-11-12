@@ -37,12 +37,15 @@ export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: Acc
     onVerifiedShown?.();
   }, [verified, onVerifiedShown]);
   return (
-    <div className="max-w-3xl">
-      <PageHeader title="Account" />
-      <div className="flex flex-col gap-6">
+    <div className="max-w-5xl">
+      <PageHeader
+        title="Account"
+        className="rounded-2xl border border-border bg-surface-raised p-5 sm:p-6"
+      />
+      <div className="grid items-start gap-6 lg:grid-cols-2">
         {authed ? (
           <Card>
-            <CardHeader title="Profile" />
+            <CardHeader title="Profile and sign-in" />
             <CardBody className="flex flex-col gap-4">
               <div className="flex min-w-0 items-center gap-3">
                 <EntityAvatar
@@ -66,7 +69,7 @@ export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: Acc
             </CardBody>
           </Card>
         ) : null}
-        <EmailsSection focusAdd={focusAdd} />
+        <EmailsSection focusAdd={focusAdd} userId={authed?.user.id} />
         <SessionsSection />
       </div>
     </div>

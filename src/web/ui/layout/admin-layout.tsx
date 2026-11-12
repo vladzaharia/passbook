@@ -1,9 +1,11 @@
 import { Outlet } from '@tanstack/react-router';
 import { Menu, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { COARSE_ONLY, useMediaQuery } from '../../lib/media.ts';
-import { useOrgScopeUrl } from '../../lib/org-filter.tsx';
+import { adminEntryPath } from '../../lib/nav.ts';
+import { useOrgScope, useOrgScopeUrl } from '../../lib/org-filter.tsx';
 import { PaletteContext } from '../../lib/palette.ts';
+import { useSession } from '../../lib/session.ts';
 import { Button } from '../button.tsx';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
@@ -21,8 +23,14 @@ export function shortcutHint(ua = typeof navigator === 'undefined' ? '' : naviga
   return /Mac|iPhone|iPad|iPod/i.test(ua) ? '⌘K' : 'Ctrl K';
 }
 
-export function AdminLayout() {
+export function AdminLayout({ children }: { children?: ReactNode }) {
   useOrgScopeUrl();
+  const { isAdmin } = useSession();
+  const scope = useOrgScope();
+  const ready = !scope.isLoading && !scope.isError;
+  const membership = ready ? scope.membership : undefined;
+  const home = adminEntryPath(isAdmin, membership, ready ? scope.memberships : []);
+  const role = isAdmin ? 'Global administrator' : 'Organization console';
   const [navOpen, setNavOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const touchOnly = useMediaQuery(COARSE_ONLY);
@@ -30,8 +38,9 @@ export function AdminLayout() {
   const sidebar = (
     // The shell's column paints the sidebar background full page height; this stays sticky.
     <aside className="sticky top-0 flex h-dvh flex-col pl-[env(safe-area-inset-left)]">
-      <div className="flex h-14 shrink-0 items-center px-4">
-        <Wordmark to="/admin" />
+      <div className="shrink-0 px-4 pb-3 pt-4">
+        <Wordmark to={home} />
+        <p className="mt-3 text-xs font-medium text-fg-muted">{role}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
         <SidebarNav />
@@ -71,14 +80,11 @@ export function AdminLayout() {
   return (
     <PaletteContext.Provider value={palette}>
       <AppShell bar={bar} sidebar={sidebar} band={<ModeBand />} width="console" holder={false}>
-        <Outlet />
+        {children ?? <Outlet />}
       </AppShell>
       <Sheet open={navOpen} onOpenChange={setNavOpen}>
-        <SheetContent
-          side="left"
-          title="Navigation"
-          header={<Wordmark to="/admin" hello={false} />}
-        >
+        <SheetContent side="left" title="Navigation" header={<Wordmark to={home} hello={false} />}>
+          <p className="px-5 pb-2 text-xs font-medium text-fg-muted">{role}</p>
           <SidebarNav onNavigate={() => setNavOpen(false)} />
         </SheetContent>
       </Sheet>

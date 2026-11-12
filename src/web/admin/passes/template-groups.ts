@@ -1,6 +1,10 @@
-import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
+export interface GroupableTemplate {
+  name: string;
+  orgId: string | null;
+  orgName: string | null;
+}
 
-type Named = Pick<TemplateSummaryDto, 'name' | 'orgId' | 'orgName'>;
+type Named = Pick<GroupableTemplate, 'name' | 'orgId' | 'orgName'>;
 
 const SEPARATOR = ' · ';
 const fold = (s: string) => s.replace(/[‘’]/g, "'").trim().toLowerCase();
@@ -19,23 +23,23 @@ export function displayName({ name, orgId, orgName }: Named): string {
   return owner === prefix || owner.startsWith(`${prefix} `) ? rest : name;
 }
 
-export interface TemplateGroup {
+export interface TemplateGroup<T extends GroupableTemplate> {
   /** The org id, or "shared". */
   key: string;
   label: string;
   orgId: string | null;
-  items: { template: TemplateSummaryDto; name: string }[];
+  items: { template: T; name: string }[];
 }
 
 /**
  * The org's own templates first, under the org's name, then the shared ones every org can use
  * (orgId null). Order inside a group is the API's.
  */
-export function groupTemplates(
-  templates: readonly TemplateSummaryDto[],
+export function groupTemplates<T extends GroupableTemplate>(
+  templates: readonly T[],
   orgName?: string,
-): TemplateGroup[] {
-  const groups = new Map<string, TemplateGroup>();
+): TemplateGroup<T>[] {
+  const groups = new Map<string, TemplateGroup<T>>();
   for (const template of templates) {
     const key = template.orgId ?? 'shared';
     let group = groups.get(key);

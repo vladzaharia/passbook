@@ -6,7 +6,7 @@ const root = resolve(import.meta.dirname, '..');
 const SQL =
   /\b(?:SELECT\s[^`'"]*\sFROM\s|INSERT\s+(?:OR\s+\w+\s+)?INTO\s|UPDATE\s+\w+\s+SET\s|DELETE\s+FROM\s)/;
 const ALLOWED =
-  /(^|\/)repo[a-z0-9-]*\.ts$|\.test\.tsx?$|(^|\/)test-kit\.ts$|src\/worker\/platform\/(db|counters|workflow-runs|batched)\.ts$/;
+  /(^|\/)repo[a-z0-9-]*\.ts$|\.test\.tsx?$|(^|\/)test-kit\.ts$|-test-fixtures\.ts$|(^|\/)templates\/testing\.ts$|src\/worker\/platform\/(db|counters|workflow-runs|batched|authority[a-z-]*)\.ts$/;
 
 function* sources(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {

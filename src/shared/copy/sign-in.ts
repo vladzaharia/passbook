@@ -21,6 +21,7 @@ export type SignInErrorCode =
   | 'NO_ACCESS'
   | 'ACCOUNT_DISABLED'
   | 'NO_EMAIL'
+  | 'EMAIL_UNVERIFIED'
   | 'EMAIL_CONFLICT'
   | 'EMAIL_PROOF_SENT'
   | 'SESSION_REQUIRED'
@@ -44,13 +45,17 @@ export const SIGN_IN_ERROR_COPY: Record<SignInErrorCode, { title: string; messag
     title: 'No email',
     message: 'The account has no email address. Add one in Polaris ID.',
   },
+  EMAIL_UNVERIFIED: {
+    title: 'Email not verified',
+    message: 'Verify your email in Polaris ID, or sign in with an email link instead.',
+  },
   EMAIL_CONFLICT: {
     title: 'Email in use',
     message: 'This email belongs to another account. Sign in with an email link first.',
   },
   EMAIL_PROOF_SENT: {
     title: 'Check your email',
-    message: 'This email belongs to an existing account. Open the link we sent, in this browser.',
+    message: 'We emailed you a link. Open it in this browser to continue.',
   },
   SESSION_REQUIRED: {
     title: 'Sign in first',

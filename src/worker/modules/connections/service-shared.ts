@@ -18,12 +18,15 @@ export type Created = z.infer<typeof ConnectionCreatedSchema>;
 export const FENCED = [
   'config',
   'secrets',
+  'webhookSecret',
   'mapping',
   'defaultTemplateId',
   'holderEmailField',
   'autoCreate',
   'autoEmail',
   'onMissing',
+  'mode',
+  'enabled',
 ] as const;
 
 export function auditActor(actor: Actor): { actorType: Actor['type']; actorId: string | null } {

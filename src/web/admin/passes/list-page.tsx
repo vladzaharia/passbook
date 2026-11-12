@@ -35,12 +35,32 @@ export function PassesListPage({
   search: ListSearch;
   onSearch: (patch: Partial<ListSearch>) => void;
 }) {
-  const { orgId } = useOrgScope();
+  const scope = useOrgScope();
+  const { orgId } = scope;
+  const canRead = Boolean(
+    !scope.isLoading &&
+      !scope.isError &&
+      orgId &&
+      scope.membership?.capabilities.includes('passes:read'),
+  );
+  const canOperate = Boolean(
+    !scope.isLoading &&
+      !scope.isError &&
+      orgId &&
+      scope.membership?.capabilities.includes('passes:operate'),
+  );
   const mode = useMode();
   const list = usePassList({ ...search, orgId });
   const templates = useTemplates({ orgId });
   const orgs = useOrgOptions(!orgId);
-  const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
+  const rows = useMemo(
+    () =>
+      canRead
+        ? (list.data?.pages.flatMap((page) => page.items).filter((pass) => pass.orgId === orgId) ??
+          [])
+        : [],
+    [canRead, list.data, orgId],
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
   const truth = !list.isPending && !filtered && rows.length === 0;
@@ -58,7 +78,7 @@ export function PassesListPage({
     [orgs.data],
   );
   const templateIds = useMemo(() => [...new Set(rows.map((r) => r.templateId))].sort(), [rows]);
-  const swatches = useSwatches(templateIds);
+  const swatches = useSwatches(templateIds, orgId);
   const showSubtitles = useMemo(() => {
     const seen = new Set<string>();
     return rows.some((r) => {
@@ -91,6 +111,8 @@ export function PassesListPage({
   const columns = useMemo(() => passColumns(!orgId), [orgId]);
   const context = useMemo(
     () => ({
+      orgId,
+      canOperate,
       templateNames,
       orgNames,
       swatches,
@@ -100,7 +122,18 @@ export function PassesListPage({
       onToggle: toggle,
       onToggleAll: toggleAll,
     }),
-    [templateNames, orgNames, swatches, showSubtitles, selected, allSelected, toggle, toggleAll],
+    [
+      orgId,
+      canOperate,
+      templateNames,
+      orgNames,
+      swatches,
+      showSubtitles,
+      selected,
+      allSelected,
+      toggle,
+      toggleAll,
+    ],
   );
 
   function exportCsv() {
@@ -134,7 +167,10 @@ export function PassesListPage({
 
   return (
     <div className={selected.size > 0 ? 'pb-20' : undefined}>
-      <PageHeader title="Passes" actions={create(truth ? 'outline' : 'primary')} />
+      <PageHeader
+        title="Passes"
+        actions={canOperate ? create(truth ? 'outline' : 'primary') : undefined}
+      />
       <PassListContext.Provider value={context}>
         {list.isError ? (
           <ErrorState error={list.error} onRetry={() => void list.refetch()} />
@@ -156,7 +192,13 @@ export function PassesListPage({
                 onChange={onSearch}
               />
             }
-            empty={<EmptyState art="passes" title="No passes yet" action={create('primary')} />}
+            empty={
+              <EmptyState
+                art="passes"
+                title="No passes yet"
+                action={canOperate ? create('primary') : undefined}
+              />
+            }
             emptyFiltered={<FilteredEmpty entity="pass" onClear={() => onSearch(CLEARED)} />}
             footer={
               <LoadMore
@@ -172,6 +214,7 @@ export function PassesListPage({
       <SelectionBar
         picked={rows.filter((r) => selected.has(r.id))}
         orgId={orgId}
+        canOperate={canOperate}
         bundleOrgId={bundleOrgId}
         onClear={() => setSelected(new Set())}
         onExport={exportCsv}

@@ -2,18 +2,21 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { type ScanActor, scannerActor } from './actor.ts';
+import { type ScanActor, scannerActor, scanScannerCsrfProof } from './actor.ts';
+import { snapshotCredentialEnv } from './credential-input.ts';
 import { getScanner, touchScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { setupMeta } from './repo-setups.ts';
 
 export async function managedAdminActor(
-  ctx: ServiceContext,
+  context: ServiceContext,
   session: SessionAuth,
   mode: Mode,
   orgId: string,
   setupId: string,
 ): Promise<ScanActor> {
+  const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
+  const userId = session.userId;
   const [row, meta] = await Promise.all([
     getScanner(ctx.env.DB, setupId),
     setupMeta(ctx.env.DB, orgId, setupId),
@@ -24,17 +27,19 @@ export async function managedAdminActor(
     row.mode !== mode ||
     row.revokedAt !== null ||
     !meta?.admin_session ||
-    meta.admin_user_id !== session.userId
+    meta.admin_user_id !== userId
   )
     throw new ForbiddenError('Choose your admin scanner setup.', 'SCAN_ADMIN_SETUP_REQUIRED');
   const scope = await readScannerScope(ctx.env.DB, row, null);
   await touchScanner(ctx.env.DB, row.id, ctx.clock.now(), null, 60_000);
-  const actor = scannerActor(ctx, row, mode, 'cookie', scope);
+  const actor = scannerActor(ctx, { ...row, csrfSecret: null }, mode, 'cookie', scope);
+  actor.scannerCsrfProof =
+    row.csrfSecret === null ? null : await scanScannerCsrfProof(ctx.env, row.id, row.csrfSecret);
   return {
     ...actor,
     principal: 'admin',
-    actorKey: `u:${session.userId}:${row.id}`,
-    actor: { type: 'user', id: session.userId },
+    actorKey: `u:${userId}:${row.id}`,
+    actor: { type: 'user', id: userId },
     role: 'manager',
     staff: null,
   };

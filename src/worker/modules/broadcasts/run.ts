@@ -1,4 +1,6 @@
 import type { BroadcastState } from '../../../shared/contracts/broadcasts.ts';
+import { jobGrant } from '../../platform/authority.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishRun } from '../../platform/workflow-runs.ts';
 import { actorOf, targetFilter } from './apply.ts';
@@ -11,6 +13,7 @@ import {
   insertBroadcastStmt,
   setTargeted,
 } from './repo.ts';
+import { creatorLive } from './repo-creator.ts';
 import { countTargeted } from './repo-target.ts';
 
 /** First workflow step: counts the target. False when the broadcast cannot be sent (cancelled, already settled). */
@@ -79,7 +82,7 @@ export async function finishBroadcast(
 ): Promise<BroadcastState> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
   if (!row) return 'failed';
-  const counts = countsOf(row, await countItems(ctx.env.DB, [broadcastId]));
+  const counts = countsOf(row, await countItems(ctx.env.DB, [broadcastId], row.org_id, row.mode));
   const state = errorCode ? 'failed' : endState(counts);
   const now = ctx.clock.now();
   const won = await casState(ctx.env.DB, broadcastId, ['sending'], state, {
@@ -95,4 +98,34 @@ export async function finishBroadcast(
     errorCode: errorCode ?? (state === 'sent' ? null : 'PARTIAL_FAILURE'),
   });
   return state;
+}
+
+/**
+ * Runs before each send step (a `job` grant, no writes): the org is still active and the creator is
+ * still live. Otherwise the run stops as failed; a cancelled broadcast is never picked up again.
+ * Returns false when the broadcast must not send.
+ */
+export async function sendStepAllowed(ctx: ServiceContext, broadcastId: string): Promise<boolean> {
+  const row = await getBroadcast(ctx.env.DB, broadcastId, null);
+  if (row?.state !== 'sending') return false;
+  try {
+    await jobGrant(ctx, {
+      purpose: 'org_mode.job.broadcast.send',
+      job: 'broadcast',
+      orgId: row.org_id,
+      mode: row.mode,
+      target: broadcastId,
+      checks: [creatorLive(row, ctx.clock.now())],
+    }).commit();
+    return true;
+  } catch (error) {
+    if (!(error instanceof AppError) || error.status >= 500) throw error;
+    const code = error.code === 'ORG_ACCESS_CHANGED' ? 'ORG_INACTIVE' : 'CREATOR_REVOKED';
+    ctx.log.warn('broadcast.blocked', { broadcastId, code });
+    await casState(ctx.env.DB, broadcastId, ['sending'], 'failed', {
+      finishedAt: ctx.clock.now(),
+      errorCode: code,
+    });
+    return false;
+  }
 }

@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test('pair, Android barcode check-in, duplicate protection and undo', async ({ browser }) => {
@@ -12,10 +13,17 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
     { orgId, name: uid('Door template') },
   );
+  const release = await publishTemplateVersion(
+    api,
+    orgId,
+    template.id,
+    template.versions[0].version,
+  );
   const pass = await createPass(api, orgId, {
     memberId,
     holder: 'Scanner Guest',
     templateId: template.id,
+    release,
   });
   const created = await api.send('POST', '/api/v1/scanners', {
     orgId,
@@ -29,6 +37,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     memberId: uid('LOOKUP').toUpperCase(),
     holder: 'Lookup Guest',
     templateId: template.id,
+    release,
   });
   const context = await browser.newContext({
     reducedMotion: 'reduce',
@@ -172,7 +181,18 @@ test('camera decodes a real QR frame through the wasm worker', async ({ browser 
     `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
     { orgId, name: uid('Camera ticket') },
   );
-  await createPass(api, orgId, { memberId, holder: 'Camera Guest', templateId: template.id });
+  const release = await publishTemplateVersion(
+    api,
+    orgId,
+    template.id,
+    template.versions[0].version,
+  );
+  await createPass(api, orgId, {
+    memberId,
+    holder: 'Camera Guest',
+    templateId: template.id,
+    release,
+  });
   const created = await api.send('POST', '/api/v1/scanners', {
     orgId,
     name: uid('Camera door'),

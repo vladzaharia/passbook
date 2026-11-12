@@ -2,12 +2,13 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
-export type Role = 'admin' | 'user' | 'nobody';
+export type Role = 'admin' | 'user' | 'reviewer' | 'nobody';
 
 /** Mock Pocket ID subjects (see test/mock-oidc/server.ts). */
 const SUBJECT: Record<Role, string> = {
   admin: 'e2e-admin',
   user: 'e2e-user',
+  reviewer: 'e2e-reviewer',
   nobody: 'e2e-nobody',
 };
 

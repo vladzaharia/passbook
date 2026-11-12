@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, likeEscape } from '../../platform/db.ts';
+import { all, prefixMatch } from '../../platform/db.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow, type PassStatus } from './repo-map.ts';
 
 export interface PassListFilter {
@@ -33,7 +33,7 @@ export function passFilterSql(filter: PassListFilter): {
   where: string[];
   params: (string | number)[];
 } {
-  const where: string[] = ['deleted_at IS NULL'];
+  const where: string[] = ['deleted_at IS NULL', 'test_data_quarantined = 0'];
   const params: (string | number)[] = [];
   const add = (sql: string, ...values: (string | number)[]) => {
     where.push(sql);
@@ -61,20 +61,15 @@ export function passFilterSql(filter: PassListFilter): {
   const q = filter.q?.trim();
   if (q) {
     // One indexed prefix lookup per column (NOCASE indexes), merged by id: an OR of LIKEs scans.
-    const prefix = `${likeEscape(q)}%`;
-    const like = (column: string) => `SELECT id FROM passes WHERE ${column} LIKE ? ESCAPE '\\'`;
+    const matches = ['display_title', 'display_subtitle', 'external_id', 'holder_email'].map(
+      (column) => prefixMatch(column, q),
+    );
     add(
       `id IN (${[
-        like('display_title'),
-        like('display_subtitle'),
-        like('external_id'),
-        like('holder_email'),
+        ...matches.map((m) => `SELECT id FROM passes WHERE ${m.sql}`),
         'SELECT id FROM passes WHERE serial = ?',
       ].join(' UNION ')})`,
-      prefix,
-      prefix,
-      prefix,
-      prefix,
+      ...matches.flatMap((m) => m.params as (string | number)[]),
       q,
     );
   }
@@ -89,7 +84,10 @@ export async function listPasses(
   const { where, params } = passFilterSql(filter);
   const rows = await all<PassDbRow>(
     db,
-    `${PASS_SELECT} WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
+    `${PASS_SELECT} WHERE ${where.join(' AND ')}
+      AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
+        WHERE t.pass_id = passes.id AND t.state = 'pending')
+      ORDER BY id DESC LIMIT ?`,
     [...params, filter.limit + 1],
   );
   const page = rows.slice(0, filter.limit).map(mapPass);

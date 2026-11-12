@@ -2,18 +2,24 @@ import { EMAIL_BADGE } from '../../../shared/email-art.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderBundleEmail } from '../../email/bundle.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
+import { rowIs } from '../../platform/authority-checks.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishSent } from '../delivery/email-finish.ts';
-import { failEmail, recordEmailOutcome } from '../delivery/email-outcome.ts';
-import { finishOutbox, type OutboxRow } from '../delivery/repo.ts';
+import { recordEmailOutcome, uncertainEmail } from '../delivery/email-outcome.ts';
+import { hasDeliveryLease } from '../delivery/repo-binding.ts';
+import type { OutboxRow } from '../delivery/repo-outbox-map.ts';
+import { finishOutbox } from '../delivery/repo-outbox-processing.ts';
+import { ATTEMPT_CANCEL_CODE, beginProviderAttempt } from '../delivery/repo-provider-attempt.ts';
+import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
-import { getOrg, getPass } from '../passes/repo.ts';
+import { getOrg } from '../passes/repo-read-issuance.ts';
 import { passImages, supportContacts } from '../public/service.ts';
 import { captureEmail } from '../sandbox/capture.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { bundleImages } from './assets.ts';
-import { getBundle, membersOf } from './repo.ts';
+import { BundleEmailIntentSchema, bundleEmailSnapshot, matchesBundle } from './email-binding.ts';
+import { bundleChecks } from './repo-delivery-fence.ts';
 
 /**
  * Sends a claimed outbox row whose payload names a bundle (`deliverEmail` hands it over once the
@@ -26,18 +32,53 @@ export async function deliverBundleEmail(
   const { row, lease, to } = claimed;
   const db = ctx.env.DB;
   const now = ctx.clock.now();
-  const bundleId = String(row.payload.bundleId);
-  const bundle = await getBundle(db, bundleId, null);
-  const members = bundle ? await membersOf(db, [bundleId]) : [];
-  const first = members[0] ? await getPass(db, members[0].pass_id) : null;
-  if (!bundle || !first) {
-    await finishOutbox(db, row.id, lease, 'cancelled', now, 'BUNDLE_GONE');
-    return;
-  }
   if (row.providerId) {
     await finishOutbox(db, row.id, lease, 'sent', now, null, row.providerId);
     return;
   }
+  const parsed = BundleEmailIntentSchema.safeParse(row.payload.intent);
+  if (
+    !parsed.success ||
+    row.payload.bundleId !== parsed.data.bundleId ||
+    row.payload.to !== parsed.data.to ||
+    to !== parsed.data.to ||
+    row.orgId !== parsed.data.orgId ||
+    row.passId !== parsed.data.members[0]?.passId
+  ) {
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'DELIVERY_UNBOUND');
+    return;
+  }
+  const intent = parsed.data;
+  // A key queues mail only to the holder of every member (email-queue.ts); refuse one that predates it.
+  if (intent.actor?.kind === 'api_key' && intent.members.some((m) => m.holderEmail !== to)) {
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'RECIPIENT_NOT_HOLDER');
+    return;
+  }
+  const snapshot = await bundleEmailSnapshot(db, intent.bundleId);
+  const first = snapshot?.passes[0];
+  if (!snapshot || !first || !(await matchesBundle(snapshot, intent))) {
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'DELIVERY_STALE');
+    return;
+  }
+  const { bundle, passes } = snapshot;
+  const bundleId = bundle.id;
+  const stillCurrent = async () => {
+    const [current, leased, active] = await Promise.all([
+      bundleEmailSnapshot(db, bundleId),
+      hasDeliveryLease(db, row.id, lease, ctx.clock.now()),
+      isOrgActive(ctx, row.orgId),
+    ]);
+    if (!leased) return false;
+    if (!active) {
+      await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'ORG_INACTIVE');
+      return false;
+    }
+    if (!current || !(await matchesBundle(current, intent))) {
+      await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'DELIVERY_STALE');
+      return false;
+    }
+    return true;
+  };
   const base = baseUrl(ctx.env);
   const page = `${base}/b/${bundle.token}`;
   const [org, platform, settings, support, images] = await Promise.all([
@@ -62,9 +103,12 @@ export async function deliverBundleEmail(
     pageUrl: page,
     addAllUrl: `${page}/passes.pkpasses`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
-    passes: members.map((m) => ({
-      title: m.title,
-      addUrl: m.status === 'active' ? `${page}/${m.pass_id}/pass.pkpass` : null,
+    passes: passes.map((pass) => ({
+      title: pass.displayTitle ?? pass.serial,
+      addUrl:
+        pass.status === 'active' && pass.removedAt === null
+          ? `${page}/${pass.id}/pass.pkpass`
+          : null,
     })),
     iconUrl,
     senderName: platform['email.senderName'],
@@ -72,6 +116,7 @@ export async function deliverBundleEmail(
     buddyBase: settings['email.buddy'] ? base : null,
   });
   if (bundle.mode === 'test') {
+    if (!(await stillCurrent())) return;
     await captureEmail(ctx, {
       row,
       lease,
@@ -91,6 +136,32 @@ export async function deliverBundleEmail(
     identityId: null,
     bundleId,
   };
+  if (!(await stillCurrent())) return;
+  if (!intent.actor)
+    ctx.log.info('delivery.legacy_intent', { code: 'DELIVERY_LEGACY_INTENT', outboxId: row.id });
+  const attempt = await beginProviderAttempt(ctx, {
+    id: row.id,
+    lease,
+    orgId: bundle.org_id,
+    mode: bundle.mode,
+    passId: first.id,
+    output: {
+      actor: intent.actor ?? { kind: 'system' },
+      checks: [rowIs('passes', first.id, { deleted_at: null }), ...bundleChecks(snapshot)],
+    },
+    now: ctx.clock.now(),
+  });
+  if (attempt !== 'started') {
+    await finishOutbox(
+      db,
+      row.id,
+      lease,
+      'cancelled',
+      ctx.clock.now(),
+      ATTEMPT_CANCEL_CODE[attempt],
+    );
+    return;
+  }
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({
@@ -100,10 +171,10 @@ export async function deliverBundleEmail(
       text: email.text,
       fromName: email.fromName ?? platform['email.senderName'],
     }));
-  } catch (error) {
-    await failEmail(ctx, claimed, target, error);
+  } catch {
+    await uncertainEmail(ctx, claimed, target);
     return;
   }
-  await recordEmailOutcome(ctx, row, target, 'ok');
   await finishSent(ctx, row, lease, messageId);
+  await recordEmailOutcome(ctx, row, target, 'ok');
 }

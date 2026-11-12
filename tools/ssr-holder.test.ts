@@ -46,6 +46,7 @@ const page = (over: Record<string, unknown> = {}) =>
     orgLabel: 'Gym',
     passTitle: 'Membership',
     downloadHref: '/p/t/pass.pkpass',
+    walletOffers: [],
     publicUrl: 'https://wallet.test/p/t',
     portalHref: '/passes/p1',
     voided: false,
@@ -61,6 +62,12 @@ const DEVICES: DeviceInfo[] = [
 ];
 const PAGES = [
   ...DEVICES.map((device) => page({ device })),
+  page({
+    walletOffers: [
+      { provider: 'google', href: '/p/t/wallet/google', installation: 'unknown' },
+      { provider: 'samsung', href: '/p/t/wallet/samsung', installation: 'unknown' },
+    ],
+  }),
   page({ voided: true }),
   page({ view: view({ expirationDate: '2020-01-01T00:00:00Z' }) }),
 ];

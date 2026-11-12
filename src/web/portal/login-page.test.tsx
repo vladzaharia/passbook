@@ -42,6 +42,7 @@ describe('login page', () => {
       session: 'anon',
     });
     expect(await screen.findByLabelText('Email')).toBeInTheDocument();
+    expect(screen.queryByText(/secure sign-in link/)).toBeNull();
     expect(screen.queryByRole('link', { name: 'Sign in with Polaris ID' })).toBeNull();
   });
 

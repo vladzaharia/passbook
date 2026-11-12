@@ -39,7 +39,7 @@ describe('SessionEndedDialog', () => {
         '/api/v1/me/sessions': () => json({ items: [] }),
       },
     });
-    await screen.findByRole('heading', { name: 'Emails' });
+    await screen.findByRole('heading', { name: 'Email addresses' });
     expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });

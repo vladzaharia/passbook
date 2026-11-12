@@ -6,7 +6,7 @@ import {
 import { IdParamSchema } from '../../../shared/contracts/common.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
-import { actorFor, passScopeOf, svc } from './http.ts';
+import { actorFor, authOf, passScopeOf, svc } from './http.ts';
 import {
   deleteMemberPhoto,
   getMemberPhoto,
@@ -14,6 +14,7 @@ import {
   readMemberPhoto,
   updateMemberPhoto,
 } from './member-photo.ts';
+import { tenantPassForRead, tenantPassForWrite } from './pass-access.ts';
 
 export function registerMemberPhotoRoutes(router: ReturnType<typeof createRouter>) {
   router.use('/:id/member-photo', limitBody(1_410_000));
@@ -27,7 +28,12 @@ export function registerMemberPhotoRoutes(router: ReturnType<typeof createRouter
       params: IdParamSchema,
       response: MemberPhotoSchema,
     },
-    async (c) => c.json(await getMemberPhoto(svc(c), c.req.valid('param').id, passScopeOf(c))),
+    async (c) => {
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope } = await tenantPassForRead(ctx, authOf(c), id, passScopeOf(c));
+      return c.json(await getMemberPhoto(ctx, id, scope));
+    },
   );
   register(
     router,
@@ -38,7 +44,12 @@ export function registerMemberPhotoRoutes(router: ReturnType<typeof createRouter
       summary: 'Private member photo',
       params: IdParamSchema,
     },
-    async (c) => readMemberPhoto(svc(c), c.req.valid('param').id, passScopeOf(c)),
+    async (c) => {
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope } = await tenantPassForRead(ctx, authOf(c), id, passScopeOf(c));
+      return readMemberPhoto(ctx, id, scope);
+    },
   );
   register(
     router,
@@ -51,16 +62,14 @@ export function registerMemberPhotoRoutes(router: ReturnType<typeof createRouter
       body: PutMemberPhotoSchema,
       response: MemberPhotoSchema,
     },
-    async (c) =>
-      c.json(
-        await putMemberPhoto(
-          svc(c),
-          actorFor(c),
-          c.req.valid('param').id,
-          c.req.valid('json'),
-          passScopeOf(c),
-        ),
-      ),
+    async (c) => {
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      return c.json(
+        await putMemberPhoto(ctx, actorFor(c), id, c.req.valid('json'), scope, authority),
+      );
+    },
   );
   register(
     router,
@@ -73,16 +82,21 @@ export function registerMemberPhotoRoutes(router: ReturnType<typeof createRouter
       body: UpdateMemberPhotoSchema,
       response: MemberPhotoSchema,
     },
-    async (c) =>
-      c.json(
+    async (c) => {
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      return c.json(
         await updateMemberPhoto(
-          svc(c),
+          ctx,
           actorFor(c),
-          c.req.valid('param').id,
+          id,
           c.req.valid('json').includeInPass,
-          passScopeOf(c),
+          scope,
+          authority,
         ),
-      ),
+      );
+    },
   );
   register(
     router,
@@ -94,7 +108,11 @@ export function registerMemberPhotoRoutes(router: ReturnType<typeof createRouter
       params: IdParamSchema,
       response: MemberPhotoSchema,
     },
-    async (c) =>
-      c.json(await deleteMemberPhoto(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
+    async (c) => {
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      return c.json(await deleteMemberPhoto(ctx, actorFor(c), id, scope, authority));
+    },
   );
 }

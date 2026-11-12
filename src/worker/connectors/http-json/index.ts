@@ -208,6 +208,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
   displayName: 'HTTP JSON',
   description: 'Fetch records from a JSON API.',
   capabilities: { poll: true, delta: true, webhook: true },
+  webhookReferenceMode: 'refs-only',
   configSchema: config,
   secretSchema: secrets,
   outputFields: {},
@@ -241,7 +242,12 @@ const definition: ConnectorDefinition<Config, Secrets> = {
     if (body === null) return { status: 'not_found' };
     const record = asRecord(getPointer(body, c.recordPointer));
     const rawEmail = c.holderEmailPointer ? getPointer(body, c.holderEmailPointer) : undefined;
-    const holderEmail = strictEmail(rawEmail);
+    if (rawEmail !== undefined && rawEmail !== null && typeof rawEmail !== 'string') {
+      throw new ConnectorError('INVALID_PAYLOAD');
+    }
+    const holderEmail =
+      strictEmail(rawEmail) ??
+      (typeof rawEmail === 'string' && rawEmail.trim() !== '' ? rawEmail : undefined);
     return { status: 'ok', record, ...(holderEmail ? { holderEmail } : {}) };
   },
 

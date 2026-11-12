@@ -36,3 +36,24 @@ export function KeyValue({
     </div>
   );
 }
+
+/** Raw ids and hashes live here, closed by default; names and labels go in the visible list. */
+export function TechnicalDetails({
+  items,
+  className,
+}: {
+  items: readonly KeyValueItem[];
+  className?: string;
+}) {
+  return (
+    <details className={cn('text-sm', className)}>
+      <summary className="cursor-pointer text-fg-muted pointer-coarse:min-h-11">
+        Technical details
+      </summary>
+      <KeyValue
+        className="pt-3"
+        items={items.map((item) => ({ ...item, mono: item.mono ?? true }))}
+      />
+    </details>
+  );
+}

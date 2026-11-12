@@ -13,7 +13,8 @@ export const DEVICE_IDLE_MS = 30 * DAY;
 const resolvedRows = new WeakMap<ScannerAuth, ScannerRow>();
 export const resolvedRowOf = (auth: ScannerAuth): ScannerRow | undefined => resolvedRows.get(auth);
 
-function expired(row: ScannerRow, now: number): boolean {
+/** The guard's expiry: past `expires_at`, or a device idle past the window (a terminal never idles). */
+export function scannerExpired(row: ScannerRow, now: number): boolean {
   if (row.expiresAt !== null && row.expiresAt <= now) return true;
   if (row.kind === 'terminal') return false;
   return (row.lastSeenAt ?? row.pairedAt ?? now) + DEVICE_IDLE_MS <= now;
@@ -34,7 +35,7 @@ export function createScannerStore(env: AppEnv, clock: Clock = systemClock): Sca
       const now = clock.now();
       if (row.revokedAt !== null)
         throw new UnauthenticatedError('This scanner was removed.', 'SCANNER_REVOKED');
-      if (expired(row, now))
+      if (scannerExpired(row, now))
         throw new UnauthenticatedError('This scanner needs to be paired again.', 'SCANNER_EXPIRED');
       if (row.lastSeenAt === null || row.lastSeenAt <= now - TOUCH_EVERY_MS)
         await touchScanner(env.DB, row.id, now, meta?.ipPrefix ?? null, TOUCH_EVERY_MS);

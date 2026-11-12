@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { IdSchema, JsonSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const ConnectionModeSchema = z.enum(['poll', 'webhook', 'hybrid', 'manual', 'snapshot']);
+export type ConnectionMode = z.infer<typeof ConnectionModeSchema>;
 export const ConnectionHealthSchema = z.enum([
   'unknown',
   'healthy',
@@ -178,6 +179,14 @@ export const TestConfigSchema = z.object({
   secrets: z.record(z.string(), z.string().max(4096)).optional(),
 });
 export const TestConfigResponseSchema = TestConnectionResponseSchema;
+/** Operator confirmation that the source system was checked for an uncertain webhook chunk. */
+export const ResolveWebhookFailureResponseSchema = z.object({
+  ok: z.literal(true),
+  /** Uncertain items marked resolved by this call. */
+  resolved: z.number().int().positive(),
+  /** `resolved` when no other item is left; otherwise the chunk stays replayable. */
+  state: z.enum(['failed', 'blocked', 'resolved']),
+});
 export const SyncNowResponseSchema = z.object({ runId: IdSchema, workflowInstanceId: z.string() });
 export const WebhookAckSchema = z.object({ accepted: z.literal(true) });
 

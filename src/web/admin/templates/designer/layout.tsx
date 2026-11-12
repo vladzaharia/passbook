@@ -9,12 +9,14 @@ import { Button, Callout } from '../../../ui/index.ts';
  */
 export function DesignerLayout({
   templateId,
+  orgId,
   structure,
   preview,
   issues,
   readOnly = false,
 }: {
   templateId: string;
+  orgId?: string | undefined;
   structure: ReactNode;
   preview: ReactNode;
   issues: ReactNode;
@@ -29,7 +31,7 @@ export function DesignerLayout({
         </Callout>
         {preview}
         <Button asChild variant="outline" className="justify-self-center">
-          <Link to="/admin/templates/$templateId" params={{ templateId }}>
+          <Link to="/admin/templates/$templateId" params={{ templateId }} search={{ orgId }}>
             Back to template
           </Link>
         </Button>

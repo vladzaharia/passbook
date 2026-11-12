@@ -9,15 +9,18 @@ import { baseUrl } from '../../platform/env.ts';
 import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { withBackContacts } from '../passes/contacts.ts';
+import { assertTemplateAuthority, authorizeTemplateWrite } from './access.ts';
+import { putVersionAsset } from './asset-storage.ts';
 import { behaviors, previewPass } from './build-check.ts';
 import { dryRunReport, dryRunTemplate } from './dry-run-report.ts';
 import { imagesFromBinding } from './images-binding.ts';
 import { audit, storageOrg } from './mutations.ts';
 import { analyzePackage } from './package/analyze.ts';
+import { buildKey } from './package/hash.ts';
 import type { ImageTools } from './package/images.ts';
 import { commitVersion } from './persist.ts';
 import { clearTemplateCache, r2Key } from './registry.ts';
-import { getOrgName, getVersion } from './repo.ts';
+import { getOrgName, getTemplate, getVersion } from './repo.ts';
 import { detail, loadTemplate } from './service.ts';
 import { resolveVersionFiles } from './version-files.ts';
 
@@ -44,6 +47,7 @@ export async function saveVersion(
   images: ImageTools = imagesFromBinding(ctx.env.IMAGES, ctx.log),
 ): Promise<Response> {
   const row = await loadTemplate(ctx, auth, id);
+  const author = await authorizeTemplateWrite(ctx, auth, row.orgId, 'templates:author');
   if (row.origin === 'baked')
     throw new ForbiddenError(
       'Built-in templates cannot be changed. Duplicate it first.',
@@ -91,9 +95,23 @@ export async function saveVersion(
     assets: analysis.assets.map((a) => ({ ...a })),
     passJson: built,
   };
-  const existing = await getVersion(ctx.env.DB, id, analysis.version);
+  const key = await buildKey(analysis);
+  const referenceVersion = row.activeVersion;
+  const [existing, active] = await Promise.all([
+    getVersion(ctx.env.DB, id, analysis.version),
+    referenceVersion ? getVersion(ctx.env.DB, id, referenceVersion) : Promise.resolve(null),
+  ]);
+  const candidateKey = existing ? existing.buildKey : key;
+  const displayOnly =
+    candidateKey !== null && active?.buildKey != null && candidateKey === active.buildKey;
   if (body.dryRun)
-    return { ...base, saved: false, created: !existing, activated: false, template: null };
+    return {
+      ...base,
+      saved: false,
+      created: !existing,
+      displayOnly,
+      template: null,
+    };
 
   const owner = await storageOrg(ctx, row);
   const assets = [];
@@ -103,18 +121,26 @@ export async function saveVersion(
       assets.push({ ...a, source: keep.source });
       continue;
     }
+    const current = await getTemplate(ctx.env.DB, id);
+    if (!current || current.orgId !== row.orgId || current.status !== 'active')
+      throw new ConflictError('The template changed. Retry the save.', 'TEMPLATE_VERSION_CONFLICT');
+    await assertTemplateAuthority(ctx, author);
     const key = r2Key(owner, id, analysis.version, a.name);
-    await ctx.env.BUCKET.put(key, analysis.files.get(a.name) as Uint8Array);
+    const bytes = analysis.files.get(a.name);
+    if (!bytes) throw new Error(`Missing file ${a.name}`);
+    await putVersionAsset(ctx, key, bytes);
     assets.push({ ...a, source: { kind: 'r2' as const, key } });
   }
-  await commitVersion(ctx, {
+  const committed = await commitVersion(ctx, {
     plan: { templateId: id, isNew: false, existing: row },
     orgId: row.orgId,
     slug: row.slug,
     name: analysis.manifest.name,
     description: analysis.manifest.description ?? null,
     createdBy: auth?.kind === 'session' ? auth.userId : null,
-    activate: body.activate,
+    guardActive: true,
+    buildKey: key,
+    authorities: [author],
     body: {
       version: analysis.version,
       manifest: analysis.manifest,
@@ -123,22 +149,39 @@ export async function saveVersion(
       report,
       styles: analysis.styles,
     },
+  }).catch(async (error: unknown) => {
+    if (error instanceof ForbiddenError) await loadTemplate(ctx, auth, id, row.orgId ?? undefined);
+    throw error;
   });
+  const current = await getTemplate(ctx.env.DB, id);
+  if (!current || current.orgId !== row.orgId || current.status !== 'active')
+    throw new ConflictError('The template changed. Retry the save.', 'TEMPLATE_VERSION_CONFLICT');
   clearTemplateCache(ctx.env, id);
+  const persisted = committed.versionCreated
+    ? null
+    : await getVersion(ctx.env.DB, id, analysis.version);
+  if (!committed.versionCreated && !persisted)
+    throw new ConflictError('The template changed. Retry the save.', 'TEMPLATE_VERSION_CONFLICT');
+  const actualKey = committed.versionCreated ? key : (persisted?.buildKey ?? null);
+  const comparisonActive =
+    current.activeVersion === referenceVersion
+      ? active
+      : current.activeVersion
+        ? await getVersion(ctx.env.DB, id, current.activeVersion)
+        : null;
+  const actualDisplayOnly =
+    actualKey !== null &&
+    comparisonActive?.buildKey != null &&
+    actualKey === comparisonActive.buildKey;
   await audit(ctx, auth, row, 'template.version', {
     version: analysis.version,
-    activated: body.activate,
+    displayOnly: actualDisplayOnly,
   });
-  if (body.activate)
-    await audit(ctx, auth, row, 'template.activate', {
-      version: analysis.version,
-      previous: row.activeVersion,
-    });
   return {
     ...base,
     saved: true,
-    created: !existing,
-    activated: body.activate,
+    created: committed.versionCreated,
+    displayOnly: actualDisplayOnly,
     template: await detail(ctx, auth, id),
   };
 }
@@ -158,7 +201,7 @@ function rejected(
     saved: false,
     version: analysis?.version ?? null,
     created: false,
-    activated: false,
+    displayOnly: false,
     report,
     assets: analysis?.assets ?? [],
     passJson: null,

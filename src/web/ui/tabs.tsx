@@ -64,17 +64,21 @@ export function TabsList({ className, children, ...props }: ComponentProps<typeo
   );
   if (phone && state && triggers.length >= 5) {
     return (
-      <Select
-        label="Section"
-        className="w-full"
-        value={state.value}
-        onValueChange={state.setValue}
-        options={triggers.map((t) => ({
-          value: t.props.value,
-          label: textOf(t.props.children),
-          disabled: t.props.disabled,
-        }))}
-      />
+      <>
+        <Select
+          label="Section"
+          className="w-full"
+          value={state.value}
+          onValueChange={state.setValue}
+          options={triggers.map((t) => ({
+            value: t.props.value,
+            label: textOf(t.props.children),
+            disabled: t.props.disabled,
+          }))}
+        />
+        {/* Keep Radix's trigger IDs available as panel labels, without exposing a second navigation. */}
+        <Primitive.List hidden>{children}</Primitive.List>
+      </>
     );
   }
   return (

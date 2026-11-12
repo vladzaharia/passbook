@@ -2,26 +2,33 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
+  api,
   buildUrl,
   createApiClient,
   endSession,
   resetSessionEnded,
   sessionEndedHref,
+  setCsrfProvider,
+  setSessionPrincipalProvider,
   useSessionEnded,
 } from './api.ts';
 import { ApiError, errorMessage, problemToError } from './errors.ts';
+import { createQueryClient } from './query-client.ts';
+import { sessionQuery } from './session.ts';
 
 const Item = z.object({ id: z.string() });
 
 function client(
   response: Response | (() => Response | Promise<Response>),
   csrf: string | null = 'tok',
+  getSessionPrincipal: () => string | undefined = () => 'user-a',
 ) {
   const fetch = vi.fn(async () => (typeof response === 'function' ? response() : response.clone()));
   const onUnauthorized = vi.fn();
   const api = createApiClient({
     fetch: fetch as unknown as typeof globalThis.fetch,
     getCsrfToken: async () => csrf ?? undefined,
+    getSessionPrincipal,
     onUnauthorized,
   });
   return { api, fetch, onUnauthorized };
@@ -32,6 +39,27 @@ function problemResponse(status: number, body: Record<string, unknown>) {
     status,
     headers: { 'content-type': 'application/problem+json' },
   });
+}
+
+function unauthorized() {
+  return problemResponse(401, {
+    type: 'about:blank',
+    title: 'Unauthorized',
+    status: 401,
+    code: 'unauthenticated',
+    detail: 'Sign in.',
+  });
+}
+
+function authenticatedSession(id: string) {
+  return {
+    authenticated: true as const,
+    user: { id, name: 'Test User', primaryEmail: 'test@example.com' },
+    roles: ['user' as const],
+    csrfToken: 'csrf-test',
+    amr: 'oidc' as const,
+    expiresAt: 4_000_000_000_000,
+  };
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -95,7 +123,7 @@ describe('api client', () => {
     expect(e.message).toBe('Check the fields.');
   });
 
-  it('calls onUnauthorized on 401 and still throws', async () => {
+  it('calls onUnauthorized for the current principal on 401 and still throws', async () => {
     const { api, onUnauthorized } = client(
       problemResponse(401, {
         type: 't',
@@ -110,6 +138,245 @@ describe('api client', () => {
       code: 'unauthenticated',
     });
     expect(onUnauthorized).toHaveBeenCalledOnce();
+    expect(onUnauthorized).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 401, code: 'unauthenticated' }),
+    );
+  });
+
+  it('retains the injected client 401 callback when no principal getter is configured', async () => {
+    const onUnauthorized = vi.fn();
+    const legacy = createApiClient({
+      fetch: async () => unauthorized(),
+      getCsrfToken: async () => undefined,
+      onUnauthorized,
+    });
+    await expect(legacy.get('/x', Item)).rejects.toMatchObject({
+      status: 401,
+      code: 'unauthenticated',
+    });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it.each(['GET', 'POST', 'PUT', 'PATCH', 'DELETE JSON', 'DELETE', 'action'] as const)(
+    'throws but does not end a new principal on a late %s 401',
+    async (method) => {
+      // The web test target is ES2023, before Promise.withResolvers.
+      let resolve!: (response: Response) => void;
+      const pending = new Promise<Response>((done) => {
+        resolve = done;
+      });
+      let principal: string | undefined = 'user-a';
+      const { api, fetch, onUnauthorized } = client(
+        () => pending,
+        'tok',
+        () => principal,
+      );
+      const send = {
+        GET: () => api.get('/x', Item),
+        POST: () => api.post('/x', Item, { id: 'a' }),
+        PUT: () => api.put('/x', Item, { id: 'a' }),
+        PATCH: () => api.patch('/x', Item, { id: 'a' }),
+        'DELETE JSON': () => api.deleteJson('/x', Item),
+        DELETE: () => api.delete('/x'),
+        action: () => api.action('POST', '/x', { id: 'a' }),
+      };
+      const rejected = expect(send[method]()).rejects.toMatchObject({
+        status: 401,
+        code: 'unauthenticated',
+      });
+      // Writes first await CSRF; release the response only after the request was dispatched.
+      await Promise.resolve();
+      expect(fetch).toHaveBeenCalledOnce();
+      principal = 'user-b';
+      resolve(unauthorized());
+      await rejected;
+      expect(onUnauthorized).not.toHaveBeenCalled();
+    },
+  );
+
+  it('checks the principal after reading a delayed 401 body', async () => {
+    let resolveBody!: (body: string) => void;
+    const body = new Promise<string>((done) => {
+      resolveBody = done;
+    });
+    let startedReading!: () => void;
+    const reading = new Promise<void>((done) => {
+      startedReading = done;
+    });
+    const response = unauthorized();
+    vi.spyOn(response, 'text').mockImplementation(() => {
+      startedReading();
+      return body;
+    });
+    let principal = 'user-a';
+    const { api, onUnauthorized } = client(
+      () => response,
+      'tok',
+      () => principal,
+    );
+    const rejected = expect(api.get('/x', Item)).rejects.toMatchObject({
+      status: 401,
+      code: 'unauthenticated',
+    });
+    await reading;
+    principal = 'user-b';
+    resolveBody(
+      JSON.stringify({
+        type: 'about:blank',
+        title: 'Unauthorized',
+        status: 401,
+        code: 'unauthenticated',
+        detail: 'Sign in.',
+      }),
+    );
+    await rejected;
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [undefined, undefined],
+    [undefined, 'user-b'],
+    ['user-a', undefined],
+  ])('does not signal a session end from unknown principal %s to %s', async (before, after) => {
+    let resolve!: (response: Response) => void;
+    const pending = new Promise<Response>((done) => {
+      resolve = done;
+    });
+    let principal: string | undefined = before;
+    const { api, onUnauthorized } = client(
+      () => pending,
+      'tok',
+      () => principal,
+    );
+    const rejected = expect(api.get('/x', Item)).rejects.toMatchObject({
+      status: 401,
+      code: 'unauthenticated',
+    });
+    principal = after;
+    resolve(unauthorized());
+    await rejected;
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it.each(['user-b', undefined])(
+    'does not dispatch a write after its principal changes to %s during CSRF lookup',
+    async (nextPrincipal) => {
+      let resolveCsrf!: (token: string | undefined) => void;
+      const csrf = new Promise<string | undefined>((done) => {
+        resolveCsrf = done;
+      });
+      let principal: string | undefined = 'user-a';
+      const fetch = vi.fn(async () => new Response('{"id":"a"}'));
+      const onUnauthorized = vi.fn();
+      const api = createApiClient({
+        fetch: fetch as unknown as typeof globalThis.fetch,
+        getCsrfToken: () => csrf,
+        getSessionPrincipal: () => principal,
+        onUnauthorized,
+      });
+      const rejected = expect(api.post('/x', Item, { id: 'a' })).rejects.toMatchObject({
+        status: 409,
+        code: 'session_changed',
+        message: 'The signed-in account changed. Review your changes and try again.',
+      });
+      principal = nextPrincipal;
+      resolveCsrf('tok');
+      await rejected;
+      expect(fetch).not.toHaveBeenCalled();
+      expect(onUnauthorized).not.toHaveBeenCalled();
+    },
+  );
+
+  it('allows an initially anonymous write when a session appears during CSRF lookup', async () => {
+    let resolveCsrf!: (token: string | undefined) => void;
+    const csrf = new Promise<string | undefined>((done) => {
+      resolveCsrf = done;
+    });
+    let principal: string | undefined;
+    const fetch = vi.fn(async () => new Response('{"id":"a"}'));
+    const api = createApiClient({
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      getCsrfToken: () => csrf,
+      getSessionPrincipal: () => principal,
+    });
+    const result = api.post('/x', Item, { id: 'a' });
+    principal = 'user-b';
+    resolveCsrf('tok');
+    await expect(result).resolves.toEqual({ id: 'a' });
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ['user-a', true],
+    ['user-b', false],
+  ] as const)(
+    'uses the principal discovered during CSRF lookup when the current principal is %s',
+    async (principalAtResponse, shouldEnd) => {
+      let resolveResponse!: (response: Response) => void;
+      const response = new Promise<Response>((resolve) => {
+        resolveResponse = resolve;
+      });
+      let principal: string | undefined;
+      const fetch = vi.fn(async () => response);
+      const onUnauthorized = vi.fn();
+      const api = createApiClient({
+        fetch: fetch as unknown as typeof globalThis.fetch,
+        getCsrfToken: async () => {
+          principal = 'user-a';
+          return 'tok';
+        },
+        getSessionPrincipal: () => principal,
+        onUnauthorized,
+      });
+      const rejected = expect(api.post('/x', Item, {})).rejects.toMatchObject({
+        status: 401,
+        code: 'unauthenticated',
+      });
+      await Promise.resolve();
+      expect(fetch).toHaveBeenCalledOnce();
+      principal = principalAtResponse;
+      resolveResponse(unauthorized());
+      await rejected;
+      expect(onUnauthorized).toHaveBeenCalledTimes(shouldEnd ? 1 : 0);
+    },
+  );
+
+  it('preserves an abort when the principal changes during CSRF lookup', async () => {
+    let resolveCsrf!: (token: string | undefined) => void;
+    const csrf = new Promise<string | undefined>((done) => {
+      resolveCsrf = done;
+    });
+    let principal = 'user-a';
+    const fetch = vi.fn(async () => new Response('{"id":"a"}'));
+    const api = createApiClient({
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      getCsrfToken: () => csrf,
+      getSessionPrincipal: () => principal,
+    });
+    const controller = new AbortController();
+    const reason = new DOMException('aborted', 'AbortError');
+    const rejected = expect(api.post('/x', Item, {}, { signal: controller.signal })).rejects.toBe(
+      reason,
+    );
+    controller.abort(reason);
+    principal = 'user-b';
+    resolveCsrf('tok');
+    await rejected;
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('propagates a CSRF lookup failure without dispatching the write', async () => {
+    const cause = new Error('CSRF lookup failed');
+    const fetch = vi.fn(async () => new Response('{"id":"a"}'));
+    const api = createApiClient({
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      getCsrfToken: async () => {
+        throw cause;
+      },
+      getSessionPrincipal: () => 'user-a',
+    });
+    await expect(api.post('/x', Item, {})).rejects.toBe(cause);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('does not call onUnauthorized on 403', async () => {
@@ -219,7 +486,11 @@ describe('errorMessage', () => {
 });
 
 describe('session end', () => {
-  afterEach(() => resetSessionEnded());
+  afterEach(() => {
+    resetSessionEnded();
+    setCsrfProvider(async () => undefined);
+    setSessionPrincipalProvider(() => undefined);
+  });
 
   it('flips once, however many requests come back 401', () => {
     const { result } = renderHook(() => useSessionEnded());
@@ -229,6 +500,165 @@ describe('session end', () => {
       endSession();
     });
     expect(result.current).toBe(true);
+  });
+
+  it('clears an earlier session-ended notice only when the authenticated user changes', async () => {
+    const queryClient = createQueryClient();
+    let session = authenticatedSession('user-a');
+    queryClient.setQueryData(sessionQuery.queryKey, session);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(session))),
+    );
+    const { result } = renderHook(() => useSessionEnded());
+    act(() => endSession());
+    expect(result.current).toBe(true);
+
+    await act(async () => {
+      await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+    });
+    expect(result.current).toBe(true);
+
+    session = authenticatedSession('user-b');
+    await act(async () => {
+      await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+    });
+    expect(result.current).toBe(false);
+    queryClient.clear();
+  });
+
+  it('keeps the new session live when cancelling an old query releases a 401', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(sessionQuery.queryKey, authenticatedSession('user-a'));
+    let resolveOld!: (response: Response) => void;
+    const oldResponse = new Promise<Response>((done) => {
+      resolveOld = done;
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input) === '/old') return oldResponse;
+        if (String(input) === '/api/v1/session') {
+          return new Response(JSON.stringify(authenticatedSession('user-b')));
+        }
+        return unauthorized();
+      }),
+    );
+    const { result } = renderHook(() => useSessionEnded());
+    const oldRejected = expect(api.get('/old', Item)).rejects.toMatchObject({
+      status: 401,
+      code: 'unauthenticated',
+    });
+    let principalAtCancel: string | undefined;
+    const cancelled = queryClient
+      .fetchQuery({
+        queryKey: ['pending-old'],
+        retry: false,
+        queryFn: ({ signal }) =>
+          new Promise<void>((resolve) => {
+            signal.addEventListener(
+              'abort',
+              () => {
+                const session = queryClient.getQueryData(sessionQuery.queryKey);
+                principalAtCancel = session?.authenticated ? session.user.id : undefined;
+                resolveOld(unauthorized());
+                resolve();
+              },
+              { once: true },
+            );
+          }),
+      })
+      .catch(() => undefined);
+    await act(async () => {
+      await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+      await cancelled;
+      await oldRejected;
+    });
+    expect(principalAtCancel).toBe('user-b');
+    expect(result.current).toBe(false);
+
+    await act(async () => {
+      await expect(api.get('/current', Item)).rejects.toMatchObject({
+        status: 401,
+        code: 'unauthenticated',
+      });
+    });
+    expect(result.current).toBe(true);
+    queryClient.clear();
+  });
+
+  it('ignores a late 401 from before an A to B to A principal switch', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(sessionQuery.queryKey, authenticatedSession('user-a'));
+    let current = authenticatedSession('user-b');
+    let resolveOld!: (response: Response) => void;
+    const oldResponse = new Promise<Response>((done) => {
+      resolveOld = done;
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input) === '/old') return oldResponse;
+        if (String(input) === '/api/v1/session') return new Response(JSON.stringify(current));
+        return unauthorized();
+      }),
+    );
+    const { result } = renderHook(() => useSessionEnded());
+    const oldRejected = expect(api.get('/old', Item)).rejects.toMatchObject({
+      status: 401,
+      code: 'unauthenticated',
+    });
+
+    await act(async () => {
+      await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+      current = authenticatedSession('user-a');
+      await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+      resolveOld(unauthorized());
+      await oldRejected;
+    });
+    expect(result.current).toBe(false);
+
+    await act(async () => {
+      await expect(api.get('/current', Item)).rejects.toMatchObject({ status: 401 });
+    });
+    expect(result.current).toBe(true);
+    queryClient.clear();
+  });
+
+  it('ends a known session when its own background refresh returns 401', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(sessionQuery.queryKey, authenticatedSession('user-a'));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => unauthorized()),
+    );
+    const { result } = renderHook(() => useSessionEnded());
+    await act(async () => {
+      await expect(
+        queryClient.fetchQuery({ ...sessionQuery, staleTime: 0, retry: false }),
+      ).rejects.toMatchObject({ status: 401, code: 'unauthenticated' });
+    });
+    expect(result.current).toBe(true);
+    queryClient.clear();
+  });
+
+  it('throws an initial session 401 without ending an unknown session', async () => {
+    const queryClient = createQueryClient();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => unauthorized()),
+    );
+    const { result } = renderHook(() => useSessionEnded());
+    await act(async () => {
+      await expect(queryClient.fetchQuery({ ...sessionQuery, retry: false })).rejects.toMatchObject(
+        {
+          status: 401,
+          code: 'unauthenticated',
+        },
+      );
+    });
+    expect(result.current).toBe(false);
+    queryClient.clear();
   });
 
   it('builds a sign-in that returns here and says why', () => {

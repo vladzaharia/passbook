@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { json, renderApp } from '../../lib/test-utils.tsx';
+import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import {
   connectionDetail,
   ORG,
@@ -9,6 +9,11 @@ import {
   templateDetail,
   templateSummary,
 } from './test-fixtures.ts';
+
+const orgScope = {
+  memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
+  selectedOrg: ORG.id,
+};
 
 function open(tab: string, over: Record<string, unknown> = {}) {
   const pass = passDetail({
@@ -20,6 +25,7 @@ function open(tab: string, over: Record<string, unknown> = {}) {
   });
   return renderApp(`/admin/passes/p1?tab=${tab}`, {
     session: 'admin',
+    ...orgScope,
     handlers: {
       '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
       '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),

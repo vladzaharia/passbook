@@ -19,6 +19,7 @@ const page = (over: Partial<PassPageProps> = {}) =>
     orgLabel: 'Gym',
     passTitle: 'Membership',
     downloadHref: '/p/t/pass.pkpass',
+    walletOffers: [],
     publicUrl: 'https://wallet.test/p/t',
     portalHref: '/passes/p1',
     voided: false,
@@ -59,26 +60,114 @@ describe('/p renders the portal HolderPassView', () => {
     expect(b).toMatch(PORTAL_LINK);
   });
 
-  it('leads with the QR on the buddy’s sign off Apple’s devices, without the badge', () => {
+  it('leads with the QR off Apple devices and keeps the Apple badge accessible', () => {
     const b = body(page());
     expect(b).toMatch(
       /<div class="wl-sign"><span [^>]*data-scene="nudge"[^>]*data-run="load"[\s\S]*?<img src="data:image\/svg\+xml/,
     );
     expect(b).toContain(HOLDER_COPY.scanLine);
-    expect(b).not.toContain('data-awb');
-    expect(b).not.toContain(HOLDER_COPY.openOnApple);
+    expect(b).toContain('data-awb');
+    expect(b).toContain(HOLDER_COPY.openOnApple);
     expect(b).toMatch(/class="wl-holder-help [^"]*"><p class="[^"]*">Help:/);
     // A click replays the scene, as on the hosted pages.
     expect(page()).toContain(REPLAY_SCRIPT);
   });
 
-  it('puts the badge beside the QR on a Mac, which a touch screen (an iPad) hides', () => {
+  it('puts the Apple badge beside the QR on a Mac without hiding it on touch screens', () => {
     const b = body(page({ device: { device: 'mac', inApp: false } }));
-    expect(b).toMatch(
-      new RegExp(
-        `<div class="wl-way wl-mac-only">[\\s\\S]*?${HOLDER_COPY.mac}[\\s\\S]*?data-awb=""`,
-      ),
+    expect(b).toMatch(/<div class="wl-way">[\s\S]*?Apple Wallet[\s\S]*?data-awb=""/);
+    expect(page()).not.toContain('wl-mac-only');
+  });
+
+  it.each([
+    { device: 'iphone', inApp: false },
+    { device: 'iphone', inApp: true },
+    { device: 'mac', inApp: false },
+    { device: 'other', inApp: false },
+  ] as const)('shows both available provider links on $device (inApp: $inApp)', (device) => {
+    const walletOffers = [
+      { provider: 'google', href: '/p/t/wallet/google', installation: 'unknown' },
+      { provider: 'samsung', href: '/p/t/wallet/samsung', installation: 'unknown' },
+    ] as const;
+    const html = page({ device, walletOffers });
+    const b = body(html);
+    expect(html).toContain('property="og:description" content="Add it to your wallet."');
+    expect(b).toContain('href="/p/t/pass.pkpass"');
+    expect(b).toContain('href="/p/t/wallet/google"');
+    expect(b).toContain('href="/p/t/wallet/samsung"');
+    expect(b).toContain(
+      'src="/icons/wallet-providers/google/add-to-google-wallet.svg" alt="Add to Google Wallet"',
     );
+    expect(b).toContain(
+      'src="/icons/wallet-providers/samsung/add-to-samsung-wallet.png" alt="Add to Samsung Wallet"',
+    );
+    expect(b).not.toMatch(/(?:Google|Samsung) Wallet (?:installed|removed)/i);
+  });
+
+  it('recommends the browser barcode off Apple devices, with Apple still reachable and no script needed', () => {
+    const html = page({ barcodeHref: '/p/t/barcode' });
+    const b = body(html);
+    expect(b.indexOf(HOLDER_COPY.bestForDevice)).toBeLessThan(b.indexOf(HOLDER_COPY.browserTitle));
+    expect(b.indexOf(HOLDER_COPY.browserTitle)).toBeLessThan(b.indexOf(HOLDER_COPY.otherWays));
+    expect(b.indexOf(HOLDER_COPY.otherWays)).toBeLessThan(b.indexOf('data-awb'));
+    expect(b).toContain('href="/p/t/barcode"');
+    expect(b).toContain('href="/p/t/pass.pkpass"');
+    expect(b).not.toContain('<script');
+  });
+
+  it('recommends Apple on an iPhone, the browser barcode after it', () => {
+    const b = body(
+      page({ barcodeHref: '/p/t/barcode', device: { device: 'iphone', inApp: false } }),
+    );
+    expect(b.indexOf(HOLDER_COPY.bestForDevice)).toBeLessThan(b.indexOf('data-awb'));
+    expect(b.indexOf('data-awb')).toBeLessThan(b.indexOf(HOLDER_COPY.otherWays));
+    expect(b.indexOf(HOLDER_COPY.otherWays)).toBeLessThan(b.indexOf(HOLDER_COPY.browserTitle));
+  });
+
+  it('drops a native wallet whose issuance is disabled', () => {
+    const google = {
+      provider: 'google',
+      href: '/p/t/wallet/google',
+      installation: 'unknown',
+    } as const;
+    const b = body(
+      page({
+        walletOffers: [google],
+        issuance: { google: { state: 'disabled', reason: 'not_released' } },
+      }),
+    );
+    expect(b).not.toContain('Add to Google Wallet');
+  });
+
+  it('omits unavailable alternatives and suppresses all offers for non-active passes', () => {
+    const google = {
+      provider: 'google',
+      href: '/p/t/wallet/google',
+      installation: 'unknown',
+    } as const;
+    const b = body(page({ walletOffers: [google] }));
+    expect(b).toContain('href="/p/t/wallet/google"');
+    expect(b).not.toContain('Add to Samsung Wallet');
+    for (const over of [
+      { voided: true },
+      { removal: { message: null } },
+      { view: view({ expirationDate: '2020-01-01T00:00:00Z' }) },
+    ]) {
+      expect(body(page({ ...over, walletOffers: [google] }))).not.toContain('Add to Google Wallet');
+    }
+  });
+
+  it('renders only capability links, not provider token metadata', () => {
+    const secret = 'provider-bearer-jwt-must-not-be-rendered';
+    const offer = {
+      provider: 'google',
+      href: '/p/t/wallet/google',
+      installation: 'unknown',
+      providerToken: secret,
+    } as const;
+    const html = page({ walletOffers: [offer] });
+    expect(html).toContain('href="/p/t/wallet/google"');
+    expect(html).not.toContain(secret);
   });
 
   it('leads with the badge’s card on the iPhone, the buddy on it pointing at the badge', () => {

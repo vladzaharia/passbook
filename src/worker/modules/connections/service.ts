@@ -4,15 +4,18 @@ import type {
   ConnectionListQuerySchema,
 } from '../../../shared/contracts/index.ts';
 import type { Actor } from '../../platform/context.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { connectorInfo, percentile, toDto } from './dto.ts';
+import type { ConnectionAuthority } from './access.ts';
+import { percentile, toDto } from './dto.ts';
 import { schedules } from './health.ts';
 import { validateMapping } from './mapping.ts';
-import { type ConnectionRow, deleteConnection, insertConnection, listConnections } from './repo.ts';
-import { passCountsFor } from './repo-passes.ts';
+import { type ConnectionRow, deleteConnection, insertConnection } from './repo.ts';
+import { listConnections } from './repo-list.ts';
 import { listRuns, runStats } from './repo-runs.ts';
+import { passCountsFor } from './repo-stats.ts';
+import { purgeConnectionWebhooks } from './repo-sync.ts';
 import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
 import {
   auditActor,
@@ -80,7 +83,9 @@ export async function create(
   sctx: ServiceContext,
   actor: Actor,
   input: CreateInput,
+  authority?: ConnectionAuthority,
 ): Promise<Created> {
+  if (authority && authority.orgId !== input.orgId) throw new ForbiddenError();
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
   const config = parseWith(def.configSchema, input.config, 'config');
@@ -110,23 +115,7 @@ export async function create(
   const wantsWebhook = mode === 'webhook' || mode === 'hybrid';
   const webhookSecret =
     wantsWebhook || input.webhookSecret ? (input.webhookSecret ?? newWebhookSecret(sctx)) : null;
-  const credentialId =
-    secretsJson && secretsJson !== '{}'
-      ? await storeCredential(sctx, {
-          orgId: input.orgId,
-          kind: 'connector',
-          value: secretsJson,
-          createdBy: actor.id,
-        })
-      : null;
-  const webhookCredentialId = webhookSecret
-    ? await storeCredential(sctx, {
-        orgId: input.orgId,
-        kind: 'webhook',
-        value: webhookSecret,
-        createdBy: actor.id,
-      })
-    : null;
+  const newCredentials: string[] = [];
 
   const row: ConnectionRow = {
     id,
@@ -135,8 +124,8 @@ export async function create(
     connectorVersion: def.version,
     name: input.name,
     config: config as ConnectionRow['config'],
-    credentialId,
-    webhookCredentialId,
+    credentialId: null,
+    webhookCredentialId: null,
     mapping: input.mapping ?? null,
     defaultTemplateId: input.defaultTemplateId ?? null,
     holderEmailField: input.holderEmailField ?? null,
@@ -161,7 +150,38 @@ export async function create(
     createdAt: now,
     updatedAt: now,
   };
-  await insertConnection(sctx.env.DB, row);
+  try {
+    if (secretsJson && secretsJson !== '{}') {
+      row.credentialId = await storeCredential(
+        sctx,
+        {
+          orgId: input.orgId,
+          kind: 'connector',
+          value: secretsJson,
+          createdBy: actor.type === 'user' ? actor.id : null,
+        },
+        authority ?? 'system',
+      );
+      newCredentials.push(row.credentialId);
+    }
+    if (webhookSecret) {
+      row.webhookCredentialId = await storeCredential(
+        sctx,
+        {
+          orgId: input.orgId,
+          kind: 'webhook',
+          value: webhookSecret,
+          createdBy: actor.type === 'user' ? actor.id : null,
+        },
+        authority ?? 'system',
+      );
+      newCredentials.push(row.webhookCredentialId);
+    }
+    await insertConnection(sctx, row, { orgId: row.orgId, authority });
+  } catch (error) {
+    await dropCredentials(sctx, newCredentials);
+    throw error;
+  }
   await recordAudit(sctx, {
     orgId: row.orgId,
     ...auditActor(actor),
@@ -176,10 +196,41 @@ export async function create(
   };
 }
 
-export async function remove(sctx: ServiceContext, actor: Actor, id: string): Promise<void> {
+export async function remove(
+  sctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  authority?: ConnectionAuthority,
+): Promise<void> {
   const conn = await requireConnection(sctx, id);
-  await deleteConnection(sctx.env.DB, id);
-  await dropCredentials(sctx, [conn.credentialId, conn.webhookCredentialId]);
+  if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
+  const credentials = [conn.credentialId, conn.webhookCredentialId];
+  try {
+    const deleted = await deleteConnection(
+      sctx,
+      id,
+      { orgId: conn.orgId, authority },
+      conn.generation,
+    );
+    if (!deleted) {
+      throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
+    }
+  } catch (error) {
+    // D1 may have committed the delete before reporting an error.
+    await dropCredentials(sctx, credentials);
+    throw error;
+  }
+  await dropCredentials(sctx, credentials);
+  try {
+    await purgeConnectionWebhooks(sctx, id, { orgId: conn.orgId, authority });
+  } catch (error) {
+    // The connection is gone; the retention TTL still expires what this missed.
+    sctx.log.error('connection.webhook_purge_failed', {
+      connectionId: id,
+      code: 'WEBHOOK_PURGE_FAILED',
+      error,
+    });
+  }
   await recordAudit(sctx, {
     orgId: conn.orgId,
     ...auditActor(actor),
@@ -192,4 +243,3 @@ export async function remove(sctx: ServiceContext, actor: Actor, id: string): Pr
 
 export { auditActor, requireConnection } from './service-shared.ts';
 export { update } from './service-update.ts';
-export { connectorInfo };

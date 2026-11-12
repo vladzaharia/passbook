@@ -20,7 +20,7 @@ export interface EmailPreviewDraft {
  * The pass email the org's holders get, rendered by `renderPassEmail` with a sample holder. The
  * rest is what the org's next pass would carry: its name, support contacts and `email.buddy` (or
  * the draft's), the template its passes use (`previewTemplate`) with the org's colours, and the
- * org's logo and icon, else the template's. Image URLs are admin-only routes on `origin`.
+ * org's logo and icon, else the template's. Image URLs require tenant access on `origin`.
  */
 export async function renderEmailPreview(
   ctx: ServiceContext,

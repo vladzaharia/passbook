@@ -1,14 +1,22 @@
 import { z } from 'zod';
 import { DeliveryEntrySchema, IdSchema } from '../../../shared/contracts/index.ts';
-import { requireAdmin } from '../../platform/auth.ts';
+import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import {
+  authOf,
+  passScopeOf,
+  requireTenantSessionOrApiKey,
+  type TenantPassWrite,
+  tenantAuthorityOf,
+} from '../passes/http.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import { listPassDeliveries } from './service.ts';
 
 export const deliveryRoutes = createRouter();
-guard(deliveryRoutes, requireAdmin);
+guard(deliveryRoutes, requireTenantSessionOrApiKey('passes:read'));
 
-const query = z.object({ passId: IdSchema });
+const query = z.object({ orgId: IdSchema, passId: IdSchema });
 
 register(
   deliveryRoutes,
@@ -21,8 +29,19 @@ register(
     response: z.object({ items: z.array(DeliveryEntrySchema) }),
   },
   async (c) => {
-    const { passId } = c.req.valid('query');
-    const rows = await listPassDeliveries(serviceContext(c), passId);
+    const { orgId, passId } = c.req.valid('query');
+    const ctx = serviceContext(c);
+    const pass = await getPass(ctx.env.DB, passId, passScopeOf(c));
+    if (!pass || pass.orgId !== orgId) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+    let authority: TenantPassWrite;
+    try {
+      authority = await tenantAuthorityOf(ctx, authOf(c), pass.orgId, 'passes:read');
+    } catch (error) {
+      if (error instanceof ForbiddenError)
+        throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+      throw error;
+    }
+    const rows = await listPassDeliveries(ctx, passId, authority);
     return c.json({
       items: rows.map((r) => ({
         id: r.id,

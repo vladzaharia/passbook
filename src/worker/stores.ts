@@ -5,7 +5,7 @@ import { createSessionStore } from './modules/auth/sessions.ts';
 import { createScannerStore } from './modules/scan/auth-store.ts';
 import type { AuthStores } from './platform/auth.ts';
 import type { AppEnv } from './platform/env.ts';
-import { createServiceContext } from './platform/service-context.ts';
+import { createDetachedContext } from './platform/service-context.ts';
 
 const HOUR = 3_600_000;
 const DENIED_ROWS_PER_HOUR = 500;
@@ -17,7 +17,7 @@ export function createAuthStores(env: AppEnv): AuthStores {
     apiKeys: createApiKeyStore(env),
     scanners: createScannerStore(env),
     async onDenied(event) {
-      const ctx = createServiceContext(env);
+      const ctx = createDetachedContext(env);
       const now = ctx.clock.now();
       const n = await bumpCounter(env.DB, 'audit:auth_denied', now - (now % HOUR));
       if (n > DENIED_ROWS_PER_HOUR) {

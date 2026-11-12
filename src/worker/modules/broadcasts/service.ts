@@ -5,11 +5,13 @@ import type {
   CreateBroadcastBody,
 } from '../../../shared/contracts/broadcasts.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { batch } from '../../platform/db.ts';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { BUDGET_WINDOW_MS } from '../passes/change-messages.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import type { ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
@@ -33,8 +35,9 @@ export async function createBroadcast(
   actor: Actor,
   mode: Mode,
   body: CreateBroadcastBody,
+  authority: TenantPassWrite,
 ): Promise<BroadcastDto> {
-  return insertBroadcast(ctx, actor, mode, body, 'broadcast.create');
+  return insertBroadcast(ctx, actor, mode, body, authority, 'broadcast.create');
 }
 
 export async function insertBroadcast(
@@ -42,6 +45,7 @@ export async function insertBroadcast(
   actor: Actor,
   mode: Mode,
   body: CreateBroadcastBody,
+  authority: TenantPassWrite,
   action: string,
   detail: Record<string, unknown> = {},
 ): Promise<BroadcastDto> {
@@ -52,23 +56,29 @@ export async function insertBroadcast(
   const now = ctx.clock.now();
   const id = ctx.ids.id();
   const at = body.send === 'schedule' ? (body.at ?? now) : now;
-  await repo
-    .insertBroadcastStmt(ctx.env.DB, {
-      id,
-      orgId: body.orgId,
-      mode,
-      kind: body.kind,
-      name: nameOf(body),
-      state: body.send === 'draft' ? 'draft' : 'scheduled',
-      target: body.target,
-      patch: body.patch,
-      notify: body.notify,
-      at: body.send === 'draft' ? null : at,
-      clearAfter: body.clearAfter ?? null,
-      actor: { type: actor.type, id: actor.id },
+  const [inserted] = await batch(ctx.env.DB, [
+    repo.insertAuthorizedBroadcastStmt(
+      ctx.env.DB,
+      {
+        id,
+        orgId: body.orgId,
+        mode,
+        kind: body.kind,
+        name: nameOf(body),
+        state: body.send === 'draft' ? 'draft' : 'scheduled',
+        target: body.target,
+        patch: body.patch,
+        notify: body.notify,
+        at: body.send === 'draft' ? null : at,
+        clearAfter: body.clearAfter ?? null,
+        actor: { type: actor.type, id: actor.id },
+        now,
+      },
+      authority,
       now,
-    })
-    .run();
+    ),
+  ]);
+  if ((inserted?.meta.changes ?? 0) !== 1) throw new ForbiddenError();
   await recordAudit(ctx, {
     orgId: body.orgId,
     actorType: actor.type,
@@ -93,7 +103,11 @@ export async function sendBroadcast(
   const row = await requireWritableBroadcast(ctx, id, scope);
   assertCanChange(scope, row.kind);
   if (at !== undefined) checkTime(ctx, at);
-  if (!(await repo.casSchedule(ctx.env.DB, id, at ?? ctx.clock.now())))
+  const now = ctx.clock.now();
+  const [scheduled] = await batch(ctx.env.DB, [
+    repo.scheduleBroadcastStmt(ctx.env.DB, id, row.kind, at ?? now, scope.authority, now),
+  ]);
+  if ((scheduled?.meta.changes ?? 0) !== 1)
     throw new ConflictError('Only a draft can be sent.', 'BROADCAST_NOT_DRAFT');
   await recordAudit(ctx, {
     orgId: row.org_id,
@@ -115,10 +129,11 @@ export async function cancelBroadcast(
   scope: BroadcastScope,
 ): Promise<BroadcastDto> {
   const row = await requireWritableBroadcast(ctx, id, scope);
-  const won = await repo.casState(ctx.env.DB, id, ['draft', 'scheduled'], 'cancelled', {
-    finishedAt: ctx.clock.now(),
-  });
-  if (!won)
+  const now = ctx.clock.now();
+  const [cancelled] = await batch(ctx.env.DB, [
+    repo.cancelBroadcastStmt(ctx.env.DB, id, scope.authority, now),
+  ]);
+  if ((cancelled?.meta.changes ?? 0) !== 1)
     throw new ConflictError(
       'Only a draft or scheduled message can be cancelled.',
       'BROADCAST_NOT_CANCELLABLE',
@@ -142,8 +157,8 @@ export async function getBroadcastDto(
   const row = await requireBroadcast(ctx, id, scope);
   return toDto(
     row,
-    await repo.countItems(ctx.env.DB, [id]),
-    await repo.followUpsOf(ctx.env.DB, [id]),
+    await repo.countItems(ctx.env.DB, [id], row.org_id, row.mode),
+    await repo.followUpsOf(ctx.env.DB, [id], row.org_id, row.mode),
   );
 }
 
@@ -155,10 +170,14 @@ export async function listBroadcastDtos(
   const counts = await repo.countItems(
     ctx.env.DB,
     rows.map((r) => r.id),
+    filter.orgId,
+    filter.mode,
   );
   const followUps = await repo.followUpsOf(
     ctx.env.DB,
     rows.map((r) => r.id),
+    filter.orgId,
+    filter.mode,
   );
   return { items: rows.map((r) => toDto(r, counts, followUps)), nextCursor };
 }

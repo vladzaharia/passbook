@@ -6,6 +6,24 @@
 - Signed-in holders: portal APIs. Org-scoped API keys: machine API.
 - Tenant admins' connector URLs: outbound fetches (SSRF).
 - Admins are trusted but audited. A stolen admin session is the worst case.
+- Cloudflare account operators with direct R2 write access are trusted infrastructure operators,
+  outside the application authorization boundary.
+
+Template release candidates bind the complete manifest, pass content, preview and output asset
+metadata, and SHA-256 of the actual bytes to the selected organization, mode, provider, policy
+revisions and author. A different authorized reviewer must approve the exact candidate before
+publication; missing preview assets fail closed. Baked extra assets are versioned and sealed.
+Version assets are created conditionally and existing objects must match byte-for-byte; release
+resolution rechecks their content. A privileged operator who changes R2 directly between that
+check and pass assembly can still change the bytes used by the build: D1 cannot atomically fence
+an external R2 write. Restrict and audit direct bucket access accordingly.
+
+Native provider projections are separate reviewed candidates bound to the effective Apple release,
+the provider-account revision and identity, and the complete normalized projection. Changing the
+source or account makes the projection ineligible without erasing approval history. Provider
+credentials are encrypted and never returned with candidate metadata. Samsung publication
+requires fresh provider evidence. Google publication and offers remain blocked until issuer
+approval and replay-safe Save behavior can be verified.
 
 ## Capabilities
 
@@ -15,6 +33,47 @@
 | Download token (`/p/<token>`) | retrievable | Recorded call: admins re-send it. Rotatable. Never logged. |
 | ApplePass token | retrievable | Devices need it back. Rotatable. Never logged. |
 | Pass serial | plain | The personalization capability (SEC-1). NFC identities must not use caller-chosen or guessable serials. |
+
+Holder transfers reserve a monotonic credential generation before invalidating the public link.
+During the pending interval, downloads, scanner actions and new provider offers fail closed.
+Completion requires retirement of older provider incarnations and rotates the Apple and scanner
+credentials. Keyed, organization- and mode-scoped tombstones prevent retired scanner identifiers
+from being accepted again. Rotating only the public link does not create a credential generation.
+
+## Scanner security
+
+- Keep the oldest KEK when rotating keys: it derives the scan PIN, asset-grant and credential
+  tombstone HMAC keys. The credential-reference keyset sentinel commits to that keyset. A missing
+  sentinel with retained references or proof provenance, or a commitment mismatch, fails closed;
+  restore the original key rather than silently reinitializing it. Lazy bootstrap is allowed only
+  for an empty reference store and is fenced in the same D1 transaction by the requesting actor's
+  current authority.
+- Scanner asset grants are short-lived opaque capabilities bound to the recipient, pass, relevant
+  source and credential lineage. Provenance stores the token hash, organization, mode, expiry and
+  keyed credential references, not raw credentials. Redemption rechecks current authority and
+  lineage, including after opening the stream; expired provenance is cleaned up in bounded batches.
+  Grant URLs and logs must not expose raw credentials or proof material, and logs must not contain
+  the grant itself.
+- Internal DTOs, URLs and logs must not carry raw credentials or CSRF secrets. The authorized
+  `/api/v1/scan/session` `csrfToken` response is the deliberate browser handshake exception; it
+  must not be propagated into internal DTOs, URLs or logs.
+- Migration `0041` retains authenticated scan provenance in `scan_retention_proofs`: a scoped,
+  keyed pass reference, event and scan digests, snapshots and MAC, not the deleted pass identity
+  or event payload. Committed check-in and undo transitions are ordered by a database sequence;
+  the transition guard prevents an older occupancy state becoming authoritative after a later
+  transition is changed or removed.
+- Use the application retention workflow for pass deletion, not direct SQL: it stages a scoped
+  deletion intent and preserves eligible final gate and presence evidence in the guarded deletion
+  transaction. Retained history is authenticated against the current scan and keyset before use;
+  missing, invalid, excluded or stale evidence must not authorize disclosure or occupancy. Do not
+  fabricate proofs or bypass the guards to recover legacy data; investigate and restore valid
+  provenance and keys instead. Normal scan retention removes proofs with their scan.
+- Migration `0047` makes session identity, lifetime and CSRF secret immutable, retires deleted
+  session and scanner IDs, and requires scanner credential changes to advance their authority
+  revision; replacement cannot bypass these protections. Migration `0048` adds monotonic
+  `imageGeneration` fencing for image mutations and durable asset GC: uploads are reserved,
+  detached references retain rollback holds, and retired keys cannot be reused. Deletion is
+  limited to eligible pass-asset and member-photo namespaces and guarded against live references.
 
 ## Fails closed
 
@@ -71,6 +130,7 @@ Org names and the sender name reject controls, line separators and bidi marks at
 - After deploy, open the status page: `ratelimits` shows every `RL_*` present; `turnstile` and `breakglass` read as expected.
 - GitHub: default workflow permissions read-only, Dependabot alerts and security updates on, `main` protected with the `ci` check required.
 - Admin offboarding: remove the user from `wallet-admins` in Pocket ID and revoke their sessions (Admin > Users > Revoke sessions). The role snapshot lasts up to 1 h idle and 12 h absolute.
+- Offboarding also revokes organization memberships: each org's Members list, or `DELETE /api/v1/orgs/{id}/memberships/{membershipId}` (`org_admin`, or a platform admin acting as one). A removed `wallet-admins` group does not remove a membership, and a member keeps tenant access until revoked. Revoke the person's API keys and pending invitations in the same pass.
 - Deploy and apply new D1 migrations yourself. Agents never deploy or use `--remote`.
 
 ## Dev advisories

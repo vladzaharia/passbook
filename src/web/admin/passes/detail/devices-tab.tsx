@@ -18,6 +18,7 @@ import {
 import { RelTime, useNow } from './rel-time.tsx';
 import { usePassDevices } from './sync-api.ts';
 import { pushReason, shortDevice } from './sync-model.ts';
+import { WalletProviderStatus } from './wallet-provider-status.tsx';
 
 const SYNC_PILL = {
   current: 'device_current',
@@ -92,7 +93,12 @@ export function DevicesTab({ pass, active }: { pass: PassDetailDto; active: bool
   const data = query.data;
   const fresh = useInsertHighlight(data?.devices.map((d) => d.device) ?? []);
   if (query.isError && !data)
-    return <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />;
+    return (
+      <div className="grid min-w-0 gap-6">
+        <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />
+        <WalletProviderStatus pass={pass} active={active} />
+      </div>
+    );
   const removing = data?.removal != null;
   return (
     <div className="grid min-w-0 gap-6">
@@ -142,6 +148,7 @@ export function DevicesTab({ pass, active }: { pass: PassDetailDto; active: bool
           )}
         </Handoff>
       </Card>
+      <WalletProviderStatus pass={pass} active={active} />
     </div>
   );
 }

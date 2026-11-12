@@ -9,7 +9,12 @@ let identity: ReturnType<typeof createFixtureIdentity> | undefined;
 
 /** One throwaway signing identity per test file; never read from .dev.vars. */
 export function fixtureIdentity() {
-  identity ??= createFixtureIdentity(FIXTURE_IDENTITY);
+  // Cover both the default ManualClock (2026-01-01) and wall-clock Worker tests.
+  identity ??= createFixtureIdentity(FIXTURE_IDENTITY, {
+    now: new Date('2026-01-01T00:00:00.000Z'),
+    days: 3650,
+    caDays: 3650,
+  });
   return identity;
 }
 

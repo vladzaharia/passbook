@@ -23,6 +23,7 @@ import {
   ScanRecentSchema,
   ScanRosterSchema,
   ScanSessionSchema,
+  ScanStaffSearchSchema,
   type ScanStaffSignInSchema,
   ScanSummarySchema,
 } from '../../../shared/contracts/scan-session.ts';
@@ -61,6 +62,8 @@ export interface ScanApiDeps {
   scope?: () => AdminScope | undefined;
   /** Waits before the one retry of a 409. */
   sleep?: (ms: number) => Promise<void>;
+  /** Refetches the scan session and its configuration (a 409 `SCAN_CONFIG_CHANGED` or `SCAN_STAFF_CHANGED`). */
+  refreshConfig?: () => Promise<void>;
 }
 
 type AdminScope = z.infer<typeof ScanAdminScopeSchema>;
@@ -129,6 +132,16 @@ export function createScanApi(deps: ScanApiDeps) {
     return { res, data };
   }
 
+  /** The original error is what the person must see; a failed cleanup is retried by the next session read. */
+  async function dropStaffSignIn(): Promise<void> {
+    try {
+      await once('DELETE', '/staff', undefined, {});
+      await deps.refreshConfig?.();
+    } catch {
+      // Nothing to add: the staff-changed error is thrown to the caller either way.
+    }
+  }
+
   async function request<S extends z.ZodType>(
     method: 'GET' | 'POST' | 'DELETE',
     path: string,
@@ -142,13 +155,21 @@ export function createScanApi(deps: ScanApiDeps) {
     if (scope && method === 'GET' && !path.includes('orgId='))
       path += `${path.includes('?') ? '&' : '?'}${scopeQuery(scope).slice(1)}`;
     let attempt = await once(method, path, body, call);
-    // A scan still being applied by another request: wait as told, once, with the same key.
     if (attempt.res.status === 409) {
       const code = problemOf(attempt.data)?.code;
+      // A scan still being applied by another request: wait as told, once, with the same key.
       if (code === 'SCAN_IN_PROGRESS' || code === 'PASS_CONFLICT') {
         await sleep(retryAfterMs(attempt.res) ?? 1000);
         attempt = await once(method, path, body, call);
       }
+      // The door's configuration moved under this request: reload it and send the same key once more.
+      // Never an unpair: only a 401 means the credential is gone.
+      else if (code === 'SCAN_CONFIG_CHANGED' && deps.refreshConfig && !call.signal?.aborted) {
+        await deps.refreshConfig();
+        attempt = await once(method, path, body, call);
+      }
+      // The signed-in staff member changed (role, PIN or access): drop the sign-in so the PIN prompt shows.
+      else if (code === 'SCAN_STAFF_CHANGED') await dropStaffSignIn();
     }
     const { res, data } = attempt;
     if (!res.ok) {
@@ -220,6 +241,8 @@ export function createScanApi(deps: ScanApiDeps) {
     staffSignIn: (body: z.infer<typeof ScanStaffSignInSchema>) =>
       request('POST', '/staff', ScanSessionSchema, body),
     staffSignOut: () => request('DELETE', '/staff', ScanSessionSchema),
+    staffSearch: (q: string, call?: Call) =>
+      request('GET', `/staff?q=${encodeURIComponent(q)}`, ScanStaffSearchSchema, undefined, call),
     roster: (cursor?: string, call?: Call) =>
       request(
         'GET',

@@ -17,12 +17,18 @@ export function AssignDialog({ event, onClose }: { event: ScanEventDto; onClose:
       }),
   });
   const [selected, setSelected] = useState<string[] | null>(null);
-  const ids =
+  const items = (scanners.data?.items ?? []).filter(
+    (scanner) => scanner.orgId === event.orgId && scanner.status !== 'revoked',
+  );
+  const ids = (
     selected ??
-    scanners.data?.items
-      .filter((s) => s.accepts && 'eventId' in s.accepts && s.accepts.eventId === event.id)
-      .map((s) => s.id) ??
-    [];
+    items
+      .filter(
+        (scanner) =>
+          scanner.accepts && 'eventId' in scanner.accepts && scanner.accepts.eventId === event.id,
+      )
+      .map((scanner) => scanner.id)
+  ).filter((id) => items.some((scanner) => scanner.id === id));
   const mutation = useMutation({
     mutationFn: () =>
       api.action('POST', `/api/v1/scan-events/${encodeURIComponent(event.id)}/scanners`, {
@@ -43,19 +49,17 @@ export function AssignDialog({ event, onClose }: { event: ScanEventDto; onClose:
       <DialogContent title="Assign scanners" size="sm">
         <div className="flex flex-col gap-4">
           <p className="text-sm text-fg-muted">Selected scanners move to {event.name}.</p>
-          {scanners.data?.items
-            .filter((s) => s.status !== 'revoked')
-            .map((s) => (
-              <CheckboxField
-                key={s.id}
-                label={s.name}
-                checked={ids.includes(s.id)}
-                onCheckedChange={(checked) =>
-                  setSelected(checked ? [...ids, s.id] : ids.filter((id) => id !== s.id))
-                }
-              />
-            ))}
-          {!scanners.data?.items.length && !scanners.isPending ? (
+          {items.map((s) => (
+            <CheckboxField
+              key={s.id}
+              label={s.name}
+              checked={ids.includes(s.id)}
+              onCheckedChange={(checked) =>
+                setSelected(checked ? [...ids, s.id] : ids.filter((id) => id !== s.id))
+              }
+            />
+          ))}
+          {!items.length && !scanners.isPending ? (
             <p>No scanners yet. Add a scanner in Scanning.</p>
           ) : null}
           {mutation.isError || scanners.isError ? (

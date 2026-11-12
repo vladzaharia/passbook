@@ -3,7 +3,7 @@ import { fakeAuth } from '../../../test/helpers/index.ts';
 import { THEME_COLOR } from '../../generated/resolved-tokens.ts';
 import { createApp } from '../app.ts';
 import { breakglassPage, expiredPage } from '../modules/auth/pages.ts';
-import { type Kit, setupKit } from '../modules/passes/test-kit.ts';
+import { type Kit, setupKit } from '../modules/passes/pass-test-fixtures.ts';
 import { renderErrorPage } from './error-page.tsx';
 import { themeFromCookie } from './head.ts';
 import { renderNotFoundPage } from './pass-page.tsx';
@@ -96,7 +96,8 @@ describe('theme cookie on Worker pages', () => {
   it.each([
     ['an auth page', '/auth/magic?token=nope'],
     ['a dead pass link', '/p/abcdefghijklmnopqrst'],
-    ['a 404', '/no/such/page'],
+    // Other unknown paths belong to the SPA; only Worker-only prefixes answer with the 404 page.
+    ['a 404', '/health/no/such/page'],
   ])('stamps %s', async (_, path) => {
     expect(await get(path, 'light')).toContain('<html lang="en" data-theme="light">');
     expect(await get(path)).toContain('<html lang="en"><head>');

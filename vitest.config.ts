@@ -21,10 +21,18 @@ export default defineConfig({
           cloudflareTest(async () => {
             const migrations = await readD1Migrations('./migrations');
             return {
-              wrangler: { configPath: './wrangler.jsonc' },
+              wrangler: { configPath: './test/wrangler.vitest.jsonc' },
+              // This file lives under test/ so Wrangler cannot load the repository-root .dev.vars.
               // ANALYTICS_SQL is remote-only; tests must not need Cloudflare sign-in or the network.
               remoteBindings: false,
               miniflare: {
+                // The keyset suite needs a fresh D1 database for each singleton/retention scenario.
+                d1Databases: Object.fromEntries(
+                  Array.from({ length: 32 }, (_, index) => [
+                    `KEYSET_TEST_DB_${index}`,
+                    `credential-keyset-test-${index}`,
+                  ]),
+                ),
                 // Tests never read .dev.vars or real secrets: fixtures are generated at setup.
                 bindings: {
                   TEST_MIGRATIONS: migrations,
@@ -49,6 +57,9 @@ export default defineConfig({
         test: {
           name: 'worker',
           include: ['src/worker/**/*.test.ts', 'test/**/*.test.ts'],
+          // A race test runs several D1 batches in workerd; on a shared CI runner that passes 5 s.
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
           setupFiles: [
             './test/setup/block-network.ts',
             './test/setup/check-responses.ts',
@@ -61,8 +72,11 @@ export default defineConfig({
         test: {
           name: 'web',
           environment: 'jsdom',
+          environmentOptions: { jsdom: { url: 'http://localhost:5173' } },
           include: ['src/web/**/*.test.{ts,tsx}'],
           setupFiles: ['./vitest.setup.web.ts'],
+          // Node 25+ defines an empty global localStorage that shadows jsdom's.
+          execArgv: ['--no-experimental-webstorage'],
           css: false,
           // Same reason: lazy route imports are slow while the worker project saturates the CPU.
           testTimeout: 30_000,
@@ -77,12 +91,15 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/generated/**', '**/*.test.*'],
       // Per area, so each coverage run (node projects, worker project) checks the files it measures.
-      thresholds: {
-        'src/worker/**': { lines: 90, branches: 80 },
-        'src/web/**': { lines: 85, branches: 75 },
-        'src/passkit/**': { lines: 88, branches: 80 },
-        'src/shared/**': { lines: 90, branches: 80 },
-      },
+      // A CI shard covers part of the suite; thresholds apply when the shards' blobs are merged.
+      thresholds: process.env.COVERAGE_SHARD
+        ? {}
+        : {
+            'src/worker/**': { lines: 90, branches: 80 },
+            'src/web/**': { lines: 85, branches: 75 },
+            'src/passkit/**': { lines: 88, branches: 80 },
+            'src/shared/**': { lines: 90, branches: 80 },
+          },
     },
   },
 });

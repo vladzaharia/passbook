@@ -5,7 +5,11 @@ import { createApp } from '../../app.ts';
 import { CRON_HOOKS, DAILY_CRON, MINUTE_CRON } from '../../jobs/cron.ts';
 import { CRON_QUERY_BUDGET } from '../../jobs/query-counter.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { buildDisplay, historyStatements } from './display.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
+import { buildDisplay } from './display.ts';
+import { isFinalizedDisplayHistory, prepareDisplayHistory } from './scan-display-history.ts';
 
 const ORIGIN = 'https://wallet.test';
 const fake = fakeAuth(ORIGIN);
@@ -13,14 +17,25 @@ const app = createApp({ stores: fake.stores });
 const call = (path: string, headers: Record<string, string> = {}) =>
   app.request(`${ORIGIN}${path}`, { headers }, env as AppEnv);
 
-/** The console routers (scanners, scan-events, scans) have their own tests; these are still empty. */
-const MOUNTS = ['/api/v1/scan', '/api/v1/scan-staff', '/api/v1/scan-display', '/api/v1/nfc'];
+/**
+ * Unknown paths on the scanner mounts are 404 problems. The console staff router guards every path
+ * with a tenant session, like the other console routers, so an anonymous request is a 401 first.
+ */
+const MOUNTS = [
+  ['/api/v1/scan', 404],
+  ['/api/v1/scan-staff', 401],
+  ['/api/v1/scan-display', 404],
+  ['/api/v1/nfc', 404],
+] as const;
 
 describe('scanner routers', () => {
-  it.each(MOUNTS)('%s is mounted and empty: unknown paths are a 404 problem', async (mount) => {
-    for (const headers of [{}, fake.admin()]) {
+  it.each(MOUNTS)('%s is mounted: unknown paths are a 404 problem', async (mount, anonymous) => {
+    for (const [headers, status] of [
+      [{}, anonymous],
+      [fake.admin(), 404],
+    ] as const) {
       const res = await call(`${mount}/nothing-here`, headers);
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(status);
       expect(res.headers.get('content-type')).toContain('application/problem+json');
     }
   });
@@ -38,6 +53,7 @@ describe('scanner routers', () => {
         '/api/v1/scan/actions',
         '/api/v1/scan/resolve',
         '/api/v1/scan/session',
+        '/api/v1/scan-display/preview',
       ]),
     );
   });
@@ -66,8 +82,7 @@ describe('scan cron hooks', () => {
         },
       }),
     } as unknown as AppEnv;
-    const { createServiceContext } = await import('../../platform/service-context.ts');
-    const ctx = createServiceContext(counted);
+    const ctx = jobCtxOf({ ctx: createServiceContext(counted) });
     const hooks = [MINUTE_CRON, DAILY_CRON]
       .flatMap((cron) => CRON_HOOKS[cron] ?? [])
       .filter((h) => h.name.startsWith('scan.'));
@@ -77,10 +92,10 @@ describe('scan cron hooks', () => {
   });
 });
 
-describe('display stub (C17)', () => {
+describe('display without a template', () => {
   const actor = {} as never;
   const ctx = {} as never;
-  it('is identity-only for a known pass and null otherwise', () => {
+  it('uses a generic identity when the title provenance is unknown, and null without a pass', () => {
     const display = buildDisplay(ctx, {
       actor,
       pass: { id: 'p1', title: 'Anna Popescu' },
@@ -88,23 +103,52 @@ describe('display stub (C17)', () => {
     });
     expect(display).toMatchObject({
       screen: 'ok',
-      identity: { holder: 'Anna Popescu', initials: 'AP' },
+      identity: { holder: 'Pass', initials: 'P' },
       panels: [],
     });
     expect(buildDisplay(ctx, { actor, pass: null, screen: 'refused' })).toBeNull();
   });
 
-  it('historyStatements returns no statements', () => {
-    const reader = historyStatements(
-      {} as never,
-      { history: [], ledger: [] },
-      {
-        passId: 'p1',
-        orgId: 'o1',
-        timeZone: 'UTC',
-        now: 0,
-      },
+  it('binds even empty display history to output authority and its original scope', async () => {
+    const credentialKeysetCommitment = await credentialRefKeysetCommitment(env);
+    const historyActor = {
+      principal: 'scanner',
+      orgId: 'o1',
+      mode: 'live',
+      actorKey: 's:scanner',
+      actor: { type: 'scanner', id: 'scanner' },
+      role: 'door',
+      timeZone: 'UTC',
+      templateIds: [],
+      credentialKeysetCommitment,
+    };
+    const found = {
+      pass: { id: 'p1', orgId: 'o1', mode: 'live', templateId: 'tpl1' },
+      credentialKeysetCommitment,
+    };
+    const service = createServiceContext(env as AppEnv);
+    const plan = await prepareDisplayHistory(service, historyActor as never, found as never, {
+      history: [],
+      ledger: [],
+    });
+    const denied = plan.bind(service.clock.now(), { sql: '0', params: [] });
+    expect(denied.stmts).toHaveLength(1);
+    expect(denied.finalize(await env.DB.batch(denied.stmts))).toBeNull();
+
+    const incomplete = plan.bind(service.clock.now(), { sql: '1', params: [] });
+    expect(incomplete.stmts).toHaveLength(1);
+    expect(incomplete.finalize([])).toBeNull();
+    const bound = plan.bind(service.clock.now(), { sql: '1', params: [] });
+    const results = await env.DB.batch(bound.stmts);
+    const history = bound.finalize(results);
+    expect(bound.finalize(results)).toBeNull();
+    expect(history?.value).toEqual({});
+    expect(isFinalizedDisplayHistory(history, historyActor as never, found as never)).toBe(true);
+    expect(isFinalizedDisplayHistory(history, { ...historyActor } as never, found as never)).toBe(
+      false,
     );
-    expect(reader.stmts).toEqual([]);
+    expect(isFinalizedDisplayHistory({ value: {} }, historyActor as never, found as never)).toBe(
+      false,
+    );
   });
 });

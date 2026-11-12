@@ -7,9 +7,19 @@ import {
   OkSchema,
   SendBundleEmailSchema,
 } from '../../../shared/contracts/index.ts';
-import { methodScope, modeOf, requireApiKeyOrAdmin } from '../../platform/auth.ts';
+import { methodScope, modeOf } from '../../platform/auth.ts';
+import { ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { actorFor, assertOrg, authOf, orgScopeOf, passScopeOf, svc } from '../passes/http.ts';
+import { idempotencyKeyOf } from '../delivery/idempotent-send.ts';
+import {
+  actorFor,
+  assertOrg,
+  authOf,
+  passScopeOf,
+  requireTenantSessionOrApiKey,
+  svc,
+  tenantAuthorityOf,
+} from '../passes/http.ts';
 import {
   createBundle,
   deleteBundle,
@@ -23,7 +33,7 @@ import {
 export const bundlesRoutes = createRouter();
 guard(
   bundlesRoutes,
-  requireApiKeyOrAdmin(methodScope({ read: 'passes:read', write: 'passes:write' })),
+  requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
 );
 
 register(
@@ -38,11 +48,15 @@ register(
   },
   async (c) => {
     const q = c.req.valid('query');
-    if (q.orgId) assertOrg(c, q.orgId);
+    const auth = authOf(c);
+    const orgId = q.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
+    if (!orgId)
+      throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
+    assertOrg(c, orgId);
+    await tenantAuthorityOf(svc(c), auth, orgId, 'passes:read');
     return c.json(
       await listBundles(svc(c), {
-        orgScope: orgScopeOf(c),
-        orgId: q.orgId,
+        orgId,
         mode: modeOf(authOf(c)),
         passId: q.passId,
         cursor: q.cursor,
@@ -66,7 +80,13 @@ register(
   async (c) => {
     const body = c.req.valid('json');
     assertOrg(c, body.orgId);
-    return c.json(await createBundle(svc(c), actorFor(c), modeOf(authOf(c)), body), 201);
+    return c.json(
+      await createBundle(svc(c), actorFor(c), modeOf(authOf(c)), body, {
+        kind: 'tenant',
+        auth: authOf(c),
+      }),
+      201,
+    );
   },
 );
 
@@ -80,7 +100,8 @@ register(
     params: IdParamSchema,
     response: BundleSchema,
   },
-  async (c) => c.json(await getBundleDto(svc(c), c.req.valid('param').id, passScopeOf(c))),
+  async (c) =>
+    c.json(await getBundleDto(svc(c), c.req.valid('param').id, passScopeOf(c), authOf(c))),
 );
 
 register(
@@ -89,7 +110,7 @@ register(
   {
     method: 'post',
     path: '/{id}/send-email',
-    summary: 'Email the bundle link',
+    summary: 'Email the bundle link (Idempotency-Key supported)',
     params: IdParamSchema,
     body: SendBundleEmailSchema,
     status: 202,
@@ -102,6 +123,8 @@ register(
       c.req.valid('param').id,
       c.req.valid('json'),
       passScopeOf(c),
+      { kind: 'tenant', auth: authOf(c) },
+      idempotencyKeyOf(c.req.header('idempotency-key')),
     );
     return c.json({ ok: true as const }, 202);
   },
@@ -118,7 +141,12 @@ register(
     response: BundleSchema,
   },
   async (c) =>
-    c.json(await rotateBundleLink(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c))),
+    c.json(
+      await rotateBundleLink(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c), {
+        kind: 'tenant',
+        auth: authOf(c),
+      }),
+    ),
 );
 
 register(
@@ -132,7 +160,10 @@ register(
     response: OkSchema,
   },
   async (c) => {
-    await deleteBundle(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c));
+    await deleteBundle(svc(c), actorFor(c), c.req.valid('param').id, passScopeOf(c), {
+      kind: 'tenant',
+      auth: authOf(c),
+    });
     return c.json({ ok: true as const });
   },
 );

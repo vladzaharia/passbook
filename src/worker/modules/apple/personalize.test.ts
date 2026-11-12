@@ -1,13 +1,19 @@
 import * as asn1 from 'asn1js';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
+import { fakeAuth, persistTemplate } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import { createPassRow } from '../passes/create.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { publishPass } from '../passes/publish.ts';
-import { getPass, type Pass } from '../passes/repo.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import type { Pass } from '../passes/repo.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
+import { devicePrincipal } from './repo-credential.ts';
 
 const ORIGIN = 'https://wallet.test';
 const TYPE = 'pass.im.plrs.wallet';
@@ -16,6 +22,8 @@ let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await setupKit();
+  // Publishing revalidates the keyset, and only an empty reference store may initialize it.
+  await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   app = createApp({ stores: fakeAuth(ORIGIN).stores });
 });
 
@@ -42,20 +50,19 @@ describe('personalize', () => {
       body: payload,
     });
 
-  /** A template version that ships personalization.json, for a pass built without it. */
-  async function personalizable(): Promise<Pass> {
-    const pass = await kit.pass();
-    icon = new Uint8Array(
+  async function personalizable(mode: 'live' | 'test' = 'live'): Promise<Pass> {
+    const icon = new Uint8Array(
       await new Response(await kit.registry.openAsset(kit.template, 'icon.png')).arrayBuffer(),
     );
-    kit.registry.add({
-      id: kit.template.id,
+    const template = kit.registry.add({
+      id: `personalizable-${kit.ctx.ids.token(8)}`,
       orgId: kit.template.orgId,
       version: kit.template.version,
       manifest: kit.template.manifest,
       passJson: kit.template.passJson,
       assets: {
         'icon.png': icon,
+        'personalizationLogo.png': icon,
         'personalization.json': new TextEncoder().encode(
           JSON.stringify({
             description: 'Join',
@@ -67,26 +74,34 @@ describe('personalize', () => {
         ),
       },
     });
+    await persistTemplate(kit.fx, template, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      templateId: template.id,
+      version: template.version,
+      mode,
+    });
+    // The build refuses personalization.json unless the signing identity is NFC-entitled.
+    await run(kit.env.DB, 'UPDATE signing_identities SET nfc_enabled = 1 WHERE 1 = 1');
+    const pass = await createPassRow(jobCtxOf(kit), {
+      orgId: kit.org.id,
+      templateId: template.id,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
+      input: { memberName: 'Alex Morgan' },
+      holderEmail: null,
+      source: 'manual',
+      mode,
+      execution: { kind: 'system' },
+      actor: { type: 'system', id: null },
+    });
     await run(kit.env.DB, 'UPDATE signing_identities SET nfc_enabled = 1 WHERE id = ?', [
       pass.identityId,
     ]);
     return pass;
   }
-  let icon = new Uint8Array();
-  const restore = async () => {
-    if (icon.length > 0)
-      kit.registry.add({
-        id: kit.template.id,
-        orgId: kit.template.orgId,
-        version: kit.template.version,
-        manifest: kit.template.manifest,
-        passJson: kit.template.passJson,
-        assets: { 'icon.png': icon },
-      });
-    await run(kit.env.DB, 'UPDATE signing_identities SET nfc_enabled = 0 WHERE 1 = 1');
-  };
 
-  afterEach(() => restore());
+  afterEach(() => run(kit.env.DB, 'UPDATE signing_identities SET nfc_enabled = 0 WHERE 1 = 1'));
 
   it('is 404 without NFC or a personalizing template, and needs no ApplePass header', async () => {
     const pass = await kit.pass();
@@ -100,6 +115,31 @@ describe('personalize', () => {
       body: body(),
     });
     expect(unknown.status).toBe(404);
+  });
+
+  it('does not personalize a quarantined test pass', async () => {
+    const blocked = await personalizable('test');
+    const normal = await personalizable();
+    await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [blocked.id]);
+    const denied = await post(blocked);
+    const unknown = await call(`/passes/${TYPE}/nope/personalize`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: body(),
+    });
+    expect(denied.status).toBe(404);
+    // Only the per-request id may differ between the two problem documents.
+    const withoutRequestId = async (response: Response) => ({
+      ...(await response.json<Record<string, unknown>>()),
+      requestId: undefined,
+    });
+    expect(await withoutRequestId(denied)).toEqual(await withoutRequestId(unknown));
+    expect(
+      await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [
+        blocked.id,
+      ]),
+    ).toBeNull();
+    expect((await post(normal)).status).toBe(200);
   });
 
   it('stores the info encrypted, republishes the pass and returns a CMS signature of the token', async () => {
@@ -122,11 +162,13 @@ describe('personalize', () => {
     ).not.toContain('sam.lee');
     const after = await getPass(kit.env.DB, pass.id);
     expect(after?.version).toBe(pass.version + 1);
+    expect(after?.templateVersion).toBe(pass.templateVersion);
+    expect(after?.releaseId).toBe(pass.releaseId);
     const object = await kit.env.BUCKET.get(after?.objectKey ?? '');
     const bytes = new TextDecoder('latin1').decode(await object?.arrayBuffer());
     expect(bytes).not.toContain('personalization.json');
     // Later publishes (admin edit, upgrade, reissue) must keep personalization.json out.
-    await publishPass(kit.ctx, {
+    await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'admin',
       actor: { type: 'system', id: null },
@@ -145,6 +187,30 @@ describe('personalize', () => {
     );
     expect(audit).toHaveLength(1);
     expect(audit[0]?.detail).not.toContain('sam.lee');
+  });
+
+  it('republishes under the device grant: a request context needs no job grant, a wrong credential is refused', async () => {
+    const pass = await personalizable();
+    const republish = (authToken: string) =>
+      publishPass(kit.ctx, {
+        passId: pass.id,
+        cause: 'user_refresh',
+        actor: { type: 'system', id: null },
+        holder: devicePrincipal({ ...pass, authToken }),
+        force: true,
+      });
+    await expect(republish('0'.repeat(64))).rejects.toMatchObject({ status: 409 });
+    expect((await getPass(kit.env.DB, pass.id))?.version).toBe(pass.version);
+    await expect(republish(pass.authToken)).resolves.toMatchObject({ changed: true });
+    expect((await getPass(kit.env.DB, pass.id))?.version).toBe(pass.version + 1);
+    await expect(
+      publishPass(kit.ctx, {
+        passId: pass.id,
+        cause: 'user_refresh',
+        actor: { type: 'system', id: null },
+        force: true,
+      }),
+    ).rejects.toMatchObject({ code: 'GRANT_NOT_JOB' });
   });
 
   it('answers a retry with the same token without republishing, and refuses another token', async () => {

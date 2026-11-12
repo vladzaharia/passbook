@@ -1,5 +1,5 @@
 import { unzipSync } from 'fflate';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   createFakeApns,
   createFakeMailer,
@@ -11,17 +11,20 @@ import { sha1Hex } from '../../../passkit/sign/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
 import { basicPackage, zipOf } from '../templates/package/fixtures.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
-import { syncBakedTemplates } from '../templates/sync.ts';
+import { requireApprovedRelease } from '../templates/releases.ts';
+import { generatedSource, resetBakedSync, syncBakedTemplates } from '../templates/sync.ts';
 import { bakedFrom, fakeAssets, importZip, sourceOf } from '../templates/testing.ts';
+import { approveAppleRelease } from './apple-release-test-fixtures.ts';
 import { putPassAsset } from './asset-service.ts';
 import { createPassRow } from './create.ts';
 import { overrideDeps } from './deps.ts';
-import { getPass } from './repo.ts';
+import { expectValidZip, ICON_PNG } from './pass-test-fixtures.ts';
+import { getPass } from './repo-read-pass.ts';
 import { updatePass } from './service.ts';
-import { expectValidZip, ICON_PNG } from './test-kit.ts';
 
 /** No fake registry: templates come from D1/R2 (uploaded) and the ASSETS binding (baked). */
 let env: AppEnv;
@@ -30,14 +33,26 @@ let ctx: ServiceContext;
 let orgId: string;
 const assets = fakeAssets();
 const actor = { type: 'system', id: null } as const;
+const previousSource = { ...generatedSource };
 
 beforeAll(async () => {
   clock = new ManualClock(Date.now());
-  env = await makeEnv({ ASSETS: assets });
+  const baked = await bakedFrom('starter-e2e', basicPackage(), { name: 'Starter E2E' });
+  for (const [path, bytes] of baked.files) assets.files.set(path, bytes);
+  Object.assign(generatedSource, sourceOf([baked], 'e2e-registry'));
+  resetBakedSync();
+  env = await makeEnv({
+    ASSETS: assets,
+    CF_VERSION: { id: 'registry-base', tag: '', timestamp: new Date(clock.now()).toISOString() },
+  });
   ctx = createServiceContext(env, { clock });
   overrideDeps(env, { apns: createFakeApns(), mailer: createFakeMailer() });
   await ensurePlatformIdentity(env, clock.now());
   orgId = (await makeOrg(fixtures(env, clock), { name: 'E2E Gym' })).id;
+}, 60_000);
+afterAll(() => {
+  Object.assign(generatedSource, previousSource);
+  resetBakedSync();
 });
 
 async function checkStored(passId: string) {
@@ -66,18 +81,33 @@ describe('registry to pkpass', () => {
       zip: zipOf(basicPackage()),
       name: 'Uploaded E2E',
     });
-    const pass = await createPassRow(ctx, {
+    if (!imported.result) throw new Error('Template import failed');
+    const release = await approveAppleRelease(
+      { ctx, fx: fixtures(env, clock) },
+      {
+        orgId,
+        templateId: imported.result.templateId,
+        version: imported.result.version,
+      },
+    );
+    const pass = await createPassRow(jobCtxOf({ ctx }), {
       orgId,
-      templateId: imported.result?.templateId ?? '',
+      templateId: imported.result.templateId,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
       input: {},
       source: 'manual',
+      mode: 'live',
+      execution: { kind: 'system' },
       actor,
     });
+    expect(pass.releaseId).toBe(release.id);
     await checkStored(pass.id);
-    await putPassAsset(ctx, actor, pass.id, 'icon.png', ICON_PNG, null);
+    await putPassAsset(jobCtxOf({ ctx }), actor, pass.id, 'icon.png', ICON_PNG, null);
     const republished = await checkStored(pass.id);
     expect(republished?.version).toBe(2);
-  });
+  }, 60_000);
 
   it('drops expirationDate from the signed pass.json once the input is cleared', async () => {
     const manifest = {
@@ -108,13 +138,28 @@ describe('registry to pkpass', () => {
       zip: zipOf(basicPackage({ 'wallet.template.json': JSON.stringify(manifest) })),
       name: 'Expiry E2E',
     });
-    const pass = await createPassRow(ctx, {
+    if (!imported.result) throw new Error('Template import failed');
+    const release = await approveAppleRelease(
+      { ctx, fx: fixtures(env, clock) },
+      {
+        orgId,
+        templateId: imported.result.templateId,
+        version: imported.result.version,
+      },
+    );
+    const pass = await createPassRow(jobCtxOf({ ctx }), {
       orgId,
-      templateId: imported.result?.templateId ?? '',
+      templateId: imported.result.templateId,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
       input: { name: 'Alex', expirationDate: '2030-01-01T00:00:00Z' },
       source: 'manual',
+      mode: 'live',
+      execution: { kind: 'system' },
       actor,
     });
+    expect(pass.releaseId).toBe(release.id);
     const passJsonOf = async (id: string) => {
       const row = await getPass(env.DB, id);
       const object = await env.BUCKET.get(row?.objectKey ?? '');
@@ -123,25 +168,35 @@ describe('registry to pkpass', () => {
     };
     expect((await passJsonOf(pass.id)).expirationDate).toBe('2030-01-01T00:00:00Z');
 
-    await updatePass(ctx, actor, pass.id, { input: { expirationDate: null } }, { scope: null });
+    await updatePass(
+      jobCtxOf({ ctx }),
+      actor,
+      pass.id,
+      { input: { expirationDate: null } },
+      { scope: null },
+    );
     const after = await passJsonOf(pass.id);
     expect(after).not.toHaveProperty('expirationDate');
     expect(after.description).toBeDefined();
-  });
+  }, 60_000);
 
   it('builds a pass from a baked template served by the ASSETS binding', async () => {
-    const baked = await bakedFrom('starter-e2e', basicPackage(), { name: 'Starter E2E' });
-    for (const [path, bytes] of baked.files) assets.files.set(path, bytes);
-    const source = sourceOf([baked], 'e2e');
-    await syncBakedTemplates(ctx, source);
-    overrideDeps(env, { registry: createTemplateRegistry(env, { source, ctx }) });
-    const pass = await createPassRow(ctx, {
+    await syncBakedTemplates(ctx);
+    overrideDeps(env, { registry: createTemplateRegistry(env, { ctx }) });
+    const release = await requireApprovedRelease(ctx, 'baked:starter-e2e', orgId, 'live', 'apple');
+    const pass = await createPassRow(jobCtxOf({ ctx }), {
       orgId,
       templateId: 'baked:starter-e2e',
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
       input: {},
       source: 'manual',
+      mode: 'live',
+      execution: { kind: 'system' },
       actor,
     });
+    expect(pass.releaseId).toBe(release.id);
     await checkStored(pass.id);
-  });
+  }, 60_000);
 });

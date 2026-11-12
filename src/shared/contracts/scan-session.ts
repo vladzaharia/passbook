@@ -29,6 +29,10 @@ const SessionTemplateSchema = z.object({
   actions: z.array(z.object({ id: z.string(), label: z.string(), kind: ScanActionKindSchema })),
 });
 const SessionStaffSchema = z.object({ id: IdSchema, name: z.string(), role: ScanRoleSchema });
+
+/** `GET /scan/staff?q=`: people matching a name, when the sign-in roster was cut. */
+export const ScanStaffSearchSchema = z.object({ items: z.array(SessionStaffSchema) });
+
 export const ScanBrandingSchema = z.strictObject({
   accent: OrgBrandingSchema.shape.accent.unwrap().nullable(),
   logo: BrandingImageSchema.nullable(),
@@ -73,6 +77,8 @@ export const ScanSessionSchema = z.object({
   staff: SessionStaffSchema.nullable(),
   /** Only when staff sign-in is on. */
   staffList: z.array(SessionStaffSchema).nullable(),
+  /** The roster was cut: search it with `GET /scan/staff?q=`. */
+  staffTruncated: z.boolean().optional(),
   approvals: z.boolean(),
   csrfToken: z.string().nullable(),
   undoWindowMinutes: z.number().int(),

@@ -1,25 +1,24 @@
 import type { Personalization } from '../../../passkit/types.ts';
-import { writeEvent } from '../../platform/analytics.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
-import { enqueuePassEmail } from '../delivery/service.ts';
 import { recordPassEvent } from '../events/record.ts';
-import { getPlatformSettings } from '../settings/service.ts';
-import { createPassRow } from './create.ts';
-import { detailOf, linksOf, toSummary } from './detail.ts';
+import { ensureCredentialRefKeyset } from './credential-keyset.ts';
+import { currentSummary, detailOf, toSummary } from './detail.ts';
+import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
+import { requestRefresh } from './pass-service-refresh.ts';
 import { type Mutation, publishPass } from './publish.ts';
 import {
-  claimRefresh,
+  type ConnectionPassContext,
   type FieldSources,
-  getPass,
   listPasses,
-  pendingPushId,
-  setDownloadToken,
   softDeletePass,
 } from './repo.ts';
+import { softDeletePassGranted } from './repo-pass-grants.ts';
+import { captureConnectionTransferPending, connectionForPass } from './repo-read-connection.ts';
+import { getPass, pendingPushId } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
 
 /** Workstream d owns this module; e, f and others call these. Keep the signatures. */
@@ -30,8 +29,6 @@ export interface Actor {
 
 const causeOf = (actor: Actor) => (actor.type === 'api_key' ? 'api' : 'admin');
 const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-
-export { createPassRow };
 
 export async function listPassSummaries(
   ctx: ServiceContext,
@@ -55,15 +52,62 @@ export async function updatePass(
   actor: Actor,
   passId: string,
   patch: PassPatch,
-  options: { scope: ScopeArg; ifMatch?: number },
+  options: { scope: ScopeArg; ifMatch?: number; authority?: TenantPassWrite },
 ) {
+  let resetContext: ConnectionPassContext | undefined;
+  if (patch.resetToConnection?.length) {
+    const pass = await getPassForWrite(ctx.env.DB, passId, options.scope);
+    if (pass.mode !== 'live')
+      throw new ConflictError('Connections are only available in Live mode.', 'MODE_MISMATCH');
+    if (
+      !pass.connectionId ||
+      !pass.externalRef ||
+      pass.status !== 'active' ||
+      pass.removedAt !== null
+    )
+      throw new ConflictError(
+        'The pass is not linked to an active connection.',
+        'PASS_CONNECTION_MISMATCH',
+      );
+    const connection = await connectionForPass(
+      ctx.env.DB,
+      pass.connectionId,
+      pass.orgId,
+      pass.mode,
+    );
+    if (!connection) throw new ConflictError('The connection is unavailable.', 'PASS_CONFLICT');
+    const transferPending = await captureConnectionTransferPending(ctx.env.DB, pass);
+    if (transferPending !== false)
+      throw new ConflictError('The pass or connection changed. Retry.', 'PASS_CONFLICT');
+    const credentialKeysetCommitment = await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
+    resetContext = {
+      passId: pass.id,
+      orgId: pass.orgId,
+      mode: 'live',
+      status: pass.status,
+      expectedVersion: pass.version,
+      ownerUserId: pass.ownerUserId,
+      linkGeneration: pass.linkGeneration,
+      identityId: pass.identityId,
+      credentialGeneration: pass.credentialGeneration,
+      lifecycleGeneration: pass.lifecycleGeneration,
+      credentialKeysetCommitment,
+      transferPending,
+      connectionId: pass.connectionId,
+      externalRef: pass.externalRef,
+      generation: connection.generation,
+      expectedConnectionMode: connection.mode,
+    };
+  }
   const changedKeys: string[] = [];
   const result = await publishPass(ctx, {
     passId,
     orgScope: options.scope,
     cause: causeOf(actor),
     actor,
+    ...(options.authority ? { authority: options.authority } : {}),
     ...(options.ifMatch !== undefined ? { expectedVersion: options.ifMatch } : {}),
+    ...(resetContext ? { connectionContext: resetContext } : {}),
     notify: patch.notify === true,
     mutate: (current): Mutation => {
       changedKeys.length = 0;
@@ -81,7 +125,7 @@ export async function updatePass(
       return {
         personalization,
         fieldSources,
-        ...(patch.templateVersion ? { templateVersion: patch.templateVersion } : {}),
+        ...(patch.templateVersion !== undefined ? { templateVersion: patch.templateVersion } : {}),
         ...(patch.externalId !== undefined ? { externalId: patch.externalId } : {}),
       };
     },
@@ -100,8 +144,39 @@ export async function updatePass(
     },
   });
   if (patch.resetToConnection?.length && result.pass.connectionId)
-    await requestRefresh(ctx, passId, actor);
-  return detailOf(ctx, (await getPass(ctx.env.DB, passId)) ?? result.pass);
+    await requestRefresh(
+      ctx,
+      passId,
+      actor,
+      {
+        orgId: result.pass.orgId,
+        mode: result.pass.mode,
+        version: result.pass.version,
+        linkGeneration: result.pass.linkGeneration,
+        identityId: result.pass.identityId,
+        templateId: result.pass.templateId,
+        templateVersion: result.pass.templateVersion,
+        releaseId: result.pass.releaseId,
+        credentialGeneration: result.pass.credentialGeneration,
+        lifecycleGeneration: result.pass.lifecycleGeneration,
+        status: result.pass.status,
+        connectionId: result.pass.connectionId,
+        externalRef: result.pass.externalRef,
+        ...(resetContext
+          ? {
+              connectionGeneration: resetContext.generation,
+              connectionMode: resetContext.expectedConnectionMode,
+              credentialKeysetCommitment: resetContext.credentialKeysetCommitment,
+            }
+          : {}),
+      },
+      options.authority,
+    );
+  return detailOf(
+    ctx,
+    (await getPass(ctx.env.DB, passId, options.scope)) ?? result.pass,
+    options.authority,
+  );
 }
 
 async function setStatus(
@@ -110,6 +185,7 @@ async function setStatus(
   passId: string,
   status: 'active' | 'voided',
   scope: ScopeArg,
+  authority?: TenantPassWrite,
 ) {
   const current = await getPassForWrite(ctx.env.DB, passId, scope);
   if (current.removedAt !== null)
@@ -119,6 +195,7 @@ async function setStatus(
     orgScope: scope,
     cause: causeOf(actor),
     actor,
+    ...(authority ? { authority } : {}),
     mutate: () => ({ status }),
   });
   await recordAudit(ctx, {
@@ -136,13 +213,23 @@ async function setStatus(
     kind: status === 'voided' ? 'pass.voided' : 'pass.unvoided',
     actor,
   });
-  return toSummary(result.pass);
+  return currentSummary(ctx, result.pass, authority);
 }
 
-export const voidPass = (ctx: ServiceContext, actor: Actor, id: string, scope: ScopeArg) =>
-  setStatus(ctx, actor, id, 'voided', scope);
-export const unvoidPass = (ctx: ServiceContext, actor: Actor, id: string, scope: ScopeArg) =>
-  setStatus(ctx, actor, id, 'active', scope);
+export const voidPass = (
+  ctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  scope: ScopeArg,
+  authority?: TenantPassWrite,
+) => setStatus(ctx, actor, id, 'voided', scope, authority);
+export const unvoidPass = (
+  ctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  scope: ScopeArg,
+  authority?: TenantPassWrite,
+) => setStatus(ctx, actor, id, 'active', scope, authority);
 
 /**
  * Voids and pushes, then soft-deletes. The voided pass stays available to registered devices
@@ -153,6 +240,7 @@ export async function deletePass(
   actor: Actor,
   passId: string,
   scope: ScopeArg,
+  authority?: TenantPassWrite,
 ): Promise<void> {
   let pass = await getPassForWrite(ctx.env.DB, passId, scope);
   if (pass.status === 'active') {
@@ -162,6 +250,7 @@ export async function deletePass(
         orgScope: scope,
         cause: causeOf(actor),
         actor,
+        ...(authority ? { authority } : {}),
         mutate: () => ({ status: 'voided' }),
       })
     ).pass;
@@ -174,7 +263,11 @@ export async function deletePass(
       }
     }
   }
-  await softDeletePass(ctx.env.DB, pass.id, ctx.clock.now());
+  const deleted = authority
+    ? await softDeletePassGranted(ctx, pass, authority)
+    : await softDeletePass(ctx.env.DB, pass, ctx.clock.now());
+  if (!deleted)
+    throw new ConflictError('The pass or authorization changed. Retry.', 'PASS_CONFLICT');
   await recordAudit(ctx, {
     orgId: pass.orgId,
     actorType: actor.type,
@@ -183,94 +276,4 @@ export async function deletePass(
     targetType: 'pass',
     targetId: passId,
   });
-}
-
-export async function rotateLink(
-  ctx: ServiceContext,
-  actor: Actor,
-  passId: string,
-  scope: ScopeArg,
-) {
-  const pass = await getPassForWrite(ctx.env.DB, passId, scope);
-  const token = ctx.ids.token();
-  await setDownloadToken(ctx.env.DB, passId, token, ctx.clock.now());
-  await recordAudit(ctx, {
-    orgId: pass.orgId,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: 'pass.rotate_link',
-    targetType: 'pass',
-    targetId: passId,
-  });
-  await recordPassEvent(ctx, {
-    orgId: pass.orgId,
-    passId,
-    mode: pass.mode,
-    kind: 'pass.link_rotated',
-    actor,
-  });
-  const { publicUrl, downloadUrl } = linksOf(ctx, { ...pass, downloadToken: token });
-  return { publicUrl, downloadUrl };
-}
-
-export async function resendEmail(
-  ctx: ServiceContext,
-  actor: Actor,
-  passId: string,
-  input: { to?: string; attach?: boolean },
-  scope: ScopeArg,
-): Promise<void> {
-  const pass = await getPassForWrite(ctx.env.DB, passId, scope);
-  if (pass.removedAt !== null)
-    throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
-  const to = input.to ?? pass.holderEmail;
-  if (!to) throw new ValidationError('The pass has no holder email.', [], 'NO_RECIPIENT');
-  // API keys may not turn resend into a mail relay.
-  if (actor.type !== 'user' && to.toLowerCase() !== pass.holderEmail?.toLowerCase())
-    throw new ValidationError('Only the holder email can be used.', [], 'RECIPIENT_NOT_HOLDER');
-  await enqueuePassEmail(ctx, { passId, to, attach: input.attach ?? false });
-  await recordAudit(ctx, {
-    orgId: pass.orgId,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: 'pass.resend_email',
-    targetType: 'pass',
-    targetId: passId,
-  });
-}
-
-/** Claims `refresh_requested_at` (coalescing window from settings) and enqueues a `pass.refresh` job. */
-export async function requestRefresh(
-  ctx: ServiceContext,
-  passId: string,
-  actor: Actor,
-): Promise<{ requestedAt: number; coalesced: boolean; cooldownSeconds: number }> {
-  const pass = await getPass(ctx.env.DB, passId);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  const now = ctx.clock.now();
-  const settings = await getPlatformSettings(ctx);
-  const cooldownSeconds = settings['refresh.userCooldownSeconds'];
-  const windowMs = cooldownSeconds * 1000;
-  if (!(await claimRefresh(ctx.env.DB, passId, now, windowMs)))
-    return { requestedAt: pass.refreshRequestedAt ?? now, coalesced: true, cooldownSeconds };
-  await ctx.env.JOBS.send({
-    kind: 'pass.refresh',
-    passId,
-    trigger: actor.type === 'user' ? 'user' : 'admin',
-    actorId: actor.id,
-  });
-  writeEvent(ctx.env, {
-    event: 'refresh.requested',
-    orgId: pass.orgId,
-    templateId: pass.templateId,
-    mode: pass.mode,
-  });
-  return { requestedAt: now, coalesced: false, cooldownSeconds };
-}
-
-export * from './connection-passes.ts';
-
-/** Throws unless the pass exists inside the scope and may be changed from it. */
-export async function requirePass(ctx: ServiceContext, id: string, scope: ScopeArg): Promise<void> {
-  await getPassForWrite(ctx.env.DB, id, scope);
 }

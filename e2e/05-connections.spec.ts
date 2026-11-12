@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { apiAs, uid } from './helpers/api.ts';
+import { apiAs, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -12,12 +12,15 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   page,
 }) => {
   const seed = readSeed();
+  const api = await apiAs('admin');
+  const release = await requireActiveTemplateRelease(api, seed.org.id, GENERIC, 'live');
   const name = `E2E Demo ${uid('c')}`;
   const domain = `${uid('d')}.example.test`;
 
   await page.goto('/admin/connections/new');
-  await page.getByRole('combobox', { name: 'Organization', exact: true }).click();
+  await page.getByRole('combobox', { name: /^Organization filter/ }).click();
   await page.getByRole('option', { name: seed.org.name }).click();
+  await expect.poll(() => new URL(page.url()).searchParams.get('orgId')).toBe(seed.org.id);
   await page.getByText('Demo', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
@@ -47,9 +50,10 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await page.getByRole('checkbox', { name: 'Create passes for new records' }).check();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Create', exact: true }).click();
-  await page.waitForURL(/\/admin\/connections\/[0-9a-f-]+$/);
+  await page.waitForURL((url) => /^\/admin\/connections\/[0-9a-f-]+$/.test(url.pathname));
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
-  const connectionId = page.url().split('/').pop() as string;
+  expect(new URL(page.url()).searchParams.get('orgId')).toBe(seed.org.id);
+  const connectionId = new URL(page.url()).pathname.split('/').pop() as string;
 
   // The Created callout repeats Test and Sync now beside the page's own; both run the same action.
   await expect(page.getByText('Connection created', { exact: true })).toBeVisible();
@@ -67,9 +71,9 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   const firstRun = (await (await syncResponse).json()) as { workflowInstanceId: string };
   const firstBucket = Number(firstRun.workflowInstanceId.split('-').at(-1));
   expect(Number.isSafeInteger(firstBucket)).toBe(true);
-  const api = await apiAs('admin');
+  const passList = `/api/v1/passes?orgId=${encodeURIComponent(seed.org.id)}&connectionId=${encodeURIComponent(connectionId)}`;
   await expect
-    .poll(async () => (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items.length, {
+    .poll(async () => (await api.get(passList)).items.length, {
       timeout: 60_000,
     })
     .toBe(3);
@@ -86,7 +90,15 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await expect(page.getByText('Paused after repeated failures')).toBeVisible();
   await expect(page.getByText('Healthy', { exact: true })).toBeVisible();
 
-  const passes = (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items;
+  const passes = (await api.get(passList)).items;
+  for (const pass of passes) {
+    expect(pass).toMatchObject({
+      orgId: seed.org.id,
+      templateId: GENERIC,
+      templateVersion: release.version,
+      mode: 'live',
+    });
+  }
   expect(passes.map((p: { holderEmail: string }) => p.holderEmail).sort()).toEqual(
     ['m-001', 'm-002', 'm-003'].map((r) => `${r}@${domain}`),
   );
@@ -108,7 +120,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await expect
     .poll(
       async () => {
-        const list = (await api.get(`/api/v1/passes?connectionId=${connectionId}`)).items;
+        const list = (await api.get(passList)).items;
         return list.every((p: { version: number }) => p.version >= 2) ? list.length : -1;
       },
       { timeout: 60_000 },

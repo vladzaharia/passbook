@@ -1,6 +1,5 @@
 import {
   IdParamSchema,
-  PreviewBatchQuerySchema,
   PreviewBatchSchema,
   SaveVersionResponseSchema,
   SaveVersionSchema,
@@ -11,6 +10,7 @@ import {
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { setArchived, templatePackage } from './lifecycle.ts';
+import { ScopedPreviewBatchQuerySchema, TemplateScopeQuerySchema } from './route-scope.ts';
 import { previewMany, recentUploads } from './service.ts';
 import { saveVersion } from './versions.ts';
 
@@ -41,10 +41,18 @@ export function registerPreviewBatch(router: Router): void {
       method: 'get',
       path: '/previews',
       summary: 'Sample previews for several templates',
-      query: PreviewBatchQuerySchema,
+      query: ScopedPreviewBatchQuerySchema,
       response: PreviewBatchSchema,
     },
-    async (c) => c.json(await previewMany(serviceContext(c), c.var.auth, c.req.valid('query').ids)),
+    async (c) =>
+      c.json(
+        await previewMany(
+          serviceContext(c),
+          c.var.auth,
+          c.req.valid('query').ids,
+          c.req.valid('query').orgId,
+        ),
+      ),
   );
 }
 
@@ -52,7 +60,7 @@ export function registerPreviewBatch(router: Router): void {
 export function registerLifecycle(router: Router): void {
   for (const [path, summary, archived] of [
     ['/{id}/archive', 'Archive an uploaded template', true],
-    ['/{id}/restore', 'Restore an archived template', false],
+    ['/{id}/restore', 'Restore an archived template that never had a release', false],
   ] as const) {
     register(
       router,
@@ -69,11 +77,17 @@ export function registerLifecycle(router: Router): void {
     {
       method: 'get',
       path: '/{id}/package',
-      summary: 'The active version as an uploadable zip',
+      summary: 'The active version or unpublished draft as an uploadable zip',
       params: IdParamSchema,
+      query: TemplateScopeQuerySchema,
     },
     async (c) => {
-      const pkg = await templatePackage(serviceContext(c), c.var.auth, c.req.valid('param').id);
+      const pkg = await templatePackage(
+        serviceContext(c),
+        c.var.auth,
+        c.req.valid('param').id,
+        c.req.valid('query').orgId,
+      );
       return new Response(pkg.bytes, {
         headers: {
           'content-type': 'application/zip',
@@ -94,8 +108,7 @@ export function registerVersions(router: Router): void {
     {
       method: 'post',
       path: '/{id}/versions',
-      summary:
-        'Save a version from JSON (same checks as an upload); dryRun only validates and builds',
+      summary: 'Save an inactive version from JSON; dryRun only validates and builds',
       params: IdParamSchema,
       body: SaveVersionSchema,
       response: SaveVersionResponseSchema,

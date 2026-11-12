@@ -25,11 +25,12 @@ async function setup() {
   const session = await makeSession(f1, { userId: user.id });
   const org = await makeOrg(f1, { name: 'Acme' });
   const template = makeTemplate();
-  const own = async () => {
-    const pass = await makePass(f1, { orgId: org.id, template: template.resolved });
-    await run(h.env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [user.id, pass.id]);
-    return pass;
-  };
+  const own = () =>
+    makePass(f1, {
+      orgId: org.id,
+      template: template.resolved,
+      ownerUserId: user.id,
+    });
   return { user, session, own };
 }
 

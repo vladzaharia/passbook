@@ -45,6 +45,7 @@ export function scannerColumns(
   a: ScannerActions,
   now: number,
   eventName: (id: string) => string | undefined,
+  canManage: boolean,
 ): ColumnDef<ScannerDto, never>[] {
   return [
     {
@@ -129,6 +130,7 @@ export function scannerColumns(
       header: () => <span className="sr-only">Actions</span>,
       id: 'actions',
       cell: ({ row }) => {
+        if (!canManage) return null;
         const s = row.original;
         const menu = scannerActions(s, a);
         // A scanner nobody has paired shows the safe action as a button, the rest in the menu.

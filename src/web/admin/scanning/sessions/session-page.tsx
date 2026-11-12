@@ -1,33 +1,16 @@
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Copy, Pause, Play, Plus, ScanLine, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
-import { revokeScannerConfirm } from '@/web/lib/confirms.ts';
 import {
-  Badge,
-  Button,
-  CheckboxField,
-  ConfirmDialog,
-  DropdownMenuItem,
-  detailError,
-  EmptyState,
-  MoreMenu,
-  PageHeader,
-  SkeletonDetail,
-  StatusPill,
-  TwoPane,
-  toast,
-} from '@/web/ui/index.ts';
-import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
-import { useScanner } from '../queries.ts';
-import { PairDialog } from '../scanners/scanner-dialogs.tsx';
-import { AddDeviceDialog } from './add-device-dialog.tsx';
-import { useRevokeSessionDevice, useScanningSession, useUpdateSession } from './api.ts';
-import { DeviceCard } from './device-card.tsx';
-import { DeviceSheet } from './device-sheet.tsx';
-import { SessionActivity } from './session-activity.tsx';
-import { NewSessionDialog, SessionRulesDialog } from './session-dialog.tsx';
-import { SessionSummary } from './session-summary.tsx';
+  type ScanningSession,
+  ScanningSessionDetailSchema,
+} from '@/shared/contracts/scanning-sessions.ts';
+import { api } from '@/web/lib/api.ts';
+import { useOrgScope, useResourceOrg } from '@/web/lib/org-filter.tsx';
+import { DetailNotFound, detailError, PageHeader, SkeletonDetail } from '@/web/ui/index.ts';
+import { sessionKeys } from './api.ts';
+import { SessionDetail } from './session-detail.tsx';
+import { NewSessionDialog } from './session-dialog.tsx';
 
 export function ScanningSessionPage({
   sessionId,
@@ -38,234 +21,100 @@ export function ScanningSessionPage({
   deviceId?: string;
   addDevice?: boolean;
 }) {
-  const query = useScanningSession(sessionId);
-  const update = useUpdateSession(sessionId);
-  const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | 'duplicate' | undefined>(
-    addDevice ? 'add' : undefined,
-  );
   const navigate = useNavigate();
+  const scope = useOrgScope();
+  const [duplicate, setDuplicate] = useState<ScanningSession>();
+  const canManage = Boolean(
+    scope.orgId && scope.membership?.capabilities.includes('scanning:manage'),
+  );
   useEffect(() => {
-    if (addDevice)
-      void navigate({
-        to: '.',
-        search: (prev) => ({ ...prev, addDevice: undefined }),
-        replace: true,
-      });
-  }, [addDevice, navigate]);
-  const [selected, setSelected] = useState<string | undefined>(deviceId);
-  const [pairing, setPairing] = useState<string>();
-  const [revoking, setRevoking] = useState<ScanningDevice>();
-  const [showRevoked, setShowRevoked] = useState(false);
-  const s = query.data;
-  const device = s?.devices.find((d) => d.id === selected);
-  const crumbs = [{ label: 'Scanning', to: '/admin/scanning' }, { label: s?.name ?? 'Session' }];
-  if (query.isError)
-    return detailError(query, {
-      entity: 'scanner',
-      to: '/admin/scanning',
-      header: <PageHeader title="Scanning session" breadcrumbs={crumbs} />,
-    });
-  if (!s)
-    return (
-      <>
-        <PageHeader title="Scanning session" breadcrumbs={crumbs} />
-        <SkeletonDetail label="Loading scanning session" />
-      </>
-    );
-  const active = s.status === 'active';
-  const devices = s.devices.filter((d) => showRevoked || !d.revoked);
-  async function change(status: 'active' | 'paused' | 'ended') {
-    try {
-      await update.mutateAsync({ status, revision: s?.updatedAt });
-    } catch (error) {
-      toast.error(error, 'Could not change session');
-    }
-  }
+    if (!scope.isLoading && (scope.isError || !canManage)) setDuplicate(undefined);
+  }, [canManage, scope.isError, scope.isLoading]);
   return (
     <>
-      <PageHeader
-        title={s.name}
-        breadcrumbs={crumbs}
-        description={s.orgName}
-        meta={
-          <>
-            <StatusPill
-              status={s.status}
-              tone={active ? 'success' : s.status === 'paused' ? 'warning' : 'neutral'}
-            >
-              {active ? 'Running' : s.status === 'paused' ? 'Paused' : 'Ended'}
-            </StatusPill>
-            <ModePill mode={s.mode} />
-            <span>
-              {s.onlineCount} online · {s.deviceCount} devices · {s.today} scans today
-            </span>
-          </>
-        }
-        actions={
-          <>
-            <Button
-              iconStart={<Plus aria-hidden />}
-              disabled={!active}
-              onClick={() => setDialog('add')}
-            >
-              Add device
-            </Button>
-            <Button
-              variant="outline"
-              iconStart={<ScanLine aria-hidden />}
-              disabled={!active}
-              asChild
-            >
-              <a
-                href={`/scan?admin=1&orgId=${encodeURIComponent(s.orgId)}&sessionId=${encodeURIComponent(s.id)}`}
-              >
-                Scan as Admin
-              </a>
-            </Button>
-            <MoreMenu>
-              <DropdownMenuItem onSelect={() => void change(active ? 'paused' : 'active')}>
-                {active ? <Pause aria-hidden /> : <Play aria-hidden />}
-                {active ? 'Pause session' : 'Resume session'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setDialog('duplicate')}>
-                <Copy aria-hidden />
-                Duplicate session
-              </DropdownMenuItem>
-              {s.status !== 'ended' ? (
-                <DropdownMenuItem destructive onSelect={() => setDialog('end')}>
-                  <Square aria-hidden />
-                  End session
-                </DropdownMenuItem>
-              ) : null}
-            </MoreMenu>
-          </>
-        }
+      <SessionResource
+        key={`${sessionId}:${scope.hasExplicitOrg}:${scope.requestedOrgId ?? ''}`}
+        sessionId={sessionId}
+        deviceId={deviceId}
+        addDevice={addDevice}
+        onDuplicate={setDuplicate}
       />
-      {!active ? (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning-border bg-warning-subtle p-4">
-          <p className="text-sm">
-            {s.status === 'paused'
-              ? 'Check-ins are paused on every device.'
-              : 'This session has ended.'}
-          </p>
-          <Button
-            variant="outline"
-            loading={update.isPending}
-            onClick={() => void change('active')}
-          >
-            Resume session
-          </Button>
-        </div>
-      ) : null}
-      <TwoPane aside={<SessionSummary session={s} onEdit={() => setDialog('rules')} />}>
-        <section className="grid gap-4" aria-labelledby="session-devices-title">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2
-                id="session-devices-title"
-                className="flex items-center gap-2 text-base font-semibold"
-              >
-                Devices <Badge>{s.deviceCount}</Badge>
-              </h2>
-              <p className="mt-1 text-sm text-fg-muted">
-                Scanners and displays using this session’s rules.
-              </p>
-            </div>
-            {s.devices.some((d) => d.revoked) ? (
-              <CheckboxField
-                label="Show revoked devices"
-                checked={showRevoked}
-                onCheckedChange={(checked) => setShowRevoked(checked === true)}
-              />
-            ) : null}
-          </div>
-          {devices.length ? (
-            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-              {devices.map((d) => (
-                <DeviceCard key={d.id} device={d} onConfigure={() => setSelected(d.id)} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              art="scanner"
-              title="Add your first device"
-              description="Pair a scanner, operator or display to use this session’s rules."
-              action={
-                <Button onClick={() => setDialog('add')} disabled={!active}>
-                  Add device
-                </Button>
-              }
-            />
-          )}
-        </section>
-        <SessionActivity items={s.activity} />
-      </TwoPane>
-      {dialog === 'rules' ? (
-        <SessionRulesDialog session={s} onClose={() => setDialog(undefined)} />
-      ) : null}
-      {dialog === 'add' ? (
-        <AddDeviceDialog session={s} onClose={() => setDialog(undefined)} />
-      ) : null}
-      {dialog === 'duplicate' ? (
+      {canManage && duplicate ? (
         <NewSessionDialog
-          initial={s}
-          onClose={() => setDialog(undefined)}
-          onCreated={(id) => location.assign(`/admin/scanning/sessions/${id}`)}
-        />
-      ) : null}
-      {dialog === 'end' ? (
-        <ConfirmDialog
-          open
-          title="End scanning session?"
-          description="Check-ins stop on every device. You can resume this session later."
-          confirmLabel="End session"
-          destructive
-          onOpenChange={(open) => !open && setDialog(undefined)}
-          onConfirm={async () => {
-            await update.mutateAsync({ status: 'ended', revision: s.updatedAt });
-            setDialog(undefined);
+          initial={duplicate}
+          onClose={() => setDuplicate(undefined)}
+          onCreated={(id) => {
+            setDuplicate(undefined);
+            void navigate({
+              to: '/admin/scanning/sessions/$sessionId',
+              params: { sessionId: id },
+              search: { orgId: scope.orgId },
+            });
           }}
         />
-      ) : null}
-      {device ? (
-        <DeviceSheet
-          key={device.id}
-          device={device}
-          session={s}
-          onClose={() => setSelected(undefined)}
-          onPair={() => {
-            setSelected(undefined);
-            setPairing(device.id);
-          }}
-          onRevoke={() => {
-            setSelected(undefined);
-            setRevoking(device);
-          }}
-        />
-      ) : null}
-      {pairing ? <SessionPairDialog id={pairing} onClose={() => setPairing(undefined)} /> : null}
-      {revoking ? (
-        <SessionRevokeDialog device={revoking} onClose={() => setRevoking(undefined)} />
       ) : null}
     </>
   );
 }
-function SessionPairDialog({ id, onClose }: { id: string; onClose: () => void }) {
-  const query = useScanner(id);
-  return <PairDialog scanner={query.data} onClose={onClose} />;
-}
-function SessionRevokeDialog({ device, onClose }: { device: ScanningDevice; onClose: () => void }) {
-  const revoke = useRevokeSessionDevice(device.id);
+
+function SessionResource({
+  sessionId,
+  deviceId,
+  addDevice,
+  onDuplicate,
+}: {
+  sessionId: string;
+  deviceId: string | undefined;
+  addDevice: boolean;
+  onDuplicate: (session: ScanningSession) => void;
+}) {
+  const scope = useOrgScope();
+  const query = useQuery({
+    queryKey: sessionKeys.detail(sessionId),
+    queryFn: ({ signal }) =>
+      api.get(`/api/v1/scanning-sessions/${sessionId}`, ScanningSessionDetailSchema, { signal }),
+    refetchInterval: 5_000,
+    refetchOnMount: 'always',
+  });
+  const s = query.data;
+  const resourceScope = useResourceOrg(
+    query.isFetchedAfterMount && !query.isError ? s?.orgId : undefined,
+  );
+  const crumbs = [{ label: 'Scanning', to: '/admin/scanning' }, { label: 'Session' }];
+  const header = <PageHeader title="Scanning session" breadcrumbs={crumbs} />;
+  if (resourceScope === 'not-found') {
+    return (
+      <>
+        {header}
+        <DetailNotFound entity="scanner" to="/admin/scanning" back="scanning" />
+      </>
+    );
+  }
+  if (query.isError) {
+    return detailError(query, {
+      entity: 'scanner',
+      to: '/admin/scanning',
+      back: 'scanning',
+      header,
+    });
+  }
+  if (!s || resourceScope !== 'ready' || scope.orgId !== s.orgId) {
+    return (
+      <>
+        {header}
+        <SkeletonDetail label="Loading scanning session" />
+      </>
+    );
+  }
+  const canManage = Boolean(scope.membership?.capabilities.includes('scanning:manage'));
   return (
-    <ConfirmDialog
-      open
-      {...revokeScannerConfirm(device.name)}
-      destructive
-      onOpenChange={(open) => !open && onClose()}
-      onConfirm={async () => {
-        await revoke.mutateAsync();
-        onClose();
-      }}
+    <SessionDetail
+      key={`${s.id}:${s.orgId}:${canManage}`}
+      session={s}
+      deviceId={deviceId}
+      addDevice={addDevice}
+      canManage={canManage}
+      onDuplicate={onDuplicate}
     />
   );
 }

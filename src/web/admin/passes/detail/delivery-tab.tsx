@@ -1,13 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { DeliveryEntrySchema, type PassDetailDto } from '@/shared/contracts/passes.ts';
+import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { api } from '../../../lib/api.ts';
 import { DELIVERY_ICON } from '../../../lib/entities.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { formatDateTime } from '../../../lib/format.ts';
+import { sessionQuery } from '../../../lib/session.ts';
 import { deliveryKindLabel } from '../../../lib/status.ts';
 import {
   Button,
@@ -26,6 +28,7 @@ import {
 } from '../../../ui/index.ts';
 import { usePassActions } from '../api.ts';
 import { BundlesCard } from '../bundles-card.tsx';
+import { classifyEmailError, reportEmailError } from '../email-outcome.ts';
 import { newKey } from '../format.ts';
 
 type Entry = z.infer<typeof DeliveryEntrySchema>;
@@ -53,15 +56,16 @@ const noDevices = (e: Entry) => e.state === 'cancelled' && e.errorCode === 'NO_D
 function SendEmailCard({
   pass,
   sent,
-  foreign,
+  readOnly,
   onSent,
 }: {
   pass: PassDetailDto;
   sent: boolean;
-  foreign: boolean;
+  readOnly: boolean;
   onSent: () => void;
 }) {
   const actions = usePassActions(pass.id);
+  const client = useQueryClient();
   const [to, setTo] = useState(pass.holderEmail ?? '');
   const [attach, setAttach] = useState(false);
   const [error, setError] = useState<string>();
@@ -70,6 +74,10 @@ function SendEmailCard({
   const key = useRef(newKey());
 
   async function send() {
+    if (readOnly) return;
+    const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+    if (!before?.authenticated) return;
+    const userId = before.user.id;
     setError(undefined);
     const address = to.trim();
     try {
@@ -80,12 +88,20 @@ function SendEmailCard({
         ...(attach ? { attach: true } : {}),
         key: key.current,
       });
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!current?.authenticated || current.user.id !== userId) return;
       key.current = newKey();
       setDone((n) => n + 1);
-      toast.sent(`Email queued to ${address || pass.holderEmail}`);
+      const afterState = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!afterState?.authenticated || afterState.user.id !== userId) return;
+      toast.info(`Email queued to ${address || pass.holderEmail}`);
+      const afterToast = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!afterToast?.authenticated || afterToast.user.id !== userId) return;
       onSent();
     } catch (cause) {
-      setError(errorMessage(cause));
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!current?.authenticated || current.user.id !== userId) return;
+      setError(`${errorMessage(cause)} ${classifyEmailError(cause).action}`);
     }
   }
 
@@ -122,7 +138,7 @@ function SendEmailCard({
               iconStart={<ACTION_ICON.sendEmail aria-hidden />}
               loading={actions.resendEmail.isPending}
               done={done}
-              disabled={!to.trim() || foreign}
+              disabled={!to.trim() || readOnly}
             >
               {sent ? 'Resend email' : 'Send email'}
             </Button>
@@ -133,12 +149,16 @@ function SendEmailCard({
   );
 }
 
-export function DeliveryTab({ pass, foreign = false }: { pass: PassDetailDto; foreign?: boolean }) {
+export function DeliveryTab({ pass, readOnly }: { pass: PassDetailDto; readOnly: boolean }) {
+  const client = useQueryClient();
   const actions = usePassActions(pass.id);
   const delivery = useQuery({
-    queryKey: ['admin', 'passes', 'delivery', pass.id],
+    queryKey: ['admin', 'passes', 'delivery', pass.orgId, pass.id],
     queryFn: ({ signal }) =>
-      api.get('/api/v1/delivery', ListSchema, { query: { passId: pass.id }, signal }),
+      api.get('/api/v1/delivery', ListSchema, {
+        query: { orgId: pass.orgId, passId: pass.id },
+        signal,
+      }),
     initialData: { items: pass.deliveries },
     staleTime: 0,
   });
@@ -146,19 +166,30 @@ export function DeliveryTab({ pass, foreign = false }: { pass: PassDetailDto; fo
   const sent = items.some((d) => d.kind === 'email');
 
   async function retry(entry: Entry) {
+    if (readOnly) return;
+    const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+    if (!before?.authenticated) return;
+    const userId = before.user.id;
     try {
       if (entry.kind === 'email') await actions.resendEmail.mutateAsync({ key: newKey() });
       else await actions.refreshFromSource.mutateAsync();
-      toast.success('Retry queued');
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!current?.authenticated || current.user.id !== userId) return;
+      toast.info(entry.kind === 'email' ? 'Email queued to current holder' : 'Update requested');
+      const afterToast = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!afterToast?.authenticated || afterToast.user.id !== userId) return;
       void delivery.refetch();
     } catch (cause) {
-      toast.error(cause, 'Could not retry');
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      if (!current?.authenticated || current.user.id !== userId) return;
+      if (entry.kind === 'email') reportEmailError(cause);
+      else toast.error(cause, 'Could not retry');
     }
   }
 
   // Cell renderers are component types to TanStack Table: keep the array stable or rows remount.
-  const foreignRef = useRef(foreign);
-  foreignRef.current = foreign;
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
   const retryRef = useRef(retry);
   retryRef.current = retry;
   const columns = useMemo<ColumnDef<Entry, never>[]>(
@@ -229,15 +260,15 @@ export function DeliveryTab({ pass, foreign = false }: { pass: PassDetailDto; fo
               size="sm"
               variant="ghost"
               iconStart={<ACTION_ICON.refresh aria-hidden />}
-              disabled={foreignRef.current}
+              disabled={readOnlyRef.current || (row.original.kind === 'email' && !pass.holderEmail)}
               onClick={() => void retryRef.current(row.original)}
             >
-              Retry
+              {row.original.kind === 'email' ? 'Send to current holder' : 'Request update'}
             </Button>
           ) : null,
       },
     ],
-    [],
+    [pass.holderEmail],
   );
 
   return (
@@ -245,7 +276,7 @@ export function DeliveryTab({ pass, foreign = false }: { pass: PassDetailDto; fo
       <SendEmailCard
         pass={pass}
         sent={sent}
-        foreign={foreign}
+        readOnly={readOnly}
         onSent={() => void delivery.refetch()}
       />
       <Card className="min-w-0">
@@ -261,6 +292,12 @@ export function DeliveryTab({ pass, foreign = false }: { pass: PassDetailDto; fo
             />
           }
         />
+        <CardBody>
+          <p className="text-sm text-fg-muted">
+            Sending to the current holder creates a new email; the original recipient is not
+            recorded here.
+          </p>
+        </CardBody>
         {delivery.isError ? (
           <CardBody>
             <ErrorState inline error={delivery.error} onRetry={() => void delivery.refetch()} />
@@ -277,7 +314,7 @@ export function DeliveryTab({ pass, foreign = false }: { pass: PassDetailDto; fo
           />
         )}
       </Card>
-      <BundlesCard passId={pass.id} mode={pass.mode} foreign={foreign} />
+      <BundlesCard passId={pass.id} orgId={pass.orgId} mode={pass.mode} readOnly={readOnly} />
     </div>
   );
 }

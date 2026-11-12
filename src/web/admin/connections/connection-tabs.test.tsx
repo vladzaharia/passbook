@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { type FetchHandler, json, renderApp } from '../../lib/test-utils.tsx';
+import { type FetchHandler, json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import {
   CONNECTOR,
   connectionDetail,
@@ -11,6 +11,12 @@ import {
 } from '../passes/test-fixtures.ts';
 
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
+const membership = membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug });
+const reader = membershipFixture(ORG.id, {
+  orgName: ORG.name,
+  orgSlug: ORG.slug,
+  capabilities: ['integrations:read', 'templates:read'],
+});
 
 function handlers(
   state: { c: ReturnType<typeof connectionDetail> },
@@ -34,11 +40,244 @@ function handlers(
   } satisfies Record<string, FetchHandler>;
 }
 
+describe('connection tabs outside the selected organization', () => {
+  it.each(['health', 'mapping', 'config', 'settings', 'webhook'])(
+    'does not mount %s or fetch its dependent resources',
+    async (tab) => {
+      const requests: string[] = [];
+      const dependent: string[] = [];
+      const track = (path: string, body: unknown) => () => {
+        dependent.push(path);
+        return json(body);
+      };
+      const foreign = connectionDetail({
+        orgId: 'org2',
+        name: 'Unselected connection',
+        mode: 'hybrid',
+        config: { baseUrl: 'https://private.example' },
+      });
+      await renderApp(`/admin/connections/c1?tab=${tab}`, {
+        session: 'admin',
+        memberships: [membership],
+        selectedOrg: ORG.id,
+        handlers: handlers({ c: foreign }, [], {
+          '/api/v1/connections/c1': (_url, init) => {
+            requests.push(method(init));
+            return json(foreign);
+          },
+          '/api/v1/connectors': track('connectors', { items: [CONNECTOR] }),
+          '/api/v1/connectors/http-json': track('connector detail', CONNECTOR),
+          '/api/v1/templates': track('templates', { items: [templateSummary()], nextCursor: null }),
+          '/api/v1/templates/tpl1': track('template detail', templateDetail()),
+        }),
+      });
+
+      expect(await screen.findByText('Connection not found')).toBeVisible();
+      expect(requests).toContain('GET');
+      expect(requests.every((request) => request === 'GET')).toBe(true);
+      expect(dependent).toEqual([]);
+      expect(screen.queryByText('Unselected connection')).not.toBeInTheDocument();
+      expect(screen.queryByText('https://private.example')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('https://wallet.example/hooks/connections/c1'),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('tablist', { name: 'Connection sections' }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Test' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Sync now' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Load sample' })).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/Base URL/)).not.toBeInTheDocument();
+    },
+  );
+});
+
+describe('connection tabs for a read-only member', () => {
+  it('shows mapping without allowing edits or loading a sample', async () => {
+    const patches: Record<string, unknown>[] = [];
+    await renderApp('/admin/connections/c1?tab=mapping', {
+      session: 'admin',
+      memberships: [reader],
+      selectedOrg: ORG.id,
+      handlers: handlers({ c: connectionDetail() }, patches),
+    });
+
+    expect(await screen.findByRole('list', { name: 'Mappings' })).toBeVisible();
+    expect(screen.getByLabelText('Template')).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: /^Source field/ })).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: /^Template field/ })).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: /^Transform/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add mapping' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Auto-map by name' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Load sample' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(patches).toEqual([]);
+  });
+
+  it('shows configuration and credential status with editing disabled', async () => {
+    const patches: Record<string, unknown>[] = [];
+    await renderApp('/admin/connections/c1?tab=config', {
+      session: 'admin',
+      memberships: [reader],
+      selectedOrg: ORG.id,
+      handlers: handlers(
+        { c: connectionDetail({ config: { baseUrl: 'https://source.example' } }) },
+        patches,
+      ),
+    });
+
+    const url = await screen.findByLabelText(/Base URL/);
+    expect(url).toHaveValue('https://source.example');
+    expect(url).toBeDisabled();
+    expect(screen.getByLabelText('Requests per minute')).toBeDisabled();
+    expect(screen.getByLabelText('Max concurrency')).toBeDisabled();
+    expect(screen.getByText('Set. Stored encrypted, never shown.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Replace credentials' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(patches).toEqual([]);
+  });
+
+  it('shows saved settings with editing disabled', async () => {
+    const patches: Record<string, unknown>[] = [];
+    await renderApp('/admin/connections/c1?tab=settings', {
+      session: 'admin',
+      memberships: [reader],
+      selectedOrg: ORG.id,
+      handlers: handlers({ c: connectionDetail() }, patches),
+    });
+
+    const name = await screen.findByLabelText(/^Name/);
+    expect(name).toHaveValue('MemberSpot sync');
+    expect(name).toBeDisabled();
+    expect(screen.getByLabelText('Interval')).toBeDisabled();
+    expect(screen.getByLabelText('Holder email')).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Create passes for new records' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(patches).toEqual([]);
+  });
+
+  it.each([false, true])(
+    'shows the webhook without allowing secret changes (set: %s)',
+    async (hasSecret) => {
+      const patches: Record<string, unknown>[] = [];
+      await renderApp('/admin/connections/c1?tab=webhook', {
+        session: 'admin',
+        memberships: [reader],
+        selectedOrg: ORG.id,
+        handlers: handlers(
+          { c: connectionDetail({ mode: 'webhook', hasWebhookSecret: hasSecret }) },
+          patches,
+        ),
+      });
+
+      expect(await screen.findByText('https://wallet.example/hooks/connections/c1')).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Copy endpoint URL' })).toBeEnabled();
+      expect(screen.getByText(hasSecret ? 'Set' : 'Not set')).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Create' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Rotate' })).not.toBeInTheDocument();
+      expect(patches).toEqual([]);
+    },
+  );
+});
+
 describe('mapping tab', () => {
+  it('does not request template data without template read capability', async () => {
+    const requests: string[] = [];
+    const { queryClient } = await renderApp('/admin/connections/c1?tab=mapping', {
+      session: 'admin',
+      memberships: [
+        membershipFixture(ORG.id, {
+          orgName: ORG.name,
+          orgSlug: ORG.slug,
+          capabilities: ['integrations:read'],
+        }),
+      ],
+      selectedOrg: ORG.id,
+      handlers: handlers({ c: connectionDetail() }, [], {
+        '/api/v1/templates': () => {
+          requests.push('list');
+          return json({ items: [templateSummary()], nextCursor: null });
+        },
+        '/api/v1/templates/tpl1': () => {
+          requests.push('detail');
+          return json(templateDetail());
+        },
+      }),
+    });
+
+    expect(await screen.findByRole('list', { name: 'Mappings' })).toBeVisible();
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    expect(screen.getByLabelText('Template')).toBeDisabled();
+    expect(screen.getByRole('listitem', { name: 'name ← name' })).toBeVisible();
+    expect(requests).toEqual([]);
+  });
+
+  it('loads shared template fields in the connection organization', async () => {
+    const scopes: (string | null)[] = [];
+    await renderApp('/admin/connections/c1?tab=mapping', {
+      session: 'user',
+      memberships: [
+        membershipFixture('org2', {
+          orgName: 'Second',
+          orgSlug: 'second',
+          roles: ['integration_admin'],
+          capabilities: ['org:read', 'integrations:read', 'integrations:manage', 'templates:read'],
+        }),
+      ],
+      selectedOrg: 'org2',
+      handlers: handlers({ c: connectionDetail({ orgId: 'org2' }) }, [], {
+        '/api/v1/templates': () =>
+          json({ items: [templateSummary({ orgId: null, orgName: null })], nextCursor: null }),
+        '/api/v1/templates/tpl1': (url) => {
+          scopes.push(url.searchParams.get('orgId'));
+          return json(templateDetail({ orgId: null, orgName: null }));
+        },
+      }),
+    });
+
+    expect(await screen.findByRole('listitem', { name: 'Member name ← name' })).toBeVisible();
+    expect(scopes).toContain('org2');
+    expect(scopes.every((scope) => scope === 'org2')).toBe(true);
+  });
+
+  it('does not use mapping fields from a different organization', async () => {
+    const scopes: (string | null)[] = [];
+    const { queryClient } = await renderApp('/admin/connections/c1?tab=mapping', {
+      session: 'admin',
+      memberships: [membershipFixture('org2', { orgName: 'Second', orgSlug: 'second' })],
+      selectedOrg: 'org2',
+      handlers: handlers({ c: connectionDetail({ orgId: 'org2' }) }, [], {
+        '/api/v1/templates': () =>
+          json({ items: [templateSummary({ orgId: null, orgName: null })], nextCursor: null }),
+        '/api/v1/templates/tpl1': (url) => {
+          scopes.push(url.searchParams.get('orgId'));
+          return json(
+            templateDetail({
+              orgId: ORG.id,
+              name: 'Private source template',
+              inputSchema: {
+                type: 'object',
+                properties: { name: { type: 'string', 'x-label': 'Private field' } },
+              },
+            }),
+          );
+        },
+      }),
+    });
+
+    await waitFor(() => expect(scopes).toContain('org2'));
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    expect(screen.getByRole('listitem', { name: 'name ← name' })).toBeVisible();
+    expect(screen.queryByText('Private field')).not.toBeInTheDocument();
+    expect(screen.queryByText('Private source template')).not.toBeInTheDocument();
+  });
+
   it('reads Template ← source = sample once a sample loads, with one header row', async () => {
     const user = userEvent.setup();
     await renderApp('/admin/connections/c1?tab=mapping', {
       session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
       handlers: handlers({ c: connectionDetail() }, [], {
         '/api/v1/connections/c1/test': () =>
           json({
@@ -67,6 +306,8 @@ describe('mapping tab', () => {
     const patches: Record<string, unknown>[] = [];
     await renderApp('/admin/connections/c1?tab=mapping', {
       session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
       handlers: handlers({ c: connectionDetail({ mapping: {} }) }, patches, {
         '/api/v1/connections/c1/test': () =>
           json({
@@ -98,6 +339,8 @@ describe('mapping tab', () => {
     const patches: Record<string, unknown>[] = [];
     await renderApp('/admin/connections/c1?tab=mapping', {
       session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
       handlers: handlers({ c: connectionDetail() }, patches),
     });
     await screen.findByRole('list', { name: 'Mappings' });
@@ -120,6 +363,8 @@ describe('configuration tab', () => {
     const state = { c: connectionDetail({ config: { baseUrl: 'https://old.example' } }) };
     await renderApp('/admin/connections/c1?tab=config', {
       session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
       handlers: handlers(state, patches),
     });
     const url = await screen.findByLabelText(/Base URL/);

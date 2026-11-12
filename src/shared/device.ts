@@ -11,10 +11,10 @@ export interface DeviceInfo {
 }
 
 /**
- * The one device rule for the portal and /p. iPhone and iPod add to Wallet; so does a Mac (its
- * Wallet syncs to the phone). iPadOS reports a Mac user agent: the browser passes its touch points
- * and a touch Mac is an iPad (`other`); the Worker cannot, so it says `mac` and the page's CSS asks
- * `pointer: coarse` (holder-pass-view.tsx). Old iPad agents, Android, Windows: `other`.
+ * The shared device rule for guidance and QR placement. iPadOS can report a Mac user agent:
+ * the browser passes its touch points and a touch Mac is treated as an iPad (`other`); the Worker
+ * cannot distinguish it and says `mac`. Old iPad agents, Android and Windows are `other`.
+ * This classification does not hide wallet choices on the pass page.
  */
 export function passDevice(ua: string | undefined, touchPoints?: number): DeviceInfo {
   const text = ua ?? '';

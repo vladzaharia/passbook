@@ -11,42 +11,48 @@ import {
   type CreateApiKeySchema,
   CreatedApiKeySchema,
 } from '@/shared/contracts/api-keys.ts';
-import { api, listQuery } from '@/web/lib/api.ts';
+import { api } from '@/web/lib/api.ts';
 
 export type ApiKey = z.infer<typeof ApiKeySchema>;
 type Page = z.infer<typeof ApiKeyListSchema>;
 type KeyState = 'live' | 'revoked';
-const KEYS = ['api-keys'] as const;
+const KEYS = ['api-keys', 'context'] as const;
 
-/** Newest first, 50 at a time, for the top-bar org (platform keys only when unscoped). */
-export function useApiKeyPages(orgId: string | undefined, state: KeyState, enabled = true) {
-  return useInfiniteQuery(
-    listQuery({
-      queryKey: [...KEYS, orgId ?? null, state],
-      enabled,
-      initialPageParam: undefined as string | undefined,
-      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
-        api.get('/api/v1/api-keys', ApiKeyListSchema, {
-          query: { orgId, state, cursor: pageParam, limit: 50 },
-          signal,
-        }),
-      getNextPageParam: (last: Page) => last.nextCursor ?? undefined,
-    }),
-  );
+/** The explicit `null` query marker selects platform-wide keys, never all tenant keys. */
+export function useApiKeyPages(
+  principal: string,
+  orgId: string | null,
+  state: KeyState,
+  enabled = true,
+) {
+  return useInfiniteQuery({
+    queryKey: [...KEYS, principal, orgId, state],
+    enabled,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+      api.get('/api/v1/api-keys', ApiKeyListSchema, {
+        query: { orgId: orgId ?? 'null', state, cursor: pageParam, limit: 50 },
+        signal,
+      }),
+    getNextPageParam: (last: Page) => last.nextCursor ?? undefined,
+  });
 }
 
 /**
  * A revoked key stays in place in the live list (marked revoked) until the list refetches; the
  * revoked list refetches when next shown.
  */
-export function useRevokeKey() {
+export function useRevokeKey(principal: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/v1/api-keys/${encodeURIComponent(id)}`),
-    onSuccess: (_done, id) => {
+    mutationFn: ({ id, orgId }: Pick<ApiKey, 'id' | 'orgId'>) =>
+      api.delete(`/api/v1/api-keys/${encodeURIComponent(id)}`, {
+        query: { orgId: orgId ?? 'null' },
+      }),
+    onSuccess: (_done, { id, orgId }) => {
       const at = Date.now();
-      client.setQueriesData<InfiniteData<Page>>(
-        { queryKey: KEYS, predicate: (q) => q.queryKey[2] === 'live' },
+      client.setQueryData<InfiniteData<Page>>(
+        [...KEYS, principal, orgId, 'live'],
         (data) =>
           data && {
             ...data,
@@ -57,19 +63,19 @@ export function useRevokeKey() {
           },
       );
       void client.invalidateQueries({
-        queryKey: KEYS,
-        predicate: (q) => q.queryKey[2] === 'revoked',
+        queryKey: [...KEYS, principal, orgId, 'revoked'],
+        exact: true,
       });
     },
   });
 }
 
-export function useCreateKey() {
+export function useCreateKey(principal: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: z.input<typeof CreateApiKeySchema>) =>
+    mutationFn: (body: z.input<typeof CreateApiKeySchema> & { orgId: string | null }) =>
       api.post('/api/v1/api-keys', CreatedApiKeySchema, body),
-    onSuccess: () => client.invalidateQueries({ queryKey: KEYS }),
+    onSuccess: () => client.invalidateQueries({ queryKey: [...KEYS, principal] }),
   });
 }
 
@@ -86,4 +92,6 @@ export const SCOPE_LABEL: Record<string, string> = {
   'holders:write': 'Assign holders',
   'templates:read': 'Read templates',
   'messages:write': 'Send messages and scheduled changes',
+  'connections:read': 'Read connections',
+  'connections:write': 'Create and update connections',
 };

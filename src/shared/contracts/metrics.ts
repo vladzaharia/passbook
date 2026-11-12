@@ -32,6 +32,7 @@ export const MetricsOverviewSchema = z.object({
     pushFailures: z.number().int(),
     emails: z.number().int(),
     emailFailures: z.number().int(),
+    emailUnknown: z.number().int().default(0),
     syncRuns: z.number().int(),
     signIns: z.number().int(),
     /** Scans of every outcome, and the refused ones among them. Zero until the scan module reports. */
@@ -48,6 +49,7 @@ export const MetricsOverviewSchema = z.object({
     pushFailures: series,
     emails: series,
     emailFailures: series,
+    emailUnknown: series.default([]),
     syncRuns: series,
     signIns: series,
     scans: series,

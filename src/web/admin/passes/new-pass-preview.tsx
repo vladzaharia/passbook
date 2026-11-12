@@ -1,11 +1,21 @@
+import { useQuery } from '@tanstack/react-query';
 import { Eye } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
-import type { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
+import { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
+import { api } from '@/web/lib/api.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
+import { scopePreviewAssets } from '@/web/lib/preview-batch.ts';
 import { useMediaQuery } from '../../lib/media.ts';
-import { Button, Card, Dialog, DialogContent, EntityArt, Skeleton } from '../../ui/index.ts';
-import { useDraftPreview } from '../templates/api.ts';
+import {
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  EntityArt,
+  ErrorState,
+  Skeleton,
+} from '../../ui/index.ts';
 import { PassPreview } from './pass-preview.tsx';
 import {
   cleanValues,
@@ -30,9 +40,62 @@ export function withGhosts(schema: unknown, sample: FormValues, input: FormValue
   return out;
 }
 
+interface ReleasedPreviewInput {
+  templateId: string | undefined;
+  orgId: string | undefined;
+  version: string | undefined;
+  principalId: string | undefined;
+  mode: 'live' | 'test';
+  input?: FormValues | undefined;
+  enabled?: boolean | undefined;
+}
+
+/** Preview only the released version in the same scope as its eligible choice. */
+export function useReleasedPreview({
+  templateId,
+  orgId,
+  version,
+  principalId,
+  mode,
+  input,
+  enabled = true,
+}: ReleasedPreviewInput) {
+  return useQuery({
+    queryKey: [
+      'admin',
+      'templates',
+      'issuance-preview',
+      principalId,
+      orgId,
+      mode,
+      templateId,
+      version,
+      input,
+    ],
+    queryFn: async ({ signal }) => {
+      if (!templateId || !orgId || !version || !principalId)
+        throw new Error('Choose an approved release.');
+      return scopePreviewAssets(
+        await api.post(
+          `/api/v1/templates/${encodeURIComponent(templateId)}/preview`,
+          PreviewResponseSchema,
+          { orgId, version, ...(input === undefined ? {} : { input }) },
+          { query: { orgId }, signal },
+        ),
+        orgId,
+      );
+    },
+    enabled: enabled && Boolean(templateId && orgId && version && principalId),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
 export interface LivePreviewInput {
   templateId: string | undefined;
   orgId: string | undefined;
+  version: string | undefined;
+  principalId: string | undefined;
+  mode: 'live' | 'test';
   schema: unknown;
   sample: FormValues;
   input: FormValues;
@@ -41,6 +104,8 @@ export interface LivePreviewInput {
 export interface LivePreviewState {
   templateId: string | undefined;
   preview: Preview | undefined;
+  error: unknown;
+  retry: () => void;
   /** The details were valid once: the card dealt in and stops looking like a sample. */
   dealt: boolean;
 }
@@ -52,6 +117,9 @@ export interface LivePreviewState {
 export function useLivePreview({
   templateId,
   orgId,
+  version,
+  principalId,
+  mode,
   schema,
   sample,
   input,
@@ -62,13 +130,29 @@ export function useLivePreview({
     [schema, input],
   );
   const ghosted = useMemo(() => withGhosts(schema, sample, input), [schema, sample, input]);
-  const debounced = useDebounced(ghosted, 250);
-  const preview = useDraftPreview(templateId, debounced, { orgId });
+  const scopeKey = JSON.stringify([principalId, orgId, mode, templateId, version]);
+  const scopedInput = useMemo(() => ({ scopeKey, input: ghosted }), [scopeKey, ghosted]);
+  const debounced = useDebounced(scopedInput, 250);
+  const preview = useReleasedPreview({
+    templateId,
+    orgId,
+    version,
+    principalId,
+    mode,
+    input: debounced.input,
+    enabled: debounced.scopeKey === scopeKey,
+  });
   const [dealt, setDealt] = useState(false);
   useEffect(() => {
     if (valid && !dealt) setDealt(true);
   }, [valid, dealt]);
-  return { templateId, preview: preview.data, dealt };
+  return {
+    templateId,
+    preview: debounced.scopeKey === scopeKey ? preview.data : undefined,
+    error: debounced.scopeKey === scopeKey && preview.isError ? preview.error : null,
+    retry: () => void preview.refetch(),
+    dealt,
+  };
 }
 
 /**
@@ -82,13 +166,14 @@ export function LivePreview({
   state: LivePreviewState;
   transitionName?: string | undefined;
 }) {
-  const { templateId, preview, dealt } = state;
+  const { templateId, preview, dealt, error, retry } = state;
   if (!templateId)
     return (
       <div className="flex aspect-[320/420] w-full max-w-xs flex-col items-center justify-center gap-2 self-center rounded-xl border border-dashed border-border-strong">
         <EntityArt name="passes" size="sm" />
       </div>
     );
+  if (error) return <ErrorState inline error={error} onRetry={retry} />;
   if (!preview) return <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />;
   return (
     <div className={dealt ? undefined : 'opacity-55'} data-ghost={dealt ? undefined : ''}>
@@ -104,20 +189,14 @@ export function LivePreview({
   );
 }
 
-/**
- * The wizard stage's content: the live card centred in the slice, the template's name under it
- * and, while choosing, its description. The caption keeps its room on every step, so the card
- * never moves; a new template's caption fades in.
- */
+/** The wizard stage's content: the released card and the eligible template's name. */
 export function StagePreview({
   state,
   name,
-  description,
   transitionName,
 }: {
   state: LivePreviewState;
   name: string | undefined;
-  description?: string | null | undefined;
   transitionName?: string | undefined;
 }) {
   return (
@@ -128,9 +207,6 @@ export function StagePreview({
         className="wl-stage-swap flex min-h-18 flex-col gap-1 text-center"
       >
         {name ? <p className="text-sm font-medium text-fg-strong">{name}</p> : null}
-        {name && description ? (
-          <p className="line-clamp-3 text-xs text-pretty text-fg-muted">{description}</p>
-        ) : null}
       </div>
     </div>
   );
@@ -143,7 +219,9 @@ export function StagePreview({
 export function ShowPassRow({ state, title }: { state: LivePreviewState; title: string }) {
   const wide = useMediaQuery('(min-width: 1024px)');
   const [open, setOpen] = useState(false);
-  if (wide || !state.preview) return null;
+  if (wide) return null;
+  if (state.error) return <ErrorState inline error={state.error} onRetry={state.retry} />;
+  if (!state.preview) return null;
   return (
     <>
       <Card className="flex items-center gap-4 p-3">

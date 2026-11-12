@@ -1,18 +1,20 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { createPassRow } from '../passes/create.ts';
-import { getPass } from '../passes/repo.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
+import { setupTenantTestAuth, type TenantTestAuth } from '../passes/tenant-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
+let auth: TenantTestAuth;
 let kit: Kit;
 let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  auth = await setupTenantTestAuth(kit);
+  app = createApp({ stores: auth.stores, clock: kit.clock });
 });
 
 const post = (path: string, headers: Record<string, string>, body: unknown) =>
@@ -26,12 +28,16 @@ const post = (path: string, headers: Record<string, string>, body: unknown) =>
     kit.env,
   );
 const livePass = () =>
-  createPassRow(kit.ctx, {
+  createPassRow(jobCtxOf(kit), {
     orgId: kit.org.id,
     templateId: kit.template.id,
+    templateVersion: kit.liveRelease!.version,
+    releaseId: kit.liveRelease!.id,
+    releaseGeneration: kit.liveRelease!.generation,
     input: { memberName: 'Live holder' },
     holderEmail: 'live-holder@example.com',
     source: 'manual',
+    execution: { kind: 'system' },
     mode: 'live',
     actor: { type: 'system', id: null },
   });
@@ -53,7 +59,7 @@ describe('holder writes cannot cross modes', () => {
     const pass = await livePass();
     const res = await post(
       path,
-      fake.apiKey({ mode: 'test', scopes: ['holders:write'] }),
+      await auth.apiKey({ orgId: kit.org.id, mode: 'test', scopes: ['holders:write'] }),
       body(pass.id),
     );
     expect(res.status).toBe(404);
@@ -64,7 +70,7 @@ describe('holder writes cannot cross modes', () => {
     'a Test-mode session gets 409 MODE_MISMATCH for a live pass: %s',
     async (_n, path, body) => {
       const pass = await livePass();
-      const res = await post(path, fake.admin({ mode: 'test' }), body(pass.id));
+      const res = await post(path, auth.admin({ mode: 'test' }), body(pass.id));
       expect(res.status).toBe(409);
       expect(((await res.json()) as { code: string }).code).toBe('MODE_MISMATCH');
       expect((await getPass(kit.env.DB, pass.id))?.holderEmail).toBe('live-holder@example.com');
@@ -73,10 +79,14 @@ describe('holder writes cannot cross modes', () => {
 
   it('a live key still reassigns a live pass', async () => {
     const pass = await livePass();
-    const res = await post('/holders/reassign', fake.apiKey({ scopes: ['holders:write'] }), {
-      passId: pass.id,
-      email: 'next@example.com',
-    });
+    const res = await post(
+      '/holders/reassign',
+      await auth.apiKey({ orgId: kit.org.id, scopes: ['holders:write'] }),
+      {
+        passId: pass.id,
+        email: 'next@example.com',
+      },
+    );
     expect(res.status).toBe(200);
   });
 });

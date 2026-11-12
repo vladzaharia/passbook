@@ -1,7 +1,8 @@
 import type { Actor } from '../../platform/context.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import type { ConnectionAuthority } from './access.ts';
 import { toDto } from './dto.ts';
 import { schedules } from './health.ts';
 import { validateMapping } from './mapping.ts';
@@ -29,14 +30,19 @@ export async function update(
   actor: Actor,
   id: string,
   input: UpdateInput,
+  authority?: ConnectionAuthority,
 ): Promise<Created> {
   const conn = await requireConnection(sctx, id);
+  if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
   const def = requireConnector(conn.connectorType);
   const now = sctx.clock.now();
   const patch: ConnectionPatch = { updatedAt: now };
   const changed = new Set<string>();
   let generated: string | undefined;
   const staleCredentials: (string | null)[] = [];
+  const newCredentials: string[] = [];
+  let connectorCredential: string | undefined;
+  let webhookCredential: string | undefined;
   const set = <K extends keyof ConnectionPatch>(key: K, value: ConnectionPatch[K]) => {
     patch[key] = value;
     changed.add(key);
@@ -53,15 +59,8 @@ export async function update(
   }
   if (input.secrets !== undefined) {
     const json = secretsFor(def, input.secrets);
-    patch.credentialId =
-      json === '{}'
-        ? null
-        : await storeCredential(sctx, {
-            orgId: conn.orgId,
-            kind: 'connector',
-            value: json,
-            createdBy: actor.id,
-          });
+    if (json === '{}') patch.credentialId = null;
+    else connectorCredential = json;
     staleCredentials.push(conn.credentialId);
     patch.cursor = null;
     changed.add('secrets');
@@ -110,12 +109,7 @@ export async function update(
     (mode === 'webhook' || mode === 'hybrid') && conn.webhookCredentialId === null;
   if (input.webhookSecret !== undefined || needsSecret) {
     const secret = input.webhookSecret ?? newWebhookSecret(sctx);
-    patch.webhookCredentialId = await storeCredential(sctx, {
-      orgId: conn.orgId,
-      kind: 'webhook',
-      value: secret,
-      createdBy: actor.id,
-    });
+    webhookCredential = secret;
     staleCredentials.push(conn.webhookCredentialId);
     if (input.webhookSecret === undefined) generated = secret;
     changed.add('webhookSecret');
@@ -124,7 +118,6 @@ export async function update(
   const enabled = input.enabled ?? conn.enabled;
   if (input.enabled !== undefined) changed.add('enabled');
   const fenced = FENCED.some((k) => changed.has(k));
-  if (fenced) patch.generation = conn.generation + 1;
   if (input.enabled !== undefined || changed.has('mode') || fenced) {
     patch.enabled = enabled;
     if (!enabled) {
@@ -141,7 +134,47 @@ export async function update(
     }
   }
 
-  await patchConnection(sctx.env.DB, id, patch);
+  try {
+    if (connectorCredential !== undefined) {
+      const credentialId = await storeCredential(
+        sctx,
+        {
+          orgId: conn.orgId,
+          kind: 'connector',
+          value: connectorCredential,
+          createdBy: actor.type === 'user' ? actor.id : null,
+        },
+        authority ?? 'system',
+      );
+      newCredentials.push(credentialId);
+      patch.credentialId = credentialId;
+    }
+    if (webhookCredential !== undefined) {
+      const credentialId = await storeCredential(
+        sctx,
+        {
+          orgId: conn.orgId,
+          kind: 'webhook',
+          value: webhookCredential,
+          createdBy: actor.type === 'user' ? actor.id : null,
+        },
+        authority ?? 'system',
+      );
+      newCredentials.push(credentialId);
+      patch.webhookCredentialId = credentialId;
+    }
+    const updated = await patchConnection(sctx, id, patch, {
+      actor: { orgId: conn.orgId, authority },
+      ...(fenced ? { generation: conn.generation } : {}),
+    });
+    if (updated === 0) {
+      throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
+    }
+  } catch (error) {
+    // A reported failure can still follow a committed update; preserve any linked credentials.
+    await dropCredentials(sctx, [...newCredentials, ...staleCredentials]);
+    throw error;
+  }
   await dropCredentials(sctx, staleCredentials);
   await recordAudit(sctx, {
     orgId: conn.orgId,

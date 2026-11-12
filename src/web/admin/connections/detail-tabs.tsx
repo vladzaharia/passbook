@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionDetailSchema } from '@/shared/contracts/connections.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
   Button,
   Card,
@@ -44,20 +45,27 @@ export function lifecycleOf(c: Detail): Lifecycle {
 /** Template, then source field → template field rows; one SaveBar for both. */
 export function MappingTab({
   c,
+  canManage,
   sample,
   onLoadSample,
   loadingSample,
 }: {
   c: Detail;
+  canManage: boolean;
   sample: readonly SourceField[] | undefined;
   onLoadSample: () => void;
   loadingSample: boolean;
 }) {
   const actions = useConnectionActions(c.id);
-  const connector = useConnector(c.connectorType);
+  const connector = useConnector(c.connectorType, c.orgId);
   const original = useMemo(() => JSON.stringify(c.mapping ?? {}), [c.mapping]);
   const [templateId, setTemplateId] = useState(c.defaultTemplateId ?? '');
-  const template = useTemplate(templateId || undefined);
+  const scope = useOrgScope();
+  const templateOrg =
+    scope.orgId === c.orgId && scope.membership?.capabilities.includes('templates:read')
+      ? c.orgId
+      : undefined;
+  const template = useTemplate(templateOrg ? templateId || undefined : undefined, templateOrg);
   const [rows, setRows] = useState<MappingRow[]>(() => toRows(c.mapping));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const result = fromRows(rows);
@@ -65,11 +73,12 @@ export function MappingTab({
     JSON.stringify(result.mapping) !== original ||
     Object.keys(result.errors).length > 0 ||
     templateId !== (c.defaultTemplateId ?? '');
-  const guard = useUnsavedChangesGuard(dirty);
+  const guard = useUnsavedChangesGuard(canManage && dirty);
   const sources =
     sample ?? Object.keys(connector.data?.outputFields ?? {}).map((k) => ({ pointer: `/${k}` }));
 
   async function save() {
+    if (!canManage) return;
     setErrors(result.errors);
     if (Object.keys(result.errors).length > 0) return;
     try {
@@ -90,64 +99,87 @@ export function MappingTab({
       <CardHeader
         title="Mapping"
         actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            busy="pulse"
-            loading={loadingSample}
-            iconStart={<ACTION_ICON.test aria-hidden />}
-            onClick={onLoadSample}
-          >
-            {sample ? 'New sample' : 'Load sample'}
-          </Button>
+          canManage ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              busy="pulse"
+              loading={loadingSample}
+              iconStart={<ACTION_ICON.test aria-hidden />}
+              onClick={onLoadSample}
+            >
+              {sample ? 'New sample' : 'Load sample'}
+            </Button>
+          ) : undefined
         }
       />
       <CardBody className="flex flex-col gap-4">
-        <TemplateSelect orgId={c.orgId} value={templateId} onChange={setTemplateId} />
+        <TemplateSelect
+          orgId={c.orgId}
+          value={templateId}
+          disabled={!canManage || !templateOrg || actions.update.isPending}
+          onChange={setTemplateId}
+        />
         <MappingEditor
           rows={rows}
           onChange={setRows}
           errors={errors}
           targets={
-            template.data ? targetsOf(flatFields(describeSchema(template.data.inputSchema))) : []
+            templateOrg &&
+            template.data &&
+            (template.data.orgId === null || template.data.orgId === c.orgId)
+              ? targetsOf(flatFields(describeSchema(template.data.inputSchema)))
+              : []
           }
           sources={sources}
-          disabled={actions.update.isPending}
+          disabled={!canManage || actions.update.isPending}
         />
       </CardBody>
-      <SaveBar
-        dirty={dirty}
-        saving={actions.update.isPending}
-        paused={actions.update.isPaused}
-        onSave={() => void save()}
-        onDiscard={() => {
-          setRows(toRows(c.mapping));
-          setTemplateId(c.defaultTemplateId ?? '');
-          setErrors({});
-        }}
-      />
+      {canManage ? (
+        <SaveBar
+          dirty={dirty}
+          saving={actions.update.isPending}
+          paused={actions.update.isPaused}
+          onSave={() => void save()}
+          onDiscard={() => {
+            setRows(toRows(c.mapping));
+            setTemplateId(c.defaultTemplateId ?? '');
+            setErrors({});
+          }}
+        />
+      ) : null}
       <UnsavedChangesDialog blocker={guard} />
     </Card>
   );
 }
 
-export function SettingsTab({ c }: { c: Detail }) {
+export function SettingsTab({
+  c,
+  canManage,
+  onSaved,
+}: {
+  c: Detail;
+  canManage: boolean;
+  onSaved?: () => void;
+}) {
   const actions = useConnectionActions(c.id);
-  const connector = useConnector(c.connectorType);
+  const connector = useConnector(c.connectorType, c.orgId);
   const initial = useMemo(() => lifecycleOf(c), [c]);
   const [name, setName] = useState(c.name);
   const [life, setLife] = useState<Lifecycle>(initial);
   const [showError, setShowError] = useState(false);
   const dirty = name !== c.name || JSON.stringify(life) !== JSON.stringify(initial);
-  const guard = useUnsavedChangesGuard(dirty);
+  const guard = useUnsavedChangesGuard(canManage && dirty);
   const error = lifecycleError(life);
   const defaults = connector.data?.defaults;
 
   async function save() {
+    if (!canManage) return;
     if (error || !name.trim()) return setShowError(true);
     try {
       await actions.update.mutateAsync({ name: name.trim(), ...lifecycleToPatch(life) });
       setShowError(false);
+      onSaved?.();
       toast.success('Settings saved');
     } catch (cause) {
       toast.error(cause, 'Could not save');
@@ -168,6 +200,7 @@ export function SettingsTab({ c }: { c: Detail }) {
               {...f}
               className="sm:max-w-md"
               maxLength={120}
+              disabled={!canManage || actions.update.isPending}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -179,21 +212,23 @@ export function SettingsTab({ c }: { c: Detail }) {
           defaultMinutes={defaults ? Math.round(defaults.intervalSeconds / 60) : undefined}
           value={life}
           onChange={setLife}
-          disabled={actions.update.isPending}
+          disabled={!canManage || actions.update.isPending}
           error={showError ? error : undefined}
         />
       </CardBody>
-      <SaveBar
-        dirty={dirty}
-        saving={actions.update.isPending}
-        paused={actions.update.isPaused}
-        onSave={() => void save()}
-        onDiscard={() => {
-          setName(c.name);
-          setLife(initial);
-          setShowError(false);
-        }}
-      />
+      {canManage ? (
+        <SaveBar
+          dirty={dirty}
+          saving={actions.update.isPending}
+          paused={actions.update.isPaused}
+          onSave={() => void save()}
+          onDiscard={() => {
+            setName(c.name);
+            setLife(initial);
+            setShowError(false);
+          }}
+        />
+      ) : null}
       <UnsavedChangesDialog blocker={guard} />
     </Card>
   );

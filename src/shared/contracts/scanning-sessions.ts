@@ -114,12 +114,15 @@ export const CreateScanningSessionSchema = z.strictObject({
   accepts: ScannerAcceptsSchema.nullable().default(null),
   settings: ScannerSettingsSchema.partial().optional(),
 });
-export const UpdateScanningSessionSchema = CreateScanningSessionSchema.omit({ orgId: true })
-  .partial()
-  .extend({
-    status: ScanningSessionStatusSchema.optional(),
-    revision: TimestampSchema.optional(),
-  });
+/** No defaults: a field that is absent is left as it is (a name-only edit keeps scope and settings). */
+export const UpdateScanningSessionSchema = z.strictObject({
+  name: PlainLineSchema(80).optional(),
+  timeZone: TimeZoneSchema.optional(),
+  accepts: ScannerAcceptsSchema.nullable().optional(),
+  settings: ScannerSettingsSchema.partial().optional(),
+  status: ScanningSessionStatusSchema.optional(),
+  revision: TimestampSchema.optional(),
+});
 export const ScanningDeviceSchema = z.object({
   id: IdSchema,
   sessionId: IdSchema,
@@ -164,7 +167,11 @@ export const CreateScanningDeviceSchema = z.strictObject({
   surface: ScanSurfaceChoiceSchema.default('auto'),
   overrides: ScanDeviceOverridesSchema.default({}),
 });
-export const UpdateScanningDeviceSchema = CreateScanningDeviceSchema.partial().extend({
+/** No defaults: a name-only edit keeps the surface, hence the device role, and the overrides. */
+export const UpdateScanningDeviceSchema = z.strictObject({
+  name: PlainLineSchema(40).optional(),
+  surface: ScanSurfaceChoiceSchema.optional(),
+  overrides: ScanDeviceOverridesSchema.optional(),
   revision: TimestampSchema.optional(),
 });
 export const DevicePairingSchema = z.object({

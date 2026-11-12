@@ -8,6 +8,7 @@ import {
   makePass,
   makeTemplate,
 } from '../../../../test/helpers/index.ts';
+import { MetricsOverviewSchema } from '../../../shared/contracts/metrics.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
@@ -91,6 +92,16 @@ describe('metrics from D1', () => {
     expect(hit).toHaveLength(1);
     expect(hit[0]?.t).toBe(Math.floor(clock.now() / o.bucketMs) * o.bucketMs);
     expect(o.series.downloads.every((p) => p.v === 0)).toBe(true);
+    expect(o.totals.emailUnknown).toBe(0);
+    expect(o.series.emailUnknown).toHaveLength(o.series.issued.length);
+    expect(o.series.emailUnknown.every((p) => p.v === 0)).toBe(true);
+    const parsed = MetricsOverviewSchema.parse({
+      ...o,
+      totals: { ...o.totals, emailUnknown: undefined },
+      series: { ...o.series, emailUnknown: undefined },
+    });
+    expect(parsed.totals.emailUnknown).toBe(0);
+    expect(parsed.series.emailUnknown).toEqual([]);
   });
 
   it('counts push and email outcomes, registrations and sync runs for the org only', async () => {
@@ -98,18 +109,33 @@ describe('metrics from D1', () => {
     const a = await orgWithPasses(f, 1);
     const b = await orgWithPasses(f, 1);
     const at = clock.now();
-    const outbox = (org: string, kind: string, state: string) =>
+    const outbox = (org: string, kind: string, state: string, errorCode: string | null = null) =>
       run(
         env.DB,
-        'INSERT INTO outbox (id, org_id, kind, state, created_at) VALUES (?, ?, ?, ?, ?)',
-        [f.ids.id(), org, kind, state, at],
+        'INSERT INTO outbox (id, org_id, kind, state, error_code, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+        [f.ids.id(), org, kind, state, errorCode, at],
       );
     await outbox(a.org.id, 'push', 'sent');
     await outbox(a.org.id, 'push', 'failed');
     await outbox(a.org.id, 'email', 'partial');
+    await outbox(a.org.id, 'email', 'sent');
+    await outbox(a.org.id, 'email', 'failed');
+    await outbox(a.org.id, 'email', 'partial', 'EMAIL_OUTCOME_UNKNOWN');
+    await outbox(b.org.id, 'email', 'partial', 'EMAIL_OUTCOME_UNKNOWN');
     await outbox(b.org.id, 'push', 'sent');
     const o = await getOverview(ctx, { orgId: a.org.id, range: '24h' });
-    expect(o.totals).toMatchObject({ pushes: 2, pushFailures: 1, emails: 1, emailFailures: 1 });
+    expect(o.totals).toMatchObject({
+      pushes: 2,
+      pushFailures: 1,
+      emails: 4,
+      emailFailures: 2,
+      emailUnknown: 1,
+    });
+    expect(o.series.emails.reduce((sum, p) => sum + p.v, 0)).toBe(4);
+    expect(o.series.emailFailures.reduce((sum, p) => sum + p.v, 0)).toBe(2);
+    expect(o.series.emailUnknown.filter((p) => p.v > 0)).toEqual([
+      { t: Math.floor(at / o.bucketMs) * o.bucketMs, v: 1 },
+    ]);
 
     const conn = f.ids.id();
     await run(
@@ -182,6 +208,8 @@ describe('metrics from Analytics Engine', () => {
         { event: 'push.result', outcome: 'ok', t: t / 1000, n: 4 },
         { event: 'push.result', outcome: 'gone', t: t / 1000, n: 1 },
         { event: 'email.result', outcome: 'bounced', t: t / 1000, n: 2 },
+        { event: 'email.result', outcome: 'ok', t: t / 1000, n: 3 },
+        { event: 'email.result', outcome: 'unknown', t: t / 1000, n: 4 },
         { event: 'auth.sign_in', outcome: 'ok', t: t / 1000, n: 5 },
         { event: 'something.else', outcome: 'ok', t: t / 1000, n: 9 },
       ],
@@ -196,11 +224,15 @@ describe('metrics from Analytics Engine', () => {
       downloads: 3,
       pushes: 5,
       pushFailures: 1,
-      emails: 2,
+      emails: 9,
       emailFailures: 2,
+      emailUnknown: 4,
       signIns: 5,
       passes: 1,
     });
+    expect(o.series.emailUnknown.filter((p) => p.v > 0)).toEqual([{ t, v: 4 }]);
+    expect(o.series.emailFailures.filter((p) => p.v > 0)).toEqual([{ t, v: 2 }]);
+    expect(o.series.emailUnknown).toHaveLength(o.series.issued.length);
     expect(calls[0]?.query).toContain('blob2 = $orgId');
     expect(calls[0]?.params).toMatchObject({ orgId: org.id });
     expect(calls[0]?.query).toContain('FROM events.analyticsEngine.wallet_events');
@@ -241,15 +273,18 @@ describe('metrics api', () => {
   const get = (q: string, headers = fake.admin()) =>
     app.request(`/api/v1/metrics/overview${q}`, { headers }, base);
 
-  it('validates input, rejects unknown orgs and non-admins', async () => {
+  it('validates tenant input and reserves platform metrics for admins', async () => {
     expect((await get('?range=1y')).status).toBe(422);
-    const unknown = await get('?orgId=missing');
-    expect(unknown.status).toBe(422);
-    expect(((await unknown.json()) as { code: string }).code).toBe('ORG_NOT_FOUND');
-    expect((await get('', fake.user())).status).toBe(403);
-    const ok = await get('?range=24h');
+    expect((await get('?orgId=missing')).status).toBe(404);
+    expect((await get('')).status).toBe(422);
+    const platform = (headers = fake.admin(), q = '') =>
+      app.request(`/api/v1/metrics/platform/overview${q}`, { headers }, base);
+    expect((await platform(fake.user())).status).toBe(403);
+    expect((await platform(fake.apiKey())).status).toBe(401);
+    expect((await platform(fake.admin(), '?orgId=missing')).status).toBe(422);
+    const ok = await platform(fake.admin(), '?range=24h');
     expect(ok.status).toBe(200);
-    expect(((await ok.json()) as { source: string }).source).toBe('d1');
+    expect(MetricsOverviewSchema.parse(await ok.json()).source).toBe('d1');
   });
 });
 

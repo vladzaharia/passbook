@@ -20,11 +20,12 @@ function withoutPersonalization(registry: TemplateRegistry): TemplateRegistry {
 
 /**
  * A context whose pass builds omit personalization.json and the logo. Deps are keyed by env
- * object, so a derived env carries its own registry without touching the shared one.
+ * object, so a derived env carries its own registry without touching the shared one. The env is
+ * copied, not inherited: publishing snapshots the KEK ring from own properties.
  * Passes that are already personalized must be published through this context.
  */
 export function withoutPersonalizationFiles(ctx: ServiceContext): ServiceContext {
-  const env = Object.create(ctx.env) as AppEnv;
+  const env = { ...ctx.env } as AppEnv;
   const base = depsOf(ctx.env);
   overrideDeps(env, { ...base, registry: withoutPersonalization(base.registry) });
   return { ...ctx, env };

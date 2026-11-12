@@ -89,7 +89,13 @@ describe('console list query plans (SC)', () => {
   it('events: an org list, with each status, uses scan_events_org', async () => {
     for (const status of [undefined, 'upcoming', 'live', 'ended', 'archived'] as const) {
       const lines = await plans((db) =>
-        listConsoleEvents(db, { mode: 'live', orgId: 'o', now: 5, limit: 51, status }),
+        listConsoleEvents(db, {
+          mode: 'live',
+          orgId: 'o',
+          now: 5,
+          limit: 51,
+          status,
+        }),
       );
       expect(fullScans(lines, 'e')).toEqual([]);
       expect(lines.join('\n')).toContain('scan_events_org');

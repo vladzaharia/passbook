@@ -2,7 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
+import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
+import { markCreated } from '../passes/created.tsx';
 import { remainingDays } from './expiry.tsx';
 import { type UploadDraft, validateUpload } from './upload-input.ts';
 
@@ -117,7 +118,68 @@ describe('identities list', () => {
     expect(screen.getAllByText('Not set up').length).toBeGreaterThan(0);
     expect(screen.getByText('Healthy')).toBeInTheDocument();
     expect(screen.getByText('Failing')).toBeInTheDocument();
+    expect(screen.getByText(/Old: a loaded certificate has expired/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Review' })).toHaveAttribute(
+      'href',
+      '/admin/identities/i3',
+    );
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('does not invent a certificate warning or readiness when expiry is unknown', async () => {
+    await renderApp('/admin/identities', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities': () =>
+          json({
+            items: [identity({ notAfter: null, daysRemaining: null, apnsHealth: 'unknown' })],
+            nextCursor: null,
+          }),
+      },
+    });
+    expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Review' })).toBeNull();
+  });
+
+  it('flags a certificate whose validity period has not begun', async () => {
+    await renderApp('/admin/identities', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities': () =>
+          json({
+            items: [identity({ notBefore: Date.now() + DAY })],
+            nextCursor: null,
+          }),
+      },
+    });
+    expect(await screen.findByRole('link', { name: 'Review' })).toHaveAttribute(
+      'href',
+      '/admin/identities/i1',
+    );
+    expect(screen.getByText(/a loaded certificate is not yet valid/)).toBeInTheDocument();
+  });
+
+  it('updates the certificate review from later loaded pages', async () => {
+    await renderApp('/admin/identities', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities': (url) =>
+          url.searchParams.get('cursor')
+            ? json({
+                items: [identity({ id: 'i2', label: 'Due', notAfter: Date.now() + DAY })],
+                nextCursor: null,
+              })
+            : json({ items: [identity()], nextCursor: 'next' }),
+      },
+    });
+    const ui = userEvent.setup();
+    expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Review' })).toBeNull();
+    await ui.click(await screen.findByRole('button', { name: 'Load more' }));
+    expect(await screen.findByRole('link', { name: 'Review' })).toHaveAttribute(
+      'href',
+      '/admin/identities/i2',
+    );
   });
 
   it('shows the certificate empty state and the certificate drop in the upload dialog', async () => {
@@ -206,6 +268,9 @@ describe('identity detail', () => {
     expect(screen.getByText(/mtls-certificate upload/)).toBeInTheDocument();
     expect(screen.getAllByText('Not set up').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Readiness checks' })).toBeNull();
+    expect(screen.queryByText('Not assessed here')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Replace certificate' })).toBeNull();
     await userEvent.setup().click(screen.getByRole('button', { name: 'More' }));
     expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
     await userEvent.setup().keyboard('{Escape}');
@@ -313,6 +378,7 @@ describe('identity detail', () => {
     });
     const ui = userEvent.setup();
     const label = await screen.findByLabelText(/Label/);
+    expect(screen.getByText(/Current default. Select another identity/)).toBeInTheDocument();
     await ui.clear(label);
     await ui.type(label, 'Renamed');
     await ui.clear(screen.getByLabelText('APNs binding'));
@@ -410,6 +476,38 @@ describe('identity detail', () => {
     expect(screen.queryByText('Identity uploaded')).toBeNull();
   });
 
+  it('links a newly uploaded organization identity to the authorized workspace', async () => {
+    markCreated('identity:i1');
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      memberships: [membershipFixture('o1')],
+      handlers: {
+        '/api/v1/identities/i1': () => json(identity({ orgId: 'o1' })),
+      },
+    });
+    const link = await screen.findByRole('link', { name: 'Use in o1' });
+    const url = new URL(link.getAttribute('href') ?? '', 'https://wallet.test');
+    expect(url.pathname).toBe('/admin/orgs/o1');
+    expect(url.searchParams.get('view')).toBe('workspace');
+    expect(url.searchParams.get('orgId')).toBe('o1');
+  });
+
+  it('does not offer tenant identity configuration without organization management', async () => {
+    markCreated('identity:i1');
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      memberships: [membershipFixture('o1', { roles: ['read_only'], capabilities: ['org:read'] })],
+      handlers: {
+        '/api/v1/identities/i1': () => json(identity({ orgId: 'o1' })),
+      },
+    });
+    expect(await screen.findByRole('link', { name: 'View o1' })).toHaveAttribute(
+      'href',
+      '/admin/orgs/o1',
+    );
+    expect(screen.queryByRole('link', { name: 'Use in o1' })).toBeNull();
+  });
+
   it('re-signs all passes of the identity after confirmation', async () => {
     let body: unknown;
     await renderApp('/admin/identities/i1', {
@@ -470,6 +568,62 @@ describe('identity detail', () => {
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'Check' }));
     expect(await screen.findByText(/Too many requests/)).toBeInTheDocument();
+  });
+
+  it('shows when the recorded certificate is not yet valid', async () => {
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1': () => json(identity({ notBefore: Date.now() + DAY })),
+      },
+    });
+    expect(await screen.findByText('Certificate is not yet valid')).toBeInTheDocument();
+    expect(screen.getByText('Valid from')).toBeInTheDocument();
+  });
+
+  it('shows unknown expiry without offering replacement for an environment identity', async () => {
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1': () =>
+          json(identity({ source: 'env', notAfter: null, daysRemaining: null })),
+      },
+    });
+    expect(await screen.findByText('Certificate expiry is unknown')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Replace certificate' })).toBeNull();
+  });
+
+  it('opens renewal from the lifecycle panel and keeps the draft when replacement fails', async () => {
+    const certificate = '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----';
+    const privateKey = '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----';
+    let attempts = 0;
+    await renderApp('/admin/identities/i1', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities/i1': () => json(identity({ notAfter: Date.now() - DAY })),
+        '/api/v1/identities/i1/rotate': () => {
+          attempts++;
+          return problem(422, 'invalid_certificate', 'Certificate not accepted.');
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    expect(await screen.findByText('Certificate has expired')).toBeInTheDocument();
+    const opener = screen.getByRole('button', { name: 'Replace certificate' });
+    await ui.click(opener);
+    const firstDialog = await screen.findByRole('dialog', { name: 'Replace certificate' });
+    await ui.click(within(firstDialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(opener).toHaveFocus());
+    await ui.click(opener);
+    const dialog = await screen.findByRole('dialog', { name: 'Replace certificate' });
+    await ui.click(within(dialog).getByRole('radio', { name: 'PEM certificate and key' }));
+    await ui.type(within(dialog).getByLabelText('Certificate (PEM)'), certificate);
+    await ui.type(within(dialog).getByLabelText('Private key (PEM)'), privateKey);
+    await ui.click(within(dialog).getByRole('button', { name: 'Replace certificate' }));
+    expect(await within(dialog).findByText('Certificate not accepted.')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Certificate (PEM)')).toHaveValue(certificate);
+    expect(within(dialog).getByLabelText('Private key (PEM)')).toHaveValue(privateKey);
+    expect(attempts).toBe(1);
   });
 
   it('rotates the certificate from PEM input', async () => {

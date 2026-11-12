@@ -108,6 +108,7 @@ export type Section =
   | 'barcode'
   | 'relevance'
   | 'none'
+  | 'scan-display'
   | GroupId;
 
 export interface Selection {
@@ -125,6 +126,7 @@ export const SECTION_LABEL: Record<Exclude<Section, GroupId>, string> = {
   inputs: 'Inputs',
   barcode: 'Barcode',
   relevance: 'Relevance',
+  'scan-display': 'Scan screen',
 };
 
 export const sectionLabel = (s: Section): string =>

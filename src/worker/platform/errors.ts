@@ -87,6 +87,74 @@ export class UnavailableError extends AppError {
   }
 }
 
+/**
+ * Why a grant refused (section 1.2). Ordered by deny precedence: org first, stale last. `staff` is a
+ * bound staff member who changed (409, the device stays paired).
+ */
+export const DENY_REASONS = [
+  'org',
+  'actor',
+  'staff',
+  'config',
+  'lineage',
+  'release',
+  'retention',
+  'stale',
+] as const;
+export type DenyReason = (typeof DENY_REASONS)[number];
+
+export interface DenialOptions {
+  /** A scanner whose credential no longer matches must re-pair (401), not retry. */
+  scanner?: boolean;
+  /** Per-purpose codes, for example `{ stale: 'PASS_CHANGED' }`. */
+  codes?: Partial<Record<DenyReason, string>>;
+}
+
+/** Maps a classified grant refusal to the HTTP error. Unknown reasons are a plain 403. */
+export function authorityDenied(
+  reason: DenyReason | string,
+  options: DenialOptions = {},
+): AppError {
+  const code = options.codes?.[reason as DenyReason];
+  switch (reason) {
+    case 'org':
+      return new ForbiddenError(
+        'Organization access changed. Reload and retry.',
+        code ?? 'ORG_ACCESS_CHANGED',
+      );
+    case 'actor':
+      return options.scanner
+        ? new UnauthenticatedError('Pair this device again.', code ?? 'SCANNER_REPAIR')
+        : new ForbiddenError('You no longer have access.', code ?? 'ACTOR_CHANGED');
+    case 'config':
+      return new ConflictError(
+        'Configuration changed. Reload and retry.',
+        code ?? 'SCAN_CONFIG_CHANGED',
+      );
+    case 'lineage':
+      return new ConflictError('The pass changed. Reload and retry.', code ?? 'LINEAGE_CHANGED');
+    case 'release':
+      return new ConflictError(
+        'The template release changed. Reload and retry.',
+        code ?? 'TEMPLATE_RELEASE_CHANGED',
+      );
+    case 'retention':
+      return new ConflictError(
+        'This record is retained. Reload and retry.',
+        code ?? 'RETENTION_CHANGED',
+      );
+    case 'staff':
+      return new ConflictError(
+        'Staff changed. Sign in again and retry.',
+        code ?? 'SCAN_STAFF_CHANGED',
+      );
+    case 'stale':
+      return new ConflictError('The resource changed. Reload and retry.', code ?? 'STALE');
+    default:
+      return new ForbiddenError('You do not have access.', code ?? 'AUTHORITY_DENIED');
+  }
+}
+
 export interface Problem {
   type: string;
   title: string;

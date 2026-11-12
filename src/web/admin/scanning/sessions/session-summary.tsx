@@ -8,18 +8,15 @@ export function SessionSummary({
   onEdit,
 }: {
   session: ScanningSession;
-  onEdit: () => void;
+  onEdit?: (() => void) | undefined;
 }) {
   const shared = [
     ['Accepts', sessionAccepts(session)],
     ['Admission', sessionRuleLabel(session)],
+    ['Paired scanner staff PIN', session.settings.staffSignIn ? 'Required' : 'Not required'],
     [
-      'Staff access',
-      session.settings.staffSignIn
-        ? 'Staff sign-in'
-        : session.settings.roleWithoutSignIn === 'desk'
-          ? 'Desk staff'
-          : 'Check-in staff',
+      'Access without staff PIN',
+      session.settings.roleWithoutSignIn === 'desk' ? 'Desk staff' : 'Check-in staff',
     ],
     ['Time zone', session.timeZone],
   ];
@@ -33,9 +30,11 @@ export function SessionSummary({
       <CardHeader
         title="Session rules"
         actions={
-          <Button size="sm" variant="ghost" iconStart={<Pencil aria-hidden />} onClick={onEdit}>
-            Edit
-          </Button>
+          onEdit ? (
+            <Button size="sm" variant="ghost" iconStart={<Pencil aria-hidden />} onClick={onEdit}>
+              Edit
+            </Button>
+          ) : undefined
         }
       />
       <CardBody className="grid gap-6">
@@ -49,6 +48,11 @@ export function SessionSummary({
               </div>
             ))}
           </dl>
+          <p className="mt-3 text-xs text-fg-muted">
+            Staff PINs apply only to paired, staff-operated scanners. Bearer-token terminals always
+            use the access level without a staff PIN. Admin-as-scanner sessions use the signed-in
+            administrator’s Manager permissions.
+          </p>
         </div>
         <div className="border-t border-border pt-4">
           <h3 className="mb-1 text-xs font-semibold text-fg-muted">DEVICE DEFAULTS</h3>

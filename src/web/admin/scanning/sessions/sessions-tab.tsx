@@ -27,15 +27,17 @@ import { useScanningSessions } from './api.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
 
 export function SessionsTab({
+  canManage,
   onNew,
   onDuplicate,
 }: {
+  canManage: boolean;
   onNew: () => void;
   onDuplicate: (s: ScanningSession) => void;
 }) {
   const { orgId } = useOrgScope();
   const query = useScanningSessions(orgId);
-  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+  const items = query.data?.pages.flatMap((p) => p.items).filter((s) => s.orgId === orgId) ?? [];
   if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   if (query.isPending)
     return (
@@ -77,7 +79,7 @@ export function SessionsTab({
           art="scanner"
           title="No scanning sessions"
           description="Create a session to share admission rules across devices."
-          action={<Button onClick={onNew}>New scanning session</Button>}
+          action={canManage ? <Button onClick={onNew}>New scanning session</Button> : undefined}
         />
       </div>
     );
@@ -110,12 +112,14 @@ export function SessionsTab({
                 </h2>
                 <p className="mt-1 truncate text-xs text-fg-muted">{s.orgName}</p>
               </div>
-              <MoreMenu>
-                <DropdownMenuItem onSelect={() => onDuplicate(s)}>
-                  <Copy aria-hidden />
-                  Duplicate session
-                </DropdownMenuItem>
-              </MoreMenu>
+              {canManage ? (
+                <MoreMenu>
+                  <DropdownMenuItem onSelect={() => onDuplicate(s)}>
+                    <Copy aria-hidden />
+                    Duplicate session
+                  </DropdownMenuItem>
+                </MoreMenu>
+              ) : null}
             </div>
             <CardBody className="grid gap-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -141,13 +145,15 @@ export function SessionsTab({
               <p className="text-sm text-fg-muted">
                 {sessionAccepts(s)} · {sessionRuleLabel(s)}
               </p>
-              <Button asChild variant="outline" iconStart={<ScanLine aria-hidden />}>
-                <a
-                  href={`/scan?admin=1&orgId=${encodeURIComponent(s.orgId)}&sessionId=${encodeURIComponent(s.id)}`}
-                >
-                  Scan as Admin
-                </a>
-              </Button>
+              {canManage ? (
+                <Button asChild variant="outline" iconStart={<ScanLine aria-hidden />}>
+                  <a
+                    href={`/scan?admin=1&orgId=${encodeURIComponent(s.orgId)}&sessionId=${encodeURIComponent(s.id)}`}
+                  >
+                    Scan as Admin
+                  </a>
+                </Button>
+              ) : null}
             </CardBody>
           </Card>
         ))}

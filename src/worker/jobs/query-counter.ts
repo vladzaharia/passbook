@@ -51,6 +51,17 @@ export function countQueries(env: AppEnv): QueryCounter {
     },
   });
   const counted = Object.create(env) as AppEnv;
+  // Bindings may themselves be inherited (for example from another env wrapper). Keep the
+  // original prototype behavior while exposing enumerable bindings to Object.entries/loadKekRing.
+  const source = env as unknown as Record<string, unknown>;
+  for (const key in source) {
+    if (key !== 'DB')
+      Object.defineProperty(counted, key, {
+        value: source[key],
+        enumerable: true,
+        configurable: true,
+      });
+  }
   Object.defineProperty(counted, 'DB', { value: db, enumerable: true });
   return { env: counted, count: () => queries };
 }

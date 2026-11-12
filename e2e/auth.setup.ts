@@ -6,6 +6,7 @@ import { createSeed } from './helpers/seed.ts';
 for (const [role, landing] of [
   ['admin', '/admin'],
   ['user', '/'],
+  ['reviewer', '/'],
 ] as [Role, string][]) {
   setup(`sign in as ${role}`, async ({ page }) => {
     await signInAs(page, role, landing);
@@ -15,6 +16,9 @@ for (const [role, landing] of [
 
 setup('seed org', async () => {
   const api = await apiAs('admin');
-  await createSeed(api);
-  await api.dispose();
+  try {
+    await createSeed(api);
+  } finally {
+    await api.dispose();
+  }
 });

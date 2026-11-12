@@ -9,6 +9,8 @@ export interface Crumb {
   label: string;
   /** Route path; omit for the current page. */
   to?: string;
+  /** Optional query parameters for the destination. */
+  search?: Record<string, string | undefined>;
 }
 
 export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; className?: string }) {
@@ -22,6 +24,7 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
               {item.to && !last ? (
                 <Link
                   to={item.to}
+                  search={item.search}
                   className={cn(
                     'relative inline-flex min-h-6 items-center rounded-sm hover:text-fg-strong hover:underline',
                     TOUCH_HIT,

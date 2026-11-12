@@ -1,3 +1,9 @@
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -528,5 +534,38 @@ describe('PageHeader', () => {
       '-1',
     );
     expect(document.title).toBe('Templates · PassBook');
+  });
+
+  it('preserves explicit workspace search on breadcrumbs', async () => {
+    const root = createRootRoute({
+      component: () => (
+        <PageHeader
+          title="Design"
+          breadcrumbs={[
+            { label: 'Templates', to: '/admin/templates' },
+            {
+              label: 'Member pass',
+              to: '/admin/templates/t1',
+              search: { orgId: 'north & east', tab: 'versions' },
+            },
+            { label: 'Design' },
+          ]}
+        />
+      ),
+    });
+    const router = createRouter({ routeTree: root, history: createMemoryHistory() });
+    render(<RouterProvider router={router} />);
+
+    const crumbs = await screen.findByRole('navigation', { name: 'Breadcrumb' });
+    const detail = within(crumbs).getByRole('link', { name: 'Member pass' });
+    const url = new URL(detail.getAttribute('href') ?? '', 'https://wallet.test');
+    expect(url.pathname).toBe('/admin/templates/t1');
+    expect(url.searchParams.get('orgId')).toBe('north & east');
+    expect(url.searchParams.get('tab')).toBe('versions');
+    expect(within(crumbs).getByRole('link', { name: 'Templates' })).toHaveAttribute(
+      'href',
+      '/admin/templates',
+    );
+    expect(within(crumbs).getByText('Design')).toHaveAttribute('aria-current', 'page');
   });
 });

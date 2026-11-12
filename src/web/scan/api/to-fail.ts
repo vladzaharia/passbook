@@ -23,6 +23,11 @@ export function toFail(error: unknown, principal: 'scanner' | 'admin' = 'scanner
         return { error: 'suspended' };
       if (error.code === 'STAFF_REQUIRED') return { error: 'staff_required' };
       return { error: 'forbidden' };
+    case 409:
+      // The signed-in staff member changed; the PIN prompt follows. Other 409s are retried upstream.
+      return error.code === 'SCAN_STAFF_CHANGED'
+        ? { error: 'staff_required' }
+        : { error: 'server' };
     case 422:
       return { error: 'forbidden' };
     case 429: {

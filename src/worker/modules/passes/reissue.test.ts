@@ -1,8 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { first } from '../../platform/db.ts';
-import { reissuePage, startBulkReissue } from './bulk.ts';
-import { getPass } from './repo.ts';
-import { type Kit, setupKit } from './test-kit.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { startBulkReissue } from './bulk.ts';
+import { reissuePage } from './bulk-reissue-page.ts';
+import { type Kit, setupKit } from './pass-test-fixtures.ts';
+import { getPass } from './repo-read-pass.ts';
 
 let kit: Kit;
 beforeAll(async () => {
@@ -21,7 +23,7 @@ describe('bulk re-sign', () => {
       identityId: pass.identityId,
       cause: 'resign' as const,
     };
-    const result = await reissuePage(kit.ctx, params, null);
+    const result = await reissuePage(jobCtxOf(kit), params, null);
     expect(result).toMatchObject({ failed: 0 });
     expect(result.changed).toBeGreaterThanOrEqual(1);
     const after = await getPass(kit.env.DB, pass.id);
@@ -32,7 +34,7 @@ describe('bulk re-sign', () => {
   it('skips passes signed by another identity', async () => {
     const pass = await kit.pass();
     const result = await reissuePage(
-      kit.ctx,
+      jobCtxOf(kit),
       {
         templateId: kit.template.id,
         version: kit.template.version,
@@ -60,7 +62,7 @@ describe('bulk re-sign', () => {
   it('re-signs an identity across templates and audits it against the identity', async () => {
     const pass = await kit.pass();
     const result = await reissuePage(
-      kit.ctx,
+      jobCtxOf(kit),
       {
         templateId: null,
         version: null,

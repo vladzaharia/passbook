@@ -1,22 +1,34 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first } from '../../platform/db.ts';
-import { getPass, type Pass } from './repo.ts';
-import { ICON_PNG, type Kit, setupKit } from './test-kit.ts';
+import { activeRelease, type TemplateRelease } from '../templates/releases.ts';
+import { approveAppleRelease } from './apple-release-test-fixtures.ts';
+import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
+import type { Pass } from './repo.ts';
+import { getPass } from './repo-read-pass.ts';
+import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
+let auth: TenantTestAuth;
 let kit: Kit;
 let app: ReturnType<typeof createApp>;
 let orgB: { id: string };
+let release: TemplateRelease;
+let orgBRelease: TemplateRelease;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
   orgB = await makeOrg(kit.fx, { name: 'Other Org' });
-});
+  const active = await activeRelease(kit.ctx, kit.template.id, kit.org.id, 'live', 'apple');
+  if (!active) throw new Error('Default Live release missing');
+  release = active;
+  orgBRelease = await approveAppleRelease(kit, { orgId: orgB.id, mode: 'live' });
+  auth = await setupTenantTestAuth(kit);
+  await auth.addOrg(orgB.id);
+  app = createApp({ stores: auth.stores, clock: kit.clock });
+}, 60_000);
 
 type Headers = Record<string, string>;
 const api = (path: string, init: RequestInit & { headers?: Headers } = {}) =>
@@ -37,6 +49,10 @@ const create = (headers: Headers, input: Record<string, unknown> = {}, extra: He
       {
         orgId: kit.org.id,
         templateId: kit.template.id,
+        templateVersion: release.version,
+        releaseId: release.id,
+        releaseGeneration: release.generation,
+        mode: 'live',
         input: { memberName: 'Api Member' },
         ...input,
       },
@@ -47,12 +63,10 @@ describe('authentication', () => {
   it('rejects anonymous callers, plain users and keys without the scope', async () => {
     const pass = await kit.pass();
     expect((await api('/passes')).status).toBe(401);
-    expect((await api('/passes', { headers: fake.user() })).status).toBe(403);
-    expect(
-      (await api(`/passes/${pass.id}`, { headers: fake.apiKey({ scopes: ['templates:read'] }) }))
-        .status,
-    ).toBe(403);
-    const readOnly = fake.apiKey({ scopes: ['passes:read'] });
+    expect((await api(`/passes/${pass.id}`, { headers: auth.user() })).status).toBe(403);
+    const wrongScope = await auth.apiKey({ orgId: kit.org.id, scopes: ['templates:read'] });
+    expect((await api(`/passes/${pass.id}`, { headers: wrongScope })).status).toBe(403);
+    const readOnly = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] });
     expect((await api(`/passes/${pass.id}`, { headers: readOnly })).status).toBe(200);
     expect(
       (await api(`/passes/${pass.id}/void`, { method: 'POST', headers: readOnly })).status,
@@ -62,7 +76,7 @@ describe('authentication', () => {
 
 describe('create and read', () => {
   it('creates a pass that matches the published contract', async () => {
-    const res = await create(fake.admin());
+    const res = await create(auth.admin());
     expect(res.status).toBe(201);
     const body = PassDetailSchema.parse(await res.json());
     expect(body).toMatchObject({
@@ -71,51 +85,55 @@ describe('create and read', () => {
       version: 1,
       holderState: 'unassigned',
     });
+    expect(await getPass(kit.env.DB, body.id)).toMatchObject({
+      templateVersion: release.version,
+      releaseId: release.id,
+    });
     expect(body.publicUrl).toMatch(/\/p\/.+/);
     expect(body.downloadUrl.endsWith('/pass.pkpass')).toBe(true);
     expect(body.versions).toHaveLength(1);
     expect(body.passJson).toMatchObject({ organizationName: 'Test Gym' });
     expect(JSON.stringify(body)).not.toContain('authenticationToken');
-    const got = await api(`/passes/${body.id}`, { headers: fake.admin() });
+    const got = await api(`/passes/${body.id}`, { headers: auth.admin() });
     expect(got.headers.get('etag')).toBe('"1"');
     PassDetailSchema.parse(await got.json());
   });
 
   it('replays an Idempotency-Key and rejects reuse with another body', async () => {
     const key = { 'idempotency-key': `k-${kit.fx.ids.token(6)}` };
-    const a = await create(fake.admin(), {}, key);
-    const b = await create(fake.admin(), {}, key);
+    const a = await create(auth.admin(), {}, key);
+    const b = await create(auth.admin(), {}, key);
     expect(b.status).toBe(201);
     expect(((await b.json()) as { id: string }).id).toBe(((await a.json()) as { id: string }).id);
-    const other = await create(fake.admin(), { input: { memberName: 'Different' } }, key);
+    const other = await create(auth.admin(), { input: { memberName: 'Different' } }, key);
     expect(other.status).toBe(409);
     expect(((await other.json()) as { code: string }).code).toBe('IDEMPOTENCY_KEY_REUSED');
-    expect((await create(fake.admin(), {}, { 'idempotency-key': 'x'.repeat(201) })).status).toBe(
+    expect((await create(auth.admin(), {}, { 'idempotency-key': 'x'.repeat(201) })).status).toBe(
       400,
     );
   });
 
   it('validates the body and reports problem+json', async () => {
-    const res = await create(fake.admin(), { input: {} });
+    const res = await create(auth.admin(), { input: {} });
     expect(res.status).toBe(422);
     expect(res.headers.get('content-type')).toBe('application/problem+json');
     expect(((await res.json()) as { code: string }).code).toBe('PASS_INPUT_INVALID');
-    expect((await create(fake.admin(), { templateId: 'missing' })).status).toBe(404);
-    expect((await create(fake.admin(), { holderEmail: 'nope' })).status).toBe(422);
+    expect((await create(auth.admin(), { templateId: 'missing' })).status).toBe(404);
+    expect((await create(auth.admin(), { holderEmail: 'nope' })).status).toBe(422);
   });
 
   it('lists with filters and cursor pagination', async () => {
-    for (let i = 0; i < 3; i++) await create(fake.admin(), { input: { memberName: `Pager ${i}` } });
+    for (let i = 0; i < 3; i++) await create(auth.admin(), { input: { memberName: `Pager ${i}` } });
     const page1 = PassListSchema.parse(
       await (
-        await api(`/passes?orgId=${kit.org.id}&q=Pager&limit=2`, { headers: fake.admin() })
+        await api(`/passes?orgId=${kit.org.id}&q=Pager&limit=2`, { headers: auth.admin() })
       ).json(),
     );
     expect(page1.items).toHaveLength(2);
     const page2 = PassListSchema.parse(
       await (
         await api(`/passes?orgId=${kit.org.id}&q=Pager&limit=2&cursor=${page1.nextCursor}`, {
-          headers: fake.admin(),
+          headers: auth.admin(),
         })
       ).json(),
     );
@@ -123,9 +141,10 @@ describe('create and read', () => {
     expect(page2.nextCursor).toBeNull();
     const byTemplate = PassListSchema.parse(
       await (
-        await api(`/passes?templateId=${kit.template.id}&status=voided&limit=5`, {
-          headers: fake.admin(),
-        })
+        await api(
+          `/passes?orgId=${kit.org.id}&templateId=${kit.template.id}&status=voided&limit=5`,
+          { headers: auth.admin() },
+        )
       ).json(),
     );
     expect(byTemplate.items.every((p) => p.status === 'voided')).toBe(true);
@@ -134,8 +153,8 @@ describe('create and read', () => {
 
 describe('update', () => {
   it('requires the current version in If-Match', async () => {
-    const created = (await (await create(fake.admin())).json()) as { id: string };
-    const headers = fake.admin();
+    const created = (await (await create(auth.admin())).json()) as { id: string };
+    const headers = auth.admin();
     const stale = await api(
       `/passes/${created.id}`,
       json({ ...headers, 'if-match': '"7"' }, { input: { memberName: 'X' } }, 'PATCH'),
@@ -158,55 +177,55 @@ describe('update', () => {
 
   it('serves version history, a retained version for rendering and a diff', async () => {
     const created = (await (
-      await create(fake.admin(), { input: { memberName: 'Before' } })
+      await create(auth.admin(), { input: { memberName: 'Before' } })
     ).json()) as { id: string };
     await api(
       `/passes/${created.id}`,
-      json(fake.admin(), { input: { memberName: 'After' } }, 'PATCH'),
+      json(auth.admin(), { input: { memberName: 'After' } }, 'PATCH'),
     );
     const v1 = PassDetailSchema.parse(
-      await (await api(`/passes/${created.id}/versions/1`, { headers: fake.admin() })).json(),
+      await (await api(`/passes/${created.id}/versions/1`, { headers: auth.admin() })).json(),
     );
     expect(v1.personalization).toEqual({ memberName: 'Before' });
     const diff = (await (
-      await api(`/passes/${created.id}/diff?from=1&to=2`, { headers: fake.admin() })
+      await api(`/passes/${created.id}/diff?from=1&to=2`, { headers: auth.admin() })
     ).json()) as {
       changes: { path: string; from: unknown; to: unknown }[];
     };
     expect(diff.changes).toEqual([{ path: 'memberName', from: 'Before', to: 'After' }]);
-    expect((await api(`/passes/${created.id}/versions/9`, { headers: fake.admin() })).status).toBe(
+    expect((await api(`/passes/${created.id}/versions/9`, { headers: auth.admin() })).status).toBe(
       404,
     );
   });
 
   it('voids, unvoids, rotates and deletes', async () => {
-    const created = (await (await create(fake.admin())).json()) as {
+    const created = (await (await create(auth.admin())).json()) as {
       id: string;
       publicUrl: string;
     };
     const voided = await api(`/passes/${created.id}/void`, {
       method: 'POST',
-      headers: fake.admin(),
+      headers: auth.admin(),
     });
     expect(((await voided.json()) as { status: string }).status).toBe('voided');
     const back = await api(`/passes/${created.id}/unvoid`, {
       method: 'POST',
-      headers: fake.admin(),
+      headers: auth.admin(),
     });
     expect(((await back.json()) as { status: string }).status).toBe('active');
     const rotated = (await (
-      await api(`/passes/${created.id}/rotate-link`, { method: 'POST', headers: fake.admin() })
+      await api(`/passes/${created.id}/rotate-link`, { method: 'POST', headers: auth.admin() })
     ).json()) as { publicUrl: string };
     expect(rotated.publicUrl).not.toBe(created.publicUrl);
     expect((await app.request(created.publicUrl, {}, kit.env)).status).toBe(404);
-    const del = await api(`/passes/${created.id}`, { method: 'DELETE', headers: fake.admin() });
+    const del = await api(`/passes/${created.id}`, { method: 'DELETE', headers: auth.admin() });
     expect(del.status).toBe(200);
-    expect((await api(`/passes/${created.id}`, { headers: fake.admin() })).status).toBe(404);
+    expect((await api(`/passes/${created.id}`, { headers: auth.admin() })).status).toBe(404);
   });
 });
 
 describe('per-pass images', () => {
-  const put = (id: string, name: string, body: BodyInit, headers: Headers = fake.admin()) =>
+  const put = (id: string, name: string, body: BodyInit, headers: Headers = auth.admin()) =>
     api(`/passes/${id}/assets/${name}`, {
       method: 'PUT',
       headers: { ...headers, 'content-type': 'image/png' },
@@ -214,7 +233,7 @@ describe('per-pass images', () => {
     });
 
   it('uploads, lists, republishes and removes an override', async () => {
-    const created = (await (await create(fake.admin())).json()) as { id: string };
+    const created = (await (await create(auth.admin())).json()) as { id: string };
     const res = await put(created.id, 'icon.png', ICON_PNG);
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
@@ -226,14 +245,14 @@ describe('per-pass images', () => {
     const row = await getPass(kit.env.DB, created.id);
     expect(row?.version).toBe(2);
     const list = (await (
-      await api(`/passes/${created.id}/assets`, { headers: fake.admin() })
+      await api(`/passes/${created.id}/assets`, { headers: auth.admin() })
     ).json()) as { items: { name: string }[] };
     expect(list.items.map((i) => i.name)).toEqual(['icon.png']);
     expect(
       (
         await api(`/passes/${created.id}/assets/icon.png`, {
           method: 'DELETE',
-          headers: fake.admin(),
+          headers: auth.admin(),
         })
       ).status,
     ).toBe(200);
@@ -242,14 +261,14 @@ describe('per-pass images', () => {
       (
         await api(`/passes/${created.id}/assets/icon.png`, {
           method: 'DELETE',
-          headers: fake.admin(),
+          headers: auth.admin(),
         })
       ).status,
     ).toBe(404);
   });
 
   it('rejects files that are not valid pass images', async () => {
-    const created = (await (await create(fake.admin())).json()) as { id: string };
+    const created = (await (await create(auth.admin())).json()) as { id: string };
     expect((await put(created.id, 'icon.png', new Uint8Array([1, 2, 3]))).status).toBe(422);
     expect((await put(created.id, 'nothing.png', ICON_PNG)).status).toBe(422);
     expect((await put(created.id, 'icon.gif', ICON_PNG)).status).toBe(422);
@@ -268,15 +287,15 @@ describe('per-pass images', () => {
 
 describe('refresh, email and bulk reissue', () => {
   it('queues one refresh and coalesces repeats inside the window', async () => {
-    const created = (await (await create(fake.admin())).json()) as { id: string };
+    const created = (await (await create(auth.admin())).json()) as { id: string };
     kit.queue.sent.length = 0;
     const first1 = await api(`/passes/${created.id}/refresh`, {
       method: 'POST',
-      headers: fake.admin(),
+      headers: auth.admin(),
     });
     const second = await api(`/passes/${created.id}/refresh`, {
       method: 'POST',
-      headers: fake.admin(),
+      headers: auth.admin(),
     });
     expect(first1.status).toBe(202);
     expect(second.status).toBe(202);
@@ -288,35 +307,61 @@ describe('refresh, email and bulk reissue', () => {
 
   it('queues an email to the holder or a given address, and needs a recipient', async () => {
     const created = (await (
-      await create(fake.admin(), { holderEmail: 'who@example.com' })
+      await create(auth.admin(), { holderEmail: 'who@example.com' })
     ).json()) as { id: string };
-    const ok = await api(`/passes/${created.id}/resend-email`, json(fake.admin(), {}));
+    const ok = await api(`/passes/${created.id}/resend-email`, json(auth.admin(), {}));
     expect(ok.status).toBe(202);
     const rows = await all<{ payload: string }>(
       kit.env.DB,
       "SELECT payload FROM outbox WHERE pass_id = ? AND kind = 'email'",
       [created.id],
     );
-    expect(JSON.parse(rows[0]?.payload ?? '{}')).toEqual({ to: 'who@example.com', attach: false });
-    const bare = (await (await create(fake.admin())).json()) as { id: string };
-    const none = await api(`/passes/${bare.id}/resend-email`, json(fake.admin(), {}));
+    expect(JSON.parse(rows[0]?.payload ?? '{}')).toMatchObject({
+      to: 'who@example.com',
+      attach: false,
+    });
+    const bare = (await (await create(auth.admin())).json()) as { id: string };
+    const none = await api(`/passes/${bare.id}/resend-email`, json(auth.admin(), {}));
     expect(none.status).toBe(422);
     const other = await api(
       `/passes/${bare.id}/resend-email`,
-      json(fake.admin(), { to: 'x@example.com', attach: true }),
+      json(auth.admin(), { to: 'x@example.com', attach: true }),
     );
     expect(other.status).toBe(202);
   });
 
-  it('starts a bulk reissue for admins only and records the run', async () => {
+  it('queues one email per Idempotency-Key and rejects a reused key with another body', async () => {
+    const created = (await (
+      await create(auth.admin(), { holderEmail: 'once@example.com' })
+    ).json()) as { id: string };
+    const send = (body: unknown, key: string) =>
+      api(
+        `/passes/${created.id}/resend-email`,
+        json({ ...auth.admin(), 'idempotency-key': key }, body),
+      );
+    expect((await send({}, 'k1')).status).toBe(202);
+    expect((await send({}, 'k1')).status).toBe(202);
+    const count = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT COUNT(*) AS n FROM outbox WHERE pass_id = ? AND kind = 'email'",
+      [created.id],
+    );
+    expect(count?.n).toBe(1);
+    expect((await send({ attach: true }, 'k1')).status).toBe(409);
+  });
+
+  it('starts a tenant bulk reissue for a session and records the run', async () => {
     const denied = await api(
       '/passes/bulk-reissue',
-      json(fake.apiKey(), { templateId: kit.template.id }),
+      json(await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:write'] }), {
+        orgId: kit.org.id,
+        templateId: kit.template.id,
+      }),
     );
     expect(denied.status).toBe(401);
     const res = await api(
       '/passes/bulk-reissue',
-      json(fake.admin(), { templateId: kit.template.id }),
+      json(auth.admin(), { orgId: kit.org.id, templateId: kit.template.id }),
     );
     expect(res.status).toBe(202);
     const { workflowInstanceId } = (await res.json()) as { workflowInstanceId: string };
@@ -324,7 +369,8 @@ describe('refresh, email and bulk reissue', () => {
       id: workflowInstanceId,
       params: {
         templateId: kit.template.id,
-        version: kit.template.version,
+        orgId: kit.org.id,
+        version: release.version,
         cause: 'template_upgrade',
       },
     });
@@ -335,11 +381,20 @@ describe('refresh, email and bulk reissue', () => {
     );
     expect(run).toEqual({ status: 'queued', kind: 'bulk_reissue' });
     expect(
-      (await api('/passes/bulk-reissue', json(fake.admin(), { templateId: 'nope' }))).status,
+      (
+        await api(
+          '/passes/bulk-reissue',
+          json(auth.admin(), { orgId: kit.org.id, templateId: 'nope' }),
+        )
+      ).status,
     ).toBe(404);
-    expect((await api('/passes/bulk-reissue', json(fake.admin(), {}))).status).toBe(422);
+    expect((await api('/passes/bulk-reissue', json(auth.admin(), {}))).status).toBe(422);
     expect(
-      (await api('/passes/bulk-reissue', json(fake.admin(), { cause: 'resign', identityId: 'i1' })))
+      (await api('/passes/bulk-reissue', json(auth.user(), { cause: 'resign', identityId: 'i1' })))
+        .status,
+    ).toBe(403);
+    expect(
+      (await api('/passes/bulk-reissue', json(auth.admin(), { cause: 'resign', identityId: 'i1' })))
         .status,
     ).toBe(202);
   });
@@ -350,7 +405,7 @@ describe('tenant isolation', () => {
   let keyA: Headers;
   beforeAll(async () => {
     foreign = await kit.pass({ orgId: orgB.id, holderEmail: 'foreign@example.com' });
-    keyA = fake.apiKey({
+    keyA = await auth.apiKey({
       orgId: kit.org.id,
       scopes: ['passes:read', 'passes:write', 'holders:write'],
     });
@@ -388,10 +443,20 @@ describe('tenant isolation', () => {
       body: ICON_PNG,
     });
     expect(upload.status).toBe(404);
-    expect((await create(keyA, { orgId: orgB.id })).status).toBe(403);
-    expect((await api(`/passes?orgId=${orgB.id}`, { headers: keyA })).status).toBe(403);
+    expect(
+      (
+        await create(keyA, {
+          orgId: orgB.id,
+          templateVersion: orgBRelease.version,
+          releaseId: orgBRelease.id,
+          releaseGeneration: orgBRelease.generation,
+        })
+      ).status,
+    ).toBe(403);
+    const foreignList = await api(`/passes?orgId=${orgB.id}`, { headers: keyA });
+    expect(foreignList.status).toBe(403);
     const list = PassListSchema.parse(
-      await (await api('/passes?limit=200', { headers: keyA })).json(),
+      await (await api(`/passes?orgId=${kit.org.id}&limit=200`, { headers: keyA })).json(),
     );
     expect(list.items.every((p) => p.orgId === kit.org.id)).toBe(true);
     expect(list.items.some((p) => p.id === foreign.id)).toBe(false);
@@ -407,20 +472,35 @@ describe('tenant isolation', () => {
     ] as const)
       expect((await api(path, json(keyA, body))).status, path).toBe(404);
     expect((await api(`/holders?orgId=${orgB.id}`, { headers: keyA })).status).toBe(403);
-    const mine = (await (await api('/holders?limit=200', { headers: keyA })).json()) as {
+    const mine = (await (
+      await api(`/holders?orgId=${kit.org.id}&limit=200`, { headers: keyA })
+    ).json()) as {
       items: { passId: string }[];
     };
     expect(mine.items.some((h) => h.passId === foreign.id)).toBe(false);
+    const foreignHolders = await api(`/holders?orgId=${orgB.id}&limit=200`, {
+      headers: auth.admin(),
+    });
+    expect(foreignHolders.status).toBe(200);
+    expect(await foreignHolders.json()).toMatchObject({
+      items: expect.arrayContaining([expect.objectContaining({ passId: foreign.id })]),
+    });
   });
 
-  it('delivery and bulk reissue are admin only', async () => {
-    expect((await api(`/delivery?passId=${foreign.id}`, { headers: keyA })).status).toBe(401);
+  it('scopes delivery reads and requires a session for bulk reissue', async () => {
+    expect(
+      (await api(`/delivery?orgId=${kit.org.id}&passId=${foreign.id}`, { headers: keyA })).status,
+    ).toBe(404);
     expect(
       (await api('/passes/bulk-reissue', json(keyA, { templateId: kit.template.id }))).status,
     ).toBe(401);
-    expect((await api(`/delivery?passId=${foreign.id}`, { headers: fake.admin() })).status).toBe(
-      200,
-    );
+    expect(
+      (
+        await api(`/delivery?orgId=${orgB.id}&passId=${foreign.id}`, {
+          headers: auth.admin(),
+        })
+      ).status,
+    ).toBe(200);
   });
 
   it('left the foreign pass untouched and lets a platform key through', async () => {
@@ -431,15 +511,15 @@ describe('tenant isolation', () => {
       downloadToken: foreign.downloadToken,
       displayTitle: 'Alex Morgan',
     });
-    const platform = fake.apiKey({ orgId: null });
+    const platform = await auth.apiKey({ orgId: null, scopes: ['passes:read'] });
     expect((await api(`/passes/${foreign.id}`, { headers: platform })).status).toBe(200);
   });
 });
 
 describe('holders API', () => {
   it('assigns, reassigns and unassigns through HTTP', async () => {
-    const created = (await (await create(fake.admin())).json()) as { id: string };
-    const admin = fake.admin();
+    const created = (await (await create(auth.admin())).json()) as { id: string };
+    const admin = auth.admin();
     const assigned = await api(
       '/holders/assign',
       json(admin, { passId: created.id, email: 'Me@Example.com' }),
@@ -448,6 +528,13 @@ describe('holders API', () => {
       passId: created.id,
       state: 'waiting',
       email: 'me@example.com',
+    });
+    const list = await api(`/holders?orgId=${kit.org.id}&limit=200`, { headers: admin });
+    expect(list.status).toBe(200);
+    expect(await list.json()).toMatchObject({
+      items: expect.arrayContaining([
+        expect.objectContaining({ passId: created.id, state: 'waiting', email: 'me@example.com' }),
+      ]),
     });
     const re = await api('/holders/reassign', json(admin, { passId: created.id, email: null }));
     expect(await re.json()).toMatchObject({ state: 'unassigned', email: null });

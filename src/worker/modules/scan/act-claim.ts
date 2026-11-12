@@ -4,7 +4,9 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
 import type { ScanActor } from './guard.ts';
-import type { Claim } from './repo-scans.ts';
+import { failPendingActionClaimStmt } from './repo-act-claim.ts';
+import type { Candidate } from './repo-lookup.ts';
+import { type Claim, pristineClaimFence } from './repo-scans.ts';
 
 export type ActRequest = z.infer<typeof ScanActRequestSchema>;
 
@@ -56,3 +58,47 @@ export function claimOf(
     now: ctx.clock.now(),
   };
 }
+
+/** Fail only the owned pending generation, preserving retryability when it stayed pristine. */
+export function failActionClaimStmt(
+  db: D1Database,
+  claim: Claim,
+  claimAt: number,
+  observedAmbiguous = false,
+): D1PreparedStatement {
+  const pristine = pristineClaimFence(claim);
+  return failPendingActionClaimStmt(db, claim, claimAt, observedAmbiguous, pristine);
+}
+
+/** A same-batch upper bound permits preplanning every authenticated history page. */
+const historyCapacities = new WeakMap<Candidate, number>();
+
+export function rememberHistoryCapacities(
+  candidates: readonly Candidate[] | null,
+  result: D1Result | { success: false } | undefined,
+): void {
+  if (!candidates || !result || result.success === false || !result.results) return;
+  const counts = new Map<string, number>();
+  for (const row of result.results) {
+    if (
+      !row ||
+      typeof row !== 'object' ||
+      !('id' in row) ||
+      !('n' in row) ||
+      typeof row.id !== 'string' ||
+      typeof row.n !== 'number' ||
+      !Number.isSafeInteger(row.n) ||
+      row.n < 0 ||
+      counts.has(row.id)
+    )
+      return;
+    counts.set(row.id, row.n);
+  }
+  for (const candidate of candidates) {
+    const count = counts.get(candidate.pass.id);
+    if (count !== undefined) historyCapacities.set(candidate, count);
+  }
+}
+
+export const historyCapacity = (candidate: Candidate): number | undefined =>
+  historyCapacities.get(candidate);

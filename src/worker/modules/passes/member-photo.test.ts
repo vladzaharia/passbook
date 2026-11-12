@@ -1,28 +1,33 @@
 import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
 import { MemberPhotoSchema } from '../../../shared/contracts/check-in.ts';
 import { createApp } from '../../app.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { brandingKey } from '../orgs/branding-files.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { putPassAsset } from './asset-service.ts';
+import { buildArtifact } from './builder.ts';
 import { getMemberPhoto, putMemberPhoto, updateMemberPhoto } from './member-photo.ts';
-import { getPass } from './repo.ts';
+import { expectValidZip, type Kit, setupKit } from './pass-test-fixtures.ts';
 import { memberPhoto } from './repo-member-photo.ts';
-import { expectValidZip, type Kit, setupKit } from './test-kit.ts';
+import { getPass } from './repo-read-pass.ts';
+import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
 const actor = { type: 'system' as const, id: null };
 const png = makePng(270, 270);
 const encoded = btoa(String.fromCharCode(...png));
 let kit: Kit;
+let auth: TenantTestAuth;
 let app: ReturnType<typeof createApp>;
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  auth = await setupTenantTestAuth(kit);
+  app = createApp({ stores: auth.stores, clock: kit.clock });
 });
-const api = (id: string, method = 'GET', body?: unknown, headers = fake.admin()) =>
+const api = (id: string, method = 'GET', body?: unknown, headers = auth.admin()) =>
   app.request(
     `${ORIGIN}/api/v1/passes/${id}/member-photo`,
     {
@@ -51,7 +56,7 @@ describe('member photos', () => {
     view.setUint32(chunk.length - 4, crc32(data));
     const original = new Uint8Array([...png.subarray(0, -12), ...chunk, ...png.subarray(-12)]);
     await putMemberPhoto(
-      kit.ctx,
+      jobCtxOf(kit),
       actor,
       pass.id,
       { png: btoa(String.fromCharCode(...original)), includeInPass: true },
@@ -62,7 +67,13 @@ describe('member photos', () => {
 
   it('restores the previous photo when a Wallet rebuild fails', async () => {
     const pass = await kit.pass();
-    await putMemberPhoto(kit.ctx, actor, pass.id, { png: encoded, includeInPass: false }, null);
+    await putMemberPhoto(
+      jobCtxOf(kit),
+      actor,
+      pass.id,
+      { png: encoded, includeInPass: false },
+      null,
+    );
     const before = await memberPhoto(kit.env.DB, pass.orgId, pass.id);
     const resolve = kit.registry.resolve.bind(kit.registry);
     const spy = vi
@@ -70,7 +81,7 @@ describe('member photos', () => {
       .mockImplementationOnce(resolve)
       .mockRejectedValueOnce(new Error('Signing unavailable'));
     try {
-      await expect(updateMemberPhoto(kit.ctx, actor, pass.id, true, null)).rejects.toThrow(
+      await expect(updateMemberPhoto(jobCtxOf(kit), actor, pass.id, true, null)).rejects.toThrow(
         'Signing unavailable',
       );
       expect(await memberPhoto(kit.env.DB, pass.orgId, pass.id)).toEqual(before);
@@ -89,21 +100,76 @@ describe('member photos', () => {
     expect(photo.url).toContain('/member-photo/image?');
     expect((await getPass(kit.env.DB, pass.id))?.version).toBe(version);
     expect((await files(pass.id))['thumbnail@3x.png']).toBeUndefined();
-    const image = await app.request(`${ORIGIN}${photo.url}`, { headers: fake.admin() }, kit.env);
+    const image = await app.request(`${ORIGIN}${photo.url}`, { headers: auth.admin() }, kit.env);
     expect(image.status).toBe(200);
     expect(image.headers.get('cache-control')).toBe('private, no-store');
     expect(new Uint8Array(await image.arrayBuffer())).toEqual(png);
   });
 
+  it('omits holder assets from a signed build while retaining organization and template assets', async () => {
+    const created = await kit.pass();
+    const holderLogo = makePng(40, 40);
+    const orgLogo = makePng(120, 120);
+    await putPassAsset(jobCtxOf(kit), actor, created.id, 'logo.png', holderLogo, null);
+    await putMemberPhoto(
+      jobCtxOf(kit),
+      actor,
+      created.id,
+      { png: encoded, includeInPass: true },
+      null,
+    );
+    await kit.env.BUCKET.put(brandingKey(created.orgId, 'logo', 3), orgLogo);
+    const pass = await getPass(kit.env.DB, created.id);
+    if (!pass) throw new Error('Missing pass');
+    const request = {
+      orgId: pass.orgId,
+      orgName: kit.org.name,
+      branding: { logo: { sha: 'org-logo', w: 120, h: 120 } },
+      passId: pass.id,
+      serial: pass.serial,
+      authToken: pass.authToken,
+      webServiceUrl: pass.webServiceUrl,
+      identityId: pass.identityId,
+      templateId: pass.templateId,
+      templateVersion: pass.templateVersion,
+      personalization: pass.personalization,
+      status: pass.status,
+    };
+    const normal = unzipSync((await buildArtifact(kit.ctx, request)).bytes);
+    const transferred = unzipSync(
+      (
+        await buildArtifact(kit.ctx, {
+          ...request,
+          omitPassAssets: true,
+        })
+      ).bytes,
+    );
+    expect(normal['logo.png']).toEqual(holderLogo);
+    expect(normal['logo@3x.png']).toBeUndefined();
+    expect(normal['thumbnail@3x.png']).toEqual(png);
+    expect(transferred['logo.png']).toBeUndefined();
+    expect(transferred['logo@3x.png']).toEqual(orgLogo);
+    expect(transferred['thumbnail@3x.png']).toBeUndefined();
+    expect(transferred['icon.png']).toEqual(normal['icon.png']);
+    expect(transferred['icon.png']).toBeDefined();
+    expect(transferred.signature).toBeDefined();
+  });
+
   it('signs the photo into Wallet and restores the original thumbnail when disabled', async () => {
     const pass = await kit.pass();
     const original = makePng(180, 180);
-    await putPassAsset(kit.ctx, actor, pass.id, 'thumbnail@2x.png', original, null);
-    await putMemberPhoto(kit.ctx, actor, pass.id, { png: encoded, includeInPass: true }, null);
+    await putPassAsset(jobCtxOf(kit), actor, pass.id, 'thumbnail@2x.png', original, null);
+    await putMemberPhoto(
+      jobCtxOf(kit),
+      actor,
+      pass.id,
+      { png: encoded, includeInPass: true },
+      null,
+    );
     const included = await files(pass.id);
     expect(included['thumbnail@3x.png']).toEqual(png);
     expect(included['thumbnail@2x.png']).toBeUndefined();
-    await updateMemberPhoto(kit.ctx, actor, pass.id, false, null);
+    await updateMemberPhoto(jobCtxOf(kit), actor, pass.id, false, null);
     const restored = await files(pass.id);
     expect(restored['thumbnail@3x.png']).toBeUndefined();
     expect(restored['thumbnail@2x.png']).toEqual(original);
@@ -111,7 +177,13 @@ describe('member photos', () => {
 
   it('removes the photo from both the signed pass and private storage', async () => {
     const pass = await kit.pass();
-    await putMemberPhoto(kit.ctx, actor, pass.id, { png: encoded, includeInPass: true }, null);
+    await putMemberPhoto(
+      jobCtxOf(kit),
+      actor,
+      pass.id,
+      { png: encoded, includeInPass: true },
+      null,
+    );
     const row = await memberPhoto(kit.env.DB, pass.orgId, pass.id);
     const response = await api(pass.id, 'DELETE');
     expect(response.status).toBe(200);
@@ -135,12 +207,12 @@ describe('member photos', () => {
   it('requires authentication, write access, matching organization and mode', async () => {
     const pass = await kit.pass();
     expect((await api(pass.id, 'GET', undefined, {})).status).toBe(401);
-    expect((await api(pass.id, 'PUT', { png: encoded }, fake.user())).status).toBe(403);
+    expect((await api(pass.id, 'PUT', { png: encoded }, auth.user())).status).toBe(403);
     const other = await makeOrg(kit.fx);
     await expect(getMemberPhoto(kit.ctx, pass.id, other.id)).rejects.toMatchObject({ status: 404 });
     await expect(
       putMemberPhoto(
-        kit.ctx,
+        jobCtxOf(kit),
         actor,
         pass.id,
         { png: encoded, includeInPass: false },

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
+import { type FakeAuth, fakeAuth, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import {
   AdminScannerStartedSchema,
   CreatedScannerSetupSchema,
@@ -8,15 +8,16 @@ import {
 import { createApp } from '../../app.ts';
 import { createScannerStore } from './auth-store.ts';
 import { getScanner } from './repo-device.ts';
-import { type ScanKit, setupScanKit } from './test-kit.ts';
+import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
+let fake: FakeAuth;
 let kit: ScanKit;
 let app: ReturnType<typeof createApp>;
 beforeAll(async () => {
   kit = await setupScanKit();
-  await makeUser(kit.fx, { id: 'admin-1' });
+  fake = fakeAuth(ORIGIN);
+  fake.bindSessions(kit.env.DB, kit.clock);
   app = createApp({
     stores: { ...fake.stores, scanners: createScannerStore(kit.env, kit.clock) },
     clock: kit.clock,
@@ -48,6 +49,7 @@ describe('managed scanner setups', () => {
     const first = await start();
     expect(await start()).toEqual(first);
     const other = await makeOrg(kit.fx);
+    await grantScanMembership(kit.fx, other.id, 'admin-1');
     expect((await start(other.id)).setupId).not.toBe(first.setupId);
     expect((await start(kit.org.id, fake.admin({ mode: 'test' }))).setupId).not.toBe(first.setupId);
     const view = ScannerSetupSchema.parse(
@@ -60,6 +62,17 @@ describe('managed scanner setups', () => {
       settings: { flow: 'auto' },
     });
     expect((await getScanner(kit.env.DB, first.setupId))?.tokenHash).toBeNull();
+  });
+
+  it('requires an explicit membership even for a platform administrator', async () => {
+    const other = await makeOrg(kit.fx);
+    const body = { orgId: other.id, timeZone: 'UTC' };
+    expect((await send('/scan-setups/admin-session', 'POST', body)).status).toBe(403);
+
+    const member = await makeUser(kit.fx);
+    await grantScanMembership(kit.fx, other.id, member.id);
+    const headers = fake.session({ userId: member.id, roles: ['user'] });
+    expect((await send('/scan-setups/admin-session', 'POST', body, headers)).status).toBe(200);
   });
 
   it('uses managed settings and refuses another admin’s setup', async () => {
@@ -79,6 +92,7 @@ describe('managed scanner setups', () => {
       scanner: { id: setup.setupId, settings: { flow: 'auto', showPhoto: false } },
     });
     const other = await makeUser(kit.fx);
+    await grantScanMembership(kit.fx, kit.org.id, other.id);
     const denied = await send(
       `/scan/session?${query}`,
       'GET',
@@ -99,7 +113,11 @@ describe('managed scanner setups', () => {
 
   it('pairs a dedicated screen and keeps it read only', async () => {
     const source = await kit.scanner();
-    const event = await kit.event({});
+    // An event scope with no templates is invalid (fails closed), so the event gets one.
+    const template = await kit.scanTemplate('Display event', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+    });
+    const event = await kit.event({ templateIds: [template] });
     const response = await send('/scan-setups', 'POST', {
       orgId: kit.org.id,
       name: 'Customer display',
@@ -110,7 +128,7 @@ describe('managed scanner setups', () => {
       timeZone: 'UTC',
       watch: { scannerIds: [source.id] },
     });
-    expect(response.status).toBe(201);
+    expect(response.status, await response.clone().text()).toBe(201);
     const screen = CreatedScannerSetupSchema.parse(await response.json());
     const paired = await send(
       '/scan/pair',
@@ -171,5 +189,59 @@ describe('managed scanner setups', () => {
         )
       ).status,
     ).toBe(403);
+  });
+
+  it('saves a screen with deviceRole and watch, as the console does on every save', async () => {
+    const source = await kit.scanner();
+    const made = await send('/scan-setups', 'POST', {
+      orgId: kit.org.id,
+      name: 'Door monitor',
+      kind: 'display',
+      deviceRole: 'monitor',
+      timeZone: 'UTC',
+      watch: { allOrg: true },
+    });
+    expect(made.status).toBe(201);
+    const { id } = CreatedScannerSetupSchema.parse(await made.json());
+    const renamed = await send(`/scan-setups/${id}`, 'PATCH', {
+      name: 'Door monitor 2',
+      deviceRole: 'monitor',
+      watch: { allOrg: true, scannerIds: [] },
+    });
+    expect(renamed.status).toBe(200);
+    expect(ScannerSetupSchema.parse(await renamed.json())).toMatchObject({
+      name: 'Door monitor 2',
+      watch: { allOrg: true },
+    });
+    const follow = await send(`/scan-setups/${id}`, 'PATCH', {
+      watch: { allOrg: false, scannerIds: [source.id] },
+    });
+    expect(follow.status).toBe(200);
+    expect(ScannerSetupSchema.parse(await follow.json()).watch).toMatchObject({
+      scannerIds: [source.id],
+    });
+    const scan = await send(`/scan-setups/${source.id}`, 'PATCH', {
+      name: 'Gate 1',
+      deviceRole: 'scan',
+      watch: null,
+    });
+    expect(scan.status).toBe(200);
+  });
+
+  it('refuses to edit a setup from the other mode', async () => {
+    const made = await send('/scan-setups', 'POST', {
+      orgId: kit.org.id,
+      name: 'Live monitor',
+      kind: 'display',
+      deviceRole: 'monitor',
+      timeZone: 'UTC',
+      watch: { allOrg: true },
+    });
+    const { id } = CreatedScannerSetupSchema.parse(await made.json());
+    const testMode = fake.admin({ mode: 'test' });
+    expect((await send(`/scan-setups/${id}`, 'PATCH', { name: 'Nope' }, testMode)).status).toBe(
+      404,
+    );
+    expect((await send(`/scan-setups/${id}`, 'GET', undefined, testMode)).status).toBe(404);
   });
 });

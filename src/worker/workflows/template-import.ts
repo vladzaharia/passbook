@@ -10,7 +10,8 @@ import {
   startImport,
 } from '../modules/templates/import-pipeline.ts';
 import type { AppEnv } from '../platform/env.ts';
-import { createServiceContext } from '../platform/service-context.ts';
+import { ForbiddenError } from '../platform/errors.ts';
+import { createJobContext } from '../platform/service-context.ts';
 
 export type TemplateImportParams = ImportParams;
 
@@ -23,7 +24,7 @@ export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportPar
     step: WorkflowStep,
   ): Promise<void> {
     const p = event.payload;
-    const ctx = createServiceContext(this.env, {
+    const ctx = createJobContext(this.env, 'template-import', {
       ctx: this.ctx,
       base: { workflow: 'template-import' },
     });
@@ -48,27 +49,27 @@ export class TemplateImport extends WorkflowEntrypoint<AppEnv, TemplateImportPar
       );
       await step.do('cleanup', () => cleanupStage(ctx, p));
     } catch (error) {
+      const code = error instanceof ForbiddenError ? error.code : 'IMPORT_FAILED';
+      const message =
+        error instanceof ForbiddenError ? error.message : 'The import failed. Try again.';
       ctx.log.error('templates.import_failed', {
         orgId: p.orgId,
-        code: 'IMPORT_FAILED',
+        code,
         error,
       });
-      await step.do('fail-import', async () => {
-        await failImport(
-          ctx,
-          p,
-          [{ severity: 'error', code: 'IMPORT_FAILED', message: 'The import failed. Try again.' }],
-          'IMPORT_FAILED',
-        );
-      });
-      try {
-        await step.do('cleanup-failed', () => cleanupStage(ctx, p));
-      } catch (cleanupError) {
-        ctx.log.error('templates.cleanup_failed', {
-          orgId: p.orgId,
-          code: 'IMPORT_CLEANUP_FAILED',
-          error: cleanupError,
-        });
+      const recorded = await step.do('fail-import', () =>
+        failImport(ctx, p, [{ severity: 'error', code, message }], code),
+      );
+      if (recorded) {
+        try {
+          await step.do('cleanup-failed', () => cleanupStage(ctx, p));
+        } catch (cleanupError) {
+          ctx.log.error('templates.cleanup_failed', {
+            orgId: p.orgId,
+            code: 'IMPORT_CLEANUP_FAILED',
+            error: cleanupError,
+          });
+        }
       }
       throw error;
     }

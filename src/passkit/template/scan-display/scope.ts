@@ -186,6 +186,7 @@ export const SECRET_PASS_KEYS = new Set([
   'authenticationToken',
   'webServiceURL',
   'serial',
+  'email',
   'serialNumber',
   'downloadToken',
   'barcode',

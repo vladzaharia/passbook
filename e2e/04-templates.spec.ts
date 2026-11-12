@@ -33,7 +33,7 @@ function variantZip(name: string): Buffer {
 test('uploads a template variant, sees it done in the list, then deletes it', async ({ page }) => {
   const seed = readSeed();
   const name = `E2E Variant ${uid('t')}`;
-  await page.goto('/admin/templates/upload');
+  await page.goto(`/admin/templates/upload?orgId=${encodeURIComponent(seed.org.id)}`);
   await page.getByRole('combobox', { name: 'Organization', exact: true }).click();
   await page.getByRole('option', { name: seed.org.name }).click();
   await page.getByLabel('Name', { exact: true }).fill(name);
@@ -47,7 +47,30 @@ test('uploads a template variant, sees it done in the list, then deletes it', as
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText('Template imported')).toBeVisible();
 
-  await page.goto('/admin/templates');
+  // Import creates a draft, not an issuable release. This test deletes it without issuing.
+  const templateId = new URL(page.url()).pathname.split('/').pop();
+  if (!templateId) throw new Error('Imported template URL has no ID');
+  const api = await apiAs('admin');
+  try {
+    const template = await api.get<{
+      orgId: string;
+      activeVersion: string | null;
+      versions: { version: string; active: boolean }[];
+    }>(`/api/v1/templates/${encodeURIComponent(templateId)}`);
+    expect(template.orgId).toBe(seed.org.id);
+    expect(template.activeVersion).toBeNull();
+    expect(template.versions).toEqual([
+      expect.objectContaining({ version: expect.any(String), active: false }),
+    ]);
+    const releases = await api.get(
+      `/api/v1/templates/${encodeURIComponent(templateId)}/releases?orgId=${encodeURIComponent(seed.org.id)}&mode=live&provider=apple`,
+    );
+    expect(releases).toMatchObject({ active: null, items: [] });
+  } finally {
+    await api.dispose();
+  }
+
+  await page.goto(`/admin/templates?orgId=${encodeURIComponent(seed.org.id)}`);
   await expect(page.getByRole('link', { name })).toBeVisible();
 
   await page.getByRole('link', { name }).click();
@@ -55,12 +78,16 @@ test('uploads a template variant, sees it done in the list, then deletes it', as
   await page.getByRole('button', { name: 'More' }).click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
-  await expect(page).toHaveURL(/\/admin\/templates$/);
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/admin/templates');
+  expect(new URL(page.url()).searchParams.get('orgId')).toBe(seed.org.id);
   await expect(page.getByRole('link', { name })).toHaveCount(0);
 });
 
 test('baked templates are locked and the API refuses to delete them', async ({ page }) => {
-  await page.goto('/admin/templates/baked:starter-generic');
+  const seed = readSeed();
+  await page.goto(
+    `/admin/templates/baked:starter-generic?orgId=${encodeURIComponent(seed.org.id)}`,
+  );
   await expect(page.getByText('Built-in', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Duplicate' })).toBeVisible();

@@ -9,8 +9,8 @@ import type { ScanningSearch } from '../search.ts';
 export function ScanFilters({ search, orgId }: { search: ScanningSearch; orgId?: string }) {
   const navigate = useNavigate();
   const [q, setQ] = useState(search.q ?? '');
-  const scanners = useScannerPages(orgId, false);
-  const events = useScanEvents(orgId);
+  const scanners = useScannerPages(orgId, false, Boolean(orgId));
+  const events = useScanEvents(orgId, Boolean(orgId));
   const set = (patch: Partial<ScanningSearch>) =>
     void navigate({ to: '.', search: (prev) => ({ ...prev, ...patch }), replace: true });
   return (
@@ -65,6 +65,7 @@ export function ScanFilters({ search, orgId }: { search: ScanningSearch; orgId?:
               { value: 'all', label: 'All scanners' },
               ...(scanners.data?.pages
                 .flatMap((page) => page.items)
+                .filter((s) => s.orgId === orgId)
                 .map((s) => ({ value: s.id, label: s.name })) ?? []),
             ]}
           />
@@ -78,7 +79,9 @@ export function ScanFilters({ search, orgId }: { search: ScanningSearch; orgId?:
             onValueChange={(value) => set({ eventId: value === 'all' ? undefined : value })}
             options={[
               { value: 'all', label: 'All events' },
-              ...(events.data?.items.map((e) => ({ value: e.id, label: e.name })) ?? []),
+              ...(events.data?.items
+                .filter((e) => e.orgId === orgId)
+                .map((e) => ({ value: e.id, label: e.name })) ?? []),
             ]}
           />
         )}

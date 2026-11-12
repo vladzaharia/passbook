@@ -1,5 +1,10 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, first, likeEscape, placeholders, stmt } from '../../platform/db.ts';
+import { first, prefixMatch, type SqlValue, stmt } from '../../platform/db.ts';
+import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
+import { eventExpectedCountSql } from './repo-counts.ts';
+import { eventArrivedCountSql } from './repo-event-attendance.ts';
+import type { EventAuthority } from './repo-event-keyset.ts';
+import { templateReleaseHeadsSql } from './repo-scope-releases.ts';
 
 type Db = D1Database;
 
@@ -18,11 +23,18 @@ export interface ConsoleEventRow {
   note: string | null;
   expected: number | null;
   expectedAt: number | null;
+  /** Computed in the same authorized snapshot as this event, never served from cache. */
+  liveExpected: number | null;
   archivedAt: number | null;
   templateIds: string[];
+  /** All stored links are retained privately for the configuration CAS. */
+  storedTemplateIds: string[];
+  releaseHeads: string;
   arrived: number;
   scanners: number;
   updatedAt: number;
+  /** Trigger-owned: what an edit or cache fill derived from this row is checked against. */
+  configEpoch: number;
 }
 
 interface Raw {
@@ -40,24 +52,43 @@ interface Raw {
   note: string | null;
   expected: number | null;
   expected_at: number | null;
+  live_expected: number | null;
   archived_at: number | null;
   template_ids: string | null;
+  stored_template_ids: string | null;
+  release_heads: string;
   arrived: number;
   scanners: number;
   updated_at: number;
+  config_epoch: number;
 }
 
-/** `arrived` rides `scan_gates_count`, `scanners` rides `scanners_event`. */
-const SELECT = `SELECT e.id, e.org_id, e.mode, e.name, e.match_input, e.match_values, e.opens_at, e.closes_at,
-    e.time_zone, e.capacity, e.reentry, e.note, e.expected, e.expected_at, e.archived_at, e.updated_at,
-    (SELECT group_concat(x.template_id) FROM scan_event_templates x
-       JOIN templates t ON t.id = x.template_id AND t.status != 'deleted'
-       WHERE x.event_id = e.id) AS template_ids,
-    (SELECT count(*) FROM scan_gates g
-       WHERE g.org_id = e.org_id AND g.mode = e.mode AND g.scope = 'event:' || e.id
-         AND g.kind = 'check_in' AND g.state IN ('in', 'out')) AS arrived,
-    (SELECT count(*) FROM scanners s WHERE s.event_id = e.id AND s.revoked_at IS NULL) AS scanners
+const scopedEventTemplates = `SELECT x.template_id FROM scan_event_templates x
+  JOIN templates t ON t.id=x.template_id AND (t.org_id=e.org_id OR t.org_id IS NULL)
+    AND t.status!='deleted'
+  WHERE x.event_id=e.id`;
+
+/** Relationship counts and returned identifiers must belong to the event's scope. */
+const eventSelect = (
+  expectedSql: string,
+) => `SELECT e.id, e.org_id, e.mode, e.name, e.match_input, e.match_values, e.opens_at, e.closes_at,
+    e.time_zone, e.capacity, e.reentry, e.note, e.expected, e.expected_at, ${expectedSql} AS live_expected, e.archived_at, e.updated_at, e.config_epoch,
+    (SELECT json_group_array(template_id) FROM (${scopedEventTemplates} ORDER BY x.template_id)) AS template_ids,
+    (SELECT json_group_array(template_id) FROM (
+       SELECT x.template_id FROM scan_event_templates x WHERE x.event_id=e.id ORDER BY x.template_id
+    )) AS stored_template_ids,
+    ${templateReleaseHeadsSql(
+      'SELECT template_id FROM scan_event_templates WHERE event_id=e.id',
+      'e.org_id',
+      'e.mode',
+    )} AS release_heads,
+    ${eventArrivedCountSql('e')} AS arrived,
+    (SELECT count(*) FROM scanners s WHERE s.event_id=e.id AND s.org_id=e.org_id
+       AND s.mode=e.mode AND s.revoked_at IS NULL) AS scanners
   FROM scan_events e`;
+
+const SELECT = eventSelect('NULL');
+const SELECT_WITH_COUNT = eventSelect(eventExpectedCountSql('e', '?'));
 
 const toRow = (r: Raw): ConsoleEventRow => ({
   id: r.id,
@@ -74,16 +105,116 @@ const toRow = (r: Raw): ConsoleEventRow => ({
   note: r.note,
   expected: r.expected,
   expectedAt: r.expected_at,
+  liveExpected: r.live_expected,
   archivedAt: r.archived_at,
-  templateIds: r.template_ids ? r.template_ids.split(',').sort() : [],
+  templateIds: r.template_ids ? (JSON.parse(r.template_ids) as string[]) : [],
+  storedTemplateIds: r.stored_template_ids ? (JSON.parse(r.stored_template_ids) as string[]) : [],
+  releaseHeads: r.release_heads,
   arrived: r.arrived,
   scanners: r.scanners,
   updatedAt: r.updated_at,
+  configEpoch: r.config_epoch,
 });
+
+/** Look up only the owning scope before tenant authorization, not event relationships or counts. */
+export async function getConsoleEventTarget(db: Db, id: string) {
+  return first<{ orgId: string; mode: Mode }>(
+    db,
+    'SELECT org_id AS orgId, mode FROM scan_events WHERE id = ?',
+    [id],
+  );
+}
 
 export async function getConsoleEvent(db: Db, id: string): Promise<ConsoleEventRow | null> {
   const row = await first<Raw>(db, `${SELECT} WHERE e.id = ?`, [id]);
   return row ? toRow(row) : null;
+}
+
+/**
+ * The event as committed, for the answer to a mutation that already succeeded: by id in the org,
+ * with no session or keyset check that could turn a committed write into an error.
+ */
+export async function getCommittedConsoleEvent(
+  db: Db,
+  id: string,
+  orgId: string,
+  now: number,
+): Promise<ConsoleEventRow | null> {
+  const row = await first<Raw>(db, `${SELECT_WITH_COUNT} WHERE e.id = ? AND e.org_id = ?`, [
+    now,
+    id,
+    orgId,
+  ]);
+  return row ? toRow(row) : null;
+}
+
+/** Project the committed response in the same transaction and under the same tenant authority. */
+export function authorizedEventStmt(
+  db: Db,
+  id: string,
+  authority: EventAuthority,
+  now: number,
+): D1PreparedStatement {
+  if (
+    authority.kind !== 'session' ||
+    (authority.capability !== 'scanning:read' && authority.capability !== 'scanning:manage')
+  )
+    return stmt(db, `${SELECT_WITH_COUNT} WHERE 0`, [now]);
+  return stmt(
+    db,
+    `${SELECT_WITH_COUNT} WHERE e.id=? AND e.mode=? AND ${tenantPassAuthoritySql(authority, 'e')}
+      AND (${authority.csrfFence.sql})`,
+    [
+      now,
+      id,
+      authority.mode,
+      ...tenantPassAuthorityParams(authority, now),
+      ...authority.csrfFence.params,
+    ],
+  );
+}
+
+export function consoleEventFromResult(result: D1Result): ConsoleEventRow | null {
+  const row = result.results[0] as unknown as Raw | undefined;
+  return row ? toRow(row) : null;
+}
+
+/** Empty results still carry session status from the projection's transaction. */
+function eventReadStatusStmt(
+  db: Db,
+  authority: EventAuthority | undefined,
+  now: number,
+): D1PreparedStatement {
+  const access = authority
+    ? `${tenantPassAuthoritySql(authority)} AND (${authority.csrfFence.sql})`
+    : '1';
+  const params = authority
+    ? [...tenantPassAuthorityParams(authority, now), ...authority.csrfFence.params]
+    : [];
+  return stmt(db, `SELECT (${access}) AS authority`, params);
+}
+
+function eventReadStatus(result: D1Result | undefined): boolean {
+  return (result?.results[0] as { authority: number } | undefined)?.authority === 1;
+}
+
+/** Bind the exact tenant session to the event and its relationship counts in one read. */
+export async function getAuthorizedConsoleEvent(
+  db: Db,
+  id: string,
+  authority: EventAuthority,
+  now: number,
+): Promise<ConsoleEventRow | null> {
+  if (
+    authority.kind !== 'session' ||
+    (authority.capability !== 'scanning:read' && authority.capability !== 'scanning:manage')
+  )
+    return null;
+  const [projection, status] = await db.batch([
+    authorizedEventStmt(db, id, authority, now),
+    eventReadStatusStmt(db, authority, now),
+  ]);
+  return eventReadStatus(status) && projection ? consoleEventFromResult(projection) : null;
 }
 
 export interface EventFilter {
@@ -94,15 +225,27 @@ export interface EventFilter {
   now: number;
   cursor?: string | undefined;
   limit: number;
+  authority?: EventAuthority | undefined;
 }
 
 /** Newest opening first. An org list rides `scan_events_org`. */
 export async function listConsoleEvents(db: Db, f: EventFilter): Promise<ConsoleEventRow[]> {
   const where = ['e.mode = ?'];
-  const params: (string | number)[] = [f.mode];
+  const params: SqlValue[] = [f.mode];
   if (f.orgId) {
     where.push('e.org_id = ?');
     params.push(f.orgId);
+  }
+  if (f.authority) {
+    if (
+      f.authority.kind !== 'session' ||
+      f.orgId !== f.authority.orgId ||
+      f.mode !== f.authority.mode ||
+      (f.authority.capability !== 'scanning:read' && f.authority.capability !== 'scanning:manage')
+    )
+      return [];
+    where.push(`${tenantPassAuthoritySql(f.authority, 'e')} AND (${f.authority.csrfFence.sql})`);
+    params.push(...tenantPassAuthorityParams(f.authority, f.now), ...f.authority.csrfFence.params);
   }
   if (f.status === 'archived') where.push('e.archived_at IS NOT NULL');
   else if (f.status) {
@@ -113,198 +256,24 @@ export async function listConsoleEvents(db: Db, f: EventFilter): Promise<Console
     params.push(...(f.status === 'live' ? [f.now, f.now] : [f.now]));
   }
   if (f.q) {
-    where.push("e.name LIKE ? ESCAPE '\\'");
-    params.push(`${likeEscape(f.q)}%`);
+    const match = prefixMatch('e.name', f.q);
+    where.push(match.sql);
+    params.push(...match.params);
   }
   if (f.cursor) {
-    where.push('(e.opens_at, e.id) < (SELECT opens_at, id FROM scan_events WHERE id = ?)');
-    params.push(f.cursor);
+    where.push(`(e.opens_at, e.id) < (
+      SELECT opens_at, id FROM scan_events WHERE id = ? AND mode = ?${f.orgId ? ' AND org_id = ?' : ''}
+    )`);
+    params.push(f.cursor, f.mode, ...(f.orgId ? [f.orgId] : []));
   }
-  const rows = await all<Raw>(
-    db,
-    `${SELECT} WHERE ${where.join(' AND ')} ORDER BY e.opens_at DESC, e.id DESC LIMIT ?`,
-    [...params, f.limit],
-  );
-  return rows.map(toRow);
+  const [page, status] = await db.batch([
+    stmt(
+      db,
+      `${SELECT_WITH_COUNT} WHERE ${where.join(' AND ')} ORDER BY e.opens_at DESC, e.id DESC LIMIT ?`,
+      [f.now, ...params, f.limit],
+    ),
+    eventReadStatusStmt(db, f.authority, f.now),
+  ]);
+  if (!eventReadStatus(status)) return [];
+  return (page?.results ?? []).map((row) => toRow(row as unknown as Raw));
 }
-
-export interface EventValues {
-  id: string;
-  orgId: string;
-  mode: Mode;
-  name: string;
-  matchInput: string | null;
-  matchValues: string[] | null;
-  opensAt: number;
-  closesAt: number;
-  timeZone: string;
-  capacity: number | null;
-  reentry: boolean;
-  note: string | null;
-}
-
-export const insertEventStmt = (
-  db: Db,
-  e: EventValues,
-  createdBy: string,
-  now: number,
-): D1PreparedStatement =>
-  stmt(
-    db,
-    `INSERT INTO scan_events (id, org_id, mode, name, match_input, match_values, opens_at, closes_at, time_zone,
-       capacity, reentry, note, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      e.id,
-      e.orgId,
-      e.mode,
-      e.name,
-      e.matchInput,
-      e.matchValues ? JSON.stringify(e.matchValues) : null,
-      e.opensAt,
-      e.closesAt,
-      e.timeZone,
-      e.capacity,
-      e.reentry ? 1 : 0,
-      e.note,
-      createdBy,
-      now,
-      now,
-    ],
-  );
-
-/** Writes every editable column and drops the cached `expected`, so the next read recounts. */
-export const updateEventStmt = (db: Db, e: EventValues, now: number): D1PreparedStatement =>
-  stmt(
-    db,
-    `UPDATE scan_events SET name = ?, match_input = ?, match_values = ?, opens_at = ?, closes_at = ?,
-       time_zone = ?, capacity = ?, reentry = ?, note = ?, expected = NULL, expected_at = NULL, updated_at = ?
-     WHERE id = ?`,
-    [
-      e.name,
-      e.matchInput,
-      e.matchValues ? JSON.stringify(e.matchValues) : null,
-      e.opensAt,
-      e.closesAt,
-      e.timeZone,
-      e.capacity,
-      e.reentry ? 1 : 0,
-      e.note,
-      now,
-      e.id,
-    ],
-  );
-
-export const replaceEventTemplatesStmts = (
-  db: Db,
-  eventId: string,
-  templateIds: readonly string[],
-): D1PreparedStatement[] => [
-  stmt(db, 'DELETE FROM scan_event_templates WHERE event_id = ?', [eventId]),
-  ...templateIds.map((id) =>
-    stmt(db, 'INSERT INTO scan_event_templates (event_id, template_id) VALUES (?, ?)', [
-      eventId,
-      id,
-    ]),
-  ),
-];
-
-/** Archiving ends the event for every scanner on it: they read as `unassigned` and refetch. */
-export const archiveEventStmts = (db: Db, id: string, now: number): D1PreparedStatement[] => [
-  stmt(
-    db,
-    'UPDATE scan_events SET archived_at = ?, updated_at = ? WHERE id = ? AND archived_at IS NULL',
-    [now, now, id],
-  ),
-  stmt(
-    db,
-    `UPDATE scanning_sessions SET accepts=NULL,settings=json_set(settings,'$.acceptAllTemplates',json('false')),updated_at=MAX(updated_at+1,?) WHERE json_extract(accepts,'$.eventId')=?`,
-    [now, id],
-  ),
-  stmt(db, 'UPDATE scanners SET event_id = NULL, updated_at = ? WHERE event_id = ?', [now, id]),
-];
-
-export const restoreEventStmt = (db: Db, id: string, now: number): D1PreparedStatement =>
-  stmt(db, 'UPDATE scan_events SET archived_at = NULL, updated_at = ? WHERE id = ?', [now, id]);
-
-export interface AssignableScanner {
-  id: string;
-  mode: Mode;
-  kind: string;
-  deviceRole: string;
-}
-
-export async function scannersInOrg(
-  db: Db,
-  orgId: string,
-  ids: readonly string[],
-): Promise<AssignableScanner[]> {
-  if (ids.length === 0) return [];
-  const rows = await all<{ id: string; mode: Mode; kind: string; device_role: string }>(
-    db,
-    `SELECT id, mode, kind, device_role FROM scanners
-     WHERE org_id = ? AND id IN (${placeholders(ids.length)})`,
-    [orgId, ...ids],
-  );
-  return rows.map((r) => ({ id: r.id, mode: r.mode, kind: r.kind, deviceRole: r.device_role }));
-}
-
-/** Moves scanners onto the event; their own template list no longer applies. */
-export const assignScannersStmts = (
-  db: Db,
-  eventId: string,
-  orgId: string,
-  ids: readonly string[],
-  now: number,
-): D1PreparedStatement[] => [
-  stmt(
-    db,
-    `UPDATE scanners SET event_id = ?, updated_at = ? WHERE org_id = ? AND id IN (${placeholders(ids.length)})`,
-    [eventId, now, orgId, ...ids],
-  ),
-  stmt(db, `DELETE FROM scanner_templates WHERE scanner_id IN (${placeholders(ids.length)})`, [
-    ...ids,
-  ]),
-];
-
-/** Live templates of the org, with the active manifest, in the given id order. */
-export async function templateManifests(
-  db: Db,
-  orgId: string,
-  ids: readonly string[],
-): Promise<{ id: string; manifest: string }[]> {
-  if (ids.length === 0) return [];
-  return all<{ id: string; manifest: string }>(
-    db,
-    `SELECT t.id, v.manifest FROM templates t
-     JOIN template_versions v ON v.template_id = t.id AND v.version = t.active_version
-     WHERE t.org_id = ? AND t.status != 'deleted' AND t.id IN (${placeholders(ids.length)})`,
-    [orgId, ...ids],
-  );
-}
-
-/** Active, not deleted passes of the event's templates that the match rule admits. */
-export async function countExpected(
-  db: Db,
-  e: Pick<ConsoleEventRow, 'orgId' | 'mode' | 'templateIds' | 'matchInput' | 'matchValues'>,
-): Promise<number> {
-  if (e.templateIds.length === 0) return 0;
-  const match = e.matchInput && e.matchValues?.length;
-  const row = await first<{ n: number }>(
-    db,
-    `SELECT count(*) AS n FROM passes
-     WHERE org_id = ? AND mode = ? AND deleted_at IS NULL AND status = 'active'
-       AND template_id IN (${placeholders(e.templateIds.length)})
-       ${match ? `AND CAST(json_extract(personalization, ?) AS TEXT) IN (${placeholders(e.matchValues?.length ?? 0)})` : ''}`,
-    [
-      e.orgId,
-      e.mode,
-      ...e.templateIds,
-      ...(match ? [`$."${e.matchInput}"`, ...(e.matchValues ?? [])] : []),
-    ],
-  );
-  return row?.n ?? 0;
-}
-
-export const setExpectedStmt = (db: Db, id: string, n: number, now: number): D1PreparedStatement =>
-  stmt(db, 'UPDATE scan_events SET expected = ?, expected_at = ? WHERE id = ?', [n, now, id]);

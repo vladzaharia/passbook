@@ -13,7 +13,8 @@ const QUERIES_PER_RECORD = 25;
 export function estimateQueries(job: Job): number {
   switch (job.kind) {
     case 'connection.webhook':
-      return 30 + QUERIES_PER_RECORD * job.refs.length;
+      // Durable item claims/finalization plus legacy binding and release proof reads.
+      return 40 + (QUERIES_PER_RECORD + 8) * job.refs.length;
     case 'pass.refresh':
       return 40;
     default:

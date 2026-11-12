@@ -67,9 +67,6 @@ export function AddDeviceDialog({
               )}
             </FormField>
             <SurfacePicker value={surface} onChange={setSurface} />
-            <p className="text-xs text-fg-muted">
-              You can change the layout and device-specific settings after pairing.
-            </p>
           </div>
         )}
       </DialogContent>

@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { strictEmail } from '@/shared/email.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { removeWithTransition } from '../lib/motion.ts';
-import { useInvalidateSession } from '../lib/session.ts';
+import { sessionQuery, useInvalidateSession } from '../lib/session.ts';
 import {
   Card,
   CardBody,
@@ -27,10 +27,28 @@ import { usePendingEmails } from './pending-emails.ts';
 type Confirm = { kind: 'remove' | 'primary'; email: string } | null;
 
 /** Emails on the account (kit EmailList). Pending addresses live in this tab only. */
-export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
+export function EmailsSection({
+  focusAdd = false,
+  userId,
+}: {
+  focusAdd?: boolean;
+  userId: string | undefined;
+}) {
   const client = useQueryClient();
+  const isCurrentPrincipal = useCallback(
+    (expected: string | undefined) => {
+      const state = client.getQueryState(sessionQuery.queryKey);
+      return (
+        expected !== undefined &&
+        state?.status === 'success' &&
+        state.data?.authenticated === true &&
+        state.data.user.id === expected
+      );
+    },
+    [client],
+  );
   const invalidateSession = useInvalidateSession();
-  const pending = usePendingEmails();
+  const pending = usePendingEmails(userId);
   const query = useQuery({
     ...myEmailsQuery,
     // A pending address flips to verified when the user comes back from the email.
@@ -48,8 +66,12 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
   const listed = query.data?.items;
   useEffect(() => {
     const done = list.filter((e) => listed?.some((v) => v.email === e && v.verifiedAt !== null));
-    if (done.length) removeWithTransition(() => drop(done));
-  }, [list, listed, drop]);
+    if (done.length && isCurrentPrincipal(userId)) {
+      removeWithTransition(() => {
+        if (isCurrentPrincipal(userId)) drop(done);
+      });
+    }
+  }, [list, listed, drop, userId, isCurrentPrincipal]);
 
   useEffect(() => {
     if (!focusAdd || !query.data) return;
@@ -57,13 +79,18 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
   }, [focusAdd, query.data]);
 
   const send = useMutation({
-    mutationFn: (email: string) => addEmail(email),
-    onMutate: (email) => setBusy(email),
-    onSettled: () => setBusy(undefined),
+    mutationFn: (request: { email: string; userId: string }) => addEmail(request.email),
+    onMutate: (request) => {
+      if (isCurrentPrincipal(request.userId)) setBusy(request.email);
+    },
+    onSettled: (_data, _error, request) => {
+      if (isCurrentPrincipal(request.userId)) setBusy(undefined);
+    },
   });
 
   /** EmailList has checked the format; false keeps a refused address in the field. */
   async function add(raw: string): Promise<boolean> {
+    if (!userId || !isCurrentPrincipal(userId)) return false;
     setAddError(undefined);
     const email = strictEmail(raw) ?? raw;
     if (verified.some((v) => v.email === email)) {
@@ -71,23 +98,26 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
       return false;
     }
     try {
-      await send.mutateAsync(email);
+      await send.mutateAsync({ email, userId });
+      if (!isCurrentPrincipal(userId)) return false;
       pending.add(email);
       return true;
     } catch (error) {
-      setAddError(errorMessage(error));
+      if (isCurrentPrincipal(userId)) setAddError(errorMessage(error));
       return false;
     }
   }
 
   async function resend(email: string) {
+    if (!userId || !isCurrentPrincipal(userId)) return;
     try {
       const again = pending.list.includes(email);
-      await send.mutateAsync(email);
+      await send.mutateAsync({ email, userId });
+      if (!isCurrentPrincipal(userId)) return;
       pending.add(email);
       if (again) toast.success('Sent again');
     } catch (error) {
-      toast.error(error, 'Could not send');
+      if (isCurrentPrincipal(userId)) toast.error(error, 'Could not send');
     }
   }
 
@@ -105,7 +135,7 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
 
   return (
     <Card>
-      <CardHeader title="Emails" />
+      <CardHeader title="Email addresses" />
       <CardBody>
         <div ref={root} className="wl-account-emails">
           {query.isPending ? <SkeletonRows rows={2} /> : null}
@@ -117,7 +147,11 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
               items={items}
               onAdd={add}
               onResend={(email) => void resend(email)}
-              onCancelPending={(email) => removeWithTransition(() => pending.drop([email]))}
+              onCancelPending={(email) =>
+                removeWithTransition(() => {
+                  if (isCurrentPrincipal(userId)) pending.drop([email]);
+                })
+              }
               onRemove={(email) => setConfirm({ kind: 'remove', email })}
               onMakePrimary={(email) => setConfirm({ kind: 'primary', email })}
               busyEmail={busy}
@@ -130,14 +164,18 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
         open={confirm?.kind === 'remove'}
         onOpenChange={(open) => !open && setConfirm(null)}
         title="Remove email?"
-        description={`Passes sent to ${confirm?.email ?? ''} stop showing here.`}
+        description={`${confirm?.email ?? ''}. Passes already assigned to you may remain in your collection.`}
         confirmLabel="Remove"
         destructive
         onConfirm={async () => {
-          if (!confirm) return;
+          if (!confirm || !userId || !isCurrentPrincipal(userId)) return;
           await removeEmail(confirm.email);
+          if (!isCurrentPrincipal(userId)) return;
           const next = await fetchMyEmails();
-          removeWithTransition(() => client.setQueryData(myEmailsKey, next));
+          if (!isCurrentPrincipal(userId)) return;
+          removeWithTransition(() => {
+            if (isCurrentPrincipal(userId)) client.setQueryData(myEmailsKey, next);
+          });
           toast.success('Email removed');
         }}
       />
@@ -148,11 +186,12 @@ export function EmailsSection({ focusAdd = false }: { focusAdd?: boolean }) {
         description={`Sign-in emails go to ${confirm?.email ?? ''}.`}
         confirmLabel="Make primary"
         onConfirm={async () => {
-          if (!confirm) return;
+          if (!confirm || !userId || !isCurrentPrincipal(userId)) return;
           const next = await makePrimaryEmail(confirm.email);
+          if (!isCurrentPrincipal(userId)) return;
           client.setQueryData(myEmailsKey, next);
           await invalidateSession();
-          toast.success('Primary email changed');
+          if (isCurrentPrincipal(userId)) toast.success('Primary email changed');
         }}
       />
     </Card>

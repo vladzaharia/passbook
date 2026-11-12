@@ -1,8 +1,9 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { hashDevice, type PassEventInput, recordPassEvents } from '../events/record.ts';
-import { pendingFetchDevices } from '../events/repo.ts';
+import { hashDevice } from '../events/record.ts';
 import type { Pass } from '../passes/repo.ts';
+import { type AppleEvent, recordAppleEvents } from './events.ts';
 import { anyRegisteredDevice, identityByPassType, passesBySerials } from './repo.ts';
+import { pendingAppleFetchDevice } from './repo-events.ts';
 
 const SERIAL_LIKE = /[A-Za-z0-9][A-Za-z0-9._-]{7,63}/g;
 const PASS_TYPE = /pass type ([A-Za-z0-9._-]+)/i;
@@ -46,7 +47,7 @@ export async function attachLogLines(ctx: ServiceContext, lines: string[]): Prom
     const serials = [...new Set(line.match(SERIAL_LIKE) ?? [])].slice(0, 6);
     if (identityId && serials.length > 0) parsed.push({ line, identityId, serials });
   }
-  const inputs: PassEventInput[] = [];
+  const inputs: AppleEvent[] = [];
   for (const identityId of new Set(parsed.map((p) => p.identityId))) {
     const mine = parsed.filter((p) => p.identityId === identityId);
     const candidates = [...new Set(mine.flatMap((p) => p.serials))].slice(0, MAX_CANDIDATES);
@@ -56,17 +57,19 @@ export async function attachLogLines(ctx: ServiceContext, lines: string[]): Prom
     for (const { line, serials } of mine) {
       const owners = serials.map((s) => bySerial.get(s)).find((l) => l !== undefined);
       const pass = owners?.length === 1 ? owners[0] : undefined;
-      if (!pass || !(await anyRegisteredDevice(ctx.env.DB, pass.id, deviceIdsOf(line)))) continue;
+      if (!pass || !(await anyRegisteredDevice(ctx.env.DB, pass, deviceIdsOf(line)))) continue;
       inputs.push({
         orgId: pass.orgId,
         passId: pass.id,
         mode: pass.mode,
+        serial: pass.serial,
+        credentialGeneration: pass.credentialGeneration,
         kind: 'device.log',
         data: { line: (await maskDevices(line)).slice(0, 300), unverified: true },
       });
     }
   }
-  await recordPassEvents(ctx, inputs);
+  await recordAppleEvents(ctx, inputs);
 }
 
 /**
@@ -76,25 +79,31 @@ export async function attachLogLines(ctx: ServiceContext, lines: string[]): Prom
  */
 export async function recordPassFetch(
   ctx: ServiceContext,
-  pass: Pick<Pass, 'id' | 'orgId' | 'mode' | 'version'>,
+  pass: Pick<Pass, 'id' | 'orgId' | 'mode' | 'version' | 'serial' | 'credentialGeneration'>,
   httpStatus: number,
 ): Promise<void> {
   if (httpStatus !== 200 && httpStatus !== 304) return;
   const now = ctx.clock.now();
-  const devices = await pendingFetchDevices(ctx.env.DB, pass.id, now - ATTRIBUTION_WINDOW_MS).catch(
-    (error: unknown) => {
-      ctx.log.warn('events.attribution_failed', { code: 'EVENT_ATTRIBUTION', error });
-      return [];
-    },
-  );
+  const devices = await pendingAppleFetchDevice(
+    ctx.env.DB,
+    pass.id,
+    pass.serial,
+    pass.credentialGeneration,
+    now - ATTRIBUTION_WINDOW_MS,
+  ).catch((error: unknown) => {
+    ctx.log.warn('events.attribution_failed', { code: 'EVENT_ATTRIBUTION', error });
+    return [];
+  });
   const base = {
     orgId: pass.orgId,
     passId: pass.id,
     mode: pass.mode,
+    serial: pass.serial,
+    credentialGeneration: pass.credentialGeneration,
     kind: 'device.fetched' as const,
     data: { step: 'file', version: pass.version, status: httpStatus },
   };
-  await recordPassEvents(
+  await recordAppleEvents(
     ctx,
     devices.length > 0 ? devices.map((deviceHash) => ({ ...base, deviceHash })) : [base],
   );

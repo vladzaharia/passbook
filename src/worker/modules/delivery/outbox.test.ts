@@ -3,10 +3,14 @@ import { renderPassEmail } from '../../email/pass.ts';
 import { handleQueue } from '../../jobs/queue.ts';
 import { retryDelaySeconds } from '../../jobs/retry.ts';
 import { first, run } from '../../platform/db.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import { jobCtxOf } from './delivery-test-fixtures.ts';
+import { enqueuePassEmail } from './issuance-intent.ts';
 import { dailyDelivery, handleEmailSend, handlePushDeliver, sweepDelivery } from './jobs.ts';
 import { getOutbox } from './repo.ts';
-import { enqueuePassEmail, enqueuePush } from './service.ts';
+import { enqueuePush } from './service.ts';
+
+const job = () => jobCtxOf(kit);
 
 let kit: Kit;
 beforeAll(async () => {
@@ -44,14 +48,15 @@ describe('pass email', () => {
 
   it('sends to the holder with direct links and an optional attachment', async () => {
     const pass = await kit.pass();
-    const { outboxId } = await enqueuePassEmail(kit.ctx, {
+    const { outboxId } = await enqueuePassEmail(job(), {
       passId: pass.id,
       to: ' Holder@Example.com ',
       attach: true,
+      expected: pass,
     });
     await kit.settle();
     expect(kit.queue.sent).toContainEqual({ kind: 'email.send', outboxId });
-    await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId }, job());
     const sent = kit.mailer.sent.at(-1);
     expect(sent?.to).toBe('holder@example.com');
     expect(sent?.html).toContain(`/p/${pass.downloadToken}/pass.pkpass`);
@@ -63,42 +68,52 @@ describe('pass email', () => {
 
   it('omits the attachment by default', async () => {
     const pass = await kit.pass();
-    const { outboxId } = await enqueuePassEmail(kit.ctx, {
+    const { outboxId } = await enqueuePassEmail(job(), {
       passId: pass.id,
       to: 'a@example.com',
       attach: false,
+      expected: pass,
     });
-    await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId }, job());
     expect(kit.mailer.sent.at(-1)?.attachments).toBeUndefined();
   });
 
   it('rejects an invalid recipient before queueing', async () => {
     const pass = await kit.pass();
     await expect(
-      enqueuePassEmail(kit.ctx, { passId: pass.id, to: 'a@b.com,c@d.com', attach: false }),
+      enqueuePassEmail(job(), {
+        passId: pass.id,
+        to: 'a@b.com,c@d.com',
+        attach: false,
+        expected: pass,
+      }),
     ).rejects.toMatchObject({ code: 'EMAIL_INVALID' });
     expect(await emailRow(pass.id)).toBeNull();
   });
 
-  it('retries a failed send, then fails the row on the last attempt without leaking the address', async () => {
+  it('keeps an ambiguous provider result unknown and never retries it automatically', async () => {
     const pass = await kit.pass();
-    const { outboxId } = await enqueuePassEmail(kit.ctx, {
+    const { outboxId } = await enqueuePassEmail(job(), {
       passId: pass.id,
       to: 'a@example.com',
       attach: false,
+      expected: pass,
     });
     kit.mailer.fail = new Error('smtp down');
-    await expect(handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx)).rejects.toMatchObject({
-      code: 'EMAIL_FAILED',
-    });
-    expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({ state: 'enqueued', attempts: 1 });
-    await run(kit.env.DB, 'UPDATE outbox SET max_attempts = 2 WHERE id = ?', [outboxId]);
-    await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+    try {
+      await handleEmailSend({ kind: 'email.send', outboxId }, job());
+    } finally {
+      kit.mailer.fail = null;
+    }
     expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({
-      state: 'failed',
-      errorCode: 'EMAIL_FAILED',
+      state: 'partial',
+      attempts: 1,
+      errorCode: 'EMAIL_OUTCOME_UNKNOWN',
     });
-    kit.mailer.fail = null;
+    const before = kit.mailer.sent.length;
+    await handleEmailSend({ kind: 'email.send', outboxId }, job());
+    expect(kit.mailer.sent).toHaveLength(before);
+    expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({ state: 'partial', attempts: 1 });
   });
 });
 
@@ -125,7 +140,7 @@ describe('queue consumer contract', () => {
   it('acks on success and retries with backoff when the handler throws', async () => {
     const pass = await kit.pass();
     await kit.device(pass, `dev-q-${pass.id}`, 'd'.repeat(64));
-    await enqueuePush(kit.ctx, pass.id, 'refresh');
+    await enqueuePush(job(), pass.id, 'refresh');
     await kit.settle();
     const row = await first<{ id: string }>(
       kit.env.DB,
@@ -154,7 +169,7 @@ describe('queue consumer contract', () => {
 
   it('finalizes exhausted jobs in the dead-letter queue', async () => {
     const pass = await kit.pass();
-    await enqueuePush(kit.ctx, pass.id, 'refresh');
+    await enqueuePush(job(), pass.id, 'refresh');
     await kit.settle();
     const row = await first<{ id: string }>(
       kit.env.DB,
@@ -173,8 +188,8 @@ describe('sweeper', () => {
   it('returns expired leases to the queue and fails those out of attempts', async () => {
     const stale = await kit.pass();
     const spent = await kit.pass();
-    await enqueuePush(kit.ctx, stale.id, 'refresh');
-    await enqueuePush(kit.ctx, spent.id, 'refresh');
+    await enqueuePush(job(), stale.id, 'refresh');
+    await enqueuePush(job(), spent.id, 'refresh');
     await kit.settle();
     const ids = async (passId: string) =>
       (
@@ -197,7 +212,7 @@ describe('sweeper', () => {
       [past, spentId],
     );
     kit.queue.sent.length = 0;
-    await sweepDelivery(kit.ctx);
+    await sweepDelivery(job());
     expect(await getOutbox(kit.env.DB, spentId)).toMatchObject({
       state: 'failed',
       errorCode: 'LEASE_EXPIRED',
@@ -208,7 +223,7 @@ describe('sweeper', () => {
 
   it('keeps a live lease alone', async () => {
     const pass = await kit.pass();
-    await enqueuePush(kit.ctx, pass.id, 'refresh');
+    await enqueuePush(job(), pass.id, 'refresh');
     await kit.settle();
     const row = await first<{ id: string }>(
       kit.env.DB,
@@ -220,15 +235,15 @@ describe('sweeper', () => {
       "UPDATE outbox SET state = 'processing', lease = 'x', available_at = ? WHERE id = ?",
       [kit.clock.now() + 60_000, row?.id],
     );
-    await sweepDelivery(kit.ctx);
+    await sweepDelivery(job());
     expect((await getOutbox(kit.env.DB, row?.id ?? ''))?.state).toBe('processing');
   });
 
   it('re-sends rows whose enqueue message was lost, but not fresh ones', async () => {
     const lost = await kit.pass();
     const fresh = await kit.pass();
-    await enqueuePush(kit.ctx, lost.id, 'refresh');
-    await enqueuePush(kit.ctx, fresh.id, 'refresh');
+    await enqueuePush(job(), lost.id, 'refresh');
+    await enqueuePush(job(), fresh.id, 'refresh');
     await kit.settle();
     const idOf = async (passId: string) =>
       (
@@ -244,10 +259,10 @@ describe('sweeper', () => {
       lostId,
     ]);
     kit.queue.sent.length = 0;
-    await sweepDelivery(kit.ctx);
+    await sweepDelivery(job());
     expect(kit.queue.sent).toEqual([{ kind: 'push.deliver', outboxId: lostId }]);
     kit.queue.sent.length = 0;
-    await sweepDelivery(kit.ctx);
+    await sweepDelivery(job());
     expect(kit.queue.sent).toEqual([]);
   });
 });
@@ -288,7 +303,7 @@ describe('claim guard', () => {
   it('never exceeds max_attempts when a message is redelivered', async () => {
     const pass = await kit.pass();
     await kit.device(pass, `dev-g-${pass.id}`, 'e'.repeat(64));
-    await enqueuePush(kit.ctx, pass.id, 'refresh');
+    await enqueuePush(job(), pass.id, 'refresh');
     await kit.settle();
     const row = await first<{ id: string }>(
       kit.env.DB,

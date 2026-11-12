@@ -5,7 +5,9 @@ import type {
   TemplateManifest,
   ValidationReport,
 } from '../../../passkit/types.ts';
-import { all, first, run, stmt } from '../../platform/db.ts';
+import { all, first, stmt } from '../../platform/db.ts';
+import { canonicalJson } from './package/hash.ts';
+import type { SqlText } from './repo-version-hashes.ts';
 
 export interface TemplateRow {
   id: string;
@@ -25,6 +27,7 @@ export interface TemplateRow {
 export interface VersionRow {
   templateId: string;
   version: string;
+  buildKey: string | null;
   manifest: TemplateManifest;
   passJson: PassJson;
   assets: AssetEntry[];
@@ -51,6 +54,7 @@ export interface TemplateSql {
 interface VersionSql {
   template_id: string;
   version: string;
+  build_key: string | null;
   manifest: string;
   pass_json: string;
   assets: string;
@@ -84,6 +88,7 @@ function versionRow(row: VersionSql): VersionRow {
   return {
     templateId: row.template_id,
     version: row.version,
+    buildKey: row.build_key,
     manifest: JSON.parse(row.manifest) as TemplateManifest,
     passJson: JSON.parse(row.pass_json) as PassJson,
     assets: JSON.parse(row.assets) as AssetEntry[],
@@ -124,15 +129,6 @@ export async function countPasses(db: D1Database, templateId: string): Promise<n
   return row?.n ?? 0;
 }
 
-export async function setTemplateOrg(
-  db: D1Database,
-  id: string,
-  orgId: string | null,
-  now: number,
-): Promise<void> {
-  await run(db, 'UPDATE templates SET org_id = ?, updated_at = ? WHERE id = ?', [orgId, now, id]);
-}
-
 /** Live passes of orgs other than `orgId` that use any version of the template. */
 export async function countPassesOutsideOrg(
   db: D1Database,
@@ -150,7 +146,7 @@ export async function countPassesOutsideOrg(
 export async function listVersions(db: D1Database, templateId: string): Promise<VersionRow[]> {
   const rows = await all<VersionSql>(
     db,
-    `SELECT template_id, version, manifest, pass_json, assets, report, created_by, created_at
+    `SELECT template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at
      FROM template_versions WHERE template_id = ? ORDER BY created_at DESC, version DESC`,
     [templateId],
   );
@@ -164,7 +160,7 @@ export async function getVersion(
 ): Promise<VersionRow | null> {
   const row = await first<VersionSql>(
     db,
-    `SELECT template_id, version, manifest, pass_json, assets, report, created_by, created_at
+    `SELECT template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at
      FROM template_versions WHERE template_id = ? AND version = ?`,
     [templateId, version],
   );
@@ -174,6 +170,7 @@ export async function getVersion(
 export interface NewVersion {
   templateId: string;
   version: string;
+  buildKey: string;
   manifest: TemplateManifest;
   passJson: PassJson;
   assets: AssetEntry[];
@@ -182,82 +179,70 @@ export interface NewVersion {
   createdAt: number;
 }
 
-export function insertVersionStmt(db: D1Database, v: NewVersion): D1PreparedStatement {
-  return stmt(
-    db,
-    `INSERT OR IGNORE INTO template_versions
-       (template_id, version, manifest, pass_json, assets, report, created_by, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      v.templateId,
-      v.version,
-      JSON.stringify(v.manifest),
-      JSON.stringify(v.passJson),
-      JSON.stringify(v.assets),
-      JSON.stringify(v.report),
-      v.createdBy,
-      v.createdAt,
-    ],
+export interface StoredVersionContent {
+  build_key: string | null;
+  manifest: string;
+  pass_json: string;
+  assets: string;
+  report: string;
+}
+
+/** Compare the complete stored content; creation metadata belongs to the first writer. */
+export function versionContentMatches(
+  stored: StoredVersionContent,
+  incoming: Pick<NewVersion, 'buildKey' | 'manifest' | 'passJson' | 'assets' | 'report'>,
+): boolean {
+  return (
+    (stored.build_key === null || stored.build_key === incoming.buildKey) &&
+    canonicalJson(JSON.parse(stored.manifest)) === canonicalJson(incoming.manifest) &&
+    canonicalJson(JSON.parse(stored.pass_json)) === canonicalJson(incoming.passJson) &&
+    canonicalJson(JSON.parse(stored.assets)) === canonicalJson(incoming.assets) &&
+    canonicalJson(JSON.parse(stored.report)) === canonicalJson(incoming.report)
   );
 }
 
-export interface NewTemplate {
-  id: string;
-  orgId: string | null;
-  slug: string;
-  name: string;
-  description: string | null;
-  activeVersion: string;
-  styles: PassStyle[];
-  createdBy: string | null;
-  now: number;
+/** The insert (once) and the read-back that proves the stored content equals the incoming one. */
+export function versionStatementSql(v: NewVersion): [SqlText, SqlText] {
+  const content = [
+    JSON.stringify(v.manifest),
+    JSON.stringify(v.passJson),
+    JSON.stringify(v.assets),
+    JSON.stringify(v.report),
+  ];
+  return [
+    {
+      sql: `INSERT INTO template_versions
+         (template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM template_versions WHERE template_id = ? AND version = ?)
+         AND NOT EXISTS (SELECT 1 FROM template_version_tombstones WHERE template_id = ? AND version = ?)`,
+      params: [
+        v.templateId,
+        v.version,
+        v.buildKey,
+        ...content,
+        v.createdBy,
+        v.createdAt,
+        v.templateId,
+        v.version,
+        v.templateId,
+        v.version,
+      ],
+    },
+    {
+      sql: `SELECT CASE WHEN EXISTS (
+         SELECT 1 FROM template_versions
+         WHERE template_id = ? AND version = ? AND (build_key IS NULL OR build_key = ?)
+           AND manifest = ? AND pass_json = ? AND assets = ? AND report = ?
+       ) THEN 1 ELSE json('!') END`,
+      params: [v.templateId, v.version, v.buildKey, ...content],
+    },
+  ];
 }
 
-export function insertUploadedTemplateStmt(db: D1Database, t: NewTemplate): D1PreparedStatement {
-  return stmt(
-    db,
-    `INSERT INTO templates (id, org_id, slug, name, description, origin, active_version, status, styles, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, 'uploaded', ?, 'active', ?, ?, ?, ?)`,
-    [
-      t.id,
-      t.orgId,
-      t.slug,
-      t.name,
-      t.description,
-      t.activeVersion,
-      JSON.stringify(t.styles),
-      t.createdBy,
-      t.now,
-      t.now,
-    ],
-  );
-}
-
-export function activateStmt(
-  db: D1Database,
-  id: string,
-  version: string,
-  fields: { name: string; description: string | null; styles: PassStyle[]; now: number },
-): D1PreparedStatement {
-  return stmt(
-    db,
-    `UPDATE templates SET active_version = ?, name = ?, description = ?, styles = ?, status = 'active', updated_at = ?
-     WHERE id = ?`,
-    [version, fields.name, fields.description, JSON.stringify(fields.styles), fields.now, id],
-  );
-}
-
-export async function setStatus(
-  db: D1Database,
-  id: string,
-  status: TemplateRow['status'],
-  now: number,
-): Promise<void> {
-  await run(db, 'UPDATE templates SET status = ?, updated_at = ? WHERE id = ?', [status, now, id]);
-}
-
-export async function deleteTemplate(db: D1Database, id: string): Promise<void> {
-  await run(db, 'DELETE FROM templates WHERE id = ?', [id]);
+/** Both statements belong in the same batch, before any dependent release writes. */
+export function insertVersionStmts(db: D1Database, v: NewVersion): D1PreparedStatement[] {
+  return versionStatementSql(v).map(({ sql, params }) => stmt(db, sql, params));
 }
 
 export { orgIdentity as getOrgName } from '../orgs/repo.ts';

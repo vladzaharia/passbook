@@ -33,10 +33,10 @@ export interface Analysis {
   manifestGenerated: boolean;
   styles: PassStyle[];
   version: string;
-  /** Bundle files (images, strings) by path, including derived images. */
+  /** Retained files by path, including derived and preview-only images. */
   files: Map<string, Uint8Array>;
   assets: AnalyzedAsset[];
-  /** Image files left out of the bundle because no declared style uses their slot. */
+  /** Non-preview image files left out because no declared style uses their slot. */
   extras: { name: string; size: number; sha1: string }[];
   tooling: Uint8Array | null;
   report: ValidationReport;
@@ -196,9 +196,14 @@ export async function analyzePackage(
   );
   const extras: Analysis['extras'] = [];
   const kept: CheckedImage[] = [];
+  const unusedPreview: CheckedImage[] = [];
   for (const image of all) {
     if (used.has(image.slot)) {
       kept.push(image);
+      continue;
+    }
+    if (previewOnly.has(image.path)) {
+      unusedPreview.push(image);
       continue;
     }
     quiet(image.path)({
@@ -247,6 +252,8 @@ export async function analyzePackage(
       });
 
   if (!report(issues).ok || !manifest) return { report: report(issues) };
+  // Retain preview images without treating their unused slots as shipped during validation.
+  for (const image of unusedPreview) kept.push(image);
 
   const assets: AnalyzedAsset[] = [];
   for (const image of kept) {
@@ -278,7 +285,12 @@ export async function analyzePackage(
   }
   assets.sort((a, b) => (a.name < b.name ? -1 : 1));
   extras.sort((a, b) => (a.name < b.name ? -1 : 1));
-  const version = await contentVersion({ passJson, manifest, assets });
+  // Baked extras are served separately; uploaded extras are not persisted.
+  const version = await contentVersion({
+    passJson,
+    manifest,
+    assets: options.uploaded ? assets : [...assets, ...extras],
+  });
   return {
     passJson,
     manifest,

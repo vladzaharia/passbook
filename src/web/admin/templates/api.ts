@@ -1,5 +1,4 @@
 import {
-  keepPreviousData,
   queryOptions,
   useInfiniteQuery,
   useMutation,
@@ -14,8 +13,10 @@ import {
   UploadListSchema,
   UploadTemplateResponseSchema,
 } from '@/shared/contracts/templates.ts';
-import { api, listQuery } from '../../lib/api.ts';
+import { api } from '../../lib/api.ts';
 import { isApiError } from '../../lib/errors.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
+import { fetchPreview, scopePreviewAssets, templatePreviewKey } from '../../lib/preview-batch.ts';
 
 export interface TemplateFilters {
   orgId?: string | undefined;
@@ -27,89 +28,120 @@ export interface TemplateFilters {
 export const templateKeys = {
   all: ['admin', 'templates'] as const,
   list: (f: TemplateFilters) => ['admin', 'templates', 'list', f] as const,
-  detail: (id: string) => ['admin', 'templates', 'detail', id] as const,
-  import: (id: string) => ['admin', 'templates', 'import', id] as const,
+  detail: (id: string, orgId?: string) =>
+    ['admin', 'templates', 'detail', id, orgId ?? null] as const,
+  import: (id: string, orgId: string | undefined) =>
+    ['admin', 'templates', 'import', id, orgId ?? null] as const,
 };
+
+function useTemplateListOrg(orgId: string | undefined): string | undefined {
+  const scope = useOrgScope();
+  return !scope.isLoading &&
+    !scope.isError &&
+    orgId &&
+    orgId === scope.orgId &&
+    scope.membership?.capabilities.includes('templates:read')
+    ? scope.orgId
+    : undefined;
+}
 
 /** Pickers and name lookups: the first 200 in one request. The list page pages instead. */
 export function useTemplates(filters: TemplateFilters, enabled = true) {
-  return useQuery(
-    listQuery({
-      queryKey: templateKeys.list(filters),
-      queryFn: ({ signal }) =>
-        api.get('/api/v1/templates', TemplateListSchema, {
-          query: {
-            ...filters,
-            includeArchived: filters.includeArchived || undefined,
-            q: filters.q || undefined,
-            limit: 200,
-          },
-          signal,
-        }),
-      enabled,
-    }),
-  );
+  const orgId = useTemplateListOrg(filters.orgId);
+  return useQuery({
+    queryKey: templateKeys.list({ ...filters, orgId }),
+    queryFn: ({ signal }) => {
+      if (!orgId) throw new Error('Choose an authorized organization.');
+      return api.get('/api/v1/templates', TemplateListSchema, {
+        // The scoped endpoint returns platform templates as well as this organization's templates.
+        query: {
+          ...filters,
+          orgId,
+          includeArchived: filters.includeArchived || undefined,
+          q: filters.q || undefined,
+          limit: 200,
+        },
+        signal,
+      });
+    },
+    enabled: enabled && Boolean(orgId),
+    placeholderData: (previous, query) =>
+      orgId && query?.queryKey[3].orgId === orgId ? previous : undefined,
+  });
 }
 
 /** The Templates list: 50 at a time, newest first; Load more fetches the next page. */
 export function useTemplatePages(filters: TemplateFilters) {
-  return useInfiniteQuery(
-    listQuery({
-      queryKey: [...templateKeys.all, 'pages', filters] as const,
-      initialPageParam: undefined as string | undefined,
-      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
-        api.get('/api/v1/templates', TemplateListSchema, {
-          query: {
-            ...filters,
-            includeArchived: filters.includeArchived || undefined,
-            q: filters.q || undefined,
-            cursor: pageParam,
-            limit: 50,
-          },
-          signal,
-        }),
-      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
-    }),
-  );
+  const orgId = useTemplateListOrg(filters.orgId);
+  return useInfiniteQuery({
+    queryKey: [...templateKeys.all, 'pages', { ...filters, orgId }] as const,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) => {
+      if (!orgId) throw new Error('Choose an authorized organization.');
+      return api.get('/api/v1/templates', TemplateListSchema, {
+        query: {
+          ...filters,
+          orgId,
+          includeArchived: filters.includeArchived || undefined,
+          q: filters.q || undefined,
+          cursor: pageParam,
+          limit: 50,
+        },
+        signal,
+      });
+    },
+    getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+    enabled: Boolean(orgId),
+    placeholderData: (previous, query) =>
+      orgId && query?.queryKey[3].orgId === orgId ? previous : undefined,
+  });
 }
 
 /** The newest imports for the "Recent uploads" strip. */
 export function useRecentUploads(orgId: string | undefined) {
+  const selectedOrgId = useTemplateListOrg(orgId);
   return useQuery({
-    queryKey: ['admin', 'templates', 'uploads', orgId ?? null],
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/templates/uploads', UploadListSchema, {
-        query: { orgId, limit: 5 },
+    queryKey: ['admin', 'templates', 'uploads', selectedOrgId ?? null],
+    queryFn: ({ signal }) => {
+      if (!selectedOrgId) throw new Error('Choose an authorized organization.');
+      return api.get('/api/v1/templates/uploads', UploadListSchema, {
+        query: { orgId: selectedOrgId, limit: 5 },
         signal,
-      }),
+      });
+    },
+    enabled: Boolean(selectedOrgId),
     staleTime: 10_000,
   });
 }
 
-export const templateDetailQuery = (id: string) =>
+/** Bare by-ID reads are server-authorized; shared tenant templates require the selected org. */
+export const templateDetailQuery = (id: string, orgId?: string) =>
   queryOptions({
-    queryKey: templateKeys.detail(id),
-    queryFn: ({ signal }) => api.get(`/api/v1/templates/${id}`, TemplateDetailSchema, { signal }),
+    queryKey: templateKeys.detail(id, orgId),
+    queryFn: ({ signal }) =>
+      api.get(`/api/v1/templates/${id}`, TemplateDetailSchema, { query: { orgId }, signal }),
   });
 
-export function useTemplate(id: string | undefined) {
-  return useQuery({ ...templateDetailQuery(id ?? ''), enabled: Boolean(id) });
+export function useTemplate(id: string | undefined, orgId?: string) {
+  return useQuery({ ...templateDetailQuery(id ?? '', orgId), enabled: Boolean(id) });
 }
 
-import { fetchPreview } from '../../lib/preview-batch.ts';
-
-export function useTemplatePreview(id: string, version?: string) {
+/** An undefined org is for an explicitly global preview, not an unselected tenant. */
+export function useTemplatePreview(id: string, orgId: string | undefined, version?: string) {
   return useQuery({
-    queryKey: ['admin', 'templates', 'preview', id, version ?? null],
-    queryFn: ({ signal }) =>
+    queryKey: templatePreviewKey(id, orgId, version),
+    queryFn: async ({ signal }) =>
       version
-        ? api.post(
-            `/api/v1/templates/${id}/preview`,
-            PreviewResponseSchema,
-            { version },
-            { signal },
+        ? scopePreviewAssets(
+            await api.post(
+              `/api/v1/templates/${id}/preview`,
+              PreviewResponseSchema,
+              { version, ...(orgId ? { orgId } : {}) },
+              { query: { orgId }, signal },
+            ),
+            orgId,
           )
-        : fetchPreview(id),
+        : fetchPreview(id, orgId),
     staleTime: Number.POSITIVE_INFINITY,
     enabled: Boolean(id),
   });
@@ -123,11 +155,6 @@ export function useTemplateActions(id: string) {
       qc.invalidateQueries({ queryKey: ['palette'] }),
     ]);
   return {
-    activate: useMutation({
-      mutationFn: (input: { version: string }) =>
-        api.post(`/api/v1/templates/${id}/activate`, TemplateDetailSchema, input),
-      onSuccess: done,
-    }),
     replaceManifest: useMutation({
       mutationFn: (manifest: Record<string, unknown>) =>
         api.put(`/api/v1/templates/${id}/manifest`, TemplateDetailSchema, { manifest }),
@@ -178,20 +205,39 @@ export function useDraftPreview(
   options: { orgId?: string | undefined; version?: string | undefined } = {},
 ) {
   return useQuery({
-    queryKey: ['admin', 'templates', 'draft-preview', id, input, options.orgId, options.version],
-    queryFn: ({ signal }) =>
-      api.post(
-        `/api/v1/templates/${id}/preview`,
-        PreviewResponseSchema,
-        {
-          input,
-          ...(options.orgId ? { orgId: options.orgId } : {}),
-          ...(options.version ? { version: options.version } : {}),
-        },
-        { signal },
-      ),
+    queryKey: [
+      'admin',
+      'templates',
+      'draft-preview',
+      id,
+      input,
+      options.orgId,
+      options.version,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!id) throw new Error('Choose a template.');
+      return scopePreviewAssets(
+        await api.post(
+          `/api/v1/templates/${id}/preview`,
+          PreviewResponseSchema,
+          {
+            input,
+            ...(options.orgId ? { orgId: options.orgId } : {}),
+            ...(options.version ? { version: options.version } : {}),
+          },
+          { signal },
+        ),
+        options.orgId,
+      );
+    },
     enabled: Boolean(id),
-    placeholderData: keepPreviousData,
+    placeholderData: (previous, query) =>
+      id &&
+      query?.queryKey[3] === id &&
+      query.queryKey[5] === options.orgId &&
+      query.queryKey[6] === options.version
+        ? previous
+        : undefined,
     staleTime: 60_000,
     retry: false,
   });
@@ -200,12 +246,17 @@ export function useDraftPreview(
 /** Mutable so tests can poll fast. */
 export const importPolling = { ms: 1500 };
 
-/** Polls until the workflow reaches a final state. */
-export function useImportStatus(uploadId: string | undefined) {
+/** Pass the upload's captured org; undefined is reserved for a platform-global import. */
+export function useImportStatus(uploadId: string | undefined, orgId: string | undefined) {
   return useQuery({
-    queryKey: templateKeys.import(uploadId ?? ''),
-    queryFn: ({ signal }) =>
-      api.get(`/api/v1/templates/uploads/${uploadId}`, ImportStatusSchema, { signal }),
+    queryKey: templateKeys.import(uploadId ?? '', orgId),
+    queryFn: ({ signal }) => {
+      if (!uploadId) throw new Error('Choose an upload.');
+      return api.get(`/api/v1/templates/uploads/${uploadId}`, ImportStatusSchema, {
+        query: { orgId },
+        signal,
+      });
+    },
     enabled: Boolean(uploadId),
     staleTime: 0,
     gcTime: 0,

@@ -84,8 +84,11 @@ describe('users list', () => {
       'href',
       '/admin/users/u2',
     );
-    const passes = screen.getByRole('link', { name: /3 passes held by ada@example.com/ });
+    const passes = screen.getByRole('link', {
+      name: 'Search primary email ada@example.com in the selected mode',
+    });
     expect(passes.getAttribute('href')).toBe('/admin/passes?q=ada%40example.com');
+    expect(screen.getByText('3', { selector: 'span.tabular-nums' }).closest('a')).toBeNull();
     expect(screen.getByText('Polaris ID, Email link')).toBeInTheDocument();
     // Role chips are neutral, never accent or success.
     const role = screen.getByText('User', { selector: 'span.rounded-full' });
@@ -93,6 +96,47 @@ describe('users list', () => {
     expect(role.className).not.toMatch(/text-(accent|success)/);
     expect(screen.getByText('1 user')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('searches and filters platform accounts, and clears both controls', async () => {
+    const { router, fetchMock } = await renderApp('/admin/users', {
+      session: 'admin',
+      handlers: { '/api/v1/users': () => json({ items: [user()], nextCursor: null }) },
+    });
+    const ui = userEvent.setup();
+    expect(await screen.findByRole('heading', { name: 'Platform accounts' })).toBeInTheDocument();
+    expect(screen.getByText(/Roles are from the last sign-in/)).toBeInTheDocument();
+    // The columns render once the list has loaded.
+    expect(
+      await screen.findByRole('columnheader', { name: 'Roles at last sign-in' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /manage membership/i })).toBeNull();
+
+    await ui.type(screen.getByRole('searchbox', { name: 'Search accounts' }), 'ada');
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ q: 'ada' }));
+    await ui.click(screen.getByRole('combobox', { name: 'Status: All' }));
+    await ui.click(await screen.findByRole('option', { name: 'Disabled' }));
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ q: 'ada', status: 'disabled' }),
+    );
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some((call) => {
+          const url = String(call[0]);
+          return (
+            url.includes('/users?') && url.includes('q=ada') && url.includes('status=disabled')
+          );
+        }),
+      ).toBe(true),
+    );
+
+    await ui.click(screen.getByRole('button', { name: 'Clear' }));
+    await waitFor(() => {
+      const search = router.state.location.search as { q?: string; status?: string };
+      expect(search.q).toBeUndefined();
+      expect(search.status).toBeUndefined();
+    });
+    expect(screen.getByRole('searchbox', { name: 'Search accounts' })).toHaveValue('');
   });
 
   it('passes the search term and status from the URL; filtered empty shows people and lens', async () => {
@@ -156,13 +200,17 @@ describe('user detail', () => {
     expect(screen.getByText('wallet-users')).toBeInTheDocument();
     expect(screen.getByText('Safari on iOS')).toBeInTheDocument();
     expect(screen.queryByText(/Mozilla/)).toBeNull();
-    expect(screen.getByRole('link', { name: /1 pass/ })).toHaveAttribute(
-      'href',
-      '/admin/passes?q=ada%40example.com',
-    );
+    expect(
+      screen.getByRole('link', { name: 'Search primary email in selected mode' }),
+    ).toHaveAttribute('href', '/admin/passes?q=ada%40example.com');
     expect(
       within(screen.getByRole('main')).getByRole('link', { name: 'Audit log' }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Account identity' })).toBeInTheDocument();
+    const ownedCount = screen.getByText('Owned passes').nextElementSibling;
+    expect(ownedCount).toHaveTextContent('1');
+    expect(ownedCount?.querySelector('a')).toBeNull();
+    expect(screen.getByText('Roles at last sign-in')).toBeInTheDocument();
     expect(await screen.findAllByRole('link', { name: /Manage in Polaris ID/ })).toHaveLength(1);
     expect((await axe(container)).violations).toEqual([]);
   });

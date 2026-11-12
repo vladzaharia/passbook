@@ -9,25 +9,31 @@ import {
   ScanRecordSchema,
   ScanUndoRequestSchema,
 } from '../../../shared/contracts/index.ts';
-import {
-  assertOrgAccess,
-  currentUserId,
-  modeOf,
-  requireAdmin,
-  requireApiKeyOrAdmin,
-} from '../../platform/auth.ts';
+import { assertOrgAccess, modeOf, type SessionAuth } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthenticatedError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { serviceContext } from '../../platform/service-context.ts';
+import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
+import { getOrgAccess, rolesGranting } from '../orgs/access.ts';
+import {
+  requireTenantSession,
+  requireTenantSessionOrApiKey,
+  tenantAuthorityOf,
+} from '../passes/http.ts';
+import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { ScanExportQuerySchema } from './dto-console.ts';
 import {
   type ConsoleUndo,
   exportScans,
   listScanFeed,
   listScanRecords,
-  loadScanRow,
+  loadUndoRow,
   scanRecord,
   UNDO_MAX_MS,
 } from './feed.ts';
@@ -39,19 +45,38 @@ const TAG = 'scans';
 /** The console's undo takes the key only; the org comes from the scan. */
 const ConsoleUndoSchema = ScanUndoRequestSchema.pick({ idempotencyKey: true });
 
+/** A missing membership is indistinguishable from a foreign tenant resource. */
+async function scanAuthority(
+  ctx: ServiceContext,
+  session: SessionAuth,
+  orgId: string,
+  capability: 'scanning:read' | 'passes:operate',
+) {
+  const membership = await getOrgAccess(ctx, session.userId, orgId);
+  if (!membership) return null;
+  if (!membership.capabilities.includes(capability)) throw new ForbiddenError();
+  const authority = await tenantAuthorityOf(ctx, session, orgId, capability);
+  if (authority.kind !== 'session') throw new ForbiddenError();
+  // Console records project pass-derived data as well as scanner metadata.
+  if (capability === 'scanning:read') {
+    const passReaders = rolesGranting('passes:read');
+    if (!authority.roles.some((role) => passReaders.includes(role))) throw new ForbiddenError();
+  }
+  return authority;
+}
+
 /**
- * The scans log and feed: /api/v1/scans. The list answers an API key with `scans:read`
- * (`ScanFeedRow`: no titles, no staff names) or an admin (`ScanRecord`); everything else is an
- * admin's. `undo` is SV.6's service, handed in so the router can be built around a stand-in.
+ * The scans log and feed: API keys with `scans:read` receive the limited feed, and tenant
+ * members with `scanning:read` receive records scoped to the requested organization.
  */
 export function createScansRoutes(deps: { undo: ConsoleUndo }) {
   const routes = createRouter();
-  const keyOrAdmin = requireApiKeyOrAdmin('scans:read');
+  const keyOrSession = requireTenantSessionOrApiKey('scans:read');
   routes.use(
     '*',
     createMiddleware<AppBindings>(async (c, next) => {
       const isList = c.req.method === 'GET' && /\/scans\/?$/.test(c.req.path);
-      return isList ? keyOrAdmin(c, next) : requireAdmin(c, next);
+      return isList ? keyOrSession(c, next) : requireTenantSession(c, next);
     }),
   );
   routes.use('*', limitBody(16 * 1024));
@@ -67,7 +92,7 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
       response: z.union([ScanRecordListSchema, ScanFeedSchema]),
     },
     async (c) => {
-      const ctx = serviceContext(c);
+      const ctx = credentialKeysetContext(serviceContext(c));
       const auth = c.var.auth;
       const query = c.req.valid('query');
       const filter = { ...query, mode: modeOf(auth) };
@@ -80,9 +105,14 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
         // An org-scoped key sees its org; a platform key may name one.
         const orgId = auth.orgId ?? query.orgId;
         if (query.orgId) assertOrgAccess(auth, query.orgId);
-        return c.json(await listScanFeed(ctx, { ...filter, orgId }));
+        return c.json(await listScanFeed(ctx, auth, { ...filter, orgId }));
       }
-      return c.json(await listScanRecords(ctx, filter));
+      if (auth?.kind !== 'session') throw new UnauthenticatedError();
+      if (!query.orgId)
+        throw new ValidationError('Select an organization to list scans.', [], 'ORG_REQUIRED');
+      const authority = await scanAuthority(ctx, auth, query.orgId, 'scanning:read');
+      if (!authority) return c.json({ items: [], nextCursor: null });
+      return c.json(await listScanRecords(ctx, auth, authority, filter));
     },
   );
   register(
@@ -96,13 +126,12 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
     },
     async (c) => {
       const { orgId, from, to, ...filter } = c.req.valid('query');
-      const out = await exportScans(serviceContext(c), currentUserId(c), {
-        mode: modeOf(c.var.auth),
-        orgId,
-        from,
-        to,
-        filter,
-      });
+      const session = c.var.auth;
+      if (session?.kind !== 'session') throw new UnauthenticatedError();
+      const ctx = credentialKeysetContext(serviceContext(c));
+      const authority = await scanAuthority(ctx, session, orgId, 'scanning:read');
+      if (!authority) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+      const out = await exportScans(ctx, session, authority, { orgId, from, to, filter });
       return new Response(out.body, {
         headers: {
           'content-type': 'text/csv; charset=utf-8',
@@ -122,7 +151,16 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
       params: IdParamSchema,
       response: ScanRecordSchema,
     },
-    async (c) => c.json(await scanRecord(serviceContext(c), c.req.valid('param').id)),
+    async (c) => {
+      const session = c.var.auth;
+      if (session?.kind !== 'session') throw new UnauthenticatedError();
+      const ctx = credentialKeysetContext(serviceContext(c));
+      const id = c.req.valid('param').id;
+      const scan = await loadUndoRow(ctx, id);
+      const authority = await scanAuthority(ctx, session, scan.orgId, 'scanning:read');
+      if (!authority) throw new NotFoundError('Scan not found.', 'SCAN_NOT_FOUND');
+      return c.json(await scanRecord(ctx, session, authority, id));
+    },
   );
   register(
     routes,
@@ -136,10 +174,12 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
       response: ScanOutcomeSchema,
     },
     async (c) => {
-      const ctx = serviceContext(c);
+      const ctx = credentialKeysetContext(serviceContext(c));
       const session = c.var.auth;
       if (session?.kind !== 'session') throw new UnauthenticatedError();
-      const scan = await loadScanRow(ctx, c.req.valid('param').id);
+      const scan = await loadUndoRow(ctx, c.req.valid('param').id);
+      if (!(await scanAuthority(ctx, session, scan.orgId, 'passes:operate')))
+        throw new NotFoundError('Scan not found.', 'SCAN_NOT_FOUND');
       if (scan.mode !== modeOf(c.var.auth))
         throw new ForbiddenError('Switch mode to undo this scan.', 'SCAN_MODE_MISMATCH');
       if (ctx.clock.now() - scan.at > UNDO_MAX_MS)

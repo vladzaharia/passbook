@@ -1,5 +1,7 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { deleteObjects, deletePassRows } from '../passes/repo-ops.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { deleteObjects, deletePassRows } from '../passes/repo-ops-retention.ts';
+import { prepareScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import {
   deleteBundlesByIds,
@@ -7,7 +9,9 @@ import {
   deleteTestBroadcastsBefore,
   expiredTestBundles,
   expiredTestPasses,
+  stageExpiredTestPassRetirement,
 } from './repo.ts';
+import { expireStaleForwards } from './repo-forward.ts';
 
 const DAY_MS = 86_400_000;
 /**
@@ -23,20 +27,40 @@ const BROADCAST_BATCH = 100;
 const MAX_BROADCAST_ROUNDS = 5;
 
 /**
- * Hard-deletes expired test passes through the same row and object removal as pass retention.
- * A test pass already in someone's Wallet is not voided first: voiding costs a publish and a push
- * per pass, which the daily query budget cannot carry. It stays as it was, without updates.
+ * Stage retirement only for still-eligible snapshots. Pending or uncertain provider work keeps the
+ * pass and its objects until reconciliation completes. Held passes cannot starve later candidates.
  */
 export async function purgeTestPasses(ctx: ServiceContext, before: number): Promise<number> {
+  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   let total = 0;
+  let after: { createdAt: number; id: string } | undefined;
   for (let round = 0; round < MAX_PASS_ROUNDS; round++) {
-    const passes = await expiredTestPasses(ctx.env.DB, before, PASS_BATCH);
+    const passes = await expiredTestPasses(ctx.env.DB, before, PASS_BATCH, {
+      after,
+      actionableOnly: true,
+    });
     for (const pass of passes) {
-      const removed = await deletePassRows(ctx.env.DB, pass);
+      if (pass.providerRetirementNeeded)
+        await stageExpiredTestPassRetirement(
+          ctx.env.DB,
+          pass,
+          before,
+          ctx.clock.now(),
+          credentialKeysetCommitment,
+        );
+      if (!pass.providerRetirementComplete) continue;
+      const prepared = await prepareScanRetentionDelete(ctx.env, pass);
+      const removed = await deletePassRows(ctx.env.DB, pass, prepared, credentialKeysetCommitment, {
+        testBefore: before,
+        lifecycleGeneration: pass.lifecycleGeneration,
+      });
       await deleteObjects(ctx.env.BUCKET, removed.objectKeys);
+      if (removed.deleted) total += 1;
     }
-    total += passes.length;
     if (passes.length < PASS_BATCH) break;
+    const last = passes[passes.length - 1];
+    if (!last) throw new Error('Missing last pass in full batch');
+    after = { createdAt: last.createdAt, id: last.id };
   }
   return total;
 }
@@ -74,6 +98,25 @@ async function purgeTestBroadcasts(ctx: ServiceContext, before: number): Promise
   return total;
 }
 
+/** Every minute: reservations past their lease (or unknown for a day) release their locks. */
+export async function sweepSandboxForwards(ctx: ServiceContext): Promise<void> {
+  await expireStaleForwards(ctx);
+}
+
+/** One purge step: a failure is logged with its name and never skips the steps after it. */
+async function step(
+  ctx: ServiceContext,
+  name: string,
+  run: () => Promise<number>,
+): Promise<number> {
+  try {
+    return await run();
+  } catch (error) {
+    ctx.log.error('sandbox.purge_step_failed', { code: 'SANDBOX_PURGE_STEP', step: name, error });
+    return 0;
+  }
+}
+
 /**
  * Deletes test passes, test bundles, finished test broadcasts and captured emails older than
  * `sandbox.purgeDays`. Bounded: what a run leaves over is taken the next day.
@@ -81,9 +124,13 @@ async function purgeTestBroadcasts(ctx: ServiceContext, before: number): Promise
 export async function dailySandbox(ctx: ServiceContext): Promise<void> {
   const { 'sandbox.purgeDays': days } = await getPlatformSettings(ctx);
   const before = ctx.clock.now() - days * DAY_MS;
-  const passes = await purgeTestPasses(ctx, before);
-  const bundles = await purgeTestBundles(ctx, before);
-  const broadcasts = await purgeTestBroadcasts(ctx, before);
-  const emails = await purgeCaptured(ctx, before);
+  await step(ctx, 'expire', async () => {
+    await expireStaleForwards(ctx);
+    return 0;
+  });
+  const passes = await step(ctx, 'passes', () => purgeTestPasses(ctx, before));
+  const bundles = await step(ctx, 'bundles', () => purgeTestBundles(ctx, before));
+  const broadcasts = await step(ctx, 'broadcasts', () => purgeTestBroadcasts(ctx, before));
+  const emails = await step(ctx, 'captured', () => purgeCaptured(ctx, before));
   ctx.log.info('sandbox.purge', { passes, bundles, broadcasts, emails, days });
 }

@@ -5,6 +5,7 @@ import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { addLine, showsAddQr } from '@/shared/device.ts';
 import { copyText } from '../lib/clipboard.ts';
 import { cn } from '../lib/cn.ts';
+import { sessionQuery } from '../lib/session.ts';
 import {
   Buddy,
   Button,
@@ -79,11 +80,24 @@ export function ShowQrButton({ passTitle, url }: { passTitle: string; url: strin
 
 function useRemovePass(passId: string, onRemoved?: () => void) {
   const client = useQueryClient();
+  const currentUser = () => {
+    const state = client.getQueryState(sessionQuery.queryKey);
+    return state?.status === 'success' && state.data?.authenticated
+      ? state.data.user.id
+      : undefined;
+  };
   return useMutation({
     mutationFn: () => removePass(passId),
-    onSuccess: async () => {
+    onMutate: () => currentUser(),
+    onSuccess: async (result, _variables, userId) => {
+      if (!userId || currentUser() !== userId) return;
       await client.invalidateQueries({ queryKey: myPassesKey, exact: true });
-      toast.success('Removed from your passes');
+      if (currentUser() !== userId) return;
+      if (result.state === 'pending') {
+        toast.info(HOLDER_COPY.removalStarted);
+      } else {
+        toast.success('Removed from your passes');
+      }
       onRemoved?.();
     },
   });
@@ -96,7 +110,7 @@ export interface PassMenuProps {
   publicUrl: string | null;
   /** Detail page: a labelled "More" with the link items (its QR is on the page). Tiles: an icon. */
   page?: boolean;
-  /** A device has the pass: removing it here leaves it in Wallet. */
+  /** An Apple device registered the pass; current installation is unknown. */
   inWallet?: boolean;
   onRemoved?: () => void;
 }
@@ -165,11 +179,13 @@ export function PassMoreMenu({
         onOpenChange={setRemoveOpen}
         title="Remove from my passes?"
         description={`${passTitle} will not come back unless an admin reassigns it.${
-          inWallet ? ' It stays in Apple Wallet; delete it there.' : ''
+          inWallet ? ' An Apple Wallet copy may remain; delete it there if needed.' : ''
         }`}
         confirmLabel="Remove"
         destructive
-        onConfirm={() => mutation.mutateAsync()}
+        onConfirm={async () => {
+          await mutation.mutateAsync();
+        }}
       />
     </>
   );

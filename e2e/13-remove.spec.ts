@@ -6,9 +6,10 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 
 test('remove from Wallet, check the sync log, then restore', async ({ page }) => {
   const admin = await apiAs('admin');
-  const pass = await createPass(admin, readSeed().org.id, { holder: `Remove ${uid('R')}` });
+  const orgId = readSeed().org.id;
+  const pass = await createPass(admin, orgId, { holder: `Remove ${uid('R')}` });
 
-  await page.goto(`/admin/passes/${pass.id}`);
+  await page.goto(`/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`);
   await page.getByRole('button', { name: 'More', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Remove from Wallet' }).click();
   const dialog = page.getByRole('dialog', { name: 'Remove from Wallet?' });

@@ -1,98 +1,83 @@
-import type { Json } from '../../../shared/contracts/common.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { sanitizeEventData } from '../events/record.ts';
-import type { EventRow } from '../events/repo.ts';
-import { gateOfScanStmt, passVersionStmt, releaseGateStmts } from './repo-gates.ts';
-import { failScanStmt, finalizeStmt, ledgerIfWonStmt, type ScanRow } from './repo-scans.ts';
-
-/** The ledger row of a check-in that reconcile finishes: what the scan row alone can tell. */
-function ledgerFor(ctx: ServiceContext, row: ScanRow, version: number): EventRow {
-  const at = ctx.clock.now();
-  const [kind, id] = row.actorKey.split(':');
-  const data: Record<string, Json> = {
-    scanId: row.id,
-    actionId: row.actionId,
-    actionKind: row.actionKind,
-    outcome: 'ok',
-    reason: null,
-    method: row.method,
-    version,
-    eventId: row.eventId,
-    scannerId: row.scannerId,
-    staffId: row.staffId,
-    approvedBy: row.approvedBy,
-    override: row.overrideOf !== null,
-    offline: false,
-    notified: false,
-  };
-  return {
-    id: ctx.ids.ordered(at),
-    org_id: row.orgId,
-    pass_id: row.passId ?? '',
-    mode: row.mode,
-    kind: 'scan.checked_in',
-    device: null,
-    actor_type: kind === 's' ? 'scanner' : 'user',
-    actor_id: id ?? null,
-    data: JSON.stringify(sanitizeEventData(data)),
-    at,
-  };
-}
+import {
+  type GateSnapshot,
+  gatesOfScansStmt,
+  quarantinePreviousClaimStmt,
+  releaseObservedGateStmt,
+} from './repo-gate-recovery.ts';
+import { failScanStmt, presenceOfScansStmt, type ScanRow } from './repo-scans.ts';
 
 /**
- * Settles pending scans that never finished (SA 9.3). A check-in whose gate points at it won:
- * finalize it `ok` with its ledger row. A scan that never took a gate failed. A value action that
- * took the gate but never committed (`pass_version` empty) gives the gate back and fails.
+ * A pending row or a gate pointer cannot prove that admission committed. Quarantine ambiguous
+ * claims, undoing only unchanged gate snapshots; a pristine claim can safely be retried.
  */
 export async function recoverScans(
   ctx: ServiceContext,
   rows: ScanRow[],
 ): Promise<{ finished: number; failed: number }> {
   const db = ctx.env.DB;
-  const open = rows.filter((r) => r.passId && r.actionId);
-  const probes = open.length
-    ? await db.batch(
-        open.flatMap((r) => [
-          gateOfScanStmt(db, r.passId ?? '', r.actionId ?? '', r.id),
-          passVersionStmt(db, r.passId ?? ''),
-        ]),
-      )
-    : [];
-  const statements: D1PreparedStatement[] = [];
-  let finished = 0;
-  let failed = 0;
-  for (const row of rows) {
-    const at = open.indexOf(row);
-    const scope = (probes[at * 2]?.results?.[0] as { scope: string } | undefined)?.scope;
-    const version = (probes[at * 2 + 1]?.results?.[0] as { version: number } | undefined)?.version;
-    const gate =
-      scope === undefined
-        ? null
-        : { passId: row.passId ?? '', actionId: row.actionId ?? '', scope };
-    const committed = gate !== null && (row.actionKind === 'check_in' || row.passVersion !== null);
-    if (gate && committed) {
-      const final = {
-        id: row.id,
-        outcome: 'ok' as const,
-        reason: null,
-        passId: row.passId,
-        templateId: row.templateId,
-        actionId: row.actionId,
-        actionKind: row.actionKind,
-        passVersion: row.passVersion ?? version ?? null,
-        overrideOf: row.overrideOf,
-        approvedBy: row.approvedBy,
-      };
-      statements.push(finalizeStmt(db, final, row.actionKind === 'check_in' ? gate : undefined));
-      if (row.actionKind === 'check_in')
-        statements.push(ledgerIfWonStmt(db, ledgerFor(ctx, row, version ?? 0), gate, row.id));
-      finished++;
-    } else {
-      if (gate) statements.push(...releaseGateStmts(db, gate, row.id));
-      statements.push(failScanStmt(db, row.id));
-      failed++;
-    }
+  const pending = rows.filter((row) => row.state === 'pending');
+  if (pending.length === 0) return { finished: 0, failed: 0 };
+
+  const ids = pending.map((row) => row.id);
+  const [probe, presenceProbe] = await db.batch([
+    gatesOfScansStmt(db, ids),
+    presenceOfScansStmt(db, ids),
+  ]);
+  const gates = new Map(pending.map((row) => [row.id, [] as GateSnapshot[]]));
+  for (const gate of (probe?.results ?? []) as unknown as GateSnapshot[]) {
+    gates.get(gate.last_scan_id)?.push(gate);
+    if (gate.prev_scan_id !== null && gate.prev_scan_id !== gate.last_scan_id)
+      gates.get(gate.prev_scan_id)?.push(gate);
   }
-  if (statements.length > 0) await db.batch(statements);
-  return { finished, failed };
+  const presence = new Set<string>();
+  for (const row of (presenceProbe?.results ?? []) as unknown as {
+    last_scan_id: string;
+    prev_scan_id: string | null;
+  }[]) {
+    presence.add(row.last_scan_id);
+    if (row.prev_scan_id !== null) presence.add(row.prev_scan_id);
+  }
+
+  const statements: D1PreparedStatement[] = [];
+  const failures: number[] = [];
+  for (const row of pending) {
+    const observed = gates.get(row.id) ?? [];
+    for (const gate of observed) {
+      if (gate.last_scan_id !== row.id) continue;
+      const previous = quarantinePreviousClaimStmt(db, gate);
+      if (previous) {
+        failures.push(statements.length);
+        statements.push(previous);
+      }
+      const release = releaseObservedGateStmt(db, gate, row.at);
+      if (release) statements.push(release);
+    }
+    failures.push(statements.length);
+    statements.push(
+      failScanStmt(db, row.id, {
+        at: row.at,
+        observedAmbiguous:
+          observed.length > 0 ||
+          presence.has(row.id) ||
+          row.passId !== null ||
+          row.templateId !== null ||
+          row.actionId !== null ||
+          row.actionKind !== null ||
+          row.passVersion !== null ||
+          row.outcome !== null ||
+          row.reason !== null ||
+          row.overrideOf !== null ||
+          row.approvedBy !== null ||
+          row.undoneBy !== null ||
+          row.direction != null ||
+          row.presenceScope != null,
+      }),
+    );
+  }
+  const results = await db.batch(statements);
+  return {
+    finished: 0,
+    failed: failures.filter((index) => (results[index]?.results?.length ?? 0) > 0).length,
+  };
 }

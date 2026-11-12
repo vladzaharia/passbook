@@ -6,12 +6,14 @@ import {
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import { assertWritableMode, type PassScope, type ScopeArg } from '../passes/scope.ts';
 import * as repo from './repo.ts';
 
-/** Who is asking (see PassScope), and whether they may change passes. */
+/** Authorized tenant and mode, pass-change scope, and the write authority to fence mutations. */
 export interface BroadcastScope extends PassScope {
   canChange: boolean;
+  authority: TenantPassWrite;
 }
 
 /** By-id read: an API key sees only its own mode, a session either. */

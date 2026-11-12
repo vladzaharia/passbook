@@ -21,6 +21,7 @@
   },
   "ignoreExportsUsedInFile": true,
   "ignoreIssues": {
+    "src/worker/platform/{authority,authority-*,job-authority}.ts": ["files", "exports", "types"],
     "src/passkit/**": ["exports", "types"],
     "src/worker/modules/scan/**": ["exports", "types"],
     "src/web/scan/{machine/types,timing,input/types}.ts": ["exports", "types"],

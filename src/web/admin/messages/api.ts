@@ -5,8 +5,10 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useRef } from 'react';
 import type { z } from 'zod';
 import {
+  type BroadcastDto,
   type BroadcastItemDto,
   BroadcastItemListSchema,
   BroadcastListSchema,
@@ -17,7 +19,9 @@ import {
   type BroadcastTarget,
   type CreateBroadcastSchema,
 } from '@/shared/contracts/broadcasts.ts';
-import { api, listQuery } from '../../lib/api.ts';
+import { api } from '../../lib/api.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
+import { sessionQuery } from '../../lib/session.ts';
 
 const path = (id: string) => `/api/v1/broadcasts/${encodeURIComponent(id)}`;
 
@@ -38,24 +42,39 @@ export const broadcastKeys = {
 
 /** The Messages list: 50 at a time. Refreshes while something is on its way out. */
 export function useBroadcastPages(filters: BroadcastFilters) {
-  return useInfiniteQuery(
-    listQuery({
-      queryKey: broadcastKeys.list(filters),
-      initialPageParam: undefined as string | undefined,
-      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
-        api.get('/api/v1/broadcasts', BroadcastListSchema, {
-          query: { ...filters, cursor: pageParam, limit: 50 },
-          signal,
-        }),
-      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
-      refetchInterval: (query: {
-        state: { data?: { pages: { items: { state: string }[] }[] } | undefined };
-      }) =>
-        query.state.data?.pages.some((p) => p.items.some((b) => b.state === 'sending'))
-          ? 3000
-          : false,
-    }),
-  );
+  const scope = useOrgScope();
+  const orgId =
+    !scope.isLoading &&
+    !scope.isError &&
+    filters.orgId &&
+    filters.orgId === scope.orgId &&
+    scope.membership?.capabilities.includes('messages:read')
+      ? scope.orgId
+      : undefined;
+  const queryKey = orgId
+    ? broadcastKeys.list({ ...filters, orgId })
+    : ([...broadcastKeys.all, 'pages', null] as const);
+  return useInfiniteQuery({
+    queryKey,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) => {
+      if (!orgId) throw new Error('Choose an authorized organization.');
+      return api.get('/api/v1/broadcasts', BroadcastListSchema, {
+        query: { ...filters, orgId, cursor: pageParam, limit: 50 },
+        signal,
+      });
+    },
+    getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+    enabled: Boolean(orgId),
+    placeholderData: (previous, query) =>
+      orgId && query?.queryKey[3]?.orgId === orgId ? previous : undefined,
+    refetchInterval: (query: {
+      state: { data?: { pages: { items: { state: string }[] }[] } | undefined };
+    }) =>
+      query.state.data?.pages.some((p) => p.items.some((b) => b.state === 'sending'))
+        ? 3000
+        : false,
+  });
 }
 
 /** Polls while the message is sending or waiting on its time. */
@@ -84,40 +103,44 @@ export function useBroadcastItems(id: string, outcome: ItemOutcome | undefined, 
   });
 }
 
-export function useBroadcast(id: string | undefined) {
-  return useQuery({ ...broadcastQuery(id ?? ''), enabled: Boolean(id) });
-}
-
 export type NewBroadcast = z.input<typeof CreateBroadcastSchema>;
 
 export function useBroadcastActions() {
   const qc = useQueryClient();
-  const done = () => qc.invalidateQueries({ queryKey: broadcastKeys.all });
+  const session = qc.getQueryData(sessionQuery.queryKey);
+  const principalId = useRef(session?.authenticated ? session.user.id : undefined).current;
+  const isCurrentPrincipal = () => {
+    const current = qc.getQueryData(sessionQuery.queryKey);
+    return Boolean(
+      principalId &&
+        qc.getQueryState(sessionQuery.queryKey)?.status === 'success' &&
+        current?.authenticated &&
+        current.user.id === principalId,
+    );
+  };
+  const done = () =>
+    isCurrentPrincipal() ? qc.invalidateQueries({ queryKey: broadcastKeys.all }) : undefined;
+  const record = async (made: BroadcastDto) => {
+    if (!isCurrentPrincipal()) return;
+    qc.setQueryData(broadcastKeys.detail(made.id), made);
+    await done();
+  };
   return {
     create: useMutation({
       mutationFn: (body: NewBroadcast) => api.post('/api/v1/broadcasts', BroadcastSchema, body),
-      onSuccess: async (made) => {
-        qc.setQueryData(broadcastKeys.detail(made.id), made);
-        await done();
-      },
+      onSuccess: record,
     }),
     /** Replaces a draft's contents. */
     update: useMutation({
       mutationFn: ({ id, body }: { id: string; body: NewBroadcast }) =>
         api.patch(path(id), BroadcastSchema, body),
-      onSuccess: async (made) => {
-        qc.setQueryData(broadcastKeys.detail(made.id), made);
-        await done();
-      },
+      onSuccess: record,
     }),
     /** Sends a draft now (no `at`) or at a time. */
     send: useMutation({
       mutationFn: ({ id, at }: { id: string; at?: number | undefined }) =>
         api.post(`${path(id)}/send`, BroadcastSchema, at === undefined ? {} : { at }),
-      onSuccess: async (made) => {
-        qc.setQueryData(broadcastKeys.detail(made.id), made);
-        await done();
-      },
+      onSuccess: record,
     }),
     cancel: useMutation({
       mutationFn: (id: string) => api.post(`${path(id)}/cancel`, BroadcastSchema),
@@ -126,10 +149,7 @@ export function useBroadcastActions() {
     /** Copies a failed message into a new one in its own mode and sends it. */
     retry: useMutation({
       mutationFn: (id: string) => api.post(`${path(id)}/retry`, BroadcastSchema),
-      onSuccess: async (made) => {
-        qc.setQueryData(broadcastKeys.detail(made.id), made);
-        await done();
-      },
+      onSuccess: record,
     }),
   };
 }

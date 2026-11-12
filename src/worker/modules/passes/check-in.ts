@@ -1,13 +1,20 @@
 import { type CheckInPolicy, CheckInPolicySchema } from '../../../shared/contracts/check-in.ts';
 import { scanOf } from '../../../shared/scan-defaults.ts';
-import { NotFoundError, ValidationError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getEvent } from '../scan/repo-scope.ts';
 import { resolveTemplate } from './builder.ts';
+import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
-import { getPass } from './repo.ts';
+import { tenantPassAuthorityValid } from './repo-authority.ts';
 import { passCheckIn, savePassCheckIn } from './repo-check-in.ts';
+import { getPass } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
 
@@ -42,6 +49,7 @@ export async function putPassCheckIn(
   passId: string,
   rules: CheckInPolicy,
   scope: ScopeArg,
+  authority?: TenantPassWrite,
 ) {
   const pass = await getPassForWrite(ctx.env.DB, passId, scope);
   const current = await getPassCheckIn(ctx, passId, scope);
@@ -56,7 +64,19 @@ export async function putPassCheckIn(
     if (!event || event.mode !== pass.mode || event.archivedAt !== null)
       throw new NotFoundError('Event not found.', 'SCAN_EVENT_NOT_FOUND');
   }
-  await savePassCheckIn(ctx.env.DB, pass.orgId, passId, rules, ctx.clock.now());
+  const saved = await savePassCheckIn(
+    ctx.env.DB,
+    pass.orgId,
+    passId,
+    rules,
+    ctx.clock.now(),
+    authority ? { authority, pass } : undefined,
+  );
+  if (authority && !saved.changes) {
+    if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
+      throw new ForbiddenError();
+    throw new ConflictError('The pass changed. Reload and retry.', 'PASS_CONFLICT');
+  }
   await recordAudit(ctx, {
     orgId: pass.orgId,
     actorType: actor.type,

@@ -2,11 +2,12 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { json, renderApp } from '@/web/lib/test-utils.tsx';
+import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { pairingFixture, scannerFixture as s, templateFixture } from '../test-fixtures.ts';
 
 const page = (items: unknown[]) => json({ items, nextCursor: null });
 const none = () => page([]);
+const northwind = membershipFixture('o1', { orgName: 'Northwind', orgSlug: 'northwind' });
 
 const scanners = [
   s({ id: 's1', name: 'Front door', lastSeenAt: Date.now() - 60_000 }),
@@ -38,6 +39,8 @@ describe('Scanners tab', () => {
   it('lists scanners with status, accepts and a ghost Pair on the unpaired one', async () => {
     const { container } = await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
       session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
       handlers: handlers(),
     });
     const table = await screen.findByRole('table', { name: 'Scanners' });
@@ -57,6 +60,8 @@ describe('Scanners tab', () => {
   it('keeps revoked scanners behind Show revoked', async () => {
     await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
       session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
       handlers: handlers(),
     });
     await screen.findByText('Side door');
@@ -69,6 +74,8 @@ describe('Scanners tab', () => {
     let revoked = false;
     await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
       session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
       handlers: handlers({
         '/api/v1/scanners/s1/revoke': (_u: URL, init?: RequestInit) => {
           revoked = init?.method === 'POST';
@@ -88,6 +95,8 @@ describe('Scanners tab', () => {
   it('asks before pairing a paired scanner again, then shows the pairing face', async () => {
     await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
       session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
       handlers: handlers({
         '/api/v1/scanners/s1/pairing': (_u: URL, init?: RequestInit) =>
           init?.method === 'POST'
@@ -108,6 +117,8 @@ describe('Scanners tab', () => {
   it('offers session creation when no devices are listed', async () => {
     await renderApp('/admin/scanning?tab=scanners', {
       session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
       handlers: { '/api/v1/scan-setups': none, '/api/v1/scan-events': none },
     });
     expect(await screen.findByText('No devices yet')).toBeInTheDocument();
@@ -119,6 +130,8 @@ describe('device creation from Devices', () => {
   it('opens the shared-session form instead of creating an independent scanner setup', async () => {
     const { router } = await renderApp('/admin/scanning?tab=scanners&orgId=o1&new=1', {
       session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
       handlers: handlers(),
     });
     const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });

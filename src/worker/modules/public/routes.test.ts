@@ -3,11 +3,14 @@ import { fakeAuth, makeTemplate, persistTemplate } from '../../../../test/helper
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
 import { createPassRow } from '../passes/create.ts';
+import { rotateLink } from '../passes/pass-service-delivery.ts';
+import { ICON_PNG, type Kit, setupKit, TINY_PNG } from '../passes/pass-test-fixtures.ts';
 import { removePass } from '../passes/remove.ts';
-import { rotateLink, voidPass } from '../passes/service.ts';
-import { ICON_PNG, type Kit, setupKit, TINY_PNG } from '../passes/test-kit.ts';
+import { voidPass } from '../passes/service.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 
@@ -27,7 +30,7 @@ const actor = { type: 'user', id: 'admin-1' } as const;
 describe('GET /p/:token', () => {
   it('renders the pass without script, with a no-JS back toggle and a download link', async () => {
     const pass = await kit.pass();
-    // A Mac: the badge sits beside the QR (elsewhere off Apple's devices the scan is the way).
+    // A Mac: the badge sits beside the QR.
     const res = await get(`/p/${pass.downloadToken}`, {
       'accept-language': 'de-DE,de;q=0.9',
       'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15',
@@ -51,6 +54,15 @@ describe('GET /p/:token', () => {
     expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
     expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
+  });
+
+  it('does not advertise native wallets without approved projections and accounts', async () => {
+    const pass = await kit.pass();
+    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    expect(html).not.toContain(`/p/${pass.downloadToken}/wallet/google`);
+    expect(html).not.toContain(`/p/${pass.downloadToken}/wallet/samsung`);
+    expect(html).not.toContain('Add to Google Wallet');
+    expect(html).not.toContain('Add to Samsung Wallet');
   });
 
   it('lists the org support contacts in the footer and drops unsafe ones', async () => {
@@ -108,20 +120,19 @@ describe('GET /p/:token', () => {
   });
 
   it.each([
-    // The iPhone adds right here: the badge, docked.
-    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, true],
-    // A Mac adds too, but the scan reaches the phone without iCloud: the QR, the badge beside it
-    // (a coarse pointer, an iPad with a Mac agent, hides it in CSS).
-    ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', true, true],
-    // Elsewhere the scan is the only way: no badge, so no line about it either.
-    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, false],
-    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile', true, false],
-  ])('follows the shared device rule on %s', async (_name, ua, qr, badge) => {
+    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, false],
+    ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', true, false],
+    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, true],
+    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile', true, true],
+    ['Samsung', 'Mozilla/5.0 (Linux; Android 14; SM-S928B) SamsungBrowser/25.0 Mobile', true, true],
+    ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36', true, true],
+  ])('keeps the Apple badge available on %s', async (_name, ua, qr, guidance) => {
     const pass = await kit.pass();
     const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
     expect(html.includes('Scan with the camera.')).toBe(qr);
-    expect(html.includes('alt="Add to Apple Wallet"')).toBe(badge);
-    expect(html).not.toContain('Open on iPhone or Mac to add to Apple Wallet.');
+    expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
+    expect(html).toContain('alt="Add to Apple Wallet"');
+    expect(html.includes('Open on iPhone or Mac to add to Apple Wallet.')).toBe(guidance);
   });
 
   it('asks in-app browsers to open Safari', async () => {
@@ -164,7 +175,7 @@ describe('GET /p/:token', () => {
       [`org:${kit.org.id}`, 'support.email', JSON.stringify('help@gym.test')],
     );
     clearSettingsCache(kit.env.DB);
-    await voidPass(kit.ctx, actor, pass.id, null);
+    await voidPass(jobCtxOf(kit), actor, pass.id, null);
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
     const note = /<div role="status">[\s\S]*?<\/div><\/div><\/div>/.exec(html)?.[0] ?? '';
     expect(note).toContain('This pass was voided.');
@@ -176,10 +187,12 @@ describe('GET /p/:token', () => {
 
   it('shows a voided banner and no download for a voided pass', async () => {
     const pass = await kit.pass();
-    await voidPass(kit.ctx, actor, pass.id, null);
+    await voidPass(jobCtxOf(kit), actor, pass.id, null);
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
     expect(html).toContain('This pass was voided.');
     expect(html).not.toContain('Add to Apple Wallet');
+    expect(html).not.toContain('/wallet/google');
+    expect(html).not.toContain('/wallet/samsung');
     expect(html).not.toContain('QR code');
     // Quiet: a fade in, no deal, glow or tilt (and no tilt script).
     expect(html).toContain('data-enter="quiet"');
@@ -190,32 +203,43 @@ describe('GET /p/:token', () => {
 
   it('says a removed pass was removed from Wallet, with the org note, not voided', async () => {
     const pass = await kit.pass();
-    await removePass(kit.ctx, actor, pass.id, { message: 'Season ended <b>.' }, null);
+    await removePass(jobCtxOf(kit), actor, pass.id, { message: 'Season ended <b>.' }, null);
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
     expect(html).toContain('Removed from Wallet. It stays in Expired passes until you delete it.');
     expect(html).toContain('Season ended &lt;b&gt;.');
     expect(html).not.toContain('This pass was voided.');
     expect(html).not.toContain('Add to Apple Wallet');
+    expect(html).not.toContain('/wallet/google');
+    expect(html).not.toContain('/wallet/samsung');
     expect(html).toContain('data-removed');
     expect(html).not.toContain('class="pc-void"');
   });
 
   it('shows an expired banner', async () => {
     const { resolved } = makeTemplate({ id: `tpl-exp-${kit.fx.ids.token(4)}` });
-    kit.registry.add({
+    const template = kit.registry.add({
       id: resolved.id,
       version: 'v1',
       manifest: resolved.manifest,
       passJson: { ...resolved.passJson, expirationDate: '2020-01-01T00:00:00Z' },
       assets: { 'icon.png': TINY_PNG },
     });
-    await persistTemplate(kit.fx, resolved);
-    const pass = await createPassRow(kit.ctx, {
+    await persistTemplate(kit.fx, template, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      templateId: template.id,
+      version: template.version,
+    });
+    const pass = await createPassRow(jobCtxOf(kit), {
       orgId: kit.org.id,
       templateId: resolved.id,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
       input: { memberName: 'Old' },
       source: 'manual',
-      actor,
+      mode: 'live',
+      execution: { kind: 'system' },
+      actor: { type: 'system', id: null },
     });
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
     expect(html).toContain('This pass has expired.');
@@ -223,7 +247,7 @@ describe('GET /p/:token', () => {
 
   it('formats dates in the visitor zone from request.cf, UTC otherwise', async () => {
     const { resolved } = makeTemplate({ id: `tpl-tz-${kit.fx.ids.token(4)}` });
-    kit.registry.add({
+    const template = kit.registry.add({
       id: resolved.id,
       version: 'v1',
       manifest: resolved.manifest,
@@ -244,13 +268,22 @@ describe('GET /p/:token', () => {
       },
       assets: { 'icon.png': TINY_PNG },
     });
-    await persistTemplate(kit.fx, resolved);
-    const pass = await createPassRow(kit.ctx, {
+    await persistTemplate(kit.fx, template, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      templateId: template.id,
+      version: template.version,
+    });
+    const pass = await createPassRow(jobCtxOf(kit), {
       orgId: kit.org.id,
       templateId: resolved.id,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
       input: { memberName: 'Zed' },
       source: 'manual',
-      actor,
+      mode: 'live',
+      execution: { kind: 'system' },
+      actor: { type: 'system', id: null },
     });
     const url = `${ORIGIN}/p/${pass.downloadToken}`;
     const la = new Request(url, { cf: { timezone: 'America/Los_Angeles' } } as RequestInit);
@@ -343,14 +376,14 @@ describe('GET /p/:token/pass.pkpass', () => {
 });
 
 describe('GET /p/:token/assets/:name', () => {
-  it('serves template images as immutable PNG with validators', async () => {
+  it('serves private, non-cacheable template PNG images with validators', async () => {
     const pass = await kit.pass();
     const page = await (await get(`/p/${pass.downloadToken}`)).text();
     expect(page).toBeTruthy();
     const res = await get(`/p/${pass.downloadToken}/assets/icon.png?v=v1`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('image/png');
-    expect(res.headers.get('cache-control')).toContain('immutable');
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(TINY_PNG);
     const etag = res.headers.get('etag') ?? '';
     const again = await get(`/p/${pass.downloadToken}/assets/icon.png`, { 'if-none-match': etag });
@@ -361,7 +394,7 @@ describe('GET /p/:token/assets/:name', () => {
     const mine = await kit.pass();
     const other = await kit.pass();
     const png = ICON_PNG;
-    await putPassAsset(kit.ctx, actor, mine.id, 'icon.png', png, null);
+    await putPassAsset(jobCtxOf(kit), actor, mine.id, 'icon.png', png, null);
     const override = await get(`/p/${mine.downloadToken}/assets/icon.png`);
     expect(new Uint8Array(await override.arrayBuffer())).toEqual(png);
     const untouched = await get(`/p/${other.downloadToken}/assets/icon.png`);
@@ -370,7 +403,7 @@ describe('GET /p/:token/assets/:name', () => {
 
   it('lets other origins embed the icon and logo, the pass email images, and nothing else', async () => {
     const pass = await kit.pass();
-    await putPassAsset(kit.ctx, actor, pass.id, 'thumbnail@2x.png', makePng(100, 100), null);
+    await putPassAsset(jobCtxOf(kit), actor, pass.id, 'thumbnail@2x.png', makePng(100, 100), null);
     const icon = await get(`/p/${pass.downloadToken}/assets/icon.png`);
     expect(icon.headers.get('cross-origin-resource-policy')).toBe('cross-origin');
     await icon.arrayBuffer();
@@ -382,7 +415,7 @@ describe('GET /p/:token/assets/:name', () => {
 
   it("lists an overridden slot's files only, as the signed pass has them", async () => {
     const pass = await kit.pass();
-    await putPassAsset(kit.ctx, actor, pass.id, 'logo@2x.png', makePng(58, 58), null);
+    await putPassAsset(jobCtxOf(kit), actor, pass.id, 'logo@2x.png', makePng(58, 58), null);
     const html = await (await get(`/p/${pass.downloadToken}`)).text();
     expect(html).toContain(`/p/${pass.downloadToken}/assets/logo@2x.png?v=`);
     expect(html).not.toContain(`/p/${pass.downloadToken}/assets/logo.png?v=`);

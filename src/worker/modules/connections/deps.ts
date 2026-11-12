@@ -3,20 +3,19 @@ import type { Json } from '../../../shared/contracts/common.ts';
 import type { Job } from '../../jobs/types.ts';
 import { type DnsResolver, dohResolver } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { enqueuePush } from '../delivery/service.ts';
-import {
-  applyConnectionRecord,
-  createPassFromConnection,
-  markPassMissing,
-} from '../passes/service.ts';
+import { enqueueRefreshPush } from '../delivery/service.ts';
+import { applyConnectionRecord, markPassMissing } from '../passes/connection-passes.ts';
+import { createPassFromConnection } from '../passes/connection-passes-create.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
+import { requireApprovedRelease } from '../templates/releases.ts';
 
 /** Everything the sync engine reaches outside this module for. Tests replace pieces with `setDeps`. */
 export interface ConnectionDeps {
   applyConnectionRecord: typeof applyConnectionRecord;
   createPassFromConnection: typeof createPassFromConnection;
   markPassMissing: typeof markPassMissing;
-  enqueuePush: typeof enqueuePush;
+  requireApprovedRelease: typeof requireApprovedRelease;
+  enqueueRefreshPush: typeof enqueueRefreshPush;
   enqueueJob(ctx: ServiceContext, job: Job): Promise<void>;
   /** Throws when `fields` do not satisfy the template's input schema. */
   validateFields(
@@ -34,7 +33,8 @@ const real: ConnectionDeps = {
   applyConnectionRecord,
   createPassFromConnection,
   markPassMissing,
-  enqueuePush,
+  requireApprovedRelease,
+  enqueueRefreshPush,
   enqueueJob: async (ctx, job) => {
     await ctx.env.JOBS.send(job);
   },

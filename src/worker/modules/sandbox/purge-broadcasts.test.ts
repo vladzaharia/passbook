@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all, run } from '../../platform/db.ts';
-import { createPassRow } from '../passes/create.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { dailySandbox } from './jobs.ts';
 
 const DAY = 86_400_000;
@@ -24,14 +24,7 @@ async function broadcast(mode: 'live' | 'test', state: string, ageDays: number):
 
 describe('daily purge of test broadcasts', () => {
   it('deletes finished test broadcasts past the window with their items; keeps the rest', async () => {
-    const pass = await createPassRow(kit.ctx, {
-      orgId: kit.org.id,
-      templateId: kit.template.id,
-      input: { memberName: 'Kept' },
-      source: 'manual',
-      mode: 'live',
-      actor: { type: 'system', id: null },
-    });
+    const pass = await kit.pass({ orgId: kit.org.id, mode: 'live', memberName: 'Kept' });
     const oldSent = await broadcast('test', 'sent', 31);
     const oldDraft = await broadcast('test', 'draft', 31);
     const oldScheduled = await broadcast('test', 'scheduled', 31);
@@ -44,7 +37,7 @@ describe('daily purge of test broadcasts', () => {
       [oldSent, pass.id],
     );
 
-    await dailySandbox(kit.ctx);
+    await dailySandbox(jobCtxOf(kit));
 
     const ids = (await all<{ id: string }>(kit.env.DB, 'SELECT id FROM broadcasts')).map(
       (r) => r.id,

@@ -49,4 +49,16 @@ describe('groupTemplates', () => {
     const [group] = groupTemplates([summary({ orgName: null })], 'Acme Fitness');
     expect(group?.label).toBe('Acme Fitness');
   });
+
+  it('groups compact records without fabricated template summary fields', () => {
+    const groups = groupTemplates([
+      { name: 'PassBook · Shared', orgId: null, orgName: null, releaseId: 'shared-release' },
+      { name: 'Acme · Own', orgId: 'org1', orgName: 'Acme Fitness', releaseId: 'own-release' },
+    ]);
+    expect(groups.map((group) => group.label)).toEqual(['Acme Fitness', 'Shared']);
+    expect(groups[0]?.items[0]).toMatchObject({
+      name: 'Own',
+      template: { releaseId: 'own-release' },
+    });
+  });
 });

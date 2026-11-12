@@ -1,93 +1,32 @@
 import type { Json, Mode } from '../../../shared/contracts/common.ts';
-import { strictEmail } from '../../../shared/email.ts';
-import type { Job } from '../../jobs/types.ts';
-import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordPassEvent } from '../events/record.ts';
-import { getPass } from '../passes/repo.ts';
+import type { AuditEntry } from '../audit/types.ts';
+import type { BundleEmailSnapshot } from '../bundles/email-binding.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import {
-  bumpCounter,
-  insertOutbox,
-  listOutboxForPass,
-  lostEnqueues,
-  markDueEnqueued,
-  revertEnqueued,
-  touchEnqueued,
-} from './repo.ts';
+  authorityMayQueue,
+  captureActor,
+  type DeliveryActor,
+  systemActor,
+} from './delivery-actor.ts';
+import {
+  dispatchSafely,
+  EMAIL_ORG_DAILY_CAP,
+  EMAIL_RECIPIENT_HOURLY_CAP,
+} from './issuance-intent.ts';
+import { enqueueAuthorizedEmail, listAuthorizedOutboxForPass } from './repo.ts';
+import { queuedAudit } from './repo-email-queue.ts';
+import { insertPushOutbox, recordPushQueuedEvent } from './repo-outbox-enqueue.ts';
+import { insertRefreshPush, type RefreshPushContext } from './repo-outbox-refresh.ts';
 
 /** Workstream d owns this module. Keep the signatures. */
 
-const SEND_BATCH = 100;
 const HOUR = 3_600_000;
 const DAY = 86_400_000;
-/** Pass emails per recipient per hour, and per org per day. */
-export const EMAIL_RECIPIENT_HOURLY_CAP = 3;
-export const EMAIL_ORG_DAILY_CAP = 500;
-
-function message(row: { id: string; kind: 'push' | 'email' }): MessageSendRequest<Job> {
-  const kind = row.kind === 'push' ? ('push.deliver' as const) : ('email.send' as const);
-  return { body: { kind, outboxId: row.id }, contentType: 'json' };
-}
-
-async function sendRows(ctx: ServiceContext, rows: { id: string; kind: 'push' | 'email' }[]) {
-  for (let i = 0; i < rows.length; i += SEND_BATCH) {
-    await ctx.env.JOBS.sendBatch(rows.slice(i, i + SEND_BATCH).map(message));
-  }
-}
-
-/**
- * Marks due rows `enqueued`, then sends them. A failed send reverts the mark so the next tick
- * retries; the sweeper covers a crash between the two steps.
- */
-export async function dispatchOutbox(
-  ctx: ServiceContext,
-  options: { passId?: string; limit?: number } = {},
-): Promise<number> {
-  const rows = await markDueEnqueued(
-    ctx.env.DB,
-    ctx.clock.now(),
-    options.limit ?? 200,
-    options.passId,
-  );
-  if (rows.length === 0) return 0;
-  try {
-    await sendRows(ctx, rows);
-  } catch (error) {
-    await revertEnqueued(
-      ctx.env.DB,
-      rows.map((r) => r.id),
-    );
-    throw error;
-  }
-  return rows.length;
-}
-
-/** For `waitUntil`: dispatch failures are logged, never thrown into the request. */
-export async function dispatchSafely(
-  ctx: ServiceContext,
-  options: { passId?: string } = {},
-): Promise<void> {
-  try {
-    await dispatchOutbox(ctx, options);
-  } catch (error) {
-    ctx.log.error('outbox.dispatch_failed', { code: 'OUTBOX_DISPATCH', error });
-  }
-}
-
-/** Re-sends rows stuck in `enqueued` (message lost after the mark). */
-export async function redispatchLost(ctx: ServiceContext, graceMs: number): Promise<number> {
-  const now = ctx.clock.now();
-  const rows = await lostEnqueues(ctx.env.DB, now - graceMs, 200);
-  if (rows.length === 0) return 0;
-  await sendRows(ctx, rows);
-  await touchEnqueued(
-    ctx.env.DB,
-    rows.map((r) => r.id),
-    now,
-  );
-  return rows.length;
-}
 
 /** Push to every registered device even if the pass didn't change (force refresh catch-up). */
 export async function enqueuePush(
@@ -97,47 +36,79 @@ export async function enqueuePush(
 ): Promise<void> {
   const pass = await getPass(ctx.env.DB, passId);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  await insertOutbox(ctx.env.DB, {
+  const queued = await insertPushOutbox(ctx, {
     id: `push:${passId}:${reason}:${ctx.ids.id()}`,
     orgId: pass.orgId,
-    kind: 'push',
+    mode: pass.mode,
     passId,
-    coalesceKey: `push:${passId}`,
-    payload: { reason },
+    identityId: pass.identityId,
+    credentialGeneration: pass.credentialGeneration,
+    lifecycleGeneration: pass.lifecycleGeneration,
+    templateId: pass.templateId,
+    templateVersion: pass.templateVersion,
+    releaseId: pass.releaseId,
+    coalesceKey: `push:${JSON.stringify([
+      passId,
+      pass.identityId,
+      pass.credentialGeneration,
+      pass.lifecycleGeneration,
+      pass.templateId,
+      pass.templateVersion,
+      pass.releaseId,
+    ])}`,
+    payload: {
+      reason,
+      identityId: pass.identityId,
+      credentialGeneration: pass.credentialGeneration,
+      lifecycleGeneration: pass.lifecycleGeneration,
+      templateId: pass.templateId,
+      templateVersion: pass.templateVersion,
+      releaseId: pass.releaseId,
+    },
     now: ctx.clock.now(),
   });
-  await recordPassEvent(ctx, {
+  if (queued === 'stale') throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  await recordPushQueuedEvent(ctx, {
     orgId: pass.orgId,
     passId,
     mode: pass.mode,
-    kind: 'push.queued',
-    data: { version: pass.version, reason },
+    identityId: pass.identityId,
+    credentialGeneration: pass.credentialGeneration,
+    lifecycleGeneration: pass.lifecycleGeneration,
+    templateId: pass.templateId,
+    templateVersion: pass.templateVersion,
+    releaseId: pass.releaseId,
+    passVersion: pass.version,
+    reason,
   });
   ctx.waitUntil(dispatchSafely(ctx, { passId }));
 }
 
-export async function enqueuePassEmail(
+/** Commit the refresh against the captured pass/connection state before scheduling a push. */
+export async function enqueueRefreshPush(
   ctx: ServiceContext,
-  input: { passId: string; to: string; attach: boolean },
-): Promise<{ outboxId: string }> {
-  const to = strictEmail(input.to);
-  if (!to) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
-  const pass = await getPass(ctx.env.DB, input.passId);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  return queueEmail(ctx, {
-    orgId: pass.orgId,
-    passId: pass.id,
-    mode: pass.mode,
-    to,
-    payload: { to, attach: input.attach },
-    event: { attached: input.attach },
-  });
+  snapshot: RefreshPushContext,
+): Promise<boolean> {
+  if (
+    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== snapshot.credentialKeysetCommitment
+  )
+    return false;
+  const queued = await insertRefreshPush(
+    ctx,
+    snapshot,
+    `push:${snapshot.passId}:refresh:${ctx.ids.id()}`,
+    ctx.clock.now(),
+  );
+  if (!queued) return false;
+  await recordPushQueuedEvent(ctx, { ...snapshot, reason: 'refresh' });
+  ctx.waitUntil(dispatchSafely(ctx, { passId: snapshot.passId }));
+  return true;
 }
 
 /**
  * Applies the recipient and org caps, then queues one email row, records `email.queued` on the
  * row's pass and dispatches it. Pass and bundle emails share it (`to` is already normalized by
- * `strictEmail`).
+ * `strictEmail`). The actor is the live request's authority, or a job acting for the system.
  */
 export async function queueEmail(
   ctx: ServiceContext,
@@ -148,45 +119,74 @@ export async function queueEmail(
     to: string;
     payload: Record<string, unknown>;
     event: Record<string, Json>;
+    authority?: TenantPassWrite;
+    bundleSnapshot?: BundleEmailSnapshot;
+    /** Recorded in the same batch as the mail. */
+    auditEntry?: AuditEntry;
   },
 ): Promise<{ outboxId: string }> {
-  const now = ctx.clock.now();
+  if (
+    (typeof input.payload.bundleId === 'string' || input.bundleSnapshot) &&
+    (!input.bundleSnapshot || input.payload.bundleId !== input.bundleSnapshot.bundle.id)
+  )
+    throw new ConflictError(
+      'The bundle changed. Review the recipient and try again.',
+      'DELIVERY_STALE',
+    );
+  const { authority } = input;
+  if (authority && !authorityMayQueue(authority, input)) throw new ForbiddenError();
+  const actor: DeliveryActor = authority
+    ? await captureActor(ctx.env.DB, authority)
+    : await systemActor(ctx.env.DB, input.orgId);
+  const intent = input.payload.intent;
+  const payload =
+    intent && typeof intent === 'object'
+      ? { ...input.payload, intent: { ...intent, actor } }
+      : input.payload;
   // Captured test mail has its own counters: it must not use up the caps of real holder email.
   const recipient = (await sha256Hex(`pass-email:${input.to.toLowerCase()}`)).slice(0, 32);
-  const perRecipient = await bumpCounter(
-    ctx.env.DB,
-    `pass-email:${input.mode}:to:${recipient}`,
-    now - (now % HOUR),
-  );
-  const perOrg = await bumpCounter(
-    ctx.env.DB,
-    `pass-email:${input.mode}:org:${input.orgId}`,
-    now - (now % DAY),
-  );
-  if (perRecipient > EMAIL_RECIPIENT_HOURLY_CAP || perOrg > EMAIL_ORG_DAILY_CAP)
-    throw new AppError('EMAIL_RATE_LIMITED', 429, 'Too many pass emails. Try again later.', {
-      headers: { 'retry-after': '3600' },
-    });
+  const now = ctx.clock.now();
   const outboxId = ctx.ids.id();
-  await insertOutbox(ctx.env.DB, {
-    id: outboxId,
-    orgId: input.orgId,
-    kind: 'email',
-    passId: input.passId,
-    coalesceKey: null,
-    payload: input.payload,
-    now: ctx.clock.now(),
-  });
-  await recordPassEvent(ctx, {
+  const result = await enqueueAuthorizedEmail(ctx, {
     orgId: input.orgId,
     passId: input.passId,
     mode: input.mode,
-    kind: 'email.queued',
-    data: { outboxId, ...input.event },
+    payload,
+    event: input.event,
+    actors: authority ? { request: [authority] } : { deferred: [actor] },
+    ...(input.bundleSnapshot ? { bundleSnapshot: input.bundleSnapshot } : {}),
+    ...(input.auditEntry ? { audit: queuedAudit(input.auditEntry, outboxId) } : {}),
+    outboxId,
+    rate: {
+      recipientKey: `pass-email:${input.mode}:to:${recipient}`,
+      orgKey: `pass-email:${input.mode}:org:${input.orgId}`,
+      recipientWindow: now - (now % HOUR),
+      orgWindow: now - (now % DAY),
+      recipientCap: EMAIL_RECIPIENT_HOURLY_CAP,
+      orgCap: EMAIL_ORG_DAILY_CAP,
+    },
   });
+  if (result === 'org')
+    throw new ForbiddenError(
+      'Organization access changed. Reload and retry.',
+      'ORG_ACCESS_CHANGED',
+    );
+  if (result === 'denied') throw new ForbiddenError();
+  if (result === 'stale')
+    throw new ConflictError(
+      'The bundle changed. Review the recipient and try again.',
+      'DELIVERY_STALE',
+    );
+  if (result === 'limited')
+    throw new AppError('EMAIL_RATE_LIMITED', 429, 'Too many pass emails. Try again later.', {
+      headers: { 'retry-after': '3600' },
+    });
   ctx.waitUntil(dispatchSafely(ctx, { passId: input.passId }));
   return { outboxId };
 }
 
-export const listPassDeliveries = (ctx: ServiceContext, passId: string) =>
-  listOutboxForPass(ctx.env.DB, passId, 50);
+export const listPassDeliveries = (
+  ctx: ServiceContext,
+  passId: string,
+  authority: TenantPassWrite,
+) => listAuthorizedOutboxForPass(ctx.env.DB, passId, authority, ctx.clock.now());

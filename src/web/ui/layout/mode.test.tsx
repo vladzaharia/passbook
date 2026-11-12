@@ -69,6 +69,11 @@ describe('ModeSwitch and ModeBand', () => {
     );
     const toggle = screen.getByRole('switch', { name: 'Test mode' });
     expect(toggle).toHaveAttribute('aria-checked', 'false');
+    // The words on screen are the control's name.
+    expect(screen.getByText('Test mode')).toHaveAttribute(
+      'id',
+      toggle.getAttribute('aria-labelledby'),
+    );
     expect(screen.queryByRole('status')).toBeNull();
     await user.click(toggle);
     expect(getMode()).toBe('test');
@@ -77,6 +82,7 @@ describe('ModeSwitch and ModeBand', () => {
     expect((await axe(container)).violations).toEqual([]);
     await user.click(toggle);
     expect(getMode()).toBe('live');
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
     expect(screen.queryByRole('status')).toBeNull();
   });
 });

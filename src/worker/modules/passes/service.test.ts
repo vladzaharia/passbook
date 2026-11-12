@@ -1,33 +1,86 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { makeOrg, makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import { createSession, resolveSession } from '../auth/sessions.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { acceptOrgInvitation } from '../orgs/membership-service.ts';
+import { requireApprovedRelease, type TemplateRelease } from '../templates/releases.ts';
+import { approveAppleRelease } from './apple-release-test-fixtures.ts';
+import { applyConnectionRecord } from './connection-passes.ts';
 import { createPassIdempotent } from './create.ts';
+import { requireCredentialRefKeyset } from './credential-keyset.ts';
 import { overrideDeps } from './deps.ts';
+import { type TenantPassWrite, tenantAuthorityOf } from './http.ts';
 import { dailyPasses } from './jobs.ts';
+import { rotateLink } from './pass-service-delivery.ts';
+import { type Kit, setupKit, TINY_PNG } from './pass-test-fixtures.ts';
 import { publishPass } from './publish.ts';
+import { listPasses } from './repo.ts';
 import {
   countRegistrations,
   getPass,
   getPassByDownloadToken,
   getPassBySerial,
-  listPasses,
-} from './repo.ts';
-import {
-  deletePass,
-  listPassSummaries,
-  rotateLink,
-  unvoidPass,
-  updatePass,
-  voidPass,
-} from './service.ts';
-import { type Kit, setupKit } from './test-kit.ts';
+} from './repo-read-pass.ts';
+import { deletePass, listPassSummaries, unvoidPass, updatePass, voidPass } from './service.ts';
 
 let kit: Kit;
+let liveRelease: TemplateRelease;
+let createPrincipal: {
+  actor: { type: 'user'; id: string };
+  execution: { kind: 'tenant'; authority: TenantPassWrite };
+};
 beforeAll(async () => {
   kit = await setupKit();
-});
+  liveRelease = await requireApprovedRelease(kit.ctx, kit.template.id, kit.org.id, 'live', 'apple');
+  createPrincipal = await passOperator(kit.org.id);
+}, 60_000);
 
 const actor = { type: 'user', id: 'admin-1' } as const;
+const reviewedRelease = () => ({
+  templateVersion: liveRelease.version,
+  releaseId: liveRelease.id,
+  releaseGeneration: liveRelease.generation,
+});
+
+async function passOperator(orgId: string) {
+  const user = await makeUser(kit.fx);
+  const session = await createSession(kit.ctx, {
+    userId: user.id,
+    roles: ['user'],
+    amr: 'oidc',
+    ipPrefix: null,
+    userAgent: null,
+  });
+  const auth = await resolveSession(kit.env, kit.clock, session.cookieValue);
+  if (!auth) throw new Error('Pass operator session did not resolve');
+  const token = kit.fx.ids.token(32);
+  const now = kit.clock.now();
+  await run(
+    kit.env.DB,
+    `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      kit.fx.ids.id(),
+      orgId,
+      user.primaryEmail,
+      JSON.stringify(['pass_operator']),
+      await sha256Hex(token),
+      now,
+      now + 60_000,
+    ],
+  );
+  await acceptOrgInvitation(kit.ctx, auth, token);
+  return {
+    actor: { type: 'user' as const, id: user.id },
+    execution: {
+      kind: 'tenant' as const,
+      authority: await tenantAuthorityOf(kit.ctx, auth, orgId, 'passes:operate'),
+    },
+  };
+}
 
 describe('create', () => {
   it('stores the object, records version 1 and derives display fields', async () => {
@@ -54,7 +107,15 @@ describe('create', () => {
     await expect(
       createPassIdempotent(
         kit.ctx,
-        { orgId: kit.org.id, templateId: kit.template.id, input: {}, source: 'manual', actor },
+        {
+          orgId: kit.org.id,
+          templateId: kit.template.id,
+          ...reviewedRelease(),
+          input: {},
+          source: 'manual',
+          mode: 'live',
+          ...createPrincipal,
+        },
         undefined,
       ),
     ).rejects.toMatchObject({ code: 'PASS_INPUT_INVALID', status: 422 });
@@ -64,21 +125,39 @@ describe('create', () => {
   });
 
   it('refuses a template from another organization', async () => {
-    const other = await kit.fx.ids.id();
+    const other = await makeOrg(kit.fx, { name: 'Other Org' });
+    const otherPrincipal = await passOperator(other.id);
+    const template = kit.registry.add({
+      id: `tpl-owned-${kit.fx.ids.token(4)}`,
+      orgId: kit.org.id,
+      manifest: kit.template.manifest,
+      passJson: kit.template.passJson,
+      assets: { 'icon.png': TINY_PNG },
+    });
+    await persistTemplate(kit.fx, template, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      orgId: kit.org.id,
+      templateId: template.id,
+      version: template.version,
+    });
     await expect(
       createPassIdempotent(
         kit.ctx,
         {
-          orgId: other,
-          templateId: kit.template.id,
+          orgId: other.id,
+          templateId: template.id,
+          templateVersion: release.version,
+          releaseId: release.id,
+          releaseGeneration: release.generation,
           input: { memberName: 'x' },
           source: 'manual',
-          actor,
+          mode: 'live',
+          ...otherPrincipal,
         },
         undefined,
       ),
     ).rejects.toMatchObject({ status: 404 });
-  });
+  }, 60_000);
 
   it('rejects a duplicate serial and removes the stored object', async () => {
     const first = await kit.pass();
@@ -89,10 +168,12 @@ describe('create', () => {
         {
           orgId: kit.org.id,
           templateId: kit.template.id,
+          ...reviewedRelease(),
           input: { memberName: 'Dup' },
           serial: first.serial,
           source: 'manual',
-          actor,
+          mode: 'live',
+          ...createPrincipal,
         },
         undefined,
       ),
@@ -107,10 +188,12 @@ describe('create', () => {
         {
           orgId: kit.org.id,
           templateId: kit.template.id,
+          ...reviewedRelease(),
           input: { memberName: 'x' },
           holderEmail: 'a@b.com,c@d.com',
           source: 'manual',
-          actor,
+          mode: 'live',
+          ...createPrincipal,
         },
         undefined,
       ),
@@ -122,9 +205,11 @@ describe('idempotency', () => {
   const base = () => ({
     orgId: kit.org.id,
     templateId: kit.template.id,
+    ...reviewedRelease(),
     input: { memberName: 'Idem' },
     source: 'manual' as const,
-    actor,
+    mode: 'live' as const,
+    ...createPrincipal,
   });
 
   it('returns the original pass for a retry with the same key and body', async () => {
@@ -171,7 +256,7 @@ describe('update and CAS publish', () => {
   it('bumps version, writes a new object and queues one push', async () => {
     const pass = await kit.pass({ memberName: 'Before' });
     const detail = await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       actor,
       pass.id,
       { input: { memberName: 'After' } },
@@ -194,7 +279,7 @@ describe('update and CAS publish', () => {
   it('does not publish when nothing changed', async () => {
     const pass = await kit.pass({ memberName: 'Same' });
     const detail = await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       actor,
       pass.id,
       { input: { memberName: 'Same' } },
@@ -205,10 +290,16 @@ describe('update and CAS publish', () => {
 
   it('fails with 412 on a stale If-Match and leaves the pass untouched', async () => {
     const pass = await kit.pass();
-    await updatePass(kit.ctx, actor, pass.id, { input: { memberName: 'v2' } }, { scope: null });
+    await updatePass(
+      jobCtxOf(kit),
+      actor,
+      pass.id,
+      { input: { memberName: 'v2' } },
+      { scope: null },
+    );
     await expect(
       updatePass(
-        kit.ctx,
+        jobCtxOf(kit),
         actor,
         pass.id,
         { input: { memberName: 'v3' } },
@@ -241,7 +332,7 @@ describe('update and CAS publish', () => {
     const pass = await kit.pass({ memberName: 'Race' });
     loseRaces(pass.id, 1);
     const seen: number[] = [];
-    const result = await publishPass(kit.ctx, {
+    const result = await publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'connection',
       actor: { type: 'connection', id: 'c1' },
@@ -260,7 +351,7 @@ describe('update and CAS publish', () => {
   it('gives up with 409 after three lost races, without a sync error', async () => {
     const pass = await kit.pass({ memberName: 'Hot' });
     loseRaces(pass.id, 3);
-    const attempt = publishPass(kit.ctx, {
+    const attempt = publishPass(jobCtxOf(kit), {
       passId: pass.id,
       cause: 'connection',
       actor: { type: 'connection', id: 'c1' },
@@ -277,8 +368,20 @@ describe('update and CAS publish', () => {
 
   it('coalesces pushes for edits made before the first push starts', async () => {
     const pass = await kit.pass();
-    await updatePass(kit.ctx, actor, pass.id, { input: { memberName: 'e1' } }, { scope: null });
-    await updatePass(kit.ctx, actor, pass.id, { input: { memberName: 'e2' } }, { scope: null });
+    await updatePass(
+      jobCtxOf(kit),
+      actor,
+      pass.id,
+      { input: { memberName: 'e1' } },
+      { scope: null },
+    );
+    await updatePass(
+      jobCtxOf(kit),
+      actor,
+      pass.id,
+      { input: { memberName: 'e2' } },
+      { scope: null },
+    );
     const rows = await all<{ id: string }>(
       kit.env.DB,
       "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push'",
@@ -290,19 +393,37 @@ describe('update and CAS publish', () => {
 
 describe('field sources', () => {
   it('locks manual fields against connection updates and resets them', async () => {
-    const { applyConnectionRecord } = await import('./service.ts');
     const pass = await kit.pass({ memberName: 'Manual Name' });
+    const credentialKeysetCommitment = await requireCredentialRefKeyset(kit.env.DB, kit.env);
     const connId = kit.fx.ids.id();
     await run(
       kit.env.DB,
       `INSERT INTO connections (id, org_id, connector_type, name, created_at, updated_at) VALUES (?, ?, 'demo', 'c', 1, 1)`,
       [connId, kit.org.id],
     );
-    await run(kit.env.DB, 'UPDATE passes SET connection_id = ? WHERE id = ?', [connId, pass.id]);
-    const skipped = await applyConnectionRecord(kit.ctx, {
+    const externalRef = 'manual-reset';
+    await run(kit.env.DB, 'UPDATE passes SET connection_id = ?, external_ref = ? WHERE id = ?', [
+      connId,
+      externalRef,
+      pass.id,
+    ]);
+    const skipped = await applyConnectionRecord(jobCtxOf(kit), {
       passId: pass.id,
+      orgId: kit.org.id,
+      mode: 'live',
+      status: 'active',
+      expectedVersion: pass.version,
+      ownerUserId: pass.ownerUserId,
+      linkGeneration: pass.linkGeneration,
+      identityId: pass.identityId,
+      credentialGeneration: pass.credentialGeneration,
+      lifecycleGeneration: pass.lifecycleGeneration,
+      credentialKeysetCommitment,
+      transferPending: false,
       connectionId: connId,
+      externalRef,
       generation: 1,
+      expectedConnectionMode: 'poll',
       fields: { memberName: 'Upstream' },
       cause: 'connection',
     });
@@ -310,17 +431,30 @@ describe('field sources', () => {
     expect((await getPass(kit.env.DB, pass.id))?.displayTitle).toBe('Manual Name');
 
     const detail = await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       actor,
       pass.id,
       { resetToConnection: ['memberName'] },
       { scope: null },
     );
     expect(detail.fieldSources).toEqual({});
-    const applied = await applyConnectionRecord(kit.ctx, {
+    const applied = await applyConnectionRecord(jobCtxOf(kit), {
       passId: pass.id,
+      orgId: kit.org.id,
+      mode: 'live',
+      status: 'active',
+      expectedVersion: detail.version,
+      ownerUserId: pass.ownerUserId,
+      linkGeneration: pass.linkGeneration,
+      identityId: pass.identityId,
+      credentialGeneration: pass.credentialGeneration,
+      lifecycleGeneration: pass.lifecycleGeneration,
+      credentialKeysetCommitment,
+      transferPending: false,
       connectionId: connId,
+      externalRef,
       generation: 1,
+      expectedConnectionMode: 'poll',
       fields: { memberName: 'Upstream' },
       cause: 'connection',
     });
@@ -331,23 +465,42 @@ describe('field sources', () => {
   });
 
   it('fences runs from an older connection generation', async () => {
-    const { applyConnectionRecord } = await import('./service.ts');
     const pass = await kit.pass();
+    const credentialKeysetCommitment = await requireCredentialRefKeyset(kit.env.DB, kit.env);
     const connId = kit.fx.ids.id();
     await run(
       kit.env.DB,
       `INSERT INTO connections (id, org_id, connector_type, name, generation, created_at, updated_at) VALUES (?, ?, 'demo', 'c', 3, 1, 1)`,
       [connId, kit.org.id],
     );
-    await run(kit.env.DB, 'UPDATE passes SET connection_id = ? WHERE id = ?', [connId, pass.id]);
-    const result = await applyConnectionRecord(kit.ctx, {
-      passId: pass.id,
-      connectionId: connId,
-      generation: 2,
-      fields: { memberName: 'Stale' },
-      cause: 'connection',
-    });
-    expect(result.changed).toBe(false);
+    const externalRef = 'stale-generation';
+    await run(kit.env.DB, 'UPDATE passes SET connection_id = ?, external_ref = ? WHERE id = ?', [
+      connId,
+      externalRef,
+      pass.id,
+    ]);
+    await expect(
+      applyConnectionRecord(jobCtxOf(kit), {
+        passId: pass.id,
+        orgId: kit.org.id,
+        mode: 'live',
+        status: 'active',
+        expectedVersion: pass.version,
+        ownerUserId: pass.ownerUserId,
+        linkGeneration: pass.linkGeneration,
+        identityId: pass.identityId,
+        credentialGeneration: pass.credentialGeneration,
+        lifecycleGeneration: pass.lifecycleGeneration,
+        credentialKeysetCommitment,
+        transferPending: false,
+        connectionId: connId,
+        externalRef,
+        generation: 2,
+        expectedConnectionMode: 'poll',
+        fields: { memberName: 'Stale' },
+        cause: 'connection',
+      }),
+    ).rejects.toMatchObject({ code: 'PASS_CONFLICT' });
     expect((await getPass(kit.env.DB, pass.id))?.displayTitle).toBe('Alex Morgan');
   });
 });
@@ -355,7 +508,7 @@ describe('field sources', () => {
 describe('void, links, delete', () => {
   it('voids and unvoids by rebuilding with voided set', async () => {
     const pass = await kit.pass();
-    const voided = await voidPass(kit.ctx, actor, pass.id, null);
+    const voided = await voidPass(jobCtxOf(kit), actor, pass.id, null);
     expect(voided.status).toBe('voided');
     const row = await first<{ pass_json: string }>(
       kit.env.DB,
@@ -363,7 +516,7 @@ describe('void, links, delete', () => {
       [pass.id],
     );
     expect(JSON.parse(row?.pass_json ?? '{}').voided).toBe(true);
-    const back = await unvoidPass(kit.ctx, actor, pass.id, null);
+    const back = await unvoidPass(jobCtxOf(kit), actor, pass.id, null);
     expect(back.status).toBe('active');
   });
 
@@ -388,7 +541,7 @@ describe('void, links, delete', () => {
       'INSERT INTO registrations (device_id, identity_id, pass_id, created_at) VALUES (?, ?, ?, 1)',
       [device, pass.identityId, pass.id],
     );
-    await deletePass(kit.ctx, actor, pass.id, null);
+    await deletePass(jobCtxOf(kit), actor, pass.id, null);
     expect(await getPass(kit.env.DB, pass.id)).toBeNull();
     expect(await getPassByDownloadToken(kit.env.DB, pass.downloadToken)).toBeNull();
     expect(

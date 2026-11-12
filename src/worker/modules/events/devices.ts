@@ -5,9 +5,10 @@ import type {
 } from '../../../shared/contracts/events.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { getPass, type Pass } from '../passes/repo.ts';
+import type { Pass } from '../passes/repo.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import { removalVersion } from '../passes/repo-remove.ts';
-import type { ScopeArg } from '../passes/scope.ts';
+import { readMode, type ScopeArg } from '../passes/scope.ts';
 import { hashDevice } from './record.ts';
 import { type LatestDeviceEvent, latestDeviceEvents, registrationsOfPass } from './repo.ts';
 
@@ -85,10 +86,12 @@ function describe(
   let removalState: PassSyncDeviceDto['removal'] = null;
   if (removal) {
     if (!registered) removalState = 'deleted';
-    else if (registeredAt >= removal.at) removalState = 'fetched';
-    else if (fetch && fetch.at >= removal.at && fetch.version >= (removal.version ?? 0))
-      removalState = 'fetched';
-    else removalState = 'pending';
+    else if (removal.version !== null) {
+      if (registeredAt >= removal.at) removalState = 'fetched';
+      else if (fetch && fetch.at >= removal.at && fetch.version >= removal.version)
+        removalState = 'fetched';
+      else removalState = 'pending';
+    }
   }
   return {
     device: hash,
@@ -119,10 +122,15 @@ export async function listPassDevices(
   const db = ctx.env.DB;
   const pass = await getPass(db, passId, orgScope);
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const fence = { orgId: pass.orgId, mode: readMode(orgScope) };
+  const pinnedScope =
+    typeof orgScope === 'object' && orgScope !== null
+      ? { ...orgScope, orgId: pass.orgId }
+      : pass.orgId;
   const [registrations, latest, removedVersion] = await Promise.all([
-    registrationsOfPass(db, passId),
-    latestDeviceEvents(db, passId),
-    pass.removedAt !== null ? removalVersion(db, passId) : null,
+    registrationsOfPass(db, passId, fence),
+    latestDeviceEvents(db, passId, fence),
+    pass.removedAt !== null ? removalVersion(db, passId, pinnedScope) : null,
   ]);
   const seen = fold(latest);
   const registeredAt = new Map<string, number>(

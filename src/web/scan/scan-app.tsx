@@ -6,7 +6,8 @@ import { errorMessage } from '../lib/errors.ts';
 import { buttonVariants } from '../ui/button-variants.ts';
 import { createLazyScanApi } from './api/lazy-api.ts';
 import { useDeviceReport } from './boot/use-device-report.ts';
-import { usePlatformAdmin } from './boot/use-platform-admin.ts';
+import { usePlatformSession } from './boot/use-platform-session.ts';
+import { useScanManageAccess } from './boot/use-scan-manage-access.ts';
 import { createCsrfHolder, useScanSession } from './boot/use-scan-session.ts';
 import type { ScanState } from './machine/types.ts';
 import { BootCard } from './ui/boot-card.tsx';
@@ -29,7 +30,8 @@ const StaffStart = lazy(() =>
 );
 
 function ScanBoot() {
-  const { admin } = usePlatformAdmin();
+  const platform = usePlatformSession();
+  const canManage = useScanManageAccess(platform?.user.id);
   const csrf = useMemo(createCsrfHolder, []);
   const params = new URLSearchParams(location.search);
   const orgId = params.get('orgId');
@@ -49,12 +51,19 @@ function ScanBoot() {
         }
       : undefined,
   );
+  const refresh = useRef<() => Promise<void>>(async () => {});
   const api = useMemo(
-    () => createLazyScanApi({ csrf: csrf.get, scope: () => scope.current }),
+    () =>
+      createLazyScanApi({
+        csrf: csrf.get,
+        scope: () => scope.current,
+        refreshConfig: () => refresh.current(),
+      }),
     [csrf],
   );
   const [machine, setMachine] = useState<ScanState | null>(null);
   const session = useScanSession(api, csrf, machine);
+  refresh.current = session.refetch;
   useDeviceReport(api, session.session, session.refetch);
   const [preview, setPreview] = useState<{
     code: string;
@@ -171,8 +180,9 @@ function ScanBoot() {
           .finally(() => setBusy(false));
       }}
     />
-  ) : adminStart && admin ? (
+  ) : adminStart && platform ? (
     <AdminStart
+      userId={platform.user.id}
       onCancel={() => {
         setAdminStart(false);
         history.replaceState(null, '', '/scan');
@@ -196,7 +206,7 @@ function ScanBoot() {
       onPair={previewPair}
       error={error}
       busy={busy}
-      onAdmin={admin ? () => setAdminStart(true) : undefined}
+      onAdmin={canManage ? () => setAdminStart(true) : undefined}
     />
   );
   return <ScanShell branding={session.session?.branding} cardMode="boot" card={card} />;

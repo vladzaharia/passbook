@@ -3,7 +3,7 @@ import { readCapped } from './read-capped.ts';
 
 export interface DnsResolver {
   /** Returns every A and AAAA address for the host. */
-  resolve(host: string): Promise<string[]>;
+  resolve(host: string, signal?: AbortSignal): Promise<string[]>;
 }
 
 export interface SafeFetchOptions {
@@ -174,10 +174,14 @@ export function assertSafeUrl(raw: string, platformHosts: string[] = []): URL {
 
 /** DNS-over-HTTPS resolver (Cloudflare). */
 export function dohResolver(fetchImpl: typeof fetch = fetch): DnsResolver {
-  const lookup = async (host: string, type: 'A' | 'AAAA'): Promise<string[]> => {
+  const lookup = async (
+    host: string,
+    type: 'A' | 'AAAA',
+    signal?: AbortSignal,
+  ): Promise<string[]> => {
     const res = await fetchImpl(
       `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(host)}&type=${type}`,
-      { headers: { accept: 'application/dns-json' } },
+      { headers: { accept: 'application/dns-json' }, signal },
     );
     if (!res.ok) throw new UpstreamError('DNS lookup failed.', 'DNS_FAILED');
     const body = (await res.json()) as { Answer?: { type: number; data: string }[] };
@@ -185,17 +189,37 @@ export function dohResolver(fetchImpl: typeof fetch = fetch): DnsResolver {
     return (body.Answer ?? []).filter((a) => a.type === wanted).map((a) => a.data);
   };
   return {
-    resolve: async (host) => [...(await lookup(host, 'A')), ...(await lookup(host, 'AAAA'))],
+    resolve: async (host, signal) => [
+      ...(await lookup(host, 'A', signal)),
+      ...(await lookup(host, 'AAAA', signal)),
+    ],
   };
 }
 
 /** Throws when the host has no public addresses or any private one. Use at save time and before fetch. */
-export async function assertPublicHost(host: string, resolver: DnsResolver): Promise<void> {
-  const addresses = await resolver.resolve(host);
+export async function assertPublicHost(
+  host: string,
+  resolver: DnsResolver,
+  signal?: AbortSignal,
+): Promise<void> {
+  const addresses = await resolver.resolve(host, signal);
   if (addresses.length === 0)
     throw new ValidationError('The host does not resolve.', [], 'UNSAFE_URL');
   if (addresses.some(isPrivateIp))
     throw new ValidationError('The host resolves to a private address.', [], 'UNSAFE_URL');
+}
+
+/** Rejects with `onAbort()` as soon as `signal` aborts, even if `work` ignores the signal. */
+function untilAborted<T>(work: Promise<T>, signal: AbortSignal, onAbort: () => Error): Promise<T> {
+  if (signal.aborted) {
+    work.catch(() => undefined);
+    return Promise.reject(onAbort());
+  }
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(onAbort());
+    signal.addEventListener('abort', abort, { once: true });
+    work.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort));
+  });
 }
 
 /** Outbound fetch for tenant-configured URLs: https/443 only, public hosts only, no redirects, capped. */
@@ -206,28 +230,40 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   return async (raw, init = {}) => {
     const url = assertSafeUrl(raw, options.platformHosts);
-    await assertPublicHost(url.hostname, resolver);
+    // One deadline covers DNS, connect, headers and the whole body.
     const timeout = AbortSignal.timeout(timeoutMs);
     const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+    const failure = () =>
+      timeout.aborted
+        ? new UpstreamError('The upstream request timed out.', 'TIMEOUT')
+        : new UpstreamError('The upstream request failed.', 'UPSTREAM');
+    await untilAborted(assertPublicHost(url.hostname, resolver, signal), signal, failure);
     let response: Response;
     try {
-      response = await fetchImpl(url.toString(), { ...init, redirect: 'manual', signal });
-    } catch {
-      const timedOut = timeout.aborted;
-      throw new UpstreamError(
-        timedOut ? 'The upstream request timed out.' : 'The upstream request failed.',
-        timedOut ? 'TIMEOUT' : 'UPSTREAM',
+      response = await untilAborted(
+        fetchImpl(url.toString(), { ...init, redirect: 'manual', signal }),
+        signal,
+        failure,
       );
+    } catch {
+      throw failure();
     }
     if (response.status >= 300 && response.status < 400) {
+      await response.body?.cancel().catch(() => undefined);
       throw new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
     }
-    const body = await readCapped(
-      response.body,
-      maxBytes,
-      () => new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE'),
-      Number(response.headers.get('content-length') ?? 0),
-    );
+    let body: Uint8Array;
+    try {
+      body = await readCapped(
+        response.body,
+        maxBytes,
+        () => new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE'),
+        Number(response.headers.get('content-length') ?? 0),
+        signal,
+      );
+    } catch (error) {
+      throw error instanceof UpstreamError ? error : failure();
+    }
     const decode = () => new TextDecoder().decode(body);
     return {
       status: response.status,

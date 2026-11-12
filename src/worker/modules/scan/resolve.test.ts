@@ -1,36 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeOrg } from '../../../../test/helpers/index.ts';
-import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { normalizeLookup } from '../../../shared/scan-lookup.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
+import { door, HOUR, kit, resolve, setupResolveFixture, tpl } from './resolve-test-fixtures.ts';
+import { codeOf, key } from './test-kit.ts';
 
-let kit: ScanKit;
-let tpl: string;
-const HOUR = 3_600_000;
-const CHECK_IN = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
-
-beforeAll(async () => {
-  kit = await setupScanKit();
-  tpl = await kit.scanTemplate('Gym card', {
-    actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
-    lookup: { input: 'memberNo' },
-    window: { from: 'startsAt', until: 'endsAt' },
-    flags: [{ input: 'tier', label: 'Unpaid dues', equals: ['overdue'], stop: true }],
-  });
-});
-
-const body = (input: unknown) => ({ idempotencyKey: key(), input, clientTs: kit.clock.now() });
-const resolve = async (headers: Record<string, string>, input: unknown) => {
-  const res = await kit.post(headers, '/resolve', body(input));
-  return { status: res.status, out: (await res.json()) as ScanOutcome };
-};
-const mask = (o: ScanOutcome) => ({ ...o, scanId: null, at: null });
-
-async function door(templateIds = [tpl], over: Record<string, unknown> = {}) {
-  return kit.scanner({ templateIds, ...over });
-}
+beforeAll(setupResolveFixture);
 
 describe('resolve: one fixture per reason', () => {
   it('a pass of the scanner answers ready with a card and the identity display', async () => {
@@ -55,7 +30,10 @@ describe('resolve: one fixture per reason', () => {
     const [a, b] = [await kit.scanPass(tpl), await kit.scanPass(tpl)];
     const hash = await sha256Hex(normalizeLookup('AMB-1'));
     for (const p of [a, b])
-      await run(kit.env.DB, 'UPDATE passes SET lookup_hash = ? WHERE id = ?', [hash, p.id]);
+      await run(kit.env.DB, 'UPDATE passes SET lookup_hash = ?, revision=revision+1 WHERE id = ?', [
+        hash,
+        p.id,
+      ]);
     const { out } = await resolve(s.headers, { code: 'amb 1', method: 'wedge' });
     expect(out).toMatchObject({ kind: 'refused', reason: 'ambiguous' });
   });
@@ -68,29 +46,182 @@ describe('resolve: one fixture per reason', () => {
     const [a, b] = [await kit.scanPass(tpl), await kit.scanPass(other)];
     const hash = await sha256Hex(normalizeLookup('NARROW-1'));
     for (const p of [a, b])
-      await run(kit.env.DB, 'UPDATE passes SET lookup_hash = ? WHERE id = ?', [hash, p.id]);
+      await run(kit.env.DB, 'UPDATE passes SET lookup_hash = ?, revision=revision+1 WHERE id = ?', [
+        hash,
+        p.id,
+      ]);
     const { out } = await resolve(s.headers, { code: 'NARROW-1', method: 'manual' });
     expect(out.kind).toBe('ready');
     expect(out.card?.passId).toBe(a.id);
   });
 
-  it('test_pass and live_pass carry only the template, no card and no display', async () => {
+  it('returns only the generic test_pass or live_pass reason across modes', async () => {
     const live = await door();
     const test = await door([tpl], { mode: 'test' });
-    const testPass = await kit.scanPass(tpl, {}, { mode: 'test' });
-    const livePass = await kit.scanPass(tpl);
-    const a = await resolve(live.headers, codeOf(testPass));
-    expect(a.out).toMatchObject({
-      kind: 'refused',
-      reason: 'test_pass',
-      card: null,
-      display: null,
-    });
-    expect(a.out.template).toEqual({ name: 'Gym card', style: 'generic' });
-    expect(JSON.stringify(a.out)).not.toContain('Anna');
-    const b = await resolve(test.headers, codeOf(livePass));
-    expect(b.out).toMatchObject({ reason: 'live_pass', card: null, display: null });
+    const testPass = await kit.scanPass(
+      tpl,
+      { memberName: 'Test Mode Private Name' },
+      { mode: 'test' },
+    );
+    const livePass = await kit.scanPass(tpl, { memberName: 'Live Mode Private Name' });
+    const cases = [
+      {
+        result: await resolve(live.headers, codeOf(testPass)),
+        pass: testPass,
+        reason: 'test_pass',
+        name: 'Test Mode Private Name',
+      },
+      {
+        result: await resolve(test.headers, codeOf(livePass)),
+        pass: livePass,
+        reason: 'live_pass',
+        name: 'Live Mode Private Name',
+      },
+    ] as const;
+    for (const { result, pass, reason, name } of cases) {
+      expect(result.status).toBe(200);
+      expect(result.out).toMatchObject({
+        kind: 'refused',
+        reason,
+        scanId: null,
+        at: null,
+        replay: false,
+        action: null,
+        card: null,
+        template: null,
+        display: null,
+        previous: null,
+        value: null,
+        flags: [],
+      });
+      const identity = await first<{ pass_type_identifier: string; team_identifier: string }>(
+        kit.env.DB,
+        'SELECT pass_type_identifier, team_identifier FROM signing_identities WHERE id = ?',
+        [pass.identityId],
+      );
+      if (!identity || !pass.scanCode || !pass.releaseId)
+        throw new Error('Missing cross-mode fixture identity');
+      const text = JSON.stringify(result.out);
+      for (const secret of [
+        name,
+        'Gym card',
+        tpl,
+        pass.id,
+        pass.serial,
+        pass.scanCode,
+        pass.identityId,
+        pass.releaseId,
+        pass.authToken,
+        pass.downloadToken,
+        identity.pass_type_identifier,
+        identity.team_identifier,
+      ])
+        expect(text).not.toContain(secret);
+    }
   });
+
+  it.each([
+    { scannerMode: 'live', passMode: 'test', route: 'resolve' },
+    { scannerMode: 'live', passMode: 'test', route: 'actions' },
+    { scannerMode: 'test', passMode: 'live', route: 'resolve' },
+    { scannerMode: 'test', passMode: 'live', route: 'actions' },
+  ] as const)(
+    'refuses a cross-mode $route when the scanner loses authority',
+    async ({ scannerMode, passMode, route }) => {
+      const scanner = await door([tpl], { mode: scannerMode });
+      const pass = await kit.scanPass(
+        tpl,
+        { memberName: 'Cross Mode Actor Race' },
+        { mode: passMode },
+      );
+      const idempotencyKey = key();
+      const real = kit.env.DB;
+      let raced = false;
+      const db = new Proxy(real, {
+        get(target, prop) {
+          if (prop === 'batch')
+            return async (statements: D1PreparedStatement[]) => {
+              const results = await target.batch(statements);
+              if (
+                !raced &&
+                results.some((result) =>
+                  result.results?.some((row) => {
+                    // D1 guarantees result rows are objects; this batch only needs the id.
+                    const batchRow = row as { id?: unknown };
+                    return batchRow.id === pass.id;
+                  }),
+                )
+              ) {
+                raced = true;
+                await run(real, "UPDATE scanners SET device_role='monitor' WHERE id=?", [
+                  scanner.id,
+                ]);
+              }
+              return results;
+            };
+          const value = Reflect.get(target, prop, target);
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+      Object.assign(kit.env, { DB: db });
+      let response: Response;
+      try {
+        response = await kit.post(scanner.headers, `/${route}`, {
+          idempotencyKey,
+          input: { passId: pass.id, method: 'manual' },
+          clientTs: kit.clock.now(),
+          ...(route === 'actions' ? { actionId: 'check_in' } : {}),
+        });
+      } finally {
+        Object.assign(kit.env, { DB: real });
+      }
+      expect(raced).toBe(true);
+      const text = await response.text();
+      // A device role change moves the scanner's config epoch: the read refuses as not found, the
+      // action's grant refuses with 409 SCAN_CONFIG_CHANGED. Neither names the pass.
+      if (route === 'actions') {
+        expect(`${response.status} ${(JSON.parse(text) as { code?: string }).code}`).toBe(
+          '409 SCAN_CONFIG_CHANGED',
+        );
+        for (const secret of [pass.id, pass.serial, pass.scanCode!, 'Cross Mode Actor Race'])
+          expect(text).not.toContain(secret);
+        // The claim is closed as failed; nothing about the pass is recorded.
+        expect(
+          await first(real, 'SELECT state FROM scans WHERE idempotency_key=?', [idempotencyKey]),
+        ).toEqual({ state: 'failed' });
+        expect(
+          await all(real, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
+            pass.id,
+          ]),
+        ).toHaveLength(0);
+        return;
+      }
+      expect(response.status).toBe(200);
+      expect(JSON.parse(text)).toMatchObject({
+        kind: 'refused',
+        reason: 'not_found',
+        scanId: null,
+        replay: false,
+        action: null,
+        template: null,
+        card: null,
+        display: null,
+      });
+      for (const secret of [pass.id, pass.serial, pass.scanCode!, 'Cross Mode Actor Race'])
+        expect(text).not.toContain(secret);
+      expect(
+        await first(real, 'SELECT id FROM scans WHERE idempotency_key=?', [idempotencyKey]),
+      ).toBeNull();
+      expect(
+        await all(real, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
+          pass.id,
+        ]),
+      ).toHaveLength(0);
+      expect(
+        await all(real, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [pass.id]),
+      ).toHaveLength(0);
+    },
+  );
 
   it('not_accepted: a pass of another template', async () => {
     const other = await kit.scanTemplate('Other card', {
@@ -99,7 +230,7 @@ describe('resolve: one fixture per reason', () => {
     const s = await door();
     const { out } = await resolve(s.headers, codeOf(await kit.scanPass(other)));
     expect(out).toMatchObject({ kind: 'refused', reason: 'not_accepted' });
-    expect(out.template?.name).toBe('Other card');
+    expect(out.template).toBeNull();
   });
 
   it('wrong_event: the event matches another tier', async () => {
@@ -209,246 +340,5 @@ describe('resolve: one fixture per reason', () => {
     });
     const session = (await (await kit.get(s.headers, '/session')).json()) as { state: string };
     expect(session.state).toBe('unassigned');
-  });
-});
-
-describe('resolve: input normalisation', () => {
-  it('strips the CR, LF and Tab a wedge reader appends', async () => {
-    const s = await door();
-    const pass = await kit.scanPass(tpl);
-    for (const tail of ['\r\n', '\t', '\r']) {
-      const { out } = await resolve(s.headers, {
-        code: `${pass.scanCode}${tail}`,
-        method: 'wedge',
-      });
-      expect(out.kind).toBe('ready');
-    }
-  });
-
-  it('a typed scan code with spaces, dashes and lower case still matches', async () => {
-    const s = await door();
-    const pass = await kit.scanPass(tpl);
-    const typed = (pass.scanCode ?? '').toLowerCase().replace(/(.{4})/g, '$1 - ');
-    expect((await resolve(s.headers, { code: typed, method: 'manual' })).out.kind).toBe('ready');
-  });
-
-  it('a non-ASCII barcode finds the pass by the hash the publish writes', async () => {
-    const s = await door();
-    const pass = await kit.scanPass(tpl);
-    const barcode = 'Zoë-Ünï-№7';
-    await run(kit.env.DB, 'UPDATE passes SET barcode_hash = ? WHERE id = ?', [
-      await sha256Hex(barcode),
-      pass.id,
-    ]);
-    const { out } = await resolve(s.headers, { code: `${barcode}\n`, method: 'wedge' });
-    expect(out.card?.passId).toBe(pass.id);
-  });
-
-  it('a typed member number finds the pass by lookup hash', async () => {
-    const s = await door();
-    const pass = await kit.scanPass(tpl, { memberNo: 'GYM-0042' });
-    await run(kit.env.DB, 'UPDATE passes SET lookup_hash = ? WHERE id = ?', [
-      await sha256Hex(normalizeLookup('GYM-0042')),
-      pass.id,
-    ]);
-    expect(
-      (await resolve(s.headers, { code: 'gym 0042', method: 'manual' })).out.card?.passId,
-    ).toBe(pass.id);
-  });
-
-  it('only a manual read may use the serial, external id or pass id', async () => {
-    const s = await door();
-    const pass = await kit.scanPass(tpl);
-    expect((await resolve(s.headers, { code: pass.serial, method: 'camera' })).out.reason).toBe(
-      'not_found',
-    );
-    expect(
-      (await resolve(s.headers, { code: pass.serial, method: 'manual' })).out.card?.passId,
-    ).toBe(pass.id);
-    expect((await resolve(s.headers, { passId: pass.id, method: 'manual' })).out.card?.passId).toBe(
-      pass.id,
-    );
-  });
-});
-
-describe('resolve: the card', () => {
-  it('has no barcode, nfc, token, URL, serial or readable email', async () => {
-    const s = await door();
-    const pass = await kit.scanPass(tpl, {}, { holderEmail: 'anna.popescu@example.com' });
-    const { out } = await resolve(s.headers, codeOf(pass));
-    const text = JSON.stringify(out.card);
-    for (const word of [
-      'barcodes',
-      '"barcode"',
-      '"nfc"',
-      'authenticationToken',
-      'webServiceURL',
-      'serialNumber',
-      'anna.popescu@example.com',
-      pass.serial,
-      pass.scanCode ?? 'x',
-    ])
-      expect(text).not.toContain(word);
-    const pj = out.card?.passView.passJson as Record<string, unknown>;
-    expect(pj).not.toHaveProperty('barcodes');
-    expect(out.card?.passView.assetNames).toContain('icon.png');
-  });
-
-  it('door state and last scans come from the gates and the scans table', async () => {
-    const s = await door();
-    const pass = await kit.scanPass(tpl);
-    expect((await resolve(s.headers, codeOf(pass))).out.card?.door).toEqual({ state: null });
-    await kit.post(s.headers, '/actions', { ...body(codeOf(pass)), actionId: 'auto' });
-    const card = (await resolve(s.headers, codeOf(pass))).out.card;
-    expect(card?.door).toEqual({ state: 'in' });
-    expect(card?.actions[0]).toMatchObject({ available: false, reason: 'already_done' });
-    expect(card?.lastScans).toHaveLength(1);
-  });
-});
-
-describe('resolve: tenant isolation', () => {
-  it("org B's code, barcode, member number, pass id and asset look like a random code", async () => {
-    const orgB = await makeOrg(kit.fx, { name: 'Other Gym' });
-    const tplB = await kit.scanTemplate(
-      'Gym card',
-      { actions: [CHECK_IN], lookup: { input: 'memberNo' } },
-      { orgId: orgB.id },
-    );
-    const passB = await kit.scanPass(tplB, { memberNo: 'B-77' }, { orgId: orgB.id });
-    await run(kit.env.DB, 'UPDATE passes SET lookup_hash = ? WHERE id = ?', [
-      await sha256Hex(normalizeLookup('B-77')),
-      passB.id,
-    ]);
-    const a = await door();
-    const random = mask((await resolve(a.headers, { code: 'ZZZZ-9999', method: 'manual' })).out);
-    const inputs = [
-      { code: passB.scanCode ?? '', method: 'camera' },
-      { code: passB.scanCode ?? '', method: 'manual' },
-      { code: 'B 77', method: 'manual' },
-      { passId: passB.id, method: 'manual' },
-    ];
-    for (const input of inputs) {
-      const { status, out } = await resolve(a.headers, input);
-      expect(status).toBe(200);
-      expect(mask(out)).toEqual(random);
-    }
-    const asset = await kit.get(
-      a.headers,
-      `/passes/${passB.id}/assets/icon.png?g=${'A'.repeat(54)}`,
-    );
-    expect(asset.status).toBe(404);
-    const unknown = await kit.get(a.headers, `/passes/nope/assets/icon.png?g=${'A'.repeat(54)}`);
-    const problem = async (r: Response) => ({ ...((await r.json()) as object), requestId: null });
-    expect(await problem(asset)).toEqual(await problem(unknown));
-  });
-});
-
-describe('asset grant', () => {
-  it('serves the image for the actor it was minted for, not for another scanner or after an hour', async () => {
-    const s = await door();
-    const other = await door();
-    const pass = await kit.scanPass(tpl);
-    const before = await first<{ n: number }>(kit.env.DB, 'SELECT COUNT(*) AS n FROM scans');
-    const { out } = await resolve(s.headers, codeOf(pass));
-    const view = out.card?.passView;
-    const url = `${view?.assetBaseUrl}icon.png?g=${view?.assetGrant}`.replace('/api/v1/scan', '');
-    const ok = await kit.get(s.headers, url);
-    expect(ok.status).toBe(200);
-    expect(ok.headers.get('content-type')).toBe('image/png');
-    expect((await kit.get(other.headers, url)).status).toBe(404);
-    const forged = url.replace(/g=(.)/, (_, c: string) => `g=${c === 'A' ? 'B' : 'A'}`);
-    expect((await kit.get(s.headers, forged)).status).toBe(404);
-    const after = await first<{ n: number }>(kit.env.DB, 'SELECT COUNT(*) AS n FROM scans');
-    expect(after?.n).toBe(before?.n);
-    kit.clock.advance(HOUR + 1);
-    expect((await kit.get(s.headers, url)).status).toBe(404);
-  });
-});
-
-describe('admin scope', () => {
-  const scope = (over: Record<string, unknown> = {}) => ({
-    orgId: kit.org.id,
-    templateIds: [tpl],
-    timeZone: 'UTC',
-    ...over,
-  });
-
-  it('needs a scope; the org must exist; the mode comes from the header', async () => {
-    const pass = await kit.scanPass(tpl);
-    const testPass = await kit.scanPass(tpl, {}, { mode: 'test' });
-    const send = (headers: Record<string, string>, input: unknown, s?: unknown) =>
-      kit.post(headers, '/resolve', { ...body(input), ...(s ? { scope: s } : {}) });
-    expect((await send(kit.admin(), codeOf(pass))).status).toBe(422);
-    expect((await send(kit.admin(), codeOf(pass), scope({ orgId: 'nope' }))).status).toBe(404);
-    const live = (await (await send(kit.admin(), codeOf(pass), scope())).json()) as ScanOutcome;
-    expect(live.kind).toBe('ready');
-    const asTest = (await (await send(kit.admin(), codeOf(pass), scope())).json()) as ScanOutcome;
-    expect(asTest.kind).toBe('ready');
-    const testHeaders = { ...kit.admin(), 'x-passbook-mode': 'test' };
-    const mismatch = (await (await send(testHeaders, codeOf(pass), scope())).json()) as ScanOutcome;
-    expect(mismatch.reason).toBe('live_pass');
-    const hit = (await (await send(testHeaders, codeOf(testPass), scope())).json()) as ScanOutcome;
-    expect(hit.kind).toBe('ready');
-  });
-});
-
-describe('session', () => {
-  it('describes the scanner, its templates, formats, counts and the csrf token', async () => {
-    const s = await door();
-    const res = await kit.get(s.headers, '/session');
-    const session = (await res.json()) as Record<string, any>;
-    expect(res.status).toBe(200);
-    expect(res.headers.get('cache-control')).toBe('no-store');
-    expect(session).toMatchObject({ principal: 'scanner', state: 'ready', formats: ['qr'] });
-    expect(session.scanner).toMatchObject({
-      orgName: 'Test Gym',
-      mode: 'live',
-      deviceRole: 'scan',
-    });
-    expect(session.templates[0]).toMatchObject({
-      id: tpl,
-      name: 'Gym card',
-      actions: [{ id: 'check_in' }],
-    });
-    expect(session.csrfToken).toEqual(expect.any(String));
-    expect(session.counts).toMatchObject({ today: 0, event: null, configRev: expect.any(Number) });
-  });
-
-  it('says staff_required, not_open and closed', async () => {
-    const staffed = await door([tpl], { settings: { staffSignIn: true } });
-    const get = async (h: Record<string, string>) =>
-      ((await (await kit.get(h, '/session')).json()) as { state: string }).state;
-    expect(await get(staffed.headers)).toBe('staff_required');
-    const early = await kit.event({
-      templateIds: [tpl],
-      opensAt: kit.clock.now() + HOUR,
-      closesAt: kit.clock.now() + 2 * HOUR,
-    });
-    const over = await kit.event({
-      templateIds: [tpl],
-      opensAt: kit.clock.now() - 2 * HOUR,
-      closesAt: kit.clock.now() - HOUR,
-    });
-    expect(await get((await kit.scanner({ eventId: early.id })).headers)).toBe('not_open');
-    expect(await get((await kit.scanner({ eventId: over.id })).headers)).toBe('closed');
-  });
-});
-
-describe('misses', () => {
-  it('the 31st not_found in ten minutes is 429 SCAN_TOO_MANY_MISSES, audited once', async () => {
-    const s = await door();
-    let last = 200;
-    for (let i = 0; i < 31; i++)
-      last = (
-        await kit.post(s.headers, '/resolve', body({ code: `MISS-${i}-ZZZZ`, method: 'camera' }))
-      ).status;
-    expect(last).toBe(429);
-    await kit.post(s.headers, '/resolve', body({ code: 'MISS-X-ZZZZ', method: 'camera' }));
-    const rows = await all<{ action: string }>(
-      kit.env.DB,
-      "SELECT action FROM audit_log WHERE action = 'scan.misses_capped' AND actor_id = ?",
-      [s.id],
-    );
-    expect(rows).toHaveLength(1);
   });
 });

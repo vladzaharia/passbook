@@ -49,6 +49,7 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
   displayName: 'Webhook push',
   description: 'Your system sends signed records.',
   capabilities: { webhook: true },
+  webhookReferenceMode: 'embedded-required',
   configSchema: config,
   outputFields: {},
   defaults: { intervalSeconds: 3600, maxConcurrency: 1, requestsPerMinute: 60, timeoutMs: 15_000 },

@@ -17,7 +17,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const list = (...items: ReturnType<typeof passFixture>[]) => json({ items, nextCursor: null });
+// The server's Add all snapshot: the passes not yet in a Wallet, ten to a part.
+const list = (...items: ReturnType<typeof passFixture>[]) => {
+  const count = items.filter((p) => p.status === 'active' && !p.inWallet).length;
+  return json({
+    items,
+    nextCursor: null,
+    bundle: count ? { token: 'snap-1,snap-2', count, parts: Math.ceil(count / 10) } : null,
+  });
+};
 
 describe('my passes', () => {
   it('renders cards with org, wallet link and no a11y violations', async () => {
@@ -36,6 +44,12 @@ describe('my passes', () => {
       'href',
       '/passes/p1',
     );
+    expect(screen.getByRole('link', { name: 'View pass' })).toHaveAttribute('href', '/passes/p1');
+    expect(screen.getByRole('link', { name: 'Manage account' })).toHaveAttribute(
+      'href',
+      '/account',
+    );
+    expect(screen.getByRole('heading', { name: 'From your organizations' })).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -75,7 +89,7 @@ describe('my passes', () => {
     });
     expect(await screen.findByRole('link', { name: /Add 2 passes/ })).toHaveAttribute(
       'href',
-      '/api/v1/me/passes.pkpasses?part=1',
+      '/api/v1/me/passes.pkpasses?part=1&snapshot=snap-1%2Csnap-2',
     );
   });
 
@@ -84,11 +98,11 @@ describe('my passes', () => {
     await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(...many) } });
     expect(await screen.findByRole('link', { name: /Passes 1–10/ })).toHaveAttribute(
       'href',
-      '/api/v1/me/passes.pkpasses?part=1',
+      '/api/v1/me/passes.pkpasses?part=1&snapshot=snap-1%2Csnap-2',
     );
     expect(screen.getByRole('link', { name: /Passes 11/ })).toHaveAttribute(
       'href',
-      '/api/v1/me/passes.pkpasses?part=2',
+      '/api/v1/me/passes.pkpasses?part=2&snapshot=snap-1%2Csnap-2',
     );
   });
 
@@ -252,7 +266,7 @@ describe('remove', () => {
         '/api/v1/me/passes/p1': (_u, init) => {
           if (init?.method !== 'DELETE') return problem(405, 'method_not_allowed', 'no');
           removed = true;
-          return json({ ok: true });
+          return json({ transferId: 'transfer-1', state: 'completed' });
         },
       },
     });

@@ -1,24 +1,23 @@
 import { KeyRound } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ApiScopeSchema, type Mode } from '@/shared/contracts/common.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { getMode } from '@/web/lib/mode.ts';
-import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
   Button,
   Checkbox,
+  ConfirmDialog,
   Dialog,
   DialogContent,
   Form,
   FormField,
   Input,
   Label,
-  SecretReveal,
   Select,
   useFormErrors,
 } from '@/web/ui/index.ts';
-import { useOrgList } from '../orgs/queries.ts';
-import { SCOPE_LABEL, useCreateKey } from './queries.ts';
+import { KeyDisclosure } from './key-disclosure.tsx';
+import { type ApiKey, SCOPE_LABEL, useCreateKey } from './queries.ts';
 
 const SCOPES = ApiScopeSchema.options;
 const DAY = 86_400_000;
@@ -28,7 +27,6 @@ const EXPIRY = [
   { value: '365', label: '1 year' },
   { value: 'never', label: 'Never' },
 ];
-const PLATFORM = 'platform';
 const MODES = [
   { value: 'live', label: 'Live' },
   { value: 'test', label: 'Test' },
@@ -37,6 +35,9 @@ const MODES = [
 export interface CreateKeyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  principal: string;
+  orgId: string | null;
+  orgName: string;
 }
 
 function ScopeRows({
@@ -92,19 +93,30 @@ function ScopeRows({
   );
 }
 
-export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
-  const orgs = useOrgList();
-  const { orgId: scoped } = useOrgScope();
-  const create = useCreateKey();
+export function CreateKeyDialog({
+  open,
+  onOpenChange,
+  principal,
+  orgId,
+  orgName,
+}: CreateKeyDialogProps) {
+  const create = useCreateKey(principal);
   const [name, setName] = useState('');
-  const [org, setOrg] = useState(scoped ?? PLATFORM);
   const [scopes, setScopes] = useState<string[]>([]);
   const [expiry, setExpiry] = useState('90');
   // A key made in Test mode is a Test key unless the admin picks Live.
   const [keyMode, setKeyMode] = useState<Mode>(getMode);
+  const [openingMode, setOpeningMode] = useState<Mode>(getMode);
   const [server, setServer] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
-  const [secret, setSecret] = useState<string>();
+  const [created, setCreated] = useState<ApiKey & { secret: string }>();
+  const [reviewKey, setReviewKey] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const mode = getMode();
+    setKeyMode(mode);
+    setOpeningMode(mode);
+  }, [open]);
   const check = useFormErrors({
     ...(name.trim() ? {} : { name: 'Required.' }),
     ...(scopes.length ? {} : { scopes: 'Pick at least one scope.' }),
@@ -114,34 +126,34 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
   function close() {
     onOpenChange(false);
     setName('');
-    setOrg(scoped ?? PLATFORM);
     setScopes([]);
     setExpiry('90');
     setKeyMode(getMode());
     setServer({});
     check.reset();
     setFormError(undefined);
-    setSecret(undefined);
+    setCreated(undefined);
+    setReviewKey(false);
   }
 
   async function submit() {
     setFormError(undefined);
     try {
-      const created = await create.mutateAsync({
+      const result = await create.mutateAsync({
         name: name.trim(),
-        orgId: org === PLATFORM ? null : org,
+        orgId,
         scopes: scopes as (typeof SCOPES)[number][],
         mode: keyMode,
         expiresAt: expiry === 'never' ? null : Date.now() + Number(expiry) * DAY,
       });
-      setSecret(created.secret);
+      setCreated(result);
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
       else setFormError(errorMessage(cause));
     }
   }
 
-  if (secret) {
+  if (created) {
     return (
       <Dialog open={open} onOpenChange={() => undefined}>
         <DialogContent
@@ -158,9 +170,15 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <SecretReveal
-            fields={[{ label: 'API key', value: secret, copyLabel: 'Copy API key' }]}
-            savedLabel="I saved the key"
+          <KeyDisclosure
+            created={created}
+            organization={
+              created.orgId === null
+                ? 'Platform-wide'
+                : created.orgId === orgId
+                  ? orgName
+                  : created.orgId
+            }
             onDone={close}
           />
         </DialogContent>
@@ -171,12 +189,13 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
   return (
     <Dialog
       open={open}
-      dirty={name.trim() !== '' || scopes.length > 0}
+      dirty={name.trim() !== '' || scopes.length > 0 || expiry !== '90' || keyMode !== openingMode}
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
     >
       <DialogContent
         size="md"
         title="New API key"
+        description="Choose the mode, permissions and expiry for this credential."
         footer={
           <>
             <Button variant="outline" onClick={close}>
@@ -192,7 +211,7 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
           id="new-key"
           className="flex flex-col gap-4"
           {...check.form}
-          onValid={() => void submit()}
+          onValid={() => setReviewKey(true)}
         >
           <FormField label="Name" required error={errors.name}>
             {(p) => (
@@ -210,19 +229,11 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
             )}
           </FormField>
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField label="Organization" error={errors.orgId}>
-              {(p) => (
-                <Select
-                  {...p}
-                  value={org}
-                  onValueChange={setOrg}
-                  options={[
-                    { value: PLATFORM, label: 'All organizations' },
-                    ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
-                  ]}
-                />
-              )}
-            </FormField>
+            <div>
+              <p className="text-sm font-medium text-fg">Organization</p>
+              <p className="mt-2 text-sm text-fg-strong">{orgName}</p>
+              {errors.orgId ? <p className="mt-1 text-xs text-danger">{errors.orgId}</p> : null}
+            </div>
             <FormField label="Expires" error={errors.expiresAt}>
               {(p) => <Select {...p} value={expiry} onValueChange={setExpiry} options={EXPIRY} />}
             </FormField>
@@ -248,6 +259,39 @@ export function CreateKeyDialog({ open, onOpenChange }: CreateKeyDialogProps) {
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
         </Form>
       </DialogContent>
+      <ConfirmDialog
+        open={reviewKey}
+        onOpenChange={setReviewKey}
+        title={orgId === null ? 'Create a platform-wide key?' : 'Review service key'}
+        description={
+          <span className="block">
+            <span className="block">
+              {orgId === null ? (
+                <>
+                  This key can access all organizations in {keyMode === 'test' ? 'Test' : 'Live'}{' '}
+                  mode.
+                </>
+              ) : (
+                <>
+                  This key is bound to {orgName} in {keyMode === 'test' ? 'Test' : 'Live'} mode.
+                </>
+              )}
+            </span>
+            <span className="mt-3 block">Name: {name.trim()}</span>
+            <span className="block">Permissions: {scopes.join(', ')}</span>
+            <span className="block">
+              {expiry === 'never'
+                ? 'It will not expire.'
+                : `It expires after ${expiry === '365' ? '1 year' : `${expiry} days`}.`}
+            </span>
+            <span className="mt-3 block">
+              No secret has been issued yet. It will be shown once after creation.
+            </span>
+          </span>
+        }
+        confirmLabel="Create key"
+        onConfirm={submit}
+      />
     </Dialog>
   );
 }

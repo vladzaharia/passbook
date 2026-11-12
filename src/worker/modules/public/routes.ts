@@ -9,9 +9,17 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
+import {
+  PRESENTATION_HEADERS,
+  renderPresentationNotFound,
+  renderPresentationPage,
+} from '../../ssr/presentation-page.tsx';
 import { recordPassEvent } from '../events/record.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
+import { listWalletOffers } from '../wallet-providers/offers.ts';
+import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
+import { canPresent, presentationForPass } from './presentation.ts';
 import {
   isTokenShape,
   openPublicAsset,
@@ -19,6 +27,7 @@ import {
   passForToken,
   supportContacts,
 } from './service.ts';
+import { assertPassSnapshot, capturePassSnapshot } from './snapshot.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
@@ -34,6 +43,7 @@ publicRoutes.use(
 );
 publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
+publicRoutes.use('/:token/barcode', rateLimit('RL_PUBLIC'));
 
 export const EMAILED = /^(icon|logo)(@[23]x)?\.png$/;
 
@@ -76,7 +86,15 @@ register(
     const theme = requestTheme(c);
     try {
       const pass = await passForToken(svcCtx, c.req.valid('param').token);
+      const snapshot = await capturePassSnapshot(svcCtx, pass);
       const model = await pageModel(svcCtx, pass);
+      const page = `/p/${pass.downloadToken}`;
+      // Resolve only links to this bearer under the same snapshot as the page and its assets.
+      const walletOffers = canPresent(pass, model.passJson, svcCtx.clock.now())
+        ? (await listWalletOffers(svcCtx, pass.id))
+            .filter(({ provider, href }) => href === `${page}/wallet/${provider}`)
+            .map(({ provider, href }) => ({ provider, href, installation: 'unknown' as const }))
+        : [];
       const lang = langOf(c.req.header('accept-language'));
       const view = normalize(model.passJson, {
         assets: model.assets,
@@ -84,16 +102,6 @@ register(
         now: new Date(svcCtx.clock.now()),
         timeZone: zoneOf(c) ?? 'UTC',
       });
-      svcCtx.waitUntil(
-        recordPassEvent(svcCtx, {
-          orgId: pass.orgId,
-          passId: pass.id,
-          mode: pass.mode,
-          kind: 'page.opened',
-          actor: { type: 'holder', id: null },
-        }),
-      );
-      const page = `/p/${pass.downloadToken}`;
       const html = renderPassPage({
         view,
         nonce,
@@ -102,6 +110,9 @@ register(
         orgLabel: model.orgName,
         passTitle: pass.displayTitle ?? view.description ?? model.orgName,
         downloadHref: `${page}/pass.pkpass`,
+        barcodeHref: `${page}/barcode`,
+        walletOffers,
+        issuance: walletIssuanceByProvider(),
         // The add QR opens this page on the phone, where the badge adds the pass.
         publicUrl: `${baseUrl(c.env)}${page}`,
         portalHref: `/passes/${pass.id}`,
@@ -111,6 +122,16 @@ register(
         device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(svcCtx, pass.orgId),
       });
+      await assertPassSnapshot(svcCtx, snapshot);
+      svcCtx.waitUntil(
+        recordPassEvent(svcCtx, {
+          orgId: pass.orgId,
+          passId: pass.id,
+          mode: pass.mode,
+          kind: 'page.opened',
+          actor: { type: 'holder', id: null },
+        }),
+      );
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404)
@@ -128,13 +149,57 @@ register(
   'public',
   {
     method: 'get',
+    path: '/{token}/barcode',
+    summary: 'Present this pass barcode',
+    params: PublicTokenParamSchema,
+  },
+  async (c) => {
+    const ctx = svc(c);
+    const theme = requestTheme(c);
+    try {
+      const pass = await passForToken(ctx, c.req.valid('param').token);
+      const snapshot = await capturePassSnapshot(ctx, pass);
+      const model = await presentationForPass(ctx, pass);
+      const html = renderPresentationPage({
+        ...model,
+        backHref: `/p/${pass.downloadToken}`,
+        nonce: c.var.nonce,
+        theme,
+      });
+      await assertPassSnapshot(ctx, snapshot);
+      return new Response(html, { headers: PRESENTATION_HEADERS });
+    } catch (error) {
+      if (error instanceof AppError && error.status === 404) {
+        return new Response(renderPresentationNotFound(c.var.nonce, theme), {
+          status: 404,
+          headers: PRESENTATION_HEADERS,
+        });
+      }
+      throw error;
+    }
+  },
+);
+
+register(
+  publicRoutes,
+  'public',
+  {
+    method: 'get',
     path: '/{token}/pass.pkpass',
     summary: 'Download the pass',
     params: PublicTokenParamSchema,
   },
   async (c) => {
-    const pass = await passForToken(svc(c), c.req.valid('param').token);
+    const ctx = svc(c);
+    const pass = await passForToken(ctx, c.req.valid('param').token);
+    const snapshot = await capturePassSnapshot(ctx, pass);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
+    try {
+      await assertPassSnapshot(ctx, snapshot);
+    } catch (error) {
+      await response.body?.cancel();
+      throw error;
+    }
     if (response.status === 200) {
       writeEvent(c.env, {
         event: 'pass.downloaded',
@@ -150,6 +215,12 @@ register(
         kind: 'pass.downloaded',
         actor: { type: 'holder', id: null },
       });
+    }
+    try {
+      await assertPassSnapshot(ctx, snapshot);
+    } catch (error) {
+      await response.body?.cancel();
+      throw error;
     }
     return response;
   },
@@ -168,11 +239,18 @@ register(
     const p = c.req.valid('param');
     const ctx = svc(c);
     const pass = await passForToken(ctx, p.token);
+    const snapshot = await capturePassSnapshot(ctx, pass);
     const asset = await openPublicAsset(ctx, pass, p.name);
+    try {
+      await assertPassSnapshot(ctx, snapshot);
+    } catch (error) {
+      await asset.body.cancel();
+      throw error;
+    }
     const headers = {
       'content-type': 'image/png',
       etag: asset.etag,
-      'cache-control': 'private, max-age=31536000, immutable',
+      'cache-control': 'private, no-store',
       'x-content-type-options': 'nosniff',
       // The pass email shows the icon and logo, and webmail loads them from its own origin.
       ...(EMAILED.test(p.name) ? { 'cross-origin-resource-policy': 'cross-origin' } : {}),

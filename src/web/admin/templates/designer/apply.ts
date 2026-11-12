@@ -31,6 +31,7 @@ import {
   updateField,
 } from './ops-pass.ts';
 import { setLookupInput } from './scan/lookup.ts';
+import { applyScanOp, type ScanOp } from './scan/ops-scan.ts';
 
 /** Every edit the designer makes. Plain data, so the history can replay and tests can read it. */
 export type Op =
@@ -56,7 +57,8 @@ export type Op =
   | { op: 'barcode'; settings: BarcodeSettings }
   | { op: 'scan-lookup'; input: string }
   | { op: 'list'; key: ListKey; items: Record<string, unknown>[] }
-  | { op: 'image'; slot: string; asset: DraftAsset | null };
+  | { op: 'image'; slot: string; asset: DraftAsset | null }
+  | ScanOp;
 
 export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
   switch (o.op) {
@@ -106,5 +108,7 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setList(doc, o.key, o.items);
     case 'image':
       return setSlotImage(doc, o.slot, o.asset);
+    case 'scan-display':
+      return applyScanOp(doc, o);
   }
 }

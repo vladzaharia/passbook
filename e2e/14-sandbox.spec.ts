@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { apiAs, GENERIC, uid } from './helpers/api.ts';
+import { apiAs, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -11,9 +11,10 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   const orgId = readSeed().org.id;
   const name = `Sandbox ${uid('S')}`;
   const to = `${uid('sandbox').toLowerCase()}@example.test`;
-  const search = `/admin/passes?q=${encodeURIComponent(name)}`;
+  const search = `/admin/passes?orgId=${encodeURIComponent(orgId)}&q=${encodeURIComponent(name)}`;
+  const release = await requireActiveTemplateRelease(admin, orgId, GENERIC, 'test');
 
-  await page.goto('/admin/passes');
+  await page.goto(`/admin/passes?orgId=${encodeURIComponent(orgId)}`);
   const toggle = page.getByRole('switch', { name: 'Test mode' });
   await toggle.click();
   await expect(toggle).toBeChecked();
@@ -26,6 +27,10 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
     {
       orgId,
       templateId: GENERIC,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
+      templateVersion: release.version,
+      mode: 'test',
       input: { holder: name, memberId: uid('ID').toUpperCase() },
       holderEmail: to,
       sendEmail: true,
@@ -38,13 +43,13 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   const row = page.getByRole('row').filter({ hasText: name });
   await expect(row).toBeVisible();
   await expect(row.getByRole('button', { name: /^Test\. / })).toBeVisible();
-  await page.goto(`/admin/passes/${pass.id}`);
+  await page.goto(`/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(name);
   await expect(page.locator('main').getByText('Test', { exact: true }).first()).toBeVisible();
   await expect(band).toBeVisible();
 
   // The queue captures the email shortly after the pass is created.
-  await page.goto('/admin/test-inbox');
+  await page.goto(`/admin/test-inbox?orgId=${encodeURIComponent(orgId)}`);
   const mail = page.getByRole('listitem').filter({ hasText: `To ${to}` });
   await expect
     .poll(
@@ -59,7 +64,9 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   await mail.getByRole('link').click();
   await expect(page.getByTitle('Email preview')).toBeVisible();
 
-  const live = await admin.get(`/api/v1/passes?q=${encodeURIComponent(name)}`);
+  const live = await admin.get(
+    `/api/v1/passes?orgId=${encodeURIComponent(orgId)}&q=${encodeURIComponent(name)}`,
+  );
   expect(live.items).toEqual([]);
   const outbox = await admin.get(`/api/v1/passes/${pass.id}/events?group=delivery`);
   expect(outbox.items.map((e: { kind: string }) => e.kind)).toContain('email.captured');

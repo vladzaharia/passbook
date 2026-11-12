@@ -110,9 +110,6 @@ export function SurfacePicker({
   return (
     <fieldset className="@container grid min-w-0 gap-3">
       <legend className="mb-2 text-sm font-medium text-fg">Device layout</legend>
-      <p className="text-sm text-fg-muted">
-        Choose how this device will be used. Admission rules remain shared by the session.
-      </p>
       {capabilities?.native?.layout?.posture === 'half-folded' ||
       capabilities?.native?.layout?.posture === 'unfolded' ? (
         <p className="text-xs text-fg-muted">
@@ -132,12 +129,6 @@ export function SurfacePicker({
           {choice('customer')}
         </div>
       </div>
-      {!capabilities ? (
-        <p className="text-xs text-fg-muted">
-          Screen size and inputs are reported when the device connects. All three views remain
-          available.
-        </p>
-      ) : null}
     </fieldset>
   );
 }

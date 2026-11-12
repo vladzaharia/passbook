@@ -5,6 +5,7 @@ import { cn } from '../lib/cn.ts';
 import { BELOW_MD, useMediaQuery } from '../lib/media.ts';
 import { useArrivalMode, useInsertHighlight } from '../lib/motion.ts';
 import { CARD_SURFACE } from './card.tsx';
+import { useStableColumns } from './data-table-columns.ts';
 import { HIDE_BELOW } from './data-table-meta.ts';
 import { EdgeFade, useEdgeFade } from './edge-fade.tsx';
 import { LoadingRail, useDelayed } from './loading-rail.tsx';
@@ -70,7 +71,7 @@ export function DataTable<T>({
   const narrow = useMediaQuery(BELOW_MD) && stack;
   const table = useReactTable<T>({
     data: data as T[],
-    columns: columns as ColumnDef<T>[],
+    columns: useStableColumns(columns),
     getRowId: getRowId ? (row) => getRowId(row) : undefined,
     getCoreRowModel: getCoreRowModel(),
   });

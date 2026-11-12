@@ -6,6 +6,7 @@ import {
   makeEnv,
   makeOrg,
   makePass,
+  makeScanner,
   makeTemplate,
   makeUser,
   persistTemplate,
@@ -137,6 +138,31 @@ describe('pass triggers', () => {
     expect(pushes).toHaveLength(0);
   });
 
+  it('rejects unreserved identity, organization and mode changes', async () => {
+    const otherOrg = await makeOrg(ctx.f);
+    await run(
+      env.DB,
+      `INSERT INTO signing_identities
+         (id, label, pass_type_identifier, team_identifier, source, env_prefix, created_at)
+       VALUES ('generation-other', 'Other', 'pass.generation.other', 'T', 'env', 'GENERATION_OTHER', 1)`,
+    );
+    for (const [column, value] of [
+      ['identity_id', 'generation-other'],
+      ['org_id', otherOrg.id],
+      ['mode', 'test'],
+    ]) {
+      await expect(
+        run(env.DB, `UPDATE passes SET ${column} = ? WHERE id = ?`, [value, ctx.pass.id]),
+      ).rejects.toThrow(/credential transfer required/);
+    }
+    const row = await first<{ identity_id: string; org_id: string; mode: string }>(
+      env.DB,
+      'SELECT identity_id, org_id, mode FROM passes WHERE id = ?',
+      [ctx.pass.id],
+    );
+    expect(row).toEqual({ identity_id: 'platform', org_id: ctx.org.id, mode: 'live' });
+  });
+
   async function publish(version: number, cause = 'admin') {
     const key = `passes/${ctx.pass.id}/v${version}.pkpass`;
     return run(
@@ -175,7 +201,14 @@ describe('pass triggers', () => {
       "SELECT state, coalesce_key FROM outbox WHERE pass_id = ? AND kind = 'push'",
       [ctx.pass.id],
     );
-    expect(pushes).toEqual([{ state: 'pending', coalesce_key: `push:${ctx.pass.id}` }]);
+    // The key binds the push to the pass's credential, lifecycle, template and release state (0045).
+    const expected = await first<{ key: string }>(
+      env.DB,
+      `SELECT 'push:' || json_array(id, identity_id, credential_generation, lifecycle_generation,
+         template_id, template_version, release_id) AS key FROM passes WHERE id = ?`,
+      [ctx.pass.id],
+    );
+    expect(pushes).toEqual([{ state: 'pending', coalesce_key: expected?.key }]);
   });
 
   it('coalesces a burst of publishes into one pending push', async () => {
@@ -303,21 +336,23 @@ describe('constraints and cascades', () => {
     expect(await first(env.DB, "SELECT 1 FROM devices WHERE device_id = 'd1'")).not.toBeNull();
   });
 
-  it('sets owner_user_id to NULL when the user is deleted and cascades sessions', async () => {
+  it('rejects user deletion when it would clear a pass owner without a transfer', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
     const user = await makeUser(f);
     const pass = await makePass(f, {
       orgId: org.id,
       template: makeTemplate({ id: 'tpl-owner' }).resolved,
+      ownerUserId: user.id,
     });
-    await run(env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [user.id, pass.id]);
     await run(
       env.DB,
       "INSERT INTO sessions (id_hash, user_id, amr, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at) VALUES ('h', ?, 'oidc', 'c', 1, 1, 2, 2)",
       [user.id],
     );
-    await run(env.DB, 'DELETE FROM users WHERE id = ?', [user.id]);
+    await expect(run(env.DB, 'DELETE FROM users WHERE id = ?', [user.id])).rejects.toThrow(
+      /credential transfer required/,
+    );
     expect(
       (
         await first<{ owner_user_id: string | null }>(
@@ -326,8 +361,20 @@ describe('constraints and cascades', () => {
           [pass.id],
         )
       )?.owner_user_id,
-    ).toBeNull();
-    expect(await first(env.DB, "SELECT 1 FROM sessions WHERE id_hash = 'h'")).toBeNull();
+    ).toBe(user.id);
+    expect(await first(env.DB, "SELECT 1 FROM sessions WHERE id_hash = 'h'")).not.toBeNull();
+  });
+
+  it('cascades sessions when deleting a user without an owned pass', async () => {
+    const f = fixtures(await makeEnv());
+    const user = await makeUser(f);
+    await run(
+      env.DB,
+      "INSERT INTO sessions (id_hash, user_id, amr, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at) VALUES ('h-cascade', ?, 'oidc', 'c', 1, 1, 2, 2)",
+      [user.id],
+    );
+    await run(env.DB, 'DELETE FROM users WHERE id = ?', [user.id]);
+    expect(await first(env.DB, "SELECT 1 FROM sessions WHERE id_hash = 'h-cascade'")).toBeNull();
   });
 
   it('caps registrations at 20 per pass', async () => {
@@ -592,7 +639,15 @@ describe('0014_scan migration', () => {
         [at],
       );
     const before = await all<{ id: number }>(env.DB, 'SELECT id FROM audit_log ORDER BY id');
+    // Later migrations hang triggers on audit_log; SQLite refuses the replayed drop and rename
+    // while they exist, so lift them for the replay and restore them exactly.
+    const triggers = await all<{ name: string; sql: string }>(
+      env.DB,
+      "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND sql LIKE '%audit_log%'",
+    );
+    for (const t of triggers) await env.DB.prepare(`DROP TRIGGER ${t.name}`).run();
     for (const q of queries.slice(from)) await env.DB.prepare(q).run();
+    for (const t of triggers) await env.DB.prepare(t.sql).run();
     const after = await all<{ id: number }>(env.DB, 'SELECT id FROM audit_log ORDER BY id');
     expect(after).toEqual(before);
     await run(
@@ -614,5 +669,132 @@ describe('0014_scan migration', () => {
       "SELECT event_id FROM scanners WHERE id = 'sc-del'",
     );
     expect(scanner?.event_id).toBeNull();
+  });
+});
+
+describe('0055 attach without a transfer', () => {
+  async function waiting() {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const user = await makeUser(f);
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-attach-${f.ids.id()}` }).resolved,
+      holderEmail: user.primaryEmail,
+    });
+    const attach = (userId = user.id) =>
+      run(env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [userId, pass.id]);
+    const owner = async () =>
+      (
+        await first<{ owner_user_id: string | null }>(
+          env.DB,
+          'SELECT owner_user_id FROM passes WHERE id = ?',
+          [pass.id],
+        )
+      )?.owner_user_id;
+    return { f, org, user, pass, attach, owner };
+  }
+  const REFUSED = /credential transfer required/;
+
+  it('links the active user whose verified address is the holder email', async () => {
+    const { user, attach, owner } = await waiting();
+    await attach();
+    expect(await owner()).toBe(user.id);
+  });
+
+  it('refuses an inactive user', async () => {
+    const { user, attach, owner } = await waiting();
+    await run(env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [user.id]);
+    await expect(attach()).rejects.toThrow(REFUSED);
+    expect(await owner()).toBeNull();
+  });
+
+  it('refuses a user without a verified address equal to the holder email', async () => {
+    const { f, org, attach, owner } = await waiting();
+    const other = await makeUser(f);
+    await expect(attach(other.id)).rejects.toThrow(REFUSED);
+    await expect(attach('no-such-user')).rejects.toThrow(REFUSED);
+    expect(await owner()).toBeNull();
+    // The holder's address on file but never verified.
+    const unverified = await makeUser(f, { verified: false });
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-attach-${f.ids.id()}` }).resolved,
+      holderEmail: unverified.primaryEmail,
+    });
+    await expect(
+      run(env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [unverified.id, pass.id]),
+    ).rejects.toThrow(REFUSED);
+    // No holder email at all.
+    const bare = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-attach-${f.ids.id()}` }).resolved,
+    });
+    await expect(
+      run(env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [other.id, bare.id]),
+    ).rejects.toThrow(REFUSED);
+  });
+
+  it('refuses a user blocked from the pass', async () => {
+    const { user, pass, attach, owner } = await waiting();
+    await run(
+      env.DB,
+      'INSERT INTO pass_attach_blocks (pass_id, user_id, created_at) VALUES (?, ?, 1)',
+      [pass.id, user.id],
+    );
+    await expect(attach()).rejects.toThrow(REFUSED);
+    expect(await owner()).toBeNull();
+  });
+
+  it('refuses a deleted or quarantined pass', async () => {
+    for (const set of ['deleted_at = 1', 'test_data_quarantined = 1']) {
+      const { pass, attach, owner } = await waiting();
+      await run(env.DB, `UPDATE passes SET ${set} WHERE id = ?`, [pass.id]);
+      await expect(attach(), set).rejects.toThrow(REFUSED);
+      expect(await owner(), set).toBeNull();
+    }
+  });
+});
+
+describe('0052 scanning_devices REPLACE guard', () => {
+  it('refuses a REPLACE over the admin device key instead of dropping the other row', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const admin = await makeUser(f);
+    const [a, b] = [
+      await makeScanner(f, { orgId: org.id }),
+      await makeScanner(f, { orgId: org.id }),
+    ];
+    const session = f.ids.id();
+    await run(
+      env.DB,
+      `INSERT INTO scanning_sessions (id, org_id, mode, name, settings, time_zone, created_at, updated_at)
+       VALUES (?, ?, 'live', 'Door', '{}', 'UTC', 1, 1)`,
+      [session, org.id],
+    );
+    const insert = (verb: string, scannerId: string) =>
+      run(
+        env.DB,
+        `${verb} INTO scanning_devices (scanner_id, session_id, org_id, mode, admin_user_id, device_key)
+         VALUES (?, ?, ?, 'live', ?, 'phone-1')`,
+        [scannerId, session, org.id, admin.id],
+      );
+    await insert('INSERT', a.id);
+    for (const verb of ['INSERT', 'INSERT OR REPLACE'])
+      await expect(insert(verb, b.id), verb).rejects.toThrow(
+        'UNIQUE constraint failed: scanning_devices.session_id, scanning_devices.admin_user_id, scanning_devices.device_key',
+      );
+    const rows = await all<{ scanner_id: string }>(
+      env.DB,
+      'SELECT scanner_id FROM scanning_devices WHERE session_id = ?',
+      [session],
+    );
+    expect(rows).toEqual([{ scanner_id: a.id }]);
+    // Without an admin device key the index does not apply.
+    await run(
+      env.DB,
+      `INSERT INTO scanning_devices (scanner_id, session_id, org_id, mode) VALUES (?, ?, ?, 'live')`,
+      [b.id, session, org.id],
+    );
   });
 });

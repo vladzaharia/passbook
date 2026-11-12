@@ -1,5 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, first, likeEscape, placeholders, stmt } from '../../platform/db.ts';
+import type { Grant, GrantedStatement } from '../../platform/authority.ts';
+import { maxNow, type SetValue } from '../../platform/authority-expr.ts';
+import { all, first, placeholders, prefixMatch, stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -29,6 +31,9 @@ export interface ConsoleScannerRow {
   templateIds: string[];
   createdAt: number;
   updatedAt: number;
+  /** Trigger-owned: what an edit derived from this row is checked against at commit. */
+  configEpoch: number;
+  credentialEpoch: number;
 }
 
 interface Raw {
@@ -56,12 +61,15 @@ interface Raw {
   template_ids: string | null;
   created_at: number;
   updated_at: number;
+  config_epoch: number;
+  credential_epoch: number;
 }
 
 const SELECT = `SELECT s.id, s.org_id, s.mode, s.kind, s.device_role, s.name, s.event_id, s.settings, s.time_zone,
     s.token_hash IS NOT NULL AS has_token, s.paired_at, s.paired_label, s.expires_at, s.last_seen_at,
     s.revoked_at, s.staff_id, st.name AS staff_name, s.staff_since, s.staff_seen_at, s.pair_expires_at,
     s.pair_code_hash IS NOT NULL AS has_pair_code, s.created_at, s.updated_at,
+    s.config_epoch, s.credential_epoch,
     (SELECT group_concat(x.template_id) FROM scanner_templates x
        JOIN templates t ON t.id = x.template_id AND t.status != 'deleted'
        WHERE x.scanner_id = s.id) AS template_ids
@@ -92,10 +100,19 @@ const toRow = (r: Raw): ConsoleScannerRow => ({
   templateIds: r.template_ids ? r.template_ids.split(',').sort() : [],
   createdAt: r.created_at,
   updatedAt: r.updated_at,
+  configEpoch: r.config_epoch,
+  credentialEpoch: r.credential_epoch,
 });
 
-export async function getConsoleScanner(db: Db, id: string): Promise<ConsoleScannerRow | null> {
-  const row = await first<Raw>(db, `${SELECT} WHERE s.id = ?`, [id]);
+/** `mode` limits the read to the console's mode; a row of the other mode is absent. */
+export async function getConsoleScanner(
+  db: Db,
+  id: string,
+  mode?: Mode,
+): Promise<ConsoleScannerRow | null> {
+  const row = mode
+    ? await first<Raw>(db, `${SELECT} WHERE s.id = ? AND s.mode = ?`, [id, mode])
+    : await first<Raw>(db, `${SELECT} WHERE s.id = ?`, [id]);
   return row ? toRow(row) : null;
 }
 
@@ -130,8 +147,9 @@ export async function listConsoleScanners(db: Db, f: ScannerFilter): Promise<Con
   }
   if (f.status) where.push(STATUS_SQL[f.status]);
   if (f.q) {
-    where.push("s.name LIKE ? ESCAPE '\\'");
-    params.push(`${likeEscape(f.q)}%`);
+    const match = prefixMatch('s.name', f.q);
+    where.push(match.sql);
+    params.push(...match.params);
   }
   if (f.cursor) {
     where.push('s.id < ?');
@@ -171,8 +189,6 @@ export async function countToday(
 
 export interface NewScanner {
   id: string;
-  orgId: string;
-  mode: Mode;
   kind: 'device' | 'terminal' | 'display';
   deviceRole?: 'scan' | 'customer' | 'monitor';
   name: string;
@@ -184,16 +200,25 @@ export interface NewScanner {
   now: number;
 }
 
-export const insertScannerStmt = (db: Db, s: NewScanner): D1PreparedStatement =>
-  stmt(
-    db,
-    `INSERT INTO scanners (id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, expires_at,
-       created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+/** org_id and mode come from the grant row. */
+export const addScannerInsert = (g: Grant, s: NewScanner): GrantedStatement =>
+  g.insertSelect(
+    'scanners',
+    [
+      'id',
+      'kind',
+      'device_role',
+      'name',
+      'event_id',
+      'settings',
+      'time_zone',
+      'expires_at',
+      'created_by',
+      'created_at',
+      'updated_at',
+    ],
     [
       s.id,
-      s.orgId,
-      s.mode,
       s.kind,
       s.deviceRole ?? 'scan',
       s.name,
@@ -207,27 +232,6 @@ export const insertScannerStmt = (db: Db, s: NewScanner): D1PreparedStatement =>
     ],
   );
 
-export const addTemplatesStmts = (
-  db: Db,
-  scannerId: string,
-  templateIds: readonly string[],
-): D1PreparedStatement[] =>
-  templateIds.map((id) =>
-    stmt(db, 'INSERT INTO scanner_templates (scanner_id, template_id) VALUES (?, ?)', [
-      scannerId,
-      id,
-    ]),
-  );
-
-export const replaceTemplatesStmts = (
-  db: Db,
-  scannerId: string,
-  templateIds: readonly string[],
-): D1PreparedStatement[] => [
-  stmt(db, 'DELETE FROM scanner_templates WHERE scanner_id = ?', [scannerId]),
-  ...addTemplatesStmts(db, scannerId, templateIds),
-];
-
 export interface ScannerPatch {
   name?: string;
   settings?: string;
@@ -236,56 +240,56 @@ export interface ScannerPatch {
   timeZone?: string;
 }
 
-/** Bumps `updated_at`, which is the scanner's `configRev`. */
-export function updateScannerStmt(
-  db: Db,
+/** Exactly one scanner of the grant's org is edited, or the batch aborts. */
+export function addScannerPatch(
+  g: Grant,
   id: string,
   patch: ScannerPatch,
   now: number,
-): D1PreparedStatement {
-  const sets = ['updated_at = ?'];
-  const params: (string | number | null)[] = [now];
-  if (patch.name !== undefined) {
-    sets.push('name = ?');
-    params.push(patch.name);
-  }
-  if (patch.settings !== undefined) {
-    sets.push('settings = ?');
-    params.push(patch.settings);
-  }
-  if (patch.eventId !== undefined) {
-    sets.push('event_id = ?');
-    params.push(patch.eventId);
-  }
-  if (patch.timeZone !== undefined) {
-    sets.push('time_zone = ?');
-    params.push(patch.timeZone);
-  }
-  return stmt(db, `UPDATE scanners SET ${sets.join(', ')} WHERE id = ?`, [...params, id]);
+): GrantedStatement {
+  const set: Record<string, SetValue> = { updated_at: maxNow(now) };
+  if (patch.name !== undefined) set.name = patch.name;
+  if (patch.settings !== undefined) set.settings = patch.settings;
+  if (patch.eventId !== undefined) set.event_id = patch.eventId;
+  if (patch.timeZone !== undefined) set.time_zone = patch.timeZone;
+  return g.update('scanners', { set, where: { id }, require: 'one' });
 }
 
-export const setModeStmt = (
-  db: Db,
+/** The mode move is the one write that sets `mode`; the new value is validated input, not a tenant. */
+export const addScannerMode = (
+  g: Grant,
   id: string,
-  mode: Mode,
+  moveTo: Mode,
   detach: boolean,
   now: number,
-): D1PreparedStatement =>
-  stmt(
-    db,
-    `UPDATE scanners SET mode = ?, ${detach ? 'event_id = NULL, ' : ''}updated_at = ? WHERE id = ?`,
-    [mode, now, id],
-  );
+  settings?: string,
+): GrantedStatement =>
+  g.update('scanners', {
+    set: {
+      mode: moveTo,
+      ...(detach ? { event_id: null } : {}),
+      ...(settings === undefined ? {} : { settings }),
+      updated_at: maxNow(now),
+    },
+    where: { id },
+    require: 'one',
+  });
 
 /** Revoking keeps the token columns, so the old device hears SCANNER_REVOKED. A pending code dies too. */
-export const revokeStmt = (db: Db, id: string, now: number): D1PreparedStatement =>
-  stmt(
-    db,
-    `UPDATE scanners SET revoked_at = ?, updated_at = ?, pair_code_hash = NULL, pair_expires_at = NULL,
-       staff_id = NULL, staff_since = NULL, staff_seen_at = NULL
-     WHERE id = ? AND revoked_at IS NULL`,
-    [now, now, id],
-  );
+export const addScannerRevoke = (g: Grant, id: string, now: number): GrantedStatement =>
+  g.update('scanners', {
+    set: {
+      revoked_at: now,
+      updated_at: maxNow(now),
+      pair_code_hash: null,
+      pair_expires_at: null,
+      staff_id: null,
+      staff_since: null,
+      staff_seen_at: null,
+    },
+    where: { id, revoked_at: null },
+    require: 'one',
+  });
 
 export const eventModeOf = (db: Db, orgId: string, id: string) =>
   first<{ mode: Mode; archived_at: number | null }>(
@@ -294,13 +298,12 @@ export const eventModeOf = (db: Db, orgId: string, id: string) =>
     [id, orgId],
   );
 
-/** The first accepted template's id and sample inputs, for a test scanner's sample pass. */
-export const firstTemplateManifest = (db: Db, orgId: string, ids: readonly string[]) =>
-  first<{ id: string; manifest: string }>(
+/** The first accepted active template; its release determines the version used for a sample. */
+export const firstSampleTemplate = (db: Db, orgId: string, ids: readonly string[]) =>
+  first<{ id: string }>(
     db,
-    `SELECT t.id, v.manifest FROM templates t
-     JOIN template_versions v ON v.template_id = t.id AND v.version = t.active_version
-     WHERE t.org_id = ? AND t.status = 'active' AND t.id IN (${placeholders(ids.length)})
+    `SELECT t.id FROM templates t
+     WHERE (t.org_id = ? OR t.org_id IS NULL) AND t.status = 'active' AND t.id IN (${placeholders(ids.length)})
      ORDER BY t.id LIMIT 1`,
     [orgId, ...ids],
   );

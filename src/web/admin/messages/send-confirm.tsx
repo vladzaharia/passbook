@@ -13,6 +13,7 @@ export function SendConfirm({
   onOpenChange,
   kind,
   count,
+  audience,
   settled = true,
   quiet,
   at,
@@ -23,6 +24,7 @@ export function SendConfirm({
   onOpenChange: (open: boolean) => void;
   kind: BroadcastKind;
   count: Pick<UseQueryResult<BroadcastPreviewDto>, 'data' | 'isError' | 'isPlaceholderData'>;
+  audience?: string;
   /** False while an edit to the audience has not been counted yet. */
   settled?: boolean;
   /** Holders get no lock-screen notice. */
@@ -54,14 +56,14 @@ export function SendConfirm({
       : targeted === 0
         ? ['Change the audience first.']
         : [
+            audience ? `Audience: ${audience}.` : null,
+            'The count is an estimate and may change before sending.',
             later && at !== undefined
-              ? `Goes out ${formatDateTime(at)}. You can cancel until then.`
+              ? `Scheduled to start ${formatDateTime(at)}. You can cancel until then.`
               : null,
             quiet
-              ? 'The passes update without a notification.'
-              : later
-                ? 'Holders are notified when it goes out.'
-                : 'Holders are notified at once.',
+              ? 'The update is requested without a notification.'
+              : 'Eligible passes may receive a notification.',
             over > 0
               ? `${plural(over, 'pass is', 'passes are')} at the daily limit and ${over === 1 ? 'updates' : 'update'} quietly.`
               : null,

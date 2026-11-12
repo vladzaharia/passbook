@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import {
   type BroadcastDto,
   BroadcastItemListSchema,
@@ -8,21 +8,29 @@ import {
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { runBroadcast } from '../../workflows/broadcast.ts';
-import { getPass } from '../passes/repo.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import { applyChunk, CHUNK } from './apply.ts';
 import { getBroadcast } from './repo.ts';
 import { finishBroadcast, startedBroadcast } from './run.ts';
 import { failStuckBroadcasts, launchBroadcast } from './start.ts';
-import { type BroadcastKit, broadcastKit } from './test-kit.ts';
+import {
+  addBroadcastAdminMembership,
+  type BroadcastAuth,
+  type BroadcastKit,
+  broadcastAuth,
+  broadcastKit,
+} from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
+let auth: BroadcastAuth;
 let kit: BroadcastKit;
 let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await broadcastKit();
-  app = createApp({ stores: fake.stores });
+  auth = await broadcastAuth(kit, ORIGIN);
+  app = createApp({ stores: auth.stores });
 });
 
 type Headers = Record<string, string>;
@@ -53,7 +61,7 @@ const isolate = (keep: string[]) =>
     [kit.messaging.id, ...keep],
   );
 const get = async (id: string): Promise<BroadcastDto> =>
-  dto(await api(`/broadcasts/${id}`, { headers: fake.admin() }));
+  dto(await api(`/broadcasts/${id}`, { headers: auth.admin() }));
 
 describe('finish retry', () => {
   it('a retried finish step still creates the clearing follow-up', async () => {
@@ -63,20 +71,20 @@ describe('finish retry', () => {
       await send(
         'POST',
         '/broadcasts',
-        fake.admin(),
+        auth.admin(),
         body('Closed today', { clearAfter: 3_600_000 }),
       ),
     );
     const instance = `broadcast-${made.id}`;
-    await startedBroadcast(kit.ctx, instance, made.id);
-    await applyChunk(kit.ctx, made.id, null);
+    await startedBroadcast(jobCtxOf(kit), instance, made.id);
+    await applyChunk(jobCtxOf(kit), made.id, null);
     // The first finish settles the state but dies before the follow-up exists.
     await run(kit.env.DB, 'UPDATE broadcasts SET state = ? WHERE id = ?', ['sent', made.id]);
     expect(
       await first(kit.env.DB, 'SELECT id FROM broadcasts WHERE parent_id = ?', [made.id]),
     ).toBeNull();
-    await finishBroadcast(kit.ctx, instance, made.id);
-    await finishBroadcast(kit.ctx, instance, made.id);
+    await finishBroadcast(jobCtxOf(kit), instance, made.id);
+    await finishBroadcast(jobCtxOf(kit), instance, made.id);
     const followUps = await all(kit.env.DB, 'SELECT id FROM broadcasts WHERE parent_id = ?', [
       made.id,
     ]);
@@ -89,7 +97,7 @@ describe('chunk budget', () => {
     const passes = await Promise.all(Array.from({ length: CHUNK }, () => kit.makePass()));
     await isolate(passes.map((p) => p.id));
     const made = await dto(
-      await send('POST', '/broadcasts', fake.admin(), body('Budget', { send: 'draft' })),
+      await send('POST', '/broadcasts', auth.admin(), body('Budget', { send: 'draft' })),
     );
     await run(kit.env.DB, `UPDATE broadcasts SET state = 'sending' WHERE id = ?`, [made.id]);
     let queries = 0;
@@ -116,7 +124,7 @@ describe('chunk budget', () => {
       return batch(statements);
     };
     try {
-      await applyChunk(kit.ctx, made.id, null);
+      await applyChunk(jobCtxOf(kit), made.id, null);
     } finally {
       db.prepare = original;
       db.batch = batch;
@@ -134,12 +142,12 @@ describe('mode', () => {
       await send(
         'POST',
         '/broadcasts',
-        fake.admin({ mode: 'test' }),
+        auth.admin({ mode: 'test' }),
         body('Test only', { send: 'draft' }),
       ),
     );
     expect(draft.mode).toBe('test');
-    const live = fake.admin();
+    const live = auth.admin();
     for (const [method, path] of [
       ['POST', `/broadcasts/${draft.id}/send`],
       ['POST', `/broadcasts/${draft.id}/cancel`],
@@ -151,12 +159,12 @@ describe('mode', () => {
       expect(((await res.json()) as { code: string }).code).toBe('MODE_MISMATCH');
     }
     expect(
-      (await send('POST', `/broadcasts/${draft.id}/cancel`, fake.admin({ mode: 'test' }))).status,
+      (await send('POST', `/broadcasts/${draft.id}/cancel`, auth.admin({ mode: 'test' }))).status,
     ).toBe(200);
   });
 
   it('send again copies the row in its own mode, even for a two-line message', async () => {
-    const test = fake.admin({ mode: 'test' });
+    const test = auth.admin({ mode: 'test' });
     const made = await dto(await send('POST', '/broadcasts', test, body('Line one\nLine two')));
     expect(made.name).toBe('Line one Line two');
     await run(kit.env.DB, `UPDATE broadcasts SET state = 'failed', name = ? WHERE id = ?`, [
@@ -175,13 +183,13 @@ describe('mode', () => {
 describe('edit', () => {
   it('replaces a draft or scheduled message, and nothing that started', async () => {
     const draft = await dto(
-      await send('POST', '/broadcasts', fake.admin(), body('First', { send: 'draft' })),
+      await send('POST', '/broadcasts', auth.admin(), body('First', { send: 'draft' })),
     );
     const at = kit.clock.now() + 3_600_000;
     const edited = await send(
       'PATCH',
       `/broadcasts/${draft.id}`,
-      fake.admin(),
+      auth.admin(),
       body('Second', { send: 'schedule', at, name: 'Renamed' }),
     );
     expect(edited.status).toBe(200);
@@ -193,10 +201,11 @@ describe('edit', () => {
       patch: { message: 'Second' },
     });
     const elsewhere = await makeOrg(kit.fx, { name: 'Elsewhere' });
+    await addBroadcastAdminMembership(kit, elsewhere.id);
     const other = body('x', { send: 'draft', orgId: elsewhere.id });
-    expect((await send('PATCH', `/broadcasts/${draft.id}`, fake.admin(), other)).status).toBe(422);
+    expect((await send('PATCH', `/broadcasts/${draft.id}`, auth.admin(), other)).status).toBe(422);
     await run(kit.env.DB, `UPDATE broadcasts SET state = 'sending' WHERE id = ?`, [draft.id]);
-    const late = await send('PATCH', `/broadcasts/${draft.id}`, fake.admin(), body('Third'));
+    const late = await send('PATCH', `/broadcasts/${draft.id}`, auth.admin(), body('Third'));
     expect(late.status).toBe(409);
   });
 });
@@ -206,24 +215,52 @@ describe('items', () => {
     const a = await kit.makePass();
     const b = await kit.makePass({ message: 'Same' });
     await isolate([a.id, b.id]);
-    const made = await dto(await send('POST', '/broadcasts', fake.admin(), body('Same')));
+    const made = await dto(await send('POST', '/broadcasts', auth.admin(), body('Same')));
     await runBroadcast(kit.env, `broadcast-${made.id}`, { broadcastId: made.id }, stepRun);
     await kit.settle();
     const all_ = BroadcastItemListSchema.parse(
-      await (await api(`/broadcasts/${made.id}/items`, { headers: fake.admin() })).json(),
+      await (await api(`/broadcasts/${made.id}/items`, { headers: auth.admin() })).json(),
     );
     expect(all_.items.map((i) => i.outcome).sort()).toEqual(['unchanged', 'updated']);
     const updated = BroadcastItemListSchema.parse(
       await (
-        await api(`/broadcasts/${made.id}/items?outcome=updated`, { headers: fake.admin() })
+        await api(`/broadcasts/${made.id}/items?outcome=updated`, { headers: auth.admin() })
       ).json(),
     );
     expect(updated.items).toMatchObject([{ passId: a.id, outcome: 'updated', silent: false }]);
     const page = BroadcastItemListSchema.parse(
-      await (await api(`/broadcasts/${made.id}/items?limit=1`, { headers: fake.admin() })).json(),
+      await (await api(`/broadcasts/${made.id}/items?limit=1`, { headers: auth.admin() })).json(),
     );
     expect(page.nextCursor).not.toBeNull();
-    expect((await api('/broadcasts/missing/items', { headers: fake.admin() })).status).toBe(404);
+    expect((await api('/broadcasts/missing/items', { headers: auth.admin() })).status).toBe(404);
+  });
+
+  it('keeps successful and failed pass outcomes when a send is partial', async () => {
+    const valid = await kit.makePass();
+    const invalid = await kit.makePass();
+    await isolate([valid.id, invalid.id]);
+    // Model a previously stored pass whose input no longer meets the template's schema.
+    await run(kit.env.DB, 'UPDATE passes SET personalization = ? WHERE id = ?', [
+      JSON.stringify({ memberName: '' }),
+      invalid.id,
+    ]);
+    const made = await dto(await send('POST', '/broadcasts', auth.admin(), body('Partial')));
+    await runBroadcast(kit.env, `broadcast-${made.id}`, { broadcastId: made.id }, stepRun);
+    await kit.settle();
+    expect(await get(made.id)).toMatchObject({
+      state: 'partial',
+      counts: { targeted: 2, updated: 1, unchanged: 0, failed: 1 },
+    });
+    const items = BroadcastItemListSchema.parse(
+      await (await api(`/broadcasts/${made.id}/items`, { headers: auth.admin() })).json(),
+    );
+    expect(items.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ passId: valid.id, outcome: 'updated' }),
+        expect.objectContaining({ passId: invalid.id, outcome: 'failed' }),
+      ]),
+    );
+    expect((await getPass(kit.env.DB, invalid.id, null))?.version).toBe(1);
   });
 });
 
@@ -231,20 +268,23 @@ describe('items access', () => {
   it('needs passes:read for a key, and the key mode', async () => {
     const pass = await kit.makePass();
     await isolate([pass.id]);
-    const made = await dto(await send('POST', '/broadcasts', fake.admin(), body('Same')));
+    const made = await dto(await send('POST', '/broadcasts', auth.admin(), body('Same')));
     const url = `/broadcasts/${made.id}/items`;
-    const blind = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+    const blind = await auth.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
     expect((await api(url, { headers: blind })).status).toBe(403);
-    const reader = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write', 'passes:read'] });
+    const reader = await auth.apiKey({
+      orgId: kit.org.id,
+      scopes: ['messages:write', 'passes:read'],
+    });
     expect((await api(url, { headers: reader })).status).toBe(200);
-    const testKey = fake.apiKey({
+    const testKey = await auth.apiKey({
       orgId: kit.org.id,
       scopes: ['messages:write', 'passes:read'],
       mode: 'test',
     });
     expect((await api(url, { headers: testKey })).status).toBe(404);
     // Sessions read either mode by id, as for GET /broadcasts/{id}.
-    expect((await api(url, { headers: fake.admin({ mode: 'test' }) })).status).toBe(200);
+    expect((await api(url, { headers: auth.admin({ mode: 'test' }) })).status).toBe(200);
   });
 });
 
@@ -252,7 +292,7 @@ describe('launch checks', () => {
   it('fails a send whose org was suspended or whose creator was revoked', async () => {
     const pass = await kit.makePass();
     await isolate([pass.id]);
-    const key = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+    const key = await auth.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
     const keyed = await dto(
       await send(
         'POST',
@@ -270,22 +310,23 @@ describe('launch checks', () => {
     )?.created_by_id;
     await run(kit.env.DB, 'UPDATE api_keys SET revoked_at = 1 WHERE id = ?', [keyId ?? '']);
     kit.clock.advance(120_000);
-    expect(await launchBroadcast(kit.ctx, { id: keyed.id, org_id: kit.org.id })).toBe(false);
+    expect(await launchBroadcast(jobCtxOf(kit), { id: keyed.id, org_id: kit.org.id })).toBe(false);
     expect(await get(keyed.id)).toMatchObject({ state: 'failed', errorCode: 'CREATOR_REVOKED' });
 
     const sched = await dto(
       await send(
         'POST',
         '/broadcasts',
-        fake.admin(),
+        auth.admin(),
         body('Org', { send: 'schedule', at: kit.clock.now() + 60_000 }),
       ),
     );
     await run(kit.env.DB, `UPDATE orgs SET status = 'suspended' WHERE id = ?`, [kit.org.id]);
     kit.clock.advance(120_000);
-    expect(await launchBroadcast(kit.ctx, { id: sched.id, org_id: kit.org.id })).toBe(false);
+    expect(await launchBroadcast(jobCtxOf(kit), { id: sched.id, org_id: kit.org.id })).toBe(false);
     await run(kit.env.DB, `UPDATE orgs SET status = 'active' WHERE id = ?`, [kit.org.id]);
-    expect(await get(sched.id)).toMatchObject({ state: 'failed', errorCode: 'ORG_INACTIVE' });
+    // The suspension trigger cancelled it before its time came; reactivation does not revive it.
+    expect(await get(sched.id)).toMatchObject({ state: 'cancelled', errorCode: 'ORG_INACTIVE' });
     expect((await getPass(kit.env.DB, pass.id, null))?.personalization.message).toBeUndefined();
   });
 });
@@ -298,7 +339,7 @@ describe('start races', () => {
       await send(
         'POST',
         '/broadcasts',
-        fake.admin(),
+        auth.admin(),
         body('Race', { send: 'schedule', at: kit.clock.now() + 60_000 }),
       ),
     );
@@ -313,9 +354,9 @@ describe('start races', () => {
     expect((await get(made.id)).counts.updated).toBe(1);
 
     const cancelled = await dto(
-      await send('POST', '/broadcasts', fake.admin(), body('Never', { send: 'draft' })),
+      await send('POST', '/broadcasts', auth.admin(), body('Never', { send: 'draft' })),
     );
-    await send('POST', `/broadcasts/${cancelled.id}/cancel`, fake.admin());
+    await send('POST', `/broadcasts/${cancelled.id}/cancel`, auth.admin());
     await run(
       kit.env.DB,
       `INSERT OR IGNORE INTO workflow_runs (instance_id, kind, status, started_at) VALUES (?, 'broadcast', 'queued', 0)`,
@@ -337,15 +378,15 @@ describe('start races', () => {
     const pass = await kit.makePass();
     await isolate([pass.id]);
     const made = await dto(
-      await send('POST', '/broadcasts', fake.admin(), body('Crash safe', { send: 'draft' })),
+      await send('POST', '/broadcasts', auth.admin(), body('Crash safe', { send: 'draft' })),
     );
     await run(kit.env.DB, `UPDATE broadcasts SET state = 'sending', started_at = ? WHERE id = ?`, [
       kit.clock.now(),
       made.id,
     ]);
-    await applyChunk(kit.ctx, made.id, null);
+    await applyChunk(jobCtxOf(kit), made.id, null);
     await run(kit.env.DB, 'DELETE FROM broadcast_items WHERE broadcast_id = ?', [made.id]);
-    await applyChunk(kit.ctx, made.id, null);
+    await applyChunk(jobCtxOf(kit), made.id, null);
     const row = await getBroadcast(kit.env.DB, made.id, null);
     expect(row?.state).toBe('sending');
     const item = await first<{ outcome: string }>(
@@ -374,8 +415,8 @@ describe('stuck sweep', () => {
       );
     for (let i = 0; i < 22; i++) await insert(`long-${String(i).padStart(2, '0')}`, base + i);
     await insert('late-dead', base + 100);
-    await failStuckBroadcasts(kit.ctx);
-    await failStuckBroadcasts(kit.ctx);
+    await failStuckBroadcasts(jobCtxOf(kit));
+    await failStuckBroadcasts(jobCtxOf(kit));
     expect((await getBroadcast(kit.env.DB, 'late-dead', null))?.state).toBe('failed');
   });
 });

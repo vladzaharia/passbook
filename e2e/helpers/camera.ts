@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import bwipjs from 'bwip-js/node';
 import { type Api, createPass, GENERIC, uid } from './api.ts';
+import { publishTemplateVersion } from './releases.ts';
 
 export const cameraFormats = [
   ['qr', 'QR', 'qrcode'],
@@ -14,7 +15,7 @@ export const cameraFormats = [
 ] as const;
 
 export async function cameraFixture(api: Api, orgId: string, reader: 'none' | 'barcode' = 'none') {
-  const templates: string[] = [];
+  const templates = [];
   for (const group of [
     cameraFormats.filter((f) => f[0] !== 'ean13'),
     cameraFormats.filter((f) => f[0] === 'ean13'),
@@ -24,7 +25,9 @@ export async function cameraFixture(api: Api, orgId: string, reader: 'none' | 'b
       `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
       { orgId, name: uid('Camera formats') },
     );
-    const detail = await api.get(`/api/v1/templates/${cloned.id}/versions/${cloned.activeVersion}`);
+    const initialVersion = cloned.versions[0]?.version;
+    if (!initialVersion) throw new Error(`Camera template ${cloned.id} has no initial version`);
+    const detail = await api.get(`/api/v1/templates/${cloned.id}/versions/${initialVersion}`);
     const sample = group[0]?.[0] === 'ean13' ? '5901234123457' : '123456789012';
     detail.manifest.sample.memberId = sample;
     detail.passJson.barcodes = group.map((f) => ({
@@ -39,10 +42,16 @@ export async function cameraFixture(api: Api, orgId: string, reader: 'none' | 'b
         name: a.name,
         sha1: a.sha1,
       })),
-      activate: true,
     });
     expect(saved.saved, JSON.stringify(saved.report)).toBe(true);
-    templates.push(cloned.id);
+    if (!saved.version) throw new Error(`Camera template ${cloned.id} has no saved version`);
+    const release = await publishTemplateVersion(api, orgId, cloned.id, saved.version);
+    expect(release).toMatchObject({
+      templateId: cloned.id,
+      version: saved.version,
+      source: 'approved',
+    });
+    templates.push({ id: cloned.id, release });
   }
   const items = [];
   for (const [format, , bcid] of cameraFormats) {
@@ -54,11 +63,15 @@ export async function cameraFixture(api: Api, orgId: string, reader: 'none' | 'b
       code += (10 - (sum % 10)) % 10;
     }
     if (format === 'codabar') code = `A${code}A`;
+    const template = templates[format === 'ean13' ? 1 : 0];
+    if (!template) throw new Error(`Camera template for ${format} is missing`);
     const pass = await createPass(api, orgId, {
-      templateId: templates[format === 'ean13' ? 1 : 0],
+      templateId: template.id,
+      release: template.release,
       memberId: code,
       holder: `Camera ${format}`,
     });
+    expect(pass.templateVersion).toBe(template.release.version);
     const png = await bwipjs.toBuffer({
       bcid,
       text: code,
@@ -76,7 +89,7 @@ export async function cameraFixture(api: Api, orgId: string, reader: 'none' | 'b
     orgId,
     name: uid('Camera suite'),
     kind: 'device',
-    accepts: { templateIds: templates },
+    accepts: { templateIds: templates.map((template) => template.id) },
     timeZone: 'UTC',
     settings: { lookup: true, reader },
   });

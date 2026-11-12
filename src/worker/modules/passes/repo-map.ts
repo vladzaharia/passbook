@@ -18,8 +18,16 @@ export interface Pass {
   serial: string;
   templateId: string;
   templateVersion: string;
+  releaseId: string | null;
   authToken: string;
   downloadToken: string;
+  linkGeneration: number;
+  /** Changes whenever holder or credential identity changes; independent of public-link rotation. */
+  credentialGeneration: number;
+  /** Changes on lifecycle, status, deletion and quarantine authority transitions. */
+  lifecycleGeneration: number;
+  /** Advances on every per-pass asset or member-photo mutation, including rollback. */
+  imageGeneration: number;
   webServiceUrl: string;
   personalization: Personalization;
   fieldSources: FieldSources;
@@ -31,7 +39,11 @@ export interface Pass {
   status: PassStatus;
   /** Set from the creator's mode and never changed. */
   mode: Mode;
+  /** Legacy Test data is unavailable until explicitly remediated. */
+  testDataQuarantined: boolean;
   version: number;
+  /** Trigger-owned staleness epoch (authority-epochs.md 1.1). Never sent by clients or written by code. */
+  rowVersion: number;
   revision: number;
   objectKey: string;
   objectSha256: string | null;
@@ -65,8 +77,13 @@ export interface PassDbRow {
   serial: string;
   template_id: string;
   template_version: string;
+  release_id: string | null;
   auth_token: string;
   download_token: string;
+  link_generation: number;
+  credential_generation: number;
+  lifecycle_generation: number;
+  image_generation: number;
   web_service_url: string;
   personalization: string;
   field_sources: string;
@@ -77,7 +94,9 @@ export interface PassDbRow {
   owner_user_id: string | null;
   status: PassStatus;
   mode: Mode;
+  test_data_quarantined: number;
   version: number;
+  row_version: number;
   revision: number;
   object_key: string;
   object_sha256: string | null;
@@ -112,8 +131,13 @@ export function mapPass(row: PassDbRow): Pass {
     serial: row.serial,
     templateId: row.template_id,
     templateVersion: row.template_version,
+    releaseId: row.release_id,
     authToken: row.auth_token,
     downloadToken: row.download_token,
+    linkGeneration: row.link_generation,
+    credentialGeneration: row.credential_generation,
+    lifecycleGeneration: row.lifecycle_generation,
+    imageGeneration: row.image_generation,
     webServiceUrl: row.web_service_url,
     personalization: JSON.parse(row.personalization) as Personalization,
     fieldSources: JSON.parse(row.field_sources) as FieldSources,
@@ -124,7 +148,9 @@ export function mapPass(row: PassDbRow): Pass {
     ownerUserId: row.owner_user_id,
     status: row.status,
     mode: row.mode,
+    testDataQuarantined: row.test_data_quarantined !== 0,
     version: row.version,
+    rowVersion: row.row_version,
     revision: row.revision,
     objectKey: row.object_key,
     objectSha256: row.object_sha256,

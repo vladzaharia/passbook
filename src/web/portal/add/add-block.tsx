@@ -2,7 +2,7 @@ import { Laptop } from 'lucide-react';
 import { useId, useState } from 'react';
 import { HOLDER_COPY } from '../../../shared/copy/holder.ts';
 import { AddedLine, RevealButton } from './added.tsx';
-import { type AddAreaProps, macBeside } from './area.ts';
+import type { AddAreaProps } from './area.ts';
 import { type RenderBuddy, Scan } from './scan.tsx';
 import './add.css';
 
@@ -10,11 +10,9 @@ const SURFACE =
   'rounded-lg border border-border bg-surface-raised shadow-[var(--wl-edge),var(--pk-elevation-1)]';
 
 /**
- * The add block: the buddy holds the job, and the block only adds. Off the phone the buddy sits on
- * the QR's sign (M), leans over and points its teal pass at the code, the ways to add beside it
- * (scan.tsx; on a Mac its badge too). On the iPhone it sits on the badge's card (S) and points at
- * the badge; the card leads the page there (holder-pass.css), so the badge is on the first screen.
- * In Apple Wallet already, it stands happy over a quiet line; Show QR (on the iPhone, Add to this
+ * The add block: the buddy holds the job. Off the phone the QR leads and the Apple badge remains
+ * beside it on every device. On the iPhone the buddy sits on the badge's card. When Apple has
+ * reported a registration, it stands happy over a quiet line; Show QR (on the iPhone, Add to this
  * iPhone) brings adding back without the buddy, which stays where it is.
  */
 export function AddBlock(p: AddAreaProps & { buddy: RenderBuddy }) {
@@ -24,15 +22,13 @@ export function AddBlock(p: AddAreaProps & { buddy: RenderBuddy }) {
   const url = p.device.device === 'iphone' ? null : p.publicUrl;
   const ask = url ? (
     <Scan url={url} label={p.qrLabel} buddy={added ? undefined : p.buddy}>
-      {macBeside(p) ? (
-        <div className="wl-way wl-mac-only">
-          <p className="wl-way-label">
-            <Laptop aria-hidden />
-            {HOLDER_COPY.mac}
-          </p>
-          {p.badge}
-        </div>
-      ) : null}
+      <div className="wl-way">
+        <p className="wl-way-label">
+          <Laptop aria-hidden />
+          Apple Wallet
+        </p>
+        {p.badge}
+      </div>
       {p.line ? <p className="text-sm text-fg-muted">{p.line}</p> : null}
     </Scan>
   ) : (

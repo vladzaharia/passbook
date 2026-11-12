@@ -1,7 +1,19 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { fixtures, makeEnv, makeOrg, makePass, makeTemplate } from '../../../test/helpers/index.ts';
-import { all, casUpdate, chunk, classifyD1Error, first, likeEscape, run, stmt } from './db.ts';
+import {
+  all,
+  casUpdate,
+  chunk,
+  classifyD1Error,
+  containsMatch,
+  first,
+  likeEscape,
+  prefixMatch,
+  run,
+  type SqlMatch,
+  stmt,
+} from './db.ts';
 
 describe('db helpers', () => {
   it('binds undefined as NULL, booleans as 0/1 and bytes as blobs', async () => {
@@ -75,6 +87,62 @@ describe('db helpers', () => {
   it('chunks lists and escapes LIKE', () => {
     expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
     expect(likeEscape('50%_off\\')).toBe('50\\%\\_off\\\\');
+  });
+});
+
+describe('prefixMatch and containsMatch', () => {
+  const rows = async (match: SqlMatch, order = 'v') => {
+    const found = await all<{ v: string }>(
+      env.DB,
+      `SELECT v FROM t_like WHERE ${match.sql} ORDER BY ${order}`,
+      match.params,
+    );
+    return found.map((r) => r.v);
+  };
+  const long = 'abcdefghij'.repeat(6);
+  const wide = 'éü日本'.repeat(12);
+
+  it('matches any length and UTF-8, case-folding ASCII like LIKE', async () => {
+    await run(env.DB, 'CREATE TABLE IF NOT EXISTS t_like (v TEXT)');
+    const values = [
+      `${long}-tail`,
+      `${long.slice(0, 58)}zz-tail`,
+      `X${long}`,
+      `${wide}-tail`,
+      `${wide.slice(0, -1)}x`,
+      '50%_off\\',
+      '50xxoff',
+    ];
+    for (const v of values) await run(env.DB, 'INSERT INTO t_like (v) VALUES (?)', [v]);
+    expect(await rows(prefixMatch('v', long))).toEqual([`${long}-tail`]);
+    expect(await rows(prefixMatch('v', long.toUpperCase()))).toEqual([`${long}-tail`]);
+    expect(await rows(prefixMatch('v', wide))).toEqual([`${wide}-tail`]);
+    expect(await rows(prefixMatch('v', '50%_'))).toEqual(['50%_off\\']);
+    expect(await rows(containsMatch('v', long))).toEqual([`X${long}`, `${long}-tail`].sort());
+    expect(await rows(containsMatch('v', `${wide.slice(0, 40)}Q`))).toEqual([]);
+    expect(await rows(containsMatch('v', wide.slice(2)))).toEqual([`${wide}-tail`]);
+    expect(await rows(containsMatch('v', '%_off\\'))).toEqual(['50%_off\\']);
+    expect(await rows(containsMatch('v', `${'%_'.repeat(30)}`))).toEqual([]);
+  });
+
+  it('keeps short patterns as one LIKE and tags the SQL', () => {
+    expect(prefixMatch('c', 'ab', 'tag')).toEqual({
+      sql: "c LIKE ?/* tag */ ESCAPE '\\'",
+      params: ['ab%'],
+    });
+    expect(containsMatch('c', 'a_').params).toEqual(['%a\\_%']);
+    expect(prefixMatch('c', long).params).toHaveLength(3);
+    expect(containsMatch('c', long).sql).toContain('instr(');
+  });
+
+  it('refuses a comment tag that is not kebab-case, since it is spliced into the SQL', () => {
+    for (const bad of ['x */ OR 1 /*', 'a b', 'Tag', 'scan_ephemeral', '*/'])
+      for (const match of [prefixMatch, containsMatch])
+        expect(() => match('c', 'ab', bad), bad).toThrow('Invalid SQL comment tag');
+    expect(containsMatch('c', 'ab', 'scan-ephemeral-2').sql).toBe(
+      "c LIKE ?/* scan-ephemeral-2 */ ESCAPE '\\'",
+    );
+    expect(prefixMatch('c', 'x'.repeat(80), 'tag').sql).toContain('/* tag */');
   });
 });
 

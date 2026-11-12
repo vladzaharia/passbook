@@ -130,8 +130,11 @@ describe('list facts', () => {
       [`s-${tag()}`, user.id, user.primaryEmail],
     );
     const org = await makeOrg(f());
-    const pass = await makePass(f(), { orgId: org.id, template: makeTemplate().resolved });
-    await run(h.env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [user.id, pass.id]);
+    await makePass(f(), {
+      orgId: org.id,
+      template: makeTemplate().resolved,
+      ownerUserId: user.id,
+    });
     const res = await send('GET', `/api/v1/users?q=${user.id}`, a.headers);
     const body = (await res.json()) as {
       items: { id: string; passCount: number; signInMethods: string[] }[];

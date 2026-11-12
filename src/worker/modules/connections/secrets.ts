@@ -4,10 +4,17 @@ import {
   encryptSecret,
   loadKekRing,
 } from '../../platform/crypto.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { ConnectionWriter } from './access.ts';
 import type { ConnectionRow } from './repo.ts';
-import { deleteCredentials, getCredential, insertCredential } from './repo-runs.ts';
+import {
+  deleteCredentials,
+  discardCredential,
+  getCredential,
+  insertCredential,
+} from './repo-credentials.ts';
 
 type Kind = 'connector' | 'webhook';
 
@@ -15,6 +22,7 @@ type Kind = 'connector' | 'webhook';
 export async function storeCredential(
   ctx: ServiceContext,
   input: { orgId: string; kind: Kind; value: string; createdBy: string | null },
+  writer: ConnectionWriter,
 ): Promise<string> {
   const id = ctx.ids.id();
   const ring = await loadKekRing(ctx.env);
@@ -25,18 +33,30 @@ export async function storeCredential(
   );
   // Short fingerprint: enough to tell two secrets apart, too short to confirm a guess.
   const fingerprint = (await sha256Hex(`${id}|${input.value}`)).slice(0, 8);
-  await insertCredential(ctx.env.DB, {
-    id,
-    orgId: input.orgId,
-    kind: input.kind,
-    envelope,
-    fingerprint,
-    createdBy: input.createdBy,
-    now: ctx.clock.now(),
-  });
+  try {
+    const inserted = await insertCredential(
+      ctx.env.DB,
+      {
+        id,
+        orgId: input.orgId,
+        kind: input.kind,
+        envelope,
+        fingerprint,
+        createdBy: input.createdBy,
+        now: ctx.clock.now(),
+      },
+      writer,
+    );
+    if (!inserted) throw new ForbiddenError();
+  } catch (error) {
+    // A failed response can follow a committed insert. Delete only this unreferenced envelope.
+    await discardCredential(ctx.env.DB, { id, orgId: input.orgId, envelope });
+    throw error;
+  }
   return id;
 }
 
+/** Removes credentials only if no connection or signing identity references them. */
 export async function dropCredentials(ctx: ServiceContext, ids: (string | null)[]): Promise<void> {
   await deleteCredentials(ctx.env.DB, ids);
 }

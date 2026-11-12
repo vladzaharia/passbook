@@ -110,7 +110,7 @@ const RULES: Rule[] = [
     mutate: (p) => {
       delete p.sharingProhibited;
     },
-    severity: 'warning',
+    severity: 'error',
     code: 'NFC',
   },
   {

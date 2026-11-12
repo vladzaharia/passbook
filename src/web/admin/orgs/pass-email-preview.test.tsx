@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { json, renderApp } from '@/web/lib/test-utils.tsx';
+import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 
 const org = {
   id: 'o1',
@@ -24,11 +24,24 @@ const entry = (key: string, value: unknown) => ({
 });
 const handlers = {
   '/api/v1/orgs/o1': () => json(org),
+  '/api/v1/orgs/o1/workspace': () => json(org),
+  '/api/v1/wallet-providers/accounts': (url: URL) =>
+    json({
+      orgId: 'o1',
+      mode: url.searchParams.get('mode'),
+      provider: url.searchParams.get('provider'),
+      accountId: null,
+      revision: 0,
+      state: 'absent',
+      externalApprovalVerified: false,
+      updatedAt: null,
+    }),
+  '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
+  '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
   '/api/v1/identities': () => json({ items: [], nextCursor: null }),
   '/api/v1/settings': () =>
     json({
       items: [entry('support.email', 'help@acme.test'), entry('email.buddy', false)],
-      oidc: { issuer: 'https://id.plrs.im', adminGroup: null, userGroup: null },
     }),
 };
 const frame = () => screen.getByTitle('Sample pass email') as HTMLIFrameElement;
@@ -38,7 +51,11 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('PassEmailPreview', () => {
   it('follows the unsaved support contacts once typing settles, and only valid ones', async () => {
-    await renderApp('/admin/orgs/o1', { session: 'admin', handlers });
+    await renderApp('/admin/orgs/o1?view=workspace&orgId=o1', {
+      session: 'admin',
+      memberships: [membershipFixture('o1')],
+      handlers,
+    });
     const ui = userEvent.setup();
     const email = await screen.findByLabelText('Support email');
     expect(email).toHaveValue('help@acme.test');
@@ -60,7 +77,11 @@ describe('PassEmailPreview', () => {
 
   it('lays the email out at a phone width and scales it into a narrow column', async () => {
     const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(352);
-    await renderApp('/admin/orgs/o1', { session: 'admin', handlers });
+    await renderApp('/admin/orgs/o1?view=workspace&orgId=o1', {
+      session: 'admin',
+      memberships: [membershipFixture('o1')],
+      handlers,
+    });
     await screen.findByTitle('Sample pass email');
     expect(frame().style.width).toBe('390px');
     expect(frame().style.transform).toBe(`scale(${350 / 390})`);
@@ -69,7 +90,11 @@ describe('PassEmailPreview', () => {
 
   it('uses the width it has, up to the email column, unscaled', async () => {
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(600);
-    await renderApp('/admin/orgs/o1', { session: 'admin', handlers });
+    await renderApp('/admin/orgs/o1?view=workspace&orgId=o1', {
+      session: 'admin',
+      memberships: [membershipFixture('o1')],
+      handlers,
+    });
     await screen.findByTitle('Sample pass email');
     expect(frame().style.width).toBe('512px');
     expect(frame().style.transform).toBe('');

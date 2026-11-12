@@ -10,7 +10,8 @@ import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { deletePassAsset, listPassAssets, putPassAsset } from './asset-service.ts';
 import { MAX_ASSET_BYTES } from './assets.ts';
-import { actorFor, passScopeOf, svc } from './http.ts';
+import { actorFor, authOf, passScopeOf, svc } from './http.ts';
+import { tenantPassForRead, tenantPassForWrite } from './pass-access.ts';
 
 /** Per-pass image overrides. */
 export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
@@ -34,7 +35,12 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
       params: IdParamSchema,
       response: PassAssetListSchema,
     },
-    async (c) => c.json(await listPassAssets(svc(c), c.req.valid('param').id, passScopeOf(c))),
+    async (c) => {
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope } = await tenantPassForRead(ctx, authOf(c), id, passScopeOf(c));
+      return c.json(await listPassAssets(ctx, id, scope));
+    },
   );
 
   register(
@@ -48,9 +54,13 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
       response: PassAssetSchema,
     },
     async (c) => {
+      const ctx = svc(c);
       const p = c.req.valid('param');
+      const { authority, scope } = await tenantPassForWrite(ctx, authOf(c), p.id, passScopeOf(c));
       const bytes = new Uint8Array(await c.req.arrayBuffer());
-      return c.json(await putPassAsset(svc(c), actorFor(c), p.id, p.name, bytes, passScopeOf(c)));
+      return c.json(
+        await putPassAsset(ctx, actorFor(c), p.id, p.name, bytes, scope, undefined, authority),
+      );
     },
   );
 
@@ -65,8 +75,10 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
       response: OkSchema,
     },
     async (c) => {
+      const ctx = svc(c);
       const p = c.req.valid('param');
-      await deletePassAsset(svc(c), actorFor(c), p.id, p.name, passScopeOf(c));
+      const { authority, scope } = await tenantPassForWrite(ctx, authOf(c), p.id, passScopeOf(c));
+      await deletePassAsset(ctx, actorFor(c), p.id, p.name, scope, authority);
       return c.json({ ok: true });
     },
   );

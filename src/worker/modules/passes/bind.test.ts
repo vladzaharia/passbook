@@ -1,20 +1,27 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { first, run } from '../../platform/db.ts';
+import { activeRelease, type TemplateRelease } from '../templates/releases.ts';
 import { overrideDeps } from './deps.ts';
-import { getPass } from './repo.ts';
-import { type Kit, setupKit } from './test-kit.ts';
+import { type Kit, setupKit } from './pass-test-fixtures.ts';
+import { getPass } from './repo-read-pass.ts';
+import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
 let kit: Kit;
+let auth: TenantTestAuth;
 let app: ReturnType<typeof createApp>;
+let release: TemplateRelease;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
-});
+  const active = await activeRelease(kit.ctx, kit.template.id, kit.org.id, 'live', 'apple');
+  if (!active) throw new Error('Default Live release missing');
+  release = active;
+  auth = await setupTenantTestAuth(kit);
+  app = createApp({ stores: auth.stores, clock: kit.clock });
+}, 60_000);
 
 type Headers = Record<string, string>;
 const api = (path: string, init: RequestInit & { headers?: Headers } = {}) =>
@@ -47,7 +54,7 @@ describe('PUT /passes/:id/connection', () => {
     kit.queue.sent.length = 0;
     const res = await api(
       `/passes/${pass.id}/connection`,
-      send('PUT', fake.admin(), { connectionId, externalRef: 'ref-1' }),
+      send('PUT', auth.admin(), { connectionId, externalRef: 'ref-1' }),
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
@@ -58,7 +65,7 @@ describe('PUT /passes/:id/connection', () => {
     expect(kit.queue.sent).toContainEqual(expect.objectContaining({ kind: 'pass.refresh' }));
     const unbind = await api(
       `/passes/${pass.id}/connection`,
-      send('PUT', fake.admin(), { connectionId: null, externalRef: null }),
+      send('PUT', auth.admin(), { connectionId: null, externalRef: null }),
     );
     expect(await unbind.json()).toMatchObject({ connectionId: null, externalRef: null });
     const actions = await first<{ n: number }>(
@@ -74,7 +81,7 @@ describe('PUT /passes/:id/connection', () => {
     const connectionId = await connection();
     const res = await api(
       `/passes/${pass.id}/connection`,
-      send('PUT', fake.admin(), {
+      send('PUT', auth.admin(), {
         connectionId,
         externalRef: 'ref-keep',
         resetFieldSources: false,
@@ -88,7 +95,7 @@ describe('PUT /passes/:id/connection', () => {
     const b = await kit.pass();
     const connectionId = await connection();
     const bind = (id: string, body: unknown) =>
-      api(`/passes/${id}/connection`, send('PUT', fake.admin(), body));
+      api(`/passes/${id}/connection`, send('PUT', auth.admin(), body));
     expect((await bind(a.id, { connectionId, externalRef: 'dup' })).status).toBe(200);
     const taken = await bind(b.id, { connectionId, externalRef: 'dup' });
     expect(taken.status).toBe(409);
@@ -111,9 +118,13 @@ describe('validation and failures', () => {
         (
           await api(
             '/passes',
-            send('POST', fake.admin(), {
+            send('POST', auth.admin(), {
               orgId: kit.org.id,
               templateId: kit.template.id,
+              templateVersion: release.version,
+              releaseId: release.id,
+              releaseGeneration: release.generation,
+              mode: 'live',
               input: { memberName: 'S' },
               serial,
             }),
@@ -122,9 +133,13 @@ describe('validation and failures', () => {
       ).toBe(422);
     const ok = await api(
       '/passes',
-      send('POST', fake.admin(), {
+      send('POST', auth.admin(), {
         orgId: kit.org.id,
         templateId: kit.template.id,
+        templateVersion: release.version,
+        releaseId: release.id,
+        releaseGeneration: release.generation,
+        mode: 'live',
         input: { memberName: 'S' },
         serial: 'ABC-123_x.y~z',
       }),
@@ -145,9 +160,13 @@ describe('validation and failures', () => {
     try {
       const res = await api(
         '/passes',
-        send('POST', fake.admin(), {
+        send('POST', auth.admin(), {
           orgId: kit.org.id,
           templateId: kit.template.id,
+          templateVersion: release.version,
+          releaseId: release.id,
+          releaseGeneration: release.generation,
+          mode: 'live',
           input: { memberName: 'S' },
         }),
       );
@@ -164,7 +183,7 @@ describe('bulk reissue options', () => {
     const pass = await kit.pass();
     const res = await api(
       '/passes/bulk-reissue',
-      send('POST', fake.admin(), {
+      send('POST', auth.admin(), {
         templateId: kit.template.id,
         orgId: kit.org.id,
         cause: 'resign',

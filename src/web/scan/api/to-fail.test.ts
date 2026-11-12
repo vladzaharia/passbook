@@ -31,6 +31,11 @@ describe('toFail (SA 2.8)', () => {
     expect(toFail(err(403, 'SCREEN_ONLY'))).toEqual({ error: 'forbidden' });
   });
 
+  it('a staff change asks for the PIN again; neither 409 unpairs', () => {
+    expect(toFail(err(409, 'SCAN_STAFF_CHANGED'))).toEqual({ error: 'staff_required' });
+    expect(toFail(err(409, 'SCAN_CONFIG_CHANGED')).error).not.toBe('revoked');
+  });
+
   it('maps a 429 to rate_limited with Retry-After', () => {
     expect(toFail(err(429, 'RATE_LIMITED', { retryAfterMs: 7000 }))).toEqual({
       error: 'rate_limited',
@@ -46,6 +51,7 @@ describe('toFail (SA 2.8)', () => {
     });
     expect(toFail(err(422, 'SCAN_ACTION_UNKNOWN'))).toEqual({ error: 'forbidden' });
     expect(toFail(err(409, 'PASS_CONFLICT'))).toEqual({ error: 'server' });
+    expect(toFail(err(409, 'SCAN_CONFIG_CHANGED'))).toEqual({ error: 'server' });
     expect(toFail(new Error('boom'))).toEqual({ error: 'server' });
   });
 });

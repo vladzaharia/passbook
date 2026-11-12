@@ -1,18 +1,100 @@
-import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
+import { notifyManager, queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
+import { OrgMembershipListSchema } from '@/shared/contracts/org-membership.ts';
 import { type SessionResponse, SessionResponseSchema } from '@/shared/contracts/session.ts';
 import { NEXT_COOKIE, NEXT_COOKIE_PATH, safeNextPath } from '@/shared/next.ts';
-import { api } from './api.ts';
-import { problemToError } from './errors.ts';
+import { api, resetSessionEnded } from './api.ts';
+import { ApiError, problemToError } from './errors.ts';
 import { clearLocalDrafts } from './local-drafts.ts';
+import { clearPreviewBatches } from './preview-batch.ts';
 import { loginHref } from './redirect.ts';
 
 export type AuthedSession = Extract<SessionResponse, { authenticated: true }>;
 
+const MEMBERSHIPS_QUERY_KEY = ['org-memberships', 'me'] as const;
+
+function sessionChangedError(): ApiError {
+  return new ApiError({
+    status: 409,
+    code: 'session_changed',
+    detail: 'The signed-in account changed. Refresh the page and try again.',
+  });
+}
+
 export const sessionQuery = queryOptions({
   queryKey: ['session'] as const,
-  queryFn: ({ signal }) => api.get('/api/v1/session', SessionResponseSchema, { signal }),
+  queryFn: async ({ client, signal }) => {
+    const session = await api.get('/api/v1/session', SessionResponseSchema, { signal });
+    signal.throwIfAborted();
+    const previous = client.getQueryData<SessionResponse>(['session']);
+    if (previous !== undefined) {
+      const principalChanged =
+        previous.authenticated !== session.authenticated ||
+        (previous.authenticated && session.authenticated && previous.user.id !== session.user.id);
+      if (principalChanged) {
+        notifyManager.batch(() => {
+          // Publish the new identity before cancelling old requests, so their late 401s cannot
+          // end the new session. Observers see the identity and cache eviction in one batch.
+          client.setQueryData<SessionResponse>(['session'], session);
+          clearPreviewBatches();
+          const cache = client.getQueryCache();
+          for (const query of cache.getAll()) {
+            if (query.queryKey.length === 1 && query.queryKey[0] === 'session') continue;
+            void query.cancel({ silent: true });
+            // Resetting instead would restore initialData belonging to the old principal.
+            query.setState({
+              data: undefined,
+              dataUpdatedAt: 0,
+              error: null,
+              status: 'pending',
+              fetchStatus: 'idle',
+            });
+            cache.remove(query);
+          }
+          // Pending requests retain their own guards; cache entries must not expose their input.
+          client.getMutationCache().clear();
+          if (session.authenticated) resetSessionEnded();
+        });
+      } else {
+        void client.invalidateQueries({ queryKey: MEMBERSHIPS_QUERY_KEY, exact: true });
+      }
+    }
+    return session;
+  },
   staleTime: 60_000,
 });
+
+/** The signed-in principal's organization grants, never inferred from platform roles. */
+export const MEMBERSHIPS_STALE_MS = 60_000;
+
+export const membershipsQuery = queryOptions({
+  queryKey: MEMBERSHIPS_QUERY_KEY,
+  queryFn: async ({ client, signal }) => {
+    const session = await client.ensureQueryData(sessionQuery);
+    signal.throwIfAborted();
+    if (!session.authenticated) {
+      throw new ApiError({ status: 401, code: 'unauthenticated', detail: 'Sign in.' });
+    }
+    // A failed refresh keeps the last session; only a different user invalidates the request.
+    const same = () => {
+      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      return current?.authenticated === true && current.user.id === session.user.id;
+    };
+    if (!same()) throw sessionChangedError();
+    const memberships = await api.get('/api/v1/orgs/memberships/me', OrgMembershipListSchema, {
+      signal,
+    });
+    signal.throwIfAborted();
+    if (!same() || memberships.items.some((membership) => membership.userId !== session.user.id)) {
+      throw sessionChangedError();
+    }
+    return memberships;
+  },
+  staleTime: MEMBERSHIPS_STALE_MS,
+});
+
+export function useMemberships() {
+  return useQuery(membershipsQuery);
+}
 
 export function isAdmin(session: SessionResponse | undefined): session is AuthedSession {
   return session?.authenticated === true && session.roles.includes('admin');
@@ -31,7 +113,21 @@ export function useSession() {
 
 export function useInvalidateSession(): () => Promise<void> {
   const client = useQueryClient();
-  return () => client.invalidateQueries({ queryKey: sessionQuery.queryKey });
+  return async () => {
+    // Mark grants stale before refreshing the session, without unmounting scoped drafts.
+    await client.invalidateQueries({
+      queryKey: membershipsQuery.queryKey,
+      exact: true,
+      refetchType: 'none',
+    });
+    await client.invalidateQueries({ queryKey: sessionQuery.queryKey });
+    // If the session was inactive, refresh active membership observers here. Otherwise join the
+    // refetch started by sessionQuery rather than cancelling or duplicating it.
+    await client.refetchQueries(
+      { queryKey: membershipsQuery.queryKey, exact: true, type: 'active', stale: true },
+      { cancelRefetch: false },
+    );
+  };
 }
 
 const BYE = 'wallet-signed-out';
@@ -130,6 +226,7 @@ export async function endSession(
 
 /** Leaves for `target`, marking the tab so the sign-in page waves and keeps `next`. */
 export function leaveSignedOut(target: string, next?: string): void {
+  clearPreviewBatches();
   clearLocalDrafts();
   try {
     sessionStorage.setItem(BYE, String(Date.now()));

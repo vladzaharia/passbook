@@ -4,6 +4,7 @@ import type {
   BroadcastOutcome,
   CreateBroadcastBody,
 } from '../../../shared/contracts/broadcasts.ts';
+import { batch } from '../../platform/db.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -49,17 +50,26 @@ export async function updateBroadcast(
   if (body.at !== undefined) checkTime(ctx, body.at);
   await checkTemplates(ctx, body);
   const now = ctx.clock.now();
-  const won = await repo.updateBroadcast(ctx.env.DB, id, {
-    name: nameOf(body),
-    kind: body.kind,
-    target: body.target,
-    patch: body.patch,
-    notify: body.notify,
-    state: body.send === 'draft' ? 'draft' : 'scheduled',
-    at: body.send === 'draft' ? null : body.send === 'schedule' ? (body.at ?? now) : now,
-    clearAfter: body.clearAfter ?? null,
-  });
-  if (!won)
+  const [edited] = await batch(ctx.env.DB, [
+    repo.updateBroadcastStmt(
+      ctx.env.DB,
+      id,
+      row.kind,
+      {
+        name: nameOf(body),
+        kind: body.kind,
+        target: body.target,
+        patch: body.patch,
+        notify: body.notify,
+        state: body.send === 'draft' ? 'draft' : 'scheduled',
+        at: body.send === 'draft' ? null : body.send === 'schedule' ? (body.at ?? now) : now,
+        clearAfter: body.clearAfter ?? null,
+      },
+      scope.authority,
+      now,
+    ),
+  ]);
+  if ((edited?.meta.changes ?? 0) !== 1)
     throw new ConflictError(
       'This message already started. Open it again.',
       'BROADCAST_NOT_EDITABLE',
@@ -105,6 +115,7 @@ export async function retryBroadcast(
       send: 'now',
       clearAfter: row.clear_after,
     },
+    scope.authority,
     'broadcast.retry',
     { retryOf: id },
   );
@@ -117,8 +128,8 @@ export async function listBroadcastItems(
   scope: ScopeArg,
   query: { outcome?: BroadcastOutcome | undefined; cursor?: string | undefined; limit: number },
 ): Promise<{ items: BroadcastItemDto[]; nextCursor: string | null }> {
-  await requireBroadcast(ctx, id, scope);
-  const { rows, nextCursor } = await listItems(ctx.env.DB, id, query);
+  const row = await requireBroadcast(ctx, id, scope);
+  const { rows, nextCursor } = await listItems(ctx.env.DB, id, row.org_id, row.mode, query);
   return {
     items: rows.map((r) => ({
       passId: r.pass_id,

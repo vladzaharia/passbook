@@ -1,26 +1,30 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { PassDevicesSchema, PassSummarySchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handlePushDeliver } from '../delivery/jobs.ts';
+import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { applyRemoval } from './remove-build.ts';
-import { currentPassJson, getPass, type Pass } from './repo.ts';
-import { type Kit, setupKit } from './test-kit.ts';
+import type { Pass } from './repo.ts';
+import { currentPassJson, getPass } from './repo-read-pass.ts';
+import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 const TYPE = 'pass.im.plrs.wallet';
-const fake = fakeAuth(ORIGIN);
 let kit: Kit;
+let auth: TenantTestAuth;
 let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  auth = await setupTenantTestAuth(kit);
+  app = createApp({ stores: auth.stores, clock: kit.clock });
 });
 
-const post = (path: string, body?: unknown, headers: Record<string, string> = fake.admin()) =>
+const post = (path: string, body?: unknown, headers: Record<string, string> = auth.admin()) =>
   app.request(
     `${ORIGIN}/api/v1/passes${path}`,
     {
@@ -134,7 +138,7 @@ describe('POST /passes/{id}/remove and /restore', () => {
         await (
           await app.request(
             `${ORIGIN}/api/v1/passes/${pass.id}/devices`,
-            { headers: fake.admin() },
+            { headers: auth.admin() },
             kit.env,
           )
         ).json(),
@@ -169,7 +173,7 @@ describe('POST /passes/{id}/remove and /restore', () => {
     const { updatePass } = await import('./service.ts');
     kit.clock.advance(1000);
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { input: { memberName: 'Late sync' } },
@@ -211,26 +215,44 @@ describe('POST /passes/{id}/remove and /restore', () => {
     const pass = await kit.pass();
     const other = await makeOrg(kit.fx, { name: 'Elsewhere' });
     expect((await post(`/${pass.id}/remove`, {}, {})).status).toBe(401);
-    expect((await post(`/${pass.id}/remove`, {}, fake.user())).status).toBe(403);
+    expect((await post(`/${pass.id}/remove`, {}, auth.user())).status).toBe(403);
     expect(
       (
         await post(
           `/${pass.id}/remove`,
           {},
-          fake.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] }),
+          await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] }),
         )
       ).status,
     ).toBe(403);
-    expect((await post(`/${pass.id}/remove`, {}, fake.apiKey({ orgId: other.id }))).status).toBe(
-      404,
-    );
-    expect((await post(`/${pass.id}/restore`, {}, fake.apiKey({ orgId: other.id }))).status).toBe(
-      404,
-    );
+    const foreignKey = await auth.apiKey({ orgId: other.id });
+    expect((await post(`/${pass.id}/remove`, {}, foreignKey)).status).toBe(404);
+    expect((await post(`/${pass.id}/restore`, {}, foreignKey)).status).toBe(404);
     expect((await post(`/${pass.id}/remove`, { message: 'x'.repeat(201) })).status).toBe(422);
     // A session changes only the mode it is in.
-    expect((await post(`/${pass.id}/remove`, {}, fake.admin({ mode: 'test' }))).status).toBe(409);
-    expect((await post(`/${pass.id}/remove`, {}, fake.apiKey({ mode: 'test' }))).status).toBe(404);
+    expect((await post(`/${pass.id}/remove`, {}, auth.admin({ mode: 'test' }))).status).toBe(409);
+    expect(
+      (await post(`/${pass.id}/remove`, {}, await auth.apiKey({ orgId: kit.org.id, mode: 'test' })))
+        .status,
+    ).toBe(404);
+    const key = await auth.apiKey({ orgId: kit.org.id });
+    expect((await post(`/${pass.id}/remove`, {}, key)).status).toBe(200);
+    expect((await post(`/${pass.id}/restore`, {}, key)).status).toBe(200);
+  });
+
+  it('requires the global admin to have membership in the pass organization', async () => {
+    const other = await makeOrg(kit.fx, { name: 'Membership required' });
+    const pass = await kit.pass({ orgId: other.id });
+
+    expect((await post(`/${pass.id}/remove`)).status).toBe(403);
+    expect((await post(`/${pass.id}/restore`)).status).toBe(403);
+    expect((await getPass(kit.env.DB, pass.id))?.removedAt).toBeNull();
+
+    await auth.addOrg(other.id);
+    expect((await post(`/${pass.id}/remove`)).status).toBe(200);
+    expect((await getPass(kit.env.DB, pass.id))?.removedAt).not.toBeNull();
+    expect((await post(`/${pass.id}/restore`)).status).toBe(200);
+    expect((await getPass(kit.env.DB, pass.id))?.removedAt).toBeNull();
   });
 
   it('removes a selection in bulk and 404s the whole call for a foreign id', async () => {
@@ -241,10 +263,8 @@ describe('POST /passes/{id}/remove and /restore', () => {
     expect((await getPass(kit.env.DB, a.id))?.removedAt).not.toBeNull();
     const other = await makeOrg(kit.fx, { name: 'Else' });
     const c = await kit.pass();
-    expect(
-      (await post('/bulk', { action: 'remove', ids: [c.id] }, fake.apiKey({ orgId: other.id })))
-        .status,
-    ).toBe(404);
+    const foreignKey = await auth.apiKey({ orgId: other.id });
+    expect((await post('/bulk', { action: 'remove', ids: [c.id] }, foreignKey)).status).toBe(404);
     expect((await getPass(kit.env.DB, c.id))?.removedAt).toBeNull();
   });
 });

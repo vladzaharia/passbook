@@ -4,16 +4,16 @@ import { getBarcodeEngine, loadBarcodeEngine, type ToSvg } from './barcode-engin
 
 const LINEAR = new Set(['code128', 'code39', 'ean13', 'interleaved2of5', 'rationalizedCodabar']);
 
-interface Parsed {
+export interface BarcodeDrawing {
   viewBox: string;
   paths: { d: string; strokeWidth?: string; fillRule?: string }[];
 }
 
 /** Read bwip-js output into plain data so the SVG renders without innerHTML. */
-function parse(svg: string): Parsed | undefined {
+export function parseBarcodeSvg(svg: string): BarcodeDrawing | undefined {
   const vb = /viewBox="(\d+(?:\.\d+)? \d+(?:\.\d+)? \d+(?:\.\d+)? \d+(?:\.\d+)?)"/.exec(svg);
   if (!vb) return undefined;
-  const paths: Parsed['paths'] = [];
+  const paths: BarcodeDrawing['paths'] = [];
   for (const m of svg.matchAll(/<path\b([^>]*?)\/>/g)) {
     const attrs = m[1] ?? '';
     const d = /\sd="([MLHVZmlhvz0-9.\s-]+)"/.exec(attrs)?.[1];
@@ -32,7 +32,7 @@ function parse(svg: string): Parsed | undefined {
 export function drawBarcode(
   toSvg: ToSvg,
   b: Pick<BarcodeView, 'bcid' | 'message'>,
-): Parsed | undefined {
+): BarcodeDrawing | undefined {
   try {
     const svg = toSvg({
       bcid: b.bcid,
@@ -41,7 +41,7 @@ export function drawBarcode(
       paddingheight: 0,
       ...(LINEAR.has(b.bcid) ? { height: 12 } : {}),
     });
-    return parse(svg);
+    return parseBarcodeSvg(svg);
   } catch {
     // Bad data for the symbology (e.g. EAN-13 length): the caller shows a text fallback.
     return undefined;

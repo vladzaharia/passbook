@@ -2,6 +2,8 @@ import { APPLE_BADGE_ALT } from '../../shared/apple-badge.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { EMAIL_BADGE, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
 import { contrast, parseColor } from '../../shared/pass-view/color.ts';
+import { NATIVE_WALLET_BADGES } from '../../shared/wallet-choice.ts';
+import type { WalletOffer } from '../modules/wallet-providers/offers.ts';
 import type { PassSummary } from './pass-summary.ts';
 import { safeMail, safeUrl } from './safe.ts';
 import {
@@ -26,6 +28,9 @@ export interface PassEmailInput {
   manageUrl: string;
   /** Apple's black badge PNG (absolute URL), drawn in the EMAIL_BADGE box. */
   badgeUrl: string;
+  /** The public base and currently available native wallet offers for this pass. */
+  publicBaseUrl?: string | null;
+  walletOffers?: readonly WalletOffer[];
   attached: boolean;
   /** The pass's title (display title, else its description). */
   passTitle?: string | null;
@@ -59,6 +64,8 @@ export interface RenderedEmail {
 export const ADD_LINE = HOLDER_COPY.openOnApple;
 const PRIVATE_LINE = 'Keep this email private. Its links open your pass.';
 const OPEN_LABEL = 'Open your pass';
+
+type EmailWalletOffer = Pick<WalletOffer, 'provider' | 'href'>;
 
 /** Wallet's logo box is 160×50 pt; the email draws the logo at most this tall. */
 const LOGO = { width: 160, height: 36 };
@@ -126,8 +133,37 @@ function actionsHtml(input: PassEmailInput): string {
   return `<div style="margin:0 0 4px;font-size:0;line-height:0">${mso(`<table role="presentation" cellspacing="0" cellpadding="0"><tr>${cell}`)}${item(badge, `${GAP}px`)}${mso(`</td><td width="${GAP}" style="width:${GAP}px;font-size:0;line-height:0">&nbsp;</td>${cell}`)}${item(badgeButtonHtml(input.manageUrl, OPEN_LABEL), '0')}${mso('</td></tr></table>')}</div>`;
 }
 
+/** Only render capability links for the same pass as the Apple and public-page links. */
+function emailWalletOffers(
+  input: PassEmailInput,
+): { base: string; offers: EmailWalletOffer[] } | null {
+  const base = safeUrl(input.publicBaseUrl);
+  if (!base) return null;
+  const offers = (input.walletOffers ?? []).flatMap(({ provider, href }) => {
+    const absolute = safeUrl(`${base}${href}`);
+    return absolute && absolute === `${input.manageUrl}/wallet/${provider}`
+      ? [{ provider, href: absolute }]
+      : [];
+  });
+  return { base, offers };
+}
+
+/** Native badges are unmodified, proportionally sized and stacked for narrow mail clients. */
+function walletActionsHtml(base: string, offers: readonly EmailWalletOffer[]): string {
+  if (!offers.length) return '';
+  const rows = offers
+    .map(({ provider, href }) => {
+      const badge = NATIVE_WALLET_BADGES[provider];
+      const link = escapeHtml(href);
+      return `<tr><td style="padding:0 0 16px"><a href="${link}" style="display:block;text-decoration:none"><img src="${escapeHtml(`${base}${badge.path}`)}" alt="${badge.label}" width="${badge.width}" height="${badge.height}" style="display:block;width:${badge.width}px;max-width:100%;height:auto;border:0"></a><a class="e-link" href="${link}" style="display:inline-block;margin:8px 0 0;${type('xs')};color:${c.text};text-decoration:underline">${badge.label}</a></td></tr>`;
+    })
+    .join('');
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse">${rows}</table>`;
+}
+
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const footer = supportFooter(safeMail(input.supportEmail), safeUrl(input.supportUrl));
+  const wallets = emailWalletOffers(input);
   const subject = `Your ${input.orgName} pass`;
   const fields = (input.summary?.fields ?? [])
     .filter((f) => f.value !== input.passTitle)
@@ -141,6 +177,14 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     `${APPLE_BADGE_ALT}: ${input.downloadUrl}`,
     `${OPEN_LABEL}: ${input.manageUrl}`,
     ADD_LINE,
+    ...(wallets?.offers.length
+      ? [
+          '',
+          ...wallets.offers.map(
+            ({ provider, href }) => `${NATIVE_WALLET_BADGES[provider].label}: ${href}`,
+          ),
+        ]
+      : []),
     ...(input.attached ? ['', 'The pass is also attached.'] : []),
     '',
     PRIVATE_LINE,
@@ -153,6 +197,7 @@ ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('pass')) : ''}
 ${passBlock(input, fields)}
 ${actionsHtml(input)}
 ${muted('0 0 24px', ADD_LINE)}
+${wallets ? walletActionsHtml(wallets.base, wallets.offers) : ''}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
 ${footer.html}`;

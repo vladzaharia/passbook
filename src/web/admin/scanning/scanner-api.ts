@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
-import { pageOf } from '@/shared/contracts/common.ts';
+import { type Mode, pageOf } from '@/shared/contracts/common.ts';
 import type { UpdateScannerSetupSchema } from '@/shared/contracts/scan-setups.ts';
 import {
   ScanEventSchema,
@@ -8,8 +8,11 @@ import {
   ScannerPairingStateSchema,
   TerminalTokenSchema,
 } from '@/shared/contracts/scanners.ts';
+import { EligibleTemplateListSchema } from '@/shared/contracts/template-releases.ts';
 import { TemplateListSchema } from '@/shared/contracts/templates.ts';
 import { api } from '@/web/lib/api.ts';
+import { useMode } from '@/web/lib/mode.ts';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { scanningKeys } from './queries.ts';
 
 /** Console scanners write API (SA 5.2). The list and detail reads live in queries.ts. */
@@ -75,21 +78,107 @@ const EventListSchema = pageOf(ScanEventSchema);
 
 /** Upcoming and live events first: the picker for "An event" and the name behind a scanner's Accepts. */
 export function useScanEvents(orgId: string | undefined, enabled = true) {
+  const scope = useOrgScope();
+  const allowed = Boolean(
+    enabled &&
+      !scope.isLoading &&
+      !scope.isError &&
+      orgId &&
+      orgId === scope.orgId &&
+      scope.membership?.capabilities.includes('scanning:read'),
+  );
   return useQuery({
-    queryKey: ['admin', 'scanning', 'events', 'options', orgId ?? null],
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/scan-events', EventListSchema, { query: { orgId, limit: 200 }, signal }),
-    enabled,
+    queryKey: ['admin', 'scanning', 'events', 'options', allowed ? orgId : null, allowed],
+    queryFn: ({ signal }) => {
+      if (!allowed || !orgId) throw new Error('Choose an authorized organization.');
+      return api.get('/api/v1/scan-events', EventListSchema, {
+        query: { orgId, limit: 200 },
+        signal,
+      });
+    },
+    select: (page) => ({ ...page, items: page.items.filter((event) => event.orgId === orgId) }),
+    enabled: allowed,
     staleTime: 60_000,
   });
 }
 
 export function useOrgTemplates(orgId: string | undefined) {
+  const scope = useOrgScope();
+  const allowed = Boolean(
+    !scope.isLoading &&
+      !scope.isError &&
+      orgId &&
+      orgId === scope.orgId &&
+      scope.membership?.capabilities.includes('templates:read'),
+  );
   return useQuery({
-    queryKey: ['admin', 'scanning', 'templates', orgId ?? null],
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/templates', TemplateListSchema, { query: { orgId, limit: 200 }, signal }),
-    enabled: Boolean(orgId),
+    queryKey: ['admin', 'scanning', 'templates', allowed ? orgId : null, allowed],
+    queryFn: ({ signal }) => {
+      if (!allowed || !orgId) throw new Error('Choose an authorized organization.');
+      return api.get('/api/v1/templates', TemplateListSchema, {
+        query: { orgId, limit: 200 },
+        signal,
+      });
+    },
+    select: (page) => ({
+      ...page,
+      items: page.items.filter((template) => template.orgId === null || template.orgId === orgId),
+    }),
+    enabled: allowed,
     staleTime: 60_000,
+  });
+}
+
+/** Approved Apple releases eligible for the selected organization and console mode. */
+export function useEligibleTemplates(
+  orgId: string | undefined,
+  enabled = true,
+  resourceMode?: Mode,
+) {
+  const scope = useOrgScope();
+  const mode = useMode();
+  const allowed = Boolean(
+    enabled &&
+      !scope.isLoading &&
+      !scope.isError &&
+      orgId &&
+      orgId === scope.orgId &&
+      (!resourceMode || resourceMode === mode) &&
+      scope.membership?.capabilities.includes('scanning:read') &&
+      (scope.membership.capabilities.includes('templates:read') ||
+        scope.membership.capabilities.includes('passes:read')),
+  );
+  return useInfiniteQuery({
+    queryKey: [
+      'admin',
+      'templates',
+      'eligible',
+      'scanning',
+      allowed ? orgId : null,
+      mode,
+      'apple',
+      allowed,
+    ],
+    enabled: allowed,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => {
+      if (!allowed || !orgId) throw new Error('Choose an authorized organization and mode.');
+      return api.get('/api/v1/templates/eligible', EligibleTemplateListSchema, {
+        query: { orgId, mode, provider: 'apple', cursor: pageParam, limit: 200 },
+        signal,
+      });
+    },
+    select: (data) => ({
+      ...data,
+      pages: data.pages.map((page) => ({
+        ...page,
+        items: page.items.filter(
+          (item) => item.templateOrgId === null || item.templateOrgId === orgId,
+        ),
+      })),
+    }),
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }

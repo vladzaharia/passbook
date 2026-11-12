@@ -68,75 +68,6 @@ export async function getVersion(
   return row ? mapVersion(row) : null;
 }
 
-export interface AssetRow {
-  name: string;
-  r2Key: string;
-  sha1: string;
-  size: number;
-  width: number | null;
-  height: number | null;
-  crc32: number | null;
-  createdAt: number;
-}
-
-export async function listAssets(db: D1Database, passId: string): Promise<AssetRow[]> {
-  const rows = await all<{
-    name: string;
-    r2_key: string;
-    sha1: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-    crc32: number | null;
-    created_at: number;
-  }>(db, 'SELECT * FROM pass_assets WHERE pass_id = ? ORDER BY name', [passId]);
-  return rows.map((r) => ({
-    name: r.name,
-    r2Key: r.r2_key,
-    sha1: r.sha1,
-    size: r.size,
-    width: r.width,
-    height: r.height,
-    crc32: r.crc32,
-    createdAt: r.created_at,
-  }));
-}
-
-export async function upsertAsset(
-  db: D1Database,
-  passId: string,
-  asset: AssetRow,
-): Promise<AssetRow | null> {
-  const previous = (await listAssets(db, passId)).find((a) => a.name === asset.name) ?? null;
-  await run(
-    db,
-    `INSERT INTO pass_assets (pass_id, name, r2_key, sha1, size, width, height, crc32, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT (pass_id, name) DO UPDATE SET r2_key = excluded.r2_key, sha1 = excluded.sha1,
-       size = excluded.size, width = excluded.width, height = excluded.height,
-       crc32 = excluded.crc32, created_at = excluded.created_at`,
-    [
-      passId,
-      asset.name,
-      asset.r2Key,
-      asset.sha1,
-      asset.size,
-      asset.width,
-      asset.height,
-      asset.crc32,
-      asset.createdAt,
-    ],
-  );
-  return previous;
-}
-
-export async function removeAsset(db: D1Database, passId: string, name: string): Promise<boolean> {
-  return (
-    (await run(db, 'DELETE FROM pass_assets WHERE pass_id = ? AND name = ?', [passId, name]))
-      .changes > 0
-  );
-}
-
 export interface PurgeCandidate {
   passId: string;
   version: number;
@@ -183,11 +114,4 @@ export async function markPurged(
 
 export async function deleteIdempotencyBefore(db: D1Database, before: number): Promise<number> {
   return (await run(db, 'DELETE FROM idempotency_keys WHERE created_at < ?', [before])).changes;
-}
-
-/** Another row (any pass) still points at this object. */
-export async function assetKeyInUse(db: D1Database, r2Key: string): Promise<boolean> {
-  return (
-    (await first(db, 'SELECT 1 AS n FROM pass_assets WHERE r2_key = ? LIMIT 1', [r2Key])) !== null
-  );
 }

@@ -86,13 +86,16 @@ export function previewAssetMap(
   assets: readonly DraftAsset[],
   baseUrl: string,
 ): Record<string, string> {
+  const queryAt = baseUrl.indexOf('?');
+  const path = queryAt === -1 ? baseUrl : baseUrl.slice(0, queryAt);
+  const query = queryAt === -1 ? '' : baseUrl.slice(queryAt);
   const out: Record<string, string> = {};
   for (const a of assets) {
     if (!a.name.endsWith('.png')) continue;
     out[a.name] =
       a.upload !== undefined
         ? `data:image/png;base64,${a.upload}`
-        : `${baseUrl.replace(/\/+$/, '')}/${encodeURIComponent(a.name)}`;
+        : `${path.replace(/\/+$/, '')}/${encodeURIComponent(a.name)}${query}`;
   }
   return out;
 }

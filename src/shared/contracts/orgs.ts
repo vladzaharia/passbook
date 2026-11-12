@@ -36,6 +36,8 @@ export const OrgSchema = z.object({
   branding: OrgBrandingSchema,
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
+  /** Moves with name, slug, branding, default identity and settings; send it back with a save. */
+  configRevision: z.number().int().optional(),
   /** Only on a save that restyles live passes: how many will be rebuilt and pushed. */
   passesToUpdate: z.number().int().optional(),
 });
@@ -65,6 +67,8 @@ export const CreateOrgSchema = z.object({
 });
 export const UpdateOrgSchema = CreateOrgSchema.partial().extend({
   status: z.enum(['active', 'suspended']).optional(),
+  /** The `configRevision` the form was loaded with; a save from older values is a 409. */
+  configRevision: z.number().int().optional(),
 });
 /** Suspend stops pass updates and API keys for the org; audited as org.suspend / org.reactivate. */
 export const OrgStatusSchema = z.object({ status: z.enum(['active', 'suspended']) });
@@ -74,6 +78,7 @@ export const OrgListSchema = pageOf(OrgSummarySchema);
 export const UploadBrandingImageSchema = z.object({
   x3: z.base64().max(560_000),
   x2: z.base64().max(560_000).optional(),
+  configRevision: z.number().int().optional(),
 });
 export const BrandingSlotParamSchema = z.object({ id: IdSchema, slot: BrandingSlotSchema });
 

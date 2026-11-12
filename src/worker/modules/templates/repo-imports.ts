@@ -1,6 +1,8 @@
 import type { ValidationReport } from '../../../passkit/types.ts';
 import { first, run, stmt } from '../../platform/db.ts';
-import { finishRun, startRunStmt } from '../../platform/workflow-runs.ts';
+import { startRunStmt } from '../../platform/workflow-runs.ts';
+import type { TemplateAuthority } from './access.ts';
+import { templateAuthorityPredicate } from './repo-authority.ts';
 
 export interface ImportRow {
   uploadId: string;
@@ -81,41 +83,196 @@ export async function getImport(db: D1Database, uploadId: string): Promise<Impor
   };
 }
 
-export async function updateImport(
-  db: D1Database,
-  uploadId: string,
-  patch: {
-    step?: string;
-    templateId?: string;
-    version?: string;
-    report?: ValidationReport;
-    error?: string | null;
-  },
-  now: number,
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE template_imports SET step = COALESCE(?, step), template_id = COALESCE(?, template_id),
-       version = COALESCE(?, version), report = COALESCE(?, report), error = COALESCE(?, error), updated_at = ?
-     WHERE upload_id = ?`,
-    [
-      patch.step ?? null,
-      patch.templateId ?? null,
-      patch.version ?? null,
-      patch.report ? JSON.stringify(patch.report) : null,
-      patch.error ?? null,
-      now,
-      uploadId,
-    ],
-  );
+export interface ImportIdentity {
+  uploadId: string;
+  orgId: string | null;
+  objectKey: string;
+  createdBy: string | null;
 }
 
-export async function setWorkflowRun(
+const identitySql = 'i.upload_id = ? AND i.org_id IS ? AND i.object_key = ? AND i.created_by IS ?';
+const identityParams = (i: ImportIdentity) => [i.uploadId, i.orgId, i.objectKey, i.createdBy];
+
+/** A workflow can clean up only the upload and workflow record it originally owned. */
+export async function matchesImport(db: D1Database, identity: ImportIdentity): Promise<boolean> {
+  const row = await first<{ ok: number }>(
+    db,
+    `SELECT 1 AS ok FROM template_imports i
+     JOIN workflow_runs w ON w.instance_id = i.upload_id
+     WHERE ${identitySql} AND w.kind = 'template_import' AND w.org_id IS i.org_id
+       AND (w.target_id = i.upload_id OR (w.status = 'complete' AND w.target_id = i.template_id))`,
+    identityParams(identity),
+  );
+  return !!row;
+}
+
+/** Starts only the matching queued import; retries cannot restart a terminal run. */
+export async function startImportRun(
   db: D1Database,
-  instanceId: string,
-  status: 'queued' | 'running' | 'complete' | 'errored' | 'terminated',
+  identity: ImportIdentity,
+  authority: TemplateAuthority,
   now: number,
-  extra: { errorCode?: string | null; targetId?: string | null } = {},
-): Promise<void> {
-  await finishRun(db, instanceId, status, now, extra);
+): Promise<boolean> {
+  const auth = templateAuthorityPredicate(authority, 'i.org_id', now, true);
+  const results = await db.batch([
+    stmt(
+      db,
+      `UPDATE workflow_runs SET status = 'running', finished_at = NULL, error_code = NULL
+       WHERE instance_id = ? AND kind = 'template_import' AND org_id IS ? AND target_id = ?
+         AND status IN ('queued', 'running')
+         AND EXISTS (SELECT 1 FROM template_imports i WHERE ${identitySql}
+           AND i.step IN ('queued', 'extract') AND (${auth.sql}))
+       RETURNING instance_id`,
+      [
+        identity.uploadId,
+        identity.orgId,
+        identity.uploadId,
+        ...identityParams(identity),
+        ...auth.params,
+      ],
+    ),
+    stmt(
+      db,
+      `UPDATE template_imports AS i SET step = 'extract', updated_at = MAX(updated_at, ?)
+       WHERE ${identitySql} AND i.step IN ('queued', 'extract') AND changes() = 1
+         AND EXISTS (SELECT 1 FROM workflow_runs w WHERE w.instance_id = i.upload_id
+           AND w.kind = 'template_import' AND w.org_id IS i.org_id
+           AND w.target_id = i.upload_id AND w.status = 'running')
+         AND (${auth.sql})
+       RETURNING upload_id`,
+      [now, ...identityParams(identity), ...auth.params],
+    ),
+  ]);
+  return !!results[0]?.results.length && !!results[1]?.results.length;
+}
+
+/** Advances a still-authorized import without changing a terminal or foreign run. */
+export async function advanceImport(
+  db: D1Database,
+  identity: ImportIdentity,
+  authority: TemplateAuthority,
+  from: string,
+  to: string,
+  now: number,
+): Promise<boolean> {
+  const auth = templateAuthorityPredicate(authority, 'i.org_id', now, true);
+  const result = await run(
+    db,
+    `UPDATE template_imports AS i SET step = ?, updated_at = MAX(updated_at, ?)
+     WHERE ${identitySql} AND i.step IN (?, ?)
+       AND EXISTS (SELECT 1 FROM workflow_runs w WHERE w.instance_id = i.upload_id
+         AND w.kind = 'template_import' AND w.org_id IS i.org_id
+         AND w.target_id = i.upload_id AND w.status = 'running')
+       AND (${auth.sql})`,
+    [to, now, ...identityParams(identity), from, to, ...auth.params],
+  );
+  return result.changes === 1;
+}
+
+/** Failure is compensation, so a revoked principal can still fail its own import. */
+export async function recordImportFailure(
+  db: D1Database,
+  identity: ImportIdentity,
+  report: ValidationReport,
+  code: string,
+  now: number,
+): Promise<boolean> {
+  const results = await db.batch([
+    stmt(
+      db,
+      `UPDATE template_imports AS i SET step = 'failed', report = ?, error = ?, updated_at = MAX(updated_at, ?)
+       WHERE ${identitySql}
+         AND (COALESCE(i.step, '') NOT IN ('done', 'failed') OR (i.step = 'failed' AND i.error = ?))
+         AND EXISTS (SELECT 1 FROM workflow_runs w WHERE w.instance_id = i.upload_id
+           AND w.kind = 'template_import' AND w.org_id IS i.org_id AND w.target_id = i.upload_id
+           AND (w.status IN ('queued', 'running') OR (w.status = 'errored' AND w.error_code = ?)))
+       RETURNING upload_id`,
+      [JSON.stringify(report), code, now, ...identityParams(identity), code, code],
+    ),
+    stmt(
+      db,
+      `UPDATE workflow_runs AS w SET status = 'errored', finished_at = ?, error_code = ?
+       WHERE w.instance_id = ? AND w.kind = 'template_import' AND w.org_id IS ? AND w.target_id = ?
+         AND (w.status IN ('queued', 'running') OR (w.status = 'errored' AND w.error_code = ?))
+         AND changes() = 1
+         AND EXISTS (SELECT 1 FROM template_imports i WHERE ${identitySql}
+           AND i.step = 'failed' AND i.error = ?)
+       RETURNING instance_id`,
+      [
+        now,
+        code,
+        identity.uploadId,
+        identity.orgId,
+        identity.uploadId,
+        code,
+        ...identityParams(identity),
+        code,
+      ],
+    ),
+  ]);
+  return !!results[0]?.results.length && !!results[1]?.results.length;
+}
+
+/** Atomically completes only the matching live import, with the same authority fence as its write. */
+export async function completeImport(
+  db: D1Database,
+  identity: ImportIdentity,
+  authority: TemplateAuthority,
+  templateId: string,
+  version: string,
+  report: ValidationReport,
+  now: number,
+): Promise<boolean> {
+  const importAuth = templateAuthorityPredicate(authority, 'i.org_id', now, true);
+  const runAuth = templateAuthorityPredicate(authority, 'w.org_id', now, true);
+  const results = await db.batch([
+    stmt(
+      db,
+      `UPDATE template_imports AS i SET step = 'done', template_id = ?, version = ?, report = ?,
+         error = NULL, updated_at = MAX(updated_at, ?)
+       WHERE ${identitySql}
+         AND (i.step = 'persist' OR (i.step = 'done' AND i.template_id = ? AND i.version = ?))
+         AND EXISTS (SELECT 1 FROM workflow_runs w WHERE w.instance_id = i.upload_id
+           AND w.kind = 'template_import' AND w.org_id IS i.org_id
+           AND ((w.status = 'running' AND w.target_id = i.upload_id)
+             OR (w.status = 'complete' AND w.target_id = ?)))
+         AND (${importAuth.sql})
+       RETURNING upload_id`,
+      [
+        templateId,
+        version,
+        JSON.stringify(report),
+        now,
+        ...identityParams(identity),
+        templateId,
+        version,
+        templateId,
+        ...importAuth.params,
+      ],
+    ),
+    stmt(
+      db,
+      `UPDATE workflow_runs AS w SET status = 'complete', finished_at = ?, error_code = NULL, target_id = ?
+       WHERE w.instance_id = ? AND w.kind = 'template_import' AND w.org_id IS ?
+         AND ((w.status = 'running' AND w.target_id = ?) OR (w.status = 'complete' AND w.target_id = ?))
+         AND changes() = 1
+         AND EXISTS (SELECT 1 FROM template_imports i WHERE ${identitySql}
+           AND i.step = 'done' AND i.template_id = ? AND i.version = ?)
+         AND (${runAuth.sql})
+       RETURNING instance_id`,
+      [
+        now,
+        templateId,
+        identity.uploadId,
+        identity.orgId,
+        identity.uploadId,
+        templateId,
+        ...identityParams(identity),
+        templateId,
+        version,
+        ...runAuth.params,
+      ],
+    ),
+  ]);
+  return !!results[0]?.results.length && !!results[1]?.results.length;
 }

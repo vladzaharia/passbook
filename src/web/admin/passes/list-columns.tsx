@@ -11,6 +11,8 @@ export type { Swatch };
 
 /** What the cells read. Cells are stable components; this context carries what changes. */
 export interface ListContextValue {
+  orgId: string | undefined;
+  canOperate: boolean;
   templateNames: ReadonlyMap<string, string>;
   orgNames: ReadonlyMap<string, string>;
   swatches: ReadonlyMap<string, Swatch>;
@@ -72,6 +74,11 @@ function SelectRow({ pass }: { pass: PassSummaryDto }) {
       onCheckedChange={() => o.onToggle(pass.id)}
     />
   );
+}
+
+function ActionsCell({ pass }: { pass: PassSummaryDto }) {
+  const { orgId, canOperate } = useList();
+  return <PassRowMenu pass={pass} orgId={orgId} canOperate={canOperate} />;
 }
 
 function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
@@ -176,7 +183,7 @@ export function passColumns(showOrg: boolean): ColumnDef<PassSummaryDto, never>[
     {
       id: 'actions',
       header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => <PassRowMenu pass={row.original} />,
+      cell: ({ row }) => <ActionsCell pass={row.original} />,
     },
   ];
 }

@@ -1,55 +1,74 @@
+import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
+import {
+  editFixedColumns,
+  makeApiKey,
+  makeOrg,
+  makeSession,
+  makeUser,
+  type SessionFixture,
+} from '../../../../test/helpers/index.ts';
 import {
   CapturedEmailDetailSchema,
   CapturedEmailListSchema,
 } from '../../../shared/contracts/index.ts';
-import { createApp } from '../../app.ts';
 import { countQueries } from '../../jobs/query-counter.ts';
+import type { AppBindings } from '../../platform/context.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { enqueuePassEmail } from '../delivery/issuance-intent.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
-import { enqueuePassEmail } from '../delivery/service.ts';
-import { createPassRow } from '../passes/create.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { dailySandbox } from './jobs.ts';
+import { inboxApp, inboxHeaders, inboxMember, scopedInboxPath } from './test-tenant-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 const DAY = 86_400_000;
-const fake = fakeAuth(ORIGIN);
+let admin: SessionFixture;
+let unverified: SessionFixture;
+let outsider: SessionFixture;
+let keyHeaders: Record<string, string>;
 let kit: Kit;
-let app: ReturnType<typeof createApp>;
+let app: OpenAPIHono<AppBindings>;
 let other: { id: string };
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  app = inboxApp(kit);
   other = await makeOrg(kit.fx, { name: 'Other Org' });
-  await makeUser(kit.fx, { id: 'admin-1', primaryEmail: 'admin-one@example.com' });
-  await makeUser(kit.fx, { id: 'admin-2', primaryEmail: 'admin-two@example.com', verified: false });
+  const first = await makeUser(kit.fx, { id: 'admin-1', primaryEmail: 'admin-one@example.com' });
+  const second = await makeUser(kit.fx, {
+    id: 'admin-2',
+    primaryEmail: 'admin-two@example.com',
+    verified: false,
+  });
+  admin = (await inboxMember(kit, first.id, kit.org.id, 'org_admin', ['admin', 'user'])).session;
+  unverified = (await inboxMember(kit, second.id)).session;
+  const user = await makeUser(kit.fx);
+  outsider = await makeSession(kit.fx, { userId: user.id });
+  keyHeaders = (await makeApiKey(kit.fx, { orgId: kit.org.id })).headers;
 });
 
 type Headers = Record<string, string>;
 const api = (path: string, init: RequestInit & { headers?: Headers } = {}) =>
-  app.request(`${ORIGIN}/api/v1${path}`, init, kit.env);
-const send = (id: string, headers: Headers = fake.admin({ mode: 'test' })) =>
+  app.request(`${ORIGIN}/api/v1${scopedInboxPath(path, kit.org.id)}`, init, kit.env);
+const send = (id: string, headers: Headers = inboxHeaders(admin)) =>
   api(`/test-inbox/${id}/send-to-me`, { method: 'POST', headers });
 
 const makePass = (mode: 'live' | 'test', orgId = kit.org.id) =>
-  createPassRow(kit.ctx, {
-    orgId,
-    templateId: kit.template.id,
-    input: { memberName: `Sandbox ${mode}` },
-    source: 'manual',
-    mode,
-    actor: { type: 'system', id: null },
-  });
+  kit.pass({ orgId, mode, memberName: `Sandbox ${mode}` });
 
 async function capture(mode: 'live' | 'test', to: string, orgId = kit.org.id) {
   const pass = await makePass(mode, orgId);
-  const { outboxId } = await enqueuePassEmail(kit.ctx, { passId: pass.id, to, attach: false });
+  const { outboxId } = await enqueuePassEmail(jobCtxOf(kit), {
+    passId: pass.id,
+    to,
+    attach: false,
+    expected: pass,
+  });
   const before = kit.mailer.sent.length;
-  await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+  await handleEmailSend({ kind: 'email.send', outboxId }, jobCtxOf(kit));
   return { pass, outboxId, sent: kit.mailer.sent.length - before };
 }
 
@@ -86,7 +105,7 @@ describe('test mode mail is captured, never sent', () => {
 
   it('handling the same row twice captures once', async () => {
     const { outboxId } = await capture('test', 'twice@example.com');
-    await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId }, jobCtxOf(kit));
     const rows = await all(kit.env.DB, 'SELECT 1 FROM captured_emails WHERE outbox_id = ?', [
       outboxId,
     ]);
@@ -100,13 +119,13 @@ describe('GET /test-inbox', () => {
     kit.clock.advance(10);
     const b = await capture('test', 'list-b@example.com');
     const test = CapturedEmailListSchema.parse(
-      await (await api('/test-inbox?limit=200', { headers: fake.admin({ mode: 'test' }) })).json(),
+      await (await api('/test-inbox?limit=200', { headers: inboxHeaders(admin) })).json(),
     );
     const ids = test.items.map((i) => i.passId);
     expect(ids.indexOf(b.pass.id)).toBeLessThan(ids.indexOf(a.pass.id));
     expect(test.items[0]).toMatchObject({ kind: 'pass', attached: false });
     const live = CapturedEmailListSchema.parse(
-      await (await api('/test-inbox', { headers: fake.admin() })).json(),
+      await (await api('/test-inbox', { headers: admin.headers })).json(),
     );
     expect(live.items).toEqual([]);
   });
@@ -116,53 +135,58 @@ describe('GET /test-inbox', () => {
     const mine = CapturedEmailListSchema.parse(
       await (
         await api(`/test-inbox?orgId=${kit.org.id}&limit=200`, {
-          headers: fake.admin({ mode: 'test' }),
+          headers: inboxHeaders(admin),
         })
       ).json(),
     );
     expect(mine.items.every((i) => i.orgId === kit.org.id)).toBe(true);
     expect(mine.items.some((i) => i.passId === theirs.pass.id)).toBe(false);
     const first1 = CapturedEmailListSchema.parse(
-      await (await api('/test-inbox?limit=1', { headers: fake.admin({ mode: 'test' }) })).json(),
+      await (await api('/test-inbox?limit=1', { headers: inboxHeaders(admin) })).json(),
     );
     expect(first1.items).toHaveLength(1);
     expect(first1.nextCursor).toBe(first1.items[0]?.id);
     const second = CapturedEmailListSchema.parse(
       await (
         await api(`/test-inbox?limit=1&cursor=${first1.nextCursor}`, {
-          headers: fake.admin({ mode: 'test' }),
+          headers: inboxHeaders(admin),
         })
       ).json(),
     );
     expect(second.items[0]?.id).not.toBe(first1.items[0]?.id);
   });
 
-  it('needs an admin session: users are refused, API keys have no cookie', async () => {
-    expect((await api('/test-inbox', { headers: fake.user() })).status).toBe(403);
-    expect((await api('/test-inbox', { headers: fake.apiKey() })).status).toBe(401);
+  it('requires a member session; API keys cannot access the inbox', async () => {
+    expect(
+      CapturedEmailListSchema.parse(
+        await (await api('/test-inbox', { headers: inboxHeaders(outsider) })).json(),
+      ).items,
+    ).toEqual([]);
+    expect(
+      (await api('/test-inbox', { headers: { ...keyHeaders, 'x-passbook-mode': 'test' } })).status,
+    ).toBe(401);
     expect((await api('/test-inbox')).status).toBe(401);
   });
 
-  it('returns one email with its HTML and text, in either mode', async () => {
+  it('returns one email with its HTML and text only in Test mode', async () => {
     const { outboxId } = await capture('test', 'detail@example.com');
     const row = await first<{ id: string }>(
       kit.env.DB,
       'SELECT id FROM captured_emails WHERE outbox_id = ?',
       [outboxId],
     );
-    for (const headers of [fake.admin(), fake.admin({ mode: 'test' })]) {
-      const res = await api(`/test-inbox/${row?.id}`, { headers });
-      expect(res.status).toBe(200);
-      const body = CapturedEmailDetailSchema.parse(await res.json());
-      expect(body.to).toBe('detail@example.com');
-      expect(body.html.length).toBeGreaterThan(0);
-    }
-    expect((await api('/test-inbox/missing', { headers: fake.admin() })).status).toBe(404);
+    const res = await api(`/test-inbox/${row?.id}`, { headers: inboxHeaders(admin) });
+    expect(res.status).toBe(200);
+    const body = CapturedEmailDetailSchema.parse(await res.json());
+    expect(body.to).toBe('detail@example.com');
+    expect(body.html.length).toBeGreaterThan(0);
+    expect((await api(`/test-inbox/${row?.id}`, { headers: admin.headers })).status).toBe(404);
+    expect((await api('/test-inbox/missing', { headers: inboxHeaders(admin) })).status).toBe(404);
   });
 });
 
 describe('POST /test-inbox/:id/send-to-me', () => {
-  it('sends to the signed-in admin only, audits it and rate limits', async () => {
+  it('sends a captured email to the verified admin address', async () => {
     const { outboxId } = await capture('test', 'someone-else@example.com');
     const row = await first<{ id: string }>(
       kit.env.DB,
@@ -175,31 +199,32 @@ describe('POST /test-inbox/:id/send-to-me', () => {
     expect(await res.json()).toEqual({ to: 'admin-one@example.com' });
     expect(kit.mailer.sent).toHaveLength(before + 1);
     expect(kit.mailer.sent.at(-1)?.to).toBe('admin-one@example.com');
-    expect(kit.mailer.sent.at(-1)?.subject).toMatch(/^\[Test\] /);
-    const audit = await first<{ actor_id: string; target_id: string; detail: string | null }>(
-      kit.env.DB,
-      "SELECT actor_id, target_id, detail FROM audit_log WHERE action = 'sandbox.send_to_me' ORDER BY id DESC LIMIT 1",
+    const detail = CapturedEmailDetailSchema.parse(
+      await (await api(`/test-inbox/${row?.id}`, { headers: inboxHeaders(admin) })).json(),
     );
-    expect(audit).toMatchObject({ actor_id: 'admin-1', target_id: row?.id });
-    expect(audit?.detail ?? '').not.toContain('example.com');
-    let limited = 0;
-    for (let i = 0; i < 6; i++) if ((await send(row?.id ?? '')).status === 429) limited++;
-    expect(limited).toBeGreaterThan(0);
+    expect(detail.forwarding).toBe('sent');
+    expect(
+      await first(
+        kit.env.DB,
+        `SELECT actor_id, detail FROM audit_log
+       WHERE action = 'sandbox.send_to_me' AND target_id = ?`,
+        [row?.id],
+      ),
+    ).toEqual({ actor_id: 'admin-1', detail: null });
   });
 
-  it('refuses an admin without a verified email and an unknown id', async () => {
+  it('refuses a member without a verified email and an unknown id', async () => {
     const { outboxId } = await capture('test', 'x@example.com');
     const row = await first<{ id: string }>(
       kit.env.DB,
       'SELECT id FROM captured_emails WHERE outbox_id = ?',
       [outboxId],
     );
-    const unverified = fake.session({ userId: 'admin-2', roles: ['admin', 'user'] });
-    const res = await send(row?.id ?? '', unverified);
+    const res = await send(row?.id ?? '', inboxHeaders(unverified));
     expect(res.status).toBe(422);
     expect(((await res.json()) as { code: string }).code).toBe('NO_VERIFIED_EMAIL');
     expect((await send('missing')).status).toBe(404);
-    expect((await send(row?.id ?? '', fake.user())).status).toBe(403);
+    expect((await send(row?.id ?? '', inboxHeaders(outsider))).status).toBe(404);
   });
 });
 
@@ -208,12 +233,12 @@ describe('daily purge', () => {
     const oldTest = await makePass('test');
     const oldLive = await makePass('live');
     const oldCap = await capture('test', 'old@example.com');
-    await run(kit.env.DB, 'UPDATE passes SET created_at = ? WHERE id IN (?, ?, ?)', [
-      kit.clock.now() - 31 * DAY,
-      oldTest.id,
-      oldLive.id,
-      oldCap.pass.id,
-    ]);
+    await editFixedColumns(
+      kit.env.DB,
+      'passes',
+      'UPDATE passes SET created_at = ? WHERE id IN (?, ?, ?)',
+      [kit.clock.now() - 31 * DAY, oldTest.id, oldLive.id, oldCap.pass.id],
+    );
     await run(kit.env.DB, 'UPDATE captured_emails SET created_at = ? WHERE pass_id = ?', [
       kit.clock.now() - 31 * DAY,
       oldCap.pass.id,
@@ -233,7 +258,7 @@ describe('daily purge', () => {
     const freshCap = await capture('test', 'fresh@example.com');
     expect(await kit.env.BUCKET.head(oldTest.objectKey)).not.toBeNull();
 
-    await dailySandbox(kit.ctx);
+    await dailySandbox(jobCtxOf(kit));
 
     expect(await kit.env.BUCKET.head(oldTest.objectKey)).toBeNull();
     const ids = (await all<{ id: string }>(kit.env.DB, 'SELECT id FROM passes')).map((r) => r.id);
@@ -271,11 +296,11 @@ describe('daily purge', () => {
     );
     clearSettingsCache(kit.env.DB);
     const three = await makePass('test');
-    await run(kit.env.DB, 'UPDATE passes SET created_at = ? WHERE id = ?', [
+    await editFixedColumns(kit.env.DB, 'passes', 'UPDATE passes SET created_at = ? WHERE id = ?', [
       kit.clock.now() - 3 * DAY,
       three.id,
     ]);
-    await dailySandbox(kit.ctx);
+    await dailySandbox(jobCtxOf(kit));
     expect(
       await first(kit.env.DB, 'SELECT 1 AS x FROM passes WHERE id = ?', [three.id]),
     ).toBeNull();
@@ -287,10 +312,15 @@ describe('daily purge', () => {
     const old = kit.clock.now() - 40 * DAY;
     for (let i = 0; i < 90; i++) {
       const pass = await makePass('test');
-      await run(kit.env.DB, 'UPDATE passes SET created_at = ? WHERE id = ?', [old, pass.id]);
+      await editFixedColumns(
+        kit.env.DB,
+        'passes',
+        'UPDATE passes SET created_at = ? WHERE id = ?',
+        [old, pass.id],
+      );
     }
     const counter = countQueries(kit.env);
-    await dailySandbox({ ...kit.ctx, env: counter.env });
+    await dailySandbox({ ...jobCtxOf(kit), env: counter.env });
     expect(counter.count()).toBeLessThan(400);
     const left = await first<{ n: number }>(
       kit.env.DB,
@@ -310,7 +340,7 @@ describe('GET /test-inbox/{id}/html', () => {
       'SELECT id, html FROM captured_emails WHERE outbox_id = ?',
       [outboxId],
     );
-    const res = await api(`/test-inbox/${row?.id}/html`, { headers: fake.admin({ mode: 'test' }) });
+    const res = await api(`/test-inbox/${row?.id}/html`, { headers: admin.headers });
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
     expect(res.headers.get('content-security-policy')).toBe(
@@ -320,16 +350,14 @@ describe('GET /test-inbox/{id}/html', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(res.headers.get('x-frame-options')).toBe('SAMEORIGIN');
     expect(await res.text()).toBe(row?.html);
-    const json = await api(`/test-inbox/${row?.id}`, { headers: fake.admin({ mode: 'test' }) });
+    const json = await api(`/test-inbox/${row?.id}`, { headers: inboxHeaders(admin) });
     expect(json.headers.get('content-security-policy')).toContain("default-src 'none'");
     expect(json.headers.get('content-security-policy')).not.toContain("style-src 'unsafe-inline'");
   });
 
-  it('is admin only and 404 for an unknown id', async () => {
-    expect(
-      (await api('/test-inbox/nope/html', { headers: fake.admin({ mode: 'test' }) })).status,
-    ).toBe(404);
-    expect((await api('/test-inbox/nope/html', { headers: fake.user() })).status).toBe(403);
+  it('hides unknown ids from a member and a non-member', async () => {
+    expect((await api('/test-inbox/nope/html', { headers: admin.headers })).status).toBe(404);
+    expect((await api('/test-inbox/nope/html', { headers: outsider.headers })).status).toBe(404);
   });
 });
 
@@ -337,7 +365,7 @@ describe('capture ledger', () => {
   it('records email.captured once when the row is handled twice', async () => {
     const { pass, outboxId } = await capture('test', 'ledger@example.com');
     await run(kit.env.DB, "UPDATE outbox SET state = 'enqueued' WHERE id = ?", [outboxId]);
-    await handleEmailSend({ kind: 'email.send', outboxId }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId }, jobCtxOf(kit));
     const events = await all(
       kit.env.DB,
       "SELECT 1 FROM pass_events WHERE pass_id = ? AND kind = 'email.captured'",

@@ -21,6 +21,7 @@ const pass = (mode?: 'live' | 'test') =>
     orgLabel: 'Gym',
     passTitle: 'Membership',
     downloadHref: '/p/t/pass.pkpass',
+    walletOffers: [],
     publicUrl: 'https://wallet.test/p/t',
     portalHref: '/passes/p1',
     voided: false,

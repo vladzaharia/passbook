@@ -6,7 +6,7 @@ import type { AdmissionPlan } from './admission-types.ts';
 import { localDayStart } from './counts.ts';
 import type { ScanActor } from './guard.ts';
 import { admissionReads } from './repo-admission.ts';
-import { getEvent } from './repo-scope.ts';
+import { presenceSnapshot } from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
 
 export function completedAdmission(plan: AdmissionPlan, now: number): CheckInState {
@@ -38,6 +38,10 @@ export async function planAdmission(
   actor: ScanActor,
   found: Found,
   requested?: 'in' | 'out',
+  extraReads?: {
+    stmts: D1PreparedStatement[];
+    finish(results: readonly D1Result[]): Promise<void>;
+  },
 ): Promise<{ plan: AdmissionPlan; reason: ScanReason | null; at: number | null; flags: string[] }> {
   const passRule = found.checkInRules ?? {};
   const scannerRule = actor.settings.checkIn ?? {};
@@ -62,23 +66,29 @@ export async function planAdmission(
   const eventIds = [actor.event?.id, ...rules.map((p) => p.eventId)].filter(
     (id): id is string => !!id,
   );
-  const eventId = eventIds[0];
-  const event = eventId
-    ? actor.event?.id === eventId
-      ? actor.event
-      : await getEvent(ctx.env.DB, actor.orgId, eventId)
-    : null;
+  const eventId = eventIds[0] ?? null;
+  const knownEvent = actor.event?.id === eventId ? actor.event : null;
   const now = ctx.clock.now();
-  const day = localDayStart(now, event?.timeZone ?? actor.timeZone);
-  const scope = event ? `event:${event.id}` : '';
-  const { history, presence } = await admissionReads(
+  const {
+    history: rawHistory,
+    presence,
+    event,
+    additional,
+  } = await admissionReads(
     ctx.env.DB,
     actor.orgId,
     found.pass.id,
-    event?.id ?? null,
-    day,
-    scope,
+    eventId,
+    knownEvent,
+    extraReads?.stmts,
   );
+  const day = localDayStart(now, event?.timeZone ?? actor.timeZone);
+  const scope = event ? `event:${event.id}` : '';
+  const history = rawHistory && {
+    ...rawHistory,
+    today_at: rawHistory.last_at !== null && rawHistory.last_at >= day ? rawHistory.last_at : null,
+  };
+  if (extraReads) await extraReads.finish(additional);
   const tracked = mode === 'in_out';
   const inside = presence?.tracking === 1 && presence.state === 'in';
   const setupDirection = actor.settings.direction ?? (tracked ? 'both' : 'in');
@@ -109,6 +119,7 @@ export async function planAdmission(
     tracked,
     rules,
     previousScanId: presence?.last_scan_id ?? null,
+    presence: presenceSnapshot(presence),
     limited,
     limitSince: modes.includes('single') ? null : day,
     state: {

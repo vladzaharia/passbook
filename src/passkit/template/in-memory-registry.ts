@@ -1,5 +1,6 @@
 import type { AssetEntry, PassJson, PassStyle, TemplateManifest } from '../types.ts';
 import { PASS_STYLES } from '../types.ts';
+import { classifyAsset } from './package.ts';
 import type { ResolvedTemplate, TemplateRegistry, TemplateSummary } from './registry.ts';
 
 export interface InMemoryTemplateInput {
@@ -25,8 +26,8 @@ export class InMemoryTemplateRegistry implements TemplateRegistry {
       this.#bytes.set(`${input.id}@${version}/${name}`, bytes);
       return {
         name,
-        slot: 'other',
-        scale: 1,
+        // The slot a package of this name would get: provider projections read it.
+        ...(classifyAsset(name) ?? { slot: 'other', scale: 1 }),
         size: bytes.length,
         sha1: '',
         crc32: 0,

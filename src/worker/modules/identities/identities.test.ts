@@ -57,6 +57,16 @@ const upload = async (f: Fixture, extra: Record<string, unknown> = {}) => {
   return call('POST', '', { ...pem(f), ...extra });
 };
 
+async function identityRevision(id: string) {
+  const row = await first<{ revision: number }>(
+    env.DB,
+    'SELECT revision FROM signing_identities WHERE id = ?',
+    [id],
+  );
+  if (!row) throw new Error(`Missing identity ${id}`);
+  return row.revision;
+}
+
 beforeAll(async () => {
   base = await makeEnv();
   app = createApp({ stores: fake.stores });
@@ -67,6 +77,7 @@ describe('identity rotation', () => {
   it('swaps cert and key for the same pass type ID, drops the old credential and audits', async () => {
     const f = await acme();
     const dto = (await (await upload(f)).json()) as Dto;
+    const beforeRevision = await identityRevision(dto.id);
     const before = await first<{ credential_id: string }>(
       env.DB,
       'SELECT credential_id FROM signing_identities WHERE id = ?',
@@ -82,6 +93,9 @@ describe('identity rotation', () => {
     const next = (await res.json()) as Dto;
     expect(next.certSha256).not.toBe(dto.certSha256);
     expect(next.daysRemaining).toBe(4);
+    expect(next).not.toHaveProperty('revision');
+    const rotatedRevision = await identityRevision(dto.id);
+    expect(rotatedRevision).toBeGreaterThan(beforeRevision);
     expect(
       await first(env.DB, 'SELECT 1 AS x FROM credentials WHERE id = ?', [before?.credential_id]),
     ).toBeNull();
@@ -99,6 +113,15 @@ describe('identity rotation', () => {
     expect(audit).not.toBeNull();
     const resolved = await createIdentityResolver(appEnv).byId(dto.id);
     expect(resolved.material.privateKey).toContain(renewed.privateKey.slice(0, 40));
+
+    appEnv = await envFor(f);
+    const restored = await call('POST', `/${dto.id}/rotate`, {
+      certificatePem: f.certificate,
+      privateKeyPem: f.privateKey,
+    });
+    expect(restored.status).toBe(200);
+    expect(((await restored.json()) as Dto).certSha256).toBe(dto.certSha256);
+    expect(await identityRevision(dto.id)).toBeGreaterThan(rotatedRevision);
   });
 
   it('refuses another pass type ID and the platform identity', async () => {
@@ -117,6 +140,306 @@ describe('identity rotation', () => {
       privateKeyPem: other.privateKey,
     });
     expect([404, 409]).toContain(platform.status);
+  });
+});
+
+describe('identity authority revision', () => {
+  it('starts positive and stays unchanged for no-op and non-authority updates', async () => {
+    const f = await acme();
+    const response = await upload(f);
+    expect(response.status).toBe(201);
+    const dto = (await response.json()) as Dto;
+    expect(dto).not.toHaveProperty('revision');
+    const initial = await identityRevision(dto.id);
+    expect(Number.isInteger(initial)).toBe(true);
+    expect(initial).toBeGreaterThan(0);
+    for (const invalid of [0, -1, 1.5, null]) {
+      await expect(
+        run(env.DB, 'UPDATE signing_identities SET revision = ? WHERE id = ?', [invalid, dto.id]),
+      ).rejects.toThrow();
+    }
+    expect(await identityRevision(dto.id)).toBe(initial);
+
+    const unchanged = await call('PATCH', `/${dto.id}`, {
+      label: 'Acme',
+      nfcEnabled: false,
+      apnsBinding: null,
+      isDefault: false,
+    });
+    expect(unchanged.status).toBe(200);
+    expect((await unchanged.json()) as Dto).not.toHaveProperty('revision');
+    expect(await identityRevision(dto.id)).toBe(initial);
+
+    const renamed = await call('PATCH', `/${dto.id}`, { label: 'Renamed' });
+    expect(renamed.status).toBe(200);
+    expect(await identityRevision(dto.id)).toBe(initial);
+    await run(env.DB, "UPDATE signing_identities SET apns_health = 'healthy' WHERE id = ?", [
+      dto.id,
+    ]);
+    expect(await identityRevision(dto.id)).toBe(initial);
+
+    const fetched = await call('GET', `/${dto.id}`);
+    expect(fetched.status).toBe(200);
+    expect((await fetched.json()) as Dto).not.toHaveProperty('revision');
+    const listed = await call('GET', '?limit=200');
+    expect(listed.status).toBe(200);
+    const page = (await listed.json()) as { items: Dto[] };
+    const item = page.items.find((identity) => identity.id === dto.id);
+    expect(item).toBeDefined();
+    expect(item).not.toHaveProperty('revision');
+  });
+
+  it('advances for each authority change, including A to B to A, but not a repeated patch', async () => {
+    const response = await upload(await acme());
+    expect(response.status).toBe(201);
+    const dto = (await response.json()) as Dto;
+    let previous = await identityRevision(dto.id);
+    const patches = [
+      { nfcEnabled: true },
+      { nfcEnabled: false },
+      { apnsBinding: 'APNS_ACME' },
+      { apnsBinding: null },
+      { isDefault: true },
+      { isDefault: false },
+    ];
+    for (const patch of patches) {
+      const changed = await call('PATCH', `/${dto.id}`, patch);
+      expect(changed.status).toBe(200);
+      expect((await changed.json()) as Dto).toMatchObject(patch);
+      const next = await identityRevision(dto.id);
+      expect(next).toBeGreaterThan(previous);
+
+      const repeated = await call('PATCH', `/${dto.id}`, patch);
+      expect(repeated.status).toBe(200);
+      expect(await identityRevision(dto.id)).toBe(next);
+      previous = next;
+    }
+  });
+
+  it('increments both identities when the default moves and uses a global sequence', async () => {
+    const aResponse = await upload(await acme());
+    expect(aResponse.status).toBe(201);
+    const a = (await aResponse.json()) as Dto;
+    const aInitial = await identityRevision(a.id);
+    const bResponse = await upload(await acme());
+    expect(bResponse.status).toBe(201);
+    const b = (await bResponse.json()) as Dto;
+    const bInitial = await identityRevision(b.id);
+    expect(bInitial).toBeGreaterThan(aInitial);
+
+    expect((await call('PATCH', `/${a.id}`, { isDefault: true })).status).toBe(200);
+    const aDefault = await identityRevision(a.id);
+    expect(aDefault).toBeGreaterThan(bInitial);
+    expect((await call('PATCH', `/${b.id}`, { isDefault: true })).status).toBe(200);
+    const aCleared = await identityRevision(a.id);
+    const bDefault = await identityRevision(b.id);
+    expect(aCleared).toBeGreaterThan(aDefault);
+    expect(bDefault).toBeGreaterThan(aCleared);
+  });
+
+  it('advances for each persisted authority field and its restoration', async () => {
+    const f = await acme();
+    const response = await upload(f);
+    expect(response.status).toBe(201);
+    const dto = (await response.json()) as Dto;
+    const otherResponse = await upload(await acme());
+    expect(otherResponse.status).toBe(201);
+    const other = (await otherResponse.json()) as Dto;
+    const org = await makeOrg(fixtures(base));
+    const row = await first<{
+      org_id: string | null;
+      pass_type_identifier: string;
+      team_identifier: string;
+      credential_id: string;
+      cert_pem: string;
+      cert_sha256: string;
+      not_before: number;
+      not_after: number;
+      env_material_sha256: string | null;
+    }>(
+      env.DB,
+      `SELECT org_id, pass_type_identifier, team_identifier, credential_id, cert_pem,
+              cert_sha256, not_before, not_after, env_material_sha256
+       FROM signing_identities WHERE id = ?`,
+      [dto.id],
+    );
+    const otherRow = await first<{ credential_id: string }>(
+      env.DB,
+      'SELECT credential_id FROM signing_identities WHERE id = ?',
+      [other.id],
+    );
+    if (!row || !otherRow) throw new Error('Missing identity fixture');
+
+    let previous = await identityRevision(dto.id);
+    const changes: Array<[string, string | number | null, string | number | null]> = [
+      ['org_id', org.id, row.org_id],
+      ['pass_type_identifier', `${row.pass_type_identifier}.changed`, row.pass_type_identifier],
+      ['team_identifier', `${row.team_identifier}X`, row.team_identifier],
+      ['credential_id', otherRow.credential_id, row.credential_id],
+      ['cert_pem', `${row.cert_pem}\n`, row.cert_pem],
+      ['cert_sha256', `${row.cert_sha256}00`, row.cert_sha256],
+      ['not_before', row.not_before + 1, row.not_before],
+      ['not_after', row.not_after + 1, row.not_after],
+      ['env_material_sha256', 'changed-material', row.env_material_sha256],
+    ];
+    for (const [column, changed, original] of changes) {
+      await run(env.DB, `UPDATE signing_identities SET ${column} = ? WHERE id = ?`, [
+        changed,
+        dto.id,
+      ]);
+      const next = await identityRevision(dto.id);
+      expect(next, `${column} changed`).toBeGreaterThan(previous);
+      await run(env.DB, `UPDATE signing_identities SET ${column} = ? WHERE id = ?`, [
+        changed,
+        dto.id,
+      ]);
+      expect(await identityRevision(dto.id), `${column} unchanged`).toBe(next);
+      await run(env.DB, `UPDATE signing_identities SET ${column} = ? WHERE id = ?`, [
+        original,
+        dto.id,
+      ]);
+      previous = await identityRevision(dto.id);
+      expect(previous, `${column} restored`).toBeGreaterThan(next);
+    }
+
+    // A DB identity can carry a prefix, allowing source and prefix to be tested independently.
+    for (const [column, value] of [
+      ['env_prefix', 'REVISION_TEST'],
+      ['source', 'env'],
+      ['source', 'db'],
+      ['env_prefix', null],
+    ] as const) {
+      await run(env.DB, `UPDATE signing_identities SET ${column} = ? WHERE id = ?`, [
+        value,
+        dto.id,
+      ]);
+      const next = await identityRevision(dto.id);
+      expect(next, `${column} changed`).toBeGreaterThan(previous);
+      await run(env.DB, `UPDATE signing_identities SET ${column} = ? WHERE id = ?`, [
+        value,
+        dto.id,
+      ]);
+      expect(await identityRevision(dto.id), `${column} unchanged`).toBe(next);
+      previous = next;
+    }
+    await run(env.DB, 'UPDATE signing_identities SET id = id WHERE id = ?', [dto.id]);
+    expect(await identityRevision(dto.id)).toBe(previous);
+    const movedId = `${dto.id}-changed`;
+    await run(env.DB, 'UPDATE signing_identities SET id = ? WHERE id = ?', [movedId, dto.id]);
+    const moved = await identityRevision(movedId);
+    expect(moved).toBeGreaterThan(previous);
+    await run(env.DB, 'UPDATE signing_identities SET id = ? WHERE id = ?', [dto.id, movedId]);
+    expect(await identityRevision(dto.id)).toBeGreaterThan(moved);
+  });
+
+  it('advances only the linked identity for in-place credential material changes', async () => {
+    const response = await upload(await acme());
+    expect(response.status).toBe(201);
+    const dto = (await response.json()) as Dto;
+    const otherResponse = await upload(await acme());
+    expect(otherResponse.status).toBe(201);
+    const other = (await otherResponse.json()) as Dto;
+    const org = await makeOrg(fixtures(base));
+    const row = await first<{ credential_id: string }>(
+      env.DB,
+      'SELECT credential_id FROM signing_identities WHERE id = ?',
+      [dto.id],
+    );
+    if (!row) throw new Error('Missing identity fixture');
+
+    let previous = await identityRevision(dto.id);
+    const otherRevision = await identityRevision(other.id);
+    await run(env.DB, 'UPDATE credentials SET rotated_at = ? WHERE id = ?', [1, row.credential_id]);
+    expect(await identityRevision(dto.id)).toBe(previous);
+    const changes: Array<[string, string | number | Uint8Array]> = [
+      ['org_id', org.id],
+      ['kind', 'webhook'],
+      ['kek_version', 2],
+      ['iv', new Uint8Array([0])],
+      ['wrapped_dek', new Uint8Array([0])],
+      ['ciphertext', new Uint8Array([0])],
+      ['fingerprint', 'changed-fingerprint'],
+    ];
+    for (const [column, value] of changes) {
+      await run(env.DB, `UPDATE credentials SET ${column} = ? WHERE id = ?`, [
+        value,
+        row.credential_id,
+      ]);
+      const next = await identityRevision(dto.id);
+      expect(next, `${column} changed`).toBeGreaterThan(previous);
+      await run(env.DB, `UPDATE credentials SET ${column} = ? WHERE id = ?`, [
+        value,
+        row.credential_id,
+      ]);
+      expect(await identityRevision(dto.id), `${column} unchanged`).toBe(next);
+      previous = next;
+    }
+    for (const value of [new Uint8Array([1]), new Uint8Array([0])]) {
+      await run(env.DB, 'UPDATE credentials SET ciphertext = ? WHERE id = ?', [
+        value,
+        row.credential_id,
+      ]);
+      const next = await identityRevision(dto.id);
+      expect(next).toBeGreaterThan(previous);
+      previous = next;
+    }
+    expect(await identityRevision(other.id)).toBe(otherRevision);
+  });
+
+  it('does not reuse a revision when the same identity is deleted and recreated', async () => {
+    const f = await acme();
+    const response = await upload(f);
+    expect(response.status).toBe(201);
+    const dto = (await response.json()) as Dto;
+    const row = await first<{
+      credential_id: string;
+      cert_pem: string;
+      cert_sha256: string;
+      not_before: number;
+      not_after: number;
+      created_at: number;
+    }>(
+      env.DB,
+      `SELECT credential_id, cert_pem, cert_sha256, not_before, not_after, created_at
+       FROM signing_identities WHERE id = ?`,
+      [dto.id],
+    );
+    if (!row) throw new Error('Missing identity fixture');
+    const before = await identityRevision(dto.id);
+
+    // The API creates its own IDs and removes credentials; retain the credential to
+    // recreate the same ID and authority through D1.
+    await run(env.DB, 'DELETE FROM signing_identities WHERE id = ?', [dto.id]);
+    expect(
+      await first(env.DB, 'SELECT id FROM signing_identities WHERE id = ?', [dto.id]),
+    ).toBeNull();
+    await run(
+      env.DB,
+      `INSERT INTO signing_identities
+         (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id,
+          cert_pem, cert_sha256, not_before, not_after, nfc_enabled, is_default, created_at)
+       VALUES (?, NULL, 'Acme', ?, ?, 'db', ?, ?, ?, ?, ?, 0, 0, ?)`,
+      [
+        dto.id,
+        f.identity.passTypeIdentifier,
+        f.identity.teamIdentifier,
+        row.credential_id,
+        row.cert_pem,
+        row.cert_sha256,
+        row.not_before,
+        row.not_after,
+        row.created_at,
+      ],
+    );
+    const recreated = await identityRevision(dto.id);
+    expect(recreated).toBeGreaterThan(before);
+
+    expect((await call('DELETE', `/${dto.id}`)).status).toBe(200);
+    const uploadedAgain = await upload(f);
+    expect(uploadedAgain.status).toBe(201);
+    const replacement = (await uploadedAgain.json()) as Dto;
+    expect(replacement.id).not.toBe(dto.id);
+    expect(await identityRevision(replacement.id)).toBeGreaterThan(recreated);
   });
 });
 
@@ -310,6 +633,8 @@ describe('db identity resolver', () => {
     await expect(resolver.forOrg(b.id, dto.id)).rejects.toMatchObject({
       code: 'IDENTITY_NOT_FOUND',
     });
+    // Storage lasts for the whole file; an earlier case may have left a global default.
+    await run(env.DB, 'UPDATE signing_identities SET is_default = 0 WHERE is_default = 1');
     expect((await resolver.forOrg(b.id)).id).toBe('platform');
 
     await run(env.DB, 'UPDATE orgs SET default_identity_id = ? WHERE id = ?', [dto.id, a.id]);

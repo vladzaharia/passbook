@@ -49,9 +49,18 @@ function prefixed(fields: Record<string, string>, prefix: string) {
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
-export function ConfigTab({ c }: { c: Detail }) {
+export function ConfigTab({
+  c,
+  canManage,
+  onSaved,
+}: {
+  c: Detail;
+  canManage: boolean;
+  /** Called after a save, so test results of the old configuration can go. */
+  onSaved?: () => void;
+}) {
   const actions = useConnectionActions(c.id);
-  const connector = useConnector(c.connectorType);
+  const connector = useConnector(c.connectorType, c.orgId);
   const cfgSchema = useMemo(
     () => flattenSchema(connector.data?.configSchema),
     [connector.data?.configSchema],
@@ -91,7 +100,7 @@ export function ConfigTab({ c }: { c: Detail }) {
     replacing ||
     rpmValue !== num(c.requestsPerMinute) ||
     concValue !== num(c.maxConcurrency);
-  const guard = useUnsavedChangesGuard(dirty);
+  const guard = useUnsavedChangesGuard(canManage && dirty);
   const serverFields = isApiError(actions.update.error) ? actions.update.error.fields : {};
 
   function reset() {
@@ -105,6 +114,7 @@ export function ConfigTab({ c }: { c: Detail }) {
   }
 
   async function save() {
+    if (!canManage) return;
     const patch: ConnectionPatch = {};
     if (!sameValues(cfg, initialConfig))
       patch.config = nestValues(cleanValues(cfg)) as ConnectionPatch['config'];
@@ -122,6 +132,7 @@ export function ConfigTab({ c }: { c: Detail }) {
     try {
       await actions.update.mutateAsync(patch);
       reset();
+      onSaved?.();
       toast.success('Configuration saved');
     } catch (cause) {
       toast.error(cause, 'Could not save');
@@ -146,7 +157,7 @@ export function ConfigTab({ c }: { c: Detail }) {
               onChange={setConfig}
               showAllErrors={showErrors}
               serverErrors={prefixed(serverFields, 'config.')}
-              disabled={actions.update.isPending}
+              disabled={!canManage || actions.update.isPending}
             />
           </CardBody>
         </Card>
@@ -156,22 +167,24 @@ export function ConfigTab({ c }: { c: Detail }) {
           <CardHeader
             title="Credentials"
             actions={
-              replacing ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setReplacing(false);
-                    setSecrets({});
-                  }}
-                >
-                  Keep current
-                </Button>
-              ) : (
-                <Button variant="ghost" size="sm" onClick={() => setReplacing(true)}>
-                  Replace credentials
-                </Button>
-              )
+              canManage ? (
+                replacing ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setReplacing(false);
+                      setSecrets({});
+                    }}
+                  >
+                    Keep current
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={() => setReplacing(true)}>
+                    Replace credentials
+                  </Button>
+                )
+              ) : undefined
             }
           />
           <CardBody>
@@ -183,7 +196,7 @@ export function ConfigTab({ c }: { c: Detail }) {
                 onChange={setSecrets}
                 showAllErrors={showErrors}
                 serverErrors={prefixed(serverFields, 'secrets.')}
-                disabled={actions.update.isPending}
+                disabled={!canManage || actions.update.isPending}
                 idPrefix="secret-"
               />
             ) : (
@@ -209,7 +222,7 @@ export function ConfigTab({ c }: { c: Detail }) {
                 inputMode="numeric"
                 value={rpmValue}
                 onChange={(e) => setRpm(e.target.value)}
-                disabled={actions.update.isPending}
+                disabled={!canManage || actions.update.isPending}
               />
             )}
           </FormField>
@@ -225,13 +238,20 @@ export function ConfigTab({ c }: { c: Detail }) {
                 inputMode="numeric"
                 value={concValue}
                 onChange={(e) => setConc(e.target.value)}
-                disabled={actions.update.isPending}
+                disabled={!canManage || actions.update.isPending}
               />
             )}
           </FormField>
         </CardBody>
       </Card>
-      <SaveBar dirty={dirty} saving={actions.update.isPending} formId={formId} onDiscard={reset} />
+      {canManage ? (
+        <SaveBar
+          dirty={dirty}
+          saving={actions.update.isPending}
+          formId={formId}
+          onDiscard={reset}
+        />
+      ) : null}
       <UnsavedChangesDialog blocker={guard} />
     </Form>
   );

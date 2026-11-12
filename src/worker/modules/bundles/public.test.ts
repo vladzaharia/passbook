@@ -4,8 +4,10 @@ import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { createPassRow } from '../passes/create.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import { seedBundlePrincipal } from './test-auth-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 const fake = fakeAuth(ORIGIN);
@@ -14,15 +16,17 @@ let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  app = createApp({ stores: fake.stores, clock: kit.clock });
 });
 
 const makePass = (mode: 'live' | 'test' = 'live') =>
-  createPassRow(kit.ctx, {
+  createPassRow(jobCtxOf(kit), {
     orgId: kit.org.id,
     templateId: kit.template.id,
+    templateVersion: kit.template.version,
     input: { memberName: 'Public Bundle' },
     source: 'manual',
+    execution: { kind: 'system' },
     mode,
     actor: { type: 'system', id: null },
   });
@@ -30,11 +34,13 @@ const makePass = (mode: 'live' | 'test' = 'live') =>
 async function bundleWith(count: number, mode: 'live' | 'test' = 'live') {
   const passes = [];
   for (let i = 0; i < count; i++) passes.push(await makePass(mode));
+  const headers = fake.admin({ mode });
+  await seedBundlePrincipal(kit, fake, headers);
   const res = await app.request(
     `${ORIGIN}/api/v1/bundles`,
     {
       method: 'POST',
-      headers: { ...fake.admin({ mode }), 'content-type': 'application/json' },
+      headers: { ...headers, 'content-type': 'application/json' },
       body: JSON.stringify({ orgId: kit.org.id, name: 'Trip', passIds: passes.map((p) => p.id) }),
     },
     kit.env,
@@ -146,6 +152,8 @@ describe('downloads', () => {
     const res = await get(`/b/${token}/${passes[0]?.id}/assets/icon.png`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('image/png');
+    // Member photos are personal: never cached, like /p/*/assets.
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
   });
 });
 

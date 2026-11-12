@@ -1,3 +1,17 @@
+.wl-overview-focus {
+  background-image:
+    radial-gradient(
+      ellipse at 90% 0%,
+      color-mix(in srgb, var(--pk-accent) 12%, transparent),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 10% 100%,
+      color-mix(in srgb, var(--pk-accent) 6%, transparent),
+      transparent 55%
+    );
+}
+
 /*
  * Overview motion (docs/design/motion-and-expression.md): the chart clips in once (600 ms), a
  * range change crossfades (160 ms), the hover guide glides (80 ms) and its dot pops. Transform and

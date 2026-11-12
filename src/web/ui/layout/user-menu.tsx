@@ -1,12 +1,27 @@
 import * as Menu from '@radix-ui/react-dropdown-menu';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Check, LayoutDashboard, LogOut, type LucideIcon, Ticket, UserRound } from 'lucide-react';
+import {
+  Check,
+  LayoutDashboard,
+  LogOut,
+  type LucideIcon,
+  RefreshCw,
+  Ticket,
+  UserRound,
+} from 'lucide-react';
 import { THEME_ICON } from '../../lib/action-icons.ts';
 import { cn } from '../../lib/cn.ts';
 import { isAdminPath } from '../../lib/guards.ts';
 import { useChangeCount } from '../../lib/motion.ts';
-import { accountPath, isActivePath } from '../../lib/nav.ts';
-import { isAdmin, signOut, useSession } from '../../lib/session.ts';
+import {
+  accountPath,
+  adminEntryPath,
+  entryOrgId,
+  isActivePath,
+  isOrgScoped,
+} from '../../lib/nav.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
+import { type AuthedSession, signOut, useSession } from '../../lib/session.ts';
 import { THEME_OPTIONS, type ThemePref, useTheme } from '../../lib/theme.tsx';
 import { ActiveIndicator } from '../active-indicator.tsx';
 import {
@@ -77,15 +92,21 @@ function FaceItem({
   icon: Icon,
   label,
   current,
+  orgId,
 }: {
   to: string;
   icon: LucideIcon;
   label: string;
   current: boolean;
+  orgId?: string | undefined;
 }) {
   return (
     <DropdownMenuItem asChild>
-      <Link to={to} aria-current={current ? 'page' : undefined}>
+      <Link
+        to={to}
+        search={isAdminPath(to) ? { orgId } : undefined}
+        aria-current={current ? 'page' : undefined}
+      >
         <Icon aria-hidden />
         {label}
         {current ? <Check aria-hidden className="ml-auto text-accent-fg!" /> : null}
@@ -94,14 +115,25 @@ function FaceItem({
   );
 }
 
-/**
- * The account menu, the same on every page: who is signed in; My passes, Account and, for admins,
- * Admin, with a check on the current one; the theme; Sign out. Account opens in the current shell.
- */
+/** The account menu opens the console for platform admins and active organization members. */
 export function UserMenu() {
-  const { authed, session } = useSession();
+  const { authed, isAdmin } = useSession();
+  return authed ? <SignedInUserMenu authed={authed} platformAdmin={isAdmin} /> : null;
+}
+
+function SignedInUserMenu({
+  authed,
+  platformAdmin,
+}: {
+  authed: AuthedSession;
+  platformAdmin: boolean;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (!authed) return null;
+  const scope = useOrgScope();
+  const ready = !scope.isLoading && !scope.isError;
+  const memberships = ready ? scope.memberships : [];
+  const membership = ready ? scope.membership : undefined;
+  const consolePath = adminEntryPath(platformAdmin, membership, memberships);
   const { user } = authed;
   const face = faceOf(pathname);
   return (
@@ -127,8 +159,20 @@ export function UserMenu() {
           label="Account"
           current={face === 'account'}
         />
-        {isAdmin(session) ? (
-          <FaceItem to="/admin" icon={LayoutDashboard} label="Admin" current={face === 'admin'} />
+        {platformAdmin || memberships.length > 0 ? (
+          <FaceItem
+            to={consolePath}
+            orgId={isOrgScoped(consolePath) ? entryOrgId(membership, memberships) : undefined}
+            icon={LayoutDashboard}
+            label="Admin"
+            current={face === 'admin'}
+          />
+        ) : null}
+        {scope.isError ? (
+          <DropdownMenuItem onSelect={() => void scope.refetch()}>
+            <RefreshCw aria-hidden />
+            Retry organization access
+          </DropdownMenuItem>
         ) : null}
         <DropdownMenuSeparator />
         <ThemeChoice />

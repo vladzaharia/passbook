@@ -1,45 +1,75 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
-import { all, first, stmt } from '../../platform/db.ts';
-import type { EventRow } from '../events/repo.ts';
-import { type GateKey, wonGate } from './repo-gates.ts';
+import { all, first, type SqlValue, stmt } from '../../platform/db.ts';
+import type { Claim } from './repo-scans-write.ts';
 
 type Db = D1Database;
 
 export type { ScanRow } from './repo-scan-map.ts';
+export type { Claim, Finalize } from './repo-scans-write.ts';
+export {
+  claimScan,
+  claimScanStmt,
+  finalizeStmt,
+  ledgerIfFinalizedStmt,
+} from './repo-scans-write.ts';
 
 import { type Raw, type ScanRow, toScan } from './repo-scan-map.ts';
 
 const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, actor_key, staff_id, request_hash,
   state, outcome, reason, action_id, action_kind, override_of, approved_by, pass_version, method, at, undone_by, direction, presence_scope`;
 
-export interface Claim {
-  id: string;
-  orgId: string;
-  mode: Mode;
-  scannerId: string | null;
-  eventId: string | null;
-  actorType: 'scanner' | 'user';
-  actorId: string;
-  actorKey: string;
-  staffId: string | null;
-  idempotencyKey: string;
-  requestHash: string;
-  method: string;
-  clientTs: number;
-  now: number;
+export async function scanByKey(db: Db, actorKey: string, key: string): Promise<ScanRow | null> {
+  const row = await first<Raw>(
+    db,
+    `SELECT ${COLUMNS} FROM scans WHERE actor_key = ?/* scan-ephemeral-actor-key */ AND idempotency_key = ?/* scan-ephemeral-idempotency-key */`,
+    [actorKey, key],
+  );
+  return row ? toScan(row) : null;
 }
 
-/** Claims the key: a row back means this request owns it, none means another request does. */
-export async function claimScan(db: Db, c: Claim): Promise<boolean> {
-  const row = await first<{ id: string }>(
+export async function scanById(db: Db, orgId: string, id: string): Promise<ScanRow | null> {
+  const row = await first<Raw>(
     db,
-    `INSERT INTO scans (id, org_id, mode, scanner_id, event_id, actor_type, actor_id, actor_key, staff_id,
-       idempotency_key, request_hash, method, state, client_ts, at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
-     ON CONFLICT (actor_key, idempotency_key) DO NOTHING RETURNING id`,
-    [
-      c.id,
+    `SELECT ${COLUMNS} FROM scans WHERE id = ?/* scan-ephemeral-scan-id */ AND org_id = ?`,
+    [id, orgId],
+  );
+  return row ? toScan(row) : null;
+}
+
+/** Evidence that a claim is not pristine, evaluated inside the write transaction. */
+const AMBIGUOUS_SCAN = `pass_id IS NOT NULL OR template_id IS NOT NULL OR action_id IS NOT NULL OR action_kind IS NOT NULL OR
+  pass_version IS NOT NULL OR outcome IS NOT NULL OR reason IS NOT NULL OR
+  override_of IS NOT NULL OR approved_by IS NOT NULL OR direction IS NOT NULL OR presence_scope IS NOT NULL OR
+  amount IS NOT NULL OR before_value IS NOT NULL OR after_value IS NOT NULL OR group_id IS NOT NULL OR
+  offline != 0 OR notified != 0 OR undoes IS NOT NULL OR undone_by IS NOT NULL OR undone_at IS NOT NULL OR
+  EXISTS (SELECT 1 FROM scan_gates g WHERE g.last_scan_id = scans.id OR g.prev_scan_id = scans.id) OR
+  EXISTS (SELECT 1 FROM scan_presence p WHERE p.last_scan_id = scans.id OR p.prev_scan_id = scans.id)`;
+
+/** Match the original claim, not a mutable row that merely retained the same key. */
+export function pristineClaimFence(
+  c: Pick<
+    Claim,
+    | 'orgId'
+    | 'mode'
+    | 'scannerId'
+    | 'eventId'
+    | 'actorType'
+    | 'actorId'
+    | 'actorKey'
+    | 'staffId'
+    | 'method'
+    | 'idempotencyKey'
+    | 'requestHash'
+  >,
+): { sql: string; params: SqlValue[] } {
+  return {
+    sql: `NOT (${AMBIGUOUS_SCAN}) AND scans.org_id=? AND scans.mode=?
+      AND scans.scanner_id IS ?/* scan-ephemeral-scanner-id */ AND scans.event_id IS ?/* scan-ephemeral-event-id */
+      AND scans.actor_type=? AND scans.actor_id=?/* scan-ephemeral-actor-id */ AND scans.actor_key=?/* scan-ephemeral-actor-key */
+      AND scans.staff_id IS ?/* scan-ephemeral-staff-id */ AND scans.method=?
+      AND scans.idempotency_key=?/* scan-ephemeral-idempotency-key */ AND scans.request_hash=?/* scan-ephemeral-request-hash */`,
+    params: [
       c.orgId,
       c.mode,
       c.scannerId,
@@ -48,182 +78,103 @@ export async function claimScan(db: Db, c: Claim): Promise<boolean> {
       c.actorId,
       c.actorKey,
       c.staffId,
+      c.method,
       c.idempotencyKey,
       c.requestHash,
-      c.method,
-      c.clientTs,
-      c.now,
     ],
-  );
-  return row !== null;
+  };
 }
 
-export async function scanByKey(db: Db, actorKey: string, key: string): Promise<ScanRow | null> {
-  const row = await first<Raw>(
+/** Preserve presence evidence observed before recovery races a later write. */
+export function presenceOfScansStmt(db: Db, ids: readonly string[]): D1PreparedStatement {
+  const values = JSON.stringify(ids);
+  return stmt(
     db,
-    `SELECT ${COLUMNS} FROM scans WHERE actor_key = ? AND idempotency_key = ?`,
-    [actorKey, key],
+    `SELECT last_scan_id,prev_scan_id FROM scan_presence
+    WHERE last_scan_id IN (SELECT value FROM json_each(?/* scan-ephemeral-scan-id-list */)) OR prev_scan_id IN (SELECT value FROM json_each(?/* scan-ephemeral-scan-id-list */))`,
+    [values, values],
   );
-  return row ? toScan(row) : null;
 }
 
-export async function scanById(db: Db, orgId: string, id: string): Promise<ScanRow | null> {
-  const row = await first<Raw>(db, `SELECT ${COLUMNS} FROM scans WHERE id = ? AND org_id = ?`, [
-    id,
-    orgId,
+/** Reopen only a pristine failure and advance its epoch even if the clock has not moved. */
+export async function reopenScan(db: Db, id: string, now: number): Promise<number | null> {
+  const results = await db.batch([
+    stmt(
+      db,
+      `UPDATE scans SET reason = 'stale' WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'failed'
+      AND reason IS NULL AND (${AMBIGUOUS_SCAN})`,
+      [id],
+    ),
+    stmt(
+      db,
+      `UPDATE scans SET state = 'pending', at = MAX(at + 1, ?) WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'failed'
+      AND reason IS NULL RETURNING at`,
+      [now, id],
+    ),
   ]);
-  return row ? toScan(row) : null;
+  return (results[1]?.results?.[0] as { at: number } | undefined)?.at ?? null;
 }
 
-/** A failed row is claimed again by the same key. Only a `failed` row moves. */
-export async function reopenScan(db: Db, id: string, now: number): Promise<boolean> {
-  const row = await first<{ id: string }>(
-    db,
-    `UPDATE scans SET state = 'pending', at = ? WHERE id = ? AND state = 'failed' RETURNING id`,
-    [now, id],
-  );
-  return row !== null;
-}
-
-/** A `ready` card and a `needs_approval` heads-up leave no row and no idempotency entry. */
-export const releaseClaimStmt = (db: Db, id: string) =>
-  stmt(db, "DELETE FROM scans WHERE id = ? AND state = 'pending'", [id]);
-
-export interface Finalize {
-  id: string;
-  outcome: 'ok' | 'heads_up' | 'refused';
-  reason: string | null;
-  passId: string | null;
-  templateId: string | null;
-  actionId: string | null;
-  actionKind: string | null;
-  passVersion: number | null;
-  overrideOf: string | null;
-  approvedBy: string | null;
-  direction?: 'in' | 'out';
-  presenceScope?: string;
-  eventId?: string;
-}
-
-/** Closes a pending row. `won` adds the gate guard of the check-in fast path. */
-export function finalizeStmt(db: Db, f: Finalize, won?: GateKey): D1PreparedStatement {
-  const guard = won ? wonGate(won, f.id) : null;
-  return stmt(
-    db,
-    `UPDATE scans SET state = 'done', outcome = ?, reason = ?, pass_id = ?, template_id = ?, action_id = ?,
-       action_kind = ?, pass_version = ?, override_of = ?, approved_by = ?, direction = ?, presence_scope = ?, event_id = COALESCE(?,event_id)
-     WHERE id = ? AND state = 'pending'${guard ? ` AND ${guard.sql}` : ''}`,
-    [
-      f.outcome,
-      f.reason,
-      f.passId,
-      f.templateId,
-      f.actionId,
-      f.actionKind,
-      f.passVersion,
-      f.overrideOf,
-      f.approvedBy,
-      f.direction,
-      f.presenceScope,
-      f.eventId,
-      f.id,
-      ...(guard?.params ?? []),
-    ],
-  );
-}
-
-export const failScanStmt = (db: Db, id: string) =>
-  stmt(db, "UPDATE scans SET state = 'failed' WHERE id = ? AND state = 'pending'", [id]);
-
-/** A ledger row, written only while this scan still holds the gate. */
-export function ledgerIfWonStmt(
+/** Discard only a pristine pending generation with no evidence of an effect. */
+export const releaseClaimStmt = (
   db: Db,
-  row: EventRow,
-  won: GateKey,
-  scanId: string,
-): D1PreparedStatement {
-  const guard = wonGate(won, scanId);
-  return stmt(
-    db,
-    `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, device, actor_type, actor_id, data, at)
-     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${guard.sql}`,
-    [
-      row.id,
-      row.org_id,
-      row.pass_id,
-      row.mode,
-      row.kind,
-      row.device,
-      row.actor_type,
-      row.actor_id,
-      row.data,
-      row.at,
-      ...guard.params,
-    ],
-  );
-}
-
-/** A pass's last scans for the desk card (`scans_pass`), newest first, with the scanner's name. */
-export const lastScansStmt = (db: Db, orgId: string, passId: string) =>
+  id: string,
+  claimAt: number,
+  extra?: { sql: string; params: readonly SqlValue[] },
+) =>
   stmt(
     db,
-    `SELECT s.id, s.at, s.action_id, s.action_kind, s.outcome, s.actor_key, s.staff_id, s.undone_by,
-       sc.name AS scanner_name
-     FROM scans s LEFT JOIN scanners sc ON sc.id = s.scanner_id
-     WHERE s.pass_id = ? AND s.org_id = ? AND s.state = 'done' AND s.action_kind != 'undo'
-     ORDER BY s.at DESC, s.id DESC LIMIT 3`,
-    [passId, orgId],
+    `DELETE FROM scans WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending' AND at = ?
+       AND NOT (${AMBIGUOUS_SCAN})${extra ? ` AND (${extra.sql})` : ''}
+     RETURNING id`,
+    [id, claimAt, ...(extra?.params ?? [])],
   );
 
-export interface RecentRow {
-  id: string;
-  at: number;
-  outcome: 'ok' | 'heads_up' | 'refused';
-  reason: string | null;
-  action_id: string | null;
-  action_kind: string | null;
-  template_id: string | null;
-  title: string | null;
-  undone_by: string | null;
-}
-
-/** The actor's own latest scans (`scans_actor`). */
-export function recentScans(db: Db, actorKey: string, limit: number): Promise<RecentRow[]> {
-  return all<RecentRow>(
-    db,
-    `SELECT s.id, s.at, s.outcome, s.reason, s.action_id, s.action_kind, s.template_id,
-       p.display_title AS title, s.undone_by
-     FROM scans s LEFT JOIN passes p ON p.id = s.pass_id
-     WHERE s.actor_key = ? AND s.state = 'done' ORDER BY s.at DESC, s.id DESC LIMIT ?`,
-    [actorKey, limit],
-  );
-}
-
-export interface SummaryRow {
-  template_id: string | null;
-  action_id: string | null;
-  action_kind: string | null;
-  outcome: 'ok' | 'heads_up' | 'refused';
-  undone: number;
-  n: number;
-  amount: number;
-  first_at: number;
-  last_at: number;
-}
-
-export function summaryRows(
+/** Preserve a no-retry marker for an ambiguous or replaced claim generation. */
+export const quarantineGateClaimStmt = (
   db: Db,
-  actorKey: string,
-  from: number,
-  to: number,
-): Promise<SummaryRow[]> {
-  return all<SummaryRow>(
+  id: string,
+  at: number,
+  original?: { sql: string; params: readonly SqlValue[] },
+) =>
+  stmt(
     db,
-    `SELECT template_id, action_id, action_kind, outcome, undone_by IS NOT NULL AS undone, COUNT(*) AS n,
-       COALESCE(SUM(amount), 0) AS amount, MIN(at) AS first_at, MAX(at) AS last_at
-     FROM scans WHERE actor_key = ? AND at >= ? AND at <= ? AND state = 'done' AND action_kind IS NOT 'undo'
-     GROUP BY template_id, action_id, action_kind, outcome, undone_by IS NOT NULL`,
-    [actorKey, from, to],
+    `UPDATE scans SET state = 'failed', reason = 'stale'
+  WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending' AND at = ?
+    AND ((${AMBIGUOUS_SCAN})${original ? ` OR NOT (${original.sql})` : ''})`,
+    [id, at, ...(original?.params ?? [])],
+  );
+
+/** Mark the exact pending generation before any batch can attempt a gate effect. */
+export const markScanEffectIntentStmt = (
+  db: Db,
+  id: string,
+  at: number,
+  guard?: { sql: string; params: readonly SqlValue[] },
+) =>
+  stmt(
+    db,
+    `UPDATE scans SET reason = 'stale' WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending'
+      AND at = ? AND NOT (${AMBIGUOUS_SCAN})${guard ? ` AND (${guard.sql})` : ''} RETURNING id`,
+    [id, at, ...(guard?.params ?? [])],
+  );
+
+/**
+ * Fail a pending claim atomically. Any evidence of an effect makes the failure non-retryable;
+ * recovery also carries forward evidence observed before this transaction.
+ */
+export function failScanStmt(
+  db: Db,
+  id: string,
+  recovery: { at: number; observedAmbiguous: boolean },
+): D1PreparedStatement {
+  return stmt(
+    db,
+    `UPDATE scans SET state = 'failed', reason = CASE WHEN ? OR (${AMBIGUOUS_SCAN})
+       THEN 'stale' ELSE NULL END
+     WHERE id = ?/* scan-ephemeral-scan-id */ AND at = ? AND (state = 'pending' OR (? AND state = 'failed' AND reason IS NULL))
+     RETURNING id, reason`,
+    [recovery.observedAmbiguous, id, recovery.at, recovery.observedAmbiguous],
   );
 }
 

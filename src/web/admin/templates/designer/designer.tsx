@@ -18,19 +18,17 @@ import {
   IconButton,
   PageHeader,
   SaveBar,
-  toast,
+  SegmentedControl,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '../../../ui/index.ts';
-import { ActivateDialog } from '../activate-dialog.tsx';
 import type { Template } from '../versions.ts';
 import { useDesignCheck } from './api.ts';
 import type { Op } from './apply.ts';
 import { DesignerProvider } from './context.tsx';
-import { clearDraft, saveDraft } from './drafts.ts';
+import { clearDraft } from './drafts.ts';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
-import { localIssues } from './local-issues.ts';
 import { type DesignDoc, findField, type Selection } from './model.ts';
 import { Outline } from './outline.tsx';
 import { DesignerPreview } from './preview.tsx';
@@ -44,7 +42,16 @@ import {
 } from './reducer.ts';
 import { useSaveFlow } from './save-flow.ts';
 import { SavedCallout } from './saved-callout.tsx';
+import { ScanMode } from './scan/scan-mode.tsx';
+import { useDesignerIssues } from './use-designer-issues.ts';
+import { useDraftPersistence } from './use-draft-persistence.ts';
 import './designer.css';
+
+type DesignerMode = 'pass' | 'scan';
+const MODES = [
+  { value: 'pass', label: 'Pass' },
+  { value: 'scan', label: 'Scan screen' },
+] as const;
 
 /** A template that cannot be changed: the card and its issues stay, the structure is inert. */
 export interface ReadOnlyDesign {
@@ -57,6 +64,8 @@ export interface ReadOnlyDesign {
 
 export interface DesignerProps {
   template: Template;
+  canPublish: boolean;
+  selectedOrg: string | undefined;
   /** Where drafts of this template are kept (person, organisation, template). */
   draftKey: string;
   /** The version the draft starts from. */
@@ -71,6 +80,8 @@ export interface DesignerProps {
 
 export function Designer({
   template,
+  canPublish,
+  selectedOrg,
   draftKey,
   base,
   draft,
@@ -85,8 +96,13 @@ export function Designer({
   const [state, dispatch] = useReducer(designerReducer, undefined, () =>
     initialState(draft ?? base.doc, base.doc),
   );
+  const [mode, setMode] = useState<DesignerMode>('pass');
+  const selections = useRef<Record<DesignerMode, Selection>>({
+    pass: state.select,
+    scan: { section: 'scan-display' },
+  });
+  selections.current[mode] = state.select;
   const [restored, setRestored] = useState(draft !== null);
-  const [activating, setActivating] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const latest = useRef(state.doc);
   latest.current = state.doc;
@@ -103,16 +119,29 @@ export function Designer({
     [readOnly],
   );
   const choose = useCallback((s: Selection) => dispatch({ type: 'select', select: s }), []);
-  const focusTarget = useCallback((s: Selection) => {
-    dispatch({ type: 'select', select: s });
-    const id = s.key ? `${s.section}:${s.key}` : s.section;
-    // The section opens on the next render; focus what the issue names once it exists.
-    requestAnimationFrame(() =>
+  const changeMode = useCallback(
+    (next: DesignerMode) => {
+      if (next === mode) return;
+      dispatch({ type: 'select', select: selections.current[next] });
+      setMode(next);
+    },
+    [mode],
+  );
+  const focusTarget = useCallback(
+    (s: Selection) => {
+      const targetMode = s.section === 'scan-display' ? 'scan' : 'pass';
+      if (targetMode !== mode) setMode(targetMode);
+      dispatch({ type: 'select', select: s });
+      const id = s.key ? `${s.section}:${s.key}` : s.section;
+      // The section opens on the next render; focus what the issue names once it exists.
       requestAnimationFrame(() =>
-        root.current?.querySelector<HTMLElement>(`[data-target="${CSS.escape(id)}"]`)?.focus(),
-      ),
-    );
-  }, []);
+        requestAnimationFrame(() =>
+          root.current?.querySelector<HTMLElement>(`[data-target="${CSS.escape(id)}"]`)?.focus(),
+        ),
+      );
+    },
+    [mode],
+  );
 
   // A new field opens its editor and takes focus, once per add.
   const handled = useRef(0);
@@ -125,26 +154,7 @@ export function Designer({
     if (at) focusTarget({ section: at.group, key: added.key });
   }, [added, state.doc.passJson, focusTarget]);
 
-  // The draft survives a reload; saving or discarding clears it.
-  // A draft from an older version is offered by the page; it is only cleared once edits were made here.
-  const wasDirty = useRef(false);
-  const warned = useRef(false);
-  useEffect(() => {
-    if (!dirty) {
-      if (wasDirty.current) clearDraft(draftKey);
-      wasDirty.current = false;
-      return;
-    }
-    wasDirty.current = true;
-    const t = setTimeout(() => {
-      const kept = saveDraft(draftKey, { base: version, doc: state.doc, at: Date.now() });
-      if (!kept && !warned.current) {
-        warned.current = true;
-        toast.info('This draft is too big to keep. Save a version to keep your work.');
-      }
-    }, 800);
-    return () => clearTimeout(t);
-  }, [dirty, state.doc, draftKey, version]);
+  useDraftPersistence(draftKey, version, state.doc, dirty);
 
   function onKeyDown(e: KeyboardEvent) {
     if (phone || readOnly) return;
@@ -156,19 +166,17 @@ export function Designer({
     dispatch({ type: k === 'y' || e.shiftKey ? 'redo' : 'undo' });
   }
 
-  const issues = useMemo(
-    () =>
-      readOnly
-        ? readOnly.issues
-        : [...localIssues(state.doc), ...(check.data?.report.issues ?? [])],
-    [readOnly, state.doc, check.data],
-  );
-  const blocking = issues.filter((i) => i.severity === 'error').length;
+  const { issues, blocking } = useDesignerIssues(state.doc, readOnly, check.data?.report.issues);
   const flow = useSaveFlow({
     templateId,
     draftKey,
     latest,
-    blocked: () => (check.isError ? null : blocking),
+    savedDoc: state.saved,
+    draftBase: version,
+    blocked: () =>
+      check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
+        ? null
+        : blocking,
     dispatch,
     onSaved: (v) => {
       setVersion(v);
@@ -197,8 +205,8 @@ export function Designer({
         <PageHeader
           title={name}
           breadcrumbs={[
-            { label: 'Templates', to: '/admin/templates' },
-            { label: name, to: `/admin/templates/${templateId}` },
+            { label: 'Templates', to: '/admin/templates', search: { orgId: selectedOrg } },
+            { label: name, to: `/admin/templates/${templateId}`, search: { orgId: selectedOrg } },
             { label: 'Design' },
           ]}
           actions={
@@ -224,6 +232,14 @@ export function Designer({
         />
         {readOnly?.notice}
         {prompt}
+        <div className="mb-4">
+          <SegmentedControl
+            label="Designer mode"
+            options={MODES}
+            value={mode}
+            onValueChange={changeMode}
+          />
+        </div>
         {restored && !phone && !readOnly ? (
           <Callout
             className="mb-4"
@@ -245,48 +261,55 @@ export function Designer({
             Restored your unsaved draft.
           </Callout>
         ) : null}
-        {flow.saved ? (
-          <SavedCallout
+        {flow.saved ? <SavedCallout templateId={templateId} canPublish={canPublish} /> : null}
+        {mode === 'scan' ? (
+          <ScanMode
             templateId={templateId}
-            saved={flow.saved}
-            onActivate={() => setActivating(flow.saved?.version ?? null)}
+            orgId={selectedOrg ?? null}
+            issues={
+              <Issues
+                issues={issues}
+                checking={readOnly ? false : check.checking}
+                failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
+              />
+            }
           />
-        ) : null}
-        <DesignerLayout
-          templateId={templateId}
-          readOnly={Boolean(readOnly)}
-          structure={<Outline />}
-          preview={
-            <DesignerPreview
-              passJson={readOnly ? readOnly.passJson : (check.lastBuilt ?? null)}
-              assets={state.doc.assets}
-              assetBase={base_}
-              checking={readOnly ? false : check.checking}
-            />
-          }
-          issues={
-            <Issues
-              issues={issues}
-              checking={readOnly ? false : check.checking}
-              failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
-            />
-          }
-        />
+        ) : (
+          <DesignerLayout
+            templateId={templateId}
+            orgId={selectedOrg}
+            readOnly={Boolean(readOnly)}
+            structure={<Outline />}
+            preview={
+              <DesignerPreview
+                passJson={readOnly ? readOnly.passJson : (check.lastBuilt ?? null)}
+                assets={state.doc.assets}
+                assetBase={base_}
+                checking={readOnly ? false : check.checking}
+              />
+            }
+            issues={
+              <Issues
+                issues={issues}
+                checking={readOnly ? false : check.checking}
+                failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
+              />
+            }
+          />
+        )}
         {phone || readOnly ? null : (
           <SaveBar
             dirty={dirty}
             saving={flow.saving}
             saveLabel="Save version"
             onSave={() => flow.run(state.doc)}
-            onDiscard={() => dispatch({ type: 'reset', doc: state.saved })}
+            onDiscard={() => {
+              dispatch({ type: 'reset', doc: state.saved });
+              clearDraft(draftKey);
+              setRestored(false);
+            }}
           />
         )}
-        <ActivateDialog
-          template={template}
-          version={activating}
-          onClose={() => setActivating(null)}
-          onActivated={() => flow.setSaved((s) => (s ? { ...s, activated: true } : s))}
-        />
         <UnsavedChangesDialog blocker={guard} />
       </div>
     </DesignerProvider>

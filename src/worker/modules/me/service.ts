@@ -1,24 +1,18 @@
 import type { z } from 'zod';
-import { MY_PASSES_BUNDLE_SIZE, type MyPassSchema } from '../../../shared/contracts/index.ts';
-import { strictEmail } from '../../../shared/email.ts';
+import type { MyPassSchema } from '../../../shared/contracts/index.ts';
 import { baseUrl } from '../../platform/env.ts';
-import {
-  ConflictError,
-  NotFoundError,
-  RateLimitedError,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
-import { withinVerifyUserCap } from '../auth/magic-caps.ts';
-import { processVerifyRequest } from '../auth/magic-service.ts';
-import { revokeAllForUser, revokeOne } from '../auth/sessions.ts';
-import { removePassFromUser } from '../holders/service.ts';
+import { removePassFromUser } from '../holders/service-remove.ts';
 import { assetNamesOf } from '../passes/detail.ts';
-import { packagePassObjects } from '../passes/package-objects.ts';
-import { requestRefresh } from '../passes/service.ts';
+import { requestRefresh } from '../passes/pass-service-refresh.ts';
+import { canPresent } from '../public/presentation.ts';
 import { supportContacts } from '../public/service.ts';
+import { listWalletOffers } from '../wallet-providers/offers.ts';
+import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
+import { bundleSnapshot } from './bundle.ts';
+import { sameSnapshot } from './pass-snapshot.ts';
 import * as repo from './repo.ts';
 
 export type MyPassDto = z.infer<typeof MyPassSchema>;
@@ -45,6 +39,39 @@ function parsePassJson(raw: string | null): Record<string, unknown> {
 
 async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassDto> {
   const base = `${baseUrl(ctx.env)}/p/${row.download_token}`;
+  const passJson = parsePassJson(row.pass_json);
+  const presentationEligible =
+    row.org_status === 'active' &&
+    canPresent(
+      {
+        status: row.status,
+        removedAt: row.removed_at,
+        deletedAt: row.deleted_at,
+        testDataQuarantined: row.test_data_quarantined !== 0,
+      },
+      { voided: passJson.voided, expirationDate: passJson.expirationDate },
+      ctx.clock.now(),
+    );
+  if (!presentationEligible) {
+    delete passJson.barcode;
+    delete passJson.barcodes;
+  }
+  // Never attach a replacement bearer capability to an older owned row.
+  const walletOffers: MyPassDto['walletOffers'] = [];
+  if (presentationEligible) {
+    for (const { provider, href } of await listWalletOffers(ctx, row.id)) {
+      if (href === `/p/${row.download_token}/wallet/${provider}`) {
+        // Provider credentials and short-lived offer tokens stay server-side.
+        walletOffers.push({ provider, href, installation: 'unknown' });
+      }
+    }
+  }
+  const assetNames = await assetNamesOf(ctx, {
+    id: row.id,
+    orgId: row.org_id,
+    templateId: row.template_id,
+    templateVersion: row.template_version,
+  });
   return {
     id: row.id,
     title: row.display_title,
@@ -59,14 +86,12 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
     lastRefreshedAt: row.last_refreshed_at,
     refreshRequestedAt: row.refresh_requested_at,
     downloadUrl: `${base}/pass.pkpass`,
-    passJson: parsePassJson(row.pass_json),
+    presentationEligible,
+    walletOffers,
+    walletIssuance: walletIssuanceByProvider(),
+    passJson,
     assetBaseUrl: `${base}/assets/`,
-    assetNames: await assetNamesOf(ctx, {
-      id: row.id,
-      orgId: row.org_id,
-      templateId: row.template_id,
-      templateVersion: row.template_version,
-    }),
+    assetNames,
     inWallet: row.registered === 1,
   };
 }
@@ -78,8 +103,35 @@ export async function listMyPasses(
 ) {
   const rows = await repo.listMyPasses(ctx.env.DB, userId, query.cursor, query.limit);
   const page = rows.slice(0, query.limit);
+  const built = await Promise.all(page.map((row) => toPass(ctx, row)));
+  const snapshot = await repo.portfolioSnapshot(
+    ctx.env.DB,
+    userId,
+    page.map((row) => row.id),
+  );
+  const byId = new Map(snapshot.current.map((row) => [row.id, row]));
+  // A pass that changed during the reads (a refresh, a reissue) is built again from the newer
+  // row; only one no longer owned or presentable leaves the page.
+  const items = (
+    await Promise.all(
+      page.map(async (row, index) => {
+        const current = byId.get(row.id);
+        if (!current) return null;
+        return sameSnapshot(row, current) ? built[index] : toPass(ctx, current);
+      }),
+    )
+  ).filter((item): item is MyPassDto => item != null);
+  const reissueRequired = await Promise.all(
+    snapshot.reissueRequired.map(async ({ orgId, ...rest }) => {
+      const { email, url } = await supportContacts(ctx, orgId);
+      return { ...rest, support: { email, url } };
+    }),
+  );
   return {
-    items: await Promise.all(page.map((row) => toPass(ctx, row))),
+    items,
+    pendingRemovals: snapshot.pendingRemovals,
+    reissueRequired,
+    bundle: await bundleSnapshot(ctx, userId),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }
@@ -90,10 +142,21 @@ async function ownedRow(ctx: ServiceContext, userId: string, passId: string) {
   return row;
 }
 
+const DETAIL_READS = 3;
+
+/** A pass that changes while it is built is read again; only one gone from the holder is a 404. */
 export async function getMyPass(ctx: ServiceContext, userId: string, passId: string) {
-  const row = await ownedRow(ctx, userId, passId);
-  const [pass, support] = await Promise.all([toPass(ctx, row), supportContacts(ctx, row.org_id)]);
-  return { ...pass, support };
+  let row = await ownedRow(ctx, userId, passId);
+  for (let attempt = 1; ; attempt++) {
+    const [pass, support] = await Promise.all([toPass(ctx, row), supportContacts(ctx, row.org_id)]);
+    const current = await repo.getMyPass(ctx.env.DB, userId, passId);
+    if (!current) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+    if (sameSnapshot(row, current)) return { ...pass, support };
+    if (attempt >= DETAIL_READS) {
+      throw new ConflictError('This pass is changing. Reload in a moment.', 'PASS_CHANGING');
+    }
+    row = current;
+  }
 }
 
 export async function refreshMyPass(
@@ -107,160 +170,57 @@ export async function refreshMyPass(
   if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `refresh:${passId}`))) {
     throw new RateLimitedError();
   }
-  const { requestedAt, cooldownSeconds } = await deps.requestRefresh(ctx, passId, {
-    type: 'user',
-    id: userId,
-  });
+  const { requestedAt, cooldownSeconds } = await deps.requestRefresh(
+    ctx,
+    passId,
+    { type: 'user', id: userId },
+    {
+      orgId: row.org_id,
+      mode: row.mode,
+      identityId: row.identity_id,
+      templateId: row.template_id,
+      templateVersion: row.template_version,
+      releaseId: row.release_id,
+      version: row.version,
+      credentialGeneration: row.credential_generation,
+      lifecycleGeneration: row.lifecycle_generation,
+      linkGeneration: row.link_generation,
+      status: row.status,
+      connectionId: row.connection_id,
+      externalRef: row.external_ref,
+      ownerUserId: userId,
+    },
+  );
   return { accepted: true as const, requestedAt, cooldownSeconds };
 }
 
 export async function removeMyPass(
   ctx: ServiceContext,
   userId: string,
+  sessionId: string,
   passId: string,
   deps: MeDeps = defaultDeps,
 ) {
-  await ownedRow(ctx, userId, passId);
-  await deps.removePassFromUser(ctx, passId, userId);
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: userId,
-    action: 'pass.remove_from_user',
-    targetType: 'pass',
-    targetId: passId,
+  const row = await repo.getPassForRemoval(ctx.env.DB, userId, passId);
+  if (!row) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  return deps.removePassFromUser(ctx, passId, userId, sessionId, {
+    orgId: row.org_id,
+    mode: row.mode,
+    holderEmail: row.holder_email,
+    ownerUserId: userId,
+    version: row.version,
+    revision: row.revision,
+    rowVersion: row.row_version,
+    credentialGeneration: row.credential_generation,
+    lifecycleGeneration: row.lifecycle_generation,
+    releaseId: row.release_id,
+    downloadToken: row.download_token,
+    linkGeneration: row.link_generation,
   });
-  return { ok: true as const };
 }
 
-export async function listMyEmails(ctx: ServiceContext, userId: string) {
-  const [user, emails] = await Promise.all([
-    repo.getUser(ctx.env.DB, userId),
-    repo.emailsOf(ctx.env.DB, userId),
-  ]);
-  const items = emails.map((e) => ({
-    email: e.email,
-    verifiedAt: e.verified_at as number | null,
-    verifiedVia: e.verified_via as 'magic_link' | 'oidc' | 'admin' | null,
-    primary: e.email === user?.primary_email,
-  }));
-  // The profile address can be unproven (OIDC without trusted email). Listed so it can be verified;
-  // it is never in user_emails, so nothing that matches on verified emails sees it.
-  if (user && !items.some((e) => e.primary)) {
-    items.push({ email: user.primary_email, verifiedAt: null, verifiedVia: null, primary: true });
-  }
-  return { items };
-}
-
-/**
- * Asks for a verification link. The answer never depends on the address, and the lookup and send
- * run after it, so neither the body nor the latency reveals who is registered.
- */
-export async function addMyEmail(ctx: ServiceContext, userId: string, rawEmail: string) {
-  const email = strictEmail(rawEmail);
-  if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
-  if (!(await checkRateLimit(ctx.env, 'RL_MAGIC_LINK', `verify:${userId}`))) {
-    throw new RateLimitedError();
-  }
-  if (!(await withinVerifyUserCap(ctx, userId))) throw new RateLimitedError();
-  ctx.waitUntil(processVerifyRequest(ctx, { userId, email }));
-  return { ok: true as const };
-}
-
-export async function removeMyEmail(ctx: ServiceContext, userId: string, rawEmail: string) {
-  const email = strictEmail(rawEmail);
-  if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
-  const user = await repo.getUser(ctx.env.DB, userId);
-  if (user?.primary_email === email) {
-    throw new ConflictError('The primary email cannot be removed.', 'PRIMARY_EMAIL');
-  }
-  if (!(await repo.removeEmail(ctx.env.DB, userId, email))) {
-    throw new NotFoundError('Email not found.', 'EMAIL_NOT_FOUND');
-  }
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: userId,
-    action: 'user.email_remove',
-    targetType: 'user',
-    targetId: userId,
-  });
-  return listMyEmails(ctx, userId);
-}
-
-/** Sign-in emails go to another of my verified addresses. */
-export async function makeMyEmailPrimary(ctx: ServiceContext, userId: string, rawEmail: string) {
-  const email = strictEmail(rawEmail);
-  if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
-  if (!(await repo.setPrimaryEmail(ctx.env.DB, userId, email))) {
-    throw new NotFoundError('Email not found.', 'EMAIL_NOT_FOUND');
-  }
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: userId,
-    action: 'user.email_primary',
-    targetType: 'user',
-    targetId: userId,
-  });
-  return listMyEmails(ctx, userId);
-}
-
-export async function listMySessions(ctx: ServiceContext, userId: string, currentId: string) {
-  const rows = await repo.listLiveSessions(ctx.env.DB, userId, ctx.clock.now());
-  return {
-    items: rows.map((s) => ({
-      id: s.id_hash,
-      createdAt: s.created_at,
-      lastSeenAt: s.last_seen_at,
-      userAgent: s.user_agent,
-      current: s.id_hash === currentId,
-    })),
-  };
-}
-
-export async function revokeMySession(ctx: ServiceContext, userId: string, sessionId: string) {
-  const row = await repo.getSession(ctx.env.DB, sessionId);
-  if (!row || row.user_id !== userId)
-    throw new NotFoundError('Session not found.', 'SESSION_NOT_FOUND');
-  await revokeOne(ctx, sessionId);
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: userId,
-    action: 'session.revoke',
-    targetType: 'user',
-    targetId: userId,
-  });
-  return { ok: true as const };
-}
-
-export async function revokeAllMySessions(ctx: ServiceContext, userId: string) {
-  const count = await revokeAllForUser(ctx, userId);
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: userId,
-    action: 'user.sessions_revoke',
-    targetType: 'user',
-    targetId: userId,
-    detail: { count },
-  });
-  return { ok: true as const };
-}
-
-const BUNDLE_NOT_FOUND = () => new NotFoundError('No passes to bundle.', 'BUNDLE_EMPTY');
-
-/** Signed .pkpass objects of my active passes, `MY_PASSES_BUNDLE_SIZE` per part. */
-export async function myPassesBundle(ctx: ServiceContext, userId: string, part: number) {
-  const total = await repo.countBundlePasses(ctx.env.DB, userId);
-  const parts = Math.ceil(total / MY_PASSES_BUNDLE_SIZE);
-  if (part > parts) throw BUNDLE_NOT_FOUND();
-  const rows = await repo.listBundlePasses(
-    ctx.env.DB,
-    userId,
-    MY_PASSES_BUNDLE_SIZE,
-    (part - 1) * MY_PASSES_BUNDLE_SIZE,
-  );
-  if (rows.length === 0) throw BUNDLE_NOT_FOUND();
-  const body = packagePassObjects(
-    ctx.env.BUCKET,
-    rows.map((row) => ({ id: row.id, objectKey: row.object_key, objectSize: row.object_size })),
-  );
-  return { body, parts };
+export async function getMyRemoval(ctx: ServiceContext, userId: string, transferId: string) {
+  const transfer = await repo.getMyRemoval(ctx.env.DB, userId, transferId);
+  if (!transfer) throw new NotFoundError('Removal not found.', 'REMOVAL_NOT_FOUND');
+  return transfer;
 }

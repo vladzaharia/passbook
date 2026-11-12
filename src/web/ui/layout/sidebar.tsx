@@ -1,15 +1,21 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Fragment } from 'react';
 import { cn } from '../../lib/cn.ts';
-import { ADMIN_NAV_GROUPS, isActivePath } from '../../lib/nav.ts';
+import { adminNavGroups, isActivePath } from '../../lib/nav.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
+import { useSession } from '../../lib/session.ts';
 import { ActiveIndicator } from '../active-indicator.tsx';
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isAdmin } = useSession();
+  const scope = useOrgScope();
+  const membership = scope.isLoading || scope.isError ? undefined : scope.membership;
+  const groups = adminNavGroups(isAdmin, membership);
   return (
     <nav aria-label="Admin" className="relative flex flex-col gap-0.5 p-2">
       <ActiveIndicator />
-      {ADMIN_NAV_GROUPS.map((group, g) => (
+      {groups.map((group, g) => (
         <Fragment key={group[0]?.to}>
           {g > 0 ? <div aria-hidden className="mx-3 my-1.5 h-px bg-border" /> : null}
           {group.map((item) => {
@@ -18,6 +24,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <Link
                 key={item.to}
                 to={item.to}
+                search={item.search ?? { orgId: item.orgScoped ? membership?.orgId : undefined }}
                 onClick={onNavigate}
                 activeOptions={{ exact: item.to === '/admin' }}
                 aria-current={active ? 'page' : undefined}

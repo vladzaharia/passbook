@@ -4,7 +4,7 @@ import { MAIN_ID } from '../../lib/route-focus.tsx';
 import { OfflineBanner } from '../offline-banner.tsx';
 
 /** Content width: holder pages read as one column, the console takes the room it has. */
-const WIDTH = { holder: 'max-w-5xl', console: 'max-w-7xl', full: '' } as const;
+const WIDTH = { holder: 'max-w-5xl', console: '', full: '' } as const;
 
 export interface AppShellProps {
   /** Top bar contents. Omitted on /login, whose page draws its own band. */

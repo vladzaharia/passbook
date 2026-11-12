@@ -25,10 +25,8 @@ function alreadyExists(error: unknown): boolean {
   return error instanceof Error && /already.?exist|instance.*exists/i.test(error.message);
 }
 
-/** Why a broadcast must not run: its org was suspended or its creating key or admin was revoked. */
-async function launchBlocker(ctx: ServiceContext, id: string): Promise<string | null> {
-  const row = await getBroadcast(ctx.env.DB, id, null);
-  if (!row) return 'BROADCAST_NOT_FOUND';
+/** Why a broadcast must not run: its org was suspended or its creating key or user was revoked. */
+async function launchBlocker(ctx: ServiceContext, row: BroadcastRow): Promise<string | null> {
   if (!(await orgIsActive(ctx.env.DB, row.org_id))) return 'ORG_INACTIVE';
   const live = await creatorIsActive(ctx.env.DB, row, ctx.clock.now());
   return live ? null : 'CREATOR_REVOKED';
@@ -46,7 +44,13 @@ export async function launchBroadcast(
   if (!(await casState(db, row.id, ['scheduled'], 'sending', { startedAt: ctx.clock.now() })))
     return false;
   const instanceId = instanceIdOf(row.id);
-  const blocked = await launchBlocker(ctx, row.id);
+  // The caller may hold a stale row. The committed broadcast is authoritative for the workflow.
+  const stored = await getBroadcast(db, row.id, null);
+  if (!stored) {
+    ctx.log.warn('broadcast.blocked', { broadcastId: row.id, code: 'BROADCAST_NOT_FOUND' });
+    return false;
+  }
+  const blocked = await launchBlocker(ctx, stored);
   if (blocked) {
     ctx.log.warn('broadcast.blocked', { broadcastId: row.id, code: blocked });
     await casState(db, row.id, ['sending'], 'failed', {
@@ -61,7 +65,7 @@ export async function launchBroadcast(
       {
         instanceId,
         kind: 'broadcast',
-        orgId: row.org_id,
+        orgId: stored.org_id,
         targetId: row.id,
         now: ctx.clock.now(),
       },
@@ -80,7 +84,14 @@ export async function launchBroadcast(
     return true;
   } catch (error) {
     ctx.log.error('broadcast.start_failed', { broadcastId: row.id, code: 'WORKFLOW_START', error });
-    await casState(db, row.id, ['sending'], 'scheduled');
+    // Back to scheduled only while the org and creator are still live: cancelled work is never revived.
+    const stillBlocked = await launchBlocker(ctx, stored);
+    if (stillBlocked)
+      await casState(db, row.id, ['sending'], 'failed', {
+        finishedAt: ctx.clock.now(),
+        errorCode: stillBlocked,
+      });
+    else await casState(db, row.id, ['sending'], 'scheduled');
     return false;
   }
 }

@@ -66,8 +66,15 @@ register(
   },
   async (c) => {
     const { status } = c.req.valid('json');
+    const auth = c.var.auth;
     return c.json(
-      await setUserStatus(serviceContext(c), currentUserId(c), c.req.valid('param').id, status),
+      await setUserStatus(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').id,
+        status,
+        auth?.kind === 'session' ? auth.sessionId : undefined,
+      ),
     );
   },
 );

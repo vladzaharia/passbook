@@ -281,26 +281,108 @@ describe('Tabs', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('turns five tabs into a Section select on phones', () => {
+  it('keeps named panel references when five tabs become a phone select', async () => {
     vi.stubGlobal('matchMedia', (q: string) => ({
       matches: q.includes('max-width: 639.98px'),
       addEventListener: () => {},
       removeEventListener: () => {},
     }));
-    render(
-      <Tabs defaultValue="a">
-        <TabsList aria-label="Sections">
-          {['a', 'b', 'c', 'd', 'e'].map((v) => (
-            <TabsTrigger key={v} value={v}>
-              {v.toUpperCase()}
-            </TabsTrigger>
+    try {
+      const user = userEvent.setup();
+      const sections = [
+        ['config', 'Configuration'],
+        ['health', 'Health'],
+        ['mapping', 'Mapping'],
+        ['settings', 'Settings'],
+        ['webhook', 'Webhook'],
+      ] as const;
+      render(
+        <Tabs defaultValue="config">
+          <TabsList aria-label="Sections">
+            {sections.map(([value, label]) => (
+              <TabsTrigger key={value} value={value}>
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {sections.map(([value, label]) => (
+            <TabsContent key={value} value={value}>
+              {label} panel
+            </TabsContent>
           ))}
-        </TabsList>
-      </Tabs>,
-    );
-    expect(screen.queryByRole('tab')).toBeNull();
-    expect(screen.getByRole('combobox', { name: 'Section: A' })).toBeInTheDocument();
-    vi.unstubAllGlobals();
+        </Tabs>,
+      );
+      const assertPanel = (name: string) => {
+        const panel = screen.getByRole('tabpanel', { name });
+        const ids = panel.getAttribute('aria-labelledby')?.split(/\s+/) ?? [];
+        expect(ids.length).toBeGreaterThan(0);
+        for (const id of ids) expect(document.getElementById(id)).not.toBeNull();
+      };
+      expect(screen.queryByRole('tab')).toBeNull();
+      assertPanel('Configuration');
+      await user.click(screen.getByRole('combobox', { name: 'Section: Configuration' }));
+      await user.click(screen.getByRole('option', { name: 'Mapping' }));
+      assertPanel('Mapping');
+      expect(screen.getByRole('combobox', { name: 'Section: Mapping' })).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('retains desktop trigger relationships for five tabs', () => {
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    try {
+      render(
+        <Tabs defaultValue="Configuration">
+          <TabsList aria-label="Sections">
+            {['Configuration', 'Health', 'Mapping', 'Settings', 'Webhook'].map((label) => (
+              <TabsTrigger key={label} value={label}>
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value="Configuration">Configuration panel</TabsContent>
+        </Tabs>,
+      );
+      const trigger = screen.getByRole('tab', { name: 'Configuration' });
+      const panel = screen.getByRole('tabpanel', { name: 'Configuration' });
+      expect(panel).toHaveAttribute('aria-labelledby', trigger.id);
+      expect(document.getElementById(trigger.id)).toBe(trigger);
+      expect(screen.queryByRole('combobox')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('keeps a three-tab strip on phones', () => {
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    try {
+      render(
+        <Tabs defaultValue="admission">
+          <TabsList aria-label="Session settings">
+            <TabsTrigger value="passes">Passes</TabsTrigger>
+            <TabsTrigger value="admission">Admission</TabsTrigger>
+            <TabsTrigger value="defaults">Device defaults</TabsTrigger>
+          </TabsList>
+          <TabsContent value="admission">Admission panel</TabsContent>
+        </Tabs>,
+      );
+      const trigger = screen.getByRole('tab', { name: 'Admission' });
+      const panel = screen.getByRole('tabpanel', { name: 'Admission' });
+      expect(panel).toHaveAttribute('aria-labelledby', trigger.id);
+      expect(document.getElementById(trigger.id)).toBe(trigger);
+      expect(screen.queryByRole('combobox')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

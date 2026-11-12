@@ -27,6 +27,12 @@ oidc.addUser({
   name: 'E2E User',
   groups: ['wallet-users'],
 });
+oidc.addUser({
+  sub: 'e2e-reviewer',
+  email: 'reviewer@example.test',
+  name: 'E2E Template Reviewer',
+  groups: ['wallet-users'],
+});
 oidc.addUser({ sub: 'e2e-nobody', email: 'nobody@example.test', name: 'No Groups', groups: [] });
 
 createServer(async (req, res) => {

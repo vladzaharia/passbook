@@ -1,22 +1,24 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { BroadcastListSchema, BroadcastSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { runBroadcast } from '../../workflows/broadcast.ts';
-import { getPass } from '../passes/repo.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import { startDueBroadcasts } from './start.ts';
-import { type BroadcastKit, broadcastKit } from './test-kit.ts';
+import { type BroadcastAuth, type BroadcastKit, broadcastAuth, broadcastKit } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
-const fake = fakeAuth(ORIGIN);
+let auth: BroadcastAuth;
 let kit: BroadcastKit;
 let app: ReturnType<typeof createApp>;
 let other: { id: string };
 
 beforeAll(async () => {
   kit = await broadcastKit();
-  app = createApp({ stores: fake.stores });
+  auth = await broadcastAuth(kit, ORIGIN);
+  app = createApp({ stores: auth.stores });
   other = await makeOrg(kit.fx, { name: 'Other Org' });
 });
 
@@ -46,7 +48,7 @@ const stepRun: Step = {
 } as unknown as Step;
 
 /** Creates a broadcast and runs its Workflow instance inline. */
-async function sendNow(body: Record<string, unknown>, headers: Headers = fake.admin()) {
+async function sendNow(body: Record<string, unknown>, headers: Headers = auth.admin()) {
   const before = kit.broadcast.created.length;
   const res = await post('/broadcasts', headers, body);
   expect(res.status).toBe(201);
@@ -133,10 +135,10 @@ describe('send now', () => {
     ]);
     for (const text of ['one', 'two', 'three']) await sendNow(message(text));
     const preview = await dto(
-      await post('/broadcasts', fake.admin(), message('four', { send: 'draft' })),
+      await post('/broadcasts', auth.admin(), message('four', { send: 'draft' })),
     );
     expect(preview.state).toBe('draft');
-    const pre = await post('/broadcasts/preview', fake.admin(), {
+    const pre = await post('/broadcasts/preview', auth.admin(), {
       orgId: kit.org.id,
       target: { templateIds: [kit.messaging.id] },
     });
@@ -162,11 +164,11 @@ describe('send now', () => {
     // A newer message replaced it: the follow-up leaves that one alone.
     await sendNow(message('Newer text'));
     kit.clock.advance(3_700_000);
-    await startDueBroadcasts(kit.ctx);
+    await startDueBroadcasts(jobCtxOf(kit));
     const instance = kit.broadcast.created.at(-1);
     expect(instance?.id).toBe(`broadcast-${follow?.id}`);
     await runBroadcast(kit.env, instance?.id ?? '', { broadcastId: follow?.id ?? '' }, stepRun);
-    const cleared = await dto(await api(`/broadcasts/${follow?.id}`, { headers: fake.admin() }));
+    const cleared = await dto(await api(`/broadcasts/${follow?.id}`, { headers: auth.admin() }));
     expect(cleared).toMatchObject({ state: 'sent', parentId: sent.id });
     expect(cleared.counts).toMatchObject({ updated: 0, unchanged: 1 });
     expect((await getPass(kit.env.DB, a.id, null))?.personalization.message).toBe('Newer text');
@@ -185,49 +187,49 @@ describe('send now', () => {
 describe('schedule', () => {
   it('starts once however many ticks race, and cancel stops it', async () => {
     const at = kit.clock.now() + 600_000;
-    const res = await post('/broadcasts', fake.admin(), message('Later', { send: 'schedule', at }));
+    const res = await post('/broadcasts', auth.admin(), message('Later', { send: 'schedule', at }));
     const scheduled = await dto(res);
     expect(scheduled).toMatchObject({ state: 'scheduled', at });
     const before = kit.broadcast.created.length;
-    await startDueBroadcasts(kit.ctx);
+    await startDueBroadcasts(jobCtxOf(kit));
     expect(kit.broadcast.created).toHaveLength(before);
     kit.clock.advance(601_000);
-    await Promise.all([startDueBroadcasts(kit.ctx), startDueBroadcasts(kit.ctx)]);
+    await Promise.all([startDueBroadcasts(jobCtxOf(kit)), startDueBroadcasts(jobCtxOf(kit))]);
     const mine = kit.broadcast.created.filter((c) => c.id === `broadcast-${scheduled.id}`);
     expect(mine).toHaveLength(1);
-    const running = await dto(await api(`/broadcasts/${scheduled.id}`, { headers: fake.admin() }));
+    const running = await dto(await api(`/broadcasts/${scheduled.id}`, { headers: auth.admin() }));
     expect(running.state).toBe('sending');
-    const cancel = await post(`/broadcasts/${scheduled.id}/cancel`, fake.admin());
+    const cancel = await post(`/broadcasts/${scheduled.id}/cancel`, auth.admin());
     expect(cancel.status).toBe(409);
     expect(await code(cancel)).toBe('BROADCAST_NOT_CANCELLABLE');
 
     const another = await dto(
       await post(
         '/broadcasts',
-        fake.admin(),
+        auth.admin(),
         message('Never', { send: 'schedule', at: kit.clock.now() + 60_000 }),
       ),
     );
-    const cancelled = await dto(await post(`/broadcasts/${another.id}/cancel`, fake.admin()));
+    const cancelled = await dto(await post(`/broadcasts/${another.id}/cancel`, auth.admin()));
     expect(cancelled.state).toBe('cancelled');
     kit.clock.advance(120_000);
     const n = kit.broadcast.created.length;
-    await startDueBroadcasts(kit.ctx);
+    await startDueBroadcasts(jobCtxOf(kit));
     expect(kit.broadcast.created).toHaveLength(n);
   });
 
   it('puts the workflow start back to scheduled when it fails', async () => {
-    const res = await post('/broadcasts', fake.admin(), message('Retry', { send: 'draft' }));
+    const res = await post('/broadcasts', auth.admin(), message('Retry', { send: 'draft' }));
     const draft = await dto(res);
     const original = kit.broadcast.create;
     kit.broadcast.create = async () => {
       throw new Error('workflow down');
     };
-    const sent = await dto(await post(`/broadcasts/${draft.id}/send`, fake.admin()));
+    const sent = await dto(await post(`/broadcasts/${draft.id}/send`, auth.admin()));
     kit.broadcast.create = original;
     expect(sent.state).toBe('scheduled');
-    await startDueBroadcasts(kit.ctx);
-    expect((await dto(await api(`/broadcasts/${draft.id}`, { headers: fake.admin() }))).state).toBe(
+    await startDueBroadcasts(jobCtxOf(kit));
+    expect((await dto(await api(`/broadcasts/${draft.id}`, { headers: auth.admin() }))).state).toBe(
       'sending',
     );
   });
@@ -235,7 +237,7 @@ describe('schedule', () => {
   it('refuses a time in the past', async () => {
     const res = await post(
       '/broadcasts',
-      fake.admin(),
+      auth.admin(),
       message('Old', { send: 'schedule', at: 1000 }),
     );
     expect(res.status).toBe(422);
@@ -247,7 +249,7 @@ describe('validation', () => {
   it('needs a template with a message field', async () => {
     const res = await post(
       '/broadcasts',
-      fake.admin(),
+      auth.admin(),
       message('x', { target: { templateIds: [kit.plain.id] } }),
     );
     expect(res.status).toBe(422);
@@ -255,7 +257,7 @@ describe('validation', () => {
   });
 
   it('checks a scheduled change against the template inputs', async () => {
-    const bad = await post('/broadcasts', fake.admin(), {
+    const bad = await post('/broadcasts', auth.admin(), {
       orgId: kit.org.id,
       kind: 'change',
       target: { templateIds: [kit.messaging.id] },
@@ -285,7 +287,7 @@ describe('validation', () => {
   });
 
   it('rejects a change value the input schema refuses', async () => {
-    const res = await post('/broadcasts', fake.admin(), {
+    const res = await post('/broadcasts', auth.admin(), {
       orgId: kit.org.id,
       kind: 'change',
       target: { templateIds: [kit.messaging.id] },
@@ -296,16 +298,16 @@ describe('validation', () => {
   });
 
   it('keeps a message under 256 characters', async () => {
-    expect((await post('/broadcasts', fake.admin(), message('x'.repeat(257)))).status).toBe(422);
+    expect((await post('/broadcasts', auth.admin(), message('x'.repeat(257)))).status).toBe(422);
   });
 });
 
 describe('tenant, mode and scope isolation', () => {
   it('another org: 403 on create and preview, 404 on read and cancel', async () => {
     const created = await dto(
-      await post('/broadcasts', fake.admin(), message('Mine', { send: 'draft' })),
+      await post('/broadcasts', auth.admin(), message('Mine', { send: 'draft' })),
     );
-    const key = fake.apiKey({ orgId: other.id, scopes: ['messages:write'] });
+    const key = await auth.apiKey({ orgId: other.id, scopes: ['messages:write'] });
     expect((await post('/broadcasts', key, message('Theirs'))).status).toBe(403);
     expect(
       (
@@ -326,23 +328,23 @@ describe('tenant, mode and scope isolation', () => {
 
   it('a test caller sees test broadcasts only in lists, and its targets are test passes', async () => {
     const live = await dto(
-      await post('/broadcasts', fake.admin(), message('Live one', { send: 'draft' })),
+      await post('/broadcasts', auth.admin(), message('Live one', { send: 'draft' })),
     );
-    const testAdmin = fake.admin({ mode: 'test' });
+    const testAdmin = auth.admin({ mode: 'test' });
     const test = await dto(
       await post('/broadcasts', testAdmin, message('Test one', { send: 'draft' })),
     );
     expect(test.mode).toBe('test');
     const ids = async (headers: Headers) =>
       BroadcastListSchema.parse(
-        await (await api('/broadcasts?limit=200', { headers })).json(),
+        await (await api(`/broadcasts?orgId=${kit.org.id}&limit=200`, { headers })).json(),
       ).items.map((b) => b.id);
-    expect(await ids(fake.admin())).toContain(live.id);
-    expect(await ids(fake.admin())).not.toContain(test.id);
+    expect(await ids(auth.admin())).toContain(live.id);
+    expect(await ids(auth.admin())).not.toContain(test.id);
     expect(await ids(testAdmin)).toContain(test.id);
     expect(await ids(testAdmin)).not.toContain(live.id);
     // Get by id works in either mode.
-    expect((await api(`/broadcasts/${test.id}`, { headers: fake.admin() })).status).toBe(200);
+    expect((await api(`/broadcasts/${test.id}`, { headers: auth.admin() })).status).toBe(200);
     const testPass = await kit.makePass({ mode: 'test' });
     const count = async (headers: Headers) =>
       (await (
@@ -357,19 +359,19 @@ describe('tenant, mode and scope isolation', () => {
 
   it('a test key cannot read, send or cancel a live broadcast; a Test session gets MODE_MISMATCH', async () => {
     const live = await dto(
-      await post('/broadcasts', fake.admin(), message('Live draft', { send: 'draft' })),
+      await post('/broadcasts', auth.admin(), message('Live draft', { send: 'draft' })),
     );
-    const key = fake.apiKey({ mode: 'test', scopes: ['messages:write'] });
+    const key = await auth.apiKey({ orgId: kit.org.id, mode: 'test', scopes: ['messages:write'] });
     expect((await api(`/broadcasts/${live.id}`, { headers: key })).status).toBe(404);
     expect((await post(`/broadcasts/${live.id}/send`, key)).status).toBe(404);
     expect((await post(`/broadcasts/${live.id}/cancel`, key)).status).toBe(404);
-    const testAdmin = fake.admin({ mode: 'test' });
+    const testAdmin = auth.admin({ mode: 'test' });
     for (const action of ['send', 'cancel']) {
       const res = await post(`/broadcasts/${live.id}/${action}`, testAdmin);
       expect(res.status).toBe(409);
       expect(await code(res)).toBe('MODE_MISMATCH');
     }
-    expect((await dto(await api(`/broadcasts/${live.id}`, { headers: fake.admin() }))).state).toBe(
+    expect((await dto(await api(`/broadcasts/${live.id}`, { headers: auth.admin() }))).state).toBe(
       'draft',
     );
     expect(kit.broadcast.created.some((i) => i.id === `broadcast-${live.id}`)).toBe(false);
@@ -382,11 +384,14 @@ describe('tenant, mode and scope isolation', () => {
       target: { templateIds: [kit.messaging.id] },
       patch: { gate: 'Z1' },
     };
-    const only = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+    const only = await auth.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
     const denied = await post('/broadcasts', only, change);
     expect(denied.status).toBe(403);
     expect(await code(denied)).toBe('MISSING_SCOPE');
-    const both = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write', 'passes:write'] });
+    const both = await auth.apiKey({
+      orgId: kit.org.id,
+      scopes: ['messages:write', 'passes:write'],
+    });
     const draft = await dto(await post('/broadcasts', both, { ...change, send: 'draft' }));
     expect(
       (await post(`/broadcasts/${draft.id}/send`, only, { at: kit.clock.now() + 60_000 })).status,
@@ -395,14 +400,40 @@ describe('tenant, mode and scope isolation', () => {
   });
 
   it('needs the messages:write scope', async () => {
-    const key = fake.apiKey({ scopes: ['passes:read', 'passes:write'] });
+    const key = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read', 'passes:write'] });
     expect((await api('/broadcasts', { headers: key })).status).toBe(403);
     expect((await post('/broadcasts', key, message('x'))).status).toBe(403);
-    const ok = fake.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+    const ok = await auth.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
     expect((await api('/broadcasts', { headers: ok })).status).toBe(200);
   });
 
   it('a signed-in holder cannot use it', async () => {
-    expect((await api('/broadcasts', { headers: fake.user() })).status).toBe(403);
+    expect((await api(`/broadcasts?orgId=${kit.org.id}`, { headers: auth.user() })).status).toBe(
+      403,
+    );
   });
+});
+
+it('previews and processes only passes checked in to the selected event', async () => {
+  const arrived = await kit.makePass();
+  const absent = await kit.makePass();
+  const eventId = `event-${arrived.id}`;
+  await run(
+    kit.env.DB,
+    `INSERT INTO scan_gates (pass_id, action_id, scope, org_id, mode, template_id, kind, state, count, first_at, last_at, last_scan_id)
+    VALUES (?, 'check_in', ?, ?, 'live', ?, 'check_in', 'in', 1, 1, 1, 'scan')`,
+    [arrived.id, `event:${eventId}`, kit.org.id, kit.messaging.id],
+  );
+  const target = { templateIds: [kit.messaging.id], scan: { eventId, checkedIn: true } };
+  const preview = await post('/broadcasts/preview', auth.admin(), { orgId: kit.org.id, target });
+  expect(preview.status).toBe(200);
+  expect(await preview.json()).toMatchObject({ targeted: 1 });
+  const done = await sendNow(message('Event update', { target }));
+  expect(done.counts).toMatchObject({ targeted: 1, updated: 1 });
+  expect((await getPass(kit.env.DB, arrived.id, null))?.personalization.message).toBe(
+    'Event update',
+  );
+  expect((await getPass(kit.env.DB, absent.id, null))?.personalization.message).not.toBe(
+    'Event update',
+  );
 });

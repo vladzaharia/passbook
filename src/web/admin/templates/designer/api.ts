@@ -1,18 +1,22 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import {
+  type SaveVersionRequest,
   type SaveVersionResponse,
   SaveVersionResponseSchema,
   TemplateVersionDetailSchema,
 } from '@/shared/contracts/index.ts';
 import { api } from '../../../lib/api.ts';
 import { useDebounced } from '../../../lib/debounce.ts';
+import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { templateKeys } from '../api.ts';
 import { assetsPayload } from './images.ts';
 import type { DesignDoc, DraftAsset } from './model.ts';
 import { signature } from './reducer.ts';
 
-const body = (doc: DesignDoc, extra: { dryRun: boolean; activate?: boolean }) => ({
+type VersionOptions = Pick<SaveVersionRequest, 'dryRun'>;
+
+const body = (doc: DesignDoc, extra: VersionOptions) => ({
   passJson: doc.passJson,
   manifest: doc.manifest,
   assets: assetsPayload(doc.assets),
@@ -21,13 +25,15 @@ const body = (doc: DesignDoc, extra: { dryRun: boolean; activate?: boolean }) =>
 
 /** The version the designer starts from: both documents and the file list. */
 export function useBaseVersion(templateId: string, version: string | null) {
+  const { orgId } = useOrgScope();
   return useQuery({
-    queryKey: [...templateKeys.detail(templateId), 'design', version],
+    queryKey: [...templateKeys.detail(templateId, orgId), 'design', version],
     queryFn: ({ signal }) =>
       api.get(`/api/v1/templates/${templateId}/versions/${version}`, TemplateVersionDetailSchema, {
+        query: { orgId },
         signal,
       }),
-    enabled: Boolean(version),
+    enabled: Boolean(version && orgId),
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 0,
   });
@@ -35,18 +41,19 @@ export function useBaseVersion(templateId: string, version: string | null) {
 
 /** Live check: the report, the built pass and the file list, once typing pauses. */
 export function useDesignCheck(templateId: string, doc: DesignDoc, enabled = true) {
+  const { orgId } = useOrgScope();
   const settled = useDebounced(doc, 450);
   const sig = useMemo(() => signature(settled), [settled]);
   const query = useQuery({
-    queryKey: ['admin', 'templates', 'design-check', templateId, sig],
+    queryKey: ['admin', 'templates', 'design-check', templateId, orgId, sig],
     queryFn: ({ signal }) =>
       api.post(
         `/api/v1/templates/${templateId}/versions`,
         SaveVersionResponseSchema,
         body(settled, { dryRun: true }),
-        { signal },
+        { signal, query: { orgId } },
       ),
-    enabled,
+    enabled: enabled && Boolean(orgId),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
     retry: false,
@@ -59,13 +66,15 @@ export function useDesignCheck(templateId: string, doc: DesignDoc, enabled = tru
 }
 
 export function useSaveVersion(templateId: string) {
+  const { orgId } = useOrgScope();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ doc, activate }: { doc: DesignDoc; activate: boolean }) =>
+    mutationFn: (doc: DesignDoc) =>
       api.post(
         `/api/v1/templates/${templateId}/versions`,
         SaveVersionResponseSchema,
-        body(doc, { dryRun: false, activate }),
+        body(doc, { dryRun: false }),
+        { query: { orgId } },
       ),
     onSuccess: () =>
       Promise.all([

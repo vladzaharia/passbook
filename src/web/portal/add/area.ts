@@ -3,8 +3,8 @@ import { type DeviceInfo, showsAddQr } from '../../../shared/device.ts';
 
 /**
  * What the add block does. scan: the QR leads (not the phone). phone: the badge leads (the
- * iPhone; a page with no public URL). added: on a device already, so a quiet line, adding again on
- * request. off: voided or expired, nothing to add.
+ * iPhone; a page with no public URL). added: Apple reported a registration, so show a quiet line
+ * with adding again on request. off: voided or expired, nothing to add.
  */
 export type AddMode = 'scan' | 'phone' | 'added' | 'off';
 
@@ -31,9 +31,3 @@ export interface AddAreaProps {
   /** Apple's line where this browser cannot add (shared/device.ts addLine). */
   line: string | null;
 }
-
-/**
- * Beside the QR, the badge only where it adds: the Mac. /p cannot tell an iPad from a Mac by its
- * user agent; `wl-mac-only` hides it on a touch screen (add.css).
- */
-export const macBeside = (p: Pick<AddAreaProps, 'device'>) => p.device.device === 'mac';

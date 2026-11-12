@@ -1,12 +1,7 @@
 import type { z } from 'zod';
-import { PassBuildError } from '../../../passkit/build.ts';
-import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { Json } from '../../../shared/contracts/common.ts';
 import type {
   ImportStatusSchema,
-  PreviewBatchSchema,
-  PreviewRequestSchema,
-  PreviewResponseSchema,
   TemplateDetailSchema,
   TemplateListQuerySchema,
   TemplateListSchema,
@@ -15,19 +10,13 @@ import type {
   UploadListSchema,
 } from '../../../shared/contracts/index.ts';
 import { type AuthContext, assertOrgAccess, modeOf } from '../../platform/auth.ts';
-import { baseUrl } from '../../platform/env.ts';
-import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { brandingWarnings, readBranding, tenantPassJson } from '../passes/branding.ts';
-import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
-import { getOrg as getPassOrg } from '../passes/repo.ts';
-import { previewPass } from './build-check.ts';
 import { createTemplateRegistry } from './registry.ts';
 import {
   countPassesByVersion,
   getImport,
   getOrgName,
-  getTemplate,
   getVersion,
   listRecentImports,
   listVersions,
@@ -36,7 +25,20 @@ import {
   type VersionRow,
 } from './repo.ts';
 import { type ListedTemplate, listTemplates } from './repo-list.ts';
+import { hasApprovedLiveHead } from './repo-mutations.ts';
+import { olderLivePassesForOrg } from './repo-usage.ts';
+import {
+  isPlatformAdmin,
+  loadTemplate,
+  passUsageOrg,
+  requireTemplateOrgRead,
+  requireTemplateReader,
+  templateCollectionOrg,
+} from './service-access.ts';
 import { syncBakedTemplates } from './sync.ts';
+
+export { loadTemplate } from './service-access.ts';
+export { preview, previewMany } from './service-preview.ts';
 
 type Summary = z.infer<typeof TemplateSummarySchema>;
 type Detail = z.infer<typeof TemplateDetailSchema>;
@@ -60,30 +62,21 @@ export function summaryOf(row: TemplateRow, passCount: number, orgName: string |
   };
 }
 
-function versionDto(v: VersionRow, active: string | null, passCount = 0) {
+function versionDto(v: VersionRow, active: VersionRow | undefined, passCount = 0) {
   return {
     version: v.version,
     createdAt: v.createdAt,
     createdBy: v.createdBy,
     assets: v.assets.map(({ source: _source, ...asset }) => asset),
     report: v.report,
-    active: v.version === active,
+    active: v.version === active?.version,
+    displayOnly:
+      v.version !== active?.version &&
+      v.buildKey !== null &&
+      active?.buildKey != null &&
+      v.buildKey === active.buildKey,
     passCount,
   };
-}
-
-/** Loads a template the caller may see. Org-scoped API keys only see their org and platform rows. */
-export async function loadTemplate(
-  ctx: ServiceContext,
-  auth: AuthContext | undefined,
-  id: string,
-): Promise<TemplateRow> {
-  await syncBakedTemplates(ctx);
-  const row = await getTemplate(ctx.env.DB, id);
-  if (!row || row.status === 'deleted')
-    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
-  if (row.orgId) assertOrgAccess(auth, row.orgId);
-  return row;
 }
 
 export async function list(
@@ -91,12 +84,8 @@ export async function list(
   auth: AuthContext | undefined,
   query: z.infer<typeof TemplateListQuerySchema>,
 ): Promise<z.infer<typeof TemplateListSchema>> {
+  const orgId = await templateCollectionOrg(ctx, auth, query.orgId);
   await syncBakedTemplates(ctx);
-  let orgId: string | undefined = query.orgId;
-  if (auth?.kind === 'api_key' && auth.orgId !== null) {
-    if (orgId) assertOrgAccess(auth, orgId);
-    orgId = auth.orgId;
-  }
   let cursor: { createdAt: number; id: string } | null = null;
   if (query.cursor) {
     const [at, ...rest] = query.cursor.split(':');
@@ -114,6 +103,10 @@ export async function list(
     limit: query.limit + 1,
     cursor,
     mode: modeOf(auth),
+    passOrgId:
+      (auth?.kind === 'api_key' && auth.orgId === null) || (orgId === null && isPlatformAdmin(auth))
+        ? undefined
+        : orgId,
   });
   const page = rows.slice(0, query.limit);
   const last = page.at(-1);
@@ -127,29 +120,41 @@ export async function detail(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   id: string,
+  orgId?: string,
 ): Promise<Detail> {
-  const row = await loadTemplate(ctx, auth, id);
+  const row = await loadTemplate(ctx, auth, id, orgId);
+  const passOrgId = passUsageOrg(auth, row.orgId, orgId);
   const [versions, counts] = await Promise.all([
     listVersions(ctx.env.DB, id),
-    countPassesByVersion(ctx.env.DB, id, modeOf(auth)),
+    countPassesByVersion(ctx.env.DB, id, modeOf(auth), passOrgId),
   ]);
   const active = versions.find((v) => v.version === row.activeVersion);
-  if (!active) throw new NotFoundError('Template has no active version.', 'TEMPLATE_NOT_FOUND');
+  const display = active ?? (row.activeVersion === null ? versions[0] : undefined);
+  if (!display) throw new NotFoundError('Template has no saved version.', 'TEMPLATE_NOT_FOUND');
   let total = 0;
   for (const n of counts.values()) total += n;
-  const { older, settled } = await olderLivePasses(ctx.env.DB, id);
+  const { older, settled } =
+    passOrgId === null
+      ? { older: 0, settled: false }
+      : passOrgId === undefined
+        ? await olderLivePasses(ctx.env.DB, id, modeOf(auth))
+        : await olderLivePassesForOrg(ctx.env.DB, id, modeOf(auth), passOrgId);
   return {
     ...summaryOf(
       row,
       total,
       row.orgId ? ((await getOrgName(ctx.env.DB, row.orgId))?.name ?? null) : null,
     ),
-    inputSchema: active.manifest.inputs as Json,
-    sample: active.manifest.sample,
-    manifest: active.manifest as unknown as Json,
-    versions: versions.map((v) => versionDto(v, row.activeVersion, counts.get(v.version) ?? 0)),
+    inputSchema: display.manifest.inputs as Json,
+    sample: display.manifest.sample,
+    manifest: display.manifest as unknown as Json,
+    versions: versions.map((v) => versionDto(v, active, counts.get(v.version) ?? 0)),
     passesOnOlderVersions: older,
     passesBlocked: settled ? older : 0,
+    restorable:
+      row.status === 'archived' &&
+      row.origin === 'uploaded' &&
+      !(await hasApprovedLiveHead(ctx.env.DB, id)),
   };
 }
 
@@ -158,13 +163,25 @@ export async function versionDetail(
   auth: AuthContext | undefined,
   id: string,
   version: string,
+  orgId?: string,
 ): Promise<VersionDetail> {
-  const row = await loadTemplate(ctx, auth, id);
+  const row = await loadTemplate(ctx, auth, id, orgId);
   const v = await getVersion(ctx.env.DB, id, version);
   if (!v) throw new NotFoundError('Template version not found.', 'TEMPLATE_VERSION_NOT_FOUND');
-  const counts = await countPassesByVersion(ctx.env.DB, id, modeOf(auth));
+  const active =
+    row.activeVersion === v.version
+      ? v
+      : row.activeVersion
+        ? await getVersion(ctx.env.DB, id, row.activeVersion)
+        : null;
+  const counts = await countPassesByVersion(
+    ctx.env.DB,
+    id,
+    modeOf(auth),
+    passUsageOrg(auth, row.orgId, orgId),
+  );
   return {
-    ...versionDto(v, row.activeVersion, counts.get(v.version) ?? 0),
+    ...versionDto(v, active ?? undefined, counts.get(v.version) ?? 0),
     manifest: v.manifest as unknown as Json,
     passJson: v.passJson,
   };
@@ -188,8 +205,9 @@ export async function openVersionAsset(
   id: string,
   version: string,
   name: string,
+  orgId?: string,
 ): Promise<AssetStream> {
-  await loadTemplate(ctx, auth, id);
+  await loadTemplate(ctx, auth, id, orgId);
   const registry = createTemplateRegistry(ctx.env, { ctx });
   const template = await registry.resolve(id, version);
   const entry = template.assets.find((a) => a.name === name);
@@ -199,99 +217,15 @@ export async function openVersionAsset(
   return { stream: await registry.openExtra(template, name), contentType, sha1: null };
 }
 
-/** Default-sample previews for several templates; one that fails or is out of reach is skipped. */
-export async function previewMany(
-  ctx: ServiceContext,
-  auth: AuthContext | undefined,
-  ids: string[],
-): Promise<z.infer<typeof PreviewBatchSchema>> {
-  const results = await Promise.all(
-    ids.map(async (id) => {
-      try {
-        return { id, ...(await preview(ctx, auth, id, {})) };
-      } catch (error) {
-        if (error instanceof AppError && error.status < 500) return null;
-        throw error;
-      }
-    }),
-  );
-  return { items: results.filter((r) => r !== null) };
-}
-
-export async function preview(
-  ctx: ServiceContext,
-  auth: AuthContext | undefined,
-  id: string,
-  body: z.infer<typeof PreviewRequestSchema>,
-): Promise<z.infer<typeof PreviewResponseSchema>> {
-  const row = await loadTemplate(ctx, auth, id);
-  const resolved: ResolvedTemplate = await createTemplateRegistry(ctx.env, { ctx }).resolve(
-    id,
-    body.version,
-  );
-  if (body.orgId) assertOrgAccess(auth, body.orgId);
-  const tenant = body.orgId ? await getPassOrg(ctx.env.DB, body.orgId) : null;
-  const org = tenant ?? (row.orgId ? await getOrgName(ctx.env.DB, row.orgId) : null);
-  const branding = readBranding(tenant?.branding);
-  const template = tenant
-    ? {
-        ...resolved,
-        passJson: withBackContacts(
-          tenantPassJson(resolved.passJson, tenant.name, branding),
-          await backContactsFor(ctx, tenant.id, tenant.branding),
-        ),
-      }
-    : // No org yet: the back shows what an org without contacts gets, never an empty Contact.
-      {
-        ...resolved,
-        passJson: withBackContacts(resolved.passJson, {
-          contact: null,
-          passService: baseUrl(ctx.env),
-        }),
-      };
-  try {
-    const result = previewPass(
-      ctx.env,
-      template,
-      body.input ?? template.manifest.sample,
-      // A shared template has no org: a placeholder, never the template's name, signs the back.
-      org?.name ?? 'Organization',
-      new Date(ctx.clock.now()),
-    );
-    return {
-      passJson: result.passJson,
-      warnings: [...result.issues, ...(tenant ? brandingWarnings(id, branding, []) : [])],
-      assetNames: [
-        ...new Set([
-          ...template.assets.map((a) => a.name),
-          ...(template.manifest.previewOnlyAssets ?? []),
-        ]),
-      ],
-      assetBaseUrl: `${baseUrl(ctx.env)}/api/v1/templates/${encodeURIComponent(id)}/versions/${template.version}/assets`,
-    };
-  } catch (error) {
-    if (error instanceof PassBuildError)
-      throw new ValidationError(
-        error.message,
-        error.report.issues.map((i) => ({ path: i.path ?? '', message: i.message, code: i.code })),
-        error.code === 'INVALID_INPUT' ? 'INVALID_INPUT' : 'VALIDATION',
-      );
-    throw error;
-  }
-}
-
 export async function recentUploads(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   query: { orgId?: string | undefined; limit: number },
 ): Promise<z.infer<typeof UploadListSchema>> {
-  let orgId = query.orgId;
-  if (auth?.kind === 'api_key' && auth.orgId !== null) {
-    if (orgId) assertOrgAccess(auth, orgId);
-    orgId = auth.orgId;
-  }
+  const orgId = await templateCollectionOrg(ctx, auth, query.orgId);
   const items = await listRecentImports(ctx.env.DB, {
-    ...(orgId ? { orgId } : {}),
+    orgId,
+    includeGlobal: auth?.kind === 'api_key',
     limit: query.limit,
   });
   return { items };
@@ -301,10 +235,16 @@ export async function importStatus(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   uploadId: string,
+  orgId?: string,
 ): Promise<z.infer<typeof ImportStatusSchema>> {
+  requireTemplateReader(auth);
+  if (orgId && auth.kind === 'api_key') assertOrgAccess(auth, orgId);
   const row = await getImport(ctx.env.DB, uploadId);
-  if (!row) throw new NotFoundError('Upload not found.', 'UPLOAD_NOT_FOUND');
-  if (row.orgId) assertOrgAccess(auth, row.orgId);
+  const notFound = () => new NotFoundError('Upload not found.', 'UPLOAD_NOT_FOUND');
+  if (!row) throw notFound();
+  if (orgId && row.orgId !== orgId) throw notFound();
+  if (row.orgId) await requireTemplateOrgRead(ctx, auth, row.orgId, notFound);
+  else if (auth.kind === 'session' && !auth.roles.includes('admin')) throw notFound();
   return {
     uploadId,
     status: row.workflowStatus ?? 'queued',

@@ -7,7 +7,8 @@ import { readSeed } from './helpers/seed.ts';
 test('public link works without sign-in and dies when rotated', async ({ browser }) => {
   const admin = await apiAs('admin');
   const holder = `Public ${uid('P')}`;
-  const pass = await createPass(admin, readSeed().org.id, { holder });
+  const orgId = readSeed().org.id;
+  const pass = await createPass(admin, orgId, { holder });
   const detail = await admin.get(`/api/v1/passes/${pass.id}`);
   const publicPath = new URL(detail.publicUrl, 'http://localhost:5173').pathname;
 
@@ -34,7 +35,7 @@ test('public link works without sign-in and dies when rotated', async ({ browser
   // Admin rotates the link from the UI.
   const adminCtx = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
   const adminPage = await adminCtx.newPage();
-  await adminPage.goto(`/admin/passes/${pass.id}`);
+  await adminPage.goto(`/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`);
   await adminPage.getByRole('button', { name: 'More', exact: true }).click();
   await adminPage.getByRole('menuitem', { name: 'Rotate link' }).click();
   await adminPage.getByRole('alertdialog').getByRole('button', { name: 'Rotate' }).click();

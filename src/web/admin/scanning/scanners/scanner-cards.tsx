@@ -20,7 +20,7 @@ import { acceptsOf, draftErrors, draftOf, type ScannerDraft, settingsOf } from '
 import { ScannerFields } from './scanner-fields.tsx';
 
 /** The dialog's fields, saved through the SaveBar. */
-export function SettingsCard({ scanner }: { scanner: ScannerDto }) {
+export function SettingsCard({ scanner, canManage }: { scanner: ScannerDto; canManage: boolean }) {
   const saved = draftOf(scanner);
   const [edits, setEdits] = useState<Partial<ScannerDraft>>({});
   const [server, setServer] = useState<Record<string, string>>({});
@@ -29,7 +29,7 @@ export function SettingsCard({ scanner }: { scanner: ScannerDto }) {
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
   const check = useFormErrors(draftErrors(draft, false));
   const errors: Record<string, string | undefined> = { ...server, ...check.errors };
-  const readOnly = scanner.status === 'revoked';
+  const readOnly = !canManage || scanner.status === 'revoked';
 
   async function save(): Promise<SaveResult> {
     try {
@@ -62,6 +62,7 @@ export function SettingsCard({ scanner }: { scanner: ScannerDto }) {
           <fieldset disabled={readOnly} className="min-w-0">
             <ScannerFields
               draft={draft}
+              mode={scanner.mode}
               onChange={(patch) => {
                 setEdits((e) => ({ ...e, ...patch }));
                 setServer({});

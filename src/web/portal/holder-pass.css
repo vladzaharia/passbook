@@ -31,6 +31,55 @@
   grid-area: help;
   min-width: 0;
 }
+/* Provider artwork stays proportional and unmodified, with clear space and a 48px target. */
+.wl-native-wallets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.wl-native-wallets a {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0.5rem;
+}
+.wl-native-wallets a:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.wl-native-wallets img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 3rem;
+  object-fit: contain;
+}
+.wl-choice-label {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.wl-presentation {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-xl);
+  background: var(--pk-surface-raised);
+}
+.wl-presentation h2 {
+  margin: 0;
+  color: var(--pk-text-strong);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.wl-presentation p {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+}
 /* The iPhone adding, or a pass that cannot be added: the card of the badge or the notice first,
    the pass under it. */
 @media (max-width: 1023.98px) {
@@ -93,7 +142,9 @@
   /* The column rises after the card (240 ms). Apple's badge never animates: what holds it does
      not rise. */
   .wl-holder[data-rise] :is(.wl-holder-details, .wl-holder-help),
-  .wl-holder[data-rise] .wl-holder-add > :not(:has([data-awb])) {
+  .wl-holder[data-rise]
+    .wl-holder-add
+    > :not(:has([data-awb])):not(.wl-native-wallets):not(.wl-choice-label) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
   }
 }

@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { UserDetailSchema } from '@/shared/contracts/users.ts';
@@ -5,7 +6,7 @@ import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { removeEmailConfirm, revokeSessionsConfirm } from '@/web/lib/confirms.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
-import { formatDateTime } from '@/web/lib/format.ts';
+import { formatCount, formatDateTime } from '@/web/lib/format.ts';
 import { removeWithTransition } from '@/web/lib/motion.ts';
 import {
   Badge,
@@ -15,13 +16,14 @@ import {
   CardHeader,
   CardLink,
   ConfirmDialog,
-  CountLink,
   EmailList,
   EmptyState,
   KeyValue,
   ListRow,
   ListRows,
   SessionList,
+  StatusPill,
+  TechnicalDetails,
   toast,
 } from '@/web/ui/index.ts';
 import { useIdpUrl } from '../settings/queries.ts';
@@ -216,28 +218,37 @@ export function IdentitiesCard({ user }: { user: UserDetail }) {
 export function AccountCard({ user }: { user: UserDetail }) {
   return (
     <Card>
-      <CardHeader title="Account" />
+      <CardHeader title="Account identity" />
       <CardBody>
         <KeyValue
           items={[
-            { label: 'Signs in with', value: methodsLabel(user.signInMethods) },
+            { label: 'Primary email', value: user.primaryEmail },
             {
-              label: 'Passes',
-              value: (
-                <CountLink
-                  count={user.passCount}
-                  noun={['pass', 'passes']}
-                  icon={ENTITY.pass.icon}
-                  to="/admin/passes"
-                  search={{ q: user.primaryEmail }}
-                />
+              label: 'Roles at last sign-in',
+              value: user.lastRoles.length ? (
+                <span className="flex flex-wrap gap-1">
+                  {user.lastRoles.map((role) => (
+                    <StatusPill key={role} status={role} />
+                  ))}
+                </span>
+              ) : (
+                '—'
               ),
             },
+            { label: 'Signs in with', value: methodsLabel(user.signInMethods) },
+            { label: 'Owned passes', value: formatCount(user.passCount) },
             { label: 'Created', value: formatDateTime(user.createdAt) },
             { label: 'Last sign-in', value: formatDateTime(user.lastLoginAt, '—') },
-            { label: 'ID', value: user.id, mono: true },
           ]}
         />
+        <TechnicalDetails className="mt-3" items={[{ label: 'ID', value: user.id }]} />
+        <div className="mt-3">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/passes" search={{ q: user.primaryEmail }}>
+              Search primary email in selected mode
+            </Link>
+          </Button>
+        </div>
       </CardBody>
     </Card>
   );

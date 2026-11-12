@@ -51,21 +51,17 @@ describe('list and search query plans', () => {
     expect(fullScans(lines, 'passes')).toEqual([]);
   });
 
-  it('bundles: an org list uses bundles_org, a platform list bundles_mode', async () => {
-    const org = await plans((db) => listBundleRows(db, { orgScope: 'o', mode: 'live', limit: 50 }));
-    expect(org.join('\n')).toContain('bundles_org');
-    const pinned = await plans((db) =>
-      listBundleRows(db, { orgScope: null, orgId: 'o', mode: 'test', limit: 50 }),
-    );
-    expect(pinned.join('\n')).toContain('bundles_org');
-    const all = await plans((db) =>
-      listBundleRows(db, { orgScope: null, mode: 'live', limit: 50 }),
-    );
-    expect(fullScans(all, 'bundles')).toEqual([]);
+  it('bundles: organization lists use bundles_org in each mode', async () => {
+    for (const mode of ['live', 'test'] as const) {
+      const org = await plans((db) => listBundleRows(db, { orgId: 'o', mode, limit: 50 }));
+      expect(org.join('\n')).toContain('bundles_org');
+    }
   });
 
   it('events: a pass ledger page uses an index', async () => {
-    const lines = await plans((db) => listEvents(db, { passId: 'p', limit: 50 }));
+    const lines = await plans((db) =>
+      listEvents(db, { passId: 'p', limit: 50, fence: { orgId: 'org', mode: null } }),
+    );
     expect(fullScans(lines, 'pass_events')).toEqual([]);
   });
 

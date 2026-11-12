@@ -21,7 +21,7 @@
 
 ## Go-live checklist
 
-Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.jsonc`.
+Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangler.jsonc`.
 
 1. **Pocket ID** (`id.plrs.im`). PassBook registers itself with a Client ID Metadata Document:
    `vars.OIDC_CLIENT_ID` is `${PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`, which the
@@ -54,7 +54,7 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
      HTTP/2. Apple answers 429 `TooManyProviderTokenUpdates` if tokens are re-signed too often
      (after setting a key, or on many isolates at once); the push job retries it.
 4. **Turnstile**: a widget whose hostnames include `PUBLIC_BASE_URL`'s host. Site key in
-   `vars.TURNSTILE_SITE_KEY`, secret in step 5. The always-pass test key is refused by `predeploy`.
+   `vars.TURNSTILE_SITE_KEY`, secret in step 5. The always-pass test key is refused by `deploy:check`.
 5. **Secrets** (`wrangler secret put <NAME>`, value on stdin)
    - `KEK_V1`: `openssl rand -base64 32`. Back it up outside Cloudflare. Losing it loses every
      stored credential.
@@ -77,18 +77,102 @@ Do in order. `npm run predeploy` lists what is still a placeholder in `wrangler.
    `ANALYTICS_SQL` binding (no API token); if the query fails they fall back to D1 and the
    overview says which source it used.
 9. **Deploy**: `npm run check`, then `npm run deploy` (dry run, prints the plan), then
-   `npm run deploy -- --apply`. That refuses on placeholders, records a D1 Time Travel bookmark in
-   `.wrangler/d1-bookmarks.log`, applies remote migrations, runs `wrangler deploy`.
-   Queues, workflows and rate-limit namespaces are created by the deploy.
-10. **First admin**: sign in through Pocket ID as a `wallet-admins` member (or break-glass if
-    Pocket ID is down). Check Status: every
-    component should be verified or configured.
+   `npm run deploy -- --apply`. That refuses on placeholders or an unset required secret, uploads
+   a Worker version (not serving yet), records a D1 Time Travel bookmark in
+   `.wrangler/d1-bookmarks.log`, applies remote migrations, then promotes the version.
+   Queues, workflows and rate-limit namespaces come from step 6. Pass flags after `--`, for
+   example `npm run deploy -- --apply --allow-no-push`; `--apply` runs every check first.
+   **First deploy**: use `npm run deploy -- --first --apply`. Cloudflare documents that
+   `versions upload` fails for a Worker that was never deployed and cannot apply Durable Object
+   class changes (`ScanHub`); it does not document registering queue consumers or workflows
+   either, so treat `wrangler deploy` as the registering step. `--first` bookmarks D1, migrates,
+   then runs `wrangler deploy`, which serves at once (no gradual promote). Use it again whenever
+   a release adds a queue consumer, a workflow or a Durable Object class. After it, check
+   `npx wrangler queues info wallet-jobs` lists the Worker as consumer; later releases use the
+   default versions flow.
+   An existing database (schema 0024) is not deployed this way, and the tool refuses to: follow
+   [Cutover](#cutover-from-schema-0024), which splits the run with `--migrate-only` and `--promote`.
+10. **First admin**: a new database has no memberships. Run
+    `node tools/bootstrap-tenancy.ts --owner <your email> --apply` locally, or the printed remote
+    commands, after signing in once. Then sign in through Pocket ID as a `wallet-admins` member
+    (or break-glass if Pocket ID is down). Check Status: every component should be verified or
+    configured.
 11. **Device acceptance test** (a real iPhone)
-    - Create an org, a template and a pass from the admin console; email it to yourself.
+    - Create an org, a template and a pass from the admin console; email it to yourself. An
+      uploaded template needs a release first (a second reviewer approves it).
     - Add it to Wallet from the link.
     - Update a field. The pass updates on the phone within a minute (push).
     - Near a venue the pass appears on the lock screen. The barcode scans.
     - Void the pass; the phone shows it as voided.
+
+## Google and Samsung Wallet accounts
+
+Keep Apple signing and push in place. Provider accounts and reviews are isolated by organization,
+mode and provider; Test configuration is not Live readiness. See the
+[provider API](api.md#google-and-samsung-wallet-providers) for account and callback routes.
+
+- **Google:** obtain an authorized Wallet issuer and service account with the Wallet issuer scope;
+  see [Google's authentication instructions](https://developers.google.com/wallet/generic/getting-started/auth/rest).
+  Publishing approval and replay-safe Save behavior are not verified, so Google publication and
+  offers remain unavailable even with valid credentials.
+- **Samsung:** complete Partner Portal onboarding and obtain the partner/card identifiers, partner
+  key and certificate, certificate ID and genuine Samsung verification certificate; see
+  [Samsung's Add to Wallet interface](https://developer.samsung.com/wallet/api/add-to-wallet-interface.html).
+  A fresh authenticated ACTIVE, testing-mode-off response can establish candidate-specific card
+  publication, but not a recipient's market eligibility. Samsung offers remain unavailable.
+- Configure credentials only through the authorized, mode-matched account flow. Do not put keys,
+  provider tokens or holder capability links in logs, documentation, tickets or screenshots.
+  Rotation preserves Google's internal object-identifier HMAC key; it does not prove approval.
+  Retire linked instances before revoking an account.
+- Use the provider-supplied artwork unchanged and follow their locale, size and clear-space rules;
+  see [Google's badge guidance](https://developers.google.com/wallet/generic/resources/brand-guidelines)
+  and [Samsung's image resources](https://developer.samsung.com/wallet/references/imageresources.html).
+  Before distributing Samsung badges, confirm applicable partner onboarding and trademark
+  permissions: Samsung's [badge guidance](https://developer.samsung.com/wallet/add-to-wallet.html)
+  and [developer terms](https://developer.samsung.com/terms?location=us) do not by themselves
+  establish a redistribution license.
+
+The Google callback at `POST /wallet/v1/google/{accountId}` verifies Google's signed event; the
+Samsung interaction at `GET` or `POST /wallet/v1/samsung/cards/{cardId}/{refId}` authenticates
+the method and path, not query fields or callback bodies. Confirm Samsung interoperability with
+the partner. A Samsung Data Fetch reference can remain reusable after the first authenticated
+fetch; protect it even after a short-lived wrapper expires. Neither callbacks nor provider
+acceptance prove a particular holder installed or removed a pass.
+
+The pass Devices view shows separate Google and Samsung instance and sanitized operation statuses
+alongside Apple devices. A missing instance does not mean the provider account is unconfigured;
+`ready` and `active` are local states, not proof of publication or recipient-market eligibility.
+Installation remains unknown, and acceptance does not prove device deletion or delivery. Check the
+scoped [pass status API](api.md#google-and-samsung-wallet-providers) when investigating pending
+retirement or an uncertain provider outcome.
+
+The minute cron (`wallet.sync`) reconciles queued provider changes and retirement; uncertain
+outcomes remain held for operator reconciliation rather than blindly retried.
+
+Provider retirement can delay Live hard purge and Test cleanup; unresolved outcomes do not permit
+deletion. A potentially issued or disclosed Google
+object remains held without proven replay-safe retirement; a strictly proven never-issued
+placeholder may retire locally. Samsung retirement is per reference, not its event-wide Cancel;
+provider acceptance proves neither physical deletion nor recipient-market eligibility.
+Provider identities are tied to a positive credential generation. Transfer start reserves the
+target, then atomically advances the pass generation, revokes the old holder link and stages old
+provider retirement and blocked target placeholders. A failed generation compare-and-swap rolls
+back the reservation and staging. The targets stay blocked until all old retirements are safely
+settled; the final compare-and-swap assigns the new holder and credentials and completes the transfer.
+Provider eligibility gates still apply. Preserve Samsung callback tombstones and never reuse
+provider IDs, references or tokens. A PII-free Samsung tombstone retains mappings to authentication
+material for old references; more than 32 retained credential revision mappings for a reference
+fail closed with `503` and require operator/Samsung migration.
+
+The credential-reference keyset commitment binds transfer and provider authority to the original
+oldest configured KEK. A missing or mismatched commitment blocks provider reference use and
+retirement rather than creating replacement identities. Restore the original key configuration
+or perform an explicitly reviewed rekey; never delete retained tombstones to bypass the fence.
+Legacy provider instances, references, projection reviews and verification evidence without a
+proven original commitment stay unavailable until a separately reviewed recovery migration.
+
+Configure and deploy the integration before using any endpoints; no production credentials are
+supplied by this project.
 
 ## Domains
 
@@ -103,7 +187,7 @@ URL all derive from it. `src/worker/platform/host-policy.ts`:
 - The files `public/` ships (icons, email images, fonts, `robots.txt`) come from the asset layer
   before the Worker runs, so they load as they are on every attached host.
 
-`npm run predeploy` checks that every custom domain in `routes` is the canonical host or a
+`npm run deploy:check` checks that every custom domain in `routes` is the canonical host or a
 redirect host, and that `EMAIL_FROM` is an allowed sender.
 
 A pass keeps the `webServiceURL` it was issued with (`passes.web_service_url`). Apple documents
@@ -157,8 +241,8 @@ Verify:
 
 Rollback: revert the change (`routes`, `PUBLIC_BASE_URL`, `REDIRECT_HOSTS`, `OIDC_CLIENT_ID`,
 `EMAIL_FROM` and `send_email` move together) and deploy. The old Pocket ID client and allowlist
-entry must still exist. Stored web service URLs stay on passbook.mobile: restore the D1 bookmark
-the deploy logged (this drops later writes), or set them back with the reverse `UPDATE`.
+entry must still exist. Stored web service URLs stay on passbook.mobile: set them back with the
+reverse `UPDATE`. Do not restore D1 (see [Cutover](#cutover-from-schema-0024)).
 Redirects are uncached, so no browser loops. Everyone signs in again. A pass added to Wallet in
 between keeps calling passbook.mobile's web service, and Wallet does not follow redirects: its
 holder re-adds it from a new link.
@@ -181,7 +265,7 @@ Admin sign-in for when Pocket ID is down.
 ## PassBook support
 
 `vars.SUPPORT_EMAIL` in `wrangler.jsonc` (`support@passbook.mobile`) is the one address for PassBook's
-own support. `npm run predeploy` refuses an empty or invalid value. It appears as:
+own support. `npm run deploy:check` refuses an empty or invalid value. It appears as:
 
 - the "Pass service" back field on every pass ("PassBook · support@passbook.mobile" and the site);
 - the support line on the holder pass page, the pass email's "Questions:" line and the voided
@@ -192,22 +276,381 @@ The Worker does not receive mail. In Cloudflare, Email Routing on `passbook.mobi
 destination verified. Changing the address is an edit to `SUPPORT_EMAIL` and a deploy. Issued
 passes keep the old one until a template change or Identities, Re-sign all rebuilds them.
 
+## Cutover from schema 0024
+
+Production D1 is at 0024. Migrations 0025–0055 have never run there; they land together. All data
+is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, secrets, and every
+`--apply` or `--remote` command. An agent never runs them. `test/cutover/` rehearses this order on
+a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
+`docs/design/authority-epochs.md` §6.
+
+### What the new Worker does with 0024 data
+
+- **Uploaded templates**: the bootstrap gives each active one a `legacy` live release at its active
+  version, in its own org (or, if unassigned, each org with undeleted passes on it). An org the old
+  Worker moved the template away from keeps only deleted passes; it gets no release, and nothing
+  serves or reissues those passes. The daily purge removes them.
+- **Baked templates**: the baked sync gives each a `system` release in the org stored on the
+  template: the platform for an unassigned one, the org for one assigned by its manifest or by the
+  old Worker's `PATCH` (a starter an org adopted). The bootstrap never makes one; a `legacy` release
+  only counts for uploaded templates. Until the sync runs, baked templates cannot issue new passes;
+  existing passes keep scanning. `--promote` runs the sync and waits for it.
+- **Passes behind their template's head** keep scanning and refreshing at their own version. This
+  build ships new versions of `henrys-blue` and `henrys-copper`, so all their passes are behind. The
+  minute cron (`passes.stale_reissue`) reissues them per template and org
+  (`template.reissue_started`); holders get a Wallet update.
+- **Archived templates** keep scanning and refreshing their passes. They have no head, so they issue
+  nothing until made active. Only a deleted template stops its passes.
+- **Deleted orgs** keep their rows. Nothing serves their passes; the bootstrap and `verify-heads`
+  skip them.
+- **Queued pass and bundle emails** get bound to their pass or bundle by the bootstrap and are sent
+  on the legacy path (`delivery.legacy_intent`). A row whose pass changed after the snapshot is
+  cancelled as `DELIVERY_UNBOUND`.
+- **Queued pushes** are bound by migration 0045. Old `connection.webhook` and `pass.refresh` queue
+  messages are logged as `queue.legacy_job_ignored` and acknowledged (webhooks are kept as ignored);
+  `email.send` and `push.deliver` messages carry only an outbox id and work.
+- **Memberships**: the bootstrap makes `--owner` `org_admin` in every org that is not deleted. Other
+  platform admins (`wallet-admins`) need none.
+- **Holder links**: a static-barcode pass (`henrys-blue`, `starter-generic`) links to a verified
+  holder's account at sign-in without a new credential (0055: only an active user with a verified
+  address equal to the holder email, no attach block, on a pass that is not deleted or
+  quarantined). Other passes get new credentials when they link.
+
+### Deploy mode
+
+Two runs of the normal version flow: `--migrate-only`, bootstrap, `--promote`. `wrangler.jsonc` is
+identical at `main` and HEAD (`git diff main HEAD -- wrangler.jsonc` is empty): same queue
+consumers, workflows, `ScanHub` Durable Object and crons, so nothing needs `wrangler deploy`. Do not
+use `--first`: it serves the new Worker as soon as the migrations finish, before the bootstrap.
+**Owner**: `npx wrangler deployments list` shows a deploy newer than the last commit to
+`wrangler.jsonc` on `main`. If `wrangler.jsonc` differs, stop and decide again.
+
+Run both halves from the same checkout: `--promote` reads the version id `--migrate-only` saved in
+`.wrangler/deploy-version.txt` once the migrations applied. Flags go after `--`; the tool refuses
+one given before it (`npm run deploy --migrate-only` would reach it only as `npm_config_*`). A
+plain `--apply` refuses while `0029_org_memberships` is pending on a database with data: a full
+deploy would serve the new Worker before the bootstrap. The dry runs print:
+
+- `npm run deploy -- --migrate-only`: secret list, `versions upload`, D1 bookmark,
+  `d1 migrations apply wallet-platform --remote`, save the version id.
+- `npm run deploy -- --promote`: secret list, `d1 migrations list` (refuses while any migration is
+  pending), read the saved version id, `versions deploy <version>@100%`, wait until every live
+  pass has a release head.
+
+### Pre-checks
+
+1. `npm run check` passes on the commit to deploy. A second person reviews the diff and this
+   runbook. `npm run deploy -- --migrate-only` and `npm run deploy -- --promote` print the plans
+   above.
+2. **Owner**: `npm run deploy:check -- --secrets` prints `wrangler.jsonc is ready to deploy.`
+3. **Owner**: sign in once on passbook.mobile with the email you pass as `--owner` (the bootstrap
+   needs its `users` row).
+4. **Owner**: Admin, API keys: create a live key in any active org with only `templates:read`.
+   Keep the secret as `WALLET_API_KEY` for step 4 of the order. Create it now, on the old Worker;
+   it keeps working after the migrations.
+5. **Owner**: `npx wrangler d1 time-travel info wallet-platform`; note the bookmark. The deploy
+   records its own in `.wrangler/d1-bookmarks.log`.
+6. Stop sources of new work: connection syncs, broadcasts, bulk actions. Dashboard, Queues:
+   `wallet-jobs` and `wallet-jobs-dlq` at zero backlog.
+7. **Owner**: read-only SQL. Paste each block into the dashboard's D1 console (`wallet-platform`),
+   or save it as `q.sql` and run
+   `npx wrangler d1 execute wallet-platform --remote --command "$(cat q.sql)"` (the blocks hold
+   quotes; never paste them into `--command "..."`). Queued work (pending pass and bundle email is
+   bound by the bootstrap):
+
+   ```sql verify-outbox
+   SELECT kind, state, count(*) AS n FROM outbox
+   WHERE state IN ('pending', 'enqueued', 'processing') GROUP BY kind, state
+   ```
+
+   Archived templates with live passes. Their passes keep scanning; un-archive one only to issue new
+   passes from it:
+
+   ```sql verify-archived
+   SELECT t.id, t.origin, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
+   WHERE t.status != 'active' AND p.deleted_at IS NULL AND p.status = 'active' GROUP BY t.id, p.org_id
+   ```
+
+   Passes on an old template version. Expect one bulk reissue per row after the cutover, and one per
+   org for each Henry's template (this build ships new Henry's versions):
+
+   ```sql verify-stale-before
+   SELECT p.template_id, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
+   WHERE p.deleted_at IS NULL AND p.status = 'active' AND p.template_version != t.active_version
+   GROUP BY p.template_id, p.org_id
+   ```
+
+   Uploaded templates with passes in another org (the old Worker moved a template once that org's
+   passes were deleted). `live` 0 is expected: the bootstrap skips those deleted passes. `live`
+   above 0 should not exist (the old Worker refused such a move); those passes could get no
+   release. Stop, delete them or reissue them on a template of their own org in the old Worker,
+   then rerun this:
+
+   ```sql verify-moved
+   SELECT t.id, t.org_id AS template_org, p.org_id, count(*) AS passes, sum(p.deleted_at IS NULL) AS live
+   FROM passes p JOIN templates t ON t.id = p.template_id
+   WHERE t.origin = 'uploaded' AND t.org_id IS NOT NULL AND p.org_id != t.org_id
+   GROUP BY t.id, p.org_id
+   ```
+
+   Counts; record them, they must not drop:
+
+   ```sql verify-counts
+   SELECT json_object(
+     'users', (SELECT count(*) FROM users), 'orgs', (SELECT count(*) FROM orgs),
+     'templates', (SELECT count(*) FROM templates), 'template_versions', (SELECT count(*) FROM template_versions),
+     'passes', (SELECT count(*) FROM passes), 'pass_versions', (SELECT count(*) FROM pass_versions),
+     'devices', (SELECT count(*) FROM devices), 'registrations', (SELECT count(*) FROM registrations),
+     'scans', (SELECT count(*) FROM scans), 'outbox', (SELECT count(*) FROM outbox),
+     'api_keys', (SELECT count(*) FROM api_keys), 'sessions', (SELECT count(*) FROM sessions),
+     'download_tokens', (SELECT count(DISTINCT download_token) FROM passes),
+     'auth_tokens', (SELECT count(auth_token) FROM passes)) AS counts
+   ```
+
+### Temporary WAF rule
+
+**Owner**, Cloudflare console, passbook.mobile zone, Security, WAF, Custom rules. Name `cutover`,
+action Block, custom response 503 `text/plain`, body `Maintenance. Back in a few minutes.` Create
+it first in the list and deploy it in step 1 of the order, before the migrations; delete it in
+step 6, after verification. The expression:
+
+```
+(http.host in {"passbook.mobile" "wallet.plrs.im"}
+  and http.request.method in {"POST" "PUT" "PATCH" "DELETE"}
+  and (starts_with(http.request.uri.path, "/api/v1/holders/")
+    or starts_with(http.request.uri.path, "/api/v1/passes")
+    or starts_with(http.request.uri.path, "/api/v1/me/passes/")))
+```
+
+Why these paths. Between migrate and promote the old Worker serves the new schema. Trigger
+`pass_credential_transfer_required` (0042, recreated in 0055) aborts its writes to `holder_email`,
+`serial`, `auth_token`, `identity_id`, `org_id`, `mode` or a set `scan_code`, and any owner change
+except linking an unowned, undeleted, unquarantined pass to an active user whose verified address is
+the holder email and who has no attach block for it, or clearing one after writing the attach block.
+`test/cutover/window.test.ts` runs the old Worker's statements:
+
+| Old write | Route | In the window |
+| --- | --- | --- |
+| assign, reassign, unassign holder | `POST /api/v1/holders/assign`, `assign-bulk`, `reassign`, `unassign`, `clear-block` | fails |
+| delete an owned pass | `DELETE /api/v1/passes/{id}` | fails |
+| remove an owned pass from an account | `DELETE /api/v1/me/passes/{id}` | succeeds without the new credential the new Worker would issue; blocked |
+| create a pass for a holder with an account | `POST /api/v1/passes` (also API keys) | succeeds; blocked with the other pass writes |
+| other pass writes | `PATCH`, `/bulk`, `/bulk-reissue`, `/{id}/refresh`, `/rotate-link`, `/remove`, `/restore` | blocked as a precaution |
+
+Not blocked, because pass pages, Wallet updates and scanning must keep working (owner answer 5):
+holder sign-in (`/auth/oidc/callback`, `/auth/magic/consume`) links waiting passes as the old
+Worker always did, except that a holder with a waiting quarantined Test pass gets an error until
+promote (0055 refuses to link a quarantined pass, and the old statement links all or none);
+connection syncs that change a holder fail and retry after promote. The old baked sync batch
+(`ensureOrgStmt`) fails on an existing org slug, but only runs when the baked hash changes, which
+the old Worker does not do. `src/worker/platform/authority-baseline.test.ts` pins the other old
+writes.
+
+### Order
+
+1. **Owner**: WAF rule on. Sources of new work stopped (pre-check 6).
+2. **Owner**: `npm run deploy -- --migrate-only --apply`. Checks secrets, uploads the version (not
+   serving), records a D1 bookmark, applies 0025–0055 and stops with
+   `Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.`
+3. **Owner**: bootstrap. The tool never touches production; it prints the commands. First:
+
+   ```
+   node tools/bootstrap-tenancy.ts --owner <email> --print-remote
+   ```
+
+   It writes `.wrangler/bootstrap-snapshot.sql`. Then run, in order:
+
+   ```
+   (umask 077; npx wrangler d1 execute wallet-platform --remote --json --command "$(cat .wrangler/bootstrap-snapshot.sql)" > .wrangler/bootstrap-snapshot.json)
+   node tools/bootstrap-tenancy.ts --owner <email> --snapshot .wrangler/bootstrap-snapshot.json
+   npx wrangler d1 execute wallet-platform --remote --file .wrangler/bootstrap-tenancy.sql; rm -f .wrangler/bootstrap-tenancy.sql
+   ```
+
+   The snapshot is read with `--command`: a remote `--file` runs through D1's import API, which
+   returns no rows. Before the last command, read the plan the second prints: one `org ...` line
+   per org, one `template ...` line per active uploaded template and org, one `email ...` or
+   `bundle email ...` line per queued email. Baked templates get no line. The snapshot holds
+   download and bundle tokens; it is created owner-only and the tool deletes it, even on failure.
+   The SQL holds token hashes and holder emails, never a token; the last command deletes it. That
+   command asks to confirm and pauses D1 for the seconds it runs. Every statement is idempotent:
+   rerun all three if anything fails.
+4. **Owner**: run `verify-memberships` (step 5): no rows. Then
+   `WALLET_API_KEY=<key> npm run deploy -- --promote --apply`. Refuses while a migration is
+   pending. Serves the uploaded version at 100%, then every 10 s calls
+   `GET https://passbook.mobile/api/v1/templates` with the key (which runs the baked sync) and
+   runs `verify-heads` below, for at most 3 minutes. Exits 0 with
+   `Baked sync done: every live pass has a release head.` Exits 1 listing the templates that still
+   lack one; see "If a step fails". Without `WALLET_API_KEY` it only polls and the minute cron
+   (`templates.sync`) runs the sync, up to a minute later.
+
+   ```sql verify-heads
+   SELECT t.id, t.origin, t.status, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
+   JOIN orgs o ON o.id = p.org_id AND o.status != 'deleted'
+   WHERE p.deleted_at IS NULL AND p.mode = 'live' AND p.status = 'active'
+     AND NOT EXISTS (SELECT 1 FROM template_release_heads h
+       WHERE h.template_id = t.id AND h.mode = 'live' AND h.provider = 'apple'
+         AND h.org_scope = CASE WHEN t.origin = 'uploaded' OR t.org_id IS NOT NULL THEN p.org_id ELSE '' END)
+   GROUP BY t.id, t.origin, t.status, p.org_id
+   ```
+
+   Only archived templates may be listed; the wait ignores them.
+5. Verify. **Owner** runs each query as in pre-check 7.
+
+   ```sql verify-memberships
+   SELECT o.id, o.slug FROM orgs o WHERE o.status != 'deleted' AND NOT EXISTS (
+     SELECT 1 FROM org_memberships m WHERE m.org_id = o.id AND m.revoked_at IS NULL AND m.roles LIKE '%"org_admin"%')
+   ```
+
+   ```sql verify-email-unbound
+   SELECT count(*) AS n FROM outbox WHERE kind = 'email' AND state IN ('pending', 'enqueued')
+     AND json_extract(payload, '$.intent') IS NULL
+   ```
+
+   ```sql verify-stale-after
+   SELECT p.template_id, p.org_id, count(*) AS passes FROM passes p JOIN templates t ON t.id = p.template_id
+   JOIN template_release_heads h ON h.template_id = t.id AND h.mode = 'live' AND h.provider = 'apple'
+     AND h.org_scope = CASE WHEN t.origin = 'uploaded' OR t.org_id IS NOT NULL THEN p.org_id ELSE '' END
+   JOIN template_releases r ON r.id = h.release_id
+   WHERE p.deleted_at IS NULL AND p.mode = 'live' AND p.status = 'active' AND p.template_version != r.version
+   GROUP BY p.template_id, p.org_id
+   ```
+
+   - Memberships: no rows. Unbound mail: 0. Stale: the `verify-stale-before` rows plus
+     `baked:henrys-blue` and `baked:henrys-copper`, shrinking to none as the reissue runs (a
+     minute after promote, then batch by batch).
+   - Rerun `verify-counts`: nothing below the pre-check numbers (`scans`, `outbox`,
+     `pass_versions` only grow).
+   - `curl -sI https://passbook.mobile/health` is 200. Status is green. `wallet-jobs-dlq` is empty.
+   - Scan: check in one Henry's pass and one uploaded-template pass by the barcode already in
+     Wallet. Both are accepted.
+   - Wallet: change a field on an issued pass; the phone updates within a minute.
+   - Sign-in link: issue a `henrys-blue` pass to an address that has no account, then request a
+     sign-in link for it at `/login` and open it. The pass is listed under the account at once,
+     and the Wallet copy still scans with the same barcode.
+   - Logs (Workers Observability), by event and code. Expected: `templates.baked_synced`,
+     `delivery.legacy_intent` (`DELIVERY_LEGACY_INTENT`), `queue.legacy_job_ignored`
+     (`LEGACY_JOB_IGNORED`), `template.reissue_started`. Act on:
+     `templates.baked_release_unavailable` (`BAKED_RELEASE_CONTENT_UNAVAILABLE`),
+     `templates.baked_sync_skipped` (`TEMPLATE_BUILD_SUPERSEDED`), `bulk_reissue.pass_failed`,
+     `queue.invalid_message` (`INVALID_MESSAGE`), `queue.dead_letter` (`DEAD_LETTER`).
+6. **Owner**: delete the WAF rule and the `WALLET_API_KEY` key. Restart the stopped sources.
+
+### If a step fails
+
+Roll forward. After the migrations the old Worker serves pass pages, Wallet updates and scanning,
+but holder edits and deleting owned passes fail, and it acknowledges new-shape queue messages as
+invalid. It is not supported on the migrated schema. Never restore D1 to undo a deploy: a restore
+drops every write since the bookmark, including Wallet registrations, scans and the tombstones that
+keep retired pass ids and credentials from being reused.
+
+| Where | What to do |
+| --- | --- |
+| Pre-checks, or step 2 before a migration ran | Nothing changed. Fix and rerun. |
+| Step 2, a migration errors | Applied migrations stay; the old Worker keeps serving. Fix the failing migration file (it never ran in production) and rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort, only if no fix is possible: Time Travel restore to the step 2 bookmark, which loses Wallet registrations and scans written since. |
+| Step 3 | Stop before promote. Take a fresh snapshot and rerun all three commands. A refused statement names the trigger; fix the tool, not the data. |
+| Step 4, promote fails | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. Refused because migrations are pending, or no saved version: rerun step 2 (it resumes), then step 3. |
+| Step 4, exit 1 after promote | The new Worker serves; the listed templates cannot issue new passes. An `uploaded` row: rerun step 3, then `--promote --apply` (it repeats only the wait). A `baked` row: check the logs for `TEMPLATE_BUILD_SUPERSEDED` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS), fix and ship a new version with the same two runs (`--migrate-only` finds nothing to migrate). Do not roll back. |
+| Step 5 fails, Worker misbehaves | Ship a fixed version with the same two runs. Emergency degraded mode only to stop an outage: `npx wrangler queues pause-delivery wallet-jobs`, keep the WAF rule, promote the previous version with `npx wrangler versions deploy <previous>@100%`, then roll forward and resume delivery (`npx wrangler queues resume-delivery wallet-jobs`). |
+
 ## Day two
 
 - **Migrations**: `npm run deploy` handles them. Manual: `npx wrangler d1 time-travel info wallet-platform`,
   note the bookmark, then `npx wrangler d1 migrations apply wallet-platform --remote`.
-  Restore: `npx wrangler d1 time-travel restore wallet-platform --bookmark <bookmark>`.
+  Migrations are forward-only: roll back a bad release by promoting the previous Worker version
+  (`npx wrangler versions deploy <previous>@100%`), not by restoring D1. A restore is the last
+  resort and drops every write since the bookmark, including pass tombstones and retired ids.
+  Apply the complete ordered migration batch, including 0042, 0044 and 0046, before routing the
+  new Worker or initializing the credential-reference keyset. The initializer deliberately
+  fails closed while later reference stores are absent.
 - **Certificate renewal** (yearly, Apple): get a new Pass Type ID certificate, then
   - platform: `npm run credentials`, update the two `SIGNER_PLATFORM_*` secrets, re-run
     `npm run identity:add -- --apply`, deploy;
   - other identities: admin console, Identities, Rotate certificate (admin session only; `POST /api/v1/identities/{id}/rotate`). Re-sign all passes is on the same page.
     Passes keep working; the pass type ID must match.
   Status warns 30 days before expiry.
-- **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts; keep older ones for existing data. Keep the oldest KEK configured for as long as scan PINs and asset grants exist: their HMAC key derives from it, and removing it makes every staff PIN fail.
+- **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts;
+  keep older ones for existing data. The oldest KEK also derives scan PIN, asset-grant and
+  credential-tombstone HMAC keys. The credential-reference keyset sentinel initializes only when
+  no prior keyed references or proof provenance remain, including tombstones, scanner grants and
+  retention proofs, retained webhook/workflow bindings and native-provider history.
+  Plain unsigned legacy scan events do not prevent initialization, but remain untrusted and are
+  never promoted to authenticated history merely because a sentinel was installed.
+  Removing or changing the oldest KEK causes a commitment mismatch: scanner, transfer, provider
+  and connection credential-reference operations fail closed. Restore the original KEK, confirm
+  the deployed keyset commitment matches the retained records, then retry the blocked operation.
+  If existing reference data lacks a sentinel, escalate for a separately audited bootstrap or
+  rekey while the original key remains available; no bootstrap or rekey tool is currently
+  implemented. Never delete evidence or reset the sentinel to bypass the fence.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
 - **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.
 - **Icons and social image**: `node tools/build-icons.ts` after the mark or the wallet art changes,
   then commit `public/`. `tools/site-meta.test.ts` checks sizes, the manifest and the heads.
+
+### Connection webhook recovery
+
+- New webhook work is retained encrypted with per-item execution state. Keep the KEK versions
+  needed to decrypt retained work; losing a key can make recovery impossible. The status API
+  exposes metadata, not payloads, upstream references or sender event IDs; see
+  [Retained connection webhooks](api.md#retained-connection-webhooks).
+- Review the connection's retained status and error before replaying. A `202` replay response
+  means the work was queued, not that it succeeded; check status again. An item that may have
+  started is not safe to replay merely because a queue attempt occurred. Investigate uncertain
+  effects before taking any independent corrective action.
+- Before an existing pass can be updated, each retained item binds its exact pass, credential and
+  lifecycle generations, holder/link state, connection and release. A new verified item reserves
+  its pass ID before creation. Started or uncertain items block holder-transfer start for that
+  pass, including a transfer requested by the same item. An old started or uncertain item whose
+  pass was not recorded conservatively blocks transfers in its organization. Replay cannot clear
+  uncertain items: preserve the encrypted evidence, reconcile the upstream and pass state, and
+  escalate for authorized manual review. Do not delete the work or alter its state just to lift
+  the fence.
+- Live updates are release-gated. Correct the template's approval if work is blocked, then
+  explicitly replay: only items proven blocked without effects may rebind to the current approved
+  release. Other work remains bound to its captured release; a changed release can prevent replay.
+  Do not bypass a release conflict by changing retained data.
+- Changes to a connection's generation, mode or organization make old jobs stale; stale work is
+  acknowledged as `ignored`, is terminal and cannot be replayed. Review current configuration and
+  upstream state before arranging fresh work. Connector reference-mode changes and missing context
+  or payload can also prevent replay; restore the required configuration or investigate upstream
+  rather than assuming a retry will reconstruct the original event.
+- Pre-cutover embedded updates and unbound or deleted references remain quarantined. Only a
+  refs-only item for an existing eligible Live-bound pass pinned to the exact current approved
+  release may refetch upstream data, with automatic creation and email disabled and the binding
+  and release checked again at commit. A queue attempt alone is not evidence that old work had
+  no effects. Reconcile quarantined or uncertain items with the upstream system and pass state;
+  do not manually replay them as if they were proven new events.
+- Legacy event markers and encrypted sources remain retained when completion of every chunk in
+  the event cannot be proven, even after processed chunks finish. Queue attempts do not establish
+  event-wide completion or justify inferring expiry.
+
+### Pass and bundle email safety
+
+- Queued pass and bundle mail is bound to the reviewed recipient, attachment choice, holder,
+  link generation and pass artifact versions. If these change before sending, the row is cancelled
+  as `DELIVERY_STALE`; older queued rows without a binding are cancelled as `DELIVERY_UNBOUND`.
+  Review the current holder, content and links before requesting a new send. Test-mode mail follows
+  the same checks before it is captured.
+- Holder changes reserve a new credential generation and immediately revoke the previous public
+  link, scanner authority and bundle membership. Other bundle members remain available; create a
+  new reviewed bundle for the replacement holder. While provider retirement is pending, neither
+  holder can download or use the pass. The worker retries pending transfers and commits the new
+  holder only after older provider credentials are retired and fresh Apple and scanner credentials
+  are ready. Do not clear a pending reservation or restore an old generation manually.
+- Successful transfer removes the prior holder's current per-pass assets and member photo from the
+  target artifact and queues their owned R2 objects for bounded, retryable cleanup. Upload
+  reservations and rollback candidates remain durable across crashes; do not manually reuse a
+  retired object key. Unrecognized legacy namespaces are tombstoned but retained for ownership
+  review rather than automatically deleted.
+- A static or non-rotatable barcode or lookup fails transfer with `PASS_REISSUE_REQUIRED`: reissue
+  the pass with a rotatable credential. Verified holders whose waiting passes need reissue are
+  directed to contact the issuer; they are not silently attached. Reconcile uncertain retained
+  webhook claims and provider retirement before retrying. No operation can physically erase an
+  installed offline Wallet copy, although its old server-backed credentials are no longer valid.
+- `partial` with `EMAIL_OUTCOME_UNKNOWN` means the email provider may have accepted the message.
+  The worker does not automatically retry that intent. Check the provider and recipient before
+  explicitly reviewing and sending a new message; a new send can duplicate one already accepted.
+  Provider acceptance is not proof of inbox delivery. A crash immediately before or during the
+  external call can also leave this conservative unknown result.
 
 ## Runtime decisions
 
@@ -215,12 +658,31 @@ passes keep the old one until a template change or Identities, Re-sign all rebui
 - **Placement**: default. `placement: smart` needs a latency comparison against D1 from production Observability data; none exists before launch. Revisit after a week of traffic.
 - **Worker-first paths** (`assets.run_worker_first`): every path runs the Worker first, so the host policy sees every page visit, except the files `public/` ships (negated entries). The Worker serves the SPA's pages from `ASSETS` unchanged (`public/_headers` applies), keeps `/api`, `/auth`, `/wallet`, `/p`, `/hooks`, `/health` and `/assets` to itself, and answers an unknown file-like path (`/foo.js`, or a missing hashed chunk that would otherwise be cached immutable as the SPA page) with a 404. Add a file to `public/` and its negated entry in `wrangler.jsonc` together; `tools/wrangler-config.test.ts` fails when they differ. `scan.webmanifest` is the one exception: it goes through the scanner gate. Vite's dev paths (`/src/*`, `/@vite/*`, …) are added only in dev, by `vite.config.ts`. The cost is one invocation per page view.
 - **Scanner gate** (`vars.SCAN_ENABLED`): `"1"` in `wrangler.jsonc` for scanner M1. Off, the Worker answers `/scan`, `/scan/*`, `/scan.html`, `/scan.webmanifest` and `/assets/decode-worker-*` with the not-found page (`no-store`); the scan API stays mounted and refuses as before. Tests, e2e and `npm run dev` (`.dev.vars`) set `"1"`. Set it to `"0"` to hide the scanner document during an incident.
-- **Baked template sync**: runs from the minute cron after a version change; the first template request still checks lazily as a fallback.
-- **Passes follow their template**: when a template's active version changes (deploy of a baked
-  template, import, activation, rollback), the minute cron (`passes.stale_reissue`, next to the
-  branding reissue) waits for it to be quiet for a minute, then starts one `BulkReissue` for the
-  template's live passes. Voided passes stay. Each active version is queued once
-  (`templates.reissued_version`). A pass whose fields no longer fit the new version stays on its
-  version, is logged (`bulk_reissue.pass_failed`, with the error code), counts in the run's
-  `PARTIAL_FAILURE` on Status, and shows as "could not update" on the template page. Upload a fixed
-  version to move it on.
+- **Baked template sync**: generated templates are the trusted system release exception. Sync
+  records a release generation for each supported mode only after verifying its actual assets.
+  Missing or inconsistent assets do not produce a usable release. `CF_VERSION` is the
+  `version_metadata` binding in `wrangler.jsonc`; sync uses its upload timestamp and an atomic
+  adoption fence to reject stale builds. A different build with missing or ambiguous ordering
+  metadata fails closed. When adopting an existing legacy baked hash for the first time, the same
+  hash can establish the fence; a different hash must have an upload timestamp newer than the
+  legacy hash's last sync time. Historical baked preview extras that were never retained require
+  their original trusted build bytes and metadata to be recovered; they cannot be reconstructed
+  from the pass version alone and remain unavailable rather than being guessed.
+- **Passes follow approved releases**: uploads and edits remain drafts. An authorized reviewer
+  other than the author approves the exact candidate; a publisher activates it or rolls back to
+  a previously approved release as a new generation. Google and Samsung projections require
+  independent approval and bind the exact effective Apple release and provider-account identity.
+  Samsung publication also requires fresh provider verification. Google candidates can be reviewed,
+  but activation and offers remain blocked until issuer approval and replay-safe Save can be verified.
+  The minute cron (`passes.stale_reissue`) waits for a release to be quiet for a minute, then
+  queues affected active passes separately for each organization and mode. Claims are recorded
+  against the scoped release, not the template's global active-version pointer. Voided passes stay.
+  A pass whose fields no longer fit the new release stays on its version, is logged as
+  `bulk_reissue.pass_failed`, and counts toward the run's `PARTIAL_FAILURE` on Status.
+- **Eligible template picker**: `GET /api/v1/templates/eligible` requires an explicit
+  organization, mode and Apple provider, and either template-read or pass-read authority for that
+  organization. Results are paged and include only effective approved/system releases, with
+  release ID, generation, version and hash. `supportsCheckIn` comes from the approved version,
+  not a newer draft. This read does not itself run baked sync; newly installed baked choices
+  appear after the normal sync has verified and recorded their system releases. A final issuance
+  still rechecks authority, release head and asset integrity.

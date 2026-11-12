@@ -24,6 +24,7 @@ export function RefChip({ value, className }: { value: Ref; className?: string }
   return (
     <MetaLink
       to={value.to}
+      search={value.search}
       icon={value.icon}
       title={value.name}
       onClick={(e) => e.stopPropagation()}

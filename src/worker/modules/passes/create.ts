@@ -1,53 +1,23 @@
-import type { Personalization } from '../../../passkit/types.ts';
-import type { Mode } from '../../../shared/contracts/common.ts';
-import { strictEmail } from '../../../shared/email.ts';
-import { writeEvent } from '../../platform/analytics.ts';
-import { classifyD1Error } from '../../platform/db.ts';
-import { baseUrl } from '../../platform/env.ts';
-import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
-import { enqueuePassEmail } from '../delivery/service.ts';
-import { recordPassEvent } from '../events/record.ts';
-import { runAttachHookA } from '../holders/service.ts';
-import { ensurePlatformIdentity } from '../identities/repo.ts';
-import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
-import { buildArtifact, resolveTemplate } from './builder.ts';
-import { depsOf } from './deps.ts';
-import { detailOf } from './detail.ts';
+import type { TemplateRelease } from '../templates/releases.ts';
+import { assertTenantCreateAuthority } from './create-authority.ts';
+import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
+import { captureIssuanceKeyset } from './create-keyset.ts';
+import { resolveCreateRelease, validateCreateReview } from './create-release.ts';
+import { createPassRowWithRelease } from './create-row.ts';
+import type { CreateParams } from './create-types.ts';
+import { assertPassDetailReadable, detailOf } from './detail.ts';
 import {
   claimIdempotencyKey,
-  connectionInOrg,
-  finishIdempotencyKey,
   getIdempotencyKey,
-  getOrg,
-  getPass,
-  insertPass,
+  type IdempotencyRow,
   type Pass,
+  releaseIdempotencyKey,
 } from './repo.ts';
-import { newScanCode } from './scan-code.ts';
-import type { Actor } from './service.ts';
-
-export interface CreateParams {
-  orgId: string;
-  templateId: string;
-  templateVersion?: string;
-  identityId?: string;
-  input: Personalization;
-  holderEmail?: string | null;
-  externalId?: string | null;
-  serial?: string;
-  connectionId?: string | null;
-  externalRef?: string | null;
-  sendEmail?: boolean;
-  source: 'manual' | 'connection';
-  /** The creator's mode (modeOf(auth)). Connection syncs always create live passes. */
-  mode?: Mode;
-  actor: Actor;
-  /** Preassigned pass id; idempotent creates reserve it with the key. */
-  passId?: string;
-}
+import { getOrg } from './repo-read-issuance.ts';
+import { getPass } from './repo-read-pass.ts';
 
 export function stableStringify(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
@@ -60,172 +30,159 @@ export function stableStringify(value: unknown): string {
   return JSON.stringify(value) ?? 'null';
 }
 
+/** Keep every credential reference on the same key material as the captured keyset. */
+function snapshotCredentialContext(ctx: ServiceContext): ServiceContext {
+  return { ...ctx, env: { ...ctx.env } };
+}
+
 /** Builds, stores and inserts a pass; the `pass_created` trigger records version 1. */
-export async function createPassRow(ctx: ServiceContext, p: CreateParams): Promise<Pass> {
-  const db = ctx.env.DB;
-  const org = await getOrg(db, p.orgId);
-  if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  const holderEmail = p.holderEmail ? strictEmail(p.holderEmail) : null;
-  if (p.holderEmail && !holderEmail)
-    throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
-  if (p.connectionId && !(await connectionInOrg(db, p.connectionId, p.orgId)))
-    throw new ValidationError(
-      'The connection does not belong to this organization.',
-      [],
-      'CONNECTION_ORG',
+export async function createPassRow(ctx: ServiceContext, input: CreateParams): Promise<Pass> {
+  return createPassFromSnapshot(ctx, structuredClone(input), snapshotCredentialContext(ctx));
+}
+
+async function createPassFromSnapshot(
+  ctx: ServiceContext,
+  p: CreateParams,
+  credentialCtx: ServiceContext,
+): Promise<Pass> {
+  await assertTenantCreateAuthority(ctx, p);
+  const keysetCommitment = await captureIssuanceKeyset(credentialCtx, p);
+  const release = await resolveCreateRelease(ctx, p);
+  return createPassRowWithRelease(ctx, p, release, keysetCommitment, credentialCtx.env);
+}
+
+async function issuanceDetail(ctx: ServiceContext, p: CreateParams, pass: Pass) {
+  const tenant = p.execution.kind === 'tenant' ? p.execution : undefined;
+  const detail = await detailOf(ctx, pass, tenant?.authority, tenant?.additionalAuthority);
+  await assertPassDetailReadable(
+    ctx,
+    pass,
+    tenant?.authority,
+    detail.reissueRequired,
+    tenant?.additionalAuthority,
+  );
+  return detail;
+}
+
+async function replayIdempotentPass(
+  ctx: ServiceContext,
+  p: CreateParams,
+  hash: string,
+  existing: IdempotencyRow | null,
+) {
+  await assertTenantCreateAuthority(ctx, p);
+  if (!existing || existing.requestHash !== hash)
+    throw new ConflictError(
+      'The Idempotency-Key was used with a different request.',
+      'IDEMPOTENCY_KEY_REUSED',
     );
-
-  const template = await resolveTemplate(ctx, p.orgId, p.templateId, p.templateVersion);
-  const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
-  if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
-
-  const id = p.passId ?? ctx.ids.id();
-  const mode: Mode = p.source === 'connection' ? 'live' : (p.mode ?? 'live');
-  const scanCode = newScanCode(ctx);
-  const serial = p.serial ?? ctx.ids.id();
-  const authToken = ctx.ids.token();
-  const webServiceUrl = `${baseUrl(ctx.env)}/wallet`;
-  const artifact = await buildArtifact(ctx, {
-    orgId: p.orgId,
-    orgName: org.name,
-    branding: org.branding,
-    passId: id,
-    scanCode,
-    serial,
-    authToken,
-    webServiceUrl,
-    identityId: identity.id,
-    templateId: template.id,
-    templateVersion: template.version,
-    personalization: p.input,
-    status: 'active',
-  });
-  const objectKey = `passes/${id}/v1-${ctx.ids.token(6)}.pkpass`;
-  await ctx.env.BUCKET.put(objectKey, artifact.bytes, {
-    httpMetadata: { contentType: 'application/vnd.apple.pkpass' },
-  });
-  try {
-    await insertPass(db, {
-      id,
-      orgId: p.orgId,
-      identityId: identity.id,
-      serial,
-      templateId: template.id,
-      templateVersion: template.version,
-      authToken,
-      downloadToken: ctx.ids.token(),
-      webServiceUrl,
-      personalization: p.input,
-      // A bound pass takes its fields from the connection until an admin edits them.
-      fieldSources: Object.fromEntries(
-        Object.keys(p.input).map((k) => [k, p.connectionId ? 'connection' : p.source]),
-      ),
-      displayTitle: artifact.title,
-      displaySubtitle: artifact.subtitle,
-      externalId: p.externalId ?? null,
-      holderEmail,
-      connectionId: p.connectionId ?? null,
-      externalRef: p.externalRef ?? null,
-      objectKey,
-      objectSha256: artifact.sha256,
-      objectSize: artifact.bytes.length,
-      contentHash: artifact.contentHash,
-      now: ctx.clock.now(),
-      createdBy: p.actor.type === 'user' ? p.actor.id : null,
-      passJson: JSON.stringify(artifact.passJson),
-      actorType: p.actor.type,
-      actorId: p.actor.id,
-      mode,
-      scanCode,
-      barcodeHash: artifact.barcodeHash,
-      lookupHash: artifact.lookupHash,
-    });
-  } catch (error) {
-    await ctx.env.BUCKET.delete(objectKey);
-    const info = classifyD1Error(error);
-    if (info?.kind === 'unique' && /passes\.(identity_id|download_token)/.test(info.detail))
-      throw new ConflictError('That serial is already in use.', 'SERIAL_TAKEN');
-    if (info?.kind === 'unique' && /passes\.external_ref/.test(info.detail))
-      throw new ConflictError('That connection ref already has a pass.', 'PASS_REF_TAKEN');
-    throw error;
+  let pass = existing.resourceId ? await getPass(ctx.env.DB, existing.resourceId, p.orgId) : null;
+  if (!pass || pass.mode !== p.mode)
+    throw new ConflictError(
+      'The original request is still running. Retry shortly.',
+      'IDEMPOTENCY_IN_PROGRESS',
+    );
+  await assertTenantCreateAuthority(ctx, p);
+  if (p.sendEmail && p.holderEmail) {
+    await scheduleRequiredIssuanceDelivery(ctx, pass.id);
+    pass = await getPass(ctx.env.DB, pass.id, p.orgId);
+    if (!pass || pass.mode !== p.mode)
+      throw new ConflictError('The pass changed. Reload and retry.', 'PASS_CONFLICT');
   }
-  const pass = await getPass(db, id);
-  if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  if (holderEmail) await runAttachHookA(ctx, id, p.actor);
-  await recordAudit(ctx, {
-    orgId: p.orgId,
-    actorType: p.actor.type,
-    actorId: p.actor.id,
-    action: 'pass.create',
-    targetType: 'pass',
-    targetId: id,
-    detail: { templateId: template.id, connectionId: p.connectionId ?? null },
-  });
-  await recordPassEvent(ctx, {
-    orgId: p.orgId,
-    passId: id,
-    mode,
-    kind: 'pass.issued',
-    actor: p.actor,
-    data: { version: 1, cause: 'create', source: null, notified: false },
-  });
-  writeEvent(ctx.env, {
-    event: 'pass.issued',
-    orgId: p.orgId,
-    templateId: template.id,
-    identityId: identity.id,
-    mode,
-  });
-  if (p.sendEmail && holderEmail) {
-    try {
-      await enqueuePassEmail(ctx, { passId: id, to: holderEmail, attach: false });
-    } catch (error) {
-      // The pass exists; a capped email is resent on request, not a failed create.
-      if (!(error instanceof AppError) || error.code !== 'EMAIL_RATE_LIMITED') throw error;
-      ctx.log.warn('passes.email_rate_limited', {
-        code: 'EMAIL_RATE_LIMITED',
-        orgId: p.orgId,
-        passId: id,
-      });
-    }
-  }
-  return (await getPass(db, id)) ?? pass;
+  const tenant = p.execution.kind === 'tenant' ? p.execution : undefined;
+  const detail = await detailOf(ctx, pass, tenant?.authority, tenant?.additionalAuthority);
+  await assertTenantCreateAuthority(ctx, p);
+  const org = await getOrg(ctx.env.DB, p.orgId);
+  if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  await assertPassDetailReadable(
+    ctx,
+    pass,
+    tenant?.authority,
+    detail.reissueRequired,
+    tenant?.additionalAuthority,
+  );
+  return detail;
 }
 
 /**
  * Admin/API create. With an Idempotency-Key a retry returns the original pass; the same key with a
- * different body is rejected.
+ * different body is rejected. `serverResolvedRelease` marks a release the server picked for a caller
+ * that pinned none: it is not part of the request, so a retry after an approval hashes the same.
  */
 export async function createPassIdempotent(
   ctx: ServiceContext,
-  p: CreateParams,
+  input: CreateParams,
   key: string | undefined,
+  options: { serverResolvedRelease?: boolean } = {},
 ) {
-  if (!key) return detailOf(ctx, await createPassRow(ctx, p));
+  const p = structuredClone(input);
+  const credentialCtx = snapshotCredentialContext(ctx);
+  if (!key) return issuanceDetail(ctx, p, await createPassFromSnapshot(ctx, p, credentialCtx));
+  if (p.reservedPassId !== undefined)
+    throw new ConflictError(
+      'Retained connection items cannot use an idempotency key.',
+      'PASS_CONFLICT',
+    );
   const db = ctx.env.DB;
-  const hash = await sha256Hex(stableStringify({ ...p, actor: undefined }));
+  await assertTenantCreateAuthority(ctx, p);
+  const keysetCommitment = await captureIssuanceKeyset(credentialCtx, p);
+  validateCreateReview(p);
+  const org = await getOrg(db, p.orgId);
+  if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  const hash = await sha256Hex(
+    stableStringify({
+      ...p,
+      actor: undefined,
+      execution: undefined,
+      ...(options.serverResolvedRelease
+        ? { templateVersion: undefined, releaseId: undefined, releaseGeneration: undefined }
+        : {}),
+    }),
+  );
+  await assertTenantCreateAuthority(ctx, p);
+  const existing = await getIdempotencyKey(db, p.orgId, key);
+  if (existing) return replayIdempotentPass(ctx, p, hash, existing);
+  let release: TemplateRelease;
+  try {
+    release = await resolveCreateRelease(ctx, p);
+  } catch (error) {
+    // Another request may have committed this key while the release was being resolved.
+    await assertTenantCreateAuthority(ctx, p);
+    const raced = await getIdempotencyKey(db, p.orgId, key);
+    if (raced) return replayIdempotentPass(ctx, p, hash, raced);
+    throw error;
+  }
   const passId = ctx.ids.id();
-  const claimed = await claimIdempotencyKey(db, p.orgId, key, hash, passId, ctx.clock.now());
+  const tenant = p.execution.kind === 'tenant' ? p.execution : undefined;
+  const claimed = await claimIdempotencyKey(
+    db,
+    p.orgId,
+    key,
+    hash,
+    passId,
+    ctx.clock.now(),
+    tenant?.authority,
+    tenant?.additionalAuthority,
+  );
   if (!claimed) {
-    const existing = await getIdempotencyKey(db, p.orgId, key);
-    if (!existing || existing.requestHash !== hash)
-      throw new ConflictError(
-        'The Idempotency-Key was used with a different request.',
-        'IDEMPOTENCY_KEY_REUSED',
-      );
-    const pass = existing.resourceId ? await getPass(db, existing.resourceId, p.orgId) : null;
-    if (!pass)
-      throw new ConflictError(
-        'The original request is still running. Retry shortly.',
-        'IDEMPOTENCY_IN_PROGRESS',
-      );
-    return detailOf(ctx, pass);
+    await assertTenantCreateAuthority(ctx, p);
+    return replayIdempotentPass(ctx, p, hash, await getIdempotencyKey(db, p.orgId, key));
   }
   try {
-    return detailOf(ctx, await createPassRow(ctx, { ...p, passId }));
+    return issuanceDetail(
+      ctx,
+      p,
+      await createPassRowWithRelease(
+        ctx,
+        { ...p, passId },
+        release,
+        keysetCommitment,
+        credentialCtx.env,
+      ),
+    );
   } catch (error) {
-    // Once the row is committed the key keeps pointing at it, so a retry replays that pass.
-    if (!(await getPass(db, passId))) await finishIdempotencyKey(db, p.orgId, key, null);
+    // Release only our unchanged reservation, and only if no raw pass row was committed.
+    await releaseIdempotencyKey(db, p.orgId, key, passId, hash);
     throw error;
   }
 }

@@ -11,6 +11,8 @@ export interface BoundStaff {
   id: string;
   name: string;
   role: ScanRole;
+  /** Monotonic staff revision, used to fence authorizations against changes. */
+  updatedAt: number;
 }
 
 /** True when a signed-in person's binding ran out: 15 minutes idle or 12 hours. */
@@ -30,11 +32,17 @@ export async function boundStaff(
 ): Promise<BoundStaff | null> {
   if (!scanner.staffId) return null;
   const now = ctx.clock.now();
-  if (!staff || staff.disabledAt !== null || bindingExpired(scanner, now)) {
-    await unbindStaff(ctx.env.DB, scanner.id);
+  if (
+    !staff ||
+    staff.id !== scanner.staffId ||
+    staff.orgId !== scanner.orgId ||
+    staff.disabledAt !== null ||
+    bindingExpired(scanner, now)
+  ) {
+    await unbindStaff(ctx, scanner);
     return null;
   }
   if ((scanner.staffSeenAt ?? 0) <= now - STAFF_TOUCH_EVERY_MS)
-    await touchStaff(ctx.env.DB, scanner.id, now, STAFF_TOUCH_EVERY_MS);
-  return { id: staff.id, name: staff.name, role: staff.role };
+    await touchStaff(ctx.env.DB, scanner, now, STAFF_TOUCH_EVERY_MS);
+  return { id: staff.id, name: staff.name, role: staff.role, updatedAt: staff.updatedAt };
 }

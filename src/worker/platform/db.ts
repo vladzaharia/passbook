@@ -1,3 +1,5 @@
+import { balanceSqlAnd } from './sql-balance.ts';
+
 /** Thin typed helpers over D1. Raw SQL belongs in repo.ts files only. */
 export type SqlValue = string | number | boolean | null | undefined | ArrayBuffer | Uint8Array;
 
@@ -11,6 +13,15 @@ function bindable(value: SqlValue): string | number | null | ArrayBuffer {
 }
 
 export function stmt(
+  db: D1Database,
+  sql: string,
+  params: readonly SqlValue[] = [],
+): D1PreparedStatement {
+  return db.prepare(balanceSqlAnd(sql)).bind(...params.map(bindable));
+}
+
+/** Binds without rewriting the SQL. For statements built bounded, such as the authority grants. */
+export function exactStmt(
   db: D1Database,
   sql: string,
   params: readonly SqlValue[] = [],
@@ -69,6 +80,56 @@ export function likeEscape(value: string): string {
   return value.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
+/** D1 rejects a LIKE or GLOB pattern over 50 bytes. */
+const LIKE_PATTERN_BYTES = 50;
+const utf8 = new TextEncoder();
+const fits = (pattern: string) => utf8.encode(pattern).length <= LIKE_PATTERN_BYTES;
+
+export interface SqlMatch {
+  sql: string;
+  params: (string | number)[];
+}
+
+/** A SQL comment tag: kebab-case only, since it is spliced into the SQL text, not bound. */
+function commentTag(comment: string): string {
+  if (!comment) return '';
+  if (!/^[a-z0-9-]+$/.test(comment)) throw new Error(`Invalid SQL comment tag: ${comment}`);
+  return `/* ${comment} */`;
+}
+
+/**
+ * `column LIKE 'q%'`, safe for any length of `q`. Case-folds ASCII like LIKE does. A pattern over
+ * D1's cap keeps the LIKE on the longest head that fits (so the index still narrows) and compares
+ * the full prefix exactly. `column` is trusted SQL; `comment` (kebab-case) is tagged into the SQL, not bound.
+ */
+export function prefixMatch(column: string, q: string, comment = ''): SqlMatch {
+  const tag = commentTag(comment);
+  const like = `${column} LIKE ?${tag} ESCAPE '\\'`;
+  const full = `${likeEscape(q)}%`;
+  if (fits(full)) return { sql: like, params: [full] };
+  let head = '';
+  for (const char of q) {
+    const next = head + likeEscape(char);
+    if (!fits(`${next}%`)) break;
+    head = next;
+  }
+  return {
+    sql: `(${like} AND substr(${column}, 1, ?) = ?${tag} COLLATE NOCASE)`,
+    params: [`${head}%`, Array.from(q).length, q],
+  };
+}
+
+/**
+ * `column LIKE '%q%'`, safe for any length of `q`. A pattern over D1's cap becomes
+ * `instr(lower(column), lower(q))`, which folds ASCII the same way.
+ */
+export function containsMatch(column: string, q: string, comment = ''): SqlMatch {
+  const tag = commentTag(comment);
+  const full = `%${likeEscape(q)}%`;
+  if (fits(full)) return { sql: `${column} LIKE ?${tag} ESCAPE '\\'`, params: [full] };
+  return { sql: `instr(lower(${column}), lower(?${tag})) > 0`, params: [q] };
+}
+
 export interface CasTarget {
   table: string;
   id: string;
@@ -115,7 +176,7 @@ export function classifyD1Error(error: unknown): D1ErrorInfo | null {
   if (unique?.[1]) return { kind: 'unique', detail: unique[1] };
   if (/FOREIGN KEY constraint failed/i.test(message))
     return { kind: 'foreign_key', detail: message };
-  const abort = /(?:^|: )(registration cap reached)\b/.exec(message);
+  const abort = /(?:^|: )(registration cap reached|authority_denied:[a-z]+)\b/.exec(message);
   if (abort?.[1]) return { kind: 'abort', detail: abort[1] };
   return null;
 }

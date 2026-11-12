@@ -10,9 +10,9 @@ import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { Button, Card, CardBody, CardHeader, ErrorState, toast } from '@/web/ui/index.ts';
 import { CheckInFields } from '../../scanning/check-in-fields.tsx';
-import { passKeys } from '../api.ts';
+import { canMutatePass, passKeys, passMutationPrincipal } from '../api.ts';
 
-export function CheckInCard({ pass, foreign }: { pass: PassDetailDto; foreign: boolean }) {
+export function CheckInCard({ pass, readOnly }: { pass: PassDetailDto; readOnly: boolean }) {
   const path = `/api/v1/passes/${pass.id}/check-in`;
   const client = useQueryClient();
   const settings = useQuery({
@@ -23,19 +23,24 @@ export function CheckInCard({ pass, foreign }: { pass: PassDetailDto; foreign: b
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   async function save() {
+    if (readOnly) return;
+    const principalId = passMutationPrincipal(client);
+    if (!principalId || !canMutatePass(client, pass, principalId)) return;
     setError(undefined);
     const parsed = CheckInPolicySchema.safeParse(draft ?? settings.data?.rules ?? {});
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'Check the rules.');
     setBusy(true);
     try {
       await api.put(path, PassCheckInSchema, { rules: parsed.data });
+      if (!canMutatePass(client, pass, principalId)) return;
       await client.invalidateQueries({ queryKey: passKeys.detail(pass.id) });
+      if (!canMutatePass(client, pass, principalId)) return;
       setDraft(undefined);
       toast.success('Check-in rules saved');
     } catch (cause) {
-      setError(errorMessage(cause));
+      if (canMutatePass(client, pass, principalId)) setError(errorMessage(cause));
     } finally {
-      setBusy(false);
+      if (passMutationPrincipal(client) === principalId) setBusy(false);
     }
   }
   return (
@@ -51,7 +56,7 @@ export function CheckInCard({ pass, foreign }: { pass: PassDetailDto; foreign: b
               defaults={settings.data.defaults}
               onChange={setDraft}
               orgId={pass.orgId}
-              disabled={foreign || busy}
+              disabled={readOnly || busy}
             />
             <p className="text-sm text-fg-muted">
               Scanner settings may add restrictions. In/out passes can leave after their entry
@@ -59,20 +64,20 @@ export function CheckInCard({ pass, foreign }: { pass: PassDetailDto; foreign: b
             </p>
             <div className="flex gap-2">
               <Button
-                disabled={foreign || busy || draft === undefined}
+                disabled={readOnly || busy || draft === undefined}
                 loading={busy}
                 onClick={() => void save()}
               >
                 Save rules
               </Button>
-              <Button variant="outline" disabled={foreign || busy} onClick={() => setDraft({})}>
+              <Button variant="outline" disabled={readOnly || busy} onClick={() => setDraft({})}>
                 Use template defaults
               </Button>
             </div>
           </>
         ) : null}
         {error ? (
-          <p role="alert" className="text-sm text-danger-fg">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         ) : null}

@@ -16,8 +16,6 @@ export const SaveVersionSchema = z.object({
   assets: z.array(VersionAssetInputSchema).max(60).default([]),
   /** Validate and build only; nothing is stored. */
   dryRun: z.boolean().default(false),
-  /** Make the new version the active one. */
-  activate: z.boolean().default(false),
 });
 
 export const SaveVersionResponseSchema = z.object({
@@ -26,7 +24,8 @@ export const SaveVersionResponseSchema = z.object({
   version: z.string().nullable(),
   /** False when an identical version already existed. */
   created: z.boolean(),
-  activated: z.boolean(),
+  /** The saved or previewed version has the same known pass build key as the active version. */
+  displayOnly: z.boolean(),
   report: ValidationReportSchema,
   /** Files of the version, derived scales included. */
   assets: z.array(AssetEntrySchema),

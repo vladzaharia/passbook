@@ -17,6 +17,12 @@ export type { ScanInput };
 export type Card = ScanCard;
 export type Counts = ScanCounts;
 
+/** A Manager's PIN approval. */
+export interface Approval {
+  staffId: string;
+  pin: string;
+}
+
 export interface Draft {
   actionId: string;
   amount: number | null;
@@ -25,7 +31,7 @@ export interface Draft {
   overrideOf?: string;
   confirmed?: boolean;
   /** A Manager's PIN approval for this one action. The PIN sheet re-sends the draft under a new key. */
-  approval?: { staffId: string; pin: string };
+  approval?: Approval;
 }
 
 export type Loop =
@@ -177,7 +183,8 @@ export type ScanEvent =
   | { type: 'approve'; staffId: string; pin: string }
   | { type: 'arm'; actionId: string; amount: number | null; sticky: boolean }
   | { type: 'disarm' }
-  | { type: 'undo'; scanId: string }
+  /** `approval` is a Manager's PIN when the undo policy requires one. */
+  | { type: 'undo'; scanId: string; approval?: Approval }
   | { type: 'undone'; key: string; outcome: ScanOutcome }
   | { type: 'dismiss' }
   /** A deadline from `nextDeadline()` passed. */
@@ -222,7 +229,7 @@ export type BuddyBeat =
 export type Cmd =
   | { c: 'resolve'; key: string; input: ScanInput }
   | { c: 'act'; key: string; input: ScanInput; draft: Draft | 'auto' }
-  | { c: 'undo'; key: string; scanId: string }
+  | { c: 'undo'; key: string; scanId: string; approval?: Approval }
   | { c: 'unsure.keep'; entry: Unsure }
   | { c: 'unsure.drop'; key: string }
   | { c: 'offline.decide'; key: string; input: ScanInput }

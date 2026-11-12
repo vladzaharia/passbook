@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   effectiveRole,
+  overridePolicyKind,
   type PolicyActor,
   type PolicyRequest,
   ROLE_RANK,
@@ -27,8 +28,16 @@ describe('effectiveRole (SA 2.2)', () => {
   const settings = { roleWithoutSignIn: 'door', staffSignIn: false } as const;
   it('admin is manager', () =>
     expect(effectiveRole({ principal: 'admin', staffRole: null, settings })).toBe('manager'));
-  it('a signed-in person brings their role', () =>
-    expect(effectiveRole({ principal: 'scanner', staffRole: 'desk', settings })).toBe('desk'));
+  it('a signed-in person brings their role only when sign-in is enabled', () => {
+    expect(
+      effectiveRole({
+        principal: 'scanner',
+        staffRole: 'desk',
+        settings: { ...settings, staffSignIn: true },
+      }),
+    ).toBe('desk');
+    expect(effectiveRole({ principal: 'scanner', staffRole: 'manager', settings })).toBe('door');
+  });
   it('nobody signed in uses roleWithoutSignIn', () =>
     expect(effectiveRole({ principal: 'scanner', staffRole: null, settings })).toBe('door'));
   it('sign-in required and missing is null', () =>
@@ -118,6 +127,22 @@ describe('scanPolicy: Matrix B', () => {
     expect(allowed(desk, { kind: 'cooldown_override' }, true).allow).toBe(true);
     expect(allowed(manager, { kind: 'cooldown_override' }).allow).toBe(true);
     expect(allowed(terminal, { kind: 'cooldown_override' }).allow).toBe(false);
+  });
+
+  it('a capacity override always needs a manager, even when anyone may let a pass in again', () => {
+    expect(door.settings.letInAgain).toBe('anyone');
+    expect(allowed(door, { kind: 'let_in_again' }).allow).toBe(true);
+    expect(allowed(door, { kind: 'capacity_override' })).toEqual({
+      allow: false,
+      why: 'needs_approval',
+    });
+    expect(allowed(desk, { kind: 'capacity_override' }, true).allow).toBe(true);
+    expect(allowed(manager, { kind: 'capacity_override' }).allow).toBe(true);
+    expect(allowed(admin, { kind: 'capacity_override' }).allow).toBe(true);
+    expect(allowed(terminal, { kind: 'capacity_override' }).allow).toBe(false);
+    expect(overridePolicyKind('capacity_full')).toBe('capacity_override');
+    expect(overridePolicyKind('cooldown')).toBe('cooldown_override');
+    expect(overridePolicyKind('already_done')).toBe('let_in_again');
   });
 
   describe('undo', () => {

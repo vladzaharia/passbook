@@ -1,23 +1,32 @@
 import { SCANNER_TOKEN } from '../../platform/auth.ts';
+import { grant } from '../../platform/authority.ts';
+import { epochIs } from '../../platform/authority-checks.ts';
 import { bump, read } from '../../platform/counters.ts';
-import { batch } from '../../platform/db.ts';
 import { AppError, RateLimitedError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import { deviceLabel } from './dto-console.ts';
-import { type Issued, notPairable, withCredential } from './pairing-token.ts';
-import { getScannerByPrefix } from './repo-device.ts';
+import {
+  addRestoreAudit,
+  type Issued,
+  notPairable,
+  restoring,
+  withCredential,
+} from './pairing-token.ts';
+import { adminGrant, audited } from './repo-admin-grant.ts';
+import { credentialEpochOf, getScannerByPrefix } from './repo-device.ts';
 import type { ConsoleScannerRow } from './repo-scanners.ts';
 import {
-  clearTokenStmt,
+  addCodeCredential,
+  addPairCode,
+  addTokenClear,
   findByPairCode,
-  heldAuditStmt,
-  installCredentialStmt,
-  setPairCodeStmt,
+  requirePairingAuthority,
 } from './repo-scanners-pair.ts';
 import { setupMeta } from './repo-setups.ts';
+import { nameTaken } from './scanner-name.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -43,6 +52,12 @@ export function normalizePairCode(raw: string): string | null {
   return code.length === 10 && [...code].every((ch) => ALPHABET.includes(ch)) ? code : null;
 }
 
+const PAIRING_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;
+const REDEEM_CODES = {
+  actor: 'PAIRING_INVALID',
+  config: 'PAIRING_INVALID',
+  lineage: 'PAIRING_INVALID',
+} as const;
 const invalid = () => new AppError('PAIRING_INVALID', 400, 'Code not valid. Ask for a new one.');
 export interface Pairing {
   code: string;
@@ -56,18 +71,35 @@ export async function createPairing(
   userId: string,
   scanner: ConsoleScannerRow,
   origin: string,
+  authority: TenantPassWrite,
+  restore = false,
 ): Promise<Pairing> {
+  requirePairingAuthority(authority, userId, scanner.orgId);
   if (
     scanner.kind === 'terminal' ||
     (await setupMeta(ctx.env.DB, scanner.orgId, scanner.id))?.admin_session
   )
     throw notPairable();
+  const restored = restoring(scanner, restore);
   const now = ctx.clock.now();
   const code = newPairCode();
   const expiresAt = now + PAIR_TTL_MS;
-  await batch(ctx.env.DB, [
-    setPairCodeStmt(ctx.env.DB, scanner.id, await sha256Hex(code), expiresAt, userId, now),
-    auditStmt(ctx.env.DB, ctx, {
+  const hash = await sha256Hex(code);
+  const g = adminGrant(
+    ctx,
+    'org_mode.scan.pairing.create',
+    userId,
+    authority,
+    scanner.orgId,
+    [epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch)],
+    PAIRING_CODES,
+    scanner.id,
+  );
+  const restart =
+    scanner.revokedAt !== null || (scanner.expiresAt !== null && scanner.expiresAt <= now);
+  addPairCode(g, scanner.id, hash, expiresAt, userId, now, restart);
+  g.add(
+    audited(g, ctx, {
       orgId: scanner.orgId,
       actorType: 'user',
       actorId: userId,
@@ -76,7 +108,10 @@ export async function createPairing(
       targetId: scanner.id,
       detail: { expiresAt },
     }),
-  ]);
+  );
+  if (restored) addRestoreAudit(g, ctx, userId, scanner);
+  // A restore makes the name active again; another scanner may have taken it meanwhile.
+  await g.commit().catch(nameTaken);
   return { code, url: `${origin}/scan#pair=${code}`, expiresAt };
 }
 
@@ -151,25 +186,35 @@ export async function completePairing(
 ): Promise<Paired> {
   const { hit, hash } = await openCode(ctx, ip, raw);
   const done = await withCredential(ctx, 'device', deviceLabel(agent), async (c) => {
-    const results = await batch(ctx.env.DB, [
-      installCredentialStmt(ctx.env.DB, hit.id, c, hash),
-      heldAuditStmt(
-        ctx.env.DB,
-        ctx,
-        {
-          orgId: hit.orgId,
-          actorType: 'scanner',
-          actorId: hit.id,
-          action: 'scanner.pair',
-          targetType: 'scanner',
-          targetId: hit.id,
-          detail: { via: 'code' },
-          ipPrefix: ip,
-        },
-        c.tokenHash,
-      ),
-    ]);
-    return results[0]?.results.length ? c : null;
+    const g = grant(ctx, {
+      purpose: 'org_mode.scan.pairing.redeem',
+      // The code names the scanner: it redeems only while the credential is the one the code was
+      // issued against (a revoke or an expiry restarts the scanner when the code is issued).
+      principal: { kind: 'scanner', scannerId: hit.id, credentialEpoch: hit.credentialEpoch },
+      target: hit.id,
+      codes: REDEEM_CODES,
+    });
+    addCodeCredential(g, hit.id, hash, c);
+    g.add(
+      audited(g, ctx, {
+        orgId: hit.orgId,
+        actorType: 'scanner',
+        actorId: hit.id,
+        action: 'scanner.pair',
+        targetType: 'scanner',
+        targetId: hit.id,
+        detail: { via: 'code' },
+        ipPrefix: ip,
+      }),
+    );
+    try {
+      await g.commit();
+    } catch (error) {
+      // A concurrent redemption, a revoke or a rotated credential: the code is no longer good.
+      if (error instanceof AppError && error.code === 'PAIRING_INVALID') return null;
+      throw error;
+    }
+    return c;
   });
   if (!done) {
     await recordMiss(ctx, ip);
@@ -189,20 +234,27 @@ export async function unpair(ctx: ServiceContext, token: string | undefined): Pr
   const row = await getScannerByPrefix(ctx.env.DB, token.slice(4, 12));
   const hash = await sha256Hex(token);
   if (!row?.tokenHash || row.kind === 'terminal' || !(await safeEqual(hash, row.tokenHash))) return;
-  await batch(ctx.env.DB, [
-    heldAuditStmt(
-      ctx.env.DB,
-      ctx,
-      {
-        orgId: row.orgId,
-        actorType: 'scanner',
-        actorId: row.id,
-        action: 'scanner.unpair',
-        targetType: 'scanner',
-        targetId: row.id,
-      },
-      hash,
-    ),
-    clearTokenStmt(ctx.env.DB, row.id, hash, ctx.clock.now()),
-  ]);
+  const g = grant(ctx, {
+    purpose: 'org_mode.scan.pairing.unpair',
+    principal: { kind: 'scanner', scannerId: row.id, credentialEpoch: credentialEpochOf(row) },
+    target: row.id,
+  });
+  addTokenClear(g, row.id, hash, ctx.clock.now());
+  g.add(
+    audited(g, ctx, {
+      orgId: row.orgId,
+      actorType: 'scanner',
+      actorId: row.id,
+      action: 'scanner.unpair',
+      targetType: 'scanner',
+      targetId: row.id,
+    }),
+  );
+  try {
+    await g.commit();
+  } catch (error) {
+    // Always safe to call: an expired, revoked or re-paired scanner has nothing left to clear.
+    if (!(error instanceof AppError) || error.status >= 500) throw error;
+    ctx.log.info('scan.unpair_refused', { scannerId: row.id, code: error.code });
+  }
 }

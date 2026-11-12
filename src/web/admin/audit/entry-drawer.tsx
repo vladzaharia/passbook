@@ -1,7 +1,14 @@
 import type { z } from 'zod';
 import type { AuditEntrySchema } from '@/shared/contracts/audit.ts';
 import { actionLabel } from '@/web/lib/actions.ts';
-import { DiffViewer, JsonViewer, KeyValue, Sheet, SheetContent } from '@/web/ui/index.ts';
+import {
+  DiffViewer,
+  JsonViewer,
+  KeyValue,
+  Sheet,
+  SheetContent,
+  TechnicalDetails,
+} from '@/web/ui/index.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import { actorRef, targetRef } from './labels.ts';
 import { describeDetail } from './redact.ts';
@@ -21,6 +28,19 @@ export function EntryDrawer({
 }) {
   const view = describeDetail(entry?.detail);
   const target = entry ? targetRef(entry) : undefined;
+  const context =
+    view.value && typeof view.value === 'object' && !Array.isArray(view.value)
+      ? (view.value as Record<string, unknown>)
+      : undefined;
+  const mode = typeof context?.mode === 'string' ? context.mode : undefined;
+  const version =
+    typeof context?.version === 'string' || typeof context?.version === 'number'
+      ? context.version
+      : undefined;
+  const reviewedVersion =
+    typeof context?.reviewedVersion === 'string' || typeof context?.reviewedVersion === 'number'
+      ? context.reviewedVersion
+      : undefined;
   return (
     <Sheet open={entry !== undefined} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
@@ -44,8 +64,23 @@ export function EntryDrawer({
                 { label: 'Time', value: formatDateTime(entry.at) },
                 { label: 'Actor', value: <RefChip value={actorRef(entry)} /> },
                 { label: 'Target', value: target ? <RefChip value={target} /> : null },
-                { label: 'Organization', value: entry.orgId ? orgName(entry.orgId) : null },
-                { label: 'Request', value: entry.requestId, mono: true },
+                {
+                  label: 'Organization',
+                  value: entry.orgId
+                    ? (orgName(entry.orgId) ?? 'Unknown organization')
+                    : 'Not recorded',
+                },
+                ...(mode === undefined ? [] : [{ label: 'Recorded mode', value: mode }]),
+                ...(version === undefined ? [] : [{ label: 'Recorded version', value: version }]),
+                ...(reviewedVersion === undefined
+                  ? []
+                  : [{ label: 'Reviewed version', value: reviewedVersion }]),
+              ]}
+            />
+            <TechnicalDetails
+              items={[
+                { label: 'Event ID', value: entry.id },
+                { label: 'Request', value: entry.requestId },
               ]}
             />
             <section aria-label="Detail" className="flex flex-col gap-2">
@@ -53,7 +88,15 @@ export function EntryDrawer({
               {view.kind === 'none' ? (
                 <p className="text-sm text-fg-muted">No detail.</p>
               ) : view.kind === 'diff' ? (
-                <DiffViewer before={view.before ?? ''} after={view.after ?? ''} />
+                <>
+                  <DiffViewer before={view.before ?? ''} after={view.after ?? ''} />
+                  {view.value === undefined ? null : (
+                    <>
+                      <h4 className="text-sm font-medium text-fg-strong">Other recorded details</h4>
+                      <JsonViewer value={view.value} label="Other recorded detail JSON" />
+                    </>
+                  )}
+                </>
               ) : (
                 <JsonViewer value={view.value} label="Detail JSON" />
               )}

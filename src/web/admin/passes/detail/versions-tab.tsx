@@ -18,7 +18,7 @@ import {
   SkeletonRows,
   StatusPill,
 } from '../../../ui/index.ts';
-import { usePassDiff } from '../api.ts';
+import { usePassDiff } from '../versions-api.ts';
 
 function show(v: unknown): string {
   if (v === undefined || v === null || v === '') return '—';

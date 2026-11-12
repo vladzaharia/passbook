@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, likeEscape } from '../../platform/db.ts';
+import { all, containsMatch } from '../../platform/db.ts';
 import { TEMPLATE_COLUMNS, type TemplateRow, type TemplateSql, templateRow } from './repo.ts';
 
 export interface ListFilter {
@@ -14,6 +14,8 @@ export interface ListFilter {
   cursor?: { createdAt: number; id: string } | null;
   /** Which mode's passes the pass counts cover. Default live. */
   mode?: Mode;
+  /** Pass-count scope: string for one org, null for none, undefined for all. */
+  passOrgId?: string | null;
 }
 
 export interface ListedTemplate extends TemplateRow {
@@ -38,9 +40,11 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     params.push(f.origin);
   }
   if (f.q) {
-    const like = `%${likeEscape(f.q.toLowerCase())}%`;
-    where.push("(lower(t.name) LIKE ? ESCAPE '\\' OR t.slug LIKE ? ESCAPE '\\')");
-    params.push(like, like);
+    const term = f.q.toLowerCase();
+    const name = containsMatch('lower(t.name)', term);
+    const slug = containsMatch('t.slug', term);
+    where.push(`(${name.sql} OR ${slug.sql})`);
+    params.push(...name.params, ...slug.params);
   }
   if (f.cursor) {
     where.push('(t.created_at < ? OR (t.created_at = ? AND t.id < ?))');
@@ -51,11 +55,11 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     `SELECT ${TEMPLATE_COLUMNS.split(', ')
       .map((c) => `t.${c}`)
       .join(', ')},
-       (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id AND p.deleted_at IS NULL AND p.mode = ?) AS pass_count,
+       (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id AND p.deleted_at IS NULL AND p.mode = ?${f.passOrgId === undefined ? '' : ' AND p.org_id = ?'}) AS pass_count,
        (SELECT o.name FROM orgs o WHERE o.id = t.org_id) AS org_name
      FROM templates t WHERE ${where.join(' AND ')}
      ORDER BY t.created_at DESC, t.id DESC LIMIT ?`,
-    [f.mode ?? 'live', ...params, f.limit],
+    [f.mode ?? 'live', ...(f.passOrgId === undefined ? [] : [f.passOrgId]), ...params, f.limit],
   );
   return rows.map((r) => ({ ...templateRow(r), passCount: r.pass_count, orgName: r.org_name }));
 }

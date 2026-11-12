@@ -66,7 +66,7 @@ the sections they cite.
 | R11 | B merges the template's Loyalty panel into the stepper | **Desk `ready` keeps two layers:** the template's panels, then the system action area with the amount control. While an amount control is open, only the first panel shows; a `progress` or `money` row on the action's input previews the draft (7 → 9, $42.50 → $36.00) | 1.2, 1.6 |
 | R12 | B's gym shows a large photo instead of the pass tile | **The member photo is an identity setting** (`photo`), not a panel row. It replaces the pass tile in the identity row (the ID check); a missing photo shows initials plus the system chip **No photo**. The `image` row keeps `thumbnail` and `strip` only | 1.3, 1.6, 4.2 |
 | R13 | B's ledger labels ("Flat white") | **Ledger rows are labelled by the action** ("Charge", "Top up") or "Changed elsewhere". No item names: scans carry no memo, and none is planned (owner, 2026-11-04) | 1.10 |
-| R14 | Saving and scanners | **A save makes a template version.** A save that changes only `scan.display` activates at once (nothing reaches passes), so every scanner shows it on its next scan. Passes are untouched: no rebuild, no push | 2.5, 10.1 E9 |
+| R14 | Saving and scanners | **A save makes a template version.** A save only creates a version. It goes live through release review like any version, and scanners show it on their next scan after that. Passes are untouched: no rebuild, no push | 2.5, 10.1 E9 |
 | R15 | The 7-unit budget doesn't fit BF's card (VIP at 6 units is 434 of 443 px; gym at 3 units with a title and photo is 436) | **The budget counts the header and is per screen.** Capacity 6 units per result (frames included), minus a header cost (custom title 2, `heads_up` 2, photo 1, a second chip line 1, staff note 1). `ok` over capacity is a save error; on other screens the renderer cuts trailing rows. Anything still over (large text, zoom) scrolls inside the card body; the band and identity row never move | 1.6, 1.11 rule 12 |
 | R16 | Bound text in the band | **`header.title` is literal text plus, optionally, the holder's name** (`{{holder.firstName}}` or `{{holder.name}}`, no filter), or a plural; no other binding (owner, 2026-11-04). Up to 2 lines (28 graphemes); a title that can take 2 lines costs 1 more unit (1.6). A verdict word in the literal part is an error at save; the name is checked at render (1-3 words of letters, no verdict word, else the band shows the system headline) and needs a `holder` source that can hold a name (1.3). Other inputs and pass fields stay out of the band, so a value like "Refunded" can never land on a green screen; they stay available in the meta line, chips, panels and notes. `heads_up` and `refused` keep the system headline | 1.3, 1.6, 1.11 rule 6 |
 | R17 | Secret holes | The blueprints have a plain `phone`, a `wifiPassword`, URL inputs, and fields that can show `pass.scanCode`. **Out of scope for every role:** URL inputs, inputs named like a contact or secret (unless explicitly annotated), and every field that references an out-of-scope input or `pass.*`. The holder source is one path, never free text | 1.11 rule 8, 3.1 |
@@ -87,7 +87,7 @@ the sections they cite.
 | 6 | **System content and template content are separate.** System: the tint, ring and verdict band (glyph, headline, verdict sub), the holder line, the pass tile or photo, flags, refusal reasons, the action area and the buddy. Template: an `ok` icon and title, the meta line, chips, panels, rows and notes. On `ok` a custom icon leads with the verdict glyph as a badge, and a custom title moves the system word into an eyebrow. Refused screens show no template content except `notes.refused`. |
 | 7 | **The server renders, the client paints.** `ScanOutcome.display` and `ScanCard.display` are fully rendered (`ScanDisplay`): strings, numbers and asset URLs, never expressions. Role filtering happens before evaluation, so data a role may not see is never in scope. |
 | 8 | **The template expression language is reused.** It gets new reserved roots (`holder`, `inputs`, `fields`, `pass`, `scan`, `history`, `event`, `scanner`, `now`), display-only formatting filters, plural texts and numeric and relative-date conditions. It still has no loops, functions or arithmetic. |
-| 9 | **The scanner reads the display from the template's active version.** A save makes a version; a display-only version activates on save (2.5), so staff see it on the next scan, mid-event, with no reissue. A version that differs from the previous one only in `scan.display` has the same `build_key`, so the stale job moves no passes and sends no push. |
+| 9 | **The scanner reads the display from the template's active version.** A save makes a version; activation goes through release review (2.5), and staff see the display on the next scan after that, with no reissue. A version that differs from the previous one only in `scan.display` has the same `build_key`, so the stale job moves no passes and sends no push. |
 | 10 | **History is computed from `scans`, not a new ledger.** `scans` already holds `before`, `after`, `amount`, `action_kind` and `outcome` for every value scan and check-in. One partial index makes visits and transactions cheap. A change made outside the scanner shows as one "Changed elsewhere" row, found by comparing the current value with the last scan's `after`. |
 | 11 | **40 curated Lucide icons, stored as our own ids.** No uploads. Verdict shapes (check, triangle, octagon, X, clock, ban) are excluded, so a custom icon can never look like a verdict. |
 | 12 | **The display never blocks a verdict.** A render error logs `SCAN_DISPLAY_RENDER` and falls back to the system default for that template. Offline verdicts (v2) carry no custom content. |
@@ -667,10 +667,10 @@ change makes every pass stale, and the stale job rebuilds them (metadata-only wh
 1. **A save makes a template version.** Every designer save, upload or API save that changes `scan.display` creates
    a new immutable version, like any other manifest change. There is no separate display store and no draft on the
    server; the browser draft (n5 `drafts.ts`) is the only unsaved state.
-2. **A display-only version activates on save.** When the new version's `build_key` equals the active version's, it
-   can't change a pass, so the save activates it at once. The designer sends `activate: 'display-only'`; the server
-   activates only when the build keys match and otherwise saves without activating, as today
-   (`SaveVersionResponse.activated`, `displayOnly`). A save that also changes the pass keeps n5's explicit Activate.
+2. **A display-only version still goes through release review.** Saving never activates: the designer sends
+   `activate: false` and the server rejects `true` and `'display-only'` with `TEMPLATE_RELEASE_REQUIRED`. The saved
+   callout links to the template's release review (Versions tab), where an approved release activates the version.
+   When the new version's `build_key` equals the active version's, the release moves no passes (rule 4).
 3. **Scanners pick it up on the next scan.** The scanner reads `scan.display` from the template's **active** version
    (5.4), never from the pass's pinned version. A verdict already on screen doesn't change; the next `resolve` or
    action response carries the new display.
@@ -689,9 +689,8 @@ change makes every pass stale, and the stale job rebuilds them (metadata-only wh
 3. When the new active version has the same `build_key` as the passes' versions, the job sets `reissued_version` and
    moves nothing: passes keep their pinned version, their `pass.json` is identical, no `pass_versions` row, no
    outbox push, no R2 write.
-4. `SaveVersionRequest.activate` accepts `true | false | 'display-only'`; `SaveVersionResponse` gains
-   `displayOnly: boolean`. Audit: `template.version_created` and, when it activates, `template.version_activated`
-   with `displayOnly: true`.
+4. `SaveVersionResponse` carries `activated` and `displayOnly`; both are false on a save. Audit:
+   `template.version_created` on save and `template.version_activated` on release.
 5. The doc's own `v` (6.5) versions the schema, not the content. A new template version can carry a migrated doc.
 
 Result: editing the result screen during an event is safe and instant. The next scan on every scanner shows it.
@@ -1227,11 +1226,11 @@ marker `renderScanDisplay` in the `/scan` chunks). The scanner only paints `Scan
 | 8.3 step 4 | build the card's `display` (screen `ready`) |
 | 8.4 step 8 | build `display` for the outcome's screen with post-effect values |
 | 9.2 (v2 offline) | queued check-ins show no custom content; the roster stays hash-only |
-| 11, Templates | display-only versions don't reissue and activate on save (`build_key`, 2.5); the active version supplies the display. `SaveVersionRequest.activate` gains `'display-only'`, `SaveVersionResponse` gains `displayOnly` |
+| 11, Templates | display-only versions don't reissue (`build_key`, 2.5) and activate through release review; the active version supplies the display |
 | 13.1 | display adds no round trips (5.3) |
 | 13.2 | `result` chunk: + display components and 40 icons, estimated 6-8 kB gzip inside its 25 kB |
 | 14 | tests in 7.3 |
-| 16.3 | `modules/templates/{persist,repo-stale,versions}.ts` (c): `build_key`, display-only activation; `admin/templates/designer/*` (n5): Inputs "Scanner" visibility and the Scan screen mode (section 10) |
+| 16.3 | `modules/templates/{persist,repo-stale,versions}.ts` (c): `build_key`; `admin/templates/designer/*` (n5): Inputs "Scanner" visibility and the Scan screen mode (section 10) |
 | 7.5 (client machine) | B's card layer and camera-live rules are the screens workstream's; the display adds nothing to the machine except "1 panel while an amount control is open" |
 | UA 6.2 | event dialog: **Note for staff** field |
 | UK 3.1, 6.4 | identity (holder line, photo) and panels on the desk card come from the display; values and headlines stay `SCAN_COPY` |
@@ -1285,10 +1284,9 @@ No table stores rendered displays. `scans` rows stay free of holder data.
   follow the actor's time zone; retention bounds; `where` for a removed scanner and for an admin session.
 - Cost: a counting D1 wrapper proves a door check-in with a header-only doc and with a history doc both keep SA
   13.1's round-trip counts.
-- Version: saving a display-only version with `activate: 'display-only'` activates it, `build_key` matches, no
-  `pass_versions` row, no outbox row, no R2 put; the next scan returns the new display; a pass pinned to an older
-  version renders the active display. A save that also changes `pass.json` with `'display-only'` is saved but not
-  activated.
+- Version: a display-only version released through review keeps `build_key`, adds no `pass_versions` row, outbox
+  row or R2 put; the next scan returns the new display; a pass pinned to an older version renders the active display.
+  A save never activates.
 - Event note: present in the session; absent from `ScanDisplay`.
 - Fail safe: a doc that makes the renderer throw (injected) still returns the verdict, with the default display and
   one `SCAN_DISPLAY_RENDER` log.
@@ -1415,7 +1413,7 @@ The visual editor for `scan.display`: the **Scan screen** mode of the existing t
 820, light and dark, and the 390 preview-only page). Sheets: `directions/display/sheets/`. Status: design,
 2026-11-04, reconciled with R1-R19. Nothing is built. The sheets paint the canvas with the B-final kit, so they
 follow R1-R19: Ticket with 4 columns, the photo as an identity setting, the system holder line with the meta under it,
-the fit meter per screen "of 6" (1.6), and a display-only save that is live at once (E9). The canvas paints whatever
+the fit meter per screen "of 6" (1.6), and a display-only save that goes through release review (E9). The canvas paints whatever
 the shared result components paint, so it follows the chosen direction without editor changes.
 
 ### 10.1 Decisions
@@ -1430,7 +1428,7 @@ the shared result components paint, so it follows the chosen direction without e
 | E6 | **Bindings are tokens, not syntax.** A text field shows literal text and teal field tokens. **Insert field** opens a picker with groups for holder, inputs, pass fields, pass, scan history and event, each entry showing its live sample value. Secrets (email, phone, the barcode message, tokens) are listed but disabled with "Never shown on scanners", so authors learn why; nothing in the editor says "hidden for Door" about them (R5). Authors never type `{{ }}`; an advanced toggle shows the raw expression. |
 | E7 | **One condition builder for three uses.** The same builder edits a variant's `when` (Rules), a panel's or row's **Show when**, and list or chip items. **Who sees it** is a three-way segmented control: Everyone, Desk and up, Manager. The value menu lists an input's enum values with pass counts. **Try another pass** switches the sample so the author sees a rule take effect. |
 | E8 | **The fit meter makes the density budget visible, per outcome tab.** "Fits on a phone: 5 of 6" (frames and the header cost included; the header's share is labelled, for example "Title 2") is coloured by panel tone. Each panel header shows "2 of 5 units". Rows the renderer cuts on the current tab (1.6) show dashed with **Cut on this screen**. On `ok` the palette greys out a row type that would break the budget and gives the reason in its tooltip. |
-| E9 | **A save makes a version; a display-only save goes live.** **Save version** sends `activate: 'display-only'`. When only the scan screen changed, the server activates it and the callout reads "Version 5 is live on scanners. Passes are unchanged." The Version card says it ahead of saving: "Only the scan screen changed. Scanners show it on the next scan." A save that also changes the pass is saved without activating and falls back to n5's copy and **Activate** button. Needs `displayOnly` and `activated` in `SaveVersionResponse` (templates module c, from `build_key`, 2.5). |
+| E9 | **A save makes a version; release review makes it live.** **Save version** sends `activate: false`, whether or not only the scan screen changed. The callout reads "Version saved. Existing releases are unchanged." and links to **Review release** (the template's Versions tab). |
 | E10 | **No per-event editing here.** The display has no per-event overrides (R10). The optional event staff note stays in the event dialog (2.6); the Notes section links to it when the template has events: "Event notes are set per event." |
 | E11 | **The action area is shown, not edited.** The canvas paints the template's actions in the system action area (locked) so the author sees the whole screen; actions are edited in the manifest's scan actions, not here. No row type in the palette is a button (R3). |
 | E12 | **Header holds the identity sources.** The Header section edits the holder line's source (`holder`, a binding picker), **Show member photo** (`photo`, with Who sees it), the `ok` icon and title, the meta line and chips. The holder line itself can't be removed. The title field's **Insert field** offers only the holder's name (**First name**, **Full name**), disabled with **The holder line's source isn't a name.** when the holder source is the pass title or an `enum` input (1.3); a name makes the fit meter read **Title 3** (2 lines, 1 more unit; R16). The title field's help: **Names that look like a verdict show the plain headline.** |
@@ -1474,11 +1472,11 @@ the shared result components paint, so it follows the chosen direction without e
 | `reducer.ts` | `added.kind` gains `panel \| row \| chip \| variant`; `mode` and `preview` become editor state outside the history; new ids come from `uniqueId` like `field-add`'s key |
 | `targets.ts` | maps `scan.display.*` issue paths to selections |
 | `outline.tsx` | renders `ScanOutline` when the mode is `scan` |
-| `designer.tsx` | the Pass / Scan screen `SegmentedControl` under the page header; mounts `ScanMode`; **Save version** sends `activate: 'display-only'`; the saved callout uses the display-only copy (E9) |
+| `designer.tsx` | the Pass / Scan screen `SegmentedControl` under the page header; mounts `ScanMode`; **Save version** sends `activate: false`; the saved callout links to release review (E9) |
 | `designer-page.tsx` | reads `?mode=scan` into the initial mode |
-| `api.ts` | `useSaveVersion` accepts `activate: boolean \| 'display-only'` and returns `displayOnly` |
+| `api.ts` | `useSaveVersion` sends `activate: false` |
 | `section-inputs.tsx` | the **Scanner** visibility control for `x-scan` (Everyone, Desk and up, Manager, Hidden; "Never shown on scanners" for secrets) |
-| `designer.test.ts`, `designer-ui.test.tsx` | mode switching, display-only save |
+| `designer.test.ts`, `designer-ui.test.tsx` | mode switching, scan screen save |
 
 **Extended outside the designer** (`src/web/admin/templates/`):
 
@@ -1621,21 +1619,20 @@ type ScanOp =
     - The condition builder round-trips 3.2 conditions, and deeper ones show as custom.
     - The fit meter matches `density()`.
     - A hidden panel shows the placeholder.
-    - The saved callout uses the display-only copy when `displayOnly` and `activated` are true, and n5's copy with
-      **Activate** otherwise.
+    - The saved callout links to **Review release** after a save.
     - The holder line is locked and always on the canvas; Header edits only its source.
     - No palette entry produces a button; the action area is painted locked.
     - The Ticket preset on a template with a gate input writes a 4-item `columns` row.
   - **Keyboard:** a full flow without a pointer: add Ticket, bind Seat, add Access, write Show when tier is VIP, reorder with Alt+Arrow, then save.
   - **Accessibility checks:** no axe violations at 1440, 820 and 390 in both themes.
 - **e2e:**
-  - Open from the template page, build the VIP display, save (it goes live, display-only), then scan with a test scanner: the next scan shows the crown, the VIP chip, the 4-column Ticket and Access, and no pass version is created.
+  - Open from the template page, build the VIP display, save, approve the release, then scan with a test scanner: the next scan shows the crown, the VIP chip, the 4-column Ticket and Access, and no pass version is created.
   - The same flow opened from Scanning reaches the same editor.
   - A phone viewport shows the preview only.
 
 ### 10.7 Open questions
 
-1. **Real-pass preview.** Decided in the plan: `GET /api/v1/scan-display/preview?templateId&passId&role` (DS.5, M3), returning the role-filtered scope, never a rendered display.
+1. **Real-pass preview.** Decided in the plan: `GET /api/v1/scan-display/preview?orgId&mode&templateId&passId&role` (DS.5, M3), returning `{ scope }` with the role-filtered scope, never a rendered display. The explicit mode must match the console session's mode.
 2. **Inline editing on the canvas.** Should bound text be editable on the canvas through a token-aware input? The proposal keeps canvas editing to literal text, to avoid a second token editor.
 
 ---

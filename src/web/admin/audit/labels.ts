@@ -11,6 +11,8 @@ interface RefDef {
   icon?: LucideIcon;
   /** The page for this record, when it has one. */
   to?: (id: string) => string;
+  /** Explicit route search, separate from any remembered tenant scope. */
+  search?: (id: string) => Record<string, string> | undefined;
   /** A fixed name for records that have no label of their own. */
   name?: (id: string | null) => string;
 }
@@ -36,7 +38,9 @@ const REFS: Record<string, RefDef> = {
     label: 'Settings',
     icon: Settings,
     name: (id) => (id?.startsWith('org:') ? 'Organization settings' : 'Platform settings'),
-    to: (id) => (id.startsWith('org:') ? `/admin/orgs/${id.slice(4)}` : '/admin/settings'),
+    to: (id) =>
+      id.startsWith('org:') ? `/admin/orgs/${encodeURIComponent(id.slice(4))}` : '/admin/settings',
+    search: (id) => (id.startsWith('org:') ? { view: 'workspace', orgId: id.slice(4) } : undefined),
   },
   system: { label: 'System', icon: Bot },
 };
@@ -47,6 +51,7 @@ export interface Ref {
   /** The record's name; else its type and a short id. */
   name: string;
   to?: string;
+  search?: Record<string, string> | undefined;
 }
 
 function refOf(type: string, id: string | null, label: string | null | undefined): Ref {
@@ -54,7 +59,13 @@ function refOf(type: string, id: string | null, label: string | null | undefined
   const icon = def.icon ?? (def.kind ? ENTITY[def.kind].icon : ENTITY.audit.icon);
   const name =
     label ?? def.name?.(id) ?? (id && UUID.test(id) ? `${def.label} ${id.slice(-6)}` : def.label);
-  return { kind: def.kind, icon, name, to: id && def.to ? def.to(id) : undefined };
+  return {
+    kind: def.kind,
+    icon,
+    name,
+    to: id && def.to ? def.to(id) : undefined,
+    search: id && def.search ? def.search(id) : undefined,
+  };
 }
 
 export const actorRef = (e: Labeled): Ref => refOf(e.actorType, e.actorId, e.actorLabel);

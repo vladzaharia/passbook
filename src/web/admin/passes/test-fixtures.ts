@@ -1,3 +1,5 @@
+import { passDeliveries, passVersions } from './pass-history-test-fixtures.ts';
+
 /** Contract-shaped fixtures for page tests. */
 export const ORG = {
   id: 'org1',
@@ -69,6 +71,7 @@ export function templateDetail(over: Record<string, unknown> = {}) {
           issues: [{ severity: 'warning', code: 'IMG_SCALE', message: 'Missing @3x icon.' }],
         },
         active: true,
+        displayOnly: false,
         passCount: 2,
       },
       {
@@ -88,11 +91,69 @@ export function templateDetail(over: Record<string, unknown> = {}) {
           ],
         },
         active: false,
+        displayOnly: false,
         passCount: 0,
       },
     ],
     passesOnOlderVersions: 0,
     passesBlocked: 0,
+    ...over,
+  };
+}
+
+export function eligibleTemplate(over: Record<string, unknown> = {}) {
+  return {
+    templateId: 'tpl1',
+    name: 'Copper card',
+    templateOrgId: 'org1',
+    origin: 'uploaded',
+    releaseId: 'release1',
+    releaseGeneration: 1,
+    version: 'a1b2c3d4e5f6a7b8',
+    candidateHash: 'a'.repeat(64),
+    supportsCheckIn: false,
+    ...over,
+  };
+}
+
+export function templateRelease(over: Record<string, unknown> = {}) {
+  return {
+    id: 'release1',
+    templateId: 'tpl1',
+    orgId: 'org1',
+    mode: 'live',
+    provider: 'apple',
+    version: 'a1b2c3d4e5f6a7b8',
+    generation: 1,
+    candidateHash: 'a'.repeat(64),
+    source: 'approved',
+    action: 'release',
+    previousReleaseId: null,
+    createdBy: 'u1',
+    createdAt: 1,
+    candidateId: 'candidate1',
+    approvalId: 'approval1',
+    ...over,
+  };
+}
+
+export function templateReleaseList(over: Record<string, unknown> = {}) {
+  const active = templateRelease(over);
+  return { active, items: [active] };
+}
+
+export function templateVersionDetail(over: Record<string, unknown> = {}) {
+  return {
+    version: 'a1b2c3d4e5f6a7b8',
+    createdAt: 1,
+    createdBy: null,
+    assets: [],
+    report: { ok: true, issues: [] },
+    active: true,
+    displayOnly: false,
+    passCount: 0,
+    manifest: { inputs: INPUT_SCHEMA, sample: { name: 'Sam' } },
+    passJson: SAMPLE_PASS_JSON,
     ...over,
   };
 }
@@ -125,6 +186,7 @@ export function passSummary(over: Record<string, unknown> = {}) {
 export function passDetail(over: Record<string, unknown> = {}) {
   return {
     ...passSummary(),
+    reissueRequired: false,
     ownerName: null,
     ownerEmail: null,
     personalization: { name: 'Sam Jones', level: 'copper' },
@@ -145,55 +207,8 @@ export function passDetail(over: Record<string, unknown> = {}) {
       { shortId: 'd4e5f6', createdAt: 1_700_000_000_000, lastPush: null },
     ],
     lastRefreshedAt: null,
-    versions: [
-      {
-        version: 3,
-        templateVersion: 'a1b2c3d4e5f6a7b8',
-        cause: 'admin',
-        actorType: 'user',
-        actorId: 'u1',
-        createdAt: 3,
-        purged: false,
-      },
-      {
-        version: 2,
-        templateVersion: 'a1b2c3d4e5f6a7b8',
-        cause: 'create',
-        actorType: 'user',
-        actorId: 'u1',
-        createdAt: 2,
-        purged: false,
-      },
-      {
-        version: 1,
-        templateVersion: 'a1b2c3d4e5f6a7b8',
-        cause: 'create',
-        actorType: null,
-        actorId: null,
-        createdAt: 1,
-        purged: true,
-      },
-    ],
-    deliveries: [
-      {
-        id: 'd1',
-        kind: 'email',
-        state: 'failed',
-        attempts: 3,
-        errorCode: 'MAIL_REJECTED',
-        createdAt: 5,
-        finishedAt: 6,
-      },
-      {
-        id: 'd2',
-        kind: 'push',
-        state: 'sent',
-        attempts: 1,
-        errorCode: null,
-        createdAt: 4,
-        finishedAt: 4,
-      },
-    ],
+    versions: passVersions(),
+    deliveries: passDeliveries(),
     voided: null,
     warnings: [],
     templateWarnings: [],

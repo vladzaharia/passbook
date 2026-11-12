@@ -111,7 +111,7 @@ export const disarm = (s: MachineState, env: Env): Out =>
 export function undo(s: MachineState, ev: Of<'undo'>, env: Env): Out {
   const key = env.id();
   return out({ ...s, undo: { scanId: ev.scanId, key, since: env.now }, lastActivity: env.now }, [
-    { c: 'undo', key, scanId: ev.scanId },
+    { c: 'undo', key, scanId: ev.scanId, ...(ev.approval ? { approval: ev.approval } : {}) },
   ]);
 }
 

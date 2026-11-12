@@ -6,8 +6,9 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 
 test('second editor gets 412, keeps the draft, and can merge', async ({ browser }) => {
   const api = await apiAs('admin');
-  const pass = await createPass(api, readSeed().org.id, { holder: 'Conflict Original' });
-  const url = `/admin/passes/${pass.id}`;
+  const orgId = readSeed().org.id;
+  const pass = await createPass(api, orgId, { holder: 'Conflict Original' });
+  const url = `/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`;
 
   const ctxA = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
   const ctxB = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
@@ -64,8 +65,9 @@ test('second editor gets 412, keeps the draft, and can merge', async ({ browser 
 
 test('unsaved changes block navigation until confirmed', async ({ page }) => {
   const api = await apiAs('admin');
-  const pass = await createPass(api, readSeed().org.id, { holder: 'Guard Original' });
-  await page.goto(`/admin/passes/${pass.id}`);
+  const orgId = readSeed().org.id;
+  const pass = await createPass(api, orgId, { holder: 'Guard Original' });
+  await page.goto(`/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`);
   await page.getByLabel('Name').fill('Guard Edited');
 
   await page.getByRole('link', { name: 'Passes', exact: true }).first().click();

@@ -13,6 +13,7 @@ import {
   Skeleton,
   SwitchRow,
 } from '../../ui/index.ts';
+import { useScanEvents } from '../scanning/scanner-api.ts';
 import { templateDetailQuery } from '../templates/api.ts';
 import type { ComposerState, HolderChoice } from './composer-state.ts';
 import { HOLDER_LABEL } from './labels.ts';
@@ -25,11 +26,18 @@ const HOLDERS: readonly { value: HolderChoice; label: string }[] = [
 ];
 
 /** Details of the templates the picker offers; a message needs the manifest's messaging key. */
-export function useTemplateDetails(templates: readonly TemplateSummaryDto[]) {
-  const results = useQueries({ queries: templates.map((t) => templateDetailQuery(t.id)) });
+export function useTemplateDetails(templates: readonly TemplateSummaryDto[], orgId: string) {
+  const results = useQueries({ queries: templates.map((t) => templateDetailQuery(t.id, orgId)) });
   return useMemo(
-    () => new Map(results.flatMap((r) => (r.data ? [[r.data.id, r.data] as const] : []))),
-    [results],
+    () =>
+      new Map(
+        results.flatMap((r) =>
+          r.data && (r.data.orgId === null || r.data.orgId === orgId)
+            ? [[r.data.id, r.data] as const]
+            : [],
+        ),
+      ),
+    [orgId, results],
   );
 }
 
@@ -42,6 +50,7 @@ export function AudienceSection({
   details,
   count,
   error,
+  scanError,
 }: {
   orgId: string | undefined;
   state: ComposerState;
@@ -50,14 +59,17 @@ export function AudienceSection({
   loading: boolean;
   details: ReturnType<typeof useTemplateDetails>;
   /** The composer's one (debounced) count, the same the send confirm waits on. */
-  count: Pick<UseQueryResult<BroadcastPreviewDto>, 'data'>;
+  count: Pick<UseQueryResult<BroadcastPreviewDto>, 'data' | 'isPlaceholderData'>;
   error?: string | undefined;
+  scanError?: string | undefined;
 }) {
+  const eventFilter = state.scanKind === 'checkedIn' || state.scanKind === 'notCheckedIn';
+  const events = useScanEvents(orgId, Boolean(orgId) && eventFilter);
   const toggle = (id: string, on: boolean) =>
     onChange({
       templateIds: on ? [...state.templateIds, id] : state.templateIds.filter((x) => x !== id),
     });
-  const c = count.data;
+  const c = count.isPlaceholderData ? undefined : count.data;
   return (
     <div className="flex flex-col gap-4">
       <fieldset
@@ -101,7 +113,7 @@ export function AudienceSection({
       </fieldset>
       <SwitchRow
         label="On a device only"
-        help="Skip passes nobody has added to Wallet."
+        help="Only passes with a device registration are included."
         checked={state.onDevice}
         onCheckedChange={(onDevice) => onChange({ onDevice })}
       />
@@ -128,11 +140,53 @@ export function AudienceSection({
           )}
         </FormField>
       </div>
+      <FormField label="Scan activity">
+        {(control) => (
+          <Select
+            {...control}
+            value={state.scanKind}
+            options={[
+              { value: 'any', label: 'Any scan activity' },
+              { value: 'checkedIn', label: 'Checked in to an event' },
+              { value: 'notCheckedIn', label: 'Not checked in to an event' },
+              { value: 'noScan30', label: 'No completed scan in 30 days' },
+              { value: 'noScan90', label: 'No completed scan in 90 days' },
+            ]}
+            onValueChange={(scanKind) =>
+              onChange({ scanKind: scanKind as ComposerState['scanKind'] })
+            }
+          />
+        )}
+      </FormField>
+      {eventFilter ? (
+        <FormField label="Scan event" error={scanError}>
+          {(control) => (
+            <Select
+              {...control}
+              value={state.scanEventId || undefined}
+              placeholder={events.isError ? 'Could not load events' : 'Choose an event'}
+              options={[
+                ...(events.data?.items ?? []).map((event) => ({
+                  value: event.id,
+                  label: event.name,
+                })),
+                ...(state.scanEventId &&
+                !events.data?.items.some((event) => event.id === state.scanEventId)
+                  ? [{ value: state.scanEventId, label: state.scanEventId }]
+                  : []),
+              ]}
+              onValueChange={(scanEventId) => onChange({ scanEventId })}
+            />
+          )}
+        </FormField>
+      ) : null}
       <p aria-live="polite" className="text-sm text-fg-muted">
         {!c
           ? state.templateIds.length === 0
             ? 'Choose a template to see who is reached.'
-            : 'Counting…'
+            : eventFilter && !state.scanEventId
+              ? 'Choose an event to count the audience.'
+              : 'Counting…'
           : `${formatCount(c.targeted)} ${c.targeted === 1 ? 'pass' : 'passes'}, ${formatCount(c.onDevice)} on a device.`}
       </p>
       {c && c.overBudget > 0 ? (

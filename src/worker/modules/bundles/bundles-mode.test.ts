@@ -3,10 +3,15 @@ import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
+import { getOutbox } from '../delivery/repo.ts';
 import { createPassRow } from '../passes/create.ts';
-import { type Kit, setupKit } from '../passes/test-kit.ts';
+import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { bundleAssetPath, bundleImages } from './assets.ts';
+import { seedBundlePrincipal } from './test-auth-fixtures.ts';
+
+const job = () => jobCtxOf(kit);
 
 const ORIGIN = 'https://wallet.test';
 const fake = fakeAuth(ORIGIN);
@@ -15,12 +20,13 @@ let app: ReturnType<typeof createApp>;
 
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: fake.stores });
+  app = createApp({ stores: fake.stores, clock: kit.clock });
 });
 
 type Headers = Record<string, string>;
-const call = (method: string, path: string, headers: Headers, body: unknown = {}) =>
-  app.request(
+const call = async (method: string, path: string, headers: Headers, body: unknown = {}) => {
+  await seedBundlePrincipal(kit, fake, headers);
+  return app.request(
     `${ORIGIN}/api/v1${path}`,
     {
       method,
@@ -29,12 +35,15 @@ const call = (method: string, path: string, headers: Headers, body: unknown = {}
     },
     kit.env,
   );
+};
 const makePass = (mode: 'live' | 'test' = 'live') =>
-  createPassRow(kit.ctx, {
+  createPassRow(jobCtxOf(kit), {
     orgId: kit.org.id,
     templateId: kit.template.id,
+    templateVersion: kit.template.version,
     input: { memberName: 'Bundle Mode' },
     source: 'manual',
+    execution: { kind: 'system' },
     mode,
     actor: { type: 'system', id: null },
   });
@@ -121,7 +130,7 @@ describe('bundle email outcome', () => {
     });
     const bundle = BundleSchema.parse(await res.json());
     const [row] = await queued(bundle.id);
-    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, kit.ctx);
+    await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, job());
     expect((await eventKinds(pass.id)).sort()).toEqual(['email.queued', 'email.sent']);
     const sent = await all<{ data: string }>(
       kit.env.DB,
@@ -134,7 +143,7 @@ describe('bundle email outcome', () => {
     });
   });
 
-  it('records email.failed when the mailer throws', async () => {
+  it('records an unknown provider outcome without claiming the email failed', async () => {
     const pass = await makePass();
     const res = await call('POST', '/bundles', fake.admin(), {
       orgId: kit.org.id,
@@ -147,14 +156,15 @@ describe('bundle email outcome', () => {
     const [row] = await queued(bundle.id);
     kit.mailer.fail = new Error('provider down');
     try {
-      // A transient failure is retried: the job throws so the queue redelivers it.
-      await expect(
-        handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, kit.ctx),
-      ).rejects.toThrow();
+      await handleEmailSend({ kind: 'email.send', outboxId: row?.id ?? '' }, job());
     } finally {
       kit.mailer.fail = null;
     }
-    expect((await eventKinds(pass.id)).sort()).toEqual(['email.failed', 'email.queued']);
+    expect((await eventKinds(pass.id)).sort()).toEqual(['email.queued']);
+    expect(await getOutbox(kit.env.DB, row?.id ?? '')).toMatchObject({
+      state: 'partial',
+      errorCode: 'EMAIL_OUTCOME_UNKNOWN',
+    });
   });
 
   it('a failed enqueue keeps the bundle and returns it (no duplicate on retry)', async () => {

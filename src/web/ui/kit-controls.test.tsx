@@ -1,11 +1,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { formatWallTime } from '../lib/format.ts';
-import { json, stubFetch } from '../lib/test-utils.tsx';
+import { membershipsQuery, sessionQuery } from '../lib/session.ts';
+import { json, sessionFixture, stubFetch } from '../lib/test-utils.tsx';
 import { Callout } from './callout.tsx';
 import { DateTimeField } from './date-time-field.tsx';
 import { EntityAvatar, EntityChip, EntityIcon, initialsOf, onColor } from './entity.tsx';
@@ -153,17 +160,25 @@ describe('EntityPicker', () => {
     });
     const onValueChange = vi.fn();
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
-      <QueryClientProvider client={client}>
+    client.setQueryData(sessionQuery.queryKey, sessionFixture('admin'));
+    client.setQueryData(membershipsQuery.queryKey, { items: [] });
+    const route = createRootRoute({
+      component: () => (
         <EntityPicker
           kind="user"
           aria-label="User"
           value={undefined}
           onValueChange={onValueChange}
         />
+      ),
+    });
+    const router = createRouter({ routeTree: route, history: createMemoryHistory() });
+    render(
+      <QueryClientProvider client={client}>
+        <RouterProvider router={router} />
       </QueryClientProvider>,
     );
-    await user.click(screen.getByRole('combobox', { name: /^User/ }));
+    await user.click(await screen.findByRole('combobox', { name: /^User/ }));
     await user.type(await screen.findByPlaceholderText('Search users'), 'ada');
     await user.click(await screen.findByRole('option', { name: 'Ada Lovelace' }));
     expect(onValueChange).toHaveBeenCalledWith('u1');

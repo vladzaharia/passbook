@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test('one field supports hidden IDs, independent QR data, people review and HID keyboard scans', async ({
@@ -14,9 +15,9 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
       `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
       { orgId, name: uid('Hidden lookup ID') },
     );
-    const version = await api.get(
-      `/api/v1/templates/${template.id}/versions/${template.activeVersion}`,
-    );
+    const initialVersion = template.versions[0]?.version;
+    if (!initialVersion) throw new Error(`Lookup template ${template.id} has no initial version`);
+    const version = await api.get(`/api/v1/templates/${template.id}/versions/${initialVersion}`);
     const manifest = structuredClone(version.manifest);
     manifest.inputs.properties.lookupId = { type: 'string', 'x-label': 'Membership number' };
     manifest.sample.lookupId = '00001234';
@@ -32,9 +33,16 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
         name: a.name,
         sha1: a.sha1,
       })),
-      activate: true,
     });
     expect(saved.report.ok).toBe(true);
+    expect(saved.saved, JSON.stringify(saved.report)).toBe(true);
+    if (!saved.version) throw new Error(`Lookup template ${template.id} has no saved version`);
+    const release = await publishTemplateVersion(api, orgId, template.id, saved.version);
+    expect(release).toMatchObject({
+      templateId: template.id,
+      version: saved.version,
+      source: 'approved',
+    });
     const names = [
       'Hidden ID Guest',
       'HID Focus Guest',
@@ -50,11 +58,13 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
       qrCodes.push(qrCode);
       const pass = await createPass(api, orgId, {
         templateId: template.id,
+        release,
         memberId: qrCode,
         holder: names[i],
         email: i === 3 ? 'review@example.test' : undefined,
         input: { lookupId: `0000123${i}` },
       });
+      expect(pass.templateVersion).toBe(saved.version);
       passIds.push(pass.id);
     }
     const ledger = async (i: number) =>

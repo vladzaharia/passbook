@@ -2,8 +2,13 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { type FetchHandler, json, renderApp } from '../../../lib/test-utils.tsx';
+import { type FetchHandler, json, membershipFixture, renderApp } from '../../../lib/test-utils.tsx';
 import { ORG, passDetail, passSummary, templateDetail, templateSummary } from '../test-fixtures.ts';
+
+const orgScope = {
+  memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
+  selectedOrg: ORG.id,
+};
 
 const NOW = Date.now();
 const device = (over: Record<string, unknown>) => ({
@@ -25,6 +30,17 @@ function handlers(extra: Record<string, FetchHandler>): Record<string, FetchHand
     '/api/v1/passes': () => json({ items: [passSummary()], nextCursor: null }),
     '/api/v1/passes/p1': () => json(passDetail()),
     '/api/v1/passes/p1/assets': () => json({ items: [] }),
+    '/api/v1/wallet-providers/passes/p1': () =>
+      json({
+        credentialGeneration: 1,
+        providers: ['google', 'samsung'].map((provider) => ({
+          provider,
+          lifecycle: 'absent',
+          desiredOperation: null,
+          priorGenerationRetirementPending: false,
+          installation: 'unknown',
+        })),
+      }),
     ...extra,
   };
 }
@@ -33,6 +49,7 @@ describe('Devices tab', () => {
   it('shows a status pill per device and how many are up to date', async () => {
     const { container } = await renderApp('/admin/passes/p1?tab=devices', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers({
         '/api/v1/passes/p1/devices': () =>
           json({
@@ -78,6 +95,7 @@ describe('Devices tab', () => {
   it('shows removal progress per device', async () => {
     await renderApp('/admin/passes/p1?tab=devices', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers({
         '/api/v1/passes/p1': () => json(passDetail({ status: 'voided', removedAt: NOW - 5000 })),
         '/api/v1/passes/p1/devices': () =>
@@ -91,7 +109,9 @@ describe('Devices tab', () => {
           }),
       }),
     });
-    expect(await screen.findByText('Removed on 1 of 2 devices')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Removal update fetched or registration ended on 1 of 2 devices'),
+    ).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Devices updated' })).toHaveAttribute(
       'aria-valuenow',
       '1',
@@ -128,6 +148,7 @@ describe('Sync log tab', () => {
     const queries: string[] = [];
     await renderApp('/admin/passes/p1?tab=sync', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers({
         '/api/v1/passes/p1/events': (url) => {
           queries.push(new URL(url, 'http://x').search);
@@ -166,6 +187,7 @@ describe('Sync log tab', () => {
   it('has an empty state per filter', async () => {
     await renderApp('/admin/passes/p1?tab=sync', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers({
         '/api/v1/passes/p1/events': () => json({ items: [], nextCursor: null }),
       }),
@@ -180,6 +202,7 @@ describe('Remove from Wallet', () => {
     const user = userEvent.setup();
     await renderApp('/admin/passes/p1', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers({
         '/api/v1/passes/p1/remove': (_u, init) => {
           bodies.push(JSON.parse(String(init?.body)));
@@ -209,9 +232,12 @@ describe('A removed pass', () => {
   it('shows the removal and its progress on every tab, with a Devices link', async () => {
     await renderApp('/admin/passes/p1?tab=holder', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers({ '/api/v1/passes/p1': removed, '/api/v1/passes/p1/devices': devices }),
     });
-    expect(await screen.findByText('Removed on 1 of 2 devices')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Removal update fetched or registration ended on 1 of 2 devices'),
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Devices' })).toBeInTheDocument();
   });
 
@@ -219,6 +245,7 @@ describe('A removed pass', () => {
     const user = userEvent.setup();
     await renderApp('/admin/passes/p1', {
       session: 'admin',
+      ...orgScope,
       handlers: handlers({ '/api/v1/passes/p1': removed, '/api/v1/passes/p1/devices': devices }),
     });
     expect(await screen.findByText('Removed from Wallet. Restore to edit.')).toBeInTheDocument();
@@ -229,17 +256,33 @@ describe('A removed pass', () => {
 });
 
 describe('Bundles of a pass in the other mode', () => {
-  it('asks in the pass mode and shows its bundles with when they were made', async () => {
-    const seen: string[] = [];
+  it('asks in the pass organization and mode and shows its bundles with when they were made', async () => {
+    const seen: { orgId: string | null; passId: string | null; mode: string }[] = [];
+    const deliveryQueries: { orgId: string | null; passId: string | null }[] = [];
     await renderApp('/admin/passes/p1?tab=delivery', {
       session: 'admin',
+      memberships: [
+        ...orgScope.memberships,
+        membershipFixture('other-org', { orgName: 'Other', orgSlug: 'other' }),
+      ],
+      selectedOrg: 'other-org',
       handlers: handlers({
-        '/api/v1/passes/p1': () => json(passDetail({ mode: 'test' })),
-        '/api/v1/delivery': () => json({ items: [] }),
-        '/api/v1/bundles': (_u, init) => {
-          seen.push(
-            String((init?.headers as Record<string, string> | undefined)?.['x-passbook-mode']),
-          );
+        '/api/v1/passes/p1': () => json(passDetail({ orgId: 'other-org', mode: 'test' })),
+        '/api/v1/delivery': (url) => {
+          deliveryQueries.push({
+            orgId: url.searchParams.get('orgId'),
+            passId: url.searchParams.get('passId'),
+          });
+          return json({ items: [] });
+        },
+        '/api/v1/bundles': (url, init) => {
+          seen.push({
+            orgId: url.searchParams.get('orgId'),
+            passId: url.searchParams.get('passId'),
+            mode: String(
+              (init?.headers as Record<string, string> | undefined)?.['x-passbook-mode'],
+            ),
+          });
           return json({
             nextCursor: null,
             items: [
@@ -260,7 +303,10 @@ describe('Bundles of a pass in the other mode', () => {
       }),
     });
     expect(await screen.findByText('Test pack')).toBeInTheDocument();
-    expect(seen).toContain('test');
+    expect(seen).toContainEqual({ orgId: 'other-org', passId: 'p1', mode: 'test' });
+    await waitFor(() =>
+      expect(deliveryQueries).toContainEqual({ orgId: 'other-org', passId: 'p1' }),
+    );
     expect(screen.getByText(/Created/)).toBeInTheDocument();
   });
 });
