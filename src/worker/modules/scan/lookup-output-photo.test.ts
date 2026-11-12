@@ -244,7 +244,7 @@ describe('lookup output authority', () => {
         sql.some((text) => text.includes('INSERT OR IGNORE INTO scan_asset_grant_provenance'))
       ) {
         changed = true;
-        await run(real, 'UPDATE scanners SET csrf_secret=? WHERE id=?', [
+        await run(real, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
           'rotated-csrf-secret',
           scanner.id,
         ]);
@@ -255,7 +255,9 @@ describe('lookup output authority', () => {
     expect(await lookup(ctx, actor, pass.id)).toEqual({ items: [], more: false });
     expect(changed).toBe(true);
     expect(
-      await first(real, 'SELECT token_hash FROM scan_asset_grant_provenance LIMIT 1'),
+      await first(real, 'SELECT token_hash FROM scan_asset_grant_provenance WHERE org_id=?', [
+        kit.org.id,
+      ]),
     ).toBeNull();
     const window = kit.clock.now() - (kit.clock.now() % 600_000);
     expect(

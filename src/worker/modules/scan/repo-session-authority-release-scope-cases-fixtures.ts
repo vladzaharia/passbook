@@ -32,14 +32,21 @@ export function registerSessionScopeReleaseCases() {
       authorityCurrent: true,
       stampsCurrent: false,
     });
+    // A newer head is content: the captured release row still exists unchanged.
     await approveScanReleases(kit, template, { modes: ['live'] });
-    expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: false });
+    expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: true });
+    const release = stamps.releases[0];
+    if (!release) throw new Error('Missing captured release.');
+    const forged = [{ ...release, generation: release.generation + 1 }];
+    expect(
+      await sessionReadFencesCurrent(kit.ctx, actor, kit.clock.now(), forged, stamps.legacy),
+    ).toEqual({ authorityCurrent: true, stampsCurrent: false });
     expect(await fence(true)).toEqual({ authorityCurrent: true, stampsCurrent: true });
     await run(kit.env.DB, 'UPDATE scanners SET token_hash=?,updated_at=updated_at+1 WHERE id=?', [
       'rotated-hash',
       scanner.id,
     ]);
-    expect(await fence(true)).toEqual({ authorityCurrent: false, stampsCurrent: false });
+    expect(await fence(true)).toEqual({ authorityCurrent: false, stampsCurrent: true });
   });
 
   it('fences every captured workspace head in one transaction without partial results', async () => {
@@ -99,7 +106,8 @@ export function registerSessionScopeReleaseCases() {
     const fence = () => sessionReadFencesCurrent(ctx, actor, kit.clock.now(), [], []);
     expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: true });
     expect(batchSizes).toEqual([scope.stamps.length + 2]);
-    expect(boundCounts).toHaveLength(scope.stamps.length + 3);
+    // One bound statement per batched read; no separate CSRF read.
+    expect(boundCounts).toHaveLength(scope.stamps.length + 2);
     expect(boundCounts.every((count) => count < 100)).toBe(true);
     for (const failure of ['missing', 'sparse', 'failed', 'malformed'] as const) {
       corrupt = failure;
@@ -116,10 +124,10 @@ export function registerSessionScopeReleaseCases() {
     expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: false });
     scope.stamps[last] = stamp;
     await approveScanReleases(kit, template, { modes: ['live'] });
-    expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: false });
+    expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: true });
   });
 
-  it('also fences hidden original scanner scope heads for a workspace projection', async () => {
+  it('also fences hidden original scanner scope stamps for a workspace projection', async () => {
     const original = await kit.scanTemplate('Device event', { actions: [CHECK_IN] });
     const selected = await kit.scanTemplate('Workspace event', { actions: [CHECK_IN] });
     const deviceEvent = await kit.event({ templateIds: [original] });
@@ -134,6 +142,9 @@ export function registerSessionScopeReleaseCases() {
       sessionReadFencesCurrent(kit.ctx, actor, kit.clock.now(), stamps.releases, stamps.legacy);
     expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: true });
     await approveScanReleases(kit, original, { modes: ['live'] });
+    expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: true });
+    // The hidden device scope is still fenced: its template is gone.
+    await run(kit.env.DB, "UPDATE templates SET status='deleted' WHERE id=?", [original]);
     expect(await fence()).toEqual({ authorityCurrent: true, stampsCurrent: false });
     expect(
       await sessionReadFencesCurrent(kit.ctx, actor, kit.clock.now(), [], [], {

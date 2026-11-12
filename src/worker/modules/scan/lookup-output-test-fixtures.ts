@@ -1,8 +1,9 @@
 import { beforeEach } from 'vitest';
+import { isolatedKeysetDatabase } from '../../../../test/helpers/credential-keyset.ts';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
-import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
+import { ICON_PNG, withKitDatabase } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
@@ -21,14 +22,23 @@ export let kit: ScanKit;
 export let templateId: string;
 const png = btoa(String.fromCharCode(...makePng(270, 270)));
 
+const lookupTemplate = () =>
+  kit.scanTemplate('Lookup photos', {
+    actions: [{ id: 'enter', label: 'Check in', kind: 'check_in' }],
+    display: { v: 1, header: {}, photo: { minRole: 'door' } },
+  });
+
 export function registerLookupOutputFixture() {
   beforeEach(async () => {
     kit = await setupScanKit();
-    templateId = await kit.scanTemplate('Lookup photos', {
-      actions: [{ id: 'enter', label: 'Check in', kind: 'check_in' }],
-      display: { v: 1, header: {}, photo: { minRole: 'door' } },
-    });
+    templateId = await lookupTemplate();
   });
+}
+
+/** Storage is shared by the file and the keyset is a singleton: start from a database without one. */
+export async function useKeysetlessDatabase() {
+  kit = await withKitDatabase(await isolatedKeysetDatabase(), setupScanKit);
+  templateId = await lookupTemplate();
 }
 
 export async function setupPhoto() {

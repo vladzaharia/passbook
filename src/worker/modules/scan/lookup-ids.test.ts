@@ -145,17 +145,10 @@ describe('scoped scanner release fixtures', () => {
       template: pinned,
       mode: 'test',
     });
+    expect(await candidateById(kit.env.DB, kit.org.id, pass.id)).not.toBeNull();
     await setPass(kit, pass.id, 'release_id = ?', [live.id]);
-    const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
-    expect(candidate).toMatchObject({
-      activeReleaseId: null,
-      activeReleaseGeneration: null,
-      activeReleaseVersion: null,
-      activeReleaseCandidateHash: null,
-      activeTemplateVersion: null,
-    });
-    if (!candidate) throw new Error('Missing invalid-release candidate');
-    expect(await foundOf(kit.ctx, candidate)).toBeNull();
+    // The pass's own release is not a valid Test issue, so the candidate read excludes it.
+    expect(await candidateById(kit.env.DB, kit.org.id, pass.id)).toBeNull();
     const scanner = await kit.scanner({ mode: 'test', settings: { acceptAllTemplates: true } });
     expect(await search(pass.id, scanner.headers)).toEqual({ items: [], more: false });
     const response = await kit.post(scanner.headers, '/resolve', {
@@ -209,6 +202,16 @@ describe('exact lookup IDs', () => {
     expect((await search('legacy@i')).items).toEqual([]);
     await setPass(kit, pass.id, 'external_id = ?', ['Legacy@example.test']);
     expect((await search('Legacy@example.test')).items.map((p) => p.passId)).toEqual([pass.id]);
+  });
+
+  it('matches name prefixes longer than a D1 LIKE pattern', async () => {
+    const head = `Harbor ${'Wide '.repeat(12)}`;
+    const alice = await kit.scanPass(templateId, { memberName: `${head}Alice` });
+    const bruno = await kit.scanPass(templateId, { memberName: `${head}Bruno` });
+    expect(new TextEncoder().encode(head).length).toBeGreaterThan(50);
+    expect((await search(head)).items.map((p) => p.passId)).toEqual([alice.id, bruno.id]);
+    expect((await search(`${head}ali`)).items.map((p) => p.passId)).toEqual([alice.id]);
+    expect((await search(`${head}Carl`)).items).toEqual([]);
   });
 
   it('scopes exact IDs by organization, mode and accepted templates', async () => {

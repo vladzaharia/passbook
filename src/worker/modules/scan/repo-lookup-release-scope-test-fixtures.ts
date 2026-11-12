@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { makeOrg, makePass } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
@@ -11,6 +11,7 @@ import { CHECK_IN, kit, stageVersion } from './repo-lookup-release-test-fixtures
 import { scanSecretSlots } from './repo-secret-binds.ts';
 import { foundOf } from './resolve.ts';
 import { candidateAudit } from './resolve-candidates.ts';
+import { makeLegacyScanPass } from './test-kit.ts';
 
 export function registerLookupReleaseScopedCases() {
   it('selects the approved Apple head for the exact organization and mode, not the legacy pointer', async () => {
@@ -207,35 +208,45 @@ export function registerLookupReleaseScopedCases() {
 export function registerLookupLegacyReleaseCases() {
   registerLookupLegacyUnapprovedCase();
 
-  it('does not mistake ineligible release history for a no-head legacy scope', async () => {
+  it('keeps existing passes on their own release or pin when the template is archived', async () => {
     const templateId = await kit.scanTemplate('Archived release history', { actions: [CHECK_IN] });
     const release = await approveAppleRelease(kit, { templateId, version: 'v1' });
     const issued = await kit.scanPass(templateId);
-    const legacy = await makePass(kit.fx, {
+    const legacy = await makeLegacyScanPass(kit.fx, {
       orgId: kit.org.id,
       template: await kit.registry.resolve(templateId),
     });
-    expect(await candidateById(kit.env.DB, kit.org.id, legacy.id)).toMatchObject({
-      pass: { releaseId: null },
+    const before = await candidateById(kit.env.DB, kit.org.id, legacy.id);
+    expect(before).toMatchObject({ pass: { releaseId: null }, activeReleaseId: release.id });
+    expect(before && (await foundOf(kit.ctx, before))).toMatchObject({
       activeReleaseId: release.id,
     });
     await setArchived(kit.ctx, release.publisherAuth, templateId, true);
+    // No head: a legacy pass uses its pinned version, an issued pass its own release.
     const candidate = await candidateById(kit.env.DB, kit.org.id, legacy.id);
     expect(candidate).toMatchObject({
       activeReleaseId: null,
       activeReleaseGeneration: null,
       activeReleaseVersion: null,
       activeReleaseCandidateHash: null,
-      activeTemplateVersion: null,
-      displayTemplateVersion: null,
+      activeTemplateVersion: release.version,
+      displayTemplateVersion: release.version,
     });
-    expect(candidate && (await foundOf(kit.ctx, candidate))).toBeNull();
+    expect(candidate && (await foundOf(kit.ctx, candidate))).toMatchObject({
+      activeVersion: release.version,
+    });
     const noHeadIssued = await candidateById(kit.env.DB, kit.org.id, issued.id);
     expect(noHeadIssued).toMatchObject({
       pass: { releaseId: release.id },
-      activeReleaseId: null,
-      activeTemplateVersion: null,
+      activeReleaseId: release.id,
+      activeTemplateVersion: release.version,
     });
-    expect(noHeadIssued && (await foundOf(kit.ctx, noHeadIssued))).toBeNull();
+    expect(noHeadIssued && (await foundOf(kit.ctx, noHeadIssued))).toMatchObject({
+      activeReleaseId: release.id,
+    });
+    // A deleted template stops both.
+    await run(kit.env.DB, "UPDATE templates SET status='deleted' WHERE id=?", [templateId]);
+    expect(await candidateById(kit.env.DB, kit.org.id, legacy.id)).toBeNull();
+    expect(await candidateById(kit.env.DB, kit.org.id, issued.id)).toBeNull();
   });
 }

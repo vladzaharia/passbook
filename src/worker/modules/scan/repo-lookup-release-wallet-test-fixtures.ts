@@ -282,11 +282,12 @@ export function registerLookupWalletCases() {
           const replay = await kit.post(scanner.headers, '/actions', request);
           expect(replay.status).toBe(200);
           const replayText = await replay.text();
+          // The replay returns the recorded passless miss.
           expect(JSON.parse(replayText)).toMatchObject({
             kind: 'refused',
             reason: 'not_found',
-            scanId: null,
-            replay: false,
+            scanId: (scan as { id: string }).id,
+            replay: true,
             action: null,
             template: null,
             card: null,

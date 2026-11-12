@@ -193,11 +193,12 @@ export function registerSessionScopeCases() {
       kit.clock.now(),
       scanner.id,
     ]);
+    // Stamps are content; the revoked credential alone denies the read.
     expect(
       await sessionReadFencesCurrent(kit.ctx, actor, kit.clock.now(), [], [], {
         scopeRedacted: true,
       }),
-    ).toEqual({ authorityCurrent: false, stampsCurrent: false });
+    ).toEqual({ authorityCurrent: false, stampsCurrent: true });
   });
 
   it('permits an unassigned session read without granting a template read', async () => {

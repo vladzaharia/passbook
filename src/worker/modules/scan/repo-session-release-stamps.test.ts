@@ -54,30 +54,25 @@ async function scenario() {
 }
 
 describe('atomic session release stamps', () => {
-  it('fences approved head replacement even when the same version remains released', async () => {
+  // A stamp is fenced by its bound release row, not by staying the head.
+  it('keeps a captured release through head replacement, not through template deletion', async () => {
     const s = await scenario();
-    expect(
-      await sessionTemplateStampsCurrent(
-        kit.env.DB,
-        kit.org.id,
-        'live',
-        s.releases,
-        s.legacyStamps,
-      ),
-    ).toBe(true);
+    const stamped = () =>
+      sessionTemplateStampsCurrent(kit.env.DB, kit.org.id, 'live', s.releases, s.legacyStamps);
+    expect(await stamped()).toBe(true);
     await approveScanReleases(kit, s.approved, { modes: ['live'] });
+    expect(await stamped()).toBe(true);
+    const release = s.releases[0];
+    if (!release) throw new Error('Missing release stamp.');
+    const forged = [{ ...release, generation: release.generation + 1 }];
     expect(
-      await sessionTemplateStampsCurrent(
-        kit.env.DB,
-        kit.org.id,
-        'live',
-        s.releases,
-        s.legacyStamps,
-      ),
+      await sessionTemplateStampsCurrent(kit.env.DB, kit.org.id, 'live', forged, s.legacyStamps),
     ).toBe(false);
+    await run(kit.env.DB, "UPDATE templates SET status='deleted' WHERE id=?", [s.approved]);
+    expect(await stamped()).toBe(false);
   });
 
-  it('fences exact legacy version sets and newly published release history', async () => {
+  it('fences exact legacy version sets, not newly published release history', async () => {
     const s = await scenario();
     await run(
       kit.env.DB,
@@ -122,7 +117,7 @@ describe('atomic session release stamps', () => {
         s.releases,
         remaining.legacy,
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('fences the latest persisted legacy Wallet identity but does not discard expired scopes', async () => {
@@ -221,7 +216,7 @@ describe('atomic session release stamps', () => {
     ).toBe(true);
   });
 
-  it('captures mixed scopes and fences a configuration write after head replacement', async () => {
+  it('captures mixed scopes and fences a configuration write after template deletion', async () => {
     const s = await scenario();
     const captured = await captureTemplateStamps(kit.env.DB, kit.org.id, 'live', [
       s.approved,
@@ -260,16 +255,18 @@ describe('atomic session release stamps', () => {
         )
       ).changes,
     ).toBe(1);
-    await approveScanReleases(kit, s.approved, { modes: ['live'] });
-    expect(
+    const write = async (name: string) =>
       (
         await run(
           kit.env.DB,
-          `UPDATE scanners AS s SET name='stale' WHERE s.id=? AND (${predicate.sql})`,
-          [scanner.id, ...predicate.params],
+          `UPDATE scanners AS s SET name=? WHERE s.id=? AND (${predicate.sql})`,
+          [name, scanner.id, ...predicate.params],
         )
-      ).changes,
-    ).toBe(0);
+      ).changes;
+    await approveScanReleases(kit, s.approved, { modes: ['live'] });
+    expect(await write('after head')).toBe(1);
+    await run(kit.env.DB, "UPDATE templates SET status='deleted' WHERE id=?", [s.approved]);
+    expect(await write('stale')).toBe(0);
   });
 
   it('denies foreign mode or tenant, malformed heads, duplicate templates and duplicate versions', async () => {

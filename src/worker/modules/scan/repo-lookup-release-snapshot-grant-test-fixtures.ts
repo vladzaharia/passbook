@@ -145,7 +145,7 @@ export function registerLookupReleaseSnapshotGrantCase() {
     });
     if (!stale) throw new Error('Missing second pass-view grant');
     await putMemberPhoto(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       {

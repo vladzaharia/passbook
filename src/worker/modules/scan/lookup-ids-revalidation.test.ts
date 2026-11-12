@@ -58,13 +58,20 @@ describe('lookup privacy', () => {
       const memberNo = 'retired-member-number-875';
       const email = 'retired-holder@example.test';
       const externalId = 'retired-external-id-875';
+      const transfer = column === 'holder_email' || column === 'serial' || column === 'scan_code';
+      // A transfer needs rotating credentials; the fixture template's barcode and lookup are static.
+      const template = transfer
+        ? await kit.scanTemplate('Transferable lookup', {
+            actions: [{ id: 'enter', label: 'Check in', kind: 'check_in' }],
+          })
+        : templateId;
       const pass = await kit.scanPass(
-        templateId,
+        template,
         { memberName: 'Race Public', memberNo },
         { holderEmail: email },
       );
       await setPass(kit, pass.id, 'external_id = ?', [externalId]);
-      const scanner = await kit.scanner({ templateIds: [templateId] });
+      const scanner = await kit.scanner({ templateIds: [template] });
       const query = {
         external_id: externalId,
         holder_email: email,
@@ -73,6 +80,9 @@ describe('lookup privacy', () => {
         barcode_hash: 'opaque:qr:payload',
         lookup_hash: memberNo,
       }[column];
+      expect((await search(query, scanner.headers)).items.map((item) => item.passId)).toEqual([
+        pass.id,
+      ]);
       const real = kit.env.DB;
       const expected = await getHolderPass(real, pass.id, null);
       if (!expected) throw new Error('Missing transfer source');
@@ -80,7 +90,7 @@ describe('lookup privacy', () => {
         real,
         pass.id,
         async () => {
-          if (column === 'holder_email' || column === 'serial' || column === 'scan_code') {
+          if (transfer) {
             await startCredentialTransfer(
               jobCtxOf(kit),
               { type: 'system', id: null },

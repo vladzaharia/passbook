@@ -1,4 +1,4 @@
-import { likeEscape, stmt } from '../../platform/db.ts';
+import { stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -18,14 +18,14 @@ export const staffListStmt = (db: Db, orgId: string) =>
     [orgId, STAFF_ROSTER_LIMIT + 1],
   );
 
-/** People whose name contains `q`, for a roster that was cut. */
+/** People whose name contains `q`, for a roster that was cut. Not LIKE: D1 caps a pattern at 50 bytes. */
 export const staffSearchStmt = (db: Db, orgId: string, q: string) =>
   stmt(
     db,
     `SELECT id, name, role FROM scan_staff
-     WHERE org_id = ? AND disabled_at IS NULL AND name LIKE ? ESCAPE '\\'
+     WHERE org_id = ? AND disabled_at IS NULL AND instr(lower(name), lower(?)) > 0
      ORDER BY name COLLATE NOCASE, id LIMIT ?`,
-    [orgId, `%${likeEscape(q)}%`, STAFF_SEARCH_LIMIT],
+    [orgId, q, STAFF_SEARCH_LIMIT],
   );
 
 export const userNameStmt = (db: Db, userId: string) =>

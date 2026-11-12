@@ -13,6 +13,61 @@ export async function session(kit: ScanKit, headers: Record<string, string>) {
   return ScanSessionSchema.parse(await response.json());
 }
 
+/**
+ * Run `change` once, right after a request reads `templateId@version` from D1. The session
+ * resolves templates through the env's default registry, not `kit.registry`.
+ */
+export function duringTemplateRead(
+  kit: ScanKit,
+  templateId: string,
+  version: string,
+  change: () => Promise<void>,
+) {
+  const real = kit.env.DB;
+  const state = { fired: false };
+  const passThrough = <T extends object>(target: T, prop: string | symbol) => {
+    const value = Reflect.get(target, prop, target);
+    return typeof value === 'function' ? value.bind(target) : value;
+  };
+  const watch = (bound: D1PreparedStatement) =>
+    new Proxy(bound, {
+      get(query, method) {
+        if (method !== 'first') return passThrough(query, method);
+        // The registry reads the whole version row (`first()` without a column).
+        return async () => {
+          const row = await query.first();
+          if (!state.fired) {
+            state.fired = true;
+            await change();
+          }
+          return row;
+        };
+      },
+    });
+  const db = new Proxy(real, {
+    get(target, prop) {
+      if (prop !== 'prepare') return passThrough(target, prop);
+      return (sql: string) => {
+        const statement = target.prepare(sql);
+        if (!sql.includes('FROM template_versions')) return statement;
+        return new Proxy(statement, {
+          get(inner, member) {
+            if (member !== 'bind') return passThrough(inner, member);
+            return (...values: unknown[]) => {
+              const bound = inner.bind(...values);
+              const match =
+                values.length === 2 && values[0] === templateId && values[1] === version;
+              return match && !state.fired ? watch(bound) : bound;
+            };
+          },
+        });
+      };
+    },
+  });
+  Object.assign(kit.env, { DB: db });
+  return { state, restore: () => Object.assign(kit.env, { DB: real }) };
+}
+
 export async function attachWorkspace(kit: ScanKit, scannerId: string, eventId: string | null) {
   const workspaceId = kit.fx.ids.id();
   const workspace = await run(

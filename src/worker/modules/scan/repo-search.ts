@@ -14,6 +14,32 @@ export interface SearchRow {
 
 type SearchKeys = { scanCode: string | null; barcodeHash: string; lookupHash: string };
 
+/** D1 rejects LIKE patterns over 50 bytes. */
+const LIKE_PATTERN_BYTES = 50;
+const utf8 = new TextEncoder();
+
+/** A prefix too long for one pattern narrows by its head and compares the full prefix exactly. */
+function prefixMatch(
+  alias: 'matched' | 'lookup_match',
+  column: 'display_title' | 'display_subtitle',
+  q: string,
+): { sql: string; params: SqlValue[] } {
+  const label = column.replace('_', '-');
+  const like = `${alias}.${column} LIKE ?/* scan-ephemeral-${label} */ ESCAPE '\\' COLLATE NOCASE`;
+  const full = `${likeEscape(q)}%`;
+  if (utf8.encode(full).length <= LIKE_PATTERN_BYTES) return { sql: like, params: [full] };
+  let head = '';
+  for (const char of q) {
+    const next = head + likeEscape(char);
+    if (utf8.encode(`${next}%`).length > LIKE_PATTERN_BYTES) break;
+    head = next;
+  }
+  return {
+    sql: `(${like} AND substr(${alias}.${column}, 1, ?) = ?/* scan-ephemeral-${label} */ COLLATE NOCASE)`,
+    params: [`${head}%`, Array.from(q).length, q],
+  };
+}
+
 /** Share exact input matching between the indexed search and the final miss fence. */
 function inputMatches(
   alias: 'matched' | 'lookup_match',
@@ -28,17 +54,7 @@ function inputMatches(
       params: [email],
     });
   } else if (!q.includes('@') && Array.from(q).length >= 3) {
-    const prefix = `${likeEscape(q)}%`;
-    matches.push(
-      {
-        sql: `${alias}.display_title LIKE ?/* scan-ephemeral-display-title */ ESCAPE '\\' COLLATE NOCASE`,
-        params: [prefix],
-      },
-      {
-        sql: `${alias}.display_subtitle LIKE ?/* scan-ephemeral-display-subtitle */ ESCAPE '\\' COLLATE NOCASE`,
-        params: [prefix],
-      },
-    );
+    matches.push(prefixMatch(alias, 'display_title', q), prefixMatch(alias, 'display_subtitle', q));
   }
   if (keys) {
     matches.push({

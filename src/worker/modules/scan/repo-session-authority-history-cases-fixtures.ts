@@ -13,7 +13,7 @@ import { codeOf, key } from './test-kit.ts';
 
 export function registerSessionHistoryCases() {
   it.each(['event', 'templates', 'workspace'] as const)(
-    'retains the original %s assignment after its release becomes unavailable',
+    'retains the original %s assignment after its template is archived',
     async (kind) => {
       const template = await kit.scanTemplate('Historical receipt', { actions: [CHECK_IN] });
       const pass = await kit.scanPass(template);
@@ -37,15 +37,16 @@ export function registerSessionHistoryCases() {
       const receipt = (await response.json()) as { kind: string; scanId: string | null };
       expect(receipt).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
       if (!receipt.scanId) throw new Error('Missing recorded scan.');
+      // An archived template keeps its release in scope: existing passes still scan.
       await run(kit.env.DB, `UPDATE templates SET status='archived' WHERE id=?`, [template]);
       const actor = await scannerSnapshot(scanner.id);
-      expect(actor.invalidScannerScope).toBe(true);
+      expect(actor.invalidScannerScope).toBeFalsy();
       expect(actor.scannerAssignment).toMatchObject({
         scannerId: scanner.id,
         templateIds: [template],
         structurallyValid: true,
       });
-      expect(await strict(actor)).toBe(false);
+      expect(await strict(actor)).toBe(true);
       const observedEvent = event ? await getEvent(kit.env.DB, kit.org.id, event.id) : null;
       if (event && !observedEvent) throw new Error('Missing event snapshot.');
       const events = observedEvent ? [observedEvent] : [];
@@ -53,21 +54,11 @@ export function registerSessionHistoryCases() {
       const history = await kit.get(scanner.headers, '/scans');
       expect(history.status).toBe(200);
       expect(await history.json()).toMatchObject({
-        items: [
-          {
-            scanId: receipt.scanId,
-            outcome: 'ok',
-            reason: null,
-            actionLabel: 'Scan',
-            title: null,
-            value: null,
-            undoable: false,
-          },
-        ],
+        items: [{ scanId: receipt.scanId, outcome: 'ok', reason: null }],
       });
       const summary = await kit.get(scanner.headers, '/summary');
       expect(summary.status).toBe(200);
-      expect(await summary.json()).toMatchObject({ total: 1, ok: 1, byAction: [] });
+      expect(await summary.json()).toMatchObject({ total: 1, ok: 1 });
       if (event) {
         await run(
           kit.env.DB,

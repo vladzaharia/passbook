@@ -14,6 +14,7 @@ import {
   scannerForLookup,
   setupPhoto,
   templateId,
+  useKeysetlessDatabase,
 } from './lookup-output-test-fixtures.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
@@ -144,7 +145,8 @@ describe('lookup output authority', () => {
     expect(result.credentialContext).toBeNull();
   });
 
-  it('only exposes a last-scan time backed by a current verified event', async () => {
+  it('only exposes a last-scan time backed by a matching ledger event', async () => {
+    // Event proofs are gone; the reader checks the ledger's recorded facts against the scan row.
     const pass = await setupPhoto();
     const { scanner, actor } = await scannerForLookup();
     const response = await kit.post(scanner.headers, '/actions', {
@@ -158,9 +160,9 @@ describe('lookup output authority', () => {
     expect((await lookup(kit.ctx, actor, pass.id)).items[0]?.lastScanAt).toBe(kit.clock.now());
     await run(
       kit.env.DB,
-      `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProof')
+      `UPDATE pass_events SET data=json_set(data,'$.authority.scanAt',?)
       WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
-      [pass.id, scan.scanId],
+      [kit.clock.now() - 1, pass.id, scan.scanId],
     );
     const after = await lookup(kit.ctx, actor, pass.id);
     expect(after.items).toHaveLength(1);
@@ -168,6 +170,7 @@ describe('lookup output authority', () => {
   });
 
   it('bootstraps a missing keyset only in the authenticated first search batch', async () => {
+    await useKeysetlessDatabase();
     const template = await kit.registry.resolve(templateId);
     const pass = await makeLegacyScanPass(kit.fx, { orgId: kit.org.id, template });
     const { actor } = await scannerForLookup();
@@ -191,6 +194,7 @@ describe('lookup output authority', () => {
   });
 
   it('bootstraps resolve with the original actor and candidate in the same batch', async () => {
+    await useKeysetlessDatabase();
     const template = await kit.registry.resolve(templateId);
     const pass = await makeLegacyScanPass(kit.fx, { orgId: kit.org.id, template });
     const { actor } = await scannerForLookup();
@@ -209,8 +213,13 @@ describe('lookup output authority', () => {
     const bootstrap = batches.find((batch) =>
       batch.some((sql) => sql.includes('INSERT INTO credential_ref_keyset')),
     );
+    // The candidate read, identified by its keyset column; SQL balancing rewrites its WHERE.
     expect(
-      bootstrap?.some((sql) => sql.includes('FROM passes p') && sql.includes('WHERE p.org_id = ?')),
+      bootstrap?.some(
+        (sql) =>
+          sql.includes('FROM passes p') &&
+          sql.includes('credential_keyset.commitment AS credential_keyset_commitment'),
+      ),
     ).toBe(true);
     expect(bootstrap?.find((sql) => sql.includes('INSERT INTO credential_ref_keyset'))).toContain(
       'csrf_actor_scanner',
@@ -221,6 +230,7 @@ describe('lookup output authority', () => {
   });
 
   it('does not bootstrap if the original scanner is revoked before the search batch', async () => {
+    await useKeysetlessDatabase();
     const template = await kit.registry.resolve(templateId);
     const pass = await makeLegacyScanPass(kit.fx, { orgId: kit.org.id, template });
     const { scanner, actor } = await scannerForLookup();

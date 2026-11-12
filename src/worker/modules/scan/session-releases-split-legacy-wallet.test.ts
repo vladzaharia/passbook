@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { activeRelease } from '../templates/releases.ts';
 import {
+  duringTemplateRead,
   expectRedactedScope,
   expectScopedSession,
   legacyPass,
@@ -31,35 +32,32 @@ describe('scanner session approved releases', () => {
     expectScopedSession(before, event.id, 'legacy_entry', kit.clock.now());
     expect(before.templates).toMatchObject([{ id, name: 'Legacy version' }]);
 
-    const resolve = kit.registry.resolve.bind(kit.registry);
     let changedRevision = 0;
-    const spy = vi
-      .spyOn(kit.registry, 'resolve')
-      .mockImplementationOnce(async (templateId, version) => {
-        expect([templateId, version]).toEqual([id, 'v1']);
-        await run(
-          kit.env.DB,
-          'UPDATE signing_identities SET pass_type_identifier = ? WHERE id = ?',
-          [`${identity.pass_type_identifier}.changed`, identity.id],
-        );
-        const changed = await first<{ revision: number }>(
-          kit.env.DB,
-          'SELECT revision FROM signing_identities WHERE id = ?',
-          [identity.id],
-        );
-        if (!changed) throw new Error('Expected the changed signing identity');
-        changedRevision = changed.revision;
-        expect(changedRevision).toBeGreaterThan(identity.revision);
-        await run(
-          kit.env.DB,
-          'UPDATE signing_identities SET pass_type_identifier = ? WHERE id = ?',
-          [identity.pass_type_identifier, identity.id],
-        );
-        return resolve(templateId, version);
-      });
-    const result = await session(kit, scanner.headers);
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
+    const race = duringTemplateRead(kit, id, 'v1', async () => {
+      await run(kit.env.DB, 'UPDATE signing_identities SET pass_type_identifier = ? WHERE id = ?', [
+        `${identity.pass_type_identifier}.changed`,
+        identity.id,
+      ]);
+      const changed = await first<{ revision: number }>(
+        kit.env.DB,
+        'SELECT revision FROM signing_identities WHERE id = ?',
+        [identity.id],
+      );
+      if (!changed) throw new Error('Expected the changed signing identity');
+      changedRevision = changed.revision;
+      expect(changedRevision).toBeGreaterThan(identity.revision);
+      await run(kit.env.DB, 'UPDATE signing_identities SET pass_type_identifier = ? WHERE id = ?', [
+        identity.pass_type_identifier,
+        identity.id,
+      ]);
+    });
+    let result: Awaited<ReturnType<typeof session>>;
+    try {
+      result = await session(kit, scanner.headers);
+    } finally {
+      race.restore();
+    }
+    expect(race.state.fired).toBe(true);
 
     const restored = await first<{ pass_type_identifier: string; revision: number }>(
       kit.env.DB,

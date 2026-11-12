@@ -9,7 +9,7 @@ import { candidateAudit } from './resolve-candidates.ts';
 import { key } from './test-kit.ts';
 
 export function registerLookupLegacyUnapprovedCase() {
-  it('uses pinned legacy policy only while scoped release history is absent', async () => {
+  it('uses pinned legacy policy until a head exists, then the head policy', async () => {
     const scan = { actions: [CHECK_IN] };
     const donorId = await kit.scanTemplate('Legacy without approval', scan);
     const donor = await kit.registry.resolve(donorId);
@@ -169,10 +169,17 @@ export function registerLookupLegacyUnapprovedCase() {
       activePolicy: { version: 'v2' },
       template: { version: template.version },
     });
-    const blocked = await kit.post(scanner.headers, '/actions', {
+    // Policy follows the head (v2 hides the name from a door scanner); content stays at v1.
+    const later = await kit.post(scanner.headers, '/actions', {
       ...request(),
       actionId: 'check_in',
     });
-    expect(await blocked.json()).toMatchObject({ reason: 'not_found', card: null, display: null });
+    const text = await later.text();
+    expect(JSON.parse(text)).toMatchObject({
+      kind: 'heads_up',
+      reason: 'already_done',
+      display: { templateVersion: template.version },
+    });
+    expect(text).not.toContain('Legacy Person');
   });
 }

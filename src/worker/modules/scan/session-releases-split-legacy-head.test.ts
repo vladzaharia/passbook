@@ -1,11 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { first, stmt } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { candidateHash } from '../templates/release-content.ts';
 import { activeRelease } from '../templates/releases.ts';
 import { getCandidate } from '../templates/repo-releases.ts';
 import {
-  expectRedactedScope,
+  duringTemplateRead,
   expectScopedSession,
   legacyPass,
   legacyVersions,
@@ -15,7 +15,7 @@ import {
 import { setupScanKit } from './test-kit.ts';
 
 describe('scanner session approved releases', () => {
-  it('does not fall back to a legacy pin when an ineligible release head has raw history', async () => {
+  it('does not fall back to a legacy pin when an ineligible release is the latest history', async () => {
     const kit = await setupScanKit();
     const { id, pinned } = await legacyVersions(kit);
     await legacyPass(kit, pinned);
@@ -113,25 +113,21 @@ describe('scanner session approved releases', () => {
               deviceRole,
               settings: { acceptAllTemplates: true },
             });
+      // With no eligible head the scope uses the latest release in scope, never the legacy pin.
       const result = await session(kit, device.headers);
       expect(result).toMatchObject({
-        state: 'unassigned',
+        state: 'ready',
         workspace: null,
-        event: null,
-        templates: [],
-        formats: [],
-        scanner: {
-          id: device.id,
-          orgId: kit.org.id,
-          mode: 'live',
-          deviceRole,
-          settings: { acceptAllTemplates: false },
-        },
+        scanner: { id: device.id, orgId: kit.org.id, mode: 'live', deviceRole },
       });
+      expect(result.templates).toEqual(
+        deviceRole === 'scan' ? [expect.objectContaining({ id, name: 'Unapproved draft' })] : [],
+      );
+      expect(JSON.stringify(result)).not.toContain('Legacy version');
     }
   });
 
-  it('fails closed if the first approved release appears while resolving a legacy pin', async () => {
+  it('serves the captured legacy pin if the first approved release appears while resolving it', async () => {
     const kit = await setupScanKit();
     const { id, pinned } = await legacyVersions(kit);
     await legacyPass(kit, pinned);
@@ -144,33 +140,34 @@ describe('scanner session approved releases', () => {
       kit.clock.now(),
     );
 
-    const resolve = kit.registry.resolve.bind(kit.registry);
-    const spy = vi
-      .spyOn(kit.registry, 'resolve')
-      .mockImplementationOnce(async (templateId, version) => {
-        expect([templateId, version]).toEqual([id, 'v1']);
-        await approveAppleRelease(kit, {
-          orgId: kit.org.id,
-          templateId: id,
-          mode: 'live',
-          version: 'v2',
-        });
-        return resolve(templateId, version);
+    const race = duringTemplateRead(kit, id, 'v1', async () => {
+      await approveAppleRelease(kit, {
+        orgId: kit.org.id,
+        templateId: id,
+        mode: 'live',
+        version: 'v2',
       });
-    const result = await session(kit, scanner.headers);
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
+    });
+    let result: Awaited<ReturnType<typeof session>>;
+    try {
+      result = await session(kit, scanner.headers);
+    } finally {
+      race.restore();
+    }
+    expect(race.state.fired).toBe(true);
 
     expect(await activeRelease(kit.ctx, id, kit.org.id, 'live', 'apple')).toMatchObject({
       version: 'v2',
     });
-    expectRedactedScope(result, kit, scanner.id);
+    // Legacy stamps are fenced by their pass evidence, not by the absence of release history.
+    expectScopedSession(result, event.id, 'legacy_entry', kit.clock.now());
+    expect(result.templates).toMatchObject([{ id, name: 'Legacy version' }]);
 
     const reloaded = await session(kit, scanner.headers);
     expect(reloaded).toMatchObject({
       state: 'ready',
       event: { id: event.id },
-      scanner: { mode: 'live', settings: { acceptAllTemplates: true } },
+      scanner: { mode: 'live', settings: { acceptAllTemplates: false } },
     });
     expect(reloaded.templates).toEqual([
       {

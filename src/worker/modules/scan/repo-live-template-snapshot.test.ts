@@ -178,7 +178,7 @@ describe('live template snapshots', () => {
     },
   );
 
-  it('uses the immutable pin for a legacy pass only while no scoped release history exists', async () => {
+  it('uses the immutable pin for a legacy pass while no head applies', async () => {
     const { kit, id, pass } = await fixture({ approved: false });
     await insertVersion(kit, id, 'draft', 'same-build', { name: 'Draft must not leak' });
     await run(kit.env.DB, 'UPDATE templates SET active_version=? WHERE id=?', ['draft', id]);
@@ -192,12 +192,18 @@ describe('live template snapshots', () => {
     expect(await current(kit, legacy.binding, legacy.snapshot)).toBe(true);
     await approveAppleRelease(kit, { templateId: id, version: 'draft', mode: 'live' });
     expect(await current(kit, legacy.binding, legacy.snapshot)).toBe(false);
+    // Archiving removes the head; the existing pass keeps scanning under its own version.
     await run(kit.env.DB, "UPDATE templates SET status='archived' WHERE id=?", [id]);
-    const invalid = await capture(kit, pass.id);
-    expect(invalid.binding.activeReleaseId).toBeNull();
+    const archived = await capture(kit, pass.id);
+    expect(archived.binding.activeReleaseId).toBeNull();
+    expect(archived.binding.activeTemplateVersion).toBe('v1');
     expect(
-      await verifyLiveTemplateSnapshot(kit.ctx, invalid.binding, invalid.snapshot, 'commit'),
-    ).toBeNull();
+      (await verifyLiveTemplateSnapshot(kit.ctx, archived.binding, archived.snapshot, 'commit'))
+        ?.active.version,
+    ).toBe('v1');
+    expect(await current(kit, archived.binding, archived.snapshot)).toBe(true);
+    await run(kit.env.DB, "UPDATE templates SET status='deleted' WHERE id=?", [id]);
+    expect(await current(kit, archived.binding, archived.snapshot)).toBe(false);
   });
 
   it('does not authorize a pass against a template reassigned to another organization', async () => {

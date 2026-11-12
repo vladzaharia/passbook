@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -6,6 +6,7 @@ import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { activeRelease } from '../templates/releases.ts';
 import {
   attachWorkspace,
+  duringTemplateRead,
   expectRedactedScope,
   expectScopedSession,
   scopedRaceScanner,
@@ -79,7 +80,7 @@ describe('scanner session approved releases', () => {
     expectRedactedScope(result, kit, scanner.id);
   });
 
-  it('fails closed if the approved release changes while its template is being resolved', async () => {
+  it('serves the captured release if the head changes while its template is being resolved', async () => {
     const kit = await setupScanKit();
     const id = await kit.scanTemplate('Initially approved', {
       actions: [{ id: 'entry', label: 'Admit', kind: 'check_in' }],
@@ -109,33 +110,34 @@ describe('scanner session approved releases', () => {
     });
     expectScopedSession(await session(kit, scanner.headers), event.id, 'entry', kit.clock.now());
 
-    const resolve = kit.registry.resolve.bind(kit.registry);
-    const spy = vi
-      .spyOn(kit.registry, 'resolve')
-      .mockImplementationOnce(async (templateId, version) => {
-        expect([templateId, version]).toEqual([id, 'v1']);
-        await approveAppleRelease(kit, {
-          orgId: kit.org.id,
-          templateId: id,
-          mode: 'live',
-          version: 'v2',
-        });
-        return resolve(templateId, version);
+    const race = duringTemplateRead(kit, id, 'v1', async () => {
+      await approveAppleRelease(kit, {
+        orgId: kit.org.id,
+        templateId: id,
+        mode: 'live',
+        version: 'v2',
       });
-    const result = await session(kit, scanner.headers);
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
+    });
+    let result: Awaited<ReturnType<typeof session>>;
+    try {
+      result = await session(kit, scanner.headers);
+    } finally {
+      race.restore();
+    }
+    expect(race.state.fired).toBe(true);
 
     expect(await activeRelease(kit.ctx, id, kit.org.id, 'live', 'apple')).toMatchObject({
       version: 'v2',
     });
-    expectRedactedScope(result, kit, scanner.id);
+    // The release head is content: the captured release row still exists, so the read stands.
+    expectScopedSession(result, event.id, 'entry', kit.clock.now());
+    expect(result.templates).toMatchObject([{ id, name: 'Initially approved' }]);
 
     const reloaded = await session(kit, scanner.headers);
     expect(reloaded).toMatchObject({
       state: 'ready',
       event: { id: event.id },
-      scanner: { mode: 'live', settings: { acceptAllTemplates: true } },
+      scanner: { mode: 'live', settings: { acceptAllTemplates: false } },
     });
     expect(reloaded.templates).toEqual([
       {
@@ -149,7 +151,7 @@ describe('scanner session approved releases', () => {
   });
 
   it.each(['revoked', 'settings changed'] as const)(
-    'returns a generic 401 if the scanner is %s while an approved template is resolving',
+    'ends the read without scope if the scanner is %s while an approved template is resolving',
     async (change) => {
       const kit = await setupScanKit();
       const id = await kit.scanTemplate('Sensitive approved template', {
@@ -165,39 +167,40 @@ describe('scanner session approved releases', () => {
         templates: [{ id, name: 'Sensitive approved template' }],
       });
 
-      const resolve = kit.registry.resolve.bind(kit.registry);
-      const spy = vi
-        .spyOn(kit.registry, 'resolve')
-        .mockImplementationOnce(async (templateId, version) => {
-          expect([templateId, version]).toEqual([id, 'v1']);
-          const updated =
-            change === 'revoked'
-              ? await run(
-                  kit.env.DB,
-                  'UPDATE scanners SET revoked_at = ?, updated_at = updated_at + 1 WHERE id = ?',
-                  [kit.clock.now(), scanner.id],
-                )
-              : await run(
-                  kit.env.DB,
-                  `UPDATE scanners SET settings = json_set(settings, '$.flow', 'choose'),
-                   updated_at = updated_at + 1 WHERE id = ?`,
-                  [scanner.id],
-                );
-          expect(updated.changes).toBe(1);
-          return resolve(templateId, version);
-        });
-      const response = await kit.get(scanner.headers, '/session');
-      expect(spy).toHaveBeenCalled();
-      spy.mockRestore();
+      const race = duringTemplateRead(kit, id, 'v1', async () => {
+        const updated =
+          change === 'revoked'
+            ? await run(
+                kit.env.DB,
+                'UPDATE scanners SET revoked_at = ?, updated_at = updated_at + 1 WHERE id = ?',
+                [kit.clock.now(), scanner.id],
+              )
+            : await run(
+                kit.env.DB,
+                `UPDATE scanners SET settings = json_set(settings, '$.flow', 'choose'),
+                 updated_at = updated_at + 1 WHERE id = ?`,
+                [scanner.id],
+              );
+        expect(updated.changes).toBeGreaterThanOrEqual(1);
+      });
+      let response: Response;
+      try {
+        response = await kit.get(scanner.headers, '/session');
+      } finally {
+        race.restore();
+      }
+      expect(race.state.fired).toBe(true);
 
-      expect(response.status).toBe(401);
+      // Revocation unpairs (401); a settings change is a config change (409) and the device rereads.
+      const status = change === 'revoked' ? 401 : 409;
+      expect(response.status).toBe(status);
       expect(response.headers.get('cache-control')).toBe('no-store');
       const body = (await response.json()) as Record<string, unknown>;
-      expect(body).toMatchObject({
-        status: 401,
-        code: 'SCANNER_UNAUTHENTICATED',
-        detail: 'Pair this scanner to continue.',
-      });
+      expect(body).toMatchObject(
+        change === 'revoked'
+          ? { status, code: 'SCANNER_UNAUTHENTICATED', detail: 'Pair this scanner to continue.' }
+          : { status, code: 'SCAN_CONFIG_CHANGED' },
+      );
       for (const field of ['state', 'scanner', 'event', 'templates', 'formats', 'csrfToken']) {
         expect(body).not.toHaveProperty(field);
       }

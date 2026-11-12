@@ -3,7 +3,7 @@ import { makePass } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { basicPackage, makePng } from '../templates/package/fixtures.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
-import { resetBakedSync, syncBakedTemplates } from '../templates/sync.ts';
+import { generatedSource, resetBakedSync, syncBakedTemplates } from '../templates/sync.ts';
 import { bakedFrom, fakeAssets, sourceOf } from '../templates/testing.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import {
@@ -65,15 +65,16 @@ describe('live template snapshot baked assets', () => {
         'wallet.template.json': JSON.stringify({
           ...kit.template.manifest,
           name: 'Baked snapshot',
-          previewOnlyAssets: ['strip.png'],
         }),
         'logo.png': makePng(100, 40),
-        'strip.png': makePng(200, 40),
+        // A slot the generic style does not use: sealed as an extra, not a pass asset.
+        'strip.png': makePng(375, 144),
       }),
       { name: 'Baked snapshot' },
     );
     for (const [path, bytes] of baked.files) assets.files.set(path, bytes);
-    const source = sourceOf([baked], `snapshot-${kit.fx.ids.token(5)}`);
+    // The kit already adopted the generated build; a different hash would be a superseded build.
+    const source = sourceOf([baked], generatedSource.hash);
     resetBakedSync();
     await syncBakedTemplates(kit.ctx, source);
     const registry = createTemplateRegistry(kit.env, { ctx: kit.ctx, source });
@@ -93,8 +94,8 @@ describe('live template snapshot baked assets', () => {
       'SELECT r2_key FROM template_version_extras WHERE template_id=? AND version=? AND name=?',
       [baked.template.id, baked.template.version, 'strip.png'],
     );
-    if (!extra) throw new Error('Expected a sealed preview extra');
-    await kit.env.BUCKET.put(extra.r2_key, makePng(201, 40));
+    if (!extra) throw new Error('Expected a sealed extra');
+    await kit.env.BUCKET.put(extra.r2_key, makePng(375, 145));
     expect(await verifyLiveTemplateSnapshot(kit.ctx, binding, snapshot, 'commit')).toBeNull();
   });
 });

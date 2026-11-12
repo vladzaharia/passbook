@@ -194,6 +194,7 @@ describe('scanner session approved releases', () => {
             });
             testScanners.push({ headers: scanner.headers, deviceRole, eventId });
           } else {
+            // An event or template list is a restricted scope: it never accepts all templates.
             expect(result).toMatchObject({
               principal: 'scanner',
               state: 'ready',
@@ -202,7 +203,7 @@ describe('scanner session approved releases', () => {
                 orgId: kit.org.id,
                 mode: 'live',
                 deviceRole,
-                settings: { acceptAllTemplates: true },
+                settings: { acceptAllTemplates: false },
               },
             });
             expect(result.event?.id ?? null).toBe(deviceRole === 'scan' ? eventId : null);
@@ -223,7 +224,7 @@ describe('scanner session approved releases', () => {
       const result = await session(kit, scanner.headers);
       expect(result).toMatchObject({
         state: scanner.deviceRole === 'scan' ? 'staff_required' : 'ready',
-        scanner: { mode: 'test', settings: { acceptAllTemplates: true } },
+        scanner: { mode: 'test', settings: { acceptAllTemplates: false } },
       });
       expect(result.event?.id ?? null).toBe(scanner.deviceRole === 'scan' ? scanner.eventId : null);
       expect(result.templates).toEqual(scanner.deviceRole === 'scan' ? expectedTemplates : []);

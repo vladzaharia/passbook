@@ -73,8 +73,9 @@ describe('session DTO actor authority', () => {
     expect(await current({ ...actor, role: null })).toBe(false);
   });
 
+  // The CSRF proof read is gone; the final read still uses the current clock, not the captured time.
   it.each(['idle', 'absolute'] as const)(
-    'rejects %s session expiry while the CSRF proof is being verified',
+    'rejects %s session expiry reached after the captured time',
     async (expiry) => {
       const { actor, sessionId } = await adminSnapshot();
       const row = await first<{ expires_at: number; idle_expires_at: number }>(
@@ -91,23 +92,16 @@ describe('session DTO actor authority', () => {
       }
       const deadline = expiry === 'idle' ? row.idle_expires_at : row.expires_at;
       const before = deadline - 1;
-      const advancingContext = () => {
-        let calls = 0;
-        return {
-          ctx: { ...kit.ctx, clock: { now: () => (++calls === 1 ? before : deadline) } },
-          calls: () => calls,
-        };
-      };
+      const at = (now: number) => ({ ...kit.ctx, clock: { now: () => now } });
       expect(await current(actor)).toBe(true);
-      const standalone = advancingContext();
-      expect(await sessionReadAuthorityCurrent(standalone.ctx, actor, before)).toBe(false);
-      expect(standalone.calls()).toBeGreaterThanOrEqual(2);
-      const releases = advancingContext();
-      expect(await sessionReadFencesCurrent(releases.ctx, actor, before, [], [])).toEqual({
-        authorityCurrent: false,
-        stampsCurrent: false,
+      expect(await sessionReadAuthorityCurrent(at(before), actor, before)).toBe(true);
+      expect(await sessionReadAuthorityCurrent(at(deadline), actor, before)).toBe(false);
+      expect(await sessionReadFencesCurrent(at(before), actor, before, [], [])).toMatchObject({
+        authorityCurrent: true,
       });
-      expect(releases.calls()).toBeGreaterThanOrEqual(2);
+      expect(await sessionReadFencesCurrent(at(deadline), actor, before, [], [])).toMatchObject({
+        authorityCurrent: false,
+      });
     },
   );
 
@@ -229,7 +223,7 @@ describe('session DTO actor authority', () => {
   });
 
   it.each(['authority', 'fences'] as const)(
-    'rechecks expiry after the awaited CSRF read for %s',
+    'rechecks scanner expiry at the final read for %s',
     async (check) => {
       const expiresAt = kit.clock.now() + 1_000;
       const scanner = await kit.scanner({ expiresAt });
@@ -240,56 +234,16 @@ describe('session DTO actor authority', () => {
         authorityCurrent: true,
         stampsCurrent: true,
       });
-
-      let csrfRead = false;
-      let finalRead = false;
-      const db = new Proxy(kit.env.DB, {
-        get(target, prop) {
-          if (prop === 'prepare')
-            return (sql: string) => {
-              const prepared = target.prepare(sql);
-              if (sql.includes('AS authority_current') || sql.includes('AS current'))
-                finalRead = true;
-              if (!sql.includes('AS scanner_secret')) return prepared;
-              return new Proxy(prepared, {
-                get(statement, member) {
-                  if (member === 'bind')
-                    return (...values: unknown[]) => {
-                      const bound = statement.bind(...values);
-                      return new Proxy(bound, {
-                        get(query, method) {
-                          if (method === 'all')
-                            return async () => {
-                              const result = await query.all();
-                              csrfRead = true;
-                              kit.clock.set(expiresAt);
-                              return result;
-                            };
-                          const value = Reflect.get(query, method, query);
-                          return typeof value === 'function' ? value.bind(query) : value;
-                        },
-                      });
-                    };
-                  const value = Reflect.get(statement, member, statement);
-                  return typeof value === 'function' ? value.bind(statement) : value;
-                },
-              });
-            };
-          const value = Reflect.get(target, prop, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        },
-      });
-      const ctx = { ...kit.ctx, env: { ...kit.env, DB: db } };
+      // The request captured `now` before expiry; the read happens at expiry.
+      kit.clock.set(expiresAt);
       if (check === 'authority') {
-        expect(await sessionReadAuthorityCurrent(ctx, actor, now)).toBe(false);
+        expect(await sessionReadAuthorityCurrent(kit.ctx, actor, now)).toBe(false);
       } else {
-        expect(await sessionReadFencesCurrent(ctx, actor, now, [], [])).toEqual({
+        expect(await sessionReadFencesCurrent(kit.ctx, actor, now, [], [])).toEqual({
           authorityCurrent: false,
           stampsCurrent: true,
         });
       }
-      expect(csrfRead).toBe(true);
-      expect(finalRead).toBe(true);
     },
   );
 

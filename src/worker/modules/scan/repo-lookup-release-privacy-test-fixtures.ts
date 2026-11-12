@@ -16,7 +16,7 @@ export function registerLookupReleasePrivacyCases() {
     { state: 'mode mismatch', route: 'resolve', rollback: true },
     { state: 'mode mismatch', route: 'actions', rollback: true },
   ] as const)(
-    'keeps a $state $route private after release supersession/rollback',
+    'keeps a $state $route consistent after release supersession/rollback',
     async ({ state, route, rollback }) => {
       const templateId = await kit.scanTemplate('Release race', { actions: [CHECK_IN] });
       const mode = state === 'mode mismatch' ? 'test' : 'live';
@@ -107,14 +107,23 @@ export function registerLookupReleasePrivacyCases() {
       if (rollback) expect(fresh?.activeReleaseCandidateHash).toBe(original.candidateHash);
       expect(response.status).toBe(200);
       const text = await response.text();
-      expect(JSON.parse(text)).toMatchObject({
-        kind: 'refused',
-        reason: state === 'mode mismatch' ? 'test_pass' : 'not_found',
-        action: null,
-        template: null,
-        card: null,
-        display: null,
-      });
+      // The release head is content, not authority: a new or rolled-back head does not void a ticket.
+      const admitted = state === 'active' && route === 'actions';
+      if (admitted)
+        expect(JSON.parse(text)).toMatchObject({
+          kind: 'ok',
+          action: { id: CHECK_IN.id },
+          display: { templateVersion: 'v1' },
+        });
+      else
+        expect(JSON.parse(text)).toMatchObject({
+          kind: 'refused',
+          reason: { 'mode mismatch': 'test_pass', inactive: 'voided', active: 'not_found' }[state],
+          action: null,
+          template: null,
+          card: null,
+          display: null,
+        });
       const identity = await first<{ pass_type_identifier: string; team_identifier: string }>(
         real,
         'SELECT pass_type_identifier, team_identifier FROM signing_identities WHERE id=?',
@@ -136,8 +145,7 @@ export function registerLookupReleasePrivacyCases() {
         identity.pass_type_identifier,
         identity.team_identifier,
         templateId,
-        'Release race',
-        'Release Race Private Person',
+        ...(admitted ? [] : ['Release race', 'Release Race Private Person']),
       ].filter((value): value is string => typeof value === 'string' && value.length > 0);
       for (const secret of secrets) expect(text).not.toContain(secret);
       if (state === 'mode mismatch') {
@@ -161,11 +169,12 @@ export function registerLookupReleasePrivacyCases() {
           const replay = await kit.post(scanner.headers, '/actions', request);
           expect(replay.status).toBe(200);
           const replayText = await replay.text();
+          // The replay returns the recorded passless miss.
           expect(JSON.parse(replayText)).toMatchObject({
             kind: 'refused',
             reason: 'not_found',
-            scanId: null,
-            replay: false,
+            scanId: (scan as { id: string }).id,
+            replay: true,
             action: null,
             template: null,
             card: null,
@@ -181,12 +190,14 @@ export function registerLookupReleasePrivacyCases() {
       }
       expect(
         await all(real, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [pass.id]),
-      ).toHaveLength(0);
+      ).toHaveLength(admitted ? 1 : 0);
+      // A refused action on a known pass is recorded, as it is without the release race.
+      const recorded = admitted || (state === 'inactive' && route === 'actions');
       expect(
         await all(real, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
           pass.id,
         ]),
-      ).toHaveLength(0);
+      ).toHaveLength(recorded ? 1 : 0);
     },
   );
 }
