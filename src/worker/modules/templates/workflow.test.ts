@@ -846,7 +846,7 @@ describe('deferred import authority at the final commit', () => {
     );
   });
 
-  it.each(['disabled', 'demoted'] as const)(
+  it.each(['disabled', 'demoted', 're-enabled'] as const)(
     'stops when a platform importer is %s',
     async (change) => {
       const f = fixtures(env, clock);
@@ -867,10 +867,16 @@ describe('deferred import authority at the final commit', () => {
         user.id,
         null,
         'ACTOR_CHANGED',
-        () =>
-          change === 'disabled'
-            ? run(env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [user.id])
-            : run(env.DB, "UPDATE users SET last_roles = '[]' WHERE id = ?", [user.id]),
+        async () => {
+          if (change === 'demoted') {
+            await run(env.DB, "UPDATE users SET last_roles = '[]' WHERE id = ?", [user.id]);
+            return;
+          }
+          await run(env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [user.id]);
+          // Disabled and enabled again before the commit: the revision captured at upload moved on.
+          if (change === 're-enabled')
+            await run(env.DB, "UPDATE users SET status = 'active' WHERE id = ?", [user.id]);
+        },
       );
     },
   );

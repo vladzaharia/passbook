@@ -4,9 +4,8 @@ import { notExists } from '../../platform/authority-cond.ts';
 import { first } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { actingPrincipal } from './create-grant.ts';
 import type { TenantPassWrite } from './http.ts';
-import { capabilityChecks } from './repo-authority.ts';
+import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { AssetRow } from './repo-history-assets.ts';
 import type { ImageMutationResult } from './repo-history-image.ts';
 import type { Pass } from './repo-map.ts';
@@ -38,7 +37,7 @@ export async function replaceAssetGranted(
     return LOST;
   const g = grant(ctx, {
     purpose: 'org_mode.pass.image',
-    principal: actingPrincipal(authority),
+    principal: tenantPrincipal(authority),
     target: pass.id,
     checks: [
       ...capabilityChecks(authority),

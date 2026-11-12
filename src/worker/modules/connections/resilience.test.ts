@@ -1107,7 +1107,9 @@ describe('scheduled pass isolation', () => {
         kit.env.DB,
         "SELECT outcome, error_code FROM connection_runs WHERE id = 'old-org'",
       ),
-    ).toEqual({ outcome: 'skipped', error_code: 'STALE_CONTEXT' });
+      // Closing runs on a platform grant pinned to the job's org: it cannot close a run of a
+      // connection that another org now holds (close-org-pin.test.ts).
+    ).toEqual({ outcome: 'running', error_code: null });
   });
 
   it('fails closed when an old workflow lacks its original proof or tracking pair', async () => {

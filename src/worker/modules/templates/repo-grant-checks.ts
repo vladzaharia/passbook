@@ -13,14 +13,15 @@ const check = (reason: DenyReason, sql: (bind: (v: string | number | null) => st
   ({ reason, ok: (b) => sql((v) => b.bind(v)) }) satisfies Check;
 
 /**
- * Deferred platform work (an import by an administrator) stops when the user is disabled or no longer
- * an administrator (`last_roles`, refreshed at each sign-in; the session that queued it is not checked).
+ * Deferred platform work (an import by an administrator) stops when the user is disabled (even if
+ * re-enabled: `access_revision` captured at upload) or no longer an administrator (`last_roles`,
+ * refreshed at each sign-in; the session that queued it is not checked).
  */
-export const userIsActiveAdmin = (userId: string): Check =>
+export const userIsActiveAdmin = (userId: string, accessRevision: number): Check =>
   check(
     'actor',
     (p) => `EXISTS (SELECT 1 FROM users u WHERE u.id = ${p(userId)} AND u.status = 'active'
-      AND json_valid(u.last_roles)
+      AND u.access_revision = ${p(accessRevision)} AND json_valid(u.last_roles)
       AND EXISTS (SELECT 1 FROM json_each(u.last_roles) r WHERE r.value = 'admin'))`,
   );
 

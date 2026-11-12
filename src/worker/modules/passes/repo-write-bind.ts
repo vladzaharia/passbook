@@ -3,9 +3,9 @@ import { grant, jobGrant } from '../../platform/authority.ts';
 import { passRow, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
-import { actingPrincipal, CREATE_CODES, createRefusal } from './create-grant.ts';
+import { CREATE_CODES, createRefusal } from './create-grant.ts';
 import type { TenantPassWrite } from './http.ts';
-import { capabilityChecks } from './repo-authority.ts';
+import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { FieldSources, Pass } from './repo-map.ts';
 
 /**
@@ -65,7 +65,7 @@ export async function setBinding(
     ? grant(ctx, {
         ...common,
         purpose: 'org_mode.pass.bind_connection',
-        principal: actingPrincipal(authority),
+        principal: tenantPrincipal(authority),
       })
     : jobGrant(ctx, {
         ...common,

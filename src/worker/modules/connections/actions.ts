@@ -134,7 +134,7 @@ export async function rotateWebhookSecret(
       value: secret,
       createdBy: actor.type === 'user' ? actor.id : null,
     },
-    authority,
+    authority ?? 'system',
   );
   let updated: number;
   try {

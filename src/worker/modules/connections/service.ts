@@ -160,7 +160,7 @@ export async function create(
           value: secretsJson,
           createdBy: actor.type === 'user' ? actor.id : null,
         },
-        authority,
+        authority ?? 'system',
       );
       newCredentials.push(row.credentialId);
     }
@@ -173,7 +173,7 @@ export async function create(
           value: webhookSecret,
           createdBy: actor.type === 'user' ? actor.id : null,
         },
-        authority,
+        authority ?? 'system',
       );
       newCredentials.push(row.webhookCredentialId);
     }

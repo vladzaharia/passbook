@@ -152,6 +152,8 @@ describe('downloads', () => {
     const res = await get(`/b/${token}/${passes[0]?.id}/assets/icon.png`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('image/png');
+    // Member photos are personal: never cached, like /p/*/assets.
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
   });
 });
 

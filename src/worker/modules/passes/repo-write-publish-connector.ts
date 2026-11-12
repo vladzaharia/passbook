@@ -7,14 +7,15 @@ import {
   releaseHead,
   rowIs,
 } from '../../platform/authority-checks.ts';
+import { tenantCheck } from '../../platform/authority-cond.ts';
 import type { SetValue } from '../../platform/authority-expr.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
-import { actingPrincipal, CREATE_CODES, createRefusal } from './create-grant.ts';
+import { CREATE_CODES, createRefusal } from './create-grant.ts';
 import type { TenantPassWrite } from './http.ts';
-import { capabilityChecks } from './repo-authority.ts';
+import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { ConnectionPassContext } from './repo-connection-context.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
 import type { PublishPassSnapshot } from './repo-write-publish-snapshot.ts';
@@ -98,6 +99,16 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
         enabled: true,
       }),
     );
+  // A device re-signs under the pass's own template, which may be archived but not deleted (issued-release rule).
+  if (w.holder)
+    checks.push(
+      tenantCheck(
+        'release',
+        `EXISTS (SELECT 1 FROM templates t WHERE t.id = ? AND (t.org_id IS NULL OR t.org_id = {org})
+          AND t.status != 'deleted')`,
+        [p.templateId],
+      ),
+    );
   if (w.requireNoReleaseHistory) checks.push(noReleaseHead(p.templateId));
   if (w.release) checks.push(releaseHead(p.templateId, p.mode, 'apple', w.release.id));
   const common = {
@@ -112,7 +123,7 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
       ? grant(ctx, {
           ...common,
           purpose: 'org_mode.pass.publish_connected',
-          principal: actingPrincipal(w.authority),
+          principal: tenantPrincipal(w.authority),
         })
       : jobGrant(ctx, {
           ...common,

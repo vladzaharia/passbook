@@ -69,6 +69,11 @@ export interface DeliveryGrantInput {
   checks: Check[];
   target?: string;
   codes?: DenialOptions['codes'];
+  /**
+   * A membership actor may act from a request context. Only the reviewed site sets it: the issuance
+   * resume on the creating request (authority-epochs.md 1.2.1). Everywhere else a job context is required.
+   */
+  allowRequestContext?: true;
 }
 
 /** Refusals a delivery caller turns into 409 `DELIVERY_STALE` or a plain 403. */
@@ -111,8 +116,7 @@ export function deliveryGrant(
           orgAccessRevision: actor.orgRevision,
           // Work queued without the user's revision is refused, never revived.
           userAccessRevision: actor.userRevision ?? 0,
-          // Queued mail outlives the session that queued it by design.
-          allowRequestContext: true as const,
+          ...(input.allowRequestContext ? { allowRequestContext: true as const } : {}),
           mode: input.mode,
         }
       : {

@@ -207,7 +207,8 @@ register(
     const headers = {
       'content-type': 'image/png',
       etag: asset.etag,
-      'cache-control': 'private, max-age=31536000, immutable',
+      // Member photos are personal and a revoked link must stop serving them, as on /p/*/assets.
+      'cache-control': 'private, no-store',
       'x-content-type-options': 'nosniff',
       ...(EMAILED.test(p.name) ? { 'cross-origin-resource-policy': 'cross-origin' } : {}),
     };

@@ -4,9 +4,8 @@ import { notExists } from '../../platform/authority-cond.ts';
 import { first } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { actingPrincipal } from './create-grant.ts';
 import type { TenantPassWrite } from './http.ts';
-import { capabilityChecks } from './repo-authority.ts';
+import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { ImageMutationResult } from './repo-history-image.ts';
 import type { Pass } from './repo-map.ts';
 import type { MemberPhotoRow } from './repo-member-photo.ts';
@@ -38,7 +37,7 @@ export async function replaceMemberPhotoGranted(
     return LOST;
   const g = grant(ctx, {
     purpose: 'org_mode.pass.member_photo',
-    principal: actingPrincipal(authority),
+    principal: tenantPrincipal(authority),
     target: pass.id,
     tables: ['passes', 'member_photos'],
     checks: [

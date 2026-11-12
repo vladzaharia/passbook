@@ -28,7 +28,12 @@ export interface QueueRate {
 /** Who queues the mail: callers holding live requests, or a durable actor captured earlier. */
 export type QueueActors =
   | { request: TenantPassWrite[] }
-  | { deferred: DeliveryActor[]; capabilities?: TenantPassWrite[] };
+  | {
+      deferred: DeliveryActor[];
+      capabilities?: TenantPassWrite[];
+      /** The issuance resume on the creating request (see `DeliveryGrantInput`). */
+      allowRequestContext?: true;
+    };
 
 export type QueueResult = 'queued' | 'limited' | 'stale' | 'org' | 'denied';
 
@@ -73,6 +78,7 @@ export function queueGrants(
       mode: base.mode,
       checks: checks(i),
       ...common,
+      ...(actors.allowRequestContext ? { allowRequestContext: true } : {}),
     }),
   );
 }

@@ -15,7 +15,7 @@ import { sendOnce } from '../delivery/idempotent-send.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { assertWritableMode, type ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
-import { enqueueBundleEmail } from './email-queue.ts';
+import { enqueueBundleEmail, RECIPIENT_NOT_HOLDER } from './email-queue.ts';
 import * as repo from './repo.ts';
 import { bundleMutationGrant, createBundleGrant } from './repo-writes.ts';
 import { checkPasses } from './service-pass-validation.ts';
@@ -127,6 +127,10 @@ export async function createBundle(
   if (input.sendEmail && !holderEmail)
     throw new ValidationError('Add an email to send the bundle.', [], 'NO_RECIPIENT');
   const passes = await checkPasses(ctx, input.orgId, mode, input.passIds);
+  // A key mails pass links only to their holder, as resendEmail does: here, every member's.
+  const holdersOnly = actor.type !== 'user';
+  if (input.sendEmail && holdersOnly && passes.some((p) => p.holderEmail !== holderEmail))
+    throw new ValidationError(RECIPIENT_NOT_HOLDER, [], 'RECIPIENT_NOT_HOLDER');
   const row = {
     id: ctx.ids.id(),
     orgId: input.orgId,
@@ -147,6 +151,8 @@ export async function createBundle(
         holderEmail,
         { token: row.token, holderEmail },
         authority,
+        undefined,
+        { holdersOnly },
       );
     } catch (error) {
       // The bundle exists and a retry would create a second live link: a failed email is resent
@@ -274,6 +280,7 @@ export async function sendBundleEmail(
       { token: row.token, holderEmail: row.holder_email },
       authority,
       actor,
+      { holdersOnly: actor.type !== 'user' },
     );
   if (idempotencyKey === undefined || !authority) {
     await send();

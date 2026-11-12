@@ -15,12 +15,8 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import { voidPass } from '../passes/service.ts';
 import { fixedBarcodePass } from './fixed-barcode-test-fixtures.ts';
 import { getHolderPass, holderReissueCurrentSql, markHolderReissueRequired } from './repo.ts';
-import {
-  attachWaitingPassesForEmail,
-  getHolder,
-  reassignHolder,
-  runAttachHookA,
-} from './service.ts';
+import { getHolder, reassignHolder, runAttachHookA } from './service.ts';
+import { attachWaitingPassesForEmail } from './service-attach.ts';
 import { eventMember } from './test-auth-fixtures.ts';
 import { resumeVerifiedHolderAttachments } from './transfer-jobs.ts';
 
@@ -196,7 +192,6 @@ describe('verified attachment requiring credential reissue', () => {
       user.id,
       kit.clock.now(),
       stale,
-      undefined,
       undefined,
       {
         ctx: jobCtxOf(kit),

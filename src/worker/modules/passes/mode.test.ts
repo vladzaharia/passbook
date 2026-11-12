@@ -274,7 +274,8 @@ describe('issuance review isolation', () => {
       [detail.id],
     );
     expect(outbox).not.toBeNull();
-    await handleEmailSend({ kind: 'email.send', outboxId: outbox?.id ?? '' }, kit.ctx);
+    // The send runs in the queue consumer: a membership's deferred grant needs a job context.
+    await handleEmailSend({ kind: 'email.send', outboxId: outbox?.id ?? '' }, jobCtxOf(kit));
     expect(kit.mailer.sent).toHaveLength(before);
     expect(
       await first(kit.env.DB, 'SELECT pass_id FROM captured_emails WHERE outbox_id = ?', [

@@ -7,6 +7,8 @@ import type { Actor } from '../passes/service.ts';
 import { bindBundle, bundleEmailSnapshot } from './email-binding.ts';
 import { bundleEmailAuditEntry } from './repo-audit.ts';
 
+export const RECIPIENT_NOT_HOLDER = 'Only the holder email of every pass can be used.';
+
 /**
  * Queues the bundle email through the outbox. The row hangs on the bundle's first pass (the outbox
  * is keyed by pass); `payload.bundleId` routes it to the bundle template. Shares the pass email's
@@ -19,6 +21,7 @@ export async function enqueueBundleEmail(
   expected: { token: string; holderEmail: string | null },
   authority?: TenantPassWrite,
   audit?: Actor,
+  options: { holdersOnly?: boolean } = {},
 ): Promise<{ outboxId: string }> {
   const to = strictEmail(address);
   if (!to) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
@@ -31,6 +34,9 @@ export async function enqueueBundleEmail(
       'The bundle changed. Review the recipient and try again.',
       'DELIVERY_STALE',
     );
+  // Not a mail relay for keys: the members' holder emails are pinned again when it sends.
+  if (options.holdersOnly && snapshot.passes.some((p) => p.holderEmail !== to))
+    throw new ValidationError(RECIPIENT_NOT_HOLDER, [], 'RECIPIENT_NOT_HOLDER');
   const intent = await bindBundle(snapshot, to);
   return queueEmail(ctx, {
     orgId: bundle.org_id,

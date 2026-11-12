@@ -225,7 +225,7 @@ export async function enqueuePassEmail(
     /** The live request's authority: its session or key must hold now. */
     authority?: TenantPassWrite;
     additionalAuthority?: TenantPassWrite;
-    /** Durable actors captured earlier (the issuance scheduler): no session is consulted. */
+    /** Durable actors captured earlier (the issuance scheduler only): no session is consulted. */
     queuedFor?: DeliveryActor[];
     connection?: ConnectionEmailAuthority;
     /** Accepted for callers; a release is checked at create and publish, never at mail time. */
@@ -252,7 +252,9 @@ export async function enqueuePassEmail(
   if (requestAuthorities.some((a) => !authorityMayQueue(a, pass))) throw new ForbiddenError();
   const now = ctx.clock.now();
   const actors: QueueActors = input.queuedFor
-    ? { deferred: input.queuedFor }
+    ? // `queuedFor` is the issuance scheduler only: the reviewed request-context site (resume on the
+      // creating request, authority-epochs.md 1.2.1).
+      { deferred: input.queuedFor, allowRequestContext: true as const }
     : requestAuthorities.length > 0
       ? { request: requestAuthorities }
       : { deferred: [await systemActor(ctx.env.DB, pass.orgId)] };

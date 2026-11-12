@@ -1,11 +1,9 @@
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
 import { type Check, exactlyOne, releaseHead } from '../../platform/authority-checks.ts';
-import type { Principal } from '../../platform/authority-principal.ts';
 import { AppError, type DenyReason } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
 import { sampleScannerScopeFence } from '../scan/sample-scope-fence.ts';
-import type { TenantPassWrite } from './http.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import {
   fenceHolds,
@@ -43,14 +41,6 @@ export async function sampleScopeCurrent(db: D1Database, row: NewPassRow): Promi
   if (ex.kind !== 'tenant' || ex.sampleScannerScope === undefined) return true;
   const fence = sampleScannerScopeFence(ex.sampleScannerScope, row.orgId, row.mode, row.templateId);
   return fenceHolds(db, fence);
-}
-
-/** The tenant principal of a request; a platform key (no org of its own) names the org it acts on. */
-export function actingPrincipal(authority: TenantPassWrite): Principal {
-  const principal = tenantPrincipal(authority);
-  if (principal.kind === 'api_key' && authority.kind === 'api_key' && authority.keyOrgId === null)
-    principal.orgId = authority.orgId;
-  return principal;
 }
 
 /** The grant of a pass create: its principal, the checks that hold at commit, and the table bound. */
@@ -160,7 +150,7 @@ export function createGrant(
     });
   return grant(ctx, {
     purpose: 'org_mode.pass.create',
-    principal: actingPrincipal(ex.authority),
+    principal: tenantPrincipal(ex.authority),
     target: row.id,
     checks: [
       ...capabilityChecks(ex.authority),

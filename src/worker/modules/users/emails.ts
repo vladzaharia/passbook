@@ -3,7 +3,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { addUserEmail as insertUserEmail } from '../auth/repo.ts';
-import { attachWaitingPassesForEmail } from '../holders/service.ts';
+import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import * as repo from './repo.ts';
 import { getUserDetail, requireUser, type UserDetailDto } from './service.ts';
 
@@ -31,7 +31,7 @@ export async function addVerifiedEmail(
   }
   if (added) {
     await audit(ctx, actorId, id, 'user.email_add');
-    await attachWaitingPassesForEmail(ctx, id, email);
+    await attachWaitingPassesForEmail(ctx, id, email, { type: 'user', id: actorId });
   }
   return getUserDetail(ctx, id, currentSessionId);
 }

@@ -52,6 +52,17 @@ const CONNECTION_TABLES = [
   'passes',
 ] as const;
 
+/** Closing stale work with no authority, outside a verified webhook, runs on a platform job grant. */
+export function closesOnPlatform(
+  ctx: ServiceContext,
+  actor: ConnectionActor,
+  closing: boolean,
+): boolean {
+  if (!closing || actor.authority) return false;
+  const verified = verifiedWebhookOf(ctx);
+  return !(verified && verified.orgId === actor.orgId);
+}
+
 /** Connection grants are live-only (0052 CHECK). A request grant also needs the manage capability or scope. */
 export function connectionGrant(
   ctx: ServiceContext,
@@ -97,13 +108,10 @@ export function connectionGrant(
     a.kind === 'session' ? a.capability === 'integrations:manage' : a.scope === 'connections:write';
   if (a.orgId !== actor.orgId || a.mode !== 'live' || !manages)
     throw authorityDenied('actor', { codes: CONNECTION_CODES });
-  const principal = tenantPrincipal(a);
-  // A null-org (platform) key names the org it acts on; the grant needs it active. Scopes still apply.
-  if (principal.kind === 'api_key' && a.kind === 'api_key' && a.keyOrgId === null)
-    principal.orgId = a.orgId;
   return grant(ctx, {
     purpose: `org_mode.connection.${action}`,
-    principal,
+    // A null-org (platform) key names the org it acts on; the grant needs it active. Scopes still apply.
+    principal: tenantPrincipal(a),
     checks: [...capabilityChecks(a), ...checks],
     codes: CONNECTION_CODES,
     tables: CONNECTION_TABLES,

@@ -93,7 +93,8 @@ export function templateGrant(
   return jobGrant(ctx, {
     job: 'template-import',
     purpose: `platform.job.template_${action}`,
-    checks: [userIsActiveAdmin(authority.userId), ...extra],
+    // Work captured without the user's revision is refused, never revived.
+    checks: [userIsActiveAdmin(authority.userId, authority.userAccessRevision ?? 0), ...extra],
     ...shared,
   });
 }

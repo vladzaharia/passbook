@@ -7,6 +7,7 @@ import { first, type SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   type ConnectionActor,
+  closesOnPlatform,
   commitOrNull,
   connectionGrant,
   connectionIs,
@@ -246,6 +247,8 @@ export async function finishRun(
   const checks: Check[] = [
     connectionIs({
       id: r.connectionId,
+      // A platform grant has no tenant of its own: the connection must still be the actor's org's.
+      ...(closesOnPlatform(ctx, actor, closing) ? { orgId: actor.orgId } : {}),
       ...(e ? { generation: e.generation } : {}),
       ...(e?.mode === undefined ? {} : { syncMode: e.mode }),
       ...(e?.requireEnabled ? { enabled: true } : {}),

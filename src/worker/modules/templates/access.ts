@@ -2,9 +2,16 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
+import { loadUserAccessRevision } from '../passes/repo-access-revision.ts';
 import { hasTemplateAuthority } from './repo-authority.ts';
 
-export type PlatformSessionAuthority = { kind: 'platform'; userId: string; sessionId: string };
+export type PlatformSessionAuthority = {
+  kind: 'platform';
+  userId: string;
+  sessionId: string;
+  /** `users.access_revision` at upload: a queued import ends if the admin was disabled meanwhile. */
+  userAccessRevision?: number;
+};
 export type TemplateAuthority =
   | Extract<TenantPassWrite, { kind: 'session' }>
   | PlatformSessionAuthority;
@@ -28,6 +35,7 @@ export async function authorizeTemplateWrite(
     kind: 'platform',
     userId: auth.userId,
     sessionId: auth.sessionId,
+    userAccessRevision: (await loadUserAccessRevision(ctx.env.DB, auth.userId)) ?? 0,
   };
   await assertTemplateAuthority(ctx, authority);
   return authority;

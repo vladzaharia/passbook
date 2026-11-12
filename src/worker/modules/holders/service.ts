@@ -20,13 +20,8 @@ import {
   type HolderConnectionFence,
   markHolderReissueRequired,
 } from './repo.ts';
-import { removeBlock } from './repo-blocks.ts';
-import {
-  getHolderPasses,
-  listHolderPasses,
-  userVerifiedEmail,
-  waitingPassIds,
-} from './repo-queries.ts';
+import { markHolderReissueGranted, removeBlock, removeBlockGranted } from './repo-blocks.ts';
+import { getHolderPasses, listHolderPasses } from './repo-queries.ts';
 import {
   assertNoTransfer,
   assignOne,
@@ -55,6 +50,7 @@ export async function runAttachHookA(
     connection?: HolderConnectionFence | undefined;
     expectedSource?: CredentialTransferSource | undefined;
     expectedUserId?: string | undefined;
+    auditActor?: Actor | undefined;
   },
 ): Promise<
   (Omit<TransferResult, 'transferId'> & { transferId: string | null; ownerUserId: string }) | null
@@ -64,10 +60,11 @@ export async function runAttachHookA(
   const email = pass.holderEmail;
   const chosen = await eligibleOwner(ctx, passId, email);
   if (!chosen || (options?.expectedUserId && options.expectedUserId !== chosen)) return null;
+  const audited = options?.auditActor ?? actor;
   const audit: AuditEntry = {
     orgId: pass.orgId,
-    actorType: actor.type,
-    actorId: actor.id,
+    actorType: audited.type,
+    actorId: audited.id,
     action: 'holder.attach',
     targetType: 'pass',
     targetId: passId,
@@ -102,20 +99,35 @@ export async function runAttachHookA(
     }
   } catch (error) {
     if (error instanceof CredentialTransferReissueRequired) {
-      await markHolderReissueRequired(
-        ctx.env.DB,
-        passId,
-        options?.expectedSource ?? pass,
-        chosen,
-        ctx.clock.now(),
-        error.credentialKeysetCommitment,
-        options?.authority,
-        options?.connection,
-        {
+      const source = options?.expectedSource ?? pass;
+      const entry = {
+        ...audit,
+        action: 'holder.attach_reissue_required',
+        detail: { userId: chosen },
+      };
+      const commitment = error.credentialKeysetCommitment;
+      if (options?.authority)
+        await markHolderReissueGranted(
           ctx,
-          entry: { ...audit, action: 'holder.attach_reissue_required', detail: { userId: chosen } },
-        },
-      );
+          passId,
+          source,
+          chosen,
+          commitment,
+          options.authority,
+          options.connection,
+          entry,
+        );
+      else
+        await markHolderReissueRequired(
+          ctx.env.DB,
+          passId,
+          source,
+          chosen,
+          ctx.clock.now(),
+          commitment,
+          options?.connection,
+          { ctx, entry },
+        );
       return null;
     }
     if (
@@ -258,10 +270,9 @@ export async function clearBlock(
     targetId: pass.id,
     detail: { userId: input.userId },
   };
-  const removed = await removeBlock(ctx.env.DB, pass, input.userId, authority, ctx.clock.now(), {
-    ctx,
-    entry: audit,
-  });
+  const removed = authority
+    ? await removeBlockGranted(ctx, pass, input.userId, authority, audit)
+    : await removeBlock(ctx.env.DB, pass, input.userId, { ctx, entry: audit });
   if (!removed) throw new NotFoundError('Block not found.', 'BLOCK_NOT_FOUND');
   // The block was the only thing stopping a waiting pass from attaching.
   await runAttachHookA(ctx, pass.id, actor, { authority });
@@ -293,26 +304,4 @@ export async function listHolders(
 
 export async function getHolder(ctx: ServiceContext, passId: string, scope: ScopeArg) {
   return toHolder(await load(ctx, passId, scope), await blockedUserIds(ctx.env.DB, passId));
-}
-
-/**
- * Hook B: stage transfers for waiting passes after the caller verifies the address.
- * Returns the number of transfers started, including those still pending provider retirement.
- */
-export async function attachWaitingPassesForEmail(
-  ctx: ServiceContext,
-  userId: string,
-  email: string,
-): Promise<number> {
-  const normalized = strictEmail(email);
-  // The caller's word is not proof: the address must be verified for this user right now.
-  const verified = await userVerifiedEmail(ctx.env.DB, userId, normalized ?? '');
-  if (!normalized || !verified) return 0;
-  const ids = await waitingPassIds(ctx.env.DB, normalized);
-  let started = 0;
-  for (const id of ids) {
-    if (await runAttachHookA(ctx, id, { type: 'user', id: userId }, { expectedUserId: userId }))
-      started++;
-  }
-  return started;
 }

@@ -54,8 +54,9 @@ function deferredPredicate(
   if (authority.kind === 'platform')
     return {
       sql: `(${orgSql}) IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND u.status = 'active'
-        AND json_valid(u.last_roles) AND EXISTS (SELECT 1 FROM json_each(u.last_roles) r WHERE r.value = 'admin'))`,
-      params: [authority.userId],
+        AND u.access_revision = ? AND json_valid(u.last_roles)
+        AND EXISTS (SELECT 1 FROM json_each(u.last_roles) r WHERE r.value = 'admin'))`,
+      params: [authority.userId, authority.userAccessRevision ?? 0],
     };
   return {
     sql: `(${orgSql}) = ? AND EXISTS (

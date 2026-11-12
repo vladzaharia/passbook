@@ -10,6 +10,8 @@ type ConnectionCapability = 'integrations:read' | 'integrations:manage';
 
 /** A secret-free principal and grant snapshot, including the request's Live/Test mode. */
 export type ConnectionAuthority = TenantPassWrite;
+/** Trusted work with no tenant principal (seeding, fixtures, jobs) names itself instead of passing nothing. */
+export type ConnectionWriter = ConnectionAuthority | 'system';
 
 /** Check the stored resource's organization, never a caller-supplied replacement for it. */
 export async function authorizeConnection(
@@ -56,16 +58,15 @@ export async function authorizeStoredConnection(
 
 /**
  * Bind the canonical tenant authority to the mutated row's actual organization. `orgSql` is a
- * trusted SQL expression; callers supply any placeholders in it before `params`. An absent
- * authority is reserved for trusted system work. Mutations require integrations:manage for
- * sessions or connections:write for API keys.
+ * trusted SQL expression; callers supply any placeholders in it before `params`. There is no
+ * authority-less form: trusted system work skips the predicate explicitly (`ConnectionWriter`).
+ * Mutations require integrations:manage for sessions or connections:write for API keys.
  */
 export function connectionAuthPredicate(
-  authority: ConnectionAuthority | undefined,
+  authority: ConnectionAuthority,
   orgSql: string,
   now: number,
 ): { sql: string; params: SqlValue[] } {
-  if (!authority) return { sql: `((${orgSql}) IS NULL OR 1)`, params: [] };
   if (
     authority.mode !== 'live' ||
     (authority.kind === 'session' && authority.capability !== 'integrations:manage') ||

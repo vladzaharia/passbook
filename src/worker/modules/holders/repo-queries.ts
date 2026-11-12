@@ -83,15 +83,20 @@ export async function userVerifiedEmail(
 }
 
 /** Candidates for the verified-email hook; each is transferred under its own source fence. */
-export async function waitingPassIds(db: D1Database, email: string): Promise<string[]> {
+export async function waitingPassIds(
+  db: D1Database,
+  email: string,
+  limit: number,
+): Promise<string[]> {
   const rows = await all<{ id: string }>(
     db,
     `SELECT p.id FROM passes p
      WHERE p.holder_email = ? AND p.owner_user_id IS NULL
        AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
-         WHERE t.pass_id = p.id AND t.state = 'pending')`,
-    [email],
+         WHERE t.pass_id = p.id AND t.state = 'pending')
+     ORDER BY p.id LIMIT ?`,
+    [email, limit],
   );
   return rows.map((row) => row.id);
 }

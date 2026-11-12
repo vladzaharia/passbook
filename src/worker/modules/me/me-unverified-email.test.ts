@@ -9,7 +9,7 @@ import {
   type TestHarness,
   waitingPass,
 } from '../auth/test-support.ts';
-import { attachWaitingPassesForEmail } from '../holders/service.ts';
+import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 
 let h: TestHarness;
 const f = () => fixtures(h.env, h.clock);

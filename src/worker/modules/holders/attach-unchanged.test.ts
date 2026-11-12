@@ -10,7 +10,8 @@ import { setDownloadToken } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { atOwnerWrite, fixedBarcodePass } from './fixed-barcode-test-fixtures.ts';
 import { getHolderPass, markHolderReissueRequired } from './repo.ts';
-import { attachWaitingPassesForEmail, getHolder, runAttachHookA } from './service.ts';
+import { getHolder, runAttachHookA } from './service.ts';
+import { attachWaitingPassesForEmail } from './service-attach.ts';
 import { eventMember } from './test-auth-fixtures.ts';
 
 const count = (kit: Kit, sql: string, id: string) =>
@@ -79,7 +80,6 @@ describe('verified attach of a pass whose credential cannot change', () => {
       user.id,
       kit.clock.now(),
       await ensureCredentialRefKeyset(kit.env.DB, kit.env),
-      undefined,
       undefined,
       {
         ctx: jobCtxOf(kit),

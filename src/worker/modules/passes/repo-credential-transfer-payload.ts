@@ -1,11 +1,17 @@
 import type { Grant } from '../../platform/authority.ts';
 import { writePart } from '../../platform/authority-include.ts';
 
-/** `pass_id = {pass}` for a holder grant, `pass_id = ?` otherwise: the part's pass-id comparison. */
+/**
+ * The part's pass-id comparison: `pass_id = {pass}` for a holder grant, otherwise the pass as one of the
+ * grant's tenant (org and mode), which is the tie the part lint requires of a pass-bearing row.
+ */
 export function passIs(g: Grant, passId: string, column = 'pass_id') {
   return g.principal.kind === 'holder'
     ? { sql: `${column} = {pass}`, params: [] as string[] }
-    : { sql: `${column} = ?`, params: [passId] };
+    : {
+        sql: `${column} IN (SELECT p.id FROM passes p WHERE p.id = ? AND p.org_id = {org} AND p.mode = {mode})`,
+        params: [passId],
+      };
 }
 
 /** The connector payload rows, tied to the transfer of the pass (the form a holder grant requires). */

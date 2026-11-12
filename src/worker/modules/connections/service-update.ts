@@ -144,7 +144,7 @@ export async function update(
           value: connectorCredential,
           createdBy: actor.type === 'user' ? actor.id : null,
         },
-        authority,
+        authority ?? 'system',
       );
       newCredentials.push(credentialId);
       patch.credentialId = credentialId;
@@ -158,7 +158,7 @@ export async function update(
           value: webhookCredential,
           createdBy: actor.type === 'user' ? actor.id : null,
         },
-        authority,
+        authority ?? 'system',
       );
       newCredentials.push(credentialId);
       patch.webhookCredentialId = credentialId;

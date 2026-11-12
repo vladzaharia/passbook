@@ -25,13 +25,13 @@ import { finishWalletProviderRetirement } from '../wallet-providers/sync-operati
 import { getHolderPass, listSweepWaitingPasses, waitingHolderSweepUpper } from './repo.ts';
 import {
   assignHolder,
-  attachWaitingPassesForEmail,
   clearBlock,
   listHolders,
   reassignHolder,
   runAttachHookA,
   unassignHolder,
 } from './service.ts';
+import { attachWaitingPassesForEmail } from './service-attach.ts';
 import { removePassFromUser } from './service-remove.ts';
 import { ownerSessionId } from './test-auth-fixtures.ts';
 import { resumeVerifiedHolderAttachments } from './transfer-jobs.ts';

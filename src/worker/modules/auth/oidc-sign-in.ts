@@ -1,7 +1,7 @@
 import { strictEmail } from '../../../shared/email.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { attachWaitingPassesForEmail } from '../holders/service.ts';
+import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { withinCaps, withinDailyCap } from './magic-caps.ts';
 import { issueMagicLink } from './magic-service.ts';

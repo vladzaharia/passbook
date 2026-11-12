@@ -459,7 +459,8 @@ describe('bundle tenant authorization', () => {
       orgId: kit.org.id,
       scopes: ['passes:read', 'passes:write'],
     });
-    const pass = await kit.pass();
+    // A key mails a bundle only to the holder of its passes (relay.test.ts).
+    const pass = await kit.pass({ holderEmail: 'authorized-key-mail@example.test' });
     const bundle = await create(key.headers, pass.id, 'Authorized key mail');
     const response = await call('POST', `/${bundle.id}/send-email`, key.headers, {});
     expect(response.status).toBe(202);

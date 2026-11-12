@@ -1,5 +1,6 @@
 import { type Check, rowIs } from '../../platform/authority-checks.ts';
 import { lte, orNull } from '../../platform/authority-expr.ts';
+import { writePart } from '../../platform/authority-include.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
 import type { Pass } from './repo-map.ts';
@@ -12,15 +13,26 @@ import {
 } from './repo-pass-grant.ts';
 import { type RefreshSnapshot, validRefreshEpochs } from './repo-refresh-snapshot.ts';
 
-/** Tenant soft delete: unlinks the pass from its owner and connection. */
+/** The owner leaves a pass only behind a block (0055 trigger), which also stops a deleted pass re-attaching. */
+const ownerBlockPart = (passId: string, userId: string, now: number) =>
+  writePart(
+    `INSERT OR IGNORE INTO pass_attach_blocks (pass_id,user_id,created_at)
+     SELECT p.id,?,? FROM passes p WHERE p.id = ? AND p.org_id = {org} AND p.mode = {mode} AND {grant}`,
+    [userId, now, passId],
+  );
+
+/** Tenant soft delete: unlinks the pass from its owner (blocking their re-attach) and connection. */
 export async function softDeletePassGranted(
   ctx: ServiceContext,
   pass: Pass,
   authority: TenantPassWrite,
 ): Promise<boolean> {
   if (!permitsPassWrite(authority)) return false;
-  const g = passWriteGrant(ctx, 'org_mode.pass.delete', authority, pass);
-  g.update('passes', {
+  const owner = pass.ownerUserId;
+  const tables = owner ? ['passes', 'pass_attach_blocks'] : undefined;
+  const g = passWriteGrant(ctx, 'org_mode.pass.delete', authority, pass, tables);
+  if (owner) g.include(ownerBlockPart(pass.id, owner, ctx.clock.now()));
+  const deleted = g.update('passes', {
     set: {
       deleted_at: ctx.clock.now(),
       owner_user_id: null,
@@ -31,7 +43,7 @@ export async function softDeletePassGranted(
     where: { id: pass.id, deleted_at: null },
     returning: ['id'],
   });
-  return ((await commitRows(g)) ?? []).length === 1;
+  return ((await commitRows(g, deleted)) ?? []).length === 1;
 }
 
 /** Tenant link rotation: a new download token invalidates every earlier link. */

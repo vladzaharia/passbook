@@ -1,6 +1,6 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { first, run } from '../../platform/db.ts';
-import { type ConnectionAuthority, connectionAuthPredicate } from './access.ts';
+import { type ConnectionWriter, connectionAuthPredicate } from './access.ts';
 
 // Credentials
 
@@ -28,9 +28,10 @@ export async function insertCredential(
     createdBy: string | null;
     now: number;
   },
-  authority?: ConnectionAuthority,
+  writer: ConnectionWriter,
 ): Promise<boolean> {
-  const auth = authority ? connectionAuthPredicate(authority, 'subject.org_id', c.now) : null;
+  const auth =
+    writer === 'system' ? null : connectionAuthPredicate(writer, 'subject.org_id', c.now);
   const result = await run(
     db,
     `INSERT INTO credentials (id, org_id, kind, kek_version, iv, wrapped_dek, ciphertext, fingerprint, created_by, created_at)

@@ -4,7 +4,7 @@ import { envString } from '../../platform/env.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { attachWaitingPassesForEmail } from '../holders/service.ts';
+import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import * as repo from './repo.ts';
 import { bumpCounter } from './repo-magic.ts';
 import { createSession, hashSessionCookie, type NewSession, revokeOne } from './sessions.ts';

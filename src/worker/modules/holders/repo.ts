@@ -1,10 +1,8 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, batch, chunk, first, placeholders, stmt } from '../../platform/db.ts';
-import type { TenantPassWrite } from '../passes/http.ts';
-import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
-import { type MutationAudit, mutationAudit, operationAuthority } from './repo-blocks.ts';
+import { type MutationAudit, mutationAudit } from './repo-blocks.ts';
 
 /** userSql/emailSql are trusted SQL expressions, never request data. */
 function verifiedAttachSql(passAlias: string, userSql: string, emailSql: string): string {
@@ -171,7 +169,7 @@ export async function blockedUserIds(db: D1Database, passId: string): Promise<st
   return rows.map((r) => r.user_id);
 }
 
-type ReissueSource = Pick<
+export type ReissueSource = Pick<
   HolderPass,
   | 'orgId'
   | 'mode'
@@ -186,7 +184,10 @@ type ReissueSource = Pick<
   | 'linkGeneration'
 >;
 
-/** Persist and audit only a current verified attachment that cannot safely rotate its credentials. */
+/**
+ * Persist and audit only a current verified attachment that cannot safely rotate its credentials.
+ * Trusted callers with no tenant authority; a tenant request takes `markHolderReissueGranted`.
+ */
 export async function markHolderReissueRequired(
   db: D1Database,
   passId: string,
@@ -194,7 +195,6 @@ export async function markHolderReissueRequired(
   userId: string,
   now: number,
   credentialKeysetCommitment: string,
-  authority: TenantPassWrite | undefined,
   connection: HolderConnectionFence | undefined,
   audit: MutationAudit,
 ): Promise<void> {
@@ -217,7 +217,6 @@ export async function markHolderReissueRequired(
         WHERE t.pass_id = p.id AND t.state = 'pending')
       AND ${verifiedAttachSql('p', 'candidate.user_id', 'p.holder_email')}
       AND ${credentialRefKeysetSql}
-      ${authority ? `AND p.org_id = ? AND p.mode = ? AND ${operationAuthority(authority) ? tenantPassAuthoritySql(authority, 'p') : '0'}` : ''}
       ${
         connection
           ? `AND p.connection_id = ? AND p.org_id = ? AND p.external_ref IS ? AND p.mode = 'live'
@@ -256,13 +255,6 @@ export async function markHolderReissueRequired(
       source.downloadToken,
       source.linkGeneration,
       credentialKeysetCommitment,
-      ...(authority
-        ? [
-            authority.orgId,
-            authority.mode,
-            ...(operationAuthority(authority) ? tenantPassAuthorityParams(authority, now) : []),
-          ]
-        : []),
       ...(connection
         ? [
             connection.connectionId,

@@ -77,7 +77,10 @@ export function tenantPassAuthorityParams(authority: TenantPassWrite, now: numbe
   ];
 }
 
-/** The grant principal for a captured tenant authority (synchronous request: the session must be live). */
+/**
+ * The grant principal for a captured tenant authority (synchronous request: the session must be live).
+ * A platform key (no org of its own) names the org it acts on, so its writes commit under that org.
+ */
 export function tenantPrincipal(authority: TenantPassWrite): Principal {
   return authority.kind === 'session'
     ? {
@@ -93,6 +96,7 @@ export function tenantPrincipal(authority: TenantPassWrite): Principal {
         keyId: authority.keyId,
         scope: authority.scope,
         ...legacyRevision(authority.orgUpdatedAt),
+        ...(authority.keyOrgId === null ? { orgId: authority.orgId } : {}),
       };
 }
 

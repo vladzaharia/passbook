@@ -7,7 +7,7 @@ import type { Kit } from '../passes/pass-test-fixtures.ts';
 import { setDownloadToken } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { atOwnerWrite, fixedBarcodePass } from './fixed-barcode-test-fixtures.ts';
-import { attachWaitingPassesForEmail } from './service.ts';
+import { attachWaitingPassesForEmail } from './service-attach.ts';
 import { removePassFromUser } from './service-remove.ts';
 
 async function ownedStaticPass() {

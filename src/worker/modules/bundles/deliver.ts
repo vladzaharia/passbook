@@ -49,6 +49,11 @@ export async function deliverBundleEmail(
     return;
   }
   const intent = parsed.data;
+  // A key queues mail only to the holder of every member (email-queue.ts); refuse one that predates it.
+  if (intent.actor?.kind === 'api_key' && intent.members.some((m) => m.holderEmail !== to)) {
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'RECIPIENT_NOT_HOLDER');
+    return;
+  }
   const snapshot = await bundleEmailSnapshot(db, intent.bundleId);
   const first = snapshot?.passes[0];
   if (!snapshot || !first || !(await matchesBundle(snapshot, intent))) {

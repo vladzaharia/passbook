@@ -4,7 +4,7 @@ import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { attachWaitingPassesForEmail } from '../holders/service.ts';
+import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import { setupKit } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 

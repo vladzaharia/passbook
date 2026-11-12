@@ -1,4 +1,4 @@
-import { type Grant, grant } from '../../platform/authority.ts';
+import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
 import { type Check, passRow, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -29,6 +29,7 @@ export function tenantPassGrant(
   authority: TenantPassWrite,
   passId: string,
   checks: Check[],
+  tables?: string[],
 ): Grant {
   return grant(ctx, {
     purpose,
@@ -36,6 +37,7 @@ export function tenantPassGrant(
     target: passId,
     checks: [...capabilityChecks(authority), ...checks],
     codes: { stale: PASS_LOST, lineage: PASS_LOST },
+    ...(tables ? { tables } : {}),
   });
 }
 
@@ -48,29 +50,41 @@ export function passWriteGrant(
   purpose: string,
   authority: TenantPassWrite,
   pass: Pass,
+  tables?: string[],
 ): Grant {
-  return tenantPassGrant(ctx, purpose, authority, pass.id, [
-    ...passRow(pass.id, pass.rowVersion),
-    rowIs(
-      'passes',
-      pass.id,
-      {
-        credential_generation: pass.credentialGeneration,
-        lifecycle_generation: pass.lifecycleGeneration,
-        link_generation: pass.linkGeneration,
-        test_data_quarantined: 0,
-        deleted_at: null,
-      },
-      'lineage',
-    ),
-    noPendingTransfer(pass.id),
-  ]);
+  return tenantPassGrant(
+    ctx,
+    purpose,
+    authority,
+    pass.id,
+    [
+      ...passRow(pass.id, pass.rowVersion),
+      rowIs(
+        'passes',
+        pass.id,
+        {
+          credential_generation: pass.credentialGeneration,
+          lifecycle_generation: pass.lifecycleGeneration,
+          link_generation: pass.linkGeneration,
+          test_data_quarantined: 0,
+          deleted_at: null,
+        },
+        'lineage',
+      ),
+      noPendingTransfer(pass.id),
+    ],
+    tables,
+  );
 }
 
-/** Commits a grant whose first statement returns rows; a lost race is `null`, every other refusal throws. */
-export async function commitRows<T>(g: Grant): Promise<T[] | null> {
+/**
+ * Commits a grant whose first statement (or `at`) returns rows; a lost race is `null`, every other
+ * refusal throws.
+ */
+export async function commitRows<T>(g: Grant, at?: GrantedStatement): Promise<T[] | null> {
   try {
-    const [result] = await g.commit();
+    const results = await g.commit();
+    const result = results[at ? g.indexOf(at) : 0];
     return (result?.results as T[] | undefined) ?? [];
   } catch (error) {
     if (error instanceof AppError && error.code === PASS_LOST) return null;

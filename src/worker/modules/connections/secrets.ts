@@ -7,7 +7,7 @@ import {
 import { ForbiddenError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { ConnectionAuthority } from './access.ts';
+import type { ConnectionWriter } from './access.ts';
 import type { ConnectionRow } from './repo.ts';
 import {
   deleteCredentials,
@@ -22,7 +22,7 @@ type Kind = 'connector' | 'webhook';
 export async function storeCredential(
   ctx: ServiceContext,
   input: { orgId: string; kind: Kind; value: string; createdBy: string | null },
-  authority?: ConnectionAuthority,
+  writer: ConnectionWriter,
 ): Promise<string> {
   const id = ctx.ids.id();
   const ring = await loadKekRing(ctx.env);
@@ -45,7 +45,7 @@ export async function storeCredential(
         createdBy: input.createdBy,
         now: ctx.clock.now(),
       },
-      authority,
+      writer,
     );
     if (!inserted) throw new ForbiddenError();
   } catch (error) {
