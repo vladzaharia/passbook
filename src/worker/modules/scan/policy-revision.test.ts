@@ -11,7 +11,7 @@ import {
 } from './repo-pass-authority.ts';
 import { policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { foundOf } from './resolve.ts';
-import { type ScanKit, setupScanKit } from './test-kit.ts';
+import { key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
 const { scenario, changeAwayAndBack, afterCandidateRead, atGate, requestOf } =
@@ -451,24 +451,50 @@ describe('scanner evaluated policy revisions', () => {
       ])
     ).length,
   });
-  const post = (s: Awaited<ReturnType<typeof scenario>>, route: string) =>
+  const post = (s: Awaited<ReturnType<typeof scenario>>, route: string, idempotencyKey?: string) =>
     kit.post(
       s.scanner.headers,
       `/${route}`,
       route === 'lookup'
         ? { q: s.pass.id }
-        : { ...requestOf(s.pass.id), ...(route === 'actions' ? { actionId: 'auto' } : {}) },
+        : {
+            ...requestOf(s.pass.id),
+            ...(idempotencyKey ? { idempotencyKey } : {}),
+            ...(route === 'actions' ? { actionId: 'auto' } : {}),
+          },
     );
+  /**
+   * An action whose evaluated policy moved before its preflight is a race, not a miss: 409
+   * `SCAN_IN_PROGRESS`, nothing disclosed or written, and the same key retried decides afresh.
+   */
+  const expectRaced = async (s: Awaited<ReturnType<typeof scenario>>, response: Response) => {
+    expect(response.status).toBe(409);
+    const text = await response.text();
+    expect(text).not.toContain(s.pass.id);
+    expect(text).not.toContain('Revision Private Person');
+    expect(JSON.parse(text)).toMatchObject({ code: 'SCAN_IN_PROGRESS' });
+    expect(await ledgerOf(s.pass.id)).toEqual({ gates: 0, events: 0 });
+  };
 
-  // Suspending and restoring the org moves its access revision: the read fences refuse the original read.
+  // Suspending and restoring the org moves its access revision: the read fences refuse the original
+  // read. The scanner's own access never lapsed (the org is active again), so an action is retried.
   for (const route of ['resolve', 'lookup', 'actions'] as const) {
     it(`does not expose or act on a candidate after an organization ABA in ${route}`, async () => {
       const s = await scenario();
+      const idempotencyKey = key();
       const response = await afterCandidateRead(
         s.pass.id,
         (db) => changeAwayAndBack(db, 'organization', s.templateId),
-        () => post(s, route),
+        () => post(s, route, idempotencyKey),
       );
+      if (route === 'actions') {
+        await expectRaced(s, response);
+        const retry = await post(s, route, idempotencyKey);
+        expect(retry.status).toBe(200);
+        expect(await retry.json()).toMatchObject({ kind: 'ok' });
+        expect(await ledgerOf(s.pass.id)).toEqual({ gates: 1, events: 1 });
+        return;
+      }
       expect(response.status).toBe(200);
       const text = await response.text();
       expect(text).not.toContain(s.pass.id);
@@ -511,11 +537,23 @@ describe('scanner evaluated policy revisions', () => {
           const s = await scenario(kind === 'mode mismatch' ? 'test' : 'live');
           if (kind === 'inactive')
             await run(kit.env.DB, "UPDATE passes SET status='voided' WHERE id=?", [s.pass.id]);
+          const idempotencyKey = key();
           const response = await afterCandidateRead(
             s.pass.id,
             (db) => changeAwayAndBack(db, policy, s.templateId),
-            () => post(s, route),
+            () => post(s, route, idempotencyKey),
           );
+          // An action on a voided pass under a moved org policy is retried, and the retry refuses it.
+          if (route === 'actions' && kind === 'inactive' && policy === 'organization') {
+            await expectRaced(s, response);
+            const retry = await post(s, route, idempotencyKey);
+            expect(retry.status).toBe(200);
+            const retried = await retry.text();
+            expect(JSON.parse(retried)).toMatchObject({ kind: 'refused', reason: 'voided' });
+            expect(retried).not.toContain('Revision Private Person');
+            expect(await ledgerOf(s.pass.id)).toEqual({ gates: 0, events: 1 });
+            return;
+          }
           expect(response.status).toBe(200);
           const text = await response.text();
           // Cross-mode detection is a bare refusal; a voided pass under an unchanged org is refused as such.

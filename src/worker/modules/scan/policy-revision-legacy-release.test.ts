@@ -261,27 +261,32 @@ describe('scanner evaluated policy revisions', () => {
     const pass = await makePass(kit.fx, { orgId: kit.org.id, template });
     await persistLegacyWallet(pass, template.passJson);
     const scanner = await kit.scanner({ templateIds: [templateId] });
+    const request = { ...requestOf(pass.id), actionId: 'auto' };
     const response = await afterCandidateRead(
       pass.id,
       async (db) => {
         await approveAppleRelease(kit, { db, templateId, mode: 'live', version: template.version });
       },
-      () => kit.post(scanner.headers, '/actions', { ...requestOf(pass.id), actionId: 'auto' }),
+      () => kit.post(scanner.headers, '/actions', request),
     );
-    expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({
-      kind: 'refused',
-      reason: 'not_found',
-      display: null,
-    });
+    // The evaluated policy moved before the preflight: a race the client retries, never a miss.
+    expect(response.status).toBe(409);
+    const text = await response.text();
+    expect(JSON.parse(text)).toMatchObject({ code: 'SCAN_IN_PROGRESS' });
+    expect(text).not.toContain(pass.id);
+    const scanEvents = () =>
+      all(kit.env.DB, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
+        pass.id,
+      ]);
     expect(
       await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [pass.id]),
     ).toHaveLength(0);
-    expect(
-      await all(kit.env.DB, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
-        pass.id,
-      ]),
-    ).toHaveLength(0);
+    expect(await scanEvents()).toHaveLength(0);
+    // The same key retried decides under the new head, which is this pass's own build.
+    const retry = await kit.post(scanner.headers, '/actions', request);
+    expect(retry.status).toBe(200);
+    expect(await retry.json()).toMatchObject({ kind: 'ok' });
+    expect(await scanEvents()).toHaveLength(1);
   });
 
   // A release is content at commit (authority-epochs.md F4): the scan grant does not ask for the head.

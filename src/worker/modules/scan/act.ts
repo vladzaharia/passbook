@@ -174,10 +174,11 @@ export async function act(
     // attempt that raced the pass is retried with the same key; a replay or claim that cannot be
     // proven stays masked.
     if (error instanceof StaleScanAuthority) {
-      const refusal = await staleActorRefusal(ctx, actor);
+      const raced = error instanceof ScanAttemptRaced;
+      const refusal = await staleActorRefusal(ctx, actor, raced);
       if (refusal) throw refusal;
       if (!accepts) return notAcceptedOutcome(credentials);
-      if (error instanceof ScanAttemptRaced) throw passRaced();
+      if (raced) throw passRaced();
       return unknownOutcome(credentials);
     }
     if (error instanceof UnavailableError && error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE')
