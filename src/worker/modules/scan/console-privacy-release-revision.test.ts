@@ -81,7 +81,14 @@ describe('scan console and feed privacy', () => {
       },
       { holderEmail: EMAIL },
     );
-    const scanner = await kit.scanner({ templateIds: [pinned.id] });
+    // The manager title needs a manager-recorded event: an event records each role's view only up
+    // to the recorder's role.
+    const staff = await kit.staff('manager');
+    const scanner = await kit.scanner({
+      templateIds: [pinned.id],
+      staffId: staff.id,
+      settings: { staffSignIn: true },
+    });
     const first = await recordedCheckIn(scanner, pass.id);
     kit.clock.advance(1000);
     const duplicateResponse = await kit.post(scanner.headers, '/actions', {
@@ -263,10 +270,8 @@ describe('scan console and feed privacy', () => {
             if (member === 'all')
               return async () => {
                 const result = await target.all();
-                if (
-                  intercepted === 0 &&
-                  sql.includes('WITH ids AS (SELECT value AS id FROM json_each(?))')
-                ) {
+                // The history proof read: the head moves before the final fence.
+                if (intercepted === 0 && sql.includes('WITH ids(id) AS (VALUES')) {
                   intercepted++;
                   await approveAppleRelease(kit, {
                     orgId: kit.org.id,

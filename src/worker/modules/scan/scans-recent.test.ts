@@ -96,19 +96,29 @@ describe('scanner recent and summary privacy', () => {
       outcome: 'refused',
       reason: 'not_found',
     });
-    const recent = await scannerGet(scanner.headers, '/scans?limit=2');
+    // A pristine passless refusal is a plain ledger fact; one with action evidence is not.
+    const recent = await scannerGet(scanner.headers, '/scans?limit=3');
     expect(recent.status).toBe(200);
     expect(await recent.json()).toMatchObject({
-      items: redacted
-        .slice(-2)
-        .reverse()
-        .map((row) => ({
-          scanId: row.id,
+      items: [
+        {
+          scanId: ambiguousPassless.id,
           title: null,
           actionLabel: 'Scan',
-          outcome: 'ok',
-          reason: null,
-        })),
+          outcome: 'refused',
+          reason: 'ambiguous',
+        },
+        ...redacted
+          .slice(-2)
+          .reverse()
+          .map((row) => ({
+            scanId: row.id,
+            title: null,
+            actionLabel: 'Scan',
+            outcome: 'ok',
+            reason: null,
+          })),
+      ],
     });
     const allRecent = await scannerGet(scanner.headers, '/scans?limit=20');
     expect(allRecent.status).toBe(200);
@@ -126,18 +136,17 @@ describe('scanner recent and summary privacy', () => {
     });
     expect(recentRows.items.some((row) => row.scanId === quarantinedId)).toBe(false);
     expect(recentRows.items.some((row) => row.scanId === unprovenOrphan.id)).toBe(false);
-    expect(recentRows.items.some((row) => row.scanId === ambiguousPassless.id)).toBe(false);
     expect(recentRows.items.some((row) => row.scanId === actionPassless.id)).toBe(false);
     const summary = await scannerGet(scanner.headers, '/summary');
     expect(summary.status).toBe(200);
     expect(await summary.json()).toMatchObject({
-      total: 10,
+      total: 11,
       ok: 9,
       headsUp: 0,
-      refused: 1,
+      refused: 2,
       byAction: [],
       firstAt: allowed.at,
-      lastAt: redacted.at(-1)?.at,
+      lastAt: ambiguousPassless.at,
     });
     const visibleScanner = await makeScanner(f, { orgId, templateIds: [template.resolved.id] });
     await recordedAction(visibleScanner, passId);
@@ -148,6 +157,25 @@ describe('scanner recent and summary privacy', () => {
       ok: 1,
       byAction: [{ actionId: 'enter', label: 'Let in', count: 1, amount: 0 }],
     });
+  });
+
+  it('returns the newest rows up to the limit below, at and above the row count', async () => {
+    const scanner = await makeScanner(f, { orgId, templateIds: [template.resolved.id] });
+    const ids: string[] = [];
+    for (let i = 0; i < 3; i++) ids.push((await recordedAction(scanner, passId)).id);
+    const newest = [...ids].reverse();
+    for (const [limit, expected] of [
+      [2, newest.slice(0, 2)],
+      [3, newest],
+      [20, newest],
+    ] as const) {
+      const response = await scannerGet(scanner.headers, `/scans?limit=${limit}`);
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { items: Rec[] };
+      expect(body.items.map((row) => row.scanId)).toEqual(expected);
+    }
+    for (const limit of [0, 21])
+      expect((await scannerGet(scanner.headers, `/scans?limit=${limit}`)).status).toBe(422);
   });
 
   it('hides a manager-only action from Door history and aggregates while allowing a Manager', async () => {

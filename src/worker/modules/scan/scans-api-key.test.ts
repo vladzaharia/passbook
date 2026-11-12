@@ -145,6 +145,9 @@ describe('GET /scans (API key)', () => {
       orgId: other.id,
       settings: { acceptAllTemplates: true },
     });
+    // The global feed spans every org this file's earlier tests left behind; be the newest rows
+    // while staying inside the fixture event's hour.
+    clock.advance(10 * 60_000);
     const visible = await recordedNoMatch(scannerFixture);
     const hidden = await recordedNoMatch(otherScanner);
     await run(env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [other.id]);

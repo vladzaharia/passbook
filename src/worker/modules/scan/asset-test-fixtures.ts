@@ -8,6 +8,7 @@ import { readScannerScope } from './repo-scope.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
 import { boundStaff } from './staff-binding.ts';
 import { proofedScanActor, type ScanKit } from './test-kit.ts';
+import { captureTestEpochs } from './test-kit-epochs.ts';
 
 /** Construct the same scanner authority that the route guard reads. */
 export async function assetActorFor(kit: ScanKit, scanner: ScannerFixture, now = kit.clock.now()) {
@@ -19,10 +20,13 @@ export async function assetActorFor(kit: ScanKit, scanner: ScannerFixture, now =
   const actor = await proofedScanActor(
     ctx,
     scannerActor(ctx, row, row.mode, scanner.headers.authorization ? 'bearer' : 'cookie', scope),
+    { epochs: false },
   );
   withRole(actor, actor.terminal ? null : await boundStaff(ctx, row, scope.staff));
   await bindScanningSession(ctx, actor);
   withRole(actor, actor.settings.staffSignIn ? actor.staff : null);
+  // Like the route guard: epochs are captured once staff and session are bound.
+  await captureTestEpochs(ctx, actor);
   return actor;
 }
 

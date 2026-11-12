@@ -26,6 +26,7 @@ import {
   templateId,
 } from './console-privacy-test-fixtures.ts';
 import { recordsOf } from './feed-projection.ts';
+import { createFeedProofCache, verifyRows } from './feed-proof.ts';
 import { getScanRow } from './repo-feed.ts';
 import { grantScanMembership, ORIGIN } from './test-kit.ts';
 
@@ -212,7 +213,9 @@ describe('scan console and feed privacy', () => {
     const row = await getScanRow(kit.env.DB, scan.id, kit.clock.now(), 'live');
     if (!row) throw new Error('The recorded scan must be available.');
     const keyset = await requireCredentialRefKeyset(kit.env.DB, kit.env);
-    const [projection] = await recordsOf(kit.ctx, auth, authority, keyset, [row]);
+    // Rows reach the projection only after their recorded facts are checked, as in the feed.
+    const verified = await verifyRows(kit.ctx, [row], createFeedProofCache(keyset));
+    const [projection] = await recordsOf(kit.ctx, auth, authority, keyset, verified.rows);
     if (!projection?.snapshot.actor.tenantAuthority)
       throw new Error('The projection must capture its tenant actor.');
     expect(projection.record).toMatchObject({ id: scan.id, passId: pass.id, passTitle: PUBLIC });

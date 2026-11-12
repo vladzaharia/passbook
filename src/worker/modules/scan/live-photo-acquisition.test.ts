@@ -179,3 +179,25 @@ it('still serves after only a scanner timestamp or name changes', async () => {
   );
   expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
 });
+
+it.each(['source re-key', 'recipient credential'] as const)(
+  'stops serving after a %s',
+  async (change) => {
+    const fixture = await photoFixture();
+    if (change === 'source re-key')
+      await run(
+        kit.env.DB,
+        'UPDATE scanners SET token_hash=?, updated_at=updated_at+1 WHERE id=?',
+        ['f'.repeat(64), fixture.source.id],
+      );
+    // A credential column the monitor still authenticates with: only its epoch moves.
+    else
+      await run(kit.env.DB, 'UPDATE scanners SET expires_at=? WHERE id=?', [
+        kit.clock.now() + 86_400_000,
+        fixture.monitor.id,
+      ]);
+    const response = await kit.get(fixture.monitor.headers, fixture.path);
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
+  },
+);

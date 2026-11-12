@@ -40,7 +40,10 @@ describe('scan console and feed privacy', () => {
       [pass.id],
     );
     expect(observed).toEqual({ test_data_quarantined: 0 });
-    const deletion = kit.env.DB.prepare('DELETE FROM passes WHERE id = ?').bind(pass.id);
+    // D1 counts cascade and trigger writes in meta.changes; RETURNING counts the pass row.
+    const deletion = kit.env.DB.prepare('DELETE FROM passes WHERE id = ? RETURNING id').bind(
+      pass.id,
+    );
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
     expect(
       await first(kit.env.DB, 'SELECT excluded FROM scan_retention_proofs WHERE scan_id = ?', [
@@ -48,7 +51,7 @@ describe('scan console and feed privacy', () => {
       ]),
     ).toEqual({ excluded: 1 });
     expect((await page(`?orgId=${kit.org.id}`, testAdmin)).items).toEqual([]);
-    expect((await deletion.run()).meta.changes).toBe(1);
+    expect((await deletion.all()).results).toHaveLength(1);
     expect(await first(kit.env.DB, 'SELECT pass_id FROM scans WHERE id = ?', [row.id])).toEqual({
       pass_id: null,
     });
@@ -180,10 +183,11 @@ describe('scan console and feed privacy', () => {
           row.id,
         ]);
       } else {
+        // A recorded fact the readers check: without its role projection the event is unusable.
         await run(
           kit.env.DB,
-          "UPDATE pass_events SET data = json_set(data, '$.authority.eventProof.mac', ?) WHERE id = ?",
-          ['0'.repeat(64), event.id],
+          "UPDATE pass_events SET data = json_remove(data, '$.authority.eventProjection') WHERE id = ?",
+          [event.id],
         );
       }
       expect(await proof()).toEqual({ excluded: 0, invalidated: 1 });

@@ -211,7 +211,7 @@ describe('scanning session count authority', () => {
   );
 
   it.each(['revoked', 'csrf'] as const)(
-    'finds no session for a %s device at the workspace counts batch',
+    'asks a %s device to re-pair at the workspace counts batch',
     async (change) => {
       const f = await freshFixture(await makeEnv());
       const scanner = await makeScanner(f.fx, { orgId: f.org.id });
@@ -244,9 +244,9 @@ describe('scanning session count authority', () => {
         change === 'csrf'
           ? await withMutableScannerSecret(f.env.DB, scanner.id, secret, race)
           : await race();
-      // The counts batch finds no session for a device whose credential moved: not found, no counts.
-      expect(result.status).toBe(404);
-      expect(await result.json()).toMatchObject({ code: 'SCANNING_SESSION_NOT_FOUND' });
+      // A device whose credential moved under the counts batch re-pairs; nothing is counted.
+      expect(result.status).toBe(401);
+      expect(await result.json()).toMatchObject({ code: 'SCANNER_REPAIR' });
       expect(await singleton(f)).toBeNull();
     },
   );

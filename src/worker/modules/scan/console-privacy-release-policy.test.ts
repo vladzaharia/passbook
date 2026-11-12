@@ -222,10 +222,13 @@ describe('scan console and feed privacy', () => {
       })
       .parse(JSON.parse(event.data)).authority.eventProjection;
     expect(projection.roles.door).toMatchObject({ action: null, titleHash: null });
-    expect(projection.roles.manager).toMatchObject({
-      action: { id: 'check_in', kind: 'check_in', labelHash: expect.any(String) },
-      titleHash: expect.any(String),
-    });
+    // The action entry commits its kind and label; the scan row holds the action id.
+    expect(projection.roles.manager).toEqual(
+      expect.objectContaining({
+        action: { kind: 'check_in', labelHash: expect.stringMatching(/^[0-9a-f]{64}$/) },
+        titleHash: expect.any(String),
+      }),
+    );
     const user = await makeUser(kit.fx);
     await grantScanMembership(kit.fx, kit.org.id, user.id, ['read_only']);
     const headers = { ...(await makeSession(kit.fx, { userId: user.id })).headers, origin: ORIGIN };

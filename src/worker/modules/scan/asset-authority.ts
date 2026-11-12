@@ -7,6 +7,7 @@ import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import type { AssetSessionSnapshot } from './asset-types.ts';
 import type { AssetGrantCsrfResults, AssetGrantGuardInput } from './repo-asset-lineage.ts';
 import { matchesEvent } from './resolve-candidates.ts';
+import { scanEpochsOf } from './scan-epochs.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 /** Clone only original internal fields; no raw scanner CSRF enters a structured clone. */
@@ -68,7 +69,9 @@ async function actorScope(
   session: AssetSessionSnapshot | null,
 ) {
   const scanner = actor.scanner;
-  const staff = actor.staff as (typeof actor.staff & { updatedAt?: number }) | null;
+  const staff = actor.staff;
+  // Epochs, not timestamps: a rename moves `updated_at` but no authority (authority-epochs.md).
+  const epochs = scanEpochsOf(actor);
   const adminEventTemplates = 'adminEventTemplates' in actor && actor.adminEventTemplates === true;
   const tenant = actor.tenantAuthority ?? null;
   const platformId = actor.platformSessionId ?? null;
@@ -121,7 +124,8 @@ async function actorScope(
       scanner.kind,
       scanner.deviceRole,
       scanner.eventId,
-      scanner.updatedAt,
+      epochs?.scanner?.id === scanner.id ? epochs.scanner.credential : null,
+      epochs?.scanner?.id === scanner.id ? epochs.scanner.config : null,
       scanner.settings,
       scanner.timeZone,
       scanner.tokenPrefix,
@@ -133,12 +137,17 @@ async function actorScope(
       scanner.staffId,
       scanner.staffSince,
     ],
-    staff && [staff.id, staff.role, staff.updatedAt ?? null],
-    actor.event && [actor.event.id, actor.event.orgId, actor.event.mode, actor.event.updatedAt],
+    staff && [staff.id, staff.role, epochs?.staff?.id === staff.id ? epochs.staff.auth : null],
+    actor.event && [
+      actor.event.id,
+      actor.event.orgId,
+      actor.event.mode,
+      epochs?.events[actor.event.id] ?? null,
+    ],
     actor.scanningSession && [
       actor.scanningSession.id,
       actor.scanningSession.status,
-      actor.scanningSession.updatedAt,
+      epochs?.session?.id === actor.scanningSession.id ? epochs.session.config : null,
     ],
     session && [
       session.user_id,

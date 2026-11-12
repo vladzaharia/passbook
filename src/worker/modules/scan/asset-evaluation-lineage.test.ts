@@ -216,7 +216,8 @@ describe('live scanner evaluated asset lineage', () => {
     expect(row?.photoUrl).toBeTruthy();
   });
 
-  it('never blesses an old evaluation after the active template changes away and back', async () => {
+  // An archived template keeps its passes: its status is no policy change for an evaluation.
+  it('keeps an evaluation after the template status changes away and back', async () => {
     const fixture = await setup();
     await setTemplateStatus(kit.env.DB, template, 'archived', kit.clock.now());
     await setTemplateStatus(kit.env.DB, template, 'active', kit.clock.now());
@@ -229,8 +230,7 @@ describe('live scanner evaluated asset lineage', () => {
       'camera',
     );
     const [row] = await publishedRows(fixture);
-    expect(row).toMatchObject({ passId: null, holder: null, photoUrl: null });
-    expect(JSON.stringify(row)).not.toContain('LIVE-PRIVATE-MEMBER');
+    expect(row).toMatchObject({ passId: fixture.pass.id, holder: 'LIVE-PRIVATE-MEMBER' });
   });
 
   it('does not republish an old evaluation under a newer approved release of the same version', async () => {

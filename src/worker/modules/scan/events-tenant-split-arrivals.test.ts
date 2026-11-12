@@ -139,7 +139,11 @@ describe('scan event tenant routes', () => {
     ).toEqual([{ template_id: templateId }]);
   }, 60_000);
 
-  it('retains historical arrivals without an available current pass policy', async () => {
+  // An archived template keeps its passes; a deleted one leaves no current pass policy.
+  it.each([
+    ['archived', 1],
+    ['deleted', 0],
+  ] as const)('retains historical arrivals when the template is %s', async (status, expected) => {
     const pass = await makeLegacyScanPass(f, { orgId, template: primaryTemplate.resolved });
     await recordedCheckIn(pass.id);
     // Older witnessed event gates predate the separate event-presence row.
@@ -147,14 +151,14 @@ describe('scan event tenant routes', () => {
       pass.id,
       `event:${eventId}`,
     ]);
-    await run(env.DB, "UPDATE templates SET status='archived' WHERE id=?", [templateId]);
+    await run(env.DB, 'UPDATE templates SET status=? WHERE id=?', [status, templateId]);
     const response = await call(reader, 'GET', `/${eventId}`);
     expect(response.status).toBe(200);
-    expect(ScanEventSchema.parse(await response.json())).toMatchObject({ arrived: 1, expected: 0 });
+    expect(ScanEventSchema.parse(await response.json())).toMatchObject({ arrived: 1, expected });
     const listed = await page(await call(reader, 'GET', `?orgId=${orgId}`));
     expect(listed.items.find((item) => item.id === eventId)).toMatchObject({
       arrived: 1,
-      expected: 0,
+      expected,
     });
   });
 });

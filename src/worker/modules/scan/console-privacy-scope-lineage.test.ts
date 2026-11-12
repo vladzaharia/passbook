@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
+import { makeOrg, persistTemplate, runOne } from '../../../../test/helpers/index.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { first, run } from '../../platform/db.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
@@ -100,9 +100,7 @@ describe('scan console and feed privacy', () => {
       const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
 
       // A same-pass reference remains ledger-visible even if its event proof is no longer usable.
-      expect(
-        await run(kit.env.DB, `UPDATE scans SET ${column} = ? WHERE id = ?`, [keep.id, linked.id]),
-      ).toEqual({ changes: 1 });
+      await runOne(kit.env.DB, `UPDATE scans SET ${column} = ? WHERE id = ?`, [keep.id, linked.id]);
       expect((await page(`?orgId=${kit.org.id}`)).items.map((row) => row.id)).toEqual([
         other.id,
         linked.id,
@@ -111,12 +109,10 @@ describe('scan console and feed privacy', () => {
       expect((await get(`/${linked.id}`)).status).toBe(200);
 
       for (const targetId of [other.id, orphan.id]) {
-        expect(
-          await run(kit.env.DB, `UPDATE scans SET ${column} = ? WHERE id = ?`, [
-            targetId,
-            linked.id,
-          ]),
-        ).toEqual({ changes: 1 });
+        await runOne(kit.env.DB, `UPDATE scans SET ${column} = ? WHERE id = ?`, [
+          targetId,
+          linked.id,
+        ]);
         expect((await page(`?orgId=${kit.org.id}`)).items.map((row) => row.id)).toEqual([
           other.id,
           keep.id,
@@ -174,12 +170,10 @@ describe('scan console and feed privacy', () => {
       }
 
       // Missing references are retained rather than treated as an existing foreign link.
-      expect(
-        await run(kit.env.DB, `UPDATE scans SET ${column} = ? WHERE id = ?`, [
-          kit.fx.ids.id(),
-          linked.id,
-        ]),
-      ).toEqual({ changes: 1 });
+      await runOne(kit.env.DB, `UPDATE scans SET ${column} = ? WHERE id = ?`, [
+        kit.fx.ids.id(),
+        linked.id,
+      ]);
       expect((await page(`?orgId=${kit.org.id}`)).items.map((row) => row.id)).toEqual([
         other.id,
         linked.id,
@@ -334,9 +328,7 @@ describe('scan console and feed privacy', () => {
     expect(await summary.json()).toMatchObject({ total: 2, ok: 2 });
 
     // A deleted connection is set to NULL by the FK and no longer makes its pass foreign.
-    expect(
-      await run(kit.env.DB, 'DELETE FROM connections WHERE id = ?', [foreignConnection]),
-    ).toEqual({ changes: 1 });
+    await runOne(kit.env.DB, 'DELETE FROM connections WHERE id = ?', [foreignConnection]);
     expect(
       await first(kit.env.DB, 'SELECT connection_id FROM passes WHERE id = ?', [cases[1].passId]),
     ).toEqual({ connection_id: null });

@@ -44,7 +44,7 @@ async function expectMissing(response: Response) {
 }
 
 describe('scanner asset capability provenance', () => {
-  it('preserves terminal NULL-CSRF proof through the post-open fence', async () => {
+  it('fences a terminal NULL-CSRF credential through the post-open fence', async () => {
     const terminal = await kit.scanner({ kind: 'terminal', templateIds: [templateId] });
     const actor = await assetActorFor(kit, terminal);
     const pass = await kit.scanPass(templateId);
@@ -83,10 +83,11 @@ describe('scanner asset capability provenance', () => {
       const object = await originalGet(key, options);
       if (key !== photo.r2_key || !object) return object;
       opened = true;
+      // A terminal never has a CSRF secret (CHECK constraint); its credential moves by token.
       await run(
         kit.env.DB,
-        'UPDATE scanners SET csrf_secret=?, updated_at=updated_at+1 WHERE id=?',
-        ['terminal-changed', terminal.id],
+        'UPDATE scanners SET token_hash=?, updated_at=updated_at+1 WHERE id=?',
+        ['f'.repeat(64), terminal.id],
       );
       return observeCancellation(object, () => cancelled++);
     });

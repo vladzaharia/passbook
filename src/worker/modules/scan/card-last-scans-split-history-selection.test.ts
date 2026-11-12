@@ -34,10 +34,11 @@ describe('card last-scan privacy', () => {
       ids.push(await act(scanner.headers, pass.id));
       kit.clock.advance(1);
     }
+    // An event without its role projection cannot establish card history.
     for (const id of ids.slice(3))
       await run(
         kit.env.DB,
-        `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProof')
+        `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProjection')
         WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
         [pass.id, id],
       );
@@ -59,7 +60,7 @@ describe('card last-scan privacy', () => {
     }
     await run(
       kit.env.DB,
-      `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProof')
+      `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProjection')
       WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
       [pass.id, ids[3]!],
     );
@@ -90,7 +91,7 @@ describe('card last-scan privacy', () => {
     });
     await run(
       kit.env.DB,
-      `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProof')
+      `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProjection')
       WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
       [pass.id, ids[2]!],
     );

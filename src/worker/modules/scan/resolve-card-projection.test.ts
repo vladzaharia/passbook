@@ -181,7 +181,8 @@ describe('resolve: the card', () => {
       'public_nested',
     );
 
-    // An incompatible build retains the pinned display internally, but cannot be admitted.
+    // An incompatible build: policy follows the head (check-in manager-only, tier and the public
+    // area hidden from desk) while content and display stay on the pass's own release.
     const head = await installVersion(
       templateId,
       'v4',
@@ -201,31 +202,30 @@ describe('resolve: the card', () => {
     expect(found?.activeTemplate?.version).toBe('v2');
     expect(found?.scan.actions.find((action) => action.id === 'check_in')?.minRole).toBe('manager');
     const stale = await resolve(scanners[1]!.headers, codeOf(pass));
-    expect(stale).toMatchObject({
-      status: 200,
-      out: { kind: 'refused', reason: 'not_found', card: null, display: null },
-    });
-    for (const secret of [
-      pass.id,
-      pass.serial,
-      pass.scanCode!,
-      'Silver desk tier',
-      'Public atrium',
-    ])
+    expect(stale).toMatchObject({ status: 200, out: { kind: 'ready', card: { passId: pass.id } } });
+    const staleCard = stale.out.card!;
+    const staleView = JSON.stringify(staleCard.passView.passJson);
+    expect(staleView).not.toContain('Silver desk tier');
+    expect(staleView).not.toContain('Public atrium');
+    expect(staleCard.values.map((value) => value.input)).not.toContain('tier');
+    expect(staleCard.actions.find((action) => action.id === 'check_in')?.available).toBe(false);
+    for (const secret of [pass.serial, pass.scanCode!])
       expect(JSON.stringify(stale.out)).not.toContain(secret);
     const action = await kit.post(scanners[1]!.headers, '/actions', {
       ...body(codeOf(pass)),
       actionId: 'auto',
     });
     expect(action.status).toBe(200);
-    expect(await action.json()).toMatchObject({ reason: 'not_found', card: null, display: null });
+    expect(((await action.json()) as { kind: string }).kind).not.toBe('ok');
     expect(
       await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [pass.id]),
     ).toHaveLength(0);
     expect(
-      await all(kit.env.DB, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
-        pass.id,
-      ]),
+      await all(
+        kit.env.DB,
+        "SELECT id FROM pass_events WHERE pass_id=? AND kind='scan.checked_in'",
+        [pass.id],
+      ),
     ).toHaveLength(0);
 
     // Roll back the scoped release while the legacy pointer and registry default remain on v4.

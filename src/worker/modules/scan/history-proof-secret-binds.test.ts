@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { runOne } from '../../../../test/helpers/index.ts';
 import { first, run, stmt } from '../../platform/db.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { scannerActor, withRole } from './actor.ts';
@@ -202,13 +203,11 @@ describe('history proof secret bindings', () => {
       ['changed-wallet-private-value', s.pass.id, s.pass.id],
     );
     expect(await current()).toBe(false);
-    const data = JSON.parse(sources.event.data) as { authority: { eventProof: { mac: string } } };
-    const mac = data.authority.eventProof.mac;
-    const changed = `${mac[0] === '0' ? '1' : '0'}${mac.slice(1)}`;
-    await run(
+    // Events carry plain facts, no MAC: a recorded gate fact that no longer holds rejects the event.
+    await runOne(
       kit.env.DB,
-      "UPDATE pass_events SET data=json_set(data,'$.authority.eventProof.mac',?) WHERE id=?",
-      [changed, sources.event.id],
+      "UPDATE pass_events SET data=json_set(data,'$.authority.gate.count',0) WHERE id=?",
+      [sources.event.id],
     );
     expect((await historyProofSnapshotsForOrg(kit.ctx, s.scope, [s.scanId], new Map())).size).toBe(
       0,

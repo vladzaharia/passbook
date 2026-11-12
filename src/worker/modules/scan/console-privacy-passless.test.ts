@@ -23,6 +23,12 @@ describe('scan console and feed privacy', () => {
   it('retains a strictly passless unsigned legacy no-event no-match only as a minimal row', async () => {
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const legacy = await seedScan({ scanner, passId: null });
+    const own = (path: string) =>
+      app.request(`${ORIGIN}/api/v1/scan${path}`, { headers: scanner.headers }, kit.env);
+    // The device's own history is fenced to rows naming the device.
+    expect(await (await own('/scans?limit=10')).json()).toMatchObject({
+      items: [{ scanId: legacy.id, outcome: 'refused', reason: 'not_found', title: null }],
+    });
     await run(kit.env.DB, 'UPDATE scans SET scanner_id = NULL WHERE id = ?', [legacy.id]);
     const history = await page(`?orgId=${kit.org.id}`);
     expect(history.items).toHaveLength(1);
@@ -64,22 +70,13 @@ describe('scan console and feed privacy', () => {
         .split('\r\n'),
     ).toHaveLength(2);
     expect(await lastExportCount()).toBe(1);
-    const recent = await app.request(
-      `${ORIGIN}/api/v1/scan/scans?limit=10`,
-      { headers: scanner.headers },
-      kit.env,
-    );
+    // Without its scanner reference the row stays console history but leaves the device's own.
+    const recent = await own('/scans?limit=10');
     expect(recent.status).toBe(200);
-    expect(await recent.json()).toMatchObject({
-      items: [{ scanId: legacy.id, outcome: 'refused', reason: 'not_found', title: null }],
-    });
-    const summary = await app.request(
-      `${ORIGIN}/api/v1/scan/summary`,
-      { headers: scanner.headers },
-      kit.env,
-    );
+    expect(await recent.json()).toMatchObject({ items: [] });
+    const summary = await own('/summary');
     expect(summary.status).toBe(200);
-    expect(await summary.json()).toMatchObject({ total: 1, refused: 1, byAction: [] });
+    expect(await summary.json()).toMatchObject({ total: 0, refused: 0, byAction: [] });
   });
 
   it('retains event-scoped no-match and ambiguous refusals after archival and deletion', async () => {

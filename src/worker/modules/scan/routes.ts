@@ -19,14 +19,13 @@ import {
   ScanWorkspaceSchema,
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
-import { UnauthenticatedError, UnavailableError } from '../../platform/errors.ts';
+import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import {
   captureCredentialKeyEnv,
   credentialRefKeysetCommitment,
 } from '../passes/credential-keyset.ts';
-import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import { act } from './act.ts';
 import { snapshotActionContext } from './act-snapshot.ts';
 import { planCounts } from './counts.ts';
@@ -35,7 +34,6 @@ import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
 import { outputPredicateStmt } from './repo-output-predicates.ts';
-import { statsGuard, statsKeysetCurrentStmt } from './repo-routes.ts';
 import {
   packedScanAuthorityPredicate,
   sessionReadAuthorityPredicate,
@@ -245,10 +243,11 @@ register(
   async (c) => {
     const source = serviceContext(c);
     const ctx = { ...source, env: { ...source.env } };
-    const keyEnv = captureCredentialKeyEnv(ctx.env);
     const actor = cloneObservedScanActor(scanActorOf(c));
-    const commitment = await credentialRefKeysetCommitment(keyEnv);
-    actor.credentialKeysetCommitment = commitment;
+    // Counts are reads: no keyset bootstrap. The commitment only fences the expected-count cache write.
+    actor.credentialKeysetCommitment = await credentialRefKeysetCommitment(
+      captureCredentialKeyEnv(ctx.env),
+    );
     // Epochs cover credential, configuration and staff changes; reads carry no CSRF proof.
     const authority = packedScanAuthorityPredicate(
       actor,
@@ -256,22 +255,14 @@ register(
     );
     if (authority.sql === '0')
       throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
-    const guard = statsGuard(authority, commitment);
-    const plan = planCounts(ctx, actor, c.req.valid('query').dayStart, actor, guard);
+    const plan = planCounts(ctx, actor, c.req.valid('query').dayStart, actor, authority);
     const results = await ctx.env.DB.batch([
-      credentialRefKeysetInitializeStmt(ctx.env.DB, commitment, authority),
       outputPredicateStmt(ctx.env.DB, authority),
-      statsKeysetCurrentStmt(ctx.env.DB, commitment),
       ...plan.stmts,
     ]);
-    if ((results[1]?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)
+    if ((results[0]?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)
       throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
-    if ((results[2]?.results?.[0] as { current?: number } | undefined)?.current !== 1)
-      throw new UnavailableError(
-        'Credential references are unavailable.',
-        'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      );
-    return c.json((await plan.read(results.slice(3))).counts);
+    return c.json((await plan.read(results.slice(1))).counts);
   },
 );
 

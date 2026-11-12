@@ -287,8 +287,16 @@ export function cardPrivacy(found: Found, actor: ScanActor): CardPrivacy {
   const hidden = new Set<string>();
   for (const { manifest } of policies)
     for (const key of hiddenFieldKeys(manifest, passJson, deniedInputs)) hidden.add(key);
+  // Field values come from the pass's own release: its bindings decide which values are secret.
+  // The current policy still hides fields, and its input rules reach these bindings through
+  // `deniedInputs` and `pathVisible`.
+  const contentHidden = hiddenFieldKeys(template.manifest, passJson, deniedInputs);
   for (const field of passFields(passJson)) {
-    if (hidden.has(field.key) || scanPrivateName(field.key) || !fieldVisible(field.key))
+    if (
+      contentHidden.has(field.key) ||
+      scanPrivateName(field.key) ||
+      !fieldBindings(field.key).every((binding) => bindingVisible(binding, template.manifest))
+    )
       deny(field.value);
   }
   return { safe, valueSafe, fieldVisible, fieldBindings, pointerVisible, hidden };

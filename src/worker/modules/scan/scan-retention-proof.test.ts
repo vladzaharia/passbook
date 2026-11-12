@@ -443,15 +443,12 @@ describe('detached scan retention provenance', () => {
       'staff-id',
       'approver-id',
     ]);
+    // The commit carries one conditional ledger insert per possible outcome and the grant composes
+    // each into its batch; exactly one raw insert binds the committed event's proof.
     const writes = captured.filter(({ sql }) => sql.includes('INSERT INTO scan_retention_proofs'));
-    expect(writes).toHaveLength(1);
-    expect(JSON.stringify(writes[0]?.values) === JSON.stringify(fence.params)).toBe(true);
-    expect(captured.some(({ sql }) => sql.includes('AS valid'))).toBe(true);
     expect(
-      captured.some(
-        ({ sql }) => sql.includes('AS authorized') && sql.includes('credential_ref_keyset'),
-      ),
-    ).toBe(true);
+      writes.filter(({ values }) => JSON.stringify(values) === JSON.stringify(fence.params)),
+    ).toHaveLength(1);
     await stmt(real, `EXPLAIN SELECT (${fence.sql})`, fence.params).all();
     for (const { sql, values } of captured) {
       expect(scanSecretSlots(sql, values.length)).not.toBeNull();
@@ -567,12 +564,14 @@ describe('detached scan retention provenance', () => {
       const db = kit.env.DB;
       const mutation =
         change === 'quarantine exclusion'
-          ? stmt(db, 'INSERT INTO scan_quarantine_exclusions (scan_id) VALUES (?)', [s.scanId])
+          ? stmt(db, 'INSERT INTO scan_quarantine_exclusions (scan_id) VALUES (?) RETURNING 1', [
+              s.scanId,
+            ])
           : stmt(
               db,
               `INSERT INTO pass_events (id,org_id,pass_id,mode,kind,device,actor_type,actor_id,data,at)
               SELECT ?,org_id,pass_id,mode,kind,device,actor_type,actor_id,data,at
-              FROM pass_events WHERE id=?`,
+              FROM pass_events WHERE id=? RETURNING 1`,
               [kit.fx.ids.id(), s.eventRow.id],
             );
       const fence = retentionProofCurrentPredicate(signed);
@@ -581,7 +580,8 @@ describe('detached scan retention provenance', () => {
         retentionProofIfRecordedStmt(db, signed),
         stmt(db, `SELECT (${fence.sql}) AS valid`, fence.params),
       ]);
-      expect(results[0]?.meta.changes).toBe(1);
+      // meta.changes also counts the trigger that invalidates the proof; RETURNING counts the row.
+      expect(results[0]?.results).toHaveLength(1);
       expect(results[1]?.meta.changes).toBe(0);
       expect(results[2]?.results?.[0]).toEqual({ valid: 0 });
     },

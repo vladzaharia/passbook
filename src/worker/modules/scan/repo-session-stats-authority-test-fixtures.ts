@@ -94,12 +94,16 @@ interface Fixture {
 }
 type Captured = { sql: string; params: unknown[] };
 
-/** Intervene just before the transaction that initializes and reads the singleton. */
+/** The batch that checks a device's authority and counts its successes (`/scan/stats`). */
+export const LEDGER_COUNT_BATCH = /SELECT\s+count\(\*\)\s+AS\s+n\s+FROM\s+scans\s+s\b/i;
+
+/** Intervene just before the transaction that checks authority and counts (default: a session's). */
 export async function atCountBatch<T>(
   env: AppEnv,
   operation: () => Promise<T>,
   intervene: (db: D1Database) => Promise<void>,
   corrupt?: (results: D1Result[], statements: (Captured | undefined)[]) => D1Result[],
+  match: RegExp = /WITH\s+session_scope\s+AS\s+MATERIALIZED/i,
 ): Promise<{ result: T; captured: Captured[] }> {
   const real = env.DB;
   const bound = new WeakMap<D1PreparedStatement, Captured>();
@@ -127,9 +131,7 @@ export async function atCountBatch<T>(
         return async (statements: D1PreparedStatement[]) => {
           const byStatement = statements.map((statement) => bound.get(statement));
           const entries = byStatement.filter((entry): entry is Captured => !!entry);
-          const selected =
-            !hits &&
-            entries.some((entry) => /WITH\s+session_scope\s+AS\s+MATERIALIZED/i.test(entry.sql));
+          const selected = !hits && entries.some((entry) => match.test(entry.sql));
           if (selected) {
             hits++;
             captured.push(...entries);

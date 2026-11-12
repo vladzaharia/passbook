@@ -191,7 +191,8 @@ describe('legacy scanner asset lineage', () => {
     expect(await response.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
   });
 
-  it('never reopens fallback when raw release history exists but no head is usable', async () => {
+  // Archived templates keep their passes: with no usable head a legacy pass keeps its own lineage.
+  it('keeps a legacy pass of an archived template on its own lineage until the template is deleted', async () => {
     const { templateId, template, pass, actor } = await legacyPass();
     await approveAppleRelease(kit, {
       orgId: kit.org.id,
@@ -214,24 +215,20 @@ describe('legacy scanner asset lineage', () => {
     expect(row?.absent).toBe(0);
     const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
     if (!current) throw new Error('Legacy pass fixture missing');
-    const fakeFallback = {
-      ...current,
-      activeReleaseId: null,
-      activeReleaseGeneration: null,
-      activeReleaseVersion: null,
-      activeReleaseCandidateHash: null,
-    };
-    await expect(
+    expect(current.activeReleaseId).toBeNull();
+    const mint = () =>
       mintAssetGrant(
         kit.ctx,
         actor,
-        fakeFallback,
+        current,
         current.connectionGeneration,
         template.version,
         undefined,
         false,
         'commit',
-      ),
-    ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
+      );
+    expect(await mint()).toMatch(/^[A-Za-z0-9_-]{54}$/);
+    await setTemplateStatus(kit.env.DB, templateId, 'deleted', kit.clock.now());
+    await expect(mint()).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
   });
 });

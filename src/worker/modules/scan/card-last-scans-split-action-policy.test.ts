@@ -48,7 +48,8 @@ describe('card last-scan privacy', () => {
     const { templateId, pass, scanner } = await simple('Original entry');
     const scanId = await act(scanner.headers, pass.id);
     await stage(templateId, 'v1', 'v2', (manifest) => {
-      manifest.scan!.actions[0]!.label = 'Renamed entry';
+      // "Renamed" contains the Wallet field key `name`, which the event projection withholds.
+      manifest.scan!.actions[0]!.label = 'Other entry';
     });
     expect(last(await card(scanner.headers, pass.id), scanId).actionLabel).toBe('Original entry');
     const release = await approveAppleRelease(kit, { templateId, version: 'v2', mode: 'live' });

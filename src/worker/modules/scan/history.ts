@@ -31,6 +31,17 @@ import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 const DAY = 86_400_000;
 const MINUTE = 60_000;
 
+/** A refusal that selected no pass (the ledger scope admits it only as such) names its own reason. */
+function passlessReason(row: RecentRow): 'not_found' | 'ambiguous' | null {
+  return row.pass_id === null &&
+    row.template_id === null &&
+    row.action_id === null &&
+    row.outcome === 'refused' &&
+    (row.reason === 'not_found' || row.reason === 'ambiguous')
+    ? row.reason
+    : null;
+}
+
 /** Compare the selected scan row while allowing its current policy to disappear. */
 function sameHistorySnapshot(first: RecentRow, last: RecentRow): boolean {
   const original = first as unknown as Record<string, unknown>;
@@ -117,7 +128,7 @@ export async function recentFor(
             scanId: row.id,
             at: row.at,
             outcome: row.outcome,
-            reason: null,
+            reason: passlessReason(row),
             actionLabel: 'Scan',
             title: null,
             value: null,

@@ -131,8 +131,34 @@ describe('scanner recent and summary privacy', () => {
       title: null,
       actionLabel: 'Scan',
     });
+    // An event records each role's view only up to the recorder's role (event-safe-projection),
+    // so a scan recorded at the door keeps the door's view after the scanner is raised to desk.
     expect(deskRecent.items.find((r) => r.scanId === privateScan.id)).toMatchObject({
-      title: 'Private Name',
+      title: null,
+      actionLabel: 'Private entry',
+    });
+    const deskPass = await makePass(f, {
+      orgId,
+      template: restricted.resolved,
+      personalization: { memberName: 'Desk Name', balance: 5 },
+    });
+    await run(env.DB, 'UPDATE passes SET release_id = ?, display_title = ? WHERE id = ?', [
+      restrictedRelease.id,
+      'Desk Name',
+      deskPass.id,
+    ]);
+    await recordVersion(deskPass.id);
+    const deskScanner = await makeScanner(f, {
+      orgId,
+      templateIds: [restricted.resolved.id],
+      settings: { roleWithoutSignIn: 'desk' },
+    });
+    const deskScan = await recordedAction(deskScanner, deskPass.id, 'private_entry');
+    const deskOwn = (await (await scannerGet(deskScanner.headers, '/scans')).json()) as {
+      items: Rec[];
+    };
+    expect(deskOwn.items.find((r) => r.scanId === deskScan.id)).toMatchObject({
+      title: 'Desk Name',
       actionLabel: 'Private entry',
     });
     expect(deskRecent.items.find((r) => r.scanId === contactScan.id)?.title).toBeNull();
@@ -172,9 +198,10 @@ describe('scanner recent and summary privacy', () => {
       title: null,
       actionLabel: 'Scan',
     });
+    // Policy follows the head whatever its build: the action survives, the now-hidden title does not.
     expect(unknownKeyRecent.items.find((r) => r.scanId === privateScan.id)).toMatchObject({
       title: null,
-      actionLabel: 'Scan',
+      actionLabel: 'Private entry',
     });
     const unknownKeySummary = (await (await scannerGet(scanner.headers, '/summary')).json()) as Rec;
     expect(unknownKeySummary).toMatchObject({ total: 4, ok: 4 });
@@ -244,7 +271,7 @@ describe('scanner recent and summary privacy', () => {
     });
     expect(tightenedRecent.items.find((r) => r.scanId === privateScan.id)).toMatchObject({
       title: null,
-      actionLabel: 'Scan',
+      actionLabel: 'Private entry',
     });
     const tightenedSummary = (await (await scannerGet(scanner.headers, '/summary')).json()) as Rec;
     expect(tightenedSummary).toMatchObject({ total: 4, ok: 4 });
@@ -262,7 +289,7 @@ describe('scanner recent and summary privacy', () => {
     });
     expect(differentKeyRecent.items.find((r) => r.scanId === privateScan.id)).toMatchObject({
       title: null,
-      actionLabel: 'Scan',
+      actionLabel: 'Private entry',
     });
     const differentKeySummary = (await (
       await scannerGet(scanner.headers, '/summary')

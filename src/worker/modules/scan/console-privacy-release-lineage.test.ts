@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { makeOrg, makePass, persistTemplate } from '../../../../test/helpers/index.ts';
+import { makeOrg, makePass, persistTemplate, runOne } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
@@ -89,22 +89,19 @@ describe('scan console and feed privacy', () => {
     const legacyScanner = await kit.scanner({ templateIds: [missing.id] });
     const pass = await privatePass();
     const old = await recordedCheckIn(scanner, pass.id);
+    // Events carry plain facts, no MAC: a malformed or missing role entry is what readers reject.
     const approvedTampered = await recordedCheckIn(scanner, pass.id);
-    expect(
-      await run(
-        kit.env.DB,
-        "UPDATE pass_events SET data = json_set(data, '$.authority.eventProof.mac', ?) WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
-        ['0'.repeat(64), pass.id, approvedTampered.id],
-      ),
-    ).toEqual({ changes: 1 });
-    const approvedMissingMac = await recordedCheckIn(scanner, pass.id);
-    expect(
-      await run(
-        kit.env.DB,
-        "UPDATE pass_events SET data = json_remove(data, '$.authority.eventProof.mac') WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
-        [pass.id, approvedMissingMac.id],
-      ),
-    ).toEqual({ changes: 1 });
+    await runOne(
+      kit.env.DB,
+      "UPDATE pass_events SET data = json_set(data, '$.authority.eventProjection.roles.door.action', 'tampered') WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
+      [pass.id, approvedTampered.id],
+    );
+    const approvedMissingProjection = await recordedCheckIn(scanner, pass.id);
+    await runOne(
+      kit.env.DB,
+      "UPDATE pass_events SET data = json_remove(data, '$.authority.eventProjection') WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
+      [pass.id, approvedMissingProjection.id],
+    );
     const approvedUnproven = await seedScan({
       scanner,
       passId: pass.id,
@@ -114,21 +111,17 @@ describe('scan console and feed privacy', () => {
     // The staged legacy pass keeps its genuinely issued Wallet snapshot while no scoped head exists.
     const legacy = await recordedCheckIn(legacyScanner, legacyPass.id);
     const legacyTampered = await recordedCheckIn(legacyScanner, legacyPass.id);
-    expect(
-      await run(
-        kit.env.DB,
-        "UPDATE pass_events SET data = json_set(data, '$.authority.eventProof.mac', ?) WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
-        ['0'.repeat(64), legacyPass.id, legacyTampered.id],
-      ),
-    ).toEqual({ changes: 1 });
-    const legacyMissingMac = await recordedCheckIn(legacyScanner, legacyPass.id);
-    expect(
-      await run(
-        kit.env.DB,
-        "UPDATE pass_events SET data = json_remove(data, '$.authority.eventProof.mac') WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
-        [legacyPass.id, legacyMissingMac.id],
-      ),
-    ).toEqual({ changes: 1 });
+    await runOne(
+      kit.env.DB,
+      "UPDATE pass_events SET data = json_set(data, '$.authority.eventProjection.roles.door.action', 'tampered') WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
+      [legacyPass.id, legacyTampered.id],
+    );
+    const legacyMissingProjection = await recordedCheckIn(legacyScanner, legacyPass.id);
+    await runOne(
+      kit.env.DB,
+      "UPDATE pass_events SET data = json_remove(data, '$.authority.eventProjection') WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
+      [legacyPass.id, legacyMissingProjection.id],
+    );
     const legacyUnproven = await seedScan({
       scanner: legacyScanner,
       passId: legacyPass.id,
@@ -174,26 +167,25 @@ describe('scan console and feed privacy', () => {
     const mismatch = await seedScan({ scanner, passId: pass.id, templateId: mismatchId });
     invalid.push(mismatch);
 
+    // Archived templates keep their passes: their history stays whole (issued-release rule).
     const opaque = [
-      archivedLegacy,
-      archived,
       legacyUnproven,
-      legacyMissingMac,
+      legacyMissingProjection,
       legacyTampered,
       approvedUnproven,
-      approvedMissingMac,
+      approvedMissingProjection,
       approvedTampered,
     ];
     const expected = [
       archivedLegacy.id,
       archived.id,
       legacyUnproven.id,
-      legacyMissingMac.id,
+      legacyMissingProjection.id,
       legacyTampered.id,
       legacy.id,
       passless.id,
       approvedUnproven.id,
-      approvedMissingMac.id,
+      approvedMissingProjection.id,
       approvedTampered.id,
       old.id,
     ];
@@ -279,35 +271,32 @@ describe('scan console and feed privacy', () => {
     expect(csv).toContain(new Date(passless.at).toISOString());
     expect(csv).toContain(new Date(approvedTampered.at).toISOString());
     expect(csv).toContain(new Date(approvedUnproven.at).toISOString());
-    expect(csv).toContain(new Date(approvedMissingMac.at).toISOString());
+    expect(csv).toContain(new Date(approvedMissingProjection.at).toISOString());
     expect(csv).toContain(new Date(legacy.at).toISOString());
     expect(csv).toContain(new Date(legacyTampered.at).toISOString());
-    expect(csv).toContain(new Date(legacyMissingMac.at).toISOString());
+    expect(csv).toContain(new Date(legacyMissingProjection.at).toISOString());
     expect(csv).toContain(new Date(legacyUnproven.at).toISOString());
     expect(csv).toContain(new Date(archived.at).toISOString());
     expect(csv).toContain(new Date(archivedLegacy.at).toISOString());
     expect(csv).not.toContain(new Date(mismatch.at).toISOString());
     for (const row of [
-      archived,
-      archivedLegacy,
       legacyTampered,
-      legacyMissingMac,
+      legacyMissingProjection,
       legacyUnproven,
       approvedTampered,
-      approvedMissingMac,
+      approvedMissingProjection,
       approvedUnproven,
     ]) {
       const line = csv.split('\r\n').find((item) => item.includes(new Date(row.at).toISOString()));
       expect(line).toBeDefined();
       expect(line).not.toContain('Check in');
-      expect(line).not.toContain('Archived');
       expect(line).not.toContain('Legacy eligible card');
       expect(line).not.toContain(PUBLIC);
     }
     for (const row of invalid) expect(csv).not.toContain(new Date(row.at).toISOString());
     expect(csv).not.toContain('Unavailable');
-    expect(csv).not.toContain('Archived Issued Sentinel');
-    expect(csv).not.toContain('Archived Legacy Sentinel');
+    expect(csv).toContain('Archived Issued Sentinel');
+    expect(csv).toContain('Archived Legacy Sentinel');
     expectNoSecrets(csv, pass);
     expect(await lastExportCount()).toBe(expected.length);
     const filtered = await page(`?orgId=${kit.org.id}&passId=${pass.id}&limit=1`);
@@ -316,7 +305,12 @@ describe('scan console and feed privacy', () => {
     const keyFiltered = await page(`?passId=${pass.id}&limit=1`, apiKey);
     expect(keyFiltered.items.map((item) => item.id)).toEqual([old.id]);
     expect(keyFiltered.nextCursor).toBeNull();
-    for (const hidden of [mismatch, approvedTampered, approvedMissingMac, approvedUnproven]) {
+    for (const hidden of [
+      mismatch,
+      approvedTampered,
+      approvedMissingProjection,
+      approvedUnproven,
+    ]) {
       await expectInvalidCursor(`?orgId=${kit.org.id}&passId=${pass.id}&cursor=${hidden.id}`);
       await expectInvalidCursor(`?passId=${pass.id}&cursor=${hidden.id}`, apiKey);
     }
@@ -333,7 +327,7 @@ describe('scan console and feed privacy', () => {
     expect(filteredCsv).not.toContain(new Date(mismatch.at).toISOString());
     expect(filteredCsv).not.toContain(new Date(approvedTampered.at).toISOString());
     expect(filteredCsv).not.toContain(new Date(approvedUnproven.at).toISOString());
-    expect(filteredCsv).not.toContain(new Date(approvedMissingMac.at).toISOString());
+    expect(filteredCsv).not.toContain(new Date(approvedMissingProjection.at).toISOString());
     expect(await lastExportCount()).toBe(1);
     const legacyFiltered = await page(`?orgId=${kit.org.id}&passId=${legacyPass.id}&limit=1`);
     expect(legacyFiltered.items.map((item) => item.id)).toEqual([legacy.id]);
@@ -341,7 +335,7 @@ describe('scan console and feed privacy', () => {
     const legacyKeyFiltered = await page(`?passId=${legacyPass.id}&limit=1`, apiKey);
     expect(legacyKeyFiltered.items.map((item) => item.id)).toEqual([legacy.id]);
     expect(legacyKeyFiltered.nextCursor).toBeNull();
-    for (const hidden of [legacyTampered, legacyMissingMac, legacyUnproven]) {
+    for (const hidden of [legacyTampered, legacyMissingProjection, legacyUnproven]) {
       await expectInvalidCursor(`?orgId=${kit.org.id}&passId=${legacyPass.id}&cursor=${hidden.id}`);
       await expectInvalidCursor(`?passId=${legacyPass.id}&cursor=${hidden.id}`, apiKey);
     }
@@ -356,9 +350,18 @@ describe('scan console and feed privacy', () => {
     ).toHaveLength(2);
     expect(legacyCsv).toContain(new Date(legacy.at).toISOString());
     expect(await lastExportCount()).toBe(1);
-    for (const value of ['Archived Issued Sentinel', 'Archived Legacy Sentinel']) {
+    for (const [value, row] of [
+      ['Archived Issued Sentinel', archived],
+      ['Archived Legacy Sentinel', archivedLegacy],
+    ] as const) {
       const query = encodeURIComponent(value);
-      expect((await page(`?orgId=${kit.org.id}&q=${query}`)).items).toEqual([]);
+      expect((await page(`?orgId=${kit.org.id}&q=${query}`)).items.map((item) => item.id)).toEqual([
+        row.id,
+      ]);
+      expect(await (await get(`/${row.id}`)).json()).toMatchObject({
+        passTitle: value,
+        actionLabel: 'Check in',
+      });
       const searched = await get(exportPath(`&q=${query}`));
       expect(searched.status).toBe(200);
       expect(
@@ -366,8 +369,8 @@ describe('scan console and feed privacy', () => {
           .replace(/^\uFEFF/, '')
           .trimEnd()
           .split('\r\n'),
-      ).toHaveLength(1);
-      expect(await lastExportCount()).toBe(0);
+      ).toHaveLength(2);
+      expect(await lastExportCount()).toBe(1);
     }
   });
 });

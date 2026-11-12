@@ -31,7 +31,8 @@ import { key, ORIGIN, proofedScanActor, setupScanKit } from './test-kit.ts';
 const OLD_EMAIL = 'first-holder-transfer@example.test';
 const NEW_EMAIL = 'next-holder-transfer@example.test';
 const TITLE = 'Alex Morgan';
-const SCANNER = 'Transfer history north entrance';
+// Short enough that the display's history row shows it whole.
+const SCANNER = 'Transfer north door';
 
 describe('provider-backed transfer and scanner history', () => {
   it('fences captured and historical pass output while pending and never revives the old signed generation', async () => {
@@ -139,19 +140,19 @@ describe('provider-backed transfer and scanner history', () => {
       "SELECT data FROM pass_events WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
       [pass.id, scanId],
     );
-    if (!event) throw new Error('The check-in must have a signed pass event.');
+    if (!event) throw new Error('The check-in must have its pass event.');
     const proof = JSON.parse(event.data) as {
       authority: {
         credentialGeneration: number;
         noPendingTransfer: boolean;
-        eventProof: { mac: string };
       };
     };
     expect(proof.authority).toMatchObject({
       credentialGeneration: pass.credentialGeneration,
       noPendingTransfer: true,
     });
-    expect(proof.authority.eventProof.mac).toMatch(/^[0-9a-f]{64}$/);
+    // Plain event-time facts: the event carries no MAC.
+    expect(proof.authority).not.toHaveProperty('eventProof');
     expect(event.data).not.toContain(TITLE);
     expect(event.data).not.toContain(OLD_EMAIL);
     const captured = (await getScanRow(db, scanId, kit.clock.now(), 'live'))?.eventProof;

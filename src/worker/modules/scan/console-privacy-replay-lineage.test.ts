@@ -31,7 +31,8 @@ import { codeOf, DAY, key } from './test-kit.ts';
 setupPrivacyKit();
 
 describe('idempotent scanner replay privacy', () => {
-  it('does not commit a scan on a pinned pass under an incompatible approved release', async () => {
+  // Policy follows the head whatever its build; the pass keeps its own release for content.
+  it('admits a pinned pass under an incompatible approved release with its own display', async () => {
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const pass = await privatePass();
     const pinned = await kit.registry.resolve(templateId, 'v1');
@@ -61,52 +62,27 @@ describe('idempotent scanner replay privacy', () => {
       clientTs: kit.clock.now(),
       actionId: 'check_in',
     };
-    const effects = async () => ({
-      pass: await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id]),
-      gates: await all(kit.env.DB, 'SELECT * FROM scan_gates WHERE pass_id = ?', [pass.id]),
-      scans: await all(kit.env.DB, 'SELECT * FROM scans WHERE pass_id = ?', [pass.id]),
-      ledger: await all(
-        kit.env.DB,
-        "SELECT * FROM pass_events WHERE pass_id = ? AND kind LIKE 'scan.%'",
-        [pass.id],
-      ),
-      audit: await all(
-        kit.env.DB,
-        "SELECT * FROM audit_log WHERE org_id = ? AND action LIKE 'scan.%'",
-        [kit.org.id],
-      ),
+    const response = await kit.post(scanner.headers, '/actions', request);
+    expect(response.status).toBe(200);
+    const outcome: ScanOutcome = await response.json();
+    ScanOutcomeSchema.parse(outcome);
+    expect(outcome).toMatchObject({
+      kind: 'ok',
+      replay: false,
+      action: { id: 'check_in' },
+      display: { templateVersion: 'v1', identity: { holder: PUBLIC } },
     });
-    const before = await effects();
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const response = await kit.post(scanner.headers, '/actions', request);
-      expect(response.status).toBe(200);
-      const outcome: ScanOutcome = await response.json();
-      ScanOutcomeSchema.parse(outcome);
-      expect(outcome).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        scanId: null,
-        replay: false,
-        display: null,
-        card: null,
-        action: null,
-        template: null,
-        previous: null,
-        undoUntil: null,
-      });
-      expectNoSecrets(outcome, pass);
-      expect(JSON.stringify(outcome)).not.toContain(PUBLIC);
-      expect(JSON.stringify(outcome)).not.toContain('Incompatible current display sentinel');
-      expect(JSON.stringify(outcome)).not.toContain(pass.id);
-      expect(await effects()).toEqual(before);
-      expect(
-        await first(
-          kit.env.DB,
-          'SELECT id FROM scans WHERE actor_key = ? AND idempotency_key = ?',
-          [`s:${scanner.id}`, request.idempotencyKey],
-        ),
-      ).toBeNull();
-    }
+    expectNoSecrets(outcome, pass);
+    expect(JSON.stringify(outcome)).not.toContain('Incompatible current display sentinel');
+    const again = await kit.post(scanner.headers, '/actions', request);
+    expect(again.status).toBe(200);
+    expect(await again.json()).toMatchObject({ scanId: outcome.scanId, replay: true });
+    expect(
+      await all(kit.env.DB, 'SELECT id FROM scans WHERE actor_key = ? AND idempotency_key = ?', [
+        `s:${scanner.id}`,
+        request.idempotencyKey,
+      ]),
+    ).toEqual([{ id: outcome.scanId }]);
   });
 
   it.each(['live', 'test'] as const)(
@@ -364,9 +340,8 @@ describe('idempotent scanner replay privacy', () => {
     }
     const before = await replayEffects(pass);
     const receipt = await replay(send);
-    if (
-      ['accepted templates', 'mode', 'organization', 'quarantined', 'hard-deleted'].includes(change)
-    ) {
+    // A hard-deleted pass leaves retained history like a soft delete: a receipt without pass data.
+    if (['accepted templates', 'mode', 'organization', 'quarantined'].includes(change)) {
       expectMasked(receipt, original, pass);
     } else {
       expectRedactedReceipt(receipt, original, pass);

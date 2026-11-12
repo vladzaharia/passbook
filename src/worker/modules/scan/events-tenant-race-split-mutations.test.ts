@@ -40,7 +40,7 @@ beforeEach(() => {
     secondaryTemplate,
   } = race);
 });
-const { admittedPass, atEventCommit, atEventRead, call, state, withMutableKeyset } = race;
+const { atEventCommit, atEventRead, call, state, withMutableKeyset } = race;
 
 describe('event mutation response', () => {
   it.each(['membership', 'session'] as const)(
@@ -73,8 +73,13 @@ describe('event mutation response', () => {
           [eventId],
         ),
       ).toEqual({ name: 'Committed', expected: null, expected_at: null });
+      // The file shares one database across tests: count this event's audit only.
       expect(
-        await all(env.DB, "SELECT id FROM audit_log WHERE action = 'scan_event.update'"),
+        await all(
+          env.DB,
+          "SELECT id FROM audit_log WHERE action = 'scan_event.update' AND target_id = ?",
+          [eventId],
+        ),
       ).toHaveLength(1);
     },
   );

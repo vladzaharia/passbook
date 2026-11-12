@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg, runOne } from '../../../../test/helpers/index.ts';
-import { first, run } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
 import { recordedCheckIn, recordedNoMatch } from './console-privacy-actions-test-fixtures.ts';
 import {
   expectNoSecrets,
@@ -38,12 +38,10 @@ describe('scan console and feed privacy', () => {
                 const result = await target.all();
                 if (intercepted === 0) {
                   intercepted++;
-                  expect(
-                    await run(db, 'UPDATE scanners SET org_id = ? WHERE id = ?', [
-                      other.id,
-                      scanner.id,
-                    ]),
-                  ).toEqual({ changes: 1 });
+                  await runOne(db, 'UPDATE scanners SET org_id = ? WHERE id = ?', [
+                    other.id,
+                    scanner.id,
+                  ]);
                 }
                 return result;
               };

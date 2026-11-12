@@ -164,7 +164,13 @@ describe('scanner asset lineage', () => {
   it('does not revive an old grant after the same photo is deleted and restored', async () => {
     const { pass, grant, image, device } = await photoPass();
     await deleteMemberPhoto(jobCtxOf(kit), system, pass.id, null);
-    await putMemberPhoto(kit.ctx, system, pass.id, { png: encoded, includeInPass: true }, null);
+    await putMemberPhoto(
+      jobCtxOf(kit),
+      system,
+      pass.id,
+      { png: encoded, includeInPass: true },
+      null,
+    );
     await missing(await image(grant));
     expect((await image(await photoAssetGrantFor(kit, device, pass.id))).status).toBe(200);
   });
@@ -290,7 +296,7 @@ describe('scanner asset lineage', () => {
     ).toBe(200);
   });
 
-  it.each(['organization status', 'organization branding', 'template status'] as const)(
+  it.each(['organization status', 'organization branding'] as const)(
     'invalidates an old grant after %s goes away and back in one tick',
     async (change) => {
       const fixture = await photoPass();
@@ -298,16 +304,13 @@ describe('scanner asset lineage', () => {
       if (change === 'organization status') {
         await setOrgStatus(kit.env.DB, kit.org.id, 'suspended', now);
         await setOrgStatus(kit.env.DB, kit.org.id, 'active', now);
-      } else if (change === 'organization branding') {
+      } else {
         const row = await kit.env.DB.prepare('SELECT branding FROM orgs WHERE id = ?')
           .bind(kit.org.id)
           .first<{ branding: string }>();
         if (!row) throw new Error('Organization fixture missing');
         await setOrgBranding(kit.env.DB, kit.org.id, '{"color":"#123456"}', now);
         await setOrgBranding(kit.env.DB, kit.org.id, row.branding, now);
-      } else {
-        await setTemplateStatus(kit.env.DB, template, 'archived', now);
-        await setTemplateStatus(kit.env.DB, template, 'active', now);
       }
       await missing(await fixture.image());
       expect(
@@ -317,38 +320,39 @@ describe('scanner asset lineage', () => {
     },
   );
 
-  it.each(['organization', 'template'] as const)(
-    'refuses to mint from an evaluated snapshot before a same-tick %s policy ABA',
-    async (change) => {
-      const fixture = await photoPass();
-      const actor = await assetActorFor(kit, fixture.device);
-      const evaluated = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
-      if (!evaluated) throw new Error('Pass fixture missing');
-      if (change === 'organization') {
-        await setOrgStatus(kit.env.DB, kit.org.id, 'suspended', kit.clock.now());
-        await setOrgStatus(kit.env.DB, kit.org.id, 'active', kit.clock.now());
-      } else {
-        await setTemplateStatus(kit.env.DB, template, 'archived', kit.clock.now());
-        await setTemplateStatus(kit.env.DB, template, 'active', kit.clock.now());
-      }
-      await expect(
-        mintAssetGrant(
-          kit.ctx,
-          actor,
-          evaluated,
-          evaluated.connectionGeneration,
-          evaluated.activeTemplateVersion,
-          undefined,
-          false,
-          'commit',
-        ),
-      ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
-      expect(
-        (await fixture.image(await photoAssetGrantFor(kit, fixture.device, fixture.pass.id)))
-          .status,
-      ).toBe(200);
-    },
-  );
+  // An archived template keeps its passes, so its status is no policy change for them.
+  it('keeps an old grant after the template status goes away and back in one tick', async () => {
+    const fixture = await photoPass();
+    const now = kit.clock.now();
+    await setTemplateStatus(kit.env.DB, template, 'archived', now);
+    expect((await fixture.image()).status).toBe(200);
+    await setTemplateStatus(kit.env.DB, template, 'active', now);
+    expect((await fixture.image()).status).toBe(200);
+  });
+
+  it('refuses to mint from an evaluated snapshot before a same-tick organization policy ABA', async () => {
+    const fixture = await photoPass();
+    const actor = await assetActorFor(kit, fixture.device);
+    const evaluated = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
+    if (!evaluated) throw new Error('Pass fixture missing');
+    await setOrgStatus(kit.env.DB, kit.org.id, 'suspended', kit.clock.now());
+    await setOrgStatus(kit.env.DB, kit.org.id, 'active', kit.clock.now());
+    await expect(
+      mintAssetGrant(
+        kit.ctx,
+        actor,
+        evaluated,
+        evaluated.connectionGeneration,
+        evaluated.activeTemplateVersion,
+        undefined,
+        false,
+        'commit',
+      ),
+    ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
+    expect(
+      (await fixture.image(await photoAssetGrantFor(kit, fixture.device, fixture.pass.id))).status,
+    ).toBe(200);
+  });
 
   it('binds connection generation even when the connection is restored', async () => {
     const device = await kit.scanner({ templateIds: [template] });

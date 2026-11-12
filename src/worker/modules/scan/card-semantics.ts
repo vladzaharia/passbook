@@ -1,4 +1,5 @@
 import { conditionInputs } from '../../../passkit/template/expr.ts';
+import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import { passFields } from '../../../passkit/template/scan-display/scope.ts';
 import { parseParts, pathTokens } from '../../../passkit/template/scan-display/text.ts';
 import type { Json } from '../../../passkit/types.ts';
@@ -52,8 +53,13 @@ export function visibleSource(
   input: string,
   privacy: CardPrivacy = cardPrivacy(found, actor),
 ): boolean {
-  if (!sourcePolicyProven(found, actor) || !scanInputVisible(found, actor, input)) return false;
-  let value: unknown = found.pass.personalization;
+  if (!sourcePolicyProven(found, actor)) return false;
+  // Issuance stores raw input and a binding reads it after defaults; the x-scan policy and the
+  // card-value policy (which denies every hidden default) still decide.
+  const personalization = applyDefaults(found.template.manifest, found.pass.personalization);
+  const resolved = { ...found, pass: { ...found.pass, personalization } };
+  if (!scanInputVisible(resolved, actor, input)) return false;
+  let value: unknown = personalization;
   for (const key of input.split('.')) {
     const object = record(value);
     if (privateKey(key) || !privacy.safe(key) || !Object.hasOwn(object, key)) return false;

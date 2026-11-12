@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { makeSession, makeUser, runOne } from '../../../../test/helpers/index.ts';
 import { ScanRecordSchema } from '../../../shared/contracts/scanners.ts';
 import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { updatePass } from '../passes/service.ts';
@@ -391,20 +392,24 @@ describe('scan console and feed privacy', () => {
       expect(baseline.items.map((item) => item.id)).toEqual([tampered.id, missing.id, original.id]);
       expect(baseline.items.every((item) => item.passTitle === PUBLIC)).toBe(true);
     }
-    expect(
-      await run(
-        kit.env.DB,
-        "UPDATE pass_events SET data = json_remove(data, '$.authority.eventProjection.roles.manager.titleHash') WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
-        [pass.id, missing.id],
-      ),
-    ).toEqual({ changes: 1 });
-    expect(
-      await run(
-        kit.env.DB,
-        "UPDATE pass_events SET data = json_set(data, '$.authority.eventProjection.roles.manager.titleHash', ?) WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?",
-        ['tampered-title-commitment', pass.id, tampered.id],
-      ),
-    ).toEqual({ changes: 1 });
+    // Without MACs each role's entry stands alone: the manager reads its own entry, the
+    // read-only viewer the door's. Break both readers' title commitments.
+    await runOne(
+      kit.env.DB,
+      `UPDATE pass_events SET data = json_remove(data,
+        '$.authority.eventProjection.roles.door.titleHash',
+        '$.authority.eventProjection.roles.manager.titleHash')
+      WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?`,
+      [pass.id, missing.id],
+    );
+    await runOne(
+      kit.env.DB,
+      `UPDATE pass_events SET data = json_set(data,
+        '$.authority.eventProjection.roles.door.titleHash', ?,
+        '$.authority.eventProjection.roles.manager.titleHash', ?)
+      WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?`,
+      ['tampered-title-commitment', 'tampered-title-commitment', pass.id, tampered.id],
+    );
     for (const headers of [admin, viewerHeaders]) {
       const history = await page(`?orgId=${kit.org.id}`, headers);
       for (const id of [missing.id, tampered.id])
@@ -420,8 +425,9 @@ describe('scan console and feed privacy', () => {
     }
 
     const changedTitle = 'Updated public guest';
+    // A system edit republishes the pass: a job write.
     await updatePass(
-      kit.ctx,
+      jobCtxOf(kit),
       { type: 'system', id: null },
       pass.id,
       { input: { memberName: changedTitle } },

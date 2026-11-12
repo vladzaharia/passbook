@@ -12,7 +12,9 @@ export async function recordWalletVersion(id: string) {
         '$.teamIdentifier', si.team_identifier), 'create', ?
     FROM passes p JOIN template_versions tv ON tv.template_id=p.template_id AND tv.version=p.template_version
       JOIN signing_identities si ON si.id=p.identity_id
-    WHERE p.id=?`,
+    WHERE p.id=?
+    ON CONFLICT(pass_id,version) DO UPDATE SET template_version=excluded.template_version,
+      personalization=excluded.personalization, pass_json=excluded.pass_json`,
     [kit.clock.now(), id],
   );
 }

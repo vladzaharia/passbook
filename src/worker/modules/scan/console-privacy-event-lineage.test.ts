@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
-import { makeSession, makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
+import { makeSession, makeUser, persistTemplate, runOne } from '../../../../test/helpers/index.ts';
 import { ScanRecordSchema } from '../../../shared/contracts/scanners.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -330,14 +330,12 @@ describe('scan console and feed privacy', () => {
               }),
               row.id,
             ];
-      expect(
-        await run(
-          kit.env.DB,
-          `UPDATE pass_events SET data = ${sql} WHERE json_valid(data)
+      await runOne(
+        kit.env.DB,
+        `UPDATE pass_events SET data = ${sql} WHERE json_valid(data)
           AND json_extract(data, '$.scanId') = ?`,
-          args,
-        ),
-      ).toEqual({ changes: 1 });
+        args,
+      );
 
       const detailResponse = await get(`/${row.id}`);
       expect(detailResponse.status).toBe(200);
@@ -370,6 +368,8 @@ describe('scan console and feed privacy', () => {
         [],
       );
 
+      // An event without a usable role projection is no record for any surface: the key sees the
+      // row but neither its pass nor its action.
       const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
       const feed = await page('', apiKey);
       expect(feed.items).toHaveLength(1);

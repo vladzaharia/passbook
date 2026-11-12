@@ -15,7 +15,9 @@ import {
 import { key } from './test-kit.ts';
 
 export function registerRetentionOccupancyTests() {
-  it('never captures an altered gate as historical occupancy', async () => {
+  // Event occupancy is the event presence row, independent of the action gate (0041 capture
+  // trigger): an altered gate alone keeps the signed admission; the next case alters presence.
+  it('keeps occupancy held by an unchanged event presence when only the action gate is altered', async () => {
     const s = await scenario();
     await run(kit.env.DB, "UPDATE scan_gates SET state='out' WHERE pass_id=?", [s.pass.id]);
     await hardDelete(s.pass);
@@ -23,8 +25,8 @@ export function registerRetentionOccupancyTests() {
       await first(kit.env.DB, 'SELECT scan_id FROM scan_retained_gates WHERE scan_id=?', [
         s.scanId,
       ]),
-    ).toBeNull();
-    expect(await scopedCount(kit.org.id, s.event.id)).toBe(0);
+    ).toEqual({ scan_id: s.scanId });
+    expect(await scopedCount(kit.org.id, s.event.id)).toBe(1);
     expect(
       (
         await readVerifiedScanRetentionProofs(kit.env.DB, kit.env, { mode: 'live' }, [s.scanId])

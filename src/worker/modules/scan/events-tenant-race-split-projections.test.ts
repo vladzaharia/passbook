@@ -44,6 +44,10 @@ describe('final event count projections', () => {
               ]);
             } else {
               if (!other) throw new Error('Missing foreign tenant.');
+              // A device binding names the scanner's org; it must go before the scanner can move.
+              await run(db, 'DELETE FROM scanning_devices WHERE scanner_id=?', [
+                attachedScanner.id,
+              ]);
               await run(db, 'UPDATE scanners SET org_id=? WHERE id=?', [
                 other.id,
                 attachedScanner.id,

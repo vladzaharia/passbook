@@ -160,7 +160,7 @@ describe('card last-scan privacy', () => {
                 if (changed === 'receipt') {
                   await run(
                     real,
-                    `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProof')
+                    `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProjection')
                   WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
                     [pass.id, scanId],
                   );

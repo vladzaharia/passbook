@@ -10,13 +10,14 @@ import {
   atCountBatch,
   freshFixture,
   insertExistingReference,
+  LEDGER_COUNT_BATCH,
   singleton,
   withMutableScannerSecret,
 } from './repo-session-stats-authority-test-fixtures.ts';
 import { setupScanKit } from './test-kit.ts';
 
 describe('standalone scanner statistics authority', () => {
-  it('bootstraps and counts only same-session ledger-visible successes for a fresh device', async () => {
+  it('counts only same-session ledger-visible successes for a fresh device without a keyset', async () => {
     const f = await freshFixture();
     const scanner = await makeScanner(f.fx, { orgId: f.org.id });
     const peer = await makeScanner(f.fx, { orgId: f.org.id });
@@ -70,6 +71,8 @@ describe('standalone scanner statistics authority', () => {
       f.env,
       () => f.request('/scan/stats', scanner.headers),
       async () => {},
+      undefined,
+      LEDGER_COUNT_BATCH,
     );
     expect(result.status).toBe(200);
     expect(ScanCountsSchema.parse(await result.json())).toMatchObject({
@@ -85,7 +88,8 @@ describe('standalone scanner statistics authority', () => {
           entry.sql.includes("s.outcome='ok'"),
       ),
     ).toBe(true);
-    expect(await singleton(f)).toEqual({ commitment: f.proof.credentialKeysetCommitment });
+    // A read never bootstraps the credential keyset.
+    expect(await singleton(f)).toBeNull();
     const consoleResponse = await f.request(`/scanning-sessions/${f.id}`);
     expect(consoleResponse.status).toBe(200);
     expect(ScanningSessionDetailSchema.parse(await consoleResponse.json())).toMatchObject({
@@ -116,6 +120,8 @@ describe('standalone scanner statistics authority', () => {
       kit.env,
       () => kit.get(scanner.headers, '/stats'),
       async () => {},
+      undefined,
+      LEDGER_COUNT_BATCH,
     );
     expect(result.status).toBe(200);
     expect(captured.some((entry) => entry.sql.includes('UPDATE scan_events SET expected ='))).toBe(
@@ -163,6 +169,8 @@ describe('standalone scanner statistics authority', () => {
                 scanner.id,
               ]);
           },
+          undefined,
+          LEDGER_COUNT_BATCH,
         );
       const { result } =
         change === 'csrf'
@@ -174,13 +182,13 @@ describe('standalone scanner statistics authority', () => {
     },
   );
 
-  it('returns unavailable when references survive a missing singleton', async () => {
+  it('counts when retired references survive a missing singleton, without bootstrapping', async () => {
     const f = await freshFixture();
     const scanner = await makeScanner(f.fx, { orgId: f.org.id });
     await insertExistingReference(f);
     const response = await f.request('/scan/stats', scanner.headers);
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+    expect(response.status).toBe(200);
+    expect(ScanCountsSchema.parse(await response.json())).toMatchObject({ today: 0 });
     expect(await singleton(f)).toBeNull();
   });
 });

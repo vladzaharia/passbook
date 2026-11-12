@@ -221,10 +221,12 @@ export async function finishStop(
       : null;
   if (miss && missResult) miss.throwIfCapped(missResult);
   recordResult(ctx, actor, pass?.templateId ?? null, stop.reason, pass?.mode);
-  return stopOutcome(ctx, actor, stop, read, {
+  const outcome = stopOutcome(ctx, actor, stop, read, {
     action: s.action,
     scanId: s.scanId,
     history: history ?? undefined,
     photoUrl,
   });
+  // A passless refusal answers with its recorded row's time, as its replay does.
+  return pass ? outcome : { ...outcome, at: s.claimAt };
 }

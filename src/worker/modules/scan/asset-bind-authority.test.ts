@@ -35,8 +35,9 @@ describe('asset grant D1 bind budget authority', () => {
       expect(outputBindings[0]!.sql).toContain('p.id=');
       expect(outputBindings[1]!.sql).toContain('scope.id=');
       for (const bound of bindings) expect(bound.params.length).toBeLessThan(100);
+      // Each case commits or rolls back its own address; the shared kit keeps the other's.
       const effect = kit.env.DB.prepare('UPDATE users SET primary_email = ? WHERE id = ?').bind(
-        'batch-effect@example.test',
+        `batch-effect-${allowed}@example.test`,
         f.user.id,
       );
       if (allowed) {

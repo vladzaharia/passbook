@@ -201,6 +201,7 @@ describe('scan console and feed privacy', () => {
     await run(kit.env.DB, "UPDATE scans SET outcome = 'ok', reason = NULL WHERE id = ?", [
       unprovenOrphan.id,
     ]);
+    // A pristine passless refusal is decided from its own row (no proof needed): it is history.
     const ambiguousPassless = await seedScan({ scanner, passId: null });
     await run(kit.env.DB, "UPDATE scans SET reason = 'ambiguous' WHERE id = ?", [
       ambiguousPassless.id,
@@ -215,7 +216,6 @@ describe('scan console and feed privacy', () => {
       linkedPassless.id,
     ]);
     const untrustedPassless = [
-      ambiguousPassless,
       successfulPassless,
       linkedPassless,
       await seedScan({ scanner, passId: null, actionId: 'check_in', actionKind: 'check_in' }),
@@ -260,9 +260,13 @@ describe('scan console and feed privacy', () => {
       id: `${bulkPrefix}-${index + 1}`,
       at: bulkAt,
     })).sort((a, b) => (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
-    const ordinary = [old, passless, newest, ...invalid.filter((row) => row.at !== bulkAt)].sort(
-      (a, b) => b.at - a.at,
-    );
+    const ordinary = [
+      old,
+      passless,
+      ambiguousPassless,
+      newest,
+      ...invalid.filter((row) => row.at !== bulkAt),
+    ].sort((a, b) => b.at - a.at);
     const expected = [...bulk, ...ordinary];
     const expectedIds = expected.map((row) => row.id);
     const collected: Row[] = [];
@@ -306,6 +310,7 @@ describe('scan console and feed privacy', () => {
     expect((await get(`/${sandboxRow.id}`)).status).toBe(404);
     expect((await get(`/${newest.id}`, testAdmin)).status).toBe(404);
     expect((await get(`/${passless.id}`)).status).toBe(200);
+    expect((await get(`/${ambiguousPassless.id}`)).status).toBe(200);
 
     const emptySearch = await page(`?orgId=${kit.org.id}&q=Public&limit=1`);
     expect(emptySearch.items).toEqual([]);

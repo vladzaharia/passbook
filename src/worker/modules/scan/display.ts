@@ -264,10 +264,14 @@ export function buildDisplay(ctx: ServiceContext, input: BuildDisplayInput): Sca
     if (!found.scan.display && !safeDefaultSources(found, privacy)) return identity(input, privacy);
     const configured =
       found.scan.display ?? defaultScanDisplay(found.template.manifest, found.passJson);
+    // A scanner that hides photos gets no photo slot: even an empty one names the holder in its alt.
+    const { photo: _hiddenPhoto, ...withoutPhoto } = configured;
     const doc =
-      input.photoUrl && input.actor.settings.showPhoto !== false && !configured.photo
-        ? { ...configured, photo: {} }
-        : configured;
+      input.actor.settings.showPhoto === false
+        ? withoutPhoto
+        : input.photoUrl && !configured.photo
+          ? { ...configured, photo: {} }
+          : configured;
     const authorized = authorizedDocument(
       found,
       doc,
