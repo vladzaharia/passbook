@@ -65,7 +65,10 @@ export function policyRevisionHelpers(getKit: () => ScanKit) {
     }
   }
 
-  /** Change policy immediately after the SELECT returned the original candidate. */
+  /**
+   * Change policy immediately after the original candidate row came back, whether the candidate
+   * read ran alone or inside a batch (resolve and action reads batch it with their fences).
+   */
   async function afterCandidateRead<T>(
     passId: string,
     change: (db: D1Database) => Promise<void>,
@@ -74,32 +77,52 @@ export function policyRevisionHelpers(getKit: () => ScanKit) {
     const kit = getKit();
     const real = kit.env.DB;
     let fired = false;
-    const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-      new Proxy(statement, {
+    const candidates = new WeakMap<object, D1PreparedStatement>();
+    const fire = async (rows: readonly unknown[] | undefined) => {
+      if (fired || !rows?.some((row) => (row as { id?: unknown } | null)?.id === passId)) return;
+      fired = true;
+      await change(real);
+    };
+    const wrap = (statement: D1PreparedStatement): D1PreparedStatement => {
+      const proxy = new Proxy(statement, {
         get(target, prop) {
           if (prop === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
           if (prop === 'first')
             return async () => {
-              const row = await target.first<{ id: string }>();
-              if (!fired && row?.id === passId) {
-                fired = true;
-                await change(real);
-              }
+              const row = await target.first();
+              await fire([row]);
               return row;
+            };
+          if (prop === 'all')
+            return async () => {
+              const result = await target.all();
+              await fire(result.results);
+              return result;
             };
           const value = Reflect.get(target, prop, target);
           return typeof value === 'function' ? value.bind(target) : value;
         },
       });
+      candidates.set(proxy, statement);
+      return proxy;
+    };
     const db = new Proxy(real, {
       get(target, prop) {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            return sql.includes('AS active_release_candidate_hash') &&
-              sql.includes('WHERE p.org_id = ?')
+            return sql.includes('AS active_release_candidate_hash') && sql.includes('FROM passes p')
               ? wrap(statement)
               : statement;
+          };
+        if (prop === 'batch')
+          return async (statements: D1PreparedStatement[]) => {
+            const results = await target.batch(
+              statements.map((statement) => candidates.get(statement) ?? statement),
+            );
+            for (const [index, statement] of statements.entries())
+              if (candidates.has(statement)) await fire(results[index]?.results);
+            return results;
           };
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;

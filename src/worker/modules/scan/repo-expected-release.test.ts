@@ -15,7 +15,9 @@ beforeEach(async () => {
 });
 
 describe('expected count release eligibility', () => {
-  it('counts the same version and compatible head promotions, but excludes incompatible builds', async () => {
+  // Issued-release rule: an existing pass is expected under any later head, whatever its build;
+  // archived templates keep it, a deleted template drops it.
+  it('counts an existing pass across head promotions until its template is deleted', async () => {
     const templateId = await kit.scanTemplate(
       'Count builds',
       { actions: [CHECK_IN] },
@@ -63,6 +65,10 @@ describe('expected count release eligibility', () => {
     expect(await counts()).toEqual([1, 1]);
     await stage('v4', 'different-build');
     await approveScanReleases(kit, templateId, { modes: ['live'], version: 'v4' });
+    expect(await counts()).toEqual([1, 1]);
+    await run(kit.env.DB, "UPDATE templates SET status='archived' WHERE id=?", [templateId]);
+    expect(await counts()).toEqual([1, 1]);
+    await run(kit.env.DB, "UPDATE templates SET status='deleted' WHERE id=?", [templateId]);
     expect(await counts()).toEqual([0, 0]);
   });
 

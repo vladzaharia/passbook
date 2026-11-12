@@ -66,25 +66,23 @@ describe('scanner evaluated policy revisions', () => {
     ).toBeNull();
   });
 
+  // The candidate captures the org's epochs (access and config revision), not `updated_at` stamps.
+  // An org suspended and restored moves its access revision; a template archived and restored is
+  // not authority (archived templates keep scanning), so the original read stays current.
   it.each(['organization', 'template'] as const)(
-    'fences the candidate read against a %s ABA before mint and admission',
+    'fences the candidate read only when a %s ABA moves an epoch',
     async (policy) => {
       const s = await scenario();
       const snapshot = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
       if (!snapshot?.activeTemplateVersion) throw new Error('Missing active candidate');
       const version = snapshot.activeTemplateVersion;
-      const org = await first<{ updated_at: number }>(
+      const org = await first<{ access_revision: number; config_revision: number }>(
         kit.env.DB,
-        'SELECT updated_at FROM orgs WHERE id=?',
+        'SELECT access_revision, config_revision FROM orgs WHERE id=?',
         [kit.org.id],
       );
-      const template = await first<{ updated_at: number }>(
-        kit.env.DB,
-        'SELECT updated_at FROM templates WHERE id=?',
-        [s.templateId],
-      );
-      expect(snapshot.orgRevision).toBe(org?.updated_at);
-      expect(snapshot.templateRevision).toBe(template?.updated_at);
+      expect(snapshot.orgRevision).toBe(org?.access_revision);
+      expect(snapshot.templateRevision).toBe(org?.config_revision);
       expect(
         await passSnapshotCurrent(
           kit.env.DB,
@@ -159,9 +157,41 @@ describe('scanner evaluated policy revisions', () => {
       if (!fresh?.activeTemplateVersion) throw new Error('Missing refreshed candidate');
       expect(fresh.pass).toEqual(snapshot.pass);
       expect(fresh.activeTemplateVersion).toBe(version);
-      expect(policy === 'organization' ? fresh.orgRevision : fresh.templateRevision).toBe(
-        (policy === 'organization' ? snapshot.orgRevision! : snapshot.templateRevision!) + 2,
-      );
+      expect(fresh.templateRevision).toBe(snapshot.templateRevision);
+      if (policy === 'template') {
+        expect(fresh.orgRevision).toBe(snapshot.orgRevision);
+        expect(
+          await passSnapshotCurrent(
+            kit.env.DB,
+            snapshot.pass,
+            snapshot.connectionGeneration,
+            version,
+            snapshot.orgRevision,
+            snapshot.templateRevision,
+            kit.clock.now(),
+            snapshot,
+          ),
+        ).toBe(true);
+        expect(
+          await actionPassFence(
+            kit.env.DB,
+            snapshot.pass,
+            snapshot.checkInRules,
+            snapshot.connectionGeneration,
+            version,
+            snapshot.orgRevision,
+            snapshot.templateRevision,
+            kit.clock.now(),
+            kit.env,
+            snapshot,
+          ),
+        ).not.toBeNull();
+        expect(
+          (await kit.get(s.scanner.headers, `${assetPath}${encodeURIComponent(grant)}`)).status,
+        ).toBe(200);
+        return;
+      }
+      expect(fresh.orgRevision).toBe(snapshot.orgRevision! + 2);
       expect(
         await passSnapshotCurrent(
           kit.env.DB,
@@ -374,113 +404,107 @@ describe('scanner evaluated policy revisions', () => {
   it('isolates release supersession between live and test pass snapshots', async () => {
     const s = await scenario();
     const testPass = await kit.scanPass(s.templateId, {}, { mode: 'test' });
+    const own = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
+    if (!own?.activeTemplateVersion) throw new Error('Missing scoped release');
+    const version = own.activeTemplateVersion;
+    const current = (c: NonNullable<typeof own>) =>
+      passSnapshotCurrent(
+        kit.env.DB,
+        c.pass,
+        c.connectionGeneration,
+        c.activeTemplateVersion,
+        c.orgRevision,
+        c.templateRevision,
+        kit.clock.now(),
+        c,
+      );
+    const approve = (mode: 'live' | 'test') =>
+      approveAppleRelease(kit, { templateId: s.templateId, mode, version });
+    // A newer release does not invalidate a pass read under its own issued release.
+    await approve('live');
+    await approve('test');
+    expect(await current(own)).toBe(true);
+    // Read again, each pass's policy is bound to its own mode's head.
     const live = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
     const test = await candidateById(kit.env.DB, kit.org.id, testPass.id);
-    if (!live?.activeTemplateVersion || !test?.activeReleaseVersion)
-      throw new Error('Missing scoped releases');
-    await approveAppleRelease(kit, {
-      templateId: s.templateId,
-      mode: 'test',
-      version: test.activeReleaseVersion,
-    });
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        live.pass,
-        live.connectionGeneration,
-        live.activeTemplateVersion,
-        live.orgRevision,
-        live.templateRevision,
-        kit.clock.now(),
-        live,
-      ),
-    ).toBe(true);
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        test.pass,
-        test.connectionGeneration,
-        test.activeTemplateVersion,
-        test.orgRevision,
-        test.templateRevision,
-        kit.clock.now(),
-        test,
-      ),
-    ).toBe(false);
+    if (!live || !test) throw new Error('Missing head-bound candidates');
+    expect(live.activeReleaseId).not.toBe(live.pass.releaseId);
+    expect(test.activeReleaseId).not.toBe(test.pass.releaseId);
+    expect(await current(live)).toBe(true);
+    expect(await current(test)).toBe(true);
+    await approve('test');
+    expect(await current(live)).toBe(true);
+    expect(await current(test)).toBe(false);
     const refreshedTest = await candidateById(kit.env.DB, kit.org.id, testPass.id);
-    if (!refreshedTest?.activeTemplateVersion) throw new Error('Missing refreshed test release');
-    await approveAppleRelease(kit, {
-      templateId: s.templateId,
-      mode: 'live',
-      version: live.activeTemplateVersion,
-    });
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        refreshedTest.pass,
-        refreshedTest.connectionGeneration,
-        refreshedTest.activeTemplateVersion,
-        refreshedTest.orgRevision,
-        refreshedTest.templateRevision,
-        kit.clock.now(),
-        refreshedTest,
-      ),
-    ).toBe(true);
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        live.pass,
-        live.connectionGeneration,
-        live.activeTemplateVersion,
-        live.orgRevision,
-        live.templateRevision,
-        kit.clock.now(),
-        live,
-      ),
-    ).toBe(false);
+    if (!refreshedTest) throw new Error('Missing refreshed test release');
+    await approve('live');
+    expect(await current(refreshedTest)).toBe(true);
+    expect(await current(live)).toBe(false);
   });
 
-  for (const policy of ['organization', 'template'] as const) {
-    for (const route of ['resolve', 'lookup', 'actions'] as const) {
-      it(`does not expose or act on a candidate after a ${policy} ABA in ${route}`, async () => {
-        const s = await scenario();
-        const response = await afterCandidateRead(
-          s.pass.id,
-          (db) => changeAwayAndBack(db, policy, s.templateId),
-          () =>
-            kit.post(
-              s.scanner.headers,
-              `/${route}`,
-              route === 'lookup'
-                ? { q: s.pass.id }
-                : { ...requestOf(s.pass.id), ...(route === 'actions' ? { actionId: 'auto' } : {}) },
-            ),
-        );
-        expect(response.status).toBe(200);
-        const text = await response.text();
-        expect(text).not.toContain(s.pass.id);
-        expect(text).not.toContain('Revision Private Person');
-        if (route === 'lookup') expect(JSON.parse(text)).toEqual({ items: [], more: false });
-        else
-          expect(JSON.parse(text)).toMatchObject({
-            kind: 'refused',
-            reason: 'not_found',
-            card: null,
-            display: null,
-          });
-        expect(
-          await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [s.pass.id]),
-        ).toHaveLength(0);
-        expect(
-          await all(
-            kit.env.DB,
-            "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'",
-            [s.pass.id],
-          ),
-        ).toHaveLength(0);
-      });
-    }
+  const ledgerOf = async (passId: string) => ({
+    gates: (await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [passId]))
+      .length,
+    events: (
+      await all(kit.env.DB, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
+        passId,
+      ])
+    ).length,
+  });
+  const post = (s: Awaited<ReturnType<typeof scenario>>, route: string) =>
+    kit.post(
+      s.scanner.headers,
+      `/${route}`,
+      route === 'lookup'
+        ? { q: s.pass.id }
+        : { ...requestOf(s.pass.id), ...(route === 'actions' ? { actionId: 'auto' } : {}) },
+    );
 
+  // Suspending and restoring the org moves its access revision: the read fences refuse the original read.
+  for (const route of ['resolve', 'lookup', 'actions'] as const) {
+    it(`does not expose or act on a candidate after an organization ABA in ${route}`, async () => {
+      const s = await scenario();
+      const response = await afterCandidateRead(
+        s.pass.id,
+        (db) => changeAwayAndBack(db, 'organization', s.templateId),
+        () => post(s, route),
+      );
+      expect(response.status).toBe(200);
+      const text = await response.text();
+      expect(text).not.toContain(s.pass.id);
+      expect(text).not.toContain('Revision Private Person');
+      if (route === 'lookup') expect(JSON.parse(text)).toEqual({ items: [], more: false });
+      else
+        expect(JSON.parse(text)).toMatchObject({
+          kind: 'refused',
+          reason: 'not_found',
+          card: null,
+          display: null,
+        });
+      expect(await ledgerOf(s.pass.id)).toEqual({ gates: 0, events: 0 });
+    });
+  }
+
+  // Archiving and restoring the template moves no epoch, and archived templates keep scanning.
+  for (const route of ['resolve', 'lookup', 'actions'] as const) {
+    it(`exposes and acts on a candidate after a template ABA in ${route}`, async () => {
+      const s = await scenario();
+      const response = await afterCandidateRead(
+        s.pass.id,
+        (db) => changeAwayAndBack(db, 'template', s.templateId),
+        () => post(s, route),
+      );
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { items?: unknown[]; kind?: string };
+      if (route === 'lookup') expect(body.items).toMatchObject([{ passId: s.pass.id }]);
+      else expect(body).toMatchObject({ kind: route === 'resolve' ? 'ready' : 'ok' });
+      expect(await ledgerOf(s.pass.id)).toEqual(
+        route === 'actions' ? { gates: 1, events: 1 } : { gates: 0, events: 0 },
+      );
+    });
+  }
+
+  for (const policy of ['organization', 'template'] as const) {
     for (const kind of ['inactive', 'mode mismatch'] as const) {
       for (const route of ['resolve', 'actions'] as const) {
         it(`does not disclose or commit a ${kind} stop after a ${policy} ABA in ${route}`, async () => {
@@ -490,34 +514,36 @@ describe('scanner evaluated policy revisions', () => {
           const response = await afterCandidateRead(
             s.pass.id,
             (db) => changeAwayAndBack(db, policy, s.templateId),
-            () =>
-              kit.post(s.scanner.headers, `/${route}`, {
-                ...requestOf(s.pass.id),
-                ...(route === 'actions' ? { actionId: 'auto' } : {}),
-              }),
+            () => post(s, route),
           );
           expect(response.status).toBe(200);
           const text = await response.text();
+          // Cross-mode detection is a bare refusal; a voided pass under an unchanged org is refused as such.
+          const reason =
+            kind === 'mode mismatch'
+              ? 'test_pass'
+              : policy === 'organization'
+                ? 'not_found'
+                : 'voided';
           expect(JSON.parse(text)).toMatchObject({
             kind: 'refused',
-            reason: 'not_found',
+            reason,
             card: null,
             display: null,
           });
           expect(text).not.toContain(s.pass.id);
-          expect(
-            await all(
-              kit.env.DB,
-              "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'",
-              [s.pass.id],
-            ),
-          ).toHaveLength(0);
+          expect(text).not.toContain('Revision Private Person');
+          // An action on a pass that resolved is a fact: its refusal is logged, as without the ABA.
+          const events = route === 'actions' && reason === 'voided' ? 1 : 0;
+          expect(await ledgerOf(s.pass.id)).toEqual({ gates: 0, events });
         });
       }
     }
 
+    // The scan grant checks a scanner's org by its status at commit (authority-epochs.md F5), and a
+    // template's status is not authority; the commit is a fact and its result is returned.
     for (const phase of ['before', 'after'] as const) {
-      it(`${phase === 'before' ? 'blocks the gate' : 'withholds output'} after a ${policy} ABA ${phase} commit`, async () => {
+      it(`commits through a ${policy} ABA ${phase} the gate`, async () => {
         const s = await scenario();
         const request = { ...requestOf(s.pass.id), actionId: 'auto' };
         const response = await atGate(
@@ -525,29 +551,30 @@ describe('scanner evaluated policy revisions', () => {
           (db) => changeAwayAndBack(db, policy, s.templateId),
           () => kit.post(s.scanner.headers, '/actions', request),
         );
-        const text = await response.text();
-        expect(text).not.toContain(s.pass.id);
-        expect(text).not.toContain('Revision Private Person');
-        const gates = await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [
-          s.pass.id,
-        ]);
-        const ledger = await all(
-          kit.env.DB,
-          "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'",
-          [s.pass.id],
-        );
-        if (phase === 'before') {
-          expect(response.status).toBe(200);
-          expect(JSON.parse(text)).toMatchObject({ kind: 'refused', reason: 'not_found' });
-          expect(gates).toHaveLength(0);
-          expect(ledger).toHaveLength(0);
-        } else {
-          expect(response.status).toBe(409);
-          expect(JSON.parse(text)).toMatchObject({ code: 'SCAN_UNCONFIRMED' });
-          expect(gates).toHaveLength(1);
-          expect(ledger).toHaveLength(1);
-        }
+        expect(response.status).toBe(200);
+        expect(await response.json()).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
+        expect(await ledgerOf(s.pass.id)).toEqual({ gates: 1, events: 1 });
       });
     }
   }
+
+  it('refuses the gate when the organization is suspended before commit', async () => {
+    const s = await scenario();
+    const request = { ...requestOf(s.pass.id), actionId: 'auto' };
+    const response = await atGate(
+      'before',
+      (db) => run(db, "UPDATE orgs SET status='suspended' WHERE id=?", [kit.org.id]).then(() => {}),
+      () => kit.post(s.scanner.headers, '/actions', request),
+    );
+    try {
+      const text = await response.text();
+      expect(`${response.status} ${(JSON.parse(text) as { code?: string }).code}`).toBe(
+        '403 ORG_ACCESS_CHANGED',
+      );
+      expect(text).not.toContain('Revision Private Person');
+      expect(await ledgerOf(s.pass.id)).toEqual({ gates: 0, events: 0 });
+    } finally {
+      await run(kit.env.DB, "UPDATE orgs SET status='active' WHERE id=?", [kit.org.id]);
+    }
+  });
 });

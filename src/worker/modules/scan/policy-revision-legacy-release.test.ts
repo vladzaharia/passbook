@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { makePass, materializeTemplateAssets } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { actionPassFence, passSnapshotCurrent } from './repo-pass-authority.ts';
@@ -14,6 +15,8 @@ const { persistLegacyWallet, afterCandidateRead, atGate, requestOf } = policyRev
 );
 beforeAll(async () => {
   kit = await setupScanKit();
+  // Candidate reads join the credential keyset; the first scan would bootstrap it.
+  await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
 
 describe('scanner evaluated policy revisions', () => {
@@ -101,7 +104,8 @@ describe('scanner evaluated policy revisions', () => {
   });
 
   it.each([true, false])(
-    'fences a legacy pass against a newer approved build (compatible=%s)',
+    // Policy comes from the head whatever its build; only display falls back to the pinned version.
+    'applies a newer approved head to a legacy pass (compatible build=%s)',
     async (compatible) => {
       const baseId = await kit.scanTemplate(
         'Legacy build base',
@@ -189,25 +193,19 @@ describe('scanner evaluated policy revisions', () => {
         kit.env,
         candidate,
       );
-      if (compatible) expect(fence).not.toBeNull();
-      else expect(fence).toBeNull();
+      expect(candidate.displayTemplateVersion).toBe(compatible ? active.version : null);
+      expect(fence).not.toBeNull();
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const response = await kit.post(scanner.headers, '/actions', {
         ...requestOf(pass.id),
         actionId: 'auto',
       });
-      const result = await response.json();
-      if (compatible) expect(result).toMatchObject({ kind: 'ok' });
-      else {
-        expect(result).toMatchObject({ kind: 'refused', reason: 'not_found' });
-        expect(
-          await all(
-            kit.env.DB,
-            "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'",
-            [pass.id],
-          ),
-        ).toHaveLength(0);
-      }
+      expect(await response.json()).toMatchObject({ kind: 'ok' });
+      expect(
+        await all(kit.env.DB, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
+          pass.id,
+        ]),
+      ).toHaveLength(1);
     },
   );
 
@@ -286,8 +284,9 @@ describe('scanner evaluated policy revisions', () => {
     ).toHaveLength(0);
   });
 
+  // A release is content at commit (authority-epochs.md F4): the scan grant does not ask for the head.
   for (const phase of ['before', 'after'] as const) {
-    it(`${phase === 'before' ? 'blocks' : 'withholds'} a legacy action when its first head appears ${phase} the gate`, async () => {
+    it(`admits a legacy action when its first head appears ${phase} the gate`, async () => {
       const templateId = await kit.scanTemplate(
         'Legacy gate race',
         { actions: [CHECK_IN] },
@@ -309,27 +308,19 @@ describe('scanner evaluated policy revisions', () => {
         },
         () => kit.post(scanner.headers, '/actions', { ...requestOf(pass.id), actionId: 'auto' }),
       );
-      const text = await response.text();
-      expect(text).not.toContain(pass.id);
-      const gates = await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [
-        pass.id,
-      ]);
-      const ledger = await all(
-        kit.env.DB,
-        "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'",
-        [pass.id],
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
+      expect(
+        await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [pass.id]),
+      ).toHaveLength(1);
+      expect(
+        await all(kit.env.DB, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
+          pass.id,
+        ]),
+      ).toHaveLength(1);
+      expect((await candidateById(kit.env.DB, kit.org.id, pass.id))?.activeReleaseId).toEqual(
+        expect.any(String),
       );
-      if (phase === 'before') {
-        expect(response.status).toBe(200);
-        expect(JSON.parse(text)).toMatchObject({ kind: 'refused', reason: 'not_found' });
-        expect(gates).toHaveLength(0);
-        expect(ledger).toHaveLength(0);
-      } else {
-        expect(response.status).toBe(409);
-        expect(JSON.parse(text)).toMatchObject({ code: 'SCAN_UNCONFIRMED' });
-        expect(gates).toHaveLength(1);
-        expect(ledger).toHaveLength(1);
-      }
     });
   }
 });

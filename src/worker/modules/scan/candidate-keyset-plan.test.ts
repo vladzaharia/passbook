@@ -1,8 +1,12 @@
 import { expect, it, vi } from 'vitest';
+import {
+  installKeysetTestEnv,
+  tombstoneWithoutKeyset,
+} from '../../../../test/helpers/credential-keyset.ts';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import { first, run } from '../../platform/db.ts';
-import { sha256Hex } from '../../platform/ids.ts';
-import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { withKitDatabase } from '../passes/pass-test-fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { credentialTombstoneRefsForInput, scanCredentialKeys } from './credential-input.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
@@ -25,8 +29,12 @@ import { scanSecretSlots } from './repo-secret-binds.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import { makeLegacyScanPass, proofedScanActor, setupScanKit } from './test-kit.ts';
 
+// The keyset is immutable once set and storage is per file: every case needs a fresh database.
+const makeEnv = installKeysetTestEnv();
+
 async function fixture(expiresIn?: number) {
-  const kit = await setupScanKit();
+  const env = await makeEnv();
+  const kit = await withKitDatabase(env.DB, setupScanKit);
   const templateId = await kit.scanTemplate('Candidate keyset plan', {
     actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
   });
@@ -212,6 +220,8 @@ it('rechecks a same-mode observed input match, including a pending transfer', as
       wrongMode.params,
     ),
   ).toEqual({ matches: 0 });
+  // A transfer reserves provider placeholders under the keyset (0043), so it needs one.
+  await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   await stagePendingCredentialTransfer(kit.env.DB, pass.id, {
     id: kit.fx.ids.id(),
     token: kit.fx.ids.token(),
@@ -496,28 +506,9 @@ it('does not initialize after a denied new-claim guard', async () => {
 });
 
 it('does not bootstrap a missing keyset over retained credential references', async () => {
-  const { kit, pass, actor, input, refs } = await fixture();
-  const transferId = kit.fx.ids.id();
-  await stagePendingCredentialTransfer(kit.env.DB, pass.id, {
-    id: transferId,
-    token: kit.fx.ids.token(),
-    now: kit.clock.now(),
-  });
-  const ref = await credentialTombstoneRef(
-    kit.env,
-    actor.orgId,
-    actor.mode,
-    await sha256Hex(pass.serial),
-  );
-  const inserted = await run(
-    kit.env.DB,
-    `INSERT INTO pass_credential_tombstones
-    (pass_id, org_id, mode, credential_generation, credential_kind, credential_hash, retired_at)
-    SELECT pass_id, org_id, mode, source_generation, 'serial', ?, ?
-    FROM pass_credential_transfers WHERE id=?`,
-    [ref, kit.clock.now(), transferId],
-  );
-  expect(inserted.changes).toBe(1);
+  const { kit, actor, input, refs } = await fixture();
+  // A retained pre-keyset reference: a transfer cannot be staged without a keyset any more (0043).
+  await tombstoneWithoutKeyset(kit.env.DB);
   const plan = await planCandidateReads(kit.ctx, actor, input, refs);
   expect(plan.finish(await kit.env.DB.batch(plan.stmts))).toBeNull();
   expect(

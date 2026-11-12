@@ -233,16 +233,32 @@ describe('scanner history event and source proofs', () => {
     const cacheKey = [...proofCache.keys()][0];
     if (!cacheKey) throw new Error('Missing proof cache key');
     expect(proofCache.size).toBe(1);
-    expect(JSON.parse(cacheKey)[0]).toBe(proof.credentialKeysetCommitment);
+    // Keyed by a hash of the exact event and scan row; no keyset commitment takes part.
+    expect(cacheKey).toMatch(/^[0-9a-f]{64}$/);
     const DeferredPromise = Promise as PromiseConstructor & {
       withResolvers<T>(): { promise: Promise<T>; resolve: (value: T) => void };
     };
     const deferred = DeferredPromise.withResolvers<boolean>();
     proofCache.set(cacheKey, deferred.promise);
     const pending = historyPolicy(kit.env, { ...sources, role: s.actor.role, proofCache });
-    sources.event.data = '{}';
-    sources.scan.actionId = 'changed';
-    action.label = 'Changed';
+    // Inputs are frozen or copied: a write after the call, refused or not, cannot reach the verdict.
+    expect(Object.isFrozen(sources.event)).toBe(true);
+    const mutate = (write: () => void) => {
+      try {
+        write();
+      } catch (error) {
+        if (!(error instanceof TypeError)) throw error;
+      }
+    };
+    mutate(() => {
+      sources.event.data = '{}';
+    });
+    mutate(() => {
+      sources.scan.actionId = 'changed';
+    });
+    mutate(() => {
+      action.label = 'Changed';
+    });
     deferred.resolve(true);
     const policy = await pending;
     expect(policy?.action('check_in', 'check_in')?.label).toBe('Check in');

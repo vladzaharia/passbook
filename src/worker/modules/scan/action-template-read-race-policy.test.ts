@@ -12,7 +12,6 @@ import {
   ACTION,
   action,
   body,
-  expectUnavailable,
   fixture,
   PRIVATE,
   race,
@@ -100,9 +99,17 @@ describe('action policy from captured D1 template rows', () => {
     });
     for (const value of ['Hidden Current Holder', 'Hidden Pinned Tier'])
       expect(JSON.stringify(display)).not.toContain(value);
+    // Policy comes from the head whatever its build: the door scanner may not run the manager-only
+    // action, so it asks for approval and records nothing; neither hidden source is shown.
     const result = await action(kit, scanner.headers, body(kit, pass.id));
-    expectUnavailable(result, pass.id);
-    for (const value of ['Hidden Current Holder', 'Hidden Pinned Tier'])
+    expect(result).toMatchObject({
+      kind: 'heads_up',
+      reason: 'needs_approval',
+      scanId: null,
+      action: null,
+      card: null,
+    });
+    for (const value of [pass.id, 'Hidden Current Holder', 'Hidden Pinned Tier', 'assetGrant'])
       expect(JSON.stringify(result)).not.toContain(value);
     expect(
       await first(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [pass.id]),

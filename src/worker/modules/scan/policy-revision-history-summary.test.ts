@@ -34,7 +34,8 @@ describe('scanner history event and source proofs', () => {
     expect(summary).toMatchObject({ total: 1, byAction: [] });
   });
 
-  it('keeps a tampered event as a minimal receipt and omits its action bucket', async () => {
+  // Facts stay, proofs go: the receipt and its bucket come from the scan row, not a re-proof of the event.
+  it('reads the receipt and its action bucket from stored facts after an event edit', async () => {
     const s = await scenario();
     const result = (await (
       await kit.post(s.scanner.headers, '/actions', {
@@ -53,19 +54,23 @@ describe('scanner history event and source proofs', () => {
       items: { scanId: string; actionLabel: string; title: string | null; undoable: boolean }[];
     };
     expect(recent.items.find((item) => item.scanId === result.scanId)).toMatchObject({
-      actionLabel: 'Scan',
-      title: null,
-      undoable: false,
+      actionLabel: 'Check in',
+      title: 'Revision Private Person',
+      undoable: true,
     });
     const summary = (await (await kit.get(s.scanner.headers, '/summary')).json()) as {
       total: number;
       ok: number;
       byAction: unknown[];
     };
-    expect(summary).toMatchObject({ total: 1, ok: 1, byAction: [] });
+    expect(summary).toMatchObject({
+      total: 1,
+      ok: 1,
+      byAction: [{ actionId: 'check_in', label: 'Check in', count: 1 }],
+    });
   });
 
-  it('omits every action bucket when any contributing action is unproven', async () => {
+  it('buckets each contributing action across templates', async () => {
     const firstTemplate = await kit.scanTemplate('Visible action', {
       actions: [{ id: 'first_entry', label: 'First entry', kind: 'check_in' }],
     });
@@ -87,17 +92,19 @@ describe('scanner history event and source proofs', () => {
       ).json()) as { kind: string };
       expect(result.kind).toBe('ok');
     }
-    await run(
-      kit.env.DB,
-      "UPDATE pass_events SET data=json_remove(data,'$.authority.eventProof') WHERE pass_id=? AND kind='scan.checked_in'",
-      [secondPass.id],
-    );
     const summary = (await (await kit.get(scanner.headers, '/summary')).json()) as {
       total: number;
       ok: number;
       byAction: unknown[];
     };
-    expect(summary).toMatchObject({ total: 2, ok: 2, byAction: [] });
+    expect(summary).toMatchObject({
+      total: 2,
+      ok: 2,
+      byAction: [
+        { actionId: 'first_entry', label: 'First entry', count: 1 },
+        { actionId: 'second_entry', label: 'Second entry', count: 1 },
+      ],
+    });
   });
 
   it('omits an action bucket when a contributor is undone at the final authority batch', async () => {

@@ -308,6 +308,7 @@ describe('approved scanner release scopes', () => {
     }
   });
 
+  // Archived templates keep scanning; only a deleted one ends the release and, with it, any legacy scope.
   it('does not revive legacy scope after an existing release becomes ineligible', async () => {
     const templateId = await kit.scanTemplate(
       'Ineligible history',
@@ -326,6 +327,10 @@ describe('approved scanner release scopes', () => {
     const actor = await actorFor(scanner.id);
     expect(await current(actor, templateId)).toBe(true);
     await run(kit.env.DB, "UPDATE templates SET status='archived' WHERE id=?", [templateId]);
+    expect(await readValidEventScope(kit.env.DB, kit.org.id, 'live', event.id)).not.toBeNull();
+    expect(await current(actor, templateId)).toBe(true);
+    expect(await actorFor(scanner.id)).toMatchObject({ templateIds: [templateId] });
+    await run(kit.env.DB, "UPDATE templates SET status='deleted' WHERE id=?", [templateId]);
     expect(await readValidEventScope(kit.env.DB, kit.org.id, 'live', event.id)).toBeNull();
     expect(await current(actor, templateId)).toBe(false);
     const refreshed = await actorFor(scanner.id);

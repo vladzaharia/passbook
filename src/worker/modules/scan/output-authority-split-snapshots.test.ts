@@ -193,7 +193,8 @@ describe('atomic scanner response authority', () => {
       requireActive: true,
     };
     expect(await outputAuthorityCurrent(kit.env.DB, proof)).toBe(true);
-    expect(await outputAuthorityCurrent(kit.env.DB, { ...proof, purpose: 'commit' })).toBe(false);
+    // Policy follows the head whatever its build, at commit too; only display falls back to the pin.
+    expect(await outputAuthorityCurrent(kit.env.DB, { ...proof, purpose: 'commit' })).toBe(true);
     const lookup = await kit.post(device.headers, '/lookup', { q: pass.id });
     const text = await lookup.text();
     expect(JSON.parse(text)).toMatchObject({ items: [{ passId: pass.id, title: '' }] });

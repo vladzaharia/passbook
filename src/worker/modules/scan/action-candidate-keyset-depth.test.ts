@@ -26,7 +26,6 @@ type Change =
   | 'event'
   | 'event templates'
   | 'template release'
-  | 'claim'
   | 'no change'
   | 'retained'
   | 'existing';
@@ -127,11 +126,6 @@ function mutation(f: Fixture, change: Change): D1PreparedStatement | null {
       return stmt(db, "UPDATE templates SET status='archived',updated_at=updated_at+1 WHERE id=?", [
         f.templateId,
       ]);
-    case 'claim':
-      return stmt(db, "UPDATE scans SET reason='stale' WHERE actor_key=? AND idempotency_key=?", [
-        f.actorKey,
-        f.request.idempotencyKey,
-      ]);
     case 'no change':
       return stmt(db, 'UPDATE scan_events SET updated_at=updated_at WHERE id=? AND 0', [
         f.event.id,
@@ -150,19 +144,25 @@ function mutation(f: Fixture, change: Change): D1PreparedStatement | null {
   }
 }
 
-/** Explain the actual bound initializer and inject one change after the actual claim acquisition. */
-async function atInitialization(f: Fixture, change: Change) {
+/**
+ * Explain the actual bound initializer and inject one change into the claim batch: `grant` lands it
+ * before the batch (the grant's checks are the keyset's guard now), `keyset` right before the
+ * initializer (its own blocker checks).
+ */
+async function atInitialization(f: Fixture, change: Change, at: 'grant' | 'keyset') {
   const real = f.kit.env.DB;
   const pending = mutation(f, change);
   const captured = new WeakMap<D1PreparedStatement, { sql: string; values: unknown[] }>();
+  const candidateReads = new WeakSet<D1PreparedStatement>();
   const observed: {
     value: {
       index: number;
       binds: number;
+      guarded: boolean;
+      aborted: boolean;
       acquired: unknown;
       mutation: unknown;
       initialized: number | undefined;
-      clear: number;
       candidates: number;
     } | null;
   } = { value: null };
@@ -171,13 +171,15 @@ async function atInitialization(f: Fixture, change: Change) {
       if (property === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes('INSERT INTO credential_ref_keyset')) return prepared;
+          const keyset = sql.includes('INSERT INTO credential_ref_keyset');
+          if (!keyset && !sql.includes('AS active_release_candidate_hash')) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')
                 return (...values: unknown[]) => {
                   const bound = statement.bind(...values);
-                  captured.set(bound, { sql, values });
+                  if (keyset) captured.set(bound, { sql, values });
+                  else candidateReads.add(bound);
                   return bound;
                 };
               const value = Reflect.get(statement, member, statement);
@@ -195,29 +197,58 @@ async function atInitialization(f: Fixture, change: Change) {
             .prepare(`EXPLAIN ${bound.sql}`)
             .bind(...bound.values)
             .all();
-          const inserted = pending
-            ? [
-                target.prepare('SELECT changes() AS n'),
-                pending,
-                target.prepare('SELECT changes() AS n'),
-              ]
-            : [target.prepare('SELECT changes() AS n')];
-          const result = await target.batch<{ n: number }>([
-            ...statements.slice(0, index),
-            ...inserted,
-            ...statements.slice(index),
-          ]);
-          const initIndex = index + inserted.length;
-          observed.value = {
+          const probe = () => target.prepare('SELECT changes() AS n');
+          const base = {
             index,
             binds: bound.values.length,
-            acquired: result[index]?.results[0]?.n,
-            mutation: pending ? result[index + 2]?.results[0]?.n : null,
-            initialized: result[initIndex]?.meta.changes,
-            clear: result[initIndex + 1]?.results.length ?? -1,
-            candidates: result[initIndex + 2]?.results.length ?? -1,
+            guarded: bound.sql.includes('authority_grants'),
           };
-          return [...result.slice(0, index), ...result.slice(initIndex)];
+          // A change before the grant commits on its own, as a concurrent request's write would.
+          const before =
+            pending && at === 'grant'
+              ? (await target.batch<{ n: number }>([pending, probe()]))[1]?.results[0]?.n
+              : null;
+          const inner = pending && at === 'keyset' ? [probe(), pending, probe()] : [probe()];
+          let result: D1Result<{ n: number }>[];
+          try {
+            result = await target.batch<{ n: number }>([
+              ...statements.slice(0, index),
+              ...inner,
+              ...statements.slice(index),
+            ]);
+          } catch (error) {
+            observed.value = {
+              ...base,
+              aborted: true,
+              acquired: null,
+              mutation: before,
+              initialized: 0,
+              candidates: 0,
+            };
+            throw error;
+          }
+          const acquiredIndex = index;
+          const initIndex = acquiredIndex + inner.length;
+          const tail = result.slice(initIndex);
+          observed.value = {
+            ...base,
+            aborted: false,
+            acquired: result[acquiredIndex]?.results[0]?.n,
+            mutation: !pending
+              ? null
+              : at === 'grant'
+                ? before
+                : result[acquiredIndex + 2]?.results[0]?.n,
+            initialized: result[initIndex]?.meta.changes,
+            candidates: statements
+              .slice(index)
+              .reduce(
+                (n, statement, offset) =>
+                  candidateReads.has(statement) ? n + (tail[offset]?.results.length ?? 0) : n,
+                0,
+              ),
+          };
+          return [...result.slice(0, acquiredIndex), ...tail];
         };
       const value = Reflect.get(target, property, target);
       return typeof value === 'function' ? value.bind(target) : value;
@@ -237,16 +268,17 @@ async function atInitialization(f: Fixture, change: Change) {
 it('initializes the exact keyset in the real scoped action claim batch', async () => {
   const f = await fixture();
   expect(await first(f.kit.env.DB, 'SELECT commitment FROM credential_ref_keyset')).toBeNull();
-  const { response, body, observed } = await atInitialization(f, 'none');
+  const { response, body, observed } = await atInitialization(f, 'none', 'grant');
+  // The initializer rides the claim grant: its guard is the grant row, not a packed claim predicate.
   expect(observed).toMatchObject({
     index: 2,
+    binds: 2,
+    guarded: true,
+    aborted: false,
     acquired: 1,
     initialized: 1,
-    clear: 1,
     candidates: 1,
   });
-  expect(observed.binds).toBeGreaterThan(40);
-  expect(observed.binds).toBeLessThanOrEqual(100);
   expect(response.status).toBe(200);
   expect(JSON.parse(body)).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
   expect(await first(f.kit.env.DB, 'SELECT commitment FROM credential_ref_keyset')).toEqual({
@@ -254,28 +286,64 @@ it('initializes the exact keyset in the real scoped action claim batch', async (
   });
 });
 
+// The claim and the initializer are one atomic grant batch, so authority changes land before it.
 it.each([
-  'session',
-  'scanner csrf',
-  'membership',
-  'event',
-  'event templates',
-  'template release',
-  'claim',
-  'no change',
-  'retained',
-  'existing',
+  ['session', '403 ACTOR_CHANGED'],
+  ['scanner csrf', '403 ACTOR_CHANGED'],
+  ['membership', '403 ACTOR_CHANGED'],
+  ['event', '409 SCAN_CONFIG_CHANGED'],
+  ['event templates', '409 SCAN_CONFIG_CHANGED'],
 ] as const)(
   'does not initialize or expose a candidate after an intervening %s change',
+  async (change, refusal) => {
+    const f = await fixture();
+    const { response, body, observed } = await atInitialization(f, change, 'grant');
+    // The grant's checks abort the whole batch: no claim, no keyset, no candidate read.
+    expect(observed).toMatchObject({
+      index: 2,
+      mutation: 1,
+      aborted: true,
+      initialized: 0,
+      candidates: 0,
+    });
+    expect(`${response.status} ${(JSON.parse(body) as { code?: string }).code}`).toBe(refusal);
+    expect(body).not.toContain(f.pass.id);
+    expect(body).not.toContain(f.commitment);
+    expect(await first(f.kit.env.DB, 'SELECT commitment FROM credential_ref_keyset')).toBeNull();
+  },
+);
+
+// Positive controls: nothing changed, or an archived template (archived templates keep scanning).
+it.each(['no change', 'template release'] as const)(
+  'initializes and admits after an intervening %s',
   async (change) => {
     const f = await fixture();
-    const { body, observed } = await atInitialization(f, change);
+    const { response, body, observed } = await atInitialization(f, change, 'grant');
+    expect(observed).toMatchObject({
+      mutation: change === 'no change' ? 0 : 1,
+      acquired: 1,
+      initialized: 1,
+      candidates: 1,
+    });
+    expect(response.status).toBe(200);
+    expect(JSON.parse(body)).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
+    expect(await first(f.kit.env.DB, 'SELECT commitment FROM credential_ref_keyset')).toEqual({
+      commitment: f.commitment,
+    });
+  },
+);
+
+// The initializer's own blockers still apply inside the batch.
+it.each(['retained', 'existing'] as const)(
+  'does not initialize or expose a candidate after an intervening %s keyset blocker',
+  async (change) => {
+    const f = await fixture();
+    const { body, observed } = await atInitialization(f, change, 'keyset');
     expect(observed).toMatchObject({
       index: 2,
       acquired: 1,
-      mutation: change === 'no change' ? 0 : 1,
+      mutation: 1,
       initialized: 0,
-      clear: 0,
       candidates: change === 'existing' ? 1 : 0,
     });
     expect(body).not.toContain(f.pass.id);

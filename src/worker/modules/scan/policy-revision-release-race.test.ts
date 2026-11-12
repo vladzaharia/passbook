@@ -12,7 +12,8 @@ beforeAll(async () => {
 });
 
 describe('scanner evaluated policy revisions', () => {
-  for (const route of ['resolve', 'lookup', 'actions'] as const) {
+  // Reads fail closed when the head moved under them.
+  for (const route of ['resolve', 'lookup'] as const) {
     it(`does not disclose a candidate after a same-version release supersedes it in ${route}`, async () => {
       const s = await scenario('test', 'test');
       const snapshot = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
@@ -31,9 +32,7 @@ describe('scanner evaluated policy revisions', () => {
           kit.post(
             s.scanner.headers,
             `/${route}`,
-            route === 'lookup'
-              ? { q: s.pass.id }
-              : { ...requestOf(s.pass.id), ...(route === 'actions' ? { actionId: 'auto' } : {}) },
+            route === 'lookup' ? { q: s.pass.id } : requestOf(s.pass.id),
           ),
       );
       expect(response.status).toBe(200);
@@ -65,9 +64,36 @@ describe('scanner evaluated policy revisions', () => {
     });
   }
 
+  // A pass read under its own issued release keeps it: a newer release does not invalidate a ticket.
+  it('admits an action after a same-version release supersedes its read', async () => {
+    const s = await scenario('test', 'test');
+    const snapshot = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
+    if (!snapshot?.activeReleaseVersion) throw new Error('Missing release');
+    expect(snapshot.activeReleaseId).toBe(snapshot.pass.releaseId);
+    const response = await afterCandidateRead(
+      s.pass.id,
+      (db) =>
+        approveAppleRelease(kit, {
+          db,
+          templateId: s.templateId,
+          mode: 'test',
+          version: snapshot.activeReleaseVersion!,
+        }).then(() => {}),
+      () => kit.post(s.scanner.headers, '/actions', { ...requestOf(s.pass.id), actionId: 'auto' }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
+    expect((await candidateById(kit.env.DB, kit.org.id, s.pass.id))?.activeReleaseId).not.toBe(
+      snapshot.activeReleaseId,
+    );
+    expect(
+      await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [s.pass.id]),
+    ).toHaveLength(1);
+  });
+
   for (const kind of ['inactive', 'mode mismatch'] as const) {
     for (const route of ['resolve', 'actions'] as const) {
-      it(`does not disclose or record a ${kind} stop after release supersession in ${route}`, async () => {
+      it(`stops a ${kind} pass without disclosure after release supersession in ${route}`, async () => {
         const mode = 'test' as const;
         const s = await scenario(mode, kind === 'mode mismatch' ? 'live' : mode);
         if (kind === 'inactive')
@@ -92,12 +118,15 @@ describe('scanner evaluated policy revisions', () => {
         );
         expect(response.status).toBe(200);
         const text = await response.text();
+        // The supersession is content: the stop is the one an unchanged release gives.
         expect(JSON.parse(text)).toMatchObject({
           kind: 'refused',
-          reason: 'not_found',
+          reason: kind === 'inactive' ? 'voided' : 'test_pass',
+          card: null,
           display: null,
         });
         expect(text).not.toContain(s.pass.id);
+        expect(text).not.toContain('Revision Private Person');
         const current = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
         expect(current).toMatchObject({
           activeTemplateVersion: snapshot.activeTemplateVersion,
@@ -111,13 +140,14 @@ describe('scanner evaluated policy revisions', () => {
             "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'",
             [s.pass.id],
           ),
-        ).toHaveLength(0);
+        ).toHaveLength(kind === 'inactive' && route === 'actions' ? 1 : 0);
       });
     }
   }
 
+  // The scan grant does not ask for the head (authority-epochs.md F4); the commit is a fact.
   for (const phase of ['before', 'after'] as const) {
-    it(`${phase === 'before' ? 'blocks admission' : 'withholds output'} after release supersession`, async () => {
+    it(`commits through a release supersession ${phase} the gate`, async () => {
       const s = await scenario('test', 'test');
       const snapshot = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
       if (!snapshot?.activeReleaseVersion) throw new Error('Missing release');
@@ -134,9 +164,8 @@ describe('scanner evaluated policy revisions', () => {
         () =>
           kit.post(s.scanner.headers, '/actions', { ...requestOf(s.pass.id), actionId: 'auto' }),
       );
-      const text = await response.text();
-      expect(text).not.toContain(s.pass.id);
-      expect(text).not.toContain('Revision Private Person');
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
       const current = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
       expect(current).toMatchObject({
         activeTemplateVersion: snapshot.activeTemplateVersion,
@@ -152,17 +181,8 @@ describe('scanner evaluated policy revisions', () => {
         "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'",
         [s.pass.id],
       );
-      if (phase === 'before') {
-        expect(response.status).toBe(200);
-        expect(JSON.parse(text)).toMatchObject({ kind: 'refused', reason: 'not_found' });
-        expect(gates).toHaveLength(0);
-        expect(ledger).toHaveLength(0);
-      } else {
-        expect(response.status).toBe(409);
-        expect(JSON.parse(text)).toMatchObject({ code: 'SCAN_UNCONFIRMED' });
-        expect(gates).toHaveLength(1);
-        expect(ledger).toHaveLength(1);
-      }
+      expect(gates).toHaveLength(1);
+      expect(ledger).toHaveLength(1);
     });
   }
 });

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
-import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
+import { type ScanOutcome, ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
@@ -28,6 +28,16 @@ beforeAll(async () => {
 });
 
 const marker = 'INTO scan_asset_grant_provenance';
+
+/**
+ * The scan grant asks no template or release state (authority-epochs.md F4): a change landing before
+ * the commit is content. The visit is recorded; only the photo grant, bound to the read, is withheld.
+ */
+function expectGateRecordedWithoutGrants(result: ScanOutcome) {
+  expect(result).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
+  expect(result.display?.identity.photo?.url ?? null).toBeNull();
+  expect(JSON.stringify(result)).not.toContain('assetGrant');
+}
 
 describe('captured action template reads at the final CAS', () => {
   it.each(['gate', 'choose', 'stop'] as const)(
@@ -97,6 +107,11 @@ describe('captured action template reads at the final CAS', () => {
           expect(
             await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
           ).toMatchObject({ grants: before?.grants });
+        } else if (phase === 'gate') {
+          expectGateRecordedWithoutGrants(result);
+          expect(
+            await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
+          ).toMatchObject({ gates: 1, events: 1, grants: before?.grants });
         } else {
           expectUnavailable(result, f.pass.id);
           expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
@@ -175,8 +190,9 @@ describe('captured action template reads at the final CAS', () => {
     expect(changed.active.extras).toMatchObject([{ name: 'preview.png' }]);
   });
 
+  // A card is a read and fails closed; a gate or stop commit keeps the policy it evaluated.
   it.each(['gate', 'choose', 'stop'] as const)(
-    'does not release a %s result when a newly approved head tightens the captured policy',
+    'withholds %s grants when a newly approved head tightens the captured policy',
     async (phase) => {
       const f = await fixture(kit, {
         compatiblePin: true,
@@ -204,6 +220,11 @@ describe('captured action template reads at the final CAS', () => {
         expect(
           await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
         ).toMatchObject({ grants: before?.grants });
+      } else if (phase === 'gate') {
+        expectGateRecordedWithoutGrants(result);
+        expect(
+          await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
+        ).toMatchObject({ gates: 1, events: 1, grants: before?.grants });
       } else {
         expectUnavailable(result, f.pass.id);
         expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
@@ -216,8 +237,9 @@ describe('captured action template reads at the final CAS', () => {
     },
   );
 
-  it.each(['same head', 'away and back', 'owner archived'] as const)(
-    'does not use an original read after %s between evaluation and gate',
+  // Releases and archiving are content at commit; only a deleted template stops the pass.
+  it.each(['same head', 'away and back', 'owner archived', 'owner deleted'] as const)(
+    'commits or refuses by authority after %s between evaluation and gate',
     async (change) => {
       const f = await fixture(kit, { compatiblePin: true, photo: true });
       await stageVersion(kit, f.templateId, 'v2', () => {}, 'same-build');
@@ -231,12 +253,11 @@ describe('captured action template reads at the final CAS', () => {
         request,
         'INSERT INTO scan_gates',
         async (db) => {
-          if (change === 'owner archived') {
-            await run(
-              db,
-              "UPDATE templates SET status='archived',updated_at=updated_at+1 WHERE id=?",
-              [f.templateId],
-            );
+          if (change === 'owner archived' || change === 'owner deleted') {
+            await run(db, 'UPDATE templates SET status=?,updated_at=updated_at+1 WHERE id=?', [
+              change === 'owner archived' ? 'archived' : 'deleted',
+              f.templateId,
+            ]);
           } else {
             if (change === 'away and back')
               await approveAppleRelease(kit, {
@@ -254,23 +275,30 @@ describe('captured action template reads at the final CAS', () => {
           }
         },
       );
-      if (change === 'owner archived') {
+      if (change === 'owner deleted') {
         await expectClassified(response, 'SCAN_PASS_CHANGED');
-      } else {
-        expectUnavailable(ScanOutcomeSchema.parse(await response.json()), f.pass.id);
+        expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
+          before,
+        );
+        return;
       }
-      expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
-        before,
-      );
-      const current = await candidateById(kit.env.DB, kit.org.id, f.pass.id);
-      expect(current?.templateSnapshot?.raw).not.toBe(original.templateSnapshot.raw);
-      if (change !== 'owner archived') {
-        expect(current?.activeTemplateVersion).toBe('v1');
-        expect(current?.activeReleaseId).not.toBe(original.activeReleaseId);
-      } else {
+      expect(response.status).toBe(200);
+      expect(ScanOutcomeSchema.parse(await response.json())).toMatchObject({
+        kind: 'ok',
+        scanId: expect.any(String),
+      });
+      expect(
+        await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
+      ).toMatchObject({ gates: 1, events: 1 });
+      if (change === 'owner archived') {
         expect(
           await first(kit.env.DB, 'SELECT status FROM templates WHERE id=?', [f.templateId]),
         ).toEqual({ status: 'archived' });
+      } else {
+        const current = await candidateById(kit.env.DB, kit.org.id, f.pass.id);
+        expect(current?.templateSnapshot?.raw).not.toBe(original.templateSnapshot.raw);
+        expect(current?.activeTemplateVersion).toBe('v1');
+        expect(current?.activeReleaseId).not.toBe(original.activeReleaseId);
       }
     },
   );

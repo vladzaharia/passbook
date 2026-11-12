@@ -149,7 +149,8 @@ describe('scanner history event and source proofs', () => {
     expect(restoredHistory?.value).toMatchObject({ visits: { total: 1 } });
   });
 
-  it('retains proven display rows and generic totals when another history row is unproven', async () => {
+  // Event proofs are gone: every recorded row is read from its stored facts.
+  it('shows every recorded history row from its stored facts', async () => {
     const templateId = await kit.scanTemplate('Mixed history proof', {
       actions: [{ ...CHECK_IN, repeat: 'always' }],
     });
@@ -171,11 +172,6 @@ describe('scanner history event and source proofs', () => {
     expect(firstResult.kind).toBe('ok');
     expect(secondResult.kind).toBe('ok');
     if (!firstResult.scanId || !secondResult.scanId) throw new Error('Missing scans');
-    await run(
-      kit.env.DB,
-      "UPDATE pass_events SET data=json_remove(data,'$.authority.eventProof') WHERE pass_id=? AND json_extract(data,'$.scanId')=?",
-      [pass.id, firstResult.scanId],
-    );
     const scannerRow = await getScanner(kit.env.DB, scanner.id);
     if (!scannerRow) throw new Error('Missing scanner');
     const actor = await proofedScanActor(
@@ -222,10 +218,9 @@ describe('scanner history event and source proofs', () => {
     const history = bound.finalize(await kit.env.DB.batch(bound.stmts));
     expect(history?.value).toMatchObject({
       scans: { total: 2 },
-      list: { scans: [{ label: 'Check in' }] },
+      visits: { total: 2 },
+      list: { scans: [{ label: 'Check in' }, { label: 'Check in' }] },
       lastScan: { label: 'Check in', action: 'Check in' },
     });
-    expect(history?.value).not.toHaveProperty('visits');
-    expect(history?.value).not.toHaveProperty('list.visits');
   });
 });

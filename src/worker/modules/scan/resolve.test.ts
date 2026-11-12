@@ -176,8 +176,27 @@ describe('resolve: one fixture per reason', () => {
         Object.assign(kit.env, { DB: real });
       }
       expect(raced).toBe(true);
-      expect(response.status).toBe(200);
       const text = await response.text();
+      // A device role change moves the scanner's config epoch: the read refuses as not found, the
+      // action's grant refuses with 409 SCAN_CONFIG_CHANGED. Neither names the pass.
+      if (route === 'actions') {
+        expect(`${response.status} ${(JSON.parse(text) as { code?: string }).code}`).toBe(
+          '409 SCAN_CONFIG_CHANGED',
+        );
+        for (const secret of [pass.id, pass.serial, pass.scanCode!, 'Cross Mode Actor Race'])
+          expect(text).not.toContain(secret);
+        // The claim is closed as failed; nothing about the pass is recorded.
+        expect(
+          await first(real, 'SELECT state FROM scans WHERE idempotency_key=?', [idempotencyKey]),
+        ).toEqual({ state: 'failed' });
+        expect(
+          await all(real, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
+            pass.id,
+          ]),
+        ).toHaveLength(0);
+        return;
+      }
+      expect(response.status).toBe(200);
       expect(JSON.parse(text)).toMatchObject({
         kind: 'refused',
         reason: 'not_found',
