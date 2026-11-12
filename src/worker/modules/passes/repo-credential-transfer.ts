@@ -18,6 +18,7 @@ import {
   identityRevision,
   noOpenClaims,
   noTargetTombstone,
+  releaseIssued,
 } from './repo-credential-transfer-fences.ts';
 import { passIs, payloadPart } from './repo-credential-transfer-payload.ts';
 import type {
@@ -39,6 +40,8 @@ export interface StartTransferInput {
   now: number;
   release: PassReleaseSnapshot;
   releaseVersion: string;
+  /** The pass keeps its own issued release (archived template, head elsewhere): no head to pin. */
+  ownRelease: boolean;
   tombstones: CredentialReference[];
   targetRefs: string[];
   credentialKeysetCommitment: string;
@@ -67,7 +70,9 @@ function startChecks(i: StartTransferInput): Check[] {
     identityRevision(p.id, s.identityRevision),
     eligibleOwner(p.id, target),
     noTargetTombstone(i.targetRefs),
-    releaseHead(p.templateId, p.mode, 'apple', i.release.id),
+    ...(i.ownRelease
+      ? [releaseIssued(i.release.id)]
+      : [releaseHead(p.templateId, p.mode, 'apple', i.release.id)]),
     ...(a.kind === 'connection'
       ? connectionContext(a.connection)
       : i.connection

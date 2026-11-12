@@ -10,6 +10,7 @@ import {
   eligibleOwner,
   identityRevision,
   noTargetTombstone,
+  releaseIssued,
 } from './repo-credential-transfer-fences.ts';
 import { payloadPart } from './repo-credential-transfer-payload.ts';
 import type {
@@ -26,6 +27,7 @@ export interface FinishTransferInput {
   source: TransferPass;
   release: PassReleaseSnapshot;
   releaseVersion: string;
+  ownRelease: boolean;
   serial: string;
   authToken: string;
   scanCode: string;
@@ -105,7 +107,9 @@ function finishChecks(i: FinishTransferInput, target: CredentialTransferTarget):
       'lineage',
     ),
     identityRevision(p.id, s.identityRevision),
-    releaseHead(p.templateId, p.mode, 'apple', i.release.id),
+    ...(i.ownRelease
+      ? [releaseIssued(i.release.id)]
+      : [releaseHead(p.templateId, p.mode, 'apple', i.release.id)]),
     eligibleOwner(p.id, target),
     noTargetTombstone(i.targetRefs),
     ...connection,

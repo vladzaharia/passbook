@@ -127,3 +127,12 @@ export function connectionContext(c: ConnectionPassContext): Check[] {
     ),
   ];
 }
+
+/** The pass's own issued release still exists and its template is not deleted (releases are immutable). */
+export const releaseIssued = (releaseId: string): Check =>
+  tenantCheck(
+    'release',
+    `EXISTS (SELECT 1 FROM template_releases r JOIN templates t ON t.id = r.template_id
+      WHERE r.id = ? AND t.status != 'deleted')`,
+    [releaseId],
+  );
