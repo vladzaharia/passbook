@@ -82,10 +82,15 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
       .getByRole('button', { name: 'Undo check-in', exact: true })
       .click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    const undone = await api.get(
-      `/api/v1/scans?orgId=${orgId}&outcome=undone&q=Admin%20Door%20Guest`,
-    );
-    expect(undone.items.some((r: { id: string }) => r.id === outcome.scanId)).toBe(true);
+    // The dialog closes before the undo request settles; poll the history instead of racing it.
+    await expect
+      .poll(async () => {
+        const undone = await api.get(
+          `/api/v1/scans?orgId=${orgId}&outcome=undone&q=Admin%20Door%20Guest`,
+        );
+        return undone.items.some((r: { id: string }) => r.id === outcome.scanId);
+      })
+      .toBe(true);
   } finally {
     await api.dispose();
   }

@@ -33,13 +33,14 @@ jobs:
       - name: Generated files are committed
         run: git diff --exit-code -- src/generated worker-configuration.d.ts src/web/routeTree.gen.ts
 
+  # Each worker test file migrates a fresh D1, so the suite is sharded to fit runner time.
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -47,7 +48,7 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npx vitest run --shard=${{ matrix.shard }}/4
+      - run: npx vitest run --shard=${{ matrix.shard }}/8
         env:
           NODE_OPTIONS: --no-experimental-webstorage
 
@@ -110,7 +111,11 @@ jobs:
 
   coverage-worker:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -118,8 +123,35 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
+      - name: Worker coverage shard (thresholds apply after the merge)
+        run: npm run coverage:worker -- --shard=${{ matrix.shard }}/8 --reporter=blob
+        env:
+          COVERAGE_SHARD: '1'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: worker-coverage-${{ matrix.shard }}
+          path: .vitest-reports
+          include-hidden-files: true
+          retention-days: 1
+
+  coverage-worker-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: coverage-worker
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: worker-coverage-*
+          path: .vitest-reports
+          merge-multiple: true
       - name: Coverage thresholds (worker)
-        run: npm run coverage:worker
+        run: npm run coverage:worker -- --merge-reports
 
   predeploy:
     if: github.ref == 'refs/heads/release'

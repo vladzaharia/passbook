@@ -88,12 +88,15 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/generated/**', '**/*.test.*'],
       // Per area, so each coverage run (node projects, worker project) checks the files it measures.
-      thresholds: {
-        'src/worker/**': { lines: 90, branches: 80 },
-        'src/web/**': { lines: 85, branches: 75 },
-        'src/passkit/**': { lines: 88, branches: 80 },
-        'src/shared/**': { lines: 90, branches: 80 },
-      },
+      // A CI shard covers part of the suite; thresholds apply when the shards' blobs are merged.
+      thresholds: process.env.COVERAGE_SHARD
+        ? {}
+        : {
+            'src/worker/**': { lines: 90, branches: 80 },
+            'src/web/**': { lines: 85, branches: 75 },
+            'src/passkit/**': { lines: 88, branches: 80 },
+            'src/shared/**': { lines: 90, branches: 80 },
+          },
     },
   },
 });
