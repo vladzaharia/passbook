@@ -199,7 +199,7 @@ describe('live display hub', () => {
   );
 
   it.each(['organization', 'template'] as const)(
-    'redacts an evaluated outcome after same-clock %s policy ABA before publication',
+    'publishes an evaluated outcome by the org access epoch after same-clock %s ABA',
     async (changed) => {
       const id = await kit.scanTemplate(`Outcome ${changed} ABA`, {
         actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
@@ -268,8 +268,11 @@ describe('live display hub', () => {
         (entry) => entry.scannerId === source.id,
       );
       if (!projection) throw new Error('Missing retained event.');
-      expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
-      expect(JSON.stringify(projection)).not.toContain('ABA Private Member');
+      // An access change redacts; a rename moves only config_revision, which is not door authority.
+      if (changed === 'organization') {
+        expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
+        expect(JSON.stringify(projection)).not.toContain('ABA Private Member');
+      } else expect(projection).toMatchObject({ passId: pass.id, photoUrl: expect.any(String) });
       expect(JSON.stringify(projection)).not.toMatch(
         /sourceProof|passSnapshot|passCommitment|credentialTombstoneRefs|otherModeCredentialTombstoneRefs|walletVersion|versionPersonalization|orgRevision|templateRevision|identityRevision|activeRelease|passReleaseId/,
       );

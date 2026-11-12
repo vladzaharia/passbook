@@ -240,6 +240,34 @@ describe('live photo streams', () => {
     expect(response.headers.get('etag')).toBeNull();
   });
 
+  // The candidate's templateRevision is the org's config_revision: not door authority (R8).
+  it('keeps an opened photo stream when the org is renamed during the object read', async () => {
+    const fixture = await photoFixture();
+    const stored = await memberPhoto(kit.env.DB, kit.org.id, fixture.pass.id);
+    if (!stored) throw new Error('Missing stored photo fixture.');
+    const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
+    let renamed = false;
+    const spy = vi.spyOn(kit.env.BUCKET, 'get').mockImplementation(async (key, options) => {
+      const object = await originalGet(key, options);
+      if (key === stored.r2_key && object) {
+        await run(kit.env.DB, "UPDATE orgs SET name = name || ' (renamed)' WHERE id = ?", [
+          kit.org.id,
+        ]);
+        renamed = true;
+      }
+      return object;
+    });
+    let response: Response;
+    try {
+      response = await kit.get(fixture.monitor.headers, fixture.path);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(renamed).toBe(true);
+    expect(response.status).toBe(200);
+    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+  });
+
   it.each([
     'watch',
     'monitor',
@@ -258,7 +286,6 @@ describe('live photo streams', () => {
     'removal-rollback',
     'image-generation',
     'org-revision',
-    'template-revision',
     'policy',
   ] as const)(
     'cancels an opened photo stream if %s authority changes during the object read',
@@ -364,11 +391,6 @@ describe('live photo streams', () => {
           // access_revision moves with status (timestamps are not authority).
           for (const status of ['suspended', 'active'])
             await run(kit.env.DB, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
-        } else if (change === 'template-revision') {
-          // The candidate's templateRevision is the org's config_revision.
-          await run(kit.env.DB, "UPDATE orgs SET name = name || ' (renamed)' WHERE id = ?", [
-            kit.org.id,
-          ]);
         } else if (change === 'source' || change === 'monitor') {
           await run(kit.env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
             kit.clock.now(),

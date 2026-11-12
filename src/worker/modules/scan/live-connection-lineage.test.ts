@@ -273,46 +273,49 @@ describe('live connection lineage', () => {
     ).toBe(200);
   });
 
-  it.each(['organization', 'template'] as const)(
-    'does not remint a retained event after its evaluated %s revision changes',
-    async (changed) => {
-      const fixture = await photoFixture();
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
-      // Timestamps are not authority: the retained grant keeps serving.
-      await run(kit.env.DB, 'UPDATE orgs SET updated_at = updated_at + 1 WHERE id = ?', [
-        kit.org.id,
-      ]);
-      await run(kit.env.DB, 'UPDATE templates SET updated_at = updated_at + 1 WHERE id = ?', [
-        template,
-      ]);
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
-      if (changed === 'organization') {
-        // orgRevision is access_revision, which moves with status: suspend, then reactivate.
-        for (const status of ['suspended', 'active'])
-          await run(kit.env.DB, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
-      } else {
-        // templateRevision is the org's config_revision (profile and settings policy is read under).
-        await run(kit.env.DB, "UPDATE orgs SET name = name || ' (renamed)' WHERE id = ?", [
-          kit.org.id,
-        ]);
-      }
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
-      const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
-        (entry) => entry.id === fixture.event.id,
-      );
-      expect(stale).toMatchObject({ passId: null, holder: null, photoUrl: null });
+  // A rename moves only the org's config_revision, which is not door authority (R8).
+  it('keeps a retained event and its photo across an org rename', async () => {
+    const fixture = await photoFixture();
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+    await run(kit.env.DB, "UPDATE orgs SET name = name || ' (renamed)' WHERE id = ?", [kit.org.id]);
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+    const kept = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
+      (entry) => entry.id === fixture.event.id,
+    );
+    expect(kept).toMatchObject({ passId: fixture.pass.id, photoUrl: expect.any(String) });
+    expect(
+      (await kit.get(fixture.monitor.headers, kept!.photoUrl!.replace('/api/v1/scan', ''))).status,
+    ).toBe(200);
+  });
 
-      const freshEvent = row(fixture.source.id, { passId: fixture.pass.id });
-      await publish(freshEvent);
-      const fresh = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
-        (entry) => entry.id === freshEvent.id,
-      );
-      if (!fresh?.photoUrl) throw new Error('Missing newly evaluated photo.');
-      expect(
-        (await kit.get(fixture.monitor.headers, fresh.photoUrl.replace('/api/v1/scan', ''))).status,
-      ).toBe(200);
-    },
-  );
+  it('does not remint a retained event after its organization access revision changes', async () => {
+    const fixture = await photoFixture();
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+    // Timestamps are not authority: the retained grant keeps serving.
+    await run(kit.env.DB, 'UPDATE orgs SET updated_at = updated_at + 1 WHERE id = ?', [kit.org.id]);
+    await run(kit.env.DB, 'UPDATE templates SET updated_at = updated_at + 1 WHERE id = ?', [
+      template,
+    ]);
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+    // orgRevision is access_revision, which moves with status: suspend, then reactivate.
+    for (const status of ['suspended', 'active'])
+      await run(kit.env.DB, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
+      (entry) => entry.id === fixture.event.id,
+    );
+    expect(stale).toMatchObject({ passId: null, holder: null, photoUrl: null });
+
+    const freshEvent = row(fixture.source.id, { passId: fixture.pass.id });
+    await publish(freshEvent);
+    const fresh = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
+      (entry) => entry.id === freshEvent.id,
+    );
+    if (!fresh?.photoUrl) throw new Error('Missing newly evaluated photo.');
+    expect(
+      (await kit.get(fixture.monitor.headers, fresh.photoUrl.replace('/api/v1/scan', ''))).status,
+    ).toBe(200);
+  });
   it('does not revive a retained event or grant across connection and binding ABA', async () => {
     const fixture = await photoFixture();
     const connection = await createConnection(jobCtxOf(kit), system, {

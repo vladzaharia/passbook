@@ -109,18 +109,23 @@ describe('action policy from captured D1 template rows', () => {
       action: null,
       card: null,
     });
-    for (const value of [pass.id, 'Hidden Current Holder', 'Hidden Pinned Tier', 'assetGrant'])
+    for (const value of ['Hidden Current Holder', 'Hidden Pinned Tier', 'assetGrant'])
       expect(JSON.stringify(result)).not.toContain(value);
+    // The member photo has its own policy (door), as for a compatible head; only it names the pass.
+    const headsUpPhoto = result.display?.identity.photo?.url ?? '';
+    expect(headsUpPhoto).toContain(`/passes/${pass.id}/assets/member.png?g=`);
+    expect(JSON.stringify(result).replace(headsUpPhoto, '')).not.toContain(pass.id);
     expect(
       await first(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [pass.id]),
     ).toBeNull();
     const chooser = await kit.scanner({ templateIds: [templateId], settings: { flow: 'choose' } });
     const ready = await action(kit, chooser.headers, body(kit, pass.id));
-    expect(ready).toMatchObject({
-      kind: 'ready',
-      card: { passId: pass.id, display: { identity: { photo: null } } },
-    });
+    expect(ready).toMatchObject({ kind: 'ready', card: { passId: pass.id } });
     if (!ready.card) throw new Error('Expected an incompatible-head read card');
+    // The member photo is read under the pass's own release, as on the resolve card.
+    const photoUrl = ready.card.display.identity.photo?.url;
+    if (!photoUrl) throw new Error('Photo withheld under the incompatible head');
+    expect((await kit.get(chooser.headers, photoUrl.replace('/api/v1/scan', ''))).status).toBe(200);
     expect(ready.card.passView.assetNames).not.toContain('thumbnail@3x.png');
     for (const value of ['Hidden Current Holder', 'Hidden Pinned Tier'])
       expect(JSON.stringify(ready)).not.toContain(value);

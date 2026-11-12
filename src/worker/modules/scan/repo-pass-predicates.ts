@@ -293,9 +293,10 @@ export function evaluatedPolicyPredicate(
     },
     credentialKeysetCommitment,
   );
+  // Not `templateRevision` (`config_revision`): a rename or settings save never fails a scan (R8).
   return {
     sql: scanConjunction([
-      `EXISTS (SELECT 1 FROM orgs o WHERE o.id=p.org_id AND o.status='active' AND o.access_revision=? AND o.config_revision=?)`,
+      `EXISTS (SELECT 1 FROM orgs o WHERE o.id=p.org_id AND o.status='active' AND o.access_revision=?)`,
       `EXISTS (SELECT 1 FROM templates t WHERE t.id=p.template_id
         AND (t.org_id=p.org_id OR t.org_id IS NULL) AND t.status!='deleted')`,
       active.sql,
@@ -314,7 +315,6 @@ export function evaluatedPolicyPredicate(
     ]),
     params: [
       orgRevision,
-      templateRevision,
       ...active.params,
       passJson,
       walletVersion,

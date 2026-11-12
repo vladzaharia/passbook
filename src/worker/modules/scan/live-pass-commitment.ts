@@ -238,8 +238,8 @@ function passCommitmentInput(candidate: Candidate): PassCommitmentInput | null {
       connectionGeneration: candidate.connectionGeneration,
       activeTemplateVersion: candidate.activeTemplateVersion,
       displayTemplateVersion: candidate.displayTemplateVersion,
+      // Not `templateRevision` (`config_revision`): a rename or settings save is not authority.
       orgRevision: candidate.orgRevision,
-      templateRevision: candidate.templateRevision,
       activeReleaseId: candidate.activeReleaseId,
       activeReleaseGeneration: candidate.activeReleaseGeneration,
       activeReleaseVersion: candidate.activeReleaseVersion,

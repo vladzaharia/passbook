@@ -110,8 +110,9 @@ export function sameSnapshot(candidate: Candidate, snapshot: LivePassSnapshot | 
     snapshot.connectionGeneration === candidate.connectionGeneration &&
     snapshot.activeTemplateVersion === candidate.activeTemplateVersion &&
     snapshot.displayTemplateVersion === candidate.displayTemplateVersion &&
+    // The org's access epoch only: `templateRevision` is its `config_revision` (name, branding,
+    // settings), which is not door authority (authority-epochs.md, R8).
     snapshot.orgRevision === candidate.orgRevision &&
-    snapshot.templateRevision === candidate.templateRevision &&
     snapshot.identityRevision === candidate.identityRevision &&
     snapshot.activeReleaseId === candidate.activeReleaseId &&
     snapshot.activeReleaseGeneration === candidate.activeReleaseGeneration &&

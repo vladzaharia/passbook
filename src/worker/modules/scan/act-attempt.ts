@@ -15,6 +15,7 @@ import {
 import { planActionReads } from './act-read-plan.ts';
 import { finishStop, type StopContext } from './act-stop.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
+import { photoGrantPurpose } from './asset-types.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { knownPhotoUrl, type PreparedPhotoGrant } from './member-photo.ts';
@@ -121,7 +122,7 @@ export async function attempt(
       scanTemplateSnapshotPredicate(
         evaluated.found.liveCandidate,
         evaluated.found.liveCandidate.templateSnapshot,
-        'commit',
+        photoGrantPurpose(evaluated.found.liveCandidate),
       ).sql !== '0'
     )
       photo = await knownPhotoUrl(
@@ -217,7 +218,7 @@ export async function attempt(
     scanTemplateSnapshotPredicate(
       found.liveCandidate,
       found.liveCandidate.templateSnapshot,
-      'commit',
+      photoGrantPurpose(found.liveCandidate),
     ).sql !== '0'
   )
     photo = await knownPhotoUrl(
