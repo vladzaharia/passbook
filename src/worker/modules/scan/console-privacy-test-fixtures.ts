@@ -141,7 +141,9 @@ export function setupPrivacyKit() {
         version: template.version,
       });
     }
-  });
+    // About 0.2 s alone; every test needs its own org, so it cannot move to beforeAll. The default
+    // 10 s hook limit fails it when the machine is saturated.
+  }, 30_000);
 }
 
 export async function insertVersion(template: ResolvedTemplate, buildKey: string) {

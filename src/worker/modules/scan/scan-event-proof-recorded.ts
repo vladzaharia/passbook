@@ -53,6 +53,23 @@ const hashOrNull = (value: unknown) =>
   value === null || (typeof value === 'string' && HASH.test(value));
 
 /**
+ * The projection has an entry for the event's recorded role. Without one (the writer's minimal
+ * `roles: {}`) no reader shows the event's pass: the console finds no role entry, the feed asks this.
+ */
+export function recordedRoleProjected(authority: unknown): boolean {
+  if (!object(authority)) return false;
+  const projection = authority.eventProjection;
+  const recorded = authority.role;
+  return (
+    object(projection) &&
+    object(projection.roles) &&
+    typeof recorded === 'string' &&
+    ROLES.has(recorded) &&
+    Object.hasOwn(projection.roles, recorded)
+  );
+}
+
+/**
  * The role projection is what every reader redacts by: `{v: 1, roles}`, each entry well-formed, with
  * an entry for the recorded role. `roles: {}` is the writer's minimal form (no policy was
  * evaluated, as for a refusal without a usable pass). Without it the event proves nothing about its pass.
@@ -61,11 +78,7 @@ function recordedProjectionValid(scan: RecordedEventScan, authority: ObjectValue
   const projection = authority.eventProjection;
   if (!object(projection) || projection.v !== 1 || !object(projection.roles)) return false;
   const roles = projection.roles;
-  const recorded = authority.role;
-  if (Object.keys(roles).length > 0) {
-    if (typeof recorded !== 'string' || !ROLES.has(recorded) || !Object.hasOwn(roles, recorded))
-      return false;
-  }
+  if (Object.keys(roles).length > 0 && !recordedRoleProjected(authority)) return false;
   return Object.entries(roles).every(([role, entry]) => {
     if (!ROLES.has(role) || !object(entry)) return false;
     const keys = Object.keys(entry).sort().join();

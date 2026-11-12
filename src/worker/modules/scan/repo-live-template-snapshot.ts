@@ -1,9 +1,9 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { stmt } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
-import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { decodeBoundLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { scanConjunction } from './repo-secret-binds.ts';
 import { readCandidateTemplateSnapshot } from './template-read-snapshot.ts';
 

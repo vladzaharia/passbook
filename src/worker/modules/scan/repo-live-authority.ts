@@ -8,7 +8,7 @@ import {
 } from './actor-csrf.ts';
 import { type CredentialTombstoneSnapshot, snapshotCredentialEnv } from './credential-input.ts';
 import type { LiveRecipient } from './live-auth.ts';
-import { liveActorDeadline, liveActorLifetimeFence, liveLifetimeStmt } from './live-lifetime.ts';
+import { liveActorDeadline, liveActorLifetimeFence } from './live-lifetime.ts';
 import { livePredicatesCurrent } from './live-read-fences.ts';
 import { eventPassPredicate } from './repo-action-authority.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
@@ -16,6 +16,7 @@ import {
   noCredentialTombstonesSql,
   validCredentialTombstoneRefs,
 } from './repo-credential-tombstones.ts';
+import { liveLifetimeStmt } from './repo-live-lifetime.ts';
 import { type LiveWatchStamp, liveRecipientFenceParts } from './repo-live-recipient.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { passOutputPredicate } from './repo-output-authority.ts';

@@ -14,6 +14,7 @@ import {
 import { readScannerScope } from './repo-scope.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
+import { captureTestEpochs } from './test-kit-epochs.ts';
 
 let kit: ScanKit;
 let templateId: string;
@@ -60,7 +61,10 @@ async function actorFor(scannerId: string) {
   );
   actor.scannerCsrfProof = await scanScannerCsrfProof(kit.env, scanner.id, scanner.csrfSecret);
   await bindScanningSession(kit.ctx, actor);
-  return withRole(actor, null);
+  withRole(actor, null);
+  // Like the route guard: epochs are captured once the session is bound.
+  await captureTestEpochs(kit.ctx, actor);
+  return actor;
 }
 
 async function atStopCommit(

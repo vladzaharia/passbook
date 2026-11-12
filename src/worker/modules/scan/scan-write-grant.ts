@@ -1,12 +1,13 @@
 import { type Grant, grant } from '../../platform/authority.ts';
 import { exactlyOne, rowIs } from '../../platform/authority-checks.ts';
-import { exists, type GrantCond, not, tenantCheck } from '../../platform/authority-cond.ts';
+import { exists, type GrantCond, not } from '../../platform/authority-cond.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
-import { type GrantPart, readPart, writePart } from '../../platform/authority-include.ts';
+import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
 import type { ScanActor } from './guard.ts';
+import { credentialRefChecks } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import { capturedStatement } from './scan-capture.ts';
 import { type ScanPassFacts, scanPassChecks } from './scan-pass-checks.ts';
@@ -48,7 +49,7 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
         ...(templateId ? { templateId } : {}),
       }),
       ...(i.pass ? scanPassChecks(i.pass.id, i.pass.facts) : []),
-      ...credentialChecks(i.credentialRefs),
+      ...credentialRefChecks(i.credentialRefs),
       ...(i.approver
         ? [
             rowIs(
@@ -84,23 +85,6 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
       ...i.codes,
     },
   });
-}
-
-function credentialChecks(refs: ScanWriteInput['credentialRefs']) {
-  const sql = (mode: string) => `NOT EXISTS (SELECT 1 FROM pass_credential_tombstones x
-    WHERE x.org_id = {org} AND x.mode = ${mode} AND x.credential_hash IN (SELECT value FROM json_each(?)))`;
-  return [
-    ...(refs?.current.length
-      ? [tenantCheck('lineage', sql('{mode}'), [JSON.stringify(refs.current)])]
-      : []),
-    ...(refs?.other.length
-      ? [
-          tenantCheck('lineage', sql("(CASE {mode} WHEN 'live' THEN 'test' ELSE 'live' END)"), [
-            JSON.stringify(refs.other),
-          ]),
-        ]
-      : []),
-  ];
 }
 
 /** Every table a scan write grant may name; each purpose lists what it writes. */
@@ -163,31 +147,6 @@ function capturedPart(statement: D1PreparedStatement, what: string): GrantPart {
 /** The retention proof row commits in the grant's batch, right after its ledger row (it inserts only when that row did). */
 export const retentionPart = (statement: D1PreparedStatement): GrantPart =>
   capturedPart(statement, 'retention');
-
-/** The current holder of a gate, named for a heads-up that lost the race. */
-export const holderPart = (gate: { passId: string; actionId: string; scope: string }): GrantPart =>
-  readPart(
-    `SELECT g.state AS gate_state, g.last_at, g.last_scan_id AS gate_scan_id, g.count AS gate_count,
-       s.id AS scan_id, s.at, s.state AS scan_state, s.action_id, s.scanner_id, s.staff_id,
-       s.override_of, s.undone_by, sc.name AS scanner_name, st.name AS staff_name
-     FROM scan_gates g LEFT JOIN scans s ON s.id = g.last_scan_id AND s.org_id = {org}
-     LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = {org}
-     LEFT JOIN scan_staff st ON st.id = s.staff_id AND st.org_id = {org}
-     WHERE g.pass_id = ? AND g.action_id = ? AND g.scope = ? AND g.org_id = {org}`,
-    [gate.passId, gate.actionId, gate.scope],
-  );
-
-/** The scan closed (any outcome): what post-commit work for a heads-up is gated on. */
-export const doneScanPredicate = (scanId: string) => ({
-  sql: `EXISTS (SELECT 1 FROM scans q WHERE q.id = ? AND q.state = 'done')`,
-  params: [scanId],
-});
-
-/** A scan row is closed with this outcome: what the post-commit work (counts, display, photo) is gated on. */
-export const doneOkPredicate = (scanId: string) => ({
-  sql: `EXISTS (SELECT 1 FROM scans q WHERE q.id = ? AND q.state = 'done' AND q.outcome = 'ok')`,
-  params: [scanId],
-});
 
 /**
  * A PIN attempt is returned after the scan commits, or after a classified refusal, as its own counter

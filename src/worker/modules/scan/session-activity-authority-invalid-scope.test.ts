@@ -23,7 +23,7 @@ const invalidScopes = [
 
 describe('invalid session activity scopes', () => {
   it.each(invalidScopes)(
-    'refuses device activity and shows the console an unassigned session with no activity for an already %s scope',
+    'shows the device and the console no activity for an already %s scope, keeping the device paired',
     async (invalid) => {
       const f = await activityFixture();
       for (const rows of [await deviceRows(await f.device()), await consoleRows(await f.console())])
@@ -78,7 +78,12 @@ describe('invalid session activity scopes', () => {
         if (invalid === 'missing selected template')
           await runOne(db, 'DELETE FROM templates WHERE id=?', [template]);
       }
-      await noLeak(await f.device(), 401, 'SCANNER_UNAUTHENTICATED', f.pass.id, ACTIVITY_NAME);
+      // An invalid scope is configuration: the device stays paired and sees nothing.
+      const device = await f.device();
+      expect(device.status).toBe(200);
+      const deviceText = await device.text();
+      expect(JSON.parse(deviceText)).toEqual({ items: [] });
+      for (const secret of [f.pass.id, ACTIVITY_NAME]) expect(deviceText).not.toContain(secret);
       // The session stays open so an admin can fix it: never as all templates, and no activity it
       // cannot scope (a rename or other edit answers the same detail).
       const detail = await f.console();
@@ -138,11 +143,83 @@ describe('invalid session activity scopes', () => {
       }
       await noLeak(
         response,
-        consumer === 'device' ? 401 : 404,
-        consumer === 'device' ? 'SCANNER_UNAUTHENTICATED' : 'SCANNING_SESSION_NOT_FOUND',
+        consumer === 'device' ? 409 : 404,
+        consumer === 'device' ? 'SCAN_CONFIG_CHANGED' : 'SCANNING_SESSION_NOT_FOUND',
         f.pass.id,
         ACTIVITY_NAME,
       );
     },
   );
+
+  it.each([
+    ['no change', 200, null],
+    ['scanner revoked', 401, 'SCANNER_REPAIR'],
+    ['scanner time zone', 409, 'SCAN_CONFIG_CHANGED'],
+  ] as const)(
+    'answers an invalid-scope device read with %s before its authority read',
+    async (change, status, code) => {
+      const f = await activityFixture();
+      await runOne(f.kit.env.DB, 'DELETE FROM scan_event_templates WHERE event_id=?', [f.event.id]);
+      const response = await beforeAuthorityRead(f.kit.env, f.device, async (db) => {
+        if (change === 'scanner revoked')
+          await runOne(db, 'UPDATE scanners SET revoked_at=? WHERE id=?', [
+            f.kit.clock.now(),
+            f.scanner.id,
+          ]);
+        if (change === 'scanner time zone')
+          await runOne(db, "UPDATE scanners SET time_zone='Europe/Paris' WHERE id=?", [
+            f.scanner.id,
+          ]);
+      });
+      if (code === null) {
+        expect(response.status).toBe(status);
+        expect(await response.json()).toEqual({ items: [] });
+        return;
+      }
+      await noLeak(response, status, code, f.pass.id, ACTIVITY_NAME);
+    },
+  );
 });
+
+/** Runs `change` right before the redacted-scope authority read of an invalid-scope device. */
+async function beforeAuthorityRead(
+  env: { DB: D1Database },
+  operation: () => Promise<Response>,
+  change: (db: D1Database) => Promise<void>,
+) {
+  const real = env.DB;
+  let fired = 0;
+  const hooked = (statement: D1PreparedStatement): D1PreparedStatement =>
+    new Proxy(statement, {
+      get(target, member) {
+        if (member === 'bind') return (...values: unknown[]) => hooked(target.bind(...values));
+        if (member === 'first')
+          return async (...args: unknown[]) => {
+            if (++fired === 1) await change(real);
+            return (target.first as (...values: unknown[]) => unknown).apply(target, args);
+          };
+        const value = Reflect.get(target, member, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+  env.DB = new Proxy(real, {
+    get(target, member) {
+      if (member === 'prepare')
+        return (sql: string) => {
+          const statement = target.prepare(sql);
+          return sql.startsWith('SELECT (') && sql.endsWith(') AS current')
+            ? hooked(statement)
+            : statement;
+        };
+      const value = Reflect.get(target, member, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  try {
+    const response = await operation();
+    expect(fired).toBe(1);
+    return response;
+  } finally {
+    env.DB = real;
+  }
+}

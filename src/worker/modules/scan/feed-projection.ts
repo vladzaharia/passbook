@@ -33,6 +33,7 @@ import {
 } from './repo-feed-projection.ts';
 import { outputPredicatesCurrent } from './repo-output-predicates.ts';
 import type { ScanEventProofCache } from './scan-event-proof.ts';
+import { recordedRoleProjected } from './scan-event-proof-recorded.ts';
 import type { PasslessScan } from './scan-passless.ts';
 
 export type ConsoleAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
@@ -64,18 +65,30 @@ function doorSeesAction(row: ScanLogRow): boolean {
   }
 }
 
+/** As the console: a pass shows only when the event projected its recorded role. */
+function passProjected(row: ScanLogRow): boolean {
+  try {
+    const data: unknown = JSON.parse(row.eventProof?.event.data ?? 'null');
+    return recordedRoleProjected((data as { authority?: unknown } | null)?.authority);
+  } catch {
+    // A proof whose data cannot be read projects no pass.
+    return false;
+  }
+}
+
 /** API keys have no scan role: names stay out, and action detail follows the door's event-time view. */
 export function toFeed(row: ScanLogRow): Feed {
   const reason = ScanReasonSchema.safeParse(row.reason);
   const noPolicy = !row.policyAvailable;
-  const detail = !noPolicy && doorSeesAction(row);
+  const passHidden = noPolicy || (row.passId !== null && !passProjected(row));
+  const detail = !passHidden && doorSeesAction(row);
   const kind = detail ? ScanRecordKindSchema.safeParse(row.actionKind) : null;
   return {
     id: row.id,
     at: row.at,
-    passId: noPolicy ? null : row.passId,
+    passId: passHidden ? null : row.passId,
     externalId: null,
-    templateId: noPolicy ? null : row.templateId,
+    templateId: passHidden ? null : row.templateId,
     eventId: !noPolicy || row.passlessProofCandidate ? row.eventId : null,
     actionId: detail ? row.actionId : null,
     kind: kind?.success ? kind.data : null,

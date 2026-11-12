@@ -12,8 +12,8 @@ export interface ScanAuthorityEpochs {
  * The epochs hang off the actor under an enumerable symbol key. Object spread copies it, so
  * `{ ...actor, event }` keeps its epochs; `JSON.stringify`, `Object.keys` and zod strict schemas
  * ignore symbols, so sealed envelopes keep their shape. `structuredClone` drops it: use
- * `copyScanEpochs` there. An actor without epochs (restored, sealed or built outside the guard) is
- * checked by its column snapshot instead (repo-actor-legacy-authority.ts).
+ * `copyScanEpochs` there. An actor with a device but without epochs is refused by the actor
+ * predicate; a console actor without one is checked by its session and event columns.
  */
 const EPOCHS = Symbol('scan.epochs');
 type Carrier = { [EPOCHS]?: ScanAuthorityEpochs };

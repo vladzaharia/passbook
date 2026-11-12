@@ -20,17 +20,19 @@ beforeAll(async () => {
   });
 });
 const call = (method: string, path: string, body?: unknown, mode?: 'test') =>
-  app.request(
-    `${ORIGIN}/api/v1/scan-events${path}`,
-    {
-      method,
-      headers: {
-        ...fake.admin(mode ? { mode } : {}),
-        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+  Promise.resolve(
+    app.request(
+      `${ORIGIN}/api/v1/scan-events${path}`,
+      {
+        method,
+        headers: {
+          ...fake.admin(mode ? { mode } : {}),
+          ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        },
+        body: body === undefined ? null : JSON.stringify(body),
       },
-      body: body === undefined ? null : JSON.stringify(body),
-    },
-    kit.env,
+      kit.env,
+    ),
   );
 const eventsOf = (ids: string[]) =>
   all<{ id: string; event_id: string | null }>(

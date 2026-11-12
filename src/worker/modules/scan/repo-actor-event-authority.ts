@@ -4,7 +4,7 @@ import { usableScanTemplateSql } from './repo-scope-releases.ts';
 /*
  * Event and session parts of the actor predicate that stay column-based: the release proofs of an
  * event's templates (for operations that do not name the scanned template) and the snapshots of
- * actors without captured epochs (see repo-actor-legacy-authority.ts).
+ * console actors without captured epochs.
  */
 
 /** The admin session as originally captured: lifetime equality, not only liveness. */
@@ -79,11 +79,10 @@ export function appendEventTemplateProofs(
   params.push(eventId, orgId, mode);
 }
 
-/** One event as originally captured: column equality and the stamp. */
+/** One event as originally captured: its configuration columns, never its stamp (a rename moves no epoch). */
 export function appendLegacyEvent(
   e: {
     id: string;
-    updatedAt: number;
     matchInput: string | null;
     matchValues: string | null;
     opensAt: number;
@@ -99,7 +98,7 @@ export function appendLegacyEvent(
 ): void {
   parts.push(
     eventTemplateProofsSql(`(e.id=?/* scan-ephemeral-event-id */ AND e.org_id=? AND e.mode=?
-          AND e.archived_at IS NULL AND e.updated_at=?)
+          AND e.archived_at IS NULL)
         AND (e.match_input IS ?/* scan-ephemeral-event-match-input */
           AND e.match_values IS ?/* scan-ephemeral-event-match-values */
           AND e.opens_at=? AND e.closes_at=?)
@@ -109,7 +108,6 @@ export function appendLegacyEvent(
     e.id,
     orgId,
     mode,
-    e.updatedAt,
     e.matchInput,
     e.matchValues,
     e.opensAt,

@@ -6,7 +6,13 @@ import { epochsMissing } from './authority-capture.ts';
 export { captureScanEpochs } from './authority-capture.ts';
 
 import type { ScanActor } from './actor.ts';
-import { DEVICE_IDLE_MS } from './auth-store.ts';
+import {
+  deviceAwakeCheck,
+  noScannerTemplatesCheck,
+  noStaffBindingCheck,
+  scannerTemplateCheck,
+  sessionAcceptsTemplateCheck,
+} from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
@@ -71,13 +77,7 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
         rowIs('scanners', scanner.id, { credential_epoch: epochs.scanner.credential }, 'actor'),
       );
     if (actor.principal === 'scanner' && !actor.terminal) {
-      checks.push(
-        rawCheck(
-          'actor',
-          `EXISTS (SELECT 1 FROM scanners s WHERE s.id = ? AND COALESCE(s.last_seen_at, s.paired_at, ?) + ? > ?)`,
-          [scanner.id, input.now, DEVICE_IDLE_MS, input.now],
-        ),
-      );
+      checks.push(deviceAwakeCheck(scanner.id, input.now));
       if (actor.staff) {
         if (epochs.staff?.id !== actor.staff.id) throw epochsMissing();
         checks.push(
@@ -101,16 +101,7 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
         );
       }
       // No staff was derived: the device must still have no valid binding (none, expired or disabled).
-      else
-        checks.push(
-          rawCheck(
-            'staff',
-            `NOT EXISTS (SELECT 1 FROM scanners s WHERE s.id = ? AND s.staff_id IS NOT NULL
-              AND COALESCE(s.staff_seen_at >= ?, 0) AND COALESCE(s.staff_since >= ?, 0)
-              AND EXISTS (SELECT 1 FROM scan_staff st WHERE st.id = s.staff_id AND st.disabled_at IS NULL))`,
-            [scanner.id, input.now - STAFF_IDLE_MS, input.now - STAFF_MAX_MS],
-          ),
-        );
+      else checks.push(noStaffBindingCheck(scanner.id, input.now));
     }
   }
   if (session) {
@@ -178,31 +169,12 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
         ),
       );
     else if (session && actor.templateIds.length > 0)
-      checks.push(
-        rawCheck(
-          'config',
-          `EXISTS (SELECT 1 FROM scanning_sessions ss, json_each(ss.accepts, '$.templateIds') j
-            WHERE ss.id = ? AND j.value = ?)`,
-          [session.id, templateId],
-        ),
-      );
+      checks.push(sessionAcceptsTemplateCheck(session.id, templateId));
     else if (scanner && !session && actor.templateIds.length > 0)
-      checks.push(
-        rawCheck(
-          'config',
-          `EXISTS (SELECT 1 FROM scanner_templates st WHERE st.scanner_id = ? AND st.template_id = ?)`,
-          [scanner.id, templateId],
-        ),
-      );
+      checks.push(scannerTemplateCheck(scanner.id, templateId));
   }
   // scanner_templates has no epoch: an unrestricted scanner must still have no template list.
   if (scanner && !session && !actor.event && actor.templateIds.length === 0)
-    checks.push(
-      rawCheck(
-        'config',
-        `NOT EXISTS (SELECT 1 FROM scanner_templates st WHERE st.scanner_id = ?)`,
-        [scanner.id],
-      ),
-    );
+    checks.push(noScannerTemplatesCheck(scanner.id));
   return checks;
 }

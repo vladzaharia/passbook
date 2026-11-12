@@ -59,7 +59,9 @@ describe('override event provenance', () => {
       // 'never' does not.
       const retry = await request(s.scanner, s.input, { overrideOf: s.headsId, idempotencyKey });
       if (field === 'policy') {
-        expect(retry.status === 200 ? (await retry.json()).kind : retry.status).not.toBe('ok');
+        expect(
+          retry.status === 200 ? (await retry.json<{ kind: string }>()).kind : retry.status,
+        ).not.toBe('ok');
         expect(await state(s.pass.id)).toEqual(before);
       }
     },
@@ -93,7 +95,9 @@ describe('override event provenance', () => {
       ]),
     ).toEqual({ state: 'failed', outcome: null });
     const retry = await request(s.scanner, s.input, options);
-    expect(retry.status === 200 ? (await retry.json()).kind : retry.status).not.toBe('ok');
+    expect(
+      retry.status === 200 ? (await retry.json<{ kind: string }>()).kind : retry.status,
+    ).not.toBe('ok');
     expect(await state(s.pass.id)).toEqual(before);
   });
 

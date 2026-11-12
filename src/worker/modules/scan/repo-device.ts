@@ -111,6 +111,13 @@ export async function getScannerByPrefix(db: Db, prefix: string): Promise<Scanne
   return row ? toRow(row) : null;
 }
 
+export const scannerHasTemplates = async (db: Db, scannerId: string) =>
+  !!(await first<{ present: number }>(
+    db,
+    'SELECT 1 AS present FROM scanner_templates WHERE scanner_id=? LIMIT 1',
+    [scannerId],
+  ));
+
 export async function getScanner(db: Db, id: string): Promise<ScannerRow | null> {
   const row = await first<Raw>(db, `SELECT ${COLUMNS} FROM scanners WHERE id = ?`, [id]);
   return row ? toRow(row) : null;

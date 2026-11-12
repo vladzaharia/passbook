@@ -12,9 +12,9 @@ import {
   sameSession,
   tenantReadAuthority,
 } from './live-auth-guards.ts';
-import { liveLifetimeStmt } from './live-lifetime.ts';
 import { liveActorSchema } from './live-provenance.ts';
 import { liveRecipientFencesCurrent } from './repo-live-authority.ts';
+import { liveLifetimeStmt } from './repo-live-lifetime.ts';
 import { type LiveWatchStamp, liveRecipientWatchStmt } from './repo-live-recipient.ts';
 import {
   captureTemplateStampsStmt,

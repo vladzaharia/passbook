@@ -18,18 +18,13 @@ import type { StopAuthority } from './repo-action-authority.ts';
 import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
 import { boundOutputPredicate, type OutputPredicate } from './repo-output-predicates.ts';
+import { doneScanPredicate } from './repo-scan-checks.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import type { Claim } from './repo-scans.ts';
 import type { Stop } from './resolve.ts';
 import { capturingDb } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
-import {
-  doneScanPredicate,
-  retentionPart,
-  SCAN_STOP_TABLES,
-  scanIs,
-  scanWriteGrant,
-} from './scan-write-grant.ts';
+import { retentionPart, SCAN_STOP_TABLES, scanIs, scanWriteGrant } from './scan-write-grant.ts';
 import { finalizeScan, ledgerEvent } from './scan-write-statements.ts';
 
 export interface StopContext {

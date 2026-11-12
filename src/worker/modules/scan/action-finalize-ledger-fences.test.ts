@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import {
   effects,
   request,
@@ -32,11 +33,13 @@ async function legacyExtraScenario(): Promise<Scenario> {
     assets: { 'icon.png': ICON_PNG },
   });
   await persistTemplate(kit.fx, template, { registry: kit.registry });
-  const pass = await makeLegacyScanPass(kit.fx, {
+  const row = await makeLegacyScanPass(kit.fx, {
     orgId: kit.org.id,
     template,
     personalization: { memberName: 'Private budget member' },
   });
+  const pass = await getPass(kit.env.DB, row.id, null);
+  if (!pass) throw new Error('Missing legacy pass');
   const scanner = await kit.scanner({ templateIds: [template.id] });
   const manager = await kit.staff('manager');
   return {

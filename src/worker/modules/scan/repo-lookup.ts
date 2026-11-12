@@ -1,7 +1,6 @@
 import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
 import { chunk, stmt } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
-import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import {
@@ -9,6 +8,7 @@ import {
   liveTemplateSnapshotColumnsSql,
 } from './repo-live-template-snapshot.ts';
 import { type Raw, toCandidate } from './repo-lookup-candidate.ts';
+import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
 
 type Db = D1Database;
 

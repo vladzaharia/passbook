@@ -18,6 +18,7 @@ import { blankOutcome, canOverride, safeOutcomeDetails } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
+import { doneScanPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import { activeFlags, type Found } from './resolve.ts';
@@ -25,7 +26,6 @@ import { capturingDb } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
 import {
   capacityOpen,
-  doneScanPredicate,
   refundPin,
   retentionPart,
   SCAN_HELD_TABLES,

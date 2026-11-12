@@ -1,7 +1,8 @@
-import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { captureScanEpochs } from './authority-checks.ts';
+import { getScanner } from './repo-device.ts';
+import { getStaff } from './repo-staff.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 
 /**
@@ -11,23 +12,15 @@ import { scanEpochsOf } from './scan-epochs.ts';
 export async function captureTestEpochs(ctx: ServiceContext, actor: ScanActor): Promise<void> {
   if (scanEpochsOf(actor)) return;
   const db = ctx.env.DB;
-  const staff = actor.staff
-    ? await first<{ pin_hash: string }>(db, 'SELECT pin_hash FROM scan_staff WHERE id = ?', [
-        actor.staff.id,
-      ])
-    : null;
+  const staff = actor.staff ? await getStaff(db, actor.orgId, actor.staff.id) : null;
   // Some actor builders read the scanner without its epochs; the row has them.
-  const row = actor.scanner
-    ? await first<{ credential_epoch: number; config_epoch: number }>(
-        db,
-        'SELECT credential_epoch, config_epoch FROM scanners WHERE id = ?',
-        [actor.scanner.id],
-      )
-    : null;
+  const row = actor.scanner ? await getScanner(db, actor.scanner.id) : null;
   await captureScanEpochs(
     db,
     actor,
-    row ? { credential: row.credential_epoch, config: row.config_epoch } : undefined,
-    staff?.pin_hash,
+    row?.credentialEpoch !== undefined && row.configEpoch !== undefined
+      ? { credential: row.credentialEpoch, config: row.configEpoch }
+      : undefined,
+    staff?.pinHash,
   );
 }

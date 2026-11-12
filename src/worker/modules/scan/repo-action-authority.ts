@@ -8,9 +8,6 @@ import { evaluatedPolicyPredicate, passPredicate } from './repo-pass-predicates.
 import type { ScanEventRow } from './repo-scope.ts';
 import { packScanPredicate, scanSecretSlots } from './repo-secret-binds.ts';
 
-export type { VerifiedLedgerBinding } from './repo-action-authority-ledger.ts';
-export { ledgerAuthorityPredicate } from './repo-action-authority-ledger.ts';
-
 type Predicate = { sql: string; params: SqlValue[] };
 
 /** Pack only nonsecret metadata; marked scalars remain independent D1 binds. */

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { runOne } from '../../../../test/helpers/index.ts';
-import { first } from '../../platform/db.ts';
+import { first, type SqlValue } from '../../platform/db.ts';
 import {
   expectRefused,
   type Refusal,
@@ -25,7 +25,7 @@ beforeAll(async () => {
 // Each change moves the epoch named in the title (migrations/0052_authority_epochs.sql), so the commit grant
 // refuses the approved ticket with a classified code. The cases replace the old column-equality fence tests.
 describe('approved action: epoch bump between preflight and commit', () => {
-  const scanner: [string, string, (id: string, now: number) => unknown[], Refusal][] = [
+  const scanner: [string, string, (id: string, now: number) => SqlValue[], Refusal][] = [
     [
       'scanner revoked (credential_epoch)',
       'UPDATE scanners SET revoked_at=? WHERE id=?',

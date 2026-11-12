@@ -19,8 +19,8 @@ import {
   candidateAudit,
   candidateCredentialSnapshotValid,
   candidateWallet,
-  findCandidates,
   eventAcceptsPass,
+  findCandidates,
   matchesEvent,
 } from './resolve-candidates.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';

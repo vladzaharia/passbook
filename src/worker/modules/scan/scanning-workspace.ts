@@ -1,7 +1,7 @@
 import type { ScanDeviceCapabilities } from '../../../shared/contracts/scanning-sessions.ts';
 import { reportedCapabilities } from '../../../shared/scan-surfaces.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { first, type SqlValue } from '../../platform/db.ts';
+import type { SqlValue } from '../../platform/db.ts';
 import {
   AppError,
   ConflictError,
@@ -15,6 +15,7 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import type { ScanActor } from './actor.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
+import { scannerHasTemplates } from './repo-device.ts';
 import { captureConfigurationScope } from './repo-scanner-configuration-scope.ts';
 import { getConsoleScanner } from './repo-scanners.ts';
 import { scanningDeviceRow, sessionWatchIds } from './repo-scanning-devices.ts';
@@ -128,13 +129,6 @@ export function scanningWorkspaceScopeFence(actor: ScanActor): { sql: string; pa
     : { sql: '1', params: [] };
 }
 
-const hasScannerTemplates = async (db: ServiceContext['env']['DB'], scannerId: string) =>
-  !!(await first<{ present: number }>(
-    db,
-    'SELECT 1 AS present FROM scanner_templates WHERE scanner_id=? LIMIT 1',
-    [scannerId],
-  ));
-
 export async function bindScanningSession(ctx: ServiceContext, actor: ScanActor) {
   if (!actor.scanner) return;
   // Some callers construct an actor without reading its scanner scope first.
@@ -162,7 +156,7 @@ export async function bindScanningSession(ctx: ServiceContext, actor: ScanActor)
       actor.scanner.eventId !== null ||
       actor.templateIds.length > 0 ||
       (actor.settings.acceptAllTemplates &&
-        (await hasScannerTemplates(ctx.env.DB, actor.scanner.id)))
+        (await scannerHasTemplates(ctx.env.DB, actor.scanner.id)))
     ) {
       actor.settings = { ...actor.settings, acceptAllTemplates: false };
     }

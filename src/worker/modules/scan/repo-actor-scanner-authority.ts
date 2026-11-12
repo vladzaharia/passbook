@@ -2,7 +2,6 @@ import type { SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { appendEventTemplateProofs } from './repo-actor-event-authority.ts';
-import { appendLegacyScannerAuthority } from './repo-actor-legacy-authority.ts';
 import { scanConjunction } from './repo-secret-binds.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
@@ -20,8 +19,10 @@ export function appendScannerAuthority(
 ): void {
   if (scanner) {
     const captured = scanEpochsOf(actor);
+    // Every actor with a device is captured (guard, pairing, undo, live envelopes); one that was
+    // not is refused, never compared by its column snapshot.
     if (!captured) {
-      appendLegacyScannerAuthority(actor, scanner, now, templateId, parts, params);
+      parts.push('0');
       return;
     }
     // An unassigned scanner or session-backed screen cannot read arbitrary templates.

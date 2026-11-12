@@ -1,6 +1,6 @@
-import { type SqlValue, stmt } from '../../platform/db.ts';
 import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ScanActor } from './actor.ts';
+import { eventEpochStmt, sessionEpochStmt, staffEpochStmt } from './repo-authority-capture.ts';
 import { type ScanAuthorityEpochs, setScanEpochs } from './scan-epochs.ts';
 import { observedScanningSession } from './scanning-workspace-observation.ts';
 
@@ -34,32 +34,12 @@ export async function captureScanEpochs(
   const { scanner, staff, scanningSession: session, event } = actor;
   const reads: D1PreparedStatement[] = [];
   const at: Record<string, number> = {};
-  const add = (key: string, sql: string, params: SqlValue[]) => {
-    at[key] = reads.push(stmt(db, sql, params)) - 1;
+  const add = (key: string, statement: D1PreparedStatement) => {
+    at[key] = reads.push(statement) - 1;
   };
-  if (staff && scanner)
-    add(
-      'staff',
-      `SELECT role, disabled_at, pin_hash, auth_epoch FROM scan_staff WHERE id=? AND org_id=?`,
-      [staff.id, actor.orgId],
-    );
-  if (session)
-    add(
-      'session',
-      `SELECT status, accepts, settings, time_zone, config_epoch FROM scanning_sessions
-        WHERE id=? AND org_id=? AND mode=?`,
-      [session.id, actor.orgId, actor.mode],
-    );
-  if (event)
-    add(
-      'event',
-      `SELECT match_input, match_values, opens_at, closes_at, time_zone, capacity, reentry,
-        archived_at, config_epoch,
-        (SELECT json_group_array(template_id) FROM
-          (SELECT template_id FROM scan_event_templates WHERE event_id=? ORDER BY template_id)) AS tpl
-        FROM scan_events WHERE id=? AND org_id=? AND mode=?`,
-      [event.id, event.id, actor.orgId, actor.mode],
-    );
+  if (staff && scanner) add('staff', staffEpochStmt(db, staff.id, actor.orgId));
+  if (session) add('session', sessionEpochStmt(db, session.id, actor.orgId, actor.mode));
+  if (event) add('event', eventEpochStmt(db, event.id, actor.orgId, actor.mode));
   const results = reads.length ? await db.batch(reads) : [];
   const row = <T>(key: string): T | undefined =>
     results[at[key] ?? -1]?.results?.[0] as T | undefined;

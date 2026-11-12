@@ -22,6 +22,7 @@ import type { StopAuthority } from './repo-action-authority.ts';
 import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
+import { doneOkPredicate, holderPart } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import type { Found } from './resolve.ts';
@@ -35,8 +36,6 @@ import {
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
 import {
   capacityOpen,
-  doneOkPredicate,
-  holderPart,
   retentionPart,
   SCAN_COMMIT_TABLES,
   scanIs,

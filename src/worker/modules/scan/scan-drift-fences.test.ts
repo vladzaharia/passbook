@@ -140,7 +140,7 @@ describe('a PIN reset is derived from the credential it read', () => {
       /UPDATE scan_staff SET/i,
       async (db) =>
         void (await run(db, "UPDATE scan_staff SET pin_hash = 'moved' WHERE name = 'Stale'")),
-      () => staffKit.send('POST', staffKit.resetPath(person.staff.id)),
+      () => Promise.resolve(staffKit.send('POST', staffKit.resetPath(person.staff.id))),
     );
     expect(fired).toBe(true);
     expect(result.status).toBe(409);

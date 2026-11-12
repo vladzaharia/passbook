@@ -137,8 +137,8 @@ describe('session activity output races', () => {
           await approveScanReleases(f.kit, victimTemplate, { modes: ['live'], db });
       });
       if (consumer === 'device' && change === 'event templates') {
-        // The scanner's own scope shrank: its credential no longer covers this read.
-        await noLeak(response, 401, 'SCANNER_UNAUTHENTICATED', victim.id, 'Race victim guest');
+        // The scanner's own scope shrank: configuration, so the device stays paired.
+        await noLeak(response, 409, 'SCAN_CONFIG_CHANGED', victim.id, 'Race victim guest');
         return;
       }
       const rows = consumer === 'device' ? await deviceRows(response) : await consoleRows(response);

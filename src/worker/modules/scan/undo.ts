@@ -11,10 +11,10 @@ import type { ConsoleUndo } from './feed.ts';
 import { undoWindowMinutes } from './outcome.ts';
 import { scanByKey } from './repo-scans.ts';
 import { commitUndo, UNDO_CODES } from './repo-undo.ts';
+import { guardMiss, undoApprovalGuard } from './repo-undo-approval-guard.ts';
 import { readUndo } from './repo-undo-read.ts';
 import { scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
-import { guardMiss, undoApprovalGuard } from './undo-approval-guard.ts';
 import { notFound, planUndo, superseded } from './undo-authority.ts';
 import { answer, replayUndo, type UndoRequest } from './undo-replay.ts';
 

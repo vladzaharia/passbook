@@ -206,3 +206,41 @@ describe('scan commit grants and a presented credential retired after resolve', 
     if (row) expect(row).toEqual({ outcome: null, pass_id: null });
   });
 });
+
+describe('scan commit grants and a pass that changes after resolve', () => {
+  const passCases = cases.filter(([label]) => label === 'choose' || label === 'approval answer');
+  it.each(
+    passCases.flatMap(([label, c]) =>
+      (['voided', 'removed'] as const).map((change) => [label, change, c] as const),
+    ),
+  )('%s: refuses a pass %s just before the grant and records nothing', async (_l, change, c) => {
+    const { pass, headers, body } = await c.setup();
+    const before = await ledger(pass.id);
+    const idempotencyKey = key();
+    const response = await beforeGrant(
+      c.purpose,
+      async (db) => {
+        if (change === 'voided')
+          await run(db, "UPDATE passes SET status='voided' WHERE id=?", [pass.id]);
+        if (change === 'removed')
+          await run(db, 'UPDATE passes SET removed_at=? WHERE id=?', [kit.clock.now(), pass.id]);
+      },
+      () =>
+        kit.post(headers, '/actions', {
+          input: codeOf(pass),
+          idempotencyKey,
+          clientTs: kit.clock.now(),
+          ...body,
+        }),
+    );
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'SCAN_PASS_CHANGED' });
+    expect(await ledger(pass.id)).toEqual(before);
+    const row = await first<{ outcome: string | null; pass_id: string | null }>(
+      kit.env.DB,
+      'SELECT outcome,pass_id FROM scans WHERE idempotency_key=?',
+      [idempotencyKey],
+    );
+    if (row) expect(row).toEqual({ outcome: null, pass_id: null });
+  });
+});

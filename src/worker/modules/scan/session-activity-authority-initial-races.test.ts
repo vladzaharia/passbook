@@ -67,10 +67,15 @@ describe('initial session activity authority batch', () => {
         },
         { phase: 'initial' },
       );
+      // A lost credential unpairs the device; a moved binding is configuration.
       await noLeak(
         response,
-        consumer === 'device' ? 401 : 404,
-        consumer === 'device' ? 'SCANNER_UNAUTHENTICATED' : 'SCANNING_SESSION_NOT_FOUND',
+        consumer === 'console' ? 404 : change === 'changed binding' ? 409 : 401,
+        consumer === 'console'
+          ? 'SCANNING_SESSION_NOT_FOUND'
+          : change === 'changed binding'
+            ? 'SCAN_CONFIG_CHANGED'
+            : 'SCANNER_REPAIR',
         f.pass.id,
         ACTIVITY_NAME,
       );

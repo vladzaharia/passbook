@@ -1,9 +1,21 @@
+import { stmt } from '../../platform/db.ts';
 import type { ScanActor, ScanTenantAuthority } from './actor.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import type { ScannerRow } from './repo-device.ts';
 import type { OutputPredicate } from './repo-output-predicates.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
+
+/** The one row `liveActorDeadline` and `liveActorLifetimeFence` read: the admin session's idle deadline. */
+export function liveLifetimeStmt(db: D1Database, actor: ScanActor): D1PreparedStatement | null {
+  if (actor.principal !== 'admin') return stmt(db, 'SELECT 1 AS present', []);
+  if (typeof actor.platformSessionId !== 'string') return null;
+  return stmt(
+    db,
+    'SELECT idle_expires_at AS session_idle FROM sessions WHERE id_hash = ?/* scan-ephemeral-session-id-hash */',
+    [actor.platformSessionId],
+  );
+}
 
 export function liveAdminLifetimePredicate(sessionId: string, idle: number): OutputPredicate {
   return {

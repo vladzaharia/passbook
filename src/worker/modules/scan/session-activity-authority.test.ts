@@ -180,13 +180,20 @@ describe('session activity authority', () => {
       if (change === 'release head')
         await approveScanReleases(f.kit, f.template, { modes: ['live'], db });
     });
-    // A rename and a release head move no epoch. The scanner's own template list is its scope, so a
-    // change to it ends the read with the other credential changes.
+    // A rename and a release head move no epoch. A lost credential unpairs the device; a scope or
+    // binding change is configuration and keeps it paired.
     if (change === 'event row' || change === 'release head') {
       expect(response.status).toBe(200);
       return;
     }
-    await noLeak(response, 401, 'SCANNER_UNAUTHENTICATED', f.pass.id, ACTIVITY_NAME);
+    const lost = change === 'revoked' || change === 'csrf rotation' || change === 'token rotation';
+    await noLeak(
+      response,
+      lost ? 401 : 409,
+      lost ? 'SCANNER_REPAIR' : 'SCAN_CONFIG_CHANGED',
+      f.pass.id,
+      ACTIVITY_NAME,
+    );
   });
 
   it.each(['membership revoked', 'membership roles', 'session rotation', 'session mode'] as const)(

@@ -160,11 +160,9 @@ export function registerCountsCacheReleaseCases() {
     const scope = await readScannerScope(kit.env.DB, row, s.staff.id);
     const observed = scannerActor(kit.ctx, row, 'live', 'cookie', scope);
     await bindScanningSession(kit.ctx, observed);
-    // Column-compared actor: this case measures the packed (no-epoch) fence against the bind cap.
     const scanner = await proofedScanActor(
       kit.ctx,
       withRole(observed, scope.staff ? await boundStaff(kit.ctx, row, scope.staff) : null),
-      { epochs: false },
     );
     const admin = await adminFor(s, false, ids);
     const bound: { sql: string; count: number }[] = [];
