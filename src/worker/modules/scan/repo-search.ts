@@ -1,4 +1,4 @@
-import { likeEscape, type SqlValue, stmt } from '../../platform/db.ts';
+import { prefixMatch, type SqlValue, stmt } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { ScanActor } from './actor.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
@@ -14,30 +14,12 @@ export interface SearchRow {
 
 type SearchKeys = { scanCode: string | null; barcodeHash: string; lookupHash: string };
 
-/** D1 rejects LIKE patterns over 50 bytes. */
-const LIKE_PATTERN_BYTES = 50;
-const utf8 = new TextEncoder();
-
-/** A prefix too long for one pattern narrows by its head and compares the full prefix exactly. */
-function prefixMatch(
+function titleMatch(
   alias: 'matched' | 'lookup_match',
   column: 'display_title' | 'display_subtitle',
   q: string,
 ): { sql: string; params: SqlValue[] } {
-  const label = column.replace('_', '-');
-  const like = `${alias}.${column} LIKE ?/* scan-ephemeral-${label} */ ESCAPE '\\' COLLATE NOCASE`;
-  const full = `${likeEscape(q)}%`;
-  if (utf8.encode(full).length <= LIKE_PATTERN_BYTES) return { sql: like, params: [full] };
-  let head = '';
-  for (const char of q) {
-    const next = head + likeEscape(char);
-    if (utf8.encode(`${next}%`).length > LIKE_PATTERN_BYTES) break;
-    head = next;
-  }
-  return {
-    sql: `(${like} AND substr(${alias}.${column}, 1, ?) = ?/* scan-ephemeral-${label} */ COLLATE NOCASE)`,
-    params: [`${head}%`, Array.from(q).length, q],
-  };
+  return prefixMatch(`${alias}.${column}`, q, `scan-ephemeral-${column.replace('_', '-')}`);
 }
 
 /** Share exact input matching between the indexed search and the final miss fence. */
@@ -54,7 +36,7 @@ function inputMatches(
       params: [email],
     });
   } else if (!q.includes('@') && Array.from(q).length >= 3) {
-    matches.push(prefixMatch(alias, 'display_title', q), prefixMatch(alias, 'display_subtitle', q));
+    matches.push(titleMatch(alias, 'display_title', q), titleMatch(alias, 'display_subtitle', q));
   }
   if (keys) {
     matches.push({

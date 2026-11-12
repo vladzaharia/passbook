@@ -4,8 +4,8 @@ import {
   batch,
   chunk,
   first,
-  likeEscape,
   placeholders,
+  prefixMatch,
   run,
   stmt,
 } from '../../platform/db.ts';
@@ -78,14 +78,16 @@ export async function listUsers(db: Db, f: ListFilter): Promise<UserRow[]> {
   const q = f.q?.trim();
   if (q) {
     // Prefix match on NOCASE-indexed columns; the contains search it replaces could only scan.
-    const prefix = `${likeEscape(q)}%`;
+    const email = prefixMatch('primary_email', q);
+    const name = prefixMatch('name', q);
+    const alias = prefixMatch('email', q);
     where.push(
       `id IN (SELECT id FROM users WHERE id = ?
-        UNION SELECT id FROM users WHERE primary_email LIKE ? ESCAPE '\\'
-        UNION SELECT id FROM users WHERE name LIKE ? ESCAPE '\\'
-        UNION SELECT user_id FROM user_emails WHERE email LIKE ? ESCAPE '\\')`,
+        UNION SELECT id FROM users WHERE ${email.sql}
+        UNION SELECT id FROM users WHERE ${name.sql}
+        UNION SELECT user_id FROM user_emails WHERE ${alias.sql})`,
     );
-    params.push(q, prefix, prefix, prefix);
+    params.push(q, ...email.params, ...name.params, ...alias.params);
   }
   params.push(f.limit + 1);
   return all<UserRow>(

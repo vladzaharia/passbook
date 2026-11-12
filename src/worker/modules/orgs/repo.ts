@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, chunk, first, likeEscape, placeholders, run } from '../../platform/db.ts';
+import { all, chunk, containsMatch, first, placeholders, run } from '../../platform/db.ts';
 
 export const COUNT_CAP = 100_000;
 
@@ -46,13 +46,14 @@ export async function slugTaken(db: D1Database, slug: string, exceptId?: string)
  */
 export function listOrgRows(db: D1Database, before: string | undefined, limit: number, q?: string) {
   const term = q?.trim().toLowerCase();
-  const like = term ? `%${likeEscape(term)}%` : null;
+  const name = term ? containsMatch('lower(name)', term) : null;
+  const slug = term ? containsMatch('slug', term) : null;
   return all<OrgRow>(
     db,
     `SELECT ${COLUMNS} FROM orgs WHERE status != 'deleted' AND id < ?
-       ${like ? "AND (lower(name) LIKE ? ESCAPE '\\' OR slug LIKE ? ESCAPE '\\')" : ''}
+       ${name && slug ? `AND (${name.sql} OR ${slug.sql})` : ''}
      ORDER BY id DESC LIMIT ?`,
-    like ? [before ?? '￿', like, like, limit] : [before ?? '￿', limit],
+    name && slug ? [before ?? '￿', ...name.params, ...slug.params, limit] : [before ?? '￿', limit],
   );
 }
 

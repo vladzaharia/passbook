@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, likeEscape } from '../../platform/db.ts';
+import { all, containsMatch } from '../../platform/db.ts';
 import { TEMPLATE_COLUMNS, type TemplateRow, type TemplateSql, templateRow } from './repo.ts';
 
 export interface ListFilter {
@@ -40,9 +40,11 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     params.push(f.origin);
   }
   if (f.q) {
-    const like = `%${likeEscape(f.q.toLowerCase())}%`;
-    where.push("(lower(t.name) LIKE ? ESCAPE '\\' OR t.slug LIKE ? ESCAPE '\\')");
-    params.push(like, like);
+    const term = f.q.toLowerCase();
+    const name = containsMatch('lower(t.name)', term);
+    const slug = containsMatch('t.slug', term);
+    where.push(`(${name.sql} OR ${slug.sql})`);
+    params.push(...name.params, ...slug.params);
   }
   if (f.cursor) {
     where.push('(t.created_at < ? OR (t.created_at = ? AND t.id < ?))');

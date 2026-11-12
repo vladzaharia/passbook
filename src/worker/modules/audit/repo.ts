@@ -1,5 +1,5 @@
 import { OrgRoleSchema } from '../../../shared/contracts/org-membership.ts';
-import { all, likeEscape, run, type SqlValue, stmt } from '../../platform/db.ts';
+import { all, prefixMatch, run, type SqlValue, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { redactDetail, safeLabel } from './redact.ts';
 import type { AuditEntry } from './types.ts';
@@ -60,9 +60,16 @@ export async function listAuditRows(
     if (filter.targetId) where.push(tenantRefPredicate('target_type', 'target_id'));
   }
   if (filter.actorId) add('actor_id = ?', filter.actorId);
-  if (filter.action) add("action LIKE ? ESCAPE '\\'", `${likeEscape(filter.action)}%`);
-  if (filter.excludeAction)
-    add("action NOT LIKE ? ESCAPE '\\'", `${likeEscape(filter.excludeAction)}%`);
+  if (filter.action) {
+    const match = prefixMatch('action', filter.action);
+    where.push(match.sql);
+    params.push(...match.params);
+  }
+  if (filter.excludeAction) {
+    const match = prefixMatch('action', filter.excludeAction);
+    where.push(`NOT (${match.sql})`);
+    params.push(...match.params);
+  }
   if (filter.targetType) add('target_type = ?', filter.targetType);
   if (filter.targetId) add('target_id = ?', filter.targetId);
   if (filter.from !== undefined) add('at >= ?', filter.from);

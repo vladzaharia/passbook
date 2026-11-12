@@ -1,4 +1,4 @@
-import { all, likeEscape, type SqlValue } from '../../platform/db.ts';
+import { all, containsMatch, type SqlValue } from '../../platform/db.ts';
 import type { ConnectionRow, Health } from './repo.ts';
 import { type ConnectionSql, toRow } from './repo-row.ts';
 
@@ -16,8 +16,9 @@ export async function listConnections(
   const params: SqlValue[] = [];
   const term = q.q?.trim().toLowerCase();
   if (term) {
-    where.push("lower(name) LIKE ? ESCAPE '\\'");
-    params.push(`%${likeEscape(term)}%`);
+    const match = containsMatch('lower(name)', term);
+    where.push(match.sql);
+    params.push(...match.params);
   }
   if (q.orgId !== undefined) {
     where.push('org_id = ?');

@@ -80,6 +80,49 @@ export function likeEscape(value: string): string {
   return value.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
+/** D1 rejects a LIKE or GLOB pattern over 50 bytes. */
+const LIKE_PATTERN_BYTES = 50;
+const utf8 = new TextEncoder();
+const fits = (pattern: string) => utf8.encode(pattern).length <= LIKE_PATTERN_BYTES;
+
+export interface SqlMatch {
+  sql: string;
+  params: (string | number)[];
+}
+
+/**
+ * `column LIKE 'q%'`, safe for any length of `q`. Case-folds ASCII like LIKE does. A pattern over
+ * D1's cap keeps the LIKE on the longest head that fits (so the index still narrows) and compares
+ * the full prefix exactly. `column` is trusted SQL; `comment` is tagged into the SQL, not bound.
+ */
+export function prefixMatch(column: string, q: string, comment = ''): SqlMatch {
+  const tag = comment ? `/* ${comment} */` : '';
+  const like = `${column} LIKE ?${tag} ESCAPE '\\'`;
+  const full = `${likeEscape(q)}%`;
+  if (fits(full)) return { sql: like, params: [full] };
+  let head = '';
+  for (const char of q) {
+    const next = head + likeEscape(char);
+    if (!fits(`${next}%`)) break;
+    head = next;
+  }
+  return {
+    sql: `(${like} AND substr(${column}, 1, ?) = ?${tag} COLLATE NOCASE)`,
+    params: [`${head}%`, Array.from(q).length, q],
+  };
+}
+
+/**
+ * `column LIKE '%q%'`, safe for any length of `q`. A pattern over D1's cap becomes
+ * `instr(lower(column), lower(q))`, which folds ASCII the same way.
+ */
+export function containsMatch(column: string, q: string, comment = ''): SqlMatch {
+  const tag = comment ? `/* ${comment} */` : '';
+  const full = `%${likeEscape(q)}%`;
+  if (fits(full)) return { sql: `${column} LIKE ?${tag} ESCAPE '\\'`, params: [full] };
+  return { sql: `instr(lower(${column}), lower(?${tag})) > 0`, params: [q] };
+}
+
 export interface CasTarget {
   table: string;
   id: string;

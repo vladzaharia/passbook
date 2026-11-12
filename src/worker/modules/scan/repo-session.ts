@@ -1,4 +1,4 @@
-import { stmt } from '../../platform/db.ts';
+import { containsMatch, stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -18,15 +18,17 @@ export const staffListStmt = (db: Db, orgId: string) =>
     [orgId, STAFF_ROSTER_LIMIT + 1],
   );
 
-/** People whose name contains `q`, for a roster that was cut. Not LIKE: D1 caps a pattern at 50 bytes. */
-export const staffSearchStmt = (db: Db, orgId: string, q: string) =>
-  stmt(
+/** People whose name contains `q`, for a roster that was cut. */
+export const staffSearchStmt = (db: Db, orgId: string, q: string) => {
+  const match = containsMatch('name', q);
+  return stmt(
     db,
     `SELECT id, name, role FROM scan_staff
-     WHERE org_id = ? AND disabled_at IS NULL AND instr(lower(name), lower(?)) > 0
+     WHERE org_id = ? AND disabled_at IS NULL AND ${match.sql}
      ORDER BY name COLLATE NOCASE, id LIMIT ?`,
-    [orgId, q, STAFF_SEARCH_LIMIT],
+    [orgId, ...match.params, STAFF_SEARCH_LIMIT],
   );
+};
 
 export const userNameStmt = (db: Db, userId: string) =>
   stmt(db, 'SELECT name, primary_email FROM users WHERE id = ?', [userId]);
