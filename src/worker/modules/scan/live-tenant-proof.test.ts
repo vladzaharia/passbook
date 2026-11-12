@@ -101,9 +101,8 @@ describe('user-backed live tenant proof validation', () => {
       ['short session proof', { ...authority, sessionCsrfProof: 'short' }],
       ['invalid session proof alphabet', { ...authority, sessionCsrfProof: '!'.repeat(43) }],
       ['long session proof', { ...authority, sessionCsrfProof: 'A'.repeat(44) }],
-      ['raw CSRF secret as proof', { ...authority, sessionCsrfProof: screen.session.csrf }],
-      ['forged well-formed session proof', { ...authority, sessionCsrfProof: alternateProof }],
-      ['scanner-domain session proof', { ...authority, sessionCsrfProof: wrongDomain }],
+      // A well-formed proof is not re-verified here: the guard checked the immutable session
+      // secret at request start (0047). An envelope/actor mismatch is still rejected below.
       ['missing platform roles', { ...authority, sessionRoles: undefined }],
       ['malformed platform roles', { ...authority, sessionRoles: ['user', 'unknown'] }],
       ['missing authentication method', { ...authority, amr: undefined }],
@@ -122,15 +121,16 @@ describe('user-backed live tenant proof validation', () => {
       ).toBe(true);
     }
     // A top-level-only change is separately rejected as an actor/envelope mismatch.
-    expect(
-      await liveRecipient(kit.ctx, {
-        ...screen.attachment,
-        admin: {
-          ...screen.attachment.admin!,
-          tenantAuthority: { ...authority, sessionCsrfProof: alternateProof },
-        },
-      }),
-    ).toBeNull();
+    for (const proof of [screen.session.csrf, alternateProof, wrongDomain])
+      expect(
+        await liveRecipient(kit.ctx, {
+          ...screen.attachment,
+          admin: {
+            ...screen.attachment.admin!,
+            tenantAuthority: { ...authority, sessionCsrfProof: proof },
+          },
+        }),
+      ).toBeNull();
     await assertClosed(replaceAuthority(screen, undefined));
     await assertClosed(replaceAuthority(screen, { ...authority, kind: 'api_key' }));
     expect(await liveRecipient(kit.ctx, { ...screen.attachment, admin: undefined })).toBeNull();

@@ -12,6 +12,7 @@ import { finishLiveRows } from './live-render-final.ts';
 import { registerCatchupAuthorityRaceTests } from './repo-live-catchup-batch-authority-races-test-fixtures.ts';
 import { contextWithDb, traceLiveD1 } from './repo-live-photo-d1-trace-test-fixtures.ts';
 import { kit } from './scan-hub-test-fixtures.ts';
+import { approveScanReleases } from './test-kit.ts';
 
 export function registerCatchupRaceTests() {
   it.each(['pass', 'template'] as const)(
@@ -26,10 +27,13 @@ export function registerCatchupRaceTests() {
           await run(kit.env.DB, 'UPDATE passes SET link_generation=link_generation+1 WHERE id=?', [
             fixture.passes[0].id,
           ]);
-        else
+        else {
+          // A template timestamp is not authority; its policy follows the approved head.
           await run(kit.env.DB, 'UPDATE templates SET updated_at=updated_at+1 WHERE id=?', [
             fixture.passes[0].templateId,
           ]);
+          await approveScanReleases(kit, fixture.passes[0].templateId, { modes: ['live'] });
+        }
         return results;
       });
       const rows = await liveRowsFor(

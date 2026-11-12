@@ -87,7 +87,7 @@ export function registerCatchupSessionTests() {
           admin.userId,
           'live',
           workspace.id,
-          { name: `Batch source ${index}`, surface: 'phone', overrides: {} },
+          { name: `Batch source ${change} ${index}`, surface: 'phone', overrides: {} },
           'https://wallet.test',
           manage,
         );

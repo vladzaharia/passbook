@@ -57,24 +57,27 @@ describe('live identity authority', () => {
       ),
     );
     const otherPass = await kit.scanPass(template);
+    const genuine = await liveRowFor(kit.ctx, recipient, another);
+    expect(genuine).toMatchObject({ passId: fixture.pass.id });
+    expect(JSON.stringify(genuine)).not.toContain('Private Member');
+    // A row whose proof does not authenticate it (missing, swapped, or bound to another event,
+    // time, pass or scanner) is dropped: none of its fields can be trusted.
     for (const entry of [
       { ...another, sourceProof: '' },
       { ...another, sourceProof: 'invalid' },
       { ...another, sourceProof: proof },
-      { ...another, sourceProof: noOrgRevision },
-      { ...another, sourceProof: noTemplateRevision },
-      ...missingRelease.map((sourceProof) => ({ ...another, sourceProof })),
       { ...another, at: another.at + 1 },
       { ...another, passId: otherPass.id },
       { ...another, scannerId: fixture.monitor.id },
-    ]) {
+    ])
+      expect(await liveRowFor(kit.ctx, recipient, entry)).toBeNull();
+    // An authentic proof whose pass snapshot is incomplete shows the event without identity.
+    for (const sourceProof of [noOrgRevision, noTemplateRevision, ...missingRelease]) {
+      const entry = { ...another, sourceProof };
       const result = await liveRowFor(kit.ctx, recipient, entry);
-      if (entry.scannerId === fixture.monitor.id) expect(result).toBeNull();
-      else {
-        expect(result).toMatchObject({ passId: null, holder: null, photoUrl: null });
-        expect(JSON.stringify(result)).not.toContain('Private Member');
-        expect(result).not.toHaveProperty('sourceProof');
-      }
+      expect(result).toMatchObject({ passId: null, holder: null, photoUrl: null });
+      expect(JSON.stringify(result)).not.toContain('Private Member');
+      expect(result).not.toHaveProperty('sourceProof');
     }
   });
 
@@ -182,8 +185,11 @@ describe('live identity authority', () => {
     const proof = await hub().sourceProof(fixture.event.id);
     if (!proof) throw new Error('Missing monitor source proof.');
     const entry = { ...fixture.event, sourceProof: proof };
-    const projection = await liveRowFor(kit.ctx, { ...recipient, actor: unassigned }, entry);
-    expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    expect(await liveRowFor(kit.ctx, recipient, entry)).toMatchObject({
+      passId: fixture.pass.id,
+    });
+    // An unassigned session binding is not the recipient's observed workspace: nothing is shown.
+    expect(await liveRowFor(kit.ctx, { ...recipient, actor: unassigned }, entry)).toBeNull();
   });
 
   it('derives staffless monitor visibility from a real signed-in source without changing its authority', async () => {
@@ -251,10 +257,11 @@ describe('live identity authority', () => {
       [kit.clock.now(), staff.id],
     );
     expect((await kit.get(monitor.headers, path)).status).toBe(404);
+    // The source's staff authority moved (auth_epoch): its events are omitted, not replayed.
     const revoked = (await hub().snapshot(monitor.attachment)).rows.find(
       (item) => item.id === event.id,
     );
-    expect(revoked).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    expect(revoked).toBeUndefined();
     await run(
       kit.env.DB,
       'UPDATE scan_staff SET disabled_at = NULL, updated_at = updated_at + 1 WHERE id = ?',
@@ -264,7 +271,7 @@ describe('live identity authority', () => {
     const stale = (await hub().snapshot(monitor.attachment)).rows.find(
       (item) => item.id === event.id,
     );
-    expect(stale).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    expect(stale).toBeUndefined();
     const freshEvent = row(source.id, { passId: pass.id });
     await publish(freshEvent);
     const freshProof = await hub().sourceProof(freshEvent.id);

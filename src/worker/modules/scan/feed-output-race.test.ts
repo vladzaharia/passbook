@@ -157,11 +157,11 @@ it.each(['console', 'key'] as const)(
     ) INSERT INTO scans
       (id, org_id, mode, pass_id, template_id, scanner_id, actor_type, actor_id, actor_key,
        idempotency_key, request_hash, method, state, outcome, reason, at)
-      SELECT printf('boundary-%03d', n), s.org_id, s.mode, s.pass_id, s.template_id, s.scanner_id,
-        s.actor_type, s.actor_id, s.actor_key, printf('boundary:%03d', n), 'seeded',
-        'manual', 'done', 'refused', 'not_found', s.at - n
+      SELECT printf('boundary-%s-%03d', ?, n), s.org_id, s.mode, s.pass_id, s.template_id,
+        s.scanner_id, s.actor_type, s.actor_id, s.actor_key, printf('boundary:%s:%03d', ?, n),
+        'seeded', 'manual', 'done', 'refused', 'not_found', s.at - n
       FROM scans s CROSS JOIN seq WHERE s.id = ?`,
-      [s.ids[0]!],
+      [surface, surface, s.ids[0]!],
     );
     const path =
       surface === 'console'

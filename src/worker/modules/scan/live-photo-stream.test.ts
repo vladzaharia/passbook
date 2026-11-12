@@ -6,7 +6,7 @@ import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { claimRemoval, releaseRemoval } from '../passes/repo-remove.ts';
-import { openLiveSourceProof } from './live-provenance.ts';
+import { livePassSnapshot, openLiveSourceProof } from './live-provenance.ts';
 import { candidateById } from './repo-lookup.ts';
 import { setSetupWatchStmt } from './repo-setups-test-support.ts';
 import {
@@ -219,12 +219,17 @@ describe('live photo streams', () => {
       (entry) => entry.id === fixture.event.id,
     );
     expect(stale).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    // Without a matching Wallet identity there is no pass commitment, so a new event for this
+    // pass cannot be sealed (publishScan skips it) and nothing new reaches the screen.
+    const damaged = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
+    if (!damaged) throw new Error('Missing damaged pass candidate.');
+    expect((await livePassSnapshot(kit.env, damaged)).passCommitment).toBeNull();
     const event = row(fixture.source.id, { passId: fixture.pass.id });
-    await publish(event);
+    await expect(publish(event)).rejects.toThrow('Invalid live source authority');
     const fresh = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === event.id,
     );
-    expect(fresh).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    expect(fresh).toBeUndefined();
   });
 
   it('serves monitor photos without exposing a photo-version cache validator', async () => {
@@ -273,7 +278,7 @@ describe('live photo streams', () => {
           passJson: pinned.passJson,
           assets: { 'icon.png': ICON_PNG },
         });
-        await persistTemplate(kit.fx, active);
+        await persistTemplate(kit.fx, active, { registry: kit.registry });
       }
       const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
       let opened = false;
@@ -356,12 +361,13 @@ describe('live photo streams', () => {
             [fixture.pass.id, fixture.pass.id],
           );
         } else if (change === 'org-revision') {
-          await run(kit.env.DB, 'UPDATE orgs SET updated_at = updated_at + 1 WHERE id = ?', [
-            kit.org.id,
-          ]);
+          // access_revision moves with status (timestamps are not authority).
+          for (const status of ['suspended', 'active'])
+            await run(kit.env.DB, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
         } else if (change === 'template-revision') {
-          await run(kit.env.DB, 'UPDATE templates SET updated_at = updated_at + 1 WHERE id = ?', [
-            template,
+          // The candidate's templateRevision is the org's config_revision.
+          await run(kit.env.DB, "UPDATE orgs SET name = name || ' (renamed)' WHERE id = ?", [
+            kit.org.id,
           ]);
         } else if (change === 'source' || change === 'monitor') {
           await run(kit.env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [

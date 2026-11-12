@@ -1,17 +1,21 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { fromBase64Url } from '../../platform/ids.ts';
-import type { ScanActor } from './actor.ts';
+import { type ScanActor, tenantScanRole } from './actor.ts';
+import { managedAdminActor } from './admin-setup.ts';
 import {
   type LiveSourceProof,
   openLiveSourceProof,
   sealLiveSourceProof,
 } from './live-provenance.ts';
 import { sealLiveSourceEnvelope } from './live-source-envelope.ts';
-import { liveTenantFixture } from './live-tenant-test-fixtures.ts';
+import { liveTenantFixture, ORIGIN } from './live-tenant-test-fixtures.ts';
+import { joinAdminScanningSession } from './scanning-devices.ts';
+import { bindScanningSession } from './scanning-workspace.ts';
 import {
   captureObservedScanningSession,
   restoreObservedScanningSession,
 } from './scanning-workspace-observation.ts';
+import { proofedScanActor } from './test-kit.ts';
 
 const fixture = liveTenantFixture();
 let env: object;
@@ -21,8 +25,31 @@ const otherEnv = { KEK_V1: btoa(String.fromCharCode(...new Uint8Array(32).fill(1
 
 beforeAll(async () => {
   const setup = await fixture.setup();
-  env = setup.kit.env;
-  actor = (await fixture.managedScreen({ scoped: true })).actor;
+  const kit = setup.kit;
+  env = kit.env;
+  // A live row's source is a scan device: the admin's own device in the managed screen's workspace.
+  const screen = await fixture.managedScreen({ scoped: true });
+  const joined = await joinAdminScanningSession(
+    kit.ctx,
+    screen.user.id,
+    'live',
+    { sessionId: screen.workspace.id, deviceKey: '44444444-4444-4444-8444-444444444444' },
+    ORIGIN,
+    screen.management,
+  );
+  const source = await managedAdminActor(
+    kit.ctx,
+    screen.resolved,
+    'live',
+    kit.org.id,
+    joined.setupId,
+  );
+  source.platformSessionId = screen.resolved.sessionId;
+  source.tenantAuthority = screen.authority;
+  source.role = tenantScanRole(screen.authority);
+  await bindScanningSession(kit.ctx, source);
+  actor = await proofedScanActor(kit.ctx, source);
+  expect(actor.scanner?.deviceRole).toBe('scan');
   const keyset = setup.credentialKeysetCommitment;
   proof = {
     actor,

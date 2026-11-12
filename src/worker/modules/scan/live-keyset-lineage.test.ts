@@ -103,9 +103,12 @@ describe('live credential keyset authority', () => {
         } else {
           expect(opened).toBe(false);
         }
+        // Without the original keyset no fence can hold: the event is withheld entirely.
         const internal = { ...fixture.event, sourceProof: sealed };
-        const projection = await liveRowFor({ ...kit.ctx, env }, recipient, internal);
-        expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
+        expect(await liveRowFor({ ...kit.ctx, env }, recipient, internal)).toBeNull();
+        expect(await liveRowFor(kit.ctx, recipient, internal)).toMatchObject({
+          passId: fixture.pass.id,
+        });
       } finally {
         spy.mockRestore();
         await run(kit.env.DB, `DROP TABLE ${table}`);

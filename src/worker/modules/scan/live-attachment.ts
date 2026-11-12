@@ -30,6 +30,7 @@ const tenantAuthority = z.strictObject({
   orgId: IdSchema,
   orgUpdatedAt: timestamp,
   userId: IdSchema,
+  userAccessRevision: timestamp.optional(),
   sessionId: z.string().min(1),
   sessionRoles: z.array(RoleSchema).min(1),
   amr: z.enum(['oidc', 'magic_link', 'breakglass']),

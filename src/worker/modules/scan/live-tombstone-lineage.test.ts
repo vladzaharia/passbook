@@ -241,11 +241,9 @@ describe('live credential tombstone provenance', () => {
       expect(current.pass.version).toBe(before.pass.version);
       expect(current.pass.credentialGeneration).toBe(before.pass.credentialGeneration);
       const rows = (await hub().snapshot(fixture.monitor.attachment)).rows;
-      expect(rows.find((entry) => entry.id === qRow.id)).toMatchObject({
-        passId: null,
-        holder: null,
-        photoUrl: null,
-      });
+      // A withheld passful event depends on its presented credential: once that is retired the
+      // event is omitted, while the pass-id event (no presented credential) is unaffected.
+      expect(rows.find((entry) => entry.id === qRow.id)).toBeUndefined();
       expect(rows.find((entry) => entry.id === explicitRow.id)).toMatchObject({ passId: pass.id });
       expect((await kit.get(fixture.monitor.headers, explicitPath)).status).toBe(200);
     } finally {

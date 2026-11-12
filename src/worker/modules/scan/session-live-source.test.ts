@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeSession } from '../../../../test/helpers/index.ts';
+import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { run } from '../../platform/db.ts';
@@ -48,6 +48,8 @@ async function managedSource(admin: SessionAuth, setupId: string) {
   const source = await managedAdminActor(kit.ctx, admin, 'live', kit.org.id, setupId);
   source.platformSessionId = admin.sessionId;
   source.tenantAuthority = await sourceAuthority(admin, 'passes:operate');
+  // Like the guard: bind the workspace first, so the captured epochs include its session.
+  await bindScanningSession(kit.ctx, source);
   return proofedScanActor(kit.ctx, source);
 }
 const parent = async (name: string, authority: TenantPassWrite, admin: SessionAuth) =>
@@ -117,7 +119,6 @@ describe('administrator source authority', () => {
     expect(source.scanner.csrfSecret).toBeNull();
     const sourceCsrfProof = source.tenantAuthority.sessionCsrfProof;
     const monitorCsrfProof = attachment.scannerCsrfProof;
-    await bindScanningSession(kit.ctx, source);
     const recipient = await liveRecipient(kit.ctx, attachment);
     if (!recipient) throw new Error('Missing paired monitor recipient.');
     expect(recipient.actor.role).toBeNull();
@@ -207,12 +208,13 @@ describe('administrator source authority', () => {
         },
       },
     });
+    // A proof re-bound to another session fails the source CSRF fence: the event is omitted.
     const swappedRow = { ...projection, sourceProof: swapped };
-    expect(await liveRowFor(kit.ctx, recipient, swappedRow)).toMatchObject({
-      passId: null,
-      holder: null,
-      photoUrl: null,
-    });
+    expect(await liveRowFor(kit.ctx, recipient, swappedRow)).toBeNull();
+    const genuineRow = { ...projection, sourceProof };
+    expect(await liveRowFor(kit.ctx, recipient, genuineRow)).toMatchObject({ passId: pass.id });
+    // The last org admin cannot be revoked: add another first.
+    await grantScanMembership(kit.fx, kit.org.id, (await makeUser(kit.fx)).id);
     const revokedMembership = await revokeMembership(
       kit.env.DB,
       kit.org.id,
@@ -225,8 +227,9 @@ describe('administrator source authority', () => {
     expect((await kit.get({ cookie }, path)).status).toBe(404);
     membershipId = await grantScanMembership(kit.fx, kit.org.id, 'admin-1');
     expect((await kit.get({ cookie }, path)).status).toBe(404);
+    // The source's membership was revoked: its retained events are omitted, not replayed.
     const stale = (await hub.snapshot(attachment)).rows.find((item) => item.id === projection.id);
-    expect(stale).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    expect(stale).toBeUndefined();
     source.tenantAuthority = await sourceAuthority(admin, 'scanning:read');
     const renewedEvaluation = await resolveOutcome(kit.ctx, source, {
       input: codeOf(pass),
@@ -290,7 +293,7 @@ describe('administrator source authority', () => {
     expect(openedStream).toBe(true);
     expect(cancelled).toBe(1);
     const revoked = (await hub.snapshot(attachment)).rows.find((item) => item.id === fresh.id);
-    expect(revoked).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    expect(revoked).toBeUndefined();
   });
 
   it.each(['paused', 'ended'] as const)(
@@ -309,7 +312,7 @@ describe('administrator source authority', () => {
         'https://wallet.test',
         manage,
       );
-      const screen = await child(session.id, 'Session monitor', manage, 'desk');
+      const screen = await child(session.id, `Session monitor ${status}`, manage, 'desk');
       const paired = await kit.post({ origin: 'https://wallet.test' }, '/pair', {
         code: screen.pairing?.code,
       });
@@ -320,7 +323,6 @@ describe('administrator source authority', () => {
         throw new Error('Missing paired monitor credentials.');
       const attachment = await pairedScreenAttachment(kit, monitor.id, cookie);
       const source = await managedSource(admin, joined.setupId);
-      await bindScanningSession(kit.ctx, source);
       const template = await kit.scanTemplate(`Session ${status} photo`, {
         actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
       });

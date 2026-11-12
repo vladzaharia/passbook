@@ -48,7 +48,7 @@ export async function effects(
   idempotencyKey: string,
   orgId: string,
 ) {
-  return first(
+  return first<{ scans: number; gates: number; presence: number; events: number; grants: number }>(
     db,
     `SELECT
     (SELECT count(*) FROM scans WHERE idempotency_key=? AND NOT (state='failed' AND outcome IS NULL)) AS scans,

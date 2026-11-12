@@ -53,7 +53,7 @@ describe('paired live scanner authority', () => {
     expect(await liveRecipient(kit.ctx, attachment)).not.toBeNull();
   });
 
-  it('rejects missing, malformed or forged paired scanner proofs', async () => {
+  it('rejects missing, malformed or mismatched paired scanner proofs', async () => {
     const screen = await managedScreen();
     const paired = await pairDevice(screen, 'desk');
     const secret = paired.csrfSecret;
@@ -65,19 +65,12 @@ describe('paired live scanner authority', () => {
     const forged = await scanScannerCsrfProof(kit.env, paired.device.id, kit.fx.ids.token());
     const foreign = await scanScannerCsrfProof(kit.env, 'another-scanner', secret);
     const wrongDomain = await scanSessionCsrfProof(kit.env, paired.device.id, secret);
-    expect(await liveRecipient(kit.ctx, { ...attachment, scannerCsrfProof: forged })).toBeNull();
-    for (const proof of [
-      undefined,
-      null,
-      '',
-      'short',
-      '!'.repeat(43),
-      'A'.repeat(44),
-      secret,
-      forged,
-      foreign,
-      wrongDomain,
-    ]) {
+    // The envelope and its actor must carry the same proof.
+    for (const proof of [forged, foreign, wrongDomain])
+      expect(await liveRecipient(kit.ctx, { ...attachment, scannerCsrfProof: proof })).toBeNull();
+    // A well-formed proof is not re-verified against the secret here: the guard checks it once at
+    // request start, and a secret change bumps credential_epoch, which the final fence binds.
+    for (const proof of [undefined, null, '', 'short', '!'.repeat(43), 'A'.repeat(44)]) {
       const altered = {
         ...attachment,
         scannerCsrfProof: proof,
@@ -116,22 +109,11 @@ describe('paired live scanner authority', () => {
     );
     expect((await liveRecipient(race.ctx, attachment)) === null).toBe(true);
     expect(race.reached()).toBe(true);
-    expect(
-      /csrf_secret\s*=\s*\?\s*\/\*\s*scan-ephemeral-csrf:recipient:scanner\s*\*\//.test(
-        race.statement(),
-      ),
-    ).toBe(true);
+    // A secret change bumps credential_epoch; the final fence binds the captured epoch, not the secret.
+    expect(race.statement()).toMatch(/\bs\.credential_epoch\s*=/);
     expect(race.statement().includes(originalSecret)).toBe(false);
-    expect(race.bound().some((value) => value === originalSecret)).toBe(true);
     expect(
-      race
-        .bound()
-        .some(
-          (value) =>
-            typeof value === 'string' &&
-            /^[[{]/.test(value.trim()) &&
-            value.includes(originalSecret),
-        ),
+      race.bound().some((value) => typeof value === 'string' && value.includes(originalSecret)),
     ).toBe(false);
     await assertClosed(attachment);
     const scanner = await getScanner(kit.env.DB, paired.device.id);

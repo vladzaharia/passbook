@@ -188,8 +188,8 @@ export function publishScan(
         evaluatedSnapshot.activeReleaseGeneration >= 0 &&
         !!evaluatedSnapshot.activeReleaseVersion &&
         evaluatedSnapshot.activeTemplateVersion === evaluatedSnapshot.activeReleaseVersion &&
-        (evaluatedSnapshot.pass.templateVersion === evaluatedSnapshot.activeReleaseVersion ||
-          evaluatedSnapshot.displayTemplateVersion === evaluatedSnapshot.activeReleaseVersion) &&
+        // A pass used under its own release while the head moved on is a valid scan; the screen
+        // shows it without identity until the pass follows the head.
         typeof evaluatedSnapshot.activeReleaseCandidateHash === 'string' &&
         /^[a-f0-9]{64}$/.test(evaluatedSnapshot.activeReleaseCandidateHash)))
       ? {

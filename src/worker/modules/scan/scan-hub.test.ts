@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { act } from './act.ts';
@@ -242,19 +242,20 @@ describe('live display hub', () => {
       expect(await livePassSnapshot(kit.env, evaluatedSnapshot)).toEqual(
         await livePassSnapshot(kit.env, originalWithCredentials),
       );
-      const table = changed === 'organization' ? 'orgs' : 'templates';
-      const policyId = changed === 'organization' ? kit.org.id : id;
-      const away = changed === 'organization' ? 'suspended' : 'archived';
-      await run(
+      // orgRevision is the org's access_revision (moves with status); templateRevision is its
+      // config_revision (moves with the profile). A template's own status A-B-A is not authority.
+      const named = await first<{ name: string }>(
         kit.env.DB,
-        `UPDATE ${table} SET status = ?, updated_at = updated_at + 1 WHERE id = ?`,
-        [away, policyId],
+        'SELECT name FROM orgs WHERE id = ?',
+        [kit.org.id],
       );
-      await run(
-        kit.env.DB,
-        `UPDATE ${table} SET status = 'active', updated_at = updated_at + 1 WHERE id = ?`,
-        [policyId],
-      );
+      if (!named) throw new Error('Missing organization.');
+      const [column, away, back] =
+        changed === 'organization'
+          ? ['status', 'suspended', 'active']
+          : ['name', `${named.name} (away)`, named.name];
+      for (const value of [away, back])
+        await run(kit.env.DB, `UPDATE orgs SET ${column} = ? WHERE id = ?`, [value, kit.org.id]);
       expect(kit.clock.now()).toBe(now);
       const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
       if (!current) throw new Error('Missing restored pass.');

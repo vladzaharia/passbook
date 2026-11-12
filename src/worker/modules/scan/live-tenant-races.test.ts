@@ -12,7 +12,7 @@ import {
 import { approveScanReleases, type ScanKit } from './test-kit.ts';
 
 const fixture = liveTenantFixture();
-const { managedScreen, assertClosed, attachmentForSession } = fixture;
+const { managedScreen, assertClosed } = fixture;
 let kit: ScanKit;
 beforeAll(async () => {
   ({ kit } = await fixture.setup());
@@ -55,22 +55,15 @@ describe('live tenant final authority races', () => {
     });
     expect((await liveRecipient(race.ctx, screen.attachment)) === null).toBe(true);
     expect(race.reached()).toBe(true);
-    expect(
-      /csrf_secret\s*=\s*\?\s*\/\*\s*scan-ephemeral-csrf:recipient:session\s*\*\//.test(
-        race.statement(),
-      ),
-    ).toBe(true);
+    // The session CSRF secret is immutable (0047): the final fence binds the session row by its
+    // id hash and captured lifetime, and never reads or binds the secret.
+    expect(race.statement()).toMatch(/id_hash\s*=\s*\?\d*\s*\/\*\s*scan-ephemeral-session-id-hash/);
+    expect(race.bound()).toContain(screen.resolved.sessionId);
     expect(race.statement().includes(screen.session.csrf)).toBe(false);
-    expect(race.bound().some((value) => value === screen.session.csrf)).toBe(true);
     expect(
       race
         .bound()
-        .some(
-          (value) =>
-            typeof value === 'string' &&
-            /^[[{]/.test(value.trim()) &&
-            value.includes(screen.session.csrf),
-        ),
+        .some((value) => typeof value === 'string' && value.includes(screen.session.csrf)),
     ).toBe(false);
     await assertClosed(screen.attachment);
   });
@@ -94,19 +87,22 @@ describe('live tenant final authority races', () => {
     expect(fresh?.watch.scannerIds).not.toContain(sourceId);
   });
 
-  it('rejects a release replacement between scope capture and the final SELECT', async () => {
+  it('keeps a recipient across a release approval but rejects its template deleted before the final SELECT', async () => {
     const screen = await managedScreen({ scoped: true });
     if (!screen.templateId) throw new Error('Missing scoped template.');
     const templateId = screen.templateId;
     expect(await liveRecipient(kit.ctx, screen.attachment)).not.toBeNull();
-    const race = raceFinalFence(kit, () =>
+    // A scope binds the captured release row, not the head: an approval meanwhile is not a refusal.
+    const approval = raceFinalFence(kit, () =>
       approveScanReleases(kit, templateId, { modes: ['live'] }),
     );
-    expect(await liveRecipient(race.ctx, screen.attachment)).toBeNull();
-    expect(race.reached()).toBe(true);
-    // The bound workspace retains the old release observation until the actor is rebound.
-    expect(await liveRecipient(kit.ctx, screen.attachment)).toBeNull();
-    const fresh = await attachmentForSession(screen, screen.resolved);
-    expect(await liveRecipient(kit.ctx, fresh)).not.toBeNull();
+    expect(await liveRecipient(approval.ctx, screen.attachment)).not.toBeNull();
+    expect(approval.reached()).toBe(true);
+    const deletion = raceFinalFence(kit, () =>
+      run(kit.env.DB, "UPDATE templates SET status = 'deleted' WHERE id = ?", [templateId]),
+    );
+    expect(await liveRecipient(deletion.ctx, screen.attachment)).toBeNull();
+    expect(deletion.reached()).toBe(true);
+    await assertClosed(screen.attachment);
   });
 });

@@ -1,12 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  fakeAuth,
-  makeSession,
-  makeUser,
-  type ScannerFixture,
-  withoutTrigger,
-} from '../../../../test/helpers/index.ts';
+import { fakeAuth, makeSession, makeUser, withoutTrigger } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { createApp } from '../../app.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -86,7 +80,7 @@ type Race = 'capture' | 'selection' | 'audit' | 'fallback';
 async function withRekey<T>(
   race: Race,
   work: () => Promise<T>,
-  scanner?: ScannerFixture,
+  afterSelection?: () => Promise<unknown>,
 ): Promise<T> {
   const db = kit.env.DB;
   const original = await ensureCredentialRefKeyset(db, kit.env);
@@ -109,12 +103,9 @@ async function withRekey<T>(
             const result = property === 'first' ? await target.first() : await target.all();
             if (!fired && race === 'selection') await rekey();
             if (!selected && race === 'fallback') {
-              if (!scanner) throw new Error('The fallback race needs a scanner.');
+              if (!afterSelection) throw new Error('The fallback race needs a change.');
               selected = true;
-              await run(db, 'UPDATE scanners SET name = ? WHERE id = ?', [
-                'Changed after selection',
-                scanner.id,
-              ]);
+              await afterSelection();
             }
             return result;
           };
@@ -131,7 +122,7 @@ async function withRekey<T>(
           const audit = sql.includes('INSERT INTO audit_log') && sql.includes("'scan.export'");
           const fallback =
             (sql.startsWith('SELECT s.id, s.org_id, s.mode, s.at,') &&
-              sql.includes('WHERE s.id IN (')) ||
+              /WHERE[\s(]*s\.id IN \(/.test(sql)) ||
             sql.startsWith('WITH requested AS MATERIALIZED');
           if (capture) captures++;
           if (
@@ -314,7 +305,7 @@ describe('scan history keyset fences', () => {
   it.each(['console', 'key'] as const)(
     'fences a %s continuation and does not downgrade a stale keyset to minimal history',
     async (surface) => {
-      const { scanner } = await recorded(2);
+      const { pass } = await recorded(2);
       const headers = surface === 'key' ? apiKey : admin;
       const prefix = surface === 'key' ? '?limit=1' : `?orgId=${kit.org.id}&limit=1`;
       const page = await get(prefix, headers);
@@ -328,7 +319,12 @@ describe('scan history keyset fences', () => {
             await get(`${prefix}&cursor=${encodeURIComponent(nextCursor!)}`, headers),
           );
         },
-        scanner,
+        // A pass link change (not a scanner rename: names are not authority) makes the selected
+        // projection stale, so the page must fall back to minimal history.
+        () =>
+          run(kit.env.DB, 'UPDATE passes SET link_generation = link_generation + 1 WHERE id = ?', [
+            pass.id,
+          ]),
       );
     },
   );

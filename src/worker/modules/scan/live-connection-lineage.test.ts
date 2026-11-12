@@ -69,15 +69,26 @@ describe('live connection lineage', () => {
       (entry) => entry.id === fixture.event.id,
     );
     expect(stale).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    // The transfer retired the source credential's photo: a new event shows the pass without it.
     const event = row(fixture.source.id, { passId: fixture.pass.id });
     await publish(event);
-    const fresh = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
+    const unphotographed = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === event.id,
+    );
+    expect(unphotographed).toMatchObject({ passId: fixture.pass.id, photoUrl: null });
+    // A photo added for the new credential gets a fresh grant; the retained one stays dead.
+    const png = btoa(String.fromCharCode(...makePng(270, 270)));
+    await putMemberPhoto(kit.ctx, system, fixture.pass.id, { png, includeInPass: false }, null);
+    const next = row(fixture.source.id, { passId: fixture.pass.id });
+    await publish(next);
+    const fresh = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
+      (entry) => entry.id === next.id,
     );
     if (!fresh?.photoUrl) throw new Error('Missing fresh credential-authorized photo.');
     expect(
       (await kit.get(fixture.monitor.headers, fresh.photoUrl.replace('/api/v1/scan', ''))).status,
     ).toBe(200);
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
   });
 
   it('does not revive a retained photo after same-version release supersession and rollback', async () => {
@@ -267,13 +278,22 @@ describe('live connection lineage', () => {
     async (changed) => {
       const fixture = await photoFixture();
       expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+      // Timestamps are not authority: the retained grant keeps serving.
+      await run(kit.env.DB, 'UPDATE orgs SET updated_at = updated_at + 1 WHERE id = ?', [
+        kit.org.id,
+      ]);
+      await run(kit.env.DB, 'UPDATE templates SET updated_at = updated_at + 1 WHERE id = ?', [
+        template,
+      ]);
+      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
       if (changed === 'organization') {
-        await run(kit.env.DB, 'UPDATE orgs SET updated_at = updated_at + 1 WHERE id = ?', [
-          kit.org.id,
-        ]);
+        // orgRevision is access_revision, which moves with status: suspend, then reactivate.
+        for (const status of ['suspended', 'active'])
+          await run(kit.env.DB, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
       } else {
-        await run(kit.env.DB, 'UPDATE templates SET updated_at = updated_at + 1 WHERE id = ?', [
-          template,
+        // templateRevision is the org's config_revision (profile and settings policy is read under).
+        await run(kit.env.DB, "UPDATE orgs SET name = name || ' (renamed)' WHERE id = ?", [
+          kit.org.id,
         ]);
       }
       expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);

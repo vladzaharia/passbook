@@ -53,7 +53,10 @@ export function revokeLiveTenantFixtureMembership(db: D1Database, revokedAt: num
   return run(db, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [revokedAt, id]);
 }
 
-/** Interleave a real D1 mutation before the final recipient SELECT or read-only batch. */
+/**
+ * Interleave a real D1 mutation before the final recipient fence: the read-only batch that binds
+ * the captured credential epochs, session and watch (`live_authority_part`).
+ */
 export function raceFinalFence(
   kit: ScanKit,
   mutate: () => Promise<unknown>,
@@ -103,9 +106,7 @@ export function raceFinalFence(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          return /scan-ephemeral-csrf:recipient:(?:session|scanner)/i.test(sql)
-            ? wrap(prepared, sql)
-            : prepared;
+          return /\blive_authority_part\b/.test(sql) ? wrap(prepared, sql) : prepared;
         };
       if (prop === 'batch')
         return async (statements: D1PreparedStatement[]) => {
