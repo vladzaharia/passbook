@@ -20,15 +20,23 @@ export const conflict = () =>
     'The pass, release or authorization changed. Reload and retry.',
     'PASS_CONFLICT',
   );
+/** The rebuilt credential would equal the live one: its pass snapshot and the refs that stay. */
+export interface UnchangedCredential {
+  source: TransferPass;
+  stableRefs: string[];
+}
 export class CredentialTransferReissueRequired extends ConflictError {
   readonly credentialKeysetCommitment: string;
+  /** Set only when no rotation is possible and none is needed; a verified attach may link without one. */
+  readonly unchanged: UnchangedCredential | undefined;
 
-  constructor(credentialKeysetCommitment: string) {
+  constructor(credentialKeysetCommitment: string, unchanged?: UnchangedCredential) {
     super(
       'This template reuses an existing scanner credential. Reissue the pass with a rotating barcode and lookup before transferring it.',
       'PASS_REISSUE_REQUIRED',
     );
     this.credentialKeysetCommitment = credentialKeysetCommitment;
+    this.unchanged = unchanged;
   }
 }
 type AppleRelease = TemplateRelease & { provider: 'apple' };
@@ -204,4 +212,28 @@ export async function newCredentialRefs(
     lookupHash: build.artifact.lookupHash,
   });
   return [...new Set(refs.map((entry) => entry.ref))];
+}
+/**
+ * The rebuilt credential cannot differ from the live one: every reference that is not freshly
+ * random (the barcode and lookup values) is already one of the pass's current references.
+ */
+export async function unchangedCredential(
+  ctx: ServiceContext,
+  source: TransferPass,
+  build: TransferBuild,
+  targetRefs: string[],
+  oldRefs: Set<string>,
+): Promise<UnchangedCredential | undefined> {
+  const fresh = new Set(
+    (
+      await credentialReferences(ctx.env, source.pass.orgId, source.pass.mode, {
+        serial: build.credentials.serial,
+        scanCode: build.credentials.scanCode,
+      })
+    ).map((entry) => entry.ref),
+  );
+  const stableRefs = targetRefs.filter((ref) => !fresh.has(ref));
+  return stableRefs.length > 0 && stableRefs.every((ref) => oldRefs.has(ref))
+    ? { source, stableRefs }
+    : undefined;
 }

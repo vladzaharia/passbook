@@ -1,20 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
+import { makeUser } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createAuthStores } from '../../stores.ts';
 import { signInMagicLink } from '../auth/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
-import { createPassRow } from '../passes/create.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
-import { type Kit, setupKit, TINY_PNG } from '../passes/pass-test-fixtures.ts';
+import type { Kit } from '../passes/pass-test-fixtures.ts';
 import { setDownloadToken } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { voidPass } from '../passes/service.ts';
+import { fixedBarcodePass } from './fixed-barcode-fixtures.ts';
 import { getHolderPass, holderReissueCurrentSql, markHolderReissueRequired } from './repo.ts';
 import {
   attachWaitingPassesForEmail,
@@ -24,49 +23,6 @@ import {
 } from './service.ts';
 import { eventMember } from './test-auth-fixtures.ts';
 import { resumeVerifiedHolderAttachments } from './transfer-jobs.ts';
-
-async function fixedBarcodePass() {
-  const kit = await setupKit();
-  const template = kit.registry.add({
-    id: `fixed-${kit.fx.ids.id()}`,
-    orgId: kit.org.id,
-    version: 'v1',
-    manifest: kit.template.manifest,
-    passJson: {
-      ...kit.template.passJson,
-      barcodes: [
-        {
-          format: 'PKBarcodeFormatQR',
-          message: 'fixed-holder-credential',
-          messageEncoding: 'iso-8859-1',
-        },
-      ],
-    },
-    assets: { 'icon.png': TINY_PNG },
-  });
-  await persistTemplate(kit.fx, template, { registry: kit.registry });
-  const release = await approveAppleRelease(kit, {
-    templateId: template.id,
-    version: template.version,
-  });
-  // Storage lasts for the whole file, so each case needs its own address.
-  const email = `waiting-${kit.fx.ids.id()}@example.test`;
-  const pass = await createPassRow(jobCtxOf(kit), {
-    orgId: kit.org.id,
-    templateId: template.id,
-    templateVersion: release.version,
-    releaseId: release.id,
-    releaseGeneration: release.generation,
-    mode: 'live',
-    source: 'manual',
-    execution: { kind: 'system' },
-    actor: { type: 'system', id: null },
-    input: { memberName: 'Waiting holder' },
-    holderEmail: email,
-  });
-  const user = await makeUser(kit.fx, { primaryEmail: email });
-  return { kit, pass, user, email };
-}
 
 function atReissueWrite(kit: Kit, change: () => Promise<unknown>) {
   let fired = false;
@@ -109,7 +65,7 @@ function atReissueWrite(kit: Kit, change: () => Promise<unknown>) {
 
 describe('verified attachment requiring credential reissue', () => {
   it('records one private current requirement and audit without claiming attachment', async () => {
-    const { kit, pass, user, email } = await fixedBarcodePass();
+    const { kit, pass, user, email } = await fixedBarcodePass({ retired: true });
     expect(await attachWaitingPassesForEmail(jobCtxOf(kit), user.id, email)).toBe(0);
     expect(await getHolder(jobCtxOf(kit), pass.id, null)).toMatchObject({
       ownerUserId: null,
@@ -184,7 +140,7 @@ describe('verified attachment requiring credential reissue', () => {
   }, 120_000);
 
   it('completes verified sign-in while reporting the unattachable pass separately', async () => {
-    const { kit, pass, user, email } = await fixedBarcodePass();
+    const { kit, pass, user, email } = await fixedBarcodePass({ retired: true });
     const session = await signInMagicLink(jobCtxOf(kit), email, {
       ipPrefix: null,
       userAgent: null,
@@ -228,7 +184,7 @@ describe('verified attachment requiring credential reissue', () => {
   }, 120_000);
 
   it('does not record an attachment diagnosis from a different credential keyset', async () => {
-    const { kit, pass, user } = await fixedBarcodePass();
+    const { kit, pass, user } = await fixedBarcodePass({ retired: true });
     const source = await getHolderPass(kit.env.DB, pass.id, null);
     if (!source) throw new Error('Missing holder source');
     const keyset = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
@@ -271,7 +227,7 @@ describe('verified attachment requiring credential reissue', () => {
   }, 120_000);
 
   it('records the requirement for a voided waiting pass without attaching it', async () => {
-    const { kit, pass } = await fixedBarcodePass();
+    const { kit, pass } = await fixedBarcodePass({ retired: true });
     await voidPass(jobCtxOf(kit), { type: 'system', id: null }, pass.id, null);
     expect(await runAttachHookA(jobCtxOf(kit), pass.id)).toBeNull();
     expect(await getHolder(jobCtxOf(kit), pass.id, null)).toMatchObject({
@@ -282,7 +238,7 @@ describe('verified attachment requiring credential reissue', () => {
   }, 120_000);
 
   it('rolls back the requirement if its audit cannot be recorded', async () => {
-    const { kit, pass } = await fixedBarcodePass();
+    const { kit, pass } = await fixedBarcodePass({ retired: true });
     const db = new Proxy(kit.env.DB, {
       get(target, prop) {
         if (prop === 'prepare')
@@ -316,7 +272,7 @@ describe('verified attachment requiring credential reissue', () => {
   it.each(['blocked', 'disabled', 'unverified', 'link'] as const)(
     'does not record a stale requirement when the user or pass becomes %s at the write',
     async (change) => {
-      const { kit, pass, user, email } = await fixedBarcodePass();
+      const { kit, pass, user, email } = await fixedBarcodePass({ retired: true });
       const race = atReissueWrite(kit, async () => {
         if (change === 'blocked')
           return run(
@@ -355,7 +311,7 @@ describe('verified attachment requiring credential reissue', () => {
   );
 
   it('does not record a requirement after the initiating tenant authority is revoked', async () => {
-    const { kit, pass } = await fixedBarcodePass();
+    const { kit, pass } = await fixedBarcodePass({ retired: true });
     const member = await eventMember(kit, kit.org.id, ['pass_operator']);
     const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
     if (!auth) throw new Error('Missing session');
@@ -386,7 +342,7 @@ describe('verified attachment requiring credential reissue', () => {
   }, 120_000);
 
   it('does not record a requirement after its source connection is disabled', async () => {
-    const { kit, pass } = await fixedBarcodePass();
+    const { kit, pass } = await fixedBarcodePass({ retired: true });
     const connectionId = kit.fx.ids.id();
     await run(
       kit.env.DB,

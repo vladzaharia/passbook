@@ -208,7 +208,6 @@ describe('0042 credential and lifecycle generations', () => {
     const before = await snapshot(db, pass.id);
     for (const [column, value] of [
       ['holder_email', 'other@example.test'],
-      ['owner_user_id', user.id],
       ['serial', crypto.randomUUID()],
       ['auth_token', crypto.randomUUID()],
     ] as const) {
@@ -243,6 +242,21 @@ describe('0042 credential and lifecycle generations', () => {
       credential_generation: before.credential_generation,
       holder_email: before.holder_email,
     });
+    // A first owner links without a transfer (verified attach of an unchanged credential); an owner
+    // never moves or clears, and never moves with a generation, outside one.
+    const other = await makeUser(f);
+    await expect(
+      run(
+        db,
+        'UPDATE passes SET owner_user_id = ?, credential_generation = credential_generation + 1 WHERE id = ?',
+        [user.id, pass.id],
+      ),
+    ).rejects.toThrow();
+    await run(db, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [user.id, pass.id]);
+    for (const value of [other.id, null])
+      await expect(
+        run(db, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [value, pass.id]),
+      ).rejects.toThrow();
   });
 
   it('requires a version or revision advance for existing barcode and lookup changes without bumping incarnation', async () => {

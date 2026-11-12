@@ -3,7 +3,9 @@ import { strictEmail } from '../../../shared/email.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
+import { linkVerifiedAttach } from '../passes/credential-link.ts';
 import {
+  type CredentialTransferAuthority,
   CredentialTransferReissueRequired,
   type CredentialTransferSource,
   startCredentialTransfer,
@@ -54,7 +56,9 @@ export async function runAttachHookA(
     expectedSource?: CredentialTransferSource | undefined;
     expectedUserId?: string | undefined;
   },
-): Promise<(TransferResult & { ownerUserId: string }) | null> {
+): Promise<
+  (Omit<TransferResult, 'transferId'> & { transferId: string | null; ownerUserId: string }) | null
+> {
   const pass = await getHolderPass(ctx.env.DB, passId, null);
   if (!pass?.holderEmail || pass.ownerUserId || pass.pendingTransferId) return null;
   const email = pass.holderEmail;
@@ -69,24 +73,33 @@ export async function runAttachHookA(
     targetId: passId,
     detail: { via: 'email', userId: chosen },
   };
+  const authority: CredentialTransferAuthority & { kind: 'verified-attach' } = {
+    kind: 'verified-attach',
+    expected: options?.expectedSource ?? pass,
+    userId: chosen,
+    email,
+    ...(options?.authority ? { authority: options.authority } : {}),
+    ...(options?.connection ? { connection: options.connection } : {}),
+    audit,
+  };
   try {
-    const transfer = await startCredentialTransfer(
-      ctx,
-      actor,
-      passId,
-      { holderEmail: email, ownerUserId: chosen },
-      null,
-      {
-        kind: 'verified-attach',
-        expected: options?.expectedSource ?? pass,
-        userId: chosen,
-        email,
-        ...(options?.authority ? { authority: options.authority } : {}),
-        ...(options?.connection ? { connection: options.connection } : {}),
-        audit,
-      },
-    );
-    return { ...transfer, ownerUserId: chosen };
+    try {
+      const transfer = await startCredentialTransfer(
+        ctx,
+        actor,
+        passId,
+        { holderEmail: email, ownerUserId: chosen },
+        null,
+        authority,
+      );
+      return { ...transfer, ownerUserId: chosen };
+    } catch (error) {
+      if (!(error instanceof CredentialTransferReissueRequired && error.unchanged)) throw error;
+      // The credential cannot change, so the verified owner is linked to the pass as it is.
+      return (await linkVerifiedAttach(ctx, authority, error.unchanged))
+        ? { transferId: null, state: 'completed', ownerUserId: chosen }
+        : null;
+    }
   } catch (error) {
     if (error instanceof CredentialTransferReissueRequired) {
       await markHolderReissueRequired(

@@ -17,6 +17,7 @@ import {
   retiredCredentials,
   transferContent,
   transferPayloadAad,
+  unchangedCredential,
 } from './credential-transfer-build.ts';
 import { getPassForWrite } from './pass-access.ts';
 import { validConnectionPassContext } from './repo.ts';
@@ -131,11 +132,21 @@ export async function startCredentialTransfer(
     newCredentialRefs(ctx, source, build),
   ]);
   const oldRefs = new Set(old.map((entry) => entry.ref));
-  if (
-    targetRefs.some((ref) => oldRefs.has(ref)) ||
-    (await tombstoneExists(ctx.env.DB, source.pass.orgId, source.pass.mode, targetRefs))
-  )
-    throw new CredentialTransferReissueRequired(credentialKeysetCommitment);
+  const overlaps = targetRefs.some((ref) => oldRefs.has(ref));
+  const tombstoned = await tombstoneExists(
+    ctx.env.DB,
+    source.pass.orgId,
+    source.pass.mode,
+    targetRefs,
+  );
+  if (overlaps || tombstoned) {
+    // The verified owner is the holder already, so a static credential can be linked as it is.
+    const unchanged =
+      authority.kind === 'verified-attach' && !tombstoned
+        ? await unchangedCredential(ctx, source, build, targetRefs, oldRefs)
+        : undefined;
+    throw new CredentialTransferReissueRequired(credentialKeysetCommitment, unchanged);
+  }
   const token = ctx.ids.token();
   if (token === source.pass.downloadToken) throw conflict();
   const transferId = ctx.ids.id();
