@@ -3,11 +3,12 @@ import { fixtures, makeEnv, makeOrg, makeUser } from '../../../../test/helpers/i
 import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run as sqlRun } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { createServiceContext } from '../../platform/service-context.ts';
+import { createJobContext, createServiceContext } from '../../platform/service-context.ts';
 import { cleanupStage, extractStage, persistStage, startImport } from './import-pipeline.ts';
 import { basicPackage, makePng, passJson, zipOf } from './package/fixtures.ts';
 import { createTemplateRegistry } from './registry.ts';
 import { getImport, getVersion, insertImport } from './repo.ts';
+import { templateGrant } from './repo-grants.ts';
 import { syncBakedTemplates } from './sync.ts';
 import { bakedFrom, fakeAssets, importZip, sourceOf, templateAuthor } from './testing.ts';
 
@@ -355,5 +356,15 @@ describe('TemplateImport pipeline', () => {
     const row = await getImport(env.DB, r.p.uploadId);
     expect(row?.error).toBe('TEMPLATE_BAKED');
     expect(row?.workflowStatus).toBe('errored');
+  });
+
+  it('a deferred import grant is built in a job context, never a request context', async () => {
+    const author = await templateAuthor(env, clock, orgId);
+    const build = (ctx: ReturnType<typeof createServiceContext>) =>
+      templateGrant(ctx, author.authority, 'import', { deferred: true });
+    expect(() => build(createServiceContext(env, { clock }))).toThrow(
+      /queue, cron or workflow context/,
+    );
+    expect(() => build(createJobContext(env, 'template-import', { clock }))).not.toThrow();
   });
 });

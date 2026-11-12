@@ -54,8 +54,6 @@ export function templatePrincipal(authority: TemplateAuthority, deferred: boolea
     orgAccessRevision: authority.orgUpdatedAt,
     // Work captured without the user's revision is refused, never revived.
     userAccessRevision: authority.userAccessRevision ?? 0,
-    // Imports run from a workflow (a job context) and from tests; the authority is captured, never request input.
-    allowRequestContext: true,
     mode: authority.mode,
   };
 }

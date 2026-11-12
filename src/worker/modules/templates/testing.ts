@@ -4,7 +4,11 @@ import { createBehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
 import type { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
+import {
+  createJobContext,
+  createServiceContext,
+  type ServiceContext,
+} from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { authorizeTemplateWrite, type TemplateAuthority } from './access.ts';
 import type { BakedTemplate } from './baked-types.ts';
@@ -159,7 +163,7 @@ export async function importZip(
   stages: string[];
   result: { templateId: string; version: string } | null;
 }> {
-  const ctx = createServiceContext(env, { clock });
+  const ctx = createJobContext(env, 'template-import', { clock });
   const uploadId = ctx.ids.id();
   const authority =
     options.authority ??

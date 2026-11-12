@@ -187,6 +187,17 @@ const results = await g.commit();                         // one batch: [grant i
 - `If-Match: <version>` with 412 stays: the client-visible CAS is `passes.version`.
 - `row_version` is captured by the server during the same request, never sent by clients.
 
+### 1.2.1 Request-context deferred principals
+
+`via: 'deferred'` is built in a queue, cron or workflow context. A request context may build one only with `allowRequestContext: true`, which is reviewed per site. Each site pins `userAccessRevision` and `orgAccessRevision` captured when the work was captured (a missing user revision is `0`, which never matches), checks no session, and is refused with 403 when the membership is revoked or either revision moved.
+
+| Site | Verdict | Why |
+| --- | --- | --- |
+| `modules/templates/repo-grants.ts` (import persist) | Removed | The workflow runs on `createJobContext`; the flag was only a test convenience. The import fixture now uses a job context. |
+| `modules/sandbox/repo-forward.ts` `finishForward` | Kept | The request has already sent the mail; the outcome must be recorded in that request even if the owner signed out meanwhile. A job would leave the reservation `sending` until its lease expires. The user revision is read before the send, the org revision is the request's `orgUpdatedAt`. A refusal is logged and the reservation expires with its lease. |
+| `modules/delivery/delivery-actor.ts` `deliveryGrant` | Kept | The issuance resume on the creating request acts for the authority stored in the durable intent (the same member, after sign-out or on replay), with the revisions captured when the intent was written. The same intent is resumed by the sweeper under a job context. |
+
+
 ### 1.3 REPLACE and UPSERT guards (M2)
 
 Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the same primary key or any unique key exists, matching the existing `0042:220` and `0047:36` pattern:
@@ -463,7 +474,7 @@ Revoke the session instead.
 1. Secret list.
 2. `versions upload`.
 3. Bookmark.
-4. Migrate 0025-0054. `--migrate-only` stops here.
+4. Migrate 0025–0055. `--migrate-only` stops here.
 5. `tools/bootstrap-tenancy.ts`: memberships, legacy releases, queued mail bound (owner runs it, remote).
 6. `versions deploy` (`--promote`).
 
@@ -515,7 +526,7 @@ Forward-only database. Once migrations have run, roll forward only (owner answer
 
 ### 6.4 Cutover rehearsal and decisions (2026-11-11)
 
-`test/cutover/` migrates a populated 0024 database through 0054, runs the bootstrap and the baked sync, and exercises it. Shapes: unassigned baked, baked assigned to an org, baked assigned with no passes, uploaded active, uploaded archived, uploaded with no passes. Each has live passes (except the empty ones), a pre-cutover check-in, a queued push and a queued pass email. The runbook is `docs/operations.md`, "Cutover from schema 0024"; its SQL blocks are executed by the test.
+`test/cutover/` migrates a populated 0024 database through 0055, runs the bootstrap and the baked sync, and exercises it. Shapes: unassigned baked, baked assigned to an org, baked assigned with no passes, a starter assigned to an org by the old `PATCH` (`baked-patched`), uploaded active, uploaded archived, uploaded with no passes; plus a live pass in a deleted org. Each has live passes (except the empty ones), a pre-cutover check-in, a queued push and a queued pass email. The runbook is `docs/operations.md`, "Cutover from schema 0024"; its SQL blocks are executed by the test.
 
 **Findings and fixes:**
 
@@ -526,20 +537,22 @@ Forward-only database. Once migrations have run, roll forward only (owner answer
 | Passes pinned to an older template version were refused (scan `not_found`, refresh `TEMPLATE_RELEASE_CONFLICT`); a new baked build makes every baked pass stale. | Fixed: issuance and use are separate. Use of an existing pass (scan, display, undo, history, refresh at its own version) depends on the pass being live, its template not deleted and its own issued release (or, with no `release_id`, its own `template_version`). A compatible head (same version or build) is still followed so display-only edits reach old passes. `reissueStaleTemplates` upgrades the rest. |
 | Archived uploaded templates: no effective release; scan refused (`SCAN_PASS_CHANGED`). | Fixed: archived templates keep scanning and refreshing existing passes; new issuance still needs the head, so it is refused. Only `deleted` stops a pass. |
 | Deploy ran migrate and promote in one command, leaving no slot for the bootstrap. | `--migrate-only` and `--promote`. |
-| `wrangler d1 execute --command` with the snapshot SQL was fragile to quote. | The tool writes `.wrangler/bootstrap-snapshot.sql` (`--print-remote`) and the owner runs `--file`. |
+| `wrangler d1 execute --command` with the snapshot SQL was fragile to quote. | The tool writes `.wrangler/bootstrap-snapshot.sql` (`--print-remote`); the owner passes it as `--command "$(cat …)"`. Not `--file`: a remote `--file` runs through D1's import API, which returns counts, never rows (`tools/lib/bootstrap-tenancy.test.ts`). |
 | Compound `SELECT` is capped at 5 terms in D1 (found by running the runbook queries). | The count query is one `json_object`. |
+| Deleting an org keeps its passes. An active uploaded template in a deleted org gets no legacy release (the bootstrap skips deleted orgs), so `verify-heads` listed it and `--promote` would exit 1. | `verify-heads` skips deleted orgs; nothing serves their passes. |
+| `0055` lets the old Worker's owner link (pass create, sign-in) and self-remove succeed in the window. | WAF table updated; `test/cutover/window.test.ts` runs the old statements. |
 
 **Assigned baked templates: the baked sync creates the org-scoped release, not the bootstrap.**
 
 - `effectiveReleaseIdSql` honors a `legacy` release only for `origin = 'uploaded'`; a baked template needs a `system` release with `org_id = templates.org_id`. A bootstrap `legacy` release for a baked template would be ignored, or would need the predicate widened (module code) and a second provenance for baked content.
 - A `system` release needs the verified content hash, the `template_version_hashes` row and the sealed preview extras. Only the sync computes them.
-- The sync already scopes by the stored `templates.org_id`, so a PATCH assignment (or a manifest `org`) from the old Worker gets its org release and an unassigned template gets the platform release. The test proves both, including the legacy `templates.baked_hash` adoption path.
-- Cost: from promote to the first `templates.sync` tick (the minute cron), baked passes cannot be scanned or refreshed. Uploaded templates are covered from the bootstrap. The runbook shortens it by opening Admin, Templates, and checks `verify-heads`.
+- The sync already scopes by the stored `templates.org_id`, so a PATCH assignment (or a manifest `org`) from the old Worker gets its org release and an unassigned template gets the platform release. The test proves both (`baked-assigned`, `baked-patched`: a starter with no manifest org, assigned by PATCH, gets `system` releases in that org, none from the bootstrap, and its passes scan, refresh, undo and send queued mail), including the legacy `templates.baked_hash` adoption path.
+- Cost: until the sync runs, baked templates cannot issue new passes; existing baked passes still scan at their own version. `--promote` calls `GET /api/v1/templates` with a `templates:read` key, which runs the sync, and waits for `verify-heads`; the minute cron (`templates.sync`) is the fallback.
 - Adoption needs `CF_VERSION` (`version_metadata` binding) so the new build's upload time is ordered after the old Worker's last sync; without it a changed hash counts as superseded and the sync skips.
 
 **Deploy mode.** `wrangler.jsonc` is identical at `main` and HEAD, so the normal version flow applies (§6.2); `--first` would serve before the bootstrap.
 
-**In-window old writes.** `authority-baseline.test.ts` pins the list above. Beyond holder edit and `ensureOrgStmt`, the 0042 trigger also aborts the old attach hooks: pass create for a holder with an account, delete of an owned pass, owner release (`DELETE /api/v1/me/passes/{id}`), and sign-in attach for a holder with a waiting pass. The WAF rule covers the admin and integration writes; sign-in and sync failures last seconds and retry (operations.md, "Temporary WAF rule").
+**In-window old writes.** `authority-baseline.test.ts` pins the list above; `test/cutover/window.test.ts` pins the old holder writes against 0025–0055. Holder edits and delete of an owned pass fail. Since `0055`, the old attach hooks (pass create for a holder with an account, sign-in of a holder with a waiting pass) and owner release (`DELETE /api/v1/me/passes/{id}`, block row first) succeed, without the new credential the new Worker would issue. The WAF rule covers the admin and integration writes and owner release; sign-in is left open (operations.md, "Temporary WAF rule").
 
 ## 7. Implementation plan (B1, M6)
 
