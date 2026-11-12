@@ -143,11 +143,12 @@ export async function finishStop(
     now,
     event: authority.event ?? null,
     ...(authority.templateId ? { templateId: authority.templateId } : {}),
-    ...(!checked && s.countMiss
+    // A miss: no mode may have retired the presented credential. A pass: its own mode may not.
+    ...(checked || s.countMiss
       ? {
           credentialRefs: {
             current: s.credentialTombstoneRefs,
-            other: s.otherModeCredentialTombstoneRefs,
+            other: checked ? [] : s.otherModeCredentialTombstoneRefs,
           },
         }
       : {}),

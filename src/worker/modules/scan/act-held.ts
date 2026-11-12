@@ -182,6 +182,8 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
     tables: SCAN_HELD_TABLES,
     pass: { id: found.pass.id, facts: { pass: found.pass, credential: {} } },
     holder: observed.gateBefore ? { ...gate, lastScanId: observed.gateBefore.lastScanId } : null,
+    // Another pass's transfer can retire the presented credential after resolve (shared hash).
+    credentialRefs: { current: claim.credentialTombstoneRefs, other: [] },
   });
   if (capacityRequired && claim.capacity)
     g.assert('stale', [

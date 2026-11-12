@@ -9,7 +9,7 @@ import {
   type HistoryProofFence,
   historyProofSnapshotPredicates,
 } from './repo-history-proof-cas.ts';
-import { afterCursorSql, likePattern, type StaffPage } from './repo-staff-page.ts';
+import { afterCursorSql, type StaffPage, staffNameMatch } from './repo-staff-page.ts';
 import { type AdminStaffRaw, type AdminStaffResult, adminStaffRows } from './repo-staff-rows.ts';
 import {
   PIN_MISSES_PER_PERSON,
@@ -40,7 +40,7 @@ export async function prepareStaffActivity(
 ): Promise<StaffActivityPreparation> {
   const params = tenantPassAuthorityParams(authority, now);
   const staffId = page.staffId;
-  const pattern = likePattern(page.q);
+  const name = staffNameMatch(page.q);
   const cursor = afterCursorSql(page.cursor);
   const [zones, scans] = await Promise.all([
     all<{ time_zone: string }>(
@@ -59,14 +59,13 @@ export async function prepareStaffActivity(
           ORDER BY s.at DESC, s.id DESC LIMIT 1
         ) AS scan_id FROM scan_staff st
         WHERE st.org_id = ? AND ${tenantPassAuthoritySql(authority, 'st')}
-          AND (? IS NULL OR st.name LIKE ? ESCAPE '\\') ${cursor.sql}
+          AND ${name.sql} ${cursor.sql}
         ORDER BY st.disabled_at IS NOT NULL, st.name COLLATE NOCASE, st.id LIMIT ?`,
           [
             authority.mode,
             authority.orgId,
             ...params,
-            pattern,
-            pattern,
+            ...name.params,
             ...cursor.params,
             page.limit + 1,
           ],
@@ -101,7 +100,7 @@ function listAdminStaffStmt(
   page: StaffPage,
 ): D1PreparedStatement {
   const { staffId } = page;
-  const pattern = likePattern(page.q);
+  const name = staffNameMatch(page.q);
   const cursor = afterCursorSql(page.cursor);
   const personWindow = now - (now % PIN_PERSON_WINDOW_MS);
   const scannerWindow = now - (now % PIN_SCANNER_WINDOW_MS);
@@ -150,7 +149,7 @@ function listAdminStaffStmt(
      FROM scope
      LEFT JOIN scan_staff st ON scope.auth_ok = 1 AND scope.snapshot_ok = 1
        AND st.org_id = ? AND (? IS NULL OR st.id = ?)
-       AND (? IS NULL OR st.name LIKE ? ESCAPE '\\') ${cursor.sql}
+       AND ${name.sql} ${cursor.sql}
      LEFT JOIN scans recent_scan ON recent_scan.id = (
        SELECT s.id FROM scans s
        WHERE s.org_id = st.org_id AND s.mode = ? AND s.staff_id = st.id AND s.state = 'done'
@@ -181,8 +180,7 @@ function listAdminStaffStmt(
       authority.orgId,
       staffId ?? null,
       staffId ?? null,
-      pattern,
-      pattern,
+      ...name.params,
       ...cursor.params,
       authority.mode,
       page.limit + 1,

@@ -63,7 +63,28 @@ function notQuarantined(target: ScanRow): Check[] {
   ];
 }
 
-const UNDO_CODES = { lineage: 'UNDO_SUPERSEDED', retention: 'SCAN_RETAINED' } as const;
+/**
+ * The check-in belongs to the pass's current holder: no transfer is pending (as `scanPassChecks`),
+ * and the ledger's recorded credential generation is still the pass's (history redacts it otherwise).
+ */
+const currentHolder = (target: UndoCommit['target']): Check =>
+  rawCheck(
+    'stale',
+    `NOT EXISTS (SELECT 1 FROM pass_credential_transfers x WHERE x.pass_id = ? AND x.state = 'pending')
+    AND NOT EXISTS (SELECT 1 FROM pass_events e JOIN passes p ON p.id = e.pass_id
+      WHERE e.pass_id = ? AND CASE WHEN json_valid(e.data) THEN json_extract(e.data, '$.scanId') = ?
+        AND json_type(e.data, '$.authority.credentialGeneration') = 'integer'
+        AND json_extract(e.data, '$.authority.credentialGeneration') <> p.credential_generation
+        ELSE 0 END)`,
+    [target.passId, target.passId, target.id],
+  );
+
+/** `UNDO_HOLDER_CHANGED` never leaves the service: it answers as the masked `SCAN_NOT_FOUND`. */
+export const UNDO_CODES = {
+  lineage: 'UNDO_SUPERSEDED',
+  retention: 'SCAN_RETAINED',
+  stale: 'UNDO_HOLDER_CHANGED',
+} as const;
 
 /**
  * One batch. The gate, presence and target compare-and-swaps are the grant's lineage checks
@@ -81,6 +102,7 @@ export function undoGrant(c: UndoCommit): Grant {
     checks: [
       ...scanActorChecks(actor, { now, event, templateId: target.templateId ?? undefined }),
       ...notQuarantined(target),
+      currentHolder(target),
       ...(approver
         ? [
             rowIs(

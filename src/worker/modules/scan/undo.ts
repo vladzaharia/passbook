@@ -10,12 +10,12 @@ import { policyActor } from './dto.ts';
 import type { ConsoleUndo } from './feed.ts';
 import { undoWindowMinutes } from './outcome.ts';
 import { scanByKey } from './repo-scans.ts';
-import { commitUndo } from './repo-undo.ts';
+import { commitUndo, UNDO_CODES } from './repo-undo.ts';
 import { readUndo } from './repo-undo-read.ts';
 import { scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { guardMiss, undoApprovalGuard } from './undo-approval-guard.ts';
-import { planUndo, superseded } from './undo-authority.ts';
+import { notFound, planUndo, superseded } from './undo-authority.ts';
 import { answer, replayUndo, type UndoRequest } from './undo-replay.ts';
 
 /**
@@ -120,7 +120,12 @@ async function run(
     approver = { id: staff.id, authEpoch: staff.authEpoch };
   }
   const id = ctx.ids.ordered();
-  await commitUndo({ ctx, actor, ...plan, approver, id, key: req.idempotencyKey });
+  try {
+    await commitUndo({ ctx, actor, ...plan, approver, id, key: req.idempotencyKey });
+  } catch (error) {
+    if (error instanceof AppError && error.code === UNDO_CODES.stale) throw notFound();
+    throw error;
+  }
   return answer(ctx, actor, target.passId, id, false);
 }
 

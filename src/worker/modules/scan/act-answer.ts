@@ -41,6 +41,8 @@ export async function answerWithoutRow(
     now: ctx.clock.now(),
     event: authority.event ?? null,
     ...(authority.templateId ? { templateId: authority.templateId } : {}),
+    // The answer shows the pass's card: its presented credential must not have been retired since.
+    ...(stop.found ? { credentialRefs: { current: s.credentialTombstoneRefs, other: [] } } : {}),
   });
   const released = g.delete('scans', {
     where: { id: s.scanId, state: 'pending', at: s.claimAt },

@@ -94,6 +94,7 @@ export async function chooseAction(input: ChooseInput): Promise<ScanEvaluation> 
     now: ctx.clock.now(),
     event: found.admission?.event ?? null,
     pass: { id: found.pass.id, facts: { pass: found.pass, credential: {} } },
+    credentialRefs: { current: credentials.credentialTombstoneRefs, other: [] },
   });
   const released = g.delete('scans', {
     where: { id: scanId, state: 'pending', at: claimAt },

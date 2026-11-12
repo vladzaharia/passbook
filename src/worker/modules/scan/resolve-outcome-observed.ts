@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction, ResolvedScanManifest } from '../../../shared/scan-defaults.ts';
+import { ConflictError, UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound } from '../passes/builder.ts';
 import { type ActorCsrfSnapshot, actorCsrfSnapshotFence } from './actor-csrf.ts';
@@ -9,23 +10,25 @@ import type { CountsPlan } from './counts.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { knownPhotoUrl } from './member-photo.ts';
-import { blankOutcome, stopOutcome } from './outcome.ts';
+import { blankOutcome, notAcceptedOutcome, stopOutcome } from './outcome.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { outputAuthorityPredicate } from './repo-output-authority.ts';
 import { outputPredicateStmt } from './repo-output-predicates.ts';
+import { sessionReadAuthorityCurrent } from './repo-session-authority.ts';
 import { accepts, candidateAudit, matchesEvent } from './resolve-candidates.ts';
 import { evaluate } from './resolve-evaluate.ts';
 import { currentFound } from './resolve-outcome-current.ts';
 import {
   acceptedFilter,
-  candidateEligible,
   candidateDetectionProof,
+  candidateEligible,
   candidateReadProof,
   currentInputActor,
   inputCandidates,
 } from './resolve-passless-read.ts';
 import type { FinalizedDisplayHistory } from './scan-display-history.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
+import { scannerCredentialLost } from './scanner-credential-lost.ts';
 
 type ObservedEvaluation = Omit<ScanEvaluation, 'credentialContext'> & { unconfirmed?: true };
 
@@ -138,7 +141,8 @@ export async function resolveObserved(
       (candidate) => candidate.pass.mode !== actor.mode,
     );
     if (!other.length) return unknown();
-    const proofs = () => other.map((candidate) => candidateDetectionProof(actor, candidate, credentials));
+    const proofs = () =>
+      other.map((candidate) => candidateDetectionProof(actor, candidate, credentials));
     const absence = await inputCandidates(ctx, actor, req.input, credentials, candidateEligible);
     if (
       !(await currentInputActor(
@@ -218,6 +222,15 @@ export async function resolveObserved(
       actor.principal === 'scanner' &&
       actor.templateIds.length === 0 &&
       !actor.settings.acceptAllTemplates;
+    // An invalid scope accepts nothing: the bare refusal `act` gives, under the same redacted-scope
+    // authority the session read uses (the scan fence refuses every invalid scope).
+    if (configOnly && actor.invalidScannerScope) {
+      if (!(await sessionReadAuthorityCurrent(ctx, actor, ctx.clock.now())))
+        throw (await scannerCredentialLost(ctx, actor))
+          ? new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR')
+          : new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');
+      return { outcome: notAcceptedOutcome().outcome, evaluatedSnapshot: null };
+    }
     const sameMode = (candidateRead.candidates ?? []).filter(
       (candidate) => candidate.pass.mode === actor.mode,
     );

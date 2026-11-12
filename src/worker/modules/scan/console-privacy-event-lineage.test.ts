@@ -311,6 +311,11 @@ describe('scan console and feed privacy', () => {
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const pass = await privatePass();
       const row = await recordedCheckIn(scanner, pass.id);
+      const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
+      // Control: with its projection intact the key sees the pass.
+      expect((await page(`?passId=${pass.id}`, apiKey)).items).toMatchObject([
+        { id: row.id, passId: pass.id },
+      ]);
       const sql =
         change === 'removed'
           ? "json_remove(data, '$.authority.eventProjection')"
@@ -370,7 +375,6 @@ describe('scan console and feed privacy', () => {
 
       // An event without a usable role projection is no record for any surface: the key sees the
       // row but neither its pass nor its action.
-      const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
       const feed = await page('', apiKey);
       expect(feed.items).toHaveLength(1);
       expect(feed.items[0]).toMatchObject({

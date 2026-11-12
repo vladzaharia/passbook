@@ -64,7 +64,13 @@ export function addSessionPropagation(
     statements.push(g.update('scanners', { set, where: { id: device.scanner_id } }));
   }
   if (patch.accepts !== undefined)
-    statements.push(...setSessionDeviceTemplates(g, session.id, patch.accepts.templateIds));
+    statements.push(
+      ...setSessionDeviceTemplates(
+        g,
+        devices.map((device) => device.scanner_id),
+        patch.accepts.templateIds,
+      ),
+    );
   return statements;
 }
 

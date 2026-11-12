@@ -23,7 +23,7 @@ const invalidScopes = [
 
 describe('invalid session activity scopes', () => {
   it.each(invalidScopes)(
-    'rejects an already %s scope instead of returning an unrestricted or empty activity page',
+    'refuses device activity and shows the console an unassigned session with no activity for an already %s scope',
     async (invalid) => {
       const f = await activityFixture();
       for (const rows of [await deviceRows(await f.device()), await consoleRows(await f.console())])
@@ -79,7 +79,17 @@ describe('invalid session activity scopes', () => {
           await runOne(db, 'DELETE FROM templates WHERE id=?', [template]);
       }
       await noLeak(await f.device(), 401, 'SCANNER_UNAUTHENTICATED', f.pass.id, ACTIVITY_NAME);
-      await noLeak(await f.console(), 404, 'SCANNING_SESSION_NOT_FOUND', f.pass.id, ACTIVITY_NAME);
+      // The session stays open so an admin can fix it: never as all templates, and no activity it
+      // cannot scope (a rename or other edit answers the same detail).
+      const detail = await f.console();
+      expect(detail.status).toBe(200);
+      const text = await detail.text();
+      expect(JSON.parse(text)).toMatchObject({
+        accepts: null,
+        settings: { acceptAllTemplates: false },
+        activity: [],
+      });
+      for (const secret of [f.pass.id, ACTIVITY_NAME]) expect(text).not.toContain(secret);
     },
   );
 

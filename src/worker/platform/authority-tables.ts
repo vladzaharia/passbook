@@ -71,6 +71,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   scan_events: { org: 'org_id', mode: 'mode' },
   scan_event_templates: { org: null, edges: [edge('event_id', 'scan_events')] },
   scanners: { org: 'org_id', mode: 'mode' },
+  // Its triggers move scanners.config_epoch: written only through a scanner of the grant's tenant.
+  scanner_templates: { org: null, edges: [edge('scanner_id', 'scanners')] },
   scanning_sessions: { org: 'org_id', mode: 'mode' },
   scanning_devices: { org: 'org_id', mode: 'mode' },
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },

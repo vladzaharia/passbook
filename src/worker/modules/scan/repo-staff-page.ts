@@ -1,4 +1,4 @@
-import { likeEscape } from '../../platform/db.ts';
+import { containsMatch, type SqlMatch } from '../../platform/db.ts';
 import { ValidationError } from '../../platform/errors.ts';
 
 /** The last person of a page: active people first, then name (case-insensitive), then id. */
@@ -17,7 +17,9 @@ export interface StaffPage {
 }
 export const STAFF_PAGE_LIMIT = 50;
 export const STAFF_PAGE_MAX = 200;
-export const likePattern = (q: string | undefined) => (q ? `%${likeEscape(q)}%` : null);
+/** The name search for the staff alias `st`: any part of the name, case-insensitive for ASCII. */
+export const staffNameMatch = (q: string | undefined): SqlMatch =>
+  q ? containsMatch('st.name', q) : { sql: '1', params: [] };
 
 export const encodeStaffCursor = (p: { disabledAt: number | null; name: string; id: string }) =>
   btoa(JSON.stringify([p.disabledAt !== null ? 1 : 0, p.name, p.id]))

@@ -110,7 +110,7 @@ describe('M1 door integration', () => {
     expect(response.status).toBe(404);
   });
 
-  it('searches prefixes, masks exact email and never searches partial email', async () => {
+  it('searches prefixes and exact email, never echoes the email and never searches partial email', async () => {
     await kit.scanPass(
       templateId,
       { memberName: 'Annabelle' },
@@ -119,10 +119,12 @@ describe('M1 door integration', () => {
     const search = async (q: string) =>
       (await kit.post(kit.admin(), '/lookup', { q, scope: scope() })).json();
     expect(await search('Ann')).toMatchObject({
-      items: [{ title: 'Annabelle', maskedEmail: 'a•••@e•••.com' }],
+      items: [{ title: 'Annabelle', maskedEmail: null }],
       more: false,
     });
-    expect(await search('anna@example.com')).toMatchObject({ items: [{ title: 'Annabelle' }] });
+    const exact = await search('anna@example.com');
+    expect(exact).toMatchObject({ items: [{ title: 'Annabelle', maskedEmail: null }] });
+    expect(JSON.stringify(exact)).not.toContain('anna@');
     expect(await search('anna@exam')).toEqual({ items: [], more: false });
     expect(await search('An')).toEqual({ items: [], more: false });
     const audits = await kit.env.DB.prepare(

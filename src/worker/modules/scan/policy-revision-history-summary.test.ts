@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -35,7 +35,24 @@ describe('scanner history event and source proofs', () => {
   });
 
   // Facts stay, proofs go: the receipt and its bucket come from the scan row, not a re-proof of the event.
-  it('reads the receipt and its action bucket from stored facts after an event edit', async () => {
+  // The recorded role must have its projection entry (`scan-event-proof-recorded.ts`): an event that
+  // names a role it holds no entry for is internally inconsistent and fails closed. Edited together,
+  // the stored facts are read as stored.
+  it.each([
+    [
+      'reads the receipt and its action bucket from stored facts after a consistent event edit',
+      `json_set(data,'$.authority.role','manager','$.authority.eventProjection.roles.manager',
+        json_extract(data,'$.authority.eventProjection.roles.' || json_extract(data,'$.authority.role')))`,
+      { actionLabel: 'Check in', title: 'Revision Private Person', undoable: true },
+      [{ actionId: 'check_in', label: 'Check in', count: 1 }],
+    ],
+    [
+      'redacts the receipt and its action bucket when the recorded role loses its projection entry',
+      `json_set(data,'$.authority.role','manager')`,
+      { actionLabel: 'Scan', title: null, undoable: false },
+      [],
+    ],
+  ] as const)('%s', async (_label, edit, item, byAction) => {
     const s = await scenario();
     const result = (await (
       await kit.post(s.scanner.headers, '/actions', {
@@ -45,29 +62,31 @@ describe('scanner history event and source proofs', () => {
     ).json()) as { kind: string; scanId: string | null };
     expect(result.kind).toBe('ok');
     if (!result.scanId) throw new Error('Missing scan');
+    const recorded = await first<{ role: string; manager: string | null }>(
+      kit.env.DB,
+      `SELECT json_extract(data,'$.authority.role') AS role,
+        json_extract(data,'$.authority.eventProjection.roles.manager') AS manager
+      FROM pass_events WHERE pass_id=? AND kind='scan.checked_in'`,
+      [s.pass.id],
+    );
+    // The edit raises the role above the recorder's, so the event holds no manager entry yet.
+    expect(recorded).toMatchObject({ manager: null });
+    expect(recorded?.role).not.toBe('manager');
     await run(
       kit.env.DB,
-      "UPDATE pass_events SET data=json_set(data,'$.authority.role','manager') WHERE pass_id=? AND kind='scan.checked_in'",
+      `UPDATE pass_events SET data=${edit} WHERE pass_id=? AND kind='scan.checked_in'`,
       [s.pass.id],
     );
     const recent = (await (await kit.get(s.scanner.headers, '/scans?limit=5')).json()) as {
       items: { scanId: string; actionLabel: string; title: string | null; undoable: boolean }[];
     };
-    expect(recent.items.find((item) => item.scanId === result.scanId)).toMatchObject({
-      actionLabel: 'Check in',
-      title: 'Revision Private Person',
-      undoable: true,
-    });
+    expect(recent.items.find((row) => row.scanId === result.scanId)).toMatchObject(item);
     const summary = (await (await kit.get(s.scanner.headers, '/summary')).json()) as {
       total: number;
       ok: number;
       byAction: unknown[];
     };
-    expect(summary).toMatchObject({
-      total: 1,
-      ok: 1,
-      byAction: [{ actionId: 'check_in', label: 'Check in', count: 1 }],
-    });
+    expect(summary).toMatchObject({ total: 1, ok: 1, byAction });
   });
 
   it('buckets each contributing action across templates', async () => {

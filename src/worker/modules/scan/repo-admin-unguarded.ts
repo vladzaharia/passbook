@@ -1,11 +1,12 @@
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
+import { inList } from '../../platform/authority-expr.ts';
 import { writePart } from '../../platform/authority-include.ts';
 import type { SqlValue } from '../../platform/db.ts';
 
 /**
- * A write to a table the builder does not guard (`scanner_templates`, `scanner_setups`) that still
- * commits only in its grant's batch. `{grant}` is the grant-row predicate, `{org}` and `{mode}` the grant's
- * tenant. Every part ties its rows to the tenant itself; the grants are `org_mode`.
+ * A write to a table the builder does not guard (`scanner_setups`) that still commits only in its
+ * grant's batch. `{grant}` is the grant-row predicate, `{org}` and `{mode}` the grant's tenant. Every part
+ * ties its rows to the tenant itself; the grants are `org_mode`.
  */
 function grantedSql(g: Grant, sql: string, params: SqlValue[] = []): GrantedStatement {
   const [statement] = g.include(writePart(sql, params));
@@ -13,84 +14,54 @@ function grantedSql(g: Grant, sql: string, params: SqlValue[] = []): GrantedStat
   return statement;
 }
 
-/** The scanner is in the grant's org and mode, so its template links may follow (an `org_mode` grant). */
-export function addScannerTemplates(
+/**
+ * Template links are a guarded child of `scanners` (their triggers move the scanner's config epoch):
+ * each write reaches the link through a scanner in the grant's org and mode.
+ */
+export const addScannerTemplates = (
   g: Grant,
   scannerId: string,
   templateIds: readonly string[],
-): GrantedStatement[] {
-  if (templateIds.length === 0) return [];
-  return [
-    grantedSql(
-      g,
-      `INSERT INTO scanner_templates (scanner_id, template_id)
-       SELECT s.id, j.value FROM scanners s, json_each(?) j
-       WHERE s.id = ? AND s.org_id = {org} AND s.mode = {mode} AND {grant}`,
-      [JSON.stringify(templateIds), scannerId],
-    ),
-  ];
-}
+): GrantedStatement[] =>
+  templateIds.map((templateId) =>
+    g.insertJoined('scanner_templates', {
+      parents: { scanner_id: scannerId },
+      columns: ['template_id'],
+      values: [templateId],
+    }),
+  );
 
 export const replaceScannerTemplates = (
   g: Grant,
   scannerId: string,
   templateIds: readonly string[],
 ): GrantedStatement[] => [
-  grantedSql(
-    g,
-    `DELETE FROM scanner_templates WHERE scanner_id IN
-       (SELECT s.id FROM scanners s WHERE s.id = ? AND s.org_id = {org} AND s.mode = {mode})
-     AND {grant}`,
-    [scannerId],
-  ),
+  g.joined('scanner_templates', { where: { scanner_id: scannerId }, delete: true }),
   ...addScannerTemplates(g, scannerId, templateIds),
 ];
 
-/** An archive ends the template lists of the scanners that were on the event. */
-export const clearTemplatesOfEventScanners = (g: Grant, eventId: string): GrantedStatement =>
-  grantedSql(
-    g,
-    `DELETE FROM scanner_templates WHERE scanner_id IN
-       (SELECT s.id FROM scanners s WHERE s.event_id = ? AND s.org_id = {org} AND s.mode = {mode})
-     AND {grant}`,
-    [eventId],
-  );
-
-/** Scanners of the grant's org and mode moved onto an event drop their own template lists. */
-export const clearTemplatesOfScanners = (g: Grant, ids: readonly string[]): GrantedStatement =>
-  grantedSql(
-    g,
-    `DELETE FROM scanner_templates WHERE scanner_id IN
-       (SELECT s.id FROM scanners s WHERE s.org_id = {org} AND s.mode = {mode}
-          AND s.id IN (SELECT value FROM json_each(?)))
-     AND {grant}`,
-    [JSON.stringify(ids)],
-  );
-
-/** The template lists of a session's devices follow the session's scope. */
-export function setSessionDeviceTemplates(
-  g: Grant,
-  sessionId: string,
-  templateIds: readonly string[],
-): GrantedStatement[] {
-  return [
-    grantedSql(
-      g,
-      `DELETE FROM scanner_templates WHERE scanner_id IN
-         (SELECT d.scanner_id FROM scanning_devices d
-          WHERE d.session_id = ? AND d.org_id = {org} AND d.mode = {mode})
-       AND {grant}`,
-      [sessionId],
-    ),
-    grantedSql(
-      g,
-      `INSERT INTO scanner_templates (scanner_id, template_id)
-       SELECT d.scanner_id, t.value FROM scanning_devices d, json_each(?) t
-       WHERE d.session_id = ? AND d.org_id = {org} AND d.mode = {mode} AND {grant}`,
-      [JSON.stringify(templateIds), sessionId],
-    ),
-  ];
+/** These scanners drop their own template lists (an archive, a move onto an event). `in` takes 20 at a time. */
+export function clearTemplatesOfScanners(g: Grant, ids: readonly string[]): GrantedStatement[] {
+  const out: GrantedStatement[] = [];
+  for (let at = 0; at < ids.length; at += 20)
+    out.push(
+      g.joined('scanner_templates', {
+        where: { scanner_id: inList(ids.slice(at, at + 20)) },
+        delete: true,
+      }),
+    );
+  return out;
 }
+
+/** The template lists of a session's devices (the set the grant checks) follow the session's scope. */
+export const setSessionDeviceTemplates = (
+  g: Grant,
+  scannerIds: readonly string[],
+  templateIds: readonly string[],
+): GrantedStatement[] => [
+  ...clearTemplatesOfScanners(g, scannerIds),
+  ...scannerIds.flatMap((id) => addScannerTemplates(g, id, templateIds)),
+];
 
 export const addSetupInsert = (
   g: Grant,

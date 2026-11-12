@@ -1,7 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { maxNow, type SetValue } from '../../platform/authority-expr.ts';
-import { all, first, likeEscape, placeholders, stmt } from '../../platform/db.ts';
+import { all, first, placeholders, prefixMatch, stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -147,8 +147,9 @@ export async function listConsoleScanners(db: Db, f: ScannerFilter): Promise<Con
   }
   if (f.status) where.push(STATUS_SQL[f.status]);
   if (f.q) {
-    where.push("s.name LIKE ? ESCAPE '\\'");
-    params.push(`${likeEscape(f.q)}%`);
+    const match = prefixMatch('s.name', f.q);
+    where.push(match.sql);
+    params.push(...match.params);
   }
   if (f.cursor) {
     where.push('s.id < ?');

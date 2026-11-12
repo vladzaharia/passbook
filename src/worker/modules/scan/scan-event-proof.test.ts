@@ -10,6 +10,8 @@ import {
 const env = { KEK_V1: btoa(String.fromCharCode(...new Uint8Array(32).fill(37))) };
 const otherEnv = { KEK_V1: btoa(String.fromCharCode(...new Uint8Array(32).fill(38))) };
 
+const DOOR_ENTRY = { action: null, scannerNameHash: null, titleHash: null };
+
 function fixture(approved: boolean): { event: EventRow; scan: ScanEventReference } {
   const scan: ScanEventReference = {
     id: 'scan',
@@ -86,6 +88,8 @@ function fixture(approved: boolean): { event: EventRow; scan: ScanEventReference
         scanAt: scan.at,
         presenceScope: null,
         nonQuarantined: true,
+        role: 'door',
+        eventProjection: { v: 1, roles: { door: DOOR_ENTRY } },
         effect: { gateBefore: null, gateAfter: null, presenceBefore: null, presenceAfter: null },
       },
     }),
@@ -142,6 +146,35 @@ describe('recorded scan event facts', () => {
     expect(
       await verifyScanEventProvenance(env, { ...recorded, data: JSON.stringify(data) }, scan),
     ).toBe(false);
+  });
+
+  it.each([
+    ['the minimal projection the writer records without a policy', { v: 1, roles: {} }, true],
+    ['a removed projection', undefined, false],
+    ['another projection version', { v: 2, roles: { door: DOOR_ENTRY } }, false],
+    ['no entry for the recorded role', { v: 1, roles: { desk: DOOR_ENTRY } }, false],
+    [
+      'an entry with an extra field',
+      { v: 1, roles: { door: { ...DOOR_ENTRY, label: 'x' } } },
+      false,
+    ],
+    [
+      'an action of another kind',
+      { v: 1, roles: { door: { ...DOOR_ENTRY, action: { kind: 'check_in', labelHash: null } } } },
+      false,
+    ],
+    ['a hash that is not hex', { v: 1, roles: { door: { ...DOOR_ENTRY, titleHash: 'x' } } }, false],
+    ['an unknown role key', { v: 1, roles: { door: DOOR_ENTRY, owner: DOOR_ENTRY } }, false],
+  ] as const)('verifies the role projection: %s', async (_label, projection, valid) => {
+    const { event, scan } = fixture(false);
+    const sealed = await sealScanEvent(env, event, null, scan.at, null, null);
+    expect(await verifyScanEventProvenance(env, sealed, scan)).toBe(true);
+    const data = JSON.parse(sealed.data);
+    if (projection === undefined) delete data.authority.eventProjection;
+    else data.authority.eventProjection = projection;
+    expect(
+      await verifyScanEventProvenance(env, { ...sealed, data: JSON.stringify(data) }, scan),
+    ).toBe(valid);
   });
 
   it('binds the cache to both event and scan and snapshots inputs before asynchronous verification', async () => {

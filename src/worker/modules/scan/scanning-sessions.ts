@@ -115,7 +115,8 @@ async function scanningSessionDetailForAuthority(
   );
   const role = countAuthority.tenant ? tenantScanRole(countAuthority.tenant) : null;
   if (!role) throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
-  const activity = await scanningSessionActivity(ctx, row, countAuthority, role);
+  // A scope that resolves to nothing has no provable activity; the session stays viewable to fix it.
+  const activity = scope.valid ? await scanningSessionActivity(ctx, row, countAuthority, role) : [];
   if (activity === null)
     throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   return { ...session, devices: deviceViews, activity };

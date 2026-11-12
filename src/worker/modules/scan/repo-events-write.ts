@@ -5,7 +5,7 @@ import { tenantSql } from '../../platform/authority-cond.ts';
 import { inList, maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, stmt } from '../../platform/db.ts';
 import { eventScannersAre, eventSessionsAre } from './repo-admin-grant.ts';
-import { clearTemplatesOfEventScanners, clearTemplatesOfScanners } from './repo-admin-unguarded.ts';
+import { clearTemplatesOfScanners } from './repo-admin-unguarded.ts';
 
 type Db = D1Database;
 
@@ -149,7 +149,13 @@ export function addEventArchive(
         where: { id: session.id },
       }),
     );
-  out.push(clearTemplatesOfEventScanners(g, id));
+  // The grant checks the event's scanners are exactly `dependents.scanners`.
+  out.push(
+    ...clearTemplatesOfScanners(
+      g,
+      dependents.scanners.map((scanner) => scanner.id),
+    ),
+  );
   for (const scanner of dependents.scanners)
     out.push(
       g.update('scanners', {
@@ -236,7 +242,7 @@ export function addEventAssign(
       ),
     ]),
   );
-  out.push(clearTemplatesOfScanners(g, ids));
+  out.push(...clearTemplatesOfScanners(g, ids));
   return out;
 }
 

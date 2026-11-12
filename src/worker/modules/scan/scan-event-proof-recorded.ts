@@ -47,6 +47,42 @@ function recordedGateValid(row: EventRow, scan: RecordedEventScan, data: ObjectV
   );
 }
 
+const HASH = /^[0-9a-f]{64}$/;
+const ROLES = new Set(['door', 'desk', 'manager']);
+const hashOrNull = (value: unknown) =>
+  value === null || (typeof value === 'string' && HASH.test(value));
+
+/**
+ * The role projection is what every reader redacts by: `{v: 1, roles}`, each entry well-formed, with
+ * an entry for the recorded role. `roles: {}` is the writer's minimal form (no policy was
+ * evaluated, as for a refusal without a usable pass). Without it the event proves nothing about its pass.
+ */
+function recordedProjectionValid(scan: RecordedEventScan, authority: ObjectValue): boolean {
+  const projection = authority.eventProjection;
+  if (!object(projection) || projection.v !== 1 || !object(projection.roles)) return false;
+  const roles = projection.roles;
+  const recorded = authority.role;
+  if (Object.keys(roles).length > 0) {
+    if (typeof recorded !== 'string' || !ROLES.has(recorded) || !Object.hasOwn(roles, recorded))
+      return false;
+  }
+  return Object.entries(roles).every(([role, entry]) => {
+    if (!ROLES.has(role) || !object(entry)) return false;
+    const keys = Object.keys(entry).sort().join();
+    if (keys !== 'action,scannerNameHash,titleHash') return false;
+    const action = entry.action;
+    return (
+      (action === null ||
+        (object(action) &&
+          Object.keys(action).sort().join() === 'kind,labelHash' &&
+          action.kind === scan.actionKind &&
+          hashOrNull(action.labelHash))) &&
+      hashOrNull(entry.scannerNameHash) &&
+      hashOrNull(entry.titleHash)
+    );
+  });
+}
+
 export function recordedEventValid(
   row: EventRow,
   scan: RecordedEventScan,
@@ -103,6 +139,7 @@ export function recordedEventValid(
     data.authority.scanAt === scan.at &&
     data.authority.presenceScope === scan.presenceScope &&
     data.authority.nonQuarantined === true &&
+    recordedProjectionValid(scan, data.authority) &&
     recordedGateValid(row, scan, data)
   );
 }

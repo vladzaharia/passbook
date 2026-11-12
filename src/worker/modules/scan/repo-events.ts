@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { first, likeEscape, type SqlValue, stmt } from '../../platform/db.ts';
+import { first, prefixMatch, type SqlValue, stmt } from '../../platform/db.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
 import { eventExpectedCountSql } from './repo-counts.ts';
 import { eventArrivedCountSql } from './repo-event-attendance.ts';
@@ -256,8 +256,9 @@ export async function listConsoleEvents(db: Db, f: EventFilter): Promise<Console
     params.push(...(f.status === 'live' ? [f.now, f.now] : [f.now]));
   }
   if (f.q) {
-    where.push("e.name LIKE ? ESCAPE '\\'");
-    params.push(`${likeEscape(f.q)}%`);
+    const match = prefixMatch('e.name', f.q);
+    where.push(match.sql);
+    params.push(...match.params);
   }
   if (f.cursor) {
     where.push(`(e.opens_at, e.id) < (
