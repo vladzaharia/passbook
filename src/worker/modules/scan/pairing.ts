@@ -26,6 +26,7 @@ import {
   requirePairingAuthority,
 } from './repo-scanners-pair.ts';
 import { setupMeta } from './repo-setups.ts';
+import { nameTaken } from './scanner-name.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -109,7 +110,8 @@ export async function createPairing(
     }),
   );
   if (restored) addRestoreAudit(g, ctx, userId, scanner);
-  await g.commit();
+  // A restore makes the name active again; another scanner may have taken it meanwhile.
+  await g.commit().catch(nameTaken);
   return { code, url: `${origin}/scan#pair=${code}`, expiresAt };
 }
 

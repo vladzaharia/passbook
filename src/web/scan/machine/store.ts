@@ -107,13 +107,14 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
   }
 
   function poll() {
-    if (state.loop.s !== 'ready' || !deps.api.stats) return;
+    if (state.loop.s !== 'ready' || state.block !== null || !deps.api.stats) return;
     const ac = new AbortController();
     const { dayStart } = deps.base();
     deps.api
       .stats({ signal: ac.signal, ...(dayStart !== undefined ? { dayStart } : {}) })
       .then((counts) => dispatch({ type: 'counts', counts }))
       .catch((error: unknown) => {
+        // A 409 (configuration or staff changed) was already reloaded by the API; the next poll retries.
         const info = deps.toFail(error);
         if (info.error === 'revoked' || info.error === 'suspended' || info.error === 'signed_out')
           dispatch({ type: 'fail', key: '', ...info });

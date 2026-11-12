@@ -103,6 +103,7 @@ describe('live tenant final authority races', () => {
     );
     expect(await liveRecipient(deletion.ctx, screen.attachment)).toBeNull();
     expect(deletion.reached()).toBe(true);
-    await assertClosed(screen.attachment);
+    // A deleted template is the screen's configuration, not its access.
+    await assertClosed(screen.attachment, 'drift');
   });
 });

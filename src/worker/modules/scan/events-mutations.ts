@@ -28,8 +28,9 @@ import {
   scannersAssignable,
   templatesUsable,
 } from './repo-admin-grant.ts';
-import { eventReleaseChecks } from './repo-event-authority.ts';
+import { attachedTemplateChecks, eventReleaseChecks } from './repo-event-authority.ts';
 import type { EventAuthority } from './repo-event-keyset.ts';
+import { archivedTemplateIds } from './repo-event-templates.ts';
 import {
   addEventArchive,
   addEventAssign,
@@ -138,10 +139,14 @@ export async function updateEvent(
       'The event templates changed. Reload and try again.',
       'SCAN_EVENT_CHANGED',
     );
-  const stamps =
-    input.templateIds || input.match !== undefined
-      ? await checkTemplates(ctx, row.orgId, row.mode, templateIds, match?.input ?? null)
-      : undefined;
+  const checking = !!input.templateIds || input.match !== undefined;
+  // Templates already on the event may be archived (they keep scanning); new ones must be active.
+  const added = checking ? templateIds.filter((t) => !row.storedTemplateIds.includes(t)) : [];
+  const kept = checking ? templateIds.filter((t) => row.storedTemplateIds.includes(t)) : [];
+  const stamps = checking
+    ? await checkTemplates(ctx, row.orgId, row.mode, templateIds, match?.input ?? null, added)
+    : undefined;
+  const keptArchived = await archivedTemplateIds(ctx.env.DB, row.orgId, kept);
   const { archived, ...fields } = input;
   const archive = archived === true && row.archivedAt === null;
   const restore = archived === false && row.archivedAt !== null;
@@ -157,8 +162,7 @@ export async function updateEvent(
     row.orgId,
     [
       eventEpoch(id, row.configEpoch),
-      ...templatesUsable(input.templateIds || input.match !== undefined ? templateIds : []),
-      ...eventReleaseChecks(stamps, row.mode),
+      ...attachedTemplateChecks(added, kept, keptArchived, stamps, row.mode),
       ...(dependents ? eventArchiveChecks(id, dependents) : []),
     ],
     EVENT_CODES,
@@ -262,8 +266,10 @@ export async function assignScanners(
   await Promise.all(ids.map((scannerId) => assertStandaloneSession(ctx, row.orgId, scannerId)));
   const stamps =
     ids.length > 0
-      ? await checkTemplates(ctx, row.orgId, row.mode, row.storedTemplateIds, row.matchInput)
+      ? await checkTemplates(ctx, row.orgId, row.mode, row.storedTemplateIds, row.matchInput, [])
       : undefined;
+  const kept = ids.length > 0 ? row.storedTemplateIds : [];
+  const keptArchived = await archivedTemplateIds(db, row.orgId, kept);
   const now = ctx.clock.now();
   const g = adminGrant(
     ctx,
@@ -273,8 +279,7 @@ export async function assignScanners(
     row.orgId,
     [
       eventEpoch(id, row.configEpoch),
-      ...templatesUsable(row.storedTemplateIds),
-      ...eventReleaseChecks(stamps, row.mode),
+      ...attachedTemplateChecks([], kept, keptArchived, stamps, row.mode),
       ...scannersAssignable(ids),
     ],
     EVENT_CODES,

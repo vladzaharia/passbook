@@ -3,20 +3,41 @@ import type { TemplateStamps } from './repo-scope-releases.ts';
 
 type Db = D1Database;
 
-/** Check tenant ownership separately from release availability, so foreign IDs remain masked. */
+/**
+ * Check tenant ownership separately from release availability, so foreign IDs remain masked.
+ * `active` counts only templates that are not archived (a new attachment needs one).
+ */
 export async function countScopedTemplates(
   db: Db,
   orgId: string,
   ids: readonly string[],
+  active = false,
 ): Promise<number> {
   if (ids.length === 0) return 0;
   const row = await first<{ n: number }>(
     db,
     `SELECT count(*) AS n FROM templates
-     WHERE (org_id=? OR org_id IS NULL) AND status!='deleted' AND id IN (${placeholders(ids.length)})`,
+     WHERE (org_id=? OR org_id IS NULL) AND ${active ? "status='active'" : "status!='deleted'"}
+       AND id IN (${placeholders(ids.length)})`,
     [orgId, ...ids],
   );
   return row?.n ?? 0;
+}
+
+/** The archived templates among `ids`: attached ones keep scanning but have no issuance head. */
+export async function archivedTemplateIds(
+  db: Db,
+  orgId: string,
+  ids: readonly string[],
+): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const rows = await all<{ id: string }>(
+    db,
+    `SELECT id FROM templates WHERE (org_id=? OR org_id IS NULL) AND status='archived'
+       AND id IN (${placeholders(ids.length)})`,
+    [orgId, ...ids],
+  );
+  return rows.map((row) => row.id);
 }
 
 /** Read only the immutable versions captured by the scoped release/legacy authority snapshot. */

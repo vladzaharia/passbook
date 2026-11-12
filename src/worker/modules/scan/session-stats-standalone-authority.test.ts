@@ -176,8 +176,9 @@ describe('standalone scanner statistics authority', () => {
         change === 'csrf'
           ? await withMutableScannerSecret(f.env.DB, scanner.id, secret, race)
           : await race();
+      // A lost credential is the one refusal that unpairs the door.
       expect(result.status).toBe(401);
-      expect(await result.json()).toMatchObject({ code: 'SCANNER_UNAUTHENTICATED' });
+      expect(await result.json()).toMatchObject({ code: 'SCANNER_REPAIR' });
       expect(await singleton(f)).toBeNull();
     },
   );

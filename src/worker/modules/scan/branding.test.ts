@@ -127,6 +127,34 @@ describe('scanner branding', () => {
     }
   });
 
+  it('answers a logo read raced by a configuration change with 409, and a revoke with SCANNER_REPAIR', async () => {
+    const { kit } = fixture;
+    const org = await otherOrg();
+    const raced = async (change: (db: D1Database, id: string) => Promise<void>) => {
+      const { id, headers } = await pairedIn(org.id, `Logo race ${kit.fx.ids.token(3)}`);
+      // The control: an unbranded org answers a plain 404, not a refusal.
+      expect((await logo(headers)).status).toBe(404);
+      const { result, fired } = await beforeBatch(
+        kit.env,
+        /SELECT branding FROM orgs/,
+        (db) => change(db, id),
+        () => logo(headers),
+      );
+      expect(fired).toBe(true);
+      return result;
+    };
+    const drift = await raced(async (db, id) => {
+      await run(db, "UPDATE scanners SET time_zone='Europe/Paris' WHERE id=?", [id]);
+    });
+    expect(drift.status).toBe(409);
+    expect(await drift.json()).toMatchObject({ code: 'SCAN_CONFIG_CHANGED' });
+    const revoked = await raced(async (db, id) => {
+      await run(db, 'UPDATE scanners SET revoked_at=? WHERE id=?', [kit.clock.now(), id]);
+    });
+    expect(revoked.status).toBe(401);
+    expect(await revoked.json()).toMatchObject({ code: 'SCANNER_REPAIR' });
+  });
+
   it("lets a member read only their organization's logo", async () => {
     const { kit, fake } = fixture;
     const reader = await makeUser(kit.fx);

@@ -31,11 +31,13 @@ export function scanPrincipal(actor: ScanActor): Principal {
     authority.userId !== actor.actor.id
   )
     throw epochsMissing();
+  // `orgUpdatedAt` is the org's access revision: a suspend and reactivate since capture refuses.
   return {
     kind: 'membership',
     via: 'session',
     membershipId: authority.membershipId,
     sessionIdHash: authority.sessionId,
+    orgAccessRevision: authority.orgUpdatedAt,
     mode: actor.mode,
   };
 }

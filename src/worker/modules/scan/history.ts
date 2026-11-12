@@ -157,6 +157,9 @@ export async function recentFor(
   };
 }
 
+/** Contributor pages of 100 a summary verifies before it stops listing actions. */
+const SUMMARY_MAX_PAGES = 5;
+
 /** `GET /summary`: totals stay minimal; an action bucket requires every signed contributor. */
 export async function summaryFor(
   ctx: ServiceContext,
@@ -186,7 +189,9 @@ export async function summaryFor(
   const proofPages: HistoryProofFence[][] = [];
   const readCandidates = summaryCandidateReader(ctx.env.DB, actor, from, now, now, events, csrf);
   let after = '';
-  for (;;) {
+  // Bounded proof work: past the cap the action buckets stay unproven, so `byAction` is empty while
+  // the totals (one aggregate read) stay exact.
+  for (let pages = 1; ; pages++) {
     const page = await readCandidates(after);
     if (page.length === 0) break;
     const last = page.at(-1);
@@ -245,7 +250,7 @@ export async function summaryFor(
     }
     if (proofs.length) proofPages.push(proofs);
     after = last.id;
-    if (page.length < 100) break;
+    if (page.length < 100 || pages >= SUMMARY_MAX_PAGES) break;
   }
 
   const finalNow = ctx.clock.now();

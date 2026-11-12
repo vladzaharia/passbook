@@ -5,7 +5,6 @@ import {
   ScannerSettingsSchema,
   type UpdateScannerSchema,
 } from '../../../shared/contracts/index.ts';
-import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
@@ -28,19 +27,13 @@ import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts
 import { addScannerInsert, addScannerPatch } from './repo-scanners.ts';
 import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { scanningSessionForDevice } from './repo-scanning-sessions.ts';
+import { nameTaken } from './scanner-name.ts';
 import { checkAccepts, requireScannerSettings } from './scanner-validation.ts';
 import { loadScanner, scannerView } from './scanner-views.ts';
 import { addEnrollment } from './scanning-enrollment.ts';
 
 /** A scanner edit that lost a race answers 409 and the console refetches (no unpairing). */
 export const SCANNER_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;
-
-export function nameTaken(error: unknown): never {
-  const info = classifyD1Error(error);
-  if (info?.kind === 'unique' && /scanners\.name|scanners_org_name/.test(info.detail))
-    throw new ConflictError('Another scanner already has that name.', 'SCANNER_NAME_TAKEN');
-  throw error;
-}
 
 export async function createScanner(
   ctx: ServiceContext,

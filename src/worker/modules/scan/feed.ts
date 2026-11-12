@@ -13,6 +13,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodeConsoleCursor, encodeConsoleCursor } from './console-cursor.ts';
 import { captureCredentialKeyset, credentialKeysetContext } from './credential-keyset-authority.ts';
+import { doorHistories } from './feed-api-door.ts';
 import { currentApiFeedSelection } from './feed-api-page.ts';
 import {
   assertConsoleAuthority,
@@ -122,13 +123,14 @@ export async function listScanFeed(ctx: ServiceContext, auth: ApiKeyAuth, filter
     limit: size,
   });
   const verified = await verifyRows(ctx, rows, proofs);
+  const door = await doorHistories(ctx, verified.rows, credentialKeysetCommitment, proofs.events);
   const pageOf = (selection: { selected: readonly ScanLogRow[]; allowed: ReadonlySet<string> }) => {
     const byId = new Map(selection.selected.map((row) => [row.id, row]));
     const visible: Feed[] = [];
     for (const row of rows) {
       const authorized = selection.allowed.has(row.id) ? byId.get(row.id) : undefined;
       if (!authorized) continue;
-      const item = toFeed(authorized);
+      const item = toFeed(authorized, door.get(authorized.id) ?? null);
       if (
         (!filter.passId || item.passId === filter.passId) &&
         (!filter.eventId || item.eventId === filter.eventId) &&

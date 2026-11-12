@@ -1,6 +1,6 @@
-import type { SqlValue } from '../../platform/db.ts';
+import { first, type SqlValue } from '../../platform/db.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
-import { type ScanActor, tenantScanRole } from './actor.ts';
+import { type ScanActor, type ScanTenantAuthority, tenantScanRole } from './actor.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { scanConjunction } from './repo-secret-binds.ts';
 import { appendSessionReadEventPredicate } from './repo-session-read-event.ts';
@@ -11,6 +11,20 @@ import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
 
 type Predicate = { sql: string; params: SqlValue[] };
 const denied = (): Predicate => ({ sql: '0', params: [] });
+
+/** The admin's session, membership and org access are still the captured ones (classifies a refusal). */
+export async function tenantAuthorityCurrent(
+  db: D1Database,
+  authority: ScanTenantAuthority,
+  now: number,
+): Promise<boolean> {
+  const row = await first<{ current: number }>(
+    db,
+    `SELECT (${tenantPassAuthoritySql(authority)}) AS current`,
+    tenantPassAuthorityParams(authority, now),
+  );
+  return row?.current === 1;
+}
 
 /**
  * Authority for the session DTO only. Unlike the pass/action fence, this allows

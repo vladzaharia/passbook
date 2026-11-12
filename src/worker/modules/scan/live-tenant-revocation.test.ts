@@ -195,7 +195,8 @@ describe('live tenant and workspace revocation', () => {
           [screen.workspace.id],
         );
       }
-      await assertClosed(screen.attachment);
+      // A removed device is lost access; a paused or rescoped workspace is drift to reconnect after.
+      await assertClosed(screen.attachment, change === 'scanner revoked' ? 'access' : 'drift');
     },
   );
 
@@ -271,7 +272,7 @@ describe('live tenant and workspace revocation', () => {
       "UPDATE scanning_sessions SET status='active', updated_at=updated_at+1 WHERE id=?",
       [screen.workspace.id],
     );
-    await assertClosed(screen.attachment);
+    await assertClosed(screen.attachment, 'drift');
     const actor = await managedAdminActor(
       kit.ctx,
       screen.resolved,
@@ -301,6 +302,6 @@ describe('live tenant and workspace revocation', () => {
       "UPDATE templates SET status='deleted', updated_at=updated_at+1 WHERE id=?",
       [screen.templateId],
     );
-    await assertClosed(screen.attachment);
+    await assertClosed(screen.attachment, 'drift');
   });
 });

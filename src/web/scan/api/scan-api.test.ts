@@ -160,6 +160,20 @@ describe('createScanApi', () => {
       expect(calls[1]?.init.body).toBe(calls[0]?.init.body);
     });
 
+    it('a counts poll refused for drift reloads the configuration and reads again', async () => {
+      const refresh = vi.fn(async () => {});
+      let n = 0;
+      const { api, calls } = withRefresh(
+        () => (++n === 1 ? conflict('SCAN_CONFIG_CHANGED') : json(fixtureCounts())),
+        refresh,
+      );
+      await expect(api.stats({ signal: new AbortController().signal })).resolves.toEqual(
+        fixtureCounts(),
+      );
+      expect(refresh).toHaveBeenCalledTimes(1);
+      expect(calls.map((c) => c.url)).toEqual(['/api/v1/scan/stats', '/api/v1/scan/stats']);
+    });
+
     it('only the second SCAN_CONFIG_CHANGED reaches the caller, and never as an unpair', async () => {
       const refresh = vi.fn(async () => {});
       const { api, calls } = withRefresh(() => conflict('SCAN_CONFIG_CHANGED'), refresh);

@@ -13,8 +13,9 @@ import { addScannerMode } from './repo-scanners.ts';
 import { addDeviceModeSync, scanningDeviceRow } from './repo-scanning-devices.ts';
 import { scanningSessionForDevice } from './repo-scanning-sessions.ts';
 import { adminSetupId, setupMeta, watchedScanners, watchOf } from './repo-setups.ts';
+import { nameTaken } from './scanner-name.ts';
 import { loadScanner, scannerView } from './scanner-views.ts';
-import { nameTaken, SCANNER_CODES } from './scanners.ts';
+import { SCANNER_CODES } from './scanners.ts';
 
 /** Go live / Move to Test mode. The token stays; the credential epoch moves with the mode. */
 export async function changeMode(

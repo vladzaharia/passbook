@@ -228,12 +228,18 @@ export function liveTenantFixture() {
     );
   }
 
-  async function assertClosed(attachment: LiveAttachment) {
+  /** Lost access is a bare 401; configuration drift is a 409 the screen reconnects after. */
+  async function assertClosed(attachment: LiveAttachment, refusal: 'access' | 'drift' = 'access') {
     expect((await liveRecipient(kit.ctx, attachment)) === null).toBe(true);
     expect(JSON.stringify(await hub().snapshot(attachment)) === '{"rows":[],"cursor":null}').toBe(
       true,
     );
     const response = await upgrade(attachment);
+    if (refusal === 'drift') {
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({ code: 'SCAN_CONFIG_CHANGED' });
+      return;
+    }
     expect(response.status).toBe(401);
     expect((await response.text()) === '').toBe(true);
   }

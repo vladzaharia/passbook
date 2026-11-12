@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { problemResponse } from '../../platform/errors.ts';
 import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { openLiveAttachment } from './live-attachment.ts';
@@ -15,6 +16,7 @@ import { LIVE_ROW_TTL_MS } from './live-lifetime.ts';
 import { type InternalLiveRow, openLiveSourceProof } from './live-provenance.ts';
 import { liveRowFor, liveRowsFor } from './live-render.ts';
 import { getScanner } from './repo-device.ts';
+import { staleScanRead } from './stale-read.ts';
 
 const RING = 'recent';
 
@@ -44,6 +46,15 @@ function internalRow(row: StoredLiveRow): InternalLiveRow {
   };
 }
 
+/** A sealed attachment the hub no longer serves: lost access is a bare 401, drift a 409 to reconnect. */
+async function refusedUpgrade(ctx: ServiceContext, attachment: LiveAttachment): Promise<Response> {
+  const captured = cloneLiveAttachment(attachment);
+  if (!captured || captured.expiresAt <= ctx.clock.now())
+    return new Response(null, { status: 401 });
+  const refusal = await staleScanRead(ctx, captured.actor);
+  return refusal.status === 409 ? problemResponse(refusal) : new Response(null, { status: 401 });
+}
+
 /** One org and mode per object. HTTP mutations remain in D1; this is a bounded display feed. */
 export class ScanHub extends DurableObject<AppEnv> {
   override async fetch(request: Request): Promise<Response> {
@@ -52,8 +63,9 @@ export class ScanHub extends DurableObject<AppEnv> {
       return new Response(null, { status: 400 });
     const ctx = liveContext(this.env);
     const attachment = await openLiveAttachment(ctx.env, raw);
-    const recipient = attachment ? await liveRecipient(ctx, attachment) : null;
-    if (!attachment || !recipient) return new Response(null, { status: 401 });
+    if (!attachment) return new Response(null, { status: 401 });
+    const recipient = await liveRecipient(ctx, attachment);
+    if (!recipient) return refusedUpgrade(ctx, attachment);
     if (!(await this.tenant(attachment.orgId, attachment.mode)))
       return new Response(null, { status: 403 });
     const pair = new WebSocketPair();

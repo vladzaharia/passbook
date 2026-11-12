@@ -1,4 +1,5 @@
 import { ScanReasonSchema, type ScanRecordDto } from '../../../shared/contracts/index.ts';
+import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import type { ScanActor } from './guard.ts';
@@ -12,11 +13,11 @@ export async function historyOf(
   ctx: ServiceContext,
   row: ScanLogRow,
   proof: VerifiedHistoryProof,
-  actor: ScanActor,
+  role: ScanRole | null,
   proofCache: ScanEventProofCache,
 ): Promise<HistoryPolicy | null> {
   const original = row.eventProof;
-  if (!row.policyAvailable || !original || !proof.projectionCurrent || !actor.role) return null;
+  if (!row.policyAvailable || !original || !proof.projectionCurrent || !role) return null;
   const sources = historyProofPolicySources(proof);
   if (
     !sources ||
@@ -30,13 +31,17 @@ export async function historyOf(
   return historyPolicy(ctx.env, {
     ...sources,
     credentialKeysetCommitment: proof.credentialKeysetCommitment,
-    role: actor.role,
+    role,
     currentScannerName: row.scannerName,
     proofCache,
   });
 }
 
-function effectValue(raw: string | null, history: HistoryPolicy | null): ScanRecordDto['before'] {
+/** A stored effect value, or null when the viewer's policy finds it unsafe (contact data, a hidden input). */
+export function effectValue(
+  raw: string | null,
+  history: HistoryPolicy | null,
+): ScanRecordDto['before'] {
   if (raw === null) return null;
   let value: ScanRecordDto['before'] = raw;
   try {

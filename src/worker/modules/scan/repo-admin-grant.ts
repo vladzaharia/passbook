@@ -105,14 +105,27 @@ export const eventsOpen = (ids: readonly (string | null | undefined)[]): Check[]
     exactlyOne('scan_events', { id, archived_at: null }, undefined, 'config'),
   );
 
-/** Every template is active and belongs to this org or the platform (one bind, any count). */
-export function templatesUsable(ids: readonly string[]): Check[] {
+const TEMPLATE_STATUS = {
+  active: "t.status = 'active'",
+  attached: "t.status != 'deleted'",
+  archived: "t.status = 'archived'",
+} as const;
+
+/**
+ * Every template belongs to this org or the platform (one bind, any count) and is `active` (a new
+ * attachment), `attached` (already on the scope: archived keeps scanning, deleted stops) or
+ * still `archived` (an attached template without an issuance head).
+ */
+export function templatesUsable(
+  ids: readonly string[],
+  status: keyof typeof TEMPLATE_STATUS = 'active',
+): Check[] {
   if (ids.length === 0) return [];
   return [
     tenantCheck(
       'config',
       `NOT EXISTS (SELECT 1 FROM json_each(?) j
-        WHERE NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = j.value AND t.status = 'active'
+        WHERE NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = j.value AND ${TEMPLATE_STATUS[status]}
           AND (t.org_id IS NULL OR t.org_id = {org})))`,
       [JSON.stringify([...new Set(ids)])],
     ),

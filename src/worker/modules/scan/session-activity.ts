@@ -1,5 +1,5 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
-import { ConflictError, UnauthenticatedError } from '../../platform/errors.ts';
+import { UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import type { ScanActor } from './actor.ts';
@@ -15,7 +15,6 @@ import {
 } from './repo-session-activity-fences.ts';
 import { sessionReadAuthorityCurrent } from './repo-session-authority.ts';
 import type { ScanEventProofCache } from './scan-event-proof.ts';
-import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import { resolveSessionScope, type SessionCountAuthority } from './scanning-session-dto.ts';
 import { scanSessionCountAuthority } from './scanning-workspace.ts';
 import {
@@ -28,6 +27,7 @@ import {
   sameCandidate,
   unavailable,
 } from './session-activity-projection.ts';
+import { staleScanRead } from './stale-read.ts';
 
 /** Verify the bounded page, then recheck every projection and the actor in one D1 snapshot. */
 export async function scanningSessionActivity(
@@ -157,12 +157,6 @@ export async function scanningSessionActivity(
     ];
   });
 }
-/** A refused device read unpairs only for a lost credential; anything else is configuration. */
-const staleDeviceRead = async (ctx: ServiceContext, actor: ScanActor) =>
-  (await scannerCredentialLost(ctx, actor))
-    ? new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR')
-    : new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');
-
 /** Device activity keeps the original actor, session and CSRF snapshot through the final read. */
 export async function sessionActivityFor(context: ServiceContext, sourceActor: ScanActor) {
   const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
@@ -173,7 +167,7 @@ export async function sessionActivityFor(context: ServiceContext, sourceActor: S
   // An invalid scope is configuration, not credential: the device stays paired and sees no activity.
   if (actor.invalidScannerScope) {
     if (await sessionReadAuthorityCurrent(ctx, actor, ctx.clock.now())) return { items: [] };
-    throw await staleDeviceRead(ctx, sourceActor);
+    throw await staleScanRead(ctx, sourceActor);
   }
   const base = await scanSessionCountAuthority(ctx, actor);
   const guard = base.guardAt(ctx.clock.now());
@@ -189,13 +183,13 @@ export async function sessionActivityFor(context: ServiceContext, sourceActor: S
       !('authorized' in status) ||
       status.authorized !== 1
     )
-      throw await staleDeviceRead(ctx, sourceActor);
+      throw await staleScanRead(ctx, sourceActor);
     return { items: [] };
   }
   if (!observed.scope)
     throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
   const rows = await scanningSessionActivity(ctx, observed.parent, base, actor.role);
-  if (rows === null) throw await staleDeviceRead(ctx, sourceActor);
+  if (rows === null) throw await staleScanRead(ctx, sourceActor);
   return {
     items: rows.filter((row) => actor.settings.lookup || row.deviceId === actor.scanner?.id),
   };

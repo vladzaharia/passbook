@@ -44,6 +44,9 @@ import { foundOf } from './resolve.ts';
 import { scanPolicy } from './rules.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
+/** Search pages of 50 examined before a lookup answers `more` instead of reading on. */
+const LOOKUP_MAX_PAGES = 4;
+
 /** Resolve only role-visible identities and publish grants after one final authority transaction. */
 export async function lookup(
   ctx: ServiceContext,
@@ -135,14 +138,17 @@ export async function lookup(
   }
 
   let offset = 0;
+  let pages = 0;
   let rows = firstRows;
   let entries: LookupEntry[] = [];
   let visible: LookupEntry[] = [];
   let uncertain = false;
+  let capped = false;
   const hidden: Candidate[] = [];
   const seen = new Set<string>();
   for (;;) {
     if (rows.length && keys) {
+      pages += 1;
       offset += rows.length;
       const pageRows = rows.filter((row) => {
         if (seen.has(row.id)) return false;
@@ -226,7 +232,9 @@ export async function lookup(
       entries.push(...accepted);
     }
     const exhausted = !keys || rows.length < 50;
-    if (entries.length >= 11 || exhausted) {
+    // Hidden rows still cost a projection each: stop after a bounded scan and answer `more`.
+    capped = !exhausted && pages >= LOOKUP_MAX_PAGES;
+    if (entries.length >= 11 || exhausted || capped) {
       const credentials =
         keys ??
         (actor.credentialKeysetCommitment
@@ -271,7 +279,7 @@ export async function lookup(
       if (!final) return { items: [], more: false };
       if (final.length !== entries.length) uncertain = true;
       visible = final;
-      if (visible.length >= 11 || exhausted) break;
+      if (visible.length >= 11 || exhausted || capped) break;
       // New pages require a new final transaction; never reuse an already inserted grant.
       entries = visible;
       await Promise.all(
@@ -309,5 +317,8 @@ export async function lookup(
     action: 'scan.lookup',
     detail: { count: Math.min(visible.length, 10) },
   }).run();
-  return { items: visible.slice(0, 10).map(({ item }) => item), more: visible.length > 10 };
+  return {
+    items: visible.slice(0, 10).map(({ item }) => item),
+    more: visible.length > 10 || capped,
+  };
 }

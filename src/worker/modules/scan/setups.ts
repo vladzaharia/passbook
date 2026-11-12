@@ -120,6 +120,13 @@ export async function createSetup(
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   roleAllowed(kind, deviceRole);
   if (input.adminUserId) {
+    // An admin setup is the caller's own; naming another user would expose their name and email.
+    if (input.adminUserId !== userId)
+      throw new ValidationError(
+        'An admin setup belongs to the admin who creates it.',
+        [{ path: 'adminUserId', message: 'Use your own account.' }],
+        'SCANNER_ADMIN_USER',
+      );
     const owner = await getUser(ctx.env.DB, input.adminUserId);
     if (owner?.status !== 'active')
       throw new NotFoundError('Admin user not found.', 'USER_NOT_FOUND');

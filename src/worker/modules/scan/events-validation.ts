@@ -8,17 +8,27 @@ import { captureTemplateStamps, type TemplateStamps } from './repo-scope-release
 
 const SCALAR = new Set(['string', 'number', 'integer', 'boolean']);
 
-/** Every template needs a check-in, and a match input must be a scalar input of each. */
+/**
+ * Every template needs a check-in, and a match input must be a scalar input of each. An archived
+ * template already on the event keeps working; `added` (new attachments) must be active.
+ */
 export async function checkTemplates(
   ctx: ServiceContext,
   orgId: string,
   mode: Mode,
   templateIds: string[],
   matchInput: string | null,
+  added: readonly string[] = templateIds,
 ): Promise<TemplateStamps> {
   const db = ctx.env.DB;
   if ((await countScopedTemplates(db, orgId, templateIds)) !== templateIds.length)
     throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
+  if ((await countScopedTemplates(db, orgId, added, true)) !== added.length)
+    throw new ValidationError(
+      'An archived template cannot be added to an event.',
+      [{ path: 'templateIds', message: 'Choose active templates.' }],
+      'TEMPLATE_ARCHIVED',
+    );
   const stamps = await captureTemplateStamps(db, orgId, mode, templateIds);
   if (!stamps)
     throw new ValidationError(

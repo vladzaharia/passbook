@@ -16,7 +16,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
 import { actorCsrfFence } from './actor-csrf.ts';
-import { historyOf, projectScanRecord } from './feed-projection-history.ts';
+import { effectValue, historyOf, projectScanRecord } from './feed-projection-history.ts';
 import type { ScanActor } from './guard.ts';
 import type { HistoryPolicy } from './history-policy.ts';
 import {
@@ -41,15 +41,6 @@ export type ConsoleAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
 const HISTORY_BATCH = 32;
 
 export type Feed = z.infer<typeof ScanFeedRowSchema>;
-
-function feedJson(raw: string | null): Feed['before'] {
-  if (raw === null) return null;
-  try {
-    return JSON.parse(raw) as Feed['before'];
-  } catch {
-    return raw;
-  }
-}
 
 /** The verified event proof signs which roles may see the action; a key may see what the door may. */
 function doorSeesAction(row: ScanLogRow): boolean {
@@ -76,8 +67,11 @@ function passProjected(row: ScanLogRow): boolean {
   }
 }
 
-/** API keys have no scan role: names stay out, and action detail follows the door's event-time view. */
-export function toFeed(row: ScanLogRow): Feed {
+/**
+ * API keys have no scan role: names stay out, and action detail follows the door's event-time view.
+ * Effect values pass the door's history policy, the filter the console applies for its viewer.
+ */
+export function toFeed(row: ScanLogRow, door: HistoryPolicy | null): Feed {
   const reason = ScanReasonSchema.safeParse(row.reason);
   const noPolicy = !row.policyAvailable;
   const passHidden = noPolicy || (row.passId !== null && !passProjected(row));
@@ -95,8 +89,8 @@ export function toFeed(row: ScanLogRow): Feed {
     outcome: row.outcome ?? 'refused',
     reason: reason.success ? reason.data : null,
     amount: detail ? row.amount : null,
-    before: detail ? feedJson(row.before) : null,
-    after: detail ? feedJson(row.after) : null,
+    before: detail && door ? effectValue(row.before, door) : null,
+    after: detail && door ? effectValue(row.after, door) : null,
     method: row.method === 'auto' ? 'manual' : row.method,
     scannerId: noPolicy ? null : row.scannerId,
     scannerName: null,
@@ -268,7 +262,8 @@ export async function recordsOf(
     await Promise.all(
       scoped.slice(start, start + HISTORY_BATCH).map(async (row, index) => {
         const proof = proofs.get(row.id);
-        if (proof) histories[start + index] = await historyOf(ctx, row, proof, actor, proofCache);
+        if (proof)
+          histories[start + index] = await historyOf(ctx, row, proof, actor.role, proofCache);
       }),
     );
   }

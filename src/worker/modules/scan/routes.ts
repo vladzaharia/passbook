@@ -19,7 +19,6 @@ import {
   ScanWorkspaceSchema,
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import {
@@ -46,6 +45,7 @@ import { reportScanDevice } from './scanning-workspace.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { buildSession } from './session.ts';
 import { sessionActivityFor } from './session-activity.ts';
+import { staleScanRead } from './stale-read.ts';
 import { undo } from './undo.ts';
 
 /** Device API: /api/v1/scan. */
@@ -256,15 +256,15 @@ register(
       actor,
       sessionReadAuthorityPredicate(actor, ctx.clock.now()),
     );
-    if (authority.sql === '0')
-      throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
+    // The door polls this: only a lost credential unpairs, drift is a 409 the client reloads.
+    if (authority.sql === '0') throw await staleScanRead(ctx, actor);
     const plan = planCounts(ctx, actor, c.req.valid('query').dayStart, actor, authority);
     const results = await ctx.env.DB.batch([
       outputPredicateStmt(ctx.env.DB, authority),
       ...plan.stmts,
     ]);
     if ((results[0]?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)
-      throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
+      throw await staleScanRead(ctx, actor);
     return c.json((await plan.read(results.slice(1))).counts);
   },
 );

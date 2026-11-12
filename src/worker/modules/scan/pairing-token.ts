@@ -14,6 +14,7 @@ import {
   requirePairingAuthority,
 } from './repo-scanners-pair.ts';
 import { setupMeta } from './repo-setups.ts';
+import { nameTaken } from './scanner-name.ts';
 
 const DAY = 86_400_000;
 export const DEVICE_MAX_MS = 180 * DAY;
@@ -147,7 +148,7 @@ export async function pairHere(
       }),
     );
     if (restored) addRestoreAudit(g, ctx, userId, scanner);
-    await g.commit();
+    await g.commit().catch(nameTaken);
     return { token: c.token, csrfSecret: c.csrfSecret, expiresAt: c.expiresAt };
   });
 }
@@ -187,7 +188,7 @@ export async function replaceTerminalToken(
       }),
     );
     if (restored) addRestoreAudit(g, ctx, userId, scanner);
-    await g.commit();
+    await g.commit().catch(nameTaken);
     return { token: c.token, expiresAt: c.expiresAt };
   });
 }
