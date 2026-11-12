@@ -57,6 +57,9 @@ export default defineConfig({
         test: {
           name: 'worker',
           include: ['src/worker/**/*.test.ts', 'test/**/*.test.ts'],
+          // A race test runs several D1 batches in workerd; on a shared CI runner that passes 5 s.
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
           setupFiles: [
             './test/setup/block-network.ts',
             './test/setup/check-responses.ts',
