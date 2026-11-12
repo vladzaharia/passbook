@@ -208,7 +208,7 @@ export function registerAuthorityRetirement() {
   }, 60_000);
 
   it.each(['voided', 'generation'] as const)(
-    'masks a %s change between evaluation and the batched preflight',
+    'answers a %s change between evaluation and the batched preflight 409, and the retry decides',
     async (change) => {
       const s = await kit.scanner({ templateIds: [tpl] });
       const pass = await kit.scanPass(tpl);
@@ -257,7 +257,9 @@ export function registerAuthorityRetirement() {
       try {
         const response = await act(s.headers, codeOf(pass), { idempotencyKey });
         expect(raced).toBe(true);
-        expectUnavailable(await out(response));
+        // A race, not a miss: the client retries the same key.
+        expect(response.status).toBe(409);
+        expect(await response.json()).toMatchObject({ code: 'SCAN_IN_PROGRESS' });
       } finally {
         Object.assign(kit.env, { DB: original });
       }
@@ -273,6 +275,10 @@ export function registerAuthorityRetirement() {
           [idempotencyKey],
         ),
       ).toSatisfy((row) => row === null || (row.state === 'failed' && row.outcome === null));
+      const retry = await out(await act(s.headers, codeOf(pass), { idempotencyKey }));
+      expect(retry).toMatchObject(
+        change === 'voided' ? { kind: 'refused', reason: 'voided' } : { kind: 'ok' },
+      );
     },
   );
 }

@@ -95,9 +95,11 @@ describe('gate and presence preflight', () => {
       () => action(s, requestKey),
     );
     if (!winner?.scanId || !winningState) throw new Error('Missing interleaved winner');
+    // The winner admitted the pass: the loser hears what a fresh read says, still inside.
     expect(outcome).toMatchObject({
       kind: 'heads_up',
-      reason: 'in_progress',
+      reason: 'still_inside',
+      overridable: false,
       previous: { scanId: winner.scanId },
     });
     // The loser moved neither the gate nor presence; its heads-up is recorded once.
@@ -110,7 +112,7 @@ describe('gate and presence preflight', () => {
       await first(kit.env.DB, 'SELECT state,outcome,reason FROM scans WHERE idempotency_key=?', [
         requestKey,
       ]),
-    ).toEqual({ state: 'done', outcome: 'heads_up', reason: 'in_progress' });
+    ).toEqual({ state: 'done', outcome: 'heads_up', reason: 'still_inside' });
     expect(after.events).toHaveLength(winningState.events.length + 1);
   });
 
@@ -172,10 +174,11 @@ describe('gate and presence preflight', () => {
       },
       () => action(s),
     );
-    // Presence follows the gate: the scan holds the gate, the unobserved presence row is kept.
-    expect(outcome).toMatchObject({ kind: 'ok' });
+    // Admission repeats the presence it read: the pass went in meanwhile, so the scan admits
+    // nothing, takes no gate and keeps the unobserved presence row.
+    expect(outcome).toMatchObject({ kind: 'heads_up', reason: 'still_inside', overridable: false });
     const after = await state(s.pass);
-    expect(after.gate).toMatchObject([{ last_scan_id: outcome.scanId }]);
+    expect(after.gate).toEqual([]);
     expect(after.presence).toMatchObject([{ last_scan_id: 'racing-presence' }]);
   });
 

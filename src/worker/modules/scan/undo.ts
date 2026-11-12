@@ -15,6 +15,7 @@ import { guardMiss, undoApprovalGuard } from './repo-undo-approval-guard.ts';
 import { readUndo } from './repo-undo-read.ts';
 import { scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
+import { scannerRefusal } from './scanner-credential-lost.ts';
 import { notFound, planUndo, superseded } from './undo-authority.ts';
 import { answer, replayUndo, type UndoRequest } from './undo-replay.ts';
 
@@ -41,7 +42,9 @@ export async function undo(
   if (read.existing) return replayUndo(ctx, actor, scanId, read.existing);
   try {
     return await run(ctx, actor, scanId, read, req, maxAgeMs);
-  } catch (error) {
+  } catch (caught) {
+    // A scanner refused as `actor` re-pairs only when its credential is lost.
+    const error = await scannerRefusal(ctx, actor, caught);
     // A concurrent request with this key may have committed: that is the retry succeeding.
     const raced =
       (error instanceof AppError && error.code === 'UNDO_SUPERSEDED') ||

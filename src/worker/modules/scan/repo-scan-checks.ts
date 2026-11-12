@@ -87,11 +87,24 @@ export const holderPart = (gate: { passId: string; actionId: string; scope: stri
     `SELECT g.state AS gate_state, g.last_at, g.last_scan_id AS gate_scan_id, g.count AS gate_count,
        s.id AS scan_id, s.at, s.state AS scan_state, s.action_id, s.scanner_id, s.staff_id,
        s.override_of, s.undone_by, sc.name AS scanner_name, st.name AS staff_name
-     FROM scan_gates g LEFT JOIN scans s ON s.id = g.last_scan_id AND s.org_id = {org}
-     LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = {org}
+     FROM scan_gates g LEFT JOIN scans s ON s.id = g.last_scan_id AND s.org_id = {org} AND s.mode = {mode}
+     LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = {org} AND sc.mode = {mode}
      LEFT JOIN scan_staff st ON st.id = s.staff_id AND st.org_id = {org}
-     WHERE g.pass_id = ? AND g.action_id = ? AND g.scope = ? AND g.org_id = {org}`,
+     WHERE g.pass_id = ? AND g.action_id = ? AND g.scope = ? AND g.org_id = {org} AND g.mode = {mode}`,
     [gate.passId, gate.actionId, gate.scope],
+  );
+
+/** The scan that last moved a pass's presence, named for a heads-up whose admission lost the race. */
+export const presenceHolderPart = (passId: string, scope: string): GrantPart =>
+  readPart(
+    `SELECT p.last_entry_at AS last_at, p.last_scan_id AS gate_scan_id,
+       s.id AS scan_id, s.at, s.state AS scan_state, s.action_id, s.scanner_id, s.staff_id,
+       s.override_of, s.undone_by, sc.name AS scanner_name, st.name AS staff_name
+     FROM scan_presence p LEFT JOIN scans s ON s.id = p.last_scan_id AND s.org_id = {org} AND s.mode = {mode}
+     LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = {org} AND sc.mode = {mode}
+     LEFT JOIN scan_staff st ON st.id = s.staff_id AND st.org_id = {org}
+     WHERE p.pass_id = ? AND p.scope = ? AND p.org_id = {org}`,
+    [passId, scope],
   );
 
 /** The scan closed (any outcome): what post-commit work for a heads-up is gated on. */

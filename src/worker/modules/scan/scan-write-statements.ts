@@ -1,7 +1,8 @@
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
-import { exists, type GrantCond } from '../../platform/authority-cond.ts';
-import { lte, ne, type WhereValue } from '../../platform/authority-expr.ts';
+import { exists, type GrantCond, notExists } from '../../platform/authority-cond.ts';
+import { gte, lte, ne, orNull, type WhereValue } from '../../platform/authority-expr.ts';
 import type { EventRow } from '../events/repo.ts';
+import type { AdmissionPlan } from './admission-types.ts';
 import type { GateRule } from './repo-gates.ts';
 import type { ScanGateSnapshot, ScanPresenceSnapshot } from './repo-scan-effect.ts';
 import { wonGate } from './scan-write-grant.ts';
@@ -76,6 +77,53 @@ export interface GateWrite {
   before: ScanGateSnapshot | null;
   after: ScanGateSnapshot;
 }
+
+/**
+ * The admission read, repeated in the gate write: presence is still the row the plan saw, and a
+ * single or daily pass has no entry since its limit. Another door, action or undo that admitted the
+ * pass in between makes this scan lose the gate instead of admitting it twice.
+ */
+export function admissionConds(
+  passId: string,
+  plan: AdmissionPlan,
+  presenceBefore: ScanPresenceSnapshot | null,
+): GrantCond[] {
+  const presence = { pass_id: passId, scope: plan.scope };
+  const conds = [
+    presenceBefore
+      ? exists('scan_presence', { ...presence, last_scan_id: presenceBefore.lastScanId })
+      : notExists('scan_presence', presence),
+  ];
+  if (plan.limited && plan.state.direction === 'in') {
+    const since = plan.limitSince ?? 0;
+    conds.push(
+      notExists('scan_presence', { ...presence, last_entry_at: gte(since) }),
+      notExists('scans', {
+        pass_id: passId,
+        ...(plan.event ? { event_id: plan.event.id } : {}),
+        outcome: 'ok',
+        action_kind: 'check_in',
+        direction: orNull(ne('out')),
+        undone_by: null,
+        at: gte(since),
+      }),
+    );
+  }
+  return conds;
+}
+
+/** One heads-up is let through once: no other scan already overrode it. */
+export const overrideOpen = (overrideOf: string): GrantCond =>
+  notExists('scans', { override_of: overrideOf, outcome: 'ok' });
+
+/** This scan wrote the presence row. */
+export const holdsPresence = (passId: string, scope: string, scanId: string): GrantCond =>
+  exists('scan_presence', { pass_id: passId, scope, last_scan_id: scanId });
+
+/** Every condition holds. */
+export const allOf = (conds: readonly GrantCond[]): GrantCond => ({
+  render: (b, scope, t, row) => conds.map((c) => `(${c.render(b, scope, t, row)})`).join(' AND '),
+});
 
 /** First scan wins: insert, or take over the observed row when the rule lets this scan through. */
 export function writeGate(g: Grant, w: GateWrite, when: GrantCond[]): GrantedStatement {

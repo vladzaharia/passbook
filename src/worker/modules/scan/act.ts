@@ -1,4 +1,4 @@
-import { UnauthenticatedError, UnavailableError } from '../../platform/errors.ts';
+import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
 import { type ActRequest, claimOf, rememberHistoryCapacities, requestHashOf } from './act-claim.ts';
@@ -11,6 +11,7 @@ import {
 } from './act-claim-lifecycle.ts';
 import { overrideEvidenceStmt, StaleScanAuthority } from './act-override.ts';
 import { snapshotActionContext } from './act-snapshot.ts';
+import { passRaced, ScanAttemptRaced, staleActorRefusal } from './act-stale-refusal.ts';
 import { actorCsrfAuthorityStmt, actorCsrfSnapshotFromResult } from './actor-csrf.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -29,7 +30,7 @@ import { pristineClaimFence } from './repo-scans.ts';
 import { staffStatement } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
-import { scannerCredentialLost } from './scanner-credential-lost.ts';
+import { scannerRefusal } from './scanner-credential-lost.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 /** `POST /actions` (SA 8.4): claim the key, evaluate, decide, gate, finalize, answer. */
@@ -164,20 +165,23 @@ export async function act(
       req.approval ? results[overrideIndex + (overrideQuery ? 1 : 0)] : undefined,
     );
   } catch (error) {
-    if (
-      error instanceof StaleScanAuthority ||
-      (error instanceof UnavailableError && error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE')
-    ) {
-      // A lost or replaced scanner credential unpairs the device instead of answering as a miss.
-      if (error instanceof StaleScanAuthority && (await scannerCredentialLost(ctx, actor)))
-        throw new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR');
-      // A scanner whose scope accepts nothing (an invalid or empty event-bound session) is told so.
-      const accepts =
-        actor.principal !== 'scanner' ||
-        actor.templateIds.length > 0 ||
-        actor.settings.acceptAllTemplates;
-      return accepts ? unknownOutcome(credentials) : notAcceptedOutcome(credentials);
+    // A scanner whose scope accepts nothing (an invalid or empty event-bound session) is told so.
+    const accepts =
+      actor.principal !== 'scanner' ||
+      actor.templateIds.length > 0 ||
+      actor.settings.acceptAllTemplates;
+    // Authority lost mid-request is the actor's drift (401 only for a lost credential). A claimed
+    // attempt that raced the pass is retried with the same key; a replay or claim that cannot be
+    // proven stays masked.
+    if (error instanceof StaleScanAuthority) {
+      const refusal = await staleActorRefusal(ctx, actor);
+      if (refusal) throw refusal;
+      if (!accepts) return notAcceptedOutcome(credentials);
+      if (error instanceof ScanAttemptRaced) throw passRaced();
+      return unknownOutcome(credentials);
     }
-    throw error;
+    if (error instanceof UnavailableError && error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE')
+      return accepts ? unknownOutcome(credentials) : notAcceptedOutcome(credentials);
+    throw await scannerRefusal(ctx, actor, error);
   }
 }

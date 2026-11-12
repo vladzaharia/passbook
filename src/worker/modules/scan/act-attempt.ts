@@ -13,6 +13,7 @@ import {
   StaleScanAuthority,
 } from './act-override.ts';
 import { planActionReads } from './act-read-plan.ts';
+import { ScanAttemptRaced } from './act-stale-refusal.ts';
 import { finishStop, type StopContext } from './act-stop.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { photoGrantPurpose } from './asset-types.ts';
@@ -32,6 +33,8 @@ import type { PinStaffSnapshot } from './staff-pin.ts';
 
 const WINDOW_REASONS: Partial<Record<ScanReason, true>> = { not_yet_valid: true, ended: true };
 const stale = () => new StaleScanAuthority();
+// The pass moved between evaluation and the preflight read: a race the client retries, not a miss.
+const raced = () => new ScanAttemptRaced();
 
 export async function attempt(
   ctx: ServiceContext,
@@ -172,7 +175,7 @@ export async function attempt(
     const preparedPassFence = evaluated.found
       ? (reads.plan?.current()?.passFence ?? reads.passFence)
       : null;
-    if (evaluated.found && !preparedPassFence) throw stale();
+    if (evaluated.found && !preparedPassFence) throw raced();
     const passFence = pass
       ? (preparedPassFence ??
         (await passSnapshotFence(
@@ -188,7 +191,7 @@ export async function attempt(
           evaluated.found ?? policy,
         )))
       : null;
-    if (pass && !passFence) throw stale();
+    if (pass && !passFence) throw raced();
     const named = evaluated.found?.scan.actions.find((a) => a.id === req.actionId);
     const action = named ?? (evaluated.found ? defaultAction(actor, evaluated.found.scan) : null);
     return {
@@ -275,7 +278,7 @@ export async function attempt(
     );
 
   const preflight = reads.plan?.current();
-  if (!preflight) throw stale();
+  if (!preflight) throw raced();
   return executeApprovedAction({
     ctx,
     actor,

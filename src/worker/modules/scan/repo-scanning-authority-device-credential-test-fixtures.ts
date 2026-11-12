@@ -13,18 +13,21 @@ import { CHECK_IN, kit, sessionWithDevice } from './scanning-authority-test-fixt
 import { bindScanningSession, reportScanDevice } from './scanning-workspace.ts';
 import { proofedScanActor } from './test-kit.ts';
 
-/** A credential change unpairs (401); a configuration change asks for a refetch (409). */
+/**
+ * A credential that no longer authenticates unpairs (401); anything else, a moved credential epoch
+ * with a working token included (new expiry, display/device switch, mode move), asks for a refetch (409).
+ */
 const REFUSED = {
   hash: [401, 'SCANNER_REPAIR'],
   prefix: [401, 'SCANNER_REPAIR'],
   csrf: [401, 'SCANNER_REPAIR'],
   expired: [401, 'SCANNER_REPAIR'],
-  expiryChanged: [401, 'SCANNER_REPAIR'],
+  expiryChanged: [409, 'SCANNING_DEVICE_CHANGED'],
   idle: [401, 'SCANNER_REPAIR'],
   revoked: [401, 'SCANNER_REPAIR'],
   role: [409, 'SCANNING_DEVICE_CHANGED'],
-  kind: [401, 'SCANNER_REPAIR'],
-  mode: [401, 'SCANNER_REPAIR'],
+  kind: [409, 'SCANNING_DEVICE_CHANGED'],
+  mode: [409, 'SCANNING_DEVICE_CHANGED'],
   settings: [409, 'SCANNING_DEVICE_CHANGED'],
   sessionSettings: [409, 'SCANNING_DEVICE_CHANGED'],
   accepts: [409, 'SCANNING_DEVICE_CHANGED'],
@@ -163,11 +166,12 @@ export function registerScanningAuthorityDeviceCredential() {
         );
       if (state === 'org')
         await run(kit.env.DB, "UPDATE orgs SET status='active' WHERE id=?", [kit.org.id]);
-      // Restored values do not revive the old credential: its epoch moved.
+      // Restored values do not revive the old actor (its epoch moved), but the token works again,
+      // so the device refetches instead of re-pairing.
       if (state === 'hash' || state === 'prefix' || state === 'csrf')
         await expect(reportScanDevice(kit.ctx, actor, capabilities)).rejects.toMatchObject({
-          status: 401,
-          code: 'SCANNER_REPAIR',
+          status: 409,
+          code: 'SCANNING_DEVICE_CHANGED',
         });
       expect(
         await first(

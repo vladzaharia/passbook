@@ -14,6 +14,7 @@ import {
   reportedCapabilitiesStmt,
 } from './repo-scanning-devices.ts';
 import { getStaff } from './repo-staff.ts';
+import { scannerRefusal } from './scanner-credential-lost.ts';
 import type { ObservedScanningSessionSnapshot } from './scanning-workspace-observation.ts';
 
 const REPORT_CODES = {
@@ -73,7 +74,8 @@ export async function commitReportedDevice(
     await g.commit();
   } catch (error) {
     if (classifyD1Error(error)?.kind === 'unique') throw changed();
-    throw error;
+    // A pair code issued or a mode move refuses as `actor`: only a lost credential re-pairs.
+    throw await scannerRefusal(ctx, actor, error, changed);
   }
   // Committed. Refresh the actor from the rows; only a credential that moved on ends the session.
   const updated = await getScanner(ctx.env.DB, old.id);

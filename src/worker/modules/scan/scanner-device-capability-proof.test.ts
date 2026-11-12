@@ -118,9 +118,10 @@ describe('scanner capability actor proof', () => {
           // A revision is a timestamp: the report goes through.
           await expect(reportScanDevice(ctx, actor, capabilities(width))).resolves.toBeTruthy();
         } else {
-          // The credential epoch moved: the device must pair again, and nothing was written.
+          // The credential epoch moved, so nothing is written. Only a credential that no longer
+          // authenticates re-pairs; a token put back (ABA) still works, so the device refetches.
           await expect(reportScanDevice(ctx, actor, capabilities(width))).rejects.toMatchObject({
-            code: 'SCANNER_REPAIR',
+            code: change === 'aba' ? 'SCANNING_DEVICE_CHANGED' : 'SCANNER_REPAIR',
           });
           expect(await deviceState(f.device.id)).toEqual(before);
         }

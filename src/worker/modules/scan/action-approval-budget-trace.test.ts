@@ -166,8 +166,9 @@ describe('approval action D1 budget and original scalar authority', () => {
     }
   });
 
+  // An ended session is the actor's own refusal, before or after the reservation; no guess is spent.
   const EXPECTED = {
-    'session revoked before reservation': null,
+    'session revoked before reservation': [403, 'ACTOR_CHANGED'],
     'session revoked before gate': [403, 'ACTOR_CHANGED'],
     'scanner csrf rotated before gate': [403, 'ACTOR_CHANGED'],
   } as const;
@@ -220,14 +221,9 @@ describe('approval action D1 budget and original scalar authority', () => {
         }),
     );
     expect(raced).toBe(true);
-    const expected = EXPECTED[change];
-    if (expected) {
-      expect(result.status).toBe(expected[0]);
-      expect(await result.json()).toMatchObject({ code: expected[1] });
-    } else {
-      // Revoked before the reservation: the guess is never spent and nothing is revealed.
-      expect(await outcome(result)).toMatchObject({ kind: 'refused', reason: 'not_found' });
-    }
+    const [status, code] = EXPECTED[change];
+    expect(result.status).toBe(status);
+    expect(await result.json()).toMatchObject({ code });
     expect(await effects(kit, pass.id)).toEqual(before);
     expect(await counts(kit, actor.scanner.id, manager.id)).toEqual({ person: 2, scanner: 3 });
   });

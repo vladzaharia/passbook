@@ -8,6 +8,7 @@ import { finishHeldGate } from './act-held.ts';
 import { type Override, StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import { snapshotActionContext, snapshotActionFound } from './act-snapshot.ts';
+import { ScanAttemptRaced } from './act-stale-refusal.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { gateRule, gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
@@ -106,6 +107,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     throw new StaleScanAuthority();
   const presencePlan = found.admission ?? found.eventAdmission;
   const presenceScope = presencePlan?.scope ?? gate.scope;
+  // The preflight read no longer matches what was evaluated: another scan or edit moved the pass.
   if (
     preflight.gate.passId !== gate.passId ||
     preflight.gate.actionId !== gate.actionId ||
@@ -113,7 +115,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     preflight.presenceScope !== presenceScope ||
     !(await preflight.prepared.keysetCurrent)
   )
-    throw new StaleScanAuthority();
+    throw new ScanAttemptRaced();
   const { passFence, observed } = preflight;
   const previousGate = observed.gateBefore;
   if (
@@ -124,9 +126,9 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
         previousGate.kind !== action.kind)) ||
     (observed.presenceBefore && observed.presenceBefore.orgId !== actor.orgId)
   )
-    throw new StaleScanAuthority();
+    throw new ScanAttemptRaced();
   if (presencePlan && !snapshots.samePresence(presencePlan.presence, observed.presenceBefore))
-    throw new StaleScanAuthority();
+    throw new ScanAttemptRaced();
   const seed = {
     ...gate,
     ...(event?.capacity != null &&

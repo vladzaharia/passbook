@@ -1,9 +1,9 @@
 import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
-import { not } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { credentialFacts, lostReason } from './act-check-in-facts.ts';
+import { commitConditions, credentialFacts, lostReason } from './act-check-in-facts.ts';
 import { finishCheckInResult } from './act-check-in-result.ts';
+import { addCheckInStatements } from './act-check-in-statements.ts';
 import type { ActRequest } from './act-claim.ts';
 import { heldOutcome } from './act-held.ts';
 import type { HeldHolder } from './act-held-holder.ts';
@@ -22,9 +22,8 @@ import type { StopAuthority } from './repo-action-authority.ts';
 import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { doneOkPredicate, holderPart } from './repo-scan-checks.ts';
+import { doneOkPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
-import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import type { Found } from './resolve.ts';
 import { capturingDb } from './scan-capture.ts';
 import {
@@ -34,21 +33,8 @@ import {
   prepareDisplayHistory,
 } from './scan-display-history.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
-import {
-  capacityOpen,
-  retentionPart,
-  SCAN_COMMIT_TABLES,
-  scanIs,
-  scanWriteGrant,
-  wonGate,
-} from './scan-write-grant.ts';
-import {
-  type Finalize,
-  finalizeScan,
-  ledgerEvent,
-  writeGate,
-  writePresence,
-} from './scan-write-statements.ts';
+import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
+import type { Finalize } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';
 
 interface CheckInSuccessInput {
@@ -133,10 +119,16 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
         ),
       )
     : null;
-  const [ok, lostVariant, capVariant] = await Promise.all([
+  // The admission or override that let this scan in, repeated in the gate write (another door wins).
+  const overrideOf = req.overrideOf ?? null;
+  const admitted = commitConditions(gate.passId, presencePlan, effect.presenceBefore, overrideOf);
+  const [ok, lostVariant, capVariant, admitVariant] = await Promise.all([
     variant('ok', null),
     variant('heads_up', lost),
     capacity ? variant('heads_up', 'capacity_full') : Promise.resolve(null),
+    admitted.conds.length && admitted.reason !== lost
+      ? variant('heads_up', admitted.reason)
+      : Promise.resolve(null),
   ]);
 
   const finalized = (outcome: 'ok' | 'heads_up', reason: ScanReason | null): Finalize => ({
@@ -198,7 +190,10 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       id: found.pass.id,
       facts: {
         pass: found.pass,
-        credential: 'code' in req.input ? credentialFacts(found.pass) : {},
+        credential:
+          'code' in req.input
+            ? await credentialFacts(found.pass, originalCandidate, req.input.code)
+            : {},
       },
     },
     approver,
@@ -206,44 +201,21 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     credentialRefs: { current: claim.credentialTombstoneRefs, other: [] },
     tables: SCAN_COMMIT_TABLES,
   });
-  const won = wonGate(gate, scanId);
-  const gateAfter = effect.gateAfter;
-  if (!gateAfter) throw new StaleScanAuthority();
-  writeGate(
-    g,
-    {
-      passId: gate.passId,
-      actionId: gate.actionId,
-      scope: gate.scope,
-      templateId: claim.templateId,
-      kind: claim.kind,
-      scanId,
-      rule: claim.gate,
-      at: authorityNow,
-      before: effect.gateBefore,
-      after: gateAfter,
-    },
-    capacity ? [capacity] : [],
-  );
-  if (presencePlan && effect.presenceAfter)
-    writePresence(g, gate, scanId, effect.presenceBefore, effect.presenceAfter);
-  const finalOk = finalizeScan(g, finalized('ok', null), [won]);
-  const finalCap =
-    capVariant && capacity
-      ? finalizeScan(g, finalized('heads_up', 'capacity_full'), [not(capacity)])
-      : null;
-  finalizeScan(g, finalized('heads_up', lost));
-  for (const [v, outcome, reason] of [
-    [ok, 'ok', null],
-    [capVariant, 'heads_up', 'capacity_full'],
-    [lostVariant, 'heads_up', lost],
-  ] as const) {
-    if (!v) continue;
-    ledgerEvent(g, v.row, scanId, outcome, reason);
-    g.include(retentionPart(retentionProofIfRecordedStmt(sideDb, v.retention)));
-  }
-  const [holder] = g.include(holderPart(gate));
-  g.assert('stale', [scanIs(scanId, { state: 'done' })]);
+  const statements = addCheckInStatements(g, {
+    gate,
+    claim,
+    at: authorityNow,
+    presencePlan,
+    overrideOf,
+    capacity,
+    admitted,
+    lost,
+    finalized,
+    variants: { ok, admit: admitVariant, cap: capVariant, lost: lostVariant },
+    sideDb,
+  });
+  if (!statements) throw new StaleScanAuthority();
+  const { finalOk, finalAdmit, finalCap, holder, presenceHolder } = statements;
 
   // One transaction: the grant, then the reads and decoration that must see its writes.
   const counts = planCommitCounts(ctx, actor, req.dayStart);
@@ -263,24 +235,31 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const at = (s: Parameters<typeof g.indexOf>[0]) => results[g.indexOf(s)] as D1Result;
   const rows = (s: Parameters<typeof g.indexOf>[0]) => (at(s).results ?? []).length;
   const wonIt = rows(finalOk) > 0;
-  const reason: ScanReason = finalCap && rows(finalCap) ? 'capacity_full' : lost;
+  const admitLost = !!finalAdmit && rows(finalAdmit) > 0;
+  const reason: ScanReason = admitLost
+    ? admitted.reason
+    : finalCap && rows(finalCap)
+      ? 'capacity_full'
+      : lost;
   if (!wonIt) onFailureCommitted();
   const read = await counts.read(committed.after);
   const rest = committed.after.slice(counts.stmts.length);
   if (!wonIt) {
-    const holderRow = (at(holder as never).results?.[0] ?? undefined) as HeldHolder | undefined;
-    return heldOutcome({
+    const holderOf = (s: unknown) => at(s as never).results?.[0] as HeldHolder | undefined;
+    // Another scan admitted the pass first: name it, and offer no override (as a fresh read would).
+    const held = heldOutcome({
       ctx,
       actor,
       found,
       action,
       scanId,
       reason,
-      holder: holderRow,
+      holder: (admitLost && presenceHolder && holderOf(presenceHolder)) || holderOf(holder),
       read,
       display: null,
       now: finishAt,
     });
+    return admitLost ? { ...held, overridable: false } : held;
   }
   return finishCheckInResult({
     ctx,
