@@ -369,7 +369,12 @@ describe('live authority revocation', () => {
     const current = (await hub().snapshot(monitor.attachment)).rows.find(
       (entry) => entry.scannerId === source.id && entry.id !== projection.id,
     );
-    expect(current).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    // The pass stays on its own version (the head is another build): the screen shows the scan as
+    // the device card does, with the head's policy hiding the name and the desk-only photo.
+    expect(reevaluated.outcome.kind).toBe('ready');
+    expect(JSON.stringify(reevaluated.outcome.card)).not.toContain('Legacy Member');
+    expect(current).toMatchObject({ passId: pass.id, holder: null, photoUrl: null });
+    expect(JSON.stringify(current)).not.toContain('Legacy Member');
     // Archiving makes the head ineligible, but immutable scoped history must not reopen fallback.
     await run(
       kit.env.DB,

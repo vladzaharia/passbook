@@ -87,7 +87,9 @@ describe('live identity template policy', () => {
     const projection = (await hub().snapshot(monitor.attachment)).rows.find(
       (entry) => entry.id === event.id,
     );
-    expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    // The pass stays on its own build and is shown as the card shows it: the head's policy hides
+    // the name and the desk-only photo.
+    expect(projection).toMatchObject({ passId: pass.id, holder: null, photoUrl: null });
     expect(JSON.stringify(projection)).not.toContain('Active Policy Member');
   });
 

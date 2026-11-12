@@ -13,8 +13,7 @@ import {
 import { type LivePassSnapshot, openLiveSourceProof } from './live-provenance.ts';
 import { finishLiveRows } from './live-render-final.ts';
 import { prepareLiveRow } from './live-render-plan.ts';
-import { scannerReleaseAllowed } from './member-photo.ts';
-import { byIdStmt, type Candidate } from './repo-lookup.ts';
+import { byIdStmt, type Candidate, hasScanPolicy } from './repo-lookup.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 function watches(recipient: LiveRecipient, source: string) {
@@ -82,7 +81,12 @@ export function sameSnapshot(candidate: Candidate, snapshot: LivePassSnapshot | 
     snapshot.walletVersion !== null &&
     Number.isSafeInteger(snapshot.walletVersion) &&
     snapshot.walletVersion > 0 &&
-    scannerReleaseAllowed(candidate) &&
+    // Issued-release rule: the head's policy applies; the content is the head's only when it is
+    // display-compatible, else the pass's own release (display version null, as on the card).
+    hasScanPolicy(candidate) &&
+    (candidate.activeReleaseId === null ||
+      candidate.displayTemplateVersion === null ||
+      candidate.displayTemplateVersion === candidate.activeReleaseVersion) &&
     snapshot.version === candidate.pass.version &&
     snapshot.revision === candidate.pass.revision &&
     snapshot.linkGeneration === candidate.pass.linkGeneration &&
@@ -106,9 +110,6 @@ export function sameSnapshot(candidate: Candidate, snapshot: LivePassSnapshot | 
     snapshot.connectionGeneration === candidate.connectionGeneration &&
     snapshot.activeTemplateVersion === candidate.activeTemplateVersion &&
     snapshot.displayTemplateVersion === candidate.displayTemplateVersion &&
-    (snapshot.activeReleaseId === null ||
-      candidate.pass.templateVersion === snapshot.activeReleaseVersion ||
-      snapshot.displayTemplateVersion === snapshot.activeReleaseVersion) &&
     snapshot.orgRevision === candidate.orgRevision &&
     snapshot.templateRevision === candidate.templateRevision &&
     snapshot.identityRevision === candidate.identityRevision &&

@@ -166,12 +166,15 @@ export async function prepareLiveRow(
       !(await livePassCommitmentValid(ctx.env, candidate, evaluated.passCommitment))
     )
       return fallback;
-    // The commitment binds this re-read to the exact original Candidate.templateSnapshot.
+    // The commitment binds this re-read to the exact original Candidate.templateSnapshot. A pass
+    // used under its own release while the head is on another build is read like the device card:
+    // the head's policy over the pass's own content (`foundOf` keeps the pinned template).
+    const purpose = candidate.displayTemplateVersion === null ? 'read' : 'commit';
     const templates = await verifyLiveTemplateSnapshot(
       ctx,
       candidate,
       candidate.templateSnapshot,
-      'commit',
+      purpose,
     );
     if (!templates) return fallback;
     const found = await foundOf(ctx, candidate, undefined, { verifiedTemplates: templates });
@@ -191,7 +194,7 @@ export async function prepareLiveRow(
       credentialContext: proof.credentialContext,
       candidate,
       requirePhoto: false,
-      extra: () => [scanTemplateSnapshotPredicate(candidate, candidate.templateSnapshot, 'commit')],
+      extra: () => [scanTemplateSnapshotPredicate(candidate, candidate.templateSnapshot, purpose)],
     };
     const visibleFences = await prepareLiveDisclosurePredicates(ctx, authority, csrfResults);
     if (!visibleFences) return fallback;
