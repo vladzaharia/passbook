@@ -3,8 +3,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import operations from '../../docs/operations.md?raw';
 import { effectiveReleaseIdSql } from '../../src/worker/modules/templates/repo-release-heads.ts';
-import { dataFingerprint, type Legacy, SHAPES } from './legacy-seed.ts';
-import { type Cutover, effective, runCutover, TABLES } from './setup.ts';
+import { dataFingerprint, type Legacy, MOVED_AWAY_PASS, OWNER, SHAPES } from './legacy-seed.ts';
+import { runBootstrap } from './run-bootstrap.ts';
+import { type Cutover, effective, NOW, runCutover, TABLES } from './setup.ts';
 
 let c: Cutover;
 let legacy: Legacy;
@@ -67,6 +68,30 @@ describe('cutover: effective releases', () => {
     }
   });
 
+  it('uploaded-moved: a release in its org only; the org it left (deleted passes only) gets none', async () => {
+    expect(c.bootstrapPlan.filter((line) => line.includes('up-moved'))).toEqual([
+      'template up-moved (org-a) live: legacy release at version v2',
+    ]);
+    const releases = await legacy.db
+      .prepare("SELECT org_id, mode, source FROM template_releases WHERE template_id = 'up-moved'")
+      .all();
+    expect(releases.results).toEqual([{ org_id: 'org-a', mode: 'live', source: 'legacy' }]);
+    expect((await effective(legacy.db, MOVED_AWAY_PASS))?.id ?? null).toBeNull();
+  });
+
+  it('a rerun of the bootstrap plans nothing', async () => {
+    expect((await runBootstrap(legacy.db, OWNER, NOW + 1)).plan).toEqual([]);
+  });
+
+  it('writes no raw download or bundle token into the bootstrap SQL', () => {
+    for (const token of [
+      ...legacy.passes.map((p) => p.downloadToken),
+      'dl-moved-away',
+      'bundle-token-1',
+    ])
+      expect(c.bootstrapSql).not.toContain(token);
+  });
+
   it('uploaded-archived: has no effective release (archived templates are ineligible); publish uses legacy maintenance', async () => {
     for (const p of legacy.passes.filter((p) => p.shape === 'uploaded-archived'))
       expect((await effective(legacy.db, p.id))?.id ?? null).toBeNull();
@@ -84,7 +109,7 @@ describe('cutover: nothing lost', () => {
         "SELECT id, state, payload, coalesce_key FROM outbox WHERE id LIKE 'push-%' OR id LIKE 'sent-%' ORDER BY id",
       )
       .all<{ id: string; state: string; payload: string; coalesce_key: string | null }>();
-    expect(rows.results).toHaveLength(10);
+    expect(rows.results).toHaveLength(12);
     for (const r of rows.results) {
       if (r.id.startsWith('push-')) {
         expect(r.state).toBe('pending');
@@ -121,23 +146,29 @@ describe('cutover: runbook queries', () => {
       'verify-email-unbound',
       'verify-heads',
       'verify-memberships',
+      'verify-moved',
       'verify-outbox',
       'verify-stale-after',
       'verify-stale-before',
     ]);
   });
 
-  it('pre-checks: no pending bundle mail; archived and stale versions are listed', async () => {
+  it('pre-checks: no pending bundle mail; archived, stale and moved templates are listed', async () => {
     expect(await rows('verify-outbox')).toEqual([
-      { kind: 'email', state: 'pending', n: 6 },
-      { kind: 'push', state: 'pending', n: 5 },
+      { kind: 'email', state: 'pending', n: 7 },
+      { kind: 'push', state: 'pending', n: 6 },
     ]);
     expect(await rows('verify-archived')).toEqual([
       { id: 'up-archived', origin: 'uploaded', org_id: 'org-a', passes: 4 },
     ]);
+    // The moved template's deleted org-b pass is stale too, and not counted.
     expect(await rows('verify-stale-before')).toEqual([
       { template_id: 'up-active', org_id: 'org-a', passes: 1 },
       { template_id: 'up-archived', org_id: 'org-a', passes: 1 },
+      { template_id: 'up-moved', org_id: 'org-a', passes: 1 },
+    ]);
+    expect(await rows('verify-moved')).toEqual([
+      { id: 'up-moved', template_org: 'org-a', org_id: 'org-b', passes: 1, live: 0 },
     ]);
   });
 
@@ -149,6 +180,7 @@ describe('cutover: runbook queries', () => {
     expect(await rows('verify-email-unbound')).toEqual([{ n: 0 }]);
     expect(await rows('verify-stale-after')).toEqual([
       { template_id: 'up-active', org_id: 'org-a', passes: 1 },
+      { template_id: 'up-moved', org_id: 'org-a', passes: 1 },
     ]);
   });
 

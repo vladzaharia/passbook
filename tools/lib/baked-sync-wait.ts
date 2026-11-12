@@ -14,14 +14,28 @@ export interface MissingHead {
   passes: number;
 }
 
+/** The SQL itself if it is one SELECT statement; the deploy runs it with `--remote --command`. */
+export function singleSelect(sql: string): string {
+  const text = sql.trim().replace(/;$/, '');
+  if (!/^SELECT\s/i.test(text) || text.includes(';'))
+    throw new Error('The runbook query must be a single SELECT.');
+  return text;
+}
+
 /**
  * Live passes with no release head, from `wrangler d1 execute --json` output, minus archived and
- * other inactive templates (they never get a head; see the runbook).
+ * other inactive templates (they never get a head; see the runbook). Throws on any other output:
+ * unreadable is never "nothing missing".
  */
 export function activeMissingHeads(output: string): MissingHead[] {
   const parsed: unknown = JSON.parse(output);
-  const rows = (parsed as { results?: MissingHead[] }[])[0]?.results ?? [];
-  return rows.filter((row) => row.status === 'active');
+  const rows: unknown = Array.isArray(parsed) ? parsed[0]?.results : undefined;
+  if (
+    !Array.isArray(rows) ||
+    !rows.every((r) => r && typeof r === 'object' && typeof r.id === 'string' && 'status' in r)
+  )
+    throw new Error('Unexpected wrangler output; cannot tell whether every live pass has a head.');
+  return (rows as MissingHead[]).filter((row) => row.status === 'active');
 }
 
 export interface WaitOptions {

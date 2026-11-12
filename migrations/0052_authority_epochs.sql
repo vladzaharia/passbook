@@ -87,6 +87,11 @@ CREATE TRIGGER scanning_devices_no_replace BEFORE INSERT ON scanning_devices
 BEGIN
   SELECT CASE WHEN EXISTS (SELECT 1 FROM scanning_devices WHERE scanner_id = NEW.scanner_id)
     THEN RAISE(ABORT, 'UNIQUE constraint failed: scanning_devices.scanner_id') END;
+  -- The partial unique index scanning_devices_admin (0024): a REPLACE would drop the other scanner's row.
+  SELECT CASE WHEN NEW.admin_user_id IS NOT NULL AND NEW.device_key IS NOT NULL AND EXISTS (
+      SELECT 1 FROM scanning_devices WHERE session_id = NEW.session_id
+        AND admin_user_id = NEW.admin_user_id AND device_key = NEW.device_key)
+    THEN RAISE(ABORT, 'UNIQUE constraint failed: scanning_devices.session_id, scanning_devices.admin_user_id, scanning_devices.device_key') END;
 END;
 CREATE TRIGGER scanning_devices_config_delete AFTER DELETE ON scanning_devices
 BEGIN UPDATE scanners SET config_epoch = config_epoch + 1 WHERE id = OLD.scanner_id; END;

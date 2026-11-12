@@ -6,6 +6,7 @@ import {
   makeEnv,
   makeOrg,
   makePass,
+  makeScanner,
   makeTemplate,
   makeUser,
   persistTemplate,
@@ -668,5 +669,132 @@ describe('0014_scan migration', () => {
       "SELECT event_id FROM scanners WHERE id = 'sc-del'",
     );
     expect(scanner?.event_id).toBeNull();
+  });
+});
+
+describe('0055 attach without a transfer', () => {
+  async function waiting() {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const user = await makeUser(f);
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-attach-${f.ids.id()}` }).resolved,
+      holderEmail: user.primaryEmail,
+    });
+    const attach = (userId = user.id) =>
+      run(env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [userId, pass.id]);
+    const owner = async () =>
+      (
+        await first<{ owner_user_id: string | null }>(
+          env.DB,
+          'SELECT owner_user_id FROM passes WHERE id = ?',
+          [pass.id],
+        )
+      )?.owner_user_id;
+    return { f, org, user, pass, attach, owner };
+  }
+  const REFUSED = /credential transfer required/;
+
+  it('links the active user whose verified address is the holder email', async () => {
+    const { user, attach, owner } = await waiting();
+    await attach();
+    expect(await owner()).toBe(user.id);
+  });
+
+  it('refuses an inactive user', async () => {
+    const { user, attach, owner } = await waiting();
+    await run(env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [user.id]);
+    await expect(attach()).rejects.toThrow(REFUSED);
+    expect(await owner()).toBeNull();
+  });
+
+  it('refuses a user without a verified address equal to the holder email', async () => {
+    const { f, org, attach, owner } = await waiting();
+    const other = await makeUser(f);
+    await expect(attach(other.id)).rejects.toThrow(REFUSED);
+    await expect(attach('no-such-user')).rejects.toThrow(REFUSED);
+    expect(await owner()).toBeNull();
+    // The holder's address on file but never verified.
+    const unverified = await makeUser(f, { verified: false });
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-attach-${f.ids.id()}` }).resolved,
+      holderEmail: unverified.primaryEmail,
+    });
+    await expect(
+      run(env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [unverified.id, pass.id]),
+    ).rejects.toThrow(REFUSED);
+    // No holder email at all.
+    const bare = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-attach-${f.ids.id()}` }).resolved,
+    });
+    await expect(
+      run(env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [other.id, bare.id]),
+    ).rejects.toThrow(REFUSED);
+  });
+
+  it('refuses a user blocked from the pass', async () => {
+    const { user, pass, attach, owner } = await waiting();
+    await run(
+      env.DB,
+      'INSERT INTO pass_attach_blocks (pass_id, user_id, created_at) VALUES (?, ?, 1)',
+      [pass.id, user.id],
+    );
+    await expect(attach()).rejects.toThrow(REFUSED);
+    expect(await owner()).toBeNull();
+  });
+
+  it('refuses a deleted or quarantined pass', async () => {
+    for (const set of ['deleted_at = 1', 'test_data_quarantined = 1']) {
+      const { pass, attach, owner } = await waiting();
+      await run(env.DB, `UPDATE passes SET ${set} WHERE id = ?`, [pass.id]);
+      await expect(attach(), set).rejects.toThrow(REFUSED);
+      expect(await owner(), set).toBeNull();
+    }
+  });
+});
+
+describe('0052 scanning_devices REPLACE guard', () => {
+  it('refuses a REPLACE over the admin device key instead of dropping the other row', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const admin = await makeUser(f);
+    const [a, b] = [
+      await makeScanner(f, { orgId: org.id }),
+      await makeScanner(f, { orgId: org.id }),
+    ];
+    const session = f.ids.id();
+    await run(
+      env.DB,
+      `INSERT INTO scanning_sessions (id, org_id, mode, name, settings, time_zone, created_at, updated_at)
+       VALUES (?, ?, 'live', 'Door', '{}', 'UTC', 1, 1)`,
+      [session, org.id],
+    );
+    const insert = (verb: string, scannerId: string) =>
+      run(
+        env.DB,
+        `${verb} INTO scanning_devices (scanner_id, session_id, org_id, mode, admin_user_id, device_key)
+         VALUES (?, ?, ?, 'live', ?, 'phone-1')`,
+        [scannerId, session, org.id, admin.id],
+      );
+    await insert('INSERT', a.id);
+    for (const verb of ['INSERT', 'INSERT OR REPLACE'])
+      await expect(insert(verb, b.id), verb).rejects.toThrow(
+        'UNIQUE constraint failed: scanning_devices.session_id, scanning_devices.admin_user_id, scanning_devices.device_key',
+      );
+    const rows = await all<{ scanner_id: string }>(
+      env.DB,
+      'SELECT scanner_id FROM scanning_devices WHERE session_id = ?',
+      [session],
+    );
+    expect(rows).toEqual([{ scanner_id: a.id }]);
+    // Without an admin device key the index does not apply.
+    await run(
+      env.DB,
+      `INSERT INTO scanning_devices (scanner_id, session_id, org_id, mode) VALUES (?, ?, ?, 'live')`,
+      [b.id, session, org.id],
+    );
   });
 });

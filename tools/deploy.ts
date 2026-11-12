@@ -10,19 +10,47 @@
 //   npm run deploy -- --promote --apply         serve the version uploaded by --migrate-only, then wait for the
 //                                    baked sync (WALLET_API_KEY starts it at once; else the minute cron)
 //                                    (with --first: `wrangler deploy` after --migrate-only --first)
-// Refuses while wrangler.jsonc still has placeholder ids or keys, or a required secret is unset.
-// Migrations are forward-only. Once they run, roll forward; the previous Worker version is an
+// Refuses while wrangler.jsonc still has placeholder ids or keys, or a required secret is unset; a
+// flag before `--`; a full deploy while 0029_org_memberships is pending (the cutover); a promote while
+// any migration is pending. Migrations are forward-only. Once they run, roll forward; the previous Worker version is an
 // emergency degraded mode only (docs/operations.md, Rollback). Never restore D1 to undo a deploy.
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { resolve } from 'node:path';
-import { activeMissingHeads, runbookSql, waitForBakedHeads } from './lib/baked-sync-wait.ts';
-import { deployFlags, deployStage, missingSecrets, parseVersionId } from './lib/deploy-plan.ts';
+import {
+  activeMissingHeads,
+  runbookSql,
+  singleSelect,
+  waitForBakedHeads,
+} from './lib/baked-sync-wait.ts';
+import {
+  deployFlags,
+  deployStage,
+  missingSecrets,
+  parseVersionId,
+  pendingMigrations,
+  pendingRefusal,
+  uploadAndMigrate,
+} from './lib/deploy-plan.ts';
 import { readJsonc } from './lib/jsonc.ts';
 import { parseBookmark, predeployProblems } from './lib/predeploy.ts';
 
 const root = resolve(import.meta.dirname, '..');
-const args = deployFlags(process.argv.slice(2), process.env);
+const args = (() => {
+  try {
+    return deployFlags(process.argv.slice(2), process.env);
+  } catch (error) {
+    console.error((error as Error).message);
+    process.exit(1);
+  }
+})();
 const database = 'wallet-platform';
 
 const config = readJsonc(resolve(root, 'wrangler.jsonc')) as Parameters<
@@ -66,11 +94,16 @@ const stage = deployStage(args);
 const versionFile = resolve(root, '.wrangler/deploy-version.txt');
 const steps = {
   secrets: `wrangler secret list   (fails unless all of ${required.join(', ') || 'none'} are set)`,
+  pending:
+    stage === 'promote'
+      ? `wrangler d1 migrations list ${database} --remote   (refuses while any migration is pending)`
+      : `wrangler d1 migrations list ${database} --remote   (refuses while 0029_org_memberships is pending: the cutover is --migrate-only, bootstrap, --promote)`,
   upload: 'wrangler versions upload   (a new version, not yet serving)',
   bookmark: `wrangler d1 time-travel info ${database}   (bookmark recorded in .wrangler/d1-bookmarks.log)`,
   migrate: `wrangler d1 migrations apply ${database} --remote`,
   bakedSync:
     'wait until every live pass has a release head (verify-heads; GET /api/v1/templates with WALLET_API_KEY triggers the sync)',
+  saveVersion: 'save the version id for --promote (.wrangler/deploy-version.txt)',
   readVersion: 'read the version id saved by --migrate-only (.wrangler/deploy-version.txt)',
   promote: first
     ? 'wrangler deploy   (registers queue consumers, workflows and Durable Object classes; serves at once)'
@@ -78,8 +111,10 @@ const steps = {
 };
 const plan = [
   steps.secrets,
+  ...(stage === 'migrate' ? [] : [steps.pending]),
   ...(stage === 'promote' ? (first ? [] : [steps.readVersion]) : first ? [] : [steps.upload]),
   ...(stage === 'promote' ? [] : [steps.bookmark, steps.migrate]),
+  ...(stage === 'migrate' && !first ? [steps.saveVersion] : []),
   ...(stage === 'migrate' ? [] : [steps.promote, steps.bakedSync]),
 ];
 if (!args.has('--apply')) {
@@ -88,6 +123,16 @@ if (!args.has('--apply')) {
 }
 
 checkSecrets();
+if (stage !== 'migrate') {
+  const refusal = pendingRefusal(
+    stage,
+    pendingMigrations(wrangler('d1', 'migrations', 'list', database, '--remote')),
+  );
+  if (refusal) {
+    console.error(refusal);
+    process.exit(1);
+  }
+}
 
 mkdirSync(resolve(root, '.wrangler'), { recursive: true });
 const promote = (versionId: string | null) =>
@@ -101,8 +146,12 @@ const promote = (versionId: string | null) =>
  * Waits until every live pass has a release head, else exits 1.
  */
 async function waitForBakedSync(): Promise<void> {
-  const sql = runbookSql(readFileSync(resolve(root, 'docs/operations.md'), 'utf8'), 'verify-heads');
-  if (!sql) throw new Error('docs/operations.md has no verify-heads query.');
+  const block = runbookSql(
+    readFileSync(resolve(root, 'docs/operations.md'), 'utf8'),
+    'verify-heads',
+  );
+  if (!block) throw new Error('docs/operations.md has no verify-heads query.');
+  const sql = singleSelect(block);
   const base = (config as { vars?: { PUBLIC_BASE_URL?: string } }).vars?.PUBLIC_BASE_URL;
   const key = process.env.WALLET_API_KEY;
   if (!key) console.log('No WALLET_API_KEY: waiting for the minute cron to run the baked sync.');
@@ -136,7 +185,7 @@ async function waitForBakedSync(): Promise<void> {
 }
 
 if (stage === 'promote') {
-  const saved = first ? null : readFileSync(versionFile, 'utf8').trim();
+  const saved = first || !existsSync(versionFile) ? null : readFileSync(versionFile, 'utf8').trim();
   if (!first && !saved) throw new Error('No saved version id. Run --migrate-only first.');
   promote(saved);
   await waitForBakedSync();
@@ -144,31 +193,36 @@ if (stage === 'promote') {
 }
 
 const outputFile = resolve(root, '.wrangler/deploy-output.ndjson');
-writeFileSync(outputFile, '');
-let versionId: string | null = null;
-if (!first) {
-  const uploaded = execFileSync('npx', ['wrangler', 'versions', 'upload'], {
-    cwd: root,
-    encoding: 'utf8',
-    env: { ...process.env, WRANGLER_OUTPUT_FILE_PATH: outputFile },
-    stdio: ['ignore', 'pipe', 'inherit'],
-  });
-  versionId = parseVersionId(readFileSync(outputFile, 'utf8'), uploaded);
-  if (!versionId) throw new Error('No version id from wrangler versions upload. Not migrating.');
-  writeFileSync(versionFile, `${versionId}\n`);
-  console.log(`Uploaded Worker version ${versionId}; previous version keeps serving.`);
-}
-
-const bookmark = parseBookmark(wrangler('d1', 'time-travel', 'info', database));
-if (!bookmark) throw new Error('No D1 bookmark in the wrangler output. Not migrating.');
-appendFileSync(
-  resolve(root, '.wrangler/d1-bookmarks.log'),
-  `${new Date().toISOString()} ${bookmark}\n`,
-);
-console.log(
-  `D1 bookmark ${bookmark}. Last resort only: a restore drops everything written since, including pass tombstones.`,
-);
-console.log(wrangler('d1', 'migrations', 'apply', database, '--remote'));
+const versionId = uploadAndMigrate({
+  clearVersion: () => rmSync(versionFile, { force: true }),
+  upload: () => {
+    if (first) return null;
+    writeFileSync(outputFile, '');
+    const uploaded = execFileSync('npx', ['wrangler', 'versions', 'upload'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...process.env, WRANGLER_OUTPUT_FILE_PATH: outputFile },
+      stdio: ['ignore', 'pipe', 'inherit'],
+    });
+    const id = parseVersionId(readFileSync(outputFile, 'utf8'), uploaded);
+    if (!id) throw new Error('No version id from wrangler versions upload. Not migrating.');
+    console.log(`Uploaded Worker version ${id}; previous version keeps serving.`);
+    return id;
+  },
+  bookmark: () => {
+    const bookmark = parseBookmark(wrangler('d1', 'time-travel', 'info', database));
+    if (!bookmark) throw new Error('No D1 bookmark in the wrangler output. Not migrating.');
+    appendFileSync(
+      resolve(root, '.wrangler/d1-bookmarks.log'),
+      `${new Date().toISOString()} ${bookmark}\n`,
+    );
+    console.log(
+      `D1 bookmark ${bookmark}. Last resort only: a restore drops everything written since, including pass tombstones.`,
+    );
+  },
+  migrate: () => console.log(wrangler('d1', 'migrations', 'apply', database, '--remote')),
+  saveVersion: (id) => writeFileSync(versionFile, `${id}\n`),
+});
 if (stage === 'migrate')
   console.log('Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.');
 else {

@@ -25,7 +25,12 @@ export const SHAPES = [
   'uploaded-active',
   'uploaded-archived',
   'uploaded-empty',
+  // Uploaded in org-b, moved to org-a by the old Worker once org-b's passes were soft-deleted
+  // (its move check ignored deleted passes). Only org-a may get a release.
+  'uploaded-moved',
 ] as const;
+/** org-b's soft-deleted pass on the moved template. Not served, never released; kept out of `passes`. */
+export const MOVED_AWAY_PASS = 'pass-uploaded-moved-away';
 export type Shape = (typeof SHAPES)[number];
 
 export interface LegacyPass {
@@ -156,6 +161,7 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
     'uploaded-active': 'up-active',
     'uploaded-archived': 'up-archived',
     'uploaded-empty': 'up-empty',
+    'uploaded-moved': 'up-moved',
   } as const satisfies Record<Shape, string>;
   const bakedRow = (t: BakedTemplate, orgId: string | null) => {
     add(`INSERT INTO templates (id, org_id, slug, name, description, origin, active_version, status, styles,
@@ -171,23 +177,25 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
   bakedRow(acme, 'org-a');
   bakedRow(spare, 'org-a');
   bakedRow(adopted, 'org-b');
-  // Uploaded templates reuse the starter's package content with r2 sources under their own prefix.
-  const uploaded: [string, string, string][] = [
-    ['up-active', 'org-a', 'active'],
-    ['up-archived', 'org-a', 'archived'],
-    ['up-empty', 'org-b', 'active'],
-    ['up-gone', 'org-gone', 'active'],
+  // Uploaded templates reuse the starter's package content with r2 sources under their own prefix
+  // (the moved one keeps the prefix of the org it was uploaded in).
+  const uploaded: [string, string, string, string][] = [
+    ['up-active', 'org-a', 'active', 'org-a'],
+    ['up-archived', 'org-a', 'archived', 'org-a'],
+    ['up-empty', 'org-b', 'active', 'org-b'],
+    ['up-gone', 'org-gone', 'active', 'org-gone'],
+    ['up-moved', 'org-a', 'active', 'org-b'],
   ];
-  for (const [id, org, status] of uploaded) {
+  for (const [id, org, status, uploadedIn] of uploaded) {
     add(`INSERT INTO templates (id, org_id, slug, name, origin, active_version, status, styles, created_at, updated_at)
       VALUES (${q(id)}, ${q(org)}, ${q(id)}, ${q(id)}, 'uploaded', 'v2', ${q(status)}, '[]', ${AT}, ${AT})`);
     const upAssets = starter.assets.map((a) => ({
       ...a,
-      source: { kind: 'r2', key: `templates/${org}/${id}/${a.name}` },
+      source: { kind: 'r2', key: `templates/${uploadedIn}/${id}/${a.name}` },
     }));
     for (const a of starter.assets) {
       const bytes = baked[0]?.files.get(`/templates/starter/${starter.version}/${a.name}`);
-      if (bytes) await bucket.put(`templates/${org}/${id}/${a.name}`, bytes);
+      if (bytes) await bucket.put(`templates/${uploadedIn}/${id}/${a.name}`, bytes);
     }
     for (const v of ['v1', 'v2'])
       add(versionRow(id, v, starter.manifest, starter.passJson, upAssets, starter.report));
@@ -242,6 +250,7 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
     ['baked-patched', 'org-b'],
     ['uploaded-active', 'org-a'],
     ['uploaded-archived', 'org-a'],
+    ['uploaded-moved', 'org-a'],
   ];
   const scanners: Record<string, LegacyScanner> = {};
   for (const [shape, org] of withPasses) {
@@ -319,6 +328,15 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
       web_service_url, personalization, display_title, status, version, object_key, modified_at, created_at, mode)
     VALUES ('pass-gone', 'org-gone', 'platform', 'serial-gone', 'up-gone', 'v2', 'auth-gone', 'dl-gone',
       'https://wallet.plrs.im/v1', '{}', 'Gone', 'active', 1, 'passes/pass-gone/1.pkpass', ${AT}, ${AT}, 'live')`);
+  // org-b's pass on the moved template, soft-deleted (status unchanged) before the move, on a stale
+  // version and still registered on a device: nothing may count it as live or release for it.
+  add(`INSERT INTO passes (id, org_id, identity_id, serial, template_id, template_version, auth_token, download_token,
+      web_service_url, personalization, display_title, holder_email, status, version, object_key, modified_at,
+      created_at, mode, deleted_at) VALUES (${q(MOVED_AWAY_PASS)}, 'org-b', 'platform', 'serial-moved-away', 'up-moved', 'v1',
+      'auth-moved-away', 'dl-moved-away', 'https://wallet.plrs.im/v1', '{}', 'Moved away', 'away@example.com', 'active', 1,
+      ${q(`passes/${MOVED_AWAY_PASS}/1.pkpass`)}, ${AT}, ${AT}, 'live', ${AT})`);
+  add(`INSERT INTO registrations (device_id, identity_id, pass_id, created_at, push_token)
+    VALUES ('dev-uploaded-moved', 'platform', ${q(MOVED_AWAY_PASS)}, ${AT}, 'tok-uploaded-moved')`);
   for (const s of stmts) await db.prepare(s).run();
   return { db, scanners, passes, templateIds, baked, assets };
 }

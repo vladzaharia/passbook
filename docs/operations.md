@@ -90,7 +90,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    a release adds a queue consumer, a workflow or a Durable Object class. After it, check
    `npx wrangler queues info wallet-jobs` lists the Worker as consumer; later releases use the
    default versions flow.
-   An existing database (schema 0024) is not deployed this way: follow
+   An existing database (schema 0024) is not deployed this way, and the tool refuses to: follow
    [Cutover](#cutover-from-schema-0024), which splits the run with `--migrate-only` and `--promote`.
 10. **First admin**: a new database has no memberships. Run
     `node tools/bootstrap-tenancy.ts --owner <your email> --apply` locally, or the printed remote
@@ -287,7 +287,9 @@ a 0024 database with every template shape and runs the SQL blocks below. Roll fo
 ### What the new Worker does with 0024 data
 
 - **Uploaded templates**: the bootstrap gives each active one a `legacy` live release at its active
-  version, in every org that is not deleted and uses it.
+  version, in its own org (or, if unassigned, each org with undeleted passes on it). An org the old
+  Worker moved the template away from keeps only deleted passes; it gets no release, and nothing
+  serves or reissues those passes. The daily purge removes them.
 - **Baked templates**: the baked sync gives each a `system` release in the org stored on the
   template: the platform for an unassigned one, the org for one assigned by its manifest or by the
   old Worker's `PATCH` (a starter an org adopted). The bootstrap never makes one; a `legacy` release
@@ -310,8 +312,9 @@ a 0024 database with every template shape and runs the SQL blocks below. Roll fo
 - **Memberships**: the bootstrap makes `--owner` `org_admin` in every org that is not deleted. Other
   platform admins (`wallet-admins`) need none.
 - **Holder links**: a static-barcode pass (`henrys-blue`, `starter-generic`) links to a verified
-  holder's account at sign-in without a new credential (0055). Other passes get new credentials
-  when they link.
+  holder's account at sign-in without a new credential (0055: only an active user with a verified
+  address equal to the holder email, no attach block, on a pass that is not deleted or
+  quarantined). Other passes get new credentials when they link.
 
 ### Deploy mode
 
@@ -323,12 +326,16 @@ use `--first`: it serves the new Worker as soon as the migrations finish, before
 `wrangler.jsonc` on `main`. If `wrangler.jsonc` differs, stop and decide again.
 
 Run both halves from the same checkout: `--promote` reads the version id `--migrate-only` saved in
-`.wrangler/deploy-version.txt`. The dry runs print:
+`.wrangler/deploy-version.txt` once the migrations applied. Flags go after `--`; the tool refuses
+one given before it (`npm run deploy --migrate-only` would reach it only as `npm_config_*`). A
+plain `--apply` refuses while `0029_org_memberships` is pending on a database with data: a full
+deploy would serve the new Worker before the bootstrap. The dry runs print:
 
 - `npm run deploy -- --migrate-only`: secret list, `versions upload`, D1 bookmark,
-  `d1 migrations apply wallet-platform --remote`.
-- `npm run deploy -- --promote`: secret list, read the saved version id,
-  `versions deploy <version>@100%`, wait until every live pass has a release head.
+  `d1 migrations apply wallet-platform --remote`, save the version id.
+- `npm run deploy -- --promote`: secret list, `d1 migrations list` (refuses while any migration is
+  pending), read the saved version id, `versions deploy <version>@100%`, wait until every live
+  pass has a release head.
 
 ### Pre-checks
 
@@ -373,6 +380,19 @@ Run both halves from the same checkout: `--promote` reads the version id `--migr
    GROUP BY p.template_id, p.org_id
    ```
 
+   Uploaded templates with passes in another org (the old Worker moved a template once that org's
+   passes were deleted). `live` 0 is expected: the bootstrap skips those deleted passes. `live`
+   above 0 should not exist (the old Worker refused such a move); those passes could get no
+   release. Stop, delete them or reissue them on a template of their own org in the old Worker,
+   then rerun this:
+
+   ```sql verify-moved
+   SELECT t.id, t.org_id AS template_org, p.org_id, count(*) AS passes, sum(p.deleted_at IS NULL) AS live
+   FROM passes p JOIN templates t ON t.id = p.template_id
+   WHERE t.origin = 'uploaded' AND t.org_id IS NOT NULL AND p.org_id != t.org_id
+   GROUP BY t.id, p.org_id
+   ```
+
    Counts; record them, they must not drop:
 
    ```sql verify-counts
@@ -405,7 +425,8 @@ step 6, after verification. The expression:
 Why these paths. Between migrate and promote the old Worker serves the new schema. Trigger
 `pass_credential_transfer_required` (0042, recreated in 0055) aborts its writes to `holder_email`,
 `serial`, `auth_token`, `identity_id`, `org_id`, `mode` or a set `scan_code`, and any owner change
-except linking an owner to an unowned pass, or clearing one after writing the attach block.
+except linking an unowned, undeleted, unquarantined pass to an active user whose verified address is
+the holder email and who has no attach block for it, or clearing one after writing the attach block.
 `test/cutover/window.test.ts` runs the old Worker's statements:
 
 | Old write | Route | In the window |
@@ -418,10 +439,12 @@ except linking an owner to an unowned pass, or clearing one after writing the at
 
 Not blocked, because pass pages, Wallet updates and scanning must keep working (owner answer 5):
 holder sign-in (`/auth/oidc/callback`, `/auth/magic/consume`) links waiting passes as the old
-Worker always did; connection syncs that change a holder fail and retry after promote. The old
-baked sync batch (`ensureOrgStmt`) fails on an existing org slug, but only runs when the baked hash
-changes, which the old Worker does not do. `src/worker/platform/authority-baseline.test.ts` pins
-the other old writes.
+Worker always did, except that a holder with a waiting quarantined Test pass gets an error until
+promote (0055 refuses to link a quarantined pass, and the old statement links all or none);
+connection syncs that change a holder fail and retry after promote. The old baked sync batch
+(`ensureOrgStmt`) fails on an existing org slug, but only runs when the baked hash changes, which
+the old Worker does not do. `src/worker/platform/authority-baseline.test.ts` pins the other old
+writes.
 
 ### Order
 
@@ -438,22 +461,26 @@ the other old writes.
    It writes `.wrangler/bootstrap-snapshot.sql`. Then run, in order:
 
    ```
-   npx wrangler d1 execute wallet-platform --remote --json --command "$(cat .wrangler/bootstrap-snapshot.sql)" > .wrangler/bootstrap-snapshot.json
+   (umask 077; npx wrangler d1 execute wallet-platform --remote --json --command "$(cat .wrangler/bootstrap-snapshot.sql)" > .wrangler/bootstrap-snapshot.json)
    node tools/bootstrap-tenancy.ts --owner <email> --snapshot .wrangler/bootstrap-snapshot.json
-   npx wrangler d1 execute wallet-platform --remote --file .wrangler/bootstrap-tenancy.sql
+   npx wrangler d1 execute wallet-platform --remote --file .wrangler/bootstrap-tenancy.sql; rm -f .wrangler/bootstrap-tenancy.sql
    ```
 
    The snapshot is read with `--command`: a remote `--file` runs through D1's import API, which
    returns no rows. Before the last command, read the plan the second prints: one `org ...` line
    per org, one `template ...` line per active uploaded template and org, one `email ...` or
    `bundle email ...` line per queued email. Baked templates get no line. The snapshot holds
-   download tokens; the tool deletes it after reading. The last command asks to confirm and pauses
-   D1 for the seconds it runs. Every statement is idempotent: rerun all three if anything fails.
-4. **Owner**: `WALLET_API_KEY=<key> npm run deploy -- --promote --apply`. Serves the uploaded
-   version at 100%, then every 10 s calls `GET https://passbook.mobile/api/v1/templates` with the
-   key (which runs the baked sync) and runs `verify-heads` below, for at most 3 minutes. Exits 0
-   with `Baked sync done: every live pass has a release head.` Exits 1 listing the templates that
-   still lack one; see "If a step fails". Without `WALLET_API_KEY` it only polls and the minute cron
+   download and bundle tokens; it is created owner-only and the tool deletes it, even on failure.
+   The SQL holds token hashes and holder emails, never a token; the last command deletes it. That
+   command asks to confirm and pauses D1 for the seconds it runs. Every statement is idempotent:
+   rerun all three if anything fails.
+4. **Owner**: run `verify-memberships` (step 5): no rows. Then
+   `WALLET_API_KEY=<key> npm run deploy -- --promote --apply`. Refuses while a migration is
+   pending. Serves the uploaded version at 100%, then every 10 s calls
+   `GET https://passbook.mobile/api/v1/templates` with the key (which runs the baked sync) and
+   runs `verify-heads` below, for at most 3 minutes. Exits 0 with
+   `Baked sync done: every live pass has a release head.` Exits 1 listing the templates that still
+   lack one; see "If a step fails". Without `WALLET_API_KEY` it only polls and the minute cron
    (`templates.sync`) runs the sync, up to a minute later.
 
    ```sql verify-heads
@@ -521,7 +548,7 @@ keep retired pass ids and credentials from being reused.
 | Pre-checks, or step 2 before a migration ran | Nothing changed. Fix and rerun. |
 | Step 2, a migration errors | Applied migrations stay; the old Worker keeps serving. Fix the failing migration file (it never ran in production) and rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort, only if no fix is possible: Time Travel restore to the step 2 bookmark, which loses Wallet registrations and scans written since. |
 | Step 3 | Stop before promote. Take a fresh snapshot and rerun all three commands. A refused statement names the trigger; fix the tool, not the data. |
-| Step 4, promote fails | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. |
+| Step 4, promote fails | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. Refused because migrations are pending, or no saved version: rerun step 2 (it resumes), then step 3. |
 | Step 4, exit 1 after promote | The new Worker serves; the listed templates cannot issue new passes. An `uploaded` row: rerun step 3, then `--promote --apply` (it repeats only the wait). A `baked` row: check the logs for `TEMPLATE_BUILD_SUPERSEDED` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS), fix and ship a new version with the same two runs (`--migrate-only` finds nothing to migrate). Do not roll back. |
 | Step 5 fails, Worker misbehaves | Ship a fixed version with the same two runs. Emergency degraded mode only to stop an outage: `npx wrangler queues pause-delivery wallet-jobs`, keep the WAF rule, promote the previous version with `npx wrangler versions deploy <previous>@100%`, then roll forward and resume delivery (`npx wrangler queues resume-delivery wallet-jobs`). |
 

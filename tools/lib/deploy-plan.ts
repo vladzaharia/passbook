@@ -38,18 +38,29 @@ export function parseVersionId(outputFile: string, stdout: string): string | nul
   return labelled?.[1] ?? null;
 }
 
-const ENV_FLAGS = ['allow-no-push', 'allow-no-oidc', 'secrets', 'first'] as const;
+const FLAGS = [
+  'apply',
+  'check',
+  'secrets',
+  'allow-no-push',
+  'allow-no-oidc',
+  'first',
+  'migrate-only',
+  'promote',
+] as const;
 
 /**
- * Flags from argv, plus the ones npm exports when given before `--`
- * (`npm run deploy --allow-no-push` sets npm_config_allow_no_push). `--apply` is never read from
- * the environment.
+ * Flags from argv only. npm moves a flag given before `--` (`npm run deploy --migrate-only -- --apply`)
+ * into npm_config_migrate_only and out of argv; that is refused, so a misplaced flag never changes
+ * what runs.
  */
 export function deployFlags(argv: readonly string[], env: Record<string, string | undefined>) {
-  const flags = new Set(argv);
-  for (const name of ENV_FLAGS)
-    if (env[`npm_config_${name.replaceAll('-', '_')}`] === 'true') flags.add(`--${name}`);
-  return flags;
+  const misplaced = FLAGS.filter((name) => env[`npm_config_${name.replaceAll('-', '_')}`]);
+  if (misplaced.length > 0)
+    throw new Error(
+      `Put deploy flags after --: npm run deploy -- ${misplaced.map((n) => `--${n}`).join(' ')}`,
+    );
+  return new Set(argv);
 }
 
 export type DeployStage = 'all' | 'migrate' | 'promote';
@@ -63,4 +74,52 @@ export function deployStage(flags: ReadonlySet<string>): DeployStage {
   const promote = flags.has('--promote');
   if (migrate && promote) throw new Error('--migrate-only and --promote are separate runs.');
   return migrate ? 'migrate' : promote ? 'promote' : 'all';
+}
+
+/** Pending migration files from `wrangler d1 migrations list`; null when the output is not recognised. */
+export function pendingMigrations(output: string): string[] | null {
+  if (output.includes('No migrations to apply')) return [];
+  if (!output.includes('Migrations to be applied')) return null;
+  const names = [...new Set(output.match(/\b\d{4}_[\w-]+\.sql\b/g) ?? [])];
+  return names.length > 0 ? names : null;
+}
+
+interface MigrateSteps {
+  clearVersion: () => void;
+  /** The uploaded version id; null with --first, which uploads nothing. */
+  upload: () => string | null;
+  bookmark: () => void;
+  migrate: () => void;
+  saveVersion: (id: string) => void;
+}
+
+/**
+ * Upload, bookmark, migrate. The version id --promote serves is saved only after the migrations
+ * apply, and an older one is cleared first, so a failed run leaves nothing to promote.
+ */
+export function uploadAndMigrate(steps: MigrateSteps): string | null {
+  steps.clearVersion();
+  const id = steps.upload();
+  steps.bookmark();
+  steps.migrate();
+  if (id) steps.saveVersion(id);
+  return id;
+}
+
+const MEMBERSHIPS = '0029_org_memberships.sql';
+
+/**
+ * Why a stage must not run against the pending migrations, or null. A full deploy across 0029 (on a
+ * database that already has data) would serve the new Worker before the bootstrap; a promote must
+ * never serve a schema that is not there yet.
+ */
+export function pendingRefusal(stage: DeployStage, pending: string[] | null): string | null {
+  if (stage === 'migrate') return null;
+  if (pending === null)
+    return 'Could not read the pending migrations from wrangler. Not deploying.';
+  if (stage === 'all' && pending.includes(MEMBERSHIPS) && !pending.includes('0001_platform.sql'))
+    return `${MEMBERSHIPS} is pending: this deploy is the cutover. Run --migrate-only --apply, the bootstrap, then --promote --apply (docs/operations.md, "Cutover from schema 0024").`;
+  if (stage === 'promote' && pending.length > 0)
+    return `Not promoting: ${pending.length} migration(s) pending (${pending[0]} first). Run --migrate-only --apply, then the bootstrap if this is the cutover, and check that verify-memberships returns no rows.`;
+  return null;
 }

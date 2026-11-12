@@ -8,7 +8,11 @@ import { sha256Hex, uuidv7 } from '../../src/worker/platform/ids.ts';
 export interface BootstrapSnapshot {
   owner: { id: string; primary_email: string } | null;
   orgs: { id: string; slug: string }[];
-  /** Active uploaded templates paired with each org that uses them, without a live release yet. */
+  /**
+   * Active uploaded templates paired with their org, or each org with undeleted passes on an
+   * unassigned one, without a live release yet. An org a template was moved away from (only its
+   * deleted passes stay) gets none: 0038 refuses a release outside the template's org.
+   */
   templates: {
     id: string;
     org_id: string;
@@ -55,7 +59,10 @@ export interface QueuedBundleEmail {
     org_id: string;
     mode: 'live' | 'test';
     name: string;
+    /** Only here to be hashed, like a pass's download token. */
     token: string;
+    /** Every token rotation sets it; the fence that the snapshot's token is still current. */
+    token_rotated_at: number | null;
     holder_email: string | null;
   };
   /** In bundle order. */
@@ -71,6 +78,13 @@ export interface QueuedEmail {
 }
 
 const q = (value: string) => `'${value.replaceAll("'", "''")}'`;
+/** Snapshot numbers go into the SQL as literals; anything but a safe integer is refused. */
+const int = (value: unknown): string => {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value))
+    throw new Error(`Snapshot value ${JSON.stringify(value)} is not an integer.`);
+  return String(value);
+};
+const intOrNull = (value: unknown) => (value === null ? 'NULL' : int(value));
 
 const passJson = (a: string) => `json_object('id', ${a}.id, 'org_id', ${a}.org_id,
       'mode', ${a}.mode, 'test_data_quarantined', ${a}.test_data_quarantined, 'holder_email', ${a}.holder_email,
@@ -91,9 +105,10 @@ export const snapshotSql = (ownerEmail: string) => `SELECT json_object(
     FROM templates t
     JOIN template_versions v ON v.template_id = t.id AND v.version = t.active_version
     JOIN (SELECT id AS template_id, org_id FROM templates WHERE org_id IS NOT NULL
-      UNION SELECT DISTINCT template_id, org_id FROM passes) s ON s.template_id = t.id
+      UNION SELECT DISTINCT template_id, org_id FROM passes WHERE deleted_at IS NULL) s ON s.template_id = t.id
     JOIN orgs o ON o.id = s.org_id AND o.status != 'deleted'
-    WHERE t.origin = 'uploaded' AND t.status = 'active' AND NOT EXISTS (SELECT 1 FROM template_releases r
+    WHERE t.origin = 'uploaded' AND t.status = 'active' AND (t.org_id IS NULL OR t.org_id = s.org_id)
+      AND NOT EXISTS (SELECT 1 FROM template_releases r
       WHERE r.template_id = t.id AND r.org_id = s.org_id AND r.mode = 'live' AND r.provider = 'apple')),
   'emails', (SELECT json_group_array(json_object('outbox_id', o.id, 'to', json_extract(o.payload, '$.to'),
       'attach', json_extract(o.payload, '$.attach') = 1, 'pass', ${passJson('p')}))
@@ -102,7 +117,7 @@ export const snapshotSql = (ownerEmail: string) => `SELECT json_object(
       AND json_extract(o.payload, '$.bundleId') IS NULL AND typeof(json_extract(o.payload, '$.to')) = 'text'),
   'bundleEmails', (SELECT json_group_array(json_object('outbox_id', o.id, 'outbox_pass_id', o.pass_id,
       'to', json_extract(o.payload, '$.to'), 'bundle', json_object('id', b.id, 'org_id', b.org_id, 'mode', b.mode,
-      'name', b.name, 'token', b.token, 'holder_email', b.holder_email),
+      'name', b.name, 'token', b.token, 'token_rotated_at', b.token_rotated_at, 'holder_email', b.holder_email),
       'members', (SELECT json_group_array(json(m.j)) FROM (SELECT json_object('position', bp.position,
           'pass', ${passJson('mp')}) AS j FROM bundle_passes bp JOIN passes mp ON mp.id = bp.pass_id
           WHERE bp.bundle_id = b.id AND mp.deleted_at IS NULL ORDER BY bp.position) m)))
@@ -117,12 +132,14 @@ export const BOOTSTRAP_SQL = '.wrangler/bootstrap-tenancy.sql';
 
 /**
  * The owner's production commands, in order. The snapshot is read with --command: a remote --file
- * goes through D1's import API, which reports counts and never returns rows.
+ * goes through D1's import API, which reports counts and never returns rows. It holds raw tokens, so
+ * it is created owner-only and the tool deletes it; the SQL holds holder emails and is deleted once
+ * applied.
  */
 export const remoteCommands = (owner: string, database = 'wallet-platform') => [
-  `npx wrangler d1 execute ${database} --remote --json --command "$(cat ${SNAPSHOT_SQL})" > ${SNAPSHOT_JSON}`,
+  `(umask 077; npx wrangler d1 execute ${database} --remote --json --command "$(cat ${SNAPSHOT_SQL})" > ${SNAPSHOT_JSON})`,
   `node tools/bootstrap-tenancy.ts --owner ${owner} --snapshot ${SNAPSHOT_JSON}`,
-  `npx wrangler d1 execute ${database} --remote --file ${BOOTSTRAP_SQL}`,
+  `npx wrangler d1 execute ${database} --remote --file ${BOOTSTRAP_SQL}; rm -f ${BOOTSTRAP_SQL}`,
 ];
 
 export interface BootstrapResult {
@@ -139,6 +156,7 @@ export async function buildBootstrap(
 ): Promise<BootstrapResult> {
   const owner = snapshot.owner;
   if (!owner) throw new Error(`No user ${ownerEmail}. Sign in once as that user, then re-run.`);
+  int(now);
   const plan: string[] = [];
   const sql: string[] = [`-- tools/bootstrap-tenancy.ts for ${ownerEmail}. Safe to re-run.`];
   // Only for rows this run inserted, so a re-run adds nothing.
@@ -185,10 +203,11 @@ export async function buildBootstrap(
     status: p.status,
     removedAt: p.removed_at,
   });
+  // The download token rotates only with link_generation (old and new Worker), so the generations
+  // fence it and the raw token never reaches the SQL.
   const passUnchanged = (p: SnapshotPass) => `EXISTS (SELECT 1 FROM passes p WHERE p.id = ${q(p.id)}
-      AND p.version = ${p.version} AND p.credential_generation = ${p.credential_generation}
-      AND p.link_generation = ${p.link_generation} AND p.lifecycle_generation = ${p.lifecycle_generation}
-      AND p.download_token = ${q(p.download_token)})`;
+      AND p.version = ${int(p.version)} AND p.credential_generation = ${int(p.credential_generation)}
+      AND p.link_generation = ${int(p.link_generation)} AND p.lifecycle_generation = ${int(p.lifecycle_generation)})`;
   // Each runs only while the passes are the ones the snapshot saw; a changed pass leaves the row unbound,
   // and delivery cancels it as DELIVERY_UNBOUND.
   for (const e of snapshot.emails ?? []) {
@@ -226,7 +245,8 @@ export async function buildBootstrap(
     sql.push(`UPDATE outbox SET payload = json_set(payload, '$.intent', json(${q(JSON.stringify(intent))}))
   WHERE id = ${q(e.outbox_id)} AND kind = 'email' AND state IN ('pending', 'enqueued')
     AND json_extract(payload, '$.intent') IS NULL
-    AND EXISTS (SELECT 1 FROM bundles b WHERE b.id = ${q(e.bundle.id)} AND b.token = ${q(e.bundle.token)})
+    AND EXISTS (SELECT 1 FROM bundles b WHERE b.id = ${q(e.bundle.id)}
+      AND b.token_rotated_at IS ${intOrNull(e.bundle.token_rotated_at)})
     AND ${e.members.map((m) => passUnchanged(m.pass)).join('\n    AND ')};`);
   }
   for (const t of snapshot.templates) {

@@ -2,7 +2,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { jobCtxOf } from '../../src/worker/modules/delivery/delivery-test-fixtures.ts';
 import { deliverEmail } from '../../src/worker/modules/delivery/email.ts';
+import { ensureCredentialRefKeyset } from '../../src/worker/modules/passes/credential-keyset.ts';
 import { overrideDeps } from '../../src/worker/modules/passes/deps.ts';
+import { dailyPasses } from '../../src/worker/modules/passes/jobs.ts';
 import { withKitDatabase } from '../../src/worker/modules/passes/pass-test-fixtures.ts';
 import { publishPass } from '../../src/worker/modules/passes/publish.ts';
 import { scannerActor, withRole } from '../../src/worker/modules/scan/actor.ts';
@@ -16,12 +18,20 @@ import {
 } from '../../src/worker/modules/scan/test-kit.ts';
 import { undo } from '../../src/worker/modules/scan/undo.ts';
 import { createTemplateRegistry } from '../../src/worker/modules/templates/registry.ts';
-import type { Shape } from './legacy-seed.ts';
+import { ManualClock } from '../../src/worker/platform/clock.ts';
+import { createServiceContext } from '../../src/worker/platform/service-context.ts';
+import { MOVED_AWAY_PASS, type Shape } from './legacy-seed.ts';
 import { type Cutover, runCutover } from './setup.ts';
 
 let c: Cutover;
 let kit: ScanKit;
-const SERVED: Shape[] = ['baked-unassigned', 'baked-assigned', 'baked-patched', 'uploaded-active'];
+const SERVED: Shape[] = [
+  'baked-unassigned',
+  'baked-assigned',
+  'baked-patched',
+  'uploaded-active',
+  'uploaded-moved',
+];
 const ALL: Shape[] = [...SERVED, 'uploaded-archived'];
 
 beforeAll(async () => {
@@ -126,6 +136,18 @@ describe('cutover: uploaded-archived scanning', () => {
     const res = await checkIn('uploaded-archived', passOf('uploaded-archived', 5).barcode);
     const o = (await res.json()) as { kind: string; reason: string | null };
     expect([res.status, o.kind, o.reason]).toEqual([200, 'ok', null]);
+  });
+});
+
+describe('cutover: uploaded-moved, the org it left', () => {
+  it("purges org-b's deleted pass after the grace period, though it never had a release", async () => {
+    await ensureCredentialRefKeyset(kit.env.DB, kit.env);
+    const later = new ManualClock(kit.clock.now() + 8 * 86_400_000);
+    await dailyPasses(createServiceContext(kit.env, { clock: later }));
+    const left = await kit.env.DB.prepare('SELECT id FROM passes WHERE id = ?')
+      .bind(MOVED_AWAY_PASS)
+      .first();
+    expect(left).toBeNull();
   });
 });
 

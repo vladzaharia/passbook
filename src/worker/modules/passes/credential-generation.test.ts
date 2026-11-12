@@ -203,8 +203,15 @@ describe('0042 credential and lifecycle generations', () => {
   });
 
   it('requires transfers for holder and existing possession credential replacements', async () => {
-    const { f, db, pass } = await fixture();
+    const { f, db, org, template, registry } = await fixture();
     const user = await makeUser(f);
+    // 0055 links without a transfer only the active user who verified the holder email.
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template,
+      registry,
+      holderEmail: user.primaryEmail,
+    });
     const before = await snapshot(db, pass.id);
     for (const [column, value] of [
       ['holder_email', 'other@example.test'],

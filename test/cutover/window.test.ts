@@ -25,6 +25,15 @@ beforeAll(async () => {
       VALUES ('key-cutover', 'org-a', 'Cutover', 'cutover1', ?, '["templates:read"]', 'u-owner', ?, 'live')`)
     .bind(await sha256Hex(KEY), AT)
     .run();
+  // A Test pass waiting for its holder; 0025 quarantines it.
+  await db
+    .prepare(`INSERT INTO passes (id, org_id, identity_id, serial, template_id, template_version, auth_token,
+      download_token, web_service_url, personalization, display_title, holder_email, status, version, object_key,
+      modified_at, created_at, mode) VALUES ('pass-test-waiting', 'org-a', 'platform', 'serial-test-waiting',
+      'up-active', 'v2', 'auth-test-waiting', 'dl-test-waiting', 'https://wallet.plrs.im/v1', '{}', 'Test',
+      'tester@example.com', 'active', 1, 'passes/pass-test-waiting/1.pkpass', ?1, ?1, 'test')`)
+    .bind(AT)
+    .run();
   await migrateForward(db);
 }, 120_000);
 
@@ -64,17 +73,25 @@ describe('cutover window: old Worker holder writes', () => {
     await expect(softDelete('pass-uploaded-active-2')).resolves.toBeTruthy();
   });
 
-  it('attach on create, self-remove and sign-in attach succeed (0055: the owner moves, the credential does not)', async () => {
+  it('attach on create, self-remove and sign-in attach succeed for the verified holder (0055: the owner moves, the credential does not)', async () => {
     const pass = 'pass-baked-unassigned-4';
     // holders/repo.ts attachOwner (hook A, pass create for a holder with an account).
-    const attached = await write(
-      `UPDATE passes SET owner_user_id = ?1 WHERE id = ?2 AND owner_user_id IS NULL
+    const attachOwner = (user: string) =>
+      write(
+        `UPDATE passes SET owner_user_id = ?1 WHERE id = ?2 AND owner_user_id IS NULL
          AND holder_email IS ?3 AND ?1 IS NOT NULL RETURNING id`,
-      'u-admin2',
-      pass,
-      'other@example.com',
+        user,
+        pass,
+        'other@example.com',
+      );
+    // Only a user who verified the holder email may become the owner.
+    await expect(attachOwner('u-admin2')).rejects.toThrow(TRANSFER);
+    await write(
+      `INSERT INTO user_emails (email, user_id, verified_via, verified_at)
+       VALUES ('other@example.com', 'u-admin2', 'magic_link', ?)`,
+      AT,
     );
-    expect(attached.results).toEqual([{ id: pass }]);
+    expect((await attachOwner('u-admin2')).results).toEqual([{ id: pass }]);
     // addBlockAndClearOwner (DELETE /api/v1/me/passes/{id}).
     await write(
       'INSERT OR IGNORE INTO pass_attach_blocks (pass_id, user_id, created_at) VALUES (?, ?, ?)',
@@ -88,7 +105,9 @@ describe('cutover window: old Worker holder writes', () => {
       'u-admin2',
     );
     expect(removed.results).toEqual([{ id: pass }]);
-    // attachWaiting (hook B, sign-in of a holder with a waiting pass).
+    // The address moves to the owner's account; attachWaiting (hook B, sign-in of a holder with a
+    // waiting pass) links it there.
+    await write("UPDATE user_emails SET user_id = 'u-owner' WHERE email = 'other@example.com'");
     const signedIn = await write(
       `UPDATE passes SET owner_user_id = ?1
        WHERE holder_email = ?2 AND owner_user_id IS NULL AND deleted_at IS NULL
@@ -98,6 +117,30 @@ describe('cutover window: old Worker holder writes', () => {
       'other@example.com',
     );
     expect(signedIn.results).toEqual([{ id: pass, org_id: 'org-b' }]);
+  });
+
+  it('sign-in attach fails for a holder with a waiting quarantined Test pass (0055), and links nothing', async () => {
+    await write(
+      `INSERT INTO user_emails (email, user_id, verified_via, verified_at)
+       VALUES ('tester@example.com', 'u-holder', 'magic_link', ?)`,
+      AT,
+    );
+    await expect(
+      write(
+        `UPDATE passes SET owner_user_id = ?1
+         WHERE holder_email = ?2 AND owner_user_id IS NULL AND deleted_at IS NULL
+           AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = passes.id AND b.user_id = ?1)
+         RETURNING id`,
+        'u-holder',
+        'tester@example.com',
+      ),
+    ).rejects.toThrow(TRANSFER);
+    const row = await db
+      .prepare(
+        "SELECT owner_user_id, test_data_quarantined FROM passes WHERE id = 'pass-test-waiting'",
+      )
+      .first();
+    expect(row).toEqual({ owner_user_id: null, test_data_quarantined: 1 });
   });
 });
 

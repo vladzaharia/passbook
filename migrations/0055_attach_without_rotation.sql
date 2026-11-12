@@ -1,6 +1,8 @@
 -- A verified holder attaches to a pass whose credential cannot change (a static barcode) without a
--- transfer: the owner goes from none to a user, and nothing else moves. The owner removing the pass
--- clears the owner after writing the attach block for that user, which deletion of the user never does.
+-- transfer: the owner goes from none to a user, and nothing else moves. Only the user the grant would
+-- admit: active, with a verified address equal to the holder email, not blocked from the pass, which
+-- is neither deleted nor quarantined. The owner removing the pass clears the owner after writing the
+-- attach block for that user, which deletion of the user never does.
 -- Any other owner, holder or credential change still needs a transfer.
 DROP TRIGGER pass_credential_transfer_required;
 CREATE TRIGGER pass_credential_transfer_required
@@ -8,7 +10,11 @@ BEFORE UPDATE OF holder_email, owner_user_id, serial, auth_token, scan_code, ide
 WHEN NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = OLD.id AND t.state = 'pending')
   AND (NEW.holder_email IS NOT OLD.holder_email
     OR (NEW.owner_user_id IS NOT OLD.owner_user_id
-      AND NOT (OLD.owner_user_id IS NULL AND NEW.owner_user_id IS NOT NULL)
+      AND NOT (OLD.owner_user_id IS NULL AND NEW.owner_user_id IS NOT NULL
+        AND NEW.deleted_at IS NULL AND NEW.test_data_quarantined = 0
+        AND EXISTS (SELECT 1 FROM users u JOIN user_emails e ON e.user_id = u.id
+          WHERE u.id = NEW.owner_user_id AND u.status = 'active' AND e.email = NEW.holder_email)
+        AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = OLD.id AND b.user_id = NEW.owner_user_id))
       AND NOT (OLD.owner_user_id IS NOT NULL AND NEW.owner_user_id IS NULL
         AND EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = OLD.id AND b.user_id = OLD.owner_user_id)))
     OR NEW.serial IS NOT OLD.serial OR NEW.auth_token IS NOT OLD.auth_token

@@ -59,6 +59,7 @@ export interface Cutover {
   beforeSync: Record<string, string | null>;
   env: AppEnv;
   bootstrapPlan: string[];
+  bootstrapSql: string;
 }
 
 /** 0024 data, then migrations 0025+, then the bootstrap, then the baked sync: the cutover in production order. */
@@ -70,7 +71,7 @@ export async function runCutover(
   const legacy = await seedLegacy(db, bindings.BUCKET);
   const before = await dataFingerprint(db, TABLES);
   await migrateForward(db);
-  const { plan } = await runBootstrap(db, OWNER, NOW);
+  const { plan, sql } = await runBootstrap(db, OWNER, NOW);
   const beforeSync: Record<string, string | null> = {};
   for (const p of legacy.passes) beforeSync[p.id] = (await effective(db, p.id))?.id ?? null;
   const env = {
@@ -104,5 +105,5 @@ export async function runCutover(
     );
     legacy.bumpedVersion = bumped.template.version;
   }
-  return { legacy, before, beforeSync, env, bootstrapPlan: plan };
+  return { legacy, before, beforeSync, env, bootstrapPlan: plan, bootstrapSql: sql };
 }

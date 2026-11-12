@@ -85,6 +85,8 @@ describe('cutover: baked content changed in the new build', () => {
       'baked:starter:org-a',
       'baked:starter:org-b',
       'up-active:org-a',
+      // Not up-moved:org-b: that org's pass on the moved template is deleted.
+      'up-moved:org-a',
     ]);
   });
 
