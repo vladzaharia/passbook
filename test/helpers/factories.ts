@@ -438,7 +438,13 @@ export async function makeScanStaff(
   const id = f.ids.id();
   const pin = options.pin ?? '123456';
   const now = f.clock.now();
-  const name = options.name ?? `Staff ${id.slice(-6)}`;
+  // Names are unique per org (NOCASE); six id hex digits collided across a file's staff.
+  const name =
+    options.name ??
+    `Staff ${f.ids
+      .token(12)
+      .replace(/[^A-Za-z0-9]/g, '')
+      .slice(0, 12)}`;
   const role = options.role ?? 'door';
   await run(
     f.env.DB,
@@ -561,7 +567,10 @@ export async function makeScanner(
       kind,
       deviceRole,
       // Not derived from the id (tests assert ids stay out of projections); six hex digits collided.
-      `Scanner ${f.ids.token(12).replace(/[^A-Za-z0-9]/g, '').slice(0, 12)}`,
+      `Scanner ${f.ids
+        .token(12)
+        .replace(/[^A-Za-z0-9]/g, '')
+        .slice(0, 12)}`,
       options.eventId ?? null,
       JSON.stringify({ ...DEFAULT_SCANNER_SETTINGS, ...options.settings }),
       prefix,
