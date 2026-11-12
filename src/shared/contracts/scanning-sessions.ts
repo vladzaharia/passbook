@@ -14,6 +14,55 @@ import { ScannerAcceptsSchema } from './scanners.ts';
 export const ScanSurfaceSchema = z.enum(['phone', 'operator', 'desk', 'customer']);
 export type ScanSurface = z.infer<typeof ScanSurfaceSchema>;
 export const ScanSurfaceChoiceSchema = z.enum(['auto', 'phone', 'operator', 'desk', 'customer']);
+/** Native platform capabilities supplement browser-observable device inputs. */
+export const NativeScannerCapabilitiesSchema = z.strictObject({
+  platform: z.enum(['ios', 'android']),
+  appVersion: z.string().max(32),
+  camera: z.strictObject({
+    available: z.boolean(),
+    permission: z.enum(['unknown', 'prompt', 'granted', 'denied', 'restricted', 'unavailable']),
+  }),
+  keyboard: z.strictObject({
+    supported: z.boolean(),
+    connected: z.boolean().nullable(),
+    connectionObservable: z.boolean(),
+  }),
+  nfc: z.strictObject({
+    available: z.boolean(),
+    reading: z.boolean(),
+    formats: z.array(z.enum(['ndef', 'wallet-vas'])).max(2),
+  }),
+  vas: z.strictObject({
+    deviceSupported: z.boolean(),
+    available: z.boolean(),
+    reader: z.enum(['proximityReader', 'android-native', 'none']),
+    reason: z.string().max(240),
+  }),
+  externalReader: z.strictObject({
+    mode: z.enum(['keyboard', 'unknown']),
+    connected: z.boolean().nullable(),
+  }),
+  customerDisplay: z.strictObject({
+    supported: z.boolean(),
+    available: z.boolean(),
+    active: z.boolean(),
+  }),
+  layout: z
+    .strictObject({
+      posture: z.enum(['unknown', 'folded', 'unfolded', 'half-folded']),
+      division: z
+        .strictObject({
+          x: z.number().min(0).max(32768),
+          y: z.number().min(0).max(32768),
+          width: z.number().min(0).max(32768),
+          height: z.number().min(0).max(32768),
+        })
+        .nullable(),
+    })
+    .optional(),
+});
+export type NativeScannerCapabilities = z.infer<typeof NativeScannerCapabilitiesSchema>;
+
 export const ScanDeviceCapabilitiesSchema = z.strictObject({
   width: z.number().int().min(1).max(32768),
   height: z.number().int().min(1).max(32768),
@@ -21,6 +70,7 @@ export const ScanDeviceCapabilitiesSchema = z.strictObject({
   camera: z.enum(['unknown', 'available', 'unavailable']),
   keyboard: z.boolean(),
   nativeBarcode: z.boolean(),
+  native: NativeScannerCapabilitiesSchema.optional(),
   surfaces: z.array(ScanSurfaceSchema).min(1).max(4),
   preferred: ScanSurfaceSchema,
 });

@@ -12,6 +12,8 @@ import { localOutcome } from './machine/outcome.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
+import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
+import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
@@ -75,7 +77,21 @@ export function ScanLoop({
   }, [s.overlay]);
   const l = s.loop;
   const scanner = session.scanner;
+  const branding = session.branding ?? null;
+  const logoUrl = scanBrandLogoUrl(branding, session);
   const counts = s.counts ?? session.counts;
+  const nativeCapabilities = useNativeCapabilities();
+  const duoLayout =
+    nativeCapabilities?.layout?.posture === 'unfolded' ||
+    nativeCapabilities?.layout?.posture === 'half-folded';
+  const operator = session.workspace?.device.effectiveSurface === 'operator';
+  const operatorPane = operator || duoLayout;
+  const nativeBarcode =
+    session.workspace?.device.capabilities?.nativeBarcode ??
+    nativeCapabilities?.platform === 'android';
+  const readerUsable =
+    (s.reader.kind === 'barcode' && nativeBarcode) ||
+    (s.reader.kind === 'nfc' && nativeCapabilities?.vas.available === true);
   const last = s.recent[0];
   const result: ScanOutcome | null =
     l.s === 'verdict'
@@ -97,7 +113,7 @@ export function ScanLoop({
     }
   }, [session, s, counts.configRev, refetch]);
   const open = (next: boolean) => {
-    if (next && operator) {
+    if (next && operatorPane) {
       document.querySelector<HTMLInputElement>('[data-operator-search]')?.focus();
       return;
     }
@@ -105,7 +121,6 @@ export function ScanLoop({
     setSheet(next);
   };
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
-  const operator = session.workspace?.device.effectiveSurface === 'operator';
   const menu = (
     <ScanMenu
       sound={s.prefs.sound}
@@ -113,7 +128,7 @@ export function ScanLoop({
       holdResults={s.prefs.holdResults}
       onHoldResults={(value) => dispatch({ type: 'prefs', prefs: { holdResults: value } })}
       camera={cameraChoice}
-      cameraAvailable={!operator}
+      cameraAvailable={!operator || duoLayout}
       canSwitchStaff={Boolean(session.staff)}
       onSwitchStaff={() =>
         void api.staffSignOut().then(refetch, (error) => setCameraError(errorMessage(error)))
@@ -123,7 +138,7 @@ export function ScanLoop({
         setCameraChoice(choice);
         runtime.camera.choose(choice);
       }}
-      hasReader={s.reader.kind !== 'none'}
+      hasReader={readerUsable}
       cameraOff={s.camera === 'disabled'}
       onCameraOff={(off) => {
         if (off) runtime.camera.stop();
@@ -140,9 +155,11 @@ export function ScanLoop({
   return (
     <>
       <ScanAppView
-        surface={operator ? 'operator' : 'phone'}
+        branding={branding}
+        surface={duoLayout ? 'duo' : operator ? 'operator' : 'phone'}
+        layout={nativeCapabilities?.layout}
         sidebar={
-          operator ? (
+          operatorPane ? (
             <Suspense fallback={null}>
               <OperatorPanel api={api} runtime={runtime} session={session} />
             </Suspense>
@@ -171,6 +188,8 @@ export function ScanLoop({
             : { s: 'loop' }
         }
         capsule={{
+          logoUrl,
+          orgName: scanner?.orgName ?? session.admin?.orgs[0]?.name ?? '',
           name: scanner?.name ?? 'Scan as admin',
           staff: session.staff?.name,
           state: !s.online
@@ -185,9 +204,7 @@ export function ScanLoop({
           chips: (
             <>
               <TestChip mode={scanner?.mode ?? getMode()} />
-              {s.reader.kind !== 'none' ? (
-                <ReaderChip state={s.focused ? 'ready' : 'paused'} />
-              ) : null}
+              {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
               {!s.online ? <SyncChip state={{ kind: 'offline', queued: 0 }} /> : null}
               <CountChip
                 count={counts.event?.arrived ?? counts.today}
@@ -198,14 +215,14 @@ export function ScanLoop({
           ),
         }}
         camera={
-          operator ? null : (
+          operator && !duoLayout ? null : (
             <CameraLayer
               videoRef={videoRef}
               status={s.camera}
               checking={l.s === 'checking' || l.s === 'applying'}
               result={Boolean(result) || l.s === 'paused' || Boolean(s.block)}
               onRetry={runtime.camera.start}
-              reader={s.reader.kind !== 'none'}
+              reader={readerUsable}
             />
           )
         }

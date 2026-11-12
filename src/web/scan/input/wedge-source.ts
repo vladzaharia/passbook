@@ -35,7 +35,6 @@ export class WedgeFields {
 export interface WedgeSourceDeps {
   clock: Pick<ClockPort, 'now' | 'setTimeout' | 'clearTimeout'>;
   fields: WedgeFields;
-  reader: () => 'none' | 'barcode' | 'nfc';
   config?: () => WedgeConfig;
   /** One slow key with nothing editable focused: open lookup with it. */
   onHuman?: (ch: string) => void;
@@ -45,7 +44,6 @@ export interface WedgeSourceDeps {
   target?: Window;
 }
 
-const SCAN_CODE = /^[A-Z2-7]{26}$/;
 const NON_TEXT = new Set([
   'button',
   'checkbox',
@@ -114,8 +112,7 @@ export function createWedgeSource(deps: WedgeSourceDeps): InputSource & { badLay
       deps.onBadLayout?.(0);
     }
     fallbackChars = [];
-    const shaped = SCAN_CODE.test(verdict.code.replace(/[\s-]/g, ''));
-    emit({ method: deps.reader() === 'nfc' && shaped ? 'nfc' : 'wedge', code: verdict.code });
+    emit({ method: 'wedge', code: verdict.code });
   }
 
   function start(emit: (read: RawRead) => void): () => void {

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema, TimestampSchema } from './common.ts';
+import { BrandingImageSchema, OrgBrandingSchema } from './orgs.ts';
 import {
   CodeFormatSchema,
   ScanActionKindSchema,
@@ -32,10 +33,17 @@ const SessionStaffSchema = z.object({ id: IdSchema, name: z.string(), role: Scan
 /** `GET /scan/staff?q=`: people matching a name, when the sign-in roster was cut. */
 export const ScanStaffSearchSchema = z.object({ items: z.array(SessionStaffSchema) });
 
+export const ScanBrandingSchema = z.strictObject({
+  accent: OrgBrandingSchema.shape.accent.unwrap().nullable(),
+  logo: BrandingImageSchema.nullable(),
+});
+export type ScanBranding = z.infer<typeof ScanBrandingSchema>;
+
 export const ScanSessionSchema = z.object({
   workspace: ScanWorkspaceSchema.nullable().optional(),
   principal: z.enum(['scanner', 'admin']),
   state: z.enum(['ready', 'staff_required', 'not_open', 'closed', 'unassigned']),
+  branding: ScanBrandingSchema.optional(),
   scanner: z
     .object({
       id: IdSchema,

@@ -1,6 +1,4 @@
-/* tear (a pass just voided, this visit; sad): seated on the Front / Details control under the
-   dimmed pass, it looks up at it, a tear rolls down its face, a sob and a sigh. 2 s, once;
-   1% = 20 ms. */
+/* Voided pass: looks up, tears once, sobs and sighs (2 s). */
 [data-scene="tear"] [data-tear] {
   transform-box: fill-box;
   transform-origin: 50% 0;
@@ -22,7 +20,7 @@
     translate: 0 0;
     scale: 1;
   }
-  /* A sob as the tear wells, then the sigh. */
+  /* A sob, then a sigh. */
   40% {
     translate: 0 -1px;
     scale: 0.98 1.03;
@@ -49,7 +47,7 @@
     translate: 0 0.4px;
   }
 }
-/* Wells under the left eye, rolls down the pocket and fades. */
+/* Tear drops beneath the eye, then fades. */
 @keyframes wl-s-tear-drop {
   0%,
   33% {

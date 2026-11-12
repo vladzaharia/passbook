@@ -15,7 +15,7 @@ export type Quad = readonly [
 /** What a source emits. Sources never call the network. */
 export interface RawRead {
   method: ScanMethod;
-  /** Decoded text, a typed code, or an NFC VAS message (the pass's scan code). */
+  /** Decoded text or identifier produced by the source. */
   code?: string;
   /** A row picked in lookup. */
   passId?: string;

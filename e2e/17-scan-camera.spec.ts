@@ -146,8 +146,14 @@ test('camera permission denial and disconnect recover with Retry camera', async 
       { permissionDenied: true },
     );
     await pairCamera(page, scanner.pairing.code);
-    await page.getByRole('button', { name: 'Use camera', exact: true }).click();
     await expect(page.getByText('Camera access blocked', { exact: true })).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { cameraTest: { attempts: number } }).cameraTest.attempts,
+        ),
+      )
+      .toBeGreaterThan(0);
     await page.evaluate(() => {
       (window as unknown as { cameraTest: { denied: boolean } }).cameraTest.denied = false;
     });

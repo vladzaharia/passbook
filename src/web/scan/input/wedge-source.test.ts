@@ -20,7 +20,7 @@ const codeFor = (ch: string) =>
       ? `Digit${ch}`
       : (CODE_OF[ch] ?? '');
 
-function setup(over: { reader?: 'none' | 'barcode' | 'nfc'; slow?: boolean } = {}) {
+function setup(over: { slow?: boolean } = {}) {
   const clock = fakeClock();
   const fields = new WedgeFields();
   const emitted: RawRead[] = [];
@@ -30,7 +30,6 @@ function setup(over: { reader?: 'none' | 'barcode' | 'nfc'; slow?: boolean } = {
   const source = createWedgeSource({
     clock,
     fields,
-    reader: () => over.reader ?? 'barcode',
     config: () => (over.slow ? WEDGE_SLOW : WEDGE_STANDARD),
     onHuman: (ch) => humans.push(ch),
     onFocus: (f) => focus.push(f),
@@ -152,14 +151,8 @@ describe('createWedgeSource', () => {
     expect(env.emitted).toHaveLength(1);
   });
 
-  it('the method is nfc only with an NFC reader and a scan-code-shaped value', () => {
-    env = setup({ reader: 'nfc' });
-    env.burst(document.body, NFC_CODE, 8);
-    expect(env.emitted[0]?.method).toBe('nfc');
-    env.burst(document.body, 'ABCDEF0123', 8);
-    expect(env.emitted[1]?.method).toBe('wedge');
-    env.stop();
-    env = setup({ reader: 'barcode' });
+  it('keeps NFC-shaped keyboard input classified as a wedge', () => {
+    env = setup();
     env.burst(document.body, NFC_CODE, 8);
     expect(env.emitted[0]?.method).toBe('wedge');
   });

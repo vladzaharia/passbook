@@ -28,6 +28,55 @@ test('handshake and validated result round trip', () => {
   assert.equal(client.result('1', 'accepted'), false);
 });
 
+test('capability updates preserve v1 ready fields and publish the latest snapshot', () => {
+  const { client, receive } = fixture();
+  const initial = {
+    platform: 'android',
+    appVersion: '0.2.2',
+    camera: { available: true, permission: 'unknown' },
+    keyboard: { supported: true, connected: null, connectionObservable: false },
+    nfc: { available: true, reading: true, formats: ['wallet-vas'] },
+    vas: {
+      deviceSupported: true,
+      available: false,
+      reader: 'android-native',
+      reason: 'No verifier',
+    },
+    externalReader: { mode: 'keyboard', connected: null },
+    customerDisplay: { supported: false, available: false, active: false },
+  };
+  receive({
+    event: 'ready',
+    nfc: true,
+    ecp: false,
+    diagnostics: false,
+    appVersion: '0.2.2',
+    capabilities: initial,
+  });
+  let update;
+  let count = 0;
+  client.addEventListener('capabilities', (event) => {
+    update = event.detail;
+    count++;
+  });
+  const next = {
+    ...initial,
+    camera: { available: true, permission: 'granted' },
+    nfc: { ...initial.nfc, available: false, reading: false },
+  };
+  receive({ event: 'capabilities', capabilities: next });
+  assert.deepEqual(update, next);
+  assert.deepEqual(client.capabilities.capabilities, next);
+  assert.equal(client.capabilities.nfc, false);
+  assert.equal(client.capabilities.ecp, false);
+  assert.equal(client.capabilities.appVersion, '0.2.2');
+  assert.equal(client.capabilities.capabilities.vas.available, false);
+  receive({ event: 'capabilities', capabilities: null });
+  receive({ event: 'capabilities', capabilities: [] });
+  assert.equal(count, 1);
+  assert.deepEqual(client.capabilities.capabilities, next);
+});
+
 test('timeouts and newer scans invalidate old decisions', () => {
   const { client, receive } = fixture();
   receive({ event: 'scan', id: '1' });

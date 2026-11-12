@@ -1,17 +1,25 @@
 import { useEffect, useRef } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
-import type { ScanDeviceCapabilities } from '../../../shared/contracts/scanning-sessions.ts';
+import type {
+  NativeScannerCapabilities,
+  ScanDeviceCapabilities,
+} from '../../../shared/contracts/scanning-sessions.ts';
 import { reportedCapabilities } from '../../../shared/scan-surfaces.ts';
 import type { ScanApi } from '../api/scan-api.ts';
+import {
+  getNativeCapabilities,
+  NATIVE_CAPABILITIES_EVENT,
+} from '../platform/native-capabilities.ts';
 
-export function deviceCapabilities(): ScanDeviceCapabilities {
+export function deviceCapabilities(native?: NativeScannerCapabilities): ScanDeviceCapabilities {
   return reportedCapabilities({
     width: Math.max(1, Math.min(32768, Math.round(innerWidth))),
     height: Math.max(1, Math.min(32768, Math.round(innerHeight))),
     touch: matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0,
     camera: typeof navigator.mediaDevices?.getUserMedia === 'function' ? 'unknown' : 'unavailable',
     keyboard: true,
-    nativeBarcode: 'PassBookNative' in window,
+    nativeBarcode: native?.platform === 'android',
+    ...(native ? { native } : {}),
     surfaces: ['phone', 'customer'],
     preferred: 'phone',
   });
@@ -35,7 +43,7 @@ export function useDeviceReport(
       const ac = new AbortController();
       request = ac;
       try {
-        const caps = deviceCapabilities();
+        const caps = deviceCapabilities(getNativeCapabilities());
         if (typeof navigator.mediaDevices?.enumerateDevices === 'function') {
           try {
             if (
@@ -65,9 +73,11 @@ export function useDeviceReport(
       clearTimeout(timer);
       timer = setTimeout(() => void report(), 300);
     };
+    const onNativeCapabilities = () => schedule();
     void report();
     window.addEventListener('resize', schedule);
     window.addEventListener('online', schedule);
+    window.addEventListener(NATIVE_CAPABILITIES_EVENT, onNativeCapabilities);
     window.addEventListener('focus', schedule);
     return () => {
       disposed = true;
@@ -76,6 +86,7 @@ export function useDeviceReport(
       window.removeEventListener('resize', schedule);
       window.removeEventListener('online', schedule);
       window.removeEventListener('focus', schedule);
+      window.removeEventListener(NATIVE_CAPABILITIES_EVENT, onNativeCapabilities);
     };
   }, [api, scannerId, refetch]);
 }

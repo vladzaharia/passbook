@@ -7,7 +7,10 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react';
-import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
+import type {
+  ScanDeviceCapabilities,
+  ScanningDevice,
+} from '@/shared/contracts/scanning-sessions.ts';
 import { SCAN_SURFACE_LABELS } from '@/shared/scan-surfaces.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { FormField, Select } from '@/web/ui/index.ts';
@@ -68,9 +71,11 @@ function SurfacePreview({ surface }: { surface: SurfaceChoice }) {
 export function SurfacePicker({
   value,
   onChange,
+  capabilities,
 }: {
   value: ScanningDevice['surface'];
   onChange: (v: ScanningDevice['surface']) => void;
+  capabilities?: ScanDeviceCapabilities | null;
 }) {
   const choice = (key: SurfaceChoice) => {
     const selectedSurface = value === 'desk' ? 'operator' : value;
@@ -105,6 +110,13 @@ export function SurfacePicker({
   return (
     <fieldset className="@container grid min-w-0 gap-3">
       <legend className="mb-2 text-sm font-medium text-fg">Device layout</legend>
+      {capabilities?.native?.layout?.posture === 'half-folded' ||
+      capabilities?.native?.layout?.posture === 'unfolded' ? (
+        <p className="text-xs text-fg-muted">
+          On Duo, Scanner and Operator share the inside displays. Customer display makes this paired
+          device screen-only; the outside face is managed by iOS.
+        </p>
+      ) : null}
       {choice('auto')}
       <div className="grid min-w-0 gap-3 @[34rem]:grid-cols-2">
         <div className="grid min-w-0 content-start gap-2">

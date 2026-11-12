@@ -37,6 +37,7 @@ const env = {
   ...process.env,
   CLOUDFLARE_ENV: 'e2e',
   WALLET_E2E: '1',
+  VITE_E2E: '1',
   OIDC_ISSUER: 'http://localhost:5174',
   OIDC_CLIENT_ID: 'wallet-e2e',
   PUBLIC_BASE_URL: 'http://localhost:5173',

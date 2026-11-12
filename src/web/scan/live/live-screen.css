@@ -9,7 +9,7 @@
   background:
     radial-gradient(
       ellipse at 100% 0,
-      color-mix(in oklab, var(--pk-accent) 9%, transparent),
+      color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 9%, transparent),
       transparent 42%
     ),
     var(--pk-surface-page);
@@ -41,10 +41,25 @@
   place-items: center;
   width: 48px;
   height: 48px;
-  border: 1px solid color-mix(in oklab, var(--pk-accent) 30%, var(--pk-border-subtle));
+  border: 1px solid
+    color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 30%, var(--pk-border-subtle));
   border-radius: 15px;
-  background: var(--pk-accent-subtle);
+  background: color-mix(
+    in oklab,
+    var(--scan-org-accent, var(--pk-accent)) 10%,
+    var(--pk-surface-raised)
+  );
   color: var(--pk-accent-fg);
+}
+.scan-live-brand-icon[data-has-logo] {
+  width: clamp(84px, 11vw, 132px);
+}
+.scan-live-logo {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  border-radius: inherit;
+  object-fit: contain;
 }
 .scan-live-brand-text {
   min-width: 0;
@@ -52,7 +67,7 @@
 .scan-live-brand h1 {
   overflow-wrap: anywhere;
   color: var(--pk-text-strong);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 650;
   line-height: 1.3;
 }
@@ -65,7 +80,7 @@
 }
 .scan-live-org {
   color: var(--pk-text-muted);
-  font-size: 14px;
+  font-size: 16px;
 }
 .scan-live-status {
   display: inline-flex;
@@ -113,16 +128,16 @@
   --scan-live-result-bg: var(--pk-danger-subtle);
 }
 .scan-live-welcome {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex: 1;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
   width: min(100%, 1400px);
   min-height: 45dvh;
   margin-inline: auto;
-  padding: clamp(28px, 5vw, 72px) 24px;
+  padding: clamp(28px, 5vw, 72px);
+  overflow: hidden;
   border: 1px solid var(--pk-border-subtle);
   border-radius: 28px;
   background:
@@ -132,36 +147,83 @@
       transparent 58%
     ),
     var(--pk-surface-raised);
-  text-align: center;
+  text-align: left;
+}
+.scan-live-customer-copy {
+  position: relative;
+  z-index: 1;
+  width: 68%;
+  max-width: 720px;
 }
 .scan-live-welcome h2 {
-  max-width: 24ch;
+  max-width: 16ch;
   color: var(--pk-text-strong);
-  font-size: clamp(36px, 6vw, 72px);
-  font-weight: 650;
-  line-height: 1.05;
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 700;
+  line-height: 1;
   overflow-wrap: anywhere;
 }
 .scan-live-welcome-hint {
+  margin-top: 16px;
   color: var(--pk-text-muted);
-  font-size: clamp(16px, 2vw, 20px);
+  font-size: clamp(22px, 2.8vw, 32px);
 }
 .scan-live-buddy {
-  position: relative;
-  width: 180px;
-  height: 110px;
+  position: absolute;
+  right: clamp(8px, 2vw, 32px);
+  bottom: max(24px, env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 0;
+  width: clamp(240px, 34vw, 520px);
+  aspect-ratio: 4 / 3;
+  pointer-events: none;
 }
 .scan-live-buddy::before {
   content: "";
   position: absolute;
-  inset: 0 35px;
+  inset: 8% 8% 12%;
   border-radius: 50%;
-  background: color-mix(in oklab, var(--pk-accent) 10%, transparent);
+  background: radial-gradient(
+    ellipse,
+    color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 24%, transparent),
+    transparent 72%
+  );
 }
 .scan-live-buddy .wl-buddy {
   top: auto;
+  right: 0;
   bottom: 0;
-  translate: -50% 0;
+  left: auto;
+  width: 100%;
+  translate: 0;
+}
+.scan-live-customer-buddy-art .wl-art {
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 600px) {
+  .scan-live-welcome {
+    align-items: flex-start;
+    min-height: clamp(360px, 58dvh, 560px);
+    padding: 28px 24px max(220px, 60vw);
+  }
+  .scan-live-customer-copy {
+    width: 100%;
+    max-width: 100%;
+  }
+  .scan-live-buddy {
+    right: 0;
+    width: clamp(200px, 60vw, 280px);
+  }
+}
+@media (max-height: 520px) and (min-width: 601px) {
+  .scan-live-welcome {
+    min-height: 260px;
+    padding-block: 24px;
+  }
+  .scan-live-buddy {
+    width: min(34vw, 320px);
+  }
 }
 .scan-live-recent {
   flex: 1;

@@ -40,6 +40,7 @@ import {
 } from './repo-session-authority.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
+import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
 import { reportScanDevice } from './scanning-workspace.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
@@ -70,6 +71,7 @@ const manageSessionActor = requireScanActor({
 scanRoutes.use('/session', (c, next) =>
   (c.req.method === 'GET' ? readSessionActor : manageSessionActor)(c, next),
 );
+scanRoutes.use('/branding/logo', readSessionActor);
 scanRoutes.use(
   '/device',
   requireScanActor({ capability: 'scanning:manage', staffOptional: true, screens: true }),
@@ -118,6 +120,7 @@ register(
 );
 
 registerScanStaffRoutes(scanRoutes);
+registerScanBrandingRoute(scanRoutes);
 
 register(
   scanRoutes,

@@ -76,6 +76,20 @@
     --scan-card-w: 980px;
   }
 }
+@media (max-height: 650px) {
+  :root {
+    --scan-card-top: calc(env(safe-area-inset-top, 0px) + 72px);
+    --scan-card-bottom: calc(var(--scan-dock-h) + 16px);
+  }
+  .scan-result-band {
+    min-height: 0;
+  }
+}
+@media (max-height: 650px) and (min-width: 1024px) {
+  :root {
+    --scan-card-top: calc(env(safe-area-inset-top, 0px) + 104px);
+  }
+}
 
 /* The shell: layers in BF z-order. */
 .scan-shell {

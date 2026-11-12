@@ -1,5 +1,6 @@
+import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
-import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
+import { ScanBrandingSchema, type ScanSession } from '../../../shared/contracts/scan-session.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import {
   type AppError,
@@ -17,7 +18,13 @@ import { snapshotCredentialEnv } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { undoWindowMinutes } from './outcome.ts';
 import { credentialGone, getScanner } from './repo-device.ts';
-import { orgNameStmt, STAFF_ROSTER_LIMIT, staffListStmt, userNameStmt } from './repo-session.ts';
+import {
+  orgBrandingStmt,
+  orgNameStmt,
+  STAFF_ROSTER_LIMIT,
+  staffListStmt,
+  userNameStmt,
+} from './repo-session.ts';
 import { sessionReadFencesCurrent } from './repo-session-authority.ts';
 import {
   sessionCountGuardPredicate,
@@ -155,6 +162,7 @@ async function sessionFor(
     db.batch([
       ...(counts ? [sessionCountStatusStmt(db, guard, scope)] : []),
       orgNameStmt(db, actor.orgId),
+      orgBrandingStmt(db, actor.orgId),
       ...(peopleStmt ? [peopleStmt] : []),
       ...(counts?.stmts ?? []),
     ]),
@@ -170,8 +178,17 @@ async function sessionFor(
       return sessionFor(ctx, sourceActor, dayStart, true, countAuthority);
   }
   const orgName = (results[base]?.results?.[0] as { name: string } | undefined)?.name ?? '';
-  const peopleRows = peopleStmt ? (results[base + 1]?.results ?? []) : [];
-  const countResults = results.slice(base + (peopleStmt ? 2 : 1));
+  const storedBranding = OrgBrandingSchema.parse(
+    JSON.parse(
+      (results[base + 1]?.results?.[0] as { branding?: string } | undefined)?.branding ?? '{}',
+    ),
+  );
+  const branding = ScanBrandingSchema.parse({
+    accent: storedBranding.accent ?? null,
+    logo: storedBranding.logo ?? null,
+  });
+  const peopleRows = peopleStmt ? (results[base + 2]?.results ?? []) : [];
+  const countResults = results.slice(base + (peopleStmt ? 3 : 2));
   if (counts) {
     const today = (countResults[0]?.results?.[0] as { n?: unknown } | undefined)?.n;
     const managers = (countResults[1]?.results?.[0] as { has?: unknown } | undefined)?.has;
@@ -229,6 +246,7 @@ async function sessionFor(
   return {
     workspace,
     principal: actor.principal,
+    branding,
     state: stateOf(ctx, actor),
     scanner: actor.scanner
       ? {

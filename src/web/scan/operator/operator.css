@@ -25,9 +25,14 @@
   place-items: center;
   width: 48px;
   height: 48px;
-  border: 1px solid color-mix(in oklab, var(--pk-accent) 30%, var(--pk-border-subtle));
+  border: 1px solid
+    color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 30%, var(--pk-border-subtle));
   border-radius: 15px;
-  background: var(--pk-accent-subtle);
+  background: color-mix(
+    in oklab,
+    var(--scan-org-accent, var(--pk-accent)) 10%,
+    var(--pk-surface-raised)
+  );
   color: var(--pk-accent-fg);
 }
 .scan-operator-eyebrow {
@@ -109,7 +114,11 @@
     grid-column: 1 / -1;
   }
   .scan-shell[data-surface="operator"] {
-    --scan-card-w: 600px;
+    --scan-card-w: 656px;
+  }
+  .scan-shell[data-surface="operator"] > .scan-card-layer:has(.scan-result) {
+    justify-content: flex-start;
+    padding-left: calc(max(20px, (100vw - 1120px) / 2) + 464px);
   }
 }
 .scan-shell[data-surface="operator"] > .scan-cam {
@@ -120,6 +129,9 @@
 }
 .scan-shell[data-surface="operator"] > .scan-card-layer:has(.scan-result) {
   z-index: 11;
+}
+.scan-shell[data-surface="operator"]:has(.scan-result) .scan-operator-activity {
+  visibility: hidden;
 }
 
 .scan-shell[data-surface="operator"]:not(:has(.scan-result)) > .scan-buddy-seat {

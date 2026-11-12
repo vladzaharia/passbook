@@ -1,10 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
+import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import { CreatedScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
 import {
   ScanningSessionDetailSchema,
   ScanningSessionListSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
+import { makePng } from '../templates/package/fixtures.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { grantScanMembership } from './test-kit.ts';
 
@@ -112,6 +114,57 @@ describe('shared scanning sessions', () => {
     expect(ids).not.toContain(foreign.id);
   });
 });
+
+describe('scanner organization branding', () => {
+  it('projects a minimal org brand and serves only the paired actor’s logo', async () => {
+    const { kit, call, parent, device, pair } = fixture;
+    const x3 = makePng(480, 150);
+    const x2 = makePng(320, 100);
+    const encoded = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64');
+    const uploaded = await call('PUT', `/orgs/${kit.org.id}/branding/logo`, {
+      x3: encoded(x3),
+      x2: encoded(x2),
+    });
+    expect(uploaded.status).toBe(200);
+    const updated = await call('PATCH', `/orgs/${kit.org.id}`, {
+      branding: {
+        accent: '#0f766e',
+        passColors: { background: '#0f172a', foreground: '#ffffff', label: '#94a3b8' },
+      },
+    });
+    expect(updated.status).toBe(200);
+
+    const session = await parent('Branded session');
+    const scanner = await device(session.id, 'Branded scanner');
+    const headers = await pair(scanner.pairing?.code ?? '');
+    const sessionResponse = await call('GET', '/scan/session', undefined, headers);
+    expect(sessionResponse.status).toBe(200);
+    const scanSession = ScanSessionSchema.parse(await sessionResponse.json());
+    expect(scanSession.branding).toEqual({
+      accent: '#0f766e',
+      logo: expect.objectContaining({ w: 480, h: 150, sha: expect.any(String) }),
+    });
+
+    const image = await call('GET', '/scan/branding/logo', undefined, headers);
+    expect(image.status).toBe(200);
+    expect(image.headers.get('content-type')).toBe('image/png');
+    expect(image.headers.get('cache-control')).toBe('private, no-cache');
+    expect(image.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(new Uint8Array(await image.arrayBuffer())).toEqual(x3);
+
+    const etag = image.headers.get('etag');
+    expect(etag).toBeTruthy();
+    const cached = await call('GET', '/scan/branding/logo', undefined, {
+      ...headers,
+      'if-none-match': etag ?? '',
+    });
+    expect(cached.status).toBe(304);
+    expect(
+      (await call('GET', `/scan/branding/logo?orgId=${kit.org.id}`, undefined, headers)).status,
+    ).toBe(422);
+  });
+});
+
 describe('legacy standalone monitors', () => {
   it('remain read-only when they report device capabilities', async () => {
     const { kit, call, pair } = fixture;

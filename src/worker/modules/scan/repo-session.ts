@@ -5,6 +5,9 @@ type Db = D1Database;
 export const orgNameStmt = (db: Db, orgId: string) =>
   stmt(db, 'SELECT name FROM orgs WHERE id = ?', [orgId]);
 
+export const orgBrandingStmt = (db: Db, orgId: string) =>
+  stmt(db, 'SELECT branding FROM orgs WHERE id = ?', [orgId]);
+
 /** The sign-in roster: bounded, so a large org never turns a session read into a full table scan. */
 export const STAFF_ROSTER_LIMIT = 500;
 const STAFF_SEARCH_LIMIT = 50;
