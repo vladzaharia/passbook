@@ -1,12 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { run, stmt } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
-import { actorCsrfAuthorityStmt, actorCsrfFenceFromResult } from './actor-csrf.ts';
-import { barcodeHashOfCode, cleanCode } from './codes.ts';
 import { credentialTombstoneRefsForInput } from './credential-input.ts';
 import {
   actorFor,
@@ -19,7 +17,7 @@ import {
   WINDOW_MS,
   windowStart,
 } from './miss-integration-test-fixtures.ts';
-import { prepareReadMiss } from './misses.ts';
+import { grantReadMiss } from './misses.ts';
 import { countMiss } from './misses-test-fixtures.ts';
 import { missCounterKey } from './repo-miss-authority.ts';
 import { grantScanMembership, key } from './test-kit.ts';
@@ -168,83 +166,24 @@ describe('scoped atomic miss accounting', () => {
     expect(await audits(scanner.id)).toHaveLength(1);
   });
 
-  it('composes a guarded read-miss plan into a larger batch', async () => {
+  it('does not count, and discloses nothing, when the scanner credential rotates before the count', async () => {
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const actor = await actorFor(scanner.id);
     const counterKey = missCounterKey(actor);
-    await run(kit.env.DB, 'INSERT INTO counters (key,window_start,count) VALUES (?,?,30)', [
-      counterKey,
-      windowStart(),
-    ]);
-    const csrfRead = actorCsrfAuthorityStmt(kit.env.DB, actor);
-    if (!csrfRead) throw new Error('Missing scanner CSRF authority statement');
-    const csrf = await actorCsrfFenceFromResult(kit.ctx, actor, await csrfRead.all());
-    if (!csrf) throw new Error('Missing scanner CSRF authority fence');
-    const input = { csrf, credentials: null, visible: [], candidates: { sql: '0', params: [] } };
-    const plan = prepareReadMiss(kit.ctx, actor, input);
-    const results = await kit.env.DB.batch([
-      stmt(kit.env.DB, 'SELECT 1 AS marker'),
-      ...plan.stmts,
-      stmt(kit.env.DB, 'SELECT 2 AS marker'),
-    ]);
-    expect(results[0]?.results?.[0]).toEqual({ marker: 1 });
-    expect(results[results.length - 1]?.results?.[0]).toEqual({ marker: 2 });
-    const result = plan.result(results.slice(1, 1 + plan.stmts.length));
-    expect(result).toBe('capped');
-    expect(() => plan.throwIfCapped(result)).toThrow('Too many codes not found.');
-    expect(await counter(counterKey)).toEqual({ count: 31 });
-    expect(await audits(scanner.id)).toHaveLength(1);
-
-    const stale = prepareReadMiss(kit.ctx, actor, input);
-    await run(kit.env.DB, 'UPDATE scanners SET revoked_at=? WHERE id=?', [
-      kit.clock.now(),
+    // A CSRF rotation moves the credential epoch the scanner principal binds.
+    await run(kit.env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
+      kit.fx.ids.token(),
       scanner.id,
     ]);
-    const staleResult = stale.result(await kit.env.DB.batch(stale.stmts));
-    expect(staleResult).toBe('not_committed');
-    stale.throwIfCapped(staleResult);
-    expect(await counter(counterKey)).toEqual({ count: 31 });
-    expect(await audits(scanner.id)).toHaveLength(1);
-  });
-
-  it('does not count a read miss when the captured scanner CSRF secret rotates in the final batch', async () => {
-    const scanner = await kit.scanner({ templateIds: [templateId] });
-    const actor = await actorFor(scanner.id);
-    const counterKey = missCounterKey(actor);
-    const csrfRead = actorCsrfAuthorityStmt(kit.env.DB, actor);
-    if (!csrfRead) throw new Error('Missing scanner CSRF authority statement');
-    const csrf = await actorCsrfFenceFromResult(kit.ctx, actor, await csrfRead.all());
-    if (!csrf) throw new Error('Missing scanner CSRF authority fence');
-    const plan = prepareReadMiss(kit.ctx, actor, {
-      csrf,
-      credentials: null,
-      visible: [],
-      candidates: { sql: '0', params: [] },
-    });
-    const results = await kit.env.DB.batch([
-      stmt(
-        kit.env.DB,
-        'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=? RETURNING 1',
-        [kit.fx.ids.token(), scanner.id],
-      ),
-      ...plan.stmts,
-    ]);
-    expect(results[0]?.results).toHaveLength(1);
-    const result = plan.result(results.slice(1));
-    expect(result).toBe('not_committed');
-    plan.throwIfCapped(result);
+    await countMiss(kit.ctx, actor);
     expect(await counter(counterKey)).toBeNull();
     expect(await audits(scanner.id)).toHaveLength(0);
   });
 
-  it('does not count when a matching candidate appears in the read-miss batch', async () => {
+  it('counts only while no pass matches the input, and a pass of another tenant never matters', async () => {
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const actor = await actorFor(scanner.id);
     const counterKey = missCounterKey(actor);
-    const csrfRead = actorCsrfAuthorityStmt(kit.env.DB, actor);
-    if (!csrfRead) throw new Error('Missing scanner CSRF authority statement');
-    const csrf = await actorCsrfFenceFromResult(kit.ctx, actor, await csrfRead.all());
-    if (!csrf) throw new Error('Missing scanner CSRF authority fence');
     await ensureCredentialRefKeyset(kit.env.DB, kit.env);
     const code = `LATE-${key()}`;
     const credentials = await credentialTombstoneRefsForInput(
@@ -255,33 +194,23 @@ describe('scoped atomic miss accounting', () => {
       false,
       'require',
     );
-    actor.credentialKeysetCommitment = credentials.credentialKeysetCommitment;
-    const hash = await barcodeHashOfCode(cleanCode(code));
-    const plan = prepareReadMiss(kit.ctx, actor, {
-      csrf,
-      credentials,
-      visible: [],
-      candidates: {
-        sql: 'EXISTS (SELECT 1 FROM passes WHERE org_id=? AND mode=? AND barcode_hash=?/* scan-ephemeral-barcode-hash */)',
-        params: [kit.org.id, 'live', hash],
-      },
-    });
-    expect(plan.result(await kit.env.DB.batch(plan.stmts))).toBe('counted');
+    const unchanged = {
+      sql: 'NOT EXISTS (SELECT 1 FROM passes p WHERE p.org_id = {org} AND p.mode = {mode} AND p.external_id = ?)',
+      params: [code],
+    };
+    const refs = credentials.credentialTombstoneRefs;
+    expect(await grantReadMiss(kit.ctx, actor, { refs, unchanged })).toBe('counted');
     expect(await counter(counterKey)).toEqual({ count: 1 });
+    // The same input in the other mode is not this tenant's match.
+    const other = await kit.scanPass(templateId, {}, { mode: 'test' });
+    await run(kit.env.DB, 'UPDATE passes SET external_id=? WHERE id=?', [code, other.id]);
+    expect(await grantReadMiss(kit.ctx, actor, { refs, unchanged })).toBe('counted');
+    expect(await counter(counterKey)).toEqual({ count: 2 });
+    // A matching pass appearing in the actor's own org and mode makes the miss stale.
     const pass = await kit.scanPass(templateId);
-    const results = await kit.env.DB.batch([
-      stmt(
-        kit.env.DB,
-        'UPDATE passes SET barcode_hash=?,revision=revision+1 WHERE id=? RETURNING 1',
-        [hash, pass.id],
-      ),
-      ...plan.stmts,
-    ]);
-    expect(results[0]?.results).toHaveLength(1);
-    const result = plan.result(results.slice(1));
-    expect(result).toBe('not_committed');
-    plan.throwIfCapped(result);
-    expect(await counter(counterKey)).toEqual({ count: 1 });
+    await run(kit.env.DB, 'UPDATE passes SET external_id=? WHERE id=?', [code, pass.id]);
+    expect(await grantReadMiss(kit.ctx, actor, { refs, unchanged })).toBe('not_committed');
+    expect(await counter(counterKey)).toEqual({ count: 2 });
     expect(await audits(scanner.id)).toHaveLength(0);
   });
 
@@ -306,7 +235,7 @@ describe('scoped atomic miss accounting', () => {
   });
 
   it.each(['counter', 'audit'] as const)(
-    'rolls back a read-only miss if its %s write is suppressed',
+    'rolls back a read-only miss if its %s write fails',
     async (failure) => {
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const actor = await actorFor(scanner.id);
@@ -317,18 +246,16 @@ describe('scoped atomic miss accounting', () => {
         windowStart(),
         before,
       ]);
-      const trigger = `miss_read_ignore_${failure}`;
+      const trigger = `miss_read_fail_${failure}`;
       const ddl =
         failure === 'audit'
           ? `CREATE TRIGGER ${trigger} BEFORE INSERT ON audit_log
-          WHEN NEW.action='scan.misses_capped' BEGIN SELECT RAISE(IGNORE); END`
-          : `CREATE TRIGGER ${trigger} BEFORE INSERT ON counters
-          WHEN NEW.key LIKE 'scan:miss:%' BEGIN SELECT RAISE(IGNORE); END`;
+          WHEN NEW.action='scan.misses_capped' BEGIN SELECT RAISE(ABORT, 'miss audit failed'); END`
+          : `CREATE TRIGGER ${trigger} BEFORE UPDATE ON counters
+          WHEN NEW.key LIKE 'scan:miss:%' BEGIN SELECT RAISE(ABORT, 'miss counter failed'); END`;
       await run(kit.env.DB, ddl);
       try {
-        await expect(countMiss(kit.ctx, actor)).rejects.toThrow(
-          /bad JSON path: '\$\[scan_effect_incomplete\]'/,
-        );
+        await expect(countMiss(kit.ctx, actor)).rejects.toThrow(/miss (audit|counter) failed/);
         expect(await counter(counterKey)).toEqual({ count: before });
         expect(await audits(scanner.id)).toHaveLength(0);
       } finally {
