@@ -51,6 +51,8 @@
   flex: 1;
   flex-direction: column;
   align-items: flex-start;
+  align-self: stretch;
+  justify-content: center;
   min-width: 0;
   padding: 0;
   border: 0;

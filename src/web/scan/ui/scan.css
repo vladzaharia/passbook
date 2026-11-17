@@ -190,6 +190,10 @@
   padding-inline: 24px;
   padding-block: var(--scan-card-top) var(--scan-card-bottom);
 }
+/* A desk card with actions needs the room the door's buddy seat reserves: stop just above the dock. */
+.scan-card-layer:has(.scan-result[data-kind="ready"]) {
+  padding-block-end: calc(var(--scan-dock-h) + 16px);
+}
 .scan-card-layer[data-mode="boot"] {
   align-items: center;
   padding-block: calc(env(safe-area-inset-top, 0px) + 72px) 24px;
