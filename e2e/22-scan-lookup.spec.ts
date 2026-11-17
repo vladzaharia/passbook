@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
+import { pairScanner } from './helpers/pair.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -77,8 +78,7 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
       settings: { reader: 'none', lookup: true },
     });
     const page = await context.newPage();
-    await page.goto(`/scan#pair=${encodeURIComponent(setup.pairing.code)}`);
-    await page.getByRole('button', { name: 'Pair', exact: true }).click();
+    await pairScanner(page, setup.pairing.code);
     await page.getByTestId('scan-start').click();
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await page.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' }).click();
