@@ -1,3 +1,17 @@
+-- row_version and template_release_heads are added here, not in 0052 with the rest of their feature: the
+-- triggers and guards below read them, and a database stopped between migrations must still accept writes.
+ALTER TABLE passes ADD COLUMN row_version INTEGER NOT NULL DEFAULT 1;
+
+-- Release heads: the newest release per (template, org scope, mode, provider). org_scope is '' for the
+-- platform scope. A view, not a table: a trigger-maintained table inflates the meta.changes of every
+-- release insert (D1 counts trigger changes), and a view cannot be written, replaced or drifted.
+CREATE VIEW template_release_heads AS
+SELECT r.template_id AS template_id, COALESCE(r.org_id, '') AS org_scope, r.mode AS mode,
+  r.provider AS provider, r.id AS release_id, r.generation AS generation
+FROM template_releases r
+WHERE r.generation = (SELECT MAX(n.generation) FROM template_releases n
+  WHERE n.template_id = r.template_id AND n.org_id IS r.org_id AND n.mode = r.mode AND n.provider = r.provider);
+
 -- Credential authority is independent of public-link rotation and removal/restore history.
 ALTER TABLE passes ADD COLUMN credential_generation INTEGER NOT NULL DEFAULT 1
   CHECK (typeof(credential_generation) = 'integer'
