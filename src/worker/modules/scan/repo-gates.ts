@@ -65,21 +65,6 @@ export interface GateClaim extends GateKey {
   effect: ScanEffectSnapshot;
 }
 
-/** The scan that holds the gate now, with who and where, for `previous` and `cooldown`. */
-export const gateHolderStmt = (db: Db, g: GateKey): D1PreparedStatement =>
-  stmt(
-    db,
-    `SELECT g.state AS gate_state, g.last_at, g.last_scan_id AS gate_scan_id, g.count AS gate_count,
-       s.id AS scan_id, s.at, s.state AS scan_state, s.action_id,
-       s.override_of, s.undone_by, sc.name AS scanner_name, st.name AS staff_name
-     FROM scan_gates g
-     LEFT JOIN scans s ON s.id = g.last_scan_id
-     LEFT JOIN scanners sc ON sc.id = s.scanner_id
-     LEFT JOIN scan_staff st ON st.id = s.staff_id
-     WHERE g.pass_id = ?/* scan-ephemeral-pass-id */ AND g.action_id = ?/* scan-ephemeral-action-id */ AND g.scope = ?/* scan-ephemeral-event-scope */`,
-    [g.passId, g.actionId, g.scope],
-  );
-
 /** SQL and params for "this scan holds the gate": the guard on every statement that follows a claim. */
 export const wonGate = (g: GateKey, scanId: string) => ({
   sql: `EXISTS (SELECT 1 FROM scan_gates WHERE pass_id = ?/* scan-ephemeral-pass-id */ AND action_id = ?/* scan-ephemeral-action-id */ AND scope = ?/* scan-ephemeral-event-scope */ AND last_scan_id = ?/* scan-ephemeral-scan-id */)`,

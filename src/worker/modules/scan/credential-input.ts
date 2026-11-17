@@ -11,7 +11,6 @@ import {
 import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
 import { barcodeHashOfCode, cleanCode, codeKeyOf, lookupHashOf } from './codes.ts';
 import {
-  credentialTombstonesClear,
   validCredentialKeysetCommitment,
   validCredentialTombstoneRefs,
 } from './repo-credential-tombstones.ts';
@@ -162,23 +161,4 @@ export function credentialInputValid(
   return 'passId' in input
     ? own.length === 0 && other.length === 0
     : own.length > 0 && other.length > 0;
-}
-
-export async function credentialInputAllowed(
-  ctx: ServiceContext,
-  orgId: string,
-  mode: Mode,
-  input: ScanInput,
-  observed: CredentialTombstoneSnapshot,
-): Promise<boolean> {
-  return (
-    credentialInputValid(input, observed) &&
-    credentialTombstonesClear(
-      ctx.env.DB,
-      orgId,
-      mode,
-      observed.credentialTombstoneRefs,
-      observed.credentialKeysetCommitment,
-    )
-  );
 }

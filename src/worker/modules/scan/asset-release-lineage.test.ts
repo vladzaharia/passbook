@@ -43,8 +43,11 @@ async function setup(older = false) {
 }
 
 describe('scanner asset approved-release lineage', () => {
-  it('keeps the pass snapshot when the same version is republished identically', async () => {
-    const { scanner, actor, pass, candidate } = await setup();
+  it('keeps the pass snapshot, and a minted grant, when the same version is republished identically', async () => {
+    const { scanner, actor, pass, candidate, grant } = await setup();
+    const image = (token: string) =>
+      kit.get(scanner.headers, `/passes/${pass.id}/assets/icon.png?g=${token}`);
+    expect((await image(grant)).status).toBe(200);
     await approveAppleRelease(kit, {
       orgId: kit.org.id,
       mode: 'live',
@@ -67,9 +70,9 @@ describe('scanner asset approved-release lineage', () => {
       false,
       'commit',
     );
-    expect(
-      (await kit.get(scanner.headers, `/passes/${pass.id}/assets/icon.png?g=${next}`)).status,
-    ).toBe(200);
+    expect((await image(next)).status).toBe(200);
+    // An identical republish is no change: the grant minted before it still redeems, and so does the new one.
+    expect((await image(grant)).status).toBe(200);
   });
 
   it('rejects a previous approved release after the same version is republished with other adapter capabilities', async () => {

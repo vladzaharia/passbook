@@ -178,26 +178,6 @@ export function failScanStmt(
   );
 }
 
-/** An override target: an earlier heads-up the same actor wrote (SA 2.6). */
-export async function overrideTarget(
-  db: Db,
-  orgId: string,
-  mode: Mode,
-  actorKey: string,
-  id: string,
-  since: number,
-): Promise<{ scan: ScanRow; taken: boolean } | null> {
-  const row = await first<Raw & { taken: number }>(
-    db,
-    `SELECT ${COLUMNS}, EXISTS (SELECT 1 FROM scans o WHERE o.actor_key = ? AND o.at >= ?
-         AND o.override_of = ? AND o.outcome = 'ok') AS taken
-     FROM scans WHERE id = ? AND org_id = ? AND mode = ? AND actor_key = ? AND state = 'done'
-       AND outcome = 'heads_up' AND at >= ?`,
-    [actorKey, since, id, id, orgId, mode, actorKey, since],
-  );
-  return row ? { scan: toScan(row), taken: row.taken === 1 } : null;
-}
-
 /** Pending rows past the threshold, oldest first. */
 export async function pendingScans(db: Db, olderThan: number, limit: number): Promise<ScanRow[]> {
   const rows = await all<Raw>(

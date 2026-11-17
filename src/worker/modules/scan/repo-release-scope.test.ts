@@ -8,7 +8,7 @@ import { type ScanActor, scannerActor, withRole } from './actor.ts';
 import { actorAuthorityCurrent } from './repo-actor-authority.ts';
 import { getScanner } from './repo-device.ts';
 import { templateManifests } from './repo-event-templates.ts';
-import { getConsoleEvent } from './repo-events.ts';
+import { getCommittedConsoleEvent } from './repo-events.ts';
 import { countOrgTemplates, readScannerScope, readValidEventScope } from './repo-scope.ts';
 import { captureTemplateStamps } from './repo-scope-releases.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
@@ -146,7 +146,10 @@ describe('approved scanner release scopes', () => {
     expect(
       (await readValidEventScope(kit.env.DB, kit.org.id, 'live', event.id))?.templateIds,
     ).toEqual([template.id]);
-    expect((await getConsoleEvent(kit.env.DB, event.id))?.templateIds).toEqual([template.id]);
+    expect(
+      (await getCommittedConsoleEvent(kit.env.DB, event.id, kit.org.id, kit.clock.now()))
+        ?.templateIds,
+    ).toEqual([template.id]);
     expect(await readValidEventScope(kit.env.DB, other.id, 'live', foreign.id)).toBeNull();
     expect(await current(await actorFor(scanner.id), template.id)).toBe(true);
     const stamps = await captureTemplateStamps(kit.env.DB, kit.org.id, 'live', [template.id]);

@@ -71,18 +71,6 @@ export function eventOccupancySql(
   return `((SELECT COUNT(DISTINCT occupancy.pass_id) FROM (${liveEventPresenceSql(orgSql, modeSql, eventSql)}) occupancy${filter})
     + ${retainedEventCountSql(orgSql, modeSql, eventSql, inside)})`;
 }
-/** Whether a live pass is already in the same event population used by occupancy. */
-export function eventHasPassSql(
-  orgSql: string,
-  modeSql: string,
-  eventSql: string,
-  passIdSql: string,
-  inside: boolean,
-): string {
-  return `EXISTS (SELECT 1 FROM (${liveEventPresenceSql(orgSql, modeSql, eventSql)}) occupancy
-    WHERE occupancy.pass_id=${passIdSql}${inside ? " AND occupancy.state='in'" : ''})`;
-}
-
 /** Historical arrivals and current inside include live presence plus proven retained deletions. */
 export const eventTotalsStmt = (db: D1Database, orgId: string, mode: Mode, eventId: string) => {
   const org = '(SELECT org_id FROM scope)';

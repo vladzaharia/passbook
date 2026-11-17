@@ -1,10 +1,6 @@
 import type { Candidate } from './repo-lookup.ts';
 import type { OutputPredicate } from './repo-output-predicates.ts';
 
-export function deniedLookupPredicate(): OutputPredicate {
-  return { sql: '0', params: [] };
-}
-
 /** The pass still has the photo and image generation the candidate was read with. */
 export function lookupPhotoSnapshotPredicate(source: Candidate): OutputPredicate {
   const originalPhoto = source.assetPhoto;
@@ -23,7 +19,7 @@ export function lookupPhotoSnapshotPredicate(source: Candidate): OutputPredicate
           originalPhoto.includeInPass,
         ],
       }
-    : deniedLookupPredicate();
+    : { sql: '0', params: [] };
 }
 
 export function andLookupPredicates(

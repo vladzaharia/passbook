@@ -87,7 +87,6 @@ const eventSelect = (
        AND s.mode=e.mode AND s.revoked_at IS NULL) AS scanners
   FROM scan_events e`;
 
-const SELECT = eventSelect('NULL');
 const SELECT_WITH_COUNT = eventSelect(eventExpectedCountSql('e', '?'));
 
 const toRow = (r: Raw): ConsoleEventRow => ({
@@ -123,11 +122,6 @@ export async function getConsoleEventTarget(db: Db, id: string) {
     'SELECT org_id AS orgId, mode FROM scan_events WHERE id = ?',
     [id],
   );
-}
-
-export async function getConsoleEvent(db: Db, id: string): Promise<ConsoleEventRow | null> {
-  const row = await first<Raw>(db, `${SELECT} WHERE e.id = ?`, [id]);
-  return row ? toRow(row) : null;
 }
 
 /**
