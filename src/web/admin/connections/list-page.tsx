@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionSummarySchema } from '@/shared/contracts/connections.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { connectorIcon } from '../../lib/entities.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -60,7 +60,7 @@ export function ConnectionsListPage({
     () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
     [orgs.data],
   );
-  const columns = useMemo<ColumnDef<Connection, never>[]>(() => {
+  const columns = useMemo<DataColumnDef<Connection, never>[]>(() => {
     const now = Date.now();
     return [
       {

@@ -1,9 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { DeliveryEntrySchema, type PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { api } from '../../../lib/api.ts';
 import { DELIVERY_ICON } from '../../../lib/entities.ts';
@@ -192,7 +192,7 @@ export function DeliveryTab({ pass, readOnly }: { pass: PassDetailDto; readOnly:
   readOnlyRef.current = readOnly;
   const retryRef = useRef(retry);
   retryRef.current = retry;
-  const columns = useMemo<ColumnDef<Entry, never>[]>(
+  const columns = useMemo<DataColumnDef<Entry, never>[]>(
     () => [
       {
         id: 'kind',

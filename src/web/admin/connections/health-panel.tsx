@@ -1,4 +1,3 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import { Pause } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { z } from 'zod';
@@ -6,6 +5,7 @@ import type {
   ConnectionDetailSchema,
   ConnectionRunSchema,
 } from '@/shared/contracts/connections.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { cn } from '../../lib/cn.ts';
 import { formatDateTime } from '../../lib/format.ts';
@@ -64,7 +64,7 @@ function SampledErrors({ detail }: { detail: string | null | undefined }) {
   );
 }
 
-const columns: ColumnDef<Run, never>[] = [
+const columns: DataColumnDef<Run, never>[] = [
   {
     id: 'started',
     header: 'Started',

@@ -1,7 +1,7 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useMemo, useRef } from 'react';
 import { BELOW_MD, useMediaQuery } from '@/web/lib/media.ts';
 import { useArrival } from '@/web/lib/motion.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
   Badge,
   Button,
@@ -64,7 +64,7 @@ export function AuditPage({
   // Cells are components: columns rebuilt on every render would remount them and drop focus.
   const openRef = useRef(open);
   openRef.current = open;
-  const columns = useMemo<ColumnDef<AuditEntry>[]>(
+  const columns = useMemo<DataColumnDef<AuditEntry>[]>(
     () => [
       {
         header: 'Action',

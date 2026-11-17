@@ -1,9 +1,9 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import { Copy, KeyRound } from 'lucide-react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { copyText } from '@/web/lib/clipboard.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { formatDay } from '@/web/lib/format.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { MetaLink, RowActions, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { type ApiKey, keyState, SCOPE_LABEL } from './queries.ts';
@@ -30,7 +30,7 @@ export function keyColumns({
   now,
   canRevoke,
   onRevoke,
-}: KeyColumnsOptions): ColumnDef<ApiKey, never>[] {
+}: KeyColumnsOptions): DataColumnDef<ApiKey, never>[] {
   return [
     {
       header: 'Name',
