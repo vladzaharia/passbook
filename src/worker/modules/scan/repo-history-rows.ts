@@ -1,4 +1,5 @@
 import type { SqlValue } from '../../platform/db.ts';
+import { UnavailableError } from '../../platform/errors.ts';
 import type { HistoryRaw, HistoryRow } from './history-row.ts';
 import { toHistoryRow } from './history-row.ts';
 import { uniqueScanEventIdSql } from './repo-history-provenance.ts';
@@ -103,6 +104,12 @@ export async function readHistoryPage(
     historyPageStmt(db, auth, sel, now),
   ]);
   const ok = (authorized?.results[0] as { authorized: number } | undefined)?.authorized === 1;
+  // An authorized page that did not come back is an outage, never an empty page.
+  if (ok && !Array.isArray(page?.results))
+    throw new UnavailableError(
+      'Scan history is unavailable. Try again.',
+      'SCAN_HISTORY_UNAVAILABLE',
+    );
   return {
     authorized: ok,
     rows: ok ? (page?.results ?? []).map((r) => toHistoryRow(r as unknown as HistoryRaw)) : [],

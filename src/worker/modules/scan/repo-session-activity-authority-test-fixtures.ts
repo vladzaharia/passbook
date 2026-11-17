@@ -12,6 +12,7 @@ import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import type { Pass } from '../passes/repo.ts';
 import { createScannerStore } from './auth-store.ts';
+import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import {
   codeOf,
@@ -182,76 +183,21 @@ export async function consoleRows(response: Response) {
   return ScanningSessionDetailSchema.parse(body).activity;
 }
 
-/** Interleave a real database change just before an activity batch. */
+/**
+ * Interleave a real database change at the activity page batch: before it (the change is in the
+ * snapshot the page reads) or after it (the answer is the snapshot's, and the next request shows
+ * the change).
+ */
 export async function atActivityRead<T>(
   env: { DB: D1Database },
   operation: () => Promise<T>,
   change: (db: D1Database) => Promise<void>,
-  options: { phase?: 'initial' | 'final'; omitFinalRows?: boolean; omitProofRows?: boolean } = {},
+  options: { when?: 'before' | 'after' } = {},
 ): Promise<T> {
-  const real = env.DB;
-  const prepared = new WeakMap<
-    D1PreparedStatement,
-    { original: D1PreparedStatement; selected: boolean }
-  >();
-  let hits = 0;
-  const selectedHit = options.phase === 'initial' ? 1 : 2;
-  const intervene = async () => {
-    if (++hits === selectedHit) await change(real);
-  };
-  const wrap = (statement: D1PreparedStatement, selected: boolean): D1PreparedStatement => {
-    const proxy = new Proxy(statement, {
-      get(target, member) {
-        if (member === 'bind') return (...args: unknown[]) => wrap(target.bind(...args), selected);
-        if (member === 'all' || member === 'first' || member === 'raw')
-          return async (...args: unknown[]) => {
-            if (selected) await intervene();
-            return (Reflect.get(target, member, target) as (...values: unknown[]) => unknown).apply(
-              target,
-              args,
-            );
-          };
-        const value = Reflect.get(target, member, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-    });
-    prepared.set(proxy, { original: statement, selected });
-    return proxy;
-  };
-  env.DB = new Proxy(real, {
-    get(target, member) {
-      if (member === 'prepare')
-        return (sql: string) =>
-          wrap(target.prepare(sql), /\bWITH\s+authorized_activity\s+AS\s*\(/i.test(sql));
-      if (member === 'batch')
-        return async (statements: D1PreparedStatement[]) => {
-          const entries = statements.map(
-            (statement) => prepared.get(statement) ?? { original: statement, selected: false },
-          );
-          const selected = entries.some((entry) => entry.selected);
-          if (selected) await intervene();
-          const results = await target.batch(entries.map((entry) => entry.original));
-          if (selected && hits === selectedHit && options.omitProofRows) {
-            expect(results.length).toBeGreaterThan(1);
-            return results.map((result, index) =>
-              index === 1 ? { ...result, results: [] } : result,
-            );
-          }
-          return selected && hits === selectedHit && options.omitFinalRows
-            ? results.map((result, index) => (index === 0 ? { ...result, results: [] } : result))
-            : results;
-        };
-      const value = Reflect.get(target, member, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  try {
-    const result = await operation();
-    expect(hits).toBe(selectedHit);
-    return result;
-  } finally {
-    env.DB = real;
-  }
+  const hook = options.when === 'after' ? afterBatch : beforeBatch;
+  const { result, fired } = await hook(env, /page AS MATERIALIZED/, change, operation);
+  expect(fired).toBe(true);
+  return result;
 }
 
 export async function noLeak(

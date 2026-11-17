@@ -12,8 +12,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantScanRole } from './actor.ts';
-import { credentialKeysetContext } from './credential-keyset-authority.ts';
-import { DEFAULT_SETTINGS, parseSettings } from './dto-console.ts';
+import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { kickScreen } from './live.ts';
 import {
   adminGrant,
@@ -24,7 +23,6 @@ import {
   templatesUsable,
 } from './repo-admin-grant.ts';
 import { addSessionPropagation, sessionDevicesAre } from './repo-scanner-configuration-sync.ts';
-import { getConsoleScanner } from './repo-scanners.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import {
   addScanningSessionInsert,
@@ -32,18 +30,16 @@ import {
   type ScanningSessionRow,
   scanningSessionRow,
 } from './repo-scanning-sessions.ts';
-import { readScannerScope } from './repo-scope.ts';
 import { acceptedTemplateIds, checkAccepts } from './scanner-validation.ts';
 import {
   assertSessionReadAuthority,
   assertSessionWriteCountAuthority,
 } from './scanning-session-authority.ts';
 import {
-  conflictsWithAllScope,
-  deviceDto,
   effectiveSessionSettings,
   resolveSessionScope,
-  type SessionCountAuthority,
+  type SessionReadAuthority,
+  sessionDeviceViews,
   sessionDto,
 } from './scanning-session-dto.ts';
 import { scanningSessionActivity } from './session-activity.ts';
@@ -72,48 +68,25 @@ export async function scanningSessionDetail(
   id: string,
   mode: Mode,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
   assertSessionReadAuthority(mode, authority, countAuthority);
   return scanningSessionDetailForAuthority(ctx, id, mode, countAuthority);
 }
 
 async function scanningSessionDetailForAuthority(
-  context: ServiceContext,
+  ctx: ServiceContext,
   id: string,
   mode: Mode,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
-  const ctx = credentialKeysetContext(context);
   const row = await loadScanningSession(ctx, id, mode, countAuthority.orgId);
   const [session, devices, scope] = await Promise.all([
     sessionDto(ctx, row, countAuthority),
     scanningDeviceRows(ctx.env.DB, row.org_id, id),
     resolveSessionScope(ctx, row),
   ]);
-  const deviceViews = await Promise.all(
-    devices.map(async (d) => {
-      const settings = effectiveSessionSettings(row, d);
-      const scanner = await getConsoleScanner(ctx.env.DB, d.scanner_id);
-      const invalidScannerScope =
-        !scanner ||
-        scanner.mode !== row.mode ||
-        !(await readScannerScope(ctx.env.DB, scanner, null)).valid;
-      const conflict =
-        !!scanner && !!settings && (await conflictsWithAllScope(ctx, scanner, scope, settings));
-      return deviceDto(
-        d,
-        ctx.clock.now(),
-        settings
-          ? {
-              ...settings,
-              acceptAllTemplates:
-                !invalidScannerScope && !conflict && session.settings.acceptAllTemplates === true,
-            }
-          : { ...parseSettings(d.settings), acceptAllTemplates: false, lookup: false },
-      );
-    }),
-  );
+  const deviceViews = await sessionDeviceViews(ctx, row, session, scope, devices);
   const role = countAuthority.tenant ? tenantScanRole(countAuthority.tenant) : null;
   if (!role) throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   // A scope that resolves to nothing has no provable activity; the session stays viewable to fix it.
@@ -128,7 +101,7 @@ export async function createScanningSession(
   mode: Mode,
   input: z.infer<typeof CreateScanningSessionSchema>,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
   if (countAuthority.orgId !== input.orgId || countAuthority.mode !== mode)
@@ -193,7 +166,7 @@ export async function updateScanningSession(
   id: string,
   input: z.infer<typeof UpdateScanningSessionSchema>,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
   const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);

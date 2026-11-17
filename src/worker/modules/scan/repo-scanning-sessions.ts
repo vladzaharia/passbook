@@ -5,8 +5,8 @@ import { maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { scanLedgerCommonScopeSql, scanLedgerSuccessfulCandidateSql } from './repo-feed-scope.ts';
-import { packScanPredicate } from './repo-secret-binds.ts';
-import type { SessionCountAuthority } from './scanning-session-dto.ts';
+import { scanAuthorizedStmt, withSessionRow } from './repo-read-authority.ts';
+import type { SessionReadAuthority } from './scanning-session-dto.ts';
 
 export interface ScanningSessionRow {
   id: string;
@@ -101,13 +101,16 @@ export function addScanningSessionUpdate(
   for (const [key, value] of Object.entries(patch)) if (value !== undefined) set[key] = value;
   return g.update('scanning_sessions', { set, where: { id }, require: 'one' });
 }
-/** A count is usable only with the original actor and exact row in the same snapshot. */
+/**
+ * The session's device and today's counts, with whether the fence holds, in one snapshot: a count
+ * is shown only with the actor and the exact session row it was read for.
+ */
 export async function scanningSessionStats(
   db: D1Database,
   row: ScanningSessionRow,
   since: number,
   onlineSince: number,
-  authority: SessionCountAuthority,
+  authority: SessionReadAuthority,
   now: number,
 ): Promise<{ devices: number; online: number; today: number } | null> {
   if (
@@ -117,41 +120,13 @@ export async function scanningSessionStats(
     (authority.sessionId !== undefined && authority.sessionId !== row.id)
   )
     return null;
-  const current = authority.guardAt(now);
-  if (!current) return null;
-  const rowGuard = packScanPredicate(
-    `EXISTS (
-      SELECT 1 FROM scanning_sessions target
-      WHERE target.id=?/* scan-ephemeral-session-id */ AND target.org_id=? AND target.mode=?
-        AND target.config_epoch=?)`,
-    [row.id, row.org_id, row.mode, row.config_epoch],
-    'session_count_row',
-  );
-  if (!rowGuard) return null;
-  const guard = {
-    sql: `(${current.sql}) AND (${rowGuard.sql})`,
-    params: [...current.params, ...rowGuard.params],
-  };
-  if (guard.params.length >= 94) return null;
-  // D1 executes a batch in one transaction. Resolving the actor fence and the
-  // ledger aggregate in separate statements avoids SQLite accumulating their
-  // expression depths, while all three results still share the same snapshot.
-  const [authorityResult, deviceResult, todayResult] = await db.batch<{
+  const [authorized, deviceResult, todayResult] = await db.batch<{
     authorized?: number;
     devices?: number;
     online?: number;
     n?: number;
   }>([
-    stmt(
-      db,
-      `WITH session_scope AS MATERIALIZED (
-        SELECT id, org_id, mode FROM scanning_sessions
-        WHERE id=?/* scan-ephemeral-session-id */ AND org_id=? AND mode=?
-      )
-      SELECT 1 AS authorized
-      FROM session_scope WHERE (${guard.sql})`,
-      [row.id, row.org_id, row.mode, ...guard.params],
-    ),
+    scanAuthorizedStmt(db, withSessionRow(authority.at(now), row)),
     stmt(
       db,
       `SELECT count(*) AS devices,
@@ -165,8 +140,7 @@ export async function scanningSessionStats(
     ),
     scanningSessionTodayStmt(db, row.org_id, row.id, row.mode, since),
   ]);
-  const authorization = authorityResult?.results?.[0];
-  if (!authorization) return null;
+  if (authorized?.results?.[0]?.authorized !== 1) return null;
   const deviceStats = deviceResult?.results?.[0];
   const todayStats = todayResult?.results?.[0];
   if (

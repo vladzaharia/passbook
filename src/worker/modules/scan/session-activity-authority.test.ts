@@ -125,7 +125,7 @@ describe('session activity authority', () => {
     },
   );
 
-  it.each([
+  const deviceChanges = [
     'revoked',
     'csrf rotation',
     'token rotation',
@@ -135,12 +135,16 @@ describe('session activity authority', () => {
     'event templates',
     'scanner templates',
     'release head',
-  ] as const)('handles a device %s change after its activity snapshot', async (change) => {
-    const f = await activityFixture();
+  ] as const;
+  type DeviceChange = (typeof deviceChanges)[number];
+  async function changeDevice(
+    f: Awaited<ReturnType<typeof activityFixture>>,
+    change: DeviceChange,
+  ) {
     const otherScanner = await f.kit.scanner({ eventId: f.event.id });
     const otherSession = await workspace(f.kit, otherScanner, { eventId: f.event.id });
     const extraTemplate = await f.kit.scanTemplate('Another activity scope', { actions: [ACTION] });
-    const response = await atActivityRead(f.kit.env, f.device, async (db) => {
+    return async (db: D1Database) => {
       if (change === 'revoked')
         await run(db, 'UPDATE scanners SET revoked_at=? WHERE id=?', [
           f.kit.clock.now(),
@@ -179,49 +183,105 @@ describe('session activity authority', () => {
         ]);
       if (change === 'release head')
         await approveScanReleases(f.kit, f.template, { modes: ['live'], db });
-    });
-    // A rename and a release head move no epoch. A lost credential unpairs the device; a scope or
-    // binding change is configuration and keeps it paired.
-    if (change === 'event row' || change === 'release head') {
-      expect(response.status).toBe(200);
-      return;
-    }
-    const lost = change === 'revoked' || change === 'csrf rotation' || change === 'token rotation';
-    await noLeak(
-      response,
-      lost ? 401 : 409,
-      lost ? 'SCANNER_REPAIR' : 'SCAN_CONFIG_CHANGED',
-      f.pass.id,
-      ACTIVITY_NAME,
-    );
-  });
+    };
+  }
+  // A rename and a release head move no epoch. A lost credential unpairs the device; a scope or
+  // binding change is configuration and keeps it paired.
+  const deviceAnswer = (change: DeviceChange) =>
+    change === 'event row' || change === 'release head'
+      ? ([200, null] as const)
+      : change === 'revoked' || change === 'csrf rotation' || change === 'token rotation'
+        ? ([401, 'SCANNER_REPAIR'] as const)
+        : ([409, 'SCAN_CONFIG_CHANGED'] as const);
 
-  it.each(['membership revoked', 'membership roles', 'session rotation', 'session mode'] as const)(
-    'rejects a console %s change after its activity snapshot',
+  it.each(deviceChanges)(
+    'refuses a device %s change made before its activity read',
     async (change) => {
       const f = await activityFixture();
-      const response = await atActivityRead(f.kit.env, f.console, async (db) => {
-        if (change === 'membership revoked' || change === 'membership roles') {
-          await run(db, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
-            f.kit.clock.now(),
-            f.membershipId,
-          ]);
-          if (change === 'membership roles') {
-            const fx = { ...f.kit.fx, env: { ...f.kit.fx.env, DB: db } };
-            await grantScanMembership(fx, f.kit.org.id, f.user.id, ['read_only']);
-          }
-        }
-        if (change === 'session rotation') {
-          await makeSession(f.kit.fx, { userId: f.user.id });
-          await run(db, 'UPDATE sessions SET revoked_at=? WHERE id_hash=?', [
-            f.kit.clock.now(),
-            f.auth.sessionId,
-          ]);
-        }
-        if (change === 'session mode')
-          await run(db, "UPDATE scanning_sessions SET mode='test' WHERE id=?", [f.sessionId]);
+      const response = await atActivityRead(f.kit.env, f.device, await changeDevice(f, change));
+      const [status, code] = deviceAnswer(change);
+      if (code === null) expect(response.status).toBe(status);
+      else await noLeak(response, status, code, f.pass.id, ACTIVITY_NAME);
+    },
+  );
+
+  it.each(deviceChanges)(
+    'answers the snapshot for a device %s change made after its activity read',
+    async (change) => {
+      const f = await activityFixture();
+      const response = await atActivityRead(f.kit.env, f.device, await changeDevice(f, change), {
+        when: 'after',
       });
+      expect(await deviceRows(response)).toEqual([
+        expect.objectContaining({ id: f.scanId, passId: f.pass.id, title: ACTIVITY_NAME }),
+      ]);
+      // The next request sees a lost credential.
+      if (change === 'revoked')
+        await noLeak(await f.device(), 401, 'SCANNER_REVOKED', f.pass.id, ACTIVITY_NAME);
+      if (change === 'token rotation')
+        await noLeak(await f.device(), 401, 'SCANNER_UNAUTHENTICATED', f.pass.id, ACTIVITY_NAME);
+    },
+  );
+
+  const consoleChanges = [
+    'membership revoked',
+    'membership roles',
+    'session rotation',
+    'session mode',
+  ] as const;
+  function changeConsole(
+    f: Awaited<ReturnType<typeof activityFixture>>,
+    change: (typeof consoleChanges)[number],
+  ) {
+    return async (db: D1Database) => {
+      if (change === 'membership revoked' || change === 'membership roles') {
+        await run(db, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
+          f.kit.clock.now(),
+          f.membershipId,
+        ]);
+        if (change === 'membership roles') {
+          const fx = { ...f.kit.fx, env: { ...f.kit.fx.env, DB: db } };
+          await grantScanMembership(fx, f.kit.org.id, f.user.id, ['read_only']);
+        }
+      }
+      if (change === 'session rotation') {
+        await makeSession(f.kit.fx, { userId: f.user.id });
+        await run(db, 'UPDATE sessions SET revoked_at=? WHERE id_hash=?', [
+          f.kit.clock.now(),
+          f.auth.sessionId,
+        ]);
+      }
+      if (change === 'session mode')
+        await run(db, "UPDATE scanning_sessions SET mode='test' WHERE id=?", [f.sessionId]);
+    };
+  }
+
+  it.each(consoleChanges)(
+    'refuses a console %s change made before its activity read',
+    async (change) => {
+      const f = await activityFixture();
+      const response = await atActivityRead(f.kit.env, f.console, changeConsole(f, change));
       await noLeak(response, 404, 'SCANNING_SESSION_NOT_FOUND', f.pass.id, ACTIVITY_NAME);
+    },
+  );
+
+  it.each(consoleChanges)(
+    'answers the snapshot for a console %s change made after its activity read',
+    async (change) => {
+      const f = await activityFixture();
+      const response = await atActivityRead(f.kit.env, f.console, changeConsole(f, change), {
+        when: 'after',
+      });
+      expect(await consoleRows(response)).toEqual([
+        expect.objectContaining({ id: f.scanId, passId: f.pass.id, title: ACTIVITY_NAME }),
+      ]);
+      // The next request is refused when the membership, the session or the mode is gone.
+      if (change === 'membership roles') return;
+      const next = await f.console();
+      expect(next.status).toBe(
+        change === 'membership revoked' ? 403 : change === 'session rotation' ? 401 : 404,
+      );
+      expect(await next.text()).not.toContain(ACTIVITY_NAME);
     },
   );
 
@@ -244,22 +304,29 @@ describe('session activity authority', () => {
     },
   );
 
-  // Reads carry no credential keyset any more, so a different keyring does not make them unavailable.
+  // A page with a pass in it needs the stored keyset; an empty page exposes nothing derived from it.
   it.each(['device', 'console'] as const)(
-    'reads the %s activity normally with a mismatched keyring',
+    'fails the %s activity closed on a mismatched keyring, and an empty page needs none',
     async (consumer) => {
       const f = await activityFixture();
+      const empty = await activityFixture({ record: false });
       const key = f.kit.env.KEK_V1;
-      f.kit.env.KEK_V1 = key === btoa('z'.repeat(32)) ? btoa('y'.repeat(32)) : btoa('z'.repeat(32));
+      const swapped = key === btoa('z'.repeat(32)) ? btoa('y'.repeat(32)) : btoa('z'.repeat(32));
+      f.kit.env.KEK_V1 = swapped;
+      empty.kit.env.KEK_V1 = swapped;
       try {
-        const response = await (consumer === 'device' ? f.device() : f.console());
+        await noLeak(
+          await (consumer === 'device' ? f.device() : f.console()),
+          503,
+          'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
+          f.pass.id,
+          ACTIVITY_NAME,
+        );
         const rows =
-          consumer === 'device' ? await deviceRows(response) : await consoleRows(response);
-        // The row is served; the pass details that need the keyring are redacted, not leaked.
-        expect(rows).toEqual([
-          expect.objectContaining({ id: f.scanId, outcome: 'ok', passId: null, title: null }),
-        ]);
-        expect(JSON.stringify(rows)).not.toContain(ACTIVITY_NAME);
+          consumer === 'device'
+            ? await deviceRows(await empty.device())
+            : await consoleRows(await empty.console());
+        expect(rows).toEqual([]);
       } finally {
         f.kit.env.KEK_V1 = key;
       }

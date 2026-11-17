@@ -24,52 +24,20 @@ const changes = [
   'release head',
 ] as const;
 const cases = (['device', 'console'] as const).flatMap((consumer) =>
-  changes.map((change) => [consumer, change] as const),
+  (['before', 'after'] as const).flatMap((when) =>
+    changes.map((change) => [consumer, when, change] as const),
+  ),
 );
 
+/*
+ * The activity page is one snapshot: a change made before the page statement is in the snapshot
+ * (the row is redacted or gone), a change made after it is not (the answer is the snapshot's, and
+ * the next request shows the change).
+ */
 describe('session activity output races', () => {
-  it.each(['device', 'console'] as const)(
-    'fails unavailable for a missing %s activity result, not a fabricated empty page',
-    async (consumer) => {
-      const f = await activityFixture();
-      const response = await atActivityRead(
-        f.kit.env,
-        consumer === 'device' ? f.device : f.console,
-        async () => {},
-        { omitFinalRows: true },
-      );
-      await noLeak(response, 503, 'SCANNING_ACTIVITY_UNAVAILABLE', f.pass.id, ACTIVITY_NAME);
-    },
-  );
-
-  it.each(['device', 'console'] as const)(
-    'redacts a %s row if a final proof fragment is missing',
-    async (consumer) => {
-      const f = await activityFixture();
-      const response = await atActivityRead(
-        f.kit.env,
-        consumer === 'device' ? f.device : f.console,
-        async () => {},
-        { omitProofRows: true },
-      );
-      const rows = consumer === 'device' ? await deviceRows(response) : await consoleRows(response);
-      expect(rows).toEqual([
-        expect.objectContaining({
-          id: f.scanId,
-          passId: null,
-          title: null,
-          deviceName: 'Scanner',
-          direction: null,
-        }),
-      ]);
-      expect(JSON.stringify(rows)).not.toContain(f.pass.id);
-      expect(JSON.stringify(rows)).not.toContain(ACTIVITY_NAME);
-    },
-  );
-
   it.each(cases)(
-    'revalidates %s activity when %s changes at the final batch',
-    async (consumer, change) => {
+    '%s activity with a change made %s the page read: %s',
+    async (consumer, when, change) => {
       const f = await activityFixture();
       const victimTemplate = await f.kit.scanTemplate('Activity race victim', {
         actions: [ACTION],
@@ -82,17 +50,17 @@ describe('session activity output races', () => {
       const victim = await f.kit.scanPass(victimTemplate, { memberName: 'Race victim guest' });
       const victimScan = await record(f.kit, f.scanner, victim);
       const operation = consumer === 'device' ? f.device : f.console;
-      const before =
-        consumer === 'device'
-          ? await deviceRows(await operation())
-          : await consoleRows(await operation());
-      expect(before).toContainEqual(
+      const read = async (response: Response) =>
+        consumer === 'device' ? deviceRows(response) : consoleRows(response);
+      // Control: before the change, both rows show their pass and title.
+      const control = await read(await operation());
+      expect(control).toContainEqual(
         expect.objectContaining({ id: f.scanId, passId: f.pass.id, title: ACTIVITY_NAME }),
       );
-      expect(before).toContainEqual(
+      expect(control).toContainEqual(
         expect.objectContaining({ id: victimScan, passId: victim.id, title: 'Race victim guest' }),
       );
-      const response = await atActivityRead(f.kit.env, operation, async (db) => {
+      const mutate = async (db: D1Database) => {
         if (change === 'removed')
           await run(db, 'UPDATE passes SET removed_at=? WHERE id=?', [
             f.kit.clock.now(),
@@ -124,7 +92,7 @@ describe('session activity output races', () => {
         if (change === 'event tampered')
           await run(
             db,
-            `UPDATE pass_events SET data=json_set(data,'$.tampered',json('true'))
+            `UPDATE pass_events SET data=json_set(data,'$.authority.pinnedTemplateVersion','forged')
             WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
             [victim.id, victimScan],
           );
@@ -135,23 +103,52 @@ describe('session activity output races', () => {
           ]);
         if (change === 'release head')
           await approveScanReleases(f.kit, victimTemplate, { modes: ['live'], db });
-      });
-      if (consumer === 'device' && change === 'event templates') {
+      };
+      const response = await atActivityRead(f.kit.env, operation, mutate, { when });
+      if (when === 'before' && consumer === 'device' && change === 'event templates') {
         // The scanner's own scope shrank: configuration, so the device stays paired.
         await noLeak(response, 409, 'SCAN_CONFIG_CHANGED', victim.id, 'Race victim guest');
         return;
       }
-      const rows = consumer === 'device' ? await deviceRows(response) : await consoleRows(response);
+      const rows = await read(response);
       expect(rows).toContainEqual(
         expect.objectContaining({ id: f.scanId, passId: f.pass.id, title: ACTIVITY_NAME }),
       );
-      // A new release head is content: the victim's row stays as it was. Every other change hides it.
-      if (change === 'release head') return;
+      if (when === 'after' || change === 'release head') {
+        // The snapshot predates the change: the victim shows as it did. A new release head is
+        // content, not authority.
+        expect(rows).toContainEqual(
+          expect.objectContaining({
+            id: victimScan,
+            passId: victim.id,
+            title: 'Race victim guest',
+          }),
+        );
+        return;
+      }
       const stale = rows.find((row) => row.id === victimScan);
-      if (stale) expect(stale).toMatchObject({ passId: null, title: null });
-      expect(JSON.stringify(rows)).not.toContain(victim.id);
       expect(JSON.stringify(rows)).not.toContain('Race victim guest');
       expect(JSON.stringify(rows)).not.toContain('Replacement guest');
+      // A changed title is withheld by the signed title commitment; the pass itself is still the
+      // event's. Every other change takes the pass away.
+      if (change === 'personalization') {
+        expect(stale).toMatchObject({ passId: victim.id, title: null });
+        return;
+      }
+      if (stale) expect(stale).toMatchObject({ passId: null, title: null, deviceName: 'Scanner' });
+      expect(JSON.stringify(rows)).not.toContain(victim.id);
     },
   );
+
+  it('redacts a removed pass in the next console read', async () => {
+    const f = await activityFixture();
+    await run(f.kit.env.DB, 'UPDATE passes SET removed_at=? WHERE id=?', [
+      f.kit.clock.now(),
+      f.pass.id,
+    ]);
+    const rows = await consoleRows(await f.console());
+    expect(rows).toEqual([
+      expect.objectContaining({ id: f.scanId, passId: null, title: null, deviceName: 'Scanner' }),
+    ]);
+  });
 });

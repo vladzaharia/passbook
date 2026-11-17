@@ -8,6 +8,7 @@ import {
 } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import {
   app,
   clock,
@@ -263,80 +264,61 @@ describe('scanner recent and summary privacy', () => {
     expect(JSON.stringify(totals)).not.toContain(unknownAction);
   });
 
-  it('revalidates pass and actor authority after reading a candidate', async () => {
+  it('refuses or redacts a change before the read and answers the snapshot after it', async () => {
     const scanner = await makeScanner(f, { orgId, templateIds: [template.resolved.id] });
     const row = await recordedAction(scanner, passId);
-    const before = await scannerGet(scanner.headers, '/scans');
-    expect(before.status).toBe(200);
-    expect(await before.json()).toMatchObject({
-      items: [{ scanId: row.id, title: 'Alex Morgan' }],
-    });
-    const real = env.DB;
-    let fired = false;
-    let invalidate: 'pass' | 'scanner' = 'pass';
-    // Fire once, just before the first batch that reads the actor's scan ledger: after the
-    // candidate rows were read, before the final authority read.
-    const sqlOf = new WeakMap<object, string>();
-    const db = new Proxy(real, {
-      get(target, prop) {
-        if (prop === 'prepare')
-          return (sql: string) => {
-            const statement = target.prepare(sql);
-            sqlOf.set(statement, sql);
-            return new Proxy(statement, {
-              get(inner, name) {
-                if (name === 'bind')
-                  return (...values: unknown[]) => {
-                    const bound = inner.bind(...values);
-                    sqlOf.set(bound, sql);
-                    return bound;
-                  };
-                const member = Reflect.get(inner, name, inner);
-                return typeof member === 'function' ? member.bind(inner) : member;
-              },
-            });
-          };
-        if (prop === 'batch')
-          return async (statements: D1PreparedStatement[]) => {
-            if (!fired && statements.some((s) => sqlOf.get(s)?.includes('s.actor_key'))) {
-              fired = true;
-              if (invalidate === 'pass')
-                await run(real, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [
-                  passId,
-                ]);
-              else
-                await run(real, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
-                  clock.now(),
-                  scanner.id,
-                ]);
-            }
-            return target.batch(statements);
-          };
-        const value = Reflect.get(target, prop, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-    });
-    Object.assign(env, { DB: db });
-    try {
-      const recent = await scannerGet(scanner.headers, '/scans');
-      expect(recent.status).toBe(200);
-      expect(fired).toBe(true);
-      expect(await recent.json()).toEqual({ items: [] });
-      await run(real, 'UPDATE passes SET test_data_quarantined = 0 WHERE id = ?', [passId]);
-      fired = false;
-      const summary = await scannerGet(scanner.headers, '/summary');
-      expect(summary.status).toBe(200);
-      expect(await summary.json()).toMatchObject({ total: 0, ok: 0, byAction: [] });
-      expect(fired).toBe(true);
-      await run(real, 'UPDATE passes SET test_data_quarantined = 0 WHERE id = ?', [passId]);
-      fired = false;
-      invalidate = 'scanner';
-      const revoked = await scannerGet(scanner.headers, '/scans');
-      expect(fired).toBe(true);
-      expect(revoked.status).toBe(200);
-      expect(await revoked.json()).toEqual({ items: [] });
-    } finally {
-      Object.assign(env, { DB: real });
-    }
+    const setStatus = (db: D1Database, status: 'active' | 'voided') =>
+      run(db, 'UPDATE passes SET status = ? WHERE id = ?', [status, passId]);
+    const recent = async () => {
+      const response = await scannerGet(scanner.headers, '/scans');
+      return { status: response.status, body: (await response.json()) as Rec };
+    };
+    const shown = { status: 200, body: { items: [{ scanId: row.id, title: 'Alex Morgan' }] } };
+    const redacted = { status: 200, body: { items: [{ scanId: row.id, title: null }] } };
+    // Control: nothing changed, the row and its title show.
+    expect(await recent()).toMatchObject(shown);
+
+    // A pass voided before the page statement reduces its row to a receipt; after it, the
+    // snapshot answers and the next request shows the change.
+    const early = await beforeBatch(
+      env,
+      /page AS MATERIALIZED/,
+      (db) => setStatus(db, 'voided'),
+      recent,
+    );
+    expect(early.fired).toBe(true);
+    expect(early.result).toMatchObject(redacted);
+    const earlySummary = await beforeBatch(
+      env,
+      /page AS MATERIALIZED/,
+      (db) => setStatus(db, 'voided'),
+      async () => (await scannerGet(scanner.headers, '/summary')).json(),
+    );
+    expect(earlySummary.result).toMatchObject({ total: 1, ok: 1, byAction: [] });
+    await setStatus(env.DB, 'active');
+    expect(await recent()).toMatchObject(shown);
+    const late = await afterBatch(
+      env,
+      /page AS MATERIALIZED/,
+      (db) => setStatus(db, 'voided'),
+      recent,
+    );
+    expect(late.fired).toBe(true);
+    expect(late.result).toMatchObject(shown);
+    expect(await recent()).toMatchObject(redacted);
+    await setStatus(env.DB, 'active');
+
+    // A revoked scanner is refused before the read; after it, the snapshot answers and the next
+    // request is refused.
+    const revoke = (db: D1Database) =>
+      run(db, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [clock.now(), scanner.id]);
+    const lateRevoke = await afterBatch(env, /page AS MATERIALIZED/, revoke, recent);
+    expect(lateRevoke.fired).toBe(true);
+    expect(lateRevoke.result).toMatchObject({ status: 200, body: { items: [{ scanId: row.id }] } });
+    expect((await recent()).status).toBe(401);
+    await run(env.DB, 'UPDATE scanners SET revoked_at = NULL WHERE id = ?', [scanner.id]);
+    const earlyRevoke = await beforeBatch(env, /page AS MATERIALIZED/, revoke, recent);
+    expect(earlyRevoke.fired).toBe(true);
+    expect(earlyRevoke.result.status).toBe(401);
   });
 });

@@ -1,10 +1,16 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { tenantFilter } from '../../platform/authority-read.ts';
+import type { ScanActor } from './actor.ts';
+import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { listConsoleEvents } from './repo-events.ts';
 import { countScanRows, getScanRow, listScanRows, type ScanLogFilter } from './repo-feed.ts';
-import type { ScanReadAuthority } from './repo-read-authority.ts';
+import { readHistoryPage } from './repo-history-rows.ts';
+import { type ScanReadAuthority, withSessionRow } from './repo-read-authority.ts';
+import { ownScansWhere, readSummary } from './repo-scan-history.ts';
 import { listConsoleScanners } from './repo-scanners.ts';
+import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
+import { activitySelector } from './repo-session-activity.ts';
 import { readStaffActivity } from './repo-staff-activity.ts';
 
 /** A fence whose actor is a fixed org and mode: only the plan of the read itself is under test. */
@@ -110,6 +116,76 @@ describe('console list query plans (SC)', () => {
       expect(fullScans(lines, 's')).toEqual([]);
       expect(fullScans(lines, 'scans')).toEqual([]);
       expect(lines.join('\n')).toContain('scans_staff');
+    }
+  });
+
+  /** A device actor reduced to what the own-history selector reads. */
+  const own = (extra: Partial<ScanActor> = {}) =>
+    ({
+      actorKey: 's:d',
+      actor: { type: 'scanner', id: 'd' },
+      scanner: { id: 'd' },
+      event: null,
+      templateIds: [],
+      settings: { acceptAllTemplates: true },
+      ...extra,
+    }) as unknown as ScanActor;
+
+  it('scanner history: recent and the summary read an actor or device index, never a scan of scans', async () => {
+    const shapes = [
+      own(),
+      own({ event: { id: 'e' } as ScanActor['event'], templateIds: ['a', 'b'] }),
+      own({ templateIds: ['a'] }),
+    ];
+    for (const actor of shapes) {
+      const where = ownScansWhere(actor);
+      const recent = await plans((db) =>
+        readHistoryPage(
+          db,
+          fixedAuth,
+          {
+            where: where.sql,
+            params: where.params,
+            limit: 50,
+            tenant: fixedAuth.tenant('+s', 'scans'),
+          },
+          5,
+        ),
+      );
+      expect(fullScans(recent, 's')).toEqual([]);
+      expect(fullScans(recent, 'scans')).toEqual([]);
+      expect(recent.join('\n')).toMatch(/scans_actor|scans_scanner/);
+      const summary = await plans((db) => readSummary(db, fixedAuth, actor, { from: 1, to: 9 }, 5));
+      expect(fullScans(summary, 's')).toEqual([]);
+      expect(fullScans(summary, 'scans')).toEqual([]);
+      expect(summary.join('\n')).toMatch(/scans_actor|scans_scanner/);
+    }
+  });
+
+  it('session activity reads the paired devices by scanner index, with every scope', async () => {
+    const row = (accepts: string | null) =>
+      ({
+        id: 'ss',
+        org_id: 'o',
+        mode: 'live',
+        accepts,
+        settings: JSON.stringify({ ...DEFAULT_SETTINGS, acceptAllTemplates: accepts === null }),
+        config_epoch: 1,
+      }) as unknown as ScanningSessionRow;
+    for (const accepts of [
+      null,
+      JSON.stringify({ eventId: 'e' }),
+      JSON.stringify({ templateIds: ['a', 'b'] }),
+    ]) {
+      const selector = activitySelector(row(accepts));
+      if (!selector) throw new Error('Missing activity selector');
+      const auth = withSessionRow(fixedAuth, row(accepts));
+      const lines = await plans((db) =>
+        readHistoryPage(db, auth, { ...selector, tenant: auth.tenant('+s', 'scans') }, 5),
+      );
+      expect(fullScans(lines, 's')).toEqual([]);
+      expect(fullScans(lines, 'scans')).toEqual([]);
+      expect(lines.join('\n')).toContain('scans_scanner');
     }
   });
 

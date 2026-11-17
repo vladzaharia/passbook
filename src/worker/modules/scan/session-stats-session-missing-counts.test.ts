@@ -18,7 +18,7 @@ const makeEnv = installKeysetTestEnv();
 
 function countResultIndexes(statements: readonly ({ sql: string } | undefined)[]) {
   const authority = statements.findIndex((entry) =>
-    /WITH\s+session_scope\s+AS\s+MATERIALIZED\s*\(/i.test(entry?.sql ?? ''),
+    /session_row\s+AS\s+MATERIALIZED[\s\S]*AS\s+authorized\s*$/i.test(entry?.sql ?? ''),
   );
   const devices = statements.findIndex((entry) =>
     /SELECT\s+count\(\*\)\s+AS\s+devices\b/i.test(entry?.sql ?? ''),
@@ -137,7 +137,7 @@ describe('scanning session missing count results', () => {
         },
         (results, statements) => {
           const indexes = countResultIndexes(statements);
-          expect(results[indexes.authority]?.results).toEqual([]);
+          expect(results[indexes.authority]?.results).toEqual([{ authorized: 0 }]);
           expect(results[indexes.devices]?.results).toEqual([{ devices: 1, online: 1 }]);
           expect(results[indexes.today]?.results).toEqual([{ n: 1 }]);
           return results.map((entry, position) =>
