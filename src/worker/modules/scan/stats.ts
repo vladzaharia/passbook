@@ -29,7 +29,9 @@ export async function statsFor(
   );
   // Epochs cover credential, configuration and staff changes; reads carry no CSRF proof.
   const auth = scanReadAuthority(actor, { now: ctx.clock.now(), read: SESSION_READ });
-  const plan = planCounts(ctx, actor, dayStart, actor, scanReadFence(auth));
+  // The cache write is guarded by the strict fence: a paused or staffless actor reads but never fills.
+  const strict = scanReadAuthority(actor, { now: ctx.clock.now() });
+  const plan = planCounts(ctx, actor, dayStart, actor, scanReadFence(strict));
   // The door polls this: only a lost credential unpairs, drift is a 409 the client reloads.
   const results = await ctx.env.DB.batch([scanAuthorizedStmt(ctx.env.DB, auth), ...plan.stmts]);
   if ((results[0]?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)

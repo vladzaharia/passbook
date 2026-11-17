@@ -274,8 +274,8 @@ export async function exportScans(
   if (rows > EXPORT_MAX_ROWS)
     throw new ValidationError('Export up to 100,000 scans at a time.', [], 'SCAN_EXPORT_TOO_LARGE');
   if ((await bump(ctx.env.DB, exportKey, hour)) > EXPORTS_PER_HOUR) throw limited();
+  // Last before streaming: the grant re-checks session, membership and org, and the stream's first pull checks the console guard.
   await auditScanExport(ctx, authority, { from: req.from, to: req.to, rows });
-  await assertConsoleAuthority(ctx, actor, credentialKeysetCommitment);
   const encoder = new TextEncoder();
   let cursor: string | undefined;
   let started = false;

@@ -1,6 +1,7 @@
 import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
+import { capabilityChecks } from '../passes/repo-authority.ts';
 import type { ScanActor } from './actor.ts';
 import { type ScanChecksInput, scanActorChecks, scanPrincipal } from './authority-checks.ts';
 
@@ -14,16 +15,37 @@ export interface ScanReadAuthority {
   tenant: (alias: string, table: string) => string;
 }
 
+/** A fence that asked for read relaxations: usable by reads only, never as a write guard. */
+export interface RelaxedReadAuthority extends ScanReadAuthority {
+  readonly relaxed: true;
+}
+
+/** A fence with the same checks as the write grant. */
+export interface StrictReadAuthority extends ScanReadAuthority {
+  readonly relaxed: false;
+}
+
 /**
  * The read fence for every scan read: the same principal and checks as the scan write grant, as
  * `WITH` CTEs. Use `scanRead` to run a statement under it. Throws `SCAN_EPOCHS_MISSING` for an
  * actor the guard did not capture, and `SQL_BIND_BUDGET` when the fence alone is over budget.
  */
+export function scanReadAuthority(
+  actor: ScanActor,
+  input: ScanChecksInput & { read: NonNullable<ScanChecksInput['read']> },
+): RelaxedReadAuthority;
+export function scanReadAuthority(
+  actor: ScanActor,
+  input: Omit<ScanChecksInput, 'read'>,
+): StrictReadAuthority;
 export function scanReadAuthority(actor: ScanActor, input: ScanChecksInput): ScanReadAuthority {
+  const tenant = actor.tenantAuthority;
+  // As `sessionGrant`: the membership's own roles still grant the capability.
+  const capability = actor.principal === 'admin' && tenant ? capabilityChecks(tenant) : [];
   const { ctes, params } = authorityPredicate(scanPrincipal(actor), {
     scope: 'org_mode',
     now: input.now,
-    checks: scanActorChecks(actor, input),
+    checks: [...capability, ...scanActorChecks(actor, input)],
   });
   assertBudget(ctes, params, PARAM_BUDGET);
   return {
@@ -31,7 +53,8 @@ export function scanReadAuthority(actor: ScanActor, input: ScanChecksInput): Sca
     params,
     ok: 'EXISTS (SELECT 1 FROM actor_ok)',
     tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
-  };
+    relaxed: input.read !== undefined,
+  } as ScanReadAuthority;
 }
 
 /**
@@ -57,7 +80,7 @@ export const scanAuthorizedStmt = (db: D1Database, auth: ScanReadAuthority) =>
   scanRead(db, auth, `SELECT ${auth.ok} AS authorized`);
 
 /** The fence as one scalar `EXISTS`, for a statement that cannot take a `WITH` (an `UPDATE`'s guard). */
-export function scanReadFence(auth: ScanReadAuthority): { sql: string; params: SqlValue[] } {
+export function scanReadFence(auth: StrictReadAuthority): { sql: string; params: SqlValue[] } {
   return { sql: `EXISTS (WITH ${auth.ctes} SELECT 1 FROM actor_ok)`, params: auth.params };
 }
 

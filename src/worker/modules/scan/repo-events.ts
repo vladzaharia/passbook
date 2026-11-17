@@ -228,8 +228,8 @@ export async function listConsoleEvents(
   return readEvents(
     db,
     auth,
-    `${filter} ORDER BY e.opens_at DESC, e.id DESC LIMIT ${Math.trunc(f.limit)}`,
-    params,
+    `${filter} ORDER BY e.opens_at DESC, e.id DESC LIMIT ?`,
+    [...params, f.limit],
     f.now,
   );
 }

@@ -13,6 +13,7 @@ export interface SetupMeta {
   admin_name: string | null;
   watch: string | null;
 }
+// No admin-binding check on this read: `admin_user_id` is insert-only and a revoke bumps `credential_epoch`.
 export async function setupMetas(db: D1Database, orgId: string | null, ids: string[]) {
   const pages = await Promise.all(
     chunk(ids, 90).map((part) =>

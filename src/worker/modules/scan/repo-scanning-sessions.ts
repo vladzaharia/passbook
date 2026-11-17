@@ -46,12 +46,12 @@ export const listScanningSessionRows = (
 ) =>
   all<ScanningSessionRow>(
     db,
-    `${SELECT} WHERE s.mode=?${query.orgId ? ' AND s.org_id=?' : ''}${query.cursor ? ' AND s.id<?' : ''}
+    `${SELECT} WHERE s.mode=?${query.orgId !== undefined ? ' AND s.org_id=?' : ''}${query.cursor !== undefined ? ' AND s.id<?' : ''}
     ORDER BY s.id DESC LIMIT ?`,
     [
       mode,
-      ...(query.orgId ? [query.orgId] : []),
-      ...(query.cursor ? [query.cursor] : []),
+      ...(query.orgId !== undefined ? [query.orgId] : []),
+      ...(query.cursor !== undefined ? [query.cursor] : []),
       query.limit + 1,
     ],
   );

@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
+import type { ScanActor } from './actor.ts';
+import { scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 
 /*
@@ -42,5 +44,19 @@ describe('session read relaxations', () => {
     expect((await logo()).status).toBe(404);
     expect((await call('POST', `/scanners/${scannerId}/revoke`)).status).toBe(200);
     expect((await logo()).status).toBe(401);
+  });
+});
+
+describe('relaxed read authority', () => {
+  it('cannot be passed to a write guard', () => {
+    // Type-level only: never called.
+    const misuse = (actor: ScanActor) => {
+      const strict = scanReadAuthority(actor, { now: 1 });
+      scanReadFence(strict);
+      const relaxed = scanReadAuthority(actor, { now: 1, read: { pausedSession: true } });
+      // @ts-expect-error a relaxed fence is read-only
+      scanReadFence(relaxed);
+    };
+    expect(typeof misuse).toBe('function');
   });
 });

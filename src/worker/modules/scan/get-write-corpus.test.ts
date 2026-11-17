@@ -40,8 +40,6 @@ const ALLOWED_INSERTS = new Set<string>([
   'credential_ref_keyset',
   // metrics counters (the export count), which hold no authority
   'counters',
-  // the export's audit grant: one row, released in the same batch (grant lifecycle, no authority state)
-  'authority_grants',
 ]);
 
 interface Write {
@@ -73,7 +71,7 @@ function writesIn(statements: readonly string[]): Write[] {
 function forbidden(writes: readonly Write[]): Write[] {
   return writes.filter((w) => {
     if (w.kind === 'insert') return !ALLOWED_INSERTS.has(w.table);
-    if (w.kind === 'delete') return w.table !== 'authority_grants';
+    if (w.kind === 'delete') return true;
     const allowed = ALLOWED_UPDATES[w.table];
     return !allowed?.test(w.set);
   });
@@ -152,7 +150,12 @@ async function writesOf(requests: { path: string; headers: Record<string, string
       counted.reset();
       const response = await app.request(`${ORIGIN}${path}`, { headers }, kit.env);
       expect(response.status, path).toBeLessThan(500);
-      const writes = forbidden(writesIn(counted.sql()));
+      // Only the export route audits through a grant (one row, released in the same batch).
+      const writes = forbidden(
+        writesIn(counted.sql()).filter(
+          (w) => !(w.table === 'authority_grants' && path.includes('/scans/export')),
+        ),
+      );
       expect(writes, `GET ${path}`).toEqual([]);
     }
   } finally {
