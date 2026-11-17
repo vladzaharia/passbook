@@ -170,6 +170,18 @@ describe('users list', () => {
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('cursor=c1'))).toBe(true);
   });
 
+  it('labels an account with no verified email, with no passes link for it', async () => {
+    await renderApp('/admin/users', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/users': () =>
+          json({ items: [user({ id: 'u9', name: null, primaryEmail: null })], nextCursor: null }),
+      },
+    });
+    expect(await screen.findByRole('link', { name: /No verified email/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Find passes/ })).toBeNull();
+  });
+
   it('shows the empty state', async () => {
     await renderApp('/admin/users', {
       session: 'admin',

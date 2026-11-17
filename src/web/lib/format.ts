@@ -1,3 +1,5 @@
+import { NO_EMAIL_LABEL } from '../../shared/email.ts';
+
 // Every date and number a person reads in the app, in one locale. Engines join a date and a time
 // differently ("Nov 2, 2026, 11:51 PM" in Chromium, "… at 11:51 PM" in WebKit), so the parts are
 // formatted apart and joined here.
@@ -124,3 +126,7 @@ export function formatEventTime(ms: number, timeZone: string): string {
     ...(local !== timeZone ? { timeZoneName: 'short' as const } : {}),
   }).format(ms);
 }
+
+/** A person's label: the name, else the verified email, else a plain "no email" label. */
+export const personLabel = (person: { name: string | null; primaryEmail: string | null }): string =>
+  person.name ?? person.primaryEmail ?? NO_EMAIL_LABEL;

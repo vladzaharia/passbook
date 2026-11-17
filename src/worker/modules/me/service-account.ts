@@ -1,4 +1,4 @@
-import { strictEmail } from '../../../shared/email.ts';
+import { knownEmail, strictEmail } from '../../../shared/email.ts';
 import {
   ConflictError,
   NotFoundError,
@@ -10,7 +10,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { withinVerifyUserCap } from '../auth/magic-caps.ts';
 import { processVerifyRequest } from '../auth/magic-service.ts';
-import { isUnverifiedPrimary } from '../auth/repo.ts';
 import { revokeAllForUser, revokeOne } from '../auth/sessions.ts';
 import * as repo from './repo.ts';
 
@@ -27,7 +26,7 @@ export async function listMyEmails(ctx: ServiceContext, userId: string) {
   }));
   // An older account's profile address can be unproven (OIDC without trusted email). Listed so it
   // can be verified; it is never in user_emails, so nothing that matches on verified emails sees it.
-  if (user && !items.some((e) => e.primary) && !isUnverifiedPrimary(user.primary_email)) {
+  if (user && !items.some((e) => e.primary) && knownEmail(user.primary_email)) {
     items.push({ email: user.primary_email, verifiedAt: null, verifiedVia: null, primary: true });
   }
   return { items };

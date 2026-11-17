@@ -4,7 +4,7 @@ import { EmailSchema, IdSchema, RoleSchema, TimestampSchema } from './common.ts'
 export const SessionUserSchema = z.object({
   id: IdSchema,
   name: z.string().nullable(),
-  primaryEmail: z.string(),
+  primaryEmail: z.string().nullable(),
 });
 
 export const SessionResponseSchema = z.discriminatedUnion('authenticated', [

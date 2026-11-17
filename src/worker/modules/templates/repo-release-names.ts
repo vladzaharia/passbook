@@ -1,3 +1,4 @@
+import { knownEmail, NO_EMAIL_LABEL } from '../../../shared/email.ts';
 import { all } from '../../platform/db.ts';
 
 /** Display names for user ids: the name, else the sign-in email; never the id. */
@@ -14,7 +15,7 @@ export async function userNames(
       `SELECT id, name, primary_email AS email FROM users WHERE id IN (${chunk.map(() => '?').join(', ')})`,
       chunk,
     );
-    for (const r of rows) names.set(r.id, r.name?.trim() || r.email);
+    for (const r of rows) names.set(r.id, r.name?.trim() || knownEmail(r.email) || NO_EMAIL_LABEL);
   }
   return names;
 }

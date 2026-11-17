@@ -1,6 +1,7 @@
 import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import { ScanBrandingSchema, type ScanSession } from '../../../shared/contracts/scan-session.ts';
+import { knownEmail } from '../../../shared/email.ts';
 import {
   type AppError,
   ConflictError,
@@ -208,7 +209,7 @@ async function sessionFor(
     admin:
       actor.principal === 'admin'
         ? {
-            name: user?.name ?? user?.primary_email ?? 'Admin',
+            name: user?.name ?? knownEmail(user?.primary_email) ?? 'Admin',
             orgs: [{ id: actor.orgId, name: orgName }],
           }
         : null,

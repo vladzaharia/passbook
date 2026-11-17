@@ -6,6 +6,7 @@ import type {
   UserSchema,
   UserSummarySchema,
 } from '../../../shared/contracts/index.ts';
+import { knownEmail } from '../../../shared/email.ts';
 import type { Role } from '../../platform/auth.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { parseJsonArray, parseRoles } from '../../platform/json-column.ts';
@@ -32,7 +33,7 @@ function toUser(row: repo.UserRow): UserDto {
   return {
     id: row.id,
     name: row.name,
-    primaryEmail: row.primary_email,
+    primaryEmail: knownEmail(row.primary_email),
     status: row.status,
     lastRoles: asRoles(row.last_roles),
     createdAt: row.created_at,
