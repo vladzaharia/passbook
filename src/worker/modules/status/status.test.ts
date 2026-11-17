@@ -324,6 +324,7 @@ describe('status api', () => {
     app.request(`/api/v1/status${path}`, { headers }, base);
 
   it('is admin only and /health stays minimal', async () => {
+    expect((await get('')).status).toBe(200);
     await expectProblem(await get('', fake.user()), 403, 'FORBIDDEN');
     expect((await get('', {})).status).toBe(401);
     const health = await app.request('/health', {}, base);

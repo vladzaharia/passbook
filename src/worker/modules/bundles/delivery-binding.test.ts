@@ -415,4 +415,29 @@ describe('durable bundle email intent', () => {
     ).toBeNull();
     expect((await getPass(kit.env.DB, pass.id))?.holderEmail).toBe('bundle-race-new@example.com');
   });
+
+  it('inserts the bundle membership when the holder has not changed', async () => {
+    const pass = await kit.pass({ holderEmail: 'bundle-control@example.com' });
+    const id = kit.ctx.ids.id();
+    await createBundleGrant(
+      job(),
+      {
+        id,
+        orgId: pass.orgId,
+        mode: pass.mode,
+        name: 'Control',
+        token: kit.ctx.ids.token(),
+        holderEmail: pass.holderEmail,
+        actor,
+        passes: [pass],
+        now: kit.clock.now(),
+      },
+      undefined,
+      {},
+    ).commit();
+    expect(await getBundle(kit.env.DB, id, null)).not.toBeNull();
+    expect(
+      await first(kit.env.DB, 'SELECT pass_id FROM bundle_passes WHERE bundle_id = ?', [id]),
+    ).toMatchObject({ pass_id: pass.id });
+  });
 });

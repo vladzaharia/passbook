@@ -79,6 +79,23 @@ async function beforeKeyBatch<T>(
 }
 
 describe('API key commit authority', () => {
+  it.each(['create', 'revoke'] as const)(
+    'does %s a key when nothing changes before commit',
+    async (action) => {
+      const { session } = await member('integration_admin');
+      const key = await makeApiKey(f(), { orgId: org.id, scopes: ['passes:read'] });
+      const response = await beforeKeyBatch(
+        action,
+        async () => {},
+        () =>
+          action === 'create'
+            ? create(session.headers, { ...keyBody(org.id), scopes: ['connections:read'] })
+            : revoke(session.headers, key.id, org.id),
+      );
+      expect(response.status).toBeLessThan(300);
+    },
+  );
+
   it.each([
     ['create', 'session'],
     ['revoke', 'session'],

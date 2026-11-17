@@ -151,6 +151,7 @@ describe('audit api', () => {
   });
 
   it('rejects a malformed cursor and non-admins', async () => {
+    expect((await get('')).status).toBe(200);
     expect((await get('?cursor=abc')).status).toBe(422);
     await expectProblem(await get('', fake.user()), 403, 'FORBIDDEN');
     expect((await get('', {})).status).toBe(401);

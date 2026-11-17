@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../test/helpers/denial.ts';
-import { fixtures, makeApiKey, makeEnv, makeSession, makeUser } from '../../test/helpers/index.ts';
+import {
+  fixtures,
+  makeApiKey,
+  makeEnv,
+  makeOrg,
+  makeSession,
+  makeUser,
+} from '../../test/helpers/index.ts';
 import { createApp } from './app.ts';
 import { ManualClock } from './platform/clock.ts';
 import { all, run } from './platform/db.ts';
@@ -38,6 +45,9 @@ describe('createAuthStores', () => {
       await Promise.allSettled(pending);
       return res;
     };
+    const org = await makeOrg(f);
+    const scoped = await makeApiKey(f, { orgId: org.id, scopes: ['passes:read'] });
+    expect((await send('/api/v1/passes', { headers: scoped.headers })).status).toBe(200);
     await expectProblem(
       await send('/api/v1/users', { headers: session.headers }),
       403,
