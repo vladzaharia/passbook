@@ -167,6 +167,42 @@ describe('authority-scope', () => {
     expect(rawWriteStatements(url)).toHaveLength(1);
   });
 
+  it('pins the predicate behind an interpolation, so a changed constant fails', () => {
+    const rel = 'src/worker/modules/scan/repo-gate-recovery.ts';
+    const text = new Map(treeFiles()).get(rel) ?? '';
+    const rawFindings = (source: string) =>
+      scanFile(rel, source, owners).filter((f) => f.rule === 'raw-guarded-write');
+    expect(rawFindings(text)).toEqual([]);
+    const widened = text.replace('pass_id = ? AND action_id = ?', 'pass_id = ? OR action_id = ?');
+    expect(widened).not.toBe(text);
+    // `${match}` is a same-file constant: its value is part of both statements that use it.
+    expect(rawFindings(widened)).toHaveLength(2);
+    // Other interpolations keep their expression text.
+    const interp = (e: string) => `run(db, \`DELETE FROM sessions WHERE $\{${e}}\`)`;
+    expect(rawWriteStatements(interp('a'))).not.toEqual(rawWriteStatements(interp('b')));
+    expect(rawWriteStatements(interp(' a '))).toEqual(rawWriteStatements(interp('a')));
+  });
+
+  it('pins a concatenated tail and a constant run from a new call site', () => {
+    const base = "run(db, 'DELETE FROM sessions WHERE ' + cond, []);";
+    expect(rawWriteStatements(base)).toHaveLength(1);
+    expect(rawWriteStatements(base)).not.toEqual(
+      rawWriteStatements("run(db, 'DELETE FROM sessions WHERE ' + other, []);"),
+    );
+    expect(
+      rawWriteStatements("run(db, 'DELETE FROM sessions WHERE ' + 'id = ?', []);"),
+    ).not.toEqual(rawWriteStatements("run(db, 'DELETE FROM sessions WHERE ' + 'id > ?', []);"));
+    const once = "const Q = 'DELETE FROM sessions WHERE id = ?';\nrun(db, Q, [id]);";
+    const twice = `${once}\nrun(db, Q, [other]);`;
+    expect(rawWriteStatements(once)).toHaveLength(2);
+    expect(rawWriteStatements(twice)).toHaveLength(3);
+    const rel = 'src/worker/modules/auth/repo-sessions.ts';
+    const text = new Map(treeFiles()).get(rel) ?? '';
+    expect(
+      scanFile(rel, `${text}\n${twice}`, owners).filter((f) => f.rule === 'raw-guarded-write'),
+    ).not.toHaveLength(0);
+  });
+
   it('flags a pin whose statement is gone, even when a comment still names it', () => {
     const rel = 'src/worker/modules/auth/repo-sessions.ts';
     const files = new Map(treeFiles());

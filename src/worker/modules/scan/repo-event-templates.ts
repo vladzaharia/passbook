@@ -1,4 +1,5 @@
 import { all, first, placeholders } from '../../platform/db.ts';
+import { templateVisibleSql, visibleBinds } from '../templates/repo-visibility.ts';
 import type { TemplateStamps } from './repo-scope-releases.ts';
 
 type Db = D1Database;
@@ -17,9 +18,9 @@ export async function countScopedTemplates(
   const row = await first<{ n: number }>(
     db,
     `SELECT count(*) AS n FROM templates
-     WHERE (org_id=? OR org_id IS NULL) AND ${active ? "status='active'" : "status!='deleted'"}
+     WHERE ${templateVisibleSql('templates', '?')} AND ${active ? "status='active'" : "status!='deleted'"}
        AND id IN (${placeholders(ids.length)})`,
-    [orgId, ...ids],
+    [...visibleBinds(orgId), ...ids],
   );
   return row?.n ?? 0;
 }

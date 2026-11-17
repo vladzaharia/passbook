@@ -15,7 +15,12 @@ import {
   UNTENANTED_CHECK_ALLOWLIST,
 } from './authority-scope-allowlists.ts';
 import { scanBans } from './authority-scope-bans.ts';
-import { fingerprint, statementAt, stripComments } from './authority-scope-statements.ts';
+import {
+  describeStatement,
+  fingerprint,
+  stripComments,
+  usesOf,
+} from './authority-scope-statements.ts';
 
 export {
   DYNAMIC_WRITE_ALLOWLIST,
@@ -246,7 +251,12 @@ export function rawWriteStatements(source: string): string[] {
   const out: string[] = [];
   for (const m of text.matchAll(WRITE)) {
     if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
-    out.push(`${m[1] ?? m[2] ?? ''}:${fingerprint(statementAt(stripped, m.index ?? 0))}`);
+    const table = m[1] ?? m[2] ?? '';
+    const { text: statement, holder } = describeStatement(stripped, m.index ?? 0);
+    const id = `${table}:${fingerprint(statement)}`;
+    out.push(id);
+    // A pinned constant run from another call site is another statement.
+    if (holder) for (let n = usesOf(stripped, holder); n > 0; n--) out.push(`${id}@use`);
   }
   for (const m of text.matchAll(HELPER_WRITE)) {
     const open = (m.index ?? 0) + m[0].indexOf('(');

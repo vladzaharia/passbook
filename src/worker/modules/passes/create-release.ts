@@ -2,6 +2,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertNotBlueprint } from '../templates/blueprint-guard.ts';
 import { requireApprovedRelease, type TemplateRelease } from '../templates/releases.ts';
+import { templateVisibleToOrg } from '../templates/repo-list.ts';
 import { assertTenantCreateAuthority } from './create-authority.ts';
 import type { CreateParams } from './create-types.ts';
 import { connectionForPass } from './repo-read-connection.ts';
@@ -33,7 +34,12 @@ async function assertCreateTemplate(
   wasPinned = false,
 ): Promise<void> {
   const template = await getCreateTemplate(ctx.env.DB, p.templateId);
-  if (template?.status !== 'active' || (template.orgId !== null && template.orgId !== p.orgId)) {
+  if (
+    template?.status !== 'active' ||
+    (template.orgId !== null && template.orgId !== p.orgId) ||
+    // A staged platform upload is as invisible as another org's template.
+    (template.orgId === null && !(await templateVisibleToOrg(ctx.env.DB, p.templateId, p.orgId)))
+  ) {
     if (wasPinned) throw releaseChanged();
     throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
   }

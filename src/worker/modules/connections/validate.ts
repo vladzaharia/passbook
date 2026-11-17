@@ -7,6 +7,7 @@ import { assertPublicHost, assertSafeUrl, platformHostsOf } from '../../platform
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { blueprintRefusal } from '../templates/blueprint-guard.ts';
+import { templateVisibleToOrg } from '../templates/repo-list.ts';
 import { getDeps, resolverOf } from './deps.ts';
 import type { Mode } from './repo.ts';
 import { templateScope } from './repo-passes.ts';
@@ -81,14 +82,18 @@ export function assertPointer(value: string | undefined, path: string): void {
   }
 }
 
-/** The template must exist, be active and belong to the connection's org (or be platform-wide). */
+/** The template must exist, be active and be the connection's org's own or a platform one offered to it. */
 export async function assertTemplateUsable(
   sctx: ServiceContext,
   orgId: string,
   templateId: string,
 ): Promise<void> {
   const scope = await templateScope(sctx.env.DB, templateId);
-  if (scope?.status !== 'active' || (scope.orgId !== null && scope.orgId !== orgId)) {
+  if (
+    scope?.status !== 'active' ||
+    (scope.orgId !== null && scope.orgId !== orgId) ||
+    (scope.orgId === null && !(await templateVisibleToOrg(sctx.env.DB, templateId, orgId)))
+  ) {
     throw new ValidationError(
       'Template not found.',
       [{ path: 'defaultTemplateId', message: 'Template not found.' }],
