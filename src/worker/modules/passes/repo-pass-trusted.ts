@@ -126,11 +126,11 @@ export async function sealTrusted(
   purpose: TokenPurpose,
   row: PlainTokenRow,
   mac: string,
-  seal: SealRow,
+  seal: SealRow | null,
 ): Promise<boolean> {
   const [updated] = await batch(db, [
     stmt(db, SEAL_SQL[purpose], [mac, row.id, row.token]),
-    sealStatement(db, purpose, row.id, mac, seal),
+    ...(seal ? [sealStatement(db, purpose, row.id, mac, seal)] : []),
   ]);
   return (updated?.results.length ?? 0) === 1;
 }

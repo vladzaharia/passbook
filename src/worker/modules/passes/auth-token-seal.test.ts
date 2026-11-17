@@ -276,7 +276,7 @@ describe('backfill work lists', () => {
         .join('\n');
     expect(
       await plan(
-        "SELECT id FROM passes WHERE auth_token NOT LIKE 'h1:%' AND id > 'a' ORDER BY id LIMIT 5",
+        "SELECT id FROM passes WHERE auth_token NOT GLOB 'h1:*' AND id > 'a' ORDER BY id LIMIT 5",
       ),
     ).toContain('passes_auth_plain');
     expect(

@@ -85,19 +85,30 @@ export async function sealCapabilityTokens(ctx: ServiceContext): Promise<void> {
   });
 }
 
+/** One row, classified on its own: a refused or failing row is counted and logged, and the sweep moves on. */
 async function sealOne(
   ctx: ServiceContext,
   purpose: TokenPurpose,
   row: PlainTokenRow,
 ): Promise<boolean> {
-  const issued = await issueToken(ctx.env, purpose, row.id, row.orgId, row.token);
   try {
-    if (!row.orgActive) return await sealTrusted(ctx.env.DB, purpose, row, issued.mac, issued.seal);
-    await sealGrant(ctx, purpose, row, issued.mac, issued.seal).commit();
+    const issued = await issueToken(ctx.env, purpose, row.id, row.orgId, row.token);
+    const seal = row.keepSeal ? issued.seal : null;
+    if (!row.orgActive) return await sealTrusted(ctx.env.DB, purpose, row, issued.mac, seal);
+    await sealGrant(ctx, purpose, row, issued.mac, seal).commit();
     return true;
   } catch (error) {
-    if (!(error instanceof AppError) || error.status >= 500) throw error;
-    ctx.log.warn('tokens.seal_refused', { code: 'TOKEN_SEAL_REFUSED', purpose, id: row.id });
+    if (error instanceof AppError && error.status < 500) {
+      ctx.log.warn('tokens.seal_refused', { code: 'TOKEN_SEAL_REFUSED', purpose, id: row.id });
+      return false;
+    }
+    // Never the token: the error's name only.
+    ctx.log.error('tokens.seal_failed', {
+      code: 'TOKEN_SEAL_FAILED',
+      purpose,
+      id: row.id,
+      errorName: error instanceof Error ? error.name : 'unknown',
+    });
     return false;
   }
 }

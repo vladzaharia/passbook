@@ -1,5 +1,6 @@
 import { keptGoalOf, withKeptGoal } from '../../../passkit/stamps/rules.ts';
 import type { PassJson } from '../../../passkit/types.ts';
+import { tokenMac } from '../../platform/capability-token.ts';
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -191,7 +192,7 @@ export async function buildTransfer(
   };
   if (
     credentials.serial === p.serial ||
-    credentials.authToken === p.authToken ||
+    (await tokenMac(ctx.env, 'apple-auth', credentials.authToken)) === p.authToken ||
     credentials.scanCode === p.scanCode
   )
     throw conflict();

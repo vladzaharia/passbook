@@ -15,6 +15,8 @@ export interface PlainTokenRow {
   token: string;
   /** A job grant needs an active org; the rows of any other org are sealed by the trusted write. */
   orgActive: boolean;
+  /** False for a deleted pass or a deleted org: it gets the MAC only and no sealed copy. */
+  keepSeal: boolean;
 }
 
 interface Raw {
@@ -24,6 +26,7 @@ interface Raw {
   row_version: number | null;
   token: string;
   org_active: number;
+  keep_seal: number;
 }
 
 const map = (r: Raw): PlainTokenRow => ({
@@ -33,6 +36,7 @@ const map = (r: Raw): PlainTokenRow => ({
   rowVersion: r.row_version,
   token: r.token,
   orgActive: r.org_active === 1,
+  keepSeal: r.keep_seal === 1,
 });
 
 export const PASS_PENDING = `EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = passes.id AND t.state = 'pending')`;
@@ -42,6 +46,14 @@ export const BUNDLE_RESERVED = `EXISTS (SELECT 1 FROM sandbox_forwards f
   WHERE f.bundle_id = bundles.id AND f.state IN ('sending', 'unknown'))`;
 const ORG_ACTIVE = (table: string) =>
   `COALESCE((SELECT o.status = 'active' FROM orgs o WHERE o.id = ${table}.org_id), 0)`;
+/** A suspended org may come back, so its rows keep a copy; a deleted org and a deleted pass never need one. */
+const ORG_KEEPS = (table: string) =>
+  `COALESCE((SELECT o.status != 'deleted' FROM orgs o WHERE o.id = ${table}.org_id), 0)`;
+/** The column's work-list predicate: the device token's is case-sensitive (0065), the older ones are not. */
+const PLAIN = {
+  download_token: "download_token NOT LIKE 'h1:%'",
+  auth_token: "auth_token NOT GLOB 'h1:*'",
+} as const;
 
 /**
  * Passes still holding a plain token in `column` (the download link or the Apple web-service token),
@@ -55,8 +67,9 @@ export async function plainPasses(
 ): Promise<PlainTokenRow[]> {
   const rows = await all<Raw>(
     db,
-    `SELECT id, org_id, mode, row_version, ${column} AS token, ${ORG_ACTIVE('passes')} AS org_active
-     FROM passes WHERE ${column} NOT LIKE 'h1:%' AND (? IS NULL OR id > ?)
+    `SELECT id, org_id, mode, row_version, ${column} AS token, ${ORG_ACTIVE('passes')} AS org_active,
+       (deleted_at IS NULL AND ${ORG_KEEPS('passes')}) AS keep_seal
+     FROM passes WHERE ${PLAIN[column]} AND (? IS NULL OR id > ?)
        AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED}
      ORDER BY id LIMIT ?`,
     [after, after, limit],
@@ -72,7 +85,8 @@ export async function plainBundles(
 ): Promise<PlainTokenRow[]> {
   const rows = await all<Raw>(
     db,
-    `SELECT id, org_id, mode, NULL AS row_version, token, ${ORG_ACTIVE('bundles')} AS org_active
+    `SELECT id, org_id, mode, NULL AS row_version, token, ${ORG_ACTIVE('bundles')} AS org_active,
+       ${ORG_KEEPS('bundles')} AS keep_seal
      FROM bundles WHERE token NOT LIKE 'h1:%' AND (? IS NULL OR id > ?)
        AND NOT ${BUNDLE_RESERVED}
      ORDER BY id LIMIT ?`,
@@ -86,7 +100,7 @@ export async function countPlain(db: D1Database): Promise<number> {
   const row = await first<{ n: number }>(
     db,
     `SELECT (SELECT count(*) FROM passes WHERE download_token NOT LIKE 'h1:%')
-          + (SELECT count(*) FROM passes WHERE auth_token NOT LIKE 'h1:%')
+          + (SELECT count(*) FROM passes WHERE ${PLAIN.auth_token})
           + (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS n`,
   );
   return row?.n ?? 0;
@@ -133,7 +147,7 @@ const noReservation = (id: string, purpose: TokenPurpose): Check =>
   );
 
 /**
- * Replaces the plain token with its MAC and keeps the sealed copy, in one grant. The write holds only
+ * Replaces the plain token with its MAC and keeps the sealed copy (none for a row that needs none), in one grant. The write holds only
  * for the row as read (token and, for a pass, `row_version`); the 0059 and 0065 triggers keep it from
  * counting as a pass change. An existing sealed copy is kept.
  */
@@ -142,7 +156,7 @@ export function sealGrant(
   purpose: TokenPurpose,
   row: PlainTokenRow,
   mac: string,
-  seal: SealRow,
+  seal: SealRow | null,
 ): Grant {
   const { owner, table, tokenColumn } = SEALS[purpose];
   const pass = owner === 'passes';
@@ -166,6 +180,6 @@ export function sealGrant(
     ],
   });
   g.update(owner, { set: { [tokenColumn]: mac }, where: { id: row.id }, require: 'one' });
-  g.include(sealPart(purpose, row.id, mac, seal));
+  if (seal) g.include(sealPart(purpose, row.id, mac, seal));
   return g;
 }

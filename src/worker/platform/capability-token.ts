@@ -104,8 +104,9 @@ export async function tokenMatches(
   stored: string,
   presented: string,
 ): Promise<boolean> {
-  if (!isTokenMac(stored)) return safeEqual(presented, stored);
-  return safeEqual(await tokenMac(env, purpose, presented), stored);
+  // The MAC is computed for every row, so a sealed, an unsealed and an unknown row cost the same.
+  const mac = await tokenMac(env, purpose, presented);
+  return isTokenMac(stored) ? safeEqual(mac, stored) : safeEqual(presented, stored);
 }
 
 const bytes = (v: number[] | ArrayBuffer) => new Uint8Array(v);
