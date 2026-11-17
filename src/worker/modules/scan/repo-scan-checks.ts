@@ -1,5 +1,6 @@
-import { type Check, rawCheck } from '../../platform/authority-checks.ts';
+import { type Check, rawCheck, tenantMatch } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
+import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, readPart } from '../../platform/authority-include.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
@@ -131,7 +132,13 @@ export const dailyAmountCheck = (
  * The pass is still used under the release the answer was evaluated under (`lineage`, 409
  * `SCAN_PASS_CHANGED`): a head that says something else about what a scanner may do refuses; an
  * identical republish leaves the effective release as it was. A snapshot without a release id is
- * false. For a grant that is the commit itself, so no read of this rides before it.
+ * false. In a grant that is the commit itself, so no read of this rides before it.
+ *
+ * The release SQL names org and mode columns of its own (`tenantCheck` refuses that), so this is a
+ * hand-built `Check`, made only here: the pass is pinned by the grant's tenant (`tenantMatch`
+ * against the actor row) and `assertReleaseCheckText` refuses, at render, any text whose `passes`
+ * alias is not so pinned, that compares a tenant column to a bound value, that uses the reserved `g`
+ * alias or an `a` other than `a.org_id` / `a.mode`, or that binds a different number of values.
  */
 export function effectiveReleaseCheck(
   passId: string,
@@ -139,12 +146,42 @@ export function effectiveReleaseCheck(
 ): Check {
   const used = usedRelease(snapshotRaw);
   if (used === false) return rawCheck('lineage', '0');
-  // Not `rawCheck` or `tenantCheck`: the release SQL names org columns and its own aliases (an inner
-  // `a` shadows the actor row only inside its subselects); the tenant is the actor row `a`.
   return {
     reason: 'lineage',
-    ok: (b) =>
-      `EXISTS (SELECT 1 FROM passes p WHERE p.id = ${b.bind(passId)} AND p.org_id = a.org_id
-        AND ${effectiveReleaseIdSql('p')} IS ${b.bind(used === null ? null : used[0])})`,
+    ok: (b, scope) => {
+      if (scope === 'platform')
+        throw new AuthorityError('GRANT_SCOPE_OVERRIDE', 'A release check needs a tenant.');
+      const before = b.params.length;
+      const text = `EXISTS (SELECT 1 FROM passes p WHERE p.id = ${b.bind(passId)}
+        AND ${tenantMatch('passes', 'p', scope, 'a')}
+        AND ${effectiveReleaseIdSql('p')} IS ${b.bind(used === null ? null : used[0])})`;
+      assertReleaseCheckText(text, b.params.length - before, scope);
+      return text;
+    },
   };
+}
+
+export function assertReleaseCheckText(
+  text: string,
+  bound: number,
+  scope: 'org' | 'org_mode' | 'platform',
+): void {
+  const bad = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE', message);
+  const aliases = [...text.matchAll(/\b(?:FROM|JOIN)\s+passes\s+(\w+)/gi)].map((m) => m[1] ?? '');
+  if (aliases.length !== 1 || aliases[0] !== 'p')
+    throw bad('A release check reads exactly one passes alias, p.');
+  if (
+    !text.includes('p.org_id = a.org_id') ||
+    (scope === 'org_mode' && !text.includes('p.mode = a.mode'))
+  )
+    throw bad('The pass of a release check is pinned by the grant tenant.');
+  if (/\b(?:org_id|mode)\s*(?:=|IS)\s*\?/i.test(text))
+    throw bad('A release check never compares a tenant column to a bound value.');
+  if (
+    /\bg\./.test(text) ||
+    [...text.matchAll(/\ba\.(\w+)/g)].some((m) => m[1] !== 'org_id' && m[1] !== 'mode')
+  )
+    throw bad('The aliases a and g are reserved in a release check.');
+  if ((text.match(/\?/g)?.length ?? 0) !== bound)
+    throw bad('A release check binds as many values as it has marks.');
 }

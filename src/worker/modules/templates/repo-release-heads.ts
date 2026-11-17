@@ -45,16 +45,16 @@ export function effectiveReleaseIdSql(scope: ReleaseScopeSql): string {
           AND er.org_id IS NOT NULL AND er.org_id IS (${o}) AND er.version = et.active_version)
         OR (er.source = 'approved' AND er.action IN ('release', 'rollback') AND et.origin = 'uploaded'
           AND er.org_id IS NOT NULL AND er.org_id IS (${o})
-          AND EXISTS (SELECT 1 FROM template_candidates c JOIN template_approvals a ON a.candidate_id = c.id
-            WHERE (c.id = er.candidate_id AND a.id = er.approval_id AND c.template_id = er.template_id
+          AND EXISTS (SELECT 1 FROM template_candidates c JOIN template_approvals apr ON apr.candidate_id = c.id
+            WHERE (c.id = er.candidate_id AND apr.id = er.approval_id AND c.template_id = er.template_id
                 AND c.org_id IS er.org_id)
               AND (c.mode = er.mode AND c.provider = er.provider AND c.version = er.version
                 AND c.candidate_hash = er.candidate_hash)
-              AND (a.candidate_hash = c.candidate_hash AND c.content_hash = er.content_hash
+              AND (apr.candidate_hash = c.candidate_hash AND c.content_hash = er.content_hash
                 AND c.adapter_revision = er.adapter_revision AND c.adapter_capabilities = er.adapter_capabilities)
               AND (c.audience_policy_revision = er.audience_policy_revision
-                AND ev.created_by IS c.version_author_id AND a.reviewer_id != c.author_id
-                AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)))))
+                AND ev.created_by IS c.version_author_id AND apr.reviewer_id != c.author_id
+                AND (c.version_author_id IS NULL OR apr.reviewer_id != c.version_author_id)))))
       AND (er.source = 'legacy' OR NOT EXISTS (SELECT 1 FROM template_version_hashes vh
         WHERE vh.template_id = er.template_id AND vh.version = er.version AND vh.content_hash != er.content_hash))
     LIMIT 1`;

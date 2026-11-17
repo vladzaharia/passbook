@@ -1,7 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
+import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { act, kit, out, rows, setupActionFixture } from './act-test-fixtures.ts';
 import { showBalance } from './act-value-test-fixtures.ts';
+import { beforeBatch } from './repo-action-template-read-race-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
@@ -212,4 +216,58 @@ describe('value actions: push budget', () => {
     expect(await silenced(loudPass.id)).toBe(2);
     expect(await balanceOf(loudPass.id)).toBe(5);
   });
+
+  // The value commit holds the release the answer was evaluated under (the grant's own check).
+  it.each(['other release', 'identical republish'] as const)(
+    'a %s between the preflight and the value commit',
+    async (change) => {
+      const t = await kit.scanTemplate('Release race', { actions: [{ ...ADD, amount: 1 }] });
+      await showBalance(t);
+      const pinned = await kit.registry.resolve(t, 'v2');
+      const manifest = structuredClone(pinned.manifest);
+      manifest.scan = { actions: [{ ...ADD, amount: 1, label: 'Add one more' }] };
+      const next = kit.registry.add({
+        id: t,
+        orgId: pinned.orgId,
+        version: 'v3',
+        manifest,
+        passJson: pinned.passJson,
+        assets: { 'icon.png': ICON_PNG },
+      });
+      await persistTemplate(kit.fx, next, { registry: kit.registry, buildKey: 'value-test' });
+      const s = await desk([t]);
+      const pass = await kit.scanPass(t, { balance: 0 });
+      const real = kit.env.DB;
+      const hooked = beforeBatch(real, 'INSERT INTO scan_gates', (db) =>
+        approveAppleRelease(kit, {
+          db,
+          templateId: t,
+          version: change === 'other release' ? 'v3' : 'v2',
+          mode: 'live',
+        }),
+      );
+      Object.assign(kit.env, { DB: hooked.db });
+      let res: Response;
+      try {
+        res = await act(s.headers, codeOf(pass), { actionId: 'add' });
+      } finally {
+        Object.assign(kit.env, { DB: real });
+      }
+      expect(hooked.fired()).toBe(true);
+      if (change === 'identical republish') {
+        expect((await out(res)).kind).toBe('ok');
+        expect(await balanceOf(pass.id)).toBe(1);
+        return;
+      }
+      expect(`${res.status} ${((await res.json()) as { code?: string }).code}`).toBe(
+        '409 PASS_CONFLICT',
+      );
+      expect(await balanceOf(pass.id)).toBe(0);
+      expect(
+        await count("SELECT COUNT(*) AS n FROM scans WHERE pass_id = ? AND outcome = 'ok'", [
+          pass.id,
+        ]),
+      ).toBe(0);
+    },
+  );
 });
