@@ -1,10 +1,10 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { z } from 'zod';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { formatCount, formatDay } from '@/web/lib/format.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
   Button,
   CountLink,
@@ -61,7 +61,7 @@ function countLink(org: Org, key: keyof typeof NOUN, to: string, member: boolean
   );
 }
 
-const columnsFor = (isMember: (orgId: string) => boolean): ColumnDef<Org, never>[] => [
+const columnsFor = (isMember: (orgId: string) => boolean): DataColumnDef<Org, never>[] => [
   {
     header: 'Organization',
     id: 'name',

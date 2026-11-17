@@ -4,11 +4,11 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { ApiError } from '../lib/errors.ts';
 import '../lib/test-utils.tsx';
 import { CodeBlock, JsonViewer } from './code-block.tsx';
@@ -37,7 +37,7 @@ const ROWS: Row[] = [
   { id: '2', name: 'Alpha', count: 3 },
   { id: '3', name: 'Charlie', count: 1 },
 ];
-const COLUMNS: ColumnDef<Row, never>[] = [
+const COLUMNS: DataColumnDef<Row, never>[] = [
   { accessorKey: 'name', header: 'Name' },
   { accessorKey: 'count', header: 'Count' },
   { id: 'actions', header: 'Actions', cell: () => 'x' },
@@ -168,7 +168,7 @@ describe('DataTable stacked rows', () => {
       removeEventListener: () => {},
     }));
     const onRowClick = vi.fn();
-    const columns: ColumnDef<Row, never>[] = [
+    const columns: DataColumnDef<Row, never>[] = [
       {
         id: 'select',
         header: 'Select',

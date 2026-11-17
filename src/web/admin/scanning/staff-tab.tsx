@@ -1,5 +1,4 @@
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import type { CellContext, ColumnDef } from '@tanstack/react-table';
 import { Ban, CircleCheck, IdCard, Pencil, Plus, RotateCw } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
@@ -10,6 +9,7 @@ import { isApiError } from '@/web/lib/errors.ts';
 import { formatCount, formatDay } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
   Badge,
   Button,
@@ -89,7 +89,7 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
   // flexRender treats cell callbacks as components, so keep this one stable across
   // refetches and clock ticks rather than remounting an open action menu.
   const actionCell = useCallback(
-    ({ row }: CellContext<ScanStaff, never>) => {
+    ({ row }: { row: { original: ScanStaff } }) => {
       if (!canManage) return null;
       const person = row.original;
       const disabled = person.disabledAt !== null;
@@ -119,7 +119,7 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
     },
     [canManage],
   );
-  const columns: ColumnDef<ScanStaff, never>[] = [
+  const columns: DataColumnDef<ScanStaff, never>[] = [
     {
       id: 'name',
       header: 'Name',

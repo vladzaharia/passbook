@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
 import { DraftingCompass, Upload } from 'lucide-react';
 import { useMemo } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { formatDay } from '../../lib/format.ts';
 import { BELOW_MD, useMediaQuery } from '../../lib/media.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -37,7 +37,7 @@ const VIEWS = [
 function columns(
   archived: boolean,
   orgId: string | undefined,
-): ColumnDef<TemplateSummaryDto, never>[] {
+): DataColumnDef<TemplateSummaryDto, never>[] {
   return [
     {
       id: 'name',
@@ -100,7 +100,7 @@ function columns(
             id: 'status',
             header: 'Status',
             cell: ({ row }) => <StatusPill status={row.original.status} />,
-          } satisfies ColumnDef<TemplateSummaryDto, never>,
+          } satisfies DataColumnDef<TemplateSummaryDto, never>,
         ]
       : []),
   ];
