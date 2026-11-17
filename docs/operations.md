@@ -279,7 +279,7 @@ passes keep the old one until a template change or Identities, Re-sign all rebui
 
 ## Cutover from schema 0024
 
-Production D1 is at 0024. Migrations 0025–0065 have never run there; they land together (0040, 0060 and 0062 do not exist). All data
+Production D1 is at 0024. Migrations 0025–0065 have never run there; they land together (0040, 0060 and 0062 do not exist: 38 files). All data
 is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, secrets, and every
 `--apply` or `--remote` command. An agent never runs them. `test/cutover/` rehearses this order on
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
@@ -287,7 +287,12 @@ a 0024 database with every template shape and runs the SQL blocks below. Roll fo
 
 Migrations 0056 to 0064 add no window rule: blueprints (0056), indexes (0057), `scans.session_id` (0058), stateless asset grants (0061: drops `scan_asset_grant_provenance`), scan core (0063: drops the `scanners_credential_revision` trigger), trigger narrowing (0064). 0059 and 0065 (token seals) are one-way: see the window and rollback notes in `authority-epochs.md` 6.2 and 6.3. `scanning_config_revisions` stays: the pre-cutover Worker writes it when a scanning session or device is edited.
 
-Old pass download, bundle and Apple web-service tokens are sealed by the minute cron `tokens.seal` (0059 and 0065, 50 of each a run, id cursors in the settings `tokens.sealCursor` and its `auth` cursor, log codes `TOKEN_SEAL_RUN` and `TOKEN_SEAL_REFUSED`); no owner step. The same run removes the device token from stored `pass_versions.pass_json` (200 a run). A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining` and `unscrubbed`, both zero when done. Scans recorded before the scrub replay as the minimal receipt, as after any pass edit. Backups from before 0059 hold working links and, from before 0065, working device tokens: rotate in bulk if one leaks (a credential transfer rotates the device token). D1 Time Travel keeps 30 days: a restore to a point before 0065 brings the plain device tokens back, so treat a restore as a rotation event. Every `.pkpass` object in R2 carries the device token that was current at its version (Wallet needs it in the signed bytes), so keep the bucket private (no public bucket, no `r2.dev`, an API token scoped to the Worker); purged versions and purged deleted passes delete their objects. A soft-deleted pass drops its sealed copies at once, and a pass of a deleted org is sealed as MAC only. Passes and bundles of a non-active org stay plain until it is active.
+Old pass download, bundle and Apple web-service tokens are sealed by the minute cron `tokens.seal` (0059 and 0065, 50 of each a run, id cursors in the settings `tokens.sealCursor` and its `auth` cursor, log codes `TOKEN_SEAL_RUN` and `TOKEN_SEAL_REFUSED`); no owner step. The same run removes the device token from stored `pass_versions.pass_json` (200 a run). A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining` and `unscrubbed`, both zero when done. A forward stuck in `unknown`
+(email outcome unknown) keeps its passes plain, and `remaining` stays above zero, until the
+sandbox sweeper expires it 24 hours after it finished; the plain token still works until then.
+Done means `remaining` is zero, or above zero only while
+`SELECT count(*) FROM sandbox_forwards WHERE state IN ('sending', 'unknown')` is above zero;
+recheck a day later. Do not seal them by hand. Scans recorded before the scrub replay as the minimal receipt, as after any pass edit. Backups from before 0059 hold working links and, from before 0065, working device tokens: rotate in bulk if one leaks (a credential transfer rotates the device token). D1 Time Travel keeps 30 days: a restore to a point before 0065 brings the plain device tokens back, so treat a restore as a rotation event. Every `.pkpass` object in R2 carries the device token that was current at its version (Wallet needs it in the signed bytes), so keep the bucket private (no public bucket, no `r2.dev`, an API token scoped to the Worker); purged versions and purged deleted passes delete their objects. A soft-deleted pass drops its sealed copies at once, and a pass of a deleted org is sealed as MAC only. Passes and bundles of a non-active org stay plain until it is active.
 
 ### What the new Worker does with 0024 data
 
@@ -324,14 +329,18 @@ Old pass download, bundle and Apple web-service tokens are sealed by the minute 
 ### Deploy mode
 
 Two runs of the normal version flow: `--migrate-only`, bootstrap, `--promote`. `wrangler.jsonc` is
-identical at `main` and HEAD (`git diff main HEAD -- wrangler.jsonc` is empty): same queue
-consumers, workflows, `ScanHub` Durable Object and crons, so nothing needs `wrangler deploy`. Do not
+identical at the deployed commit `c25b9c09` and HEAD (`git diff c25b9c09 HEAD -- wrangler.jsonc` is
+empty): same queue consumers, workflows, `ScanHub` Durable Object and crons, so nothing needs
+`wrangler deploy`. Do not
 use `--first`: it serves the new Worker as soon as the migrations finish, before the bootstrap.
-**Owner**: `npx wrangler deployments list` shows a deploy newer than the last commit to
-`wrangler.jsonc` on `main`. If `wrangler.jsonc` differs, stop and decide again.
+**Owner**: `npx wrangler deployments list` shows no deploy newer than `c25b9c09`'s. If
+`wrangler.jsonc` differs or a later deploy exists, stop and decide again.
 
-Run both halves from the same checkout: `--promote` reads the version id `--migrate-only` saved in
-`.wrangler/deploy-version.txt` once the migrations applied. Flags go after `--`; the tool refuses
+Run both halves from the same clean worktree that passed pre-check 1: the upload ships that
+checkout's `dist/` while the migrations come from its `migrations/`, and a stale `dist/` (an older
+build, another checkout) serves a Worker that predates 0059 and 0065. Run `npm run build` there if
+unsure. `--promote` reads the version id `--migrate-only` saved in `.wrangler/deploy-version.txt`
+once the migrations applied. Flags go after `--`; the tool refuses
 one given before it (`npm run deploy --migrate-only` would reach it only as `npm_config_*`). A
 plain `--apply` refuses while `0029_org_memberships` is pending on a database with data: a full
 deploy would serve the new Worker before the bootstrap. The dry runs print:
@@ -355,9 +364,15 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
    it keeps working after the migrations.
 5. **Owner**: `npx wrangler d1 time-travel info wallet-platform`; note the bookmark. The deploy
    records its own in `.wrangler/d1-bookmarks.log`.
-6. Stop sources of new work: connection syncs, broadcasts, bulk actions. Dashboard, Queues:
-   `wallet-jobs` and `wallet-jobs-dlq` at zero backlog.
-7. **Owner**: read-only SQL. Paste each block into the dashboard's D1 console (`wallet-platform`),
+6. **Owner**: `npx wrangler d1 migrations list wallet-platform --remote` lists exactly the 38 files
+   0025–0065, none of 0040, 0060, 0062 (`--migrate-only` never prints what it will apply).
+   Anything else: stop and decide again.
+7. Stop sources of new work: connection syncs, broadcasts, bulk actions. Dashboard, Queues:
+   `wallet-jobs` and `wallet-jobs-dlq` at zero backlog. **Owner**: no Workflow instance is running
+   or paused: `npx wrangler workflows instances list <name>` for `wallet-bulk-reissue`,
+   `wallet-broadcast`, `wallet-connection-sync` and `wallet-template-import`. Wait for them to
+   finish; an instance resuming on the new code would run old params.
+8. **Owner**: read-only SQL. Paste each block into the dashboard's D1 console (`wallet-platform`),
    or save it as `q.sql` and run
    `npx wrangler d1 execute wallet-platform --remote --command "$(cat q.sql)"` (the blocks hold
    quotes; never paste them into `--command "..."`). Queued work (pending pass and bundle email is
@@ -366,6 +381,44 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
    ```sql verify-outbox
    SELECT kind, state, count(*) AS n FROM outbox
    WHERE state IN ('pending', 'enqueued', 'processing') GROUP BY kind, state
+   ```
+
+   No `processing` row before step 2: the bootstrap and 0045 bind only `pending` and `enqueued`
+   rows, so an in-flight one would lose a Wallet update or an email (`PASS_GONE`,
+   `DELIVERY_UNBOUND`). Rerun until none; a crashed send returns to `pending` when its lease
+   expires (the old minute cron). If one stays past 15 minutes, stop and look at it before step 1.
+
+   Passes the old Worker marked removed without finishing the removal (it crashed between setting
+   `removed_at` and publishing the voided version). 0030 records them as published, so the new
+   Worker refuses to remove them again (`PASS_CONFLICT`) and their Wallet copy is never voided. Expect
+   no rows. For each: on the old Worker, `POST /api/v1/passes/{id}/restore`, then `.../remove`; rerun.
+   Do this before the WAF rule:
+
+   ```sql verify-orphan-removed
+   SELECT p.id, p.org_id, p.status FROM passes p WHERE p.removed_at IS NOT NULL AND (p.status != 'voided'
+     OR (SELECT v.source FROM pass_versions v WHERE v.pass_id = p.id ORDER BY v.version DESC LIMIT 1) IS NOT 'remove')
+   ```
+
+   Scheduled broadcasts due in the window (from now to two hours ahead; set the end to cover your
+   expected cutover). The old minute cron would start them, and the old send fails on the new
+   schema, which marks them failed. Owner reschedules each past the cutover, or accepts the failure:
+
+   ```sql verify-broadcasts-due
+   SELECT id, org_id, name, datetime(at / 1000, 'unixepoch') AS at_utc FROM broadcasts
+   WHERE state = 'scheduled' AND at < (unixepoch() + 7200) * 1000 ORDER BY at
+   ```
+
+   Size of the bootstrap snapshot, one JSON string that D1 caps at 2,000,000 bytes (it holds every
+   active uploaded template's manifest, pass JSON and assets per org, and each queued email's pass).
+   `est_bytes` over 1500000: stop, the snapshot would fail at step 3; split it per template first.
+
+   ```sql verify-snapshot-size
+   SELECT (SELECT coalesce(sum(length(v.manifest) + length(v.pass_json) + length(v.assets)), 0)
+       FROM templates t JOIN template_versions v ON v.template_id = t.id AND v.version = t.active_version
+       JOIN (SELECT id AS template_id, org_id FROM templates WHERE org_id IS NOT NULL
+         UNION SELECT DISTINCT template_id, org_id FROM passes WHERE deleted_at IS NULL) s ON s.template_id = t.id
+       WHERE t.origin = 'uploaded' AND t.status = 'active')
+     + 4000 * (SELECT count(*) FROM outbox WHERE kind = 'email' AND state IN ('pending', 'enqueued')) AS est_bytes
    ```
 
    Archived templates with live passes. Their passes keep scanning; un-archive one only to issue new
@@ -398,7 +451,9 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
    GROUP BY t.id, p.org_id
    ```
 
-   Counts; record them, they must not drop:
+   Counts; record them. `users`, `orgs`, `templates`, `template_versions`, `passes` and `api_keys`
+   must not drop. The rest are informational: `devices`, `registrations` and `sessions` fall when
+   Wallet unregisters a device, on sign-out and in the daily retention (03:17 UTC):
 
    ```sql verify-counts
    SELECT json_object(
@@ -420,13 +475,19 @@ it first in the list and deploy it in step 1 of the order, before the migrations
 step 6, after verification. The expression:
 
 ```
-(http.host in {"passbook.mobile" "wallet.plrs.im"}
+(http.host eq "passbook.mobile"
   and http.request.method in {"POST" "PUT" "PATCH" "DELETE"}
   and (starts_with(http.request.uri.path, "/api/v1/holders/")
     or starts_with(http.request.uri.path, "/api/v1/passes")
     or starts_with(http.request.uri.path, "/api/v1/me/passes/")
     or starts_with(http.request.uri.path, "/api/v1/connections/")
     or starts_with(http.request.uri.path, "/api/v1/templates/")
+    or starts_with(http.request.uri.path, "/api/v1/bundles")
+    or starts_with(http.request.uri.path, "/api/v1/scanners/")
+    or starts_with(http.request.uri.path, "/api/v1/identities/")
+    or starts_with(http.request.uri.path, "/api/v1/test-inbox/")
+    or starts_with(http.request.uri.path, "/api/v1/broadcasts")
+    or starts_with(http.request.uri.path, "/api/v1/orgs")
     or starts_with(http.request.uri.path, "/hooks/")))
 ```
 
@@ -436,8 +497,15 @@ guard below, 0059 and 0065 refuse what the old Worker writes for a new pass or v
 (every create, publish, edit, template upgrade, connection sync and credential transfer). The paths
 are `/api/v1/passes*` (create, edit, refresh, bulk, stamps), `/api/v1/holders/`, `/api/v1/me/passes/`,
 `/api/v1/connections/` (`POST /{id}/sync`), `/api/v1/templates/` (release approval and rollback
-reissue passes) and `/hooks/` (webhook ingress creates and updates passes). Queue and cron jobs cannot
-be blocked; they fail and retry until the new Worker is promoted. The Wallet device fetch
+reissue passes), `/api/v1/bundles` (create and rotate-link write a plain token), `/api/v1/scanners/`
+(the sample pass is a pass create), `/api/v1/identities/` (rotate re-signs every pass and aborts),
+`/api/v1/test-inbox/` (send-to-me), `/api/v1/broadcasts` (send) and `/api/v1/orgs` (a branding
+save marks passes dirty, the old reissue claims the mark, then fails per pass, so the change may
+never reach them after promote; repeat branding saves after step 6) and `/hooks/` (webhook ingress
+creates and updates passes). The rule matches `passbook.mobile` only: the Worker 308s every
+`wallet.plrs.im` request there, keeping the method, so the rule applies on the second hop. Queue
+and cron jobs cannot be blocked (a scheduled broadcast the old cron starts fails: see the due-broadcasts
+query); they fail and retry until the new Worker is promoted. The Wallet device fetch
 (`GET /wallet/v1/passes/...`) re-signs a pass only after a template upgrade; it fails and the device
 retries.
 
@@ -462,14 +530,16 @@ Worker always did, except that a holder with a waiting quarantined Test pass get
 promote (0055 refuses to link a quarantined pass, and the old statement links all or none);
 connection syncs that change a holder fail and retry after promote. The old baked sync batch
 (`ensureOrgStmt`) fails on an existing org slug, but only runs when the baked hash changes, which
-the old Worker does not do. `src/worker/platform/authority-baseline.test.ts` pins the other old
+the old Worker does not do. An old-Worker scanner write (pairing, revoke, mode, event) can abort
+once on the `updated_at` must-not-decrease guard (0047, 0063) when the stored value is ahead of the
+clock; it is transient, retry it. `src/worker/platform/authority-baseline.test.ts` pins the other old
 writes.
 
 ### Order
 
-1. **Owner**: WAF rule on. Sources of new work stopped (pre-check 6).
+1. **Owner**: WAF rule on. Sources of new work stopped (pre-check 7).
 2. **Owner**: `npm run deploy -- --migrate-only --apply`. Checks secrets, uploads the version (not
-   serving), records a D1 bookmark, applies 0025–0065 and stops with
+   serving), records a D1 bookmark, applies the 38 files 0025–0065 and stops with
    `Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.`
 3. **Owner**: bootstrap. The tool never touches production; it prints the commands. First:
 
@@ -513,7 +583,7 @@ writes.
    ```
 
    Only archived templates may be listed; the wait ignores them.
-5. Verify. **Owner** runs each query as in pre-check 7.
+5. Verify. **Owner** runs each query as in pre-check 8.
 
    ```sql verify-memberships
    SELECT o.id, o.slug FROM orgs o WHERE o.status != 'deleted' AND NOT EXISTS (
@@ -537,8 +607,8 @@ writes.
    - Memberships: no rows. Unbound mail: 0. Stale: the `verify-stale-before` rows plus
      `baked:henrys-blue` and `baked:henrys-copper`, shrinking to none as the reissue runs (a
      minute after promote, then batch by batch).
-   - Rerun `verify-counts`: nothing below the pre-check numbers (`scans`, `outbox`,
-     `pass_versions` only grow).
+   - Rerun `verify-counts`: `users`, `orgs`, `templates`, `template_versions`, `passes` and
+     `api_keys` not below the pre-check numbers; the rest may differ.
    - `curl -sI https://passbook.mobile/health` is 200. Status is green. `wallet-jobs-dlq` is empty.
    - Scan: check in one Henry's pass and one uploaded-template pass by the barcode already in
      Wallet. Both are accepted.
@@ -610,8 +680,9 @@ keep retired pass ids and credentials from being reused.
   2. The minute cron `tokens.remac` rewrites every pass link, Apple web-service token and bundle link from its sealed copy (100 of each a run). Each run logs `TOKEN_REMAC_RUN` with `moved`, `current`, `skipped` and `unreadable`. A pass with a pending credential transfer or a test-inbox forward is skipped and the sweep runs again; `TOKEN_REMAC_DONE` means a sweep ended clean (the setting `tokens.remacDone` holds `1>2`).
   3. Then unset `MAC_KEY_VERSION_PREVIOUS` and deploy. A row counted `unreadable` (a deleted pass or org keeps no sealed copy; also `TOKEN_SEAL_MISSING`, `TOKEN_SEAL_UNREADABLE`, `TOKEN_SEAL_MISMATCH` in the log) still holds the old MAC and stops resolving now: its link and device calls end.
   4. To go back, swap the two values; the job moves the rows again.
-  Credential-reference evidence stays on the oldest KEK, so KEK_V1 cannot be retired until a rekey exists.
   What a rotation does not move: the credential tombstone, retention proof, webhook and action reference and personalization proof keys stay on the oldest KEK. They are retained evidence bound to the credential-reference keyset commitment, and no rekey tool exists, so keep the oldest KEK for as long as that evidence is kept (see above). After a compromise of it, rotation only protects the tokens, PINs, codes and grants named above.
+- **Retired ids**: `retired_session_ids`, `retired_scanner_ids` and `retired_api_key_ids` refuse
+  deletes and grow without bound. Storage only; leave them.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
 - **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.
 - **Icons and social image**: `node tools/build-icons.ts` after the mark or the wallet art changes,
