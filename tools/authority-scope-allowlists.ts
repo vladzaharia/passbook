@@ -38,8 +38,14 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     ],
   },
   'src/worker/modules/auth/repo.ts': {
-    reason: 'sign-in finds or creates the user and stamps last login before any principal exists',
-    writes: ['users:21bde5076000', 'users:c3b10ce30da0'],
+    reason:
+      'sign-in finds or creates the user, stamps last login and settles an unproven primary address (#73) before any principal exists',
+    writes: [
+      'users:16004e2ec149',
+      'users:21bde5076000',
+      'users:c3b10ce30da0',
+      'users:df81eec8157d',
+    ],
   },
   'src/worker/modules/me/repo.ts': {
     reason: 'a user edits their own primary email under their own session',
