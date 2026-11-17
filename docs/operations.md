@@ -610,6 +610,7 @@ keep retired pass ids and credentials from being reused.
   2. The minute cron `tokens.remac` rewrites every pass link, Apple web-service token and bundle link from its sealed copy (100 of each a run). Each run logs `TOKEN_REMAC_RUN` with `moved`, `current`, `skipped` and `unreadable`. A pass with a pending credential transfer or a test-inbox forward is skipped and the sweep runs again; `TOKEN_REMAC_DONE` means a sweep ended clean (the setting `tokens.remacDone` holds `1>2`).
   3. Then unset `MAC_KEY_VERSION_PREVIOUS` and deploy. A row counted `unreadable` (a deleted pass or org keeps no sealed copy; also `TOKEN_SEAL_MISSING`, `TOKEN_SEAL_UNREADABLE`, `TOKEN_SEAL_MISMATCH` in the log) still holds the old MAC and stops resolving now: its link and device calls end.
   4. To go back, swap the two values; the job moves the rows again.
+  Credential-reference evidence stays on the oldest KEK, so KEK_V1 cannot be retired until a rekey exists.
   What a rotation does not move: the credential tombstone, retention proof, webhook and action reference and personalization proof keys stay on the oldest KEK. They are retained evidence bound to the credential-reference keyset commitment, and no rekey tool exists, so keep the oldest KEK for as long as that evidence is kept (see above). After a compromise of it, rotation only protects the tokens, PINs, codes and grants named above.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
 - **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.

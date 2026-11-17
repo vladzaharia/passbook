@@ -172,7 +172,7 @@ export async function detailOf(
     listOutboxForPass(db, pass.id),
     listBlockedUsers(db, pass.id, withEmail),
     pass.ownerUserId ? getOwnerLabel(db, pass.ownerUserId) : null,
-    pass.status === 'voided' ? lastVoidEvent(db, pass.id) : null,
+    pass.status === 'voided' ? lastVoidEvent(db, pass.id, withEmail) : null,
   ]);
   const passJson = parseJson(json);
   const warnings = await warningsFor(ctx, pass, passJson);

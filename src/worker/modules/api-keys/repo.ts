@@ -8,6 +8,7 @@ import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
+import { userLabelSql } from '../orgs/repo-user-label.ts';
 import {
   capabilityChecks,
   membershipCapability,
@@ -159,8 +160,8 @@ function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state'>) {
   return { where, params };
 }
 
-/** Newest first, with the creator's name (or email, for a caller who may see account emails) for the actor chip. */
-export function listKeys(db: Db, f: KeyFilter, withEmail: boolean) {
+/** Newest first, with the creator's name (else the email its org knows them by; a platform admin sees the account email) for the actor chip. */
+export function listKeys(db: Db, f: KeyFilter, platform: boolean) {
   const { where, params } = keyWhere(f);
   if (f.cursor) {
     where.push(
@@ -170,12 +171,12 @@ export function listKeys(db: Db, f: KeyFilter, withEmail: boolean) {
   }
   return all<ApiKeyRow & { created_by_name: string | null }>(
     db,
-    `SELECT k.*, CASE WHEN u.id IS NULL THEN NULL
-       ELSE coalesce(u.name, CASE WHEN ? THEN u.primary_email ELSE 'Account' END) END AS created_by_name
-     FROM api_keys k LEFT JOIN users u ON u.id = k.created_by
+    `SELECT k.*, CASE WHEN k.created_by IS NULL THEN NULL
+       ELSE ${userLabelSql('k.created_by', 'k.org_id', platform)} END AS created_by_name
+     FROM api_keys k
      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
      ORDER BY k.created_at DESC, k.id DESC LIMIT ?`,
-    [withEmail ? 1 : 0, ...params, f.limit],
+    [...params, f.limit],
   );
 }
 

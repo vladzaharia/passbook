@@ -1,5 +1,6 @@
 import { tokenKeys } from '../../platform/capability-token.ts';
 import { all, first, stmt } from '../../platform/db.ts';
+import { userLabelSql } from '../orgs/repo-user-label.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
 import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
 
@@ -74,17 +75,17 @@ export async function currentPassJson(db: D1Database, passId: string): Promise<s
   return row?.pass_json ?? null;
 }
 
-/** The label of a user without a name is their email for a caller who may see it, else "Account". */
+/** Users blocked from attaching, labelled for the caller (see `userLabelSql`). */
 export async function listBlockedUsers(
   db: D1Database,
   passId: string,
-  withEmail: boolean,
+  platform: boolean,
 ): Promise<{ id: string; name: string | null }[]> {
   return all<{ id: string; name: string | null }>(
     db,
-    `SELECT u.id, COALESCE(u.name, CASE WHEN ? THEN u.primary_email ELSE 'Account' END) AS name
-     FROM pass_attach_blocks b JOIN users u ON u.id = b.user_id WHERE b.pass_id = ? ORDER BY b.created_at`,
-    [withEmail ? 1 : 0, passId],
+    `SELECT b.user_id AS id, ${userLabelSql('b.user_id', '(SELECT org_id FROM passes WHERE id = b.pass_id)', platform)} AS name
+     FROM pass_attach_blocks b WHERE b.pass_id = ? ORDER BY b.created_at`,
+    [passId],
   );
 }
 

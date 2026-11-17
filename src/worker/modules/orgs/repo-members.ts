@@ -63,6 +63,10 @@ export function myMemberships(db: D1Database, userId: string) {
     [userId],
   );
 }
+/**
+ * The org's members. `user_email` is the email the org invited them by; only a platform administrator
+ * (the admin fence) sees the account's primary email, which may belong to another org's member.
+ */
 export function orgMembers(
   db: D1Database,
   orgId: string,
@@ -70,10 +74,15 @@ export function orgMembers(
   admin: AdminFence | boolean,
 ) {
   const m = manager(orgId, userId, admin);
+  const f = adminFence(admin);
   return all<MembershipRow>(
     db,
-    `${membershipSelect} WHERE m.org_id = ? AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active' AND ${m.sql} ORDER BY m.created_at, m.id`,
-    [orgId, ...m.params],
+    `SELECT m.*, o.name AS org_name, o.slug AS org_slug, u.name AS user_name,
+       CASE WHEN (${f.sql}) THEN u.primary_email
+         ELSE COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') END AS user_email
+     FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
+     WHERE m.org_id = ? AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active' AND ${m.sql} ORDER BY m.created_at, m.id`,
+    [...f.params, orgId, ...m.params],
   );
 }
 export function orgInvitations(
