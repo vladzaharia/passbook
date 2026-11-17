@@ -60,6 +60,12 @@ async function photo(kit: Kit, passId: string, orgId: string, key: string) {
   );
 }
 
+// Stage candidates are stamped by SQL triggers from the wall clock, not kit.clock, so a slow run
+// can leave them newer than a fixed advance past the lease.
+function expireStages(kit: Kit) {
+  kit.clock.set(Math.max(kit.clock.now(), Date.now()) + TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
+}
+
 // Fail the final audit inside the real D1 batch, after asset retirement, without changing schema.
 function failTransferCompletionAudit(db: D1Database, passId: string): D1Database {
   return new Proxy(db, {
@@ -1117,7 +1123,7 @@ describe('crashed image-stage recovery', () => {
       [pass.id, old],
     );
     if (!before || !hold) throw new Error('Missing staged image snapshot');
-    kit.clock.advance(TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
+    expireStages(kit);
     await sweepTransferAssetGc(jobCtxOf(kit));
     expect(
       await first(kit.env.DB, 'SELECT r2_key FROM pass_assets WHERE pass_id = ?', [pass.id]),
@@ -1165,7 +1171,7 @@ describe('crashed image-stage recovery', () => {
       "UPDATE member_photos SET r2_key = ?, version = 'new' WHERE pass_id = ?",
       [nextPhoto, photoPass.id],
     );
-    kit.clock.advance(TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
+    expireStages(kit);
     await sweepTransferAssetGc(jobCtxOf(kit));
     expect(
       await first(kit.env.DB, 'SELECT r2_key FROM pass_assets WHERE pass_id = ?', [assetPass.id]),
@@ -1200,7 +1206,7 @@ describe('crashed image-stage recovery', () => {
       "UPDATE pass_assets SET r2_key = ? WHERE pass_id = ? AND name = 'icon.png'",
       [newIcon, pass.id],
     );
-    kit.clock.advance(TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
+    expireStages(kit);
     await sweepTransferAssetGc(jobCtxOf(kit));
     expect(
       await first(
@@ -1239,7 +1245,7 @@ describe('crashed image-stage recovery', () => {
     await asset(kit, pass.id, old);
     await run(kit.env.DB, 'UPDATE pass_assets SET r2_key = ? WHERE pass_id = ?', [next, pass.id]);
     await run(kit.env.DB, 'UPDATE passes SET version = version + 1 WHERE id = ?', [pass.id]);
-    kit.clock.advance(TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
+    expireStages(kit);
     await sweepTransferAssetGc(jobCtxOf(kit));
     expect(
       await first(kit.env.DB, 'SELECT r2_key FROM pass_assets WHERE pass_id = ?', [pass.id]),
@@ -1286,7 +1292,7 @@ describe('crashed image-stage recovery', () => {
     try {
       const work = begin(kit, pass.id);
       await entered.promise;
-      kit.clock.advance(TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
+      expireStages(kit);
       expect(
         await retireUnusedPassAssetKey(kit.env.DB, {
           key: old,
@@ -1348,7 +1354,7 @@ it('rechecks newest operation ownership when a candidate races recovery', async 
     [pass.id, a],
   );
   if (!stale) throw new Error('Missing captured operation');
-  kit.clock.advance(TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
+  expireStages(kit);
   await run(kit.env.DB, 'UPDATE pass_assets SET r2_key = ? WHERE pass_id = ?', [c, pass.id]);
   await recoverExpiredPassAssetCandidate(kit.env.DB, {
     id: stale.id,
@@ -1467,7 +1473,7 @@ it('rolls back recovery if displaced-key retirement cannot commit', async () => 
     `CREATE TRIGGER fail_image_recovery BEFORE INSERT ON pass_transfer_asset_gc
     WHEN NEW.r2_key = '${next}' BEGIN SELECT RAISE(ABORT, 'forced recovery rollback'); END`,
   );
-  kit.clock.advance(TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
+  expireStages(kit);
   try {
     await sweepTransferAssetGc(jobCtxOf(kit));
     expect(
