@@ -6,7 +6,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
+import { clientIp, rateLimit, rateLimitMisses } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import {
@@ -33,6 +33,19 @@ import { assertPassSnapshot, capturePassSnapshot } from './snapshot.ts';
 export const publicRoutes = createRouter();
 // Mail proxies fetch every emailed pass's images from a few IPs, so assets are limited per
 // token and IP prefix; a malformed token (no pass behind it) falls back to the IP alone.
+// Random tokens each get a fresh per-token bucket, so the IP is limited first and its 404s are
+// charged to it.
+publicRoutes.use(
+  '/:token/assets/*',
+  rateLimit('RL_APPLE_IP', (c) => {
+    const ip = clientIp(c);
+    return `public-asset:${ipPrefix(ip) ?? ip}`;
+  }),
+);
+publicRoutes.use(
+  '/:token/assets/*',
+  rateLimitMisses('RL_PUBLIC', (c) => clientIp(c)),
+);
 publicRoutes.use(
   '/:token/assets/*',
   rateLimit('RL_PUBLIC_ASSET', (c) => {

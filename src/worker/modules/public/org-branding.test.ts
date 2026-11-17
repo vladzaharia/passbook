@@ -83,4 +83,33 @@ describe('asset rate limit', () => {
     expect(await hit('short1')).toBe(404);
     expect(await hit('short2')).toBe(429);
   });
+
+  it('charges token misses to the IP, whatever the token', async () => {
+    const env = { ...kit.env, RL_PUBLIC: fakeLimiter(2) as unknown as RateLimit };
+    const hit = async (ip: string) =>
+      (
+        await get(
+          `/p/${'a'.repeat(21)}${Math.random().toString(36).slice(2, 8)}/assets/icon@3x.png`,
+          env,
+          {
+            'cf-connecting-ip': ip,
+          },
+        )
+      ).status;
+    expect(await hit('6.6.6.6')).toBe(404);
+    expect(await hit('6.6.6.6')).toBe(404);
+    expect(await hit('6.6.6.6')).toBe(429);
+    expect(await hit('6.6.6.7')).toBe(404);
+  });
+
+  it('limits asset lookups per IP prefix before any token lookup', async () => {
+    const a = await kit.pass();
+    const b = await kit.pass();
+    const env = { ...kit.env, RL_APPLE_IP: fakeLimiter(1) as unknown as RateLimit };
+    const hit = async (token: string, ip: string) =>
+      (await get(`/p/${token}/assets/icon@3x.png`, env, { 'cf-connecting-ip': ip })).status;
+    expect(await hit(a.downloadToken, '5.5.5.1')).toBe(200);
+    expect(await hit(b.downloadToken, '5.5.5.2')).toBe(429);
+    expect(await hit(b.downloadToken, '4.4.4.4')).toBe(200);
+  });
 });

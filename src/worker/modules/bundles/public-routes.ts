@@ -10,7 +10,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
+import { clientIp, rateLimit, rateLimitMisses } from '../../platform/rate-limit.ts';
 import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
@@ -32,6 +32,19 @@ import {
 
 /** /b: bearer-link bundle page, its .pkpasses and per-pass files. No sign-in. */
 export const bundlePublicRoutes = createRouter();
+// Random tokens each get a fresh per-token bucket, so the IP is limited first and its 404s are
+// charged to it.
+bundlePublicRoutes.use(
+  '/:token/:passId/assets/*',
+  rateLimit('RL_APPLE_IP', (c) => {
+    const ip = clientIp(c);
+    return `public-asset:${ipPrefix(ip) ?? ip}`;
+  }),
+);
+bundlePublicRoutes.use(
+  '/:token/:passId/assets/*',
+  rateLimitMisses('RL_PUBLIC', (c) => clientIp(c)),
+);
 bundlePublicRoutes.use(
   '/:token/:passId/assets/*',
   rateLimit('RL_PUBLIC_ASSET', (c) => {

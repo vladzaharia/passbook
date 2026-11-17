@@ -51,3 +51,14 @@ export function rateLimit(
     await next();
   });
 }
+
+/** Middleware: charges every 404 to a per-key bucket, so probing random capability tokens runs dry. */
+export function rateLimitMisses(
+  name: RateLimitName,
+  keyOf: (c: Context<AppBindings>) => string = clientIp,
+): MiddlewareHandler<AppBindings> {
+  return createMiddleware(async (c, next) => {
+    await next();
+    if (c.res.status === 404) await enforceRateLimit(c.env, name, `${name}:miss:${keyOf(c)}`);
+  });
+}
