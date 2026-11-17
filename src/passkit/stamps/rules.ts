@@ -31,16 +31,43 @@ export const addStamps = (stamps: number, count: number, max: number): number | 
 export const redeem = (stamps: number, goal: number): number | null =>
   stamps >= goal ? stamps - goal : null;
 
-/** The count a pass keeps when the goal changes. `keepReady` tops up ready cards on a raise. */
+/**
+ * The count a pass keeps when the goal changes. `keepReady` tops up a ready card on a raise by
+ * what the goal grew beyond the highest goal it was ever topped up to (`kept`, 0 when never): a
+ * rollback and a second release never top it up twice.
+ */
 export function countAfterGoalChange(
   stamps: number,
   oldGoal: number,
   newGoal: number,
   keepReady: boolean,
+  kept = 0,
 ): number {
-  return keepReady && newGoal > oldGoal && stamps >= oldGoal
-    ? stamps + (newGoal - oldGoal)
-    : stamps;
+  const from = Math.max(oldGoal, kept);
+  return keepReady && newGoal > from && stamps >= oldGoal ? stamps + (newGoal - from) : stamps;
+}
+
+/** `fieldSources` key that records the goal a card was last topped up to: `stamps.kept:15`. */
+const KEPT = 'stamps.kept:';
+
+/** The highest goal a card was topped up to, from its field sources (0 when never). */
+export function keptGoalOf(fieldSources: Readonly<Record<string, unknown>>): number {
+  let kept = 0;
+  for (const key of Object.keys(fieldSources))
+    if (key.startsWith(KEPT)) kept = Math.max(kept, Number(key.slice(KEPT.length)) || 0);
+  return kept;
+}
+
+/** The field sources with the top-up to `goal` recorded in place of any earlier one. */
+export function withKeptGoal<V>(
+  fieldSources: Readonly<Record<string, V>>,
+  goal: number,
+  value: V,
+): Record<string, V> {
+  const out: Record<string, V> = {};
+  for (const [key, v] of Object.entries(fieldSources)) if (!key.startsWith(KEPT)) out[key] = v;
+  out[`${KEPT}${goal}`] = value;
+  return out;
 }
 
 export interface GoalImpact {
@@ -61,6 +88,8 @@ export interface StampBucket {
   stamps: number;
   cards: number;
   goal: number;
+  /** The goal these cards were last topped up to (0 when never). */
+  kept?: number;
 }
 
 /** What moving every bucket to `newGoal` does. */
@@ -73,10 +102,13 @@ export function goalImpact(buckets: Iterable<StampBucket>, newGoal: number): Goa
     highest: 0,
     highestKept: 0,
   };
-  for (const { stamps, cards, goal } of buckets) {
+  for (const { stamps, cards, goal, kept = 0 } of buckets) {
     out.passes += cards;
     out.highest = Math.max(out.highest, stamps);
-    out.highestKept = Math.max(out.highestKept, countAfterGoalChange(stamps, goal, newGoal, true));
+    out.highestKept = Math.max(
+      out.highestKept,
+      countAfterGoalChange(stamps, goal, newGoal, true, kept),
+    );
     if (stamps >= goal) {
       out.readyNow += cards;
       if (stamps < newGoal) out.readyLost += cards;

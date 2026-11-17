@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { assertStampsFit } from '../templates/stamps.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { getPass } from './repo-read-pass.ts';
+import { stampMovePlan } from './stamps-keep.ts';
 import {
   reissueStamps,
   releaseStamps,
@@ -97,5 +99,41 @@ describe('goal changes on live Stamp cards', () => {
     await expect(releaseStamps(kit, 'tpl-stamps-max', 'v4')).resolves.toMatchObject({
       version: 'v4',
     });
+  });
+
+  it("reads each card with its own version's input name, in the guard and in keep-ready", async () => {
+    const v1 = await program('tpl-stamps-input');
+    await stampCard(kit, v1, 19);
+    const v2 = await stampVersion(kit, 'tpl-stamps-input', 'v2', 10, {
+      input: 'visits',
+      maximum: 15,
+    });
+    // The guard counts the v1 card under v1's `stamps`, not under v2's `visits`.
+    await expect(
+      assertStampsFit(
+        kit.ctx,
+        'tpl-stamps-input',
+        { orgId: kit.org.id, mode: 'live' },
+        v2.manifest,
+      ),
+    ).rejects.toMatchObject({ code: 'STAMPS_ABOVE_MAX' });
+    // Keep-ready reads the ready card from `stamps` and tops it up in `visits`.
+    const raised = await stampVersion(kit, 'tpl-stamps-input', 'v3', 12, {
+      input: 'visits',
+      keepReady: true,
+    });
+    const plan = await stampMovePlan(
+      kit.ctx,
+      { orgId: kit.org.id, templateId: 'tpl-stamps-input', version: raised.version },
+      ['v1'],
+    );
+    expect(
+      plan({ templateVersion: 'v1', personalization: { stamps: 10 }, fieldSources: {} }),
+    ).toMatchObject({
+      personalization: { stamps: 10, visits: 12 },
+    });
+    expect(
+      plan({ templateVersion: 'v1', personalization: { stamps: 4 }, fieldSources: {} }),
+    ).toEqual({});
   });
 });

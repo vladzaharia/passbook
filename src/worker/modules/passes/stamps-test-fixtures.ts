@@ -28,7 +28,7 @@ export async function stampVersion(
   id: string,
   version: string,
   goal: number,
-  options: { keepReady?: boolean; maximum?: number } = {},
+  options: { keepReady?: boolean; maximum?: number; input?: string } = {},
 ) {
   const manifest = structuredClone(STAMP_CARD.manifest) as TemplateManifest;
   const block = manifest.stamps;
@@ -36,6 +36,11 @@ export async function stampVersion(
   manifest.stamps = { ...block, goal, ...(options.keepReady ? { keepReady: true } : {}) };
   const props = manifest.inputs.properties as Record<string, Record<string, unknown>>;
   props.stamps = { ...props.stamps, maximum: options.maximum ?? 2 * goal - 1 };
+  if (options.input) {
+    props[options.input] = props.stamps as Record<string, unknown>;
+    delete props.stamps;
+    manifest.stamps = { ...manifest.stamps, input: options.input } as never;
+  }
   const assets: Record<string, Uint8Array> = { ...IMAGES };
   for (let n = 0; n <= goal; n++) {
     assets[`stamps/strips/${n}/strip@2x.png`] = STRIPS[2];

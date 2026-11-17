@@ -5,7 +5,7 @@ import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { publishPass } from './publish.ts';
 import { passesForReissue } from './repo.ts';
 import { hasWorkflowReleaseSnapshots, passesForWorkflowReissue } from './repo-workflow-releases.ts';
-import { type KeepReady, keepReadyPlan } from './stamps-keep.ts';
+import { releaseMovePlan, type StampMove } from './stamps-keep.ts';
 
 const REISSUE_PAGE = 100;
 
@@ -29,6 +29,8 @@ export interface ReissuePageResult {
   changed: number;
   unchanged: number;
   failed: number;
+  /** Failed because the card holds more stamps than the new version allows. */
+  aboveMax: number;
 }
 
 /**
@@ -92,11 +94,17 @@ export async function reissuePage(
       activeOnly: params.cause !== 'resign',
     });
   }
-  const result: ReissuePageResult = { nextCursor: null, changed: 0, unchanged: 0, failed: 0 };
-  const plans = new Map<string, Promise<KeepReady>>();
-  const keepReady = (r: Release) => {
+  const result: ReissuePageResult = {
+    nextCursor: null,
+    changed: 0,
+    unchanged: 0,
+    failed: 0,
+    aboveMax: 0,
+  };
+  const plans = new Map<string, Promise<StampMove>>();
+  const movePlan = (r: Release) => {
     const id = `${r.orgId}|${r.mode}|${r.templateId}|${r.version}`;
-    const planned = plans.get(id) ?? keepReadyPlan(ctx, r);
+    const planned = plans.get(id) ?? releaseMovePlan(ctx, r);
     plans.set(id, planned);
     return planned;
   };
@@ -118,7 +126,7 @@ export async function reissuePage(
           'TEMPLATE_RELEASE_CONFLICT',
         );
       }
-      const keep = release ? await keepReady(release) : null;
+      const move = release ? await movePlan(release) : null;
       const published = await publishPass(ctx, {
         orgScope: release
           ? { orgId: release.orgId, mode: release.mode, principal: 'session' }
@@ -147,7 +155,7 @@ export async function reissuePage(
             throw new ConflictError('The pass changed. Retry.', 'PASS_CONFLICT');
           }
           // Resigning and restyling keep each pass on its current template version.
-          return release && keep ? { templateVersion: release.version, ...keep(current) } : {};
+          return release && move ? { templateVersion: release.version, ...move(current) } : {};
         },
       });
       if (published.changed) result.changed++;
@@ -155,6 +163,7 @@ export async function reissuePage(
     } catch (error) {
       if (!(error instanceof AppError)) throw error;
       result.failed++;
+      if (error.code === 'STAMPS_ABOVE_MAX') result.aboveMax++;
       ctx.log.warn('bulk_reissue.pass_failed', {
         passId: row.id,
         templateId: params.templateId,
