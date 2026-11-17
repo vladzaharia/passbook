@@ -6,16 +6,16 @@ import {
   type ActionPreflightReadPlan,
   prepareCheckInReads,
 } from './act-preflight.ts';
-import type { ScanActor } from './guard.ts';
 import {
   type PendingDisplayHistorySource,
   planPendingDisplayHistorySource,
-} from './history-proof-pending.ts';
+} from './display-history-pending.ts';
 import {
   type PreloadedDisplayHistory,
   planDisplayHistoryRead,
   rebindDisplayHistoryRead,
-} from './history-proof-plan.ts';
+} from './display-history-plan.ts';
+import type { ScanActor } from './guard.ts';
 import { type ActionPassFence, prepareActionPassFence } from './repo-act-pass-fence.ts';
 import type { Found } from './resolve.ts';
 import type { EvaluationReadPlan } from './resolve-evaluate.ts';

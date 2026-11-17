@@ -31,7 +31,7 @@ export function noCredentialTombstonesSql(
   return {
     sql: `(NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tombstone
       WHERE tombstone.org_id=${scope.orgIdSql} AND tombstone.mode=${scope.modeSql}
-        AND tombstone.credential_hash IN (SELECT value FROM json_each(?/* scan-ephemeral-credential-refs */))) AND ${credentialRefKeysetSql})`,
+        AND tombstone.credential_hash IN (SELECT value FROM json_each(?))) AND ${credentialRefKeysetSql})`,
     params: [JSON.stringify(refs), credentialKeysetCommitment],
   };
 }

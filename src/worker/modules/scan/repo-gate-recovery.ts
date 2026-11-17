@@ -27,7 +27,7 @@ export interface GateSnapshot {
 export const gatesOfScansStmt = (db: Db, scanIds: string[]): D1PreparedStatement =>
   stmt(
     db,
-    `WITH ids AS (SELECT value AS id FROM json_each(?/* scan-ephemeral-scan-id-list */))
+    `WITH ids AS (SELECT value AS id FROM json_each(?))
      SELECT g.pass_id, g.action_id, g.scope, g.org_id, g.mode, g.template_id, g.kind, g.state, g.count,
        g.first_at, g.last_at, g.last_scan_id, g.prev_state, g.prev_last_at, g.prev_scan_id,
        prior.state AS previous_scan_state, prior.at AS previous_scan_at
@@ -48,9 +48,9 @@ export function quarantinePreviousClaimStmt(db: Db, g: GateSnapshot): D1Prepared
   return stmt(
     db,
     `UPDATE scans SET state = 'failed', reason = 'stale'
-    WHERE id = ?/* scan-ephemeral-scan-id */ AND at = ? AND org_id = ? AND mode = ?
-      AND (pass_id IS NULL OR pass_id = ?/* scan-ephemeral-pass-id */) AND (action_id IS NULL OR action_id = ?/* scan-ephemeral-action-id */)
-      AND (template_id IS NULL OR template_id = ?/* scan-ephemeral-template-id */)
+    WHERE id = ? AND at = ? AND org_id = ? AND mode = ?
+      AND (pass_id IS NULL OR pass_id = ?) AND (action_id IS NULL OR action_id = ?)
+      AND (template_id IS NULL OR template_id = ?)
       AND (state = 'pending' OR (state = 'failed' AND reason IS NOT 'stale')) RETURNING id`,
     [g.prev_scan_id, g.previous_scan_at, g.org_id, g.mode, g.pass_id, g.action_id, g.template_id],
   );
@@ -70,10 +70,10 @@ export function releaseObservedGateStmt(
   const updated =
     g.prev_state !== null && g.prev_last_at !== null && g.prev_scan_id !== null && g.count >= 1;
   if (!inserted && !updated) return null;
-  const match = `pass_id = ?/* scan-ephemeral-pass-id */ AND action_id = ?/* scan-ephemeral-action-id */ AND scope = ?/* scan-ephemeral-event-scope */ AND org_id = ? AND mode = ?
-    AND template_id = ?/* scan-ephemeral-template-id */ AND kind = ? AND state = ? AND count = ? AND first_at = ? AND last_at = ?
-    AND last_scan_id = ?/* scan-ephemeral-scan-id */ AND prev_state IS ? AND prev_last_at IS ? AND prev_scan_id IS ?/* scan-ephemeral-scan-id */
-    AND EXISTS (SELECT 1 FROM scans q WHERE q.id = ?/* scan-ephemeral-scan-id */ AND q.state = 'pending' AND q.at = ?)`;
+  const match = `pass_id = ? AND action_id = ? AND scope = ? AND org_id = ? AND mode = ?
+    AND template_id = ? AND kind = ? AND state = ? AND count = ? AND first_at = ? AND last_at = ?
+    AND last_scan_id = ? AND prev_state IS ? AND prev_last_at IS ? AND prev_scan_id IS ?
+    AND EXISTS (SELECT 1 FROM scans q WHERE q.id = ? AND q.state = 'pending' AND q.at = ?)`;
   const params = [
     g.pass_id,
     g.action_id,

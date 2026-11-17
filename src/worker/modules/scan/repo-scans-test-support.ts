@@ -18,7 +18,7 @@ export function claimScanStmt(
     db,
     `INSERT INTO scans (id, org_id, mode, scanner_id, event_id, actor_type, actor_id, actor_key, staff_id,
        session_id, idempotency_key, request_hash, method, state, client_ts, at)
-     SELECT ?/* scan-ephemeral-scan-id */, ?, ?, ?/* scan-ephemeral-scanner-id */, ?/* scan-ephemeral-event-id */, ?, ?/* scan-ephemeral-actor-id */, ?/* scan-ephemeral-actor-key */, ?/* scan-ephemeral-staff-id */, ?, ?/* scan-ephemeral-idempotency-key */, ?/* scan-ephemeral-request-hash */, ?, 'pending', ?, ?
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?
      WHERE (${bound.sql}) ON CONFLICT (actor_key, idempotency_key) DO NOTHING RETURNING id`,
     [
       c.id,
@@ -69,12 +69,12 @@ export function finalizeStmt(
   const guard = guardOf(extra);
   return stmt(
     db,
-    `UPDATE scans SET state = 'done', outcome = ?, reason = ?, pass_id = ?/* scan-ephemeral-pass-id */,
-       template_id = ?/* scan-ephemeral-template-id */, action_id = ?/* scan-ephemeral-action-id */,
-       action_kind = ?, pass_version = ?, override_of = ?/* scan-ephemeral-scan-id */,
-       approved_by = ?/* scan-ephemeral-approver-id */, direction = ?, presence_scope = ?/* scan-ephemeral-event-scope */,
-       event_id = COALESCE(?/* scan-ephemeral-event-id */,event_id)
-     WHERE (id = ?/* scan-ephemeral-scan-id */ AND state = 'pending' AND at = ?)${
+    `UPDATE scans SET state = 'done', outcome = ?, reason = ?, pass_id = ?,
+       template_id = ?, action_id = ?,
+       action_kind = ?, pass_version = ?, override_of = ?,
+       approved_by = ?, direction = ?, presence_scope = ?,
+       event_id = COALESCE(?,event_id)
+     WHERE (id = ? AND state = 'pending' AND at = ?)${
        gate
          ? ` AND ${gate.sql}`
          : ` AND NOT EXISTS (SELECT 1 FROM scan_gates g WHERE g.last_scan_id = scans.id OR g.prev_scan_id = scans.id)`
@@ -115,11 +115,11 @@ export function ledgerIfFinalizedStmt(
   return stmt(
     db,
     `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, device, actor_type, actor_id, data, at)
-     SELECT ?/* scan-ephemeral-event-id */, ?, ?/* scan-ephemeral-pass-id */, ?, ?, ?/* scan-ephemeral-event-device */, ?, ?/* scan-ephemeral-event-actor */, ?/* scan-ephemeral-event-json */, ?
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
      ${won ? 'FROM scan_gates g JOIN scans holder ON holder.id = g.last_scan_id' : ''}
-     WHERE ${won ? '(g.pass_id = ?/* scan-ephemeral-pass-id */ AND g.action_id = ?/* scan-ephemeral-action-id */ AND g.scope = ?/* scan-ephemeral-event-scope */ AND g.last_scan_id = ?/* scan-ephemeral-scan-id */) AND ' : ''}changes() = 1 AND EXISTS (
-       SELECT 1 FROM scans q WHERE (q.id = ?/* scan-ephemeral-scan-id */ AND q.org_id = ?
-         AND q.state = 'done') AND (q.at = ? AND q.pass_id = ?/* scan-ephemeral-pass-id */ AND q.outcome = ?)
+     WHERE ${won ? '(g.pass_id = ? AND g.action_id = ? AND g.scope = ? AND g.last_scan_id = ?) AND ' : ''}changes() = 1 AND EXISTS (
+       SELECT 1 FROM scans q WHERE (q.id = ? AND q.org_id = ?
+         AND q.state = 'done') AND (q.at = ? AND q.pass_id = ? AND q.outcome = ?)
      ) AND (${guard.sql})`,
     [
       row.id,

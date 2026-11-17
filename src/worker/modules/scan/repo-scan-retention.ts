@@ -73,11 +73,11 @@ function sourceParams(prepared: PreparedScanRetentionProof): SqlValue[] {
 }
 
 // Both fences share this signed source; group comparisons for D1's expression limit.
-const SOURCE_JOINS = `(SELECT json(?) AS j, ?/* scan-ephemeral-pass-id */ AS pass_id,
-  ?/* scan-ephemeral-action-id */ AS action_id, ?/* scan-ephemeral-scan-actor */ AS scan_actor_id,
-  ?/* scan-ephemeral-actor-key */ AS actor_key, ?/* scan-ephemeral-event-actor */ AS event_actor_id,
-  ?/* scan-ephemeral-event-json */ AS event_data, ?/* scan-ephemeral-scanner-id */ AS scanner_id,
-  ?/* scan-ephemeral-staff-id */ AS staff_id, ?/* scan-ephemeral-approver-id */ AS approved_by) input
+const SOURCE_JOINS = `(SELECT json(?) AS j, ? AS pass_id,
+  ? AS action_id, ? AS scan_actor_id,
+  ? AS actor_key, ? AS event_actor_id,
+  ? AS event_data, ? AS scanner_id,
+  ? AS staff_id, ? AS approved_by) input
   JOIN scans s ON s.id=json_extract(input.j,'$.proof.scanId')
   JOIN passes p ON p.id=s.pass_id AND p.org_id=s.org_id AND p.mode=s.mode AND p.test_data_quarantined=0
   JOIN pass_events e ON e.id=json_extract(input.j,'$.proof.ledgerEventId') AND e.pass_id=p.id
@@ -145,7 +145,7 @@ export function stageScanRetentionDeleteStmt(
     JOIN passes p ON p.id=s.pass_id AND p.org_id=s.org_id AND p.mode=s.mode
     JOIN scan_retention_proofs proof ON proof.scan_id=s.id AND proof.org_id=s.org_id
       AND proof.mode=s.mode AND proof.excluded=0 AND proof.invalidated=0
-    WHERE s.pass_id=?/* scan-ephemeral-pass-id */ AND s.org_id=? AND s.mode=? AND proof.pass_ref=?
+    WHERE s.pass_id=? AND s.org_id=? AND s.mode=? AND proof.pass_ref=?
       AND p.test_data_quarantined=0 AND NOT ${scanRetentionExcludedSql('s')}
     ORDER BY s.at DESC,s.id DESC LIMIT 1`,
     [passId, prepared.orgId, prepared.mode, prepared.passRef],

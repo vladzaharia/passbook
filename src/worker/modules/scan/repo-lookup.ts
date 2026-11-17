@@ -165,26 +165,20 @@ const ELIGIBLE = `p.deleted_at IS NULL AND p.test_data_quarantined = 0
 
 const SELECT = `${PROJECTION} FROM passes p ${JOINS} WHERE p.org_id = ? AND ${ELIGIBLE}`;
 
-const LOOKUP_LABELS = {
-  scan_code: 'scan-code',
-  barcode_hash: 'barcode-hash',
-  lookup_hash: 'lookup-hash',
-  serial: 'serial',
-  id: 'pass-id',
-} as const;
+const LOOKUP_COLUMNS = ['scan_code', 'barcode_hash', 'lookup_hash', 'serial', 'id'] as const;
 
 /** Prefer the actor's mode before the bounded cap; the other mode is only for a warning. */
 const lookup = (
   db: Db,
   orgId: string,
-  column: keyof typeof LOOKUP_LABELS,
+  column: (typeof LOOKUP_COLUMNS)[number],
   value: string,
   limit: number,
   mode?: 'live' | 'test',
 ) =>
   stmt(
     db,
-    `${SELECT} AND p.${column} = ?/* scan-ephemeral-${LOOKUP_LABELS[column]} */${mode ? ' ORDER BY (p.mode = ?) DESC' : ''} LIMIT ${limit}`,
+    `${SELECT} AND p.${column} = ?${mode ? ' ORDER BY (p.mode = ?) DESC' : ''} LIMIT ${limit}`,
     mode ? [orgId, value, mode] : [orgId, value],
   );
 
@@ -211,7 +205,7 @@ export async function candidatesByScopes(
   if (scopes.length === 0) return [];
   if (scopes.length > 1000) throw new RangeError('At most 1000 candidate scopes are allowed');
   const statements = chunk(scopes, 30).map((group) => {
-    const values = group.map(() => '(?,?,?/* scan-ephemeral-pass-id */)').join(',');
+    const values = group.map(() => '(?,?,?)').join(',');
     const params = group.flatMap(({ orgId, mode, passId }) => [orgId, mode, passId]);
     return stmt(
       db,

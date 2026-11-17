@@ -163,11 +163,7 @@ export function configurationScopeRowsPredicate(
 ): { sql: string; params: SqlValue[] } {
   if (snapshot.orgId !== orgId || snapshot.mode !== mode) return { sql: '0', params: [] };
   return {
-    sql: [
-      `${eventRowsSql}=?/* scan-ephemeral-scope-event-rows */`,
-      `${eventTemplatesSql}=?/* scan-ephemeral-scope-event-templates */`,
-      `${scannerTemplatesSql}=?/* scan-ephemeral-scope-scanner-templates */`,
-    ].join(' AND '),
+    sql: [`${eventRowsSql}=?`, `${eventTemplatesSql}=?`, `${scannerTemplatesSql}=?`].join(' AND '),
     params: [
       orgId,
       snapshot.eventIds,
@@ -189,7 +185,7 @@ export function configurationScopeTemplatesPredicate(
 ): { sql: string; params: SqlValue[] } {
   if (snapshot.orgId !== orgId || snapshot.mode !== mode) return { sql: '0', params: [] };
   return {
-    sql: `${templateRowsSql}=?/* scan-ephemeral-scope-template-rows */`,
+    sql: `${templateRowsSql}=?`,
     params: [snapshot.templateIds, snapshot.templateRows],
   };
 }

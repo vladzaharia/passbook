@@ -24,8 +24,8 @@ export function credentialRefKeysetInitializeStmt(
   // so its depth does not accumulate with the blocking-event view.
   return stmt(
     db,
-    `${guard ? 'WITH keyset_proposal AS MATERIALIZED (SELECT ?/* scan-ephemeral-proof */ AS commitment)\n    ' : ''}INSERT INTO credential_ref_keyset (id, commitment)
-    SELECT 1, ${guard ? 'keyset_proposal.commitment FROM keyset_proposal' : '?/* scan-ephemeral-proof */'} WHERE (
+    `${guard ? 'WITH keyset_proposal AS MATERIALIZED (SELECT ? AS commitment)\n    ' : ''}INSERT INTO credential_ref_keyset (id, commitment)
+    SELECT 1, ${guard ? 'keyset_proposal.commitment FROM keyset_proposal' : '?'} WHERE (
       NOT EXISTS (SELECT 1 FROM credential_ref_keyset)
       AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones)
       AND NOT EXISTS (SELECT 1 FROM connection_webhook_retention)

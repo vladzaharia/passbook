@@ -111,7 +111,7 @@ export function setExpectedStmt(
   ];
   if (params.length >= 100) return null;
   const sql = `UPDATE scan_events SET expected = (${count.sql}), expected_at = ?
-    WHERE id = ?/* scan-ephemeral-event-id */ AND org_id = ? AND mode = ?
+    WHERE id = ? AND org_id = ? AND mode = ?
       AND archived_at IS NULL AND (expected_at IS NULL OR expected_at <= ?)
       AND config_epoch = ?
       AND (SELECT COUNT(*) FROM scan_event_templates et WHERE et.event_id=scan_events.id)=?

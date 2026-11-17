@@ -3,10 +3,10 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { PreparedAssetGrant } from './asset-types.ts';
 import { cardLastScans } from './card-last-scans.ts';
 import type { CountsPlan, CountsRead } from './counts.ts';
+import { type PreloadedDisplayHistory, planDisplayHistoryRead } from './display-history-plan.ts';
 import { buildCard, type CardDraft, cardAssetStmt, cardAssets, type GateSeen } from './dto.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
-import { type PreloadedDisplayHistory, planDisplayHistoryRead } from './history-proof-plan.ts';
 import { blankOutcome, safeDisplay, undoWindowMinutes } from './outcome.ts';
 import {
   type CardHistoryFence,

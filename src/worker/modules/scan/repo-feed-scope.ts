@@ -119,30 +119,28 @@ const scopedReferenceSql = (scan: 's' | 'cs', ref: ScopedReference) => `EXISTS (
 export function where(f: ScanLogFilter): { sql: string; params: SqlValue[] } {
   const clauses = [scanLedgerScopeSql('s')];
   const params: SqlValue[] = [];
-  const eq = (column: string, value: string | undefined, label?: 'pass-id' | 'history-reason') => {
+  const eq = (column: string, value: string | undefined) => {
     if (value === undefined) return;
-    clauses.push(`${column} = ?${label ? `/* scan-ephemeral-${label} */` : ''}`);
+    clauses.push(`${column} = ?`);
     params.push(value);
   };
   const references = [
-    { table: 'scanners', field: 'scanner_id', mode: true, label: 'scanner-id', value: f.scannerId },
-    { table: 'scan_staff', field: 'staff_id', mode: false, label: 'staff-id', value: f.staffId },
-    { table: 'scan_events', field: 'event_id', mode: true, label: 'event-id', value: f.eventId },
+    { table: 'scanners', field: 'scanner_id', mode: true, value: f.scannerId },
+    { table: 'scan_staff', field: 'staff_id', mode: false, value: f.staffId },
+    { table: 'scan_events', field: 'event_id', mode: true, value: f.eventId },
   ] as const;
   for (const ref of references) {
     if (ref.value === undefined) continue;
-    clauses.push(
-      `s.${ref.field} = ?/* scan-ephemeral-${ref.label} */ AND ${scopedReferenceSql('s', ref)}`,
-    );
+    clauses.push(`s.${ref.field} = ? AND ${scopedReferenceSql('s', ref)}`);
     params.push(ref.value);
   }
-  eq('s.pass_id', f.passId, 'pass-id');
+  eq('s.pass_id', f.passId);
   if (f.outcome === 'undone') clauses.push('s.undone_at IS NOT NULL');
   else eq('s.outcome', f.outcome);
   // Name searches are projected in the service before pagination; repository callers may still
   // select an exact pass id without consulting the untrusted cached display title.
-  if (f.q) eq('s.pass_id', f.q, 'pass-id');
-  eq('s.reason', f.reason, 'history-reason');
+  if (f.q) eq('s.pass_id', f.q);
+  eq('s.reason', f.reason);
   if (f.from !== undefined) {
     clauses.push('s.at >= ?');
     params.push(f.from);
@@ -152,7 +150,7 @@ export function where(f: ScanLogFilter): { sql: string; params: SqlValue[] } {
     params.push(f.to);
   }
   if (f.internalCursor) {
-    clauses.push('(s.at, s.id) < (?, ?/* scan-ephemeral-scan-id */)');
+    clauses.push('(s.at, s.id) < (?, ?)');
     params.push(f.internalCursor.at, f.internalCursor.id);
   }
   return { sql: clauses.join(' AND '), params };

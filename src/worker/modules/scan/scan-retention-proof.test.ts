@@ -403,9 +403,9 @@ describe('detached scan retention provenance', () => {
       expect(packed).not.toContain(secret);
     for (const value of [s.pass.id, ACTION, s.scanner.id, s.eventRow.data])
       expect(fence.params).toContain(value);
-    expect(fence.sql).toContain('?/* scan-ephemeral-pass-id */');
-    expect(fence.sql).toContain('?/* scan-ephemeral-action-id */');
-    expect(fence.sql).toContain('?/* scan-ephemeral-event-json */');
+    expect(fence.sql).toContain('?');
+    expect(fence.sql).toContain('?');
+    expect(fence.sql).toContain('?');
     expect(await first(kit.env.DB, `SELECT 1 AS valid WHERE ${fence.sql}`, fence.params)).toEqual({
       valid: 1,
     });

@@ -5,12 +5,12 @@ import { candidateAuthority } from './candidate-authority-test-fixtures.ts';
 import {
   planPendingDisplayHistorySource,
   preparePlannedDisplayHistoryProof,
-} from './history-proof-pending.ts';
+} from './display-history-pending.ts';
 import {
   consumeDisplayHistoryRead,
   planDisplayHistoryRead,
   rebindDisplayHistoryRead,
-} from './history-proof-plan.ts';
+} from './display-history-plan.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { claimScanStmt } from './repo-scans-test-support.ts';

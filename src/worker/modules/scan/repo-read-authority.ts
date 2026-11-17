@@ -164,7 +164,7 @@ export function withSessionRow<A extends ScanReadAuthority>(
     ...auth,
     ctes: `${auth.ctes},
     session_row AS MATERIALIZED (SELECT 1 AS ok FROM scanning_sessions
-      WHERE id = ?/* scan-ephemeral-session-id */ AND org_id = ? AND mode = ? AND config_epoch = ?)`,
+      WHERE id = ? AND org_id = ? AND mode = ? AND config_epoch = ?)`,
     params: [...auth.params, row.id, row.org_id, row.mode, row.config_epoch],
     ok: `(${auth.ok} AND EXISTS (SELECT 1 FROM session_row))`,
   };

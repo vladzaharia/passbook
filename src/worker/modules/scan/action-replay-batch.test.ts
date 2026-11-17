@@ -84,7 +84,7 @@ describe('bounded scanner action replay', () => {
       const { kit, scanner, pass, request, original } = await fixture();
       const real = kit.env.DB;
       const before = await effectCounts(real, original.scanId!, pass.id);
-      const intercepted = beforeReceiptCas(real, 'scan-ephemeral-source-event-json', async () => {
+      const intercepted = beforeReceiptCas(real, 'l.data=? AND l.at=?', async () => {
         if (mutation === 'ledger') {
           await run(
             real,
@@ -278,7 +278,7 @@ describe('bounded scanner action replay', () => {
       targetHolderEmail: 'retired@example.test',
     });
     const before = await effectCounts(real, original.scanId!, pass.id);
-    const intercepted = beforeReceiptCas(real, 'scan-ephemeral-source-event-json', () =>
+    const intercepted = beforeReceiptCas(real, 'l.data=? AND l.at=?', () =>
       run(
         real,
         `INSERT INTO pass_credential_tombstones
@@ -320,7 +320,7 @@ describe('bounded scanner action replay', () => {
     const before = await effectCounts(real, original.scanId!, pass.id);
     await run(real, 'DROP TRIGGER credential_ref_keyset_no_update');
     const replacement = keyset.commitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
-    const intercepted = beforeReceiptCas(real, 'scan-ephemeral-source-event-json', () =>
+    const intercepted = beforeReceiptCas(real, 'l.data=? AND l.at=?', () =>
       run(real, 'UPDATE credential_ref_keyset SET commitment=? WHERE id=1', [replacement]),
     );
     Object.assign(kit.env, { DB: intercepted.db });

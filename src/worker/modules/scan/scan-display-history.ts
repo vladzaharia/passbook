@@ -7,12 +7,12 @@ import type { Json } from '../../../passkit/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import type { AfterCommit } from './after-commit.ts';
-import { captureDisplayHistoryScope, sameDisplayHistoryScope } from './history-display-scope.ts';
 import {
   consumeDisplayHistoryRead,
   type PreloadedDisplayHistory,
   planDisplayHistoryRead,
-} from './history-proof-plan.ts';
+} from './display-history-plan.ts';
+import { captureDisplayHistoryScope, sameDisplayHistoryScope } from './history-display-scope.ts';
 import { validCredentialKeysetCommitment } from './repo-credential-tombstones.ts';
 import {
   displayHistoryAuthorityStmt,

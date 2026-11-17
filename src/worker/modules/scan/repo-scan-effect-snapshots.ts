@@ -89,8 +89,8 @@ export function readScanEffectStmt(
   return stmt(
     db,
     `SELECT (SELECT ${jsonObject(gateFields)} FROM scan_gates g
-      LEFT JOIN scans h ON h.id=g.last_scan_id WHERE g.pass_id=?/* scan-ephemeral-pass-id */ AND g.action_id=?/* scan-ephemeral-action-id */ AND g.scope=?/* scan-ephemeral-event-scope */) AS gate,
-      (SELECT ${jsonObject(presenceFields)} FROM scan_presence p WHERE p.pass_id=?/* scan-ephemeral-pass-id */ AND p.scope=?/* scan-ephemeral-event-scope */) AS presence`,
+      LEFT JOIN scans h ON h.id=g.last_scan_id WHERE g.pass_id=? AND g.action_id=? AND g.scope=?) AS gate,
+      (SELECT ${jsonObject(presenceFields)} FROM scan_presence p WHERE p.pass_id=? AND p.scope=?) AS presence`,
     [gate.passId, gate.actionId, gate.scope, gate.passId, presenceScope],
   );
 }
@@ -129,13 +129,12 @@ export function samePresence(
 
 export function gateSnapshotPredicate(gate: GateKey, expected: ScanGateSnapshot | null): Predicate {
   const keys = [gate.passId, gate.actionId, gate.scope];
-  const where =
-    'g.pass_id=?/* scan-ephemeral-pass-id */ AND g.action_id=?/* scan-ephemeral-action-id */ AND g.scope=?/* scan-ephemeral-event-scope */';
+  const where = 'g.pass_id=? AND g.action_id=? AND g.scope=?';
   if (!expected)
     return { sql: `NOT EXISTS (SELECT 1 FROM scan_gates g WHERE ${where})`, params: keys };
   return {
     sql: `EXISTS (SELECT 1 FROM scan_gates g LEFT JOIN scans h ON h.id=g.last_scan_id
-      CROSS JOIN (SELECT ?/* scan-ephemeral-gate-snapshot */ AS value) snapshot WHERE ${where} AND ${matches(gateFields)})`,
+      CROSS JOIN (SELECT ? AS value) snapshot WHERE ${where} AND ${matches(gateFields)})`,
     params: [JSON.stringify(expected), ...keys],
   };
 }
@@ -145,15 +144,14 @@ export function presenceSnapshotPredicate(
   scope: string,
   expected: ScanPresenceSnapshot | null,
 ): Predicate {
-  const where =
-    'p.pass_id=?/* scan-ephemeral-pass-id */ AND p.scope=?/* scan-ephemeral-event-scope */';
+  const where = 'p.pass_id=? AND p.scope=?';
   if (!expected)
     return {
       sql: `NOT EXISTS (SELECT 1 FROM scan_presence p WHERE ${where})`,
       params: [passId, scope],
     };
   return {
-    sql: `EXISTS (SELECT 1 FROM scan_presence p CROSS JOIN (SELECT ?/* scan-ephemeral-presence-snapshot */ AS value) snapshot
+    sql: `EXISTS (SELECT 1 FROM scan_presence p CROSS JOIN (SELECT ? AS value) snapshot
       WHERE ${where} AND ${matches(presenceFields)})`,
     params: [JSON.stringify(expected), passId, scope],
   };

@@ -9,7 +9,7 @@ import { candidateAuthority } from './candidate-authority-test-fixtures.ts';
 import { historyPlan, readCard, renderCardDisplay } from './card.ts';
 import { cardLastScansSplitFixture } from './card-last-scans-split-fixture.ts';
 import { planCounts } from './counts.ts';
-import { planDisplayHistoryRead, rebindDisplayHistoryRead } from './history-proof-plan.ts';
+import { planDisplayHistoryRead, rebindDisplayHistoryRead } from './display-history-plan.ts';
 import { knownPhotoUrl } from './member-photo.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';

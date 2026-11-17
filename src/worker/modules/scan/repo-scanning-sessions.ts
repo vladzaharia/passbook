@@ -134,7 +134,7 @@ export async function scanningSessionStats(
       FROM scanning_devices d
       JOIN scanning_sessions x ON x.id=d.session_id AND x.org_id=d.org_id AND x.mode=d.mode
       JOIN scanners device ON device.id=d.scanner_id AND device.org_id=d.org_id AND device.mode=d.mode
-      WHERE x.id=?/* scan-ephemeral-session-id */ AND x.org_id=? AND x.mode=?
+      WHERE x.id=? AND x.org_id=? AND x.mode=?
         AND device.revoked_at IS NULL`,
       [onlineSince, row.id, row.org_id, row.mode],
     ),
@@ -171,7 +171,7 @@ export const scanningSessionTodayStmt = (
       JOIN scanning_devices d ON d.scanner_id=s.scanner_id AND d.org_id=s.org_id AND d.mode=s.mode
       JOIN scanning_sessions x ON x.id=d.session_id AND x.org_id=d.org_id AND x.mode=d.mode
       JOIN scanners device ON device.id=d.scanner_id AND device.org_id=d.org_id AND device.mode=d.mode
-      WHERE x.org_id=? AND x.id=?/* scan-ephemeral-session-id */ AND x.mode=?
+      WHERE x.org_id=? AND x.id=? AND x.mode=?
         AND s.org_id=x.org_id AND s.mode=x.mode AND s.at>=?
         AND s.outcome='ok' AND s.action_kind!='undo' AND s.undone_by IS NULL
         AND ${scanLedgerCommonScopeSql('s')}
