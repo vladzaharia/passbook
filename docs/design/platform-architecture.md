@@ -163,6 +163,7 @@ Conventions (layering, errors, clock and ids, logs, registries, file size, copy 
 - **templates** (id, org_id NULL = platform starter usable by any org, slug, name, description, origin baked|uploaded, active_version, status active|archived|deleted, created_by, created_at, updated_at; UNIQUE(org_id, slug)). Baked rows are upserted by `syncBakedTemplates()` (idempotent, keyed by build hash, once per isolate) and are immutable through the API.
 - **template_versions** (template_id, version TEXT content hash, manifest JSON, pass_json, assets JSON [{name, slot, scale, locale, size, sha1, crc32, width, height, source}], report JSON, created_by, created_at; PK template_id+version; immutable trigger).
 - **passes** (id, org_id, identity_id, serial, template_id, template_version, auth_token, download_token UNIQUE (rotatable), download_token_rotated_at, web_service_url (frozen), personalization JSON, field_sources JSON, display_title, display_subtitle, external_id, status active|voided, version (optimistic lock/ETag), revision (Apple tag), object_key, object_sha256, object_size, modified_at, modified_collision, connection_id, external_ref, link_generation, next_sync_at, last_synced_at, sync_error_code, sync_failures, refresh_requested_at, last_refreshed_at, created_by, created_at; UNIQUE(identity_id, serial); FK (template_id, template_version)).
+- **Capability tokens at rest** (`0059`): `passes.download_token` and `bundles.token` hold `h1:` + HMAC-SHA-256 (key `capability-token.v1`, derived from the oldest KEK); the plain link lives only in `pass_token_seals` and `bundle_token_seals` (AES-GCM envelope). Rows written before `0059` stay plain until the minute cron `tokens.seal` seals them. `platform/capability-token.ts`.
 - **pass_versions** (pass_id, version, object_key, object_sha256, template_version, personalization, pass_json (signed pass.json for history rendering), cause create|admin|api|connection|user_refresh|template_upgrade|resign, actor_type, actor_id, created_at, purged_at).
 - **passes.holder_email** (normalized, nullable, indexed) and **passes.owner_user_id** (nullable FK users, ON DELETE SET NULL); **pass_attach_blocks** (pass_id, user_id, created_at; PK both).
 - **pass_assets** (pass_id, name e.g. `thumbnail@2x.png`, r2_key `pass-assets/<passId>/<sha1>.png`, sha1, size, width, height, created_at; PK pass_id+name) — per-pass images that override template assets of the same name.
@@ -180,8 +181,11 @@ Conventions (layering, errors, clock and ids, logs, registries, file size, copy 
 - **Passes:** `pass_credential_transfers`, `pass_credential_tombstones`, `credential_ref_keyset` (`0042`); `pass_issuance_deliveries` (`0045`); `pass_check_in`, `scan_presence` (`0022`); `member_photos` (`0021`); `pass_events` (`0010`); `bundles` (`0011`); `broadcasts` (`0013`).
 - **Delivery and sandbox:** `sandbox_forwards` (`0028`); `branding_gc_queue` (`0053`).
 - **Connections:** `connection_webhook_retention`, `connection_webhook_items` (`0033`, `0044`).
-- **Scanning:** `scanners`, `scans`, `scan_gates`, `scan_staff`, `scan_events` (`0014`); `scanner_setups` (`0023`); `scanning_sessions`, `scanning_devices` (`0024`); retention proofs (`0041`).
+- **Scanning:** `scanners`, `scans`, `scan_gates`, `scan_staff`, `scan_events` (`0014`); `scanner_setups` (`0023`); `scanning_sessions`, `scanning_devices` (`0024`); retention proofs (`0041`); `scans.session_id` (`0058`). Dropped: `scan_asset_grant_provenance` (`0061`, grants are stateless), the `scanners_credential_revision` trigger (`0063`), `scanning_config_revisions` (`0066`).
+- **Capability token seals:** `pass_token_seals`, `bundle_token_seals` (`0059`). Indexes `0054`, `0057`; trigger narrowing `0064`.
 - **Wallet providers (dark):** `wallet_provider_*` (`0037`).
+
+Cron hooks (`src/worker/jobs/cron.ts`): the minute hooks include `tokens.seal` (the token backfill), `scan.reconcile` and `scan.backfill`; the daily ones include `authority.sweep` and `orgs.branding_gc`.
 
 Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 objects deleted in batches, `purged_at` set); revisions 7 d; outbox sent 30 d / failed 90 d; connection_runs 30 d or last 1 000; webhook_events, magic_links, oidc_flows, expired sessions 7 d; wallet_logs 7 d; audit_log 1 y.
 
@@ -217,7 +221,7 @@ Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 obj
 
 ## 8. Passes, holders and delivery
 
-**Lifecycle** (`modules/passes`): create (idempotency key), update (If-Match version), publish = build → R2 put → D1 CAS (`UPDATE … WHERE version=?` RETURNING) with up to 3 re-reads on conflict; never set a sync error for a lock conflict. `field_sources` per field (`manual` locks against connection overwrite; "reset to connection" clears). Void/unvoid. Rotate download link. Delete (void first; then removes rows + R2 objects). Pass detail returns current `pass_json`, version history (from `pass_versions` with `pass_json` for rendering any retained version), delivery history, registrations count, connection status, audit trail.
+**Lifecycle** (`modules/passes`): create (idempotency key), update (If-Match version), publish = build → R2 put → D1 CAS (`UPDATE … WHERE version=?` RETURNING) with up to 3 re-reads on conflict; never set a sync error for a lock conflict. `field_sources` per field (`manual` locks against connection overwrite; "reset to connection" clears). Void/unvoid. Rotate download link. Stamp cards (`manifest.stamps`) add or redeem through `POST /passes/{id}/stamps`. Scanner value actions (add, take, set, use up) publish through the same `publishPass`: a `PublishCommit` puts the scan's gate, scan row and ledger event in the pass write's own batch. A publish reads its removal snapshot, org, personalization, previous pass.json and build inputs in one batch (`repo-read-publish-bundle.ts`). Delete (void first; then removes rows + R2 objects). Pass detail returns current `pass_json`, version history (from `pass_versions` with `pass_json` for rendering any retained version), delivery history, registrations count, connection status, audit trail.
 
 **Holders** (`modules/holders`, polaris-key semantics, audit G §2): state is derived — unassigned (no email, no owner), waiting (email, no owner), owned (owner). Hook A: when an unowned pass gets or changes `holder_email`, attach it to the single user who verified that email (if exactly one and not blocked) with `UPDATE … WHERE owner_user_id IS NULL`. Hook B: when a user verifies an email, attach every waiting, unblocked pass with that email. Owned passes never move automatically; changing the email on an owned pass is an explicit admin **reassign** (clear owner → hook A; audited). A user's **Remove from my passes** writes a block, then clears the owner. Assignment never creates accounts. Both hooks always run the same queries so timing doesn't reveal whether an account exists. Emails normalized with `strictEmail`. Emailing a pass to its holder uses the outbox.
 
@@ -302,6 +306,9 @@ Health in admin: status, last success vs interval, failures, breaker, last 20 ru
 | `/auth/oidc/start`, `/auth/oidc/callback`, `/auth/magic/request`, `/auth/magic`, `/auth/magic/consume`, `/auth/logout` | — | sign-in flows |
 | `/wallet/v1/*` | ApplePass token / none per protocol | Apple web service |
 | `/p/:token`, `/p/:token/pass.pkpass`, `/p/:token/assets/:name` | bearer link | public pass page + download |
+| `/b/:token`, `/b/:token/*` | bearer link | public bundle page |
+| `/scan` | SPA (scanner) | paired scanner client, behind `vars.SCAN_ENABLED` |
+| `/api/v1/scan/*` | paired scanner credential, or an admin session ("Scan as admin") | scanner device API; pairing routes are rate-limited |
 | `/hooks/connections/:id` | connection webhook signature | inbound webhooks |
 | `/health` | public | liveness |
 

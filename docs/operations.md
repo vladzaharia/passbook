@@ -17,6 +17,7 @@
 - Demo data: with `npm run dev` running, `node tools/seed-demo.ts` (token from `npm run breakglass`;
   `--url` for another port) adds 3 orgs, ~45 passes, portal users, connections and API keys.
 - Tests: `npm run test:unit|worker|web`, `npm run test:e2e`, `npm run coverage`.
+- e2e runs the dev server or, in CI, the built preview. Both raise `RL_SCAN_PAIR` (30 a minute in production) to 100,000: `vite.config.ts` for dev, `tools/e2e-server.ts` patches the built `wrangler.json` for preview. A worker test covers the real limit.
 - `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
 
 ## Go-live checklist
@@ -278,13 +279,15 @@ passes keep the old one until a template change or Identities, Re-sign all rebui
 
 ## Cutover from schema 0024
 
-Production D1 is at 0024. Migrations 0025–0055 have never run there; they land together. All data
+Production D1 is at 0024. Migrations 0025–0066 have never run there; they land together (0040, 0060, 0062 and 0065 do not exist). All data
 is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, secrets, and every
 `--apply` or `--remote` command. An agent never runs them. `test/cutover/` rehearses this order on
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
 `docs/design/authority-epochs.md` §6.
 
-Old pass download and bundle tokens are sealed by the minute cron `tokens.seal` (0059, 50 of each a run, log code `TOKEN_SEAL_RUN`); no owner step. A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining`. Backups from before 0059 hold working links: rotate in bulk if one leaks.
+Migrations 0056 to 0066 add no window rule except the last: blueprints (0056), indexes (0057), `scans.session_id` (0058), token seal tables (0059), stateless asset grants (0061: drops `scan_asset_grant_provenance`), scan core (0063: drops the `scanners_credential_revision` trigger), trigger narrowing (0064), and 0066, which drops `scanning_config_revisions`. The old Worker writes that table when a scanning session or device is edited, so those edits fail between migrate and promote; door scans do not. Retry them after promote.
+
+Old pass download and bundle tokens are sealed by the minute cron `tokens.seal` (0059, 50 of each a run, id cursor in the setting `tokens.sealCursor`, log codes `TOKEN_SEAL_RUN` and `TOKEN_SEAL_REFUSED`); no owner step. Passes and bundles of a deleted or non-active org stay plain until the org is active (nothing serves them). A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining`. Backups from before 0059 hold working links: rotate in bulk if one leaks.
 
 ### What the new Worker does with 0024 data
 
@@ -452,7 +455,7 @@ writes.
 
 1. **Owner**: WAF rule on. Sources of new work stopped (pre-check 6).
 2. **Owner**: `npm run deploy -- --migrate-only --apply`. Checks secrets, uploads the version (not
-   serving), records a D1 bookmark, applies 0025–0055 and stops with
+   serving), records a D1 bookmark, applies 0025–0066 and stops with
    `Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.`
 3. **Owner**: bootstrap. The tool never touches production; it prints the commands. First:
 
@@ -577,8 +580,8 @@ keep retired pass ids and credentials from being reused.
   retention proofs, retained webhook/workflow bindings and native-provider history.
   Plain unsigned legacy scan events do not prevent initialization, but remain untrusted and are
   never promoted to authenticated history merely because a sentinel was installed.
-  Scanner asset grants are stateless: to void every outstanding one, deploy with a new label in
-  `asset-grant-mint.ts` (`scan-asset-grant-v2` to `-v3`).
+  Scanner asset grants are stateless (one hour): to void every outstanding one, deploy with a new label in
+  `asset-grant-mint.ts` (`scan-asset-grant-v2` to `-v3`). Changing the grant's field list (`scan-asset-v4` in `asset-claim.ts`) voids them the same way. Adding a KEK version changes none of them; the pass and bundle link MACs also stay valid.
   Removing or changing the oldest KEK causes a commitment mismatch: scanner, transfer, provider
   and connection credential-reference operations fail closed. Restore the original KEK, confirm
   the deployed keyset commitment matches the retained records, then retry the blocked operation.

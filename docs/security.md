@@ -30,7 +30,9 @@ approval and replay-safe Save behavior can be verified.
 | Secret | Stored | Notes |
 | --- | --- | --- |
 | Session, magic link, API key | hashed | Shown once. |
-| Download token (`/p/<token>`), bundle token (`/b/<token>`) | MAC + sealed copy | Lookup by HMAC (`h1:`); the link is shown again from an AES-GCM copy bound to id, org and purpose. A database read yields no link. Rotatable. Never logged. |
+| Download token (`/p/<token>`), bundle token (`/b/<token>`) | MAC + sealed copy | Lookup by HMAC (`h1:`); the link is shown again from an AES-GCM copy bound to id, org and purpose. A database read yields no link, once the minute backfill `tokens.seal` has reached the row (until then it holds the plain token). A presented `h1:` value never matches, so a leaked MAC is no link. Rotatable. Never logged. |
+| Scanner asset grant | none | Stateless HMAC, one hour. See Scanner security. |
+| Manager PIN | hashed | HMAC under a key from the oldest KEK. Rate-limited. |
 | ApplePass token | retrievable | Devices need it back. Rotatable. Never logged. |
 | Pass serial | plain | The personalization capability (SEC-1). NFC identities must not use caller-chosen or guessable serials. |
 
@@ -48,11 +50,25 @@ from being accepted again. Rotating only the public link does not create a crede
   restore the original key rather than silently reinitializing it. Lazy bootstrap is allowed only
   for an empty reference store and is fenced in the same D1 transaction by the requesting actor's
   current authority.
-- Scanner asset grants are short-lived stateless capabilities: an expiry and an HMAC over the
-  recipient, pass, release, photo and credential lineage; nothing is stored. Redemption rereads
-  that lineage, recomputes the HMAC in constant time and rechecks current authority, including
-  after opening the stream. Grant URLs and logs must not expose raw credentials or proof material,
+- Scanner asset grants (`scan-asset-v4`) are stateless capabilities valid for one hour: a nonce, an
+  expiry, a truncated HMAC and, for a grant minted from a scanned credential, masked 8-byte
+  prefixes of its keyed tombstone refs. The HMAC covers the recipient, pass, the release the pass
+  is actually used under, photo and credential lineage; nothing is stored. Redemption rereads that
+  lineage, recomputes the HMAC in constant time, fences it in SQL (including that no tombstone
+  starts with a carried prefix) and rechecks current authority, including after opening the
+  stream. A rotated keyset, or a successor release that changes the adapter, capabilities or
+  audience policy, voids a grant; an identical republish keeps it. Grant URLs and logs must not expose raw credentials or proof material,
   and logs must not contain the grant itself.
+- Manager PINs are six digits, hashed under a key derived from the oldest KEK. A wrong PIN counts
+  against the manager (5 per 5 minutes) and the scanner (20 per hour); past either, 429
+  `RATE_LIMITED`. A PIN sent without a manager is tested against the org's active managers: both
+  limits divide by their number, an org-wide hourly counter bounds a fleet of devices, and two
+  managers sharing a PIN answer as a wrong one (`PIN_INVALID`, logged `PIN_AMBIGUOUS`). The attempt
+  is reserved only once policy says the action needs approval; an unspent PIN is refunded inside
+  the scan's own grant.
+- Codes not found are counted per scanner (or admin actor) in 10-minute windows. Past 30, 429
+  `SCAN_TOO_MANY_MISSES` (with `Retry-After`) and one `scan.misses_capped` audit row. A miss counts
+  only when its grant commits; otherwise `SCAN_MISS_UNCOUNTED` is logged.
 - Internal DTOs, URLs and logs must not carry raw credentials or CSRF secrets. The authorized
   `/api/v1/scan/session` `csrfToken` response is the deliberate browser handshake exception; it
   must not be propagated into internal DTOs, URLs or logs.
@@ -68,8 +84,8 @@ from being accepted again. Rotating only the public link does not create a crede
   fabricate proofs or bypass the guards to recover legacy data; investigate and restore valid
   provenance and keys instead. Normal scan retention removes proofs with their scan.
 - Migration `0047` makes session identity, lifetime and CSRF secret immutable, retires deleted
-  session and scanner IDs, and requires scanner credential changes to advance their authority
-  revision; replacement cannot bypass these protections. Migration `0048` adds monotonic
+  session and scanner IDs, and guards scanner credential changes (authority is the scanner's `credential_epoch`, `0052`; the
+  `0047` revision trigger was dropped by `0063`); replacement cannot bypass these protections. Migration `0048` adds monotonic
   `imageGeneration` fencing for image mutations and durable asset GC: uploads are reserved,
   detached references retain rollback holds, and retired keys cannot be reused. Deletion is
   limited to eligible pass-asset and member-photo namespaces and guarded against live references.

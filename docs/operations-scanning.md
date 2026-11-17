@@ -57,6 +57,14 @@ identifier when rebuilt against that version. Lookup IDs are normalized for case
 hyphens, dots and slashes; keep them unique within the accepted passes. Duplicate matches
 require selecting a person and are never automatically admitted.
 
+## Value actions and Manager PINs
+
+A template's `scan.actions` (see `docs/extending.md`) can add, take, set or use up a value, such as stamps or a balance. Staff pick the action on the result card; an amount shows a picker or a confirm step. The pass updates in Wallet like any other change, and the scan can be undone from Recent or the console while the value is unchanged.
+
+An action locked by role, or an amount above the action's maximum, asks for a Manager PIN. With staff sign-in on, staff choose the manager; with it off, the PIN alone identifies one. Five wrong PINs for a manager in five minutes lock that manager on the scanner; 20 an hour lock the scanner's PIN entry. A PIN shared by two managers is refused as wrong.
+
+A scanner or admin session that scans more than 30 unknown codes in 10 minutes is refused for a few minutes (`SCAN_TOO_MANY_MISSES`).
+
 ## Bluetooth and USB scanners
 
 Pair a Bluetooth scanner in the device's operating system using **HID / keyboard** mode, or

@@ -180,7 +180,7 @@ The Test-a-reader dialog and the reader key flow work before approval, so a VTAP
 | SA §3.1: pairing in `routes.ts` | `routes-pair.ts` (stream SC), mounted at `/api/v1/scan` beside `routes.ts` | Avoids two streams in one file |
 | SA §4.1: `scanOf` in `modules/scan/rules.ts` | `src/shared/scan-defaults.ts` | The designer needs the same defaults |
 | SA §4.2: `UuidV7Schema`, `TimeZoneSchema` | Define them in `contracts/scan.ts` | Neither exists in `common.ts` |
-| SA §6.1 "0014 is independent" | Keep it so. Any later scanner migration is `0018_scan_<topic>.sql`, because `0017` is reserved for n5 | `AGENTS.md` n5 row |
+| SA §6.1 "0014 is independent" | Keep it so. Any later scanner migration takes the next free number (`0017` was reserved for n5). Built so far: `0058` (`scans.session_id`), `0061`, `0063`, `0066` | `AGENTS.md` n5 row |
 | SA §13.2: SPA budget 232,500 B | Measure first. Raise by at most 1 kB, with a comment in `check-bundle.ts` | Owner already accepted measured steps |
 | SA §3.2: `src/shared/mask.ts` | `maskEmail` in `src/shared/email.ts` | One email module (AGENTS.md "Data") |
 | SV owning `staff-session.ts` while SC owns `repo-scanners.ts` | SV gets `repo-device.ts` for the device-side `scanners` SQL | No file shared by two streams |
@@ -815,6 +815,7 @@ under 300 lines.
 - **Done when:** guest-list lookup works through the API.
 
 **SV.5 Value actions, staff session and approval** (M2; needs PT.1 (C5), PT.2, P0.4)
+- **Status: built** (#43, no migration). Differences from the text below: one grant batch with no gate-first release (`passes/publish.ts` `PublishCommit`, `scan/act-value*.ts`, `effects-value.ts`); a short `take` closes `no_balance` in that batch; `notify: action.notify ? the template's : false`; `approval.staffId` is optional (a PIN alone is matched against the org's managers, SA §2.7); a stamp on a full card is refused `card_full`; undo is SV.6b (built); the typed `set` input is `ScanCardAction.input`.
 - **Files:** `effects.ts`, `act.ts` (value branch), `staff-session.ts`, `rules.ts` (value rows),
   `routes.ts` (`POST/DELETE /staff`).
 - **Build:**
@@ -846,6 +847,7 @@ under 300 lines.
 - **Done when:** M2 desk flows work through the API.
 
 **SV.6 Undo** (check-in in M1, needs SV.2; the value kinds in M2, needs SV.5; check-out moved to OC.1)
+- **Status:** SV.6a and SV.6b are built (`undo-value.ts`, `repo-undo-grant.ts`). Check-out and override-group undo (OC.1) are not.
 - M1 is required: `16-scan-door`, AD.4 and SC.4's console undo all undo a check-in in M1. Land `undo.ts` with the
   `check_in` rows first (SV.6a), then add the value rows (SV.6b). Undo of an exit and of an override group is OC.1's
   (SV.11 wires it).
