@@ -14,7 +14,7 @@ import { type AuthContext, modeOf } from '../../platform/auth.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type CompositeTemplateRegistry, createTemplateRegistry } from './registry.ts';
-import { listVersions } from './repo.ts';
+import { latestVersionName } from './repo.ts';
 import { stampHistogram, stampVersions } from './repo-stamps.ts';
 import { loadTemplate, passUsageOrg } from './service-access.ts';
 
@@ -54,7 +54,7 @@ export async function stampsImpact(
 ): Promise<z.infer<typeof StampsImpactSchema>> {
   const row = await loadTemplate(ctx, auth, id, query.orgId);
   const registry = createTemplateRegistry(ctx.env, { ctx });
-  const version = row.activeVersion ?? (await listVersions(ctx.env.DB, id))[0]?.version;
+  const version = row.activeVersion ?? (await latestVersionName(ctx.env.DB, id));
   if (!version) throw new NotFoundError('Template has no saved version.', 'TEMPLATE_NOT_FOUND');
   if (!(await registry.resolve(id, version)).manifest.stamps)
     throw new ConflictError('This template has no stamps.', 'STAMPS_NONE');
