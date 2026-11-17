@@ -114,17 +114,12 @@ describe('tenant reissue requirement', () => {
     const { authority } = await memberAuthority(kit, 'passes:operate');
     const source = await getHolderPass(kit.env.DB, pass.id, null);
     if (!source) throw new Error('Missing source');
-    const keyset = (await first<{ commitment: string }>(
-      kit.env.DB,
-      'SELECT commitment FROM credential_ref_keyset WHERE id = 1',
-    ))!.commitment;
     const mark = () =>
       markHolderReissueGranted(
         jobCtxOf(kit),
         pass.id,
         source,
         user.id,
-        keyset,
         authority,
         undefined,
         entry(pass.orgId, pass.id, user.id),
@@ -145,7 +140,6 @@ describe('tenant reissue requirement', () => {
       pass.id,
       source,
       user.id,
-      '0'.repeat(64),
       authority,
       undefined,
       entry(pass.orgId, pass.id, user.id),

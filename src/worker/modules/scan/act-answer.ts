@@ -1,12 +1,14 @@
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
-import { StaleScanAuthority } from './act-override.ts';
+import { CommittedScanUnconfirmed, StaleScanAuthority } from './act-override.ts';
 import type { StopContext } from './act-stop.ts';
 import { historyPlan } from './card.ts';
 import { planCounts } from './counts.ts';
 import { photoGrantUrl } from './member-photo.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
+import { candidateTemplateFenceStmt, templateFenceHolds } from './repo-resolve-outcome-current.ts';
 import type { Stop } from './resolve.ts';
+import { afterReads, capturingDb } from './scan-capture.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 
 /**
@@ -40,11 +42,15 @@ export async function answerWithoutRow(
     where: { id: s.scanId, state: 'pending', at: s.claimAt },
     returning: ['id'],
   });
-  const results = await g.commit();
-  if (!(results[g.indexOf(released)]?.results ?? []).length) {
+  const fence = stop.found?.liveCandidate;
+  const committed = await g.commitWith(
+    afterReads(fence ? [candidateTemplateFenceStmt(capturingDb(ctx.env.DB), fence)] : []),
+  );
+  if (!(committed.writes[g.indexOf(released)]?.results ?? []).length) {
     s.onFailureCommitted();
     throw new StaleScanAuthority();
   }
+  if (fence && !templateFenceHolds(committed.after[0])) throw new CommittedScanUnconfirmed();
   const now = ctx.clock.now();
   const open = { sql: '1', params: [] };
   const counts = planCounts(

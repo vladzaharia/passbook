@@ -43,7 +43,7 @@ describe('event mutation commit authority', () => {
     ).toBeNull();
   });
 
-  it('binds the session secret only as a scalar, never inside JSON parameters', async () => {
+  it('never binds the session secret: the read fence rides epochs, not the secret', async () => {
     const sessionHash = await hashSessionCookie(member.cookieValue);
     const session = await first<{ csrf_secret: string }>(
       env.DB,
@@ -53,7 +53,7 @@ describe('event mutation commit authority', () => {
     if (!session?.csrf_secret) throw new Error('Missing session secret fixture.');
     const secret = session.csrf_secret;
     const real = env.DB;
-    let scalarSeen = false;
+    let secretBound = false;
     const db = new Proxy(real, {
       get(target, prop) {
         if (prop !== 'prepare') {
@@ -67,8 +67,7 @@ describe('event mutation commit authority', () => {
               if (member === 'bind')
                 return (...values: unknown[]) => {
                   for (const value of values) {
-                    if (value === secret) scalarSeen = true;
-                    else if (typeof value === 'string') expect(value).not.toContain(secret);
+                    if (typeof value === 'string' && value.includes(secret)) secretBound = true;
                   }
                   return prepared.bind(...values);
                 };
@@ -83,7 +82,7 @@ describe('event mutation commit authority', () => {
     try {
       const response = await call('GET', `/${eventId}`);
       expect(response.status).toBe(200);
-      expect(scalarSeen).toBe(true);
+      expect(secretBound).toBe(false);
     } finally {
       Object.assign(env, { DB: real });
     }

@@ -105,14 +105,12 @@ export async function runAttachHookA(
         action: 'holder.attach_reissue_required',
         detail: { userId: chosen },
       };
-      const commitment = error.credentialKeysetCommitment;
       if (options?.authority)
         await markHolderReissueGranted(
           ctx,
           passId,
           source,
           chosen,
-          commitment,
           options.authority,
           options.connection,
           entry,
@@ -124,7 +122,6 @@ export async function runAttachHookA(
           source,
           chosen,
           ctx.clock.now(),
-          commitment,
           options?.connection,
           { ctx, entry },
         );

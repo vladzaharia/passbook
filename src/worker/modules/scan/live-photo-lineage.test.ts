@@ -4,7 +4,7 @@ import { run } from '../../platform/db.ts';
 import { deleteMemberPhoto, putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { assetGrantValid, mintAssetGrant } from './assets.ts';
+import { assetGrantValid, mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { liveRecipient } from './live-auth.ts';
 import { liveRowFor } from './live-render.ts';
 import { getScanner } from './repo-device.ts';

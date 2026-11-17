@@ -7,8 +7,8 @@ import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { claimRemoval, getPassLifecycle, releaseRemoval } from '../passes/repo-remove.ts';
 import { makePng } from '../templates/package/fixtures.ts';
+import { assetGrantValid, mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { assetActorFor, observeCancellation } from './asset-test-fixtures.ts';
-import { assetGrantValid, mintAssetGrant } from './assets.ts';
 import { candidateById } from './repo-lookup.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 

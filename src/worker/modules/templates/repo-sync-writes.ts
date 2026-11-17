@@ -1,5 +1,6 @@
 import type { Grant } from '../../platform/authority.ts';
-import { inList, maxNow } from '../../platform/authority-expr.ts';
+import { tenantSql } from '../../platform/authority-cond.ts';
+import { maxNow } from '../../platform/authority-expr.ts';
 import { readPart, writePart } from '../../platform/authority-include.ts';
 import type { NewVersion } from './repo.ts';
 import { versionStatementSql } from './repo.ts';
@@ -118,13 +119,15 @@ export function addBakedTemplate(
     });
 }
 
-/** Baked templates that left the build are archived, not deleted. */
-export function addArchiveStale(g: Grant, ids: readonly string[], now: number): void {
-  for (let i = 0; i < ids.length; i += 20)
-    g.update('templates', {
-      set: { status: 'archived', updated_at: maxNow(now) },
-      where: { id: inList(ids.slice(i, i + 20)), origin: 'baked', status: 'active' },
-    });
+/** Baked templates that left the build are archived, not deleted; the stale set is read when the statement runs. */
+export function addArchiveStale(g: Grant, keepIds: readonly string[], now: number): void {
+  g.update('templates', {
+    set: { status: 'archived', updated_at: maxNow(now) },
+    where: { origin: 'baked', status: 'active' },
+    when: [
+      tenantSql('{row}.id NOT IN (SELECT value FROM json_each(?))', [JSON.stringify(keepIds)]),
+    ],
+  });
 }
 
 /** The immutable version row (inserted once) and the read-back that proves its content is unchanged. */

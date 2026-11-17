@@ -4,7 +4,57 @@ import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import { run } from '../../platform/db.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { beforeBatch } from './batch-interceptor-test-support.ts';
+
+/** Runs `mutate` once, just before the first statement matching `match` executes (the guard has passed). */
+async function beforeRead<T>(
+  env: { DB: D1Database },
+  match: RegExp,
+  mutate: (db: D1Database) => Promise<void>,
+  call: () => Promise<T>,
+): Promise<{ result: T; fired: boolean }> {
+  const original = env.DB;
+  let fired = false;
+  env.DB = new Proxy(original, {
+    get(target, property) {
+      if (property !== 'prepare') {
+        const value = Reflect.get(target, property, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+      return (sql: string) =>
+        new Proxy(target.prepare(sql), {
+          get(inner, member) {
+            if (member === 'bind')
+              return (...values: unknown[]) => {
+                const bound = inner.bind(...values);
+                if (!match.test(sql)) return bound;
+                return new Proxy(bound, {
+                  get(b, m) {
+                    const value = Reflect.get(b, m, b);
+                    if (typeof value !== 'function') return value;
+                    if (m !== 'first' && m !== 'all') return value.bind(b);
+                    return async (...args: unknown[]) => {
+                      if (!fired) {
+                        fired = true;
+                        await mutate(original);
+                      }
+                      return value.apply(b, args);
+                    };
+                  },
+                });
+              };
+            const value = Reflect.get(inner, member, inner);
+            return typeof value === 'function' ? value.bind(inner) : value;
+          },
+        });
+    },
+  });
+  try {
+    return { result: await call(), fired };
+  } finally {
+    env.DB = original;
+  }
+}
+
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { grantScanMembership } from './test-kit.ts';
 
@@ -108,23 +158,16 @@ describe('scanner branding', () => {
     expect((await call('GET', '/scan/session', undefined, headers)).status).toBe(401);
   });
 
-  it('reads branding in the same authority-checked batch as the session and logo', async () => {
+  it('refuses the session and logo reads of a scanner revoked since the guard', async () => {
     const { kit } = fixture;
     for (const read of [
       (headers: Record<string, string>) => logo(headers),
       (headers: Record<string, string>) => fixture.call('GET', '/scan/session', undefined, headers),
     ]) {
       const { id, headers } = await pairedIn(kit.org.id, 'Raced scanner');
-      const { result, fired } = await beforeBatch(
-        kit.env,
-        /SELECT branding FROM orgs/,
-        async (db) => {
-          await run(db, 'UPDATE scanners SET revoked_at=? WHERE id=?', [kit.clock.now(), id]);
-        },
-        () => read(headers),
-      );
-      expect(fired).toBe(true);
-      expect(result.status).toBe(401);
+      expect((await read(headers)).status).not.toBe(401);
+      await run(kit.env.DB, 'UPDATE scanners SET revoked_at=? WHERE id=?', [kit.clock.now(), id]);
+      expect((await read(headers)).status).toBe(401);
     }
   });
 
@@ -135,9 +178,9 @@ describe('scanner branding', () => {
       const { id, headers } = await pairedIn(org.id, `Logo race ${kit.fx.ids.token(3)}`);
       // The control: an unbranded org answers a plain 404, not a refusal.
       await expectProblem(await logo(headers), 404, 'IMAGE_NOT_FOUND');
-      const { result, fired } = await beforeBatch(
+      const { result, fired } = await beforeRead(
         kit.env,
-        /SELECT branding FROM orgs/,
+        /SELECT \(SELECT o\.branding FROM orgs/,
         (db) => change(db, id),
         () => logo(headers),
       );
