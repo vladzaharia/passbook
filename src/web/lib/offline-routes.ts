@@ -18,16 +18,16 @@ const KINDS = ['component', 'errorComponent', 'pendingComponent', 'notFoundCompo
  * the route error component renders inside the shell. Online behaviour is unchanged.
  */
 export function offlineSafe(lazy: LazyComponent): LazyComponent {
-  const Safe: LazyComponent = (props) => {
+  const safe: LazyComponent = (props) => {
     // preload is cleared once the chunk has loaded.
     if (lazy.preload && typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new OfflineChunkError();
     }
     return createElement(lazy, props);
   };
-  Safe.displayName = 'OfflineSafeRoute';
-  Safe.preload = () => lazy.preload?.() ?? Promise.resolve();
-  return Safe;
+  safe.displayName = 'OfflineSafeRoute';
+  safe.preload = () => lazy.preload?.() ?? Promise.resolve();
+  return safe;
 }
 
 /** Wraps every code-split route component of a router in place. */

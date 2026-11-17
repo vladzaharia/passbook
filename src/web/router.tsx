@@ -1,11 +1,21 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createRouter, type RouterHistory } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import { viewTransitionOption } from './lib/motion.ts';
 import { guardOfflineChunks } from './lib/offline-routes.ts';
 import { parseSearch, stringifySearch } from './lib/search-codec.ts';
 import { routeTree } from './routeTree.gen.ts';
 import { NotFoundPage, RouteError } from './ui/layout/error-pages.tsx';
 import { SessionEnded } from './ui/session-ended.tsx';
+
+function InnerWrap({ children }: { children: ReactNode }) {
+  return (
+    <>
+      {children}
+      <SessionEnded />
+    </>
+  );
+}
 
 export function createAppRouter(options: { queryClient: QueryClient; history?: RouterHistory }) {
   const router = createRouter({
@@ -20,12 +30,7 @@ export function createAppRouter(options: { queryClient: QueryClient; history?: R
     scrollRestoration: true,
     defaultViewTransition: viewTransitionOption(),
     // Inside the router, so its Sign in can pass the unsaved-changes blocker.
-    InnerWrap: ({ children }) => (
-      <>
-        {children}
-        <SessionEnded />
-      </>
-    ),
+    InnerWrap,
   });
   guardOfflineChunks(Object.values(router.routesById));
   return router;
