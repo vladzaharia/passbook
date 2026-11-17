@@ -1,7 +1,7 @@
 import { type GrantPart, writePart } from './authority-include.ts';
-import { exactStmt, first } from './db.ts';
+import { exactStmt } from './db.ts';
 
-export type TokenPurpose = 'pass' | 'bundle';
+export type TokenPurpose = 'pass' | 'bundle' | 'apple-auth';
 
 export interface SealRow {
   kekVersion: number;
@@ -18,6 +18,13 @@ export const SEALS = {
     owner: 'passes',
     tokenColumn: 'download_token',
     kind: 'pass-link',
+  },
+  'apple-auth': {
+    table: 'pass_auth_seals',
+    column: 'pass_id',
+    owner: 'passes',
+    tokenColumn: 'auth_token',
+    kind: 'apple-auth',
   },
   bundle: {
     table: 'bundle_token_seals',
@@ -92,16 +99,26 @@ export interface SealRaw {
   ciphertext: number[] | ArrayBuffer;
 }
 
+/** The read of a sealed copy, for a caller that batches it with its own reads. */
+export function sealReadStatement(
+  db: D1Database,
+  purpose: TokenPurpose,
+  id: string,
+  orgId: string,
+): D1PreparedStatement {
+  const s = SEALS[purpose];
+  return exactStmt(
+    db,
+    `SELECT kek_version, iv, wrapped_dek, ciphertext FROM ${s.table} WHERE ${s.column} = ? AND org_id = ?`,
+    [id, orgId],
+  );
+}
+
 export function readSeal(
   db: D1Database,
   purpose: TokenPurpose,
   id: string,
   orgId: string,
 ): Promise<SealRaw | null> {
-  const s = SEALS[purpose];
-  return first<SealRaw>(
-    db,
-    `SELECT kek_version, iv, wrapped_dek, ciphertext FROM ${s.table} WHERE ${s.column} = ? AND org_id = ?`,
-    [id, orgId],
-  );
+  return sealReadStatement(db, purpose, id, orgId).first<SealRaw>();
 }

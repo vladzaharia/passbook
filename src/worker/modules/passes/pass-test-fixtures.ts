@@ -13,6 +13,7 @@ import {
   makeTemplate,
   type OrgRow,
   persistTemplate,
+  rememberAuthToken,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
@@ -202,7 +203,7 @@ export async function setupKit(
       if (!release && options.approvedReleases !== false && orgId !== org.id)
         release = await approveAppleRelease(kit, { orgId, mode });
       release ??= await requireApprovedRelease(ctx, resolved.id, orgId, mode, 'apple');
-      return createPassRow(jobCtxOf({ ctx }), {
+      const created = await createPassRow(jobCtxOf({ ctx }), {
         orgId,
         templateId: resolved.id,
         templateVersion: release.version,
@@ -215,6 +216,7 @@ export async function setupKit(
         execution: { kind: 'system' },
         actor: { type: 'system', id: null },
       });
+      return rememberAuthToken(env, created);
     },
   };
   if (options.approvedReleases !== false) {

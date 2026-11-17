@@ -8,6 +8,7 @@ import {
   makeSession,
   makeTemplate,
   makeUser,
+  withoutTrigger,
 } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { NotFoundError, RateLimitedError } from '../../platform/errors.ts';
@@ -53,10 +54,13 @@ describe('passes', () => {
   it('never returns the device authentication token', async () => {
     const { session, own } = await setup();
     const mine = await own();
-    await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
-      JSON.stringify({ description: 'Hi', authenticationToken: 'secret-device-token' }),
-      mine.id,
-    ]);
+    // A copy written before 0065, which the guard now refuses.
+    await withoutTrigger(h.env.DB, 'pass_versions_no_auth_token_update', () =>
+      run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
+        JSON.stringify({ description: 'Hi', authenticationToken: 'secret-device-token' }),
+        mine.id,
+      ]),
+    );
     const list = await get('/api/v1/me/passes', session.headers);
     const one = await get(`/api/v1/me/passes/${mine.id}`, session.headers);
     expect(await list.text()).not.toContain('secret-device-token');

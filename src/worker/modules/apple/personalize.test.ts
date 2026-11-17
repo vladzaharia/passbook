@@ -1,7 +1,7 @@
 import * as asn1 from 'asn1js';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { fakeAuth, persistTemplate } from '../../../../test/helpers/index.ts';
+import { deviceToken, fakeAuth, persistTemplate } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -31,7 +31,7 @@ beforeAll(async () => {
 const call = (path: string, init: RequestInit = {}, env: AppEnv = kit.env) =>
   app.request(`${ORIGIN}/wallet/v1${path}`, init, env);
 const token = (c: string) => c.repeat(64);
-const authHeader = (pass: Pass) => ({ authorization: `ApplePass ${pass.authToken}` });
+const authHeader = (pass: Pass) => ({ authorization: `ApplePass ${deviceToken(pass)}` });
 
 describe('personalize', () => {
   const body = (extra: object = {}) =>

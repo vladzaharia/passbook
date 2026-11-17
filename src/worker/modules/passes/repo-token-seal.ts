@@ -1,7 +1,8 @@
 import { type Grant, jobGrant } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { type SealRow, sealPart, type TokenPurpose } from '../../platform/capability-token.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
+import { SEALS } from '../../platform/repo-capability-token.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 
 /** A row whose token column still holds the plain token (written before the tokens were sealed). */
@@ -42,16 +43,20 @@ export const BUNDLE_RESERVED = `EXISTS (SELECT 1 FROM sandbox_forwards f
 const ORG_ACTIVE = (table: string) =>
   `COALESCE((SELECT o.status = 'active' FROM orgs o WHERE o.id = ${table}.org_id), 0)`;
 
-/** Passes still holding a plain token, after `after` in id order. A pending transfer or a reservation waits. */
+/**
+ * Passes still holding a plain token in `column` (the download link or the Apple web-service token),
+ * after `after` in id order. A pending transfer or a reservation waits.
+ */
 export async function plainPasses(
   db: D1Database,
+  column: 'download_token' | 'auth_token',
   after: string | null,
   limit: number,
 ): Promise<PlainTokenRow[]> {
   const rows = await all<Raw>(
     db,
-    `SELECT id, org_id, mode, row_version, download_token AS token, ${ORG_ACTIVE('passes')} AS org_active
-     FROM passes WHERE download_token NOT LIKE 'h1:%' AND (? IS NULL OR id > ?)
+    `SELECT id, org_id, mode, row_version, ${column} AS token, ${ORG_ACTIVE('passes')} AS org_active
+     FROM passes WHERE ${column} NOT LIKE 'h1:%' AND (? IS NULL OR id > ?)
        AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED}
      ORDER BY id LIMIT ?`,
     [after, after, limit],
@@ -81,7 +86,31 @@ export async function countPlain(db: D1Database): Promise<number> {
   const row = await first<{ n: number }>(
     db,
     `SELECT (SELECT count(*) FROM passes WHERE download_token NOT LIKE 'h1:%')
+          + (SELECT count(*) FROM passes WHERE auth_token NOT LIKE 'h1:%')
           + (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS n`,
+  );
+  return row?.n ?? 0;
+}
+
+/** A stored pass.json that still carries the device token (written before 0065); the partial index of 0065. */
+const SCRUB_WORK = `CASE WHEN json_valid(pass_json) THEN json_type(pass_json, '$.authenticationToken') END IS NOT NULL`;
+
+/** Removes the device token from up to `limit` stored pass.json copies; returns how many were rewritten. */
+export async function scrubPassJson(db: D1Database, limit: number): Promise<number> {
+  const result = await run(
+    db,
+    `UPDATE pass_versions SET pass_json = json_remove(pass_json, '$.authenticationToken')
+     WHERE (pass_id, version) IN (SELECT pass_id, version FROM pass_versions WHERE ${SCRUB_WORK} LIMIT ?)`,
+    [limit],
+  );
+  return result.changes;
+}
+
+/** Stored pass.json copies still carrying the device token. */
+export async function countUnscrubbed(db: D1Database): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT count(*) AS n FROM pass_versions WHERE ${SCRUB_WORK}`,
   );
   return row?.n ?? 0;
 }
@@ -105,8 +134,8 @@ const noReservation = (id: string, purpose: TokenPurpose): Check =>
 
 /**
  * Replaces the plain token with its MAC and keeps the sealed copy, in one grant. The write holds only
- * for the row as read (token and, for a pass, `row_version`); the 0059 triggers keep it from counting
- * as a pass change. An existing sealed copy is kept.
+ * for the row as read (token and, for a pass, `row_version`); the 0059 and 0065 triggers keep it from
+ * counting as a pass change. An existing sealed copy is kept.
  */
 export function sealGrant(
   ctx: ServiceContext,
@@ -115,22 +144,20 @@ export function sealGrant(
   mac: string,
   seal: SealRow,
 ): Grant {
-  const pass = purpose === 'pass';
+  const { owner, table, tokenColumn } = SEALS[purpose];
+  const pass = owner === 'passes';
   const g = jobGrant(ctx, {
-    purpose: `org_mode.job.${purpose}.token_seal`,
+    purpose: `org_mode.job.${purpose === 'apple-auth' ? 'pass.apple_auth' : purpose}.token_seal`,
     job: 'token.seal',
     orgId: row.orgId,
     mode: row.mode,
     target: row.id,
-    tables: pass ? ['passes', 'pass_token_seals'] : ['bundles', 'bundle_token_seals'],
+    tables: [owner, table],
     checks: [
       rowIs(
-        pass ? 'passes' : 'bundles',
+        owner,
         row.id,
-        {
-          ...(pass ? { row_version: row.rowVersion } : {}),
-          [pass ? 'download_token' : 'token']: row.token,
-        },
+        { ...(pass ? { row_version: row.rowVersion } : {}), [tokenColumn]: row.token },
         'stale',
       ),
       ...(pass
@@ -138,11 +165,7 @@ export function sealGrant(
         : [noReservation(row.id, 'bundle')]),
     ],
   });
-  g.update(pass ? 'passes' : 'bundles', {
-    set: { [pass ? 'download_token' : 'token']: mac },
-    where: { id: row.id },
-    require: 'one',
-  });
+  g.update(owner, { set: { [tokenColumn]: mac }, where: { id: row.id }, require: 'one' });
   g.include(sealPart(purpose, row.id, mac, seal));
   return g;
 }

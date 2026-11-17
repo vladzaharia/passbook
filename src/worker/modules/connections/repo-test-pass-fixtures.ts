@@ -27,6 +27,7 @@ export async function seedPass(
   };
   const now = kit.clock.now();
   const link = await fixtureToken(kit.env, id, orgId, pass.downloadToken);
+  const auth = await fixtureToken(kit.env, id, orgId, pass.authToken, 'apple-auth');
   await kit.env.BUCKET.put(pass.objectKey, new Uint8Array([1, 2, 3]));
   await run(
     kit.env.DB,
@@ -42,7 +43,7 @@ export async function seedPass(
       pass.serial,
       template.id,
       template.version,
-      pass.authToken,
+      auth.mac,
       link.mac,
       `${kit.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify({ memberName: 'Alex Morgan' }),
@@ -57,5 +58,6 @@ export async function seedPass(
     ],
   );
   await link.seal();
+  await auth.seal();
   return pass;
 }

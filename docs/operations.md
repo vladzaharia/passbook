@@ -284,7 +284,7 @@ is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, 
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
 `docs/design/authority-epochs.md` §6.
 
-Old pass download and bundle tokens are sealed by the minute cron `tokens.seal` (0059, 50 of each a run, log code `TOKEN_SEAL_RUN`); no owner step. A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining`. Backups from before 0059 hold working links: rotate in bulk if one leaks.
+Old pass download, bundle and Apple web-service tokens are sealed by the minute cron `tokens.seal` (0059 and 0065, 50 of each a run, log code `TOKEN_SEAL_RUN`); no owner step. The same run removes the device token from stored `pass_versions.pass_json` (200 a run). A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining` and `unscrubbed`, both zero when done. Scans recorded before the scrub replay as the minimal receipt, as after any pass edit. Backups from before 0059 hold working links and, from before 0065, working device tokens: rotate in bulk if one leaks (a credential transfer rotates the device token).
 
 ### What the new Worker does with 0024 data
 
@@ -572,7 +572,7 @@ keep retired pass ids and credentials from being reused.
   Status warns 30 days before expiry.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts;
   keep older ones for existing data. The oldest KEK also derives scan PIN, pair-code, asset-grant,
-  credential-tombstone and pass/bundle link (`h1:`) HMAC keys; losing it breaks every stored link lookup. The credential-reference keyset sentinel initializes only when
+  credential-tombstone, pass/bundle link and Apple web-service token (`h1:`) HMAC keys; losing it breaks every stored link lookup and every device call. The credential-reference keyset sentinel initializes only when
   no prior keyed references or proof provenance remain, including tombstones and
   retention proofs, retained webhook/workflow bindings and native-provider history.
   Plain unsigned legacy scan events do not prevent initialization, but remain untrusted and are

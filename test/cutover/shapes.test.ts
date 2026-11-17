@@ -201,7 +201,7 @@ describe('cutover: runbook queries', () => {
 });
 
 describe('cutover: capability tokens', () => {
-  it('seals every old download and bundle token, keeps each link and moves no row_version', async () => {
+  it('seals every old download, device and bundle token, keeps each, scrubs stored pass.json and moves no row_version', async () => {
     const db = legacy.db;
     const versions = () =>
       db.prepare('SELECT id, row_version, link_generation FROM passes ORDER BY id').all();
@@ -211,11 +211,13 @@ describe('cutover: capability tokens', () => {
     const plain = await db
       .prepare(
         `SELECT (SELECT count(*) FROM passes WHERE download_token NOT LIKE 'h1:%') AS passes,
-         (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS bundles`,
+         (SELECT count(*) FROM passes WHERE auth_token NOT LIKE 'h1:%') AS auth,
+         (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS bundles,
+         (SELECT count(*) FROM pass_versions WHERE pass_json LIKE '%authenticationToken%') AS stored`,
       )
       .first();
     // pass-gone belongs to a deleted org: the trusted write seals it too.
-    expect(plain).toEqual({ passes: 0, bundles: 0 });
+    expect(plain).toEqual({ passes: 0, auth: 0, bundles: 0, stored: 0 });
     expect((await versions()).results).toEqual(before.results);
     for (const p of legacy.passes) {
       const row = await db
@@ -226,6 +228,13 @@ describe('cutover: capability tokens', () => {
       expect(
         await revealToken(c.env, 'pass', p.id, row?.org_id ?? '', row?.download_token ?? ''),
       ).toBe(p.downloadToken);
+      const auth = await db
+        .prepare('SELECT org_id, auth_token FROM passes WHERE id = ?')
+        .bind(p.id)
+        .first<{ org_id: string; auth_token: string }>();
+      expect(
+        await revealToken(c.env, 'apple-auth', p.id, auth?.org_id ?? '', auth?.auth_token ?? ''),
+      ).toBe(p.authToken);
     }
     const bundle = await db
       .prepare("SELECT org_id, token FROM bundles WHERE id = 'bundle-1'")

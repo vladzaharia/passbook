@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { fakeAuth, fakeRateLimiter, makeOrg } from '../../../../test/helpers/index.ts';
+import { deviceToken, fakeAuth, fakeRateLimiter, makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -24,7 +24,7 @@ beforeAll(async () => {
 
 const call = (path: string, init: RequestInit = {}) =>
   app.request(`${ORIGIN}/wallet/v1${path}`, init, kit.env);
-const authHeader = (pass: Pass) => ({ authorization: `ApplePass ${pass.authToken}` });
+const authHeader = (pass: Pass) => ({ authorization: `ApplePass ${deviceToken(pass)}` });
 const token = (c: string) => c.repeat(64);
 const register = (
   pass: Pass,
@@ -152,8 +152,8 @@ describe('register', () => {
     const wrong: Record<string, string>[] = [
       {},
       { authorization: 'ApplePass nope' },
-      { authorization: `ApplePass ${pass.authToken}x` },
-      { authorization: pass.authToken },
+      { authorization: `ApplePass ${deviceToken(pass)}x` },
+      { authorization: deviceToken(pass) },
     ];
     for (const headers of wrong)
       expect((await register(pass, 'dev-x', token('a'), headers)).status).toBe(401);

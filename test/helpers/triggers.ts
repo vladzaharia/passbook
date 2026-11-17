@@ -70,3 +70,12 @@ export async function editApiKeyIdentity(
   await db.prepare('DROP TRIGGER IF EXISTS api_keys_identity_immutable').run();
   return run(db, sql, params);
 }
+
+/**
+ * Lets a test store a pass.json that carries the device token, as copies written before 0065 do
+ * (`pass_versions_no_auth_token_*`). The worker test setup restores the triggers afterwards.
+ */
+export async function allowLegacyPassJson(db: D1Database): Promise<void> {
+  await db.prepare('DROP TRIGGER IF EXISTS pass_versions_no_auth_token_insert').run();
+  await db.prepare('DROP TRIGGER IF EXISTS pass_versions_no_auth_token_update').run();
+}

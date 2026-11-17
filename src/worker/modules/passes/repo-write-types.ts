@@ -16,7 +16,9 @@ export interface NewPassRow {
   templateVersion: string;
   /** Approved release snapshot used to build the pass. */
   release: PassReleaseSnapshot;
+  /** The `auth_token` column value: the lookup MAC. */
   authToken: string;
+  authSeal: SealRow;
   /** The token column value: the lookup MAC. */
   downloadToken: string;
   tokenSeal: SealRow;

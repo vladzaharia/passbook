@@ -89,6 +89,7 @@ async function passWith(
   const objectKey = `passes/${id}/v1-${f.ids.token(4)}.pkpass`;
   await h.env.BUCKET.put(objectKey, new Uint8Array([1, 2, 3]));
   const link = await fixtureToken(h.env, id, org.id, f.ids.token());
+  const auth = await fixtureToken(h.env, id, org.id, f.ids.token(), 'apple-auth');
   await run(
     h.env.DB,
     `INSERT INTO passes
@@ -103,7 +104,7 @@ async function passWith(
       f.ids.token(16),
       template.id,
       template.version,
-      f.ids.token(),
+      auth.mac,
       link.mac,
       `${f.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify({ memberName: 'Alex Morgan' }),
@@ -118,6 +119,7 @@ async function passWith(
     ],
   );
   await link.seal();
+  await auth.seal();
   // The pass_created trigger inserts the current version.
   const version = await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
     JSON.stringify({

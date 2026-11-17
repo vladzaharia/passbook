@@ -1,6 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import {
+  deviceToken,
+  makeApiKey,
+  makeOrg,
+  makeSession,
+  makeUser,
+} from '../../../../test/helpers/index.ts';
 import {
   PassDevicesSchema,
   PassEventListSchema,
@@ -33,7 +39,7 @@ const wallet = (path: string, init: RequestInit = {}) =>
   app.request(`${ORIGIN}/wallet/v1${path}`, init, kit.env);
 const api = (path: string, headers: Record<string, string> = credentials.member.session.headers) =>
   app.request(`${ORIGIN}/api/v1/passes${path}`, { headers }, kit.env);
-const auth = (pass: Pass) => ({ authorization: `ApplePass ${pass.authToken}` });
+const auth = (pass: Pass) => ({ authorization: `ApplePass ${deviceToken(pass)}` });
 
 const register = (pass: Pass, device: string) =>
   wallet(`/devices/${device}/registrations/${TYPE}/${pass.serial}`, {
