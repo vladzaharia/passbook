@@ -13,12 +13,12 @@ import { makePng } from '../templates/package/fixtures.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { createScannerStore } from './auth-store.ts';
+import { candidateAuthorityHolds } from './candidate-authority-test-fixtures.ts';
 import { scanCredentialKeys } from './credential-input.ts';
 import { lookup } from './lookup.ts';
 import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { getScanner } from './repo-device.ts';
 import { type Candidate, candidateById } from './repo-lookup.ts';
-import { type OutputAuthority, outputAuthorityCurrent } from './repo-output-authority.ts';
 import { providerFixture } from './repo-output-authority-provider-test-fixtures.ts';
 import {
   finishProviderTransfer,
@@ -117,25 +117,10 @@ describe('atomic scanner response authority', () => {
       const pending = capturedPending as Candidate | null;
       if (!pending) throw new Error('Missing captured pending transfer.');
       expect(pending.pass.credentialGeneration).toBe(original.pass.credentialGeneration + 1);
-      const pendingProof: OutputAuthority = {
-        actor,
-        event: actor.event,
-        now: t.kit.clock.now(),
-        templateId: pending.pass.templateId,
-        credentialKeysetCommitment: pending.credentialKeysetCommitment,
-        credentialTombstoneRefs: [],
-        pass: pending.pass,
-        connectionGeneration: pending.connectionGeneration,
-        activeTemplateVersion: pending.activeTemplateVersion,
-        orgRevision: pending.orgRevision,
-        templateRevision: pending.templateRevision,
-        release: pending,
-        displayTemplateVersion: pending.displayTemplateVersion,
-        checkInRules: pending.checkInRules,
-        lookupHash: pending.lookupHash,
-        requireActive: true,
-      };
-      expect(await outputAuthorityCurrent(real, pendingProof)).toBe(false);
+      // Read while pending, the pass was at the next generation; once the transfer completes it stands.
+      expect(await candidateAuthorityHolds(real, actor, pending, t.kit.clock.now())).toBe(
+        stage === 'completed',
+      );
       if (stage === 'completed') {
         const current = await candidateById(real, orgId, t.pass.id);
         if (!current) throw new Error('Missing completed transfer snapshot.');
@@ -143,31 +128,9 @@ describe('atomic scanner response authority', () => {
         expect(current.pass.credentialGeneration).toBe(pending.pass.credentialGeneration);
         expect(current.pass.holderEmail).toBe('transfer-new@example.test');
         expect(current.pass.serial).not.toBe(original.pass.serial);
-        const currentProof: OutputAuthority = {
-          ...pendingProof,
-          pass: current.pass,
-          release: current,
-          lookupHash: current.lookupHash,
-          activeTemplateVersion: current.activeTemplateVersion,
-          orgRevision: current.orgRevision,
-          templateRevision: current.templateRevision,
-          displayTemplateVersion: current.displayTemplateVersion,
-          checkInRules: current.checkInRules,
-        };
-        expect(await outputAuthorityCurrent(real, currentProof)).toBe(true);
-        expect(
-          await outputAuthorityCurrent(real, {
-            ...currentProof,
-            pass: original.pass,
-            release: original,
-          }),
-        ).toBe(false);
-        expect(
-          await outputAuthorityCurrent(real, {
-            ...currentProof,
-            release: { ...current, transferPending: pending.transferPending },
-          }),
-        ).toBe(false);
+        const now = t.kit.clock.now();
+        expect(await candidateAuthorityHolds(real, actor, current, now)).toBe(true);
+        expect(await candidateAuthorityHolds(real, actor, original, now)).toBe(false);
         if (route === 'resolve')
           expect(await request()).toMatchObject({ kind: 'ready', card: { passId: t.pass.id } });
         else expect(await request()).toMatchObject({ items: [{ passId: t.pass.id }] });
@@ -352,30 +315,17 @@ describe('atomic scanner response authority', () => {
       const pending = await candidateById(real, orgId, t.pass.id);
       expect(pending?.transferPending).toBe(true);
       expect(pending!.pass.credentialGeneration).toBeGreaterThan(source.pass.credentialGeneration);
-      const direct: OutputAuthority = {
-        actor,
-        event: actor.event,
-        now: t.kit.clock.now(),
-        templateId: id,
-        pass: original.pass,
-        credentialKeysetCommitment: original.credentialKeysetCommitment,
-        credentialTombstoneRefs: [],
-        connectionGeneration: original.connectionGeneration,
-        activeTemplateVersion: original.activeTemplateVersion,
-        orgRevision: original.orgRevision,
-        templateRevision: original.templateRevision,
-        release: original,
-        displayTemplateVersion: original.displayTemplateVersion,
-        checkInRules: original.checkInRules,
-        lookupHash: original.lookupHash,
-        requireActive: true,
-      };
-      expect(await outputAuthorityCurrent(real, direct)).toBe(true);
+      const now = t.kit.clock.now();
+      expect(await candidateAuthorityHolds(real, actor, original, now)).toBe(true);
       expect(
-        await outputAuthorityCurrent(real, {
-          ...direct,
-          credentialTombstoneRefs: keys.credentialTombstoneRefs,
-        }),
+        await candidateAuthorityHolds(
+          real,
+          actor,
+          original,
+          now,
+          actor.event,
+          keys.credentialTombstoneRefs,
+        ),
       ).toBe(false);
     },
     180_000,

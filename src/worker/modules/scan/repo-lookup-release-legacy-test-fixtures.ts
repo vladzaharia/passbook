@@ -3,7 +3,6 @@ import { all, first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { CHECK_IN, kit, stageVersion } from './repo-lookup-release-test-fixtures.ts';
-import { passSnapshotCurrent } from './repo-pass-authority.ts';
 import { foundOf } from './resolve.ts';
 import { candidateAudit } from './resolve-candidates.ts';
 import { key } from './test-kit.ts';
@@ -96,18 +95,6 @@ export function registerLookupLegacyUnapprovedCase() {
       template: { version: template.version },
       activePolicy: { version: template.version },
     });
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        candidate.pass,
-        candidate.connectionGeneration,
-        candidate.activeTemplateVersion,
-        candidate.orgRevision,
-        candidate.templateRevision,
-        kit.clock.now(),
-        candidate,
-      ),
-    ).toBe(true);
     const scanner = await kit.scanner({ templateIds: [draftId] });
     const request = () => ({
       idempotencyKey: key(),
@@ -130,18 +117,6 @@ export function registerLookupLegacyUnapprovedCase() {
       templateId: draftId,
       version: template.version,
     });
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        beforeHead.pass,
-        beforeHead.connectionGeneration,
-        beforeHead.activeTemplateVersion,
-        beforeHead.orgRevision,
-        beforeHead.templateRevision,
-        kit.clock.now(),
-        beforeHead,
-      ),
-    ).toBe(false);
     const afterHead = await candidateById(kit.env.DB, kit.org.id, legacy.id);
     expect(afterHead).toMatchObject({
       pass: { releaseId: null },

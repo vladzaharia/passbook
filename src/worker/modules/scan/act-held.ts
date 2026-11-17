@@ -14,7 +14,6 @@ import { type PreloadedDisplayHistory, rebindDisplayHistoryRead } from './histor
 import { type LedgerFacts, ledgerRow, recordResult } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import { blankOutcome, canOverride, safeOutcomeDetails } from './outcome.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import * as gates from './repo-gates.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
@@ -22,6 +21,7 @@ import { retentionProofPart } from './repo-scan-retention-part.ts';
 import { activeFlags, type Found } from './resolve.ts';
 import { afterReads, capturingDb } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 import { capacityOpen, SCAN_HELD_TABLES, scanIs, scanWriteGrant } from './scan-write-grant.ts';
 import { finalizeScan, ledgerEvent } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';

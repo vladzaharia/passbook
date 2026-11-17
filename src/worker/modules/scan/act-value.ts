@@ -32,14 +32,14 @@ import { type CountsPlan, localDayStart, planCommitCounts } from './counts.ts';
 import { appliedAmount, ScanEffectStop, type ValueEffect, valueEffect } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import type { LedgerFacts } from './ledger.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import type * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { filledSinceRedeem } from './repo-scan-amount.ts';
-import { dailyAmountCheck, doneOkPredicate } from './repo-scan-checks.ts';
+import { dailyAmountCheck, doneOkPredicate, effectiveReleaseCheck } from './repo-scan-checks.ts';
 import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
 import { displayRequiresHistory } from './scan-display-history.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 import { SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import type { PinReservation } from './staff-pin.ts';
 
@@ -113,9 +113,8 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     results?: { writes: D1Result[]; after: D1Result[] };
     granted?: ReturnType<typeof open>;
   } = {};
-  // The scanner's daily amount, held in the batch itself: two desks at the cap cannot both pass.
+  // The daily amount is held in the batch itself, as the effect applied (set by `mutate`).
   const limit = actor.settings.dailyAmount;
-  // The amount the effect applied (set by the attempt's `mutate`), not the one asked for.
   const dailyLimit = () => {
     const applied = st.effect ? appliedAmount(st.effect) : 0;
     return limit != null && applied > 0 && (action.kind === 'add' || action.kind === 'take')
@@ -137,7 +136,11 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       pass: { id: found.pass.id, facts: { pass: found.pass, credential } },
       approver: i.approver,
       credentialRefs: claim.credentialTombstoneRefs,
-      checks: [...passChecks, ...dailyLimit()],
+      checks: [
+        ...passChecks,
+        effectiveReleaseCheck(found.pass.id, found.liveCandidate?.templateSnapshot?.raw),
+        ...dailyLimit(),
+      ],
       tables: VALUE_TABLES,
       codes: CODES,
     });

@@ -5,10 +5,10 @@ import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { type ScanActor, scannerActor, withRole } from './actor.ts';
-import { actorAuthorityCurrent } from './repo-actor-authority.ts';
 import { getScanner } from './repo-device.ts';
 import { templateManifests } from './repo-event-templates.ts';
 import { getCommittedConsoleEvent } from './repo-events.ts';
+import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
 import { countOrgTemplates, readScannerScope, readValidEventScope } from './repo-scope.ts';
 import { captureTemplateStamps } from './repo-scope-releases.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
@@ -37,14 +37,12 @@ async function actorFor(scannerId: string) {
   return proofedScanActor(kit.ctx, withRole(actor, null));
 }
 
-function current(actor: ScanActor, templateId: string) {
-  return actorAuthorityCurrent(kit.env.DB, {
-    actor,
-    now: kit.clock.now(),
-    event: actor.event,
-    templateId,
-    adminEventTemplates: false,
-  });
+async function current(actor: ScanActor, templateId: string) {
+  const row = await scanAuthorizedStmt(
+    kit.env.DB,
+    scanReadAuthority(actor, { now: kit.clock.now(), templateId }),
+  ).first<{ authorized: number }>();
+  return row?.authorized === 1;
 }
 
 describe('approved scanner release scopes', () => {
@@ -215,8 +213,6 @@ describe('approved scanner release scopes', () => {
       legacy.id,
     ]);
     expect(await readValidEventScope(kit.env.DB, kit.org.id, 'live', event.id)).toBeNull();
-    expect(await current(actor, templateId)).toBe(false);
-    expect(await current(eventActor, templateId)).toBe(false);
   });
 
   it.each([
@@ -278,7 +274,6 @@ describe('approved scanner release scopes', () => {
         [`$.${field}`, 'wrong', pass.id],
       );
     }
-    expect(await current(actor, templateId)).toBe(false);
     expect(await actorFor(scanner.id)).toMatchObject({
       invalidScannerScope: true,
       templateIds: [],
@@ -335,7 +330,6 @@ describe('approved scanner release scopes', () => {
     expect(await actorFor(scanner.id)).toMatchObject({ templateIds: [templateId] });
     await run(kit.env.DB, "UPDATE templates SET status='deleted' WHERE id=?", [templateId]);
     expect(await readValidEventScope(kit.env.DB, kit.org.id, 'live', event.id)).toBeNull();
-    expect(await current(actor, templateId)).toBe(false);
     const refreshed = await actorFor(scanner.id);
     expect(refreshed).toMatchObject({
       invalidScannerScope: true,

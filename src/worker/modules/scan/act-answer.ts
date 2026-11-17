@@ -6,10 +6,10 @@ import { historyPlan } from './card.ts';
 import { planCounts } from './counts.ts';
 import { photoGrantUrl } from './member-photo.ts';
 import { stopOutcome } from './outcome.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import { candidateTemplateFenceStmt, templateFenceHolds } from './repo-resolve-outcome-current.ts';
 import type { Stop } from './resolve.ts';
 import { afterReads, capturingDb } from './scan-capture.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 
 /**

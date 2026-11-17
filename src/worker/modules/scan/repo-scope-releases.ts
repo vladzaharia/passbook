@@ -2,12 +2,8 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { stmt } from '../../platform/db.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 import type { ReleaseScopeSql } from '../templates/repo-releases.ts';
-import { legacyPassSql, sessionTemplateStampsPredicate } from './repo-scope-release-predicates.ts';
-
-export {
-  releaseHeadsComplete,
-  sessionTemplateStampsPredicate,
-} from './repo-scope-release-predicates.ts';
+import { walletIdentityPredicateSql } from './repo-wallet-snapshot.ts';
+import { scanConjunction } from './scan-conjunction.ts';
 
 /** Configured scopes remain restricted, including when they contain only eligible legacy passes. */
 export function usableScanTemplateSql(scope: ReleaseScopeSql): string {
@@ -171,14 +167,7 @@ export function templateStampsFromResult(
       stamps.legacy.push({ templateId: row.template_id, versions, identities });
     }
   }
-  return sessionTemplateStampsPredicate(
-    stamps.releases,
-    stamps.legacy,
-    'scope.org_id',
-    'scope.mode',
-  ).sql === '0'
-    ? null
-    : stamps;
+  return stampsValid(stamps.releases, stamps.legacy) ? stamps : null;
 }
 
 /** Capture every selected template's effective head or exact legacy version set. */
@@ -192,4 +181,126 @@ export async function captureTemplateStamps(
   const query = captureTemplateStampsStmt(db, orgId, mode, templateIds);
   if (!query) return null;
   return templateStampsFromResult(templateIds, await query.all());
+}
+
+/** A legacy pass can use only its own immutable pinned template version. */
+export function legacyPassSql(alias: string, scope: ReleaseScopeSql): string {
+  return scanConjunction([
+    `${alias}.template_id=(${scope.templateIdSql})`,
+    `${alias}.org_id=(${scope.orgIdSql})`,
+    `${alias}.mode=(${scope.modeSql})`,
+    `${alias}.release_id IS NULL`,
+    `${alias}.deleted_at IS NULL`,
+    `${alias}.test_data_quarantined=0`,
+    `EXISTS (SELECT 1 FROM template_versions pinned
+      WHERE pinned.template_id=${alias}.template_id AND pinned.version=${alias}.template_version)`,
+    walletIdentityPredicateSql({ passAlias: alias }),
+  ]);
+}
+
+/** A missing or malformed head cannot authorize reuse of an expected-count cache. */
+export function releaseHeadsComplete(snapshot: string): boolean {
+  let heads: unknown;
+  try {
+    heads = JSON.parse(snapshot);
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(heads) || heads.length === 0 || heads.length > 40) return false;
+  const seen = new Set<string>();
+  for (const item of heads) {
+    const head = item as Partial<ScopedReleaseHead> | null;
+    const release = head?.release;
+    if (
+      !head ||
+      typeof head.templateId !== 'string' ||
+      !head.templateId ||
+      seen.has(head.templateId) ||
+      !release ||
+      typeof release.id !== 'string' ||
+      !release.id ||
+      !Number.isSafeInteger(release.generation) ||
+      release.generation <= 0 ||
+      typeof release.version !== 'string' ||
+      !release.version ||
+      typeof release.candidateHash !== 'string' ||
+      !/^[0-9a-f]{64}$/.test(release.candidateHash)
+    )
+      return false;
+    seen.add(head.templateId);
+  }
+  return true;
+}
+
+/** Captured stamps are complete: every template has one head or an exact legacy version set, none repeated. */
+function stampsValid(
+  releases: readonly SessionReleaseStamp[],
+  legacy: readonly SessionLegacyStamp[],
+): boolean {
+  if (!Array.isArray(releases) || !Array.isArray(legacy) || releases.length + legacy.length > 20)
+    return false;
+  if (
+    releases.length &&
+    !releaseHeadsComplete(
+      JSON.stringify(
+        releases.map((r) => ({
+          templateId: r?.templateId,
+          release: {
+            id: r?.id,
+            generation: r?.generation,
+            version: r?.version,
+            candidateHash: r?.candidateHash,
+          },
+        })),
+      ),
+    )
+  )
+    return false;
+  const seen = new Set(releases.map((release) => release.templateId));
+  for (const item of legacy) {
+    if (
+      !item ||
+      typeof item.templateId !== 'string' ||
+      !item.templateId ||
+      seen.has(item.templateId) ||
+      !Array.isArray(item.versions) ||
+      item.versions.length === 0 ||
+      item.versions.some((version: unknown) => typeof version !== 'string' || !version) ||
+      new Set(item.versions).size !== item.versions.length ||
+      !Array.isArray(item.identities) ||
+      item.identities.length === 0
+    )
+      return false;
+    const evidence = new Set<string>();
+    const versions = new Set<string>();
+    for (const identity of item.identities) {
+      if (
+        !identity ||
+        typeof identity.version !== 'string' ||
+        !identity.version ||
+        typeof identity.identityId !== 'string' ||
+        !identity.identityId ||
+        !Number.isSafeInteger(identity.identityRevision) ||
+        identity.identityRevision <= 0
+      )
+        return false;
+      const key = JSON.stringify([
+        identity.version,
+        identity.identityId,
+        identity.identityRevision,
+      ]);
+      if (evidence.has(key)) return false;
+      evidence.add(key);
+      versions.add(identity.version);
+    }
+    if (
+      versions.size !== item.versions.length ||
+      item.versions.some(
+        (version: unknown) => typeof version !== 'string' || !versions.has(version),
+      )
+    )
+      return false;
+    seen.add(item.templateId);
+  }
+  return true;
 }

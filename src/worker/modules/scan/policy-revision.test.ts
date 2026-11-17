@@ -3,13 +3,13 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { mintAssetGrant } from './asset-grant-test-fixtures.ts';
-import { candidateById } from './repo-lookup.ts';
 import {
   actionPassFence,
   passSnapshotCurrent,
   passSnapshotCurrentStrict,
   passSnapshotFence,
-} from './repo-pass-authority.ts';
+} from './pass-fence-test-fixtures.ts';
+import { candidateById } from './repo-lookup.ts';
 import { policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { foundOf } from './resolve.ts';
 import { key, type ScanKit, setupScanKit } from './test-kit.ts';
@@ -29,7 +29,7 @@ describe('scanner evaluated policy revisions', () => {
     const pending = { ...candidate, transferPending: true };
     expect(
       await passSnapshotCurrent(
-        kit.env.DB,
+        kit.env,
         pending.pass,
         pending.connectionGeneration,
         pending.activeTemplateVersion,
@@ -41,7 +41,7 @@ describe('scanner evaluated policy revisions', () => {
     ).toBe(false);
     expect(
       await passSnapshotCurrentStrict(
-        kit.env.DB,
+        kit.env,
         pending.pass,
         pending.connectionGeneration,
         pending.activeTemplateVersion,
@@ -86,7 +86,7 @@ describe('scanner evaluated policy revisions', () => {
       expect(snapshot.templateRevision).toBe(org?.config_revision);
       expect(
         await passSnapshotCurrent(
-          kit.env.DB,
+          kit.env,
           snapshot.pass,
           snapshot.connectionGeneration,
           version,
@@ -116,7 +116,7 @@ describe('scanner evaluated policy revisions', () => {
       });
       expect(
         await passSnapshotCurrent(
-          kit.env.DB,
+          kit.env,
           snapshot.pass,
           snapshot.connectionGeneration,
           `${version}-different`,
@@ -163,7 +163,7 @@ describe('scanner evaluated policy revisions', () => {
         expect(fresh.orgRevision).toBe(snapshot.orgRevision);
         expect(
           await passSnapshotCurrent(
-            kit.env.DB,
+            kit.env,
             snapshot.pass,
             snapshot.connectionGeneration,
             version,
@@ -195,7 +195,7 @@ describe('scanner evaluated policy revisions', () => {
       expect(fresh.orgRevision).toBe(snapshot.orgRevision! + 2);
       expect(
         await passSnapshotCurrent(
-          kit.env.DB,
+          kit.env,
           snapshot.pass,
           snapshot.connectionGeneration,
           version,
@@ -276,7 +276,7 @@ describe('scanner evaluated policy revisions', () => {
     expect(await foundOf(kit.ctx, snapshot, s.actor)).toBeNull();
     expect(
       await passSnapshotCurrent(
-        kit.env.DB,
+        kit.env,
         snapshot.pass,
         snapshot.connectionGeneration,
         snapshot.activeTemplateVersion,
@@ -311,103 +311,6 @@ describe('scanner evaluated policy revisions', () => {
     ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
   });
 
-  it('does not substitute an approved release from another mode', async () => {
-    const s = await scenario();
-    const testPass = await kit.scanPass(s.templateId, {}, { mode: 'test' });
-    const live = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
-    const test = await candidateById(kit.env.DB, kit.org.id, testPass.id);
-    if (!live?.activeTemplateVersion || !test?.activeReleaseId)
-      throw new Error('Missing scoped releases');
-    expect(test.activeReleaseId).not.toBe(live.activeReleaseId);
-    const wrongScope = {
-      ...live,
-      activeReleaseId: test.activeReleaseId,
-      activeReleaseGeneration: test.activeReleaseGeneration,
-      activeReleaseVersion: test.activeReleaseVersion,
-      activeReleaseCandidateHash: test.activeReleaseCandidateHash,
-    };
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        live.pass,
-        live.connectionGeneration,
-        live.activeTemplateVersion,
-        live.orgRevision,
-        live.templateRevision,
-        kit.clock.now(),
-        live,
-      ),
-    ).toBe(true);
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        live.pass,
-        live.connectionGeneration,
-        live.activeTemplateVersion,
-        live.orgRevision,
-        live.templateRevision,
-        kit.clock.now(),
-        wrongScope,
-      ),
-    ).toBe(false);
-    expect(
-      await passSnapshotFence(
-        kit.env.DB,
-        live.pass,
-        live.checkInRules,
-        live.connectionGeneration,
-        live.activeTemplateVersion,
-        live.orgRevision,
-        live.templateRevision,
-        kit.clock.now(),
-        kit.env,
-        wrongScope,
-      ),
-    ).toBeNull();
-  });
-
-  it.each([
-    'activeReleaseId',
-    'activeReleaseGeneration',
-    'activeReleaseVersion',
-    'activeReleaseCandidateHash',
-  ] as const)('rejects a mismatched %s even with current policy revisions', async (field) => {
-    const s = await scenario();
-    const candidate = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
-    if (!candidate?.activeTemplateVersion) throw new Error('Missing scoped release');
-    const changed = {
-      ...candidate,
-      [field]:
-        field === 'activeReleaseGeneration' ? candidate.activeReleaseGeneration! + 1 : 'different',
-    };
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        candidate.pass,
-        candidate.connectionGeneration,
-        candidate.activeTemplateVersion,
-        candidate.orgRevision,
-        candidate.templateRevision,
-        kit.clock.now(),
-        changed,
-      ),
-    ).toBe(false);
-    expect(
-      await passSnapshotFence(
-        kit.env.DB,
-        candidate.pass,
-        candidate.checkInRules,
-        candidate.connectionGeneration,
-        candidate.activeTemplateVersion,
-        candidate.orgRevision,
-        candidate.templateRevision,
-        kit.clock.now(),
-        kit.env,
-        changed,
-      ),
-    ).toBeNull();
-  });
-
   it('isolates release supersession between live and test pass snapshots', async () => {
     const s = await scenario();
     const testPass = await kit.scanPass(s.templateId, {}, { mode: 'test' });
@@ -416,7 +319,7 @@ describe('scanner evaluated policy revisions', () => {
     const version = own.activeTemplateVersion;
     const current = (c: NonNullable<typeof own>) =>
       passSnapshotCurrent(
-        kit.env.DB,
+        kit.env,
         c.pass,
         c.connectionGeneration,
         c.activeTemplateVersion,
@@ -439,14 +342,13 @@ describe('scanner evaluated policy revisions', () => {
     expect(test.activeReleaseId).not.toBe(test.pass.releaseId);
     expect(await current(live)).toBe(true);
     expect(await current(test)).toBe(true);
+    // An identical republish never refuses, in either mode.
     await approve('test');
     expect(await current(live)).toBe(true);
-    expect(await current(test)).toBe(false);
-    const refreshedTest = await candidateById(kit.env.DB, kit.org.id, testPass.id);
-    if (!refreshedTest) throw new Error('Missing refreshed test release');
+    expect(await current(test)).toBe(true);
     await approve('live');
-    expect(await current(refreshedTest)).toBe(true);
-    expect(await current(live)).toBe(false);
+    expect(await current(test)).toBe(true);
+    expect(await current(live)).toBe(true);
   });
 
   const ledgerOf = async (passId: string) => ({

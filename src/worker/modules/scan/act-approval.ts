@@ -12,16 +12,14 @@ import {
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import type { StopContext } from './act-stop.ts';
 import { finishEffectStop, valueRefusal } from './act-value-guard.ts';
-import { type ActorCsrfSnapshot, actionCsrfAt } from './actor-csrf.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { policyActor } from './dto.ts';
 import { amountOf, ScanEffectStop } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import { approvalReservationPredicate } from './repo-act-approval.ts';
-import { actorAuthorityPredicate } from './repo-actor-authority.ts';
-import { credentialTombstonePredicate } from './repo-gates.ts';
-import { scanCandidateTemplateReadPredicate } from './repo-live-template-snapshot.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
+import { passAnswerFence, underAuthorityCtes } from './repo-read-fences.ts';
 import { ObservedScanAmbiguity } from './repo-scan-effect.ts';
 import { pristineClaimFence, releaseClaimStmt } from './repo-scans.ts';
 import type { Found } from './resolve.ts';
@@ -38,7 +36,6 @@ interface ActionApprovalInput {
   claimAt: number;
   requestHash: string;
   credentials: CredentialTombstoneSnapshot;
-  csrfSnapshot: ActorCsrfSnapshot;
   found: Found;
   action: ResolvedScanAction;
   override: Override | null;
@@ -62,7 +59,6 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
     claimAt,
     requestHash,
     credentials,
-    csrfSnapshot,
     found,
     action,
     override,
@@ -85,8 +81,6 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
         actor: authorityActor,
         event: found.admission?.event ?? null,
         templateId: found.pass.templateId,
-        adminEventTemplates:
-          authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
         passFence: preflight.passFence,
       },
       req,
@@ -120,8 +114,6 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
         actor: authorityActor,
         event: found.admission?.event ?? null,
         templateId: found.pass.templateId,
-        adminEventTemplates:
-          authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
         passFence: preflight.passFence,
       }),
       evaluatedSnapshot: found.liveCandidate ?? null,
@@ -139,33 +131,30 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
   }
   const approval = checks.some((check) => !check.allow) ? req.approval : undefined;
   const now = ctx.clock.now();
-  const csrf = actionCsrfAt(authorityActor, csrfSnapshot, now);
-  if (!csrf || !found.liveCandidate) throw new StaleScanAuthority();
+  if (!found.liveCandidate) throw new StaleScanAuthority();
   const ownedClaim = claimOf(ctx, authorityActor, req, scanId, requestHash);
   const original = pristineClaimFence(ownedClaim);
-  const actorFence = actorAuthorityPredicate({
-    actor: authorityActor,
-    now,
-    event: found.admission?.event ?? null,
-    templateId: found.pass.templateId,
-    adminEventTemplates: authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
+  // The actor, the pass the answer read and the unretired credential, all as of now.
+  const inner = passAnswerFence(authorityActor, found.liveCandidate, {
+    photo: false,
+    refs: credentials.credentialTombstoneRefs,
+    staged: true,
   });
-  const tokens = credentialTombstonePredicate(
-    authorityActor.orgId,
-    authorityActor.mode,
-    credentials.credentialTombstoneRefs,
-    credentials.credentialKeysetCommitment,
+  if (!inner) throw new StaleScanAuthority();
+  const staged = underAuthorityCtes(
+    scanReadAuthority(authorityActor, {
+      now,
+      event: found.admission?.event ?? null,
+      templateId: found.pass.templateId,
+    }),
+    inner,
   );
-  const template = scanCandidateTemplateReadPredicate(found.liveCandidate);
-  const guard = approvalReservationPredicate(
-    scanId,
-    claimAt,
-    original,
-    actorFence,
-    csrf,
-    tokens,
-    template,
-  );
+  const guard = approvalReservationPredicate(scanId, claimAt, original, {
+    sql: staged.sql,
+    params: [],
+    ctes: staged.ctes,
+    cteParams: staged.params,
+  });
   const reservation = approval
     ? preparePinReservation(
         ctx,

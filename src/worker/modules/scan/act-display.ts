@@ -5,8 +5,8 @@ import type { ScanActor } from './guard.ts';
 import type { PreloadedDisplayHistory } from './history-proof-plan.ts';
 import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
 import { safeDisplay } from './outcome.ts';
-import type { OutputPredicate } from './repo-output-predicates.ts';
 import type { Found } from './resolve.ts';
+import type { ScanPredicate } from './scan-predicate.ts';
 
 /** Prepare the held result's history; the caller's grant batch is its only authority. */
 export async function prepareCommittedDisplay(
@@ -20,7 +20,7 @@ export async function prepareCommittedDisplay(
 ): Promise<{
   bind(
     now: number,
-    authority: OutputPredicate,
+    authority: ScanPredicate,
   ): {
     /** Display reads: they run with the commit and must see it. */
     reads: D1PreparedStatement[];

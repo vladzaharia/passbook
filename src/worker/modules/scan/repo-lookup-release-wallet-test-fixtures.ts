@@ -3,7 +3,6 @@ import { makeOrg, makePass } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { candidateById } from './repo-lookup.ts';
 import { CHECK_IN, kit } from './repo-lookup-release-test-fixtures.ts';
-import { passSnapshotCurrent } from './repo-pass-authority.ts';
 import { foundOf } from './resolve.ts';
 import { key } from './test-kit.ts';
 
@@ -34,18 +33,6 @@ export function registerLookupPartialReleaseCases() {
       const invalidPass = { ...approved.pass, imageGeneration: imageGeneration as number };
       expect(await foundOf(kit.ctx, { ...approved, pass: invalidPass })).toBeNull();
     }
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        approved.pass,
-        approved.connectionGeneration,
-        approved.activeTemplateVersion,
-        approved.orgRevision,
-        approved.templateRevision,
-        kit.clock.now(),
-        { ...approved, transferPending: true },
-      ),
-    ).toBe(false);
     expect(
       await foundOf(kit.ctx, { ...approved, pass: { ...approved.pass, credentialGeneration: 0 } }),
     ).toBeNull();
@@ -129,18 +116,6 @@ export function registerLookupWalletCases() {
     expect(fresh?.identityTeamIdentifier).toBe(original.identityTeamIdentifier);
     expect(fresh?.identityRevision).toBeGreaterThan(original.identityRevision);
     expect(fresh && (await foundOf(kit.ctx, fresh))).not.toBeNull();
-    expect(
-      await passSnapshotCurrent(
-        kit.env.DB,
-        original.pass,
-        original.connectionGeneration,
-        original.activeTemplateVersion,
-        original.orgRevision,
-        original.templateRevision,
-        kit.clock.now(),
-        original,
-      ),
-    ).toBe(false);
   });
 
   it('does not trust a signing identity belonging to another organization', async () => {

@@ -5,6 +5,7 @@ import { putPassCheckIn } from '../passes/check-in.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
+import { candidateAuthority } from './candidate-authority-test-fixtures.ts';
 import { historyPlan, readCard, renderCardDisplay } from './card.ts';
 import { cardLastScansSplitFixture } from './card-last-scans-split-fixture.ts';
 import { planCounts } from './counts.ts';
@@ -12,7 +13,6 @@ import { planDisplayHistoryRead, rebindDisplayHistoryRead } from './history-proo
 import { knownPhotoUrl } from './member-photo.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { foundOf } from './resolve.ts';
 import { displayNeedsFor } from './scan-display-history.ts';
@@ -55,24 +55,13 @@ describe('card last-scan privacy', () => {
     const now = ctx.clock.now();
     const bound = result.displayHistory.bind(
       now,
-      outputAuthorityPredicate({
+      candidateAuthority(
         actor,
-        event: found.admission?.event ?? actor.event,
+        found.liveCandidate,
         now,
-        credentialTombstoneRefs: found.credentialTombstoneRefs,
-        credentialKeysetCommitment: found.credentialKeysetCommitment,
-        templateId: found.pass.templateId,
-        pass: found.liveCandidate?.pass ?? found.pass,
-        connectionGeneration: found.connectionGeneration,
-        activeTemplateVersion: found.activeVersion,
-        orgRevision: found.orgRevision,
-        templateRevision: found.templateRevision,
-        release: found,
-        displayTemplateVersion: found.displayTemplateVersion,
-        checkInRules: found.checkInRules,
-        lookupHash: found.liveCandidate?.lookupHash,
-        requireActive: true,
-      }),
+        found.admission?.event ?? actor.event,
+        found.credentialTombstoneRefs,
+      ),
     );
     const history = bound.finalize(await ctx.env.DB.batch(bound.stmts));
     expect(history).not.toBeNull();

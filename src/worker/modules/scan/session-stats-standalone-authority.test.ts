@@ -5,7 +5,6 @@ import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import { ScanningSessionDetailSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import { run } from '../../platform/db.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import {
   atCountBatch,
   freshFixture,
@@ -128,8 +127,6 @@ describe('standalone scanner statistics authority', () => {
       true,
     );
     for (const entry of captured) {
-      if (!scanSecretSlots(entry.sql, entry.params.length))
-        throw new Error('Malformed statistics bind labels');
       for (const value of entry.params) {
         // A read carries no keyset commitment and never the CSRF secret.
         expect(value).not.toBe(commitment);

@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, chunk, placeholders, type SqlValue, stmt } from '../../platform/db.ts';
-import { scanConjunction } from './repo-secret-binds.ts';
+import { scanConjunction } from './scan-conjunction.ts';
 import {
   type PreparedScanRetentionDelete,
   type PreparedScanRetentionProof,

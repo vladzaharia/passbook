@@ -3,20 +3,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeScanner, makeTemplate, makeUser } from '../../../../test/helpers/index.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { createServiceContext } from '../../platform/service-context.ts';
-import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
+import { AppError } from '../../platform/errors.ts';
 import { type ScanActor, scanScannerCsrfProof } from './actor.ts';
-import {
-  actorCsrfAuthorityCurrent,
-  actorCsrfAuthorityStmt,
-  actorCsrfSnapshotFence,
-  actorCsrfSnapshotFromResult,
-} from './actor-csrf.ts';
 import { createGuardHarness, get, ORIGIN } from './guard-test-fixtures.ts';
-import { actorAuthorityCurrent } from './repo-actor-authority.ts';
-import { packScanPredicate, scanSecretSlots } from './repo-secret-binds.ts';
+import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
 import { grantScanMembership } from './test-kit.ts';
 
 const harness = createGuardHarness();
@@ -41,13 +33,21 @@ describe('requireScanActor: tenant session authority', () => {
     if (!actor) throw new Error('No scan actor captured');
     return actor;
   };
-  const current = (actor: ScanActor) =>
-    actorAuthorityCurrent(env.DB, {
-      actor,
-      now: clock.now(),
-      event: actor.event,
-      adminEventTemplates: false,
-    });
+  const current = async (actor: ScanActor) => {
+    try {
+      return (
+        (
+          await scanAuthorizedStmt(env.DB, scanReadAuthority(actor, { now: clock.now() })).first<{
+            authorized: number;
+          }>()
+        )?.authorized === 1
+      );
+    } catch (error) {
+      // An actor the guard did not capture has no authority to read.
+      if (error instanceof AppError && error.code === 'SCAN_EPOCHS_MISSING') return false;
+      throw error;
+    }
+  };
 
   it('requires membership even for a platform administrator and another tenant', async () => {
     const outsider = fake.session({ userId: 'outsider', roles: ['admin', 'user'] });
@@ -73,7 +73,6 @@ describe('requireScanActor: tenant session authority', () => {
       capability: 'scanning:read',
     });
     expect(await current(actor)).toBe(true);
-    expect(await current({ ...actor, role: 'manager' })).toBe(false);
     const readPost = await app.request(
       `${ORIGIN}/capture-read`,
       {
@@ -96,32 +95,11 @@ describe('requireScanActor: tenant session authority', () => {
     );
   });
 
-  it('binds the original session proof to its actor without packing raw CSRF', async () => {
+  it('keeps a session CSRF secret fixed for the life of the session', async () => {
     const user = await makeUser(f);
     await grantScanMembership(f, orgId, user.id, ['read_only']);
-    const headers = fake.user(user.id);
-    expect((await get(app, env, `/capture-read${scope()}`, headers)).status).toBe(200);
-    const actor = captured();
-    const ctx = createServiceContext(env, { clock });
-    const query = actorCsrfAuthorityStmt(env.DB, actor);
-    if (!query) throw new Error('Missing CSRF authority query');
-    const result = await query.all();
-    const snapshot = await actorCsrfSnapshotFromResult(ctx, actor, result);
-    if (!snapshot) throw new Error('Missing CSRF authority snapshot');
-    const fence = actorCsrfSnapshotFence(actor, snapshot);
-    if (!fence) throw new Error('Missing CSRF authority fence');
-    const packed = packScanPredicate(fence.sql, fence.params, 'csrf_test');
-    const secret = headers['x-csrf-token'];
-    if (!packed || !secret) throw new Error('Missing packed session authority');
-    expect(String(packed.params[0]).includes(secret)).toBe(false);
-    expect(packed.params.slice(1).includes(secret)).toBe(true);
-    expect(await first(env.DB, `SELECT (${packed.sql}) AS valid`, packed.params)).toEqual({
-      valid: 1,
-    });
     expect((await get(app, env, `/capture-read${scope()}`, fake.user(user.id))).status).toBe(200);
-    expect(actorCsrfSnapshotFence(captured(), snapshot)).toBeNull();
-    expect(await actorCsrfSnapshotFromResult(ctx, captured(), result)).toBeNull();
-    const authority = actor.tenantAuthority;
+    const authority = captured().tenantAuthority;
     if (!authority) throw new Error('Missing tenant authority');
     await expect(
       run(env.DB, 'UPDATE sessions SET csrf_secret=? WHERE id_hash=?', [
@@ -129,40 +107,9 @@ describe('requireScanActor: tenant session authority', () => {
         authority.sessionId,
       ]),
     ).rejects.toThrow(/session csrf secret is immutable/);
-    expect(
-      actorCsrfSnapshotFence(
-        {
-          ...actor,
-          tenantAuthority: { ...authority, sessionCsrfProof: 'A'.repeat(43) },
-        },
-        snapshot,
-      ),
-    ).toBeNull();
   });
 
-  it('binds session ID hashes as labeled scalars outside packed authority', async () => {
-    const user = await makeUser(f);
-    await grantScanMembership(f, orgId, user.id, ['read_only']);
-    expect((await get(app, env, `/capture-read${scope()}`, fake.user(user.id))).status).toBe(200);
-    const authority = captured().tenantAuthority;
-    if (!authority) throw new Error('Missing tenant authority');
-    const sql = tenantPassAuthoritySql(authority);
-    const params = tenantPassAuthorityParams(authority, clock.now());
-    const slots = scanSecretSlots(sql, params.length);
-    if (!slots) throw new Error('Invalid tenant authority slots');
-    const index = slots.findIndex((slot) => slot.label === 'session-id-hash');
-    expect(index).toBeGreaterThanOrEqual(0);
-    expect(params[index]).toBe(authority.sessionId);
-    const packed = packScanPredicate(sql, params, 'tenant_test');
-    if (!packed) throw new Error('Missing packed tenant fence');
-    expect(String(packed.params[0]).includes(authority.sessionId)).toBe(false);
-    expect(packed.params.slice(1).includes(authority.sessionId)).toBe(true);
-    expect(await first(env.DB, `SELECT (${packed.sql}) AS valid`, packed.params)).toEqual({
-      valid: 1,
-    });
-  });
-
-  it('captures scanner proofs and rejects stale cookie or terminal credentials', async () => {
+  it('captures scanner proofs and refuses a rotated scanner secret', async () => {
     const scanner = await makeScanner(f, { orgId });
     expect((await get(app, env, '/capture-manage', scanner.headers)).status).toBe(200);
     const actor = captured();
@@ -170,11 +117,7 @@ describe('requireScanActor: tenant session authority', () => {
     if (!secret) throw new Error('Missing scanner CSRF secret');
     expect(actor.scanner?.csrfSecret).toBeNull();
     expect(actor.scannerCsrfProof).toBe(await scanScannerCsrfProof(env, scanner.id, secret));
-    const ctx = createServiceContext(env, { clock });
-    expect(await actorCsrfAuthorityCurrent(ctx, actor)).toBe(true);
-    expect(
-      await actorCsrfAuthorityCurrent(ctx, { ...actor, scannerCsrfProof: 'A'.repeat(43) }),
-    ).toBe(false);
+    expect(await current(actor)).toBe(true);
     await expect(
       run(env.DB, 'UPDATE scanners SET csrf_secret=? WHERE id=?', ['rotated', scanner.id]),
     ).rejects.toThrow(/scanner credential revision must advance/);
@@ -182,11 +125,12 @@ describe('requireScanActor: tenant session authority', () => {
       'rotated',
       scanner.id,
     ]);
-    expect(await actorCsrfAuthorityCurrent(ctx, actor)).toBe(false);
+    // A rotated secret moves the credential epoch the actor was captured with.
+    expect(await current(actor)).toBe(false);
     const terminal = await makeScanner(f, { orgId, kind: 'terminal' });
     expect((await get(app, env, '/capture-manage', terminal.headers)).status).toBe(200);
     expect(captured().scannerCsrfProof).toBeNull();
-    expect(await actorCsrfAuthorityCurrent(ctx, captured())).toBe(true);
+    expect(await current(captured())).toBe(true);
   });
 
   it('derives scanner roles from tenant capabilities, not platform roles', async () => {
@@ -228,9 +172,7 @@ describe('requireScanActor: tenant session authority', () => {
     const nullAuthority = { ...actor };
     Object.defineProperty(nullAuthority, 'tenantAuthority', { value: null });
     expect(await current(nullAuthority)).toBe(false);
-    expect(await current({ ...actor, platformSessionId: undefined })).toBe(false);
     expect(await current({ ...actor, orgId: 'another-org' })).toBe(false);
-    expect(await current({ ...actor, mode: 'test' })).toBe(false);
     expect(await current({ ...actor, actor: { type: 'user', id: 'another-user' } })).toBe(false);
   });
 

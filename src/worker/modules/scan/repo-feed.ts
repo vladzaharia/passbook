@@ -1,9 +1,8 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ApiKeyAuth } from '../../platform/auth.ts';
-import { first } from '../../platform/db.ts';
+import { exactStmt, first } from '../../platform/db.ts';
 import { scanLedgerScopeSql, where } from './repo-feed-scope.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
-import { type OutputPredicate, outputPredicatesCurrent } from './repo-output-predicates.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
 
 export { auditScanExport } from './repo-feed-console.ts';
@@ -68,26 +67,6 @@ export function getScanRow(db: Db, auth: ScanReadAuthority, id: string, now: num
   );
 }
 
-/** The keyed feed has no actor role: a key is live and lists `scans:read` now. */
-function apiKeyFeedPredicates(auth: ApiKeyAuth, now: number): [OutputPredicate, OutputPredicate] {
-  const keyLive: OutputPredicate = {
-    sql: `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ?/* scan-ephemeral-proof */ AND k.org_id IS ? AND k.mode = ?
-      AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
-      AND (k.org_id IS NULL OR EXISTS (
-        SELECT 1 FROM orgs o WHERE o.id = k.org_id AND o.status = 'active'
-      )))`,
-    params: [auth.keyId, auth.orgId, auth.mode, now],
-  };
-  const keyScopes: OutputPredicate = {
-    sql: `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ?/* scan-ephemeral-proof */ AND CASE WHEN json_valid(k.scopes) THEN
-      json_type(k.scopes) = 'array' AND EXISTS (SELECT 1 FROM json_each(k.scopes) scope
-        WHERE scope.type = 'text' AND scope.value = 'scans:read')
-      ELSE 0 END)`,
-    params: [auth.keyId],
-  };
-  return [keyLive, keyScopes];
-}
-
 /** Why the keyed feed refused: an invalid key (401), or a key without the scope or the org (403). */
 export async function getApiKeyFeedStatus(
   db: Db,
@@ -95,7 +74,21 @@ export async function getApiKeyFeedStatus(
   filter: ScanLogFilter,
   now: number,
 ): Promise<'ok' | 'invalid' | 'forbidden'> {
-  const [live, scopes] = await outputPredicatesCurrent(db, apiKeyFeedPredicates(auth, now));
+  const row = await exactStmt(
+    db,
+    `SELECT EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND k.org_id IS ? AND k.mode = ?
+        AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
+        AND (k.org_id IS NULL OR EXISTS (
+          SELECT 1 FROM orgs o WHERE o.id = k.org_id AND o.status = 'active'
+        ))) AS live,
+      EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND CASE WHEN json_valid(k.scopes) THEN
+        json_type(k.scopes) = 'array' AND EXISTS (SELECT 1 FROM json_each(k.scopes) scope
+          WHERE scope.type = 'text' AND scope.value = 'scans:read')
+        ELSE 0 END) AS scopes`,
+    [auth.keyId, auth.orgId, auth.mode, now, auth.keyId],
+  ).first<{ live: number; scopes: number }>();
+  const live = row?.live === 1;
+  const scopes = row?.scopes === 1;
   if (!live) return 'invalid';
   if (
     !scopes ||

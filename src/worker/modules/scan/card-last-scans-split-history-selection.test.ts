@@ -9,9 +9,9 @@ import { planCounts } from './counts.ts';
 import { type CardHistoryRow, cardHistoryStmt } from './repo-card-history.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { foundOf } from './resolve.ts';
+import { predicateStmt } from './scan-predicate.ts';
 import { proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -77,7 +77,7 @@ describe('card last-scan privacy', () => {
     const result = await readCard(kit.ctx, actor, found, planCounts(kit.ctx, actor), 'read');
     if (!result?.historyFence) throw new Error('Expected selected history fence');
     expect(result.card.lastScans.map((row) => row.scanId)).toEqual([ids[2], ids[1], ids[0]]);
-    expect(await outputPredicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
+    expect(await predicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
       authorized: 1,
     });
     // The rows are one snapshot: a later change to an event, selected or not, does not unread them.
@@ -88,7 +88,7 @@ describe('card last-scan privacy', () => {
       WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
         [pass.id, id],
       );
-    expect(await outputPredicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
+    expect(await predicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
       authorized: 1,
     });
     // The pass moving is what the fence stands for.
@@ -97,7 +97,7 @@ describe('card last-scan privacy', () => {
       'UPDATE passes SET lifecycle_generation=lifecycle_generation+1 WHERE id=?',
       [pass.id],
     );
-    expect(await outputPredicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
+    expect(await predicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
       authorized: 0,
     });
   });

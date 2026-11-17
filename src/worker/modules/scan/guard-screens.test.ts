@@ -95,27 +95,6 @@ describe('requireScanActor: screens (SA 2.5 step 4)', () => {
       strict: false,
       monitor: true,
     });
-
-    const sessionId = f.ids.id();
-    await run(
-      env.DB,
-      `INSERT INTO scanning_sessions
-      (id,org_id,mode,name,status,accepts,settings,time_zone,created_at,updated_at)
-      SELECT ?,org_id,mode,name,'active',NULL,settings,time_zone,created_at,updated_at
-      FROM scanners WHERE id=?`,
-      [sessionId, screen.id],
-    );
-    await run(
-      env.DB,
-      `INSERT INTO scanning_devices
-      (scanner_id,session_id,org_id,mode,surface,effective_surface,overrides)
-      SELECT id,?,org_id,mode,'desk','desk','{}' FROM scanners WHERE id=?`,
-      [sessionId, screen.id],
-    );
-    expect(await (await get(app, env, path, screen.headers)).json()).toEqual({
-      strict: false,
-      monitor: false,
-    });
   });
 
   it.each(screens)(

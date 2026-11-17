@@ -5,12 +5,12 @@ import { gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
 import type { PendingDisplayHistorySource } from './history-proof-pending.ts';
 import type { PreloadedDisplayHistory } from './history-proof-plan.ts';
-import type * as gates from './repo-gates.ts';
 import {
   type ActionPassFence,
   type PreparedActionPassFence,
   prepareActionPassFence,
-} from './repo-pass-authority.ts';
+} from './repo-act-pass-fence.ts';
+import type * as gates from './repo-gates.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
 
@@ -54,6 +54,7 @@ export function prepareCheckInReads(
     now,
     ctx.env,
     found,
+    found.liveCandidate?.templateSnapshot?.raw,
   );
   if (!prepared) return null;
   // Admission, presence and capacity belong to a check-in; a value action reads only its gate.

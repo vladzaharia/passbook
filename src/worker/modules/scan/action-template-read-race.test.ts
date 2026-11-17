@@ -38,8 +38,11 @@ async function expectRaced(
   phase: 'gate' | 'choose' | 'stop',
   headers: Record<string, string>,
   response: Response,
+  headChanged = false,
 ) {
   if (phase !== 'gate') return expectUnconfirmed(response);
+  // A head that says something else is the release gate of the check-in commit itself.
+  if (headChanged) return expectClassified(response, 'SCAN_PASS_CHANGED');
   expect(response.status).toBe(200);
   const result = ScanOutcomeSchema.parse(await response.json());
   expect(result).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
@@ -70,7 +73,11 @@ describe('captured action template reads at the final CAS', () => {
   );
 
   for (const phase of ['gate', 'choose', 'stop'] as const) {
-    for (const source of ['pinned', 'active'] as const) {
+    // A pass repinned to another version of its template (a publish) is content, not authority: a
+    // choose or stop answer read before it is still served. A head change is the release gate.
+    for (const source of phase === 'gate'
+      ? (['pinned', 'active'] as const)
+      : (['active'] as const)) {
       it(`handles ${source} version replacement before the ${phase} transaction`, async () => {
         const f = await fixture(kit, {
           compatiblePin: true,
@@ -118,11 +125,11 @@ describe('captured action template reads at the final CAS', () => {
           },
         );
         expect(rejectedRewrite).toBe(true);
-        await expectRaced(phase, f.scanner.headers, response);
+        await expectRaced(phase, f.scanner.headers, response, source === 'active');
         if (phase === 'gate')
           expect(
             await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
-          ).toMatchObject({ gates: 1, events: 1 });
+          ).toMatchObject(source === 'active' ? { gates: 0, events: 0 } : { gates: 1, events: 1 });
         const current = await candidateById(kit.env.DB, kit.org.id, f.pass.id);
         expect(current?.templateSnapshot?.raw).not.toBe(original.templateSnapshot.raw);
         expect(
@@ -195,6 +202,43 @@ describe('captured action template reads at the final CAS', () => {
     expect(changed.active.extras).toMatchObject([{ name: 'preview.png' }]);
   });
 
+  it('answers 409 when a release-less legacy pass is repinned between evaluation and the preflight read', async () => {
+    const seedId = await kit.scanTemplate(
+      'Legacy repin source',
+      { actions: [ACTION] },
+      { releaseModes: [] },
+    );
+    const seed = await kit.registry.resolve(seedId, 'v1');
+    const templateId = `${seedId}-repin`;
+    const add = (version: string) =>
+      kit.registry.add({
+        id: templateId,
+        orgId: null,
+        origin: 'baked',
+        version,
+        manifest: seed.manifest,
+        passJson: seed.passJson,
+        assets: { 'icon.png': ICON_PNG },
+      });
+    await persistTemplate(kit.fx, add('v1'), { registry: kit.registry });
+    await persistTemplate(kit.fx, add('v2'), { registry: kit.registry });
+    const scanner = await kit.scanner({ templateIds: [templateId] });
+    const template = await kit.registry.resolve(templateId, 'v1');
+    const control = await makeLegacyScanPass(kit.fx, { orgId: kit.org.id, template });
+    expect((await action(kit, scanner.headers, body(kit, control.id))).kind).toBe('ok');
+    const pass = await makeLegacyScanPass(kit.fx, { orgId: kit.org.id, template });
+    const response = await raceRaw(
+      kit,
+      scanner.headers,
+      body(kit, pass.id),
+      'SELECT (SELECT rules FROM pass_check_in',
+      (db) => run(db, "UPDATE passes SET template_version='v2' WHERE id=?", [pass.id]),
+    );
+    // A race, not a miss: the client retries the same key.
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'SCAN_IN_PROGRESS' });
+  });
+
   // A gate, stop or choose commit keeps the policy it evaluated; the capabilities it minted do not redeem.
   it.each(['gate', 'choose', 'stop'] as const)(
     'withholds a choose or stop answer, and voids the grants of a gate, when a newly approved head tightens the captured policy',
@@ -219,11 +263,11 @@ describe('captured action template reads at the final CAS', () => {
       const response = await raceRaw(kit, f.scanner.headers, request, COMMIT_MARKER[phase], (db) =>
         approveAppleRelease(kit, { db, templateId: f.templateId, version: 'v2', mode: 'live' }),
       );
-      await expectRaced(phase, f.scanner.headers, response);
+      await expectRaced(phase, f.scanner.headers, response, true);
       if (phase === 'gate')
         expect(
           await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
-        ).toMatchObject({ gates: 1, events: 1 });
+        ).toMatchObject({ gates: 0, events: 0 });
       expect((await candidateById(kit.env.DB, kit.org.id, f.pass.id))?.activeTemplateVersion).toBe(
         'v2',
       );

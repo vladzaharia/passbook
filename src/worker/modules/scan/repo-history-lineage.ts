@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import type { OutputPredicate } from './repo-output-predicates.ts';
+import type { ScanPredicate } from './scan-predicate.ts';
 
 /** The pass state a history read was made under. */
 export interface PassLineage {
@@ -15,7 +15,7 @@ export interface PassLineage {
  * lifecycle and credential generation, no credential transfer pending. Every history row of that
  * pass was read in one snapshot, so this one check in the final batch stands for all of them.
  */
-export function passLineagePredicate(lineage: PassLineage): OutputPredicate {
+export function passLineagePredicate(lineage: PassLineage): ScanPredicate {
   return {
     sql: `EXISTS (SELECT 1 FROM passes lineage
       WHERE lineage.id = ?/* scan-ephemeral-pass-id */ AND lineage.org_id = ? AND lineage.mode = ?

@@ -17,10 +17,9 @@ import { preparePlannedDisplayHistoryProof } from './history-proof-pending.ts';
 import { appendPlannedDisplayHistory, rebindDisplayHistoryRead } from './history-proof-plan.ts';
 import { type LedgerFacts, ledgerRow } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { doneOkPredicate } from './repo-scan-checks.ts';
+import { doneOkPredicate, effectiveReleaseCheck } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
@@ -31,6 +30,7 @@ import {
   prepareDisplayHistory,
 } from './scan-display-history.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import type { Finalize } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';
@@ -180,6 +180,8 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       },
     },
     approver,
+    // The release the answer was evaluated under still stands (the pre-commit read cannot hold it).
+    checks: [effectiveReleaseCheck(found.pass.id, found.liveCandidate?.templateSnapshot?.raw)],
     // Another pass's transfer can retire the presented credential after resolve (shared hash).
     credentialRefs: claim.credentialTombstoneRefs,
     tables: SCAN_COMMIT_TABLES,

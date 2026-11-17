@@ -10,20 +10,12 @@ import {
   StaleScanAuthority,
 } from './act-override.ts';
 import { replayOutcome } from './act-replay.ts';
-import { type ActorCsrfSnapshot, actionCsrfAt } from './actor-csrf.ts';
 import { type CredentialTombstoneSnapshot, credentialInputValid } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { unknownOutcome } from './outcome.ts';
 import { recoverScans } from './recover.ts';
-import {
-  claimAuthorityPredicate,
-  claimOutputPredicateStmt,
-  initialClaimCredentialPredicate,
-  observedClaimCollisionPredicate,
-} from './repo-act-claim-lifecycle.ts';
+import { collidingClaimCurrent } from './repo-act-claim-current.ts';
 import { quarantineOnGrant, reopenOnGrant } from './repo-act-claim-reopen.ts';
-import { actorAuthorityPredicate } from './repo-actor-authority.ts';
-import { credentialTombstonePredicate } from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { ObservedScanAmbiguity } from './repo-scan-effect.ts';
 import {
@@ -42,32 +34,6 @@ import { pinStaffListFromResult } from './staff-pin.ts';
 export const SCAN_IN_PROGRESS_MS = 15_000;
 
 export const staleScanAuthority = () => new StaleScanAuthority();
-export function actionClaimAuthority(
-  actor: ScanActor,
-  req: ActRequest,
-  credentials: CredentialTombstoneSnapshot,
-  csrfSnapshot: ActorCsrfSnapshot,
-  now: number,
-  initialize: boolean,
-) {
-  const csrf = actionCsrfAt(actor, csrfSnapshot, now);
-  if (!csrf) return null;
-  const actorFence = actorAuthorityPredicate({
-    actor,
-    now,
-    event: actor.event,
-    adminEventTemplates: actor.principal === 'admin' && !req.scope?.templateIds?.length,
-  });
-  const credentialsFence = initialize
-    ? initialClaimCredentialPredicate(credentials.credentialKeysetCommitment)
-    : credentialTombstonePredicate(
-        actor.orgId,
-        actor.mode,
-        credentials.credentialTombstoneRefs,
-        credentials.credentialKeysetCommitment,
-      );
-  return claimAuthorityPredicate(actorFence, csrf, credentialsFence);
-}
 
 export async function executeClaimedAction(
   ctx: ServiceContext,
@@ -78,7 +44,6 @@ export async function executeClaimedAction(
   requestHash: string,
   credentials: CredentialTombstoneSnapshot,
   candidates: Candidate[] | null,
-  csrfSnapshot: ActorCsrfSnapshot,
   undoWindow: number,
   overrideResult: D1Result | undefined,
   approverResult: D1Result | undefined,
@@ -95,7 +60,6 @@ export async function executeClaimedAction(
       requestHash,
       credentials,
       candidates,
-      csrfSnapshot,
       undoWindow,
       capturedOverride,
       pinStaffListFromResult(approverResult),
@@ -131,7 +95,6 @@ export async function replayOrReopenClaim(
   req: ActRequest,
   hash: string,
   credentials: CredentialTombstoneSnapshot,
-  csrfSnapshot: ActorCsrfSnapshot,
   undoWindow: number,
   snapshot: { row: ScanRow | null; credentialsClear: boolean },
   allowReopen = true,
@@ -146,14 +109,16 @@ export async function replayOrReopenClaim(
     row.reason !== 'stale' && row.state === 'pending' && now - row.at < SCAN_IN_PROGRESS_MS;
   if (mismatch || inProgress) {
     if (allowReopen) {
-      const guard = actionClaimAuthority(actor, req, credentials, csrfSnapshot, now, false);
-      const current = guard
-        ? await claimOutputPredicateStmt(
-            ctx.env.DB,
-            observedClaimCollisionPredicate(guard, row, actor.actorKey, req.idempotencyKey),
-          ).first<{ authorized: number }>()
-        : null;
-      if (current?.authorized !== 1) return unknownOutcome(credentials);
+      if (
+        !(await collidingClaimCurrent(
+          ctx,
+          actor,
+          credentials.credentialTombstoneRefs,
+          row,
+          req.idempotencyKey,
+        ))
+      )
+        return unknownOutcome(credentials);
     }
     if (mismatch)
       throw new ValidationError(
@@ -167,7 +132,7 @@ export async function replayOrReopenClaim(
   }
   if (row.reason === 'stale' || (row.state === 'failed' && row.reason !== null))
     return unknownOutcome(credentials);
-  if (row.state === 'done') return replayOutcome(ctx, actor, req, row, credentials, csrfSnapshot);
+  if (row.state === 'done') return replayOutcome(ctx, actor, req, row, credentials);
   if (!allowReopen) return unknownOutcome(credentials);
   if (row.state === 'failed' || row.state === 'pending') {
     const claimBase = claimOf(ctx, actor, req, row.id, hash);
@@ -176,10 +141,7 @@ export async function replayOrReopenClaim(
       actor,
       req.input,
       credentials,
-      (now) => {
-        const guard = actionClaimAuthority(actor, req, credentials, csrfSnapshot, now, false);
-        return guard && { sql: '1', params: [] };
-      },
+      () => ({ sql: '1', params: [] }),
       true,
     );
     const claim = { ...claimBase, now: plan.now };
@@ -218,7 +180,6 @@ export async function replayOrReopenClaim(
       hash,
       credentials,
       reread,
-      csrfSnapshot,
       undoWindow,
       overrideQuery ? results[overrideIndex] : undefined,
       req.approval ? results[overrideIndex + (overrideQuery ? 1 : 0)] : undefined,

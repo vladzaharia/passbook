@@ -1,12 +1,12 @@
 import type { GrantPart } from '../../platform/authority-include.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
-import type { SqlValue } from '../../platform/db.ts';
 import { AppError, RateLimitedError } from '../../platform/errors.ts';
 import { toHex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
 import { preparePinCounters } from './repo-staff-pin-counters.ts';
+import type { ScanPredicate } from './scan-predicate.ts';
 import { anyManagerDecision, personDecision } from './staff-pin-decide.ts';
 import {
   ANY_MANAGER,
@@ -40,7 +40,7 @@ export async function hashPin(env: object, staffId: string, pin: string): Promis
   return toHex(new Uint8Array(mac));
 }
 
-export type PinReservationGuard = { sql: string; params: readonly SqlValue[] };
+export type PinReservationGuard = ScanPredicate;
 const lockedError = (millisecondsLeft: number) =>
   new RateLimitedError(Math.ceil(millisecondsLeft / 1000), 'Too many wrong PINs. Try again later.');
 const resultCount = (result: D1Result | undefined) =>

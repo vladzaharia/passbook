@@ -4,8 +4,8 @@ import { all, first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
+import { actionPassFence, passSnapshotCurrent } from './pass-fence-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
-import { actionPassFence, passSnapshotCurrent } from './repo-pass-authority.ts';
 import { CHECK_IN, policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -41,7 +41,7 @@ describe('scanner evaluated policy revisions', () => {
     });
     expect(
       await passSnapshotCurrent(
-        kit.env.DB,
+        kit.env,
         candidate.pass,
         candidate.connectionGeneration,
         candidate.activeTemplateVersion,
@@ -72,7 +72,7 @@ describe('scanner evaluated policy revisions', () => {
     await approveAppleRelease(kit, { templateId, mode: 'live', version: template.version });
     expect(
       await passSnapshotCurrent(
-        kit.env.DB,
+        kit.env,
         candidate.pass,
         candidate.connectionGeneration,
         candidate.activeTemplateVersion,
@@ -289,7 +289,9 @@ describe('scanner evaluated policy revisions', () => {
     expect(await scanEvents()).toHaveLength(1);
   });
 
-  // A release is content at commit (authority-epochs.md F4): the scan grant does not ask for the head.
+  // A release is content at commit (authority-epochs.md F4), and a head equal to the pass's own build
+  // (same version and content: FIX35's same-version rule) is no change: the grant's release check
+  // refuses only a head that says something else (action-template-read-race, act-value-race).
   for (const phase of ['before', 'after'] as const) {
     it(`admits a legacy action when its first head appears ${phase} the gate`, async () => {
       const templateId = await kit.scanTemplate(

@@ -1,6 +1,8 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
-import { all, first, type SqlValue, stmt } from '../../platform/db.ts';
+import { all, exactStmt, first, type SqlValue, stmt } from '../../platform/db.ts';
+import { scanConjunction } from './scan-conjunction.ts';
+import { type ScanPredicate, withCtes } from './scan-predicate.ts';
 
 type Db = D1Database;
 
@@ -65,14 +67,40 @@ export async function scanById(db: Db, orgId: string, id: string): Promise<ScanR
   return row ? toScan(row) : null;
 }
 
-/** Evidence that a claim is not pristine, evaluated inside the write transaction. */
-const AMBIGUOUS_SCAN = `pass_id IS NOT NULL OR template_id IS NOT NULL OR action_id IS NOT NULL OR action_kind IS NOT NULL OR
-  pass_version IS NOT NULL OR outcome IS NOT NULL OR reason IS NOT NULL OR
-  override_of IS NOT NULL OR approved_by IS NOT NULL OR direction IS NOT NULL OR presence_scope IS NOT NULL OR
-  amount IS NOT NULL OR before_value IS NOT NULL OR after_value IS NOT NULL OR group_id IS NOT NULL OR
-  offline != 0 OR notified != 0 OR undoes IS NOT NULL OR undone_by IS NOT NULL OR undone_at IS NOT NULL OR
-  EXISTS (SELECT 1 FROM scan_gates g WHERE g.last_scan_id = scans.id OR g.prev_scan_id = scans.id) OR
-  EXISTS (SELECT 1 FROM scan_presence p WHERE p.last_scan_id = scans.id OR p.prev_scan_id = scans.id)`;
+/** Evidence that a claim is not pristine, evaluated inside the write transaction. Grouped to bound D1's expression depth. */
+const AMBIGUOUS_TERMS = [
+  'pass_id IS NOT NULL',
+  'template_id IS NOT NULL',
+  'action_id IS NOT NULL',
+  'action_kind IS NOT NULL',
+  'pass_version IS NOT NULL',
+  'outcome IS NOT NULL',
+  'reason IS NOT NULL',
+  'override_of IS NOT NULL',
+  'approved_by IS NOT NULL',
+  'direction IS NOT NULL',
+  'presence_scope IS NOT NULL',
+  'amount IS NOT NULL',
+  'before_value IS NOT NULL',
+  'after_value IS NOT NULL',
+  'group_id IS NOT NULL',
+  'offline != 0',
+  'notified != 0',
+  'undoes IS NOT NULL',
+  'undone_by IS NOT NULL',
+  'undone_at IS NOT NULL',
+  'EXISTS (SELECT 1 FROM scan_gates g WHERE g.last_scan_id = scans.id OR g.prev_scan_id = scans.id)',
+  'EXISTS (SELECT 1 FROM scan_presence p WHERE p.last_scan_id = scans.id OR p.prev_scan_id = scans.id)',
+];
+const AMBIGUOUS_SCAN = Array.from(
+  { length: Math.ceil(AMBIGUOUS_TERMS.length / 4) },
+  (_, group) => `(${AMBIGUOUS_TERMS.slice(group * 4, group * 4 + 4).join(' OR ')})`,
+).join(' OR ');
+
+declare const pristineBrand: unique symbol;
+
+/** A predicate that carries the pristine-claim evidence check: only `pristineClaimFence` and `invalidAttemptAuthority` make one. */
+export type PristineClaimFence = ScanPredicate & { readonly [pristineBrand]: true };
 
 /** Match the original claim, not a mutable row that merely retained the same key. */
 export function pristineClaimFence(
@@ -90,13 +118,16 @@ export function pristineClaimFence(
     | 'idempotencyKey'
     | 'requestHash'
   >,
-): { sql: string; params: SqlValue[] } {
+): PristineClaimFence & { params: SqlValue[] } {
   return {
-    sql: `NOT (${AMBIGUOUS_SCAN}) AND scans.org_id=? AND scans.mode=?
-      AND scans.scanner_id IS ?/* scan-ephemeral-scanner-id */ AND scans.event_id IS ?/* scan-ephemeral-event-id */
-      AND scans.actor_type=? AND scans.actor_id=?/* scan-ephemeral-actor-id */ AND scans.actor_key=?/* scan-ephemeral-actor-key */
-      AND scans.staff_id IS ?/* scan-ephemeral-staff-id */ AND scans.method=?
-      AND scans.idempotency_key=?/* scan-ephemeral-idempotency-key */ AND scans.request_hash=?/* scan-ephemeral-request-hash */`,
+    sql: scanConjunction([
+      `NOT (${AMBIGUOUS_SCAN})`,
+      'scans.org_id=? AND scans.mode=?',
+      'scans.scanner_id IS ?/* scan-ephemeral-scanner-id */ AND scans.event_id IS ?/* scan-ephemeral-event-id */',
+      'scans.actor_type=? AND scans.actor_id=?/* scan-ephemeral-actor-id */ AND scans.actor_key=?/* scan-ephemeral-actor-key */',
+      'scans.staff_id IS ?/* scan-ephemeral-staff-id */ AND scans.method=?',
+      'scans.idempotency_key=?/* scan-ephemeral-idempotency-key */ AND scans.request_hash=?/* scan-ephemeral-request-hash */',
+    ]),
     params: [
       c.orgId,
       c.mode,
@@ -110,7 +141,7 @@ export function pristineClaimFence(
       c.idempotencyKey,
       c.requestHash,
     ],
-  };
+  } as PristineClaimFence & { params: SqlValue[] };
 }
 
 /** Preserve presence evidence observed before recovery races a later write. */
@@ -143,20 +174,23 @@ export async function reopenScan(db: Db, id: string, now: number): Promise<numbe
   return (results[1]?.results?.[0] as { at: number } | undefined)?.at ?? null;
 }
 
-/** Discard only a pristine pending generation with no evidence of an effect. */
-export const releaseClaimStmt = (
+/**
+ * Discard only a pristine pending generation with no evidence of an effect. `extra` is the claim's
+ * `pristineClaimFence`, alone or under an authority; it carries the evidence check itself.
+ */
+export function releaseClaimStmt(
   db: Db,
   id: string,
   claimAt: number,
-  extra?: { sql: string; params: readonly SqlValue[] },
-) =>
-  stmt(
-    db,
-    `DELETE FROM scans WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending' AND at = ?
-       AND NOT (${AMBIGUOUS_SCAN})${extra ? ` AND (${extra.sql})` : ''}
-     RETURNING id`,
-    [id, claimAt, ...(extra?.params ?? [])],
-  );
+  extra?: PristineClaimFence,
+): D1PreparedStatement {
+  const sql = `DELETE FROM scans WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending' AND at = ?
+       AND ${extra ? `(${extra.sql})` : `NOT (${AMBIGUOUS_SCAN})`}
+     RETURNING id`;
+  const params = [id, claimAt, ...(extra?.params ?? [])];
+  const staged = extra ? withCtes(extra, sql, params) : { sql, params };
+  return exactStmt(db, staged.sql, staged.params);
+}
 
 /** Preserve a no-retry marker for an ambiguous or replaced claim generation. */
 export const quarantineGateClaimStmt = (

@@ -1,28 +1,27 @@
-import { type CheckInPolicy, CheckInPolicySchema } from '../../../shared/contracts/check-in.ts';
-import { type SqlValue, stmt } from '../../platform/db.ts';
+import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
+import { CheckInPolicySchema } from '../../../shared/contracts/check-in.ts';
+import { exactStmt } from '../../platform/db.ts';
 import { safeEqual } from '../../platform/ids.ts';
 import {
   captureCredentialKeyEnv,
   credentialRefKeysetCommitment,
 } from '../passes/credential-keyset.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { effectiveReleaseIs, usedRelease } from './effective-release.ts';
 import {
   validCredentialKeysetCommitment,
   validCredentialTombstoneRefs,
 } from './repo-credential-tombstones.ts';
 import {
   completeRelease,
-  evaluatedPolicyPredicate,
   legacyRelease,
   passJsonOf,
-  passPredicate,
   type ReleaseSnapshot,
   type WalletStatus,
   walletStatusOf,
-} from './repo-pass-predicates.ts';
+} from './repo-pass-fence-release.ts';
+import { passVisibleSql } from './repo-pass-visible.ts';
 import { passJsonFingerprint, personalizationFingerprint } from './scan-personalization-proof.ts';
-
-type Db = D1Database;
 
 /** The pass state read after evaluation and fenced again in the gate transaction. */
 export interface ActionPassFence {
@@ -58,15 +57,20 @@ export interface ActionPassFence {
 export interface PreparedActionPassFence {
   /** Await before using guard so a changed process key cannot create a stale marker. */
   keysetCurrent: Promise<boolean>;
-  /** Exact original pass, release, credential and rules predicate for trusted alias p. */
-  guard: { sql: string; params: readonly SqlValue[] };
   statement: D1PreparedStatement;
   /** The row must be the result of this statement in the caller's authority batch. */
   complete(row: { rules: string | null } | null | undefined): Promise<ActionPassFence | null>;
 }
 
+/**
+ * Prepare the pass read of an action: one statement for the batch that evaluates it, and the fence
+ * built from its row. The read decides the answer (the pass is still at the generations and the
+ * release the evaluation used, and its check-in rules are the ones admission decided on); the actor,
+ * staff, event and credential checks are the commit grant's. With `active` the pass must also be
+ * shown as live (not voided, removed or expired).
+ */
 export function prepareSnapshotFence(
-  db: Db,
+  db: D1Database,
   pass: Pass,
   checkInRules: CheckInPolicy | undefined,
   connectionGeneration: number | null | undefined,
@@ -76,7 +80,7 @@ export function prepareSnapshotFence(
   now: number,
   env: object,
   release: ReleaseSnapshot | null | undefined,
-  purpose: 'read' | 'commit',
+  snapshotRaw: string | null | undefined,
   requiredStatus?: WalletStatus,
 ): PreparedActionPassFence | null {
   const passJsonSnapshot = passJsonOf(release);
@@ -94,9 +98,21 @@ export function prepareSnapshotFence(
   const evaluatedPersonalization = JSON.stringify(pass.personalization);
   const evaluatedRules = checkInRules === undefined ? undefined : JSON.stringify(checkInRules);
   const walletStatus = walletStatusOf(passJsonSnapshot, now);
+  const used = usedRelease(snapshotRaw);
   if (
+    used === false ||
     (!completeRelease(release) && !legacyRelease(release)) ||
+    // The policy version is the release's own (a head or the issued one), or the pass's pinned version without a release.
+    (completeRelease(release)
+      ? activeTemplateVersion !== release.activeReleaseVersion
+      : activeTemplateVersion !== pass.templateVersion) ||
     release.transferPending !== false ||
+    (pass.connectionId !== null && typeof connectionGeneration !== 'number') ||
+    (pass.connectionId === null && connectionGeneration != null) ||
+    !Number.isSafeInteger(credentialGeneration) ||
+    credentialGeneration <= 0 ||
+    !Number.isSafeInteger(lifecycleGeneration) ||
+    lifecycleGeneration < 0 ||
     !validCredentialTombstoneRefs(refs) ||
     !validCredentialKeysetCommitment(credentialKeysetCommitment) ||
     !activeTemplateVersion ||
@@ -119,42 +135,35 @@ export function prepareSnapshotFence(
   )
     return null;
   const frozenRelease = { ...release, credentialTombstoneRefs: Object.freeze([...refs]) };
-  const predicate = passPredicate(pass, connectionGeneration);
-  const policy = evaluatedPolicyPredicate(
-    activeTemplateVersion,
-    orgRevision,
-    templateRevision,
-    frozenRelease,
-    purpose,
-    now,
-    walletStatus,
-  );
-  if (policy.sql === '0') return null;
-  const rulesSql =
-    evaluatedRules === undefined
-      ? ''
-      : `AND EXISTS (SELECT 1 FROM (
-    SELECT COALESCE((SELECT c.rules FROM pass_check_in c WHERE c.org_id=p.org_id AND c.pass_id=p.id),'{}') AS rules
-  ) original_rules WHERE CASE WHEN json_valid(original_rules.rules) THEN
-    json_type(original_rules.rules)='object'
-    AND NOT EXISTS (SELECT fullkey,type,atom FROM json_tree(original_rules.rules)
-      EXCEPT SELECT fullkey,type,atom FROM json_tree(?/* scan-ephemeral-check-in-rules */))
-    AND NOT EXISTS (SELECT fullkey,type,atom FROM json_tree(?/* scan-ephemeral-check-in-rules */)
-      EXCEPT SELECT fullkey,type,atom FROM json_tree(original_rules.rules))
-    ELSE 0 END)`;
-  const guard = {
-    sql: `(${predicate.sql}) AND (${policy.sql}) ${rulesSql}`,
-    params: [
-      ...predicate.params,
-      ...policy.params,
-      ...(evaluatedRules === undefined ? [] : [evaluatedRules, evaluatedRules]),
-    ],
-  };
-  const statement = stmt(
+  // A live pass is disclosed under F8; a refused or heads-up answer may name a voided or removed
+  // one, which stays the same pass: not deleted or quarantined, at its generations, no transfer.
+  const standing =
+    requiredStatus === 'active'
+      ? passVisibleSql('p', { credential: '?', lifecycle: '?' })
+      : `(p.deleted_at IS NULL AND p.test_data_quarantined = 0
+        AND p.credential_generation = ? AND p.lifecycle_generation = ?
+        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers pv_t
+          WHERE pv_t.pass_id = p.id AND pv_t.state = 'pending'))`;
+  // An action's claim is a write: an organization suspended and restored since the read moved its
+  // access revision, and the client retries.
+  const statement = exactStmt(
     db,
     `SELECT (SELECT rules FROM pass_check_in c WHERE c.org_id=p.org_id AND c.pass_id=p.id) AS rules
-     FROM passes p WHERE ${guard.sql}`,
-    guard.params,
+     FROM passes p WHERE p.id=? AND p.org_id=? AND p.mode=? AND ${standing}
+       AND ${effectiveReleaseIs('p')}${
+         used === null ? ' AND p.release_id IS NULL AND p.template_version=?' : ''
+       }
+       AND EXISTS (SELECT 1 FROM orgs o WHERE o.id=p.org_id AND o.status='active' AND o.access_revision=?)`,
+    [
+      pass.id,
+      pass.orgId,
+      pass.mode,
+      credentialGeneration,
+      lifecycleGeneration,
+      used === null ? null : used[0],
+      ...(used === null ? [pass.templateVersion] : []),
+      orgRevision,
+    ],
   );
   const keys = captureCredentialKeyEnv(env);
   const keysetCurrent = credentialRefKeysetCommitment(keys).then((actual) =>
@@ -162,7 +171,6 @@ export function prepareSnapshotFence(
   );
   return {
     keysetCurrent,
-    guard,
     statement,
     async complete(row) {
       if (!(await keysetCurrent)) return null;
@@ -227,4 +235,66 @@ export function prepareSnapshotFence(
       };
     },
   };
+}
+
+/** The pass read of an answer that is a refusal or heads-up: any state of the pass, as evaluated. */
+export async function passSnapshotFence(
+  db: D1Database,
+  pass: Pass,
+  checkInRules: CheckInPolicy | undefined,
+  connectionGeneration: number | null | undefined,
+  activeTemplateVersion: string | null | undefined,
+  orgRevision: number | null | undefined,
+  templateRevision: number | null | undefined,
+  now: number,
+  env: object,
+  release: ReleaseSnapshot | null | undefined,
+  snapshotRaw: string | null | undefined,
+): Promise<ActionPassFence | null> {
+  const prepared = prepareSnapshotFence(
+    db,
+    pass,
+    checkInRules,
+    connectionGeneration,
+    activeTemplateVersion,
+    orgRevision,
+    templateRevision,
+    now,
+    env,
+    release,
+    snapshotRaw,
+  );
+  if (!prepared || !(await prepared.keysetCurrent)) return null;
+  return prepared.complete(await prepared.statement.first<{ rules: string | null }>());
+}
+
+/** The pass read of an action on an active, present pass: it rides the batch that evaluates the action. */
+export function prepareActionPassFence(
+  db: D1Database,
+  pass: Pass,
+  checkInRules: CheckInPolicy | undefined,
+  connectionGeneration: number | null | undefined,
+  activeTemplateVersion: string | null | undefined,
+  orgRevision: number | null | undefined,
+  templateRevision: number | null | undefined,
+  now: number,
+  env: object,
+  release: ReleaseSnapshot | null | undefined,
+  snapshotRaw: string | null | undefined,
+): PreparedActionPassFence | null {
+  if (pass.status !== 'active' || pass.removedAt !== null) return null;
+  return prepareSnapshotFence(
+    db,
+    pass,
+    checkInRules ?? {},
+    connectionGeneration,
+    activeTemplateVersion,
+    orgRevision,
+    templateRevision,
+    now,
+    env,
+    release,
+    snapshotRaw,
+    'active',
+  );
 }

@@ -15,16 +15,36 @@ import { type AppBindings, requestContext } from '../../platform/context.ts';
 import { handleError } from '../../platform/error-handler.ts';
 import { createServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import type { Pass } from '../passes/repo-map.ts';
 import type { ScanActor } from './actor.ts';
 import { createScannerStore } from './auth-store.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
-import { actorAuthorityCurrent } from './repo-actor-authority.ts';
 import { revokeScannerForGuard } from './repo-guard-test-fixtures.ts';
+import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
+import { accepts } from './resolve-candidates.ts';
 import { evaluate } from './resolve-evaluate.ts';
 import { buildSession } from './session.ts';
 import { grantScanMembership } from './test-kit.ts';
 
 export const ORIGIN = 'https://wallet.test';
+
+/** The actor's authority as the scan routes apply it: its role and scope, then the same checks as a write. */
+async function authorized(
+  db: D1Database,
+  actor: ScanActor,
+  input: { now: number; templateId?: string; read?: { stafflessMonitor: true } },
+): Promise<boolean> {
+  // Only a monitor screen may stay staffless; every other actor needs its role and an accepted template.
+  if (actor.role === null && !(input.read && actor.scanner?.deviceRole === 'monitor')) return false;
+  if (actor.invalidScannerScope) return false;
+  if (!input.read && input.templateId && !accepts(actor, { templateId: input.templateId } as Pass))
+    return false;
+  const row = await scanAuthorizedStmt(
+    db,
+    scanReadAuthority(actor, input as Parameters<typeof scanReadAuthority>[1]),
+  ).first<{ authorized: number }>();
+  return row?.authorized === 1;
+}
 
 export function createGuardHarness() {
   let f: Fixtures;
@@ -102,11 +122,8 @@ export function createGuardHarness() {
       const actor = scanActorOf(c);
       const templateId = c.req.query('templateId');
       return c.json({
-        current: await actorAuthorityCurrent(c.env.DB, {
-          actor,
+        current: await authorized(c.env.DB, actor, {
           now: clock.now(),
-          event: actor.event,
-          adminEventTemplates: false,
           ...(templateId ? { templateId } : {}),
         }),
       });
@@ -127,16 +144,13 @@ export function createGuardHarness() {
         if (c.req.query('revoke') && actor.scanner)
           await revokeScannerForGuard(c.env.DB, actor.scanner.id, clock.now());
         const templateId = c.req.query('templateId');
-        const input = {
-          actor,
-          now: clock.now(),
-          event: actor.event,
-          adminEventTemplates: false,
-          ...(templateId ? { templateId } : {}),
-        };
+        const input = { now: clock.now(), ...(templateId ? { templateId } : {}) };
         return c.json({
-          strict: await actorAuthorityCurrent(c.env.DB, input),
-          monitor: await actorAuthorityCurrent(c.env.DB, { ...input, allowStafflessScreen: true }),
+          strict: await authorized(c.env.DB, actor, input),
+          monitor: await authorized(c.env.DB, actor, {
+            ...input,
+            read: { stafflessMonitor: true },
+          }),
         });
       },
     );

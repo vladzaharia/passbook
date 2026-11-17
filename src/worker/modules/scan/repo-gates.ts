@@ -4,10 +4,10 @@ import type { Pass } from '../passes/repo-map.ts';
 import type { Override } from './act-override.ts';
 import type { ScanActor } from './actor.ts';
 import type { AdmissionPlan } from './admission-types.ts';
+import type { ActionPassFence } from './repo-act-pass-fence.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
 import { liveEventPresenceSql } from './repo-event-attendance.ts';
 import { scanLedgerCommonScopeSql, scanLedgerSuccessfulCandidateSql } from './repo-feed-scope.ts';
-import type { ActionPassFence } from './repo-pass-authority.ts';
 import type { ScanEffectSnapshot } from './repo-scan-effect.ts';
 import { retainedEventCountSql } from './repo-scan-retention.ts';
 import type { ScanEventRow } from './repo-scope.ts';
@@ -37,7 +37,6 @@ export interface GateAuthority {
   approvedBy: string | null;
   approvedAuthEpoch: number | null;
   override: Override | null;
-  adminEventTemplates: boolean;
   /** Fresh authority and repeat-rule time; the gate transition retains the original claim time. */
   authorityNow?: number;
 }

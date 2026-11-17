@@ -1,7 +1,7 @@
 import type { SqlValue } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { ScanActor } from './actor.ts';
-import { effectiveReleaseIs, usedRelease } from './effective-release.ts';
+import { effectiveReleaseIdSql, effectiveReleaseIs, usedRelease } from './effective-release.ts';
 import { validCredentialTombstoneRefs } from './repo-credential-tombstones.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
@@ -12,6 +12,10 @@ import { actorPassScopeSql } from './repo-recipient-scope.ts';
 export interface Fence {
   sql: string;
   params: SqlValue[];
+  /** A staged fence keeps its deep scalars in CTEs (with their binds) joined by `from`, for a statement that cannot be deep. */
+  ctes?: string;
+  cteParams?: SqlValue[];
+  from?: string;
 }
 
 /** The tenant of the actor's own read: the `actor_ok` row of its authority. */
@@ -22,9 +26,27 @@ export const ACTOR_TENANT = { org: 'actor_ok.org_id', mode: 'actor_ok.mode' } as
  * holds, and so does `inner`, which may name the tenant as `actor_ok.org_id` and `actor_ok.mode`.
  */
 export function underAuthority(auth: StrictReadAuthority, inner: Fence): Fence {
+  const staged = underAuthorityCtes(auth, inner);
   return {
-    sql: `EXISTS (WITH ${auth.ctes} SELECT 1 FROM actor_ok WHERE ${inner.sql})`,
-    params: [...auth.params, ...inner.params],
+    sql: `EXISTS (WITH ${staged.ctes} SELECT 1 FROM under_inner)`,
+    params: staged.params,
+  };
+}
+
+/**
+ * `underAuthority` as CTEs for a statement's top-level `WITH`: the fence is `EXISTS (SELECT 1 FROM
+ * under_inner)`. Its depth stays out of the `WHERE` of the write it guards. The inner fence is its
+ * own materialized select, so it does not add to the statement it joins either.
+ */
+export function underAuthorityCtes(
+  auth: StrictReadAuthority,
+  inner: Fence,
+): { ctes: string; params: SqlValue[]; sql: string } {
+  return {
+    ctes: `${auth.ctes}${inner.ctes ? `, ${inner.ctes}` : ''}, under_inner AS MATERIALIZED (
+      SELECT 1 AS fenced FROM actor_ok${inner.from ? `, ${inner.from}` : ''} WHERE ${inner.sql})`,
+    params: [...auth.params, ...(inner.cteParams ?? []), ...inner.params],
+    sql: 'EXISTS (SELECT 1 FROM under_inner)',
   };
 }
 
@@ -60,29 +82,39 @@ export function refsClear(
 export function passAnswerFence(
   actor: ScanActor,
   candidate: Pick<Candidate, 'pass' | 'templateSnapshot'>,
-  input: { photo: boolean; refs: readonly string[] | undefined },
+  input: { photo: boolean; refs: readonly string[] | undefined; staged?: boolean },
 ): Fence | null {
   const scope = actorPassScopeSql(actor, 'p');
   const release = usedRelease(candidate.templateSnapshot?.raw);
   const refs = refsClear(input.refs);
   if (!scope || release === false || !refs) return null;
   const { pass } = candidate;
+  const releaseId = release === null ? null : release[0];
+  // Staged: the release is read once in its own CTE (joined), not inside the chain of the pass check.
+  const staged = input.staged === true;
   return {
     sql: `EXISTS (SELECT 1 FROM passes p
       WHERE p.id = ? AND p.org_id = ${ACTOR_TENANT.org} AND p.mode = ${ACTOR_TENANT.mode}
         AND ${passVisibleSql('p', { credential: '?', lifecycle: '?' })}
         ${input.photo ? 'AND p.image_generation = ?' : ''}
-        AND ${effectiveReleaseIs('p')} AND ${scope.sql}
+        AND ${staged ? 'ans_release.rid IS ?' : effectiveReleaseIs('p')} AND ${scope.sql}
         AND ${refs.sql})`,
     params: [
       pass.id,
       pass.credentialGeneration,
       pass.lifecycleGeneration,
       ...(input.photo ? [pass.imageGeneration] : []),
-      release === null ? null : release[0],
+      releaseId,
       ...scope.params,
       ...refs.params,
     ],
+    ...(staged
+      ? {
+          ctes: `ans_release AS MATERIALIZED (SELECT ${effectiveReleaseIdSql('p')} AS rid FROM passes p WHERE p.id = ?)`,
+          cteParams: [pass.id],
+          from: 'ans_release',
+        }
+      : {}),
   };
 }
 

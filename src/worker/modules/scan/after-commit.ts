@@ -1,4 +1,4 @@
-import type { OutputPredicate } from './repo-output-predicates.ts';
+import type { ScanPredicate } from './scan-predicate.ts';
 
 declare const afterCommitBrand: unique symbol;
 
@@ -7,7 +7,7 @@ declare const afterCommitBrand: unique symbol;
  * batch of choose, answer and stop needs no second actor or pass fence. It can only be made from a
  * committed grant result, so a path that has not committed has no way to ask for an open fence.
  */
-export interface AfterCommit extends OutputPredicate {
+export interface AfterCommit extends ScanPredicate {
   readonly [afterCommitBrand]: true;
 }
 

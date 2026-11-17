@@ -2,10 +2,10 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { first } from '../../platform/db.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { scannerActor, withRole } from './actor.ts';
+import { candidateAuthority } from './candidate-authority-test-fixtures.ts';
 import { cardLastScansSplitFixture } from './card-last-scans-split-fixture.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { foundOf } from './resolve.ts';
 import { isFinalizedDisplayHistory, prepareDisplayHistory } from './scan-display-history.ts';
@@ -41,24 +41,13 @@ describe('card last-scan privacy', () => {
     const other = await credentialRefKeysetCommitment({ KEK_V1: btoa('a'.repeat(32)) });
     expect(other).not.toBe(original);
     const now = kit.clock.now();
-    const authority = outputAuthorityPredicate({
+    const authority = candidateAuthority(
       actor,
-      event: found.admission?.event ?? actor.event,
+      found.liveCandidate,
       now,
-      credentialTombstoneRefs: found.credentialTombstoneRefs,
-      credentialKeysetCommitment: original,
-      templateId: found.pass.templateId,
-      pass: found.liveCandidate?.pass ?? found.pass,
-      connectionGeneration: found.connectionGeneration,
-      activeTemplateVersion: found.activeVersion,
-      orgRevision: found.orgRevision,
-      templateRevision: found.templateRevision,
-      release: found,
-      displayTemplateVersion: found.displayTemplateVersion,
-      checkInRules: found.checkInRules,
-      lookupHash: found.liveCandidate?.lookupHash,
-      requireActive: true,
-    });
+      found.admission?.event ?? actor.event,
+      found.credentialTombstoneRefs,
+    );
     const needs = { history: [], ledger: [] };
     const plan = await prepareDisplayHistory(kit.ctx, actor, found, needs);
     const initial = plan.bind(now, authority);

@@ -1,8 +1,8 @@
 import { beforeAll, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { eventPassPredicate } from './repo-action-authority.ts';
 import { getScanner } from './repo-device.ts';
+import { actorPassScopeSql } from './repo-recipient-scope.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { codeOf, key, proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -43,7 +43,7 @@ it('applies the same event filter to check-in and expected membership', async ()
   ).toBeNull();
 });
 
-it('fails closed on malformed filters and SQLite numeric representations at the pass fence', async () => {
+it('fails closed on malformed filters and SQLite numeric representations at the pass scope', async () => {
   const event = await kit.event({ templateIds: [templateId] });
   const scanner = await kit.scanner({ eventId: event.id });
   const row = await getScanner(kit.env.DB, scanner.id);
@@ -54,7 +54,8 @@ it('fails closed on malformed filters and SQLite numeric representations at the 
     withRole(scannerActor(kit.ctx, row, row.mode, 'cookie', scope), null),
   );
   const pass = await kit.scanPass(templateId, { tier: 'gold', balance: 1 });
-  const fence = eventPassPredicate(actor, actor.event);
+  const fence = actorPassScopeSql(actor, 'p');
+  if (!fence) throw new Error('Missing event scope');
   const allowed = () =>
     first<{ allowed: number }>(
       kit.env.DB,

@@ -7,7 +7,6 @@ import { first, run, stmt } from '../../platform/db.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { withKitDatabase } from '../passes/pass-test-fixtures.ts';
-import { candidateInitializationFence } from './repo-act.ts';
 import {
   grantScanMembership,
   key,
@@ -366,57 +365,3 @@ it.each(['retained', 'existing'] as const)(
     else expect(actual).toBeNull();
   },
 );
-
-it('preserves grouped OR, nulls, quoted parentheses and bind order in the claim fence', async () => {
-  const f = await fixture();
-  const db = f.kit.env.DB;
-  const actorKey = f.actorKey;
-  const idempotencyKey = f.request.idempotencyKey;
-  await run(
-    db,
-    `INSERT INTO scans
-    (id,org_id,mode,actor_type,actor_id,actor_key,idempotency_key,request_hash,method,state,at)
-    VALUES (?,?, 'live','user',?,?,?,'hash','manual','pending',?)`,
-    [
-      f.kit.fx.ids.id(),
-      f.kit.org.id,
-      actorKey.slice(2),
-      actorKey,
-      idempotencyKey,
-      f.kit.clock.now(),
-    ],
-  );
-  const pristine = {
-    sql: 'scans.org_id=? AND scans.request_hash=?',
-    params: [f.kit.org.id, 'hash'],
-  };
-  const expression = `((?='quoted ) AND ( value') AND ((? IS NULL) OR (?=1)))
-    AND ((?='escaped '' ) AND ( value') AND (?=1 /* ) AND ( */))`;
-  const cases = [
-    { params: ['quoted ) AND ( value', null, 0, "escaped ' ) AND ( value", 1], expected: 1 },
-    { params: ['quoted ) AND ( value', 'not null', 0, "escaped ' ) AND ( value", 1], expected: 0 },
-    { params: ['quoted ) AND ( value', null, 0, "escaped ' ) AND ( value", 0], expected: 0 },
-  ];
-  for (const { params, expected } of cases) {
-    const guard = { sql: expression, params };
-    const staged = candidateInitializationFence(actorKey, idempotencyKey, pristine, guard);
-    const original = `changes()=1 AND EXISTS (SELECT 1 FROM scans
-      WHERE scans.actor_key=? AND scans.idempotency_key=? AND scans.state='pending'
-        AND (${pristine.sql})) AND (${guard.sql})`;
-    const [, direct, isolated] = await db.batch<{ valid: number }>([
-      stmt(db, 'UPDATE scans SET at=at WHERE actor_key=? AND idempotency_key=?', [
-        actorKey,
-        idempotencyKey,
-      ]),
-      stmt(db, `SELECT CASE WHEN (${original}) THEN 1 ELSE 0 END AS valid`, [
-        actorKey,
-        idempotencyKey,
-        ...pristine.params,
-        ...guard.params,
-      ]),
-      stmt(db, `SELECT CASE WHEN (${staged.sql}) THEN 1 ELSE 0 END AS valid`, staged.params),
-    ]);
-    expect(direct?.results).toEqual([{ valid: expected }]);
-    expect(isolated?.results).toEqual(direct?.results);
-  }
-});

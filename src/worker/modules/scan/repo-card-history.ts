@@ -8,9 +8,9 @@ import {
   scanCurrentCredentialLineageSql,
   uniqueScanEventIdSql,
 } from './repo-history-provenance.ts';
-import type { OutputPredicate } from './repo-output-predicates.ts';
 import type { Raw } from './repo-scan-map.ts';
 import { scanRetentionExcludedSql } from './repo-scan-retention.ts';
+import type { ScanPredicate } from './scan-predicate.ts';
 
 export interface CardHistoryQuery {
   orgId: string;
@@ -172,7 +172,7 @@ export function cardHistoryStmt(db: D1Database, query: CardHistoryQuery): D1Prep
   return stmt(db, CARD_HISTORY_SQL, [query.orgId, query.mode, query.passId, query.templateId]);
 }
 
-export type CardHistoryFence = OutputPredicate;
+export type CardHistoryFence = ScanPredicate;
 
 /**
  * Recheck in the final actor/pass authorization statement that the pass is still the one the rows

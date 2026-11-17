@@ -12,7 +12,6 @@ import {
   snapshotCredentialEnv,
 } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
-import { boundedClaimPredicate } from './repo-act-claim-lifecycle.ts';
 import {
   credentialTombstonesClearStmt,
   validCredentialKeysetCommitment,
@@ -109,13 +108,7 @@ export async function planCandidateReads(
   // On a grant, the keyset write is the grant's part: a placeholder keeps the result positions.
   if (guard && keysetOnGrant) stmts.unshift(stmt(db, 'SELECT 1 AS keyset_on_grant'));
   else if (guard)
-    stmts.unshift(
-      credentialRefKeysetInitializeStmt(
-        db,
-        refs.credentialKeysetCommitment,
-        initGuard ? boundedClaimPredicate(guard, 1) : guard,
-      ),
-    );
+    stmts.unshift(credentialRefKeysetInitializeStmt(db, refs.credentialKeysetCommitment, guard));
   const capacityStmt = candidateCapacityStmt(db, actor, capacityInput);
   return {
     now,

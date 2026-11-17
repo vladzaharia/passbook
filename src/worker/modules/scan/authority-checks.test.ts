@@ -14,7 +14,7 @@ import { first } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { captureScanEpochs, scanActorChecks, scanPrincipal } from './authority-checks.ts';
 import { createGuardHarness, get } from './guard-test-fixtures.ts';
-import { actorAuthorityCurrent } from './repo-actor-authority.ts';
+import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
 import { getEvent } from './repo-scope.ts';
 import { copyScanEpochs, scanEpochsOf } from './scan-epochs.ts';
 
@@ -55,13 +55,13 @@ describe('scan actor authority: epochs and grant checks', () => {
       );
     return { actor, scannerId, send, refused };
   }
-  const authority = (actor: NonNullable<typeof harness.capturedActor>) =>
-    actorAuthorityCurrent(env.DB, {
-      actor,
-      now: clock.now(),
-      event: actor.event,
-      adminEventTemplates: false,
-    });
+  const authority = async (actor: NonNullable<typeof harness.capturedActor>) => {
+    const row = await scanAuthorizedStmt(
+      env.DB,
+      scanReadAuthority(actor, { now: clock.now() }),
+    ).first<{ authorized: number }>();
+    return row?.authorized === 1;
+  };
 
   describe('captured epochs', () => {
     it('are the ones stored in the scanner row the credential was verified against', async () => {

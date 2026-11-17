@@ -243,7 +243,7 @@ export function registerAuthorityRetirement() {
                   target,
                   change === 'voided'
                     ? "UPDATE passes SET status='voided' WHERE id=?"
-                    : 'UPDATE passes SET link_generation=link_generation+1 WHERE id=?',
+                    : 'UPDATE passes SET lifecycle_generation=lifecycle_generation+1 WHERE id=?',
                   [pass.id],
                 );
               }

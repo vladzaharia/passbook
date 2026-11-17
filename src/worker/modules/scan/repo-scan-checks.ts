@@ -1,7 +1,9 @@
-import { type Check, rawCheck } from '../../platform/authority-checks.ts';
+import { type Check, rawCheck, tenantMatch } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
+import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, readPart } from '../../platform/authority-include.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
+import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
 
 /** The SQL behind the scan grant checks (`authority-checks.ts`, `scan-pass-checks.ts`, `scan-write-grant.ts`). */
@@ -125,3 +127,75 @@ export const dailyAmountCheck = (
        AND s.outcome = 'ok' AND s.undone_by IS NULL AND s.at >= ?), 0) + ? <= ?`,
     [actorKey, since, amount, limit],
   );
+
+/**
+ * The pass is still used under the release the answer was evaluated under (`lineage`, 409
+ * `SCAN_PASS_CHANGED`), by content: it holds when the release the pass would be used under now is
+ * the one evaluated, or says the same about everything a scanner sees or may do (version,
+ * content hash, adapter revision and capabilities, audience policy revision, org: FIX35's
+ * `ownReleaseSaysSameSql`). A republish, or the first head of a legacy pass that is its own
+ * pinned version, is no change; another version or adapter is. A legacy pass (no release) holds
+ * while it has no head, or the head is its pinned version. A snapshot without a release is false.
+ * In a grant that is the commit itself, so no read of this rides before it.
+ *
+ * The release SQL names org and mode columns of its own (`tenantCheck` refuses that), so this is a
+ * hand-built `Check`, made only here: the pass is pinned by the grant's tenant (`tenantMatch`
+ * against the actor row) and `assertReleaseCheckText` refuses, at render, any text whose `passes`
+ * alias is not so pinned, that compares a tenant column to a bound value, that uses the reserved `g`
+ * alias or an `a` other than `a.org_id` / `a.mode`, or that binds a different number of values.
+ */
+export function effectiveReleaseCheck(
+  passId: string,
+  snapshotRaw: string | null | undefined,
+): Check {
+  const used = usedRelease(snapshotRaw);
+  if (used === false) return rawCheck('lineage', '0');
+  return {
+    reason: 'lineage',
+    ok: (b, scope) => {
+      if (scope === 'platform')
+        throw new AuthorityError('GRANT_SCOPE_OVERRIDE', 'A release check needs a tenant.');
+      const before = b.params.length;
+      const head = `LEFT JOIN template_releases cur ON cur.id = ${effectiveReleaseIdSql('p')}`;
+      const pinned = `p.id = ${b.bind(passId)} AND ${tenantMatch('passes', 'p', scope, 'a')}`;
+      const same =
+        used === null
+          ? '(cur.id IS NULL OR cur.version = p.template_version)'
+          : `(cur.id IS ${b.bind(used[0])} OR EXISTS (SELECT 1 FROM template_releases ev
+              WHERE ev.id = ${b.bind(used[0])} AND ev.version = cur.version
+                AND ev.content_hash = cur.content_hash
+                AND ev.adapter_revision = cur.adapter_revision
+                AND ev.adapter_capabilities = cur.adapter_capabilities
+                AND ev.audience_policy_revision = cur.audience_policy_revision
+                AND ev.org_id IS cur.org_id))`;
+      const text = `EXISTS (SELECT 1 FROM passes p ${head} WHERE ${pinned} AND ${same})`;
+      assertReleaseCheckText(text, b.params.length - before, scope);
+      return text;
+    },
+  };
+}
+
+export function assertReleaseCheckText(
+  text: string,
+  bound: number,
+  scope: 'org' | 'org_mode' | 'platform',
+): void {
+  const bad = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE', message);
+  const aliases = [...text.matchAll(/\b(?:FROM|JOIN)\s+passes\s+(\w+)/gi)].map((m) => m[1] ?? '');
+  if (aliases.length !== 1 || aliases[0] !== 'p')
+    throw bad('A release check reads exactly one passes alias, p.');
+  if (
+    !text.includes('p.org_id = a.org_id') ||
+    (scope === 'org_mode' && !text.includes('p.mode = a.mode'))
+  )
+    throw bad('The pass of a release check is pinned by the grant tenant.');
+  if (/\b(?:org_id|mode)\s*(?:=|IS)\s*\?/i.test(text))
+    throw bad('A release check never compares a tenant column to a bound value.');
+  if (
+    /\bg\./.test(text) ||
+    [...text.matchAll(/\ba\.(\w+)/g)].some((m) => m[1] !== 'org_id' && m[1] !== 'mode')
+  )
+    throw bad('The aliases a and g are reserved in a release check.');
+  if ((text.match(/\?/g)?.length ?? 0) !== bound)
+    throw bad('A release check binds as many values as it has marks.');
+}

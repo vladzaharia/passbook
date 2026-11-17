@@ -1,4 +1,4 @@
-import { beforeAll, expect } from 'vitest';
+import { beforeAll } from 'vitest';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import {
   CreateScanningDeviceSchema,
@@ -14,7 +14,6 @@ import { pairHere } from './pairing-token.ts';
 import { getScanner, scannerEpochsOf } from './repo-device.ts';
 import { getConsoleScanner } from './repo-scanners.ts';
 import { readScannerScope } from './repo-scope.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import { createScanningDevice } from './scanning-devices.ts';
 import { captureConsoleSessionCountAuthority } from './scanning-session-dto.ts';
 import { createScanningSession } from './scanning-sessions.ts';
@@ -166,25 +165,4 @@ export async function revokeCapabilityPlatformSession(
   sessionId: string,
 ) {
   await run(db, 'UPDATE sessions SET revoked_at=? WHERE id_hash=?', [now, sessionId]);
-}
-
-export function expectScalarSecret(
-  writes: { sql: string; values: unknown[] }[],
-  secret: string,
-  label: string,
-) {
-  expect(writes.length).toBeGreaterThan(0);
-  for (const { sql, values } of writes) {
-    const slots = scanSecretSlots(sql, values.length);
-    expect(sql).toContain('json(?) AS data');
-    expect(slots).not.toBeNull();
-    const positions = values.flatMap((value, index) => (value === secret ? [index] : []));
-    expect(positions).toHaveLength(1);
-    if (!slots) throw new Error('Expected SQL secret slots');
-    const position = positions[0];
-    if (position === undefined) throw new Error('Expected a unique SQL secret slot');
-    expect(slots[position]?.label).toBe(label);
-    for (const value of values)
-      if (typeof value === 'string' && value !== secret) expect(value).not.toContain(secret);
-  }
 }

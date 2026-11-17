@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import { run } from '../../platform/db.ts';
+import { candidateAuthority } from './candidate-authority-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
 import { CHECK_IN, policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { foundOf } from './resolve.ts';
 import { prepareDisplayHistory } from './scan-display-history.ts';
@@ -29,24 +29,7 @@ async function checkedIn() {
     const found = await foundOf(kit.ctx, candidate, s.actor);
     if (!found) throw new Error('Missing authorized pass');
     const now = kit.clock.now();
-    const authority = outputAuthorityPredicate({
-      actor: s.actor,
-      event: s.actor.event,
-      now,
-      templateId: found.pass.templateId,
-      pass: candidate.pass,
-      connectionGeneration: candidate.connectionGeneration,
-      activeTemplateVersion: candidate.activeTemplateVersion,
-      orgRevision: candidate.orgRevision,
-      templateRevision: candidate.templateRevision,
-      release: candidate,
-      displayTemplateVersion: candidate.displayTemplateVersion,
-      checkInRules: candidate.checkInRules,
-      lookupHash: candidate.lookupHash,
-      requireActive: true,
-      credentialTombstoneRefs: [],
-      credentialKeysetCommitment: candidate.credentialKeysetCommitment,
-    });
+    const authority = candidateAuthority(s.actor, candidate, now, s.actor.event);
     await between?.();
     // The read, then (a caller's window for a race), then the final batch.
     const plan = await prepareDisplayHistory(kit.ctx, s.actor, found, NEEDS);

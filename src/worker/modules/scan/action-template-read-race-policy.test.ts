@@ -145,7 +145,7 @@ describe('action policy from captured D1 template rows', () => {
     );
   });
 
-  it('allows the unchanged legacy pin and admits the first approved head at commit', async () => {
+  it('allows the unchanged legacy pin and admits the first approved head of its own build at commit', async () => {
     const valid = await fixture(kit, { legacy: true });
     const candidate = await candidateById(kit.env.DB, kit.org.id, valid.pass.id);
     expect(candidate).toMatchObject({
@@ -162,7 +162,7 @@ describe('action policy from captured D1 template rows', () => {
     const result = await race(kit, stale.scanner.headers, request, 'INSERT INTO scan_gates', (db) =>
       approveAppleRelease(kit, { db, templateId: stale.templateId, version: 'v1', mode: 'live' }),
     );
-    // The first approved head is a release (content), not authority: the visit is recorded.
+    // The first approved head is this pass's own build (same version and content): no change, the visit is recorded.
     expect(result.kind).toBe('ok');
     expect(
       await effects(kit.env.DB, stale.pass.id, request.idempotencyKey, kit.org.id),
