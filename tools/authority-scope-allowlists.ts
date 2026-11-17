@@ -19,23 +19,21 @@ export const RAW_WRITE_ALLOWLIST: Record<string, string> = {
     'sign-in finds or creates the user and stamps last login before any principal exists',
   'src/worker/modules/me/repo.ts': 'a user edits their own primary email under their own session',
   'src/worker/modules/orgs/repo.ts':
-    'trusted callers without an admin session (fixtures, service tests): setOrgBranding, setOrgStatus, markOrgDeleted, insertOrg. Routes use platform.org.* grants',
+    'trusted callers without an admin session: markOrgDeleted, insertOrg. Routes use platform.org.* grants',
   'src/worker/modules/orgs/repo-org-writes.ts':
     'the CAS-only org edit for a trusted caller without authority; tenant edits are org.org.update grants',
   'src/worker/modules/orgs/repo-members.ts':
-    'invitation accept (the token is the authority) and the revokeMembership fixture helper; manager writes are org.member.* grants',
+    'invitation accept (the token is the authority); manager writes are org.member.* grants',
   'src/worker/modules/settings/repo.ts':
-    'trusted org settings writes without authority (fixtures) and system-scope job values; routes use settings grants',
+    'system-scope job values (cron runs, identity checks); the settings routes use grants',
   'src/worker/modules/users/repo.ts':
-    'trusted setStatus for service callers without an admin session; the route uses platform.user.* grants',
+    'primary-email change and email removal behind the admin route (requireAdmin session); status changes are platform.user.* grants',
   'src/worker/modules/scan/repo-scans.ts':
     "release, fail, quarantine and retention purge of the actor's own server-minted claim row: they run after authority is revoked and only close a claim; a scan takes effect only through scan.* grants",
   'src/worker/modules/scan/repo-act-claim.ts':
     "reopen, quarantine and fail of the actor's own claim generation after a key collision, still fenced by the claim authority predicate; a fresh claim is the org_mode.scan.claim upsert",
   'src/worker/modules/scan/repo-gate-recovery.ts':
     'server-side recovery of a crashed claim: quarantines the claim and restores only gate and presence snapshots that still match what the crashed scan wrote; it runs from the recovery job (or once per collision) and takes no actor authority',
-  'src/worker/modules/scan/repo-scans-write.ts':
-    'claim, finalize and ledger statements kept for fixtures and the reconcile tests; production writes are scan.* grants',
   'src/worker/modules/scan/repo-counts.ts':
     'scan_events.expected is an idempotent cache fill on a GET (volatile, derived from the guarded event config_epoch); it is not authority',
   'src/worker/modules/events/repo.ts':

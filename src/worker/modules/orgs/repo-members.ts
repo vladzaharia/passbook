@@ -114,26 +114,6 @@ export function activePrincipal(db: D1Database, userId: string, orgId: string) {
     [orgId, userId],
   );
 }
-const holdsOrgAdmin = (alias: string) =>
-  `EXISTS (SELECT 1 FROM json_each(${alias}.roles) ar WHERE ar.value = 'org_admin')`;
-const otherAdmin = `SELECT 1 FROM org_memberships o2 JOIN users u2 ON u2.id = o2.user_id
- WHERE o2.org_id = ? AND o2.id != ? AND o2.revoked_at IS NULL AND u2.status = 'active' AND ${holdsOrgAdmin('o2')}`;
-export function revokeMembership(
-  db: D1Database,
-  orgId: string,
-  id: string,
-  now: number,
-  userId: string,
-  admin: AdminFence | boolean,
-) {
-  const m = manager(orgId, userId, admin);
-  return stmt(
-    db,
-    `UPDATE org_memberships SET revoked_at = ? WHERE id = ? AND org_id = ? AND revoked_at IS NULL
- AND (NOT ${holdsOrgAdmin('org_memberships')} OR EXISTS (${otherAdmin})) AND ${m.sql}`,
-    [now, id, orgId, orgId, id, ...m.params],
-  );
-}
 export function acceptMembership(
   db: D1Database,
   id: string,

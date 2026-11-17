@@ -2,7 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { first } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { candidateHash } from '../templates/release-content.ts';
-import { activeReleaseIdSql } from '../templates/repo-releases.ts';
+import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
   type NativeProjection,
@@ -36,7 +36,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
     "'",
     "''",
   );
-  const source = activeReleaseIdSql({
+  const source = effectiveReleaseIdSql({
     templateIdSql: 'pc.template_id',
     orgIdSql: 'pc.org_id',
     modeSql: 'pc.mode',
@@ -104,7 +104,7 @@ export async function effectiveAppleSourceId(
   db: D1Database,
   scope: { templateId: string; orgId: string; mode: Mode },
 ): Promise<string | null> {
-  const sql = activeReleaseIdSql({
+  const sql = effectiveReleaseIdSql({
     templateIdSql: 'requested.template_id',
     orgIdSql: 'requested.org_id',
     modeSql: 'requested.mode',

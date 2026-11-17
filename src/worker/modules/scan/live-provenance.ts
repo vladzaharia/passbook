@@ -158,7 +158,7 @@ export const liveActorSchema = z.strictObject({
     .strictObject({
       kind: z.literal('session'),
       orgId: IdSchema,
-      orgUpdatedAt: revisionNumber,
+      orgAccessRevision: revisionNumber,
       userId: IdSchema,
       userAccessRevision: revisionNumber.optional(),
       sessionId: z.string().min(1),

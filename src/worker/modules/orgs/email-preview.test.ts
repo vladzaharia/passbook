@@ -12,6 +12,7 @@ import {
   makeUser,
   persistTemplate,
   type SessionFixture,
+  saveOrgSettings,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
@@ -20,7 +21,6 @@ import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { updateSettings } from '../settings/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { crc32, sha1Hex } from '../templates/package/hash.ts';
 import { r2Key } from '../templates/registry.ts';
@@ -383,13 +383,11 @@ describe('email preview drafts', () => {
     const org = await makeOrg(fixtures(appEnv));
     await join(org.id);
     const ctx = createServiceContext(appEnv, { clock });
-    await updateSettings(
-      ctx,
-      { type: 'user', id: orgAdmin.userId },
-      {
-        scope: `org:${org.id}`,
-        values: { 'support.email': 'saved@gym.test', 'support.url': 'https://gym.test/saved' },
-      },
+    await saveOrgSettings(
+      ctx.env.DB,
+      org.id,
+      { 'support.email': 'saved@gym.test', 'support.url': 'https://gym.test/saved' },
+      ctx.clock.now(),
     );
     const saved = await preview(org.id);
     expect(saved).toContain('saved@gym.test');

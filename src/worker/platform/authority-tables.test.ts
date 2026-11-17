@@ -67,14 +67,6 @@ describe('GrantInput.tables', () => {
     ).toBe('GRANT_TABLE_NOT_ALLOWED');
     expect(
       refused(() =>
-        g.unguarded(
-          'INSERT INTO counters (key, window_start, count) SELECT ?, 1, 1 FROM authority_grants g WHERE g.id = ?',
-          ['k', g.id],
-        ),
-      ),
-    ).toBe('GRANT_TABLE_NOT_ALLOWED');
-    expect(
-      refused(() =>
         g.insertSelect('pass_events', ['pass_id', 'kind', 'data', 'at'], [s.pass.id, 'k', '{}', 1]),
       ),
     ).toBeNull();
@@ -119,14 +111,9 @@ describe('GrantInput.tables', () => {
     expect(codeOf(() => g.delete('scan_gates', { where: { action_id: 'x' } }))).toBe(
       'GRANT_TABLE_NOT_ALLOWED',
     );
-    expect(
-      codeOf(() =>
-        g.unguarded(
-          'DELETE FROM counters WHERE EXISTS (SELECT 1 FROM authority_grants g WHERE g.id = ?)',
-          [g.id],
-        ),
-      ),
-    ).toBe('GRANT_TABLE_NOT_ALLOWED');
+    expect(codeOf(() => g.include(writePart('DELETE FROM counters WHERE {grant}')))).toBe(
+      'GRANT_TABLE_NOT_ALLOWED',
+    );
     expect(
       codeOf(() =>
         g.update('templates', { set: { status: 'archived' }, where: { id: 't', origin: 'baked' } }),
@@ -141,10 +128,7 @@ describe('GrantInput.tables', () => {
     ).toBeNull();
     expect(
       codeOf(() =>
-        g.unguarded(
-          'INSERT INTO template_versions (template_id) SELECT 1 FROM authority_grants g WHERE g.id = ?',
-          [g.id],
-        ),
+        g.include(writePart('INSERT INTO template_versions (template_id) SELECT 1 WHERE {grant}')),
       ),
     ).toBeNull();
   });

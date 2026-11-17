@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { makeApiKey, runOne } from '../../../../test/helpers/index.ts';
+import { makeApiKey, runOne, saveOrgSettings } from '../../../../test/helpers/index.ts';
 import { all, first } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
-import { updateSettings } from '../settings/service.ts';
 import type { ApiKeyAuthority } from './access.ts';
 import { type ApiKeyRow, createKey, revokeKey } from './repo.ts';
 import { f, h, member, org, other, setup, teardown } from './test-kit.ts';
@@ -163,13 +162,11 @@ describe('API key grants: safety', () => {
 describe('API key grants: liveness', () => {
   it('creates and revokes after a settings save, and audits a revoke once', async () => {
     const { authority } = await authorityFor('org_admin');
-    await updateSettings(
-      ctx(),
-      { type: 'system', id: null },
-      {
-        scope: `org:${org.id}`,
-        values: { 'support.email': 'help@example.test' },
-      },
+    await saveOrgSettings(
+      ctx().env.DB,
+      org.id,
+      { 'support.email': 'help@example.test' },
+      ctx().clock.now(),
     );
     const key = row(org.id, ['passes:read']);
     await createKey(ctx(), key, authority, entry('api_key.create', key.id));

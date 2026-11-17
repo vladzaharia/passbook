@@ -145,11 +145,7 @@ describe('E: parts are inert and ordered (20, 21)', () => {
     expect(() => w.run()).toThrow(
       expect.objectContaining({ code: 'GRANT_STATEMENT_OUTSIDE_BATCH' }),
     );
-    const late = g.unguarded(
-      'INSERT INTO counters (key, window_start, count) SELECT ?, 1, 1 FROM authority_grants g WHERE g.id = ?',
-      ['inc-3', g.id],
-    );
-    g.add(late, first);
+    const [late] = g.include(writePart(COUNTER, ['inc-3', 1])) as [typeof w];
     const [r] = g.include(readPart('SELECT {org} AS o, ? AS tag', ['late'])) as [typeof w];
     expect([g.indexOf(first), g.indexOf(w), g.indexOf(late), g.indexOf(r)]).toEqual([0, 1, 2, 3]);
     const res = await g.commit();
