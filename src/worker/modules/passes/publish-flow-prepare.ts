@@ -2,7 +2,6 @@ import type { PassJson } from '../../../passkit/types.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { withoutPersonalizationFiles } from '../apple/personalize-files.ts';
-import { isPersonalized } from '../apple/repo-personalize.ts';
 import { type BuildRequest, buildArtifact } from './builder.ts';
 import type { PublishOptions } from './publish.ts';
 import { artifactCredentialRefs, type PublishAttempt } from './publish-service-artifact.ts';
@@ -13,8 +12,7 @@ import {
   resolvePublishRelease,
 } from './publish-service-release.ts';
 import type { Pass } from './repo-map.ts';
-import { getOrg } from './repo-read-issuance.ts';
-import { currentPassJson } from './repo-read-pass.ts';
+import type { PublishReads } from './repo-read-publish-bundle.ts';
 import type { PublishRemovalSnapshot } from './repo-write-publish-snapshot.ts';
 import { newScanCode } from './scan-code.ts';
 
@@ -25,6 +23,7 @@ export interface PublishReleaseState {
 
 interface PublishBuildSnapshot {
   current: Pass;
+  reads: PublishReads;
   removalSnapshot: PublishRemovalSnapshot & {
     publishedGeneration: number | null;
     imageGeneration: number;
@@ -48,7 +47,7 @@ export async function preparePublishAttempt(
   credentialEnv: object,
   credentialKeysetCommitment: string,
 ): Promise<PreparedPublishAttempt> {
-  const { current, removalSnapshot } = snapshot;
+  const { current, removalSnapshot, reads } = snapshot;
   const expectedPassBase = {
     ...current,
     removalMessage: removalSnapshot.message,
@@ -86,12 +85,11 @@ export async function preparePublishAttempt(
   }
   // Re-rendering a pass at its own version is use, not issuance: it needs no head, so a newer,
   // withdrawn or missing release (archived template) never refuses it.
-  const db = ctx.env.DB;
-  const org = await getOrg(db, current.orgId);
+  const org = reads.org;
   if (!org) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   // Once Wallet has personalized the pass, personalization.json must stay out of every build.
-  const buildCtx = (await isPersonalized(db, current.id)) ? withoutPersonalizationFiles(ctx) : ctx;
-  const previousJson = await currentPassJson(db, current.id);
+  const buildCtx = reads.personalized ? withoutPersonalizationFiles(ctx) : ctx;
+  const previousJson = reads.previousJson;
   const previous = options.notify === undefined ? null : previousJson;
   // Older passes get their scan code on the first publish after it was introduced.
   const scanCode = current.scanCode ?? newScanCode(ctx);

@@ -11,33 +11,17 @@ beforeAll(setupActionFixture);
 async function tripsOf(headers: Record<string, string>, run: () => Promise<unknown>) {
   const original = kit.env.DB;
   const counted = countD1(original);
-  const calls: string[] = [];
-  const traced = new Proxy(counted.db, {
-    get(target, prop) {
-      const value = Reflect.get(target, prop, target);
-      if (prop === 'batch')
-        return (statements: D1PreparedStatement[]) => {
-          const done = (value as (s: D1PreparedStatement[]) => Promise<unknown>).call(
-            target,
-            statements,
-          );
-          const batch = counted.sql().slice(-statements.length);
-          calls.push(
-            `[${statements.length}] ${batch.map((q) => q.replace(/\s+/g, ' ').slice(0, 28)).join(' | ')}`,
-          );
-          return done;
-        };
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  Object.assign(kit.env, { DB: traced });
+  Object.assign(kit.env, { DB: counted.db });
   try {
     await kit.post(headers, '/actions', {});
     const guard = counted.count();
     counted.reset();
-    calls.length = 0;
     clearSettingsCache(counted.db);
     await run();
+    const calls = counted
+      .tripLog()
+      .slice(guard)
+      .map((t) => `[${t.length}] ${t.map((q) => q.replace(/\s+/g, ' ').slice(0, 28)).join(' | ')}`);
     return { trips: counted.count() - guard, calls };
   } finally {
     Object.assign(kit.env, { DB: original });
@@ -47,7 +31,7 @@ async function tripsOf(headers: Record<string, string>, run: () => Promise<unkno
 const heads = (calls: string[]) => `\n${calls.join('\n')}`;
 
 describe('value action round trips (design 4.7)', () => {
-  it('an add that publishes a new artifact: 21 trips, 7 of them batches, one grant batch writes it', async () => {
+  it('an add that publishes a new artifact: 17 trips, one grant batch writes it', async () => {
     const t = await kit.scanTemplate('Value trips', {
       actions: [
         { id: 'add', label: 'Add', kind: 'add', input: 'balance', amount: 1, repeat: 'always' },
@@ -61,7 +45,8 @@ describe('value action round trips (design 4.7)', () => {
       expect(o.kind).toBe('ok');
     });
     // Not the check-in's five: the publish reads and builds the pass first (template, release, assets).
-    // This holds the number where it is; a value fast path would lower it.
-    expect(trips, heads(calls)).toBeLessThanOrEqual(21);
+    // The publish reads its pass, removal, org, personalization and history in one batch (21 before).
+    // Fewer needs the claim batch to carry the pass row and the builder's reads to join it.
+    expect(trips, heads(calls)).toBeLessThanOrEqual(17);
   });
 });

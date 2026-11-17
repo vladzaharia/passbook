@@ -14,30 +14,6 @@ import {
   devicePrincipal,
 } from './repo-credential.ts';
 
-export interface PersonalizationRow {
-  passId: string;
-  tokenSha256: string;
-  publishedAt: number | null;
-}
-
-export async function getPersonalization(
-  db: D1Database,
-  passId: string,
-): Promise<PersonalizationRow | null> {
-  const row = await first<{ pass_id: string; token_sha256: string; published_at: number | null }>(
-    db,
-    'SELECT pass_id, token_sha256, published_at FROM pass_personalizations WHERE pass_id = ?',
-    [passId],
-  );
-  return row
-    ? { passId: row.pass_id, tokenSha256: row.token_sha256, publishedAt: row.published_at }
-    : null;
-}
-
-export async function isPersonalized(db: D1Database, passId: string): Promise<boolean> {
-  return (await getPersonalization(db, passId)) !== null;
-}
-
 /** Personalization is an unauthenticated serial capability, so its snapshot must still be live. */
 export async function personalizationCredentialCurrent(
   db: D1Database,
@@ -51,6 +27,12 @@ export async function personalizationCredentialCurrent(
       appleCredentialParams(pass),
     )) !== null
   );
+}
+
+export interface PersonalizationRow {
+  passId: string;
+  tokenSha256: string;
+  publishedAt: number | null;
 }
 
 export async function getCredentialPersonalization(

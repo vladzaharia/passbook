@@ -53,8 +53,8 @@ export async function registrationsSince(
   return row?.n ?? 0;
 }
 
-export async function registrationCount(db: D1Database, passId: string): Promise<number> {
-  const row = await first<{ n: number }>(
+export function registrationCountStmt(db: D1Database, passId: string) {
+  return stmt(
     db,
     `SELECT count(*) AS n FROM registrations r JOIN passes p ON p.id = r.pass_id
      WHERE r.pass_id = ? AND r.credential_generation = p.credential_generation
@@ -62,7 +62,6 @@ export async function registrationCount(db: D1Database, passId: string): Promise
          WHERE t.pass_id = p.id AND t.state = 'pending')`,
     [passId],
   );
-  return row?.n ?? 0;
 }
 
 /**

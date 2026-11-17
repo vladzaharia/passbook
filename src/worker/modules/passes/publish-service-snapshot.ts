@@ -4,10 +4,8 @@ import { getPassForWrite } from './pass-access.ts';
 import type { PublishOptions } from './publish.ts';
 import type { Pass } from './repo.ts';
 import { matchesConnectionPass } from './repo-read-connection.ts';
-import {
-  getPublishRemovalSnapshot,
-  type PublishRemovalSnapshot,
-} from './repo-write-publish-snapshot.ts';
+import { readPublishBundle } from './repo-read-publish-bundle.ts';
+import type { PublishRemovalSnapshot } from './repo-write-publish-snapshot.ts';
 
 export interface PublishSnapshotState {
   original: Pass | null;
@@ -67,7 +65,8 @@ export async function capturePublishSnapshot(
       current.objectKey !== options.expectedPass.objectKey)
   )
     throw new ConflictError('The staged pass changed. Reload and retry.', 'PASS_CONFLICT');
-  const removalSnapshot = await getPublishRemovalSnapshot(db, current, options.source === 'remove');
+  const reads = await readPublishBundle(db, current, options.source === 'remove');
+  const removalSnapshot = reads.removal;
   if (!removalSnapshot) {
     if (options.connectionContext)
       throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
@@ -94,5 +93,5 @@ export async function capturePublishSnapshot(
     throw new ConflictError('The pass images changed. Reload and retry.', 'PASS_CONFLICT');
   state.originalImageGeneration ??= removalSnapshot.imageGeneration;
   state.originalRemoval ??= removalSnapshot;
-  return { current, removalSnapshot };
+  return { current, removalSnapshot, reads };
 }
