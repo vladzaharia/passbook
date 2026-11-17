@@ -1,8 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { makePass } from '../../../../test/helpers/index.ts';
+import { makePass, setOrgStatus } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { setOrgStatus } from '../orgs/repo.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';

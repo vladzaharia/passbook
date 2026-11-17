@@ -6,6 +6,8 @@ import {
   ownerOf,
   parseAppendixA,
   RAW_WRITE_ALLOWLIST,
+  RAW_WRITE_ALLOWLIST_LIMIT,
+  scanAllowlist,
   scanBrandImport,
   scanFile,
   scanJobContext,
@@ -112,6 +114,25 @@ describe('authority-scope', () => {
       scanFile(rel, 'x WHERE org_id = ? AND o.updated_at = ?', owners).map((f) => f.rule),
     ).toEqual(['updated-at-predicate']);
     expect(scanFile(rel, 'SET name = ?, updated_at = ? WHERE id = ?', owners)).toEqual([]);
+    expect(scanFile(rel, 'INSERT INTO t (id, updated_at) SELECT ?, ?', owners)).toEqual([]);
+    // A WHERE in one literal does not reach an assignment in the next.
+    expect(
+      scanFile(
+        rel,
+        "run('SELECT 1 WHERE id = ?', [a]); run(`UPDATE t SET updated_at = ?`)",
+        owners,
+      ),
+    ).toEqual([]);
+  });
+
+  it('blocks a stale or additional raw-write allowlist entry', () => {
+    const rel = Object.keys(RAW_WRITE_ALLOWLIST)[0] ?? '';
+    const files = new Map(treeFiles());
+    expect(scanAllowlist(files)).toEqual([]);
+    expect(
+      scanAllowlist(new Map(files).set(rel, 'export const x = 1;')).map((f) => f.rule),
+    ).toEqual(['stale-allowlist']);
+    expect(Object.keys(RAW_WRITE_ALLOWLIST).length).toBeLessThanOrEqual(RAW_WRITE_ALLOWLIST_LIMIT);
   });
 
   it('flags a grant statement that binds an org or mode from the request', () => {

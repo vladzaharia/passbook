@@ -7,6 +7,7 @@ import {
   makeOrg,
   makeSession,
   makeUser,
+  saveOrgSettings,
   type UserRow,
 } from '../../../../test/helpers/index.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
@@ -23,7 +24,6 @@ import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { rolesGranting } from '../orgs/access.ts';
-import { updateSettings } from '../settings/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { activeRelease, type TemplateRelease } from '../templates/releases.ts';
 import { approveAppleRelease } from './apple-release-test-fixtures.ts';
@@ -781,13 +781,11 @@ describe('issuance commit authority', () => {
           else if (change === 'organization revised')
             await run(db, 'UPDATE orgs SET updated_at = updated_at + 1 WHERE id = ?', [kit.org.id]);
           else if (change === 'org settings saved')
-            await updateSettings(
-              kit.ctx,
-              { type: 'system', id: null },
-              {
-                scope: `org:${kit.org.id}`,
-                values: { 'support.email': `${unique()}@example.test` },
-              },
+            await saveOrgSettings(
+              kit.ctx.env.DB,
+              kit.org.id,
+              { 'support.email': `${unique()}@example.test` },
+              kit.ctx.clock.now(),
             );
           else if (change === 'org branding saved')
             await run(
@@ -886,13 +884,11 @@ describe('issuance commit authority', () => {
           else if (change === 'organization revised')
             await run(db, 'UPDATE orgs SET updated_at = updated_at + 1 WHERE id = ?', [kit.org.id]);
           else if (change === 'org settings saved')
-            await updateSettings(
-              kit.ctx,
-              { type: 'system', id: null },
-              {
-                scope: `org:${kit.org.id}`,
-                values: { 'support.email': `${unique()}@example.test` },
-              },
+            await saveOrgSettings(
+              kit.ctx.env.DB,
+              kit.org.id,
+              { 'support.email': `${unique()}@example.test` },
+              kit.ctx.clock.now(),
             );
           else if (change === 'org branding saved')
             await run(

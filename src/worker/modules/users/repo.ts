@@ -1,14 +1,5 @@
 import { grant } from '../../platform/authority.ts';
-import {
-  all,
-  batch,
-  chunk,
-  first,
-  placeholders,
-  prefixMatch,
-  run,
-  stmt,
-} from '../../platform/db.ts';
+import { all, chunk, first, placeholders, prefixMatch, run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { UserRow } from '../auth/repo.ts';
 
@@ -148,37 +139,6 @@ export const recentAudit = (db: Db, userId: string) =>
      WHERE target_type = 'user' AND target_id = ? ORDER BY at DESC, id DESC LIMIT 20`,
     [userId],
   );
-
-/**
- * Change status only if needed; a disable and its session revocations commit together. Scheduled
- * broadcasts are cancelled by the `users_disable_cancels_broadcasts` trigger. Ungated form for trusted
- * service callers; routes use `setStatusAsAdmin`.
- */
-export async function setStatus(
-  db: Db,
-  userId: string,
-  status: 'active' | 'disabled',
-  now: number,
-): Promise<boolean> {
-  const results = await batch(db, [
-    stmt(db, 'UPDATE users SET status = ? WHERE id = ? AND status != ? RETURNING id', [
-      status,
-      userId,
-      status,
-    ]),
-    ...(status === 'disabled'
-      ? [
-          stmt(
-            db,
-            `UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL
-             AND EXISTS (SELECT 1 FROM users WHERE id = ? AND status = 'disabled')`,
-            [now, userId, userId],
-          ),
-        ]
-      : []),
-  ]);
-  return (results[0]?.results.length ?? 0) > 0;
-}
 
 /** The same change as a `platform.user.*` grant: the acting admin's session must be live at commit. */
 export async function setStatusAsAdmin(

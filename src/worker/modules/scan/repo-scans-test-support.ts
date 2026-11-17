@@ -1,28 +1,11 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
+// Raw claim and finalize statements for the reconcile and recovery tests; the door writes through scan.* grants.
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { EventRow } from '../events/repo.ts';
 import { type GateKey, wonGate } from './repo-gates.ts';
 
-type Db = D1Database;
+import type { Claim, Finalize } from './repo-scans.ts';
 
-export interface Claim {
-  id: string;
-  orgId: string;
-  mode: Mode;
-  scannerId: string | null;
-  eventId: string | null;
-  actorType: 'scanner' | 'user';
-  actorId: string;
-  actorKey: string;
-  staffId: string | null;
-  /** The scanning session the device belongs to, kept for passless replays. */
-  sessionId?: string | null;
-  idempotencyKey: string;
-  requestHash: string;
-  method: string;
-  clientTs: number;
-  now: number;
-}
+type Db = D1Database;
 
 /** Claim the key only while the optional original authority remains current. */
 export function claimScanStmt(
@@ -60,23 +43,6 @@ export function claimScanStmt(
 
 export async function claimScan(db: Db, c: Claim): Promise<boolean> {
   return (await claimScanStmt(db, c).first<{ id: string }>()) !== null;
-}
-
-export interface Finalize {
-  id: string;
-  claimAt: number;
-  outcome: 'ok' | 'heads_up' | 'refused';
-  reason: string | null;
-  passId: string | null;
-  templateId: string | null;
-  actionId: string | null;
-  actionKind: string | null;
-  passVersion: number | null;
-  overrideOf: string | null;
-  approvedBy: string | null;
-  direction?: 'in' | 'out';
-  presenceScope?: string;
-  eventId?: string;
 }
 
 type Predicate = { sql: string; params: readonly SqlValue[] };

@@ -3,7 +3,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { requestHashOf } from './act-claim.ts';
 import { kit } from './act-test-fixtures.ts';
 import { reconcileScans } from './jobs.ts';
-import { claimScan } from './repo-scans.ts';
+import { claimScan } from './repo-scans-test-support.ts';
 
 export async function stage(
   s: { id: string },

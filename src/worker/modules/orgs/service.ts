@@ -26,7 +26,6 @@ import {
   listOrgRows,
   markOrgDeleted,
   type OrgRow,
-  setOrgStatus as setOrgStatusRow,
   slugTaken,
 } from './repo.ts';
 import {
@@ -218,16 +217,13 @@ export async function setOrgStatus(
   actor: Actor,
   id: string,
   status: 'active' | 'suspended',
-  admin?: OrgAdmin,
+  admin: OrgAdmin,
 ): Promise<OrgDto> {
   const before = await requireOrg(ctx, id);
   if (before.status === status) return toDto(before);
-  const now = ctx.clock.now();
-  const saved = admin
-    ? (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin))
-      ? await getOrgRow(ctx.env.DB, id)
-      : null
-    : await setOrgStatusRow(ctx.env.DB, id, status, now);
+  const saved = (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin))
+    ? await getOrgRow(ctx.env.DB, id)
+    : null;
   if (!saved) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   await recordAudit(ctx, {
     ...auditActor(actor),

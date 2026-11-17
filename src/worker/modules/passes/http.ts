@@ -20,7 +20,7 @@ import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { requireOrgCapability } from '../orgs/access.ts';
 import { loadUserAccessRevision } from './repo-access-revision.ts';
-import { tenantOrgUpdatedAt, tenantPassAuthorityValid } from './repo-authority.ts';
+import { tenantOrgAccessRevision, tenantPassAuthorityValid } from './repo-authority.ts';
 import type { PassScope } from './scope.ts';
 import type { Actor } from './service.ts';
 
@@ -44,13 +44,13 @@ export function authOf(c: C): AuthContext {
 
 /**
  * A credential and exact membership captured before a tenant operation starts.
- * `orgUpdatedAt` is the org's `access_revision` (only status moves it); the name predates the epochs.
+ * `orgAccessRevision` is the org's `access_revision` (only status moves it).
  */
 export type TenantPassWrite =
   | {
       kind: 'session';
       orgId: string;
-      orgUpdatedAt: number;
+      orgAccessRevision: number;
       userId: string;
       /** `users.access_revision` when captured: deferred work built from this authority carries it. */
       userAccessRevision?: number;
@@ -65,7 +65,7 @@ export type TenantPassWrite =
   | {
       kind: 'api_key';
       orgId: string;
-      orgUpdatedAt: number;
+      orgAccessRevision: number;
       keyId: string;
       keyOrgId: string | null;
       scopes: ApiScope[];
@@ -83,15 +83,15 @@ export async function tenantAuthorityOf(
   orgId: string,
   capability: OrgCapability,
 ): Promise<TenantPassWrite> {
-  const orgUpdatedAt = await tenantOrgUpdatedAt(ctx.env.DB, orgId);
-  if (orgUpdatedAt === null) throw new ForbiddenError();
+  const orgAccessRevision = await tenantOrgAccessRevision(ctx.env.DB, orgId);
+  if (orgAccessRevision === null) throw new ForbiddenError();
   let authority: TenantPassWrite;
   if (auth.kind === 'session') {
     const membership = await requireOrgCapability(ctx, auth.userId, orgId, capability);
     authority = {
       kind: 'session',
       orgId,
-      orgUpdatedAt,
+      orgAccessRevision,
       userId: auth.userId,
       userAccessRevision: (await loadUserAccessRevision(ctx.env.DB, auth.userId)) ?? 0,
       sessionId: auth.sessionId,
@@ -121,7 +121,7 @@ export async function tenantAuthorityOf(
     authority = {
       kind: 'api_key',
       orgId,
-      orgUpdatedAt,
+      orgAccessRevision,
       keyId: auth.keyId,
       keyOrgId: auth.orgId,
       scopes: [...auth.scopes],

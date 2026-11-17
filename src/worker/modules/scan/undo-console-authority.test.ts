@@ -74,7 +74,7 @@ describe('console undo authority', () => {
         platformSessionId: session.sessionId,
         tenantAuthority: {
           ...(await captureScanTenantAuthority(kit.ctx, session, authority)),
-          orgUpdatedAt: preCutover,
+          orgAccessRevision: preCutover,
         },
       };
       await captureScanEpochs(kit.env.DB, actor);

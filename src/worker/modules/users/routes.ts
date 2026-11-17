@@ -14,6 +14,7 @@ import {
 import { currentUserId, requireAdmin } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
+import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { addVerifiedEmail, makePrimaryEmail, removeEmail } from './emails.ts';
@@ -67,13 +68,14 @@ register(
   async (c) => {
     const { status } = c.req.valid('json');
     const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
     return c.json(
       await setUserStatus(
         serviceContext(c),
         currentUserId(c),
         c.req.valid('param').id,
         status,
-        auth?.kind === 'session' ? auth.sessionId : undefined,
+        auth.sessionId,
       ),
     );
   },

@@ -13,7 +13,7 @@ function sameSessionAuthority(
   return (
     authority.orgId === captured.orgId &&
     authority.mode === captured.mode &&
-    authority.orgUpdatedAt === captured.orgUpdatedAt &&
+    authority.orgAccessRevision === captured.orgAccessRevision &&
     authority.userId === captured.userId &&
     authority.sessionId === captured.sessionId &&
     authority.membershipId === captured.membershipId &&

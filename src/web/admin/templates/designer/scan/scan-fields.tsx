@@ -2,6 +2,7 @@ import { checkExpr, exprReferences } from '@/passkit/template/expr.ts';
 import { BINDING_STYLE_GROUPS } from '@/passkit/template/pointer.ts';
 import { FILTERS } from '@/passkit/template/scan-display/format.ts';
 import { SCAN_ICONS, type ScanIconId } from '@/passkit/template/scan-display/icons.ts';
+import { isPrivateName } from '@/passkit/template/scan-display/privacy.ts';
 import {
   type InputSchema,
   inputProps,
@@ -15,7 +16,7 @@ import { parseParts, pathTokens, splitPath } from '@/passkit/template/scan-displ
 import type { ScanRole, TemplateManifest } from '@/passkit/types.ts';
 import { Combobox, FormField, SegmentedControl } from '../../../../ui/index.ts';
 import { type DesignDoc, isRecord } from '../model.ts';
-import { privatePreviewKey, safePreviewText } from './scan-preview-policy.ts';
+import { safePreviewText } from './scan-preview-policy.ts';
 
 export type Manifest = DesignDoc['manifest'];
 export type Pass = DesignDoc['passJson'];
@@ -92,7 +93,7 @@ function privateName(name: string, schema: InputSchema): boolean {
   const compact = name.toLowerCase().replace(/[^a-z0-9]/g, '');
   return (
     isSecretInput(name, withoutOverride) ||
-    privatePreviewKey(name) ||
+    isPrivateName(name) ||
     nameSegments(name).includes('contact') ||
     compact.includes('barcode') ||
     compact.includes('scancode')

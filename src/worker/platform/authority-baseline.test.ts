@@ -146,29 +146,6 @@ describe('baseline writes against the migrated schema', () => {
   });
 
   // Baseline statements below are copied from 8f5bee02 (section 6.2 of the design).
-  const ensureOrg = (id: string, slug: string) =>
-    run(
-      db,
-      `INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT (slug) DO NOTHING`,
-      [id, slug, 'Baked', 1, 1],
-    );
-
-  it('baseline baked-org insert (ON CONFLICT (slug) DO NOTHING) is a known in-window break for an existing slug', async () => {
-    const s = await seedAuthority('base-ensure-org');
-    const slug =
-      (await first<{ slug: string }>(db, 'SELECT slug FROM orgs WHERE id = ?', [s.org.id]))?.slug ??
-      '';
-    // The current sync looks the org up first and never issues this insert for an existing slug.
-    // orgs_no_replace aborts where DO NOTHING used to skip. The baseline skips the whole sync when the
-    // stored build hash matches, so this batch runs only when a fresh baked build reaches the old Worker.
-    await expect(ensureOrg(s.f.ids.id(), slug)).rejects.toThrow(
-      /UNIQUE constraint failed: orgs.slug/,
-    );
-    const created = await ensureOrg(s.f.ids.id(), `${slug}-new`);
-    expect(created.changes).toBe(1);
-  });
-
   it('baked template upsert and a new template version succeed; a re-sent version is refused (0049)', async () => {
     const s = await seedAuthority('base-templates');
     const id = `baked-${s.f.ids.id()}`;

@@ -32,7 +32,7 @@ import { managedAdminActor } from './admin-setup.ts';
 import { resolvedRowOf } from './auth-store.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
-import { getScanner, type ScannerRow, unbindStaff } from './repo-device.ts';
+import { getScanner, scannerEpochsOf, unbindStaff } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
@@ -44,16 +44,6 @@ import { rawScopeOf, resolveAdminScope } from './scope.ts';
 import { bindingExpired, boundStaff } from './staff-binding.ts';
 
 export type { ScanActor } from './actor.ts';
-
-/** A spread drops the non-enumerable epochs of a `ScannerRow`; later writes on the copy need them. */
-function withRowEpochs<T extends object>(copy: T, from: ScannerRow): T {
-  if (from.credentialEpoch !== undefined && from.configEpoch !== undefined)
-    Object.defineProperties(copy, {
-      credentialEpoch: { value: from.credentialEpoch, enumerable: false },
-      configEpoch: { value: from.configEpoch, enumerable: false },
-    });
-  return copy;
-}
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -157,12 +147,11 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       )
         throw unauthenticated();
       const epochRow = storeRow ?? row;
-      if (epochRow.credentialEpoch !== undefined && epochRow.configEpoch !== undefined)
-        scannerEpochs = { credential: epochRow.credentialEpoch, config: epochRow.configEpoch };
+      scannerEpochs = scannerEpochsOf(epochRow);
       const terminal = auth.transport === 'bearer';
       const csrfSecret = terminal ? null : auth.csrfSecret;
       if (!terminal && !csrfSecret) throw unauthenticated();
-      const scanner = withRowEpochs({ ...row, csrfSecret: null }, epochRow);
+      const scanner = { ...row, csrfSecret: null };
       const staffId =
         !terminal && scanner.staffId && !bindingExpired(scanner, ctx.clock.now())
           ? scanner.staffId
@@ -184,8 +173,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
           ? (rawScope as { setupId?: string }).setupId
           : undefined;
       const managedRow = setupId ? await getScanner(ctx.env.DB, setupId) : null;
-      if (managedRow?.credentialEpoch !== undefined && managedRow.configEpoch !== undefined)
-        scannerEpochs = { credential: managedRow.credentialEpoch, config: managedRow.configEpoch };
+      if (managedRow) scannerEpochs = scannerEpochsOf(managedRow);
       const mode = managedRow?.mode ?? modeFromRequest(c);
       const scope = await resolveAdminScope(c, rawScope, mode);
       const sessionAuth = { ...session, mode };

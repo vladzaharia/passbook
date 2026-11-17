@@ -57,40 +57,6 @@ export function listOrgRows(db: D1Database, before: string | undefined, limit: n
   );
 }
 
-/** Replaces the branding without authority or CAS: for trusted internal callers and fixtures only. */
-export function setOrgBranding(
-  db: D1Database,
-  id: string,
-  branding: string,
-  now: number,
-): Promise<OrgRow | null> {
-  return first<OrgRow>(
-    db,
-    `UPDATE orgs SET branding = ?, updated_at = MAX(updated_at + 1, ?)
-     WHERE id = ? AND status != 'deleted' RETURNING ${COLUMNS}`,
-    [branding, now, id],
-  );
-}
-
-/**
- * Trusted-caller status change (fixtures, service callers without a session). Scheduled broadcasts are
- * cancelled by the `orgs_inactive_cancels_broadcasts` trigger, on every path. Routes use `platform.org.status`.
- */
-export async function setOrgStatus(
-  db: D1Database,
-  id: string,
-  status: 'active' | 'suspended',
-  now: number,
-): Promise<OrgRow | null> {
-  const saved = await first<{ id: string }>(
-    db,
-    `UPDATE orgs SET status = ?, updated_at = MAX(updated_at + 1, ?)
-     WHERE id = ? AND status != 'deleted' RETURNING id`,
-    [status, now, id],
-  );
-  return saved ? getOrgRow(db, id) : null;
-}
-
 export async function insertOrg(
   db: D1Database,
   row: Omit<OrgRow, 'config_revision'>,

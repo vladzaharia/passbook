@@ -1,12 +1,11 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeApiKey, makeSession } from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeSession, revokeMembership } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from '../api-keys/access.ts';
 import { getKey } from '../api-keys/repo.ts';
 import { createApiKey, revokeApiKey } from '../api-keys/service.ts';
 import { revokeSession } from '../auth/repo-sessions.ts';
 import { hashSessionCookie, resolveSession } from '../auth/sessions.ts';
-import { revokeMembership } from '../orgs/repo-members.ts';
 import { grantKitMembership } from './apple-release-test-fixtures.ts';
 import {
   encoded,
@@ -69,8 +68,6 @@ describe('member photo credential HTTP fence', () => {
             pass.orgId,
             membershipId,
             kit.clock.now(),
-            'admin-1',
-            true,
           ).run();
           return (result.meta.changes ?? 0) > 0;
         };

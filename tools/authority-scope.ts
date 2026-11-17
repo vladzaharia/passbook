@@ -36,7 +36,9 @@ export type Rule =
   | 'job-context'
   | 'job-authority-import'
   | 'builder-internal'
-  | 'forged-statement';
+  | 'forged-statement'
+  | 'stale-allowlist'
+  | 'allowlist-growth';
 
 export interface Finding {
   rule: Rule;
@@ -105,6 +107,9 @@ const BUILDER_TENANT_KEY =
 /** An `include` part whose SQL compares org_id or mode to a bound value instead of `{org}` and `{mode}`. */
 const PART_TENANT_BIND =
   /\b(?:writePart|readPart)\(\s*(['"`])(?:(?!\1)[\s\S])*?\b(?:org_id|mode)\s*=\s*\?/;
+const UPDATED_AT_PREDICATE = /\bWHERE\b[^;`]*?\bupdated_at\s*=\s*\?/is;
+/** The number of reviewed raw-write files. Removing one lowers it; a new entry fails until a design decision raises it. */
+export const RAW_WRITE_ALLOWLIST_LIMIT = 28;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 
 const TENANT_TABLES = new Set([
@@ -231,6 +236,17 @@ export function ownerOf(rel: string, owners: Owners): string | null {
   return owners.exact.get(rel) ?? owners.globs.find(([re]) => re.test(rel))?.[1] ?? null;
 }
 
+/** Guarded tables a file writes with raw SQL (a stamp-only update does not count). */
+function rawGuardedWrites(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.matchAll(WRITE)) {
+    if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
+    out.push(m[1] ?? m[2] ?? '');
+  }
+  for (const m of text.matchAll(HELPER_WRITE)) out.push(m[1] ?? '');
+  return out;
+}
+
 export function scanFile(rel: string, text: string, owners: Owners): Finding[] {
   if (skipFile(rel)) return [];
   const found: Finding[] = [];
@@ -242,18 +258,11 @@ export function scanFile(rel: string, text: string, owners: Owners): Finding[] {
   // An OpenAPI `summary:` line is prose ("Set or replace the key"), not SQL.
   if (REPLACE.test(text.replace(/^\s*summary:.*$/gm, '')) && !(rel in REPLACE_ALLOWLIST))
     add('replace', 'OR REPLACE / REPLACE INTO outside the allowlist');
-  if (
-    /updated_at\s*=\s*\?/.test(text) &&
-    /\b(?:UPDATE|WHERE|AND)\b[^;]*updated_at\s*=\s*\?/is.test(text)
-  )
-    add('updated-at-predicate', 'updated_at = ? (a timestamp is not an epoch)');
-  for (const m of rel in RAW_WRITE_ALLOWLIST ? [] : text.matchAll(WRITE)) {
-    const table = m[1] ?? m[2];
-    if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
-    add('raw-guarded-write', `raw write to ${table}`);
-  }
-  for (const m of rel in RAW_WRITE_ALLOWLIST ? [] : text.matchAll(HELPER_WRITE))
-    add('raw-guarded-write', `raw write to ${m[1]} through a table-taking helper`);
+  // Only a WHERE clause compares: `SET updated_at = ?` stamps a timestamp.
+  if (UPDATED_AT_PREDICATE.test(text))
+    add('updated-at-predicate', 'updated_at = ? in a WHERE clause (a timestamp is not an epoch)');
+  if (!(rel in RAW_WRITE_ALLOWLIST))
+    for (const table of rawGuardedWrites(text)) add('raw-guarded-write', `raw write to ${table}`);
   if (!(rel in DYNAMIC_WRITE_ALLOWLIST))
     for (const m of DYNAMIC_WRITE.flatMap((re) => [...text.matchAll(re)]))
       add('dynamic-write', `write target built at runtime: ${m[0].replace(/\s+/g, ' ')}`);
@@ -348,13 +357,37 @@ function* sources(dir: string): Generator<string> {
   }
 }
 
+/** An allowlist entry must still name a file with a raw guarded write, and the list may not grow. */
+export function scanAllowlist(files: ReadonlyMap<string, string>): Finding[] {
+  const found: Finding[] = [];
+  const listed = Object.keys(RAW_WRITE_ALLOWLIST);
+  for (const rel of listed)
+    if (rawGuardedWrites(files.get(rel) ?? '').length === 0)
+      found.push({
+        rule: 'stale-allowlist',
+        file: rel,
+        detail: 'RAW_WRITE_ALLOWLIST names a file with no raw guarded write: remove the entry',
+      });
+  if (listed.length > RAW_WRITE_ALLOWLIST_LIMIT)
+    found.push({
+      rule: 'allowlist-growth',
+      file: 'tools/authority-scope-allowlists.ts',
+      detail: `RAW_WRITE_ALLOWLIST has ${listed.length} entries, the limit is ${RAW_WRITE_ALLOWLIST_LIMIT}: convert the write to a grant`,
+    });
+  return found;
+}
+
 export function scanTree(markdown: string, files: Iterable<[string, string]>): Finding[] {
   const owners = parseAppendixA(markdown);
-  return [...files].flatMap(([rel, text]) => [
-    ...scanFile(rel, text, owners),
-    ...scanJobContext(rel, text),
-    ...scanBrandImport(rel, text),
-  ]);
+  const all = [...files];
+  return [
+    ...all.flatMap(([rel, text]) => [
+      ...scanFile(rel, text, owners),
+      ...scanJobContext(rel, text),
+      ...scanBrandImport(rel, text),
+    ]),
+    ...scanAllowlist(new Map(all)),
+  ];
 }
 
 if (import.meta.main) {

@@ -1,12 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeApiKey, makeOrg, makeSession } from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeOrg, makeSession, setUserStatus } from '../../../../test/helpers/index.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from '../api-keys/access.ts';
 import { getKey } from '../api-keys/repo.ts';
 import { createApiKey, revokeApiKey } from '../api-keys/service.ts';
 import { revokeSession } from '../auth/repo-sessions.ts';
 import { hashSessionCookie, resolveSession } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { setStatus } from '../users/repo.ts';
 import { grantKitMembership } from './apple-release-test-fixtures.ts';
 import type { TenantPassWrite } from './http.ts';
 import { putMemberPhoto } from './member-photo.ts';
@@ -17,7 +16,7 @@ import {
   setupPhotoTestKit,
 } from './member-photo-test-fixtures.ts';
 
-import { tenantOrgUpdatedAt } from './repo-authority.ts';
+import { tenantOrgAccessRevision } from './repo-authority.ts';
 import { capturePassImageGeneration } from './repo-history-image.ts';
 import { memberPhoto } from './repo-member-photo.ts';
 import { replaceMemberPhotoGranted } from './repo-member-photo-grant.ts';
@@ -62,9 +61,9 @@ describe('member photo credential fence', () => {
     const before = (await memberPhoto(kit.env.DB, pass.orgId, pass.id))!;
     const prior = (await getPass(kit.env.DB, pass.id))!;
     const next = { ...before, version: kit.ctx.ids.token(16) };
-    const orgUpdatedAt = await tenantOrgUpdatedAt(kit.env.DB, pass.orgId);
+    const orgAccessRevision = await tenantOrgAccessRevision(kit.env.DB, pass.orgId);
     const imageGeneration = await capturePassImageGeneration(kit.env.DB, prior, kit.clock.now());
-    if (orgUpdatedAt === null || imageGeneration === null)
+    if (orgAccessRevision === null || imageGeneration === null)
       throw new Error('Pass snapshot is missing');
     let authority: TenantPassWrite;
     let mode = pass.mode;
@@ -86,7 +85,7 @@ describe('member photo credential fence', () => {
         membershipId = await grantKitMembership(kit, pass.orgId, userId, ['read_only']);
       if (scenario === 'disabled user') {
         membershipId = await grantKitMembership(kit, pass.orgId, userId);
-        await setStatus(kit.env.DB, userId, 'disabled', now);
+        await setUserStatus(kit.env.DB, userId, 'disabled', now);
       }
       const session = await makeSession(kit.fx, { userId });
       const sessionId = await hashSessionCookie(session.cookieValue);
@@ -98,7 +97,7 @@ describe('member photo credential fence', () => {
       authority = {
         kind: 'session',
         orgId: pass.orgId,
-        orgUpdatedAt,
+        orgAccessRevision,
         mode,
         userId,
         sessionId,
@@ -138,7 +137,7 @@ describe('member photo credential fence', () => {
       authority = {
         kind: 'api_key',
         orgId: pass.orgId,
-        orgUpdatedAt,
+        orgAccessRevision,
         keyId,
         keyOrgId: orgId,
         scopes,
@@ -176,9 +175,9 @@ describe('member photo credential fence', () => {
     );
     const before = (await memberPhoto(kit.env.DB, pass.orgId, pass.id))!;
     const prior = (await getPass(kit.env.DB, pass.id))!;
-    const orgUpdatedAt = await tenantOrgUpdatedAt(kit.env.DB, pass.orgId);
+    const orgAccessRevision = await tenantOrgAccessRevision(kit.env.DB, pass.orgId);
     const imageGeneration = await capturePassImageGeneration(kit.env.DB, prior, kit.clock.now());
-    if (orgUpdatedAt === null || imageGeneration === null)
+    if (orgAccessRevision === null || imageGeneration === null)
       throw new Error('Pass snapshot is missing');
     const key = await makeApiKey(kit.fx, { orgId: null, scopes: ['passes:write'] });
     const next = { ...before, version: kit.ctx.ids.token(16) };
@@ -188,7 +187,7 @@ describe('member photo credential fence', () => {
       authority: {
         kind: 'api_key',
         orgId: pass.orgId,
-        orgUpdatedAt,
+        orgAccessRevision,
         keyId: key.id,
         keyOrgId: null,
         scopes: ['passes:write'],

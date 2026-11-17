@@ -106,9 +106,9 @@ describe('lookup privacy', () => {
       expect(JSON.stringify(audits.results)).not.toContain(value);
   });
 
-  it('does not disclose restricted values or credentials through a template name', async () => {
+  it('does not disclose credentials or contact through a template name, but shows one that merely repeats a restricted value', async () => {
     const cases = [
-      { name: 'Hidden Desk Identity' },
+      { name: 'Hidden Desk Identity', shown: true },
       { name: 'person@example.test' },
       { name: 'SERIAL-COLLISION-842', column: 'serial' },
       { name: 'AUTH-COLLISION-842', column: 'auth_token' },
@@ -145,7 +145,8 @@ describe('lookup privacy', () => {
       const scanner = await kit.scanner({ templateIds: [restricted] });
       const result = await search(pass.id, scanner.headers);
       expect(result.items.map((item) => item.passId)).toEqual([pass.id]);
-      expect(JSON.stringify(result)).not.toContain(entry.name);
+      if ('shown' in entry) expect(JSON.stringify(result)).toContain(entry.name);
+      else expect(JSON.stringify(result)).not.toContain(entry.name);
     }
   });
 

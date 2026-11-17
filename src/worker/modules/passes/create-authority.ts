@@ -4,14 +4,14 @@ import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { CreateParams } from './create-types.ts';
 import type { TenantPassWrite } from './http.ts';
-import { tenantOrgUpdatedAt, tenantPassAuthorityValid } from './repo-authority.ts';
+import { tenantOrgAccessRevision, tenantPassAuthorityValid } from './repo-authority.ts';
 import { connectionForPass } from './repo-read-connection.ts';
 
 /** A suspended (or suspended and reactivated) org is a distinct refusal from a lost membership or key. */
 async function assertOrgUnchanged(ctx: ServiceContext, authority: TenantPassWrite): Promise<void> {
-  const current = await tenantOrgUpdatedAt(ctx.env.DB, authority.orgId);
-  const legacy = authority.orgUpdatedAt >= LEGACY_REVISION_MS;
-  if (current === null || (!legacy && current !== authority.orgUpdatedAt))
+  const current = await tenantOrgAccessRevision(ctx.env.DB, authority.orgId);
+  const legacy = authority.orgAccessRevision >= LEGACY_REVISION_MS;
+  if (current === null || (!legacy && current !== authority.orgAccessRevision))
     throw new ForbiddenError(
       'Organization access changed. Reload and retry.',
       'ORG_ACCESS_CHANGED',

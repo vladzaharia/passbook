@@ -1,9 +1,9 @@
 import { exprReferences } from '@/passkit/template/expr.ts';
+import { hasContactShape, isPrivateName } from '@/passkit/template/scan-display/privacy.ts';
 import {
   type InputSchema,
   inputProps,
   inputVisibleTo,
-  nameSegments,
   secretInputs,
 } from '@/passkit/template/scan-display/scope.ts';
 import { parseParts, pathTokens } from '@/passkit/template/scan-display/text.ts';
@@ -11,70 +11,12 @@ import type { Json, PassJson, ScanRole, TemplateManifest } from '@/passkit/types
 import { PASS_STYLES } from '@/passkit/types.ts';
 import { type DesignDoc, isRecord } from '../model.ts';
 
-const PRIVATE_PARTS: Record<string, true> = {
-  email: true,
-  phone: true,
-  tel: true,
-  mobile: true,
-  password: true,
-  passcode: true,
-  secret: true,
-  token: true,
-  pin: true,
-  private: true,
-  credential: true,
-  authorization: true,
-  cookie: true,
-};
-const PRIVATE_KEYS: Record<string, boolean> = {
-  barcode: true,
-  barcodes: true,
-  scancode: true,
-  serial: true,
-  serialnumber: true,
-  apikey: true,
-  webserviceurl: true,
-  messageencoding: true,
-  proto: true,
-  constructor: true,
-  prototype: true,
-};
-
-/** The preview is stricter than x-scan: an explicit annotation cannot make contact data safe. */
-export function privatePreviewKey(key: string): boolean {
-  return (
-    Object.hasOwn(PRIVATE_KEYS, key.replace(/[^a-z0-9]/gi, '').toLowerCase()) ||
-    nameSegments(key).some((part) => Object.hasOwn(PRIVATE_PARTS, part))
-  );
-}
-
-const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*/iu;
-const PHONE = /(?:^|[^A-Za-z0-9])\+?\d[\d ().-]*\d(?=$|[^A-Za-z0-9])/g;
-/** Dates, clock times and year ranges are not contact data, whatever their digit count. */
-const BENIGN_DIGITS = [
-  /(?<![\d-])\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?Z?)?(?![\d-])/g,
-  /(?<![\d.])\d{1,2}[./]\d{1,2}[./](?:19|20)\d{2}(?![\d.])/g,
-  /(?<![\d-])(?:19|20)\d{2}\s?[-\u2013]\s?(?:(?:19|20)\d{2}|\d{2})(?![\d-])/g,
-  /(?<![\d.:])(?:[01]?\d|2[0-3])[.:][0-5]\d(?![\d]|[.:]\d)/g,
-];
-
-/** A number this long reads as a phone or account number; amounts and counts stay shorter. */
-export function safePreviewNumber(text: string): boolean {
-  return (text.match(/\d/g) ?? []).length < 10;
-}
-
+/**
+ * Authored text typed into the designer: what the scanner would hide (an address or a link), plus
+ * an expression or raw JSON, which a label never holds. Digits are not judged; see {@link safePreviewValue}.
+ */
 export function safePreviewText(value: string): boolean {
-  if (
-    value.includes('{{') ||
-    EMAIL.test(value) ||
-    /\b(?:https?:\/\/|mailto:|tel:)/i.test(value) ||
-    /^\s*[[{]/.test(value)
-  )
-    return false;
-  const rest = BENIGN_DIGITS.reduce((text, pattern) => text.replace(pattern, ' '), value);
-  return !Array.from(rest.matchAll(PHONE)).some(
-    (match) => (match[0].match(/\d/g) ?? []).length >= 7,
-  );
+  return !value.includes('{{') && !hasContactShape(value) && !/^\s*[[{]/.test(value);
 }
 
 /** Why an authored literal is refused, in a sentence for the field; null when it is fine. */
@@ -108,7 +50,9 @@ const RENDERED_TEXT_KEYS: Record<string, true> = {
 /** Rendered text is still checked: an unfinished draft can contain a literal contact or JSON. */
 export function hasUnsafeRenderedText(value: unknown, key = ''): boolean {
   if (typeof value === 'string')
-    return Object.hasOwn(RENDERED_TEXT_KEYS, key) && !safePreviewText(value);
+    return (
+      Object.hasOwn(RENDERED_TEXT_KEYS, key) && (!safePreviewValue(value) || /^\s*[[{]/.test(value))
+    );
   if (Array.isArray(value)) return value.some((item) => hasUnsafeRenderedText(item));
   if (value && typeof value === 'object')
     return Object.entries(value).some(([name, item]) => hasUnsafeRenderedText(item, name));
@@ -118,8 +62,13 @@ export function hasUnsafeRenderedText(value: unknown, key = ''): boolean {
 const obj = (value: unknown): Record<string, Json> | undefined =>
   isRecord(value) ? (value as Record<string, Json>) : undefined;
 
+/** A value in the preview scope: an expression left in it, an address or a link is not shown. */
+export function safePreviewValue(value: string): boolean {
+  return !value.includes('{{') && !hasContactShape(value);
+}
+
 function clean(value: Json | undefined, deniedKeys: Set<string>): Json | undefined {
-  if (typeof value === 'string') return safePreviewText(value) ? value : undefined;
+  if (typeof value === 'string') return safePreviewValue(value) ? value : undefined;
   if (
     value === null ||
     typeof value === 'number' ||
@@ -131,7 +80,7 @@ function clean(value: Json | undefined, deniedKeys: Set<string>): Json | undefin
   const result: Record<string, Json> = {};
   for (const key of Object.keys(value)) {
     // Test the name before dereferencing the property, even for a nested or untyped object.
-    if (privatePreviewKey(key) || deniedKeys.has(key) || !safePreviewText(key)) continue;
+    if (isPrivateName(key) || deniedKeys.has(key) || !safePreviewValue(key)) continue;
     const next = clean(value[key], deniedKeys);
     if (next !== undefined) result[key] = next;
   }
@@ -165,11 +114,7 @@ function visibleInput(
   const result: Record<string, Json> = {};
   for (const key of Object.keys(record)) {
     const childSchema = obj(properties?.[key]);
-    if (
-      !childSchema ||
-      privatePreviewKey(key) ||
-      !inputVisibleTo(key, childSchema, role, secrets)
-    ) {
+    if (!childSchema || isPrivateName(key) || !inputVisibleTo(key, childSchema, role, secrets)) {
       state.deniedKeys.add(key);
       state.restricted = true;
       continue;
@@ -193,7 +138,7 @@ function privateExpression(value: unknown, deniedKeys: Set<string>): boolean {
     if (
       tokens.some((token) => {
         const key = token.replace(/^\[|\]$/g, '').trim();
-        return deniedKeys.has(key) || privatePreviewKey(key);
+        return deniedKeys.has(key) || isPrivateName(key);
       })
     )
       return true;
@@ -243,7 +188,7 @@ export function previewPassFields(doc: DesignDoc, deniedKeys: Set<string> = new 
         if (
           !isRecord(field) ||
           typeof field.key !== 'string' ||
-          privatePreviewKey(field.key) ||
+          isPrivateName(field.key) ||
           deniedKeys.has(field.key)
         )
           return [];
@@ -298,7 +243,7 @@ function filteredInputs(
     const schema = Object.hasOwn(props, name) ? props[name] : undefined;
     const inSource = Object.hasOwn(source, name);
     const inOverrides = Object.hasOwn(overrides, name);
-    if (!schema || privatePreviewKey(name) || !inputVisibleTo(name, schema, role, secrets)) {
+    if (!schema || isPrivateName(name) || !inputVisibleTo(name, schema, role, secrets)) {
       state.deniedKeys.add(name);
       if (inSource || inOverrides || (defaults && schema && Object.hasOwn(schema, 'default')))
         state.restricted = true;
