@@ -202,7 +202,10 @@ export async function lookup(
     capped = !exhausted && pages >= LOOKUP_MAX_PAGES;
     if (entries.length >= 11 || exhausted || capped) {
       const countMiss = exhausted && !uncertain && entries.length === 0;
-      const final = await finalizeLookup(ctx, actor, entries, keys?.credentialTombstoneRefs ?? []);
+      // An empty page that is a miss has nothing to disclose: the miss's own grant holds the actor.
+      const final = countMiss
+        ? []
+        : await finalizeLookup(ctx, actor, entries, keys?.credentialTombstoneRefs ?? []);
       if (!final) return { items: [], more: false };
       if (final.length !== entries.length) uncertain = true;
       // A miss is counted in its own grant: the search window is the one the read saw.
