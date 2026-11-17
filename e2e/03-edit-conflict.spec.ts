@@ -22,7 +22,7 @@ test('second editor gets 412, keeps the draft, and can merge', async ({ browser 
   // B saves first.
   await b.getByLabel('Name').fill('Saved by B');
   await b.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(b.getByText('Saved', { exact: true }).first()).toBeVisible();
+  await expect(b.getByText('Fields saved', { exact: true })).toBeVisible();
 
   // A edits another field from the stale baseline; its save is rejected, draft kept.
   await a.getByLabel('Points').fill('77');
@@ -51,7 +51,7 @@ test('second editor gets 412, keeps the draft, and can merge', async ({ browser 
   await expect(b.getByLabel('Points')).toHaveValue('77');
   await b.getByLabel('Name').fill('Saved by B again');
   await b.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(b.getByText('Saved', { exact: true }).first()).toBeVisible();
+  await expect(b.getByText('Fields saved', { exact: true })).toBeVisible();
   await a.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(a.getByRole('button', { name: 'Reload' })).toBeVisible();
   await a.getByRole('button', { name: 'Reload' }).click();
