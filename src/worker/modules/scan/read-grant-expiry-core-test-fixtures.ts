@@ -140,7 +140,7 @@ export function clockDuringGrant(clock: ManualClock, options: GrantRaceOptions) 
     const capability =
       fields?.[0] === 'scan-asset-v4' && fields.includes('scan-asset-capability-v2');
     const result = await nativeSign(algorithm, key, data);
-    if (capability && fields?.[4] === options.passId && ++signs === options.occurrence && !fired) {
+    if (capability && fields?.[3] === options.passId && ++signs === options.occurrence && !fired) {
       fired = true;
       events.push('clock advanced');
       clock.advance(options.advance);

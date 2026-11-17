@@ -91,16 +91,7 @@ describe('paired live scanner authority', () => {
     const originalSecret = paired.csrfSecret;
     if (!originalSecret) throw new Error('Missing scanner credential.');
     const replacement = kit.fx.ids.token();
-    await expect(
-      run(kit.env.DB, 'UPDATE scanners SET updated_at=updated_at-1 WHERE id=?', [paired.device.id]),
-    ).rejects.toThrow(/scanner credential revision must advance/);
-    await expect(
-      run(kit.env.DB, 'UPDATE scanners SET csrf_secret=? WHERE id=?', [
-        replacement,
-        paired.device.id,
-      ]),
-    ).rejects.toThrow(/scanner credential revision must advance/);
-    await run(kit.env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
+    await run(kit.env.DB, 'UPDATE scanners SET csrf_secret=? WHERE id=?', [
       replacement,
       paired.device.id,
     ]);

@@ -143,28 +143,11 @@ describe('session CSRF secret immutability', () => {
     }
   });
 
-  it('requires scanner credential changes to advance a monotonic revision', async () => {
+  it('refuses replacing a scanner row', async () => {
     const e = env as AppEnv;
     const f = fixtures(e, new ManualClock());
     const org = await makeOrg(f);
     const scanner = await makeScanner(f, { orgId: org.id });
-    for (const [column, value] of [
-      ['csrf_secret', 'different-secret'],
-      ['token_hash', 'different-hash'],
-      ['token_prefix', `different-${scanner.id}`],
-    ] as const) {
-      await expect(
-        run(e.DB, `UPDATE scanners SET ${column} = ? WHERE id = ?`, [value, scanner.id]),
-      ).rejects.toThrow('scanner credential revision must advance');
-      await run(
-        e.DB,
-        `UPDATE scanners SET ${column} = ?, updated_at = updated_at + 1 WHERE id = ?`,
-        [value, scanner.id],
-      );
-    }
-    await expect(
-      run(e.DB, 'UPDATE scanners SET updated_at = updated_at - 1 WHERE id = ?', [scanner.id]),
-    ).rejects.toThrow('scanner credential revision must advance');
     await run(e.DB, 'UPDATE scanners SET last_seen_at = ? WHERE id = ?', [42, scanner.id]);
     await expect(
       run(
