@@ -18,11 +18,8 @@ interface Raw extends Partial<SealRaw> {
 }
 
 const COLUMN = { pass: 'download_token', 'apple-auth': 'auth_token', bundle: 'token' } as const;
-const MAC_LIKE = {
-  pass: "LIKE 'h1:%'",
-  'apple-auth': "GLOB 'h1:*'",
-  bundle: "LIKE 'h1:%'",
-} as const;
+/** The same text as the partial indexes of 0059 and 0065, without the NOT. */
+const MAC_GLOB = "GLOB 'h1:*'";
 
 /** Up to `limit` rows after `after` in id order whose column holds a MAC; the sweep of cron tokens.remac. */
 export async function macRows(
@@ -36,7 +33,7 @@ export async function macRows(
     db,
     `SELECT t.id, t.org_id, t.${COLUMN[purpose]} AS mac, s.kek_version, s.iv, s.wrapped_dek, s.ciphertext
      FROM ${owner} t LEFT JOIN ${table} s ON s.${column} = t.id AND s.org_id = t.org_id
-     WHERE t.${COLUMN[purpose]} ${MAC_LIKE[purpose]} AND (? IS NULL OR t.id > ?)
+     WHERE t.${COLUMN[purpose]} ${MAC_GLOB} AND (? IS NULL OR t.id > ?)
      ORDER BY t.id LIMIT ?`,
     [after, after, limit],
   );

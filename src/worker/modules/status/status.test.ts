@@ -175,6 +175,26 @@ describe('status components', () => {
     expect(JSON.stringify(bad)).not.toContain('not-a-key');
   });
 
+  it('fails the key check on a wrong MAC key rotation setting', async () => {
+    for (const settings of [
+      { MAC_KEY_VERSION: '3' },
+      { MAC_KEY_VERSION: 'two' },
+      { MAC_KEY_VERSION: '1', MAC_KEY_VERSION_PREVIOUS: '1' },
+    ]) {
+      clearStatusCache(env.DB);
+      const bad = await status(settings as Partial<AppEnv>);
+      expect(find(bad, 'kek')).toMatchObject({ state: 'failing' });
+      expect(find(bad, 'kek')?.detail).toContain('MAC_KEY_VERSION');
+    }
+    clearStatusCache(env.DB);
+    const ok = await status({
+      KEK_V2: base.KEK_V1,
+      MAC_KEY_VERSION: '2',
+      MAC_KEY_VERSION_PREVIOUS: '1',
+    } as Partial<AppEnv>);
+    expect(find(ok, 'kek')).toMatchObject({ state: 'verified' });
+  });
+
   it('counts retained terminal failures by kind', async () => {
     const fx = fixtures(base);
     const org = await makeOrg(fx);

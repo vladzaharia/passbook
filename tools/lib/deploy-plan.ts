@@ -1,13 +1,16 @@
+/** The secret names in `wrangler secret list --format json`. */
+export function secretNames(listOutput: string): string[] {
+  const parsed: unknown = JSON.parse(listOutput);
+  return Array.isArray(parsed)
+    ? parsed.flatMap((s: unknown) =>
+        s && typeof s === 'object' && 'name' in s && typeof s.name === 'string' ? [s.name] : [],
+      )
+    : [];
+}
+
 /** Names in `secrets.required` that the Worker does not have, given `wrangler secret list --format json`. */
 export function missingSecrets(required: readonly string[], listOutput: string): string[] {
-  const parsed: unknown = JSON.parse(listOutput);
-  const present = new Set(
-    Array.isArray(parsed)
-      ? parsed.flatMap((s: unknown) =>
-          s && typeof s === 'object' && 'name' in s && typeof s.name === 'string' ? [s.name] : [],
-        )
-      : [],
-  );
+  const present = new Set(secretNames(listOutput));
   return required.filter((name) => !present.has(name));
 }
 

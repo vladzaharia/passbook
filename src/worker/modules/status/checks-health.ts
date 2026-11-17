@@ -1,5 +1,6 @@
-import { decryptSecret, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
+import { decryptSecret, encryptSecret, kekVersionsOf, loadKekRing } from '../../platform/crypto.ts';
 import { all } from '../../platform/db.ts';
+import { macKeyProblems } from '../../platform/mac-key-config.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Draft } from './checks.ts';
 
@@ -12,6 +13,15 @@ export async function checkKek(ctx: ServiceContext): Promise<Draft> {
     const sealed = await encryptSecret(ring, probe, 'status:kek');
     const opened = await decryptSecret(ring, sealed, 'status:kek');
     if (opened.length !== probe.length) throw new Error('KEK round trip mismatch');
+    const env = ctx.env as { MAC_KEY_VERSION?: string; MAC_KEY_VERSION_PREVIOUS?: string };
+    const macProblems = macKeyProblems(
+      { pin: env.MAC_KEY_VERSION, previous: env.MAC_KEY_VERSION_PREVIOUS },
+      kekVersionsOf(ctx.env),
+    );
+    if (macProblems.length > 0) {
+      ctx.log.error('status.mac_key_config', { code: 'MAC_KEY_CONFIG_INVALID' });
+      return { ...base, state: 'failing', detail: macProblems.join(' ') };
+    }
     return {
       ...base,
       state: 'verified',

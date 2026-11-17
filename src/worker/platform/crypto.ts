@@ -151,6 +151,9 @@ export async function rewrapSecret(
 export const isKeyEnvName = (name: string): boolean =>
   /^KEK_V\d+$/.test(name) || name === 'MAC_KEY_VERSION' || name === 'MAC_KEY_VERSION_PREVIOUS';
 
+/** The KEK version numbers configured in `env`, ascending. */
+export const kekVersionsOf = (env: object): number[] => kekVersions(env).map((e) => e.version);
+
 function kekVersions(env: object): { version: number; value: string }[] {
   return Object.entries(env as Record<string, unknown>)
     .map(([name, value]) => ({ match: /^KEK_V(\d+)$/.exec(name), value }))
@@ -189,8 +192,8 @@ export function macPreviousVersion(env: object): number | null {
 
 /**
  * The labels whose keys follow `MAC_KEY_VERSION`: the MACs of capability and device tokens (re-MACed from
- * their sealed copies by cron tokens.remac), staff PINs and pair codes (reset after a rotation) and scanner
- * asset grants (one hour). Every other label stays on the oldest KEK: its MACs are retained evidence bound
+ * their sealed copies by cron tokens.remac), staff PINs (checked under both roots while `MAC_KEY_VERSION_PREVIOUS` is set), pair codes
+ * (ten minutes), scanner asset grants (one hour) and the scan CSRF proofs (computed on every request). Every other label stays on the oldest KEK: its MACs are retained evidence bound
  * to the credential-reference keyset commitment (tombstones, retention proofs, webhook and action
  * references), which a changed root would fail closed. docs/operations.md, MAC key rotation.
  */
@@ -202,6 +205,8 @@ const ROTATABLE_LABELS: ReadonlySet<string> = new Set([
   'scan-asset-grant-v2',
   'scan-asset-claim',
   'scan-asset-session-id',
+  'scan-session-csrf.v1',
+  'scan-scanner-csrf.v1',
 ]);
 
 /**

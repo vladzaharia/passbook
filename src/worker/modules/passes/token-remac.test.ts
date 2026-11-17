@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { withoutTrigger } from '../../../../test/helpers/index.ts';
 import { revealToken, tokenMac } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
@@ -147,7 +147,19 @@ describe('tokens.remac', () => {
     );
     env().MAC_KEY_VERSION = '2';
     env().MAC_KEY_VERSION_PREVIOUS = '1';
-    await sweepToEnd();
+    const ctx = job();
+    const info = vi.spyOn(ctx.log, 'info');
+    for (let i = 0; i < 6; i++) {
+      await remacCapabilityTokens(ctx);
+      if ((await readSystemValue(kit.env.DB, 'tokens.remacDone')) !== null) break;
+    }
+    const done = info.mock.calls.find(
+      ([, f]) => (f as { code?: string })?.code === 'TOKEN_REMAC_DONE',
+    );
+    expect(done?.[1]).toMatchObject({ unreadable: expect.any(Number) });
+    expect(
+      (done?.[1] as { unreadable?: number } | undefined)?.unreadable ?? 0,
+    ).toBeGreaterThanOrEqual(1);
     expect((await tokens(orphan.id))?.download_token).toBe(stored);
   });
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { makeEnv } from '../../../test/helpers/index.ts';
 import { tokenKeys, tokenMac, tokenMacs, tokenMatches } from './capability-token.ts';
 import { derivedHmacKey, isKeyEnvName, macKeyVersion, macPreviousVersion } from './crypto.ts';
+import { macKeyProblems } from './mac-key-config.ts';
 
 const kek = (byte: number) => btoa(String.fromCharCode(...new Uint8Array(32).fill(byte)));
 const mac = async (key: CryptoKey) =>
@@ -96,5 +97,24 @@ describe('token MACs across a rotation', () => {
     expect(await tokenMatches(during, 'pass', old, 'other-token')).toBe(false);
     // A purpose never verifies as another's.
     expect(await tokenMatches(during, 'apple-auth', old, 'link-token')).toBe(false);
+  });
+});
+
+describe('macKeyProblems', () => {
+  it('accepts unset values and a distinct pair of configured KEKs', () => {
+    expect(macKeyProblems({}, [1])).toEqual([]);
+    expect(macKeyProblems({ pin: '2', previous: '1' }, [1, 2])).toEqual([]);
+  });
+
+  it('names every problem', () => {
+    expect(macKeyProblems({ pin: '3' }, [1, 2])).toEqual([
+      'MAC_KEY_VERSION=3 names a KEK that is not set (KEK_V3).',
+    ]);
+    expect(macKeyProblems({ pin: '0', previous: 'x' }, [1])).toHaveLength(2);
+    expect(macKeyProblems({ pin: '2', previous: '2' }, [1, 2])).toEqual([
+      'MAC_KEY_VERSION and MAC_KEY_VERSION_PREVIOUS must differ.',
+    ]);
+    // Without the secrets (a config-only check) existence is not judged.
+    expect(macKeyProblems({ pin: '7' }, null)).toEqual([]);
   });
 });

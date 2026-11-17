@@ -78,6 +78,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },
+  // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
+  token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */

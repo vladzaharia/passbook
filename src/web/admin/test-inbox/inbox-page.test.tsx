@@ -72,7 +72,26 @@ describe('Test inbox', () => {
     expect(screen.getByText('Hi there from the pass email.')).toBeInTheDocument();
   });
 
-  it('says remote images are hidden when the email references one', async () => {
+  it.each([
+    '<img src="https://cdn.example.test/logo.png">',
+    '<table background="//cdn.example.test/bg.png"><tr><td>x</td></tr></table>',
+    '<img srcset="small.png 1x, https://cdn.example.test/big.png 2x">',
+    '<div style="background:url(https://cdn.example.test/bg.png)">x</div>',
+  ])('says remote images are hidden when the email references one: %s', async (markup) => {
+    setMode('test');
+    await renderApp('/admin/test-inbox?email=e1', {
+      session: 'admin',
+      ...orgAccess,
+      handlers: {
+        ...handlers,
+        '/api/v1/test-inbox/e1': () => json({ ...detail(), html: `<p>Hi</p>${markup}` }),
+      },
+    });
+    expect(await screen.findByText('Remote images hidden in preview')).toBeInTheDocument();
+    expect(screen.getByTitle('Email preview')).toBeInTheDocument();
+  });
+
+  it('does not warn for inline images', async () => {
     setMode('test');
     await renderApp('/admin/test-inbox?email=e1', {
       session: 'admin',
@@ -80,11 +99,14 @@ describe('Test inbox', () => {
       handlers: {
         ...handlers,
         '/api/v1/test-inbox/e1': () =>
-          json({ ...detail(), html: '<p>Hi</p><img src="https://cdn.example.test/logo.png">' }),
+          json({
+            ...detail(),
+            html: '<img src="data:image/png;base64,AAA//AA=" srcset="a.png 1x">',
+          }),
       },
     });
-    expect(await screen.findByText('Remote images hidden in preview')).toBeInTheDocument();
-    expect(screen.getByTitle('Email preview')).toBeInTheDocument();
+    expect(await screen.findByTitle('Email preview')).toBeInTheDocument();
+    expect(screen.queryByText('Remote images hidden in preview')).not.toBeInTheDocument();
   });
 
   it('keeps content and the status region mounted while its capture is revalidated, holding Send', async () => {

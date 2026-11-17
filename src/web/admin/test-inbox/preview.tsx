@@ -100,9 +100,12 @@ function Details({
   );
 }
 
-/** An image or CSS url() that points at a remote host; the frame's policy does not load these. */
+/**
+ * An image the frame's policy does not load: a remote `src` or `background` attribute, a `srcset` with a
+ * remote candidate, or a CSS `url()`. Notice text only; the policy is what blocks them.
+ */
 const REMOTE_IMAGE =
-  /<img\b[^>]*\bsrc\s*=\s*["']?\s*(?:https?:)?\/\/|url\(\s*["']?\s*(?:https?:)?\/\//i;
+  /\b(?:src|background)\s*=\s*["']?\s*(?:https?:)?\/\/|\bsrcset\s*=\s*["']?[^"'>]*(?:https?:)?\/\/|url\(\s*["']?\s*(?:https?:)?\/\//i;
 
 function Message({ email, orgId, view }: { email: Email; orgId: string; view: View }) {
   if (view !== 'html')
