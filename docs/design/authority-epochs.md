@@ -255,7 +255,8 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 - session idle slide (`auth/repo-sessions.ts:75`);
 - scanner `last_seen_*`;
 - rate-limit counters;
-- idempotent cache fills, listed by name.
+- idempotent cache fills, listed by name;
+- the export audit (`org_mode.scan.export` grant, `GET /scans/export` only): one audit row, committed last before the stream.
 
 ## 2. Fence family mapping
 

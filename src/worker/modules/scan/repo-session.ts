@@ -1,4 +1,5 @@
 import { containsMatch, stmt } from '../../platform/db.ts';
+import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 
 type Db = D1Database;
 
@@ -7,6 +8,15 @@ export const orgNameStmt = (db: Db, orgId: string) =>
 
 export const orgBrandingStmt = (db: Db, orgId: string) =>
   stmt(db, 'SELECT branding FROM orgs WHERE id = ?', [orgId]);
+
+/** The actor's org branding, or no row when the actor's checks no longer hold. */
+export const orgBrandingForActorStmt = (db: Db, auth: ScanReadAuthority) =>
+  scanRead(
+    db,
+    auth,
+    `SELECT (SELECT o.branding FROM orgs o WHERE o.id = (SELECT org_id FROM actor_ok)) AS branding
+     WHERE ${auth.ok}`,
+  );
 
 /** The sign-in roster: bounded, so a large org never turns a session read into a full table scan. */
 export const STAFF_ROSTER_LIMIT = 500;
