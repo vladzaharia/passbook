@@ -2,8 +2,9 @@ import { strictEmail } from '../../../shared/email.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { addUserEmail as insertUserEmail } from '../auth/repo.ts';
-import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
+import { processVerifyRequest } from '../auth/magic-service.ts';
+import { emailsOf } from '../auth/repo.ts';
+import { isOwnedByOther } from '../auth/repo-magic.ts';
 import * as repo from './repo.ts';
 import { getUserDetail, requireUser, type UserDetailDto } from './service.ts';
 
@@ -16,7 +17,12 @@ function parseEmail(raw: string): string {
 const audit = (ctx: ServiceContext, actorId: string, userId: string, action: string) =>
   recordAudit(ctx, { actorType: 'user', actorId, action, targetType: 'user', targetId: userId });
 
-export async function addVerifiedEmail(
+/**
+ * Sends the address a verification link for this user. The address joins the account only when
+ * its holder follows the link signed in as that user: an admin's word is not a mailbox proof, and
+ * proof is what attaches waiting passes and accepts invitations.
+ */
+export async function requestEmailProof(
   ctx: ServiceContext,
   actorId: string,
   id: string,
@@ -25,13 +31,13 @@ export async function addVerifiedEmail(
 ): Promise<UserDetailDto> {
   const email = parseEmail(rawEmail);
   await requireUser(ctx, id);
-  const { ownerId, added } = await insertUserEmail(ctx.env.DB, email, id, 'admin', ctx.clock.now());
-  if (ownerId !== id) {
+  if (await isOwnedByOther(ctx.env.DB, email, id)) {
     throw new ConflictError('That address belongs to another account.', 'EMAIL_TAKEN');
   }
-  if (added) {
-    await audit(ctx, actorId, id, 'user.email_add');
-    await attachWaitingPassesForEmail(ctx, id, email, { type: 'user', id: actorId });
+  const proven = (await emailsOf(ctx.env.DB, id)).some((e) => e.email === email);
+  if (!proven) {
+    await processVerifyRequest(ctx, { userId: id, email });
+    await audit(ctx, actorId, id, 'user.email_proof_requested');
   }
   return getUserDetail(ctx, id, currentSessionId);
 }

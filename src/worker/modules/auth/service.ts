@@ -5,6 +5,7 @@ import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
+import { accountProvenByMail, createUser, releaseClaimOtherThan } from './account-claims.ts';
 import * as repo from './repo.ts';
 import { bumpCounter } from './repo-magic.ts';
 import { createSession, hashSessionCookie, type NewSession, revokeOne } from './sessions.ts';
@@ -26,6 +27,8 @@ export interface SignInContext {
   previousCookie?: string;
   /** User of the live session the browser holds, if any. */
   sessionUserId?: string | null;
+  /** How that session was made (`oidc`, `magic_link`, ...). */
+  sessionAmr?: string | null;
   /** Hash of a fresh browser-binding cookie, set by the caller if the proof mail is sent. */
   bindingHash?: string | null;
   next?: string | null;
@@ -114,34 +117,37 @@ export async function auditIdentityLinked(
   });
 }
 
-export async function createUser(ctx: ServiceContext, email: string, name: string | null) {
-  await repo.insertUser(ctx.env.DB, { id: ctx.ids.id(), name, email, now: ctx.clock.now() });
-  const user = await repo.findUserByPrimaryEmail(ctx.env.DB, email);
-  if (!user) throw new Error('user insert lost');
-  return user;
-}
-
 /** Magic-link sign-in for an email the browser just proved. Grants `user` only. */
 export async function signInMagicLink(
   ctx: ServiceContext,
   email: string,
   sign: SignInContext,
-  pending?: PendingIdentity,
 ): Promise<SignInResult> {
-  const db = ctx.env.DB;
-  let user =
-    (await repo.findUserByEmail(db, email)) ?? (await repo.findUserByPrimaryEmail(db, email));
-  if (!user) user = await createUser(ctx, email, null);
-  if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
-  const { ownerId } = await repo.addUserEmail(db, email, user.id, 'magic_link', ctx.clock.now());
-  if (ownerId !== user.id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
-  if (pending) {
-    await repo.insertIdentity(db, { ...pending, userId: user.id, now: ctx.clock.now() });
-    await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
-  }
+  const user = await accountProvenByMail(ctx, email, sign);
   const result = await startSession(ctx, user.id, ['user'], 'magic_link', null, sign);
   await attachWaitingPassesForEmail(ctx, user.id, email);
   return result;
+}
+
+/**
+ * Links a Pocket ID subject to the account of an address it just proved by mail. No session: the
+ * caller sends the browser back through Pocket ID, so the sign-in that follows carries the
+ * subject's group roles rather than the `user` role a mail link grants.
+ */
+export async function linkIdentityByMail(
+  ctx: ServiceContext,
+  email: string,
+  pending: PendingIdentity,
+  sign: SignInContext,
+): Promise<void> {
+  const user = await accountProvenByMail(ctx, email, sign);
+  const linked = await repo.insertIdentity(ctx.env.DB, {
+    ...pending,
+    userId: user.id,
+    now: ctx.clock.now(),
+  });
+  if (linked) await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
+  await attachWaitingPassesForEmail(ctx, user.id, email);
 }
 
 /** Adds a proven email to the account that asked for it. */
@@ -154,6 +160,7 @@ export async function verifyEmailForUser(
   if (user?.status !== 'active') {
     throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
   }
+  await releaseClaimOtherThan(ctx, userId, email);
   const { ownerId } = await repo.addUserEmail(
     ctx.env.DB,
     email,
@@ -164,6 +171,7 @@ export async function verifyEmailForUser(
   if (ownerId !== userId) {
     throw new ForbiddenError('That address belongs to another account.', 'EMAIL_TAKEN');
   }
+  await repo.adoptPrimaryEmail(ctx.env.DB, userId, email);
   await recordAudit(ctx, {
     actorType: 'user',
     actorId: userId,

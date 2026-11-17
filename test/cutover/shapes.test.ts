@@ -133,10 +133,9 @@ describe('cutover: nothing lost', () => {
 
 /** The SQL blocks the runbook tells the owner to run, executed against the cutover database. */
 const runbook = new Map(
-  [...operations.matchAll(/```sql (verify-[\w-]+)\n([\s\S]*?)```/g)].map((m) => [
-    m[1] as string,
-    (m[2] as string).replace(/^ {3}/gm, '').trim(),
-  ]),
+  [...operations.matchAll(/```sql ((?:verify|backfill|release)-[\w-]+)\n([\s\S]*?)```/g)].map(
+    (m) => [m[1] as string, (m[2] as string).replace(/^ {3}/gm, '').trim()],
+  ),
 );
 const rows = async (name: string) =>
   (await legacy.db.prepare(runbook.get(name) ?? `missing ${name}`).all<Record<string, unknown>>())
@@ -145,6 +144,9 @@ const rows = async (name: string) =>
 describe('cutover: runbook queries', () => {
   it('has every query the runbook names', () => {
     expect([...runbook.keys()].sort()).toEqual([
+      'backfill-proven-primaries',
+      'release-disabled-claimant',
+      'verify-admin-emails',
       'verify-archived',
       'verify-broadcasts-due',
       'verify-counts',
@@ -157,6 +159,7 @@ describe('cutover: runbook queries', () => {
       'verify-snapshot-size',
       'verify-stale-after',
       'verify-stale-before',
+      'verify-unproven-primaries',
     ]);
   });
 
@@ -182,6 +185,95 @@ describe('cutover: runbook queries', () => {
     const size = (await rows('verify-snapshot-size'))[0]?.est_bytes as number;
     expect(size).toBeGreaterThan(0);
     expect(size).toBeLessThan(1_500_000);
+  });
+
+  it('pre-check 9: lists provider accounts with an unproven primary; the backfill proves exactly the listed ids it may', async () => {
+    const db = legacy.db;
+    const run = (sql: string) => db.prepare(sql).run();
+    const script = async (sql: string) => {
+      await db.batch(
+        sql
+          .split(/;\s*\n/)
+          .filter((part) => part.trim())
+          .map((part) => db.prepare(part)),
+      );
+    };
+    const ids = (name: string, list: string[]) =>
+      (runbook.get(name) ?? '').replaceAll(
+        /'REPLACE-WITH-USER-ID'(, 'REPLACE-WITH-ANOTHER-USER-ID')?/g,
+        list.map((id) => `'${id}'`).join(', '),
+      );
+    await run(
+      `INSERT INTO users (id, name, primary_email, status, created_at, last_roles) VALUES
+        ('u-ph', 'Placeholder', 'u-ph@unverified.invalid', 'active', 1, '["user"]'),
+        ('u-dis', 'Disabled', 'dis@example.com', 'disabled', 1, '["user"]')`,
+    );
+    await run(
+      `INSERT INTO auth_identities (provider, subject, user_id, email_claim, email_verified, groups, created_at)
+       VALUES ('pocketid', 'sub-h', 'u-holder', 'holder@example.com', 1, '[]', 1),
+              ('pocketid', 'sub-a', 'u-admin2', 'admin2@example.com', 0, '[]', 1),
+              ('pocketid', 'sub-p', 'u-ph', 'u-ph@example.com', 1, '[]', 1),
+              ('pocketid', 'sub-d', 'u-dis', 'dis@example.com', 1, '[]', 1)`,
+    );
+    // Someone else already has u-admin2's address verified.
+    await run(
+      "INSERT INTO user_emails (email, user_id, verified_via, verified_at) VALUES ('admin2@example.com', 'u-owner', 'magic_link', 1)",
+    );
+    try {
+      const listed = async () => (await rows('verify-unproven-primaries')).map((r) => r.id);
+      expect(await listed()).toEqual(['u-admin2', 'u-dis', 'u-holder', 'u-ph']);
+      expect((await rows('verify-unproven-primaries')).find((r) => r.id === 'u-holder')).toEqual({
+        id: 'u-holder',
+        status: 'active',
+        primary_email: 'holder@example.com',
+        idp_verified: 1,
+        passes: 8,
+      });
+      const backfill = ids('backfill-proven-primaries', ['u-holder', 'u-admin2', 'u-ph']);
+      expect(backfill).toContain("'u-holder', 'u-admin2', 'u-ph'");
+      await run(backfill);
+      const proven = await db
+        .prepare(
+          "SELECT email, user_id, verified_via FROM user_emails WHERE verified_via = 'admin' AND user_id IN ('u-holder', 'u-admin2', 'u-ph')",
+        )
+        .all();
+      // Guards: no placeholder address, none already verified for another account.
+      expect(proven.results).toEqual([
+        { email: 'holder@example.com', user_id: 'u-holder', verified_via: 'admin' },
+      ]);
+      expect(await listed()).toEqual(['u-admin2', 'u-dis', 'u-ph']);
+      expect(await rows('verify-admin-emails')).toContainEqual(
+        expect.objectContaining({ email: 'holder@example.com', user_id: 'u-holder' }),
+      );
+      await run(backfill);
+
+      const release = ids('release-disabled-claimant', ['u-dis', 'u-holder', 'u-admin2']);
+      await script(release);
+      await script(release);
+      const users = await db
+        .prepare(
+          "SELECT id, primary_email FROM users WHERE id IN ('u-dis', 'u-holder', 'u-admin2') ORDER BY id",
+        )
+        .all();
+      expect(users.results).toEqual([
+        { id: 'u-admin2', primary_email: 'admin2@example.com' },
+        { id: 'u-dis', primary_email: 'u-dis@unverified.invalid' },
+        { id: 'u-holder', primary_email: 'holder@example.com' },
+      ]);
+      const audits = await db
+        .prepare("SELECT target_id FROM audit_log WHERE action = 'auth.primary_email_unproven'")
+        .all();
+      expect(audits.results).toEqual([{ target_id: 'u-dis' }]);
+    } finally {
+      await run("DELETE FROM audit_log WHERE action = 'auth.primary_email_unproven'");
+      await run(
+        "DELETE FROM user_emails WHERE user_id IN ('u-holder', 'u-admin2', 'u-ph') OR email = 'admin2@example.com'",
+      );
+      await run(
+        "DELETE FROM auth_identities WHERE subject IN ('sub-h', 'sub-a', 'sub-p', 'sub-d')",
+      );
+      await run("DELETE FROM users WHERE id IN ('u-ph', 'u-dis')");
+    }
   });
 
   it('after the cutover: only the archived template lacks a head (a deleted org is ignored); mail and memberships are bound', async () => {

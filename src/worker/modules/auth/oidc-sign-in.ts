@@ -3,12 +3,12 @@ import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import { getPlatformSettings } from '../settings/service.ts';
-import { withinCaps, withinDailyCap } from './magic-caps.ts';
+import { createUserForProvenEmail, releaseClaimOtherThan } from './account-claims.ts';
+import { withinCaps, withinDailyCap, withinIpCap, withinSubjectCap } from './magic-caps.ts';
 import { issueMagicLink } from './magic-service.ts';
 import * as repo from './repo.ts';
 import {
   auditIdentityLinked,
-  createUser,
   OIDC_PROVIDER,
   type OidcClaims,
   rolesFromGroups,
@@ -30,7 +30,14 @@ async function sendIdentityProof(
 ): Promise<never> {
   const conflict = () => new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   if (!sign.bindingHash) throw conflict();
-  if (!(await withinCaps(ctx, email)) || !(await withinDailyCap(ctx))) {
+  // Any group member can trigger this mail to any address: cap it per network, per subject and per
+  // address, like the public sign-in request.
+  if (
+    !(await withinIpCap(ctx, sign.ipPrefix)) ||
+    !(await withinSubjectCap(ctx, claims.sub)) ||
+    !(await withinCaps(ctx, email)) ||
+    !(await withinDailyCap(ctx))
+  ) {
     ctx.log.warn('auth.magic_throttled', { code: 'MAGIC_THROTTLED', userId: ownerId });
     throw conflict();
   }
@@ -74,17 +81,17 @@ export async function signInOidc(
   let user = identity ? await repo.getUser(db, identity.user_id) : null;
   let linkVia: 'trusted_email' | 'new_user' = 'new_user';
   if (!user) {
-    const owner =
-      (await repo.findUserByEmail(db, email)) ?? (await repo.findUserByPrimaryEmail(db, email));
-    // A new subject never establishes an identity from an address its provider did not verify;
-    // the mail round trip proves it instead.
-    if ((owner && !trust) || (!identity && claims.emailVerified !== true)) {
-      if (owner && owner.status !== 'active') {
-        throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
-      }
-      await sendIdentityProof(ctx, owner?.id ?? null, email, claims, sign);
+    // Only a proven address names an owner: a primary email on an account that signs in through a
+    // provider may be an unverified claim.
+    const owner = await repo.findUserByProvenEmail(db, email);
+    if (owner && owner.status !== 'active') {
+      throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
     }
-    user = owner ?? (await createUser(ctx, email, claims.name ?? null));
+    // Without trust (setting off, or the provider did not verify the address) nothing is linked or
+    // created from the claim: the mail round trip proves the address first, and the account is
+    // made or found then.
+    if (!trust) await sendIdentityProof(ctx, owner?.id ?? null, email, claims, sign);
+    user = owner ?? (await createUserForProvenEmail(ctx, email, claims.name ?? null, sign));
     linkVia = owner ? 'trusted_email' : 'new_user';
   }
   if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
@@ -99,16 +106,17 @@ export async function signInOidc(
   };
   if (identity) await repo.updateIdentity(db, identityRow);
   else {
-    await repo.insertIdentity(db, { ...identityRow, userId: user.id });
-    await auditIdentityLinked(ctx, user.id, linkVia, claims.emailVerified);
+    const linked = await repo.insertIdentity(db, { ...identityRow, userId: user.id });
+    if (linked) await auditIdentityLinked(ctx, user.id, linkVia, claims.emailVerified);
   }
 
   let verified = false;
   if (trust) {
+    await releaseClaimOtherThan(ctx, user.id, email);
     const { ownerId } = await repo.addUserEmail(db, email, user.id, 'oidc', ctx.clock.now());
     verified = ownerId === user.id;
-    if (!verified)
-      ctx.log.warn('auth.oidc_email_conflict', { code: 'OIDC_EMAIL_CONFLICT', userId: user.id });
+    if (verified) await repo.adoptPrimaryEmail(db, user.id, email);
+    else ctx.log.warn('auth.oidc_email_conflict', { code: 'OIDC_EMAIL_CONFLICT', userId: user.id });
   } else {
     verified = (await repo.emailsOf(db, user.id)).some((e) => e.email === email);
   }

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
+import { setOidcTrust } from './oidc-trust-test-fixtures.ts';
 import { oidcSignIn } from './test-oidc.ts';
 import { harness, ISSUER, type Jar, ORIGIN, type TestHarness } from './test-support.ts';
 
@@ -11,6 +12,7 @@ let h: TestHarness;
 beforeEach(async () => {
   await resetOidcClientCaches(ISSUER);
   h = await harness({ OIDC_CLIENT_ID: METADATA_URL }, { publicClient: true });
+  await setOidcTrust(h.env.DB, true);
 });
 afterEach(() => h.restore());
 

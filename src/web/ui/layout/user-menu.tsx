@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from 'react';
+import { personLabel } from '../../lib/format.ts';
 import { useSession } from '../../lib/session.ts';
 import { EntityAvatar } from '../entity.tsx';
 import { IconButton } from '../icon-button.tsx';
@@ -20,7 +21,7 @@ export function UserMenu() {
       fallback={
         <IconButton
           label="Account menu"
-          icon={<EntityAvatar kind="user" id={user.id} name={user.name ?? user.primaryEmail} />}
+          icon={<EntityAvatar kind="user" id={user.id} name={personLabel(user)} />}
           onClick={() => setAsked(true)}
         />
       }

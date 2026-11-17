@@ -1,3 +1,4 @@
+import { UNVERIFIED_EMAIL_SUFFIX } from '../../../shared/email.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { pruneCounters } from '../../platform/counters.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -32,6 +33,71 @@ export const findUserByEmail = (db: Db, email: string) =>
 
 export const findUserByPrimaryEmail = (db: Db, email: string) =>
   first<UserRow>(db, 'SELECT * FROM users WHERE primary_email = ?', [email]);
+
+/**
+ * Stands in for a primary email nobody has proven (an account an identity provider created). It
+ * sits on the reserved .invalid TLD, so it never receives mail and is never a real address.
+ */
+export const unverifiedPrimaryEmail = (userId: string) => `${userId}${UNVERIFIED_EMAIL_SUFFIX}`;
+
+/** The account signs in through an identity provider (anything but the break-glass token). */
+const hasExternalIdentity = async (db: Db, userId: string) =>
+  (await first(db, "SELECT 1 FROM auth_identities WHERE user_id = ? AND provider <> 'breakglass'", [
+    userId,
+  ])) !== null;
+
+/**
+ * The account that owns `email`: a verified address, or a primary email on an account with no
+ * external identity. A primary email on an account that has one is a claim, not ownership (it may
+ * come from an identity provider that never proved it), so it never matches here.
+ */
+export async function findUserByProvenEmail(db: Db, email: string): Promise<UserRow | null> {
+  const verified = await findUserByEmail(db, email);
+  if (verified) return verified;
+  const byPrimary = await findUserByPrimaryEmail(db, email);
+  return byPrimary && !(await hasExternalIdentity(db, byPrimary.id)) ? byPrimary : null;
+}
+
+/** A provider identity of the account whose email claim is this address. */
+export async function identityClaims(db: Db, userId: string, email: string): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      "SELECT 1 FROM auth_identities WHERE user_id = ? AND provider <> 'breakglass' AND email_claim = ?",
+      [userId, email],
+    )) !== null
+  );
+}
+
+/**
+ * Frees the address from an account that holds it unproven. One conditional statement: it only
+ * acts while the account still has the address as primary, has a provider identity and no verified
+ * row for it, so concurrent proofs release once. True when this call released it.
+ */
+export async function releaseUnprovenPrimary(
+  db: Db,
+  holderId: string,
+  email: string,
+): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    `UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?
+       AND EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = users.id AND a.provider <> 'breakglass')
+       AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = ?)`,
+    [unverifiedPrimaryEmail(holderId), holderId, email, email],
+  );
+  return changes > 0;
+}
+
+/** An account with a placeholder primary email takes the first address it proves. */
+export async function adoptPrimaryEmail(db: Db, userId: string, email: string): Promise<void> {
+  await run(
+    db,
+    `UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?
+       AND NOT EXISTS (SELECT 1 FROM users WHERE primary_email = ?)`,
+    [email, userId, unverifiedPrimaryEmail(userId), email],
+  );
+}
 
 /** No-op when the primary email is already taken; callers re-select. */
 export async function insertUser(
@@ -75,6 +141,7 @@ export const findIdentity = (db: Db, provider: string, subject: string) =>
     [provider, subject],
   );
 
+/** True when the identity was linked now; false when the subject was already linked. */
 export async function insertIdentity(
   db: Db,
   row: {
@@ -86,8 +153,8 @@ export async function insertIdentity(
     groups: string[];
     now: number;
   },
-): Promise<void> {
-  await run(
+): Promise<boolean> {
+  const { changes } = await run(
     db,
     `INSERT OR IGNORE INTO auth_identities
        (provider, subject, user_id, email_claim, email_verified, groups, created_at, last_used_at)
@@ -103,6 +170,7 @@ export async function insertIdentity(
       row.now,
     ],
   );
+  return changes > 0;
 }
 
 export async function updateIdentity(

@@ -5,7 +5,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { envString } from '../../platform/env.ts';
 import { AppError, UnavailableError, UpstreamError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
+import { clientIp, clientRatePrefix, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import {
@@ -71,7 +71,7 @@ export function noAccess(c: Context<AppBindings>) {
 }
 
 export async function startOidc(c: Context<AppBindings>) {
-  await enforceRateLimit(c.env, 'RL_LOGIN', `oidc:${clientIp(c)}`);
+  await enforceRateLimit(c.env, 'RL_LOGIN', `oidc:${clientRatePrefix(c)}`);
   const rp = oidcConfig(c.env);
   if (!rp) throw new UnavailableError('Sign-in is not configured.', 'OIDC_UNCONFIGURED');
   const ctx = serviceContext(c);
@@ -108,7 +108,7 @@ export async function startOidc(c: Context<AppBindings>) {
 }
 
 export async function callbackOidc(c: Context<AppBindings>) {
-  await enforceRateLimit(c.env, 'RL_LOGIN', `oidc:${clientIp(c)}`);
+  await enforceRateLimit(c.env, 'RL_LOGIN', `oidc:${clientRatePrefix(c)}`);
   const ctx = serviceContext(c);
   const { code, state, iss, error } = c.req.query();
   const binding = readCookie(c, OIDC_COOKIE);

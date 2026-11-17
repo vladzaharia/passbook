@@ -5,6 +5,7 @@ import { exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { all, first, run, type SqlValue } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
+import { personLabelSql } from '../../platform/known-email-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
@@ -170,7 +171,7 @@ export function listKeys(db: Db, f: KeyFilter) {
   }
   return all<ApiKeyRow & { created_by_name: string | null }>(
     db,
-    `SELECT k.*, coalesce(u.name, u.primary_email) AS created_by_name
+    `SELECT k.*, ${personLabelSql('u.name', 'u.primary_email')} AS created_by_name
      FROM api_keys k LEFT JOIN users u ON u.id = k.created_by
      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
      ORDER BY k.created_at DESC, k.id DESC LIMIT ?`,

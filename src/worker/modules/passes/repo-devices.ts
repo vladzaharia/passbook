@@ -1,4 +1,5 @@
 import { all, first } from '../../platform/db.ts';
+import { personLabelSql } from '../../platform/known-email-sql.ts';
 
 export interface PassDevice {
   shortId: string;
@@ -43,7 +44,7 @@ export async function lastVoidEvent(
     db,
     `SELECT a.at, a.actor_type,
        CASE a.actor_type
-         WHEN 'user' THEN (SELECT COALESCE(name, primary_email) FROM users WHERE id = a.actor_id)
+         WHEN 'user' THEN (SELECT ${personLabelSql('name', 'primary_email')} FROM users WHERE id = a.actor_id)
          WHEN 'api_key' THEN (SELECT name FROM api_keys WHERE id = a.actor_id)
          WHEN 'connection' THEN (SELECT name FROM connections WHERE id = a.actor_id)
        END AS label

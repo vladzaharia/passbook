@@ -5,7 +5,7 @@ import { PassStatusSchema } from './passes.ts';
 export const UserSchema = z.object({
   id: IdSchema,
   name: z.string().nullable(),
-  primaryEmail: z.string(),
+  primaryEmail: z.string().nullable(),
   status: z.enum(['active', 'disabled']),
   lastRoles: z.array(RoleSchema),
   createdAt: TimestampSchema,

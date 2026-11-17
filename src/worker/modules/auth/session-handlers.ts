@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import type { SessionResponse } from '../../../shared/contracts/index.ts';
+import { knownEmail } from '../../../shared/email.ts';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { csrfGuard } from '../../platform/csrf.ts';
@@ -28,7 +29,7 @@ export async function getSession(c: Context<AppBindings>): Promise<SessionRespon
     const expiresAt = 'expiresAt' in auth ? Number(auth.expiresAt) : ctx.clock.now();
     return {
       authenticated: true,
-      user: { id: user.id, name: user.name, primaryEmail: user.primary_email },
+      user: { id: user.id, name: user.name, primaryEmail: knownEmail(user.primary_email) },
       roles: auth.roles,
       csrfToken: auth.csrfSecret,
       amr: auth.amr,

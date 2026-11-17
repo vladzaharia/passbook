@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { TURNSTILE_ACTION } from '../../shared/turnstile.ts';
 import { useTheme } from '../lib/theme.tsx';
 
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
@@ -72,6 +73,7 @@ export function Turnstile({
         api = t;
         widgetId = t.render(host.current, {
           sitekey: siteKey,
+          action: TURNSTILE_ACTION,
           theme: resolved,
           appearance: 'interaction-only',
           'before-interactive-callback': () => callbacks.current.onInteractive?.(true),
