@@ -67,7 +67,7 @@ BEGIN SELECT RAISE(ABORT, 'credential transfer required'); END;
 DROP TRIGGER passes_row_version_a;
 CREATE TRIGGER passes_row_version_a AFTER UPDATE OF org_id, identity_id, serial, template_id, template_version, auth_token, download_token, web_service_url, personalization, field_sources, display_title, display_subtitle, external_id, holder_email, owner_user_id ON passes
 WHEN NEW.row_version = OLD.row_version AND (NEW.org_id IS NOT OLD.org_id OR NEW.identity_id IS NOT OLD.identity_id OR NEW.serial IS NOT OLD.serial OR NEW.template_id IS NOT OLD.template_id OR NEW.template_version IS NOT OLD.template_version OR (NEW.auth_token IS NOT OLD.auth_token AND NOT (OLD.auth_token NOT GLOB 'h1:*' AND NEW.auth_token GLOB 'h1:*'
-    AND NEW.serial IS OLD.serial AND NEW.credential_generation IS OLD.credential_generation)) OR (NEW.download_token IS NOT OLD.download_token AND NOT (OLD.download_token NOT LIKE 'h1:%' AND NEW.download_token LIKE 'h1:%'
+    AND NEW.serial IS OLD.serial AND NEW.credential_generation IS OLD.credential_generation)) OR (NEW.download_token IS NOT OLD.download_token AND NOT (OLD.download_token NOT GLOB 'h1:*' AND NEW.download_token GLOB 'h1:*'
     AND NEW.download_token_rotated_at IS OLD.download_token_rotated_at AND NEW.link_generation IS OLD.link_generation)) OR NEW.web_service_url IS NOT OLD.web_service_url OR NEW.personalization IS NOT OLD.personalization OR NEW.field_sources IS NOT OLD.field_sources OR NEW.display_title IS NOT OLD.display_title OR NEW.display_subtitle IS NOT OLD.display_subtitle OR NEW.external_id IS NOT OLD.external_id OR NEW.holder_email IS NOT OLD.holder_email OR NEW.owner_user_id IS NOT OLD.owner_user_id)
 BEGIN UPDATE passes SET row_version = row_version + 1 WHERE rowid = NEW.rowid; END;
 

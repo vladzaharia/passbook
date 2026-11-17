@@ -210,9 +210,9 @@ describe('cutover: capability tokens', () => {
     for (let run = 0; run < 3; run++) await sealCapabilityTokens(ctx);
     const plain = await db
       .prepare(
-        `SELECT (SELECT count(*) FROM passes WHERE download_token NOT LIKE 'h1:%') AS passes,
-         (SELECT count(*) FROM passes WHERE auth_token NOT LIKE 'h1:%') AS auth,
-         (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS bundles,
+        `SELECT (SELECT count(*) FROM passes WHERE download_token NOT GLOB 'h1:*') AS passes,
+         (SELECT count(*) FROM passes WHERE auth_token NOT GLOB 'h1:*') AS auth,
+         (SELECT count(*) FROM bundles WHERE token NOT GLOB 'h1:*') AS bundles,
          (SELECT count(*) FROM pass_versions WHERE pass_json LIKE '%authenticationToken%') AS stored`,
       )
       .first();
