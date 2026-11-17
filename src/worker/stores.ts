@@ -4,6 +4,7 @@ import { bumpCounter } from './modules/auth/repo-magic.ts';
 import { createSessionStore } from './modules/auth/sessions.ts';
 import { createScannerStore } from './modules/scan/auth-store.ts';
 import type { AuthStores } from './platform/auth.ts';
+import type { Clock } from './platform/clock.ts';
 import type { AppEnv } from './platform/env.ts';
 import { createDetachedContext } from './platform/service-context.ts';
 
@@ -11,13 +12,13 @@ const HOUR = 3_600_000;
 const DENIED_ROWS_PER_HOUR = 500;
 
 /** Production session (D1) and API-key stores, wired into createApp by index.ts. */
-export function createAuthStores(env: AppEnv): AuthStores {
+export function createAuthStores(env: AppEnv, clock?: Clock): AuthStores {
   return {
-    sessions: createSessionStore(env),
-    apiKeys: createApiKeyStore(env),
-    scanners: createScannerStore(env),
+    sessions: createSessionStore(env, clock),
+    apiKeys: createApiKeyStore(env, clock),
+    scanners: createScannerStore(env, clock),
     async onDenied(event) {
-      const ctx = createDetachedContext(env);
+      const ctx = createDetachedContext(env, { clock });
       const now = ctx.clock.now();
       const n = await bumpCounter(env.DB, 'audit:auth_denied', now - (now % HOUR));
       if (n > DENIED_ROWS_PER_HOUR) {

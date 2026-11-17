@@ -29,7 +29,10 @@ export async function tenantKeyAuthority(
 ): Promise<TenantPassWrite> {
   const captured: { authority?: TenantPassWrite } = {};
   const app = new Hono<AppBindings>();
-  app.use('*', requestContext({ stores: createAuthStores, clock: kit.clock }));
+  app.use(
+    '*',
+    requestContext({ stores: (env) => createAuthStores(env, kit.clock), clock: kit.clock }),
+  );
   app.post('/', requireTenantSessionOrApiKey(scope), async (c) => {
     captured.authority = await tenantAuthorityOf(kit.ctx, authOf(c), orgId, 'passes:operate');
     return c.json({ ok: true });
