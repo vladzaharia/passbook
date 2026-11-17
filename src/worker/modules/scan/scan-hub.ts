@@ -1,6 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { problemResponse } from '../../platform/errors.ts';
 import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
@@ -12,9 +11,8 @@ import {
   type LiveRecipient,
   liveRecipient,
 } from './live-auth.ts';
-import { LIVE_ROW_TTL_MS } from './live-lifetime.ts';
-import { type InternalLiveRow, openLiveSourceProof } from './live-provenance.ts';
 import { liveRowFor, liveRowsFor } from './live-render.ts';
+import { LIVE_ROW_TTL_MS, type LiveRingRow, ringRowOf } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
 import { staleScanRead } from './stale-read.ts';
 
@@ -26,24 +24,12 @@ function liveContext(env: AppEnv) {
   return { ...ctx, env: snapshotCredentialEnv(env) };
 }
 
-// Old rows without an authenticated source proof cannot authorize a live disclosure.
-type StoredLiveRow = ScanLiveRow & { sourceProof?: string };
-
-function internalRow(row: StoredLiveRow): InternalLiveRow {
-  return {
-    id: row.id,
-    at: row.at,
-    scannerId: row.scannerId,
-    scannerName: row.scannerName,
-    passId: row.passId,
-    holder: null,
-    photoUrl: null,
-    kind: row.kind,
-    direction: row.direction,
-    label: row.label,
-    presented: row.presented,
-    sourceProof: typeof row.sourceProof === 'string' ? row.sourceProof : '',
-  };
+/** The unexpired ring, oldest first; an entry from before plain rows is kept as a redacted row. */
+async function readRing(storage: DurableObjectStorage, now: number): Promise<LiveRingRow[]> {
+  const stored = (await storage.get<unknown[]>(RING)) ?? [];
+  return stored
+    .map(ringRowOf)
+    .filter((r): r is LiveRingRow => r !== null && now - r.row.at < LIVE_ROW_TTL_MS);
 }
 
 /** A sealed attachment the hub no longer serves: lost access is a bare 401, drift a 409 to reconnect. */
@@ -81,22 +67,10 @@ export class ScanHub extends DurableObject<AppEnv> {
     return new Response(null, { status: 101, webSocket: client });
   }
 
-  async publish(input: { orgId: string; mode: Mode; row: InternalLiveRow }): Promise<boolean> {
+  async publish(input: { orgId: string; mode: Mode; row: LiveRingRow }): Promise<boolean> {
     const ctx = liveContext(this.env);
-    const { orgId, mode } = input;
-    const row = internalRow(input.row);
-    if (!row.sourceProof) return false;
-    const proof = await openLiveSourceProof(ctx.env, row.sourceProof);
-    if (
-      !proof ||
-      proof.actor.orgId !== orgId ||
-      proof.actor.mode !== mode ||
-      proof.actor.scanner?.id !== row.scannerId ||
-      proof.eventId !== row.id ||
-      proof.passId !== row.passId ||
-      proof.at !== row.at
-    )
-      return false;
+    const { orgId, mode, row: entry } = input;
+    const { row } = entry;
     if (!(await this.tenant(orgId, mode))) return false;
     const source = await getScanner(ctx.env.DB, row.scannerId);
     if (
@@ -108,12 +82,12 @@ export class ScanHub extends DurableObject<AppEnv> {
     )
       return false;
     const now = ctx.clock.now();
-    const previous = (await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? [];
-    if (previous.some((r) => r.id === row.id)) return true;
-    const rows = [...previous.filter((r) => now - r.at < LIVE_ROW_TTL_MS).map(internalRow), row]
+    const previous = await readRing(this.ctx.storage, now);
+    if (previous.some((r) => r.row.id === row.id)) return true;
+    const rows = [...previous, entry]
       // Random event IDs have no chronological order. Stable sorting preserves arrival
       // order for same-millisecond events so reconnect cursors cannot skip them.
-      .sort((a, b) => a.at - b.at)
+      .sort((a, b) => a.row.at - b.row.at)
       .slice(-100);
     await this.ctx.storage.put(RING, rows);
     await this.schedule(now + LIVE_ROW_TTL_MS);
@@ -127,7 +101,7 @@ export class ScanHub extends DurableObject<AppEnv> {
           socket.close(4409, 'Setup changed');
           return;
         }
-        const body = await liveRowFor(ctx, recipient, row);
+        const body = await liveRowFor(ctx, recipient, entry);
         if (body) this.send(socket, JSON.stringify({ rows: [body], cursor: row.id }));
       }),
     );
@@ -150,44 +124,20 @@ export class ScanHub extends DurableObject<AppEnv> {
     const recipient = authenticated ?? (await liveRecipient(ctx, captured));
     if (!recipient) return { rows: [], cursor: null };
     if (!(await this.tenant(captured.orgId, captured.mode))) return { rows: [], cursor: null };
-    const ring = ((await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? [])
-      .filter((r) => ctx.clock.now() - r.at < LIVE_ROW_TTL_MS)
-      .map(internalRow);
+    const ring = await readRing(this.ctx.storage, ctx.clock.now());
     // A customer reconnect never replays a previous person's result.
-    if (captured.role === 'customer') return { rows: [], cursor: ring.at(-1)?.id ?? null };
-    const index = after ? ring.findIndex((r) => r.id === after) : -1;
+    if (captured.role === 'customer') return { rows: [], cursor: ring.at(-1)?.row.id ?? null };
+    const index = after ? ring.findIndex((r) => r.row.id === after) : -1;
     const rows = await liveRowsFor(ctx, recipient, ring.slice(index + 1));
-    return { rows, cursor: ring.at(-1)?.id ?? null };
+    return { rows, cursor: ring.at(-1)?.row.id ?? null };
   }
 
-  /** Server-side only: grants can redeem proof for a retained, unexpired event. */
-  async sourceProof(eventId: string): Promise<string | null> {
+  /** Server-side only: the retained, unexpired ring entry of a live event, for its photo. */
+  async ringRow(eventId: string): Promise<LiveRingRow | null> {
     const ctx = liveContext(this.env);
-    const now = ctx.clock.now();
-    const rows = (await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? [];
-    const row = rows.find((entry) => entry.id === eventId && now - entry.at < LIVE_ROW_TTL_MS);
-    if (typeof row?.sourceProof !== 'string' || !row.sourceProof) return null;
-    const sealed = row.sourceProof;
-    const proof = await openLiveSourceProof(ctx.env, sealed);
-    if (!proof) return null;
-
-    // Decryption yields to other requests. Recheck retention and expiry afterwards, and
-    // bind every stored row identity field to its authenticated source proof.
-    const retained = (await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? [];
-    const currentNow = ctx.clock.now();
-    const current = retained.find(
-      (entry) => entry.id === eventId && currentNow - entry.at < LIVE_ROW_TTL_MS,
+    return (
+      (await readRing(this.ctx.storage, ctx.clock.now())).find((r) => r.row.id === eventId) ?? null
     );
-    if (
-      !current ||
-      current.sourceProof !== sealed ||
-      proof.eventId !== current.id ||
-      proof.passId !== current.passId ||
-      proof.at !== current.at ||
-      proof.actor.scanner?.id !== current.scannerId
-    )
-      return null;
-    return sealed;
   }
 
   async kick(scannerId: string) {
@@ -212,9 +162,7 @@ export class ScanHub extends DurableObject<AppEnv> {
   override async alarm() {
     const ctx = liveContext(this.env);
     const now = ctx.clock.now();
-    const rows = ((await this.ctx.storage.get<StoredLiveRow[]>(RING)) ?? []).filter(
-      (r) => now - r.at < LIVE_ROW_TTL_MS,
-    );
+    const rows = await readRing(this.ctx.storage, now);
     if (rows.length) await this.ctx.storage.put(RING, rows);
     else await this.ctx.storage.delete(RING);
     for (const socket of this.ctx.getWebSockets()) {
@@ -229,7 +177,7 @@ export class ScanHub extends DurableObject<AppEnv> {
         socket.close(4401, 'Reconnect');
       else await this.schedule(attachment.expiresAt);
     }
-    if (rows.length) await this.schedule((rows[0]?.at ?? now) + LIVE_ROW_TTL_MS);
+    if (rows.length) await this.schedule((rows[0]?.row.at ?? now) + LIVE_ROW_TTL_MS);
   }
 
   private async schedule(at: number) {
