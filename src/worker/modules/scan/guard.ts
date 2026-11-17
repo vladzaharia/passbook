@@ -12,10 +12,16 @@ import {
 import type { AppBindings } from '../../platform/context.ts';
 import { csrfGuard } from '../../platform/csrf.ts';
 import { reportDenied } from '../../platform/denied.ts';
-import { ForbiddenError, UnauthenticatedError, ValidationError } from '../../platform/errors.ts';
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthenticatedError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { getOrgAccess } from '../orgs/access.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import {
@@ -172,7 +178,16 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         rawScope && typeof rawScope === 'object' && 'setupId' in rawScope
           ? (rawScope as { setupId?: string }).setupId
           : undefined;
+      // Rate limit and membership come before any id is read: a non-member learns nothing.
+      await enforceRateLimit(c.env, 'RL_SCAN', `a:${session.userId}`);
+      const claimedOrg =
+        rawScope && typeof rawScope === 'object' && 'orgId' in rawScope
+          ? (rawScope as { orgId?: unknown }).orgId
+          : undefined;
+      if (typeof claimedOrg === 'string' && !(await getOrgAccess(ctx, session.userId, claimedOrg)))
+        throw new ForbiddenError();
       const managedRow = setupId ? await getScanner(ctx.env.DB, setupId) : null;
+      if (managedRow && managedRow.orgId !== claimedOrg) throw new NotFoundError();
       if (managedRow) scannerEpochs = scannerEpochsOf(managedRow);
       const mode = managedRow?.mode ?? modeFromRequest(c);
       const scope = await resolveAdminScope(c, rawScope, mode);

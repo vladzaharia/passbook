@@ -308,6 +308,7 @@ curl -X POST https://passbook.mobile/api/v1/passes \
 - `templateId` must be a template. A blueprint answers 409 `TEMPLATE_IS_BLUEPRINT`
   (`docs/design/blueprints-and-templates.md`).
 - Optional: `serial`, `externalId`, `identityId`, `connectionId` + `externalRef`.
+- `serial` is honored only for passes on the org's own Apple identity (409 `SERIAL_TAKEN` on a repeat). On the shared platform identity the server generates the serial and ignores the field; use `externalId` for your own key.
 - The response carries the pass id, the download link and the current `version`.
 
 An authorized pass detail or retained-version read returns `409 PASS_TRANSFER_PENDING` while

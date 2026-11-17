@@ -148,14 +148,14 @@ export function registerScanningAuthorityAdminMembership() {
     const platform = await makeSession(kit.fx, { userId: outsider.id, roles: ['admin', 'user'] });
     expect(
       (await request('GET', `/scanners/${scanner.id}`, undefined, platform.headers)).status,
-    ).toBe(403);
+    ).toBe(404);
     expect(
       (await request('GET', `/scan-setups/${scanner.id}`, undefined, platform.headers)).status,
-    ).toBe(403);
+    ).toBe(404);
     expect(
       (await request('GET', `/scanning-sessions/${scanner.id}`, undefined, platform.headers))
         .status,
-    ).toBe(403);
+    ).toBe(404);
     expect(
       (
         await request(

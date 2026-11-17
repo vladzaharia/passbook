@@ -16,6 +16,16 @@ CREATE TABLE wallet_provider_accounts (
     OR (revision > 0 AND credential_id IS NOT NULL))
 );
 
+-- The projection columns of a native candidate (the rest of that feature is 0038). They live here because the
+-- triggers below read them: a database stopped between 0037 and 0038 must still accept writes.
+ALTER TABLE template_candidates ADD COLUMN source_release_id TEXT REFERENCES template_releases(id);
+ALTER TABLE template_candidates ADD COLUMN source_release_generation INTEGER;
+ALTER TABLE template_candidates ADD COLUMN source_release_hash TEXT;
+ALTER TABLE template_candidates ADD COLUMN projection_json TEXT;
+ALTER TABLE template_candidates ADD COLUMN provider_account_id TEXT REFERENCES wallet_provider_accounts(id);
+ALTER TABLE template_candidates ADD COLUMN provider_account_revision INTEGER;
+ALTER TABLE template_candidates ADD COLUMN provider_identity_hash TEXT;
+
 -- Credential versions and account events are append-only. Every version has a fresh encrypted
 -- envelope; no provider identifier, secret, or key is stored in plaintext.
 CREATE TABLE wallet_provider_credentials (

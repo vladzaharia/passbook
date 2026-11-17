@@ -159,28 +159,6 @@ describe('create', () => {
     ).rejects.toMatchObject({ status: 404 });
   });
 
-  it('rejects a duplicate serial and removes the stored object', async () => {
-    const first = await kit.pass();
-    const before = (await kit.env.BUCKET.list({ prefix: 'passes/' })).objects.length;
-    await expect(
-      createPassIdempotent(
-        kit.ctx,
-        {
-          orgId: kit.org.id,
-          templateId: kit.template.id,
-          ...reviewedRelease(),
-          input: { memberName: 'Dup' },
-          serial: first.serial,
-          source: 'manual',
-          mode: 'live',
-          ...createPrincipal,
-        },
-        undefined,
-      ),
-    ).rejects.toMatchObject({ code: 'SERIAL_TAKEN' });
-    expect((await kit.env.BUCKET.list({ prefix: 'passes/' })).objects).toHaveLength(before);
-  });
-
   it('rejects an invalid holder email', async () => {
     await expect(
       createPassIdempotent(

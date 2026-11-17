@@ -261,11 +261,17 @@ describe('create and list', () => {
         (await consoleCall('GET', `/${deviceScanner.id}/pairing`, undefined, headers)).status,
       ).toBe(200);
     }
-    for (const path of [`?orgId=${orgId}`, `/${deviceScanner.id}`, `/${deviceScanner.id}/pairing`])
+    await expectProblem(
+      await consoleCall('GET', `?orgId=${orgId}`, undefined, outsiderHeaders),
+      403,
+      'FORBIDDEN',
+    );
+    // A non-member cannot tell a foreign scanner from a missing one.
+    for (const path of [`/${deviceScanner.id}`, `/${deviceScanner.id}/pairing`])
       await expectProblem(
         await consoleCall('GET', path, undefined, outsiderHeaders),
-        403,
-        'FORBIDDEN',
+        404,
+        'SCANNER_NOT_FOUND',
       );
 
     const writes: [string, string, unknown?][] = [
@@ -289,8 +295,14 @@ describe('create and list', () => {
       ['POST', `/${deviceScanner.id}/sample-pass`],
     ];
     for (const headers of [readHeaders, operatorHeaders, outsiderHeaders])
-      for (const [method, path, body] of writes)
-        await expectProblem(await consoleCall(method, path, body, headers), 403, 'FORBIDDEN');
+      for (const [method, path, body] of writes) {
+        const hidden = headers === outsiderHeaders && path !== '';
+        await expectProblem(
+          await consoleCall(method, path, body, headers),
+          hidden ? 404 : 403,
+          hidden ? 'SCANNER_NOT_FOUND' : 'FORBIDDEN',
+        );
+      }
 
     expect(await all(env.DB, sql, ids)).toEqual(before);
     expect(await first(env.DB, "SELECT id FROM scanners WHERE name='Denied'")).toBeNull();

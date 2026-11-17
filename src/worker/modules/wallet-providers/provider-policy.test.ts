@@ -11,7 +11,6 @@ import { createLogger } from '../../platform/log.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getWalletProviderReadiness } from './account-service.ts';
-import { GOOGLE_CALLBACK_KEYS_URL } from './google-callback-crypto.ts';
 import {
   type CallbackSigningKeys,
   callbackKeyset,
@@ -161,7 +160,7 @@ describe('disabled providers', () => {
     ).toEqual([]);
   });
 
-  it('verifies and acknowledges a Google callback without recording anything', async () => {
+  it('acknowledges a Google callback before reading or decrypting any account, and records nothing', async () => {
     const f = await kitFor({ google: 'configured', samsung: 'absent' });
     const account = await first<{ id: string }>(
       f.kit.env.DB,
@@ -206,15 +205,15 @@ describe('disabled providers', () => {
       );
     expect((await send(body)).status).toBe(204);
     expect(logs.join('\n')).toContain('wallet.callback_ignored');
-    // A forged signature is still refused: the acknowledgement follows verification.
+    // The answer is constant: nothing is verified, fetched or decrypted while the provider is off.
     const forged = await signedGoogleEvent(
       keys,
       issuer,
       JSON.parse(JSON.parse(body).signedMessage),
       { keyExpiration: f.kit.clock.now() + 60_000, messageSigner: keys.root },
     );
-    expect((await send(forged)).status).toBe(401);
-    expect(new Set(requested)).toEqual(new Set([GOOGLE_CALLBACK_KEYS_URL]));
+    expect((await send(forged)).status).toBe(204);
+    expect(requested).toEqual([]);
     await expectNoProviderState(f.kit.env.DB);
   });
 

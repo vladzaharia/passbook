@@ -27,6 +27,7 @@ import { listScanners, loadScanner, scannerView } from './scanner-views.ts';
 import { createScanner, updateScanner } from './scanners.ts';
 import { revokeScanner } from './scanning-devices.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
+import { scannerAuthority } from './target-authority.ts';
 
 /** Console scanners: /api/v1/scanners. Mode comes from the console's header, never the body. */
 export const scannersRoutes = createRouter();
@@ -103,7 +104,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:read');
+    await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:read');
     return c.json(scopedScanningView(await scannerView(ctx, row.id), row.orgId));
   },
 );
@@ -121,7 +122,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
     return c.json(
       scopedScanningView(
         await updateScanner(ctx, currentUserId(c), row.id, c.req.valid('json'), authority),
@@ -144,7 +145,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
     return c.json(
       await createPairing(
         ctx,
@@ -170,7 +171,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:read');
+    await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:read');
     return c.json(pairingState(row, ctx.clock.now()));
   },
 );
@@ -188,7 +189,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
     const issued = await pairHere(
       ctx,
       currentUserId(c),
@@ -216,7 +217,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
     return c.json(
       await replaceTerminalToken(
         ctx,
@@ -245,7 +246,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
     return c.json(
       scopedScanningView(await revokeScanner(ctx, currentUserId(c), row.id, authority), row.orgId),
     );
@@ -265,7 +266,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
     return c.json(
       scopedScanningView(
         await changeMode(ctx, currentUserId(c), row.id, c.req.valid('json'), authority),
@@ -289,8 +290,8 @@ register(
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id);
     const auth = { ...authOf(c), mode: 'test' as const };
-    const authority = await tenantAuthorityOf(ctx, auth, row.orgId, 'scanning:manage');
-    const passAuthority = await tenantAuthorityOf(ctx, auth, row.orgId, 'passes:operate');
+    const authority = await scannerAuthority(ctx, auth, row.orgId, 'scanning:manage');
+    const passAuthority = await scannerAuthority(ctx, auth, row.orgId, 'passes:operate');
     return c.json(
       await createSamplePass(ctx, currentUserId(c), row.id, authority, passAuthority),
       201,
