@@ -37,7 +37,13 @@ describe('session activity authority', () => {
     const outsider = await makeUser(f.kit.fx);
     await grantScanMembership(f.kit.fx, otherOrg.id, outsider.id);
     const foreign = await makeSession(f.kit.fx, { userId: outsider.id });
-    await noLeak(await f.console(foreign.headers), 403, 'FORBIDDEN', f.pass.id, ACTIVITY_NAME);
+    await noLeak(
+      await f.console(foreign.headers),
+      404,
+      'SCANNING_SESSION_NOT_FOUND',
+      f.pass.id,
+      ACTIVITY_NAME,
+    );
     await noLeak(
       await f.request(`/scanning-sessions/${f.sessionId}`, {
         ...f.browser.headers,
@@ -63,7 +69,7 @@ describe('session activity authority', () => {
       f.kit.clock.now(),
       f.membershipId,
     ]);
-    await noLeak(await f.console(), 403, 'FORBIDDEN', f.pass.id, ACTIVITY_NAME);
+    await noLeak(await f.console(), 404, 'SCANNING_SESSION_NOT_FOUND', f.pass.id, ACTIVITY_NAME);
   });
 
   it.each(['missing', 'revoked', 'rotated'] as const)(
@@ -117,8 +123,8 @@ describe('session activity authority', () => {
         ]);
       await noLeak(
         change === 'missing' ? await f.console({}) : await f.console(),
-        change === 'revoked membership' ? 403 : 401,
-        change === 'revoked membership' ? 'FORBIDDEN' : 'UNAUTHENTICATED',
+        change === 'revoked membership' ? 404 : 401,
+        change === 'revoked membership' ? 'SCANNING_SESSION_NOT_FOUND' : 'UNAUTHENTICATED',
         f.pass.id,
         ACTIVITY_NAME,
       );
@@ -279,7 +285,7 @@ describe('session activity authority', () => {
       if (change === 'membership roles') return;
       const next = await f.console();
       expect(next.status).toBe(
-        change === 'membership revoked' ? 403 : change === 'session rotation' ? 401 : 404,
+        change === 'membership revoked' ? 404 : change === 'session rotation' ? 401 : 404,
       );
       expect(await next.text()).not.toContain(ACTIVITY_NAME);
     },

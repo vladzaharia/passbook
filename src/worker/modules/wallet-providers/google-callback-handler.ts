@@ -81,7 +81,9 @@ export async function handleGoogleCallback(
       url.pathname !== `/wallet/v1/google/${accountId}`
     )
       throw rejected();
-    // A disabled provider is acknowledged before any account material is read or decrypted.
+    // The size cap needs no stored state, so it applies even before the keyset is initialized.
+    const raw = await readGoogleCallbackBody(request);
+    // A disabled provider is acknowledged after the size cap and before any account material is read or decrypted.
     const disabled = walletProviderDisabledReason('google');
     if (disabled) {
       ctx.log.info('wallet.callback_ignored', {
@@ -91,8 +93,6 @@ export async function handleGoogleCallback(
       });
       return;
     }
-    // The size cap needs no stored state, so it applies even before the keyset is initialized.
-    const raw = await readGoogleCallbackBody(request);
     credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, credentialKeyEnv);
     await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
     const scope = await findGoogleCallbackAccount(
