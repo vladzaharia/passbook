@@ -152,6 +152,16 @@ async function consumeErrorPage(
   return c.html(page.html, page.status);
 }
 
+/** Where the browser goes once a link or code is consumed. */
+function targetOf(outcome: MagicOutcome): string {
+  if (outcome.kind === 'verified') return `/account?verified=${encodeURIComponent(outcome.email)}`;
+  if (outcome.kind === 'linked') {
+    const next = safeNext(outcome.next);
+    return next ? `/auth/oidc/start?next=${encodeURIComponent(next)}` : '/auth/oidc/start';
+  }
+  return homeFor(outcome.result.roles, outcome.next);
+}
+
 /** POST /auth/magic/consume. Forms get a redirect or an error page; JSON gets JSON. */
 export async function consumeMagic(c: Context<AppBindings>) {
   const type = c.req.header('content-type') ?? '';
@@ -171,10 +181,8 @@ export async function consumeMagic(c: Context<AppBindings>) {
     setSessionCookie(c, outcome.result.session.cookieValue, outcome.result.session.maxAgeSeconds);
     clearCookie(c, MAGIC_COOKIE);
   }
+  if (outcome.kind === 'linked') clearCookie(c, MAGIC_COOKIE);
   // ?verified= tells /account which address was just added (the portal confirms it).
-  const target =
-    outcome.kind === 'verified'
-      ? `/account?verified=${encodeURIComponent(outcome.email)}`
-      : homeFor(outcome.result.roles, outcome.next);
+  const target = targetOf(outcome);
   return isForm ? c.redirect(target, 303) : c.json({ ok: true as const, next: target });
 }

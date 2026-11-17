@@ -10,6 +10,7 @@ import { getPlatformSettings } from '../settings/service.ts';
 import { withinCaps, withinDailyCap, withinIpCap } from './magic-caps.ts';
 import * as repo from './repo-magic.ts';
 import {
+  linkIdentityByMail,
   type PendingIdentity,
   type SignInContext,
   type SignInResult,
@@ -214,6 +215,8 @@ async function requireSignInEnabled(ctx: ServiceContext) {
 
 export type MagicOutcome =
   | { kind: 'signed_in'; result: SignInResult; next: string | null }
+  /** A Pocket ID subject was linked: the browser goes back through Pocket ID to sign in. */
+  | { kind: 'linked'; next: string | null }
   | { kind: 'verified'; email: string };
 
 async function finish(
@@ -226,10 +229,11 @@ async function finish(
     await verifyEmailForUser(ctx, link.user_id, link.email);
     return { kind: 'verified', email: link.email };
   }
-  const pending = link.pending_identity
-    ? (JSON.parse(link.pending_identity) as PendingIdentity)
-    : undefined;
-  const result = await signInMagicLink(ctx, link.email, sign, pending);
+  if (link.pending_identity) {
+    await linkIdentityByMail(ctx, link.email, JSON.parse(link.pending_identity) as PendingIdentity);
+    return { kind: 'linked', next: link.redirect_path };
+  }
+  const result = await signInMagicLink(ctx, link.email, sign);
   return { kind: 'signed_in', result, next: link.redirect_path };
 }
 

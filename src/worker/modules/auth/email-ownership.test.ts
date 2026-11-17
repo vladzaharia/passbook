@@ -8,9 +8,16 @@ import { resetOidcClientCaches } from './oidc-client.ts';
 import { signInOidc } from './oidc-sign-in.ts';
 import { setOidcTrust } from './oidc-trust-test-fixtures.ts';
 import { isOwnedByOther } from './repo-magic.ts';
-import { signInMagicLink, verifyEmailForUser } from './service.ts';
+import { linkIdentityByMail, signInMagicLink, verifyEmailForUser } from './service.ts';
 import { oidcSignIn } from './test-oidc.ts';
-import { harness, ISSUER, type Jar, type TestHarness, waitingPass } from './test-support.ts';
+import {
+  absorb,
+  harness,
+  ISSUER,
+  type Jar,
+  type TestHarness,
+  waitingPass,
+} from './test-support.ts';
 
 let h: TestHarness;
 let n = 0;
@@ -188,15 +195,50 @@ describe('positive controls', () => {
   it('a proven address still signs into its owner, with its identity', async () => {
     const owner = await makeUser(fixtures(h.env));
     const attacker = await legacyClaimant(`other-${uniq()}@example.test`);
-    const session = await signInMagicLink(ctx(), owner.primaryEmail, sign, {
+    const subject = `proof-${uniq()}`;
+    await linkIdentityByMail(ctx(), owner.primaryEmail, {
       provider: 'pocketid',
-      subject: `proof-${uniq()}`,
+      subject,
       emailClaim: owner.primaryEmail,
       emailVerified: true,
       groups: ['wallet-users'],
     });
-    expect(session.userId).toBe(owner.id);
-    expect(session.userId).not.toBe(attacker.user.id);
+    const linked = await first<{ user_id: string }>(
+      h.env.DB,
+      'SELECT user_id FROM auth_identities WHERE subject = ?',
+      [subject],
+    );
+    expect(linked?.user_id).toBe(owner.id);
+    expect(linked?.user_id).not.toBe(attacker.user.id);
+  });
+
+  it('after the proof the browser goes back through Pocket ID and signs in with group roles', async () => {
+    const email = `admin-${uniq()}@example.test`;
+    const jar: Jar = new Map();
+    const admin = { ...person(email), groups: ['wallet-admins'] };
+    expect((await oidcSignIn(h, jar, admin)).res.status).toBe(403);
+    const consumed = await consumeProof(jar);
+    expect(consumed.status).toBe(303);
+    expect(consumed.headers.get('location')).toBe('/auth/oidc/start');
+    absorb(jar, consumed);
+    expect(jar.has('__Host-wallet_sid')).toBe(false);
+    const again = await oidcSignIn(h, jar, admin);
+    expect(again.res.status).toBe(302);
+    absorb(jar, again.res);
+    const body = (await (await h.call('/api/v1/session', { cookies: jar })).json()) as {
+      roles: string[];
+      user: { primaryEmail: string };
+    };
+    expect(body.roles).toEqual(['admin', 'user']);
+    expect(body.user.primaryEmail).toBe(email);
+  });
+
+  it('carries the requested next through the proof', async () => {
+    const jar: Jar = new Map();
+    const holder = person(`next-${uniq()}@example.test`);
+    expect((await oidcSignIn(h, jar, holder, { next: '/passes' })).res.status).toBe(403);
+    const consumed = await consumeProof(jar);
+    expect(consumed.headers.get('location')).toBe('/auth/oidc/start?next=%2Fpasses');
   });
 
   it('an account without a provider identity still owns its primary email', async () => {

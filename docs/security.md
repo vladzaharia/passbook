@@ -124,10 +124,10 @@ Magic-link sends are also capped per address (5/h), per network (30/day) and, fo
 
 ## Sign-in
 
-- `oidc.trustEmail` is off by default. When on, it applies only if Pocket ID sends `email_verified=true`. Otherwise the address is proven by mail before any account is made or linked. The status `oidc` component is degraded while it is on. Trade-off: on, a Pocket ID user whose email matches an account links at once, and a new subject's first sign-in needs no mail.
+- `oidc.trustEmail` is off by default. When on, it applies only if Pocket ID sends `email_verified=true`. Otherwise the address is proven by mail before any account is made or linked. After the proof the browser goes back through Pocket ID, so the first session carries the group roles. Set `oidc.trustEmail` only if the provider verifies emails. The status `oidc` component is degraded while it is on. Trade-off: on, a Pocket ID user whose email matches an account links at once, and a new subject's first sign-in needs no mail.
 - Ownership of an address is a `user_emails` row (or a primary email on an account with no Pocket ID identity). A primary email on a provider account is a claim: a mailbox proof never merges into it. The proof gets its own account and the claimant keeps its sign-in with a placeholder `<id>@unverified.invalid` primary (`auth.primary_email_unproven`). `isOwnedByOther` ignores such claims.
 - A platform admin naming an address for a user sends a verification link (`user.email_proof_requested`); the address joins the account, and waiting passes attach, only when the user follows it signed in.
-- `RL_LOGIN`, `RL_MAGIC_LINK`, `RL_SCAN_PAIR` and the `rateLimit` default key on the client's /24 (v4) or /64 (v6), not the full IP.
+- `RL_LOGIN` (OIDC, magic consume, break-glass), `RL_MAGIC_LINK` and `RL_SCAN_PAIR` key on the client's /24 (v4) or /64 (v6). Every other `rateLimit` defaults to the full IPv4 address or the IPv6 /64, so a venue's NAT pool is not one bucket.
 - The code-entry failure counter keys on address and browser, so a stranger's wrong guesses cannot lock the owner out. Guessing stays bounded by 5 tries per link and 5 links per address per hour.
 - Turnstile verdicts must name the `PUBLIC_BASE_URL` host (`auth.turnstile_hostname`); only Cloudflare's always-pass test secret skips this.
 - Counter keys built from addresses (`magic:*`, `pass-email:*`) are HMACs under a derived key (`counter.*` labels), not bare hashes; old counters expire on their own.

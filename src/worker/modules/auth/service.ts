@@ -157,26 +157,43 @@ export async function createUserForProvenEmail(
   return createUser(ctx, email, name);
 }
 
-/** Magic-link sign-in for an email the browser just proved. Grants `user` only. */
-export async function signInMagicLink(
-  ctx: ServiceContext,
-  email: string,
-  sign: SignInContext,
-  pending?: PendingIdentity,
-): Promise<SignInResult> {
+/** The account that owns an address its holder just proved by mail; the address is recorded on it. */
+async function accountProvenByMail(ctx: ServiceContext, email: string) {
   const db = ctx.env.DB;
   const user = await accountForProvenEmail(ctx, email, null);
   if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
   const { ownerId } = await repo.addUserEmail(db, email, user.id, 'magic_link', ctx.clock.now());
   if (ownerId !== user.id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   await repo.adoptPrimaryEmail(db, user.id, email);
-  if (pending) {
-    await repo.insertIdentity(db, { ...pending, userId: user.id, now: ctx.clock.now() });
-    await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
-  }
+  return user;
+}
+
+/** Magic-link sign-in for an email the browser just proved. Grants `user` only. */
+export async function signInMagicLink(
+  ctx: ServiceContext,
+  email: string,
+  sign: SignInContext,
+): Promise<SignInResult> {
+  const user = await accountProvenByMail(ctx, email);
   const result = await startSession(ctx, user.id, ['user'], 'magic_link', null, sign);
   await attachWaitingPassesForEmail(ctx, user.id, email);
   return result;
+}
+
+/**
+ * Links a Pocket ID subject to the account of an address it just proved by mail. No session: the
+ * caller sends the browser back through Pocket ID, so the sign-in that follows carries the
+ * subject's group roles rather than the `user` role a mail link grants.
+ */
+export async function linkIdentityByMail(
+  ctx: ServiceContext,
+  email: string,
+  pending: PendingIdentity,
+): Promise<void> {
+  const user = await accountProvenByMail(ctx, email);
+  await repo.insertIdentity(ctx.env.DB, { ...pending, userId: user.id, now: ctx.clock.now() });
+  await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
+  await attachWaitingPassesForEmail(ctx, user.id, email);
 }
 
 /** Adds a proven email to the account that asked for it. */

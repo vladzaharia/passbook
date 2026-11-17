@@ -12,7 +12,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { signInOidc } from './oidc-sign-in.ts';
 import { setOidcTrust } from './oidc-trust-test-fixtures.ts';
-import { type OidcClaims, signInMagicLink } from './service.ts';
+import { linkIdentityByMail, type OidcClaims } from './service.ts';
 import { oidcSignIn } from './test-oidc.ts';
 import {
   fakeLimiter,
@@ -264,7 +264,10 @@ describe('oidc sign-in', () => {
           cookies,
         });
       expect((await consume(new Map())).status).toBe(400);
-      expect((await consume(jar)).status).toBe(303);
+      const consumed = await consume(jar);
+      expect(consumed.status).toBe(303);
+      expect(consumed.headers.get('location')).toBe('/auth/oidc/start');
+      expect(consumed.headers.getSetCookie().join(';')).not.toContain('wallet_sid');
       const row = await first<{ user_id: string }>(
         h.env.DB,
         'SELECT user_id FROM auth_identities WHERE subject = ?',
@@ -364,18 +367,13 @@ describe('oidc sign-in', () => {
     const existing = await makeUser(fixtures(h.env));
     const ctx = createServiceContext(h.env, { clock: h.clock });
     const subject = `proof-${uniq()}`;
-    await signInMagicLink(
-      ctx,
-      existing.primaryEmail,
-      { ipPrefix: null, userAgent: null },
-      {
-        provider: 'pocketid',
-        subject,
-        emailClaim: existing.primaryEmail,
-        emailVerified: false,
-        groups: ['wallet-users'],
-      },
-    );
+    await linkIdentityByMail(ctx, existing.primaryEmail, {
+      provider: 'pocketid',
+      subject,
+      emailClaim: existing.primaryEmail,
+      emailVerified: false,
+      groups: ['wallet-users'],
+    });
     expect(
       await first(
         h.env.DB,
