@@ -16,9 +16,15 @@ import { parseSettings } from './dto-console.ts';
 import { captureConsoleFeed } from './feed-console-page.ts';
 import { scannerHasTemplates } from './repo-device.ts';
 import { type ScanReadAuthority, scanReadAuthority } from './repo-read-authority.ts';
+import { getConsoleScanner } from './repo-scanners.ts';
 import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 import { type ScanningSessionRow, scanningSessionStats } from './repo-scanning-sessions.ts';
-import { countOrgTemplates, readValidEventScope, type ScanEventRow } from './repo-scope.ts';
+import {
+  countOrgTemplates,
+  readScannerScope,
+  readValidEventScope,
+  type ScanEventRow,
+} from './repo-scope.ts';
 
 /**
  * What a session read is authorized by: the org and mode, the session a device is bound to, and
@@ -190,17 +196,19 @@ export async function sessionDto(
   row: ScanningSessionRow,
   authority: SessionReadAuthority,
 ) {
-  const scope = await resolveSessionScope(ctx, row);
   const settings = effectiveSessionSettings(row);
   const now = ctx.clock.now();
-  const stats = await scanningSessionStats(
-    ctx.env.DB,
-    row,
-    localDayStart(now, row.time_zone),
-    now - 120_000,
-    authority,
-    now,
-  );
+  const [scope, stats] = await Promise.all([
+    resolveSessionScope(ctx, row),
+    scanningSessionStats(
+      ctx.env.DB,
+      row,
+      localDayStart(now, row.time_zone),
+      now - 120_000,
+      authority,
+      now,
+    ),
+  ]);
   if (!stats) throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   return ScanningSessionSchema.parse({
     id: row.id,
@@ -220,4 +228,37 @@ export async function sessionDto(
     onlineCount: stats.online,
     today: stats.today,
   });
+}
+
+/** The session's devices as the console shows them, each with its scope as it holds now. */
+export function sessionDeviceViews(
+  ctx: ServiceContext,
+  row: ScanningSessionRow,
+  session: { settings: { acceptAllTemplates?: boolean } },
+  scope: ResolvedSessionScope,
+  devices: readonly ScanningDeviceRow[],
+) {
+  return Promise.all(
+    devices.map(async (d) => {
+      const settings = effectiveSessionSettings(row, d);
+      const scanner = await getConsoleScanner(ctx.env.DB, d.scanner_id);
+      const invalidScannerScope =
+        !scanner ||
+        scanner.mode !== row.mode ||
+        !(await readScannerScope(ctx.env.DB, scanner, null)).valid;
+      const conflict =
+        !!scanner && !!settings && (await conflictsWithAllScope(ctx, scanner, scope, settings));
+      return deviceDto(
+        d,
+        ctx.clock.now(),
+        settings
+          ? {
+              ...settings,
+              acceptAllTemplates:
+                !invalidScannerScope && !conflict && session.settings.acceptAllTemplates === true,
+            }
+          : { ...parseSettings(d.settings), acceptAllTemplates: false, lookup: false },
+      );
+    }),
+  );
 }

@@ -69,7 +69,13 @@ export async function recentFor(
   const auth = scanReadAuthority(actor, { now, read: HISTORY_READ });
   const own = ownScansWhere(actor);
   const [page, window] = await Promise.all([
-    readHistoryPage(ctx.env.DB, auth, { where: own.sql, params: own.params, limit }, now),
+    readHistoryPage(
+      ctx.env.DB,
+      auth,
+      // The `+` keeps the planner on the actor's own index, not the org's.
+      { where: own.sql, params: own.params, limit, tenant: auth.tenant('+s', 'scans') },
+      now,
+    ),
     undoWindowMinutes(ctx),
   ]);
   if (!page.authorized) throw await staleScanRead(ctx, actor);

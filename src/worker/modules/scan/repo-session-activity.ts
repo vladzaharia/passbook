@@ -34,7 +34,8 @@ function activityScope(row: ScanningSessionRow): Predicate | null {
   if (!parsed.success) return null;
   if ('eventId' in parsed.data)
     return {
-      sql: `s.event_id=?/* scan-ephemeral-event-id */ AND EXISTS (
+      // The `+` keeps the planner on the devices' scans, not the whole event's.
+      sql: `+s.event_id=?/* scan-ephemeral-event-id */ AND EXISTS (
       SELECT 1 FROM scan_events event_scope WHERE event_scope.id=s.event_id
         AND event_scope.org_id=s.org_id AND event_scope.mode=s.mode AND event_scope.archived_at IS NULL)
       AND ((s.pass_id IS NULL AND s.template_id IS NULL) OR EXISTS (SELECT 1 FROM scan_event_templates et

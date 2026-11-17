@@ -134,7 +134,7 @@ export async function readSummary(
         COALESCE(SUM(s.outcome IS NOT 'ok' AND s.outcome IS NOT 'heads_up'), 0) AS refused,
         COALESCE(SUM(s.undone_by IS NOT NULL), 0) AS undone,
         MIN(s.at) AS first_at, MAX(s.at) AS last_at
-      FROM scans s WHERE ${auth.ok} AND ${auth.tenant('s', 'scans')} AND ${inWindow}`,
+      FROM scans s WHERE ${auth.ok} AND ${auth.tenant('+s', 'scans')} AND ${inWindow}`,
       params,
     ),
     historyPageStmt(
@@ -144,6 +144,8 @@ export async function readSummary(
         where: `${inWindow} AND s.outcome = 'ok' AND s.undone_by IS NULL`,
         params,
         limit: SUMMARY_CONTRIBUTORS + 1,
+        // The `+` keeps the planner on the actor's own index, not the org's.
+        tenant: auth.tenant('+s', 'scans'),
       },
       now,
     ),
