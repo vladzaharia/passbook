@@ -15,7 +15,6 @@ import {
 import { planActionReads } from './act-read-plan.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
 import { finishStop, type StopContext } from './act-stop.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { photoGrantPurpose } from './asset-types.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { valueRequestIssue } from './effects-value.ts';
@@ -23,9 +22,9 @@ import type { ScanActor } from './guard.ts';
 import { knownPhotoUrl, type PreparedPhotoGrant } from './member-photo.ts';
 import { unknownOutcome } from './outcome.ts';
 import { invalidAttemptAuthority } from './repo-act-attempt-authority.ts';
+import { passSnapshotFence } from './repo-act-pass-fence.ts';
 import { scanTemplateSnapshotPredicate } from './repo-live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { passSnapshotFence } from './repo-pass-authority.ts';
 import type { Found, Stop } from './resolve.ts';
 import { evaluate } from './resolve-evaluate.ts';
 import { defaultAction } from './resolve-outcome.ts';
@@ -46,7 +45,6 @@ export async function attempt(
   requestHash: string,
   credentials: CredentialTombstoneSnapshot,
   candidates: Candidate[] | null,
-  csrfSnapshot: ActorCsrfSnapshot,
   undoWindow: number,
   capturedOverride: Override | null,
   approver: readonly PinStaffSnapshot[],
@@ -57,15 +55,7 @@ export async function attempt(
   const reads = planActionReads(ctx, authorityActor, req, scanId);
   let invalidFound: Found | null = null;
   const invalidAuthority = () =>
-    invalidAttemptAuthority(
-      ctx,
-      authorityActor,
-      req,
-      credentials,
-      csrfSnapshot,
-      ownedClaim,
-      invalidFound,
-    );
+    invalidAttemptAuthority(ctx, authorityActor, credentials, ownedClaim, invalidFound);
   const stopFor = (action: ResolvedScanAction | null): StopContext => ({
     ctx,
     actor,
@@ -77,7 +67,6 @@ export async function attempt(
     requestHash,
     credentialTombstoneRefs: credentials.credentialTombstoneRefs,
     credentialKeysetCommitment: credentials.credentialKeysetCommitment,
-    csrfSnapshot,
     history: reads.preloaded,
     photo,
     dayStart: req.dayStart,
@@ -163,8 +152,6 @@ export async function attempt(
         {
           actor: authorityActor,
           event: null,
-          adminEventTemplates:
-            authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
           passFence: null,
         },
       );
@@ -195,6 +182,8 @@ export async function attempt(
           ctx.clock.now(),
           ctx.env,
           evaluated.found ?? policy,
+          evaluated.found?.liveCandidate?.templateSnapshot?.raw ??
+            evaluated.auditCandidate?.templateSnapshot?.raw,
         )))
       : null;
     if (pass && !passFence) throw raced();
@@ -208,8 +197,6 @@ export async function attempt(
           actor: authorityActor,
           event: evaluated.found?.admission?.event ?? null,
           ...(scopedTemplate ? { templateId: scopedTemplate } : {}),
-          adminEventTemplates:
-            authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
           passFence,
         },
         auditPass,
@@ -304,7 +291,6 @@ export async function attempt(
     claimAt,
     requestHash,
     credentials,
-    csrfSnapshot,
     found,
     action,
     override,

@@ -16,7 +16,7 @@ import {
   planDisplayHistoryRead,
   rebindDisplayHistoryRead,
 } from './history-proof-plan.ts';
-import { type ActionPassFence, prepareActionPassFence } from './repo-pass-authority.ts';
+import { type ActionPassFence, prepareActionPassFence } from './repo-act-pass-fence.ts';
 import type { Found } from './resolve.ts';
 import type { EvaluationReadPlan } from './resolve-evaluate.ts';
 import { displayNeedsFor } from './scan-display-history.ts';
@@ -77,6 +77,7 @@ export function planActionReads(
           ctx.clock.now(),
           ctx.env,
           found,
+          found.liveCandidate?.templateSnapshot?.raw,
         );
         if (!prepared && picked !== 'choose') throw new StaleScanAuthority();
         base = prepared

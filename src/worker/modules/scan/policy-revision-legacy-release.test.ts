@@ -4,8 +4,8 @@ import { all, first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
+import { actionPassFence, passSnapshotCurrent } from './pass-fence-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
-import { actionPassFence, passSnapshotCurrent } from './repo-pass-authority.ts';
 import { CHECK_IN, policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -41,7 +41,7 @@ describe('scanner evaluated policy revisions', () => {
     });
     expect(
       await passSnapshotCurrent(
-        kit.env.DB,
+        kit.env,
         candidate.pass,
         candidate.connectionGeneration,
         candidate.activeTemplateVersion,
@@ -72,7 +72,7 @@ describe('scanner evaluated policy revisions', () => {
     await approveAppleRelease(kit, { templateId, mode: 'live', version: template.version });
     expect(
       await passSnapshotCurrent(
-        kit.env.DB,
+        kit.env,
         candidate.pass,
         candidate.connectionGeneration,
         candidate.activeTemplateVersion,

@@ -9,7 +9,6 @@ import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
 import { StaleScanAuthority } from './act-override.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { planAdmission } from './admission.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { policyActor } from './dto.ts';
@@ -19,8 +18,8 @@ import { verifiedEventRoleProjection } from './history-policy.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { blankOutcome, isOverridable, safeOutcomeDetails } from './outcome.ts';
 import { readReplayEvidence } from './repo-act-authority.ts';
+import { type ActionPassFence, prepareActionPassFence } from './repo-act-pass-fence.ts';
 import { replayCurrent } from './repo-act-replay-current.ts';
-import { type ActionPassFence, prepareActionPassFence } from './repo-pass-authority.ts';
 import type { ScanRow } from './repo-scans.ts';
 import { foundOf } from './resolve.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
@@ -54,7 +53,6 @@ export async function replayOutcome(
   req: ActRequest,
   row: ScanRow,
   credentialContext: CredentialTombstoneSnapshot,
-  csrfSnapshot: ActorCsrfSnapshot,
 ): Promise<ScanEvaluation> {
   ctx = capturingContext(ctx);
   // A passless refusal is scoped by the session it was made in; a device now in another one cannot replay it.
@@ -71,17 +69,7 @@ export async function replayOutcome(
     credentialContext,
   };
   const finishReceipt = async () => {
-    await replayCurrent(
-      ctx,
-      actor,
-      req,
-      row,
-      credentialContext,
-      csrfSnapshot,
-      evidence,
-      null,
-      null,
-    );
+    await replayCurrent(ctx, actor, req, row, credentialContext, evidence, null, null);
     return receipt;
   };
   const { candidate, ledger, reference, recorded } = evidence;
@@ -155,6 +143,7 @@ export async function replayOutcome(
     ctx.clock.now(),
     ctx.env,
     candidate,
+    candidate.templateSnapshot?.raw,
   );
   if (!prepared) return finishReceipt();
   let fence: ActionPassFence | null = null;
@@ -277,7 +266,6 @@ export async function replayOutcome(
     req,
     row,
     credentialContext,
-    csrfSnapshot,
     evidence,
     candidate,
     currentEvent,

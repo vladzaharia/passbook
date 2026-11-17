@@ -4,14 +4,12 @@ import { decodePlatformSettings, platformSettingsStmt } from '../settings/servic
 import { type ActRequest, claimOf, rememberHistoryCapacities, requestHashOf } from './act-claim.ts';
 import { claimGrant, claimOnGrant, keysetOnGrant } from './act-claim-grant.ts';
 import {
-  actionClaimAuthority,
   executeClaimedAction,
   replayOrReopenClaim,
   staleScanAuthority,
 } from './act-claim-lifecycle.ts';
 import { overrideEvidenceStmt, StaleScanAuthority } from './act-override.ts';
 import { passRaced, ScanAttemptRaced, staleActorRefusal } from './act-stale-refusal.ts';
-import { actorCsrfAuthorityStmt, actorCsrfSnapshotFromResult } from './actor-csrf.ts';
 import {
   type CredentialTombstoneSnapshot,
   captureCredentialTombstoneSnapshot,
@@ -20,12 +18,9 @@ import {
 } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { notAcceptedOutcome, unknownOutcome } from './outcome.ts';
-import { candidateInitializationFence } from './repo-act.ts';
 import { replayScanByKeyStmt, replayScanFromResult } from './repo-act-authority.ts';
-import { actorAuthorityPredicates } from './repo-actor-authority.ts';
 import { credentialTombstonesClearStmt } from './repo-credential-tombstones.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
-import { pristineClaimFence } from './repo-scans.ts';
+import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
 import { approverStatement } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import { afterReads, capturingContext } from './scan-capture.ts';
@@ -49,18 +44,13 @@ export async function act(
     ]);
     const captured = captureCredentialTombstoneSnapshot(derived);
     credentials = captured;
-    const csrfQuery = actorCsrfAuthorityStmt(ctx.env.DB, actor);
-    if (!csrfQuery) throw staleScanAuthority();
-    const actorFences = actorAuthorityPredicates({
-      actor,
-      now: ctx.clock.now(),
-      event: actor.event,
-      adminEventTemplates: actor.principal === 'admin' && !req.scope?.templateIds?.length,
-    });
+    // A device with no role or an invalid scope accepts nothing; the rest of the actor is read now.
+    if (actor.role === null || actor.invalidScannerScope) throw staleScanAuthority();
+    const authority = scanReadAuthority(actor, { now: ctx.clock.now() });
     const initial = await ctx.env.DB.batch<{ authorized?: unknown }>([
       replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
       platformSettingsStmt(ctx.env.DB),
-      csrfQuery,
+      scanAuthorizedStmt(ctx.env.DB, authority),
       credentialTombstonesClearStmt(
         ctx.env.DB,
         actor.orgId,
@@ -68,43 +58,28 @@ export async function act(
         captured.credentialTombstoneRefs,
         captured.credentialKeysetCommitment,
       ),
-      ...actorFences.map((fence) => outputPredicateStmt(ctx.env.DB, fence)),
     ]);
-    const csrfSnapshot = await actorCsrfSnapshotFromResult(ctx, actor, initial[2]);
-    if (
-      !csrfSnapshot ||
-      !initial[1] ||
-      actorFences.some((_, index) => initial[index + 4]?.results?.[0]?.authorized !== 1)
-    )
-      throw staleScanAuthority();
+    if (!initial[1] || initial[2]?.results?.[0]?.authorized !== 1) throw staleScanAuthority();
     const undoWindow = decodePlatformSettings(initial[1])['scan.undoWindowMinutes'];
     actor = { ...actor, credentialKeysetCommitment: captured.credentialKeysetCommitment };
     if (!credentialInputValid(req.input, captured)) return unknownOutcome(captured);
     const previous = replayScanFromResult(initial[0]);
     if (previous)
-      return await replayOrReopenClaim(ctx, actor, req, hash, captured, csrfSnapshot, undoWindow, {
+      return await replayOrReopenClaim(ctx, actor, req, hash, captured, undoWindow, {
         row: previous,
         credentialsClear: !!initial[3]?.results?.length,
       });
     const scanId = ctx.ids.ordered();
     const claimBase = claimOf(ctx, actor, req, scanId, hash);
-    const pristine = pristineClaimFence(claimBase);
     const plan = await planCandidateReads(
       ctx,
       actor,
       req.input,
       captured,
-      (now) => {
-        const guard = actionClaimAuthority(actor, req, captured, csrfSnapshot, now, true);
-        return (
-          guard && candidateInitializationFence(actor.actorKey, req.idempotencyKey, pristine, guard)
-        );
-      },
+      () => ({ sql: '1', params: [] }),
       true,
     );
     const claim = { ...claimBase, now: plan.now };
-    const claimGuard = actionClaimAuthority(actor, req, captured, csrfSnapshot, plan.now, true);
-    if (!claimGuard) throw staleScanAuthority();
     const overrideQuery = overrideEvidenceStmt(ctx, actor, req);
     const g = claimGrant(ctx, actor, claim);
     const claimed = claimOnGrant(g, claim);
@@ -135,7 +110,7 @@ export async function act(
       | { id?: unknown; at?: unknown }
       | undefined;
     if (!acquired) {
-      return await replayOrReopenClaim(ctx, actor, req, hash, captured, csrfSnapshot, undoWindow, {
+      return await replayOrReopenClaim(ctx, actor, req, hash, captured, undoWindow, {
         row: replayScanFromResult(results[collisionIndex]),
         credentialsClear: !!results[collisionIndex + 1]?.results?.length,
       });
@@ -155,7 +130,6 @@ export async function act(
       hash,
       captured,
       candidates,
-      csrfSnapshot,
       undoWindow,
       overrideQuery ? results[overrideIndex] : undefined,
       req.approval ? results[overrideIndex + (overrideQuery ? 1 : 0)] : undefined,

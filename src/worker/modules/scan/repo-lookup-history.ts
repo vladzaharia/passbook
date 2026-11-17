@@ -1,8 +1,8 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type PassLineage, passLineagePredicate } from './repo-history-lineage.ts';
 import { scopedHistoryPageStmt } from './repo-history-scoped-page.ts';
-import type { OutputPredicate } from './repo-output-predicates.ts';
 import { HISTORICAL_SCOPE_SQL } from './repo-scan-history.ts';
+import type { ScanPredicate } from './scan-predicate.ts';
 
 /** A last scan whose signed event holds and whose pass was current when it was read. */
 export interface LookupHistoryProof {
@@ -30,7 +30,7 @@ export function lookupHistoryPageStmt(
 }
 
 /** The scan is still the pass's, and the pass is still the one the scan was read for. */
-export function lookupHistoryPredicate(history: LookupHistoryProof): OutputPredicate {
+export function lookupHistoryPredicate(history: LookupHistoryProof): ScanPredicate {
   const lineage = passLineagePredicate(history.lineage);
   return {
     sql: `(${lineage.sql}) AND EXISTS (SELECT 1 FROM scans s WHERE s.id = ?/* scan-ephemeral-scan-id */

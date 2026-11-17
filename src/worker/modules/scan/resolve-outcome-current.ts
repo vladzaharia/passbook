@@ -4,12 +4,12 @@ import { takeAssetGrantToken } from './asset-sidecar.ts';
 import type { CardRead } from './card.ts';
 import type { ScanActor } from './guard.ts';
 import { type PreparedPhotoGrant, photoGrantUrl, scannerPassActive } from './member-photo.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import { passAnswerFence, underAuthority } from './repo-read-fences.ts';
 import { headMoved, passChanged } from './repo-resolve-outcome-current.ts';
 import type { Found } from './resolve.ts';
 import type { DisplayHistoryPlan, FinalizedDisplayHistory } from './scan-display-history.ts';
+import { predicateStmt } from './scan-predicate.ts';
 
 async function currentFoundRead(
   ctx: ServiceContext,
@@ -37,7 +37,7 @@ async function currentFoundRead(
     if (!fence) return null;
     const auth = scanReadAuthority(actor, { now, event: found.admission?.event ?? null });
     const bound = displayHistory.bind(now, underAuthority(auth, fence));
-    const cardFence = historyFence ? outputPredicateStmt(ctx.env.DB, historyFence) : null;
+    const cardFence = historyFence ? predicateStmt(ctx.env.DB, historyFence) : null;
     const results = await ctx.env.DB.batch<Record<string, unknown>>([
       ...bound.stmts,
       ...(cardFence ? [cardFence] : []),

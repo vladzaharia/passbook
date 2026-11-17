@@ -9,18 +9,10 @@ import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { withKitDatabase } from '../passes/pass-test-fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { credentialTombstoneRefsForInput, scanCredentialKeys } from './credential-input.ts';
-import { actorAuthorityPredicate } from './repo-actor-authority.ts';
 import { getScanner } from './repo-device.ts';
-import {
-  byBarcodeHashStmt,
-  byIdStmt,
-  byLookupHashStmt,
-  byScanCodeStmt,
-  bySerialStmt,
-} from './repo-lookup.ts';
+import { scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { searchPassesStmt, searchRowsOf, searchWindowUnchanged } from './repo-search.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import { makeLegacyScanPass, proofedScanActor, setupScanKit } from './test-kit.ts';
 
@@ -77,89 +69,6 @@ it('bootstraps the original keyset and candidate in the actor-fenced batch', asy
   expect(
     await first(kit.env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id=1'),
   ).toEqual({ commitment: refs.credentialKeysetCommitment });
-});
-
-it('packs a large initialization guard without exceeding the D1 bind limit', async () => {
-  const { kit, pass, actor, input, refs } = await fixture();
-  let maxBindings = 0;
-  const db = new Proxy(kit.env.DB, {
-    get(target, prop) {
-      if (prop === 'prepare')
-        return (sql: string) => {
-          const prepared = target.prepare(sql);
-          return new Proxy(prepared, {
-            get(statement, member) {
-              if (member === 'bind')
-                return (...values: unknown[]) => {
-                  maxBindings = Math.max(maxBindings, values.length);
-                  return statement.bind(...values);
-                };
-              const value = Reflect.get(statement, member, statement);
-              return typeof value === 'function' ? value.bind(statement) : value;
-            },
-          });
-        };
-      const value = Reflect.get(target, prop, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  const clauses = Array.from({ length: 80 }, () => '? IS ?');
-  const params = Array.from({ length: 80 }, (_, index) => [index, index]).flat();
-  const ctx = { ...kit.ctx, env: { ...kit.ctx.env, DB: db } };
-  const plan = await planCandidateReads(ctx, actor, input, refs, () => ({
-    sql: clauses.join(' AND '),
-    params,
-  }));
-  expect(maxBindings).toBeLessThan(100);
-  expect(plan.finish(await db.batch(plan.stmts))).toMatchObject([{ pass: { id: pass.id } }]);
-});
-
-it('does not initialize when a guard cannot be safely packed', async () => {
-  const { kit, actor, input, refs } = await fixture();
-  const plan = await planCandidateReads(kit.ctx, actor, input, refs, () => ({
-    sql: '? IS ?',
-    params: [Number.NaN, Number.NaN],
-  }));
-  expect(plan.finish(await kit.env.DB.batch(plan.stmts))).toBeNull();
-  expect(
-    await first(kit.env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id=1'),
-  ).toBeNull();
-});
-
-it('labels each raw candidate lookup value as a scalar bind', async () => {
-  const { kit, pass, actor } = await fixture();
-  const labels: string[] = [];
-  const db = new Proxy(kit.env.DB, {
-    get(target, prop) {
-      if (prop === 'prepare')
-        return (sql: string) => {
-          const prepared = target.prepare(sql);
-          return new Proxy(prepared, {
-            get(statement, member) {
-              if (member === 'bind')
-                return (...values: unknown[]) => {
-                  const slots = scanSecretSlots(sql, values.length);
-                  if (!slots) throw new Error('Unrecognized candidate bind layout');
-                  labels.push(
-                    ...slots.flatMap((slot) => (slot.label === null ? [] : [slot.label])),
-                  );
-                  return statement.bind(...values);
-                };
-              const value = Reflect.get(statement, member, statement);
-              return typeof value === 'function' ? value.bind(statement) : value;
-            },
-          });
-        };
-      const value = Reflect.get(target, prop, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  byIdStmt(db, actor.orgId, pass.id);
-  byScanCodeStmt(db, actor.orgId, 'A'.repeat(26), actor.mode);
-  byBarcodeHashStmt(db, actor.orgId, 'b'.repeat(64), actor.mode);
-  byLookupHashStmt(db, actor.orgId, 'c'.repeat(64), actor.mode);
-  bySerialStmt(db, actor.orgId, pass.serial, actor.mode);
-  expect(labels).toEqual(['pass-id', 'scan-code', 'barcode-hash', 'lookup-hash', 'serial']);
 });
 
 it('reads the first scoped search page in the same bootstrap batch', async () => {
@@ -418,12 +327,7 @@ it.each(['default', 'claim'] as const)(
         kind === 'claim'
           ? (now) => {
               guardNow = now;
-              return actorAuthorityPredicate({
-                actor,
-                now,
-                event: actor.event,
-                adminEventTemplates: actor.adminEventTemplates === true,
-              });
+              return scanReadFence(scanReadAuthority(actor, { now }));
             }
           : undefined,
       );

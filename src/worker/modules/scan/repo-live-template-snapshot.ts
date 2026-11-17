@@ -2,10 +2,8 @@ import type { SqlValue } from '../../platform/db.ts';
 import { stmt } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import { decodeBoundLiveTemplateSnapshot } from './live-template-snapshot.ts';
-import type { Candidate } from './repo-lookup.ts';
 import { ownReleaseSaysSameSql, usedReleaseIdSql } from './repo-pass-release-sql.ts';
-import { scanConjunction } from './repo-secret-binds.ts';
-import { readCandidateTemplateSnapshot } from './template-read-snapshot.ts';
+import { scanConjunction } from './scan-conjunction.ts';
 
 /** Server-only, original D1 projection. Never serialize this into an API response or grant. */
 export interface LiveTemplateSnapshot {
@@ -185,19 +183,6 @@ export function liveTemplateSnapshotFromResult(
   const row = rows[0];
   if (row === undefined) throw new TypeError('Missing live template snapshot row');
   return liveTemplateSnapshotFromRow(row);
-}
-
-/** Fence a general scanner read to its own original owner and version rows. */
-export function scanCandidateTemplateReadPredicate(candidate: Candidate): {
-  sql: string;
-  params: readonly SqlValue[];
-} {
-  const snapshot = candidate.templateSnapshot;
-  if (!snapshot || !readCandidateTemplateSnapshot(candidate)) return { sql: '0', params: [] };
-  return {
-    sql: snapshotFenceSql(['p.id=?/* scan-ephemeral-pass-id */', 'p.org_id=?', 'p.mode=?']),
-    params: [candidate.pass.id, candidate.pass.orgId, candidate.pass.mode, snapshot.raw],
-  };
 }
 
 /**

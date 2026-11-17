@@ -17,7 +17,6 @@ import { preparePlannedDisplayHistoryProof } from './history-proof-pending.ts';
 import { appendPlannedDisplayHistory, rebindDisplayHistoryRead } from './history-proof-plan.ts';
 import { type LedgerFacts, ledgerRow } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { doneOkPredicate } from './repo-scan-checks.ts';
@@ -31,6 +30,7 @@ import {
   prepareDisplayHistory,
 } from './scan-display-history.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import type { Finalize } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';

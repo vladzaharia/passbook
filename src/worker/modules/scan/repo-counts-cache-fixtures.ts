@@ -18,13 +18,9 @@ import {
   scannerActor,
   withRole,
 } from './actor.ts';
-import {
-  actorCsrfAuthorityStmt,
-  actorCsrfSnapshotFence,
-  actorCsrfSnapshotFromResult,
-} from './actor-csrf.ts';
 import { planCounts } from './counts.ts';
 import { getScanner } from './repo-device.ts';
+import { scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import { getEvent, readScannerScope, type ScanEventRow } from './repo-scope.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
 import { boundStaff } from './staff-binding.ts';
@@ -191,14 +187,9 @@ export async function withMutableTrigger(
   });
 }
 
+/** The actor's authority as a guard for a statement that cannot take a `WITH`. */
 export async function csrfFence(actor: ScanActor) {
-  const statement = actorCsrfAuthorityStmt(kit.env.DB, actor);
-  if (!statement) throw new Error('Missing CSRF authority statement');
-  const snapshot = await actorCsrfSnapshotFromResult(kit.ctx, actor, await statement.all());
-  if (!snapshot) throw new Error('Missing verified CSRF snapshot');
-  const fence = actorCsrfSnapshotFence(actor, snapshot);
-  if (!fence) throw new Error('Missing CSRF authority fence');
-  return fence;
+  return scanReadFence(scanReadAuthority(actor, { now: kit.clock.now() }));
 }
 
 export async function expectBlocked(

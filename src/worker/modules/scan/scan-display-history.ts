@@ -14,7 +14,6 @@ import {
   planDisplayHistoryRead,
 } from './history-proof-plan.ts';
 import { validCredentialKeysetCommitment } from './repo-credential-tombstones.ts';
-import type { OutputPredicate } from './repo-output-predicates.ts';
 import {
   displayHistoryAuthorityStmt,
   displayHistoryCountsStmt,
@@ -30,6 +29,7 @@ import {
   type HistoryScope,
   render,
 } from './scan-display-history-view.ts';
+import type { ScanPredicate } from './scan-predicate.ts';
 
 const finalized = Symbol('finalized-scan-display-history');
 const owners = new WeakMap<object, { actor: ScanActor; found: Found; scope: readonly unknown[] }>();
@@ -75,7 +75,7 @@ export interface DisplayHistoryPlan {
    * `authority` binds the original actor, pass, release and any committed gate in the same batch
    * as the returned statements.
    */
-  bind(now: number, authority: OutputPredicate): BoundDisplayHistory;
+  bind(now: number, authority: ScanPredicate): BoundDisplayHistory;
   /**
    * The batch that follows a grant's commit (choose, answer, stop): the grant bound the actor,
    * event and pass after the history was read, so this batch holds no authority of its own. A
@@ -167,7 +167,7 @@ export async function prepareDisplayHistory(
     else complete = false;
   }
 
-  const bind = (now: number, authority: OutputPredicate): BoundDisplayHistory => {
+  const bind = (now: number, authority: ScanPredicate): BoundDisplayHistory => {
     const current =
       !!loaded &&
       sameDisplayHistoryScope(captureDisplayHistoryScope(actor, found), originalScope) &&

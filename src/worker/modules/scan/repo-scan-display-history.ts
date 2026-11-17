@@ -1,8 +1,8 @@
 import { stmt } from '../../platform/db.ts';
 import { type PassLineage, passLineagePredicate } from './repo-history-lineage.ts';
 import { scopedHistoryPageStmt } from './repo-history-scoped-page.ts';
-import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
 import { type HistoryPassScope, historyPassScopePredicate } from './repo-scan-history.ts';
+import { predicateStmt, type ScanPredicate } from './scan-predicate.ts';
 
 export interface PassScope extends HistoryPassScope {
   credentialKeysetCommitment: string;
@@ -38,14 +38,14 @@ export function displayHistoryScopeCountStmt(
 export function displayHistoryAuthorityStmt(
   db: D1Database,
   current: boolean,
-  authority: OutputPredicate,
+  authority: ScanPredicate,
 ): D1PreparedStatement {
-  return outputPredicateStmt(db, current ? authority : { sql: '0', params: [] });
+  return predicateStmt(db, current ? authority : { sql: '0', params: [] });
 }
 
 export function displayHistoryCountsStmt(
   db: D1Database,
-  scope: OutputPredicate,
+  scope: ScanPredicate,
   today: number,
 ): D1PreparedStatement {
   return stmt(
@@ -56,7 +56,7 @@ export function displayHistoryCountsStmt(
   );
 }
 
-export function displayHistoryTopStmt(db: D1Database, scope: OutputPredicate): D1PreparedStatement {
+export function displayHistoryTopStmt(db: D1Database, scope: ScanPredicate): D1PreparedStatement {
   return stmt(
     db,
     `SELECT s.id FROM scans s WHERE ${scope.sql} ORDER BY s.at DESC,s.id DESC LIMIT 3`,

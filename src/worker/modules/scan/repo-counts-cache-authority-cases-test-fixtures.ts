@@ -16,7 +16,8 @@ import {
 } from './repo-counts-cache-fixtures.ts';
 
 export function registerCountsCacheAuthorityCases() {
-  it.each(['scanner', 'admin'] as const)(
+  // A session's CSRF secret is immutable (0047), so only a scanner's can rotate under a request.
+  it.each(['scanner'] as const)(
     'fences %s CSRF rotation without a revision bump in the cache batch',
     async (principal) => {
       const s = await scenario();

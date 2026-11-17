@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
 import { scannerActor, withRole } from './actor.ts';
+import { candidateAuthority } from './candidate-authority-test-fixtures.ts';
 import {
   planPendingDisplayHistorySource,
   preparePlannedDisplayHistoryProof,
@@ -12,7 +13,6 @@ import {
 } from './history-proof-plan.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
 import { claimScanStmt } from './repo-scans-test-support.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { foundOf } from './resolve.ts';
@@ -121,24 +121,7 @@ describe('display history read', () => {
     expect(JSON.stringify(preloaded)).not.toContain(s.pass.authToken);
     const display = await prepareDisplayHistory(ctx, actor, found, needs, preloaded);
     const now = kit.clock.now();
-    const authority = outputAuthorityPredicate({
-      actor,
-      event: actor.event,
-      now,
-      templateId: found.pass.templateId,
-      pass: candidate.pass,
-      connectionGeneration: candidate.connectionGeneration,
-      activeTemplateVersion: candidate.activeTemplateVersion,
-      orgRevision: candidate.orgRevision,
-      templateRevision: candidate.templateRevision,
-      release: candidate,
-      displayTemplateVersion: candidate.displayTemplateVersion,
-      checkInRules: candidate.checkInRules,
-      lookupHash: candidate.lookupHash,
-      requireActive: true,
-      credentialTombstoneRefs: [],
-      credentialKeysetCommitment: candidate.credentialKeysetCommitment,
-    });
+    const authority = candidateAuthority(actor, candidate, now, actor.event);
     const bound = display.bind(now, authority);
     const history = bound.finalize(await recorder.db.batch(bound.stmts));
     expect(history?.value).toMatchObject({

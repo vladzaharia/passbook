@@ -8,13 +8,13 @@ import { lostReason } from './act-check-in-facts.ts';
 import { ledgerAuthoritySnapshot } from './act-result-authority.ts';
 import type { ScanActor } from './actor.ts';
 import { type LedgerFacts, ledgerRow } from './ledger.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import type * as gates from './repo-gates.ts';
 import { holderPart } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { Found } from './resolve.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 import { scanIs, wonGate } from './scan-write-grant.ts';
 import { type Finalize, finalizeScan, ledgerEvent, writeGate } from './scan-write-statements.ts';
 

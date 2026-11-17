@@ -8,7 +8,6 @@ import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 import { candidateById, candidatesByScopes } from './repo-lookup.ts';
 import { registerLookupLegacyUnapprovedCase } from './repo-lookup-release-legacy-test-fixtures.ts';
 import { CHECK_IN, kit, stageVersion } from './repo-lookup-release-test-fixtures.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import { foundOf } from './resolve.ts';
 import { candidateAudit } from './resolve-candidates.ts';
 import { makeLegacyScanPass } from './test-kit.ts';
@@ -79,11 +78,6 @@ export function registerLookupReleaseScopedCases() {
               get(statement, member) {
                 if (member === 'bind')
                   return (...values: unknown[]) => {
-                    const slots = scanSecretSlots(sql, values.length);
-                    if (!slots) throw new Error('Unrecognized scoped candidate bindings');
-                    expect(slots.filter((slot) => slot.label === 'pass-id')).toHaveLength(
-                      values.length / 3,
-                    );
                     bindingSizes.push(values.length);
                     return statement.bind(...values);
                   };

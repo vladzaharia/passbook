@@ -60,7 +60,10 @@ export function outputRaceDatabase(real: D1Database, trigger: () => Promise<void
             return wrap(statement);
           if (
             !sql.includes(' AS authorized') ||
-            (!sql.includes('output_bound_snapshot') && !sql.includes('output_segments'))
+            (!sql.includes('under_inner') &&
+              !sql.startsWith('SELECT CASE WHEN (') &&
+              !sql.includes('output_bound_snapshot') &&
+              !sql.includes('output_segments'))
           )
             return statement;
           return new Proxy(statement, {

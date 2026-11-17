@@ -6,9 +6,9 @@ import type { ScanActor } from './guard.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { type LookupHistoryProof, lookupHistoryPredicate } from './repo-lookup-history.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
 import type { SearchRow } from './repo-search.ts';
 import type { Found } from './resolve.ts';
+import { predicateStmt } from './scan-predicate.ts';
 
 export type LookupEntry = {
   item: z.infer<typeof ScanLookupResultSchema>['items'][number];
@@ -49,5 +49,5 @@ export function lookupHistoryStmts(
   history: LookupHistoryProof,
   _now: number,
 ): D1PreparedStatement[] {
-  return [outputPredicateStmt(db, lookupHistoryPredicate(history))];
+  return [predicateStmt(db, lookupHistoryPredicate(history))];
 }

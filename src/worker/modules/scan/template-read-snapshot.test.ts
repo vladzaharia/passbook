@@ -7,9 +7,8 @@ import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { versionExtrasHash } from '../templates/repo-preview-extras.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { getScanner } from './repo-device.ts';
-import { scanCandidateTemplateReadPredicate } from './repo-live-template-snapshot.ts';
 import { candidateById } from './repo-lookup.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
+import { candidateTemplateFenceStmt, templateFenceHolds } from './repo-resolve-outcome-current.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { foundOf } from './resolve.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
@@ -96,22 +95,23 @@ describe('captured scanner template reads', () => {
     expect(resolved.outcome).toMatchObject({ kind: 'ready', card: { passId: pass.id } });
   });
 
-  it('fences the original owner and immutable version rows in the final read', async () => {
+  it('fences the pass and its release in the final read; an archived template keeps its passes', async () => {
     const { template, candidate } = await legacyBaked();
-    const predicate = scanCandidateTemplateReadPredicate(candidate);
-    expect(
-      (await outputPredicateStmt(kit.env.DB, predicate).first<{ authorized: number }>())
-        ?.authorized,
-    ).toBe(1);
+    const holds = async () =>
+      templateFenceHolds(await candidateTemplateFenceStmt(kit.env.DB, candidate).all());
+    expect(await holds()).toBe(true);
     await run(
       kit.env.DB,
       "UPDATE templates SET status='archived',updated_at=updated_at+1 WHERE id=?",
       [template.id],
     );
-    expect(
-      (await outputPredicateStmt(kit.env.DB, predicate).first<{ authorized: number }>())
-        ?.authorized,
-    ).toBe(0);
+    expect(await holds()).toBe(true);
+    await run(
+      kit.env.DB,
+      "UPDATE templates SET status='deleted',updated_at=updated_at+1 WHERE id=?",
+      [template.id],
+    );
+    expect(await holds()).toBe(false);
   });
 
   it('fails closed for missing, malformed, or cross-tenant original template rows', async () => {
@@ -140,7 +140,6 @@ describe('captured scanner template reads', () => {
     ]) {
       const changed = { ...candidate, templateSnapshot };
       expect(resolveCandidateReadTemplates(changed)).toBeNull();
-      expect(scanCandidateTemplateReadPredicate(changed)).toEqual({ sql: '0', params: [] });
     }
   });
 

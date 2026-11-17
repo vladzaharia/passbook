@@ -7,13 +7,13 @@ import { type ActRequest, failActionClaimStmt } from './act-claim.ts';
 import type { ScanActor } from './guard.ts';
 import { isOverridable } from './outcome.ts';
 import { overrideEvidenceForTargetStmt } from './repo-act-override.ts';
-import type { OutputPredicate } from './repo-output-predicates.ts';
 import { type Raw as RawScan, toScan } from './repo-scan-map.ts';
 import { type Claim, pristineClaimFence, releaseClaimStmt, type ScanRow } from './repo-scans.ts';
 import type { Found, Stop } from './resolve.ts';
 import { defaultAction } from './resolve-outcome.ts';
 import { verifyScanEventProvenance } from './scan-event-proof.ts';
 import { releaseClass } from './scan-event-proof-envelope.ts';
+import type { ScanPredicate } from './scan-predicate.ts';
 
 const OVERRIDE_WINDOW_MS = 10 * 60_000;
 
@@ -33,7 +33,7 @@ export async function invalid(
   claimAt: number,
   code: string,
   message: string,
-  authority: () => OutputPredicate,
+  authority: () => ScanPredicate,
   onFailureCommitted: () => void,
 ): Promise<never> {
   const original = pristineClaimFence(claim);
@@ -147,7 +147,7 @@ export async function checkOverride(
   req: ActRequest,
   claim: Claim,
   claimAt: number,
-  authority: () => OutputPredicate,
+  authority: () => ScanPredicate,
   captured: Override | null,
   onFailureCommitted: () => void,
 ): Promise<Override | null> {

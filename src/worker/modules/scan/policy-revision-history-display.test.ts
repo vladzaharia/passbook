@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
 import { scannerActor, withRole } from './actor.ts';
+import { candidateAuthority } from './candidate-authority-test-fixtures.ts';
 import { scopeOf } from './card-projection.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
 import { CHECK_IN, policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { foundOf } from './resolve.ts';
@@ -37,24 +37,7 @@ describe('scanner history event and source proofs', () => {
       ledger: [],
     });
     const now = kit.clock.now();
-    const authority = outputAuthorityPredicate({
-      actor: s.actor,
-      event: s.actor.event,
-      now,
-      templateId: found.pass.templateId,
-      pass: candidate.pass,
-      connectionGeneration: candidate.connectionGeneration,
-      activeTemplateVersion: candidate.activeTemplateVersion,
-      orgRevision: candidate.orgRevision,
-      templateRevision: candidate.templateRevision,
-      release: candidate,
-      displayTemplateVersion: candidate.displayTemplateVersion,
-      checkInRules: candidate.checkInRules,
-      lookupHash: candidate.lookupHash,
-      requireActive: true,
-      credentialTombstoneRefs: [],
-      credentialKeysetCommitment: candidate.credentialKeysetCommitment,
-    });
+    const authority = candidateAuthority(s.actor, candidate, now, s.actor.event);
     const firstFence = plan.bind(now, authority);
     const history = firstFence.finalize(await kit.env.DB.batch(firstFence.stmts));
     expect(isFinalizedDisplayHistory(history, s.actor, found)).toBe(true);
@@ -137,24 +120,7 @@ describe('scanner history event and source proofs', () => {
       history: ['visits'],
       ledger: [],
     });
-    const restoredAuthority = outputAuthorityPredicate({
-      actor: s.actor,
-      event: s.actor.event,
-      now,
-      templateId: restored.pass.templateId,
-      pass: refreshed.pass,
-      connectionGeneration: refreshed.connectionGeneration,
-      activeTemplateVersion: refreshed.activeTemplateVersion,
-      orgRevision: refreshed.orgRevision,
-      templateRevision: refreshed.templateRevision,
-      release: refreshed,
-      displayTemplateVersion: refreshed.displayTemplateVersion,
-      checkInRules: refreshed.checkInRules,
-      lookupHash: refreshed.lookupHash,
-      requireActive: true,
-      credentialTombstoneRefs: [],
-      credentialKeysetCommitment: refreshed.credentialKeysetCommitment,
-    });
+    const restoredAuthority = candidateAuthority(s.actor, refreshed, now, s.actor.event);
     const restoredFence = restoredPlan.bind(now, restoredAuthority);
     const restoredHistory = restoredFence.finalize(await kit.env.DB.batch(restoredFence.stmts));
     expect(restoredHistory?.value).toMatchObject({ visits: { total: 1 } });
@@ -207,24 +173,7 @@ describe('scanner history event and source proofs', () => {
       ledger: [],
     });
     const now = kit.clock.now();
-    const authority = outputAuthorityPredicate({
-      actor,
-      event: actor.event,
-      now,
-      templateId: found.pass.templateId,
-      pass: candidate.pass,
-      connectionGeneration: candidate.connectionGeneration,
-      activeTemplateVersion: candidate.activeTemplateVersion,
-      orgRevision: candidate.orgRevision,
-      templateRevision: candidate.templateRevision,
-      release: candidate,
-      displayTemplateVersion: candidate.displayTemplateVersion,
-      checkInRules: candidate.checkInRules,
-      lookupHash: candidate.lookupHash,
-      requireActive: true,
-      credentialTombstoneRefs: [],
-      credentialKeysetCommitment: candidate.credentialKeysetCommitment,
-    });
+    const authority = candidateAuthority(actor, candidate, now, actor.event);
     const bound = plan.bind(now, authority);
     const history = bound.finalize(await kit.env.DB.batch(bound.stmts));
     expect(history?.value).toMatchObject({

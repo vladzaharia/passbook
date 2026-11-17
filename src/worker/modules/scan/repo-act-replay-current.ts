@@ -2,37 +2,35 @@ import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
 import { StaleScanAuthority } from './act-override.ts';
-import { type ActorCsrfSnapshot, actorCsrfSnapshotFence } from './actor-csrf.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import type { ReplayEvidence } from './repo-act-authority.ts';
 import { CURRENT_ISSUANCE, NO_PENDING_TRANSFER, RECORDED_PROOF } from './repo-act-replay-sql.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
 import { uniqueScanEventIdSql } from './repo-history-provenance.ts';
-import { scanTemplateSnapshotPredicate } from './repo-live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
-import {
-  andOutputPredicates,
-  type OutputPredicate,
-  outputPredicateStmt,
-} from './repo-output-predicates.ts';
+import { scanRead, scanReadAuthority } from './repo-read-authority.ts';
+import { passAnswerFence } from './repo-read-fences.ts';
+import { ownScansWhere } from './repo-scan-history.ts';
 import type { ScanRow } from './repo-scan-map.ts';
 import { scanPasslessSnapshotPredicate } from './repo-scan-passless.ts';
 import { scanRetentionCandidateSql } from './repo-scan-retention.ts';
 import type { ScanEventRow } from './repo-scope.ts';
-import { minimalHistoryAuthorityPredicate } from './repo-session-authority.ts';
+import { scanConjunction } from './scan-conjunction.ts';
+import { predicateStmt, type ScanPredicate } from './scan-predicate.ts';
 
-const SCAN_MATCH = `q.id=?/* scan-ephemeral-scan-id */ AND q.org_id=? AND q.mode=?
-  AND q.actor_key=?/* scan-ephemeral-actor-key */ AND q.scanner_id IS ?/* scan-ephemeral-scanner-id */
-  AND q.state='done' AND q.outcome IS ? AND q.reason IS ?/* scan-ephemeral-history-reason */
-  AND q.pass_id IS ?/* scan-ephemeral-pass-id */ AND q.template_id IS ?/* scan-ephemeral-template-id */
-  AND q.event_id IS ?/* scan-ephemeral-event-id */ AND q.staff_id IS ?/* scan-ephemeral-staff-id */
-  AND q.action_id IS ?/* scan-ephemeral-action-id */ AND q.action_kind IS ?
-  AND q.override_of IS ?/* scan-ephemeral-history-override-of */ AND q.approved_by IS ?/* scan-ephemeral-approver-id */
-  AND q.pass_version IS ? AND q.method=? AND q.at=?
-  AND q.idempotency_key=?/* scan-ephemeral-idempotency-key */ AND q.request_hash=?/* scan-ephemeral-request-hash */
-  AND q.direction IS ? AND q.presence_scope IS ?/* scan-ephemeral-event-scope */`;
+const SCAN_MATCH = scanConjunction([
+  'q.id=?/* scan-ephemeral-scan-id */ AND q.org_id=? AND q.mode=?',
+  'q.actor_key=?/* scan-ephemeral-actor-key */ AND q.scanner_id IS ?/* scan-ephemeral-scanner-id */',
+  "q.state='done' AND q.outcome IS ? AND q.reason IS ?/* scan-ephemeral-history-reason */",
+  'q.pass_id IS ?/* scan-ephemeral-pass-id */ AND q.template_id IS ?/* scan-ephemeral-template-id */',
+  'q.event_id IS ?/* scan-ephemeral-event-id */ AND q.staff_id IS ?/* scan-ephemeral-staff-id */',
+  'q.action_id IS ?/* scan-ephemeral-action-id */ AND q.action_kind IS ?',
+  'q.override_of IS ?/* scan-ephemeral-history-override-of */ AND q.approved_by IS ?/* scan-ephemeral-approver-id */',
+  'q.pass_version IS ? AND q.method=? AND q.at=?',
+  'q.idempotency_key=?/* scan-ephemeral-idempotency-key */ AND q.request_hash=?/* scan-ephemeral-request-hash */',
+  'q.direction IS ? AND q.presence_scope IS ?/* scan-ephemeral-event-scope */',
+]);
 
 function scanParams(row: ScanRow, req: ActRequest): SqlValue[] {
   return [
@@ -68,13 +66,10 @@ export async function replayCurrent(
   req: ActRequest,
   row: ScanRow,
   credentials: CredentialTombstoneSnapshot,
-  csrfSnapshot: ActorCsrfSnapshot,
   evidence: ReplayEvidence,
   projected: Candidate | null,
   projectedEvent: ScanEventRow | null,
 ): Promise<boolean> {
-  const csrf = actorCsrfSnapshotFence(actor, csrfSnapshot);
-  if (!csrf) throw new StaleScanAuthority();
   const tombstones = noCredentialTombstonesSql(
     credentials.credentialTombstoneRefs,
     { orgIdSql: 'q.org_id', modeSql: 'q.mode' },
@@ -82,12 +77,12 @@ export async function replayCurrent(
   );
   const matchParams = scanParams(row, req);
   // Each staged check rebinds the complete receipt so it cannot refer to another scan.
-  const receiptPart = (part: OutputPredicate, joins = ''): OutputPredicate => ({
+  const receiptPart = (part: ScanPredicate, joins = ''): ScanPredicate => ({
     sql: `EXISTS (SELECT 1 FROM scans q ${joins}
     WHERE (${SCAN_MATCH}) AND (${part.sql}))`,
     params: [...matchParams, ...part.params],
   });
-  const receiptParts: OutputPredicate[] = [receiptPart(tombstones)];
+  const receiptParts: ScanPredicate[] = [receiptPart(tombstones)];
   if (evidence.ledger) {
     const l = evidence.ledger;
     const joins = `JOIN passes p ON p.id=q.pass_id AND p.org_id=q.org_id AND p.mode=q.mode AND p.test_data_quarantined=0
@@ -179,80 +174,79 @@ export async function replayCurrent(
       }),
     );
   } else throw new StaleScanAuthority();
-  const receipt = andOutputPredicates(receiptParts);
-  const scope = minimalHistoryAuthorityPredicate(actor, ctx.clock.now(), {
-    scanAlias: 'q',
-    ...(evidence.ledger ? { ledgerAlias: 'l' } : {}),
-    events: evidence.event ? [evidence.event] : [],
+  // The receipt is the actor's own recorded scan, inside the scope its assignment grants now.
+  const now = ctx.clock.now();
+  const auth = scanReadAuthority(actor, {
+    now,
+    ...(evidence.event ? { event: evidence.event } : {}),
   });
-  const scopeJoin = evidence.ledger
-    ? `JOIN pass_events l ON l.id=${uniqueScanEventIdSql('q')}`
-    : '';
-  const actorFence: OutputPredicate = {
-    sql: `EXISTS (SELECT 1 FROM scans q ${scopeJoin}
-    WHERE q.id=?/* scan-ephemeral-scan-id */ AND (${scope.sql}) AND (${csrf.sql}))`,
-    params: [row.id, ...scope.params, ...csrf.params],
-  };
+  const own = ownScansWhere(actor);
+  // One statement per receipt part: each rebinds the whole receipt, so none can name another scan.
   const statements = [
-    outputPredicateStmt(ctx.env.DB, receipt),
-    outputPredicateStmt(ctx.env.DB, actorFence),
+    ...receiptParts.map((part) => predicateStmt(ctx.env.DB, part)),
+    scanRead(
+      ctx.env.DB,
+      auth,
+      `SELECT 1 AS authorized FROM scans s
+        WHERE ${auth.ok} AND s.id = ? AND ${auth.tenant('s', 'scans')} AND ${own.sql}`,
+      [row.id, ...own.params],
+    ),
   ];
+  const receiptCount = statements.length;
+  let projection = 0;
   if (projected) {
-    const output = outputAuthorityPredicate({
-      actor,
-      event: projectedEvent,
-      now: ctx.clock.now(),
-      adminEventTemplates: actor.principal === 'admin' && !req.scope?.templateIds?.length,
-      templateId: row.templateId ?? undefined,
-      pass: projected.pass,
-      connectionGeneration: projected.connectionGeneration,
-      activeTemplateVersion: projected.activeTemplateVersion,
-      orgRevision: projected.orgRevision,
-      templateRevision: projected.templateRevision,
-      credentialTombstoneRefs: credentials.credentialTombstoneRefs,
-      credentialKeysetCommitment: credentials.credentialKeysetCommitment,
-      release: projected,
-      purpose: 'commit',
-      requireActive: true,
-      displayTemplateVersion: projected.displayTemplateVersion,
-      checkInRules: projected.checkInRules ?? {},
-      lookupHash: projected.lookupHash,
+    const inner = passAnswerFence(actor, projected, {
+      photo: false,
+      refs: credentials.credentialTombstoneRefs,
     });
-    const template = scanTemplateSnapshotPredicate(projected, projected.templateSnapshot, 'commit');
     const target = evidence.target;
-    const projectionParts: OutputPredicate[] = [
-      {
-        sql: `EXISTS (SELECT 1 FROM (SELECT ? AS org_id,? AS mode) scope WHERE (${template.sql}))`,
-        params: [actor.orgId, actor.mode, ...template.params],
-      },
-    ];
-    if (row.overrideOf && target) {
-      projectionParts.push({
-        sql: `EXISTS (SELECT 1 FROM scans target
-      WHERE target.id=?/* scan-ephemeral-scan-id */ AND target.org_id=? AND target.mode=?
-        AND target.actor_key=?/* scan-ephemeral-actor-key */ AND target.pass_id IS ?/* scan-ephemeral-pass-id */
-        AND target.action_id IS ?/* scan-ephemeral-action-id */ AND target.reason IS ?/* scan-ephemeral-history-reason */)`,
-        params: [
-          target.id,
-          target.orgId,
-          target.mode,
-          target.actorKey,
-          target.passId,
-          target.actionId,
-          target.reason,
-        ],
-      });
-    }
+    // The pass the answer reads, under the actor's authority and at the release it was read under.
+    const auth = scanReadAuthority(actor, {
+      now,
+      event: projectedEvent,
+      ...(row.templateId ? { templateId: row.templateId } : {}),
+    });
     statements.push(
-      outputPredicateStmt(ctx.env.DB, output),
-      outputPredicateStmt(ctx.env.DB, andOutputPredicates(projectionParts)),
+      inner
+        ? scanRead(
+            ctx.env.DB,
+            auth,
+            `SELECT 1 AS authorized FROM actor_ok WHERE ${inner.sql}`,
+            inner.params,
+          )
+        : predicateStmt(ctx.env.DB, { sql: '0', params: [] }),
     );
+    projection = 1;
+    if (row.overrideOf && target) {
+      statements.push(
+        predicateStmt(ctx.env.DB, {
+          sql: `EXISTS (SELECT 1 FROM scans target
+      WHERE target.id=? AND target.org_id=? AND target.mode=?
+        AND target.actor_key=? AND target.pass_id IS ?
+        AND target.action_id IS ? AND target.reason IS ?)`,
+          params: [
+            target.id,
+            target.orgId,
+            target.mode,
+            target.actorKey,
+            target.passId,
+            target.actionId,
+            target.reason,
+          ],
+        }),
+      );
+      projection = 2;
+    }
   }
   const results = await ctx.env.DB.batch(statements);
   const authorized = (index: number) => {
     const value = results[index]?.results?.[0];
     return !!value && typeof value === 'object' && 'authorized' in value && value.authorized === 1;
   };
-  if (!authorized(0) || !authorized(1)) throw new StaleScanAuthority();
-  return projected !== null && authorized(2) && authorized(3);
+  for (let index = 0; index < receiptCount; index++)
+    if (!authorized(index)) throw new StaleScanAuthority();
+  if (projected === null) return false;
+  for (let index = 0; index < projection; index++)
+    if (!authorized(receiptCount + index)) return false;
+  return true;
 }

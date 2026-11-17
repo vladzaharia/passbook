@@ -1,6 +1,7 @@
 import { type GrantPart, writePart } from '../../platform/authority-include.ts';
-import { bumpIfSql, bumpIfStmt } from '../../platform/counters.ts';
-import type { SqlValue } from '../../platform/db.ts';
+import { bumpIfSql } from '../../platform/counters.ts';
+import { exactStmt, type SqlValue } from '../../platform/db.ts';
+import { withCtes } from './scan-predicate.ts';
 import type { PinReservationGuard } from './staff-pin.ts';
 
 interface PinCounterScope {
@@ -24,7 +25,20 @@ export function preparePinCounters(db: D1Database, scope: PinCounterScope) {
   const guarded = (predicate: PinReservationGuard): PinReservationGuard => ({
     sql: `(${guard.sql}) AND (${predicate.sql})`,
     params: [...guard.params, ...predicate.params],
+    ...(guard.ctes ? { ctes: guard.ctes, cteParams: guard.cteParams ?? [] } : {}),
   });
+  /** An increment under `predicate`; the guard's CTEs, when it has any, are the statement's `WITH`. */
+  const bumpIfStmt = (
+    db: D1Database,
+    key: string,
+    window: number,
+    predicate: PinReservationGuard,
+    by = 1,
+  ) => {
+    const built = bumpIfSql(key, window, predicate, by);
+    const staged = withCtes(predicate, built.sql, built.params);
+    return exactStmt(db, staged.sql, staged.params);
+  };
   const and = (
     left: PinReservationGuard,
     sql: string,

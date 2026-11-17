@@ -9,10 +9,10 @@ import { scanValueOf } from './act-value-result.ts';
 import { localDayStart } from './counts.ts';
 import { amountOf, ScanEffectStop, schemaOf, valueEffect } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import { amountUsedSince } from './repo-scan-amount.ts';
 import type { Found, Stop } from './resolve.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 
 /**
  * The maximum of a release waiting to reissue the pass, when it is lower than the pass's own: an

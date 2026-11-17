@@ -8,7 +8,6 @@ import {
 import type { Pass } from '../passes/repo-map.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import { eventSafeProjectionWithCommitments } from './event-safe-projection.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import {
   type ScanEffectSnapshot,
   type ScanGateEventProjection,
@@ -17,6 +16,7 @@ import {
 import type { Found } from './resolve.ts';
 import { scanActionIdRef } from './scan-action-ref.ts';
 import { sealScanEvent } from './scan-event-proof.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 
 export interface LedgerAuthorityOptions {
   claimAt: number;

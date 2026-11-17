@@ -1,4 +1,3 @@
-import type { SqlValue } from '../../platform/db.ts';
 import {
   APPLE_ADAPTER_CAPABILITIES,
   APPLE_ADAPTER_REVISION,
@@ -59,21 +58,4 @@ export function effectiveReleaseIdSql(scope: ReleaseScopeSql): string {
       AND (er.source = 'legacy' OR NOT EXISTS (SELECT 1 FROM template_version_hashes vh
         WHERE vh.template_id = er.template_id AND vh.version = er.version AND vh.content_hash != er.content_hash))
     LIMIT 1`;
-}
-
-/** The captured release is still the effective head, checked in the statement that depends on it. */
-export function boundHeadPredicateSql(
-  scope: ReleaseScopeSql,
-  binding: { id: string; generation: number; version: string; candidateHash: string },
-): { sql: string; params: SqlValue[] } {
-  return {
-    // The immutable snapshot and the head are separate cores to keep D1 expression depth bounded.
-    sql: `EXISTS (
-    SELECT bound_release.id FROM template_releases bound_release
-    WHERE bound_release.id = ? AND bound_release.generation = ? AND bound_release.version = ?
-      AND bound_release.candidate_hash = ?
-    INTERSECT ${effectiveReleaseIdSql(scope)}
-  )`,
-    params: [binding.id, binding.generation, binding.version, binding.candidateHash],
-  };
 }

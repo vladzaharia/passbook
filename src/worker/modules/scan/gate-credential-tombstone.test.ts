@@ -4,7 +4,6 @@ import type { Pass } from '../passes/repo-map.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
 import { credentialTombstoneRefsForInput } from './credential-input.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
-import { packScanPredicate, scanSecretSlots } from './repo-secret-binds.ts';
 import {
   codeOf,
   key,
@@ -22,23 +21,11 @@ beforeAll(async () => {
   });
 });
 
-it('keeps keyed refs in scalar binds and checks the keyset even for an empty selector', () => {
+it('binds the refs once and checks the keyset even for an empty selector', () => {
   const refs = ['a'.repeat(64), 'b'.repeat(64)];
   const keyset = 'c'.repeat(64);
   const predicate = noCredentialTombstonesSql(refs, { orgIdSql: '?', modeSql: '?' }, keyset);
-  const packed = packScanPredicate(
-    predicate.sql,
-    [kit.org.id, 'live', ...predicate.params],
-    'tombstone_bound',
-  );
-  if (!packed) throw new Error('Unable to pack tombstone predicate');
-  expect(packed.params[0]).not.toContain(refs[0]);
-  expect(packed.params[0]).not.toContain(refs[1]);
-  expect(packed.params.slice(1)).toEqual([JSON.stringify(refs)]);
-  expect(scanSecretSlots(packed.sql, packed.params.length)?.map((slot) => slot.label)).toEqual([
-    null,
-    'credential-refs',
-  ]);
+  expect(predicate.params).toEqual([JSON.stringify(refs), keyset]);
   const empty = noCredentialTombstonesSql([], { orgIdSql: '?', modeSql: '?' }, keyset);
   expect(empty.sql).not.toBe('0');
   expect(empty.params).toEqual([keyset]);

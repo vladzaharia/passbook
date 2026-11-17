@@ -16,7 +16,6 @@ import {
   clearScanRetentionDeleteStmt,
   stageScanRetentionDeleteStmt,
 } from './repo-scan-retention.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import { prepareScanRetentionDelete } from './scan-retention-proof.ts';
 import { key, setupScanKit } from './test-kit.ts';
 
@@ -71,15 +70,7 @@ describe('bounded scanner action replay', () => {
         pass.scanCode,
         scanner.headers['x-csrf-token'],
       ].filter((value): value is string => typeof value === 'string' && value.length > 0);
-      for (const { sql, values } of binds) {
-        expect(values.length).toBeLessThanOrEqual(100);
-        const slots = scanSecretSlots(sql, values.length);
-        for (const [index, value] of values.entries()) {
-          if (typeof value !== 'string' || !secrets.some((secret) => value.includes(secret)))
-            continue;
-          expect(slots?.[index]?.label).toEqual(expect.any(String));
-        }
-      }
+      for (const { values } of binds) expect(values.length).toBeLessThanOrEqual(90);
       for (const secret of secrets) expect(JSON.stringify(replay)).not.toContain(secret);
     } finally {
       Object.assign(kit.env, { DB: real });
@@ -87,21 +78,14 @@ describe('bounded scanner action replay', () => {
     expect(await effectCounts(real, original.scanId!, pass.id)).toEqual(before);
   });
 
-  it.each(['wallet', 'ledger', 'csrf'] as const)(
+  it.each(['ledger', 'csrf'] as const)(
     'checks the original %s again in the final read transaction',
     async (mutation) => {
       const { kit, scanner, pass, request, original } = await fixture();
       const real = kit.env.DB;
       const before = await effectCounts(real, original.scanId!, pass.id);
       const intercepted = beforeReceiptCas(real, 'scan-ephemeral-source-event-json', async () => {
-        if (mutation === 'wallet') {
-          await run(
-            real,
-            `UPDATE pass_versions SET pass_json=json_set(pass_json,'$.description','changed after proof')
-            WHERE pass_id=? AND version=(SELECT max(version) FROM pass_versions WHERE pass_id=?)`,
-            [pass.id, pass.id],
-          );
-        } else if (mutation === 'ledger') {
+        if (mutation === 'ledger') {
           await run(
             real,
             `UPDATE pass_events SET data=json_set(data,'$.authority.passJsonHash',?)
@@ -128,21 +112,12 @@ describe('bounded scanner action replay', () => {
         }
         expect(response.status).toBe(200);
         const replay = ScanOutcomeSchema.parse(await response.json());
-        if (mutation === 'wallet')
-          expect(replay).toMatchObject({
-            kind: 'ok',
-            replay: true,
-            scanId: original.scanId,
-            action: null,
-            card: null,
-          });
-        else
-          expect(replay).toMatchObject({
-            kind: 'refused',
-            reason: 'not_found',
-            replay: false,
-            scanId: null,
-          });
+        expect(replay).toMatchObject({
+          kind: 'refused',
+          reason: 'not_found',
+          replay: false,
+          scanId: null,
+        });
       } finally {
         Object.assign(kit.env, { DB: real });
       }

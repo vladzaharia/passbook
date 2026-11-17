@@ -158,7 +158,6 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       approvedBy,
       approvedAuthEpoch,
       override,
-      adminEventTemplates: authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
     },
     gate:
       override && (override.reason === 'already_done' || override.reason === 'cooldown')
@@ -180,7 +179,6 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     actor: authorityActor,
     event,
     templateId: found.pass.templateId,
-    adminEventTemplates: authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
     passFence,
     approvedBy,
     approvedAuthEpoch,

@@ -32,7 +32,6 @@ import { type CountsPlan, localDayStart, planCommitCounts } from './counts.ts';
 import { appliedAmount, ScanEffectStop, type ValueEffect, valueEffect } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import type { LedgerFacts } from './ledger.ts';
-import type { StopAuthority } from './repo-action-authority.ts';
 import type * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { filledSinceRedeem } from './repo-scan-amount.ts';
@@ -40,6 +39,7 @@ import { dailyAmountCheck, doneOkPredicate } from './repo-scan-checks.ts';
 import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
 import { displayRequiresHistory } from './scan-display-history.ts';
+import type { StopAuthority } from './scan-stop-authority.ts';
 import { SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import type { PinReservation } from './staff-pin.ts';
 

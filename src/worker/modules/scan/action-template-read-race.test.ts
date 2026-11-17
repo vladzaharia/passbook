@@ -70,7 +70,11 @@ describe('captured action template reads at the final CAS', () => {
   );
 
   for (const phase of ['gate', 'choose', 'stop'] as const) {
-    for (const source of ['pinned', 'active'] as const) {
+    // A pass repinned to another version of its template (a publish) is content, not authority: a
+    // choose or stop answer read before it is still served. A head change is the release gate.
+    for (const source of phase === 'gate'
+      ? (['pinned', 'active'] as const)
+      : (['active'] as const)) {
       it(`handles ${source} version replacement before the ${phase} transaction`, async () => {
         const f = await fixture(kit, {
           compatiblePin: true,

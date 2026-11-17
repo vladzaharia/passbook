@@ -3,8 +3,6 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { cardLastScansSplitFixture } from './card-last-scans-split-fixture.ts';
 import { type CardHistoryRow, cardHistoryFence, cardHistoryStmt } from './repo-card-history.ts';
-import { boundOutputPredicate } from './repo-output-predicates.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -16,7 +14,7 @@ beforeAll(async () => {
 const { act, body, card, simple } = cardLastScansSplitFixture(() => kit);
 
 describe('card last-scan privacy', () => {
-  it('fences the card history on the pass lineage, with the pass id bound as a secret', async () => {
+  it('fences the card history on the pass lineage, ', async () => {
     const { templateId, pass, scanner } = await simple();
     await act(scanner.headers, pass.id);
     const query = { orgId: kit.org.id, mode: 'live' as const, passId: pass.id, templateId };
@@ -32,16 +30,6 @@ describe('card last-scan privacy', () => {
       rows[0]?.current_credential_generation,
       rows[0]?.id,
     ]);
-    const slots = scanSecretSlots(fence.sql, fence.params.length);
-    expect(slots?.map((slot) => slot.label)).toEqual([
-      'pass-id',
-      null,
-      null,
-      null,
-      null,
-      'scan-id',
-    ]);
-
     const sql = `SELECT CASE WHEN (${fence.sql}) THEN 1 ELSE 0 END AS current`;
     expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 1 });
     // The rows are one snapshot: renaming the scanner after the read does not unread them.
@@ -77,10 +65,8 @@ describe('card last-scan privacy', () => {
     expect(rows.map((row) => row.id)).toEqual([ids[2], ids[1], ids[0]]);
     const fence = cardHistoryFence(query, rows);
     if (!fence) throw new Error('Missing card history fence');
-    const bounded = boundOutputPredicate(fence);
-    expect(bounded.sql).not.toBe('0');
-    expect(bounded.params.length).toBeLessThanOrEqual(90);
-    expect(await first(kit.env.DB, `SELECT (${bounded.sql}) AS current`, bounded.params)).toEqual({
+    expect(fence.params.length).toBeLessThanOrEqual(90);
+    expect(await first(kit.env.DB, `SELECT (${fence.sql}) AS current`, fence.params)).toEqual({
       current: 1,
     });
   });

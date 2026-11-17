@@ -5,10 +5,10 @@ import {
   UnauthenticatedError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
 import type { ScanActor } from './actor.ts';
 import { staffEpochStmt } from './repo-authority-capture.ts';
 import { getScanner, scannerEpochsOf } from './repo-device.ts';
-import { tenantAuthorityCurrent } from './repo-session-read-predicate.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
@@ -16,7 +16,7 @@ import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
 /** An admin whose session or access ended signs in again; a re-paired or removed managed device is gone. */
 async function adminAccessLost(ctx: ServiceContext, actor: ScanActor): Promise<AppError | null> {
   const authority = actor.tenantAuthority;
-  if (!authority || !(await tenantAuthorityCurrent(ctx.env.DB, authority, ctx.clock.now())))
+  if (!authority || !(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
     return new UnauthenticatedError();
   const scanner = actor.scanner;
   if (!scanner) return null;
