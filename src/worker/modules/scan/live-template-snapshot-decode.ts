@@ -199,8 +199,8 @@ export function decodeBoundLiveTemplateSnapshot(
       s.active.buildKey !== null &&
       s.pinned.buildKey === s.active.buildKey);
   const displayVersion = compatible ? r.version : null;
-  // A same-version head changes nothing about how the pass is used: the snapshot then holds the
-  // pass's own issued release, so the capture does not move when a newer one of that version lands.
+  // A head that says the same as the pass's own release about everything a scanner sees or may do
+  // (ownReleaseSaysSameSql, which builds the snapshot) leaves the pass's own release in the snapshot.
   const sameVersionHead = r.id === s.issuedId && r.id !== binding.activeReleaseId;
   return (purpose === 'read' || compatible) &&
     (sameVersionHead

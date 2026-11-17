@@ -3,7 +3,7 @@ import { stmt } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import { decodeBoundLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
+import { ownReleaseSaysSameSql, usedReleaseIdSql } from './repo-pass-release-sql.ts';
 import { scanConjunction } from './repo-secret-binds.ts';
 import { readCandidateTemplateSnapshot } from './template-read-snapshot.ts';
 
@@ -106,8 +106,7 @@ function snapshotExpressionSql(): string {
       'origin', snapshot_template.origin, 'status', snapshot_template.status),
     'pinned', json(${versionSql('pinned')}),
     'active', json(${versionSql('snapshot_active')}),
-    'release', json(CASE WHEN ar.id IS NOT p.release_id AND ar.version IS (
-        SELECT i.version FROM template_releases i WHERE i.id=p.release_id)
+    'release', json(CASE WHEN ${ownReleaseSaysSameSql('p', 'ar')}
       THEN (SELECT ${releaseSql('own')} FROM template_releases own WHERE own.id=p.release_id)
       ELSE ${releaseSql('ar')} END),
     'issued', json((SELECT ${releaseSql('issued')} FROM template_releases issued

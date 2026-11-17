@@ -16,7 +16,11 @@ import {
 } from './repo-lookup-finalize.ts';
 import { type OutputAuthority, outputAuthorityPredicate } from './repo-output-authority.ts';
 import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
-import { headVersionsStmt, passChanged } from './repo-resolve-outcome-current.ts';
+import {
+  capturedReleaseId,
+  headReleasesStmt,
+  passChanged,
+} from './repo-resolve-outcome-current.ts';
 
 export async function finalizeLookup(
   ctx: ServiceContext,
@@ -130,7 +134,7 @@ export async function finalizeLookup(
   statements.push(actorFence, ...(miss?.stmts ?? []));
   const headIndex = statements.length;
   statements.push(
-    headVersionsStmt(
+    headReleasesStmt(
       db,
       actor.orgId,
       entries.map((entry) => entry.source.pass.id),
@@ -172,15 +176,14 @@ export async function finalizeLookup(
         : null;
     visible.push(entry);
   }
-  // A different release version as head is a real race, not an absent pass.
+  // A release that changed how the pass is used is a real race, not an absent pass.
   const heads = new Map(
-    ((results[headIndex]?.results ?? []) as { id: string; version: string | null }[]).map((row) => [
-      row.id,
-      row.version,
-    ]),
+    ((results[headIndex]?.results ?? []) as { id: string; releaseId: string | null }[]).map(
+      (row) => [row.id, row.releaseId],
+    ),
   );
   for (const source of lost)
-    if (heads.has(source.pass.id) && heads.get(source.pass.id) !== source.activeReleaseVersion)
+    if (heads.has(source.pass.id) && heads.get(source.pass.id) !== capturedReleaseId(source))
       throw passChanged();
   if (visible.length === 0 && (entries.length > 0 || missStatus === 'not_committed')) return null;
   return visible;

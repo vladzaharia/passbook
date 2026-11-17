@@ -12,7 +12,7 @@ import {
   currentFoundActorStmt,
   currentFoundExtra,
   currentFoundTemplate,
-  headVersionMoved,
+  headMoved,
   passChanged,
 } from './repo-resolve-outcome-current.ts';
 import type { Found } from './resolve.ts';
@@ -150,7 +150,7 @@ export async function currentFound(
     historyFence,
     passViewGrant,
   );
-  if (!result && found.liveCandidate && (await headVersionMoved(ctx.env.DB, found.liveCandidate)))
+  if (!result && found.liveCandidate && (await headMoved(ctx.env.DB, found.liveCandidate)))
     throw passChanged();
   return result;
 }
