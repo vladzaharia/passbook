@@ -4,6 +4,7 @@ import { request } from 'node:http';
 import { createServer } from 'node:https';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { e2ePorts } from './lib/e2e-ports.ts';
 
 // Secure scanner cookies and camera permissions must be exercised on HTTPS in every engine.
 const dir = mkdtempSync(join(tmpdir(), 'passbook-camera-tls-'));
@@ -32,10 +33,10 @@ const server = createServer(
     const upstream = request(
       {
         hostname: 'localhost',
-        port: 5173,
+        port: e2ePorts.web,
         path: req.url,
         method: req.method,
-        headers: { ...req.headers, host: 'localhost:5173' },
+        headers: { ...req.headers, host: `localhost:${e2ePorts.web}` },
       },
       (reply) => {
         res.writeHead(reply.statusCode ?? 502, reply.headers);
@@ -49,7 +50,7 @@ const server = createServer(
     req.pipe(upstream);
   },
 );
-server.listen(5175, 'localhost');
+server.listen(e2ePorts.camera, 'localhost');
 const stop = () => {
   server.close();
   rmSync(dir, { recursive: true, force: true });

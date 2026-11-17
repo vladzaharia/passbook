@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { OrgMembership } from '../src/shared/contracts/org-membership.ts';
 import type { PassDetailDto } from '../src/shared/contracts/passes.ts';
 import type { SessionResponse } from '../src/shared/contracts/session.ts';
+import { e2eOrigin } from '../tools/lib/e2e-ports.ts';
 import { apiAs, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
 import { addOrgMember, createOrgWithRoles } from './helpers/seed.ts';
 
@@ -77,7 +78,7 @@ test('a pass operator can issue only in an organization where they are a member'
         releaseGeneration: foreignRelease.generation,
         templateVersion: foreignRelease.version,
       };
-      const headers = { Origin: 'http://localhost:5173', 'X-CSRF-Token': session.csrfToken };
+      const headers = { Origin: e2eOrigin, 'X-CSRF-Token': session.csrfToken };
       const created = await operator.ctx.post('/api/v1/passes', {
         headers: { ...headers, 'Idempotency-Key': uid('tenant-issue') },
         data: { ...issue, orgId: memberOrg.id },

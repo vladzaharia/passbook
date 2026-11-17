@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 import base from './playwright.config.ts';
 import { writeCameraVideo } from './tools/lib/camera-fixture.ts';
+import { e2ePorts } from './tools/lib/e2e-ports.ts';
 
 const cameraVideo = resolve('.wrangler/camera-qr.y4m');
 writeCameraVideo(cameraVideo);
@@ -21,7 +22,7 @@ export default defineConfig({
       dependencies: ['setup'],
       use: {
         browserName: 'chromium',
-        baseURL: 'https://localhost:5175',
+        baseURL: `https://localhost:${e2ePorts.camera}`,
         ignoreHTTPSErrors: true,
         permissions: ['camera'],
         viewport: { width: 390, height: 844 },
@@ -43,7 +44,7 @@ export default defineConfig({
         ...(browserName === 'firefox' && process.platform === 'darwin'
           ? { launchOptions: { env: { ...process.env, CFFIXED_USER_HOME: firefoxData } } }
           : {}),
-        baseURL: 'https://localhost:5175',
+        baseURL: `https://localhost:${e2ePorts.camera}`,
         ignoreHTTPSErrors: true,
         viewport: { width: 390, height: 844 },
       },
@@ -52,13 +53,13 @@ export default defineConfig({
   webServer: [
     {
       command: 'node tools/e2e-server.ts',
-      url: 'http://localhost:5173/health',
+      url: `http://localhost:${e2ePorts.web}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
     {
       command: 'node tools/e2e-camera-proxy.ts',
-      url: 'https://localhost:5175/health',
+      url: `https://localhost:${e2ePorts.camera}/health`,
       ignoreHTTPSErrors: true,
       reuseExistingServer: !process.env.CI,
     },

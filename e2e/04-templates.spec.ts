@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { zipSync } from 'fflate';
+import { e2eOrigin } from '../tools/lib/e2e-ports.ts';
 import { apiAs, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -96,7 +97,7 @@ test('baked templates are locked and the API refuses to delete them', async ({ p
   const res = await api.ctx.fetch('/api/v1/templates/baked%3Astarter-generic', {
     method: 'DELETE',
     headers: {
-      Origin: 'http://localhost:5173',
+      Origin: e2eOrigin,
       'X-CSRF-Token': (await (await api.ctx.get('/api/v1/session')).json()).csrfToken,
     },
   });
