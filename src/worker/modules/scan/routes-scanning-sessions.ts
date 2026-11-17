@@ -32,6 +32,7 @@ import {
   updateScanningSession,
 } from './scanning-sessions.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
+import { sessionAuthority } from './target-authority.ts';
 
 export const scanningSessionsRoutes = createRouter();
 guard(scanningSessionsRoutes, requireTenantSession);
@@ -112,7 +113,7 @@ register(
     const ctx = serviceContext(c);
     const input = c.req.valid('json');
     const row = await loadScanningSession(ctx, input.sessionId, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.org_id, 'scanning:manage');
+    const authority = await sessionAuthority(ctx, authOf(c), row.org_id, 'scanning:manage');
     return c.json(
       scopedScanningView(
         await joinAdminScanningSession(
@@ -144,7 +145,7 @@ register(
     if (auth.kind !== 'session') throw new UnauthenticatedError();
     const mode = modeOf(auth);
     const row = await loadScanningSession(ctx, c.req.valid('param').id, mode);
-    const authority = await tenantAuthorityOf(ctx, auth, row.org_id, 'scanning:read');
+    const authority = await sessionAuthority(ctx, auth, row.org_id, 'scanning:read');
     const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, authority);
     return c.json(
       scopedScanningView(
@@ -170,8 +171,8 @@ register(
     const auth = authOf(c);
     if (auth.kind !== 'session') throw new UnauthenticatedError();
     const row = await loadScanningSession(ctx, c.req.valid('param').id, modeOf(auth));
-    const authority = await tenantAuthorityOf(ctx, auth, row.org_id, 'scanning:manage');
-    const read = await tenantAuthorityOf(ctx, auth, row.org_id, 'scanning:read');
+    const authority = await sessionAuthority(ctx, auth, row.org_id, 'scanning:manage');
+    const read = await sessionAuthority(ctx, auth, row.org_id, 'scanning:read');
     const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, read);
     return c.json(
       scopedScanningView(
@@ -203,7 +204,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanningSession(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.org_id, 'scanning:manage');
+    const authority = await sessionAuthority(ctx, authOf(c), row.org_id, 'scanning:manage');
     return c.json(
       await createScanningDevice(
         ctx,
@@ -232,7 +233,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanningSession(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.org_id, 'scanning:manage');
+    const authority = await sessionAuthority(ctx, authOf(c), row.org_id, 'scanning:manage');
     return c.json(
       await updateScanningDevice(
         ctx,

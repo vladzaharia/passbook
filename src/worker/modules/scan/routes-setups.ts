@@ -18,6 +18,7 @@ import { startAdminSetup } from './scanning-sessions.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
 import { listSetups, setupView } from './setup-views.ts';
 import { createSetup, updateSetup } from './setups.ts';
+import { scannerAuthority } from './target-authority.ts';
 
 export const scanSetupsRoutes = createRouter();
 guard(scanSetupsRoutes, requireTenantSession);
@@ -114,7 +115,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:read');
+    await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:read');
     return c.json(scopedScanningView(await setupView(ctx, row.id), row.orgId));
   },
 );
@@ -132,7 +133,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await tenantAuthorityOf(ctx, authOf(c), row.orgId, 'scanning:manage');
+    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
     return c.json(
       scopedScanningView(
         await updateSetup(ctx, currentUserId(c), row.id, c.req.valid('json'), authority),
