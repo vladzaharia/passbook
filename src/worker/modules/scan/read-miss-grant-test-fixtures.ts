@@ -4,7 +4,7 @@ import { scannerActor, scanScannerCsrfProof, withRole } from './actor.ts';
 import { credentialTombstoneRefsForInput } from './credential-input.ts';
 import type { ReadMissObservation } from './misses.ts';
 import { getScanner } from './repo-device.ts';
-import { missCounterKey } from './repo-miss-authority.ts';
+import { missCounterKey, missWindow } from './repo-miss-authority.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
@@ -44,10 +44,10 @@ async function fixture() {
   );
   const observation: ReadMissObservation = {
     refs: credentials.credentialTombstoneRefs,
-    unchanged: {
-      sql: 'NOT EXISTS (SELECT 1 FROM passes p WHERE p.org_id = {org} AND p.mode = {mode} AND p.external_id = ?)',
-      params: [query],
-    },
+    unchanged: missWindow(
+      'NOT EXISTS (SELECT 1 FROM passes p WHERE p.org_id = {org} AND p.mode = {mode} AND p.external_id = ?)',
+      [query],
+    ),
   };
   const window = kit.clock.now() - (kit.clock.now() % WINDOW_MS);
   const key = missCounterKey(actor);

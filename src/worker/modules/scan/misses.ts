@@ -1,14 +1,15 @@
 import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
 import type { GrantCond } from '../../platform/authority-cond.ts';
-import type { SqlValue } from '../../platform/db.ts';
 import { AppError, DENY_REASONS } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
-import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
+import { scanActorChecks, scanCapabilityChecks, scanPrincipal } from './authority-checks.ts';
 import {
   auditedAtCap,
   crossedCap,
+  type MissWindow,
   missCounterKey,
+  missCountStmt,
   missIncrementPart,
   readMissIncrementPart,
 } from './repo-miss-authority.ts';
@@ -81,14 +82,13 @@ const REFUSED = 'SCAN_READ_MISS_REFUSED';
 const INCOMPLETE = 'SCAN_MISS_INCOMPLETE';
 
 /** The observation as an assert condition: `{org}` and `{mode}` are the grant row's. */
-const unchangedCond = (observation: ReadMissObservation['unchanged']): GrantCond => ({
+export const unchangedCond = (window: MissWindow): GrantCond => ({
   render: (b, _scope, tenant) => {
     let at = 0;
-    const sql = observation.sql
+    return window.sql
       .replace(/\{org\}/g, `${tenant}.org_id`)
       .replace(/\{mode\}/g, `${tenant}.mode`)
-      .replace(/\?/g, () => b.bind(observation.params[at++]));
-    return sql;
+      .replace(/\?/g, () => b.bind(window.params[at++]));
   },
 });
 
@@ -96,12 +96,29 @@ const unchangedCond = (observation: ReadMissObservation['unchanged']): GrantCond
 export interface ReadMissObservation {
   /** Keyed refs of the presented credential in the actor's mode: none may be retired by a transfer. */
   refs: readonly string[];
-  /**
-   * SQL that holds while what the read saw still holds (no pass it did not see matches the input). It
-   * names the tenant as `{org}` and `{mode}`: the grant's own, never the request's.
-   */
-  unchanged: { sql: string; params: readonly SqlValue[] };
+  unchanged: MissWindow;
 }
+
+/** The actor's miss counter is past its cap in this window: refuse before any pass is read. */
+export function refuseOverCap(row: unknown, now: number): void {
+  const count = row && typeof row === 'object' && 'count' in row ? row.count : undefined;
+  if (typeof count === 'number' && count > MISSES_PER_WINDOW)
+    throwCapped('capped', now - (now % WINDOW_MS), now);
+}
+
+/** Window start and counter read of an actor's misses, for a first batch. */
+export const missCounterRead = (db: D1Database, actor: ScanActor, now: number) =>
+  missCountStmt(db, missCounterKey(actor), now - (now % WINDOW_MS));
+
+/**
+ * The checks of a read miss: the admin's capability, the actor's epochs and the credential's refs. None
+ * may carry `release`: that reason is the cap-audit assert's, answered as an incomplete effect.
+ */
+export const readMissChecks = (actor: ScanActor, now: number, refs: readonly string[]) => [
+  ...scanCapabilityChecks(actor),
+  ...scanActorChecks(actor, { now }),
+  ...credentialRefChecks(refs),
+];
 
 /**
  * The miss of a read that found nothing, counted in its own grant (`org_mode.scan.miss`) after the
@@ -122,7 +139,7 @@ export async function grantReadMiss(
   const g = grant(ctx, {
     purpose: 'org_mode.scan.miss',
     principal: scanPrincipal(actor),
-    checks: [...scanActorChecks(actor, { now }), ...credentialRefChecks(observation.refs)],
+    checks: readMissChecks(actor, now, observation.refs),
     tables: ['counters'],
     // `release` names no check of a miss: it is the assert that its cap audit was written.
     codes: Object.fromEntries(

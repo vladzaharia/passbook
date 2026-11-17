@@ -2,6 +2,7 @@ import { exactStmt, prefixMatch, type SqlValue } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { ScanActor } from './actor.ts';
 import { eventMatch } from './repo-event-match.ts';
+import { type MissWindow, missWindow } from './repo-miss-authority.ts';
 import { refsClear } from './repo-read-fences.ts';
 import { walletSnapshotPredicateSql } from './repo-wallet-snapshot.ts';
 
@@ -72,6 +73,33 @@ const tenantTerms = (actor: ScanActor, tenant: Tenant) =>
         modeParams: [actor.mode] as SqlValue[],
       };
 
+/** The actor's template and event scope over a `passes` alias: what a search may return. Null: nothing. */
+function actorScopeParts(
+  actor: ScanActor,
+  alias: string,
+): { parts: string[]; params: SqlValue[] } | null {
+  const parts: string[] = [];
+  const params: SqlValue[] = [];
+  if (actor.templateIds.length) {
+    parts.push(`${alias}.template_id IN (SELECT value FROM json_each(?) WHERE type='text')`);
+    params.push(JSON.stringify(actor.templateIds));
+  }
+  if (actor.event) {
+    const match = eventMatch(actor.event.matchInput, actor.event.matchValues);
+    if (!match) return null;
+    if (match.input !== null) {
+      parts.push(`EXISTS (
+        SELECT 1 FROM json_each(CASE WHEN json_valid(${alias}.personalization) THEN ${alias}.personalization ELSE '{}' END) input
+        JOIN json_each(?) allowed
+          ON allowed.type='text' AND CAST(input.value AS TEXT)=allowed.value
+        WHERE input.key=? AND input.type IN ('text','integer','real','true','false')
+      )`);
+      params.push(JSON.stringify(match.values), match.input);
+    }
+  }
+  return { parts, params };
+}
+
 /** Shared exact eligibility for the indexed page and the miss's window check. */
 function searchWhere(
   actor: ScanActor,
@@ -113,23 +141,10 @@ function searchWhere(
       WHERE pinned.template_id=p.template_id AND pinned.version=p.template_version)`,
   ];
   const params: SqlValue[] = [...at.orgParams, ...at.modeParams, ...tombstones.params, now];
-  if (actor.templateIds.length) {
-    where.push("p.template_id IN (SELECT value FROM json_each(?) WHERE type='text')");
-    params.push(JSON.stringify(actor.templateIds));
-  }
-  if (actor.event) {
-    const match = eventMatch(actor.event.matchInput, actor.event.matchValues);
-    if (!match) return null;
-    if (match.input !== null) {
-      where.push(`EXISTS (
-        SELECT 1 FROM json_each(CASE WHEN json_valid(p.personalization) THEN p.personalization ELSE '{}' END) input
-        JOIN json_each(?) allowed
-          ON allowed.type='text' AND CAST(input.value AS TEXT)=allowed.value
-        WHERE input.key=? AND input.type IN ('text','integer','real','true','false')
-      )`);
-      params.push(JSON.stringify(match.values), match.input);
-    }
-  }
+  const scope = actorScopeParts(actor, 'p');
+  if (!scope) return null;
+  where.push(...scope.parts);
+  params.push(...scope.params);
   const matches = inputMatches('matched', q, email, keys);
   if (!matches.length) return null;
   const indexed = matches.map((match) => {
@@ -180,22 +195,26 @@ export function searchWindowUnchanged(
   now: number,
   credentialTombstoneRefs: readonly string[],
   observedCount: number,
-): Fragment | null {
+): MissWindow | null {
   const where = searchWhere(actor, q, email, keys, now, credentialTombstoneRefs, 'grant');
   if (!where || !Number.isSafeInteger(observedCount) || observedCount < 0) return null;
   const matches = inputMatches('lookup_match', q, email, keys);
-  if (!matches.length) return null;
-  return {
-    sql: `(SELECT COUNT(*) FROM passes p JOIN templates t ON t.id=p.template_id
+  // A pending transfer on a pass the read could not have returned is not a change to its answer.
+  const scope = actorScopeParts(actor, 'lookup_match');
+  if (!matches.length || !scope) return null;
+  return missWindow(
+    `(SELECT COUNT(*) FROM passes p JOIN templates t ON t.id=p.template_id
         AND (t.org_id=p.org_id OR t.org_id IS NULL) AND t.status!='deleted'
       WHERE (${where.sql})) = ?
       AND NOT EXISTS (SELECT 1 FROM passes lookup_match
         WHERE lookup_match.org_id={org} AND lookup_match.mode={mode}
+          AND lookup_match.deleted_at IS NULL AND lookup_match.test_data_quarantined = 0
           AND (${matches.map((match) => `(${match.sql})`).join(' OR ')})
+          ${scope.parts.map((part) => `AND ${part}`).join('\n          ')}
           AND EXISTS (SELECT 1 FROM pass_credential_transfers transfer
             WHERE transfer.pass_id=lookup_match.id AND transfer.state='pending'))`,
-    params: [...where.params, observedCount, ...matches.flatMap((match) => match.params)],
-  };
+    [...where.params, observedCount, ...matches.flatMap((match) => match.params), ...scope.params],
+  );
 }
 
 /** Decode a bounded search page after a direct query or a D1 authority batch. */

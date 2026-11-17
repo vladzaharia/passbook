@@ -97,7 +97,7 @@ export const ScanStaffSignInSchema = z.object({
   pin: z.string().regex(/^\d{6}$/),
 });
 export const ScanLookupRequestSchema = z.object({
-  q: z.string().min(1).max(120),
+  q: z.string().trim().min(1).max(120),
   scope: ScanAdminScopeSchema.optional(),
 });
 export const ScanLookupRowSchema = z.object({

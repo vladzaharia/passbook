@@ -18,7 +18,7 @@ import { planHistoryProofSnapshotsForOrg } from './history-proof-plan.ts';
 import { finalizeLookup } from './lookup-finalize.ts';
 import { attachLookupHistory, type LookupEntry } from './lookup-history.ts';
 import { knownPhotoUrl } from './member-photo.ts';
-import { grantReadMiss } from './misses.ts';
+import { grantReadMiss, missCounterRead, refuseOverCap } from './misses.ts';
 import { byIdStmt, type Candidate, candidatesOf } from './repo-lookup.ts';
 import { lookupGateStmt } from './repo-lookup-final.ts';
 import { scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
@@ -47,23 +47,30 @@ export async function lookup(
   actor = cloneObservedScanActor(actor);
   if (!scanPolicy(policyActor(actor), { kind: 'search' }).allow)
     throw new ForbiddenError('Lookup is disabled for this scanner.', 'SCAN_LOOKUP_DISABLED');
+  // The contract refuses a blank query; nothing is searched, so nothing is counted for one.
+  const q = raw.trim();
+  if (!q) return { items: [], more: false };
   await enforceRateLimit(ctx.env, 'RL_SCAN_LOOKUP', actor.actorKey);
   const now = ctx.clock.now();
   const hour = now - (now % 3_600_000);
-  const [settingsResult, counterResult] = await ctx.env.DB.batch<Record<string, unknown>>([
-    platformSettingsStmt(ctx.env.DB),
-    bumpIfStmt(ctx.env.DB, `scan:lk:${actor.actorKey}`, hour, { sql: '1', params: [] }),
-  ]);
+  const [settingsResult, counterResult, missRead] = await ctx.env.DB.batch<Record<string, unknown>>(
+    [
+      platformSettingsStmt(ctx.env.DB),
+      bumpIfStmt(ctx.env.DB, `scan:lk:${actor.actorKey}`, hour, { sql: '1', params: [] }),
+      missCounterRead(ctx.env.DB, actor, now),
+    ],
+  );
+  // Past its miss cap an actor reads nothing, a hit included: guessing is throttled, not just its misses.
+  refuseOverCap(missRead?.results?.[0], now);
   if (!settingsResult) throw new Error('Missing lookup settings result');
   const maximum = decodePlatformSettings(settingsResult)['scan.lookupsPerHour'];
   const count = counterResult?.results?.[0]?.count;
   if (typeof count === 'number' && count > maximum)
     throw new RateLimitedError(Math.ceil((hour + 3_600_000 - now) / 1000));
 
-  const q = raw.trim();
   const email = strictEmail(q);
-  const keys = q ? await scanCredentialKeys(ctx.env, actor.orgId, actor.mode, q, false) : undefined;
-  if (keys) actor = { ...actor, credentialKeysetCommitment: keys.credentialKeysetCommitment };
+  const keys = await scanCredentialKeys(ctx.env, actor.orgId, actor.mode, q, false);
+  actor = { ...actor, credentialKeysetCommitment: keys.credentialKeysetCommitment };
   const directMatch = (candidate: Candidate) =>
     (email !== null && candidate.pass.holderEmail === email) ||
     candidate.pass.id === q ||
@@ -210,23 +217,19 @@ export async function lookup(
       if (final.length !== entries.length) uncertain = true;
       // A miss is counted in its own grant: the search window is the one the read saw.
       if (countMiss && final.length === 0) {
-        const unchanged = keys
-          ? searchWindowUnchanged(
-              actor,
-              q,
-              email,
-              keys,
-              ctx.clock.now(),
-              keys.credentialTombstoneRefs,
-              hidden.length,
-            )
-          : { sql: '{org} IS NOT NULL', params: [] };
+        const unchanged = searchWindowUnchanged(
+          actor,
+          q,
+          email,
+          keys,
+          ctx.clock.now(),
+          keys.credentialTombstoneRefs,
+          hidden.length,
+        );
         if (
           !unchanged ||
-          (await grantReadMiss(ctx, actor, {
-            refs: keys?.credentialTombstoneRefs ?? [],
-            unchanged,
-          })) !== 'counted'
+          (await grantReadMiss(ctx, actor, { refs: keys.credentialTombstoneRefs, unchanged })) !==
+            'counted'
         )
           return { items: [], more: false };
       }

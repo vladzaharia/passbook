@@ -19,7 +19,7 @@ import {
 } from './miss-integration-test-fixtures.ts';
 import { grantReadMiss } from './misses.ts';
 import { countMiss } from './misses-test-fixtures.ts';
-import { missCounterKey } from './repo-miss-authority.ts';
+import { missCounterKey, missWindow } from './repo-miss-authority.ts';
 import { grantScanMembership, key } from './test-kit.ts';
 
 beforeAll(setupMissIntegration);
@@ -194,10 +194,10 @@ describe('scoped atomic miss accounting', () => {
       false,
       'require',
     );
-    const unchanged = {
-      sql: 'NOT EXISTS (SELECT 1 FROM passes p WHERE p.org_id = {org} AND p.mode = {mode} AND p.external_id = ?)',
-      params: [code],
-    };
+    const unchanged = missWindow(
+      'NOT EXISTS (SELECT 1 FROM passes p WHERE p.org_id = {org} AND p.mode = {mode} AND p.external_id = ?)',
+      [code],
+    );
     const refs = credentials.credentialTombstoneRefs;
     expect(await grantReadMiss(kit.ctx, actor, { refs, unchanged })).toBe('counted');
     expect(await counter(counterKey)).toEqual({ count: 1 });

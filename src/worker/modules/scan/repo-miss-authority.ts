@@ -1,5 +1,7 @@
 import type { GrantCond } from '../../platform/authority-cond.ts';
+import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, writePart } from '../../platform/authority-include.ts';
+import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 
 /** Misses for one actor are independent across tenants and live/test modes. */
@@ -38,3 +40,32 @@ export const auditedAtCap = (
     OR EXISTS (SELECT 1 FROM audit_log WHERE org_id=${tenant}.org_id AND action='scan.misses_capped'
       AND actor_id IS ${b.bind(actor.actor.id)} AND at=${b.bind(at)})`,
 });
+
+/** The counter row of an actor's window: one read, in the first batch of a read that could be a miss. */
+export const missCountStmt = (db: D1Database, key: string, window: number) =>
+  stmt(db, 'SELECT count FROM counters WHERE key = ? AND window_start = ?', [key, window]);
+
+declare const windowBrand: unique symbol;
+
+/**
+ * What a read saw when it found nothing, as SQL a grant can assert: it holds while no pass the read
+ * could have returned matches the input. It names the tenant only as `{org}` and `{mode}` (the
+ * grant's own). Made by `missWindow`, which refuses SQL that could name another tenant, write, or
+ * bind the wrong number of values; only `repo-search.ts` and `resolve-passless-read.ts` make one.
+ */
+export interface MissWindow {
+  readonly sql: string;
+  readonly params: readonly SqlValue[];
+  readonly [windowBrand]: true;
+}
+
+export function missWindow(sql: string, params: readonly SqlValue[]): MissWindow {
+  const marks = sql.match(/\?/g)?.length ?? 0;
+  const bad = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE', message);
+  if (marks !== params.length) throw bad('A miss window binds as many values as it has marks.');
+  if (/\b(?:org_id|mode)\s*(?:=|IS)\s*\?/i.test(sql) || /\b[ag]\./.test(sql))
+    throw bad('A miss window names its tenant only as {org} and {mode}.');
+  if (/;|--|\/\*|\b(?:insert|update|delete|replace|attach|pragma|drop|create|alter)\b/i.test(sql))
+    throw bad('A miss window is read-only fixed SQL.');
+  return Object.freeze({ sql, params: Object.freeze([...params]) }) as MissWindow;
+}

@@ -3,7 +3,7 @@ import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.t
 import { exists, type GrantCond, not } from '../../platform/authority-cond.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
+import { scanActorChecks, scanCapabilityChecks, scanPrincipal } from './authority-checks.ts';
 import type { ScanActor } from './guard.ts';
 import { credentialRefChecks } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
@@ -42,6 +42,7 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
     principal: scanPrincipal(actor),
     ...(i.target ? { target: i.target } : {}),
     checks: [
+      ...scanCapabilityChecks(actor),
       ...scanActorChecks(actor, {
         now: i.now,
         ...(i.event === undefined ? {} : { event: i.event }),

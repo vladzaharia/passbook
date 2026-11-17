@@ -3,10 +3,16 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { type CredentialTombstoneSnapshot, scanCredentialKeys } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { grantReadMiss } from './misses.ts';
+import { missWindow } from './repo-miss-authority.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import { ACTOR_TENANT, type Fence, otherModeSql, refsClear } from './repo-read-fences.ts';
 import type { CandidateMatchInput } from './repo-resolve-candidates.ts';
-import { absent, matchingPassSql, passlessStmt } from './repo-resolve-passless-read.ts';
+import {
+  absent,
+  acceptedFilter,
+  matchingPassSql,
+  passlessStmt,
+} from './repo-resolve-passless-read.ts';
 
 export { acceptedFilter, candidateEligible } from './repo-resolve-passless-read.ts';
 
@@ -77,8 +83,28 @@ export async function passlessCurrent(
 }
 
 /**
- * Count a `not_found` and confirm it: no pass of the tenant matches the input, the actor and the
- * credential's refs still hold. False when nothing was counted. Throws `SCAN_TOO_MANY_MISSES` past the cap.
+ * The window a `not_found` rests on: no pass the read could have returned (live, in the actor's
+ * templates and event) matches the input. A match outside that is not a change to the answer, so an
+ * uncounted miss cannot say that such a pass exists.
+ */
+export function notFoundWindow(
+  actor: ScanActor,
+  match: CandidateMatchInput | null,
+): ReturnType<typeof missWindow> {
+  if (!match) return missWindow('{org} IS NOT NULL', []);
+  const found = matchingPassSql(
+    match,
+    { org: '{org}', mode: '{mode}' },
+    acceptedFilter(actor, true),
+  );
+  const none = absent(found);
+  return missWindow(none.sql, none.params);
+}
+
+/**
+ * Count a `not_found` and confirm it: no pass the read could have returned matches the input, the
+ * actor and the credential's refs still hold. False when nothing was counted. Throws
+ * `SCAN_TOO_MANY_MISSES` past the cap.
  */
 export async function countNotFound(
   ctx: ServiceContext,
@@ -87,11 +113,8 @@ export async function countNotFound(
   refs: readonly string[] | undefined,
 ): Promise<boolean> {
   if (!Array.isArray(refs)) return false;
-  const found = matchingPassSql(match, { org: '{org}', mode: '{mode}' });
   return (
-    (await grantReadMiss(ctx, actor, {
-      refs,
-      unchanged: match ? absent(found) : { sql: '{org} IS NOT NULL', params: [] },
-    })) === 'counted'
+    (await grantReadMiss(ctx, actor, { refs, unchanged: notFoundWindow(actor, match) })) ===
+    'counted'
   );
 }

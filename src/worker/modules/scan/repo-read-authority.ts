@@ -3,9 +3,13 @@ import { AuthorityError } from '../../platform/authority-error.ts';
 import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
-import { capabilityChecks } from '../passes/repo-authority.ts';
 import type { ScanActor } from './actor.ts';
-import { type ScanChecksInput, scanActorChecks, scanPrincipal } from './authority-checks.ts';
+import {
+  type ScanChecksInput,
+  scanActorChecks,
+  scanCapabilityChecks,
+  scanPrincipal,
+} from './authority-checks.ts';
 
 export interface ScanReadAuthority {
   /** CTE list to follow `WITH`: defines `actor` and `actor_ok`. */
@@ -44,9 +48,8 @@ export function scanReadAuthority(
   actor: ScanActor,
   input: ScanChecksInput & { extraChecks?: Check[] },
 ): ScanReadAuthority {
-  const tenant = actor.tenantAuthority;
   // As `sessionGrant`: the membership's own roles still grant the capability.
-  const capability = actor.principal === 'admin' && tenant ? capabilityChecks(tenant) : [];
+  const capability = scanCapabilityChecks(actor);
   const { ctes, params } = authorityPredicate(scanPrincipal(actor), {
     scope: 'org_mode',
     now: input.now,
