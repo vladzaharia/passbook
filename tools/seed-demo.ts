@@ -46,17 +46,23 @@ const henrys = orgId('henrys');
 const northwind = orgId('northwind');
 const harbor = orgId('harbor-lights');
 
-// Templates: two baked ones assigned, a clone, an upload in flight and one failed import.
-await admin.send('PATCH', '/api/v1/templates/baked:starter-store-card', { orgId: northwind });
-await admin.send('PATCH', '/api/v1/templates/baked:starter-event-ticket', { orgId: harbor });
+// Templates: made from blueprints (passes come from templates), an upload in flight and one failed import.
 let templates = await admin.all('/api/v1/templates');
 const byName = (name: string) => templates.find((t) => t.name === name);
-if (!byName('Northwind Member')) {
-  await admin.send('POST', '/api/v1/templates/baked:starter-generic/clone', {
-    orgId: northwind,
-    name: 'Northwind Member',
+async function fromBlueprint(slug: string, orgId: string, name: string): Promise<string> {
+  const found = byName(name);
+  if (found) return found.id as string;
+  const made = await admin.send('POST', `/api/v1/templates/baked:starter-${slug}/use`, {
+    orgId,
+    name,
   });
+  return made.id as string;
 }
+const store = await fromBlueprint('store-card', northwind, 'Northwind Store Card');
+const ticket = await fromBlueprint('event-ticket', harbor, 'Harbor Event Ticket');
+const coupon = await fromBlueprint('coupon', northwind, 'Northwind Coupon');
+const crew = await fromBlueprint('generic', harbor, 'Harbor Crew');
+await fromBlueprint('generic', northwind, 'Northwind Member');
 
 function variantZip(name: string): Uint8Array {
   const dir = resolve(root, 'templates/starter-generic');
@@ -67,6 +73,8 @@ function variantZip(name: string): Uint8Array {
     if (entry.name === 'wallet.template.json') {
       const manifest = JSON.parse(Buffer.from(bytes).toString('utf8'));
       manifest.name = name;
+      // An uploaded package is never a blueprint.
+      manifest.blueprint = undefined;
       // Uploads are untrusted: baked-only keywords and /semantics bindings are rejected.
       if (manifest.inputs?.properties?.website)
         manifest.inputs.properties.website.pattern = undefined;
@@ -102,7 +110,7 @@ const tenancy = tenancyCommand(DEMO_OWNER);
 execFileSync(tenancy.file, tenancy.args, { cwd: root, stdio: 'inherit' });
 
 // Passes
-const plans = demoPlans({ henrys, northwind, harbor, member });
+const plans = demoPlans({ henrys, northwind, harbor, member, store, ticket, coupon, crew });
 
 const existing = new Set(
   (await admin.all('/api/v1/passes')).map((p) => p.externalId).filter(Boolean),
@@ -190,7 +198,7 @@ const CONNECTIONS = [
     connectorType: 'demo',
     name: 'Box office feed',
     config: { seed: 'harbor', count: 5, fail: 'upstream' },
-    defaultTemplateId: 'baked:starter-event-ticket',
+    defaultTemplateId: ticket,
     mapping: { attendee: { from: '/memberName' }, ticketId: { from: '/memberId' } },
   },
   {

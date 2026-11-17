@@ -5,7 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
 import { sampleScannerScopeCheck } from '../scan/sample-scope-fence.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
-import { releaseOrgCheck, releaseSnapshotCheck } from './repo-create-checks.ts';
+import { notBlueprintCheck, releaseOrgCheck, releaseSnapshotCheck } from './repo-create-checks.ts';
 import { type RetainedIssuanceScope, retainedIssuanceChecks } from './repo-write-retained.ts';
 import type { NewPassRow } from './repo-write-types.ts';
 
@@ -37,6 +37,7 @@ export function createGrant(
   const ex = row.execution;
   const checks: Check[] = [
     releaseHead(row.templateId, row.mode, 'apple', row.release.id),
+    notBlueprintCheck(row.templateId),
     releaseSnapshotCheck(row),
     releaseOrgCheck(row.release),
   ];

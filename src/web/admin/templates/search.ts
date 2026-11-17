@@ -18,3 +18,13 @@ export const uploadSearchSchema = z.object({
   /** An earlier import, to show its report. */
   upload: z.string().optional().catch(undefined),
 });
+
+/** The designer on a draft of a blueprint: `orgId` is the destination, `name` the new template's. */
+export const newTemplateSearchSchema = z.object({
+  blueprint: z.string().max(200).optional().catch(undefined),
+  name: z.string().max(120).optional().catch(undefined),
+});
+
+export const blueprintSearchSchema = z.object({
+  tab: z.enum(['overview', 'inputs']).optional().catch(undefined),
+});

@@ -12,7 +12,7 @@ import {
   apiAs,
   BASE,
   createPass,
-  GENERIC,
+  GENERIC_BLUEPRINT,
   requireActiveTemplateRelease,
   templateReleases,
   uid,
@@ -37,10 +37,14 @@ test('releases require independent review, compare-and-swap, and mode-specific i
     const slug = uid('release-e2e').toLowerCase();
     const org = await createOrgWithRoles(author, { slug, name: `Release test ${slug}` });
     const clone = TemplateDetailSchema.parse(
-      await author.send('POST', `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`, {
-        orgId: org.id,
-        name: uid('Reviewed template'),
-      }),
+      await author.send(
+        'POST',
+        `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
+        {
+          orgId: org.id,
+          name: uid('Reviewed template'),
+        },
+      ),
     );
     expect(clone).toMatchObject({ orgId: org.id, origin: 'uploaded', activeVersion: null });
     expect(clone.versions).toHaveLength(1);

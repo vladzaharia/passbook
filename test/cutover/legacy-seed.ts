@@ -22,6 +22,10 @@ export const SHAPES = [
   'baked-assigned-empty',
   // A starter (no org in its manifest) that the old Worker's PATCH assigned to org-b.
   'baked-patched',
+  // The shipped starters, as the real ids that migration 0056 matches: one still platform-owned (a
+  // blueprint after the cutover), one the old Worker's PATCH assigned to org-b (that org's template).
+  'baked-blueprint',
+  'baked-starter-org',
   'uploaded-active',
   'uploaded-archived',
   'uploaded-empty',
@@ -53,6 +57,8 @@ export interface Legacy {
   scanners: Record<string, LegacyScanner>;
   /** Set when a second baked sync shipped new starter content. */
   bumpedVersion?: string;
+  /** The versions the second sync shipped for the two starters (generic, coupon). */
+  bumpedStarters?: string[];
   db: D1Database;
   passes: LegacyPass[];
   templateIds: Record<Shape, string>;
@@ -90,6 +96,21 @@ const q = (v: string | number | null) =>
 
 export const SCAN = { actions: [{ id: 'enter', label: 'Check in', kind: 'check_in' }] };
 
+/** A shipped starter: the build's manifest marks it a blueprint. */
+export const starterPackage = (name: string, logoWidth: number) =>
+  basicPackage({
+    'logo.png': makePng(logoWidth, 40),
+    'wallet.template.json': JSON.stringify({
+      schema: 1,
+      name,
+      blueprint: true,
+      inputs: { type: 'object', properties: { name: { type: 'string' } } },
+      sample: { name: 'Alex' },
+      bindings: [{ to: { field: 'name' }, value: '{{name}}' }],
+      display: { title: '{{name}}', icon: 'stamp' },
+    }),
+  });
+
 async function bakedPair(): Promise<BakedFixture[]> {
   const built = await bakedFixtures();
   for (const f of built) f.template.manifest = { ...f.template.manifest, scan: SCAN } as never;
@@ -108,6 +129,10 @@ async function bakedFixtures(): Promise<BakedFixture[]> {
       org: { slug: 'org-a', name: 'Org A' },
     }),
     await bakedFrom('adopted', basicPackage({ 'logo.png': makePng(80, 40) }), { name: 'Adopted' }),
+    await bakedFrom('starter-generic', starterPackage('Membership card', 70), {
+      name: 'Membership card',
+    }),
+    await bakedFrom('starter-coupon', starterPackage('Coupon', 60), { name: 'Coupon' }),
   ];
 }
 
@@ -122,7 +147,9 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
   const baked = await bakedPair();
   const assets = fakeAssets();
   for (const f of baked) for (const [k, v] of f.files) assets.files.set(k, v);
-  const [starter, acme, spare, adopted] = baked.map((f) => f.template) as [
+  const [starter, acme, spare, adopted, blueprint, starterOrg] = baked.map((f) => f.template) as [
+    BakedTemplate,
+    BakedTemplate,
     BakedTemplate,
     BakedTemplate,
     BakedTemplate,
@@ -158,6 +185,8 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
     'baked-assigned': acme.id,
     'baked-assigned-empty': spare.id,
     'baked-patched': adopted.id,
+    'baked-blueprint': blueprint.id,
+    'baked-starter-org': starterOrg.id,
     'uploaded-active': 'up-active',
     'uploaded-archived': 'up-archived',
     'uploaded-empty': 'up-empty',
@@ -177,6 +206,8 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
   bakedRow(acme, 'org-a');
   bakedRow(spare, 'org-a');
   bakedRow(adopted, 'org-b');
+  bakedRow(blueprint, null);
+  bakedRow(starterOrg, 'org-b');
   // Uploaded templates reuse the starter's package content with r2 sources under their own prefix
   // (the moved one keeps the prefix of the org it was uploaded in).
   const uploaded: [string, string, string, string][] = [
@@ -248,6 +279,8 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
     ['baked-unassigned', 'org-a'],
     ['baked-assigned', 'org-a'],
     ['baked-patched', 'org-b'],
+    ['baked-blueprint', 'org-a'],
+    ['baked-starter-org', 'org-b'],
     ['uploaded-active', 'org-a'],
     ['uploaded-archived', 'org-a'],
     ['uploaded-moved', 'org-a'],

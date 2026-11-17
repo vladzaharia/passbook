@@ -109,7 +109,7 @@ describe('cutover: nothing lost', () => {
         "SELECT id, state, payload, coalesce_key FROM outbox WHERE id LIKE 'push-%' OR id LIKE 'sent-%' ORDER BY id",
       )
       .all<{ id: string; state: string; payload: string; coalesce_key: string | null }>();
-    expect(rows.results).toHaveLength(12);
+    expect(rows.results).toHaveLength(16);
     for (const r of rows.results) {
       if (r.id.startsWith('push-')) {
         expect(r.state).toBe('pending');
@@ -155,8 +155,8 @@ describe('cutover: runbook queries', () => {
 
   it('pre-checks: no pending bundle mail; archived, stale and moved templates are listed', async () => {
     expect(await rows('verify-outbox')).toEqual([
-      { kind: 'email', state: 'pending', n: 7 },
-      { kind: 'push', state: 'pending', n: 6 },
+      { kind: 'email', state: 'pending', n: 9 },
+      { kind: 'push', state: 'pending', n: 8 },
     ]);
     expect(await rows('verify-archived')).toEqual([
       { id: 'up-archived', origin: 'uploaded', org_id: 'org-a', passes: 4 },

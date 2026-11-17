@@ -12,6 +12,7 @@
 	<key>CFBundleIconName</key><string>AppIcon</string>
 	<key>UILaunchScreen</key><dict><key>UIColorName</key><string>LaunchBackground</string></dict>
 	<key>LSRequiresIPhoneOS</key><true/>
+	<key>ITSAppUsesNonExemptEncryption</key><false/>
 	<key>NSCameraUsageDescription</key><string>Scan pass barcodes with the camera.</string>
 	<key>NFCReaderUsageDescription</key><string>Read a supported NFC tag when you choose NFC scan.</string>
 	<key>UIApplicationSceneManifest</key>

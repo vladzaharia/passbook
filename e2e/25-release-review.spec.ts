@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import type { PassDetailDto } from '../src/shared/contracts/passes.ts';
 import type { SessionResponse } from '../src/shared/contracts/session.ts';
 import { TemplateDetailSchema } from '../src/shared/contracts/templates.ts';
-import { apiAs, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
+import { apiAs, GENERIC_BLUEPRINT, requireActiveTemplateRelease, uid } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
 import { templateReviewer } from './helpers/releases.ts';
 import { createOrgWithRoles } from './helpers/seed.ts';
@@ -50,10 +50,14 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
     await reviewer.dispose();
     const templateName = uid('Reviewed card');
     const clone = TemplateDetailSchema.parse(
-      await author.send('POST', `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`, {
-        orgId: org.id,
-        name: templateName,
-      }),
+      await author.send(
+        'POST',
+        `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
+        {
+          orgId: org.id,
+          name: templateName,
+        },
+      ),
     );
     expect(clone.activeVersion).toBeNull();
     const version = clone.versions[0]?.version;

@@ -109,6 +109,33 @@ describe('pairing tenant authority', () => {
     expect(await passState()).toEqual(beforePass);
   }, 60_000);
 
+  it('never samples from a blueprint: a template beside it is used, a blueprint alone is unassigned', async () => {
+    const actor = await member();
+    const blueprint = await kit.scanTemplate('Blueprint sample', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+    });
+    await run(kit.env.DB, 'UPDATE templates SET blueprint = 1 WHERE id = ?', [blueprint]);
+    const alone = await kit.scanner({ mode: 'test', templateIds: [blueprint] });
+    const before = await passState();
+    const refused = await request(
+      'POST',
+      scannerPath(alone.id, 'sample-pass'),
+      actor.session.headers,
+    );
+    expect(refused.status).toBe(422);
+    expect(await refused.json()).toMatchObject({ code: 'SCANNER_UNASSIGNED' });
+    expect(await passState()).toEqual(before);
+    // Positive control: with a template in scope the sample is issued from it, whatever the id order.
+    const both = await kit.scanner({ mode: 'test', templateIds: [blueprint, templateId] });
+    const issued = await request(
+      'POST',
+      scannerPath(both.id, 'sample-pass'),
+      actor.session.headers,
+    );
+    expect(issued.status).toBe(201);
+    expect(await issued.json()).toMatchObject({ templateId });
+  }, 60_000);
+
   it('refuses a sample when the assigned event is in Live mode', async () => {
     const actor = await member();
     const event = await kit.event({ mode: 'live', templateIds: [templateId] });

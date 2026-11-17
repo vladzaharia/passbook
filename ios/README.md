@@ -20,11 +20,30 @@ If the startup network load fails, tap **Retry**; the error overlay clears after
 
 ## TestFlight
 
-Before the first upload, the Account Holder must register `mobile.passbook.scanner`, enable **NFC Tag Reading** for its App ID, and create the matching App Store Connect app record.
+One-time setup, by the Account Holder (team `48H7CLBV8Y`):
 
-Create a GitHub environment named `iOS TestFlight` with required reviewers. Set `APPLE_TEAM_ID` as a repository variable, and add `ASC_KEY_ID`, `ASC_ISSUER_ID`, and base64-encoded `ASC_KEY_P8_BASE64` as environment secrets. Use an **Admin** App Store Connect team key so Xcode can manage signing profiles. Never commit the `.p8` file.
+1. Register the App ID `mobile.passbook.scanner` (Certificates, Identifiers & Profiles) with **NFC Tag Reading**.
+2. Create the App Store Connect app record: My Apps, **+**, New App, iOS, bundle ID `mobile.passbook.scanner`.
+3. Create an **Admin** team API key (Users and Access, Integrations, App Store Connect API). Admin lets Xcode create the
+   distribution certificate and profiles. Keep the `.p8` out of the repo.
+4. Create the `iOS TestFlight` GitHub environment with required reviewers. Add secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`,
+   `ASC_KEY_P8_BASE64` (`base64 -i AuthKey_XXXX.p8`). Add repository variable `APPLE_TEAM_ID`; optionally
+   `PASSBOOK_TESTFLIGHT_GROUP`, `PASSBOOK_BUILD_NUMBER_OFFSET` (default 1000) and `PASSBOOK_RELEASE_XCODE_BUILD`.
+5. Create an internal TestFlight group on the app record.
 
-Run **Actions → iOS TestFlight** from `main` and enter the marketing version. The workflow runs `npm run check` and the browser E2E suite, archives with automatic signing, and uploads the build. After processing, add it to an internal TestFlight group; external testers require Beta App Review.
+Run **Actions, iOS TestFlight** from `main` with the marketing version (X.Y.Z). It runs `npm run check` and the E2E
+suite, then archives with cloud-managed signing, checks the archive, uploads, waits for processing, sets What to Test
+and adds the build to the group. The build number is the run number plus the offset (`.N` on re-runs); a re-run after
+a completed upload skips the upload. External testers need Beta App Review.
+
+Scripts in `ios/scripts/` (no fastlane): `build.sh` (xcodegen, archive, export), `check-archive.sh`, `version.sh`,
+`secrets.sh` (key file for one command), `asc-jwt.sh` and `asc-testflight.sh` (App Store Connect API),
+`select-xcode.sh`, `install-xcodegen.sh`. Local check without signing:
+
+    APPLE_TEAM_ID=48H7CLBV8Y ios/scripts/build.sh --archive --no-sign --marketing-version 1.0.0 --build-number 1
+    ios/scripts/check-archive.sh ios/build/PassBookScanner.xcarchive
+
+`build.sh` refuses the API key outside the workflow, so only the pipeline passes `-allowProvisioningUpdates`.
 
 ## Hardware limits
 

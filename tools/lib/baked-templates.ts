@@ -79,6 +79,11 @@ export async function collectBaked(options: BakedOptions): Promise<BakedTemplate
       typeof raw.org?.slug === 'string' && typeof raw.org.name === 'string'
         ? { slug: raw.org.slug, name: raw.org.name }
         : null;
+    const blueprint = result.manifest.blueprint === true;
+    if (blueprint && org) {
+      failures.push(`templates/${slug}: a blueprint is platform-wide and cannot name an org`);
+      continue;
+    }
     const base = `/templates/${slug}/${result.version}`;
     for (const [name, bytes] of result.files)
       writeFile(join(staticRoot, slug, result.version, name), bytes);
@@ -93,6 +98,7 @@ export async function collectBaked(options: BakedOptions): Promise<BakedTemplate
       name: result.manifest.name,
       description: result.manifest.description ?? null,
       org,
+      blueprint,
       styles: result.styles,
       manifest: result.manifest,
       passJson: result.passJson,

@@ -72,7 +72,14 @@ export async function assignTemplateOrg(
   });
   writer.update('templates', {
     set: { org_id: orgId, updated_at: maxNow(now) },
-    where: { id, org_id: row.orgId, origin: row.origin, status: row.status },
+    // A blueprint stays platform-wide; the update matches only the flag as read.
+    where: {
+      id,
+      org_id: row.orgId,
+      origin: row.origin,
+      status: row.status,
+      blueprint: row.blueprint ? 1 : 0,
+    },
     require: 'one',
     returning: ['id'],
   });

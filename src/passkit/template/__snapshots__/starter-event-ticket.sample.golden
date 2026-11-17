@@ -1,6 +1,6 @@
 {
   "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "backgroundColor": "rgb(31,41,55)",
+  "backgroundColor": "rgb(94,6,54)",
   "barcodes": [
     {
       "altText": "TICKET-0001",
@@ -101,7 +101,7 @@
   "expirationDate": "2030-06-16T05:00:00Z",
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
-  "labelColor": "rgb(199,210,254)",
+  "labelColor": "rgb(246,197,214)",
   "locations": [
     {
       "latitude": 37.3349,

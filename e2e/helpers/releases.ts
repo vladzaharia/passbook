@@ -2,6 +2,7 @@ import type { OrgMembership } from '../../src/shared/contracts/org-membership.ts
 import {
   type Api,
   apiAs,
+  GENERIC_BLUEPRINT,
   type ReleaseMode,
   requireActiveTemplateRelease,
   type TemplateRelease,
@@ -173,4 +174,22 @@ export async function rollbackTemplateRelease(
     },
     modeHeaders(target.mode),
   );
+}
+
+/** A template made from the Generic blueprint in `orgId` (Use blueprint), released in each mode. */
+export async function templateFromBlueprint(
+  admin: Api,
+  orgId: string,
+  name: string,
+  modes: ReleaseMode[] = ['live'],
+): Promise<{ id: string; name: string }> {
+  const made = await admin.send<{ id: string; name: string; versions: { version: string }[] }>(
+    'POST',
+    `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/use`,
+    { orgId, name },
+  );
+  const version = made.versions[0]?.version;
+  if (!version) throw new Error(`Template ${made.id} has no first version`);
+  for (const mode of modes) await publishTemplateVersion(admin, orgId, made.id, version, mode);
+  return { id: made.id, name: made.name };
 }

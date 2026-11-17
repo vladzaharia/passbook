@@ -23,6 +23,8 @@ export interface TemplateFilters {
   origin?: 'baked' | 'uploaded' | undefined;
   includeArchived?: boolean | undefined;
   q?: string | undefined;
+  /** True lists blueprints; templates otherwise. */
+  blueprint?: boolean | undefined;
 }
 
 export const templateKeys = {

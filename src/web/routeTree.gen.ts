@@ -18,6 +18,8 @@ import { Route as AdminAccountRouteImport } from './routes/admin/account'
 import { Route as PassesPassIdRouteImport } from './routes/passes/$passId'
 import { Route as AdminApiKeysIndexRouteImport } from './routes/admin/api-keys/index'
 import { Route as AdminAuditIndexRouteImport } from './routes/admin/audit/index'
+import { Route as AdminBlueprintsIndexRouteImport } from './routes/admin/blueprints/index'
+import { Route as AdminBlueprintsBlueprintIdRouteImport } from './routes/admin/blueprints/$blueprintId'
 import { Route as AdminConnectionsIndexRouteImport } from './routes/admin/connections/index'
 import { Route as AdminConnectionsConnectionIdRouteImport } from './routes/admin/connections/$connectionId'
 import { Route as AdminConnectionsNewRouteImport } from './routes/admin/connections/new'
@@ -36,6 +38,7 @@ import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/
 import { Route as AdminStatusIndexRouteImport } from './routes/admin/status/index'
 import { Route as AdminTemplatesIndexRouteImport } from './routes/admin/templates/index'
 import { Route as AdminTemplatesTemplateIdRouteImport } from './routes/admin/templates/$templateId'
+import { Route as AdminTemplatesNewRouteImport } from './routes/admin/templates/new'
 import { Route as AdminTemplatesUploadRouteImport } from './routes/admin/templates/upload'
 import { Route as AdminTestInboxIndexRouteImport } from './routes/admin/test-inbox/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
@@ -90,6 +93,17 @@ const AdminAuditIndexRoute = AdminAuditIndexRouteImport.update({
   path: '/audit/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminBlueprintsIndexRoute = AdminBlueprintsIndexRouteImport.update({
+  id: '/blueprints/',
+  path: '/blueprints/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminBlueprintsBlueprintIdRoute =
+  AdminBlueprintsBlueprintIdRouteImport.update({
+    id: '/blueprints/$blueprintId',
+    path: '/blueprints/$blueprintId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminConnectionsIndexRoute = AdminConnectionsIndexRouteImport.update({
   id: '/connections/',
   path: '/connections/',
@@ -184,6 +198,11 @@ const AdminTemplatesTemplateIdRoute =
     path: '/templates/$templateId',
     getParentRoute: () => AdminRouteRoute,
   } as any)
+const AdminTemplatesNewRoute = AdminTemplatesNewRouteImport.update({
+  id: '/templates/new',
+  path: '/templates/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminTemplatesUploadRoute = AdminTemplatesUploadRouteImport.update({
   id: '/templates/upload',
   path: '/templates/upload',
@@ -237,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/blueprints/$blueprintId': typeof AdminBlueprintsBlueprintIdRoute
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
   '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
@@ -246,10 +266,12 @@ export interface FileRoutesByFullPath {
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
   '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
+  '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/api-keys/': typeof AdminApiKeysIndexRoute
   '/admin/audit/': typeof AdminAuditIndexRoute
+  '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
   '/admin/connections/': typeof AdminConnectionsIndexRoute
   '/admin/identities/': typeof AdminIdentitiesIndexRoute
   '/admin/messages/': typeof AdminMessagesIndexRoute
@@ -273,6 +295,7 @@ export interface FileRoutesByTo {
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/blueprints/$blueprintId': typeof AdminBlueprintsBlueprintIdRoute
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
   '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
@@ -282,10 +305,12 @@ export interface FileRoutesByTo {
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
   '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
+  '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/api-keys': typeof AdminApiKeysIndexRoute
   '/admin/audit': typeof AdminAuditIndexRoute
+  '/admin/blueprints': typeof AdminBlueprintsIndexRoute
   '/admin/connections': typeof AdminConnectionsIndexRoute
   '/admin/identities': typeof AdminIdentitiesIndexRoute
   '/admin/messages': typeof AdminMessagesIndexRoute
@@ -311,6 +336,7 @@ export interface FileRoutesById {
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/blueprints/$blueprintId': typeof AdminBlueprintsBlueprintIdRoute
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
   '/admin/identities/$identityId': typeof AdminIdentitiesIdentityIdRoute
@@ -320,10 +346,12 @@ export interface FileRoutesById {
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
   '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
+  '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/api-keys/': typeof AdminApiKeysIndexRoute
   '/admin/audit/': typeof AdminAuditIndexRoute
+  '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
   '/admin/connections/': typeof AdminConnectionsIndexRoute
   '/admin/identities/': typeof AdminIdentitiesIndexRoute
   '/admin/messages/': typeof AdminMessagesIndexRoute
@@ -350,6 +378,7 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/passes/$passId'
     | '/admin/'
+    | '/admin/blueprints/$blueprintId'
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
     | '/admin/identities/$identityId'
@@ -359,10 +388,12 @@ export interface FileRouteTypes {
     | '/admin/passes/$passId'
     | '/admin/passes/new'
     | '/admin/templates/$templateId'
+    | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
     | '/admin/api-keys/'
     | '/admin/audit/'
+    | '/admin/blueprints/'
     | '/admin/connections/'
     | '/admin/identities/'
     | '/admin/messages/'
@@ -386,6 +417,7 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/passes/$passId'
     | '/admin'
+    | '/admin/blueprints/$blueprintId'
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
     | '/admin/identities/$identityId'
@@ -395,10 +427,12 @@ export interface FileRouteTypes {
     | '/admin/passes/$passId'
     | '/admin/passes/new'
     | '/admin/templates/$templateId'
+    | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
     | '/admin/api-keys'
     | '/admin/audit'
+    | '/admin/blueprints'
     | '/admin/connections'
     | '/admin/identities'
     | '/admin/messages'
@@ -423,6 +457,7 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/passes/$passId'
     | '/admin/'
+    | '/admin/blueprints/$blueprintId'
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
     | '/admin/identities/$identityId'
@@ -432,10 +467,12 @@ export interface FileRouteTypes {
     | '/admin/passes/$passId'
     | '/admin/passes/new'
     | '/admin/templates/$templateId'
+    | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
     | '/admin/api-keys/'
     | '/admin/audit/'
+    | '/admin/blueprints/'
     | '/admin/connections/'
     | '/admin/identities/'
     | '/admin/messages/'
@@ -524,6 +561,20 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/admin/audit/'
       preLoaderRoute: typeof AdminAuditIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/blueprints/': {
+      id: '/admin/blueprints/'
+      path: '/blueprints'
+      fullPath: '/admin/blueprints/'
+      preLoaderRoute: typeof AdminBlueprintsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/blueprints/$blueprintId': {
+      id: '/admin/blueprints/$blueprintId'
+      path: '/blueprints/$blueprintId'
+      fullPath: '/admin/blueprints/$blueprintId'
+      preLoaderRoute: typeof AdminBlueprintsBlueprintIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/connections/': {
@@ -652,6 +703,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTemplatesTemplateIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/templates/new': {
+      id: '/admin/templates/new'
+      path: '/templates/new'
+      fullPath: '/admin/templates/new'
+      preLoaderRoute: typeof AdminTemplatesNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/templates/upload': {
       id: '/admin/templates/upload'
       path: '/templates/upload'
@@ -714,6 +772,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteRouteChildren {
   AdminAccountRoute: typeof AdminAccountRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminBlueprintsBlueprintIdRoute: typeof AdminBlueprintsBlueprintIdRoute
   AdminConnectionsConnectionIdRoute: typeof AdminConnectionsConnectionIdRoute
   AdminConnectionsNewRoute: typeof AdminConnectionsNewRoute
   AdminIdentitiesIdentityIdRoute: typeof AdminIdentitiesIdentityIdRoute
@@ -723,10 +782,12 @@ interface AdminRouteRouteChildren {
   AdminPassesPassIdRoute: typeof AdminPassesPassIdRoute
   AdminPassesNewRoute: typeof AdminPassesNewRoute
   AdminTemplatesTemplateIdRoute: typeof AdminTemplatesTemplateIdRoute
+  AdminTemplatesNewRoute: typeof AdminTemplatesNewRoute
   AdminTemplatesUploadRoute: typeof AdminTemplatesUploadRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
   AdminApiKeysIndexRoute: typeof AdminApiKeysIndexRoute
   AdminAuditIndexRoute: typeof AdminAuditIndexRoute
+  AdminBlueprintsIndexRoute: typeof AdminBlueprintsIndexRoute
   AdminConnectionsIndexRoute: typeof AdminConnectionsIndexRoute
   AdminIdentitiesIndexRoute: typeof AdminIdentitiesIndexRoute
   AdminMessagesIndexRoute: typeof AdminMessagesIndexRoute
@@ -747,6 +808,7 @@ interface AdminRouteRouteChildren {
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAccountRoute: AdminAccountRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminBlueprintsBlueprintIdRoute: AdminBlueprintsBlueprintIdRoute,
   AdminConnectionsConnectionIdRoute: AdminConnectionsConnectionIdRoute,
   AdminConnectionsNewRoute: AdminConnectionsNewRoute,
   AdminIdentitiesIdentityIdRoute: AdminIdentitiesIdentityIdRoute,
@@ -756,10 +818,12 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminPassesPassIdRoute: AdminPassesPassIdRoute,
   AdminPassesNewRoute: AdminPassesNewRoute,
   AdminTemplatesTemplateIdRoute: AdminTemplatesTemplateIdRoute,
+  AdminTemplatesNewRoute: AdminTemplatesNewRoute,
   AdminTemplatesUploadRoute: AdminTemplatesUploadRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
   AdminApiKeysIndexRoute: AdminApiKeysIndexRoute,
   AdminAuditIndexRoute: AdminAuditIndexRoute,
+  AdminBlueprintsIndexRoute: AdminBlueprintsIndexRoute,
   AdminConnectionsIndexRoute: AdminConnectionsIndexRoute,
   AdminIdentitiesIndexRoute: AdminIdentitiesIndexRoute,
   AdminMessagesIndexRoute: AdminMessagesIndexRoute,

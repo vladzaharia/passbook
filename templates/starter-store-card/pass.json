@@ -1,10 +1,10 @@
 {
   "formatVersion": 1,
-  "description": "Store card",
+  "description": "Balance card",
   "organizationName": "Organization",
-  "backgroundColor": "rgb(31,41,55)",
+  "backgroundColor": "rgb(0,75,65)",
   "foregroundColor": "rgb(255,255,255)",
-  "labelColor": "rgb(199,210,254)",
+  "labelColor": "rgb(242,208,125)",
   "logoText": "Organization",
   "sharingProhibited": true,
   "barcodes": [
