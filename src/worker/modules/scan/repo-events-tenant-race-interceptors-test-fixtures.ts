@@ -36,9 +36,8 @@ export function createEventTenantRaceInterceptors(getEnv: () => AppEnv) {
           return async (statements: D1PreparedStatement[]) => {
             const targetWrite = statements.some((statement) => {
               const sql = sqlOf.get(statement) ?? '';
-              return (
-                /\b(?:INSERT(?: OR IGNORE)? INTO|UPDATE) (?:scan_events|scanners)\b/i.test(sql) ||
-                /\bscanning_config_revisions\b/i.test(sql)
+              return /\b(?:INSERT(?: OR IGNORE)? INTO|UPDATE) (?:scan_events|scanners)\b/i.test(
+                sql,
               );
             });
             const bootstrap = statements.some((statement) =>

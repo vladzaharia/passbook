@@ -35,10 +35,6 @@ export function createEventTenantRaceQueries(getEnv: () => AppEnv) {
         'SELECT * FROM scanner_templates ORDER BY scanner_id, template_id',
       ),
       sessions: await all(getEnv().DB, 'SELECT * FROM scanning_sessions ORDER BY id'),
-      revisions: await all(
-        getEnv().DB,
-        'SELECT * FROM scanning_config_revisions ORDER BY kind, target_id, revision',
-      ),
       audits: await all(
         getEnv().DB,
         "SELECT * FROM audit_log WHERE action LIKE 'scan_event.%' ORDER BY id",

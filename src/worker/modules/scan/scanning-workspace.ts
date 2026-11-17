@@ -15,7 +15,6 @@ import type { ScanActor } from './actor.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { scannerHasTemplates } from './repo-device.ts';
 import { SESSION_READ, scanReadAuthority } from './repo-read-authority.ts';
-import { captureConfigurationScope } from './repo-scanner-configuration-scope.ts';
 import { getConsoleScanner } from './repo-scanners.ts';
 import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { scanningSessionForDevice } from './repo-scanning-sessions.ts';
@@ -152,13 +151,7 @@ export async function bindScanningSession(ctx: ServiceContext, actor: ScanActor)
     );
   }
   const scanner = await getConsoleScanner(ctx.env.DB, actor.scanner.id);
-  const captured = scanner
-    ? await captureConfigurationScope(ctx.env.DB, actor.orgId, actor.mode, {
-        scanner,
-        session: parent,
-      })
-    : null;
-  // Re-evaluate the scanner scope after capturing its heads; actors may have been
+  // Re-evaluate the scanner scope against the scanner row read now; actors may have been
   // constructed from a scope read before this session was bound.
   if (!scanner || !(await readScannerScope(ctx.env.DB, scanner, null)).valid)
     actor.invalidScannerScope = true;
@@ -175,7 +168,6 @@ export async function bindScanningSession(ctx: ServiceContext, actor: ScanActor)
     parent,
     device,
     accepts: JSON.stringify(scope.accepts),
-    scope: captured,
   });
 }
 export async function scanWorkspace(

@@ -97,8 +97,6 @@ export async function sessionActivityFor(context: ServiceContext, sourceActor: S
     if (status?.authorized === 1) return { items: [] };
     throw await staleScanRead(ctx, sourceActor);
   }
-  if (!observed.scope)
-    throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
   const rows = await scanningSessionActivity(
     ctx,
     observed.parent,

@@ -18,9 +18,5 @@ export async function state() {
       env.DB,
       "SELECT * FROM audit_log WHERE action LIKE 'scan_event.%' ORDER BY id",
     ),
-    revisions: await all(
-      env.DB,
-      'SELECT * FROM scanning_config_revisions ORDER BY kind, target_id, revision',
-    ),
   };
 }

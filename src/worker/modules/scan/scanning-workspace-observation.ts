@@ -6,7 +6,6 @@ import {
   ScanSurfaceSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import type { ScanActor } from './actor.ts';
-import type { ConfigurationScopeSnapshot } from './repo-scanner-configuration-scope.ts';
 import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { copyScanEpochs } from './scan-epochs.ts';
@@ -15,7 +14,6 @@ export interface ObservedScanningSessionSnapshot {
   parent: ScanningSessionRow;
   device: ScanningDeviceRow;
   accepts: string;
-  scope: ConfigurationScopeSnapshot | null;
 }
 
 const observedSessions = new WeakMap<
@@ -28,7 +26,6 @@ export function observedScanningSession(actor: ScanActor): Readonly<{
   parent: Readonly<ScanningSessionRow>;
   device: Readonly<ScanningDeviceRow>;
   accepts: string;
-  scope: Readonly<ConfigurationScopeSnapshot> | null;
 }> | null {
   return actor.scanningSession ? (observedSessions.get(actor.scanningSession) ?? null) : null;
 }
@@ -128,46 +125,6 @@ const observedSessionSchema = z.object({
     device_key: z.string().nullable(),
   }),
   accepts: z.string(),
-  scope: z
-    .object({
-      orgId: IdSchema,
-      mode: ModeSchema,
-      scannerId: IdSchema.nullable(),
-      eventIds: z.string(),
-      events: z.string(),
-      eventTemplates: z.string(),
-      scannerTemplates: z.string(),
-      templateIds: z.string(),
-      templateRows: z.string(),
-      stamps: z.array(
-        z.object({
-          releases: z.array(
-            z.object({
-              templateId: IdSchema,
-              id: IdSchema,
-              generation: z.number().int().positive(),
-              version: z.string().min(1),
-              candidateHash: z.string().regex(/^[0-9a-f]{64}$/),
-            }),
-          ),
-          legacy: z.array(
-            z.object({
-              templateId: IdSchema,
-              versions: z.array(z.string().min(1)),
-              identities: z.array(
-                z.object({
-                  version: z.string().min(1),
-                  identityId: IdSchema,
-                  identityRevision: z.number().int().positive(),
-                }),
-              ),
-            }),
-          ),
-        }),
-      ),
-      unusable: z.array(z.string()),
-    })
-    .nullable(),
 });
 
 /** An authenticated envelope may restore only the same original actor/workspace association. */
@@ -177,11 +134,10 @@ function observationMatchesActor(
 ): boolean {
   const binding = actor.scanningSession;
   const scanner = actor.scanner;
-  const { parent, device, scope } = observed;
+  const { parent, device } = observed;
   return (
     !!binding &&
     !!scanner &&
-    !!scope &&
     scanner.orgId === actor.orgId &&
     scanner.mode === actor.mode &&
     parent.id === binding.id &&
@@ -198,10 +154,7 @@ function observationMatchesActor(
     device.kind === scanner.kind &&
     device.settings === scanner.settings &&
     device.token_hash === scanner.tokenHash &&
-    device.revoked_at === scanner.revokedAt &&
-    scope.scannerId === scanner.id &&
-    scope.orgId === actor.orgId &&
-    scope.mode === actor.mode
+    device.revoked_at === scanner.revokedAt
   );
 }
 /** Validate a deserialized observation against its original actor. */

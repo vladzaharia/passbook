@@ -403,6 +403,7 @@ describe('authority-scope rawCheck tenant terms', () => {
       ['label', "stmt(db, 'SELECT ?/* scan-ephemeral-x */')"],
       ['slot', "stmt(db, \"SELECT json_extract('[]','$[0]')\")"],
       ['keyset', 'WHERE x AND credentialRefKeysetSql'],
+      ['import', "import { x } from './repo-scanner-configuration-scope.ts';"],
       ['import', "import { x } from './repo-session-authority.ts';"],
       ['import', "import { balanceSqlAnd } from '../../platform/sql-balance.ts';"],
       ['balancer', 'balanceSqlAnd(sql)'],
@@ -419,5 +420,9 @@ describe('authority-scope rawCheck tenant terms', () => {
     expect(scanBans(`${MOD}/passes/repo-credential-keyset.ts`, 'credentialRefKeysetSql')).toEqual(
       [],
     );
+    for (const owner of ['passes/repo-ops-retention.ts', 'scan/repo-credential-tombstones.ts'])
+      expect(scanBans(`${MOD}/${owner}`, 'credentialRefKeysetSql').map((f) => f.rule)).toContain(
+        'banned',
+      );
   });
 });

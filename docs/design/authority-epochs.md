@@ -70,7 +70,7 @@ The classification test (`authority-columns.test.ts`) reads `PRAGMA table_info` 
 
 **`scanning_config_revisions` (`0024`, in production, read by 10 scan files):**
 - No production code reads or writes it; `config_epoch` replaces it. Only test fixtures still mention it.
-- A later migration drops it. It cannot be amended, because it is in production.
+- Migration `0066` drops it.
 
 **Trigger shape.** The passes bump set has about 45 columns. To bound expression depth, it is split into three triggers by column group (`passes_row_version_a`, `_b`, `_c`), because D1 allows expression depth 100.
 
@@ -497,8 +497,7 @@ Roll forward only once migrations have run (owner answer 6). A Worker-only rollb
 
 ### 7.2 Open work
 
-- Remove `scan/repo-scanner-configuration-scope.ts` (still read by `scanning-workspace*.ts`).
-- Drop `scanning_config_revisions`.
+- Done: `scan/repo-scanner-configuration-scope.ts` is deleted; the workspace observation carries the scanner's `config_epoch`. Migration `0066` drops `scanning_config_revisions`.
 - Done: the balancer, `sql-tokens`, `repo-secret-binds` and the legacy fence families are deleted; migration `0063` drops `scanners_credential_revision`. A scanner's `updated_at` is a label: authority is `credential_epoch`. The live ring's `revision` is an in-memory self-check of one actor snapshot, not a database compare. One credential-loss rule: every scanner path uses `scannerCredentialLost`.
 
 ### 7.3 Provider track
