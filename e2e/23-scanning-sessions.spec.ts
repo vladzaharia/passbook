@@ -7,6 +7,7 @@ import {
   uid,
 } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
+import { pairScanner } from './helpers/pair.ts';
 import { readSeed } from './helpers/seed.ts';
 
 async function hardwareCode(page: Page, value: string) {
@@ -18,6 +19,8 @@ async function hardwareCode(page: Page, value: string) {
 test('shared sessions pair multiple devices, configure live, and keep lookup and customer display private', async ({
   browser,
 }) => {
+  // Pairing three devices may wait out RL_SCAN_PAIR's 60 s window (helpers/pair.ts).
+  test.setTimeout(170_000);
   const api = await apiAs('admin');
   const contexts: BrowserContext[] = [];
   try {
@@ -78,8 +81,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       });
       contexts.push(context);
       const scanner = await context.newPage();
-      await scanner.goto(`/scan#pair=${code}`);
-      await scanner.getByRole('button', { name: 'Pair', exact: true }).click();
+      await pairScanner(scanner, code);
       return scanner;
     };
     const desk = await pair(operator.pairing.code, 1360);
@@ -96,7 +98,8 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await expect(customer.getByTestId('scan-live')).toHaveAttribute('data-view', 'customer');
     await expect(phone.locator('.scan-shell')).toHaveAttribute('data-surface', 'phone');
     const memberId = uid('MEMBER').toUpperCase();
-    const pass = await createPass(api, orgId, { holder: 'Shared Session Member', memberId });
+    const holderName = uid('Shared Session Member');
+    const pass = await createPass(api, orgId, { holder: holderName, memberId });
     expect(pass).toMatchObject({
       orgId,
       templateId: seedTemplateId(),
@@ -104,11 +107,11 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       mode: 'live',
     });
     const field = desk.getByRole('textbox', { name: 'Name, email, code or ID', exact: true });
-    await field.fill('Shared Session Member');
+    await field.fill(holderName);
     const previewAsset = desk.waitForResponse((r) =>
       r.url().includes(`/scan/passes/${pass.id}/assets/`),
     );
-    await desk.getByRole('button', { name: /Shared Session Member/ }).click();
+    await desk.getByRole('button', { name: holderName }).click();
     expect((await previewAsset).status()).toBe(200);
     const ledger = async () =>
       (await api.get(`/api/v1/scans?orgId=${orgId}&passId=${pass.id}`)).items;
@@ -119,7 +122,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await hardwareCode(desk, memberId);
     await expect(desk.getByTestId('scan-result')).toContainText('Checked in');
     await expect(customer.getByRole('heading', { name: 'Checked in', exact: true })).toBeVisible();
-    await expect(customer.getByTestId('scan-live')).not.toContainText('Shared Session Member');
+    await expect(customer.getByTestId('scan-live')).not.toContainText(holderName);
     await phone.getByRole('button', { name: 'Look up', exact: true }).click();
     await phone
       .getByRole('textbox', { name: 'Name, email, code or ID', exact: true })
@@ -171,7 +174,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await sessionRefresh;
     await field.focus();
     await hardwareCode(desk, memberId);
-    await expect(desk.getByTestId('scan-result')).toContainText('Shared Session Member');
+    await expect(desk.getByTestId('scan-result')).toContainText(holderName);
     expect(await ledger()).toHaveLength(2);
     await desk.getByRole('button', { name: 'Check in', exact: true }).click();
     await expect.poll(async () => (await ledger()).length).toBe(3);
