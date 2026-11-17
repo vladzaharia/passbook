@@ -2,8 +2,12 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { listAuditRows } from '../src/worker/modules/audit/repo.ts';
 import { listBundleRows } from '../src/worker/modules/bundles/repo.ts';
+import { deleteOldWebhookEvents } from '../src/worker/modules/connections/repo-sync.ts';
 import { listEvents } from '../src/worker/modules/events/repo.ts';
 import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
+import { portfolioSnapshot } from '../src/worker/modules/me/repo.ts';
+import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
+import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
 import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
 import { eventTotalsStmt } from '../src/worker/modules/scan/repo-event-attendance.ts';
@@ -12,6 +16,11 @@ import {
   quietUnqueuedTemplates,
 } from '../src/worker/modules/templates/repo-stale.ts';
 import { listUsers } from '../src/worker/modules/users/repo.ts';
+import {
+  beginSamsungSyncTarget,
+  finishSamsungSyncTarget,
+} from '../src/worker/modules/wallet-providers/repo-sync-targets.ts';
+import { createDetachedContext } from '../src/worker/platform/service-context.ts';
 
 /** Runs a repo function against a DB that records its statements, then explains each one. */
 async function plans(run: (db: D1Database) => Promise<unknown>): Promise<string[]> {
@@ -178,5 +187,69 @@ describe('scan and template sweep plans', () => {
         'SEARCH p USING INDEX passes_active_scope (template_id=? AND org_id=? AND mode=?)',
       );
     }
+  });
+});
+
+describe('sweep and retention plans', () => {
+  it('me: reissue notices start from the user index, not the waiting-holder passes', async () => {
+    const text = (await plans((db) => portfolioSnapshot(db, 'u', []))).join('\n');
+    expect(text).toContain('pass_holder_reissue_required_user (user_id=?)');
+    expect(text).not.toContain('passes_waiting_holder');
+  });
+
+  it('pass versions: the purge probes by offset and a slot upsert reads one key', async () => {
+    const purge = await plans((db) => versionsToPurge(db, 5, 10));
+    expect(purge.join('\n')).toContain('CO-ROUTINE');
+    const asset = {
+      name: 'icon.png',
+      r2Key: 'k',
+      sha1: 's',
+      size: 1,
+      width: null,
+      height: null,
+      crc32: null,
+      createdAt: 1,
+    };
+    const lines = await plans((db) =>
+      // The insert has no pass to attach to; the read before it is what the plan covers.
+      upsertAsset(db, 'p', asset).catch(() => null),
+    );
+    expect(lines.join('\n')).toContain('sqlite_autoindex_pass_assets_1 (pass_id=? AND name=?)');
+  });
+
+  it('samsung sync targets: begin and finish search by the claim operation', async () => {
+    const claim = {
+      instanceId: 'i',
+      orgId: 'o',
+      mode: 'live',
+      provider: 'samsung',
+      version: 1,
+      claimHandle: 'h'.repeat(40),
+      now: 1,
+      credentialKeysetCommitment: 'a'.repeat(64),
+    } as never;
+    const ctx = (db: D1Database) =>
+      createDetachedContext({ ...env, DB: db } as never, { clock: { now: () => 5 } as never });
+    const begin = await plans((db) => beginSamsungSyncTarget(ctx(db), claim, 'US'));
+    const finish = await plans((db) =>
+      finishSamsungSyncTarget(ctx(db), claim, 'US', { kind: 'success' }),
+    );
+    for (const lines of [begin, finish]) {
+      const text = lines.join('\n');
+      expect(text).toContain(
+        'SEARCH t USING INDEX sqlite_autoindex_wallet_provider_sync_targets_1 (operation_id=? AND country_code=?)',
+      );
+      expect(text).not.toContain('wallet_provider_sync_targets_due');
+    }
+  });
+
+  it('connection retention: the failed-payload sweep reads by state and age', async () => {
+    const ctx = (db: D1Database) =>
+      createDetachedContext({ ...env, DB: db } as never, { clock: { now: () => 5 } as never });
+    const lines = await plans((db) => deleteOldWebhookEvents(ctx(db) as never, 1, 1));
+    expect(lines.join('\n')).toContain(
+      'connection_webhook_retention_expiry (state=? AND updated_at<?)',
+    );
+    expect(fullScans(lines, 'connection_webhook_retention')).toEqual([]);
   });
 });
