@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { first, run } from '../../platform/db.ts';
 import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import { recordedCheckIn, recordedNoMatch } from './console-privacy-actions-test-fixtures.ts';
@@ -65,7 +66,7 @@ describe('scan console and feed privacy', () => {
           const text = new TextDecoder().decode(header.value);
           expect(text).toContain('Time (UTC)');
           expect(text).not.toContain(PUBLIC);
-          await expect(reader.read()).rejects.toThrow();
+          await expectRejectsCode(reader.read(), 'FORBIDDEN');
           return text;
         },
       );
