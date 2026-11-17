@@ -4,7 +4,7 @@ import type {
   UseBlueprintRequest,
 } from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertTemplateAuthority } from './access.ts';
 import { putVersionAsset } from './asset-storage.ts';
@@ -41,6 +41,11 @@ async function prepare(
 ) {
   const target = await prepareClone(ctx, auth, id, { orgId: body.orgId, name: body.name });
   if (!target.source.blueprint) throw notBlueprint();
+  if (target.source.status !== 'active')
+    throw new ConflictError(
+      'This blueprint is no longer offered. Pick another.',
+      'TEMPLATE_BLUEPRINT_INACTIVE',
+    );
   return target;
 }
 

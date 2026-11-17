@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makePass } from '../../../../test/helpers/index.ts';
 import type { TemplateManifest } from '../../../passkit/types.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { type BlueprintKit, blueprintKit } from './blueprint-test-fixtures.ts';
 import { validateManifest } from './package/manifest.ts';
 import { extractArchive } from './package/unzip.ts';
@@ -151,6 +151,24 @@ describe('use a blueprint', () => {
     expect((await kit.post('/baked:nope/use', { orgId: kit.org.id, name: 'Copy' })).status).toBe(
       404,
     );
+  });
+
+  it('refuses a blueprint that is no longer offered, with its own code', async () => {
+    // A blueprint that left the build is archived by the sync; one still in the build is reactivated.
+    const id = 'baked:retired-blueprint';
+    await run(
+      kit.env.DB,
+      `INSERT INTO templates (id, org_id, slug, name, origin, active_version, status, styles, blueprint, created_at, updated_at)
+       VALUES (?, NULL, 'retired-blueprint', 'Retired', 'baked', NULL, 'archived', '[]', 1, 1, 1)`,
+      [id],
+    );
+    const use = () => kit.post(`/${id}/use`, { orgId: kit.org.id, name: 'Retired Card' });
+    const refused = await use();
+    expect(refused.status).toBe(409);
+    expect(await refused.json()).toMatchObject({ code: 'TEMPLATE_BLUEPRINT_INACTIVE' });
+    // Positive control: active, the same request no longer gets that code.
+    await run(kit.env.DB, "UPDATE templates SET status = 'active' WHERE id = ?", [id]);
+    expect(await (await use()).json()).not.toMatchObject({ code: 'TEMPLATE_BLUEPRINT_INACTIVE' });
   });
 
   it('needs a template author in the destination org', async () => {

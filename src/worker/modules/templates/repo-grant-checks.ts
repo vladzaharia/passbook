@@ -164,12 +164,12 @@ export const sharedCloneSource = (id: string, version: string): Check =>
         AND s.org_id IS NULL)`,
   );
 
-/** "Use blueprint": the source is still a blueprint. */
+/** "Use blueprint": the source is still an active blueprint. */
 export const blueprintSource = (id: string): Check =>
   check(
     'lineage',
     (p) => `EXISTS (SELECT 1 FROM templates b WHERE b.id = ${p(id)} AND b.blueprint = 1
-      AND b.status != 'deleted' AND b.org_id IS NULL)`,
+      AND b.status = 'active' AND b.org_id IS NULL)`,
   );
 
 const HISTORY = `(EXISTS (SELECT 1 FROM template_candidates h WHERE h.template_id = t.id)
