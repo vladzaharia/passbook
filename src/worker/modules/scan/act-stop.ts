@@ -16,12 +16,12 @@ import { prepareMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
-import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention.ts';
 import type { Claim } from './repo-scans.ts';
 import type { Stop } from './resolve.ts';
-import { afterReads, capturingDb } from './scan-capture.ts';
+import { afterReads } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
-import { retentionPart, SCAN_STOP_TABLES, scanIs, scanWriteGrant } from './scan-write-grant.ts';
+import { SCAN_STOP_TABLES, scanIs, scanWriteGrant } from './scan-write-grant.ts';
 import { finalizeScan, ledgerEvent } from './scan-write-statements.ts';
 
 export interface StopContext {
@@ -58,7 +58,6 @@ export async function finishStop(
   auditPass: Pass | null = null,
 ): Promise<ScanOutcome> {
   const { ctx, actor } = s;
-  const side = { ...ctx, env: { ...ctx.env, DB: capturingDb(ctx.env.DB) } };
   const pass = stop.pass ?? auditPass;
   const ledger = pass
     ? await ledgerAuthoritySnapshot(
@@ -121,7 +120,7 @@ export async function finishStop(
   });
   if (ledger && retention) {
     ledgerEvent(g, ledger, s.scanId, stop.kind, stop.reason);
-    g.include(retentionPart(retentionProofIfRecordedStmt(side.env.DB, retention)));
+    g.include(retentionProofPart(retention));
   }
   g.assert('stale', [scanIs(s.scanId, { state: 'done' })]);
   const dayCounts: CountsPlan | null = s.suppressCounts

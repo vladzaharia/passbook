@@ -1,4 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import { all, chunk, placeholders, type SqlValue, stmt } from '../../platform/db.ts';
 import { scanConjunction } from './repo-secret-binds.ts';
 import {
@@ -120,26 +121,43 @@ const CURRENT_PROOF_MATCH = scanConjunction([
 ]);
 
 /**
- * Immediately follows the guarded event INSERT in the same transaction. Its `changes()`
- * fence, exact event/scan snapshot, current pass, and unique ledger linkage prevent a
- * partial or stale action from producing a trusted index. Follow it with the action's
- * existing completeness sentinel, which must abort when this INSERT did not succeed.
+ * The proof row, written in the grant's batch after the scan row and its ledger event. It is built from
+ * those two rows (the batch's own writes): the event is this scan's, unique, and the scan closed with
+ * the outcome the proof was signed for. The MAC binds the rest, and verification recomputes it.
  */
-export function retentionProofIfRecordedStmt(
-  db: D1Database,
-  prepared: PreparedScanRetentionProof,
-): D1PreparedStatement {
-  return stmt(
-    db,
+export function retentionProofPart(prepared: PreparedScanRetentionProof): GrantPart {
+  const { proof, scan, event } = prepared;
+  const linked = (alias: string) =>
+    `(CASE WHEN json_valid(${alias}.data) THEN json_extract(${alias}.data,'$.scanId') END)=s.id`;
+  return writePart(
     `INSERT INTO scan_retention_proofs
     (scan_id,org_id,mode,ledger_event_id,pass_ref,event_digest,scan_digest,gate_snapshot,presence_snapshot,mac)
-    SELECT json_extract(input.j,'$.proof.scanId'), json_extract(input.j,'$.proof.orgId'),
-      json_extract(input.j,'$.proof.mode'), json_extract(input.j,'$.proof.ledgerEventId'),
-      json_extract(input.j,'$.proof.passRef'), json_extract(input.j,'$.proof.eventDigest'),
-      json_extract(input.j,'$.proof.scanDigest'), json_extract(input.j,'$.proof.gateSnapshot'),
-      json_extract(input.j,'$.proof.presenceSnapshot'), json_extract(input.j,'$.proof.mac')
-    FROM ${SOURCE_JOINS} WHERE changes()=1 AND (${SOURCE_MATCH})`,
-    sourceParams(prepared),
+    SELECT s.id, {org}, {mode}, e.id, ?, ?, ?, ?, ?, ?
+    FROM scans s JOIN pass_events e ON e.id=? AND e.pass_id=s.pass_id
+    WHERE s.id=? AND s.org_id={org} AND s.mode={mode} AND e.org_id={org} AND e.mode={mode}
+      AND s.state='done' AND s.outcome=? AND s.reason IS ? AND s.at=? AND s.action_id IS ?
+      AND s.pass_version IS ? AND e.kind=? AND e.at=?
+      AND NOT ${scanRetentionExcludedSql('s')} AND ${linked('e')}
+      AND (SELECT count(*) FROM pass_events duplicate WHERE duplicate.pass_id=e.pass_id
+        AND duplicate.org_id={org} AND duplicate.mode={mode} AND ${linked('duplicate')})=1
+      AND {grant}`,
+    [
+      proof.passRef,
+      proof.eventDigest,
+      proof.scanDigest,
+      proof.gateSnapshot,
+      proof.presenceSnapshot,
+      proof.mac,
+      event.id,
+      proof.scanId,
+      scan.outcome,
+      scan.reason,
+      scan.at,
+      scan.actionId,
+      scan.passVersion,
+      event.kind,
+      event.at,
+    ],
   );
 }
 

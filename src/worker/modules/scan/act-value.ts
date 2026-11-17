@@ -39,7 +39,7 @@ import { filledSinceRedeem } from './repo-scan-amount.ts';
 import { dailyAmountCheck, doneOkPredicate } from './repo-scan-checks.ts';
 import { transferPending } from './repo-scan-transfer.ts';
 import type { Found } from './resolve.ts';
-import { afterReads, capturingDb } from './scan-capture.ts';
+import { afterReads } from './scan-capture.ts';
 import { displayRequiresHistory } from './scan-display-history.ts';
 import { SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import type { PinReservation } from './staff-pin.ts';
@@ -90,7 +90,6 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
   const manifest = found.template.manifest;
   const input = action.input ?? '';
   const body = { amount: req.amount, value: req.value };
-  const side = { ...ctx, env: { ...ctx.env, DB: capturingDb(ctx.env.DB) } };
   const credential =
     'code' in req.input
       ? await credentialFacts(found.pass, i.originalCandidate, req.input.code)
@@ -105,7 +104,6 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     gate,
     stopAuthority: i.stopAuthority,
     facts: i.facts,
-    sideDb: side.env.DB,
     approvedBy,
     eventId: event?.id ?? null,
   };
