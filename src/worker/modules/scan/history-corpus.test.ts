@@ -5,7 +5,7 @@ import { tenantAuthorityOf } from '../passes/http.ts';
 import { captureConsoleFeed, consoleReadAuthority } from './feed-console-page.ts';
 import { listConsoleEvents } from './repo-events.ts';
 import { countScanRows, getScanRow, listScanRows, type ScanLogFilter } from './repo-feed.ts';
-import { apiKeyReadAuthority, READ_SQL_BYTE_BUDGET } from './repo-read-authority.ts';
+import { apiKeyReadAuthority, READ_SQL_BYTE_BUDGET, scanRead } from './repo-read-authority.ts';
 import { readStaffActivity, staffTimeZones } from './repo-staff-activity.ts';
 import { grantScanMembership, setupScanKit } from './test-kit.ts';
 
@@ -110,5 +110,20 @@ describe('history reads at their widest shape', () => {
       expect(result.authorized).toBe(true);
     });
     expect(Math.max(...all)).toBeLessThan(READ_SQL_BYTE_BUDGET * 0.9);
+  });
+  it('a read may be 64 KiB of UTF-8, counted in bytes, and no more', async () => {
+    const { kit, auth } = await console();
+    const padded = (comment: string) => `SELECT 1 AS ok /*${comment}*/`;
+    // Over the 32 KiB a grant write may be, under the read budget.
+    expect(
+      (await scanRead(kit.env.DB, auth, padded('x'.repeat(40_000))).all()).results,
+    ).toHaveLength(1);
+    // 33,000 characters but 66,000 bytes: refused although it is short in characters.
+    expect(() => scanRead(kit.env.DB, auth, padded('é'.repeat(33_000)))).toThrow(
+      /SQL_SIZE_BUDGET|bytes/,
+    );
+    expect(() => scanRead(kit.env.DB, auth, padded('x'.repeat(READ_SQL_BYTE_BUDGET)))).toThrow(
+      /SQL_SIZE_BUDGET|bytes/,
+    );
   });
 });

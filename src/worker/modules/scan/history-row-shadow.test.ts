@@ -159,6 +159,23 @@ describe('history row flags against the old builders', () => {
     const restored = await pass('removed then restored pass');
     await run(db, 'UPDATE passes SET removed_at = ? WHERE id = ?', [at, restored.passId]);
     await run(db, 'UPDATE passes SET removed_at = NULL WHERE id = ?', [restored.passId]);
+    for (const [name, enabled] of [
+      ['enabled connection', 1],
+      ['disabled connection', 0],
+    ] as const) {
+      const linked = await pass(name);
+      const connectionId = `conn-${enabled}`;
+      await run(
+        db,
+        `INSERT INTO connections (id, org_id, connector_type, name, enabled, generation, created_at, updated_at)
+         VALUES (?, ?, 'test', ?, ?, 1, ?, ?)`,
+        [connectionId, kit.org.id, name, enabled, at, at],
+      );
+      await run(db, 'UPDATE passes SET connection_id = ? WHERE id = ?', [
+        connectionId,
+        linked.passId,
+      ]);
+    }
     const noMatch = await recordedNoMatch(scanner);
     cases.push({ name: 'passless refusal', scanId: noMatch.id });
 
