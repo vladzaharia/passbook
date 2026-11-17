@@ -238,7 +238,7 @@ describe('baseline writes against the migrated schema', () => {
         row?.template_id ?? null,
         row?.template_version ?? null,
         `auth-${id}`,
-        `dl-${id}`,
+        `h1:dl-${id}`,
         row?.web_service_url ?? null,
         `key-${id}`,
         'a'.repeat(64),

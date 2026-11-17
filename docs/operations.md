@@ -284,6 +284,8 @@ is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, 
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
 `docs/design/authority-epochs.md` §6.
 
+Old pass download and bundle tokens are sealed by the minute cron `tokens.seal` (0059, 50 of each a run, log code `TOKEN_SEAL_RUN`); no owner step. A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining`. Backups from before 0059 hold working links: rotate in bulk if one leaks.
+
 ### What the new Worker does with 0024 data
 
 - **Uploaded templates**: the bootstrap gives each active one a `legacy` live release at its active
@@ -569,8 +571,8 @@ keep retired pass ids and credentials from being reused.
     Passes keep working; the pass type ID must match.
   Status warns 30 days before expiry.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts;
-  keep older ones for existing data. The oldest KEK also derives scan PIN, pair-code, asset-grant and
-  credential-tombstone HMAC keys. The credential-reference keyset sentinel initializes only when
+  keep older ones for existing data. The oldest KEK also derives scan PIN, pair-code, asset-grant,
+  credential-tombstone and pass/bundle link (`h1:`) HMAC keys; losing it breaks every stored link lookup. The credential-reference keyset sentinel initializes only when
   no prior keyed references or proof provenance remain, including tombstones and
   retention proofs, retained webhook/workflow bindings and native-provider history.
   Plain unsigned legacy scan events do not prevent initialization, but remain untrusted and are

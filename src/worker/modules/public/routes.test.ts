@@ -1,5 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
+import {
+  fakeAuth,
+  linkToken,
+  makeTemplate,
+  persistTemplate,
+} from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
@@ -31,7 +36,7 @@ describe('GET /p/:token', () => {
   it('renders the pass without script, with a no-JS back toggle and a download link', async () => {
     const pass = await kit.pass();
     // A Mac: the badge sits beside the QR.
-    const res = await get(`/p/${pass.downloadToken}`, {
+    const res = await get(`/p/${await linkToken(kit.env, pass)}`, {
       'accept-language': 'de-DE,de;q=0.9',
       'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15',
     });
@@ -51,16 +56,16 @@ describe('GET /p/:token', () => {
     expect(html).toContain(
       '<label for="pc-flip-front">Front</label><label for="pc-flip">Details</label>',
     );
-    expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
+    expect(html).toContain(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
     expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
   });
 
   it('does not advertise native wallets without approved projections and accounts', async () => {
     const pass = await kit.pass();
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(html).not.toContain(`/p/${pass.downloadToken}/wallet/google`);
-    expect(html).not.toContain(`/p/${pass.downloadToken}/wallet/samsung`);
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
+    expect(html).not.toContain(`/p/${await linkToken(kit.env, pass)}/wallet/google`);
+    expect(html).not.toContain(`/p/${await linkToken(kit.env, pass)}/wallet/samsung`);
     expect(html).not.toContain('Add to Google Wallet');
     expect(html).not.toContain('Add to Samsung Wallet');
   });
@@ -76,17 +81,17 @@ describe('GET /p/:token', () => {
     await put('support.email', 'help@gym.test');
     await put('support.url', 'https://gym.test/help');
     clearSettingsCache(kit.env.DB);
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     expect(html).toContain('Help: ');
     expect(html).toContain('href="mailto:help@gym.test"');
     expect(html).toContain('href="https://gym.test/help"');
     await put('support.url', 'javascript:alert(1)');
     clearSettingsCache(kit.env.DB);
-    const unsafe = await (await get(`/p/${pass.downloadToken}`)).text();
+    const unsafe = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     expect(unsafe).not.toContain('javascript:');
     await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
     clearSettingsCache(kit.env.DB);
-    const fallback = await (await get(`/p/${pass.downloadToken}`)).text();
+    const fallback = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     // The platform's inbox is never offered on an org's page.
     expect(fallback).not.toContain('support@passbook.mobile');
     expect(fallback).not.toContain('gym.test');
@@ -94,7 +99,7 @@ describe('GET /p/:token', () => {
 
   it('sets the privacy headers and a nonce that matches the inline style', async () => {
     const pass = await kit.pass();
-    const res = await get(`/p/${pass.downloadToken}`);
+    const res = await get(`/p/${await linkToken(kit.env, pass)}`);
     const csp = res.headers.get('content-security-policy') ?? '';
     const nonce = /style-src 'self' 'nonce-([^']+)'/.exec(csp)?.[1];
     expect(nonce).toBeTruthy();
@@ -108,7 +113,7 @@ describe('GET /p/:token', () => {
 
   it('leads with the org, never the platform wordmark', async () => {
     const pass = await kit.pass();
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     // The app shell's bar: 56 px with its border, sticky, on the page surface.
     const head =
       /<header class="sticky top-0 z-20 border-b border-border bg-surface-page[^"]*">(.*?)<\/header>/.exec(
@@ -128,9 +133,11 @@ describe('GET /p/:token', () => {
     ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36', true, true],
   ])('keeps the Apple badge available on %s', async (_name, ua, qr, guidance) => {
     const pass = await kit.pass();
-    const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
+    const html = await (
+      await get(`/p/${await linkToken(kit.env, pass)}`, { 'user-agent': ua })
+    ).text();
     expect(html.includes('Scan with the camera.')).toBe(qr);
-    expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
+    expect(html).toContain(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
     expect(html.includes('Open on iPhone or Mac to add to Apple Wallet.')).toBe(guidance);
   });
@@ -138,14 +145,18 @@ describe('GET /p/:token', () => {
   it('asks in-app browsers to open Safari', async () => {
     const pass = await kit.pass();
     const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/330.0 Mobile/15E148';
-    const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
+    const html = await (
+      await get(`/p/${await linkToken(kit.env, pass)}`, { 'user-agent': ua })
+    ).text();
     expect(html).toContain('Open in Safari to add to Apple Wallet.');
   });
 
   it('leads with a QR of this page for desktop visitors, on the buddy’s sign', async () => {
     const pass = await kit.pass();
     const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36';
-    const html = await (await get(`/p/${pass.downloadToken}`, { 'user-agent': ua })).text();
+    const html = await (
+      await get(`/p/${await linkToken(kit.env, pass)}`, { 'user-agent': ua })
+    ).text();
     const qr = /<img src="(data:image\/svg\+xml;base64,[^"]+)" alt="QR code for ([^"]+)"/.exec(
       html,
     );
@@ -161,7 +172,7 @@ describe('GET /p/:token', () => {
 
   it('links the holder to the pass in the portal, quietly, once', async () => {
     const pass = await kit.pass();
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     expect(html.match(/<a [^>]*>Open in My passes<\/a>/g)).toEqual([
       expect.stringContaining(`href="/passes/${pass.id}"`),
     ]);
@@ -176,7 +187,7 @@ describe('GET /p/:token', () => {
     );
     clearSettingsCache(kit.env.DB);
     await voidPass(jobCtxOf(kit), actor, pass.id, null);
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     const note = /<div role="status">[\s\S]*?<\/div><\/div><\/div>/.exec(html)?.[0] ?? '';
     expect(note).toContain('This pass was voided.');
     expect(note).toMatch(/href="mailto:help@gym.test"[^>]*>Contact /);
@@ -188,7 +199,7 @@ describe('GET /p/:token', () => {
   it('shows a voided banner and no download for a voided pass', async () => {
     const pass = await kit.pass();
     await voidPass(jobCtxOf(kit), actor, pass.id, null);
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     expect(html).toContain('This pass was voided.');
     expect(html).not.toContain('Add to Apple Wallet');
     expect(html).not.toContain('/wallet/google');
@@ -204,7 +215,7 @@ describe('GET /p/:token', () => {
   it('says a removed pass was removed from Wallet, with the org note, not voided', async () => {
     const pass = await kit.pass();
     await removePass(jobCtxOf(kit), actor, pass.id, { message: 'Season ended <b>.' }, null);
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     expect(html).toContain('Removed from Wallet. It stays in Expired passes until you delete it.');
     expect(html).toContain('Season ended &lt;b&gt;.');
     expect(html).not.toContain('This pass was voided.');
@@ -241,7 +252,7 @@ describe('GET /p/:token', () => {
       execution: { kind: 'system' },
       actor: { type: 'system', id: null },
     });
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     expect(html).toContain('This pass has expired.');
   });
 
@@ -285,17 +296,17 @@ describe('GET /p/:token', () => {
       execution: { kind: 'system' },
       actor: { type: 'system', id: null },
     });
-    const url = `${ORIGIN}/p/${pass.downloadToken}`;
+    const url = `${ORIGIN}/p/${await linkToken(kit.env, pass)}`;
     const la = new Request(url, { cf: { timezone: 'America/Los_Angeles' } } as RequestInit);
     expect(await (await app.request(la, {}, kit.env)).text()).toMatch(/1:00\sAM/);
     const bad = new Request(url, { cf: { timezone: 'Not/AZone' } } as RequestInit);
     expect(await (await app.request(bad, {}, kit.env)).text()).toMatch(/8:00\sAM/);
-    expect(await (await get(`/p/${pass.downloadToken}`)).text()).toMatch(/8:00\sAM/);
+    expect(await (await get(`/p/${await linkToken(kit.env, pass)}`)).text()).toMatch(/8:00\sAM/);
   });
 
   it('has a heading, and its only inline styles are pass colour variables', async () => {
     const pass = await kit.pass();
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     // The app's 24 px page title.
     expect(html).toMatch(/<h1 [^>]*class="[^"]*text-2xl font-semibold[^"]*">[^<]+<\/h1>/);
     const styles = [...html.matchAll(/\sstyle="([^"]*)"/g)].map((m) => m[1] ?? '');
@@ -307,7 +318,8 @@ describe('GET /p/:token', () => {
   it('allows unsafe-inline only for style attributes', async () => {
     const pass = await kit.pass();
     const csp =
-      (await get(`/p/${pass.downloadToken}`)).headers.get('content-security-policy') ?? '';
+      (await get(`/p/${await linkToken(kit.env, pass)}`)).headers.get('content-security-policy') ??
+      '';
     const withInline = csp.split(';').filter((d) => d.includes('unsafe-inline'));
     for (const d of withInline) expect(d.trim()).toMatch(/^style-src-attr /);
   });
@@ -327,16 +339,17 @@ describe('GET /p/:token', () => {
       /<a class="btn outline" href="\/"><svg[\s\S]*?<\/svg>Go to My passes<\/a>/,
     );
     expect(body).not.toMatch(/class="btn"/);
+    const oldToken = await linkToken(kit.env, pass);
     await rotateLink(kit.ctx, actor, pass.id, null);
-    expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
-    expect((await get(`/p/${pass.downloadToken}/pass.pkpass`)).status).toBe(404);
+    expect((await get(`/p/${oldToken}`)).status).toBe(404);
+    expect((await get(`/p/${oldToken}/pass.pkpass`)).status).toBe(404);
   });
 });
 
 describe('GET /p/:token/pass.pkpass', () => {
   it('downloads the signed pass with validators and the right MIME type', async () => {
     const pass = await kit.pass();
-    const res = await get(`/p/${pass.downloadToken}/pass.pkpass`);
+    const res = await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('application/vnd.apple.pkpass');
     expect(res.headers.get('content-disposition')).toContain('attachment');
@@ -350,19 +363,24 @@ describe('GET /p/:token/pass.pkpass', () => {
 
   it('answers 304 to matching validators', async () => {
     const pass = await kit.pass();
-    const first = await get(`/p/${pass.downloadToken}/pass.pkpass`);
+    const first = await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
     await first.arrayBuffer();
     const etag = first.headers.get('etag') ?? '';
     const lastModified = first.headers.get('last-modified') ?? '';
     expect(
-      (await get(`/p/${pass.downloadToken}/pass.pkpass`, { 'if-none-match': etag })).status,
-    ).toBe(304);
-    expect(
-      (await get(`/p/${pass.downloadToken}/pass.pkpass`, { 'if-modified-since': lastModified }))
+      (await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`, { 'if-none-match': etag }))
         .status,
     ).toBe(304);
     expect(
-      (await get(`/p/${pass.downloadToken}/pass.pkpass`, { 'if-none-match': '"x"' })).status,
+      (
+        await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`, {
+          'if-modified-since': lastModified,
+        })
+      ).status,
+    ).toBe(304);
+    expect(
+      (await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`, { 'if-none-match': '"x"' }))
+        .status,
     ).toBe(200);
   });
 
@@ -378,15 +396,17 @@ describe('GET /p/:token/pass.pkpass', () => {
 describe('GET /p/:token/assets/:name', () => {
   it('serves private, non-cacheable template PNG images with validators', async () => {
     const pass = await kit.pass();
-    const page = await (await get(`/p/${pass.downloadToken}`)).text();
+    const page = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     expect(page).toBeTruthy();
-    const res = await get(`/p/${pass.downloadToken}/assets/icon.png?v=v1`);
+    const res = await get(`/p/${await linkToken(kit.env, pass)}/assets/icon.png?v=v1`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('image/png');
     expect(res.headers.get('cache-control')).toBe('private, no-store');
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(TINY_PNG);
     const etag = res.headers.get('etag') ?? '';
-    const again = await get(`/p/${pass.downloadToken}/assets/icon.png`, { 'if-none-match': etag });
+    const again = await get(`/p/${await linkToken(kit.env, pass)}/assets/icon.png`, {
+      'if-none-match': etag,
+    });
     expect(again.status).toBe(304);
   });
 
@@ -395,19 +415,19 @@ describe('GET /p/:token/assets/:name', () => {
     const other = await kit.pass();
     const png = ICON_PNG;
     await putPassAsset(jobCtxOf(kit), actor, mine.id, 'icon.png', png, null);
-    const override = await get(`/p/${mine.downloadToken}/assets/icon.png`);
+    const override = await get(`/p/${await linkToken(kit.env, mine)}/assets/icon.png`);
     expect(new Uint8Array(await override.arrayBuffer())).toEqual(png);
-    const untouched = await get(`/p/${other.downloadToken}/assets/icon.png`);
+    const untouched = await get(`/p/${await linkToken(kit.env, other)}/assets/icon.png`);
     expect(new Uint8Array(await untouched.arrayBuffer())).toEqual(TINY_PNG);
   });
 
   it('lets other origins embed the icon and logo, the pass email images, and nothing else', async () => {
     const pass = await kit.pass();
     await putPassAsset(jobCtxOf(kit), actor, pass.id, 'thumbnail@2x.png', makePng(100, 100), null);
-    const icon = await get(`/p/${pass.downloadToken}/assets/icon.png`);
+    const icon = await get(`/p/${await linkToken(kit.env, pass)}/assets/icon.png`);
     expect(icon.headers.get('cross-origin-resource-policy')).toBe('cross-origin');
     await icon.arrayBuffer();
-    const thumb = await get(`/p/${pass.downloadToken}/assets/thumbnail@2x.png`);
+    const thumb = await get(`/p/${await linkToken(kit.env, pass)}/assets/thumbnail@2x.png`);
     expect(thumb.status).toBe(200);
     expect(thumb.headers.get('cross-origin-resource-policy')).toBe('same-origin');
     await thumb.arrayBuffer();
@@ -416,30 +436,30 @@ describe('GET /p/:token/assets/:name', () => {
   it("lists an overridden slot's files only, as the signed pass has them", async () => {
     const pass = await kit.pass();
     await putPassAsset(jobCtxOf(kit), actor, pass.id, 'logo@2x.png', makePng(58, 58), null);
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(html).toContain(`/p/${pass.downloadToken}/assets/logo@2x.png?v=`);
-    expect(html).not.toContain(`/p/${pass.downloadToken}/assets/logo.png?v=`);
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
+    expect(html).toContain(`/p/${await linkToken(kit.env, pass)}/assets/logo@2x.png?v=`);
+    expect(html).not.toContain(`/p/${await linkToken(kit.env, pass)}/assets/logo.png?v=`);
   });
 
   it('rejects names outside the pass image set', async () => {
     const pass = await kit.pass();
     for (const name of ['pass.json', 'missing.png', '..%2Fpass.png', 'icon.svg'])
-      expect((await get(`/p/${pass.downloadToken}/assets/${name}`)).status).toBe(404);
+      expect((await get(`/p/${await linkToken(kit.env, pass)}/assets/${name}`)).status).toBe(404);
   });
 });
 
 describe('org suspension', () => {
   it('stops the page, download and images while the org is suspended', async () => {
     const pass = await kit.pass();
-    expect((await get(`/p/${pass.downloadToken}`)).status).toBe(200);
+    expect((await get(`/p/${await linkToken(kit.env, pass)}`)).status).toBe(200);
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
     try {
       for (const path of ['', '/pass.pkpass', '/assets/icon.png'])
-        expect((await get(`/p/${pass.downloadToken}${path}`)).status).toBe(404);
+        expect((await get(`/p/${await linkToken(kit.env, pass)}${path}`)).status).toBe(404);
     } finally {
       await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
     }
-    expect((await get(`/p/${pass.downloadToken}`)).status).toBe(200);
+    expect((await get(`/p/${await linkToken(kit.env, pass)}`)).status).toBe(200);
   });
 });
 
@@ -447,9 +467,9 @@ describe('rate limit', () => {
   it('limits /p per client IP and answers problem+json', async () => {
     const pass = await kit.pass();
     const env = { ...kit.env, RL_PUBLIC: fakeLimiter(1) as unknown as RateLimit };
-    const hit = (ip: string) =>
+    const hit = async (ip: string) =>
       app.request(
-        `${ORIGIN}/p/${pass.downloadToken}`,
+        `${ORIGIN}/p/${await linkToken(kit.env, pass)}`,
         { headers: { 'cf-connecting-ip': ip } },
         env,
       );
@@ -466,8 +486,8 @@ describe('rate limit', () => {
     const page = fakeLimiter(1);
     const env = { ...kit.env, RL_PUBLIC: page as unknown as RateLimit };
     for (let i = 0; i < 5; i++)
-      await app.request(`${ORIGIN}/p/${pass.downloadToken}/assets/icon.png`, {}, env);
-    const res = await app.request(`${ORIGIN}/p/${pass.downloadToken}`, {}, env);
+      await app.request(`${ORIGIN}/p/${await linkToken(kit.env, pass)}/assets/icon.png`, {}, env);
+    const res = await app.request(`${ORIGIN}/p/${await linkToken(kit.env, pass)}`, {}, env);
     expect(res.status).toBe(200);
   });
 });

@@ -35,6 +35,8 @@ export interface EvaluationReadPlan {
 export interface EvaluationOptions {
   candidateRead?: { candidates: Candidate[] | null };
   prepareReads?: (found: Found) => Promise<EvaluationReadPlan>;
+  /** False when the request runs a value action: admission, presence and capacity are a check-in's. */
+  admits?: (found: Found) => boolean;
 }
 
 /** SA 2.6 steps 5-13. A found pass that passes every step comes back as `found`. */
@@ -153,13 +155,18 @@ async function evaluateObserved(
     connectionGeneration: found.connectionGeneration,
   };
   const configured =
-    Object.keys(found.checkInRules ?? {}).length > 0 ||
-    Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
-    actor.settings.direction === 'out' ||
-    actor.settings.direction === 'both';
+    options.admits?.(found) !== false &&
+    (Object.keys(found.checkInRules ?? {}).length > 0 ||
+      Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
+      actor.settings.direction === 'out' ||
+      actor.settings.direction === 'both');
   const extraReads = await options.prepareReads?.(found);
   // Action callers also capture event-scoped admission in the same transaction.
-  const eventAdmission = !configured && actor.event != null && extraReads !== undefined;
+  const eventAdmission =
+    !configured &&
+    options.admits?.(found) !== false &&
+    actor.event != null &&
+    extraReads !== undefined;
   if (!configured && !eventAdmission && extraReads) {
     const results = extraReads.stmts.length ? await ctx.env.DB.batch(extraReads.stmts) : [];
     await extraReads.finish(results);

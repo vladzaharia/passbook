@@ -7,8 +7,8 @@ import { assetUrlMap } from '../pass-card/assets.ts';
 export type MyPass = z.infer<typeof MyPassSchema>;
 
 /** `names` is the server's list of the pass's image files, when it sends one. */
-export function assetUrls(base: string, names?: readonly string[]): Record<string, string> {
-  return assetUrlMap(base, names);
+export function assetUrls(base: string | null, names?: readonly string[]): Record<string, string> {
+  return base === null ? {} : assetUrlMap(base, names);
 }
 
 export function toView(pass: MyPass): PassView {

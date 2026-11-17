@@ -1,0 +1,46 @@
+.scan-picker {
+  display: grid;
+  gap: 14px;
+  padding: 4px 0 2px;
+}
+.scan-picker-title {
+  margin: 0;
+  color: var(--sd-strong);
+  font: var(--sd-t2, 600 20px / 1.2) var(--pk-font-sans);
+}
+.scan-picker-presets {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scan-picker-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.scan-picker-amount {
+  min-width: 3ch;
+  text-align: center;
+  color: var(--sd-strong);
+  font: 700 44px / 1 var(--pk-font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.scan-picker-change {
+  margin: 0;
+  color: var(--sd-muted);
+  font: var(--sd-t3) var(--pk-font-sans);
+}
+.scan-picker-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+}
+.scan-approval {
+  display: grid;
+  gap: 12px;
+  padding-top: 6px;
+}

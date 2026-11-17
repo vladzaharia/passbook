@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import { makeOrg, makeUser, type SessionFixture } from '../../../../test/helpers/index.ts';
 import { CapturedEmailListSchema } from '../../../shared/contracts/index.ts';
+import { tokenMac } from '../../platform/capability-token.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -47,7 +48,7 @@ beforeAll(async () => {
 });
 
 const uniqueEmail = () => `${kit.ctx.ids.token(8).toLowerCase()}@example.com`;
-const tokenOf = (url: string) => url.split('/b/')[1] ?? '';
+const tokenOf = (url: string | null) => url?.split('/b/')[1] ?? '';
 const api = (path: string, init: RequestInit = {}, orgId = kit.org.id) =>
   app.request(
     `${ORIGIN}/api/v1${scopedInboxPath(path, orgId)}`,
@@ -96,7 +97,7 @@ async function queuedBundle() {
     { kind: 'system' },
   );
   const { outboxId } = await enqueueBundleEmail(jobCtxOf(kit), bundle.id, to, {
-    token: tokenOf(bundle.url),
+    token: await tokenMac(kit.env, 'bundle', tokenOf(bundle.url)),
     holderEmail: to,
   });
   return { passes, bundle, to, outboxId };
@@ -309,7 +310,7 @@ describe('atomic test email capture', () => {
         } else if (field === 'token') {
           await run(
             kit.env.DB,
-            'UPDATE passes SET download_token = ?, link_generation = link_generation + 1 WHERE id = ?',
+            `UPDATE passes SET download_token = 'h1:' || ?, link_generation = link_generation + 1 WHERE id = ?`,
             [kit.ctx.ids.token(), pass.id],
           );
         } else {
@@ -389,7 +390,7 @@ describe('atomic test email capture', () => {
             passes[1]!.id,
           ]);
         else if (change === 'token')
-          await run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [
+          await run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
             kit.ctx.ids.token(),
             bundleId,
           ]);
@@ -505,7 +506,7 @@ describe('existing capture exposure', () => {
           queued.passes[1]!.id,
         ]);
       else if (change === 'token')
-        await run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [
+        await run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
           kit.ctx.ids.token(),
           queued.bundle.id,
         ]);
@@ -538,7 +539,7 @@ describe('existing capture exposure', () => {
     const authority = await inboxAuthority(kit, session, 'passes:read');
     const ref = await getCapturedReference(kit.env.DB, id, authority, kit.clock.now());
     if (!ref) throw new Error('reference missing');
-    const snapshot = await resolveCaptureSnapshot(kit.env.DB, ref);
+    const snapshot = await resolveCaptureSnapshot(kit.env, ref);
     if (!snapshot) throw new Error('snapshot missing');
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [
       queued.pass.id,

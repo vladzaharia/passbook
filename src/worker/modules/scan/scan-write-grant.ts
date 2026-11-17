@@ -1,5 +1,5 @@
 import { type Grant, grant } from '../../platform/authority.ts';
-import { exactlyOne, rowIs } from '../../platform/authority-checks.ts';
+import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.ts';
 import { exists, type GrantCond, not } from '../../platform/authority-cond.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, writePart } from '../../platform/authority-include.ts';
@@ -13,7 +13,7 @@ import { capturedStatement } from './scan-capture.ts';
 import { type ScanPassFacts, scanPassChecks } from './scan-pass-checks.ts';
 
 export interface ScanWriteInput {
-  purpose: `org_mode.scan.${'claim' | 'check_in' | 'held' | 'stop' | 'undo'}`;
+  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo'}`;
   now: number;
   /** The operation's event when it is not the actor's. */
   event?: ScanEventRow | null;
@@ -26,6 +26,8 @@ export interface ScanWriteInput {
   holder?: { passId: string; actionId: string; scope: string; lastScanId: string } | null;
   /** None of the presented credential's references may be retired by a transfer in this mode. */
   credentialRefs?: readonly string[];
+  /** Further checks of the operation itself (a value action's pass write adds its row version). */
+  checks?: readonly Check[];
   target?: string;
   codes?: DenialOptions['codes'];
   /** Unguarded tables the grant's parts write. */
@@ -50,6 +52,7 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
       }),
       ...(i.pass ? scanPassChecks(i.pass.id, i.pass.facts) : []),
       ...credentialRefChecks(i.credentialRefs),
+      ...(i.checks ?? []),
       ...(i.approver
         ? [
             rowIs(

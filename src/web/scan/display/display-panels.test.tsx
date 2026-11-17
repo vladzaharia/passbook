@@ -120,12 +120,33 @@ describe('every row type and the panel frame', () => {
     expect(empty.container.textContent).toContain('No visits yet.');
   });
 
-  it('falls back to a bar for stamps over ten', () => {
+  it('draws two rows of discs up to sixteen and falls back to a bar past it', () => {
+    const progress = (goal: number): ScanDisplayRow => ({
+      type: 'progress',
+      id: 'p',
+      value: 3,
+      goal,
+      before: null,
+      style: 'stamps',
+      icon: null,
+      rewards: 0,
+      caption: '',
+    });
+    const discs = render(<DisplayPanels display={display([panel([progress(16)])])} />);
+    expect(discs.container.querySelectorAll('.sd-stamp')).toHaveLength(16);
+    expect(discs.container.querySelector('.sd-bar')).toBeNull();
+    const row = progress(17);
+    const { container } = render(<DisplayPanels display={display([panel([row])])} />);
+    expect(container.querySelector('.sd-stamps')).toBeNull();
+    expect(container.querySelector('.sd-bar')).not.toBeNull();
+  });
+
+  it('falls back to a bar for stamps over the cap', () => {
     const row: ScanDisplayRow = {
       type: 'progress',
       id: 'p',
       value: 3,
-      goal: 12,
+      goal: 40,
       before: null,
       style: 'stamps',
       icon: null,

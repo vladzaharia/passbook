@@ -145,7 +145,7 @@ describe('list and get', () => {
 });
 
 describe('rotate, delete and the public link', () => {
-  const token = (url: string) => url.split('/b/')[1] ?? '';
+  const token = (url: string | null) => url?.split('/b/')[1] ?? '';
   const pub = (path: string) => app.request(`${ORIGIN}${path}`, {}, kit.env);
 
   it('a rotated link returns 404 and the new one works', async () => {
@@ -216,7 +216,7 @@ describe('send-email', () => {
     expect(kit.mailer.sent).toHaveLength(before + 1);
     const mail = kit.mailer.sent.at(-1);
     expect(mail?.to).toBe('mia@example.com');
-    const token = bundle.url.split('/b/')[1];
+    const token = bundle.url?.split('/b/')[1];
     expect(mail?.html).toContain(`/b/${token}/passes.pkpasses`);
     expect(mail?.html).toContain(`/b/${token}/${a.id}/pass.pkpass`);
     expect(mail?.text).not.toContain('/p/');
@@ -359,7 +359,7 @@ describe('voided passes', () => {
     const b = await makePass();
     const bundle = await bundleOf(await create(fake.admin(), { passIds: [a.id, b.id] }));
     await voidPass(jobCtxOf(kit), { type: 'system', id: null }, a.id, null);
-    const token = bundle.url.split('/b/')[1];
+    const token = bundle.url?.split('/b/')[1];
     const html = await (await app.request(`${ORIGIN}/b/${token}`, {}, kit.env)).text();
     expect(html).toContain(`/b/${token}/${b.id}/pass.pkpass`);
     expect(html).not.toContain(`/b/${token}/${a.id}/pass.pkpass`);

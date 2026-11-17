@@ -1,6 +1,7 @@
 /** Rows to rendered rows (DM 1.6, 5.1). Pure. Missing values hide the row; caps cut by grapheme. */
 import type { ScanChip, ScanDisplayRow } from '../../../shared/contracts/scan-display.ts';
 import { scanLine } from '../../../shared/copy/scan.ts';
+import { SCAN_STAMPS_MAX } from '../../stamps/layout.ts';
 import { columnsUnits, DENSITY, oneLineCap } from './density.ts';
 import { graphemeLength, moneyText, toNumber, truncate } from './format.ts';
 import { history } from './render-history.ts';
@@ -51,11 +52,22 @@ function progress(
     text(row.reward, rc, 24) || (typeof taken?.reward === 'string' ? taken.reward : '');
   const earned = row.rewards !== undefined ? toNumber(evalExpr(row.rewards, rc)) : null;
   const rewards = Math.max(0, Math.floor(earned ?? value / goal));
-  const style = row.style === 'bar' || goal > 10 ? 'bar' : 'stamps';
+  const style = row.style === 'bar' || goal > SCAN_STAMPS_MAX ? 'bar' : 'stamps';
   const left = Math.max(0, Math.ceil(goal - value));
+  // Stamps past the reward carry over: "1 reward ready · 2 saved".
+  const saved = Math.max(0, Math.floor(value - rewards * goal));
   const caption =
     rewards >= 1
-      ? scanLine(rewards === 1 ? COPY.rewardsReady.one : COPY.rewardsReady.other, { n: rewards })
+      ? scanLine(
+          saved > 0
+            ? rewards === 1
+              ? COPY.rewardReadySaved.one
+              : COPY.rewardReadySaved.other
+            : rewards === 1
+              ? COPY.rewardsReady.one
+              : COPY.rewardsReady.other,
+          { n: rewards, saved },
+        )
       : reward
         ? scanLine(COPY.moreFor, { n: left, reward })
         : `${value} of ${goal}`;

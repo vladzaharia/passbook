@@ -34,11 +34,11 @@ import {
   releaseClaimStmt,
   type ScanRow,
 } from './repo-scans.ts';
-import { staffStatement } from './repo-staff.ts';
+import { approverStatement } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import { afterReads } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
-import { pinStaffFromResult } from './staff-pin.ts';
+import { pinStaffListFromResult } from './staff-pin.ts';
 
 export const SCAN_IN_PROGRESS_MS = 15_000;
 
@@ -99,7 +99,7 @@ export async function executeClaimedAction(
       csrfSnapshot,
       undoWindow,
       capturedOverride,
-      pinStaffFromResult(approverResult),
+      pinStaffListFromResult(approverResult),
       () => {
         failureCommitted = true;
       },
@@ -197,7 +197,7 @@ export async function replayOrReopenClaim(
         ...plan.stmts,
         ...(plan.capacityStmt ? [plan.capacityStmt] : []),
         ...(overrideQuery ? [overrideQuery] : []),
-        ...(req.approval ? [staffStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
+        ...(req.approval ? [approverStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
       ]),
     );
     const results = done.after;

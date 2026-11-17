@@ -1,6 +1,7 @@
 import { stampCountOf, stampedName, stampedView } from '../../../passkit/build-assets.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { safeMail, safeUrl } from '../../email/safe.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
@@ -32,7 +33,7 @@ const notFound = () => new NotFoundError('This link is not valid.', 'LINK_NOT_FO
 /** Bearer-link lookup. A rotated token or a pending transfer never resolves. */
 export async function passForToken(ctx: ServiceContext, token: string): Promise<Pass> {
   if (!isTokenShape(token)) throw notFound();
-  const pass = await getPassByDownloadToken(ctx.env.DB, token);
+  const pass = await getPassByDownloadToken(ctx.env, token);
   if (!pass || !(await currentPublicGeneration(ctx.env.DB, pass))) throw notFound();
   return pass;
 }
@@ -85,6 +86,7 @@ export interface PassImage {
  */
 export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassImage[]> {
   const snapshot = await capturePassSnapshot(ctx, pass);
+  const plainToken = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
   const [template, originalOverrides, org, photo] = await Promise.all([
     resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
     listAssets(ctx.env.DB, pass.id),
@@ -107,7 +109,7 @@ export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassI
     version: string,
   ): PassImage => ({
     name: a.name,
-    path: `/p/${pass.downloadToken}/assets/${a.name}?v=${version}`,
+    path: `/p/${plainToken}/assets/${a.name}?v=${version}`,
     width: a.width ?? null,
     height: a.height ?? null,
   });

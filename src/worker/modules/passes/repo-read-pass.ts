@@ -1,3 +1,4 @@
+import { tokenKeys } from '../../platform/capability-token.ts';
 import { all, first } from '../../platform/db.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
 import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
@@ -18,11 +19,14 @@ export async function getPass(
   return row ? mapPass(row) : null;
 }
 
-export async function getPassByDownloadToken(db: D1Database, token: string): Promise<Pass | null> {
+export async function getPassByDownloadToken(
+  env: { DB: D1Database },
+  token: string,
+): Promise<Pass | null> {
   const row = await first<PassDbRow>(
-    db,
-    `${PASS_SELECT} WHERE download_token = ? AND deleted_at IS NULL AND test_data_quarantined = 0`,
-    [token],
+    env.DB,
+    `${PASS_SELECT} WHERE download_token IN (?, ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
+    await tokenKeys(env, 'pass', token),
   );
   return row ? mapPass(row) : null;
 }

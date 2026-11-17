@@ -1,5 +1,6 @@
 import type { EventRow } from '../events/repo.ts';
 import type { ScanRow } from './repo-scan-map.ts';
+import { okEventKind } from './scan-event-kind.ts';
 import { type ObjectValue, object } from './scan-event-proof-envelope.ts';
 
 type RecordedEventScan = Omit<
@@ -13,10 +14,13 @@ type RecordedEventScan = Omit<
   presenceScope: string | null;
 };
 
+/** The gate an ok scan leaves: a check-in's direction, `used` for a value action. */
+export const settledState = (actionKind: string | null, direction: string | null) =>
+  actionKind === 'check_in' || actionKind === null ? (direction ?? 'in') : 'used';
+
 function recordedGateValid(row: EventRow, scan: RecordedEventScan, data: ObjectValue): boolean {
   if (!object(data.authority)) return false;
   const gate = data.authority.gate;
-  if (scan.outcome === 'ok' && scan.actionKind !== 'check_in') return false;
   if (scan.outcome !== 'ok')
     return (
       gate === undefined ||
@@ -31,7 +35,7 @@ function recordedGateValid(row: EventRow, scan: RecordedEventScan, data: ObjectV
     gate.mode === row.mode &&
     gate.templateId === scan.templateId &&
     gate.kind === scan.actionKind &&
-    gate.state === (scan.direction ?? 'in') &&
+    gate.state === settledState(scan.actionKind, scan.direction) &&
     gate.scanState === 'done' &&
     gate.undoneBy === null &&
     Number.isSafeInteger(gate.count) &&
@@ -115,7 +119,7 @@ export function recordedEventValid(
     scan.outcome === 'ok'
       ? scan.direction === 'out'
         ? 'scan.checked_out'
-        : 'scan.checked_in'
+        : okEventKind(scan.actionKind)
       : scan.outcome === 'heads_up'
         ? 'scan.heads_up'
         : scan.outcome === 'refused'

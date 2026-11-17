@@ -9,6 +9,7 @@ import { enqueuePassEmail } from '../delivery/issuance-intent.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import type { Kit } from '../passes/pass-test-fixtures.ts';
+import { openBody } from './captured-body.ts';
 import { findInboxCapture, insertInboxMembership } from './repo-test-tenant-fixtures.ts';
 
 export type InboxMember = { membershipId: string; session: SessionFixture };
@@ -64,7 +65,9 @@ export async function captureInboxPass(kit: Kit, orgId = kit.org.id) {
   await handleEmailSend({ kind: 'email.send', outboxId }, jobCtxOf(kit));
   const capture = await findInboxCapture(kit, outboxId);
   if (!capture) throw new Error('Inbox capture missing');
-  return { ...capture, pass, recipient };
+  const html = await openBody(kit.env, capture.id, orgId, capture.html);
+  const text = await openBody(kit.env, capture.id, orgId, capture.text);
+  return { ...capture, html, text, pass, recipient };
 }
 
 export function inboxApp(kit: Kit) {

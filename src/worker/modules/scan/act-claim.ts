@@ -30,6 +30,8 @@ export async function requestHashOf(req: ActRequest): Promise<string> {
       req.group ?? null,
       req.approval?.staffId ?? null,
       req.scope ?? null,
+      // Only when given, so a request without one hashes as it always did.
+      ...(req.expectedVersion === undefined ? [] : [req.expectedVersion]),
     ]),
   );
 }

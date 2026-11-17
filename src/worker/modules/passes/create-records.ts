@@ -1,6 +1,7 @@
 import { type EventActorType, EventKindSchema } from '../../../shared/contracts/events.ts';
 import type { Grant } from '../../platform/authority.ts';
 import { exists } from '../../platform/authority-cond.ts';
+import { sealPart } from '../../platform/capability-token.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { redactDetail } from '../audit/redact.ts';
 import { grantIssuanceInsert } from '../delivery/repo-issuance.ts';
@@ -28,6 +29,7 @@ export async function addCreateStatements(
 ): Promise<CreateStatements> {
   const insert = grantPassInsert(g, row, ownerUserId);
   g.assert('stale', [exists('passes', { id: row.id })]);
+  g.include(sealPart('pass', row.id, row.downloadToken, row.tokenSeal));
   if (row.sendEmail && row.holderEmail) {
     await grantIssuanceInsert(ctx.env.DB, g, row);
     g.assert('stale', [exists('pass_issuance_deliveries', { pass_id: row.id })]);

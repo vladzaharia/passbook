@@ -1,8 +1,10 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { linkToken } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { rotateLink as RotateLink } from '../passes/pass-service-delivery.ts';
 import type { Kit, setupKit as SetupKit } from '../passes/pass-test-fixtures.ts';
+import { openBody } from '../sandbox/captured-body.ts';
 import type { listWalletOffers as ListWalletOffers } from '../wallet-providers/offers.ts';
 import type { jobCtxOf as JobCtxOf } from './delivery-test-fixtures.ts';
 import type { enqueuePassEmail as EnqueuePassEmail } from './issuance-intent.ts';
@@ -61,13 +63,13 @@ describe('wallet offers in pass delivery', () => {
     const returnedOffers = [
       {
         provider: 'google' as const,
-        href: `/p/${pass.downloadToken}/wallet/google`,
+        href: `/p/${await linkToken(kit.env, pass)}/wallet/google`,
         installation: 'unknown' as const,
         providerJwt: 'private-google-bearer',
       },
       {
         provider: 'samsung' as const,
-        href: `/p/${pass.downloadToken}/wallet/samsung`,
+        href: `/p/${await linkToken(kit.env, pass)}/wallet/samsung`,
         installation: 'unknown' as const,
         providerToken: 'private-samsung-bearer',
       },
@@ -81,14 +83,14 @@ describe('wallet offers in pass delivery', () => {
     expect(sent).toBeDefined();
     const base = baseUrl(kit.env);
     for (const provider of ['google', 'samsung']) {
-      const link = `${base}/p/${pass.downloadToken}/wallet/${provider}`;
+      const link = `${base}/p/${await linkToken(kit.env, pass)}/wallet/${provider}`;
       expect(sent?.html).toContain(`href="${link}"`);
       expect(sent?.text).toContain(link);
     }
-    expect(sent?.html).toContain(`href="${base}/p/${pass.downloadToken}/pass.pkpass"`);
+    expect(sent?.html).toContain(`href="${base}/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
     const payload = JSON.stringify((await getOutbox(kit.env.DB, outboxId))?.payload);
     const output = [sent?.html, sent?.text, payload].join('\n');
-    expect(payload).not.toContain(pass.downloadToken);
+    expect(payload).not.toContain(await linkToken(kit.env, pass));
     expect(output).not.toContain('private-google-bearer');
     expect(output).not.toContain('private-samsung-bearer');
   });
@@ -113,27 +115,31 @@ describe('wallet offers in pass delivery', () => {
     const returnedOffers = [
       {
         provider: 'google' as const,
-        href: `/p/${pass.downloadToken}/wallet/google`,
+        href: `/p/${await linkToken(kit.env, pass)}/wallet/google`,
         installation: 'unknown' as const,
         providerJwt: 'private-google-bearer',
       },
       {
         provider: 'samsung' as const,
-        href: `/p/${pass.downloadToken}/wallet/samsung`,
+        href: `/p/${await linkToken(kit.env, pass)}/wallet/samsung`,
         installation: 'unknown' as const,
         providerToken: 'private-samsung-bearer',
       },
     ];
     lookup.mockResolvedValue(returnedOffers);
     await handleEmailSend({ kind: 'email.send', outboxId }, job());
-    const captured = await first<{ html: string; text: string }>(
+    const row = await first<{ id: string; html: string; text: string }>(
       kit.env.DB,
-      'SELECT html, text FROM captured_emails WHERE outbox_id = ?',
+      'SELECT id, html, text FROM captured_emails WHERE outbox_id = ?',
       [outboxId],
     );
+    const captured = {
+      html: await openBody(kit.env, row?.id ?? '', kit.org.id, row?.html ?? ''),
+      text: await openBody(kit.env, row?.id ?? '', kit.org.id, row?.text ?? ''),
+    };
     expect(kit.mailer.sent).toHaveLength(before);
     for (const provider of ['google', 'samsung']) {
-      const link = `${baseUrl(kit.env)}/p/${pass.downloadToken}/wallet/${provider}`;
+      const link = `${baseUrl(kit.env)}/p/${await linkToken(kit.env, pass)}/wallet/${provider}`;
       expect(captured?.html).toContain(`href="${link}"`);
       expect(captured?.text).toContain(link);
     }
@@ -145,12 +151,13 @@ describe('wallet offers in pass delivery', () => {
   it('cancels rather than sending if the pass link rotates during offer lookup', async () => {
     const { pass, outboxId } = await queuePass();
     const before = kit.mailer.sent.length;
+    const oldToken = await linkToken(kit.env, pass);
     lookup.mockImplementation(async () => {
       await rotateLink(kit.ctx, { type: 'user', id: 'admin-1' }, pass.id, null);
       return [
         {
           provider: 'google',
-          href: `/p/${pass.downloadToken}/wallet/google`,
+          href: `/p/${oldToken}/wallet/google`,
           installation: 'unknown',
         },
       ];
