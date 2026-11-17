@@ -13,6 +13,7 @@ import type { LiveAttachment } from './live-auth.ts';
 import type { LiveRingRow } from './live-ring.ts';
 import { photoPolicyForResolved, scannerCandidateAllowed } from './member-photo.ts';
 import { scanIdentity } from './projection-privacy.ts';
+import { CREDENTIAL_REF_PREFIX } from './repo-credential-tombstones.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { foundOf } from './resolve.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
@@ -170,9 +171,12 @@ export async function liveRingRow(
   base: ScanLiveRow,
   candidate: Candidate | null,
   scanId: string | null,
+  /** The full keyed refs of the credential the scan presented. */
+  credentialRefs: readonly string[] = [],
 ): Promise<LiveRingRow | null> {
   const detail = candidate ? await passDetail(ctx, source, candidate, await pinKeyset(ctx)) : null;
   if (candidate && !detail) return null;
+  const staff = source.staff ? scanEpochsOf(source)?.staff : undefined;
   return {
     row: detail && candidate ? { ...base, passId: candidate.pass.id, holder: detail.holder } : base,
     scanId,
@@ -181,6 +185,8 @@ export async function liveRingRow(
     release: detail?.release ?? null,
     validUntil: detail?.validUntil ?? null,
     sourceRole: source.role,
+    sourceStaff: staff ? { id: staff.id, authEpoch: staff.auth } : null,
+    refPrefixes: detail ? credentialRefs.map((ref) => ref.slice(0, CREDENTIAL_REF_PREFIX)) : [],
     holderRoles: detail?.holderRoles ?? [],
     photoRoles: detail?.photoRoles ?? [],
   };
@@ -191,7 +197,7 @@ export function publishScan(
   actor: ScanActor,
   out: ScanOutcome,
   evaluatedSnapshot: Candidate | null,
-  _credentialContext: CredentialTombstoneSnapshot | null,
+  credentialContext: CredentialTombstoneSnapshot | null,
   method: string,
   undo = false,
   enteredCode = false,
@@ -227,7 +233,14 @@ export function publishScan(
   };
   ctx.waitUntil(
     (async () => {
-      const entry = await liveRingRow(ctx, source, base, evaluatedSnapshot, out.scanId);
+      const entry = await liveRingRow(
+        ctx,
+        source,
+        base,
+        evaluatedSnapshot,
+        out.scanId,
+        credentialContext?.credentialTombstoneRefs ?? [],
+      );
       // An evaluated pass that cannot be shown is withheld, not published as a refusal.
       if (!entry) return;
       if (!(await hub.publish({ orgId: source.orgId, mode: source.mode, row: entry })))

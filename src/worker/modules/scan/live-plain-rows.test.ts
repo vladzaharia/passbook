@@ -1,7 +1,7 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -34,10 +34,23 @@ import { codeOf, key, proofedScanActor } from './test-kit.ts';
 
 const REDACTED = { passId: null, holder: null, photoUrl: null };
 
-async function fixture(options: { older?: boolean; photo?: boolean } = {}) {
-  const source = await kit.scanner({ templateIds: [template] });
-  const monitor = await screen('monitor', [source.id]);
-  const pass = await kit.scanPass(template, { memberName: 'Plain Row Member' });
+interface FixtureOptions {
+  older?: boolean;
+  photo?: boolean;
+  templateId?: string;
+  /** The source scanner's own scope; defaults to the template. */
+  source?: { templateIds?: string[]; eventId?: string };
+  /** The monitor's own scope. */
+  monitor?: { templateIds?: string[]; eventId?: string };
+  passInput?: Record<string, unknown>;
+  wallet?: (passId: string) => Promise<void>;
+}
+
+async function fixture(options: FixtureOptions = {}) {
+  const tpl = options.templateId ?? template;
+  const source = await kit.scanner(options.source ?? { templateIds: [tpl] });
+  const monitor = await screen('monitor', [source.id], false, {}, options.monitor);
+  const pass = await kit.scanPass(tpl, { memberName: 'Plain Row Member', ...options.passInput });
   if (options.older) await issueUnderOlderAdapter(kit, pass.id);
   if (options.photo !== false) {
     const png = btoa(String.fromCharCode(...makePng(270, 270)));
@@ -49,12 +62,18 @@ async function fixture(options: { older?: boolean; photo?: boolean } = {}) {
       null,
     );
   }
+  await options.wallet?.(pass.id);
   const event = row(source.id, { passId: pass.id });
   await publish(event);
   const shown = async () =>
     (await hub().snapshot(monitor.attachment)).rows.find((item) => item.id === event.id);
-  return { source, monitor, pass, event, shown };
+  const path = (await shown())?.photoUrl?.replace('/api/v1/scan', '') ?? '';
+  const photoStatus = async () => (path ? (await kit.get(monitor.headers, path)).status : 404);
+  return { source, monitor, pass, event, shown, path, photoStatus };
 }
+
+const freshTemplate = (name: string) =>
+  kit.scanTemplate(name, { actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }] });
 
 describe('live plain rows', () => {
   it('shows the holder, pass and photo while everything is current (positive control)', async () => {
@@ -219,5 +238,161 @@ describe('live plain rows', () => {
     await expect(proven(row(f.source.id, { passId: f.pass.id }))).rejects.toThrow(
       'The source pass cannot be shown.',
     );
+  });
+
+  it('redacts a row and refuses its photo when the monitor loses its own template', async () => {
+    const f = await fixture({ monitor: { templateIds: [template] } });
+    expect(await f.shown()).toMatchObject({ passId: f.pass.id });
+    expect(await f.photoStatus()).toBe(200);
+    const elsewhere = await freshTemplate('Monitor moved elsewhere');
+    await run(kit.env.DB, 'UPDATE scanner_templates SET template_id = ? WHERE scanner_id = ?', [
+      elsewhere,
+      f.monitor.id,
+    ]);
+    // The change may also close the screen (nothing delivered); either way no identity.
+    const after = await f.shown();
+    expect(after === undefined || after.passId === null).toBe(true);
+    expect(JSON.stringify(after ?? {})).not.toContain('Plain Row Member');
+    expect(await f.photoStatus()).not.toBe(200);
+  });
+
+  it('shows no identity once the monitor event filter excludes the pass', async () => {
+    const event = await kit.event({ templateIds: [template] });
+    await run(kit.env.DB, 'UPDATE scan_events SET match_input = ?, match_values = ? WHERE id = ?', [
+      'tier',
+      '["gold"]',
+      event.id,
+    ]);
+    const f = await fixture({
+      source: { eventId: event.id },
+      monitor: { eventId: event.id },
+      passInput: { tier: 'gold' },
+    });
+    expect(await f.shown()).toMatchObject({ passId: f.pass.id });
+    expect(await f.photoStatus()).toBe(200);
+    await run(
+      kit.env.DB,
+      'UPDATE scan_events SET match_values = ?, updated_at = updated_at + 1 WHERE id = ?',
+      ['["silver"]', event.id],
+    );
+    // The event's own epoch may close the screen (nothing) or the scope redacts the row.
+    const after = await f.shown();
+    expect(after === undefined || after.passId === null).toBe(true);
+    expect(JSON.stringify(after ?? {})).not.toContain('Plain Row Member');
+    expect(await f.photoStatus()).toBe(404);
+  });
+
+  it('redacts a row whose template is deleted after the scan', async () => {
+    const own = await freshTemplate('Deleted after scan');
+    const f = await fixture({ templateId: own });
+    expect(await f.shown()).toMatchObject({ passId: f.pass.id });
+    await run(kit.env.DB, "UPDATE templates SET status = 'deleted' WHERE id = ?", [own]);
+    expect(await f.shown()).toMatchObject(REDACTED);
+    expect(await f.photoStatus()).toBe(404);
+  });
+
+  it('stops showing identity and the photo once the Wallet expiry passes', async () => {
+    const expiry = new Date(kit.clock.now() + 2_500).toISOString();
+    const f = await fixture({
+      wallet: async (passId) => {
+        await run(
+          kit.env.DB,
+          "UPDATE pass_versions SET pass_json = json_set(pass_json, '$.expirationDate', ?) WHERE pass_id = ?",
+          [expiry, passId],
+        );
+      },
+    });
+    expect(await f.shown()).toMatchObject({ passId: f.pass.id, holder: 'Plain Row Member' });
+    expect(await f.photoStatus()).toBe(200);
+    // The hub reads the system clock, the request path the kit's.
+    kit.clock.advance(3_000);
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
+    expect(await f.shown()).toMatchObject(REDACTED);
+    expect(await f.photoStatus()).toBe(404);
+  });
+
+  it('shows the row again when the effective release returns (release ABA)', async () => {
+    const own = await freshTemplate('Release ABA');
+    const f = await fixture({ older: true, templateId: own });
+    const issued = await candidateById(kit.env.DB, kit.org.id, f.pass.id);
+    if (!issued?.activeReleaseVersion) throw new Error('Missing release fixture.');
+    expect(await f.shown()).toMatchObject({ passId: f.pass.id });
+    await approveAppleRelease(kit, {
+      orgId: kit.org.id,
+      mode: 'live',
+      templateId: own,
+      version: issued.activeReleaseVersion,
+    });
+    expect(await f.shown()).toMatchObject(REDACTED);
+    // Archiving ends the head; the pass is again used under the release it was scanned under.
+    await run(kit.env.DB, "UPDATE templates SET status = 'archived' WHERE id = ?", [own]);
+    expect(await f.shown()).toMatchObject({ passId: f.pass.id, holder: 'Plain Row Member' });
+  });
+
+  it('withholds the pass while its connection is disabled and shows it again when re-enabled', async () => {
+    const connectionId = kit.ctx.ids.id();
+    await run(
+      kit.env.DB,
+      `INSERT INTO connections (id, org_id, connector_type, name, generation, created_at, updated_at)
+       VALUES (?, ?, 'demo', 'Plain row', 1, 1, 1)`,
+      [connectionId, kit.org.id],
+    );
+    const f = await fixture({
+      wallet: async (passId) => {
+        await run(
+          kit.env.DB,
+          "UPDATE passes SET connection_id = ?, external_ref = 'plain-row' WHERE id = ?",
+          [connectionId, passId],
+        );
+      },
+    });
+    expect(await f.shown()).toMatchObject({ passId: f.pass.id });
+    await run(kit.env.DB, 'UPDATE connections SET enabled = 0 WHERE id = ?', [connectionId]);
+    expect(await f.shown()).toMatchObject(REDACTED);
+    expect(await f.photoStatus()).toBe(404);
+    await run(kit.env.DB, 'UPDATE connections SET enabled = 1 WHERE id = ?', [connectionId]);
+    expect(await f.shown()).toMatchObject({ passId: f.pass.id });
+  });
+
+  it('redacts a row whose scanned credential was retired by another pass transfer', async () => {
+    const source = await kit.scanner({ templateIds: [template] });
+    const monitor = await screen('monitor', [source.id]);
+    const pass = await kit.scanPass(template, { memberName: 'Credential Member' });
+    const ref = `${'a'.repeat(16)}${'b'.repeat(48)}`;
+    const event = row(source.id, { passId: pass.id });
+    await publish(event, [ref]);
+    const shown = async () =>
+      (await hub().snapshot(monitor.attachment)).rows.find((item) => item.id === event.id);
+    expect(await shown()).toMatchObject({ passId: pass.id });
+    expect(await hub().ringRow(event.id)).toMatchObject({ refPrefixes: ['a'.repeat(16)] });
+    // Tombstones are written only by a transfer; this one is another pass's, so no generation moved.
+    const trigger = await first<{ sql: string }>(
+      kit.env.DB,
+      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'pass_credential_tombstones_insert_guard'",
+    );
+    if (!trigger?.sql) throw new Error('Missing tombstone guard trigger.');
+    await run(kit.env.DB, 'DROP TRIGGER pass_credential_tombstones_insert_guard');
+    try {
+      await run(
+        kit.env.DB,
+        `INSERT INTO pass_credential_tombstones
+         (pass_id, org_id, mode, credential_generation, credential_kind, credential_hash, retired_at)
+         VALUES (?, ?, 'live', 1, 'barcode', ?, ?)`,
+        [kit.ctx.ids.id(), kit.org.id, `${'a'.repeat(16)}${'0'.repeat(48)}`, kit.clock.now()],
+      );
+    } finally {
+      await run(kit.env.DB, trigger.sql);
+    }
+    expect(await shown()).toMatchObject(REDACTED);
+  });
+
+  it('scrubs the holder name from storage once its pass is no longer visible', async () => {
+    const f = await fixture();
+    expect(await hub().ringRow(f.event.id)).toMatchObject({ row: { holder: 'Plain Row Member' } });
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = 1 WHERE id = ?', [f.pass.id]);
+    await publish(row(f.source.id));
+    const stored = await hub().ringRow(f.event.id);
+    expect(stored).toMatchObject({ gen: null, row: { holder: null, passId: null } });
+    expect(JSON.stringify(stored)).not.toContain('Plain Row Member');
   });
 });

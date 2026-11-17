@@ -27,10 +27,12 @@ function visibleRow(
   entry: LiveRingRow,
   now: number,
   imageCurrent: boolean,
+  staffOk: boolean,
 ): ScanLiveRow {
   const { row } = entry;
   const actor = recipient.actor;
-  const role = actor.role ?? entry.sourceRole;
+  // A staffless monitor reads with the source's role while the source's staff binding still holds.
+  const role = actor.role ?? (staffOk ? entry.sourceRole : null);
   const visible = { ...redactedRow(row, false), passId: row.passId };
   if (!role) return visible;
   const holder = entry.holderRoles.includes(role) && row.holder ? row.holder.slice(0, 40) : null;
@@ -71,6 +73,7 @@ export async function liveRowsFor(
     i: number;
     scan_ok: number;
     pass_ok: number;
+    staff_ok: number;
   }>();
   if (!result.success) return [];
   const flags = new Map(result.results.map((r) => [r.i, r]));
@@ -88,7 +91,7 @@ export async function liveRowsFor(
       (entry.validUntil === null || now <= entry.validUntil);
     out.push(
       live
-        ? visibleRow(recipient, entry, now, flag.pass_ok === 2)
+        ? visibleRow(recipient, entry, now, flag.pass_ok === 2, flag.staff_ok === 1)
         : redactedRow(entry.row, customer),
     );
   });

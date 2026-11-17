@@ -7,7 +7,11 @@ export const LIVE_ROW_TTL_MS = 15 * 60_000;
 /**
  * One entry of the hub's ring, written when the scan commits. The row is what the source screen
  * disclosed; everything else is a plain fact a recipient's render re-checks against D1 (the scan
- * and the pass generations, the effective release). Nothing in it is a credential or a proof.
+ * and the pass generations, the effective release, the credential's tombstones). Nothing in it is a
+ * credential or a proof. The holder title and the Wallet expiry are frozen at publish, and sit in
+ * plaintext in Durable Object storage for at most `LIVE_ROW_TTL_MS`: an entry whose pass stops being
+ * visible is scrubbed to its redacted shape at the next publish or alarm (`scrubbedEntry`). The
+ * event id (`row.id`) only selects an entry; it is not a capability and every read re-checks.
  * `gen` is null for a row without pass detail (a refusal, an unknown code, or a pass that could not
  * be evaluated): such a row renders as its redacted shape.
  */
@@ -21,10 +25,31 @@ export interface LiveRingRow {
   /** The Wallet expiry the scan saw; the row stops showing the holder after it. */
   validUntil: number | null;
   sourceRole: ScanRole | null;
+  /** The source's signed-in staff and its `auth_epoch`: a staffless monitor borrowing `sourceRole` needs it still valid. */
+  sourceStaff: { id: string; authEpoch: number } | null;
+  /** Leading hex of the refs of the credential the scan presented (none for a pass-id scan). */
+  refPrefixes: string[];
   /** Roles whose own title for the holder equals the source's (a viewer sees the name only then). */
   holderRoles: ScanRole[];
   /** Roles the source's policy shows a photo to; empty when the pass has none. */
   photoRoles: ScanRole[];
+}
+
+/** The entry with every identity field removed: what is kept once its pass is no longer visible. */
+export function scrubbedEntry(e: LiveRingRow): LiveRingRow {
+  return {
+    row: redactedRow(e.row, false),
+    scanId: e.scanId,
+    templateId: null,
+    gen: null,
+    release: null,
+    validUntil: null,
+    sourceRole: null,
+    sourceStaff: null,
+    refPrefixes: [],
+    holderRoles: [],
+    photoRoles: [],
+  };
 }
 
 /** A ring entry written before plain rows carried a sealed source proof: it renders redacted until its TTL. */
@@ -32,7 +57,7 @@ export function ringRowOf(raw: unknown): LiveRingRow | null {
   if (!raw || typeof raw !== 'object') return null;
   const entry = raw as Record<string, unknown>;
   if ('row' in entry && entry.row && typeof entry.row === 'object')
-    return entry as unknown as LiveRingRow;
+    return { sourceStaff: null, refPrefixes: [], ...entry } as unknown as LiveRingRow;
   const old = entry as unknown as ScanLiveRow;
   if (typeof old.id !== 'string' || typeof old.at !== 'number') return null;
   return {
@@ -55,6 +80,8 @@ export function ringRowOf(raw: unknown): LiveRingRow | null {
     release: null,
     validUntil: null,
     sourceRole: null,
+    sourceStaff: null,
+    refPrefixes: [],
     holderRoles: [],
     photoRoles: [],
   };

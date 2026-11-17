@@ -1,3 +1,4 @@
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 
@@ -17,4 +18,15 @@ export function pinKeyset(ctx: ServiceContext): Promise<string> {
     pin.catch(() => pins.delete(ctx));
   }
   return pin;
+}
+
+/** `pinKeyset`, or null when the stored keyset is not this deployment's: for reads that answer "not found" instead of 503. */
+export async function pinKeysetOrNull(ctx: ServiceContext): Promise<string | null> {
+  try {
+    return await pinKeyset(ctx);
+  } catch (error) {
+    if (error instanceof AppError && error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE')
+      return null;
+    throw error;
+  }
 }

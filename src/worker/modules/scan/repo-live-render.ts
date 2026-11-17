@@ -1,4 +1,4 @@
-import type { SqlValue } from '../../platform/db.ts';
+import { exactStmt, type SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql } from './effective-release.ts';
 import type { LiveRingRow } from './live-ring.ts';
@@ -40,7 +40,9 @@ export function liveRecipientStmt(
  * Per ring row: `scan_ok` (the scan is still a retained, finished scan of this pass; true for a row
  * without a scan), `pass_ok` (0: not visible, 1: visible, 2: visible and its image generation is the
  * one the scan saw). A pass is visible to the recipient while it is live at the generations the scan
- * saw, under the release it was used under, inside the recipient's own scope. One statement; no row
+ * saw, under the release it was used under, inside the recipient's own scope, with the scan's
+ * credential not retired by a transfer. `staff_ok` is 0 when the source's staff binding the monitor may
+ * borrow its role from is disabled or re-keyed. One statement; no row
  * comes back when the recipient's authority fails.
  */
 export function liveRowsStmt(
@@ -59,6 +61,9 @@ export function liveRowsStmt(
       e.gen?.lifecycle ?? null,
       e.gen?.image ?? null,
       e.release,
+      JSON.stringify(e.refPrefixes),
+      e.sourceStaff?.id ?? null,
+      e.sourceStaff?.authEpoch ?? null,
     ]),
   );
   const params: SqlValue[] = [];
@@ -67,7 +72,11 @@ export function liveRowsStmt(
         WHERE ring.pass_id IS NOT NULL AND ring.cred IS NOT NULL AND p.id = ring.pass_id
           AND ${auth.tenant('p', 'passes')}
           AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
-          AND ${effectiveReleaseIdSql('p')} IS ring.rel AND ${scope.sql})`
+          AND ${effectiveReleaseIdSql('p')} IS ring.rel AND ${scope.sql}
+          AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tomb, json_each(ring.refs) j
+            WHERE tomb.org_id = p.org_id AND tomb.mode = p.mode
+              AND tomb.credential_hash BETWEEN j.value || '${'0'.repeat(48)}'
+                AND j.value || '${'f'.repeat(48)}'))`
     : '0';
   if (scope) params.push(...scope.params);
   return scanRead(
@@ -77,14 +86,18 @@ export function liveRowsStmt(
       CASE WHEN ring.scan_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scans s
         WHERE s.id = ring.scan_id AND ${auth.tenant('s', 'scans')} AND s.pass_id IS ring.pass_id
           AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')}) END AS scan_ok,
-      COALESCE(${passOk}, 0) AS pass_ok
+      COALESCE(${passOk}, 0) AS pass_ok,
+      CASE WHEN ring.staff_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scan_staff st
+        WHERE st.id = ring.staff_id AND st.org_id = (SELECT org_id FROM actor_ok)
+          AND st.auth_epoch = ring.staff_epoch AND st.disabled_at IS NULL) END AS staff_ok
     FROM ring WHERE ${auth.ok}`,
     params,
     {
       ctes: `ring AS MATERIALIZED (SELECT json_extract(value,'$[0]') AS i,
         json_extract(value,'$[1]') AS scan_id, json_extract(value,'$[2]') AS pass_id,
         json_extract(value,'$[3]') AS cred, json_extract(value,'$[4]') AS life,
-        json_extract(value,'$[5]') AS img, json_extract(value,'$[6]') AS rel
+        json_extract(value,'$[5]') AS img, json_extract(value,'$[6]') AS rel, json_extract(value,'$[7]') AS refs,
+        json_extract(value,'$[8]') AS staff_id, json_extract(value,'$[9]') AS staff_epoch
         FROM json_each(?))`,
       params: [ring],
     },
@@ -101,6 +114,9 @@ export function livePhotoStmt(
   const scope = actorPassScopeSql(actor, 'p');
   const { gen, row } = entry;
   if (!scope || !gen || !row.passId) return null;
+  // A staffless monitor reads with the role the source had: only while that staff binding holds.
+  const borrowed = actor.role === null && entry.sourceStaff !== null;
+  const prefixes = entry.refPrefixes.slice(0, 3);
   return scanRead(
     db,
     auth,
@@ -111,7 +127,15 @@ export function livePhotoStmt(
         AND p.image_generation = ? AND ${effectiveReleaseIdSql('p')} IS ? AND ${scope.sql}
         AND (? IS NULL OR EXISTS (SELECT 1 FROM scans s
           WHERE s.id = ? AND ${auth.tenant('s', 'scans')} AND s.pass_id = p.id
-            AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')}))`,
+            AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')}))
+        ${borrowed ? 'AND EXISTS (SELECT 1 FROM scan_staff st WHERE st.id = ? AND st.org_id = p.org_id AND st.auth_epoch = ? AND st.disabled_at IS NULL)' : ''}
+        ${
+          prefixes.length
+            ? `AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tomb
+          WHERE tomb.org_id = p.org_id AND tomb.mode = p.mode
+            AND (${prefixes.map(() => 'tomb.credential_hash BETWEEN ? AND ?').join(' OR ')}))`
+            : ''
+        }`,
     [
       row.passId,
       gen.credential,
@@ -121,6 +145,41 @@ export function livePhotoStmt(
       ...scope.params,
       entry.scanId,
       entry.scanId,
+      ...(borrowed && entry.sourceStaff ? [entry.sourceStaff.id, entry.sourceStaff.authEpoch] : []),
+      ...prefixes.flatMap((prefix) => [prefix + '0'.repeat(48), prefix + 'f'.repeat(48)]),
     ],
+  );
+}
+
+/**
+ * The ring rows whose pass is no longer visible at the generations and release the scan saw (any
+ * recipient): their identity can be scrubbed from storage. Returns the indexes into `entries`.
+ */
+export function liveRingStaleStmt(
+  db: D1Database,
+  orgId: string,
+  mode: string,
+  entries: readonly LiveRingRow[],
+): D1PreparedStatement {
+  const ring = JSON.stringify(
+    entries.map((e, i) => [
+      i,
+      e.row.passId,
+      e.gen?.credential ?? null,
+      e.gen?.lifecycle ?? null,
+      e.release,
+    ]),
+  );
+  return exactStmt(
+    db,
+    `WITH ring AS (SELECT json_extract(value,'$[0]') AS i, json_extract(value,'$[1]') AS pass_id,
+        json_extract(value,'$[2]') AS cred, json_extract(value,'$[3]') AS life,
+        json_extract(value,'$[4]') AS rel FROM json_each(?))
+    SELECT ring.i AS i FROM ring
+    WHERE ring.pass_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM passes p
+      WHERE p.id = ring.pass_id AND p.org_id = ? AND p.mode = ?
+        AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
+        AND ${effectiveReleaseIdSql('p')} IS ring.rel)`,
+    [ring, orgId, mode],
   );
 }

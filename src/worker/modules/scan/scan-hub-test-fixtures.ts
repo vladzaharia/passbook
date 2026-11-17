@@ -81,8 +81,14 @@ export async function screen(
   ids: string[],
   allOrg = false,
   settings: Record<string, unknown> = {},
+  access: { templateIds?: string[]; eventId?: string } = {},
 ) {
-  const device = await kit.scanner({ deviceRole: role, templateIds: [], settings });
+  const device = await kit.scanner({
+    deviceRole: role,
+    templateIds: access.templateIds ?? [],
+    ...(access.eventId ? { eventId: access.eventId } : {}),
+    settings,
+  });
   await setSetupWatchStmt(kit.env.DB, kit.org.id, device.id, { scannerIds: ids, allOrg }).run();
   const row = await getScanner(kit.env.DB, device.id);
   if (!row?.tokenHash || !row.expiresAt || !row.csrfSecret)
@@ -110,7 +116,10 @@ export const row = (id: string, more: Partial<ScanLiveRow> = {}): ScanLiveRow =>
   ...more,
 });
 /** The ring entry the source scanner's commit would publish for `body` (its pass read now). */
-export const proven = async (body: ScanLiveRow): Promise<LiveRingRow> => {
+export const proven = async (
+  body: ScanLiveRow,
+  credentialRefs: readonly string[] = [],
+): Promise<LiveRingRow> => {
   const source = await getScanner(kit.env.DB, body.scannerId);
   if (!source) throw new Error('Missing source scanner.');
   const scope = await readScannerScope(kit.env.DB, source, source.staffId);
@@ -137,12 +146,13 @@ export const proven = async (body: ScanLiveRow): Promise<LiveRingRow> => {
     { ...body, passId: null, holder: null, photoUrl: null },
     candidate,
     null,
+    credentialRefs,
   );
   if (!entry) throw new Error('The source pass cannot be shown.');
   return entry;
 };
-export const publish = async (body: ScanLiveRow) =>
-  hub().publish({ orgId: kit.org.id, mode: 'live', row: await proven(body) });
+export const publish = async (body: ScanLiveRow, credentialRefs: readonly string[] = []) =>
+  hub().publish({ orgId: kit.org.id, mode: 'live', row: await proven(body, credentialRefs) });
 export const next = (socket: WebSocket) =>
   new Promise<{ rows: ScanLiveRow[] }>((resolve) =>
     socket.addEventListener('message', (event) => resolve(JSON.parse(String(event.data))), {

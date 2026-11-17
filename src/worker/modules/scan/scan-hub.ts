@@ -12,8 +12,9 @@ import {
   liveRecipient,
 } from './live-auth.ts';
 import { liveRowFor, liveRowsFor } from './live-render.ts';
-import { LIVE_ROW_TTL_MS, type LiveRingRow, ringRowOf } from './live-ring.ts';
+import { LIVE_ROW_TTL_MS, type LiveRingRow, ringRowOf, scrubbedEntry } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
+import { liveRingStaleStmt } from './repo-live-render.ts';
 import { staleScanRead } from './stale-read.ts';
 
 const RING = 'recent';
@@ -82,7 +83,7 @@ export class ScanHub extends DurableObject<AppEnv> {
     )
       return false;
     const now = ctx.clock.now();
-    const previous = await readRing(this.ctx.storage, now);
+    const previous = await this.scrub(ctx, await readRing(this.ctx.storage, now));
     if (previous.some((r) => r.row.id === row.id)) return true;
     const rows = [...previous, entry]
       // Random event IDs have no chronological order. Stable sorting preserves arrival
@@ -162,7 +163,7 @@ export class ScanHub extends DurableObject<AppEnv> {
   override async alarm() {
     const ctx = liveContext(this.env);
     const now = ctx.clock.now();
-    const rows = await readRing(this.ctx.storage, now);
+    const rows = await this.scrub(ctx, await readRing(this.ctx.storage, now));
     if (rows.length) await this.ctx.storage.put(RING, rows);
     else await this.ctx.storage.delete(RING);
     for (const socket of this.ctx.getWebSockets()) {
@@ -178,6 +179,34 @@ export class ScanHub extends DurableObject<AppEnv> {
       else await this.schedule(attachment.expiresAt);
     }
     if (rows.length) await this.schedule((rows[0]?.row.at ?? now) + LIVE_ROW_TTL_MS);
+  }
+
+  /**
+   * Strip identity from entries whose pass is no longer visible (deleted, erased, transferred,
+   * released elsewhere) or whose Wallet has expired, so a holder's name does not sit in storage
+   * until the TTL. The redacted event stays.
+   */
+  private async scrub(ctx: ServiceContext, ring: LiveRingRow[]): Promise<LiveRingRow[]> {
+    const tenant = await this.ctx.storage.get<string>('tenant');
+    const [orgId, mode] = tenant?.split(':') ?? [];
+    const withPass = ring.filter((e) => e.gen !== null);
+    if (!orgId || !mode || !withPass.length) return ring;
+    const now = ctx.clock.now();
+    let stale: Set<number>;
+    try {
+      const { results } = await liveRingStaleStmt(ctx.env.DB, orgId, mode, ring).all<{
+        i: number;
+      }>();
+      stale = new Set(results.map((r) => r.i));
+    } catch {
+      ctx.log.warn('scan.live_scrub_failed', { orgId, code: 'SCAN_LIVE_SCRUB_FAILED' });
+      return ring;
+    }
+    return ring.map((e, i) =>
+      e.gen !== null && (stale.has(i) || (e.validUntil !== null && now > e.validUntil))
+        ? scrubbedEntry(e)
+        : e,
+    );
   }
 
   private async schedule(at: number) {

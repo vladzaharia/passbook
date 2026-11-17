@@ -14,7 +14,7 @@ import {
   photoGrantPurpose,
 } from './asset-types.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
-import { pinKeyset } from './keyset-pin.ts';
+import { pinKeysetOrNull } from './keyset-pin.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { assetReadCurrent } from './repo-asset-read.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
@@ -196,7 +196,8 @@ export async function assetGrantValid(
     purpose,
     requirePhoto,
   );
-  if (!verified || snapshot.credentialKeysetCommitment !== (await pinKeyset(pinned))) return false;
+  if (!verified || snapshot.credentialKeysetCommitment !== (await pinKeysetOrNull(pinned)))
+    return false;
   const templates =
     verified.purpose === 'read'
       ? resolveCandidateReadTemplates(snapshot)

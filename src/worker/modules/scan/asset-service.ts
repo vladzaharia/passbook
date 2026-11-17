@@ -15,7 +15,7 @@ import {
   prepareAssetGrantVerification,
 } from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
-import { pinKeyset } from './keyset-pin.ts';
+import { pinKeysetOrNull } from './keyset-pin.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { photoPolicyForResolved } from './member-photo.ts';
 import {
@@ -93,7 +93,7 @@ export async function openScannerAsset(
     const photo =
       name === 'member.png' ||
       (name === 'thumbnail@3x.png' && candidate.assetPhoto?.includeInPass === 1);
-    if (candidate.credentialKeysetCommitment !== (await pinKeyset(ctx))) throw missing();
+    if (candidate.credentialKeysetCommitment !== (await pinKeysetOrNull(ctx))) throw missing();
     const verified = await prepareAssetGrantVerification(
       pinned,
       capturedActor,

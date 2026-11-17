@@ -179,16 +179,16 @@ describe('live identity authority', () => {
     );
     expect(denied).toMatchObject({ passId: pass.id, holder: null, photoUrl: null });
 
-    // The row is re-checked against the recipient, not the source: a source staff member disabled
-    // after the scan does not redact it from the still-authorized monitor.
+    // The source is not re-checked, except for the role a staffless monitor borrows from it: once
+    // that staff member is disabled the borrowed rights end (the row stays, without name or photo).
     await run(
       kit.env.DB,
       'UPDATE scan_staff SET disabled_at = ?, updated_at = updated_at + 1 WHERE id = ?',
       [kit.clock.now(), staff.id],
     );
-    expect((await kit.get(monitor.headers, path)).status).toBe(200);
+    expect((await kit.get(monitor.headers, path)).status).toBe(404);
     expect(
       (await hub().snapshot(monitor.attachment)).rows.find((item) => item.id === event.id),
-    ).toMatchObject({ passId: pass.id, holder: 'Desk Only Member' });
+    ).toMatchObject({ passId: pass.id, holder: null, photoUrl: null });
   });
 });

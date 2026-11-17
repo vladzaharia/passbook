@@ -7,7 +7,7 @@ import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { openMemberPhotoFromSnapshot } from '../passes/member-photo.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
-import { pinKeyset } from './keyset-pin.ts';
+import { pinKeysetOrNull } from './keyset-pin.ts';
 import { liveAttachment, scanHub } from './live.ts';
 import { sealLiveAttachment } from './live-attachment.ts';
 import { prepareLivePhoto } from './live-photo-delivery.ts';
@@ -69,10 +69,11 @@ register(
     const ctx = { ...initial, env: snapshotCredentialEnv(initial.env) };
     const actor = cloneObservedScanActor(scanActorOf(c));
     const missing = () => new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
-    const keyset = await pinKeyset(initial);
+    const keyset = await pinKeysetOrNull(initial);
     if (
-      actor.credentialKeysetCommitment !== undefined &&
-      actor.credentialKeysetCommitment !== keyset
+      keyset === null ||
+      (actor.credentialKeysetCommitment !== undefined &&
+        actor.credentialKeysetCommitment !== keyset)
     )
       throw missing();
     actor.credentialKeysetCommitment = keyset;

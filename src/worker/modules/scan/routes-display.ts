@@ -14,6 +14,7 @@ import { auditStmt } from '../audit/repo.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { capabilityChecks } from '../passes/repo-authority.ts';
 import { activeRelease } from '../templates/releases.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
 import { captureScanEpochs } from './authority-checks.ts';
@@ -74,7 +75,11 @@ register(
     await captureScanEpochs(ctx.env.DB, actor);
     const viewer = await previewActorStmt(
       ctx.env.DB,
-      scanReadAuthority(actor, { now: ctx.clock.now(), templateId }),
+      scanReadAuthority(actor, {
+        now: ctx.clock.now(),
+        templateId,
+        extraChecks: capabilityChecks(previewAuthority),
+      }),
     ).first<{ actor_ok: number }>();
     if (viewer?.actor_ok !== 1) throw new ForbiddenError();
     // Authorized by now, so the credential keyset may be created on first use; then it is pinned.
@@ -171,7 +176,11 @@ register(
     const assertCurrent = async () => {
       const stmt = previewCurrentStmt(
         ctx.env.DB,
-        scanReadAuthority(actor, { now: ctx.clock.now(), templateId }),
+        scanReadAuthority(actor, {
+          now: ctx.clock.now(),
+          templateId,
+          extraChecks: capabilityChecks(previewAuthority),
+        }),
         candidate,
       );
       const row = stmt ? await stmt.first<{ actor_ok: number; pass_ok: number }>() : null;
