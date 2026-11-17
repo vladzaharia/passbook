@@ -110,6 +110,9 @@ describe('deleted passes and orgs keep no sealed copy', () => {
     await makeLegacy(inOrg, inOrgLegacy);
     await run(kit.env.DB, 'DELETE FROM pass_token_seals WHERE pass_id = ?', [inOrg.id]);
     await run(kit.env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [org.id]);
+    // The cursor kept from the earlier tests may sit past these ids (same-millisecond ids on the
+    // fixed clock); the second run wraps it, as production does once a pass reaches the end.
+    await sweep();
     await sweep();
     expect((await column(gone.id))?.auth_token).toBe(await tokenMac(kit.env, 'apple-auth', legacy));
     expect((await seals(gone.id))?.auth).toBe(0);
