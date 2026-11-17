@@ -498,7 +498,7 @@ Between steps 4 and 5 the baseline Worker serves against the new schema. Migrati
 **In-window break: `ensureOrgStmt` and template sync.**
 - The baseline sync batch runs only when the stored build hash differs from the Worker's. The baseline build already synced its own hash, so the old Worker skips the batch for the whole window; the break appears only if a fresh baked build reaches it (a new build hash) or the `templates.baked_hash` system setting is cleared.
 - In that case the batch aborts as a whole (the `orgs` insert hits `orgs.slug`) and the next request retries it. No data is written, so the effect is a delayed baked-template sync, not corruption. The new Worker's `ensureOrgStmt` is `INSERT ... SELECT ... WHERE NOT EXISTS` and is unaffected.
-- Accepted as a known break; `authority-baseline.test.ts` pins both outcomes.
+- Accepted as a known break; `test/cutover/window.test.ts` pins both outcomes.
 
 **Containment:**
 - The window is automated (seconds to minutes).
@@ -592,6 +592,10 @@ WP0 adds `tools/authority-scope.ts`, which re-runs the scan and fails when a new
 | WP7 Scan reads | Appendix A, WP7, via `authorityPredicate`; `0041` retention drops. **Coordination:** W1-17 owns the projection logic in `repo-feed*` (WP7 changes only their authority predicate); W1-13 keeps the backfill logic in `repo-lookup-backfill.ts` and WP7 converts its fence. | revoked actor cannot read feed, live data or assets; cross-mode | sync touch does not blank output; GET issues no writes outside the allowlist |
 | WP9 Scan admin and config writes | Appendix A, WP9: scanners, pairing, devices (P1-3c contract from W1-18 kept), sessions, setups, events, staff (including the W1-15 PIN reset), configuration, workspace report, staff session; retire `scanning_config_revisions` readers | revoked or rotated scanner; cross-org event or staff; name-only PATCH keeps the role (403 `SCREEN_ONLY`) | report and staff sign-in never 409 after commit; config edit returns 409 then refetch, without unpairing |
 | WP8 Cleanup | delete `platform/{sql-balance.ts,sql-tokens.ts}` and `scan/repo-secret-binds.ts`; drop `scanners_credential_revision`; `credentialRefKeysetSql` stays only in `passes/repo-credential-keyset.ts` and wallet providers; `check:rules` blocking | corpus with balancing off | `npm run check` green |
+
+**WP8 status.**
+- Done: `unguarded()` and `inGrant` (template and email-queue writes are `writePart` parts), `repo-releases-active` (`boundHeadPredicateSql` and `effectiveReleaseIdSql`), the `orgAccessRevision` rename, `ScannerRow` epochs on a symbol key, the test-only raw helpers in `test/helpers/org-writes.ts` and `scan/repo-scans-test-support.ts`, and a blocking `RAW_WRITE_ALLOWLIST` (`stale-allowlist`, `allowlist-growth`).
+- Open, one cluster: `sql-balance`, `sql-tokens`, `repo-secret-binds`, `repo-scanner-configuration-scope` and `scanners_credential_revision`. The scan snapshot fences still build deep AND trees and pack binds; with the balancer off, `history-proof-secret-binds`, `scan-hub`, `session-live-source` and `staff-session-inheritance` fail with `Expression tree is too large (maximum depth 100)`. The trigger still backs the `scanner.updatedAt` revision compares in `live-auth`, `counts` and `act-result-authority`. They go together when the scan reads and fences move to epochs.
 
 ### 7.3 Wave-1 reconciliation (M6)
 
@@ -748,7 +752,7 @@ Answers `.wrangler/agent-logs/wp0-review.md`. `0052` and the amendments were una
 | M4 multi-grant batches | One grant per batch unless all share `codes` (`GRANT_BATCH_MIXED`); later grants' checks see earlier grants' writes. |
 | M5 | `Grant.prepare` is private; `prepareGrantForTest` for tests, linted elsewhere. |
 | M6 | `MembershipLiveness`: `via: 'session'` (session hash required) or `via: 'deferred'` (revision required). |
-| M7 | `authority-baseline.test.ts` covers pass create, template upload and sync, scan check-in; the `ensureOrgStmt` break is in section 6.2. |
+| M7 | `authority-baseline.test.ts` covers pass create, template upload and sync, scan check-in; the `ensureOrgStmt` break is pinned in `test/cutover/window.test.ts` (section 6.2). |
 | M8 | `leak_guard NOT NULL` with `CHECK (leak_guard = id)`, so the sentinel key cannot be skipped with NULL. |
 | M9 | Non-partial `template_releases_head` index; `releaseHead` check with org-over-platform and baked precedence. |
 | Minors 1-3 | Re-keying `scanning_devices.scanner_id`, `settings.scope` / `key` and `scan_event_templates` rows bumps old and new owners; `scanning_devices_no_replace`. |
@@ -790,7 +794,7 @@ Tenant authority and W1-10. Fences replaced:
 | `users/repo.ts` `setStatus` | `changes() = 1` chain | `platform.user.disable` / `enable` grant (`setStatusAsAdmin`); disabling cancels the user's scheduled broadcasts, and so does re-enabling |
 | `orgs/repo.ts` `setOrgStatus`, `markOrgDeleted` | none | suspend or delete cancels the org's scheduled broadcasts in the same batch; they stay cancelled on reactivation |
 
-`TenantPassWrite.orgUpdatedAt` and `tenantOrgUpdatedAt` keep their names but carry `access_revision`; WP8 renames them.
+`TenantPassWrite.orgAccessRevision` and `tenantOrgAccessRevision` carry `access_revision` (WP8 renamed them from `orgUpdatedAt` and `tenantOrgUpdatedAt`).
 
 Left for other packages: threading the admin session into `orgs/service.ts` (create, status, delete) and `users` trusted callers; `settings` system-scope writes (`writeSystemValue`, jobs); invitation accept; `broadcasts` is not in Appendix B, so its writes stay raw behind the drop-in; `pass_issuance_deliveries` and import work need their own cancel on user disable (WP3, WP-T); `passes/repo-credential-transfer-source.ts` still compares `o.updated_at` and `o.branding`, so a branding save fails a holder reassign (WP2). Grant batches cannot carry an audit row through the public API: `audit/repo-granted.ts` builds a `GrantedStatement` directly, and a `Grant.audit()` would replace it.
 
