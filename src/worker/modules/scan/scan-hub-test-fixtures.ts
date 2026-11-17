@@ -103,7 +103,7 @@ export async function screen(
 export const hub = () => scanHub(kit.ctx, kit.org.id, 'live');
 export const row = (id: string, more: Partial<ScanLiveRow> = {}): ScanLiveRow => ({
   id: kit.ctx.ids.token(16),
-  at: Date.now(),
+  at: kit.clock.now(),
   scannerId: id,
   scannerName: 'Front door',
   passId: null,
@@ -152,7 +152,12 @@ export const proven = async (
   return entry;
 };
 export const publish = async (body: ScanLiveRow, credentialRefs: readonly string[] = []) =>
-  hub().publish({ orgId: kit.org.id, mode: 'live', row: await proven(body, credentialRefs) });
+  hub().publish({
+    orgId: kit.org.id,
+    mode: 'live',
+    row: await proven(body, credentialRefs),
+    now: kit.clock.now(),
+  });
 export const next = (socket: WebSocket) =>
   new Promise<{ rows: ScanLiveRow[] }>((resolve) =>
     socket.addEventListener('message', (event) => resolve(JSON.parse(String(event.data))), {
@@ -174,7 +179,7 @@ export async function photoFixture() {
   );
   const event = row(source.id, { passId: pass.id });
   await publish(event);
-  const result = (await hub().snapshot(monitor.attachment)).rows.find(
+  const result = (await hub().snapshot(monitor.attachment, undefined, kit.clock.now())).rows.find(
     (item) => item.id === event.id,
   );
   if (!result?.photoUrl) throw new Error('Missing live photo fixture.');

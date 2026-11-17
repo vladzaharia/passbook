@@ -243,7 +243,14 @@ export function publishScan(
       );
       // An evaluated pass that cannot be shown is withheld, not published as a refusal.
       if (!entry) return;
-      if (!(await hub.publish({ orgId: source.orgId, mode: source.mode, row: entry })))
+      if (
+        !(await hub.publish({
+          orgId: source.orgId,
+          mode: source.mode,
+          row: entry,
+          now: ctx.clock.now(),
+        }))
+      )
         throw new Error('SCAN_LIVE_PUBLISH_REJECTED');
     })().catch(() => {
       ctx.log.error('scan.live_publish_failed', {

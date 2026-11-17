@@ -66,7 +66,9 @@ async function fixture(options: FixtureOptions = {}) {
   const event = row(source.id, { passId: pass.id });
   await publish(event);
   const shown = async () =>
-    (await hub().snapshot(monitor.attachment)).rows.find((item) => item.id === event.id);
+    (await hub().snapshot(monitor.attachment, undefined, kit.clock.now())).rows.find(
+      (item) => item.id === event.id,
+    );
   const path = (await shown())?.photoUrl?.replace('/api/v1/scan', '') ?? '';
   const photoStatus = async () => (path ? (await kit.get(monitor.headers, path)).status : 404);
   return { source, monitor, pass, event, shown, path, photoStatus };
@@ -292,7 +294,7 @@ describe('live plain rows', () => {
   });
 
   it('stops showing identity and the photo once the Wallet expiry passes', async () => {
-    const expiry = new Date(kit.clock.now() + 6_000).toISOString();
+    const expiry = new Date(kit.clock.now() + 5_000).toISOString();
     const f = await fixture({
       wallet: async (passId) => {
         await run(
@@ -304,9 +306,8 @@ describe('live plain rows', () => {
     });
     expect(await f.shown()).toMatchObject({ passId: f.pass.id, holder: 'Plain Row Member' });
     expect(await f.photoStatus()).toBe(200);
-    // The hub reads the system clock, the request path the kit's.
+    // The hub reads the clock of the call that reaches it, so the kit clock decides.
     kit.clock.advance(7_000);
-    await new Promise((resolve) => setTimeout(resolve, 7_000));
     expect(await f.shown()).toMatchObject(REDACTED);
     expect(await f.photoStatus()).toBe(404);
   });

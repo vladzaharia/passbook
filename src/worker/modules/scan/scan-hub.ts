@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { problemResponse } from '../../platform/errors.ts';
 import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
@@ -20,8 +21,14 @@ import { staleScanRead } from './stale-read.ts';
 const RING = 'recent';
 
 /** Pin one key ring for every asynchronous live operation. */
-function liveContext(env: AppEnv) {
-  const ctx = createDetachedContext(env);
+function liveContext(env: AppEnv, callerNow?: number) {
+  // The caller's request clock, carried as an offset so time still advances inside the call. A
+  // Durable Object has no request clock of its own; without one it reads the system clock.
+  const offset = callerNow === undefined ? 0 : callerNow - systemClock.now();
+  const ctx = createDetachedContext(
+    env,
+    callerNow === undefined ? {} : { clock: { now: () => systemClock.now() + offset } },
+  );
   return { ...ctx, env: snapshotCredentialEnv(env) };
 }
 
@@ -48,7 +55,11 @@ export class ScanHub extends DurableObject<AppEnv> {
     const raw = request.headers.get('x-pb-live');
     if (!raw || request.headers.get('upgrade')?.toLowerCase() !== 'websocket')
       return new Response(null, { status: 400 });
-    const ctx = liveContext(this.env);
+    const callerNow = Number(request.headers.get('x-pb-now'));
+    const ctx = liveContext(
+      this.env,
+      Number.isSafeInteger(callerNow) && callerNow > 0 ? callerNow : undefined,
+    );
     const attachment = await openLiveAttachment(ctx.env, raw);
     if (!attachment) return new Response(null, { status: 401 });
     const recipient = await liveRecipient(ctx, attachment);
@@ -68,8 +79,14 @@ export class ScanHub extends DurableObject<AppEnv> {
     return new Response(null, { status: 101, webSocket: client });
   }
 
-  async publish(input: { orgId: string; mode: Mode; row: LiveRingRow }): Promise<boolean> {
-    const ctx = liveContext(this.env);
+  async publish(input: {
+    orgId: string;
+    mode: Mode;
+    row: LiveRingRow;
+    /** The caller's clock reading. */
+    now?: number;
+  }): Promise<boolean> {
+    const ctx = liveContext(this.env, input.now);
     const { orgId, mode, row: entry } = input;
     const { row } = entry;
     if (!(await this.tenant(orgId, mode))) return false;
@@ -109,8 +126,8 @@ export class ScanHub extends DurableObject<AppEnv> {
     return true;
   }
 
-  async snapshot(attachment: LiveAttachment, after?: string | null) {
-    const ctx = liveContext(this.env);
+  async snapshot(attachment: LiveAttachment, after?: string | null, now?: number) {
+    const ctx = liveContext(this.env, now);
     return this.snapshotFor(ctx, attachment, after);
   }
 
@@ -134,8 +151,8 @@ export class ScanHub extends DurableObject<AppEnv> {
   }
 
   /** Server-side only: the retained, unexpired ring entry of a live event, for its photo. */
-  async ringRow(eventId: string): Promise<LiveRingRow | null> {
-    const ctx = liveContext(this.env);
+  async ringRow(eventId: string, now?: number): Promise<LiveRingRow | null> {
+    const ctx = liveContext(this.env, now);
     return (
       (await readRing(this.ctx.storage, ctx.clock.now())).find((r) => r.row.id === eventId) ?? null
     );

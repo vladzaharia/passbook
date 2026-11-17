@@ -46,10 +46,11 @@ register(
         throw new ForbiddenError('Open the screen on this site.', 'SCAN_LIVE_ORIGIN');
       const request = new Request(c.req.raw);
       request.headers.set('x-pb-live', await sealLiveAttachment(ctx.env, attachment));
+      request.headers.set('x-pb-now', String(ctx.clock.now()));
       return hub.fetch(request);
     }
     c.header('cache-control', 'no-store');
-    return c.json(await hub.snapshot(attachment, c.req.valid('query').after));
+    return c.json(await hub.snapshot(attachment, c.req.valid('query').after, ctx.clock.now()));
   },
 );
 register(
@@ -82,7 +83,7 @@ register(
     const { event } = c.req.valid('query');
     if (attachment.role !== 'monitor') throw missing();
     const hub = scanHub(ctx, actor.orgId, actor.mode);
-    const entry = await hub.ringRow(event);
+    const entry = await hub.ringRow(event, ctx.clock.now());
     if (!entry || entry.row.passId !== passId) throw missing();
     const prepared = await prepareLivePhoto(ctx, attachment, entry);
     if (!prepared) throw missing();
