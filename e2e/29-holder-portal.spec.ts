@@ -24,7 +24,8 @@ test('holder portal: list shows only my passes, detail opens, self-remove drops 
 
     await page.getByRole('link', { name: mine, exact: true }).click();
     await page.waitForURL((u) => u.pathname === `/passes/${own.id}`);
-    await expect(page.getByRole('heading', { name: mine })).toBeVisible();
+    // The detail route loads its chunk and the pass; on a loaded CI runner that can pass 5 s.
+    await expect(page.getByRole('heading', { name: mine })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('heading', { name: 'Details' })).toBeVisible();
 
     await page.getByRole('button', { name: 'More' }).click();

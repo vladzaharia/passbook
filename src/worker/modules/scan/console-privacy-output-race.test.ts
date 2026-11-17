@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg, runOne } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
+import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import { recordedCheckIn, recordedNoMatch } from './console-privacy-actions-test-fixtures.ts';
 import {
   expectNoSecrets,
@@ -19,75 +20,49 @@ import { startScanCredentialTransfer } from './test-kit.ts';
 
 setupPrivacyKit();
 
+type Surface = 'console' | 'api key' | 'export';
+
+const body = async (surface: Surface, apiKey: Record<string, string>) => {
+  const response =
+    surface === 'console'
+      ? await get(`?orgId=${kit.org.id}`)
+      : surface === 'api key'
+        ? await get('', apiKey)
+        : await get(exportPath());
+  expect(response.status).toBe(200);
+  return response.text();
+};
+
+const csvLines = (text: string) =>
+  text
+    .replace(/^\uFEFF/, '')
+    .trimEnd()
+    .split('\r\n');
+
 describe('scan console and feed privacy', () => {
   it.each(['console', 'api key', 'export'] as const)(
-    'does not expose a ledger row when its scanner becomes foreign during %s output',
+    'does not expose a ledger row when its scanner becomes foreign before %s output, and stops showing it after',
     async (surface) => {
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const row = await recordedNoMatch(scanner);
       const other = await makeOrg(kit.fx);
       const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
-      const db = kit.env.DB;
-      let intercepted = 0;
-      const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-        new Proxy(statement, {
-          get(target, property) {
-            if (property === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
-            if (property === 'all')
-              return async () => {
-                const result = await target.all();
-                if (intercepted === 0) {
-                  intercepted++;
-                  await runOne(db, 'UPDATE scanners SET org_id = ? WHERE id = ?', [
-                    other.id,
-                    scanner.id,
-                  ]);
-                }
-                return result;
-              };
-            const value = Reflect.get(target, property, target);
-            return typeof value === 'function' ? value.bind(target) : value;
-          },
-        });
-      const proxy = new Proxy(db, {
-        get(target, property) {
-          if (property === 'prepare')
-            return (sql: string) => {
-              const statement = target.prepare(sql);
-              return /FROM\s+scans\s+s[\s\S]*ORDER BY s\.at DESC/i.test(sql)
-                ? wrap(statement)
-                : statement;
-            };
-          const value = Reflect.get(target, property, target);
-          return typeof value === 'function' ? value.bind(target) : value;
+      const { result: text, fired } = await beforeBatch(
+        kit.env,
+        /page AS MATERIALIZED/,
+        async (db) => {
+          await runOne(db, 'UPDATE scanners SET org_id = ? WHERE id = ?', [other.id, scanner.id]);
         },
-      });
-      Object.assign(kit.env, { DB: proxy });
-      try {
-        const response =
-          surface === 'console'
-            ? await get(`?orgId=${kit.org.id}`)
-            : surface === 'api key'
-              ? await get('', apiKey)
-              : await get(exportPath());
-        expect(response.status).toBe(200);
-        const body = await response.text();
-        if (surface === 'export') {
-          expect(
-            body
-              .replace(/^\uFEFF/, '')
-              .trimEnd()
-              .split('\r\n'),
-          ).toHaveLength(1);
-          expect(body).not.toContain(new Date(row.at).toISOString());
-        } else {
-          expect(JSON.parse(body)).toMatchObject({ items: [] });
-          expect(body).not.toContain(row.id);
-          expect(body).not.toContain(scanner.id);
-        }
-        expect(intercepted).toBe(1);
-      } finally {
-        Object.assign(kit.env, { DB: db });
+        () => body(surface, apiKey),
+      );
+      expect(fired).toBe(true);
+      if (surface === 'export') {
+        expect(csvLines(text)).toHaveLength(1);
+        expect(text).not.toContain(new Date(row.at).toISOString());
+      } else {
+        expect(JSON.parse(text)).toMatchObject({ items: [] });
+        expect(text).not.toContain(row.id);
+        expect(text).not.toContain(scanner.id);
       }
     },
   );
@@ -103,75 +78,38 @@ describe('scan console and feed privacy', () => {
     ['api key', 'lifecycle'],
     ['export', 'lifecycle'],
   ] as const)(
-    'keeps immutable history redacted during %s output after a %s change',
+    'serves immutable history to %s output after a %s change that came before its page',
     async (surface, change) => {
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const pass = await privatePass();
       const row = await recordedCheckIn(scanner, pass.id);
       const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
-      const db = kit.env.DB;
-      let intercepted = 0;
-      const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-        new Proxy(statement, {
-          get(target, property) {
-            if (property === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
-            if (property === 'all')
-              return async () => {
-                const result = await target.all();
-                if (intercepted === 0) {
-                  intercepted++;
-                  if (change === 'credential') {
-                    expect(await startScanCredentialTransfer(kit, pass.id, { db })).toMatchObject({
-                      state: 'completed',
-                    });
-                  } else {
-                    const mutation =
-                      change === 'voided'
-                        ? "UPDATE passes SET status = 'voided' WHERE id = ?"
-                        : 'UPDATE passes SET lifecycle_generation = lifecycle_generation + 1 WHERE id = ?';
-                    // A pass update also moves row_version; D1 counts trigger changes.
-                    await runOne(db, mutation, [pass.id]);
-                  }
-                }
-                return result;
-              };
-            const value = Reflect.get(target, property, target);
-            return typeof value === 'function' ? value.bind(target) : value;
-          },
-        });
-      const proxy = new Proxy(db, {
-        get(target, property) {
-          if (property === 'prepare')
-            return (sql: string) => {
-              const statement = target.prepare(sql);
-              return /FROM\s+scans\s+s[\s\S]*ORDER BY s\.at DESC/i.test(sql)
-                ? wrap(statement)
-                : statement;
-            };
-          const value = Reflect.get(target, property, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        },
-      });
-      Object.assign(kit.env, { DB: proxy });
-      try {
-        const response =
-          surface === 'console'
-            ? await get(`?orgId=${kit.org.id}`)
-            : surface === 'api key'
-              ? await get('', apiKey)
-              : await get(exportPath());
-        expect(response.status).toBe(200);
-        const body = await response.text();
-        if (surface === 'export') {
-          expect(
-            body
-              .replace(/^\uFEFF/, '')
-              .trimEnd()
-              .split('\r\n'),
-          ).toHaveLength(2);
-          expect(body).toContain(new Date(row.at).toISOString());
+      const mutate = async (db: D1Database) => {
+        if (change === 'credential') {
+          expect(await startScanCredentialTransfer(kit, pass.id, { db })).toMatchObject({
+            state: 'completed',
+          });
         } else {
-          const result = JSON.parse(body) as { items: unknown[] };
+          const mutation =
+            change === 'voided'
+              ? "UPDATE passes SET status = 'voided' WHERE id = ?"
+              : 'UPDATE passes SET lifecycle_generation = lifecycle_generation + 1 WHERE id = ?';
+          // A pass update also moves row_version; D1 counts trigger changes.
+          await runOne(db, mutation, [pass.id]);
+        }
+      };
+      // A lifecycle bump alone does not withdraw history: the event never named it, so a read that
+      // sees the bump is as current as one that does not. Voiding or rotating the credential does.
+      const expectRedacted = (text: string) => {
+        if (change === 'lifecycle') {
+          expect(text).toContain(surface === 'api key' ? pass.id : PUBLIC);
+          return;
+        }
+        if (surface === 'export') {
+          expect(csvLines(text)).toHaveLength(2);
+          expect(text).toContain(new Date(row.at).toISOString());
+        } else {
+          const result = JSON.parse(text) as { items: unknown[] };
           expect(result.items).toHaveLength(1);
           expect(result.items[0]).toMatchObject({
             id: row.id,
@@ -185,13 +123,42 @@ describe('scan console and feed privacy', () => {
             after: null,
           });
         }
-        expectNoSecrets(body, pass);
-        expect(body).not.toContain(pass.id);
-        expect(body).not.toContain(PUBLIC);
-        expect(intercepted).toBe(1);
-      } finally {
-        Object.assign(kit.env, { DB: db });
-      }
+        expectNoSecrets(text, pass);
+        expect(text).not.toContain(pass.id);
+        expect(text).not.toContain(PUBLIC);
+      };
+
+      const before = await beforeBatch(kit.env, /page AS MATERIALIZED/, mutate, () =>
+        body(surface, apiKey),
+      );
+      expect(before.fired).toBe(true);
+      expectRedacted(before.result);
+    },
+  );
+
+  it.each(['console', 'api key', 'export'] as const)(
+    'answers %s output from the page snapshot when the pass changes after it, and redacts the next read',
+    async (surface) => {
+      const scanner = await kit.scanner({ templateIds: [templateId] });
+      const pass = await privatePass();
+      const row = await recordedCheckIn(scanner, pass.id);
+      const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
+      const snapshot = await afterBatch(
+        kit.env,
+        /page AS MATERIALIZED/,
+        async (db) => {
+          await runOne(db, "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]);
+        },
+        () => body(surface, apiKey),
+      );
+      expect(snapshot.fired).toBe(true);
+      // The snapshot still held the live pass: a control that the redaction below is the change.
+      if (surface === 'api key') expect(snapshot.result).toContain(pass.id);
+      if (surface === 'console') expect(snapshot.result).toContain(PUBLIC);
+      const next = await body(surface, apiKey);
+      expect(next).not.toContain(PUBLIC);
+      expect(next).not.toContain(pass.id);
+      expect(next).toContain(surface === 'export' ? new Date(row.at).toISOString() : row.id);
     },
   );
 

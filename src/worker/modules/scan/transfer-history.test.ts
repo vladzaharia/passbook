@@ -22,7 +22,7 @@ import { scannerActor, withRole } from './actor.ts';
 import { createScannerStore } from './auth-store.ts';
 import { scanCredentialKeys } from './credential-input.ts';
 import { getScanner } from './repo-device.ts';
-import { getScanRow } from './repo-feed.ts';
+import { testHistoryProof } from './repo-history-row-test-support.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { searchPasses } from './repo-search.ts';
 import { effects, raceCardHistory } from './repo-transfer-history-test-fixtures.ts';
@@ -156,8 +156,7 @@ describe('provider-backed transfer and scanner history', () => {
     expect(proof.authority).not.toHaveProperty('eventProof');
     expect(event.data).not.toContain(TITLE);
     expect(event.data).not.toContain(OLD_EMAIL);
-    const captured = (await getScanRow(db, scanId, kit.clock.now(), 'live'))?.eventProof;
-    if (!captured) throw new Error('The committed check-in needs its original proof snapshot.');
+    const captured = await testHistoryProof(db, kit.org.id, scanId, kit.clock.now());
     expect(await verifyScanEventProvenance(kit.env, captured.event, captured.scan)).toBe(true);
 
     const beforeCard = await json<ScanOutcome>(

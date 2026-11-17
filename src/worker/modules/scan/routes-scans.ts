@@ -92,7 +92,7 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
       response: z.union([ScanRecordListSchema, ScanFeedSchema]),
     },
     async (c) => {
-      const ctx = credentialKeysetContext(serviceContext(c));
+      const ctx = serviceContext(c);
       const auth = c.var.auth;
       const query = c.req.valid('query');
       const filter = { ...query, mode: modeOf(auth) };
@@ -128,7 +128,7 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
       const { orgId, from, to, ...filter } = c.req.valid('query');
       const session = c.var.auth;
       if (session?.kind !== 'session') throw new UnauthenticatedError();
-      const ctx = credentialKeysetContext(serviceContext(c));
+      const ctx = serviceContext(c);
       const authority = await scanAuthority(ctx, session, orgId, 'scanning:read');
       if (!authority) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
       const out = await exportScans(ctx, session, authority, { orgId, from, to, filter });
@@ -154,7 +154,7 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
     async (c) => {
       const session = c.var.auth;
       if (session?.kind !== 'session') throw new UnauthenticatedError();
-      const ctx = credentialKeysetContext(serviceContext(c));
+      const ctx = serviceContext(c);
       const id = c.req.valid('param').id;
       const scan = await loadUndoRow(ctx, id);
       const authority = await scanAuthority(ctx, session, scan.orgId, 'scanning:read');

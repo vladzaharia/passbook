@@ -2,7 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { first, prefixMatch, type SqlValue } from '../../platform/db.ts';
 import { eventExpectedCountSql } from './repo-counts.ts';
 import { eventArrivedCountSql } from './repo-event-attendance.ts';
-import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
+import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
 import { templateReleaseHeadsSql } from './repo-scope-releases.ts';
 
 type Db = D1Database;
@@ -88,13 +88,6 @@ const eventSelect = (
   FROM scan_events e`;
 
 const SELECT_WITH_COUNT = eventSelect(eventExpectedCountSql('e', '?'), eventArrivedCountSql('e'));
-/**
- * An authorized read splits the occupancy count into its own statement of the same batch: the
- * count is ~20 KB of SQL, and the fence plus the whole select would pass the 32 KB statement
- * budget. Both statements apply the same fence and filter in one transaction.
- */
-const SELECT_ROWS = eventSelect(eventExpectedCountSql('e', '?'), '0');
-const SELECT_ARRIVED = `SELECT e.id, ${eventArrivedCountSql('e')} AS arrived FROM scan_events e`;
 
 const toRow = (r: Raw): ConsoleEventRow => ({
   id: r.id,
@@ -149,7 +142,7 @@ export async function getCommittedConsoleEvent(
   return row ? toRow(row) : null;
 }
 
-/** Rows and their occupancy counts under one fence and filter, in one batch. */
+/** Rows with their occupancy counts under one fence and filter, and whether the fence holds, in one batch. */
 async function readEvents(
   db: Db,
   auth: ScanReadAuthority,
@@ -158,23 +151,13 @@ async function readEvents(
   now: number,
 ): Promise<{ authorized: boolean; rows: ConsoleEventRow[] }> {
   const where = `WHERE ${auth.ok} AND ${auth.tenant('e', 'scan_events')}${filter}`;
-  const [rows, arrived, status] = await db.batch([
-    scanRead(db, auth, `${SELECT_ROWS} ${where}`, [now, ...params]),
-    scanRead(db, auth, `${SELECT_ARRIVED} ${where}`, params),
-    scanRead(db, auth, `SELECT 1 AS ok WHERE ${auth.ok}`),
+  const [rows, status] = await db.batch([
+    scanRead(db, auth, `${SELECT_WITH_COUNT} ${where}`, [now, ...params]),
+    scanAuthorizedStmt(db, auth),
   ]);
-  const counts = new Map(
-    (arrived?.results ?? []).map((r) => {
-      const row = r as unknown as { id: string; arrived: number };
-      return [row.id, row.arrived] as const;
-    }),
-  );
   return {
-    authorized: !!status?.results.length,
-    rows: (rows?.results ?? []).map((r) => {
-      const raw = r as unknown as Raw;
-      return toRow({ ...raw, arrived: counts.get(raw.id) ?? 0 });
-    }),
+    authorized: (status?.results[0] as { authorized: number } | undefined)?.authorized === 1,
+    rows: (rows?.results ?? []).map((r) => toRow(r as unknown as Raw)),
   };
 }
 

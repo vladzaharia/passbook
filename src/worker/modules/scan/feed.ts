@@ -3,7 +3,6 @@ import type { ScanOutcome, ScanRecordDto } from '../../../shared/contracts/index
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { bump, read } from '../../platform/counters.ts';
 import {
-  ConflictError,
   ForbiddenError,
   NotFoundError,
   RateLimitedError,
@@ -11,12 +10,11 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodeConsoleCursor, encodeConsoleCursor } from './console-cursor.ts';
-import { captureCredentialKeyset, credentialKeysetContext } from './credential-keyset-authority.ts';
 import { doorHistories } from './feed-api-door.ts';
-import { currentApiFeedSelection } from './feed-api-page.ts';
 import {
   assertConsoleAuthority,
   captureConsoleFeed,
+  consoleReadAuthority,
   EXPORT_PAGE,
   type RecordCache,
   recordPage,
@@ -26,13 +24,11 @@ import {
   assertFeedKey,
   type ConsoleAuthority,
   type Feed,
-  fenceRecords,
   recordsOf,
   toFeed,
 } from './feed-projection.ts';
-import { createFeedProofCache, verifyRows } from './feed-proof.ts';
+import { checkProvenance, createHistoryEvidenceCache, withKeyset } from './history-row-evidence.ts';
 import {
-  apiKeyFeedGuard,
   auditScanExport,
   countScanRows,
   getApiKeyFeedStatus,
@@ -40,8 +36,8 @@ import {
   getScanRow,
   listScanRows,
   type ScanLogFilter,
-  type ScanLogRow,
 } from './repo-feed.ts';
+import { apiKeyReadAuthority } from './repo-read-authority.ts';
 
 const DAY = 86_400_000;
 export const UNDO_MAX_MS = 30 * DAY;
@@ -70,17 +66,15 @@ export async function listScanRecords(
   authority: ConsoleAuthority,
   filter: ScanLogFilter,
 ) {
-  ctx = credentialKeysetContext(ctx);
-  const { actor, credentialKeysetCommitment } = await captureConsoleFeed(ctx, session, authority);
+  const actor = await captureConsoleFeed(ctx, session, authority);
   return recordPage(ctx, session, authority, filter, {
     actor,
-    proofs: createFeedProofCache(credentialKeysetCommitment),
+    evidence: createHistoryEvidenceCache(),
     operation: 'list',
   });
 }
 
 export async function listScanFeed(ctx: ServiceContext, auth: ApiKeyAuth, filter: ScanLogFilter) {
-  ctx = credentialKeysetContext(ctx);
   if (auth.orgId && filter.orgId && auth.orgId !== filter.orgId) throw new ForbiddenError();
   const now = ctx.clock.now();
   const scoped = { ...filter, orgId: auth.orgId ?? filter.orgId, mode: auth.mode };
@@ -91,89 +85,60 @@ export async function listScanFeed(ctx: ServiceContext, auth: ApiKeyAuth, filter
     filters: scoped,
     operation: 'list' as const,
   };
-  if (scoped.staffId) {
-    if (scoped.cursor !== undefined) await decodeConsoleCursor(ctx, scope, scoped.cursor);
-    assertFeedKey(await getApiKeyFeedStatus(ctx.env.DB, auth, scoped, ctx.clock.now()));
-    return { items: [], nextCursor: null };
-  }
-  const credentialKeysetCommitment = await captureCredentialKeyset(ctx, apiKeyFeedGuard(auth, now));
-  if (!credentialKeysetCommitment) {
-    assertFeedKey(await getApiKeyFeedStatus(ctx.env.DB, auth, scoped, ctx.clock.now()));
-    throw new ForbiddenError();
-  }
-  const proofs = createFeedProofCache(credentialKeysetCommitment);
+  const refused = async () => {
+    assertFeedKey(await getApiKeyFeedStatus(ctx.env.DB, auth, scoped, now));
+  };
   // No raw row id is accepted as a continuation, including for the staff-hidden fast path.
   const position =
     scoped.cursor !== undefined ? await decodeConsoleCursor(ctx, scope, scoped.cursor) : undefined;
-  const base = {
-    ...scoped,
-    passId: undefined,
-    q: undefined,
-    staffId: undefined,
-    cursor: undefined,
-    internalCursor: undefined,
-  };
+  if (scoped.staffId) {
+    await refused();
+    return { items: [], nextCursor: null };
+  }
   const size = Math.min(Math.max(filter.limit + 1, 50), EXPORT_PAGE);
-  const rows = await listScanRows(ctx.env.DB, {
-    ...base,
-    internalCursor: position,
+  const { authorized, rows } = await listScanRows(
+    ctx.env.DB,
+    apiKeyReadAuthority(auth, scoped.orgId, now),
+    {
+      ...scoped,
+      passId: undefined,
+      q: undefined,
+      staffId: undefined,
+      cursor: undefined,
+      internalCursor: position,
+      now,
+      limit: size,
+    },
     now,
-    limit: size,
+  );
+  if (!authorized) {
+    await refused();
+    throw new ForbiddenError();
+  }
+  const cache = createHistoryEvidenceCache();
+  const { checked, door } = await withKeyset(ctx, rows, async () => {
+    const marked = await checkProvenance(ctx, rows, cache);
+    return { checked: marked, door: await doorHistories(ctx, marked, cache) };
   });
-  const verified = await verifyRows(ctx, rows, proofs);
-  const door = await doorHistories(ctx, verified.rows, credentialKeysetCommitment, proofs.events);
-  const pageOf = (selection: { selected: readonly ScanLogRow[]; allowed: ReadonlySet<string> }) => {
-    const byId = new Map(selection.selected.map((row) => [row.id, row]));
-    const visible: Feed[] = [];
-    for (const row of rows) {
-      const authorized = selection.allowed.has(row.id) ? byId.get(row.id) : undefined;
-      if (!authorized) continue;
-      const item = toFeed(authorized, door.get(authorized.id) ?? null);
-      if (
-        (!filter.passId || item.passId === filter.passId) &&
-        (!filter.eventId || item.eventId === filter.eventId) &&
-        (!filter.scannerId || item.scannerId === filter.scannerId) &&
-        (!filter.q || item.passId === filter.q)
-      )
-        visible.push(item);
-    }
-    const items = visible.slice(0, filter.limit);
-    const overflow = visible.length > filter.limit;
-    const boundary = overflow ? items.at(-1) : rows.at(-1);
-    return { items, boundary: boundary && (overflow || rows.length === size) ? boundary : null };
+  const visible: Feed[] = [];
+  for (const row of checked) {
+    const item = toFeed(row, door.get(row.id) ?? null);
+    if (
+      (!filter.passId || item.passId === filter.passId) &&
+      (!filter.eventId || item.eventId === filter.eventId) &&
+      (!filter.scannerId || item.scannerId === filter.scannerId) &&
+      (!filter.q || item.passId === filter.q)
+    )
+      visible.push(item);
+  }
+  const items = visible.slice(0, filter.limit);
+  const overflow = visible.length > filter.limit;
+  const boundary = overflow ? items.at(-1) : rows.at(-1);
+  if (!boundary || !(overflow || rows.length === size)) return { items, nextCursor: null };
+  return {
+    items,
+    nextCursor: await encodeConsoleCursor(ctx, scope, { at: boundary.at, id: boundary.id }),
   };
-  const current = await currentApiFeedSelection(
-    ctx,
-    auth,
-    base,
-    verified.rows,
-    verified.passless,
-    credentialKeysetCommitment,
-  );
-  const page = pageOf(current);
-  const boundary = page.boundary;
-  if (!boundary) return { items: page.items, nextCursor: null };
-  const nextCursor = await encodeConsoleCursor(ctx, scope, {
-    at: boundary.at,
-    id: boundary.id,
-  });
-  const boundaryRow = rows.find((row) => row.id === boundary.id && row.at === boundary.at);
-  if (!boundaryRow)
-    throw new ConflictError('Scan history changed. Reload and retry.', 'SCAN_HISTORY_CHANGED');
-  const final = pageOf(
-    await currentApiFeedSelection(
-      ctx,
-      auth,
-      base,
-      current.selected,
-      verified.passless,
-      credentialKeysetCommitment,
-      boundaryRow,
-    ),
-  );
-  if (final.boundary && (final.boundary.id !== boundary.id || final.boundary.at !== boundary.at))
-    throw new ConflictError('Scan history changed. Reload and retry.', 'SCAN_HISTORY_CHANGED');
-  return { items: final.items, nextCursor: final.boundary ? nextCursor : null };
 }
 
 /** Undo delegates its authority checks and needs no pass-derived log fields. */
@@ -189,33 +154,19 @@ export async function scanRecord(
   authority: ConsoleAuthority,
   id: string,
 ): Promise<ScanRecordDto> {
-  ctx = credentialKeysetContext(ctx);
-  const { actor, credentialKeysetCommitment } = await captureConsoleFeed(ctx, session, authority);
-  const proofs = createFeedProofCache(credentialKeysetCommitment);
-  const row = await getScanRow(ctx.env.DB, id, ctx.clock.now(), authority.mode);
-  if (!row || row.orgId !== authority.orgId)
-    throw new NotFoundError('Scan not found.', 'SCAN_NOT_FOUND');
-  const verified = await verifyRows(ctx, [row], proofs);
-  const records = await recordsOf(
-    ctx,
-    session,
-    authority,
-    credentialKeysetCommitment,
-    verified.rows,
-    proofs.events,
-    verified.passless,
-    actor,
+  const actor = await captureConsoleFeed(ctx, session, authority);
+  const now = ctx.clock.now();
+  const { authorized, rows } = await getScanRow(
+    ctx.env.DB,
+    consoleReadAuthority(ctx, actor),
+    id,
+    now,
   );
-  let record: ScanRecordDto | undefined;
-  try {
-    record = (await fenceRecords(ctx, credentialKeysetCommitment, records, actor))[0]?.record;
-  } catch (error) {
-    if (error instanceof ForbiddenError)
-      throw new NotFoundError('Scan not found.', 'SCAN_NOT_FOUND');
-    throw error;
-  }
-  if (!record) throw new NotFoundError('Scan not found.', 'SCAN_NOT_FOUND');
-  return record;
+  const [projected] = authorized
+    ? await recordsOf(ctx, rows, actor, createHistoryEvidenceCache())
+    : [];
+  if (!projected) throw new NotFoundError('Scan not found.', 'SCAN_NOT_FOUND');
+  return projected.record;
 }
 
 export interface ExportRequest {
@@ -235,10 +186,9 @@ export async function exportScans(
   authority: ConsoleAuthority,
   req: ExportRequest,
 ): Promise<{ name: string; body: ReadableStream<Uint8Array> }> {
-  ctx = credentialKeysetContext(ctx);
   if (req.to <= req.from || req.to - req.from > EXPORT_MAX_RANGE_MS)
     throw new ValidationError('Export up to 92 days at a time.', [], 'SCAN_EXPORT_RANGE');
-  const { actor, credentialKeysetCommitment } = await captureConsoleFeed(ctx, session, authority);
+  const actor = await captureConsoleFeed(ctx, session, authority);
   const now = ctx.clock.now();
   const filter: ScanLogFilter = {
     ...req.filter,
@@ -251,7 +201,7 @@ export async function exportScans(
   };
   const cache: RecordCache = {
     actor,
-    proofs: createFeedProofCache(credentialKeysetCommitment),
+    evidence: createHistoryEvidenceCache(),
     operation: 'export',
   };
   const exportKey = `scan:export:${session.userId}`;
@@ -259,8 +209,12 @@ export async function exportScans(
   const limited = () => new RateLimitedError(Math.ceil((hour + 3_600_000 - now) / 1000));
   // Read first so a user over the cap costs no scan; count the export only once it will run.
   if ((await read(ctx.env.DB, exportKey, hour)) >= EXPORTS_PER_HOUR) throw limited();
+  // A pass or title search pages through unfiltered scans to count: it is charged before it runs,
+  // so a request that never finishes counting still spends the hour's cap.
+  const searched = !!(filter.q || filter.passId);
+  if (searched && (await bump(ctx.env.DB, exportKey, hour)) > EXPORTS_PER_HOUR) throw limited();
   let rows = 0;
-  if (filter.q || filter.passId || filter.eventId || filter.scannerId || filter.staffId) {
+  if (searched || filter.eventId || filter.scannerId || filter.staffId) {
     let cursor: string | undefined;
     do {
       const page = await recordPage(ctx, session, authority, { ...filter, cursor }, cache);
@@ -268,12 +222,19 @@ export async function exportScans(
       cursor = page.nextCursor ?? undefined;
     } while (cursor && rows <= EXPORT_MAX_ROWS);
   } else {
-    rows = await countScanRows(ctx.env.DB, filter, EXPORT_MAX_ROWS);
+    const counted = await countScanRows(
+      ctx.env.DB,
+      consoleReadAuthority(ctx, actor),
+      filter,
+      EXPORT_MAX_ROWS,
+    );
+    if (!counted.authorized) throw new ForbiddenError();
+    rows = counted.n;
   }
-  await assertConsoleAuthority(ctx, actor, credentialKeysetCommitment);
+  await assertConsoleAuthority(ctx, actor);
   if (rows > EXPORT_MAX_ROWS)
     throw new ValidationError('Export up to 100,000 scans at a time.', [], 'SCAN_EXPORT_TOO_LARGE');
-  if ((await bump(ctx.env.DB, exportKey, hour)) > EXPORTS_PER_HOUR) throw limited();
+  if (!searched && (await bump(ctx.env.DB, exportKey, hour)) > EXPORTS_PER_HOUR) throw limited();
   // Last before streaming: the grant re-checks session, membership and org, and the stream's first pull checks the console guard.
   await auditScanExport(ctx, authority, { from: req.from, to: req.to, rows });
   const encoder = new TextEncoder();
@@ -285,7 +246,7 @@ export async function exportScans(
     body: new ReadableStream<Uint8Array>({
       async pull(controller) {
         if (!started) {
-          await assertConsoleAuthority(ctx, actor, credentialKeysetCommitment);
+          await assertConsoleAuthority(ctx, actor);
           started = true;
           controller.enqueue(encoder.encode(`﻿${csvRow(EXPORT_COLUMNS)}`));
           return;

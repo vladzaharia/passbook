@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
-import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { buildKey as templateBuildKey } from '../templates/package/hash.ts';
 import { scanSessionCsrfProof } from './actor.ts';
+import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import { recordedCheckIn } from './console-privacy-actions-test-fixtures.ts';
 import {
   adminSessionId,
@@ -25,8 +25,9 @@ import {
   setupPrivacyKit,
   templateId,
 } from './console-privacy-test-fixtures.ts';
+import { captureConsoleFeed, consoleReadAuthority } from './feed-console-page.ts';
 import { recordsOf } from './feed-projection.ts';
-import { createFeedProofCache, verifyRows } from './feed-proof.ts';
+import { createHistoryEvidenceCache } from './history-row-evidence.ts';
 import { getScanRow } from './repo-feed.ts';
 import { grantScanMembership, ORIGIN } from './test-kit.ts';
 
@@ -210,118 +211,88 @@ describe('scan console and feed privacy', () => {
     const authority = await tenantAuthorityOf(kit.ctx, auth, kit.org.id, 'scanning:read');
     if (authority.kind !== 'session')
       throw new Error('The console authority must be session-backed.');
-    const row = await getScanRow(kit.env.DB, scan.id, kit.clock.now(), 'live');
-    if (!row) throw new Error('The recorded scan must be available.');
-    const keyset = await requireCredentialRefKeyset(kit.env.DB, kit.env);
-    // Rows reach the projection only after their recorded facts are checked, as in the feed.
-    const verified = await verifyRows(kit.ctx, [row], createFeedProofCache(keyset));
-    const [projection] = await recordsOf(kit.ctx, auth, authority, keyset, verified.rows);
-    if (!projection?.snapshot.actor.tenantAuthority)
-      throw new Error('The projection must capture its tenant actor.');
-    expect(projection.record).toMatchObject({ id: scan.id, passId: pass.id, passTitle: PUBLIC });
-    const proof = projection.snapshot.actor.tenantAuthority.sessionCsrfProof;
+    const actor = await captureConsoleFeed(kit.ctx, auth, authority);
+    const { authorized, rows } = await getScanRow(
+      kit.env.DB,
+      consoleReadAuthority(kit.ctx, actor),
+      scan.id,
+      kit.clock.now(),
+    );
+    expect(authorized).toBe(true);
+    const [projection] = await recordsOf(kit.ctx, rows, actor, createHistoryEvidenceCache());
+    expect(projection?.record).toMatchObject({ id: scan.id, passId: pass.id, passTitle: PUBLIC });
+    const proof = actor.tenantAuthority?.sessionCsrfProof;
     expect(proof).toBe(await scanSessionCsrfProof(kit.env, auth.sessionId, auth.csrfSecret));
     const otherSessionId = await hashSessionCookie(other.cookieValue);
     expect(otherSessionId).not.toBe(auth.sessionId);
     expect(proof).not.toBe(await scanSessionCsrfProof(kit.env, otherSessionId, auth.csrfSecret));
-    expect(JSON.stringify(projection.snapshot.actor)).not.toContain(auth.csrfSecret);
+    expect(JSON.stringify(actor)).not.toContain(auth.csrfSecret);
   });
 
+  /*
+   * A read answers from one snapshot. A change before the page statement is a refusal; a change after
+   * it leaves the answer the snapshot gave, and the next request is refused.
+   */
   it.each([
-    ['list', 'csrf rotation'],
-    ['detail', 'csrf rotation'],
-    ['list', 'revocation'],
-    ['detail', 'revocation'],
+    ['list', 'before', 403],
+    ['detail', 'before', 404],
+    ['list', 'after', 200],
+    ['detail', 'after', 200],
   ] as const)(
-    'keeps console %s authority current after session %s races selection',
-    async (surface, change) => {
+    'serves %s from one snapshot when the session is revoked %s the read',
+    async (surface, when, status) => {
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const pass = await privatePass();
       const scan = await recordedCheckIn(scanner, pass.id);
       const path = surface === 'list' ? `?orgId=${kit.org.id}` : `/${scan.id}`;
+      const expected = { id: scan.id, passId: pass.id, passTitle: PUBLIC, actionId: 'check_in' };
       const baseline = await get(path);
       expect(baseline.status).toBe(200);
-      const expected = { id: scan.id, passId: pass.id, passTitle: PUBLIC, actionId: 'check_in' };
       expect(await baseline.json()).toMatchObject(
         surface === 'list' ? { items: [expected] } : expected,
       );
-      const db = kit.env.DB;
-      const original = await first<{ csrf_secret: string }>(
-        db,
-        'SELECT csrf_secret FROM sessions WHERE id_hash = ?',
-        [adminSessionId],
-      );
-      if (!original) throw new Error('The original console session must exist.');
-      let intercepted = 0;
-      const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-        new Proxy(statement, {
-          get(target, property) {
-            if (property === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
-            if (property === (surface === 'list' ? 'all' : 'first'))
-              return async () => {
-                const result = surface === 'list' ? await target.all() : await target.first();
-                if (intercepted === 0) {
-                  intercepted++;
-                  if (change === 'csrf rotation') {
-                    await expect(
-                      run(db, 'UPDATE sessions SET csrf_secret = ? WHERE id_hash = ?', [
-                        'replacement-csrf-secret',
-                        adminSessionId,
-                      ]),
-                    ).rejects.toThrow('session csrf secret is immutable');
-                  } else {
-                    expect(
-                      await run(db, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
-                        kit.clock.now(),
-                        adminSessionId,
-                      ]),
-                    ).toEqual({ changes: 1 });
-                  }
-                }
-                return result;
-              };
-            const value = Reflect.get(target, property, target);
-            return typeof value === 'function' ? value.bind(target) : value;
-          },
-        });
-      const proxy = new Proxy(db, {
-        get(target, property) {
-          if (property === 'prepare')
-            return (sql: string) => {
-              const statement = target.prepare(sql);
-              const select =
-                surface === 'list'
-                  ? /FROM\s+scans\s+s[\s\S]*ORDER BY s\.at DESC/i
-                  : /FROM\s+scans\s+s[\s\S]*WHERE\s+s\.id\s*=\s*\?/i;
-              return select.test(sql) ? wrap(statement) : statement;
-            };
-          const value = Reflect.get(target, property, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        },
-      });
-      Object.assign(kit.env, { DB: proxy });
-      try {
-        const response = await get(path);
-        const body = await response.text();
-        expect(intercepted).toBe(1);
+      const revoke = async (db: D1Database) => {
         expect(
-          await first(db, 'SELECT csrf_secret FROM sessions WHERE id_hash = ?', [adminSessionId]),
-        ).toEqual(original);
-        if (change === 'csrf rotation') {
-          expect(response.status).toBe(200);
-          expect(JSON.parse(body)).toMatchObject(
-            surface === 'list' ? { items: [expected] } : expected,
-          );
-        } else {
-          expect(response.status).toBe(surface === 'list' ? 403 : 404);
-          expect(body).not.toContain(scan.id);
-          expect(body).not.toContain(pass.id);
-          expect(body).not.toContain(PUBLIC);
-          expectNoSecrets(body, pass);
-        }
-      } finally {
-        Object.assign(kit.env, { DB: db });
+          await run(db, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
+            kit.clock.now(),
+            adminSessionId,
+          ]),
+        ).toEqual({ changes: 1 });
+      };
+      const match = /page AS MATERIALIZED/;
+      const { result: response, fired } = await (when === 'before' ? beforeBatch : afterBatch)(
+        kit.env,
+        match,
+        revoke,
+        () => get(path),
+      );
+      expect(fired).toBe(true);
+      const body = await response.text();
+      expect(response.status).toBe(status);
+      if (when === 'before') {
+        expect(body).not.toContain(scan.id);
+        expect(body).not.toContain(pass.id);
+        expect(body).not.toContain(PUBLIC);
+        expectNoSecrets(body, pass);
+      } else {
+        expect(JSON.parse(body)).toMatchObject(
+          surface === 'list' ? { items: [expected] } : expected,
+        );
+        expect((await get(path)).status).toBe(401);
       }
     },
   );
+
+  it('rejects a session csrf rotation, so the secret a read captured stays the secret', async () => {
+    const scanner = await kit.scanner({ templateIds: [templateId] });
+    const pass = await privatePass();
+    await recordedCheckIn(scanner, pass.id);
+    await expect(
+      run(kit.env.DB, 'UPDATE sessions SET csrf_secret = ? WHERE id_hash = ?', [
+        'replacement-csrf-secret',
+        adminSessionId,
+      ]),
+    ).rejects.toThrow('session csrf secret is immutable');
+    expect((await get(`?orgId=${kit.org.id}`)).status).toBe(200);
+  });
 });
