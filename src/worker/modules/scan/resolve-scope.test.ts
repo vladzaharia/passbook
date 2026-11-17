@@ -186,8 +186,8 @@ describe('misses', () => {
 });
 
 describe('resolve: projection revalidation', () => {
-  it.each(['pass', 'snapshot', 'scanner', 'template', 'release-adapter', 'release'] as const)(
-    'does not disclose a card when %s changes after the card read',
+  it.each(['pass', 'void', 'scanner', 'template', 'release-adapter', 'release'] as const)(
+    'answers the card read for a %s change after it, as the fence allows',
     async (change) => {
       const templateId = await kit.scanTemplate('Resolve race', { actions: [CHECK_IN] });
       const pass = await kit.scanPass(
@@ -231,10 +231,10 @@ describe('resolve: projection revalidation', () => {
                     'UPDATE passes SET link_generation=link_generation+1 WHERE id=?',
                     [pass.id],
                   );
-                else if (change === 'snapshot')
+                else if (change === 'void')
                   await run(
                     target,
-                    "UPDATE pass_versions SET pass_json=json_set(pass_json,'$.voided',json('true')) WHERE pass_id=?",
+                    "UPDATE passes SET status='voided', lifecycle_generation=lifecycle_generation+1 WHERE id=?",
                     [pass.id],
                   );
                 else if (change === 'scanner')
@@ -274,8 +274,9 @@ describe('resolve: projection revalidation', () => {
         Object.assign(kit.env, { DB: real });
       }
       expect(raced).toBe(true);
-      if (change === 'release') {
-        // Identical to the pass's own release: nothing a scanner sees or may do changed.
+      if (change === 'release' || change === 'pass') {
+        // Identical to the pass's own release, or a link generation: content, not authority. The card
+        // is the one the read saw; the next read shows the change.
         expect(response).toMatchObject({ status: 200, out: { kind: 'ready' } });
         return;
       }

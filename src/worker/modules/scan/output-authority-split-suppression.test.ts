@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
+import { racedResolve } from './output-authority-raced-resolve-test-fixtures.ts';
 import {
   changeAfterProjection,
   fixture,
   kit,
   noDisclosure,
-  racedResolve,
   raceFence,
   templateId,
 } from './repo-output-authority-split-test-fixtures.ts';
@@ -133,14 +133,27 @@ describe('atomic scanner response authority', () => {
     }
   });
 
-  it.each([
-    'scanner',
-    'wallet-personalization',
-    'identity-aba',
-    'credential-generation',
-    'lifecycle-generation',
-    'release-adapter',
-  ] as const)(
+  it.each(['wallet-personalization', 'identity-aba'] as const)(
+    'lists the item the read matched when only content (%s) changes during the audit',
+    async (change) => {
+      const f = await fixture({ photo: true });
+      const real = kit.env.DB;
+      const race = raceFence(real, () => changeAfterProjection(f, real, change), 2);
+      Object.assign(kit.env, { DB: race.db });
+      try {
+        const response = await kit.post(f.scanner.headers, '/lookup', { q: f.pass.id });
+        expect(race.fired()).toBe(true);
+        expect(response.status).toBe(200);
+        expect((await response.json()) as { items: unknown[] }).toMatchObject({
+          items: [{ passId: f.pass.id }],
+        });
+      } finally {
+        Object.assign(kit.env, { DB: real });
+      }
+    },
+  );
+
+  it.each(['scanner', 'credential-generation', 'lifecycle-generation', 'release-adapter'] as const)(
     'rechecks actor and source together after lookup auditing when %s changes',
     async (change) => {
       const f = await fixture({ photo: true, olderAdapter: change === 'release-adapter' });
@@ -215,7 +228,7 @@ describe('atomic scanner response authority', () => {
     },
   );
 
-  it('does not return an item after its exact lookup key is revoked during audit', async () => {
+  it('lists the item its exact lookup key matched when the key changes during the audit, and not on the next read', async () => {
     const memberNo = 'REVOKED-OUTPUT-KEY';
     const f = await fixture({ memberNo });
     if (!f.candidate.lookupHash) throw new Error('Missing lookup key.');
@@ -230,33 +243,13 @@ describe('atomic scanner response authority', () => {
     try {
       const response = await kit.post(f.scanner.headers, '/lookup', { q: memberNo });
       expect(race.fired()).toBe(true);
-      const text = await response.text();
-      expect(JSON.parse(text)).toEqual({ items: [], more: false });
-      noDisclosure(text, f.pass.id);
+      // The key is derived from content: the answer is the read's own.
+      expect(await response.json()).toMatchObject({ items: [{ passId: f.pass.id }] });
     } finally {
       Object.assign(kit.env, { DB: real });
     }
-  });
-
-  it('does not return an item after an unversioned initial lookup-key backfill during audit', async () => {
-    const f = await fixture();
-    expect(f.candidate.lookupHash).toBeNull();
-    const real = kit.env.DB;
-    const race = raceFence(
-      real,
-      () => run(real, 'UPDATE passes SET lookup_hash=? WHERE id=?', ['f'.repeat(64), f.pass.id]),
-      2,
-    );
-    Object.assign(kit.env, { DB: race.db });
-    try {
-      const response = await kit.post(f.scanner.headers, '/lookup', { q: f.pass.id });
-      expect(race.fired()).toBe(true);
-      const text = await response.text();
-      expect(JSON.parse(text)).toEqual({ items: [], more: false });
-      noDisclosure(text, f.pass.id);
-    } finally {
-      Object.assign(kit.env, { DB: real });
-    }
+    const next = await kit.post(f.scanner.headers, '/lookup', { q: memberNo });
+    expect(await next.json()).toEqual({ items: [], more: false });
   });
 
   it('filters only the stale member from a multi-item lookup at one final snapshot', async () => {
@@ -264,7 +257,7 @@ describe('atomic scanner response authority', () => {
     const a = await fixture({ memberName: pairName });
     const b = await fixture({ memberName: pairName });
     const real = kit.env.DB;
-    const race = raceFence(real, () => changeAfterProjection(a, real, 'wallet-personalization'), 2);
+    const race = raceFence(real, () => changeAfterProjection(a, real, 'lifecycle-generation'), 2);
     Object.assign(kit.env, { DB: race.db });
     try {
       const response = await kit.post(a.scanner.headers, '/lookup', { q: pairName });

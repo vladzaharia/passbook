@@ -84,19 +84,20 @@ describe('lookup output authority', () => {
     const real = kit.env.DB;
     const barcodeHash = await barcodeHashOfCode(cleanCode(target.scanCode!));
     let changed = false;
-    const { db } = interceptBatches(real, async (sql) => {
-      if (
-        !changed &&
-        sql.some((text) => text.includes('AS authorized')) &&
-        !sql.some((text) => text.includes('INSERT INTO credential_ref_keyset'))
-      ) {
-        changed = true;
-        await run(real, 'UPDATE passes SET barcode_hash=?,revision=revision+1 WHERE id=?', [
-          barcodeHash,
-          live.id,
-        ]);
-      }
-    });
+    // The answer's own read: the actor, the retired refs and the absence of a same-mode match.
+    const { db } = interceptBatches(
+      real,
+      async (sql) => {
+        if (!changed && sql.some((text) => text.includes('SELECT 1 AS ok FROM actor_ok'))) {
+          changed = true;
+          await run(real, 'UPDATE passes SET barcode_hash=?,revision=revision+1 WHERE id=?', [
+            barcodeHash,
+            live.id,
+          ]);
+        }
+      },
+      { singles: true },
+    );
     const ctx = { ...kit.ctx, env: { ...kit.env, DB: db } };
     overrideDeps(ctx.env, depsOf(kit.env));
     const result = await resolveOutcome(ctx, actor, resolveRequest(target.scanCode!));
@@ -124,19 +125,20 @@ describe('lookup output authority', () => {
     );
     const real = kit.env.DB;
     const barcodeHash = await barcodeHashOfCode(cleanCode(wrong.scanCode!));
-    let candidateBatch = false;
     let changed = false;
-    const { db } = interceptBatches(real, async (sql) => {
-      if (sql.some((text) => text.includes('INSERT INTO credential_ref_keyset')))
-        candidateBatch = true;
-      else if (candidateBatch && !changed && sql.some((text) => text.includes('AS authorized'))) {
-        changed = true;
-        await run(real, 'UPDATE passes SET barcode_hash=?,revision=revision+1 WHERE id=?', [
-          barcodeHash,
-          accepted.id,
-        ]);
-      }
-    });
+    const { db } = interceptBatches(
+      real,
+      async (sql) => {
+        if (!changed && sql.some((text) => text.includes('SELECT 1 AS ok FROM actor_ok'))) {
+          changed = true;
+          await run(real, 'UPDATE passes SET barcode_hash=?,revision=revision+1 WHERE id=?', [
+            barcodeHash,
+            accepted.id,
+          ]);
+        }
+      },
+      { singles: true },
+    );
     const ctx = { ...kit.ctx, env: { ...kit.env, DB: db } };
     overrideDeps(ctx.env, depsOf(kit.env));
     const result = await resolveOutcome(ctx, actor, resolveRequest(wrong.scanCode!));
@@ -185,8 +187,9 @@ describe('lookup output authority', () => {
     );
     expect(bootstrap).toBeDefined();
     expect(bootstrap?.some((sql) => sql.includes('FROM passes p JOIN templates t'))).toBe(true);
+    // The first initialization is guarded by the actor's read authority, in the same batch.
     expect(bootstrap?.find((sql) => sql.includes('INSERT INTO credential_ref_keyset'))).toContain(
-      'csrf_actor_scanner',
+      'FROM actor_ok',
     );
     expect(await first(real, 'SELECT commitment FROM credential_ref_keyset WHERE id=1')).toEqual({
       commitment: actor.credentialKeysetCommitment,
@@ -221,8 +224,9 @@ describe('lookup output authority', () => {
           sql.includes('credential_keyset.commitment AS credential_keyset_commitment'),
       ),
     ).toBe(true);
+    // The first initialization is guarded by the actor's read authority, in the same batch.
     expect(bootstrap?.find((sql) => sql.includes('INSERT INTO credential_ref_keyset'))).toContain(
-      'csrf_actor_scanner',
+      'FROM actor_ok',
     );
     expect(await first(real, 'SELECT commitment FROM credential_ref_keyset WHERE id=1')).toEqual({
       commitment: result.credentialContext?.credentialKeysetCommitment,

@@ -1,19 +1,13 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound } from '../passes/builder.ts';
-import { type ActorCsrfSnapshot, actorCsrfSnapshotFence } from './actor-csrf.ts';
 import { takeAssetGrantToken } from './asset-sidecar.ts';
 import type { CardRead } from './card.ts';
 import type { ScanActor } from './guard.ts';
-import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
+import { type PreparedPhotoGrant, photoGrantUrl, scannerPassActive } from './member-photo.ts';
 import { outputPredicateStmt } from './repo-output-predicates.ts';
-import {
-  currentFoundActorStmt,
-  currentFoundExtra,
-  currentFoundTemplate,
-  headMoved,
-  passChanged,
-} from './repo-resolve-outcome-current.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
+import { passAnswerFence, underAuthority } from './repo-read-fences.ts';
+import { headMoved, passChanged } from './repo-resolve-outcome-current.ts';
 import type { Found } from './resolve.ts';
 import type { DisplayHistoryPlan, FinalizedDisplayHistory } from './scan-display-history.ts';
 
@@ -22,7 +16,6 @@ async function currentFoundRead(
   actor: ScanActor,
   found: Found,
   displayHistory: DisplayHistoryPlan,
-  csrfSnapshot: ActorCsrfSnapshot,
   photoGrant: PreparedPhotoGrant | null,
   historyFence?: CardRead['historyFence'],
   passViewGrant?: CardRead['passViewGrant'],
@@ -35,47 +28,23 @@ async function currentFoundRead(
   try {
     const original = found.liveCandidate;
     if (!original) return null;
-    const template = currentFoundTemplate(original);
-    if (!template) return null;
     const now = ctx.clock.now();
-    const csrf = actorCsrfSnapshotFence(
-      actor,
-      csrfSnapshot.session
-        ? { ...csrfSnapshot, session: { ...csrfSnapshot.session, now } }
-        : csrfSnapshot,
-    );
-    if (!csrf) return null;
-    const predicate = outputAuthorityPredicate({
-      actor,
-      now,
-      event: found.admission?.event ?? actor.event,
-      templateId: found.pass.templateId,
-      credentialTombstoneRefs: found.credentialTombstoneRefs,
-      credentialKeysetCommitment: found.credentialKeysetCommitment,
-      pass: original.pass,
-      connectionGeneration: found.connectionGeneration,
-      activeTemplateVersion: found.activeVersion,
-      orgRevision: found.orgRevision,
-      templateRevision: found.templateRevision,
-      release: found,
-      displayTemplateVersion: found.displayTemplateVersion,
-      checkInRules: found.checkInRules,
-      lookupHash: original.lookupHash,
-      requireActive: true,
-      requirePhoto: !!photoGrant,
-      extra: currentFoundExtra(csrf, template),
+    // The pass is still the one the answer was read from, under the actor's authority now.
+    const fence = passAnswerFence(actor, original, {
+      photo: !!photoGrant,
+      refs: found.credentialTombstoneRefs,
     });
-    const bound = displayHistory.bind(now, predicate);
+    if (!fence) return null;
+    const auth = scanReadAuthority(actor, { now, event: found.admission?.event ?? null });
+    const bound = displayHistory.bind(now, underAuthority(auth, fence));
     const cardFence = historyFence ? outputPredicateStmt(ctx.env.DB, historyFence) : null;
     const results = await ctx.env.DB.batch<Record<string, unknown>>([
       ...bound.stmts,
       ...(cardFence ? [cardFence] : []),
-      currentFoundActorStmt(ctx.env.DB, csrf),
     ]);
-    const csrfIndex = bound.stmts.length + (cardFence ? 1 : 0);
-    if (results[csrfIndex]?.results?.[0]?.actor_authorized !== 1) return null;
     const history = bound.finalize(results.slice(0, bound.stmts.length));
-    if (!history) return null;
+    // A Wallet that expired by the final clock is no longer a pass to show.
+    if (!history || !scannerPassActive(original, found.passJson, now)) return null;
     const passViewToken = passViewGrant ? takeAssetGrantToken(passViewGrant) : null;
     if (passViewGrant && !passViewToken) return null;
     const photoUrl = photoGrant ? photoGrantUrl(actor, original.pass.id, photoGrant.grant) : null;
@@ -98,7 +67,6 @@ export async function currentFound(
   actor: ScanActor,
   found: Found,
   displayHistory: DisplayHistoryPlan,
-  csrfSnapshot: ActorCsrfSnapshot,
   photoGrant: PreparedPhotoGrant | null,
   historyFence?: CardRead['historyFence'],
   passViewGrant?: CardRead['passViewGrant'],
@@ -108,7 +76,6 @@ export async function currentFound(
     actor,
     found,
     displayHistory,
-    csrfSnapshot,
     photoGrant,
     historyFence,
     passViewGrant,

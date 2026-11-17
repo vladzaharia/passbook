@@ -280,7 +280,7 @@ describe('provider-backed transfer and scanner history', () => {
       await proofedScanActor(kit.ctx, scannerActor(kit.ctx, scannerRow, 'live', 'cookie', scope)),
       null,
     );
-    const { credentialTombstoneRefs, credentialKeysetCommitment } = await scanCredentialKeys(
+    const { credentialTombstoneRefs } = await scanCredentialKeys(
       kit.env,
       actor.orgId,
       actor.mode,
@@ -296,7 +296,6 @@ describe('provider-backed transfer and scanner history', () => {
       kit.clock.now(),
       0,
       credentialTombstoneRefs,
-      credentialKeysetCommitment,
     );
     expect(candidates.map((row) => row.id)).toEqual([other.id]);
     const pendingLookup = await json<{ items: { passId: string }[] }>(await lookup());

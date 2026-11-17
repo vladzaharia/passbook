@@ -1,11 +1,12 @@
 /**
  * The last batch of a read: the output fences that decide what the answer discloses. A resolve ends in
- * the actor check of `currentFoundActorStmt`; a lookup ends in the batch that reads the passes' heads.
+ * the history bind whose authority term is the actor's read fence over the pass; a lookup ends in the
+ * batch that reads the passes' standing (`AS pass_ok`).
  */
 export function isFinalFenceBatch(sql: readonly string[]) {
   return sql.some(
     (text) =>
-      text.includes('AS actor_authorized') ||
-      (text.includes('AS releaseId') && text.includes('json_each')),
+      (text.includes('ring AS MATERIALIZED') && text.includes('AS pass_ok')) ||
+      (text.includes('AS authorized') && text.includes('EXISTS (WITH actor AS MATERIALIZED')),
   );
 }

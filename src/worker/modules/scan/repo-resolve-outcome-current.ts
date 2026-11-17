@@ -5,29 +5,6 @@ import type { Candidate } from './repo-lookup.ts';
 import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
 import { snapshotReleaseIdSql, usedReleaseIdSql } from './repo-pass-release-sql.ts';
 
-export function currentFoundTemplate(candidate: Candidate): OutputPredicate | null {
-  const template = scanCandidateTemplateReadPredicate(candidate);
-  return template.sql === '0' ? null : template;
-}
-
-export function currentFoundExtra(
-  csrf: OutputPredicate,
-  template: OutputPredicate,
-): OutputPredicate {
-  return {
-    sql: `(${csrf.sql}) AND (${template.sql})`,
-    params: [...csrf.params, ...template.params],
-  };
-}
-
-export function currentFoundActorStmt(db: D1Database, csrf: OutputPredicate): D1PreparedStatement {
-  return stmt(
-    db,
-    `SELECT CASE WHEN (${csrf.sql}) THEN 1 ELSE 0 END AS actor_authorized`,
-    csrf.params,
-  );
-}
-
 /** The release id a scan read captured in its template snapshot, null for none or no snapshot. */
 export function capturedReleaseId(candidate: Pick<Candidate, 'templateSnapshot'>): string | null {
   const raw = candidate.templateSnapshot?.raw;

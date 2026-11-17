@@ -1,27 +1,23 @@
 import type { ScanInput } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { type ActorCsrfSnapshot, actorCsrfSnapshotFence } from './actor-csrf.ts';
 import { type CredentialTombstoneSnapshot, scanCredentialKeys } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
-import { prepareReadMiss } from './misses.ts';
-import type { Candidate } from './repo-lookup.ts';
-import { passOutputPredicate } from './repo-output-authority.ts';
-import { detectionOutputPredicate } from './repo-output-detection.ts';
-import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
-import { inputActorFence, inputCandidatesPredicate } from './repo-resolve-passless-read.ts';
+import { grantReadMiss } from './misses.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
+import { ACTOR_TENANT, type Fence, otherModeSql, refsClear } from './repo-read-fences.ts';
+import type { CandidateMatchInput } from './repo-resolve-candidates.ts';
+import { absent, matchingPassSql, passlessStmt } from './repo-resolve-passless-read.ts';
 
 export { acceptedFilter, candidateEligible } from './repo-resolve-passless-read.ts';
 
-/** Any newly matching or pending same-mode credential makes a missing result unconfirmed. */
-export async function inputCandidates(
+/** The credential alternatives a code or pass id names, for matching passes. Null: it cleaned to nothing. */
+export async function inputMatch(
   ctx: ServiceContext,
   actor: ScanActor,
   input: ScanInput,
   credentials: CredentialTombstoneSnapshot,
-  filter?: OutputPredicate,
-): Promise<OutputPredicate> {
-  const scope = { orgId: actor.orgId, mode: actor.mode };
-  if ('passId' in input) return inputCandidatesPredicate(scope, { passId: input.passId }, filter);
+): Promise<CandidateMatchInput | null> {
+  if ('passId' in input) return { passId: input.passId };
   const keys = await scanCredentialKeys(
     ctx.env,
     actor.orgId,
@@ -30,125 +26,72 @@ export async function inputCandidates(
     true,
     credentials,
   );
-  return inputCandidatesPredicate(
-    scope,
-    keys.clean
-      ? {
-          scanCode: keys.scanCode,
-          barcodeHash: keys.barcodeHash,
-          lookupHash: keys.lookupHash,
-          serial: input.method === 'manual' ? keys.clean : null,
-        }
-      : null,
-    filter,
-  );
+  return keys.clean
+    ? {
+        scanCode: keys.scanCode,
+        barcodeHash: keys.barcodeHash,
+        lookupHash: keys.lookupHash,
+        serial: input.method === 'manual' ? keys.clean : null,
+      }
+    : null;
 }
 
-export function candidateReadProof(
-  actor: ScanActor,
-  candidate: Candidate,
-  credentials: CredentialTombstoneSnapshot,
-  now: number,
-): OutputPredicate {
-  const modeRefs =
-    candidate.pass.mode === actor.mode
-      ? credentials.credentialTombstoneRefs
-      : credentials.otherModeCredentialTombstoneRefs;
-  return passOutputPredicate({
-    now,
-    pass: candidate.pass,
-    connectionGeneration: candidate.connectionGeneration,
-    activeTemplateVersion: candidate.activeTemplateVersion,
-    orgRevision: candidate.orgRevision,
-    templateRevision: candidate.templateRevision,
-    credentialTombstoneRefs: modeRefs,
-    credentialKeysetCommitment: credentials.credentialKeysetCommitment,
-    release: { ...candidate, credentialTombstoneRefs: modeRefs },
-    displayTemplateVersion: candidate.displayTemplateVersion,
-    checkInRules: candidate.checkInRules,
-    lookupHash: candidate.lookupHash,
-  });
+/** What a passless answer must still hold when it is given. */
+export interface PasslessSpec {
+  /** Keyed refs of the presented credential in the actor's mode. */
+  refs: readonly string[] | undefined;
+  /** Refs in the other mode, for a cross-mode detection. */
+  otherRefs?: readonly string[] | undefined;
+  /** A same-mode pass that would change the answer exists: the answer is stale. */
+  appeared?: Fence;
+  /** Each pass the answer names is still the one it saw. A null fence cannot hold. */
+  lineage?: readonly (Fence | null)[];
 }
 
-/** Actor-only reasons must not reveal a credential retired since candidate resolution. */
-export async function currentInputActor(
+/**
+ * One read: the actor's authority holds, the credential is not retired, and nothing the answer
+ * rests on moved. Actor-only reasons must not disclose a credential retired since candidate resolution.
+ */
+export async function passlessCurrent(
   ctx: ServiceContext,
   actor: ScanActor,
-  csrfSnapshot: ActorCsrfSnapshot,
-  refs: readonly string[] | undefined,
-  commitment: string | undefined,
-  otherRefs?: readonly string[],
-  bothModes = false,
-  candidates?: OutputPredicate,
-  proofsAt: (now: number) => readonly OutputPredicate[] = () => [],
-  absence?: OutputPredicate,
+  spec: PasslessSpec,
 ): Promise<boolean> {
-  if (
-    typeof commitment !== 'string' ||
-    !Array.isArray(refs) ||
-    (bothModes && !Array.isArray(otherRefs))
-  )
-    return false;
-  const now = ctx.clock.now();
-  const csrf = actorCsrfSnapshotFence(
-    actor,
-    csrfSnapshot.session
-      ? { ...csrfSnapshot, session: { ...csrfSnapshot.session, now } }
-      : csrfSnapshot,
-  );
-  if (!csrf) return false;
-  const predicate = inputActorFence(
-    actor,
-    csrf,
-    refs,
-    commitment,
-    otherRefs,
-    bothModes,
-    absence,
-    now,
-  );
-  if (!predicate) return false;
-  const fence = outputPredicateStmt(ctx.env.DB, predicate);
-  const proofStmts = proofsAt(now).map((proof) => outputPredicateStmt(ctx.env.DB, proof));
-  if (!candidates && !proofStmts.length)
-    return (await fence.first<{ authorized: number }>())?.authorized === 1;
-  const miss = candidates
-    ? prepareReadMiss({ ...ctx, clock: { now: () => now } }, actor, {
-        csrf,
-        credentials: { credentialKeysetCommitment: commitment, credentialTombstoneRefs: refs },
-        visible: [],
-        candidates,
-      })
-    : null;
-  const results = await ctx.env.DB.batch<Record<string, unknown>>([
-    fence,
-    ...proofStmts,
-    ...(miss?.stmts ?? []),
-  ]);
-  if (
-    results[0]?.results?.[0]?.authorized !== 1 ||
-    proofStmts.some((_, index) => results[index + 1]?.results?.[0]?.authorized !== 1)
-  )
-    return false;
-  if (!miss) return true;
-  const status = miss.result(results.slice(1 + proofStmts.length));
-  miss.throwIfCapped(status);
-  return status === 'counted';
+  const own = refsClear(spec.refs);
+  const other = spec.otherRefs
+    ? refsClear(spec.otherRefs, { org: ACTOR_TENANT.org, mode: otherModeSql(actor.mode) })
+    : { sql: '1', params: [] };
+  if (!own || !other || spec.lineage?.some((fence) => fence === null)) return false;
+  const parts: Fence[] = [
+    own,
+    other,
+    ...(spec.appeared ? [absent(spec.appeared)] : []),
+    ...(spec.lineage ?? []).flatMap((fence) => (fence ? [fence] : [])),
+  ];
+  const row = await passlessStmt(
+    ctx.env.DB,
+    scanReadAuthority(actor, { now: ctx.clock.now() }),
+    parts,
+  ).first();
+  return row !== null;
 }
 
-/** Proof for a cross-mode detection: the other-mode credential is still the one observed. */
-export function candidateDetectionProof(
+/**
+ * Count a `not_found` and confirm it: no pass of the tenant matches the input, the actor and the
+ * credential's refs still hold. False when nothing was counted. Throws `SCAN_TOO_MANY_MISSES` past the cap.
+ */
+export async function countNotFound(
+  ctx: ServiceContext,
   actor: ScanActor,
-  candidate: Candidate,
-  credentials: CredentialTombstoneSnapshot,
-): OutputPredicate {
-  const refs =
-    candidate.pass.mode === actor.mode
-      ? credentials.credentialTombstoneRefs
-      : credentials.otherModeCredentialTombstoneRefs;
-  return detectionOutputPredicate({
-    pass: candidate.pass,
-    credentialTombstoneRefs: refs,
-    credentialKeysetCommitment: credentials.credentialKeysetCommitment,
-  });
+  match: CandidateMatchInput | null,
+  refs: readonly string[] | undefined,
+): Promise<boolean> {
+  if (!Array.isArray(refs)) return false;
+  const found = matchingPassSql(match, { org: '{org}', mode: '{mode}' });
+  return (
+    (await grantReadMiss(ctx, actor, {
+      refs,
+      unchanged: match ? absent(found) : { sql: '{org} IS NOT NULL', params: [] },
+    })) === 'counted'
+  );
 }

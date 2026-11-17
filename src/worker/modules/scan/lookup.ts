@@ -7,16 +7,8 @@ import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
-import {
-  credentialRefKeysetInitializeStmt,
-  credentialRefKeysetSql,
-} from '../passes/repo-credential-keyset.ts';
+import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
-import {
-  actorCsrfAuthorityStmt,
-  actorCsrfSnapshotFence,
-  actorCsrfSnapshotFromResult,
-} from './actor-csrf.ts';
 import { visibleIdentity } from './card-semantics.ts';
 import { scanCredentialKeys, snapshotCredentialEnv } from './credential-input.ts';
 import { policyActor } from './dto.ts';
@@ -26,19 +18,15 @@ import { planHistoryProofSnapshotsForOrg } from './history-proof-plan.ts';
 import { finalizeLookup } from './lookup-finalize.ts';
 import { attachLookupHistory, type LookupEntry } from './lookup-history.ts';
 import { knownPhotoUrl } from './member-photo.ts';
-import { actorAuthorityPredicate } from './repo-actor-authority.ts';
+import { grantReadMiss } from './misses.ts';
 import { byIdStmt, type Candidate, candidatesOf } from './repo-lookup.ts';
-import {
-  boundOutputPredicate,
-  type OutputPredicate,
-  outputPredicateStmt,
-} from './repo-output-predicates.ts';
+import { lookupGateStmt } from './repo-lookup-final.ts';
+import { scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import {
   type SearchRow,
-  searchInputWindowChangedPredicate,
-  searchObservedCandidatePredicate,
   searchPassesStmt,
   searchRowsOf,
+  searchWindowUnchanged,
 } from './repo-search.ts';
 import { foundOf } from './resolve.ts';
 import { scanPolicy } from './rules.ts';
@@ -62,13 +50,8 @@ export async function lookup(
   await enforceRateLimit(ctx.env, 'RL_SCAN_LOOKUP', actor.actorKey);
   const now = ctx.clock.now();
   const hour = now - (now % 3_600_000);
-  const csrfStmt = actorCsrfAuthorityStmt(ctx.env.DB, actor);
-  if (!csrfStmt) return { items: [], more: false };
-  const [settingsResult, csrfResult, counterResult] = await ctx.env.DB.batch<
-    Record<string, unknown>
-  >([
+  const [settingsResult, counterResult] = await ctx.env.DB.batch<Record<string, unknown>>([
     platformSettingsStmt(ctx.env.DB),
-    csrfStmt,
     bumpIfStmt(ctx.env.DB, `scan:lk:${actor.actorKey}`, hour, { sql: '1', params: [] }),
   ]);
   if (!settingsResult) throw new Error('Missing lookup settings result');
@@ -76,13 +59,11 @@ export async function lookup(
   const count = counterResult?.results?.[0]?.count;
   if (typeof count === 'number' && count > maximum)
     throw new RateLimitedError(Math.ceil((hour + 3_600_000 - now) / 1000));
-  const csrfSnapshot = await actorCsrfSnapshotFromResult(ctx, actor, csrfResult);
-  if (!csrfSnapshot) return { items: [], more: false };
 
   const q = raw.trim();
   const email = strictEmail(q);
   const keys = q ? await scanCredentialKeys(ctx.env, actor.orgId, actor.mode, q, false) : undefined;
-  if (keys) actor.credentialKeysetCommitment = keys.credentialKeysetCommitment;
+  if (keys) actor = { ...actor, credentialKeysetCommitment: keys.credentialKeysetCommitment };
   const directMatch = (candidate: Candidate) =>
     (email !== null && candidate.pass.holderEmail === email) ||
     candidate.pass.id === q ||
@@ -92,27 +73,10 @@ export async function lookup(
       ((keys.scanCode !== null && candidate.pass.scanCode === keys.scanCode) ||
         candidate.pass.barcodeHash === keys.barcodeHash ||
         candidate.lookupHash === keys.lookupHash));
-  const guardNow = ctx.clock.now();
-  const csrf = actorCsrfSnapshotFence(
-    actor,
-    csrfSnapshot.session
-      ? { ...csrfSnapshot, session: { ...csrfSnapshot.session, now: guardNow } }
-      : csrfSnapshot,
-  );
-  if (!csrf) return { items: [], more: false };
-  const actorAuthority = actorAuthorityPredicate({
-    actor,
-    now: guardNow,
-    event: actor.event,
-    adminEventTemplates: actor.adminEventTemplates === true,
-  });
-  const guard: OutputPredicate = {
-    sql: `(${actorAuthority.sql}) AND (${csrf.sql})`,
-    params: [...actorAuthority.params, ...csrf.params],
-  };
-
   let firstRows: SearchRow[] = [];
   if (keys) {
+    const guardNow = ctx.clock.now();
+    const auth = scanReadAuthority(actor, { now: guardNow });
     const search = searchPassesStmt(
       ctx.env.DB,
       actor,
@@ -122,18 +86,20 @@ export async function lookup(
       guardNow,
       0,
       keys.credentialTombstoneRefs,
-      keys.credentialKeysetCommitment,
     );
-    const guarded = boundOutputPredicate(guard);
     const results = await ctx.env.DB.batch<Record<string, unknown>>([
-      credentialRefKeysetInitializeStmt(ctx.env.DB, keys.credentialKeysetCommitment, guarded),
-      outputPredicateStmt(ctx.env.DB, {
-        sql: `(${guard.sql}) AND (${credentialRefKeysetSql})`,
-        params: [...guard.params, keys.credentialKeysetCommitment],
-      }),
+      credentialRefKeysetInitializeStmt(
+        ctx.env.DB,
+        keys.credentialKeysetCommitment,
+        scanReadFence(auth),
+      ),
+      // The stored keyset is the one this request's refs were keyed with (it is an immutable singleton).
+      lookupGateStmt(ctx.env.DB, auth),
       ...(search ? [search] : []),
     ]);
-    if (results[1]?.results?.[0]?.authorized !== 1) return { items: [], more: false };
+    const gate = results[1]?.results?.[0];
+    if (gate?.authorized !== 1 || gate.keyset !== keys.credentialKeysetCommitment)
+      return { items: [], more: false };
     firstRows = search ? searchRowsOf(results[2]) : [];
   }
 
@@ -235,48 +201,32 @@ export async function lookup(
     // Hidden rows still cost a projection each: stop after a bounded scan and answer `more`.
     capped = !exhausted && pages >= LOOKUP_MAX_PAGES;
     if (entries.length >= 11 || exhausted || capped) {
-      const credentials =
-        keys ??
-        (actor.credentialKeysetCommitment
-          ? {
-              credentialKeysetCommitment: actor.credentialKeysetCommitment,
-              credentialTombstoneRefs: [],
-              otherModeCredentialTombstoneRefs: [],
-            }
-          : null);
       const countMiss = exhausted && !uncertain && entries.length === 0;
-      const observed = [...hidden, ...entries.map((entry) => entry.source)];
-      const changed = (finalNow: number) =>
-        countMiss && keys
-          ? searchInputWindowChangedPredicate(
+      const final = await finalizeLookup(ctx, actor, entries, keys?.credentialTombstoneRefs ?? []);
+      if (!final) return { items: [], more: false };
+      if (final.length !== entries.length) uncertain = true;
+      // A miss is counted in its own grant: the search window is the one the read saw.
+      if (countMiss && final.length === 0) {
+        const unchanged = keys
+          ? searchWindowUnchanged(
               actor,
               q,
               email,
               keys,
-              finalNow,
+              ctx.clock.now(),
               keys.credentialTombstoneRefs,
-              keys.credentialKeysetCommitment,
-              observed.length,
+              hidden.length,
             )
-          : { sql: '0', params: [] };
-      const observedMatches = countMiss
-        ? observed.map((source) =>
-            searchObservedCandidatePredicate(actor, q, email, keys, source.pass.id),
-          )
-        : [];
-      const final = await finalizeLookup(
-        ctx,
-        actor,
-        entries,
-        csrfSnapshot,
-        credentials,
-        changed,
-        observed,
-        observedMatches,
-        countMiss,
-      );
-      if (!final) return { items: [], more: false };
-      if (final.length !== entries.length) uncertain = true;
+          : { sql: '{org} IS NOT NULL', params: [] };
+        if (
+          !unchanged ||
+          (await grantReadMiss(ctx, actor, {
+            refs: keys?.credentialTombstoneRefs ?? [],
+            unchanged,
+          })) !== 'counted'
+        )
+          return { items: [], more: false };
+      }
       visible = final;
       if (visible.length >= 11 || exhausted || capped) break;
       // New pages require a new final transaction.
@@ -305,7 +255,6 @@ export async function lookup(
       now,
       offset,
       keys.credentialTombstoneRefs,
-      keys.credentialKeysetCommitment,
     );
     rows = next ? searchRowsOf(await next.all()) : [];
   }
