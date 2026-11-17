@@ -29,6 +29,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   voided: { headline: 'Voided', sub: 'Voided {date}.' },
   expired: { headline: 'Expired', sub: 'Ended {date}.' },
   no_balance: { headline: 'Not enough {unit}', sub: 'Has {have}, needs {need}.' },
+  card_full: { headline: 'Card is full', sub: 'Redeem the reward first.' },
   managed_elsewhere: {
     headline: 'Set by a connection',
     sub: '{input} come from {source}. Change them there.',

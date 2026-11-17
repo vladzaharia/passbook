@@ -57,6 +57,7 @@ export const SCAN_REFUSED_REASONS = [
   'voided',
   'expired',
   'no_balance',
+  'card_full',
   'managed_elsewhere',
   'limit_reached',
   'zone_not_included',

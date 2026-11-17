@@ -12,9 +12,11 @@ import {
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import { actionCsrfAt } from './act-snapshot.ts';
 import type { StopContext } from './act-stop.ts';
+import { finishEffectStop, valueRefusal } from './act-value-guard.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { policyActor } from './dto.ts';
+import { amountOf, ScanEffectStop } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import { approvalReservationPredicate } from './repo-act-approval.ts';
@@ -74,8 +76,26 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
     onFailureCommitted,
   } = input;
   const pa = policyActor(actor);
+  const settleEffectStop = (stop: ScanEffectStop) =>
+    finishEffectStop(stopFor(action), found, action, stop, {
+      actor: authorityActor,
+      event: found.admission?.event ?? null,
+      templateId: found.pass.templateId,
+      adminEventTemplates: authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
+      passFence: preflight.passFence,
+    });
+  const sized = action.kind === 'add' || action.kind === 'take';
   const checks = [
-    scanPolicy(pa, { kind: 'act', minRole: action.minRole }),
+    scanPolicy(pa, {
+      kind: 'act',
+      minRole: action.minRole,
+      ...(sized
+        ? {
+            amount: amountOf(action, req.amount),
+            max: typeof action.amount === 'object' ? action.amount.max : null,
+          }
+        : {}),
+    }),
     ...(override
       ? [
           scanPolicy(pa, {
@@ -100,6 +120,15 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       evaluatedSnapshot: found.liveCandidate ?? null,
       credentialContext: credentials,
     };
+  }
+  if (action.kind !== 'check_in') {
+    const refusal = await valueRefusal(ctx, actor, found, action, req);
+    if (refusal)
+      return {
+        outcome: await settleEffectStop(refusal),
+        evaluatedSnapshot: found.liveCandidate ?? null,
+        credentialContext: credentials,
+      };
   }
   const approval = checks.some((check) => !check.allow) ? req.approval : undefined;
   const now = ctx.clock.now();
@@ -157,29 +186,34 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
           })
         : null;
     if (reservation && !verified) throw new StaleScanAuthority();
-    const outcome = await commitCheckIn({
-      ctx,
-      actor,
-      authorityActor,
-      req,
-      scanId,
-      claimAt,
-      requestHash,
-      found,
-      action,
-      override,
-      approvedBy: verified?.id ?? null,
-      approvedAuthEpoch: verified?.authEpoch ?? null,
-      reservation,
-      credentialTombstoneRefs: credentials.credentialTombstoneRefs,
-      credentialKeysetCommitment: credentials.credentialKeysetCommitment,
-      csrfSnapshot,
-      undoWindow,
-      preflight,
-      held,
-      history,
-      photo,
-      onFailureCommitted: recordFailure,
+    const commit = () =>
+      commitCheckIn({
+        ctx,
+        actor,
+        authorityActor,
+        req,
+        scanId,
+        claimAt,
+        requestHash,
+        found,
+        action,
+        override,
+        approvedBy: verified?.id ?? null,
+        approvedAuthEpoch: verified?.authEpoch ?? null,
+        reservation,
+        credentialTombstoneRefs: credentials.credentialTombstoneRefs,
+        credentialKeysetCommitment: credentials.credentialKeysetCommitment,
+        csrfSnapshot,
+        undoWindow,
+        preflight,
+        held,
+        history,
+        photo,
+        onFailureCommitted: recordFailure,
+      });
+    const outcome = await commit().catch((error: unknown) => {
+      if (error instanceof ScanEffectStop) return settleEffectStop(error);
+      throw error;
     });
     return {
       outcome,

@@ -9,6 +9,7 @@ import { type Override, StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import { snapshotActionContext, snapshotActionFound } from './act-snapshot.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
+import { commitValue } from './act-value.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { gateRule, gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
@@ -131,7 +132,8 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     throw new ScanAttemptRaced();
   const seed = {
     ...gate,
-    ...(event?.capacity != null &&
+    ...(action.kind === 'check_in' &&
+    event?.capacity != null &&
     found.admission?.state.direction !== 'out' &&
     override?.reason !== 'capacity_full'
       ? { capacity: { eventId: event.id, max: event.capacity, reentry: event.reentry } }
@@ -140,7 +142,10 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     mode: found.pass.mode,
     templateId: found.pass.templateId,
     kind: action.kind,
-    state: found.admission?.state.direction ?? ('in' as const),
+    state:
+      action.kind === 'check_in'
+        ? (found.admission?.state.direction ?? ('in' as const))
+        : ('used' as const),
     admission: presencePlan,
     method: req.input.method,
     claimEventId: authorityActor.event?.id ?? null,
@@ -220,6 +225,26 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       facts,
       dayStart: req.dayStart,
       reservation,
+      onFailureCommitted,
+    });
+  if (action.kind !== 'check_in')
+    return commitValue({
+      ctx,
+      actor,
+      found,
+      req,
+      reservation,
+      action,
+      undoWindow,
+      gate,
+      claim,
+      stopAuthority,
+      originalCandidate,
+      facts,
+      approver:
+        approvedBy && approvedAuthEpoch !== null
+          ? { id: approvedBy, authEpoch: approvedAuthEpoch }
+          : null,
       onFailureCommitted,
     });
   return commitCheckInSuccess({

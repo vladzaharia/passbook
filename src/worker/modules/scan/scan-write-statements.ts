@@ -22,6 +22,8 @@ export interface Finalize {
   direction?: 'in' | 'out';
   presenceScope?: string;
   eventId?: string;
+  /** A value action's amount and the input's value before and after, JSON text. */
+  value?: { amount: number | null; before: string; after: string };
 }
 
 /** Close this pending generation. Zero rows come back when the claim moved or another variant already closed it. */
@@ -41,6 +43,9 @@ export function finalizeScan(g: Grant, f: Finalize, when: GrantCond[] = []): Gra
       direction: f.direction ?? null,
       presence_scope: f.presenceScope ?? null,
       ...(f.eventId ? { event_id: f.eventId } : {}),
+      ...(f.value
+        ? { amount: f.value.amount, before_value: f.value.before, after_value: f.value.after }
+        : {}),
     },
     where: { id: f.id, state: 'pending', at: f.claimAt },
     when,
@@ -76,6 +81,8 @@ export interface GateWrite {
   at: number;
   before: ScanGateSnapshot | null;
   after: ScanGateSnapshot;
+  /** Take over an existing row even though none was seen: an `always` gate never blocks (value actions). */
+  takeOver?: boolean;
 }
 
 /**
@@ -153,7 +160,8 @@ export function writeGate(g: Grant, w: GateWrite, when: GrantCond[]): GrantedSta
     w.scanId,
   ];
   const base = { when, returning: ['last_scan_id'] };
-  if (!w.before) return g.upsert('scan_gates', columns, values, { ...base, doNothing: true });
+  if (!w.before && !w.takeOver)
+    return g.upsert('scan_gates', columns, values, { ...base, doNothing: true });
   const rule: Record<string, WhereValue> =
     w.rule.rule === 'once'
       ? { state: 'undone' }
