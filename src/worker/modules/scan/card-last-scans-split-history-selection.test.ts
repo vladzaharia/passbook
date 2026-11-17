@@ -47,7 +47,7 @@ describe('card last-scan privacy', () => {
     expect(scans.every((row) => row.actionLabel === 'Admit member')).toBe(true);
   });
 
-  it('rechecks only the selected card history snapshots', async () => {
+  it('rechecks the pass lineage the selected card history was read for', async () => {
     const templateId = await kit.scanTemplate('Selected history fence', {
       actions: [{ id: 'enter', label: 'Admit member', kind: 'check_in', repeat: 'always' }],
     });
@@ -80,20 +80,22 @@ describe('card last-scan privacy', () => {
     expect(await outputPredicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
       authorized: 1,
     });
-    await run(
-      kit.env.DB,
-      `UPDATE pass_events SET data=json_set(data,'$.reason','changed')
+    // The rows are one snapshot: a later change to an event, selected or not, does not unread them.
+    for (const id of [ids[3]!, ids[2]!])
+      await run(
+        kit.env.DB,
+        `UPDATE pass_events SET data=json_set(data,'$.reason','changed')
       WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
-      [pass.id, ids[3]!],
-    );
+        [pass.id, id],
+      );
     expect(await outputPredicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
       authorized: 1,
     });
+    // The pass moving is what the fence stands for.
     await run(
       kit.env.DB,
-      `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProjection')
-      WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
-      [pass.id, ids[2]!],
+      'UPDATE passes SET lifecycle_generation=lifecycle_generation+1 WHERE id=?',
+      [pass.id],
     );
     expect(await outputPredicateStmt(kit.env.DB, result.historyFence).first()).toMatchObject({
       authorized: 0,

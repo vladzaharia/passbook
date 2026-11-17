@@ -1,12 +1,14 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { type SqlValue, stmt } from '../../platform/db.ts';
+import { stmt } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
+import { passLineagePredicate } from './repo-history-lineage.ts';
 import {
   legacyScanProvenanceSql,
   recordedScanProvenanceSql,
   scanCurrentCredentialLineageSql,
   uniqueScanEventIdSql,
 } from './repo-history-provenance.ts';
+import type { OutputPredicate } from './repo-output-predicates.ts';
 import type { Raw } from './repo-scan-map.ts';
 import { scanRetentionExcludedSql } from './repo-scan-retention.ts';
 
@@ -40,7 +42,7 @@ export interface CardHistoryRow extends Raw {
 
 export const CARD_HISTORY_CANDIDATE_LIMIT = 64;
 
-const cardHistorySql = (selectedCount: number) => `WITH selected_scans AS MATERIALIZED (
+const CARD_HISTORY_SQL = `WITH selected_scans AS MATERIALIZED (
        SELECT s.*, p.personalization AS current_personalization,
          p.credential_generation AS current_credential_generation,
          p.lifecycle_generation AS current_lifecycle_generation,
@@ -68,14 +70,6 @@ const cardHistorySql = (selectedCount: number) => `WITH selected_scans AS MATERI
              providerSql: "'apple'",
            },
          )})
-         ${
-           selectedCount === 0
-             ? ''
-             : `AND s.id IN (${Array.from(
-                 { length: selectedCount },
-                 () => '?/* scan-ephemeral-card-history */',
-               ).join(', ')})`
-         }
          AND s.state = 'done' AND s.action_kind IS NOT 'undo'
          AND NOT ${scanRetentionExcludedSql('s')}
          AND (s.actor_type != 'scanner' OR NOT EXISTS (
@@ -175,137 +169,28 @@ const cardHistorySql = (selectedCount: number) => `WITH selected_scans AS MATERI
  * immutable policy snapshot. Missing or ambiguous ledger evidence never grants authority.
  */
 export function cardHistoryStmt(db: D1Database, query: CardHistoryQuery): D1PreparedStatement {
-  return stmt(db, cardHistorySql(0), [query.orgId, query.mode, query.passId, query.templateId]);
+  return stmt(db, CARD_HISTORY_SQL, [query.orgId, query.mode, query.passId, query.templateId]);
 }
 
-export interface CardHistoryFence {
-  sql: string;
-  params: readonly SqlValue[];
-}
+export type CardHistoryFence = OutputPredicate;
 
-const HISTORY_COLUMNS = [
-  'id',
-  'org_id',
-  'mode',
-  'pass_id',
-  'template_id',
-  'scanner_id',
-  'event_id',
-  'actor_key',
-  'staff_id',
-  'request_hash',
-  'state',
-  'outcome',
-  'reason',
-  'action_id',
-  'action_kind',
-  'override_of',
-  'approved_by',
-  'pass_version',
-  'method',
-  'at',
-  'undone_by',
-  'direction',
-  'presence_scope',
-  'scanner_name',
-  'approved_proof',
-  'legacy_proof',
-  'event_json',
-  'recorded_wallet_version',
-  'recorded_wallet_template_version',
-  'recorded_template_version',
-  'current_credential_generation',
-  'current_lifecycle_generation',
-  'current_pending_transfer',
-  'current_personalization',
-  'recorded_personalization',
-  'recorded_wallet_manifest',
-  'recorded_manifest',
-  'event_active_manifest',
-  'event_legacy_manifest',
-] as const satisfies readonly (keyof CardHistoryRow)[];
-
-/** Classify by source column; shared deduplicated values inherit the strongest classification. */
-const SENSITIVE_HISTORY_COLUMNS: Partial<Record<keyof CardHistoryRow, true>> = {
-  id: true,
-  org_id: true,
-  pass_id: true,
-  template_id: true,
-  scanner_id: true,
-  event_id: true,
-  actor_key: true,
-  staff_id: true,
-  request_hash: true,
-  reason: true,
-  action_id: true,
-  override_of: true,
-  approved_by: true,
-  pass_version: true,
-  at: true,
-  undone_by: true,
-  presence_scope: true,
-  scanner_name: true,
-  event_json: true,
-  recorded_wallet_version: true,
-  recorded_wallet_template_version: true,
-  recorded_template_version: true,
-  current_credential_generation: true,
-  current_lifecycle_generation: true,
-  current_pending_transfer: true,
-  current_personalization: true,
-  recorded_personalization: true,
-  recorded_wallet_manifest: true,
-  recorded_manifest: true,
-  event_active_manifest: true,
-  event_legacy_manifest: true,
-};
-
-/** Recheck the original bounded rows in the final actor/pass authorization statement. */
+/**
+ * Recheck in the final actor/pass authorization statement that the pass is still the one the rows
+ * were read for. The rows came from one snapshot; only a moved credential or lifecycle, a pending
+ * transfer or a deleted pass changes what they may disclose.
+ */
 export function cardHistoryFence(
   query: CardHistoryQuery,
   rows: readonly CardHistoryRow[],
 ): CardHistoryFence | null {
-  if (rows.length === 0) return null;
+  const row = rows[0];
+  if (!row) return null;
   if (rows.length > 3) throw new RangeError('At most three card scans may be fenced');
-  const values: SqlValue[] = [];
-  const slots = new Map<SqlValue, number>();
-  const sensitiveSlots = new Set<number>();
-  const reference = (column: keyof CardHistoryRow, value: SqlValue): string => {
-    let slot = slots.get(value);
-    if (slot === undefined) {
-      slot = values.length;
-      slots.set(value, slot);
-      values.push(value);
-    }
-    if (SENSITIVE_HISTORY_COLUMNS[column]) sensitiveSlots.add(slot);
-    return `snapshot.v${slot}`;
-  };
-  const matches = rows
-    .map(
-      (row) =>
-        `(${HISTORY_COLUMNS.map((column) => `history.${column} IS ${reference(column, row[column])}`).join(' AND ')})`,
-    )
-    .join(' OR ');
-  const snapshot = values
-    .map(
-      (_, index) =>
-        `${sensitiveSlots.has(index) ? '?/* scan-ephemeral-card-history */' : '?'} AS v${index}`,
-    )
-    .join(', ');
-  return {
-    sql: `(WITH snapshot AS MATERIALIZED (SELECT ${snapshot})
-      SELECT CASE WHEN count(*) = ?
-        AND SUM(CASE WHEN ${matches} THEN 1 ELSE 0 END) = ? THEN 1 ELSE 0 END
-      FROM (${cardHistorySql(rows.length)}) history CROSS JOIN snapshot)`,
-    params: [
-      ...values,
-      rows.length,
-      rows.length,
-      query.orgId,
-      query.mode,
-      query.passId,
-      query.templateId,
-      ...rows.map((row) => row.id),
-    ],
-  };
+  return passLineagePredicate({
+    orgId: query.orgId,
+    mode: query.mode,
+    passId: query.passId,
+    credentialGeneration: row.current_credential_generation,
+    lifecycleGeneration: row.current_lifecycle_generation,
+  });
 }
