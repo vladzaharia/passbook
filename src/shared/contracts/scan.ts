@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { CheckInPolicySchema, CheckInStateSchema, SetupDirectionSchema } from './check-in.ts';
 import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
+import { ScanActionInputSchema } from './scan-action-input.ts';
 import { ScanDisplayReadSchema } from './scan-display.ts';
+
+export type { ScanActionInput } from './scan-action-input.ts';
+export { ScanActionInputSchema } from './scan-action-input.ts';
 
 /** Idempotency keys: UUIDv7, made by the client. */
 export const UuidV7Schema = z
@@ -133,7 +137,11 @@ export const ScanAccessSchema = z.object({
   timeZone: TimeZoneSchema,
 });
 export type ScanAccess = z.infer<typeof ScanAccessSchema>;
-export const ScanApprovalSchema = z.object({ staffId: IdSchema, pin: z.string().regex(/^\d{6}$/) });
+/** A Manager's PIN for one action. `staffId` is optional: a PIN alone is matched against the org's managers. */
+export const ScanApprovalSchema = z.object({
+  staffId: IdSchema.optional(),
+  pin: z.string().regex(/^\d{6}$/),
+});
 
 const request = {
   idempotencyKey: UuidV7Schema,
@@ -182,20 +190,6 @@ export const ScanValueSchema = z.object({
   format: z.enum(['number', 'currency', 'text']),
   currency: z.string().optional(),
 });
-/** What a `set` may be set to: the input's own schema, so the desk can offer typed entry. The server still validates. */
-export const ScanActionInputSchema = z.object({
-  type: z.enum(['string', 'number', 'integer', 'boolean']),
-  label: z.string(),
-  min: z.number().optional(),
-  max: z.number().optional(),
-  step: z.number().optional(),
-  maxLength: z.number().int().optional(),
-  enum: z
-    .array(z.union([z.string(), z.number()]))
-    .max(50)
-    .optional(),
-});
-export type ScanActionInput = z.infer<typeof ScanActionInputSchema>;
 export const ScanCardActionSchema = z.object({
   id: z.string(),
   label: z.string(),

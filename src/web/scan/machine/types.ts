@@ -19,7 +19,8 @@ export type Counts = ScanCounts;
 
 /** A Manager's PIN approval. */
 export interface Approval {
-  staffId: string;
+  /** Absent: the PIN is matched against the org's managers. */
+  staffId?: string;
   pin: string;
 }
 
@@ -186,7 +187,7 @@ export type ScanEvent =
   | { type: 'keep' }
   | { type: 'override'; actionId: string }
   /** The Manager PIN sheet's Approve: re-sends the same draft under a new key with `approval`. */
-  | { type: 'approve'; staffId: string; pin: string }
+  | { type: 'approve'; staffId?: string; pin: string }
   | { type: 'arm'; actionId: string; amount: number | null; sticky: boolean }
   | { type: 'disarm' }
   /** `approval` is a Manager's PIN when the undo policy requires one. */

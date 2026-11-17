@@ -38,7 +38,7 @@ export function ResultCard({
     onConfirm: () => void;
     onCancel: () => void;
     managers: { id: string; name: string }[];
-    onApprove: (staffId: string, pin: string) => void;
+    onApprove: (staffId: string | undefined, pin: string) => void;
   };
 }) {
   const [pin, setPin] = useState(false);

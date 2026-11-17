@@ -111,7 +111,9 @@ async function run(
     }
     // The PIN snapshot carries no `auth_epoch`. The row read before verification does: use it only
     // if it is the row the PIN verified. Any change since then moves the epoch, and the grant refuses.
-    const staff = read.approver;
+    const staff = req.approval.staffId
+      ? read.approver
+      : { ...verified, pinHash: verified.pinHash, authEpoch: verified.authEpoch, disabledAt: null };
     if (
       !staff ||
       staff.id !== verified.id ||

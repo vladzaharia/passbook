@@ -28,7 +28,7 @@ import { pristineClaimFence, releaseClaimStmt } from './repo-scans.ts';
 import type { Found } from './resolve.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
-import { type PinStaffSnapshot, preparePinReservation } from './staff-pin.ts';
+import { ANY_MANAGER, type PinStaffSnapshot, preparePinReservation } from './staff-pin.ts';
 
 interface ActionApprovalInput {
   ctx: ServiceContext;
@@ -47,7 +47,7 @@ interface ActionApprovalInput {
   history: ActionHistoryPreflight | null;
   photo: PreparedPhotoGrant | null;
   undoWindow: number;
-  approver: PinStaffSnapshot | null;
+  approver: readonly PinStaffSnapshot[];
   stopFor(action: ResolvedScanAction | null): StopContext;
   onFailureCommitted(): void;
 }
@@ -173,7 +173,7 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
         {
           scannerId: authorityActor.scanner?.id ?? authorityActor.actorKey,
           orgId: authorityActor.orgId,
-          staffId: approval.staffId,
+          staffId: approval.staffId ?? ANY_MANAGER,
         },
         guard,
       )
@@ -185,13 +185,16 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
   };
   try {
     const { held } = preflight;
+    const failure = {
+      failureStatements: [failActionClaimStmt(ctx.env.DB, ownedClaim, claimAt)],
+      onFailureCommitted: recordFailure,
+    };
     const results = reservation ? await ctx.env.DB.batch(reservation.stmts) : [];
     const verified =
       reservation && approval
-        ? await reservation.verify(results, approver, approval.pin, true, {
-            failureStatements: [failActionClaimStmt(ctx.env.DB, ownedClaim, claimAt)],
-            onFailureCommitted: recordFailure,
-          })
+        ? await (approval.staffId
+            ? reservation.verify(results, approver[0] ?? null, approval.pin, true, failure)
+            : reservation.verifyAny(results, approver, approval.pin, failure))
         : null;
     if (reservation && !verified) throw new StaleScanAuthority();
     const commit = () =>

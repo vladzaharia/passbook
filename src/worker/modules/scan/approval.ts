@@ -2,10 +2,12 @@ import type { z } from 'zod';
 import type { ScanApprovalSchema } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './guard.ts';
-import { staffStatement } from './repo-staff.ts';
+import { approverStatement } from './repo-staff.ts';
 import {
+  ANY_MANAGER,
   type PinReservationGuard,
   pinStaffFromResult,
+  pinStaffListFromResult,
   preparePinReservation,
   type VerifiedPinSnapshot,
 } from './staff-pin.ts';
@@ -29,19 +31,15 @@ export async function verifyApproval(
     {
       scannerId: actor.scanner?.id ?? actor.actorKey,
       orgId,
-      staffId,
+      staffId: staffId ?? ANY_MANAGER,
     },
     guard,
   );
   try {
-    const results = await db.batch([staffStatement(db, orgId, staffId), ...reservation.stmts]);
-    const manager = await reservation.verify(
-      results.slice(1),
-      pinStaffFromResult(results[0]),
-      pin,
-      true,
-    );
-    return manager;
+    const results = await db.batch([approverStatement(db, orgId, staffId), ...reservation.stmts]);
+    return staffId
+      ? await reservation.verify(results.slice(1), pinStaffFromResult(results[0]), pin, true)
+      : await reservation.verifyAny(results.slice(1), pinStaffListFromResult(results[0]), pin);
   } finally {
     await reservation.refund();
   }

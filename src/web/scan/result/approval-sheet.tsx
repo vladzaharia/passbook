@@ -12,10 +12,11 @@ export function ApprovalSheet({
   onCancel,
 }: {
   managers: { id: string; name: string }[];
-  onApprove: (staffId: string, pin: string) => void;
+  onApprove: (staffId: string | undefined, pin: string) => void;
   onCancel: () => void;
 }) {
-  const [staffId, setStaffId] = useState(managers.length === 1 ? (managers[0]?.id ?? '') : '');
+  // With a roster the manager is named; without one the PIN alone finds them.
+  const [staffId, setStaffId] = useState('');
   const [pin, setPin] = useState('');
   return (
     <form
@@ -23,19 +24,21 @@ export function ApprovalSheet({
       data-testid="scan-approval"
       onSubmit={(event) => {
         event.preventDefault();
-        if (staffId && pin.length === 6) onApprove(staffId, pin);
+        if (pin.length === 6) onApprove(staffId || undefined, pin);
       }}
     >
-      <FormField label="Manager">
-        {(p) => (
-          <Select
-            {...p}
-            value={staffId || undefined}
-            onValueChange={setStaffId}
-            options={managers.map((m) => ({ value: m.id, label: m.name }))}
-          />
-        )}
-      </FormField>
+      {managers.length > 1 ? (
+        <FormField label="Manager">
+          {(p) => (
+            <Select
+              {...p}
+              value={staffId || undefined}
+              onValueChange={setStaffId}
+              options={managers.map((m) => ({ value: m.id, label: m.name }))}
+            />
+          )}
+        </FormField>
+      ) : null}
       <FormField label="PIN">
         {(p) => <CodeField id={p.id} value={pin} onChange={setPin} />}
       </FormField>
@@ -43,7 +46,7 @@ export function ApprovalSheet({
         <Button type="button" size="lg" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" size="lg" disabled={!staffId || pin.length !== 6}>
+        <Button type="submit" size="lg" disabled={pin.length !== 6}>
           Approve
         </Button>
       </div>

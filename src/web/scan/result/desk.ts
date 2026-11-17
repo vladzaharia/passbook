@@ -14,6 +14,7 @@ export function deskOf(
     onConfirm: () => dispatch({ type: 'confirm' }),
     onCancel: () => dispatch({ type: 'cancel' }),
     managers: (staffList ?? []).filter((m) => m.role === 'manager'),
-    onApprove: (staffId: string, pin: string) => dispatch({ type: 'approve', staffId, pin }),
+    onApprove: (staffId: string | undefined, pin: string) =>
+      dispatch({ type: 'approve', ...(staffId ? { staffId } : {}), pin }),
   };
 }

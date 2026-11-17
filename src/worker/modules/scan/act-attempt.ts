@@ -49,7 +49,7 @@ export async function attempt(
   csrfSnapshot: ActorCsrfSnapshot,
   undoWindow: number,
   capturedOverride: Override | null,
-  approver: PinStaffSnapshot | null,
+  approver: readonly PinStaffSnapshot[],
   onFailureCommitted: () => void,
 ): Promise<ScanEvaluation> {
   const authorityActor = actor;

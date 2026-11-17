@@ -45,7 +45,10 @@ export function approve(s: MachineState, ev: Of<'approve'>, env: Env): Out {
   const l = s.loop;
   if (l.s !== 'verdict' || l.outcome.reason !== 'needs_approval' || !l.draft) return same(s);
   const key = env.id();
-  const draft = { ...l.draft, approval: { staffId: ev.staffId, pin: ev.pin } };
+  const draft = {
+    ...l.draft,
+    approval: { ...(ev.staffId ? { staffId: ev.staffId } : {}), pin: ev.pin },
+  };
   return out(
     {
       ...s,
