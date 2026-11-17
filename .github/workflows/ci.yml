@@ -31,7 +31,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - name: Generated files are committed
-        run: git diff --exit-code -- src/generated worker-configuration.d.ts src/web/routeTree.gen.ts
+        run: git diff --exit-code -- src/generated test/setup/schema-snapshot.generated.json worker-configuration.d.ts src/web/routeTree.gen.ts
 
   # Each worker test file migrates a fresh D1, so the suite is sharded to fit runner time.
   test:
