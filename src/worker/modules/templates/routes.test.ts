@@ -1755,6 +1755,50 @@ describe('org assignment', () => {
     );
     expect((await call(`/uploads/${tenantId}`, {}, key)).status).toBe(200);
   });
+
+  it('hides a staged platform upload from other orgs, by key and by session, until it is shared', async () => {
+    const staged = await seed(org.id, 'Staged Platform Upload');
+    await run(env.DB, 'UPDATE templates SET org_id = NULL WHERE id = ?', [staged.id]);
+    const share = (shared: boolean, headers = admin) =>
+      call(`/${staged.id}/share`, { method: 'POST', ...json({ shared }) }, headers);
+    const other = auth.apiKey({ orgId: otherOrg.id, scopes: ['templates:read'] });
+    const platform = auth.apiKey({ orgId: null, scopes: ['templates:read'] });
+    const reader = await member(otherOrg.id, ['read_only']);
+    const listed = async (headers: Record<string, string>, query: string) => {
+      const res = await call(`?${query}`, {}, headers);
+      expect(res.status).toBe(200);
+      return ((await res.json()) as { items: { id: string }[] }).items.map((t) => t.id);
+    };
+    const hiddenFromOther = async () => {
+      await expectProblem(await call(`/${staged.id}`, {}, other), 404, 'TEMPLATE_NOT_FOUND');
+      await expectProblem(
+        await call(`/${staged.id}?orgId=${otherOrg.id}`, {}, reader.headers),
+        404,
+        'TEMPLATE_NOT_FOUND',
+      );
+      expect(await listed(other, `orgId=${otherOrg.id}&limit=100`)).not.toContain(staged.id);
+      expect(await listed(reader.headers, `orgId=${otherOrg.id}&limit=100`)).not.toContain(
+        staged.id,
+      );
+    };
+    await hiddenFromOther();
+    expect((await call(`/${staged.id}`, {}, platform)).status).toBe(200);
+    expect((await call(`/${staged.id}`)).status).toBe(200);
+
+    expect((await share(true)).status).toBe(200);
+    expect((await call(`/${staged.id}`, {}, other)).status).toBe(200);
+    expect(await listed(other, `orgId=${otherOrg.id}&limit=100`)).toContain(staged.id);
+    expect(await listed(reader.headers, `orgId=${otherOrg.id}&limit=100`)).toContain(staged.id);
+
+    expect((await share(false)).status).toBe(200);
+    await hiddenFromOther();
+    expect((await share(true, user)).status).toBe(403);
+    // A template that belongs to an org is not shared.
+    const owned = await seed(org.id, 'Owned Not Shareable');
+    const res = await call(`/${owned.id}/share`, { method: 'POST', ...json({ shared: true }) });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ code: 'TEMPLATE_NOT_SHAREABLE' });
+  });
 });
 
 describe('contract', () => {

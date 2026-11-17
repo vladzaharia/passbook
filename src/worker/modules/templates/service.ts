@@ -67,6 +67,7 @@ export function summaryOf(
     activeVersion: row.activeVersion,
     styles: row.styles,
     blueprint: row.blueprint,
+    shared: row.shared,
     icon: lineage.icon,
     fromBlueprint: lineage.fromBlueprint,
     passCount,

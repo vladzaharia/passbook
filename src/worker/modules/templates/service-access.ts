@@ -9,6 +9,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { getTemplate, type TemplateRow } from './repo.ts';
+import { globalTemplateVisible } from './repo-list.ts';
 import { syncBakedTemplates } from './sync.ts';
 
 export function requireTemplateReader(
@@ -111,5 +112,15 @@ export async function loadTemplate(
       'An organization is required to access this template.',
       'ORG_REQUIRED',
     );
+  // A tenant sees a platform upload only once it is shared or the org works with it; a staged one is for the platform.
+  const tenantOrg = selectedOrgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
+  if (
+    row.orgId === null &&
+    row.origin === 'uploaded' &&
+    !row.shared &&
+    !isPlatformPrincipal(auth) &&
+    !(tenantOrg && (await globalTemplateVisible(ctx.env.DB, row.id, tenantOrg)))
+  )
+    throw notFound();
   return row;
 }

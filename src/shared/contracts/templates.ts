@@ -46,6 +46,8 @@ export const TemplateSummarySchema = z.object({
   styles: z.array(PassStyleSchema),
   /** A PassBook design to start from. Passes are issued from templates, never from a blueprint. */
   blueprint: z.boolean().default(false),
+  /** An unassigned upload that every org may use. Unshared ones are staged for the platform. */
+  shared: z.boolean().default(false),
   /** `display.icon` of the shown version: a curated icon id (a blueprint's glyph). */
   icon: z.string().nullable().default(null),
   /** The blueprint this template was made from. */
@@ -160,6 +162,7 @@ export const CloneTemplateSchema = z.object({
   orgId: IdSchema,
   name: z.string().min(1).max(120).optional(),
 });
+export const ShareTemplateSchema = z.object({ shared: z.boolean() });
 export const UpdateTemplateSchema = z.object({ orgId: IdSchema.nullable() });
 export const UpdateManifestSchema = z.object({ manifest: z.record(z.string(), JsonSchema) });
 export const PreviewRequestSchema = z.object({

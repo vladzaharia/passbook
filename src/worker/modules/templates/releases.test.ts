@@ -130,6 +130,17 @@ const assignOrg = (id: string, orgId: string | null, actor = platformAdmin) =>
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ orgId }),
   });
+/** Moves a template to the platform and shares it with every org, as the shared library does. */
+const assignGlobal = async (id: string) => {
+  const moved = await assignOrg(id, null);
+  if (moved.status === 200)
+    await call(`/${id}/share`, platformAdmin, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ shared: true }),
+    });
+  return moved;
+};
 const manifest = (name: string, description?: string) => ({
   schema: 1,
   name,
@@ -704,11 +715,63 @@ describe('template release API', () => {
     expect((await releases(v1.id, scope('test'))).active).toEqual(testHead);
   });
 
+  it('keeps a staged platform upload from other orgs until it is shared, and never takes held releases back', async () => {
+    const v1 = await imported('Staged Release Card');
+    expect((await assignOrg(v1.id, null)).status).toBe(200);
+    const authorB = await member(otherOrg.id, ['template_author']);
+    const orgB = scope('live', otherOrg.id);
+    const share = (shared: boolean, actor = platformAdmin) =>
+      post(`/${v1.id}/share`, { shared }, actor);
+    const audits = () =>
+      all<{ action: string }>(
+        env.DB,
+        "SELECT action FROM audit_log WHERE target_id = ? AND action IN ('template.shared', 'template.unshared') ORDER BY id",
+        [v1.id],
+      ).then((rows) => rows.map((r) => r.action));
+
+    // Staged: another org's member gets 404 on read, list and candidate create.
+    expect((await call(`/${v1.id}?orgId=${otherOrg.id}`, authorB)).status).toBe(404);
+    const staged = await call(`?orgId=${otherOrg.id}`, authorB);
+    expect(
+      ((await staged.json()) as { items: { id: string }[] }).items.map((t) => t.id),
+    ).not.toContain(v1.id);
+    expect(
+      (await post(`/${v1.id}/candidates`, { ...orgB, version: v1.version }, authorB)).status,
+    ).toBe(404);
+    // Sharing is for platform administrators.
+    expect((await share(true, authorB)).status).toBe(403);
+    expect(await audits()).toEqual([]);
+
+    const shared = await share(true);
+    expect(shared.status).toBe(200);
+    expect(await shared.json()).toMatchObject({ shared: true, orgId: null });
+    expect((await share(true)).status).toBe(200);
+    expect(await audits()).toEqual(['template.shared']);
+    expect((await call(`/${v1.id}?orgId=${otherOrg.id}`, authorB)).status).toBe(200);
+    const visible = await call(`?orgId=${otherOrg.id}`, authorB);
+    expect(
+      ((await visible.json()) as { items: { id: string }[] }).items.map((t) => t.id),
+    ).toContain(v1.id);
+    const held = await candidate(v1.id, v1.version, authorB, orgB);
+
+    // Unsharing stages it again for everyone but the org that already holds a candidate.
+    expect((await share(false)).status).toBe(200);
+    expect(await audits()).toEqual(['template.shared', 'template.unshared']);
+    expect((await call(`/${v1.id}?orgId=${otherOrg.id}`, authorB)).status).toBe(200);
+    expect((await candidates(v1.id, orgB, authorB)).map((c) => c.id)).toEqual([held.id]);
+    const third = await makeOrg(f);
+    const authorC = await member(third.id, ['template_author']);
+    expect((await call(`/${v1.id}?orgId=${third.id}`, authorC)).status).toBe(404);
+
+    // Only an unassigned upload can be shared.
+    expect((await assignOrg(v1.id, otherOrg.id)).status).toBe(409);
+  });
+
   it('isolates releases of a shared uploaded template by organization and mode', async () => {
     const v1 = await imported('Shared Release Card');
     const v2 = await imported('Shared Release Card', author, org.id, 100);
     expect(v2.id).toBe(v1.id);
-    expect((await assignOrg(v1.id, null)).status).toBe(200);
+    expect((await assignGlobal(v1.id)).status).toBe(200);
     const template = () =>
       first<{
         org_id: string | null;
@@ -888,7 +951,7 @@ describe('template release API', () => {
     const old = await imported('Shared Legacy Pointer');
     const newer = await imported('Shared Legacy Pointer', author, org.id, 100);
     expect(newer.id).toBe(old.id);
-    expect((await assignOrg(old.id, null)).status).toBe(200);
+    expect((await assignGlobal(old.id)).status).toBe(200);
     // A shared version published before reviewed releases may already have this compatibility pointer.
     await run(env.DB, 'UPDATE templates SET active_version = ? WHERE id = ?', [
       old.version,
@@ -921,7 +984,7 @@ describe('template release API', () => {
     'fences reassignment when %s history commits after the assignment preflight',
     async (kind) => {
       const draft = await imported(`Shared Assignment Race ${kind}`);
-      expect((await assignOrg(draft.id, null)).status).toBe(200);
+      expect((await assignGlobal(draft.id)).status).toBe(200);
       const before = await first(env.DB, 'SELECT * FROM templates WHERE id = ?', [draft.id]);
       const beforeAudits = await all(
         env.DB,
@@ -1152,7 +1215,7 @@ describe('template release API', () => {
 
   it('does not restore an archived shared global template by rolling back either scoped head', async () => {
     const t = await imported('Shared Restore Current Head');
-    expect((await assignOrg(t.id, null)).status).toBe(200);
+    expect((await assignGlobal(t.id)).status).toBe(200);
     const liveCandidate = await candidate(t.id, t.version);
     const liveApproval = await approval(t.id, liveCandidate);
     const live = await publish(t.id, liveCandidate, liveApproval, 0);
@@ -1604,7 +1667,7 @@ describe('template release API', () => {
   it('invalidates only matching org, mode and template event caches on publish and rollback', async () => {
     const v1 = await imported('Shared Event Release');
     const v2 = await imported('Shared Event Release', author, org.id, 100);
-    expect((await assignOrg(v1.id, null)).status).toBe(200);
+    expect((await assignGlobal(v1.id)).status).toBe(200);
     const unrelated = await imported('Unrelated Event Release');
     const c1 = await candidate(v1.id, v1.version);
     const c2 = await candidate(v1.id, v2.version);

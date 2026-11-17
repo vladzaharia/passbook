@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, containsMatch } from '../../platform/db.ts';
+import { all, containsMatch, first } from '../../platform/db.ts';
 import { TEMPLATE_COLUMNS, type TemplateRow, type TemplateSql, templateRow } from './repo.ts';
 
 export interface ListFilter {
@@ -20,6 +20,27 @@ export interface ListFilter {
   passOrgId?: string | null;
 }
 
+/**
+ * A platform template a tenant may see: a baked one, a shared upload, or an upload the org already holds
+ * a candidate or release of (unsharing never takes those away). Other platform uploads are staged.
+ */
+const GLOBAL_VISIBLE = `(t.org_id IS NULL AND (t.origin = 'baked' OR t.shared = 1
+  OR EXISTS (SELECT 1 FROM template_releases r WHERE r.template_id = t.id AND r.org_id = ?)
+  OR EXISTS (SELECT 1 FROM template_candidates c WHERE c.template_id = t.id AND c.org_id = ?)))`;
+
+export async function globalTemplateVisible(
+  db: D1Database,
+  templateId: string,
+  orgId: string,
+): Promise<boolean> {
+  const row = await first<{ ok: number }>(
+    db,
+    `SELECT 1 AS ok FROM templates t WHERE t.id = ? AND ${GLOBAL_VISIBLE}`,
+    [templateId, orgId, orgId],
+  );
+  return row !== null;
+}
+
 export interface ListedTemplate extends TemplateRow {
   passCount: number;
   orgName: string | null;
@@ -37,8 +58,8 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
   } else where.push(f.includeArchived ? "t.status != 'deleted'" : "t.status = 'active'");
   if (f.orgId === null) where.push('t.org_id IS NULL');
   else if (f.orgId !== undefined) {
-    where.push('(t.org_id = ? OR t.org_id IS NULL)');
-    params.push(f.orgId);
+    where.push(`(t.org_id = ? OR ${GLOBAL_VISIBLE})`);
+    params.push(f.orgId, f.orgId, f.orgId);
   }
   if (f.blueprint !== undefined) {
     where.push('t.blueprint = ?');

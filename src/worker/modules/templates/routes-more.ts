@@ -3,6 +3,7 @@ import {
   PreviewBatchSchema,
   SaveVersionResponseSchema,
   SaveVersionSchema,
+  ShareTemplateSchema,
   TemplateDetailSchema,
   UploadListQuerySchema,
   UploadListSchema,
@@ -13,6 +14,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { setArchived, templatePackage } from './lifecycle.ts';
 import { ScopedPreviewBatchQuerySchema, TemplateScopeQuerySchema } from './route-scope.ts';
 import { previewMany, recentUploads } from './service.ts';
+import { setShared } from './sharing.ts';
 import { stampsImpact } from './stamps.ts';
 import { saveVersion } from './versions.ts';
 
@@ -20,6 +22,28 @@ type Router = ReturnType<typeof createRouter>;
 
 /** GET /uploads; registered before GET /{id} so "uploads" is not read as an id. */
 export function registerUploadList(router: Router): void {
+  register(
+    router,
+    'templates',
+    {
+      method: 'post',
+      path: '/{id}/share',
+      summary: 'Share an unassigned upload with every organization, or stage it again',
+      params: IdParamSchema,
+      body: ShareTemplateSchema,
+      response: TemplateDetailSchema,
+    },
+    async (c) =>
+      c.json(
+        await setShared(
+          serviceContext(c),
+          c.var.auth,
+          c.req.valid('param').id,
+          c.req.valid('json').shared,
+        ),
+      ),
+  );
+
   register(
     router,
     'templates',

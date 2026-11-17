@@ -143,6 +143,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.candidate': a('Template candidate created', ENTITY.version.icon, 'info'),
   'template.archive': a('Template archived', Archive, 'neutral'),
   'template.assign_org': a('Template organization changed', ENTITY.org.icon, 'info'),
+  'template.shared': a('Template shared with all organizations', ENTITY.org.icon, 'info'),
+  'template.unshared': a('Template no longer shared', ENTITY.org.icon, 'neutral'),
   'template.clone': a('Template duplicated', I.duplicate, 'success'),
   'template.use_blueprint': a('Template made from a blueprint', ENTITY.blueprint.icon, 'success'),
   'template.delete': a('Template deleted', I.delete, 'danger'),

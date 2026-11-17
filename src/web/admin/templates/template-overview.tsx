@@ -29,8 +29,10 @@ import {
   KeyValue,
   ListRow,
   ListRows,
+  toast,
 } from '../../ui/index.ts';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
+import { useTemplateActions } from './api.ts';
 import { styleList } from './labels.ts';
 import { OrgDialog } from './template-dialogs.tsx';
 
@@ -46,6 +48,16 @@ export function TemplateOverview({
 }) {
   const { orgId } = useOrgScope();
   const [changing, setChanging] = useState(false);
+  const actions = useTemplateActions(t.id);
+  const shareable = canAssign && t.orgId === null && t.origin === 'uploaded' && !t.blueprint;
+  async function toggleShared() {
+    try {
+      await actions.share.mutateAsync(!t.shared);
+      toast.success(t.shared ? 'Sharing stopped' : 'Shared with all orgs');
+    } catch (cause) {
+      toast.error(cause, 'Could not change sharing');
+    }
+  }
   const active = t.versions.find((v) => v.active);
   const warnings = (active?.report.issues ?? []).filter((i) => i.severity !== 'error');
   return (
@@ -79,6 +91,26 @@ export function TemplateOverview({
                   </span>
                 ),
               },
+              ...(shareable
+                ? [
+                    {
+                      label: 'Sharing',
+                      value: (
+                        <span className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span>{t.shared ? 'All orgs' : 'Platform only'}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            loading={actions.share.isPending}
+                            onClick={toggleShared}
+                          >
+                            {t.shared ? 'Stop sharing' : 'Share with all orgs'}
+                          </Button>
+                        </span>
+                      ),
+                    },
+                  ]
+                : []),
               {
                 label: 'Passes',
                 value: (

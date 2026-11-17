@@ -163,6 +163,10 @@ approved release, and generated baked templates with a trusted system release. B
 listed. It never falls back to another org's release or an unapproved draft. `supportsCheckIn` is derived from the
 released version. Issuance rechecks the selected release and its assets.
 
+An upload with no organization is staged: only platform administrators see it. `POST /templates/{id}/share`
+with `{shared: true}` (platform administrator) offers it to every org, `{shared: false}` stages it again;
+an org that already holds a candidate or release of it keeps seeing it. Baked templates are always shared.
+
 For an uploaded template, a `templates:author` session creates a candidate with
 `POST /templates/{id}/candidates` and `{orgId, mode, provider: "apple", version}`. A different
 `templates:review` session approves it at `/templates/{id}/candidates/{candidateId}/approve`
