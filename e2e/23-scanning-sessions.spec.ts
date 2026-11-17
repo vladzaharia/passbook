@@ -19,8 +19,7 @@ async function hardwareCode(page: Page, value: string) {
 test('shared sessions pair multiple devices, configure live, and keep lookup and customer display private', async ({
   browser,
 }) => {
-  // Pairing three devices may wait out RL_SCAN_PAIR's 60 s window (helpers/pair.ts).
-  test.setTimeout(170_000);
+  test.setTimeout(120_000);
   const api = await apiAs('admin');
   const contexts: BrowserContext[] = [];
   try {

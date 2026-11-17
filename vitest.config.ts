@@ -13,6 +13,8 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           include: ['src/passkit/**/*.test.ts', 'src/shared/**/*.test.ts', 'tools/**/*.test.ts'],
+          // Image and package tests decode PNGs; under v8 coverage (coverage-node) they pass 5 s.
+          testTimeout: 30_000,
         },
       },
       {
@@ -56,6 +58,9 @@ export default defineConfig({
         ],
         test: {
           name: 'worker',
+          // lucide-react's barrel is ~4300 icon modules; workerd fetched each one per test file (10+ s).
+          // Pre-bundled it is one module.
+          deps: { optimizer: { ssr: { enabled: true, include: ['lucide-react'] } } },
           include: ['src/worker/**/*.test.ts', 'test/**/*.test.ts'],
           // A race test runs several D1 batches in workerd; on a shared CI runner that passes 5 s.
           testTimeout: 30_000,

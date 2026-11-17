@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
+import { pairScanner } from './helpers/pair.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -55,10 +56,8 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     Object.assign(window, { PassBookNative: native });
   });
   try {
-    await page.goto(`/scan#pair=${encodeURIComponent(created.pairing.code)}`);
-    await expect(page.getByRole('heading', { name: 'Pair this device?' })).toBeVisible();
+    await pairScanner(page, created.pairing.code);
     expect(new URL(page.url()).hash).toBe('');
-    await page.getByRole('button', { name: 'Pair', exact: true }).click();
     await page.getByTestId('scan-start').click();
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await page.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' }).click();
@@ -232,8 +231,7 @@ test('camera decodes a real QR frame through the wasm worker', async ({ browser 
     { image: `data:image/png;base64,${png.toString('base64')}` },
   );
   try {
-    await page.goto(`/scan#pair=${encodeURIComponent(created.pairing.code)}`);
-    await page.getByRole('button', { name: 'Pair', exact: true }).click();
+    await pairScanner(page, created.pairing.code);
     await page.getByTestId('scan-start').click();
     await expect(page.getByTestId('scan-result')).toContainText('Camera Guest', {
       timeout: 20_000,

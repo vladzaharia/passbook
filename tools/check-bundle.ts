@@ -7,7 +7,7 @@ import { gzipSync } from 'node:zlib';
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
 
-/** Console entry: 239 kB measured with the M1 scanning interfaces and shared contracts; 1 kB headroom.
+/** Console entry: 221 kB measured; the account menu and its Radix chunks load after first paint.
  * Scanning pages, pass inspection, tables and search controls remain lazy. */
 export const BUDGET_BYTES = 240_000;
 /** The scanner's initial load (scan.html), in gzip bytes. */

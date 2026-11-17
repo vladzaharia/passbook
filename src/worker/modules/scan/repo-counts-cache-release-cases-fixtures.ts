@@ -189,6 +189,7 @@ export function registerCountsCacheReleaseCases() {
     for (const actor of [scanner, admin]) {
       const guard = await csrfFence(actor);
       bound.length = 0;
+      kit.clock.advance(61_000);
       const plan = planCounts(ctx, actor, undefined, actor, guard);
       const results = await db.batch(plan.stmts);
       expect(bound.some(({ sql }) => sql.startsWith('UPDATE scan_events SET expected ='))).toBe(

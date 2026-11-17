@@ -20,7 +20,13 @@ import {
   createTemplateRegistry,
   r2Prefix,
 } from './registry.ts';
-import { countPasses, getVersion, listVersions, type TemplateRow } from './repo.ts';
+import {
+  getVersion,
+  hasPasses,
+  latestVersionName,
+  listVersions,
+  type TemplateRow,
+} from './repo.ts';
 import {
   archiveUploadedTemplate,
   deleteUploadedTemplate,
@@ -79,7 +85,7 @@ export async function resolveCurrentTemplate(
   registry: CompositeTemplateRegistry,
   row: TemplateRow,
 ) {
-  const version = row.activeVersion ?? (await listVersions(ctx.env.DB, row.id))[0]?.version;
+  const version = row.activeVersion ?? (await latestVersionName(ctx.env.DB, row.id));
   if (!version) throw new NotFoundError('Template has no version.', 'TEMPLATE_NOT_FOUND');
   return registry.resolve(row.id, version);
 }
@@ -249,18 +255,18 @@ export async function removeTemplate(
     const now = ctx.clock.now();
     const deleted = await softDeleteUploadedTemplate(ctx, row, id, authority, now);
     if (!deleted) {
-      if ((await countPasses(ctx.env.DB, id)) > 0) return archive();
+      if (await hasPasses(ctx.env.DB, id)) return archive();
       return templateChanged(ctx, auth, row, authority);
     }
     return finishDelete();
   };
-  if ((await countPasses(ctx.env.DB, id)) > 0) return archive();
+  if (await hasPasses(ctx.env.DB, id)) return archive();
   if (await hasTemplateHistory(ctx.env.DB, id)) return softDelete();
   const prefix = r2Prefix(await storageOrg(ctx, row), id);
   try {
     const deleted = await deleteUploadedTemplate(ctx, row, id, authority);
     if (!deleted) {
-      if ((await countPasses(ctx.env.DB, id)) > 0) return archive();
+      if (await hasPasses(ctx.env.DB, id)) return archive();
       if (await hasTemplateHistory(ctx.env.DB, id)) return softDelete();
       return templateChanged(ctx, auth, row, authority);
     }
