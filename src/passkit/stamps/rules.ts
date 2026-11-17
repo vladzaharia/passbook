@@ -59,10 +59,10 @@ export function keptGoalOf(fieldSources: Readonly<Record<string, unknown>>): num
 }
 
 /** The field sources with the top-up to `goal` recorded in place of any earlier one. */
-export function withKeptGoal<V>(
+export function withKeptGoal<V extends string>(
   fieldSources: Readonly<Record<string, V>>,
   goal: number,
-  value: V,
+  value: NoInfer<V>,
 ): Record<string, V> {
   const out: Record<string, V> = {};
   for (const [key, v] of Object.entries(fieldSources)) if (!key.startsWith(KEPT)) out[key] = v;
