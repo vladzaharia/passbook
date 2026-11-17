@@ -171,7 +171,9 @@ describe('staff binding grants', () => {
       '401',
     ],
     ['revoked', 'UPDATE scanners SET revoked_at = ? WHERE id = ?', 1, '401'],
-    ['mode changed', 'UPDATE scanners SET mode = ? WHERE id = ?', 'test', '409'],
+    // A mode move also moves the credential epoch: the grant refuses it as `actor` and the caller
+    // classifies it (`scannerRefusal`: 409 unless the credential is lost, credential-loss-rule.test.ts).
+    ['mode changed', 'UPDATE scanners SET mode = ? WHERE id = ?', 'test', '401'],
     ['screen', 'UPDATE scanners SET device_role = ? WHERE id = ?', 'customer', '409'],
     ['settings changed', 'UPDATE scanners SET settings = ? WHERE id = ?', '{}', '409'],
   ] as const)(

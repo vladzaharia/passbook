@@ -5,16 +5,17 @@ import { setupScanKit } from './test-kit.ts';
 
 /**
  * One credential-loss rule (`scannerCredentialLost`) for the session read and the staff bind: a
- * replaced token prefix or a rotated CSRF secret unpairs; a pair code issued for the same token moves
- * the credential epoch too, but the device stays paired and rereads (409).
+ * replaced token prefix or a rotated CSRF secret unpairs; a pair code issued for the same token or a
+ * mode move moves the credential epoch too, but the device stays paired and rereads (409).
  */
 const changes = {
   'token prefix replaced': "token_prefix = 'p-' || id",
   'CSRF secret rotated': "csrf_secret = 'rotated-csrf-secret'",
   'pair code issued': "pair_code_hash = 'code-' || id, pair_expires_at = 9999999999999",
+  'mode moved': "mode = 'test'",
 } as const;
 type Change = keyof typeof changes;
-const lost = (change: Change) => change !== 'pair code issued';
+const lost = (change: Change) => change !== 'pair code issued' && change !== 'mode moved';
 
 const move = (id: string, change: Change) => async (db: D1Database) =>
   void (await run(
