@@ -3,6 +3,7 @@ import { ScanLiveSnapshotSchema } from '../../../shared/contracts/scan-setups.ts
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { openMemberPhotoFromSnapshot } from '../passes/member-photo.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
@@ -31,7 +32,7 @@ register(
     const initial = serviceContext(c);
     const ctx = { ...initial, env: snapshotCredentialEnv(initial.env) };
     const actor = cloneObservedScanActor(scanActorOf(c));
-    const keyset = await pinKeyset(initial);
+    const keyset = await credentialRefKeysetCommitment(ctx.env);
     if (
       actor.credentialKeysetCommitment !== undefined &&
       actor.credentialKeysetCommitment !== keyset
