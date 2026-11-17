@@ -7,16 +7,15 @@ import { gateWasHeld, type HeldGateSnapshot } from './act-gate-preflight.ts';
 import { finishHeldGate } from './act-held.ts';
 import { type Override, StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
-import { snapshotActionContext, snapshotActionFound } from './act-snapshot.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
 import { commitValue } from './act-value.ts';
+import { deepFreeze } from './freeze.ts';
 import { gateRule, gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import type * as gates from './repo-gates.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
-import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import type { PinReservation } from './staff-pin.ts';
 
 interface CommitInput {
@@ -44,11 +43,11 @@ interface CommitInput {
 }
 export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
   const {
-    ctx: originalCtx,
-    actor: inputActor,
-    authorityActor: inputAuthority,
-    found: originalFound,
-    req: originalReq,
+    ctx,
+    actor,
+    authorityActor,
+    found,
+    req,
     preflight,
     held,
     history,
@@ -58,17 +57,9 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     onFailureCommitted,
     ...source
   } = input;
-  const ctx = snapshotActionContext(originalCtx);
-  const actor = cloneObservedScanActor(inputActor);
-  const authorityActor = cloneObservedScanActor(inputAuthority);
-  const originalCandidate = originalFound.liveCandidate ?? null;
-  const found = snapshotActionFound(originalFound);
-  const { input: requestInput, approval, ...request } = originalReq;
-  const req = {
-    ...structuredClone(request),
-    input: { ...requestInput },
-    ...(approval ? { approval: { ...approval } } : {}),
-  };
+  // What was read is not changed from here on: the grant batch decides, not a copy.
+  deepFreeze(found);
+  const originalCandidate = found.liveCandidate ?? null;
   const {
     scanId,
     claimAt,
@@ -79,7 +70,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     credentialTombstoneRefs,
     credentialKeysetCommitment,
     undoWindow,
-  } = structuredClone(source);
+  } = source;
   const _db = ctx.env.DB;
   const now = ctx.clock.now();
   const event = actor.event;

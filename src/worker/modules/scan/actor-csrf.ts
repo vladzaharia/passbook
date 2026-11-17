@@ -204,3 +204,11 @@ export async function actorCsrfAuthorityCurrent(
   const query = actorCsrfAuthorityStmt(observed.env.DB, actor);
   return actorCsrfAuthorityFromResult(observed, actor, query ? await query.all() : undefined);
 }
+
+/** Preserve the verified CSRF scalars while sampling expiry at the final transaction. */
+export function actionCsrfAt(actor: ScanActor, snapshot: ActorCsrfSnapshot, now: number) {
+  const current = snapshot.session
+    ? { ...snapshot, session: { ...snapshot.session, now } }
+    : snapshot;
+  return actorCsrfSnapshotFence(actor, current);
+}

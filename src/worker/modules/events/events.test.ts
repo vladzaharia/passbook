@@ -90,7 +90,46 @@ describe('recordPassEvent', () => {
       'events.record_failed',
       expect.objectContaining({ code: 'EVENT_RECORD_FAILED' }),
     );
+    expect(warn).toHaveBeenCalledWith(
+      'events.pass_missing',
+      expect.objectContaining({ code: 'EVENT_PASS_MISSING', passId: 'no-such-pass' }),
+    );
     warn.mockRestore();
+  });
+
+  it('a live event needs a live pass; a test event may sit on either', async () => {
+    const pass = await kit.pass({ mode: 'test' });
+    const error = vi.spyOn(kit.ctx.log, 'error');
+    await recordPassEvents(kit.ctx, [
+      { ...base(pass.id), mode: 'live', kind: 'page.opened' },
+      { ...base(pass.id), mode: 'test', kind: 'email.captured' },
+    ]);
+    expect(error).toHaveBeenCalledWith(
+      'events.org_mismatch',
+      expect.objectContaining({ code: 'EVENT_ORG_MISMATCH', passId: pass.id }),
+    );
+    expect((await rows(pass.id)).filter((r) => r.kind !== 'pass.issued')).toMatchObject([
+      { kind: 'email.captured', mode: 'test' },
+    ]);
+    error.mockRestore();
+  });
+
+  it('takes the org from the pass: another org writes nothing and logs EVENT_ORG_MISMATCH', async () => {
+    const pass = await kit.pass();
+    const error = vi.spyOn(kit.ctx.log, 'error');
+    await recordPassEvents(kit.ctx, [
+      { ...base(pass.id), orgId: 'another-org', kind: 'page.opened' },
+      { ...base(pass.id), kind: 'page.opened' },
+    ]);
+    expect(error).toHaveBeenCalledWith(
+      'events.org_mismatch',
+      expect.objectContaining({ code: 'EVENT_ORG_MISMATCH', passId: pass.id }),
+    );
+    expect((await rows(pass.id)).map((r) => [r.kind, r.mode])).toEqual([
+      ['pass.issued', 'live'],
+      ['page.opened', 'live'],
+    ]);
+    error.mockRestore();
   });
 
   it('records a batch in order', async () => {

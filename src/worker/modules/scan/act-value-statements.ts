@@ -12,10 +12,10 @@ import type { StopAuthority } from './repo-action-authority.ts';
 import type * as gates from './repo-gates.ts';
 import { holderPart } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
-import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { Found } from './resolve.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
-import { retentionPart, scanIs, wonGate } from './scan-write-grant.ts';
+import { scanIs, wonGate } from './scan-write-grant.ts';
 import { type Finalize, finalizeScan, ledgerEvent, writeGate } from './scan-write-statements.ts';
 
 /** What every closing of a value scan shares. */
@@ -28,7 +28,6 @@ export interface ValueScan {
   gate: gates.GateKey;
   stopAuthority: StopAuthority;
   facts: Omit<LedgerFacts, 'outcome' | 'reason'>;
-  sideDb: D1Database;
   approvedBy: string | null;
   eventId: string | null;
 }
@@ -157,7 +156,7 @@ export async function addValueStatements(
     [held, 'heads_up', lost],
   ] as const) {
     ledgerEvent(g, v.row, scanId, outcome, reason);
-    g.include(retentionPart(retentionProofIfRecordedStmt(s.sideDb, v.retention)));
+    g.include(retentionProofPart(v.retention));
   }
   const [holder] = g.include(holderPart(gate));
   g.assert('stale', [scanIs(scanId, { state: 'done' })]);

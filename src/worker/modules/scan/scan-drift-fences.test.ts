@@ -1,8 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { first, run } from '../../platform/db.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import type { ScanActor } from './actor.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
-import { credentialGone, getScanner, scannerEpochsOf } from './repo-device.ts';
+import { getScanner, scannerEpochsOf } from './repo-device.ts';
+import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
 import { setupScanKit } from './test-kit.ts';
@@ -79,7 +82,13 @@ describe('only a changed device credential unpairs', () => {
       return row;
     };
     const held = await read();
-    const gone = () => credentialGone(kit.env.DB, held, kit.clock.now());
+    const actor = {
+      principal: 'scanner',
+      scanner: held,
+      scannerCsrfProof: null,
+    } as unknown as ScanActor;
+    const gone = () =>
+      scannerCredentialLost(createServiceContext(kit.env, { clock: kit.clock }), actor);
     expect(await gone()).toBe(false);
     const change = (set: string, ...params: (string | number | null)[]) =>
       run(kit.env.DB, `UPDATE scanners SET ${set}, updated_at = updated_at + 1 WHERE id = ?`, [

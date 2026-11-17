@@ -23,7 +23,7 @@ import type { Candidate } from './repo-lookup.ts';
 import { doneOkPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
-import { afterReads, capturingDb } from './scan-capture.ts';
+import { afterReads } from './scan-capture.ts';
 import {
   type DisplayHistoryPlan,
   displayNeedsFor,
@@ -66,8 +66,6 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const { facts, approver, onFailureCommitted } = input;
   const { scanId, claimAt, effect } = claim;
   const { actor: authorityActor, approvedBy, event } = claim.authority;
-  const side = { ...ctx, env: { ...ctx.env, DB: capturingDb(ctx.env.DB) } };
-  const sideDb = side.env.DB;
   const now = ctx.clock.now();
   const authorityNow = now;
 
@@ -197,7 +195,6 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     lost,
     finalized,
     variants: { ok, admit: admitVariant, cap: capVariant, lost: lostVariant },
-    sideDb,
   });
   if (!statements) throw new StaleScanAuthority();
   const { finalOk, finalAdmit, finalCap, holder, presenceHolder } = statements;

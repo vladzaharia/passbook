@@ -7,7 +7,7 @@ import {
 import { batch, chunk } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { type EventRow, insertEventStmt } from './repo.ts';
+import { type EventRow, insertEventStmt, passExists } from './repo.ts';
 
 export interface PassEventInput {
   orgId: string;
@@ -88,11 +88,23 @@ export async function recordPassEvents(
   try {
     const rows = await Promise.all(inputs.map((input) => toRow(ctx, input)));
     // Ids are UUIDv7 from one clock, so a batch keeps its order within the same millisecond.
-    for (const part of chunk(rows, 50))
-      await batch(
+    for (const part of chunk(rows, 50)) {
+      const results = await batch(
         ctx.env.DB,
         part.map((row) => insertEventStmt(ctx.env.DB, row)),
       );
+      for (const [index, result] of results.entries()) {
+        const row = part[index];
+        if (result.meta.changes === 1 || !row) continue;
+        const missing = !(await passExists(ctx.env.DB, row.pass_id));
+        ctx.log.error(missing ? 'events.pass_missing' : 'events.org_mismatch', {
+          code: missing ? 'EVENT_PASS_MISSING' : 'EVENT_ORG_MISMATCH',
+          orgId: row.org_id,
+          passId: row.pass_id,
+          kind: row.kind,
+        });
+      }
+    }
   } catch (error) {
     ctx.log.error('events.record_failed', {
       code: 'EVENT_RECORD_FAILED',

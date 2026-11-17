@@ -1,4 +1,5 @@
 import { type Grant, grant } from '../../platform/authority.ts';
+import type { AfterRead } from '../../platform/authority-after.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
@@ -44,6 +45,8 @@ export interface UndoCommit {
   approver: { id: string; authEpoch: number } | null;
   id: string;
   key: string;
+  /** The answer's reads: they commit with the grant, so the undo needs no trip of its own for them. */
+  reads?: readonly AfterRead[];
 }
 
 /** A quarantined pass keeps its scans out of every ledger, undo included. */

@@ -2,7 +2,6 @@ import type { z } from 'zod';
 import type { ScanUndoRequestSchema } from '../../../shared/contracts/scan.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { snapshotActionCandidate } from './act-snapshot.ts';
 import type { ScanActor } from './actor.ts';
 import { planCounts } from './counts.ts';
 import { blankOutcome } from './outcome.ts';
@@ -12,8 +11,8 @@ import type { ScanEvaluation } from './scan-evaluation.ts';
 
 export type UndoRequest = z.infer<typeof ScanUndoRequestSchema>;
 
-/** The outcome of a committed undo: current counts and the pass the live view re-renders. */
-export async function answer(
+/** The outcome of an undo that committed earlier: current counts and the pass the live view re-renders. */
+async function answer(
   ctx: ServiceContext,
   actor: ScanActor,
   passId: string | null,
@@ -26,7 +25,7 @@ export async function answer(
     passId ? candidateById(db, actor.orgId, passId) : null,
     db.batch(counts.stmts),
   ]);
-  const candidate = selected ? snapshotActionCandidate(selected) : null;
+  const candidate = selected;
   return {
     outcome: {
       ...blankOutcome('ok', await counts.read(results)),

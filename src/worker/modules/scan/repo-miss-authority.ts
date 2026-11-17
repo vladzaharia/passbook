@@ -1,3 +1,5 @@
+import type { GrantCond } from '../../platform/authority-cond.ts';
+import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
@@ -118,6 +120,20 @@ export function missCounterKey(actor: ScanActor): string {
   return `scan:miss:${JSON.stringify([actor.orgId, actor.mode, actor.actorKey])}`;
 }
 
+/** The increment of a stop grant's miss: it applies only when the statement before it changed a row (the scan closed here). */
+export const missIncrementPart = (key: string, window: number): GrantPart =>
+  writePart(
+    `INSERT INTO counters (key, window_start, count) SELECT ?, ?, 1 WHERE changes()=1 AND {grant}
+    ON CONFLICT (key, window_start) DO UPDATE SET count=count+excluded.count RETURNING count`,
+    [key, window],
+  );
+
+/** The audit row's condition: the increment just before it crossed the cap. */
+export const crossedCap = (key: string, window: number, threshold: number): GrantCond => ({
+  render: (b) =>
+    `changes()=1 AND EXISTS (SELECT 1 FROM counters WHERE key=${b.bind(key)} AND window_start=${b.bind(window)} AND count=${b.bind(threshold)})`,
+});
+
 /** The immediately preceding increment must have crossed the cap in this transaction. */
 export function cappedMissAuditStmt(
   db: D1Database,
@@ -151,23 +167,6 @@ export function cappedMissAuditStmt(
       threshold,
     ],
   );
-}
-
-interface CompletedMiss {
-  actor: ScanActor;
-  scanId: string;
-  claimAt: number;
-}
-
-/** Bind the counter to this exact finalized generation, not another completed claim. */
-export function completedMissPredicate(input: CompletedMiss): Predicate {
-  const { actor, scanId, claimAt } = input;
-  return {
-    sql: `EXISTS (SELECT 1 FROM scans miss_scan WHERE miss_scan.id=? AND miss_scan.at=?
-      AND miss_scan.org_id=? AND miss_scan.mode=? AND miss_scan.actor_key=?
-      AND miss_scan.state='done' AND miss_scan.reason='not_found')`,
-    params: [scanId, claimAt, actor.orgId, actor.mode, actor.actorKey],
-  };
 }
 
 /** An eligible miss cannot commit without its counter update. */

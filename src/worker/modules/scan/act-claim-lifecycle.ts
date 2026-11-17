@@ -10,8 +10,7 @@ import {
   StaleScanAuthority,
 } from './act-override.ts';
 import { replayOutcome } from './act-replay.ts';
-import { actionCsrfAt } from './act-snapshot.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
+import { type ActorCsrfSnapshot, actionCsrfAt } from './actor-csrf.ts';
 import { type CredentialTombstoneSnapshot, credentialInputValid } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { unknownOutcome } from './outcome.ts';

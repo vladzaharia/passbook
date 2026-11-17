@@ -44,10 +44,8 @@ export function stoppedAuditPass(
       candidate.identityTeamIdentifier !== snapshot.identityTeamIdentifier ||
       candidate.identityRevision !== snapshot.identityRevision ||
       candidate.activeTemplateVersion !== snapshot.activeTemplateVersion ||
-      candidate.activeReleaseId !== snapshot.activeReleaseId ||
-      candidate.activeReleaseGeneration !== snapshot.activeReleaseGeneration ||
-      candidate.activeReleaseVersion !== snapshot.activeReleaseVersion ||
-      candidate.activeReleaseCandidateHash !== snapshot.activeReleaseCandidateHash ||
+      // No release comparison: the snapshot and the candidate come from one read, so it could not
+      // fail. The commit grant (`scanPassChecks`, the template usable check) is the release gate.
       // Not `templateRevision` (`config_revision`): a rename is not door authority (R8).
       candidate.orgRevision !== snapshot.orgRevision ||
       fields.some((field) => candidate.pass[field] !== snapshot[field])

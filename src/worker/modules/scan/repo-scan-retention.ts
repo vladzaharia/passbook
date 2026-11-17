@@ -119,30 +119,6 @@ const CURRENT_PROOF_MATCH = scanConjunction([
   `r.mac=json_extract(input.j,'$.proof.mac')`,
 ]);
 
-/**
- * Immediately follows the guarded event INSERT in the same transaction. Its `changes()`
- * fence, exact event/scan snapshot, current pass, and unique ledger linkage prevent a
- * partial or stale action from producing a trusted index. Follow it with the action's
- * existing completeness sentinel, which must abort when this INSERT did not succeed.
- */
-export function retentionProofIfRecordedStmt(
-  db: D1Database,
-  prepared: PreparedScanRetentionProof,
-): D1PreparedStatement {
-  return stmt(
-    db,
-    `INSERT INTO scan_retention_proofs
-    (scan_id,org_id,mode,ledger_event_id,pass_ref,event_digest,scan_digest,gate_snapshot,presence_snapshot,mac)
-    SELECT json_extract(input.j,'$.proof.scanId'), json_extract(input.j,'$.proof.orgId'),
-      json_extract(input.j,'$.proof.mode'), json_extract(input.j,'$.proof.ledgerEventId'),
-      json_extract(input.j,'$.proof.passRef'), json_extract(input.j,'$.proof.eventDigest'),
-      json_extract(input.j,'$.proof.scanDigest'), json_extract(input.j,'$.proof.gateSnapshot'),
-      json_extract(input.j,'$.proof.presenceSnapshot'), json_extract(input.j,'$.proof.mac')
-    FROM ${SOURCE_JOINS} WHERE changes()=1 AND (${SOURCE_MATCH})`,
-    sourceParams(prepared),
-  );
-}
-
 /** Recheck the exact signed event, scan and immutable proof after asynchronous work. */
 export function retentionProofCurrentPredicate(prepared: PreparedScanRetentionProof): {
   sql: string;

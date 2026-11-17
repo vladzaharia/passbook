@@ -4,7 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
 import { type ScanActor, scanScannerCsrfProof } from './actor.ts';
 import { scannerExpired } from './auth-store.ts';
-import { credentialGone, getScanner } from './repo-device.ts';
+import { getScanner } from './repo-device.ts';
 
 /**
  * The presented scanner credential no longer authenticates, as the guard would find on the next
@@ -20,12 +20,14 @@ export async function scannerCredentialLost(
   const scanner = actor.scanner;
   if (actor.principal !== 'scanner' || !scanner) return false;
   const now = ctx.clock.now();
-  if (await credentialGone(ctx.env.DB, scanner, now)) return true;
   const fresh = await getScanner(ctx.env.DB, scanner.id);
   if (
     !fresh ||
+    fresh.revokedAt !== null ||
+    fresh.tokenHash !== scanner.tokenHash ||
     fresh.tokenPrefix !== scanner.tokenPrefix ||
     (fresh.kind === 'terminal') !== (scanner.kind === 'terminal') ||
+    (scanner.csrfSecret !== null && fresh.csrfSecret !== scanner.csrfSecret) ||
     scannerExpired(fresh, now)
   )
     return true;
