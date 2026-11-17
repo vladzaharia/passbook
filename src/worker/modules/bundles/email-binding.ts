@@ -1,9 +1,14 @@
 import { z } from 'zod';
+import { revealToken } from '../../platform/capability-token.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { bindPass, matchesPass, PassDeliveryBindingSchema } from '../delivery/binding.ts';
 import { DeliveryActorSchema } from '../delivery/delivery-actor.ts';
 import { mapPass, type Pass } from '../passes/repo-map.ts';
 import { type BundleRow, bundleEmailRows } from './repo.ts';
+
+/** Of the plain token, so a binding made before the token is sealed still matches after. */
+const bundleTokenHash = async (env: { DB: D1Database }, bundle: BundleRow) =>
+  sha256Hex(await revealToken(env, 'bundle', bundle.id, bundle.org_id, bundle.token));
 
 export const BundleEmailIntentSchema = z.object({
   format: z.literal(1),
@@ -51,6 +56,7 @@ export async function bundleEmailSnapshot(
 }
 
 export async function bindBundle(
+  env: { DB: D1Database },
   snapshot: BundleEmailSnapshot,
   to: string,
 ): Promise<BundleEmailIntent> {
@@ -63,13 +69,14 @@ export async function bindBundle(
     mode: bundle.mode,
     holderEmail: bundle.holder_email,
     name: bundle.name,
-    tokenHash: await sha256Hex(bundle.token),
+    tokenHash: await bundleTokenHash(env, bundle),
     positions,
     members: await Promise.all(passes.map(bindPass)),
   };
 }
 
 export async function matchesBundle(
+  env: { DB: D1Database },
   snapshot: BundleEmailSnapshot,
   binding: BundleEmailIntent,
 ): Promise<boolean> {
@@ -82,7 +89,7 @@ export async function matchesBundle(
     passes.length !== binding.members.length ||
     positions.length !== binding.positions.length ||
     positions.some((position, index) => position !== binding.positions[index]) ||
-    (await sha256Hex(bundle.token)) !== binding.tokenHash
+    (await bundleTokenHash(env, bundle)) !== binding.tokenHash
   )
     return false;
   return passes.every((pass, i) => {

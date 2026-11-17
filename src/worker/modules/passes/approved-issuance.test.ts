@@ -3,6 +3,7 @@ import { unzipSync } from 'fflate';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   type ApiKeyFixture,
+  linkToken,
   makeApiKey,
   makeOrg,
   makeSession,
@@ -13,6 +14,7 @@ import {
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
+import { issueToken } from '../../platform/capability-token.ts';
 import { type AppBindings, requestContext } from '../../platform/context.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -57,7 +59,7 @@ import {
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import type { Pass } from './repo.ts';
 import { tenantPassAuthorityValid } from './repo-authority.ts';
-import { getPass, getPassByDownloadToken } from './repo-read-pass.ts';
+import { getPass } from './repo-read-pass.ts';
 import { approvedReleaseFence } from './repo-release.ts';
 import { makeTenantTestApiKey } from './repo-tenant-test-fixtures.ts';
 import { insertPass } from './repo-write.ts';
@@ -577,6 +579,11 @@ async function pendingPassId(before: string[]) {
   return passId;
 }
 
+async function tokenFields(env: object, id: string, orgId: string, token: string) {
+  const t = await issueToken(env, 'pass', id, orgId, token);
+  return { downloadToken: t.mac, tokenSeal: t.seal };
+}
+
 describe('approved issuance over tenant HTTP', () => {
   it.each(['session', 'api key'] as const)(
     'persists the exact reviewed release for a real %s',
@@ -647,7 +654,7 @@ describe('approved issuance over tenant HTTP', () => {
     const current = await getPass(kit.env.DB, detail.id);
     if (!current) throw new Error('Missing issued pass');
     expect(detail).toMatchObject({ ownerUserId: user.id, holderState: 'owned' });
-    expect(detail.publicUrl).toContain(current.downloadToken);
+    expect(detail.publicUrl).toContain(await linkToken(kit.env, current));
     expect(initial.ownerUserId).toBe(user.id);
     expect(current).toMatchObject({
       ownerUserId: user.id,
@@ -736,7 +743,7 @@ describe('approved issuance over tenant HTTP', () => {
     await handleEmailSend({ kind: 'email.send', outboxId: queued.id }, jobCtxOf(kit));
     expect(kit.mailer.sent).toHaveLength(sent + 1);
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
-    expect(kit.mailer.sent.at(-1)?.html).toContain(current.downloadToken);
+    expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, current));
   }, 60_000);
 
   it('rolls back the pass and delivery intent if the initial holder audit cannot commit', async () => {
@@ -876,7 +883,7 @@ describe('approved issuance over tenant HTTP', () => {
     if (!queued[0]) throw new Error('Committed issuance email was lost');
     await handleEmailSend({ kind: 'email.send', outboxId: queued[0].id }, jobCtxOf(kit));
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
-    expect(kit.mailer.sent.at(-1)?.html).toContain(pass.downloadToken);
+    expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, pass));
   }, 60_000);
 
   it('selects a newly verified holder in the issuance INSERT, without a transfer', async () => {
@@ -1041,7 +1048,7 @@ describe('approved issuance over tenant HTTP', () => {
       if (!rows[0]) throw new Error('Missing issuance email');
       await handleEmailSend({ kind: 'email.send', outboxId: rows[0].id }, jobCtxOf(kit));
       expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
-      expect(kit.mailer.sent.at(-1)?.html).toContain(pass.downloadToken);
+      expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, pass));
     },
     60_000,
   );
@@ -1115,7 +1122,7 @@ describe('approved issuance over tenant HTTP', () => {
       linkGeneration: initial.linkGeneration + 1,
       version: initial.version,
     });
-    expect(await getPassByDownloadToken(kit.env.DB, initial.downloadToken)).toBeNull();
+    expect(pending.downloadToken).not.toBe(initial.downloadToken);
     expect(
       await first(
         kit.env.DB,
@@ -1182,7 +1189,7 @@ describe('approved issuance over tenant HTTP', () => {
     await handleEmailSend({ kind: 'email.send', outboxId: outboxes[0].id }, jobCtxOf(kit));
     expect(kit.mailer.sent).toHaveLength(sent + 1);
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
-    expect(kit.mailer.sent.at(-1)?.html).toContain(completed.downloadToken);
+    expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, completed));
     expect(kit.mailer.sent.at(-1)?.html).not.toContain(initial.downloadToken);
   }, 60_000);
 
@@ -1277,7 +1284,7 @@ describe('approved issuance over tenant HTTP', () => {
     await handleEmailSend({ kind: 'email.send', outboxId: queued[0].id }, jobCtxOf(kit));
     expect(kit.mailer.sent).toHaveLength(sent + 1);
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
-    expect(kit.mailer.sent.at(-1)?.html).toContain(pass.downloadToken);
+    expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, pass));
   }, 60_000);
 
   it.each([
@@ -1957,7 +1964,7 @@ describe('issuance commit fences', () => {
         templateVersion: release.version,
         release: forged,
         authToken: unique(),
-        downloadToken: unique(),
+        ...(await tokenFields(kit.env, id, own.orgId, unique())),
         webServiceUrl: `${ORIGIN}/wallet`,
         personalization: { memberName: 'Forged' },
         fieldSources: { memberName: 'manual' },
@@ -2095,7 +2102,7 @@ describe('issuance commit fences', () => {
         templateVersion: release.version,
         release: snapshot,
         authToken: unique(),
-        downloadToken: unique(),
+        ...(await tokenFields(kit.env, id, own.orgId, unique())),
         webServiceUrl: `${ORIGIN}/wallet`,
         personalization: { memberName: 'Forged execution' },
         fieldSources: { memberName: 'manual' },

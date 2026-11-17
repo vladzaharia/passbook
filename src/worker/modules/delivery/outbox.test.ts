@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { linkToken } from '../../../../test/helpers/index.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import { handleQueue } from '../../jobs/queue.ts';
 import { retryDelaySeconds } from '../../jobs/retry.ts';
@@ -59,8 +60,8 @@ describe('pass email', () => {
     await handleEmailSend({ kind: 'email.send', outboxId }, job());
     const sent = kit.mailer.sent.at(-1);
     expect(sent?.to).toBe('holder@example.com');
-    expect(sent?.html).toContain(`/p/${pass.downloadToken}/pass.pkpass`);
-    expect(sent?.html).toContain(`/p/${pass.downloadToken}"`);
+    expect(sent?.html).toContain(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
+    expect(sent?.html).toContain(`/p/${await linkToken(kit.env, pass)}"`);
     expect(sent?.attachments?.[0]).toMatchObject({ type: 'application/vnd.apple.pkpass' });
     expect(sent?.attachments?.[0]?.content.length).toBeGreaterThan(100);
     expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({ state: 'sent' });

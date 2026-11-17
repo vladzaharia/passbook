@@ -1,3 +1,4 @@
+import { type IssuedToken, sealStatement } from '../../platform/capability-token.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import type { Pass } from './repo-map.ts';
 import {
@@ -14,7 +15,7 @@ import {
 export async function setDownloadToken(
   db: D1Database,
   pass: Pass,
-  token: string,
+  token: IssuedToken,
   now: number,
 ): Promise<boolean> {
   if (
@@ -24,16 +25,19 @@ export async function setDownloadToken(
     pass.lifecycleGeneration < 0
   )
     return false;
-  const row = await first<{ id: string }>(
-    db,
-    `UPDATE passes SET download_token = ?, download_token_rotated_at = ?, link_generation = link_generation + 1
+  const [updated] = await batch(db, [
+    stmt(
+      db,
+      `UPDATE passes SET download_token = ?, download_token_rotated_at = ?, link_generation = link_generation + 1
      WHERE id = ?
        AND credential_generation = ? AND lifecycle_generation = ?
        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = passes.id AND t.state = 'pending')
      RETURNING id`,
-    [token, now, pass.id, pass.credentialGeneration, pass.lifecycleGeneration],
-  );
-  return row !== null;
+      [token.mac, now, pass.id, pass.credentialGeneration, pass.lifecycleGeneration],
+    ),
+    sealStatement(db, 'pass', pass.id, token.mac, token.seal),
+  ]);
+  return (updated?.results.length ?? 0) === 1;
 }
 
 /** Claims the slot only while the selected context  still match. */

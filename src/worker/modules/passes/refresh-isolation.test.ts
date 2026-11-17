@@ -598,7 +598,7 @@ describe('connector snapshot fencing', () => {
     const pass = await kit.pass({ mode: 'test' });
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
     expect(await getPass(kit.env.DB, pass.id)).toBeNull();
-    expect(await getPassByDownloadToken(kit.env.DB, pass.downloadToken)).toBeNull();
+    expect(await getPassByDownloadToken(kit.env, pass.downloadToken)).toBeNull();
     expect(await getPassBySerial(kit.env.DB, pass.identityId, pass.serial)).toBeNull();
     expect(
       (await listPasses(kit.env.DB, { orgId: pass.orgId, mode: 'test', limit: 100 })).items.map(

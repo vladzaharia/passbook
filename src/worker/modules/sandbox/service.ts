@@ -101,7 +101,7 @@ export async function sendCapturedToMe(
   const db = ctx.env.DB;
   const ref = await getCapturedReference(db, id, authority, ctx.clock.now());
   if (!ref) throw new NotFoundError('Email not found.', 'CAPTURED_EMAIL_NOT_FOUND');
-  const snapshot = await resolveCaptureSnapshot(db, ref);
+  const snapshot = await resolveCaptureSnapshot(ctx.env, ref);
   if (!snapshot || !(await readCaptured(db, ref, snapshot, false, authority, ctx.clock.now())))
     throw new ConflictError(
       'The email or account changed. Reload and try again.',

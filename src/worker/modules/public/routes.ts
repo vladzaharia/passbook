@@ -85,10 +85,11 @@ register(
     const nonce = c.var.nonce;
     const theme = requestTheme(c);
     try {
-      const pass = await passForToken(svcCtx, c.req.valid('param').token);
+      const { token } = c.req.valid('param');
+      const pass = await passForToken(svcCtx, token);
       const snapshot = await capturePassSnapshot(svcCtx, pass);
       const model = await pageModel(svcCtx, pass);
-      const page = `/p/${pass.downloadToken}`;
+      const page = `/p/${token}`;
       // Resolve only links to this bearer under the same snapshot as the page and its assets.
       const walletOffers = canPresent(pass, model.passJson, svcCtx.clock.now())
         ? (await listWalletOffers(svcCtx, pass.id))
@@ -157,12 +158,13 @@ register(
     const ctx = svc(c);
     const theme = requestTheme(c);
     try {
-      const pass = await passForToken(ctx, c.req.valid('param').token);
+      const { token } = c.req.valid('param');
+      const pass = await passForToken(ctx, token);
       const snapshot = await capturePassSnapshot(ctx, pass);
       const model = await presentationForPass(ctx, pass);
       const html = renderPresentationPage({
         ...model,
-        backHref: `/p/${pass.downloadToken}`,
+        backHref: `/p/${token}`,
         nonce: c.var.nonce,
         theme,
       });

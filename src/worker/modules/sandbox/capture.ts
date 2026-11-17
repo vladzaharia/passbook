@@ -65,7 +65,7 @@ export async function captureEmail(ctx: ServiceContext, input: CaptureInput): Pr
     attached: input.attached ? 1 : 0,
     intent: intent ?? null,
   };
-  const snapshot = await resolveCaptureSnapshot(ctx.env.DB, ref);
+  const snapshot = await resolveCaptureSnapshot(ctx.env, ref);
   const matchesOutbox =
     row.kind === 'email' &&
     row.orgId === input.orgId &&

@@ -1,4 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { linkToken } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { rotateLink as RotateLink } from '../passes/pass-service-delivery.ts';
@@ -61,13 +62,13 @@ describe('wallet offers in pass delivery', () => {
     const returnedOffers = [
       {
         provider: 'google' as const,
-        href: `/p/${pass.downloadToken}/wallet/google`,
+        href: `/p/${await linkToken(kit.env, pass)}/wallet/google`,
         installation: 'unknown' as const,
         providerJwt: 'private-google-bearer',
       },
       {
         provider: 'samsung' as const,
-        href: `/p/${pass.downloadToken}/wallet/samsung`,
+        href: `/p/${await linkToken(kit.env, pass)}/wallet/samsung`,
         installation: 'unknown' as const,
         providerToken: 'private-samsung-bearer',
       },
@@ -81,14 +82,14 @@ describe('wallet offers in pass delivery', () => {
     expect(sent).toBeDefined();
     const base = baseUrl(kit.env);
     for (const provider of ['google', 'samsung']) {
-      const link = `${base}/p/${pass.downloadToken}/wallet/${provider}`;
+      const link = `${base}/p/${await linkToken(kit.env, pass)}/wallet/${provider}`;
       expect(sent?.html).toContain(`href="${link}"`);
       expect(sent?.text).toContain(link);
     }
-    expect(sent?.html).toContain(`href="${base}/p/${pass.downloadToken}/pass.pkpass"`);
+    expect(sent?.html).toContain(`href="${base}/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
     const payload = JSON.stringify((await getOutbox(kit.env.DB, outboxId))?.payload);
     const output = [sent?.html, sent?.text, payload].join('\n');
-    expect(payload).not.toContain(pass.downloadToken);
+    expect(payload).not.toContain(await linkToken(kit.env, pass));
     expect(output).not.toContain('private-google-bearer');
     expect(output).not.toContain('private-samsung-bearer');
   });
@@ -113,13 +114,13 @@ describe('wallet offers in pass delivery', () => {
     const returnedOffers = [
       {
         provider: 'google' as const,
-        href: `/p/${pass.downloadToken}/wallet/google`,
+        href: `/p/${await linkToken(kit.env, pass)}/wallet/google`,
         installation: 'unknown' as const,
         providerJwt: 'private-google-bearer',
       },
       {
         provider: 'samsung' as const,
-        href: `/p/${pass.downloadToken}/wallet/samsung`,
+        href: `/p/${await linkToken(kit.env, pass)}/wallet/samsung`,
         installation: 'unknown' as const,
         providerToken: 'private-samsung-bearer',
       },
@@ -133,7 +134,7 @@ describe('wallet offers in pass delivery', () => {
     );
     expect(kit.mailer.sent).toHaveLength(before);
     for (const provider of ['google', 'samsung']) {
-      const link = `${baseUrl(kit.env)}/p/${pass.downloadToken}/wallet/${provider}`;
+      const link = `${baseUrl(kit.env)}/p/${await linkToken(kit.env, pass)}/wallet/${provider}`;
       expect(captured?.html).toContain(`href="${link}"`);
       expect(captured?.text).toContain(link);
     }
@@ -150,7 +151,7 @@ describe('wallet offers in pass delivery', () => {
       return [
         {
           provider: 'google',
-          href: `/p/${pass.downloadToken}/wallet/google`,
+          href: `/p/${await linkToken(kit.env, pass)}/wallet/google`,
           installation: 'unknown',
         },
       ];

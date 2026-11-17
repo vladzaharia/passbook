@@ -1,3 +1,4 @@
+import { issueToken } from '../../platform/capability-token.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -19,7 +20,7 @@ export async function rotateLink(
   authority?: TenantPassWrite,
 ) {
   const pass = await getPassForWrite(ctx.env.DB, passId, scope);
-  const token = ctx.ids.token();
+  const token = await issueToken(ctx.env, 'pass', passId, pass.orgId, ctx.ids.token());
   const tokenSet = authority
     ? await setDownloadTokenGranted(ctx, pass, token, authority)
     : await setDownloadToken(ctx.env.DB, pass, token, ctx.clock.now());
@@ -40,8 +41,8 @@ export async function rotateLink(
     kind: 'pass.link_rotated',
     actor,
   });
-  const rotated = { ...pass, downloadToken: token, linkGeneration: pass.linkGeneration + 1 };
-  const { publicUrl, downloadUrl } = linksOf(ctx, rotated);
+  const rotated = { ...pass, downloadToken: token.mac, linkGeneration: pass.linkGeneration + 1 };
+  const { publicUrl, downloadUrl } = await linksOf(ctx, rotated, token.token);
   await assertPassDetailReadable(ctx, rotated, authority);
   return { publicUrl, downloadUrl };
 }

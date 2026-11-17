@@ -96,7 +96,7 @@ async function reservation(captureId: string, actor: Awaited<ReturnType<typeof o
   const authority = await inboxAuthority(kit, actor.session);
   const ref = await getCapturedReference(kit.env.DB, captureId, authority, kit.clock.now());
   if (!ref) throw new Error('ref missing');
-  const snapshot = await resolveCaptureSnapshot(kit.env.DB, ref);
+  const snapshot = await resolveCaptureSnapshot(kit.env, ref);
   if (!snapshot) throw new Error('snapshot missing');
   const id = kit.fx.ids.id();
   const ok = await reserveForward(

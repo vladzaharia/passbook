@@ -3,6 +3,7 @@ import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
 import { passSummary } from '../../email/pass-summary.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
@@ -117,12 +118,13 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     return;
   }
   const passJson = parseStoredPassJson(artifact.pass_json);
+  const plainToken = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
   const { iconUrl, logo } = passEmailImages(images, base);
   const email = renderPassEmail({
     orgName: org?.name ?? 'PassBook',
     ...emailSupport(ctx.env, orgSettings, branding),
-    downloadUrl: `${base}/p/${pass.downloadToken}/pass.pkpass`,
-    manageUrl: `${base}/p/${pass.downloadToken}`,
+    downloadUrl: `${base}/p/${plainToken}/pass.pkpass`,
+    manageUrl: `${base}/p/${plainToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     publicBaseUrl: base,
     walletOffers,

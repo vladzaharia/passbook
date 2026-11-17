@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
+import { stubIssuedToken } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { first, run } from '../../platform/db.ts';
 import { checksHold, jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -48,6 +49,7 @@ async function makeBundle(kit: Kit, passes: Pass[]) {
 
 function delayedBundle(kit: Kit, pass: Pass) {
   const id = kit.ctx.ids.id();
+  const stub = stubIssuedToken(kit.ctx.ids.token());
   return {
     id,
     grant: createBundleGrant(
@@ -57,7 +59,8 @@ function delayedBundle(kit: Kit, pass: Pass) {
         orgId: pass.orgId,
         mode: pass.mode,
         name: 'Delayed',
-        token: kit.ctx.ids.token(),
+        token: stub.mac,
+        tokenSeal: stub.seal,
         holderEmail: pass.holderEmail,
         actor,
         passes: [pass],

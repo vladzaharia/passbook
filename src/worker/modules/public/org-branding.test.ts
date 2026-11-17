@@ -1,6 +1,6 @@
 import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
+import { fakeAuth, linkToken } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -29,17 +29,19 @@ const bytesOf = async (res: Response) => new Uint8Array(await res.arrayBuffer())
 describe('org branding images on passes', () => {
   it('puts the uploaded logo and icon into the signed pass', async () => {
     const pass = await kit.pass();
-    const files = unzipSync(await bytesOf(await get(`/p/${pass.downloadToken}/pass.pkpass`)));
+    const files = unzipSync(
+      await bytesOf(await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`)),
+    );
     expect(files['icon@3x.png']).toEqual(makePng(114, 114));
     expect(files['logo@3x.png']).toEqual(makePng(480, 150));
   });
 
   it('shows them on the pass page and serves them as assets', async () => {
     const pass = await kit.pass();
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(html).toContain(`/p/${pass.downloadToken}/assets/logo@3x.png?v=`);
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
+    expect(html).toContain(`/p/${await linkToken(kit.env, pass)}/assets/logo@3x.png?v=`);
     expect(html).not.toContain('/assets/icon@3x.png');
-    const logo = await get(`/p/${pass.downloadToken}/assets/logo@3x.png`);
+    const logo = await get(`/p/${await linkToken(kit.env, pass)}/assets/logo@3x.png`);
     expect(await bytesOf(logo)).toEqual(makePng(480, 150));
   });
 
@@ -47,14 +49,18 @@ describe('org branding images on passes', () => {
     const pass = await kit.pass();
     const own = makePng(320, 100);
     await putPassAsset(jobCtxOf(kit), admin, pass.id, 'logo@2x.png', own, null);
-    const files = unzipSync(await bytesOf(await get(`/p/${pass.downloadToken}/pass.pkpass`)));
+    const files = unzipSync(
+      await bytesOf(await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`)),
+    );
     expect(files['logo@2x.png']).toEqual(own);
     expect(files['logo@3x.png']).toBeUndefined();
     expect(files['icon@3x.png']).toEqual(makePng(114, 114));
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
+    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     expect(html).toContain('/assets/logo@2x.png?v=');
     expect(html).not.toContain('/assets/logo@3x.png?v=');
-    expect(await bytesOf(await get(`/p/${pass.downloadToken}/assets/logo@2x.png`))).toEqual(own);
+    expect(
+      await bytesOf(await get(`/p/${await linkToken(kit.env, pass)}/assets/logo@2x.png`)),
+    ).toEqual(own);
   });
 });
 
@@ -68,12 +74,12 @@ describe('asset rate limit', () => {
       await res.arrayBuffer();
       return res.status;
     };
-    expect(await hit(a.downloadToken, '9.9.9.1')).toBe(200);
-    expect(await hit(a.downloadToken, '9.9.9.2')).toBe(200);
-    expect(await hit(a.downloadToken, '9.9.9.3')).toBe(429);
+    expect(await hit(await linkToken(kit.env, a), '9.9.9.1')).toBe(200);
+    expect(await hit(await linkToken(kit.env, a), '9.9.9.2')).toBe(200);
+    expect(await hit(await linkToken(kit.env, a), '9.9.9.3')).toBe(429);
     // The same proxy still reaches every other token, and another network reaches this one.
-    expect(await hit(b.downloadToken, '9.9.9.1')).toBe(200);
-    expect(await hit(a.downloadToken, '8.8.8.8')).toBe(200);
+    expect(await hit(await linkToken(kit.env, b), '9.9.9.1')).toBe(200);
+    expect(await hit(await linkToken(kit.env, a), '8.8.8.8')).toBe(200);
   });
 
   it('falls back to the IP for a malformed token', async () => {

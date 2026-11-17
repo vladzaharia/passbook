@@ -1,7 +1,7 @@
 import { unzlibSync, zlibSync } from 'fflate';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { isolatedKeysetDatabase } from '../../../../test/helpers/credential-keyset.ts';
-import { fakeAuth, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
+import { fakeAuth, linkToken, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
 import { createApp } from '../../app.ts';
@@ -329,11 +329,12 @@ describe('public credential transfer fence', () => {
     const nextOwner = await makeUser(kit.fx);
     const holderName = 'Transfer Holder Private Foxtrot';
     const pass = await kit.pass({ memberName: holderName, holderEmail: oldOwner.primaryEmail });
+    const oldToken = await linkToken(kit.env, pass);
     expect(pass.ownerUserId).toBe(oldOwner.id);
     const snapshot = await capturePassSnapshot(kit.ctx, pass);
     const oldOwnerHeaders = auth.user(oldOwner.id);
     const nextOwnerHeaders = auth.user(nextOwner.id);
-    const oldBase = `/p/${pass.downloadToken}`;
+    const oldBase = `/p/${oldToken}`;
     const oldFile = await get(`${oldBase}/pass.pkpass`);
     expect(oldFile.status).toBe(200);
     const fileEtag = oldFile.headers.get('etag') ?? '*';
@@ -367,8 +368,8 @@ describe('public credential transfer fence', () => {
       ]);
       const pending = await getPass(kit.env.DB, pass.id);
       if (!pending) throw new Error('Missing pending pass');
-      pendingToken = pending.downloadToken;
-      expect(pendingToken).not.toBe(pass.downloadToken);
+      pendingToken = await linkToken(kit.env, pending);
+      expect(pendingToken).not.toBe(oldToken);
       expect(pending.credentialGeneration).toBe(pass.credentialGeneration + 1);
       expect(pending.linkGeneration).toBe(pass.linkGeneration + 1);
       expect(pending.ownerUserId).toBe(oldOwner.id);
@@ -384,7 +385,7 @@ describe('public credential transfer fence', () => {
         source_generation: pass.credentialGeneration,
         target_generation: pending.credentialGeneration,
       });
-      await expect(passForToken(kit.ctx, pass.downloadToken)).rejects.toMatchObject({
+      await expect(passForToken(kit.ctx, oldToken)).rejects.toMatchObject({
         status: 404,
       });
       await expect(passForToken(kit.ctx, pendingToken)).rejects.toMatchObject({ status: 404 });
@@ -396,12 +397,12 @@ describe('public credential transfer fence', () => {
       const secrets = [
         holderName,
         oldOwner.primaryEmail,
-        pass.downloadToken,
+        oldToken,
         pendingToken,
         pass.authToken,
         pass.scanCode,
       ].filter((value): value is string => Boolean(value));
-      for (const token of [pass.downloadToken, pendingToken]) {
+      for (const token of [oldToken, pendingToken]) {
         const base = `/p/${token}`;
         for (const [path, headers] of [
           [base, {}],
@@ -436,7 +437,7 @@ describe('public credential transfer fence', () => {
     expect(outcome?.state).toBe('completed');
     const fresh = await getPass(kit.env.DB, pass.id);
     if (!fresh) throw new Error('Missing completed pass');
-    expect(fresh.downloadToken).toBe(pendingToken);
+    expect(await linkToken(kit.env, fresh)).toBe(pendingToken);
     expect(fresh.ownerUserId).toBe(nextOwner.id);
     expect(fresh.serial).not.toBe(pass.serial);
     expect(fresh.scanCode).not.toBe(pass.scanCode);
@@ -458,29 +459,29 @@ describe('public credential transfer fence', () => {
     await expect(passImages(kit.ctx, pass)).rejects.toMatchObject({ status: 404 });
     await expect(presentationForPass(kit.ctx, pass)).rejects.toMatchObject({ status: 404 });
     expect((await presentationForPass(kit.ctx, fresh)).barcode?.message).toBe(fresh.scanCode);
-    expect((await passForToken(kit.ctx, fresh.downloadToken)).id).toBe(pass.id);
+    expect((await passForToken(kit.ctx, await linkToken(kit.env, fresh))).id).toBe(pass.id);
     const images = await passImages(kit.ctx, fresh);
     expect(images.length).toBeGreaterThan(0);
-    expect(
-      images.every((image) => image.path.startsWith(`/p/${fresh.downloadToken}/assets/`)),
-    ).toBe(true);
+    const freshToken = await linkToken(kit.env, fresh);
+    expect(images.every((image) => image.path.startsWith(`/p/${freshToken}/assets/`))).toBe(true);
     expect((await get(oldBase)).status).toBe(404);
-    const freshPage = await get(`/p/${fresh.downloadToken}`);
+    const freshPage = await get(`/p/${await linkToken(kit.env, fresh)}`);
     expect(freshPage.status).toBe(200);
-    expect(await freshPage.text()).toContain(`/p/${fresh.downloadToken}/pass.pkpass`);
-    expect((await get(`/p/${fresh.downloadToken}/barcode`)).status).toBe(200);
-    const freshFile = await get(`/p/${fresh.downloadToken}/pass.pkpass`);
+    expect(await freshPage.text()).toContain(`/p/${await linkToken(kit.env, fresh)}/pass.pkpass`);
+    expect((await get(`/p/${await linkToken(kit.env, fresh)}/barcode`)).status).toBe(200);
+    const freshFile = await get(`/p/${await linkToken(kit.env, fresh)}/pass.pkpass`);
     expect(freshFile.status).toBe(200);
     expect(new Uint8Array(await freshFile.arrayBuffer())).not.toEqual(oldBytes);
     expect((await get(`/api/v1/me/passes/${pass.id}/barcode`, oldOwnerHeaders)).status).toBe(404);
     expect((await get(`/api/v1/me/passes/${pass.id}/barcode`, nextOwnerHeaders)).status).toBe(200);
     const freshOwner = await get(`/api/v1/me/passes/${pass.id}`, nextOwnerHeaders);
     expect(freshOwner.status).toBe(200);
-    expect(await freshOwner.text()).toContain(fresh.downloadToken);
+    expect(await freshOwner.text()).toContain(await linkToken(kit.env, fresh));
   }, 120_000);
 
   it('does not resolve a bearer whose transfer commits after the token lookup', async () => {
     const pass = await kit.pass();
+    const oldToken = await linkToken(kit.env, pass);
     const change = vi.fn(async () => {
       expect((await startTransfer(pass)).state).toBe('completed');
     });
@@ -492,20 +493,21 @@ describe('public credential transfer fence', () => {
         change,
       ),
     };
-    await expect(passForToken({ ...kit.ctx, env }, pass.downloadToken)).rejects.toMatchObject({
+    await expect(passForToken({ ...kit.ctx, env }, oldToken)).rejects.toMatchObject({
       status: 404,
       code: 'LINK_NOT_FOUND',
     });
     expect(change).toHaveBeenCalledOnce();
     const fresh = await getPass(kit.env.DB, pass.id);
     if (!fresh) throw new Error('Missing completed pass');
-    expect((await passForToken(kit.ctx, fresh.downloadToken)).id).toBe(pass.id);
+    expect((await passForToken(kit.ctx, await linkToken(kit.env, fresh))).id).toBe(pass.id);
   }, 120_000);
 
   it.each(['page', 'barcode'] as const)(
     'rejects a stale %s when the transfer completes during the stored JSON read',
     async (surface) => {
       const pass = await kit.pass({ memberName: 'Raced Holder Private Golf' });
+      const oldToken = await linkToken(kit.env, pass);
       const change = vi.fn(async () => {
         expect((await startTransfer(pass)).state).toBe('completed');
       });
@@ -515,16 +517,16 @@ describe('public credential transfer fence', () => {
       };
       overrideDeps(env, { registry: kit.registry, apns: kit.apns, mailer: kit.mailer });
       const suffix = surface === 'barcode' ? '/barcode' : '';
-      const response = await get(`/p/${pass.downloadToken}${suffix}`, {}, env);
+      const response = await get(`/p/${oldToken}${suffix}`, {}, env);
       expect(change).toHaveBeenCalledOnce();
       const fresh = await getPass(kit.env.DB, pass.id);
       if (!fresh) throw new Error('Missing completed pass');
       await expectNoDisclosure(response, [
-        pass.downloadToken,
-        fresh.downloadToken,
+        oldToken,
+        await linkToken(kit.env, fresh),
         'Raced Holder Private Golf',
       ]);
-      expect((await get(`/p/${fresh.downloadToken}${suffix}`)).status).toBe(200);
+      expect((await get(`/p/${await linkToken(kit.env, fresh)}${suffix}`)).status).toBe(200);
     },
     120_000,
   );
@@ -537,6 +539,7 @@ describe('public credential transfer fence', () => {
       const pass = await getPass(kit.env.DB, created.id);
       const icon = await getPassAsset(kit.env.DB, created.id, 'icon.png');
       if (!pass || !icon) throw new Error('Missing pass or icon fixture');
+      const oldToken = await linkToken(kit.env, pass);
       const key = surface === 'pass.pkpass' ? pass.objectKey : icon.r2Key;
       const entered = deferred.withResolvers<void>();
       const held = deferred.withResolvers<void>();
@@ -571,7 +574,7 @@ describe('public credential transfer fence', () => {
         });
       let outcome: CredentialTransferResult | undefined;
       try {
-        const response = await get(`/p/${pass.downloadToken}/${surface}`);
+        const response = await get(`/p/${oldToken}/${surface}`);
         const pending = await getPass(kit.env.DB, pass.id);
         if (!pending) throw new Error('Missing pending pass');
         expect(
@@ -585,8 +588,8 @@ describe('public credential transfer fence', () => {
         expect(opened).toBe(true);
         expect(cancelled).toBe(1);
         await expectNoDisclosure(response, [
-          pass.downloadToken,
-          pending.downloadToken,
+          oldToken,
+          await linkToken(kit.env, pending),
           pass.authToken,
         ]);
       } finally {
@@ -598,7 +601,7 @@ describe('public credential transfer fence', () => {
       expect(outcome?.state).toBe('completed');
       const fresh = await getPass(kit.env.DB, pass.id);
       if (!fresh) throw new Error('Missing completed pass');
-      const current = await get(`/p/${fresh.downloadToken}/${surface}`);
+      const current = await get(`/p/${await linkToken(kit.env, fresh)}/${surface}`);
       expect(current.status).toBe(200);
       await current.arrayBuffer();
     },
@@ -609,7 +612,7 @@ describe('public credential transfer fence', () => {
 describe('public asset fencing', () => {
   it('serves the unchanged photo and template icon privately, including conditional responses', async () => {
     const { pass, photo } = await photoPass();
-    const image = await get(`${assetPath(pass.downloadToken)}?v=${photo.sha1}`);
+    const image = await get(`${assetPath(await linkToken(kit.env, pass))}?v=${photo.sha1}`);
     expect(image.status).toBe(200);
     expect(image.headers.get('content-type')).toBe('image/png');
     expect(image.headers.get('cache-control')).toBe('private, no-store');
@@ -617,14 +620,14 @@ describe('public asset fencing', () => {
     expect(image.headers.get('etag')).toBe(`"${photo.sha1}"`);
     expect(new Uint8Array(await image.arrayBuffer())).toEqual(oldPhoto);
 
-    const conditional = await get(assetPath(pass.downloadToken), {
+    const conditional = await get(assetPath(await linkToken(kit.env, pass)), {
       'if-none-match': `"${photo.sha1}"`,
     });
     expect(conditional.status).toBe(304);
     expect(conditional.headers.get('cache-control')).toBe('private, no-store');
     expect((await conditional.arrayBuffer()).byteLength).toBe(0);
 
-    const icon = await get(`/p/${pass.downloadToken}/assets/icon.png?v=v1`);
+    const icon = await get(`/p/${await linkToken(kit.env, pass)}/assets/icon.png?v=v1`);
     expect(icon.status).toBe(200);
     expect(icon.headers.get('cache-control')).toBe('private, no-store');
     expect(icon.headers.get('cross-origin-resource-policy')).toBe('cross-origin');
@@ -706,7 +709,7 @@ describe('public asset fencing', () => {
       let response: Response;
       try {
         response = await get(
-          assetPath(pass.downloadToken),
+          assetPath(await linkToken(kit.env, pass)),
           conditional ? { 'if-none-match': `"${photo.sha1}"` } : {},
         );
       } finally {
@@ -761,7 +764,7 @@ describe('public asset fencing', () => {
       });
       let response: Response;
       try {
-        response = await get(assetPath(pass.downloadToken), {
+        response = await get(assetPath(await linkToken(kit.env, pass)), {
           'if-none-match': `"${photo.sha1}"`,
         });
       } finally {
@@ -773,7 +776,7 @@ describe('public asset fencing', () => {
       await expect(assertPassSnapshot(kit.ctx, snapshot)).resolves.toBeUndefined();
 
       if (change === 'replacement') {
-        const current = await get(assetPath(pass.downloadToken));
+        const current = await get(assetPath(await linkToken(kit.env, pass)));
         expect(current.status).toBe(200);
         expect(current.headers.get('etag')).toBe(`"${replacementSha}"`);
         expect(current.headers.get('cache-control')).toBe('private, no-store');
@@ -805,7 +808,7 @@ describe('public asset fencing', () => {
     });
     let response: Response;
     try {
-      response = await get(`/p/${pass.downloadToken}/assets/icon.png`, {
+      response = await get(`/p/${await linkToken(kit.env, pass)}/assets/icon.png`, {
         'if-none-match': `"${override.sha1}"`,
       });
     } finally {
@@ -819,6 +822,7 @@ describe('public asset fencing', () => {
 
   it('does not disclose a newly assigned holder photo to the old bearer', async () => {
     const { pass, owner } = await photoPass();
+    const oldToken = await linkToken(kit.env, pass);
     const next = await makeUser(kit.fx);
     let newToken = '';
     const newPhoto = newHolderPhoto();
@@ -831,7 +835,7 @@ describe('public asset fencing', () => {
       expect((await startTransfer(pass, next)).state).toBe('completed');
       const transferred = await getPass(kit.env.DB, pass.id);
       if (!transferred) throw new Error('Missing transferred pass');
-      newToken = transferred.downloadToken;
+      newToken = await linkToken(kit.env, transferred);
       await putMemberPhoto(
         jobCtxOf(kit),
         actor,
@@ -858,7 +862,7 @@ describe('public asset fencing', () => {
     });
     let response: Response;
     try {
-      response = await get(assetPath(pass.downloadToken), {}, env);
+      response = await get(assetPath(oldToken), {}, env);
     } finally {
       spy.mockRestore();
     }
@@ -867,7 +871,7 @@ describe('public asset fencing', () => {
     expect(opened).toBe(true);
     expect(cancelled).toBe(1);
     await expectNoImage(response);
-    expect((await get(assetPath(pass.downloadToken))).status).toBe(404);
+    expect((await get(assetPath(oldToken))).status).toBe(404);
     const current = await get(assetPath(newToken));
     expect(current.status).toBe(200);
     expect(current.headers.get('cache-control')).toBe('private, no-store');
@@ -876,6 +880,7 @@ describe('public asset fencing', () => {
 
   it('cancels a downloaded pass if its link changes during the R2 read', async () => {
     const pass = await kit.pass();
+    const oldToken = await linkToken(kit.env, pass);
     const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
     let opened = false;
     let cancelled = 0;
@@ -892,7 +897,7 @@ describe('public asset fencing', () => {
     });
     let response: Response;
     try {
-      response = await get(`/p/${pass.downloadToken}/pass.pkpass`);
+      response = await get(`/p/${oldToken}/pass.pkpass`);
     } finally {
       spy.mockRestore();
     }
@@ -909,12 +914,13 @@ describe('public page fencing', () => {
     const oldOwner = await makeUser(kit.fx);
     const newOwner = await makeUser(kit.fx);
     const pass = await kit.pass({ memberName: oldName, holderEmail: oldOwner.primaryEmail });
+    const oldToken = await linkToken(kit.env, pass);
     let newToken = '';
     const change = vi.fn(async () => {
       expect((await startTransfer(pass, newOwner)).state).toBe('completed');
       const transferred = await getPass(kit.env.DB, pass.id);
       if (!transferred) throw new Error('Missing transferred pass');
-      newToken = transferred.downloadToken;
+      newToken = await linkToken(kit.env, transferred);
       await run(
         kit.env.DB,
         'UPDATE pass_versions SET pass_json = replace(pass_json, ?, ?) WHERE pass_id = ?',
@@ -926,7 +932,7 @@ describe('public page fencing', () => {
       DB: beforeFirstRead(kit.env.DB, (sql) => sql.includes('FROM pass_versions'), change),
     };
     overrideDeps(env, { registry: kit.registry, apns: kit.apns, mailer: kit.mailer });
-    const stale = await get(`/p/${pass.downloadToken}`, {}, env);
+    const stale = await get(`/p/${oldToken}`, {}, env);
     expect(change).toHaveBeenCalledOnce();
     expect(stale.status).toBe(404);
     expect(stale.headers.get('cache-control')).toBe('private, no-store');
@@ -946,12 +952,13 @@ describe('public page fencing', () => {
       db: await isolatedKeysetDatabase(),
     });
     const newOwner = await makeUser(nativeKit.fx);
+    const oldToken = await linkToken(nativeKit.env, pass);
     let newToken = '';
     const change = vi.fn(async () => {
       expect((await startTransfer(pass, newOwner, nativeKit)).state).toBe('completed');
       const transferred = await getPass(nativeKit.env.DB, pass.id);
       if (!transferred) throw new Error('Missing transferred pass');
-      newToken = transferred.downloadToken;
+      newToken = await linkToken(nativeKit.env, transferred);
     });
     const env: AppEnv = {
       ...nativeKit.env,
@@ -967,7 +974,7 @@ describe('public page fencing', () => {
       apns: nativeKit.apns,
       mailer: nativeKit.mailer,
     });
-    const stale = await get(`/p/${pass.downloadToken}`, {}, env);
+    const stale = await get(`/p/${oldToken}`, {}, env);
     expect(change).toHaveBeenCalledOnce();
     expect(stale.status).toBe(404);
     const html = await stale.text();
@@ -1001,7 +1008,7 @@ describe('public page fencing', () => {
       [row.pass_json.replaceAll(currentName, futureName), pass.id, pass.version],
     );
     await run(kit.env.DB, 'UPDATE passes SET version = version + 1 WHERE id = ?', [pass.id]);
-    const response = await get(`/p/${pass.downloadToken}`);
+    const response = await get(`/p/${await linkToken(kit.env, pass)}`);
     expect(response.status).toBe(200);
     const html = await response.text();
     expect(html).toContain(currentName);
@@ -1011,7 +1018,7 @@ describe('public page fencing', () => {
       pass.id,
       pass.version,
     ]);
-    const missing = await get(`/p/${pass.downloadToken}`);
+    const missing = await get(`/p/${await linkToken(kit.env, pass)}`);
     expect(missing.status).toBe(404);
     expect(await missing.text()).not.toContain(futureName);
   });

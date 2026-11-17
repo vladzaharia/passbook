@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { Personalization } from '../../../passkit/types.ts';
 import type { MyPassSchema } from '../../../shared/contracts/index.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
@@ -39,7 +40,8 @@ function parsePassJson(raw: string | null): Record<string, unknown> {
 }
 
 async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassDto> {
-  const base = `${baseUrl(ctx.env)}/p/${row.download_token}`;
+  const plainToken = await revealToken(ctx.env, 'pass', row.id, row.org_id, row.download_token);
+  const base = `${baseUrl(ctx.env)}/p/${plainToken}`;
   const passJson = parsePassJson(row.pass_json);
   const presentationEligible =
     row.org_status === 'active' &&
@@ -61,7 +63,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
   const walletOffers: MyPassDto['walletOffers'] = [];
   if (presentationEligible) {
     for (const { provider, href } of await listWalletOffers(ctx, row.id)) {
-      if (href === `/p/${row.download_token}/wallet/${provider}`) {
+      if (href === `/p/${plainToken}/wallet/${provider}`) {
         // Provider credentials and short-lived offer tokens stay server-side.
         walletOffers.push({ provider, href, installation: 'unknown' });
       }

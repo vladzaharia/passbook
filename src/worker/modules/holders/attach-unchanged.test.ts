@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { issueToken } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
 import { createAuthStores } from '../../stores.ts';
 import { signInMagicLink } from '../auth/service.ts';
@@ -147,7 +148,12 @@ describe('verified attach of a pass whose credential cannot change', () => {
           );
         const current = await getPass(kit.env.DB, pass.id);
         if (!current) throw new Error('Missing pass');
-        return setDownloadToken(kit.env.DB, current, kit.fx.ids.token(), kit.clock.now());
+        return setDownloadToken(
+          kit.env.DB,
+          current,
+          await issueToken(kit.env, 'pass', current.id, current.orgId, kit.fx.ids.token()),
+          kit.clock.now(),
+        );
       });
       expect(await runAttachHookA(race.ctx, pass.id)).toBeNull();
       expect(race.fired()).toBe(true);
