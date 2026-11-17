@@ -189,7 +189,7 @@ describe('pending native wallets on holder surfaces', () => {
       pass.id,
     ]);
     expect((await get(`/p/${link}`)).status).toBe(404);
-    expect((await holderOffers(pass.id)).walletOffers).toEqual([]);
+    await expectProblem(await get(`/api/v1/me/passes/${pass.id}`, headers), 404, 'PASS_NOT_FOUND');
   });
 
   it('does not expose a quarantined pass to either surface', async () => {

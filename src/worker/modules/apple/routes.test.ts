@@ -173,6 +173,15 @@ describe('register', () => {
     expect(stored).toBeNull();
   });
 
+  it('refuses a new device on a soft-deleted pass', async () => {
+    const pass = await kit.pass();
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [Date.now(), pass.id]);
+    expect((await register(pass, 'deleted-dev')).status).toBe(401);
+    expect(
+      await first(kit.env.DB, 'SELECT 1 FROM registrations WHERE pass_id = ?', [pass.id]),
+    ).toBeNull();
+  });
+
   it('rejects malformed push tokens and device ids', async () => {
     const pass = await kit.pass();
     for (const bad of ['', 'xyz', 'a'.repeat(63), 'g'.repeat(64), 'a'.repeat(129)])

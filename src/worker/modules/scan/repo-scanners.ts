@@ -118,7 +118,7 @@ export async function getConsoleScanner(
 
 export interface ScannerFilter {
   mode: Mode;
-  orgId?: string | undefined;
+  orgId: string;
   status?: 'not_paired' | 'paired' | 'revoked' | undefined;
   eventId?: string | undefined;
   q?: string | undefined;
@@ -135,12 +135,8 @@ const STATUS_SQL = {
 
 /** Newest first (UUIDv7 ids). An org list rides `scanners_org`. */
 export async function listConsoleScanners(db: Db, f: ScannerFilter): Promise<ConsoleScannerRow[]> {
-  const where = ['s.mode = ?'];
-  const params: (string | number)[] = [f.mode];
-  if (f.orgId) {
-    where.push('s.org_id = ?');
-    params.push(f.orgId);
-  }
+  const where = ['s.mode = ?', 's.org_id = ?'];
+  const params: (string | number)[] = [f.mode, f.orgId];
   if (f.eventId) {
     where.push('s.event_id = ?');
     params.push(f.eventId);
@@ -255,7 +251,7 @@ export function addScannerPatch(
   return g.update('scanners', { set, where: { id }, require: 'one' });
 }
 
-/** The mode move is the one write that sets `mode`; the new value is validated input, not a tenant. */
+/** The mode move is the one write that sets `mode`; the new value is validated input, not a tenant. A pending pair code dies with the move. */
 export const addScannerMode = (
   g: Grant,
   id: string,
@@ -270,6 +266,8 @@ export const addScannerMode = (
       ...(detach ? { event_id: null } : {}),
       ...(settings === undefined ? {} : { settings }),
       updated_at: maxNow(now),
+      pair_code_hash: null,
+      pair_expires_at: null,
     },
     where: { id },
     require: 'one',

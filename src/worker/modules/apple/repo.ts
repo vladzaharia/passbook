@@ -79,7 +79,7 @@ export async function addRegistration(
     stmt(
       db,
       `INSERT INTO devices (device_id, identity_id, push_token, updated_at)
-       SELECT ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM passes p WHERE ${appleCredentialSql})
+       SELECT ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM passes p WHERE ${appleCredentialSql} AND p.deleted_at IS NULL)
        ON CONFLICT (device_id, identity_id) DO UPDATE SET updated_at = excluded.updated_at`,
       [r.deviceId, pass.identityId, r.pushToken, r.now, ...appleCredentialParams(pass)],
     ),
@@ -87,7 +87,7 @@ export async function addRegistration(
       db,
       `DELETE FROM registrations WHERE device_id = ? AND identity_id = ? AND pass_id = ?
        AND credential_generation != ?
-       AND EXISTS (SELECT 1 FROM passes p WHERE ${appleCredentialSql})`,
+       AND EXISTS (SELECT 1 FROM passes p WHERE ${appleCredentialSql} AND p.deleted_at IS NULL)`,
       [
         r.deviceId,
         pass.identityId,
@@ -100,7 +100,7 @@ export async function addRegistration(
       db,
       `INSERT INTO registrations (device_id, identity_id, pass_id, push_token, created_at, credential_generation)
        SELECT ?, ?, ?, ?, ?, ?
-       WHERE EXISTS (SELECT 1 FROM passes p WHERE ${appleCredentialSql})`,
+       WHERE EXISTS (SELECT 1 FROM passes p WHERE ${appleCredentialSql} AND p.deleted_at IS NULL)`,
       [
         r.deviceId,
         pass.identityId,
