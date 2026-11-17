@@ -25,6 +25,10 @@ export async function sha1Hex(bytes: Uint8Array): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-1', bytes as BufferSource));
 }
 
+export async function sha256BytesHex(bytes: Uint8Array): Promise<string> {
+  return hex(await crypto.subtle.digest('SHA-256', bytes as BufferSource));
+}
+
 export async function sha256Hex(text: string): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
 }

@@ -224,3 +224,25 @@ button.dz-issue:hover {
 [data-readonly] {
   opacity: 0.6;
 }
+
+/* Stamps: the goal pops when it changes; the slider is the kit's accent. */
+.dz-range {
+  width: 100%;
+  min-height: 1.75rem;
+  accent-color: var(--pk-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dz-goal {
+    animation: dz-goal-pop 220ms var(--wl-ease-move, ease);
+  }
+}
+@keyframes dz-goal-pop {
+  from {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

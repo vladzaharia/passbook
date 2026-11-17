@@ -5,6 +5,10 @@ export type FileKind =
   | { kind: 'manifest' }
   | { kind: 'tooling' }
   | { kind: 'personalization' }
+  /** Stamp art: `stamps/filled.png` and its siblings. Kept in the version, never shipped. */
+  | { kind: 'stampArt' }
+  /** `stamps/strips/**` is generated at save; an upload may not carry it. */
+  | { kind: 'stampStrip' }
   | { kind: 'strings'; locale: string }
   | { kind: 'image'; slot: SlotName; scale: 1 | 2 | 3; locale?: string };
 
@@ -68,6 +72,10 @@ export function classify(path: string): FileKind | null {
   }
   const dir = path.slice(0, slash);
   const rest = path.slice(slash + 1);
+  if (dir === 'stamps') {
+    if (rest.startsWith('strips/')) return { kind: 'stampStrip' };
+    return /^[a-z][a-z0-9-]*\.png$/.test(rest) ? { kind: 'stampArt' } : null;
+  }
   if (!dir.endsWith('.lproj') || rest.includes('/')) return null;
   const locale = dir.slice(0, -'.lproj'.length);
   if (!LOCALE.test(locale)) return null;

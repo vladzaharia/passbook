@@ -16,6 +16,10 @@ export interface DesignerApi {
   assetBase: string;
   /** A template that cannot be changed: edits are ignored and the structure is inert. */
   readOnly: boolean;
+  /** The selected organization: scopes reads of shared templates (the Stamp card art). */
+  orgId?: string | undefined;
+  /** The Stamps preview slider: view state, never saved. */
+  stamps: { count: number; setCount: (n: number) => void };
 }
 
 const Ctx = createContext<DesignerApi | null>(null);

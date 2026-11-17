@@ -15,7 +15,7 @@ async function manifestFor(example: ScanExample): Promise<TemplateManifest> {
   for (const slug of [example.base, example.standIn]) {
     if (!slug) continue;
     try {
-      return exampleManifest((await loadBaked(slug)).template.manifest, example);
+      return exampleManifest((await loadBaked(slug, { strips: false })).template.manifest, example);
     } catch {
       // Not on this branch yet.
     }

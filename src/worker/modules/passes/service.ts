@@ -20,6 +20,7 @@ import { softDeletePassGranted } from './repo-pass-grants.ts';
 import { captureConnectionTransferPending, connectionForPass } from './repo-read-connection.ts';
 import { getPass, pendingPushId } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
+import { stampMovePlan } from './stamps-keep.ts';
 
 /** Workstream d owns this module; e, f and others call these. Keep the signatures. */
 export interface Actor {
@@ -99,6 +100,22 @@ export async function updatePass(
       expectedConnectionMode: connection.mode,
     };
   }
+  const moving =
+    patch.templateVersion !== undefined
+      ? await getPassForWrite(ctx.env.DB, passId, options.scope)
+      : null;
+  const move =
+    moving && patch.templateVersion !== moving.templateVersion
+      ? await stampMovePlan(
+          ctx,
+          {
+            orgId: moving.orgId,
+            templateId: moving.templateId,
+            version: patch.templateVersion as string,
+          },
+          [moving.templateVersion],
+        )
+      : null;
   const changedKeys: string[] = [];
   const result = await publishPass(ctx, {
     passId,
@@ -122,9 +139,14 @@ export async function updatePass(
         }
       }
       for (const key of patch.resetToConnection ?? []) delete fieldSources[key];
-      return {
+      const moved = move?.({
+        templateVersion: current.templateVersion,
         personalization,
         fieldSources,
+      });
+      return {
+        personalization: moved?.personalization ?? personalization,
+        fieldSources: moved?.fieldSources ?? fieldSources,
         ...(patch.templateVersion !== undefined ? { templateVersion: patch.templateVersion } : {}),
         ...(patch.externalId !== undefined ? { externalId: patch.externalId } : {}),
       };

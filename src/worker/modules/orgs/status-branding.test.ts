@@ -68,7 +68,10 @@ beforeAll(async () => {
   });
   for (const template of generatedSource.templates) {
     const entries = [
-      ...template.assets.map((asset) => ({ name: asset.name, path: asset.source.path })),
+      // Generated stamp strips have no source file; nothing here opens them.
+      ...template.assets
+        .filter((asset) => asset.stamps === undefined)
+        .map((asset) => ({ name: asset.name, path: asset.source.path })),
       ...template.extras,
     ];
     for (const entry of entries) {

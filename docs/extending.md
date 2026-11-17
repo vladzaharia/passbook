@@ -55,6 +55,38 @@ Templates. Extra limits for uploads: `pass.json` and the manifest are at most 64
 most 4096 px per side, no `pattern` or `$ref` in the input schema, and only behaviors that exist in
 the registry. The import report lists every issue by path.
 
+## Add stamps to a card
+
+A top-level `stamps` block turns a strip card (store card, coupon, event ticket) into a stamp card.
+`templates/starter-stamp-card` is the reference package.
+
+```json
+"stamps": {
+  "input": "stamps",
+  "goal": 10,
+  "art": { "filled": "stamps/filled.png", "empty": "stamps/empty.png" },
+  "tilt": true
+}
+```
+
+- `goal` is 3 to 20. `input` is an integer input from 0; set its `maximum` to `2 * goal - 1` (a full
+  card plus the carry-over). `art.reward` and `art.rewardEarned` are optional.
+- Art is square PNG, 128 to 1000 px (256 or more recommended), the stamp in the middle two thirds.
+  The package's own `strip@2x.png` and `strip@3x.png` (750 × 288, 1125 × 432) are the background;
+  without them the pass colour shows through.
+- Saving a version draws one strip pair per count into `stamps/strips/<n>/`; a save whose goal,
+  tilt, art and background match an earlier version carries that version's strips. Do not ship the
+  folder. A pass ships the pair for its count as `strip@2x.png`.
+- Expressions and conditions read `pass.stamps.goal|card|left|ready|extra`. Put the `changeMessage` on
+  a field whose value flips once, with `"when": { "input": "pass.stamps.ready", "eq": true }`.
+- `POST /api/v1/passes/{id}/stamps` with `{ "action": "add", "count": 1 }` or
+  `{ "action": "redeem" }` adds stamps or takes the goal off. A full card refuses an add
+  (`STAMPS_CARD_FULL`); a card short of the goal refuses a redeem (`STAMPS_NO_REWARD`).
+- Changing the goal of a template with live passes: `GET /api/v1/templates/{id}/stamps-impact?goal=`
+  says who is affected. A lowering alerts the cards it makes ready; a raise keeps ready cards ready
+  when the version sets `stamps.keepReady`. Publishing a release is refused (`STAMPS_ABOVE_MAX`)
+  while a live count is above the input's `maximum`.
+
 ## Add a behavior
 
 A behavior is trusted code that edits a pass after bindings run (for example adding locations).

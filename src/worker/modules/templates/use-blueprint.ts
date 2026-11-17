@@ -58,7 +58,10 @@ export async function checkBlueprintDraft(
   images: ImageTools = imagesFromBinding(ctx.env.IMAGES, ctx.log),
 ): Promise<VersionResponse> {
   const { source, org, name } = await prepare(ctx, auth, id, body);
-  const checked = await checkVersion(ctx, source, org.id, asTemplate(body.version, name), images);
+  const checked = await checkVersion(ctx, source, org.id, asTemplate(body.version, name), images, {
+    dryRun: true,
+    carry: false,
+  });
   if ('refused' in checked) return refusedResponse(true, checked.refused);
   return { ...checked.base, saved: false, created: true, displayOnly: false, template: null };
 }
@@ -79,7 +82,10 @@ export async function useBlueprint(
   if (!body.version) return cloneTemplate(ctx, auth, id, { orgId: body.orgId, name: body.name });
 
   const { source, authority, org, name, slug, plan, createdBy } = target;
-  const checked = await checkVersion(ctx, source, org.id, asTemplate(body.version, name), images);
+  const checked = await checkVersion(ctx, source, org.id, asTemplate(body.version, name), images, {
+    dryRun: false,
+    carry: false,
+  });
   if ('refused' in checked) return refusedResponse(false, checked.refused);
   const { analysis, report } = checked;
   const assets = [];
