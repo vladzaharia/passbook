@@ -1,5 +1,3 @@
-import { balanceSqlAnd } from './sql-balance.ts';
-
 /** Thin typed helpers over D1. Raw SQL belongs in repo.ts files only. */
 export type SqlValue = string | number | boolean | null | undefined | ArrayBuffer | Uint8Array;
 
@@ -13,15 +11,6 @@ function bindable(value: SqlValue): string | number | null | ArrayBuffer {
 }
 
 export function stmt(
-  db: D1Database,
-  sql: string,
-  params: readonly SqlValue[] = [],
-): D1PreparedStatement {
-  return db.prepare(balanceSqlAnd(sql)).bind(...params.map(bindable));
-}
-
-/** Binds without rewriting the SQL. For statements built bounded, such as the authority grants. */
-export function exactStmt(
   db: D1Database,
   sql: string,
   params: readonly SqlValue[] = [],

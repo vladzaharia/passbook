@@ -1,4 +1,4 @@
-import { exactStmt } from '../../platform/db.ts';
+import { stmt } from '../../platform/db.ts';
 import { type Raw, type ScanRow, toScan } from './repo-scan-map.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import { type ScanStaffRow, type StaffRaw, staffStatement, toStaff } from './repo-staff.ts';
@@ -64,12 +64,12 @@ export async function readUndo(
   approverId?: string,
 ): Promise<UndoRead> {
   const [existing, target, gate, presence, event, approver] = await db.batch([
-    exactStmt(db, `SELECT ${COLUMNS} FROM scans WHERE actor_key = ? AND idempotency_key = ?`, [
+    stmt(db, `SELECT ${COLUMNS} FROM scans WHERE actor_key = ? AND idempotency_key = ?`, [
       actorKey,
       key,
     ]),
-    exactStmt(db, `SELECT ${COLUMNS} FROM scans WHERE id = ? AND org_id = ?`, [scanId, orgId]),
-    exactStmt(
+    stmt(db, `SELECT ${COLUMNS} FROM scans WHERE id = ? AND org_id = ?`, [scanId, orgId]),
+    stmt(
       db,
       `SELECT g.scope,g.template_id,g.kind,g.state,g.count,g.first_at,g.last_at,g.prev_state,g.prev_last_at,g.prev_scan_id
        FROM scans q JOIN scan_gates g ON g.org_id = q.org_id AND g.mode = q.mode AND g.pass_id = q.pass_id
@@ -77,7 +77,7 @@ export async function readUndo(
        WHERE q.id = ? AND q.org_id = ?`,
       [scanId, orgId],
     ),
-    exactStmt(
+    stmt(
       db,
       `SELECT p.state,p.tracking,p.entered_at,p.first_at,p.last_entry_at,p.prev_state,p.prev_tracking,
          p.prev_entered_at,p.prev_first_at,p.prev_last_entry_at,p.prev_scan_id
@@ -86,7 +86,7 @@ export async function readUndo(
        WHERE q.id = ? AND q.org_id = ?`,
       [scanId, orgId],
     ),
-    exactStmt(
+    stmt(
       db,
       `SELECT e.id,e.org_id,e.mode,e.name,e.match_input,e.match_values,e.opens_at,e.closes_at,e.time_zone,
          e.capacity,e.reentry,e.note,e.updated_at,e.archived_at

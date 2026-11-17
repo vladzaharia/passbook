@@ -101,20 +101,6 @@ describe('H2: write targets cannot hide behind a schema, quotes or REPLACE INTO'
       bad('REPLACE INTO counters (key) SELECT 1 WHERE {grant} AND "UPDATE counters" IS NOT NULL'),
     ).toBe(OVERRIDE);
     expect(bad('INSERT INTO temp.counters (key) SELECT 1 WHERE {grant}')).toBe(OVERRIDE);
-    expect(
-      codeOf(() =>
-        g.unguarded("UPDATE main.passes SET org_id = 'x' FROM authority_grants g WHERE g.id = ?", [
-          g.id,
-        ]),
-      ),
-    ).toBe(OVERRIDE);
-    expect(
-      codeOf(() =>
-        g.unguarded('REPLACE INTO passes (id) SELECT 1 FROM authority_grants g WHERE g.id = ?', [
-          g.id,
-        ]),
-      ),
-    ).toBe('GRANT_UNGUARDED_TABLE');
     expect(await title(b.s.pass.id)).not.toBe('PWNED');
   });
 });
@@ -219,18 +205,11 @@ describe('H3: a part is tied to its tenant and pass', () => {
     ).toBe(OVERRIDE);
   });
 
-  it('tables is mandatory for include writes and unguarded', async () => {
+  it('tables is mandatory for include writes', async () => {
     const x = await setupGrant('h3-tables');
     const g = grant(x.route, { purpose: 'org_mode.test.bypass', principal: x.member() });
     expect(
       codeOf(() => g.include(writePart('INSERT INTO counters (key) SELECT 1 WHERE {grant}'))),
-    ).toBe('GRANT_TABLE_NOT_ALLOWED');
-    expect(
-      codeOf(() =>
-        g.unguarded('INSERT INTO counters (key) SELECT 1 FROM authority_grants g WHERE g.id = ?', [
-          g.id,
-        ]),
-      ),
     ).toBe('GRANT_TABLE_NOT_ALLOWED');
     expect(codeOf(() => g.include(readPart('SELECT {org} AS o')))).toBeNull();
     expect(await count('SELECT count(*) AS n FROM authority_grants')).toBe(0);
@@ -773,21 +752,5 @@ describe('L2: a tenant term is a conjunct of its own statement, and pass rows ar
       '(? IS NULL OR EXISTS (SELECT 1 FROM outbox ob WHERE ob.id = ? AND ob.org_id = {org}))',
     ])
       expect(cond(sql, sql.startsWith('(?') ? ['p', 'p'] : ['p']), sql).toBeNull();
-  });
-
-  it('unguarded: the grant-row predicate counts only outside string literals', async () => {
-    const x = await setupGrant('l2-unguarded');
-    const g = mk(x);
-    expect(
-      codeOf(() => g.unguarded("UPDATE counters SET count = 0 WHERE key = 'authority_grants'", [])),
-    ).toBe('GRANT_FOREIGN_STATEMENT');
-    expect(
-      codeOf(() =>
-        g.unguarded(
-          'UPDATE counters SET count = 0 WHERE key = ? AND EXISTS (SELECT 1 FROM authority_grants g WHERE g.id = ?)',
-          ['k', g.id],
-        ),
-      ),
-    ).toBeNull();
   });
 });

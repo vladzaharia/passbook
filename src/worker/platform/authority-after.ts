@@ -2,7 +2,7 @@
 // transaction, so they see its writes. They carry no authority, so they may not write.
 import { AuthorityError } from './authority-error.ts';
 import { assertReadOnly } from './authority-sqltext.ts';
-import { exactStmt, type SqlValue } from './db.ts';
+import { type SqlValue, stmt } from './db.ts';
 
 /** Fixed read-only SQL and its values; only `afterRead` makes one. */
 export interface AfterRead {
@@ -30,6 +30,6 @@ export function prepareAfter(db: D1Database, reads: readonly AfterRead[]): D1Pre
         'GRANT_FOREIGN_STATEMENT',
         'A read after a grant is built by afterRead().',
       );
-    return exactStmt(db, r.sql, r.params);
+    return stmt(db, r.sql, r.params);
   });
 }

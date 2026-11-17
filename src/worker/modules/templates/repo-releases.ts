@@ -3,10 +3,6 @@ import { all, first, type SqlValue } from '../../platform/db.ts';
 import { effectiveReleaseIdSql, type ReleaseScopeSql } from './repo-release-heads.ts';
 
 export type { ReleaseScopeSql } from './repo-release-heads.ts';
-export {
-  activeReleaseIdSql,
-  activeReleasePredicate,
-} from './repo-releases-active.ts';
 
 export type ReleaseProvider = 'apple' | 'google' | 'samsung';
 export interface ReleaseScope {

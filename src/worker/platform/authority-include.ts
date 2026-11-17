@@ -61,28 +61,6 @@ const banned = () =>
     ...TRIGGER_WRITES_GUARDED,
   ]);
 
-/** The tables an unguarded statement writes. */
-export function writeTargets(sql: string): string[] {
-  return writeTargetsOf(assertSqlText(sql, 'An unguarded statement')).map((t) => t.table);
-}
-
-/** A legacy unguarded write: carries the grant row and targets no guarded, authority or append-only table. */
-export function assertUnguarded(sql: string): void {
-  const writes = writeTargets(sql);
-  if (writes.length > 0 && !/\bauthority_grants\b/.test(stripLiterals(sql)))
-    throw new AuthorityError(
-      'GRANT_FOREIGN_STATEMENT',
-      'An unguarded write must carry the grant-row predicate.',
-    );
-  const tables = banned();
-  for (const t of writes)
-    if (tables.has(t))
-      throw new AuthorityError(
-        'GRANT_UNGUARDED_TABLE',
-        `${t} is written through the typed builder, not unguarded().`,
-      );
-}
-
 // The markers read the grant row of `main`, so a CTE or alias in caller text cannot stand in for it.
 const MARKERS = {
   grant: 'EXISTS (SELECT 1 FROM main.authority_grants ag WHERE ag.id = ?)',

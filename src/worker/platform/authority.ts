@@ -17,7 +17,7 @@ import {
   newGrantedStatement,
   scopeOf,
 } from './authority-granted.ts';
-import { assertUnguarded, buildPart, type GrantPart, writeTargets } from './authority-include.ts';
+import { buildPart, type GrantPart } from './authority-include.ts';
 import {
   buildInsertJoined,
   buildJoined,
@@ -37,7 +37,7 @@ import {
   type WriteOptions,
 } from './authority-statements.ts';
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
-import { exactStmt, type SqlValue } from './db.ts';
+import { type SqlValue, stmt } from './db.ts';
 import { authorityDenied, type DenyReason } from './errors.ts';
 import { hasJobAuthority } from './job-authority.ts';
 import type { ServiceContext } from './service-context.ts';
@@ -100,7 +100,7 @@ export class Grant {
     return table;
   }
 
-  /** Parts and unguarded writes reach tables the builder does not type, so the grant must list its tables. */
+  /** Parts reach tables the builder does not type, so the grant must list its tables. */
   #need(table: string): string {
     if (!this.#tables)
       throw new AuthorityError(
@@ -228,18 +228,6 @@ export class Grant {
     return at;
   }
 
-  /**
-   * A write to a table the builder does not guard that still commits only in this grant's batch. The SQL
-   * must carry the grant-row predicate (`authority_grants`) and may not write a guarded, authority or
-   * append-only table. Like every statement it runs only after `add()`.
-   * @deprecated Use `include(writePart(...))`: it adds itself, validates markers and takes the tenant from the grant.
-   */
-  unguarded(sql: string, params: SqlValue[]): GrantedStatement {
-    assertUnguarded(sql);
-    for (const table of writeTargets(sql)) this.#need(table);
-    return newGrantedStatement(this.id, { sql, params });
-  }
-
   /** Bound-parameter and byte counts of the grant insert and each write, for the corpus test. */
   inspect(): { grant: StatementSize; writes: StatementSize[] } {
     const size = (b: BuiltStatement) => ({ params: b.params.length, bytes: b.sql.length });
@@ -257,12 +245,12 @@ export class Grant {
     this.#committed = true;
     const writes = this.#statements.map((s) => {
       const { sql, params } = builtOf(s);
-      return exactStmt(this.#db, sql, params);
+      return stmt(this.#db, sql, params);
     });
     return [
-      exactStmt(this.#db, insert.sql, insert.params),
+      stmt(this.#db, insert.sql, insert.params),
       ...writes,
-      exactStmt(this.#db, 'DELETE FROM authority_grants WHERE id = ?', [this.id]),
+      stmt(this.#db, 'DELETE FROM authority_grants WHERE id = ?', [this.id]),
     ];
   }
 

@@ -1,15 +1,13 @@
-import { type Grant, type GrantedStatement, grant, jobGrant } from '../../platform/authority.ts';
+import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
-import { GUARDED_TABLES } from '../../platform/authority-tables.ts';
-import type { SqlValue } from '../../platform/db.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { membershipCapability, tenantPrincipal } from '../passes/repo-authority.ts';
 import type { TemplateAuthority } from './access.ts';
 import { userIsActiveAdmin } from './repo-grant-checks.ts';
 
-/** Every table a template grant writes, typed or through `inGrant`. Anything else is refused. */
+/** Every table a template grant writes, typed or through parts. Anything else is refused. */
 const TEMPLATE_TABLES = [
   'templates',
   'template_candidates',
@@ -121,27 +119,3 @@ export function templateGrants(
   const ordered = [...all.filter((g) => g !== writer), writer];
   return { writer, all: ordered };
 }
-
-const WRITE_TARGET =
-  /^\s*(?:INSERT\s+(?:OR\s+\w+\s+)?INTO|UPDATE|DELETE\s+FROM)\s+([a-z_][a-z0-9_]*)/i;
-
-/**
- * A statement on an unguarded table (versions, hashes, extras) or a read that must run inside the
- * grant's batch. Guarded tables go through the builder; the SQL of a write must name its grant row.
- */
-export function inGrant(g: Grant, sql: string, params: SqlValue[]): GrantedStatement {
-  const table = WRITE_TARGET.exec(sql)?.[1];
-  if (table !== undefined) {
-    if (table in GUARDED_TABLES)
-      throw new Error(`${table} is guarded: write it with the grant builder.`);
-    if (!/authority_grants/.test(sql))
-      throw new Error('A write inside a grant names its grant row.');
-  }
-  return g.unguarded(sql, params);
-}
-
-/** `EXISTS` over the statement's own grant row, for the tail of an unguarded write. */
-export const grantRow = (g: Grant): { sql: string; params: SqlValue[] } => ({
-  sql: 'EXISTS (SELECT 1 FROM authority_grants g WHERE g.id = ?)',
-  params: [g.id],
-});
