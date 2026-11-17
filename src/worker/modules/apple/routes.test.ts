@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { fakeAuth, fakeRateLimiter, makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -179,21 +179,27 @@ describe('register', () => {
     expect(noBody.status).toBe(400);
   });
 
-  it('caps registrations at 20 per pass but still updates an existing device at the cap', async () => {
+  it('evicts the least recently active registration at 20 instead of refusing a new device', async () => {
     const pass = await kit.pass();
-    for (let i = 0; i < 20; i++) expect((await register(pass, `cap-${i}`)).status).toBe(201);
-    const over = await register(pass, 'cap-20');
-    expect(over.status).toBe(429);
-    expect(((await over.json()) as { code: string }).code).toBe('REGISTRATION_LIMIT');
-    expect((await register(pass, 'cap-3', token('c'))).status).toBe(200);
-    const count = await first<{ n: number }>(
-      kit.env.DB,
-      'SELECT count(*) AS n FROM registrations WHERE pass_id = ?',
-      [pass.id],
-    );
-    expect(count?.n).toBe(20);
-    const orphan = await first(kit.env.DB, "SELECT 1 FROM devices WHERE device_id = 'cap-20'");
-    expect(orphan).toBeNull();
+    for (let i = 0; i < 20; i++) {
+      kit.clock.advance(1000);
+      expect((await register(pass, `cap-${i}`)).status).toBe(201);
+    }
+    kit.clock.advance(1000);
+    // cap-0 is the oldest, but a fresh registration makes it the most recently active.
+    expect((await register(pass, 'cap-0', token('c'))).status).toBe(200);
+    expect((await register(pass, 'cap-20')).status).toBe(201);
+    const ids = (
+      await all<{ device_id: string }>(
+        kit.env.DB,
+        'SELECT device_id FROM registrations WHERE pass_id = ?',
+        [pass.id],
+      )
+    ).map((r) => r.device_id);
+    expect(ids).toHaveLength(20);
+    expect(ids).toContain('cap-20');
+    expect(ids).toContain('cap-0');
+    expect(ids).not.toContain('cap-1');
   });
 });
 
@@ -387,6 +393,10 @@ describe('latest pass', () => {
 });
 
 describe('log', () => {
+  beforeEach(async () => {
+    await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'apple.log%'");
+  });
+
   const post = (logs: unknown, size?: number) =>
     call('/log', {
       method: 'POST',
@@ -430,9 +440,23 @@ describe('log', () => {
       "INSERT OR REPLACE INTO counters (key, window_start, count) VALUES ('apple.log', ?, 4990)",
       [Math.floor(Date.now() / hour) * hour],
     );
-    const res = await post(Array.from({ length: 20 }, (_, i) => `l${i}`));
+    const res = await post(Array.from({ length: 30 }, (_, i) => `l${i}`));
     expect(res.status).toBe(429);
     expect(await first(kit.env.DB, 'SELECT 1 FROM wallet_logs')).toBeNull();
+  });
+
+  it('keeps logging for quiet IPs once the global ceiling is spent, and caps each IP at 100', async () => {
+    await run(kit.env.DB, 'DELETE FROM wallet_logs');
+    const hour = 3_600_000;
+    await run(
+      kit.env.DB,
+      "INSERT OR REPLACE INTO counters (key, window_start, count) VALUES ('apple.log', ?, 5000)",
+      [Math.floor(Date.now() / hour) * hour],
+    );
+    expect((await post(['a', 'b', 'c'])).status).toBe(200);
+    expect(await first(kit.env.DB, 'SELECT 1 FROM wallet_logs')).not.toBeNull();
+    await run(kit.env.DB, 'DELETE FROM counters WHERE key = ?', ['apple.log']);
+    expect((await post(Array.from({ length: 100 }, (_, i) => `m${i}`))).status).toBe(429);
   });
 });
 

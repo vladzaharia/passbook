@@ -26,7 +26,9 @@ const MAX_SERIALS = 200;
 const MAX_LOG_LINES = 100;
 const MAX_LOG_LINE = 1000;
 const LOG_LINES_PER_HOUR = 5000;
-const LOG_LINES_PER_IP_HOUR = 300;
+const LOG_LINES_PER_IP_HOUR = 100;
+/** Past the global ceiling, an IP that has spent this much of its hour is shed; quiet ones still log. */
+const LOG_LINES_RESERVED_PER_IP = 25;
 const HOUR = 3_600_000;
 
 const DEVICE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
@@ -96,6 +98,7 @@ export async function registerDevice(
       deviceId: input.deviceId,
       pass,
       pushToken: input.pushToken,
+      now,
     });
     if (updated) {
       await assertAppleCredential(ctx, pass);
@@ -104,6 +107,7 @@ export async function registerDevice(
     // An ordinary concurrent unregister may have removed the row; a retired credential cannot retry it.
     await assertAppleCredential(ctx, pass);
   }
+  // Only a lost race for the last slot reaches the cap trigger; the oldest registration is evicted first.
   const full = new AppError(
     'REGISTRATION_LIMIT',
     429,
@@ -117,6 +121,8 @@ export async function registerDevice(
       now,
     });
     if (!created) throw unauthorized();
+    if (created === 'evicted')
+      ctx.log.info('apple.registration_evicted', { orgId: pass.orgId, passId: pass.id });
   } catch (error) {
     // Lost the race for the last slot: the trigger aborts the batch.
     if (classifyD1Error(error)?.kind === 'abort') throw full;
@@ -228,8 +234,9 @@ const clean = (line: string) =>
   Array.from(line, (ch) => (ch.charCodeAt(0) < 32 ? ' ' : ch)).join('');
 
 /**
- * Stores redacted, truncated lines. Each client IP has its own hourly budget, with a global
- * ceiling behind it; over either, the lines are dropped and 429 returned.
+ * Stores redacted, truncated lines. /log carries no credential (Apple's protocol), so each client
+ * IP has its own hourly budget. A global ceiling behind it sheds only IPs already past a small
+ * reserve, so a few noisy addresses cannot lock every device out of logging.
  */
 export async function recordDeviceLogs(
   ctx: ServiceContext,
@@ -243,11 +250,11 @@ export async function recordDeviceLogs(
   const now = ctx.clock.now();
   const window = Math.floor(now / HOUR) * HOUR;
   const ipKey = `apple.log.ip:${(await sha256Hex(ip)).slice(0, 16)}`;
-  if ((await bumpLogCounter(ctx.env.DB, ipKey, window, kept.length)) > LOG_LINES_PER_IP_HOUR)
-    throw new AppError('LOG_BUDGET', 429, 'Too many log lines. Try again later.');
+  const own = await bumpLogCounter(ctx.env.DB, ipKey, window, kept.length);
+  const budget = () => new AppError('LOG_BUDGET', 429, 'Too many log lines. Try again later.');
+  if (own > LOG_LINES_PER_IP_HOUR) throw budget();
   const total = await bumpLogCounter(ctx.env.DB, GLOBAL_LOG_KEY, window, kept.length);
-  if (total > LOG_LINES_PER_HOUR)
-    throw new AppError('LOG_BUDGET', 429, 'Too many log lines. Try again later.');
+  if (total > LOG_LINES_PER_HOUR && own > LOG_LINES_RESERVED_PER_IP) throw budget();
   await insertLogs(ctx.env.DB, kept, null, now);
   // Attaching is best effort: a failure must not turn Wallet's log post into a 500.
   await attachLogLines(ctx, kept).catch((error: unknown) =>

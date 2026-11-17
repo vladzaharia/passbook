@@ -360,7 +360,7 @@ describe('device logs per IP', () => {
         headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
         body: JSON.stringify({ logs: Array.from({ length: 100 }, (_, i) => `l${i}`) }),
       });
-    for (let i = 0; i < 3; i++) expect((await post('1.1.1.1')).status).toBe(200);
+    expect((await post('1.1.1.1')).status).toBe(200);
     const over = await post('1.1.1.1');
     expect(over.status).toBe(429);
     expect(((await over.json()) as { code: string }).code).toBe('LOG_BUDGET');
