@@ -1,5 +1,6 @@
 import { tokenKeys } from '../../platform/capability-token.ts';
 import { all, first, stmt } from '../../platform/db.ts';
+import { knownEmailSql, personLabelSql } from '../../platform/known-email-sql.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
 import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
 
@@ -80,7 +81,7 @@ export async function listBlockedUsers(
 ): Promise<{ id: string; name: string | null }[]> {
   return all<{ id: string; name: string | null }>(
     db,
-    `SELECT u.id, COALESCE(u.name, u.primary_email) AS name FROM pass_attach_blocks b
+    `SELECT u.id, ${personLabelSql('u.name', 'u.primary_email')} AS name FROM pass_attach_blocks b
      JOIN users u ON u.id = b.user_id WHERE b.pass_id = ? ORDER BY b.created_at`,
     [passId],
   );
@@ -92,7 +93,7 @@ export async function getOwnerLabel(
 ): Promise<{ name: string | null; email: string | null }> {
   const row = await first<{ name: string | null; email: string | null }>(
     db,
-    'SELECT name, primary_email AS email FROM users WHERE id = ?',
+    `SELECT name, ${knownEmailSql('primary_email')} AS email FROM users WHERE id = ?`,
     [userId],
   );
   return row ?? { name: null, email: null };

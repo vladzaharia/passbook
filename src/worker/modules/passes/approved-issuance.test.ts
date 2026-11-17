@@ -33,6 +33,7 @@ import {
   recoverIssuanceDeliveries,
 } from '../delivery/issuance-intent.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
+import { recipientKey } from '../delivery/recipient-key.ts';
 import { assignHolder, runAttachHookA } from '../holders/service.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
 import { basicPackage, passJson, zipOf } from '../templates/package/fixtures.ts';
@@ -734,7 +735,7 @@ describe('approved issuance over tenant HTTP', () => {
         [detail.id],
       ),
     ).toEqual({ state: 'queued', outbox_id: queued.id });
-    const recipient = (await sha256Hex(`pass-email:${email.toLowerCase()}`)).slice(0, 32);
+    const recipient = await recipientKey(kit.env, email);
     expect(
       await first(kit.env.DB, 'SELECT count FROM counters WHERE key = ? AND window_start = ?', [
         `pass-email:live:to:${recipient}`,
@@ -1276,7 +1277,7 @@ describe('approved issuance over tenant HTTP', () => {
     const email = `limited-${unique()
       .toLowerCase()
       .replace(/[^a-z0-9]/g, 'x')}@example.com`;
-    const recipient = (await sha256Hex(`pass-email:${email}`)).slice(0, 32);
+    const recipient = await recipientKey(kit.env, email);
     const counterKey = `pass-email:live:to:${recipient}`;
     const window = kit.clock.now() - (kit.clock.now() % 3_600_000);
     await run(kit.env.DB, 'INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)', [
@@ -1935,10 +1936,7 @@ describe('issuance commit fences', () => {
       expect(await all(kit.env.DB, 'SELECT id FROM outbox WHERE pass_id = ?', [passId])).toEqual(
         [],
       );
-      const recipient = (await sha256Hex(`pass-email:${data.holderEmail.toLowerCase()}`)).slice(
-        0,
-        32,
-      );
+      const recipient = await recipientKey(kit.env, data.holderEmail);
       expect(
         await first(kit.env.DB, 'SELECT count FROM counters WHERE key = ?', [
           `pass-email:live:to:${recipient}`,

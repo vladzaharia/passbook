@@ -56,6 +56,22 @@ execFileSync(
   ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local', '--persist-to', state],
   { cwd: root, stdio: 'inherit' },
 );
+// Mock Pocket ID verifies its emails, and with trust off a first sign-in needs a mail round trip.
+execFileSync(
+  'npx',
+  [
+    'wrangler',
+    'd1',
+    'execute',
+    'wallet-platform',
+    '--local',
+    '--persist-to',
+    state,
+    '--command',
+    "INSERT INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', 'true', 0)",
+  ],
+  { cwd: root, stdio: 'inherit' },
+);
 if (mode === 'preview') {
   execFileSync('npx', ['vite', 'build'], { cwd: root, stdio: 'inherit', env });
   // Vite's emitted vars omit non-secret overrides such as the local OIDC issuer.

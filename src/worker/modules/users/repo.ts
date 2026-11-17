@@ -1,5 +1,6 @@
 import { grant } from '../../platform/authority.ts';
 import { all, chunk, first, placeholders, prefixMatch, run } from '../../platform/db.ts';
+import { knownEmailSql } from '../../platform/known-email-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { UserRow } from '../auth/repo.ts';
 
@@ -74,7 +75,7 @@ export async function listUsers(db: Db, f: ListFilter): Promise<UserRow[]> {
     const alias = prefixMatch('email', q);
     where.push(
       `id IN (SELECT id FROM users WHERE id = ?
-        UNION SELECT id FROM users WHERE ${email.sql}
+        UNION SELECT id FROM users WHERE ${email.sql} AND ${knownEmailSql('primary_email')} IS NOT NULL
         UNION SELECT id FROM users WHERE ${name.sql}
         UNION SELECT user_id FROM user_emails WHERE ${alias.sql})`,
     );

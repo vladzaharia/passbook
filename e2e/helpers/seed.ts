@@ -18,7 +18,7 @@ interface VerifiedIdentity {
   csrfToken: string;
 }
 
-/** Verify the session's exact primary address through the real platform-admin email API. */
+/** The session's primary address must be verified: the e2e database trusts the mock Pocket ID's emails. */
 async function verifiedIdentity(admin: Api, member: Api): Promise<VerifiedIdentity> {
   const session = await member.get<{
     authenticated: boolean;
@@ -30,10 +30,7 @@ async function verifiedIdentity(admin: Api, member: Api): Promise<VerifiedIdenti
     throw new Error('A signed-in user with a valid primary email and CSRF token is required');
   }
   const path = `/api/v1/users/${encodeURIComponent(session.user.id)}`;
-  let detail = await admin.get<{ emails: { email: string }[] }>(path);
-  if (!detail.emails.some((entry) => entry.email === email)) {
-    detail = await admin.send('POST', `${path}/emails`, { email });
-  }
+  const detail = await admin.get<{ emails: { email: string }[] }>(path);
   if (!detail.emails.some((entry) => entry.email === email)) {
     throw new Error('The signed-in user has no verified matching email');
   }

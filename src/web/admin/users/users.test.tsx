@@ -170,6 +170,18 @@ describe('users list', () => {
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('cursor=c1'))).toBe(true);
   });
 
+  it('labels an account with no verified email, with no passes link for it', async () => {
+    await renderApp('/admin/users', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/users': () =>
+          json({ items: [user({ id: 'u9', name: null, primaryEmail: null })], nextCursor: null }),
+      },
+    });
+    expect(await screen.findByRole('link', { name: /No verified email/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Find passes/ })).toBeNull();
+  });
+
   it('shows the empty state', async () => {
     await renderApp('/admin/users', {
       session: 'admin',
@@ -365,7 +377,7 @@ describe('user detail', () => {
       },
     });
     expect(await screen.findByText('No emails')).toBeInTheDocument();
-    expect(screen.getByLabelText('Add verified email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Send verification link')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Polaris ID/ })).toBeNull();
   });
 
@@ -379,7 +391,7 @@ describe('user detail', () => {
       },
     });
     const ui = userEvent.setup();
-    const field = await screen.findByLabelText('Add verified email');
+    const field = await screen.findByLabelText('Send verification link');
     await ui.type(field, 'x@example.com');
     await ui.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('Email belongs to another user.')).toBeInTheDocument();

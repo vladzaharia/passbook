@@ -5,7 +5,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { envString } from '../../platform/env.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
-import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
+import { clientIp, clientRatePrefix, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { ipPrefix, readCookie, setSessionCookie } from './cookies.ts';
@@ -35,7 +35,7 @@ export async function breakglassSignIn(c: Context<AppBindings>) {
   const expected = configuredHash(c);
   const ctx = serviceContext(c);
   const ip = clientIp(c);
-  await enforceRateLimit(c.env, 'RL_LOGIN', `breakglass:${ip}`);
+  await enforceRateLimit(c.env, 'RL_LOGIN', `breakglass:${clientRatePrefix(c)}`);
   const form = await c.req.parseBody();
   const token = typeof form.token === 'string' ? form.token.trim() : '';
   const next = safeNext(typeof form.next === 'string' ? form.next : undefined) ?? undefined;

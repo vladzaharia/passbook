@@ -11,7 +11,7 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
+import { clientIp, clientRatePrefix, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import {
@@ -41,7 +41,7 @@ import { verifyTurnstile } from './turnstile.ts';
 export async function requestMagic(c: Context<AppBindings>) {
   const ctx = serviceContext(c);
   const ip = clientIp(c);
-  await enforceRateLimit(c.env, 'RL_MAGIC_LINK', `ip:${ip}`);
+  await enforceRateLimit(c.env, 'RL_MAGIC_LINK', `ip:${clientRatePrefix(c)}`);
   if (!(await isEmailSignInEnabled(ctx))) {
     throw new UnavailableError('Email sign-in is off.', 'MAGIC_LINK_DISABLED');
   }
@@ -111,7 +111,7 @@ async function readConsumeBody(c: Context<AppBindings>, isForm: boolean): Promis
 async function runConsume(c: Context<AppBindings>, body: unknown): Promise<MagicOutcome> {
   const parsed = MagicLinkConsumeSchema.safeParse(body);
   if (!parsed.success) throw new ValidationError('Invalid request.');
-  await enforceRateLimit(c.env, 'RL_LOGIN', `magic:${clientIp(c)}`);
+  await enforceRateLimit(c.env, 'RL_LOGIN', `magic:${clientRatePrefix(c)}`);
   const ctx = serviceContext(c);
   const { cookie: previousCookie, session } = await currentSession(c);
   const sign = {
@@ -119,6 +119,7 @@ async function runConsume(c: Context<AppBindings>, body: unknown): Promise<Magic
     userAgent: c.req.header('user-agent') ?? null,
     previousCookie,
     sessionUserId: session?.userId ?? null,
+    sessionAmr: session?.amr ?? null,
   };
   const data = parsed.data;
   return 'token' in data
@@ -152,6 +153,16 @@ async function consumeErrorPage(
   return c.html(page.html, page.status);
 }
 
+/** Where the browser goes once a link or code is consumed. */
+function targetOf(outcome: MagicOutcome): string {
+  if (outcome.kind === 'verified') return `/account?verified=${encodeURIComponent(outcome.email)}`;
+  if (outcome.kind === 'linked') {
+    const next = safeNext(outcome.next);
+    return next ? `/auth/oidc/start?next=${encodeURIComponent(next)}` : '/auth/oidc/start';
+  }
+  return homeFor(outcome.result.roles, outcome.next);
+}
+
 /** POST /auth/magic/consume. Forms get a redirect or an error page; JSON gets JSON. */
 export async function consumeMagic(c: Context<AppBindings>) {
   const type = c.req.header('content-type') ?? '';
@@ -171,10 +182,8 @@ export async function consumeMagic(c: Context<AppBindings>) {
     setSessionCookie(c, outcome.result.session.cookieValue, outcome.result.session.maxAgeSeconds);
     clearCookie(c, MAGIC_COOKIE);
   }
+  if (outcome.kind === 'linked') clearCookie(c, MAGIC_COOKIE);
   // ?verified= tells /account which address was just added (the portal confirms it).
-  const target =
-    outcome.kind === 'verified'
-      ? `/account?verified=${encodeURIComponent(outcome.email)}`
-      : homeFor(outcome.result.roles, outcome.next);
+  const target = targetOf(outcome);
   return isForm ? c.redirect(target, 303) : c.json({ ok: true as const, next: target });
 }

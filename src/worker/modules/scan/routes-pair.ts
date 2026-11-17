@@ -11,7 +11,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { sameOriginOnly } from '../../platform/csrf.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { rateLimit } from '../../platform/rate-limit.ts';
+import { clientRatePrefix, rateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { completePairing, previewPairing, unpair } from './pairing.ts';
 import { pairedSession } from './pairing-session.ts';
@@ -34,8 +34,9 @@ const ipOf = (c: Context<AppBindings>) => ipPrefix(c.req.header('cf-connecting-i
 /** Pairing, public: /api/v1/scan/pair*, and /unpair. Same-origin, rate limited per IP. */
 export const scanPairRoutes = createRouter();
 guard(scanPairRoutes, sameOriginOnly);
-scanPairRoutes.use('/pair/*', rateLimit('RL_SCAN_PAIR'));
-scanPairRoutes.use('/pair', rateLimit('RL_SCAN_PAIR'));
+// A pairing code is a guess target: key on the /24 or /64, not the full address.
+scanPairRoutes.use('/pair/*', rateLimit('RL_SCAN_PAIR', clientRatePrefix));
+scanPairRoutes.use('/pair', rateLimit('RL_SCAN_PAIR', clientRatePrefix));
 scanPairRoutes.use('*', limitBody(4 * 1024));
 
 register(
