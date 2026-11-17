@@ -183,7 +183,7 @@ export function ResultCard({
               onPass?.(o.card);
             }}
           />
-          {d && o.kind !== 'refused' ? <DisplayPanels display={d} /> : null}
+          {d && o.kind !== 'refused' && !desk?.picker ? <DisplayPanels display={d} /> : null}
           {notes.length ? (
             <div className="scan-result-notes">
               <Info size={18} aria-hidden />
