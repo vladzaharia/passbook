@@ -1,8 +1,10 @@
 import { stampKey } from '../../../passkit/stamps/key.ts';
 import { isGoal } from '../../../passkit/stamps/rules.ts';
-import type { TemplateManifest } from '../../../passkit/types.ts';
+import type { AssetEntry, StampsManifest, TemplateManifest } from '../../../passkit/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { sha256BytesHex } from './package/hash.ts';
 import type { StampOptions } from './package/stamps.ts';
+import { readReleaseAsset } from './release-content.ts';
 import { listVersions } from './repo.ts';
 import type { Resolved } from './version-files.ts';
 
@@ -14,6 +16,29 @@ export function sampleCount(manifest: TemplateManifest): number {
   return typeof n === 'number' && Number.isFinite(n)
     ? Math.max(0, Math.min(Math.floor(n), block.goal))
     : 0;
+}
+
+/** Whether the earlier version's art and base strips hash to `key` (SHA-256 of their bytes). */
+async function sameBytes(
+  ctx: ServiceContext,
+  earlier: StampsManifest,
+  assets: readonly AssetEntry[],
+  key: string,
+): Promise<boolean> {
+  const digests = new Map<string, string>();
+  const names = [
+    earlier.art.filled,
+    earlier.art.empty,
+    earlier.art.reward,
+    earlier.art.rewardEarned,
+    'strip@2x.png',
+    'strip@3x.png',
+  ];
+  for (const name of names) {
+    const asset = typeof name === 'string' ? assets.find((a) => a.name === name) : undefined;
+    if (asset) digests.set(asset.name, await sha256BytesHex(await readReleaseAsset(ctx, asset)));
+  }
+  return (await stampKey(earlier, (name) => digests.get(name))) === key;
 }
 
 /**
@@ -34,12 +59,15 @@ export function stampsForSave(
   return {
     ...(dryRun ? { counts: sample } : {}),
     sample,
-    carry: async (key) => {
+    carry: async (key, sha1Of) => {
+      const first = await stampKey(block, sha1Of);
       for (const v of await listVersions(ctx.env.DB, templateId)) {
         const earlier = v.manifest.stamps;
         if (!earlier || !isGoal(earlier.goal)) continue;
         const sha1 = new Map(v.assets.map((a) => [a.name, a.sha1]));
-        if ((await stampKey(earlier, (name) => sha1.get(name))) !== key) continue;
+        // Versions store SHA-1s: they find the candidate, the bytes' SHA-256 confirm it.
+        if ((await stampKey(earlier, (name) => sha1.get(name))) !== first) continue;
+        if (!(await sameBytes(ctx, earlier, v.assets, key))) continue;
         const strips = v.assets.filter((a) => a.stamps !== undefined);
         if (strips.length !== 2 * (earlier.goal + 1)) continue;
         for (const a of strips) carried.set(a.name, { sha1: a.sha1, source: a.source });

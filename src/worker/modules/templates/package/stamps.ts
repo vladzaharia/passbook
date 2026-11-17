@@ -18,8 +18,11 @@ export interface StampOptions {
   counts?: readonly number[];
   /** Counts the build check reads: the only ones drawn when the rest is carried. */
   sample?: readonly number[];
-  /** Strips an earlier version drew from the same key, or null. A hit lists them undrawn. */
-  carry?: (key: string) => Promise<Analyzed[] | null>;
+  /**
+   * Strips an earlier version drew from the same key, or null. A hit lists them undrawn. `key`
+   * hashes the SHA-256 of the bytes; `sha1` maps a file name to its SHA-1, for a cheap first match.
+   */
+  carry?: (key: string, sha1: (name: string) => string | undefined) => Promise<Analyzed[] | null>;
 }
 
 /** `stamps/strips/` in an upload: the server draws those files. */
@@ -67,9 +70,11 @@ export async function stampOutput(
   options: StampOptions = {},
 ): Promise<StampOutput> {
   const out: StampOutput = { files: new Map(), assets: [], issues: [] };
+  const sha1 = new Map<string, string>();
   const digest = new Map<string, string>();
   for (const [name, bytes] of art) {
     const m = await meta(name, bytes);
+    sha1.set(name, m.sha1);
     digest.set(name, await sha256BytesHex(bytes));
     out.files.set(name, bytes);
     out.assets.push({ ...m, slot: 'source', scale: 1 });
@@ -81,10 +86,11 @@ export async function stampOutput(
     if (!s.locale && (s.scale === 2 || s.scale === 3)) {
       const name = `strip@${s.scale}x.png`;
       inputs.set(name, s.bytes);
+      sha1.set(name, await sha1Hex(s.bytes));
       digest.set(name, await sha256BytesHex(s.bytes));
     }
   const key = await stampKey(block, (name) => digest.get(name));
-  const carried = options.carry ? await options.carry(key) : null;
+  const carried = options.carry ? await options.carry(key, (name) => sha1.get(name)) : null;
   const counts = carried ? (options.sample ?? options.counts ?? []) : options.counts;
   const id = counts ? `${key}|${counts.join(',')}` : null;
   const cached = id ? drawn.get(id) : undefined;
