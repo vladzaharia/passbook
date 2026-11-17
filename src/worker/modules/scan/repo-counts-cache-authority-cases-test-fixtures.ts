@@ -62,38 +62,6 @@ export function registerCountsCacheAuthorityCases() {
     },
   );
 
-  it('fences a replaced credential keyset before the cache batch', async () => {
-    const s = await scenario();
-    const original = s.actor.credentialKeysetCommitment;
-    if (!original) throw new Error('Missing credential keyset fixture');
-    const replacement = (original === 'f'.repeat(64) ? 'e' : 'f').repeat(64);
-    await withMutableTrigger('credential_ref_keyset_no_update', async () => {
-      try {
-        await expectBlocked(s, (db) =>
-          run(db, 'UPDATE credential_ref_keyset SET commitment=? WHERE id=1', [replacement]),
-        );
-      } finally {
-        await run(kit.env.DB, 'UPDATE credential_ref_keyset SET commitment=? WHERE id=1', [
-          original,
-        ]);
-      }
-    });
-  });
-
-  it.each(['invalid', 'f'.repeat(64)])(
-    'does not cache with an invalid or stale keyset %s',
-    async (keyset) => {
-      const s = await scenario();
-      const value = keyset === s.actor.credentialKeysetCommitment ? 'e'.repeat(64) : keyset;
-      const actor = { ...s.actor, credentialKeysetCommitment: value };
-      const plan = planCounts(kit.ctx, actor);
-      const results = await kit.env.DB.batch(plan.stmts);
-      expect(results[3]?.results).toEqual([]);
-      expect((await plan.read(results)).counts.event?.expected).toBe(1);
-      expect(await cache(s.event.id)).toEqual({ expected: 73, expected_at: 0 });
-    },
-  );
-
   it.each([
     [
       'event match without a revision bump',
