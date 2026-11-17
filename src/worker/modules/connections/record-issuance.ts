@@ -7,7 +7,10 @@ import type { Applied, ApplyIncomingOptions } from './records.ts';
 import type { ConnectionRow } from './repo.ts';
 import { hasBinding, templateScope } from './repo-passes.ts';
 
-export type ReleaseBlockCode = 'TEMPLATE_RELEASE_REQUIRED' | 'TEMPLATE_RELEASE_CONFLICT';
+export type ReleaseBlockCode =
+  | 'TEMPLATE_RELEASE_REQUIRED'
+  | 'TEMPLATE_RELEASE_CONFLICT'
+  | 'TEMPLATE_IS_BLUEPRINT';
 export type ConnectionReleaseSnapshot =
   | { kind: 'approved'; id: string; generation: number; version: string }
   | { kind: 'blocked'; code: ReleaseBlockCode }
@@ -26,6 +29,15 @@ export async function captureConnectionRelease(
   conn: ConnectionRow,
 ): Promise<ConnectionReleaseSnapshot> {
   if (!conn.autoCreate || !conn.defaultTemplateId) return null;
+  // A connection left on a blueprint keeps its passes updating; new records wait for a template.
+  if ((await templateScope(sctx.env.DB, conn.defaultTemplateId))?.blueprint) {
+    sctx.log.warn('connections.records_skipped', {
+      orgId: conn.orgId,
+      connectionId: conn.id,
+      code: 'TEMPLATE_IS_BLUEPRINT',
+    });
+    return { kind: 'blocked', code: 'TEMPLATE_IS_BLUEPRINT' };
+  }
   try {
     const release = await getDeps().requireApprovedRelease(
       sctx,

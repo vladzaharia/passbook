@@ -19,6 +19,7 @@ export interface BakedTemplateRow {
   description: string | null;
   version: string;
   styles: unknown;
+  blueprint: boolean;
   now: number;
 }
 
@@ -33,6 +34,7 @@ const TEMPLATE_COLUMNS = [
   'active_version',
   'status',
   'styles',
+  'blueprint',
   'created_at',
   'updated_at',
 ];
@@ -85,6 +87,7 @@ export function addBakedTemplate(
       t.version,
       'active',
       styles,
+      t.blueprint ? 1 : 0,
       t.now,
       t.now,
     ]);
@@ -95,7 +98,8 @@ export function addBakedTemplate(
     existing.description === t.description &&
     existing.active_version === t.version &&
     existing.status === 'active' &&
-    existing.styles === styles;
+    existing.styles === styles &&
+    existing.blueprint === (t.blueprint ? 1 : 0);
   if (!same)
     g.update('templates', {
       set: {
@@ -104,6 +108,7 @@ export function addBakedTemplate(
         active_version: t.version,
         status: 'active',
         styles,
+        blueprint: t.blueprint ? 1 : 0,
         updated_at: maxNow(t.now),
       },
       where: { id: t.id, origin: 'baked' },

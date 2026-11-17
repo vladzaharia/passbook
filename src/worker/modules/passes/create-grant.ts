@@ -7,6 +7,7 @@ import { sampleScannerScopeFence } from '../scan/sample-scope-fence.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import {
   fenceHolds,
+  notBlueprintCheck,
   releaseOrgCheck,
   releaseSnapshotCheck,
   scannerHasNoDevicesCheck,
@@ -52,6 +53,7 @@ export function createGrant(
   const ex = row.execution;
   const checks: Check[] = [
     releaseHead(row.templateId, row.mode, 'apple', row.release.id),
+    notBlueprintCheck(row.templateId),
     releaseSnapshotCheck(row),
     releaseOrgCheck(row.release),
   ];

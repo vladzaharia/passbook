@@ -16,7 +16,7 @@ export interface EligibleReleaseQuery {
   limit: number;
 }
 
-/** List effective releases without exposing manifests or other release internals. */
+/** List effective releases without exposing manifests or other release internals. Blueprints never issue. */
 export async function listEligibleReleases(
   db: D1Database,
   query: EligibleReleaseQuery,
@@ -38,7 +38,7 @@ export async function listEligibleReleases(
        providerSql: 's.provider',
      })})
      JOIN template_versions v ON v.template_id = r.template_id AND v.version = r.version
-     WHERE t.status = 'active' AND s.mode = ?
+     WHERE t.status = 'active' AND t.blueprint = 0 AND s.mode = ?
        AND ${tenantPassAuthoritySql(authority, 's')}
        ${query.cursor === undefined ? '' : 'AND t.id > ?'}
      ORDER BY t.id ASC LIMIT ?`,

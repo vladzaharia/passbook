@@ -92,7 +92,7 @@ export async function preview(
     );
     return {
       passJson: result.passJson,
-      warnings: [...result.issues, ...(tenant ? brandingWarnings(id, branding, []) : [])],
+      warnings: [...result.issues, ...(tenant ? brandingWarnings(template, branding, []) : [])],
       assetNames: [
         ...new Set([
           ...template.assets.map((a) => a.name),

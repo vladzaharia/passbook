@@ -286,7 +286,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       warnings: [
         ...built.report.issues.filter((i) => i.severity !== 'error'),
         ...brandingWarnings(
-          req.templateId,
+          resolved,
           branding,
           passOverrides.map((a) => a.name),
         ),

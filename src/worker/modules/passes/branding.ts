@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { bakedTemplates } from '../../../generated/baked-templates.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import type { BrandingImageRef } from '../orgs/branding-files.ts';
 
@@ -86,32 +87,59 @@ export function tenantPassJson(
   return pass;
 }
 
-/** Starter templates ship placeholder logo and icon art that tenants must replace. */
-export const isStarterTemplate = (templateId: string) => templateId.startsWith('baked:starter-');
+/**
+ * Blueprints ship placeholder logo and icon art that tenants must replace. A template made from a
+ * blueprint carries the same files, so their hashes find it where an id cannot.
+ */
+let placeholderHashes: ReadonlySet<string> | null = null;
+function placeholders(): ReadonlySet<string> {
+  placeholderHashes ??= new Set(
+    bakedTemplates
+      .filter((t) => t.blueprint)
+      .flatMap((t) => t.assets.filter((a) => SLOTS.some((s) => s === a.slot)).map((a) => a.sha1)),
+  );
+  return placeholderHashes;
+}
+
+/** Test hook: replace the blueprint file hashes; null restores the generated set. */
+export function setPlaceholderHashes(hashes: ReadonlySet<string> | null): void {
+  placeholderHashes = hashes;
+}
+
+/** Logo and icon slots that still hold a blueprint's file; a blueprint's own passes always do. */
+function placeholderSlots(
+  templateId: string,
+  assets: readonly { slot: string; sha1: string }[],
+): string[] {
+  if (templateId.startsWith('baked:starter-')) return [...SLOTS];
+  const hashes = placeholders();
+  return SLOTS.filter((slot) => assets.some((a) => a.slot === slot && hashes.has(a.sha1)));
+}
 
 const slotOfName = (name: string) => name.replace(/(@[23]x)?\.png$/, '');
 
 /**
- * PLATFORM_BRANDING when a tenant pass would ship a starter's logo or icon: neither the org
- * branding nor a per-pass override replaces it.
+ * PLATFORM_BRANDING when a tenant pass would ship a blueprint's logo or icon: neither the template,
+ * the org branding nor a per-pass override replaces it.
  */
 export function brandingWarnings(
-  templateId: string,
+  template: { id: string; assets: readonly { slot: string; sha1: string }[] },
   branding: TenantBranding,
   overrideNames: readonly string[],
 ): { severity: 'warning'; code: string; message: string; path?: string }[] {
-  if (!isStarterTemplate(templateId)) return [];
   const replaced = new Set([
     ...branding.images.map((i) => i.slot),
     ...overrideNames.map(slotOfName),
   ]);
-  const missing = SLOTS.filter((slot) => !replaced.has(slot));
+  const missing = placeholderSlots(template.id, template.assets).filter(
+    (slot) => !replaced.has(slot),
+  );
   if (missing.length === 0) return [];
   return [
     {
       severity: 'warning',
       code: 'PLATFORM_BRANDING',
-      message: `Uses the starter ${missing.join(' and ')}. Add the organization's ${missing.join(' and ')} in Pass branding.`,
+      message: `Uses the placeholder ${missing.join(' and ')}. Add the organization's ${missing.join(' and ')} in Pass branding.`,
       path: missing[0],
     },
   ];

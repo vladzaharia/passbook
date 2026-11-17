@@ -20,6 +20,8 @@ export interface BakedTemplate {
   description: string | null;
   /** Owning org from the manifest `org` key. Null = platform starter. */
   org: { slug: string; name: string } | null;
+  /** A design to start from; never issues passes. */
+  blueprint: boolean;
   styles: PassStyle[];
   manifest: TemplateManifest;
   /** Stored as parsed from pass.json; server fields are filled at build time. */

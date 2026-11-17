@@ -2,6 +2,7 @@
   "schema": 1,
   "name": "PassBook · Event ticket",
   "description": "Event ticket with the poster layout and a classic fallback, relevant dates, venue semantics and an optional list of upcoming events.",
+  "blueprint": true,
   "inputs": {
     "type": "object",
     "required": [

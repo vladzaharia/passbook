@@ -1,5 +1,6 @@
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { assertNotBlueprint } from '../templates/blueprint-guard.ts';
 import { requireApprovedRelease, type TemplateRelease } from '../templates/releases.ts';
 import { assertTenantCreateAuthority } from './create-authority.ts';
 import type { CreateParams } from './create-types.ts';
@@ -44,6 +45,8 @@ async function requiredRelease(
   reviewed: boolean,
   wasPinned = false,
 ): Promise<TemplateRelease> {
+  // The release head serves passes already on a blueprint; issuance needs a template.
+  await assertNotBlueprint(ctx.env.DB, p.templateId);
   try {
     return await requireApprovedRelease(ctx, p.templateId, p.orgId, p.mode, 'apple');
   } catch (error) {

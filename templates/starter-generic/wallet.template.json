@@ -2,6 +2,7 @@
   "schema": 1,
   "name": "PassBook · Generic",
   "description": "Membership or ID card with a QR code, relevance and two featured actions.",
+  "blueprint": true,
   "inputs": {
     "type": "object",
     "required": [

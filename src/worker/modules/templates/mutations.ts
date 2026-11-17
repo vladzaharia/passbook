@@ -128,7 +128,8 @@ export async function cloneTemplate(
     assertSource,
     assertCloneAuthority,
   });
-  await audit(ctx, auth, { id: plan.templateId, orgId: org.id }, 'template.clone', {
+  const action = source.blueprint ? 'template.use_blueprint' : 'template.clone';
+  await audit(ctx, auth, { id: plan.templateId, orgId: org.id }, action, {
     sourceId: id,
     sourceVersion: template.version,
   });

@@ -71,6 +71,8 @@ export interface CommitArgs {
     version: string;
     authority?: TemplateAuthority;
   };
+  /** The blueprint a new template is made from ("Use blueprint"). */
+  sourceBlueprint?: string;
   /** Queued work (an import): the authority needs no live session (owner answer 2). */
   deferred?: boolean;
   /** Upload record whose immutable identity must still match this import. */

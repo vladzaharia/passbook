@@ -27,6 +27,7 @@ import { eligibleTemplates } from './eligible.ts';
 import { cloneTemplate, removeTemplate, replaceManifest } from './mutations.ts';
 import { assignOrg } from './org-assignment.ts';
 import { TemplateScopeQuerySchema } from './route-scope.ts';
+import { registerBlueprints } from './routes-blueprints.ts';
 import {
   registerLifecycle,
   registerPreviewBatch,
@@ -41,7 +42,7 @@ import { VERSION_BODY_LIMIT } from './version-files.ts';
 
 export const templatesRoutes = createRouter({ bodyLimit: false });
 /** The archive upload and the version save (base64 images) have their own caps below. */
-templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/versions)$/));
+templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
 // Template reads allow scoped API keys; mutations require a session and are authorized per org.
 templatesRoutes.use('*', async (c, next) =>
   c.req.method === 'GET'
@@ -281,5 +282,6 @@ register(
 registerVersionReads(templatesRoutes);
 
 registerVersions(templatesRoutes);
+registerBlueprints(templatesRoutes);
 registerLifecycle(templatesRoutes);
 registerTemplateReleases(templatesRoutes);

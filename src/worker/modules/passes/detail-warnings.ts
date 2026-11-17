@@ -31,7 +31,7 @@ export async function warningsFor(ctx: ServiceContext, pass: Pass, passJson: Pas
       listAssets(ctx.env.DB, pass.id),
     ]);
     const branding = brandingWarnings(
-      pass.templateId,
+      template,
       readBranding(org?.branding),
       overrides.map((a) => a.name),
     );

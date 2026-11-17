@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, onTestFinished } from 'vitest';
 import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
 import {
   BulkPassActionResponseSchema,
@@ -12,6 +12,7 @@ import { enqueuePush } from '../delivery/service.ts';
 import { putBrandingImage } from '../orgs/branding.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { approveAppleRelease } from './apple-release-test-fixtures.ts';
+import { setPlaceholderHashes } from './branding.ts';
 import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
 import { getPass } from './repo-read-pass.ts';
 import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
@@ -208,8 +209,51 @@ describe('change messages', () => {
   });
 });
 
+describe('placeholder art', () => {
+  it('warns on a template made from a blueprint by the file hash, not the id', async () => {
+    const resolved = kit.registry.add({
+      id: `tpl-from-blueprint-${kit.fx.ids.token(4)}`,
+      orgId: kit.org.id,
+      version: 'v1',
+      manifest: kit.template.manifest,
+      passJson: kit.template.passJson,
+      assets: { 'icon.png': ICON_PNG },
+    });
+    await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      orgId: kit.org.id,
+      mode: 'live',
+      templateId: resolved.id,
+      version: resolved.version,
+    });
+    const create = async () =>
+      PassDetailSchema.parse(
+        await (
+          await post('/passes', {
+            orgId: kit.org.id,
+            templateId: resolved.id,
+            templateVersion: release.version,
+            releaseId: release.id,
+            releaseGeneration: release.generation,
+            mode: 'live',
+            input: { memberName: 'Placeholder' },
+          })
+        ).json(),
+      );
+    expect((await create()).warnings.map((w) => w.code)).not.toContain('PLATFORM_BRANDING');
+    const icon = resolved.assets.find((a) => a.slot === 'icon');
+    if (!icon) throw new Error('The icon is missing');
+    setPlaceholderHashes(new Set([icon.sha1]));
+    onTestFinished(() => setPlaceholderHashes(null));
+    expect((await create()).warnings.find((w) => w.code === 'PLATFORM_BRANDING')).toMatchObject({
+      message: "Uses the placeholder icon. Add the organization's icon in Pass branding.",
+      path: 'icon',
+    });
+  });
+});
+
 describe('tenant identity', () => {
-  it('names the org, warns on starter art and downloads under the org and title', async () => {
+  it('names the org, warns on blueprint art and downloads under the org and title', async () => {
     const resolved = kit.registry.add({
       id: 'baked:starter-tenant',
       orgId: null,
@@ -246,7 +290,7 @@ describe('tenant identity', () => {
     });
     expect(plain.warnings.map((w) => w.code)).toContain('PLATFORM_BRANDING');
     expect(plain.warnings.find((w) => w.code === 'PLATFORM_BRANDING')?.message).toBe(
-      "Uses the starter logo and icon. Add the organization's logo and icon in Pass branding.",
+      "Uses the placeholder logo and icon. Add the organization's logo and icon in Pass branding.",
     );
 
     await run(kit.env.DB, 'UPDATE orgs SET branding = ? WHERE id = ?', [

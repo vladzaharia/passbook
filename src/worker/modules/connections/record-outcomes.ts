@@ -9,7 +9,9 @@ import { type PassReleaseBinding, type SyncPass, validPassReleaseBinding } from 
 
 export function releaseBlockCode(error: unknown): ReleaseBlockCode | null {
   if (!(error instanceof ConflictError)) return null;
-  return error.code === 'TEMPLATE_RELEASE_REQUIRED' || error.code === 'TEMPLATE_RELEASE_CONFLICT'
+  return error.code === 'TEMPLATE_RELEASE_REQUIRED' ||
+    error.code === 'TEMPLATE_RELEASE_CONFLICT' ||
+    error.code === 'TEMPLATE_IS_BLUEPRINT'
     ? error.code
     : null;
 }

@@ -2,6 +2,7 @@
   "schema": 1,
   "name": "PassBook · Store card",
   "description": "Stored-value card with balance, strip image, relevance, two featured actions and optional beacons.",
+  "blueprint": true,
   "inputs": {
     "type": "object",
     "required": [

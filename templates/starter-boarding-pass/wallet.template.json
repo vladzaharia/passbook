@@ -2,6 +2,7 @@
   "schema": 1,
   "name": "PassBook · Boarding pass",
   "description": "Air boarding pass with the semantic layout and a classic fallback.",
+  "blueprint": true,
   "inputs": {
     "type": "object",
     "required": [
