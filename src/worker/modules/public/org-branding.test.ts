@@ -1,6 +1,6 @@
 import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, linkToken } from '../../../../test/helpers/index.ts';
+import { fakeAuth, linkToken, orgManager } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { first, run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
@@ -19,8 +19,11 @@ let app: ReturnType<typeof createApp>;
 beforeAll(async () => {
   kit = await setupKit();
   app = createApp({ stores: fakeAuth(ORIGIN).stores });
-  await putBrandingImage(kit.ctx, admin, kit.org.id, 'icon', { x3: b64(makePng(114, 114)) });
-  await putBrandingImage(kit.ctx, admin, kit.org.id, 'logo', { x3: b64(makePng(480, 150)) });
+  const manager = await orgManager(kit.fx, kit.ctx, kit.org.id);
+  const icon = { x3: b64(makePng(114, 114)) };
+  await putBrandingImage(kit.ctx, admin, kit.org.id, 'icon', icon, undefined, manager);
+  const logo = { x3: b64(makePng(480, 150)) };
+  await putBrandingImage(kit.ctx, admin, kit.org.id, 'logo', logo, undefined, manager);
 });
 
 const get = (path: string, env = kit.env, headers: Record<string, string> = {}) =>

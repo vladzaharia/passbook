@@ -7,6 +7,7 @@ import {
   parseAppendixA,
   RAW_WRITE_ALLOWLIST,
   RAW_WRITE_ALLOWLIST_LIMIT,
+  rawGuardedWrites,
   scanAllowlist,
   scanBrandImport,
   scanFile,
@@ -134,6 +135,44 @@ describe('authority-scope', () => {
       scanAllowlist(new Map(files).set(rel, 'export const x = 1;')).map((f) => f.rule),
     ).toEqual(['stale-allowlist']);
     expect(Object.keys(RAW_WRITE_ALLOWLIST).length).toBeLessThanOrEqual(RAW_WRITE_ALLOWLIST_LIMIT);
+  });
+
+  it('pins the raw writes of an allowlisted file to the reviewed statements', () => {
+    const rel = 'src/worker/modules/auth/repo-sessions.ts';
+    const pinned = RAW_WRITE_ALLOWLIST[rel]?.writes ?? {};
+    const text = new Map(treeFiles()).get(rel) ?? '';
+    expect(scanFile(rel, text, owners).filter((f) => f.rule === 'raw-guarded-write')).toEqual([]);
+    const more = `${text}\nrun(db, 'UPDATE sessions SET revoked_at = ? WHERE user_id = ?', [1, 2]);`;
+    expect(scanFile(rel, more, owners).filter((f) => f.rule === 'raw-guarded-write').length).toBe(
+      1,
+    );
+    const other = `${text}\nrun(db, 'DELETE FROM passes WHERE id = ?', [1]);`;
+    expect(scanFile(rel, other, owners).map((f) => f.detail)).toContain('raw write to passes');
+    expect(Object.values(pinned).every((n) => n > 0)).toBe(true);
+  });
+
+  it('flags a pin that is higher than the writes the file still holds', () => {
+    const rel = 'src/worker/modules/auth/repo-sessions.ts';
+    const files = new Map(treeFiles());
+    const text = files.get(rel) ?? '';
+    const fewer = text.replace(
+      'UPDATE sessions SET revoked_at = ? WHERE id_hash',
+      'SELECT 1 FROM sessions WHERE id_hash',
+    );
+    expect(fewer).not.toBe(text);
+    expect(scanAllowlist(new Map(files).set(rel, fewer)).map((f) => f.rule)).toEqual([
+      'stale-allowlist',
+    ]);
+  });
+
+  it('every pin equals the raw guarded writes in the tree', () => {
+    const text = new Map(treeFiles());
+    for (const [rel, entry] of Object.entries(RAW_WRITE_ALLOWLIST)) {
+      const actual: Record<string, number> = {};
+      for (const table of rawGuardedWrites(text.get(rel) ?? ''))
+        actual[table] = (actual[table] ?? 0) + 1;
+      expect(actual, rel).toEqual(entry.writes);
+    }
   });
 
   it('flags a grant statement that binds an org or mode from the request', () => {

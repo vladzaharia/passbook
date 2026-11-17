@@ -156,7 +156,12 @@ describe('orgs api', () => {
       'SELECT action, detail FROM audit_log WHERE target_id = ? ORDER BY id',
       [org.id],
     );
-    expect(actions.map((a) => a.action)).toEqual(['org.create', 'org.suspend', 'org.delete']);
+    expect(actions.map((a) => a.action)).toEqual([
+      'org.create',
+      'org.update',
+      'org.suspend',
+      'org.delete',
+    ]);
     expect(JSON.parse(actions[1]?.detail ?? '{}').changes.name).toEqual({
       from: 'Acme',
       to: 'Acme Inc',

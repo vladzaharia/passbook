@@ -107,14 +107,17 @@ export function tenantPrincipal(authority: TenantPassWrite): Principal {
 export function capabilityChecks(authority: TenantPassWrite): Check[] {
   if (authority.kind === 'session')
     return [membershipCapability(authority.membershipId, authority.capability)];
-  return [
-    rawCheck(
-      'actor',
-      `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ?
-        AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = ?))`,
-      [authority.keyId, authority.scope],
-    ),
-  ];
+  return [keyScope(authority.keyId, authority.scope)];
+}
+
+/** The key's own scopes list `scope`. */
+export function keyScope(keyId: string, scope: string): Check {
+  return rawCheck(
+    'actor',
+    `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ?
+      AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = ?))`,
+    [keyId, scope],
+  );
 }
 
 /** The membership's own roles grant the capability. */

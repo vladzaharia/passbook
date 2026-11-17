@@ -1,6 +1,11 @@
 // Raw writes to authority rows for tests that need a state change no grant would make (no session, no CAS).
+import { createSessionStore } from '../../src/worker/modules/auth/sessions.ts';
+import type { OrgWriteAuthority } from '../../src/worker/modules/orgs/repo-org-writes.ts';
+import { tenantAuthorityOf } from '../../src/worker/modules/passes/http.ts';
 import { clearSettingsCache } from '../../src/worker/modules/settings/service.ts';
 import { batch, run, stmt } from '../../src/worker/platform/db.ts';
+import type { ServiceContext } from '../../src/worker/platform/service-context.ts';
+import { type Fixtures, makeSession, makeUser } from './factories.ts';
 
 const isAdmin = (alias: string) =>
   `EXISTS (SELECT 1 FROM json_each(${alias}.roles) ar WHERE ar.value = 'org_admin')`;
@@ -86,4 +91,42 @@ export async function saveOrgSettings(
     ),
   );
   clearSettingsCache(db);
+}
+
+/** A fresh org admin with a live session: the `org:manage` authority an org edit commits under. */
+export async function orgManager(
+  f: Fixtures,
+  ctx: ServiceContext,
+  orgId: string,
+): Promise<OrgWriteAuthority> {
+  const user = await makeUser(f);
+  const now = ctx.clock.now();
+  const invitationId = f.ids.id();
+  await run(
+    f.env.DB,
+    `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      invitationId,
+      orgId,
+      user.primaryEmail,
+      '["org_admin"]',
+      f.ids.token(),
+      now,
+      now + 3600_000,
+      now,
+    ],
+  );
+  await run(
+    f.env.DB,
+    `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
+     VALUES (?, ?, ?, ?, '["org_admin"]', ?)`,
+    [f.ids.id(), orgId, user.id, invitationId, now],
+  );
+  const fixture = await makeSession(f, { userId: user.id });
+  const session = await createSessionStore(f.env, ctx.clock).resolve(fixture.cookieValue);
+  if (!session) throw new Error('The persisted session did not resolve');
+  const authority = await tenantAuthorityOf(ctx, session, orgId, 'org:manage');
+  if (authority.kind !== 'session') throw new Error('Expected a session authority');
+  return authority;
 }

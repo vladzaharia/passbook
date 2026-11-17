@@ -764,13 +764,44 @@ describe('organization mutation-time authority', () => {
             ]);
           }
         },
-        () => call('PATCH', `/${org.id}`, subject.session.headers, { status: 'suspended' }),
+        () =>
+          call('PATCH', `/${org.id}`, subject.session.headers, {
+            name: 'Renamed',
+            status: 'suspended',
+          }),
       );
       expect([401, 403, 404, 409, 412]).toContain(response.status);
       expect(await orgState()).toEqual(before);
       expect(await auditState()).toEqual(audits);
     },
   );
+
+  it('moves a status-only PATCH through the platform grant, so a revoked admin session is refused', async () => {
+    const subject = await principal({ platform: true, role: 'org_admin' });
+    const before = await orgState();
+    const refused = await atOrgWrite(
+      async (db) => {
+        await run(db, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
+          fx.clock.now(),
+          await hashSessionCookie(subject.session.cookieValue),
+        ]);
+      },
+      () => call('PATCH', `/${org.id}`, subject.session.headers, { status: 'suspended' }),
+    );
+    expect([401, 403, 404, 409, 412]).toContain(refused.status);
+    expect(await orgState()).toEqual(before);
+
+    const live = await principal({ platform: true, role: 'org_admin' });
+    const moved = await call('PATCH', `/${org.id}`, live.session.headers, { status: 'suspended' });
+    expect(moved.status).toBe(200);
+    expect(await moved.json()).toMatchObject({ status: 'suspended' });
+    const actions = await all<{ action: string }>(
+      fx.env.DB,
+      'SELECT action FROM audit_log WHERE target_id = ? ORDER BY id DESC LIMIT 1',
+      [org.id],
+    );
+    expect(actions.map((a) => a.action)).toEqual(['org.suspend']);
+  });
 
   it('binds repository writes to the real organization and org:manage capability', async () => {
     const manager = await principal({ role: 'org_admin' });

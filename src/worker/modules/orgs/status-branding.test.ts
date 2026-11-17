@@ -10,6 +10,7 @@ import {
   makeOrg,
   makeSession,
   makeUser,
+  orgManager,
   type SessionFixture,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
@@ -50,6 +51,7 @@ const call = (method: string, path: string, body?: unknown, headers = platformAd
   );
 const tenantCall = (method: string, path: string, body?: unknown) =>
   call(method, path, body, orgAdmin.headers);
+const manager = (orgId: string) => orgManager(f, createServiceContext(appEnv, { clock }), orgId);
 const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 const actionsOf = async (id: string) =>
   (
@@ -243,6 +245,7 @@ describe('pass branding images', () => {
       'logo',
       { x3: b64(makePng(300, 90)) },
       { resize: async () => null },
+      await manager(org.id),
     );
     const x3 = await tenantCall('GET', `/${org.id}/branding/logo/3x`);
     expect(x3.status).toBe(200);
@@ -321,6 +324,7 @@ describe('pass branding images', () => {
       'logo',
       { x3: b64(x3) },
       { resize: async () => null },
+      await manager(org.id),
     );
     await expectProblem(
       await tenantCall('GET', `/${org.id}/branding/logo/2x`),
@@ -367,6 +371,7 @@ describe('pass branding images', () => {
       'logo',
       { x3: b64(makePng(330, 90)) },
       { resize: async () => null },
+      await manager(org.id),
     );
     const after = await appEnv.BUCKET.list({ prefix: `orgs/${org.id}/branding/` });
     expect(after.objects.length).toBeGreaterThan(before.objects.length);
@@ -394,6 +399,7 @@ describe('pass branding images', () => {
         return typeof value === 'function' ? value.bind(target) : value;
       },
     });
+    const authority = await manager(org.id);
     await expect(
       putBrandingImage(
         createServiceContext({ ...appEnv, BUCKET: bucket }, { clock }),
@@ -401,6 +407,8 @@ describe('pass branding images', () => {
         org.id,
         'logo',
         { x3: b64(makePng(300, 90)), x2: b64(makePng(200, 60)) },
+        undefined,
+        authority,
       ),
     ).rejects.toThrow('R2 put failed');
     expect(await storedBranding(org.id)).not.toHaveProperty('logo');
@@ -538,6 +546,7 @@ describe('pass branding images', () => {
         return typeof value === 'function' ? value.bind(target) : value;
       },
     });
+    const authority = await manager(org.id);
     await expect(
       putBrandingImage(
         createServiceContext({ ...appEnv, DB: db }, { clock }),
@@ -545,6 +554,8 @@ describe('pass branding images', () => {
         org.id,
         'logo',
         { x3: b64(makePng(300, 90)), x2: b64(makePng(200, 60)) },
+        undefined,
+        authority,
       ),
     ).rejects.toThrow('Audit write failed');
     const images = readBranding(await storedBranding(org.id)).images;
@@ -557,28 +568,38 @@ describe('pass branding images', () => {
 
   it('retains staged objects when the org commit result is ambiguous', async () => {
     const org = await makeOrg(f);
+    const orgWrites = new WeakSet<object>();
     const db = new Proxy(appEnv.DB, {
       get(target, prop) {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            if (!sql.includes('UPDATE orgs SET branding =')) return statement;
-            return {
-              bind: (...args: unknown[]) => {
-                const bound = statement.bind(...args);
-                return {
-                  first: async () => {
-                    await bound.first();
-                    throw new Error('D1 response lost');
-                  },
-                };
+            if (!sql.includes('UPDATE orgs SET')) return statement;
+            return new Proxy(statement, {
+              get(inner, key) {
+                if (key === 'bind')
+                  return (...args: unknown[]) => {
+                    const bound = inner.bind(...args);
+                    orgWrites.add(bound);
+                    return bound;
+                  };
+                const value = Reflect.get(inner, key, inner);
+                return typeof value === 'function' ? value.bind(inner) : value;
               },
-            };
+            });
+          };
+        if (prop === 'batch')
+          return async (statements: D1PreparedStatement[]) => {
+            const results = await target.batch(statements);
+            if (statements.some((statement) => orgWrites.has(statement)))
+              throw new Error('D1 response lost');
+            return results;
           };
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;
       },
     });
+    const authority = await manager(org.id);
     await expect(
       putBrandingImage(
         createServiceContext({ ...appEnv, DB: db }, { clock }),
@@ -586,6 +607,8 @@ describe('pass branding images', () => {
         org.id,
         'logo',
         { x3: b64(makePng(300, 90)), x2: b64(makePng(200, 60)) },
+        undefined,
+        authority,
       ),
     ).rejects.toThrow('D1 response lost');
     const images = readBranding(await storedBranding(org.id)).images;

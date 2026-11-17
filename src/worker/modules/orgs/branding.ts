@@ -64,7 +64,7 @@ async function saveBranding(
   before: OrgRow,
   branding: Branding,
   detail: Record<string, unknown>,
-  authority?: OrgWriteAuthority,
+  authority: OrgWriteAuthority,
   onCommitResult?: (committed: boolean) => void,
 ): Promise<OrgDto> {
   const orgId = before.id;
@@ -104,7 +104,7 @@ export async function putBrandingImage(
   slot: Slot,
   upload: Upload,
   images: ImageTools = imagesFromBinding(ctx.env.IMAGES, ctx.log),
-  authority?: OrgWriteAuthority,
+  authority: OrgWriteAuthority,
 ): Promise<OrgDto> {
   const current = await requireOrg(ctx, orgId);
   const row = { ...current, config_revision: upload.configRevision ?? current.config_revision };
@@ -160,7 +160,7 @@ export async function deleteBrandingImage(
   actor: Actor,
   orgId: string,
   slot: Slot,
-  authority?: OrgWriteAuthority,
+  authority: OrgWriteAuthority,
 ): Promise<OrgDto> {
   const row = await requireOrg(ctx, orgId);
   const { [slot]: _gone, ...branding } = JSON.parse(row.branding) as Branding;

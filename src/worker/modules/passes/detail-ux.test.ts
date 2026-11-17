@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, onTestFinished } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
+import { makeOrg, orgManager, persistTemplate } from '../../../../test/helpers/index.ts';
 import {
   BulkPassActionResponseSchema,
   PassDetailSchema,
@@ -372,8 +372,11 @@ describe('tenant identity', () => {
     ]);
     const admin = { type: 'user', id: 'admin' } as const;
     const b64 = (png: Uint8Array) => btoa(String.fromCharCode(...png));
-    await putBrandingImage(kit.ctx, admin, kit.org.id, 'icon', { x3: b64(makePng(114, 114)) });
-    await putBrandingImage(kit.ctx, admin, kit.org.id, 'logo', { x3: b64(makePng(480, 150)) });
+    const manager = await orgManager(kit.fx, kit.ctx, kit.org.id);
+    const icon = { x3: b64(makePng(114, 114)) };
+    await putBrandingImage(kit.ctx, admin, kit.org.id, 'icon', icon, undefined, manager);
+    const logo = { x3: b64(makePng(480, 150)) };
+    await putBrandingImage(kit.ctx, admin, kit.org.id, 'logo', logo, undefined, manager);
     const branded = await create();
     expect(branded.passJson.logoText).toBeUndefined();
     expect(branded.passJson.backgroundColor).toBe('rgb(10, 20, 30)');

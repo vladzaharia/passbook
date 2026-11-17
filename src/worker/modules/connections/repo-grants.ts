@@ -8,6 +8,7 @@ import { AppError, authorityDenied, type DenyReason } from '../../platform/error
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   capabilityChecks,
+  keyScope,
   membershipCapability,
   tenantPrincipal,
 } from '../passes/repo-authority.ts';
@@ -127,14 +128,10 @@ export function connectionGrant(
 
 /** Re-derives pass rights from the principal's own row: roles for a member, scopes for a key. */
 function issuingChecks(a: ConnectionAuthority): Check[] {
-  if (a.kind === 'session') return [membershipCapability(a.membershipId, 'passes:operate')];
   return [
-    rawCheck(
-      'actor',
-      `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ?
-        AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = 'passes:write'))`,
-      [a.keyId],
-    ),
+    a.kind === 'session'
+      ? membershipCapability(a.membershipId, 'passes:operate')
+      : keyScope(a.keyId, 'passes:write'),
   ];
 }
 

@@ -155,7 +155,8 @@ register(
     // The status route is platform-only; PATCH must not be a tenant lifecycle bypass.
     if (input.status !== undefined && !authority.sessionRoles.includes('admin'))
       throw new ForbiddenError();
-    return c.json(await updateOrg(serviceContext(c), requestActor(c), id, input, authority));
+    const admin = input.status === undefined ? undefined : adminOf(c);
+    return c.json(await updateOrg(serviceContext(c), requestActor(c), id, input, authority, admin));
   },
 );
 register(

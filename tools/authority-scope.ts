@@ -111,7 +111,7 @@ const PART_TENANT_BIND =
   /\b(?:writePart|readPart)\(\s*(['"`])(?:(?!\1)[\s\S])*?\b(?:org_id|mode)\s*=\s*\?/;
 const UPDATED_AT_PREDICATE = /\bWHERE\b[^;`]*?\bupdated_at\s*=\s*\?/is;
 /** The number of reviewed raw-write files. Removing one lowers it; a new entry fails until a design decision raises it. */
-export const RAW_WRITE_ALLOWLIST_LIMIT = 28;
+export const RAW_WRITE_ALLOWLIST_LIMIT = 26;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 
 const TENANT_TABLES = new Set([
@@ -239,7 +239,7 @@ export function ownerOf(rel: string, owners: Owners): string | null {
 }
 
 /** Guarded tables a file writes with raw SQL (a stamp-only update does not count). */
-function rawGuardedWrites(text: string): string[] {
+export function rawGuardedWrites(text: string): string[] {
   const out: string[] = [];
   for (const m of text.matchAll(WRITE)) {
     if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
@@ -263,8 +263,20 @@ export function scanFile(rel: string, text: string, owners: Owners): Finding[] {
   // Only a WHERE clause compares: `SET updated_at = ?` stamps a timestamp.
   if (UPDATED_AT_PREDICATE.test(text))
     add('updated-at-predicate', 'updated_at = ? in a WHERE clause (a timestamp is not an epoch)');
-  if (!(rel in RAW_WRITE_ALLOWLIST))
-    for (const table of rawGuardedWrites(text)) add('raw-guarded-write', `raw write to ${table}`);
+  const pinned = RAW_WRITE_ALLOWLIST[rel]?.writes;
+  const seen = new Map<string, number>();
+  for (const table of rawGuardedWrites(text)) {
+    const n = (seen.get(table) ?? 0) + 1;
+    seen.set(table, n);
+    // An allowlisted file may hold exactly the reviewed writes: one more, or one to a new table, is a finding.
+    if (n > (pinned?.[table] ?? 0))
+      add(
+        'raw-guarded-write',
+        pinned?.[table]
+          ? `raw write to ${table} beyond the ${pinned[table]} reviewed in RAW_WRITE_ALLOWLIST`
+          : `raw write to ${table}`,
+      );
+  }
   if (!(rel in DYNAMIC_WRITE_ALLOWLIST))
     for (const m of DYNAMIC_WRITE.flatMap((re) => [...text.matchAll(re)]))
       add('dynamic-write', `write target built at runtime: ${m[0].replace(/\s+/g, ' ')}`);
@@ -363,13 +375,23 @@ function* sources(dir: string): Generator<string> {
 export function scanAllowlist(files: ReadonlyMap<string, string>): Finding[] {
   const found: Finding[] = [];
   const listed = Object.keys(RAW_WRITE_ALLOWLIST);
-  for (const rel of listed)
-    if (rawGuardedWrites(files.get(rel) ?? '').length === 0)
+  for (const [rel, entry] of Object.entries(RAW_WRITE_ALLOWLIST)) {
+    const actual = rawGuardedWrites(files.get(rel) ?? '');
+    if (actual.length === 0)
       found.push({
         rule: 'stale-allowlist',
         file: rel,
         detail: 'RAW_WRITE_ALLOWLIST names a file with no raw guarded write: remove the entry',
       });
+    else
+      for (const [table, count] of Object.entries(entry.writes))
+        if (actual.filter((t) => t === table).length < count)
+          found.push({
+            rule: 'stale-allowlist',
+            file: rel,
+            detail: `RAW_WRITE_ALLOWLIST pins ${count} raw write(s) to ${table}, the file has fewer: lower the pin`,
+          });
+  }
   if (listed.length > RAW_WRITE_ALLOWLIST_LIMIT)
     found.push({
       rule: 'allowlist-growth',
