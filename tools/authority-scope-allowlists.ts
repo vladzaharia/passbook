@@ -8,9 +8,9 @@ export const REPLACE_ALLOWLIST: Record<string, string> = {
 
 /**
  * A reviewed file and the exact raw writes it may hold, one `table:fingerprint` per statement (the
- * fingerprint hashes the statement with comments and whitespace normalized away, same-file constants
- * inlined into `${...}`, other interpolations kept as text, and `+ ...` tails joined on; `@use` marks each
- * further call site of a constant that holds a statement). A new
+ * fingerprint hashes the statement with comments and whitespace normalized away, constants
+ * (same-file or imported from a file in the tree) inlined into `${...}`, other interpolations kept as text, and `+ ...` tails joined on; `@use` marks each
+ * further call site of a constant that holds a statement, in its own file or one that imports it). A new
  * statement, or an edited one (a widened WHERE, another column), is a finding until it is a grant or a
  * design decision re-pins it here. `node tools/authority-scope.ts --pins` prints the current pins.
  */
@@ -108,31 +108,31 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     reason:
       "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority; routes take the grants in repo-remove.ts",
     writes: [
-      'passes:0110f78e1b89',
-      'passes:16ef4e5669fd',
-      'passes:80268957d662',
-      'passes:90a7bfb5efd3',
+      'passes:5b7a0ebd34a7',
+      'passes:d03344a9a7dc',
+      'passes:dbb5af80fe98',
+      'passes:ec2d184a0290',
     ],
   },
   'src/worker/modules/passes/repo-pass-trusted.ts': {
     reason:
       'link rotation, refresh claim, soft delete and the seal of an old plain pass or bundle link token (org no job grant can write; MAC under a CAS on the plain value, no authority change) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
     writes: [
-      'bundles:d576cc9fbe2f',
-      'bundles:d576cc9fbe2f@use',
-      'passes:22890c56fc34',
-      'passes:22890c56fc34@use',
-      'passes:56fc36815be8',
-      'passes:56fc36815be8@use',
+      'bundles:4d66feaeeccb',
+      'bundles:4d66feaeeccb@use',
+      'passes:09a2c6689ea1',
+      'passes:09a2c6689ea1@use',
+      'passes:4ba63e739c4c',
+      'passes:4ba63e739c4c@use',
       'passes:8dac9824a940',
-      'passes:9787dbdeacc5',
       'passes:a565c31165b3',
+      'passes:c76312f4fe8f',
     ],
   },
   'src/worker/modules/passes/repo-connection-state.ts': {
     reason:
       'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
-    writes: ['passes:b9527b1b76b7'],
+    writes: ['passes:de5d2c1970fb'],
   },
   'src/worker/modules/passes/repo-history-assets.ts': {
     reason:

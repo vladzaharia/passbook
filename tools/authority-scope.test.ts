@@ -203,6 +203,48 @@ describe('authority-scope', () => {
     ).not.toHaveLength(0);
   });
 
+  it('resolves an imported constant, so changing its definition fails the importer pin', () => {
+    const rel = `${MOD}/passes/repo-pass-trusted.ts`;
+    const files = new Map(treeFiles());
+    const text = files.get(rel) ?? '';
+    const rawFindings = (map: ReadonlyMap<string, string>) =>
+      scanFile(rel, text, owners, map).filter((f) => f.rule === 'raw-guarded-write');
+    expect(rawFindings(files)).toEqual([]);
+    const definition = [...files].find(([, t]) => /export const BUNDLE_RESERVED\b/.test(t));
+    if (!definition) throw new Error('BUNDLE_RESERVED is not exported in the tree.');
+    const changed = new Map(files).set(
+      definition[0],
+      definition[1].replace(/(export const BUNDLE_RESERVED[^`'"]*[`'"])/, '$1 1 = 1 OR '),
+    );
+    expect(changed.get(definition[0])).not.toBe(definition[1]);
+    expect(rawFindings(changed).length).toBeGreaterThan(0);
+  });
+
+  it('counts each use of an exported pinned write in another file, and survives import cycles', () => {
+    const exporter = "export const PURGE = 'DELETE FROM sessions WHERE id = ?';";
+    const user = "import { PURGE } from './a.ts';\nrun(db, PURGE, [id]);\nrun(db, PURGE, [other]);";
+    const files = new Map([
+      [`${MOD}/x/a.ts`, exporter],
+      [`${MOD}/x/b.ts`, user],
+    ]);
+    const used = rawWriteStatements(user, { rel: `${MOD}/x/b.ts`, files });
+    expect(used).toHaveLength(2);
+    expect(used.every((id) => id.endsWith('@use'))).toBe(true);
+    expect(rawWriteStatements(user)).toEqual([]);
+    // A new file that runs the write is flagged; its own `run(db, PURGE)` is not a write literal.
+    expect(
+      scanFile(`${MOD}/x/b.ts`, user, owners, files).filter((f) => f.rule === 'raw-guarded-write'),
+    ).toHaveLength(2);
+    // Constants that name each other do not loop.
+    const ref = (name: string) => `$\{${name}}`;
+    const cyc = new Map([
+      [`${MOD}/x/c.ts`, `import { B } from './d.ts';\nexport const A = \`a ${ref('B')}\`;`],
+      [`${MOD}/x/d.ts`, `import { A } from './c.ts';\nexport const B = \`b ${ref('A')}\`;`],
+    ]);
+    const source = `import { A } from './c.ts';\nrun(db, \`DELETE FROM sessions WHERE ${ref('A')}\`);`;
+    expect(rawWriteStatements(source, { rel: `${MOD}/x/e.ts`, files: cyc })).toHaveLength(1);
+  });
+
   it('flags a pin whose statement is gone, even when a comment still names it', () => {
     const rel = 'src/worker/modules/auth/repo-sessions.ts';
     const files = new Map(treeFiles());
@@ -221,7 +263,9 @@ describe('authority-scope', () => {
   it('every pin equals the raw guarded statements in the tree', () => {
     const text = new Map(treeFiles());
     for (const [rel, entry] of Object.entries(RAW_WRITE_ALLOWLIST))
-      expect(rawWriteStatements(text.get(rel) ?? ''), rel).toEqual([...entry.writes].sort());
+      expect(rawWriteStatements(text.get(rel) ?? '', { rel, files: text }), rel).toEqual(
+        [...entry.writes].sort(),
+      );
   });
 
   it('flags a grant statement that binds an org or mode from the request', () => {

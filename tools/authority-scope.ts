@@ -16,8 +16,10 @@ import {
 } from './authority-scope-allowlists.ts';
 import { scanBans } from './authority-scope-bans.ts';
 import {
+  type Cx,
   describeStatement,
   fingerprint,
+  importsOf,
   stripComments,
   usesOf,
 } from './authority-scope-statements.ts';
@@ -244,24 +246,59 @@ export function ownerOf(rel: string, owners: Owners): string | null {
   return owners.exact.get(rel) ?? owners.globs.find(([re]) => re.test(rel))?.[1] ?? null;
 }
 
-/** A raw write to a guarded table, as `table:fingerprint` of its statement (comments never count). */
-export function rawWriteStatements(source: string): string[] {
-  const stripped = stripComments(source);
+/** The raw writes of one file, each with the constant that holds it (the file's own, not its imports'). */
+function writeEntries(
+  source: string,
+  cx?: Cx,
+): { table: string; id: string; holder: string | null; exported: boolean }[] {
+  const stripped = stripComments(source, cx);
   const { text } = stripped;
-  const out: string[] = [];
+  const out: { table: string; id: string; holder: string | null; exported: boolean }[] = [];
   for (const m of text.matchAll(WRITE)) {
     if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
     const table = m[1] ?? m[2] ?? '';
-    const { text: statement, holder } = describeStatement(stripped, m.index ?? 0);
-    const id = `${table}:${fingerprint(statement)}`;
-    out.push(id);
-    // A pinned constant run from another call site is another statement.
-    if (holder) for (let n = usesOf(stripped, holder); n > 0; n--) out.push(`${id}@use`);
+    const { text: statement, holder, exported } = describeStatement(stripped, m.index ?? 0);
+    out.push({ table, id: `${table}:${fingerprint(statement)}`, holder, exported });
   }
   for (const m of text.matchAll(HELPER_WRITE)) {
     const open = (m.index ?? 0) + m[0].indexOf('(');
-    out.push(`${m[1] ?? ''}:${fingerprint(group(text, open))}`);
+    out.push({
+      table: m[1] ?? '',
+      id: `${m[1] ?? ''}:${fingerprint(group(text, open))}`,
+      holder: null,
+      exported: false,
+    });
   }
+  return out;
+}
+
+/**
+ * A raw write to a guarded table, as `table:fingerprint` of its statement (comments never count). With the
+ * file set, a constant imported from a file inside it is inlined, and each use of an exported constant that
+ * holds a write adds that write's `id@use` here, so a new file that runs a pinned write is a new statement.
+ */
+export function rawWriteStatements(
+  source: string,
+  where?: { rel: string; files: ReadonlyMap<string, string> },
+): string[] {
+  const cx = where && { ...where, seen: new Set<string>() };
+  const stripped = stripComments(source, cx);
+  const out: string[] = [];
+  for (const e of writeEntries(source, cx)) {
+    out.push(e.id);
+    // A pinned constant run from another call site is another statement.
+    if (e.holder) for (let n = usesOf(stripped, e.holder); n > 0; n--) out.push(`${e.id}@use`);
+  }
+  if (cx)
+    for (const imported of importsOf(stripped)) {
+      const entries = writeEntries(cx.files.get(imported.file) ?? '', {
+        rel: imported.file,
+        files: cx.files,
+        seen: new Set(),
+      }).filter((e) => e.exported && e.holder === imported.name);
+      const uses = usesOf(stripped, imported.local);
+      for (const e of entries) for (let n = uses; n > 0; n--) out.push(`${e.id}@use`);
+    }
   return out.sort();
 }
 
@@ -270,7 +307,12 @@ export function rawGuardedWrites(text: string): string[] {
   return rawWriteStatements(text).map((id) => id.slice(0, id.indexOf(':')));
 }
 
-export function scanFile(rel: string, text: string, owners: Owners): Finding[] {
+export function scanFile(
+  rel: string,
+  text: string,
+  owners: Owners,
+  files?: ReadonlyMap<string, string>,
+): Finding[] {
   if (skipFile(rel)) return [];
   const found: Finding[] = [];
   const add = (rule: Rule, detail: string) => found.push({ rule, file: rel, detail });
@@ -286,7 +328,7 @@ export function scanFile(rel: string, text: string, owners: Owners): Finding[] {
     add('updated-at-predicate', 'updated_at = ? in a WHERE clause (a timestamp is not an epoch)');
   // An allowlisted file may hold exactly the reviewed statements: a new one, or a changed one, is a finding.
   const pinned = [...(RAW_WRITE_ALLOWLIST[rel]?.writes ?? [])];
-  for (const id of rawWriteStatements(text)) {
+  for (const id of rawWriteStatements(text, files && { rel, files })) {
     const at = pinned.indexOf(id);
     if (at !== -1) {
       pinned.splice(at, 1);
@@ -398,7 +440,7 @@ export function scanAllowlist(files: ReadonlyMap<string, string>): Finding[] {
   const found: Finding[] = [];
   const listed = Object.keys(RAW_WRITE_ALLOWLIST);
   for (const [rel, entry] of Object.entries(RAW_WRITE_ALLOWLIST)) {
-    const actual = rawWriteStatements(files.get(rel) ?? '');
+    const actual = rawWriteStatements(files.get(rel) ?? '', { rel, files });
     if (actual.length === 0)
       found.push({
         rule: 'stale-allowlist',
@@ -432,14 +474,15 @@ export function scanAllowlist(files: ReadonlyMap<string, string>): Finding[] {
 export function scanTree(markdown: string, files: Iterable<[string, string]>): Finding[] {
   const owners = parseAppendixA(markdown);
   const all = [...files];
+  const byPath = new Map(all);
   return [
     ...all.flatMap(([rel, text]) => [
-      ...scanFile(rel, text, owners),
+      ...scanFile(rel, text, owners, byPath),
       ...scanJobContext(rel, text),
       ...scanBrandImport(rel, text),
       ...(skipFile(rel) ? [] : scanBans(rel, text)),
     ]),
-    ...scanAllowlist(new Map(all)),
+    ...scanAllowlist(byPath),
   ];
 }
 
@@ -452,7 +495,9 @@ if (import.meta.main) {
   if (process.argv.includes('--pins')) {
     for (const [rel, text] of files)
       if (rel in RAW_WRITE_ALLOWLIST)
-        process.stdout.write(`${rel} ${rawWriteStatements(text).join(' ')}\n`);
+        process.stdout.write(
+          `${rel} ${rawWriteStatements(text, { rel, files: new Map(files) }).join(' ')}\n`,
+        );
     process.exit(0);
   }
   const findings = scanTree(readFileSync(join(root, DOC), 'utf8'), files);
