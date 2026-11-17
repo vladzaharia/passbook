@@ -42,7 +42,7 @@ export function createSamsungRefId(): string {
 export function buildSamsungDataFetchLink(
   account: ValidatedSamsungCredentials,
   refId: string,
-  now = Date.now(),
+  now: number,
 ): string {
   assertSamsungCredentialsCurrent(account, now);
   if (typeof refId !== 'string' || !/^[A-Za-z0-9_-]{32}$/.test(refId))
@@ -95,7 +95,7 @@ export function classifySamsungFailure(input: {
   status?: number;
   attempt: number;
   retryAfter?: string | null;
-  now?: number;
+  now: number;
 }): SamsungFailure {
   if (!Number.isInteger(input.attempt) || input.attempt < 1 || input.attempt > MAX_ATTEMPTS)
     return { kind: 'invalid_request', retryable: false, ambiguous: false };
@@ -122,7 +122,7 @@ export function classifySamsungFailure(input: {
   if (value && /^\d+$/.test(value)) delay = Number(value) * 1000;
   else if (value) {
     const date = Date.parse(value);
-    if (Number.isFinite(date)) delay = Math.max(0, date - (input.now ?? Date.now()));
+    if (Number.isFinite(date)) delay = Math.max(0, date - input.now);
   }
   if (!Number.isFinite(delay)) delay = MAX_RETRY_MS;
   return {
@@ -140,7 +140,7 @@ export interface SamsungUpdateInput {
   refId: string;
   state: SamsungCardState;
   attempt: number;
-  now?: number;
+  now: number;
 }
 
 export interface SamsungCancelInput {
@@ -148,7 +148,7 @@ export interface SamsungCancelInput {
   type: 'ticket';
   eventId: string;
   attempt: number;
-  now?: number;
+  now: number;
 }
 
 function invalidRequest(): SamsungNotificationError {
@@ -167,11 +167,11 @@ async function sendNotification(
     body: object;
     retirement: boolean;
     attempt: number;
-    now?: number;
+    now: number;
   },
   fetcher: typeof fetch,
 ): Promise<void> {
-  const now = input.now ?? Date.now();
+  const now = input.now;
   assertSamsungCredentialsCurrent(account, now);
   if (
     typeof input.cc2 !== 'string' ||

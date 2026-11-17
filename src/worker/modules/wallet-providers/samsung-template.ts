@@ -13,7 +13,7 @@ interface SamsungTemplateProbeInput {
   subType: string;
   countryCode: string;
   mode: 'live' | 'test';
-  now?: number;
+  now: number;
 }
 
 /** Current provider-reported template state, not independent approval of the issuer program. */
@@ -145,7 +145,7 @@ export async function probeSamsungActiveTemplate(
     (input.mode !== 'live' && input.mode !== 'test')
   )
     throw new SamsungTemplateError('invalid_input');
-  const now = input.now ?? Date.now();
+  const now = input.now;
   assertSamsungCredentialsCurrent(account, now);
   const path = `${PATH}/${account.cardId}`;
   const authorization = await createSamsungAuthorizationToken(account, {
@@ -193,6 +193,6 @@ export async function probeSamsungActiveTemplate(
     countryCode: input.countryCode,
     state: 'ACTIVE',
     testingModeOff: 'Y',
-    verifiedAt: input.now ?? Date.now(),
+    verifiedAt: input.now,
   };
 }

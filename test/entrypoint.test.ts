@@ -35,6 +35,7 @@ describe('worker entrypoint', () => {
   });
 
   it('resolves a real D1 session cookie and rejects an unknown one', async () => {
+    // Real clock: the Worker entrypoint reads wall time for session expiry.
     const f = fixtures(await makeEnv({ DB: env.DB }), new ManualClock(Date.now()));
     const user = await makeUser(f);
     const session = await makeSession(f, { userId: user.id });
@@ -51,6 +52,7 @@ describe('worker entrypoint', () => {
   });
 
   it('resolves sessions against the env of each request, not the first one seen', async () => {
+    // Real clock: the Worker entrypoint reads wall time for session expiry.
     const f = fixtures(await makeEnv({ DB: env.DB }), new ManualClock(Date.now()));
     const user = await makeUser(f);
     const session = await makeSession(f, { userId: user.id });

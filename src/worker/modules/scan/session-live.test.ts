@@ -36,14 +36,15 @@ describe('session display authorization', () => {
         await hub.publish({
           orgId: kit.org.id,
           mode: 'live',
+          now: kit.clock.now(),
           row: await withSourceProof(row(source.id)),
         }),
       ).toBe(true);
     }
-    expect((await hub.snapshot(monitor)).rows).toMatchObject([
+    expect((await hub.snapshot(monitor, undefined, kit.clock.now())).rows).toMatchObject([
       { scannerId: sourceA.id, holder: null, passId: null },
     ]);
-    expect((await hub.snapshot(monitor)).rows).toHaveLength(1);
+    expect((await hub.snapshot(monitor, undefined, kit.clock.now())).rows).toHaveLength(1);
     const recipient = await liveRecipient(kit.ctx, customer);
     if (!recipient) throw new Error('Missing customer recipient.');
     expect(
@@ -57,7 +58,7 @@ describe('session display authorization', () => {
       label: 'Checked in',
     });
     expect(await liveRowFor(kit.ctx, recipient, await withSourceProof(row(sourceB.id)))).toBeNull();
-    expect((await hub.snapshot(customer)).rows).toEqual([]);
+    expect((await hub.snapshot(customer, undefined, kit.clock.now())).rows).toEqual([]);
   });
 
   it('restores the original paired workspace after encrypted transport and rejects crossed authority', async () => {

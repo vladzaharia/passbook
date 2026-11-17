@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
+import { fakeAuth, fixtures, makeEnv, makeOrg, TEST_NOW } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -27,7 +27,7 @@ const queue = (backlog: number, ageMs = 0) =>
     metrics: async () => ({
       backlogCount: backlog,
       backlogBytes: 0,
-      oldestMessageTimestamp: ageMs ? new Date(Date.now() - ageMs) : undefined,
+      oldestMessageTimestamp: ageMs ? new Date(TEST_NOW - ageMs) : undefined,
     }),
   }) as unknown as Queue;
 
@@ -48,7 +48,7 @@ beforeEach(async () => {
 async function status(
   overrides: Partial<AppEnv> = {},
   fetchImpl = okFetch,
-  clock = new ManualClock(Date.now()),
+  clock = new ManualClock(TEST_NOW),
 ) {
   const e = { ...base, ...overrides } as AppEnv;
   return getStatus(createServiceContext(e, { clock }), { fetch: fetchImpl });
@@ -58,7 +58,7 @@ describe('status components', () => {
   it('verifies D1 and R2, reports the build and sorts by severity', async () => {
     const fx = fixtures(base);
     const org = await makeOrg(fx);
-    const now = Date.now();
+    const now = TEST_NOW;
     for (let i = 0; i < 5; i++)
       await run(
         env.DB,
@@ -80,7 +80,7 @@ describe('status components', () => {
   });
 
   it('ignores old workflow failures and reports configured when nothing ran', async () => {
-    const now = Date.now();
+    const now = TEST_NOW;
     await run(
       env.DB,
       "INSERT INTO workflow_runs (instance_id, kind, status, started_at) VALUES ('old', 'bulk_reissue', 'errored', ?)",
@@ -91,7 +91,7 @@ describe('status components', () => {
   });
 
   it('degrades on one failed workflow and on queue backlog or dead letters', async () => {
-    const now = Date.now();
+    const now = TEST_NOW;
     await run(
       env.DB,
       "INSERT INTO workflow_runs (instance_id, kind, status, started_at) VALUES ('e1', 'template_import', 'errored', ?)",
@@ -107,7 +107,7 @@ describe('status components', () => {
   });
 
   it('counts broadcast runs', async () => {
-    const now = Date.now();
+    const now = TEST_NOW;
     for (const id of ['b1', 'b2'])
       await run(
         env.DB,
@@ -119,7 +119,7 @@ describe('status components', () => {
   });
 
   it('does not count rejected template uploads as workflow failures', async () => {
-    const now = Date.now();
+    const now = TEST_NOW;
     await run(
       env.DB,
       "INSERT INTO workflow_runs (instance_id, kind, status, started_at, error_code) VALUES ('r1', 'template_import', 'errored', ?, 'IMPORT_INVALID')",
@@ -210,7 +210,7 @@ describe('status components', () => {
   });
 
   it('grades email by the magic-link daily budget', async () => {
-    const clock = new ManualClock(Date.now());
+    const clock = new ManualClock(TEST_NOW);
     const at = clock.now() - (clock.now() % 86_400_000);
     const put = (n: number) =>
       run(
@@ -240,7 +240,7 @@ describe('status components', () => {
       calls += 1;
       return new Response(JSON.stringify({ issuer: 'x' }));
     }) as unknown as typeof fetch;
-    const clock = new ManualClock(Date.now());
+    const clock = new ManualClock(TEST_NOW);
     await status({}, counting, clock);
     await status({}, counting, clock);
     clock.advance(20_000);
@@ -253,7 +253,11 @@ describe('status components', () => {
 
   it('reports identities: expiring cert is degraded, a missing binding is degraded', async () => {
     // The shared test identity lives for years; this case needs one that is about to expire.
-    const expiring = await createFixtureIdentity(undefined, { days: 20, caDays: 20 });
+    const expiring = await createFixtureIdentity(undefined, {
+      now: new Date(TEST_NOW),
+      days: 20,
+      caDays: 20,
+    });
     const short = {
       SIGNER_PLATFORM_CERTIFICATE: expiring.certificate,
       SIGNER_PLATFORM_PRIVATE_KEY: expiring.privateKey,
@@ -280,7 +284,7 @@ describe('status components', () => {
     await run(env.DB, "DELETE FROM signing_identities WHERE id = 'gone'");
 
     clearStatusCache(env.DB);
-    const expired = await status(short, okFetch, new ManualClock(Date.now() + 30 * 86_400_000));
+    const expired = await status(short, okFetch, new ManualClock(TEST_NOW + 30 * 86_400_000));
     expect(find(expired, 'identity:platform')?.state).toBe('failing');
   });
 

@@ -590,7 +590,9 @@ describe('template reissue', () => {
     };
 
     try {
-      kit.clock.set(kit.clock.now() + 1_000);
+      // The adoption order compares build timestamps with the worker version already recorded from
+      // the real clock, so this deploy must be later than wall time.
+      kit.clock.set(Math.max(kit.clock.now(), Date.now()) + 1_000);
       Object.assign(kit.env, {
         ASSETS: assets,
         CF_VERSION: { id: 'build-v1', tag: '', timestamp: new Date(kit.clock.now()).toISOString() },

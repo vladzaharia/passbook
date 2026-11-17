@@ -10,14 +10,14 @@ import { reissueStaleTemplates } from '../../src/worker/modules/passes/stale-rei
 import { type ScanKit, setupScanKit } from '../../src/worker/modules/scan/test-kit.ts';
 import { createTemplateRegistry } from '../../src/worker/modules/templates/registry.ts';
 import { activeRelease } from '../../src/worker/modules/templates/releases.ts';
-import { type Cutover, effective, runCutover } from './setup.ts';
+import { type Cutover, effective, NOW, runCutover } from './setup.ts';
 
 let c: Cutover;
 let kit: ScanKit;
 
 beforeAll(async () => {
   c = await runCutover(31, { bumpStarters: true });
-  kit = await withKitDatabase(c.legacy.db, () => setupScanKit());
+  kit = await withKitDatabase(c.legacy.db, () => setupScanKit({ clockStart: NOW })); // real clock: the cutover seed is wall-time based
   overrideDeps(kit.env, { registry: createTemplateRegistry(kit.env) });
 });
 

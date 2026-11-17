@@ -276,7 +276,9 @@ describe('verified attachment requiring credential reissue', () => {
   it('does not record a requirement after the initiating tenant authority is revoked', async () => {
     const { kit, pass } = await fixedBarcodePass({ retired: true });
     const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-    const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!auth) throw new Error('Missing session');
     const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
     const race = atReissueWrite(kit, () =>
