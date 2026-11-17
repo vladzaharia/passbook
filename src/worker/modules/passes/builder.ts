@@ -14,20 +14,14 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
-import {
-  brandingWarnings,
-  readBranding,
-  sourceArtHashes,
-  type TenantBranding,
-  tenantPassJson,
-} from './branding.ts';
+import { brandingWarnings, readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
+import { readBuildInputs } from './build-reads.ts';
 import { applyChangeMessages, stripChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import { applyRemoval, type Removal } from './remove-build.ts';
 import type { PassStatus } from './repo.ts';
-import { type AssetRow, listAssets } from './repo-history-assets.ts';
-import { memberPhotoAsset } from './repo-member-photo.ts';
+import type { AssetRow } from './repo-history-assets.ts';
 import { barcodeHashOf, lookupHashOf, lookupValueOf } from './scan-code.ts';
 
 export interface BuildRequest {
@@ -213,12 +207,9 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
   const resolved = await resolveTemplate(ctx, req.orgId, req.templateId, req.templateVersion);
   const identity = await deps.identities.byId(req.identityId);
   const branding = readBranding(req.branding);
-  const [originalOverrides, contacts, photo] = await Promise.all([
-    req.omitPassAssets ? Promise.resolve([] as AssetRow[]) : listAssets(ctx.env.DB, req.passId),
+  const [{ overrides: originalOverrides, photo, artHashes }, contacts] = await Promise.all([
+    readBuildInputs(ctx.env.DB, req, resolved.id),
     backContactsFor(ctx, req.orgId, req.branding),
-    req.omitPassAssets
-      ? Promise.resolve(null)
-      : memberPhotoAsset(ctx.env.DB, req.orgId, req.passId),
   ]);
   const passOverrides = photo
     ? [...originalOverrides.filter((a) => parseAssetName(a.name).slot !== 'thumbnail'), photo]
@@ -295,7 +286,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
           resolved,
           branding,
           passOverrides.map((a) => a.name),
-          await sourceArtHashes(ctx.env.DB, resolved.id),
+          artHashes,
         ),
       ],
     };
