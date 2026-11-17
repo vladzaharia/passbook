@@ -10,11 +10,14 @@ import type { ScanActor } from './actor.ts';
 import { actorCsrfAuthorityStmt } from './actor-csrf.ts';
 import { captureActor } from './asset-authority.ts';
 import { photoGrantPurpose } from './asset-types.ts';
-import { assetGrantTokenHash, assetWalletActive, prepareAssetGrantVerification } from './assets.ts';
+import {
+  assetGrantWellFormed,
+  assetWalletActive,
+  prepareAssetGrantVerification,
+} from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { photoPolicyForResolved } from './member-photo.ts';
-import { assetGrantFromResult, getAssetGrantStmt } from './repo-asset-grants.ts';
 import { prepareAssetGrantGuardParts } from './repo-asset-lineage.ts';
 import {
   assetGrantPredicatesCurrent,
@@ -76,24 +79,15 @@ export async function openScannerAsset(
     throw missing();
   let response: Response | null = null;
   try {
-    const tokenHash = await assetGrantTokenHash(grant);
     const csrfStmt = actorCsrfAuthorityStmt(pinned.env.DB, capturedActor);
-    if (!tokenHash || !csrfStmt) throw missing();
+    if (!assetGrantWellFormed(grant) || !csrfStmt) throw missing();
     const results = await pinned.env.DB.batch([
       byIdStmt(pinned.env.DB, capturedActor.orgId, passId),
-      getAssetGrantStmt(
-        pinned.env.DB,
-        tokenHash,
-        capturedActor.orgId,
-        capturedActor.mode,
-        pinned.clock.now(),
-      ),
       csrfStmt,
       scannerAssetResourceStmt(pinned.env.DB, capturedActor.orgId, passId, name),
     ]);
     const candidate = candidatesOf(results[0])[0];
-    const stored = assetGrantFromResult(results[1]);
-    const resource = scannerAssetResourceFromResult(results[3]);
+    const resource = scannerAssetResourceFromResult(results[2]);
     if (
       !candidate ||
       !resource ||
@@ -111,7 +105,6 @@ export async function openScannerAsset(
       candidate,
       candidate.connectionGeneration,
       grant,
-      stored,
       undefined,
       photo ? photoGrantPurpose(candidate) : 'read',
       photo,
@@ -126,15 +119,11 @@ export async function openScannerAsset(
       verified.purpose === 'read'
         ? scanCandidateTemplateReadPredicate(candidate)
         : scanTemplateSnapshotPredicate(candidate, candidate.templateSnapshot, 'commit');
-    const originalSnapshot = {
-      ...candidate,
-      credentialTombstoneRefs: verified.credentialTombstoneRefs,
-    };
     const guard = await prepareAssetGrantGuardParts(
       pinned,
       verified,
-      { recipient: results[2] },
-      originalSnapshot,
+      { recipient: results[1] },
+      candidate,
     );
     if (!guard) throw missing();
     if (

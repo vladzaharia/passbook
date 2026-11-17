@@ -1,16 +1,13 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { ScanManifest } from '../../../passkit/types.ts';
 import { run } from '../../platform/db.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import type { ScanActor } from './actor.ts';
 import { assetActorFor, observeCancellation } from './asset-test-fixtures.ts';
-import { assetGrantValid, confirmAssetGrantToken, preparePhotoGrant } from './assets.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
-import { type Candidate, candidateById } from './repo-lookup.ts';
+import { assetGrantValid, mintAssetGrant } from './assets.ts';
+import { candidateById } from './repo-lookup.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
 const system = { type: 'system' as const, id: null };
@@ -26,18 +23,6 @@ beforeAll(async () => {
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   templateId = await kit.scanTemplate('Asset capability provenance', scan);
 });
-async function planFor(ctx: ServiceContext, actor: ScanActor, candidate: Candidate) {
-  const plan = await preparePhotoGrant(
-    ctx,
-    actor,
-    candidate,
-    candidate.connectionGeneration,
-    candidate.activeTemplateVersion,
-  );
-  if (!plan) throw new Error('Expected a photo grant plan');
-  return plan;
-}
-
 async function expectMissing(response: Response) {
   expect(response.status).toBe(404);
   expect(await response.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
@@ -59,11 +44,16 @@ describe('scanner asset capability provenance', () => {
     const photo = await memberPhoto(kit.env.DB, kit.org.id, pass.id);
     if (!candidate || !photo) throw new Error('Terminal photo fixture missing');
     expect(actor.scannerCsrfProof).toBeNull();
-    const plan = await planFor(kit.ctx, actor, candidate);
-    const bind = await prepareAssetGrantInsertion(kit.ctx, plan, undefined, candidate);
-    const inserted = await kit.env.DB.batch(bind(kit.clock.now(), undefined));
-    const token = confirmAssetGrantToken(plan, inserted);
-    if (!token) throw new Error('Confirmed photo token missing');
+    const token = await mintAssetGrant(
+      kit.ctx,
+      actor,
+      candidate,
+      candidate.connectionGeneration,
+      candidate.activeTemplateVersion,
+      undefined,
+      true,
+      'commit',
+    );
     expect(
       await assetGrantValid(
         kit.ctx,

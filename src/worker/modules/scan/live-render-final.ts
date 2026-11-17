@@ -1,9 +1,9 @@
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
+import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { takePhotoGrantToken } from './asset-sidecar.ts';
 import type { LiveRecipient } from './live-auth.ts';
 import { livePhotoUrl, type PreparedLiveRow } from './live-render-plan.ts';
-import { isAssetGrantAuthorityFailure } from './repo-asset-grants.ts';
 import {
   type LiveRenderFence,
   liveRenderFence,
@@ -11,6 +11,7 @@ import {
   liveRenderVisibilityPredicate,
 } from './repo-live-render-final.ts';
 
+type Predicate = { sql: string; params: readonly SqlValue[] };
 type LiveRenderResultRow = Record<string, unknown>;
 
 /** Identify each part independently so truncated or reordered result arrays cannot authorize a row. */
@@ -43,7 +44,7 @@ function current(
   return true;
 }
 
-/** Commit every catch-up row and its optional photo grant in one atomic D1 transaction. */
+/** Fence every catch-up row, and its photo, in one read-only D1 transaction. */
 export async function finishLiveRows(
   ctx: ServiceContext,
   recipient: LiveRecipient,
@@ -52,93 +53,34 @@ export async function finishLiveRows(
   const db = ctx.env.DB;
   // Every asynchronous proof and grant plan has completed before this common final clock.
   const now = ctx.clock.now();
-  const build = (grantable: (index: number) => boolean) => {
-    const statements: D1PreparedStatement[] = [];
-    const groups = plans.map((plan, index) => {
-      if (!plan || plan.expiresAt <= now) return null;
-      const fresh = plan.freshAt(now);
-      if (!fresh) return null;
-      const visibleFresh = Number.isFinite(plan.visibleUntil)
-        ? [...fresh, liveRenderVisibilityPredicate(now, plan.visibleUntil)]
-        : fresh;
-      const visible =
-        plan.visibleFences && now <= plan.visibleUntil
-          ? liveRenderFence(
-              db,
-              [...plan.visibleFences, ...visibleFresh],
-              recipient.actor.orgId,
-              recipient.actor.mode,
-              index,
-              1,
-            )
-          : null;
-      const fallback = plan.fallbackFences
-        ? liveRenderFence(
-            db,
-            [...plan.fallbackFences, ...fresh],
-            recipient.actor.orgId,
-            recipient.actor.mode,
-            index,
-            2,
-          )
+  const statements: D1PreparedStatement[] = [];
+  const groups = plans.map((plan, index) => {
+    if (!plan || plan.expiresAt <= now) return null;
+    const fresh = plan.freshAt(now);
+    if (!fresh) return null;
+    const visibleFresh = Number.isFinite(plan.visibleUntil)
+      ? [...fresh, liveRenderVisibilityPredicate(now, plan.visibleUntil)]
+      : fresh;
+    const fence = (pieces: readonly Predicate[] | null, kind: number) =>
+      pieces
+        ? liveRenderFence(db, pieces, recipient.actor.orgId, recipient.actor.mode, index, kind)
         : null;
-      const start = statements.length;
-      let grantCount = 0;
-      if (
-        plan.visible &&
-        visible &&
-        plan.grant &&
-        plan.grant.plan.expiresAt > now &&
-        grantable(index)
-      ) {
-        const grantStatements = plan.grant.statementsAt(now, visibleFresh);
-        statements.push(...grantStatements);
-        grantCount = grantStatements.length;
-      }
-      if (visible) statements.push(...visible.statements);
-      if (fallback) statements.push(...fallback.statements);
-      return { plan, start, grantCount, visible, fallback };
-    });
-    // This receipt makes a missing or damaged trailing result incapable of releasing a grant token.
-    if (statements.length) statements.push(liveRenderReceiptStmt(db));
-    return { statements, groups };
-  };
-  let { statements, groups } = build(() => true);
+    const visible =
+      plan.visibleFences && now <= plan.visibleUntil
+        ? fence([...plan.visibleFences, ...visibleFresh], 1)
+        : null;
+    const fallback = fence(plan.fallbackFences && [...plan.fallbackFences, ...fresh], 2);
+    const photo =
+      plan.visible && visible && plan.grant && plan.grant.plan.expiresAt > now
+        ? fence([...plan.grant.photoFences, ...visibleFresh], 3)
+        : null;
+    for (const part of [visible, fallback, photo]) if (part) statements.push(...part.statements);
+    return { plan, visible, fallback, photo };
+  });
   if (!statements.length) return [];
-  let results: D1Result<LiveRenderResultRow>[];
-  try {
-    results = await db.batch<LiveRenderResultRow>(statements);
-  } catch (error) {
-    if (!isAssetGrantAuthorityFailure(error)) throw error;
-    // The sentinel rolled the entire grant transaction back. Recheck every row in one
-    // read-only transaction so one stale event cannot suppress unrelated events.
-    const reads: D1PreparedStatement[] = [];
-    for (const group of groups) {
-      if (group?.visible) reads.push(...group.visible.statements);
-      if (group?.fallback) reads.push(...group.fallback.statements);
-    }
-    if (!reads.length) return [];
-    const rechecked = await db.batch<LiveRenderResultRow>(reads);
-    results = rechecked;
-    // Epoch staleness shows only in SQL. Retry the grants of rows that are still visible once,
-    // so one stale event cannot strip every other photo.
-    const granted = groups.flatMap((group, index) =>
-      group && group.grantCount > 0 ? [index] : [],
-    );
-    const retry = new Set(
-      granted.filter((index) => current(rechecked, groups[index]?.visible ?? null)),
-    );
-    if (retry.size > 0 && retry.size < granted.length) {
-      const second = build((index) => retry.has(index));
-      try {
-        results = await db.batch<LiveRenderResultRow>(second.statements);
-        ({ statements, groups } = second);
-      } catch (retryError) {
-        if (!isAssetGrantAuthorityFailure(retryError)) throw retryError;
-        results = rechecked;
-      }
-    }
-  }
+  // This receipt makes a missing or damaged trailing result incapable of releasing a photo URL.
+  statements.push(liveRenderReceiptStmt(db));
+  const results = await db.batch<LiveRenderResultRow>(statements);
   const receipt = results[results.length - 1];
   const complete =
     results.length === statements.length &&
@@ -155,13 +97,13 @@ export async function finishLiveRows(
       let visible = plan.visible;
       if (
         plan.grant &&
-        group.grantCount > 0 &&
+        group.photo &&
         complete &&
+        current(results, group.photo) &&
         plan.grant.plan.expiresAt > deliveredAt
       ) {
         const { grant } = plan;
-        const slice = results.slice(group.start, group.start + group.grantCount);
-        const token = takePhotoGrantToken(grant.actor, grant.passId, grant.plan, slice);
+        const token = takePhotoGrantToken(grant.actor, grant.passId, grant.plan);
         if (
           token &&
           plan.expiresAt > ctx.clock.now() &&

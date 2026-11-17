@@ -18,7 +18,7 @@ import { snapshotCredentialEnv } from './credential-input.ts';
 import { scannerHasTemplates } from './repo-device.ts';
 import { captureConfigurationScope } from './repo-scanner-configuration-scope.ts';
 import { getConsoleScanner } from './repo-scanners.ts';
-import { scanningDeviceRow, sessionWatchIds } from './repo-scanning-devices.ts';
+import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { scanningSessionForDevice } from './repo-scanning-sessions.ts';
 import { readScannerScope, readValidEventScope } from './repo-scope.ts';
 import {
@@ -280,12 +280,4 @@ export async function reportScanDevice(
   await commitReportedDevice(ctx, actor, observed, capabilities, bindScanningSession);
   const authority = await scanSessionCountAuthority(ctx, actor, credentialKeysetCommitment);
   return scanWorkspace(ctx, actor, authority);
-}
-export async function sessionScreenWatch(ctx: ServiceContext, orgId: string, scannerId: string) {
-  const parent = await scanningSessionForDevice(ctx.env.DB, orgId, scannerId);
-  if (!parent || parent.id === scannerId) return null;
-  return {
-    scannerIds: await sessionWatchIds(ctx.env.DB, orgId, parent.id, parent.mode),
-    allOrg: false,
-  };
 }

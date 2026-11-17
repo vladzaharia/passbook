@@ -1,5 +1,4 @@
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
-import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { EventRow } from '../events/repo.ts';
 import {
@@ -9,11 +8,7 @@ import {
 import type { Pass } from '../passes/repo-map.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import { eventSafeProjectionWithCommitments } from './event-safe-projection.ts';
-import { type StopAuthority, stopAuthorityPredicate } from './repo-action-authority.ts';
-import { scanCandidateTemplateReadPredicate } from './repo-live-template-snapshot.ts';
-import type { Candidate } from './repo-lookup.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
-import { andOutputPredicates, type OutputPredicate } from './repo-output-predicates.ts';
+import type { StopAuthority } from './repo-action-authority.ts';
 import {
   type ScanEffectSnapshot,
   type ScanGateEventProjection,
@@ -22,59 +17,6 @@ import {
 import type { Found } from './resolve.ts';
 import { scanActionIdRef } from './scan-action-ref.ts';
 import { sealScanEvent } from './scan-event-proof.ts';
-
-/** The caller must guard its write with stopAuthorityPredicate in this same transaction. */
-export function outputAuthorityFence(
-  ctx: ServiceContext,
-  authority: StopAuthority,
-  pass: Pass | null,
-  found: Found | null,
-  extra?: { sql: string; params: readonly SqlValue[] },
-  source?: Candidate,
-  allowInactive = false,
-  requirePhoto = false,
-  at?: number,
-): OutputPredicate {
-  const now = at ?? ctx.clock.now();
-  const candidate = found?.liveCandidate ?? source;
-  if ((pass || found) && !authority.passFence) return { sql: '0', params: [] };
-  if (pass || found || candidate) {
-    if (
-      !candidate ||
-      !Array.isArray(candidate.credentialTombstoneRefs) ||
-      (pass && candidate.pass.id !== pass.id)
-    )
-      return { sql: '0', params: [] };
-    const template = scanCandidateTemplateReadPredicate(candidate);
-    const output = outputAuthorityPredicate({
-      actor: authority.actor,
-      event: authority.event,
-      now,
-      adminEventTemplates: authority.adminEventTemplates,
-      templateId: authority.templateId,
-      pass: candidate.pass,
-      connectionGeneration: candidate.connectionGeneration,
-      credentialKeysetCommitment: candidate.credentialKeysetCommitment,
-      credentialTombstoneRefs: candidate.credentialTombstoneRefs,
-      activeTemplateVersion: candidate.activeTemplateVersion,
-      orgRevision: candidate.orgRevision,
-      templateRevision: candidate.templateRevision,
-      release: candidate,
-      purpose: 'commit',
-      displayTemplateVersion: candidate.displayTemplateVersion,
-      checkInRules: candidate.checkInRules,
-      lookupHash: candidate.lookupHash,
-      requirePhoto,
-      requireActive: !!found,
-      allowInactive,
-      expectedWalletStatus: authority.passFence?.walletStatus,
-      extra: template,
-    });
-    return extra ? andOutputPredicates([output, extra]) : output;
-  }
-  const fence = stopAuthorityPredicate(authority, pass, now, true);
-  return extra ? andOutputPredicates([fence, extra]) : fence;
-}
 
 export interface LedgerAuthorityOptions {
   claimAt: number;

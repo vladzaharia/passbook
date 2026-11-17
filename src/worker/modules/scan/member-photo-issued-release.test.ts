@@ -9,11 +9,11 @@ import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { makePng } from '../templates/package/fixtures.ts';
+import { takeAssetGrantToken } from './asset-sidecar.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
-import { confirmAssetGrantToken, mintAssetGrant } from './assets.ts';
+import { mintAssetGrant } from './assets.ts';
 import { canShowPhotoForCandidate, knownPhotoUrl } from './member-photo.ts';
-import { scanPhotoUrl } from './member-photo-url.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
+import { scanPhotoUrl } from './member-photo-url-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -66,16 +66,13 @@ async function current(passId: string) {
   return candidate;
 }
 
-/** The card's path: policy, read-purpose plan, guarded insert, then the served image. */
+/** The card's path: policy, then a read-purpose capability for the served image. */
 async function cardPhoto(fixture: Awaited<ReturnType<typeof setup>>) {
   const candidate = await current(fixture.pass.id);
   const pinned = await kit.registry.resolve(fixture.templateId, candidate.pass.templateVersion);
   const photo = await knownPhotoUrl(kit.ctx, fixture.actor, candidate, pinned);
   if (!photo) return null;
-  const bind = await prepareAssetGrantInsertion(kit.ctx, photo.grant, undefined, candidate);
-  const inserted = await kit.env.DB.batch(bind(kit.clock.now(), undefined));
-  const token = confirmAssetGrantToken(photo.grant, inserted);
-  return { purpose: photo.grant.guard.purpose, token };
+  return { purpose: photo.grant.purpose, token: takeAssetGrantToken(photo.grant) };
 }
 
 const image = (fixture: Awaited<ReturnType<typeof setup>>, grant: string) =>
@@ -93,7 +90,7 @@ describe('member photos under the issued-release rule', () => {
     expect(await canShowPhotoForCandidate(kit.ctx, fixture.actor, candidate)).toBe(true);
     const photo = await cardPhoto(fixture);
     expect(photo?.purpose).toBe('read');
-    if (!photo?.token) throw new Error('Photo grant not confirmed.');
+    if (!photo?.token) throw new Error('Photo grant not minted.');
     expect(await image(fixture, photo.token)).toBe(200);
     const url = await scanPhotoUrl(kit.ctx, fixture.actor, fixture.pass.id);
     expect(url).toEqual(expect.any(String));
@@ -125,7 +122,7 @@ describe('member photos under the issued-release rule', () => {
     const fixture = await setup('Deleted photo');
     await moveHead(fixture.templateId);
     const photo = await cardPhoto(fixture);
-    if (!photo?.token) throw new Error('Photo grant not confirmed.');
+    if (!photo?.token) throw new Error('Photo grant not minted.');
     expect(await image(fixture, photo.token)).toBe(200);
     await run(kit.env.DB, "UPDATE templates SET status = 'deleted' WHERE id = ?", [
       fixture.templateId,

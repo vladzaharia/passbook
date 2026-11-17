@@ -24,7 +24,6 @@ import {
 } from './repo-act-claim-lifecycle.ts';
 import { quarantineOnGrant, reopenOnGrant } from './repo-act-claim-reopen.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
-import { isAssetGrantAuthorityFailure } from './repo-asset-grants.ts';
 import { credentialTombstonePredicate } from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { ObservedScanAmbiguity } from './repo-scan-effect.ts';
@@ -106,7 +105,7 @@ export async function executeClaimedAction(
       },
     );
   } catch (cause) {
-    const error = isAssetGrantAuthorityFailure(cause) ? staleScanAuthority() : cause;
+    const error = cause;
     if (failureCommitted) {
       if (error instanceof ObservedScanAmbiguity) throw staleScanAuthority();
       throw error;

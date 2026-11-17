@@ -1,4 +1,5 @@
-import { bumpIfStmt } from '../../platform/counters.ts';
+import { type GrantPart, writePart } from '../../platform/authority-include.ts';
+import { bumpIfSql, bumpIfStmt } from '../../platform/counters.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { PinReservationGuard } from './staff-pin.ts';
 
@@ -58,29 +59,46 @@ export function preparePinCounters(db: D1Database, scope: PinCounterScope) {
     bumpIfStmt(db, personKey, personWindow, guarded(marker(2)), -1),
     bumpIfStmt(db, markerKey, personWindow, guarded(changed(2))),
   ];
+  const refundSteps = () => {
+    const personHeld: PinReservationGuard = {
+      sql: 'EXISTS (SELECT 1 FROM counters WHERE key=? AND window_start=? AND count IN (2,4))',
+      params: [markerKey, personWindow],
+    };
+    const personStillCounted = and(
+      personHeld,
+      'EXISTS (SELECT 1 FROM counters WHERE key=? AND window_start=? AND count>0)',
+      [personKey, personWindow],
+    );
+    const scannerStillCounted = and(
+      marker(4),
+      'EXISTS (SELECT 1 FROM counters WHERE key=? AND window_start=? AND count>0)',
+      [allKey, allWindow],
+    );
+    return [
+      { key: personKey, window: personWindow, predicate: personStillCounted, by: -1 },
+      { key: allKey, window: allWindow, predicate: scannerStillCounted, by: -1 },
+      { key: markerKey, window: personWindow, predicate: marker(2), by: -2 },
+      { key: markerKey, window: personWindow, predicate: marker(4), by: -4 },
+    ];
+  };
   return {
     stmts,
     refundStatements(): D1PreparedStatement[] {
-      const personHeld: PinReservationGuard = {
-        sql: 'EXISTS (SELECT 1 FROM counters WHERE key=? AND window_start=? AND count IN (2,4))',
-        params: [markerKey, personWindow],
-      };
-      const personStillCounted = and(
-        personHeld,
-        'EXISTS (SELECT 1 FROM counters WHERE key=? AND window_start=? AND count>0)',
-        [personKey, personWindow],
+      return refundSteps().map((step) =>
+        bumpIfStmt(db, step.key, step.window, step.predicate, step.by),
       );
-      const scannerStillCounted = and(
-        marker(4),
-        'EXISTS (SELECT 1 FROM counters WHERE key=? AND window_start=? AND count>0)',
-        [allKey, allWindow],
-      );
-      return [
-        bumpIfStmt(db, personKey, personWindow, personStillCounted, -1),
-        bumpIfStmt(db, allKey, allWindow, scannerStillCounted, -1),
-        bumpIfStmt(db, markerKey, personWindow, marker(2), -2),
-        bumpIfStmt(db, markerKey, personWindow, marker(4), -4),
-      ];
+    },
+    /** The same refund as parts of a grant's batch: they apply only while its `{grant}` holds. */
+    refundParts(): GrantPart[] {
+      return refundSteps().map((step) => {
+        const { sql, params } = bumpIfSql(
+          step.key,
+          step.window,
+          { sql: `(${step.predicate.sql}) AND {grant}`, params: step.predicate.params },
+          step.by,
+        );
+        return writePart(sql, params);
+      });
     },
   };
 }

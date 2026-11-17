@@ -1,12 +1,13 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { AssetGrantBatchResult } from './asset-grant-results.ts';
 
+/** A real result, or one a test has damaged. */
+export type HookResult = { results: readonly unknown[] } & ({ success: true } | { success: false });
 type Statement = { sql: string; params: unknown[] };
 type Trip = { kind: 'single' | 'batch'; statements: Statement[] };
 type BatchHook = (
   statements: Statement[],
   results: D1Result[],
-) => Promise<AssetGrantBatchResult[]> | AssetGrantBatchResult[];
+) => Promise<HookResult[]> | HookResult[];
 
 /** Trace real prepared statements while preserving the D1 transaction and ordered binds. */
 export function traceLiveD1(real: D1Database, afterBatch?: BatchHook) {
@@ -60,13 +61,14 @@ export function traceLiveD1(real: D1Database, afterBatch?: BatchHook) {
   return { db, trips };
 }
 
+/** The live photo's one acquisition batch: watch, pass, photo and both actors' proofs. */
 export const photoAcquisition = (statements: Statement[]) =>
-  statements.some(({ sql }) => sql.includes('SELECT * FROM member_photos')) &&
-  statements.some(({ sql }) => sql.includes('FROM scan_asset_grant_provenance'));
+  statements.some(({ sql }) => sql.includes('SELECT * FROM member_photos'));
 
-export const grantInsertion = (statements: Statement[]) =>
-  statements.some(({ sql }) => sql.includes('asset_grant_final')) &&
-  statements.some(({ sql }) => sql.includes('INTO scan_asset_grant_provenance'));
+/** The final live render batch, with a photo fence among its statements. */
+export const photoFence = (statements: Statement[]) =>
+  statements.some(({ sql }) => sql.includes('live_render_final')) &&
+  statements.some(({ sql }) => sql.includes('3 AS live_row_kind'));
 
 export function contextWithDb(ctx: ServiceContext, db: D1Database): ServiceContext {
   return { ...ctx, env: { ...ctx.env, DB: db } };

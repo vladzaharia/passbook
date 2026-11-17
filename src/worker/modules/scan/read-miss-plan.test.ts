@@ -3,7 +3,8 @@ import { stagePendingCredentialTransfer } from '../../../../test/helpers/credent
 import { first, run, stmt } from '../../platform/db.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { credentialTombstoneRefsForInput } from './credential-input.ts';
-import { countMiss, isReadMissStale, prepareReadMiss } from './misses.ts';
+import { isReadMissStale, prepareReadMiss } from './misses.ts';
+import { countMiss } from './misses-test-fixtures.ts';
 import { fixture, kit, setupReadMissPlan, templateId } from './read-miss-plan-test-fixtures.ts';
 import { type ReadMissFence, readMissAuthorityPredicate } from './repo-miss-authority.ts';
 import { outputPredicateStmt } from './repo-output-predicates.ts';

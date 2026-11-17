@@ -3,11 +3,9 @@ import { StaleScanAuthority } from './act-override.ts';
 import type { StopContext } from './act-stop.ts';
 import { historyPlan } from './card.ts';
 import { planCounts } from './counts.ts';
-import { confirmedPhotoUrl } from './member-photo.ts';
+import { photoGrantUrl } from './member-photo.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
-import { boundOutputPredicate } from './repo-output-predicates.ts';
 import type { Stop } from './resolve.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 
@@ -25,17 +23,6 @@ export async function answerWithoutRow(
     ? await historyPlan(ctx, actor, stop.found, s.history)
     : null;
   const photo = s.photo;
-  if (photo && !stop.found?.liveCandidate) throw new StaleScanAuthority();
-  const photoPlan =
-    photo && stop.found?.liveCandidate
-      ? await prepareAssetGrantInsertion(
-          ctx,
-          photo.grant,
-          { recipientSnapshot: s.csrfSnapshot },
-          stop.found.liveCandidate,
-          { soft: true },
-        )
-      : null;
   const g = scanWriteGrant(ctx, authority.actor, {
     purpose: 'org_mode.scan.stop',
     now: ctx.clock.now(),
@@ -68,20 +55,12 @@ export async function answerWithoutRow(
     open,
   );
   const bound = historyPlanForStop?.bind(now, open);
-  const insert = photoPlan ? photoPlan(now, boundOutputPredicate(open), open) : [];
-  const after = await ctx.env.DB.batch([...counts.stmts, ...(bound?.stmts ?? []), ...insert]);
+  const after = await ctx.env.DB.batch([...counts.stmts, ...(bound?.stmts ?? [])]);
   const read = await counts.read(after.slice(0, counts.stmts.length));
   const history = bound?.finalize(
     after.slice(counts.stmts.length, counts.stmts.length + bound.stmts.length),
   );
   const photoUrl =
-    photo && stop.found
-      ? confirmedPhotoUrl(
-          authority.actor,
-          stop.found.pass.id,
-          photo.grant,
-          after.slice(counts.stmts.length + (bound?.stmts.length ?? 0)),
-        )
-      : null;
+    photo && stop.found ? photoGrantUrl(authority.actor, stop.found.pass.id, photo.grant) : null;
   return stopOutcome(ctx, actor, stop, read, { action: s.action, history, photoUrl });
 }

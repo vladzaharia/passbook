@@ -268,7 +268,6 @@ export async function lookup(
         ctx,
         actor,
         entries,
-        csrfResult,
         csrfSnapshot,
         credentials,
         changed,
@@ -280,7 +279,7 @@ export async function lookup(
       if (final.length !== entries.length) uncertain = true;
       visible = final;
       if (visible.length >= 11 || exhausted || capped) break;
-      // New pages require a new final transaction; never reuse an already inserted grant.
+      // New pages require a new final transaction.
       entries = visible;
       await Promise.all(
         entries.map(async (entry) => {

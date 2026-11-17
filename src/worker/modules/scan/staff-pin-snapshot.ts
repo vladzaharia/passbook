@@ -1,4 +1,5 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
+import type { GrantPart } from '../../platform/authority-include.ts';
 import { type ScanStaffRow, type StaffRaw, toStaff } from './repo-staff.ts';
 
 export type PinStaffSnapshot = Readonly<{
@@ -97,6 +98,8 @@ export interface PinReservation {
   ): Promise<VerifiedPinSnapshot | null>;
   verifyLogin(results: readonly D1Result[], staff: PinCheck['staff'], pin: string): Promise<void>;
   refundStatements(): D1PreparedStatement[];
+  /** The refund as parts of the scan's own grant batch; `markRefunded` once it commits. */
+  refundParts(): GrantPart[];
   markRefunded(): void;
   refund(failure?: PinFailure): Promise<void>;
 }

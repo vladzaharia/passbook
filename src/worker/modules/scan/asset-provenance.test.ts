@@ -1,267 +1,242 @@
+// A grant is a stateless capability: nonce, expiry, a truncated HMAC over the lineage it was minted
+// from, and the ref prefixes of the credential it was scanned from. Each denial has a positive control.
 import { beforeAll, describe, expect, it } from 'vitest';
+import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { ScanManifest } from '../../../passkit/types.ts';
 import { first } from '../../platform/db.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
+import { fromBase64Url, toBase64Url } from '../../platform/ids.ts';
+import { createSessionStore } from '../auth/sessions.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { tenantAuthorityOf } from '../passes/http.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import type { ScanActor } from './actor.ts';
-import { grantInsertConfirmed } from './asset-grant-results.ts';
-import { assetActorFor } from './asset-test-fixtures.ts';
-import { confirmAssetGrantToken, preparePhotoGrant } from './assets.ts';
+import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
+import { parseGrant } from './asset-grant-mint.ts';
+import { takePhotoGrantToken } from './asset-sidecar.ts';
+import { assetActorFor, genericAssetGrantFor, photoAssetGrantFor } from './asset-test-fixtures.ts';
+import { assetGrantValid, mintAssetGrant, preparePhotoGrant } from './assets.ts';
 import { scanCredentialKeys } from './credential-input.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
-import { type Candidate, candidateById } from './repo-lookup.ts';
-import { type ScanKit, setupScanKit } from './test-kit.ts';
+import { candidateById } from './repo-lookup.ts';
+import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
 
 const system = { type: 'system' as const, id: null };
-const photoBytes = makePng(270, 270);
-const encodedPhoto = btoa(String.fromCharCode(...photoBytes));
-const person = 'Cross Pass Private Person';
-const email = 'cross-pass-private@example.test';
+const encodedPhoto = btoa(String.fromCharCode(...makePng(270, 270)));
 const scan: ScanManifest = {
   actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
   display: { v: 1, header: {}, photo: { minRole: 'door' } },
 };
-let kit: ScanKit, templateId: string;
+let kit: ScanKit;
+let templateId: string;
 beforeAll(async () => {
   kit = await setupScanKit();
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   templateId = await kit.scanTemplate('Asset capability provenance', scan);
 });
-async function planFor(ctx: ServiceContext, actor: ScanActor, candidate: Candidate) {
-  const plan = await preparePhotoGrant(
-    ctx,
-    actor,
-    candidate,
-    candidate.connectionGeneration,
-    candidate.activeTemplateVersion,
-  );
-  if (!plan) throw new Error('Expected a photo grant plan');
-  return plan;
-}
 
-async function expectMissing(response: Response) {
-  expect(response.status).toBe(404);
-  expect(await response.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
-}
-
-async function expectPhoto(response: Response) {
-  expect(response.status).toBe(200);
-  expect(response.headers.get('content-type')).toBe('image/png');
-  expect(response.headers.get('cache-control')).toBe('private, no-store');
-  expect(response.headers.get('etag')).toBeNull();
-  expect(new Uint8Array(await response.arrayBuffer())).toEqual(photoBytes);
-}
-
-async function sha256Token(token: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
-}
 async function photoFixture() {
   const device = await kit.scanner({ templateIds: [templateId] });
   const actor = await assetActorFor(kit, device);
-  const pass = await kit.scanPass(templateId, { memberName: person }, { holderEmail: email });
+  const pass = await kit.scanPass(templateId, { memberName: 'Provenance Person' });
   await putMemberPhoto(kit.ctx, system, pass.id, { png: encodedPhoto, includeInPass: false }, null);
   if (!pass.scanCode) throw new Error('Pass scan code missing');
   const keys = await scanCredentialKeys(kit.env, kit.org.id, 'live', pass.scanCode, false);
   const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
   if (!current?.assetPhoto) throw new Error('Photo fixture missing');
-  expect(current.credentialKeysetCommitment).toMatch(/^[a-f0-9]{64}$/);
-  expect(current.credentialKeysetCommitment).toBe(keys.credentialKeysetCommitment);
-  expect(keys.credentialTombstoneRefs.length).toBeGreaterThan(0);
   const candidate = { ...current, credentialTombstoneRefs: keys.credentialTombstoneRefs };
-  return { device, actor, pass, candidate, keys, raw: pass.scanCode };
+  const url = (grant: string, name = 'member.png', scanner = device) =>
+    kit.get(scanner.headers, `/passes/${pass.id}/assets/${name}?g=${grant}`);
+  return { device, actor, pass, candidate, keys, url };
 }
 
-describe('scanner asset capability provenance', () => {
-  it('keeps a cloneable tokenless plan unusable until its guarded batch is confirmed', async () => {
-    const { device, actor, pass, candidate, keys, raw } = await photoFixture();
-    const plan = await planFor(kit.ctx, actor, candidate);
+const mintPhoto = (f: Awaited<ReturnType<typeof photoFixture>>) =>
+  mintAssetGrant(
+    kit.ctx,
+    f.actor,
+    f.candidate,
+    f.candidate.connectionGeneration,
+    f.candidate.activeTemplateVersion,
+    undefined,
+    true,
+    'commit',
+  );
+
+async function missing(response: Response) {
+  expect(response.status).toBe(404);
+  expect(await response.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
+}
+
+/** The same token with one byte changed. */
+function flipped(grant: string, offset: number): string {
+  const bytes = fromBase64Url(grant);
+  bytes[offset] = (bytes[offset] ?? 0) ^ 1;
+  return toBase64Url(bytes);
+}
+
+describe('stateless asset capability', () => {
+  it('is a plan without secrets, and its URL goes only to the recipient it was minted for', async () => {
+    const f = await photoFixture();
+    const other = await assetActorFor(kit, await kit.scanner({ templateIds: [templateId] }));
+    const plan = await preparePhotoGrant(
+      kit.ctx,
+      f.actor,
+      f.candidate,
+      f.candidate.connectionGeneration,
+      f.candidate.activeTemplateVersion,
+    );
+    if (!plan) throw new Error('Expected a photo grant plan');
     expect(Object.isFrozen(plan)).toBe(true);
-    expect(Object.isFrozen(plan.guard)).toBe(true);
-    expect(Object.isFrozen(plan.guard.credentialTombstoneRefs)).toBe(true);
-    const clone = structuredClone(plan);
-    expect(clone).toEqual(plan);
-    expect(clone).not.toBe(plan);
-    const csrf = await first<{ csrf_secret: string }>(
-      kit.env.DB,
-      'SELECT csrf_secret FROM scanners WHERE id=?',
-      [device.id],
-    );
-    if (!csrf?.csrf_secret) throw new Error('Scanner CSRF fixture missing');
-    const cloned = JSON.stringify(clone);
-    const jsonClone = JSON.parse(cloned) as typeof plan;
-    expect(jsonClone).not.toHaveProperty('token');
-    expect(cloned).not.toContain(csrf.csrf_secret);
-    expect(cloned).not.toContain(device.token);
-    expect(cloned).not.toMatch(/passJsonSnapshot|personalization/i);
-    for (const secret of [
-      candidate.pass.authToken,
-      candidate.pass.downloadToken,
-      candidate.pass.scanCode,
-    ]) {
+    const cloned = JSON.stringify(structuredClone(plan));
+    expect(cloned).not.toMatch(/token|passJsonSnapshot|personalization/i);
+    for (const secret of [f.device.token, f.candidate.pass.authToken, f.candidate.pass.scanCode])
       if (secret) expect(cloned).not.toContain(secret);
-    }
-    expect(plan).not.toHaveProperty('token');
-    expect(plan.guard).not.toHaveProperty('actor');
-    expect(plan.guard).not.toHaveProperty('source');
-    expect(plan.guard).not.toHaveProperty('recipientSession');
-    expect(plan.guard).not.toHaveProperty('sourceSession');
-    expect(confirmAssetGrantToken(plan, undefined)).toBeNull();
-    expect(plan.expiresAt).toBe(kit.clock.now() + 3_600_000);
-    const cloneBind = await prepareAssetGrantInsertion(kit.ctx, clone, undefined, candidate);
-    await expect(kit.env.DB.batch(cloneBind(kit.clock.now(), undefined))).rejects.toThrow(
-      'scan_asset_authority_failed',
-    );
-    const jsonBind = await prepareAssetGrantInsertion(kit.ctx, jsonClone, undefined, candidate);
-    await expect(kit.env.DB.batch(jsonBind(kit.clock.now(), undefined))).rejects.toThrow(
-      'scan_asset_authority_failed',
-    );
-    const alteredRefs = { ...candidate, credentialTombstoneRefs: [] };
-    const alteredBind = await prepareAssetGrantInsertion(kit.ctx, plan, undefined, alteredRefs);
-    await expect(kit.env.DB.batch(alteredBind(kit.clock.now(), undefined))).rejects.toThrow(
-      'scan_asset_authority_failed',
-    );
-    const bind = await prepareAssetGrantInsertion(kit.ctx, plan, undefined, candidate);
-    await expect(kit.env.DB.batch(bind(kit.clock.now(), { sql: '0', params: [] }))).rejects.toThrow(
-      'scan_asset_authority_failed',
-    );
-    expect(grantInsertConfirmed(undefined)).toBe(false);
-    expect(
-      await first(kit.env.DB, 'SELECT * FROM scan_asset_grant_provenance WHERE token_hash = ?', [
-        plan.tokenHash,
-      ]),
-    ).toBeNull();
-    const [output, ...inserted] = await kit.env.DB.batch([
-      kit.env.DB.prepare('SELECT 42 AS output_marker'),
-      ...bind(kit.clock.now(), undefined),
-    ]);
-    expect(output?.results).toEqual([{ output_marker: 42 }]);
-    expect(grantInsertConfirmed(inserted)).toBe(true);
-    expect(confirmAssetGrantToken(clone, inserted)).toBeNull();
-    expect(confirmAssetGrantToken(jsonClone, inserted)).toBeNull();
-    const token = confirmAssetGrantToken(plan, inserted);
-    if (!token) throw new Error('Confirmed asset token missing');
-    expect(confirmAssetGrantToken(plan, inserted)).toBeNull();
-    expect(token).toMatch(/^[A-Za-z0-9_-]{54}$/);
-    expect(atob(`${token.replace(/-/g, '+').replace(/_/g, '/')}==`)).toHaveLength(40);
-    expect(plan.tokenHash).toBe(await sha256Token(token));
-    const image = () => kit.get(device.headers, `/passes/${pass.id}/assets/member.png?g=${token}`);
-    expect(inserted[0]?.results).toEqual([{ token_hash: plan.tokenHash }]);
-    const row = await first<Record<string, unknown>>(
-      kit.env.DB,
-      'SELECT * FROM scan_asset_grant_provenance WHERE token_hash = ?',
-      [plan.tokenHash],
-    );
-    expect(row).toEqual({
-      token_hash: await sha256Token(token),
-      org_id: kit.org.id,
-      mode: 'live',
-      expires_at: kit.clock.now() + 3_600_000,
-      credential_refs: JSON.stringify(keys.credentialTombstoneRefs),
-    });
-    const stored = JSON.stringify(row);
-    for (const secret of [
-      token,
-      raw,
-      pass.id,
-      pass.serial,
-      pass.identityId,
-      pass.downloadToken,
-      device.id,
-      device.token,
-      actor.scanner?.csrfSecret,
-      actor.scanningSession?.id,
-      person,
-      email,
-      candidate.activeReleaseId,
-      candidate.activeReleaseCandidateHash,
-      candidate.credentialKeysetCommitment,
-      candidate.assetPhoto!.version,
-      candidate.assetPhoto!.key,
-      candidate.assetPhoto!.sha1,
-    ]) {
-      if (secret) expect(stored).not.toContain(secret);
-    }
-    await expectPhoto(await image());
-    // Losing the row, or replacing its refs, never recreates the original capability.
-    await kit.env.DB.prepare('DELETE FROM scan_asset_grant_provenance WHERE token_hash = ?')
-      .bind(plan.tokenHash)
-      .run();
-    await expectMissing(await image());
-    await kit.env.DB.prepare(`INSERT INTO scan_asset_grant_provenance
-      (token_hash, org_id, mode, expires_at, credential_refs) VALUES (?, ?, ?, ?, ?)`)
-      .bind(plan.tokenHash, kit.org.id, 'live', plan.expiresAt, '[]')
-      .run();
-    await expectMissing(await image());
+    // Positive control, then every other recipient or pass.
+    expect(takePhotoGrantToken(f.actor, f.pass.id, plan)).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(takePhotoGrantToken(other, f.pass.id, plan)).toBeNull();
+    expect(takePhotoGrantToken(f.actor, 'another-pass', plan)).toBeNull();
   });
-  it('fails closed on missing or invalid original references and keyset commitments', async () => {
-    const { actor, candidate } = await photoFixture();
-    const missing: Partial<Candidate> = { ...candidate };
-    delete missing.credentialTombstoneRefs;
+
+  it('writes nothing: no table backs a grant', async () => {
+    const f = await photoFixture();
     expect(
-      await preparePhotoGrant(
+      await first(kit.env.DB, "SELECT 1 FROM sqlite_master WHERE name LIKE 'scan_asset_grant%'"),
+    ).toBeNull();
+    const grant = await mintPhoto(f);
+    expect((await f.url(grant)).status).toBe(200);
+  });
+
+  it('carries the keyed ref prefixes of the scanned credential, and none for a pass-ID card', async () => {
+    const f = await photoFixture();
+    expect(f.keys.credentialTombstoneRefs.length).toBeGreaterThan(0);
+    const scanned = await mintPhoto(f);
+    expect(parseGrant(scanned)?.refs).toEqual(
+      f.keys.credentialTombstoneRefs.map((ref) => ref.slice(0, 16)),
+    );
+    const byId = await photoAssetGrantFor(kit, f.device, f.pass.id);
+    expect(parseGrant(byId)?.refs).toEqual([]);
+    for (const grant of [scanned, byId]) expect((await f.url(grant)).status).toBe(200);
+  });
+
+  it('refuses a tampered tag, expiry, nonce, ref or length, and serves the original', async () => {
+    const f = await photoFixture();
+    const grant = await mintPhoto(f);
+    expect((await f.url(grant)).status).toBe(200);
+    // nonce 8, expiry 6, tag 24, then the ref prefixes.
+    for (const offset of [0, 7, 8, 13, 14, 37, 38, 45])
+      await missing(await f.url(flipped(grant, offset)));
+    const bytes = fromBase64Url(grant);
+    await missing(await f.url(toBase64Url(bytes.subarray(0, bytes.length - 8))));
+    await missing(await f.url(`${grant}A`));
+    await missing(await f.url(grant.slice(1)));
+  });
+
+  it('refuses a later expiry that was not minted', async () => {
+    const f = await photoFixture();
+    const grant = await mintPhoto(f);
+    const bytes = fromBase64Url(grant);
+    bytes[10] = (bytes[10] ?? 0) + 1;
+    await missing(await f.url(toBase64Url(bytes)));
+    expect((await f.url(grant)).status).toBe(200);
+  });
+
+  it('is bound to its asset class: a photo grant is not an icon grant and the reverse', async () => {
+    const f = await photoFixture();
+    const photo = await photoAssetGrantFor(kit, f.device, f.pass.id);
+    const generic = await genericAssetGrantFor(kit, f.device, f.pass.id);
+    expect((await f.url(photo)).status).toBe(200);
+    expect((await f.url(generic, 'icon.png')).status).toBe(200);
+    await missing(await f.url(photo, 'icon.png'));
+    await missing(await f.url(generic, 'member.png'));
+  });
+
+  it('is bound to its recipient: another scanner and an admin cannot redeem it', async () => {
+    const f = await photoFixture();
+    const second = await kit.scanner({ templateIds: [templateId] });
+    const grant = await mintPhoto(f);
+    expect((await f.url(grant)).status).toBe(200);
+    await missing(await f.url(grant, 'member.png', second));
+    // The other scanner's own grant works for it, so the denial above is the recipient binding.
+    expect(
+      (await f.url(await photoAssetGrantFor(kit, second, f.pass.id), 'member.png', second)).status,
+    ).toBe(200);
+
+    const user = await makeUser(kit.fx);
+    await grantScanMembership(kit.fx, kit.org.id, user.id);
+    const session = await makeSession(kit.fx, { userId: user.id, roles: ['admin', 'user'] });
+    const auth = await createSessionStore(kit.env, kit.clock).resolve(session.cookieValue);
+    if (!auth) throw new Error('Session fixture missing');
+    const authority = await tenantAuthorityOf(kit.ctx, auth, kit.org.id, 'scanning:read');
+    if (authority.kind !== 'session') throw new Error('Session authority fixture missing');
+    const admin = adminActor(auth, 'live', {
+      orgId: kit.org.id,
+      event: null,
+      templateIds: [],
+      timeZone: 'UTC',
+    });
+    admin.platformSessionId = auth.sessionId;
+    admin.tenantAuthority = await captureScanTenantAuthority(kit.ctx, auth, authority);
+    admin.role = tenantScanRole(admin.tenantAuthority);
+    const redeem = (actor: typeof admin, token: string) =>
+      assetGrantValid(
         kit.ctx,
         actor,
-        missing as Candidate,
-        candidate.connectionGeneration,
-        candidate.activeTemplateVersion,
+        f.candidate,
+        f.candidate.connectionGeneration,
+        token,
+        undefined,
+        'commit',
+        true,
+      );
+    expect(await redeem(admin, grant)).toBe(false);
+    // Positive control: the admin's own grant redeems for the admin and not for the device.
+    const own = await mintAssetGrant(
+      kit.ctx,
+      admin,
+      f.candidate,
+      f.candidate.connectionGeneration,
+      f.candidate.activeTemplateVersion,
+      undefined,
+      true,
+    );
+    expect(await redeem(admin, own)).toBe(true);
+    expect(
+      await assetGrantValid(
+        kit.ctx,
+        f.actor,
+        f.candidate,
+        f.candidate.connectionGeneration,
+        own,
+        undefined,
+        'commit',
+        true,
       ),
-    ).toBeNull();
+    ).toBe(false);
+  });
+
+  it('refuses a snapshot with no or a wrong credential keyset or invalid refs', async () => {
+    const f = await photoFixture();
+    const mint = (snapshot: unknown) =>
+      preparePhotoGrant(
+        kit.ctx,
+        f.actor,
+        snapshot as typeof f.candidate,
+        f.candidate.connectionGeneration,
+        f.candidate.activeTemplateVersion,
+      );
+    expect(await mint(f.candidate)).not.toBeNull();
+    const wrong =
+      f.candidate.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
+    for (const credentialKeysetCommitment of [wrong, 'invalid', undefined])
+      expect(await mint({ ...f.candidate, credentialKeysetCommitment })).toBeNull();
     const ref = 'a'.repeat(64);
-    const invalid: unknown[] = [
+    for (const refs of [
       null,
-      'not-an-array',
+      'x',
       [null],
       ['bad'],
       ['A'.repeat(64)],
       [ref, ref],
-      ['1'.repeat(64), '2'.repeat(64), '3'.repeat(64), '4'.repeat(64)],
-    ];
-    for (const refs of invalid) {
-      const altered = { ...candidate, credentialTombstoneRefs: refs } as Candidate;
-      expect(
-        await preparePhotoGrant(
-          kit.ctx,
-          actor,
-          altered,
-          candidate.connectionGeneration,
-          candidate.activeTemplateVersion,
-        ),
-      ).toBeNull();
-    }
-    missing.credentialTombstoneRefs = candidate.credentialTombstoneRefs;
-    delete missing.credentialKeysetCommitment;
-    const wrong =
-      candidate.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
-    const snapshots = [
-      missing as Candidate,
-      { ...candidate, credentialKeysetCommitment: 'invalid' },
-      { ...candidate, credentialKeysetCommitment: wrong },
-    ];
-    for (const snapshot of snapshots) {
-      const plan = await preparePhotoGrant(
-        kit.ctx,
-        actor,
-        snapshot,
-        candidate.connectionGeneration,
-        candidate.activeTemplateVersion,
-      );
-      if (!plan) {
-        expect(plan).toBeNull();
-        continue;
-      }
-      const bind = await prepareAssetGrantInsertion(kit.ctx, plan, undefined, snapshot);
-      await expect(kit.env.DB.batch(bind(kit.clock.now(), undefined))).rejects.toThrow(
-        'scan_asset_authority_failed',
-      );
-      expect(
-        await first(kit.env.DB, 'SELECT * FROM scan_asset_grant_provenance WHERE token_hash = ?', [
-          plan.tokenHash,
-        ]),
-      ).toBeNull();
-      expect(confirmAssetGrantToken(plan, undefined)).toBeNull();
-    }
+      [ref, ref, ref, ref],
+    ])
+      expect(await mint({ ...f.candidate, credentialTombstoneRefs: refs })).toBeNull();
   });
 });

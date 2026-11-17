@@ -1,3 +1,4 @@
+import type { GrantPart } from '../../platform/authority-include.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import { AppError, RateLimitedError } from '../../platform/errors.ts';
@@ -96,6 +97,12 @@ export function preparePinReservation(
 
   const refundStatements = (): D1PreparedStatement[] =>
     settled ? [] : counters.refundStatements();
+  const refundParts = (): GrantPart[] => (settled ? [] : counters.refundParts());
+  /** A refund exists only for a verified PIN that was not returned yet. */
+  const refundable = () => {
+    if (!settled && !verified) throw new Error('Cannot prepare a refund before verifying the PIN');
+    return !settled;
+  };
 
   const verifyCandidate = async (
     results: readonly D1Result[],
@@ -171,29 +178,18 @@ export function preparePinReservation(
 
     // A miss keeps both reservations, including if the audit subsequently fails.
     settled = true;
+    const audit = (action: string, targetType: string, targetId: string) =>
+      auditStmt(db, auditContext, {
+        orgId,
+        actorType: 'scanner',
+        actorId: scannerId,
+        action,
+        targetType,
+        targetId,
+      });
     const audits: D1PreparedStatement[] = [];
-    if (person === personCap)
-      audits.push(
-        auditStmt(db, auditContext, {
-          orgId,
-          actorType: 'scanner',
-          actorId: scannerId,
-          action: 'scan_staff.pin_locked',
-          targetType: 'scan_staff',
-          targetId: staffId,
-        }),
-      );
-    if (scanner === scannerCap)
-      audits.push(
-        auditStmt(db, auditContext, {
-          orgId,
-          actorType: 'scanner',
-          actorId: scannerId,
-          action: 'scanner.pin_flood',
-          targetType: 'scanner',
-          targetId: scannerId,
-        }),
-      );
+    if (person === personCap) audits.push(audit('scan_staff.pin_locked', 'scan_staff', staffId));
+    if (scanner === scannerCap) audits.push(audit('scanner.pin_flood', 'scanner', scannerId));
     await finishFailure(audits);
     // Two managers with one PIN answer exactly as a wrong one (a different answer would say so);
     // the owner is told in the log, with no PIN in it.
@@ -255,11 +251,8 @@ export function preparePinReservation(
       )
         throw new Error('PIN reservation was not authorized');
     },
-    refundStatements() {
-      if (settled) return [];
-      if (!verified) throw new Error('Cannot prepare a refund before verifying the PIN');
-      return refundStatements();
-    },
+    refundStatements: () => (refundable() ? refundStatements() : []),
+    refundParts: () => (refundable() ? refundParts() : []),
     markRefunded() {
       if (!verified) throw new Error('Cannot mark an unverified PIN as refunded');
       settled = true;

@@ -36,6 +36,38 @@ export function noCredentialTombstonesSql(
   };
 }
 
+/** Hex characters of a keyed ref a stateless grant carries (`asset-grant-mint.ts`). */
+export const CREDENTIAL_REF_PREFIX = 16;
+
+/**
+ * The same check for refs known only by their leading hex digits: each prefix is a range of the
+ * (org, mode, hash) index, so a retired ref always matches and a clash can only deny.
+ */
+export function noCredentialTombstonePrefixesSql(
+  prefixes: readonly string[],
+  scope: Scope,
+  credentialKeysetCommitment: string | null | undefined,
+): Predicate {
+  if (
+    prefixes.length > 3 ||
+    !prefixes.every((prefix) => new RegExp(`^[0-9a-f]{${CREDENTIAL_REF_PREFIX}}$`).test(prefix)) ||
+    !validCredentialKeysetCommitment(credentialKeysetCommitment)
+  )
+    return { sql: '0', params: [] };
+  if (prefixes.length === 0)
+    return { sql: credentialRefKeysetSql, params: [credentialKeysetCommitment] };
+  const rest = 64 - CREDENTIAL_REF_PREFIX;
+  return {
+    sql: `(NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tombstone
+      WHERE tombstone.org_id=${scope.orgIdSql} AND tombstone.mode=${scope.modeSql}
+        AND (${prefixes.map(() => 'tombstone.credential_hash BETWEEN ? AND ?').join(' OR ')})) AND ${credentialRefKeysetSql})`,
+    params: [
+      ...prefixes.flatMap((prefix) => [prefix + '0'.repeat(rest), prefix + 'f'.repeat(rest)]),
+      credentialKeysetCommitment,
+    ],
+  };
+}
+
 /** A statement suitable for the same D1 batch as candidate lookups. */
 export function credentialTombstonesClearStmt(
   db: D1Database,

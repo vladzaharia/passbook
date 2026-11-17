@@ -41,7 +41,7 @@ import { transferPending } from './repo-scan-transfer.ts';
 import type { Found } from './resolve.ts';
 import { afterReads, capturingDb } from './scan-capture.ts';
 import { displayRequiresHistory } from './scan-display-history.ts';
-import { decorateScan, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
+import { SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import type { PinReservation } from './staff-pin.ts';
 
 export interface ValueInput {
@@ -155,6 +155,8 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       before: json(effect.before),
       after: json(effect.after),
     });
+    // The verified PIN's attempt comes back with the scan, in the same commit.
+    if (reservation) g.include(...reservation.refundParts());
     const counts = planCommitCounts(ctx, actor, req.dayStart);
     const bound = plan?.bind(ctx.clock.now(), doneOkPredicate(claim.scanId)) ?? null;
     return {
@@ -181,6 +183,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       return {
         reads: planned.reads,
         settle(r, grant) {
+          reservation?.markRefunded();
           st.results = r;
           st.granted = grant;
         },
@@ -258,7 +261,6 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     fx: ValueEffect,
   ): Promise<ScanOutcome> {
     const finishAt = ctx.clock.now();
-    await decorateScan(ctx, reservation, []);
     const read = await p.counts.read(r.after.slice(0, p.counts.stmts.length));
     const rows = (r.writes[g.indexOf(p.statements.finalOk)]?.results ?? []).length;
     if (!rows) {
@@ -289,7 +291,6 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     g: NonNullable<(typeof st)['granted']>,
   ): Promise<ScanOutcome> {
     i.onFailureCommitted();
-    await decorateScan(ctx, reservation, []);
     const read = await p.counts.read(r.after.slice(0, p.counts.stmts.length));
     const holder = r.writes[g.indexOf(p.statements.holder)]?.results?.[0] as HeldHolder | undefined;
     return heldOutcome({
@@ -316,6 +317,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       fx,
     );
     const r = await g.commitWith(p.reads);
+    reservation?.markRefunded();
     return answer(p, r, g, pass, fx);
   }
 }

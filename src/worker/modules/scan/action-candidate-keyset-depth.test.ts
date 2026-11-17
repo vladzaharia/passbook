@@ -131,11 +131,18 @@ function mutation(f: Fixture, change: Change): D1PreparedStatement | null {
         f.event.id,
       ]);
     case 'retained':
+      // A retained scan event that carries an opaque reference blocks the keyset initializer.
       return stmt(
         db,
-        `INSERT INTO scan_asset_grant_provenance
-        (token_hash,org_id,mode,expires_at,credential_refs) VALUES (?,?,'live',?,?)`,
-        ['a'.repeat(64), f.kit.org.id, now + 60_000, JSON.stringify(['b'.repeat(64)])],
+        `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, data, at)
+        VALUES (?, ?, ?, 'live', 'scan.checked_in', ?, ?)`,
+        [
+          f.kit.fx.ids.id(),
+          f.kit.org.id,
+          f.pass.id,
+          JSON.stringify({ legacy: { customToken: 'opaque' } }),
+          now,
+        ],
       );
     case 'existing':
       return stmt(db, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [

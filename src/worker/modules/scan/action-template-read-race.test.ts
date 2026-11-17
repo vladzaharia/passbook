@@ -9,9 +9,10 @@ import {
   ACTION,
   action,
   body,
+  COMMIT_MARKER,
   expectClassified,
-  expectStopRecordedWithoutGrants,
-  expectUnavailable,
+  expectGrantsUnredeemable,
+  expectStopRecordedUnredeemable,
   fixture,
   race,
   raceRaw,
@@ -27,16 +28,19 @@ beforeAll(async () => {
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
 
-const marker = 'INTO scan_asset_grant_provenance';
-
 /**
  * The scan grant asks no template or release state (authority-epochs.md F4): a change landing before
- * the commit is content. The visit is recorded; only the photo grant, bound to the read, is withheld.
+ * the commit is content. The visit is recorded; its capabilities, minted from the read, no longer redeem.
  */
-function expectGateRecordedWithoutGrants(result: ScanOutcome) {
-  expect(result).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
-  expect(result.display?.identity.photo?.url ?? null).toBeNull();
-  expect(JSON.stringify(result)).not.toContain('assetGrant');
+async function expectRecordedUnredeemable(
+  phase: 'gate' | 'choose' | 'stop',
+  headers: Record<string, string>,
+  result: ScanOutcome,
+) {
+  if (phase === 'stop') return expectStopRecordedUnredeemable(kit, headers, result);
+  if (phase === 'choose') expect(result).toMatchObject({ kind: 'ready', reason: 'choose' });
+  else expect(result).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
+  expect(await expectGrantsUnredeemable(kit, headers, result)).toBeGreaterThan(0);
 }
 
 describe('captured action template reads at the final CAS', () => {
@@ -55,6 +59,10 @@ describe('captured action template reads at the final CAS', () => {
         phase === 'choose' ? result.card?.display.identity.photo : result.display?.identity.photo;
       expect(photo?.url).toContain(`/passes/${f.pass.id}/assets/member.png?g=`);
       if (phase === 'choose') expect(result.card?.passView.assetGrant).toEqual(expect.any(String));
+      // Positive control for the races below: the same URL redeems when nothing moved.
+      const served = await kit.get(f.scanner.headers, photo!.url!.replace('/api/v1/scan', ''));
+      expect(served.status).toBe(200);
+      await served.body?.cancel();
     },
   );
 
@@ -75,49 +83,43 @@ describe('captured action template reads at the final CAS', () => {
         expect(original.pass.templateVersion).toBe('v1');
         expect(original.activeTemplateVersion).toBe(source === 'active' ? 'v2' : 'v1');
         const request = body(kit, f.pass.id);
-        const before = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
         let rejectedRewrite = false;
-        const result = await race(kit, f.scanner.headers, request, marker, async (db) => {
-          await expect(
-            run(
-              db,
-              `UPDATE template_versions SET manifest=json_set(manifest,'$.name','rewritten')
+        const result = await race(
+          kit,
+          f.scanner.headers,
+          request,
+          COMMIT_MARKER[phase],
+          async (db) => {
+            await expect(
+              run(
+                db,
+                `UPDATE template_versions SET manifest=json_set(manifest,'$.name','rewritten')
             WHERE template_id=? AND version=?`,
-              [f.templateId, source === 'active' ? 'v2' : 'v1'],
-            ),
-          ).rejects.toThrow(/template versions are immutable/);
-          rejectedRewrite = true;
-          if (source === 'pinned') {
-            await run(db, 'UPDATE passes SET template_version=?, release_id=NULL WHERE id=?', [
-              'v2',
-              f.pass.id,
-            ]);
-          } else {
-            await approveAppleRelease(kit, {
-              db,
-              templateId: f.templateId,
-              version: 'v1',
-              mode: 'live',
-            });
-          }
-        });
+                [f.templateId, source === 'active' ? 'v2' : 'v1'],
+              ),
+            ).rejects.toThrow(/template versions are immutable/);
+            rejectedRewrite = true;
+            if (source === 'pinned') {
+              await run(db, 'UPDATE passes SET template_version=?, release_id=NULL WHERE id=?', [
+                'v2',
+                f.pass.id,
+              ]);
+            } else {
+              await approveAppleRelease(kit, {
+                db,
+                templateId: f.templateId,
+                version: 'v1',
+                mode: 'live',
+              });
+            }
+          },
+        );
         expect(rejectedRewrite).toBe(true);
-        if (phase === 'stop') {
-          expectStopRecordedWithoutGrants(result);
+        await expectRecordedUnredeemable(phase, f.scanner.headers, result);
+        if (phase === 'gate')
           expect(
             await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
-          ).toMatchObject({ grants: before?.grants });
-        } else if (phase === 'gate') {
-          expectGateRecordedWithoutGrants(result);
-          expect(
-            await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
-          ).toMatchObject({ gates: 1, events: 1, grants: before?.grants });
-        } else {
-          expectUnavailable(result, f.pass.id);
-          expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
-            before,
-          );
-        }
+          ).toMatchObject({ gates: 1, events: 1 });
         const current = await candidateById(kit.env.DB, kit.org.id, f.pass.id);
         expect(current?.templateSnapshot?.raw).not.toBe(original.templateSnapshot.raw);
         expect(
@@ -190,9 +192,9 @@ describe('captured action template reads at the final CAS', () => {
     expect(changed.active.extras).toMatchObject([{ name: 'preview.png' }]);
   });
 
-  // A card is a read and fails closed; a gate or stop commit keeps the policy it evaluated.
+  // A gate, stop or choose commit keeps the policy it evaluated; the capabilities it minted do not redeem.
   it.each(['gate', 'choose', 'stop'] as const)(
-    'withholds %s grants when a newly approved head tightens the captured policy',
+    'voids %s grants when a newly approved head tightens the captured policy',
     async (phase) => {
       const f = await fixture(kit, {
         compatiblePin: true,
@@ -211,26 +213,14 @@ describe('captured action template reads at the final CAS', () => {
         'same-build',
       );
       const request = body(kit, f.pass.id);
-      const before = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
-      const result = await race(kit, f.scanner.headers, request, marker, (db) =>
+      const result = await race(kit, f.scanner.headers, request, COMMIT_MARKER[phase], (db) =>
         approveAppleRelease(kit, { db, templateId: f.templateId, version: 'v2', mode: 'live' }),
       );
-      if (phase === 'stop') {
-        expectStopRecordedWithoutGrants(result);
+      await expectRecordedUnredeemable(phase, f.scanner.headers, result);
+      if (phase === 'gate')
         expect(
           await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
-        ).toMatchObject({ grants: before?.grants });
-      } else if (phase === 'gate') {
-        expectGateRecordedWithoutGrants(result);
-        expect(
-          await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
-        ).toMatchObject({ gates: 1, events: 1, grants: before?.grants });
-      } else {
-        expectUnavailable(result, f.pass.id);
-        expect(await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id)).toEqual(
-          before,
-        );
-      }
+        ).toMatchObject({ gates: 1, events: 1 });
       expect((await candidateById(kit.env.DB, kit.org.id, f.pass.id))?.activeTemplateVersion).toBe(
         'v2',
       );

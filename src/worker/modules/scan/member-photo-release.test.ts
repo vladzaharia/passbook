@@ -8,16 +8,10 @@ import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { setTemplateStatus } from '../templates/testing.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { grantInsertConfirmed } from './asset-grant-results.ts';
+import { takeAssetGrantToken } from './asset-sidecar.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
-import {
-  assetGrantValid,
-  confirmAssetGrantToken,
-  prepareGenericAssetGrant,
-  preparePhotoGrant,
-} from './assets.ts';
+import { assetGrantValid, prepareGenericAssetGrant, preparePhotoGrant } from './assets.ts';
 import { canShowPhotoForCandidate, knownPhotoUrl, scannerReleaseAllowed } from './member-photo.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
@@ -80,26 +74,9 @@ describe('scanner member photo release authority', () => {
       candidate.activeTemplateVersion,
     );
     if (!generic || !photo) throw new Error('Asset grant plans missing');
-    const [genericBind, photoBind] = await Promise.all([
-      prepareAssetGrantInsertion(kit.ctx, generic, undefined, candidate),
-      prepareAssetGrantInsertion(kit.ctx, photo, undefined, candidate),
-    ]);
-    const now = kit.clock.now();
-    const genericStatements = genericBind(now, undefined);
-    const photoStatements = photoBind(now, undefined);
-    const [output, ...results] = await kit.env.DB.batch([
-      kit.env.DB.prepare('SELECT 42 AS output_marker'),
-      ...genericStatements,
-      ...photoStatements,
-    ]);
-    expect(output?.results).toEqual([{ output_marker: 42 }]);
-    const genericResults = results.slice(0, genericStatements.length);
-    const photoResults = results.slice(genericStatements.length);
-    expect(grantInsertConfirmed(genericResults)).toBe(true);
-    expect(grantInsertConfirmed(photoResults)).toBe(true);
-    const genericToken = confirmAssetGrantToken(generic, genericResults);
-    const photoToken = confirmAssetGrantToken(photo, photoResults);
-    if (!genericToken || !photoToken) throw new Error('Confirmed asset grants missing');
+    const genericToken = takeAssetGrantToken(generic);
+    const photoToken = takeAssetGrantToken(photo);
+    if (!genericToken || !photoToken) throw new Error('Asset grants missing');
     expect(
       await assetGrantValid(
         kit.ctx,
@@ -207,11 +184,8 @@ describe('scanner member photo release authority', () => {
         'read',
       );
       if (!plan) throw new Error('Generic read plan missing');
-      const bind = await prepareAssetGrantInsertion(kit.ctx, plan, undefined, candidate);
-      const inserted = await kit.env.DB.batch(bind(kit.clock.now(), undefined));
-      expect(grantInsertConfirmed(inserted)).toBe(true);
-      const grant = confirmAssetGrantToken(plan, inserted);
-      if (!grant) throw new Error('Confirmed generic read grant missing');
+      const grant = takeAssetGrantToken(plan);
+      if (!grant) throw new Error('Generic read grant missing');
       const image = (name: string) =>
         kit.get(scanner.headers, `/passes/${pass.id}/assets/${name}?g=${grant}`);
       expect((await image('icon.png')).status).toBe(200);
@@ -219,7 +193,7 @@ describe('scanner member photo release authority', () => {
       const pinned = await kit.registry.resolve(templateId, candidate.pass.templateVersion);
       // The photo has its own capability, read as the card reads this state.
       const photo = await knownPhotoUrl(kit.ctx, actor, candidate, pinned);
-      expect(photo?.grant.guard).toMatchObject({ requirePhoto: true, purpose: 'read' });
+      expect(photo?.grant).toMatchObject({ requirePhoto: true, purpose: 'read' });
 
       const pending = await prepareGenericAssetGrant(
         kit.ctx,
@@ -229,8 +203,12 @@ describe('scanner member photo release authority', () => {
         candidate.activeTemplateVersion,
         'read',
       );
-      if (!pending) throw new Error('Generic read plan missing');
-      const bindPending = await prepareAssetGrantInsertion(kit.ctx, pending, undefined, candidate);
+      const pendingToken = pending && takeAssetGrantToken(pending);
+      if (!pendingToken) throw new Error('Generic read plan missing');
+      const pendingImage = () =>
+        kit.get(scanner.headers, `/passes/${pass.id}/assets/icon.png?g=${pendingToken}`);
+      // Positive control: served before the race.
+      expect((await pendingImage()).status).toBe(200);
       if (race === 'release') await stageVersion(templateId, 'v3');
       else {
         await setTemplateStatus(kit.env.DB, templateId, 'archived', kit.clock.now());
@@ -238,15 +216,10 @@ describe('scanner member photo release authority', () => {
       }
       if (race === 'template') {
         // Status A-B-A leaves the same template standing: the grant stands too.
-        expect(
-          grantInsertConfirmed(await kit.env.DB.batch(bindPending(kit.clock.now(), undefined))),
-        ).toBe(true);
+        expect((await pendingImage()).status).toBe(200);
         return;
       }
-      await expect(kit.env.DB.batch(bindPending(kit.clock.now(), undefined))).rejects.toThrow(
-        'scan_asset_authority_failed',
-      );
-      expect(confirmAssetGrantToken(pending, undefined)).toBeNull();
+      expect((await pendingImage()).status).toBe(404);
       expect((await image('icon.png')).status).toBe(404);
     },
   );

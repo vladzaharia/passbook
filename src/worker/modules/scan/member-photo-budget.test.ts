@@ -7,8 +7,7 @@ import { putMemberPhoto } from '../passes/member-photo.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
-import { confirmedPhotoUrl, knownPhotoUrl } from './member-photo.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
+import { knownPhotoUrl, photoGrantUrl } from './member-photo.ts';
 import { candidateById } from './repo-lookup.ts';
 import { codeOf, key, setupScanKit } from './test-kit.ts';
 
@@ -87,10 +86,8 @@ describe('scanner member photo D1 budget', () => {
     const pinned = await scoped.registry.resolve(templateId, candidate.pass.templateVersion);
     const prepared = await knownPhotoUrl(scoped.ctx, actor, candidate, pinned);
     if (!prepared) throw new Error('Photo grant plan missing');
-    const bind = await prepareAssetGrantInsertion(scoped.ctx, prepared.grant, undefined, candidate);
-    const results = await scoped.env.DB.batch(bind(scoped.clock.now(), undefined));
-    const url = confirmedPhotoUrl(actor, pass.id, prepared.grant, results);
-    if (!url) throw new Error('Confirmed photo URL missing');
+    const url = photoGrantUrl(actor, pass.id, prepared.grant);
+    if (!url) throw new Error('Photo URL missing');
     const real = scoped.env.DB;
     const counted = countD1(real);
     Object.assign(scoped.env, { DB: counted.db });
