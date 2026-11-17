@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/@biomejs/biome/configuration_schema.json",
   "root": false,
-  "extends": ["../../../biome.json"],
+  "extends": ["../../../biome.jsonc"],
   "files": { "includes": ["!passbook-brand-guide.html"] }
 }

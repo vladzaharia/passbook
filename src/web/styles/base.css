@@ -44,7 +44,7 @@
 /* After a pointer interaction (input-modality.ts), buttons and controls show no ring; text fields
    keep theirs and the next key press brings rings back. Unlayered, so it wins over utilities. */
 html[data-modality="pointer"]
-:focus-visible:not(input, textarea, select, [contenteditable="true"]) {
+  :focus-visible:not(input, textarea, select, [contenteditable="true"]) {
   outline: none;
 }
 
