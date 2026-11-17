@@ -136,7 +136,7 @@ describe('wallet route isolation', () => {
       appEnv,
     );
     expect(apple.status).toBe(422);
-    expect(keys).toEqual(['RL_APPLE_IP:203.0.113.25', 'RL_APPLE:203.0.113.25']);
+    expect(keys).toEqual(['RL_APPLE_IP:203.0.113.0/24', 'RL_APPLE:203.0.113.0/24']);
   });
 });
 

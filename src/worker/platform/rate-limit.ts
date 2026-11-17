@@ -43,10 +43,13 @@ export function clientIp(c: Context): string {
   return c.req.header('cf-connecting-ip') ?? 'unknown';
 }
 
-/** Middleware: limits per `keyOf(c)` (default: client IP). */
+/** The network (v4 /24, v6 /64) the request comes from: one IPv6 subscriber must not hold 2^64 buckets. */
+export const clientRatePrefix = (c: Context): string => ipRatePrefix(clientIp(c)) ?? 'unknown';
+
+/** Middleware: limits per `keyOf(c)` (default: client network prefix). */
 export function rateLimit(
   name: RateLimitName,
-  keyOf: (c: Context<AppBindings>) => string = clientIp,
+  keyOf: (c: Context<AppBindings>) => string = clientRatePrefix,
 ): MiddlewareHandler<AppBindings> {
   return createMiddleware(async (c, next) => {
     await enforceRateLimit(c.env, name, `${name}:${keyOf(c)}`);
@@ -65,7 +68,7 @@ export const ASSET_MISSES_PER_MINUTE = 300;
  */
 export function gateMisses(threshold: number): MiddlewareHandler<AppBindings> {
   return createMiddleware(async (c, next) => {
-    const prefix = ipRatePrefix(clientIp(c)) ?? 'unknown';
+    const prefix = clientRatePrefix(c);
     const window = Math.floor(c.var.clock.now() / MISS_WINDOW_MS) * MISS_WINDOW_MS;
     const key = `asset.miss:${prefix}`;
     if ((await readCounter(c.env.DB, key, window)) >= threshold) {
