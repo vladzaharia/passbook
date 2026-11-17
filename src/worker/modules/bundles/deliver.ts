@@ -5,6 +5,7 @@ import { passEmailImages } from '../../email/pass-images.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
 import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishSent } from '../delivery/email-finish.ts';
 import { recordEmailOutcome, uncertainEmail } from '../delivery/email-outcome.ts';
@@ -81,8 +82,16 @@ export async function deliverBundleEmail(
     return true;
   };
   const base = baseUrl(ctx.env);
-  const bundleToken = await revealToken(ctx.env, 'bundle', bundle.id, bundle.org_id, bundle.token);
-  const firstToken = await revealToken(ctx.env, 'pass', first.id, first.orgId, first.downloadToken);
+  let bundleToken: string;
+  let firstToken: string;
+  try {
+    bundleToken = await revealToken(ctx.env, 'bundle', bundle.id, bundle.org_id, bundle.token);
+    firstToken = await revealToken(ctx.env, 'pass', first.id, first.orgId, first.downloadToken);
+  } catch (error) {
+    if (!(error instanceof AppError) || !error.code.startsWith('TOKEN_SEAL_')) throw error;
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'DELIVERY_STALE');
+    return;
+  }
   const page = `${base}/b/${bundleToken}`;
   const [org, platform, settings, support, images] = await Promise.all([
     getOrg(db, bundle.org_id),

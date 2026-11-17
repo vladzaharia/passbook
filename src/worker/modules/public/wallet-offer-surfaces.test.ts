@@ -167,10 +167,12 @@ describe('native offers on public and holder surfaces', () => {
     'does not expose a new incarnation to a prior owner during %s lookup',
     async (surface) => {
       const pass = await ownPass();
+      const oldToken = await linkToken(kit.env, pass);
       lookup.mockImplementation(async (_ctx, id) => {
         if (id !== pass.id) return [];
+        const offers = await offersFor(pass);
         await transfer(pass);
-        return offersFor(pass);
+        return offers;
       });
       const path = surface === 'list' ? '/api/v1/me/passes' : `/api/v1/me/passes/${pass.id}`;
       const response = await get(path, headers);
@@ -181,7 +183,7 @@ describe('native offers on public and holder surfaces', () => {
         const body = JSON.parse(text) as { items: { id: string }[] };
         expect(body.items.some((item) => item.id === pass.id)).toBe(false);
       }
-      expect(text).not.toContain(await linkToken(kit.env, pass));
+      expect(text).not.toContain(oldToken);
       expect(text).not.toContain('private-google-token');
       expect(text).not.toContain('private-samsung-token');
     },
@@ -263,8 +265,9 @@ describe('native offers on public and holder surfaces', () => {
     let replacement = '';
     lookup.mockImplementation(async (_ctx, id) => {
       if (id !== pass.id) return [];
-      replacement = (await transfer(pass)).downloadToken;
-      return offersFor(pass);
+      const offers = await offersFor(pass);
+      replacement = await linkToken(kit.env, await transfer(pass));
+      return offers;
     });
     const response = await get(`/p/${await linkToken(kit.env, pass)}`);
     expect(response.status).toBe(404);

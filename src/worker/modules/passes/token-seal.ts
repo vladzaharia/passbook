@@ -2,7 +2,14 @@ import { issueToken, type TokenPurpose } from '../../platform/capability-token.t
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
-import { type PlainTokenRow, plainBundles, plainPasses, sealGrant } from './repo-token-seal.ts';
+import {
+  countPlain,
+  type PlainTokenRow,
+  plainBundles,
+  plainPasses,
+  sealGrant,
+  sealTrusted,
+} from './repo-token-seal.ts';
 
 const BATCH = 50;
 const CURSOR = 'tokens.sealCursor';
@@ -57,6 +64,7 @@ export async function sealCapabilityTokens(ctx: ServiceContext): Promise<void> {
     passes: sealed.pass,
     bundles: sealed.bundle,
     refused,
+    remaining: await countPlain(db),
   });
 }
 
@@ -67,6 +75,7 @@ async function sealOne(
 ): Promise<boolean> {
   const issued = await issueToken(ctx.env, purpose, row.id, row.orgId, row.token);
   try {
+    if (!row.orgActive) return await sealTrusted(ctx.env.DB, purpose, row, issued.mac, issued.seal);
     await sealGrant(ctx, purpose, row, issued.mac, issued.seal).commit();
     return true;
   } catch (error) {

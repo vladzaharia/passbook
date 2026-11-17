@@ -21,6 +21,26 @@ CREATE TABLE bundle_token_seals (
 CREATE INDEX passes_token_plain ON passes (id) WHERE download_token NOT LIKE 'h1:%';
 CREATE INDEX bundles_token_plain ON bundles (id) WHERE token NOT LIKE 'h1:%';
 
+-- A token column holds a MAC from now on: nothing may write a plain token, and a change of the pass token
+-- is a rotation, which moves link_generation (the sealing of an old plain token is the one exception).
+CREATE TRIGGER passes_token_is_mac_insert BEFORE INSERT ON passes
+WHEN NEW.download_token NOT LIKE 'h1:%'
+BEGIN SELECT RAISE(ABORT, 'download_token must be a MAC'); END;
+CREATE TRIGGER passes_token_is_mac_update BEFORE UPDATE OF download_token ON passes
+WHEN NEW.download_token IS NOT OLD.download_token AND NEW.download_token NOT LIKE 'h1:%'
+BEGIN SELECT RAISE(ABORT, 'download_token must be a MAC'); END;
+CREATE TRIGGER passes_token_change_moves_link BEFORE UPDATE OF download_token ON passes
+WHEN NEW.download_token IS NOT OLD.download_token AND NEW.link_generation IS OLD.link_generation
+  AND NOT (OLD.download_token NOT LIKE 'h1:%' AND NEW.download_token LIKE 'h1:%'
+    AND NEW.download_token_rotated_at IS OLD.download_token_rotated_at)
+BEGIN SELECT RAISE(ABORT, 'a token change must move link_generation'); END;
+CREATE TRIGGER bundles_token_is_mac_insert BEFORE INSERT ON bundles
+WHEN NEW.token NOT LIKE 'h1:%'
+BEGIN SELECT RAISE(ABORT, 'token must be a MAC'); END;
+CREATE TRIGGER bundles_token_is_mac_update BEFORE UPDATE OF token ON bundles
+WHEN NEW.token IS NOT OLD.token AND NEW.token NOT LIKE 'h1:%'
+BEGIN SELECT RAISE(ABORT, 'token must be a MAC'); END;
+
 -- Sealing a token (plain -> MAC, same rotation timestamp and link generation) is not a pass change: it
 -- bumps neither row_version nor the wallet-provider authority and dirty counters. A rotation still does.
 

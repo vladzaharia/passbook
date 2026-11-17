@@ -35,6 +35,16 @@ function executionAuth(execution: BundleWriteExecution): AuthContext | undefined
 
 export const bundleUrl = (ctx: ServiceContext, token: string) => `${baseUrl(ctx.env)}/b/${token}`;
 
+/** A row whose stored link cannot be shown (logged by the reveal) lists without one: rotate it. */
+async function linkOf(ctx: ServiceContext, row: repo.BundleRow): Promise<string | null> {
+  try {
+    return bundleUrl(ctx, await revealToken(ctx.env, 'bundle', row.id, row.org_id, row.token));
+  } catch (error) {
+    if (error instanceof AppError && error.code.startsWith('TOKEN_SEAL_')) return null;
+    throw error;
+  }
+}
+
 async function toDto(
   ctx: ServiceContext,
   row: repo.BundleRow,
@@ -45,7 +55,7 @@ async function toDto(
     orgId: row.org_id,
     mode: row.mode,
     name: row.name,
-    url: bundleUrl(ctx, await revealToken(ctx.env, 'bundle', row.id, row.org_id, row.token)),
+    url: await linkOf(ctx, row),
     holderEmail: row.holder_email,
     passes: members.map((m) => ({
       id: m.pass_id,

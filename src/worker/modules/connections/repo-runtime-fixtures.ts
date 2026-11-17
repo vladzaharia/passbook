@@ -36,7 +36,7 @@ export async function startPendingTransfer(ctx: ServiceContext, passId: string) 
       db,
       `UPDATE passes SET credential_generation = credential_generation + 1,
       download_token = ?, link_generation = link_generation + 1 WHERE id = ?`,
-      [ctx.ids.token(), passId],
+      [`h1:${ctx.ids.token()}`, passId],
     ),
   ]);
 }

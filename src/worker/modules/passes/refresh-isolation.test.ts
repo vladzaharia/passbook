@@ -303,7 +303,7 @@ describe('connector snapshot fencing', () => {
     await run(
       kit.env.DB,
       "INSERT INTO bundles (id, org_id, name, token, created_at) VALUES (?, ?, 'B', ?, 1)",
-      [bundleId, pass.orgId, kit.fx.ids.token()],
+      [bundleId, pass.orgId, `h1:${kit.fx.ids.token()}`],
     );
     await run(
       kit.env.DB,
@@ -342,7 +342,7 @@ describe('connector snapshot fencing', () => {
     await run(
       kit.env.DB,
       "INSERT INTO bundles (id, org_id, name, token, created_at) VALUES (?, ?, 'B', ?, 1)",
-      [bundleId, pass.orgId, kit.fx.ids.token()],
+      [bundleId, pass.orgId, `h1:${kit.fx.ids.token()}`],
     );
     await run(
       kit.env.DB,

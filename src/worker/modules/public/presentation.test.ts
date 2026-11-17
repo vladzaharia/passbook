@@ -13,6 +13,7 @@ import {
   type SessionFixture,
   type UserRow,
 } from '../../../../test/helpers/index.ts';
+import { fixtureToken } from '../../../../test/helpers/tokens.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
 import type { InMemoryTemplateRegistry } from '../../../passkit/template/in-memory-registry.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
@@ -86,6 +87,7 @@ async function passWith(
   const id = f.ids.id();
   const objectKey = `passes/${id}/v1-${f.ids.token(4)}.pkpass`;
   await h.env.BUCKET.put(objectKey, new Uint8Array([1, 2, 3]));
+  const link = await fixtureToken(h.env, id, org.id, f.ids.token());
   await run(
     h.env.DB,
     `INSERT INTO passes
@@ -101,7 +103,7 @@ async function passWith(
       template.id,
       template.version,
       f.ids.token(),
-      f.ids.token(),
+      link.mac,
       `${f.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify({ memberName: 'Alex Morgan' }),
       options.holderEmail ?? null,
@@ -114,6 +116,7 @@ async function passWith(
       f.clock.now(),
     ],
   );
+  await link.seal();
   // The pass_created trigger inserts the current version.
   const version = await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
     JSON.stringify({
@@ -554,12 +557,9 @@ describe('presentation barcode', () => {
   it('denies malformed, unknown and rotated bearer links but accepts the new link', async () => {
     const pass = await passWith({ json: primaryJson });
     await presentationHtml(await publicGet(await publicPath(pass)), [PRIMARY, SCAN_CODE]);
+    const oldPath = await publicPath(pass);
     const rotated = await rotateLink(ctx, { type: 'user', id: user.id }, pass.id, null);
-    for (const path of [
-      '/p/short/barcode',
-      `/p/${'z'.repeat(43)}/barcode`,
-      await publicPath(pass),
-    ]) {
+    for (const path of ['/p/short/barcode', `/p/${'z'.repeat(43)}/barcode`, oldPath]) {
       const res = await publicGet(path);
       expect(res.status).toBe(404);
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);

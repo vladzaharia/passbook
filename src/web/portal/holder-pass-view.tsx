@@ -29,7 +29,8 @@ export interface HolderPassViewProps {
   /** The org's note with a removal (state removed). */
   removalMessage?: string | null;
   device: DeviceInfo;
-  downloadHref: string;
+  /** Null hides the Apple badge. */
+  downloadHref: string | null;
   /** Available native alternatives, independent of the Apple registration state. */
   walletOffers: readonly WalletOffer[];
   /** The server's release gate per native wallet; disabled ones are not offered. */
@@ -72,9 +73,9 @@ export function HolderPassView(props: HolderPassViewProps) {
           publicUrl,
           qrLabel: HOLDER_COPY.qrAlt(props.passTitle),
           // The gaps around the badge are its clear space.
-          badge: (
+          badge: props.downloadHref ? (
             <AppleWalletBadge href={props.downloadHref} onClick={props.onAdd} className="p-0" />
-          ),
+          ) : null,
           // Apple's guidance accompanies the badge on every device.
           line: addLine(device),
         };

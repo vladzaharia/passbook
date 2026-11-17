@@ -113,7 +113,7 @@ describe('asset rate limit', () => {
       return res.status;
     };
     await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'asset.miss:%'");
-    for (let i = 0; i < 5; i++) expect(await hit(a.downloadToken, '5.5.5.1')).toBe(200);
+    for (let i = 0; i < 5; i++) expect(await hit(await linkToken(kit.env, a), '5.5.5.1')).toBe(200);
     expect(await missCount('5.5.5.0/24')).toBe(0);
     expect(await hit(randomToken(), '5.5.5.2')).toBe(404);
     expect(await hit(randomToken(), '5.5.5.3')).toBe(404);
@@ -125,19 +125,22 @@ describe('asset rate limit', () => {
     await seedMisses('4.4.4.0/24', 300);
     const hit = async (token: string, ip: string) =>
       (await get(`/p/${token}/assets/icon@3x.png`, kit.env, { 'cf-connecting-ip': ip })).status;
-    expect(await hit(a.downloadToken, '4.4.4.9')).toBe(429);
+    expect(await hit(await linkToken(kit.env, a), '4.4.4.9')).toBe(429);
     expect(await hit(randomToken(), '4.4.4.10')).toBe(429);
     // Refused requests are not charged further, and other prefixes are untouched.
     expect(await missCount('4.4.4.0/24')).toBe(300);
-    expect(await hit(a.downloadToken, '4.4.5.9')).toBe(200);
+    expect(await hit(await linkToken(kit.env, a), '4.4.5.9')).toBe(200);
   });
 
   it('keys IPv6 by the normalized /64', async () => {
     const a = await kit.pass();
     await seedMisses('2001:0db8:0001:0002::/64', 300);
     const hit = async (ip: string) =>
-      (await get(`/p/${a.downloadToken}/assets/icon@3x.png`, kit.env, { 'cf-connecting-ip': ip }))
-        .status;
+      (
+        await get(`/p/${await linkToken(kit.env, a)}/assets/icon@3x.png`, kit.env, {
+          'cf-connecting-ip': ip,
+        })
+      ).status;
     expect(await hit('2001:DB8:1:2::7')).toBe(429);
     expect(await hit('2001:db8:1:2:abcd:ef01:2345:6789')).toBe(429);
     expect(await hit('2001:db8:1:3::7')).toBe(200);

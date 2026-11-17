@@ -35,7 +35,8 @@ export const BundleSchema = z.object({
   mode: ModeSchema,
   name: z.string(),
   /** The capability link, `/b/<token>` on the public origin. */
-  url: z.string(),
+  /** Null when the link cannot be shown: rotate it. */
+  url: z.string().nullable(),
   holderEmail: z.string().nullable(),
   passes: z.array(BundlePassSchema),
   createdAt: TimestampSchema,

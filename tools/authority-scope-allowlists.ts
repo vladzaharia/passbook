@@ -46,6 +46,8 @@ export const RAW_WRITE_ALLOWLIST: Record<string, string> = {
     "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority; routes take the grants in repo-remove.ts",
   'src/worker/modules/passes/repo-pass-trusted.ts':
     'link rotation, refresh claim and soft delete for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
+  'src/worker/modules/passes/repo-token-seal.ts':
+    'seals an old plain link token of a pass or bundle whose org no job grant can write (suspended, deleted): the token changes to its MAC under a CAS on the plain value, which is no authority change (0059 triggers); active orgs take sealGrant',
   'src/worker/modules/passes/repo-connection-state.ts':
     'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
   'src/worker/modules/passes/repo-history-assets.ts':

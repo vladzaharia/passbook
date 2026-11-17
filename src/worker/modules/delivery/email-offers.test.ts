@@ -4,6 +4,7 @@ import { first } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { rotateLink as RotateLink } from '../passes/pass-service-delivery.ts';
 import type { Kit, setupKit as SetupKit } from '../passes/pass-test-fixtures.ts';
+import { openBody } from '../sandbox/captured-body.ts';
 import type { listWalletOffers as ListWalletOffers } from '../wallet-providers/offers.ts';
 import type { jobCtxOf as JobCtxOf } from './delivery-test-fixtures.ts';
 import type { enqueuePassEmail as EnqueuePassEmail } from './issuance-intent.ts';
@@ -127,11 +128,15 @@ describe('wallet offers in pass delivery', () => {
     ];
     lookup.mockResolvedValue(returnedOffers);
     await handleEmailSend({ kind: 'email.send', outboxId }, job());
-    const captured = await first<{ html: string; text: string }>(
+    const row = await first<{ id: string; html: string; text: string }>(
       kit.env.DB,
-      'SELECT html, text FROM captured_emails WHERE outbox_id = ?',
+      'SELECT id, html, text FROM captured_emails WHERE outbox_id = ?',
       [outboxId],
     );
+    const captured = {
+      html: await openBody(kit.env, row?.id ?? '', kit.org.id, row?.html ?? ''),
+      text: await openBody(kit.env, row?.id ?? '', kit.org.id, row?.text ?? ''),
+    };
     expect(kit.mailer.sent).toHaveLength(before);
     for (const provider of ['google', 'samsung']) {
       const link = `${baseUrl(kit.env)}/p/${await linkToken(kit.env, pass)}/wallet/${provider}`;
@@ -146,12 +151,13 @@ describe('wallet offers in pass delivery', () => {
   it('cancels rather than sending if the pass link rotates during offer lookup', async () => {
     const { pass, outboxId } = await queuePass();
     const before = kit.mailer.sent.length;
+    const oldToken = await linkToken(kit.env, pass);
     lookup.mockImplementation(async () => {
       await rotateLink(kit.ctx, { type: 'user', id: 'admin-1' }, pass.id, null);
       return [
         {
           provider: 'google',
-          href: `/p/${await linkToken(kit.env, pass)}/wallet/google`,
+          href: `/p/${oldToken}/wallet/google`,
           installation: 'unknown',
         },
       ];

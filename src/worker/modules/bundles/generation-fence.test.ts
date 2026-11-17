@@ -85,7 +85,7 @@ it('binds the credential generation independently of the link, including members
     },
     { kind: 'system' },
   );
-  const authorized = await bundleForToken(jobCtxOf(kit), replacement.url.split('/b/')[1] ?? '');
+  const authorized = await bundleForToken(jobCtxOf(kit), replacement.url?.split('/b/')[1] ?? '');
   const currentSnapshot = await bundleEmailSnapshot(kit.env.DB, replacement.id);
   if (!currentSnapshot?.passes[0]) throw new Error('Missing replacement snapshot');
   const intent = await bindBundle(kit.env, currentSnapshot, 'holder@example.test');

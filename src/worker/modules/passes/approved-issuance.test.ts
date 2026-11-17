@@ -1403,7 +1403,7 @@ describe('approved issuance over tenant HTTP', () => {
         passId = claim.resource_id;
         await run(
           db,
-          'UPDATE passes SET download_token = ?, link_generation = link_generation + 1 WHERE id = ?',
+          `UPDATE passes SET download_token = 'h1:' || ?, link_generation = link_generation + 1 WHERE id = ?`,
           [kit.fx.ids.token(), passId],
         );
       },

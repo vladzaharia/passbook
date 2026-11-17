@@ -284,7 +284,7 @@ is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, 
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
 `docs/design/authority-epochs.md` §6.
 
-Old pass download and bundle tokens are sealed by the minute cron `tokens.seal` (0059, 50 of each a run, log code `TOKEN_SEAL_RUN`); no owner step. A pass waiting on a credential transfer is sealed after it settles.
+Old pass download and bundle tokens are sealed by the minute cron `tokens.seal` (0059, 50 of each a run, log code `TOKEN_SEAL_RUN`); no owner step. A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining`. Backups from before 0059 hold working links: rotate in bulk if one leaks.
 
 ### What the new Worker does with 0024 data
 

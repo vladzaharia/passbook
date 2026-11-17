@@ -214,8 +214,8 @@ describe('cutover: capability tokens', () => {
          (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS bundles`,
       )
       .first();
-    // pass-gone belongs to a deleted org: no grant can write it, so it keeps its plain token.
-    expect(plain).toEqual({ passes: 1, bundles: 0 });
+    // pass-gone belongs to a deleted org: the trusted write seals it too.
+    expect(plain).toEqual({ passes: 0, bundles: 0 });
     expect((await versions()).results).toEqual(before.results);
     for (const p of legacy.passes) {
       const row = await db

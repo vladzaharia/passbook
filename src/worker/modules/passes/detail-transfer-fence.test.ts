@@ -49,7 +49,7 @@ async function reserve(db: D1Database, passId: string, advance = true): Promise<
           stmt(
             db,
             `UPDATE passes SET credential_generation = credential_generation + 1,
-      link_generation = link_generation + 1, download_token = ? WHERE id = ?`,
+      link_generation = link_generation + 1, download_token = 'h1:' || ? WHERE id = ?`,
             [token, passId],
           ),
         ]
@@ -280,7 +280,7 @@ describe('pass detail transfer disclosure fences', () => {
       async (db) => {
         await run(
           db,
-          `UPDATE passes SET download_token = ?, link_generation = link_generation + 1
+          `UPDATE passes SET download_token = 'h1:' || ?, link_generation = link_generation + 1
         WHERE id = ?`,
           [kit.fx.ids.token(), pass.id],
         );
@@ -385,7 +385,7 @@ describe('pass detail transfer disclosure fences', () => {
         () => rotateLink(kit.ctx, actor, pass.id, null),
       ),
     ).rejects.toMatchObject({ code: 'PASS_CONFLICT' });
-    expect((await getPass(kit.env.DB, pass.id))?.downloadToken).toBe(token);
+    expect((await getPass(kit.env.DB, pass.id))?.downloadToken).toBe(`h1:${token}`);
   }, 60_000);
 
   it('does not rotate a system link for a pending reservation at the same generation', async () => {

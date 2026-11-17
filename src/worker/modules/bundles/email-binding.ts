@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { revealToken } from '../../platform/capability-token.ts';
+import { AppError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { bindPass, matchesPass, PassDeliveryBindingSchema } from '../delivery/binding.ts';
 import { DeliveryActorSchema } from '../delivery/delivery-actor.ts';
@@ -7,8 +8,17 @@ import { mapPass, type Pass } from '../passes/repo-map.ts';
 import { type BundleRow, bundleEmailRows } from './repo.ts';
 
 /** Of the plain token, so a binding made before the token is sealed still matches after. */
-const bundleTokenHash = async (env: { DB: D1Database }, bundle: BundleRow) =>
-  sha256Hex(await revealToken(env, 'bundle', bundle.id, bundle.org_id, bundle.token));
+const bundleTokenHash = async (env: { DB: D1Database }, bundle: BundleRow) => {
+  try {
+    return await sha256Hex(
+      await revealToken(env, 'bundle', bundle.id, bundle.org_id, bundle.token),
+    );
+  } catch (error) {
+    // A link that cannot be shown binds to nothing: no intent matches it.
+    if (error instanceof AppError && error.code.startsWith('TOKEN_SEAL_')) return '';
+    throw error;
+  }
+};
 
 export const BundleEmailIntentSchema = z.object({
   format: z.literal(1),

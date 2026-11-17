@@ -31,7 +31,7 @@ import { createBundle } from './service.ts';
 
 const actor = { type: 'system', id: null } as const;
 const origin = 'https://wallet.test';
-const tokenOf = (url: string) => url.split('/b/')[1] ?? '';
+const tokenOf = (url: string | null) => url?.split('/b/')[1] ?? '';
 
 async function makeBundle(kit: Kit, passes: Pass[]) {
   return createBundle(

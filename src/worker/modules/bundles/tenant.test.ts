@@ -293,7 +293,7 @@ describe('bundle tenant authorization', () => {
       'SELECT token FROM bundles WHERE id = ?',
       [bundle.id],
     );
-    expect(row?.token).toBe(await tokenMac(kit.env, 'bundle', bundle.url.split('/b/')[1] ?? ''));
+    expect(row?.token).toBe(await tokenMac(kit.env, 'bundle', bundle.url?.split('/b/')[1] ?? ''));
     expect(
       await all(
         kit.env.DB,
@@ -403,7 +403,7 @@ describe('bundle tenant authorization', () => {
         () =>
           change === 'deleted'
             ? run(kit.env.DB, 'DELETE FROM bundles WHERE id = ?', [bundle.id])
-            : run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [
+            : run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
                 kit.ctx.ids.token(),
                 bundle.id,
               ]),

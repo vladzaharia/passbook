@@ -48,7 +48,7 @@ beforeAll(async () => {
 });
 
 const uniqueEmail = () => `${kit.ctx.ids.token(8).toLowerCase()}@example.com`;
-const tokenOf = (url: string) => url.split('/b/')[1] ?? '';
+const tokenOf = (url: string | null) => url?.split('/b/')[1] ?? '';
 const api = (path: string, init: RequestInit = {}, orgId = kit.org.id) =>
   app.request(
     `${ORIGIN}/api/v1${scopedInboxPath(path, orgId)}`,
@@ -310,7 +310,7 @@ describe('atomic test email capture', () => {
         } else if (field === 'token') {
           await run(
             kit.env.DB,
-            'UPDATE passes SET download_token = ?, link_generation = link_generation + 1 WHERE id = ?',
+            `UPDATE passes SET download_token = 'h1:' || ?, link_generation = link_generation + 1 WHERE id = ?`,
             [kit.ctx.ids.token(), pass.id],
           );
         } else {
@@ -390,7 +390,7 @@ describe('atomic test email capture', () => {
             passes[1]!.id,
           ]);
         else if (change === 'token')
-          await run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [
+          await run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
             kit.ctx.ids.token(),
             bundleId,
           ]);
@@ -506,7 +506,7 @@ describe('existing capture exposure', () => {
           queued.passes[1]!.id,
         ]);
       else if (change === 'token')
-        await run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [
+        await run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
           kit.ctx.ids.token(),
           queued.bundle.id,
         ]);

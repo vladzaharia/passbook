@@ -2,6 +2,7 @@ import { unzlibSync, zlibSync } from 'fflate';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { isolatedKeysetDatabase } from '../../../../test/helpers/credential-keyset.ts';
 import { fakeAuth, linkToken, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { crc32 } from '../../../passkit/index.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
 import { createApp } from '../../app.ts';
@@ -194,10 +195,12 @@ describe('public pass snapshots', () => {
     const pass = await kit.pass();
     const snapshot = await capturePassSnapshot(kit.ctx, pass);
     await expect(assertPassSnapshot(kit.ctx, snapshot)).resolves.toBeUndefined();
-    await run(kit.env.DB, 'UPDATE passes SET download_token = ? WHERE id = ?', [
-      kit.fx.ids.token(),
-      pass.id,
-    ]);
+    await withoutTrigger(kit.env.DB, 'passes_token_change_moves_link', () =>
+      run(kit.env.DB, `UPDATE passes SET download_token = 'h1:' || ? WHERE id = ?`, [
+        kit.fx.ids.token(),
+        pass.id,
+      ]),
+    );
     await expect(capturePassSnapshot(kit.ctx, pass)).rejects.toMatchObject({
       status: 404,
       code: 'PASS_NOT_FOUND',
@@ -208,10 +211,12 @@ describe('public pass snapshots', () => {
     {
       name: 'token',
       change: (pass: Pass) =>
-        run(kit.env.DB, 'UPDATE passes SET download_token = ? WHERE id = ?', [
-          kit.fx.ids.token(),
-          pass.id,
-        ]),
+        withoutTrigger(kit.env.DB, 'passes_token_change_moves_link', () =>
+          run(kit.env.DB, `UPDATE passes SET download_token = 'h1:' || ? WHERE id = ?`, [
+            kit.fx.ids.token(),
+            pass.id,
+          ]),
+        ),
     },
     {
       name: 'link generation, even when the token is unchanged',
@@ -639,10 +644,12 @@ describe('public asset fencing', () => {
       name: 'token rotation',
       conditional: false,
       change: (pass: Pass) =>
-        run(kit.env.DB, 'UPDATE passes SET download_token = ? WHERE id = ?', [
-          kit.fx.ids.token(),
-          pass.id,
-        ]),
+        withoutTrigger(kit.env.DB, 'passes_token_change_moves_link', () =>
+          run(kit.env.DB, `UPDATE passes SET download_token = 'h1:' || ? WHERE id = ?`, [
+            kit.fx.ids.token(),
+            pass.id,
+          ]),
+        ),
     },
     {
       name: 'owner reassignment',

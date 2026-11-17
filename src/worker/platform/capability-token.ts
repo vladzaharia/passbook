@@ -5,8 +5,9 @@ import {
   encryptSecret,
   loadKekRing,
 } from './crypto.ts';
-import { UnavailableError } from './errors.ts';
+import { NotFoundError, UnavailableError } from './errors.ts';
 import { toHex } from './ids.ts';
+import { createLogger } from './log.ts';
 import { readSeal, SEALS, type SealRow, type TokenPurpose } from './repo-capability-token.ts';
 
 export { sealPart, sealStatement } from './repo-capability-token.ts';
@@ -20,6 +21,7 @@ export type { SealRow, TokenPurpose };
  */
 export const MAC_PREFIX = 'h1:';
 const encoder = new TextEncoder();
+const log = createLogger({ module: 'capability-token' });
 
 export const isTokenMac = (stored: string): boolean => stored.startsWith(MAC_PREFIX);
 
@@ -90,9 +92,13 @@ export async function revealToken(
 ): Promise<string> {
   if (!isTokenMac(stored)) return stored;
   const row = await readSeal(env.DB, purpose, id, orgId);
-  if (!row) throw new UnavailableError('The link is unavailable. Rotate it.', 'TOKEN_SEAL_MISSING');
+  if (!row) {
+    log.error('token.seal_missing', { code: 'TOKEN_SEAL_MISSING', purpose, id });
+    throw new UnavailableError('The link is unavailable. Rotate it.', 'TOKEN_SEAL_MISSING');
+  }
+  let plain: string;
   try {
-    return await decryptSecretText(
+    plain = await decryptSecretText(
       await loadKekRing(env),
       {
         kekVersion: row.kek_version,
@@ -103,6 +109,14 @@ export async function revealToken(
       credentialAad(id, orgId, SEALS[purpose].kind),
     );
   } catch {
+    log.error('token.seal_unreadable', { code: 'TOKEN_SEAL_UNREADABLE', purpose, id });
     throw new UnavailableError('The link is unavailable. Rotate it.', 'TOKEN_SEAL_UNREADABLE');
   }
+  // A copy that is not of the token this row holds (a write that skipped the seal) must not be shown.
+  if ((await tokenMac(env, purpose, plain)) !== stored) {
+    log.error('token.seal_mismatch', { code: 'TOKEN_SEAL_MISMATCH', purpose, id });
+    // The row moved to another token since the caller read it: the caller's snapshot is stale.
+    throw new NotFoundError('This link is not valid.', 'TOKEN_SEAL_MISMATCH');
+  }
+  return plain;
 }

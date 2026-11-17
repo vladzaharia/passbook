@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
-import { makeOrg } from '../../../../test/helpers/index.ts';
-import { isTokenMac, revealToken, tokenMac } from '../../platform/capability-token.ts';
+import { asLegacyTokens, makeOrg } from '../../../../test/helpers/index.ts';
+import { isTokenMac, revealToken, sealToken, tokenMac } from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { bundleForToken } from '../bundles/public-service.ts';
-import { createBundle } from '../bundles/service.ts';
+import { createBundle, getBundleDto } from '../bundles/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { passForToken } from '../public/service.ts';
 import { linksOf } from './detail.ts';
@@ -33,8 +33,13 @@ async function plainOf(passId: string) {
 /** Puts a pass back to its pre-0059 shape: the plain token in the column, no sealed copy. */
 async function makeLegacy(passId: string, token: string) {
   await run(kit.env.DB, 'DELETE FROM pass_token_seals WHERE pass_id = ?', [passId]);
-  await run(kit.env.DB, 'UPDATE passes SET download_token = ? WHERE id = ?', [token, passId]);
+  await asLegacyTokens(kit.env.DB, () =>
+    run(kit.env.DB, 'UPDATE passes SET download_token = ? WHERE id = ?', [token, passId]),
+  );
 }
+
+const linkOf = (row: { id: string; orgId: string; downloadToken: string } | null) =>
+  row ? revealToken(kit.env, 'pass', row.id, row.orgId, row.downloadToken) : null;
 
 const state = (passId: string) =>
   first<{ row_version: number; download_token: string; gen: number | null; dirty: number }>(
@@ -71,7 +76,7 @@ describe('capability tokens at rest', () => {
       { orgId: kit.org.id, passIds: [pass.id], name: 'B' },
       { kind: 'system' },
     );
-    const token = bundle.url.split('/b/')[1] ?? '';
+    const token = bundle.url?.split('/b/')[1] ?? '';
     await expect(passForToken(job(), token)).rejects.toMatchObject({ status: 404 });
     expect((await bundleForToken(job(), token)).id).toBe(bundle.id);
   });
@@ -139,21 +144,64 @@ describe('sealing legacy tokens', () => {
       now: kit.clock.now(),
     });
     await run(kit.env.DB, 'DELETE FROM pass_token_seals WHERE pass_id = ?', [pass.id]);
+    await asLegacyTokens(kit.env.DB, () =>
+      run(kit.env.DB, 'UPDATE passes SET download_token = ? WHERE id = ?', [legacy, pass.id]),
+    );
     await sealCapabilityTokens(job());
     expect((await state(pass.id))?.download_token).toBe(legacy);
   });
 
-  it('leaves a pass of a suspended org plain until the org is active again', async () => {
+  it('seals a pass of a suspended org too, by the trusted write', async () => {
     const org = await makeOrg(kit.fx, { name: 'Suspended Org' });
     const pass = await kit.pass({ orgId: org.id });
     const legacy = `suspended-${pass.id}-${'z'.repeat(24)}`;
     await makeLegacy(pass.id, legacy);
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
     await sealCapabilityTokens(job());
-    expect((await state(pass.id))?.download_token).toBe(legacy);
-    await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [org.id]);
-    await sealCapabilityTokens(job());
-    expect(isTokenMac((await state(pass.id))?.download_token ?? '')).toBe(true);
+    const row = await getPass(kit.env.DB, pass.id);
+    expect(row?.downloadToken).toBe(await tokenMac(kit.env, 'pass', legacy));
+    expect(await linkOf(row)).toBe(legacy);
+  });
+
+  it('keeps plain tokens and unsealed rotations out of the database', async () => {
+    const pass = await kit.pass();
+    await expect(
+      run(
+        kit.env.DB,
+        "UPDATE passes SET download_token = 'plain', link_generation = link_generation + 1 WHERE id = ?",
+        [pass.id],
+      ),
+    ).rejects.toThrow(/must be a MAC/);
+    await expect(
+      run(kit.env.DB, "UPDATE passes SET download_token = 'h1:forgot' WHERE id = ?", [pass.id]),
+    ).rejects.toThrow(/must move link_generation/);
+    await run(
+      kit.env.DB,
+      "UPDATE passes SET download_token = 'h1:ok', link_generation = link_generation + 1 WHERE id = ?",
+      [pass.id],
+    );
+  });
+
+  it('refuses a sealed copy of another token and lists a bundle with no link', async () => {
+    const pass = await kit.pass();
+    const other = await sealToken(kit.env, 'pass', pass.id, pass.orgId, 'another-token');
+    await run(
+      kit.env.DB,
+      'UPDATE pass_token_seals SET iv = ?, wrapped_dek = ?, ciphertext = ?, kek_version = ? WHERE pass_id = ?',
+      [other.iv, other.wrappedDek, other.ciphertext, other.kekVersion, pass.id],
+    );
+    await expect(
+      revealToken(kit.env, 'pass', pass.id, pass.orgId, pass.downloadToken),
+    ).rejects.toMatchObject({ code: 'TOKEN_SEAL_MISMATCH' });
+    const bundle = await createBundle(
+      job(),
+      actor,
+      'live',
+      { orgId: kit.org.id, passIds: [(await kit.pass()).id], name: 'Broken' },
+      { kind: 'system' },
+    );
+    await run(kit.env.DB, 'DELETE FROM bundle_token_seals WHERE bundle_id = ?', [bundle.id]);
+    expect((await getBundleDto(job(), bundle.id, null)).url).toBeNull();
   });
 
   it('seals a bundle token and is idempotent', async () => {
@@ -165,9 +213,11 @@ describe('sealing legacy tokens', () => {
       { orgId: kit.org.id, passIds: [pass.id], name: 'Legacy' },
       { kind: 'system' },
     );
-    const plain = bundle.url.split('/b/')[1] ?? '';
+    const plain = bundle.url?.split('/b/')[1] ?? '';
     await run(kit.env.DB, 'DELETE FROM bundle_token_seals WHERE bundle_id = ?', [bundle.id]);
-    await run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [plain, bundle.id]);
+    await asLegacyTokens(kit.env.DB, () =>
+      run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [plain, bundle.id]),
+    );
     await sealCapabilityTokens(job());
     await sealCapabilityTokens(job());
     const row = await first<{ token: string }>(

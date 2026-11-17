@@ -36,7 +36,7 @@ beforeAll(async () => {
   kit = await setupKit();
 });
 const actor = { type: 'system', id: null } as const;
-const tokenOf = (url: string) => url.split('/b/')[1] ?? '';
+const tokenOf = (url: string | null) => url?.split('/b/')[1] ?? '';
 
 async function bundle(passIds: string[], email: string) {
   return createBundle(
