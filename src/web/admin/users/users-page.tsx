@@ -83,10 +83,10 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
         <MetaLink
           to="/admin/passes"
           search={{ q: row.original.primaryEmail }}
-          aria-label={`Search primary email ${row.original.primaryEmail} in the selected mode`}
+          aria-label={`Find passes for ${row.original.primaryEmail}`}
           className="text-xs text-accent-fg"
         >
-          Search primary email
+          Find passes
         </MetaLink>
       </div>
     ),
