@@ -5,7 +5,6 @@ import { makePng } from '../templates/package/fixtures.ts';
 import { act } from './act.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { publishScan } from './live.ts';
-import { livePassSnapshot, openLiveSourceProof } from './live-provenance.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { registerHubLoggingTests } from './scan-hub-logging-test-fixtures.ts';
@@ -69,7 +68,7 @@ describe('live display hub', () => {
     expect(JSON.stringify(rows)).not.toMatch(/STAFF-ONLY-TITLE|OTHER-MODE-TITLE/);
   });
 
-  it('publishes only with the original evaluated credential context', async () => {
+  it('withholds an outcome whose card is not the evaluated pass, and publishes the matching one', async () => {
     const source = await kit.scanner({ templateIds: [template] });
     const monitor = await screen('monitor', [source.id]);
     const device = await getScanner(kit.env.DB, source.id);
@@ -82,29 +81,16 @@ describe('live display hub', () => {
       ),
     );
     const pass = await kit.scanPass(template);
+    const other = await kit.scanPass(template);
     const { outcome, evaluatedSnapshot, credentialContext } = await act(kit.ctx, actor, {
       input: codeOf(pass),
       actionId: 'auto',
       clientTs: kit.clock.now(),
       idempotencyKey: key(),
     });
-    if (
-      !evaluatedSnapshot ||
-      !credentialContext?.credentialTombstoneRefs.length ||
-      !credentialContext.otherModeCredentialTombstoneRefs.length
-    )
-      throw new Error('Missing evaluated credential context.');
-    const otherKeyset =
-      credentialContext.credentialKeysetCommitment === 'f'.repeat(64)
-        ? 'e'.repeat(64)
-        : 'f'.repeat(64);
-    for (const invalid of [
-      null,
-      { ...credentialContext, credentialKeysetCommitment: otherKeyset },
-      { ...credentialContext, credentialTombstoneRefs: [] },
-      { ...credentialContext, otherModeCredentialTombstoneRefs: [] },
-    ])
-      publishScan(kit.ctx, actor, outcome, evaluatedSnapshot, invalid, 'camera');
+    if (!evaluatedSnapshot) throw new Error('Missing evaluated pass.');
+    const swapped = { ...outcome, card: { ...outcome.card, passId: other.id } as never };
+    publishScan(kit.ctx, actor, swapped, evaluatedSnapshot, credentialContext, 'camera');
     await kit.settle();
     expect((await hub().snapshot(monitor.attachment)).rows).toEqual([]);
 
@@ -112,27 +98,27 @@ describe('live display hub', () => {
     await kit.settle();
     const rows = (await hub().snapshot(monitor.attachment)).rows;
     expect(rows).toMatchObject([{ passId: pass.id, holder: 'Anna Popescu' }]);
-    const sealed = await hub().sourceProof(rows[0]!.id);
-    if (!sealed) throw new Error('Missing retained source proof.');
-    const opened = await openLiveSourceProof(kit.env, sealed);
-    expect(opened?.credentialContext).toEqual(credentialContext);
-    expect(opened?.passSnapshot?.credentialTombstoneRefs).toEqual(
-      credentialContext.credentialTombstoneRefs,
-    );
-    expect(opened?.passSnapshot?.otherModeCredentialTombstoneRefs).toEqual(
-      credentialContext.otherModeCredentialTombstoneRefs,
-    );
-    expect(JSON.stringify(rows)).not.toContain(sealed);
+    const stored = await hub().ringRow(rows[0]?.id ?? '');
+    expect(stored).toMatchObject({
+      scanId: outcome.scanId,
+      templateId: template,
+      gen: {
+        credential: evaluatedSnapshot.pass.credentialGeneration,
+        lifecycle: evaluatedSnapshot.pass.lifecycleGeneration,
+      },
+    });
     for (const privateValue of [
-      credentialContext.credentialKeysetCommitment,
-      ...credentialContext.credentialTombstoneRefs,
-      ...credentialContext.otherModeCredentialTombstoneRefs,
-    ])
+      credentialContext?.credentialKeysetCommitment ?? 'none',
+      ...(credentialContext?.credentialTombstoneRefs ?? []),
+      ...(credentialContext?.otherModeCredentialTombstoneRefs ?? []),
+    ]) {
       expect(JSON.stringify(rows)).not.toContain(privateValue);
+      expect(JSON.stringify(stored)).not.toContain(privateValue);
+    }
   });
 
   it.each(['wallet document', 'wallet serial', 'pass personalization'] as const)(
-    'does not replace evaluated %s with later same-version data',
+    'keeps the evaluated pass on its screen after a content-only %s change',
     async (changed) => {
       const source = await kit.scanner({ templateIds: [template] });
       const monitor = await screen('monitor', [source.id]);
@@ -193,13 +179,14 @@ describe('live display hub', () => {
         (entry) => entry.scannerId === source.id,
       );
       if (!projection) throw new Error('Missing retained event.');
-      expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
-      expect(JSON.stringify(projection)).not.toContain('Original Wallet Member');
+      // Content is not authority (F8): the row is the one the source screen showed.
+      expect(projection).toMatchObject({ passId: pass.id, holder: 'Original Wallet Member' });
+      expect(projection.photoUrl).toEqual(expect.any(String));
     },
   );
 
   it.each(['organization', 'template'] as const)(
-    'publishes an evaluated outcome by the org access epoch after same-clock %s ABA',
+    "shows an evaluated outcome after a same-clock %s change that left the recipient's authority intact",
     async (changed) => {
       const id = await kit.scanTemplate(`Outcome ${changed} ABA`, {
         actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
@@ -232,18 +219,6 @@ describe('live display hub', () => {
         idempotencyKey: key(),
       });
       expect(outcome.kind).toBe('ok');
-      const original = await candidateById(kit.env.DB, kit.org.id, pass.id);
-      if (!original || !evaluatedSnapshot) throw new Error('Missing evaluated pass.');
-      const originalWithCredentials = {
-        ...original,
-        credentialTombstoneRefs: evaluatedSnapshot.credentialTombstoneRefs,
-        otherModeCredentialTombstoneRefs: evaluatedSnapshot.otherModeCredentialTombstoneRefs,
-      };
-      expect(await livePassSnapshot(kit.env, evaluatedSnapshot)).toEqual(
-        await livePassSnapshot(kit.env, originalWithCredentials),
-      );
-      // orgRevision is the org's access_revision (moves with status); templateRevision is its
-      // config_revision (moves with the profile). A template's own status A-B-A is not authority.
       const named = await first<{ name: string }>(
         kit.env.DB,
         'SELECT name FROM orgs WHERE id = ?',
@@ -256,31 +231,14 @@ describe('live display hub', () => {
           : ['name', `${named.name} (away)`, named.name];
       for (const value of [away, back])
         await run(kit.env.DB, `UPDATE orgs SET ${column} = ? WHERE id = ?`, [value, kit.org.id]);
-      expect(kit.clock.now()).toBe(now);
-      const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
-      if (!current) throw new Error('Missing restored pass.');
-      expect(changed === 'organization' ? current.orgRevision : current.templateRevision).toBe(
-        (changed === 'organization' ? original.orgRevision : original.templateRevision)! + 2,
-      );
       publishScan(kit.ctx, actor, outcome, evaluatedSnapshot, credentialContext, 'camera');
       await kit.settle();
       const projection = (await hub().snapshot(monitor.attachment)).rows.find(
         (entry) => entry.scannerId === source.id,
       );
-      if (!projection) throw new Error('Missing retained event.');
-      // An access change redacts; a rename moves only config_revision, which is not door authority.
-      if (changed === 'organization') {
-        expect(projection).toMatchObject({ passId: null, holder: null, photoUrl: null });
-        expect(JSON.stringify(projection)).not.toContain('ABA Private Member');
-      } else expect(projection).toMatchObject({ passId: pass.id, photoUrl: expect.any(String) });
+      expect(projection).toMatchObject({ passId: pass.id, photoUrl: expect.any(String) });
       expect(JSON.stringify(projection)).not.toMatch(
-        /sourceProof|passSnapshot|passCommitment|credentialTombstoneRefs|otherModeCredentialTombstoneRefs|walletVersion|versionPersonalization|orgRevision|templateRevision|identityRevision|activeRelease|passReleaseId/,
-      );
-      const sealed = await hub().sourceProof(projection.id);
-      if (!sealed) throw new Error('Missing retained source proof.');
-      expect(JSON.stringify(projection)).not.toContain(sealed);
-      expect((await openLiveSourceProof(kit.env, sealed))?.passSnapshot).toEqual(
-        await livePassSnapshot(kit.env, originalWithCredentials),
+        /sourceProof|passSnapshot|passCommitment|credentialTombstoneRefs|walletVersion|versionPersonalization|orgRevision|templateRevision|identityRevision|activeRelease|passReleaseId/,
       );
     },
   );

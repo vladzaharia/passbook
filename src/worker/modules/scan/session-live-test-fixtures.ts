@@ -9,9 +9,9 @@ import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { captureScanTenantAuthority, scannerActor, tenantScanRole, withRole } from './actor.ts';
 import { managedAdminActor } from './admin-setup.ts';
 import { createScannerStore, resolvedRowOf } from './auth-store.ts';
-import { liveAttachment } from './live.ts';
+import { liveAttachment, liveRingRow } from './live.ts';
 import type { LiveAttachment } from './live-auth.ts';
-import { type InternalLiveRow, livePassSnapshot, sealLiveSourceProof } from './live-provenance.ts';
+import type { LiveRingRow } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { readScannerScope } from './repo-scope.ts';
@@ -83,12 +83,12 @@ export interface SessionLiveFixtures {
     role: 'desk' | 'customer',
   ) => Promise<LiveAttachment>;
   row: (scannerId: string) => ScanLiveRow;
-  withSourceProof: (entry: ScanLiveRow) => Promise<InternalLiveRow>;
+  withSourceProof: (entry: ScanLiveRow) => Promise<LiveRingRow>;
 }
 
 export async function sessionLiveFixtures(): Promise<SessionLiveFixtures> {
   const kit = await setupScanKit();
-  const credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
+  const _credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   const fixture = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin'] });
   const auth = await createSessionStore(kit.env, kit.clock).resolve(fixture.cookieValue);
   if (!auth) throw new Error('Missing admin session.');
@@ -158,30 +158,15 @@ export async function sessionLiveFixtures(): Promise<SessionLiveFixtures> {
       ? await candidateById(kit.env.DB, scanner.orgId, entry.passId)
       : null;
     if (entry.passId && !candidate) throw new Error('Missing source pass.');
-    const credentialContext = candidate
-      ? {
-          credentialKeysetCommitment: candidate.credentialKeysetCommitment,
-          credentialTombstoneRefs: candidate.credentialTombstoneRefs,
-          otherModeCredentialTombstoneRefs: candidate.otherModeCredentialTombstoneRefs,
-        }
-      : {
-          credentialKeysetCommitment,
-          credentialTombstoneRefs: [],
-          otherModeCredentialTombstoneRefs: [],
-        };
-    if (credentialContext.credentialKeysetCommitment !== safeActor.credentialKeysetCommitment)
-      throw new Error('Source credential keyset changed.');
-    return {
-      ...entry,
-      sourceProof: await sealLiveSourceProof(kit.env, {
-        actor: safeActor,
-        credentialContext,
-        eventId: entry.id,
-        passId: entry.passId,
-        passSnapshot: candidate ? await livePassSnapshot(kit.env, candidate) : null,
-        at: entry.at,
-      }),
-    };
+    const ring = await liveRingRow(
+      kit.ctx,
+      safeActor,
+      { ...entry, passId: null, holder: null, photoUrl: null },
+      candidate,
+      null,
+    );
+    if (!ring) throw new Error('The source pass cannot be shown.');
+    return ring;
   }
   return { kit, authority, parent, child, pairedAttachment, row, withSourceProof };
 }

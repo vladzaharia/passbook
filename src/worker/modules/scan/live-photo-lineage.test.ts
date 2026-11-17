@@ -1,13 +1,8 @@
+import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
 import { deleteMemberPhoto, putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { scannerActor, withRole } from './actor.ts';
-import { assetGrantValid, mintAssetGrant } from './assets.ts';
-import { liveRecipient } from './live-auth.ts';
-import { liveRowFor } from './live-render.ts';
-import { getScanner } from './repo-device.ts';
-import { candidateById } from './repo-lookup.ts';
 import { setSetupWatchStmt } from './repo-setups-test-support.ts';
 import {
   hub,
@@ -18,10 +13,9 @@ import {
   screen,
   template,
 } from './scan-hub-test-fixtures.ts';
-import { proofedScanActor } from './test-kit.ts';
 
 describe('live photo lineage', () => {
-  it('renders a permitted member photo with a monitor-bound grant', async () => {
+  it('serves a permitted member photo to a watching monitor only', async () => {
     const source = await kit.scanner({ templateIds: [template] });
     const monitor = await screen('monitor', [source.id]);
     const pass = await kit.scanPass(template);
@@ -40,128 +34,60 @@ describe('live photo lineage', () => {
     expect(url).toContain('/scan/live/passes/');
     const image = await kit.get(monitor.headers, url.replace('/api/v1/scan', ''));
     expect(image.status).toBe(200);
-    const other = await screen('monitor', [source.id]);
-    expect((await kit.get(other.headers, url.replace('/api/v1/scan', ''))).status).toBe(404);
+    const unwatching = await screen('monitor', []);
+    expect((await kit.get(unwatching.headers, url.replace('/api/v1/scan', ''))).status).toBe(404);
   });
 
-  it('separates ordinary grants from live grants and binds a live grant to its watched source', async () => {
+  it('binds a live photo to its retained event, its pass and a watched source', async () => {
     const fixture = await photoFixture();
     const otherSource = await kit.scanner({ templateIds: [template] });
+    const otherPass = await kit.scanPass(template);
+    const projection = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
+      (item) => item.id === fixture.event.id,
+    );
+    if (!projection?.photoUrl) throw new Error('Missing current live photo.');
+    const url = new URL(projection.photoUrl, 'https://wallet.test');
+    expect([...url.searchParams.keys()]).toEqual(['event']);
+    const path = () => `${url.pathname.replace('/api/v1/scan', '')}${url.search}`;
+    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(200);
+    // An event nobody retained, and an event of another pass, never open this pass's photo.
+    url.searchParams.set('event', 'no-such-event');
+    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
+    const otherEvent = row(otherSource.id, { passId: otherPass.id });
+    await publish(otherEvent);
+    url.searchParams.set('event', otherEvent.id);
+    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
+    // A source the monitor does not watch is out of scope until the watch lists it.
+    const sameFromOther = row(otherSource.id, { passId: fixture.pass.id });
+    await publish(sameFromOther);
+    url.searchParams.set('event', sameFromOther.id);
+    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
     await setSetupWatchStmt(kit.env.DB, kit.org.id, fixture.monitor.id, {
       scannerIds: [fixture.source.id, otherSource.id],
       allOrg: false,
     }).run();
-    const snapshot = await hub().snapshot(fixture.monitor.attachment);
-    const projection = snapshot.rows.find((item) => item.id === fixture.event.id);
-    if (!projection?.photoUrl) throw new Error('Missing current live photo.');
-    expect(projection).not.toHaveProperty('sourceProof');
-    const url = new URL(projection.photoUrl, 'https://wallet.test');
-    expect(url.searchParams.has('sourceProof')).toBe(false);
-    expect(url.searchParams.has('source')).toBe(false);
-    const liveGrant = url.searchParams.get('g');
-    const recipient = await liveRecipient(kit.ctx, fixture.monitor.attachment);
-    const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
-    if (!liveGrant || !recipient || !candidate?.activeTemplateVersion)
-      throw new Error('Missing grant authority fixture.');
-    const sourceRow = await getScanner(kit.env.DB, fixture.source.id);
-    if (!sourceRow) throw new Error('Missing source scanner.');
-    const sourceActor = await proofedScanActor(
-      kit.ctx,
-      withRole(
-        scannerActor(kit.ctx, sourceRow, 'live', 'cookie', {
-          event: null,
-          templateIds: [template],
-        }),
-        null,
-      ),
-    );
-    const ordinary = await mintAssetGrant(
-      kit.ctx,
-      sourceActor,
-      candidate,
-      candidate.connectionGeneration,
-      candidate.activeTemplateVersion,
-      undefined,
-      true,
-      'commit',
-    );
-    expect(
-      await assetGrantValid(
-        kit.ctx,
-        sourceActor,
-        candidate,
-        candidate.connectionGeneration,
-        ordinary,
-        undefined,
-        'commit',
-        true,
-      ),
-    ).toBe(true);
-    expect(
-      await assetGrantValid(
-        kit.ctx,
-        recipient.actor,
-        candidate,
-        candidate.connectionGeneration,
-        liveGrant,
-        { sourceId: fixture.source.id, eventId: fixture.event.id, actor: sourceActor },
-        'commit',
-        true,
-      ),
-    ).toBe(true);
-    expect(
-      await assetGrantValid(
-        kit.ctx,
-        sourceActor,
-        candidate,
-        candidate.connectionGeneration,
-        liveGrant,
-        undefined,
-        'commit',
-        true,
-      ),
-    ).toBe(false);
-    expect(
-      await assetGrantValid(
-        kit.ctx,
-        recipient.actor,
-        candidate,
-        candidate.connectionGeneration,
-        ordinary,
-        { sourceId: fixture.source.id, eventId: fixture.event.id, actor: sourceActor },
-        'commit',
-        true,
-      ),
-    ).toBe(false);
-    const path = () => `${url.pathname.replace('/api/v1/scan', '')}${url.search}`;
     expect((await kit.get(fixture.monitor.headers, path())).status).toBe(200);
-    const otherSourceEvent = row(otherSource.id, { passId: fixture.pass.id });
-    await publish(otherSourceEvent);
-    url.searchParams.set('event', otherSourceEvent.id);
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
-    const anotherEvent = row(fixture.source.id, { passId: fixture.pass.id });
-    await publish(anotherEvent);
-    url.searchParams.set('event', anotherEvent.id);
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
-    url.searchParams.set('event', fixture.event.id);
-    expect(url.searchParams.has('source')).toBe(false);
-    url.searchParams.set('g', ordinary);
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
   });
 
-  it('omits retained rows without valid source proof', async () => {
+  it('renders ring entries written before plain rows as redacted', async () => {
     const fixture = await photoFixture();
-    const recipient = await liveRecipient(kit.ctx, fixture.monitor.attachment);
-    if (!recipient) throw new Error('Missing monitor recipient.');
-    for (const entry of [
-      row(fixture.source.id, { passId: fixture.pass.id }),
-      { ...row(fixture.source.id, { passId: fixture.pass.id }), sourceProof: 'invalid' },
-    ]) {
-      const projection = await liveRowFor(kit.ctx, recipient, entry);
-      expect(projection).toBeNull();
-      expect(JSON.stringify(projection)).not.toContain('Private Member');
-      expect(JSON.stringify(projection)).not.toContain('sourceProof');
-    }
+    const old = {
+      ...fixture.event,
+      id: kit.ctx.ids.token(16),
+      holder: 'Private Member',
+      sourceProof: 'sealed-by-an-earlier-deploy',
+    };
+    await runInDurableObject(hub(), async (_object, state) => {
+      const ring = (await state.storage.get<unknown[]>('recent')) ?? [];
+      await state.storage.put('recent', [...ring, old]);
+    });
+    const rows = (await hub().snapshot(fixture.monitor.attachment)).rows;
+    expect(rows.find((item) => item.id === fixture.event.id)).toMatchObject({
+      passId: fixture.pass.id,
+    });
+    const legacy = rows.find((item) => item.id === old.id);
+    expect(legacy).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    expect(JSON.stringify(legacy)).not.toMatch(/Private Member|sourceProof|sealed/);
   });
 
   it('revokes an old live photo after deletion and recreation with identical bytes', async () => {
@@ -179,7 +105,7 @@ describe('live photo lineage', () => {
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
-    expect(stale).toMatchObject({ passId: null, holder: null, photoUrl: null });
+    expect(stale).toMatchObject({ passId: fixture.pass.id, photoUrl: null });
     const event = row(fixture.source.id, { passId: fixture.pass.id });
     await publish(event);
     const fresh = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
@@ -191,7 +117,7 @@ describe('live photo lineage', () => {
     ).toBe(200);
   });
 
-  it('binds live photos to the current connection generation and denies a disabled connection', async () => {
+  it('withholds the pass of a disabled connection', async () => {
     const fixture = await photoFixture();
     const connectionId = kit.ctx.ids.id();
     await run(
@@ -205,31 +131,17 @@ describe('live photo lineage', () => {
       "UPDATE passes SET connection_id = ?, external_ref = 'live-photo' WHERE id = ?",
       [connectionId, fixture.pass.id],
     );
+    // Attaching an enabled connection changes content, not authority.
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+    await run(kit.env.DB, 'UPDATE connections SET enabled = 0 WHERE id = ?', [connectionId]);
     expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
-    const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
+    const disabled = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
-    expect(stale?.photoUrl).toBeNull();
-    const connectedEvent = row(fixture.source.id, { passId: fixture.pass.id });
-    await publish(connectedEvent);
-    const connected = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
-      (item) => item.id === connectedEvent.id,
-    );
-    if (!connected?.photoUrl) throw new Error('Missing connected live photo.');
-    const path = connected.photoUrl.replace('/api/v1/scan', '');
-    expect((await kit.get(fixture.monitor.headers, path)).status).toBe(200);
-    await run(kit.env.DB, 'UPDATE connections SET generation = generation + 1 WHERE id = ?', [
-      connectionId,
-    ]);
-    expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
-    await run(kit.env.DB, 'UPDATE connections SET enabled = 0 WHERE id = ?', [connectionId]);
-    const disabled = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
-      (item) => item.id === connectedEvent.id,
-    );
-    expect(disabled?.photoUrl).toBeNull();
+    expect(disabled).toMatchObject({ passId: null, holder: null, photoUrl: null });
   });
 
-  it('enforces the current source event filter on both projection and redemption', async () => {
+  it('does not re-check the source event filter after the scan', async () => {
     const event = await kit.event({ templateIds: [template] });
     await run(kit.env.DB, 'UPDATE scan_events SET match_input = ?, match_values = ? WHERE id = ?', [
       'tier',
@@ -260,11 +172,11 @@ describe('live photo lineage', () => {
       'UPDATE scan_events SET match_values = ?, updated_at = updated_at + 1 WHERE id = ?',
       ['["silver"]', event.id],
     );
-    expect((await kit.get(monitor.headers, path)).status).toBe(404);
+    expect((await kit.get(monitor.headers, path)).status).toBe(200);
     const current = (await hub().snapshot(monitor.attachment)).rows.find(
       (item) => item.id === entry.id,
     );
-    expect(current).toBeUndefined();
+    expect(current).toMatchObject({ passId: pass.id });
   });
 
   it('requires both source and monitor roles to meet the photo policy', async () => {
@@ -305,27 +217,24 @@ describe('live photo lineage', () => {
       "UPDATE scanners SET settings = json_set(settings, '$.roleWithoutSignIn', 'door'), updated_at = updated_at + 1 WHERE id = ?",
       [source.id],
     );
+    // The source is not re-checked: the scan was made under the role it had.
     expect(
       (await kit.get(desk.headers, deskResult.photoUrl.replace('/api/v1/scan', ''))).status,
-    ).toBe(404);
-    const downgraded = (await hub().snapshot(desk.attachment)).rows.find(
-      (item) => item.id === entry.id,
-    );
-    expect(downgraded).toBeUndefined();
+    ).toBe(200);
   });
 
-  it('omits the row and denies the photo after the source loses template access', async () => {
+  it('keeps the row after the source loses template access', async () => {
     const fixture = await photoFixture();
     await run(
       kit.env.DB,
       'DELETE FROM scanner_templates WHERE scanner_id = ? AND template_id = ?',
       [fixture.source.id, template],
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
     const projection = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
-    expect(projection).toBeUndefined();
+    expect(projection).toMatchObject({ passId: fixture.pass.id });
   });
 
   it.each([
@@ -342,18 +251,21 @@ describe('live photo lineage', () => {
     expect(projection?.photoUrl).toBeNull();
   });
 
-  it('honors the source and monitor photo settings during projection and redemption', async () => {
+  it('honors the source setting at the scan and the monitor setting at every read', async () => {
     const fixture = await photoFixture();
     await run(
       kit.env.DB,
       "UPDATE scanners SET settings = json_set(settings, '$.showPhoto', json('false')), updated_at = updated_at + 1 WHERE id = ?",
       [fixture.source.id],
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
-    const projection = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
-      (item) => item.id === fixture.event.id,
-    );
-    expect(projection).toBeUndefined();
+    // The scan was made while photos were on: the retained row keeps its photo.
+    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+    const next = row(fixture.source.id, { passId: fixture.pass.id });
+    await publish(next);
+    expect(
+      (await hub().snapshot(fixture.monitor.attachment)).rows.find((item) => item.id === next.id)
+        ?.photoUrl,
+    ).toBeNull();
 
     const source = await kit.scanner({ templateIds: [template] });
     const monitor = await screen('monitor', [source.id], false, { showPhoto: false });

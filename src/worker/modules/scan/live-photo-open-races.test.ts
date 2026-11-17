@@ -4,43 +4,24 @@ import { run } from '../../platform/db.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { candidateById } from './repo-lookup.ts';
 import { kit, observeCancellation, photoFixture } from './scan-hub-test-fixtures.ts';
 
 describe('live photo open-to-commit fence', () => {
   it.each([
-    'source-token',
     'recipient-token',
-    'source-config',
     'recipient-config',
-    'source-mode',
     'recipient-mode',
-    'source-scope',
     'grant-expiry',
     'photo-key',
     'photo-version',
     'photo-hash',
     'photo-inclusion',
-    'template-bytes',
   ] as const)('cancels the open R2 body when %s changes', async (change) => {
     const fixture = await photoFixture();
     const before = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
     const stored = await memberPhoto(kit.env.DB, kit.org.id, fixture.pass.id);
     if (!before || !stored) throw new Error('Missing original photo authority.');
-    const resolved = await verifyLiveTemplateSnapshot(
-      kit.ctx,
-      before,
-      before.templateSnapshot,
-      'commit',
-    );
-    const asset = resolved?.pinned.assets.find((entry) => entry.source.kind === 'r2');
-    if (asset?.source.kind !== 'r2') throw new Error('Missing pinned R2 template asset.');
-    const assetKey = asset.source.key;
-    const assetObject = await kit.env.BUCKET.get(assetKey);
-    if (!assetObject) throw new Error('Missing pinned template bytes.');
-    const originalBytes = new Uint8Array(await assetObject.arrayBuffer());
-    if (!originalBytes.length) throw new Error('Empty pinned template asset.');
     const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
     let opened = false;
     let cancelled = 0;
@@ -48,39 +29,29 @@ describe('live photo open-to-commit fence', () => {
       const object = await originalGet(key, options);
       if (key !== stored.r2_key || !object) return object;
       opened = true;
-      if (change === 'source-token' || change === 'recipient-token') {
-        const scanner = change === 'source-token' ? fixture.source.id : fixture.monitor.id;
+      if (change === 'recipient-token') {
+        const scanner = fixture.monitor.id;
         await run(
           kit.env.DB,
           'UPDATE scanners SET token_hash=?, updated_at=updated_at+1 WHERE id=?',
           [`replacement-${kit.ctx.ids.token()}`, scanner],
         );
-      } else if (change === 'source-config' || change === 'recipient-config') {
-        const scanner = change === 'source-config' ? fixture.source.id : fixture.monitor.id;
+      } else if (change === 'recipient-config') {
+        const scanner = fixture.monitor.id;
         await run(
           kit.env.DB,
           "UPDATE scanners SET time_zone = CASE time_zone WHEN 'UTC' THEN 'Europe/Paris' ELSE 'UTC' END WHERE id=?",
           [scanner],
         );
-      } else if (change === 'source-mode' || change === 'recipient-mode') {
-        const scanner = change === 'source-mode' ? fixture.source.id : fixture.monitor.id;
+      } else if (change === 'recipient-mode') {
+        const scanner = fixture.monitor.id;
         await run(
           kit.env.DB,
           "UPDATE scanners SET mode='test', updated_at=updated_at+1 WHERE id=?",
           [scanner],
         );
-      } else if (change === 'source-scope') {
-        await run(
-          kit.env.DB,
-          'DELETE FROM scanner_templates WHERE scanner_id=? AND template_id=?',
-          [fixture.source.id, fixture.pass.templateId],
-        );
       } else if (change === 'grant-expiry') {
         kit.clock.advance(3_600_001);
-      } else if (change === 'template-bytes') {
-        const changed = originalBytes.slice();
-        changed[0] = originalBytes[0]! ^ 1;
-        await kit.env.BUCKET.put(assetKey, changed);
       } else {
         const field = {
           'photo-key': ['r2_key', `${stored.r2_key}-replacement`],
@@ -102,7 +73,6 @@ describe('live photo open-to-commit fence', () => {
       response = await kit.get(fixture.monitor.headers, fixture.path);
     } finally {
       spy.mockRestore();
-      if (change === 'template-bytes') await kit.env.BUCKET.put(assetKey, originalBytes);
     }
     expect(opened).toBe(true);
     expect(cancelled).toBe(1);
@@ -115,6 +85,51 @@ describe('live photo open-to-commit fence', () => {
       expect(after?.pass.imageGeneration).toBe(before.pass.imageGeneration + 1);
     }
   });
+
+  it.each(['token', 'config', 'mode', 'scope'] as const)(
+    'keeps an open stream when only the source %s changes',
+    async (change) => {
+      const fixture = await photoFixture();
+      const stored = await memberPhoto(kit.env.DB, kit.org.id, fixture.pass.id);
+      if (!stored) throw new Error('Missing stored photo.');
+      const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
+      const spy = vi.spyOn(kit.env.BUCKET, 'get').mockImplementation(async (key, options) => {
+        const object = await originalGet(key, options);
+        if (key !== stored.r2_key || !object) return object;
+        if (change === 'token')
+          await run(
+            kit.env.DB,
+            'UPDATE scanners SET token_hash=?, updated_at=updated_at+1 WHERE id=?',
+            [`replacement-${kit.ctx.ids.token()}`, fixture.source.id],
+          );
+        else if (change === 'config')
+          await run(
+            kit.env.DB,
+            "UPDATE scanners SET time_zone = CASE time_zone WHEN 'UTC' THEN 'Europe/Paris' ELSE 'UTC' END WHERE id=?",
+            [fixture.source.id],
+          );
+        else if (change === 'mode')
+          await run(
+            kit.env.DB,
+            "UPDATE scanners SET mode='test', updated_at=updated_at+1 WHERE id=?",
+            [fixture.source.id],
+          );
+        else
+          await run(
+            kit.env.DB,
+            'DELETE FROM scanner_templates WHERE scanner_id=? AND template_id=?',
+            [fixture.source.id, fixture.pass.templateId],
+          );
+        return object;
+      });
+      try {
+        // The row is re-checked against the recipient, not the scanner that made the scan.
+        expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  );
 
   it('does not open a foreign tenant photo with an otherwise valid local event and grant', async () => {
     const fixture = await photoFixture();

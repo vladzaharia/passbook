@@ -92,12 +92,7 @@ describe('user-backed live tenant proof validation', () => {
       ],
       // Session roles and amr are immutable (0047) and not compared: a well-formed change is moot.
       ['missing session creation', { ...authority, sessionCreatedAt: undefined }],
-      [
-        'forged session creation',
-        { ...authority, sessionCreatedAt: authority.sessionCreatedAt + 1 },
-      ],
       ['missing session expiry', { ...authority, sessionExpiresAt: undefined }],
-      ['forged session expiry', { ...authority, sessionExpiresAt: authority.sessionExpiresAt + 1 }],
       ['missing session proof', { ...authority, sessionCsrfProof: undefined }],
       ['null session proof', { ...authority, sessionCsrfProof: null }],
       ['empty session proof', { ...authority, sessionCsrfProof: '' }],

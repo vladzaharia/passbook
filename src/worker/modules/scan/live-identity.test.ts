@@ -9,8 +9,6 @@ import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { updatePass } from '../passes/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { liveRecipient } from './live-auth.ts';
-import { openLiveSourceProof, sealLiveSourceProof } from './live-provenance.ts';
-import { liveRowFor } from './live-render.ts';
 import { canShowPhotoForCandidate, scannerCandidateAllowed } from './member-photo.ts';
 import { candidateById } from './repo-lookup.ts';
 import {
@@ -27,61 +25,7 @@ import {
 const system = { type: 'system' as const, id: null };
 
 describe('live identity authority', () => {
-  it('never projects cached details when a proof is missing, swapped or bound to another row', async () => {
-    const fixture = await photoFixture();
-    const recipient = await liveRecipient(kit.ctx, fixture.monitor.attachment);
-    const proof = await hub().sourceProof(fixture.event.id);
-    if (!recipient || !proof) throw new Error('Missing proof fixture.');
-    const another = await proven(row(fixture.source.id, { passId: fixture.pass.id }));
-    const decoded = await openLiveSourceProof(kit.env, another.sourceProof);
-    if (!decoded?.passSnapshot) throw new Error('Missing pass snapshot fixture.');
-    const noOrgRevision = await sealLiveSourceProof(kit.env, {
-      ...decoded,
-      passSnapshot: { ...decoded.passSnapshot, orgRevision: null },
-    });
-    const noTemplateRevision = await sealLiveSourceProof(kit.env, {
-      ...decoded,
-      passSnapshot: { ...decoded.passSnapshot, templateRevision: null },
-    });
-    const missingRelease = await Promise.all(
-      [
-        'activeReleaseId',
-        'activeReleaseGeneration',
-        'activeReleaseVersion',
-        'activeReleaseCandidateHash',
-      ].map((field) =>
-        sealLiveSourceProof(kit.env, {
-          ...decoded,
-          passSnapshot: { ...decoded.passSnapshot!, [field]: null },
-        }),
-      ),
-    );
-    const otherPass = await kit.scanPass(template);
-    const genuine = await liveRowFor(kit.ctx, recipient, another);
-    expect(genuine).toMatchObject({ passId: fixture.pass.id });
-    expect(JSON.stringify(genuine)).not.toContain('Private Member');
-    // A row whose proof does not authenticate it (missing, swapped, or bound to another event,
-    // time, pass or scanner) is dropped: none of its fields can be trusted.
-    for (const entry of [
-      { ...another, sourceProof: '' },
-      { ...another, sourceProof: 'invalid' },
-      { ...another, sourceProof: proof },
-      { ...another, at: another.at + 1 },
-      { ...another, passId: otherPass.id },
-      { ...another, scannerId: fixture.monitor.id },
-    ])
-      expect(await liveRowFor(kit.ctx, recipient, entry)).toBeNull();
-    // An authentic proof whose pass snapshot is incomplete shows the event without identity.
-    for (const sourceProof of [noOrgRevision, noTemplateRevision, ...missingRelease]) {
-      const entry = { ...another, sourceProof };
-      const result = await liveRowFor(kit.ctx, recipient, entry);
-      expect(result).toMatchObject({ passId: null, holder: null, photoUrl: null });
-      expect(JSON.stringify(result)).not.toContain('Private Member');
-      expect(result).not.toHaveProperty('sourceProof');
-    }
-  });
-
-  it('reconstructs identity rather than replaying a cached title, and rejects pass ABA', async () => {
+  it('evaluates the holder at publish rather than replaying a cached title', async () => {
     const source = await kit.scanner({ templateIds: [template] });
     const monitor = await screen('monitor', [source.id]);
     const pass = await kit.scanPass(template, { memberName: 'Visible Member' });
@@ -106,11 +50,12 @@ describe('live identity authority', () => {
       { input: { memberName: 'Visible Member' } },
       { scope: null },
     );
-    const stale = (await hub().snapshot(monitor.attachment)).rows.find(
+    // Content is not authority (F8): the row still shows what the source screen showed.
+    const after = (await hub().snapshot(monitor.attachment)).rows.find(
       (entry) => entry.id === event.id,
     );
-    expect(stale).toMatchObject({ passId: null, holder: null, photoUrl: null });
-    expect(JSON.stringify(stale)).not.toContain('Visible Member');
+    expect(after).toMatchObject({ passId: pass.id, holder: 'Visible Member' });
+    expect(JSON.stringify(after)).not.toContain('STALE PRIVATE');
   });
 
   it('intersects source and recipient identity roles and never trusts the stored holder', async () => {
@@ -182,14 +127,6 @@ describe('live identity authority', () => {
     };
     expect(scannerCandidateAllowed(unassigned, candidate, passJson, kit.clock.now())).toBe(false);
     expect(await canShowPhotoForCandidate(kit.ctx, unassigned, candidate)).toBe(false);
-    const proof = await hub().sourceProof(fixture.event.id);
-    if (!proof) throw new Error('Missing monitor source proof.');
-    const entry = { ...fixture.event, sourceProof: proof };
-    expect(await liveRowFor(kit.ctx, recipient, entry)).toMatchObject({
-      passId: fixture.pass.id,
-    });
-    // An unassigned session binding is not the recipient's observed workspace: nothing is shown.
-    expect(await liveRowFor(kit.ctx, { ...recipient, actor: unassigned }, entry)).toBeNull();
   });
 
   it('derives staffless monitor visibility from a real signed-in source without changing its authority', async () => {
@@ -223,15 +160,7 @@ describe('live identity authority', () => {
     await putMemberPhoto(kit.ctx, system, pass.id, { png, includeInPass: false }, null);
     const event = row(source.id, { passId: pass.id });
     await publish(event);
-    const sealed = await hub().sourceProof(event.id);
-    if (!sealed) throw new Error('Missing staff source proof.');
-    const proof = await openLiveSourceProof(kit.env, sealed);
-    expect(proof?.actor.staff).toMatchObject({
-      id: staff.id,
-      name: staff.name,
-      role: 'desk',
-      updatedAt: kit.clock.now(),
-    });
+    expect(await hub().ringRow(event.id)).toMatchObject({ sourceRole: 'desk' });
     const visible = (await hub().snapshot(monitor.attachment)).rows.find(
       (item) => item.id === event.id,
     );
@@ -251,42 +180,16 @@ describe('live identity authority', () => {
     );
     expect(denied).toMatchObject({ passId: pass.id, holder: null, photoUrl: null });
 
+    // The row is re-checked against the recipient, not the source: a source staff member disabled
+    // after the scan does not redact it from the still-authorized monitor.
     await run(
       kit.env.DB,
       'UPDATE scan_staff SET disabled_at = ?, updated_at = updated_at + 1 WHERE id = ?',
       [kit.clock.now(), staff.id],
     );
-    expect((await kit.get(monitor.headers, path)).status).toBe(404);
-    // The source's staff authority moved (auth_epoch): its events are omitted, not replayed.
-    const revoked = (await hub().snapshot(monitor.attachment)).rows.find(
-      (item) => item.id === event.id,
-    );
-    expect(revoked).toBeUndefined();
-    await run(
-      kit.env.DB,
-      'UPDATE scan_staff SET disabled_at = NULL, updated_at = updated_at + 1 WHERE id = ?',
-      [staff.id],
-    );
-    expect((await kit.get(monitor.headers, path)).status).toBe(404);
-    const stale = (await hub().snapshot(monitor.attachment)).rows.find(
-      (item) => item.id === event.id,
-    );
-    expect(stale).toBeUndefined();
-    const freshEvent = row(source.id, { passId: pass.id });
-    await publish(freshEvent);
-    const freshProof = await hub().sourceProof(freshEvent.id);
-    if (!freshProof) throw new Error('Missing renewed staff source proof.');
-    expect((await openLiveSourceProof(kit.env, freshProof))?.actor.staff).toMatchObject({
-      id: staff.id,
-      updatedAt: kit.clock.now() + 2,
-    });
-    const fresh = (await hub().snapshot(monitor.attachment)).rows.find(
-      (item) => item.id === freshEvent.id,
-    );
-    expect(fresh).toMatchObject({ passId: pass.id, holder: 'Desk Only Member' });
-    if (!fresh?.photoUrl) throw new Error('Missing fresh staff-authorized photo.');
+    expect((await kit.get(monitor.headers, path)).status).toBe(200);
     expect(
-      (await kit.get(monitor.headers, fresh.photoUrl.replace('/api/v1/scan', ''))).status,
-    ).toBe(200);
+      (await hub().snapshot(monitor.attachment)).rows.find((item) => item.id === event.id),
+    ).toMatchObject({ passId: pass.id, holder: 'Desk Only Member' });
   });
 });

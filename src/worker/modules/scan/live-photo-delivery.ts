@@ -20,20 +20,20 @@ export async function prepareLivePhoto(
   attachment: LiveAttachment,
   entry: LiveRingRow,
 ): Promise<PreparedLivePhoto | null> {
-  const recipient = await liveRecipient(ctx, attachment);
-  if (recipient?.actor.scanner?.deviceRole !== 'monitor') return null;
-  const { actor } = recipient;
-  const role = actor.role ?? entry.sourceRole;
-  if (
-    !watches(recipient, entry.row.scannerId) ||
-    !role ||
-    !entry.photoRoles.includes(role) ||
-    actor.settings.showPhoto === false
-  )
-    return null;
   const read = async () => {
+    const recipient = await liveRecipient(ctx, attachment);
+    if (recipient?.actor.scanner?.deviceRole !== 'monitor') return null;
+    const { actor } = recipient;
+    const role = actor.role ?? entry.sourceRole;
     const now = ctx.clock.now();
-    if (entry.validUntil !== null && now > entry.validUntil) return null;
+    if (
+      !watches(recipient, entry.row.scannerId) ||
+      !role ||
+      !entry.photoRoles.includes(role) ||
+      actor.settings.showPhoto === false ||
+      (entry.validUntil !== null && now > entry.validUntil)
+    )
+      return null;
     const auth = scanReadAuthority(actor, { now, read: { stafflessMonitor: true } });
     const stmt = livePhotoStmt(ctx.env.DB, auth, actor, entry);
     return stmt ? stmt.first<{ r2_key: string; version: string }>() : null;

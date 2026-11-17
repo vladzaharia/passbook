@@ -2,14 +2,13 @@ import { beforeAll, expect, vi } from 'vitest';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { getHolderPass } from '../holders/repo.ts';
-import { captureCredentialKeyEnv, ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { snapshotCredentialEnv } from './credential-input.ts';
-import { liveAttachment, scanHub } from './live.ts';
-import { livePassSnapshot, sealLiveSourceProof } from './live-provenance.ts';
+import { liveAttachment, liveRingRow, scanHub } from './live.ts';
+import type { LiveRingRow } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { stagedCredentialTransfer } from './repo-scan-hub-test-fixtures.ts';
@@ -110,9 +109,8 @@ export const row = (id: string, more: Partial<ScanLiveRow> = {}): ScanLiveRow =>
   presented: true,
   ...more,
 });
-export const proven = async (body: ScanLiveRow) => {
-  const keyEnv = captureCredentialKeyEnv(kit.env);
-  const ctx = { ...kit.ctx, env: snapshotCredentialEnv(kit.env, keyEnv) };
+/** The ring entry the source scanner's commit would publish for `body` (its pass read now). */
+export const proven = async (body: ScanLiveRow): Promise<LiveRingRow> => {
   const source = await getScanner(kit.env.DB, body.scannerId);
   if (!source) throw new Error('Missing source scanner.');
   const scope = await readScannerScope(kit.env.DB, source, source.staffId);
@@ -130,26 +128,18 @@ export const proven = async (body: ScanLiveRow) => {
       ? await boundStaff(kit.ctx, source, scope.staff)
       : null,
   );
-  const safeActor = await proofedScanActor(ctx, actor);
+  const safeActor = await proofedScanActor(kit.ctx, actor);
   const candidate = body.passId ? await candidateById(kit.env.DB, source.orgId, body.passId) : null;
   if (body.passId && !candidate) throw new Error('Missing source pass.');
-  if (!safeActor.credentialKeysetCommitment) throw new Error('Missing credential context.');
-  if (candidate && candidate.credentialKeysetCommitment !== safeActor.credentialKeysetCommitment)
-    throw new Error('Source credential keyset changed.');
-  const credentialContext = {
-    credentialKeysetCommitment: safeActor.credentialKeysetCommitment,
-    credentialTombstoneRefs: candidate?.credentialTombstoneRefs ?? [],
-    otherModeCredentialTombstoneRefs: candidate?.otherModeCredentialTombstoneRefs ?? [],
-  };
-  const sourceProof = await sealLiveSourceProof(keyEnv, {
-    actor: safeActor,
-    credentialContext,
-    eventId: body.id,
-    passId: body.passId,
-    passSnapshot: candidate ? await livePassSnapshot(keyEnv, candidate) : null,
-    at: body.at,
-  });
-  return { ...body, sourceProof };
+  const entry = await liveRingRow(
+    kit.ctx,
+    safeActor,
+    { ...body, passId: null, holder: null, photoUrl: null },
+    candidate,
+    null,
+  );
+  if (!entry) throw new Error('The source pass cannot be shown.');
+  return entry;
 };
 export const publish = async (body: ScanLiveRow) =>
   hub().publish({ orgId: kit.org.id, mode: 'live', row: await proven(body) });

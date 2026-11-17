@@ -19,10 +19,10 @@ import {
 } from './actor.ts';
 import { managedAdminActor } from './admin-setup.ts';
 import { createScannerStore } from './auth-store.ts';
-import { liveAttachment, scanHub } from './live.ts';
+import { liveAttachment, liveRingRow, scanHub } from './live.ts';
 import { sealLiveAttachment } from './live-attachment.ts';
 import { type LiveAttachment, liveRecipient } from './live-auth.ts';
-import { sealLiveSourceProof } from './live-provenance.ts';
+import type { LiveRingRow } from './live-ring.ts';
 import { asDeskDisplay } from './live-screen-test-fixtures.ts';
 import { getScanner } from './repo-device.ts';
 import { revokeLiveTenantFixtureMembership } from './repo-live-tenant-db-test-fixtures.ts';
@@ -278,7 +278,7 @@ export function liveTenantFixture() {
     };
   }
 
-  async function provenRow(actor: ScanActor): Promise<ScanLiveRow & { sourceProof: string }> {
+  async function provenRow(actor: ScanActor): Promise<LiveRingRow> {
     if (!actor.scanner) throw new Error('Missing live source scanner.');
     const row: ScanLiveRow = {
       id: kit.ctx.ids.token(16),
@@ -286,28 +286,16 @@ export function liveTenantFixture() {
       scannerId: actor.scanner.id,
       scannerName: 'Entry scanner',
       passId: null,
-      holder: 'Private live holder',
+      holder: null,
       photoUrl: null,
       kind: 'ok',
       direction: 'in',
       label: 'Checked in',
       presented: true,
     };
-    return {
-      ...row,
-      sourceProof: await sealLiveSourceProof(kit.env, {
-        actor,
-        credentialContext: {
-          credentialKeysetCommitment,
-          credentialTombstoneRefs: [],
-          otherModeCredentialTombstoneRefs: [],
-        },
-        eventId: row.id,
-        passId: null,
-        passSnapshot: null,
-        at: row.at,
-      }),
-    };
+    const ring = await liveRingRow(kit.ctx, actor, row, null, null);
+    if (!ring) throw new Error('Missing live ring row.');
+    return ring;
   }
 
   return {

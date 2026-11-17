@@ -162,7 +162,7 @@ describe('user-backed live tenant authority', () => {
       const displayed = snapshot.rows[0];
       expect(
         snapshot.rows.length === 1 &&
-          displayed?.id === entry.id &&
+          displayed?.id === entry.row.id &&
           displayed.scannerId === screen.source.device.id &&
           displayed.holder === null &&
           displayed.passId === null,
@@ -174,7 +174,7 @@ describe('user-backed live tenant authority', () => {
       const denied = await app.request(url, { headers: screen.session.headers }, kit.env);
       expect(denied.status).toBe(403);
       const deniedBody = await denied.text();
-      expect(deniedBody.includes(entry.id)).toBe(false);
+      expect(deniedBody.includes(entry.row.id)).toBe(false);
       expect(deniedBody.includes(screen.resolved.sessionId)).toBe(false);
       expect(deniedBody.includes(screen.membershipId)).toBe(false);
       expect(deniedBody.includes(screen.session.csrf)).toBe(false);

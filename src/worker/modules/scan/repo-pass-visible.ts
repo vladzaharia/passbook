@@ -1,6 +1,6 @@
 /**
  * F8 pass disclosure (authority-epochs.md): a pass may be shown or served only while it is live,
- * its credential and lifecycle generations are the ones the read saw, and no transfer is pending.
+ * its credential and lifecycle generations are the ones the read saw, and no transfer is pending and its template is not deleted (an archived template keeps its passes working), and its connection, if any, is enabled.
  * Content-only changes (version, revision, personalization, release content) are not authority.
  * `alias` is a trusted alias of a `passes` row; the generations are SQL expressions (`?` or a
  * column), so a read binds two values (credential first, then lifecycle, then link) and a batched read binds none per row. `link` adds the link
@@ -16,5 +16,9 @@ export function passVisibleSql(
     AND ${alias}.lifecycle_generation = ${gen.lifecycle}
     ${gen.link ? `AND ${alias}.link_generation = ${gen.link}` : ''}
     AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers pv_t
-      WHERE pv_t.pass_id = ${alias}.id AND pv_t.state = 'pending'))`;
+      WHERE pv_t.pass_id = ${alias}.id AND pv_t.state = 'pending')
+    AND EXISTS (SELECT 1 FROM templates pv_tp WHERE pv_tp.id = ${alias}.template_id
+      AND pv_tp.status != 'deleted' AND (pv_tp.org_id IS NULL OR pv_tp.org_id = ${alias}.org_id))
+    AND (${alias}.connection_id IS NULL OR EXISTS (SELECT 1 FROM connections pv_c
+      WHERE pv_c.id = ${alias}.connection_id AND pv_c.org_id = ${alias}.org_id AND pv_c.enabled = 1)))`;
 }
