@@ -1,9 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { PassDetailSchema } from '../../../shared/contracts/passes.ts';
 import { createApp } from '../../app.ts';
-import { all } from '../../platform/db.ts';
-import { notifiesHolder } from './change-messages.ts';
+import { all, run } from '../../platform/db.ts';
+import { notifiesHolder, overBudget, pushBudgetOf } from './change-messages.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { getPass } from './repo-read-pass.ts';
 import { releaseStamps, stampCard, stampVersion } from './stamps-test-fixtures.ts';
@@ -147,5 +148,64 @@ describe('stamp actions', () => {
     );
     expect(plain.status).toBe(409);
     expect(await plain.json()).toMatchObject({ code: 'STAMPS_NONE' });
+  });
+
+  it('stays inside its organization and mode', async () => {
+    const card = await stampCard(kit, release, 2);
+    const other = await makeOrg(kit.fx, { name: 'Other Org' });
+    const scopes = ['passes:read', 'passes:write'] as const;
+    const elsewhere = await auth.apiKey({ orgId: other.id, scopes: [...scopes] });
+    const wrongOrg = await stamp(card.id, { action: 'add' }, elsewhere);
+    expect([403, 404]).toContain(wrongOrg.status);
+    const sandbox = await auth.apiKey({ orgId: kit.org.id, scopes: [...scopes], mode: 'test' });
+    const wrongMode = await stamp(card.id, { action: 'add' }, sandbox);
+    expect([403, 404, 409]).toContain(wrongMode.status);
+    expect((await getPass(kit.env.DB, card.id))?.personalization.stamps).toBe(2);
+    // Positive control: the same card takes the stamp from its own organization and mode.
+    const own = await auth.apiKey({ orgId: kit.org.id, scopes: [...scopes] });
+    expect((await stamp(card.id, { action: 'add' }, own)).status).toBe(200);
+    expect((await getPass(kit.env.DB, card.id))?.personalization.stamps).toBe(3);
+  });
+
+  it('counts two desks adding at once, and alerts once', async () => {
+    const card = await stampCard(kit, release, 8);
+    const both = await Promise.all([
+      stamp(card.id, { action: 'add' }),
+      stamp(card.id, { action: 'add' }),
+    ]);
+    expect(both.map((r) => r.status)).toEqual([200, 200]);
+    expect((await getPass(kit.env.DB, card.id))?.personalization.stamps).toBe(10);
+    const alerts = (await history(card.id)).filter((h) => h.alerts);
+    expect(alerts).toEqual([{ header: 'Reward ready', alerts: true }]);
+  });
+
+  it('keeps one consistent count when an add meets a redeem', async () => {
+    const card = await stampCard(kit, release, 10);
+    const both = await Promise.all([
+      stamp(card.id, { action: 'add' }),
+      stamp(card.id, { action: 'redeem' }),
+    ]);
+    expect(both.map((r) => r.status)).toEqual([200, 200]);
+    // Add then redeem is 11 - 10, redeem then add is 0 + 1.
+    expect((await getPass(kit.env.DB, card.id))?.personalization.stamps).toBe(1);
+  });
+
+  it('alerts the stamp that fills a card even at the daily push limit', async () => {
+    const card = await stampCard(kit, release, 9);
+    const at = kit.clock.now();
+    for (let i = 0; i < 3; i++)
+      await run(
+        kit.env.DB,
+        `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, data, at)
+         VALUES (?, ?, ?, 'live', 'pass.updated', '{"notified":1}', ?)`,
+        [kit.fx.ids.id(), kit.org.id, card.id, at],
+      );
+    // The premise: this pass is at its limit, so any other notifying update would go out silent.
+    expect(overBudget(await pushBudgetOf(kit.ctx, card.id))).toBe(true);
+    const res = await detail(await stamp(card.id, { action: 'add' }));
+    expect(res.stamps).toMatchObject({ count: 10, ready: true });
+    expect((await history(card.id)).filter((h) => h.alerts)).toEqual([
+      { header: 'Reward ready', alerts: true },
+    ]);
   });
 });

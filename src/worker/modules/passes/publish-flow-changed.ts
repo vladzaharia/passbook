@@ -25,6 +25,7 @@ export async function publishChangedAttempt(
   let silenced = false;
   if (
     !prepared.removal &&
+    !options.budgetExempt?.() &&
     notifiesHolder(prepared.artifact.passJson, prepared.previousParsed) &&
     overBudget(await pushBudgetOf(ctx, current.id))
   ) {
