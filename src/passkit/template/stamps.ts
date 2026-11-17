@@ -156,5 +156,23 @@ export function stampsIssues(
         `fields/${key}`,
       );
   if (!tellsReady) warn('STAMPS_SILENT', 'No field tells holders a reward is ready.');
+
+  // A scan take on the count redeems the reward: it takes the goal, so extra stamps carry over.
+  const scan = isRecord(manifest.scan) ? manifest.scan : {};
+  const actions = Array.isArray(scan.actions) ? scan.actions : [];
+  actions.forEach((a, i) => {
+    if (
+      isRecord(a) &&
+      a.kind === 'take' &&
+      a.input === stampInput &&
+      isGoal(goal) &&
+      a.amount !== goal
+    )
+      error(
+        'SCAN_STAMPS_GOAL',
+        `Redeeming takes the goal: set the amount to ${goal}.`,
+        `scan.actions.${i}.amount`,
+      );
+  });
   return issues;
 }

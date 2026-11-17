@@ -224,6 +224,43 @@ describe('stamps manifest checks', () => {
     m.bindings = m.bindings.filter((b) => (b.to as { prop?: string }).prop !== 'changeMessage');
     expect(codes(m)).toContain('STAMPS_SILENT');
   });
+  it('wants a scan take on the count to redeem the goal, and lets its adds notify', () => {
+    const m = base();
+    const take = (amount: number) => ({
+      id: 'redeem',
+      label: 'Redeem reward',
+      kind: 'take' as const,
+      input: 'stamps',
+      amount,
+    });
+    const add = {
+      id: 'stamp',
+      label: 'Add stamp',
+      kind: 'add' as const,
+      input: 'stamps',
+      amount: 1,
+      notify: true,
+    };
+    m.scan = { actions: [take(5), add] };
+    expect(codes(m)).toContain('SCAN_STAMPS_GOAL');
+    m.scan = { actions: [take(10), add] };
+    expect(codes(m)).not.toContain('SCAN_STAMPS_GOAL');
+    const all = validateManifest(m, {
+      passJson: template.passJson,
+      behaviors: bakedBehaviors,
+      allowPattern: true,
+    });
+    expect(all.map((i) => i.code)).not.toContain('SCAN_NOTIFY_BUDGET');
+    const other = structuredClone(m);
+    (other.inputs.properties as Record<string, unknown>).visits = { type: 'integer', minimum: 0 };
+    other.scan = { actions: [{ ...add, input: 'visits' }] };
+    const plain = validateManifest(other, {
+      passJson: template.passJson,
+      behaviors: bakedBehaviors,
+      allowPattern: true,
+    });
+    expect(plain.map((i) => i.code)).toContain('SCAN_NOTIFY_BUDGET');
+  });
   it('warns about primary fields', () => {
     const pass = structuredClone(template.passJson) as unknown as {
       storeCard: Record<string, unknown>;

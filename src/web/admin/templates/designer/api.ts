@@ -6,19 +6,29 @@ import {
   SaveVersionResponseSchema,
   TemplateVersionDetailSchema,
 } from '@/shared/contracts/index.ts';
+import { StampsImpactSchema } from '@/shared/contracts/stamps.ts';
 import { api } from '../../../lib/api.ts';
 import { useDebounced } from '../../../lib/debounce.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { templateKeys } from '../api.ts';
 import { assetsPayload } from './images.ts';
-import type { DesignDoc, DraftAsset } from './model.ts';
+import { type DesignDoc, type DraftAsset, isRecord } from './model.ts';
 import { signature } from './reducer.ts';
+import { readStamps } from './stamps.ts';
 
 type VersionOptions = Pick<SaveVersionRequest, 'dryRun'>;
 
-const body = (doc: DesignDoc, extra: VersionOptions) => ({
+/** The live check builds the slider's count, so the header reads what the strip shows. */
+function withPreviewCount(doc: DesignDoc, count: number | undefined): DesignDoc['manifest'] {
+  const view = readStamps(doc);
+  if (!view || count === undefined) return doc.manifest;
+  const sample = isRecord(doc.manifest.sample) ? doc.manifest.sample : {};
+  return { ...doc.manifest, sample: { ...sample, [view.input]: count } };
+}
+
+const body = (doc: DesignDoc, extra: VersionOptions, previewCount?: number) => ({
   passJson: doc.passJson,
-  manifest: doc.manifest,
+  manifest: extra.dryRun ? withPreviewCount(doc, previewCount) : doc.manifest,
   assets: assetsPayload(doc.assets),
   ...extra,
 });
@@ -40,17 +50,22 @@ export function useBaseVersion(templateId: string, version: string | null) {
 }
 
 /** Live check: the report, the built pass and the file list, once typing pauses. */
-export function useDesignCheck(templateId: string, doc: DesignDoc, enabled = true) {
+export function useDesignCheck(
+  templateId: string,
+  doc: DesignDoc,
+  enabled = true,
+  previewCount?: number,
+) {
   const { orgId } = useOrgScope();
   const settled = useDebounced(doc, 450);
-  const sig = useMemo(() => signature(settled), [settled]);
+  const sig = useMemo(() => `${signature(settled)}|${previewCount ?? ''}`, [settled, previewCount]);
   const query = useQuery({
     queryKey: ['admin', 'templates', 'design-check', templateId, orgId, sig],
     queryFn: ({ signal }) =>
       api.post(
         `/api/v1/templates/${templateId}/versions`,
         SaveVersionResponseSchema,
-        body(settled, { dryRun: true }),
+        body(settled, { dryRun: true }, previewCount),
         { signal, query: { orgId } },
       ),
     enabled: enabled && Boolean(orgId),
@@ -63,6 +78,23 @@ export function useDesignCheck(templateId: string, doc: DesignDoc, enabled = tru
   const [lastBuilt, setLastBuilt] = useState(built);
   if (built && built !== lastBuilt) setLastBuilt(built);
   return { ...query, lastBuilt, checking: settled !== doc || query.isFetching };
+}
+
+/** What a goal change does to the template's live cards. */
+export function useStampsImpact(templateId: string, goal: number, enabled: boolean) {
+  const { orgId } = useOrgScope();
+  return useQuery({
+    queryKey: ['admin', 'templates', 'stamps-impact', templateId, orgId, goal],
+    queryFn: ({ signal }) =>
+      api.get(`/api/v1/templates/${templateId}/stamps-impact`, StampsImpactSchema, {
+        query: { goal, orgId },
+        signal,
+      }),
+    enabled: enabled && Boolean(orgId),
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
 }
 
 export function useSaveVersion(templateId: string) {
