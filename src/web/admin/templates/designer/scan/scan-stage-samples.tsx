@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isPrivateName } from '@/passkit/template/scan-display/privacy.ts';
 import { inputProps, inputVisibleTo } from '@/passkit/template/scan-display/scope.ts';
 import type { ScanDisplayScope } from '@/passkit/template/scan-display/text.ts';
 import type { Json, ScanRole } from '@/passkit/types.ts';
@@ -6,12 +7,7 @@ import { MODE_HEADER, type Mode } from '@/shared/contracts/common.ts';
 import { ScanDisplayPreviewSchema } from '@/shared/contracts/scan-display-preview.ts';
 import { api } from '@/web/lib/api.ts';
 import type { DesignDoc } from '../model.ts';
-import {
-  previewManifest,
-  previewSecrets,
-  privatePreviewKey,
-  safePreviewText,
-} from './scan-preview-policy.ts';
+import { previewManifest, previewSecrets, safePreviewText } from './scan-preview-policy.ts';
 
 type RealScope = { key: string; scope: Record<string, Json> };
 
@@ -96,7 +92,7 @@ export function SampleInputs({
   const entries = Object.entries(inputProps(manifest)).filter(
     ([name, schema]) =>
       safePreviewText(name) &&
-      !privatePreviewKey(name) &&
+      !isPrivateName(name) &&
       inputVisibleTo(name, schema, role, secrets) &&
       ['string', 'number', 'integer', 'boolean'].includes(String(schema.type)),
   );

@@ -24,7 +24,7 @@ describe('card last-scan privacy', () => {
     { name: 'PrivateRef', value: 'PrivateRef', field: 'name' },
     { name: 'Style projection', value: 'generic', field: 'style' },
   ] as const)(
-    'neutralizes a template $field containing a denied input',
+    'shows a template $field that merely repeats a restricted input value',
     async ({ name, value, field }) => {
       const templateId = await kit.scanTemplate(name, {
         actions: [{ id: 'enter', label: 'Admit member', kind: 'check_in' }],
@@ -40,10 +40,9 @@ describe('card last-scan privacy', () => {
       expect(outcome.kind).toBe('ready');
       if (!outcome.card) throw new Error('Expected a ready scanner card');
       expect(outcome.card.template.id).toBe(templateId);
-      expect(outcome.card.template[field]).toBe('');
-      expect(outcome.template?.[field]).toBe('');
-      expect(JSON.stringify(outcome.card.template)).not.toContain(value);
-      expect(JSON.stringify(outcome.template)).not.toContain(value);
+      // The name and style are the template's own; only a secret would hide them.
+      expect(outcome.card.template[field]).toBe(value);
+      expect(outcome.template?.[field]).toBe(value);
     },
   );
 
@@ -92,9 +91,12 @@ describe('card last-scan privacy', () => {
     expect(JSON.stringify(projected.lastScans)).not.toContain('private@example.com');
   });
 
-  it('does not expose a current action id copied from a role-restricted source', async () => {
+  it('keeps an action whose id merely equals a restricted value, and hides one whose source is restricted', async () => {
     const templateId = await kit.scanTemplate('Private action id', {
-      actions: [{ id: 'vip_code', label: 'Admit member', kind: 'check_in' }],
+      actions: [
+        { id: 'vip_code', label: 'Admit member', kind: 'check_in' },
+        { id: 'tier_set', label: 'Set tier', kind: 'set', input: 'tier' },
+      ],
     });
     await stage(templateId, 'v1', 'v2', (manifest) => {
       manifest.inputs.properties!.tier = { type: 'string', 'x-scan': 'manager' };
@@ -102,11 +104,11 @@ describe('card last-scan privacy', () => {
     const pass = await kit.scanPass(templateId, { tier: 'vip_code' });
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const projected = await card(scanner.headers, pass.id);
-    expect(projected.actions).toEqual([]);
-    expect(JSON.stringify(projected)).not.toContain('vip_code');
+    expect(projected.actions.map((action) => action.id)).toEqual(['vip_code']);
+    expect(JSON.stringify(projected)).not.toContain('tier_set');
   });
 
-  it('does not expose reward labels copied from a role-restricted source', async () => {
+  it('hides a reward action whose source is restricted, not one whose label repeats a restricted value', async () => {
     const templateId = await kit.scanTemplate('Private action reward', {
       actions: [
         { id: 'enter', label: 'Admit member', kind: 'check_in' },
@@ -118,17 +120,19 @@ describe('card last-scan privacy', () => {
           amount: 1,
           rewardLabel: 'vip_code',
         },
+        { id: 'redeem_vip', label: 'Redeem VIP', kind: 'take', input: 'vipBalance', amount: 1 },
       ],
     });
     await stage(templateId, 'v1', 'v2', (manifest) => {
       manifest.inputs.properties!.tier = { type: 'string', 'x-scan': 'manager' };
+      manifest.inputs.properties!.vipBalance = { type: 'integer', 'x-scan': 'manager' };
     });
-    const pass = await kit.scanPass(templateId, { tier: 'vip_code', balance: 5 });
+    const pass = await kit.scanPass(templateId, { tier: 'vip_code', balance: 5, vipBalance: 3 });
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const projected = await card(scanner.headers, pass.id);
     expect(projected.actions.some((action) => action.id === 'enter')).toBe(true);
-    expect(projected.actions.some((action) => action.id === 'redeem')).toBe(false);
-    expect(JSON.stringify(projected)).not.toContain('vip_code');
+    expect(projected.actions.some((action) => action.id === 'redeem')).toBe(true);
+    expect(projected.actions.some((action) => action.id === 'redeem_vip')).toBe(false);
   });
 
   it('redacts a manager-only historical action after the same staff member is downgraded', async () => {

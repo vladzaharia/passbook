@@ -95,7 +95,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
     });
   });
 
-  it('applies the viewer role to a proven scanner name containing a restricted input', async () => {
+  it('shows a proven scanner name that merely repeats a restricted input value to every viewer', async () => {
     const kit = await setupScanKit();
     const template = kit.registry.add({
       id: kit.fx.ids.id(),
@@ -161,8 +161,9 @@ describe('mode-specific staff activity and device PIN locks', () => {
     expect(managed.items.find((item) => item.id === person.id)?.lastScan?.scannerName).toBe(
       'Priority section',
     );
+    // The name is the scanner's own; only a secret would turn it into the generic 'Scanner'.
     expect(restricted.items.find((item) => item.id === person.id)?.lastScan?.scannerName).toBe(
-      'Scanner',
+      'Priority section',
     );
 
     const membership = await first<{ id: string }>(
@@ -229,8 +230,9 @@ describe('mode-specific staff activity and device PIN locks', () => {
     const downgraded = await tenantAuthorityOf(kit.ctx, manager, kit.org.id, 'scanning:read');
     if (downgraded.kind !== 'session') throw new Error('Expected session authority');
     const current = await listStaff(kit.ctx, manager, downgraded, kit.org.id, 'live');
+    // The downgrade changes what the viewer may list, not the scanner's own name.
     expect(current.items.find((item) => item.id === person.id)?.lastScan?.scannerName).toBe(
-      'Scanner',
+      'Priority section',
     );
   });
 });

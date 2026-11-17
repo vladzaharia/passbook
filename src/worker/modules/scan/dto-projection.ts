@@ -2,21 +2,23 @@ import { DATE_STYLES, NUMBER_STYLES, TEXT_ALIGNMENTS } from '../../../passkit/sc
 import { conditionInputs } from '../../../passkit/template/expr.ts';
 import { parsePointer } from '../../../passkit/template/pointer.ts';
 import {
+  hasContactShape,
+  isPrivateName,
+  leaksSecret,
+} from '../../../passkit/template/scan-display/privacy.ts';
+import {
   hiddenFieldKeys,
   type InputSchema,
   inputProps,
   inputVisibleTo,
-  passFields,
   secretInputs,
 } from '../../../passkit/template/scan-display/scope.ts';
 import { parseParts, pathTokens } from '../../../passkit/template/scan-display/text.ts';
 import type { Binding, TemplateManifest } from '../../../passkit/types.ts';
 import type { ScanActor } from './guard.ts';
-import { scanInputVisible, scanPrivateName, scanValueSafe } from './projection-privacy.ts';
+import { passSecretSpellings, scanInputVisible } from './projection-privacy.ts';
 import type { Found } from './resolve.ts';
 
-const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*/iu;
-const PHONE = /(?:^|[^A-Za-z0-9])\+?\d[\d ().-]*\d(?=$|[^A-Za-z0-9])/g;
 export const ISO_DATE =
   /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2})?)?$/i;
 
@@ -24,44 +26,6 @@ export const record = (value: unknown): Record<string, unknown> | undefined =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined;
-
-/** A protected value may reappear in an interpolated field, escaped or URL encoded. */
-function remember(value: unknown, denied: Set<string>, booleans: Set<boolean>): void {
-  if (typeof value === 'string' && value !== '') {
-    denied.add(value);
-    if (/[&<>"']/.test(value))
-      denied.add(
-        value
-          .replaceAll('&', '&amp;')
-          .replaceAll('<', '&lt;')
-          .replaceAll('>', '&gt;')
-          .replaceAll('"', '&quot;')
-          .replaceAll("'", '&#39;'),
-      );
-    if (/[^A-Za-z0-9_.!~*'()-]/.test(value)) denied.add(encodeURIComponent(value.toWellFormed()));
-  } else if (typeof value === 'number' && Number.isFinite(value)) denied.add(String(value));
-  else if (typeof value === 'boolean') {
-    booleans.add(value);
-    denied.add(String(value));
-  } else if (Array.isArray(value)) for (const entry of value) remember(entry, denied, booleans);
-  else {
-    const object = record(value);
-    if (object) for (const entry of Object.values(object)) remember(entry, denied, booleans);
-  }
-}
-
-function contact(value: string): boolean {
-  if (
-    value.includes('{{') ||
-    EMAIL.test(value) ||
-    /\b(?:[a-z][a-z0-9+.-]*:\/\/|mailto:|tel:|www\.)/i.test(value)
-  )
-    return true;
-  if (ISO_DATE.test(value)) return false;
-  for (const match of value.matchAll(PHONE))
-    if ((match[0].match(/\d/g) ?? []).length >= 7) return true;
-  return false;
-}
 
 type Scalar = string | number | boolean | null;
 
@@ -88,14 +52,11 @@ export function cardPrivacy(found: Found, actor: ScanActor): CardPrivacy {
   }));
   const role = actor.role ?? 'door';
   const deniedInputs = new Set<string>();
-  const deniedValues = new Set<string>();
-  const deniedWalletStrings = new Set<string>();
-  const deniedBooleans = new Set<boolean>();
-  const deny = (value: unknown) => remember(value, deniedValues, deniedBooleans);
+  const secrets = passSecretSpellings(found);
 
   const sourceAllowed = (name: string) =>
     actor.role !== null &&
-    !scanPrivateName(name) &&
+    !isPrivateName(name) &&
     policies.every(({ props, secrets }) => {
       const schema = Object.hasOwn(props, name) ? props[name] : undefined;
       return schema !== undefined && inputVisibleTo(name, schema, role, secrets);
@@ -106,88 +67,23 @@ export function cardPrivacy(found: Found, actor: ScanActor): CardPrivacy {
     const schema = policies[0]?.props[name];
     return schema !== undefined && Object.hasOwn(schema, 'default') && safe(schema.default);
   };
-  // Child schemas have their own visibility; undeclared nested data is never public.
-  const collect = (entry: unknown, schema: InputSchema | undefined, secrets: Set<string>) => {
-    if (Array.isArray(entry)) {
-      const item = record(schema?.items) as InputSchema | undefined;
-      for (const child of entry) item ? collect(child, item, secrets) : deny(child);
-      return;
-    }
-    const object = record(entry);
-    if (!object) return;
-    const children = record(schema?.properties);
-    for (const [key, child] of Object.entries(object)) {
-      const childSchema = record(children?.[key]) as InputSchema | undefined;
-      if (!childSchema || scanPrivateName(key) || !inputVisibleTo(key, childSchema, role, secrets))
-        deny(child);
-      else collect(child, childSchema, secrets);
-    }
-  };
-  for (const { props, secrets } of policies) {
-    for (const [name, schema] of Object.entries(props)) {
-      if (!sourceAllowed(name)) {
-        deniedInputs.add(name);
-        deny(schema.default);
-      } else collect(schema.default, schema, secrets);
-    }
-  }
-  for (const [name, value] of Object.entries(pass.personalization)) {
-    if (!sourceAllowed(name)) {
-      deniedInputs.add(name);
-      deny(value);
-    } else {
-      for (const { props, secrets } of policies) collect(value, props[name], secrets);
-    }
-  }
-  for (const value of [
-    pass.serial,
-    pass.authToken,
-    pass.downloadToken,
-    pass.webServiceUrl,
-    pass.scanCode,
-    pass.holderEmail,
-    passJson.serialNumber,
-    passJson.authenticationToken,
-    passJson.webServiceURL,
-    passJson.barcode?.message,
-    passJson.barcode?.altText,
-    ...(passJson.barcodes ?? []).flatMap((barcode) => [barcode.message, barcode.altText]),
-    passJson.nfc?.message,
-  ])
-    deny(value);
-  // Opaque Wallet metadata and the rest of the NFC envelope are never display
-  // sources. Protect their scalar spellings in text without treating a Wallet
-  // boolean/number as a restriction on unrelated authorized scalar fields.
-  const denyWalletText = (value: unknown): void => {
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
-      remember(String(value), deniedWalletStrings, deniedBooleans);
-    else if (Array.isArray(value)) value.forEach(denyWalletText);
-    else if (value && typeof value === 'object') Object.values(value).forEach(denyWalletText);
-  };
-  denyWalletText(passJson.nfc);
-  denyWalletText(passJson.userInfo);
+  for (const { props } of policies)
+    for (const name of Object.keys(props)) if (!sourceAllowed(name)) deniedInputs.add(name);
+  for (const name of Object.keys(pass.personalization))
+    if (!sourceAllowed(name)) deniedInputs.add(name);
 
   const safe = (value: unknown): value is Scalar => {
-    if (!scanValueSafe(found, value, actor)) return false;
-    if (typeof value === 'string') {
-      if (contact(value)) return false;
-      for (const denied of deniedValues)
-        if (value === denied || (denied.length >= 3 && value.includes(denied))) return false;
-      for (const denied of deniedWalletStrings)
-        if (value === denied || (denied.length >= 3 && value.includes(denied))) return false;
-      return true;
-    }
-    if (typeof value === 'number')
-      return Number.isFinite(value) && !contact(String(value)) && !deniedValues.has(String(value));
-    if (typeof value === 'boolean') return !deniedBooleans.has(value);
-    return value === null;
+    if (typeof value === 'string')
+      return !value.includes('{{') && !hasContactShape(value) && !leaksSecret(value, secrets);
+    if (typeof value === 'number') return Number.isFinite(value) && !leaksSecret(value, secrets);
+    return typeof value === 'boolean' || value === null;
   };
   const valueSafe = (value: unknown): boolean => {
     if (Array.isArray(value)) return value.every(valueSafe);
     const object = record(value);
     if (object)
       return Object.entries(object).every(
-        ([key, child]) => !scanPrivateName(key) && safe(key) && valueSafe(child),
+        ([key, child]) => !isPrivateName(key) && safe(key) && valueSafe(child),
       );
     return safe(value);
   };
@@ -227,7 +123,7 @@ export function cardPrivacy(found: Found, actor: ScanActor): CardPrivacy {
         }
       }
       inputPath += `.${key}`;
-      if (scanPrivateName(key) || ['__proto__', 'constructor', 'prototype'].includes(key))
+      if (isPrivateName(key) || ['__proto__', 'constructor', 'prototype'].includes(key))
         return false;
       if (root !== 'lookups') {
         for (const [index, policy] of policies.entries()) {
@@ -287,18 +183,6 @@ export function cardPrivacy(found: Found, actor: ScanActor): CardPrivacy {
   const hidden = new Set<string>();
   for (const { manifest } of policies)
     for (const key of hiddenFieldKeys(manifest, passJson, deniedInputs)) hidden.add(key);
-  // Field values come from the pass's own release: its bindings decide which values are secret.
-  // The current policy still hides fields, and its input rules reach these bindings through
-  // `deniedInputs` and `pathVisible`.
-  const contentHidden = hiddenFieldKeys(template.manifest, passJson, deniedInputs);
-  for (const field of passFields(passJson)) {
-    if (
-      contentHidden.has(field.key) ||
-      scanPrivateName(field.key) ||
-      !fieldBindings(field.key).every((binding) => bindingVisible(binding, template.manifest))
-    )
-      deny(field.value);
-  }
   return { safe, valueSafe, fieldVisible, fieldBindings, pointerVisible, hidden };
 }
 

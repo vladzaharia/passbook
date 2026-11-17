@@ -165,18 +165,14 @@ register(
     if (passScope && typeof passScope === 'object' && !Array.isArray(passScope)) {
       for (const [key, value] of Object.entries(passScope)) {
         if (key === 'createdAt' || key === 'validFrom' || key === 'validUntil') {
-          if (
-            value !== null &&
-            (typeof value !== 'number' || !safeTimestamp(found, actor, privacy, value))
-          )
+          if (value !== null && (typeof value !== 'number' || !safeTimestamp(privacy, value)))
             delete passScope[key];
         } else if (!privacy.safe(value)) {
           delete passScope[key];
         }
       }
     }
-    if (typeof scope.now === 'number' && !safeTimestamp(found, actor, privacy, scope.now))
-      delete scope.now;
+    if (typeof scope.now === 'number' && !safeTimestamp(privacy, scope.now)) delete scope.now;
     // The scope is assembled across several reads; do not return it after any of the
     // evaluated pass, template, organization, session or membership snapshots change.
     const assertCurrent = async () => {
