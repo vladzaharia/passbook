@@ -15,7 +15,7 @@ import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type CompositeTemplateRegistry, createTemplateRegistry } from './registry.ts';
 import { listVersions } from './repo.ts';
-import { type StampRow, stampHistogram } from './repo-stamps.ts';
+import { stampHistogram, stampVersions } from './repo-stamps.ts';
 import { loadTemplate, passUsageOrg } from './service-access.ts';
 
 const cards = (n: number) => `${n} ${n === 1 ? 'card' : 'cards'}`;
@@ -26,18 +26,23 @@ const inputMax = (m: TemplateManifest): number | undefined => {
   return typeof max === 'number' ? max : undefined;
 };
 
-/** Each row with the goal of the version it sits on; a version without stamps never reads ready. */
-async function withGoals(
+/**
+ * The live cards of the scope as buckets, each read with its own version's input name and goal.
+ * A version without stamps holds no cards that count.
+ */
+async function buckets(
+  ctx: ServiceContext,
   registry: CompositeTemplateRegistry,
-  templateId: string,
-  rows: readonly StampRow[],
+  q: { templateId: string; mode: Mode; orgId?: string | null },
 ): Promise<StampBucket[]> {
-  const goals = new Map<string, number>();
-  for (const version of new Set(rows.map((r) => r.version))) {
-    const goal = (await registry.resolve(templateId, version)).manifest.stamps?.goal;
-    goals.set(version, goal ?? Number.POSITIVE_INFINITY);
+  const out: StampBucket[] = [];
+  for (const version of await stampVersions(ctx.env.DB, q)) {
+    const own = (await registry.resolve(q.templateId, version)).manifest.stamps;
+    if (!own) continue;
+    const rows = await stampHistogram(ctx.env.DB, { ...q, version, input: own.input });
+    for (const r of rows) out.push({ ...r, goal: own.goal });
   }
-  return rows.map((r) => ({ stamps: r.stamps, cards: r.cards, goal: goals.get(r.version) ?? 0 }));
+  return out;
 }
 
 /** What changing the goal of the template's current version to `goal` does to the live cards. */
@@ -51,15 +56,16 @@ export async function stampsImpact(
   const registry = createTemplateRegistry(ctx.env, { ctx });
   const version = row.activeVersion ?? (await listVersions(ctx.env.DB, id))[0]?.version;
   if (!version) throw new NotFoundError('Template has no saved version.', 'TEMPLATE_NOT_FOUND');
-  const block = (await registry.resolve(id, version)).manifest.stamps;
-  if (!block) throw new ConflictError('This template has no stamps.', 'STAMPS_NONE');
-  const rows = await stampHistogram(ctx.env.DB, {
-    templateId: id,
-    input: block.input,
-    mode: modeOf(auth),
-    orgId: passUsageOrg(auth, row.orgId, query.orgId),
-  });
-  return goalImpact(await withGoals(registry, id, rows), query.goal);
+  if (!(await registry.resolve(id, version)).manifest.stamps)
+    throw new ConflictError('This template has no stamps.', 'STAMPS_NONE');
+  return goalImpact(
+    await buckets(ctx, registry, {
+      templateId: id,
+      mode: modeOf(auth),
+      orgId: passUsageOrg(auth, row.orgId, query.orgId),
+    }),
+    query.goal,
+  );
 }
 
 /**
@@ -76,11 +82,16 @@ export async function assertStampsFit(
   const max = inputMax(manifest);
   if (!block || max === undefined) return;
   const registry = createTemplateRegistry(ctx.env, { ctx });
-  const rows = await stampHistogram(ctx.env.DB, { templateId, input: block.input, ...scope });
   let above = 0;
   let highest = 0;
-  for (const b of await withGoals(registry, templateId, rows)) {
-    const next = countAfterGoalChange(b.stamps, b.goal, block.goal, block.keepReady === true);
+  for (const b of await buckets(ctx, registry, { templateId, ...scope })) {
+    const next = countAfterGoalChange(
+      b.stamps,
+      b.goal,
+      block.goal,
+      block.keepReady === true,
+      b.kept,
+    );
     highest = Math.max(highest, next);
     if (next > max) above += b.cards;
   }

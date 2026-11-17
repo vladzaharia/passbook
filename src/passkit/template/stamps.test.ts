@@ -194,6 +194,18 @@ describe('stamps manifest checks', () => {
     expect(codes(withBlock({ input: 'nope' }))).toContain('STAMPS_INPUT');
     expect(codes(withBlock({ input: 'holder' }))).toContain('STAMPS_INPUT');
   });
+  it('refuses an input name that is not a plain name, even when the input exists', () => {
+    // The name is read through a JSON path: quotes and dots never get that far.
+    for (const input of ['a"b', 'a.b', '1abc', 'a b', 'x'.repeat(65)]) {
+      const m = withBlock({ input });
+      (m.inputs.properties as Record<string, unknown>)[input] = { type: 'integer', minimum: 0 };
+      expect(codes(m)).toContain('STAMPS_INPUT');
+    }
+    // Positive control: a plain name that exists is fine.
+    const ok = withBlock({ input: 'visits_2' });
+    (ok.inputs.properties as Record<string, unknown>).visits_2 = { type: 'integer', minimum: 0 };
+    expect(codes(ok)).not.toContain('STAMPS_INPUT');
+  });
   it('refuses a maximum under the goal and warns below a full card', () => {
     const m = base();
     (m.inputs.properties as Record<string, Record<string, unknown>>).stamps!.maximum = 9;

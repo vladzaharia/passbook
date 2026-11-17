@@ -60,6 +60,9 @@ const fieldOf = (b: Binding): { key: string; prop: string } | null => {
 };
 
 /** Manifest-level checks for the `stamps` block. File and pixel checks live in the analyzer. */
+/** The input a stamp card counts in: it is read through a JSON path, so only plain names. */
+const STAMPS_INPUT = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
+
 export function stampsIssues(
   manifest: TemplateManifest,
   passJson?: PassJson,
@@ -88,7 +91,13 @@ export function stampsIssues(
 
   const properties = isRecord(manifest.inputs?.properties) ? manifest.inputs.properties : {};
   const input = typeof block.input === 'string' ? properties[block.input] : undefined;
-  if (!isRecord(input) || input.type !== 'integer' || (input.minimum ?? 0) !== 0)
+  if (typeof block.input !== 'string' || !STAMPS_INPUT.test(block.input))
+    error(
+      'STAMPS_INPUT',
+      'stamps.input must be a plain input name (letters, digits, _).',
+      'stamps/input',
+    );
+  else if (!isRecord(input) || input.type !== 'integer' || (input.minimum ?? 0) !== 0)
     error('STAMPS_INPUT', 'stamps.input must be an integer input starting at 0.', 'stamps/input');
   else if (isGoal(goal) && typeof input.maximum === 'number' && input.maximum < goal)
     error('STAMPS_MAX', `The stamps input must allow at least ${goal}.`, 'stamps/input');
