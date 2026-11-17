@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../test/helpers/denial.ts';
 import { fakeAuth } from '../../test/helpers/fake-auth.ts';
 import { createApp } from './app.ts';
 import type { AppEnv } from './platform/env.ts';
@@ -49,7 +50,7 @@ describe('scan gate', () => {
         expect(await res.text(), path).not.toBe(SHELL);
       }
       const machine = await call('/scan', appEnv(value, fetched), {});
-      expect(machine.status).toBe(404);
+      await expectProblem(machine, 404, 'NOT_FOUND');
       expect(machine.headers.get('content-type')).toBe('application/problem+json');
       expect(fetched).toEqual([]);
     },
@@ -64,7 +65,7 @@ describe('scan gate', () => {
     expect((await call('/assets/scan-4yfauZzv.js', off, {})).status).toBe(200);
     expect(fetched).toEqual(['/login', '/scanner', '/admin/passes', '/assets/scan-4yfauZzv.js']);
     const api = await call('/api/v1/scan/nothing-here', off, fake.admin());
-    expect(api.status).toBe(404);
+    await expectProblem(api, 404, 'NOT_FOUND');
     expect(api.headers.get('content-type')).toBe('application/problem+json');
   });
 

@@ -42,7 +42,7 @@ export function registerEventTitleCommitmentTests(
       hash,
     };
     expect(await verifyEventTitleHash(env, args)).toBe(true);
-    await expect(verifyEventTitleHash({}, args)).rejects.toThrow();
+    await expect(verifyEventTitleHash({}, args)).rejects.toThrow(/No KEK configured/);
     expect(await verifyEventTitleHash(otherEnv, args)).toBe(false);
     expect(await verifyEventTitleHash(env, { ...args, orgId: 'org-2' })).toBe(false);
     expect(await verifyEventTitleHash(env, { ...args, passId: 'pass-2' })).toBe(false);
@@ -83,14 +83,14 @@ export function registerEventTitleCommitmentTests(
       hash: manager.scannerNameHash,
     };
     expect(await verifyEventActionLabelHash(env, label)).toBe(true);
-    await expect(verifyEventActionLabelHash({}, label)).rejects.toThrow();
+    await expect(verifyEventActionLabelHash({}, label)).rejects.toThrow(/No KEK configured/);
     expect(await verifyEventActionLabelHash(env, { ...label, actionId: 'other' })).toBe(false);
     expect(await verifyEventActionLabelHash(env, { ...label, kind: 'set' })).toBe(false);
     expect(await verifyEventActionLabelHash(env, { ...label, label: 'Changed' })).toBe(false);
     expect(await verifyEventActionLabelHash(env, { ...label, role: 'desk' })).toBe(false);
     expect(await verifyEventActionLabelHash(env, { ...label, hash: name.hash })).toBe(false);
     expect(await verifyEventScannerNameHash(env, name)).toBe(true);
-    await expect(verifyEventScannerNameHash({}, name)).rejects.toThrow();
+    await expect(verifyEventScannerNameHash({}, name)).rejects.toThrow(/No KEK configured/);
     expect(await verifyEventScannerNameHash(otherEnv, name)).toBe(false);
     expect(await verifyEventScannerNameHash(env, { ...name, scanId: 'scan-2' })).toBe(false);
     expect(await verifyEventScannerNameHash(env, { ...name, role: 'desk' })).toBe(false);

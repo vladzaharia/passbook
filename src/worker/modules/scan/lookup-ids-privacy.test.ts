@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makePass } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { run } from '../../platform/db.ts';
@@ -170,7 +171,7 @@ describe('lookup privacy', () => {
     const serialized = JSON.stringify(result);
     for (const id of [hidden.id, ...hiddenIds]) expect(serialized).not.toContain(id);
     expect(serialized).not.toContain('Paged Alpha');
-  }, 60_000);
+  });
 
   it('excludes quarantined, deleted, removed, voided and invalid Wallet passes before the page cap', async () => {
     const common = 'shared-external-id-495';
@@ -225,7 +226,7 @@ describe('lookup privacy', () => {
     expect((await search(valid.id, scanner.headers)).items.map((row) => row.passId)).toEqual([
       valid.id,
     ]);
-  }, 60_000);
+  });
 
   it('includes a valid expiry at the current instant but excludes an expired Wallet pass', async () => {
     const scanner = await kit.scanner({ templateIds: [templateId] });
@@ -307,6 +308,6 @@ describe('lookup privacy', () => {
     expect(url).toContain(`/passes/${pass.id}/assets/member.png?g=`);
     const path = (url ?? '').replace('/api/v1/scan', '');
     expect((await kit.get(desk.headers, path)).status).toBe(200);
-    expect((await kit.get(door.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(door.headers, path), 404, 'ASSET_NOT_FOUND');
   });
 });

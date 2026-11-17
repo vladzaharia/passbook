@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -177,7 +178,7 @@ const releaseCount = async (id: string) =>
   )?.n;
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   assets = fakeAssets();
   env = await makeEnv({
     ASSETS: assets,
@@ -190,7 +191,7 @@ beforeAll(async () => {
   author = await member(org.id, ['template_author']);
   reviewer = await member(org.id, ['template_reviewer']);
   publisher = await member(org.id, ['template_publisher']);
-}, 60_000);
+});
 
 afterEach(async () => {
   await run(env.DB, "UPDATE orgs SET status = 'active' WHERE id IN (?, ?)", [org.id, otherOrg.id]);
@@ -272,7 +273,7 @@ describe('release writes refuse a changed authority', () => {
     const both = await member(org.id, ['template_author', 'template_reviewer']);
     const t = await uploaded('Own Candidate', both);
     const c = await candidateOf(t.templateId, t.version, both);
-    expect((await approve(t.templateId, c, both)).status).toBe(403);
+    await expectProblem(await approve(t.templateId, c, both), 403, 'TEMPLATE_SELF_APPROVAL');
     expect(
       await all(env.DB, 'SELECT id FROM template_approvals WHERE candidate_id = ?', [c.id]),
     ).toEqual([]);
@@ -390,7 +391,11 @@ describe('release impact, restore and platform counts', () => {
     expect(impact.passes).toEqual({ count: 1, capped: false });
     expect(impact.diff.colors).toMatchObject([{ label: 'Background', to: 'rgb(1, 2, 3)' }]);
     const foreign = await member(otherOrg.id, ['template_publisher']);
-    expect((await request(`/${t.templateId}/releases/impact?${query}`, foreign)).status).toBe(404);
+    await expectProblem(
+      await request(`/${t.templateId}/releases/impact?${query}`, foreign),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
   });
 
   it('shows platform pass counts for shared templates to a platform admin', async () => {

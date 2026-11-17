@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -59,7 +60,11 @@ describe('live photo streams', () => {
         return originalGet(key, options);
       });
       try {
-        expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+        await expectProblem(
+          await kit.get(fixture.monitor.headers, fixture.path),
+          404,
+          'ASSET_NOT_FOUND',
+        );
         expect(opened).toBe(false);
       } finally {
         spy.mockRestore();
@@ -72,7 +77,11 @@ describe('live photo streams', () => {
       await finish();
     }
     // The transfer bumped the credential generation: the old event stays redacted for good.
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it('keeps the event and withholds only the photo after an image-row update', async () => {
@@ -94,7 +103,11 @@ describe('live photo streams', () => {
       return originalGet(key, options);
     });
     try {
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
       expect(opened).toBe(false);
     } finally {
       spy.mockRestore();

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first } from '../../platform/db.ts';
@@ -77,10 +78,10 @@ describe('scanner member photos', () => {
     const image = await kit.get(scanner.headers, path);
     expect(image.status).toBe(200);
     expect(new Uint8Array(await image.arrayBuffer())).toEqual(bytes);
-    expect((await kit.get(other.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(other.headers, path), 404, 'ASSET_NOT_FOUND');
     expect((await kit.get({}, path)).status).toBe(401);
     kit.clock.advance(3_600_001);
-    expect((await kit.get(scanner.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(scanner.headers, path), 404, 'ASSET_NOT_FOUND');
   });
 
   it('honors the scanner photo setting', async () => {

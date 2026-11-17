@@ -41,7 +41,7 @@ beforeAll(async () => {
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   templateId = await kit.scanTemplate('Original rebind scope', { actions: [CHECK_IN] });
   otherTemplateId = await kit.scanTemplate('Other rebind scope', { actions: [CHECK_IN] });
-}, 60_000);
+});
 
 const capabilities = (width: number): ScanDeviceCapabilities => ({
   width,
@@ -436,7 +436,7 @@ describe('session rebind snapshots', () => {
     expect(await deviceState(kit.env.DB, f.scanner.id)).toEqual(
       expectedWrite(before, 'unbind', 1200),
     );
-  }, 60_000);
+  });
 
   it.each([390, 1200])(
     'returns a clean rebind after reporting width %i',

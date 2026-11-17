@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -64,10 +65,22 @@ describe('bundle by-id changes respect mode', () => {
   it('a test key gets 404 for a live bundle: rotate, send, delete, get', async () => {
     const bundle = await makeBundle(fake.admin(), 'live', 'own@example.com');
     const key = fake.apiKey({ mode: 'test' });
-    expect((await call('POST', `/bundles/${bundle.id}/rotate-link`, key)).status).toBe(404);
-    expect((await call('POST', `/bundles/${bundle.id}/send-email`, key)).status).toBe(404);
-    expect((await call('DELETE', `/bundles/${bundle.id}`, key)).status).toBe(404);
-    expect((await call('GET', `/bundles/${bundle.id}`, key)).status).toBe(404);
+    await expectProblem(
+      await call('POST', `/bundles/${bundle.id}/rotate-link`, key),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
+    await expectProblem(
+      await call('POST', `/bundles/${bundle.id}/send-email`, key),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
+    await expectProblem(
+      await call('DELETE', `/bundles/${bundle.id}`, key),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
+    await expectProblem(await call('GET', `/bundles/${bundle.id}`, key), 404, 'BUNDLE_NOT_FOUND');
     expect((await call('GET', `/bundles/${bundle.id}`, fake.admin())).status).toBe(200);
   });
 
@@ -80,7 +93,7 @@ describe('bundle by-id changes respect mode', () => {
       ['DELETE', `/bundles/${bundle.id}`],
     ] as const) {
       const res = await call(method, path, session);
-      expect(res.status).toBe(409);
+      await expectProblem(res, 409, 'MODE_MISMATCH');
       expect(await codeOf(res)).toBe('MODE_MISMATCH');
     }
     expect((await call('GET', `/bundles/${bundle.id}`, session)).status).toBe(200);

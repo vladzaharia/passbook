@@ -87,5 +87,5 @@ describe('waiting pass requiring reissue', () => {
       before.credentialGeneration + 1,
     );
     expect((await list(session.headers)).reissueRequired).toEqual([]);
-  }, 120_000);
+  });
 });

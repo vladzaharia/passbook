@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { PassDevicesSchema, PassSummarySchema } from '../../../shared/contracts/index.ts';
@@ -215,7 +216,7 @@ describe('POST /passes/{id}/remove and /restore', () => {
     const pass = await kit.pass();
     const other = await makeOrg(kit.fx, { name: 'Elsewhere' });
     expect((await post(`/${pass.id}/remove`, {}, {})).status).toBe(401);
-    expect((await post(`/${pass.id}/remove`, {}, auth.user())).status).toBe(403);
+    await expectProblem(await post(`/${pass.id}/remove`, {}, auth.user()), 403, 'FORBIDDEN');
     expect(
       (
         await post(
@@ -226,11 +227,15 @@ describe('POST /passes/{id}/remove and /restore', () => {
       ).status,
     ).toBe(403);
     const foreignKey = await auth.apiKey({ orgId: other.id });
-    expect((await post(`/${pass.id}/remove`, {}, foreignKey)).status).toBe(404);
-    expect((await post(`/${pass.id}/restore`, {}, foreignKey)).status).toBe(404);
+    await expectProblem(await post(`/${pass.id}/remove`, {}, foreignKey), 404, 'PASS_NOT_FOUND');
+    await expectProblem(await post(`/${pass.id}/restore`, {}, foreignKey), 404, 'PASS_NOT_FOUND');
     expect((await post(`/${pass.id}/remove`, { message: 'x'.repeat(201) })).status).toBe(422);
     // A session changes only the mode it is in.
-    expect((await post(`/${pass.id}/remove`, {}, auth.admin({ mode: 'test' }))).status).toBe(409);
+    await expectProblem(
+      await post(`/${pass.id}/remove`, {}, auth.admin({ mode: 'test' })),
+      409,
+      'MODE_MISMATCH',
+    );
     expect(
       (await post(`/${pass.id}/remove`, {}, await auth.apiKey({ orgId: kit.org.id, mode: 'test' })))
         .status,
@@ -244,8 +249,8 @@ describe('POST /passes/{id}/remove and /restore', () => {
     const other = await makeOrg(kit.fx, { name: 'Membership required' });
     const pass = await kit.pass({ orgId: other.id });
 
-    expect((await post(`/${pass.id}/remove`)).status).toBe(403);
-    expect((await post(`/${pass.id}/restore`)).status).toBe(403);
+    await expectProblem(await post(`/${pass.id}/remove`), 403, 'FORBIDDEN');
+    await expectProblem(await post(`/${pass.id}/restore`), 403, 'FORBIDDEN');
     expect((await getPass(kit.env.DB, pass.id))?.removedAt).toBeNull();
 
     await auth.addOrg(other.id);
@@ -264,7 +269,11 @@ describe('POST /passes/{id}/remove and /restore', () => {
     const other = await makeOrg(kit.fx, { name: 'Else' });
     const c = await kit.pass();
     const foreignKey = await auth.apiKey({ orgId: other.id });
-    expect((await post('/bulk', { action: 'remove', ids: [c.id] }, foreignKey)).status).toBe(404);
+    await expectProblem(
+      await post('/bulk', { action: 'remove', ids: [c.id] }, foreignKey),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect((await getPass(kit.env.DB, c.id))?.removedAt).toBeNull();
   });
 });

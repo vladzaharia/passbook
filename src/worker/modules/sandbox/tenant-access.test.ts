@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -115,13 +116,13 @@ describe('tenant Test inbox routes', () => {
         kit.org.id,
         path.endsWith('/send-to-me') ? 'POST' : 'GET',
       );
-      expect(res.status, path).toBe(404);
+      await expectProblem(res, 404, 'CAPTURED_EMAIL_NOT_FOUND');
       const body = await res.text();
       expect(body).not.toContain(capture.recipient);
       expect(body).not.toContain(capture.html);
     }
     await noEffects(capture.id, before);
-  }, 60_000);
+  });
 
   it('lets read-only members preview but reserves sending for pass operators', async () => {
     const capture = await captureInboxPass(kit);
@@ -153,7 +154,11 @@ describe('tenant Test inbox routes', () => {
       CapturedEmailListSchema.parse(await (await request('/test-inbox', author.session)).json())
         .items,
     ).toEqual([]);
-    expect((await request(`/test-inbox/${capture.id}`, author.session)).status).toBe(404);
+    await expectProblem(
+      await request(`/test-inbox/${capture.id}`, author.session),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
     await noEffects(capture.id, before);
     const sent = await request(
       `/test-inbox/${capture.id}/send-to-me`,
@@ -179,7 +184,7 @@ describe('tenant Test inbox routes', () => {
         [capture.id],
       ),
     ).toEqual({ actor_id: operator.user.id, org_id: kit.org.id, detail: null });
-  }, 60_000);
+  });
 
   it('uses the actual capture org and hides foreign, missing, and non-Test captures', async () => {
     const actor = await member();
@@ -240,7 +245,7 @@ describe('tenant Test inbox routes', () => {
     }
     await noEffects(foreign.id, before);
     await noEffects(live.id, before);
-  }, 60_000);
+  });
 
   it('requires Test mode, with an explicit mode query for the iframe', async () => {
     const actor = await member();
@@ -320,7 +325,7 @@ describe('tenant Test inbox routes', () => {
       ).status,
     ).toBe(404);
     await noEffects(capture.id, before);
-  }, 60_000);
+  });
 
   it('enforces verified email independently of tenant access', async () => {
     const user = await makeUser(kit.fx, { verified: false });
@@ -337,7 +342,7 @@ describe('tenant Test inbox routes', () => {
     expect(response.status).toBe(422);
     expect(await response.json()).toMatchObject({ code: 'NO_VERIFIED_EMAIL' });
     await noEffects(capture.id, before);
-  }, 60_000);
+  });
 
   it('rejects revoked memberships and sessions and never permits API keys', async () => {
     const capture = await captureInboxPass(kit);
@@ -352,7 +357,11 @@ describe('tenant Test inbox routes', () => {
         await (await request('/test-inbox', revokedMember.session)).json(),
       ).items,
     ).toEqual([]);
-    expect((await request(`/test-inbox/${capture.id}`, revokedMember.session)).status).toBe(404);
+    await expectProblem(
+      await request(`/test-inbox/${capture.id}`, revokedMember.session),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
     expect(
       (
         await request(
@@ -420,5 +429,5 @@ describe('tenant Test inbox routes', () => {
     );
     expect(denied.status).toBe(401);
     await noEffects(capture.id, before);
-  }, 60_000);
+  });
 });

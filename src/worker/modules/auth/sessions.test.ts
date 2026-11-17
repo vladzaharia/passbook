@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fixtures, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { first, run } from '../../platform/db.ts';
@@ -15,7 +16,7 @@ let h: TestHarness;
 let clock: ManualClock;
 
 beforeEach(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   h = await harness({}, { clock });
 });
 afterEach(() => h.restore());
@@ -208,7 +209,7 @@ describe('http', () => {
   it('answers 401 without a session and 403 for non-admins on admin routes', async () => {
     expect((await h.call('/api/v1/users')).status).toBe(401);
     const { jar } = await signIn(['user']);
-    expect((await h.call('/api/v1/users', { cookies: jar })).status).toBe(403);
+    await expectProblem(await h.call('/api/v1/users', { cookies: jar }), 403, 'FORBIDDEN');
   });
 
   it('logs out: revokes server-side and clears the cookie', async () => {

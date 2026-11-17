@@ -107,7 +107,7 @@ describe('0001_platform migration', () => {
         env.DB,
         "INSERT INTO orgs (id, slug, name, status, created_at, updated_at) VALUES ('x', 'xx', 'X', 'bogus', 1, 1)",
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/CHECK constraint failed: status IN \('active', 'suspended', 'deleted'\)/);
   });
 });
 
@@ -285,7 +285,9 @@ describe('constraints and cascades', () => {
     const org = await makeOrg(f);
     const template = makeTemplate({ id: 'tpl-ref' });
     await makePass(f, { orgId: org.id, template: template.resolved });
-    await expect(run(env.DB, "DELETE FROM templates WHERE id = 'tpl-ref'")).rejects.toThrow();
+    await expect(run(env.DB, "DELETE FROM templates WHERE id = 'tpl-ref'")).rejects.toThrow(
+      /FOREIGN KEY constraint failed/,
+    );
   });
 
   it('cascades pass deletion to versions, registrations, assets, blocks and outbox', async () => {
@@ -419,13 +421,13 @@ describe('constraints and cascades', () => {
         env.DB,
         "INSERT INTO signing_identities (id, label, pass_type_identifier, team_identifier, source, env_prefix, is_default, created_at) VALUES ('b', 'B', 'pass.other', 'T', 'env', 'B', 1, 1)",
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/UNIQUE constraint failed: signing_identities\.is_default/);
     await expect(
       run(
         env.DB,
         "INSERT INTO signing_identities (id, label, pass_type_identifier, team_identifier, source, env_prefix, created_at) VALUES ('c', 'C', 'pass.im.plrs.wallet', 'T', 'env', 'C', 1)",
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/UNIQUE constraint failed: signing_identities\.pass_type_identifier/);
   });
 });
 
@@ -519,7 +521,9 @@ describe('0014_scan migration', () => {
         env.DB,
         "INSERT INTO audit_log (at, actor_type, action) VALUES (1, 'robot', 'scanner.paired')",
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(
+      /CHECK constraint failed: actor_type IN \('user', 'api_key', 'system', 'connection/,
+    );
   });
 
   it('keeps scan_gates WITHOUT ROWID with the pass, action, scope key', async () => {
@@ -546,14 +550,28 @@ describe('0014_scan migration', () => {
   it('rejects a bad mode, a backwards window, a match half and a long note', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
-    await expect(insertEvent(org.id, { mode: 'staging' })).rejects.toThrow();
-    await expect(insertEvent(org.id, { closes_at: 10 })).rejects.toThrow();
-    await expect(insertEvent(org.id, { closes_at: 5 })).rejects.toThrow();
-    await expect(insertEvent(org.id, { match_input: 'tier' })).rejects.toThrow();
-    await expect(insertEvent(org.id, { match_values: '["gold"]' })).rejects.toThrow();
-    await expect(insertEvent(org.id, { note: 'x'.repeat(141) })).rejects.toThrow();
+    await expect(insertEvent(org.id, { mode: 'staging' })).rejects.toThrow(
+      /CHECK constraint failed: mode IN \('live', 'test'\)/,
+    );
+    await expect(insertEvent(org.id, { closes_at: 10 })).rejects.toThrow(
+      /CHECK constraint failed: closes_at > opens_at/,
+    );
+    await expect(insertEvent(org.id, { closes_at: 5 })).rejects.toThrow(
+      /CHECK constraint failed: closes_at > opens_at/,
+    );
+    await expect(insertEvent(org.id, { match_input: 'tier' })).rejects.toThrow(
+      /CHECK constraint failed: \(match_input IS NULL\) = \(match_values IS NULL\)/,
+    );
+    await expect(insertEvent(org.id, { match_values: '["gold"]' })).rejects.toThrow(
+      /CHECK constraint failed: \(match_input IS NULL\) = \(match_values IS NULL\)/,
+    );
+    await expect(insertEvent(org.id, { note: 'x'.repeat(141) })).rejects.toThrow(
+      /CHECK constraint failed: note IS NULL OR length\(note\) <= 140/,
+    );
     await insertEvent(org.id, { note: 'x'.repeat(140) });
-    await expect(insertScanner(org.id, { mode: 'staging' })).rejects.toThrow();
+    await expect(insertScanner(org.id, { mode: 'staging' })).rejects.toThrow(
+      /CHECK constraint failed: mode IN \('live', 'test'\)/,
+    );
   });
 
   it('keeps a csrf secret to browser devices and the token columns paired', async () => {
@@ -562,7 +580,9 @@ describe('0014_scan migration', () => {
     await expect(
       insertScanner(org.id, { kind: 'terminal', csrf_secret: 'secret' }),
     ).rejects.toThrow(/CHECK constraint failed/);
-    await expect(insertScanner(org.id, { token_hash: 'h' })).rejects.toThrow();
+    await expect(insertScanner(org.id, { token_hash: 'h' })).rejects.toThrow(
+      /CHECK constraint failed: \(token_hash IS NULL\) = \(token_prefix IS NULL\)/,
+    );
     await insertScanner(org.id, { token_prefix: 'abcd1234', token_hash: 'h', csrf_secret: 's' });
   });
 

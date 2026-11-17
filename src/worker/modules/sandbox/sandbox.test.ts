@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   editFixedColumns,
   makeApiKey,
@@ -185,8 +186,16 @@ describe('GET /test-inbox', () => {
     const body = CapturedEmailDetailSchema.parse(await res.json());
     expect(body.to).toBe('detail@example.com');
     expect(body.html.length).toBeGreaterThan(0);
-    expect((await api(`/test-inbox/${row?.id}`, { headers: admin.headers })).status).toBe(404);
-    expect((await api('/test-inbox/missing', { headers: inboxHeaders(admin) })).status).toBe(404);
+    await expectProblem(
+      await api(`/test-inbox/${row?.id}`, { headers: admin.headers }),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
+    await expectProblem(
+      await api('/test-inbox/missing', { headers: inboxHeaders(admin) }),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
   });
 });
 
@@ -229,7 +238,11 @@ describe('POST /test-inbox/:id/send-to-me', () => {
     expect(res.status).toBe(422);
     expect(((await res.json()) as { code: string }).code).toBe('NO_VERIFIED_EMAIL');
     expect((await send('missing')).status).toBe(404);
-    expect((await send(row?.id ?? '', inboxHeaders(outsider))).status).toBe(404);
+    await expectProblem(
+      await send(row?.id ?? '', inboxHeaders(outsider)),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
   });
 });
 
@@ -334,7 +347,7 @@ describe('daily purge', () => {
     );
     expect(left?.n).toBeGreaterThan(0);
     // Creating 90 passes is the slow part; under a loaded runner it outlasts the 5 s default.
-  }, 60_000);
+  });
 });
 
 describe('GET /test-inbox/{id}/html', () => {
@@ -363,8 +376,16 @@ describe('GET /test-inbox/{id}/html', () => {
   });
 
   it('hides unknown ids from a member and a non-member', async () => {
-    expect((await api('/test-inbox/nope/html', { headers: admin.headers })).status).toBe(404);
-    expect((await api('/test-inbox/nope/html', { headers: outsider.headers })).status).toBe(404);
+    await expectProblem(
+      await api('/test-inbox/nope/html', { headers: admin.headers }),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
+    await expectProblem(
+      await api('/test-inbox/nope/html', { headers: outsider.headers }),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
   });
 });
 

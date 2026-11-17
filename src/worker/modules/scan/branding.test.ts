@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import { run } from '../../platform/db.ts';
@@ -176,7 +177,7 @@ describe('scanner branding', () => {
     const raced = async (change: (db: D1Database, id: string) => Promise<void>) => {
       const { id, headers } = await pairedIn(org.id, `Logo race ${kit.fx.ids.token(3)}`);
       // The control: an unbranded org answers a plain 404, not a refusal.
-      expect((await logo(headers)).status).toBe(404);
+      await expectProblem(await logo(headers), 404, 'IMAGE_NOT_FOUND');
       const { result, fired } = await beforeRead(
         kit.env,
         /SELECT \(SELECT o\.branding FROM orgs/,
@@ -206,6 +207,6 @@ describe('scanner branding', () => {
     const other = await otherOrg();
     await uploadLogo(other.id, 360, 150);
     expect((await logo(headers, `?orgId=${kit.org.id}&timeZone=UTC`)).status).toBe(200);
-    expect((await logo(headers, `?orgId=${other.id}&timeZone=UTC`)).status).toBe(403);
+    await expectProblem(await logo(headers, `?orgId=${other.id}&timeZone=UTC`), 403, 'FORBIDDEN');
   });
 });

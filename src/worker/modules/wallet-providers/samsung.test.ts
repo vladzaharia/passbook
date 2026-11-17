@@ -3,6 +3,7 @@ import * as asn1 from 'asn1js';
 import { CompactSign, compactVerify, importX509 } from 'jose';
 import * as pki from 'pkijs';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { fromBase64Url } from '../../platform/ids.ts';
 import {
   buildSamsungDataFetchLink,
@@ -24,7 +25,7 @@ import {
   verifySamsungTombstoneRequest,
 } from './samsung.ts';
 
-const NOW = Date.now();
+const NOW = Date.UTC(2026, 0, 1);
 const utf8 = new TextEncoder();
 const text = new TextDecoder();
 const engine = new pki.CryptoEngine({
@@ -223,7 +224,7 @@ async function decryptedCard(token: string): Promise<unknown> {
       key,
       encrypted,
     ),
-  ).rejects.toThrow();
+  ).rejects.toThrow(/Decryption failed/);
   return JSON.parse(text.decode(plain));
 }
 
@@ -279,7 +280,10 @@ describe('Samsung credentials and Data Fetch', () => {
     const signature = segments[2] ?? '';
     segments[2] = `${signature[0] === 'A' ? 'B' : 'A'}${signature.slice(1)}`;
     const key = await importX509(partner.certificate, 'RS256');
-    await expect(compactVerify(segments.join('.'), key)).rejects.toThrow();
+    await expectRejectsCode(
+      compactVerify(segments.join('.'), key),
+      'ERR_JWS_SIGNATURE_VERIFICATION_FAILED',
+    );
   });
 });
 

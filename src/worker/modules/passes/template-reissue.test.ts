@@ -24,7 +24,7 @@ import { reissueStalePasses, STALE_QUIET_MS } from './stale-reissue.ts';
 let kit: Kit;
 beforeAll(async () => {
   kit = await setupKit();
-}, 60_000);
+});
 
 const admin = { type: 'user', id: 'admin-1' } as const;
 type Fn = () => Promise<unknown>;
@@ -258,7 +258,7 @@ describe('template reissue', () => {
         [issued.id],
       ),
     ).toEqual(passBefore);
-  }, 60_000);
+  });
 
   it('keeps NULL build keys stale for either the pinned or target version', async () => {
     const id = await newTemplate();
@@ -284,7 +284,7 @@ describe('template reissue', () => {
     expect(started(other)).toHaveLength(1);
     await expectSnapshot(started(other)[0], rollback);
     expect((await getPass(kit.env.DB, issued.id))?.templateVersion).toBe('v1');
-  }, 60_000);
+  });
 
   it('counts stale passes only in the requested mode', async () => {
     const id = await newTemplate();
@@ -294,7 +294,7 @@ describe('template reissue', () => {
     await approve(id, 'v2', kit.org.id, 'test');
     expect((await olderLivePasses(kit.env.DB, id, 'live', kit.org.id)).older).toBe(0);
     expect((await olderLivePasses(kit.env.DB, id, 'test', kit.org.id)).older).toBe(1);
-  }, 60_000);
+  });
 
   it('queues and rebuilds only the approved tenant and mode', async () => {
     const id = await newTemplate([], null);
@@ -347,7 +347,7 @@ describe('template reissue', () => {
     expect(await run(otherJob)).toEqual({ changed: 1, unchanged: 0, failed: 0 });
     expect((await getPass(kit.env.DB, testPass.id))?.releaseId).toBe(testV2.id);
     expect((await getPass(kit.env.DB, otherPass.id))?.releaseId).toBe(otherV2.id);
-  }, 60_000);
+  });
 
   it('restores the previous release claim and retries when a workflow cannot start', async () => {
     const id = await newTemplate();
@@ -372,7 +372,7 @@ describe('template reissue', () => {
     expect(await queuedRelease(id)).toBe(target.id);
     expect(started(id)).toHaveLength(1);
     await expectSnapshot(started(id)[0], target);
-  }, 60_000);
+  });
 
   it('rebuilds live passes on the new version with its back fields; voided passes stay', async () => {
     const id = await newTemplate();
@@ -428,7 +428,7 @@ describe('template reissue', () => {
     }[];
     expect(back.find((f) => f.key === 'pass-service')?.value).toContain('support@passbook.mobile');
     expect((await olderLivePasses(kit.env.DB, id, 'live', kit.org.id)).older).toBe(0);
-  }, 60_000);
+  });
 
   it('turns a burst of approved releases into one reissue to the latest', async () => {
     const id = await newTemplate();
@@ -455,7 +455,7 @@ describe('template reissue', () => {
     });
     if (!latest) throw new Error('Expected the latest release');
     await expectSnapshot(started(id)[0], latest);
-  }, 60_000);
+  });
 
   it('rejects a queued snapshot superseded by a new generation of the same version', async () => {
     const id = await newTemplate();
@@ -486,7 +486,7 @@ describe('template reissue', () => {
     await expectSnapshot(secondJob, newerRelease);
     expect(await run(secondJob)).toEqual({ changed: 1, unchanged: 0, failed: 0 });
     expect((await getPass(kit.env.DB, pass.id))?.releaseId).toBe(newerRelease.id);
-  }, 60_000);
+  });
 
   it('starts nothing when current and queues a fresh generation after rollback', async () => {
     const id = await newTemplate();
@@ -517,7 +517,7 @@ describe('template reissue', () => {
       templateVersion: 'v1',
       releaseId: rollback.id,
     });
-  }, 60_000);
+  });
 
   it('keeps a pass on its version when the new one no longer fits, and says so', async () => {
     const id = await newTemplate();
@@ -549,7 +549,7 @@ describe('template reissue', () => {
     });
     await cron();
     expect(started(id)).toHaveLength(1);
-  }, 60_000);
+  });
 
   it('follows a baked template that changed in a deploy', async () => {
     const previousSource = { ...generatedSource };
@@ -661,5 +661,5 @@ describe('template reissue', () => {
       Object.assign(generatedSource, previousSource);
       resetBakedSync();
     }
-  }, 60_000);
+  });
 });

@@ -138,7 +138,7 @@ describe('verified attachment requiring credential reissue', () => {
         [pass.id],
       ),
     ).toEqual({ n: 2 });
-  }, 120_000);
+  });
 
   it('completes verified sign-in while reporting the unattachable pass separately', async () => {
     const { kit, pass, user, email } = await fixedBarcodePass({ retired: true });
@@ -160,7 +160,7 @@ describe('verified attachment requiring credential reissue', () => {
         [pass.id],
       ),
     ).toEqual({ n: 1 });
-  }, 120_000);
+  });
 
   it('rejects a direct administrator transfer instead of recording an autoattach requirement', async () => {
     const { kit, pass } = await fixedBarcodePass();
@@ -182,7 +182,7 @@ describe('verified attachment requiring credential reissue', () => {
         pass.id,
       ]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('records the requirement for a voided waiting pass without attaching it', async () => {
     const { kit, pass } = await fixedBarcodePass({ retired: true });
@@ -193,7 +193,7 @@ describe('verified attachment requiring credential reissue', () => {
       reissueRequired: true,
     });
     expect((await getPass(kit.env.DB, pass.id))?.status).toBe('voided');
-  }, 120_000);
+  });
 
   it('rolls back the requirement if its audit cannot be recorded', async () => {
     const { kit, pass } = await fixedBarcodePass({ retired: true });
@@ -225,7 +225,7 @@ describe('verified attachment requiring credential reissue', () => {
         pass.id,
       ]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it.each(['blocked', 'disabled', 'unverified', 'link'] as const)(
     'does not record a stale requirement when the user or pass becomes %s at the write',
@@ -302,7 +302,7 @@ describe('verified attachment requiring credential reissue', () => {
         [pass.id],
       ),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('does not record a requirement after its source connection is disabled', async () => {
     const { kit, pass } = await fixedBarcodePass({ retired: true });
@@ -345,5 +345,5 @@ describe('verified attachment requiring credential reissue', () => {
         [pass.id],
       ),
     ).toBeNull();
-  }, 120_000);
+  });
 });

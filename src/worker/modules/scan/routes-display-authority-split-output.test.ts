@@ -15,6 +15,18 @@ beforeEach(async () => {
 });
 
 describe('scan display preview tenant authorization', () => {
+  it('projects the pass when nothing changes at the post-audit output read', async () => {
+    const { f, org, own, atPreviewOutputFence, preview } = fixture;
+    const user = await makeUser(f);
+    await grantScanMembership(f, org.id, user.id, ['pass_operator']);
+    const session = await makeSession(f, { userId: user.id });
+    const response = await atPreviewOutputFence(
+      async () => {},
+      () => preview(own, session.headers),
+    );
+    expect(response.status).toBe(200);
+  });
+
   it.each(['membership', 'session', 'pass', 'Wallet', 'source', 'credential', 'transfer'] as const)(
     'handles a %s change at the post-audit output read',
     async (change) => {

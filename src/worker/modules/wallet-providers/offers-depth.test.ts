@@ -237,5 +237,5 @@ describe('offer snapshot SQL depth', () => {
     ]);
     expect(await current(market)).toBe(true);
     expect(await current(market, refreshed)).toBe(false);
-  }, 120_000);
+  });
 });

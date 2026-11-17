@@ -218,7 +218,7 @@ export function registerRetentionOccupancyTests() {
       run(kit.env.DB, 'UPDATE scan_retention_proofs SET occupancy_invalidated=0 WHERE scan_id=?', [
         older.scanId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable scan retention proof/);
     await restorePresence(pass.id, event.id, proof.presence_snapshot);
     await hardDelete(pass);
     expect(await scopedCount(kit.org.id, event.id)).toBe(0);

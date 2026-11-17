@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   allowInvalidRoleNames,
   type Fixtures,
@@ -100,14 +101,14 @@ describe('tenant metrics authorization', () => {
     expect((await overview('', s.headers)).status).toBe(422);
     expect((await overview(`?templateId=${s.templateA.resolved.id}`, s.headers)).status).toBe(422);
     expect((await overview(q, s.headers)).status).toBe(200);
-    expect((await overview(`?orgId=${s.b.id}`, s.headers)).status).toBe(404);
-    expect((await overview('?orgId=missing', s.headers)).status).toBe(404);
+    await expectProblem(await overview(`?orgId=${s.b.id}`, s.headers), 404, 'METRICS_NOT_FOUND');
+    await expectProblem(await overview('?orgId=missing', s.headers), 404, 'METRICS_NOT_FOUND');
 
     const platformOnly = fake.session({ userId: s.person.id, roles: ['admin', 'user'] });
-    expect((await overview(`?orgId=${s.b.id}`, platformOnly)).status).toBe(404);
+    await expectProblem(await overview(`?orgId=${s.b.id}`, platformOnly), 404, 'METRICS_NOT_FOUND');
     const noMembership = await makeUser(s.f);
     const unrelatedAdmin = fake.session({ userId: noMembership.id, roles: ['admin', 'user'] });
-    expect((await overview(q, unrelatedAdmin)).status).toBe(404);
+    await expectProblem(await overview(q, unrelatedAdmin), 404, 'METRICS_NOT_FOUND');
     const directory = await app.request(
       `/api/v1/metrics/platform/overview${q}`,
       { headers: unrelatedAdmin },
@@ -117,11 +118,11 @@ describe('tenant metrics authorization', () => {
     expect(MetricsOverviewSchema.parse(await directory.json()).setup.latestPassId).toBeNull();
     const templateAuthor = await makeUser(s.f);
     await addMember(s.f, s.a.id, templateAuthor.id, 'template_author');
-    expect((await overview(q, fake.user(templateAuthor.id))).status).toBe(404);
+    await expectProblem(await overview(q, fake.user(templateAuthor.id)), 404, 'METRICS_NOT_FOUND');
     const invalidMember = await makeUser(s.f);
     await allowInvalidRoleNames(env.DB);
     await addMember(s.f, s.a.id, invalidMember.id, 'unknown_role');
-    expect((await overview(q, fake.user(invalidMember.id))).status).toBe(404);
+    await expectProblem(await overview(q, fake.user(invalidMember.id)), 404, 'METRICS_NOT_FOUND');
     expect(
       (await overview(q, fake.apiKey({ orgId: s.a.id, scopes: ['passes:read'] }))).status,
     ).toBe(401);
@@ -153,8 +154,8 @@ describe('tenant metrics authorization', () => {
     const own = `?orgId=${s.a.id}&templateId=${s.templateA.resolved.id}&range=24h`;
     const foreign = `?orgId=${s.a.id}&templateId=${s.templateB.resolved.id}&range=24h`;
     const missing = `?orgId=${s.a.id}&templateId=missing&range=24h`;
-    expect((await overview(foreign, s.headers)).status).toBe(404);
-    expect((await overview(missing, s.headers)).status).toBe(404);
+    await expectProblem(await overview(foreign, s.headers), 404, 'METRICS_NOT_FOUND');
+    await expectProblem(await overview(missing, s.headers), 404, 'METRICS_NOT_FOUND');
     expect((await overview(own, s.headers)).status).toBe(200);
 
     // A warmed cache must not survive reassignment of the selected template.
@@ -162,7 +163,7 @@ describe('tenant metrics authorization', () => {
       s.b.id,
       s.templateA.resolved.id,
     ]);
-    expect((await overview(own, s.headers)).status).toBe(404);
+    await expectProblem(await overview(own, s.headers), 404, 'METRICS_NOT_FOUND');
 
     const unfiltered = `?orgId=${s.a.id}&range=24h`;
     expect((await overview(unfiltered, s.headers)).status).toBe(200);
@@ -170,7 +171,7 @@ describe('tenant metrics authorization', () => {
       s.clock.now(),
       s.membershipId,
     ]);
-    expect((await overview(unfiltered, s.headers)).status).toBe(404);
+    await expectProblem(await overview(unfiltered, s.headers), 404, 'METRICS_NOT_FOUND');
   });
 
   it('allows shared templates without counting passes or deliveries from other organizations', async () => {
@@ -236,10 +237,10 @@ describe('tenant metrics authorization', () => {
     const testAgain = MetricsOverviewSchema.parse(await (await overview(q, testHeaders)).json());
     expect(testAgain.setup.latestPassId).toBe(s.passA2.id);
     await run(base.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [s.a.id]);
-    expect((await overview(q, testHeaders)).status).toBe(404);
+    await expectProblem(await overview(q, testHeaders), 404, 'METRICS_NOT_FOUND');
     await run(base.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [s.a.id]);
     await run(base.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [s.person.id]);
-    expect((await overview(q, s.headers)).status).toBe(404);
+    await expectProblem(await overview(q, s.headers), 404, 'METRICS_NOT_FOUND');
   });
 
   it('allows explicit platform-admin org filters without sharing privileged recent data with tenants', async () => {
@@ -271,7 +272,7 @@ describe('tenant metrics authorization', () => {
       passEmailsSent: 0,
       latestPassId: null,
     });
-    expect((await overview(`?orgId=${s.b.id}`, admin)).status).toBe(404);
+    await expectProblem(await overview(`?orgId=${s.b.id}`, admin), 404, 'METRICS_NOT_FOUND');
     expect(b.recent).toEqual([]);
     expect(b.live).toEqual([]);
     expect(JSON.stringify(b)).not.toContain(s.passB.id);
@@ -294,7 +295,7 @@ describe('tenant metrics authorization', () => {
       { headers: admin },
       base,
     );
-    expect(mismatched.status).toBe(404);
+    await expectProblem(mismatched, 404, 'METRICS_NOT_FOUND');
     const tenant = MetricsOverviewSchema.parse(
       await (await overview(`?orgId=${s.a.id}&range=24h`, s.headers)).json(),
     );
@@ -458,7 +459,11 @@ describe('tenant metrics authorization', () => {
       },
     };
     const withAnalytics = { ...base, ANALYTICS_SQL: analytics } as unknown as AppEnv;
-    expect((await overview(`?orgId=${s.b.id}`, s.headers, withAnalytics)).status).toBe(404);
+    await expectProblem(
+      await overview(`?orgId=${s.b.id}`, s.headers, withAnalytics),
+      404,
+      'METRICS_NOT_FOUND',
+    );
     expect(
       (
         await overview(

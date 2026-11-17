@@ -96,7 +96,7 @@ beforeAll(async () => {
   const auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
   key = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read', 'passes:write'] });
-}, 60_000);
+});
 
 describe('issuing from a blueprint', () => {
   it('is refused on every issue path with TEMPLATE_IS_BLUEPRINT', async () => {

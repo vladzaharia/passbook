@@ -35,7 +35,7 @@ describe('status recheck and crons', () => {
   });
 
   it('fresh skips the short cache', async () => {
-    const clock = new ManualClock(Date.now());
+    const clock = new ManualClock();
     const ctx = createServiceContext(base, { clock });
     const first = await getStatus(ctx, { fetch: okFetch });
     clock.advance(1000);

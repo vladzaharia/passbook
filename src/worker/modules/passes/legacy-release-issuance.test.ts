@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -120,7 +121,7 @@ beforeAll(async () => {
   publisher = await member(['template_publisher']);
   operator = await member(['pass_operator']);
   viewer = await member(['org_admin']);
-}, 60_000);
+});
 
 /** An uploaded template that was already active before reviews existed. */
 async function uploadedActive(): Promise<Imported> {
@@ -271,7 +272,7 @@ describe('legacy template releases', () => {
         passId,
       ]),
     ).toEqual({ release_id: id, template_version: template.version });
-  }, 60_000);
+  });
 
   it('lets an API key create resolve the legacy release without release fields', async () => {
     const template = await uploadedActive();
@@ -283,7 +284,7 @@ describe('legacy template releases', () => {
     expect(await first(kit.env.DB, 'SELECT release_id FROM passes WHERE id = ?', [passId])).toEqual(
       { release_id: id },
     );
-  }, 60_000);
+  });
 
   it('does not treat a legacy release in the other mode as effective', async () => {
     const template = await uploadedActive();
@@ -296,7 +297,7 @@ describe('legacy template releases', () => {
     const response = await issue(key.headers, passBody(template));
     expect(response.status).toBe(409);
     expect(await response.json()).toMatchObject({ code: 'TEMPLATE_RELEASE_REQUIRED' });
-  }, 60_000);
+  });
 
   it('is superseded by a newer approved release, which cannot be rolled back to legacy', async () => {
     const template = await uploadedActive();
@@ -312,7 +313,7 @@ describe('legacy template releases', () => {
     ]);
     // The superseded legacy binding no longer issues.
     const stale = await issue(operator.session.headers, passBody(template, legacy));
-    expect(stale.status).toBe(409);
+    await expectProblem(stale, 409, 'TEMPLATE_RELEASE_CONFLICT');
     const key = await makeApiKey(kit.fx, { orgId, scopes: ['passes:write'] });
     const viaKey = await issue(key.headers, passBody(template));
     expect(viaKey.status, await viaKey.clone().text()).toBe(201);
@@ -327,9 +328,9 @@ describe('legacy template releases', () => {
       expectedGeneration: 2,
       reason: 'Restore the grandfathered release',
     });
-    expect(rollback.status).toBe(409);
+    await expectProblem(rollback, 409, 'TEMPLATE_RELEASE_CONFLICT');
     expect((await releases(template)).active?.id).toBe(next.id);
-  }, 60_000);
+  });
 
   it('refuses a legacy release for a template whose active version moved', async () => {
     const template = await uploadedActive();
@@ -340,6 +341,6 @@ describe('legacy template releases', () => {
     ]);
     const key = await makeApiKey(kit.fx, { orgId, scopes: ['passes:write'] });
     const response = await issue(key.headers, passBody(template));
-    expect(response.status).toBe(409);
-  }, 60_000);
+    await expectProblem(response, 409, 'TEMPLATE_RELEASE_REQUIRED');
+  });
 });

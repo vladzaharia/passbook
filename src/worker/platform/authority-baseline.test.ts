@@ -168,7 +168,7 @@ describe('baseline writes against the migrated schema', () => {
         [id, v],
       );
     expect((await version('1')).changes).toBe(1);
-    await expect(version('1')).rejects.toThrow();
+    await expect(version('1')).rejects.toThrow(/template versions are immutable/);
   });
 
   it('template upload (uploaded template plus its first version) succeeds', async () => {

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import type { ScanRole } from '../../../passkit/types.ts';
 import { all } from '../../platform/db.ts';
 import {
@@ -85,7 +86,7 @@ describe('real-pass scan display preview', () => {
     const problems: unknown[] = [];
     for (const params of cases) {
       const response = await preview(params, admin(params.mode === 'test' ? 'test' : 'live'));
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
       noStore(response);
       const body = (await response.json()) as { requestId?: string };
       delete body.requestId;

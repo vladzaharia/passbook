@@ -1,5 +1,6 @@
 import { createExecutionContext } from 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeOrg, makeTemplate, withoutTrigger } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { signWebhook } from '../../connectors/lib/hmac.ts';
@@ -33,7 +34,7 @@ beforeEach(async () => {
     { orgId: kit.org.id, templateId: kit.templateId, version: template.resolved.version },
   );
   kit.seams.release = { id: release.id, generation: release.generation, version: release.version };
-}, 60_000);
+});
 
 function webhookSecret(dto: { webhookSecret?: string | null }): string {
   if (!dto.webhookSecret) throw new Error('Missing generated webhook secret');
@@ -784,7 +785,7 @@ describe('processWebhook', () => {
     await expect(processWebhook(kit.sctx, queued)).rejects.toMatchObject({ status: 503 });
     expect(fetches).toBe(1);
     expect(kit.seams.applied).toEqual([]);
-  }, 60_000);
+  });
 
   it.each([1, 8])(
     'logs and retains a baseline-shaped queue message as ignored (attempt %s) without running it',
@@ -2119,7 +2120,7 @@ describe('POST /hooks/connections/:id', () => {
       await signedRequest(secret, event('evt-http-3')),
       kit.env,
     );
-    expect(unknown.status).toBe(404);
+    await expectProblem(unknown, 404, 'NOT_FOUND');
   });
 
   it('needs no session or CSRF token', async () => {

@@ -129,7 +129,7 @@ describe('REPLACE and UPSERT never overwrite a guarded row', () => {
         "INSERT OR REPLACE INTO template_versions (template_id, version, manifest, pass_json, assets, created_at) VALUES (?, ?, '{}', '{}', '{}', 1)",
         [version?.template_id as string, version?.version as string],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template versions are immutable/);
     expect(
       await all<Row>(db, 'SELECT * FROM template_versions WHERE template_id = ?', [
         s.template.resolved.id,
@@ -142,10 +142,10 @@ describe('REPLACE and UPSERT never overwrite a guarded row', () => {
           keyset[0]?.id as number,
           'f'.repeat(64),
         ]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential reference keyset/);
       await expect(
         run(db, 'UPDATE credential_ref_keyset SET commitment = ?', ['f'.repeat(64)]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential reference keyset/);
       expect(await all<Row>(db, 'SELECT * FROM credential_ref_keyset')).toEqual(keyset);
     }
   });
@@ -180,7 +180,7 @@ describe('Rule-2 immutable inputs', () => {
       );
     await expect(invite('["owner"]')).rejects.toThrow(/invalid role names/);
     await expect(invite('["org_admin","org_admin"]')).rejects.toThrow(/invalid role names/);
-    await expect(invite('[1]')).rejects.toThrow();
+    await expect(invite('[1]')).rejects.toThrow(/invalid role names/);
     await expect(invite('["read_only","pass_operator"]')).resolves.toBeDefined();
     const freshInvite = s.f.ids.id();
     await run(
@@ -217,7 +217,9 @@ describe('Rule-2 immutable inputs', () => {
             ids[t.table] as string,
           ]),
           `${t.table}.${column}`,
-        ).rejects.toThrow();
+        ).rejects.toThrow(
+          /connections identity is immutable|orgs identity is immutable|passes identity is immutable|scan_events identity is immutable|scan_staff identity is immutable|scanner ID is immutable|scanners identity is immutable|scanning_sessions identity is immutable/,
+        );
       }
     }
   });

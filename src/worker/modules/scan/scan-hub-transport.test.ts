@@ -1,5 +1,6 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -43,7 +44,7 @@ describe('live display transport and authorization', () => {
     for (const field of ['actor', 'observation'] as const) {
       const missing = { ...monitor.attachment };
       Reflect.deleteProperty(missing, field);
-      await expect(sealLiveAttachment(kit.env, missing)).rejects.toThrow();
+      await expect(sealLiveAttachment(kit.env, missing)).rejects.toThrow(/Invalid live attachment/);
       expect((await hub().snapshot(missing)).rows).toEqual([]);
     }
   });
@@ -290,7 +291,11 @@ describe('live display transport and authorization', () => {
     const image = await kit.get(monitor.headers, url.replace('/api/v1/scan', ''));
     expect(image.status).toBe(200);
     const unwatching = await screen('monitor', []);
-    expect((await kit.get(unwatching.headers, url.replace('/api/v1/scan', ''))).status).toBe(404);
+    await expectProblem(
+      await kit.get(unwatching.headers, url.replace('/api/v1/scan', '')),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it('rejects stale credentials and settings revisions before returning history', async () => {

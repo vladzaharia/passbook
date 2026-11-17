@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { makeOrg, stubIssuedToken } from '../../../../test/helpers/index.ts';
 import { issueToken, tokenMac } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
@@ -360,7 +361,7 @@ describe('durable bundle email intent', () => {
         action: 'rotate_link',
         token: await issueToken(kit.env, 'bundle', original.id, pass.orgId, kit.ctx.ids.token()),
       }).commit(),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/The pass changed\. Reload and retry\./);
     expect(
       (
         await first<{ token: string }>(kit.env.DB, 'SELECT token FROM bundles WHERE id = ?', [
@@ -411,11 +412,38 @@ describe('durable bundle email intent', () => {
       { passId: pass.id, email: 'bundle-race-new@example.com' },
       null,
     );
-    await expect(pending.commit()).rejects.toThrow();
+    await expectRejectsCode(pending.commit(), 'BUNDLE_STALE');
     expect(await getBundle(kit.env.DB, id, null)).toBeNull();
     expect(
       await first(kit.env.DB, 'SELECT pass_id FROM bundle_passes WHERE bundle_id = ?', [id]),
     ).toBeNull();
     expect((await getPass(kit.env.DB, pass.id))?.holderEmail).toBe('bundle-race-new@example.com');
+  });
+
+  it('inserts the bundle membership when the holder has not changed', async () => {
+    const pass = await kit.pass({ holderEmail: 'bundle-control@example.com' });
+    const id = kit.ctx.ids.id();
+    const stub = stubIssuedToken(kit.ctx.ids.token());
+    await createBundleGrant(
+      job(),
+      {
+        id,
+        orgId: pass.orgId,
+        mode: pass.mode,
+        name: 'Control',
+        token: stub.mac,
+        tokenSeal: stub.seal,
+        holderEmail: pass.holderEmail,
+        actor,
+        passes: [pass],
+        now: kit.clock.now(),
+      },
+      undefined,
+      {},
+    ).commit();
+    expect(await getBundle(kit.env.DB, id, null)).not.toBeNull();
+    expect(
+      await first(kit.env.DB, 'SELECT pass_id FROM bundle_passes WHERE bundle_id = ?', [id]),
+    ).toMatchObject({ pass_id: pass.id });
   });
 });

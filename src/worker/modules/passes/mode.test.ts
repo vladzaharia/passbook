@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -60,7 +61,7 @@ beforeAll(async () => {
   otherOrg = await makeOrg(kit.fx, { name: 'Other Org' });
   otherTestRelease = await approveAppleRelease(kit, { orgId: otherOrg.id, mode: 'test' });
   await auth.addOrg(otherOrg.id);
-}, 60_000);
+});
 
 type Headers = Record<string, string>;
 const api = (path: string, init: RequestInit & { headers?: Headers } = {}) =>
@@ -240,7 +241,7 @@ describe('issuance review isolation', () => {
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
     const headers = auth.admin({ mode: 'test' });
     expect(await getPass(kit.env.DB, pass.id)).toBeNull();
-    expect((await api(`/passes/${pass.id}`, { headers })).status).toBe(404);
+    await expectProblem(await api(`/passes/${pass.id}`, { headers }), 404, 'PASS_NOT_FOUND');
     const page = PassListSchema.parse(
       await (await api(`/passes?orgId=${encodeURIComponent(kit.org.id)}`, { headers })).json(),
     );
@@ -512,7 +513,11 @@ describe('lists filter by the caller mode; get by id works in both', () => {
       expect(got.mode).toBe('test');
     }
     const liveKey = await auth.apiKey({ orgId: null, mode: 'live' });
-    expect((await api(`/passes/${test.id}`, { headers: liveKey })).status).toBe(404);
+    await expectProblem(
+      await api(`/passes/${test.id}`, { headers: liveKey }),
+      404,
+      'PASS_NOT_FOUND',
+    );
     // A key of another org cannot read it in either mode.
     expect(
       (

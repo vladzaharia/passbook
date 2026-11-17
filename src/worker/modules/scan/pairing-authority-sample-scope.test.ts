@@ -37,7 +37,7 @@ describe('pairing tenant authority', () => {
     expect(await response.json()).toMatchObject({ code: 'TEMPLATE_RELEASE_REQUIRED' });
     expect(await scannerState(scanner.id)).toEqual(beforeScanner);
     expect(await passState()).toEqual(beforePass);
-  }, 60_000);
+  });
 
   it.each([
     ['templates', 'missing'],
@@ -107,7 +107,7 @@ describe('pairing tenant authority', () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toMatchObject({ code: 'PASS_CONFLICT' });
     expect(await passState()).toEqual(beforePass);
-  }, 60_000);
+  });
 
   it('never samples from a blueprint: a template beside it is used, a blueprint alone is unassigned', async () => {
     const actor = await member();
@@ -134,7 +134,7 @@ describe('pairing tenant authority', () => {
     );
     expect(issued.status).toBe(201);
     expect(await issued.json()).toMatchObject({ templateId });
-  }, 60_000);
+  });
 
   it('refuses a sample when the assigned event is in Live mode', async () => {
     const actor = await member();
@@ -153,7 +153,7 @@ describe('pairing tenant authority', () => {
     expect(response.status).toBe(422);
     expect(await response.json()).toMatchObject({ code: 'SCANNER_UNASSIGNED' });
     expect(await passState()).toEqual(beforePass);
-  }, 60_000);
+  });
 
   it.each([
     'scanner generation',
@@ -248,7 +248,7 @@ describe('pairing tenant authority', () => {
     } finally {
       await run(kit.env.DB, "UPDATE templates SET status='active' WHERE id=?", [invalidated]);
     }
-  }, 60_000);
+  });
 
   it.each(['session scope', 'session status', 'device overrides', 'device attachment'] as const)(
     'does not issue a sample after %s changes at commit',
@@ -355,5 +355,5 @@ describe('pairing tenant authority', () => {
     expect(
       await first(kit.env.DB, 'SELECT template_id,mode FROM passes WHERE id=?', [sample.passId]),
     ).toEqual({ template_id: nextTemplate, mode: 'test' });
-  }, 60_000);
+  });
 });

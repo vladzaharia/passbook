@@ -1,5 +1,6 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { run } from '../../platform/db.ts';
 import { deleteMemberPhoto, putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -35,7 +36,11 @@ describe('live photo lineage', () => {
     const image = await kit.get(monitor.headers, url.replace('/api/v1/scan', ''));
     expect(image.status).toBe(200);
     const unwatching = await screen('monitor', []);
-    expect((await kit.get(unwatching.headers, url.replace('/api/v1/scan', ''))).status).toBe(404);
+    await expectProblem(
+      await kit.get(unwatching.headers, url.replace('/api/v1/scan', '')),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it('binds a live photo to its retained event, its pass and a watched source', async () => {
@@ -52,16 +57,16 @@ describe('live photo lineage', () => {
     expect((await kit.get(fixture.monitor.headers, path())).status).toBe(200);
     // An event nobody retained, and an event of another pass, never open this pass's photo.
     url.searchParams.set('event', 'no-such-event');
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path()), 404, 'ASSET_NOT_FOUND');
     const otherEvent = row(otherSource.id, { passId: otherPass.id });
     await publish(otherEvent);
     url.searchParams.set('event', otherEvent.id);
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path()), 404, 'ASSET_NOT_FOUND');
     // A source the monitor does not watch is out of scope until the watch lists it.
     const sameFromOther = row(otherSource.id, { passId: fixture.pass.id });
     await publish(sameFromOther);
     url.searchParams.set('event', sameFromOther.id);
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path()), 404, 'ASSET_NOT_FOUND');
     await setSetupWatchStmt(kit.env.DB, kit.org.id, fixture.monitor.id, {
       scannerIds: [fixture.source.id, otherSource.id],
       allOrg: false,
@@ -101,7 +106,11 @@ describe('live photo lineage', () => {
       { png: fixture.png, includeInPass: false },
       null,
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
@@ -134,7 +143,11 @@ describe('live photo lineage', () => {
     // Attaching an enabled connection changes content, not authority.
     expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
     await run(kit.env.DB, 'UPDATE connections SET enabled = 0 WHERE id = ?', [connectionId]);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const disabled = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
@@ -244,7 +257,11 @@ describe('live photo lineage', () => {
   ])('does not project or serve a %s pass photo', async (_state, change) => {
     const fixture = await photoFixture();
     await run(kit.env.DB, `UPDATE passes SET ${change} WHERE id = ?`, [fixture.pass.id]);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const projection = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeScanEvent,
   makeTemplate,
@@ -42,7 +43,7 @@ describe('revoke and mode', () => {
     expect((await consoleCall('POST', `/${body.id}/revoke`)).status).toBe(200);
     expect((await auditActions()).filter((a) => a === 'scanner.revoke')).toHaveLength(1);
     const refused = await consoleCall('POST', `/${body.id}/pairing`);
-    expect(refused.status).toBe(409);
+    await expectProblem(refused, 409, 'SCANNER_REVOKED');
     expect(await codeOf(refused)).toBe('SCANNER_REVOKED');
     expect((await consoleCall('POST', `/${body.id}/pair-here`)).status).toBe(409);
     const fresh = (await (

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -233,7 +234,11 @@ describe('assign and archive', () => {
     const e = (await create()).body;
     const other = await makeOrg(f);
     const theirs = await makeScanner(f, { orgId: other.id });
-    expect((await call('POST', `/${e.id}/scanners`, { scannerIds: [theirs.id] })).status).toBe(404);
+    await expectProblem(
+      await call('POST', `/${e.id}/scanners`, { scannerIds: [theirs.id] }),
+      404,
+      'SCANNER_NOT_FOUND',
+    );
     const testScanner = await makeScanner(f, { orgId, mode: 'test' });
     const res = await call('POST', `/${e.id}/scanners`, { scannerIds: [testScanner.id] });
     expect(res.status).toBe(422);
@@ -270,8 +275,8 @@ describe('assign and archive', () => {
   });
 
   it('an event is a 404 for the wrong id and requires an organization selection', async () => {
-    expect((await call('GET', '/missing')).status).toBe(404);
-    expect((await call('GET', '', undefined, fake.user())).status).toBe(403);
+    await expectProblem(await call('GET', '/missing'), 404, 'EVENT_NOT_FOUND');
+    await expectProblem(await call('GET', '', undefined, fake.user()), 403, 'FORBIDDEN');
     await makeScanEvent(f, { orgId });
   });
 });

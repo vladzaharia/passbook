@@ -261,7 +261,7 @@ describe('BulkReissue', () => {
       [templateId],
     );
     expect(left?.n).toBe(0);
-  }, 60_000);
+  });
 
   it('marks the run errored when the workflow itself fails', async () => {
     const templateId = await twoVersions();

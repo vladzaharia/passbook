@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { countD1, makeOrg } from '../../../../test/helpers/index.ts';
 import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
@@ -77,8 +78,8 @@ describe('policy-selected event action grants', () => {
       (await kit.get(f.scanner.headers, f.assetPath('thumbnail@3x.png', f.photoToken))).status,
     ).toBe(200);
     const other = await kit.scanner({ templateIds: [f.templateId], settings: { flow: 'choose' } });
-    expect((await kit.get(other.headers, f.photoPath)).status).toBe(404);
-    expect((await kit.get(other.headers, f.genericPath)).status).toBe(404);
+    await expectProblem(await kit.get(other.headers, f.photoPath), 404, 'ASSET_NOT_FOUND');
+    await expectProblem(await kit.get(other.headers, f.genericPath), 404, 'ASSET_NOT_FOUND');
 
     const originalActor = await assetActorFor(kit, f.scanner);
     const event = await getEvent(kit.env.DB, kit.org.id, f.event.id);
@@ -274,8 +275,8 @@ describe('policy-selected event action grants', () => {
       'replacement-scanner-secret',
       f.scanner.id,
     ]);
-    expect((await kit.get(f.scanner.headers, f.photoPath)).status).toBe(404);
-    expect((await kit.get(f.scanner.headers, f.genericPath)).status).toBe(404);
+    await expectProblem(await kit.get(f.scanner.headers, f.photoPath), 404, 'ASSET_NOT_FOUND');
+    await expectProblem(await kit.get(f.scanner.headers, f.genericPath), 404, 'ASSET_NOT_FOUND');
   });
 
   it('does not redeem or create grants with a keyring foreign to the captured D1 keyset', async () => {
@@ -285,8 +286,8 @@ describe('policy-selected event action grants', () => {
     const before = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
     try {
       kit.env.KEK_V1 = btoa(String.fromCharCode(...new Uint8Array(32).fill(29)));
-      expect((await kit.get(f.scanner.headers, f.photoPath)).status).toBe(404);
-      expect((await kit.get(f.scanner.headers, f.genericPath)).status).toBe(404);
+      await expectProblem(await kit.get(f.scanner.headers, f.photoPath), 404, 'ASSET_NOT_FOUND');
+      await expectProblem(await kit.get(f.scanner.headers, f.genericPath), 404, 'ASSET_NOT_FOUND');
       expectUnavailable(await action(kit, f.scanner.headers, request), f.pass.id);
     } finally {
       kit.env.KEK_V1 = original;

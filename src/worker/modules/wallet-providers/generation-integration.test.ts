@@ -367,5 +367,5 @@ describe('provider credential generation transitions', () => {
     ).toBeNull();
     expect((await f.call({ token: await f.token() })).status).toBe(204);
     await expect(passForToken(f.kit.ctx, oldToken)).rejects.toMatchObject({ status: 404 });
-  }, 120_000);
+  });
 });

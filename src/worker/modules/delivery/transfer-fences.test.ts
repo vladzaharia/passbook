@@ -290,7 +290,7 @@ describe('delivery transfer fences', () => {
       SELECT * FROM pass_issuance_deliveries WHERE pass_id = ?`,
         [source.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid issuance delivery source/);
     await expect(
       run(
         kit.env.DB,
@@ -298,7 +298,7 @@ describe('delivery transfer fences', () => {
       SET state = 'pending', outbox_id = NULL WHERE pass_id = ?`,
         [source.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid issuance delivery transition/);
     expect(await intent(source.id)).toEqual(before);
   });
 

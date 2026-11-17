@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { recordedCheckIn, recordedNoMatch } from './console-privacy-actions-test-fixtures.ts';
@@ -171,10 +172,10 @@ describe('scan console and feed privacy', () => {
         '0'.repeat(64),
         orphanedScan.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable scan retention proof/);
     await expect(
       run(kit.env.DB, 'DELETE FROM scan_retention_proofs WHERE scan_id = ?', [orphanedScan.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scan retention proof belongs to scan/);
     await run(kit.env.DB, 'DELETE FROM passes WHERE id = ?', [hardDeleted.id]);
     expect(
       await first(kit.env.DB, 'SELECT pass_id, template_id FROM scans WHERE id = ?', [
@@ -305,10 +306,10 @@ describe('scan console and feed privacy', () => {
       unprovenOrphan,
       ...untrustedPassless,
     ])
-      expect((await get(`/${bad.id}`)).status).toBe(404);
-    expect((await get(`/${badSandbox.id}`, testAdmin)).status).toBe(404);
-    expect((await get(`/${sandboxRow.id}`)).status).toBe(404);
-    expect((await get(`/${newest.id}`, testAdmin)).status).toBe(404);
+      await expectProblem(await get(`/${bad.id}`), 404, 'SCAN_NOT_FOUND');
+    await expectProblem(await get(`/${badSandbox.id}`, testAdmin), 404, 'SCAN_NOT_FOUND');
+    await expectProblem(await get(`/${sandboxRow.id}`), 404, 'SCAN_NOT_FOUND');
+    await expectProblem(await get(`/${newest.id}`, testAdmin), 404, 'SCAN_NOT_FOUND');
     expect((await get(`/${passless.id}`)).status).toBe(200);
     expect((await get(`/${ambiguousPassless.id}`)).status).toBe(200);
 
@@ -365,7 +366,7 @@ describe('scan console and feed privacy', () => {
     );
     const spoofedMode = await page('?limit=100', { ...liveKey, 'x-passbook-mode': 'test' });
     expect(spoofedMode.items.map((item) => item.id)).toEqual(expectedIds);
-    expect((await get(`?orgId=${foreignOrg.id}`, liveKey)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${foreignOrg.id}`, liveKey), 403, 'ORG_FORBIDDEN');
     expectNoSecrets(keyFirst, pass);
 
     const response = await get(exportPath());

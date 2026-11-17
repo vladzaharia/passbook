@@ -164,7 +164,7 @@ describe('issuance authority at the Test capture boundary', () => {
       errorCode: 'TEST_MODE',
     });
     expect(kit.mailer.sent).toHaveLength(sent);
-  }, 60_000);
+  });
 
   it.each(['membership', 'intent'] as const)(
     'does not capture when original %s authority changes after preflight',
@@ -215,7 +215,7 @@ describe('issuance authority at the Test capture boundary', () => {
       errorCode: 'TEST_MODE',
     });
     expect(kit.mailer.sent).toHaveLength(sent);
-  }, 90_000);
+  });
 
   it('continues using the original release after a later release is published', async () => {
     const issued = await tenantIssued();
@@ -230,7 +230,7 @@ describe('issuance authority at the Test capture boundary', () => {
       errorCode: 'TEST_MODE',
     });
     expect(kit.mailer.sent).toHaveLength(sent);
-  }, 90_000);
+  });
 
   it('captures when the pass release changes after its snapshot (releases are checked at create)', async () => {
     const issued = await tenantIssued();
@@ -245,7 +245,7 @@ describe('issuance authority at the Test capture boundary', () => {
     });
     expect(inserted).toBe(true);
     expect(kit.mailer.sent).toHaveLength(sent);
-  }, 90_000);
+  });
 });
 
 /** Model a retained historical connection-backed Test intent; current connector issuance is Live-only. */
@@ -361,7 +361,7 @@ describe('historical connection-backed Test issuance', () => {
     const sent = kit.mailer.sent.length;
     expect(await capture(issued.outboxId, issued.pass.id, issued.to)).toBe(true);
     expect(kit.mailer.sent).toHaveLength(sent);
-  }, 90_000);
+  });
 });
 
 it('binds exact pass and bundle member epochs and rejects a fresh pending snapshot', async () => {
@@ -427,4 +427,4 @@ it('binds exact pass and bundle member epochs and rejects a fresh pending snapsh
   expect(await allowed(asBundle)).toBeNull();
   expect(await allowed({ kind: 'pass', pass: pendingPass })).toBeNull();
   expect(await allowed({ kind: 'bundle', snapshot: pendingBundle })).toBeNull();
-}, 60_000);
+});

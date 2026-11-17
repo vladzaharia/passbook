@@ -249,7 +249,7 @@ describe('Samsung tombstone retention', () => {
       await replaceCallbackKeysetForTest(db, t.credentialKeysetCommitment);
     }
     expect((await t.call({ token: await t.token() })).status).toBe(204);
-  }, 120_000);
+  });
 
   it('retains independently verified historical certificates for the same instance after rotation', async () => {
     const t = await setupSamsungCallbacks();
@@ -361,7 +361,7 @@ describe('Samsung tombstone retention', () => {
     expect((await t.call({ token: await t.token() })).status).toBe(204);
     const newKey = (await importPKCS8(rotatedIdentity.privateKey, 'RS256')) as CryptoKey;
     expect((await t.call({ token: await t.token({ signingKey: newKey }) })).status).toBe(204);
-  }, 120_000);
+  });
 
   it('never reuses a tombstoned ref hash after the original pass is purged', async () => {
     const t = await setupSamsungCallbacks();
@@ -471,7 +471,7 @@ describe('Samsung tombstone retention', () => {
         envelope,
         credentialKeysetCommitment: t.credentialKeysetCommitment,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/retired Samsung reference cannot be reused/);
     expect(
       await putSamsungFetchRef(db, refScope, {
         id: referenceId,
@@ -493,7 +493,7 @@ describe('Samsung tombstone retention', () => {
       }),
     ).toBeNull();
     expect((await t.call({ token: await t.token() })).status).toBe(204);
-  }, 120_000);
+  });
 
   it('waits for every older incarnation before transfer completion and retains old tombstones', async () => {
     const t = await setupSamsungCallbacks({ holderEmail: 'first@example.test' });
@@ -604,5 +604,5 @@ describe('Samsung tombstone retention', () => {
     expect(intermediate).toHaveLength(2);
     expect(intermediate.every((row) => row.lifecycle === 'retired')).toBe(true);
     expect((await t.call({ token: await t.token() })).status).toBe(204);
-  }, 180_000);
+  });
 });

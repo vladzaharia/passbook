@@ -10,7 +10,6 @@ import {
   staleScanAuthority,
 } from './act-claim-lifecycle.ts';
 import { overrideEvidenceStmt, StaleScanAuthority } from './act-override.ts';
-import { snapshotActionContext } from './act-snapshot.ts';
 import { passRaced, ScanAttemptRaced, staleActorRefusal } from './act-stale-refusal.ts';
 import { actorCsrfAuthorityStmt, actorCsrfSnapshotFromResult } from './actor-csrf.ts';
 import {
@@ -29,10 +28,9 @@ import { outputPredicateStmt } from './repo-output-predicates.ts';
 import { pristineClaimFence } from './repo-scans.ts';
 import { approverStatement } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
-import { afterReads } from './scan-capture.ts';
+import { afterReads, capturingContext } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
-import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 /** `POST /actions` (SA 8.4): claim the key, evaluate, decide, gate, finalize, answer. */
 export async function act(
@@ -40,16 +38,9 @@ export async function act(
   actor: ScanActor,
   req: ActRequest,
 ): Promise<ScanEvaluation> {
-  ctx = snapshotActionContext(ctx);
-  actor = cloneObservedScanActor(actor);
+  ctx = capturingContext(ctx);
   if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
     throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
-  const { input, approval, ...request } = req;
-  req = {
-    ...structuredClone(request),
-    input: { ...input },
-    ...(approval ? { approval: { ...approval } } : {}),
-  };
   let credentials: CredentialTombstoneSnapshot | null = null;
   try {
     const [hash, derived] = await Promise.all([
@@ -87,7 +78,7 @@ export async function act(
     )
       throw staleScanAuthority();
     const undoWindow = decodePlatformSettings(initial[1])['scan.undoWindowMinutes'];
-    actor.credentialKeysetCommitment = captured.credentialKeysetCommitment;
+    actor = { ...actor, credentialKeysetCommitment: captured.credentialKeysetCommitment };
     if (!credentialInputValid(req.input, captured)) return unknownOutcome(captured);
     const previous = replayScanFromResult(initial[0]);
     if (previous)

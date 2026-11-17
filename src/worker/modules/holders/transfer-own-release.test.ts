@@ -57,20 +57,20 @@ describe('holder change under the pass own release', () => {
     const pass = await kit.pass({ holderEmail: email() });
     await setStatus(kit, kit.template.id, 'archived');
     await expectKeptVersion(kit, pass);
-  }, 120_000);
+  });
 
   it('completes behind a head on another build, without moving the pass', async () => {
     const kit = await setupKit();
     const pass = await kit.pass({ holderEmail: email() });
     await moveHead(kit, kit.template.id, 'v2');
     await expectKeptVersion(kit, pass);
-  }, 120_000);
+  });
 
   it('still completes at the head when the head is the pass own version', async () => {
     const kit = await setupKit();
     const pass = await kit.pass({ holderEmail: email() });
     await expectKeptVersion(kit, pass);
-  }, 120_000);
+  });
 
   it('refuses when the template is deleted', async () => {
     const kit = await setupKit();
@@ -80,7 +80,7 @@ describe('holder change under the pass own release', () => {
     expect((await getPass(kit.env.DB, pass.id))?.credentialGeneration).toBe(
       pass.credentialGeneration,
     );
-  }, 120_000);
+  });
 
   it('needs the head when the pass has no issued release (it would move to a new version)', async () => {
     const kit = await setupKit();
@@ -91,7 +91,7 @@ describe('holder change under the pass own release', () => {
     await setStatus(kit, kit.template.id, 'active');
     await reassign(kit, pass.id, email());
     expect((await getPass(kit.env.DB, pass.id))?.releaseId).not.toBeNull();
-  }, 120_000);
+  });
 
   it('still requires a reissue for a static barcode on an archived template', async () => {
     const { kit, pass } = await fixedBarcodePass();
@@ -99,5 +99,5 @@ describe('holder change under the pass own release', () => {
     await expect(reassign(kit, pass.id, email())).rejects.toMatchObject({
       code: 'PASS_REISSUE_REQUIRED',
     });
-  }, 120_000);
+  });
 });

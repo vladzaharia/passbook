@@ -14,7 +14,7 @@ import {
   signedGoogleEvent,
 } from './google-callback-test-kit.ts';
 
-const now = Date.now();
+const now = Date.UTC(2026, 0, 1);
 const issuer = '33880000000223344';
 const event = {
   classId: `${issuer}.c_${'a'.repeat(43)}`,

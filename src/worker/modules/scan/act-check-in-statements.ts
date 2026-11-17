@@ -5,9 +5,9 @@ import type { EventRow } from '../events/repo.ts';
 import type { AdmissionPlan } from './admission-types.ts';
 import type * as gates from './repo-gates.ts';
 import { holderPart, presenceHolderPart } from './repo-scan-checks.ts';
-import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { PreparedScanRetentionProof } from './scan-retention-proof.ts';
-import { retentionPart, scanIs, wonGate } from './scan-write-grant.ts';
+import { scanIs, wonGate } from './scan-write-grant.ts';
 import {
   allOf,
   type Finalize,
@@ -43,7 +43,6 @@ interface CheckInStatementsInput {
     cap: CheckInVariant | null;
     lost: CheckInVariant;
   };
-  sideDb: D1Database;
 }
 
 /**
@@ -95,7 +94,7 @@ export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
   ] as const) {
     if (!v) continue;
     ledgerEvent(g, v.row, scanId, outcome, reason);
-    g.include(retentionPart(retentionProofIfRecordedStmt(i.sideDb, v.retention)));
+    g.include(retentionProofPart(v.retention));
   }
   const [holder] = g.include(holderPart(gate));
   const [presenceHolder] = presence

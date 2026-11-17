@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { first } from '../../platform/db.ts';
@@ -24,7 +25,7 @@ beforeAll(async () => {
   releases = { live, test };
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
-}, 60_000);
+});
 
 type Headers = Record<string, string>;
 const call = (method: string, path: string, headers: Headers, body: unknown = {}) =>
@@ -73,7 +74,7 @@ describe('by-id writes cannot cross modes', () => {
       const live = await make('live');
       const key = await auth.apiKey({ orgId: null, mode: 'test' });
       const res = await call(method, path(live.id), key, body);
-      expect(res.status).toBe(404);
+      await expectProblem(res, 404, 'PASS_NOT_FOUND');
       expect(await getPass(kit.env.DB, live.id)).toMatchObject({
         version: live.version,
         status: 'active',
@@ -86,7 +87,7 @@ describe('by-id writes cannot cross modes', () => {
     async (method, _n, path, body) => {
       const live = await make('live');
       const res = await call(method, path(live.id), auth.admin({ mode: 'test' }), body);
-      expect(res.status).toBe(409);
+      await expectProblem(res, 409, 'MODE_MISMATCH');
       expect(await codeOf(res)).toBe('MODE_MISMATCH');
     },
   );
@@ -110,8 +111,12 @@ describe('by-id writes cannot cross modes', () => {
   it('a test key cannot read the events or devices of a live pass', async () => {
     const live = await make('live');
     const key = await auth.apiKey({ orgId: null, mode: 'test' });
-    expect((await call('GET', `/passes/${live.id}/events`, key)).status).toBe(404);
-    expect((await call('GET', `/passes/${live.id}/devices`, key)).status).toBe(404);
+    await expectProblem(await call('GET', `/passes/${live.id}/events`, key), 404, 'PASS_NOT_FOUND');
+    await expectProblem(
+      await call('GET', `/passes/${live.id}/devices`, key),
+      404,
+      'PASS_NOT_FOUND',
+    );
   });
 
   it('the email is not queued by a refused resend', async () => {
@@ -187,7 +192,7 @@ describe('resend', () => {
     const pass = await make('live');
     await call('POST', `/passes/${pass.id}/remove`, auth.admin());
     const res = await call('POST', `/passes/${pass.id}/resend-email`, auth.admin());
-    expect(res.status).toBe(409);
+    await expectProblem(res, 409, 'PASS_REMOVED');
     expect(await codeOf(res)).toBe('PASS_REMOVED');
   });
 });

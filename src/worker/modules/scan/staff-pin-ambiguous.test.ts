@@ -166,7 +166,7 @@ describe('ambiguous PIN reservation responses', () => {
           committed = true;
         },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/malformed JSON/);
     expect(committed).toBe(false);
     expect(await counter(personKey(manager.id), windowOf(PIN_PERSON_WINDOW_MS))).toBe(1);
     expect(await counter(scannerKey(), windowOf(PIN_SCANNER_WINDOW_MS))).toBe(1);

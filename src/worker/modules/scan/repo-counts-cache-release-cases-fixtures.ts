@@ -201,7 +201,7 @@ export function registerCountsCacheReleaseCases() {
       expect((await plan.read(results)).counts.event?.expected).toBe(1);
       expect(await cache(s.event.id)).toEqual({ expected: 1, expected_at: kit.clock.now() });
     }
-  }, 120_000);
+  });
 
   it('reads the exact count without a cache write when the cache fence exceeds the bind budget', async () => {
     const s = await scenario();

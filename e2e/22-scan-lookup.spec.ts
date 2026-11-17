@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { pairScanner } from './helpers/pair.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
+import { hardwareCode } from './helpers/scan-input.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test('one field supports hidden IDs, independent QR data, people review and HID keyboard scans', async ({
@@ -97,14 +98,13 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     // Bluetooth/USB HID readers generate a burst of keys plus Enter, including in the field.
     field = await open();
-    await field.pressSequentially('00001231', { delay: 10 });
-    await field.press('Enter');
+    await field.focus();
+    await hardwareCode(page, '00001231');
     await expect(page.getByTestId('scan-result')).toContainText('HID Focus Guest');
     expect(await ledger(1)).toMatchObject([{ outcome: 'ok', method: 'wedge' }]);
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     await page.locator('body').click({ position: { x: 3, y: 120 } });
-    await page.keyboard.type('00001232', { delay: 10 });
-    await page.keyboard.press('Enter');
+    await hardwareCode(page, '00001232');
     await expect(page.getByTestId('scan-result')).toContainText('HID Global Guest');
     expect(await ledger(2)).toMatchObject([{ outcome: 'ok', method: 'wedge' }]);
     await page.getByRole('button', { name: 'Done', exact: true }).click();

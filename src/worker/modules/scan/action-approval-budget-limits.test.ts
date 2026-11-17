@@ -62,7 +62,7 @@ describe('concurrent action PIN guesses', () => {
     expect(
       await first(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [s.pass.id]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('admits only twenty wrong guesses across distinct people and compensates denied reservations', async () => {
     const { kit } = f;
@@ -109,7 +109,7 @@ describe('concurrent action PIN guesses', () => {
     expect(
       await first(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [s.pass.id]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('commits both threshold audits and the failed claim in the same bounded request', async () => {
     const { kit } = f;

@@ -23,5 +23,5 @@ describe('GET /scans filters', () => {
     expect(body.items.map((row) => row.id)).toEqual([wanted.id]);
     expect(body.nextCursor).toBeNull();
     expect((await items(await get(`?orgId=${orgId}&limit=100`))).length).toBe(56);
-  }, 60_000);
+  });
 });

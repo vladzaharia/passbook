@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import {
   PassDevicesSchema,
@@ -271,8 +272,12 @@ describe('GET /passes/{id}/devices', () => {
     const session = await makeSession(kit.fx, { userId: outsider.id });
     const foreignKey = await makeApiKey(kit.fx, { orgId: other.id });
     expect((await api(`/${pass.id}/devices`, {})).status).toBe(401);
-    expect((await api(`/${pass.id}/devices`, session.headers)).status).toBe(404);
-    expect((await api(`/${pass.id}/devices`, foreignKey.headers)).status).toBe(404);
+    await expectProblem(await api(`/${pass.id}/devices`, session.headers), 404, 'PASS_NOT_FOUND');
+    await expectProblem(
+      await api(`/${pass.id}/devices`, foreignKey.headers),
+      404,
+      'PASS_NOT_FOUND',
+    );
     for (const headers of [
       { ...credentials.member.session.headers, 'x-passbook-mode': 'test' },
       credentials.key.headers,

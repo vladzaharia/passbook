@@ -1,7 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { first, run } from '../../platform/db.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import type { ScanActor } from './actor.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
-import { credentialGone, getScanner, scannerEpochsOf } from './repo-device.ts';
+import { getScanner, scannerEpochsOf } from './repo-device.ts';
+import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
 import { setupScanKit } from './test-kit.ts';
@@ -29,7 +33,7 @@ describe('scanning sessions are fenced to the console mode and write only what t
       { name: 'Hijacked' },
       fake.admin({ mode: 'test' }),
     );
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'SCANNING_SESSION_NOT_FOUND');
     const row = await first<{ name: string }>(
       kit.env.DB,
       'SELECT name FROM scanners WHERE id = ?',
@@ -78,7 +82,13 @@ describe('only a changed device credential unpairs', () => {
       return row;
     };
     const held = await read();
-    const gone = () => credentialGone(kit.env.DB, held, kit.clock.now());
+    const actor = {
+      principal: 'scanner',
+      scanner: held,
+      scannerCsrfProof: null,
+    } as unknown as ScanActor;
+    const gone = () =>
+      scannerCredentialLost(createServiceContext(kit.env, { clock: kit.clock }), actor);
     expect(await gone()).toBe(false);
     const change = (set: string, ...params: (string | number | null)[]) =>
       run(kit.env.DB, `UPDATE scanners SET ${set}, updated_at = updated_at + 1 WHERE id = ?`, [
@@ -145,7 +155,7 @@ describe('a PIN reset is derived from the credential it read', () => {
       () => Promise.resolve(staffKit.send('POST', staffKit.resetPath(person.staff.id))),
     );
     expect(fired).toBe(true);
-    expect(result.status).toBe(409);
+    await expectProblem(result, 409, 'SCAN_STAFF_CHANGED');
     const after = await first<{ pin_hash: string }>(
       staffKit.env.DB,
       'SELECT pin_hash FROM scan_staff WHERE name = ?',

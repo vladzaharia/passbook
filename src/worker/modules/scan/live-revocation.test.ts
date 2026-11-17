@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makePass, materializeTemplateAssets } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -35,7 +36,11 @@ describe('live authority revocation', () => {
     });
     if (generation === null) throw new Error('Removal claim failed.');
     try {
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
       const removed = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
         (entry) => entry.id === fixture.event.id,
       );
@@ -49,7 +54,11 @@ describe('live authority revocation', () => {
     expect(restored.pass.removedAt).toBeNull();
     expect(restored.pass.version).toBe(before.pass.version);
     expect(restored.pass.lifecycleGeneration).toBeGreaterThan(generation);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === fixture.event.id,
     );
@@ -200,7 +209,7 @@ describe('live authority revocation', () => {
       absent: 0,
       active: approved.id,
     });
-    expect((await kit.get(monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     const stale = (await hub().snapshot(monitor.attachment)).rows.find(
       (entry) => entry.id === projection.id,
     );
@@ -238,7 +247,11 @@ describe('live authority revocation', () => {
       allOrg: false,
     }).run();
     expect((await hub().snapshot(fixture.monitor.attachment)).rows).toEqual([]);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it.each(['revoked', 'expired', 'rotated'] as const)(

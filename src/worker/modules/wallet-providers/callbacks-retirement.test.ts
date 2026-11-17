@@ -111,7 +111,7 @@ describe('Samsung unpromoted reference retirement', () => {
       t.kit.env.KEK_V1 = oldKey;
       await replaceCallbackKeysetForTest(db, t.credentialKeysetCommitment);
     }
-  }, 120_000);
+  });
 
   it('waits for expiry and keeps the retired ref tombstoned without minting a replacement', async () => {
     const t = await setupSamsungCallbacks({ promoted: false });
@@ -233,7 +233,7 @@ describe('Samsung unpromoted reference retirement', () => {
     );
     expect(old?.retired_at).not.toBeNull();
     expect((await t.call({ token: await t.token() })).status).toBe(204);
-  }, 120_000);
+  });
 
   it('preserves an existing promoted ref across a same-holder revoke and restore', async () => {
     const t = await setupSamsungCallbacks();
@@ -310,5 +310,5 @@ describe('Samsung unpromoted reference retirement', () => {
     });
     expect(fresh).toBeNull();
     expect((await t.call({ token: await t.token() })).status).toBe(200);
-  }, 120_000);
+  });
 });

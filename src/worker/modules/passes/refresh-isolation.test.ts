@@ -292,7 +292,9 @@ describe('connector snapshot fencing', () => {
         params: [pass.id],
       },
     ]) {
-      await expect(run(kit.env.DB, change.sql, change.params)).rejects.toThrow();
+      await expect(run(kit.env.DB, change.sql, change.params)).rejects.toThrow(
+        /credential generation requires a pending reservation|credential transfer required/,
+      );
       expect(await persisted(pass.id)).toEqual(before);
     }
   });

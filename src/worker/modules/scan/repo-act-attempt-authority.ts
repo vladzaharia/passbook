@@ -1,7 +1,6 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
-import { actionCsrfAt } from './act-snapshot.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
+import { type ActorCsrfSnapshot, actionCsrfAt } from './actor-csrf.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fixtures, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
@@ -80,7 +81,7 @@ describe('unverified primary email', () => {
       method: 'DELETE',
       headers: session.headers,
     });
-    expect(res.status).toBe(409);
+    await expectProblem(res, 409, 'PRIMARY_EMAIL');
   });
 
   it('verifies through the mailed link, attaches waiting passes, leaves one row', async () => {

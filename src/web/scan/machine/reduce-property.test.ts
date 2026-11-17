@@ -94,5 +94,5 @@ describe('reduce property', () => {
   it('holds its invariants over 2,000 seeded sequences', () => {
     for (let seed = 1; seed <= 2000; seed++) sequence(seed, 40);
     expect(true).toBe(true);
-  }, 120_000);
+  }, 120_000); // property runs: 100s of cases, slower under v8 coverage
 });

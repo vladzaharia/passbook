@@ -86,7 +86,7 @@ describe('event retained arrivals', () => {
       SELECT scan_id,org_id,mode,?,pass_ref,'in','in' FROM scan_retention_proofs WHERE scan_id=?`,
         [eventId, live.scanId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid retained gate source/);
     expect(await eventView(kit.ctx, eventId, authority)).toMatchObject({ arrived: 2, expected: 1 });
     const page = await listEvents(kit.ctx, 'live', { orgId: kit.org.id, limit: 50 }, authority);
     expect(page.items.find((item) => item.id === eventId)).toMatchObject({
@@ -157,7 +157,7 @@ describe('event retained arrivals', () => {
         SELECT scan_id,org_id,mode,?,pass_ref,'in','in' FROM scan_retention_proofs WHERE scan_id=?`,
           [other.id, entry.scanId],
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/invalid retained gate source/);
     } finally {
       await run(kit.env.DB, 'DELETE FROM scan_retention_delete_intents WHERE scan_id=?', [
         entry.scanId,

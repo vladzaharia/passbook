@@ -232,7 +232,9 @@ describe('atomic PIN reservations', () => {
       { code: 'PIN_INVALID', issues: [{ path: 'triesLeft', message: '4' }] },
     );
     expect(reservation.refundStatements()).toEqual([]);
-    await expect(reservation.verify(results.slice(1), staff, manager.pin, true)).rejects.toThrow();
+    await expect(reservation.verify(results.slice(1), staff, manager.pin, true)).rejects.toThrow(
+      /A PIN reservation can only be checked once/,
+    );
     await reservation.refund();
     expect(await counter(personKey(manager.id), personWindow())).toBe(1);
     expect(await counter(scannerKey(), scannerWindow())).toBe(1);
@@ -426,7 +428,7 @@ describe('atomic PIN reservations', () => {
           committed = true;
         },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/malformed JSON/);
     await reservation.refund();
     expect(committed).toBe(false);
     expect(await counter(personKey(manager.id), personWindow())).toBe(1);

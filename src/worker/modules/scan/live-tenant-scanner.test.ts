@@ -93,13 +93,13 @@ describe('paired live scanner authority', () => {
     const replacement = kit.fx.ids.token();
     await expect(
       run(kit.env.DB, 'UPDATE scanners SET updated_at=updated_at-1 WHERE id=?', [paired.device.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scanner credential revision must advance/);
     await expect(
       run(kit.env.DB, 'UPDATE scanners SET csrf_secret=? WHERE id=?', [
         replacement,
         paired.device.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scanner credential revision must advance/);
     await run(kit.env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
       replacement,
       paired.device.id,
@@ -153,7 +153,7 @@ describe('paired live scanner authority', () => {
           kit.clock.now(),
         ],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scanner ID is retired/);
     await assertClosed(attachment);
     const fresh = await pairDevice(screen, 'desk');
     expect(fresh.device.id).not.toBe(paired.device.id);

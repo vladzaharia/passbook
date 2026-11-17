@@ -178,7 +178,7 @@ beforeAll(async () => {
       });
     },
   );
-}, 60_000);
+});
 
 function request(
   headers: Record<string, string>,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeOrg,
   makeScanEvent,
@@ -141,7 +142,7 @@ describe('GET /scans (admin)', () => {
       foreignOverride,
       wrongModeOverride,
     ]) {
-      expect((await get(`/${bad.id}`)).status).toBe(404);
+      await expectProblem(await get(`/${bad.id}`), 404, 'SCAN_NOT_FOUND');
       const invalid = await get(`?orgId=${orgId}&cursor=${bad.id}`);
       expect(invalid.status).toBe(422);
       expect(await codeOf(invalid)).toBe('INVALID_CURSOR');
@@ -265,6 +266,10 @@ describe('GET /scans (admin)', () => {
         await checkedExport(query, 0);
       }
     }
-    expect((await get(`?orgId=${other.id}&staffId=${staffId}`, apiKey)).status).toBe(403);
+    await expectProblem(
+      await get(`?orgId=${other.id}&staffId=${staffId}`, apiKey),
+      403,
+      'ORG_FORBIDDEN',
+    );
   });
 });

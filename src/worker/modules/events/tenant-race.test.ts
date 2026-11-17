@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   editApiKeyIdentity,
   makeApiKey,
@@ -27,7 +28,7 @@ beforeAll(async () => {
   kit = await setupKit();
   otherOrg = await makeOrg(kit.fx, { name: 'Other tenant' });
   app = createApp({ stores: eventStores(kit), clock: kit.clock });
-}, 60_000);
+});
 
 const path = (pass: Pick<Pass, 'id'>, resource: 'events' | 'devices') =>
   `${ORIGIN}/api/v1/passes/${pass.id}/${resource}`;
@@ -197,7 +198,7 @@ describe('pass event and device tenant races', () => {
       const headers = invalidation === 'api key' ? key.headers : member.session.headers;
       const response = await racing.request(path(pass, resource), { headers }, kit.env);
       expect(changed).toBe(true);
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'PASS_NOT_FOUND');
     },
     60_000,
   );
@@ -233,7 +234,7 @@ describe('pass event and device tenant races', () => {
         { headers: member.session.headers },
         kit.env,
       );
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'PASS_NOT_FOUND');
     },
     60_000,
   );
@@ -268,11 +269,11 @@ describe('pass event and device tenant races', () => {
           if (change === 'organization')
             await expect(
               run(db, 'UPDATE passes SET org_id = ? WHERE id = ?', [otherOrg.id, pass.id]),
-            ).rejects.toThrow();
+            ).rejects.toThrow(/credential transfer required/);
           else
             await expect(
               run(db, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]),
-            ).rejects.toThrow();
+            ).rejects.toThrow(/credential transfer required/);
         },
         async () => app.request(path(pass, resource), { headers: key.headers }, kit.env),
       );
@@ -303,7 +304,7 @@ describe('pass event and device tenant races', () => {
       async (db) => {
         await expect(
           run(db, 'UPDATE passes SET org_id = ? WHERE id = ?', [otherOrg.id, pass.id]),
-        ).rejects.toThrow();
+        ).rejects.toThrow(/credential transfer required/);
       },
       async () => app.request(path(pass, 'devices'), { headers: key.headers }, kit.env),
     );
@@ -312,7 +313,7 @@ describe('pass event and device tenant races', () => {
     // A removed pass keeps listing its registered devices until the removal reaches them.
     expect(body.devices).toEqual(beforeBody.devices);
     expect(body.removal?.version).toBe(2);
-  }, 60_000);
+  });
 });
 
 describe('pass event side effects', () => {
@@ -406,7 +407,7 @@ describe('pass event side effects', () => {
         ),
     );
     expect(response.status).toBe(200);
-  }, 60_000);
+  });
 
   it('records a successful tenant update with its pass version and event actor', async () => {
     const pass = await kit.pass();
@@ -443,5 +444,5 @@ describe('pass event side effects', () => {
         [pass.id],
       ),
     ).toEqual({ version: 2 });
-  }, 60_000);
+  });
 });

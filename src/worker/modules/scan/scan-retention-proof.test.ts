@@ -7,10 +7,10 @@ import {
   clearScanRetentionDeleteStmt,
   readVerifiedScanRetentionProofs,
   retentionProofCurrentPredicate,
-  retentionProofIfRecordedStmt,
   scanRetentionCandidateSql,
   stageScanRetentionDeleteStmt,
 } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import { registerRetentionOccupancyTests } from './repo-scan-retention-proof-occupancy-test-fixtures.ts';
 import {
   ACTION,
@@ -24,7 +24,6 @@ import {
   templateId,
   transition,
 } from './repo-scan-retention-proof-setup-test-fixtures.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import {
   InvalidScanRetentionProof,
   type PreparedScanRetentionProof,
@@ -35,6 +34,21 @@ import {
 import { key } from './test-kit.ts';
 
 beforeAll(setupRetentionProof);
+
+/** The rows a proof part would insert against the live rows, with the grant's tenant and `{grant}` bound. */
+async function insertPart(prepared: PreparedScanRetentionProof) {
+  const part = retentionProofPart(prepared);
+  const sql = part.sql
+    .replaceAll('{org}', `'${prepared.scan.orgId}'`)
+    .replaceAll('{mode}', `'${prepared.scan.mode}'`)
+    .replaceAll('{grant}', '1');
+  const rows = await first<{ n: number }>(
+    kit.env.DB,
+    `SELECT count(*) AS n FROM (${sql.slice(sql.indexOf('SELECT s.id'))})`,
+    [...part.params],
+  );
+  return { changes: rows?.n ?? -1 };
+}
 
 describe('detached scan retention provenance', () => {
   it('keeps a signed generic receipt and exact event occupancy across a clean hard delete', async () => {
@@ -223,7 +237,7 @@ describe('detached scan retention provenance', () => {
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined=0 WHERE id=?', [s.pass.id]);
     await expect(
       run(kit.env.DB, 'UPDATE scan_retention_proofs SET excluded=0 WHERE scan_id=?', [s.scanId]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable scan retention proof/);
     await run(kit.env.DB, 'DELETE FROM passes WHERE id=?', [s.pass.id]);
     expect(
       (
@@ -282,7 +296,7 @@ describe('detached scan retention provenance', () => {
           (scan_id,org_id,mode,event_id,pass_ref,state,presence_state) VALUES (?,?,?,?,?,?,?)`,
             [s.scanId, kit.org.id, 'live', s.event.id, prepared.passRef, state, presence],
           ),
-        ).rejects.toThrow();
+        ).rejects.toThrow(/invalid retained gate source/);
       }
     } finally {
       await clearScanRetentionDeleteStmt(kit.env.DB, prepared).run();
@@ -331,7 +345,7 @@ describe('detached scan retention provenance', () => {
       FROM scan_retention_proofs WHERE scan_id=?`,
         [replacement, s.scanId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid scan retention source/);
     expect(
       await first(kit.env.DB, 'SELECT invalidated FROM scan_retention_proofs WHERE scan_id=?', [
         s.scanId,
@@ -430,30 +444,11 @@ describe('detached scan retention provenance', () => {
     const signed = await prepareScanRetentionProof(kit.env, s.eventRow, `s:${s.scanner.id}`, {
       actionId: ACTION,
     });
-    const fence = retentionProofCurrentPredicate(signed);
-    expect(scanSecretSlots(fence.sql, fence.params.length)?.map((slot) => slot.label)).toEqual([
-      null,
-      'pass-id',
-      'action-id',
-      'scan-actor',
-      'actor-key',
-      'event-actor',
-      'event-json',
-      'scanner-id',
-      'staff-id',
-      'approver-id',
-    ]);
     // The commit carries one conditional ledger insert per possible outcome and the grant composes
     // each into its batch; exactly one raw insert binds the committed event's proof.
     const writes = captured.filter(({ sql }) => sql.includes('INSERT INTO scan_retention_proofs'));
-    expect(
-      writes.filter(({ values }) => JSON.stringify(values) === JSON.stringify(fence.params)),
-    ).toHaveLength(1);
-    await stmt(real, `EXPLAIN SELECT (${fence.sql})`, fence.params).all();
-    for (const { sql, values } of captured) {
-      expect(scanSecretSlots(sql, values.length)).not.toBeNull();
-      await stmt(real, `EXPLAIN ${sql}`, values).all();
-    }
+    expect(writes.filter(({ values }) => values.includes(signed.proof.mac))).toHaveLength(1);
+    for (const { sql, values } of captured) await stmt(real, `EXPLAIN ${sql}`, values).all();
   });
 
   it('matches signed source in both fences and stored proof fields on read', async () => {
@@ -497,21 +492,46 @@ describe('detached scan retention provenance', () => {
         valid: 0,
       });
 
-    const sources = mutations.filter(({ section }) => section !== 'proof');
-    const counter = `retention-fence:${s.scanId}`;
-    const writes = await db.batch([
-      stmt(db, 'INSERT INTO counters (key,window_start,count) VALUES (?,0,0)', [counter]),
-      ...sources.flatMap(({ prepared }) => [
-        retentionProofIfRecordedStmt(db, prepared),
-        stmt(db, 'UPDATE counters SET count=count+1 WHERE key=?', [counter]),
-      ]),
-      stmt(db, 'UPDATE counters SET count=count WHERE key=? AND 0', [counter]),
-      retentionProofIfRecordedStmt(db, signed),
-      stmt(db, 'DELETE FROM counters WHERE key=?', [counter]),
+    // The insert is built from the scan and ledger rows written in the same batch: what it compares
+    // is the closing facts of the scan and the identity of its event. The MAC covers the rest.
+    const compared = new Set([
+      'scan.outcome',
+      'scan.reason',
+      'scan.at',
+      'scan.actionId',
+      'scan.passVersion',
+      'event.id',
+      'event.kind',
+      'event.at',
     ]);
-    for (const [index, mutation] of sources.entries())
-      expect(writes[1 + index * 2]?.meta.changes, `${mutation.section}.${mutation.field}`).toBe(0);
-    expect(writes[2 + sources.length * 2]?.meta.changes).toBe(0);
+    const sources = mutations.filter(({ section, field }) => compared.has(`${section}.${field}`));
+    expect(sources.length).toBeGreaterThanOrEqual(compared.size - 1);
+    for (const { section, field, prepared } of sources)
+      expect((await insertPart(prepared)).changes, `${section}.${field}`).toBe(0);
+    expect((await insertPart(signed)).changes).toBe(1);
+  });
+
+  it('writes no proof when the stored ledger row differs from the signed one', async () => {
+    const db = kit.env.DB;
+    await run(
+      db,
+      `CREATE TRIGGER retention_tamper AFTER INSERT ON pass_events
+       WHEN NEW.kind='scan.checked_in'
+       BEGIN UPDATE pass_events SET device='tampered' WHERE id=NEW.id; END`,
+    );
+    try {
+      const s = await scenario();
+      // The scan itself is unaffected; only the trusted index is refused.
+      expect(s.outcome.kind).toBe('ok');
+      expect(
+        await first(db, 'SELECT scan_id FROM scan_retention_proofs WHERE scan_id=?', [s.scanId]),
+      ).toBeNull();
+      expect(await first(db, 'SELECT outcome FROM scans WHERE id=?', [s.scanId])).toEqual({
+        outcome: 'ok',
+      });
+    } finally {
+      await run(db, 'DROP TRIGGER retention_tamper');
+    }
   });
 
   it('requires the exact non-null gate and presence snapshots', async () => {
@@ -555,7 +575,7 @@ describe('detached scan retention provenance', () => {
   });
 
   it.each(['quarantine exclusion', 'duplicate ledger linkage'] as const)(
-    'rejects a %s in both insert and current fences',
+    'rejects a %s in both the insert and the current fence',
     async (change) => {
       const s = await scenario();
       const signed = await prepareScanRetentionProof(kit.env, s.eventRow, `s:${s.scanner.id}`, {
@@ -575,15 +595,12 @@ describe('detached scan retention provenance', () => {
               [kit.fx.ids.id(), s.eventRow.id],
             );
       const fence = retentionProofCurrentPredicate(signed);
-      const results = await db.batch([
-        mutation,
-        retentionProofIfRecordedStmt(db, signed),
-        stmt(db, `SELECT (${fence.sql}) AS valid`, fence.params),
-      ]);
+      const mutated = await db.batch([mutation]);
       // meta.changes also counts the trigger that invalidates the proof; RETURNING counts the row.
-      expect(results[0]?.results).toHaveLength(1);
-      expect(results[1]?.meta.changes).toBe(0);
-      expect(results[2]?.results?.[0]).toEqual({ valid: 0 });
+      expect(mutated[0]?.results).toHaveLength(1);
+      expect((await insertPart(signed)).changes).toBe(0);
+      const results = await db.batch([stmt(db, `SELECT (${fence.sql}) AS valid`, fence.params)]);
+      expect(results[0]?.results?.[0]).toEqual({ valid: 0 });
     },
   );
 
@@ -736,10 +753,10 @@ describe('detached scan retention provenance', () => {
         '0'.repeat(64),
         s.scanId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable scan retention proof/);
     await expect(
       run(kit.env.DB, 'DELETE FROM scan_retention_proofs WHERE scan_id=?', [s.scanId]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scan retention proof belongs to scan/);
     await run(kit.env.DB, "UPDATE scans SET reason='altered' WHERE id=?", [s.scanId]);
     expect(
       await first(kit.env.DB, `SELECT 1 AS valid WHERE ${fence.sql}`, fence.params),

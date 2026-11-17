@@ -358,7 +358,7 @@ describe('restore claims the removal', () => {
       "CREATE TRIGGER versions_block BEFORE INSERT ON pass_versions BEGIN SELECT RAISE(ABORT, 'blocked'); END",
     );
     try {
-      await expect(restorePass(jobCtxOf(kit), actor, pass.id, null)).rejects.toThrow();
+      await expect(restorePass(jobCtxOf(kit), actor, pass.id, null)).rejects.toThrow(/blocked/);
     } finally {
       await run(kit.env.DB, 'DROP TRIGGER versions_block');
     }

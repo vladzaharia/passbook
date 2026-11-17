@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   assertNoLeakedGrants,
   makeOrg,
@@ -18,7 +19,7 @@ let kit: MemberPhotoFixture['kit'];
 beforeAll(async () => {
   fx = await setupPhotoTestKit();
   kit = fx.kit;
-}, 60_000);
+});
 
 async function operator(orgId = kit.org.id) {
   const user = await makeUser(kit.fx);
@@ -88,7 +89,7 @@ describe('member photo writes as grants', () => {
       actor.membershipId,
     ]);
     const put = await fx.api(pass.id, 'PUT', { png: encoded, includeInPass: false }, actor.headers);
-    expect(put.status).toBe(403);
+    await expectProblem(put, 403, 'FORBIDDEN');
     expect(await row(pass.id)).toBeNull();
   });
 

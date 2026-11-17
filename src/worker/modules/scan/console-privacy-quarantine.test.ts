@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { first, run } from '../../platform/db.ts';
 import { recordedCheckIn } from './console-privacy-actions-test-fixtures.ts';
 import {
@@ -62,7 +63,7 @@ describe('scan console and feed privacy', () => {
     ).toEqual({ excluded: 1 });
 
     expect((await page(`?orgId=${kit.org.id}`, testAdmin)).items).toEqual([]);
-    expect((await get(`/${row.id}`, testAdmin)).status).toBe(404);
+    await expectProblem(await get(`/${row.id}`, testAdmin), 404, 'SCAN_NOT_FOUND');
     const key = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'], mode: 'test' });
     expect((await page('', key)).items).toEqual([]);
     const exported = await get(exportPath(), testAdmin);
@@ -106,7 +107,7 @@ describe('scan console and feed privacy', () => {
     await run(kit.env.DB, 'DELETE FROM passes WHERE id = ?', [pass.id]);
     expect(await proof()).toEqual({ excluded: 1 });
     expect((await page(`?orgId=${kit.org.id}`, testAdmin)).items).toEqual([]);
-    expect((await get(`/${row.id}`, testAdmin)).status).toBe(404);
+    await expectProblem(await get(`/${row.id}`, testAdmin), 404, 'SCAN_NOT_FOUND');
     const exported = await get(exportPath(), testAdmin);
     expect(exported.status).toBe(200);
     expect(
@@ -145,7 +146,7 @@ describe('scan console and feed privacy', () => {
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 0 WHERE id = ?', [pass.id]);
     expect((await page(`?orgId=${kit.org.id}`, testAdmin)).items).toEqual([]);
-    expect((await get(`/${row.id}`, testAdmin)).status).toBe(404);
+    await expectProblem(await get(`/${row.id}`, testAdmin), 404, 'SCAN_NOT_FOUND');
     const exported = await get(exportPath(), testAdmin);
     expect(exported.status).toBe(200);
     expect(
@@ -212,7 +213,7 @@ describe('scan console and feed privacy', () => {
       await run(kit.env.DB, 'DELETE FROM passes WHERE id = ?', [pass.id]);
       expect(await proof()).toEqual({ excluded: 0, invalidated: 1 });
       expect((await page(`?orgId=${kit.org.id}`, testAdmin)).items).toEqual([]);
-      expect((await get(`/${row.id}`, testAdmin)).status).toBe(404);
+      await expectProblem(await get(`/${row.id}`, testAdmin), 404, 'SCAN_NOT_FOUND');
       const key = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'], mode: 'test' });
       expect((await page('', key)).items).toEqual([]);
       const exported = await get(exportPath(), testAdmin);
@@ -250,8 +251,8 @@ describe('scan console and feed privacy', () => {
     expect((await page(`?orgId=${kit.org.id}`)).items.map((row) => row.id)).toEqual([complete.id]);
     const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
     expect((await page('', apiKey)).items.map((row) => row.id)).toEqual([complete.id]);
-    expect((await get(`/${pending.id}`)).status).toBe(404);
-    expect((await get(`/${failed.id}`)).status).toBe(404);
+    await expectProblem(await get(`/${pending.id}`), 404, 'SCAN_NOT_FOUND');
+    await expectProblem(await get(`/${failed.id}`), 404, 'SCAN_NOT_FOUND');
     const exported = await get(exportPath());
     expect(exported.status).toBe(200);
     expect(
@@ -358,7 +359,7 @@ describe('scan console and feed privacy', () => {
     );
     expect((await page(`?orgId=${kit.org.id}`)).items).toEqual([]);
     expect((await page('', apiKey)).items).toEqual([]);
-    expect((await get(`/${row.id}`)).status).toBe(404);
+    await expectProblem(await get(`/${row.id}`), 404, 'SCAN_NOT_FOUND');
     const quarantinedExport = await get(exportPath());
     expect(quarantinedExport.status).toBe(200);
     expect(

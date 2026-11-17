@@ -18,9 +18,9 @@ export function undoGrant(c: UndoCommit): Grant {
   return addUndoWrites(openUndoGrant(c), c);
 }
 
-export async function commitUndo(c: UndoCommit): Promise<void> {
+export async function commitUndo(c: UndoCommit): Promise<D1Result[]> {
   const { presence } = c;
-  const results = await undoGrant(c).commit();
+  const { writes: results, after } = await undoGrant(c).commitWith(c.reads ?? []);
   // A grant that passed wrote every row; a short result means the batch contract broke after commit.
   const rows = (index: number) => results[index]?.results?.length ?? 0;
   if (
@@ -31,4 +31,5 @@ export async function commitUndo(c: UndoCommit): Promise<void> {
     (presence && rows(5) !== 1)
   )
     throw new AppError('UNDO_UNCONFIRMED', 500, 'The undo could not be confirmed.');
+  return after;
 }

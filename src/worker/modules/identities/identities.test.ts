@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
 import { buildManifest, signManifest } from '../../../passkit/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
@@ -156,7 +157,9 @@ describe('identity authority revision', () => {
     for (const invalid of [0, -1, 1.5, null]) {
       await expect(
         run(env.DB, 'UPDATE signing_identities SET revision = ? WHERE id = ?', [invalid, dto.id]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(
+        /CHECK constraint failed: typeof\(revision\) = 'integer' AND revision > 0|NOT NULL constraint failed: signing_identities\.revision/,
+      );
     }
     expect(await identityRevision(dto.id)).toBe(initial);
 
@@ -582,7 +585,7 @@ describe('identity upload', () => {
     expect(dup.status).toBe(409);
     expect(((await dup.json()) as { code: string }).code).toBe('IDENTITY_EXISTS');
     expect((await call('POST', '', pem(f), fake.user())).status).toBe(403);
-    expect((await call('GET', '', undefined, fake.user())).status).toBe(403);
+    await expectProblem(await call('GET', '', undefined, fake.user()), 403, 'FORBIDDEN');
   });
 });
 
@@ -683,9 +686,9 @@ describe('identity update and delete', () => {
     expect((await resolver.forOrg('any-org')).id).toBe(b.id);
 
     await ensurePlatformIdentity(base, 1);
-    expect((await call('DELETE', '/platform')).status).toBe(409);
+    await expectProblem(await call('DELETE', '/platform'), 409, 'IDENTITY_PROTECTED');
     expect((await call('PATCH', '/platform', { apnsBinding: 'APNS' })).status).toBe(422);
-    expect((await call('PATCH', '/missing', { label: 'x' })).status).toBe(404);
+    await expectProblem(await call('PATCH', '/missing', { label: 'x' }), 404, 'IDENTITY_NOT_FOUND');
   });
 
   it('deletes the identity and its credential unless passes use it', async () => {
@@ -700,8 +703,8 @@ describe('identity update and delete', () => {
     expect(
       await first(env.DB, 'SELECT 1 FROM credentials WHERE id = ?', [cred?.credential_id]),
     ).toBeNull();
-    expect((await call('GET', `/${dto.id}`)).status).toBe(404);
-    expect((await call('DELETE', `/${dto.id}`)).status).toBe(404);
+    await expectProblem(await call('GET', `/${dto.id}`), 404, 'IDENTITY_NOT_FOUND');
+    await expectProblem(await call('DELETE', `/${dto.id}`), 404, 'IDENTITY_NOT_FOUND');
   });
 });
 

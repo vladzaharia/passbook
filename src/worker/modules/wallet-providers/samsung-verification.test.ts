@@ -1,5 +1,6 @@
 import { compactVerify, importX509 } from 'jose';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
@@ -239,14 +240,14 @@ describe('authenticated Samsung card-state evidence', () => {
         'UPDATE wallet_provider_projection_evidence_history SET country_code = ? WHERE candidate_id = ?',
         ['US', c.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable Samsung provider evidence/);
     await expect(
       run(
         f.kit.env.DB,
         'DELETE FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
         [c.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable Samsung provider evidence/);
     expect(
       await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, orgId: 'another-org' }, f.proof),
     ).toBe(false);
@@ -785,7 +786,7 @@ describe('authenticated Samsung card-state evidence', () => {
       ),
     ).toBe(true);
     expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate, f.proof)).toBe(true);
-  }, 120_000);
+  });
 
   it.each(['candidate', 'approval', 'current', 'history'] as const)(
     'does not reuse legacy %s provenance without a keyset commitment',
@@ -967,7 +968,7 @@ describe('authenticated Samsung card-state evidence', () => {
     } finally {
       f.kit.env.KEK_V1 = oldKey;
     }
-  }, 120_000);
+  });
 
   it.each(['changed', 'missing'] as const)(
     'does not contact Samsung or report evidence if the singleton becomes %s after opening credentials',
@@ -1295,7 +1296,7 @@ describe('authenticated Samsung card-state evidence', () => {
         f.kit.env,
       );
     expect((await request({ 'content-type': 'application/json' })).status).toBe(401);
-    expect((await request({ ...headers, 'x-csrf-token': 'wrong' })).status).toBe(403);
+    await expectProblem(await request({ ...headers, 'x-csrf-token': 'wrong' }), 403, 'CSRF_TOKEN');
     const response = await request(headers);
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');

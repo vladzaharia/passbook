@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { createApp } from '../../app.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { createPassRow } from '../passes/create.ts';
@@ -62,7 +63,7 @@ describe('holder writes cannot cross modes', () => {
       await auth.apiKey({ orgId: kit.org.id, mode: 'test', scopes: ['holders:write'] }),
       body(pass.id),
     );
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'PASS_NOT_FOUND');
     expect((await getPass(kit.env.DB, pass.id))?.holderEmail).toBe('live-holder@example.com');
   });
 

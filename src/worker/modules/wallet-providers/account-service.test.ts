@@ -48,7 +48,7 @@ import { saveAccountConfiguration, transitionAccount } from './repo-accounts.ts'
 const origin = 'https://wallet.test';
 const base = `${origin}/api/v1/wallet-providers/accounts`;
 const kek = btoa(String.fromCharCode(...new Uint8Array(32).fill(7)));
-const clock = new ManualClock(Date.now());
+const clock = new ManualClock();
 let env: AppEnv;
 let f: Fixtures;
 let app: OpenAPIHono<AppBindings>;
@@ -268,14 +268,14 @@ describe('wallet provider accounts', () => {
         envelope,
         credentialAad(row.id, 'another-org', `wallet-provider:${configured.accountId}:live:google`),
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Decryption failed/);
     await expect(
       decryptSecretText(
         ring,
         envelope,
         credentialAad(row.id, org.id, `wallet-provider:${configured.accountId}:test:google`),
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Decryption failed/);
     await expect(
       decryptSecretText(
         ring,
@@ -286,7 +286,7 @@ describe('wallet provider accounts', () => {
           `wallet-provider:${configured.accountId}:live:google`,
         ),
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Decryption failed/);
     const expected = {
       accountId: configured.accountId,
       accountRevision: 1,
@@ -387,15 +387,15 @@ describe('wallet provider accounts', () => {
         'revoke',
         events[0]?.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable wallet provider event/);
     await expect(
       run(env.DB, 'DELETE FROM wallet_provider_credentials WHERE id = ?', [row.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable wallet provider credential/);
     await expect(
       run(env.DB, 'UPDATE wallet_provider_accounts SET revision = revision + 1 WHERE id = ?', [
         configured.accountId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid wallet provider account transition/);
     const audits = await all<{ action: string; detail: string }>(
       env.DB,
       "SELECT action, detail FROM audit_log WHERE target_id = ? AND action LIKE 'wallet_provider.account_%' ORDER BY id",

@@ -26,7 +26,7 @@ let author: TemplateAuthorFixture;
 
 beforeAll(async () => {
   env = await makeEnv();
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   orgId = (await makeOrg(fixtures(env, clock))).id;
   author = await templateAuthor(env, clock, orgId);
 });

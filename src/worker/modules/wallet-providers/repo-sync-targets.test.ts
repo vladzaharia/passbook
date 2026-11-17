@@ -185,5 +185,5 @@ describe('Samsung sync target keyset authority', () => {
     ).toEqual(['DE', 'FR', 'GB', 'US']);
     expect(await finishSamsungSyncTarget(t.kit.ctx, claim, 'GB', { kind: 'success' })).toBe(true);
     expect(await beginSamsungSyncTarget(t.kit.ctx, claim, 'US')).toBe(1);
-  }, 90_000);
+  });
 });

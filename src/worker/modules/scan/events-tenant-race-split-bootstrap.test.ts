@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { ScanEventSchema } from '../../../shared/contracts/index.ts';
 import { first, run } from '../../platform/db.ts';
@@ -130,7 +131,7 @@ describe('event mutation commit authority', () => {
         expect(response.status).toBe(200);
         expect(await response.json()).toEqual({ items: [], nextCursor: null });
       } else {
-        expect(response.status).toBe(403);
+        await expectProblem(response, 403, ['ACTOR_CHANGED', 'FORBIDDEN']);
       }
       expect(await state()).toEqual(before);
     },
@@ -146,6 +147,6 @@ describe('event mutation commit authority', () => {
       },
       () => call('GET', `/${eventId}`),
     );
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'EVENT_NOT_FOUND');
   });
 });

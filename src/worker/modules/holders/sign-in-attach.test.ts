@@ -42,7 +42,7 @@ describe('a waiting pass that cannot attach', () => {
     ).toEqual({ ok: 1 });
     expect(await owner(kit, good.id)).toBe(result.userId);
     expect(await getPass(kit.env.DB, bad.id)).toMatchObject({ ownerUserId: null, holderEmail: e });
-  }, 120_000);
+  });
 
   it('verifying an address completes; the bad pass stays waiting', async () => {
     const kit = await setupKit();
@@ -57,7 +57,7 @@ describe('a waiting pass that cannot attach', () => {
       ]),
     ).toEqual({ ok: 1 });
     expect(await owner(kit, bad.id)).toBeNull();
-  }, 120_000);
+  });
 });
 
 describe('more waiting passes than the inline cap', () => {
@@ -76,7 +76,7 @@ describe('more waiting passes than the inline cap', () => {
     for (let i = 0; i < 5 && (await owned()) < passes.length; i++)
       await resumeVerifiedHolderAttachments(jobCtxOf(kit));
     expect(await owned()).toBe(passes.length);
-  }, 120_000);
+  });
 });
 
 describe('an admin adds a verified address', () => {
@@ -95,7 +95,7 @@ describe('an admin adds a verified address', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ actor_type: 'user', actor_id: admin.id });
     expect(JSON.parse(rows[0]?.detail ?? '{}')).toMatchObject({ userId: user.id });
-  }, 120_000);
+  });
 
   it('a self-verified address is audited as the owner', async () => {
     const kit = await setupKit();
@@ -110,5 +110,5 @@ describe('an admin adds a verified address', () => {
         [pass.id],
       ),
     ).toEqual({ actor_id: user.id });
-  }, 120_000);
+  });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem, expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { first, run } from '../../platform/db.ts';
 import { recordedCheckIn, recordedNoMatch } from './console-privacy-actions-test-fixtures.ts';
 import {
@@ -68,7 +69,7 @@ describe('scan console and feed privacy', () => {
         Object.assign(kit.env, { DB: db });
       }
       expect(intercepted).toBe(1);
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(await first(db, "SELECT id FROM audit_log WHERE action = 'scan.export'")).toBeNull();
     },
   );
@@ -126,7 +127,7 @@ describe('scan console and feed privacy', () => {
         const text = new TextDecoder().decode(header.value);
         expect(text).toContain('Time (UTC)');
         expect(text).not.toContain(PUBLIC);
-        await expect(reader.read()).rejects.toThrow();
+        await expectRejectsCode(reader.read(), 'FORBIDDEN');
         expect(intercepted).toBe(1);
       } finally {
         Object.assign(kit.env, { DB: db });

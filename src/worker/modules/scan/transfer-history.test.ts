@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeScanner, makeSession } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { createApp } from '../../app.ts';
@@ -397,7 +398,7 @@ describe('provider-backed transfer and scanner history', () => {
     }
     const undoKey = key();
     const deniedUndo = await post(`/scans/${scanId}/undo`, { idempotencyKey: undoKey });
-    expect(deniedUndo.status).toBe(404);
+    await expectProblem(deniedUndo, 404, 'SCAN_NOT_FOUND');
     noSecrets(await deniedUndo.text());
     expect(
       await first(db, 'SELECT id FROM scans WHERE actor_key = ? AND idempotency_key = ?', [
@@ -525,5 +526,5 @@ describe('provider-backed transfer and scanner history', () => {
       ]),
     ).toBeNull();
     expect(await effects(db, pass.id)).toEqual(completedEffects);
-  }, 180_000);
+  });
 });

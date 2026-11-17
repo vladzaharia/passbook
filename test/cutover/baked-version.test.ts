@@ -18,7 +18,7 @@ beforeAll(async () => {
   c = await runCutover(28, { bumpStarter: true });
   kit = await withKitDatabase(c.legacy.db, () => setupScanKit());
   overrideDeps(kit.env, { registry: createTemplateRegistry(kit.env) });
-}, 180_000);
+});
 
 const scan = async (code = pass1().barcode) => {
   const res = await kit.post(c.legacy.scanners['baked-unassigned']!.headers, '/actions', {

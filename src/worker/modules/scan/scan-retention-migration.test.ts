@@ -91,10 +91,10 @@ describe('scan retention migration authority', () => {
         'UPDATE scan_retention_event_transitions SET sequence=sequence+10000000 WHERE scan_id=?',
         [scanId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable scan transition/);
     await expect(
       run(kit.env.DB, 'DELETE FROM scan_retention_event_transitions WHERE scan_id=?', [scanId]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scan transition belongs to scan/);
     await expect(
       run(
         kit.env.DB,
@@ -103,7 +103,7 @@ describe('scan retention migration authority', () => {
       SELECT sequence,scan_id,org_id,mode,event_id,NULL FROM scan_retention_event_transitions WHERE scan_id=?`,
         [scanId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid scan transition/);
     expect(
       await first(
         kit.env.DB,
@@ -192,7 +192,7 @@ describe('scan retention migration authority', () => {
       (scan_id,org_id,mode,event_id,pass_ref,state,presence_state) VALUES (?,?,'live',?,?,?,?)`,
         [older, kit.org.id, eventA.id, oldProof.pass_ref, oldState, oldState],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid retained gate source/);
 
     await restorePresence(pass.id, eventA.id, newProof.presence_snapshot);
     await run(kit.env.DB, 'DELETE FROM passes WHERE id=?', [pass.id]);

@@ -2,6 +2,8 @@ import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
 const alias = { '@': new URL('./src', import.meta.url).pathname };
+// Coverage instrumentation (istanbul in workerd, v8 in node) makes tests 2–3× slower on CI runners.
+const timeout = process.argv.includes('--coverage') ? 90_000 : 30_000;
 
 export default defineConfig({
   resolve: { alias },
@@ -14,7 +16,8 @@ export default defineConfig({
           environment: 'node',
           include: ['src/passkit/**/*.test.ts', 'src/shared/**/*.test.ts', 'tools/**/*.test.ts'],
           // Image and package tests decode PNGs; under v8 coverage (coverage-node) they pass 5 s.
-          testTimeout: 30_000,
+          testTimeout: timeout,
+          hookTimeout: timeout,
         },
       },
       {
@@ -63,8 +66,8 @@ export default defineConfig({
           deps: { optimizer: { ssr: { enabled: true, include: ['lucide-react'] } } },
           include: ['src/worker/**/*.test.ts', 'test/**/*.test.ts'],
           // A race test runs several D1 batches in workerd; on a shared CI runner that passes 5 s.
-          testTimeout: 30_000,
-          hookTimeout: 30_000,
+          testTimeout: timeout,
+          hookTimeout: timeout,
           setupFiles: [
             './test/setup/als-disable.ts',
             './test/setup/block-network.ts',
@@ -85,8 +88,8 @@ export default defineConfig({
           execArgv: ['--no-experimental-webstorage'],
           css: false,
           // Same reason: lazy route imports are slow while the worker project saturates the CPU.
-          testTimeout: 30_000,
-          hookTimeout: 30_000,
+          testTimeout: timeout,
+          hookTimeout: timeout,
         },
       },
     ],

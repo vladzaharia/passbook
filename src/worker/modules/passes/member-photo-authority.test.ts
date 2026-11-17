@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeSession, revokeMembership } from '../../../../test/helpers/index.ts';
 import { hashSessionCookie } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -25,6 +26,38 @@ beforeAll(async () => {
 });
 
 describe('member photo tenant authority', () => {
+  it('stores a photo when the membership stays active', async () => {
+    const pass = await kit.pass();
+    const orgAccessRevision = await tenantOrgAccessRevision(kit.env.DB, pass.orgId);
+    if (orgAccessRevision === null) throw new Error('Organization snapshot is missing');
+    const userId = `photo-${kit.ctx.ids.token(12)}`;
+    const membershipId = await grantKitMembership(kit, pass.orgId, userId);
+    const session = await makeSession(kit.fx, { userId });
+    const authority: TenantPassWrite = {
+      kind: 'session' as const,
+      orgId: pass.orgId,
+      orgAccessRevision,
+      mode: pass.mode,
+      userId,
+      sessionId: await hashSessionCookie(session.cookieValue),
+      sessionRoles: ['user'],
+      amr: 'oidc',
+      membershipId,
+      roles: ['pass_operator'],
+      capability: 'passes:operate' as const,
+    };
+    const scope = { orgId: pass.orgId, mode: pass.mode, principal: 'session' as const };
+    await putMemberPhoto(
+      kit.ctx,
+      { type: 'user' as const, id: userId },
+      pass.id,
+      { png: encoded, includeInPass: false },
+      scope,
+      authority,
+    );
+    expect(await memberPhoto(kit.env.DB, pass.orgId, pass.id)).not.toBeNull();
+  });
+
   it.each(['insert', 'replace', 'update', 'delete'] as const)(
     'rejects a %s when authority is revoked before the photo CAS',
     async (operation) => {
@@ -195,7 +228,7 @@ describe('member photo tenant authority', () => {
                   scope,
                   authority,
                 );
-        await expect(pending).rejects.toThrow();
+        await expectRejectsCode(pending, 'ACTOR_CHANGED');
       } finally {
         spy.mockRestore();
       }

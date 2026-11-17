@@ -166,5 +166,5 @@ describe('1,000 random docs', () => {
     }
     expect(docs).toBeGreaterThan(500);
     expect(total / renders).toBeLessThan(5);
-  }, 60_000);
+  }, 60_000); // property runs: 100s of cases, slower under v8 coverage
 });

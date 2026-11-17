@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { linkToken, makeApiKey, makeUser } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/passes.ts';
 import { createApp } from '../../app.ts';
@@ -24,7 +25,7 @@ beforeAll(async () => {
   kit = await setupKit();
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
-}, 60_000);
+});
 
 const request = async (path: string, headers = auth.admin()) =>
   app.request(`${ORIGIN}/api/v1${path}`, { headers }, kit.env);
@@ -172,13 +173,13 @@ describe('pass detail transfer disclosure fences', () => {
       `/passes/${pass.id}/diff?from=${pass.version}&to=${pass.version}`,
     ]) {
       const response = await request(path);
-      expect(response.status).toBe(409);
+      await expectProblem(response, 409, 'PASS_TRANSFER_PENDING');
       const body = await response.text();
       expect(body).toContain('PASS_TRANSFER_PENDING');
       noDisclosure(body, secrets);
     }
     const unauthorized = await request(`/passes/${pass.id}`, auth.user());
-    expect(unauthorized.status).toBe(403);
+    await expectProblem(unauthorized, 403, 'FORBIDDEN');
     noDisclosure(await unauthorized.text(), [...secrets, 'PASS_TRANSFER_PENDING']);
     const listed = await request(`/passes?orgId=${encodeURIComponent(pass.orgId)}&limit=200`);
     expect(listed.status).toBe(200);
@@ -187,7 +188,7 @@ describe('pass detail transfer disclosure fences', () => {
     expect(list.items.some((item) => item.id === pass.id)).toBe(false);
     expect(list.items.some((item) => item.id === other.id)).toBe(true);
     noDisclosure(body, secrets);
-  }, 60_000);
+  });
 
   it('drops an in-flight detail when START commits just before its final SQL fence', async () => {
     const pass = await kit.pass({ memberName: 'Private raced holder' });
@@ -201,11 +202,11 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_TRANSFER_PENDING');
     const body = await response.text();
     expect(body).toContain('PASS_TRANSFER_PENDING');
     noDisclosure(body, [plain, token, pass.serial, 'Private raced holder']);
-  }, 60_000);
+  });
 
   it('does not reveal even pending status if tenant authority is revoked at the final fence', async () => {
     const pass = await kit.pass({ memberName: 'Revoked tenant private' });
@@ -220,14 +221,14 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`, key.headers),
     );
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     noDisclosure(await response.text(), [
       'PASS_TRANSFER_PENDING',
       plain,
       pass.serial,
       'Revoked tenant private',
     ]);
-  }, 60_000);
+  });
 
   it('drops an in-flight detail after a complete transfer even when no pending row remains', async () => {
     const pass = await kit.pass({ memberName: 'Previous incarnation' });
@@ -246,11 +247,11 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_CONFLICT');
     const body = await response.text();
     expect(body).toContain('PASS_CONFLICT');
     noDisclosure(body, [plain, pass.serial, 'Previous incarnation', 'new-holder@example.test']);
-  }, 60_000);
+  });
 
   it('drops an in-flight detail when its lifecycle incarnation changes', async () => {
     const pass = await kit.pass({ memberName: 'Lifecycle race private' });
@@ -267,9 +268,9 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_CONFLICT');
     noDisclosure(await response.text(), [plain, pass.serial, 'Lifecycle race private']);
-  }, 60_000);
+  });
 
   it('does not return a link rotated after the initial detail snapshot', async () => {
     const pass = await kit.pass({ memberName: 'Rotated link private' });
@@ -287,9 +288,9 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_CONFLICT');
     noDisclosure(await response.text(), [plain, pass.serial, 'Rotated link private']);
-  }, 60_000);
+  });
 
   it('excludes a pass whose transfer starts immediately before the list query', async () => {
     const pass = await kit.pass({ memberName: 'Raced list private' });
@@ -309,7 +310,7 @@ describe('pass detail transfer disclosure fences', () => {
       false,
     );
     noDisclosure(body, [plain, token, pass.serial, 'Raced list private']);
-  }, 60_000);
+  });
 
   it('reports reissue only while the exact waiting pass and uniquely verified user remain eligible', async () => {
     const email = `reissue-${kit.fx.ids.id()}@example.test`;
@@ -320,7 +321,7 @@ describe('pass detail transfer disclosure fences', () => {
       PassDetailSchema.parse(await (await request(`/passes/${pass.id}`)).json()).reissueRequired,
     ).toBe(true);
     const unauthorized = await request(`/passes/${pass.id}`, auth.user());
-    expect(unauthorized.status).toBe(403);
+    await expectProblem(unauthorized, 403, 'FORBIDDEN');
     expect(await unauthorized.text()).not.toContain('reissueRequired');
     const raced = await withRace(
       detailFence,
@@ -332,7 +333,7 @@ describe('pass detail transfer disclosure fences', () => {
     );
     expect(raced.status).toBe(200);
     expect(PassDetailSchema.parse(await raced.json()).reissueRequired).toBe(false);
-  }, 60_000);
+  });
 
   it.each(['voided', 'removed'] as const)(
     'reports reissue for a still-eligible %s waiting pass',
@@ -386,7 +387,7 @@ describe('pass detail transfer disclosure fences', () => {
       ),
     ).rejects.toMatchObject({ code: 'PASS_CONFLICT' });
     expect((await getPass(kit.env.DB, pass.id))?.downloadToken).toBe(`h1:${token}`);
-  }, 60_000);
+  });
 
   it('does not rotate a system link for a pending reservation at the same generation', async () => {
     const pass = await kit.pass();
@@ -404,7 +405,7 @@ describe('pass detail transfer disclosure fences', () => {
       downloadToken: pass.downloadToken,
       credentialGeneration: pass.credentialGeneration,
     });
-  }, 60_000);
+  });
 
   it('does not rotate a system link after a remove-and-restore lifecycle ABA', async () => {
     const pass = await kit.pass();
@@ -423,5 +424,5 @@ describe('pass detail transfer disclosure fences', () => {
     expect(current?.removedAt).toBeNull();
     expect(current?.downloadToken).toBe(pass.downloadToken);
     expect(current?.lifecycleGeneration).toBeGreaterThan(pass.lifecycleGeneration);
-  }, 60_000);
+  });
 });

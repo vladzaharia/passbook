@@ -40,7 +40,7 @@ beforeAll(async () => {
   c = await runCutover(29);
   kit = await withKitDatabase(c.legacy.db, () => setupScanKit());
   overrideDeps(kit.env, { registry: createTemplateRegistry(kit.env) });
-}, 180_000);
+});
 
 const passOf = (shape: Shape, n: number) =>
   c.legacy.passes.find((p) => p.id === `pass-${shape}-${n}`)!;

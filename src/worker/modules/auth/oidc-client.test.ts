@@ -18,7 +18,7 @@ import {
 const ISSUER = 'https://idp.test';
 const CLIENT = 'cid';
 const rp = issuerRelyingParty({ issuer: ISSUER, clientId: CLIENT, clientSecret: 'secret' });
-const NOW = Date.now();
+const NOW = Date.UTC(2026, 0, 1);
 
 interface Key {
   privateKey: CryptoKey;

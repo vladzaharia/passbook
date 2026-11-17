@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -54,7 +55,7 @@ describe('scan display preview tenant authorization', () => {
       () => preview(own, session.headers),
     );
     const unknown = await preview({ ...own, passId: f.ids.id() }, session.headers);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await problem(response)).toEqual(await problem(unknown));
     expect(await previewAudits(session.userId)).toEqual([
       { org_id: org.id, target_id: own.passId },
@@ -106,7 +107,7 @@ describe('scan display preview tenant authorization', () => {
       },
       () => preview(own, session.headers),
     );
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await response.text()).not.toContain('scope');
   });
 
@@ -195,7 +196,7 @@ describe('scan display preview tenant authorization', () => {
       [own.passId],
     );
     expect(after?.credential_generation).toBe(before.credential_generation + 1);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await response.text()).not.toContain('Alex Morgan');
   });
 
@@ -280,7 +281,7 @@ describe('scan display preview tenant authorization', () => {
     const session = await memberSession(['pass_operator']);
     await run(env.DB, sql, [own.passId]);
     const response = await preview(own, session.headers);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await response.text()).not.toContain('Alex Morgan');
     expect(await previewAudits(session.userId)).toEqual([]);
   });
@@ -307,7 +308,7 @@ describe('scan display preview tenant authorization', () => {
               (db) => startTransfer(db, own.passId),
               () => preview(own, session.headers),
             );
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
       expect(await response.text()).not.toContain('Alex Morgan');
       const transfer = await first<{
         state: string;

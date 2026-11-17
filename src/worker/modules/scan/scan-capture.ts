@@ -2,6 +2,8 @@ import { type AfterRead, afterRead } from '../../platform/authority-after.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { mapOutsideLiterals } from '../../platform/authority-sqltext.ts';
 import type { SqlValue } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { depsOf, overrideDeps } from '../passes/deps.ts';
 
 interface Captured {
   sql: string;
@@ -43,6 +45,16 @@ export function capturingDb(db: D1Database): D1Database {
   });
   capturing.add(proxy);
   return proxy;
+}
+
+/**
+ * The context with a capturing database, keeping the environment's registry and service overrides:
+ * statements built from it can ride a grant's commit (`afterReads`).
+ */
+export function capturingContext(ctx: ServiceContext): ServiceContext {
+  const env = { ...ctx.env, DB: capturingDb(ctx.env.DB) };
+  overrideDeps(env, depsOf(ctx.env));
+  return { ...ctx, env };
 }
 
 export function capturedStatement(statement: D1PreparedStatement): Captured | undefined {

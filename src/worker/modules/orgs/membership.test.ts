@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fakeAuth,
   fixtures,
@@ -139,7 +140,7 @@ describe('organization memberships', () => {
     expect((await call('GET', `/${org.id}/memberships`, undefined, user(person.id))).status).toBe(
       403,
     );
-    expect((await call('GET', '', undefined, user(person.id))).status).toBe(403);
+    await expectProblem(await call('GET', '', undefined, user(person.id)), 403, 'FORBIDDEN');
     expect(
       (await call('PATCH', `/${org.id}`, { name: 'Not allowed' }, user(person.id))).status,
     ).toBe(403);
@@ -381,10 +382,10 @@ describe('organization memberships', () => {
       run(env.DB, 'UPDATE org_invitations SET revoked_at = NULL WHERE id = ?', [
         revoked.invitation.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable invitation/);
     await expect(
       run(env.DB, 'DELETE FROM org_invitations WHERE id = ?', [revoked.invitation.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable invitation/);
     const other = await makeUser(f);
     const used = await invite(org.id, other.primaryEmail);
     expect((await accept(used.token, other.id)).status).toBe(200);
@@ -405,7 +406,7 @@ describe('organization memberships', () => {
     expect(
       (await call('DELETE', `/${otherOrg.id}/invitations/${pending.invitation.id}`)).status,
     ).not.toBe(200);
-    expect((await call('GET', '', undefined, user(person.id))).status).toBe(403);
+    await expectProblem(await call('GET', '', undefined, user(person.id)), 403, 'FORBIDDEN');
     // org:manage lets an org_admin edit its own org (docs/api.md); isolation and lifecycle stay closed.
     expect((await call('PATCH', `/${otherOrg.id}`, { name: 'No' }, user(person.id))).status).toBe(
       403,
@@ -555,16 +556,16 @@ describe('organization memberships', () => {
         '["org_admin"]',
         invitation.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable invitation/);
     await expect(
       run(env.DB, 'UPDATE org_memberships SET roles = ? WHERE id = ?', [
         '["org_admin"]',
         membership.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable membership/);
     await expect(
       run(env.DB, 'DELETE FROM org_memberships WHERE id = ?', [membership.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable membership/);
     expect(
       (await getOrgAccess(createServiceContext(env, { clock }), person.id, org.id))?.roles,
     ).toEqual(['read_only']);

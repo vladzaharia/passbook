@@ -1,15 +1,12 @@
 import { type Grant, grant } from '../../platform/authority.ts';
 import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.ts';
 import { exists, type GrantCond, not } from '../../platform/authority-cond.ts';
-import { AuthorityError } from '../../platform/authority-error.ts';
-import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
 import type { ScanActor } from './guard.ts';
 import { credentialRefChecks } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
-import { capturedStatement } from './scan-capture.ts';
 import { type ScanPassFacts, scanPassChecks } from './scan-pass-checks.ts';
 
 export interface ScanWriteInput {
@@ -140,14 +137,3 @@ export function partSql(sql: string): string {
     .replace(/(\w+)\.org_id\s*=\s*\w+\.org_id/g, '$1.org_id={org}')
     .replace(/(\w+)\.mode\s*=\s*\w+\.mode/g, '$1.mode={mode}');
 }
-
-function capturedPart(statement: D1PreparedStatement, what: string): GrantPart {
-  const seen = capturedStatement(statement);
-  if (!seen)
-    throw new AuthorityError('GRANT_FOREIGN_STATEMENT', `A ${what} statement was not captured.`);
-  return writePart(`${partSql(seen.sql)} AND {grant}`, seen.params);
-}
-
-/** The retention proof row commits in the grant's batch, right after its ledger row (it inserts only when that row did). */
-export const retentionPart = (statement: D1PreparedStatement): GrantPart =>
-  capturedPart(statement, 'retention');

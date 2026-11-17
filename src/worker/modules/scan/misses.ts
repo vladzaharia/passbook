@@ -1,3 +1,4 @@
+import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { bumpIfStmt } from '../../platform/counters.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -5,8 +6,9 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import {
   cappedMissAuditStmt,
-  completedMissPredicate,
+  crossedCap,
   missCounterKey,
+  missIncrementPart,
   type ReadMissFence,
   readMissAuthorityPredicate,
   requireMissAuditStmt,
@@ -31,11 +33,24 @@ export interface MissPlan {
 
 type Predicate = { sql: string; params: readonly SqlValue[] };
 
+/** `counted`, `capped` or `not_committed` from the increment's returned row. */
+function missResultOf(row: unknown): MissResult {
+  const count = row && typeof row === 'object' && 'count' in row ? row.count : undefined;
+  if (typeof count !== 'number' || !Number.isInteger(count) || count < 1) return 'not_committed';
+  return count > MISSES_PER_WINDOW ? 'capped' : 'counted';
+}
+
+function throwCapped(result: MissResult, window: number, now: number): void {
+  if (result !== 'capped') return;
+  throw new AppError('SCAN_TOO_MANY_MISSES', 429, 'Too many codes not found. Wait a few minutes.', {
+    headers: { 'retry-after': String(Math.ceil((window + WINDOW_MS - now) / 1000)) },
+  });
+}
+
 function missPlan(
   ctx: ServiceContext,
   actor: ScanActor,
   authority: Predicate,
-  completed?: Predicate,
   now = ctx.clock.now(),
   assertions: readonly D1PreparedStatement[] = [],
 ): MissPlan {
@@ -52,7 +67,7 @@ function missPlan(
     at: now,
     requestId: ctx.requestId,
   });
-  const eligible = completed ?? authority;
+  const eligible = authority;
   return {
     stmts: [
       ...assertions,
@@ -67,38 +82,53 @@ function missPlan(
         results.some((item) => !item || item.success === false)
       )
         return 'not_committed';
-      const row = results[assertions.length]?.results?.[0];
-      const count = row && typeof row === 'object' && 'count' in row ? row.count : undefined;
-      if (typeof count !== 'number' || !Number.isInteger(count) || count < 1)
-        return 'not_committed';
-      return count > MISSES_PER_WINDOW ? 'capped' : 'counted';
+      return missResultOf(results[assertions.length]?.results?.[0]);
     },
-    throwIfCapped(result) {
-      if (result !== 'capped') return;
-      throw new AppError(
-        'SCAN_TOO_MANY_MISSES',
-        429,
-        'Too many codes not found. Wait a few minutes.',
-        {
-          headers: { 'retry-after': String(Math.ceil((window + WINDOW_MS - now) / 1000)) },
-        },
-      );
-    },
+    throwIfCapped: (result) => throwCapped(result, window, now),
   };
 }
 
 /**
- * Run right after the stop's grant batch committed, as its own batch: the increment applies only to
- * the finalized `not_found` generation, so it counts once. Both completeness sentinels abort this batch.
+ * The miss of a finalized `not_found` stop, counted in the stop's own grant: call right after the
+ * statement that closes the scan. The increment applies only if that statement changed its row
+ * (`changes()`), so a claim counts once; the audit row follows the increment that crossed the cap.
  */
-export function prepareMiss(
+export function grantMiss(
+  g: Grant,
+  closing: GrantedStatement,
   ctx: ServiceContext,
   actor: ScanActor,
-  scanId: string,
-  claimAt: number,
-): MissPlan {
-  const completed = completedMissPredicate({ actor, scanId, claimAt });
-  return missPlan(ctx, actor, completed, completed);
+  now: number,
+) {
+  const window = now - (now % WINDOW_MS);
+  const key = missCounterKey(actor);
+  const threshold = MISSES_PER_WINDOW + 1;
+  const [increment] = g.include(missIncrementPart(key, window));
+  // `changes()` reads the statement before it: anything between them would silently stop the count.
+  if (!increment || g.indexOf(increment) !== g.indexOf(closing) + 1)
+    throw new Error('The miss increment must follow the statement that closes the scan.');
+  g.audit(
+    {
+      at: now,
+      orgId: actor.orgId,
+      actorType: actor.actor.type,
+      actorId: actor.actor.id,
+      action: 'scan.misses_capped',
+      targetType: actor.scanner ? 'scanner' : null,
+      targetId: actor.scanner?.id ?? null,
+      requestId: ctx.requestId,
+      ipPrefix: null,
+      detail: null,
+    },
+    [crossedCap(key, window, threshold)],
+  );
+  return {
+    /** From the grant's writes: nothing counted (the scan did not close here), counted, or past the cap. */
+    result(writes: readonly D1Result[]): MissResult {
+      return missResultOf(writes[g.indexOf(increment)]?.results?.[0]);
+    },
+    throwIfCapped: (result: MissResult) => throwCapped(result, window, now),
+  };
 }
 
 /**
@@ -119,12 +149,5 @@ export function prepareReadMiss(
         .filter((item) => item && typeof item.sql === 'string' && Array.isArray(item.params))
         .map((item) => requireReadMissObservationStmt(ctx.env.DB, item))
     : [];
-  return missPlan(
-    ctx,
-    actor,
-    readMissAuthorityPredicate(actor, now, fence),
-    undefined,
-    now,
-    observations,
-  );
+  return missPlan(ctx, actor, readMissAuthorityPredicate(actor, now, fence), now, observations);
 }

@@ -36,7 +36,7 @@ beforeAll(async () => {
      FROM template_versions WHERE template_id = ? AND version = ?`,
     [otherVersion, kit.template.id, kit.template.version],
   );
-}, 60_000);
+});
 
 async function linked() {
   const pass = await kit.pass();
@@ -223,7 +223,7 @@ describe('retained connection release proof', () => {
     expect(
       await all(kit.env.DB, 'SELECT id FROM outbox WHERE pass_id = ? ORDER BY id', [pass.id]),
     ).toEqual(before);
-  }, 60_000);
+  });
 
   it('commits mapped content only with the completed credential rotation under the exact retained proof', async () => {
     const { pass, context } = await linked();
@@ -249,7 +249,7 @@ describe('retained connection release proof', () => {
     expect(changed?.authToken).not.toBe(pass.authToken);
     expect(changed?.scanCode).not.toBe(pass.scanCode);
     expect(await getPassBySerial(kit.env.DB, pass.identityId, pass.serial)).toBeNull();
-  }, 60_000);
+  });
 
   it.each(['head', 'mode', 'generation'] as const)(
     'does not start a retained holder transfer when the %s changes at reservation',
@@ -622,7 +622,7 @@ describe('retained connection release proof', () => {
     );
     expect(await snapshot(kit.env.DB, pass.id)).toEqual(before);
     expect(await objectKeys(pass.id)).toEqual(objects);
-  }, 60_000);
+  });
 
   it('preserves content-corruption errors on the retained flag path', async () => {
     const { pass, context } = await linked();
@@ -650,7 +650,7 @@ describe('retained connection release proof', () => {
     } finally {
       await kit.env.BUCKET.put(key, bytes);
     }
-  }, 60_000);
+  });
 
   it.each(operations)(
     'keeps ordinary %s syncs working without a retained proof after supersession',

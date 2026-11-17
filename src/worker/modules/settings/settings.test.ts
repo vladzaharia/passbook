@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   allowInvalidRoleNames,
   editSessionAuthority,
@@ -359,8 +360,12 @@ describe('settings api', () => {
   });
 
   it('requires a platform admin for platform settings', async () => {
-    expect((await call('GET', '', undefined, tenantUser.headers)).status).toBe(403);
-    expect((await call('PUT', '', { values: {} }, tenantUser.headers)).status).toBe(403);
+    await expectProblem(await call('GET', '', undefined, tenantUser.headers), 403, 'FORBIDDEN');
+    await expectProblem(
+      await call('PUT', '', { values: {} }, tenantUser.headers),
+      403,
+      'FORBIDDEN',
+    );
   });
 });
 
@@ -498,7 +503,11 @@ describe('organization settings authorization', () => {
     await addMembership(org.id, tenantUser.userId, roles as unknown as OrgRole[]);
     const scope = `org:${org.id}`;
     const before = await orgEffects(org.id);
-    expect((await call('GET', `?scope=${scope}`, undefined, tenantUser.headers)).status).toBe(403);
+    await expectProblem(
+      await call('GET', `?scope=${scope}`, undefined, tenantUser.headers),
+      403,
+      'FORBIDDEN',
+    );
     expect(
       (
         await call(
@@ -577,7 +586,7 @@ describe('organization settings authorization', () => {
     ).toBe(200);
     const before = await orgEffects(org.id);
 
-    expect((await call('GET', `?scope=${scope}`)).status).toBe(403);
+    await expectProblem(await call('GET', `?scope=${scope}`), 403, 'FORBIDDEN');
     expect(
       (
         await call('PUT', '', {
@@ -625,13 +634,13 @@ describe('organization settings authorization', () => {
       "SELECT * FROM settings WHERE scope = 'platform' ORDER BY key",
     );
     for (const path of ['', '?scope=platform', '/impact']) {
-      expect((await call('GET', path, undefined, tenantUser.headers)).status).toBe(403);
+      await expectProblem(await call('GET', path, undefined, tenantUser.headers), 403, 'FORBIDDEN');
     }
     for (const body of [
       { values: { 'retention.auditDays': 90 } },
       { scope: 'platform', values: { 'retention.auditDays': 90 } },
     ]) {
-      expect((await call('PUT', '', body, tenantUser.headers)).status).toBe(403);
+      await expectProblem(await call('PUT', '', body, tenantUser.headers), 403, 'FORBIDDEN');
     }
     expect(
       await all(appEnv.DB, "SELECT * FROM settings WHERE scope = 'platform' ORDER BY key"),
@@ -1250,7 +1259,11 @@ describe('settings impact', () => {
     const res = await call('GET', '/impact');
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ emailOnlyUsers: before + 1 });
-    expect((await call('GET', '/impact', undefined, tenantUser.headers)).status).toBe(403);
+    await expectProblem(
+      await call('GET', '/impact', undefined, tenantUser.headers),
+      403,
+      'FORBIDDEN',
+    );
   });
 });
 

@@ -219,7 +219,9 @@ describe('wallet operation claim SQL and atomicity', () => {
     // A failure in the provenance insert must roll the preceding operation UPDATE back.
     await expect(
       finishOperation(captured, { ...finish, raw: { ...raw, eventHash: 'invalid' } }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(
+      /CHECK constraint failed: length\(event_hash\) = 64 AND event_hash NOT GLOB '\*\[\^0-9/,
+    );
     expect(
       await first(
         db,
@@ -302,7 +304,7 @@ describe('wallet operation claim SQL and atomicity', () => {
       expect(plan.results.length).toBeGreaterThan(0);
       expect(bytecode.results.length).toBeGreaterThan(0);
     }
-  }, 120_000);
+  });
 
   it('rechecks keyset and desired operation when settling the transaction', async () => {
     const db = (await makeEnv()).DB;
@@ -370,7 +372,7 @@ describe('wallet operation claim SQL and atomicity', () => {
         next.operationId,
       ]),
     ).toEqual({ state: 'pending' });
-  }, 120_000);
+  });
 
   it('rechecks keyset and pass authority before finalization and never persists stale output', async () => {
     const db = (await makeEnv()).DB;
@@ -432,5 +434,5 @@ describe('wallet operation claim SQL and atomicity', () => {
         operation.instanceId,
       ]),
     ).toEqual({ lifecycle: 'active' });
-  }, 120_000);
+  });
 });

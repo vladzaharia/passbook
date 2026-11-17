@@ -72,7 +72,7 @@ export function registerScanningAuthorityAdminMembership() {
           ORIGIN,
           authority,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/You no longer have access/);
       await expect(
         createSetup(
           kit.ctx,
@@ -86,7 +86,7 @@ export function registerScanningAuthorityAdminMembership() {
           ORIGIN,
           authority,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/You no longer have access/);
       await expect(
         createScanningSession(
           kit.ctx,
@@ -100,7 +100,7 @@ export function registerScanningAuthorityAdminMembership() {
           authority,
           countAuthority,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/You no longer have access/);
       await expect(
         createScanningDevice(
           kit.ctx,
@@ -111,11 +111,13 @@ export function registerScanningAuthorityAdminMembership() {
           ORIGIN,
           authority,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/You no longer have access/);
       await expect(
         changeMode(kit.ctx, user.id, scanner.id, { mode: 'test' }, authority),
-      ).rejects.toThrow();
-      await expect(revokeScanner(kit.ctx, user.id, scanner.id, authority)).rejects.toThrow();
+      ).rejects.toThrow(/You no longer have access/);
+      await expect(revokeScanner(kit.ctx, user.id, scanner.id, authority)).rejects.toThrow(
+        /You no longer have access/,
+      );
       expect(
         await first<{ n: number }>(
           kit.env.DB,

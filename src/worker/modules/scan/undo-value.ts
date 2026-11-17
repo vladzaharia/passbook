@@ -18,7 +18,7 @@ const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0
  * scan, event, audit) commit in the same batch. An add and a take reverse what they actually
  * changed (a capped add gives back less); a set only if the value is still the one it wrote.
  */
-export async function commitValueUndo(c: UndoCommit): Promise<void> {
+export async function commitValueUndo(c: UndoCommit): Promise<D1Result[]> {
   const { ctx, actor, target } = c;
   const db = ctx.env.DB;
   const [value, pass] = await Promise.all([
@@ -34,7 +34,7 @@ export async function commitValueUndo(c: UndoCommit): Promise<void> {
   if (!action || (target.actionKind !== 'use_up' && !input)) throw superseded();
   const schema = schemaOf(template.manifest, input);
   const [minimum, maximum] = [schema?.minimum, schema?.maximum];
-  let committed = false;
+  const committed: { after?: D1Result[] } = {};
   const commit: PublishCommit = {
     open: (checks) =>
       openUndoGrant(c, { checks, codes: { ...UNDO_CODES, stale: 'PASS_CONFLICT' } }),
@@ -42,8 +42,9 @@ export async function commitValueUndo(c: UndoCommit): Promise<void> {
     async add(g) {
       addUndoWrites(g, c);
       return {
-        settle() {
-          committed = true;
+        reads: c.reads ?? [],
+        settle(r) {
+          committed.after = r.after;
         },
       };
     },
@@ -82,7 +83,7 @@ export async function commitValueUndo(c: UndoCommit): Promise<void> {
       return { personalization: { ...current.personalization, [input]: next } };
     },
   });
-  if (committed) return;
+  if (committed.after) return committed.after;
   // Nothing about the pass changes (a floor was already reached): the undo's rows commit alone.
   if (published.changed)
     throw new AppError('UNDO_UNCONFIRMED', 500, 'The undo could not be confirmed.');
@@ -90,5 +91,5 @@ export async function commitValueUndo(c: UndoCommit): Promise<void> {
     openUndoGrant(c, { checks: passRow(published.pass.id, published.pass.rowVersion) }),
     c,
   );
-  await g.commit();
+  return (await g.commitWith(c.reads ?? [])).after;
 }

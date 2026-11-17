@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { first } from '../../platform/db.ts';
 import {
   admin,
@@ -44,7 +45,7 @@ describe('the console edits only scanners of its own mode', () => {
   it('refuses a token replacement from the other mode', async () => {
     const { body } = await create({ kind: 'terminal', name: 'Live till' });
     const res = await consoleCall('POST', `/${body.id}/token`, undefined, admin('test'));
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'SCANNER_NOT_FOUND');
   });
 
   it('refuses a setup edit from the other mode', async () => {
@@ -52,7 +53,7 @@ describe('the console edits only scanners of its own mode', () => {
     const res = await send('PATCH', `/api/v1/scan-setups/${body.id}`, admin('test'), {
       name: 'Hijacked',
     });
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'SCANNER_NOT_FOUND');
     expect((await state(body.id))?.name).toBe('Live scanner');
   });
 

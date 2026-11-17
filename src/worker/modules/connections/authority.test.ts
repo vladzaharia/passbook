@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type ApiKeyFixture,
   editApiKeyIdentity,
@@ -514,7 +515,7 @@ describe('API-key authority at the final D1 write', () => {
         invalidateKey(key.id, reason),
       );
       const response = await keyRequest(seam.sctx, key, 'POST', '/api/v1/connections', httpInput());
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(seam.hits()).toBe(1);
       expect(await state()).toEqual(before);
     },
@@ -531,7 +532,7 @@ describe('API-key authority at the final D1 write', () => {
       kit.clock.advance(1000);
     });
     const response = await keyRequest(seam.sctx, key, 'POST', '/api/v1/connections', httpInput());
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'ACTOR_CHANGED');
     expect(seam.hits()).toBe(1);
     expect(await state()).toEqual(before);
   });
@@ -554,7 +555,7 @@ describe('API-key authority at the final D1 write', () => {
           secrets: { token: 'replacement-secret' },
         },
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(seam.hits()).toBe(1);
       expect(await state()).toEqual(before);
       const stored = await getConnection(kit.env.DB, connection.id);
@@ -581,7 +582,7 @@ describe('API-key authority at the final D1 write', () => {
         'DELETE',
         `/api/v1/connections/${connection.id}`,
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(seam.hits()).toBe(1);
       expect(await state()).toEqual(before);
       expect(await first(kit.env.DB, 'SELECT * FROM passes WHERE id = ?', [pass.id])).toEqual(
@@ -609,7 +610,7 @@ describe('API-key authority at the final D1 write', () => {
         'POST',
         `/api/v1/connections/${connection.id}/webhook-secret`,
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(seam.hits()).toBe(1);
       expect(await state()).toEqual(before);
       const stored = await getConnection(kit.env.DB, connection.id);
@@ -636,7 +637,7 @@ describe('API-key authority at the final D1 write', () => {
         'POST',
         `/api/v1/connections/${connection.id}/test`,
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(seam.hits()).toBe(1);
       expect(await state()).toEqual(before);
     },
@@ -658,7 +659,7 @@ describe('API-key authority at the final D1 write', () => {
         connectorType: 'demo',
         config: { count: 1 },
       });
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(seam.hits()).toBe(1);
       expect(await state()).toEqual(before);
     },
@@ -707,7 +708,7 @@ describe('API-key authority at the final D1 write', () => {
           config: { count: 4 },
         },
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(seam.hits()).toBe(1);
       expect(await state()).toEqual(before);
     },
@@ -1105,7 +1106,7 @@ describe('manual workflow enqueue authority', () => {
         'POST',
         `/api/v1/connections/${connection.id}/sync`,
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(seam.hits()).toBe(1);
       expect(workflow.created).toEqual([]);
       expect(await state()).toEqual(before);

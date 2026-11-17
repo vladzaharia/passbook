@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { run } from '../../platform/db.ts';
 import { createScannerStore } from './auth-store.ts';
 import {
@@ -173,7 +174,7 @@ describe('pairing', () => {
       origin: 'https://evil.example',
       'sec-fetch-site': 'cross-site',
     });
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'CSRF_ORIGIN');
   });
 
   it('a suspended org cannot pair', async () => {

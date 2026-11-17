@@ -81,5 +81,5 @@ describe('a self-remove transfer and an org suspended mid-way', () => {
     );
     expect(row?.state).not.toBe('completed');
     expect((await getPass(kit.env.DB, pass.id))?.ownerUserId).toBe(user.id);
-  }, 120_000);
+  });
 });

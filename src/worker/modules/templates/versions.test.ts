@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -176,7 +177,7 @@ async function seed(org: string, name: string, extra: Record<string, Uint8Array>
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   env = await makeEnv();
   f = fixtures(env, clock);
   app = createApp({ stores: { ...auth.stores, sessions: createSessionStore(env, clock) }, clock });
@@ -612,10 +613,10 @@ describe('POST /templates/{id}/versions', () => {
       expect((await save(mine.id, draft(), headers)).status).toBe(401);
       expect((await save(mine.id, draft({ activate: 'display-only' }), headers)).status).toBe(401);
     }
-    expect((await save(mine.id, draft(), noMembership)).status).toBe(404);
-    expect((await save('missing', draft())).status).toBe(404);
+    await expectProblem(await save(mine.id, draft(), noMembership), 404, 'TEMPLATE_NOT_FOUND');
+    await expectProblem(await save('missing', draft()), 404, 'TEMPLATE_NOT_FOUND');
     const { 'x-csrf-token': _drop, ...noCsrf } = admin;
-    expect((await save(mine.id, draft(), noCsrf)).status).toBe(403);
+    await expectProblem(await save(mine.id, draft(), noCsrf), 403, 'CSRF_TOKEN');
   });
 
   it('separates authoring from publish capability, and masks another tenant', async () => {
@@ -625,9 +626,9 @@ describe('POST /templates/{id}/versions', () => {
     const reader = await member(orgId, ['read_only']);
     const foreign = await member(otherOrgId, ['template_author', 'template_publisher']);
     const body = draft({ assets: same(t.assets), manifest: manifest('Capability Draft Changed') });
-    expect((await save(t.id, body, reader.headers)).status).toBe(403);
-    expect((await save(t.id, body, publisher.headers)).status).toBe(403);
-    expect((await save(t.id, body, foreign.headers)).status).toBe(404);
+    await expectProblem(await save(t.id, body, reader.headers), 403, 'FORBIDDEN');
+    await expectProblem(await save(t.id, body, publisher.headers), 403, 'FORBIDDEN');
+    await expectProblem(await save(t.id, body, foreign.headers), 404, 'TEMPLATE_NOT_FOUND');
     expect((await save(t.id, { ...body, dryRun: true }, author.headers)).status).toBe(200);
     const saved = await save(t.id, body, author.headers);
     expect(saved.status).toBe(200);
@@ -737,6 +738,6 @@ describe('POST /templates/{id}/versions', () => {
     const t = await seed(orgId, 'Old Card');
     await call(`/${t.id}/archive`, { method: 'POST' });
     const res = await save(t.id, { ...draft(), assets: same(t.assets) });
-    expect(res.status).toBe(409);
+    await expectProblem(res, 409, 'TEMPLATE_ARCHIVED');
   });
 });

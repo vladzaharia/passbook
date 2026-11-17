@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   assertNoLeakedGrants,
   makeApiKey,
@@ -29,7 +30,7 @@ beforeAll(async () => {
     },
     clock: kit.clock,
   });
-}, 60_000);
+});
 
 async function operator(orgId = kit.org.id) {
   const user = await makeUser(kit.fx);
@@ -120,7 +121,7 @@ describe('remove and restore as grants', () => {
       kit.clock.now(),
       actor.membershipId,
     ]);
-    expect((await post(actor.session.headers, `/${pass.id}/remove`)).status).toBe(403);
+    await expectProblem(await post(actor.session.headers, `/${pass.id}/remove`), 403, 'FORBIDDEN');
     expect(await removedAt(pass.id)).toBeNull();
   });
 
@@ -130,7 +131,7 @@ describe('remove and restore as grants', () => {
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
     try {
       const response = await post(actor.session.headers, `/${pass.id}/remove`);
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(await removedAt(pass.id)).toBeNull();
     } finally {
       await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
@@ -189,7 +190,11 @@ describe('delete, rotate and refresh as grants', () => {
       kit.clock.now(),
       actor.membershipId,
     ]);
-    expect((await post(actor.session.headers, `/${pass.id}/rotate-link`)).status).toBe(403);
+    await expectProblem(
+      await post(actor.session.headers, `/${pass.id}/rotate-link`),
+      403,
+      'FORBIDDEN',
+    );
   });
 
   it('soft deletes through a session', async () => {

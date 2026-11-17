@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -36,7 +37,7 @@ beforeAll(async () => {
     orgId: kit.org.id,
     scopes: ['passes:read', 'passes:write', 'holders:write'],
   });
-}, 60_000);
+});
 
 describe('/api/v1 baseline request shapes (8f5bee02)', () => {
   it('creates with orgId, templateId and input only, fencing the effective release', async () => {
@@ -72,7 +73,11 @@ describe('/api/v1 baseline request shapes (8f5bee02)', () => {
       (await post(orgKey, { orgId: strangerOrg.id, templateId: kit.template.id, input: {} }))
         .status,
     ).toBe(403);
-    expect((await api(`/passes?orgId=${strangerOrg.id}`, { headers: orgKey })).status).toBe(403);
+    await expectProblem(
+      await api(`/passes?orgId=${strangerOrg.id}`, { headers: orgKey }),
+      403,
+      'ORG_FORBIDDEN',
+    );
     const global = await auth.apiKey({ orgId: null, scopes: ['passes:read'] });
     expect((await api('/holders', { headers: global })).status).toBe(422);
     expect((await api('/bundles', { headers: global })).status).toBe(422);

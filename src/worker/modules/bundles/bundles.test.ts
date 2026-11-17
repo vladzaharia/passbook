@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
 import { BundleListSchema, BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -92,13 +93,13 @@ describe('POST /bundles', () => {
     const theirs = await makePass(other.id);
     const key = fake.apiKey({ orgId: kit.org.id });
     const res = await post('/bundles', key, { orgId: other.id, name: 'X', passIds: [theirs.id] });
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'ORG_FORBIDDEN');
   });
 
   it('needs passes:write to create and passes:read to list', async () => {
     const a = await makePass();
     const readOnly = fake.apiKey({ scopes: ['passes:read'] });
-    expect((await create(readOnly, { passIds: [a.id] })).status).toBe(403);
+    await expectProblem(await create(readOnly, { passIds: [a.id] }), 403, 'MISSING_SCOPE');
     expect((await api(`/bundles?orgId=${kit.org.id}`, { headers: readOnly })).status).toBe(200);
     expect(
       (await api('/bundles', { headers: fake.apiKey({ scopes: ['templates:read'] }) })).status,
@@ -135,7 +136,11 @@ describe('list and get', () => {
     expect(got.mode).toBe('test');
     // An org-scoped key sees only its own org, and another org's bundle is missing.
     const stranger = fake.apiKey({ orgId: kit.org.id });
-    expect((await api(`/bundles/${l.id}`, { headers: stranger })).status).toBe(404);
+    await expectProblem(
+      await api(`/bundles/${l.id}`, { headers: stranger }),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
     expect(
       BundleListSchema.parse(
         await (await api(`/bundles?orgId=${kit.org.id}`, { headers: stranger })).json(),
@@ -156,7 +161,11 @@ describe('rotate, delete and the public link', () => {
     expect(rotated.url).not.toBe(bundle.url);
     expect(rotated.linkRotatedAt).not.toBeNull();
     expect((await pub(`/b/${token(bundle.url)}`)).status).toBe(404);
-    expect((await pub(`/b/${token(bundle.url)}/passes.pkpasses`)).status).toBe(404);
+    await expectProblem(
+      await pub(`/b/${token(bundle.url)}/passes.pkpasses`),
+      404,
+      'LINK_NOT_FOUND',
+    );
     expect((await pub(`/b/${token(rotated.url)}`)).status).toBe(200);
   });
 
@@ -167,7 +176,11 @@ describe('rotate, delete and the public link', () => {
       (await api(`/bundles/${bundle.id}`, { method: 'DELETE', headers: fake.admin() })).status,
     ).toBe(200);
     expect((await pub(`/b/${token(bundle.url)}`)).status).toBe(404);
-    expect((await api(`/bundles/${bundle.id}`, { headers: fake.admin() })).status).toBe(404);
+    await expectProblem(
+      await api(`/bundles/${bundle.id}`, { headers: fake.admin() }),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [a.id])).not.toBeNull();
   });
 
@@ -175,7 +188,11 @@ describe('rotate, delete and the public link', () => {
     const a = await makePass();
     const bundle = await bundleOf(await create(fake.admin(), { passIds: [a.id] }));
     const stranger = fake.apiKey({ orgId: other.id });
-    expect((await post(`/bundles/${bundle.id}/rotate-link`, stranger)).status).toBe(404);
+    await expectProblem(
+      await post(`/bundles/${bundle.id}/rotate-link`, stranger),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
     expect(
       (await api(`/bundles/${bundle.id}`, { method: 'DELETE', headers: stranger })).status,
     ).toBe(404);
@@ -275,7 +292,7 @@ describe('send-email', () => {
       await create(fake.admin(), { passIds: [a.id], holderEmail: 'own@example.com' }),
     );
     const res = await post(`/bundles/${bundle.id}/send-email`, fake.apiKey({ orgId: other.id }));
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'BUNDLE_NOT_FOUND');
   });
 
   it('cancels queued email when the bundle members change; a removed pass reads voided', async () => {

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { PassEventListSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -89,7 +90,46 @@ describe('recordPassEvent', () => {
       'events.record_failed',
       expect.objectContaining({ code: 'EVENT_RECORD_FAILED' }),
     );
+    expect(warn).toHaveBeenCalledWith(
+      'events.pass_missing',
+      expect.objectContaining({ code: 'EVENT_PASS_MISSING', passId: 'no-such-pass' }),
+    );
     warn.mockRestore();
+  });
+
+  it('a live event needs a live pass; a test event may sit on either', async () => {
+    const pass = await kit.pass({ mode: 'test' });
+    const error = vi.spyOn(kit.ctx.log, 'error');
+    await recordPassEvents(kit.ctx, [
+      { ...base(pass.id), mode: 'live', kind: 'page.opened' },
+      { ...base(pass.id), mode: 'test', kind: 'email.captured' },
+    ]);
+    expect(error).toHaveBeenCalledWith(
+      'events.org_mismatch',
+      expect.objectContaining({ code: 'EVENT_ORG_MISMATCH', passId: pass.id }),
+    );
+    expect((await rows(pass.id)).filter((r) => r.kind !== 'pass.issued')).toMatchObject([
+      { kind: 'email.captured', mode: 'test' },
+    ]);
+    error.mockRestore();
+  });
+
+  it('takes the org from the pass: another org writes nothing and logs EVENT_ORG_MISMATCH', async () => {
+    const pass = await kit.pass();
+    const error = vi.spyOn(kit.ctx.log, 'error');
+    await recordPassEvents(kit.ctx, [
+      { ...base(pass.id), orgId: 'another-org', kind: 'page.opened' },
+      { ...base(pass.id), kind: 'page.opened' },
+    ]);
+    expect(error).toHaveBeenCalledWith(
+      'events.org_mismatch',
+      expect.objectContaining({ code: 'EVENT_ORG_MISMATCH', passId: pass.id }),
+    );
+    expect((await rows(pass.id)).map((r) => [r.kind, r.mode])).toEqual([
+      ['pass.issued', 'live'],
+      ['page.opened', 'live'],
+    ]);
+    error.mockRestore();
   });
 
   it('records a batch in order', async () => {
@@ -152,11 +192,15 @@ describe('GET /passes/{id}/events', () => {
     const noScope = await makeApiKey(kit.fx, { scopes: ['templates:read'] });
     const foreignKey = await makeApiKey(kit.fx, { orgId: other.id });
     expect((await events(pass.id, {})).status).toBe(401);
-    expect((await events(pass.id, session.headers)).status).toBe(404);
-    expect((await events(pass.id, noScope.headers)).status).toBe(403);
+    await expectProblem(await events(pass.id, session.headers), 404, 'PASS_NOT_FOUND');
+    await expectProblem(await events(pass.id, noScope.headers), 403, 'MISSING_SCOPE');
     expect((await events(pass.id, credentials.key.headers)).status).toBe(200);
-    expect((await events(pass.id, foreignKey.headers)).status).toBe(404);
-    expect((await events('missing', credentials.member.session.headers)).status).toBe(404);
+    await expectProblem(await events(pass.id, foreignKey.headers), 404, 'PASS_NOT_FOUND');
+    await expectProblem(
+      await events('missing', credentials.member.session.headers),
+      404,
+      'PASS_NOT_FOUND',
+    );
   });
 
   it('requires current membership and read capability for events and devices', async () => {
@@ -179,12 +223,12 @@ describe('GET /passes/{id}/events', () => {
         app.request(`${ORIGIN}/api/v1/passes/${pass.id}/${resource}`, { headers }, kit.env);
       expect((await request(member.session.headers)).status).toBe(200);
       expect((await request(ordinarySession.headers)).status).toBe(200);
-      expect((await request(platformAdmin.headers)).status).toBe(404);
-      expect((await request(foreign.session.headers)).status).toBe(404);
-      expect((await request(noRead.session.headers)).status).toBe(404);
+      await expectProblem(await request(platformAdmin.headers), 404, 'PASS_NOT_FOUND');
+      await expectProblem(await request(foreign.session.headers), 404, 'PASS_NOT_FOUND');
+      await expectProblem(await request(noRead.session.headers), 404, 'PASS_NOT_FOUND');
       expect((await request(key.headers)).status).toBe(200);
-      expect((await request(noScope.headers)).status).toBe(403);
-      expect((await request(wrongMode.headers)).status).toBe(404);
+      await expectProblem(await request(noScope.headers), 403, 'MISSING_SCOPE');
+      await expectProblem(await request(wrongMode.headers), 404, 'PASS_NOT_FOUND');
     }
     await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
       kit.clock.now(),
@@ -227,7 +271,7 @@ describe('GET /passes/{id}/events', () => {
     }
     // A key of the other mode does not see the pass at all.
     const testKey = await makeApiKey(kit.fx, { orgId: kit.org.id, mode: 'test' });
-    expect((await events(pass.id, testKey.headers)).status).toBe(404);
+    await expectProblem(await events(pass.id, testKey.headers), 404, 'PASS_NOT_FOUND');
   });
 });
 

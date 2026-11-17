@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { PassDetailSchema } from '../../../shared/contracts/passes.ts';
@@ -22,7 +23,7 @@ beforeAll(async () => {
   app = createApp({ stores: auth.stores, clock: kit.clock });
   await stampVersion(kit, ID, 'v1', 10);
   release = await releaseStamps(kit, ID, 'v1');
-}, 60_000);
+});
 
 const stamp = (passId: string, body: unknown, headers = auth.admin()) =>
   app.request(
@@ -54,9 +55,9 @@ async function history(passId: string) {
 describe('stamp actions', () => {
   it('needs a pass writer', async () => {
     const card = await stampCard(kit, release, 0);
-    expect((await stamp(card.id, { action: 'add' }, auth.user())).status).toBe(403);
+    await expectProblem(await stamp(card.id, { action: 'add' }, auth.user()), 403, 'FORBIDDEN');
     const reader = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] });
-    expect((await stamp(card.id, { action: 'add' }, reader)).status).toBe(403);
+    await expectProblem(await stamp(card.id, { action: 'add' }, reader), 403, 'MISSING_SCOPE');
     expect((await stamp(card.id, { action: 'add' })).status).toBe(200);
   });
 
@@ -140,7 +141,7 @@ describe('stamp actions', () => {
       highestKept: 14,
     });
     expect((await impact('goal=21')).status).toBe(422);
-    expect((await impact('goal=8', auth.user())).status).toBe(404);
+    await expectProblem(await impact('goal=8', auth.user()), 404, 'TEMPLATE_NOT_FOUND');
     const plain = await app.request(
       `https://wallet.test/api/v1/templates/${kit.template.id}/stamps-impact?goal=8`,
       { headers: auth.admin() },

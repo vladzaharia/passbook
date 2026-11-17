@@ -1,5 +1,6 @@
 import * as asn1 from 'asn1js';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, persistTemplate } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -105,16 +106,16 @@ describe('personalize', () => {
 
   it('is 404 without NFC or a personalizing template, and needs no ApplePass header', async () => {
     const pass = await kit.pass();
-    expect((await post(pass)).status).toBe(404);
+    await expectProblem(await post(pass), 404, 'PERSONALIZATION_UNAVAILABLE');
     await run(kit.env.DB, 'UPDATE signing_identities SET nfc_enabled = 1 WHERE id = ?', [
       pass.identityId,
     ]);
-    expect((await post(pass)).status).toBe(404);
+    await expectProblem(await post(pass), 404, 'PERSONALIZATION_UNAVAILABLE');
     const unknown = await call(`/passes/${TYPE}/nope/personalize`, {
       method: 'POST',
       body: body(),
     });
-    expect(unknown.status).toBe(404);
+    await expectProblem(unknown, 404, 'PERSONALIZATION_UNAVAILABLE');
   });
 
   it('does not personalize a quarantined test pass', async () => {
@@ -127,7 +128,7 @@ describe('personalize', () => {
       headers: { 'content-type': 'application/json' },
       body: body(),
     });
-    expect(denied.status).toBe(404);
+    await expectProblem(denied, 404, 'PERSONALIZATION_UNAVAILABLE');
     // Only the per-request id may differ between the two problem documents.
     const withoutRequestId = async (response: Response) => ({
       ...(await response.json<Record<string, unknown>>()),
@@ -226,7 +227,7 @@ describe('personalize', () => {
         requiredPersonalizationInfo: { fullName: 'X', emailAddress: 'x@example.com' },
       }),
     );
-    expect(other.status).toBe(409);
+    await expectProblem(other, 409, 'ALREADY_PERSONALIZED');
   });
 
   it('rejects missing required fields and malformed bodies', async () => {
@@ -300,13 +301,13 @@ describe('personalize', () => {
     const hay = Array.from(sig).join(',');
     expect(hay).toContain(Array.from(digest).join(','));
     const other = await post(pass, withToken('different'));
-    expect(other.status).toBe(409);
+    await expectProblem(other, 409, 'ALREADY_PERSONALIZED');
   });
 
   it('is unavailable for a suspended org', async () => {
     const pass = await personalizable();
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [pass.orgId]);
-    expect((await post(pass)).status).toBe(404);
+    await expectProblem(await post(pass), 404, 'PERSONALIZATION_UNAVAILABLE');
     await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [pass.orgId]);
   });
 });

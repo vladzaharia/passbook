@@ -12,17 +12,17 @@ import type { ScanActor } from './guard.ts';
 import type { PreloadedDisplayHistory } from './history-proof-plan.ts';
 import { ledgerRow, recordResult } from './ledger.ts';
 import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
-import { prepareMiss } from './misses.ts';
+import { grantMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import { candidateTemplateFenceStmt, templateFenceHolds } from './repo-resolve-outcome-current.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
-import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { Claim } from './repo-scans.ts';
 import type { Stop } from './resolve.ts';
-import { afterReads, capturingDb } from './scan-capture.ts';
+import { afterReads } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
-import { retentionPart, SCAN_STOP_TABLES, scanIs, scanWriteGrant } from './scan-write-grant.ts';
+import { SCAN_STOP_TABLES, scanIs, scanWriteGrant } from './scan-write-grant.ts';
 import { finalizeScan, ledgerEvent } from './scan-write-statements.ts';
 
 export interface StopContext {
@@ -59,7 +59,6 @@ export async function finishStop(
   auditPass: Pass | null = null,
 ): Promise<ScanOutcome> {
   const { ctx, actor } = s;
-  const side = { ...ctx, env: { ...ctx.env, DB: capturingDb(ctx.env.DB) } };
   const pass = stop.pass ?? auditPass;
   const ledger = pass
     ? await ledgerAuthoritySnapshot(
@@ -104,7 +103,7 @@ export async function finishStop(
     // A pass or a miss: the scanner's mode may not have retired the presented credential.
     ...(checked || s.countMiss ? { credentialRefs: s.credentialTombstoneRefs } : {}),
     ...(checked ? { pass: { id: checked.id, facts: { pass: checked, credential: {} } } } : {}),
-    tables: SCAN_STOP_TABLES,
+    tables: s.countMiss ? [...SCAN_STOP_TABLES, 'counters'] : SCAN_STOP_TABLES,
   });
   const finalized = finalizeScan(g, {
     id: s.scanId,
@@ -120,9 +119,11 @@ export async function finishStop(
     approvedBy: null,
     ...(authority.event ? { eventId: authority.event.id } : {}),
   });
+  // Counted by the same batch, right after the statement that closes the scan.
+  const miss = s.countMiss ? grantMiss(g, finalized, ctx, authority.actor, ctx.clock.now()) : null;
   if (ledger && retention) {
     ledgerEvent(g, ledger, s.scanId, stop.kind, stop.reason);
-    g.include(retentionPart(retentionProofIfRecordedStmt(side.env.DB, retention)));
+    g.include(retentionProofPart(retention));
   }
   g.assert('stale', [scanIs(s.scanId, { state: 'done' })]);
   const dayCounts: CountsPlan | null = s.suppressCounts
@@ -132,7 +133,7 @@ export async function finishStop(
   const fence = stop.found?.liveCandidate;
   const committed = await g.commitWith(
     afterReads([
-      ...(fence ? [candidateTemplateFenceStmt(side.env.DB, fence)] : []),
+      ...(fence ? [candidateTemplateFenceStmt(ctx.env.DB, fence)] : []),
       ...(dayCounts?.stmts ?? []),
     ]),
   );
@@ -143,13 +144,12 @@ export async function finishStop(
   }
 
   if (fence && !templateFenceHolds(committed.after[0])) throw new CommittedScanUnconfirmed();
-  // Recorded with its counts. The miss counter and card follow; a failure only degrades the answer.
+  // Recorded with its counts and its miss. The card follows; a failure only degrades the answer.
   const finishAt = ctx.clock.now();
   const done = doneScanPredicate(s.scanId);
-  const clock = { ...ctx, clock: { now: () => finishAt } };
-  const miss = s.countMiss ? prepareMiss(clock, authority.actor, s.scanId, s.claimAt) : null;
+  const missResult = miss ? miss.result(results) : null;
   const bound = displayPlan?.bind(finishAt, done);
-  const statements = [...(miss?.stmts ?? []), ...(bound?.stmts ?? [])];
+  const statements = bound?.stmts ?? [];
   let after: D1Result[] | null = null;
   try {
     after = statements.length ? await ctx.env.DB.batch(statements) : [];
@@ -159,18 +159,14 @@ export async function finishStop(
       message: error instanceof Error ? error.message : 'unknown',
     });
   }
-  const missEnd = miss?.stmts.length ?? 0;
-  const missResult = miss && after ? miss.result(after.slice(0, missEnd)) : null;
   const read = dayCounts
     ? await dayCounts.read(committed.after.slice(fence ? 1 : 0))
     : { approvals: false, counts: { today: 0, event: null, asOf: 0, configRev: 0 } };
-  const boundStart = missEnd;
-  const history =
-    bound && after
-      ? bound.finalize(after.slice(boundStart, boundStart + bound.stmts.length))
-      : undefined;
+  const history = bound && after ? bound.finalize(after.slice(0, bound.stmts.length)) : undefined;
   const photoUrl =
     photo && stop.found ? photoGrantUrl(authority.actor, stop.found.pass.id, photo.grant) : null;
+  if (miss && missResult === 'not_committed')
+    ctx.log.warn('scan.miss_uncounted', { orgId: actor.orgId, code: 'SCAN_MISS_UNCOUNTED' });
   if (miss && missResult) miss.throwIfCapped(missResult);
   recordResult(ctx, actor, pass?.templateId ?? null, stop.reason, pass?.mode);
   const outcome = stopOutcome(ctx, actor, stop, read, {

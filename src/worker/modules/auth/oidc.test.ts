@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
   makeOrg,
@@ -612,7 +613,7 @@ describe('oidc sign-in', () => {
         method: 'POST',
         headers: { 'sec-fetch-site': 'cross-site' },
       });
-      expect(res.status).toBe(403);
+      await expectProblem(res, 403, 'CSRF_ORIGIN');
     });
   });
 });

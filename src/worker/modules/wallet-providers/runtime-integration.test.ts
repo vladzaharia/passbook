@@ -174,7 +174,7 @@ describe('existing provider instance runtime', () => {
     expect(await projectionReleaseBindingValid(f.kit.env.DB, newerBinding)).toBe(true);
     await approveAppleRelease(f.kit);
     expect(await projectionReleaseBindingValid(f.kit.env.DB, newerBinding)).toBe(false);
-  }, 60_000);
+  });
 
   it('keeps reviewer and evidence on the exact release and fences account rotation', async () => {
     const f = await publishedProjectionBindingFixture();
@@ -256,7 +256,7 @@ describe('existing provider instance runtime', () => {
       credentials: f.samsung,
     });
     expect(await projectionReleaseBindingValid(db, binding)).toBe(false);
-  }, 60_000);
+  });
 
   it('releases Google retirement credentials only for the exact claimed object generation', async () => {
     const f = await runtimeGoogleLegacyFixture();
@@ -312,7 +312,7 @@ describe('existing provider instance runtime', () => {
       [proof.operationId],
     );
     expect(await readWalletProviderRetirementCredentials(f.kit.ctx, proof)).toBeNull();
-  }, 60_000);
+  });
 
   it('keeps Samsung retirement reference, provenance, and pass authority in the same read', async () => {
     const f = await runtimeSamsungLegacyFixture('retirement');
@@ -382,7 +382,7 @@ describe('existing provider instance runtime', () => {
     const ctx = { ...f.kit.ctx, env: { ...f.kit.ctx.env, DB: seam.db } };
     expect(await readWalletProviderRetirementCredentials(ctx, proof)).toBeNull();
     expect(seam.hits()).toBe(1);
-  }, 60_000);
+  });
 
   it('inactivates only the historical Google object authorized by the exact claimed generation', async () => {
     const f = await runtimeGoogleLegacyFixture();

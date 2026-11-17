@@ -1,6 +1,7 @@
 import { unzlibSync, zlibSync } from 'fflate';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, onTestFinished } from 'vitest';
 import { z } from 'zod';
+import { expectProblem, expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -338,7 +339,7 @@ async function expectedCache(id: string) {
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   assets = fakeAssets();
   env = await makeEnv({
     ASSETS: assets,
@@ -386,7 +387,7 @@ describe('template release API', () => {
     expect(saved).toMatchObject({ saved: true });
     expect(saved.version).not.toBe(t.version);
     const direct = await post(`/${t.id}/activate`, { version: saved.version }, admin);
-    expect(direct.status).toBe(404);
+    await expectProblem(direct, 404, 'NOT_FOUND');
     // A legacy `activate` field is ignored: a save is always a draft.
     for (const activate of [true, 'display-only']) {
       const bypass = await post(`/${t.id}/versions`, { ...body, activate }, admin);
@@ -444,9 +445,9 @@ describe('template release API', () => {
       expect(await response.json()).toMatchObject({ code: 'TEMPLATE_SELF_APPROVAL' });
     };
     await expectSelfApprovalDenied(await post(approvePath, body, dual));
-    expect((await post(approvePath, body, author)).status).toBe(403);
-    expect((await post(approvePath, body, publisher)).status).toBe(403);
-    expect((await post(approvePath, body, reader)).status).toBe(403);
+    await expectProblem(await post(approvePath, body, author), 403, 'FORBIDDEN');
+    await expectProblem(await post(approvePath, body, publisher), 403, 'FORBIDDEN');
+    await expectProblem(await post(approvePath, body, reader), 403, 'FORBIDDEN');
     expect(
       (
         await post(
@@ -625,8 +626,16 @@ describe('template release API', () => {
     expect(await candidates(v1.id)).toEqual(reviewedCandidates);
     expect(await releases(v1.id)).toEqual(beforeReleases);
     expect(await audits(v1.id)).toEqual(reviewedAudits);
-    expect((await call(`/${v1.id}/candidates?${query(scope())}`, foreign)).status).toBe(404);
-    expect((await call(`/${v1.id}/releases?${query(scope())}`, foreign)).status).toBe(404);
+    await expectProblem(
+      await call(`/${v1.id}/candidates?${query(scope())}`, foreign),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
+    await expectProblem(
+      await call(`/${v1.id}/releases?${query(scope())}`, foreign),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
     expect(
       (await call(`/${v1.id}/candidates?${query(scope('live', otherOrg.id))}`, admin)).status,
     ).toBe(404);
@@ -865,7 +874,7 @@ describe('template release API', () => {
       publisher,
       'test',
     );
-    expect(restore.status).toBe(409);
+    await expectProblem(restore, 409, 'TEMPLATE_ARCHIVED');
     expect(await template()).toEqual(archived);
     expect(await audits(v1.id)).toEqual(beforeAudits);
     expect(
@@ -1034,7 +1043,7 @@ describe('template release API', () => {
         [f.ids.id(), publisher.userId, clock.now(), releaseId],
       );
     // The SQL boundary must reject a current-head rollback while the template is still active.
-    await expect(rawRollback(live.id)).rejects.toThrow();
+    await expect(rawRollback(live.id)).rejects.toThrow(/invalid template rollback/);
     const beforeActiveAttempt = await first(
       env.DB,
       'SELECT status, active_version, updated_at FROM templates WHERE id = ?',
@@ -1046,7 +1055,7 @@ describe('template release API', () => {
       rollbackBody(live, 1),
       publisher,
     );
-    expect(activeAttempt.status).toBe(409);
+    await expectProblem(activeAttempt, 409, 'TEMPLATE_RELEASE_CONFLICT');
     expect(
       await first(env.DB, 'SELECT status, active_version, updated_at FROM templates WHERE id = ?', [
         t.id,
@@ -1063,7 +1072,7 @@ describe('template release API', () => {
     );
     expect(archived).toMatchObject({ status: 'archived', active_version: t.version });
     // Archiving does not authorize a Test-mode restore, even through direct SQL.
-    await expect(rawRollback(test.id)).rejects.toThrow();
+    await expect(rawRollback(test.id)).rejects.toThrow(/invalid template release scope/);
     const beforeTestAttempt = await audits(t.id);
     const testAttempt = await post(
       `/${t.id}/releases/rollback`,
@@ -1071,7 +1080,7 @@ describe('template release API', () => {
       publisher,
       'test',
     );
-    expect(testAttempt.status).toBe(409);
+    await expectProblem(testAttempt, 409, 'TEMPLATE_ARCHIVED');
     expect(
       await first(env.DB, 'SELECT status, active_version, updated_at FROM templates WHERE id = ?', [
         t.id,
@@ -1218,11 +1227,15 @@ describe('template release API', () => {
       publisher,
       'test',
     );
-    expect(testRestore.status).toBe(409);
+    await expectProblem(testRestore, 409, 'TEMPLATE_ARCHIVED');
     expect(
       await first(env.DB, 'SELECT status, updated_at FROM templates WHERE id = ?', [v1.id]),
     ).toEqual(archived);
-    expect((await post(`/${v1.id}/restore`, {}, publisher)).status).toBe(409);
+    await expectProblem(
+      await post(`/${v1.id}/restore`, {}, publisher),
+      409,
+      'TEMPLATE_RELEASE_REQUIRED',
+    );
     const r3 = await publish(v1.id, c3, a3, 2);
     expect(r3).toMatchObject({ generation: 3, version: v3.version, previousReleaseId: r2.id });
     const liveRestored = await first<{ status: string; updated_at: number }>(
@@ -1234,7 +1247,11 @@ describe('template release API', () => {
     expect(liveRestored?.updated_at).toBeGreaterThan(archived?.updated_at ?? 0);
     expect((await releases(v1.id)).active).toEqual(r3);
     expect((await post(`/${v1.id}/archive`, {}, publisher)).status).toBe(200);
-    expect((await post(`/${v1.id}/restore`, {}, publisher)).status).toBe(409);
+    await expectProblem(
+      await post(`/${v1.id}/restore`, {}, publisher),
+      409,
+      'TEMPLATE_RELEASE_REQUIRED',
+    );
     const longestReason = 'x'.repeat(500);
     const r4 = await rollback(v1.id, r1, 3, scope(), `  ${longestReason}  `);
     expect(r4).toMatchObject({
@@ -1310,7 +1327,7 @@ describe('template release API', () => {
         { ...env, DB: db },
       );
       expect(intercepted).toBe(true);
-      expect(response.status).toBe(409);
+      await expectProblem(response, 409, 'TEMPLATE_RELEASE_CONFLICT');
       expect(await first(env.DB, 'SELECT status FROM templates WHERE id = ?', [t.id])).toEqual({
         status: 'archived',
       });
@@ -1453,7 +1470,7 @@ describe('template release API', () => {
     expect(JSON.parse(afterFirstRelease.styles)).toEqual(['generic']);
     expect(afterFirstRelease.updated_at).toBeGreaterThan(initialTemplate.updated_at);
     const stalePublish = await post(`/${v1.id}/releases`, publishBody(c2, a2, 0), publisher);
-    expect(stalePublish.status).toBe(409);
+    await expectProblem(stalePublish, 409, 'TEMPLATE_RELEASE_CONFLICT');
     expect((await releases(v1.id)).active).toEqual(firstRelease);
     const second = await publish(v1.id, c2, a2, 1);
     expect(second).toMatchObject({
@@ -1498,7 +1515,7 @@ describe('template release API', () => {
       rollbackBody(firstRelease, 1),
       publisher,
     );
-    expect(staleRollback.status).toBe(409);
+    await expectProblem(staleRollback, 409, 'TEMPLATE_RELEASE_CONFLICT');
     const wrongHash = await post(
       `/${v1.id}/releases/rollback`,
       {
@@ -1614,7 +1631,11 @@ describe('template release API', () => {
     await setExpectedCache(live2, 32);
     const staleBefore = await Promise.all(allEvents.map(expectedCache));
     const staleAudits = await audits(v1.id);
-    expect((await post(`/${v1.id}/releases`, publishBody(c2, a2, 0), publisher)).status).toBe(409);
+    await expectProblem(
+      await post(`/${v1.id}/releases`, publishBody(c2, a2, 0), publisher),
+      409,
+      'TEMPLATE_RELEASE_CONFLICT',
+    );
     expect((await post(`/${v1.id}/releases/rollback`, rollbackBody(r1, 1), publisher)).status).toBe(
       409,
     );
@@ -1777,7 +1798,7 @@ describe('template release API', () => {
       { ...env, DB: db },
     );
     expect(intervened).toBe(true);
-    expect(loser.status).toBe(409);
+    await expectProblem(loser, 409, 'TEMPLATE_RELEASE_CONFLICT');
     expect(await expectedCache(event)).toEqual({
       expected: 91,
       expected_at: clock.now() - 1000,
@@ -2350,8 +2371,10 @@ describe('trusted baked template releases', () => {
       expect(await readExtra(name)).toEqual(bytes);
       await env.BUCKET.put(key, newBytes);
       try {
-        await expect(readExtra(name)).rejects.toThrow();
-        await expect(templateContentHash(nextCtx, oldVersion, pinnedExtras)).rejects.toThrow();
+        await expectRejectsCode(readExtra(name), 'ASSET_NOT_FOUND');
+        await expect(templateContentHash(nextCtx, oldVersion, pinnedExtras)).rejects.toThrow(
+          /Template extra hash mismatch: background\.png|Template extra hash mismatch: strip\.png/,
+        );
       } finally {
         await env.BUCKET.put(key, bytes);
       }
@@ -2423,7 +2446,7 @@ describe('trusted baked template releases', () => {
       WHEN OLD.id = '${blocked.id}' BEGIN SELECT RAISE(ABORT, 'cache down'); END`,
     );
     try {
-      await expect(syncBakedTemplates(nextCtx, nextSource)).rejects.toThrow();
+      await expect(syncBakedTemplates(nextCtx, nextSource)).rejects.toThrow(/cache down/);
     } finally {
       await run(env.DB, 'DROP TRIGGER fail_baked_event_cache');
     }
@@ -2490,7 +2513,7 @@ describe('trusted baked template releases', () => {
       BEGIN SELECT RAISE(ABORT, 'audit down'); END`,
     );
     try {
-      await expect(syncBakedTemplates(ctx, source)).rejects.toThrow();
+      await expect(syncBakedTemplates(ctx, source)).rejects.toThrow(/audit down/);
     } finally {
       await run(env.DB, 'DROP TRIGGER fail_baked_release_audit');
     }

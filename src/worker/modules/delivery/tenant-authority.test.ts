@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
@@ -401,7 +402,7 @@ describe('tenant email enqueue authority', () => {
           authority,
           auditEntry,
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/audit unavailable/);
       expect(await effects(pass.id)).toEqual(before);
     } finally {
       await run(kit.env.DB, 'DROP TRIGGER reject_resend_audit');
@@ -505,9 +506,21 @@ describe('delivery listing tenant access', () => {
     expect(body.items.some((row) => row.id === foreignOutbox)).toBe(false);
     expect(body.items.every((row) => !('payload' in row) && !('orgId' in row))).toBe(true);
     expect((await app.request(url, { headers: readKey.headers }, kit.env)).status).toBe(200);
-    expect((await app.request(url, { headers: admin.headers }, kit.env)).status).toBe(404);
-    expect((await app.request(url, { headers: wrongKey.headers }, kit.env)).status).toBe(404);
-    expect((await app.request(url, { headers: writeKey.headers }, kit.env)).status).toBe(403);
+    await expectProblem(
+      await app.request(url, { headers: admin.headers }, kit.env),
+      404,
+      'PASS_NOT_FOUND',
+    );
+    await expectProblem(
+      await app.request(url, { headers: wrongKey.headers }, kit.env),
+      404,
+      'PASS_NOT_FOUND',
+    );
+    await expectProblem(
+      await app.request(url, { headers: writeKey.headers }, kit.env),
+      403,
+      'MISSING_SCOPE',
+    );
     expect(
       (
         await app.request(
@@ -528,7 +541,11 @@ describe('delivery listing tenant access', () => {
     ).toBe(404);
     const testPass = await kit.pass({ mode: 'test' });
     const testUrl = `/api/v1/delivery?orgId=${kit.org.id}&passId=${testPass.id}`;
-    expect((await app.request(testUrl, { headers: readKey.headers }, kit.env)).status).toBe(404);
+    await expectProblem(
+      await app.request(testUrl, { headers: readKey.headers }, kit.env),
+      404,
+      'PASS_NOT_FOUND',
+    );
     const prefix = kit.ctx.ids.token(6);
     const secret = `wlt_${prefix}_${kit.ctx.ids.token()}`;
     await run(

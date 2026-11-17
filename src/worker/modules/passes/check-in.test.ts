@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PassCheckInSchema } from '../../../shared/contracts/check-in.ts';
 import { createApp } from '../../app.ts';
@@ -55,11 +56,15 @@ describe('pass check-in configuration', () => {
 
   it('enforces membership, organization and mode for policy writes', async () => {
     const pass = await dated();
-    expect((await put(pass.id, { mode: 'single' }, auth.user())).status).toBe(403);
+    await expectProblem(await put(pass.id, { mode: 'single' }, auth.user()), 403, 'FORBIDDEN');
     const other = await makeOrg(kit.fx);
     const key = await auth.apiKey({ orgId: other.id, scopes: ['passes:write'] });
-    expect((await put(pass.id, {}, key)).status).toBe(404);
-    expect((await put(pass.id, {}, auth.admin({ mode: 'test' }))).status).toBe(409);
-    expect((await put(pass.id, { eventId: 'missing-event' })).status).toBe(404);
+    await expectProblem(await put(pass.id, {}, key), 404, 'PASS_NOT_FOUND');
+    await expectProblem(await put(pass.id, {}, auth.admin({ mode: 'test' })), 409, 'MODE_MISMATCH');
+    await expectProblem(
+      await put(pass.id, { eventId: 'missing-event' }),
+      404,
+      'SCAN_EVENT_NOT_FOUND',
+    );
   });
 });

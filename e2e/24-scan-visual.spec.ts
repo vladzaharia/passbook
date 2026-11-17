@@ -47,6 +47,7 @@ async function expectWithinViewport(page: Page, selector: string) {
 test('scanner and operator pass layouts stay readable at phone, tablet and desk sizes', async ({
   page,
 }) => {
+  // Reason: every size x scheme x surface takes a screenshot and an axe pass; ~85 s measured, over the 90 s default's margin.
   test.setTimeout(180_000);
   await serveVisualLogo(page);
   for (const surface of ['scanner', 'operator']) {
@@ -158,7 +159,6 @@ test('scan verdict motion respects the reduced-motion preference', async ({ page
 });
 
 test('customer screens stay pass-agnostic and legible across sizes', async ({ page }) => {
-  test.setTimeout(180_000);
   await serveVisualLogo(page);
   for (const pass of passes) {
     for (const viewport of viewports) {

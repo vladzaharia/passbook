@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeScanStaff } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -47,7 +48,7 @@ describe('staff read and response authority', () => {
       DB: db,
     });
     expect(intercepted).toBe(1);
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'ACTOR_CHANGED');
     expect(await response.json()).not.toHaveProperty('role');
     expect(await first(env.DB, 'SELECT role FROM scan_staff WHERE id = ?', [person.id])).toEqual({
       role: 'door',

@@ -107,7 +107,7 @@ describe('pass provider lifecycle', () => {
     expect(restored.lifecycleGeneration).toBeGreaterThan(revoked.lifecycleGeneration);
     expect((await instance()).retirementRequestedAt).toBeNull();
     expect((await instance()).installationState).toBe('unknown');
-  }, 120_000);
+  });
 
   it('keeps a deleted Apple pass until the accepted provider revoke has a durable Samsung tombstone', async () => {
     const scanKit = await withKitDatabase(await testDatabase(), setupScanKit);
@@ -248,7 +248,7 @@ describe('pass provider lifecycle', () => {
     });
     expect(JSON.stringify(gate)).not.toContain(t.pass.id);
     expect(JSON.stringify(gate)).not.toContain('private@example.test');
-  }, 120_000);
+  });
 
   it('keeps a deleted Apple pass after a historical Google revoke while replay safety is unknown', async () => {
     const t = await runtimeGoogleLegacyFixture({ db: await testDatabase() });
@@ -289,7 +289,7 @@ describe('pass provider lifecycle', () => {
       await first(db, 'SELECT 1 FROM registrations WHERE pass_id = ?', [t.pass.id]),
     ).not.toBeNull();
     expect(await t.kit.env.BUCKET.head(deleted.object_key)).not.toBeNull();
-  }, 120_000);
+  });
 
   it('reconciles unissued target placeholders before ordinary deleted-pass retention', async () => {
     const kit = await setupKit({ db: await testDatabase() });
@@ -329,7 +329,7 @@ describe('pass provider lifecycle', () => {
     await dailyPasses(jobCtxOf(kit));
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [pass.id])).toBeNull();
     expect(await kit.env.BUCKET.head(deleted.object_key)).toBeNull();
-  }, 120_000);
+  });
 
   it.each(['metadata', 'artifact'] as const)(
     'defers connection holder and content until the old provider retires (%s)',
@@ -541,5 +541,5 @@ describe('pass provider lifecycle', () => {
       version: pass.version,
       linkGeneration: pass.linkGeneration,
     });
-  }, 120_000);
+  });
 });

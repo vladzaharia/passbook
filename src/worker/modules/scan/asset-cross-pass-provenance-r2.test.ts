@@ -28,5 +28,5 @@ describe('scanner asset cross-pass provenance', () => {
     expect(opened).toBe(true);
     expect(cancelled).toBe(1);
     await expectCrossPassRevoked();
-  }, 180_000);
+  });
 });

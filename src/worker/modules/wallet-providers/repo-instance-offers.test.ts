@@ -185,5 +185,5 @@ describe('wallet offer reference keyset authority', () => {
       .prepare(`EXPLAIN ${update.sql}`)
       .bind(...update.params)
       .all();
-  }, 90_000);
+  });
 });

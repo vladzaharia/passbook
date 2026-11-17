@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -150,7 +151,7 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
       const spy = vi.spyOn(kit.mailer, 'send');
       try {
         const response = await send(capture.id, inboxHeaders(actor.session), race.env);
-        expect(response.status).toBe(404);
+        await expectProblem(response, 404, 'CAPTURED_EMAIL_NOT_FOUND');
         expect(race.hits()).toBe(1);
         expect(await forwards(capture.id)).toEqual([]);
         expect(await audits(capture.id)).toEqual([]);
@@ -174,7 +175,11 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
     );
     const spy = vi.spyOn(kit.mailer, 'send');
     try {
-      expect((await send(capture.id, inboxHeaders(actor.session), race.env)).status).toBe(404);
+      await expectProblem(
+        await send(capture.id, inboxHeaders(actor.session), race.env),
+        404,
+        'CAPTURED_EMAIL_NOT_FOUND',
+      );
       expect(race.hits()).toBe(1);
       expect(await forwards(capture.id)).toEqual([]);
       expect(await audits(capture.id)).toEqual([]);
@@ -185,12 +190,16 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
         kit.env,
       );
       expect(detail.status).toBe(200);
-      expect((await send(capture.id, inboxHeaders(actor.session))).status).toBe(404);
+      await expectProblem(
+        await send(capture.id, inboxHeaders(actor.session)),
+        404,
+        'CAPTURED_EMAIL_NOT_FOUND',
+      );
       expect(spy).not.toHaveBeenCalled();
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it.each(['membership', 'session'] as const)(
     'marks the reservation failed, without sending, if %s is revoked before the provider boundary',
@@ -273,7 +282,7 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
           expect(response.status).toBe(200);
           expect(CapturedEmailListSchema.parse(await response.json()).items).toEqual([]);
         } else {
-          expect(response.status).toBe(404);
+          await expectProblem(response, 404, 'CAPTURED_EMAIL_NOT_FOUND');
           const body = await response.text();
           expect(body).not.toContain(capture.recipient);
           expect(body).not.toContain(capture.html);
@@ -300,7 +309,7 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
         race.env,
       );
       expect(race.hits()).toBe(1);
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'CAPTURED_EMAIL_NOT_FOUND');
       const body = await response.text();
       expect(body).not.toContain(capture.recipient);
       expect(body).not.toContain(capture.html);
@@ -390,5 +399,5 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
     expect(
       await first(kit.env.DB, 'SELECT state FROM sandbox_forwards WHERE id = ?', [id]),
     ).toEqual({ state: 'failed' });
-  }, 60_000);
+  });
 });

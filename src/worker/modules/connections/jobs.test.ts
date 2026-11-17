@@ -177,7 +177,7 @@ describe('pass.refresh', () => {
     expect(
       await all(kit.env.DB, 'SELECT * FROM outbox WHERE pass_id = ? ORDER BY id', [pass.id]),
     ).toEqual(outbox);
-  }, 60_000);
+  });
 
   it('enqueues one guarded refresh using the exact post-CAS metadata when no push was published', async () => {
     const dto = await createDemo(kit, { config: { count: 1 } });
@@ -464,7 +464,7 @@ describe('pass.refresh', () => {
     const pass = await linkedPass(kit, dto.id, 'm-001');
     await expect(
       run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer required/);
   });
 
   it.each([
@@ -1308,7 +1308,7 @@ describe('retention', () => {
         [dto.id],
       ),
     ).toEqual({ n: 1 });
-  }, 60_000);
+  });
 
   it('cleans completed retained events but preserves unresolved and plaintext legacy work', async () => {
     const dto = await createDemo(kit, {
@@ -1405,7 +1405,7 @@ describe('retention', () => {
       { event_id: 'failed', state: 'failed' },
       { event_id: 'resolved-with-plaintext', state: 'resolved' },
     ]);
-  }, 60_000);
+  });
 
   it('keeps a resolved legacy marker so an unseen sibling can still be staged after daily cleanup', async () => {
     const dto = await createDemo(kit, {
@@ -1484,7 +1484,7 @@ describe('retention', () => {
     ]);
     expect(kit.seams.applied).toEqual([]);
     expect(kit.seams.created).toEqual([]);
-  }, 60_000);
+  });
 
   it.each(['missing', 'conflicting', 'complete'] as const)(
     'deletes an old ingress marker only with %s chunk-count evidence',
@@ -1647,7 +1647,7 @@ describe('retention', () => {
       sources: { n: 45 },
       markers: { n: 45 },
     });
-  }, 60_000);
+  });
 
   it.each(['connection_webhook_legacy_sources', 'connection_webhook_retention'] as const)(
     'preserves legacy work and logs no private data when writing %s fails',

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeScanner } from '../../../../test/helpers/index.ts';
 import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import {
@@ -145,7 +146,7 @@ describe('scanning session count authority', () => {
       );
     }
     const denied = await f.request(`/scanning-sessions?orgId=${seeded.foreignOrgId}&limit=50`);
-    expect(denied.status).toBe(403);
+    await expectProblem(denied, 403, 'FORBIDDEN');
     expect(await denied.text()).not.toContain(seeded.denied);
     const emptyOrg = await makeOrg(f.fx);
     await grantScanMembership(f.fx, emptyOrg.id, f.user.id, ['read_only']);

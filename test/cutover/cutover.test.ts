@@ -95,7 +95,7 @@ describe('bootstrap-tenancy', () => {
        VALUES ('dup', 't-a', 'org-a', 'live', 'apple', 2, 'v2', ?1, ?1, 1, '["apple-passkit"]', 1, 'legacy', 'legacy', 1,
         (SELECT id FROM template_releases WHERE template_id = 't-a'))`,
     ).bind('a'.repeat(64));
-    await expect(insert.run()).rejects.toThrow();
+    await expect(insert.run()).rejects.toThrow(/legacy release requires an empty scope/);
   });
 
   it('refuses an unknown owner', async () => {

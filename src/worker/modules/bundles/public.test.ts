@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -100,7 +101,7 @@ describe('GET /b/:token', () => {
   it('is 404 for an unknown or malformed token', async () => {
     expect((await get('/b/nope')).status).toBe(404);
     expect((await get(`/b/${'a'.repeat(43)}`)).status).toBe(404);
-    expect((await get(`/b/${'a'.repeat(43)}/passes.pkpasses`)).status).toBe(404);
+    await expectProblem(await get(`/b/${'a'.repeat(43)}/passes.pkpasses`), 404, 'LINK_NOT_FOUND');
   });
 
   it('records bundle.opened per pass, in the bundle mode, without the token', async () => {
@@ -143,8 +144,12 @@ describe('downloads', () => {
   it('refuses a pass that is not in the bundle', async () => {
     const { token } = await bundleWith(1);
     const stray = await makePass();
-    expect((await get(`/b/${token}/${stray.id}/pass.pkpass`)).status).toBe(404);
-    expect((await get(`/b/${token}/${stray.id}/assets/icon.png`)).status).toBe(404);
+    await expectProblem(await get(`/b/${token}/${stray.id}/pass.pkpass`), 404, 'LINK_NOT_FOUND');
+    await expectProblem(
+      await get(`/b/${token}/${stray.id}/assets/icon.png`),
+      404,
+      'LINK_NOT_FOUND',
+    );
   });
 
   it('serves images under the bundle token', async () => {
