@@ -104,7 +104,7 @@ describe('invalid session activity scopes', () => {
     ),
   );
   it.each(races)(
-    'handles a %s activity read when its original %s changes at the final batch',
+    'handles a %s activity read when its original %s changes before the page read',
     async (consumer, change) => {
       const f = await activityFixture();
       const response = await atActivityRead(
@@ -207,7 +207,7 @@ async function beforeAuthorityRead(
       if (member === 'prepare')
         return (sql: string) => {
           const statement = target.prepare(sql);
-          return sql.startsWith('SELECT (') && sql.endsWith(') AS current')
+          return /session_row|actor_ok/.test(sql) && sql.trimEnd().endsWith('AS authorized')
             ? hooked(statement)
             : statement;
         };
