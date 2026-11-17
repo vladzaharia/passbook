@@ -1,9 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeApiKey, makeUser } from '../../../test/helpers/index.ts';
+import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../test/helpers/index.ts';
+import { createSessionStore } from '../modules/auth/sessions.ts';
+import { jobCtxOf } from '../modules/delivery/delivery-test-fixtures.ts';
+import { startBulkReissue } from '../modules/passes/bulk.ts';
 import { reissuePage } from '../modules/passes/bulk-reissue-page.ts';
+import { tenantAuthorityOf } from '../modules/passes/http.ts';
 import { type Kit, setupKit } from '../modules/passes/pass-test-fixtures.ts';
 import { insertWorkflowRun } from '../modules/passes/repo.ts';
 import type { ReissuePrincipal } from '../modules/passes/repo-bulk-principal.ts';
+import { watchBatch } from '../modules/templates/testing.ts';
 import { first, run } from '../platform/db.ts';
 import { runBulkReissue } from './bulk-reissue.ts';
 
@@ -17,7 +22,7 @@ const stepRun = {
     ((typeof a === 'function' ? a : b) as () => Promise<unknown>)(),
 } as unknown as Parameters<typeof runBulkReissue>[3];
 
-async function membership(roles: string[]) {
+async function membership(roles: string[], orgId = kit.org.id) {
   const user = await makeUser(kit.fx);
   const invitationId = kit.fx.ids.id();
   const membershipId = kit.fx.ids.id();
@@ -28,7 +33,7 @@ async function membership(roles: string[]) {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       invitationId,
-      kit.org.id,
+      orgId,
       user.primaryEmail,
       JSON.stringify(roles),
       kit.fx.ids.token(),
@@ -41,7 +46,7 @@ async function membership(roles: string[]) {
     kit.env.DB,
     `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [membershipId, kit.org.id, user.id, invitationId, JSON.stringify(roles), now],
+    [membershipId, orgId, user.id, invitationId, JSON.stringify(roles), now],
   );
   const principal: ReissuePrincipal = {
     kind: 'membership',
@@ -162,5 +167,101 @@ describe('bulk reissue re-checks the principal that started it', () => {
       m.membershipId,
     ]);
     expect((await reissuePage(kit.ctx, p, null)).revoked).toBe(true);
+  });
+
+  it('stops the very next write when the starter is revoked mid-page', async () => {
+    const created = [await kit.pass(), await kit.pass()];
+    const m = await membership(['pass_operator']);
+    const before = await Promise.all(created.map((p) => versionOf(p.id)));
+    const watched = watchBatch(kit.env, /UPDATE\s+passes\s+SET/i, async () => {
+      await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
+        kit.clock.now(),
+        m.membershipId,
+      ]);
+    });
+    const ctx = jobCtxOf({ ctx: { ...kit.ctx, env: watched.env } });
+    const page = await reissuePage(ctx, params(m.principal), null);
+    expect(watched.fired()).toBe(1);
+    expect(page.revoked).toBe(true);
+    expect(page.changed).toBe(0);
+    expect(await Promise.all(created.map((p) => versionOf(p.id)))).toEqual(before);
+  });
+
+  it('stops when the organization is suspended after the start', async () => {
+    const other = await makeOrg(kit.fx);
+    const m = await membership(['pass_operator'], other.id);
+    expect(
+      (await reissuePage(kit.ctx, params(m.principal, other.id), null)).revoked,
+    ).toBeUndefined();
+    await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [other.id]);
+    expect((await reissuePage(kit.ctx, params(m.principal, other.id), null)).revoked).toBe(true);
+    await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [other.id]);
+    // Reactivation moved the org's access revision: the run that began before it stays stopped.
+    expect((await reissuePage(kit.ctx, params(m.principal, other.id), null)).revoked).toBe(true);
+  });
+
+  it('captures the real principal when a rebuild starts', async () => {
+    const user = await makeUser(kit.fx);
+    await run(kit.env.DB, 'UPDATE users SET last_roles = ? WHERE id = ?', ['["admin"]', user.id]);
+    const invitationId = kit.fx.ids.id();
+    const now = kit.clock.now();
+    await run(
+      kit.env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
+       VALUES (?, ?, ?, '["pass_operator"]', ?, ?, ?, ?)`,
+      [invitationId, kit.org.id, user.primaryEmail, kit.fx.ids.token(), now, now + 3600_000, now],
+    );
+    const membershipId = kit.fx.ids.id();
+    await run(
+      kit.env.DB,
+      `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
+       VALUES (?, ?, ?, ?, '["pass_operator"]', ?)`,
+      [membershipId, kit.org.id, user.id, invitationId, now],
+    );
+    const fixture = await makeSession(kit.fx, { userId: user.id, roles: ['admin', 'user'] });
+    const session = await createSessionStore(kit.env, kit.clock).resolve(fixture.cookieValue);
+    if (!session) throw new Error('The persisted session did not resolve');
+    const authority = await tenantAuthorityOf(kit.ctx, session, kit.org.id, 'passes:operate');
+    const system = { type: 'system', id: null } as const;
+
+    await startBulkReissue(
+      kit.ctx,
+      system,
+      { orgId: kit.org.id, cause: 'resign' },
+      { authority, mode: 'live' },
+    );
+    const org = await first<{ access_revision: number }>(
+      kit.env.DB,
+      'SELECT access_revision FROM orgs WHERE id = ?',
+      [kit.org.id],
+    );
+    const userRow = await first<{ access_revision: number }>(
+      kit.env.DB,
+      'SELECT access_revision FROM users WHERE id = ?',
+      [user.id],
+    );
+    expect(kit.workflow.created.at(-1)?.params).toMatchObject({
+      principal: {
+        kind: 'membership',
+        membershipId,
+        userId: user.id,
+        userAccessRevision: userRow?.access_revision,
+        orgAccessRevision: org?.access_revision,
+      },
+    });
+
+    await startBulkReissue(
+      kit.ctx,
+      system,
+      { cause: 'resign', identityId: 'identity-for-test' },
+      { platformSession: { userId: user.id, sessionId: session.sessionId }, mode: 'live' },
+    );
+    expect(kit.workflow.created.at(-1)?.params).toMatchObject({
+      principal: {
+        kind: 'platform',
+        userId: user.id,
+        userAccessRevision: userRow?.access_revision,
+      },
+    });
   });
 });

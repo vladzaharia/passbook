@@ -7,13 +7,14 @@ export const REPLACE_ALLOWLIST: Record<string, string> = {
 };
 
 /**
- * A reviewed file and the exact raw writes it may hold: guarded table -> number of raw statements. A new
- * raw write to a guarded table in the file (one more, or to another table) is a finding until it is a grant
- * or a design decision adds it here.
+ * A reviewed file and the exact raw writes it may hold, one `table:fingerprint` per statement (the
+ * fingerprint hashes the statement with comments, whitespace and interpolations normalized away). A new
+ * statement, or an edited one (a widened WHERE, another column), is a finding until it is a grant or a
+ * design decision re-pins it here. `node tools/authority-scope.ts --pins` prints the current pins.
  */
 export interface RawWriteEntry {
   reason: string;
-  writes: Record<string, number>;
+  writes: string[];
 }
 
 /**
@@ -24,129 +25,182 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/orgs/repo-branding.ts': {
     reason:
       'branding_dirty_at is volatile bookkeeping for the branding reissue debounce, not an authority column',
-    writes: { orgs: 2 },
+    writes: ['orgs:0f6e16ce1927', 'orgs:f22092f04dca'],
   },
   'src/worker/modules/auth/repo-sessions.ts': {
     reason:
       "sign-in creates the session (no principal exists yet); idle slide is on the allowlist; sign-out revokes the caller's own session",
-    writes: { sessions: 4 },
+    writes: [
+      'sessions:52e6852de8c6',
+      'sessions:b0a06a56c10d',
+      'sessions:c825f2f74d5b',
+      'sessions:d0c2564ed9b5',
+    ],
   },
   'src/worker/modules/auth/repo.ts': {
     reason: 'sign-in finds or creates the user and stamps last login before any principal exists',
-    writes: { users: 2 },
+    writes: ['users:21bde5076000', 'users:c3b10ce30da0'],
   },
   'src/worker/modules/me/repo.ts': {
     reason: 'a user edits their own primary email under their own session',
-    writes: { users: 1 },
+    writes: ['users:51de1c632ee3'],
   },
   'src/worker/modules/orgs/repo-members.ts': {
     reason:
       'invitation accept (the token is the authority); manager writes are org.member.* grants',
-    writes: { org_invitations: 1, org_memberships: 1 },
+    writes: ['org_invitations:4b6bc4ab06f4', 'org_memberships:d5844d93f52c'],
   },
   'src/worker/modules/settings/repo.ts': {
     reason: 'system-scope job values (cron runs, identity checks); the settings routes use grants',
-    writes: { settings: 1 },
+    writes: ['settings:4b2f1a4579d8'],
   },
   'src/worker/modules/users/repo.ts': {
     reason:
       'primary-email change and email removal behind the admin route (requireAdmin session); status changes are platform.user.* grants',
-    writes: { users: 1 },
+    writes: ['users:e671e1014430'],
   },
   'src/worker/modules/scan/repo-scans.ts': {
     reason:
       "release, fail, quarantine and retention purge of the actor's own server-minted claim row: they run after authority is revoked and only close a claim; a scan takes effect only through scan.* grants",
-    writes: { scans: 7 },
+    writes: [
+      'scans:5865cabd3f84',
+      'scans:8f59dc9eb4bd',
+      'scans:af3fe65731a1',
+      'scans:b4d79920a91f',
+      'scans:d9d2ac048b59',
+      'scans:efebac65c7bc',
+      'scans:f3644c602860',
+    ],
   },
   'src/worker/modules/scan/repo-act-claim.ts': {
     reason:
       "reopen, quarantine and fail of the actor's own claim generation after a key collision, still fenced by the claim authority predicate; a fresh claim is the org_mode.scan.claim upsert",
-    writes: { scans: 1 },
+    writes: ['scans:7e64b062911a'],
   },
   'src/worker/modules/scan/repo-gate-recovery.ts': {
     reason:
       'server-side recovery of a crashed claim: quarantines the claim and restores only gate and presence snapshots that still match what the crashed scan wrote; it runs from the recovery job (or once per collision) and takes no actor authority',
-    writes: { scan_gates: 2, scans: 1 },
+    writes: ['scan_gates:87ce7e10a6f5', 'scan_gates:f437d1f5a936', 'scans:88345d12eee0'],
   },
   'src/worker/modules/scan/repo-counts.ts': {
     reason:
       'scan_events.expected is an idempotent cache fill on a GET (volatile, derived from the guarded event config_epoch); it is not authority',
-    writes: { scan_events: 1 },
+    writes: ['scan_events:c1538fffeacb'],
   },
   'src/worker/modules/events/repo.ts': {
     reason:
       'pass_events is an append-only ledger written by recordPassEvent; WP5b owns the grant conversion',
-    writes: { pass_events: 2 },
+    writes: ['pass_events:223e2022931b', 'pass_events:4550bbd6e863'],
   },
   'src/worker/modules/apple/repo-events.ts': {
     reason:
       'device.fetched ledger rows from the Apple device protocol, fenced in SQL by the credential serial and generation; the device principal has no ledger purpose',
-    writes: { pass_events: 1 },
+    writes: ['pass_events:9f58dbf16fba'],
   },
   'src/worker/modules/passes/repo-remove-compensate.ts': {
     reason:
       "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority; routes take the grants in repo-remove.ts",
-    writes: { passes: 4 },
+    writes: [
+      'passes:516bcdf0ad7a',
+      'passes:bd12673e176a',
+      'passes:dea8aaa6396e',
+      'passes:fe14af37599c',
+    ],
   },
   'src/worker/modules/passes/repo-pass-trusted.ts': {
     reason:
       'link rotation, refresh claim, soft delete and the seal of an old plain pass or bundle link token (org no job grant can write; MAC under a CAS on the plain value, no authority change) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
-    writes: { bundles: 1, passes: 5 },
+    writes: [
+      'bundles:87674c4b8544',
+      'passes:361f091f41ca',
+      'passes:898b0be90a8b',
+      'passes:9cf500b09743',
+      'passes:a565c31165b3',
+      'passes:b04e7463171d',
+    ],
   },
   'src/worker/modules/passes/repo-connection-state.ts': {
     reason:
       'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
-    writes: { passes: 1 },
+    writes: ['passes:afa323784916'],
   },
   'src/worker/modules/passes/repo-history-assets.ts': {
     reason:
       'exact-state rollback of an asset write after a failed rebuild, and trusted callers; tenant writes take replaceAssetGranted',
-    writes: { pass_assets: 4 },
+    writes: [
+      'pass_assets:0ca291987a45',
+      'pass_assets:630207b0fc2b',
+      'pass_assets:bbb4bf4399cf',
+      'pass_assets:f294d90b0709',
+    ],
   },
   'src/worker/modules/passes/repo-history-image.ts': {
     reason:
       'commitImageMutation advances link_generation only for the exact-state rollback paths of asset and member photo writes and trusted callers; tenant writes take replaceAssetGranted and replaceMemberPhotoGranted',
-    writes: { passes: 1 },
+    writes: ['passes:682818a1e9cf'],
   },
   'src/worker/modules/passes/repo-member-photo.ts': {
     reason:
       "exact-state compensation of this request's own photo write (after authority may be revoked) and trusted callers; tenant writes take replaceMemberPhotoGranted",
-    writes: { member_photos: 2 },
+    writes: ['member_photos:00150ddda5e1', 'member_photos:c22ba945241c'],
   },
   'src/worker/modules/passes/repo-ops-retention.ts': {
     reason:
       'retention purge of a soft-deleted pass past its grace period: server-selected ids behind a keyset commitment and scan retention proof, no principal',
-    writes: { passes: 1 },
+    writes: ['passes:0c95d5aa0cb4'],
   },
   'src/worker/modules/passes/repo-transfer-asset-gc.ts': {
     reason:
       'the transfer asset sweeper (no principal): GC of retired server-minted r2 keys, and recovery of an expired image stage that restores the exact staged pass_assets / member_photos row (UPDATE ... AS a|m, INSERT) and advances passes.link_generation, only while the stage still matches its pass incarnation and no transfer is pending',
-    writes: { member_photos: 2, pass_assets: 2, passes: 1 },
+    writes: [
+      'member_photos:7835092b463d',
+      'member_photos:9f737fcb5f75',
+      'pass_assets:322e06ce8b42',
+      'pass_assets:f4b0ac9323dd',
+      'passes:a92c1702af5b',
+    ],
   },
   'src/worker/modules/delivery/repo-outbox-processing.ts': {
     reason:
       'outbox lease, retry and finish bookkeeping for a row already authorized at queue time, and the sent/failed outbox purge (deleteInBatches); the provider boundary is a grant (repo-provider-attempt.ts)',
-    writes: { outbox: 12 },
+    writes: [
+      'outbox:24e2ab649be5',
+      'outbox:25f751c88a47',
+      'outbox:2765ae869719',
+      'outbox:52c31dc58d20',
+      'outbox:74cd8e38bf87',
+      'outbox:8f7fc3db2a8a',
+      'outbox:9c338dc13ae7',
+      'outbox:9de783f49135',
+      'outbox:a99e262e1616',
+      'outbox:b57a00ed96d9',
+      'outbox:c884cec3a55c',
+      'outbox:e8ce3b00eadb',
+    ],
   },
   'src/worker/modules/delivery/repo-binding.ts': {
     reason:
       'outbox lease check, provider acceptance and uncertain-outcome settlement for a leased row; no principal acts on it',
-    writes: { outbox: 3 },
+    writes: ['outbox:453ccd650aed', 'outbox:58b03302df0a', 'outbox:b26971782270'],
   },
   'src/worker/modules/delivery/repo-devices.ts': {
     reason:
       'push device outcomes (outbox cancel, pass_events) written while delivering a leased push',
-    writes: { outbox: 2, pass_events: 1 },
+    writes: ['outbox:ca8d7827afc0', 'outbox:f59a484696ec', 'pass_events:1bff2ebd1498'],
   },
   'src/worker/modules/delivery/repo-issuance-recovery.ts': {
     reason:
       'issuance delivery retry deferral and stale cancellation by the scheduler; cancelling cannot widen authority',
-    writes: { pass_issuance_deliveries: 3 },
+    writes: [
+      'pass_issuance_deliveries:1ddc36afd484',
+      'pass_issuance_deliveries:69f9a8d354ba',
+      'pass_issuance_deliveries:8bb2e8f960c0',
+    ],
   },
   'src/worker/modules/sandbox/repo.ts': {
     reason:
       'daily test-data retention purge (captured_emails, bundles); a platform job with no tenant principal',
-    writes: { bundles: 1, captured_emails: 1 },
+    writes: ['bundles:117d1143fbfe', 'captured_emails:54483bed5926'],
   },
 };
 

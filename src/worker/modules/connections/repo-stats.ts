@@ -1,4 +1,4 @@
-import { all, chunk, placeholders } from '../../platform/db.ts';
+import { all, chunk, first, placeholders } from '../../platform/db.ts';
 import type { Health } from './repo.ts';
 
 /** Passes bound to each connection (list rows). */
@@ -19,6 +19,18 @@ export async function passCountsFor(
     for (const r of rows) out.set(r.id, r.n);
   }
   return out;
+}
+
+/** The connection has a live pass bound to it: a sync would rewrite or void it. */
+export async function hasBoundPasses(db: D1Database, connectionId: string): Promise<boolean> {
+  return (
+    (await first<{ found: number }>(
+      db,
+      `SELECT 1 AS found FROM passes WHERE connection_id = ? AND mode = 'live'
+         AND deleted_at IS NULL AND test_data_quarantined = 0 LIMIT 1`,
+      [connectionId],
+    )) !== null
+  );
 }
 
 export async function summary(db: D1Database, orgId?: string) {

@@ -95,6 +95,7 @@ export async function publishUnchangedAttempt(
     authority: options.authority,
     holder: options.holder,
     commit: options.commit,
+    extraChecks: options.extraChecks,
     clock: ctx.clock,
   });
   if (written === null) {

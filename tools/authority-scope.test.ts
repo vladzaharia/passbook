@@ -7,7 +7,7 @@ import {
   parseAppendixA,
   RAW_WRITE_ALLOWLIST,
   RAW_WRITE_ALLOWLIST_LIMIT,
-  rawGuardedWrites,
+  rawWriteStatements,
   scanAllowlist,
   scanBrandImport,
   scanFile,
@@ -137,42 +137,55 @@ describe('authority-scope', () => {
     expect(Object.keys(RAW_WRITE_ALLOWLIST).length).toBeLessThanOrEqual(RAW_WRITE_ALLOWLIST_LIMIT);
   });
 
-  it('pins the raw writes of an allowlisted file to the reviewed statements', () => {
+  it('pins each raw statement of an allowlisted file by its fingerprint', () => {
     const rel = 'src/worker/modules/auth/repo-sessions.ts';
-    const pinned = RAW_WRITE_ALLOWLIST[rel]?.writes ?? {};
     const text = new Map(treeFiles()).get(rel) ?? '';
-    expect(scanFile(rel, text, owners).filter((f) => f.rule === 'raw-guarded-write')).toEqual([]);
-    const more = `${text}\nrun(db, 'UPDATE sessions SET revoked_at = ? WHERE user_id = ?', [1, 2]);`;
-    expect(scanFile(rel, more, owners).filter((f) => f.rule === 'raw-guarded-write').length).toBe(
-      1,
+    const rawFindings = (source: string) =>
+      scanFile(rel, source, owners).filter((f) => f.rule === 'raw-guarded-write');
+    expect(rawFindings(text)).toEqual([]);
+    // Reformatting keeps the pin; a changed WHERE (one reviewed statement widened) does not.
+    expect(rawFindings(text.replace(/\n\s+/g, '\n      '))).toEqual([]);
+    const widened = text.replace(
+      'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?',
+      'UPDATE sessions SET revoked_at = ? WHERE id_hash = ? OR user_id IS NOT NULL',
     );
-    const other = `${text}\nrun(db, 'DELETE FROM passes WHERE id = ?', [1]);`;
-    expect(scanFile(rel, other, owners).map((f) => f.detail)).toContain('raw write to passes');
-    expect(Object.values(pinned).every((n) => n > 0)).toBe(true);
+    expect(widened).not.toBe(text);
+    expect(rawFindings(widened)).toHaveLength(1);
+    // A swapped statement on the same table, and an extra one, are findings too.
+    expect(
+      rawFindings(`${text}\nrun(db, 'UPDATE sessions SET csrf_secret = ?', [1]);`),
+    ).toHaveLength(1);
+    expect(
+      rawFindings(`${text}\nrun(db, 'DELETE FROM passes WHERE id = ?', [1]);`)[0]?.detail,
+    ).toContain('passes:');
+    // A statement that is only in a comment is not a statement.
+    const commented = `${text}\n// run(db, 'DELETE FROM sessions WHERE 1 = 1');\n/* UPDATE sessions SET x = 1 */`;
+    expect(rawFindings(commented)).toEqual([]);
+    expect(rawWriteStatements(commented)).toEqual(rawWriteStatements(text));
+    // A URL in a string is not a comment start.
+    const url = "const u = 'https://example.test'; run(db, 'DELETE FROM sessions WHERE a = ?');";
+    expect(rawWriteStatements(url)).toHaveLength(1);
   });
 
-  it('flags a pin that is higher than the writes the file still holds', () => {
+  it('flags a pin whose statement is gone, even when a comment still names it', () => {
     const rel = 'src/worker/modules/auth/repo-sessions.ts';
     const files = new Map(treeFiles());
     const text = files.get(rel) ?? '';
-    const fewer = text.replace(
-      'UPDATE sessions SET revoked_at = ? WHERE id_hash',
-      'SELECT 1 FROM sessions WHERE id_hash',
+    const gone = text.replace(
+      'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?',
+      'SELECT 1 FROM sessions WHERE id_hash = ?',
     );
-    expect(fewer).not.toBe(text);
-    expect(scanAllowlist(new Map(files).set(rel, fewer)).map((f) => f.rule)).toEqual([
+    expect(gone).not.toBe(text);
+    const padded = `${gone}\n// UPDATE sessions SET revoked_at = ? WHERE id_hash = ?`;
+    expect(scanAllowlist(new Map(files).set(rel, padded)).map((f) => f.rule)).toEqual([
       'stale-allowlist',
     ]);
   });
 
-  it('every pin equals the raw guarded writes in the tree', () => {
+  it('every pin equals the raw guarded statements in the tree', () => {
     const text = new Map(treeFiles());
-    for (const [rel, entry] of Object.entries(RAW_WRITE_ALLOWLIST)) {
-      const actual: Record<string, number> = {};
-      for (const table of rawGuardedWrites(text.get(rel) ?? ''))
-        actual[table] = (actual[table] ?? 0) + 1;
-      expect(actual, rel).toEqual(entry.writes);
-    }
+    for (const [rel, entry] of Object.entries(RAW_WRITE_ALLOWLIST))
+      expect(rawWriteStatements(text.get(rel) ?? ''), rel).toEqual([...entry.writes].sort());
   });
 
   it('flags a grant statement that binds an org or mode from the request', () => {
@@ -230,7 +243,12 @@ describe('authority-scope', () => {
 
   it('suppresses raw guarded writes only in reviewed files, and ignores summary prose for REPLACE', () => {
     const write = 'run(db, "UPDATE users SET status = ? WHERE id = ?")';
-    expect(scanFile(`${MOD}/users/repo.ts`, write, owners).map((f) => f.rule)).toEqual([]);
+    const reviewed = new Map(treeFiles()).get(`${MOD}/users/repo.ts`) ?? '';
+    expect(scanFile(`${MOD}/users/repo.ts`, reviewed, owners).map((f) => f.rule)).toEqual([]);
+    // A reviewed file pins its statements: an unreviewed one in it is a finding too.
+    expect(scanFile(`${MOD}/users/repo.ts`, write, owners).map((f) => f.rule)).toEqual([
+      'raw-guarded-write',
+    ]);
     expect(scanFile(`${MOD}/users/other.ts`, write, owners).map((f) => f.rule)).toContain(
       'raw-guarded-write',
     );
@@ -345,9 +363,10 @@ describe('authority-scope write forms', () => {
       'raw-guarded-write',
     ]);
     expect(rules("deleteInBatches(db, 'wallet_logs', 'at < ?', [before])")).toEqual([]);
+    // Only the reviewed statements of an allowlisted file pass; this one is not among them.
     expect(
       rules("deleteInBatches(db, 'scans', 'at < ?', [b])", `${MOD}/scan/repo-scans.ts`),
-    ).toEqual([]);
+    ).toEqual(['raw-guarded-write']);
   });
 
   it('flags dynamic and concatenated write targets unless allowlisted', () => {

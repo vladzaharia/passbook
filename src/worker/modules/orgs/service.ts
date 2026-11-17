@@ -9,6 +9,7 @@ import type {
 } from '../../../shared/contracts/orgs.ts';
 import type { Actor } from '../../platform/context.ts';
 import {
+  BadRequestError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
@@ -167,6 +168,18 @@ export async function updateOrg(
     input.name !== undefined ||
     input.defaultIdentityId !== undefined ||
     input.branding !== undefined;
+  // Two commits can half-apply, so a status move travels alone.
+  if (toStatus && edits)
+    throw new BadRequestError(
+      'Send the status change on its own, then the other edits.',
+      'ORG_STATUS_ALONE',
+    );
+  if (
+    toStatus &&
+    input.configRevision !== undefined &&
+    input.configRevision !== before.config_revision
+  )
+    throw new ConflictError('The organization changed. Reload and retry.', 'SETTINGS_CHANGED');
   let out: OrgDto = toDto(before);
   if (edits || !toStatus) {
     if (input.slug !== undefined && input.slug !== before.slug)
@@ -237,7 +250,13 @@ export async function setOrgStatus(
   const saved = (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin))
     ? await getOrgRow(ctx.env.DB, id)
     : null;
-  if (!saved) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  if (!saved) {
+    // The org moved under us (status, deletion): a gone org is a 404, a changed one a conflict.
+    const now = await getOrgRow(ctx.env.DB, id);
+    if (!now || now.status === 'deleted')
+      throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+    throw new ConflictError('The organization changed. Reload and retry.', 'ORG_CONFLICT');
+  }
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: id,

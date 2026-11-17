@@ -104,7 +104,7 @@ The server-owned role mapping unions capabilities when a membership has multiple
 | Role | Capabilities in addition to `org:read` |
 |---|---|
 | `org_admin` | All capabilities below, plus `org:manage`, `members:read` and `members:manage` |
-| `integration_admin` | `integrations:read`, `integrations:manage`, `templates:read` |
+| `integration_admin` | `integrations:read`, `integrations:manage`, `templates:read`. Turning on a connection's issuing switches (`autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping`, `onMissing`), and changing the source of one that issues or has bound passes (config, secrets, webhook secret or its rotation, mode, `holderEmailField`, re-enabling), also needs `passes:operate` (a key needs `passes:write`). Turning issuing off does not |
 | `template_author` | `templates:read`, `templates:author` |
 | `template_reviewer` | `templates:read`, `templates:review` |
 | `template_publisher` | `templates:read`, `templates:publish` |

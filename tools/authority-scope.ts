@@ -15,6 +15,7 @@ import {
   UNTENANTED_CHECK_ALLOWLIST,
 } from './authority-scope-allowlists.ts';
 import { scanBans } from './authority-scope-bans.ts';
+import { fingerprint, statementAt, stripComments } from './authority-scope-statements.ts';
 
 export {
   DYNAMIC_WRITE_ALLOWLIST,
@@ -238,15 +239,25 @@ export function ownerOf(rel: string, owners: Owners): string | null {
   return owners.exact.get(rel) ?? owners.globs.find(([re]) => re.test(rel))?.[1] ?? null;
 }
 
-/** Guarded tables a file writes with raw SQL (a stamp-only update does not count). */
-export function rawGuardedWrites(text: string): string[] {
+/** A raw write to a guarded table, as `table:fingerprint` of its statement (comments never count). */
+export function rawWriteStatements(source: string): string[] {
+  const stripped = stripComments(source);
+  const { text } = stripped;
   const out: string[] = [];
   for (const m of text.matchAll(WRITE)) {
     if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
-    out.push(m[1] ?? m[2] ?? '');
+    out.push(`${m[1] ?? m[2] ?? ''}:${fingerprint(statementAt(stripped, m.index ?? 0))}`);
   }
-  for (const m of text.matchAll(HELPER_WRITE)) out.push(m[1] ?? '');
-  return out;
+  for (const m of text.matchAll(HELPER_WRITE)) {
+    const open = (m.index ?? 0) + m[0].indexOf('(');
+    out.push(`${m[1] ?? ''}:${fingerprint(group(text, open))}`);
+  }
+  return out.sort();
+}
+
+/** Guarded tables a file writes with raw SQL (a stamp-only update does not count). */
+export function rawGuardedWrites(text: string): string[] {
+  return rawWriteStatements(text).map((id) => id.slice(0, id.indexOf(':')));
 }
 
 export function scanFile(rel: string, text: string, owners: Owners): Finding[] {
@@ -263,19 +274,20 @@ export function scanFile(rel: string, text: string, owners: Owners): Finding[] {
   // Only a WHERE clause compares: `SET updated_at = ?` stamps a timestamp.
   if (UPDATED_AT_PREDICATE.test(text))
     add('updated-at-predicate', 'updated_at = ? in a WHERE clause (a timestamp is not an epoch)');
-  const pinned = RAW_WRITE_ALLOWLIST[rel]?.writes;
-  const seen = new Map<string, number>();
-  for (const table of rawGuardedWrites(text)) {
-    const n = (seen.get(table) ?? 0) + 1;
-    seen.set(table, n);
-    // An allowlisted file may hold exactly the reviewed writes: one more, or one to a new table, is a finding.
-    if (n > (pinned?.[table] ?? 0))
-      add(
-        'raw-guarded-write',
-        pinned?.[table]
-          ? `raw write to ${table} beyond the ${pinned[table]} reviewed in RAW_WRITE_ALLOWLIST`
-          : `raw write to ${table}`,
-      );
+  // An allowlisted file may hold exactly the reviewed statements: a new one, or a changed one, is a finding.
+  const pinned = [...(RAW_WRITE_ALLOWLIST[rel]?.writes ?? [])];
+  for (const id of rawWriteStatements(text)) {
+    const at = pinned.indexOf(id);
+    if (at !== -1) {
+      pinned.splice(at, 1);
+      continue;
+    }
+    add(
+      'raw-guarded-write',
+      rel in RAW_WRITE_ALLOWLIST
+        ? `raw write ${id} is not one of the statements reviewed in RAW_WRITE_ALLOWLIST`
+        : `raw write to ${id.slice(0, id.indexOf(':'))}`,
+    );
   }
   if (!(rel in DYNAMIC_WRITE_ALLOWLIST))
     for (const m of DYNAMIC_WRITE.flatMap((re) => [...text.matchAll(re)]))
@@ -376,21 +388,27 @@ export function scanAllowlist(files: ReadonlyMap<string, string>): Finding[] {
   const found: Finding[] = [];
   const listed = Object.keys(RAW_WRITE_ALLOWLIST);
   for (const [rel, entry] of Object.entries(RAW_WRITE_ALLOWLIST)) {
-    const actual = rawGuardedWrites(files.get(rel) ?? '');
+    const actual = rawWriteStatements(files.get(rel) ?? '');
     if (actual.length === 0)
       found.push({
         rule: 'stale-allowlist',
         file: rel,
         detail: 'RAW_WRITE_ALLOWLIST names a file with no raw guarded write: remove the entry',
       });
-    else
-      for (const [table, count] of Object.entries(entry.writes))
-        if (actual.filter((t) => t === table).length < count)
-          found.push({
-            rule: 'stale-allowlist',
-            file: rel,
-            detail: `RAW_WRITE_ALLOWLIST pins ${count} raw write(s) to ${table}, the file has fewer: lower the pin`,
-          });
+    else {
+      const left = [...actual];
+      const gone = entry.writes.filter((id) => {
+        const at = left.indexOf(id);
+        if (at !== -1) left.splice(at, 1);
+        return at === -1;
+      });
+      if (gone.length > 0)
+        found.push({
+          rule: 'stale-allowlist',
+          file: rel,
+          detail: `RAW_WRITE_ALLOWLIST pins statements the file no longer holds (${gone.join(', ')}): update or remove them`,
+        });
+    }
   }
   if (listed.length > RAW_WRITE_ALLOWLIST_LIMIT)
     found.push({
@@ -421,6 +439,12 @@ if (import.meta.main) {
   const files: [string, string][] = [];
   for (const file of sources(join(root, 'src/worker')))
     files.push([relative(root, file), readFileSync(file, 'utf8')]);
+  if (process.argv.includes('--pins')) {
+    for (const [rel, text] of files)
+      if (rel in RAW_WRITE_ALLOWLIST)
+        process.stdout.write(`${rel} ${rawWriteStatements(text).join(' ')}\n`);
+    process.exit(0);
+  }
   const findings = scanTree(readFileSync(join(root, DOC), 'utf8'), files);
   const byRule = new Map<Rule, Finding[]>();
   for (const f of findings) byRule.set(f.rule, [...(byRule.get(f.rule) ?? []), f]);

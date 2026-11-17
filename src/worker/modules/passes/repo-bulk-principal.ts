@@ -1,4 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -57,6 +58,60 @@ export async function reissuePrincipalOf(
 }
 
 /**
+ * The SQL that proves the starter still holds the right it started with, as a bare SELECT. `inGrant` is the
+ * form a grant check may hold: it never names org_id or mode (the grant owns them), so the org is the
+ * actor row's `a.org_id` and the immutable membership or key id stands for its own org and mode.
+ */
+function principalQuery(
+  orgId: string | null,
+  principal: ReissuePrincipal,
+  now: number,
+  inGrant: boolean,
+): { sql: string; params: SqlValue[] } {
+  if (principal.kind === 'platform') {
+    return {
+      sql: `SELECT 1 AS ok FROM users u WHERE u.id = ? AND u.status = 'active' AND u.access_revision = ?
+      AND json_valid(u.last_roles)
+      AND EXISTS (SELECT 1 FROM json_each(u.last_roles) r WHERE r.type = 'text' AND r.value = 'admin')`,
+      params: [principal.userId, principal.userAccessRevision],
+    };
+  }
+  if (orgId === null) return { sql: 'SELECT 1 AS ok WHERE 0', params: [] };
+  const org = inGrant ? 'o.id = a.org_id' : 'o.id = ?';
+  const orgParams: SqlValue[] = inGrant ? [] : [orgId];
+  if (principal.kind === 'membership') {
+    return {
+      sql: `SELECT 1 AS ok FROM org_memberships m
+      JOIN users u ON u.id = m.user_id JOIN orgs o ON ${org}${inGrant ? '' : ' AND o.id = m.org_id'}
+      WHERE m.id = ? AND m.user_id = ? AND m.revoked_at IS NULL
+        AND u.status = 'active' AND u.access_revision = ? AND ${orgEpochMatchSql('o')}
+        AND EXISTS (SELECT 1 FROM json_each(m.roles) r JOIN json_each(?) g ON g.value = r.value WHERE r.type = 'text')`,
+      params: [
+        ...orgParams,
+        principal.membershipId,
+        principal.userId,
+        principal.userAccessRevision,
+        ...orgEpochParams(principal.orgAccessRevision),
+        JSON.stringify(rolesGranting('passes:operate')),
+      ],
+    };
+  }
+  return {
+    sql: `SELECT 1 AS ok FROM api_keys k JOIN orgs o ON ${org} AND ${orgEpochMatchSql('o')}
+      WHERE k.id = ?${inGrant ? '' : ' AND k.org_id IS ? AND (k.org_id IS NULL OR k.org_id = o.id) AND k.mode = ?'}
+        AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
+        AND EXISTS (SELECT 1 FROM json_each(k.scopes) s WHERE s.type = 'text' AND s.value = 'passes:write')`,
+    params: [
+      ...orgParams,
+      ...orgEpochParams(principal.orgAccessRevision),
+      principal.keyId,
+      ...(inGrant ? [] : [principal.keyOrgId, principal.mode]),
+      now,
+    ],
+  };
+}
+
+/**
  * The starter still holds the right it started with: an unrevoked membership (or key) that still grants
  * `passes:operate` (or `passes:write`), an active user at the captured `access_revision`, and an org that is
  * active at the captured revision. A platform admin must still have signed in as an admin.
@@ -67,42 +122,16 @@ export async function reissuePrincipalValid(
   principal: ReissuePrincipal,
   now: number,
 ): Promise<boolean> {
-  let sql: string;
-  let params: SqlValue[];
-  if (principal.kind === 'platform') {
-    sql = `SELECT 1 AS ok FROM users u WHERE u.id = ? AND u.status = 'active' AND u.access_revision = ?
-      AND json_valid(u.last_roles)
-      AND EXISTS (SELECT 1 FROM json_each(u.last_roles) r WHERE r.type = 'text' AND r.value = 'admin')`;
-    params = [principal.userId, principal.userAccessRevision];
-  } else if (orgId === null) {
-    return false;
-  } else if (principal.kind === 'membership') {
-    sql = `SELECT 1 AS ok FROM org_memberships m
-      JOIN users u ON u.id = m.user_id JOIN orgs o ON o.id = m.org_id
-      WHERE m.id = ? AND m.org_id = ? AND m.user_id = ? AND m.revoked_at IS NULL
-        AND u.status = 'active' AND u.access_revision = ? AND ${orgEpochMatchSql('o')}
-        AND EXISTS (SELECT 1 FROM json_each(m.roles) r JOIN json_each(?) g ON g.value = r.value WHERE r.type = 'text')`;
-    params = [
-      principal.membershipId,
-      orgId,
-      principal.userId,
-      principal.userAccessRevision,
-      ...orgEpochParams(principal.orgAccessRevision),
-      JSON.stringify(rolesGranting('passes:operate')),
-    ];
-  } else {
-    sql = `SELECT 1 AS ok FROM api_keys k JOIN orgs o ON o.id = ? AND ${orgEpochMatchSql('o')}
-      WHERE k.id = ? AND k.org_id IS ? AND (k.org_id IS NULL OR k.org_id = o.id) AND k.mode = ?
-        AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
-        AND EXISTS (SELECT 1 FROM json_each(k.scopes) s WHERE s.type = 'text' AND s.value = 'passes:write')`;
-    params = [
-      orgId,
-      ...orgEpochParams(principal.orgAccessRevision),
-      principal.keyId,
-      principal.keyOrgId,
-      principal.mode,
-      now,
-    ];
-  }
-  return (await first<{ ok: number }>(db, sql, params)) !== null;
+  const q = principalQuery(orgId, principal, now, false);
+  return (await first<{ ok: number }>(db, q.sql, q.params)) !== null;
+}
+
+/** The same proof as a check of each publish grant, so a revocation mid-page stops the next write. */
+export function reissuePrincipalCheck(
+  orgId: string | null,
+  principal: ReissuePrincipal,
+  now: number,
+): Check {
+  const q = principalQuery(orgId, principal, now, true);
+  return rawCheck('actor', `EXISTS (${q.sql})`, q.params);
 }

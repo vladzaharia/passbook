@@ -12,6 +12,7 @@ import { recordAudit } from '../audit/service.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import { toDto } from './dto.ts';
+import { assertMayIssue, isArmed } from './issuing.ts';
 import { patchConnection } from './repo.ts';
 import { recordTestRun } from './repo-run-test.ts';
 import { listRuns } from './repo-runs.ts';
@@ -123,6 +124,9 @@ export async function rotateWebhookSecret(
 ): Promise<{ webhookSecret: string; connection: ReturnType<typeof toDto> }> {
   const conn = await requireConnection(sctx, id);
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
+  // The holder of the signing secret decides which records issue, mail, rewrite and void passes.
+  const armed = await isArmed(sctx.env.DB, conn);
+  if (armed) assertMayIssue(authority);
   const def = requireConnector(conn.connectorType);
   assertModeSupported(def, conn.mode === 'poll' || conn.mode === 'manual' ? 'webhook' : conn.mode);
   const secret = newWebhookSecret(sctx);
@@ -142,7 +146,7 @@ export async function rotateWebhookSecret(
       sctx,
       id,
       { webhookCredentialId: credentialId, updatedAt: sctx.clock.now() },
-      { actor: { orgId: conn.orgId, authority }, generation: conn.generation },
+      { actor: { orgId: conn.orgId, authority, issuing: armed }, generation: conn.generation },
     );
     if (!updated) {
       throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');

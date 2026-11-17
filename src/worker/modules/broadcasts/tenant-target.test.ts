@@ -458,6 +458,21 @@ describe('scheduled broadcast execution', () => {
         mismatched.id,
       ]),
     ).toEqual({ state: 'failed', error_code: 'CREATOR_REVOKED' });
+    // And to its mode: a Test key does not stand behind a Live broadcast.
+    const testKey = await makeApiKey(kit.fx, {
+      orgId: kit.org.id,
+      scopes: ['messages:write'],
+      mode: 'test',
+    });
+    const modeMismatch = await schedule(kit, { actor: { type: 'api_key', id: testKey.id } });
+    expect(
+      await launchBroadcast(jobCtxOf(kit), { id: modeMismatch.id, org_id: modeMismatch.orgId }),
+    ).toBe(false);
+    expect(
+      await first(kit.env.DB, 'SELECT state, error_code FROM broadcasts WHERE id = ?', [
+        modeMismatch.id,
+      ]),
+    ).toEqual({ state: 'failed', error_code: 'CREATOR_REVOKED' });
     const matched = await schedule(kit, { actor: { type: 'api_key', id: own.id } });
     expect(await launchBroadcast(jobCtxOf(kit), { id: matched.id, org_id: matched.orgId })).toBe(
       true,

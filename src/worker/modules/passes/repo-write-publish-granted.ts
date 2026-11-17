@@ -52,6 +52,7 @@ export interface GrantedPublish {
   set: Record<string, SetValue>;
   /** A staged removal also pins the claim it made. */
   removalClaim?: boolean;
+  extraChecks?: readonly Check[] | undefined;
 }
 
 /**
@@ -90,6 +91,7 @@ export async function casGranted(ctx: ServiceContext, w: GrantedPublish): Promis
   ];
   if (w.requireNoReleaseHistory) checks.push(noReleaseHead(p.templateId));
   if (w.release) checks.push(releaseHead(p.templateId, p.mode, 'apple', w.release.id));
+  checks.push(...(w.extraChecks ?? []));
   if (!w.authority && !w.commit) throw new Error('A publish needs a tenant authority or a commit.');
   const g =
     w.commit?.open(checks) ??

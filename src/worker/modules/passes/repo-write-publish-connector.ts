@@ -35,6 +35,7 @@ export interface ConnectorWrite {
   holder?: HolderPrincipal | undefined;
   /** A staged removal also pins the claim it made. */
   removalClaim?: boolean | undefined;
+  extraChecks?: readonly Check[] | undefined;
 }
 
 /** What the connector's captured context pins on the pass row, beyond the publish snapshot. */
@@ -111,6 +112,7 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
     );
   if (w.requireNoReleaseHistory) checks.push(noReleaseHead(p.templateId));
   if (w.release) checks.push(releaseHead(p.templateId, p.mode, 'apple', w.release.id));
+  checks.push(...(w.extraChecks ?? []));
   const common = {
     target: w.id,
     checks,

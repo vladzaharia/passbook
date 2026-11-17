@@ -745,7 +745,7 @@ describe('organization mutation-time authority', () => {
   });
 
   it.each(['membership', 'session'] as const)(
-    'rechecks a revoked %s for PATCH status even with the platform role',
+    'rechecks a revoked %s for PATCH edits even with the platform role',
     async (revoked) => {
       const subject = await principal({ platform: true, role: 'org_admin' });
       const before = await orgState();
@@ -764,11 +764,7 @@ describe('organization mutation-time authority', () => {
             ]);
           }
         },
-        () =>
-          call('PATCH', `/${org.id}`, subject.session.headers, {
-            name: 'Renamed',
-            status: 'suspended',
-          }),
+        () => call('PATCH', `/${org.id}`, subject.session.headers, { name: 'Renamed' }),
       );
       expect([401, 403, 404, 409, 412]).toContain(response.status);
       expect(await orgState()).toEqual(before);
@@ -790,6 +786,18 @@ describe('organization mutation-time authority', () => {
     );
     expect([401, 403, 404, 409, 412]).toContain(refused.status);
     expect(await orgState()).toEqual(before);
+
+    // A status race is a conflict, not a missing org.
+    const racer = await principal({ platform: true, role: 'org_admin' });
+    const raced = await atOrgWrite(
+      async (db) => {
+        await run(db, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
+      },
+      () => call('PATCH', `/${org.id}`, racer.session.headers, { status: 'suspended' }),
+    );
+    expect(raced.status).toBe(409);
+    expect(await raced.json()).toMatchObject({ code: 'ORG_CONFLICT' });
+    await run(fx.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [org.id]);
 
     const live = await principal({ platform: true, role: 'org_admin' });
     const moved = await call('PATCH', `/${org.id}`, live.session.headers, { status: 'suspended' });

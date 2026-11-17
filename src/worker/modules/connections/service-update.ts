@@ -35,7 +35,7 @@ export async function update(
 ): Promise<Created> {
   const conn = await requireConnection(sctx, id);
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
-  const issues = updateIssues(input, conn);
+  const issues = await updateIssues(sctx.env.DB, input, conn);
   if (issues) assertMayIssue(authority);
   const def = requireConnector(conn.connectorType);
   const now = sctx.clock.now();
