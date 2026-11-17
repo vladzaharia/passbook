@@ -538,7 +538,9 @@ writes.
 ### Order
 
 1. **Owner**: WAF rule on. Sources of new work stopped (pre-check 7).
-2. **Owner**: `npm run deploy -- --migrate-only --apply`. Checks secrets, uploads the version (not
+2. **Owner**: `npm run deploy -- --migrate-only --apply`, from the same clean worktree that passed
+   `npm run check`. It refuses a dirty tree or a `dist/` not built from HEAD, and `--promote` refuses
+   if HEAD moved since the upload. Checks secrets, uploads the version (not
    serving), records a D1 bookmark, applies the 38 files 0025–0065 and stops with
    `Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.`
 3. **Owner**: bootstrap. The tool never touches production; it prints the commands. First:
@@ -635,7 +637,7 @@ keep retired pass ids and credentials from being reused.
 | Where | What to do |
 | --- | --- |
 | Pre-checks, or step 2 before a migration ran | Nothing changed. Fix and rerun. |
-| Step 2, a migration errors | Applied migrations stay; the old Worker keeps serving. Fix the failing migration file (it never ran in production) and rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort, only if no fix is possible: Time Travel restore to the step 2 bookmark, which loses Wallet registrations and scans written since. |
+| Step 2, a migration errors | Applied migrations stay and the database sits at the last one that applied. The old Worker still serves reads, but its writes can fail until the rest apply: stopped in 0043–0049, every write to `passes`; from 0059, creating or publishing a pass. Do not leave it there. Fix the failing migration file (it never ran in production) and rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort, only if no fix is possible: Time Travel restore to the step 2 bookmark, which loses Wallet registrations and scans written since. |
 | Step 3 | Stop before promote. Take a fresh snapshot and rerun all three commands. A refused statement names the trigger; fix the tool, not the data. |
 | Step 4, promote fails | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. Refused because migrations are pending, or no saved version: rerun step 2 (it resumes), then step 3. |
 | Step 4, exit 1 after promote | The new Worker serves; the listed templates cannot issue new passes. An `uploaded` row: rerun step 3, then `--promote --apply` (it repeats only the wait). A `baked` row: check the logs for `TEMPLATE_BUILD_SUPERSEDED` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS), fix and ship a new version with the same two runs (`--migrate-only` finds nothing to migrate). Do not roll back. |

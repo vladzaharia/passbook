@@ -1,6 +1,6 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
-import { asLegacyTokens, makeOrg } from '../../../../test/helpers/index.ts';
+import { asLegacyTokens, makeOrg, resetSealCursor } from '../../../../test/helpers/index.ts';
 import { isTokenMac, revealToken, sealToken, tokenMac } from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { bundleForToken } from '../bundles/public-service.ts';
@@ -19,6 +19,7 @@ const job = () => jobCtxOf(kit);
 beforeAll(async () => {
   kit = await setupKit();
 });
+beforeEach(() => resetSealCursor(kit.env.DB, kit.clock.now()));
 
 async function plainOf(passId: string) {
   const row = await first<{ download_token: string; org_id: string }>(
