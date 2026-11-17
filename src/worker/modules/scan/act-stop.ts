@@ -16,8 +16,7 @@ import { prepareMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
-import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
-import { boundOutputPredicate, type OutputPredicate } from './repo-output-predicates.ts';
+import { boundOutputPredicate } from './repo-output-predicates.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import type { Claim } from './repo-scans.ts';
@@ -37,7 +36,6 @@ export interface StopContext {
   idempotencyKey: string;
   requestHash: string;
   credentialTombstoneRefs: readonly string[];
-  otherModeCredentialTombstoneRefs: readonly string[];
   credentialKeysetCommitment: string;
   csrfSnapshot: ActorCsrfSnapshot;
   history?: PreloadedDisplayHistory;
@@ -48,29 +46,6 @@ export interface StopContext {
   action: ResolvedScanAction | null;
   overrideOf: string | null;
   onFailureCommitted(): void;
-}
-
-export function credentialStopFence(s: StopContext, actor: ScanActor): OutputPredicate {
-  const scoped = (refs: readonly string[], mode: 'live' | 'test'): OutputPredicate => {
-    const predicate = noCredentialTombstonesSql(
-      refs,
-      { orgIdSql: '?', modeSql: '?' },
-      s.credentialKeysetCommitment,
-    );
-    return {
-      sql: predicate.sql,
-      params:
-        refs.length && predicate.sql !== '0'
-          ? [actor.orgId, mode, ...predicate.params]
-          : predicate.params,
-    };
-  };
-  const current = scoped(s.credentialTombstoneRefs, actor.mode);
-  const other = scoped(s.otherModeCredentialTombstoneRefs, actor.mode === 'live' ? 'test' : 'live');
-  return {
-    sql: `(${current.sql}) AND (${other.sql})`,
-    params: [...current.params, ...other.params],
-  };
 }
 
 /**
