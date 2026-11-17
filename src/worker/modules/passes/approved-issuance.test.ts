@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type ApiKeyFixture,
+  authTokenOf,
   linkToken,
   makeApiKey,
   makeOrg,
@@ -582,7 +583,8 @@ async function pendingPassId(before: string[]) {
 
 async function tokenFields(env: object, id: string, orgId: string, token: string) {
   const t = await issueToken(env, 'pass', id, orgId, token);
-  return { downloadToken: t.mac, tokenSeal: t.seal };
+  const a = await issueToken(env, 'apple-auth', id, orgId, `${token}-auth`);
+  return { downloadToken: t.mac, tokenSeal: t.seal, authToken: a.mac, authSeal: a.seal };
 }
 
 describe('approved issuance over tenant HTTP', () => {
@@ -692,7 +694,7 @@ describe('approved issuance over tenant HTTP', () => {
     };
     expect(passJson).toMatchObject({
       serialNumber: current.serial,
-      authenticationToken: current.authToken,
+      authenticationToken: await authTokenOf(kit.env, current),
     });
     expect(passJson.barcodes[0]?.message).toBe('MEMBER123');
     const outboxes = await all<{ id: string; payload: string }>(
@@ -1173,7 +1175,7 @@ describe('approved issuance over tenant HTTP', () => {
     const files = unzipSync(new Uint8Array(await artifact.arrayBuffer()));
     expect(JSON.parse(new TextDecoder().decode(files['pass.json']))).toMatchObject({
       serialNumber: completed.serial,
-      authenticationToken: completed.authToken,
+      authenticationToken: await authTokenOf(kit.env, completed),
     });
     const outboxes = await all<{ id: string }>(
       kit.env.DB,
@@ -1964,7 +1966,6 @@ describe('issuance commit fences', () => {
         templateId: release.templateId,
         templateVersion: release.version,
         release: forged,
-        authToken: unique(),
         ...(await tokenFields(kit.env, id, own.orgId, unique())),
         webServiceUrl: `${ORIGIN}/wallet`,
         personalization: { memberName: 'Forged' },
@@ -2102,7 +2103,6 @@ describe('issuance commit fences', () => {
         templateId: release.templateId,
         templateVersion: release.version,
         release: snapshot,
-        authToken: unique(),
         ...(await tokenFields(kit.env, id, own.orgId, unique())),
         webServiceUrl: `${ORIGIN}/wallet`,
         personalization: { memberName: 'Forged execution' },

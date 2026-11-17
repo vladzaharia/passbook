@@ -1,4 +1,4 @@
-import type { PassRow } from '../../../../test/helpers/index.ts';
+import { allowLegacyPassJson, type PassRow } from '../../../../test/helpers/index.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -15,6 +15,7 @@ export function previewAuthorityQueries(env: AppEnv) {
       [pass.id],
     );
     if (!identity) throw new Error('Missing pass signing identity');
+    await allowLegacyPassJson(env.DB);
     const snapshot = {
       ...template.passJson,
       serialNumber: pass.serial,

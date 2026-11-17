@@ -91,4 +91,5 @@ const CREATE_TABLES = [
   'pass_events',
   'pass_issuance_deliveries',
   'pass_token_seals',
+  'pass_auth_seals',
 ] as const;

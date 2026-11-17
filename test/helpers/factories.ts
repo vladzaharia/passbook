@@ -314,6 +314,7 @@ export async function makePass(
   await f.env.BUCKET.put(row.objectKey, new Uint8Array([1, 2, 3]));
   const now = f.clock.now();
   const link = await fixtureToken(f.env, id, options.orgId, row.downloadToken);
+  const auth = await fixtureToken(f.env, id, options.orgId, row.authToken, 'apple-auth');
   await run(
     f.env.DB,
     `INSERT INTO passes (id, org_id, identity_id, serial, template_id, template_version, auth_token, download_token,
@@ -327,7 +328,7 @@ export async function makePass(
       row.serial,
       options.template.id,
       options.template.version,
-      row.authToken,
+      auth.mac,
       link.mac,
       `${f.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify(options.personalization ?? { memberName: 'Alex Morgan' }),
@@ -341,6 +342,7 @@ export async function makePass(
     ],
   );
   await link.seal();
+  await auth.seal();
   return row;
 }
 

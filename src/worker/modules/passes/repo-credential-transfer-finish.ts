@@ -1,5 +1,6 @@
 import { type Check, passRow, releaseHead, rowIs } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
+import { issueToken, sealPart } from '../../platform/capability-token.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -29,6 +30,7 @@ export interface FinishTransferInput {
   releaseVersion: string;
   ownRelease: boolean;
   serial: string;
+  /** The new device token as built into pass.json; the row takes its MAC and a sealed copy. */
   authToken: string;
   scanCode: string;
   barcodeHash: string | null;
@@ -140,10 +142,11 @@ export async function finishTransferBatch(
   if (connection && p.mode !== 'live') return false;
   const g = await transferGrant(ctx, i.authority, 'finish', p, finishChecks(i, target));
   if (!g) return false;
+  const auth = await issueToken(ctx.env, 'apple-auth', p.id, p.orgId, i.authToken);
   g.update('passes', {
     set: {
       serial: i.serial,
-      auth_token: i.authToken,
+      auth_token: auth.mac,
       scan_code: i.scanCode,
       barcode_hash: i.barcodeHash,
       lookup_hash: i.lookupHash,
@@ -174,6 +177,9 @@ export async function finishTransferBatch(
     require: 'one',
     returning: ['id'],
   });
+  g.include(
+    sealPart('apple-auth', p.id, auth.mac, auth.seal, { holder: g.principal.kind === 'holder' }),
+  );
   g.update('pass_credential_transfers', {
     set: { state: 'completed', completed_at: now },
     where: { id: t.id, pass_id: p.id, state: 'pending' },

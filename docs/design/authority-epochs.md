@@ -457,6 +457,7 @@ The runbook is `docs/operations.md` ("Cutover from schema 0024"): order, pre-che
 | `0053` | `branding_gc_queue` |
 | `0055` | a verified holder attaches to a pass with a static credential without a transfer |
 | `0056`, `0057` | blueprints; indexes. Additive: they do not touch the cutover window |
+| `0059`, `0065` | pass download, bundle and device tokens stored as MACs with sealed copies; `pass_versions.pass_json` never carries `authenticationToken`. One-way: the previous Worker fails against them (6.2, 6.3) |
 | `0063` | drops `scanners_credential_revision`; scanner authority is `credential_epoch`. Additive-safe: the old Worker's writes satisfy no trigger and need none |
 
 Migrations already applied are never edited; new schema takes the next free number.
@@ -471,6 +472,8 @@ The old Worker serves against the new schema until the bootstrap and promote ste
 | Owner link on pass create or sign-in, self-remove | succeeds | `0055` |
 | Org settings upsert, profile and branding | ok; each moves `orgs.config_revision` | `0052` triggers |
 | Template upload, baked upsert, scanner pairing and heartbeat, scan check-in claim, connection sync | ok | |
+| Pass create, publish, edit, refresh, template upgrade, connection sync, credential transfer finish | fails | `0059`/`0065` refuse a plain `download_token` or `auth_token` and a stored `pass_json` with `authenticationToken` |
+| Wallet device calls on a sealed pass | fails (401) | the old Worker compares the plain token; rows are sealed only after promote, so the window itself is unaffected |
 | Template sync `INSERT ... ON CONFLICT (slug) DO NOTHING` for an existing org, and a re-sent `INSERT OR IGNORE INTO template_versions` | fails | BEFORE INSERT guards ignore `ON CONFLICT` and `OR IGNORE` |
 
 The sync break is reachable only when a fresh baked build reaches the old Worker (a new build hash) or `templates.baked_hash` is cleared. The batch aborts as a whole and retries, so the effect is a delayed baked sync, not corruption. The new Worker has no `ensureOrgStmt` (deleted); the sync does not insert orgs.
@@ -479,7 +482,7 @@ Containment: the window is automated (seconds to minutes). Routes known to fail 
 
 ### 6.3 Rollback
 
-Roll forward only once migrations have run (owner answer 6). A Worker-only rollback is an emergency degraded mode: pause queue consumers first, keep transfer-starting routes blocked, then redeploy forward. A Time Travel restore to the pre-migration bookmark is the last resort and loses later writes.
+Roll forward only once migrations have run (owner answer 6). `0059` and `0065` make this strict: a Worker older than them cannot serve sealed tokens and cannot create or publish a pass, so it is never promoted again. A Worker-only rollback is an emergency degraded mode: pause queue consumers first, keep transfer-starting routes blocked, then redeploy forward. A Time Travel restore to the pre-migration bookmark is the last resort and loses later writes.
 
 ### 6.4 Baked and legacy releases
 
@@ -499,6 +502,8 @@ Roll forward only once migrations have run (owner answer 6). A Worker-only rollb
 
 - Done: `scan/repo-scanner-configuration-scope.ts` is deleted; the workspace observation carries the scanner's `config_epoch`. Migration `0066` drops `scanning_config_revisions`.
 - Done: the balancer, `sql-tokens`, `repo-secret-binds` and the legacy fence families are deleted; migration `0063` drops `scanners_credential_revision`. A scanner's `updated_at` is a label: authority is `credential_epoch`. The live ring's `revision` is an in-memory self-check of one actor snapshot, not a database compare. One credential-loss rule: every scanner path uses `scannerCredentialLost`.
+
+- Open: drop the plain-to-MAC exception (0059 `passes_token_change_moves_link`, `passes_row_version_a`, wallet-provider triggers; 0065 `passes_auth_token_change_follows_generation`, `pass_credential_transfer_required`, `passes_row_version_a`) in a new migration once `TOKEN_SEAL_RUN remaining = 0` and `unscrubbed = 0` in production. SQL cannot verify the HMAC, so until then any `h1:` value passes the exception.
 
 ### 7.3 Provider track
 

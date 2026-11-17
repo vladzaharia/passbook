@@ -2,7 +2,9 @@ import { unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
+import { authTokenOf, deviceToken, rememberAuthToken } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
+import { isTokenMac } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -26,7 +28,7 @@ function client(kit: Kit) {
   const app = createApp({ clock: kit.clock });
   const call = (path: string, init: RequestInit = {}, env: AppEnv = kit.env) =>
     app.request(`${ORIGIN}/wallet/v1${path}`, init, env);
-  const auth = (pass: Pass) => ({ authorization: `ApplePass ${pass.authToken}` });
+  const auth = (pass: Pass) => ({ authorization: `ApplePass ${deviceToken(pass)}` });
   const register = (pass: Pass, device: string, env: AppEnv = kit.env, value = push('a')) =>
     call(
       `/devices/${device}/registrations/${TYPE}/${pass.serial}`,
@@ -249,9 +251,15 @@ describe('Apple credential transfer fences', () => {
     expect((await beginTransfer(kit, old)).state).toBe('completed');
     const rotated = await getPass(kit.env.DB, old.id);
     if (!rotated) throw new Error('Missing transferred pass');
+    await rememberAuthToken(kit.env, rotated);
     expect(rotated.credentialGeneration).toBe(old.credentialGeneration + 1);
     expect(rotated.serial).not.toBe(old.serial);
     expect(rotated.authToken).not.toBe(old.authToken);
+    expect(isTokenMac(rotated.authToken)).toBe(true);
+    expect(await authTokenOf(kit.env, rotated)).not.toBe(deviceToken(old));
+    expect(
+      await first(kit.env.DB, 'SELECT 1 AS n FROM pass_auth_seals WHERE pass_id = ?', [old.id]),
+    ).toEqual({ n: 1 });
     expect(rotated.holderEmail).toBe('next-holder@example.test');
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM registrations WHERE pass_id = ?', [old.id]),
@@ -284,6 +292,7 @@ describe('Apple credential transfer fences', () => {
     );
     const fresh = await getPass(kit.env.DB, rotated.id);
     if (!fresh) throw new Error('Missing updated pass');
+    await rememberAuthToken(kit.env, fresh);
     const response = await http.latest(fresh);
     expect(response.status).toBe(200);
     const files = unzipSync(new Uint8Array(await response.arrayBuffer()));
@@ -292,7 +301,7 @@ describe('Apple credential transfer fences', () => {
       .passthrough()
       .parse(JSON.parse(new TextDecoder().decode(files['pass.json'])));
     expect(passJson.serialNumber).toBe(fresh.serial);
-    expect(passJson.authenticationToken).toBe(fresh.authToken);
+    expect(passJson.authenticationToken).toBe(await authTokenOf(kit.env, fresh));
     expect(
       (await http.latest(fresh, kit.env, { 'if-none-match': `"${fresh.objectSha256}"` })).status,
     ).toBe(304);
@@ -370,6 +379,7 @@ describe('Apple credential transfer fences', () => {
     ).toBeNull();
     const fresh = await getPass(kit.env.DB, old.id);
     if (!fresh) throw new Error('Missing transferred pass');
+    await rememberAuthToken(kit.env, fresh);
     expect((await http.register(fresh, 'race-completed')).status).toBe(201);
   });
 });

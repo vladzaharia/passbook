@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makePass } from '../../../../test/helpers/index.ts';
+import { asLegacyAuthTokens, makePass } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { run } from '../../platform/db.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -112,7 +112,7 @@ describe('lookup privacy', () => {
       { name: 'Hidden Desk Identity', shown: true },
       { name: 'person@example.test' },
       { name: 'SERIAL-COLLISION-842', column: 'serial' },
-      { name: 'AUTH-COLLISION-842', column: 'auth_token' },
+      { name: 'h1:AUTH-COLLISION-842', column: 'auth_token' },
       { name: 'h1:DOWNLOAD-COLLISION-842', column: 'download_token' },
       { name: 'https://wallet.test/private', column: 'web_service_url' },
       { name: 'A'.repeat(26), column: 'scan_code' },
@@ -126,7 +126,6 @@ describe('lookup privacy', () => {
         personalization: { memberName: 'Hidden Desk Identity' },
         holderEmail: 'person@example.test',
         ...(column === 'serial' ? { serial: entry.name } : {}),
-        ...(column === 'auth_token' ? { authToken: entry.name } : {}),
         ...(column === 'scan_code' ? { scanCode: entry.name } : {}),
       });
       await run(
@@ -142,6 +141,10 @@ describe('lookup privacy', () => {
       if (column === 'download_token' || column === 'web_service_url')
         await withoutTrigger(kit.env.DB, 'passes_token_change_moves_link', () =>
           setPass(kit, pass.id, `${column} = ?`, [entry.name]),
+        );
+      if (column === 'auth_token')
+        await asLegacyAuthTokens(kit.env.DB, () =>
+          setPass(kit, pass.id, 'auth_token = ?', [entry.name]),
         );
       const scanner = await kit.scanner({ templateIds: [restricted] });
       const result = await search(pass.id, scanner.headers);

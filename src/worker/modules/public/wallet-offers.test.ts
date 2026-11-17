@@ -182,11 +182,13 @@ describe('pending native wallets on holder surfaces', () => {
 
   it('hides native choices for a soft-deleted pass', async () => {
     const pass = await ownNewPass();
+    // Before the delete: a deleted pass keeps no sealed copy to reveal the link from.
+    const link = await linkToken(fixture.kit.env, pass);
     await run(fixture.kit.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [
       fixture.kit.clock.now(),
       pass.id,
     ]);
-    expect((await get(`/p/${await linkToken(fixture.kit.env, pass)}`)).status).toBe(404);
+    expect((await get(`/p/${link}`)).status).toBe(404);
     expect((await holderOffers(pass.id)).walletOffers).toEqual([]);
   });
 

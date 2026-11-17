@@ -260,6 +260,7 @@ export async function seedLegacy(db: D1Database, bucket: R2Bucket): Promise<Lega
     const wallet = {
       ...starter.passJson,
       serialNumber: p.serial,
+      authenticationToken: p.authToken,
       passTypeIdentifier: 'pass.im.plrs.wallet',
       teamIdentifier: '48H7CLBV8Y',
       barcodes: [

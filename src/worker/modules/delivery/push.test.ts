@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { isolatedKeysetDatabase } from '../../../../test/helpers/credential-keyset.ts';
-import { makeOrg } from '../../../../test/helpers/index.ts';
+import { deviceToken, makeOrg, rememberAuthToken } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -1006,6 +1006,7 @@ describe('push credential transfer fences', () => {
     }
     const current = transferred.current;
     if (!current) throw new Error('Transfer did not run');
+    await rememberAuthToken(kit.env, current);
     expect(
       await first(
         kit.env.DB,
@@ -1026,9 +1027,9 @@ describe('push credential transfer fences', () => {
         { headers: { authorization: `ApplePass ${token}` } },
         kit.env,
       );
-    expect((await latest(pass.serial, pass.authToken)).status).toBe(401);
-    expect((await latest(current.serial, pass.authToken)).status).toBe(401);
-    expect((await latest(current.serial, current.authToken)).status).toBe(200);
+    expect((await latest(pass.serial, deviceToken(pass))).status).toBe(401);
+    expect((await latest(current.serial, deviceToken(pass))).status).toBe(401);
+    expect((await latest(current.serial, deviceToken(current))).status).toBe(200);
 
     // A leftover source-generation row is never included in a replacement push.
     const staleDevice = `stale-${pass.id}`;
@@ -1320,7 +1321,7 @@ describe('push credential transfer fences', () => {
     });
     const response = await createApp({ clock: pendingKit.clock }).request(
       `https://wallet.test/wallet/v1/passes/pass.im.plrs.wallet/${pass.serial}`,
-      { headers: { authorization: `ApplePass ${pass.authToken}` } },
+      { headers: { authorization: `ApplePass ${deviceToken(pass)}` } },
       pendingKit.env,
     );
     expect(response.status).toBe(401);

@@ -31,7 +31,7 @@ approval and replay-safe Save behavior can be verified.
 | --- | --- | --- |
 | Session, magic link, API key | hashed | Shown once. |
 | Download token (`/p/<token>`), bundle token (`/b/<token>`) | MAC + sealed copy | Lookup by HMAC (`h1:`); the link is shown again from an AES-GCM copy bound to id, org and purpose. A database read yields no link. Rotatable. Never logged. |
-| ApplePass token | retrievable | Devices need it back. Rotatable. Never logged. |
+| ApplePass token (`authenticationToken`) | MAC + sealed copy | Device calls compare the MAC of the presented token in constant time (own HMAC key; a stored MAC is no token). `pass.json` builds read the AES-GCM copy; stored `pass_versions.pass_json` never carries the token. Rotated by a credential transfer. Never logged. |
 | Pass serial | plain | The personalization capability (SEC-1). NFC identities must not use caller-chosen or guessable serials. |
 
 Holder transfers reserve a monotonic credential generation before invalidating the public link.

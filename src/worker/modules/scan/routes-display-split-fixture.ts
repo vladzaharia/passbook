@@ -1,5 +1,6 @@
 import { expect } from 'vitest';
 import {
+  allowLegacyPassJson,
   type FakeAuth,
   type Fixtures,
   fakeAuth,
@@ -69,6 +70,7 @@ export const noStore = (response: Response) =>
 export async function createPreviewRouteFixture(): Promise<PreviewRouteFixture> {
   const clock = new ManualClock(Date.UTC(2026, 10, 5, 18));
   const env = await makeEnv();
+  await allowLegacyPassJson(env.DB);
   const f = fixtures(env, clock);
   const fake = fakeAuth(ORIGIN);
   const app = createApp({

@@ -16,6 +16,7 @@ import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
 import { brandingWarnings, readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
+import { type PrefetchedAuthSeal, plainAuthToken } from './build-auth-token.ts';
 import { type BuildInputs, readBuildInputs } from './build-reads.ts';
 import { applyChangeMessages, stripChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
@@ -30,6 +31,7 @@ export interface BuildRequest {
   orgName: string;
   passId: string;
   serial: string;
+  /** The `auth_token` column value or a token just made (see `plainAuthToken`). */
   authToken: string;
   /** Frozen at creation: rebuilds must not change the pass identity (audit B7). */
   webServiceUrl: string;
@@ -58,6 +60,8 @@ export interface BuildRequest {
     identityRow: IdentityRow | null;
     /** Inputs read for `templateId`; ignored when the template resolves to another id. */
     inputs: BuildInputs;
+    /** The sealed copy of `authToken`, read with them; used only while it still names `authToken`. */
+    authSeal?: PrefetchedAuthSeal;
   };
 }
 
@@ -219,12 +223,14 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       ? await deps.identities.byRow(row)
       : await deps.identities.byId(req.identityId);
   const branding = readBranding(req.branding);
-  const [{ overrides: originalOverrides, photo, artHashes }, contacts] = await Promise.all([
-    req.prefetched && resolved.id === req.templateId && !req.omitPassAssets
-      ? req.prefetched.inputs
-      : readBuildInputs(ctx.env.DB, req, resolved.id),
-    backContactsFor(ctx, req.orgId, req.branding),
-  ]);
+  const [{ overrides: originalOverrides, photo, artHashes }, contacts, authToken] =
+    await Promise.all([
+      req.prefetched && resolved.id === req.templateId && !req.omitPassAssets
+        ? req.prefetched.inputs
+        : readBuildInputs(ctx.env.DB, req, resolved.id),
+      backContactsFor(ctx, req.orgId, req.branding),
+      plainAuthToken(ctx.env, req),
+    ]);
   const passOverrides = photo
     ? [...originalOverrides.filter((a) => parseAssetName(a.name).slot !== 'thumbnail'), photo]
     : originalOverrides;
@@ -246,7 +252,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       input: req.personalization,
       server: {
         serial: req.serial,
-        authToken: req.authToken,
+        authToken,
         webServiceURL: req.webServiceUrl,
         organizationName: req.orgName,
         identity,
@@ -284,10 +290,12 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     const display = displayOf(template, req.personalization);
     const lookupInput = resolved.manifest.scan?.lookup?.input;
     const lookupValue = lookupInput ? lookupValueOf(req.personalization, lookupInput) : null;
+    // The signed bytes carry the device token; the copy kept in the database never does.
+    const { authenticationToken: _token, ...storedPassJson } = built.passJson;
     return {
       bytes,
       sha256: await sha256Hex(bytes),
-      passJson: built.passJson,
+      passJson: storedPassJson,
       template: resolved,
       title: display.title,
       subtitle: display.subtitle,

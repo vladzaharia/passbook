@@ -83,7 +83,7 @@ export async function createPassRowWithRelease(
   // A personalizable pass is addressed by serial in Apple's personalize flow, so the caller never picks it.
   const personalizable = template.assets.some((a) => a.name === 'personalization.json');
   const serial = personalizable ? ctx.ids.id() : (p.serial ?? ctx.ids.id());
-  const authToken = ctx.ids.token();
+  const authToken = await issueToken(ctx.env, 'apple-auth', id, p.orgId, ctx.ids.token());
   const downloadToken = await issueToken(ctx.env, 'pass', id, p.orgId, ctx.ids.token());
   const webServiceUrl = `${baseUrl(ctx.env)}/wallet`;
   const artifact = await buildArtifact(ctx, {
@@ -93,7 +93,7 @@ export async function createPassRowWithRelease(
     passId: id,
     scanCode,
     serial,
-    authToken,
+    authToken: authToken.token,
     webServiceUrl,
     identityId: identity.id,
     templateId: template.id,
@@ -142,7 +142,8 @@ export async function createPassRowWithRelease(
         candidateHash: release.candidateHash,
         provider: 'apple',
       },
-      authToken,
+      authToken: authToken.mac,
+      authSeal: authToken.seal,
       downloadToken: downloadToken.mac,
       tokenSeal: downloadToken.seal,
       webServiceUrl,
@@ -249,7 +250,7 @@ export async function createPassRowWithRelease(
       pass.templateVersion !== template.version ||
       pass.releaseId !== release.id ||
       pass.serial !== serial ||
-      pass.authToken !== authToken ||
+      pass.authToken !== authToken.mac ||
       pass.downloadToken !== downloadToken.mac ||
       pass.webServiceUrl !== webServiceUrl ||
       pass.scanCode !== scanCode ||

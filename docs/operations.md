@@ -284,7 +284,7 @@ is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, 
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
 `docs/design/authority-epochs.md` §6.
 
-Old pass download and bundle tokens are sealed by the minute cron `tokens.seal` (0059, 50 of each a run, log code `TOKEN_SEAL_RUN`); no owner step. A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining`. Backups from before 0059 hold working links: rotate in bulk if one leaks.
+Old pass download, bundle and Apple web-service tokens are sealed by the minute cron `tokens.seal` (0059 and 0065, 50 of each a run, log code `TOKEN_SEAL_RUN`); no owner step. The same run removes the device token from stored `pass_versions.pass_json` (200 a run). A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining` and `unscrubbed`, both zero when done. Scans recorded before the scrub replay as the minimal receipt, as after any pass edit. Backups from before 0059 hold working links and, from before 0065, working device tokens: rotate in bulk if one leaks (a credential transfer rotates the device token). D1 Time Travel keeps 30 days: a restore to a point before 0065 brings the plain device tokens back, so treat a restore as a rotation event. Every `.pkpass` object in R2 carries the device token that was current at its version (Wallet needs it in the signed bytes), so keep the bucket private (no public bucket, no `r2.dev`, an API token scoped to the Worker); purged versions and purged deleted passes delete their objects. A soft-deleted pass drops its sealed copies at once, and a pass of a deleted org is sealed as MAC only.
 
 ### What the new Worker does with 0024 data
 
@@ -421,10 +421,24 @@ step 6, after verification. The expression:
   and http.request.method in {"POST" "PUT" "PATCH" "DELETE"}
   and (starts_with(http.request.uri.path, "/api/v1/holders/")
     or starts_with(http.request.uri.path, "/api/v1/passes")
-    or starts_with(http.request.uri.path, "/api/v1/me/passes/")))
+    or starts_with(http.request.uri.path, "/api/v1/me/passes/")
+    or starts_with(http.request.uri.path, "/api/v1/connections/")
+    or starts_with(http.request.uri.path, "/api/v1/templates/")
+    or starts_with(http.request.uri.path, "/hooks/")))
 ```
 
-Why these paths. Between migrate and promote the old Worker serves the new schema. Trigger
+Why these paths. Between migrate and promote the old Worker serves the new schema. Besides the transfer
+guard below, 0059 and 0065 refuse what the old Worker writes for a new pass or version: a plain
+`download_token` or `auth_token` on insert, and a stored `pass_json` that carries `authenticationToken`
+(every create, publish, edit, template upgrade, connection sync and credential transfer). The paths
+are `/api/v1/passes*` (create, edit, refresh, bulk, stamps), `/api/v1/holders/`, `/api/v1/me/passes/`,
+`/api/v1/connections/` (`POST /{id}/sync`), `/api/v1/templates/` (release approval and rollback
+reissue passes) and `/hooks/` (webhook ingress creates and updates passes). Queue and cron jobs cannot
+be blocked; they fail and retry until the new Worker is promoted. The Wallet device fetch
+(`GET /wallet/v1/passes/...`) re-signs a pass only after a template upgrade; it fails and the device
+retries.
+
+The transfer guard. Trigger
 `pass_credential_transfer_required` (0042, recreated in 0055) aborts its writes to `holder_email`,
 `serial`, `auth_token`, `identity_id`, `org_id`, `mode` or a set `scan_code`, and any owner change
 except linking an unowned, undeleted, unquarantined pass to an active user whose verified address is
@@ -552,14 +566,18 @@ keep retired pass ids and credentials from being reused.
 | Step 3 | Stop before promote. Take a fresh snapshot and rerun all three commands. A refused statement names the trigger; fix the tool, not the data. |
 | Step 4, promote fails | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. Refused because migrations are pending, or no saved version: rerun step 2 (it resumes), then step 3. |
 | Step 4, exit 1 after promote | The new Worker serves; the listed templates cannot issue new passes. An `uploaded` row: rerun step 3, then `--promote --apply` (it repeats only the wait). A `baked` row: check the logs for `TEMPLATE_BUILD_SUPERSEDED` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS), fix and ship a new version with the same two runs (`--migrate-only` finds nothing to migrate). Do not roll back. |
-| Step 5 fails, Worker misbehaves | Ship a fixed version with the same two runs. Emergency degraded mode only to stop an outage: `npx wrangler queues pause-delivery wallet-jobs`, keep the WAF rule, promote the previous version with `npx wrangler versions deploy <previous>@100%`, then roll forward and resume delivery (`npx wrangler queues resume-delivery wallet-jobs`). |
+| Step 5 fails, Worker misbehaves | Ship a fixed version with the same two runs. Emergency degraded mode only to stop an outage: `npx wrangler queues pause-delivery wallet-jobs`, keep the WAF rule, promote the previous version with `npx wrangler versions deploy <previous>@100%` only if it already ships 0059 and 0065 (an older one answers 401 to every sealed pass and cannot create or publish), then roll forward and resume delivery (`npx wrangler queues resume-delivery wallet-jobs`). |
 
 ## Day two
 
 - **Migrations**: `npm run deploy` handles them. Manual: `npx wrangler d1 time-travel info wallet-platform`,
   note the bookmark, then `npx wrangler d1 migrations apply wallet-platform --remote`.
   Migrations are forward-only: roll back a bad release by promoting the previous Worker version
-  (`npx wrangler versions deploy <previous>@100%`), not by restoring D1. A restore is the last
+  (`npx wrangler versions deploy <previous>@100%`), not by restoring D1. Exception: 0059 and 0065 are
+  a one-way line. Never promote a Worker older than the release that ships them: it cannot read a
+  sealed token (every device call answers 401, a stored MAC would pass its plain compare) and every
+  create, publish and transfer aborts on the new triggers. Roll forward. `npm run deploy` only ever
+  promotes the version it uploaded; the risk is a manual `wrangler versions deploy`. A restore is the last
   resort and drops every write since the bookmark, including pass tombstones and retired ids.
   Apply the complete ordered migration batch, including 0042, 0044 and 0046, before routing the
   new Worker or initializing the credential-reference keyset. The initializer deliberately
@@ -572,7 +590,7 @@ keep retired pass ids and credentials from being reused.
   Status warns 30 days before expiry.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts;
   keep older ones for existing data. The oldest KEK also derives scan PIN, pair-code, asset-grant,
-  credential-tombstone and pass/bundle link (`h1:`) HMAC keys; losing it breaks every stored link lookup. The credential-reference keyset sentinel initializes only when
+  credential-tombstone, pass/bundle link and Apple web-service token (`h1:`) HMAC keys; losing it breaks every stored link lookup and every device call. The credential-reference keyset sentinel initializes only when
   no prior keyed references or proof provenance remain, including tombstones and
   retention proofs, retained webhook/workflow bindings and native-provider history.
   Plain unsigned legacy scan events do not prevent initialization, but remain untrusted and are
