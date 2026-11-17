@@ -55,7 +55,7 @@ export function StampsCard({
   return (
     <Card>
       <CardHeader
-        title="Stamps"
+        title="Stamp card"
         actions={
           stamps.ready ? (
             <span className="relative">

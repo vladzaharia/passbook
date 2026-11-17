@@ -117,7 +117,8 @@ describe('goal', () => {
   it('describes the layout and the capacity', () => {
     expect(gridNote(8)).toBe('2 rows of 4, 44 pt stamps');
     expect(gridNote(5)).toMatch(/^1 row of 5/);
-    expect(gridNote(7)).toMatch(/^2 rows of 4, 3/);
+    expect(gridNote(7)).toMatch(/^2 rows \(4 and 3\), \d+ pt stamps$/);
+    expect(gridNote(20)).toMatch(/^3 rows \(7, 7 and 6\), 28 pt stamps$/);
     expect(holdsNote(8)).toBe('Holds up to 15: a full card plus 7 saved.');
   });
 

@@ -59,9 +59,9 @@ export function gridNote(goal: number): string {
   const size = `${Math.round(d)} pt stamps`;
   const same = rows.every((n) => n === rows[0]);
   if (rows.length === 1) return `1 row of ${rows[0]}, ${size}`;
-  return same
-    ? `${rows.length} rows of ${rows[0]}, ${size}`
-    : `${rows.length} rows of ${rows.join(', ')}, ${size}`;
+  if (same) return `${rows.length} rows of ${rows[0]}, ${size}`;
+  const split = `${rows.slice(0, -1).join(', ')} and ${rows.at(-1)}`;
+  return `${rows.length} rows (${split}), ${size}`;
 }
 
 /** What the input holds: a full card plus the carry-over. */
