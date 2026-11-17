@@ -189,7 +189,7 @@ const results = await g.commit();                         // one batch: [grant i
 
 ### 1.2.1 Request-context deferred principals
 
-`via: 'deferred'` is built in a queue, cron or workflow context. A request context may build one only with `allowRequestContext: true`, which is reviewed per site. Each site pins `userAccessRevision` and `orgAccessRevision` captured when the work was captured (a missing user revision is `0`, which never matches), checks no session, and is refused with 403 when the membership is revoked or either revision moved.
+`via: 'deferred'` is built in a queue, cron or workflow context. A request context may build one only with `allowRequestContext: true`, which is reviewed per site. Each site pins `userAccessRevision` and `orgAccessRevision` captured when the work was captured (a missing user revision is `0`, which never matches), checks no session, and is refused with 403 `ACTOR_CHANGED` when the membership is revoked or the user revision moved, and 403 `ORG_ACCESS_CHANGED` when the org revision moved, like every other principal.
 
 | Site | Verdict | Why |
 | --- | --- | --- |

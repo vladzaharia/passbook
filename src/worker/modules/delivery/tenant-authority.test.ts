@@ -136,7 +136,7 @@ describe('tenant email enqueue authority', () => {
               authority,
             }),
         ),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      ).rejects.toMatchObject({ code: 'ACTOR_CHANGED' });
       expect(await effects(pass.id)).toEqual(before);
     });
   }
@@ -162,7 +162,7 @@ describe('tenant email enqueue authority', () => {
             authority,
           }),
       ),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: 'ACTOR_CHANGED' });
     expect(await effects(pass.id)).toEqual(before);
   });
 
@@ -355,7 +355,7 @@ describe('tenant email enqueue authority', () => {
         },
         (ctx) => queueEmail(ctx, input),
       ),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: 'ACTOR_CHANGED' });
     expect(await effects(pass.id)).toEqual(before);
     const replacement = await sessionAuthority();
     await queueEmail(job(), { ...input, authority: replacement.authority });
