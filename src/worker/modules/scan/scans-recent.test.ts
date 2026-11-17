@@ -292,7 +292,7 @@ describe('scanner recent and summary privacy', () => {
       env,
       /page AS MATERIALIZED/,
       (db) => setStatus(db, 'voided'),
-      () => scannerGet(scanner.headers, '/summary').then((r) => r.json()),
+      async () => (await scannerGet(scanner.headers, '/summary')).json(),
     );
     expect(earlySummary.result).toMatchObject({ total: 1, ok: 1, byAction: [] });
     await setStatus(env.DB, 'active');

@@ -12,7 +12,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantScanRole } from './actor.ts';
-import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { DEFAULT_SETTINGS, parseSettings } from './dto-console.ts';
 import { kickScreen } from './live.ts';
 import {
@@ -43,7 +42,7 @@ import {
   deviceDto,
   effectiveSessionSettings,
   resolveSessionScope,
-  type SessionCountAuthority,
+  type SessionReadAuthority,
   sessionDto,
 } from './scanning-session-dto.ts';
 import { scanningSessionActivity } from './session-activity.ts';
@@ -72,19 +71,18 @@ export async function scanningSessionDetail(
   id: string,
   mode: Mode,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
   assertSessionReadAuthority(mode, authority, countAuthority);
   return scanningSessionDetailForAuthority(ctx, id, mode, countAuthority);
 }
 
 async function scanningSessionDetailForAuthority(
-  context: ServiceContext,
+  ctx: ServiceContext,
   id: string,
   mode: Mode,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
-  const ctx = credentialKeysetContext(context);
   const row = await loadScanningSession(ctx, id, mode, countAuthority.orgId);
   const [session, devices, scope] = await Promise.all([
     sessionDto(ctx, row, countAuthority),
@@ -128,7 +126,7 @@ export async function createScanningSession(
   mode: Mode,
   input: z.infer<typeof CreateScanningSessionSchema>,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
   if (countAuthority.orgId !== input.orgId || countAuthority.mode !== mode)
@@ -193,7 +191,7 @@ export async function updateScanningSession(
   id: string,
   input: z.infer<typeof UpdateScanningSessionSchema>,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
   const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);

@@ -192,8 +192,7 @@ describe('scanning session count authority', () => {
         VALUES (?,?,?,'live')`,
         [scanner.id, f.id, f.org.id],
       );
-      const other =
-        f.proof.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
+      const other = '1'.repeat(64);
       if (condition === 'missing with references') await insertExistingReference(f);
       else
         await run(f.env.DB, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [
@@ -272,7 +271,7 @@ describe('scanning session count authority', () => {
       withRole(actor, null);
       actor.scannerCsrfProof = await scanScannerCsrfProof(f.env, scanner.id, secret);
       await captureTestEpochs(f.ctx, actor);
-      const authority = await scanSessionCountAuthority(f.ctx, actor);
+      const authority = scanSessionCountAuthority(actor);
       expect(authority.sessionId).toBe(f.id);
       const race = () =>
         atCountBatch(

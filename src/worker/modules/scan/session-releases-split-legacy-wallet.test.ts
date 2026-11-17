@@ -5,7 +5,6 @@ import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { activeRelease } from '../templates/releases.ts';
 import {
   duringTemplateRead,
-  expectRedactedScope,
   expectScopedSession,
   legacyPass,
   legacyVersions,
@@ -15,7 +14,7 @@ import {
 import { setupScanKit } from './test-kit.ts';
 
 describe('scanner session approved releases', () => {
-  it('fails closed if a legacy signing identity changes away and back during projection', async () => {
+  it('serves the captured legacy view if a signing identity changes away and back during projection', async () => {
     const kit = await setupScanKit();
     const { id, pinned } = await legacyVersions(kit);
     const pass = await legacyPass(kit, pinned);
@@ -67,7 +66,9 @@ describe('scanner session approved releases', () => {
     if (!restored) throw new Error('Expected the restored signing identity');
     expect(restored.pass_type_identifier).toBe(identity.pass_type_identifier);
     expect(restored.revision).toBeGreaterThan(changedRevision);
-    expectRedactedScope(result, kit, scanner.id);
+    // The view is built from the pinned, immutable template version: an identity is not part of it.
+    expectScopedSession(result, event.id, 'legacy_entry', kit.clock.now());
+    expect(result.templates).toMatchObject([{ id, name: 'Legacy version' }]);
 
     const reloaded = await session(kit, scanner.headers);
     expect(reloaded).toMatchObject({

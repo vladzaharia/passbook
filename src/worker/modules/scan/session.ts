@@ -1,7 +1,6 @@
 import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import { ScanBrandingSchema, type ScanSession } from '../../../shared/contracts/scan-session.ts';
-import type { SqlValue } from '../../platform/db.ts';
 import {
   type AppError,
   ConflictError,
@@ -14,6 +13,7 @@ import { planCounts } from './counts.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { undoWindowMinutes } from './outcome.ts';
+import { scanAuthorizedStmt, scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import {
   orgBrandingStmt,
   orgNameStmt,
@@ -21,19 +21,9 @@ import {
   staffListStmt,
   userNameStmt,
 } from './repo-session.ts';
-import { sessionReadFencesCurrent } from './repo-session-authority.ts';
-import {
-  sessionCountGuardPredicate,
-  sessionCountStatusStmt,
-  unrestrictedSessionCountScope,
-} from './repo-session-counts.ts';
 import { scannerCredentialLost } from './scanner-credential-lost.ts';
-import type { SessionCountAuthority } from './scanning-session-dto.ts';
-import {
-  scanningWorkspaceScopeFence,
-  scanSessionCountAuthority,
-  scanWorkspace,
-} from './scanning-workspace.ts';
+import type { SessionReadAuthority } from './scanning-session-dto.ts';
+import { scanSessionCountAuthority, scanWorkspace } from './scanning-workspace.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { FORMATS, templatesOf } from './session-templates.ts';
 
@@ -73,16 +63,6 @@ function stateOf(ctx: ServiceContext, actor: ScanActor): ScanSession['state'] {
   if (actor.event && now > actor.event.closesAt) return 'closed';
   return 'ready';
 }
-/** Keep the count bootstrap and status statements below D1's bind limit. */
-export function planSessionCountGuard(
-  guard: { sql: string; params: readonly SqlValue[] },
-  scope: { sql: string; params: readonly SqlValue[] },
-): { sql: string; params: SqlValue[] } {
-  if (guard.params.length + scope.params.length >= 99)
-    throw new UnavailableError('Scanning counts are unavailable.', 'SCAN_COUNTS_UNAVAILABLE');
-  return sessionCountGuardPredicate(guard, scope);
-}
-
 export async function buildSession(
   context: ServiceContext,
   sourceActor: ScanActor,
@@ -90,21 +70,17 @@ export async function buildSession(
 ): Promise<ScanSession> {
   const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
   const actor = cloneObservedScanActor(sourceActor);
-  const authority = await scanSessionCountAuthority(ctx, actor);
-  actor.credentialKeysetCommitment = authority.credentialKeysetCommitment;
-  return sessionFor(ctx, actor, dayStart, false, authority);
+  return sessionFor(ctx, actor, dayStart, scanSessionCountAuthority(actor));
 }
 
 async function sessionFor(
   ctx: ServiceContext,
   sourceActor: ScanActor,
   dayStart: number | undefined,
-  forceUnassigned: boolean,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ): Promise<ScanSession> {
   let actor = sourceActor;
-  const scopedTemplates =
-    forceUnassigned || actor.invalidScannerScope ? null : await templatesOf(ctx, actor);
+  const scopedTemplates = actor.invalidScannerScope ? null : await templatesOf(ctx, actor);
   if (scopedTemplates === null) {
     const settings = { ...actor.settings, acceptAllTemplates: false, defaultActionId: null };
     delete settings.checkIn;
@@ -123,15 +99,18 @@ async function sessionFor(
   if (screen) actor = { ...actor, event: null, templateIds: [], staff: null };
   const templates = screen ? [] : (scopedTemplates?.templates ?? []);
   const db = ctx.env.DB;
-  const guard = countAuthority.guardAt(ctx.clock.now());
-  if (!guard) throw await authorityLost(ctx, sourceActor);
-  const scope =
-    scopedTemplates === null
-      ? unrestrictedSessionCountScope()
-      : scanningWorkspaceScopeFence(sourceActor);
-  const countGuard = planSessionCountGuard(guard, scope);
+  const now = ctx.clock.now();
+  // The cache write is under the strict fence: a paused or staffless actor reads but never fills.
   const counts =
-    scopedTemplates === null ? null : planCounts(ctx, actor, dayStart, sourceActor, countGuard);
+    scopedTemplates === null
+      ? null
+      : planCounts(
+          ctx,
+          actor,
+          dayStart,
+          sourceActor,
+          scanReadFence(scanReadAuthority(sourceActor, { now })),
+        );
   const listStaff =
     scopedTemplates !== null &&
     actor.scanner?.deviceRole === 'scan' &&
@@ -145,7 +124,7 @@ async function sessionFor(
         : null;
   const [results, undoWindow] = await Promise.all([
     db.batch([
-      ...(counts ? [sessionCountStatusStmt(db, guard, scope)] : []),
+      scanAuthorizedStmt(db, countAuthority.at(now)),
       orgNameStmt(db, actor.orgId),
       orgBrandingStmt(db, actor.orgId),
       ...(peopleStmt ? [peopleStmt] : []),
@@ -153,27 +132,18 @@ async function sessionFor(
     ]),
     undoWindowMinutes(ctx),
   ]);
-  const base = counts ? 1 : 0;
-  if (counts) {
-    const status = results[0]?.results?.[0] as
-      | { authorized: number; scope_current: number }
-      | undefined;
-    if (status?.authorized !== 1) throw await authorityLost(ctx, sourceActor);
-    if (status.scope_current !== 1)
-      return sessionFor(ctx, sourceActor, dayStart, true, countAuthority);
-  }
-  const orgName = (results[base]?.results?.[0] as { name: string } | undefined)?.name ?? '';
+  if ((results[0]?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)
+    throw await authorityLost(ctx, sourceActor);
+  const orgName = (results[1]?.results?.[0] as { name: string } | undefined)?.name ?? '';
   const storedBranding = OrgBrandingSchema.parse(
-    JSON.parse(
-      (results[base + 1]?.results?.[0] as { branding?: string } | undefined)?.branding ?? '{}',
-    ),
+    JSON.parse((results[2]?.results?.[0] as { branding?: string } | undefined)?.branding ?? '{}'),
   );
   const branding = ScanBrandingSchema.parse({
     accent: storedBranding.accent ?? null,
     logo: storedBranding.logo ?? null,
   });
-  const peopleRows = peopleStmt ? (results[base + 2]?.results ?? []) : [];
-  const countResults = results.slice(base + (peopleStmt ? 3 : 2));
+  const peopleRows = peopleStmt ? (results[3]?.results ?? []) : [];
+  const countResults = results.slice(peopleStmt ? 4 : 3);
   if (counts) {
     const today = (countResults[0]?.results?.[0] as { n?: unknown } | undefined)?.n;
     const managers = (countResults[1]?.results?.[0] as { has?: unknown } | undefined)?.has;
@@ -217,17 +187,6 @@ async function sessionFor(
   const user = peopleRows[0] as { name: string | null; primary_email: string } | undefined;
   const workspace =
     scopedTemplates === null ? null : await scanWorkspace(ctx, actor, countAuthority);
-  const fences = await sessionReadFencesCurrent(
-    ctx,
-    sourceActor,
-    ctx.clock.now(),
-    scopedTemplates?.releases ?? [],
-    scopedTemplates?.legacy ?? [],
-    { scopeRedacted: scopedTemplates === null },
-  );
-  if (!fences.authorityCurrent || (!fences.stampsCurrent && !scopedTemplates))
-    throw await authorityLost(ctx, sourceActor);
-  if (!fences.stampsCurrent) return sessionFor(ctx, sourceActor, dayStart, true, countAuthority);
   return {
     workspace,
     principal: actor.principal,
