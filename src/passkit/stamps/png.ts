@@ -1,7 +1,8 @@
 // Minimal deterministic PNG codec on fflate (already a passkit dependency): 8-bit, non-interlaced
 // decode to RGBA; encode RGB or RGBA with the smallest-sum filter per row. Same input and the same
 // fflate version give the same bytes in workerd, Node and browsers.
-import { unzlibSync, zlibSync } from 'fflate';
+import { zlibSync } from 'fflate';
+import { assertPngDimensions, inflateIdat, PngError } from '../png-inflate.ts';
 
 export interface Rgba {
   width: number;
@@ -38,7 +39,7 @@ const paeth = (a: number, b: number, c: number) => {
   return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
 };
 
-export class PngError extends Error {}
+export { PngError };
 
 export function decodePng(bytes: Uint8Array): Rgba {
   if (bytes.length < 33 || SIG.some((b, i) => bytes[i] !== b)) throw new PngError('Not a PNG.');
@@ -50,6 +51,7 @@ export function decodePng(bytes: Uint8Array): Rgba {
   const channels = CHANNELS[type];
   if (!channels || depth !== 8 || bytes[28] !== 0)
     throw new PngError('Use an 8-bit, non-interlaced PNG.');
+  assertPngDimensions(width, height);
   if (width * height > 1_000_000) throw new PngError('Stamp art is larger than 1 megapixel.');
   const idat: Uint8Array[] = [];
   let plte: Uint8Array | null = null;
@@ -64,15 +66,8 @@ export function decodePng(bytes: Uint8Array): Rgba {
     else if (kind === 'IEND') break;
     at += 12 + length;
   }
-  const joined = new Uint8Array(idat.reduce((n, d) => n + d.length, 0));
-  let o = 0;
-  for (const d of idat) {
-    joined.set(d, o);
-    o += d.length;
-  }
-  const raw = unzlibSync(joined);
   const stride = width * channels;
-  if (raw.length < (stride + 1) * height) throw new PngError('PNG data is truncated.');
+  const raw = inflateIdat(idat, (stride + 1) * height);
   const px = new Uint8Array(stride * height);
   for (let y = 0; y < height; y++) {
     const f = raw[y * (stride + 1)] as number;
