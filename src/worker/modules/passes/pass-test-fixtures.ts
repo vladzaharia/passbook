@@ -13,6 +13,8 @@ import {
   makeTemplate,
   type OrgRow,
   persistTemplate,
+  rememberAuthToken,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
@@ -135,7 +137,8 @@ export async function setupKit(
     JOBS: queue as unknown as Queue,
     BULK_REISSUE: workflow as unknown as Workflow,
   });
-  const clock = new ManualClock(options.clockStart ?? Date.now());
+  // Fixed epoch by default; kits that read wall time pass clockStart.
+  const clock = new ManualClock(options.clockStart ?? TEST_NOW);
   const fx = fixtures(env, clock);
   const templateId = `tpl-${fx.ids.token(4)}`;
   const { resolved, registry } = options.template?.(templateId) ?? makeTemplate({ id: templateId });
@@ -202,7 +205,7 @@ export async function setupKit(
       if (!release && options.approvedReleases !== false && orgId !== org.id)
         release = await approveAppleRelease(kit, { orgId, mode });
       release ??= await requireApprovedRelease(ctx, resolved.id, orgId, mode, 'apple');
-      return createPassRow(jobCtxOf({ ctx }), {
+      const created = await createPassRow(jobCtxOf({ ctx }), {
         orgId,
         templateId: resolved.id,
         templateVersion: release.version,
@@ -215,6 +218,7 @@ export async function setupKit(
         execution: { kind: 'system' },
         actor: { type: 'system', id: null },
       });
+      return rememberAuthToken(env, created);
     },
   };
   if (options.approvedReleases !== false) {

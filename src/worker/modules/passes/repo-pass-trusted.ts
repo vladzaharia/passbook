@@ -126,19 +126,19 @@ export async function sealTrusted(
   purpose: TokenPurpose,
   row: PlainTokenRow,
   mac: string,
-  seal: SealRow,
+  seal: SealRow | null,
 ): Promise<boolean> {
-  const pass = purpose === 'pass';
   const [updated] = await batch(db, [
-    stmt(
-      db,
-      pass
-        ? `UPDATE passes SET download_token = ? WHERE id = ? AND download_token = ?
-             AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED} RETURNING id`
-        : `UPDATE bundles SET token = ? WHERE id = ? AND token = ? AND NOT ${BUNDLE_RESERVED} RETURNING id`,
-      [mac, row.id, row.token],
-    ),
-    sealStatement(db, purpose, row.id, mac, seal),
+    stmt(db, SEAL_SQL[purpose], [mac, row.id, row.token]),
+    ...(seal ? [sealStatement(db, purpose, row.id, mac, seal)] : []),
   ]);
   return (updated?.results.length ?? 0) === 1;
 }
+
+const SEAL_SQL = {
+  pass: `UPDATE passes SET download_token = ? WHERE id = ? AND download_token = ?
+    AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED} RETURNING id`,
+  'apple-auth': `UPDATE passes SET auth_token = ? WHERE id = ? AND auth_token = ?
+    AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED} RETURNING id`,
+  bundle: `UPDATE bundles SET token = ? WHERE id = ? AND token = ? AND NOT ${BUNDLE_RESERVED} RETURNING id`,
+} as const;

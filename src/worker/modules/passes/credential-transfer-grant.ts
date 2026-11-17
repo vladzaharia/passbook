@@ -42,6 +42,7 @@ const FINISH_TABLES = [
   'pass_transfer_asset_gc',
   'pass_transfer_asset_candidates',
   'pass_transfer_asset_uploads',
+  'pass_auth_seals',
 ];
 
 export const tenantOf = (a: CredentialTransferAuthority): TenantPassWrite | undefined =>

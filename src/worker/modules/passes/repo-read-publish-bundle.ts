@@ -1,4 +1,6 @@
+import { isTokenMac, type SealRaw } from '../../platform/capability-token.ts';
 import { stmt } from '../../platform/db.ts';
+import { sealReadStatement } from '../../platform/repo-capability-token.ts';
 import { type IdentityRow, identityRowStmt } from '../identities/repo.ts';
 import { orgForPassStmt } from '../orgs/repo.ts';
 import { type BuildInputs, buildInputStmts, buildInputsFromResults } from './build-reads.ts';
@@ -15,6 +17,8 @@ export interface PublishReads {
   identityRow: IdentityRow | null;
   /** Build inputs for the pass's own template id. */
   inputs: BuildInputs;
+  /** The sealed copy of the pass's device token, read with the rest; null while the token is plain or the copy is missing. */
+  authSeal: { stored: string; row: SealRaw | null };
   /** Results of the caller's `extra` statements, in order. */
   extra: D1Result[];
 }
@@ -26,6 +30,7 @@ export async function readPublishBundle(
   extra: D1PreparedStatement[] = [],
 ): Promise<PublishReads> {
   const inputReq = { passId: pass.id, orgId: pass.orgId };
+  const sealed = isTokenMac(pass.authToken);
   const [removal, org, personalization, version, identity, ...rest] = await db.batch([
     publishRemovalStmt(db, pass, requireRemovalClaim),
     orgForPassStmt(db, pass.orgId),
@@ -36,9 +41,11 @@ export async function readPublishBundle(
       [pass.id],
     ),
     identityRowStmt(db, pass.identityId),
+    ...(sealed ? [sealReadStatement(db, 'apple-auth', pass.id, pass.orgId)] : []),
     ...buildInputStmts(db, inputReq, pass.templateId),
     ...extra,
   ]);
+  const authSeal = sealed ? rest.shift() : undefined;
   const inputResults = rest.slice(0, rest.length - extra.length);
   const first = <T>(r: D1Result | undefined) => (r?.results?.[0] as T | undefined) ?? null;
   return {
@@ -48,6 +55,7 @@ export async function readPublishBundle(
     previousJson: first<{ pass_json: string | null }>(version)?.pass_json ?? null,
     identityRow: first<IdentityRow>(identity),
     inputs: buildInputsFromResults({}, inputResults),
+    authSeal: { stored: pass.authToken, row: first<SealRaw>(authSeal) },
     extra: rest.slice(rest.length - extra.length),
   };
 }

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makeOrg } from '../../../../test/helpers/index.ts';
+import { deviceToken, makeOrg } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { PassDevicesSchema, PassSummarySchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -87,7 +87,7 @@ describe('POST /passes/{id}/remove and /restore', () => {
         {
           method: 'POST',
           headers: {
-            authorization: `ApplePass ${pass.authToken}`,
+            authorization: `ApplePass ${deviceToken(pass)}`,
             'content-type': 'application/json',
           },
           body: JSON.stringify({ pushToken: 'c'.repeat(64) }),
@@ -150,7 +150,7 @@ describe('POST /passes/{id}/remove and /restore', () => {
       await app.request(`${ORIGIN}/wallet/v1/devices/${d}/registrations/${TYPE}`, {}, kit.env);
     await app.request(
       `${ORIGIN}/wallet/v1/passes/${TYPE}/${pass.serial}`,
-      { headers: { authorization: `ApplePass ${pass.authToken}` } },
+      { headers: { authorization: `ApplePass ${deviceToken(pass)}` } },
       kit.env,
     );
     const after = await progress();

@@ -1,3 +1,4 @@
+import { allowLegacyPassJson } from '../../../../test/helpers/index.ts';
 import {
   installVersion,
   persistCardProjection,
@@ -7,6 +8,7 @@ import {
 import { CHECK_IN, kit } from './resolve-test-fixtures.ts';
 
 export async function cardProjectionFixture() {
+  await allowLegacyPassJson(kit.env.DB);
   const templateId = await kit.scanTemplate('Private projection', {
     actions: [
       CHECK_IN,

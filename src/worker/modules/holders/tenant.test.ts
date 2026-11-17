@@ -37,7 +37,7 @@ let kit: Kit;
 let app: ReturnType<typeof createApp>;
 beforeAll(async () => {
   kit = await setupKit();
-  app = createApp({ stores: createAuthStores, clock: kit.clock });
+  app = createApp({ stores: (env) => createAuthStores(env, kit.clock), clock: kit.clock });
 });
 const request = (path: string, headers: Record<string, string>, body?: unknown) =>
   app.request(
@@ -306,7 +306,7 @@ describe('holder tenant access', () => {
     async (which) => {
       const member = await eventMember(kit, kit.org.id, ['pass_operator']);
       const key = await makeApiKey(kit.fx, { orgId: kit.org.id, scopes: ['holders:write'] });
-      const stores = createAuthStores(kit.env);
+      const stores = createAuthStores(kit.env, kit.clock);
       const auth = which.startsWith('key')
         ? null
         : await stores.sessions.resolve(member.session.cookieValue);
@@ -395,7 +395,9 @@ describe('holder tenant access', () => {
   it('does not fence a holder change on the org timestamp', async () => {
     const org = await makeOrg(kit.fx);
     const member = await eventMember(kit, org.id, ['pass_operator']);
-    const session = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const session = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!session) throw new Error('Missing session fixture');
     const pass = await kit.pass({ orgId: org.id });
     const authority = await tenantAuthorityOf(jobCtxOf(kit), session, org.id, 'passes:operate');
@@ -415,7 +417,9 @@ describe('holder tenant access', () => {
     async (change) => {
       const org = await makeOrg(kit.fx);
       const member = await eventMember(kit, org.id, ['pass_operator']);
-      const session = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+      const session = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+        member.session.cookieValue,
+      );
       if (!session) throw new Error('Missing session fixture');
       const pass = await kit.pass({ orgId: org.id });
       const before = await getPass(kit.env.DB, pass.id);
@@ -453,7 +457,9 @@ describe('holder tenant access', () => {
 
   it('does not accept a read-only authority as a write capability', async () => {
     const member = await eventMember(kit, kit.org.id, ['read_only']);
-    const session = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const session = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!session) throw new Error('Missing session fixture');
     const authority = await tenantAuthorityOf(jobCtxOf(kit), session, kit.org.id, 'passes:read');
     const pass = await kit.pass();
@@ -480,7 +486,9 @@ describe('holder tenant access', () => {
     'does not %s when an attempted organization move is rejected',
     async (operation) => {
       const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-      const session = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+      const session = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+        member.session.cookieValue,
+      );
       if (!session) throw new Error('Missing session fixture');
       const foreignOrg = await makeOrg(kit.fx);
       const user = await makeUser(kit.fx);
@@ -570,7 +578,9 @@ describe('holder tenant access', () => {
       'INSERT INTO pass_attach_blocks (pass_id, user_id, created_at) VALUES (?, ?, ?)',
       [pass.id, user.id, kit.clock.now()],
     );
-    const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!auth) throw new Error('Missing session fixture');
     const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
     await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
@@ -620,7 +630,9 @@ describe('holder tenant access', () => {
     'does not mutate or audit %s after revocation at the batch',
     async (operation) => {
       const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-      const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+      const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+        member.session.cookieValue,
+      );
       if (!auth) throw new Error('Missing session fixture');
       const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
       const pass = await kit.pass({ holderEmail: 'before@example.com' });
@@ -682,7 +694,9 @@ describe('holder tenant access', () => {
     'completes %s when an org settings save lands before the batch',
     async (operation) => {
       const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-      const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+      const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+        member.session.cookieValue,
+      );
       if (!auth) throw new Error('Missing session fixture');
       const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
       const pass = await kit.pass({ holderEmail: 'before@example.com' });
@@ -726,7 +740,9 @@ describe('holder tenant access', () => {
 
   it('still refuses a holder change after an org suspension and reactivation', async () => {
     const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-    const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!auth) throw new Error('Missing session fixture');
     const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
     const pass = await kit.pass({ holderEmail: 'before@example.com' });
@@ -755,7 +771,9 @@ describe('holder tenant access', () => {
     'keeps the %s audit when membership is revoked immediately after its mutation batch',
     async (operation) => {
       const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-      const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+      const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+        member.session.cookieValue,
+      );
       if (!auth) throw new Error('Missing session fixture');
       const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
       const email = holderEmail();
@@ -840,7 +858,9 @@ describe('holder tenant access', () => {
 
   it('does not attach after authority is revoked between clearing the block and its hook', async () => {
     const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-    const session = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const session = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!session) throw new Error('Missing session fixture');
     const authority = await tenantAuthorityOf(jobCtxOf(kit), session, kit.org.id, 'passes:operate');
     const email = holderEmail();
@@ -900,7 +920,9 @@ describe('holder tenant access', () => {
     'commits %s and its audit together',
     async (operation) => {
       const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-      const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+      const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+        member.session.cookieValue,
+      );
       if (!auth) throw new Error('Missing session fixture');
       const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
       const pass = await kit.pass();
@@ -969,7 +991,9 @@ describe('holder tenant access', () => {
 
   it('does not audit or invalidate a bundle when the holder CAS is stale', async () => {
     const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-    const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!auth) throw new Error('Missing session fixture');
     const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
     const pass = await kit.pass();
@@ -1027,7 +1051,9 @@ describe('holder tenant access', () => {
     'rolls back %s and its side effects if its audit insert fails',
     async (operation) => {
       const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-      const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+      const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+        member.session.cookieValue,
+      );
       if (!auth) throw new Error('Missing session fixture');
       const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
       const email = holderEmail();
@@ -1128,7 +1154,9 @@ describe('holder tenant access', () => {
 
   it('commits block removal and attachment with separate matching audits', async () => {
     const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-    const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!auth) throw new Error('Missing session fixture');
     const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
     const email = holderEmail();

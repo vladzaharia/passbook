@@ -88,7 +88,7 @@ function finish(db: D1Database, passId: string, transferId: string, now: number)
       owner_user_id = NULL, object_key = ?, modified_at = ?, version = version + 1 WHERE id = ?`,
       [
         crypto.randomUUID(),
-        crypto.randomUUID(),
+        `h1:${crypto.randomUUID()}`,
         crypto.randomUUID(),
         'new-holder@example.test',
         `passes/${passId}/${crypto.randomUUID()}.pkpass`,

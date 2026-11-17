@@ -6,18 +6,25 @@ import {
   loadKekRing,
 } from './crypto.ts';
 import { NotFoundError, UnavailableError } from './errors.ts';
-import { toHex } from './ids.ts';
+import { safeEqual, toHex } from './ids.ts';
 import { createLogger } from './log.ts';
-import { readSeal, SEALS, type SealRow, type TokenPurpose } from './repo-capability-token.ts';
+import {
+  readSeal,
+  SEALS,
+  type SealRaw,
+  type SealRow,
+  type TokenPurpose,
+} from './repo-capability-token.ts';
 
 export { sealPart, sealStatement } from './repo-capability-token.ts';
-export type { SealRow, TokenPurpose };
+export type { SealRaw, SealRow, TokenPurpose };
 
 /**
- * Capability tokens (pass download links, bundle links) at rest. The token column stores a lookup MAC
- * (`h1:` + HMAC-SHA-256 under a derived key), never the token. The link is shown again from a sealed
- * copy (AES-GCM envelope, AAD = id|org|purpose). Rows not yet backfilled still hold the plain token:
- * a lookup tries the MAC and the plain value (`tokenKeys`), and `revealToken` returns it as is.
+ * Capability tokens (pass download links, bundle links, the Apple web-service token) at rest. The token
+ * column stores a lookup MAC (`h1:` + HMAC-SHA-256 under a derived key), never the token. The token is
+ * shown or built again from a sealed copy (AES-GCM envelope, AAD = id|org|purpose). Rows not yet
+ * backfilled still hold the plain token: a lookup tries the MAC and the plain value (`tokenKeys`,
+ * `tokenMatches`), and `revealToken` returns it as is.
  */
 export const MAC_PREFIX = 'h1:';
 const encoder = new TextEncoder();
@@ -25,8 +32,15 @@ const log = createLogger({ module: 'capability-token' });
 
 export const isTokenMac = (stored: string): boolean => stored.startsWith(MAC_PREFIX);
 
+/** Each secret kind has its own derived key: a MAC of one kind never verifies as another's. */
+const MAC_KEYS: Record<TokenPurpose, string> = {
+  pass: 'capability-token.v1',
+  bundle: 'capability-token.v1',
+  'apple-auth': 'apple-auth-token.v1',
+};
+
 export async function tokenMac(env: object, purpose: TokenPurpose, token: string): Promise<string> {
-  const key = await derivedHmacKey(env, 'capability-token.v1');
+  const key = await derivedHmacKey(env, MAC_KEYS[purpose]);
   const mac = await crypto.subtle.sign(
     'HMAC',
     key,
@@ -80,6 +94,21 @@ export async function issueToken(
   return { token, mac, seal };
 }
 
+/**
+ * Whether `presented` is the token a column holds, in constant time. A sealed row compares the MAC of the
+ * presented value, so a MAC read from the database is no token; a row not yet backfilled holds the plain one.
+ */
+export async function tokenMatches(
+  env: object,
+  purpose: TokenPurpose,
+  stored: string,
+  presented: string,
+): Promise<boolean> {
+  // The MAC is computed for every row, so a sealed, an unsealed and an unknown row cost the same.
+  const mac = await tokenMac(env, purpose, presented);
+  return isTokenMac(stored) ? safeEqual(mac, stored) : safeEqual(presented, stored);
+}
+
 const bytes = (v: number[] | ArrayBuffer) => new Uint8Array(v);
 
 /** The plain token of a stored column value: a row not yet backfilled holds it, others are unsealed. */
@@ -91,7 +120,19 @@ export async function revealToken(
   stored: string,
 ): Promise<string> {
   if (!isTokenMac(stored)) return stored;
-  const row = await readSeal(env.DB, purpose, id, orgId);
+  return unsealToken(env, purpose, id, orgId, stored, await readSeal(env.DB, purpose, id, orgId));
+}
+
+/** `revealToken` for a caller that read the sealed copy itself (in a batch of its own reads). */
+export async function unsealToken(
+  env: object,
+  purpose: TokenPurpose,
+  id: string,
+  orgId: string,
+  stored: string,
+  row: SealRaw | null,
+): Promise<string> {
+  if (!isTokenMac(stored)) return stored;
   if (!row) {
     log.error('token.seal_missing', { code: 'TOKEN_SEAL_MISSING', purpose, id });
     throw new UnavailableError('The link is unavailable. Rotate it.', 'TOKEN_SEAL_MISSING');

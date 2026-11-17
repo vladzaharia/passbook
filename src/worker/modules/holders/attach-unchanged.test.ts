@@ -164,7 +164,9 @@ describe('verified attach of a pass whose credential cannot change', () => {
   it('does not link after the initiating tenant authority is revoked', async () => {
     const { kit, pass } = await fixedBarcodePass();
     const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-    const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!auth) throw new Error('Missing session');
     const authority = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:operate');
     const race = atOwnerWrite(kit, () =>

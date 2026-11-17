@@ -134,7 +134,7 @@ function finishStatements(db: D1Database, passId: string, transferId: string, no
       owner_user_id = NULL, object_key = ?, modified_at = ?, version = version + 1 WHERE id = ?`,
       [
         crypto.randomUUID(),
-        crypto.randomUUID(),
+        `h1:${crypto.randomUUID()}`,
         toBase32(crypto.getRandomValues(new Uint8Array(16))),
         'new-holder@example.test',
         `passes/${passId}/${crypto.randomUUID()}.pkpass`,
@@ -217,7 +217,7 @@ describe('0042 credential and lifecycle generations', () => {
     for (const [column, value] of [
       ['holder_email', 'other@example.test'],
       ['serial', crypto.randomUUID()],
-      ['auth_token', crypto.randomUUID()],
+      ['auth_token', `h1:${crypto.randomUUID()}`],
     ] as const) {
       await expect(
         run(db, `UPDATE passes SET ${column} = ? WHERE id = ?`, [value, pass.id]),

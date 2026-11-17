@@ -37,7 +37,9 @@ async function blockedRetiredPass() {
 
 async function memberAuthority(kit: Kit, capability: 'passes:operate' | 'passes:read') {
   const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-  const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+  const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+    member.session.cookieValue,
+  );
   if (!auth) throw new Error('Missing session');
   return {
     member,
@@ -81,7 +83,9 @@ describe('tenant clear-block', () => {
   it('refuses a snapshot that claims a capability the membership does not hold', async () => {
     const { kit, pass, user } = await blockedRetiredPass();
     const member = await eventMember(kit, kit.org.id, ['read_only']);
-    const auth = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const auth = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!auth) throw new Error('Missing session');
     const read = await tenantAuthorityOf(jobCtxOf(kit), auth, kit.org.id, 'passes:read');
     const forged = { ...read, capability: 'passes:operate' } as TenantPassWrite;

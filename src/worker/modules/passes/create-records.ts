@@ -30,6 +30,7 @@ export async function addCreateStatements(
   const insert = grantPassInsert(g, row, ownerUserId);
   g.assert('stale', [exists('passes', { id: row.id })]);
   g.include(sealPart('pass', row.id, row.downloadToken, row.tokenSeal));
+  g.include(sealPart('apple-auth', row.id, row.authToken, row.authSeal));
   if (row.sendEmail && row.holderEmail) {
     await grantIssuanceInsert(ctx.env.DB, g, row);
     g.assert('stale', [exists('pass_issuance_deliveries', { pass_id: row.id })]);

@@ -16,6 +16,7 @@ import { createAuthStores } from './stores.ts';
 describe('createAuthStores', () => {
   it('wires the D1 session and API-key stores', async () => {
     const env = await makeEnv();
+    // Real clock: the stores under test read wall time for session and key expiry.
     const f = fixtures(env, new ManualClock(Date.now()));
     const stores = createAuthStores(env);
     const user = await makeUser(f);
@@ -29,6 +30,7 @@ describe('createAuthStores', () => {
 
   it('audits refused principals as auth.denied, without emails or tokens', async () => {
     const env = await makeEnv();
+    // Real clock: the stores under test read wall time for session and key expiry.
     const f = fixtures(env, new ManualClock(Date.now()));
     const app = createApp({ stores: createAuthStores(env) });
     const user = await makeUser(f);

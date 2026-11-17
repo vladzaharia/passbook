@@ -734,6 +734,7 @@ describe('identity checks', () => {
   it('daily run audits identities inside the 30 day window and records check results', async () => {
     const f = await acme();
     const dto = (await (await upload(f)).json()) as Dto;
+    // Real clock: the uploaded certificate is minted at wall time.
     const ctx = createServiceContext(appEnv, { clock: new ManualClock(Date.now()) });
     await run(env.DB, "DELETE FROM audit_log WHERE action LIKE 'identity.exp%'");
     await runDailyIdentityChecks(ctx);

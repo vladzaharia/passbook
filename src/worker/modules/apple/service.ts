@@ -1,4 +1,5 @@
 import { writeEvent } from '../../platform/analytics.ts';
+import { MAC_PREFIX, tokenMatches } from '../../platform/capability-token.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import {
   AppError,
@@ -6,7 +7,7 @@ import {
   RateLimitedError,
   UnauthenticatedError,
 } from '../../platform/errors.ts';
-import { safeEqual, sha256Hex } from '../../platform/ids.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { ipRatePrefix } from '../../platform/ip.ts';
 import { redactString } from '../../platform/log.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -46,7 +47,8 @@ const DEVICE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 /** APNs device tokens vary in length; APNs rejects bad ones (BadDeviceToken cleans them up). */
 const PUSH_TOKEN = /^(?:[0-9a-fA-F]{2}){8,200}$/;
 /** Compared when the pass is unknown so the response time does not reveal which part was wrong. */
-const DUMMY_TOKEN = 'ApplePass 0000000000000000000000000000000000000000000';
+const DUMMY_STORED = `${MAC_PREFIX}${'0'.repeat(64)}`;
+const SCHEME = 'ApplePass ';
 
 export interface AppleTarget {
   pass: Pass;
@@ -72,8 +74,13 @@ export async function authorizePass(
 ): Promise<AppleTarget> {
   const identity = await identityByPassType(ctx.env.DB, passTypeId);
   const pass = identity ? await getPassBySerial(ctx.env.DB, identity.id, serial) : null;
-  const expected = pass ? `ApplePass ${pass.authToken}` : DUMMY_TOKEN;
-  const ok = await safeEqual(authorization ?? '', expected);
+  const presented = authorization?.startsWith(SCHEME) ? authorization.slice(SCHEME.length) : '';
+  const ok = await tokenMatches(
+    ctx.env,
+    'apple-auth',
+    pass ? pass.authToken : DUMMY_STORED,
+    presented,
+  );
   if (!identity || !pass || pass.testDataQuarantined || !ok) throw unauthorized();
   await assertAppleCredential(ctx, pass);
   return { pass, identity };

@@ -151,7 +151,8 @@ export async function broadcastAuth(
 }
 
 export async function broadcastKit(): Promise<BroadcastKit> {
-  const kit = await setupKit();
+  // Wall time: the route suites schedule against Date.now() and mint sessions on the system clock.
+  const kit = await setupKit({ clockStart: Date.now() });
   await seedCreators(kit);
   const broadcast: FakeWorkflow = {
     created: [],

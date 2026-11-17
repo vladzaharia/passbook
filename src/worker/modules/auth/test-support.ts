@@ -1,4 +1,5 @@
 import { makeEnv } from '../../../../test/helpers/env.ts';
+import { TEST_NOW } from '../../../../test/helpers/factories.ts';
 import { createMockOidc, type MockOidc } from '../../../../test/mock-oidc/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
@@ -80,11 +81,12 @@ export async function harness(
 ): Promise<TestHarness> {
   await resetOidcClientCaches(ISSUER);
   const mail: SentMail[] = [];
-  const clock = options.clock ?? new ManualClock(Date.now());
+  const clock = options.clock ?? new ManualClock(TEST_NOW);
   const oidc = await createMockOidc({
     issuer: ISSUER,
     clientId: overrides.OIDC_CLIENT_ID ?? CLIENT_ID,
     publicClient: options.publicClient,
+    now: () => clock.now(),
   });
   const turnstileOk = { value: true };
   const env = await makeEnv({

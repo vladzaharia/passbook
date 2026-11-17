@@ -33,7 +33,7 @@ approval and replay-safe Save behavior can be verified.
 | Download token (`/p/<token>`), bundle token (`/b/<token>`) | MAC + sealed copy | Lookup by HMAC (`h1:`); the link is shown again from an AES-GCM copy bound to id, org and purpose. A database read yields no link, once the minute backfill `tokens.seal` has reached the row (until then it holds the plain token). A presented `h1:` value never matches, so a leaked MAC is no link. Rotatable. Never logged. |
 | Scanner asset grant | none | Stateless HMAC, one hour. See Scanner security. |
 | Manager PIN | hashed | HMAC under a key from the oldest KEK. Rate-limited. |
-| ApplePass token | retrievable | Devices need it back. Rotatable. Never logged. |
+| ApplePass token (`authenticationToken`) | MAC + sealed copy | Device calls compare the MAC of the presented token in constant time (own HMAC key; a stored MAC is no token). `pass.json` builds read the AES-GCM copy; stored `pass_versions.pass_json` never carries the token. Rotated by a credential transfer. Never logged. |
 | Pass serial | plain | The personalization capability (SEC-1). NFC identities must not use caller-chosen or guessable serials. |
 
 Holder transfers reserve a monotonic credential generation before invalidating the public link.

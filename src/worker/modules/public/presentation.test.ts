@@ -89,6 +89,7 @@ async function passWith(
   const objectKey = `passes/${id}/v1-${f.ids.token(4)}.pkpass`;
   await h.env.BUCKET.put(objectKey, new Uint8Array([1, 2, 3]));
   const link = await fixtureToken(h.env, id, org.id, f.ids.token());
+  const auth = await fixtureToken(h.env, id, org.id, f.ids.token(), 'apple-auth');
   await run(
     h.env.DB,
     `INSERT INTO passes
@@ -103,7 +104,7 @@ async function passWith(
       f.ids.token(16),
       template.id,
       template.version,
-      f.ids.token(),
+      auth.mac,
       link.mac,
       `${f.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify({ memberName: 'Alex Morgan' }),
@@ -118,6 +119,7 @@ async function passWith(
     ],
   );
   await link.seal();
+  await auth.seal();
   // The pass_created trigger inserts the current version.
   const version = await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
     JSON.stringify({
@@ -373,6 +375,8 @@ describe('presentation barcode', () => {
     if (state === 'expired') json.expirationDate = '2026-01-01T00:00:00Z';
     if (state === 'JSON-voided') json.voided = true;
     const pass = await passWith({ json });
+    // Before the state change: a deleted pass keeps no sealed copy to reveal the link from.
+    const link = await linkToken(h.env, pass);
     if (state === 'status-voided') {
       await run(h.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]);
     } else if (state === 'removed') {
@@ -385,7 +389,7 @@ describe('presentation barcode', () => {
         org.id,
       ]);
     }
-    for (const res of [await publicGet(await publicPath(pass)), await ownerGet(ownerPath(pass))]) {
+    for (const res of [await publicGet(`/p/${link}/barcode`), await ownerGet(ownerPath(pass))]) {
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     }
 
@@ -402,7 +406,7 @@ describe('presentation barcode', () => {
         expect(json).not.toContain(secret);
     }
 
-    const preview = await publicGet(`/p/${await linkToken(h.env, pass)}`);
+    const preview = await publicGet(`/p/${link}`);
     expect(preview.status).toBe(canBeMissing ? 404 : 200);
     const previewHtml = await preview.text();
     for (const secret of [PRIMARY, SECONDARY, LEGACY, SCAN_CODE, ALT_TEXT])
