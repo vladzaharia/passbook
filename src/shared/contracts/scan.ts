@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { CheckInPolicySchema, CheckInStateSchema, SetupDirectionSchema } from './check-in.ts';
 import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
+import { ScanActionInputSchema } from './scan-action-input.ts';
 import { ScanDisplayReadSchema } from './scan-display.ts';
+
+export type { ScanActionInput } from './scan-action-input.ts';
+export { ScanActionInputSchema } from './scan-action-input.ts';
 
 /** Idempotency keys: UUIDv7, made by the client. */
 export const UuidV7Schema = z
@@ -57,6 +61,7 @@ export const SCAN_REFUSED_REASONS = [
   'voided',
   'expired',
   'no_balance',
+  'card_full',
   'managed_elsewhere',
   'limit_reached',
   'zone_not_included',
@@ -132,7 +137,11 @@ export const ScanAccessSchema = z.object({
   timeZone: TimeZoneSchema,
 });
 export type ScanAccess = z.infer<typeof ScanAccessSchema>;
-export const ScanApprovalSchema = z.object({ staffId: IdSchema, pin: z.string().regex(/^\d{6}$/) });
+/** A Manager's PIN for one action. `staffId` is optional: a PIN alone is matched against the org's managers. */
+export const ScanApprovalSchema = z.object({
+  staffId: IdSchema.optional(),
+  pin: z.string().regex(/^\d{6}$/),
+});
 
 const request = {
   idempotencyKey: UuidV7Schema,
@@ -204,6 +213,8 @@ export const ScanCardActionSchema = z.object({
   cooldownRemainingMs: z.number().int().nullable(),
   armable: z.enum(['sticky', 'once']).nullable(),
   rewardLabel: z.string().nullable(),
+  /** A `set` with no fixed value: what it accepts. */
+  input: ScanActionInputSchema.optional(),
 });
 export const ScanTemplateRefSchema = z.object({ name: z.string(), style: z.string() });
 export const ScanCardSchema = z.object({

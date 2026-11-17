@@ -47,7 +47,7 @@ export async function stagePendingCredentialTransfer(
           AND t.source_row_version = p.row_version
           AND t.source_lifecycle_generation = p.lifecycle_generation
           AND t.source_link_generation = p.link_generation + 1)`,
-      [options.token, options.now, passId, options.id],
+      [`h1:${options.token}`, options.now, passId, options.id],
     ),
     guard(),
   ]);

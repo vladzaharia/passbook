@@ -48,6 +48,18 @@ export interface ScanChecksInput {
   event?: ScanEventRow | null;
   /** The scanned pass's template; only this template's membership is checked, not every scoped one. */
   templateId?: string;
+  /** Relaxations only a read may ask for; a write never passes them. */
+  read?: ScanReadRelaxations;
+}
+
+/** What the session read fence allows beyond a write's checks (`scan/read-authority.ts`). */
+export interface ScanReadRelaxations {
+  /** A paused session compares its `config_epoch` only: its status is in the bump set. */
+  pausedSession?: boolean;
+  /** A monitor screen has no staff binding to check. */
+  stafflessMonitor?: boolean;
+  /** An invalid scanner scope is redacted by the caller, so no scope-derived check applies. */
+  invalidScope?: boolean;
 }
 
 /**
@@ -61,6 +73,7 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
   const epochs = scanEpochsOf(actor);
   if (!epochs) throw epochsMissing();
   const checks: Check[] = [];
+  const read = input.read ?? {};
   const { scanner, scanningSession: session } = actor;
   if (scanner) {
     if (epochs.scanner?.id !== scanner.id) throw epochsMissing();
@@ -103,17 +116,21 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
         );
       }
       // No staff was derived: the device must still have no valid binding (none, expired or disabled).
-      else checks.push(noStaffBindingCheck(scanner.id, input.now));
+      else if (!(read.stafflessMonitor && scanner.deviceRole === 'monitor'))
+        checks.push(noStaffBindingCheck(scanner.id, input.now));
     }
   }
   if (session) {
     if (epochs.session?.id !== session.id) throw epochsMissing();
-    if (session.status !== 'active') return [rawCheck('config', '0')];
+    const paused = read.pausedSession === true && session.status === 'paused';
+    if (session.status !== 'active' && !paused) return [rawCheck('config', '0')];
     checks.push(
       rowIs(
         'scanning_sessions',
         session.id,
-        { config_epoch: epochs.session.config, status: 'active' },
+        paused
+          ? { config_epoch: epochs.session.config }
+          : { config_epoch: epochs.session.config, status: 'active' },
         'config',
       ),
     );
@@ -159,8 +176,16 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
       ),
     );
   }
+  // An invalid scope is redacted by the caller: it must carry no scope at all.
+  if (
+    read.invalidScope &&
+    actor.invalidScannerScope &&
+    (actor.event || actor.templateIds.length > 0 || actor.settings.acceptAllTemplates === true)
+  )
+    return [rawCheck('config', '0')];
   const { templateId } = input;
-  if (templateId) {
+  const scoped = !(read.invalidScope && actor.invalidScannerScope);
+  if (templateId && scoped) {
     if (actor.event)
       checks.push(
         exactlyOne(
@@ -176,7 +201,7 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
       checks.push(scannerTemplateCheck(scanner.id, templateId));
   }
   // scanner_templates has no epoch: an unrestricted scanner must still have no template list.
-  if (scanner && !session && !actor.event && actor.templateIds.length === 0)
+  if (scoped && scanner && !session && !actor.event && actor.templateIds.length === 0)
     checks.push(noScannerTemplatesCheck(scanner.id));
   return checks;
 }

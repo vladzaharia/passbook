@@ -291,7 +291,7 @@ describe('pass.refresh', () => {
             row_version, lifecycle_generation, link_generation + 1, 'next@example.test', NULL, 'system', NULL,
             ${kit.clock.now()}, NULL FROM passes WHERE id = NEW.id;
           UPDATE passes SET credential_generation = credential_generation + 1,
-            download_token = '${kit.ids.token()}', link_generation = link_generation + 1 WHERE id = NEW.id;`,
+            download_token = 'h1:${kit.ids.token()}', link_generation = link_generation + 1 WHERE id = NEW.id;`,
       }[race];
       await run(
         kit.env.DB,

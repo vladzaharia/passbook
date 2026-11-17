@@ -1,4 +1,6 @@
 /** Structure rules of `scanDisplayIssues`: placement, references, conditions, density and warnings. */
+
+import { SCAN_STAMPS_MAX } from '../../stamps/layout.ts';
 import { condPaths, condShape } from './condition.ts';
 import {
   DENSITY,
@@ -73,9 +75,9 @@ function checkPlacement(ctx: Ctx, rows: ScanRowDoc[], at: string): void {
       row.type === 'progress' &&
       row.style === 'stamps' &&
       typeof row.goal === 'number' &&
-      row.goal > 10
+      row.goal > SCAN_STAMPS_MAX
     )
-      bad(i, 'Stamps hold 10 at most. Use a bar.');
+      bad(i, `Stamps hold ${SCAN_STAMPS_MAX} at most. Use a bar.`);
   });
 }
 

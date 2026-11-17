@@ -36,7 +36,7 @@ async function reserve(pass: Pass): Promise<void> {
     stmt(
       db,
       `UPDATE passes SET credential_generation = credential_generation + 1,
-      link_generation = link_generation + 1, download_token = ? WHERE id = ?`,
+      link_generation = link_generation + 1, download_token = 'h1:' || ? WHERE id = ?`,
       [kit.fx.ids.token(), pass.id],
     ),
   ]);

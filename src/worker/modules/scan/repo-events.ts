@@ -1,9 +1,8 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { first, prefixMatch, type SqlValue, stmt } from '../../platform/db.ts';
-import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
+import { first, prefixMatch, type SqlValue } from '../../platform/db.ts';
 import { eventExpectedCountSql } from './repo-counts.ts';
 import { eventArrivedCountSql } from './repo-event-attendance.ts';
-import type { EventAuthority } from './repo-event-keyset.ts';
+import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 import { templateReleaseHeadsSql } from './repo-scope-releases.ts';
 
 type Db = D1Database;
@@ -71,6 +70,7 @@ const scopedEventTemplates = `SELECT x.template_id FROM scan_event_templates x
 /** Relationship counts and returned identifiers must belong to the event's scope. */
 const eventSelect = (
   expectedSql: string,
+  arrivedSql: string,
 ) => `SELECT e.id, e.org_id, e.mode, e.name, e.match_input, e.match_values, e.opens_at, e.closes_at,
     e.time_zone, e.capacity, e.reentry, e.note, e.expected, e.expected_at, ${expectedSql} AS live_expected, e.archived_at, e.updated_at, e.config_epoch,
     (SELECT json_group_array(template_id) FROM (${scopedEventTemplates} ORDER BY x.template_id)) AS template_ids,
@@ -82,12 +82,19 @@ const eventSelect = (
       'e.org_id',
       'e.mode',
     )} AS release_heads,
-    ${eventArrivedCountSql('e')} AS arrived,
+    ${arrivedSql} AS arrived,
     (SELECT count(*) FROM scanners s WHERE s.event_id=e.id AND s.org_id=e.org_id
        AND s.mode=e.mode AND s.revoked_at IS NULL) AS scanners
   FROM scan_events e`;
 
-const SELECT_WITH_COUNT = eventSelect(eventExpectedCountSql('e', '?'));
+const SELECT_WITH_COUNT = eventSelect(eventExpectedCountSql('e', '?'), eventArrivedCountSql('e'));
+/**
+ * An authorized read splits the occupancy count into its own statement of the same batch: the
+ * count is ~20 KB of SQL, and the fence plus the whole select would pass the 32 KB statement
+ * budget. Both statements apply the same fence and filter in one transaction.
+ */
+const SELECT_ROWS = eventSelect(eventExpectedCountSql('e', '?'), '0');
+const SELECT_ARRIVED = `SELECT e.id, ${eventArrivedCountSql('e')} AS arrived FROM scan_events e`;
 
 const toRow = (r: Raw): ConsoleEventRow => ({
   id: r.id,
@@ -142,105 +149,62 @@ export async function getCommittedConsoleEvent(
   return row ? toRow(row) : null;
 }
 
-/** Project the committed response in the same transaction and under the same tenant authority. */
-export function authorizedEventStmt(
+/** Rows and their occupancy counts under one fence and filter, in one batch. */
+async function readEvents(
   db: Db,
-  id: string,
-  authority: EventAuthority,
+  auth: ScanReadAuthority,
+  filter: string,
+  params: SqlValue[],
   now: number,
-): D1PreparedStatement {
-  if (
-    authority.kind !== 'session' ||
-    (authority.capability !== 'scanning:read' && authority.capability !== 'scanning:manage')
-  )
-    return stmt(db, `${SELECT_WITH_COUNT} WHERE 0`, [now]);
-  return stmt(
-    db,
-    `${SELECT_WITH_COUNT} WHERE e.id=? AND e.mode=? AND ${tenantPassAuthoritySql(authority, 'e')}
-      AND (${authority.csrfFence.sql})`,
-    [
-      now,
-      id,
-      authority.mode,
-      ...tenantPassAuthorityParams(authority, now),
-      ...authority.csrfFence.params,
-    ],
+): Promise<{ authorized: boolean; rows: ConsoleEventRow[] }> {
+  const where = `WHERE ${auth.ok} AND ${auth.tenant('e', 'scan_events')}${filter}`;
+  const [rows, arrived, status] = await db.batch([
+    scanRead(db, auth, `${SELECT_ROWS} ${where}`, [now, ...params]),
+    scanRead(db, auth, `${SELECT_ARRIVED} ${where}`, params),
+    scanRead(db, auth, `SELECT 1 AS ok WHERE ${auth.ok}`),
+  ]);
+  const counts = new Map(
+    (arrived?.results ?? []).map((r) => {
+      const row = r as unknown as { id: string; arrived: number };
+      return [row.id, row.arrived] as const;
+    }),
   );
+  return {
+    authorized: !!status?.results.length,
+    rows: (rows?.results ?? []).map((r) => {
+      const raw = r as unknown as Raw;
+      return toRow({ ...raw, arrived: counts.get(raw.id) ?? 0 });
+    }),
+  };
 }
 
-export function consoleEventFromResult(result: D1Result): ConsoleEventRow | null {
-  const row = result.results[0] as unknown as Raw | undefined;
-  return row ? toRow(row) : null;
-}
-
-/** Empty results still carry session status from the projection's transaction. */
-function eventReadStatusStmt(
-  db: Db,
-  authority: EventAuthority | undefined,
-  now: number,
-): D1PreparedStatement {
-  const access = authority
-    ? `${tenantPassAuthoritySql(authority)} AND (${authority.csrfFence.sql})`
-    : '1';
-  const params = authority
-    ? [...tenantPassAuthorityParams(authority, now), ...authority.csrfFence.params]
-    : [];
-  return stmt(db, `SELECT (${access}) AS authority`, params);
-}
-
-function eventReadStatus(result: D1Result | undefined): boolean {
-  return (result?.results[0] as { authority: number } | undefined)?.authority === 1;
-}
-
-/** Bind the exact tenant session to the event and its relationship counts in one read. */
+/** The event and its counts under the actor's read authority, with whether the actor is allowed. */
 export async function getAuthorizedConsoleEvent(
   db: Db,
   id: string,
-  authority: EventAuthority,
+  auth: ScanReadAuthority,
   now: number,
-): Promise<ConsoleEventRow | null> {
-  if (
-    authority.kind !== 'session' ||
-    (authority.capability !== 'scanning:read' && authority.capability !== 'scanning:manage')
-  )
-    return null;
-  const [projection, status] = await db.batch([
-    authorizedEventStmt(db, id, authority, now),
-    eventReadStatusStmt(db, authority, now),
-  ]);
-  return eventReadStatus(status) && projection ? consoleEventFromResult(projection) : null;
+): Promise<{ authorized: boolean; row: ConsoleEventRow | null }> {
+  const { authorized, rows } = await readEvents(db, auth, ' AND e.id=?', [id], now);
+  return { authorized, row: rows[0] ?? null };
 }
 
 export interface EventFilter {
-  mode: Mode;
-  orgId?: string | undefined;
   status?: 'upcoming' | 'live' | 'ended' | 'archived' | undefined;
   q?: string | undefined;
   now: number;
   cursor?: string | undefined;
   limit: number;
-  authority?: EventAuthority | undefined;
 }
 
-/** Newest opening first. An org list rides `scan_events_org`. */
-export async function listConsoleEvents(db: Db, f: EventFilter): Promise<ConsoleEventRow[]> {
-  const where = ['e.mode = ?'];
-  const params: SqlValue[] = [f.mode];
-  if (f.orgId) {
-    where.push('e.org_id = ?');
-    params.push(f.orgId);
-  }
-  if (f.authority) {
-    if (
-      f.authority.kind !== 'session' ||
-      f.orgId !== f.authority.orgId ||
-      f.mode !== f.authority.mode ||
-      (f.authority.capability !== 'scanning:read' && f.authority.capability !== 'scanning:manage')
-    )
-      return [];
-    where.push(`${tenantPassAuthoritySql(f.authority, 'e')} AND (${f.authority.csrfFence.sql})`);
-    params.push(...tenantPassAuthorityParams(f.authority, f.now), ...f.authority.csrfFence.params);
-  }
+/** Newest opening first. The tenant comes from the actor, so the list rides `scan_events_org`. */
+export async function listConsoleEvents(
+  db: Db,
+  auth: ScanReadAuthority,
+  f: EventFilter,
+): Promise<{ authorized: boolean; rows: ConsoleEventRow[] }> {
+  const where: string[] = [];
+  const params: SqlValue[] = [];
   if (f.status === 'archived') where.push('e.archived_at IS NOT NULL');
   else if (f.status) {
     where.push('e.archived_at IS NULL');
@@ -256,18 +220,16 @@ export async function listConsoleEvents(db: Db, f: EventFilter): Promise<Console
   }
   if (f.cursor) {
     where.push(`(e.opens_at, e.id) < (
-      SELECT opens_at, id FROM scan_events WHERE id = ? AND mode = ?${f.orgId ? ' AND org_id = ?' : ''}
+      SELECT c.opens_at, c.id FROM scan_events c WHERE c.id = ? AND ${auth.tenant('c', 'scan_events')}
     )`);
-    params.push(f.cursor, f.mode, ...(f.orgId ? [f.orgId] : []));
+    params.push(f.cursor);
   }
-  const [page, status] = await db.batch([
-    stmt(
-      db,
-      `${SELECT_WITH_COUNT} WHERE ${where.join(' AND ')} ORDER BY e.opens_at DESC, e.id DESC LIMIT ?`,
-      [f.now, ...params, f.limit],
-    ),
-    eventReadStatusStmt(db, f.authority, f.now),
-  ]);
-  if (!eventReadStatus(status)) return [];
-  return (page?.results ?? []).map((row) => toRow(row as unknown as Raw));
+  const filter = where.map((w) => ` AND ${w}`).join('');
+  return readEvents(
+    db,
+    auth,
+    `${filter} ORDER BY e.opens_at DESC, e.id DESC LIMIT ?`,
+    [...params, f.limit],
+    f.now,
+  );
 }

@@ -14,32 +14,8 @@ import {
   type AssetWalletSnapshot,
   photoGrantPurpose,
 } from './asset-types.ts';
+import { usedRelease } from './effective-release.ts';
 import { walletIdentityMatches } from './wallet-snapshot.ts';
-
-/**
- * The release the pass is used under, as its template snapshot captured it: the pass's own when the
- * head only republishes it (`ownReleaseSaysSameSql`), so an identical republish keeps a minted grant
- * valid and a successor that changes what a scanner sees or may do does not.
- */
-function usedRelease(snapshot: AssetPassSnapshot): [string, number, string, string] | null | false {
-  const raw = snapshot.templateSnapshot?.raw;
-  if (!raw) return false;
-  let release: unknown;
-  try {
-    release = (JSON.parse(raw) as { release?: unknown }).release;
-  } catch {
-    return false;
-  }
-  if (release === null) return null;
-  const r = release as Record<string, unknown> | undefined;
-  return r &&
-    typeof r.id === 'string' &&
-    typeof r.generation === 'number' &&
-    typeof r.version === 'string' &&
-    typeof r.candidateHash === 'string'
-    ? [r.id, r.generation, r.version, r.candidateHash]
-    : false;
-}
 
 /** Keep credentials and identifying scalars out of the serialized MAC input. */
 async function sensitiveDigest(key: CryptoKey, value: string | null): Promise<string | null> {
@@ -117,7 +93,7 @@ export async function grantData(
       (!source.eventId || !source.sourceId || source.actor.scanner?.id !== source.sourceId))
   )
     return null;
-  const release = usedRelease(snapshot);
+  const release = usedRelease(snapshot.templateSnapshot?.raw);
   if (release === false) return null;
   const noRelease =
     snapshot.activeReleaseId === null &&

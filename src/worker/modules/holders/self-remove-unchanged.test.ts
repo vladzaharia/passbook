@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeSession } from '../../../../test/helpers/index.ts';
+import { issueToken } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -70,7 +71,12 @@ describe('owner removes a pass whose credential cannot change', () => {
           return run(kit.env.DB, 'DELETE FROM sessions WHERE user_id = ?', [user.id]);
         const current = await getPass(kit.env.DB, pass.id);
         if (!current) throw new Error('Missing pass');
-        return setDownloadToken(kit.env.DB, current, kit.fx.ids.token(), kit.clock.now());
+        return setDownloadToken(
+          kit.env.DB,
+          current,
+          await issueToken(kit.env, 'pass', current.id, current.orgId, kit.fx.ids.token()),
+          kit.clock.now(),
+        );
       });
       await expect(removePassFromUser(race.ctx, pass.id, user.id, sessionId)).rejects.toBeDefined();
       expect(race.fired()).toBe(true);

@@ -150,7 +150,12 @@ async function writesOf(requests: { path: string; headers: Record<string, string
       counted.reset();
       const response = await app.request(`${ORIGIN}${path}`, { headers }, kit.env);
       expect(response.status, path).toBeLessThan(500);
-      const writes = forbidden(writesIn(counted.sql()));
+      // Only the export route audits through a grant (one row, released in the same batch).
+      const writes = forbidden(
+        writesIn(counted.sql()).filter(
+          (w) => !(w.table === 'authority_grants' && path.includes('/scans/export')),
+        ),
+      );
       expect(writes, `GET ${path}`).toEqual([]);
     }
   } finally {

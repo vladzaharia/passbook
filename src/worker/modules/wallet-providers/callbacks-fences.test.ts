@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -292,10 +293,12 @@ describe('Samsung callback authority fences', () => {
     if (!snapshot) throw new Error('Missing fetch snapshot');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
     if (!raw) throw new Error('Missing materialized pass');
-    await run(db, 'UPDATE passes SET download_token = ? WHERE id = ?', [
-      t.kit.ctx.ids.token(32),
-      t.pass.id,
-    ]);
+    await withoutTrigger(db, 'passes_token_change_moves_link', () =>
+      run(db, `UPDATE passes SET download_token = 'h1:' || ? WHERE id = ?`, [
+        t.kit.ctx.ids.token(32),
+        t.pass.id,
+      ]),
+    );
     expect((await t.call({ token: await t.token() })).status).toBe(200);
     const generation = await first<{ credential_generation: number }>(
       db,

@@ -1,4 +1,4 @@
-import { UnavailableError } from '../../platform/errors.ts';
+import { UnavailableError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
 import { type ActRequest, claimOf, rememberHistoryCapacities, requestHashOf } from './act-claim.ts';
@@ -27,7 +27,7 @@ import { actorAuthorityPredicates } from './repo-actor-authority.ts';
 import { credentialTombstonesClearStmt } from './repo-credential-tombstones.ts';
 import { outputPredicateStmt } from './repo-output-predicates.ts';
 import { pristineClaimFence } from './repo-scans.ts';
-import { staffStatement } from './repo-staff.ts';
+import { approverStatement } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import { afterReads } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
@@ -42,6 +42,8 @@ export async function act(
 ): Promise<ScanEvaluation> {
   ctx = snapshotActionContext(ctx);
   actor = cloneObservedScanActor(actor);
+  if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
+    throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
   const { input, approval, ...request } = req;
   req = {
     ...structuredClone(request),
@@ -122,7 +124,7 @@ export async function act(
         ...plan.stmts,
         ...(plan.capacityStmt ? [plan.capacityStmt] : []),
         ...(overrideQuery ? [overrideQuery] : []),
-        ...(req.approval ? [staffStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
+        ...(req.approval ? [approverStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
         replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
         credentialTombstonesClearStmt(
           ctx.env.DB,

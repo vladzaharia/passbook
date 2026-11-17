@@ -9,6 +9,7 @@ import type { OutboxRow } from '../delivery/repo-outbox-map.ts';
 import { finishOutbox } from '../delivery/repo-outbox-processing.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { type CaptureSnapshot, resolveCaptureSnapshot } from './binding.ts';
+import { sealBody } from './captured-body.ts';
 import { insertCaptured } from './repo-capture.ts';
 
 /** The actor captured at queue time and the lineage checks the capture must still hold. */
@@ -65,7 +66,7 @@ export async function captureEmail(ctx: ServiceContext, input: CaptureInput): Pr
     attached: input.attached ? 1 : 0,
     intent: intent ?? null,
   };
-  const snapshot = await resolveCaptureSnapshot(ctx.env.DB, ref);
+  const snapshot = await resolveCaptureSnapshot(ctx.env, ref);
   const matchesOutbox =
     row.kind === 'email' &&
     row.orgId === input.orgId &&
@@ -85,16 +86,17 @@ export async function captureEmail(ctx: ServiceContext, input: CaptureInput): Pr
   }
   if ('legacy' in output && output.legacy)
     ctx.log.info('delivery.legacy_intent', { code: 'DELIVERY_LEGACY_INTENT', outboxId: row.id });
+  const captureId = ctx.ids.id();
   const result = await insertCaptured(
     ctx,
     {
-      id: ctx.ids.id(),
+      id: captureId,
       ...ref,
       intent,
       outbox_id: row.id,
       subject: email.subject,
-      html: email.html,
-      text: email.text,
+      html: await sealBody(ctx.env, captureId, input.orgId, email.html),
+      text: await sealBody(ctx.env, captureId, input.orgId, email.text),
       attached: input.attached ?? false,
       created_at: ctx.clock.now(),
     },

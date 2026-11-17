@@ -12,7 +12,7 @@ import { type OutputPredicate, outputPredicatesCurrent } from './repo-output-pre
 import { scanPasslessSnapshotPredicate } from './repo-scan-passless.ts';
 import type { PasslessScan } from './scan-passless.ts';
 
-export { consoleFeedAuthorityCurrent, scanExportAuditStmt } from './repo-feed-console.ts';
+export { auditScanExport, consoleFeedAuthorityCurrent } from './repo-feed-console.ts';
 export { scanLedgerScopeSql } from './repo-feed-scope.ts';
 export { scanLogSnapshotPredicate } from './repo-feed-snapshot.ts';
 export type { ScanEventProof, ScanKeySnapshot, ScanLogRow } from './repo-feed-types.ts';
@@ -233,12 +233,11 @@ export async function getApiKeyFeedRowsCurrent(
       ? scanPasslessSnapshotPredicate('s', passlessProof)
       : null;
     const scope = `EXISTS (SELECT 1 FROM scans s WHERE s.id = ?/* scan-ephemeral-scan-id */ AND s.mode = ?
-      AND (? IS NULL OR s.org_id = ?) AND (${filtered.sql}))`;
+      ${auth.orgId === null ? '' : 'AND s.org_id = ? '}AND (${filtered.sql}))`;
     const params: SqlValue[] = [
       row.id,
       auth.mode,
-      auth.orgId,
-      auth.orgId,
+      ...(auth.orgId === null ? [] : [auth.orgId]),
       ...filtered.params,
       ...snapshot.params,
     ];

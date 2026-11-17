@@ -67,7 +67,7 @@ describe('credential transfer', () => {
     await run(
       kit.env.DB,
       `INSERT INTO bundles (id,org_id,name,token,created_at) VALUES (?,?,'old',?,?)`,
-      [bundle, pass.orgId, kit.ctx.ids.token(), kit.clock.now()],
+      [bundle, pass.orgId, `h1:${kit.ctx.ids.token()}`, kit.clock.now()],
     );
     await run(kit.env.DB, 'INSERT INTO bundle_passes (bundle_id,pass_id,position) VALUES (?,?,0)', [
       bundle,

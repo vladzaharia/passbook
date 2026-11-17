@@ -7,12 +7,14 @@ import type {
 } from '../../../shared/contracts/scanners.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
+import { bump } from '../../platform/counters.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import {
   AppError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  RateLimitedError,
   UnavailableError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -24,6 +26,7 @@ import {
   addStaffPinRotate,
   addStaffUpdate,
   addUnbindStaffEverywhere,
+  getStaff,
   getStaffBase,
   type ScanStaffRow,
 } from './repo-staff.ts';
@@ -36,6 +39,19 @@ import {
 } from './repo-staff-page.ts';
 import { staffViews } from './staff-admin-views.ts';
 import { hashPin } from './staff-pin.ts';
+
+/** One minute window per user: 60 writes or 240 reads. */
+export async function staffRateLimit(ctx: ServiceContext, userId: string, write: boolean) {
+  const now = ctx.clock.now();
+  const window = now - (now % 60_000);
+  const key = `scan:staff-admin:${write ? 'write' : 'read'}:${userId}`;
+  if ((await bump(ctx.env.DB, key, window)) > (write ? 60 : 240))
+    throw new RateLimitedError(Math.ceil((window + 60_000 - now) / 1000));
+}
+
+/** The staff row in the named organization, before any tenant authority exists for it. */
+export const staffTarget = (ctx: ServiceContext, orgId: string, id: string) =>
+  getStaff(ctx.env.DB, orgId, id);
 
 type CreateStaff = z.infer<typeof CreateScanStaffSchema>;
 type UpdateStaff = z.infer<typeof UpdateScanStaffSchema>;

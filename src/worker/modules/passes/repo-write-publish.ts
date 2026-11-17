@@ -10,7 +10,7 @@ import type { FieldSources, PassCause, PassStatus } from './repo-map.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
 import { permitsPassMutation } from './repo-write-authority.ts';
 import { casConnector } from './repo-write-publish-connector.ts';
-import { casGranted } from './repo-write-publish-granted.ts';
+import { casGranted, type PublishCommit } from './repo-write-publish-granted.ts';
 import { type PublishPassSnapshot, permitsPublishRelease } from './repo-write-publish-snapshot.ts';
 
 export interface PublishWrite {
@@ -51,6 +51,8 @@ export interface PublishWrite {
   connectionState?: ConnectionStateWrite | undefined;
   authority?: TenantPassWrite | undefined;
   holder?: HolderPrincipal | undefined;
+  /** A scan's grant in place of a tenant's: its rows commit in this write's batch. */
+  commit?: PublishCommit | undefined;
   /** Required with authority, so its expiry is checked immediately before the batch. */
   clock?: Clock | undefined;
 }
@@ -132,6 +134,7 @@ export async function casPublish(ctx: ServiceContext, w: PublishWrite): Promise<
       removalClaim: w.publishedRemovalGeneration !== undefined,
     };
     // A tenant publish is one grant. A connector (or legacy no-principal) publish is a connection job grant.
+    if (w.commit && !w.connectionContext) return casGranted(ctx, { ...common, commit: w.commit });
     return w.authority && !w.connectionContext
       ? casGranted(ctx, { ...common, authority: w.authority })
       : casConnector(ctx, {
@@ -169,6 +172,8 @@ export async function casMeta(
     connectionState?: ConnectionStateWrite | undefined;
     authority?: TenantPassWrite | undefined;
     holder?: HolderPrincipal | undefined;
+    /** A scan's grant in place of a tenant's: its rows commit in this write's batch. */
+    commit?: PublishCommit | undefined;
     /** Required with authority, so its expiry is checked immediately before the batch. */
     clock?: Clock | undefined;
   },
@@ -207,6 +212,8 @@ export async function casMeta(
       ...(set.connectionState ? { sync_error_code: set.connectionState.syncErrorCode } : {}),
     },
   };
+  if (set.commit && !set.connectionContext)
+    return casGranted(ctx, { ...common, commit: set.commit });
   return set.authority && !set.connectionContext
     ? casGranted(ctx, { ...common, authority: set.authority })
     : casConnector(ctx, {

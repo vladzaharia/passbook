@@ -1,3 +1,4 @@
+import { revealToken } from '../../platform/capability-token.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvents } from '../events/record.ts';
@@ -15,7 +16,7 @@ const notFound = () => new NotFoundError('This link is not valid.', 'LINK_NOT_FO
 /** Bearer-link lookup. A rotated or deleted bundle's token no longer resolves. */
 export async function bundleForToken(ctx: ServiceContext, token: string): Promise<BundleRow> {
   if (!isTokenShape(token)) throw notFound();
-  const bundle = await getBundleByToken(ctx.env.DB, token);
+  const bundle = await getBundleByToken(ctx.env, token);
   if (!bundle || !(await isOrgActive(ctx, bundle.org_id))) throw notFound();
   return bundle;
 }
@@ -36,13 +37,15 @@ export async function bundleMembers(
     return [];
   }
   if (snapshot.bundle.token !== bundle.token) throw notFound();
-  const binding = await bindBundle(snapshot, '');
+  const binding = await bindBundle(ctx.env, snapshot, '');
+  const bundleToken = await revealToken(ctx.env, 'bundle', bundle.id, bundle.org_id, bundle.token);
   const members = await Promise.all(
     snapshot.passes.map(async (pass) => {
       const model = await pageModel(ctx, pass);
+      const passToken = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
       const assets = Object.fromEntries(
         Object.entries(model.assets).flatMap(([name, path]) => {
-          const own = bundleAssetPath(path, pass.downloadToken, bundle.token, pass.id);
+          const own = bundleAssetPath(path, passToken, bundleToken, pass.id);
           return own === null ? [] : [[name, own]];
         }),
       );
@@ -50,7 +53,7 @@ export async function bundleMembers(
     }),
   );
   const current = await bundleEmailSnapshot(ctx.env.DB, bundle.id);
-  if (!current || !(await matchesBundle(current, binding))) throw notFound();
+  if (!current || !(await matchesBundle(ctx.env, current, binding))) throw notFound();
   await assertBundleMembers(
     ctx,
     bundle,

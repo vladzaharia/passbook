@@ -14,9 +14,8 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
-import { captureEventAuthority, eventView, listEvents } from './events.ts';
+import { captureEventAuthority, eventTarget, eventView, listEvents } from './events.ts';
 import { archiveEvent, assignScanners, createEvent, updateEvent } from './events-mutations.ts';
-import { getConsoleEventTarget } from './repo-events.ts';
 
 /** Console events: /api/v1/scan-events. Mode comes from the console's header, never the body. */
 export const scanEventsRoutes = createRouter();
@@ -29,7 +28,7 @@ async function eventAuthority(c: C, id: string, capability: 'scanning:read' | 's
   const ctx = serviceContext(c);
   const auth = c.var.auth;
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
-  const event = await getConsoleEventTarget(ctx.env.DB, id);
+  const event = await eventTarget(ctx, id);
   if (!event || event.mode !== modeOf(auth) || !(await getOrgAccess(ctx, auth.userId, event.orgId)))
     throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   const authority = await captureEventAuthority(

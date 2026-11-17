@@ -126,7 +126,7 @@ export function addStamps(doc: DesignDoc, art: Partial<Record<ArtSlot, DraftAsse
   return { passJson, manifest, assets };
 }
 
-/** A new goal: rewrites the block and the input's maximum, clamps the sample, drops keepReady. */
+/** A new goal: rewrites the block, the input's maximum and the scan's redeem, clamps the sample, drops keepReady. */
 export function setGoal(doc: DesignDoc, goal: number): DesignDoc {
   const view = readStamps(doc);
   if (!view || goal < GOAL_MIN || goal > GOAL_MAX || goal === view.goal) return doc;
@@ -142,6 +142,11 @@ export function setGoal(doc: DesignDoc, goal: number): DesignDoc {
     if (typeof node['x-help'] === 'string')
       node['x-help'] = node['x-help'].replace(/takes \d+ off/, `takes ${goal} off`);
   }
+  // Redeeming at the scanner takes the goal, so a take on the count follows it.
+  const actions = (manifest.scan as { actions?: unknown } | undefined)?.actions;
+  for (const action of Array.isArray(actions) ? actions : [])
+    if (isRecord(action) && action.kind === 'take' && action.input === view.input)
+      action.amount = goal;
   const sample = manifest.sample as Dict;
   if (typeof sample[view.input] === 'number')
     sample[view.input] = Math.min(sample[view.input] as number, max);

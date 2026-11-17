@@ -1,4 +1,4 @@
-import { makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
+import { fixtureToken, makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
@@ -26,6 +26,7 @@ export async function seedPass(
     objectKey: `passes/${id}/v1-${kit.ids.token(4)}.pkpass`,
   };
   const now = kit.clock.now();
+  const link = await fixtureToken(kit.env, id, orgId, pass.downloadToken);
   await kit.env.BUCKET.put(pass.objectKey, new Uint8Array([1, 2, 3]));
   await run(
     kit.env.DB,
@@ -42,7 +43,7 @@ export async function seedPass(
       template.id,
       template.version,
       pass.authToken,
-      pass.downloadToken,
+      link.mac,
       `${kit.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify({ memberName: 'Alex Morgan' }),
       pass.objectKey,
@@ -55,5 +56,6 @@ export async function seedPass(
       binding?.ref ?? null,
     ],
   );
+  await link.seal();
   return pass;
 }
