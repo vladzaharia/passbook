@@ -43,6 +43,8 @@
       "arrowParentheses": "always"
     }
   },
+  "markdown": { "formatter": { "enabled": false } },
+  "yaml": { "formatter": { "enabled": false } },
   "json": { "formatter": { "trailingCommas": "none" }, "parser": { "allowComments": true } },
   "linter": {
     "enabled": true,
@@ -67,6 +69,29 @@
     {
       "includes": ["tools/**", "e2e/**", "test/mock-oidc/**", "*.config.ts"],
       "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+    },
+    // The Playwright rules also match vitest describe(name, opts, fn), jest-dom matchers and any
+    // function named describe; they apply to e2e/** only.
+    {
+      "includes": ["src/**", "test/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "usePlaywrightValidDescribeCallback": "off",
+            "noPlaywrightMissingAwait": "off"
+          }
+        }
+      }
+    },
+    // Harnesses and wrappers in tests mount once per test; no parent re-renders them.
+    {
+      "includes": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*test-fixtures.ts",
+        "**/*test-fixtures.tsx"
+      ],
+      "linter": { "rules": { "correctness": { "noComponentHookFactories": "off" } } }
     },
     {
       "includes": ["**/*.test.ts", "**/*.test.tsx", "test/**"],
