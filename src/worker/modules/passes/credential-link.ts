@@ -1,4 +1,4 @@
-import { type Check, passRow, rawCheck, rowIs } from '../../platform/authority-checks.ts';
+import { type Check, passRow, rowIs } from '../../platform/authority-checks.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -10,6 +10,7 @@ import {
   eligibleOwner,
   noOpenClaims,
   noTargetTombstone,
+  orgInactive,
 } from './repo-credential-transfer-fences.ts';
 import {
   type CredentialTransferAuthority,
@@ -112,18 +113,7 @@ export async function unlinkInactiveOrg(
   a: SelfRemove,
 ): Promise<boolean> {
   const source = await readTransferPass(ctx.env.DB, passId);
-  return (
-    !!source &&
-    unlinkOwner(
-      ctx,
-      a,
-      source,
-      rawCheck(
-        'stale',
-        "NOT EXISTS (SELECT 1 FROM orgs o WHERE o.id = a.org_id AND o.status = 'active')",
-      ),
-    )
-  );
+  return !!source && unlinkOwner(ctx, a, source, orgInactive());
 }
 
 async function unlinkOwner(

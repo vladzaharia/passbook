@@ -144,3 +144,10 @@ export const attachBlockPart = (userId: string, now: number) =>
     'INSERT OR IGNORE INTO pass_attach_blocks (pass_id,user_id,created_at) SELECT {pass},?,? WHERE {grant}',
     [userId, now],
   );
+
+/** The pass's org is still not active: an unlink without a re-sign holds only while nothing can issue. */
+export const orgInactive = (): Check =>
+  rawCheck(
+    'stale',
+    "NOT EXISTS (SELECT 1 FROM orgs o WHERE o.id = a.org_id AND o.status = 'active')",
+  );
