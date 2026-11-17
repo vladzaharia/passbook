@@ -33,6 +33,54 @@ export const findUserByEmail = (db: Db, email: string) =>
 export const findUserByPrimaryEmail = (db: Db, email: string) =>
   first<UserRow>(db, 'SELECT * FROM users WHERE primary_email = ?', [email]);
 
+/**
+ * Stands in for a primary email nobody has proven (an account an identity provider created). It
+ * sits on the reserved .invalid TLD, so it never receives mail and is never a real address.
+ */
+const UNVERIFIED_SUFFIX = '@unverified.invalid';
+export const unverifiedPrimaryEmail = (userId: string) => `${userId}${UNVERIFIED_SUFFIX}`;
+export const isUnverifiedPrimary = (email: string) => email.endsWith(UNVERIFIED_SUFFIX);
+
+/** The account signs in through an identity provider (anything but the break-glass token). */
+const hasExternalIdentity = async (db: Db, userId: string) =>
+  (await first(db, "SELECT 1 FROM auth_identities WHERE user_id = ? AND provider <> 'breakglass'", [
+    userId,
+  ])) !== null;
+
+/**
+ * The account that owns `email`: a verified address, or a primary email on an account with no
+ * external identity. A primary email on an account that has one is a claim, not ownership (it may
+ * come from an identity provider that never proved it), so it never matches here.
+ */
+export async function findUserByProvenEmail(db: Db, email: string): Promise<UserRow | null> {
+  const verified = await findUserByEmail(db, email);
+  if (verified) return verified;
+  const byPrimary = await findUserByPrimaryEmail(db, email);
+  return byPrimary && !(await hasExternalIdentity(db, byPrimary.id)) ? byPrimary : null;
+}
+
+/** Frees the address from an account that held it unproven. Returns the account, if any. */
+export async function releaseUnprovenPrimary(db: Db, email: string): Promise<UserRow | null> {
+  const holder = await findUserByPrimaryEmail(db, email);
+  if (!holder) return null;
+  await run(db, 'UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?', [
+    unverifiedPrimaryEmail(holder.id),
+    holder.id,
+    email,
+  ]);
+  return holder;
+}
+
+/** An account with a placeholder primary email takes the first address it proves. */
+export async function adoptPrimaryEmail(db: Db, userId: string, email: string): Promise<void> {
+  await run(
+    db,
+    `UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?
+       AND NOT EXISTS (SELECT 1 FROM users WHERE primary_email = ?)`,
+    [email, userId, unverifiedPrimaryEmail(userId), email],
+  );
+}
+
 /** No-op when the primary email is already taken; callers re-select. */
 export async function insertUser(
   db: Db,

@@ -48,7 +48,7 @@ export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) 
     setAddError(undefined);
     try {
       await addEmail.mutateAsync(email);
-      toast.success('Email added');
+      toast.success('Verification link sent');
       return true;
     } catch (cause) {
       setAddError(errorMessage(cause));
@@ -61,7 +61,7 @@ export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) 
       <CardHeader title="Emails" />
       <CardBody>
         <EmailList
-          addLabel="Add verified email"
+          addLabel="Send verification link"
           items={user.emails.map((e) => ({
             email: e.email,
             primary: e.email === user.primaryEmail,

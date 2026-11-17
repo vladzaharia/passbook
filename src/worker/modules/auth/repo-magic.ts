@@ -123,12 +123,17 @@ export async function spendAttempt(db: Db, tokenHash: string, max: number): Prom
 
 export { bump as bumpCounter } from '../../platform/counters.ts';
 
-/** True when another account holds the address as primary or verified. */
+/**
+ * True when another account holds the address as verified, or as primary without an external
+ * identity. A provider-created account's primary email is a claim, so it cannot squat the address.
+ */
 export async function isOwnedByOther(db: Db, email: string, userId: string): Promise<boolean> {
   const row = await first<{ found: number }>(
     db,
     `SELECT 1 AS found WHERE EXISTS (SELECT 1 FROM user_emails WHERE email = ? AND user_id != ?)
-       OR EXISTS (SELECT 1 FROM users WHERE primary_email = ? AND id != ?)`,
+       OR EXISTS (SELECT 1 FROM users u WHERE u.primary_email = ? AND u.id != ?
+         AND NOT EXISTS (SELECT 1 FROM auth_identities a
+           WHERE a.user_id = u.id AND a.provider <> 'breakglass'))`,
     [email, userId, email, userId],
   );
   return row !== null;

@@ -1,12 +1,12 @@
-// Sign-in, email verification and an admin adding an address attach waiting passes, but never fail on one.
+// Sign-in and email verification attach waiting passes, but never fail on one. An admin's word does not.
 import { describe, expect, it, vi } from 'vitest';
 import { makeUser } from '../../../../test/helpers/index.ts';
-import { all, first, run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { signInMagicLink, verifyEmailForUser } from '../auth/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { addVerifiedEmail } from '../users/emails.ts';
+import { requestEmailProof } from '../users/emails.ts';
 import { INLINE_ATTACH_CAP } from './service-attach.ts';
 import { resumeVerifiedHolderAttachments } from './transfer-jobs.ts';
 
@@ -79,22 +79,27 @@ describe('more waiting passes than the inline cap', () => {
   });
 });
 
-describe('an admin adds a verified address', () => {
-  it('audits the attach as the admin, naming the owner in the detail', async () => {
+describe('an admin names an address for a user', () => {
+  it('attaches nothing and verifies nothing until the owner proves it', async () => {
     const kit = await setupKit();
     const e = email();
     const pass = await kit.pass({ holderEmail: e });
     const [admin, user] = await Promise.all([makeUser(kit.fx), makeUser(kit.fx)]);
-    await addVerifiedEmail(jobCtxOf(kit), admin.id, user.id, e);
+    await requestEmailProof(jobCtxOf(kit), admin.id, user.id, e);
+    expect(await owner(kit, pass.id)).toBeNull();
+    expect(await first(kit.env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [e])).toBeNull();
+    expect(
+      await first(
+        kit.env.DB,
+        "SELECT 1 FROM audit_log WHERE action = 'user.email_proof_requested' AND target_id = ?",
+        [user.id],
+      ),
+    ).not.toBeNull();
+    // The sweep does not count the admin's request either.
+    await resumeVerifiedHolderAttachments(jobCtxOf(kit));
+    expect(await owner(kit, pass.id)).toBeNull();
+    await verifyEmailForUser(jobCtxOf(kit), user.id, e);
     expect(await owner(kit, pass.id)).toBe(user.id);
-    const rows = await all<{ actor_type: string; actor_id: string; detail: string }>(
-      kit.env.DB,
-      "SELECT actor_type, actor_id, detail FROM audit_log WHERE action = 'holder.attach' AND target_id = ?",
-      [pass.id],
-    );
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ actor_type: 'user', actor_id: admin.id });
-    expect(JSON.parse(rows[0]?.detail ?? '{}')).toMatchObject({ userId: user.id });
   });
 
   it('a self-verified address is audited as the owner', async () => {

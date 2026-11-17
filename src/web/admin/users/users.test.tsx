@@ -365,7 +365,7 @@ describe('user detail', () => {
       },
     });
     expect(await screen.findByText('No emails')).toBeInTheDocument();
-    expect(screen.getByLabelText('Add verified email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Send verification link')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Polaris ID/ })).toBeNull();
   });
 
@@ -379,7 +379,7 @@ describe('user detail', () => {
       },
     });
     const ui = userEvent.setup();
-    const field = await screen.findByLabelText('Add verified email');
+    const field = await screen.findByLabelText('Send verification link');
     await ui.type(field, 'x@example.com');
     await ui.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('Email belongs to another user.')).toBeInTheDocument();

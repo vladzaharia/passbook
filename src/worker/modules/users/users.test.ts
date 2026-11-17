@@ -241,21 +241,24 @@ describe('disable and enable', () => {
 });
 
 describe('emails', () => {
-  it('adds a verified email as admin', async () => {
+  it('sends a verification link instead of adding the address', async () => {
     const a = await admin();
     const user = await makeUser(f());
     const email = `Added-${tag()}@Example.test`;
     const res = await send('POST', `/api/v1/users/${user.id}/emails`, a.headers, { email });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { emails: { email: string; verifiedVia: string }[] };
-    expect(body.emails).toContainEqual(
-      expect.objectContaining({ email: email.toLowerCase(), verifiedVia: 'admin' }),
-    );
-    const again = await send('POST', `/api/v1/users/${user.id}/emails`, a.headers, { email });
-    expect(again.status).toBe(201);
+    expect(res.status).toBe(202);
+    const body = (await res.json()) as { emails: { email: string }[] };
+    expect(body.emails.map((e) => e.email)).toEqual([user.primaryEmail]);
+    expect(
+      await first(h.env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [email.toLowerCase()]),
+    ).toBeNull();
+    expect(h.mail.map((m) => m.to)).toEqual([email.toLowerCase()]);
+    expect(
+      (await send('POST', `/api/v1/users/${user.id}/emails`, a.headers, { email })).status,
+    ).toBe(202);
   });
 
-  it('attaches passes waiting for an added email', async () => {
+  it('does not attach passes waiting for the address', async () => {
     const a = await admin();
     const user = await makeUser(f());
     const email = `wait-${tag()}@example.test`;
@@ -266,7 +269,7 @@ describe('emails', () => {
       'SELECT owner_user_id FROM passes WHERE id = ?',
       [pass.id],
     );
-    expect(row?.owner_user_id).toBe(user.id);
+    expect(row?.owner_user_id).toBeNull();
   });
 
   it('refuses invalid addresses and addresses owned by another user', async () => {
@@ -287,7 +290,11 @@ describe('emails', () => {
     const a = await admin();
     const user = await makeUser(f());
     const extra = `extra-${tag()}@example.test`;
-    await send('POST', `/api/v1/users/${user.id}/emails`, a.headers, { email: extra });
+    await run(
+      h.env.DB,
+      "INSERT INTO user_emails (email, user_id, verified_via, verified_at) VALUES (?, ?, 'magic_link', 0)",
+      [extra, user.id],
+    );
     const del = (email: string) =>
       send('DELETE', `/api/v1/users/${user.id}/emails/${encodeURIComponent(email)}`, a.headers);
     await expectProblem(await del(user.primaryEmail), 409, 'PRIMARY_EMAIL');

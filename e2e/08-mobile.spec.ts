@@ -19,8 +19,8 @@ let adminPassTitle = '';
 test.beforeAll(async () => {
   const api = await apiAs('admin');
   adminPassTitle = `Mobile ${uid('M')}`;
-  // With oidc.trustEmail off (the default) an OIDC sign-in does not verify the address, so on a
-  // fresh database the admin verifies it; then the pass below is owned immediately.
+  // The e2e database trusts the mock Pocket ID's verified emails (tools/e2e-server.ts), so the
+  // address is already verified and the pass below is owned immediately.
   const users = await api.get<{ items: { id: string; primaryEmail: string }[] }>(
     `/api/v1/users?q=${encodeURIComponent(USER_EMAIL)}`,
   );
@@ -28,7 +28,7 @@ test.beforeAll(async () => {
   if (!user) throw new Error(`${USER_EMAIL} has not signed in`);
   const detail = await api.get<{ emails: { email: string }[] }>(`/api/v1/users/${user.id}`);
   if (!detail.emails.some((e) => e.email === USER_EMAIL))
-    await api.send('POST', `/api/v1/users/${user.id}/emails`, { email: USER_EMAIL });
+    throw new Error(`${USER_EMAIL} is not verified`);
   // Verified email of the signed-in OIDC user, so the pass is owned immediately.
   const pass = await createPass(api, readSeed().org.id, {
     holder: adminPassTitle,
