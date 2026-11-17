@@ -26,6 +26,10 @@ describe('MAC root version', () => {
       'pass-credential-tombstone-v1',
       'scan-retention-proof.v1',
       'connection.webhook.item-ref.v1',
+      // keyedDigest counter keys: a rotation must not reset their buckets.
+      'counter.magic-email.v1',
+      'counter.magic-ip.v1',
+      'counter.pass-email.v1',
     ])
       expect(await mac(await derivedHmacKey(pinned, label))).toBe(
         await mac(await derivedHmacKey(base, label)),

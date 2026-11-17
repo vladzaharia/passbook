@@ -1,4 +1,5 @@
 import { all, first, type SqlValue, stmt } from '../../platform/db.ts';
+import { knownEmailSql } from '../../platform/known-email-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 
 export interface MembershipRow {
@@ -8,7 +9,8 @@ export interface MembershipRow {
   org_slug: string;
   user_id: string;
   user_name: string | null;
-  user_email: string;
+  /** Null for an account whose primary email is the no-verified-email placeholder. */
+  user_email: string | null;
   roles: string;
   created_at: number;
   revoked_at: number | null;
@@ -23,7 +25,7 @@ export interface InvitationRow {
   revoked_at: number | null;
   accepted_at: number | null;
 }
-const membershipSelect = `SELECT m.*, o.name AS org_name, o.slug AS org_slug, u.name AS user_name, u.primary_email AS user_email FROM org_memberships m
+const membershipSelect = `SELECT m.*, o.name AS org_name, o.slug AS org_slug, u.name AS user_name, ${knownEmailSql('u.primary_email')} AS user_email FROM org_memberships m
  JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id`;
 /**
  * SQL for "this principal may bypass membership as a platform admin". The service passes
@@ -78,7 +80,7 @@ export function orgMembers(
   return all<MembershipRow>(
     db,
     `SELECT m.*, o.name AS org_name, o.slug AS org_slug, u.name AS user_name,
-       CASE WHEN (${f.sql}) THEN u.primary_email
+       CASE WHEN (${f.sql}) THEN ${knownEmailSql('u.primary_email')}
          ELSE COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') END AS user_email
      FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
      WHERE m.org_id = ? AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active' AND ${m.sql} ORDER BY m.created_at, m.id`,

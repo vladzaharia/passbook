@@ -90,7 +90,11 @@ describe('make primary', () => {
     const a = await admin();
     const user = await makeUser(f());
     const extra = `extra-${tag()}@example.test`;
-    await send('POST', `/api/v1/users/${user.id}/emails`, a.headers, { email: extra });
+    await run(
+      h.env.DB,
+      "INSERT INTO user_emails (email, user_id, verified_via, verified_at) VALUES (?, ?, 'magic_link', 0)",
+      [extra, user.id],
+    );
     const res = await send(
       'POST',
       `/api/v1/users/${user.id}/emails/${encodeURIComponent(extra)}/primary`,

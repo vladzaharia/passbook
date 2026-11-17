@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { THEME_ICON } from '../../lib/action-icons.ts';
 import { cn } from '../../lib/cn.ts';
+import { personLabel } from '../../lib/format.ts';
 import { isAdminPath } from '../../lib/guards.ts';
 import { useChangeCount } from '../../lib/motion.ts';
 import {
@@ -137,13 +138,13 @@ export function SignedInUserMenu({
       <DropdownMenuTrigger asChild>
         <IconButton
           label="Account menu"
-          icon={<EntityAvatar kind="user" id={user.id} name={user.name ?? user.primaryEmail} />}
+          icon={<EntityAvatar kind="user" id={user.id} name={personLabel(user)} />}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel>
-          <span className="block truncate text-fg-strong">{user.name ?? user.primaryEmail}</span>
-          {user.name ? (
+          <span className="block truncate text-fg-strong">{personLabel(user)}</span>
+          {user.name && user.primaryEmail ? (
             <span className="block truncate text-fg-muted">{user.primaryEmail}</span>
           ) : null}
         </DropdownMenuLabel>

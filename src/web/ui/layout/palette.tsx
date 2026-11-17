@@ -6,6 +6,7 @@ import { PlatformOrgListSchema } from '@/web/admin/orgs/queries.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
 import { api } from '../../lib/api.ts';
 import { connectorIcon, ENTITY } from '../../lib/entities.ts';
+import { personLabel } from '../../lib/format.ts';
 import { canAccessAdminPath } from '../../lib/guards.ts';
 import { adminNavGroups, isOrgScoped } from '../../lib/nav.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -208,9 +209,9 @@ export function AdminPalette({
               remote && platformReady
                 ? (users.data?.items ?? []).map((u) => ({
                     id: `user:${u.id}`,
-                    label: u.name ?? u.primaryEmail,
+                    label: personLabel(u),
                     icon: ENTITY.user.icon,
-                    hint: u.name ? u.primaryEmail : undefined,
+                    hint: u.name ? (u.primaryEmail ?? undefined) : undefined,
                     onSelect: go(`/admin/users/${u.id}`),
                   }))
                 : [],

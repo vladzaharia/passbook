@@ -18,6 +18,7 @@ import {
   RowLink,
   StatusPill,
 } from '@/web/ui/index.ts';
+import { personLabel } from '../../lib/format.ts';
 import { methodsLabel } from './labels.ts';
 import { useUserList } from './queries.ts';
 import type { UsersSearch } from './users-search.ts';
@@ -32,7 +33,7 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
     id: 'user',
     cell: ({ row }) => {
       const u = row.original;
-      const name = u.name ?? u.primaryEmail;
+      const name = personLabel(u);
       return (
         <div className="flex min-h-10 min-w-0 items-center gap-3">
           <EntityAvatar kind="user" id={u.id} name={name} />
@@ -40,7 +41,7 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
             <RowLink to="/admin/users/$userId" params={{ userId: u.id }}>
               {name}
             </RowLink>
-            {u.name ? (
+            {u.name && u.primaryEmail ? (
               <span className="block truncate text-xs text-fg-muted">{u.primaryEmail}</span>
             ) : null}
           </div>
@@ -80,14 +81,16 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
     cell: ({ row }) => (
       <div className="flex flex-col items-end gap-1">
         <span className="tabular-nums">{formatCount(row.original.passCount)}</span>
-        <MetaLink
-          to="/admin/passes"
-          search={{ q: row.original.primaryEmail }}
-          aria-label={`Find passes for ${row.original.primaryEmail}`}
-          className="text-xs text-accent-fg"
-        >
-          Find passes
-        </MetaLink>
+        {row.original.primaryEmail ? (
+          <MetaLink
+            to="/admin/passes"
+            search={{ q: row.original.primaryEmail }}
+            aria-label={`Find passes for ${row.original.primaryEmail}`}
+            className="text-xs text-accent-fg"
+          >
+            Find passes
+          </MetaLink>
+        ) : null}
       </div>
     ),
   },

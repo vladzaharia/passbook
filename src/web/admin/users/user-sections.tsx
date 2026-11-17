@@ -26,6 +26,8 @@ import {
   TechnicalDetails,
   toast,
 } from '@/web/ui/index.ts';
+import { NO_EMAIL_LABEL } from '../../../shared/email.ts';
+import { personLabel } from '../../lib/format.ts';
 import { useIdpUrl } from '../settings/queries.ts';
 import { isPolaris, methodsLabel, providerLabel } from './labels.ts';
 import { useUserMutations } from './queries.ts';
@@ -48,7 +50,7 @@ export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) 
     setAddError(undefined);
     try {
       await addEmail.mutateAsync(email);
-      toast.success('Email added');
+      toast.success('Verification link sent');
       return true;
     } catch (cause) {
       setAddError(errorMessage(cause));
@@ -61,7 +63,7 @@ export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) 
       <CardHeader title="Emails" />
       <CardBody>
         <EmailList
-          addLabel="Add verified email"
+          addLabel="Send verification link"
           items={user.emails.map((e) => ({
             email: e.email,
             primary: e.email === user.primaryEmail,
@@ -163,7 +165,7 @@ export function SessionsCard({
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}
-        {...revokeSessionsConfirm(user.name ?? user.primaryEmail)}
+        {...revokeSessionsConfirm(personLabel(user))}
         destructive
         onConfirm={async () => {
           await revokeSessions.mutateAsync();
@@ -222,7 +224,7 @@ export function AccountCard({ user }: { user: UserDetail }) {
       <CardBody>
         <KeyValue
           items={[
-            { label: 'Primary email', value: user.primaryEmail },
+            { label: 'Primary email', value: user.primaryEmail ?? NO_EMAIL_LABEL },
             {
               label: 'Roles at last sign-in',
               value: user.lastRoles.length ? (
@@ -243,11 +245,13 @@ export function AccountCard({ user }: { user: UserDetail }) {
         />
         <TechnicalDetails className="mt-3" items={[{ label: 'ID', value: user.id }]} />
         <div className="mt-3">
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin/passes" search={{ q: user.primaryEmail }}>
-              Find passes
-            </Link>
-          </Button>
+          {user.primaryEmail ? (
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin/passes" search={{ q: user.primaryEmail }}>
+                Find passes
+              </Link>
+            </Button>
+          ) : null}
         </div>
       </CardBody>
     </Card>

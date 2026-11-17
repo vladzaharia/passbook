@@ -20,6 +20,7 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import { jobCtxOf } from './delivery-test-fixtures.ts';
 import { EMAIL_RECIPIENT_HOURLY_CAP, enqueuePassEmail } from './issuance-intent.ts';
 import { handleEmailSend } from './jobs.ts';
+import { recipientKey } from './recipient-key.ts';
 import { getOutbox } from './repo.ts';
 
 const job = () => jobCtxOf(kit);
@@ -325,7 +326,7 @@ async function expectQueued(input: EmailInput, seam: Seam, before: Effects, outb
   expect(events[0]).toMatchObject({ org_id: pass.orgId, pass_id: pass.id, mode: pass.mode });
   expect(JSON.parse(events[0]?.data ?? '{}')).toEqual({ outboxId, attached: input.attach });
   const now = kit.clock.now();
-  const hash = (await sha256Hex(`pass-email:${to}`)).slice(0, 32);
+  const hash = await recipientKey(kit.env, to);
   for (const [key, window] of [
     [`pass-email:${pass.mode}:org:${pass.orgId}`, now - (now % DAY)],
     [`pass-email:${pass.mode}:to:${hash}`, now - (now % HOUR)],
@@ -471,7 +472,7 @@ describe('issued email authority at the outbox commit', () => {
 
   it('does not consume capped counters for a valid combined authority', async () => {
     const input = await combinedInput();
-    const hash = (await sha256Hex(`pass-email:${input.to}`)).slice(0, 32);
+    const hash = await recipientKey(kit.env, input.to);
     const now = kit.clock.now();
     await run(
       kit.env.DB,

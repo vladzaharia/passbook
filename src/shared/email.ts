@@ -21,6 +21,16 @@ export function strictEmail(raw: unknown): string | null {
   return EMAIL_ADDR_SPEC.test(email) ? email : null;
 }
 
+/** Primary email of an account that has proven no address (a provider-made one): never mailed. */
+export const UNVERIFIED_EMAIL_SUFFIX = '@unverified.invalid';
+/** What the UI shows for an account with no verified email. */
+export const NO_EMAIL_LABEL = 'No verified email';
+export const isUnverifiedEmail = (email: string): boolean =>
+  email.endsWith(UNVERIFIED_EMAIL_SUFFIX);
+/** The address to show or mail, or null for the placeholder. */
+export const knownEmail = (email: string | null | undefined): string | null =>
+  email && !isUnverifiedEmail(email) ? email : null;
+
 /** `anna@gmail.com` as `a•••@g•••.com`: enough to tell people apart, not enough to contact them. */
 export function maskEmail(raw: string): string {
   const email = normalizeEmail(raw);

@@ -1,4 +1,4 @@
-import { fromBase64, randomBytes } from './ids.ts';
+import { fromBase64, randomBytes, toHex } from './ids.ts';
 import { parseKekVersion } from './mac-key-config.ts';
 
 /**
@@ -242,4 +242,16 @@ export async function derivedHmacKey(
     false,
     ['sign', 'verify'],
   );
+}
+
+/**
+ * A 128-bit hex digest of `value` under the derived key for `label`. For counter and rate-limit
+ * keys built from an address: a plain hash falls to a dictionary of emails, this one does not
+ * without the KEK. Stored counters under an older scheme just expire. The `counter.*` labels are not
+ * rotatable labels: they stay on the oldest KEK, so a MAC root rotation does not reset their buckets.
+ */
+export async function keyedDigest(env: object, label: string, value: string): Promise<string> {
+  const key = await derivedHmacKey(env, label);
+  const mac = await crypto.subtle.sign('HMAC', key, encoder.encode(value) as BufferSource);
+  return toHex(new Uint8Array(mac)).slice(0, 32);
 }

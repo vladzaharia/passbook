@@ -14,6 +14,7 @@ let otherOrgId: string;
 let managerId: string;
 let memberId: string;
 let strangerId: string;
+let placeholderId: string;
 const primary = 'account-owner@example.test';
 const alias = 'invited-as@example.test';
 
@@ -44,6 +45,8 @@ beforeAll(async () => {
   // The account's primary email differs from the alias this org invited it by.
   memberId = (await makeUser(fx, { primaryEmail: primary })).id;
   strangerId = (await makeUser(fx)).id;
+  placeholderId = (await makeUser(fx, { primaryEmail: 'p1@unverified.invalid' })).id;
+  await member(placeholderId, orgId, 'joined-as@example.test', 'read_only');
   await member(managerId, orgId, 'manager@example.test', 'org_admin');
   await member(memberId, orgId, alias, 'read_only');
   await member(strangerId, otherOrgId, 'stranger-invite@example.test', 'read_only');
@@ -84,5 +87,21 @@ describe('void actor label', () => {
     );
     expect((await lastVoidEvent(h.env.DB, 'pass-void-label', false))?.actorLabel).toBe(alias);
     expect((await lastVoidEvent(h.env.DB, 'pass-void-label', true))?.actorLabel).toBe(primary);
+  });
+});
+
+describe('an account with no verified email', () => {
+  it('never shows the placeholder: tenants get the invited email, platform admins a plain label', async () => {
+    const tenant = await userNames(h.env.DB, [placeholderId], orgId, false);
+    expect(tenant.get(placeholderId)).toBe('joined-as@example.test');
+    const admin = await userNames(h.env.DB, [placeholderId], orgId, true);
+    expect(admin.get(placeholderId)).toBe('No verified email');
+    const members = await orgMembers(h.env.DB, orgId, managerId, true);
+    expect(members.find((m) => m.user_id === placeholderId)?.user_email).toBeNull();
+    const asTenant = await orgMembers(h.env.DB, orgId, managerId, false);
+    expect(asTenant.find((m) => m.user_id === placeholderId)?.user_email).toBe(
+      'joined-as@example.test',
+    );
+    expect(JSON.stringify([tenant, admin, members, asTenant])).not.toContain('unverified.invalid');
   });
 });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDebounced } from '@/web/lib/debounce.ts';
 import { ENTITY } from '../lib/entities.ts';
+import { personLabel } from '../lib/format.ts';
 import {
   matchesWords,
   PALETTE_LIMIT,
@@ -60,8 +61,8 @@ export function EntityPicker({
     loading = users.isFetching;
     options = (users.data?.items ?? []).map((u) => ({
       value: u.id,
-      label: u.name ?? u.primaryEmail,
-      icon: <EntityAvatar kind="user" id={u.id} name={u.name ?? u.primaryEmail} />,
+      label: personLabel(u),
+      icon: <EntityAvatar kind="user" id={u.id} name={personLabel(u)} />,
     }));
   } else if (kind === 'pass') {
     loading = passes.isFetching;

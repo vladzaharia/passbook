@@ -14,6 +14,7 @@ import {
   EMAIL_RECIPIENT_HOURLY_CAP,
   enqueuePassEmail,
 } from './issuance-intent.ts';
+import { recipientKey } from './recipient-key.ts';
 import { getOutbox } from './repo.ts';
 
 const job = () => jobCtxOf(kit);
@@ -178,7 +179,7 @@ async function effects(passId: string) {
 }
 
 async function counters(orgId: string, to: string, mode: 'live' | 'test' = 'live') {
-  const hash = (await sha256Hex(`pass-email:${to.toLowerCase()}`)).slice(0, 32);
+  const hash = await recipientKey(kit.env, to);
   return all<{ key: string; window_start: number; count: number }>(
     kit.env.DB,
     'SELECT key, window_start, count FROM counters WHERE key IN (?, ?) ORDER BY key, window_start',
@@ -426,7 +427,7 @@ describe('connection pass email enqueue fence', () => {
     expect(queued).toHaveLength(1);
     expect(queued[0]).toMatchObject({ org_id: f.org.id, pass_id: f.pass.id, mode: 'live' });
     expect(JSON.parse(queued[0]?.data ?? '{}')).toEqual({ outboxId, attached: true });
-    const hash = (await sha256Hex(`pass-email:${f.to}`)).slice(0, 32);
+    const hash = await recipientKey(kit.env, f.to);
     const now = kit.clock.now();
     expect(await counters(f.org.id, f.to)).toEqual([
       { key: `pass-email:live:org:${f.org.id}`, window_start: now - (now % DAY), count: 1 },

@@ -7,6 +7,7 @@ import {
   makeTemplate,
   makeUser,
 } from '../../../../test/helpers/index.ts';
+import { keyedDigest } from '../../platform/crypto.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { clearSettingsCache } from '../settings/service.ts';
@@ -196,7 +197,7 @@ describe('request', () => {
   it('does not spend an address budget on unknown addresses', async () => {
     const email = addr();
     for (let i = 0; i < 6; i++) await requestLink(email);
-    const key = `magic:email:${(await sha256Hex(`magic-email:${email}`)).slice(0, 32)}`;
+    const key = `magic:email:${await keyedDigest(h.env, 'counter.magic-email.v1', email)}`;
     expect(await first(h.env.DB, 'SELECT 1 FROM counters WHERE key = ?', [key])).toBeNull();
   });
 
@@ -282,7 +283,7 @@ describe('consume limits', () => {
     expect(limited.status).toBe(429);
     expect(((await limited.json()) as { code: string }).code).toBe('RATE_LIMITED');
     expect((await post('2.2.2.2')).status).toBe(400);
-    expect([...limiter.calls.keys()]).toContain('magic:1.1.1.1');
+    expect([...limiter.calls.keys()]).toContain('magic:1.1.1.0/24');
   });
 
   it('rejects oversized bodies with 413 before parsing', async () => {
@@ -493,6 +494,56 @@ describe('code', () => {
     await requestLink(email, jar);
     expect((await consumeCode(email, codeOf(h.mail.at(-1)), jar)).status).toBe(400);
     expect((await consumeForm(tokenOf(h.mail.at(-1)))).status).toBe(303);
+  });
+
+  it("a stranger's wrong codes do not lock the owner's code sign-in", async () => {
+    const email = await knownEmail();
+    const stranger: Jar = new Map();
+    for (let round = 0; round < 3; round++) {
+      await requestLink(email, stranger);
+      const wrong = codeOf(h.mail.at(-1)) === '000000' ? '111111' : '000000';
+      for (let i = 0; i < 4; i++) await consumeCode(email, wrong, stranger);
+    }
+    // The stranger's browser is locked out of this address for the day.
+    await requestLink(email, stranger);
+    expect((await consumeCode(email, codeOf(h.mail.at(-1)), stranger)).status).toBe(400);
+    // The owner's browser is not.
+    const owner: Jar = new Map();
+    await requestLink(email, owner);
+    expect((await consumeCode(email, codeOf(h.mail.at(-1)), owner)).status).toBe(200);
+  });
+
+  it('a stranger rotating browsers hits the per-address ceiling: codes refused, the link still works', async () => {
+    const email = await knownEmail();
+    // Five links an hour, five tries each: ten fresh browsers make fifty wrong guesses.
+    for (let hour = 0; hour < 2; hour++) {
+      for (let b = 0; b < 5; b++) {
+        const jar: Jar = new Map();
+        await requestLink(email, jar);
+        const wrong = codeOf(h.mail.at(-1)) === '000000' ? '111111' : '000000';
+        for (let i = 0; i < 5; i++) await consumeCode(email, wrong, jar);
+      }
+      h.clock.advance(61 * 60_000);
+    }
+    const owner: Jar = new Map();
+    await requestLink(email, owner);
+    expect((await consumeCode(email, codeOf(h.mail.at(-1)), owner)).status).toBe(400);
+    expect((await consumeForm(tokenOf(h.mail.at(-1)), owner)).status).toBe(303);
+  });
+
+  it('keys failure and cap counters on a keyed digest, never the bare hash of the address', async () => {
+    const email = await knownEmail();
+    const jar: Jar = new Map();
+    await requestLink(email, jar);
+    await consumeCode(email, codeOf(h.mail.at(-1)) === '000000' ? '111111' : '000000', jar);
+    const keys = (await all<{ key: string }>(h.env.DB, 'SELECT key FROM counters')).map(
+      (r) => r.key,
+    );
+    const plain = (await sha256Hex(email)).slice(0, 32);
+    const legacy = (await sha256Hex(`magic-email:${email}`)).slice(0, 32);
+    expect(keys.some((k) => k.startsWith('magic:fail:'))).toBe(true);
+    expect(keys.some((k) => k.startsWith('magic:email:'))).toBe(true);
+    expect(keys.filter((k) => k.includes(plain) || k.includes(legacy))).toEqual([]);
   });
 
   it('is bound to the requested address', async () => {

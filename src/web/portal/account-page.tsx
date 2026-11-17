@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { NO_EMAIL_LABEL } from '../../shared/email.ts';
+import { personLabel } from '../lib/format.ts';
 import { useSession } from '../lib/session.ts';
 import { signInMethodLabel } from '../lib/status.ts';
 import {
@@ -48,7 +50,7 @@ export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: Acc
                 <EntityAvatar
                   kind="user"
                   id={authed.user.id}
-                  name={authed.user.name ?? authed.user.primaryEmail}
+                  name={personLabel(authed.user)}
                   size={48}
                 />
                 <div className="min-w-0">
@@ -57,7 +59,9 @@ export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: Acc
                       {authed.user.name}
                     </p>
                   ) : null}
-                  <p className="truncate text-sm text-fg-muted">{authed.user.primaryEmail}</p>
+                  <p className="truncate text-sm text-fg-muted">
+                    {authed.user.primaryEmail ?? NO_EMAIL_LABEL}
+                  </p>
                 </div>
               </div>
               <KeyValue

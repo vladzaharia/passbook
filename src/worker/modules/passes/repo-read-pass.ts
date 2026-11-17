@@ -1,5 +1,6 @@
 import { tokenKeys } from '../../platform/capability-token.ts';
 import { all, first, stmt } from '../../platform/db.ts';
+import { knownEmailSql } from '../../platform/known-email-sql.ts';
 import { userLabelSql } from '../orgs/repo-user-label.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
 import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
@@ -95,7 +96,7 @@ export async function getOwnerLabel(
 ): Promise<{ name: string | null; email: string | null }> {
   const row = await first<{ name: string | null; email: string | null }>(
     db,
-    'SELECT name, primary_email AS email FROM users WHERE id = ?',
+    `SELECT name, ${knownEmailSql('primary_email')} AS email FROM users WHERE id = ?`,
     [userId],
   );
   return row ?? { name: null, email: null };

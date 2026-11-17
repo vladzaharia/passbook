@@ -6,7 +6,6 @@ import {
   ForbiddenError,
   NotFoundError,
 } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import type { BundleEmailSnapshot } from '../bundles/email-binding.ts';
@@ -24,6 +23,7 @@ import {
   EMAIL_ORG_DAILY_CAP,
   EMAIL_RECIPIENT_HOURLY_CAP,
 } from './issuance-intent.ts';
+import { recipientKey } from './recipient-key.ts';
 import { enqueueAuthorizedEmail, listAuthorizedOutboxForPass } from './repo.ts';
 import { queuedAudit } from './repo-email-queue.ts';
 import { insertPushOutbox, recordPushQueuedEvent } from './repo-outbox-enqueue.ts';
@@ -150,7 +150,7 @@ export async function queueEmail(
       ? { ...input.payload, intent: { ...intent, actor } }
       : input.payload;
   // Captured test mail has its own counters: it must not use up the caps of real holder email.
-  const recipient = (await sha256Hex(`pass-email:${input.to.toLowerCase()}`)).slice(0, 32);
+  const recipient = await recipientKey(ctx.env, input.to);
   const now = ctx.clock.now();
   const outboxId = ctx.ids.id();
   const result = await enqueueAuthorizedEmail(ctx, {
