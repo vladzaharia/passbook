@@ -3,7 +3,6 @@ import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
-import { activeRelease } from '../templates/releases.ts';
 import type { ActRequest } from './act-claim.ts';
 import { finishStop, type StopContext } from './act-stop.ts';
 import { scanValueOf } from './act-value-result.ts';
@@ -26,8 +25,9 @@ export async function pendingCap(
 ): Promise<number | undefined> {
   if (action.kind !== 'add' || !action.input) return undefined;
   const { pass } = found;
-  const head = await activeRelease(ctx, pass.templateId, pass.orgId, pass.mode, 'apple');
-  if (!head || head.version === pass.templateVersion) return undefined;
+  // The release the evaluation found current is already known: only a different one needs a read.
+  if (found.activeVersion === pass.templateVersion) return undefined;
+  const head = { version: found.activeVersion };
   try {
     const next = await resolveTemplate(ctx, pass.orgId, pass.templateId, head.version);
     const max = schemaOf(next.manifest, action.input)?.maximum;
