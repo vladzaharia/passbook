@@ -66,6 +66,7 @@ export default defineConfig({
           testTimeout: 30_000,
           hookTimeout: 30_000,
           setupFiles: [
+            './test/setup/als-disable.ts',
             './test/setup/block-network.ts',
             './test/setup/check-responses.ts',
             './test/setup/apply-migrations.ts',

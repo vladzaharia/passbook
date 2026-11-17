@@ -21,7 +21,7 @@ import {
 
 const makeEnv = installKeysetTestEnv();
 
-describe.sequential('credential keyset SQL guards', () => {
+describe('credential keyset SQL guards', () => {
   it('checks the reference stores in the same D1 transaction as initialization', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
