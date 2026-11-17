@@ -148,6 +148,7 @@ export async function beginSamsungSyncTarget(
     SET state = 'inflight', attempts = attempts + 1, next_attempt_at = NULL, updated_at = ?
     WHERE t.country_code = ? AND t.state IN ('pending', 'retry') AND t.attempts < 3
       AND (t.next_attempt_at IS NULL OR t.next_attempt_at <= ?)
+      AND t.operation_id = (SELECT op.id FROM wallet_provider_instance_operations op WHERE op.instance_id = ? AND op.version = ?)
       AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations o
         JOIN wallet_provider_instances i ON i.id = o.instance_id
         WHERE o.id = t.operation_id AND i.id = ? AND i.org_id = ? AND i.mode = ?
@@ -161,6 +162,8 @@ export async function beginSamsungSyncTarget(
       now,
       countryCode,
       now,
+      claim.instanceId,
+      claim.version,
       claim.instanceId,
       claim.orgId,
       claim.mode,
@@ -216,6 +219,7 @@ export async function finishSamsungSyncTarget(
     `UPDATE wallet_provider_sync_targets AS t
     SET state = ?, reason_code = ?, http_status = ?, next_attempt_at = ?, updated_at = ?
     WHERE t.country_code = ? AND t.state = 'inflight'
+      AND t.operation_id = (SELECT op.id FROM wallet_provider_instance_operations op WHERE op.instance_id = ? AND op.version = ?)
       AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations o
         JOIN wallet_provider_instances i ON i.id = o.instance_id
         WHERE o.id = t.operation_id AND i.id = ? AND i.org_id = ? AND i.mode = ?
@@ -230,6 +234,8 @@ export async function finishSamsungSyncTarget(
       retryAt,
       ctx.clock.now(),
       countryCode,
+      claim.instanceId,
+      claim.version,
       claim.instanceId,
       claim.orgId,
       claim.mode,

@@ -1,4 +1,4 @@
-import { all, run, stmt } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 import {
   commitImageMutation,
   type ImageMutationResult,
@@ -37,17 +37,19 @@ interface RawAsset {
 export const listAssetsStmt = (db: D1Database, passId: string) =>
   stmt(db, 'SELECT * FROM pass_assets WHERE pass_id = ? ORDER BY name', [passId]);
 
+const mapAsset = (r: RawAsset): AssetRow => ({
+  name: r.name,
+  r2Key: r.r2_key,
+  sha1: r.sha1,
+  size: r.size,
+  width: r.width,
+  height: r.height,
+  crc32: r.crc32,
+  createdAt: r.created_at,
+});
+
 export const assetsFromResult = (result: D1Result | undefined): AssetRow[] =>
-  ((result?.results ?? []) as unknown as RawAsset[]).map((r) => ({
-    name: r.name,
-    r2Key: r.r2_key,
-    sha1: r.sha1,
-    size: r.size,
-    width: r.width,
-    height: r.height,
-    crc32: r.crc32,
-    createdAt: r.created_at,
-  }));
+  ((result?.results ?? []) as unknown as RawAsset[]).map(mapAsset);
 
 export async function listAssets(db: D1Database, passId: string): Promise<AssetRow[]> {
   const rows = await all<RawAsset>(
@@ -55,16 +57,7 @@ export async function listAssets(db: D1Database, passId: string): Promise<AssetR
     'SELECT * FROM pass_assets WHERE pass_id = ? ORDER BY name',
     [passId],
   );
-  return rows.map((r) => ({
-    name: r.name,
-    r2Key: r.r2_key,
-    sha1: r.sha1,
-    size: r.size,
-    width: r.width,
-    height: r.height,
-    crc32: r.crc32,
-    createdAt: r.created_at,
-  }));
+  return rows.map(mapAsset);
 }
 
 export async function upsertAsset(
@@ -72,7 +65,12 @@ export async function upsertAsset(
   passId: string,
   asset: AssetRow,
 ): Promise<AssetRow | null> {
-  const previous = (await listAssets(db, passId)).find((a) => a.name === asset.name) ?? null;
+  const row = await first<RawAsset>(
+    db,
+    'SELECT * FROM pass_assets WHERE pass_id = ? AND name = ?',
+    [passId, asset.name],
+  );
+  const previous = row ? mapAsset(row) : null;
   await run(
     db,
     `INSERT INTO pass_assets (pass_id, name, r2_key, sha1, size, width, height, crc32, created_at)
