@@ -1,4 +1,5 @@
-import { grant } from '../../platform/authority.ts';
+import { type Grant, grant } from '../../platform/authority.ts';
+import type { AfterRead } from '../../platform/authority-after.ts';
 import {
   type Check,
   noReleaseHead,
@@ -7,6 +8,7 @@ import {
   releaseHead,
   rowIs,
 } from '../../platform/authority-checks.ts';
+import type { GrantCond } from '../../platform/authority-cond.ts';
 import type { SetValue } from '../../platform/authority-expr.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -15,8 +17,31 @@ import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
 import type { PublishPassSnapshot } from './repo-write-publish-snapshot.ts';
 
+/**
+ * A scanner's rows that commit with the pass write (the scan row, its gate and ledger event): the
+ * hook's grant replaces the tenant's, so every statement shares one batch and one set of checks.
+ */
+export interface PublishCommit {
+  /** The scan's grant with the pass checks added; its code for `stale` must be `PASS_CONFLICT`. */
+  open(passChecks: Check[]): Grant;
+  /** Conditions on the pass write itself: when one fails the write is skipped and the batch declines. */
+  when: GrantCond[];
+  /** Adds the statements that follow the pass write (`objectKey` is empty for a metadata write); it runs once per attempt. */
+  add(g: Grant, w: { objectKey: string; version: number }): Promise<PublishCommitDone>;
+}
+
+export interface PublishCommitDone {
+  reads?: readonly AfterRead[];
+  /** Sees the batch's results, whether or not the pass write applied. */
+  settle(r: { writes: D1Result[]; after: D1Result[] }, g: Grant): void;
+}
+
+/** The batch committed without the pass write: a condition of the hook's failed, and its rows closed the scan. */
+export class PublishDeclined extends Error {}
+
 export interface GrantedPublish {
-  authority: TenantPassWrite;
+  authority?: TenantPassWrite;
+  commit?: PublishCommit;
   id: string;
   expectedVersion: number;
   expectedPass: PublishPassSnapshot;
@@ -43,7 +68,7 @@ export const PUBLISH_STALE = 'PASS_CONFLICT';
 export async function casGranted(ctx: ServiceContext, w: GrantedPublish): Promise<number | null> {
   const p = w.expectedPass;
   const checks: Check[] = [
-    ...capabilityChecks(w.authority),
+    ...(w.authority ? capabilityChecks(w.authority) : []),
     ...passRow(w.id, p.rowVersion),
     rowIs(
       'passes',
@@ -65,14 +90,17 @@ export async function casGranted(ctx: ServiceContext, w: GrantedPublish): Promis
   ];
   if (w.requireNoReleaseHistory) checks.push(noReleaseHead(p.templateId));
   if (w.release) checks.push(releaseHead(p.templateId, p.mode, 'apple', w.release.id));
-  const g = grant(ctx, {
-    purpose: 'org_mode.pass.publish',
-    principal: tenantPrincipal(w.authority),
-    target: w.id,
-    checks,
-    codes: { stale: PUBLISH_STALE, release: 'TEMPLATE_RELEASE_CONFLICT' },
-  });
-  g.update('passes', {
+  if (!w.authority && !w.commit) throw new Error('A publish needs a tenant authority or a commit.');
+  const g =
+    w.commit?.open(checks) ??
+    grant(ctx, {
+      purpose: 'org_mode.pass.publish',
+      principal: tenantPrincipal(w.authority as TenantPassWrite),
+      target: w.id,
+      checks,
+      codes: { stale: PUBLISH_STALE, release: 'TEMPLATE_RELEASE_CONFLICT' },
+    });
+  const update = g.update('passes', {
     set: w.set,
     inc: ['version'],
     where: {
@@ -87,9 +115,23 @@ export async function casGranted(ctx: ServiceContext, w: GrantedPublish): Promis
           }
         : {}),
     },
+    ...(w.commit?.when.length ? { when: w.commit.when } : {}),
     returning: ['version'],
   });
   try {
+    if (w.commit) {
+      const done = await w.commit.add(g, {
+        objectKey: String(w.set.object_key ?? ''),
+        version: w.expectedVersion + 1,
+      });
+      const committed = await g.commitWith(done.reads ?? []);
+      done.settle(committed, g);
+      const written = (
+        committed.writes[g.indexOf(update)]?.results as { version: number }[] | undefined
+      )?.[0];
+      if (!written) throw new PublishDeclined();
+      return written.version;
+    }
     const [result] = await g.commit();
     const row = (result?.results as { version: number }[] | undefined)?.[0];
     return row?.version ?? null;

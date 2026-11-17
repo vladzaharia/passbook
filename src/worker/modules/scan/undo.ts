@@ -1,5 +1,5 @@
 import { classifyD1Error } from '../../platform/db.ts';
-import { AppError, ForbiddenError } from '../../platform/errors.ts';
+import { AppError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, type ScanActor, tenantScanRole } from './actor.ts';
@@ -18,6 +18,7 @@ import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
 import { notFound, planUndo, superseded } from './undo-authority.ts';
 import { answer, replayUndo, type UndoRequest } from './undo-replay.ts';
+import { commitValueUndo } from './undo-value.ts';
 
 /**
  * Undo a check-in: one read batch, then one grant batch whose gate, presence and target
@@ -31,6 +32,8 @@ export async function undo(
   req: UndoRequest,
   maxAgeMs?: number,
 ): Promise<ScanEvaluation> {
+  if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
+    throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
   const read = await readUndo(
     ctx.env.DB,
     actor.orgId,
@@ -110,7 +113,9 @@ async function run(
     }
     // The PIN snapshot carries no `auth_epoch`. The row read before verification does: use it only
     // if it is the row the PIN verified. Any change since then moves the epoch, and the grant refuses.
-    const staff = read.approver;
+    const staff = req.approval.staffId
+      ? read.approver
+      : { ...verified, pinHash: verified.pinHash, authEpoch: verified.authEpoch, disabledAt: null };
     if (
       !staff ||
       staff.id !== verified.id ||
@@ -124,7 +129,9 @@ async function run(
   }
   const id = ctx.ids.ordered();
   try {
-    await commitUndo({ ctx, actor, ...plan, approver, id, key: req.idempotencyKey });
+    const commit = { ctx, actor, ...plan, approver, id, key: req.idempotencyKey };
+    if (target.actionKind === 'check_in') await commitUndo(commit);
+    else await commitValueUndo(commit);
   } catch (error) {
     if (error instanceof AppError && error.code === UNDO_CODES.stale) throw notFound();
     throw error;

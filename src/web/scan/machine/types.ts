@@ -19,7 +19,8 @@ export type Counts = ScanCounts;
 
 /** A Manager's PIN approval. */
 export interface Approval {
-  staffId: string;
+  /** Absent: the PIN is matched against the org's managers. */
+  staffId?: string;
   pin: string;
 }
 
@@ -27,6 +28,8 @@ export interface Draft {
   actionId: string;
   amount: number | null;
   value?: unknown;
+  /** A `set`: the card's version the staff read, so a card that moved answers `stale`. */
+  expectedVersion?: number;
   override?: boolean;
   overrideOf?: string;
   confirmed?: boolean;
@@ -78,6 +81,8 @@ export type Loop =
       /** From here a different code replaces the verdict (T0 + NEXT_SCAN_AFTER_VERDICT). */
       openFrom: number;
       next: ScanInput | null;
+      /** What was sent, so a Manager's PIN can re-send the same draft (`needs_approval`). */
+      draft?: Draft;
     }
   | { s: 'paused'; reason: 'idle' | 'hidden' | 'camera_lost' };
 
@@ -172,6 +177,8 @@ export type ScanEvent =
   | { type: 'offline'; key: string; outcome: ScanOutcome }
   | { type: 'pick'; actionId: string }
   | { type: 'amount'; value: number | null }
+  /** A `set`'s typed value. */
+  | { type: 'value'; value: unknown }
   | { type: 'review' }
   | { type: 'confirm' }
   | { type: 'cancel' }
@@ -180,7 +187,7 @@ export type ScanEvent =
   | { type: 'keep' }
   | { type: 'override'; actionId: string }
   /** The Manager PIN sheet's Approve: re-sends the same draft under a new key with `approval`. */
-  | { type: 'approve'; staffId: string; pin: string }
+  | { type: 'approve'; staffId?: string; pin: string }
   | { type: 'arm'; actionId: string; amount: number | null; sticky: boolean }
   | { type: 'disarm' }
   /** `approval` is a Manager's PIN when the undo policy requires one. */

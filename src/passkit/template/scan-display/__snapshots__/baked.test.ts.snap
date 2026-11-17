@@ -1527,6 +1527,17 @@ exports[`starter-stamp-card default display > matches its snapshot, and so does 
   "holder": "{{inputs.holder}}",
   "panels": [
     {
+      "id": "p_main",
+      "rows": [
+        {
+          "id": "r_main",
+          "reward": "Free item",
+          "type": "progress",
+          "value": "{{inputs.stamps}}",
+        },
+      ],
+    },
+    {
       "icon": "info",
       "id": "p_details",
       "rows": [
@@ -1564,20 +1575,23 @@ exports[`starter-stamp-card default display > matches its snapshot, and so does 
   },
   "panels": [
     {
-      "icon": "info",
-      "id": "p_details",
+      "icon": null,
+      "id": "p_main",
       "kind": "custom",
       "rows": [
         {
+          "before": 6,
+          "caption": "3 more for Free item",
+          "goal": 10,
           "icon": null,
-          "id": "r_field1",
-          "label": "Reward",
-          "strong": false,
-          "type": "field",
-          "value": "Sample reward",
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 7,
         },
       ],
-      "title": "Details",
+      "title": null,
       "tone": null,
     },
   ],
@@ -1607,6 +1621,26 @@ exports[`starter-stamp-card default display > matches its snapshot, and so does 
     "staff": null,
   },
   "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": 6,
+          "caption": "3 more for Free item",
+          "goal": 10,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 7,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
     {
       "icon": "info",
       "id": "p_details",
@@ -1651,6 +1685,26 @@ exports[`starter-stamp-card default display > matches its snapshot, and so does 
     "staff": null,
   },
   "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": 6,
+          "caption": "3 more for Free item",
+          "goal": 10,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 7,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
     {
       "icon": "info",
       "id": "p_details",

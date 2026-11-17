@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { NfcStatusSchema, VasKeySchema } from './nfc.ts';
 import {
   SCAN_HEADS_UP_REASONS,
+  ScanActionInputSchema,
   ScanActRequestSchema,
   ScanAdminScopeSchema,
   ScanCardSchema,
@@ -265,6 +266,16 @@ describe('scan records', () => {
       undoneAt: null,
     };
     expect(ScanFeedRowSchema.parse(feed)).toEqual(feed);
+  });
+
+  it('describes what a set accepts, and nothing it was not given', () => {
+    const input = { type: 'integer', label: 'Seats', min: 0, max: 9, step: 1 };
+    expect(ScanActionInputSchema.parse(input)).toEqual(input);
+    expect(
+      ScanActionInputSchema.parse({ type: 'string', label: 'Tier', enum: ['Silver', 'Gold'] }).enum,
+    ).toEqual(['Silver', 'Gold']);
+    expect(ScanActionInputSchema.safeParse({ type: 'object', label: 'x' }).success).toBe(false);
+    expect(ScanActionInputSchema.safeParse({ type: 'string' }).success).toBe(false);
   });
 
   it('lets an admin put a scope on an undo, and no one add other keys', () => {
