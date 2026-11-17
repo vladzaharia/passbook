@@ -52,6 +52,7 @@ export function stampsForSave(
   manifest: TemplateManifest,
   dryRun: boolean,
   carried: Resolved['carried'],
+  carry = true,
 ): StampOptions | undefined {
   const block = manifest.stamps;
   if (!block || !isGoal(block.goal)) return undefined;
@@ -59,21 +60,23 @@ export function stampsForSave(
   return {
     ...(dryRun ? { counts: sample } : {}),
     sample,
-    carry: async (key, sha1Of) => {
-      const first = await stampKey(block, sha1Of);
-      for (const v of await listVersions(ctx.env.DB, templateId)) {
-        const earlier = v.manifest.stamps;
-        if (!earlier || !isGoal(earlier.goal)) continue;
-        const sha1 = new Map(v.assets.map((a) => [a.name, a.sha1]));
-        // Versions store SHA-1s: they find the candidate, the bytes' SHA-256 confirm it.
-        if ((await stampKey(earlier, (name) => sha1.get(name))) !== first) continue;
-        if (!(await sameBytes(ctx, earlier, v.assets, key))) continue;
-        const strips = v.assets.filter((a) => a.stamps !== undefined);
-        if (strips.length !== 2 * (earlier.goal + 1)) continue;
-        for (const a of strips) carried.set(a.name, { sha1: a.sha1, source: a.source });
-        return strips.map(({ source: _source, ...a }) => a);
-      }
-      return null;
-    },
+    carry: carry
+      ? async (key, sha1Of) => {
+          const first = await stampKey(block, sha1Of);
+          for (const v of await listVersions(ctx.env.DB, templateId)) {
+            const earlier = v.manifest.stamps;
+            if (!earlier || !isGoal(earlier.goal)) continue;
+            const sha1 = new Map(v.assets.map((a) => [a.name, a.sha1]));
+            // Versions store SHA-1s: they find the candidate, the bytes' SHA-256 confirm it.
+            if ((await stampKey(earlier, (name) => sha1.get(name))) !== first) continue;
+            if (!(await sameBytes(ctx, earlier, v.assets, key))) continue;
+            const strips = v.assets.filter((a) => a.stamps !== undefined);
+            if (strips.length !== 2 * (earlier.goal + 1)) continue;
+            for (const a of strips) carried.set(a.name, { sha1: a.sha1, source: a.source });
+            return strips.map(({ source: _source, ...a }) => a);
+          }
+          return null;
+        }
+      : undefined,
   };
 }

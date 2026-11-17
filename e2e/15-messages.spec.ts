@@ -13,7 +13,7 @@ test('a message sent now to one template reaches the pass back', async ({ page }
 
   await page.goto(`/admin/messages/new?orgId=${orgId}`);
   const main = page.locator('main');
-  await main.getByRole('checkbox', { name: 'PassBook · Generic', exact: true }).check();
+  await main.getByRole('checkbox', { name: readSeed().template.name, exact: true }).check();
   await main.getByRole('textbox', { name: 'Search' }).fill(holder);
   await expect(main.getByText('1 pass, 0 on a device.')).toBeVisible();
   await main.getByRole('textbox', { name: 'Message' }).fill(text);

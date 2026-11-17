@@ -40,9 +40,12 @@ export async function templatePackage(
   const row = await loadTemplate(ctx, auth, id, orgId);
   const registry = createTemplateRegistry(ctx.env, { ctx });
   const template = await resolveCurrentTemplate(ctx, registry, row);
-  const { org: _org, ...manifest } = template.manifest as typeof template.manifest & {
-    org?: unknown;
-  };
+  // Neither key may be uploaded: the org is set at upload, and only built-ins can be blueprints.
+  const {
+    org: _org,
+    blueprint: _blueprint,
+    ...manifest
+  } = template.manifest as typeof template.manifest & { org?: unknown };
   const text = (value: unknown) => new TextEncoder().encode(`${JSON.stringify(value, null, 2)}\n`);
   const files: Record<string, Uint8Array> = {
     'pass.json': text(template.passJson),

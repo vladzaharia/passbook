@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { apiAs, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
+import { apiAs, requireActiveTemplateRelease, seedTemplateId, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -13,7 +13,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
 }) => {
   const seed = readSeed();
   const api = await apiAs('admin');
-  const release = await requireActiveTemplateRelease(api, seed.org.id, GENERIC, 'live');
+  const release = await requireActiveTemplateRelease(api, seed.org.id, seedTemplateId(), 'live');
   const name = `E2E Demo ${uid('c')}`;
   const domain = `${uid('d')}.example.test`;
 
@@ -30,7 +30,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByRole('combobox', { name: 'Template', exact: true }).click();
-  await page.getByRole('option', { name: 'PassBook · Generic' }).click();
+  await page.getByRole('option', { name: seed.template.name }).click();
   const mappings: [string, string][] = [
     ['Name *', '/memberName'],
     ['ID *', '/memberId'],
@@ -94,7 +94,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   for (const pass of passes) {
     expect(pass).toMatchObject({
       orgId: seed.org.id,
-      templateId: GENERIC,
+      templateId: seedTemplateId(),
       templateVersion: release.version,
       mode: 'live',
     });

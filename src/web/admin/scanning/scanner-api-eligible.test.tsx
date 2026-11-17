@@ -53,6 +53,7 @@ describe('useEligibleTemplates organization and mode scope', () => {
       orgId: 'o1',
       mode: 'live',
       provider: 'apple',
+      purpose: 'scan',
     });
   });
 
@@ -154,6 +155,16 @@ describe('Event template choices', () => {
     });
     expect(selected).toBeChecked();
     await userEvent.setup().click(selected);
+    expect(screen.queryByRole('checkbox', { name: /no approved release/ })).not.toBeInTheDocument();
+  });
+
+  it('offers a blueprint the org has live passes on and shows one it no longer can with its state', async () => {
+    setup('o1', [northwind, harbor], 'choices', undefined, ['bp-live', 'bp-empty']);
+    expect(await screen.findByRole('checkbox', { name: 'Coupon blueprint' })).toBeChecked();
+    const gone = await screen.findByRole('checkbox', {
+      name: 'Membership card · blueprint, no live passes',
+    });
+    expect(gone).toBeChecked();
     expect(screen.queryByRole('checkbox', { name: /no approved release/ })).not.toBeInTheDocument();
   });
 

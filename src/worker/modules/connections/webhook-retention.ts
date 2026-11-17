@@ -7,6 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { syncKeysetCurrent } from './keyset-current.ts';
 import { retainLegacyDuplicate } from './legacy-duplicate.ts';
+import { isReleaseBlockCode } from './record-issuance.ts';
 import type { ConnectionReleaseSnapshot } from './records.ts';
 import type { ConnectionRow } from './repo.ts';
 import {
@@ -148,10 +149,7 @@ export async function failRetainedWebhook(
   revision: number,
 ): Promise<void> {
   const safeCode = codeOf(code);
-  const state =
-    safeCode === 'TEMPLATE_RELEASE_REQUIRED' || safeCode === 'TEMPLATE_RELEASE_CONFLICT'
-      ? 'blocked'
-      : 'failed';
+  const state = isReleaseBlockCode(safeCode) ? 'blocked' : 'failed';
   await transitionRetainedWebhook(sctx, job, revision, state, safeCode);
 }
 

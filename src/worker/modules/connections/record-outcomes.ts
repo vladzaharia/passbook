@@ -2,17 +2,11 @@ import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getDeps } from './deps.ts';
 import { validEpochNumbers } from './record-epochs.ts';
-import type { Applied, ReleaseBlockCode } from './records.ts';
+import { releaseBlockCode } from './record-issuance.ts';
+import type { Applied } from './records.ts';
 import type { ConnectionRow } from './repo.ts';
 import { markPassSynced, type SyncSnapshot } from './repo-pass-snapshot.ts';
 import { type PassReleaseBinding, type SyncPass, validPassReleaseBinding } from './repo-passes.ts';
-
-export function releaseBlockCode(error: unknown): ReleaseBlockCode | null {
-  if (!(error instanceof ConflictError)) return null;
-  return error.code === 'TEMPLATE_RELEASE_REQUIRED' || error.code === 'TEMPLATE_RELEASE_CONFLICT'
-    ? error.code
-    : null;
-}
 
 type MutationResult = Pick<
   SyncSnapshot,

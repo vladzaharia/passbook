@@ -12,6 +12,8 @@ import { ConflictError } from '../../platform/errors.ts';
 import { createLogger } from '../../platform/log.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { getDeps, setDeps } from './deps.ts';
+import { captureConnectionRelease } from './records.ts';
+import { getConnection } from './repo.ts';
 import { retainedById } from './repo-webhook-retention.ts';
 import { replaceKeysetForTest, startPendingTransfer } from './runtime-fixtures.ts';
 import * as service from './service.ts';
@@ -1110,6 +1112,70 @@ describe('processWebhook', () => {
         [dto.id, 'mixed-release-block'],
       ),
     ).toEqual({ state: 'blocked', error_code: 'TEMPLATE_RELEASE_REQUIRED' });
+  });
+
+  it('blocks a new ref on a blueprint connection with its own code and updates the existing pass', async () => {
+    const { dto, secret } = await pushConn({
+      autoCreate: true,
+      defaultTemplateId: kit.templateId,
+      maxConcurrency: 1,
+    });
+    const existing = await linkedPass(kit, dto.id, 'existing');
+    await run(kit.env.DB, 'UPDATE templates SET blueprint = 1 WHERE id = ?', [kit.templateId]);
+    await receiveWebhook(
+      kit.sctx,
+      dto.id,
+      await signedRequest(secret, {
+        id: 'blueprint-block',
+        records: [
+          { ref: 'existing', record: { memberName: 'Updated member' } },
+          { ref: 'new', record: { memberName: 'New member' } },
+        ],
+      }),
+    );
+    const queued = kit.seams.jobs[0];
+    if (queued?.kind !== 'connection.webhook') throw new Error('no job');
+
+    await expect(processWebhook(kit.sctx, queued)).resolves.toBeUndefined();
+    expect(kit.seams.applied.map((input) => input.passId)).toEqual([existing.id]);
+    expect(kit.seams.created).toEqual([]);
+    expect(
+      await first(
+        kit.env.DB,
+        'SELECT state, error_code FROM connection_webhook_retention WHERE connection_id = ? AND event_id = ?',
+        [dto.id, 'blueprint-block'],
+      ),
+    ).toEqual({ state: 'blocked', error_code: 'TEMPLATE_IS_BLUEPRINT' });
+  });
+
+  it('logs the blueprint skip once per delivery, not per capture', async () => {
+    const { dto, secret } = await pushConn({
+      autoCreate: true,
+      defaultTemplateId: kit.templateId,
+      maxConcurrency: 1,
+    });
+    await run(kit.env.DB, 'UPDATE templates SET blueprint = 1 WHERE id = ?', [kit.templateId]);
+    const warn = vi.fn();
+    const log = { ...createLogger(), warn, child: () => log };
+    const sctx = { ...kit.sctx, log };
+    const conn = await getConnection(kit.env.DB, dto.id);
+    if (!conn) throw new Error('no connection');
+    await captureConnectionRelease(sctx, conn);
+    await captureConnectionRelease(sctx, conn);
+    expect(warn).not.toHaveBeenCalled();
+    await receiveWebhook(
+      sctx,
+      dto.id,
+      await signedRequest(secret, {
+        id: 'blueprint-log',
+        records: [
+          { ref: 'a', record: { memberName: 'A' } },
+          { ref: 'b', record: { memberName: 'B' } },
+        ],
+      }),
+    );
+    const skipped = warn.mock.calls.filter(([event]) => event === 'connections.records_skipped');
+    expect(skipped).toHaveLength(1);
   });
 
   it.each([false, true])(

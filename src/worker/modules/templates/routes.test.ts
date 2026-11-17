@@ -304,7 +304,12 @@ describe('tenant scoping', () => {
     };
     expect(list.items.some((t) => t.id === templateId)).toBe(false);
     expect(list.items.every((t) => t.orgId === null || t.orgId === otherOrg.id)).toBe(true);
-    expect(list.items.some((t) => t.id.startsWith('baked:'))).toBe(true);
+    // Platform blueprints are listed for every key, only when asked for.
+    expect(list.items.some((t) => t.id.startsWith('baked:starter-'))).toBe(false);
+    const blueprints = (await (await call('?blueprint=true', {}, other)).json()) as {
+      items: { id: string }[];
+    };
+    expect(blueprints.items.some((t) => t.id.startsWith('baked:starter-'))).toBe(true);
     expect((await call(`/${templateId}`, {}, mine)).status).toBe(200);
     expect((await call(`/${templateId}/versions/${version}`, {}, mine)).status).toBe(200);
     expect(
@@ -464,7 +469,7 @@ describe('tenant scoping', () => {
       [org.id, reader.headers, 1],
       [otherOrg.id, foreign.headers, 2],
     ] as const) {
-      const list = (await (await call(`?orgId=${orgId}`, {}, headers)).json()) as {
+      const list = (await (await call(`?orgId=${orgId}&blueprint=true`, {}, headers)).json()) as {
         items: { id: string; passCount: number }[];
       };
       expect(list.items.find((item) => item.id === id)?.passCount).toBe(count);
@@ -552,7 +557,7 @@ describe('tenant scoping', () => {
 
 describe('read', () => {
   it('lists with origin and status filters and paginates', async () => {
-    const baked = (await (await call(`?orgId=${org.id}&origin=baked`)).json()) as {
+    const baked = (await (await call(`?orgId=${org.id}&origin=baked&blueprint=true`)).json()) as {
       items: { origin: string }[];
     };
     expect(baked.items.length).toBeGreaterThan(0);
@@ -1457,10 +1462,11 @@ describe('org assignment', () => {
       { org_id: null, mode: 'test', source: 'system', version: baked.version },
     ]);
     expect(await assignmentAudits(id)).toEqual([]);
+    // Every shared baked template is a blueprint: it stays platform-wide.
     for (const destination of [org.id, otherOrg.id]) {
       const res = await patch(id, { orgId: destination });
       expect(res.status).toBe(409);
-      expect(await res.json()).toMatchObject({ code: 'TEMPLATE_RELEASE_REQUIRED' });
+      expect(await res.json()).toMatchObject({ code: 'TEMPLATE_IS_BLUEPRINT' });
       expect(await orgOf(id)).toBeNull();
     }
     const unchanged = await patch(id, { orgId: null });
@@ -1584,7 +1590,10 @@ describe('org assignment', () => {
     const row = list.items.find((i) => i.id === t.id);
     expect(row?.orgId).toBe(otherOrg.id);
     expect(row?.orgName).toEqual(expect.any(String));
-    expect(list.items.some((i) => i.orgId === null && i.orgName === null)).toBe(true);
+    const shared = (await (await call(`?orgId=${otherOrg.id}&blueprint=true`)).json()) as {
+      items: { orgId: string | null; orgName: string | null }[];
+    };
+    expect(shared.items.some((i) => i.orgId === null && i.orgName === null)).toBe(true);
     expect(await (await call(`/${t.id}`, { method: 'DELETE' })).json()).toEqual({
       ok: true,
       outcome: 'deleted',

@@ -8,6 +8,8 @@ const FILE = 'e2e/.auth/seed.json';
 
 export interface Seed {
   org: { id: string; slug: string; name: string };
+  /** The org's template made from the Generic blueprint: passes come from templates. */
+  template: { id: string; name: string };
 }
 
 interface VerifiedIdentity {
@@ -120,13 +122,22 @@ export async function createOrgWithRoles(
   return { id: org.id, slug: org.slug, name: org.name };
 }
 
-/** One fresh org per run keeps specs independent of whatever the persisted local D1 already holds. */
-export async function createSeed(api: Api): Promise<Seed> {
+/**
+ * One fresh org per run keeps specs independent of whatever the persisted local D1 already holds.
+ * `template` makes the org's own template (blueprints never issue passes).
+ */
+export async function createSeed(
+  api: Api,
+  template: (orgId: string) => Promise<Seed['template']>,
+): Promise<Seed> {
   // Listing templates syncs the baked ones (and Henry's org) into a fresh database.
-  await api.get('/api/v1/templates');
+  await api.get('/api/v1/templates?blueprint=true');
   const slug = uid('e2e').toLowerCase();
   const org = await createOrgWithRoles(api, { slug, name: `E2E Org ${slug}` });
-  const seed: Seed = { org: { id: org.id, slug, name: org.name } };
+  const seed: Seed = {
+    org: { id: org.id, slug, name: org.name },
+    template: await template(org.id),
+  };
   mkdirSync('e2e/.auth', { recursive: true });
   writeFileSync(FILE, JSON.stringify(seed));
   return seed;

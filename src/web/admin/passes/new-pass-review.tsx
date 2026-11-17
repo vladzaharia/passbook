@@ -68,7 +68,7 @@ export function ReviewStep({
     <div className="flex flex-col gap-4">
       {brandingMissing ? (
         <Callout tone="warning" title="No pass branding">
-          The pass shows the starter logo and icon.
+          The pass shows the placeholder logo and icon.
         </Callout>
       ) : null}
       {warnings.length > 0 ? (

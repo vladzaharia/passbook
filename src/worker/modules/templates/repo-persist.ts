@@ -4,7 +4,12 @@ import { first, type SqlValue } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { CommitArgs } from './persist.ts';
-import { cloneSource, importMatches, sharedCloneSource } from './repo-grant-checks.ts';
+import {
+  blueprintSource,
+  cloneSource,
+  importMatches,
+  sharedCloneSource,
+} from './repo-grant-checks.ts';
 import { grantRow, inGrant, templateGrant, templateGrants } from './repo-grants.ts';
 
 const CODES = {
@@ -76,6 +81,8 @@ export async function writeVersion(
     );
   const source = args.source;
   if (source && source.orgId === null) checks.push(sharedCloneSource(source.id, source.version));
+  const fromBlueprint = plan.isNew ? args.sourceBlueprint : undefined;
+  if (fromBlueprint) checks.push(blueprintSource(fromBlueprint));
   const { writer, all } = templateGrants(
     ctx,
     [authority, ...others],
@@ -99,6 +106,7 @@ export async function writeVersion(
       'templates',
       [
         ...(authority.kind === 'platform' ? ['org_id'] : []),
+        ...(fromBlueprint ? ['source_blueprint'] : []),
         'id',
         'slug',
         'name',
@@ -113,6 +121,7 @@ export async function writeVersion(
       ],
       [
         ...(authority.kind === 'platform' ? [null] : []),
+        ...(fromBlueprint ? [fromBlueprint] : []),
         plan.templateId,
         args.slug,
         args.name,

@@ -94,6 +94,8 @@ export async function commitClonedVersion(
   const { authority, org, plan, slug, name, createdBy } = clone;
   const manifest = { ...template.manifest, name } as TemplateManifest & { org?: unknown };
   delete manifest.org;
+  // A copy of a blueprint is a template: it issues passes.
+  delete manifest.blueprint;
   const sha = new Map(template.assets.map((a) => [a.name, a.sha1]));
   const version = await contentVersion({
     passJson: template.passJson,
@@ -120,6 +122,7 @@ export async function commitClonedVersion(
       createdBy,
       authorities: [authority],
       source: sourceFence,
+      ...(clone.source.blueprint ? { sourceBlueprint: clone.source.id } : {}),
       body: {
         version,
         manifest,

@@ -253,11 +253,14 @@ export interface TemplateManifest {
   sample: Record<string, Json>;
   lookups?: Record<string, Record<string, Record<string, Json>>>;
   bindings: Binding[];
-  display: { title: Expr; subtitle?: Expr; status?: Expr; search?: string[] };
+  /** `icon` is a curated icon id (`SCAN_ICONS`): a blueprint's glyph. */
+  display: { title: Expr; subtitle?: Expr; status?: Expr; search?: string[]; icon?: string };
   behaviors?: { use: string; version: number; config: Json }[];
   requires?: { styles?: PassStyle[]; nfc?: boolean };
   /** Baked templates belong to an org by slug; starters have none. */
   org?: { slug: string; name: string };
+  /** Baked only: a platform design to start from. Never issues passes; "Use blueprint" makes a template. */
+  blueprint?: boolean;
   /** Files used for web previews only. They never enter the signed bundle. */
   previewOnlyAssets?: string[];
   /**

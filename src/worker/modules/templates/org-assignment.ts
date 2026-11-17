@@ -33,6 +33,11 @@ export async function assignOrg(
   // Only a platform grant sets a template's org, so every move needs a platform administrator.
   const authority = await authorizeTemplateWrite(ctx, auth, null, 'templates:author');
   if (authority.kind !== 'platform') throw new ForbiddenError();
+  if (row.blueprint && orgId !== null)
+    throw new ConflictError(
+      'Blueprints belong to PassBook. Use this blueprint to make a template for the organization.',
+      'TEMPLATE_IS_BLUEPRINT',
+    );
   const before = await detail(ctx, auth, id);
   if (orgId !== row.orgId) {
     if (orgId && !(await getOrgName(ctx.env.DB, orgId)))

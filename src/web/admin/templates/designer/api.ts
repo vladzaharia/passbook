@@ -16,7 +16,7 @@ import { type DesignDoc, type DraftAsset, isRecord } from './model.ts';
 import { signature } from './reducer.ts';
 import { readStamps } from './stamps.ts';
 
-type VersionOptions = Pick<SaveVersionRequest, 'dryRun'>;
+type VersionOptions = Partial<Pick<SaveVersionRequest, 'dryRun'>>;
 
 /** The live check builds the slider's count, so the header reads what the strip shows. */
 function withPreviewCount(doc: DesignDoc, count: number | undefined): DesignDoc['manifest'] {
@@ -49,25 +49,36 @@ export function useBaseVersion(templateId: string, version: string | null) {
   });
 }
 
-/** Live check: the report, the built pass and the file list, once typing pauses. */
+/**
+ * Live check: the report, the built pass and the file list, once typing pauses. `asNew` checks a
+ * draft of a blueprint as the named template of that organization.
+ */
 export function useDesignCheck(
   templateId: string,
   doc: DesignDoc,
   enabled = true,
   previewCount?: number,
+  asNew?: { orgId: string; name: string },
 ) {
   const { orgId } = useOrgScope();
   const settled = useDebounced(doc, 450);
   const sig = useMemo(() => `${signature(settled)}|${previewCount ?? ''}`, [settled, previewCount]);
   const query = useQuery({
-    queryKey: ['admin', 'templates', 'design-check', templateId, orgId, sig],
+    queryKey: ['admin', 'templates', 'design-check', templateId, orgId, asNew ?? null, sig],
     queryFn: ({ signal }) =>
-      api.post(
-        `/api/v1/templates/${templateId}/versions`,
-        SaveVersionResponseSchema,
-        body(settled, { dryRun: true }, previewCount),
-        { signal, query: { orgId } },
-      ),
+      asNew
+        ? api.post(
+            `/api/v1/templates/${templateId}/use/check`,
+            SaveVersionResponseSchema,
+            { ...asNew, version: body(settled, {}) },
+            { signal },
+          )
+        : api.post(
+            `/api/v1/templates/${templateId}/versions`,
+            SaveVersionResponseSchema,
+            body(settled, { dryRun: true }, previewCount),
+            { signal, query: { orgId } },
+          ),
     enabled: enabled && Boolean(orgId),
     placeholderData: keepPreviousData,
     staleTime: 60_000,

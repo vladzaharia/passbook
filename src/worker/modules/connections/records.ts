@@ -18,13 +18,13 @@ import {
   type ConnectionReleaseSnapshot,
   createIncomingPass,
   type ReleaseBlockCode,
+  releaseBlockCode,
 } from './record-issuance.ts';
 import {
   appliedSnapshot,
   markIncomingMissing,
   markIncomingSynced,
   mutationFence,
-  releaseBlockCode,
 } from './record-outcomes.ts';
 import { captureRecordSnapshot } from './record-snapshot.ts';
 import { type ConnectionRow, getConnection } from './repo.ts';
@@ -32,7 +32,11 @@ import { markPassSyncError, markPassSynced, type SyncSnapshot } from './repo-pas
 import { getPassByRef, type SyncPass, validCredentialKeysetCommitment } from './repo-passes.ts';
 
 export type { ConnectionReleaseSnapshot, ReleaseBlockCode } from './record-issuance.ts';
-export { captureConnectionRelease, ReleaseContentRetryError } from './record-issuance.ts';
+export {
+  captureConnectionRelease,
+  logRecordsSkipped,
+  ReleaseContentRetryError,
+} from './record-issuance.ts';
 
 export type Outcome =
   | 'changed'

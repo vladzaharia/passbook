@@ -1,7 +1,8 @@
 {
   "schema": 1,
-  "name": "PassBook · Event ticket",
-  "description": "Event ticket with the poster layout and a classic fallback, relevant dates, venue semantics and an optional list of upcoming events.",
+  "name": "Event ticket",
+  "description": "Seat, doors and venue, with a poster layout.",
+  "blueprint": true,
   "inputs": {
     "type": "object",
     "required": [
@@ -545,6 +546,7 @@
     }
   ],
   "display": {
+    "icon": "music",
     "title": "{{eventName}}",
     "subtitle": "{{attendee}}",
     "status": "{{venueName}}",

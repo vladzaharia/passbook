@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import {
   Braces,
   Calendar,
@@ -90,6 +91,22 @@ export function TemplateOverview({
                 ),
               },
               { label: 'Styles', value: styleList(t.styles) },
+              ...(t.fromBlueprint
+                ? [
+                    {
+                      label: 'From',
+                      value: (
+                        <Link
+                          to="/admin/blueprints/$blueprintId"
+                          params={{ blueprintId: t.fromBlueprint.id }}
+                          className="text-accent-fg underline-offset-2 hover:underline"
+                        >
+                          {t.fromBlueprint.name}
+                        </Link>
+                      ),
+                    },
+                  ]
+                : []),
               { label: 'Slug', value: t.slug, mono: true },
             ]}
           />

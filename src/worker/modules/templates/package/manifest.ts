@@ -11,6 +11,7 @@ import type {
   TemplateManifest,
   ValidationIssue,
 } from '../../../../passkit/types.ts';
+import { checkIdentity } from './manifest-identity.ts';
 import { ALLOWED_KEYWORDS, pointerAllowed } from './manifest-rules.ts';
 import { isSafePattern, needsInputBound, PATTERN_INPUT_MAX } from './safe-regex.ts';
 import { stylesOf } from './slots.ts';
@@ -197,6 +198,7 @@ export function validateManifest(
   if (JSON.stringify(manifest).length > MAX_MANIFEST_BYTES)
     error('MANIFEST_SIZE', 'Manifest is larger than 64 KB.');
   if (m.schema !== 1) error('MANIFEST_SCHEMA', 'Manifest schema must be 1.', 'schema');
+  checkIdentity(m, options.uploaded, error);
   if (typeof m.name !== 'string' || !m.name.trim() || m.name.length > 120)
     error('MANIFEST_NAME', 'Manifest needs a name of 1 to 120 characters.', 'name');
   const inputs = m.inputs as Record<string, unknown> | undefined;

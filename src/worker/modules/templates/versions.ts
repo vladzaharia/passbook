@@ -1,39 +1,25 @@
 import type { z } from 'zod';
-import type { TemplateManifest, ValidationIssue } from '../../../passkit/types.ts';
 import type {
   SaveVersionResponseSchema,
   SaveVersionSchema,
 } from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { baseUrl } from '../../platform/env.ts';
-import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { withBackContacts } from '../passes/contacts.ts';
 import { assertTemplateAuthority, authorizeTemplateWrite } from './access.ts';
 import { putVersionAsset } from './asset-storage.ts';
-import { behaviors, previewPass } from './build-check.ts';
-import { dryRunReport, dryRunTemplate } from './dry-run-report.ts';
 import { imagesFromBinding } from './images-binding.ts';
 import { audit, storageOrg } from './mutations.ts';
-import { analyzePackage } from './package/analyze.ts';
 import { buildKey } from './package/hash.ts';
 import type { ImageTools } from './package/images.ts';
 import { commitVersion } from './persist.ts';
 import { clearTemplateCache, r2Key } from './registry.ts';
-import { getOrgName, getTemplate, getVersion } from './repo.ts';
+import { getTemplate, getVersion } from './repo.ts';
 import { detail, loadTemplate } from './service.ts';
-import { stampsForSave } from './stamps-save.ts';
-import { resolveVersionFiles } from './version-files.ts';
+import { checkVersion, refusedResponse } from './version-check.ts';
 
 type Body = z.infer<typeof SaveVersionSchema>;
 type Response = z.infer<typeof SaveVersionResponseSchema>;
-
-const encoder = new TextEncoder();
-
-const toIssues = (issues: ValidationIssue[]) =>
-  issues
-    .filter((i) => i.severity === 'error')
-    .map((i) => ({ path: i.path ?? '', message: i.message, code: i.code }));
 
 /**
  * Validates a version written from JSON (the designer) with the upload pipeline's own steps:
@@ -57,46 +43,11 @@ export async function saveVersion(
   if (row.status !== 'active')
     throw new ConflictError('Archived templates cannot be changed.', 'TEMPLATE_ARCHIVED');
 
-  // tooling.json of an uploaded version is not carried into designer versions; it only serves the import pipeline.
-  const { files, carried } = await resolveVersionFiles(ctx, id, body.assets);
-  const manifest = body.manifest as unknown as TemplateManifest;
-  const input = new Map(files);
-  input.set('pass.json', encoder.encode(JSON.stringify(body.passJson)));
-  input.set('wallet.template.json', encoder.encode(JSON.stringify(manifest)));
-  const analysis = await analyzePackage(input, {
-    uploaded: true,
-    fallbackName: row.name,
-    images,
-    behaviors,
-    stamps: stampsForSave(ctx, id, manifest, body.dryRun === true, carried),
+  const checked = await checkVersion(ctx, row, row.orgId, body, images, {
+    dryRun: body.dryRun === true,
   });
-  if (!('version' in analysis)) return rejected(body, analysis.report, null);
-
-  const report = await dryRunReport(ctx, row.orgId, analysis, async (name) => {
-    const bytes = analysis.files.get(name);
-    if (!bytes) throw new Error(`Missing file ${name}`);
-    return bytes;
-  });
-  if (!report.ok) return rejected(body, report, analysis);
-
-  const org = row.orgId ? await getOrgName(ctx.env.DB, row.orgId) : null;
-  const preview = previewPass(
-    ctx.env,
-    dryRunTemplate(row.orgId, analysis),
-    analysis.manifest.sample,
-    org?.name ?? 'Organization',
-    new Date(ctx.clock.now()),
-  );
-  const built = withBackContacts(preview.passJson, {
-    contact: null,
-    passService: baseUrl(ctx.env),
-  }) as unknown as Record<string, unknown>;
-  const base = {
-    version: analysis.version,
-    report,
-    assets: analysis.assets.map((a) => ({ ...a })),
-    passJson: built,
-  };
+  if ('refused' in checked) return refusedResponse(body.dryRun, checked.refused);
+  const { analysis, report, carried, base } = checked;
   const key = await buildKey(analysis);
   const referenceVersion = row.activeVersion;
   const [existing, active] = await Promise.all([
@@ -185,28 +136,5 @@ export async function saveVersion(
     created: committed.versionCreated,
     displayOnly: actualDisplayOnly,
     template: await detail(ctx, auth, id),
-  };
-}
-
-function rejected(
-  body: Body,
-  report: Response['report'],
-  analysis: { version: string; assets: Response['assets'] } | null,
-): Response {
-  if (!body.dryRun)
-    throw new ValidationError(
-      'The template is invalid.',
-      toIssues(report.issues),
-      'VERSION_INVALID',
-    );
-  return {
-    saved: false,
-    version: analysis?.version ?? null,
-    created: false,
-    displayOnly: false,
-    report,
-    assets: analysis?.assets ?? [],
-    passJson: null,
-    template: null,
   };
 }
