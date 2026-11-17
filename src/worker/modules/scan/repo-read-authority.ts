@@ -110,13 +110,16 @@ export const SESSION_READ = {
 /**
  * The fence of an API key's scan feed: the key is live and lists `scans:read` now. An org-bound key
  * reads its own org, which must be active. A platform key reads the org it names (suspended or not:
- * history outlives the org's access) or, naming none, every org of its mode.
+ * history outlives the org's access) or, naming none, every org of its mode. That allowance, and the
+ * named org not being checked to exist, make it a read fence only: it is `Relaxed`, so
+ * `scanReadFence` refuses it as a write guard. A platform key's tenant asserts in SQL that the stored
+ * key really has no org.
  */
 export function apiKeyReadAuthority(
   key: { keyId: string; orgId: string | null },
   namedOrgId: string | undefined,
   now: number,
-): StrictReadAuthority {
+): RelaxedReadAuthority {
   const bound = key.orgId !== null;
   const { ctes, params } = authorityPredicate(
     {
@@ -136,7 +139,7 @@ export function apiKeyReadAuthority(
     tenant: (alias, table) =>
       bound
         ? tenantFilter(alias, table, 'org_mode')
-        : `${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = (SELECT mode FROM actor_ok)`,
-    relaxed: false,
+        : `(SELECT org_id FROM actor_ok) IS NULL AND ${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = (SELECT mode FROM actor_ok)`,
+    relaxed: true,
   };
 }

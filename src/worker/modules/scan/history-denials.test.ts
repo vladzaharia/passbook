@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg, makeSession, makeUser, withoutTrigger } from '../../../../test/helpers/index.ts';
-import { run } from '../../platform/db.ts';
+import { read } from '../../platform/counters.ts';
+import { first, run } from '../../platform/db.ts';
+import { createSessionStore } from '../auth/sessions.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { tenantAuthorityOf } from '../passes/http.ts';
 import { beforeBatch, beforeStatement } from './batch-interceptor-test-support.ts';
 import { recordedCheckIn } from './console-privacy-actions-test-fixtures.ts';
 import {
   admin,
   adminMembershipId,
+  adminUserId,
   app,
   expectNoSecrets,
   exportPath,
@@ -19,6 +23,10 @@ import {
   templateId,
   testAdmin,
 } from './console-privacy-test-fixtures.ts';
+import { captureConsoleFeed, recordPage } from './feed-console-page.ts';
+import { createHistoryEvidenceCache } from './history-row-evidence.ts';
+import { listScanRows } from './repo-feed.ts';
+import { apiKeyReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import { grantScanMembership, ORIGIN } from './test-kit.ts';
 
 setupPrivacyKit();
@@ -280,5 +288,86 @@ describe('the pass or the scanner changed since the scan', () => {
       items: { scannerName: string | null }[];
     };
     expect(list.items[0]?.scannerName).toBeNull();
+  });
+});
+
+describe('the export loop and the API-key fence', () => {
+  it("judges Wallet validity by each page's own clock, so a pass that expires mid-export stops being exported", async () => {
+    const { pass, row } = await recorded();
+    const user = await makeUser(kit.fx);
+    await grantScanMembership(kit.fx, kit.org.id, user.id);
+    const fixture = await makeSession(kit.fx, { userId: user.id, roles: ['admin', 'user'] });
+    const session = await createSessionStore(kit.env, kit.clock).resolve(fixture.cookieValue);
+    if (!session) throw new Error('The console session must resolve.');
+    const authority = await tenantAuthorityOf(kit.ctx, session, kit.org.id, 'scanning:read');
+    if (authority.kind !== 'session') throw new Error('Expected session authority');
+    const actor = await captureConsoleFeed(kit.ctx, session, authority);
+    const start = kit.clock.now();
+    await run(
+      kit.env.DB,
+      "UPDATE pass_versions SET pass_json = json_set(pass_json, '$.expirationDate', ?) WHERE pass_id = ?",
+      [new Date(start + 5 * 60_000).toISOString(), pass.id],
+    );
+    const filter = {
+      mode: 'live',
+      orgId: kit.org.id,
+      from: start - 86_400_000,
+      to: start + 86_400_000,
+      limit: 1000,
+      now: start,
+    } as const;
+    const page = () =>
+      recordPage(kit.ctx, session, authority, filter, {
+        actor,
+        evidence: createHistoryEvidenceCache(),
+        operation: 'export',
+      });
+    expect((await page()).items[0]).toMatchObject({ id: row.id, passId: pass.id });
+    // The export started at `start`; the next page is read after the Wallet pass expired.
+    kit.clock.advance(10 * 60_000);
+    expect((await page()).items[0]).toMatchObject({ id: row.id, passId: null, passTitle: null });
+  });
+
+  it('charges a pass search against the hourly cap before it counts', async () => {
+    const { pass } = await recorded();
+    const hour = kit.clock.now() - (kit.clock.now() % 3_600_000);
+    const key = `scan:export:${adminUserId}`;
+    const { fired } = await beforeBatch(
+      kit.env,
+      /page AS MATERIALIZED/,
+      () => {
+        throw new Error('The count never finishes.');
+      },
+      () => get(exportPath(`&passId=${pass.id}`)),
+    );
+    expect(fired).toBe(true);
+    expect(await read(kit.env.DB, key, hour)).toBe(1);
+  });
+
+  it('a platform fence asserts in SQL that its key has no org, and is not a write guard', async () => {
+    await recorded();
+    const orgKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
+    expect((await get('', orgKey)).status).toBe(200);
+    const stored = await first<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM api_keys WHERE org_id = ?',
+      [kit.org.id],
+    );
+    if (!stored) throw new Error('The org key must be stored.');
+    // The same key presented as a platform key, naming its own org: refused by the row, not by JS.
+    const forged = apiKeyReadAuthority(
+      { keyId: stored.id, orgId: null },
+      kit.org.id,
+      kit.clock.now(),
+    );
+    const result = await listScanRows(
+      kit.env.DB,
+      forged,
+      { mode: 'live', limit: 10 },
+      kit.clock.now(),
+    );
+    expect(result.rows).toEqual([]);
+    // @ts-expect-error A relaxed read fence cannot be an UPDATE guard.
+    scanReadFence(forged);
   });
 });

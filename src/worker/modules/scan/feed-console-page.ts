@@ -80,7 +80,9 @@ export async function recordPage(
     ctx.env.DB,
     consoleReadAuthority(ctx, cache.actor),
     candidatesFilter,
-    now,
+    // Each page judges Wallet validity by the clock it reads at: a pass that expires during a long
+    // export stops being exported. The filter's `now` stays the export's, for its cursor scope.
+    ctx.clock.now(),
   );
   if (!authorized) throw new ForbiddenError();
   const projected = await recordsOf(ctx, rows, cache.actor, cache.evidence);

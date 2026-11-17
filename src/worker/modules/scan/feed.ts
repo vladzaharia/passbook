@@ -209,8 +209,12 @@ export async function exportScans(
   const limited = () => new RateLimitedError(Math.ceil((hour + 3_600_000 - now) / 1000));
   // Read first so a user over the cap costs no scan; count the export only once it will run.
   if ((await read(ctx.env.DB, exportKey, hour)) >= EXPORTS_PER_HOUR) throw limited();
+  // A pass or title search pages through unfiltered scans to count: it is charged before it runs,
+  // so a request that never finishes counting still spends the hour's cap.
+  const searched = !!(filter.q || filter.passId);
+  if (searched && (await bump(ctx.env.DB, exportKey, hour)) > EXPORTS_PER_HOUR) throw limited();
   let rows = 0;
-  if (filter.q || filter.passId || filter.eventId || filter.scannerId || filter.staffId) {
+  if (searched || filter.eventId || filter.scannerId || filter.staffId) {
     let cursor: string | undefined;
     do {
       const page = await recordPage(ctx, session, authority, { ...filter, cursor }, cache);
@@ -230,7 +234,7 @@ export async function exportScans(
   await assertConsoleAuthority(ctx, actor);
   if (rows > EXPORT_MAX_ROWS)
     throw new ValidationError('Export up to 100,000 scans at a time.', [], 'SCAN_EXPORT_TOO_LARGE');
-  if ((await bump(ctx.env.DB, exportKey, hour)) > EXPORTS_PER_HOUR) throw limited();
+  if (!searched && (await bump(ctx.env.DB, exportKey, hour)) > EXPORTS_PER_HOUR) throw limited();
   // Last before streaming: the grant re-checks session, membership and org, and the stream's first pull checks the console guard.
   await auditScanExport(ctx, authority, { from: req.from, to: req.to, rows });
   const encoder = new TextEncoder();
