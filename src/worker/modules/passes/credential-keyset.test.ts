@@ -22,7 +22,7 @@ import { credentialRefKeysetSql } from './repo-credential-keyset.ts';
 
 const makeEnv = installKeysetTestEnv();
 
-describe.sequential('credential reference keyset', () => {
+describe('credential reference keyset', () => {
   it('commits to the tombstone key with a separate fixed HMAC domain', async () => {
     const key = await derivedHmacKey(envA, 'pass-credential-tombstone-v1');
     const expected = toHex(
