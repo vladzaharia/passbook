@@ -26,6 +26,7 @@ import { DesignerProvider } from './context.tsx';
 import { type CreateDesign, useCreateFlow } from './create-flow.ts';
 import { DesignerHeader } from './designer-header.tsx';
 import { clearDraft } from './drafts.ts';
+import { useGoalFlow } from './goal-flow.tsx';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
 import { type DesignDoc, findField, type Selection } from './model.ts';
@@ -42,6 +43,7 @@ import {
 import { useSaveFlow } from './save-flow.ts';
 import { SavedCallout } from './saved-callout.tsx';
 import { ScanMode } from './scan/scan-mode.tsx';
+import { useStampsPreview } from './stamp-preview.ts';
 import { useDesignerIssues } from './use-designer-issues.ts';
 import { useDraftPersistence } from './use-draft-persistence.ts';
 import './designer.css';
@@ -110,13 +112,15 @@ export function Designer({
   latest.current = state.doc;
   const dirty = isDirty(state);
   const select = useMemo(() => validSelection(state), [state]);
+  const base_ = assetBase(version);
+  const stamps = useStampsPreview(state.doc, base_);
   const check = useDesignCheck(
     templateId,
     state.doc,
     !readOnly,
+    stamps.checkCount,
     create ? { orgId: create.orgId, name: create.name } : undefined,
   );
-  const base_ = assetBase(version);
 
   const edit = useCallback(
     (op: Op, merge?: string) => {
@@ -193,6 +197,7 @@ export function Designer({
       setRestored(false);
     },
   });
+  const goalFlow = useGoalFlow(templateId, template.passCount, state, edit, flow, check.checking);
 
   const api = useMemo(
     () => ({
@@ -204,8 +209,10 @@ export function Designer({
       dispatch,
       assetBase: base_,
       readOnly: Boolean(readOnly),
+      stamps: stamps.slider,
+      orgId: selectedOrg,
     }),
-    [state, select, edit, choose, focusTarget, base_, readOnly],
+    [state, select, edit, choose, focusTarget, base_, readOnly, stamps.slider, selectedOrg],
   );
 
   return (
@@ -279,6 +286,7 @@ export function Designer({
                 assets={state.doc.assets}
                 assetBase={base_}
                 checking={readOnly ? false : check.checking}
+                stripUrl={stamps.stripUrl}
               />
             }
             issues={
@@ -295,7 +303,7 @@ export function Designer({
             dirty={create ? created.made === null : dirty}
             saving={create ? created.saving : flow.saving}
             saveLabel={create ? 'Create template' : 'Save version'}
-            onSave={() => (create ? created.run(state.doc) : flow.run(state.doc))}
+            onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
             onDiscard={() => {
               dispatch({ type: 'reset', doc: state.saved });
               clearDraft(draftKey);
@@ -303,6 +311,7 @@ export function Designer({
             }}
           />
         )}
+        {goalFlow.dialog}
         <UnsavedChangesDialog blocker={guard} />
       </div>
     </DesignerProvider>

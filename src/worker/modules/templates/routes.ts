@@ -31,6 +31,7 @@ import { registerBlueprints } from './routes-blueprints.ts';
 import {
   registerLifecycle,
   registerPreviewBatch,
+  registerStampsImpact,
   registerUploadList,
   registerVersions,
 } from './routes-more.ts';
@@ -282,6 +283,7 @@ register(
 registerVersionReads(templatesRoutes);
 
 registerVersions(templatesRoutes);
+registerStampsImpact(templatesRoutes);
 registerBlueprints(templatesRoutes);
 registerLifecycle(templatesRoutes);
 registerTemplateReleases(templatesRoutes);

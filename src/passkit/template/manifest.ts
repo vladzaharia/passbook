@@ -16,6 +16,7 @@ import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
 import { validateRequires } from './requires.ts';
 import { reservedInputIssues, unknownPassValues } from './reserved.ts';
 import { scanManifestIssues } from './scan.ts';
+import { stampPassScope, stampsIssues } from './stamps.ts';
 
 /** Image target: drops the slot's files from the bundle when the binding's condition says so. */
 export interface ImageTarget {
@@ -135,7 +136,7 @@ export function validateManifest(
       error('EXPR', problem, path);
       return;
     }
-    for (const name of unknownPassValues(typeof expr === 'string' ? expr : ''))
+    for (const name of unknownPassValues(typeof expr === 'string' ? expr : '', manifest))
       warn('EXPR_PASS', `Unknown pass value "${name}".`, path);
     const refs = exprReferences(expr);
     for (const name of refs.inputs)
@@ -237,6 +238,7 @@ export function validateManifest(
 
   issues.push(...messagingIssues(manifest, options.passJson));
   issues.push(...scanManifestIssues(manifest, options));
+  issues.push(...stampsIssues(manifest, options.passJson, options.assetNames));
 
   if (manifest.previewOnlyAssets && options.assetNames) {
     for (const name of manifest.previewOnlyAssets)
@@ -305,7 +307,7 @@ export function projectDisplay(
   input: Personalization,
 ): DisplayProjection {
   const full = applyDefaults(manifest, input);
-  const scope = { input: full, lookups: manifest.lookups ?? {} };
+  const scope = { input: full, lookups: manifest.lookups ?? {}, ...stampPassScope(manifest, full) };
   const ev = (expr: Expr | undefined) => (expr === undefined ? null : text(evaluate(expr, scope)));
   const search = (manifest.display.search ?? [])
     .map((name) => text(full[name]))

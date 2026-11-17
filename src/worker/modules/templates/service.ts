@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { stampedName } from '../../../passkit/build-assets.ts';
 import type { Json } from '../../../shared/contracts/common.ts';
 import type {
   ImportStatusSchema,
@@ -224,10 +225,12 @@ export async function openVersionAsset(
   version: string,
   name: string,
   orgId?: string,
+  stamps?: number,
 ): Promise<AssetStream> {
   await loadTemplate(ctx, auth, id, orgId);
   const registry = createTemplateRegistry(ctx.env, { ctx });
   const template = await registry.resolve(id, version);
+  name = stampedName(template, name, stamps);
   const entry = template.assets.find((a) => a.name === name);
   const contentType = TYPES[name.split('.').pop() ?? ''] ?? 'application/octet-stream';
   if (entry)

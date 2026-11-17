@@ -153,7 +153,8 @@ export function actionIssues(actions: unknown, ctx: ActionContext): void {
         `rewardLabel is 1 to ${MAX_LABEL} characters.`,
         `${path}.rewardLabel`,
       );
-    if (a.kind === 'add' && a.notify === true)
+    // A stamp card alerts once per card by itself (STAMPS_CHATTY): its adds may notify.
+    if (a.kind === 'add' && a.notify === true && a.input !== ctx.manifest.stamps?.input)
       warn(
         'SCAN_NOTIFY_BUDGET',
         'Notifying on every add spends the daily push budget.',

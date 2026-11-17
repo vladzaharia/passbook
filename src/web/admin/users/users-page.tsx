@@ -1,10 +1,10 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { UserSummarySchema } from '@/shared/contracts/users.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { formatCount, formatDateTime } from '@/web/lib/format.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
   Badge,
   DataTable,
@@ -26,7 +26,7 @@ type UserRow = z.infer<typeof UserSummarySchema>;
 
 const ALL = 'all';
 
-const COLUMNS: ColumnDef<UserRow, never>[] = [
+const COLUMNS: DataColumnDef<UserRow, never>[] = [
   {
     header: 'User',
     id: 'user',

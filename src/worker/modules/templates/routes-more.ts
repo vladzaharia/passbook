@@ -7,11 +7,13 @@ import {
   UploadListQuerySchema,
   UploadListSchema,
 } from '../../../shared/contracts/index.ts';
+import { StampsImpactQuerySchema, StampsImpactSchema } from '../../../shared/contracts/stamps.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { setArchived, templatePackage } from './lifecycle.ts';
 import { ScopedPreviewBatchQuerySchema, TemplateScopeQuerySchema } from './route-scope.ts';
 import { previewMany, recentUploads } from './service.ts';
+import { stampsImpact } from './stamps.ts';
 import { saveVersion } from './versions.ts';
 
 type Router = ReturnType<typeof createRouter>;
@@ -120,6 +122,31 @@ export function registerVersions(router: Router): void {
           c.var.auth,
           c.req.valid('param').id,
           c.req.valid('json'),
+        ),
+      ),
+  );
+}
+
+/** GET /{id}/stamps-impact?goal=: what a goal change does to the live cards. */
+export function registerStampsImpact(router: Router): void {
+  register(
+    router,
+    'templates',
+    {
+      method: 'get',
+      path: '/{id}/stamps-impact',
+      summary: 'What changing the stamp goal does to live passes',
+      params: IdParamSchema,
+      query: StampsImpactQuerySchema,
+      response: StampsImpactSchema,
+    },
+    async (c) =>
+      c.json(
+        await stampsImpact(
+          serviceContext(c),
+          c.var.auth,
+          c.req.valid('param').id,
+          c.req.valid('query'),
         ),
       ),
   );

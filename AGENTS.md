@@ -68,7 +68,7 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | | Workstream | Owns |
 | --- | --- | --- |
 | a1 | pass format | `src/passkit/{schema,sign,package}/**`, `src/passkit/validate*.ts`, `src/passkit/types.ts` |
-| a2 | template language + baked packages | `src/passkit/{template,behaviors}/**` (registry port shape frozen), `src/passkit/build*.ts`, `templates/**` |
+| a2 | template language + baked packages | `src/passkit/{template,behaviors,stamps}/**` (registry port shape frozen), `src/passkit/build*.ts`, `templates/**` |
 | b | pass-view + PassCard | `src/shared/pass-view/**`, `src/web/pass-card/**` |
 | c | templates module | `src/worker/modules/templates/**`, `src/worker/workflows/template-import.ts`, `tools/build-templates.ts` |
 | d | passes, holders, delivery, apple, public | `modules/{passes,holders,delivery,apple,public}/**`, `workflows/bulk-reissue.ts`, `src/worker/ssr/**`, `src/worker/email/pass*`, retention hooks |
