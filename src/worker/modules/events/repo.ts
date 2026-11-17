@@ -15,15 +15,18 @@ export interface EventRow {
   at: number;
 }
 
+/**
+ * The row's org comes from the pass: a pass of another org writes nothing (`changes` is 0), so the
+ * caller can name the mismatch. The mode is the event's own (a sandbox capture is a `test` event on a
+ * pass of either mode).
+ */
 export function insertEventStmt(db: D1Database, row: EventRow): D1PreparedStatement {
   return stmt(
     db,
     `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, device, actor_type, actor_id, data, at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     SELECT ?, p.org_id, p.id, ?, ?, ?, ?, ?, ?, ? FROM passes p WHERE p.id = ? AND p.org_id = ?`,
     [
       row.id,
-      row.org_id,
-      row.pass_id,
       row.mode,
       row.kind,
       row.device,
@@ -31,6 +34,8 @@ export function insertEventStmt(db: D1Database, row: EventRow): D1PreparedStatem
       row.actor_id,
       row.data,
       row.at,
+      row.pass_id,
+      row.org_id,
     ],
   );
 }

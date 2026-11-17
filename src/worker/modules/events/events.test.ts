@@ -92,6 +92,24 @@ describe('recordPassEvent', () => {
     warn.mockRestore();
   });
 
+  it('takes the org from the pass: another org writes nothing and logs EVENT_ORG_MISMATCH', async () => {
+    const pass = await kit.pass();
+    const error = vi.spyOn(kit.ctx.log, 'error');
+    await recordPassEvents(kit.ctx, [
+      { ...base(pass.id), orgId: 'another-org', kind: 'page.opened' },
+      { ...base(pass.id), kind: 'page.opened' },
+    ]);
+    expect(error).toHaveBeenCalledWith(
+      'events.org_mismatch',
+      expect.objectContaining({ code: 'EVENT_ORG_MISMATCH', passId: pass.id }),
+    );
+    expect((await rows(pass.id)).map((r) => [r.kind, r.mode])).toEqual([
+      ['pass.issued', 'live'],
+      ['page.opened', 'live'],
+    ]);
+    error.mockRestore();
+  });
+
   it('records a batch in order', async () => {
     const pass = await kit.pass();
     await recordPassEvents(kit.ctx, [

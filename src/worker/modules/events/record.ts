@@ -88,11 +88,21 @@ export async function recordPassEvents(
   try {
     const rows = await Promise.all(inputs.map((input) => toRow(ctx, input)));
     // Ids are UUIDv7 from one clock, so a batch keeps its order within the same millisecond.
-    for (const part of chunk(rows, 50))
-      await batch(
+    for (const part of chunk(rows, 50)) {
+      const results = await batch(
         ctx.env.DB,
         part.map((row) => insertEventStmt(ctx.env.DB, row)),
       );
+      results.forEach((result, index) => {
+        if (result.meta.changes === 1) return;
+        ctx.log.error('events.org_mismatch', {
+          code: 'EVENT_ORG_MISMATCH',
+          orgId: part[index]?.org_id,
+          passId: part[index]?.pass_id,
+          kind: part[index]?.kind,
+        });
+      });
+    }
   } catch (error) {
     ctx.log.error('events.record_failed', {
       code: 'EVENT_RECORD_FAILED',
