@@ -162,6 +162,8 @@ export const EligibleTemplateListSchema = z.object({
 export type EligibleTemplateList = z.infer<typeof EligibleTemplateListSchema>;
 
 export const EligibleTemplateQuerySchema = TemplateReleaseScopeSchema.extend({
+  /** `issue` lists templates a pass can be made from; `scan` also lists blueprints the org has live passes on. */
+  purpose: z.enum(['issue', 'scan']).default('issue'),
   cursor: IdSchema.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
 });

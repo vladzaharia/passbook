@@ -1,13 +1,15 @@
-// Playwright webServer: mock Pocket ID + local D1 + Vite on 5173.
+// Playwright webServer: mock Pocket ID + local D1 + Vite on E2E_PORT (default 5173; OIDC on +1).
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { copyFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
 import { writeDevVars } from './lib/dev-vars.ts';
+import { e2eOrigin, e2ePorts } from './lib/e2e-ports.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const children: ChildProcess[] = [];
+const oidcIssuer = `http://localhost:${e2ePorts.oidc}`;
 const mode = process.env.WALLET_E2E_PREVIEW === '1' ? 'preview' : 'dev';
 
 // Own vars file (picked up via CLOUDFLARE_ENV=e2e) so a developer's .dev.vars (other issuer, port,
@@ -18,8 +20,8 @@ const fixture = await createFixtureIdentity();
 writeDevVars(varsFile, {
   KEK_V1: randomBytes(32).toString('base64'),
   OIDC_CLIENT_ID: 'wallet-e2e',
-  OIDC_ISSUER: 'http://localhost:5174',
-  PUBLIC_BASE_URL: 'http://localhost:5173',
+  OIDC_ISSUER: oidcIssuer,
+  PUBLIC_BASE_URL: e2eOrigin,
   // Cloudflare's always-pass Turnstile test secret (paired with the always-pass test site key).
   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
   SIGNER_PLATFORM_CERTIFICATE: fixture.certificate,
@@ -38,9 +40,9 @@ const env = {
   CLOUDFLARE_ENV: 'e2e',
   WALLET_E2E: '1',
   VITE_E2E: '1',
-  OIDC_ISSUER: 'http://localhost:5174',
+  OIDC_ISSUER: oidcIssuer,
   OIDC_CLIENT_ID: 'wallet-e2e',
-  PUBLIC_BASE_URL: 'http://localhost:5173',
+  PUBLIC_BASE_URL: e2eOrigin,
   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
 };
 
@@ -61,10 +63,14 @@ if (mode === 'preview') {
 }
 
 children.push(
-  spawn('node', ['test/mock-oidc/server.ts', '5174'], { cwd: root, stdio: 'inherit', env }),
+  spawn('node', ['test/mock-oidc/server.ts', String(e2ePorts.oidc)], {
+    cwd: root,
+    stdio: 'inherit',
+    env,
+  }),
 );
 children.push(
-  spawn('npx', ['vite', mode, '--port', '5173', '--strictPort'], {
+  spawn('npx', ['vite', mode, '--port', String(e2ePorts.web), '--strictPort'], {
     cwd: root,
     stdio: 'inherit',
     // Preview uses the environment already selected in its build output.

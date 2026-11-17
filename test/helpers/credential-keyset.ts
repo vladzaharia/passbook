@@ -1,4 +1,3 @@
-import { applyD1Migrations } from 'cloudflare:test';
 import { env as bindings } from 'cloudflare:workers';
 import { beforeEach, expect } from 'vitest';
 import {
@@ -6,6 +5,7 @@ import {
   ensureCredentialRefKeyset,
 } from '../../src/worker/modules/passes/credential-keyset.ts';
 import { first, run } from '../../src/worker/platform/db.ts';
+import { applySchemaSnapshot } from '../setup/schema-snapshot.ts';
 import { makeEnv as makeBaseEnv } from './env.ts';
 
 export const keyA = btoa('a'.repeat(32));
@@ -23,7 +23,7 @@ export function installKeysetTestEnv() {
     const name = `KEYSET_TEST_DB_${nextDatabase++}`;
     const db = (bindings as unknown as Record<string, D1Database | undefined>)[name];
     if (!db) throw new Error(`No isolated D1 binding for ${name}`);
-    await applyD1Migrations(db, bindings.TEST_MIGRATIONS);
+    await applySchemaSnapshot(db);
     currentDatabase = db;
   }, 30_000);
   return () => makeBaseEnv({ DB: currentDatabase });
@@ -35,7 +35,7 @@ export async function isolatedKeysetDatabase(): Promise<D1Database> {
   const name = `KEYSET_TEST_DB_${nextLazyDatabase++}`;
   const db = (bindings as unknown as Record<string, D1Database | undefined>)[name];
   if (!db) throw new Error(`No isolated D1 binding for ${name}`);
-  await applyD1Migrations(db, bindings.TEST_MIGRATIONS);
+  await applySchemaSnapshot(db);
   return db;
 }
 

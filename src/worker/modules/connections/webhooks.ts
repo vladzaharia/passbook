@@ -13,7 +13,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getDeps } from './deps.ts';
-import { captureConnectionRelease } from './records.ts';
+import { captureConnectionRelease, logRecordsSkipped } from './records.ts';
 import { getConnection } from './repo.ts';
 import { classify, prepare } from './runtime.ts';
 import { MAX_RECORDS_PER_STEP } from './sync.ts';
@@ -72,6 +72,7 @@ export async function receiveWebhook(
   try {
     credentialKeysetCommitment = await ensureCredentialRefKeyset(sctx.env.DB, sctx.env);
     const release = await captureConnectionRelease(sctx, conn);
+    logRecordsSkipped(sctx, conn, release);
     const rawBody = new Uint8Array(await rawRequest.arrayBuffer());
     staged = await stageRetainedWebhook(
       sctx,

@@ -64,6 +64,20 @@ export function setup(
     },
     '/api/v1/templates': (url) => {
       requests.push(url.searchParams.get('orgId'));
+      if (url.searchParams.get('blueprint') === 'true')
+        return json({
+          items: [
+            templateFixture({
+              id: 'bp-empty',
+              orgId: null,
+              orgName: null,
+              name: 'Membership card',
+              origin: 'baked',
+              blueprint: true,
+            }),
+          ],
+          nextCursor: null,
+        });
       return json({
         items: [
           templateFixture(),
@@ -98,6 +112,12 @@ export function setup(
             templateOrgId: null,
             origin: 'uploaded',
             name: 'Shared scoped ticket',
+          }),
+          eligibleTemplateFixture({
+            templateId: 'bp-live',
+            templateOrgId: null,
+            origin: 'baked',
+            name: 'Coupon blueprint',
           }),
           eligibleTemplateFixture({
             templateId: 'foreign',

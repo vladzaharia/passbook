@@ -1,4 +1,5 @@
 // One D1 transaction for several grants. Kept apart from `Grant` so the class stays small.
+import { type AfterRead, prepareAfter } from './authority-after.ts';
 import { AuthorityError } from './authority-error.ts';
 
 /** What a batch needs of a grant; `Grant` is the only implementation. */
@@ -28,21 +29,24 @@ export async function grantedBatch(db: D1Database, grants: BatchGrant[]): Promis
 }
 
 /**
- * `grantedBatch` plus plain statements that run after the last release, in the same transaction.
+ * `grantedBatch` plus reads (`afterRead`) that run after the last release, in the same transaction.
  * For reads that must see the grant's writes in one round trip; they carry no authority and write nothing.
+ * A write that must commit with the grant is a part of it (`include(writePart(...))`); decoration that
+ * may fail on its own is a separate batch after the commit.
  */
 export async function grantedBatchWith(
   db: D1Database,
   grants: BatchGrant[],
-  after: D1PreparedStatement[],
+  after: readonly AfterRead[],
 ): Promise<{ grants: D1Result[][]; after: D1Result[] }> {
   if (grants.length === 0) return { grants: [], after: [] };
   if (grants.some((g) => g.codesKey !== grants[0]?.codesKey))
     throw new AuthorityError('GRANT_BATCH_MIXED', 'Grants in one batch must share their codes.');
+  const reads = prepareAfter(db, after);
   const prepared = grants.map((g) => prepare(g));
   let results: D1Result[];
   try {
-    results = await db.batch([...prepared.flat(), ...after]);
+    results = await db.batch([...prepared.flat(), ...reads]);
   } catch (error) {
     throw grants.reduce((e, g) => g.translate(e), error);
   }

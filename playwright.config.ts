@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import { e2ePorts } from './tools/lib/e2e-ports.ts';
 
-const port = 5173;
+const port = e2ePorts.web;
 
 export default defineConfig({
   testDir: './e2e',

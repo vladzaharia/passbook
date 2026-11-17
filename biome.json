@@ -11,6 +11,7 @@
       "!**/playwright-report",
       "!**/test-results",
       "!src/generated",
+      "!test/setup/schema-snapshot.generated.json",
       "!src/web/routeTree.gen.ts",
       "!worker-configuration.d.ts",
       "!docs/research",

@@ -28,8 +28,11 @@ export async function prepareCommittedDisplay(
     now: number,
     authority: OutputPredicate,
   ): {
-    stmts: D1PreparedStatement[];
-    finish(results: readonly D1Result[]): ScanDisplay | null;
+    /** Display reads: they run with the commit and must see it. */
+    reads: D1PreparedStatement[];
+    /** The photo grant insert: decoration after the commit (`decorateScan`). */
+    photo: D1PreparedStatement[];
+    finish(reads: readonly D1Result[], photo: readonly D1Result[]): ScanDisplay | null;
   };
 }> {
   if (photo && !original) throw new StaleScanAuthority();
@@ -43,21 +46,14 @@ export async function prepareCommittedDisplay(
   return {
     bind(now, authority) {
       const bound = planned.bind(now, authority);
-      const insert = grant
-        ? grant(now, boundOutputPredicate(authority), { sql: '1', params: [] })
-        : [];
       return {
-        stmts: [...bound.stmts, ...insert],
-        finish(results) {
-          const history = bound.finalize(results.slice(0, bound.stmts.length));
+        reads: bound.stmts,
+        photo: grant ? grant(now, boundOutputPredicate(authority), { sql: '1', params: [] }) : [],
+        finish(reads, photoResults) {
+          const history = bound.finalize(reads);
           if (!history) return null;
           const photoUrl = photo
-            ? confirmedPhotoUrl(
-                authorityActor,
-                found.pass.id,
-                photo.grant,
-                results.slice(bound.stmts.length),
-              )
+            ? confirmedPhotoUrl(authorityActor, found.pass.id, photo.grant, photoResults)
             : null;
           return safeDisplay(ctx, actor, found.pass, screen, { found, history, photoUrl });
         },

@@ -1,6 +1,6 @@
 {
   "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "backgroundColor": "rgb(31,41,55)",
+  "backgroundColor": "rgb(0,75,65)",
   "barcodes": [
     {
       "altText": "CARD-0001",
@@ -16,11 +16,11 @@
       "relevantText": "Welcome back."
     }
   ],
-  "description": "Store card",
+  "description": "Balance card",
   "featuredActions": [],
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
-  "labelColor": "rgb(199,210,254)",
+  "labelColor": "rgb(242,208,125)",
   "logoText": "Organization",
   "organizationName": "PassBook",
   "passTypeIdentifier": "pass.im.plrs.wallet",

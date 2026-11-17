@@ -1,0 +1,318 @@
+{
+  "schema": 1,
+  "name": "Stamp card",
+  "description": "Stamps fill the strip; a full card earns a reward.",
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "holder",
+      "cardNumber"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "holder": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Holder",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "cardNumber": {
+        "type": "string",
+        "x-label": "Card number",
+        "x-group": "Holder",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 60,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 70,
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      },
+      "storeLat": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "x-label": "Store latitude",
+        "x-group": "Location",
+        "x-order": 200
+      },
+      "storeLng": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "x-label": "Store longitude",
+        "x-group": "Location",
+        "x-order": 201
+      },
+      "beacons": {
+        "type": "array",
+        "maxItems": 10,
+        "x-label": "Beacons",
+        "x-group": "Location",
+        "x-order": 210,
+        "x-widget": "list",
+        "x-itemLabel": "Beacon",
+        "x-addLabel": "Add beacon",
+        "x-help": "Shows the card on the lock screen near a Bluetooth beacon. Up to 10.",
+        "items": {
+          "type": "object",
+          "required": [
+            "proximityUUID"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "proximityUUID": {
+              "type": "string",
+              "x-label": "UUID",
+              "x-order": 10,
+              "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$",
+              "x-placeholder": "8DEEFBB9-F738-4297-8040-96668BB44281"
+            },
+            "major": {
+              "type": "integer",
+              "x-label": "Major",
+              "x-order": 20,
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "minor": {
+              "type": "integer",
+              "x-label": "Minor",
+              "x-order": 30,
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "relevantText": {
+              "type": "string",
+              "x-label": "Lock screen text",
+              "x-order": 40,
+              "maxLength": 120
+            }
+          }
+        }
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 59,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back. A change notifies the holder."
+      },
+      "stamps": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 19,
+        "default": 0,
+        "x-label": "Stamps",
+        "x-group": "Stamps",
+        "x-order": 40,
+        "x-help": "Redeeming takes 10 off. Extra stamps carry over."
+      },
+      "reward": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40,
+        "default": "Free item",
+        "x-label": "Reward",
+        "x-group": "Stamps",
+        "x-order": 50
+      }
+    },
+    "dependentRequired": {
+      "storeLat": [
+        "storeLng"
+      ],
+      "storeLng": [
+        "storeLat"
+      ]
+    }
+  },
+  "sample": {
+    "holder": "Alex Morgan",
+    "cardNumber": "CARD-0001",
+    "stamps": 7,
+    "reward": "Free coffee"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "stamps"
+      },
+      "value": "{{pass.stamps.card}} of {{pass.stamps.goal}}"
+    },
+    {
+      "to": {
+        "field": "stamps"
+      },
+      "value": "Reward ready",
+      "when": {
+        "input": "pass.stamps.ready",
+        "eq": true
+      }
+    },
+    {
+      "to": {
+        "field": "stamps",
+        "prop": "changeMessage"
+      },
+      "value": "%@",
+      "when": {
+        "input": "pass.stamps.ready",
+        "eq": true
+      }
+    },
+    {
+      "to": {
+        "field": "reward"
+      },
+      "value": "{{reward}}"
+    },
+    {
+      "to": {
+        "action": "rewards",
+        "prop": "url"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{holder}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}",
+      "remove": {
+        "input": "message",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{cardNumber}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{cardNumber}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/latitude"
+      },
+      "value": "{{storeLat}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations/0/longitude"
+      },
+      "value": "{{storeLng}}"
+    },
+    {
+      "to": {
+        "pointer": "/locations"
+      },
+      "remove": {
+        "any": [
+          {
+            "input": "storeLat",
+            "empty": true
+          },
+          {
+            "input": "storeLng",
+            "empty": true
+          }
+        ]
+      }
+    }
+  ],
+  "display": {
+    "icon": "stamp",
+    "title": "{{holder}}",
+    "subtitle": "{{pass.stamps.card}} of {{pass.stamps.goal}} · {{cardNumber}}",
+    "status": "{{pass.stamps.card}} of {{pass.stamps.goal}}",
+    "search": [
+      "holder",
+      "cardNumber"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "beacons",
+      "version": 1,
+      "config": {
+        "input": "beacons"
+      }
+    }
+  ],
+  "messaging": {
+    "input": "message"
+  },
+  "stamps": {
+    "input": "stamps",
+    "goal": 10,
+    "art": {
+      "filled": "stamps/filled.png",
+      "empty": "stamps/empty.png",
+      "reward": "stamps/reward.png",
+      "rewardEarned": "stamps/reward-earned.png"
+    },
+    "tilt": true
+  }
+}

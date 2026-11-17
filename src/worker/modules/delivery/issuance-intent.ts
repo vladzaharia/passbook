@@ -2,6 +2,7 @@ import { strictEmail } from '../../../shared/email.ts';
 import type { Job } from '../../jobs/types.ts';
 import {
   AppError,
+  authorityDenied,
   ConflictError,
   ForbiddenError,
   NotFoundError,
@@ -293,11 +294,8 @@ export async function enqueuePassEmail(
       orgCap: EMAIL_ORG_DAILY_CAP,
     },
   });
-  if (result === 'org')
-    throw new ForbiddenError(
-      'Organization access changed. Reload and retry.',
-      'ORG_ACCESS_CHANGED',
-    );
+  // A revoked membership or moved revision answers like every other principal's refusal.
+  if (result === 'org' || result === 'actor') throw authorityDenied(result);
   if (result === 'denied') throw new ForbiddenError();
   if (result === 'stale')
     throw new ConflictError(

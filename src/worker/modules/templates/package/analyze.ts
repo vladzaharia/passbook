@@ -19,6 +19,7 @@ import {
 import { defaultManifest, validateManifest } from './manifest.ts';
 import { classify } from './names.ts';
 import { stylesOf, usedSlots } from './slots.ts';
+import { type StampOptions, stampOutput, stampsReserved } from './stamps.ts';
 import { decodeStrings, parseStrings } from './strings.ts';
 
 export const MAX_PASS_JSON_BYTES = 64 * 1024;
@@ -51,6 +52,8 @@ export interface AnalyzeOptions {
   name?: string;
   images?: ImageTools;
   behaviors?: BehaviorRegistry;
+  /** Stamp strips: what to draw and what an earlier version already drew. */
+  stamps?: StampOptions;
 }
 
 function report(issues: ValidationIssue[]): ValidationReport {
@@ -78,6 +81,7 @@ export async function analyzePackage(
   let passBytes: Uint8Array | undefined;
   let manifestBytes: Uint8Array | undefined;
   let tooling: Uint8Array | null = null;
+  const stampArt = new Map<string, Uint8Array>();
 
   for (const [path, bytes] of [...input].sort(([a], [b]) => (a < b ? -1 : 1))) {
     const kind = classify(path);
@@ -94,6 +98,8 @@ export async function analyzePackage(
     else if (kind.kind === 'manifest') manifestBytes = bytes;
     else if (kind.kind === 'tooling') tooling = bytes;
     else if (kind.kind === 'personalization') files.set(path, bytes);
+    else if (kind.kind === 'stampArt') stampArt.set(path, bytes);
+    else if (kind.kind === 'stampStrip') push(stampsReserved(path));
     else if (kind.kind === 'strings') {
       try {
         strings.set(kind.locale, parseStrings(decodeStrings(bytes)));
@@ -251,11 +257,17 @@ export async function analyzePackage(
         path: `${locale}.lproj`,
       });
 
+  const strips = kept.filter((i) => i.slot === 'strip');
+  // With errors elsewhere the art is still checked, but no strip is drawn.
+  const stampOptions = report(issues).ok ? options.stamps : { counts: [] };
+  const stamps = await stampOutput(manifest, stampArt, strips, stampOptions);
+  for (const issue of stamps.issues) push(issue);
   if (!report(issues).ok || !manifest) return { report: report(issues) };
   // Retain preview images without treating their unused slots as shipped during validation.
   for (const image of unusedPreview) kept.push(image);
 
-  const assets: AnalyzedAsset[] = [];
+  const assets: AnalyzedAsset[] = [...stamps.assets];
+  for (const [path, bytes] of stamps.files) files.set(path, bytes);
   for (const image of kept) {
     files.set(image.path, image.bytes);
     assets.push({

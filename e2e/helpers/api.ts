@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { type APIRequestContext, expect, request } from '@playwright/test';
+import { e2eOrigin } from '../../tools/lib/e2e-ports.ts';
 import { type Role, stateFile } from './auth.ts';
 
-export const BASE = 'http://localhost:5173';
+export const BASE = e2eOrigin;
 
 // biome-ignore lint/suspicious/noExplicitAny: loosely typed test-side API payloads
 type Json = any;
@@ -56,7 +58,13 @@ export async function firstOrg(api: Api): Promise<{ id: string; slug: string; na
   return list[0];
 }
 
-export const GENERIC = 'baked:starter-generic';
+/** The Generic blueprint: it never issues passes. Clone or use it to make a template. */
+export const GENERIC_BLUEPRINT = 'baked:starter-generic';
+
+/** The seed org's template, made from the Generic blueprint and released (see auth.setup.ts). */
+export const seedTemplateId = (): string =>
+  (JSON.parse(readFileSync('e2e/.auth/seed.json', 'utf8')) as { template: { id: string } }).template
+    .id;
 
 export type ReleaseMode = 'live' | 'test';
 
@@ -128,7 +136,7 @@ export async function requireActiveTemplateRelease(
   return active;
 }
 
-/** Creates a pass through the real API (starter-generic by default). */
+/** Creates a pass through the real API (from the seed's template by default). */
 export async function createPass(
   api: Api,
   orgId: string,
@@ -143,12 +151,17 @@ export async function createPass(
   } = {},
 ) {
   const memberId = options.memberId ?? uid('ID').toUpperCase();
-  const templateId = options.templateId ?? options.release?.templateId ?? GENERIC;
+  const templateId = options.templateId ?? options.release?.templateId ?? seedTemplateId();
   const mode = options.mode ?? 'live';
   const release =
     options.release ?? (await requireActiveTemplateRelease(api, orgId, templateId, mode));
   assertReleaseScope(release, orgId, templateId, mode);
-  if (!options.release && (!templateId.startsWith('baked:') || release.source !== 'system')) {
+  const seeded = templateId === seedTemplateId() && release.source === 'approved';
+  if (
+    !options.release &&
+    !seeded &&
+    (!templateId.startsWith('baked:') || release.source !== 'system')
+  ) {
     throw new Error(`Pass creation requires an explicitly published release for ${templateId}`);
   }
   return api.send(

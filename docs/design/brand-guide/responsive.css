@@ -1,0 +1,163 @@
+@page {
+  size: 1120px 792px;
+  margin: 0;
+}
+@media print {
+  body {
+    background: transparent;
+  }
+  .sheet {
+    margin: 0;
+    break-after: page;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .sheet:last-child {
+    break-after: auto;
+  }
+}
+@media screen and (max-width: 1150px) {
+  .sheet {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 28px 24px;
+    margin: 0;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  header {
+    height: auto;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  header .eyebrow {
+    font-size: 9px;
+  }
+  footer {
+    position: static;
+    margin-top: 36px;
+    font-size: 10px;
+  }
+  h2 {
+    font-size: 34px;
+  }
+  .columns,
+  .identity-grid,
+  .palette-columns,
+  .foil-detail,
+  .buddy-anatomy,
+  .application-pair,
+  .email-pair {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .cover-copy {
+    margin-top: 50px;
+  }
+  .columns > *,
+  .palette-columns > *,
+  .foil-detail > * {
+    min-width: 0;
+  }
+  .shape-row {
+    gap: 10px;
+  }
+  .shape-row div {
+    min-width: 0;
+    width: auto;
+    flex: 1;
+    padding: 12px 10px;
+  }
+  .cover h1 {
+    font-size: 88px;
+  }
+  .cover-art {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    margin-top: 32px;
+  }
+  .cover-art .wl-art {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+  .seat-line {
+    top: 91.67%;
+  }
+  .cover-art p {
+    margin-top: 20px;
+  }
+  .cover-art .seat-line {
+    top: auto;
+    bottom: 60px;
+  }
+  .lede {
+    font-size: 22px;
+  }
+  .copy-panel {
+    padding: 24px;
+  }
+  .identity-sample {
+    min-height: 160px;
+  }
+  .size-row {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 10px 0;
+  }
+  .palette {
+    padding: 20px;
+  }
+  .swatch-row {
+    gap: 10px;
+  }
+  .swatch-row code {
+    font-size: 9px;
+  }
+  .type-aa {
+    font-size: 90px;
+  }
+  .type-heading h2 {
+    font-size: 56px;
+  }
+  .type-heading .intro {
+    font-size: 13px;
+  }
+  .anatomy-art .wl-art {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+  .moods {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+  }
+  .art-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .motion-tiers {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .motion-sequence {
+    grid-template-columns: 1fr 1fr;
+  }
+  .asset-table {
+    table-layout: fixed;
+  }
+  .asset-table td:first-child {
+    width: 33%;
+  }
+  .asset-table code {
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+  .asset-table td + td {
+    padding-left: 10px;
+  }
+  .foil-detail code {
+    font-size: 10px;
+  }
+}

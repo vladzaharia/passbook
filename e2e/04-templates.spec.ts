@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { zipSync } from 'fflate';
+import { e2eOrigin } from '../tools/lib/e2e-ports.ts';
 import { apiAs, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -17,6 +18,8 @@ function variantZip(name: string): Buffer {
     if (entry.name === 'wallet.template.json') {
       const manifest = JSON.parse(Buffer.from(bytes).toString('utf8'));
       manifest.name = name;
+      // Only built-in packages are blueprints.
+      manifest.blueprint = undefined;
       // Uploads are untrusted: baked-only schema keywords and /semantics bindings are rejected.
       manifest.inputs.properties.website.pattern = undefined;
       manifest.inputs.dependentRequired = undefined;
@@ -83,20 +86,25 @@ test('uploads a template variant, sees it done in the list, then deletes it', as
   await expect(page.getByRole('link', { name })).toHaveCount(0);
 });
 
-test('baked templates are locked and the API refuses to delete them', async ({ page }) => {
+test('a blueprint is locked, opens as a blueprint, and the API refuses to delete it', async ({
+  page,
+}) => {
   const seed = readSeed();
   await page.goto(
     `/admin/templates/baked:starter-generic?orgId=${encodeURIComponent(seed.org.id)}`,
   );
-  await expect(page.getByText('Built-in', { exact: true }).first()).toBeVisible();
+  await expect
+    .poll(() => decodeURIComponent(new URL(page.url()).pathname))
+    .toBe('/admin/blueprints/baked:starter-generic');
+  await expect(page.getByText('Blueprint', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Duplicate' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Use blueprint' })).toBeVisible();
 
   const api = await apiAs('admin');
   const res = await api.ctx.fetch('/api/v1/templates/baked%3Astarter-generic', {
     method: 'DELETE',
     headers: {
-      Origin: 'http://localhost:5173',
+      Origin: e2eOrigin,
       'X-CSRF-Token': (await (await api.ctx.get('/api/v1/session')).json()).csrfToken,
     },
   });

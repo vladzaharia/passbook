@@ -274,7 +274,7 @@ export async function finishCredentialTransfer(
       objectSha256: build.artifact.sha256,
       objectSize: build.artifact.bytes.length,
       contentHash: build.artifact.contentHash,
-      content,
+      content: build.content,
       credentialKeysetCommitment,
       passJson: JSON.stringify(build.artifact.passJson),
       title: build.artifact.title,

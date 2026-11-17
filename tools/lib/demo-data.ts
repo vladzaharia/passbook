@@ -63,8 +63,22 @@ export function demoPlans(ids: {
   northwind: string;
   harbor: string;
   member: string;
+  /** Templates made from the store card, event ticket, coupon and generic blueprints. */
+  store: string;
+  ticket: string;
+  coupon: string;
+  crew: string;
 }): Plan[] {
-  const { henrys, northwind, harbor, member } = ids;
+  const {
+    henrys,
+    northwind,
+    harbor,
+    member,
+    store: storeCard,
+    ticket,
+    coupon: couponTemplate,
+    crew,
+  } = ids;
   const plans: Plan[] = [];
   PEOPLE.forEach((name, i) => {
     const n = String(i + 1).padStart(3, '0');
@@ -92,7 +106,7 @@ export function demoPlans(ids: {
     } else if (i < 22) {
       const store = i % 2 === 0;
       plans.push({
-        template: store ? 'baked:starter-store-card' : member,
+        template: store ? storeCard : member,
         org: northwind,
         input: store
           ? {
@@ -116,7 +130,7 @@ export function demoPlans(ids: {
       });
     } else if (i < 32) {
       plans.push({
-        template: 'baked:starter-event-ticket',
+        template: ticket,
         org: harbor,
         input: {
           eventName: 'Harbor Lights 2026',
@@ -137,7 +151,7 @@ export function demoPlans(ids: {
     } else {
       const coupon = i % 2 === 0;
       plans.push({
-        template: coupon ? 'baked:starter-coupon' : 'baked:starter-generic',
+        template: coupon ? couponTemplate : crew,
         org: coupon ? northwind : harbor,
         input: coupon
           ? {
@@ -164,7 +178,7 @@ export function demoPlans(ids: {
       image: 'thumbnail@2x.png',
     },
     {
-      template: 'baked:starter-event-ticket',
+      template: ticket,
       org: harbor,
       input: {
         eventName: 'Harbor Lights 2026',
@@ -181,7 +195,7 @@ export function demoPlans(ids: {
       holder: emailOf('Maya Chen'),
     },
     {
-      template: 'baked:starter-coupon',
+      template: couponTemplate,
       org: northwind,
       input: {
         offer: 'Free day pass',

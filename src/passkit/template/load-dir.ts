@@ -13,10 +13,13 @@ function walk(dir: string, base: string): string[] {
     .filter((name) => !name.endsWith('.DS_Store'));
 }
 
-export function readTemplateDir(dir: string): Promise<TemplatePackage> {
+export function readTemplateDir(
+  dir: string,
+  options: { strips?: boolean } = {},
+): Promise<TemplatePackage> {
   const files: Record<string, Uint8Array> = {};
   for (const name of walk(dir, dir)) files[name] = new Uint8Array(readFileSync(join(dir, name)));
-  return readTemplatePackage(files);
+  return readTemplatePackage(files, options);
 }
 
 export function listTemplateDirs(root: string): string[] {

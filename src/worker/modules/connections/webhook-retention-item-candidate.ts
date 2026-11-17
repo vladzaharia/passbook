@@ -1,3 +1,4 @@
+import { isReleaseBlockCode } from './record-issuance.ts';
 import type { RetainedRow } from './repo-webhook-retention.ts';
 import type { RetainedWebhookCandidate } from './webhook-retention-items.ts';
 
@@ -53,8 +54,6 @@ export function newValid(candidate: New, row: RetainedRow, ref: string): boolean
         nonempty(release.id) &&
         positive(release.generation) &&
         nonempty(release.version)) ||
-      (release.kind === 'blocked' &&
-        (release.code === 'TEMPLATE_RELEASE_REQUIRED' ||
-          release.code === 'TEMPLATE_RELEASE_CONFLICT')))
+      (release.kind === 'blocked' && isReleaseBlockCode(release.code)))
   );
 }

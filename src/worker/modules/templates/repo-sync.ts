@@ -12,6 +12,7 @@ export interface BakedTemplateSnapshot {
   active_version: string | null;
   status: 'active' | 'archived' | 'deleted';
   styles: string;
+  blueprint: number;
 }
 
 export interface BakedVersionSnapshot {
@@ -49,7 +50,7 @@ export async function bakedSyncComplete(
   db: D1Database,
   adoption: string,
   hash: string,
-  templates: readonly { id: string; version: string }[],
+  templates: readonly { id: string; version: string; blueprint?: boolean }[],
   policy: {
     adapterRevision: number;
     adapterCapabilities: readonly string[];
@@ -66,6 +67,7 @@ export async function bakedSyncComplete(
          LEFT JOIN templates t ON t.id = json_extract(entry.value, '$.id')
          WHERE t.id IS NULL OR t.origin != 'baked' OR t.status != 'active'
            OR t.active_version IS NOT json_extract(entry.value, '$.version')
+           OR t.blueprint != CASE WHEN t.org_id IS NULL THEN json_extract(entry.value, '$.blueprint') ELSE 0 END
            OR NOT EXISTS (
              SELECT 1 FROM template_version_extra_sets s
              WHERE s.template_id = t.id AND s.version = t.active_version
@@ -92,7 +94,13 @@ export async function bakedSyncComplete(
       adoption,
       HASH_KEY,
       JSON.stringify(hash),
-      JSON.stringify(templates.map(({ id, version }) => ({ id, version }))),
+      JSON.stringify(
+        templates.map(({ id, version, blueprint }) => ({
+          id,
+          version,
+          blueprint: blueprint ? 1 : 0,
+        })),
+      ),
       policy.adapterRevision,
       JSON.stringify(policy.adapterCapabilities),
       policy.audiencePolicyRevision,
@@ -108,7 +116,7 @@ export function bakedTemplateSnapshot(
 ): Promise<BakedTemplateSnapshot | null> {
   return first(
     db,
-    'SELECT org_id, origin, name, description, active_version, status, styles FROM templates WHERE id = ?',
+    'SELECT org_id, origin, name, description, active_version, status, styles, blueprint FROM templates WHERE id = ?',
     [id],
   );
 }

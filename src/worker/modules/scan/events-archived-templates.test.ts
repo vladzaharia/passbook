@@ -18,6 +18,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { createScannerStore } from './auth-store.ts';
+import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { grantScanMembership } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -101,6 +102,22 @@ describe('archived templates on an event', () => {
     expect(await matched.json()).toMatchObject({
       match: { input: 'memberName', values: ['Alex Morgan'] },
     });
+  });
+
+  it('refuses a match edit when a kept archived template is deleted before the commit', async () => {
+    const kept = await template();
+    const { body } = await event([kept]);
+    await archive(kept);
+    const { result, fired } = await beforeBatch(
+      env,
+      /UPDATE scan_events SET/i,
+      async (db) =>
+        void (await run(db, "UPDATE templates SET status='deleted' WHERE id=?", [kept])),
+      async () =>
+        call('PATCH', `/${body.id}`, { match: { input: 'memberName', values: ['Alex'] } }),
+    );
+    expect(fired).toBe(true);
+    expect(result.status).toBe(409);
   });
 
   it('refuses a newly attached archived template with 422 TEMPLATE_ARCHIVED, and takes an active one', async () => {

@@ -160,8 +160,8 @@ The requested mode must match the session header or API key mode. This picker is
 ```
 
 The list includes org-owned and shared uploaded templates only when the selected org has its own
-approved release, and generated baked templates with a trusted system release. It never falls
-back to another org's release or an unapproved draft. `supportsCheckIn` is derived from the
+approved release, and generated baked templates with a trusted system release. Blueprints are never
+listed. It never falls back to another org's release or an unapproved draft. `supportsCheckIn` is derived from the
 released version. Issuance rechecks the selected release and its assets.
 
 For an uploaded template, a `templates:author` session creates a candidate with
@@ -302,6 +302,8 @@ curl -X POST https://passbook.mobile/api/v1/passes \
 - `input` is validated against the template's `inputs` schema. See `GET /api/v1/templates/{id}`.
 - `Idempotency-Key` (1 to 200 chars): a retry with the same key and body returns the first result.
   The same key with a different body is 409 `IDEMPOTENCY_KEY_REUSED`.
+- `templateId` must be a template. A blueprint answers 409 `TEMPLATE_IS_BLUEPRINT`
+  (`docs/design/blueprints-and-templates.md`).
 - Optional: `serial`, `externalId`, `identityId`, `connectionId` + `externalRef`.
 - The response carries the pass id, the download link and the current `version`.
 
@@ -500,5 +502,10 @@ quarantine at deletion permanently excludes their historical rows.
   content is idempotent while that version exists; different content under the same key returns a
   conflict. Once a version is deleted, its key cannot be reused. Publishing or rollback requires
   a reviewed release and advances its scoped generation.
+- `GET /templates` lists templates; `?blueprint=true` lists blueprints. `POST /templates/{id}/use`
+  (session with `templates:author` in `orgId`) makes a template from a blueprint: `{ orgId, name,
+  version? }`, 201 with the template. `version` is a draft (`passJson`, `manifest`, `assets`); without it
+  the copy is exact. Its first version is a candidate: release it as usual. `POST /templates/{id}/use/check`
+  takes the same body with `version` and returns the dry-run report and the built pass.
 - Public pass and bundle links (`/p/{token}`, `/b/{token}`), the Apple web service (`/wallet/v1`) and webhooks
   (`/hooks/connections/{id}`) have their own auth and are not part of the key API.

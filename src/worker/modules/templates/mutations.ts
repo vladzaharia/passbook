@@ -31,6 +31,7 @@ import {
 } from './repo-mutations.ts';
 import { hasCloneAuthority, hasTemplateSource } from './repo-source.ts';
 import { detail, loadTemplate } from './service.ts';
+import { assertStampsUnchanged } from './stamps.ts';
 
 function baked(row: TemplateRow): ForbiddenError | null {
   return row.origin === 'baked'
@@ -128,7 +129,8 @@ export async function cloneTemplate(
     assertSource,
     assertCloneAuthority,
   });
-  await audit(ctx, auth, { id: plan.templateId, orgId: org.id }, 'template.clone', {
+  const action = source.blueprint ? 'template.use_blueprint' : 'template.clone';
+  await audit(ctx, auth, { id: plan.templateId, orgId: org.id }, action, {
     sourceId: id,
     sourceVersion: template.version,
   });
@@ -149,6 +151,7 @@ export async function replaceManifest(
     throw new ConflictError('Archived templates cannot be changed.', 'TEMPLATE_ARCHIVED');
   const registry = createTemplateRegistry(ctx.env, { ctx });
   const current = await resolveCurrentTemplate(ctx, registry, row);
+  assertStampsUnchanged(current.manifest, input);
   const version = await persistManifestReplacement(ctx, {
     id,
     auth,

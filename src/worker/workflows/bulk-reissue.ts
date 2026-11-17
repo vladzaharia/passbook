@@ -22,13 +22,17 @@ export async function runBulkReissue(
   params: BulkReissueParams,
   step: StepLike,
   exec?: ExecutionContext,
-): Promise<{ changed: number; unchanged: number; failed: number }> {
+): Promise<{ changed: number; unchanged: number; failed: number; aboveMax?: number }> {
   const ctx = createJobContext(env, 'bulk-reissue', {
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'bulk-reissue', instanceId },
   });
   await step.do('start', () => setWorkflowStatus(env.DB, instanceId, 'running', ctx.clock.now()));
-  const totals = { changed: 0, unchanged: 0, failed: 0 };
+  const totals: { changed: number; unchanged: number; failed: number; aboveMax?: number } = {
+    changed: 0,
+    unchanged: 0,
+    failed: 0,
+  };
   try {
     let cursor: string | null = null;
     for (let page = 0; page < MAX_PAGES; page++) {
@@ -39,6 +43,7 @@ export async function runBulkReissue(
       totals.changed += result.changed;
       totals.unchanged += result.unchanged;
       totals.failed += result.failed;
+      if (result.aboveMax) totals.aboveMax = (totals.aboveMax ?? 0) + result.aboveMax;
       if (!result.nextCursor) break;
       cursor = result.nextCursor;
     }

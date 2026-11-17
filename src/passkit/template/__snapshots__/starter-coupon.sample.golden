@@ -1,6 +1,6 @@
 {
   "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "backgroundColor": "rgb(31,41,55)",
+  "backgroundColor": "rgb(181,64,0)",
   "barcodes": [
     {
       "altText": "SAVE-0001",
@@ -63,7 +63,7 @@
   "featuredActions": [],
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
-  "labelColor": "rgb(199,210,254)",
+  "labelColor": "rgb(255,238,221)",
   "logoText": "Organization",
   "organizationName": "PassBook",
   "passTypeIdentifier": "pass.im.plrs.wallet",

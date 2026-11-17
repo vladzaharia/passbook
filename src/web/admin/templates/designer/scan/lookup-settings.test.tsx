@@ -20,6 +20,7 @@ it('selects and clears a lookup identifier through the template history', async 
     dispatch: vi.fn(),
     assetBase: '',
     readOnly: false,
+    stamps: { count: 0, setCount: vi.fn() },
   };
   const { rerender } = render(
     <DesignerProvider value={value}>

@@ -80,9 +80,14 @@ export interface ValidationReport {
 /** An asset known only by name and metadata (bytes are opened lazily from static assets or R2). */
 export interface AssetEntry {
   name: string;
-  slot: ImageSlot | 'strings' | 'other';
+  /** `source` is stamp art: kept in the version, never shipped. */
+  slot: ImageSlot | 'strings' | 'other' | 'source';
   scale: 1 | 2 | 3;
   locale?: string;
+  /** A generated strip: the stamp count it draws. Only the pass's own count ships. */
+  stamps?: number;
+  /** A per-pass file that replaces the template's file of the same name. */
+  override?: boolean;
   size: number;
   sha1: string;
   crc32: number;
@@ -219,6 +224,22 @@ export interface ScanManifest {
   access?: AccessManifest;
 }
 
+/** A card that fills a strip with stamps; the compositor draws one strip pair per count at save. */
+export interface StampsManifest {
+  /** The integer input that holds the count. */
+  input: string;
+  /** Stamps for one reward, 3 to 20. */
+  goal: number;
+  art: { filled: string; empty: string; reward?: string; rewardEarned?: string };
+  /** Each position keeps its own angle. Default true. */
+  tilt?: boolean;
+  /**
+   * Set by a save that raises the goal: cards that were ready at the old goal move up by the
+   * difference when their pass moves to this version, so they stay ready.
+   */
+  keepReady?: boolean;
+}
+
 export interface NfcManifest {
   enabled: boolean;
   requiresAuthentication?: boolean;
@@ -232,11 +253,14 @@ export interface TemplateManifest {
   sample: Record<string, Json>;
   lookups?: Record<string, Record<string, Record<string, Json>>>;
   bindings: Binding[];
-  display: { title: Expr; subtitle?: Expr; status?: Expr; search?: string[] };
+  /** `icon` is a curated icon id (`SCAN_ICONS`): a blueprint's glyph. */
+  display: { title: Expr; subtitle?: Expr; status?: Expr; search?: string[]; icon?: string };
   behaviors?: { use: string; version: number; config: Json }[];
   requires?: { styles?: PassStyle[]; nfc?: boolean };
   /** Baked templates belong to an org by slug; starters have none. */
   org?: { slug: string; name: string };
+  /** Baked only: a platform design to start from. Never issues passes; "Use blueprint" makes a template. */
+  blueprint?: boolean;
   /** Files used for web previews only. They never enter the signed bundle. */
   previewOnlyAssets?: string[];
   /**
@@ -248,6 +272,8 @@ export interface TemplateManifest {
   scan?: ScanManifest;
   /** Apple NFC (VAS). Off until the pass type is approved. */
   nfc?: NfcManifest;
+  /** Stamp card: the goal, the art and the count input. */
+  stamps?: StampsManifest;
 }
 
 export type Personalization = Record<string, Json>;

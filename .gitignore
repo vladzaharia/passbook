@@ -28,3 +28,6 @@ e2e/.auth/
 
 # Agent state, at any depth
 .omc/
+
+# iOS build output
+ios/build/

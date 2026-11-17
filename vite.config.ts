@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cloudflare } from '@cloudflare/vite-plugin';
@@ -123,6 +123,12 @@ function radixChunk(id: string): string {
 
 const root = fileURLToPath(new URL('.', import.meta.url)).replace(/\/$/, '');
 
+/** A worktree's node_modules may be a symlink into another checkout; Vite refuses files outside `server.fs.allow`. */
+const realNodeModules = existsSync(join(root, 'node_modules'))
+  ? realpathSync(join(root, 'node_modules'))
+  : join(root, 'node_modules');
+const nodeModulesAllow = realNodeModules === join(root, 'node_modules') ? [] : [realNodeModules];
+
 export default defineConfig(({ command }) => ({
   publicDir: 'public',
   environments: {
@@ -143,6 +149,7 @@ export default defineConfig(({ command }) => ({
   server: {
     port: 5173,
     strictPort: true,
+    ...(nodeModulesAllow.length > 0 ? { fs: { allow: [root, ...nodeModulesAllow] } } : {}),
     // Files that change while the app runs (agent worktrees, local email/D1 state, test output)
     // must not trigger full page reloads mid-session.
     watch: {

@@ -1,5 +1,11 @@
 import type { Json, Mode } from '../../../shared/contracts/common.ts';
-import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
+import {
+  AppError,
+  authorityDenied,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
@@ -166,11 +172,8 @@ export async function queueEmail(
       orgCap: EMAIL_ORG_DAILY_CAP,
     },
   });
-  if (result === 'org')
-    throw new ForbiddenError(
-      'Organization access changed. Reload and retry.',
-      'ORG_ACCESS_CHANGED',
-    );
+  // A revoked membership or moved revision answers like every other principal's refusal.
+  if (result === 'org' || result === 'actor') throw authorityDenied(result);
   if (result === 'denied') throw new ForbiddenError();
   if (result === 'stale')
     throw new ConflictError(

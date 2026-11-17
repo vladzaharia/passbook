@@ -1,0 +1,92 @@
+{
+  "formatVersion": 1,
+  "description": "Stamp card",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(252,244,230)",
+  "foregroundColor": "rgb(49,28,15)",
+  "labelColor": "rgb(162,64,25)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "CARD-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "CARD-0001"
+    }
+  ],
+  "locations": [
+    {
+      "latitude": 0,
+      "longitude": 0,
+      "relevantText": "Store nearby"
+    }
+  ],
+  "featuredActions": [
+    {
+      "identifier": "rewards",
+      "type": "viewOffersRewards",
+      "url": ""
+    }
+  ],
+  "storeCard": {
+    "headerFields": [
+      {
+        "key": "stamps",
+        "label": "Stamps",
+        "value": "7 of 10"
+      }
+    ],
+    "primaryFields": [],
+    "secondaryFields": [
+      {
+        "key": "reward",
+        "label": "Reward",
+        "value": "Free coffee"
+      },
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Alex Morgan"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "how",
+        "label": "How it works",
+        "value": "One stamp per visit. A full card earns the reward."
+      },
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "site",
+        "label": "Website",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "One reward per full card. No cash value."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

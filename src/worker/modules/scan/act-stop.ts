@@ -16,13 +16,12 @@ import { prepareMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
-import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
-import { boundOutputPredicate, type OutputPredicate } from './repo-output-predicates.ts';
+import { boundOutputPredicate } from './repo-output-predicates.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import type { Claim } from './repo-scans.ts';
 import type { Stop } from './resolve.ts';
-import { capturingDb } from './scan-capture.ts';
+import { afterReads, capturingDb } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
 import { retentionPart, SCAN_STOP_TABLES, scanIs, scanWriteGrant } from './scan-write-grant.ts';
 import { finalizeScan, ledgerEvent } from './scan-write-statements.ts';
@@ -37,7 +36,6 @@ export interface StopContext {
   idempotencyKey: string;
   requestHash: string;
   credentialTombstoneRefs: readonly string[];
-  otherModeCredentialTombstoneRefs: readonly string[];
   credentialKeysetCommitment: string;
   csrfSnapshot: ActorCsrfSnapshot;
   history?: PreloadedDisplayHistory;
@@ -48,29 +46,6 @@ export interface StopContext {
   action: ResolvedScanAction | null;
   overrideOf: string | null;
   onFailureCommitted(): void;
-}
-
-export function credentialStopFence(s: StopContext, actor: ScanActor): OutputPredicate {
-  const scoped = (refs: readonly string[], mode: 'live' | 'test'): OutputPredicate => {
-    const predicate = noCredentialTombstonesSql(
-      refs,
-      { orgIdSql: '?', modeSql: '?' },
-      s.credentialKeysetCommitment,
-    );
-    return {
-      sql: predicate.sql,
-      params:
-        refs.length && predicate.sql !== '0'
-          ? [actor.orgId, mode, ...predicate.params]
-          : predicate.params,
-    };
-  };
-  const current = scoped(s.credentialTombstoneRefs, actor.mode);
-  const other = scoped(s.otherModeCredentialTombstoneRefs, actor.mode === 'live' ? 'test' : 'live');
-  return {
-    sql: `(${current.sql}) AND (${other.sql})`,
-    params: [...current.params, ...other.params],
-  };
 }
 
 /**
@@ -138,15 +113,8 @@ export async function finishStop(
     now,
     event: authority.event ?? null,
     ...(authority.templateId ? { templateId: authority.templateId } : {}),
-    // A miss: no mode may have retired the presented credential. A pass: its own mode may not.
-    ...(checked || s.countMiss
-      ? {
-          credentialRefs: {
-            current: s.credentialTombstoneRefs,
-            other: checked ? [] : s.otherModeCredentialTombstoneRefs,
-          },
-        }
-      : {}),
+    // A pass or a miss: the scanner's mode may not have retired the presented credential.
+    ...(checked || s.countMiss ? { credentialRefs: s.credentialTombstoneRefs } : {}),
     ...(checked ? { pass: { id: checked.id, facts: { pass: checked, credential: {} } } } : {}),
     tables: SCAN_STOP_TABLES,
   });
@@ -172,7 +140,7 @@ export async function finishStop(
   const dayCounts: CountsPlan | null = s.suppressCounts
     ? null
     : planCommitCounts(ctx, actor, s.dayStart);
-  const committed = await g.commitWith(dayCounts?.stmts ?? []);
+  const committed = await g.commitWith(afterReads(dayCounts?.stmts ?? []));
   const results = committed.writes;
   if (!(results[g.indexOf(finalized)]?.results ?? []).length) {
     s.onFailureCommitted();

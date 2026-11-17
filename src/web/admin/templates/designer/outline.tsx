@@ -20,8 +20,10 @@ import { FieldsSection } from './section-fields.tsx';
 import { ImagesSection } from './section-images.tsx';
 import { InputsSection } from './section-inputs.tsx';
 import { RelevanceSection } from './section-relevance.tsx';
+import { StampsSection } from './section-stamps.tsx';
 import { StyleSection } from './section-style.tsx';
 import { TemplateSection } from './section-template.tsx';
+import { STRIP_STYLES } from './stamps.ts';
 
 /** The count pops when it changes, not when the page opens. */
 function Count({ n }: { n: number }) {
@@ -102,6 +104,11 @@ export function Outline() {
         <Disclosure section="images" index={next()} count={filledSlots(doc.assets)}>
           <ImagesSection />
         </Disclosure>
+        {STRIP_STYLES.some((s) => s === style) ? (
+          <Disclosure section="stamps" index={next()}>
+            <StampsSection />
+          </Disclosure>
+        ) : null}
         {groups.map((g: GroupId) => (
           <Disclosure key={g} section={g} index={next()} count={fieldsOf(doc.passJson, g).length}>
             <FieldsSection group={g} />

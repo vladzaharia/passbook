@@ -14,7 +14,13 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
-import { brandingWarnings, readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
+import {
+  brandingWarnings,
+  readBranding,
+  sourceArtHashes,
+  type TenantBranding,
+  tenantPassJson,
+} from './branding.ts';
 import { applyChangeMessages, stripChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
@@ -109,6 +115,7 @@ async function withOverrides(
       name: a.name,
       slot,
       scale,
+      override: true,
       size: a.size,
       sha1: a.sha1,
       crc32: a.crc32 ?? (await legacyCrc(bucket, a)),
@@ -286,9 +293,10 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       warnings: [
         ...built.report.issues.filter((i) => i.severity !== 'error'),
         ...brandingWarnings(
-          req.templateId,
+          resolved,
           branding,
           passOverrides.map((a) => a.name),
+          await sourceArtHashes(ctx.env.DB, resolved.id),
         ),
       ],
     };

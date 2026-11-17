@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { scanId } from '../src/web/scan/platform/id.ts';
-import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -10,7 +10,7 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
   const api = await apiAs('admin');
   const orgId = readSeed().org.id;
   const name = uid('Door event');
-  const template = await api.send('POST', `/api/v1/templates/${GENERIC}/clone`, {
+  const template = await api.send('POST', `/api/v1/templates/${GENERIC_BLUEPRINT}/clone`, {
     orgId,
     name: uid('Event template'),
   });

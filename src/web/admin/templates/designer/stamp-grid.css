@@ -1,0 +1,34 @@
+/* The strip's discs as the compositor lays them out: filled ones pop in, the reward is dashed. */
+.wl-stamp-grid circle {
+  fill: none;
+  stroke: var(--pk-border-strong);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    fill var(--wl-dur-hover, 150ms) var(--wl-ease-move, ease),
+    stroke var(--wl-dur-hover, 150ms) var(--wl-ease-move, ease);
+}
+.wl-stamp-grid circle[data-on] {
+  fill: var(--pk-accent);
+  stroke: var(--pk-accent);
+}
+.wl-stamp-grid circle[data-reward] {
+  stroke-dasharray: 5 4;
+}
+.wl-stamp-grid circle[data-reward][data-on] {
+  stroke-dasharray: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-stamp-grid circle[data-on] {
+    animation: wl-stamp-pop 260ms var(--wl-ease-spring, ease);
+  }
+}
+@keyframes wl-stamp-pop {
+  from {
+    transform: scale(0.6);
+  }
+  to {
+    transform: none;
+  }
+}

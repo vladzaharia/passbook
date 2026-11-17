@@ -1,7 +1,11 @@
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isOrgActive } from '../orgs/active.ts';
-import { type ConnectionReleaseSnapshot, captureConnectionRelease } from './records.ts';
+import {
+  type ConnectionReleaseSnapshot,
+  captureConnectionRelease,
+  logRecordsSkipped,
+} from './records.ts';
 import { type ConnectionRow, getConnection } from './repo.ts';
 import { listDuePassRefs } from './repo-passes.ts';
 import { insertRun, syncRunCurrent } from './repo-runs.ts';
@@ -139,6 +143,7 @@ export async function startRun(
   let release: ConnectionReleaseSnapshot;
   try {
     release = await captureConnectionRelease(sctx, conn);
+    logRecordsSkipped(sctx, conn, release);
   } catch (error) {
     // Back off and leave the cursor untouched if approved content is no longer intact.
     if (error instanceof AppError && error.code === 'TEMPLATE_CONTENT_CHANGED')

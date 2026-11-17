@@ -45,7 +45,7 @@ export async function answerWithoutRow(
     ...(stop.found
       ? {
           pass: { id: stop.found.pass.id, facts: { pass: stop.found.pass, credential: {} } },
-          credentialRefs: { current: s.credentialTombstoneRefs, other: [] },
+          credentialRefs: s.credentialTombstoneRefs,
         }
       : {}),
   });

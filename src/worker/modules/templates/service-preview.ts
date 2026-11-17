@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { PassBuildError } from '../../../passkit/build.ts';
+import { stampCountOf, stampedView } from '../../../passkit/build-assets.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type {
   PreviewBatchSchema,
@@ -10,7 +11,12 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { brandingWarnings, readBranding, tenantPassJson } from '../passes/branding.ts';
+import {
+  brandingWarnings,
+  readBranding,
+  sourceArtHashes,
+  tenantPassJson,
+} from '../passes/branding.ts';
 import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
 import { getOrg as getPassOrg } from '../passes/repo-read-issuance.ts';
 import { previewPass } from './build-check.ts';
@@ -90,16 +96,28 @@ export async function preview(
       org?.name ?? 'Organization',
       new Date(ctx.clock.now()),
     );
+    // A stamp card shows the strip drawn for the input's count under the plain strip name.
+    const input = body.input ?? template.manifest.sample;
+    const stamps = stampCountOf(template, input);
+    const query = new URLSearchParams({
+      ...(selectedOrgId ? { orgId: selectedOrgId } : {}),
+      ...(stamps !== undefined ? { stamps: String(stamps) } : {}),
+    }).toString();
     return {
       passJson: result.passJson,
-      warnings: [...result.issues, ...(tenant ? brandingWarnings(id, branding, []) : [])],
+      warnings: [
+        ...result.issues,
+        ...(tenant
+          ? brandingWarnings(template, branding, [], await sourceArtHashes(ctx.env.DB, template.id))
+          : []),
+      ],
       assetNames: [
         ...new Set([
-          ...template.assets.map((a) => a.name),
+          ...(stampedView(template, input) ?? template.assets).map((a) => a.name),
           ...(template.manifest.previewOnlyAssets ?? []),
         ]),
       ],
-      assetBaseUrl: `${baseUrl(ctx.env)}/api/v1/templates/${encodeURIComponent(id)}/versions/${template.version}/assets${selectedOrgId ? `?orgId=${encodeURIComponent(selectedOrgId)}` : ''}`,
+      assetBaseUrl: `${baseUrl(ctx.env)}/api/v1/templates/${encodeURIComponent(id)}/versions/${template.version}/assets${query ? `?${query}` : ''}`,
     };
   } catch (error) {
     if (error instanceof PassBuildError)

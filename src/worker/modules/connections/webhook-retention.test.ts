@@ -1054,6 +1054,27 @@ describe('durable connection webhook retention', () => {
     expect((await retainedRow(item.id))?.state).toBe('resolved');
   }, 60_000);
 
+  it('reports the blueprint code when a blocked webhook is replayed while still on a blueprint', async () => {
+    const { id, secret } = await connection();
+    await run(kit.env.DB, 'UPDATE templates SET blueprint = 1 WHERE id = ?', [kit.templateId]);
+    await receiveWebhook(
+      kit.sctx,
+      id,
+      await signed(secret, {
+        id: 'on-blueprint',
+        records: [{ ref: 'new-ref', record: { memberName: 'New member' } }],
+      }),
+    );
+    await processWebhook(kit.sctx, onlyJob());
+    const [item] = await list(id);
+    if (!item) throw new Error('Missing blocked event');
+    expect(item).toMatchObject({ state: 'blocked', errorCode: 'TEMPLATE_IS_BLUEPRINT' });
+    const replay = await call('POST', replayPath(id, item.id));
+    expect(replay.status).toBe(409);
+    expect(replay.json).toMatchObject({ code: 'TEMPLATE_IS_BLUEPRINT' });
+    expect(kit.seams.created).toEqual([]);
+  }, 60_000);
+
   it('rolls back the replay reservation and item reset when its audit insert fails', async () => {
     const { id, secret, template } = await connectionWithoutApproval();
     await receiveWebhook(

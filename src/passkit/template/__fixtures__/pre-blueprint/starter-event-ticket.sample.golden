@@ -1,0 +1,231 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(31,41,55)",
+  "barcodes": [
+    {
+      "altText": "TICKET-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "TICKET-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Event ticket",
+  "eventLogoText": "Organization",
+  "eventTicket": {
+    "additionalInfoFields": [
+      {
+        "dateStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true,
+        "key": "doors",
+        "label": "Doors",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-06-01T18:00:00-07:00"
+      },
+      {
+        "key": "admission",
+        "label": "Admission",
+        "value": "General"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "attendee",
+        "label": "Name",
+        "row": 0,
+        "value": "Alex Morgan"
+      },
+      {
+        "key": "room",
+        "label": "Room",
+        "value": "Main hall"
+      }
+    ],
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "No re-entry. Ticket is non-transferable."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "The event is now on %@.",
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true,
+        "key": "date",
+        "label": "Date",
+        "timeStyle": "PKDateStyleNone",
+        "value": "2030-06-01T19:00:00-07:00"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "event",
+        "label": "Event",
+        "value": "Sample Event"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "changeMessage": "The event now starts at %@.",
+        "dateStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true,
+        "key": "time",
+        "label": "Starts",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-06-01T19:00:00-07:00"
+      },
+      {
+        "key": "venue",
+        "label": "Venue",
+        "value": "Sample Hall"
+      }
+    ]
+  },
+  "expirationDate": "2030-06-16T05:00:00Z",
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "labelColor": "rgb(199,210,254)",
+  "locations": [
+    {
+      "latitude": 37.3349,
+      "longitude": -122.009,
+      "relevantText": "Venue nearby"
+    }
+  ],
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "preferredStyleSchemes": [
+    "posterEventTicket",
+    "eventTicket"
+  ],
+  "relevantDate": "2030-06-02T02:00:00Z",
+  "relevantDates": [
+    {
+      "endDate": "2030-06-02T05:00:00Z",
+      "startDate": "2030-06-02T00:00:00Z"
+    },
+    {
+      "endDate": "2030-06-09T05:00:00Z",
+      "startDate": "2030-06-09T00:00:00Z"
+    },
+    {
+      "endDate": "2030-06-16T05:00:00Z",
+      "startDate": "2030-06-16T00:00:00Z"
+    }
+  ],
+  "semantics": {
+    "admissionLevel": "General",
+    "attendeeName": "Alex Morgan",
+    "eventEndDate": "2030-06-01T22:00:00-07:00",
+    "eventName": "Sample Event",
+    "eventStartDate": "2030-06-01T19:00:00-07:00",
+    "eventType": "PKEventTypeGeneric",
+    "venueLocation": {
+      "latitude": 37.3349,
+      "longitude": -122.009
+    },
+    "venueName": "Sample Hall",
+    "venueRegionName": "Cupertino, CA",
+    "venueRoom": "Main hall"
+  },
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "upcomingPassInformation": [
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Sample Hall, Cupertino, CA"
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-01T19:00:00-07:00",
+        "timeZone": "America/Los_Angeles"
+      },
+      "identifier": "sample-event-203006011900",
+      "isActive": false,
+      "name": "Sample Event",
+      "semantics": {
+        "eventEndDate": "2030-06-01T22:00:00-07:00",
+        "eventName": "Sample Event",
+        "eventStartDate": "2030-06-01T19:00:00-07:00",
+        "venueName": "Sample Hall",
+        "venueRegionName": "Cupertino, CA"
+      },
+      "type": "event"
+    },
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Sample Hall, Cupertino, CA"
+        },
+        {
+          "key": "note",
+          "label": "Note",
+          "value": "Doors at 6 PM."
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-08T19:00:00-07:00",
+        "timeZone": "America/Los_Angeles"
+      },
+      "identifier": "sample-event-encore-203006081900",
+      "isActive": false,
+      "name": "Sample Event: Encore",
+      "semantics": {
+        "eventEndDate": "2030-06-08T22:00:00-07:00",
+        "eventName": "Sample Event: Encore",
+        "eventStartDate": "2030-06-08T19:00:00-07:00",
+        "venueName": "Sample Hall",
+        "venueRegionName": "Cupertino, CA"
+      },
+      "type": "event"
+    },
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Harbor Arena, San Jose, CA"
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-15T19:00:00-07:00",
+        "timeZone": "America/Los_Angeles"
+      },
+      "identifier": "sample-event-finale-203006151900",
+      "isActive": false,
+      "name": "Sample Event: Finale",
+      "semantics": {
+        "eventName": "Sample Event: Finale",
+        "eventStartDate": "2030-06-15T19:00:00-07:00",
+        "venueName": "Harbor Arena",
+        "venueRegionName": "San Jose, CA"
+      },
+      "type": "event"
+    }
+  ],
+  "webServiceURL": "https://wallet.example/wallet"
+}

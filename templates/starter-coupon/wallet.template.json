@@ -1,7 +1,8 @@
 {
   "schema": 1,
-  "name": "PassBook · Coupon",
-  "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
+  "name": "Coupon",
+  "description": "A single-use offer with an expiry.",
+  "blueprint": true,
   "inputs": {
     "type": "object",
     "required": [
@@ -223,6 +224,7 @@
     }
   ],
   "display": {
+    "icon": "percent",
     "title": "{{offer}}",
     "subtitle": "{{code}}",
     "search": [

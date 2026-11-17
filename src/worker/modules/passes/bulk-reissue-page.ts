@@ -5,6 +5,7 @@ import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { publishPass } from './publish.ts';
 import { passesForReissue } from './repo.ts';
 import { hasWorkflowReleaseSnapshots, passesForWorkflowReissue } from './repo-workflow-releases.ts';
+import { releaseMovePlan, type StampMove } from './stamps-keep.ts';
 
 const REISSUE_PAGE = 100;
 
@@ -28,6 +29,8 @@ export interface ReissuePageResult {
   changed: number;
   unchanged: number;
   failed: number;
+  /** Present when some failed because the card holds more stamps than the new version allows. */
+  aboveMax?: number;
 }
 
 /**
@@ -91,7 +94,19 @@ export async function reissuePage(
       activeOnly: params.cause !== 'resign',
     });
   }
-  const result: ReissuePageResult = { nextCursor: null, changed: 0, unchanged: 0, failed: 0 };
+  const result: ReissuePageResult = {
+    nextCursor: null,
+    changed: 0,
+    unchanged: 0,
+    failed: 0,
+  };
+  const plans = new Map<string, Promise<StampMove>>();
+  const movePlan = (r: Release) => {
+    const id = `${r.orgId}|${r.mode}|${r.templateId}|${r.version}`;
+    const planned = plans.get(id) ?? releaseMovePlan(ctx, r);
+    plans.set(id, planned);
+    return planned;
+  };
   for (const row of rows) {
     try {
       const release = row.release;
@@ -110,6 +125,7 @@ export async function reissuePage(
           'TEMPLATE_RELEASE_CONFLICT',
         );
       }
+      const move = release ? await movePlan(release) : null;
       const published = await publishPass(ctx, {
         orgScope: release
           ? { orgId: release.orgId, mode: release.mode, principal: 'session' }
@@ -138,7 +154,7 @@ export async function reissuePage(
             throw new ConflictError('The pass changed. Retry.', 'PASS_CONFLICT');
           }
           // Resigning and restyling keep each pass on its current template version.
-          return release ? { templateVersion: release.version } : {};
+          return release && move ? { templateVersion: release.version, ...move(current) } : {};
         },
       });
       if (published.changed) result.changed++;
@@ -146,6 +162,7 @@ export async function reissuePage(
     } catch (error) {
       if (!(error instanceof AppError)) throw error;
       result.failed++;
+      if (error.code === 'STAMPS_ABOVE_MAX') result.aboveMax = (result.aboveMax ?? 0) + 1;
       ctx.log.warn('bulk_reissue.pass_failed', {
         passId: row.id,
         templateId: params.templateId,

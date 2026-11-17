@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { NATIVE_CAMERA_CODE } from '../tools/lib/camera-fixture.ts';
-import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { pairCamera } from './helpers/camera.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
@@ -13,7 +13,7 @@ test('native getUserMedia camera video decodes and checks in without an injected
   try {
     const template = await api.send(
       'POST',
-      `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
+      `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
       { orgId, name: uid('Native camera') },
     );
     const release = await publishTemplateVersion(

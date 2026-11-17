@@ -1,4 +1,3 @@
-import { Redo2, Undo2 } from 'lucide-react';
 import {
   type KeyboardEvent,
   type ReactNode,
@@ -15,8 +14,6 @@ import { PHONE, useMediaQuery } from '../../../lib/media.ts';
 import {
   Button,
   Callout,
-  IconButton,
-  PageHeader,
   SaveBar,
   SegmentedControl,
   UnsavedChangesDialog,
@@ -26,7 +23,10 @@ import type { Template } from '../versions.ts';
 import { useDesignCheck } from './api.ts';
 import type { Op } from './apply.ts';
 import { DesignerProvider } from './context.tsx';
+import { type CreateDesign, useCreateFlow } from './create-flow.ts';
+import { DesignerHeader } from './designer-header.tsx';
 import { clearDraft } from './drafts.ts';
+import { useGoalFlow } from './goal-flow.tsx';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
 import { type DesignDoc, findField, type Selection } from './model.ts';
@@ -43,6 +43,7 @@ import {
 import { useSaveFlow } from './save-flow.ts';
 import { SavedCallout } from './saved-callout.tsx';
 import { ScanMode } from './scan/scan-mode.tsx';
+import { useStampsPreview } from './stamp-preview.ts';
 import { useDesignerIssues } from './use-designer-issues.ts';
 import { useDraftPersistence } from './use-draft-persistence.ts';
 import './designer.css';
@@ -76,6 +77,8 @@ export interface DesignerProps {
   readOnly?: ReadOnlyDesign;
   /** Shown under the title, before the designer: the stale-draft question. */
   prompt?: ReactNode;
+  /** A draft of a blueprint: Create template makes the template; nothing exists before. */
+  create?: CreateDesign;
 }
 
 export function Designer({
@@ -88,6 +91,7 @@ export function Designer({
   assetBase,
   readOnly,
   prompt,
+  create,
 }: DesignerProps) {
   const templateId = template.id;
   const name = template.name;
@@ -107,10 +111,16 @@ export function Designer({
   const latest = useRef(state.doc);
   latest.current = state.doc;
   const dirty = isDirty(state);
-  const guard = useUnsavedChangesGuard(dirty);
   const select = useMemo(() => validSelection(state), [state]);
-  const check = useDesignCheck(templateId, state.doc, !readOnly);
   const base_ = assetBase(version);
+  const stamps = useStampsPreview(state.doc, base_);
+  const check = useDesignCheck(
+    templateId,
+    state.doc,
+    !readOnly,
+    stamps.checkCount,
+    create ? { orgId: create.orgId, name: create.name } : undefined,
+  );
 
   const edit = useCallback(
     (op: Op, merge?: string) => {
@@ -167,22 +177,27 @@ export function Designer({
   }
 
   const { issues, blocking } = useDesignerIssues(state.doc, readOnly, check.data?.report.issues);
+  const blocked = () =>
+    check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
+      ? null
+      : blocking;
+  const created = useCreateFlow(create, blocked);
+  // A new template is unsaved until Create template, edits or not.
+  const guard = useUnsavedChangesGuard(create ? created.made === null : dirty);
   const flow = useSaveFlow({
     templateId,
     draftKey,
     latest,
     savedDoc: state.saved,
     draftBase: version,
-    blocked: () =>
-      check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
-        ? null
-        : blocking,
+    blocked,
     dispatch,
     onSaved: (v) => {
       setVersion(v);
       setRestored(false);
     },
   });
+  const goalFlow = useGoalFlow(templateId, template.passCount, state, edit, flow, check.checking);
 
   const api = useMemo(
     () => ({
@@ -194,40 +209,25 @@ export function Designer({
       dispatch,
       assetBase: base_,
       readOnly: Boolean(readOnly),
+      stamps: stamps.slider,
+      orgId: selectedOrg,
     }),
-    [state, select, edit, choose, focusTarget, base_, readOnly],
+    [state, select, edit, choose, focusTarget, base_, readOnly, stamps.slider, selectedOrg],
   );
 
   return (
     <DesignerProvider value={api}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: shortcuts for the whole designer */}
       <div ref={root} data-designer="" onKeyDown={onKeyDown}>
-        <PageHeader
-          title={name}
-          breadcrumbs={[
-            { label: 'Templates', to: '/admin/templates', search: { orgId: selectedOrg } },
-            { label: name, to: `/admin/templates/${templateId}`, search: { orgId: selectedOrg } },
-            { label: 'Design' },
-          ]}
-          actions={
-            phone || readOnly ? undefined : (
-              <>
-                <IconButton
-                  label="Undo"
-                  icon={<Undo2 aria-hidden />}
-                  variant="outline"
-                  disabled={!canUndo(state)}
-                  onClick={() => dispatch({ type: 'undo' })}
-                />
-                <IconButton
-                  label="Redo"
-                  icon={<Redo2 aria-hidden />}
-                  variant="outline"
-                  disabled={!canRedo(state)}
-                  onClick={() => dispatch({ type: 'redo' })}
-                />
-              </>
-            )
+        <DesignerHeader
+          templateId={templateId}
+          name={name}
+          orgId={selectedOrg}
+          create={create}
+          undoRedo={
+            phone || readOnly
+              ? null
+              : { canUndo: canUndo(state), canRedo: canRedo(state), dispatch }
           }
         />
         {readOnly?.notice}
@@ -286,6 +286,7 @@ export function Designer({
                 assets={state.doc.assets}
                 assetBase={base_}
                 checking={readOnly ? false : check.checking}
+                stripUrl={stamps.stripUrl}
               />
             }
             issues={
@@ -299,10 +300,10 @@ export function Designer({
         )}
         {phone || readOnly ? null : (
           <SaveBar
-            dirty={dirty}
-            saving={flow.saving}
-            saveLabel="Save version"
-            onSave={() => flow.run(state.doc)}
+            dirty={create ? created.made === null : dirty}
+            saving={create ? created.saving : flow.saving}
+            saveLabel={create ? 'Create template' : 'Save version'}
+            onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
             onDiscard={() => {
               dispatch({ type: 'reset', doc: state.saved });
               clearDraft(draftKey);
@@ -310,6 +311,7 @@ export function Designer({
             }}
           />
         )}
+        {goalFlow.dialog}
         <UnsavedChangesDialog blocker={guard} />
       </div>
     </DesignerProvider>

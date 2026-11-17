@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import bwipjs from 'bwip-js/node';
-import { type Api, createPass, GENERIC, uid } from './api.ts';
+import { e2ePorts } from '../../tools/lib/e2e-ports.ts';
+import { type Api, createPass, GENERIC_BLUEPRINT, uid } from './api.ts';
 import { publishTemplateVersion } from './releases.ts';
 
 export const cameraFormats = [
@@ -22,7 +23,7 @@ export async function cameraFixture(api: Api, orgId: string, reader: 'none' | 'b
   ]) {
     const cloned = await api.send(
       'POST',
-      `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
+      `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
       { orgId, name: uid('Camera formats') },
     );
     const initialVersion = cloned.versions[0]?.version;
@@ -211,7 +212,7 @@ export async function showBarcode(
 }
 
 export async function pairCamera(page: Page, code: string) {
-  await page.goto(`https://localhost:5175/scan#pair=${encodeURIComponent(code)}`);
+  await page.goto(`https://localhost:${e2ePorts.camera}/scan#pair=${encodeURIComponent(code)}`);
   await expect(page.getByRole('heading', { name: 'Pair this device?' })).toBeVisible();
   await page.getByRole('button', { name: 'Pair', exact: true }).click();
   await page.getByTestId('scan-start').click();

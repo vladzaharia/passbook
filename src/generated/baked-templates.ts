@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "0e2101b52c90cd9413118cff26b2b6f530bc3608";
+export const BAKED_BUILD_HASH = "a0f2b2812f73b1856826b1635933d40eafbb58ab";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -15,6 +15,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "slug": "henrys",
       "name": "Henry’s Gymnasium"
     },
+    "blueprint": false,
     "styles": [
       "generic",
       "posterGeneric"
@@ -684,6 +685,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "slug": "henrys",
       "name": "Henry’s Gymnasium"
     },
+    "blueprint": false,
     "styles": [
       "generic",
       "posterGeneric"
@@ -1346,17 +1348,19 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-boarding-pass",
     "slug": "starter-boarding-pass",
-    "version": "e0d284a40dd3fb69",
-    "name": "PassBook · Boarding pass",
-    "description": "Air boarding pass with the semantic layout and a classic fallback.",
+    "version": "d43662631733563c",
+    "name": "Boarding pass",
+    "description": "Flight, gate and seat, with a route footer.",
     "org": null,
+    "blueprint": true,
     "styles": [
       "boardingPass"
     ],
     "manifest": {
       "schema": 1,
-      "name": "PassBook · Boarding pass",
-      "description": "Air boarding pass with the semantic layout and a classic fallback.",
+      "name": "Boarding pass",
+      "description": "Flight, gate and seat, with a route footer.",
+      "blueprint": true,
       "inputs": {
         "type": "object",
         "required": [
@@ -1935,6 +1939,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "display": {
+        "icon": "plane",
         "title": "{{passengerGiven}} {{passengerFamily}}",
         "subtitle": "{{origin}} to {{destination}}",
         "status": "{{airlineCode}}{{flightNumber}}",
@@ -1963,9 +1968,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "formatVersion": 1,
       "description": "Boarding pass",
       "organizationName": "Organization",
-      "backgroundColor": "rgb(31,41,55)",
+      "backgroundColor": "rgb(3,82,142)",
       "foregroundColor": "rgb(255,255,255)",
-      "labelColor": "rgb(199,210,254)",
+      "labelColor": "rgb(191,228,251)",
       "logoText": "Organization",
       "preferredStyleSchemes": [
         "semanticBoardingPass",
@@ -2109,119 +2114,119 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2152989108,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/en.lproj/pass.strings"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/en.lproj/pass.strings"
         }
       },
       {
         "name": "footer@2x.png",
         "slot": "footer",
         "scale": 2,
-        "size": 465,
-        "sha1": "392a2577c90ff097eb1307c028929e0719489c6f",
-        "crc32": 477819165,
+        "size": 737,
+        "sha1": "4476005993ff0c48a93724e6e00b18e3a1e76e02",
+        "crc32": 3655566947,
         "width": 536,
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/footer@2x.png"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/footer@2x.png"
         }
       },
       {
         "name": "footer@3x.png",
         "slot": "footer",
         "scale": 3,
-        "size": 738,
-        "sha1": "062995f4018497ffce8124b606cd7c53ca795929",
-        "crc32": 134609604,
+        "size": 1103,
+        "sha1": "d916ad1c61481cc71191ec9a9354dbd0ff951a2e",
+        "crc32": 283651362,
         "width": 804,
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/footer@3x.png"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/footer@3x.png"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 1071,
-        "sha1": "5989422a98e3efd6f9f4d92ac3a0609efe75149e",
-        "crc32": 1357529787,
+        "size": 951,
+        "sha1": "d2b6c90c2276be9a06f4e344940c69737d7b8fa7",
+        "crc32": 1003223891,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/icon@2x.png"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 1573,
-        "sha1": "cc89218297a4bdda02694a55c4ba998cb8f91c24",
-        "crc32": 2672977786,
+        "size": 1437,
+        "sha1": "e2fcbfec992cc5df9df405cb15b33993163db424",
+        "crc32": 2913434211,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/icon@3x.png"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1064,
-        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
-        "crc32": 3776894497,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
         "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/logo@2x.png"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 1722,
-        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
-        "crc32": 3930646469,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
         "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/logo@3x.png"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/logo@3x.png"
         }
       },
       {
         "name": "primaryLogo@2x.png",
         "slot": "primaryLogo",
         "scale": 2,
-        "size": 740,
-        "sha1": "e10e82be8b54d98b53242c5295183fa6a773d82c",
-        "crc32": 260778372,
+        "size": 681,
+        "sha1": "f452b875a737a19c3974758772b51b1eded52e6f",
+        "crc32": 1739579844,
         "width": 60,
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/primaryLogo@2x.png"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/primaryLogo@2x.png"
         }
       },
       {
         "name": "primaryLogo@3x.png",
         "slot": "primaryLogo",
         "scale": 3,
-        "size": 1155,
-        "sha1": "69ee3f8896061530d33392f73d0971244ee232de",
-        "crc32": 1379429626,
+        "size": 1036,
+        "sha1": "a6577cf7fff623bd87d0d4b50b6763f72d76530e",
+        "crc32": 3292793453,
         "width": 90,
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e0d284a40dd3fb69/primaryLogo@3x.png"
+          "path": "/templates/starter-boarding-pass/d43662631733563c/primaryLogo@3x.png"
         }
       }
     ],
@@ -2234,17 +2239,19 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-coupon",
     "slug": "starter-coupon",
-    "version": "04b508e1cbc14549",
-    "name": "PassBook · Coupon",
-    "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
+    "version": "6c547db43e8c64d1",
+    "name": "Coupon",
+    "description": "A single-use offer with an expiry.",
     "org": null,
+    "blueprint": true,
     "styles": [
       "coupon"
     ],
     "manifest": {
       "schema": 1,
-      "name": "PassBook · Coupon",
-      "description": "Single-use offer with a PDF417 code, strip image, relevance and expiry.",
+      "name": "Coupon",
+      "description": "A single-use offer with an expiry.",
+      "blueprint": true,
       "inputs": {
         "type": "object",
         "required": [
@@ -2466,6 +2473,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "display": {
+        "icon": "percent",
         "title": "{{offer}}",
         "subtitle": "{{code}}",
         "search": [
@@ -2481,9 +2489,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "formatVersion": 1,
       "description": "Coupon",
       "organizationName": "Organization",
-      "backgroundColor": "rgb(31,41,55)",
+      "backgroundColor": "rgb(181,64,0)",
       "foregroundColor": "rgb(255,255,255)",
-      "labelColor": "rgb(199,210,254)",
+      "labelColor": "rgb(255,238,221)",
       "logoText": "Organization",
       "expirationDate": "2030-01-01T00:00:00Z",
       "barcodes": [
@@ -2579,91 +2587,91 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3965588232,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/04b508e1cbc14549/en.lproj/pass.strings"
+          "path": "/templates/starter-coupon/6c547db43e8c64d1/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 1062,
-        "sha1": "1d74cf18d875cf7bb1e301a3a47e8572ed25b238",
-        "crc32": 3760859733,
+        "size": 948,
+        "sha1": "29b05db0089ddb4cf635051ae9ebe0b80f9a7f07",
+        "crc32": 3821632184,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/04b508e1cbc14549/icon@2x.png"
+          "path": "/templates/starter-coupon/6c547db43e8c64d1/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 1556,
-        "sha1": "4f962f2ccc7b92b2a416e589ede9b068f5101442",
-        "crc32": 1644851849,
+        "size": 1439,
+        "sha1": "ac895c99a84c56c451315d272e01e6913a14056a",
+        "crc32": 1844118592,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/04b508e1cbc14549/icon@3x.png"
+          "path": "/templates/starter-coupon/6c547db43e8c64d1/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1064,
-        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
-        "crc32": 3776894497,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
         "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/04b508e1cbc14549/logo@2x.png"
+          "path": "/templates/starter-coupon/6c547db43e8c64d1/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 1722,
-        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
-        "crc32": 3930646469,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
         "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/04b508e1cbc14549/logo@3x.png"
+          "path": "/templates/starter-coupon/6c547db43e8c64d1/logo@3x.png"
         }
       },
       {
         "name": "strip@2x.png",
         "slot": "strip",
         "scale": 2,
-        "size": 20009,
-        "sha1": "407493e37aa28cc6d4f13509b3daa9b555dbf90d",
-        "crc32": 346849481,
+        "size": 18670,
+        "sha1": "a6a0581cc03bb4f639f3410770f532750b8d36d3",
+        "crc32": 1213800567,
         "width": 750,
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/04b508e1cbc14549/strip@2x.png"
+          "path": "/templates/starter-coupon/6c547db43e8c64d1/strip@2x.png"
         }
       },
       {
         "name": "strip@3x.png",
         "slot": "strip",
         "scale": 3,
-        "size": 33616,
-        "sha1": "f1b3fdef00a374f34866c323c0deab0fcc89ea0d",
-        "crc32": 677332770,
+        "size": 30935,
+        "sha1": "a5541cbe5011aa1ce6bcd0ca57b0f12413946339",
+        "crc32": 3373962251,
         "width": 1125,
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/04b508e1cbc14549/strip@3x.png"
+          "path": "/templates/starter-coupon/6c547db43e8c64d1/strip@3x.png"
         }
       }
     ],
@@ -2676,17 +2684,19 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
-    "version": "47ca980ebbac70af",
-    "name": "PassBook · Event ticket",
-    "description": "Event ticket with the poster layout and a classic fallback, relevant dates, venue semantics and an optional list of upcoming events.",
+    "version": "81e4183b8c57a277",
+    "name": "Event ticket",
+    "description": "Seat, doors and venue, with a poster layout.",
     "org": null,
+    "blueprint": true,
     "styles": [
       "eventTicket"
     ],
     "manifest": {
       "schema": 1,
-      "name": "PassBook · Event ticket",
-      "description": "Event ticket with the poster layout and a classic fallback, relevant dates, venue semantics and an optional list of upcoming events.",
+      "name": "Event ticket",
+      "description": "Seat, doors and venue, with a poster layout.",
+      "blueprint": true,
       "inputs": {
         "type": "object",
         "required": [
@@ -3230,6 +3240,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "display": {
+        "icon": "music",
         "title": "{{eventName}}",
         "subtitle": "{{attendee}}",
         "status": "{{venueName}}",
@@ -3269,9 +3280,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "formatVersion": 1,
       "description": "Event ticket",
       "organizationName": "Organization",
-      "backgroundColor": "rgb(31,41,55)",
+      "backgroundColor": "rgb(94,6,54)",
       "foregroundColor": "rgb(255,255,255)",
-      "labelColor": "rgb(199,210,254)",
+      "labelColor": "rgb(246,197,214)",
       "logoText": "Organization",
       "eventLogoText": "Organization",
       "preferredStyleSchemes": [
@@ -3426,56 +3437,56 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "artwork@2x.png",
         "slot": "artwork",
         "scale": 2,
-        "size": 18747,
-        "sha1": "54f4663c0cc6e9cc7044961d8276643cec88b386",
-        "crc32": 2636465397,
+        "size": 88122,
+        "sha1": "33526537e995ee24d0494d1739e8653f4c887ba8",
+        "crc32": 1756891216,
         "width": 716,
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/artwork@2x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/artwork@2x.png"
         }
       },
       {
         "name": "artwork@3x.png",
         "slot": "artwork",
         "scale": 3,
-        "size": 31361,
-        "sha1": "7f460f063599cd1cbc193a8ba2833017786b0ec2",
-        "crc32": 1196895748,
+        "size": 136621,
+        "sha1": "b5821f4acb109d00d73d9a86989b98098dc54f6c",
+        "crc32": 1178139661,
         "width": 1074,
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/artwork@3x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/artwork@3x.png"
         }
       },
       {
         "name": "background@2x.png",
         "slot": "background",
         "scale": 2,
-        "size": 20486,
-        "sha1": "305bfdb57ef8763fcb68ba898a38beea3fb48c3a",
-        "crc32": 1425028295,
+        "size": 55386,
+        "sha1": "1e06c820fe23567b0c53dc397ff16d7cac681e73",
+        "crc32": 3909780869,
         "width": 686,
         "height": 1006,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/background@2x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/background@2x.png"
         }
       },
       {
         "name": "background@3x.png",
         "slot": "background",
         "scale": 3,
-        "size": 41316,
-        "sha1": "463d67a3996aa90a0b10398a556fd0d19659be00",
-        "crc32": 3448502692,
+        "size": 90294,
+        "sha1": "585f14e85b8d33bd300b598f419f62c503657355",
+        "crc32": 1629843326,
         "width": 1029,
         "height": 1509,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/background@3x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/background@3x.png"
         }
       },
       {
@@ -3488,147 +3499,147 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3221089066,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/en.lproj/pass.strings"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 1075,
-        "sha1": "2381a373088f1cf9266f52c165eedd6fc810b46d",
-        "crc32": 2256149970,
+        "size": 946,
+        "sha1": "49f6666edec03113eb3cdab20a9b599c6cf9415e",
+        "crc32": 1879282080,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/icon@2x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 1573,
-        "sha1": "5f7cc069798cdfe90dd3190f6556b6ccfb40b96b",
-        "crc32": 1730582506,
+        "size": 1444,
+        "sha1": "ec5db774c12a21402a60285f0516548751a464c1",
+        "crc32": 42936213,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/icon@3x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1064,
-        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
-        "crc32": 3776894497,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
         "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/logo@2x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 1722,
-        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
-        "crc32": 3930646469,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
         "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/logo@3x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/logo@3x.png"
         }
       },
       {
         "name": "primaryLogo@2x.png",
         "slot": "primaryLogo",
         "scale": 2,
-        "size": 740,
-        "sha1": "e10e82be8b54d98b53242c5295183fa6a773d82c",
-        "crc32": 260778372,
+        "size": 681,
+        "sha1": "f452b875a737a19c3974758772b51b1eded52e6f",
+        "crc32": 1739579844,
         "width": 60,
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/primaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/primaryLogo@2x.png"
         }
       },
       {
         "name": "primaryLogo@3x.png",
         "slot": "primaryLogo",
         "scale": 3,
-        "size": 1155,
-        "sha1": "69ee3f8896061530d33392f73d0971244ee232de",
-        "crc32": 1379429626,
+        "size": 1036,
+        "sha1": "a6577cf7fff623bd87d0d4b50b6763f72d76530e",
+        "crc32": 3292793453,
         "width": 90,
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/primaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/primaryLogo@3x.png"
         }
       },
       {
         "name": "secondaryLogo@2x.png",
         "slot": "secondaryLogo",
         "scale": 2,
-        "size": 345,
-        "sha1": "0439d356714358eade855e2f3e3271d8b5c9482a",
-        "crc32": 2487579467,
+        "size": 301,
+        "sha1": "63b246d3f98402129de2af48b763b2c78dce554e",
+        "crc32": 3340071446,
         "width": 24,
         "height": 24,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/secondaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/secondaryLogo@2x.png"
         }
       },
       {
         "name": "secondaryLogo@3x.png",
         "slot": "secondaryLogo",
         "scale": 3,
-        "size": 459,
-        "sha1": "96d10c663a967ef6660b818c5ad39d9f3417e691",
-        "crc32": 3350851213,
+        "size": 408,
+        "sha1": "b79340ad124b513cfd1a41d48642b35a4843da96",
+        "crc32": 246279785,
         "width": 36,
         "height": 36,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/secondaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/secondaryLogo@3x.png"
         }
       },
       {
         "name": "thumbnail@2x.png",
         "slot": "thumbnail",
         "scale": 2,
-        "size": 2676,
-        "sha1": "d19573ea214ab307ab7438bd7884508f093e3bde",
-        "crc32": 3018627731,
+        "size": 3957,
+        "sha1": "d8234aa673ba0b03756513a5036a43a22e2968bf",
+        "crc32": 3505027201,
         "width": 180,
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/thumbnail@2x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/thumbnail@2x.png"
         }
       },
       {
         "name": "thumbnail@3x.png",
         "slot": "thumbnail",
         "scale": 3,
-        "size": 4279,
-        "sha1": "e357288c9f3917e42dc3c964aa319a8dd2e12c67",
-        "crc32": 531878251,
+        "size": 5956,
+        "sha1": "dae13b433f583eee121b2b39c6171f0791b370dd",
+        "crc32": 2066769664,
         "width": 270,
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/47ca980ebbac70af/thumbnail@3x.png"
+          "path": "/templates/starter-event-ticket/81e4183b8c57a277/thumbnail@3x.png"
         }
       }
     ],
@@ -3641,17 +3652,19 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-generic",
     "slug": "starter-generic",
-    "version": "4c3da3add3cc9a93",
-    "name": "PassBook · Generic",
-    "description": "Membership or ID card with a QR code, relevance and two featured actions.",
+    "version": "bac463644ee95522",
+    "name": "Membership card",
+    "description": "Name, tier and points with a QR code.",
     "org": null,
+    "blueprint": true,
     "styles": [
       "generic"
     ],
     "manifest": {
       "schema": 1,
-      "name": "PassBook · Generic",
-      "description": "Membership or ID card with a QR code, relevance and two featured actions.",
+      "name": "Membership card",
+      "description": "Name, tier and points with a QR code.",
+      "blueprint": true,
       "inputs": {
         "type": "object",
         "required": [
@@ -3964,6 +3977,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "display": {
+        "icon": "id-card",
         "title": "{{holder}}",
         "subtitle": "{{tier}}",
         "status": "{{tier}}",
@@ -3980,9 +3994,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "formatVersion": 1,
       "description": "Membership card",
       "organizationName": "Organization",
-      "backgroundColor": "rgb(31,41,55)",
+      "backgroundColor": "rgb(20,26,43)",
       "foregroundColor": "rgb(255,255,255)",
-      "labelColor": "rgb(199,210,254)",
+      "labelColor": "rgb(94,234,212)",
       "logoText": "Organization",
       "sharingProhibited": true,
       "expirationDate": "2030-01-01T00:00:00Z",
@@ -4107,91 +4121,91 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3132866019,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/4c3da3add3cc9a93/en.lproj/pass.strings"
+          "path": "/templates/starter-generic/bac463644ee95522/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 1071,
-        "sha1": "5989422a98e3efd6f9f4d92ac3a0609efe75149e",
-        "crc32": 1357529787,
+        "size": 946,
+        "sha1": "804843bb285dbe43340c825ff02dbe5daecb06ac",
+        "crc32": 2839404599,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/4c3da3add3cc9a93/icon@2x.png"
+          "path": "/templates/starter-generic/bac463644ee95522/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 1573,
-        "sha1": "cc89218297a4bdda02694a55c4ba998cb8f91c24",
-        "crc32": 2672977786,
+        "size": 1461,
+        "sha1": "880c1b963f0d9f7f9bb53bc64e725085950bc6db",
+        "crc32": 3239369279,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/4c3da3add3cc9a93/icon@3x.png"
+          "path": "/templates/starter-generic/bac463644ee95522/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1064,
-        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
-        "crc32": 3776894497,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
         "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/4c3da3add3cc9a93/logo@2x.png"
+          "path": "/templates/starter-generic/bac463644ee95522/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 1722,
-        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
-        "crc32": 3930646469,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
         "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/4c3da3add3cc9a93/logo@3x.png"
+          "path": "/templates/starter-generic/bac463644ee95522/logo@3x.png"
         }
       },
       {
         "name": "thumbnail@2x.png",
         "slot": "thumbnail",
         "scale": 2,
-        "size": 3282,
-        "sha1": "89c3b1bbae0cc0f73f492141aba8e1511caaeda3",
-        "crc32": 4168214601,
+        "size": 5646,
+        "sha1": "f3631fcca1f3b5d750497198f3d9e24a7bdcfe98",
+        "crc32": 3599321880,
         "width": 180,
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/4c3da3add3cc9a93/thumbnail@2x.png"
+          "path": "/templates/starter-generic/bac463644ee95522/thumbnail@2x.png"
         }
       },
       {
         "name": "thumbnail@3x.png",
         "slot": "thumbnail",
         "scale": 3,
-        "size": 5123,
-        "sha1": "3e78c88309b28534cf6a8191f3d20ccdb60df667",
-        "crc32": 2593601087,
+        "size": 9102,
+        "sha1": "88889387011fd8b545c5bce22d5746c3e78938ab",
+        "crc32": 2579539611,
         "width": 270,
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/4c3da3add3cc9a93/thumbnail@3x.png"
+          "path": "/templates/starter-generic/bac463644ee95522/thumbnail@3x.png"
         }
       }
     ],
@@ -4204,18 +4218,20 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-poster-generic",
     "slug": "starter-poster-generic",
-    "version": "78272d65e07751d6",
-    "name": "PassBook · Poster",
-    "description": "Membership card in the poster style, with a generic fallback.",
+    "version": "e7913c11031d6ebe",
+    "name": "Poster card",
+    "description": "Full-bleed artwork on iOS 27, a classic card before it.",
     "org": null,
+    "blueprint": true,
     "styles": [
       "generic",
       "posterGeneric"
     ],
     "manifest": {
       "schema": 1,
-      "name": "PassBook · Poster",
-      "description": "Membership card in the poster style, with a generic fallback.",
+      "name": "Poster card",
+      "description": "Full-bleed artwork on iOS 27, a classic card before it.",
+      "blueprint": true,
       "inputs": {
         "type": "object",
         "required": [
@@ -4491,6 +4507,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "display": {
+        "icon": "sparkles",
         "title": "{{holder}}",
         "subtitle": "{{tier}}",
         "status": "{{tier}}",
@@ -4507,9 +4524,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "formatVersion": 1,
       "description": "Membership card",
       "organizationName": "Organization",
-      "backgroundColor": "rgb(31,41,55)",
+      "backgroundColor": "rgb(54,18,115)",
       "foregroundColor": "rgb(255,255,255)",
-      "labelColor": "rgb(199,210,254)",
+      "labelColor": "rgb(216,199,249)",
       "logoText": "Organization",
       "sharingProhibited": true,
       "barcodes": [
@@ -4665,28 +4682,28 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "artwork@2x.png",
         "slot": "artwork",
         "scale": 2,
-        "size": 20347,
-        "sha1": "78ce2990ca739583dbfa01cf4b27bca81aa3c24b",
-        "crc32": 3922443920,
+        "size": 47200,
+        "sha1": "cd3c2b0185e7029d71fff9aa68f9802cd5505b02",
+        "crc32": 454217027,
         "width": 716,
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/artwork@2x.png"
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/artwork@2x.png"
         }
       },
       {
         "name": "artwork@3x.png",
         "slot": "artwork",
         "scale": 3,
-        "size": 32737,
-        "sha1": "c6acc5fe6d56d382905359b051cbc9fd965c24d7",
-        "crc32": 3418188137,
+        "size": 74893,
+        "sha1": "c86dca8b2ccded41d50ce35c79eb1ed73d2dc8f2",
+        "crc32": 2819242699,
         "width": 1074,
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/artwork@3x.png"
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/artwork@3x.png"
         }
       },
       {
@@ -4699,21 +4716,547 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2978387323,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/en.lproj/pass.strings"
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 1075,
-        "sha1": "2381a373088f1cf9266f52c165eedd6fc810b46d",
-        "crc32": 2256149970,
+        "size": 948,
+        "sha1": "d21ae77e97625d98f2fa2db97a869bced89d81af",
+        "crc32": 3758566684,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/icon@2x.png"
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1431,
+        "sha1": "2794c5b4dba43010467b0d4e268f0bf392f76543",
+        "crc32": 198408797,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/logo@3x.png"
+        }
+      },
+      {
+        "name": "primaryLogo@2x.png",
+        "slot": "primaryLogo",
+        "scale": 2,
+        "size": 681,
+        "sha1": "f452b875a737a19c3974758772b51b1eded52e6f",
+        "crc32": 1739579844,
+        "width": 60,
+        "height": 60,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/primaryLogo@2x.png"
+        }
+      },
+      {
+        "name": "primaryLogo@3x.png",
+        "slot": "primaryLogo",
+        "scale": 3,
+        "size": 1036,
+        "sha1": "a6577cf7fff623bd87d0d4b50b6763f72d76530e",
+        "crc32": 3292793453,
+        "width": 90,
+        "height": 90,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-poster-generic/e7913c11031d6ebe/primaryLogo@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-stamp-card",
+    "slug": "starter-stamp-card",
+    "version": "d26e2583ab690945",
+    "name": "Stamp card",
+    "description": "Stamps fill the strip; a full card earns a reward.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "storeCard"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Stamp card",
+      "description": "Stamps fill the strip; a full card earns a reward.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "holder",
+          "cardNumber"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "holder": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Holder",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "cardNumber": {
+            "type": "string",
+            "x-label": "Card number",
+            "x-group": "Holder",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 60,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 70,
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          },
+          "storeLat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "x-label": "Store latitude",
+            "x-group": "Location",
+            "x-order": 200
+          },
+          "storeLng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "x-label": "Store longitude",
+            "x-group": "Location",
+            "x-order": 201
+          },
+          "beacons": {
+            "type": "array",
+            "maxItems": 10,
+            "x-label": "Beacons",
+            "x-group": "Location",
+            "x-order": 210,
+            "x-widget": "list",
+            "x-itemLabel": "Beacon",
+            "x-addLabel": "Add beacon",
+            "x-help": "Shows the card on the lock screen near a Bluetooth beacon. Up to 10.",
+            "items": {
+              "type": "object",
+              "required": [
+                "proximityUUID"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "proximityUUID": {
+                  "type": "string",
+                  "x-label": "UUID",
+                  "x-order": 10,
+                  "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$",
+                  "x-placeholder": "8DEEFBB9-F738-4297-8040-96668BB44281"
+                },
+                "major": {
+                  "type": "integer",
+                  "x-label": "Major",
+                  "x-order": 20,
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "minor": {
+                  "type": "integer",
+                  "x-label": "Minor",
+                  "x-order": 30,
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "relevantText": {
+                  "type": "string",
+                  "x-label": "Lock screen text",
+                  "x-order": 40,
+                  "maxLength": 120
+                }
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 59,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back. A change notifies the holder."
+          },
+          "stamps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 19,
+            "default": 0,
+            "x-label": "Stamps",
+            "x-group": "Stamps",
+            "x-order": 40,
+            "x-help": "Redeeming takes 10 off. Extra stamps carry over."
+          },
+          "reward": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "default": "Free item",
+            "x-label": "Reward",
+            "x-group": "Stamps",
+            "x-order": 50
+          }
+        },
+        "dependentRequired": {
+          "storeLat": [
+            "storeLng"
+          ],
+          "storeLng": [
+            "storeLat"
+          ]
+        }
+      },
+      "sample": {
+        "holder": "Alex Morgan",
+        "cardNumber": "CARD-0001",
+        "stamps": 7,
+        "reward": "Free coffee"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "stamps"
+          },
+          "value": "{{pass.stamps.card}} of {{pass.stamps.goal}}"
+        },
+        {
+          "to": {
+            "field": "stamps"
+          },
+          "value": "Reward ready",
+          "when": {
+            "input": "pass.stamps.ready",
+            "eq": true
+          }
+        },
+        {
+          "to": {
+            "field": "stamps",
+            "prop": "changeMessage"
+          },
+          "value": "%@",
+          "when": {
+            "input": "pass.stamps.ready",
+            "eq": true
+          }
+        },
+        {
+          "to": {
+            "field": "reward"
+          },
+          "value": "{{reward}}"
+        },
+        {
+          "to": {
+            "action": "rewards",
+            "prop": "url"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{holder}}"
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}",
+          "remove": {
+            "input": "message",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{cardNumber}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{cardNumber}}"
+        },
+        {
+          "to": {
+            "pointer": "/locations/0/latitude"
+          },
+          "value": "{{storeLat}}"
+        },
+        {
+          "to": {
+            "pointer": "/locations/0/longitude"
+          },
+          "value": "{{storeLng}}"
+        },
+        {
+          "to": {
+            "pointer": "/locations"
+          },
+          "remove": {
+            "any": [
+              {
+                "input": "storeLat",
+                "empty": true
+              },
+              {
+                "input": "storeLng",
+                "empty": true
+              }
+            ]
+          }
+        }
+      ],
+      "display": {
+        "icon": "stamp",
+        "title": "{{holder}}",
+        "subtitle": "{{pass.stamps.card}} of {{pass.stamps.goal}} · {{cardNumber}}",
+        "status": "{{pass.stamps.card}} of {{pass.stamps.goal}}",
+        "search": [
+          "holder",
+          "cardNumber"
+        ]
+      },
+      "behaviors": [
+        {
+          "use": "beacons",
+          "version": 1,
+          "config": {
+            "input": "beacons"
+          }
+        }
+      ],
+      "messaging": {
+        "input": "message"
+      },
+      "stamps": {
+        "input": "stamps",
+        "goal": 10,
+        "art": {
+          "filled": "stamps/filled.png",
+          "empty": "stamps/empty.png",
+          "reward": "stamps/reward.png",
+          "rewardEarned": "stamps/reward-earned.png"
+        },
+        "tilt": true
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Stamp card",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(252,244,230)",
+      "foregroundColor": "rgb(49,28,15)",
+      "labelColor": "rgb(162,64,25)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "CARD-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "CARD-0001"
+        }
+      ],
+      "locations": [
+        {
+          "latitude": 0,
+          "longitude": 0,
+          "relevantText": "Store nearby"
+        }
+      ],
+      "featuredActions": [
+        {
+          "identifier": "rewards",
+          "type": "viewOffersRewards",
+          "url": ""
+        }
+      ],
+      "storeCard": {
+        "headerFields": [
+          {
+            "key": "stamps",
+            "label": "Stamps",
+            "value": "7 of 10"
+          }
+        ],
+        "primaryFields": [],
+        "secondaryFields": [
+          {
+            "key": "reward",
+            "label": "Reward",
+            "value": "Free coffee"
+          },
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Alex Morgan"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "how",
+            "label": "How it works",
+            "value": "One stamp per visit. A full card earns the reward."
+          },
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "One reward per full card. No cash value."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 461,
+        "sha1": "bdbc32142a6bcdcbbe1e83aec2dff8edcfec721d",
+        "crc32": 4183522916,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 1078,
+        "sha1": "d3cc595a63d56c84aa9f0c55faedbe46450a78bc",
+        "crc32": 545554119,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/icon@2x.png"
         }
       },
       {
@@ -4721,69 +5264,455 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "slot": "icon",
         "scale": 3,
         "size": 1573,
-        "sha1": "5f7cc069798cdfe90dd3190f6556b6ccfb40b96b",
-        "crc32": 1730582506,
+        "sha1": "8b9a7b13f399f5db253a1313cd8acf038c349ec2",
+        "crc32": 3100012766,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/icon@3x.png"
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1064,
-        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
-        "crc32": 3776894497,
+        "size": 1068,
+        "sha1": "d9b4f8a5964be7b76b58900c58052cd0f9f1cb6a",
+        "crc32": 2952008567,
         "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/logo@2x.png"
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 1722,
-        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
-        "crc32": 3930646469,
+        "size": 1724,
+        "sha1": "5abbf3a364f0c23d8a1e127a1cbba4193ebb8b83",
+        "crc32": 1665975649,
         "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/logo@3x.png"
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/logo@3x.png"
         }
       },
       {
-        "name": "primaryLogo@2x.png",
-        "slot": "primaryLogo",
+        "name": "stamps/empty.png",
+        "size": 4512,
+        "sha1": "37998c7ba83217f4aa43abca57741f5092df1fe9",
+        "crc32": 99855168,
+        "width": 288,
+        "height": 288,
+        "slot": "source",
+        "scale": 1,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/empty.png"
+        }
+      },
+      {
+        "name": "stamps/filled.png",
+        "size": 9099,
+        "sha1": "161128bb02b4b5f454e8ece36479295ce7067ee3",
+        "crc32": 1624300129,
+        "width": 288,
+        "height": 288,
+        "slot": "source",
+        "scale": 1,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/filled.png"
+        }
+      },
+      {
+        "name": "stamps/reward-earned.png",
+        "size": 11854,
+        "sha1": "4fe96aa040242b59f8066899426a79f831d4977c",
+        "crc32": 3860530421,
+        "width": 288,
+        "height": 288,
+        "slot": "source",
+        "scale": 1,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/reward-earned.png"
+        }
+      },
+      {
+        "name": "stamps/reward.png",
+        "size": 6654,
+        "sha1": "cb1cfd6c597c4e7ae54e879e32d39d85fbce93ea",
+        "crc32": 25244437,
+        "width": 288,
+        "height": 288,
+        "slot": "source",
+        "scale": 1,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/reward.png"
+        }
+      },
+      {
+        "name": "stamps/strips/0/strip@2x.png",
+        "size": 17266,
+        "sha1": "13930bcc1584b91789325131bdcc6a045c34a94f",
+        "crc32": 665799025,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
         "scale": 2,
-        "size": 740,
-        "sha1": "e10e82be8b54d98b53242c5295183fa6a773d82c",
-        "crc32": 260778372,
-        "width": 60,
-        "height": 60,
+        "stamps": 0,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/primaryLogo@2x.png"
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/0/strip@2x.png"
         }
       },
       {
-        "name": "primaryLogo@3x.png",
-        "slot": "primaryLogo",
+        "name": "stamps/strips/0/strip@3x.png",
+        "size": 26201,
+        "sha1": "78e05d86577a6927eb4168aa1cc9862904cd5a7e",
+        "crc32": 3318520001,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
         "scale": 3,
-        "size": 1155,
-        "sha1": "69ee3f8896061530d33392f73d0971244ee232de",
-        "crc32": 1379429626,
-        "width": 90,
-        "height": 90,
+        "stamps": 0,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/78272d65e07751d6/primaryLogo@3x.png"
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/0/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/1/strip@2x.png",
+        "size": 25272,
+        "sha1": "dc72cd85cce5e96373df31249e9070ac8a82a4b2",
+        "crc32": 4104431624,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 1,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/1/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/1/strip@3x.png",
+        "size": 37909,
+        "sha1": "30d1e4a12577a3319e18b79fac0141fffaddb8a4",
+        "crc32": 269764451,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 1,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/1/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/10/strip@2x.png",
+        "size": 73271,
+        "sha1": "f14bbc69ee087eada50a9cf8166eac3fb242df67",
+        "crc32": 2115894123,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 10,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/10/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/10/strip@3x.png",
+        "size": 107242,
+        "sha1": "5302317a0305013072f06c6be061e39de6aae4e1",
+        "crc32": 4083396368,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 10,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/10/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/2/strip@2x.png",
+        "size": 32099,
+        "sha1": "fd5f8759ba4ae376e40a28204d1d019008c7fe14",
+        "crc32": 1994453752,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 2,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/2/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/2/strip@3x.png",
+        "size": 47768,
+        "sha1": "b9f03a8d8411dd7c6450a9befe2ab0f2b7cc73ef",
+        "crc32": 1951819484,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 2,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/2/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/3/strip@2x.png",
+        "size": 38317,
+        "sha1": "70d91e573a4e49c79237d4cf3572c7d6548e63b8",
+        "crc32": 309721114,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 3,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/3/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/3/strip@3x.png",
+        "size": 56819,
+        "sha1": "7ea88251227502f56ad8917a737d74278eb35c23",
+        "crc32": 3002674308,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 3,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/3/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/4/strip@2x.png",
+        "size": 44336,
+        "sha1": "aac6f19aae18ab9b94a4daff5b32f0324586a692",
+        "crc32": 2971445056,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 4,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/4/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/4/strip@3x.png",
+        "size": 64741,
+        "sha1": "a44f7b1e4a4e9d4dbe9f71fc7b37851603321ac9",
+        "crc32": 16921767,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 4,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/4/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/5/strip@2x.png",
+        "size": 46852,
+        "sha1": "4ed816f688905e11fbc5f241ef15b842680680a4",
+        "crc32": 3494899193,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 5,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/5/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/5/strip@3x.png",
+        "size": 68903,
+        "sha1": "773cf813697ad41a2a7ec172f8d6f57d5dc23e37",
+        "crc32": 3625143269,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 5,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/5/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/6/strip@2x.png",
+        "size": 54517,
+        "sha1": "38712b936e6193200e1a5cd3ad3f05a70a31beb8",
+        "crc32": 2172199747,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 6,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/6/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/6/strip@3x.png",
+        "size": 80168,
+        "sha1": "79f211d105f9b3dfaac7578a88fb8616bb89df51",
+        "crc32": 1535126819,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 6,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/6/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/7/strip@2x.png",
+        "size": 61321,
+        "sha1": "b107e9144d815e7fb69d50530bb37064c84cd1c5",
+        "crc32": 438705751,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 7,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/7/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/7/strip@3x.png",
+        "size": 89631,
+        "sha1": "5666dcd77637d3f74e12ad03234c9da6d4025471",
+        "crc32": 2215452033,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 7,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/7/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/8/strip@2x.png",
+        "size": 67362,
+        "sha1": "cf0b860d8838d537a0632535839d20e613e69e4e",
+        "crc32": 853635115,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 8,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/8/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/8/strip@3x.png",
+        "size": 98706,
+        "sha1": "756782713b5d2aa85f2428f1e9e47d6a6e1a7f4d",
+        "crc32": 3173308134,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 8,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/8/strip@3x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/9/strip@2x.png",
+        "size": 69986,
+        "sha1": "a8f0c2d8cc9ad7ec2fe6b79d2858cc064d1c7ccd",
+        "crc32": 4178733036,
+        "width": 750,
+        "height": 288,
+        "slot": "strip",
+        "scale": 2,
+        "stamps": 9,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/9/strip@2x.png"
+        }
+      },
+      {
+        "name": "stamps/strips/9/strip@3x.png",
+        "size": 102421,
+        "sha1": "14107d0a98b35a0678dd1bf296e3dc722a915db7",
+        "crc32": 1271243904,
+        "width": 1125,
+        "height": 432,
+        "slot": "strip",
+        "scale": 3,
+        "stamps": 9,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/stamps/strips/9/strip@3x.png"
+        }
+      },
+      {
+        "name": "strip@2x.png",
+        "slot": "strip",
+        "scale": 2,
+        "size": 1369,
+        "sha1": "538c71707a136288d60cd5272ab171f93f2ce695",
+        "crc32": 1509570109,
+        "width": 750,
+        "height": 288,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/strip@2x.png"
+        }
+      },
+      {
+        "name": "strip@3x.png",
+        "slot": "strip",
+        "scale": 3,
+        "size": 2385,
+        "sha1": "10d922e78f333c5c032c6ec7fde148dcd0fe61b3",
+        "crc32": 241197605,
+        "width": 1125,
+        "height": 432,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-stamp-card/d26e2583ab690945/strip@3x.png"
         }
       }
     ],
@@ -4796,17 +5725,19 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-store-card",
     "slug": "starter-store-card",
-    "version": "ed7e257be45930f0",
-    "name": "PassBook · Store card",
-    "description": "Stored-value card with balance, strip image, relevance, two featured actions and optional beacons.",
+    "version": "07f8fa6e6297514f",
+    "name": "Balance card",
+    "description": "A big balance up front, on a coin strip.",
     "org": null,
+    "blueprint": true,
     "styles": [
       "storeCard"
     ],
     "manifest": {
       "schema": 1,
-      "name": "PassBook · Store card",
-      "description": "Stored-value card with balance, strip image, relevance, two featured actions and optional beacons.",
+      "name": "Balance card",
+      "description": "A big balance up front, on a coin strip.",
+      "blueprint": true,
       "inputs": {
         "type": "object",
         "required": [
@@ -5122,6 +6053,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "display": {
+        "icon": "coins",
         "title": "{{holder}}",
         "subtitle": "{{tier}} · {{cardNumber}}",
         "status": "{{tier}}",
@@ -5145,11 +6077,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Store card",
+      "description": "Balance card",
       "organizationName": "Organization",
-      "backgroundColor": "rgb(31,41,55)",
+      "backgroundColor": "rgb(0,75,65)",
       "foregroundColor": "rgb(255,255,255)",
-      "labelColor": "rgb(199,210,254)",
+      "labelColor": "rgb(242,208,125)",
       "logoText": "Organization",
       "sharingProhibited": true,
       "barcodes": [
@@ -5256,91 +6188,91 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 581305781,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/ed7e257be45930f0/en.lproj/pass.strings"
+          "path": "/templates/starter-store-card/07f8fa6e6297514f/en.lproj/pass.strings"
         }
       },
       {
         "name": "icon@2x.png",
         "slot": "icon",
         "scale": 2,
-        "size": 1080,
-        "sha1": "cc75374c7b1aa0868eff595dcff9124cf45a28b6",
-        "crc32": 1585718174,
+        "size": 952,
+        "sha1": "4684bdceb7cb9aea3ab9b7573a0d15c2644e1b05",
+        "crc32": 1543857962,
         "width": 76,
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/ed7e257be45930f0/icon@2x.png"
+          "path": "/templates/starter-store-card/07f8fa6e6297514f/icon@2x.png"
         }
       },
       {
         "name": "icon@3x.png",
         "slot": "icon",
         "scale": 3,
-        "size": 1572,
-        "sha1": "d0e379cc25aa18ce2b873f9a5684a7f9ec7e0ee8",
-        "crc32": 1590750032,
+        "size": 1436,
+        "sha1": "d94e809561f6989d87dbc962221b4858b36ed506",
+        "crc32": 2137743716,
         "width": 114,
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/ed7e257be45930f0/icon@3x.png"
+          "path": "/templates/starter-store-card/07f8fa6e6297514f/icon@3x.png"
         }
       },
       {
         "name": "logo@2x.png",
         "slot": "logo",
         "scale": 2,
-        "size": 1064,
-        "sha1": "c0dc220cc6b38bde2f69d8d171017c53fd2f1754",
-        "crc32": 3776894497,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
         "width": 100,
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/ed7e257be45930f0/logo@2x.png"
+          "path": "/templates/starter-store-card/07f8fa6e6297514f/logo@2x.png"
         }
       },
       {
         "name": "logo@3x.png",
         "slot": "logo",
         "scale": 3,
-        "size": 1722,
-        "sha1": "7a361a8fd2c2ef4c2299355d4563fd3399c3b714",
-        "crc32": 3930646469,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
         "width": 150,
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/ed7e257be45930f0/logo@3x.png"
+          "path": "/templates/starter-store-card/07f8fa6e6297514f/logo@3x.png"
         }
       },
       {
         "name": "strip@2x.png",
         "slot": "strip",
         "scale": 2,
-        "size": 9205,
-        "sha1": "2397ce7a997cb608cd46a395361a2cfbe0edd295",
-        "crc32": 1730786063,
+        "size": 18990,
+        "sha1": "71c270ee77547f92240b7b02768ed5ed0c214829",
+        "crc32": 3279367857,
         "width": 750,
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/ed7e257be45930f0/strip@2x.png"
+          "path": "/templates/starter-store-card/07f8fa6e6297514f/strip@2x.png"
         }
       },
       {
         "name": "strip@3x.png",
         "slot": "strip",
         "scale": 3,
-        "size": 17245,
-        "sha1": "f9666719c99e775adcc9c618a226bc6465ba8cdc",
-        "crc32": 1338747643,
+        "size": 31354,
+        "sha1": "fd25684d564db591d68547a0bc8abec2b3eb9dfa",
+        "crc32": 170406077,
         "width": 1125,
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/ed7e257be45930f0/strip@3x.png"
+          "path": "/templates/starter-store-card/07f8fa6e6297514f/strip@3x.png"
         }
       }
     ],

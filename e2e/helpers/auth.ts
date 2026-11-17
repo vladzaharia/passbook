@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { expect, type Page } from '@playwright/test';
+import { e2eOrigin } from '../../tools/lib/e2e-ports.ts';
 
 export type Role = 'admin' | 'user' | 'reviewer' | 'nobody';
 
@@ -46,7 +47,7 @@ export async function startOidcAs(page: Page, role: Role, next = '/') {
 
 export async function signInAs(page: Page, role: Role, next = '/') {
   await startOidcAs(page, role, next);
-  await page.waitForURL((u) => u.origin === 'http://localhost:5173' && u.pathname === next);
+  await page.waitForURL((u) => u.origin === e2eOrigin && u.pathname === next);
 }
 
 export async function saveState(page: Page, role: Role) {

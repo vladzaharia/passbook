@@ -298,7 +298,8 @@ describe('ScanDisplayDocSchema', () => {
   });
 
   it('refuses a verdict icon outside the curated set', () => {
-    expect(SCAN_ICONS).toHaveLength(42);
+    expect(SCAN_ICONS).toHaveLength(43);
+    expect(SCAN_ICONS).toContain('plane');
     expect(SCAN_ICONS).toContain('infinity');
     expect(SCAN_ICONS).toContain('clock');
     expect(SCAN_ICONS).not.toContain('check');

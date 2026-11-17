@@ -1,4 +1,5 @@
 // The only module that builds guarded writes. Contract: docs/design/authority-epochs.md section 1.2.
+import type { AfterRead } from './authority-after.ts';
 import { type AuditRow, type AuditWhen, buildAudit } from './authority-audit.ts';
 import { grantedBatch, grantedBatchWith, prepareOf, registerPrepare } from './authority-batch.ts';
 import type { Check } from './authority-checks.ts';
@@ -47,6 +48,7 @@ export type { GrantedStatement, GrantInput } from './authority-granted.ts';
 export { authorityDenial, sweepLeakedGrants } from './authority-granted.ts';
 
 const JOB_PURPOSE = /\.job\./;
+type StatementSize = { params: number; bytes: number };
 
 export class Grant {
   readonly id: string;
@@ -239,10 +241,7 @@ export class Grant {
   }
 
   /** Bound-parameter and byte counts of the grant insert and each write, for the corpus test. */
-  inspect(): {
-    grant: { params: number; bytes: number };
-    writes: { params: number; bytes: number }[];
-  } {
+  inspect(): { grant: StatementSize; writes: StatementSize[] } {
     const size = (b: BuiltStatement) => ({ params: b.params.length, bytes: b.sql.length });
     return {
       grant: size(this.#insert()),
@@ -282,9 +281,9 @@ export class Grant {
     return (await grantedBatch(this.#db, [this]))[0] ?? [];
   }
 
-  /** `commit()` with plain read statements appended after the release, in the same transaction. */
+  /** `commit()` plus reads (`afterRead`) after the release, in the same transaction: they see its writes. */
   async commitWith(
-    after: D1PreparedStatement[],
+    after: readonly AfterRead[],
   ): Promise<{ writes: D1Result[]; after: D1Result[] }> {
     const r = await grantedBatchWith(this.#db, [this], after);
     return { writes: r.grants[0] ?? [], after: r.after };
