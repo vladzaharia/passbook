@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { OrgMembership } from '../src/shared/contracts/org-membership.ts';
 import type { SessionResponse } from '../src/shared/contracts/session.ts';
-import { apiAs, createPass, uid } from './helpers/api.ts';
+import { apiAs, createPass, requireActiveTemplateRelease, uid } from './helpers/api.ts';
 import { templateFromBlueprint } from './helpers/releases.ts';
 import { addOrgMember, createOrgWithRoles, readSeed } from './helpers/seed.ts';
 
@@ -204,7 +204,7 @@ test.describe('platform administrator', () => {
       const template = await templateFromBlueprint(api, org.id, 'Shell revocation');
       const pass = await createPass(api, org.id, {
         holder: uid('Revocation proof'),
-        templateId: template.id,
+        release: await requireActiveTemplateRelease(api, org.id, template.id),
       });
       const listPath = `/api/v1/passes?orgId=${encodeURIComponent(org.id)}`;
       const visible = await api.get<{ items: { id: string }[] }>(listPath);
