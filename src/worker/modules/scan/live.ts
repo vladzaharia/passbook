@@ -1,20 +1,21 @@
-import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
+import { parseIsoDate } from '../../../passkit/schema/util.ts';
+import type { ScanOutcome, ScanRole } from '../../../shared/contracts/scan.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
-import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import {
-  captureCredentialKeyEnv,
-  credentialRefKeysetCommitment,
-} from '../passes/credential-keyset.ts';
 import type { ScanActor } from './actor.ts';
 import { epochsMissing } from './authority-capture.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
+import { usedRelease } from './effective-release.ts';
+import { sourceActor } from './event-safe-projection-policy.ts';
+import { pinKeyset } from './keyset-pin.ts';
 import type { LiveAttachment } from './live-auth.ts';
-import { livePassSnapshot, sealLiveSourceProof } from './live-provenance.ts';
-import { validCredentialTombstoneRefs } from './repo-credential-tombstones.ts';
-import { liveCredentialKeyset } from './repo-live.ts';
+import type { LiveRingRow } from './live-ring.ts';
+import { photoPolicyForResolved, scannerCandidateAllowed } from './member-photo.ts';
+import { scanIdentity } from './projection-privacy.ts';
+import { CREDENTIAL_REF_PREFIX } from './repo-credential-tombstones.ts';
 import type { Candidate } from './repo-lookup.ts';
+import { foundOf } from './resolve.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import {
   captureObservedScanningSession,
@@ -102,6 +103,95 @@ export function liveAttachment(ctx: ServiceContext, actor: ScanActor): LiveAttac
   };
 }
 
+const ROLES: readonly ScanRole[] = ['door', 'desk', 'manager'];
+
+/**
+ * The pass facts a live row discloses, taken from the candidate the scan evaluated: the holder name
+ * (as the source screen showed it), the roles that would read the same name, the roles a photo is
+ * shown to, and the generations and release a render re-checks. Null when the pass cannot be
+ * evaluated for the source (the row is then published as a redacted row).
+ */
+async function passDetail(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  candidate: Candidate,
+  keyset: string,
+): Promise<
+  | (Pick<
+      LiveRingRow,
+      'templateId' | 'gen' | 'release' | 'validUntil' | 'holderRoles' | 'photoRoles'
+    > & { holder: string | null })
+  | null
+> {
+  const { pass } = candidate;
+  const release = usedRelease(candidate.templateSnapshot?.raw);
+  const found = release === false ? null : await foundOf(ctx, candidate);
+  const now = ctx.clock.now();
+  if (
+    !found ||
+    release === false ||
+    candidate.credentialKeysetCommitment !== keyset ||
+    pass.orgId !== actor.orgId ||
+    pass.mode !== actor.mode ||
+    !scannerCandidateAllowed(actor, candidate, found.passJson, now)
+  )
+    return null;
+  const title = scanIdentity(found, actor).title;
+  const holderRoles = title
+    ? ROLES.filter((r) => scanIdentity(found, sourceActor(actor, r)).title === title)
+    : [];
+  const photoRoles = ROLES.filter((r) =>
+    photoPolicyForResolved(
+      sourceActor(actor, r),
+      candidate,
+      found.template,
+      found.activePolicy,
+      now,
+    ),
+  );
+  return {
+    templateId: pass.templateId,
+    gen: {
+      credential: pass.credentialGeneration,
+      lifecycle: pass.lifecycleGeneration,
+      image: pass.imageGeneration,
+    },
+    release: release === null ? null : release[0],
+    validUntil: parseIsoDate(found.passJson.expirationDate) ?? null,
+    holder: title ? title.slice(0, 40) : null,
+    holderRoles,
+    photoRoles,
+  };
+}
+
+/** The ring entry for a committed scan of `candidate` (null: no pass); null when the pass cannot be shown. */
+export async function liveRingRow(
+  ctx: ServiceContext,
+  source: ScanActor,
+  base: ScanLiveRow,
+  candidate: Candidate | null,
+  scanId: string | null,
+  /** The full keyed refs of the credential the scan presented. */
+  credentialRefs: readonly string[] = [],
+): Promise<LiveRingRow | null> {
+  const detail = candidate ? await passDetail(ctx, source, candidate, await pinKeyset(ctx)) : null;
+  if (candidate && !detail) return null;
+  const staff = source.staff ? scanEpochsOf(source)?.staff : undefined;
+  return {
+    row: detail && candidate ? { ...base, passId: candidate.pass.id, holder: detail.holder } : base,
+    scanId,
+    templateId: detail?.templateId ?? null,
+    gen: detail?.gen ?? null,
+    release: detail?.release ?? null,
+    validUntil: detail?.validUntil ?? null,
+    sourceRole: source.role,
+    sourceStaff: staff ? { id: staff.id, authEpoch: staff.auth } : null,
+    refPrefixes: detail ? credentialRefs.map((ref) => ref.slice(0, CREDENTIAL_REF_PREFIX)) : [],
+    holderRoles: detail?.holderRoles ?? [],
+    photoRoles: detail?.photoRoles ?? [],
+  };
+}
+
 export function publishScan(
   ctx: ServiceContext,
   actor: ScanActor,
@@ -113,99 +203,17 @@ export function publishScan(
   enteredCode = false,
 ) {
   if (!actor.scanner || (!actor.scanningSession && !actor.scanner.hasScreens) || out.replay) return;
-  const keyset = credentialContext?.credentialKeysetCommitment;
-  if (
-    typeof keyset !== 'string' ||
-    !/^[a-f0-9]{64}$/.test(keyset) ||
-    !credentialContext ||
-    (actor.credentialKeysetCommitment !== undefined &&
-      actor.credentialKeysetCommitment !== keyset) ||
-    !validCredentialTombstoneRefs(credentialContext.credentialTombstoneRefs) ||
-    !validCredentialTombstoneRefs(credentialContext.otherModeCredentialTombstoneRefs) ||
-    new Set(credentialContext.credentialTombstoneRefs).size !==
-      credentialContext.credentialTombstoneRefs.length ||
-    new Set(credentialContext.otherModeCredentialTombstoneRefs).size !==
-      credentialContext.otherModeCredentialTombstoneRefs.length ||
-    ((method !== 'manual' || enteredCode) &&
-      (!credentialContext.credentialTombstoneRefs.length ||
-        !credentialContext.otherModeCredentialTombstoneRefs.length)) ||
-    (!!out.card && (!evaluatedSnapshot || out.card.passId !== evaluatedSnapshot.pass.id)) ||
-    (evaluatedSnapshot !== null &&
-      (!validCredentialTombstoneRefs(evaluatedSnapshot.credentialTombstoneRefs) ||
-        !validCredentialTombstoneRefs(evaluatedSnapshot.otherModeCredentialTombstoneRefs) ||
-        evaluatedSnapshot.credentialKeysetCommitment !== keyset ||
-        evaluatedSnapshot.credentialTombstoneRefs.length !==
-          credentialContext.credentialTombstoneRefs.length ||
-        evaluatedSnapshot.credentialTombstoneRefs.some(
-          (ref, index) => ref !== credentialContext.credentialTombstoneRefs[index],
-        ) ||
-        evaluatedSnapshot.otherModeCredentialTombstoneRefs.length !==
-          credentialContext.otherModeCredentialTombstoneRefs.length ||
-        evaluatedSnapshot.otherModeCredentialTombstoneRefs.some(
-          (ref, index) => ref !== credentialContext.otherModeCredentialTombstoneRefs[index],
-        )))
-  )
-    return;
-  const keyEnv = captureCredentialKeyEnv(ctx.env);
-  const sourceCredentialContext: CredentialTombstoneSnapshot = {
-    credentialKeysetCommitment: keyset,
-    credentialTombstoneRefs: [...credentialContext.credentialTombstoneRefs],
-    otherModeCredentialTombstoneRefs: [...credentialContext.otherModeCredentialTombstoneRefs],
-  };
-  // Preserve authority before yielding; raw scanner CSRF must never enter the clone.
+  // A supplied pass must stay bound to the outcome; never downgrade it to a passless event.
+  if (out.card && (!evaluatedSnapshot || out.card.passId !== evaluatedSnapshot.pass.id)) return;
   const source = cloneObservedScanActor(actor);
-  source.credentialKeysetCommitment = keyset;
-  const db = ctx.env.DB;
+  const scanner = actor.scanner;
   const hub = scanHub(ctx, source.orgId, source.mode);
-  const captured =
-    evaluatedSnapshot &&
-    evaluatedSnapshot.pass.orgId === actor.orgId &&
-    evaluatedSnapshot.pass.mode === actor.mode &&
-    validCredentialTombstoneRefs(evaluatedSnapshot.credentialTombstoneRefs) &&
-    validCredentialTombstoneRefs(evaluatedSnapshot.otherModeCredentialTombstoneRefs) &&
-    ((method === 'manual' && !enteredCode) ||
-      evaluatedSnapshot.credentialTombstoneRefs.length > 0) &&
-    (!out.card || out.card.passId === evaluatedSnapshot.pass.id) &&
-    evaluatedSnapshot.orgRevision !== null &&
-    Number.isSafeInteger(evaluatedSnapshot.orgRevision) &&
-    evaluatedSnapshot.orgRevision >= 0 &&
-    evaluatedSnapshot.templateRevision !== null &&
-    Number.isSafeInteger(evaluatedSnapshot.templateRevision) &&
-    evaluatedSnapshot.templateRevision >= 0 &&
-    evaluatedSnapshot.identityRevision !== null &&
-    Number.isSafeInteger(evaluatedSnapshot.identityRevision) &&
-    evaluatedSnapshot.identityRevision > 0 &&
-    evaluatedSnapshot.activeTemplateVersion &&
-    ((evaluatedSnapshot.pass.releaseId === null &&
-      evaluatedSnapshot.activeTemplateVersion === evaluatedSnapshot.pass.templateVersion &&
-      evaluatedSnapshot.activeReleaseId === null &&
-      evaluatedSnapshot.activeReleaseGeneration === null &&
-      evaluatedSnapshot.activeReleaseVersion === null &&
-      evaluatedSnapshot.activeReleaseCandidateHash === null) ||
-      (!!evaluatedSnapshot.activeReleaseId &&
-        evaluatedSnapshot.activeReleaseGeneration !== null &&
-        Number.isSafeInteger(evaluatedSnapshot.activeReleaseGeneration) &&
-        evaluatedSnapshot.activeReleaseGeneration >= 0 &&
-        !!evaluatedSnapshot.activeReleaseVersion &&
-        evaluatedSnapshot.activeTemplateVersion === evaluatedSnapshot.activeReleaseVersion &&
-        // A pass used under its own release while the head moved on is a valid scan; the screen
-        // shows it without identity until the pass follows the head.
-        typeof evaluatedSnapshot.activeReleaseCandidateHash === 'string' &&
-        /^[a-f0-9]{64}$/.test(evaluatedSnapshot.activeReleaseCandidateHash)))
-      ? {
-          passId: evaluatedSnapshot.pass.id,
-          passSnapshot: livePassSnapshot(keyEnv, evaluatedSnapshot),
-        }
-      : null;
-  // A supplied pass must remain bound to the evaluated snapshot. Never downgrade malformed
-  // or incomplete pass authority to a passless event.
-  if (evaluatedSnapshot && !captured) return;
-  const row: ScanLiveRow = {
+  const base: ScanLiveRow = {
     id: ctx.ids.token(16),
     at: ctx.clock.now(),
-    scannerId: actor.scanner.id,
+    scannerId: scanner.id,
     scannerName: actor.name,
-    passId: captured?.passId ?? null,
+    passId: null,
     holder: null,
     photoUrl: null,
     kind: undo ? 'undo' : out.kind,
@@ -225,27 +233,25 @@ export function publishScan(
   };
   ctx.waitUntil(
     (async () => {
-      const [capturedKeyset, passSnapshot] = await Promise.all([
-        credentialRefKeysetCommitment(keyEnv),
-        captured ? captured.passSnapshot : Promise.resolve(null),
-      ]);
-      if (captured && !passSnapshot?.passCommitment) return;
-      if (!(await safeEqual(capturedKeyset, keyset))) return;
-      if (!(await liveCredentialKeyset(db, keyset))) return;
-      const sourceProof = await sealLiveSourceProof(keyEnv, {
-        credentialContext: sourceCredentialContext,
-        actor: source,
-        eventId: row.id,
-        passId: row.passId,
-        passSnapshot,
-        at: row.at,
-      });
-      const accepted = await hub.publish({
-        orgId: source.orgId,
-        mode: source.mode,
-        row: { ...row, sourceProof },
-      });
-      if (!accepted) throw new Error('SCAN_LIVE_PUBLISH_REJECTED');
+      const entry = await liveRingRow(
+        ctx,
+        source,
+        base,
+        evaluatedSnapshot,
+        out.scanId,
+        credentialContext?.credentialTombstoneRefs ?? [],
+      );
+      // An evaluated pass that cannot be shown is withheld, not published as a refusal.
+      if (!entry) return;
+      if (
+        !(await hub.publish({
+          orgId: source.orgId,
+          mode: source.mode,
+          row: entry,
+          now: ctx.clock.now(),
+        }))
+      )
+        throw new Error('SCAN_LIVE_PUBLISH_REJECTED');
     })().catch(() => {
       ctx.log.error('scan.live_publish_failed', {
         orgId: source.orgId,

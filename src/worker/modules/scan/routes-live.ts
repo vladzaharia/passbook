@@ -7,6 +7,7 @@ import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { openMemberPhotoFromSnapshot } from '../passes/member-photo.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
+import { pinKeysetOrNull } from './keyset-pin.ts';
 import { liveAttachment, scanHub } from './live.ts';
 import { sealLiveAttachment } from './live-attachment.ts';
 import { prepareLivePhoto } from './live-photo-delivery.ts';
@@ -45,10 +46,11 @@ register(
         throw new ForbiddenError('Open the screen on this site.', 'SCAN_LIVE_ORIGIN');
       const request = new Request(c.req.raw);
       request.headers.set('x-pb-live', await sealLiveAttachment(ctx.env, attachment));
+      request.headers.set('x-pb-now', String(ctx.clock.now()));
       return hub.fetch(request);
     }
     c.header('cache-control', 'no-store');
-    return c.json(await hub.snapshot(attachment, c.req.valid('query').after));
+    return c.json(await hub.snapshot(attachment, c.req.valid('query').after, ctx.clock.now()));
   },
 );
 register(
@@ -60,7 +62,6 @@ register(
     summary: 'Private monitor photo',
     params: z.object({ passId: z.string().min(1).max(64) }),
     query: z.object({
-      g: z.string().min(1).max(100),
       event: z.string().min(1).max(64),
     }),
   },
@@ -69,34 +70,27 @@ register(
     const ctx = { ...initial, env: snapshotCredentialEnv(initial.env) };
     const actor = cloneObservedScanActor(scanActorOf(c));
     const missing = () => new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
-    const keyset = await credentialRefKeysetCommitment(ctx.env);
+    const keyset = await pinKeysetOrNull(initial);
     if (
-      actor.credentialKeysetCommitment !== undefined &&
-      actor.credentialKeysetCommitment !== keyset
+      keyset === null ||
+      (actor.credentialKeysetCommitment !== undefined &&
+        actor.credentialKeysetCommitment !== keyset)
     )
       throw missing();
     actor.credentialKeysetCommitment = keyset;
     const attachment = liveAttachment(ctx, actor);
     const { passId } = c.req.valid('param');
-    const { g, event } = c.req.valid('query');
+    const { event } = c.req.valid('query');
     if (attachment.role !== 'monitor') throw missing();
     const hub = scanHub(ctx, actor.orgId, actor.mode);
-    const proof = await hub.sourceProof(event);
-    if (!proof) throw missing();
-    const prepared = await prepareLivePhoto(
-      ctx,
-      actor,
-      attachment,
-      passId,
-      { eventId: event, sourceProof: proof },
-      g,
-    );
+    const entry = await hub.ringRow(event, ctx.clock.now());
+    if (!entry || entry.row.passId !== passId) throw missing();
+    const prepared = await prepareLivePhoto(ctx, attachment, entry);
     if (!prepared) throw missing();
     try {
       const response = await openMemberPhotoFromSnapshot(ctx, prepared.photo);
       try {
-        const currentProof = await hub.sourceProof(event);
-        if (currentProof !== proof || !(await prepared.recheck())) throw missing();
+        if (!(await prepared.recheck())) throw missing();
       } catch (error) {
         try {
           await response.body?.cancel();

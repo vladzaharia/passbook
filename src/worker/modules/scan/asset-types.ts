@@ -43,22 +43,6 @@ export const photoGrantPurpose = (
   snapshot: Pick<Candidate, 'displayTemplateVersion'>,
 ): AssetGrantPurpose => (snapshot.displayTemplateVersion === null ? 'read' : 'commit');
 
-/** Server-only authority with original pass data bound only by a keyed proof. */
-export interface AssetGuardPlan {
-  passId: string;
-  snapshotProof: string;
-  actor: ScanActor;
-  source: AssetGrantSource | undefined;
-  recipientSession: AssetSessionSnapshot | null;
-  sourceSession: AssetSessionSnapshot | null;
-  connectionGeneration: number | null;
-  activeVersion: string | null;
-  /** Leading hex of the keyed refs of the credential the grant was scanned from. */
-  credentialRefPrefixes: readonly string[];
-  purpose: AssetGrantPurpose;
-  requirePhoto: boolean;
-}
-
 /** A minted capability: the token stays in the sidecar (`asset-sidecar.ts`), never in this object. */
 export interface PreparedAssetGrant {
   orgId: string;

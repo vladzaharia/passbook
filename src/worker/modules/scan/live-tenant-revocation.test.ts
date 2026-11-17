@@ -299,7 +299,7 @@ describe('live tenant and workspace revocation', () => {
     expect(await liveRecipient(kit.ctx, fresh)).not.toBeNull();
   });
 
-  it('rejects a screen when its release-backed template becomes unavailable', async () => {
+  it('keeps a screen whose scoped template is deleted: its passes are withheld, not the screen', async () => {
     const screen = await managedScreen({ scoped: true });
     if (!screen.templateId) throw new Error('Missing scoped template.');
     expect(await liveRecipient(kit.ctx, screen.attachment)).not.toBeNull();
@@ -308,6 +308,6 @@ describe('live tenant and workspace revocation', () => {
       "UPDATE templates SET status='deleted', updated_at=updated_at+1 WHERE id=?",
       [screen.templateId],
     );
-    await assertClosed(screen.attachment, 'drift');
+    expect(await liveRecipient(kit.ctx, screen.attachment)).not.toBeNull();
   });
 });

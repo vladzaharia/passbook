@@ -5,23 +5,15 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import type { ScanActor } from './actor.ts';
-import { snapshotCredentialEnv } from './credential-input.ts';
+import { liveActorSchema } from './live-actor-schema.ts';
 import {
   type LiveAttachmentTenant,
   sameAuthorityValue,
   sameSession,
   tenantReadAuthority,
 } from './live-auth-guards.ts';
-import { liveActorSchema } from './live-provenance.ts';
-import { liveRecipientFencesCurrent } from './repo-live-authority.ts';
-import { liveLifetimeStmt } from './repo-live-lifetime.ts';
-import { type LiveWatchStamp, liveRecipientWatchStmt } from './repo-live-recipient.ts';
-import {
-  captureTemplateStampsStmt,
-  type SessionLegacyStamp,
-  type SessionReleaseStamp,
-  templateStampsFromResult,
-} from './repo-scope-releases.ts';
+import { liveRecipientStmt } from './repo-live-render.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
 import { type ScanAuthorityEpochs, scanEpochsOf, setScanEpochs } from './scan-epochs.ts';
 import {
   captureObservedScanningSession,
@@ -83,12 +75,6 @@ export interface LiveRecipient {
   actor: ScanActor;
   watch: z.infer<typeof ScanWatchSchema>;
   attachment: LiveAttachment;
-  /** The original recipient authority used in the final combined output fence. */
-  fences: {
-    releases: readonly SessionReleaseStamp[];
-    legacy: readonly SessionLegacyStamp[];
-    watch: LiveWatchStamp;
-  };
 }
 
 function validLiveAttachment(a: LiveAttachment): boolean {
@@ -162,80 +148,14 @@ function validLiveAttachment(a: LiveAttachment): boolean {
   return true;
 }
 
-/** Batch the original watch and selected template stamps with photo/grant authority reads. */
-export function liveRecipientAcquisitionStmts(
-  db: D1Database,
+/** The watch a screen row stores, or its session's scanners; null when malformed. */
+function parseWatch(
   actor: ScanActor,
-): {
-  watch: D1PreparedStatement;
-  stamps: D1PreparedStatement;
-} | null {
-  const scanner = actor.scanner;
-  const stamps = captureTemplateStampsStmt(db, actor.orgId, actor.mode, actor.templateIds);
-  if (!scanner || !stamps || actor.invalidScannerScope) return null;
-  return {
-    stamps,
-    watch: liveRecipientWatchStmt(db, actor, scanner),
-  };
-}
-
-/** Use only the guard actor and the same batched watch/stamp observation. */
-export function liveRecipientFromResults(
-  ctx: ServiceContext,
-  actor: ScanActor,
-  attachment: LiveAttachment,
-  results: { watch: D1Result | undefined; stamps: D1Result | undefined },
-): LiveRecipient | null {
-  const scanner = actor.scanner;
-  if (
-    !validLiveAttachment(attachment) ||
-    !scanner ||
-    actor.invalidScannerScope ||
-    !sameAuthorityValue(cloneObservedScanActor(actor), attachment.actor) ||
-    !restoreObservedScanningSession(actor, attachment.observation) ||
-    attachment.expiresAt <= ctx.clock.now() ||
-    attachment.orgId !== actor.orgId ||
-    attachment.mode !== actor.mode ||
-    attachment.scannerId !== scanner.id ||
-    attachment.role !== scanner.deviceRole ||
-    attachment.revision !== scanner.updatedAt ||
-    attachment.tokenHash !== (scanner.tokenHash ?? '') ||
-    attachment.scannerCsrfProof !== actor.scannerCsrfProof ||
-    attachment.credentialKeysetCommitment !== actor.credentialKeysetCommitment ||
-    !sameSession(attachment.session, actor.scanningSession ?? null)
-  )
-    return null;
-  if (actor.principal === 'admin') {
-    if (
-      !attachment.admin ||
-      !tenantReadAuthority(attachment) ||
-      attachment.admin.userId !== actor.actor.id ||
-      attachment.admin.sessionId !== actor.platformSessionId ||
-      !sameAuthorityValue(attachment.admin.tenantAuthority, actor.tenantAuthority)
-    )
-      return null;
-  } else if (
-    attachment.admin ||
-    !attachment.tokenHash ||
-    typeof attachment.scannerCsrfProof !== 'string'
-  ) {
-    return null;
-  }
-  if (
-    results.watch?.success !== true ||
-    results.watch.results?.length !== 1 ||
-    results.stamps?.success !== true
-  )
-    return null;
-  const row = results.watch.results?.[0] as
-    | { watch?: unknown; session_watch?: unknown }
-    | undefined;
-  const stamps = templateStampsFromResult(actor.templateIds, results.stamps);
-  if (!row || !stamps) return null;
+  scannerId: string,
+  row: { watch?: unknown; session_watch?: unknown },
+): z.infer<typeof ScanWatchSchema> | null {
   try {
-    let watch: z.infer<typeof ScanWatchSchema>;
-    let watchStamp: LiveWatchStamp;
-    if (actor.scanningSession && actor.scanningSession.id !== scanner.id) {
+    if (actor.scanningSession && actor.scanningSession.id !== scannerId) {
       if (typeof row.session_watch !== 'string') return null;
       const ids: unknown = JSON.parse(row.session_watch);
       if (
@@ -244,36 +164,25 @@ export function liveRecipientFromResults(
         new Set(ids).size !== ids.length
       )
         return null;
-      watch = ScanWatchSchema.parse({ scannerIds: ids, allOrg: false });
-      watchStamp = {
-        kind: 'session',
-        sessionId: actor.scanningSession.id,
-        scannerIds: watch.scannerIds,
-      };
-    } else {
-      if (typeof row.watch !== 'string') return null;
-      watch = ScanWatchSchema.parse(JSON.parse(row.watch));
-      watchStamp = { kind: 'standalone', raw: row.watch };
+      return ScanWatchSchema.parse({ scannerIds: ids, allOrg: false });
     }
-    if (attachment.role === 'customer' && watch.allOrg) return null;
-    return {
-      actor: cloneObservedScanActor(actor),
-      watch,
-      attachment,
-      fences: { releases: stamps.releases, legacy: stamps.legacy, watch: watchStamp },
-    };
+    if (typeof row.watch !== 'string') return null;
+    return ScanWatchSchema.parse(JSON.parse(row.watch));
   } catch (error) {
     if (error instanceof ZodError || error instanceof SyntaxError) return null;
     throw error;
   }
 }
 
-/** Read authoritative rows before each delivery; a cached socket never extends a credential. */
+/**
+ * The recipient screen, read in one statement under its own authority: the same checks as a scan
+ * write (credential, device and staff liveness, session and event epochs), so a cached socket never
+ * extends a credential. Null when the attachment is expired, malformed, or its authority failed.
+ */
 export async function liveRecipient(
   ctx: ServiceContext,
   a: LiveAttachment,
 ): Promise<LiveRecipient | null> {
-  ctx = { ...ctx, env: snapshotCredentialEnv(ctx.env) };
   if (
     !validLiveAttachment(a) ||
     a.expiresAt <= ctx.clock.now() ||
@@ -284,46 +193,26 @@ export async function liveRecipient(
   const attachment = cloneLiveAttachment(a);
   if (!attachment) return null;
   const actor = attachment.actor;
-  if (!restoreObservedScanningSession(actor, attachment.observation)) return null;
-  const reads = liveRecipientAcquisitionStmts(ctx.env.DB, actor);
-  const lifetime = liveLifetimeStmt(ctx.env.DB, actor);
-  if (!reads || !lifetime) return null;
+  const scanner = actor.scanner;
+  if (!restoreObservedScanningSession(actor, attachment.observation) || !scanner) return null;
+  if (actor.invalidScannerScope || attachment.role !== scanner.deviceRole) return null;
   try {
-    const [keyset, results] = await Promise.all([
-      credentialRefKeysetCommitment(ctx.env),
-      ctx.env.DB.batch([reads.watch, reads.stamps, lifetime]),
-    ]);
-    if (
-      keyset !== attachment.credentialKeysetCommitment ||
-      results.length !== 3 ||
-      results.some((result) => result.success !== true)
-    )
+    if ((await credentialRefKeysetCommitment(ctx.env)) !== attachment.credentialKeysetCommitment)
       return null;
-    const recipient = liveRecipientFromResults(ctx, actor, attachment, {
-      watch: results[0],
-      stamps: results[1],
+    const auth = scanReadAuthority(actor, {
+      now: ctx.clock.now(),
+      read: { stafflessMonitor: true },
     });
-    if (
-      !recipient ||
-      !(await liveRecipientFencesCurrent(
-        ctx,
-        recipient.actor,
-        ctx.clock.now(),
-        recipient.fences.releases,
-        recipient.fences.legacy,
-        recipient.fences.watch,
-        attachment.expiresAt,
-        results[2],
-      ))
-    )
-      return null;
-    return recipient;
+    const row = await liveRecipientStmt(ctx.env.DB, auth, actor, scanner.id).first<{
+      watch?: unknown;
+      session_watch?: unknown;
+    }>();
+    if (!row) return null;
+    const watch = parseWatch(actor, scanner.id, row);
+    if (!watch || (attachment.role === 'customer' && watch.allOrg)) return null;
+    return { actor: cloneObservedScanActor(actor), watch, attachment };
   } catch (error) {
-    if (
-      error instanceof ZodError ||
-      error instanceof SyntaxError ||
-      (error instanceof AppError && error.status < 500)
-    )
+    if (error instanceof AppError && (error.status < 500 || error.code === 'SCAN_EPOCHS_MISSING'))
       return null;
     throw error;
   }

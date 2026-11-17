@@ -11,7 +11,6 @@ import {
   prepareAssetGrant,
   tagMatches,
 } from './asset-grant-mint.ts';
-import { assetSnapshotInput, assetSnapshotProofFromInput } from './asset-secrets.ts';
 import {
   type AssetGrantPurpose,
   type AssetGrantSource,
@@ -21,7 +20,6 @@ import {
   photoGrantPurpose,
 } from './asset-types.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
-import type { AssetGrantGuardInput } from './repo-asset-lineage.ts';
 
 /** Freeze the KEKs once before any asynchronous capability work. */
 function pinnedContext(ctx: ServiceContext): ServiceContext {
@@ -71,7 +69,14 @@ export const prepareGenericAssetGrant = (
   );
 
 /** A verified capability: the guard input for every later SQL fence, and its own expiry. */
-export type VerifiedAssetGrant = AssetGrantGuardInput & { expiresAt: number };
+export interface VerifiedAssetGrant {
+  passId: string;
+  purpose: AssetGrantPurpose;
+  requirePhoto: boolean;
+  /** Leading hex of the keyed refs of the credential the grant was scanned from. */
+  credentialRefPrefixes: readonly string[];
+  expiresAt: number;
+}
 
 /** A well-formed capability string, before any read. */
 export const assetGrantWellFormed = (grant: string | undefined): boolean =>
@@ -108,21 +113,17 @@ export async function prepareAssetGrantVerification(
   const capturedSource = source
     ? { sourceId: source.sourceId, eventId: source.eventId, actor: captureActor(source.actor) }
     : undefined;
-  const capturedInput = assetSnapshotInput(snapshot);
   const activeVersion = snapshot.activeReleaseVersion ?? snapshot.pass.templateVersion;
-  const [snapshotProof, data] = await Promise.all([
-    assetSnapshotProofFromInput(pinned.env, capturedInput),
-    grantData(
-      pinned,
-      capturedActor,
-      snapshot,
-      connectionGeneration,
-      activeVersion,
-      capturedSource,
-      requirePhoto,
-      purpose,
-    ),
-  ]);
+  const data = await grantData(
+    pinned,
+    capturedActor,
+    snapshot,
+    connectionGeneration,
+    activeVersion,
+    capturedSource,
+    requirePhoto,
+    purpose,
+  );
   if (!data) return null;
   const purposes: AssetGrantPurpose[] =
     purpose === 'read' && !requirePhoto && snapshot.displayTemplateVersion === activeVersion
@@ -138,13 +139,6 @@ export async function prepareAssetGrantVerification(
   if (!verifiedPurpose || parsed.expiresAt <= pinned.clock.now()) return null;
   return {
     passId,
-    snapshotProof,
-    actor: capturedActor,
-    recipientSession: data.recipientSession,
-    source: capturedSource,
-    sourceSession: data.sourceSession,
-    connectionGeneration,
-    activeVersion,
     credentialRefPrefixes: refs,
     requirePhoto,
     purpose: verifiedPurpose,

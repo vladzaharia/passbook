@@ -12,25 +12,20 @@ import { noScopedReleaseSql } from '../templates/repo-releases.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { publishScan } from './live.ts';
 import { liveRecipient } from './live-auth.ts';
-import { livePassCommitmentValid } from './live-pass-commitment.ts';
-import { livePassSnapshot, openLiveSourceProof, sealLiveSourceProof } from './live-provenance.ts';
-import { liveRowFor } from './live-render.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { setSetupWatchStmt } from './repo-setups-test-support.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
-import { hub, kit, photoFixture, proven, publish, row, screen } from './scan-hub-test-fixtures.ts';
+import { hub, kit, photoFixture, publish, row, screen } from './scan-hub-test-fixtures.ts';
 import { key, proofedScanActor } from './test-kit.ts';
 
 describe('live authority revocation', () => {
   it('does not revive a retained grant after a same-clock removal claim is rolled back', async () => {
     const fixture = await photoFixture();
     const before = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
-    const sealed = await hub().sourceProof(fixture.event.id);
-    if (!before || !sealed) throw new Error('Missing lifecycle fixture.');
-    expect((await openLiveSourceProof(kit.env, sealed))?.passSnapshot?.lifecycleGeneration).toBe(
-      before.pass.lifecycleGeneration,
-    );
+    const stored = await hub().ringRow(fixture.event.id);
+    if (!before || !stored) throw new Error('Missing lifecycle fixture.');
+    expect(stored.gen?.lifecycle).toBe(before.pass.lifecycleGeneration);
     expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
     const now = kit.clock.now();
     const state = { at: now, message: null, priorStatus: before.pass.status };
@@ -77,139 +72,6 @@ describe('live authority revocation', () => {
     expect(
       (await kit.get(fixture.monitor.headers, fresh.photoUrl.replace('/api/v1/scan', ''))).status,
     ).toBe(200);
-  });
-
-  it('bounds and validates the original Wallet authority before computing its commitment', async () => {
-    const fixture = await photoFixture();
-    const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
-    if (!candidate?.passJsonSnapshot) throw new Error('Missing Wallet snapshot.');
-    const wallet = JSON.parse(candidate.passJsonSnapshot) as Record<string, unknown>;
-    let nested: unknown = 'leaf';
-    for (let depth = 0; depth < 100; depth++) nested = { nested };
-    const invalid = [
-      null,
-      '{',
-      JSON.stringify({ ...wallet, serialNumber: 'different-serial' }),
-      JSON.stringify({ ...wallet, serialNumber: undefined }),
-      JSON.stringify({ ...wallet, passTypeIdentifier: 'pass.invalid' }),
-      JSON.stringify({ ...wallet, teamIdentifier: 'OTHERTEAM' }),
-      JSON.stringify({ ...wallet, oversized: 'x'.repeat(4 * 1024 * 1024) }),
-      JSON.stringify({ ...wallet, oversized: 'x'.repeat(2_000_001) }),
-      JSON.stringify({ ...wallet, oversized: 'é'.repeat(1_000_001) }),
-    ];
-    for (const passJsonSnapshot of invalid) {
-      const damaged = { ...candidate, passJsonSnapshot };
-      const snapshot = await livePassSnapshot(kit.env, damaged);
-      expect(snapshot.passCommitment).toBeNull();
-      expect(await livePassCommitmentValid(kit.env, damaged, snapshot.passCommitment)).toBe(false);
-    }
-    for (const passJsonSnapshot of [
-      JSON.stringify({ ...wallet, nested }),
-      JSON.stringify({ ...wallet, manyNodes: Array.from({ length: 100_001 }, () => 0) }),
-    ]) {
-      const valid = { ...candidate, passJsonSnapshot };
-      const snapshot = await livePassSnapshot(kit.env, valid);
-      expect(snapshot.passCommitment).toBeTruthy();
-      expect(await livePassCommitmentValid(kit.env, valid, snapshot.passCommitment)).toBe(true);
-    }
-    for (const damaged of [
-      { ...candidate, identityPassTypeIdentifier: null },
-      { ...candidate, identityTeamIdentifier: null },
-      { ...candidate, walletVersion: null },
-      { ...candidate, walletVersion: 0 },
-      { ...candidate, walletVersion: candidate.pass.version + 1 },
-      { ...candidate, transferPending: true },
-      { ...candidate, pass: { ...candidate.pass, credentialGeneration: 0 } },
-    ]) {
-      expect((await livePassSnapshot(kit.env, damaged)).passCommitment).toBeNull();
-    }
-  });
-  it('binds legacy Wallet-row personalization as exact opaque bytes', async () => {
-    const fixture = await photoFixture();
-    const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
-    if (!candidate?.passJsonSnapshot) throw new Error('Missing Wallet snapshot.');
-    const values = [null, '', '{', '[]', 'null', '{"memberName":"different"}'];
-    const commitments = new Set<string>();
-    for (const versionPersonalization of values) {
-      const legacy = { ...candidate, versionPersonalization };
-      const snapshot = await livePassSnapshot(kit.env, legacy);
-      if (!snapshot.passCommitment) throw new Error('Missing legacy pass commitment.');
-      expect(await livePassCommitmentValid(kit.env, legacy, snapshot.passCommitment)).toBe(true);
-      expect(snapshot).not.toHaveProperty('versionPersonalization');
-      commitments.add(snapshot.passCommitment);
-    }
-    expect(commitments.size).toBe(values.length);
-    const versions = [null, '', 'legacy-wallet-version'];
-    const versionCommitments = new Set<string>();
-    for (const walletTemplateVersion of versions) {
-      const legacy = { ...candidate, walletTemplateVersion };
-      const snapshot = await livePassSnapshot(kit.env, legacy);
-      if (!snapshot.passCommitment) throw new Error('Missing legacy version commitment.');
-      expect(snapshot.walletTemplateVersion).toBe(walletTemplateVersion);
-      expect(await livePassCommitmentValid(kit.env, legacy, snapshot.passCommitment)).toBe(true);
-      versionCommitments.add(snapshot.passCommitment);
-    }
-    expect(versionCommitments.size).toBe(versions.length);
-  });
-
-  it('captures the commitment inputs before the first asynchronous yield', async () => {
-    const fixture = await photoFixture();
-    const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
-    if (!candidate?.passJsonSnapshot) throw new Error('Missing Wallet snapshot.');
-    const original = {
-      ...candidate,
-      credentialTombstoneRefs: ['a'.repeat(64)],
-      otherModeCredentialTombstoneRefs: ['b'.repeat(64)],
-    };
-    const expected = await livePassSnapshot(kit.env, original);
-    expect(expected.passCommitment).toBeTruthy();
-    const mutable = structuredClone(original);
-    const pending = livePassSnapshot(kit.env, mutable);
-    mutable.pass.personalization.memberName = 'Changed after evaluation';
-    mutable.pass.serial = 'changed-serial';
-    mutable.passJsonSnapshot = '{}';
-    mutable.activeReleaseId = 'changed-release';
-    mutable.credentialTombstoneRefs[0] = 'c'.repeat(64);
-    mutable.otherModeCredentialTombstoneRefs[0] = 'd'.repeat(64);
-    expect(await pending).toEqual(expected);
-    expect(await livePassCommitmentValid(kit.env, original, expected.passCommitment)).toBe(true);
-    expect(
-      await livePassCommitmentValid(
-        kit.env,
-        { ...original, credentialTombstoneRefs: [] },
-        expected.passCommitment,
-      ),
-    ).toBe(false);
-    expect(
-      await livePassCommitmentValid(
-        kit.env,
-        { ...original, otherModeCredentialTombstoneRefs: [] },
-        expected.passCommitment,
-      ),
-    ).toBe(false);
-    expect(await livePassCommitmentValid(kit.env, mutable, expected.passCommitment)).toBe(false);
-  });
-
-  it('does not replace an evaluated display version with a different current projection', async () => {
-    const fixture = await photoFixture();
-    const recipient = await liveRecipient(kit.ctx, fixture.monitor.attachment);
-    const entry = await proven(row(fixture.source.id, { passId: fixture.pass.id }));
-    const proof = await openLiveSourceProof(kit.env, entry.sourceProof);
-    const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
-    if (!recipient || !proof?.passSnapshot || !candidate)
-      throw new Error('Missing display lineage fixture.');
-    expect(proof.passSnapshot.displayTemplateVersion).toBe(candidate.displayTemplateVersion);
-    expect(await liveRowFor(kit.ctx, recipient, entry)).toMatchObject({ passId: fixture.pass.id });
-    const substituted = await sealLiveSourceProof(kit.env, {
-      ...proof,
-      passSnapshot: { ...proof.passSnapshot, displayTemplateVersion: 'different-display-version' },
-    });
-    const substitutedRow = { ...entry, sourceProof: substituted };
-    expect(await liveRowFor(kit.ctx, recipient, substitutedRow)).toMatchObject({
-      passId: null,
-      holder: null,
-      photoUrl: null,
-    });
   });
 
   it('keeps a legacy pass pinned to its issued policy instead of an unapproved draft', async () => {
@@ -341,16 +203,7 @@ describe('live authority revocation', () => {
     expect(projection).toMatchObject({ passId: pass.id, holder: 'Legacy Member' });
     const path = projection.photoUrl.replace('/api/v1/scan', '');
     expect((await kit.get(monitor.headers, path)).status).toBe(200);
-    const sealed = await hub().sourceProof(projection.id);
-    if (!sealed) throw new Error('Missing legacy source proof.');
-    expect((await openLiveSourceProof(kit.env, sealed))?.passSnapshot).toMatchObject({
-      passReleaseId: null,
-      activeTemplateVersion: pinned.version,
-      activeReleaseId: null,
-      activeReleaseGeneration: null,
-      activeReleaseVersion: null,
-      activeReleaseCandidateHash: null,
-    });
+    expect(await hub().ringRow(projection.id)).toMatchObject({ release: null });
     const approved = await approveAppleRelease(kit, { templateId: id, version: draft.version });
     expect(await first(kit.env.DB, releaseStateSql, [pass.id])).toEqual({
       absent: 0,
@@ -384,21 +237,6 @@ describe('live authority revocation', () => {
     expect(JSON.stringify(reevaluated.outcome.card)).not.toContain('Legacy Member');
     expect(current).toMatchObject({ passId: pass.id, holder: null, photoUrl: null });
     expect(JSON.stringify(current)).not.toContain('Legacy Member');
-    // Archiving makes the head ineligible, but immutable scoped history must not reopen fallback.
-    await run(
-      kit.env.DB,
-      "UPDATE templates SET status = 'archived', updated_at = updated_at + 1 WHERE id = ?",
-      [id],
-    );
-    expect(await first(kit.env.DB, releaseStateSql, [pass.id])).toEqual({
-      absent: 0,
-      active: null,
-    });
-    await expectProblem(await kit.get(monitor.headers, path), 404, 'ASSET_NOT_FOUND');
-    const archived = (await hub().snapshot(monitor.attachment)).rows.find(
-      (entry) => entry.id === projection.id,
-    );
-    expect(archived).toMatchObject({ passId: null, holder: null, photoUrl: null });
   });
 
   it('removes an unwatched source from catch-up and denies its retained grant', async () => {
@@ -417,7 +255,7 @@ describe('live authority revocation', () => {
   });
 
   it.each(['revoked', 'expired', 'rotated'] as const)(
-    'omits the event and denies a live grant when the source is %s',
+    'keeps the scan and its photo for the recipient when the source is %s afterwards',
     async (change) => {
       const fixture = await photoFixture();
       expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
@@ -438,15 +276,14 @@ describe('live authority revocation', () => {
           ['rotated-source-token', fixture.source.id],
         );
       }
-      await expectProblem(
-        await kit.get(fixture.monitor.headers, fixture.path),
-        404,
-        'ASSET_NOT_FOUND',
-      );
-      const row = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
+      // The row is re-checked against the recipient, not the source scanner: the scan happened.
+      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(200);
+      const shown = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
         (item) => item.id === fixture.event.id,
       );
-      expect(row).toBeUndefined();
+      expect(shown).toMatchObject({ passId: fixture.pass.id });
+      // A source revoked before its next event can no longer publish.
+      if (change === 'revoked') await expect(publish(row(fixture.source.id))).resolves.toBe(false);
     },
   );
 

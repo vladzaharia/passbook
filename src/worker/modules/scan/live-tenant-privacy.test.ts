@@ -6,8 +6,8 @@ import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { tenantScanRole } from './actor.ts';
 import { managedAdminActor } from './admin-setup.ts';
+import { liveRingRow } from './live.ts';
 import { liveRecipient } from './live-auth.ts';
-import { livePassSnapshot, openLiveSourceProof, sealLiveSourceProof } from './live-provenance.ts';
 import { liveRowFor } from './live-render.ts';
 import { liveTenantFixture, ORIGIN } from './live-tenant-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
@@ -18,9 +18,8 @@ import { proofedScanActor, type ScanKit } from './test-kit.ts';
 const fixture = liveTenantFixture();
 const { managedScreen, pairDevice, provenRow, hub, upgrade } = fixture;
 let kit: ScanKit;
-let credentialKeysetCommitment: string;
 beforeAll(async () => {
-  ({ kit, credentialKeysetCommitment } = await fixture.setup());
+  ({ kit } = await fixture.setup());
 });
 
 describe('live tenant privacy and delivery', () => {
@@ -29,32 +28,14 @@ describe('live tenant privacy and delivery', () => {
     if (!screen.templateId || !screen.source?.actor.scanner)
       throw new Error('Missing scoped live fixture.');
     const source = screen.source;
-    const scanner = source.actor.scanner!;
+    const _scanner = source.actor.scanner!;
     const scannerSecret = source.csrfSecret;
     const scannerProof = source.actor.scannerCsrfProof;
     if (!scannerProof) throw new Error('Missing scanner proof.');
     const entry = await provenRow(source.actor);
-    await expect(
-      sealLiveSourceProof(kit.env, {
-        actor: { ...source.actor, scanner: { ...scanner, csrfSecret: scannerSecret } },
-        credentialContext: {
-          credentialKeysetCommitment,
-          credentialTombstoneRefs: [],
-          otherModeCredentialTombstoneRefs: [],
-        },
-        eventId: entry.id,
-        passId: null,
-        passSnapshot: null,
-        at: entry.at,
-      }),
-    ).rejects.toThrow(/Invalid live source authority\./);
-    const opened = await openLiveSourceProof(kit.env, entry.sourceProof);
-    if (!opened) throw new Error('Missing paired source proof.');
-    expect(opened.actor.scanner?.csrfSecret === null).toBe(true);
-    expect(opened.actor.scannerCsrfProof === source.actor.scannerCsrfProof).toBe(true);
-    expect(JSON.stringify(opened).includes(scannerSecret)).toBe(false);
-    expect(JSON.stringify(opened).includes(screen.session.csrf)).toBe(false);
     expect(JSON.stringify(entry).includes(scannerSecret)).toBe(false);
+    expect(JSON.stringify(entry).includes(scannerProof)).toBe(false);
+    expect(JSON.stringify(entry).includes(screen.session.csrf)).toBe(false);
 
     const joined = await joinAdminScanningSession(
       kit.ctx,
@@ -76,13 +57,9 @@ describe('live tenant privacy and delivery', () => {
     admin.role = tenantScanRole(screen.authority);
     await bindScanningSession(kit.ctx, admin);
     const adminEntry = await provenRow(await proofedScanActor(kit.ctx, admin));
-    const adminProof = await openLiveSourceProof(kit.env, adminEntry.sourceProof);
-    if (!adminProof) throw new Error('Missing user source proof.');
-    expect(
-      adminProof.actor.tenantAuthority?.sessionCsrfProof === screen.authority.sessionCsrfProof,
-    ).toBe(true);
-    expect(JSON.stringify(adminProof).includes(screen.session.csrf)).toBe(false);
-    expect(JSON.stringify(adminProof).includes(scannerSecret)).toBe(false);
+    expect(JSON.stringify(adminEntry).includes(screen.authority.sessionCsrfProof)).toBe(false);
+    expect(JSON.stringify(adminEntry).includes(screen.session.csrf)).toBe(false);
+    expect(JSON.stringify(adminEntry).includes(scannerSecret)).toBe(false);
 
     const pass = await kit.scanPass(screen.templateId);
     const png = btoa(String.fromCharCode(...makePng(270, 270)));
@@ -95,28 +72,20 @@ describe('live tenant privacy and delivery', () => {
     );
     const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
     if (!candidate) throw new Error('Missing live pass candidate.');
-    const photoEntry = {
-      ...entry,
-      passId: pass.id,
-      sourceProof: await sealLiveSourceProof(kit.env, {
-        actor: source.actor,
-        credentialContext: {
-          credentialKeysetCommitment: candidate.credentialKeysetCommitment,
-          credentialTombstoneRefs: candidate.credentialTombstoneRefs,
-          otherModeCredentialTombstoneRefs: candidate.otherModeCredentialTombstoneRefs,
-        },
-        eventId: entry.id,
-        passId: pass.id,
-        passSnapshot: await livePassSnapshot(kit.env, candidate),
-        at: entry.at,
-      }),
-    };
+    const photoEntry = await liveRingRow(
+      kit.ctx,
+      source.actor,
+      { ...entry.row, holder: null },
+      candidate,
+      null,
+    );
+    if (!photoEntry) throw new Error('Missing photo ring entry.');
     const recipient = await liveRecipient(kit.ctx, screen.attachment);
     if (!recipient) throw new Error('Missing live recipient.');
     const projection = await liveRowFor(kit.ctx, recipient, photoEntry);
     if (!projection?.photoUrl) throw new Error('Missing live photo URL.');
     const url = new URL(projection.photoUrl, ORIGIN);
-    expect(url.searchParams.has('g')).toBe(true);
+    expect(url.searchParams.get('event')).toBe(photoEntry.row.id);
     expect(url.toString().includes(scannerSecret)).toBe(false);
     expect(url.toString().includes(screen.session.csrf)).toBe(false);
     expect(url.toString().includes(scannerProof)).toBe(false);
@@ -126,7 +95,6 @@ describe('live tenant privacy and delivery', () => {
     expect(JSON.stringify(projection).includes(screen.session.csrf)).toBe(false);
     expect(JSON.stringify(projection).includes(scannerProof)).toBe(false);
     expect(JSON.stringify(projection).includes(screen.authority.sessionCsrfProof)).toBe(false);
-    expect(JSON.stringify(projection).includes(photoEntry.sourceProof)).toBe(false);
     expect(JSON.stringify(projection)).not.toContain(screen.resolved.sessionId);
     expect(await hub().publish({ orgId: kit.org.id, mode: 'live', row: photoEntry })).toBe(true);
     const snapshot = JSON.stringify(await hub().snapshot(screen.attachment));
@@ -134,7 +102,6 @@ describe('live tenant privacy and delivery', () => {
     expect(snapshot.includes(screen.session.csrf)).toBe(false);
     expect(snapshot.includes(scannerProof)).toBe(false);
     expect(snapshot.includes(screen.authority.sessionCsrfProof)).toBe(false);
-    expect(snapshot.includes(photoEntry.sourceProof)).toBe(false);
     expect(snapshot).not.toContain(screen.resolved.sessionId);
 
     const lines: string[] = [];

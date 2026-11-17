@@ -1,3 +1,4 @@
+import type { Check } from '../../platform/authority-checks.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
@@ -33,20 +34,23 @@ export interface StrictReadAuthority extends ScanReadAuthority {
  */
 export function scanReadAuthority(
   actor: ScanActor,
-  input: ScanChecksInput & { read: NonNullable<ScanChecksInput['read']> },
+  input: ScanChecksInput & { read: NonNullable<ScanChecksInput['read']>; extraChecks?: Check[] },
 ): RelaxedReadAuthority;
 export function scanReadAuthority(
   actor: ScanActor,
-  input: Omit<ScanChecksInput, 'read'>,
+  input: Omit<ScanChecksInput, 'read'> & { extraChecks?: Check[] },
 ): StrictReadAuthority;
-export function scanReadAuthority(actor: ScanActor, input: ScanChecksInput): ScanReadAuthority {
+export function scanReadAuthority(
+  actor: ScanActor,
+  input: ScanChecksInput & { extraChecks?: Check[] },
+): ScanReadAuthority {
   const tenant = actor.tenantAuthority;
   // As `sessionGrant`: the membership's own roles still grant the capability.
   const capability = actor.principal === 'admin' && tenant ? capabilityChecks(tenant) : [];
   const { ctes, params } = authorityPredicate(scanPrincipal(actor), {
     scope: 'org_mode',
     now: input.now,
-    checks: [...capability, ...scanActorChecks(actor, input)],
+    checks: [...capability, ...(input.extraChecks ?? []), ...scanActorChecks(actor, input)],
   });
   assertBudget(ctes, params, PARAM_BUDGET);
   return {

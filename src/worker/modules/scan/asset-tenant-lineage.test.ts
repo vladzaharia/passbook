@@ -5,6 +5,7 @@ import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
 import { assetGrantValid, mintAssetGrant } from './asset-grant-test-fixtures.ts';
+import { captureScanEpochs } from './authority-checks.ts';
 import { candidateById } from './repo-lookup.ts';
 import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -37,6 +38,7 @@ describe('tenant scanner asset grants', () => {
     const capturedAuthority = await captureScanTenantAuthority(kit.ctx, auth, authority);
     actor.tenantAuthority = capturedAuthority;
     actor.role = tenantScanRole(capturedAuthority);
+    await captureScanEpochs(kit.env.DB, actor);
     const pass = await kit.scanPass(template);
     const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
     if (!candidate) throw new Error('Pass fixture missing');

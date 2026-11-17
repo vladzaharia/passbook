@@ -15,6 +15,7 @@ import { assetGrantValid, grantRefsOf, mintAssetGrant } from './asset-grant-test
 import { takePhotoGrantToken } from './asset-sidecar.ts';
 import { assetActorFor, genericAssetGrantFor, photoAssetGrantFor } from './asset-test-fixtures.ts';
 import { prepareAssetGrantVerification, preparePhotoGrant } from './assets.ts';
+import { captureScanEpochs } from './authority-checks.ts';
 import { scanCredentialKeys } from './credential-input.ts';
 import { candidateById } from './repo-lookup.ts';
 import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
@@ -206,6 +207,7 @@ describe('stateless asset capability', () => {
     admin.platformSessionId = auth.sessionId;
     admin.tenantAuthority = await captureScanTenantAuthority(kit.ctx, auth, authority);
     admin.role = tenantScanRole(admin.tenantAuthority);
+    await captureScanEpochs(kit.env.DB, admin);
     const redeem = (actor: typeof admin, token: string) =>
       assetGrantValid(
         kit.ctx,

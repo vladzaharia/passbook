@@ -7,13 +7,10 @@ import { takeAssetGrantToken } from './asset-sidecar.ts';
 import type { AssetGrantPurpose, AssetGrantSource, AssetPassSnapshot } from './asset-types.ts';
 import { prepareAssetGrantVerification } from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
+import { pinKeysetOrNull } from './keyset-pin.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
-import { prepareAssetGrantGuardParts } from './repo-asset-lineage.ts';
-import { assetGrantPredicatesCurrent } from './repo-asset-read.ts';
-import {
-  scanCandidateTemplateReadPredicate,
-  scanTemplateSnapshotPredicate,
-} from './repo-live-template-snapshot.ts';
+import { assetReadCurrent } from './repo-asset-read.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
 const missing = () => new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
@@ -72,20 +69,21 @@ export async function assetGrantValid(
     purpose,
     requirePhoto,
   );
-  if (!verified) return false;
+  if (!verified || snapshot.credentialKeysetCommitment !== (await pinKeysetOrNull(pinned)))
+    return false;
   const templates =
     verified.purpose === 'read'
       ? resolveCandidateReadTemplates(snapshot)
       : await verifyLiveTemplateSnapshot(pinned, snapshot, snapshot.templateSnapshot, 'commit');
   if (!templates) return false;
-  const template =
-    verified.purpose === 'read'
-      ? scanCandidateTemplateReadPredicate(snapshot)
-      : scanTemplateSnapshotPredicate(snapshot, snapshot.templateSnapshot, 'commit');
-  const makeGuard = await prepareAssetGrantGuardParts(pinned, verified, undefined, snapshot);
-  return makeGuard
-    ? assetGrantPredicatesCurrent(pinned.env.DB, makeGuard(pinned.clock.now()), template)
-    : false;
+  return assetReadCurrent(
+    pinned.env.DB,
+    scanReadAuthority(capturedActor, { now: pinned.clock.now() }),
+    capturedActor,
+    snapshot,
+    verified.requirePhoto,
+    verified.credentialRefPrefixes,
+  );
 }
 
 /** The ref prefixes (hex) a grant carries, or null when it is not a grant. */

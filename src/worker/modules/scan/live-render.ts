@@ -1,22 +1,14 @@
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
-import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
-import { actorCsrfAuthorityStmt } from './actor-csrf.ts';
-import { snapshotCredentialEnv } from './credential-input.ts';
-import {
-  cloneLiveAttachment,
-  type LiveRecipient,
-  liveRecipientAcquisitionStmts,
-  liveRecipientFromResults,
-} from './live-auth.ts';
-import { type LivePassSnapshot, openLiveSourceProof } from './live-provenance.ts';
-import { finishLiveRows } from './live-render-final.ts';
-import { prepareLiveRow } from './live-render-plan.ts';
-import { byIdStmt, type Candidate, hasScanPolicy } from './repo-lookup.ts';
-import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
+import type { LiveRecipient } from './live-auth.ts';
+import { type LiveRingRow, livePhotoUrl, redactedRow } from './live-ring.ts';
+import { liveRowsStmt } from './repo-live-render.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
 
-function watches(recipient: LiveRecipient, source: string) {
+const CUSTOMER_WINDOW_MS = 10_000;
+
+/** A recipient watches every source it lists, and never its own screen. */
+export function watches(recipient: LiveRecipient, source: string) {
   return (
     recipient.actor.scanner !== null &&
     recipient.actor.scanner.id !== source &&
@@ -24,211 +16,93 @@ function watches(recipient: LiveRecipient, source: string) {
   );
 }
 
-export interface PhotoProof {
-  eventId: string;
-  sourceProof: string;
-  scannerId?: string;
-  at?: number;
+/**
+ * What one recipient may see of a ring row once the scan and pass are known to be current: the
+ * pass id, the holder's name only to a role whose own title for the holder is the source's (a
+ * staffless monitor reads as the source), and a photo link only to a role the source's photo policy
+ * shows and only while the pass image is the one the scan saw. A customer screen never gets identity.
+ */
+function visibleRow(
+  recipient: LiveRecipient,
+  entry: LiveRingRow,
+  now: number,
+  imageCurrent: boolean,
+  staffOk: boolean,
+): ScanLiveRow {
+  const { row } = entry;
+  const actor = recipient.actor;
+  // A staffless monitor reads with the source's role while the source's staff binding still holds.
+  const role = actor.role ?? (staffOk ? entry.sourceRole : null);
+  const visible = { ...redactedRow(row, false), passId: row.passId };
+  if (!role) return visible;
+  const holder = entry.holderRoles.includes(role) && row.holder ? row.holder.slice(0, 40) : null;
+  const photo =
+    imageCurrent &&
+    row.passId !== null &&
+    actor.settings.showPhoto !== false &&
+    entry.photoRoles.includes(role) &&
+    (entry.validUntil === null || now <= entry.validUntil);
+  return {
+    ...visible,
+    holder,
+    photoUrl: photo && row.passId ? livePhotoUrl(actor, row.passId, row.id) : null,
+  };
 }
 
-async function boundProof(
+/**
+ * Render ring rows for one recipient. One D1 statement re-checks the recipient's authority, each
+ * row's scan and each row's pass; a row that fails any part is delivered as its redacted shape, and
+ * nothing at all when the recipient's own authority fails.
+ */
+export async function liveRowsFor(
   ctx: ServiceContext,
   recipient: LiveRecipient,
-  passId: string | null,
-  ref: PhotoProof,
-  keyset: Promise<string>,
-) {
-  const [proof, currentKeyset] = await Promise.all([
-    openLiveSourceProof(ctx.env, ref.sourceProof),
-    keyset,
-  ]);
-  const sourceId = proof?.actor.scanner?.id;
-  if (
-    !proof ||
-    !sourceId ||
-    !proof.actor.role ||
-    proof.eventId !== ref.eventId ||
-    proof.passId !== passId ||
-    (ref.scannerId !== undefined && sourceId !== ref.scannerId) ||
-    (ref.at !== undefined && proof.at !== ref.at) ||
-    proof.actor.orgId !== recipient.actor.orgId ||
-    proof.actor.mode !== recipient.actor.mode ||
-    proof.actor.scanner?.deviceRole !== 'scan' ||
-    !watches(recipient, sourceId)
-  )
-    return null;
-  if (!(await safeEqual(currentKeyset, proof.credentialContext.credentialKeysetCommitment)))
-    return null;
-  return { proof, sourceId };
-}
-
-export function sameSnapshot(candidate: Candidate, snapshot: LivePassSnapshot | null) {
-  return (
-    snapshot !== null &&
-    snapshot.orgRevision !== null &&
-    snapshot.templateRevision !== null &&
-    snapshot.identityRevision !== null &&
-    Number.isSafeInteger(snapshot.identityRevision) &&
-    snapshot.identityRevision > 0 &&
-    Number.isSafeInteger(snapshot.credentialGeneration) &&
-    snapshot.credentialGeneration > 0 &&
-    Number.isSafeInteger(snapshot.lifecycleGeneration) &&
-    snapshot.lifecycleGeneration >= 0 &&
-    Number.isSafeInteger(snapshot.imageGeneration) &&
-    snapshot.imageGeneration >= 0 &&
-    snapshot.transferPending === false &&
-    candidate.transferPending === false &&
-    snapshot.walletVersion !== null &&
-    Number.isSafeInteger(snapshot.walletVersion) &&
-    snapshot.walletVersion > 0 &&
-    // Issued-release rule: the head's policy applies; the content is the head's only when it is
-    // display-compatible, else the pass's own release (display version null, as on the card).
-    hasScanPolicy(candidate) &&
-    (candidate.activeReleaseId === null ||
-      candidate.displayTemplateVersion === null ||
-      candidate.displayTemplateVersion === candidate.activeReleaseVersion) &&
-    snapshot.version === candidate.pass.version &&
-    snapshot.revision === candidate.pass.revision &&
-    snapshot.linkGeneration === candidate.pass.linkGeneration &&
-    snapshot.credentialGeneration === candidate.pass.credentialGeneration &&
-    snapshot.lifecycleGeneration === candidate.pass.lifecycleGeneration &&
-    snapshot.imageGeneration === candidate.pass.imageGeneration &&
-    snapshot.credentialKeysetCommitment === candidate.credentialKeysetCommitment &&
-    snapshot.credentialTombstoneRefs.length === candidate.credentialTombstoneRefs.length &&
-    snapshot.credentialTombstoneRefs.every(
-      (ref, index) => ref === candidate.credentialTombstoneRefs[index],
-    ) &&
-    snapshot.otherModeCredentialTombstoneRefs.length ===
-      candidate.otherModeCredentialTombstoneRefs.length &&
-    snapshot.otherModeCredentialTombstoneRefs.every(
-      (ref, index) => ref === candidate.otherModeCredentialTombstoneRefs[index],
-    ) &&
-    snapshot.walletVersion === candidate.walletVersion &&
-    snapshot.walletTemplateVersion === candidate.walletTemplateVersion &&
-    snapshot.walletVersion <= candidate.pass.version &&
-    snapshot.passReleaseId === candidate.pass.releaseId &&
-    snapshot.connectionGeneration === candidate.connectionGeneration &&
-    snapshot.activeTemplateVersion === candidate.activeTemplateVersion &&
-    snapshot.displayTemplateVersion === candidate.displayTemplateVersion &&
-    // The org's access epoch only: `templateRevision` is its `config_revision` (name, branding,
-    // settings), which is not door authority (authority-epochs.md, R8).
-    snapshot.orgRevision === candidate.orgRevision &&
-    snapshot.identityRevision === candidate.identityRevision &&
-    snapshot.activeReleaseId === candidate.activeReleaseId &&
-    snapshot.activeReleaseGeneration === candidate.activeReleaseGeneration &&
-    snapshot.activeReleaseVersion === candidate.activeReleaseVersion &&
-    snapshot.activeReleaseCandidateHash === candidate.activeReleaseCandidateHash
-  );
-}
-
-/** Acquire all watched source, recipient, watch, stamp and candidate rows in one snapshot. */
-export async function liveRowsFor(
-  context: ServiceContext,
-  original: LiveRecipient,
-  inputs: readonly ScanLiveRow[],
+  inputs: readonly LiveRingRow[],
 ): Promise<ScanLiveRow[]> {
-  const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
-  const attachment = cloneLiveAttachment(original.attachment);
-  if (!attachment) return [];
-  const actor = cloneObservedScanActor(original.actor);
-  const originalFences = JSON.stringify(original.fences);
-  const recipient: LiveRecipient = {
-    ...original,
-    actor,
-    attachment,
-    watch: { allOrg: original.watch.allOrg, scannerIds: [...original.watch.scannerIds] },
-  };
+  const actor = recipient.actor;
   const customer = actor.scanner?.deviceRole === 'customer';
-  const entries = inputs
-    .map((input) => ({
-      row: { ...input },
-      sourceProof: (input as ScanLiveRow & { sourceProof?: string }).sourceProof ?? '',
-    }))
-    .filter(
-      ({ row }) =>
-        watches(recipient, row.scannerId) &&
-        (!customer || (row.presented && ctx.clock.now() - row.at <= 10_000)),
-    );
+  const start = ctx.clock.now();
+  const entries = inputs.filter(
+    ({ row }) =>
+      watches(recipient, row.scannerId) &&
+      (!customer || (row.presented && start - row.at <= CUSTOMER_WINDOW_MS)),
+  );
   if (!entries.length) return [];
-  const keyset = credentialRefKeysetCommitment(ctx.env);
-  const authenticated = await Promise.all(
-    entries.map(async ({ row, sourceProof }) => {
-      const bound = await boundProof(
-        ctx,
-        recipient,
-        row.passId,
-        {
-          eventId: row.id,
-          sourceProof,
-          scannerId: row.scannerId,
-          at: row.at,
-        },
-        keyset,
-      );
-      return bound ? { row, ...bound } : null;
-    }),
-  );
-  const rows = authenticated.filter((entry) => entry !== null);
-  if (!rows.length) return [];
-  const reads = liveRecipientAcquisitionStmts(ctx.env.DB, actor);
-  const recipientCsrf = actorCsrfAuthorityStmt(ctx.env.DB, actor);
-  if (!reads || !recipientCsrf) return [];
-  const statements = [reads.watch, reads.stamps, recipientCsrf];
-  const acquired = rows
-    .map((entry) => {
-      const sourceCsrf = actorCsrfAuthorityStmt(ctx.env.DB, entry.proof.actor);
-      if (!sourceCsrf) return null;
-      const sourceIndex = statements.push(sourceCsrf) - 1;
-      const candidateIndex = entry.row.passId
-        ? statements.push(byIdStmt(ctx.env.DB, entry.proof.actor.orgId, entry.row.passId)) - 1
-        : null;
-      return { ...entry, sourceIndex, candidateIndex };
-    })
-    .filter((entry) => entry !== null);
-  if (!acquired.length) return [];
-  const results = await ctx.env.DB.batch(statements);
-  if (
-    results.length !== statements.length ||
-    ![0, 1, 2].every((index) => results[index]?.success === true)
-  )
-    return [];
-  const healthy = acquired.filter(
-    ({ sourceIndex, candidateIndex }) =>
-      results[sourceIndex]?.success === true &&
-      (candidateIndex === null || results[candidateIndex]?.success === true),
-  );
-  const observed = liveRecipientFromResults(ctx, actor, attachment, {
-    watch: results[0],
-    stamps: results[1],
+  const auth = scanReadAuthority(actor, { now: start, read: { stafflessMonitor: true } });
+  const result = await liveRowsStmt(ctx.env.DB, auth, actor, entries).all<{
+    i: number;
+    scan_ok: number;
+    pass_ok: number;
+    staff_ok: number;
+  }>();
+  if (!result.success) return [];
+  const flags = new Map(result.results.map((r) => [r.i, r]));
+  const now = ctx.clock.now();
+  const out: ScanLiveRow[] = [];
+  entries.forEach((entry, i) => {
+    const flag = flags.get(i);
+    if (!flag || (customer && now - entry.row.at > CUSTOMER_WINDOW_MS)) return;
+    const live =
+      !customer &&
+      entry.row.passId !== null &&
+      entry.gen !== null &&
+      flag.scan_ok === 1 &&
+      flag.pass_ok > 0 &&
+      (entry.validUntil === null || now <= entry.validUntil);
+    out.push(
+      live
+        ? visibleRow(recipient, entry, now, flag.pass_ok === 2, flag.staff_ok === 1)
+        : redactedRow(entry.row, customer),
+    );
   });
-  if (!observed || JSON.stringify(observed.fences) !== originalFences) return [];
-  const plans = await Promise.all(
-    healthy.map(({ row, proof, sourceId, sourceIndex, candidateIndex }) =>
-      watches(observed, sourceId)
-        ? prepareLiveRow(
-            ctx,
-            observed,
-            row,
-            proof,
-            sourceId,
-            candidateIndex === null ? undefined : results[candidateIndex],
-            { sourceResult: results[sourceIndex], recipientResult: results[2] },
-            sameSnapshot,
-          )
-        : Promise.resolve(null),
-    ),
-  );
-  const projected = await finishLiveRows(ctx, observed, plans);
-  return customer
-    ? projected.filter((row) => row.presented && ctx.clock.now() - row.at <= 10_000)
-    : projected;
+  return out;
 }
 
-/** A single live event uses the same batched acquisition and final CAS as catch-up. */
+/** A single live event goes through the same statement as catch-up. */
 export async function liveRowFor(
-  context: ServiceContext,
-  original: LiveRecipient,
-  input: ScanLiveRow,
+  ctx: ServiceContext,
+  recipient: LiveRecipient,
+  input: LiveRingRow,
 ): Promise<ScanLiveRow | null> {
-  return (await liveRowsFor(context, original, [input]))[0] ?? null;
+  return (await liveRowsFor(ctx, recipient, [input]))[0] ?? null;
 }

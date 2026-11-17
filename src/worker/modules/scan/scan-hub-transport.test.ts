@@ -2,12 +2,10 @@ import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
-import { fromBase64Url } from '../../platform/ids.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { scanScannerCsrfProof } from './actor.ts';
 import { openLiveAttachment, sealLiveAttachment } from './live-attachment.ts';
-import { openLiveSourceProof } from './live-provenance.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import {
@@ -190,31 +188,31 @@ describe('live display transport and authorization', () => {
     socket.accept();
     try {
       const initial = await next(socket);
-      const originalProof = await hub().sourceProof(fixture.event.id);
-      if (!originalProof) throw new Error('Missing source proof.');
-      const opened = await openLiveSourceProof(kit.env, originalProof);
-      if (!opened?.actor.scanner?.tokenHash) throw new Error('Missing private source lineage.');
-      expect(opened.actor.scanner.csrfSecret).toBeNull();
-      expect(opened.actor.scannerCsrfProof).toBe(scannerProof);
       expect(scannerProof).not.toBe(
         await scanScannerCsrfProof(kit.env, 'another-scanner', scannerSecret),
       );
-      expect(JSON.stringify(opened)).not.toContain(scannerSecret);
-      if (!opened.passSnapshot) throw new Error('Missing pass commitment.');
-      const passSnapshot = JSON.stringify(opened.passSnapshot);
+      const stored = await hub().ringRow(fixture.event.id);
+      if (!stored?.gen) throw new Error('Missing plain ring row.');
+      const plain = JSON.stringify(stored);
       for (const secret of [
         fixture.pass.serial,
         fixture.pass.downloadToken,
         fixture.pass.authToken,
         fixture.pass.scanCode,
+        scannerSecret,
+        scannerProof,
+        source.tokenHash,
       ]) {
-        if (secret) expect(passSnapshot).not.toContain(secret);
+        if (secret) expect(plain).not.toContain(secret);
       }
       const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
       if (!candidate?.passJsonSnapshot) throw new Error('Missing Wallet snapshot.');
-      expect(opened.passSnapshot.identityRevision).toBe(candidate.identityRevision);
-      expect(opened.passSnapshot.imageGeneration).toBe(candidate.pass.imageGeneration);
-      expect(passSnapshot).not.toContain(candidate.passJsonSnapshot);
+      expect(stored.gen).toEqual({
+        credential: candidate.pass.credentialGeneration,
+        lifecycle: candidate.pass.lifecycleGeneration,
+        image: candidate.pass.imageGeneration,
+      });
+      expect(plain).not.toContain(candidate.passJsonSnapshot);
       const publicFields = [
         'id',
         'at',
@@ -233,43 +231,35 @@ describe('live display transport and authorization', () => {
       expect(JSON.stringify(initial)).not.toMatch(
         /sourceProof|platformSessionId|tokenHash|csrfSecret|scannerCsrfProof|sessionCsrfProof|passSnapshot|passCommitment|credentialKeysetCommitment|credentialTombstoneRefs|otherModeCredentialTombstoneRefs|walletVersion|versionPersonalization|imageGeneration|linkGeneration|connectionGeneration|identityRevision|activeTemplateVersion|activeRelease|passReleaseId/,
       );
-      expect(JSON.stringify(initial)).not.toContain(opened.actor.scanner.tokenHash);
+      expect(JSON.stringify(initial)).not.toContain(source.tokenHash);
       expect(JSON.stringify(initial)).not.toContain(scannerSecret);
       expect(JSON.stringify(initial)).not.toContain(scannerProof);
       expect(JSON.stringify(initial)).not.toContain(monitorSecret);
       expect(JSON.stringify(initial)).not.toContain(monitorProof);
-      expect(JSON.stringify(initial)).not.toContain(originalProof);
       const received = next(socket);
       const entry = row(fixture.source.id, { passId: fixture.pass.id });
       await publish(entry);
       const event = await received;
-      const proof = await hub().sourceProof(entry.id);
-      if (!proof || !event.rows[0]?.photoUrl) throw new Error('Missing live photo event.');
+      if (!event.rows[0]?.photoUrl) throw new Error('Missing live photo event.');
       expect(Object.keys(event.rows[0]).sort()).toEqual(publicFields);
       const body = JSON.stringify(event);
       expect(body).not.toMatch(
         /sourceProof|platformSessionId|tokenHash|csrfSecret|scannerCsrfProof|sessionCsrfProof|passSnapshot|passCommitment|credentialKeysetCommitment|credentialTombstoneRefs|otherModeCredentialTombstoneRefs|walletVersion|versionPersonalization|imageGeneration|linkGeneration|connectionGeneration|identityRevision|activeTemplateVersion|activeRelease|passReleaseId/,
       );
-      expect(body).not.toContain(opened.actor.scanner.tokenHash);
+      expect(body).not.toContain(source.tokenHash);
       expect(body).not.toContain(scannerSecret);
       expect(body).not.toContain(scannerProof);
       expect(body).not.toContain(monitorSecret);
       expect(body).not.toContain(monitorProof);
-      expect(body).not.toContain(proof);
       const url = new URL(event.rows[0].photoUrl, 'https://wallet.test');
       expect(url.searchParams.get('event')).toBe(entry.id);
-      expect([...url.searchParams.keys()].sort()).toEqual(['event', 'g']);
-      const grant = url.searchParams.get('g');
-      if (!grant) throw new Error('Missing live grant.');
-      // nonce, expiry and tag, then the ref prefixes of the scanned credential (none for a pass-ID row).
-      expect(fromBase64Url(grant).length).toBeGreaterThanOrEqual(38);
+      expect([...url.searchParams.keys()]).toEqual(['event']);
       expect(url.toString()).not.toContain(fixture.source.id);
-      expect(url.toString()).not.toContain(opened.actor.scanner.tokenHash);
+      expect(url.toString()).not.toContain(source.tokenHash);
       expect(url.toString()).not.toContain(scannerSecret);
       expect(url.toString()).not.toContain(scannerProof);
       expect(url.toString()).not.toContain(monitorSecret);
       expect(url.toString()).not.toContain(monitorProof);
-      expect(url.toString()).not.toContain(proof);
     } finally {
       socket.close(1000);
     }
@@ -282,7 +272,7 @@ describe('live display transport and authorization', () => {
     expect((await hub().snapshot(customer.attachment)).rows).toEqual([]);
   });
 
-  it('renders a permitted member photo with a monitor-bound grant', async () => {
+  it('serves a permitted member photo to the watching monitor only', async () => {
     const source = await kit.scanner({ templateIds: [template] });
     const monitor = await screen('monitor', [source.id]);
     const pass = await kit.scanPass(template);
@@ -300,9 +290,9 @@ describe('live display transport and authorization', () => {
     expect(url).toContain('/scan/live/passes/');
     const image = await kit.get(monitor.headers, url.replace('/api/v1/scan', ''));
     expect(image.status).toBe(200);
-    const other = await screen('monitor', [source.id]);
+    const unwatching = await screen('monitor', []);
     await expectProblem(
-      await kit.get(other.headers, url.replace('/api/v1/scan', '')),
+      await kit.get(unwatching.headers, url.replace('/api/v1/scan', '')),
       404,
       'ASSET_NOT_FOUND',
     );
@@ -320,10 +310,6 @@ describe('live display transport and authorization', () => {
     const source = await kit.scanner({ templateIds: [template] });
     const other = await makeOrg(kit.fx);
     await publish(row(source.id));
-    const unproven = row(source.id);
-    await expect(
-      hub().publish({ orgId: kit.org.id, mode: 'live', row: { ...unproven, sourceProof: '' } }),
-    ).resolves.toBe(false);
     await expect(
       hub().publish({ orgId: other.id, mode: 'live', row: await proven(row(source.id)) }),
     ).resolves.toBe(false);

@@ -141,15 +141,8 @@ describe('administrator session display authorization', () => {
     const projection = await liveRowFor(kit.ctx, recipient, entry);
     if (!projection?.photoUrl) throw new Error('Missing admin monitor photo.');
     const url = new URL(projection.photoUrl, 'https://wallet.test');
-    expect([...url.searchParams.keys()].sort()).toEqual([
-      'event',
-      'g',
-      'orgId',
-      'setupId',
-      'timeZone',
-    ]);
-    expect(url.searchParams.get('event')).toBe(entry.id);
-    expect(url.toString()).not.toContain(entry.sourceProof);
+    expect([...url.searchParams.keys()].sort()).toEqual(['event', 'orgId', 'setupId', 'timeZone']);
+    expect(url.searchParams.get('event')).toBe(entry.row.id);
     expect(url.toString()).not.toContain(attachment.admin!.sessionId);
     expect(url.toString()).not.toContain(tenantAuthority.membershipId);
     expect(JSON.stringify(projection)).not.toMatch(

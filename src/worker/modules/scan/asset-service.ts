@@ -7,7 +7,6 @@ import { readBranding } from '../passes/branding.ts';
 import { depsOf } from '../passes/deps.ts';
 import { openMemberPhotoFromSnapshot } from '../passes/member-photo.ts';
 import type { ScanActor } from './actor.ts';
-import { actorCsrfAuthorityStmt } from './actor-csrf.ts';
 import { captureActor } from './asset-authority.ts';
 import { photoGrantPurpose } from './asset-types.ts';
 import {
@@ -16,20 +15,17 @@ import {
   prepareAssetGrantVerification,
 } from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
+import { pinKeysetOrNull } from './keyset-pin.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { photoPolicyForResolved } from './member-photo.ts';
-import { prepareAssetGrantGuardParts } from './repo-asset-lineage.ts';
 import {
-  assetGrantPredicatesCurrent,
+  assetReadCurrent,
   type ScannerAssetResource,
   scannerAssetResourceFromResult,
   scannerAssetResourceStmt,
 } from './repo-asset-read.ts';
-import {
-  scanCandidateTemplateReadPredicate,
-  scanTemplateSnapshotPredicate,
-} from './repo-live-template-snapshot.ts';
 import { byIdStmt, type Candidate, candidatesOf } from './repo-lookup.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
 import { candidateInScope } from './resolve.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
@@ -79,15 +75,13 @@ export async function openScannerAsset(
     throw missing();
   let response: Response | null = null;
   try {
-    const csrfStmt = actorCsrfAuthorityStmt(pinned.env.DB, capturedActor);
-    if (!assetGrantWellFormed(grant) || !csrfStmt) throw missing();
+    if (!assetGrantWellFormed(grant)) throw missing();
     const results = await pinned.env.DB.batch([
       byIdStmt(pinned.env.DB, capturedActor.orgId, passId),
-      csrfStmt,
       scannerAssetResourceStmt(pinned.env.DB, capturedActor.orgId, passId, name),
     ]);
     const candidate = candidatesOf(results[0])[0];
-    const resource = scannerAssetResourceFromResult(results[2]);
+    const resource = scannerAssetResourceFromResult(results[1]);
     if (
       !candidate ||
       !resource ||
@@ -99,6 +93,7 @@ export async function openScannerAsset(
     const photo =
       name === 'member.png' ||
       (name === 'thumbnail@3x.png' && candidate.assetPhoto?.includeInPass === 1);
+    if (candidate.credentialKeysetCommitment !== (await pinKeysetOrNull(ctx))) throw missing();
     const verified = await prepareAssetGrantVerification(
       pinned,
       capturedActor,
@@ -115,30 +110,27 @@ export async function openScannerAsset(
         ? resolveCandidateReadTemplates(candidate)
         : await verifyLiveTemplateSnapshot(ctx, candidate, candidate.templateSnapshot, 'commit');
     if (!templates) throw missing();
-    const templateFence =
-      verified.purpose === 'read'
-        ? scanCandidateTemplateReadPredicate(candidate)
-        : scanTemplateSnapshotPredicate(candidate, candidate.templateSnapshot, 'commit');
-    const guard = await prepareAssetGrantGuardParts(
-      pinned,
-      verified,
-      { recipient: results[1] },
-      candidate,
-    );
-    if (!guard) throw missing();
-    if (
-      photo &&
-      !photoPolicyForResolved(
+    // The pass stays the one the grant was minted for, under the release it was used under, for
+    // this actor, at the start and again once the object is open.
+    const current = () =>
+      assetReadCurrent(
+        pinned.env.DB,
+        scanReadAuthority(capturedActor, { now: pinned.clock.now() }),
         capturedActor,
         candidate,
-        templates.pinned,
-        templates.active,
-        pinned.clock.now(),
-      )
-    )
-      throw missing();
+        photo,
+        verified.credentialRefPrefixes,
+      );
     if (
-      !(await assetGrantPredicatesCurrent(pinned.env.DB, guard(pinned.clock.now()), templateFence))
+      (photo &&
+        !photoPolicyForResolved(
+          capturedActor,
+          candidate,
+          templates.pinned,
+          templates.active,
+          pinned.clock.now(),
+        )) ||
+      !(await current())
     )
       throw missing();
 
@@ -170,7 +162,7 @@ export async function openScannerAsset(
           templates.active,
           pinned.clock.now(),
         )) ||
-      !(await assetGrantPredicatesCurrent(pinned.env.DB, guard(pinned.clock.now()), templateFence))
+      !(await current())
     )
       throw missing();
     return response;

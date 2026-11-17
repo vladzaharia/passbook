@@ -7,7 +7,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import { act } from './act.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { publishScan } from './live.ts';
-import { type InternalLiveRow, openLiveSourceProof } from './live-provenance.ts';
+import type { LiveRingRow } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { hub, kit, screen, template } from './scan-hub-test-fixtures.ts';
@@ -84,15 +84,14 @@ describe('ambiguous live event privacy', () => {
     expect(new Set(rows.map((row) => row.at)).size).toBe(1);
     for (const row of rows) {
       expect(row).toMatchObject({ kind: 'refused', passId: null, holder: null, photoUrl: null });
-      expect(row).not.toHaveProperty('sourceProof');
-      const sealed = await hub().sourceProof(row.id);
-      if (!sealed) throw new Error('Missing passless proof.');
-      const proof = await openLiveSourceProof(kit.env, sealed);
-      expect(proof).toMatchObject({ eventId: row.id, passId: null, passSnapshot: null });
+      expect(await hub().ringRow(row.id)).toMatchObject({
+        row: { id: row.id, passId: null },
+        gen: null,
+      });
     }
     const internal = await runInDurableObject(hub(), async (_object, state) =>
-      ((await state.storage.get<InternalLiveRow[]>('recent')) ?? []).filter(
-        (row) => row.scannerId === source.id,
+      ((await state.storage.get<LiveRingRow[]>('recent')) ?? []).filter(
+        (entry) => entry.row.scannerId === source.id,
       ),
     );
     expect(internal).toHaveLength(3);

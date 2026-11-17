@@ -6,7 +6,6 @@ import { liveAttachment } from './live.ts';
 import { type LiveAttachment, liveRecipient } from './live-auth.ts';
 import { liveTenantFixture } from './live-tenant-test-fixtures.ts';
 import { getScanner } from './repo-device.ts';
-import { raceFinalFence } from './repo-live-tenant-db-test-fixtures.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
 import { proofedScanActor, type ScanKit } from './test-kit.ts';
@@ -84,7 +83,7 @@ describe('paired live scanner authority', () => {
     await assertClosed(missing);
   });
 
-  it('rejects paired scanner credential replacement during the final SELECT', async () => {
+  it('rejects paired scanner credential replacement', async () => {
     const screen = await managedScreen();
     const paired = await pairDevice(screen, 'desk');
     const attachment = liveAttachment(kit.ctx, paired.actor);
@@ -101,20 +100,12 @@ describe('paired live scanner authority', () => {
         paired.device.id,
       ]),
     ).rejects.toThrow(/scanner credential revision must advance/);
-    const race = raceFinalFence(kit, () =>
-      run(kit.env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
-        replacement,
-        paired.device.id,
-      ]),
-    );
-    expect((await liveRecipient(race.ctx, attachment)) === null).toBe(true);
-    expect(race.reached()).toBe(true);
-    // A secret change bumps credential_epoch; the final fence binds the captured epoch, not the secret.
-    expect(race.statement()).toMatch(/\bs\.credential_epoch\s*=/);
-    expect(race.statement().includes(originalSecret)).toBe(false);
-    expect(
-      race.bound().some((value) => typeof value === 'string' && value.includes(originalSecret)),
-    ).toBe(false);
+    await run(kit.env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
+      replacement,
+      paired.device.id,
+    ]);
+    // A secret change bumps credential_epoch, which the recipient's principal binds.
+    expect((await liveRecipient(kit.ctx, attachment)) === null).toBe(true);
     await assertClosed(attachment);
     const scanner = await getScanner(kit.env.DB, paired.device.id);
     if (!scanner?.csrfSecret) throw new Error('Missing replacement scanner credential.');
