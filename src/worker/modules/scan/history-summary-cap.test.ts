@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { makePass, makeTemplate } from '../../../../test/helpers/index.ts';
 import { ScanSummarySchema } from '../../../shared/contracts/scan-session.ts';
 import { run } from '../../platform/db.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { setupScanKit } from './test-kit.ts';
 
 type Kit = Awaited<ReturnType<typeof setupScanKit>>;
@@ -34,24 +35,40 @@ async function seedScans(kit: Kit, scannerId: string, n: number) {
   );
 }
 
-/** Count the summary's contributor page reads while it answers. */
+/** The summary's contributor reads: the batches holding the page statement, and the page limit it bound. */
 async function summaryReads(kit: Kit, headers: Record<string, string>) {
   const real = kit.env.DB;
-  let reads = 0;
-  const watch = (statement: D1PreparedStatement, page: boolean): D1PreparedStatement =>
-    new Proxy(statement, {
-      get(target, member) {
-        if (member === 'bind') return (...values: unknown[]) => watch(target.bind(...values), page);
-        if (member === 'all' && page) reads++;
-        const value = Reflect.get(target, member, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-    });
+  const bound = new WeakMap<object, { sql: string; params: unknown[] }>();
+  const reads: number[] = [];
   const counted = new Proxy(real, {
     get(target, property) {
       if (property === 'prepare')
         return (sql: string) =>
-          watch(target.prepare(sql), /AS projection_authorized/.test(sql) && /LIMIT 100/.test(sql));
+          new Proxy(target.prepare(sql), {
+            get(inner, member) {
+              if (member === 'bind')
+                return (...params: unknown[]) => {
+                  const statement = inner.bind(...params);
+                  bound.set(statement, { sql, params });
+                  return statement;
+                };
+              const value = Reflect.get(inner, member, inner);
+              return typeof value === 'function' ? value.bind(inner) : value;
+            },
+          });
+      if (property === 'batch')
+        return (statements: D1PreparedStatement[]) => {
+          for (const statement of statements) {
+            const entry = bound.get(statement);
+            if (
+              entry &&
+              /page AS MATERIALIZED/.test(entry.sql) &&
+              /s\.undone_by IS NULL/.test(entry.sql)
+            )
+              reads.push(Number(entry.params.at(-2)));
+          }
+          return target.batch(statements);
+        };
       const value = Reflect.get(target, property, target);
       return typeof value === 'function' ? value.bind(target) : value;
     },
@@ -66,20 +83,22 @@ async function summaryReads(kit: Kit, headers: Record<string, string>) {
   }
 }
 
-describe('GET /scan/summary page cap', () => {
-  it('verifies at most five contributor pages, keeps exact totals and lists no actions past the cap', async () => {
+describe('GET /scan/summary contributor cap', () => {
+  it('reads its contributors in one statement of at most 501, and keeps exact totals past the cap', async () => {
     const kit = await setupScanKit();
-    // Control: under the cap every page is read.
+    // Scans of a pass exist only after an act initialized the credential keyset.
+    await ensureCredentialRefKeyset(kit.env.DB, kit.env);
+    // Control: under the cap one statement carries every contributor.
     const small = await kit.scanner();
     await seedScans(kit, small.id, 150);
     const under = await summaryReads(kit, small.headers);
-    expect(under.reads).toBe(2);
+    expect(under.reads).toEqual([501]);
     expect(under.summary).toMatchObject({ total: 150, ok: 150 });
 
     const busy = await kit.scanner();
     await seedScans(kit, busy.id, 650);
     const capped = await summaryReads(kit, busy.headers);
-    expect(capped.reads).toBe(5);
+    expect(capped.reads).toEqual([501]);
     expect(capped.summary).toMatchObject({ total: 650, ok: 650, byAction: [] });
   });
 });
