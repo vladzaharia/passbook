@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
-import { all } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { createPassRow } from '../passes/create.ts';
@@ -169,5 +169,25 @@ describe('rate limit', () => {
     expect((await hit('2.2.2.2')).status).toBe(200);
     for (let i = 0; i < 5; i++) await get(`/b/${token}/${passes[0]?.id}/assets/icon.png`, {}, env);
     expect((await get(`/b/${token}`, { 'cf-connecting-ip': '3.3.3.3' }, env)).status).toBe(200);
+  });
+});
+
+describe('asset miss gate', () => {
+  it('charges misses per prefix and refuses an over-threshold prefix before lookup', async () => {
+    const { token, passes } = await bundleWith(1);
+    const url = `/b/${token}/${passes[0]?.id}/assets/icon.png`;
+    const key = 'asset.miss:9.9.9.0/24';
+    await run(kit.env.DB, 'DELETE FROM counters WHERE key = ?', [key]);
+    const as = (ip: string, path = url) => get(path, { 'cf-connecting-ip': ip });
+    expect((await as('9.9.9.1')).status).toBe(200);
+    expect(
+      (await as('9.9.9.2', `/b/${'z'.repeat(27)}/${passes[0]?.id}/assets/icon.png`)).status,
+    ).toBe(404);
+    const count = () =>
+      first<{ count: number }>(kit.env.DB, 'SELECT count FROM counters WHERE key = ?', [key]);
+    expect((await count())?.count).toBe(1);
+    await run(kit.env.DB, 'UPDATE counters SET count = 300 WHERE key = ?', [key]);
+    expect((await as('9.9.9.3')).status).toBe(429);
+    expect((await as('9.9.8.3')).status).toBe(200);
   });
 });

@@ -88,7 +88,13 @@ export interface LedgerAuthorityOptions {
   gateScope?: string;
 }
 
-/** Record the plain event-time facts (no proof material) so an earlier scan cannot authorize a later mutation. */
+/**
+ * Record the event-time facts so an earlier scan cannot authorize a later mutation: plain
+ * generations and revisions, plus unsigned content digests (passJsonHash, personalizationHash,
+ * evaluatedPersonalizationHash, activeReleaseCandidateHash) and the keyed actionIdRef. The digests
+ * are stored because act-replay and the proof envelope compare them to the pass's current
+ * fence; no signature or proof secret is stored.
+ */
 export async function ledgerAuthoritySnapshot(
   ctx: ServiceContext,
   row: EventRow,

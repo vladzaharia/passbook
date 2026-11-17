@@ -90,21 +90,32 @@ export async function assertBundleMembers(
   if (!(await currentBundleMembers(ctx.env.DB, bundle, passes))) throw notFound();
 }
 
-/** A lazy object read may cross a transfer; never emit a chunk without a fresh fence. */
+/**
+ * A lazy object read may cross a transfer, so no chunk is emitted before a fence that follows
+ * its read. A single file is one already-opened object: it is fenced before and after its first
+ * chunk, then streams on (every later byte belongs to the object opened before any transfer). An
+ * archive opens each member's object lazily, so every chunk is fenced; that is decided by
+ * `archive`, not by how many members it holds.
+ */
 export function fenceBundleStream(
   ctx: ServiceContext,
   bundle: BundleRow,
   passes: readonly Pass[],
   source: ReadableStream<Uint8Array>,
+  archive: boolean,
 ): ReadableStream<Uint8Array> {
   const reader = source.getReader();
+  const everyChunk = archive;
+  let fenced = false;
   return new ReadableStream<Uint8Array>(
     {
       async pull(controller) {
         try {
-          await assertBundleMembers(ctx, bundle, passes);
+          const check = everyChunk || !fenced;
+          if (!fenced) await assertBundleMembers(ctx, bundle, passes);
           const chunk = await reader.read();
-          await assertBundleMembers(ctx, bundle, passes);
+          if (check) await assertBundleMembers(ctx, bundle, passes);
+          fenced = true;
           if (chunk.done) controller.close();
           else controller.enqueue(chunk.value);
         } catch (error) {
@@ -143,7 +154,7 @@ export async function bundleArchive(ctx: ServiceContext, bundle: BundleRow) {
     passes.map((pass) => ({ id: pass.id, objectKey: pass.objectKey, objectSize: pass.objectSize })),
   );
   return {
-    body: fenceBundleStream(ctx, bundle, passes, body),
+    body: fenceBundleStream(ctx, bundle, passes, body, true),
     passIds: passes.map((pass) => pass.id),
     passes,
   };

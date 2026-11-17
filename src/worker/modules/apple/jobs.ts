@@ -1,5 +1,5 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { purgeLogs, purgeRevisions } from './repo.ts';
+import { purgeLogs, purgeRevisions } from './repo-logs.ts';
 
 const DAY = 86_400_000;
 

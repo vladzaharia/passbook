@@ -2,8 +2,9 @@ import { SCANNER_TOKEN } from '../../platform/auth.ts';
 import { grant } from '../../platform/authority.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
 import { bump, read } from '../../platform/counters.ts';
+import { derivedHmacKey } from '../../platform/crypto.ts';
 import { AppError, RateLimitedError } from '../../platform/errors.ts';
-import { safeEqual, sha256Hex } from '../../platform/ids.ts';
+import { safeEqual, sha256Hex, toHex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -36,6 +37,16 @@ const PAIR_FLOOD = 500;
 const PAIR_FAIL_AUDITS_PER_HOUR = 100;
 /** Crockford base32: no I, L, O or U. */
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+/**
+ * HMAC-SHA256(K_pair, code), hex. A code is only 50 bits, so an unkeyed digest in a leaked
+ * database could be inverted offline within its ten-minute life.
+ */
+export async function hashPairCode(env: object, code: string): Promise<string> {
+  const key = await derivedHmacKey(env, 'scan-pair-code.v1');
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(code));
+  return toHex(new Uint8Array(mac));
+}
 
 export function newPairCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(10));
@@ -84,7 +95,7 @@ export async function createPairing(
   const now = ctx.clock.now();
   const code = newPairCode();
   const expiresAt = now + PAIR_TTL_MS;
-  const hash = await sha256Hex(code);
+  const hash = await hashPairCode(ctx.env, code);
   const g = adminGrant(
     ctx,
     'org_mode.scan.pairing.create',
@@ -158,7 +169,7 @@ async function openCode(ctx: ServiceContext, ip: string | null, raw: string) {
   if ((await read(ctx.env.DB, failKey(ip), window)) >= PAIR_FAILS_PER_IP)
     throw new RateLimitedError(Math.ceil((window + HOUR - now) / 1000));
   const code = normalizePairCode(raw);
-  const hash = code ? await sha256Hex(code) : null;
+  const hash = code ? await hashPairCode(ctx.env, code) : null;
   const hit = hash ? await findByPairCode(ctx.env.DB, hash, now) : null;
   if (!hit || !hash) {
     await recordMiss(ctx, ip);

@@ -1,8 +1,10 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import type { AppBindings } from './context.ts';
+import { bump, read as readCounter } from './counters.ts';
 import type { AppEnv, RateLimitName } from './env.ts';
 import { RateLimitedError, UnavailableError } from './errors.ts';
+import { ipRatePrefix } from './ip.ts';
 import { createLogger } from './log.ts';
 
 const warned = new Set<string>();
@@ -49,5 +51,28 @@ export function rateLimit(
   return createMiddleware(async (c, next) => {
     await enforceRateLimit(c.env, name, `${name}:${keyOf(c)}`);
     await next();
+  });
+}
+
+const MISS_WINDOW_MS = 60_000;
+/** Misses per network prefix per minute before token-probing surfaces stop looking tokens up. */
+export const ASSET_MISSES_PER_MINUTE = 300;
+
+/**
+ * Middleware for token-probing surfaces. Only 404s are charged, per network prefix (/24, /64), so
+ * valid traffic never spends it. Once a prefix passes `threshold` misses in a minute, its requests
+ * get 429 before any lookup runs, until the window turns over.
+ */
+export function gateMisses(threshold: number): MiddlewareHandler<AppBindings> {
+  return createMiddleware(async (c, next) => {
+    const prefix = ipRatePrefix(clientIp(c)) ?? 'unknown';
+    const window = Math.floor(c.var.clock.now() / MISS_WINDOW_MS) * MISS_WINDOW_MS;
+    const key = `asset.miss:${prefix}`;
+    if ((await readCounter(c.env.DB, key, window)) >= threshold) {
+      const retry = Math.ceil((window + MISS_WINDOW_MS - c.var.clock.now()) / 1000);
+      throw new RateLimitedError(Math.max(retry, 1));
+    }
+    await next();
+    if (c.res.status === 404) await bump(c.env.DB, key, window);
   });
 }
