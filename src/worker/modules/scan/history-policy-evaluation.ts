@@ -1,14 +1,20 @@
 import {
+  hasContactShape,
+  isPrivateName,
+  leaksSecret,
+  secretSpellings,
+} from '../../../passkit/template/scan-display/privacy.ts';
+import {
   type InputSchema,
   inputProps,
   inputVisibleTo,
+  isSecretInput,
   secretInputs,
 } from '../../../passkit/template/scan-display/scope.ts';
 import type { ScanRole, TemplateManifest } from '../../../passkit/types.ts';
 import { type ResolvedScanAction, scanOf } from '../../../shared/scan-defaults.ts';
 import { verifyEventActionLabelHash } from './event-safe-projection.ts';
 import { historyTitleVisible } from './history-policy-title.ts';
-import { scanPrivateName } from './projection-privacy.ts';
 import { ROLE_RANK } from './rules.ts';
 import type { ScanEventReference } from './scan-event-proof.ts';
 
@@ -43,10 +49,6 @@ function schemaOf(value: unknown): InputSchema | null {
   const schema = object(value);
   return schema ? (schema as InputSchema) : null;
 }
-
-const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/u;
-const PHONE = /(?:^|[^\d])\+?\d[\d ().-]{6,}\d(?:$|[^\d])/u;
-const CONTACT_URL = /\b(?:[a-z][a-z0-9+.-]*:\/\/|mailto:|tel:|www\.)/i;
 
 /** Build disclosure decisions from the captured and authenticated history inputs. */
 export async function evaluatedHistoryPolicy({
@@ -120,7 +122,7 @@ export async function evaluatedHistoryPolicy({
     if (selected === 'version' && walletPolicy) policies.push(walletPolicy);
     const sources = historical === current ? [historical] : [historical, current];
     const allowed = (name: string, schema: InputSchema | null, secrets: Set<string>): boolean =>
-      schema !== null && !scanPrivateName(name) && inputVisibleTo(name, schema, role, secrets);
+      schema !== null && !isPrivateName(name) && inputVisibleTo(name, schema, role, secrets);
     const fullyVisible = (
       name: string,
       value: unknown,
@@ -160,40 +162,35 @@ export async function evaluatedHistoryPolicy({
           }),
         );
       };
-      const denied: (string | number | boolean)[] = [...(privateValues ?? [])];
-      const collect = (value: unknown): void => {
-        if (typeof value === 'string' && value) denied.push(value);
-        else if (typeof value === 'number' || typeof value === 'boolean') denied.push(value);
-        else if (Array.isArray(value))
-          value.forEach((item) => {
-            collect(item);
-          });
-        else if (object(value))
-          Object.values(value as ObjectValue).forEach((item) => {
-            collect(item);
-          });
-      };
+      // Only secrets are matched by value: credentials the caller names and the values of secret
+      // inputs. What a role may read of the rest is decided by `inputVisible`, not by a copy.
+      const denied: unknown[] = [...(privateValues ?? [])];
+      const secretHere = (name: string, schema: InputSchema | null, secrets: Set<string>) =>
+        isPrivateName(name) ||
+        secrets.has(name) ||
+        (schema !== null && isSecretInput(name, schema));
       for (const { properties, secrets } of policySet) {
-        const defaults = (name: string, schema: InputSchema | null, hidden: boolean): void => {
+        const defaults = (name: string, schema: InputSchema | null): void => {
           if (!schema) return;
-          const deniedHere = hidden || !allowed(name, schema, secrets);
-          if (deniedHere) collect(schema.default);
+          if (secretHere(name, schema, secrets)) {
+            denied.push(schema.default);
+            return;
+          }
           const children = object(schema.properties);
           if (children)
-            for (const [key, child] of Object.entries(children))
-              defaults(key, schemaOf(child), deniedHere);
-          if (schema.items) defaults(name, schemaOf(schema.items), deniedHere);
+            for (const [key, child] of Object.entries(children)) defaults(key, schemaOf(child));
+          if (schema.items) defaults(name, schemaOf(schema.items));
         };
-        for (const [name, schema] of Object.entries(properties))
-          defaults(name, schemaOf(schema), false);
+        for (const [name, schema] of Object.entries(properties)) defaults(name, schemaOf(schema));
       }
       for (const { properties, secrets } of policySet)
         for (const source of sources) {
           const visit = (name: string, value: unknown, schema: InputSchema | null): void => {
-            if (!allowed(name, schema, secrets) || !schema) {
-              collect(value);
+            if (secretHere(name, schema, secrets)) {
+              denied.push(value);
               return;
             }
+            if (!schema) return;
             if (Array.isArray(value))
               value.forEach((item) => {
                 visit(name, item, schemaOf(schema.items));
@@ -210,36 +207,15 @@ export async function evaluatedHistoryPolicy({
           for (const [name, value] of Object.entries(source))
             visit(name, value, schemaOf(properties[name]));
         }
-      const protectedStrings = denied.flatMap((value) => {
-        const text = String(value);
-        return [
-          text,
-          text
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;'),
-          encodeURIComponent(text.toWellFormed()),
-        ];
-      });
+      const spellings = secretSpellings(denied);
       const valueSafe = (value: unknown): boolean => {
         if (typeof value === 'string')
-          return (
-            !EMAIL.test(value) &&
-            !CONTACT_URL.test(value) &&
-            (/^\d{4}-\d{2}-\d{2}(?:$|T)/.test(value) || !PHONE.test(value)) &&
-            !protectedStrings.some((secret) =>
-              secret.length < 3 ? value === secret : value.includes(secret),
-            )
-          );
-        if (typeof value === 'number' || typeof value === 'boolean') return !denied.includes(value);
+          return !hasContactShape(value) && !leaksSecret(value, spellings);
+        if (typeof value === 'number') return !leaksSecret(value, spellings);
         if (Array.isArray(value)) return value.every(valueSafe);
         const record = object(value);
         return record
-          ? Object.entries(record).every(
-              ([key, child]) => !scanPrivateName(key) && valueSafe(child),
-            )
+          ? Object.entries(record).every(([key, child]) => !isPrivateName(key) && valueSafe(child))
           : true;
       };
       return { inputVisible, valueSafe };

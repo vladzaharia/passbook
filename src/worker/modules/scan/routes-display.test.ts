@@ -50,8 +50,9 @@ describe('real-pass scan display preview', () => {
         const inputs = body.scope.inputs as Record<string, unknown>;
         const fields = body.scope.fields as Record<string, unknown>;
         expect(inputs).toMatchObject({ memberName: name, seat: 'C12' });
-        // The hidden "locked" value is also true, so its copy cannot be exposed.
-        expect(inputs).not.toHaveProperty('canVisit');
+        // A visible boolean is not blanked because a hidden one has the same value.
+        expect(inputs).toMatchObject({ canVisit: true });
+        expect(inputs).not.toHaveProperty('locked');
         expect(fields).toMatchObject({ name, seat: 'C12' });
         const profile = inputs.profile as Record<string, unknown>;
         expect(profile).toMatchObject({ publicLabel: 'Atrium access' });
@@ -135,7 +136,7 @@ describe('real-pass scan display preview', () => {
         'scan_ref',
       ])
         expect(fields).not.toHaveProperty(key);
-      expect(inputs).not.toHaveProperty('canVisit');
+      expect(inputs).toMatchObject({ canVisit: true });
       expect(body.scope).not.toHaveProperty('passJson');
       expect(body.scope).not.toHaveProperty('display');
       const text = JSON.stringify(body);

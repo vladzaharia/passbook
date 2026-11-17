@@ -1,11 +1,12 @@
 import {
   condPaths,
   defaultScanDisplay,
+  type RenderScanDisplayOptions,
   renderScanDisplay,
   SCAN_ICONS,
   type ScanDisplayScope,
 } from '../../../passkit/template/scan-display/index.ts';
-import type { ScanCond } from '../../../passkit/template/scan-display/schema.ts';
+import type { ScanCond, ScanDisplayDoc } from '../../../passkit/template/scan-display/schema.ts';
 import {
   parseParts,
   pathTokens,
@@ -27,6 +28,7 @@ import {
   visibleSource,
 } from './card-semantics.ts';
 import { authorizedDocument, safeDefaultSources } from './display-document-policy.ts';
+import { DROP, dropUnsafeLeaves, pruneDocument } from './display-leaves.ts';
 import { isOwnPhotoUrl } from './display-photo-url.ts';
 import { type CardPrivacy, cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
@@ -161,17 +163,47 @@ function visibleSelectors(
   return true;
 }
 
-/**
- * Check authored literals before rendering truncates or formats them. Binding paths
- * are not output text: the renderer evaluates them against the projected scope.
- */
-function safeDocument(
-  value: unknown,
+/** The paths in `when` must come from sources this actor may read, and its literals must be safe. */
+function conditionVisible(
+  cond: ScanCond,
   found: Found,
   actor: ScanActor,
   privacy: CardPrivacy,
   scope: ScanDisplayScope,
-  key = '',
+): boolean {
+  const literals = (value: unknown, key = ''): boolean => {
+    if (key === 'path' || key === 'input') return true;
+    if (typeof value === 'string' || typeof value === 'number') return privacy.safe(value);
+    if (Array.isArray(value)) return value.every((entry) => literals(entry, key));
+    if (value && typeof value === 'object')
+      return Object.entries(value).every(([name, entry]) => literals(entry, name));
+    return true;
+  };
+  if (!literals(cond)) return false;
+  for (const path of condPaths(cond)) {
+    const tokens = pathTokens(path);
+    const source = splitPath(path);
+    if (!tokens || !source || !visibleSelectors(tokens, found, actor, privacy)) return false;
+    if (source.root === 'inputs') {
+      const input = source.rest.filter((token) => !token.startsWith('[')).join('.');
+      if (!input || !visibleSource(found, actor, input, privacy)) return false;
+    } else if (source.root !== 'holder' && resolveDisplayPath(scope, path) === undefined) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Whether an authored leaf may be rendered. Binding paths are not output text: the renderer
+ * evaluates them against the projected scope, so only literals and selectors are judged here.
+ */
+function documentLeaf(
+  value: unknown,
+  key: string,
+  found: Found,
+  actor: ScanActor,
+  privacy: CardPrivacy,
 ): boolean {
   if (typeof value === 'string') {
     if (FORMAT_VALUES[key]?.includes(value)) return true;
@@ -190,52 +222,48 @@ function safeDocument(
   }
   // Numeric authoring literals can affect a displayed decision (for example a
   // low-balance threshold) even when the number itself is not rendered.
-  if (typeof value === 'number') return key === 'v' || privacy.safe(value);
-  if (key === 'when' && value && typeof value === 'object' && !Array.isArray(value)) {
-    for (const path of condPaths(value as ScanCond)) {
-      const tokens = pathTokens(path);
-      const source = splitPath(path);
-      if (!tokens || !source || !visibleSelectors(tokens, found, actor, privacy)) return false;
-      if (source.root === 'inputs') {
-        const input = source.rest.filter((token) => !token.startsWith('[')).join('.');
-        if (!input || !visibleSource(found, actor, input, privacy)) return false;
-      } else if (source.root !== 'holder' && resolveDisplayPath(scope, path) === undefined) {
-        return false;
-      }
-    }
-  }
-  if (Array.isArray(value))
-    return value.every((entry) => safeDocument(entry, found, actor, privacy, scope, key));
-  if (value && typeof value === 'object')
-    return Object.entries(value).every(([name, entry]) =>
-      safeDocument(entry, found, actor, privacy, scope, name),
-    );
-  return true;
+  return key === 'v' || privacy.safe(value);
 }
 
-/** Check every emitted data leaf, including numeric and boolean rendered values. */
-function safeRendered(
-  input: BuildDisplayInput,
-  privacy: CardPrivacy,
-  display: ScanDisplay,
-): ScanDisplay | null {
-  const safe = (value: unknown, key = ''): boolean => {
+/** Whether a rendered leaf may leave the server: a secret or a contact in any slot is not shown. */
+function renderedLeaf(input: BuildDisplayInput, privacy: CardPrivacy) {
+  return (value: unknown, key: string): boolean => {
     if (typeof value === 'string' && FORMAT_VALUES[key]?.includes(value)) return true;
     if (key === 'url' && typeof value === 'string' && value === input.photoUrl)
       return isOwnPhotoUrl(value);
-    if (
-      (typeof value === 'number' || typeof value === 'boolean') &&
-      Object.hasOwn(RENDER_CONTROL_KEYS, key)
-    )
-      return true;
+    if (typeof value === 'number' && Object.hasOwn(RENDER_CONTROL_KEYS, key)) return true;
     if (typeof value === 'number' && key === 'at' && input.template)
-      return safeTimestamp(input.template, input.actor, privacy, value);
-    if (Array.isArray(value)) return value.every((entry) => safe(entry, key));
-    if (value && typeof value === 'object')
-      return Object.entries(value).every(([name, entry]) => safe(entry, name));
+      return safeTimestamp(privacy, value);
     return privacy.safe(value);
   };
-  return safe(display) ? display : identity(input, privacy);
+}
+
+/** Prune, render and scrub one document. Unsafe leaves are dropped; null only if nothing fits. */
+function renderDocument(
+  ctx: ServiceContext,
+  input: BuildDisplayInput,
+  found: Found,
+  privacy: CardPrivacy,
+  doc: ScanDisplayDoc,
+  options: RenderScanDisplayOptions,
+): ScanDisplay | null {
+  const authorized = authorizedDocument(
+    found,
+    doc,
+    options.role,
+    input.actor.terminal,
+    options.screen,
+  );
+  const scope = scopeOf(ctx, input, found);
+  const pruned = pruneDocument(
+    authorized,
+    (value, key) => documentLeaf(value, key, found, input.actor, privacy),
+    (cond) => conditionVisible(cond as ScanCond, found, input.actor, privacy, scope),
+  );
+  if (pruned === DROP) return null;
+  const rendered = renderScanDisplay(pruned as ScanDisplayDoc, scope, options);
+  const generic = ['Pass', 'Card', ''].find((name) => privacy.safe(name)) ?? '';
+  return dropUnsafeLeaves(rendered, renderedLeaf(input, privacy), generic);
 }
 
 /** A broken display cannot interrupt a door decision. */
@@ -260,10 +288,7 @@ export function buildDisplay(ctx: ServiceContext, input: BuildDisplayInput): Sca
     timeZone: input.actor.timeZone,
     now: ctx.clock.now(),
   };
-  try {
-    if (!found.scan.display && !safeDefaultSources(found, privacy)) return identity(input, privacy);
-    const configured =
-      found.scan.display ?? defaultScanDisplay(found.template.manifest, found.passJson);
+  const show = (configured: ScanDisplayDoc): ScanDisplay | null => {
     // A scanner that hides photos gets no photo slot: even an empty one names the holder in its alt.
     const { photo: _hiddenPhoto, ...withoutPhoto } = configured;
     const doc =
@@ -272,17 +297,14 @@ export function buildDisplay(ctx: ServiceContext, input: BuildDisplayInput): Sca
         : input.photoUrl && !configured.photo
           ? { ...configured, photo: {} }
           : configured;
-    const authorized = authorizedDocument(
-      found,
-      doc,
-      options.role,
-      options.terminal,
-      options.screen,
-    );
-    const scope = scopeOf(ctx, input, found);
-    if (!safeDocument(authorized, found, input.actor, privacy, scope))
-      return identity(input, privacy);
-    return safeRendered(input, privacy, renderScanDisplay(authorized, scope, options));
+    return renderDocument(ctx, input, found, privacy, doc, options);
+  };
+  const fallback = (): ScanDisplay | null => {
+    const sources = safeDefaultSources(found, privacy);
+    return show(defaultScanDisplay(sources.manifest, sources.passJson));
+  };
+  try {
+    return (found.scan.display ? show(found.scan.display) : fallback()) ?? identity(input, privacy);
   } catch (error) {
     ctx.log.error('scan.display_failed', {
       code: 'SCAN_DISPLAY_FAILED',
@@ -290,19 +312,7 @@ export function buildDisplay(ctx: ServiceContext, input: BuildDisplayInput): Sca
       error,
     });
     try {
-      if (!safeDefaultSources(found, privacy)) return identity(input, privacy);
-      const doc = defaultScanDisplay(found.template.manifest, found.passJson);
-      const authorized = authorizedDocument(
-        found,
-        doc,
-        options.role,
-        options.terminal,
-        options.screen,
-      );
-      const scope = scopeOf(ctx, input, found);
-      if (!safeDocument(authorized, found, input.actor, privacy, scope))
-        return identity(input, privacy);
-      return safeRendered(input, privacy, renderScanDisplay(authorized, scope, options));
+      return fallback() ?? identity(input, privacy);
     } catch (fallbackError) {
       ctx.log.error('scan.display_fallback_failed', {
         code: 'SCAN_DISPLAY_FALLBACK_FAILED',

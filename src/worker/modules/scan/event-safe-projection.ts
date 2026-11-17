@@ -3,17 +3,7 @@ import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
 import { toHex } from '../../platform/ids.ts';
 import { cardPrivacy } from './dto-projection.ts';
-import {
-  ACTION_KINDS,
-  actionPolicies,
-  appendFieldValues,
-  appendOpaqueStyle,
-  appendProtected,
-  containsProtected,
-  PUBLIC_WALLET_ROOT,
-  sourceActor,
-  WALLET_STYLES,
-} from './event-safe-projection-policy.ts';
+import { ACTION_KINDS, actionPolicies, sourceActor } from './event-safe-projection-policy.ts';
 import type { ScanActor } from './guard.ts';
 import { scanIdentity, scanInputVisible } from './projection-privacy.ts';
 import type { Found } from './resolve.ts';
@@ -91,31 +81,6 @@ function evaluate(
     const snapshots = sourceSnapshots(found);
     if (!snapshots) return empty();
     const policies = actionPolicies(found, action);
-    // A current reader may later expose the action id, so don't authorize an id copied
-    // from personalization or a non-public Wallet leaf. Text commitments deny opaque Wallet values.
-    const privateIds: string[] = [];
-    const privateText: string[] = [];
-    const unknownWalletInputs: string[] = [];
-    for (const snapshot of snapshots) appendProtected(snapshot.pass.personalization, privateIds);
-    for (const [name, value] of Object.entries(found.passJson)) {
-      if (Object.hasOwn(PUBLIC_WALLET_ROOT, name)) continue;
-      if (Object.hasOwn(WALLET_STYLES, name)) {
-        // Field labels are template text, not holder data: an action may share a word with one.
-        appendFieldValues(value, privateText);
-        appendOpaqueStyle(value, unknownWalletInputs);
-      } else {
-        appendProtected(value, privateText);
-        appendProtected(value, unknownWalletInputs);
-      }
-    }
-    for (const value of privateText) privateIds.push(value);
-    const active = found.activePolicy ?? found.activeTemplate ?? found.template;
-    if (
-      snapshots[1] &&
-      found.walletTemplateVersion !== found.template.version &&
-      found.walletTemplateVersion !== active.version
-    )
-      appendProtected(snapshots[1].pass.personalization, unknownWalletInputs);
     const result = empty();
     for (const role of ROLES) {
       // No hypothetical reader gets more event-time authority than the evaluated actor had.
@@ -128,29 +93,16 @@ function evaluate(
         action &&
         policies.every(
           (policy) =>
-            ROLE_RANK[role] >= ROLE_RANK[policy.minRole] &&
-            safe(policy.id) &&
-            safe(policy.label) &&
-            !containsProtected(policy.id, privateIds) &&
-            !containsProtected(policy.label, privateText) &&
-            !containsProtected(policy.label, unknownWalletInputs),
+            ROLE_RANK[role] >= ROLE_RANK[policy.minRole] && safe(policy.id) && safe(policy.label),
         ) &&
         (!action.input || scanInputVisible(found, simulated, action.input))
           ? { kind: action.kind, labelHash: null }
           : null;
       if (visibleAction && action) result.actionLabels[role] = action.label;
       const name = actor.scanner?.name;
-      if (
-        typeof name === 'string' &&
-        name !== '' &&
-        safe(name) &&
-        !containsProtected(name, privateText) &&
-        !containsProtected(name, unknownWalletInputs)
-      )
-        result.scannerNames[role] = name;
+      if (typeof name === 'string' && name !== '' && safe(name)) result.scannerNames[role] = name;
       const title = scanIdentity(found, simulated).title;
-      if (title !== null && safe(title) && !containsProtected(title, unknownWalletInputs))
-        result.titles[role] = title;
+      if (title !== null && safe(title)) result.titles[role] = title;
       result.projection.roles[role] = {
         action: visibleAction,
         scannerNameHash: null,

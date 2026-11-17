@@ -4,6 +4,7 @@ import {
   PREFERRED_STYLE_SCHEMES,
   TRANSIT_TYPES,
 } from '../../../passkit/schema/constants.ts';
+import { isPrivateName } from '../../../passkit/template/scan-display/privacy.ts';
 import { PASS_STYLES } from '../../../passkit/types.ts';
 import type { Json } from '../../../shared/contracts/common.ts';
 import { parseColor } from '../../../shared/pass-view/color.ts';
@@ -17,7 +18,6 @@ import {
 } from './dto-projection.ts';
 import { fieldSemantics, rootSemantics } from './dto-semantics.ts';
 import type { ScanActor } from './guard.ts';
-import { scanPrivateName } from './projection-privacy.ts';
 import type { Found } from './resolve.ts';
 
 /** Only appearance and source-authorized field properties needed by the preview leave the server. */
@@ -77,7 +77,7 @@ export function passViewJson(found: Found, actor: ScanActor, privacy: CardPrivac
         const key = field.key;
         if (
           typeof key !== 'string' ||
-          scanPrivateName(key) ||
+          isPrivateName(key) ||
           !privacy.safe(key) ||
           privacy.hidden.has(key)
         )

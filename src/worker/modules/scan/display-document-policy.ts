@@ -8,37 +8,60 @@ import type {
   ScanPanelDoc,
   ScanRowDoc,
 } from '../../../passkit/template/scan-display/schema.ts';
-import { PASS_STYLES, type ScanRole } from '../../../passkit/types.ts';
+import type { InputSchema } from '../../../passkit/template/scan-display/scope.ts';
+import {
+  type Json,
+  PASS_STYLES,
+  type PassJson,
+  type ScanRole,
+  type TemplateManifest,
+} from '../../../passkit/types.ts';
 import type { ScanDisplayScreen } from '../../../shared/contracts/scan-display.ts';
 import type { CardPrivacy } from './dto-projection.ts';
 import type { Found } from './resolve.ts';
 
-/** Defaults shorten field and input labels while building the document, so check originals first. */
-export function safeDefaultSources(found: Found, privacy: CardPrivacy): boolean {
-  for (const schema of Object.values(found.template.manifest.inputs.properties ?? {})) {
-    if (!schema || typeof schema !== 'object' || Array.isArray(schema)) continue;
-    const label = schema['x-label'];
-    if (typeof label === 'string' && !privacy.safe(label)) return false;
+/**
+ * The manifest and pass the default document is built from, without the labels and fields whose
+ * text is unsafe. Defaults shorten labels while building, so the originals are checked here and
+ * the offending field or label is left out rather than the whole display.
+ */
+export function safeDefaultSources(
+  found: Found,
+  privacy: CardPrivacy,
+): { manifest: TemplateManifest; passJson: PassJson } {
+  const manifest = found.template.manifest;
+  const properties: Record<string, Json> = {};
+  for (const [name, schema] of Object.entries(manifest.inputs.properties ?? {})) {
+    const label = schema && typeof schema === 'object' ? (schema as InputSchema)['x-label'] : null;
+    if (typeof label === 'string' && !privacy.safe(label)) {
+      const { 'x-label': _label, ...rest } = schema as InputSchema;
+      properties[name] = rest;
+    } else properties[name] = schema as Json;
   }
-  const pass = found.passJson as unknown as Record<string, unknown>;
+  // Shallow on purpose: the pass JSON carries credentials, which are never cloned.
+  const passJson: Record<string, unknown> = { ...found.passJson };
   for (const style of PASS_STYLES) {
-    const block = pass[style];
+    const block = passJson[style];
     if (!block || typeof block !== 'object' || Array.isArray(block)) continue;
+    const groups: Record<string, unknown> = { ...block };
     for (const group of ['primaryFields', 'secondaryFields', 'auxiliaryFields']) {
-      const fields = (block as Record<string, unknown>)[group];
+      const fields = groups[group];
       if (!Array.isArray(fields)) continue;
-      for (const field of fields) {
-        if (!field || typeof field !== 'object' || Array.isArray(field)) continue;
+      groups[group] = fields.filter((field) => {
+        if (!field || typeof field !== 'object' || Array.isArray(field)) return true;
         const { key, label } = field as Record<string, unknown>;
-        if (
+        return !(
           (typeof key === 'string' && !privacy.safe(key)) ||
           (typeof label === 'string' && !privacy.safe(label))
-        )
-          return false;
-      }
+        );
+      });
     }
+    passJson[style] = groups;
   }
-  return true;
+  return {
+    manifest: { ...manifest, inputs: { ...manifest.inputs, properties } },
+    passJson: passJson as unknown as PassJson,
+  };
 }
 
 /**
