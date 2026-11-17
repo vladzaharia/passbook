@@ -298,12 +298,13 @@ export const eventModeOf = (db: Db, orgId: string, id: string) =>
     [id, orgId],
   );
 
-/** The first accepted active template; its release determines the version used for a sample. */
+/** The first accepted active template (never a blueprint: a sample is issued); its release sets the version. */
 export const firstSampleTemplate = (db: Db, orgId: string, ids: readonly string[]) =>
   first<{ id: string }>(
     db,
     `SELECT t.id FROM templates t
-     WHERE (t.org_id = ? OR t.org_id IS NULL) AND t.status = 'active' AND t.id IN (${placeholders(ids.length)})
+     WHERE (t.org_id = ? OR t.org_id IS NULL) AND t.status = 'active' AND t.blueprint = 0
+       AND t.id IN (${placeholders(ids.length)})
      ORDER BY t.id LIMIT 1`,
     [orgId, ...ids],
   );
