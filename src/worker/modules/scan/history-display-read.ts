@@ -3,7 +3,13 @@ import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { HistoryPolicy } from './history-policy.ts';
 import { type HistoryRaw, type HistoryRow, toHistoryRow } from './history-row.ts';
-import { type HistoryEvidenceCache, historyEvidenceOf } from './history-row-evidence.ts';
+import {
+  createHistoryEvidenceCache,
+  type HistoryEvidenceCache,
+  historyEvidenceOf,
+} from './history-row-evidence.ts';
+import { manifestCacheKey } from './repo-template-manifests.ts';
+import type { Found } from './resolve.ts';
 import type { DisplayRow } from './scan-display-history-view.ts';
 
 /** What a display read is for: one pass's check-ins, optionally of one event. */
@@ -23,6 +29,22 @@ export interface DecodedPage {
 }
 
 export type DisplayHistoryRaw = HistoryRaw & { candidate_total?: number };
+
+/**
+ * The evidence cache of one display read, with the manifests this request already resolved: a
+ * template version is its content hash, so most scans were recorded under one of them and need no
+ * read of their own.
+ */
+export function displayEvidenceCache(orgId: string, found: Found): HistoryEvidenceCache {
+  const cache = createHistoryEvidenceCache();
+  for (const template of [found.template, found.activePolicy, found.activeTemplate])
+    if (template.id === found.pass.templateId)
+      cache.manifests.set(
+        manifestCacheKey({ orgId, templateId: template.id, version: template.version }),
+        JSON.stringify(template.manifest),
+      );
+  return cache;
+}
 
 /** A plain, successful, signed-in check-in: the only scan a display lists. */
 export function isDisplayCheckIn(
@@ -108,6 +130,7 @@ export async function decodeDisplayPage(
     cache,
     requireAvailable: false,
     wanted: (row) => listed(row, scope),
+    commitment: scope.credentialKeysetCommitment,
   });
   const rows = new Map<string, DisplayRow>();
   for (const row of history) {

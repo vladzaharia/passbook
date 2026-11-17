@@ -163,6 +163,8 @@ export async function historyEvidenceOf(
     /** Console, API feed: only rows whose provenance was checked. Staff names need no candidate. */
     requireAvailable: boolean;
     wanted?: (row: HistoryRow) => boolean;
+    /** The request's own commitment, already matched to the stored keyset; skips the pin read. */
+    commitment?: string;
   },
 ): Promise<Map<string, HistoryEvidence>> {
   const { role, cache } = options;
@@ -194,7 +196,7 @@ export async function historyEvidenceOf(
   );
   if (!eligible.length) return evidence;
   const [commitment] = await Promise.all([
-    pinKeyset(ctx),
+    options.commitment ?? pinKeyset(ctx),
     loadManifests(
       ctx.env.DB,
       cache.manifests,

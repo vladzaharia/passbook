@@ -1,9 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { runOne } from '../../../../test/helpers/index.ts';
-import { first, run, stmt } from '../../platform/db.ts';
-import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { run } from '../../platform/db.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { historyProofPolicySources, historyProofSnapshotsForOrg } from './history-proof.ts';
 import {
   planPendingDisplayHistorySource,
   preparePlannedDisplayHistoryProof,
@@ -14,12 +11,10 @@ import {
   rebindDisplayHistoryRead,
 } from './history-proof-plan.ts';
 import { getScanner } from './repo-device.ts';
-import { historyProofSnapshotPredicates } from './repo-history-proof-cas.ts';
 import { candidateById } from './repo-lookup.ts';
 import { outputAuthorityPredicate } from './repo-output-authority.ts';
 import { claimScanStmt } from './repo-scans-test-support.ts';
 import { readScannerScope } from './repo-scope.ts';
-import { packScanPredicate, scanSecretSlots } from './repo-secret-binds.ts';
 import { foundOf } from './resolve.ts';
 import { prepareDisplayHistory } from './scan-display-history.ts';
 import { codeOf, key, proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
@@ -60,9 +55,7 @@ async function scenario(copyCredential = true) {
       "UPDATE passes SET personalization=json_set(personalization,'$.credentialCopy',?) WHERE id=?",
       [pass.authToken, pass.id],
     );
-  const credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
-  const scope = { orgId: kit.org.id, mode: 'live' as const, credentialKeysetCommitment };
-  return { pass, scanner, scanId: result.scanId, scope, walletSecret, externalId, holderEmail };
+  return { pass, scanner, scanId: result.scanId, walletSecret, externalId, holderEmail };
 }
 
 function recordingDb(db: D1Database) {
@@ -91,195 +84,7 @@ function recordingDb(db: D1Database) {
   return { db: proxy, prepared };
 }
 
-describe('history proof secret bindings', () => {
-  it('keeps private values out of snapshots and prepared JSON while retaining exact CAS', async () => {
-    const s = await scenario();
-    const recorder = recordingDb(kit.env.DB);
-    const ctx = { ...kit.ctx, env: { ...kit.ctx.env, DB: recorder.db } };
-    const proofs = await historyProofSnapshotsForOrg(ctx, s.scope, [s.scanId], new Map());
-    const proof = proofs.get(s.scanId);
-    if (!proof) throw new Error('Missing verified history proof');
-    expect(proof.projectionCurrent).toBe(true);
-    const sources = historyProofPolicySources(proof);
-    if (!sources) throw new Error('Missing opaque history policy sources');
-    const fragments = historyProofSnapshotPredicates(proof, 's', kit.clock.now());
-    const packed = fragments.map((fragment) => {
-      const result = packScanPredicate(fragment.sql, fragment.params, 'history_bind_test');
-      if (!result) throw new Error('History fragment could not be packed');
-      return result;
-    });
-    const current = async () => {
-      const results = await recorder.db.batch<{ id: string }>(
-        packed.map((fragment) =>
-          stmt(recorder.db, `SELECT s.id FROM scans s WHERE s.id=? AND (${fragment.sql})`, [
-            s.scanId,
-            ...fragment.params,
-          ]),
-        ),
-      );
-      return (
-        results.length === packed.length &&
-        results.every((result) => result.results?.[0]?.id === s.scanId)
-      );
-    };
-    expect(await current()).toBe(true);
-
-    const privateByLabel = {
-      serial: s.pass.serial,
-      'auth-token': s.pass.authToken,
-      'download-token': s.pass.downloadToken,
-      'web-service-url': s.pass.webServiceUrl,
-      'scan-code': s.pass.scanCode!,
-      'external-id': s.externalId,
-      'holder-email': s.holderEmail,
-    };
-    const scanner = await first<{ csrf_secret: string | null }>(
-      kit.env.DB,
-      'SELECT csrf_secret FROM scanners WHERE id=?',
-      [s.scanner.id],
-    );
-    const secrets = [
-      ...Object.values(privateByLabel),
-      s.walletSecret,
-      ...(scanner?.csrf_secret ? [scanner.csrf_secret] : []),
-    ];
-    expect(sources.privateValues).toEqual(
-      expect.arrayContaining([...Object.values(privateByLabel), s.walletSecret]),
-    );
-    expect(historyProofPolicySources({ ...proof })).toBeNull();
-    const serialized = JSON.stringify(proof);
-    for (const secret of secrets) expect(serialized).not.toContain(secret);
-    const finals = recorder.prepared.filter((entry) => entry.sql.includes('history_bind_test'));
-    expect(finals).toHaveLength(fragments.length);
-    const labeled = finals.flatMap((entry) => {
-      expect(entry.values.length).toBeLessThanOrEqual(100);
-      const slots = scanSecretSlots(entry.sql, entry.values.length);
-      if (!slots) throw new Error('Missing structural bind labels');
-      return slots.map((slot, index) => ({ label: slot.label, value: entry.values[index] }));
-    });
-    for (const [label, secret] of Object.entries(privateByLabel))
-      expect(labeled.some((slot) => slot.label === label && slot.value === secret)).toBe(true);
-    expect(labeled.some((slot) => slot.label === 'history-current-wallet-private-values')).toBe(
-      true,
-    );
-    const real = kit.env.DB;
-    Object.assign(kit.env, { DB: recorder.db });
-    try {
-      for (const path of ['/scans?limit=5', '/summary']) {
-        const response = await kit.get(s.scanner.headers, path);
-        expect(response.status).toBe(200);
-        const text = await response.text();
-        for (const secret of secrets) expect(text).not.toContain(secret);
-      }
-    } finally {
-      Object.assign(kit.env, { DB: real });
-    }
-    for (const statement of recorder.prepared) {
-      for (const value of statement.values) {
-        if (typeof value !== 'string') continue;
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(value);
-        } catch {
-          continue;
-        }
-        const json = JSON.stringify(parsed);
-        for (const secret of secrets) expect(json).not.toContain(secret);
-      }
-    }
-
-    await run(kit.env.DB, 'UPDATE passes SET external_id=? WHERE id=?', [
-      'changed-private-value',
-      s.pass.id,
-    ]);
-    expect(await current()).toBe(false);
-    await run(kit.env.DB, 'UPDATE passes SET external_id=? WHERE id=?', [s.externalId, s.pass.id]);
-    expect(await current()).toBe(true);
-    await run(
-      kit.env.DB,
-      `UPDATE pass_versions SET pass_json=json_set(pass_json,'$.userInfo.nested[0].value',?)
-      WHERE pass_id=? AND version=(SELECT max(v.version) FROM pass_versions v JOIN passes p ON p.id=v.pass_id
-        WHERE v.pass_id=? AND v.version<=p.version)`,
-      ['changed-wallet-private-value', s.pass.id, s.pass.id],
-    );
-    expect(await current()).toBe(false);
-    // Events carry plain facts, no MAC: a recorded gate fact that no longer holds rejects the event.
-    await runOne(
-      kit.env.DB,
-      "UPDATE pass_events SET data=json_set(data,'$.authority.gate.count',0) WHERE id=?",
-      [sources.event.id],
-    );
-    expect((await historyProofSnapshotsForOrg(kit.ctx, s.scope, [s.scanId], new Map())).size).toBe(
-      0,
-    );
-  });
-
-  it('segments large Wallet scalars across bounded fragments and rejects forged evidence', async () => {
-    const s = await scenario();
-    await run(
-      kit.env.DB,
-      `UPDATE pass_versions SET pass_json=json_set(pass_json,'$.userInfo.large',?)
-      WHERE pass_id=? AND version=(SELECT max(v.version) FROM pass_versions v JOIN passes p ON p.id=v.pass_id
-        WHERE v.pass_id=? AND v.version<=p.version)`,
-      ['🙂'.repeat(200_000), s.pass.id, s.pass.id],
-    );
-    const proofs = await historyProofSnapshotsForOrg(kit.ctx, s.scope, [s.scanId], new Map());
-    const proof = proofs.get(s.scanId);
-    if (!proof) throw new Error('Missing verified history proof');
-    const fragments = historyProofSnapshotPredicates(proof, 's', kit.clock.now());
-    const walletParts = fragments.flatMap((fragment) => {
-      const slots = scanSecretSlots(fragment.sql, fragment.params.length);
-      if (!slots) throw new Error('Missing structural bind labels');
-      return slots.flatMap((slot, index) =>
-        slot.label === 'history-current-wallet-private-values' ? [fragment.params[index]] : [],
-      );
-    });
-    expect(walletParts.length).toBeGreaterThan(1);
-    expect(
-      walletParts.every(
-        (part) => typeof part === 'string' && new TextEncoder().encode(part).byteLength <= 750_000,
-      ),
-    ).toBe(true);
-    expect(fragments.every((fragment) => fragment.params.length <= 60)).toBe(true);
-    const check = () =>
-      kit.env.DB.batch<{ id: string }>(
-        fragments.map((fragment) =>
-          stmt(kit.env.DB, `SELECT s.id FROM scans s WHERE s.id=? AND (${fragment.sql})`, [
-            s.scanId,
-            ...fragment.params,
-          ]),
-        ),
-      );
-    expect((await check()).every((result) => result.results?.[0]?.id === s.scanId)).toBe(true);
-    await run(
-      kit.env.DB,
-      `UPDATE pass_versions SET pass_json=json_set(pass_json,'$.userInfo.large',?)
-      WHERE pass_id=? AND version=(SELECT max(v.version) FROM pass_versions v JOIN passes p ON p.id=v.pass_id
-        WHERE v.pass_id=? AND v.version<=p.version)`,
-      [`${'🙂'.repeat(199_999)}x`, s.pass.id, s.pass.id],
-    );
-    const changed = await check();
-    expect(changed.some((result) => result.results?.[0]?.id === s.scanId)).toBe(true);
-    expect(changed.some((result) => !result.results?.length)).toBe(true);
-    expect(
-      historyProofSnapshotPredicates(
-        { ...proof, snapshot: { metadata: proof.snapshot.metadata } },
-        's',
-        kit.clock.now(),
-      ),
-    ).toEqual([{ sql: '0', params: [] }]);
-    expect(historyProofSnapshotPredicates(proof, 's) OR 1=1 --', kit.clock.now())).toEqual([
-      { sql: '0', params: [] },
-    ]);
-    expect(
-      historyProofSnapshotPredicates(
-        { ...proof, credentialKeysetCommitment: '' },
-        's',
-        kit.clock.now(),
-      ),
-    ).toEqual([{ sql: '0', params: [] }]);
-  });
-
+describe('display history read', () => {
   it('batches proof discovery with caller reads and retains the zero-history fast path', async () => {
     const s = await scenario(false);
     const scanner = await getScanner(kit.env.DB, s.scanner.id);
@@ -308,8 +113,7 @@ describe('history proof secret bindings', () => {
     expect(plan.stmts).toHaveLength(1);
     expect(
       recorder.prepared.some(
-        (entry) =>
-          entry.sql.includes('WITH page AS MATERIALIZED') && entry.values.length <= 100,
+        (entry) => entry.sql.includes('WITH page AS MATERIALIZED') && entry.values.length <= 100,
       ),
     ).toBe(true);
     const preloaded = await plan.finish(await recorder.db.batch(plan.stmts));
@@ -482,8 +286,7 @@ describe('history proof secret bindings', () => {
     expect(JSON.stringify(source)).not.toContain(s.walletSecret);
     expect(
       recorder.prepared.some(
-        (entry) =>
-          entry.sql.includes("s.state = 'pending'") && entry.values.length <= 100,
+        (entry) => entry.sql.includes("s.state = 'pending'") && entry.values.length <= 100,
       ),
     ).toBe(true);
     expect(

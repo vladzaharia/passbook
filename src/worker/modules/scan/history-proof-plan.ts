@@ -6,10 +6,11 @@ import {
   type DisplayHistoryRaw,
   type DisplayReadScope,
   decodeDisplayPage,
+  displayEvidenceCache,
 } from './history-display-read.ts';
 import { captureDisplayHistoryScope, sameDisplayHistoryScope } from './history-display-scope.ts';
 import type { PlannedDisplayScan } from './history-planned-display.ts';
-import { createHistoryEvidenceCache, type HistoryEvidenceCache } from './history-row-evidence.ts';
+import type { HistoryEvidenceCache } from './history-row-evidence.ts';
 import { validCredentialKeysetCommitment } from './repo-credential-tombstones.ts';
 import {
   DISPLAY_PAGE_SIZE,
@@ -100,7 +101,7 @@ export function planDisplayHistoryRead(
       )
         return null;
       consumed = true;
-      const cache = createHistoryEvidenceCache();
+      const cache = displayEvidenceCache(actor.orgId, found);
       const ids: string[] = [];
       const seen = new Set<string>();
       const rows = new Map<string, DisplayRow>();
