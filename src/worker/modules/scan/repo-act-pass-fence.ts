@@ -150,7 +150,9 @@ export function prepareSnapshotFence(
     db,
     `SELECT (SELECT rules FROM pass_check_in c WHERE c.org_id=p.org_id AND c.pass_id=p.id) AS rules
      FROM passes p WHERE p.id=? AND p.org_id=? AND p.mode=? AND ${standing}
-       AND ${effectiveReleaseIs('p')}
+       AND ${effectiveReleaseIs('p')}${
+         used === null ? ' AND p.release_id IS NULL AND p.template_version=?' : ''
+       }
        AND EXISTS (SELECT 1 FROM orgs o WHERE o.id=p.org_id AND o.status='active' AND o.access_revision=?)`,
     [
       pass.id,
@@ -159,6 +161,7 @@ export function prepareSnapshotFence(
       credentialGeneration,
       lifecycleGeneration,
       used === null ? null : used[0],
+      ...(used === null ? [pass.templateVersion] : []),
       orgRevision,
     ],
   );

@@ -97,6 +97,11 @@ const AMBIGUOUS_SCAN = Array.from(
   (_, group) => `(${AMBIGUOUS_TERMS.slice(group * 4, group * 4 + 4).join(' OR ')})`,
 ).join(' OR ');
 
+declare const pristineBrand: unique symbol;
+
+/** A predicate that carries the pristine-claim evidence check: only `pristineClaimFence` and `invalidAttemptAuthority` make one. */
+export type PristineClaimFence = ScanPredicate & { readonly [pristineBrand]: true };
+
 /** Match the original claim, not a mutable row that merely retained the same key. */
 export function pristineClaimFence(
   c: Pick<
@@ -113,7 +118,7 @@ export function pristineClaimFence(
     | 'idempotencyKey'
     | 'requestHash'
   >,
-): { sql: string; params: SqlValue[] } {
+): PristineClaimFence & { params: SqlValue[] } {
   return {
     sql: scanConjunction([
       `NOT (${AMBIGUOUS_SCAN})`,
@@ -136,7 +141,7 @@ export function pristineClaimFence(
       c.idempotencyKey,
       c.requestHash,
     ],
-  };
+  } as PristineClaimFence & { params: SqlValue[] };
 }
 
 /** Preserve presence evidence observed before recovery races a later write. */
@@ -177,7 +182,7 @@ export function releaseClaimStmt(
   db: Db,
   id: string,
   claimAt: number,
-  extra?: ScanPredicate,
+  extra?: PristineClaimFence,
 ): D1PreparedStatement {
   const sql = `DELETE FROM scans WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending' AND at = ?
        AND ${extra ? `(${extra.sql})` : `NOT (${AMBIGUOUS_SCAN})`}

@@ -2,6 +2,7 @@ import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import { type GrantPart, readPart } from '../../platform/authority-include.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
+import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
 
 /** The SQL behind the scan grant checks (`authority-checks.ts`, `scan-pass-checks.ts`, `scan-write-grant.ts`). */
@@ -125,3 +126,25 @@ export const dailyAmountCheck = (
        AND s.outcome = 'ok' AND s.undone_by IS NULL AND s.at >= ?), 0) + ? <= ?`,
     [actorKey, since, amount, limit],
   );
+
+/**
+ * The pass is still used under the release the answer was evaluated under (`lineage`, 409
+ * `SCAN_PASS_CHANGED`): a head that says something else about what a scanner may do refuses; an
+ * identical republish leaves the effective release as it was. A snapshot without a release id is
+ * false. For a grant that is the commit itself, so no read of this rides before it.
+ */
+export function effectiveReleaseCheck(
+  passId: string,
+  snapshotRaw: string | null | undefined,
+): Check {
+  const used = usedRelease(snapshotRaw);
+  if (used === false) return rawCheck('lineage', '0');
+  // Not `rawCheck` or `tenantCheck`: the release SQL names org columns and its own aliases (an inner
+  // `a` shadows the actor row only inside its subselects); the tenant is the actor row `a`.
+  return {
+    reason: 'lineage',
+    ok: (b) =>
+      `EXISTS (SELECT 1 FROM passes p WHERE p.id = ${b.bind(passId)} AND p.org_id = a.org_id
+        AND ${effectiveReleaseIdSql('p')} IS ${b.bind(used === null ? null : used[0])})`,
+  };
+}

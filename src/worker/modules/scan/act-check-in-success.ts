@@ -19,7 +19,7 @@ import { type LedgerFacts, ledgerRow } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { doneOkPredicate } from './repo-scan-checks.ts';
+import { doneOkPredicate, effectiveReleaseCheck } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
@@ -180,6 +180,8 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       },
     },
     approver,
+    // The release the answer was evaluated under still stands (the pre-commit read cannot hold it).
+    checks: [effectiveReleaseCheck(found.pass.id, found.liveCandidate?.templateSnapshot?.raw)],
     // Another pass's transfer can retire the presented credential after resolve (shared hash).
     credentialRefs: claim.credentialTombstoneRefs,
     tables: SCAN_COMMIT_TABLES,

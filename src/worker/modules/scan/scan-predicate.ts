@@ -29,7 +29,11 @@ export function withCtes(
 
 /** One `authorized` row (1 or 0) for a predicate, in the batch of the reads it covers. At most 90 binds. */
 export function predicateStmt(db: D1Database, predicate: ScanPredicate): D1PreparedStatement {
-  const sql = `SELECT CASE WHEN (${predicate.sql}) THEN 1 ELSE 0 END AS authorized`;
-  assertBudget(sql, predicate.params, PARAM_BUDGET);
-  return exactStmt(db, sql, predicate.params);
+  const staged = withCtes(
+    predicate,
+    `SELECT CASE WHEN (${predicate.sql}) THEN 1 ELSE 0 END AS authorized`,
+    predicate.params,
+  );
+  assertBudget(staged.sql, staged.params, PARAM_BUDGET);
+  return exactStmt(db, staged.sql, staged.params);
 }

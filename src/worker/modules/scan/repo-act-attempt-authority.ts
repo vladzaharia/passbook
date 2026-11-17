@@ -4,11 +4,10 @@ import type { ScanActor } from './guard.ts';
 import { validCredentialTombstoneRefs } from './repo-credential-tombstones.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import { passAnswerFence, refsClear, underAuthorityCtes } from './repo-read-fences.ts';
-import { type Claim, pristineClaimFence } from './repo-scans.ts';
+import { type Claim, type PristineClaimFence, pristineClaimFence } from './repo-scans.ts';
 import type { Found } from './resolve.ts';
-import type { ScanPredicate } from './scan-predicate.ts';
 
-const DENIED: ScanPredicate = { sql: '0', params: [] };
+const DENIED = { sql: '0', params: [] } as unknown as PristineClaimFence;
 
 /**
  * Fence invalid-action handling to the original actor, candidate and claim: the actor's authority
@@ -21,7 +20,7 @@ export function invalidAttemptAuthority(
   credentials: CredentialTombstoneSnapshot,
   ownedClaim: Claim,
   invalidFound: Found | null,
-): ScanPredicate {
+): PristineClaimFence {
   const candidate = invalidFound?.liveCandidate;
   if (invalidFound && !candidate) return DENIED;
   const refs = credentials.credentialTombstoneRefs;
@@ -46,5 +45,5 @@ export function invalidAttemptAuthority(
     params: original.params,
     ctes: staged.ctes,
     cteParams: staged.params,
-  };
+  } as unknown as PristineClaimFence;
 }

@@ -41,4 +41,31 @@ describe('POST /actions CSRF', () => {
     expect(ok.status).toBe(200);
     expect(await ok.json()).toMatchObject({ kind: 'ok' });
   });
+
+  it('refuses an admin session request with a wrong CSRF token, and acts with its own', async () => {
+    const templateId = await kit.scanTemplate('CSRF admin act', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+    });
+    const pass = await kit.scanPass(templateId);
+    const idempotencyKey = key();
+    const body = {
+      scope: { orgId: kit.org.id, timeZone: 'UTC' },
+      idempotencyKey,
+      input: codeOf(pass),
+      clientTs: kit.clock.now(),
+      actionId: 'check_in',
+    };
+    const admin = kit.admin();
+    for (const token of [undefined, 'not-the-secret']) {
+      const headers = { ...admin };
+      if (token === undefined) delete headers['x-csrf-token'];
+      else headers['x-csrf-token'] = token;
+      await expectProblem(await kit.post(headers, '/actions', body), 403, 'CSRF_TOKEN');
+    }
+    expect(
+      await first(kit.env.DB, 'SELECT id FROM scans WHERE idempotency_key = ?', [idempotencyKey]),
+    ).toBeNull();
+    const ok = await kit.post(admin, '/actions', body);
+    expect(ok.status, await ok.clone().text()).toBe(200);
+  });
 });

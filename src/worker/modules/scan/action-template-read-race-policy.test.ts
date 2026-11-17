@@ -13,9 +13,10 @@ import {
   ACTION,
   action,
   body,
+  expectClassified,
   fixture,
   PRIVATE,
-  race,
+  raceRaw,
   stageVersion,
 } from './action-template-read-race-test-fixtures.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
@@ -145,7 +146,7 @@ describe('action policy from captured D1 template rows', () => {
     );
   });
 
-  it('allows the unchanged legacy pin and admits the first approved head at commit', async () => {
+  it('allows the unchanged legacy pin and refuses the commit when the first approved head lands', async () => {
     const valid = await fixture(kit, { legacy: true });
     const candidate = await candidateById(kit.env.DB, kit.org.id, valid.pass.id);
     expect(candidate).toMatchObject({
@@ -159,15 +160,23 @@ describe('action policy from captured D1 template rows', () => {
     const stale = await fixture(kit, { legacy: true });
     const request = body(kit, stale.pass.id);
     const before = await effects(kit.env.DB, stale.pass.id, request.idempotencyKey, kit.org.id);
-    const result = await race(kit, stale.scanner.headers, request, 'INSERT INTO scan_gates', (db) =>
-      approveAppleRelease(kit, { db, templateId: stale.templateId, version: 'v1', mode: 'live' }),
+    const response = await raceRaw(
+      kit,
+      stale.scanner.headers,
+      request,
+      'INSERT INTO scan_gates',
+      (db) =>
+        approveAppleRelease(kit, { db, templateId: stale.templateId, version: 'v1', mode: 'live' }),
     );
-    // The first approved head is a release (content), not authority: the visit is recorded.
-    expect(result.kind).toBe('ok');
+    // The first approved head changes the release the pass is used under: the commit refuses (409,
+    // the client retries under the head), and nothing was recorded.
+    await expectClassified(response, 'SCAN_PASS_CHANGED');
     expect(
       await effects(kit.env.DB, stale.pass.id, request.idempotencyKey, kit.org.id),
-    ).toMatchObject({ gates: 1, events: 1 });
+    ).toMatchObject({ gates: 0, events: 0 });
     expect(before).toMatchObject({ gates: 0, events: 0 });
+    const retry = await action(kit, stale.scanner.headers, request);
+    expect(retry.kind).toBe('ok');
     expect((await candidateById(kit.env.DB, kit.org.id, stale.pass.id))?.activeReleaseId).toEqual(
       expect.any(String),
     );
