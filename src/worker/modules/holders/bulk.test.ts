@@ -1,12 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
+import { makeOrg, makeUser, saveOrgSettings } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { createAuthStores } from '../../stores.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { updateSettings } from '../settings/service.ts';
 import { blockedUsers } from './repo.ts';
 import { assignHolder, assignHoldersBulk } from './service.ts';
 import { eventMember } from './test-auth-fixtures.ts';
@@ -87,10 +86,12 @@ describe('assign-bulk', () => {
       null,
       async (orgId) => {
         const authority = await tenantAuthorityOf(jobCtxOf(kit), session, orgId, 'passes:operate');
-        await updateSettings(jobCtxOf(kit), admin, {
-          scope: `org:${orgId}`,
-          values: { 'support.email': `${kit.fx.ids.id()}@example.test` },
-        });
+        await saveOrgSettings(
+          jobCtxOf(kit).env.DB,
+          orgId,
+          { 'support.email': `${kit.fx.ids.id()}@example.test` },
+          jobCtxOf(kit).clock.now(),
+        );
         return authority;
       },
     );

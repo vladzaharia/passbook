@@ -23,7 +23,7 @@ import { localDayStart } from './counts.ts';
 import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { parseSettings } from './dto-console.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
-import { hasScannerTemplates } from './repo-scanner-configuration-scope.ts';
+import { scannerHasTemplates } from './repo-device.ts';
 import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 import { type ScanningSessionRow, scanningSessionStats } from './repo-scanning-sessions.ts';
 import { countOrgTemplates, readValidEventScope, type ScanEventRow } from './repo-scope.ts';
@@ -174,7 +174,7 @@ export async function conflictsWithAllScope(
   return (
     !scope.restricted &&
     settings.acceptAllTemplates === true &&
-    (scanner.eventId !== null || (await hasScannerTemplates(ctx.env.DB, scanner.id)))
+    (scanner.eventId !== null || (await scannerHasTemplates(ctx.env.DB, scanner.id)))
   );
 }
 

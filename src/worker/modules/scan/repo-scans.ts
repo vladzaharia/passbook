@@ -1,18 +1,44 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { all, first, type SqlValue, stmt } from '../../platform/db.ts';
-import type { Claim } from './repo-scans-write.ts';
 
 type Db = D1Database;
 
 export type { ScanRow } from './repo-scan-map.ts';
-export type { Claim, Finalize } from './repo-scans-write.ts';
-export {
-  claimScan,
-  claimScanStmt,
-  finalizeStmt,
-  ledgerIfFinalizedStmt,
-} from './repo-scans-write.ts';
+
+export interface Claim {
+  id: string;
+  orgId: string;
+  mode: Mode;
+  scannerId: string | null;
+  eventId: string | null;
+  actorType: 'scanner' | 'user';
+  actorId: string;
+  actorKey: string;
+  staffId: string | null;
+  idempotencyKey: string;
+  requestHash: string;
+  method: string;
+  clientTs: number;
+  now: number;
+}
+
+export interface Finalize {
+  id: string;
+  claimAt: number;
+  outcome: 'ok' | 'heads_up' | 'refused';
+  reason: string | null;
+  passId: string | null;
+  templateId: string | null;
+  actionId: string | null;
+  actionKind: string | null;
+  passVersion: number | null;
+  overrideOf: string | null;
+  approvedBy: string | null;
+  direction?: 'in' | 'out';
+  presenceScope?: string;
+  eventId?: string;
+}
 
 import { type Raw, type ScanRow, toScan } from './repo-scan-map.ts';
 

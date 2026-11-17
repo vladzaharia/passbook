@@ -3,7 +3,7 @@ import type { ScannerFixture } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { reconcileScans } from './jobs.ts';
-import { claimScan } from './repo-scans.ts';
+import { claimScan } from './repo-scans-test-support.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
 export let kit: ScanKit;

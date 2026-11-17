@@ -28,7 +28,7 @@ const session = z.strictObject({
 const tenantAuthority = z.strictObject({
   kind: z.literal('session'),
   orgId: IdSchema,
-  orgUpdatedAt: timestamp,
+  orgAccessRevision: timestamp,
   userId: IdSchema,
   userAccessRevision: timestamp.optional(),
   sessionId: z.string().min(1),

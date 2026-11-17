@@ -23,7 +23,7 @@ const AuthoritySchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('session'),
     orgId: z.string(),
-    orgUpdatedAt: z.number(),
+    orgAccessRevision: z.number(),
     userId: z.string(),
     sessionId: z.string(),
     sessionRoles: z.array(RoleSchema),
@@ -36,7 +36,7 @@ const AuthoritySchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('api_key'),
     orgId: z.string(),
-    orgUpdatedAt: z.number(),
+    orgAccessRevision: z.number(),
     keyId: z.string(),
     keyOrgId: z.string().nullable(),
     scopes: z.array(ApiScopeSchema),

@@ -49,7 +49,7 @@ export function templatePrincipal(authority: TemplateAuthority, deferred: boolea
     kind: 'membership',
     membershipId: authority.membershipId,
     via: 'deferred',
-    orgAccessRevision: authority.orgUpdatedAt,
+    orgAccessRevision: authority.orgAccessRevision,
     // Work captured without the user's revision is refused, never revived.
     userAccessRevision: authority.userAccessRevision ?? 0,
     mode: authority.mode,

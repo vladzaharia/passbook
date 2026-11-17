@@ -143,15 +143,16 @@ export async function setUserStatus(
   actorId: string,
   id: string,
   status: 'active' | 'disabled',
-  adminSessionId?: string,
+  adminSessionId: string,
 ): Promise<UserDto> {
   const user = await requireUser(ctx, id);
   if (status === 'disabled' && id === actorId) {
     throw new ConflictError('You cannot disable your own account.', 'SELF_DISABLE');
   }
-  const changed = adminSessionId
-    ? await repo.setStatusAsAdmin(ctx, id, status, { userId: actorId, sessionId: adminSessionId })
-    : await repo.setStatus(ctx.env.DB, id, status, ctx.clock.now());
+  const changed = await repo.setStatusAsAdmin(ctx, id, status, {
+    userId: actorId,
+    sessionId: adminSessionId,
+  });
   if (changed) {
     await recordAudit(ctx, {
       actorType: 'user',

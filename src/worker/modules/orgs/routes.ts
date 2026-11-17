@@ -58,9 +58,10 @@ orgsRoutes.use('/:id', (c, next) =>
 orgsRoutes.use('*', limitBody(1024 * 1024));
 
 /** The signed-in admin session: requireAdmin already proved it, and the platform grant re-checks it at commit. */
-function adminOf(c: Context<AppBindings>): OrgAdmin | undefined {
+function adminOf(c: Context<AppBindings>): OrgAdmin {
   const auth = c.var.auth;
-  return auth?.kind === 'session' ? { userId: auth.userId, sessionId: auth.sessionId } : undefined;
+  if (auth?.kind !== 'session') throw new UnauthenticatedError();
+  return { userId: auth.userId, sessionId: auth.sessionId };
 }
 
 async function authorizeOrg(c: Context<AppBindings>, id: string, capability: OrgCapability) {

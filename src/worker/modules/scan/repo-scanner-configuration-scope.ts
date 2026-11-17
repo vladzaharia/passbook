@@ -1,14 +1,11 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
-import { packedPredicate } from './repo-action-authority.ts';
 import type { ConsoleScannerRow } from './repo-scanners.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 import {
   captureTemplateStamps,
   type SessionLegacyStamp,
   type SessionReleaseStamp,
-  sessionTemplateStampsPredicate,
-  usableScanTemplateSql,
 } from './repo-scope-releases.ts';
 
 type Db = D1Database;
@@ -196,49 +193,3 @@ export function configurationScopeTemplatesPredicate(
     params: [snapshot.templateIds, snapshot.templateRows],
   };
 }
-
-export function configurationScopePredicate(
-  snapshot: ConfigurationScopeSnapshot | undefined,
-  orgId: string,
-  mode: Mode,
-): { sql: string; params: SqlValue[] } {
-  if (!snapshot) return { sql: '1', params: [] };
-  if (snapshot.orgId !== orgId || snapshot.mode !== mode) return { sql: '0', params: [] };
-  const rows = configurationScopeRowsPredicate(snapshot, orgId, mode);
-  const templates = configurationScopeTemplatesPredicate(snapshot, orgId, mode);
-  const sql = [`(${rows.sql})`, `(${templates.sql})`];
-  const params: SqlValue[] = [...rows.params, ...templates.params];
-  for (const stamps of snapshot.stamps) {
-    const predicate = sessionTemplateStampsPredicate(
-      stamps.releases,
-      stamps.legacy,
-      'config_scope.org_id',
-      'config_scope.mode',
-    );
-    sql.push(`EXISTS (SELECT 1 FROM (SELECT ? AS org_id, ? AS mode) config_scope
-      WHERE ${predicate.sql})`);
-    params.push(orgId, mode, ...predicate.params);
-  }
-  if (snapshot.unusable.length) {
-    sql.push(`NOT EXISTS (SELECT 1 FROM (SELECT ? AS org_id, ? AS mode) invalid_scope
-      JOIN json_each(?) invalid
-      JOIN templates invalid_t ON invalid_t.id=invalid.value
-        AND (invalid_t.org_id=invalid_scope.org_id OR invalid_t.org_id IS NULL)
-        AND invalid_t.status!='deleted'
-      WHERE ${usableScanTemplateSql({
-        templateIdSql: 'invalid_t.id',
-        orgIdSql: 'invalid_scope.org_id',
-        modeSql: 'invalid_scope.mode',
-        providerSql: "'apple'",
-      })})`);
-    params.push(orgId, mode, JSON.stringify(snapshot.unusable));
-  }
-  return packedPredicate(sql.join(' AND '), params);
-}
-
-export const hasScannerTemplates = async (db: Db, scannerId: string): Promise<boolean> =>
-  !!(await first<{ present: number }>(
-    db,
-    'SELECT 1 AS present FROM scanner_templates WHERE scanner_id=? LIMIT 1',
-    [scannerId],
-  ));
