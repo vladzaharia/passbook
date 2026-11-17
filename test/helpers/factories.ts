@@ -6,7 +6,7 @@ import { PLATFORM_IDENTITY_ID } from '../../src/worker/modules/identities/resolv
 import { hashPin } from '../../src/worker/modules/scan/staff-pin.ts';
 import { putVersionAsset } from '../../src/worker/modules/templates/asset-storage.ts';
 import { canonicalJson, crc32, sha1Hex } from '../../src/worker/modules/templates/package/hash.ts';
-import { r2Key } from '../../src/worker/modules/templates/registry.ts';
+import { r2Key } from '../../src/worker/modules/templates/r2-key.ts';
 import { ManualClock } from '../../src/worker/platform/clock.ts';
 import { first, run } from '../../src/worker/platform/db.ts';
 import type { AppEnv } from '../../src/worker/platform/env.ts';

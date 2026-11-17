@@ -56,6 +56,9 @@ export default defineConfig({
         ],
         test: {
           name: 'worker',
+          // lucide-react's barrel is ~4300 icon modules; workerd fetched each one per test file (10+ s).
+          // Pre-bundled it is one module.
+          deps: { optimizer: { ssr: { enabled: true, include: ['lucide-react'] } } },
           include: ['src/worker/**/*.test.ts', 'test/**/*.test.ts'],
           // A race test runs several D1 batches in workerd; on a shared CI runner that passes 5 s.
           testTimeout: 30_000,
