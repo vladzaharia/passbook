@@ -9,6 +9,7 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
 import { actorCsrfFence } from './actor-csrf.ts';
 import { sessionGrant } from './repo-admin-grant.ts';
+import { EXPECTED_TTL_MS } from './repo-counts.ts';
 import { eventCacheChecks } from './repo-event-authority.ts';
 import { type EventAuthority, eventSessionAuthorityValid } from './repo-event-keyset.ts';
 import {
@@ -22,7 +23,6 @@ import { releaseHeadsComplete } from './repo-scope-releases.ts';
 
 export { checkTemplates, checkWindow } from './events-validation.ts';
 
-const EXPECTED_TTL_MS = 60_000;
 /** Every returned count is live; at most ten cache writes are attempted per page. */
 const LIST_CACHE_WRITES = 10;
 

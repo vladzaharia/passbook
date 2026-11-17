@@ -78,9 +78,10 @@ export function registerCountsCacheReadCases() {
     await run(kit.env.DB, "UPDATE passes SET status='voided' WHERE id=?", [s.passId]);
     expect((await plan.read(results)).counts.event?.expected).toBe(1);
     expect(await cache(s.event.id)).toEqual({ expected: 1, expected_at: asOf });
+    kit.clock.advance(61_000);
     const next = planCounts(kit.ctx, s.actor);
     expect((await next.read(await kit.env.DB.batch(next.stmts))).counts.event?.expected).toBe(0);
-    expect(await cache(s.event.id)).toEqual({ expected: 0, expected_at: asOf });
+    expect(await cache(s.event.id)).toEqual({ expected: 0, expected_at: kit.clock.now() });
   });
 
   it('captures the event selection, rule and extra fence before lazy batch assembly', async () => {
@@ -107,20 +108,20 @@ export function registerCountsCacheReadCases() {
     await run(
       kit.env.DB,
       "UPDATE pass_versions SET pass_json=json_set(pass_json,'$.expirationDate',?) WHERE pass_id=?",
-      [new Date(kit.clock.now() + 5_000).toISOString(), expiring.id],
+      [new Date(kit.clock.now() + 65_000).toISOString(), expiring.id],
     );
     const read = async () => {
       const plan = planCounts(kit.ctx, s.actor);
       return plan.read(await kit.env.DB.batch(plan.stmts));
     };
     expect((await read()).counts.event?.expected).toBe(2);
-    kit.clock.advance(5_000);
+    kit.clock.advance(65_000);
     expect((await read()).counts.event?.expected).toBe(2);
     const plannedAt = kit.clock.now();
     const pending = planCounts(kit.ctx, s.actor);
     const afterExpiry = planCounts(kit.ctx, s.actor);
     const results = await kit.env.DB.batch(pending.stmts);
-    kit.clock.advance(1);
+    kit.clock.advance(61_000);
     const captured = await pending.read(results);
     expect(captured.counts.event?.expected).toBe(2);
     expect(captured.counts.asOf).toBe(plannedAt);
@@ -149,6 +150,7 @@ export function registerCountsCacheReadCases() {
     expect(captured.counts.event?.expected).toBe(1);
     expect(captured.counts.asOf).toBe(asOf);
     expect(await cache(s.event.id)).toEqual({ expected: 1, expected_at: asOf });
+    kit.clock.advance(61_000);
     const fresh = planCounts(kit.ctx, s.actor);
     expect((await fresh.read(await kit.env.DB.batch(fresh.stmts))).counts.event?.expected).toBe(0);
     expect(await cache(s.event.id)).toEqual({ expected: 0, expected_at: kit.clock.now() });
