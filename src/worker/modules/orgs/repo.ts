@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, chunk, containsMatch, first, placeholders, run } from '../../platform/db.ts';
+import { all, chunk, containsMatch, first, placeholders, run, stmt } from '../../platform/db.ts';
 
 export const COUNT_CAP = 100_000;
 
@@ -169,15 +169,23 @@ export async function orgBrandingJson(db: D1Database, orgId: string): Promise<st
   return row?.branding ?? null;
 }
 
+export interface OrgForPassRow {
+  id: string;
+  slug: string;
+  name: string;
+  status: string;
+  default_identity_id: string | null;
+  branding: string | null;
+}
+
+export function orgForPassStmt(db: D1Database, orgId: string) {
+  return stmt(
+    db,
+    'SELECT id, slug, name, status, default_identity_id, branding FROM orgs WHERE id = ?',
+    [orgId],
+  );
+}
+
 export function orgForPass(db: D1Database, orgId: string) {
-  return first<{
-    id: string;
-    slug: string;
-    name: string;
-    status: string;
-    default_identity_id: string | null;
-    branding: string | null;
-  }>(db, 'SELECT id, slug, name, status, default_identity_id, branding FROM orgs WHERE id = ?', [
-    orgId,
-  ]);
+  return orgForPassStmt(db, orgId).first<OrgForPassRow>();
 }

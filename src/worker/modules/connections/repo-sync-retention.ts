@@ -212,7 +212,7 @@ async function deleteExpiredUnfinishedWebhooks(
   );
   const rows = await deleteRetained(
     ctx,
-    `state <> 'pending' AND received_at < ? AND updated_at < ?
+    `state IN ('failed', 'blocked', 'resolved', 'ignored') AND received_at < ? AND updated_at < ?
      AND NOT EXISTS (SELECT 1 FROM webhook_events e
        WHERE e.connection_id = connection_webhook_retention.connection_id
          AND e.event_id = connection_webhook_retention.event_id)

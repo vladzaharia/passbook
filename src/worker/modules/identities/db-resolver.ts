@@ -101,6 +101,7 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
   return {
     platform,
     byId,
+    byRow: (row) => resolveRow(env, row),
     async forOrg(orgId, identityId) {
       const explicit = identityId ?? (await orgDefaultIdentityId(env.DB, orgId));
       if (explicit) {

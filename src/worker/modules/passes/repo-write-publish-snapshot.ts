@@ -1,4 +1,4 @@
-import { first } from '../../platform/db.ts';
+import { first, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
 import {
@@ -131,19 +131,17 @@ export function removalClaimParams(
   return [version, pass.status, pass.objectKey, pass.linkGeneration];
 }
 
-/** Reads the raw removal state only while the pass still matches the original publish input. */
-export async function getPublishRemovalSnapshot(
-  db: D1Database,
-  pass: Pass,
-  requireRemovalClaim = false,
-): Promise<CapturedPublishRemoval | null> {
-  const row = await first<{
-    removal_message: string | null;
-    removal_prior_status: string | null;
-    lifecycle_generation: number;
-    removal_published_generation: number | null;
-    image_generation: number;
-  }>(
+interface RemovalRow {
+  removal_message: string | null;
+  removal_prior_status: string | null;
+  lifecycle_generation: number;
+  removal_published_generation: number | null;
+  image_generation: number;
+}
+
+/** The raw removal read, guarded by the original publish input (a miss means the pass moved). */
+export function publishRemovalStmt(db: D1Database, pass: Pass, requireRemovalClaim = false) {
+  return stmt(
     db,
     `SELECT removal_message, removal_prior_status, lifecycle_generation, removal_published_generation, image_generation FROM passes
      WHERE id = ? AND version = ? AND ${basePublishSnapshotPredicate}
@@ -155,6 +153,12 @@ export async function getPublishRemovalSnapshot(
       ...(requireRemovalClaim ? removalClaimParams(pass.version, pass) : []),
     ],
   );
+}
+
+export function mapPublishRemoval(
+  pass: Pass,
+  row: RemovalRow | null,
+): CapturedPublishRemoval | null {
   return row
     ? {
         at: pass.removedAt,
@@ -165,6 +169,16 @@ export async function getPublishRemovalSnapshot(
         priorStatus: row.removal_prior_status,
       }
     : null;
+}
+
+/** Reads the raw removal state only while the pass still matches the original publish input. */
+export async function getPublishRemovalSnapshot(
+  db: D1Database,
+  pass: Pass,
+  requireRemovalClaim = false,
+): Promise<CapturedPublishRemoval | null> {
+  const row = await publishRemovalStmt(db, pass, requireRemovalClaim).first<RemovalRow>();
+  return mapPublishRemoval(pass, row);
 }
 
 /** Revalidates the exact build input before writing its artifact to R2. */

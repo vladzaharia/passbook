@@ -95,8 +95,12 @@ export function pageIdentityRows(
   );
 }
 
+export function identityRowStmt(db: D1Database, id: string) {
+  return stmt(db, `SELECT ${COLUMNS} FROM signing_identities WHERE id = ?`, [id]);
+}
+
 export function getIdentityRow(db: D1Database, id: string): Promise<IdentityRow | null> {
-  return first<IdentityRow>(db, `SELECT ${COLUMNS} FROM signing_identities WHERE id = ?`, [id]);
+  return identityRowStmt(db, id).first<IdentityRow>();
 }
 
 export function findByPassType(db: D1Database, passTypeIdentifier: string) {

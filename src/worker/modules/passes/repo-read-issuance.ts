@@ -1,5 +1,5 @@
 import { first } from '../../platform/db.ts';
-import { orgForPass } from '../orgs/repo.ts';
+import { type OrgForPassRow, orgForPass } from '../orgs/repo.ts';
 
 export interface PassOrg {
   id: string;
@@ -12,7 +12,10 @@ export interface PassOrg {
 }
 
 export async function getOrg(db: D1Database, orgId: string): Promise<PassOrg | null> {
-  const row = await orgForPass(db, orgId);
+  return mapPassOrg(await orgForPass(db, orgId));
+}
+
+export function mapPassOrg(row: OrgForPassRow | null): PassOrg | null {
   if (!row) return null;
   let branding: unknown = {};
   try {

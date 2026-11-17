@@ -3,6 +3,7 @@ import { UnavailableError } from '../../platform/errors.ts';
 import { toHex } from '../../platform/ids.ts';
 import {
   initializeCredentialRefKeyset,
+  initializeKeysetWith,
   matchesCredentialRefKeyset,
 } from './repo-credential-keyset.ts';
 
@@ -44,6 +45,18 @@ export async function ensureCredentialRefKeyset(db: D1Database, env: object): Pr
   const commitment = await credentialRefKeysetCommitment(env);
   if (!(await initializeCredentialRefKeyset(db, commitment))) throw unavailable();
   return commitment;
+}
+
+/** `ensureCredentialRefKeyset` that also runs `extra` statements in its trip. */
+export async function ensureCredentialRefKeysetWith(
+  db: D1Database,
+  env: object,
+  extra: D1PreparedStatement[],
+): Promise<{ commitment: string; extra: D1Result[] }> {
+  const commitment = await credentialRefKeysetCommitment(env);
+  const done = await initializeKeysetWith(db, commitment, extra);
+  if (!done.ok) throw unavailable();
+  return { commitment, extra: done.extra };
 }
 
 /** Revalidate retained authority without ever initializing a missing singleton. */

@@ -42,17 +42,30 @@ const mapVersion = (r: VersionDbRow): VersionRow => ({
   passJson: r.pass_json,
 });
 
+export type VersionSummaryRow = Omit<VersionRow, 'personalization' | 'passJson'>;
+
+/** The history list shows who and when; the snapshot columns stay in the table. */
 export async function listVersions(
   db: D1Database,
   passId: string,
   limit = 50,
-): Promise<VersionRow[]> {
-  const rows = await all<VersionDbRow>(
+): Promise<VersionSummaryRow[]> {
+  const rows = await all<Omit<VersionDbRow, 'personalization' | 'pass_json'>>(
     db,
-    'SELECT * FROM pass_versions WHERE pass_id = ? ORDER BY version DESC LIMIT ?',
+    `SELECT version, template_version, cause, source, actor_type, actor_id, created_at, purged_at
+     FROM pass_versions WHERE pass_id = ? ORDER BY version DESC LIMIT ?`,
     [passId, limit],
   );
-  return rows.map(mapVersion);
+  return rows.map((r) => ({
+    version: r.version,
+    templateVersion: r.template_version,
+    cause: r.cause,
+    source: PassSourceSchema.safeParse(r.source).data ?? null,
+    actorType: r.actor_type,
+    actorId: r.actor_id,
+    createdAt: r.created_at,
+    purged: r.purged_at !== null,
+  }));
 }
 
 export async function getVersion(
@@ -85,7 +98,8 @@ export async function versionsToPurge(
     db,
     `SELECT pv.pass_id, pv.version, pv.object_key FROM pass_versions pv
      WHERE pv.purged_at IS NULL ${passId === undefined ? '' : 'AND pv.pass_id = ?'}
-       AND (SELECT count(*) FROM pass_versions n WHERE n.pass_id = pv.pass_id AND n.version > pv.version) > ?
+       AND EXISTS (SELECT 1 FROM (SELECT 1 FROM pass_versions n
+         WHERE n.pass_id = pv.pass_id AND n.version > pv.version LIMIT 1 OFFSET ?))
      LIMIT ?`,
     [...(passId === undefined ? [] : [passId]), keep, limit],
   );

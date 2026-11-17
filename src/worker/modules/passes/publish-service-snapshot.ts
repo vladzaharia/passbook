@@ -1,18 +1,19 @@
 import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { getPassForWrite } from './pass-access.ts';
+import { orgSettingsStmtIfCold, primeOrgSettings } from '../settings/service.ts';
+import { getPassForWrite, writablePass } from './pass-access.ts';
 import type { PublishOptions } from './publish.ts';
 import type { Pass } from './repo.ts';
 import { matchesConnectionPass } from './repo-read-connection.ts';
-import {
-  getPublishRemovalSnapshot,
-  type PublishRemovalSnapshot,
-} from './repo-write-publish-snapshot.ts';
+import { readPublishBundle } from './repo-read-publish-bundle.ts';
+import type { PublishRemovalSnapshot } from './repo-write-publish-snapshot.ts';
 
 export interface PublishSnapshotState {
   original: Pass | null;
   originalRemoval: PublishRemovalSnapshot | null;
   originalImageGeneration: number | null;
+  /** The pass read with the keyset check; consumed by the first attempt. */
+  preloaded?: { pass: Pass | null } | undefined;
 }
 
 /** Capture the original pass and removal state across compare-and-swap retries. */
@@ -24,7 +25,11 @@ export async function capturePublishSnapshot(
   const db = ctx.env.DB;
   if (options.connectionContext && !(await matchesConnectionPass(db, options.connectionContext)))
     throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
-  const current = await getPassForWrite(db, options.passId, options.orgScope ?? null);
+  const preloaded = state.preloaded;
+  state.preloaded = undefined;
+  const current = preloaded
+    ? writablePass(preloaded.pass, options.orgScope ?? null)
+    : await getPassForWrite(db, options.passId, options.orgScope ?? null);
   if (
     options.authority &&
     (current.orgId !== options.authority.orgId || current.mode !== options.authority.mode)
@@ -67,7 +72,15 @@ export async function capturePublishSnapshot(
       current.objectKey !== options.expectedPass.objectKey)
   )
     throw new ConflictError('The staged pass changed. Reload and retry.', 'PASS_CONFLICT');
-  const removalSnapshot = await getPublishRemovalSnapshot(db, current, options.source === 'remove');
+  const settings = orgSettingsStmtIfCold(ctx, current.orgId);
+  const reads = await readPublishBundle(
+    db,
+    current,
+    options.source === 'remove',
+    settings ? [settings] : [],
+  );
+  if (settings && reads.extra[0]) primeOrgSettings(ctx, current.orgId, reads.extra[0]);
+  const removalSnapshot = reads.removal;
   if (!removalSnapshot) {
     if (options.connectionContext)
       throw new ConflictError('The connection or pass changed. Retry.', 'PASS_CONFLICT');
@@ -94,5 +107,5 @@ export async function capturePublishSnapshot(
     throw new ConflictError('The pass images changed. Reload and retry.', 'PASS_CONFLICT');
   state.originalImageGeneration ??= removalSnapshot.imageGeneration;
   state.originalRemoval ??= removalSnapshot;
-  return { current, removalSnapshot };
+  return { current, removalSnapshot, reads };
 }

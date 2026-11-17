@@ -8,6 +8,7 @@ import { orgIsReadable } from '../orgs/repo.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
 import {
   countEmailOnlyUsers,
+  orgSettingsStmt,
   readOrgConfigRevision,
   readScopeRows,
   type SettingRow,
@@ -41,6 +42,28 @@ async function readScope(ctx: ServiceContext, scope: string): Promise<Record<str
   const values = validStored(ctx, scope, await readScopeRows(ctx.env.DB, scope));
   byScope.set(scope, { at: now, values });
   return values;
+}
+
+/** The org's settings read as a batch statement, or null while a fresh cached value exists. */
+export function orgSettingsStmtIfCold(
+  ctx: ServiceContext,
+  orgId: string,
+): D1PreparedStatement | null {
+  const hit = cache.get(ctx.env.DB)?.get(`org:${orgId}`);
+  const now = ctx.clock.now();
+  if (hit && now >= hit.at && now - hit.at < CACHE_TTL_MS) return null;
+  return orgSettingsStmt(ctx.env.DB, orgId);
+}
+
+/** Fills the cache from a `orgSettingsStmtIfCold` result, as `getOrgSettings` would have. */
+export function primeOrgSettings(ctx: ServiceContext, orgId: string, result: D1Result): void {
+  const scope = `org:${orgId}`;
+  const byScope = cache.get(ctx.env.DB) ?? new Map();
+  cache.set(ctx.env.DB, byScope);
+  byScope.set(scope, {
+    at: ctx.clock.now(),
+    values: validStored(ctx, scope, result.results as SettingRow[]),
+  });
 }
 
 /** Stored values that still pass their schema; unknown or invalid ones fall back to the default. */

@@ -1,16 +1,5 @@
 import { first } from '../../platform/db.ts';
 
-/** A credential transfer is under way: the pass is not the holder's to change right now. */
-export async function transferPending(db: D1Database, passId: string): Promise<boolean> {
-  return (
-    (await first(
-      db,
-      "SELECT 1 AS n FROM pass_credential_transfers WHERE pass_id = ? AND state = 'pending'",
-      [passId],
-    )) !== null
-  );
-}
-
 /** The credential moved since this scan: a transfer is pending, or the generation its event recorded is not the pass's. */
 export async function holderMoved(
   db: D1Database,
