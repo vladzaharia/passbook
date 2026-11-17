@@ -9,7 +9,11 @@ import { assertWritableMode, type PassScope, type ScopeArg } from './scope.ts';
 
 /** Reads a pass for a change: missing, out of org, or (for API keys and sessions) the other mode fails. */
 export async function getPassForWrite(db: D1Database, id: string, scope: ScopeArg): Promise<Pass> {
-  const pass = await getPass(db, id, scope);
+  return writablePass(await getPass(db, id, scope), scope);
+}
+
+/** `getPassForWrite` for a row the caller already read. */
+export function writablePass(pass: Pass | null, scope: ScopeArg): Pass {
   if (!pass) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   assertWritableMode(scope, pass.mode);
   return pass;

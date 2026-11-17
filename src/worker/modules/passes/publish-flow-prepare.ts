@@ -118,6 +118,7 @@ export async function preparePublishAttempt(
     templateVersion: next.templateVersion,
     personalization: next.personalization,
     status: next.status,
+    prefetched: { identityRow: reads.identityRow, inputs: reads.inputs },
   };
   const artifact = await buildArtifact(buildCtx, buildRequest);
   assertReleaseArtifact(release, artifact.template);

@@ -3,7 +3,7 @@ import type { PassSource } from '../../../shared/contracts/passes.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { ensureCredentialRefKeyset, requireCredentialRefKeyset } from './credential-keyset.ts';
+import { ensureCredentialRefKeysetWith, requireCredentialRefKeyset } from './credential-keyset.ts';
 import type { TenantPassWrite } from './http.ts';
 import { publishChangedAttempt } from './publish-flow-changed.ts';
 import { type PublishReleaseState, preparePublishAttempt } from './publish-flow-prepare.ts';
@@ -11,6 +11,7 @@ import { publishUnchangedAttempt } from './publish-flow-unchanged.ts';
 import { capturePublishSnapshot, type PublishSnapshotState } from './publish-service-snapshot.ts';
 import type { ConnectionPassContext } from './repo-connection-context.ts';
 import type { FieldSources, Pass, PassCause, PassStatus } from './repo-map.ts';
+import { getPassStmt, passFromResult, transferPendingStmt } from './repo-read-pass.ts';
 import type { ConnectionStateWrite } from './repo-write-publish.ts';
 import type { PublishCommit } from './repo-write-publish-granted.ts';
 import type { PublishRemovalSnapshot } from './repo-write-publish-snapshot.ts';
@@ -73,6 +74,8 @@ export interface PublishOptions {
   budgetExempt?: () => boolean;
   /** A scan's own grant: its rows commit in the pass write's batch (no tenant `authority` then). */
   commit?: PublishCommit;
+  /** Refuses (with this error) when a credential transfer is pending; checked in the first read trip. */
+  transferPendingError?: () => Error;
 }
 
 export interface PublishResult {
@@ -81,6 +84,8 @@ export interface PublishResult {
   credentialKeysetCommitment: string;
   /** The update would have notified, but the pass is at its daily limit: it went out silent. */
   silenced?: boolean;
+  /** The pass.json the commit wrote (changed publishes only). */
+  passJson?: string;
 }
 
 /**
@@ -122,9 +127,20 @@ export async function publishPass(
       : options.authority.scope !== 'passes:write')
   )
     throw new ConflictError('Your access changed. Reload and retry.', 'PASS_CONFLICT');
-  const credentialKeysetCommitment = await (options.connectionContext
-    ? requireCredentialRefKeyset(db, credentialEnv)
-    : ensureCredentialRefKeyset(db, credentialEnv));
+  let credentialKeysetCommitment: string;
+  if (options.connectionContext) {
+    credentialKeysetCommitment = await requireCredentialRefKeyset(db, credentialEnv);
+  } else {
+    // The keyset check, the pass and the transfer check share one trip.
+    const done = await ensureCredentialRefKeysetWith(db, credentialEnv, [
+      getPassStmt(db, options.passId, options.orgScope ?? null),
+      ...(options.transferPendingError ? [transferPendingStmt(db, options.passId)] : []),
+    ]);
+    credentialKeysetCommitment = done.commitment;
+    if (options.transferPendingError && done.extra[1]?.results.length)
+      throw options.transferPendingError();
+    snapshotState.preloaded = { pass: passFromResult(done.extra[0]) };
+  }
   if (
     options.connectionContext &&
     options.connectionContext.credentialKeysetCommitment !== credentialKeysetCommitment

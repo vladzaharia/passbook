@@ -2,6 +2,7 @@ import wwdrG4 from '../../../generated/wwdr-g4.ts';
 import type { PassIdentity, SigningMaterial } from '../../../passkit/types.ts';
 import { type AppEnv, envString } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
+import type { IdentityRow } from './repo.ts';
 
 export const PLATFORM_IDENTITY_ID = 'platform';
 
@@ -18,6 +19,8 @@ export interface IdentityResolver {
   /** Identity for a new pass: explicit id, else the org default, else the platform identity. */
   forOrg(orgId: string, identityId?: string | null): Promise<ResolvedIdentity>;
   byId(identityId: string): Promise<ResolvedIdentity>;
+  /** `byId` for a row the caller already read in a batch. */
+  byRow?(row: IdentityRow): Promise<ResolvedIdentity>;
   platform(): Promise<ResolvedIdentity>;
 }
 

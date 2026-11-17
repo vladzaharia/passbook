@@ -7,8 +7,7 @@ import { recordPassEvents } from '../events/record.ts';
 import { notifiesHolder } from './change-messages.ts';
 import type { PublishOptions, PublishResult } from './publish.ts';
 import type { PreparedPublishAttempt } from './publish-flow-prepare.ts';
-import { mapPass, type PassDbRow } from './repo-map.ts';
-import { getPassStmt } from './repo-read-pass.ts';
+import { getPassStmt, passFromResult } from './repo-read-pass.ts';
 
 /** Revalidate the committed pass before recording delivery events and scheduling dispatch. */
 export async function completePublishAttempt(
@@ -25,8 +24,7 @@ export async function completePublishAttempt(
     getPassStmt(db, current.id),
     ...(pushes ? [registrationCountStmt(db, current.id)] : []),
   ]);
-  const passRow = passResult?.results?.[0] as PassDbRow | undefined;
-  const pass = passRow ? mapPass(passRow) : null;
+  const pass = passFromResult(passResult);
   const devices = (devicesResult?.results?.[0] as { n: number } | undefined)?.n ?? 0;
   if (
     !pass ||
@@ -78,5 +76,11 @@ export async function completePublishAttempt(
       : []),
   ]);
   if (options.dispatch !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
-  return { pass, changed: true, credentialKeysetCommitment, ...(silenced ? { silenced } : {}) };
+  return {
+    pass,
+    changed: true,
+    credentialKeysetCommitment,
+    passJson: prepared.passJson,
+    ...(silenced ? { silenced } : {}),
+  };
 }

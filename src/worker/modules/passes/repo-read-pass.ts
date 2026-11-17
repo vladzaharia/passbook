@@ -14,6 +14,21 @@ export function getPassStmt(db: D1Database, id: string, scope: ScopeArg = null) 
   );
 }
 
+/** The pass a `getPassStmt` returned in a batch. */
+export function passFromResult(result: D1Result | undefined): Pass | null {
+  const row = result?.results?.[0] as PassDbRow | undefined;
+  return row ? mapPass(row) : null;
+}
+
+/** A credential transfer is under way: one row when it is. */
+export function transferPendingStmt(db: D1Database, passId: string) {
+  return stmt(
+    db,
+    "SELECT 1 AS n FROM pass_credential_transfers WHERE pass_id = ? AND state = 'pending'",
+    [passId],
+  );
+}
+
 export async function getPass(
   db: D1Database,
   id: string,

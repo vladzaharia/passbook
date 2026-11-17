@@ -31,7 +31,7 @@ async function tripsOf(headers: Record<string, string>, run: () => Promise<unkno
 const heads = (calls: string[]) => `\n${calls.join('\n')}`;
 
 describe('value action round trips (design 4.7)', () => {
-  it('an add that publishes a new artifact: 17 trips, one grant batch writes it', async () => {
+  it('an add that publishes a new artifact: 10 trips, one grant batch writes it', async () => {
     const t = await kit.scanTemplate('Value trips', {
       actions: [
         { id: 'add', label: 'Add', kind: 'add', input: 'balance', amount: 1, repeat: 'always' },
@@ -44,9 +44,10 @@ describe('value action round trips (design 4.7)', () => {
       const o = await out(await act(s.headers, codeOf(pass), { actionId: 'add' }));
       expect(o.kind).toBe('ok');
     });
-    // Not the check-in's five: the publish reads and builds the pass first (template, release, assets).
-    // The publish reads its pass, removal, org, personalization and history in one batch (21 before).
-    // Fewer needs the claim batch to carry the pass row and the builder's reads to join it.
-    expect(trips, heads(calls)).toBeLessThanOrEqual(17);
+    // 21 before. The publish reads its pass with the keyset check, then everything it builds from (removal,
+    // org, personalization, history, signing identity, assets, settings) in one batch.
+    // Left: guard 8, claim 12, gate preflight 3, keyset+pass+transfer 4, bundle, pre-write match, grant 15,
+    // post-commit pass+devices, events, outbox dispatch.
+    expect(trips, heads(calls)).toBeLessThanOrEqual(10);
   });
 });
