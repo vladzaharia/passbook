@@ -54,6 +54,7 @@ describe('Test inbox', () => {
     expect(frame).toHaveAttribute('referrerpolicy', 'no-referrer');
     expect(frame).not.toHaveAttribute('srcdoc');
     expect(frame.style.colorScheme).toBe('light');
+    expect(screen.queryByText('Remote images hidden in preview')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'A pass' })).toHaveAttribute(
       'href',
       '/admin/passes/p1?orgId=o1',
@@ -69,6 +70,21 @@ describe('Test inbox', () => {
       (detailCall?.[1]?.headers as Record<string, string> | undefined)?.['x-passbook-mode'],
     ).toBe('test');
     expect(screen.getByText('Hi there from the pass email.')).toBeInTheDocument();
+  });
+
+  it('says remote images are hidden when the email references one', async () => {
+    setMode('test');
+    await renderApp('/admin/test-inbox?email=e1', {
+      session: 'admin',
+      ...orgAccess,
+      handlers: {
+        ...handlers,
+        '/api/v1/test-inbox/e1': () =>
+          json({ ...detail(), html: '<p>Hi</p><img src="https://cdn.example.test/logo.png">' }),
+      },
+    });
+    expect(await screen.findByText('Remote images hidden in preview')).toBeInTheDocument();
+    expect(screen.getByTitle('Email preview')).toBeInTheDocument();
   });
 
   it('keeps content and the status region mounted while its capture is revalidated, holding Send', async () => {

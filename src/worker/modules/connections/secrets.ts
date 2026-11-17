@@ -5,7 +5,6 @@ import {
   loadKekRing,
 } from '../../platform/crypto.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ConnectionWriter } from './access.ts';
 import type { ConnectionRow } from './repo.ts';
@@ -31,8 +30,6 @@ export async function storeCredential(
     input.value,
     credentialAad(id, input.orgId, input.kind),
   );
-  // Short fingerprint: enough to tell two secrets apart, too short to confirm a guess.
-  const fingerprint = (await sha256Hex(`${id}|${input.value}`)).slice(0, 8);
   try {
     const inserted = await insertCredential(
       ctx.env.DB,
@@ -41,7 +38,6 @@ export async function storeCredential(
         orgId: input.orgId,
         kind: input.kind,
         envelope,
-        fingerprint,
         createdBy: input.createdBy,
         now: ctx.clock.now(),
       },

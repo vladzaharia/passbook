@@ -64,7 +64,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    - `BREAKGLASS_TOKEN_SHA256`: run `npm run breakglass`, then paste the printed command. See
      [Break-glass admin](#break-glass-admin).
    - Optional: `SIGNER_PLATFORM_INTERMEDIATE` (defaults to the bundled WWDR G4),
-     `MAGIC_LINK_DAILY_CAP`, `KEK_V2` (rotation).
+     `MAGIC_LINK_DAILY_CAP`, `KEK_V2`, `MAC_KEY_VERSION` and `MAC_KEY_VERSION_PREVIOUS` (rotation).
 6. **Provision** (owner only): `node tools/provision.ts` prints the wrangler commands;
    `--apply` runs them. It creates the D1 database `wallet-platform` (id written to
    `wrangler.jsonc`), the queues and the R2 bucket, adds the R2 lifecycle rule (`uploads/` expires
@@ -589,8 +589,7 @@ keep retired pass ids and credentials from being reused.
     Passes keep working; the pass type ID must match.
   Status warns 30 days before expiry.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts;
-  keep older ones for existing data. The oldest KEK also derives scan PIN, pair-code, asset-grant,
-  credential-tombstone, pass/bundle link and Apple web-service token (`h1:`) HMAC keys; losing it breaks every stored link lookup and every device call. The credential-reference keyset sentinel initializes only when
+  keep older ones for existing data. The MAC keys (scan PIN, pair code, asset grant, pass/bundle link and Apple web-service token `h1:`) derive from the KEK named by `MAC_KEY_VERSION` (default: the oldest); the credential-tombstone key and the other retained-evidence keys always derive from the oldest KEK. Losing the KEK a stored MAC was made with breaks it: see MAC key rotation. The credential-reference keyset sentinel initializes only when
   no prior keyed references or proof provenance remain, including tombstones and
   retention proofs, retained webhook/workflow bindings and native-provider history.
   Plain unsigned legacy scan events do not prevent initialization, but remain untrusted and are
@@ -603,6 +602,12 @@ keep retired pass ids and credentials from being reused.
   If existing reference data lacks a sentinel, escalate for a separately audited bootstrap or
   rekey while the original key remains available; no bootstrap or rekey tool is currently
   implemented. Never delete evidence or reset the sentinel to bypass the fence.
+- **MAC key rotation** (retire a KEK for link, device, PIN, pair-code and asset-grant MACs): needs the new KEK in place (`KEK_V2`) and its envelopes rewrapped.
+  1. Set `MAC_KEY_VERSION=2` and `MAC_KEY_VERSION_PREVIOUS=1` together and deploy. Lookups accept a link or device token under either root, so nothing stops. At once: staff PINs (stored as MACs) stop verifying, so reset them in Scanning; a pair code issued before the deploy fails (they last 10 minutes); asset grants made before it expire within 1 hour.
+  2. The minute cron `tokens.remac` rewrites every pass link, Apple web-service token and bundle link from its sealed copy (100 of each a run). Each run logs `TOKEN_REMAC_RUN` with `moved`, `current`, `skipped` and `unreadable`. A pass with a pending credential transfer or a test-inbox forward is skipped and the sweep runs again; `TOKEN_REMAC_DONE` means a sweep ended clean (the setting `tokens.remacDone` holds `1>2`).
+  3. Then unset `MAC_KEY_VERSION_PREVIOUS` and deploy. A row counted `unreadable` (a deleted pass or org keeps no sealed copy; also `TOKEN_SEAL_MISSING`, `TOKEN_SEAL_UNREADABLE`, `TOKEN_SEAL_MISMATCH` in the log) still holds the old MAC and stops resolving now: its link and device calls end.
+  4. To go back, swap the two values; the job moves the rows again.
+  What a rotation does not move: the credential tombstone, retention proof, webhook and action reference and personalization proof keys stay on the oldest KEK. They are retained evidence bound to the credential-reference keyset commitment, and no rekey tool exists, so keep the oldest KEK for as long as that evidence is kept (see above). After a compromise of it, rotation only protects the tokens, PINs, codes and grants named above.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
 - **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.
 - **Icons and social image**: `node tools/build-icons.ts` after the mark or the wallet art changes,

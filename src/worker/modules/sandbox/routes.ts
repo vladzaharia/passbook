@@ -92,13 +92,14 @@ register(
 
 /**
  * The email as a page for the Test inbox's iframe. It has its own policy so the email's inline
- * styles apply; `sandbox` and `default-src 'none'` keep scripts, forms and requests out. The app's
+ * styles apply; `sandbox` and `default-src 'none'` keep scripts, forms and requests out, and `img-src`
+ * allows only inline images so opening a message never reveals the viewer to the template author. The app's
  * own policy stays strict.
  */
 export const EMAIL_FRAME_HEADERS = {
   'content-type': 'text/html; charset=utf-8',
   'content-security-policy':
-    "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data: https:; frame-ancestors 'self'",
+    "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:; frame-ancestors 'self'",
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'SAMEORIGIN',
   'cache-control': 'no-store',

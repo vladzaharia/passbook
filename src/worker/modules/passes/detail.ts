@@ -6,6 +6,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { listOutboxForPass } from '../delivery/repo.ts';
+import { seesAccountEmails } from './account-email.ts';
 import { replacedBy } from './assets.ts';
 import { resolveTemplate } from './builder.ts';
 import { pushBudgetOf } from './change-messages.ts';
@@ -162,13 +163,14 @@ export async function detailOf(
   additionalAuthority?: TenantPassWrite,
 ) {
   const db = ctx.env.DB;
+  const withEmail = seesAccountEmails(authority);
   await assertPassDetailReadable(ctx, pass, authority, undefined, additionalAuthority);
   const [json, devices, versions, deliveries, blockedUsers, owner, voided] = await Promise.all([
     currentPassJson(db, pass.id),
     listPassDevices(db, pass.id),
     listVersions(db, pass.id),
     listOutboxForPass(db, pass.id),
-    listBlockedUsers(db, pass.id),
+    listBlockedUsers(db, pass.id, withEmail),
     pass.ownerUserId ? getOwnerLabel(db, pass.ownerUserId) : null,
     pass.status === 'voided' ? lastVoidEvent(db, pass.id) : null,
   ]);
@@ -178,7 +180,7 @@ export async function detailOf(
     ...toSummary(pass),
     pushBudget: await pushBudgetOf(ctx, pass.id),
     ownerName: owner?.name ?? null,
-    ownerEmail: owner?.email ?? null,
+    ownerEmail: withEmail ? (owner?.email ?? null) : owner ? pass.holderEmail : null,
     personalization: pass.personalization,
     fieldSources: pass.fieldSources,
     passJson,

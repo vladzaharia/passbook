@@ -44,7 +44,7 @@ export async function getPassByDownloadToken(
 ): Promise<Pass | null> {
   const row = await first<PassDbRow>(
     env.DB,
-    `${PASS_SELECT} WHERE download_token IN (?, ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
+    `${PASS_SELECT} WHERE download_token IN (?, ?, ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
     await tokenKeys(env, 'pass', token),
   );
   return row ? mapPass(row) : null;
@@ -74,15 +74,17 @@ export async function currentPassJson(db: D1Database, passId: string): Promise<s
   return row?.pass_json ?? null;
 }
 
+/** The label of a user without a name is their email for a caller who may see it, else "Account". */
 export async function listBlockedUsers(
   db: D1Database,
   passId: string,
+  withEmail: boolean,
 ): Promise<{ id: string; name: string | null }[]> {
   return all<{ id: string; name: string | null }>(
     db,
-    `SELECT u.id, COALESCE(u.name, u.primary_email) AS name FROM pass_attach_blocks b
-     JOIN users u ON u.id = b.user_id WHERE b.pass_id = ? ORDER BY b.created_at`,
-    [passId],
+    `SELECT u.id, COALESCE(u.name, CASE WHEN ? THEN u.primary_email ELSE 'Account' END) AS name
+     FROM pass_attach_blocks b JOIN users u ON u.id = b.user_id WHERE b.pass_id = ? ORDER BY b.created_at`,
+    [withEmail ? 1 : 0, passId],
   );
 }
 

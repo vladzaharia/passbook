@@ -159,8 +159,8 @@ function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state'>) {
   return { where, params };
 }
 
-/** Newest first, with the creator's name (or email) for the actor chip. */
-export function listKeys(db: Db, f: KeyFilter) {
+/** Newest first, with the creator's name (or email, for a caller who may see account emails) for the actor chip. */
+export function listKeys(db: Db, f: KeyFilter, withEmail: boolean) {
   const { where, params } = keyWhere(f);
   if (f.cursor) {
     where.push(
@@ -170,11 +170,12 @@ export function listKeys(db: Db, f: KeyFilter) {
   }
   return all<ApiKeyRow & { created_by_name: string | null }>(
     db,
-    `SELECT k.*, coalesce(u.name, u.primary_email) AS created_by_name
+    `SELECT k.*, CASE WHEN u.id IS NULL THEN NULL
+       ELSE coalesce(u.name, CASE WHEN ? THEN u.primary_email ELSE 'Account' END) END AS created_by_name
      FROM api_keys k LEFT JOIN users u ON u.id = k.created_by
      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
      ORDER BY k.created_at DESC, k.id DESC LIMIT ?`,
-    [...params, f.limit],
+    [withEmail ? 1 : 0, ...params, f.limit],
   );
 }
 

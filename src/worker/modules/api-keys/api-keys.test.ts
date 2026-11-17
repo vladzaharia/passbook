@@ -787,3 +787,24 @@ describe('use', () => {
     expect((await h.call('/api/v1/passes', { headers: other.headers })).status).not.toBe(429);
   });
 });
+
+describe('creator label privacy', () => {
+  it('shows an unnamed creator as "Account" to org members and as the email to platform admins', async () => {
+    const org = await makeOrg(f());
+    const { key } = await create(
+      { name: 'Labelled', scopes: ['passes:read'], orgId: org.id },
+      org.id,
+    );
+    const listAs = async (platformAdmin: boolean) => {
+      const { headers } = await memberHeaders(org.id, 'org_admin', platformAdmin);
+      const res = await h.call(`/api/v1/api-keys?orgId=${org.id}`, { headers });
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { items: { id: string; createdByName: string | null }[] };
+      return body.items.find((i) => i.id === key.id)?.createdByName;
+    };
+    expect(await listAs(false)).toBe('Account');
+    expect(await listAs(true)).toBe(`${key.createdBy}@example.com`);
+    await run(h.env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Ada', key.createdBy]);
+    expect(await listAs(false)).toBe('Ada');
+  });
+});

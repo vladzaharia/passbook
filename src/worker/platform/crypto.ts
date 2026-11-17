@@ -147,20 +147,80 @@ export async function rewrapSecret(
   return { ...envelope, kekVersion: ring.current, wrappedDek };
 }
 
-/**
- * An HMAC-SHA256 key derived (HKDF) from the oldest configured KEK and a purpose label. The oldest
- * version keeps stored MACs valid when a newer KEK is added; removing it breaks every MAC made
- * with it (staff PINs, asset grants), so docs/operations.md says to keep it. Never reuse a label across purposes.
- */
-export async function derivedHmacKey(env: object, label: string): Promise<CryptoKey> {
-  const versions = Object.entries(env as Record<string, unknown>)
+/** The env entries that decide key material: the KEK ring and the pinned MAC root versions. */
+export const isKeyEnvName = (name: string): boolean =>
+  /^KEK_V\d+$/.test(name) || name === 'MAC_KEY_VERSION' || name === 'MAC_KEY_VERSION_PREVIOUS';
+
+function kekVersions(env: object): { version: number; value: string }[] {
+  return Object.entries(env as Record<string, unknown>)
     .map(([name, value]) => ({ match: /^KEK_V(\d+)$/.exec(name), value }))
     .filter((e) => e.match && typeof e.value === 'string' && e.value)
     .map((e) => ({ version: Number(e.match?.[1]), value: e.value as string }))
     .sort((a, b) => a.version - b.version);
-  const oldest = versions[0];
+}
+
+/**
+ * The KEK version the MAC keys derive from: `MAC_KEY_VERSION` when set, else the oldest configured KEK
+ * (so a deployment that never sets it keeps every stored MAC valid).
+ */
+export function macKeyVersion(env: object): number {
+  const oldest = kekVersions(env)[0];
   if (!oldest) throw new Error('No KEK configured (KEK_V1)');
-  const raw = fromBase64(oldest.value.trim());
+  return versionSetting(env, 'MAC_KEY_VERSION') ?? oldest.version;
+}
+
+function versionSetting(env: object, name: string): number | null {
+  const raw = (env as Record<string, unknown>)[name];
+  if (raw === undefined || raw === null || raw === '') return null;
+  const version = Number(raw);
+  if (!Number.isInteger(version) || version < 1)
+    throw new Error(`${name} must be a KEK version number`);
+  return version;
+}
+
+/**
+ * During a MAC root rotation, the version stored MACs may still be under (`MAC_KEY_VERSION_PREVIOUS`):
+ * lookups accept both until `tokens.remac` has rewritten every row. Null when unset or equal to the root.
+ */
+export function macPreviousVersion(env: object): number | null {
+  const previous = versionSetting(env, 'MAC_KEY_VERSION_PREVIOUS');
+  return previous === null || previous === macKeyVersion(env) ? null : previous;
+}
+
+/**
+ * The labels whose keys follow `MAC_KEY_VERSION`: the MACs of capability and device tokens (re-MACed from
+ * their sealed copies by cron tokens.remac), staff PINs and pair codes (reset after a rotation) and scanner
+ * asset grants (one hour). Every other label stays on the oldest KEK: its MACs are retained evidence bound
+ * to the credential-reference keyset commitment (tombstones, retention proofs, webhook and action
+ * references), which a changed root would fail closed. docs/operations.md, MAC key rotation.
+ */
+const ROTATABLE_LABELS: ReadonlySet<string> = new Set([
+  'capability-token.v1',
+  'apple-auth-token.v1',
+  'scan-pin',
+  'scan-pair-code.v1',
+  'scan-asset-grant-v2',
+  'scan-asset-claim',
+  'scan-asset-session-id',
+]);
+
+/**
+ * An HMAC-SHA256 key derived (HKDF) from a KEK and a purpose label: the MAC root (`macKeyVersion`) for the
+ * rotatable labels above, the oldest configured KEK for the rest. Removing or changing the KEK a stored MAC
+ * was made with breaks it. `version` derives under another KEK, for the job that moves MACs between roots.
+ * Never reuse a label across purposes.
+ */
+export async function derivedHmacKey(
+  env: object,
+  label: string,
+  version?: number,
+): Promise<CryptoKey> {
+  const oldest = kekVersions(env)[0];
+  if (!oldest) throw new Error('No KEK configured (KEK_V1)');
+  const wanted = version ?? (ROTATABLE_LABELS.has(label) ? macKeyVersion(env) : oldest.version);
+  const root = kekVersions(env).find((e) => e.version === wanted);
+  if (!root) throw new Error(`KEK version ${wanted} is not available for MAC keys`);
+  const raw = fromBase64(root.value.trim());
   if (raw.length !== 32) throw new Error('KEK must be 32 bytes, base64 encoded');
   const ikm = await crypto.subtle.importKey('raw', raw as BufferSource, 'HKDF', false, [
     'deriveKey',
