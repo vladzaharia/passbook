@@ -7,6 +7,7 @@ import { bundleForToken } from '../bundles/public-service.ts';
 import { createBundle, getBundleDto } from '../bundles/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { passForToken } from '../public/service.ts';
+import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { linksOf } from './detail.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { getPass } from './repo-read-pass.ts';
@@ -240,5 +241,43 @@ describe('sealing legacy tokens', () => {
       bundle.id,
     ]);
     expect(seals).toHaveLength(1);
+  });
+});
+
+describe('sweep cursor', () => {
+  it('wraps at the end: a run past every id rewinds the cursor, the next seals the row', async () => {
+    const pass = await kit.pass();
+    const legacy = `wrap-${pass.id}-${'w'.repeat(24)}`;
+    await makeLegacy(pass.id, legacy);
+    const past = { pass: 'zzzz', auth: 'zzzz', bundle: 'zzzz' };
+    await writeSystemValue(kit.env.DB, 'tokens.sealCursor', past, kit.clock.now());
+    await sealCapabilityTokens(job());
+    expect(await readSystemValue(kit.env.DB, 'tokens.sealCursor')).toEqual({
+      pass: null,
+      auth: null,
+      bundle: null,
+    });
+    expect((await getPass(kit.env.DB, pass.id))?.downloadToken).toBe(legacy);
+    await sealCapabilityTokens(job());
+    expect(isTokenMac((await getPass(kit.env.DB, pass.id))?.downloadToken ?? '')).toBe(true);
+  });
+});
+
+describe('case-sensitive MAC guard', () => {
+  it('refuses an upper-case prefix on the download and bundle tokens', async () => {
+    const pass = await kit.pass();
+    await expect(
+      run(kit.env.DB, "UPDATE passes SET download_token = 'H1:abc' WHERE id = ?", [pass.id]),
+    ).rejects.toThrow(/download_token must be a MAC/);
+    const bundle = await createBundle(
+      job(),
+      actor,
+      'live',
+      { orgId: kit.org.id, passIds: [pass.id], name: 'Upper' },
+      { kind: 'system' },
+    );
+    await expect(
+      run(kit.env.DB, "UPDATE bundles SET token = 'H1:abc' WHERE id = ?", [bundle.id]),
+    ).rejects.toThrow(/token must be a MAC/);
   });
 });

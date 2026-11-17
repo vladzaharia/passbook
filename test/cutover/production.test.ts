@@ -99,6 +99,15 @@ describe('production shapes: passes', () => {
       ),
     ).toEqual({ n: 0 });
     expect(await versions()).toEqual(rv);
+    // Every shape's tokens are sealed: test-mode, removed, half-removed, suspended-org and own-identity too.
+    const unsealed = await rows(
+      `SELECT p.id FROM passes p WHERE p.id LIKE 'prod-%' AND p.deleted_at IS NULL AND (
+         p.download_token NOT GLOB 'h1:*' OR p.auth_token NOT GLOB 'h1:*'
+         OR NOT EXISTS (SELECT 1 FROM pass_token_seals s WHERE s.pass_id = p.id)
+         OR NOT EXISTS (SELECT 1 FROM pass_auth_seals s WHERE s.pass_id = p.id)) ORDER BY p.id`,
+    );
+    expect(unsealed).toEqual([]);
+    expect(await one("SELECT count(*) AS n FROM passes WHERE id LIKE 'prod-%'")).toEqual({ n: 11 });
   });
 
   it('keeps a suspended org suspended and gives the owner a membership in it', async () => {
@@ -273,6 +282,12 @@ describe('production shapes: ledger and sessions', () => {
       amr: 'magic_link',
       csrfSecret: 'legacy-csrf',
     });
+    const row = await one<{ last_seen_at: number; idle_expires_at: number }>(
+      'SELECT last_seen_at, idle_expires_at FROM sessions WHERE user_id = ?',
+      'u-admin2',
+    );
+    expect(row?.last_seen_at).toBe(NOW);
+    expect(row?.idle_expires_at).toBeGreaterThan(NOW);
     expect(await resolveSession(c.env, new ManualClock(NOW), 'not-the-cookie')).toBeNull();
   });
 });

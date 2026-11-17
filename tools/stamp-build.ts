@@ -4,6 +4,6 @@ import { dirname, resolve } from 'node:path';
 import { gitState, stampPath } from './lib/build-stamp.ts';
 
 const root = resolve(import.meta.dirname, '..');
-const { head, dirty } = gitState(root);
+const { head, changed } = gitState(root);
 mkdirSync(dirname(stampPath(root)), { recursive: true });
-writeFileSync(stampPath(root), `${JSON.stringify({ sha: head, dirty })}\n`);
+writeFileSync(stampPath(root), `${JSON.stringify({ sha: head, dirty: changed.length > 0 })}\n`);

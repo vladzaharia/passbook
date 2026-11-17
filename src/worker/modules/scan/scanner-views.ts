@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScannerListQuerySchema } from '../../../shared/contracts/scanners.ts';
-import { NotFoundError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dayStartMs, scannerDto } from './dto-console.ts';
 import {
@@ -81,7 +81,13 @@ export async function listScanners(
   mode: Mode,
   query: z.infer<typeof ScannerListQuerySchema>,
 ) {
-  const rows = await listConsoleScanners(ctx.env.DB, { ...query, mode, limit: query.limit + 1 });
+  if (!query.orgId) throw new ForbiddenError();
+  const rows = await listConsoleScanners(ctx.env.DB, {
+    ...query,
+    orgId: query.orgId,
+    mode,
+    limit: query.limit + 1,
+  });
   const page = rows.slice(0, query.limit);
   return {
     items: await withToday(ctx, page),

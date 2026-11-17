@@ -1,9 +1,13 @@
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildProblem, parseStamp } from './build-stamp.ts';
+import { buildProblem, type GitState, gitState, parseStamp } from './build-stamp.ts';
 
 const HEAD = 'a'.repeat(40);
 const OTHER = 'b'.repeat(40);
-const clean = { head: HEAD, dirty: false };
+const clean: GitState = { head: HEAD, changed: [] };
 const stamp = (sha: string, dirty = false) => JSON.stringify({ sha, dirty });
 
 describe('parseStamp', () => {
@@ -29,7 +33,7 @@ describe('buildProblem, uploading from dist/', () => {
   });
 
   it('refuses a dirty tree', () => {
-    expect(run({ git: { head: HEAD, dirty: true } })).toContain('clean worktree');
+    expect(run({ git: { head: HEAD, changed: ['HANDOFF.md'] } })).toContain('clean worktree');
   });
 
   it('refuses a dist/ built from another commit (the stale build)', () => {
@@ -60,6 +64,57 @@ describe('buildProblem, promoting an uploaded version', () => {
   });
 
   it('refuses a dirty tree', () => {
-    expect(run(HEAD, { head: HEAD, dirty: true })).toContain('clean worktree');
+    expect(run(HEAD, { head: HEAD, changed: ['HANDOFF.md'] })).toContain('clean worktree');
+  });
+});
+
+describe('buildProblem, dirty tree message', () => {
+  const dirty = (changed: string[]) =>
+    buildProblem({
+      servesUploaded: false,
+      git: { head: HEAD, changed },
+      stamp: stamp(HEAD),
+      uploadedSha: null,
+    });
+
+  it('names the paths', () => {
+    expect(dirty(['HANDOFF.md', 'docs/audits/a.md'])).toContain(
+      '2 uncommitted or untracked paths: HANDOFF.md, docs/audits/a.md.',
+    );
+  });
+
+  it('lists ten and counts the rest', () => {
+    const many = Array.from({ length: 13 }, (_, i) => `f${i}`);
+    const message = dirty(many) ?? '';
+    expect(message).toContain('f9, and 3 more');
+    expect(message).not.toContain('f10');
+  });
+});
+
+describe('gitState', () => {
+  it('sees an untracked file a global excludes file would hide, and every file in an untracked directory', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'build-stamp-'));
+    const globalConfig = join(dir, 'gitconfig');
+    const repo = join(dir, 'repo');
+    writeFileSync(join(dir, 'ignore'), '*.log\nvendor/\n');
+    writeFileSync(globalConfig, `[core]\n\texcludesFile = ${join(dir, 'ignore')}\n`);
+    const env = { ...process.env, GIT_CONFIG_GLOBAL: globalConfig, GIT_CONFIG_NOSYSTEM: '1' };
+    const git = (...a: string[]) => execFileSync('git', a, { cwd: repo, env, encoding: 'utf8' });
+    execFileSync('git', ['init', '-q', repo], { env });
+    writeFileSync(join(repo, 'a.txt'), 'a');
+    git('add', 'a.txt');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'init');
+    expect(git('status', '--porcelain', '--untracked-files=all')).toBe('');
+    writeFileSync(join(repo, 'x.log'), 'x');
+    expect(git('status', '--porcelain', '--untracked-files=all')).toBe('');
+    const saved = { ...process.env };
+    Object.assign(process.env, env);
+    try {
+      const state = gitState(repo);
+      expect(state.head).toMatch(/^[0-9a-f]{40}$/);
+      expect(state.changed).toEqual(['x.log']);
+    } finally {
+      process.env = saved;
+    }
   });
 });

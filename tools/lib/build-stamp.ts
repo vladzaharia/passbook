@@ -11,17 +11,32 @@ export interface BuildStamp {
 
 export interface GitState {
   head: string;
-  dirty: boolean;
+  /** Paths that differ from HEAD, untracked included; empty when clean. */
+  changed: string[];
 }
 
-/** HEAD and whether anything differs from it, untracked files included (wrangler applies every file in migrations/). */
+/**
+ * HEAD and every path that differs from it, untracked files included (wrangler applies every file in
+ * migrations/). The repo's own .gitignore applies; a global excludes file does not, or it would hide files.
+ */
 export function gitState(root: string): GitState {
-  const git = (...a: string[]) => execFileSync('git', a, { cwd: root, encoding: 'utf8' });
+  const git = (...a: string[]) =>
+    execFileSync('git', ['-c', 'core.excludesFile=/dev/null', ...a], {
+      cwd: root,
+      encoding: 'utf8',
+    });
   return {
     head: git('rev-parse', 'HEAD').trim(),
-    dirty: git('status', '--porcelain').trim() !== '',
+    changed: git('status', '--porcelain', '--untracked-files=all')
+      .split('\n')
+      .filter((line) => line !== '')
+      .map((line) => line.slice(3)),
   };
 }
+
+const LISTED = 10;
+const dirtyMessage = (changed: string[]) =>
+  `The working tree has ${changed.length} uncommitted or untracked path${changed.length === 1 ? '' : 's'}: ${changed.slice(0, LISTED).join(', ')}${changed.length > LISTED ? `, and ${changed.length - LISTED} more` : ''}. Deploy from the clean worktree that passed npm run check (docs/operations.md, pre-check 1).`;
 
 export const stampPath = (root: string) => resolve(root, STAMP_FILE);
 
@@ -57,8 +72,7 @@ export function buildProblem({
   stamp,
   uploadedSha,
 }: GuardInput): string | null {
-  if (git.dirty)
-    return 'The working tree has uncommitted or untracked files. Deploy from the clean worktree that passed npm run check.';
+  if (git.changed.length > 0) return dirtyMessage(git.changed);
   if (servesUploaded) {
     if (uploadedSha !== git.head)
       return `The uploaded version was built from ${uploadedSha?.slice(0, 9) ?? 'an unknown commit'}, this checkout is ${git.head.slice(0, 9)}. Check out that commit, or run --migrate-only again.`;
