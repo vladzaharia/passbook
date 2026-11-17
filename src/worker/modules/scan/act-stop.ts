@@ -22,7 +22,7 @@ import { doneScanPredicate } from './repo-scan-checks.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import type { Claim } from './repo-scans.ts';
 import type { Stop } from './resolve.ts';
-import { capturingDb } from './scan-capture.ts';
+import { afterReads, capturingDb } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
 import { retentionPart, SCAN_STOP_TABLES, scanIs, scanWriteGrant } from './scan-write-grant.ts';
 import { finalizeScan, ledgerEvent } from './scan-write-statements.ts';
@@ -138,15 +138,8 @@ export async function finishStop(
     now,
     event: authority.event ?? null,
     ...(authority.templateId ? { templateId: authority.templateId } : {}),
-    // A miss: no mode may have retired the presented credential. A pass: its own mode may not.
-    ...(checked || s.countMiss
-      ? {
-          credentialRefs: {
-            current: s.credentialTombstoneRefs,
-            other: checked ? [] : s.otherModeCredentialTombstoneRefs,
-          },
-        }
-      : {}),
+    // A pass or a miss: the scanner's mode may not have retired the presented credential.
+    ...(checked || s.countMiss ? { credentialRefs: s.credentialTombstoneRefs } : {}),
     ...(checked ? { pass: { id: checked.id, facts: { pass: checked, credential: {} } } } : {}),
     tables: SCAN_STOP_TABLES,
   });
@@ -172,7 +165,7 @@ export async function finishStop(
   const dayCounts: CountsPlan | null = s.suppressCounts
     ? null
     : planCommitCounts(ctx, actor, s.dayStart);
-  const committed = await g.commitWith(dayCounts?.stmts ?? []);
+  const committed = await g.commitWith(afterReads(dayCounts?.stmts ?? []));
   const results = committed.writes;
   if (!(results[g.indexOf(finalized)]?.results ?? []).length) {
     s.onFailureCommitted();

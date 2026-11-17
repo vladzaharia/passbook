@@ -26,6 +26,8 @@ beforeAll(async () => {
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
 const marker = 'INTO scan_asset_grant_provenance';
+/** A check-in's photo grant follows its commit, so a gate race intervenes at the gate write. */
+const COMMIT = 'INSERT INTO scan_gates';
 
 async function cardGrantFixture() {
   const f = await fixture(kit, { choose: true, event: true, photo: true, includeInPass: true });
@@ -186,7 +188,8 @@ describe('policy-selected event action grants', () => {
         const other = foreign ? await kit.event({ orgId: foreign.id }) : null;
         const request = body(kit, f.pass.id);
         const before = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
-        const response = await raceRaw(kit, f.scanner.headers, request, marker, async (db) => {
+        const at = phase === 'gate' ? COMMIT : marker;
+        const response = await raceRaw(kit, f.scanner.headers, request, at, async (db) => {
           if (change === 'event archived') {
             await run(
               db,
@@ -277,7 +280,7 @@ describe('policy-selected event action grants', () => {
     expect((await kit.get(f.scanner.headers, f.genericPath)).status).toBe(200);
   });
 
-  it('performs a cold history and photo override in at most five post-guard D1 trips', async () => {
+  it('performs a cold history and photo override in at most six post-guard D1 trips', async () => {
     const f = await fixture(kit, { photo: true, history: true });
     const firstResult = await action(
       kit,
@@ -308,7 +311,8 @@ describe('policy-selected event action grants', () => {
       expect(outcome.display?.identity.photo?.url).toContain(
         `/passes/${f.pass.id}/assets/member.png?g=`,
       );
-      expect(counted.count() - guard).toBeLessThanOrEqual(5);
+      // Five for the scan; the photo grant is decoration in one batch after the commit (PIN refund too).
+      expect(counted.count() - guard).toBeLessThanOrEqual(6);
       const sql = counted.sql().join('\n');
       expect(sql).toContain('template_versions');
       expect(sql).toContain('pass_events');

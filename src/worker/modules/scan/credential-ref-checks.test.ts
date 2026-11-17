@@ -24,14 +24,14 @@ const scan = async (headers: Record<string, string>, code: string) => {
 };
 
 /**
- * The other-mode tombstone check is refused by the tenant lint when it is built, so a scan that built
- * it would answer 500. No scan path builds it: the miss stop passes no other-mode refs, and the
- * other-mode refusal (`test_pass`) writes its stop without credential refs.
+ * A scan write checks the presented credential's tombstones in its own mode only. The other-mode
+ * refusal (`test_pass`) writes its stop without credential refs.
  */
-describe('the other-mode credential check is never built by a scan', () => {
-  it('as written, the check is refused when built', () => {
-    expect(() => credentialRefChecks({ current: [], other: ['a'.repeat(64)] })).toThrow(/mode/);
-    expect(credentialRefChecks({ current: ['a'.repeat(64)], other: [] })).toHaveLength(1);
+describe('scan writes check credential refs in their own mode', () => {
+  it('builds one tenant check for the presented refs and none without refs', () => {
+    expect(credentialRefChecks(['a'.repeat(64)])).toHaveLength(1);
+    expect(credentialRefChecks([])).toEqual([]);
+    expect(credentialRefChecks()).toEqual([]);
   });
 
   it('a pass of the other mode and a passless miss both answer 200', async () => {

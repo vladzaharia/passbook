@@ -24,8 +24,8 @@ export interface ScanWriteInput {
   approver?: { id: string; authEpoch: number } | null;
   /** Held: the answer shown names this gate holder and must still be true. */
   holder?: { passId: string; actionId: string; scope: string; lastScanId: string } | null;
-  /** A passless miss: none of the presented credential's references may be retired by a transfer. */
-  credentialRefs?: { current: readonly string[]; other: readonly string[] };
+  /** None of the presented credential's references may be retired by a transfer in this mode. */
+  credentialRefs?: readonly string[];
   target?: string;
   codes?: DenialOptions['codes'];
   /** Unguarded tables the grant's parts write. */
@@ -149,21 +149,26 @@ export const retentionPart = (statement: D1PreparedStatement): GrantPart =>
   capturedPart(statement, 'retention');
 
 /**
- * A PIN attempt is returned after the scan commits, or after a classified refusal, as its own counter
- * write outside any grant (counters hold no authority). A failed refund is logged and never fails the scan.
+ * Decoration after a scan commits, in one batch outside any grant: the PIN attempt is returned
+ * (counters hold no authority) and the photo grant is minted. A failure is logged and never fails or
+ * undoes the scan: the attempt stays counted and the photo is omitted. Returns the photo results.
  */
-export async function refundPin(
+export async function decorateScan(
   ctx: ServiceContext,
   reservation: { refundStatements(): D1PreparedStatement[]; markRefunded(): void } | null,
-): Promise<void> {
-  if (!reservation) return;
+  photo: readonly D1PreparedStatement[] = [],
+): Promise<D1Result[]> {
   try {
-    await ctx.env.DB.batch(reservation.refundStatements());
-    reservation.markRefunded();
+    const refund = reservation?.refundStatements() ?? [];
+    const statements = [...refund, ...photo];
+    const results = statements.length ? await ctx.env.DB.batch(statements) : [];
+    reservation?.markRefunded();
+    return results.slice(refund.length);
   } catch (error) {
-    ctx.log.error('scan.pin_refund_failed', {
-      code: 'SCAN_PIN_REFUND_FAILED',
+    ctx.log.error('scan.finish_degraded', {
+      code: 'SCAN_FINISH_DEGRADED',
       message: error instanceof Error ? error.message : 'unknown',
     });
+    return [];
   }
 }

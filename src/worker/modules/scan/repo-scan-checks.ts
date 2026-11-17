@@ -60,24 +60,16 @@ export const passTemplateUsableCheck = (passId: string): Check =>
     [passId],
   );
 
-/** None of the presented credential's references may be retired by a transfer, in this mode or the other. */
-export function credentialRefChecks(refs?: {
-  current: readonly string[];
-  other: readonly string[];
-}): Check[] {
-  const sql = (mode: string) => `NOT EXISTS (SELECT 1 FROM pass_credential_tombstones x
-    WHERE x.org_id = {org} AND x.mode = ${mode} AND x.credential_hash IN (SELECT value FROM json_each(?)))`;
+/** None of the presented credential's references may be retired by a transfer in the grant's mode. */
+export function credentialRefChecks(refs: readonly string[] = []): Check[] {
+  if (!refs.length) return [];
   return [
-    ...(refs?.current.length
-      ? [tenantCheck('lineage', sql('{mode}'), [JSON.stringify(refs.current)])]
-      : []),
-    ...(refs?.other.length
-      ? [
-          tenantCheck('lineage', sql("(CASE {mode} WHEN 'live' THEN 'test' ELSE 'live' END)"), [
-            JSON.stringify(refs.other),
-          ]),
-        ]
-      : []),
+    tenantCheck(
+      'lineage',
+      `NOT EXISTS (SELECT 1 FROM pass_credential_tombstones x
+        WHERE x.org_id = {org} AND x.mode = {mode} AND x.credential_hash IN (SELECT value FROM json_each(?)))`,
+      [JSON.stringify(refs)],
+    ),
   ];
 }
 

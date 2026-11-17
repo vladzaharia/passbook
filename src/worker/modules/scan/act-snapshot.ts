@@ -6,10 +6,14 @@ import { snapshotCredentialEnv } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import type { Candidate } from './repo-lookup.ts';
 import type { Found } from './resolve.ts';
+import { capturingDb } from './scan-capture.ts';
 
-/** Pin the keyring without losing environment-scoped registry and service overrides. */
+/**
+ * Pin the keyring without losing environment-scoped registry and service overrides. Statements
+ * remember their SQL, so the reads that follow a scan's grant can be checked (`afterReads`).
+ */
 export function snapshotActionContext(ctx: ServiceContext): ServiceContext {
-  const env = snapshotCredentialEnv(ctx.env);
+  const env = snapshotCredentialEnv({ ...ctx.env, DB: capturingDb(ctx.env.DB) });
   overrideDeps(env, depsOf(ctx.env));
   return { ...ctx, env };
 }
