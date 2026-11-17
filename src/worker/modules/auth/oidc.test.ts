@@ -367,13 +367,18 @@ describe('oidc sign-in', () => {
     const existing = await makeUser(fixtures(h.env));
     const ctx = createServiceContext(h.env, { clock: h.clock });
     const subject = `proof-${uniq()}`;
-    await linkIdentityByMail(ctx, existing.primaryEmail, {
-      provider: 'pocketid',
-      subject,
-      emailClaim: existing.primaryEmail,
-      emailVerified: false,
-      groups: ['wallet-users'],
-    });
+    await linkIdentityByMail(
+      ctx,
+      existing.primaryEmail,
+      {
+        provider: 'pocketid',
+        subject,
+        emailClaim: existing.primaryEmail,
+        emailVerified: false,
+        groups: ['wallet-users'],
+      },
+      { ipPrefix: null, userAgent: null },
+    );
     expect(
       await first(
         h.env.DB,

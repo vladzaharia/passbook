@@ -1,3 +1,4 @@
+import { TURNSTILE_ACTION } from '../../../shared/turnstile.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import type { Logger } from '../../platform/log.ts';
 
@@ -29,13 +30,22 @@ export async function verifyTurnstile(
       log.warn('auth.turnstile_unavailable', { code: 'TURNSTILE_UNAVAILABLE', status: res.status });
       return false;
     }
-    const result = (await res.json()) as { success?: unknown; hostname?: unknown };
+    const result = (await res.json()) as {
+      success?: unknown;
+      hostname?: unknown;
+      action?: unknown;
+    };
     if (result.success !== true) return false;
     if (env.TURNSTILE_SECRET === TEST_SECRET) return true;
     // A token solved on another site that shares this widget must not pass here.
     const expected = new URL(env.PUBLIC_BASE_URL).hostname.toLowerCase();
     if (typeof result.hostname !== 'string' || result.hostname.toLowerCase() !== expected) {
       log.warn('auth.turnstile_hostname', { code: 'TURNSTILE_HOSTNAME' });
+      return false;
+    }
+    // A token minted for another widget action (another form on the same site key) is refused.
+    if (result.action !== TURNSTILE_ACTION) {
+      log.warn('auth.turnstile_action', { code: 'TURNSTILE_ACTION' });
       return false;
     }
     return true;

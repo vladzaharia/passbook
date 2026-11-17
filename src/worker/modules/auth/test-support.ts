@@ -115,6 +115,7 @@ export async function harness(
       return Response.json({
         success: turnstileOk.value && body.get('response') === 'ok',
         hostname: new URL(env.PUBLIC_BASE_URL).hostname,
+        action: 'magic_request',
       });
     }
     throw new Error(`unexpected fetch ${url}`);

@@ -1,3 +1,4 @@
+import { knownEmail } from '../../../shared/email.ts';
 import { first, run } from '../../platform/db.ts';
 
 type Db = D1Database;
@@ -141,9 +142,12 @@ export async function isOwnedByOther(db: Db, email: string, userId: string): Pro
 
 export { read as readCounter } from '../../platform/counters.ts';
 
+/** The account's address for display or mail, or null when it has proven none. */
 export const primaryEmailOf = async (db: Db, userId: string): Promise<string | null> =>
-  (
-    await first<{ primary_email: string }>(db, 'SELECT primary_email FROM users WHERE id = ?', [
-      userId,
-    ])
-  )?.primary_email ?? null;
+  knownEmail(
+    (
+      await first<{ primary_email: string }>(db, 'SELECT primary_email FROM users WHERE id = ?', [
+        userId,
+      ])
+    )?.primary_email,
+  );

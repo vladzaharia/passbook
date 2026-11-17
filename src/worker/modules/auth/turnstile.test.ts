@@ -42,19 +42,35 @@ describe('verifyTurnstile', () => {
 
   it('passes a successful verdict', async () => {
     const ok = (async () =>
-      Response.json({ success: true, hostname: 'Passbook.mobile' })) as unknown as typeof fetch;
+      Response.json({
+        success: true,
+        hostname: 'Passbook.mobile',
+        action: 'magic_request',
+      })) as unknown as typeof fetch;
     expect(await verifyTurnstile(env, 't', '1.2.3.4', log, ok)).toBe(true);
     expect(lines).toHaveLength(0);
   });
 
   it.each([
     ['another host', { success: true, hostname: 'evil.example' }],
-    ['a missing host', { success: true }],
-    ['a non-string host', { success: true, hostname: ['passbook.mobile'] }],
+    ['a missing host', { success: true, action: 'magic_request' }],
+    [
+      'a non-string host',
+      { success: true, hostname: ['passbook.mobile'], action: 'magic_request' },
+    ],
   ])('refuses a solved token with %s', async (_name, verdict) => {
     const fetchImpl = (async () => Response.json(verdict)) as unknown as typeof fetch;
     expect(await verifyTurnstile(env, 't', null, log, fetchImpl)).toBe(false);
     expect(events()[0]).toMatchObject({ code: 'TURNSTILE_HOSTNAME' });
+  });
+
+  it.each([
+    ['another action', { success: true, hostname: 'passbook.mobile', action: 'contact' }],
+    ['no action', { success: true, hostname: 'passbook.mobile' }],
+  ])('refuses a solved token with %s', async (_name, verdict) => {
+    const fetchImpl = (async () => Response.json(verdict)) as unknown as typeof fetch;
+    expect(await verifyTurnstile(env, 't', null, log, fetchImpl)).toBe(false);
+    expect(events()[0]).toMatchObject({ code: 'TURNSTILE_ACTION' });
   });
 
   it('refuses a failed verdict without a hostname check', async () => {

@@ -1,3 +1,4 @@
+import { UNVERIFIED_EMAIL_SUFFIX } from '../../../shared/email.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { pruneCounters } from '../../platform/counters.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -37,9 +38,7 @@ export const findUserByPrimaryEmail = (db: Db, email: string) =>
  * Stands in for a primary email nobody has proven (an account an identity provider created). It
  * sits on the reserved .invalid TLD, so it never receives mail and is never a real address.
  */
-const UNVERIFIED_SUFFIX = '@unverified.invalid';
-export const unverifiedPrimaryEmail = (userId: string) => `${userId}${UNVERIFIED_SUFFIX}`;
-export const isUnverifiedPrimary = (email: string) => email.endsWith(UNVERIFIED_SUFFIX);
+export const unverifiedPrimaryEmail = (userId: string) => `${userId}${UNVERIFIED_EMAIL_SUFFIX}`;
 
 /** The account signs in through an identity provider (anything but the break-glass token). */
 const hasExternalIdentity = async (db: Db, userId: string) =>
@@ -59,16 +58,24 @@ export async function findUserByProvenEmail(db: Db, email: string): Promise<User
   return byPrimary && !(await hasExternalIdentity(db, byPrimary.id)) ? byPrimary : null;
 }
 
-/** Frees the address from an account that held it unproven. Returns the account, if any. */
-export async function releaseUnprovenPrimary(db: Db, email: string): Promise<UserRow | null> {
-  const holder = await findUserByPrimaryEmail(db, email);
-  if (!holder) return null;
-  await run(db, 'UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?', [
-    unverifiedPrimaryEmail(holder.id),
-    holder.id,
-    email,
-  ]);
-  return holder;
+/**
+ * Frees the address from an account that holds it unproven. One conditional statement: it only
+ * acts while the account still has the address as primary, has a provider identity and no verified
+ * row for it, so concurrent proofs release once. True when this call released it.
+ */
+export async function releaseUnprovenPrimary(
+  db: Db,
+  holderId: string,
+  email: string,
+): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    `UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?
+       AND EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = users.id AND a.provider <> 'breakglass')
+       AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = ?)`,
+    [unverifiedPrimaryEmail(holderId), holderId, email, email],
+  );
+  return changes > 0;
 }
 
 /** An account with a placeholder primary email takes the first address it proves. */
@@ -123,6 +130,7 @@ export const findIdentity = (db: Db, provider: string, subject: string) =>
     [provider, subject],
   );
 
+/** True when the identity was linked now; false when the subject was already linked. */
 export async function insertIdentity(
   db: Db,
   row: {
@@ -134,8 +142,8 @@ export async function insertIdentity(
     groups: string[];
     now: number;
   },
-): Promise<void> {
-  await run(
+): Promise<boolean> {
+  const { changes } = await run(
     db,
     `INSERT OR IGNORE INTO auth_identities
        (provider, subject, user_id, email_claim, email_verified, groups, created_at, last_used_at)
@@ -151,6 +159,7 @@ export async function insertIdentity(
       row.now,
     ],
   );
+  return changes > 0;
 }
 
 export async function updateIdentity(

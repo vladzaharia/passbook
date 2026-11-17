@@ -513,6 +513,24 @@ describe('code', () => {
     expect((await consumeCode(email, codeOf(h.mail.at(-1)), owner)).status).toBe(200);
   });
 
+  it('a stranger rotating browsers hits the per-address ceiling: codes refused, the link still works', async () => {
+    const email = await knownEmail();
+    // Five links an hour, five tries each: ten fresh browsers make fifty wrong guesses.
+    for (let hour = 0; hour < 2; hour++) {
+      for (let b = 0; b < 5; b++) {
+        const jar: Jar = new Map();
+        await requestLink(email, jar);
+        const wrong = codeOf(h.mail.at(-1)) === '000000' ? '111111' : '000000';
+        for (let i = 0; i < 5; i++) await consumeCode(email, wrong, jar);
+      }
+      h.clock.advance(61 * 60_000);
+    }
+    const owner: Jar = new Map();
+    await requestLink(email, owner);
+    expect((await consumeCode(email, codeOf(h.mail.at(-1)), owner)).status).toBe(400);
+    expect((await consumeForm(tokenOf(h.mail.at(-1)), owner)).status).toBe(303);
+  });
+
   it('keys failure and cap counters on a keyed digest, never the bare hash of the address', async () => {
     const email = await knownEmail();
     const jar: Jar = new Map();

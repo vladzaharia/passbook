@@ -21,6 +21,8 @@ import {
 export const MAGIC_TTL_MS = 15 * 60 * 1000;
 export const MAX_CODE_ATTEMPTS = 5;
 const CODE_FAILURE_CAP = 10;
+/** Failed codes per address per day, across browsers: rotating a binding does not reset it. */
+const ADDRESS_FAILURE_CAP = 50;
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
@@ -230,7 +232,12 @@ async function finish(
     return { kind: 'verified', email: link.email };
   }
   if (link.pending_identity) {
-    await linkIdentityByMail(ctx, link.email, JSON.parse(link.pending_identity) as PendingIdentity);
+    await linkIdentityByMail(
+      ctx,
+      link.email,
+      JSON.parse(link.pending_identity) as PendingIdentity,
+      sign,
+    );
     return { kind: 'linked', next: link.redirect_path };
   }
   const result = await signInMagicLink(ctx, link.email, sign);
@@ -277,17 +284,21 @@ export async function consumeMagicCode(
   const now = ctx.clock.now();
   const bindingHash = await sha256Hex(input.bindingCookie);
   // Per browser: a stranger's wrong guesses on a link bound to their own cookie cannot lock the
-  // address's owner out. Guessing stays bounded by the per-link attempts and the hourly link cap.
+  // address's owner out. Rotating cookies is bounded by the per-address ceiling below.
   const failKey = `magic:fail:${await keyedDigest(ctx.env, 'counter.magic-fail.v1', `${input.email}\n${bindingHash}`)}`;
+  const addressKey = `magic:fail-addr:${await keyedDigest(ctx.env, 'counter.magic-fail-addr.v1', input.email)}`;
   const windowStart = now - (now % DAY);
-  // Failures count across links, so reissuing a link does not reset the guess budget.
+  // Failures count across links, so reissuing a link does not reset the guess budget. At the
+  // address ceiling only codes are refused; the emailed link still works.
   if ((await repo.readCounter(db, failKey, windowStart)) >= CODE_FAILURE_CAP) throw invalid();
+  if ((await repo.readCounter(db, addressKey, windowStart)) >= ADDRESS_FAILURE_CAP) throw invalid();
   const link = await repo.findLinkForCode(db, input.email, bindingHash, now);
   if (!link?.code_hash) throw invalid();
   if (!link.pending_identity) await requireSignInEnabled(ctx);
   if (!(await repo.spendAttempt(db, link.token_hash, MAX_CODE_ATTEMPTS))) throw invalid();
   if (!(await safeEqual(await hashCode(link.token_hash, input.code), link.code_hash))) {
     await repo.bumpCounter(db, failKey, windowStart);
+    await repo.bumpCounter(db, addressKey, windowStart);
     throw invalid();
   }
   const consumed = await repo.consumeLink(db, link.token_hash, now);

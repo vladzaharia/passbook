@@ -7,6 +7,8 @@ export const DEFAULT_DAILY_CAP = 2000;
 export const EMAIL_HOURLY_CAP = 5;
 export const IP_DAILY_CAP = 30;
 export const VERIFY_USER_DAILY_CAP = 10;
+/** Identity-proof mails one Pocket ID subject may trigger per day. */
+export const SUBJECT_DAILY_CAP = 10;
 const HOUR = 60 * 60 * 1000;
 export const DAY = 24 * HOUR;
 
@@ -39,6 +41,12 @@ export async function withinIpCap(ctx: ServiceContext, prefix: string | null): P
   const key = `magic:ip:${await keyedDigest(ctx.env, 'counter.magic-ip.v1', prefix)}`;
   const now = ctx.clock.now();
   return (await repo.bumpCounter(ctx.env.DB, key, dayStart(now))) <= IP_DAILY_CAP;
+}
+
+/** Identity-proof mails per Pocket ID subject per day, whatever the address. */
+export async function withinSubjectCap(ctx: ServiceContext, subject: string): Promise<boolean> {
+  const key = `magic:sub:${await keyedDigest(ctx.env, 'counter.oidc-sub.v1', subject)}`;
+  return (await repo.bumpCounter(ctx.env.DB, key, dayStart(ctx.clock.now()))) <= SUBJECT_DAILY_CAP;
 }
 
 /** Verification mails one signed-in user may trigger per day, whatever the address. */

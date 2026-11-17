@@ -5,6 +5,7 @@ import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
+import { accountProvenByMail, createUser, releaseClaimOtherThan } from './account-claims.ts';
 import * as repo from './repo.ts';
 import { bumpCounter } from './repo-magic.ts';
 import { createSession, hashSessionCookie, type NewSession, revokeOne } from './sessions.ts';
@@ -114,67 +115,13 @@ export async function auditIdentityLinked(
   });
 }
 
-export async function createUser(ctx: ServiceContext, email: string, name: string | null) {
-  await repo.insertUser(ctx.env.DB, { id: ctx.ids.id(), name, email, now: ctx.clock.now() });
-  const user = await repo.findUserByPrimaryEmail(ctx.env.DB, email);
-  if (!user) throw new Error('user insert lost');
-  return user;
-}
-
-/**
- * The account for an address whose holder just proved it (mail link, or a provider vouching for
- * it under `oidc.trustEmail`). An account that merely lists the address as a primary email and has
- * an external identity does not own it: it may be an unverified provider claim, so the proof must
- * not merge into it (that would hand it the holder's passes and memberships). Such an account
- * loses the address and keeps its identity; the holder gets a separate account.
- */
-export async function accountForProvenEmail(
-  ctx: ServiceContext,
-  email: string,
-  name: string | null,
-): Promise<repo.UserRow> {
-  return (
-    (await repo.findUserByProvenEmail(ctx.env.DB, email)) ??
-    (await createUserForProvenEmail(ctx, email, name))
-  );
-}
-
-/** For an address with no proven owner: frees it from any unproven claimant, then creates the account. */
-export async function createUserForProvenEmail(
-  ctx: ServiceContext,
-  email: string,
-  name: string | null,
-): Promise<repo.UserRow> {
-  const released = await repo.releaseUnprovenPrimary(ctx.env.DB, email);
-  if (released) {
-    await recordAudit(ctx, {
-      actorType: 'system',
-      action: 'auth.primary_email_unproven',
-      targetType: 'user',
-      targetId: released.id,
-    });
-  }
-  return createUser(ctx, email, name);
-}
-
-/** The account that owns an address its holder just proved by mail; the address is recorded on it. */
-async function accountProvenByMail(ctx: ServiceContext, email: string) {
-  const db = ctx.env.DB;
-  const user = await accountForProvenEmail(ctx, email, null);
-  if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
-  const { ownerId } = await repo.addUserEmail(db, email, user.id, 'magic_link', ctx.clock.now());
-  if (ownerId !== user.id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
-  await repo.adoptPrimaryEmail(db, user.id, email);
-  return user;
-}
-
 /** Magic-link sign-in for an email the browser just proved. Grants `user` only. */
 export async function signInMagicLink(
   ctx: ServiceContext,
   email: string,
   sign: SignInContext,
 ): Promise<SignInResult> {
-  const user = await accountProvenByMail(ctx, email);
+  const user = await accountProvenByMail(ctx, email, sign);
   const result = await startSession(ctx, user.id, ['user'], 'magic_link', null, sign);
   await attachWaitingPassesForEmail(ctx, user.id, email);
   return result;
@@ -189,10 +136,15 @@ export async function linkIdentityByMail(
   ctx: ServiceContext,
   email: string,
   pending: PendingIdentity,
+  sign: SignInContext,
 ): Promise<void> {
-  const user = await accountProvenByMail(ctx, email);
-  await repo.insertIdentity(ctx.env.DB, { ...pending, userId: user.id, now: ctx.clock.now() });
-  await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
+  const user = await accountProvenByMail(ctx, email, sign);
+  const linked = await repo.insertIdentity(ctx.env.DB, {
+    ...pending,
+    userId: user.id,
+    now: ctx.clock.now(),
+  });
+  if (linked) await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
   await attachWaitingPassesForEmail(ctx, user.id, email);
 }
 
@@ -206,6 +158,7 @@ export async function verifyEmailForUser(
   if (user?.status !== 'active') {
     throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
   }
+  await releaseClaimOtherThan(ctx, userId, email);
   const { ownerId } = await repo.addUserEmail(
     ctx.env.DB,
     email,
