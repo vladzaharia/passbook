@@ -1,14 +1,14 @@
 import { Link } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import type { ScanEventDto } from '@/shared/contracts/scanners.ts';
 import { formatEventTime } from '@/web/lib/format.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { Button, DataTable, EmptyState, ErrorState, StatusPill } from '@/web/ui/index.ts';
 import { EventDialog } from './events/event-dialog.tsx';
 import { useScanEvents } from './scanner-api.ts';
 
-const columns: ColumnDef<ScanEventDto>[] = [
+const columns: DataColumnDef<ScanEventDto>[] = [
   {
     accessorKey: 'name',
     header: 'Event',

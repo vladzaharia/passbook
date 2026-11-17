@@ -1,5 +1,4 @@
 import type { Mode } from '../../src/shared/contracts/common.ts';
-import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
 import type {
   ApiKeyAuth,
   ApiKeyStore,
@@ -142,14 +141,21 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
   const denied: DeniedEvent[] = [];
   let n = 0;
   let binding: { db: D1Database; clock: Clock } | undefined;
-  let keyBinding: { db: D1Database; clock: Clock; store: ApiKeyStore } | undefined;
+  let keyBinding: { db: D1Database; clock: Clock; store: Promise<ApiKeyStore> } | undefined;
   return {
     denied,
     bindSessions(db, clock) {
       binding = { db, clock };
     },
     bindApiKeys(env, clock) {
-      keyBinding = { db: env.DB, clock, store: createApiKeyStore(env, clock) };
+      // Loaded on first use: the service pulls ~50 modules most tests never need.
+      keyBinding = {
+        db: env.DB,
+        clock,
+        store: import('../../src/worker/modules/api-keys/service.ts').then((m) =>
+          m.createApiKeyStore(env, clock),
+        ),
+      };
     },
     stores: {
       sessions: {
@@ -186,7 +192,7 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
             key.seeded.set(db, seeded);
           }
           await seeded;
-          return store.resolve(raw);
+          return (await store).resolve(raw);
         },
       },
       scanners: {

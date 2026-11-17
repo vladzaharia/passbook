@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import type { BroadcastDto, BroadcastState } from '@/shared/contracts/broadcasts.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
@@ -77,7 +77,7 @@ function ScopedMessagesPage({
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   // Test mode already says so in the header; a pill on every row would repeat it.
   const mixed = rows.some((r) => r.mode !== 'test');
-  const columns = useMemo<ColumnDef<BroadcastDto, never>[]>(
+  const columns = useMemo<DataColumnDef<BroadcastDto, never>[]>(
     () => [
       {
         id: 'name',

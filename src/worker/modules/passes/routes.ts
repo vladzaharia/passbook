@@ -36,6 +36,7 @@ import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
 import { registerCheckInRoutes } from './routes-check-in.ts';
 import { registerMemberPhotoRoutes } from './routes-member-photo.ts';
+import { registerStampsRoutes } from './routes-stamps.ts';
 import { registerWriteRoutes } from './routes-write.ts';
 import { deletePass, listPassSummaries, unvoidPass, voidPass } from './service.ts';
 
@@ -290,6 +291,7 @@ registerActionRoutes(passesRoutes);
 registerAssetRoutes(passesRoutes);
 registerMemberPhotoRoutes(passesRoutes);
 registerCheckInRoutes(passesRoutes);
+registerStampsRoutes(passesRoutes);
 registerBulkRoutes(passesRoutes);
 registerEventRoutes(passesRoutes);
 registerRemoveRoutes(passesRoutes);

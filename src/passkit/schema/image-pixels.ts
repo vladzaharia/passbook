@@ -1,4 +1,4 @@
-import { unzlibSync } from 'fflate';
+import { assertPngDimensions, inflateIdat } from '../png-inflate.ts';
 
 /** Alpha channel of a PNG, row by row (0 transparent, 255 opaque). */
 export interface AlphaMap {
@@ -41,6 +41,11 @@ export function decodePixels(bytes: Uint8Array): PixelMap | null {
   const interlace = bytes[28];
   const channels = CHANNELS[type];
   if (!channels || interlace !== 0 || (depth !== 8 && depth !== 16)) return null;
+  try {
+    assertPngDimensions(width, height);
+  } catch {
+    return null;
+  }
   if (width * height > 4_000_000) return null;
   const idat: Uint8Array[] = [];
   let trns: Uint8Array | null = null;
@@ -55,21 +60,14 @@ export function decodePixels(bytes: Uint8Array): PixelMap | null {
     else if (kind === 'IEND') break;
     at += 12 + length;
   }
+  const bpp = channels * (depth / 8);
+  const stride = width * bpp;
   let raw: Uint8Array;
   try {
-    const joined = new Uint8Array(idat.reduce((n, d) => n + d.length, 0));
-    let o = 0;
-    for (const d of idat) {
-      joined.set(d, o);
-      o += d.length;
-    }
-    raw = unzlibSync(joined);
+    raw = inflateIdat(idat, (stride + 1) * height);
   } catch {
     return null; // Damaged data: the structure check reports it; pixel lint skips.
   }
-  const bpp = channels * (depth / 8);
-  const stride = width * bpp;
-  if (raw.length < (stride + 1) * height) return null;
   const pixels = new Uint8Array(stride * height);
   for (let y = 0; y < height; y++) {
     const filter = raw[y * (stride + 1)];

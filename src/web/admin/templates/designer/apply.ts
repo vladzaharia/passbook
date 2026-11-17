@@ -32,6 +32,15 @@ import {
 } from './ops-pass.ts';
 import { setLookupInput } from './scan/lookup.ts';
 import { applyScanOp, type ScanOp } from './scan/ops-scan.ts';
+import {
+  type ArtSlot,
+  addStamps,
+  renameStampsInput,
+  setArt,
+  setGoal,
+  setStampsInput,
+  setStampsProp,
+} from './stamps.ts';
 
 /** Every edit the designer makes. Plain data, so the history can replay and tests can read it. */
 export type Op =
@@ -58,6 +67,11 @@ export type Op =
   | { op: 'scan-lookup'; input: string }
   | { op: 'list'; key: ListKey; items: Record<string, unknown>[] }
   | { op: 'image'; slot: string; asset: DraftAsset | null }
+  | { op: 'stamps-add'; art: Partial<Record<ArtSlot, DraftAsset>> }
+  | { op: 'stamps-goal'; goal: number }
+  | { op: 'stamps-set'; patch: { tilt?: boolean; keepReady?: boolean; maximum?: number } }
+  | { op: 'stamps-art'; slot: ArtSlot; asset: DraftAsset | null }
+  | { op: 'stamps-input'; input: string }
   | ScanOp;
 
 export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
@@ -92,8 +106,12 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setFieldLink(doc, o.key, o.on, o.optional);
     case 'input-add':
       return addInput(doc, o.spec);
-    case 'input-set':
-      return updateInput(doc, o.name, o.patch);
+    case 'input-set': {
+      const next = updateInput(doc, o.name, o.patch);
+      return o.patch.name && o.patch.name !== o.name && next !== doc
+        ? renameStampsInput(next, o.name, o.patch.name)
+        : next;
+    }
     case 'input-remove':
       return removeInput(doc, o.name);
     case 'input-move':
@@ -110,5 +128,15 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setSlotImage(doc, o.slot, o.asset);
     case 'scan-display':
       return applyScanOp(doc, o);
+    case 'stamps-add':
+      return addStamps(doc, o.art);
+    case 'stamps-goal':
+      return setGoal(doc, o.goal);
+    case 'stamps-set':
+      return setStampsProp(doc, o.patch);
+    case 'stamps-art':
+      return setArt(doc, o.slot, o.asset);
+    case 'stamps-input':
+      return setStampsInput(doc, o.input);
   }
 }

@@ -48,6 +48,8 @@ it('starter clones open in the designer as inactive drafts, and a draft can be s
   };
   for (const t of generatedSource.templates) {
     for (const a of t.assets) {
+      // Generated stamp strips have no source file; stamps-save.test.ts draws and checks them.
+      if (a.stamps !== undefined) continue;
       const bytes = bytesFor(t.slug, a.name);
       if (bytes.length !== a.size || (await sha1Hex(bytes)) !== a.sha1 || crc32(bytes) !== a.crc32)
         throw new Error(`Baked fixture does not match generated metadata: ${t.slug}/${a.name}`);

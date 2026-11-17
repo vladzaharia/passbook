@@ -51,7 +51,8 @@ export async function templatePackage(
     'pass.json': text(template.passJson),
     'wallet.template.json': text(manifest),
   };
-  for (const asset of template.assets)
+  // Generated stamp strips are drawn again when the package is uploaded.
+  for (const asset of template.assets.filter((a) => a.stamps === undefined))
     files[asset.name] = new Uint8Array(
       await new Response(await registry.openAsset(template, asset.name)).arrayBuffer(),
     );

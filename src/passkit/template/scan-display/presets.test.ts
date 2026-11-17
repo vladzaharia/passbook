@@ -17,7 +17,7 @@ const withInputs = (manifest: TemplateManifest, add: Record<string, object>): Te
 
 describe('presets', () => {
   it.each(bakedSlugs())('every preset validates against %s', async (slug) => {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     for (const id of PRESET_ORDER) {
       const panel = PRESETS[id].build(template.manifest, {}, { passJson: template.passJson });
       const manifest: TemplateManifest = {
@@ -40,7 +40,7 @@ describe('presets', () => {
   });
 
   it('tags every row with a slot and writes no photo row', async () => {
-    const { template } = await loadBaked('starter-event-ticket');
+    const { template } = await loadBaked('starter-event-ticket', { strips: false });
     for (const id of PRESET_ORDER)
       for (const row of PRESETS[id].build(template.manifest).rows) {
         expect(row.slot, `${id} ${row.id}`).toBeTruthy();
@@ -49,7 +49,7 @@ describe('presets', () => {
   });
 
   it('Ticket writes a 4-item big columns row when a gate input exists', async () => {
-    const { template } = await loadBaked('starter-event-ticket');
+    const { template } = await loadBaked('starter-event-ticket', { strips: false });
     const manifest = exampleManifest(template.manifest, example('vip'));
     const rows = PRESETS.ticket.build(manifest).rows;
     expect(rows[0]).toMatchObject({ type: 'columns', size: 'big' });
@@ -59,7 +59,7 @@ describe('presets', () => {
   });
 
   it('Ticket writes a big row for the event blueprint single seat, within 5 units', async () => {
-    const { template } = await loadBaked('starter-event-ticket');
+    const { template } = await loadBaked('starter-event-ticket', { strips: false });
     const rows = PRESETS.ticket.build(template.manifest).rows;
     expect(rows.map((r) => r.type)).toEqual(['big', 'field', 'field', 'field']);
     expect(rows.map((r) => (r as { value?: string }).value)).toEqual([
@@ -73,7 +73,7 @@ describe('presets', () => {
   });
 
   it('Balance and Loyalty follow the actions', async () => {
-    const { template: store } = await loadBaked('starter-store-card');
+    const { template: store } = await loadBaked('starter-store-card', { strips: false });
     const balance = PRESETS.balance.build(exampleManifest(store.manifest, example('prepaid')));
     expect(balance.rows).toMatchObject([
       {
@@ -94,18 +94,18 @@ describe('presets', () => {
   });
 
   it('Loyalty without a take action writes its own goal', async () => {
-    const { template } = await loadBaked('starter-store-card');
+    const { template } = await loadBaked('starter-store-card', { strips: false });
     const manifest = withInputs(template.manifest, { stamps: { type: 'integer' } });
     expect(PRESETS.loyalty.build(manifest).rows[0]).toMatchObject({ goal: 10 });
   });
 
   it('Membership reads the tier input', async () => {
-    const { template } = await loadBaked('starter-generic');
+    const { template } = await loadBaked('starter-generic', { strips: false });
     expect(PRESETS.membership.build(template.manifest).rows[0]).toMatchObject({ type: 'chips' });
   });
 
   it('Offer maps the coupon blueprint', async () => {
-    const { template } = await loadBaked('starter-coupon');
+    const { template } = await loadBaked('starter-coupon', { strips: false });
     expect(PRESETS.offer.build(template.manifest).rows).toMatchObject([
       { type: 'big', value: '{{inputs.offer}}' },
       { type: 'field', label: 'Conditions', value: '{{inputs.validFor}}' },
@@ -114,7 +114,7 @@ describe('presets', () => {
   });
 
   it('Details quick-picks the front fields and Access reads boolean inputs', async () => {
-    const { template } = await loadBaked('starter-store-card');
+    const { template } = await loadBaked('starter-store-card', { strips: false });
     const rows = PRESETS.details.build(template.manifest, {}, { passJson: template.passJson }).rows;
     expect(rows[0]).toMatchObject({ type: 'field', label: 'Balance', value: '{{fields.balance}}' });
     const manifest = withInputs(template.manifest, {
@@ -132,7 +132,7 @@ describe('presets', () => {
   });
 
   it('renders a preset panel, and Note renders nothing until written', async () => {
-    const { template } = await loadBaked('starter-event-ticket');
+    const { template } = await loadBaked('starter-event-ticket', { strips: false });
     const panel = PRESETS.ticket.build(template.manifest);
     const doc = { v: 1 as const, holder: '{{inputs.attendee}}', header: {}, panels: [panel] };
     const out = renderDoc(

@@ -43,7 +43,9 @@ export async function saveVersion(
   if (row.status !== 'active')
     throw new ConflictError('Archived templates cannot be changed.', 'TEMPLATE_ARCHIVED');
 
-  const checked = await checkVersion(ctx, row, row.orgId, body, images);
+  const checked = await checkVersion(ctx, row, row.orgId, body, images, {
+    dryRun: body.dryRun === true,
+  });
   if ('refused' in checked) return refusedResponse(body.dryRun, checked.refused);
   const { analysis, report, carried, base } = checked;
   const key = await buildKey(analysis);

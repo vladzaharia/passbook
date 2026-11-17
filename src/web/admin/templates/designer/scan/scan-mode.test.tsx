@@ -49,6 +49,7 @@ function Harness() {
           dispatch,
           assetBase: '',
           readOnly: false,
+          stamps: { count: 0, setCount: () => {} },
         }}
       >
         <ScanMode templateId="tpl1" orgId="org1" issues={<div>Issues</div>} />

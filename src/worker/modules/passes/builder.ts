@@ -109,6 +109,7 @@ async function withOverrides(
       name: a.name,
       slot,
       scale,
+      override: true,
       size: a.size,
       sha1: a.sha1,
       crc32: a.crc32 ?? (await legacyCrc(bucket, a)),

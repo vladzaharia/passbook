@@ -1,14 +1,15 @@
 import { cachedAssetBytes } from './asset-cache.ts';
 import type { BehaviorRegistry } from './behaviors/registry.ts';
+import { AssetPlanError, type ShippedAsset, shippedAssets } from './build-assets.ts';
 import { inputTimeZone, isTimeZone, localizeDates, localZones } from './build-local-time.ts';
 import { normalizePass } from './schema/normalize.ts';
 import type { SignedPass } from './sign/index.ts';
 import { sha1Hex, signPass } from './sign/index.ts';
 import { bindPass } from './template/bindings.ts';
 import { applyDefaults, checkInput } from './template/manifest.ts';
-import { classifyAsset, pngSize, slotOf } from './template/package.ts';
 import type { ResolvedTemplate, TemplateRegistry } from './template/registry.ts';
 import { unmetRequirements } from './template/requires.ts';
+import { stampScopeFor } from './template/stamps.ts';
 import type {
   PassIdentity,
   PassJson,
@@ -124,62 +125,6 @@ export function validateInput(template: ResolvedTemplate, input: Personalization
     throw new PassBuildError('INVALID_INPUT', 'The pass input is invalid.', issues);
 }
 
-interface ShippedAsset {
-  name: string;
-  width?: number;
-  height?: number;
-  size?: number;
-  sha1?: string;
-  crc32?: number;
-  bytes?: Uint8Array;
-}
-
-/** Template files minus preview-only and dropped slots, with per-pass overrides applied. */
-function shippedAssets(
-  template: ResolvedTemplate,
-  dropped: string[],
-  overrides: Record<string, AssetOverride>,
-): ShippedAsset[] {
-  const previewOnly = new Set(template.manifest.previewOnlyAssets ?? []);
-  const isDropped = (name: string) => {
-    const slot = slotOf(name);
-    return slot !== null && dropped.includes(slot);
-  };
-  const out = new Map<string, ShippedAsset>();
-  for (const entry of template.assets) {
-    if (previewOnly.has(entry.name) || isDropped(entry.name)) continue;
-    out.set(entry.name, {
-      name: entry.name,
-      ...(entry.size ? { size: entry.size } : {}),
-      ...(entry.width ? { width: entry.width } : {}),
-      ...(entry.height ? { height: entry.height } : {}),
-      ...(entry.sha1 ? { sha1: entry.sha1 } : {}),
-      ...(entry.crc32 !== undefined ? { crc32: entry.crc32 } : {}),
-    });
-  }
-  for (const [name, override] of Object.entries(overrides)) {
-    const kind = classifyAsset(name);
-    if (!kind || kind.slot === 'other' || kind.slot === 'strings')
-      fail('INVALID_INPUT', `${name} is not an image slot file.`, `assetOverrides/${name}`);
-    if (isDropped(name)) continue;
-    const size = pngSize(override.bytes);
-    if (!size) fail('INVALID_INPUT', `${name} is not a PNG.`, `assetOverrides/${name}`);
-    out.set(name, {
-      name,
-      ...size,
-      size: override.bytes.length,
-      bytes: override.bytes,
-      ...(override.sha1 ? { sha1: override.sha1 } : {}),
-    });
-  }
-  // Every device Wallet runs on is @2x or @3x: a @1x file is dead weight once a larger one ships.
-  const hasRetina = (name: string) =>
-    [2, 3].some((scale) => out.has(name.replace(/\.png$/, `@${scale}x.png`)));
-  for (const name of [...out.keys()])
-    if (/^(?:[^/]+\.lproj\/)?[A-Za-z]+\.png$/.test(name) && hasRetina(name)) out.delete(name);
-  return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
-}
-
 export interface PlannedPass {
   passJson: PassJson;
   report: ValidationReport;
@@ -219,11 +164,13 @@ export function planPass(args: BuildPassInput): PlannedPass {
   validateInput(template, input);
   const unmet = unmetRequirements(template.manifest, server.identity);
   if (unmet.length > 0) fail('TEMPLATE', unmet.join(' '), 'requires');
+  const stamps = stampScopeFor(template.manifest, applyDefaults(template.manifest, input));
   let pass: PassJson;
   let dropped: string[];
   try {
     ({ pass, droppedImages: dropped } = bindPass(template, input, {
       ...(server.scanCode ? { scanCode: server.scanCode } : {}),
+      ...(stamps ? { stamps } : {}),
     }));
   } catch (error) {
     if (error instanceof Error) fail('TEMPLATE', `Binding failed: ${error.message}`);
@@ -259,7 +206,13 @@ export function planPass(args: BuildPassInput): PlannedPass {
   pass.webServiceURL = server.webServiceURL;
   pass.organizationName = server.organizationName;
 
-  const assets = shippedAssets(template, dropped, args.assetOverrides ?? {});
+  let assets: ShippedAsset[];
+  try {
+    assets = shippedAssets(template, dropped, args.assetOverrides ?? {}, stamps?.card);
+  } catch (error) {
+    if (error instanceof AssetPlanError) fail(error.code, error.message, error.path);
+    throw error;
+  }
   const report = validatePass(pass, assets, server.identity);
   if (!report.ok)
     throw new PassBuildError('INVALID_PASS', 'The pass failed validation.', report.issues);
@@ -285,7 +238,7 @@ export async function buildPass(args: BuildPassInput): Promise<BuiltPass | Uncha
     bytes[asset.name] =
       asset.bytes ??
       (await cachedAssetBytes(template.id, template.version, asset, async () =>
-        readAll(await registry.openAsset(template, asset.name)),
+        readAll(await registry.openAsset(template, asset.source ?? asset.name)),
       ));
     sha1[asset.name] = asset.sha1 ?? (await sha1Hex(bytes[asset.name] as Uint8Array));
     if (asset.crc32 !== undefined) crc[asset.name] = asset.crc32;

@@ -1,0 +1,68 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(252,244,230)",
+  "barcodes": [
+    {
+      "altText": "CARD-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "CARD-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Stamp card",
+  "featuredActions": [],
+  "foregroundColor": "rgb(49,28,15)",
+  "formatVersion": 1,
+  "labelColor": "rgb(162,64,25)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "storeCard": {
+    "backFields": [
+      {
+        "key": "how",
+        "label": "How it works",
+        "value": "One stamp per visit. A full card earns the reward."
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "One reward per full card. No cash value."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "stamps",
+        "label": "Stamps",
+        "value": "7 of 10"
+      }
+    ],
+    "primaryFields": [],
+    "secondaryFields": [
+      {
+        "key": "reward",
+        "label": "Reward",
+        "value": "Free coffee"
+      },
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Alex Morgan"
+      }
+    ]
+  },
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

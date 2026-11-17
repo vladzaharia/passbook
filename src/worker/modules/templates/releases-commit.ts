@@ -17,6 +17,7 @@ import {
   getLatestRelease,
   getRelease,
 } from './repo-releases.ts';
+import { assertStampsFit } from './stamps.ts';
 
 export async function commitRelease(
   ctx: ServiceContext,
@@ -37,6 +38,7 @@ export async function commitRelease(
   const version = await getVersion(db, candidate.templateId, candidate.version);
   const template = await getTemplate(db, candidate.templateId);
   if (!version) throw changed();
+  await assertStampsFit(ctx, candidate.templateId, scope, version.manifest);
   const templateMetadata = {
     name: version.manifest.name,
     description: version.manifest.description ?? null,

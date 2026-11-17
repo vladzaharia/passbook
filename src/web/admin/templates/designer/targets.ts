@@ -26,6 +26,7 @@ export const platformManaged = (issue: ValidationIssue): boolean =>
 /** The part of the designer an issue is about, from its path; null when it has no home. */
 export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection | null {
   const path = issue.path ?? '';
+  if (issue.code.startsWith('STAMPS') || /^stamps(?:\/|$)/.test(path)) return { section: 'stamps' };
   if (/^scan\.display\b/.test(path)) {
     const display = scanDisplayOf(doc);
     return { section: 'scan-display', key: display ? scanIssueTarget(display, path) : 'header' };

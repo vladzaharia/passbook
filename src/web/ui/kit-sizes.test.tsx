@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
-import type { ColumnDef } from '@tanstack/react-table';
 import { render, screen } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { generic } from '@/shared/pass-view/fixtures/index.ts';
 import { normalize } from '@/shared/pass-view/index.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import '../lib/test-utils.tsx';
 import { PassCardStage } from '../pass-card/stage.tsx';
 import { Button, buttonVariants } from './button.tsx';
@@ -124,7 +124,7 @@ describe('CardHeader', () => {
 
 describe('DataTable', () => {
   it('frames a standalone table with the card surface, and none inside a card', () => {
-    const columns: ColumnDef<{ id: string }, never>[] = [{ accessorKey: 'id', header: 'Id' }];
+    const columns: DataColumnDef<{ id: string }, never>[] = [{ accessorKey: 'id', header: 'Id' }];
     const { rerender } = render(
       <DataTable caption="Rows" columns={columns} data={[{ id: 'a' }]} />,
     );

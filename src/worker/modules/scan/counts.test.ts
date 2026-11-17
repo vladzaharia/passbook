@@ -3,6 +3,7 @@ import { localDayStart, planCounts } from './counts.ts';
 import { registerCountsCacheAuthorityCases } from './repo-counts-cache-authority-cases-test-fixtures.ts';
 import {
   adminFor,
+  cache,
   csrfFence,
   kit,
   registerCountsFixture,
@@ -25,6 +26,22 @@ describe('scanner local midnight', () => {
 
 describe('event expected-count cache authority', () => {
   registerCountsFixture();
+  it('rewrites the cache only once it is older than the TTL, and every read stays live', async () => {
+    const s = await scenario();
+    const read = async () => {
+      const plan = planCounts(kit.ctx, s.actor);
+      return plan.read(await kit.env.DB.batch(plan.stmts));
+    };
+    await read();
+    const written = await cache(s.event.id);
+    kit.clock.advance(1_000);
+    await kit.scanPass(s.templateId);
+    expect((await read()).counts.event?.expected).toBe(2);
+    expect(await cache(s.event.id)).toEqual(written);
+    kit.clock.advance(60_000);
+    expect((await read()).counts.event?.expected).toBe(2);
+    expect(await cache(s.event.id)).toEqual({ expected: 2, expected_at: kit.clock.now() });
+  });
   registerCountsCacheReadCases();
   registerCountsCacheAuthorityCases();
   registerCountsCacheReleaseCases();

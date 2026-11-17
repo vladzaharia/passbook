@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { Personalization } from '../../../passkit/types.ts';
 import type { MyPassSchema } from '../../../shared/contracts/index.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
@@ -71,6 +72,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
     orgId: row.org_id,
     templateId: row.template_id,
     templateVersion: row.template_version,
+    personalization: JSON.parse(row.personalization) as Personalization,
   });
   return {
     id: row.id,
