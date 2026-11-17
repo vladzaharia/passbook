@@ -384,6 +384,11 @@ export async function makeSession(
       now + 12 * 3600_000,
     ],
   );
+  // A sign-in records the roles it granted (`recordLogin`); deferred platform work re-reads them.
+  await run(f.env.DB, 'UPDATE users SET last_roles = ? WHERE id = ?', [
+    JSON.stringify(roles),
+    options.userId,
+  ]);
   return {
     userId: options.userId,
     cookieValue,

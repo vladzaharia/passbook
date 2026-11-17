@@ -1,4 +1,4 @@
-import { strictEmail } from '../../../shared/email.ts';
+import { knownEmail, strictEmail } from '../../../shared/email.ts';
 import {
   ConflictError,
   NotFoundError,
@@ -24,9 +24,9 @@ export async function listMyEmails(ctx: ServiceContext, userId: string) {
     verifiedVia: e.verified_via as 'magic_link' | 'oidc' | 'admin' | null,
     primary: e.email === user?.primary_email,
   }));
-  // The profile address can be unproven (OIDC without trusted email). Listed so it can be verified;
-  // it is never in user_emails, so nothing that matches on verified emails sees it.
-  if (user && !items.some((e) => e.primary)) {
+  // An older account's profile address can be unproven (OIDC without trusted email). Listed so it
+  // can be verified; it is never in user_emails, so nothing that matches on verified emails sees it.
+  if (user && !items.some((e) => e.primary) && knownEmail(user.primary_email)) {
     items.push({ email: user.primary_email, verifiedAt: null, verifiedVia: null, primary: true });
   }
   return { items };

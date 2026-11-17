@@ -173,6 +173,15 @@ describe('register', () => {
     expect(stored).toBeNull();
   });
 
+  it('refuses a new device on a soft-deleted pass', async () => {
+    const pass = await kit.pass();
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [Date.now(), pass.id]);
+    expect((await register(pass, 'deleted-dev')).status).toBe(401);
+    expect(
+      await first(kit.env.DB, 'SELECT 1 FROM registrations WHERE pass_id = ?', [pass.id]),
+    ).toBeNull();
+  });
+
   it('rejects malformed push tokens and device ids', async () => {
     const pass = await kit.pass();
     for (const bad of ['', 'xyz', 'a'.repeat(63), 'g'.repeat(64), 'a'.repeat(129)])
@@ -328,7 +337,7 @@ describe('latest pass', () => {
     expect(res.headers.get('last-modified')).toBe(
       new Date(Math.floor(pass.modifiedAt / 1000) * 1000).toUTCString(),
     );
-    expect(res.headers.get('cache-control')).toBe('private, no-cache');
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
     const bytes = new Uint8Array(await res.arrayBuffer());
     expect([bytes[0], bytes[1]]).toEqual([0x50, 0x4b]);
   });

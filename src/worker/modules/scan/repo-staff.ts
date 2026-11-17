@@ -72,6 +72,8 @@ export interface NewStaff {
   name: string;
   role: ScanRole;
   pinHash: string;
+  /** The MAC root the hash was made under. */
+  pinMacVersion: number;
   createdBy: string;
   now: number;
 }
@@ -80,8 +82,28 @@ export interface NewStaff {
 export const addStaffInsert = (g: Grant, row: NewStaff): GrantedStatement =>
   g.insertSelect(
     'scan_staff',
-    ['id', 'name', 'role', 'pin_hash', 'pin_set_at', 'created_by', 'created_at', 'updated_at'],
-    [row.id, row.name, row.role, row.pinHash, row.now, row.createdBy, row.now, row.now],
+    [
+      'id',
+      'name',
+      'role',
+      'pin_hash',
+      'pin_mac_version',
+      'pin_set_at',
+      'created_by',
+      'created_at',
+      'updated_at',
+    ],
+    [
+      row.id,
+      row.name,
+      row.role,
+      row.pinHash,
+      row.pinMacVersion,
+      row.now,
+      row.createdBy,
+      row.now,
+      row.now,
+    ],
   );
 
 /** Only the fields the edit names move; disabling keeps the first disable time. */
@@ -103,10 +125,16 @@ export const addStaffPinRotate = (
   g: Grant,
   id: string,
   pinHash: string,
+  pinMacVersion: number,
   now: number,
 ): GrantedStatement =>
   g.update('scan_staff', {
-    set: { pin_hash: pinHash, pin_set_at: now, updated_at: maxNow(now) },
+    set: {
+      pin_hash: pinHash,
+      pin_mac_version: pinMacVersion,
+      pin_set_at: now,
+      updated_at: maxNow(now),
+    },
     where: { id },
     require: 'one',
   });

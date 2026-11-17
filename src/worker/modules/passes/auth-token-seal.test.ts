@@ -5,6 +5,7 @@ import {
   authTokenOf,
   deviceToken,
   makeOrg,
+  resetSealCursor,
   withoutTrigger,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
@@ -30,8 +31,9 @@ beforeAll(async () => {
   kit = await setupKit();
 });
 
-/** Two runs: ids made in the same millisecond may sort behind the cursor, and a run at the end rewinds it. */
+/** From the first row: ids made in the same millisecond sort randomly, so an old cursor may sit past a new row. */
 async function sweep() {
+  await resetSealCursor(kit.env.DB, kit.clock.now());
   await sealCapabilityTokens(job());
   await sealCapabilityTokens(job());
 }

@@ -44,6 +44,10 @@ register(
   },
   async (c) => {
     const { orgId, mode, templateId, passId, role } = c.req.valid('query');
+    // The preview writes an audit row, so a cross-site navigation must not reach it.
+    const site = c.req.header('sec-fetch-site');
+    if (site && site !== 'same-origin')
+      throw new ForbiddenError('Cross-origin requests are not allowed.', 'CSRF_ORIGIN');
     const ctx = credentialKeysetContext(serviceContext(c));
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();

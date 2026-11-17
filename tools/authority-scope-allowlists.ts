@@ -40,8 +40,14 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     ],
   },
   'src/worker/modules/auth/repo.ts': {
-    reason: 'sign-in finds or creates the user and stamps last login before any principal exists',
-    writes: ['users:21bde5076000', 'users:c3b10ce30da0'],
+    reason:
+      'sign-in finds or creates the user, stamps last login and settles an unproven primary address (#73) before any principal exists',
+    writes: [
+      'users:16004e2ec149',
+      'users:21bde5076000',
+      'users:c3b10ce30da0',
+      'users:df81eec8157d',
+    ],
   },
   'src/worker/modules/me/repo.ts': {
     reason: 'a user edits their own primary email under their own session',
@@ -116,8 +122,9 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/passes/repo-pass-trusted.ts': {
     reason:
-      'link rotation, refresh claim, soft delete and the seal of an old plain pass or bundle link token (org no job grant can write; MAC under a CAS on the plain value, no authority change) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
+      'link rotation, refresh claim, soft delete, the seal of an old plain pass or bundle link token (org no job grant can write; MAC under a CAS on the plain value, no authority change) and the re-MAC of a stored token MAC under a new root (cron tokens.remac: a token_remac_marks row, the CAS update and the mark removal in one batch) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
     writes: [
+      'bundles:4d66feaeeccb',
       'bundles:4d66feaeeccb',
       'bundles:4d66feaeeccb@use',
       'passes:09a2c6689ea1',
@@ -126,7 +133,13 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'passes:4ba63e739c4c@use',
       'passes:8dac9824a940',
       'passes:a565c31165b3',
+      'passes:a978e7f9948b',
+      'passes:a978e7f9948b@use',
       'passes:c76312f4fe8f',
+      'passes:d60295b23550',
+      'passes:d60295b23550@use',
+      'token_remac_marks:b15f0832d2e7',
+      'token_remac_marks:d1185d6069bd',
     ],
   },
   'src/worker/modules/passes/repo-connection-state.ts': {

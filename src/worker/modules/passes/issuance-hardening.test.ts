@@ -58,9 +58,9 @@ describe('serial of a personalizable pass (P1-5)', () => {
       });
     const personalized = await create(template.id, release.version, release.id, release.generation);
     expect(personalized.serial).not.toBe('chosen-by-caller');
-    // A template without personalization keeps the caller's serial.
+    // The shared platform identity generates every serial.
     const plain = await create(kit.template.id, live.version, live.id, live.generation);
-    expect(plain.serial).toBe('chosen-by-caller');
+    expect(plain.serial).not.toBe('chosen-by-caller');
   });
 });
 

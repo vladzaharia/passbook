@@ -20,6 +20,18 @@ const ready = {
 };
 
 describe('predeployProblems', () => {
+  it('validates the MAC key rotation settings', () => {
+    const withVars = (extra: Record<string, string>) =>
+      predeployProblems({ ...ready, vars: { ...ready.vars, ...extra } });
+    expect(withVars({ MAC_KEY_VERSION: '2', MAC_KEY_VERSION_PREVIOUS: '1' })).toEqual([]);
+    expect(withVars({ MAC_KEY_VERSION: 'two' })).toEqual([
+      'MAC_KEY_VERSION must be a KEK version number (1, 2, ...).',
+    ]);
+    expect(withVars({ MAC_KEY_VERSION: '2', MAC_KEY_VERSION_PREVIOUS: '2' })).toEqual([
+      'MAC_KEY_VERSION and MAC_KEY_VERSION_PREVIOUS must differ.',
+    ]);
+  });
+
   it('passes a finished config', () => {
     expect(predeployProblems(ready)).toEqual([]);
   });

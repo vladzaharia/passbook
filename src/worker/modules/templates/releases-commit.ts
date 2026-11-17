@@ -78,5 +78,5 @@ export async function commitRelease(
   clearTemplateCache(ctx.env, candidate.templateId);
   const created = await getRelease(db, id);
   if (!created) throw new Error('Committed template release was not found.');
-  return toRelease(created, await userNames(db, [created.createdBy]));
+  return toRelease(created, await userNames(db, [created.createdBy], scope.orgId, false));
 }

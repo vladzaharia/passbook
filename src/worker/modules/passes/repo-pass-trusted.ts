@@ -142,3 +142,49 @@ const SEAL_SQL = {
     AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED} RETURNING id`,
   bundle: `UPDATE bundles SET token = ? WHERE id = ? AND token = ? AND NOT ${BUNDLE_RESERVED} RETURNING id`,
 } as const;
+
+const REMAC_SQL = {
+  pass: ['download', 'UPDATE passes SET download_token = ?'],
+  'apple-auth': ['auth', 'UPDATE passes SET auth_token = ?'],
+} as const;
+
+/**
+ * Replaces a stored MAC with the same token's MAC under the new root (cron tokens.remac), only while the
+ * column still holds `from`. A pass writes the 0069 mark first so the triggers let a MAC replace a MAC, and
+ * removes it in the same batch. A pending transfer or a forwarding reservation refuses the row (false).
+ */
+export async function remacTrusted(
+  db: D1Database,
+  purpose: TokenPurpose,
+  id: string,
+  from: string,
+  to: string,
+): Promise<boolean> {
+  if (purpose === 'bundle') {
+    const [updated] = await batch(db, [
+      stmt(
+        db,
+        `UPDATE bundles SET token = ? WHERE id = ? AND token = ? AND NOT ${BUNDLE_RESERVED} RETURNING id`,
+        [to, id, from],
+      ),
+    ]);
+    return (updated?.results.length ?? 0) === 1;
+  }
+  const [kind, update] = REMAC_SQL[purpose];
+  const column = kind === 'download' ? 'download_token' : 'auth_token';
+  const [, updated] = await batch(db, [
+    stmt(
+      db,
+      `INSERT INTO token_remac_marks (pass_id, kind, mac) VALUES (?, ?, ?)
+       ON CONFLICT (pass_id, kind) DO UPDATE SET mac = excluded.mac`,
+      [id, kind, to],
+    ),
+    stmt(
+      db,
+      `${update} WHERE id = ? AND ${column} = ? AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED} RETURNING id`,
+      [to, id, from],
+    ),
+    stmt(db, 'DELETE FROM token_remac_marks WHERE pass_id = ? AND kind = ?', [id, kind]),
+  ]);
+  return (updated?.results.length ?? 0) === 1;
+}

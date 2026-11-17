@@ -47,6 +47,7 @@ import {
   listCandidates as selectCandidates,
   listReleases as selectReleases,
 } from './repo-releases.ts';
+import { isPlatformAdmin } from './service-access.ts';
 
 export type { TemplateRelease } from '../../../shared/contracts/template-releases.ts';
 export { createCandidate } from './releases-create.ts';
@@ -61,10 +62,15 @@ export async function listCandidates(
   await scopedTemplate(ctx, auth, templateId, scope);
   const rows = await selectCandidates(ctx.env.DB, repositoryScope(templateId, scope));
   const approvals = await Promise.all(rows.map((row) => listApprovals(ctx.env.DB, row.id)));
-  const names = await userNames(ctx.env.DB, [
-    ...rows.flatMap((row) => [row.authorId, row.versionAuthorId]),
-    ...approvals.flatMap((list) => list.map((a) => a.reviewerId)),
-  ]);
+  const names = await userNames(
+    ctx.env.DB,
+    [
+      ...rows.flatMap((row) => [row.authorId, row.versionAuthorId]),
+      ...approvals.flatMap((list) => list.map((a) => a.reviewerId)),
+    ],
+    scope.orgId,
+    isPlatformAdmin(auth),
+  );
   return { items: rows.map((row, i) => toCandidate(row, approvals[i] ?? [], names)) };
 }
 
@@ -99,7 +105,10 @@ export async function approveCandidate(
     mode: body.mode,
     provider: body.provider,
   });
-  return toApproval(approval, await userNames(ctx.env.DB, [approval.reviewerId]));
+  return toApproval(
+    approval,
+    await userNames(ctx.env.DB, [approval.reviewerId], body.orgId, false),
+  );
 }
 
 /** The current generation, or null; the supplied org is the pass's actual organization. */
@@ -143,10 +152,12 @@ export async function listReleases(
     orgId: effectiveOrg,
   });
   const active = await activeRelease(ctx, templateId, scope.orgId, scope.mode, scope.provider);
-  const names = await userNames(ctx.env.DB, [
-    ...rows.map((r) => r.createdBy),
-    active?.createdBy ?? null,
-  ]);
+  const names = await userNames(
+    ctx.env.DB,
+    [...rows.map((r) => r.createdBy), active?.createdBy ?? null],
+    scope.orgId,
+    isPlatformAdmin(auth),
+  );
   return {
     active: active ? { ...active, createdByName: names.get(active.createdBy ?? '') ?? null } : null,
     items: rows.map((r) => toRelease(r, names)),

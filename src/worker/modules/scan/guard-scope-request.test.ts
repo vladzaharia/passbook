@@ -175,7 +175,20 @@ describe('requireScanActor: scope: requests and admin', () => {
     expect(strip((await unknown.json()) as never)).toEqual(strip((await foreign.json()) as never));
     expect(
       (await post(app, env, fake.admin(), { scope: { orgId: 'nope', timeZone: 'UTC' } })).status,
-    ).toBe(404);
+    ).toBe(403);
+  });
+
+  it('an admin scope naming an org it has no membership in is the same 404 as an unknown org', async () => {
+    const other = await makeOrg(f);
+    const foreign = await post(app, env, fake.admin(), {
+      scope: { orgId: other.id, timeZone: 'UTC' },
+    });
+    const unknown = await post(app, env, fake.admin(), {
+      scope: { orgId: 'nope', timeZone: 'UTC' },
+    });
+    await expectProblem(foreign, 403, 'FORBIDDEN');
+    const strip = (b: Record<string, unknown>) => ({ ...b, requestId: undefined });
+    expect(strip((await foreign.json()) as never)).toEqual(strip((await unknown.json()) as never));
   });
 
   it('an admin event of the other mode is a 404; templates must belong to the org', async () => {

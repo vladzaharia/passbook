@@ -9,10 +9,10 @@ import {
 } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
-import { clearSettingsCache } from '../settings/service.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { signInOidc } from './oidc-sign-in.ts';
-import { type OidcClaims, signInMagicLink } from './service.ts';
+import { setOidcTrust } from './oidc-trust-test-fixtures.ts';
+import { linkIdentityByMail, type OidcClaims } from './service.ts';
 import { oidcSignIn } from './test-oidc.ts';
 import {
   fakeLimiter,
@@ -37,20 +37,13 @@ const person = (groups: string[], extra: { email?: string; sub?: string } = {}) 
 };
 const session = async (jar: Jar) => (await h.call('/api/v1/session', { cookies: jar })).json();
 
-async function setTrust(on: boolean | null) {
-  await run(h.env.DB, "DELETE FROM settings WHERE key = 'oidc.trustEmail'");
-  if (on !== null)
-    await run(
-      h.env.DB,
-      "INSERT INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', ?, 0)",
-      [String(on)],
-    );
-  clearSettingsCache(h.env.DB);
-}
+const setTrust = (on: boolean | null) => setOidcTrust(h.env.DB, on);
 
 beforeEach(async () => {
   await resetOidcClientCaches(ISSUER);
   h = await harness();
+  // Mock Pocket ID verifies its emails; most tests want a first sign-in to need no mail round trip.
+  await setTrust(true);
 });
 afterEach(async () => {
   h.restore();
@@ -230,10 +223,24 @@ describe('oidc sign-in', () => {
     expect(((await limited.json()) as { code: string }).code).toBe('RATE_LIMITED');
     expect((await h.call('/auth/oidc/callback', ip('1.1.1.1'))).status).toBe(429);
     expect((await h.call('/auth/oidc/start', ip('2.2.2.2'))).status).toBe(302);
-    expect([...limiter.calls.keys()]).toContain('oidc:1.1.1.1');
+    expect([...limiter.calls.keys()]).toContain('oidc:1.1.1.0/24');
+  });
+
+  it('shares the RL_LOGIN bucket across an IPv4 /24 and an IPv6 /64', async () => {
+    h.restore();
+    h = await harness({ RL_LOGIN: fakeLimiter(1) as unknown as RateLimit });
+    const start = async (ip: string) =>
+      (await h.call('/auth/oidc/start', { headers: { 'cf-connecting-ip': ip } })).status;
+    expect(await start('1.1.1.1')).toBe(302);
+    expect(await start('1.1.1.200')).toBe(429);
+    expect(await start('2001:db8:1:2::1')).toBe(302);
+    expect(await start('2001:db8:1:2:ffff::9')).toBe(429);
+    expect(await start('2001:db8:1:3::1')).toBe(302);
   });
 
   describe('oidc.trustEmail off (default)', () => {
+    beforeEach(() => setTrust(null));
+
     it('proves an existing email owner by mail before linking', async () => {
       const f = fixtures(h.env);
       const existing = await makeUser(f);
@@ -257,7 +264,10 @@ describe('oidc sign-in', () => {
           cookies,
         });
       expect((await consume(new Map())).status).toBe(400);
-      expect((await consume(jar)).status).toBe(303);
+      const consumed = await consume(jar);
+      expect(consumed.status).toBe(303);
+      expect(consumed.headers.get('location')).toBe('/auth/oidc/start');
+      expect(consumed.headers.getSetCookie().join(';')).not.toContain('wallet_sid');
       const row = await first<{ user_id: string }>(
         h.env.DB,
         'SELECT user_id FROM auth_identities WHERE subject = ?',
@@ -277,12 +287,20 @@ describe('oidc sign-in', () => {
       expect(h.mail).toHaveLength(0);
     });
 
-    it('creates the user without a verified email', async () => {
+    it('proves a new subject by mail and creates nothing from the claim', async () => {
       const user = person(['wallet-users']);
       const { res } = await oidcSignIn(h, new Map(), user);
-      expect(res.status).toBe(302);
+      expect(res.status).toBe(403);
+      expect(await res.text()).toContain('Check your email');
+      expect(h.mail.at(-1)?.to).toBe(user.email);
+      expect(
+        await first(h.env.DB, 'SELECT 1 FROM users WHERE primary_email = ?', [user.email]),
+      ).toBeNull();
       expect(
         await first(h.env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [user.email]),
+      ).toBeNull();
+      expect(
+        await first(h.env.DB, 'SELECT 1 FROM auth_identities WHERE subject = ?', [user.sub]),
       ).toBeNull();
     });
   });
@@ -349,10 +367,9 @@ describe('oidc sign-in', () => {
     const existing = await makeUser(fixtures(h.env));
     const ctx = createServiceContext(h.env, { clock: h.clock });
     const subject = `proof-${uniq()}`;
-    await signInMagicLink(
+    await linkIdentityByMail(
       ctx,
       existing.primaryEmail,
-      { ipPrefix: null, userAgent: null },
       {
         provider: 'pocketid',
         subject,
@@ -360,6 +377,7 @@ describe('oidc sign-in', () => {
         emailVerified: false,
         groups: ['wallet-users'],
       },
+      { ipPrefix: null, userAgent: null },
     );
     expect(
       await first(

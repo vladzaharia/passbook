@@ -114,7 +114,7 @@ test('releases require independent review, compare-and-swap, and mode-specific i
       );
       expect(invitations.items).toContainEqual(
         expect.objectContaining({
-          email: reviewerSession.user.primaryEmail.toLowerCase(),
+          email: reviewerSession.user.primaryEmail?.toLowerCase(),
           roles: ['template_reviewer'],
           acceptedAt: expect.any(Number),
           revokedAt: null,

@@ -95,6 +95,24 @@ describe('real-pass scan display preview', () => {
     expect(problems).toEqual(cases.map(() => problems[0]));
   });
 
+  it('refuses a cross-site navigation and writes no audit row', async () => {
+    const { env, admin, preview, query } = fixture;
+    for (const site of ['cross-site', 'same-site', 'none']) {
+      const response = await preview(query({ role: 'manager' }), {
+        ...admin(),
+        'sec-fetch-site': site,
+      });
+      await expectProblem(response, 403, 'CSRF_ORIGIN');
+    }
+    const rows = await all(env.DB, "SELECT 1 FROM audit_log WHERE action = 'scan_display.preview'");
+    expect(rows).toEqual([]);
+    const same = await preview(query({ role: 'manager' }), {
+      ...admin(),
+      'sec-fetch-site': 'same-origin',
+    });
+    expect(same.status).toBe(200);
+  });
+
   it('audits the successful preview with only IDs and role in its detail', async () => {
     const { env, userId, orgId, templateId, live, preview, query } = fixture;
     const role: ScanRole = 'manager';

@@ -14,6 +14,7 @@ import { revokeAccessConfirm } from '@/web/lib/confirms.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import { membershipsQuery, sessionQuery, useSession } from '@/web/lib/session.ts';
 import { Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorState } from '@/web/ui/index.ts';
+import { NO_EMAIL_LABEL } from '../../../shared/email.ts';
 import { InviteForm, type SendInvite } from './org-invite-form.tsx';
 import { ROLE_LABELS } from './org-roles.ts';
 
@@ -106,7 +107,7 @@ export function AccessCard({ org }: { org: { id: string; name: string } }) {
               {members.data.items
                 .filter((member) => member.revokedAt === null)
                 .map((member) => {
-                  const label = member.userName ?? member.userEmail;
+                  const label = member.userName ?? member.userEmail ?? NO_EMAIL_LABEL;
                   const self = member.userId === authed?.user.id;
                   return (
                     <li
@@ -118,7 +119,7 @@ export function AccessCard({ org }: { org: { id: string; name: string } }) {
                           {label}
                           {self ? <span className="ml-2 text-xs text-fg-muted">You</span> : null}
                         </p>
-                        {member.userName ? (
+                        {member.userName && member.userEmail ? (
                           <p className="break-all text-fg-muted">{member.userEmail}</p>
                         ) : null}
                         <p className="text-fg-muted">

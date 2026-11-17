@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { makeOrg, makeScanner, makeScanStaff } from '../../../../test/helpers/index.ts';
 import { StaffPinSchema } from '../../../shared/contracts/scanners.ts';
-import { all, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { staffPinsOnRoot } from '../status/repo.ts';
 import { getStaff } from './repo-staff.ts';
 import { createStaff, resetStaffPin } from './staff-admin.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
@@ -28,6 +29,50 @@ let orgId: typeof staffAdmin.orgId;
 let userId: typeof staffAdmin.userId;
 beforeEach(() => {
   ({ env, f, clock, orgId, userId } = staffAdmin);
+});
+
+describe('staff PIN MAC root', () => {
+  const root = (id: string) =>
+    first<{ pin_mac_version: number | null }>(
+      env.DB,
+      'SELECT pin_mac_version FROM scan_staff WHERE id = ?',
+      [id],
+    );
+
+  it('is recorded with every PIN, and a reset refuses the PIN the previous root accepts', async () => {
+    const legacy = await makeScanStaff(f, { orgId, pin: '000042' });
+    expect((await root(legacy.id))?.pin_mac_version).toBeNull();
+    const kek = btoa(String.fromCharCode(...new Uint8Array(32).fill(9)));
+    const rotated = { ...env, KEK_V2: kek, MAC_KEY_VERSION: '2', MAC_KEY_VERSION_PREVIOUS: '1' };
+    const onPrevious = () => staffPinsOnRoot(env.DB, 1, 1);
+    const before = await onPrevious();
+    expect(before).toBeGreaterThan(0);
+
+    const ctx = createServiceContext(rotated, { clock });
+    const { auth, authority } = await serviceAuthority(ctx);
+    const draws = ['000042', '900007'];
+    let used = 0;
+    ctx.ids.code = () => draws[used++] ?? '900007';
+    const observed = await getStaff(env.DB, orgId, legacy.id);
+    if (!observed) throw new Error('Staff fixture missing');
+    const reset = await resetStaffPin(ctx, auth, authority, observed);
+    // The old PIN still verifies under the previous root, so it is not issued again.
+    expect(reset.pin).toBe('900007');
+    expect((await root(legacy.id))?.pin_mac_version).toBe(2);
+    expect((await credential(legacy.id))?.pin_hash).toBe(
+      await hashPin(rotated, legacy.id, '900007'),
+    );
+    expect(await onPrevious()).toBe(before - 1);
+
+    ctx.ids.code = () => '123456';
+    const made = await createStaff(ctx, auth, authority, 'live', {
+      orgId,
+      name: 'Rotated',
+      role: 'door',
+    });
+    expect((await root(made.staff.id))?.pin_mac_version).toBe(2);
+    expect(await onPrevious()).toBe(before - 1);
+  });
 });
 
 describe('staff records and credentials', () => {

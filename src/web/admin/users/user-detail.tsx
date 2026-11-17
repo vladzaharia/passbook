@@ -16,6 +16,7 @@ import {
   TwoPane,
   toast,
 } from '@/web/ui/index.ts';
+import { personLabel } from '../../lib/format.ts';
 import { useUser, useUserMutations } from './queries.ts';
 import { AccountCard, EmailsCard, IdentitiesCard, SessionsCard } from './user-sections.tsx';
 
@@ -47,7 +48,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
   const user = query.data;
   const disabled = user.status === 'disabled';
   const self = authed?.user.id === user.id;
-  const name = user.name ?? user.primaryEmail;
+  const name = personLabel(user);
   // Disable is undone from its toast (it also ends their sessions); Enable just runs.
   const toggle = async () => {
     try {
@@ -67,7 +68,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
       <PageHeader
         title={name}
         breadcrumbs={crumbs}
-        description={user.primaryEmail}
+        description={user.primaryEmail ?? undefined}
         avatar={<EntityAvatar kind="user" id={user.id} name={name} size={40} />}
         meta={
           <>

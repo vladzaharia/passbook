@@ -96,11 +96,14 @@ describe('admin scope', () => {
     const send = (headers: Record<string, string>, input: unknown, s?: unknown) =>
       kit.post(headers, '/resolve', { ...body(input), ...(s ? { scope: s } : {}) });
     expect((await send(kit.admin(), codeOf(pass))).status).toBe(422);
-    await expectProblem(
-      await send(kit.admin(), codeOf(pass), scope({ orgId: 'nope' })),
-      404,
-      'NOT_FOUND',
-    );
+    // A foreign org and an unknown one answer alike: the guard checks membership first.
+    const foreignOrg = await makeOrg(kit.fx);
+    for (const orgId of ['nope', foreignOrg.id])
+      await expectProblem(
+        await send(kit.admin(), codeOf(pass), scope({ orgId })),
+        403,
+        'FORBIDDEN',
+      );
     const live = (await (await send(kit.admin(), codeOf(pass), scope())).json()) as ScanOutcome;
     expect(live.kind).toBe('ready');
     const asTest = (await (await send(kit.admin(), codeOf(pass), scope())).json()) as ScanOutcome;

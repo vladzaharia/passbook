@@ -17,6 +17,7 @@ import {
   seedLegacy,
   starterPackage,
 } from './legacy-seed.ts';
+import { seedProduction } from './production-seed.ts';
 import { runBootstrap } from './run-bootstrap.ts';
 
 export const NOW = Date.now();
@@ -66,10 +67,11 @@ export interface Cutover {
 /** 0024 data, then migrations 0025+, then the bootstrap, then the baked sync: the cutover in production order. */
 export async function runCutover(
   slot: number,
-  options: { bumpStarter?: boolean; bumpStarters?: boolean } = {},
+  options: { bumpStarter?: boolean; bumpStarters?: boolean; production?: boolean } = {},
 ): Promise<Cutover> {
   const db = await legacyDatabase(slot);
   const legacy = await seedLegacy(db, bindings.BUCKET);
+  if (options.production) await seedProduction(db, bindings.BUCKET, legacy);
   const before = await dataFingerprint(db, TABLES);
   await migrateForward(db);
   const { plan, sql } = await runBootstrap(db, OWNER, NOW);

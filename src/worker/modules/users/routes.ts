@@ -17,7 +17,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { addVerifiedEmail, makePrimaryEmail, removeEmail } from './emails.ts';
+import { makePrimaryEmail, removeEmail, requestEmailProof } from './emails.ts';
 import { getUserDetail, listUsers, setUserStatus } from './service.ts';
 import { revokeUserSession, revokeUserSessions } from './sessions.ts';
 
@@ -86,18 +86,18 @@ register(
   {
     method: 'post',
     path: '/{id}/emails',
-    summary: 'Add a verified email',
+    summary: 'Send an email verification link',
     params: IdParamSchema,
     body: AddUserEmailSchema,
-    status: 201,
+    status: 202,
     response: UserDetailSchema,
   },
   async (c) => {
     const { email } = c.req.valid('json');
     const ctx = serviceContext(c);
     return c.json(
-      await addVerifiedEmail(ctx, currentUserId(c), c.req.valid('param').id, email, ownSession(c)),
-      201,
+      await requestEmailProof(ctx, currentUserId(c), c.req.valid('param').id, email, ownSession(c)),
+      202,
     );
   },
 );

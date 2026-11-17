@@ -135,7 +135,13 @@ describe('passes', () => {
       404,
       'PASS_NOT_FOUND',
     );
-    for (const pass of [active, voided, jsonVoided, expired, removed, deleted]) {
+    expect(list.items.some((item) => item.id === deleted.id)).toBe(false);
+    await expectProblem(
+      await get(`/api/v1/me/passes/${deleted.id}`, session.headers),
+      404,
+      'PASS_NOT_FOUND',
+    );
+    for (const pass of [active, voided, jsonVoided, expired, removed]) {
       const detail = (await (
         await get(`/api/v1/me/passes/${pass.id}`, session.headers)
       ).json()) as {

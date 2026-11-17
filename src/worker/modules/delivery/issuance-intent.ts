@@ -8,7 +8,6 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -27,6 +26,7 @@ import {
   systemActor,
 } from './delivery-actor.ts';
 import { parseContext } from './issuance-context.ts';
+import { recipientKey } from './recipient-key.ts';
 import {
   authorityActors,
   deferredActors,
@@ -274,7 +274,7 @@ export async function enqueuePassEmail(
     ...(also ? { also } : {}),
     ...(input.issuanceIntentId ? { issuanceId: input.issuanceIntentId } : {}),
   };
-  const recipient = (await sha256Hex(`pass-email:${to.toLowerCase()}`)).slice(0, 32);
+  const recipient = await recipientKey(ctx.env, to);
   const outboxId = ctx.ids.id();
   const result = await insertIssuedPassEmail(ctx, {
     id: outboxId,

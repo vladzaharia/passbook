@@ -173,8 +173,8 @@ describe('idempotent scanner replay privacy', () => {
     });
     await run(
       kit.env.DB,
-      `INSERT INTO templates (id, org_id, slug, name, origin, active_version, created_at, updated_at)
-       VALUES (?, NULL, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO templates (id, org_id, slug, name, origin, active_version, shared, created_at, updated_at)
+       VALUES (?, NULL, ?, ?, ?, ?, 1, ?, ?)`,
       [
         shared.id,
         shared.id,

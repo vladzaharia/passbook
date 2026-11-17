@@ -1,6 +1,13 @@
-import { safeEqual } from '../../platform/ids.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
 import type { PinStaffSnapshot } from './staff-pin-snapshot.ts';
+
+/** Whether `stored` is the PIN's hash: under the root now, or (mid-rotation) under the previous one. */
+export type PinMatches = (
+  env: object,
+  staffId: string,
+  pin: string,
+  stored: string,
+) => Promise<boolean>;
 
 export const DUMMY_PIN_HASH = '0'.repeat(64);
 
@@ -21,18 +28,15 @@ export const personDecision =
     staff: Candidate | null,
     pin: string,
     managerOnly: boolean,
-    hash: (env: object, id: string, pin: string) => Promise<string>,
+    matches: PinMatches,
   ) =>
   async (): Promise<'match' | 'miss'> => {
     const usable =
       staff?.orgId === orgId &&
       staff.disabledAt === null &&
       (!managerOnly || (staff.id === staffId && staff.role === 'manager'));
-    const matches = await safeEqual(
-      await hash(pinEnv, staffId, pin),
-      usable ? staff.pinHash : DUMMY_PIN_HASH,
-    );
-    return usable && matches ? 'match' : 'miss';
+    const matched = await matches(pinEnv, staffId, pin, usable ? staff.pinHash : DUMMY_PIN_HASH);
+    return usable && matched ? 'match' : 'miss';
   };
 
 /**
@@ -43,7 +47,7 @@ export function anyManagerDecision(
   { pinEnv, orgId, staffId }: Subject,
   managers: readonly PinStaffSnapshot[],
   pin: string,
-  hash: (env: object, id: string, pin: string) => Promise<string>,
+  matches: PinMatches,
 ) {
   let found: PinStaffSnapshot | null = null;
   let count = 0;
@@ -52,12 +56,12 @@ export function anyManagerDecision(
       for (const manager of managers) {
         const usable =
           manager.orgId === orgId && manager.disabledAt === null && manager.role === 'manager';
-        if (usable && (await safeEqual(await hash(pinEnv, manager.id, pin), manager.pinHash))) {
+        if (usable && (await matches(pinEnv, manager.id, pin, manager.pinHash))) {
           found = manager;
           count++;
         }
       }
-      await safeEqual(await hash(pinEnv, staffId, pin), DUMMY_PIN_HASH);
+      await matches(pinEnv, staffId, pin, DUMMY_PIN_HASH);
       return count === 1 ? 'match' : count > 1 ? 'ambiguous' : 'miss';
     },
     found: () => found,

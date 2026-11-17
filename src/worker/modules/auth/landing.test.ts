@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all } from '../../platform/db.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
+import { setOidcTrust } from './oidc-trust-test-fixtures.ts';
 import { oidcSignIn } from './test-oidc.ts';
 import { harness, ISSUER, type Jar, type TestHarness } from './test-support.ts';
 
@@ -24,6 +25,7 @@ const session = async (jar: Jar) =>
 beforeEach(async () => {
   await resetOidcClientCaches(ISSUER);
   h = await harness();
+  await setOidcTrust(h.env.DB, true);
 });
 afterEach(() => h.restore());
 

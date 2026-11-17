@@ -787,3 +787,45 @@ describe('use', () => {
     expect((await h.call('/api/v1/passes', { headers: other.headers })).status).not.toBe(429);
   });
 });
+
+describe('creator label privacy', () => {
+  it('shows an unnamed creator by the email their org invited them by, and to a platform admin by the account email', async () => {
+    const org = await makeOrg(f());
+    // The org knows the creator by an alias; the account's primary email is another address.
+    const creator = await makeUser(f());
+    const fx = f();
+    const invitationId = fx.ids.id();
+    const now = h.clock.now();
+    await run(
+      h.env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
+       VALUES (?, ?, 'invited-as@example.test', '["org_admin"]', ?, ?, ?, ?)`,
+      [invitationId, org.id, fx.ids.token(), now, now + 3600_000, now],
+    );
+    await run(
+      h.env.DB,
+      `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
+       VALUES (?, ?, ?, ?, '["org_admin"]', ?)`,
+      [fx.ids.id(), org.id, creator.id, invitationId, now],
+    );
+    const session = await makeSession(f(), { userId: creator.id, roles: ['admin', 'user'] });
+    const created = await h.call('/api/v1/api-keys', {
+      method: 'POST',
+      json: { name: 'Labelled', scopes: ['passes:read'], orgId: org.id },
+      headers: session.headers,
+    });
+    expect(created.status).toBe(201);
+    const key = (await created.json()) as Created;
+    const listAs = async (platformAdmin: boolean) => {
+      const { headers } = await memberHeaders(org.id, 'org_admin', platformAdmin);
+      const res = await h.call(`/api/v1/api-keys?orgId=${org.id}`, { headers });
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { items: { id: string; createdByName: string | null }[] };
+      return body.items.find((i) => i.id === key.id)?.createdByName;
+    };
+    expect(await listAs(false)).toBe('invited-as@example.test');
+    expect(await listAs(true)).toBe(`${key.createdBy}@example.com`);
+    await run(h.env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Ada', key.createdBy]);
+    expect(await listAs(false)).toBe('Ada');
+  });
+});

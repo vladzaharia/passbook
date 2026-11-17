@@ -100,23 +100,37 @@ function Details({
   );
 }
 
+/**
+ * An image the frame's policy does not load: a remote `src` or `background` attribute, a `srcset` with a
+ * remote candidate, or a CSS `url()`. Notice text only; the policy is what blocks them.
+ */
+const REMOTE_IMAGE =
+  /\b(?:src|background)\s*=\s*["']?\s*(?:https?:)?\/\/|\bsrcset\s*=\s*["']?[^"'>]*(?:https?:)?\/\/|url\(\s*["']?\s*(?:https?:)?\/\//i;
+
 function Message({ email, orgId, view }: { email: Email; orgId: string; view: View }) {
-  return view === 'html' ? (
-    // No allow-* tokens: no script, no forms, no popups, no storage. It loads from the
-    // endpoint that sets the email's own CSP (the SPA's would block its styles), on the white
-    // canvas email is designed for, whatever the viewer's theme.
-    <iframe
-      title="Email preview"
-      sandbox=""
-      referrerPolicy="no-referrer"
-      src={`/api/v1/test-inbox/${encodeURIComponent(email.id)}/html?${new URLSearchParams({ orgId, mode: 'test' })}`}
-      style={{ colorScheme: 'light' }}
-      className="h-[32rem] w-full min-w-0 rounded-md border border-border bg-white"
-    />
-  ) : (
-    <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-md border border-border bg-surface-sunken p-3 font-mono text-xs text-fg [overflow-wrap:anywhere]">
-      {email.text}
-    </pre>
+  if (view !== 'html')
+    return (
+      <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-md border border-border bg-surface-sunken p-3 font-mono text-xs text-fg [overflow-wrap:anywhere]">
+        {email.text}
+      </pre>
+    );
+  // No allow-* tokens: no script, no forms, no popups, no storage. It loads from the
+  // endpoint that sets the email's own CSP (the SPA's would block its styles), on the white
+  // canvas email is designed for, whatever the viewer's theme.
+  return (
+    <>
+      {REMOTE_IMAGE.test(email.html) ? (
+        <p className="text-sm text-fg-muted">Remote images hidden in preview</p>
+      ) : null}
+      <iframe
+        title="Email preview"
+        sandbox=""
+        referrerPolicy="no-referrer"
+        src={`/api/v1/test-inbox/${encodeURIComponent(email.id)}/html?${new URLSearchParams({ orgId, mode: 'test' })}`}
+        style={{ colorScheme: 'light' }}
+        className="h-[32rem] w-full min-w-0 rounded-md border border-border bg-white"
+      />
+    </>
   );
 }
 

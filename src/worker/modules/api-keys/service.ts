@@ -14,6 +14,7 @@ import { parseJsonArray } from '../../platform/json-column.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { seesAccountEmails } from '../passes/account-email.ts';
 import { type ApiKeyAuthority, authorityOrgId, delegableScopes } from './access.ts';
 import * as repo from './repo.ts';
 
@@ -48,7 +49,11 @@ export async function listApiKeys(
 ): Promise<{ items: ApiKeyDto[]; nextCursor: string | null; revokedCount: number }> {
   const orgId = authorityOrgId(authority);
   const [rows, revokedCount] = await Promise.all([
-    repo.listKeys(ctx.env.DB, { ...query, orgId, limit: query.limit + 1 }),
+    repo.listKeys(
+      ctx.env.DB,
+      { ...query, orgId, limit: query.limit + 1 },
+      seesAccountEmails(authority),
+    ),
     repo.countRevoked(ctx.env.DB, orgId),
   ]);
   const page = rows.slice(0, query.limit);

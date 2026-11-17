@@ -1,5 +1,10 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { asLegacyAuthTokens, deviceToken, makeOrg } from '../../../../test/helpers/index.ts';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  asLegacyAuthTokens,
+  deviceToken,
+  makeOrg,
+  resetSealCursor,
+} from '../../../../test/helpers/index.ts';
 import { tokenMac, tokenMatches } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -15,8 +20,10 @@ const job = () => jobCtxOf(kit);
 beforeAll(async () => {
   kit = await setupKit();
 });
+beforeEach(() => resetSealCursor(kit.env.DB, kit.clock.now()));
 
 async function sweep(ctx = job()) {
+  await resetSealCursor(kit.env.DB, kit.clock.now());
   await sealCapabilityTokens(ctx);
   await sealCapabilityTokens(ctx);
 }
@@ -110,8 +117,6 @@ describe('deleted passes and orgs keep no sealed copy', () => {
     await makeLegacy(inOrg, inOrgLegacy);
     await run(kit.env.DB, 'DELETE FROM pass_token_seals WHERE pass_id = ?', [inOrg.id]);
     await run(kit.env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [org.id]);
-    // The cursor kept from the earlier tests may sit past these ids (same-millisecond ids on the
-    // fixed clock); the second run wraps it, as production does once a pass reaches the end.
     await sweep();
     await sweep();
     expect((await column(gone.id))?.auth_token).toBe(await tokenMac(kit.env, 'apple-auth', legacy));

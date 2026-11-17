@@ -91,7 +91,7 @@ export async function migrateForward(db: D1Database): Promise<void> {
   );
 }
 
-const q = (v: string | number | null) =>
+export const q = (v: string | number | null) =>
   v === null ? 'NULL' : typeof v === 'number' ? String(v) : `'${v.replaceAll("'", "''")}'`;
 
 export const SCAN = { actions: [{ id: 'enter', label: 'Check in', kind: 'check_in' }] };

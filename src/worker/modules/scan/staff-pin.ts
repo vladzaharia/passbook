@@ -1,13 +1,13 @@
 import type { GrantPart } from '../../platform/authority-include.ts';
-import { derivedHmacKey } from '../../platform/crypto.ts';
+import { derivedHmacKey, macPreviousVersion } from '../../platform/crypto.ts';
 import { AppError, RateLimitedError } from '../../platform/errors.ts';
-import { toHex } from '../../platform/ids.ts';
+import { safeEqual, toHex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
 import { preparePinCounters } from './repo-staff-pin-counters.ts';
 import type { ScanPredicate } from './scan-predicate.ts';
-import { anyManagerDecision, personDecision } from './staff-pin-decide.ts';
+import { anyManagerDecision, type PinMatches, personDecision } from './staff-pin-decide.ts';
 import {
   ANY_MANAGER,
   hideHash,
@@ -34,11 +34,29 @@ export const PIN_SCANNER_WINDOW_MS = 60 * MINUTE;
 const windowOf = (now: number, size: number) => now - (now % size);
 
 /** HMAC-SHA256(K_pin, id:pin), hex. A database leak alone cannot be brute-forced offline. */
-export async function hashPin(env: object, staffId: string, pin: string): Promise<string> {
-  const key = await derivedHmacKey(env, 'scan-pin');
+export async function hashPin(
+  env: object,
+  staffId: string,
+  pin: string,
+  version?: number,
+): Promise<string> {
+  const key = await derivedHmacKey(env, 'scan-pin', version);
   const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${staffId}:${pin}`));
   return toHex(new Uint8Array(mac));
 }
+
+/**
+ * Whether `stored` is the hash of `pin`: under the MAC root, or, while `MAC_KEY_VERSION_PREVIOUS` is set,
+ * under the previous root. A correct PIN that was set before a rotation keeps working (and is not
+ * counted as a miss) until the previous root is unset; it is then reset like any PIN.
+ */
+export const pinMatches: PinMatches = async (env, staffId, pin, stored) => {
+  const current = await safeEqual(await hashPin(env, staffId, pin), stored);
+  const previous = macPreviousVersion(env);
+  if (previous === null) return current;
+  const old = await safeEqual(await hashPin(env, staffId, pin, previous), stored);
+  return current || old;
+};
 
 export type PinReservationGuard = ScanPredicate;
 const lockedError = (millisecondsLeft: number) =>
@@ -226,7 +244,7 @@ export function preparePinReservation(
       if (
         !(await verifyCandidate(
           results,
-          personDecision({ pinEnv, orgId, staffId }, captured, pin, managerOnly, hashPin),
+          personDecision({ pinEnv, orgId, staffId }, captured, pin, managerOnly, pinMatches),
           failure,
         ))
       )
@@ -239,14 +257,14 @@ export function preparePinReservation(
         await verifyCandidate(results, async () => 'miss', failure);
         return null;
       }
-      const any = anyManagerDecision({ pinEnv, orgId, staffId }, managers, pin, hashPin);
+      const any = anyManagerDecision({ pinEnv, orgId, staffId }, managers, pin, pinMatches);
       return (await verifyCandidate(results, () => any.decide(), failure)) ? any.found() : null;
     },
     async verifyLogin(results, staff, pin) {
       if (
         !(await verifyCandidate(
           results,
-          personDecision({ pinEnv, orgId, staffId }, staff, pin, false, hashPin),
+          personDecision({ pinEnv, orgId, staffId }, staff, pin, false, pinMatches),
         ))
       )
         throw new Error('PIN reservation was not authorized');

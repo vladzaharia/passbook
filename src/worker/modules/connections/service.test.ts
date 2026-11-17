@@ -76,7 +76,7 @@ describe('create', () => {
     expect((await createDemo(kit, { mode: 'manual' })).nextRunAt).toBeNull();
   });
 
-  it('never returns or stores secrets in plaintext, and records a fingerprint', async () => {
+  it('never returns or stores secrets in plaintext, and keeps no fingerprint of them', async () => {
     const dto = await service.create(kit.sctx, kit.actor, httpJson());
     expect(dto.hasCredential).toBe(true);
     expect(JSON.stringify(dto)).not.toContain('tok-super-secret');
@@ -91,7 +91,7 @@ describe('create', () => {
       [dto.id],
     );
     expect(row?.kind).toBe('connector');
-    expect(row?.fingerprint).toMatch(/^[0-9a-f]{8}$/);
+    expect(row?.fingerprint).toBeNull();
     expect(
       new TextDecoder().decode(new Uint8Array(row?.ciphertext as unknown as number[])),
     ).not.toContain('tok-super-secret');

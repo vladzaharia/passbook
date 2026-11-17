@@ -16,7 +16,7 @@ export function registerLookupReleaseScopedCases() {
   it('selects the approved Apple head for the exact organization and mode, not the legacy pointer', async () => {
     const templateId = await kit.scanTemplate('Scoped candidate', { actions: [CHECK_IN] });
     const base = await kit.registry.resolve(templateId, 'v1');
-    await run(kit.env.DB, 'UPDATE templates SET org_id=NULL WHERE id=?', [templateId]);
+    await run(kit.env.DB, 'UPDATE templates SET org_id=NULL, shared=1 WHERE id=?', [templateId]);
     kit.registry.add({
       id: templateId,
       orgId: null,

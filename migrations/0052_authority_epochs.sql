@@ -42,7 +42,6 @@ BEGIN UPDATE orgs SET config_revision = config_revision + 1 WHERE id = substr(OL
 
 -- passes.row_version: staleness for writes derived from a read. The bump set is split in three to bound
 -- expression depth (D1 allows 100). scan_code, barcode_hash and lookup_hash bump only once set.
-ALTER TABLE passes ADD COLUMN row_version INTEGER NOT NULL DEFAULT 1;
 CREATE TRIGGER passes_row_version_a AFTER UPDATE OF org_id, identity_id, serial, template_id, template_version, auth_token, download_token, web_service_url, personalization, field_sources, display_title, display_subtitle, external_id, holder_email, owner_user_id ON passes
 WHEN NEW.row_version = OLD.row_version AND (NEW.org_id IS NOT OLD.org_id OR NEW.identity_id IS NOT OLD.identity_id OR NEW.serial IS NOT OLD.serial OR NEW.template_id IS NOT OLD.template_id OR NEW.template_version IS NOT OLD.template_version OR NEW.auth_token IS NOT OLD.auth_token OR NEW.download_token IS NOT OLD.download_token OR NEW.web_service_url IS NOT OLD.web_service_url OR NEW.personalization IS NOT OLD.personalization OR NEW.field_sources IS NOT OLD.field_sources OR NEW.display_title IS NOT OLD.display_title OR NEW.display_subtitle IS NOT OLD.display_subtitle OR NEW.external_id IS NOT OLD.external_id OR NEW.holder_email IS NOT OLD.holder_email OR NEW.owner_user_id IS NOT OLD.owner_user_id)
 BEGIN UPDATE passes SET row_version = row_version + 1 WHERE rowid = NEW.rowid; END;
@@ -179,16 +178,6 @@ BEGIN
   SELECT CASE WHEN EXISTS (SELECT 1 FROM connections WHERE id = NEW.id)
     THEN RAISE(ABORT, 'UNIQUE constraint failed: connections.id') END;
 END;
-
--- Release heads: the newest release per (template, org scope, mode, provider). org_scope is '' for the
--- platform scope. A view, not a table: a trigger-maintained table inflates the meta.changes of every
--- release insert (D1 counts trigger changes), and a view cannot be written, replaced or drifted.
-CREATE VIEW template_release_heads AS
-SELECT r.template_id AS template_id, COALESCE(r.org_id, '') AS org_scope, r.mode AS mode,
-  r.provider AS provider, r.id AS release_id, r.generation AS generation
-FROM template_releases r
-WHERE r.generation = (SELECT MAX(n.generation) FROM template_releases n
-  WHERE n.template_id = r.template_id AND n.org_id IS r.org_id AND n.mode = r.mode AND n.provider = r.provider);
 
 -- Head lookups (releaseHead) read the newest generation per (template, mode, provider, org): the unique
 -- indexes above are partial by org, so this one serves both scopes.

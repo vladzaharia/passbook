@@ -33,6 +33,7 @@ import {
   recoverIssuanceDeliveries,
 } from '../delivery/issuance-intent.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
+import { recipientKey } from '../delivery/recipient-key.ts';
 import { assignHolder, runAttachHookA } from '../holders/service.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
 import { basicPackage, passJson, zipOf } from '../templates/package/fixtures.ts';
@@ -66,6 +67,28 @@ import { approvedReleaseFence } from './repo-release.ts';
 import { makeTenantTestApiKey } from './repo-tenant-test-fixtures.ts';
 import { insertPass } from './repo-write.ts';
 import type { NewPassRow } from './repo-write-types.ts';
+
+// Org-owned signing identities need a real certificate; this stands one in for the platform
+// identity under another id, in every resolver the env is copied into.
+let ownIdentity: { id: string; orgId: string } | null = null;
+vi.mock('../identities/resolver.ts', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../identities/resolver.ts')>();
+  return {
+    ...original,
+    createIdentityResolver: (...args: Parameters<typeof original.createIdentityResolver>) => {
+      const base = original.createIdentityResolver(...args);
+      const asOwn = async () => ({ ...(await base.platform()), ...ownIdentity });
+      return {
+        ...base,
+        forOrg: (orgId: string, identityId?: string | null) =>
+          ownIdentity && orgId === ownIdentity.orgId ? asOwn() : base.forOrg(orgId, identityId),
+        byId: (id: string) => (ownIdentity && id === ownIdentity.id ? asOwn() : base.byId(id)),
+        byRow: (row: { id: string }) =>
+          ownIdentity && row.id === ownIdentity.id ? asOwn() : base.byId(row.id),
+      };
+    },
+  };
+});
 
 const ORIGIN = 'https://wallet.test';
 const originalGeneratedSource = { ...generatedSource };
@@ -712,7 +735,7 @@ describe('approved issuance over tenant HTTP', () => {
         [detail.id],
       ),
     ).toEqual({ state: 'queued', outbox_id: queued.id });
-    const recipient = (await sha256Hex(`pass-email:${email.toLowerCase()}`)).slice(0, 32);
+    const recipient = await recipientKey(kit.env, email);
     expect(
       await first(kit.env.DB, 'SELECT count FROM counters WHERE key = ? AND window_start = ?', [
         `pass-email:live:to:${recipient}`,
@@ -950,6 +973,16 @@ describe('approved issuance over tenant HTTP', () => {
 
   it('does not issue a serial retired by a completed holder transfer', async () => {
     const { release } = await approved();
+    // Caller serials count only on an org-owned identity; the shared one generates its own.
+    const ownId = crypto.randomUUID();
+    await run(
+      kit.env.DB,
+      `INSERT INTO signing_identities
+       (id, org_id, label, pass_type_identifier, team_identifier, source, env_prefix, created_at)
+       VALUES (?, ?, 'Own', ?, 'TEAM', 'env', 'TEST', ?)`,
+      [ownId, own.orgId, `pass.test.${ownId}`, kit.clock.now()],
+    );
+    ownIdentity = { id: ownId, orgId: own.orgId };
     const serial = `retired-${unique()}`;
     const issueInput: CreateParams = {
       orgId: own.orgId,
@@ -986,6 +1019,7 @@ describe('approved issuance over tenant HTTP', () => {
     ).rejects.toMatchObject({ code: 'PASS_REISSUE_REQUIRED' });
     await assertNoPass(attemptedId);
     expect(await objects()).toEqual(before);
+    ownIdentity = null;
   });
 
   it.each(['unverified', 'disabled'] as const)(
@@ -1243,7 +1277,7 @@ describe('approved issuance over tenant HTTP', () => {
     const email = `limited-${unique()
       .toLowerCase()
       .replace(/[^a-z0-9]/g, 'x')}@example.com`;
-    const recipient = (await sha256Hex(`pass-email:${email}`)).slice(0, 32);
+    const recipient = await recipientKey(kit.env, email);
     const counterKey = `pass-email:live:to:${recipient}`;
     const window = kit.clock.now() - (kit.clock.now() % 3_600_000);
     await run(kit.env.DB, 'INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)', [
@@ -1902,10 +1936,7 @@ describe('issuance commit fences', () => {
       expect(await all(kit.env.DB, 'SELECT id FROM outbox WHERE pass_id = ?', [passId])).toEqual(
         [],
       );
-      const recipient = (await sha256Hex(`pass-email:${data.holderEmail.toLowerCase()}`)).slice(
-        0,
-        32,
-      );
+      const recipient = await recipientKey(kit.env, data.holderEmail);
       expect(
         await first(kit.env.DB, 'SELECT count FROM counters WHERE key = ?', [
           `pass-email:live:to:${recipient}`,

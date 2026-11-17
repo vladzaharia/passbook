@@ -1,12 +1,5 @@
 -- A native candidate extends the same reviewed template-release lifecycle. Apple rows remain
 -- unchanged; the extra columns bind a provider projection to one immutable Apple source release.
-ALTER TABLE template_candidates ADD COLUMN source_release_id TEXT REFERENCES template_releases(id);
-ALTER TABLE template_candidates ADD COLUMN source_release_generation INTEGER;
-ALTER TABLE template_candidates ADD COLUMN source_release_hash TEXT;
-ALTER TABLE template_candidates ADD COLUMN projection_json TEXT;
-ALTER TABLE template_candidates ADD COLUMN provider_account_id TEXT REFERENCES wallet_provider_accounts(id);
-ALTER TABLE template_candidates ADD COLUMN provider_account_revision INTEGER;
-ALTER TABLE template_candidates ADD COLUMN provider_identity_hash TEXT;
 CREATE INDEX template_candidates_source_release_fk ON template_candidates(source_release_id);
 CREATE INDEX template_candidates_provider_account_fk ON template_candidates(provider_account_id);
 

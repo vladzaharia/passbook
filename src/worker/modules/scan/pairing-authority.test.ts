@@ -280,15 +280,18 @@ describe('pairing tenant authority', () => {
         .status,
     ).toBe(200);
     for (const headers of [reader.session.headers, operator.session.headers, platform.headers]) {
+      // A non-member (the platform administrator) gets the 404 of a missing scanner.
+      const denied = headers === platform.headers ? 404 : 403;
+      const code = headers === platform.headers ? 'SCANNER_NOT_FOUND' : 'FORBIDDEN';
       for (const action of ['pairing', 'pair-here', 'sample-pass']) {
         expect(
           (await request('POST', scannerPath(device.id, action), inTest(headers))).status,
-        ).toBe(403);
+        ).toBe(denied);
       }
       await expectProblem(
         await request('POST', scannerPath(terminal.id, 'token'), headers),
-        403,
-        'FORBIDDEN',
+        denied,
+        code,
       );
     }
   });

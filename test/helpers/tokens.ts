@@ -1,3 +1,4 @@
+import { writeSystemValue } from '../../src/worker/modules/settings/repo.ts';
 import {
   type IssuedToken,
   issueToken,
@@ -44,6 +45,13 @@ export async function fixtureToken(
     seal: () => sealStatement(env.DB, purpose, id, issued.mac, issued.seal).run(),
   };
 }
+
+/**
+ * Starts the token-seal sweep at the first row. Under a fixed test clock, uuidv7 ids sort randomly, so a
+ * cursor left by an earlier sweep can sit past a new row; production ids carry time and the cron wraps.
+ */
+export const resetSealCursor = (db: D1Database, now: number) =>
+  writeSystemValue(db, 'tokens.sealCursor', { pass: null, auth: null, bundle: null }, now);
 
 const plainAuth = new Map<string, string>();
 

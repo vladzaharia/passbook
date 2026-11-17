@@ -63,7 +63,7 @@ const NO_PENDING_TRANSFER = `NOT EXISTS (SELECT 1 FROM pass_credential_transfers
 export const listMyPasses = (db: Db, userId: string, cursor: string | undefined, limit: number) =>
   all<MyPassRow>(
     db,
-    `${SELECT} WHERE p.owner_user_id = ? AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
+    `${SELECT} WHERE p.owner_user_id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
       ${cursor ? 'AND p.id < ?' : ''} ORDER BY p.id DESC LIMIT ?`,
     cursor ? [userId, cursor, limit + 1] : [userId, limit + 1],
   );
@@ -71,7 +71,7 @@ export const listMyPasses = (db: Db, userId: string, cursor: string | undefined,
 export const getMyPass = (db: Db, userId: string, passId: string) =>
   first<MyPassRow>(
     db,
-    `${SELECT} WHERE p.owner_user_id = ? AND p.id = ?
+    `${SELECT} WHERE p.owner_user_id = ? AND p.id = ? AND p.deleted_at IS NULL
     AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}`,
     [userId, passId],
   );
@@ -82,7 +82,7 @@ export async function portfolioSnapshot(db: Db, userId: string, ids: readonly st
     stmt(
       db,
       `${SELECT} JOIN json_each(?) expected ON expected.value = p.id
-      WHERE p.owner_user_id = ? AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}`,
+      WHERE p.owner_user_id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}`,
       [JSON.stringify(ids), userId],
     ),
     stmt(
@@ -120,7 +120,7 @@ export async function portfolioSnapshot(db: Db, userId: string, ids: readonly st
 export const getPassForRemoval = (db: Db, userId: string, passId: string) =>
   first<MyPassRow>(
     db,
-    `${SELECT} WHERE p.owner_user_id = ? AND p.id = ?
+    `${SELECT} WHERE p.owner_user_id = ? AND p.id = ? AND p.deleted_at IS NULL
     AND p.test_data_quarantined = 0`,
     [userId, passId],
   );

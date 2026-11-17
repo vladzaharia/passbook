@@ -1,4 +1,5 @@
 import { strictEmail } from '../../src/shared/email.ts';
+import { macKeyProblems } from '../../src/worker/platform/mac-key-config.ts';
 
 interface WranglerConfig {
   vars?: Record<string, unknown>;
@@ -42,7 +43,14 @@ export function predeployProblems(
     if (key === 'TURNSTILE_SITE_KEY' && TURNSTILE_TEST_KEY.test(value))
       problems.push('vars.TURNSTILE_SITE_KEY is a Cloudflare test key.');
   }
-  problems.push(...cimdProblems(config.vars ?? {}), ...domainProblems(config));
+  problems.push(
+    ...cimdProblems(config.vars ?? {}),
+    ...domainProblems(config),
+    ...macKeyProblems(
+      { pin: config.vars?.MAC_KEY_VERSION, previous: config.vars?.MAC_KEY_VERSION_PREVIOUS },
+      null,
+    ),
+  );
   const apns = (config.mtls_certificates ?? []).find((m) => m.binding === 'APNS');
   if (!apns) {
     if (!options.allowNoPush)

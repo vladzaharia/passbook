@@ -65,7 +65,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    - `BREAKGLASS_TOKEN_SHA256`: run `npm run breakglass`, then paste the printed command. See
      [Break-glass admin](#break-glass-admin).
    - Optional: `SIGNER_PLATFORM_INTERMEDIATE` (defaults to the bundled WWDR G4),
-     `MAGIC_LINK_DAILY_CAP`, `KEK_V2` (rotation).
+     `MAGIC_LINK_DAILY_CAP`, `KEK_V2`, `MAC_KEY_VERSION` and `MAC_KEY_VERSION_PREVIOUS` (rotation).
 6. **Provision** (owner only): `node tools/provision.ts` prints the wrangler commands;
    `--apply` runs them. It creates the D1 database `wallet-platform` (id written to
    `wrangler.jsonc`), the queues and the R2 bucket, adds the R2 lifecycle rule (`uploads/` expires
@@ -353,8 +353,10 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
 
 ### Pre-checks
 
-1. `npm run check` passes on the commit to deploy. A second person reviews the diff and this
-   runbook. `npm run deploy -- --migrate-only` and `npm run deploy -- --promote` print the plans
+1. **Owner**: a fresh worktree on the commit to deploy: `git worktree add ../wallet-cutover <sha>`,
+   then there `npm ci` and `npm run check`, which must pass. Every later step runs in that worktree;
+   deploy refuses any other tree with uncommitted or untracked files. A second person reviews the
+   diff and this runbook. `npm run deploy -- --migrate-only` and `npm run deploy -- --promote` print the plans
    above.
 2. **Owner**: `npm run deploy:check -- --secrets` prints `wrangler.jsonc is ready to deploy.`
 3. **Owner**: sign in once on passbook.mobile with the email you pass as `--owner` (the bootstrap
@@ -373,8 +375,8 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
    `wallet-broadcast`, `wallet-connection-sync` and `wallet-template-import`. Wait for them to
    finish; an instance resuming on the new code would run old params.
 8. **Owner**: read-only SQL. Paste each block into the dashboard's D1 console (`wallet-platform`),
-   or save it as `q.sql` and run
-   `npx wrangler d1 execute wallet-platform --remote --command "$(cat q.sql)"` (the blocks hold
+   or save it as `.wrangler/q.sql` (the tree must stay clean) and run
+   `npx wrangler d1 execute wallet-platform --remote --command "$(cat .wrangler/q.sql)"` (the blocks hold
    quotes; never paste them into `--command "..."`). Queued work (pending pass and bundle email is
    bound by the bootstrap):
 
@@ -467,6 +469,66 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
      'auth_tokens', (SELECT count(auth_token) FROM passes)) AS counts
    ```
 
+9. **Owner**: sign-in accounts that never proved their address. Before this build a Pocket ID sign-in
+   (`oidc.trustEmail` off) gave the account the provider's email as its primary email and no
+   `user_emails` row. The new Worker treats such an account as unproven: the first magic link for
+   that address makes a separate account for the person, and the old account keeps its sign-in,
+   roles and memberships but loses the address (and a disabled one stays refused). Each row below
+   is a person you must classify before the cutover. Read-only; expect rows (record them):
+
+   ```sql verify-unproven-primaries
+   SELECT u.id, u.status, u.primary_email, max(a.email_verified) AS idp_verified,
+     (SELECT count(*) FROM passes p WHERE p.holder_email = u.primary_email AND p.deleted_at IS NULL) AS passes
+   FROM users u JOIN auth_identities a ON a.user_id = u.id AND a.provider != 'breakglass'
+   WHERE NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.user_id = u.id AND e.email = u.primary_email)
+   GROUP BY u.id ORDER BY u.id
+   ```
+
+   For a row you recognize as the person who owns that address, backfill it: replace the
+   placeholder list with exactly the ids you confirmed (one quoted id each) and run this write once.
+   The address then counts as verified (`verified_via = 'admin'`) and waiting passes for it attach.
+   It skips placeholder primaries and addresses some account already has verified. Leave every
+   other row alone: that person proves the address by mail, or signs in as the same account and
+   verifies it in My account first:
+
+   ```sql backfill-proven-primaries
+   INSERT OR IGNORE INTO user_emails (email, user_id, verified_via, verified_at)
+   SELECT u.primary_email, u.id, 'admin', unixepoch() * 1000 FROM users u
+   WHERE u.id IN ('REPLACE-WITH-USER-ID', 'REPLACE-WITH-ANOTHER-USER-ID')
+     AND u.primary_email NOT LIKE '%@unverified.invalid'
+     AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = u.primary_email)
+   ```
+
+   Rerun `verify-unproven-primaries` and confirm every id you listed is gone; one still listed was
+   skipped by a guard.
+
+   A disabled account that still holds an address blocks that person's mail sign-in
+   (`ACCOUNT_DISABLED`, log event `auth.claimant_disabled`, field `userId`). If the owner decides
+   the address is not that account's, release it, naming the id (it writes the audit row first;
+   rerunning does nothing):
+
+   ```sql release-disabled-claimant
+   INSERT INTO audit_log (at, actor_type, action, target_type, target_id, detail)
+   SELECT unixepoch() * 1000, 'system', 'auth.primary_email_unproven', 'user', u.id, '{"by":"owner"}'
+   FROM users u WHERE u.id IN ('REPLACE-WITH-USER-ID') AND u.status = 'disabled'
+     AND u.primary_email NOT LIKE '%@unverified.invalid'
+     AND EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = u.id AND a.provider != 'breakglass')
+     AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = u.primary_email);
+   UPDATE users SET primary_email = id || '@unverified.invalid'
+   WHERE id IN ('REPLACE-WITH-USER-ID') AND status = 'disabled'
+     AND primary_email NOT LIKE '%@unverified.invalid'
+     AND EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = users.id AND a.provider != 'breakglass')
+     AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = users.primary_email)
+   ```
+
+   Addresses an admin added by hand already count as verified, and their passes are attached. Review
+   them once for any that are not the account's own:
+
+   ```sql verify-admin-emails
+   SELECT e.email, e.user_id, datetime(e.verified_at / 1000, 'unixepoch') AS verified_utc
+   FROM user_emails e WHERE e.verified_via = 'admin' ORDER BY e.verified_at
+   ```
+
 ### Temporary WAF rule
 
 **Owner**, Cloudflare console, passbook.mobile zone, Security, WAF, Custom rules. Name `cutover`,
@@ -538,7 +600,9 @@ writes.
 ### Order
 
 1. **Owner**: WAF rule on. Sources of new work stopped (pre-check 7).
-2. **Owner**: `npm run deploy -- --migrate-only --apply`. Checks secrets, uploads the version (not
+2. **Owner**: `npm run deploy -- --migrate-only --apply`, from the pre-check 1 worktree. It lists the
+   uncommitted or untracked files and stops on a dirty tree or a `dist/` not built from HEAD, and
+   `--promote` refuses if HEAD moved since the upload. Checks secrets, uploads the version (not
    serving), records a D1 bookmark, applies the 39 files 0025–0067 and stops with
    `Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.`
 3. **Owner**: bootstrap. The tool never touches production; it prints the commands. First:
@@ -619,12 +683,15 @@ writes.
    - Sign-in link: issue a `henrys-blue` pass to an address that has no account, then request a
      sign-in link for it at `/login` and open it. The pass is listed under the account at once,
      and the Wallet copy still scans with the same barcode.
+   - SPA tabs opened before the deploy must reload before signing in by mail; expect brief
+     `auth.turnstile_action` warnings.
    - Logs (Workers Observability), by event and code. Expected: `templates.baked_synced`,
      `delivery.legacy_intent` (`DELIVERY_LEGACY_INTENT`), `queue.legacy_job_ignored`
      (`LEGACY_JOB_IGNORED`), `template.reissue_started`. Act on:
      `templates.baked_release_unavailable` (`BAKED_RELEASE_CONTENT_UNAVAILABLE`),
      `templates.baked_sync_skipped` (`TEMPLATE_BUILD_SUPERSEDED`), `bulk_reissue.pass_failed`,
-     `queue.invalid_message` (`INVALID_MESSAGE`), `queue.dead_letter` (`DEAD_LETTER`).
+     `queue.invalid_message` (`INVALID_MESSAGE`), `queue.dead_letter` (`DEAD_LETTER`),
+     `auth.claimant_disabled` (`CLAIMANT_DISABLED`: see pre-check 9).
 6. **Owner**: delete the WAF rule and the `WALLET_API_KEY` key. Restart the stopped sources.
 
 ### If a step fails
@@ -638,7 +705,7 @@ keep retired pass ids and credentials from being reused.
 | Where | What to do |
 | --- | --- |
 | Pre-checks, or step 2 before a migration ran | Nothing changed. Fix and rerun. |
-| Step 2, a migration errors | Applied migrations stay; the old Worker keeps serving. Fix the failing migration file (it never ran in production) and rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort, only if no fix is possible: Time Travel restore to the step 2 bookmark, which loses Wallet registrations and scans written since. |
+| Step 2, a migration errors | Applied migrations stay and the database sits at the last one that applied. Stopped in 0043–0049: updates of passes.credential_generation, wallet_provider_instances.lifecycle and pass_credential_transfers.state fail; the old Worker writes none of them. From 0059: creating or publishing a pass. Fix the failing migration file (it never ran in production), commit, run `npm run check`, then rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort, only if no fix is possible: Time Travel restore to the step 2 bookmark, which loses Wallet registrations and scans written since. |
 | Step 3 | Stop before promote. Take a fresh snapshot and rerun all three commands. A refused statement names the trigger; fix the tool, not the data. |
 | Step 4, promote fails | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. Refused because migrations are pending, or no saved version: rerun step 2 (it resumes), then step 3. |
 | Step 4, exit 1 after promote | The new Worker serves; the listed templates cannot issue new passes. An `uploaded` row: rerun step 3, then `--promote --apply` (it repeats only the wait). A `baked` row: check the logs for `TEMPLATE_BUILD_SUPERSEDED` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS), fix and ship a new version with the same two runs (`--migrate-only` finds nothing to migrate). Do not roll back. |
@@ -665,8 +732,7 @@ keep retired pass ids and credentials from being reused.
     Passes keep working; the pass type ID must match.
   Status warns 30 days before expiry.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts;
-  keep older ones for existing data. The oldest KEK also derives scan PIN, pair-code, asset-grant,
-  credential-tombstone, pass/bundle link and Apple web-service token (`h1:`) HMAC keys; losing it breaks every stored link lookup and every device call. The credential-reference keyset sentinel initializes only when
+  keep older ones for existing data. The MAC keys (scan PIN, pair code, asset grant, pass/bundle link and Apple web-service token `h1:`) derive from the KEK named by `MAC_KEY_VERSION` (default: the oldest); the credential-tombstone key and the other retained-evidence keys always derive from the oldest KEK. Losing the KEK a stored MAC was made with breaks it: see MAC key rotation. The credential-reference keyset sentinel initializes only when
   no prior keyed references or proof provenance remain, including tombstones and
   retention proofs, retained webhook/workflow bindings and native-provider history.
   Plain unsigned legacy scan events do not prevent initialization, but remain untrusted and are
@@ -679,6 +745,12 @@ keep retired pass ids and credentials from being reused.
   If existing reference data lacks a sentinel, escalate for a separately audited bootstrap or
   rekey while the original key remains available; no bootstrap or rekey tool is currently
   implemented. Never delete evidence or reset the sentinel to bypass the fence.
+- **MAC key rotation** (availability after a change of MAC root; it revokes nothing): needs the new KEK in place (`KEK_V2`). Set both values as Worker vars (wrangler.jsonc `vars`), not secrets: `npm run deploy:check` reads them from the config, an integer or a digit string. `npm run deploy:check` (with `--secrets`) and Status refuse a `MAC_KEY_VERSION` or `MAC_KEY_VERSION_PREVIOUS` that is malformed, names a KEK that is not set, or equals the other; a pin changed without `MAC_KEY_VERSION_PREVIOUS` breaks every link, and `tokens.remac` logs `TOKEN_MAC_ROOT_MISMATCH` (error, sampled every 6 hours) when stored MACs match no root.
+  1. Set `MAC_KEY_VERSION=2` and `MAC_KEY_VERSION_PREVIOUS=1` together and deploy. Lookups accept a link or device token under either root, and staff PINs set before the deploy still verify under the previous root (a correct PIN is no miss), so nothing stops. At once: a pair code issued before the deploy fails (they last 10 minutes); asset grants made before it expire within 1 hour; scan CSRF proofs are computed on every request and follow the pin.
+  2. The minute cron `tokens.remac` rewrites every pass link, Apple web-service token and bundle link from its sealed copy, in id order, at most 30 D1 write batches a run (the minute hooks share one invocation's subrequests; read 100 rows of each kind a run). Plan on about 30 tokens a minute (rows / 30 minutes). Each run logs `TOKEN_REMAC_RUN` with `moved`, `current`, `skipped` and `unreadable`, and `TOKEN_REMAC_SKIPPED` with up to 20 ids. A pass with a pending credential transfer or a test-inbox forward is skipped and the sweep runs again. The sweep and the done marker belong to one pair (`previous>current`): swapping the two values, or pinning a pair again after another finished, starts over. `TOKEN_REMAC_DONE` (setting `tokens.remacDone` = `1>2`) means a sweep left nothing skipped; its `unreadable` total counts rows it could not move.
+  3. Check, then unset `MAC_KEY_VERSION_PREVIOUS` and deploy. Do not unset it while any staff PIN is still on the previous root: Status shows "N staff PINs still on the previous root" (degraded) while it is set, and the query is `SELECT count(*) FROM scan_staff WHERE COALESCE(pin_mac_version, 1) = 1;` (replace both 1 with the previous version, the first with the oldest KEK's number; NULL means the oldest KEK). Those staff keep signing in with their old PIN until then (the PIN is checked under both roots) and are reset in Scanning, which writes the current root. A new or reset PIN records the root it was hashed under (`scan_staff.pin_mac_version`). Also check the row counts: `SELECT (SELECT count(*) FROM passes WHERE download_token GLOB 'h1:*') + (SELECT count(*) FROM passes WHERE auth_token GLOB 'h1:*') + (SELECT count(*) FROM bundles WHERE token GLOB 'h1:*') AS tokens;` is the sweep's size, so the sweep takes about tokens / 30 minutes (30 writes a minute at most), and `TOKEN_REMAC_DONE` must have logged. A row counted `unreadable` (a deleted pass or org keeps no sealed copy; also `TOKEN_SEAL_MISSING`, `TOKEN_SEAL_UNREADABLE`, `TOKEN_SEAL_MISMATCH` in the log) still holds the old MAC and stops resolving now: its link and device calls end.
+  4. To go back, swap the two values; the job moves the rows again.
+  A rotation restores availability only. The sealed copies still sit under the KEK that wrapped them and a copy of the database plus that KEK opens every link and device token, so after a KEK_V1 compromise rotate the links (`rotate-link`) and credentials (credential transfer) too. No job rewraps stored envelopes to a newer KEK (`rewrapSecret` has no caller; the envelope tables hold per-table AADs and the signing-identity revision trigger fires on a credential rewrite), so KEK_V1 cannot be retired: credential-reference evidence also stays on the oldest KEK (tombstones, retention proofs, webhook and action references, personalization proofs; bound to the keyset commitment, no rekey tool).
 - **Retired ids**: `retired_session_ids`, `retired_scanner_ids` and `retired_api_key_ids` refuse
   deletes and grow without bound. Storage only; leave them.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
