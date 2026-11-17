@@ -6,7 +6,7 @@ import { outputAuthorityPredicate } from './repo-output-authority.ts';
 import { CHECK_IN, policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { foundOf } from './resolve.ts';
 import { prepareDisplayHistory } from './scan-display-history.ts';
-import { key, type ScanKit, setupScanKit } from './test-kit.ts';
+import { key, type ScanKit, setupScanKit, startScanCredentialTransfer } from './test-kit.ts';
 
 let kit: ScanKit;
 const { scenario, requestOf } = policyRevisionHelpers(() => kit);
@@ -174,4 +174,68 @@ describe('display history of another pass', () => {
     expect(history?.value).toMatchObject({ scans: { total: 1 }, visits: { total: 1 } });
     expect(CHECK_IN.id).toBe('check_in');
   });
+});
+
+type Move =
+  | 'listed scan undone'
+  | 'pass deleted'
+  | 'pass quarantined'
+  | 'lifecycle moved'
+  | 'credential rotated'
+  | 'scanner revoked';
+
+describe('display history when the world moves around the read', () => {
+  const apply = async (move: Move, s: Awaited<ReturnType<typeof checkedIn>>) => {
+    if (move === 'listed scan undone')
+      await run(kit.env.DB, 'UPDATE scans SET undone_by=id WHERE id=?', [s.scanId]);
+    else if (move === 'pass deleted')
+      await run(kit.env.DB, 'UPDATE passes SET deleted_at=? WHERE id=?', [
+        kit.clock.now(),
+        s.pass.id,
+      ]);
+    else if (move === 'pass quarantined')
+      await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined=1 WHERE id=?', [s.pass.id]);
+    else if (move === 'lifecycle moved')
+      await run(
+        kit.env.DB,
+        'UPDATE passes SET lifecycle_generation=lifecycle_generation+1 WHERE id=?',
+        [s.pass.id],
+      );
+    else if (move === 'credential rotated')
+      await startScanCredentialTransfer(kit, s.pass.id, {
+        target: { holderEmail: `rotated-${key()}@example.test`, ownerUserId: null },
+      });
+    else
+      await run(kit.env.DB, 'UPDATE scanners SET revoked_at=? WHERE id=?', [
+        kit.clock.now(),
+        s.scanner.id,
+      ]);
+  };
+
+  it.each([
+    'listed scan undone',
+    'pass deleted',
+    'pass quarantined',
+    'lifecycle moved',
+    'credential rotated',
+    'scanner revoked',
+  ] as const)(
+    'lists nothing and claims no visits after %s, before or after the read',
+    async (move) => {
+      for (const when of ['before', 'after'] as const) {
+        const s = await checkedIn();
+        // Positive control: the same scan is listed until the world moves.
+        expect(listed((await (await s.read()).finalize())?.value)).toBe(1);
+        const read = await s.read(when === 'before' ? () => apply(move, s) : undefined);
+        if (when === 'after') await apply(move, s);
+        const value = (await read.finalize())?.value;
+        expect(listed(value)).toBe(0);
+        // No visit is claimed: none at all, or an empty history that counts none (the undone scan).
+        expect((value as { visits?: { total: number } } | undefined)?.visits?.total ?? 0).toBe(0);
+        // A moved pass is not the viewer's any more: not even its counts are shown.
+        if (move !== 'listed scan undone' && move !== 'scanner revoked')
+          expect(value ?? {}).not.toHaveProperty('scans');
+      }
+    },
+  );
 });

@@ -176,8 +176,10 @@ export type CardHistoryFence = OutputPredicate;
 
 /**
  * Recheck in the final actor/pass authorization statement that the pass is still the one the rows
- * were read for. The rows came from one snapshot; only a moved credential or lifecycle, a pending
- * transfer or a deleted pass changes what they may disclose.
+ * were read for, and that none of the shown scans was undone since (`undoable` stays honest). The
+ * rows came from one snapshot; only a moved credential or lifecycle, a pending transfer, a deleted
+ * pass or an undo changes what they may show. A scanner renamed after the read still shows its old
+ * name for that one response: the viewer could see it a moment earlier.
  */
 export function cardHistoryFence(
   query: CardHistoryQuery,
@@ -186,11 +188,17 @@ export function cardHistoryFence(
   const row = rows[0];
   if (!row) return null;
   if (rows.length > 3) throw new RangeError('At most three card scans may be fenced');
-  return passLineagePredicate({
+  const lineage = passLineagePredicate({
     orgId: query.orgId,
     mode: query.mode,
     passId: query.passId,
     credentialGeneration: row.current_credential_generation,
     lifecycleGeneration: row.current_lifecycle_generation,
   });
+  return {
+    sql: `(${lineage.sql}) AND NOT EXISTS (SELECT 1 FROM scans shown
+      WHERE shown.id IN (${rows.map(() => '?/* scan-ephemeral-scan-id */').join(', ')})
+        AND shown.undone_by IS NOT NULL)`,
+    params: [...lineage.params, ...rows.map((shown) => shown.id)],
+  };
 }

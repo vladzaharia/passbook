@@ -43,7 +43,7 @@ export function attachLookupHistory(
   }
 }
 
-/** Keep the last scan's pass check in the final item-authority transaction. */
+/** Keep the last scan's pass check in the final item-authority transaction. `_now` keeps the caller's signature. */
 export function lookupHistoryStmts(
   db: D1Database,
   history: LookupHistoryProof,

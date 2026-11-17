@@ -38,7 +38,7 @@ export type DisplayHistoryRaw = HistoryRaw & { candidate_total?: number };
 export function displayEvidenceCache(orgId: string, found: Found): HistoryEvidenceCache {
   const cache = createHistoryEvidenceCache();
   for (const template of [found.template, found.activePolicy, found.activeTemplate])
-    if (template.id === found.pass.templateId)
+    if (template?.id === found.pass.templateId)
       cache.manifests.set(
         manifestCacheKey({ orgId, templateId: template.id, version: template.version }),
         JSON.stringify(template.manifest),
@@ -135,8 +135,7 @@ export async function decodeDisplayPage(
   const rows = new Map<string, DisplayRow>();
   for (const row of history) {
     const found = evidence.get(row.id);
-    if (!found || found.sources.credentialKeysetCommitment !== scope.credentialKeysetCommitment)
-      continue;
+    if (!found) continue;
     const shown = displayRowOf(
       found.policy,
       { id: row.id, at: row.at, actionId: row.actionId, actionKind: row.actionKind },

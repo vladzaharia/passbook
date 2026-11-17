@@ -6,6 +6,7 @@ import type { ActRequest } from './act-claim.ts';
 import { CommittedScanUnconfirmed, StaleScanAuthority } from './act-override.ts';
 import { ledgerAuthoritySnapshot } from './act-result-authority.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
+import { afterCommit } from './after-commit.ts';
 import { historyPlan } from './card.ts';
 import { type CountsPlan, planCommitCounts } from './counts.ts';
 import type { ScanActor } from './guard.ts';
@@ -16,7 +17,6 @@ import { grantMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import { candidateTemplateFenceStmt, templateFenceHolds } from './repo-resolve-outcome-current.ts';
-import { doneScanPredicate } from './repo-scan-checks.ts';
 import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { Claim } from './repo-scans.ts';
 import type { Stop } from './resolve.ts';
@@ -146,9 +146,8 @@ export async function finishStop(
   if (fence && !templateFenceHolds(committed.after[0])) throw new CommittedScanUnconfirmed();
   // Recorded with its counts and its miss. The card follows; a failure only degrades the answer.
   const finishAt = ctx.clock.now();
-  const done = doneScanPredicate(s.scanId);
   const missResult = miss ? miss.result(results) : null;
-  const bound = displayPlan?.bind(finishAt, done);
+  const bound = displayPlan?.bindAfterCommit(finishAt, afterCommit(committed));
   const statements = bound?.stmts ?? [];
   let after: D1Result[] | null = null;
   try {

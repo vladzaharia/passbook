@@ -2,6 +2,7 @@ import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
 import { CommittedScanUnconfirmed, StaleScanAuthority } from './act-override.ts';
+import { afterCommit } from './after-commit.ts';
 import { takeAssetGrantToken } from './asset-sidecar.ts';
 import { readCard, readyOutcome, renderCardDisplay } from './card.ts';
 import { planCounts } from './counts.ts';
@@ -94,7 +95,7 @@ export async function chooseAction(input: ChooseInput): Promise<ScanEvaluation> 
   // The pending key is released. The card needs its history, so a failure here is an error the
   // client can retry with the same key; the photo only decorates it.
   const now = ctx.clock.now();
-  const bound = displayHistory.bind(now, { sql: '1', params: [] });
+  const bound = displayHistory.bindAfterCommit(now, afterCommit(committed));
   const history = bound.finalize(bound.stmts.length ? await ctx.env.DB.batch(bound.stmts) : []);
   if (!history) throw new CommittedScanUnconfirmed();
   const passViewToken = takeAssetGrantToken(passViewGrant);

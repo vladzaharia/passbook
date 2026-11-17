@@ -6,6 +6,7 @@ import {
 import type { Json } from '../../../passkit/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
+import type { AfterCommit } from './after-commit.ts';
 import { captureDisplayHistoryScope, sameDisplayHistoryScope } from './history-display-scope.ts';
 import {
   consumeDisplayHistoryRead,
@@ -70,8 +71,17 @@ export interface BoundDisplayHistory {
 export interface DisplayHistoryPlan {
   /** False only when neither history nor ledger values are requested by the display. */
   readonly requiresHistory: boolean;
-  /** Authority must bind the original actor, pass, release and any committed gate in this batch. */
+  /**
+   * `authority` binds the original actor, pass, release and any committed gate in the same batch
+   * as the returned statements.
+   */
   bind(now: number, authority: OutputPredicate): BoundDisplayHistory;
+  /**
+   * The batch that follows a grant's commit (choose, answer, stop): the grant bound the actor,
+   * event and pass after the history was read, so this batch holds no authority of its own. A
+   * change between the commit and this batch can only leave a shown row stale, never widen it.
+   */
+  bindAfterCommit(now: number, committed: AfterCommit): BoundDisplayHistory;
 }
 
 /** Resolve display dependencies once using the same default as card rendering. */
@@ -157,82 +167,83 @@ export async function prepareDisplayHistory(
     else complete = false;
   }
 
+  const bind = (now: number, authority: OutputPredicate): BoundDisplayHistory => {
+    const current =
+      !!loaded &&
+      sameDisplayHistoryScope(captureDisplayHistoryScope(actor, found), originalScope) &&
+      validCredentialKeysetCommitment(actor.credentialKeysetCommitment) &&
+      validCredentialKeysetCommitment(scopeSnapshot.credentialKeysetCommitment) &&
+      actor.credentialKeysetCommitment === scopeSnapshot.credentialKeysetCommitment;
+    const statements = [displayHistoryAuthorityStmt(db, current, authority)];
+    if (requested) {
+      const scope = historyPassScopePredicate(scopeSnapshot, now);
+      statements.push(
+        displayHistoryCountsStmt(db, scope, boundaries(now, scopeSnapshot.timeZone).today),
+        displayHistoryTopStmt(db, scope),
+        displayHistoryLineageStmt(db, {
+          orgId: found.pass.orgId,
+          mode: found.pass.mode,
+          passId: found.pass.id,
+          credentialGeneration: found.pass.credentialGeneration,
+          lifecycleGeneration: found.pass.lifecycleGeneration,
+        }),
+      );
+    }
+    let consumed = false;
+    return {
+      stmts: statements,
+      finalize(results) {
+        if (consumed) return null;
+        consumed = true;
+        const authorityRow = results[0]?.results?.[0];
+        if (
+          results.length !== statements.length ||
+          !isHistoryRow(authorityRow) ||
+          authorityRow.authorized !== 1 ||
+          !sameDisplayHistoryScope(captureDisplayHistoryScope(actor, found), originalScope)
+        )
+          return null;
+        if (!requested) return stamp({}, actor, found, originalScope);
+        // The pass moved since the read: not even the counts are for this viewer any more.
+        const lineage = results[3]?.results;
+        if (lineage?.length !== 1) return stamp({}, actor, found, originalScope);
+        const countsRow = results[1]?.results?.[0];
+        const generic: { scans: { total: number; today: number } } | null = genericHistory(
+          isHistoryRow(countsRow) ? countsRow : undefined,
+        );
+        if (!generic) return stamp({}, actor, found, originalScope);
+        const top = results[2]?.results;
+        if (!top) return stamp(generic, actor, found, originalScope);
+        const topIds: string[] = [];
+        for (const row of top) {
+          if (!isHistoryRow(row) || typeof row.id !== 'string' || topIds.includes(row.id))
+            return stamp(generic, actor, found, originalScope);
+          topIds.push(row.id);
+        }
+        if (topIds.length !== Math.min(generic.scans.total, 3))
+          return stamp(generic, actor, found, originalScope);
+        // A listed scan must be one the read evaluated and one of the newest now: an undone or
+        // replaced scan drops out of the newest three.
+        const listed = new Set(rows.map((row) => row.id));
+        const verified = new Set(topIds.filter((id) => listed.has(id)));
+        const today = boundaries(now, scopeSnapshot.timeZone).today;
+        const allVisible =
+          complete &&
+          generic.scans.total === rows.length &&
+          generic.scans.today === rows.filter((row) => row.at >= today).length &&
+          verified.size === topIds.length;
+        return stamp(
+          render(rows, topIds, verified, generic, allVisible, now, scopeSnapshot.timeZone),
+          actor,
+          found,
+          originalScope,
+        );
+      },
+    };
+  };
   return {
     requiresHistory: requested,
-    bind(now, authority) {
-      const current =
-        !!loaded &&
-        sameDisplayHistoryScope(captureDisplayHistoryScope(actor, found), originalScope) &&
-        validCredentialKeysetCommitment(actor.credentialKeysetCommitment) &&
-        validCredentialKeysetCommitment(scopeSnapshot.credentialKeysetCommitment) &&
-        actor.credentialKeysetCommitment === scopeSnapshot.credentialKeysetCommitment;
-      const statements = [displayHistoryAuthorityStmt(db, current, authority)];
-      if (requested) {
-        const scope = historyPassScopePredicate(scopeSnapshot, now);
-        statements.push(
-          displayHistoryCountsStmt(db, scope, boundaries(now, scopeSnapshot.timeZone).today),
-          displayHistoryTopStmt(db, scope),
-          displayHistoryLineageStmt(db, {
-            orgId: found.pass.orgId,
-            mode: found.pass.mode,
-            passId: found.pass.id,
-            credentialGeneration: found.pass.credentialGeneration,
-            lifecycleGeneration: found.pass.lifecycleGeneration,
-          }),
-        );
-      }
-      let consumed = false;
-      return {
-        stmts: statements,
-        finalize(results) {
-          if (consumed) return null;
-          consumed = true;
-          const authorityRow = results[0]?.results?.[0];
-          if (
-            results.length !== statements.length ||
-            !isHistoryRow(authorityRow) ||
-            authorityRow.authorized !== 1 ||
-            !sameDisplayHistoryScope(captureDisplayHistoryScope(actor, found), originalScope)
-          )
-            return null;
-          if (!requested) return stamp({}, actor, found, originalScope);
-          const countsRow = results[1]?.results?.[0];
-          const generic: { scans: { total: number; today: number } } | null = genericHistory(
-            isHistoryRow(countsRow) ? countsRow : undefined,
-          );
-          if (!generic) return stamp({}, actor, found, originalScope);
-          const top = results[2]?.results;
-          if (!top) return stamp(generic, actor, found, originalScope);
-          const topIds: string[] = [];
-          for (const row of top) {
-            if (!isHistoryRow(row) || typeof row.id !== 'string' || topIds.includes(row.id))
-              return stamp(generic, actor, found, originalScope);
-            topIds.push(row.id);
-          }
-          const lineage = results[3]?.results;
-          if (topIds.length !== Math.min(generic.scans.total, 3) || !lineage || lineage.length > 1)
-            return stamp(generic, actor, found, originalScope);
-          // A listed scan must be one the read evaluated and one of the newest now: an undone or
-          // replaced scan drops out of the newest three. A moved pass shows no scan at all.
-          const listed = new Set(rows.map((row) => row.id));
-          const verified = new Set(
-            lineage.length === 1 ? topIds.filter((id) => listed.has(id)) : [],
-          );
-          const today = boundaries(now, scopeSnapshot.timeZone).today;
-          const allVisible =
-            complete &&
-            lineage.length === 1 &&
-            generic.scans.total === rows.length &&
-            generic.scans.today === rows.filter((row) => row.at >= today).length &&
-            verified.size === topIds.length;
-          return stamp(
-            render(rows, topIds, verified, generic, allVisible, now, scopeSnapshot.timeZone),
-            actor,
-            found,
-            originalScope,
-          );
-        },
-      };
-    },
+    bind,
+    bindAfterCommit: (now, committed) => bind(now, committed),
   };
 }

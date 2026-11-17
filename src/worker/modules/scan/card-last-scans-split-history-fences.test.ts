@@ -30,14 +30,27 @@ describe('card last-scan privacy', () => {
       query.mode,
       rows[0]?.current_lifecycle_generation,
       rows[0]?.current_credential_generation,
+      rows[0]?.id,
     ]);
     const slots = scanSecretSlots(fence.sql, fence.params.length);
-    expect(slots?.map((slot) => slot.label)).toEqual(['pass-id', null, null, null, null]);
+    expect(slots?.map((slot) => slot.label)).toEqual([
+      'pass-id',
+      null,
+      null,
+      null,
+      null,
+      'scan-id',
+    ]);
 
     const sql = `SELECT CASE WHEN (${fence.sql}) THEN 1 ELSE 0 END AS current`;
     expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 1 });
     // The rows are one snapshot: renaming the scanner after the read does not unread them.
     await run(kit.env.DB, 'UPDATE scanners SET name=? WHERE id=?', ['Changed lobby', scanner.id]);
+    expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 1 });
+    // An undo does: the card must not show an undone scan as undoable.
+    await run(kit.env.DB, 'UPDATE scans SET undone_by=id WHERE id=?', [rows[0]?.id]);
+    expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 0 });
+    await run(kit.env.DB, 'UPDATE scans SET undone_by=NULL WHERE id=?', [rows[0]?.id]);
     expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 1 });
     // A moved pass does: every row was read for the lineage the fence names.
     await run(
