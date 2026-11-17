@@ -206,7 +206,7 @@ describe('errors', () => {
                 id: 'r_s',
                 type: 'progress',
                 value: '{{inputs.stamps}}',
-                goal: 12,
+                goal: 17,
                 style: 'stamps',
               },
             ]),

@@ -36,7 +36,7 @@ function validate(name: string, email: string): Record<string, string> {
 
 /** The created link, with the email request beside it. */
 function Result({ bundle, emailRequested }: { bundle: BundleDto; emailRequested: string | null }) {
-  const url = absoluteUrl(bundle.url);
+  const url = bundle.url ? absoluteUrl(bundle.url) : '';
   const test = bundle.mode === 'test';
   return (
     <div className="wl-rise flex min-w-0 flex-col gap-4">

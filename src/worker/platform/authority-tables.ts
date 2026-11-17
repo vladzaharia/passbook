@@ -151,6 +151,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'scan_retention_delete_intents',
   'scan_retained_gates',
   'pass_holder_reissue_required',
+  'pass_token_seals',
+  'bundle_token_seals',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
@@ -196,4 +198,5 @@ export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_transfer_asset_candidates',
   'pass_transfer_asset_recoveries',
   'pass_transfer_asset_uploads',
+  'pass_token_seals',
 ]);

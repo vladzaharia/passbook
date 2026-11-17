@@ -2,10 +2,12 @@ import type { z } from 'zod';
 import type { ScanApprovalSchema } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './guard.ts';
-import { staffStatement } from './repo-staff.ts';
+import { approverStatement, managerRosterStatement } from './repo-staff.ts';
 import {
+  ANY_MANAGER,
   type PinReservationGuard,
   pinStaffFromResult,
+  pinStaffListFromResult,
   preparePinReservation,
   type VerifiedPinSnapshot,
 } from './staff-pin.ts';
@@ -24,24 +26,25 @@ export async function verifyApproval(
   const db = ctx.env.DB;
   const { staffId, pin } = approval;
   const orgId = actor.orgId;
+  // The PIN is tested against every manager: that count sets what an attempt costs.
+  const testedManagers = staffId
+    ? 1
+    : (await managerRosterStatement(db, orgId).all()).results.length;
   const reservation = preparePinReservation(
     ctx,
     {
       scannerId: actor.scanner?.id ?? actor.actorKey,
       orgId,
-      staffId,
+      staffId: staffId ?? ANY_MANAGER,
+      testedManagers,
     },
     guard,
   );
   try {
-    const results = await db.batch([staffStatement(db, orgId, staffId), ...reservation.stmts]);
-    const manager = await reservation.verify(
-      results.slice(1),
-      pinStaffFromResult(results[0]),
-      pin,
-      true,
-    );
-    return manager;
+    const results = await db.batch([approverStatement(db, orgId, staffId), ...reservation.stmts]);
+    return staffId
+      ? await reservation.verify(results.slice(1), pinStaffFromResult(results[0]), pin, true)
+      : await reservation.verifyAny(results.slice(1), pinStaffListFromResult(results[0]), pin);
   } finally {
     await reservation.refund();
   }

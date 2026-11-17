@@ -110,3 +110,18 @@ export const doneOkPredicate = (scanId: string) => ({
   sql: `EXISTS (SELECT 1 FROM scans q WHERE q.id = ? AND q.state = 'done' AND q.outcome = 'ok')`,
   params: [scanId],
 });
+
+/** What this scanner added and took today, with `amount` more, stays within its daily limit. Read in the grant's own transaction. */
+export const dailyAmountCheck = (
+  actorKey: string,
+  since: number,
+  amount: number,
+  limit: number,
+): Check =>
+  tenantCheck(
+    'retention',
+    `COALESCE((SELECT SUM(s.amount) FROM scans s WHERE s.org_id = {org} AND s.mode = {mode}
+       AND s.actor_key = ? AND s.action_kind IN ('add', 'take')
+       AND s.outcome = 'ok' AND s.undone_by IS NULL AND s.at >= ?), 0) + ? <= ?`,
+    [actorKey, since, amount, limit],
+  );

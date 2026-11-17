@@ -55,9 +55,8 @@ export function planActionReads(
     async prepare(found) {
       const picked = pickAction(actor, found.scan, req.actionId);
       const action = picked === 'choose' ? undefined : picked;
-      const plan =
-        action?.kind === 'check_in' ? prepareCheckInReads(ctx, actor, found, action) : null;
-      if (action?.kind === 'check_in' && !plan) throw new StaleScanAuthority();
+      const plan = action ? prepareCheckInReads(ctx, actor, found, action) : null;
+      if (action && !plan) throw new StaleScanAuthority();
       reads.plan = plan;
       reads.passFence = null;
       reads.preloaded = undefined;

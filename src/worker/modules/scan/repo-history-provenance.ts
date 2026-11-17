@@ -86,6 +86,8 @@ function scanProvenanceSql(input: RecordedScanProvenanceSql, legacy: boolean): s
   return `CASE WHEN json_valid(${data}) THEN ${l}.org_id=${s}.org_id AND ${l}.mode=${s}.mode AND ${l}.pass_id=${s}.pass_id
     AND ${l}.actor_type=${s}.actor_type AND ${l}.actor_id=${s}.actor_id
     AND ${l}.kind=CASE WHEN ${s}.outcome='ok' AND ${s}.direction='out' THEN 'scan.checked_out'
+      WHEN ${s}.outcome='ok' AND ${s}.action_kind IN ('take','use_up') THEN 'scan.redeemed'
+      WHEN ${s}.outcome='ok' AND ${s}.action_kind IN ('add','set') THEN 'scan.adjusted'
       WHEN ${s}.outcome='ok' THEN 'scan.checked_in' WHEN ${s}.outcome='heads_up' THEN 'scan.heads_up'
       WHEN ${s}.outcome='refused' THEN 'scan.rejected' END
     AND json_extract(${data},'$.scanId')=${s}.id

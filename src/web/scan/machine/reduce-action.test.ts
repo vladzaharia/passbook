@@ -54,8 +54,8 @@ describe('explicit action-card check-in', () => {
     expect(twice.state).toBe(once.state);
     expect(twice.cmds).toEqual([]);
   });
-  it.each([{ available: false }, { lock: 'role' as const }, { kind: 'add' as const }])(
-    'does not run an unavailable or unsupported action %j',
+  it.each([{ available: false }, { lock: 'role' as const }])(
+    'does not run an unavailable or locked action %j',
     (over) => {
       const state = ready(over);
       const result = step(state, { type: 'pick', actionId: 'check_in' });

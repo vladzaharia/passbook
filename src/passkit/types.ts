@@ -167,7 +167,7 @@ export interface ScanAction {
   rewardLabel?: string;
   /** A lock-screen message; spends the push budget. Default false. */
   notify?: boolean;
-  /** May change a connection-owned input, which then becomes manual. Default false. */
+  /** May change a connection-owned input. A scan takes the field over from the connection: it becomes manual and later syncs leave it alone. Default false. */
   allowOnConnected?: boolean;
 }
 

@@ -4,6 +4,7 @@ import type { PublishOptions } from './publish.ts';
 import type { PreparedPublishAttempt } from './publish-flow-prepare.ts';
 import { assertPublishAuthority, assertReleaseFence } from './publish-service-release.ts';
 import { casPublish } from './repo-write-publish.ts';
+import { PublishDeclined } from './repo-write-publish-granted.ts';
 
 /** Put the built object before its guarded version write, retaining it on ambiguous D1 failure. */
 export async function commitPublishArtifact(
@@ -62,11 +63,12 @@ export async function commitPublishArtifact(
       connectionState: options.connectionState,
       authority: options.authority,
       holder: options.holder,
+      commit: options.commit,
       clock: ctx.clock,
     });
   } catch (error) {
     // A grant refusal is a definite rollback: nothing committed, so the object can go.
-    if (error instanceof AppError) {
+    if (error instanceof AppError || error instanceof PublishDeclined) {
       await ctx.env.BUCKET.delete(objectKey);
       throw error;
     }

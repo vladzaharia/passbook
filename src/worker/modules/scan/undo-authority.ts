@@ -11,6 +11,9 @@ import type { ScanEventRow } from './repo-scope.ts';
 import type { UndoGate, UndoPresence } from './repo-undo.ts';
 import type { UndoRead } from './repo-undo-read.ts';
 
+/** Every kind an ok scan can have; an undo row is not one. */
+const UNDOABLE = new Set(['check_in', 'add', 'take', 'set', 'use_up']);
+
 export const notFound = () => new NotFoundError('Scan not found.', 'SCAN_NOT_FOUND');
 export const superseded = () =>
   new ConflictError('A later scan replaced this one.', 'UNDO_SUPERSEDED');
@@ -42,7 +45,7 @@ export async function planUndo(actor: ScanActor, read: UndoRead): Promise<UndoPl
     scan.mode !== actor.mode ||
     scan.state !== 'done' ||
     scan.outcome !== 'ok' ||
-    scan.actionKind !== 'check_in' ||
+    !UNDOABLE.has(scan.actionKind ?? '') ||
     !scan.passId ||
     !scan.actionId
   )
@@ -64,7 +67,7 @@ export async function planUndo(actor: ScanActor, read: UndoRead): Promise<UndoPl
   if (
     !gate ||
     gate.template_id !== target.templateId ||
-    gate.kind !== 'check_in' ||
+    gate.kind !== scan.actionKind ||
     gate.state === 'undone' ||
     gate.count < 1
   )

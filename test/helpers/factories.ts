@@ -13,6 +13,7 @@ import type { AppEnv } from '../../src/worker/platform/env.ts';
 import { ConflictError } from '../../src/worker/platform/errors.ts';
 import { createIds, type Ids, sha256Hex } from '../../src/worker/platform/ids.ts';
 import { createServiceContext } from '../../src/worker/platform/service-context.ts';
+import { fixtureToken } from './tokens.ts';
 
 /** Clock and ids shared by factories. Ids are UUIDv7 so tests do not collide across a file. */
 export interface Fixtures {
@@ -309,6 +310,7 @@ export async function makePass(
   };
   await f.env.BUCKET.put(row.objectKey, new Uint8Array([1, 2, 3]));
   const now = f.clock.now();
+  const link = await fixtureToken(f.env, id, options.orgId, row.downloadToken);
   await run(
     f.env.DB,
     `INSERT INTO passes (id, org_id, identity_id, serial, template_id, template_version, auth_token, download_token,
@@ -323,7 +325,7 @@ export async function makePass(
       options.template.id,
       options.template.version,
       row.authToken,
-      row.downloadToken,
+      link.mac,
       `${f.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify(options.personalization ?? { memberName: 'Alex Morgan' }),
       options.holderEmail ?? null,
@@ -335,6 +337,7 @@ export async function makePass(
       now,
     ],
   );
+  await link.seal();
   return row;
 }
 

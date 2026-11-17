@@ -3,6 +3,7 @@ import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
+import { issueToken } from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createSessionStore } from '../auth/sessions.ts';
@@ -105,7 +106,7 @@ describe('holder changes and native wallet retirement', () => {
       scanCode: t.pass.scanCode,
     });
     expect(pending?.downloadToken).not.toBe(t.pass.downloadToken);
-    expect(await getPassByDownloadToken(db, t.pass.downloadToken)).toBeNull();
+    expect(await getPassByDownloadToken(t.kit.env, t.pass.downloadToken)).toBeNull();
     await expect(
       reassignHolder(
         jobCtxOf(t.kit),
@@ -306,7 +307,7 @@ describe('holder changes and native wallet retirement', () => {
     await run(
       t.kit.env.DB,
       "INSERT INTO bundles (id, org_id, name, token, created_at) VALUES (?, ?, 'B', ?, 1)",
-      [bundleId, t.pass.orgId, t.kit.fx.ids.token()],
+      [bundleId, t.pass.orgId, `h1:${t.kit.fx.ids.token()}`],
     );
     await run(
       t.kit.env.DB,
@@ -329,7 +330,7 @@ describe('holder changes and native wallet retirement', () => {
       ),
     ).toEqual({ target_owner_user_id: null, state: 'pending' });
     expect((await getPass(t.kit.env.DB, t.pass.id))?.downloadToken).not.toBe(t.pass.downloadToken);
-    expect(await getPassByDownloadToken(t.kit.env.DB, t.pass.downloadToken)).toBeNull();
+    expect(await getPassByDownloadToken(t.kit.env, t.pass.downloadToken)).toBeNull();
     expect(
       await first(t.kit.env.DB, 'SELECT 1 FROM bundle_passes WHERE bundle_id = ? AND pass_id = ?', [
         bundleId,
@@ -441,7 +442,12 @@ describe('holder changes and native wallet retirement', () => {
     const pass = await getPass(t.kit.env.DB, t.pass.id);
     if (!pass) throw new Error('Missing pass');
     expect(
-      await setDownloadToken(t.kit.env.DB, pass, t.kit.fx.ids.token(), t.kit.clock.now()),
+      await setDownloadToken(
+        t.kit.env.DB,
+        pass,
+        await issueToken(t.kit.env, 'pass', pass.id, pass.orgId, t.kit.fx.ids.token()),
+        t.kit.clock.now(),
+      ),
     ).toBe(true);
     expect(
       await first(
