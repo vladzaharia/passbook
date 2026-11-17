@@ -1,6 +1,7 @@
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { CommittedScanUnconfirmed, StaleScanAuthority } from './act-override.ts';
 import type { StopContext } from './act-stop.ts';
+import { afterCommit } from './after-commit.ts';
 import { historyPlan } from './card.ts';
 import { planCounts } from './counts.ts';
 import { photoGrantUrl } from './member-photo.ts';
@@ -52,7 +53,7 @@ export async function answerWithoutRow(
   }
   if (fence && !templateFenceHolds(committed.after[0])) throw new CommittedScanUnconfirmed();
   const now = ctx.clock.now();
-  const open = { sql: '1', params: [] };
+  const open = afterCommit(committed);
   const counts = planCounts(
     { ...ctx, clock: { now: () => now } },
     actor,
@@ -60,7 +61,7 @@ export async function answerWithoutRow(
     authority.actor,
     open,
   );
-  const bound = historyPlanForStop?.bind(now, open);
+  const bound = historyPlanForStop?.bindAfterCommit(now, open);
   const after = await ctx.env.DB.batch([...counts.stmts, ...(bound?.stmts ?? [])]);
   const read = await counts.read(after.slice(0, counts.stmts.length));
   const history = bound?.finalize(

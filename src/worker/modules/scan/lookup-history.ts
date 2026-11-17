@@ -3,11 +3,9 @@ import type { ScanLookupResultSchema } from '../../../shared/contracts/scan-sess
 import { safeTimestamp } from './card-semantics.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
-import { historyProofPolicySources, type VerifiedHistoryProof } from './history-proof.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
-import type { HistoryProofFence } from './repo-history-proof-cas.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { lookupHistoryEventPredicate, lookupHistorySnapshots } from './repo-lookup-history.ts';
+import { type LookupHistoryProof, lookupHistoryPredicate } from './repo-lookup-history.ts';
 import { outputPredicateStmt } from './repo-output-predicates.ts';
 import type { SearchRow } from './repo-search.ts';
 import type { Found } from './resolve.ts';
@@ -16,45 +14,40 @@ export type LookupEntry = {
   item: z.infer<typeof ScanLookupResultSchema>['items'][number];
   found: Found;
   source: Candidate;
-  history: HistoryProofFence | null;
+  history: LookupHistoryProof | null;
   photoGrant: PreparedPhotoGrant | null;
 };
 
-/** Only verified, current immutable events may contribute a last-scan timestamp. */
+/** Only a last scan whose signed event holds and whose pass was current may contribute a timestamp. */
 export function attachLookupHistory(
   actor: ScanActor,
   entries: readonly LookupEntry[],
   rows: readonly SearchRow[],
-  proofs: ReadonlyMap<string, VerifiedHistoryProof>,
+  proofs: ReadonlyMap<string, LookupHistoryProof>,
 ): void {
   const byPass = new Map(rows.map((row) => [row.id, row]));
   for (const entry of entries) {
     const row = byPass.get(entry.source.pass.id);
     const proof = row?.last_scan_id ? proofs.get(row.last_scan_id) : undefined;
-    const source = proof ? historyProofPolicySources(proof) : null;
     if (
       !row ||
       !proof ||
-      !source ||
-      !proof.projectionCurrent ||
-      source.scan.passId !== entry.source.pass.id ||
-      source.scan.templateId !== entry.source.pass.templateId ||
-      source.scan.at !== row.last_scan_at ||
-      !safeTimestamp(cardPrivacy(entry.found, actor), source.scan.at)
+      proof.scan.passId !== entry.source.pass.id ||
+      proof.scan.templateId !== entry.source.pass.templateId ||
+      proof.scan.at !== row.last_scan_at ||
+      !safeTimestamp(cardPrivacy(entry.found, actor), proof.scan.at)
     )
       continue;
-    entry.item.lastScanAt = source.scan.at;
+    entry.item.lastScanAt = proof.scan.at;
     entry.history = proof;
   }
 }
 
-/** Keep every verified event fragment in the final item-authority transaction. */
+/** Keep the last scan's pass check in the final item-authority transaction. `_now` keeps the caller's signature. */
 export function lookupHistoryStmts(
   db: D1Database,
-  history: HistoryProofFence,
-  now: number,
+  history: LookupHistoryProof,
+  _now: number,
 ): D1PreparedStatement[] {
-  return lookupHistorySnapshots(history, now).map((proof) =>
-    outputPredicateStmt(db, lookupHistoryEventPredicate(history, proof)),
-  );
+  return [outputPredicateStmt(db, lookupHistoryPredicate(history))];
 }

@@ -143,7 +143,7 @@ describe('atomic scanner response authority', () => {
     const race = raceFence(real, () =>
       run(
         real,
-        "UPDATE pass_events SET data=json_set(data,'$.authority.identityRevision',999998) WHERE pass_id=? AND kind LIKE 'scan.%'",
+        "UPDATE pass_events SET data=json_set(data,'$.authority.role','manager') WHERE pass_id=? AND kind LIKE 'scan.%'",
         [pass.id],
       ),
     );
@@ -155,21 +155,36 @@ describe('atomic scanner response authority', () => {
         clientTs: kit.clock.now(),
       });
       expect(race.fired()).toBe(true);
-      const text = await response.text();
-      expect(JSON.parse(text)).toMatchObject({
+      // The change landed after the history read: this answer is that read's snapshot.
+      const snapshot = (await response.json()) as { card: { lastScans: unknown[] } };
+      expect(snapshot).toMatchObject({
         kind: 'ready',
         card: {
           passId: pass.id,
-          lastScans: [],
-          // Visits that changed under the final batch are dropped, not shown unproven: the
-          // returning variant goes, and the one that needs only the proven scan count stays.
-          display: { variant: 'generic', header: { title: null } },
+          display: { variant: 'returning', header: { title: null } },
         },
       });
-      expect(text).not.toContain('Returning member');
+      expect(snapshot.card.lastScans).toHaveLength(2);
     } finally {
       Object.assign(kit.env, { DB: real });
     }
+    // The next request reads the change: visits whose event no longer holds are dropped, not shown
+    // unproven; the variant that needs only the scan count stays.
+    const next = await kit.post(scanner.headers, '/resolve', {
+      idempotencyKey: key(),
+      input,
+      clientTs: kit.clock.now(),
+    });
+    const text = await next.text();
+    expect(JSON.parse(text)).toMatchObject({
+      kind: 'ready',
+      card: {
+        passId: pass.id,
+        lastScans: [],
+        display: { variant: 'generic', header: { title: null } },
+      },
+    });
+    expect(text).not.toContain('Returning member');
   });
 
   it.each([true, false])(

@@ -1,81 +1,29 @@
 import type { ScanDisplayNeeds } from '../../../passkit/template/scan-display/index.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
-import { credentialKeysetContext } from './credential-keyset-authority.ts';
-import { captureDisplayHistoryScope, sameDisplayHistoryScope } from './history-display-scope.ts';
-import { historyProofPolicySources, type VerifiedHistoryProof } from './history-proof.ts';
 import {
-  countStmt,
   type DecodedPage,
-  decodePage,
-  type HistoryOrgScope,
-  type PassScope,
-  pageStmt,
-  passScope,
-} from './history-proof-plan-query.ts';
+  type DisplayHistoryRaw,
+  type DisplayReadScope,
+  decodeDisplayPage,
+  displayEvidenceCache,
+} from './history-display-read.ts';
+import { captureDisplayHistoryScope, sameDisplayHistoryScope } from './history-display-scope.ts';
+import type { PlannedDisplayScan } from './history-planned-display.ts';
+import type { HistoryEvidenceCache } from './history-row-evidence.ts';
 import { validCredentialKeysetCommitment } from './repo-credential-tombstones.ts';
-import { type HistoryProofRow, historyProofRowsStmt } from './repo-history-proof-read.ts';
+import {
+  DISPLAY_PAGE_SIZE,
+  displayHistoryPageStmt,
+  displayHistoryScopeCountStmt,
+  type PassScope,
+} from './repo-scan-display-history.ts';
 import type { Found } from './resolve.ts';
-import type { ScanEventProofCache } from './scan-event-proof.ts';
+import type { DisplayRow } from './scan-display-history-view.ts';
 
-type ProofBatchResult =
-  | { success: true; results: unknown[] }
-  | { success: false; results?: unknown[] };
+export { planHistoryProofSnapshotsForOrg } from './lookup-history-plan.ts';
 
-const PAGE_SIZE = 100;
-
-/** Prepare independent scoped ID batches for inclusion in a caller's existing D1 batch. */
-export function planHistoryProofSnapshotsForOrg(
-  ctx: ServiceContext,
-  scope: HistoryOrgScope,
-  scanIds: readonly string[],
-): {
-  stmts: D1PreparedStatement[];
-  finish(results: readonly ProofBatchResult[]): Promise<Map<string, VerifiedHistoryProof>>;
-} {
-  const operation = credentialKeysetContext(ctx);
-  const captured = { ...scope };
-  const ids = [...new Set(scanIds)];
-  const requested = new Set(ids);
-  const stmts: D1PreparedStatement[] = [];
-  if (validCredentialKeysetCommitment(captured.credentialKeysetCommitment)) {
-    for (let at = 0; at < ids.length; at += 96)
-      stmts.push(
-        historyProofRowsStmt(
-          operation,
-          { ids: ids.slice(at, at + 96) },
-          's.org_id=? AND s.mode=?',
-          [captured.orgId, captured.mode],
-          captured.credentialKeysetCommitment,
-        ),
-      );
-  }
-  let consumed = false;
-  return {
-    stmts,
-    async finish(results) {
-      if (consumed || results.length !== stmts.length) return new Map();
-      consumed = true;
-      const proofs = new Map<string, VerifiedHistoryProof>();
-      const seen = new Set<string>();
-      const cache: ScanEventProofCache = new Map();
-      for (const result of results) {
-        if (!result.results || result.success === false) return new Map();
-        const page = await decodePage(
-          operation,
-          result.results as unknown as HistoryProofRow[],
-          captured,
-          (row) => requested.has(row.id),
-          cache,
-        );
-        if (!page || page.ids.some((id) => seen.has(id))) return new Map();
-        for (const id of page.ids) seen.add(id);
-        for (const [id, proof] of page.proofs) proofs.set(id, proof);
-      }
-      return proofs;
-    },
-  };
-}
+type ReadResult = { success: true; results: unknown[] } | { success: false; results?: unknown[] };
 
 const brand: unique symbol = Symbol('preloaded-display-history');
 export interface PreloadedDisplayHistory {
@@ -89,12 +37,33 @@ interface PreloadState extends DecodedPage {
   scope: PassScope;
   requested: boolean;
   total: number;
-  cache: ScanEventProofCache;
-  operation: ServiceContext;
+  cache: HistoryEvidenceCache;
+  ctx: ServiceContext;
 }
 const preloads = new WeakMap<PreloadedDisplayHistory, PreloadState>();
 
-/** Prepare a bounded first proof page, or all pages when an earlier count supplies the capacity. */
+const eventOf = (actor: ScanActor) => actor.event?.id ?? actor.scannerAssignment?.eventId ?? null;
+const wanted = (needs: ScanDisplayNeeds) => needs.history.length > 0 || needs.ledger.length > 0;
+
+function passScope(ctx: ServiceContext, actor: ScanActor, found: Found): PassScope {
+  return {
+    orgId: actor.orgId,
+    mode: actor.mode,
+    passId: found.pass.id,
+    templateId: found.pass.templateId,
+    eventId: eventOf(actor),
+    credentialKeysetCommitment: found.credentialKeysetCommitment,
+    until: ctx.clock.now(),
+  };
+}
+
+const readScope = (scope: PassScope): DisplayReadScope => scope;
+
+/**
+ * Prepare a bounded first page of the pass's check-ins, or every page when an earlier count
+ * supplies the capacity, for a caller's existing D1 batch. One page statement reads the scans,
+ * their signed events and the pass state of one snapshot; nothing is proven again afterwards.
+ */
 export function planDisplayHistoryRead(
   ctx: ServiceContext,
   actor: ScanActor,
@@ -104,23 +73,22 @@ export function planDisplayHistoryRead(
   eventId?: string | null,
 ): {
   stmts: D1PreparedStatement[];
-  finish(results: readonly ProofBatchResult[]): Promise<PreloadedDisplayHistory | null>;
+  finish(results: readonly ReadResult[]): Promise<PreloadedDisplayHistory | null>;
 } {
-  const operation = credentialKeysetContext(ctx);
-  const scope = passScope(operation, actor, found);
+  const scope = passScope(ctx, actor, found);
   if (eventId !== undefined) scope.eventId = eventId;
   const capturedScope = captureDisplayHistoryScope(actor, found);
   const capturedWithoutEvent = captureDisplayHistoryScope({ ...actor, event: null }, found);
-  const requested = needs.history.length > 0 || needs.ledger.length > 0;
+  const requested = wanted(needs);
   const valid =
     validCredentialKeysetCommitment(scope.credentialKeysetCommitment) &&
     (expectedCount === undefined || (Number.isSafeInteger(expectedCount) && expectedCount >= 0));
   const pageCount =
-    expectedCount === undefined ? 1 : Math.max(1, Math.ceil(expectedCount / PAGE_SIZE));
+    expectedCount === undefined ? 1 : Math.max(1, Math.ceil(expectedCount / DISPLAY_PAGE_SIZE));
   const stmts: D1PreparedStatement[] = [];
   if (requested && valid)
     for (let page = 0; page < pageCount; page++)
-      stmts.push(pageStmt(operation, scope, page * PAGE_SIZE, page === 0));
+      stmts.push(displayHistoryPageStmt(ctx.env.DB, scope, page * DISPLAY_PAGE_SIZE, scope.until));
   let consumed = false;
   return {
     stmts,
@@ -133,46 +101,39 @@ export function planDisplayHistoryRead(
       )
         return null;
       consumed = true;
-      const cache: ScanEventProofCache = new Map();
+      const cache = displayEvidenceCache(actor.orgId, found);
       const ids: string[] = [];
       const seen = new Set<string>();
-      const proofs = new Map<string, VerifiedHistoryProof>();
+      const rows = new Map<string, DisplayRow>();
       let total = 0;
       for (let index = 0; index < results.length; index++) {
         const result = results[index];
         if (!result?.results || result.success === false) return null;
-        const rows = result.results as unknown as (HistoryProofRow & {
-          candidate_total?: number;
-        })[];
-        if (index === 0 && rows.length) {
-          const count = rows[0]?.candidate_total;
-          if (
-            typeof count !== 'number' ||
-            !Number.isSafeInteger(count) ||
-            count < rows.length ||
-            rows.some((row) => row.candidate_total !== count)
-          )
-            return null;
-          total = count;
-        }
-        if (rows.length !== Math.min(PAGE_SIZE, Math.max(0, total - index * PAGE_SIZE)))
-          return null;
-        const page = await decodePage(
-          operation,
-          rows,
-          scope,
-          (row) =>
-            row.pass_id === scope.passId &&
-            row.template_id === scope.templateId &&
-            (scope.eventId === null || row.event_id === scope.eventId),
+        const page = await decodeDisplayPage(
+          ctx,
+          result.results as unknown as DisplayHistoryRaw[],
+          readScope(scope),
+          actor.role,
           cache,
         );
-        if (!page || page.ids.some((id) => seen.has(id))) return null;
+        const counted = (result.results as DisplayHistoryRaw[])[0]?.candidate_total;
+        if (index === 0 && result.results.length) {
+          if (typeof counted !== 'number' || !Number.isSafeInteger(counted)) return null;
+          total = counted;
+        }
+        if (
+          !page ||
+          result.results.length !==
+            Math.min(DISPLAY_PAGE_SIZE, Math.max(0, total - index * DISPLAY_PAGE_SIZE)) ||
+          (result.results.length && counted !== total) ||
+          page.ids.some((id) => seen.has(id))
+        )
+          return null;
         for (const id of page.ids) seen.add(id);
         ids.push(...page.ids);
-        for (const [id, proof] of page.proofs) proofs.set(id, proof);
+        for (const [id, row] of page.rows) rows.set(id, row);
       }
-      if (expectedCount !== undefined && total > pageCount * PAGE_SIZE) return null;
+      if (expectedCount !== undefined && total > pageCount * DISPLAY_PAGE_SIZE) return null;
       const token = Object.freeze({ [brand]: true as const });
       preloads.set(token, {
         actor,
@@ -183,9 +144,9 @@ export function planDisplayHistoryRead(
         requested,
         total,
         ids,
-        proofs,
+        rows,
         cache,
-        operation,
+        ctx,
       });
       return token;
     },
@@ -201,7 +162,7 @@ export function rebindDisplayHistoryRead(
   const state = preloads.get(preload);
   if (
     !state ||
-    (actor.event?.id ?? actor.scannerAssignment?.eventId ?? null) !== state.scope.eventId ||
+    eventOf(actor) !== state.scope.eventId ||
     !sameDisplayHistoryScope(
       state.capturedWithoutEvent,
       captureDisplayHistoryScope({ ...actor, event: null }, found),
@@ -214,29 +175,26 @@ export function rebindDisplayHistoryRead(
   return true;
 }
 
-/** Add an independently preverified planned scan; final bind still checks all its CAS fragments. */
+/** Add the scan this request is about to commit; the final batch counts it with the rest. */
 export function appendPlannedDisplayHistory(
   preload: PreloadedDisplayHistory,
-  proof: VerifiedHistoryProof,
+  planned: PlannedDisplayScan,
 ): boolean {
   const state = preloads.get(preload);
-  const source = historyProofPolicySources(proof);
   if (
     !state?.requested ||
     state.ids.length !== state.total ||
-    !source ||
-    !proof.projectionCurrent ||
-    proof.credentialKeysetCommitment !== state.scope.credentialKeysetCommitment ||
-    source.scan.orgId !== state.scope.orgId ||
-    source.scan.mode !== state.scope.mode ||
-    source.scan.passId !== state.scope.passId ||
-    source.scan.templateId !== state.scope.templateId ||
-    (state.scope.eventId !== null && source.scan.eventId !== state.scope.eventId) ||
-    state.ids.includes(proof.scan.id)
+    planned.credentialKeysetCommitment !== state.scope.credentialKeysetCommitment ||
+    planned.orgId !== state.scope.orgId ||
+    planned.mode !== state.scope.mode ||
+    planned.passId !== state.scope.passId ||
+    planned.templateId !== state.scope.templateId ||
+    (state.scope.eventId !== null && planned.eventId !== state.scope.eventId) ||
+    state.ids.includes(planned.id)
   )
     return false;
-  state.ids.push(proof.scan.id);
-  state.proofs.set(proof.scan.id, proof);
+  state.ids.push(planned.id);
+  if (planned.row) state.rows.set(planned.id, planned.row);
   state.total++;
   return true;
 }
@@ -247,26 +205,27 @@ export async function consumeDisplayHistoryRead(
   actor: ScanActor,
   found: Found,
   needs: ScanDisplayNeeds,
-): Promise<(DecodedPage & { total: number; until: number; cache: ScanEventProofCache }) | null> {
+): Promise<(DecodedPage & { total: number; until: number }) | null> {
   const state = preloads.get(preload);
   if (
     !state ||
     state.actor !== actor ||
     state.found !== found ||
-    state.requested !== (needs.history.length > 0 || needs.ledger.length > 0) ||
-    (actor.event?.id ?? actor.scannerAssignment?.eventId ?? null) !== state.scope.eventId ||
+    state.requested !== wanted(needs) ||
+    eventOf(actor) !== state.scope.eventId ||
     !sameDisplayHistoryScope(state.capturedScope, captureDisplayHistoryScope(actor, found))
   )
     return null;
   preloads.delete(preload);
-  const { operation, scope, total, ids, proofs, cache } = state;
+  const { ctx, scope, total, ids, rows, cache } = state;
   const seen = new Set(ids);
   if (ids.length < total) {
+    const db = ctx.env.DB;
     const stmts: D1PreparedStatement[] = [];
-    for (let offset = ids.length; offset < total; offset += PAGE_SIZE)
-      stmts.push(pageStmt(operation, scope, offset, false));
-    stmts.push(countStmt(operation, scope));
-    const results: ProofBatchResult[] = await operation.env.DB.batch(stmts);
+    for (let offset = ids.length; offset < total; offset += DISPLAY_PAGE_SIZE)
+      stmts.push(displayHistoryPageStmt(db, scope, offset, scope.until));
+    stmts.push(displayHistoryScopeCountStmt(db, scope));
+    const results: ReadResult[] = await db.batch(stmts);
     const sentinel = results[results.length - 1];
     const sentinelRow = sentinel?.results?.[0];
     const count =
@@ -285,23 +244,20 @@ export async function consumeDisplayHistoryRead(
       if (
         !result?.results ||
         result.success === false ||
-        result.results.length !== Math.min(PAGE_SIZE, total - ids.length)
+        result.results.length !== Math.min(DISPLAY_PAGE_SIZE, total - ids.length)
       )
         return null;
-      const page = await decodePage(
-        operation,
-        result.results as unknown as HistoryProofRow[],
-        scope,
-        (row) =>
-          row.pass_id === scope.passId &&
-          row.template_id === scope.templateId &&
-          (scope.eventId === null || row.event_id === scope.eventId),
+      const page = await decodeDisplayPage(
+        ctx,
+        result.results as unknown as DisplayHistoryRaw[],
+        readScope(scope),
+        actor.role,
         cache,
       );
       if (!page || page.ids.some((id) => seen.has(id))) return null;
       for (const id of page.ids) seen.add(id);
       ids.push(...page.ids);
-      for (const [id, proof] of page.proofs) proofs.set(id, proof);
+      for (const [id, row] of page.rows) rows.set(id, row);
     }
   }
   if (
@@ -309,5 +265,5 @@ export async function consumeDisplayHistoryRead(
     !sameDisplayHistoryScope(state.capturedScope, captureDisplayHistoryScope(actor, found))
   )
     return null;
-  return { ids, proofs, total, until: scope.until, cache };
+  return { ids, rows, total, until: scope.until };
 }

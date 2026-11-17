@@ -83,7 +83,20 @@ export interface HistoryEvidence {
   policy: HistoryPolicy | null;
 }
 
-function privateValues(raw: HistoryRaw): string[] | null {
+/** The pass's credentials and Wallet values, which a history must never repeat; null when unreadable. */
+export function privateValues(
+  raw: Pick<
+    HistoryRaw,
+    | 'current_wallet_private_values'
+    | 'pass_serial'
+    | 'pass_auth_token'
+    | 'pass_download_token'
+    | 'pass_web_service_url'
+    | 'pass_scan_code'
+    | 'pass_external_id'
+    | 'pass_holder_email'
+  >,
+): string[] | null {
   if (!raw.current_wallet_private_values) return null;
   try {
     const values = [
@@ -150,6 +163,8 @@ export async function historyEvidenceOf(
     /** Console, API feed: only rows whose provenance was checked. Staff names need no candidate. */
     requireAvailable: boolean;
     wanted?: (row: HistoryRow) => boolean;
+    /** The request's own commitment, already matched to the stored keyset; skips the pin read. */
+    commitment?: string;
   },
 ): Promise<Map<string, HistoryEvidence>> {
   const { role, cache } = options;
@@ -181,7 +196,7 @@ export async function historyEvidenceOf(
   );
   if (!eligible.length) return evidence;
   const [commitment] = await Promise.all([
-    pinKeyset(ctx),
+    options.commitment ?? pinKeyset(ctx),
     loadManifests(
       ctx.env.DB,
       cache.manifests,

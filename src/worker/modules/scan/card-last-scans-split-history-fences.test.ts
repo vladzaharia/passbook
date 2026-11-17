@@ -4,7 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { cardLastScansSplitFixture } from './card-last-scans-split-fixture.ts';
 import { type CardHistoryRow, cardHistoryFence, cardHistoryStmt } from './repo-card-history.ts';
 import { boundOutputPredicate } from './repo-output-predicates.ts';
-import { packScanPredicate, scanSecretSlots } from './repo-secret-binds.ts';
+import { scanSecretSlots } from './repo-secret-binds.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -13,91 +13,52 @@ beforeAll(async () => {
   kit = await setupScanKit();
 });
 
-const { act, body, simple } = cardLastScansSplitFixture(() => kit);
+const { act, body, card, simple } = cardLastScansSplitFixture(() => kit);
 
 describe('card last-scan privacy', () => {
-  it('keeps card history source scalars out of packed JSON while preserving the exact fence', async () => {
+  it('fences the card history on the pass lineage, with the pass id bound as a secret', async () => {
     const { templateId, pass, scanner } = await simple();
-    const scanId = await act(scanner.headers, pass.id);
+    await act(scanner.headers, pass.id);
     const query = { orgId: kit.org.id, mode: 'live' as const, passId: pass.id, templateId };
     const rows = (await cardHistoryStmt(kit.env.DB, query).all<CardHistoryRow>()).results;
-    const row = rows[0];
-    if (!row?.event_json || !row.recorded_manifest) throw new Error('Missing signed card history');
     const fence = cardHistoryFence(query, rows);
     if (!fence) throw new Error('Missing card history fence');
-    const slots = scanSecretSlots(fence.sql, fence.params.length);
-    if (!slots) throw new Error('Invalid card history bind labels');
-    const scopeOffset = fence.params.length - 4 - rows.length;
-    expect(fence.params.slice(scopeOffset, scopeOffset + 4)).toEqual([
+    expect(cardHistoryFence(query, [])).toBeNull();
+    expect(fence.params).toEqual([
+      pass.id,
       query.orgId,
       query.mode,
-      query.passId,
-      query.templateId,
+      rows[0]?.current_lifecycle_generation,
+      rows[0]?.current_credential_generation,
+      rows[0]?.id,
     ]);
-    expect(slots.slice(scopeOffset, scopeOffset + 4).map((slot) => slot.label)).toEqual([
-      'card-history',
+    const slots = scanSecretSlots(fence.sql, fence.params.length);
+    expect(slots?.map((slot) => slot.label)).toEqual([
+      'pass-id',
       null,
-      'card-history',
-      'card-history',
+      null,
+      null,
+      null,
+      'scan-id',
     ]);
-    expect(fence.params.slice(-rows.length)).toEqual(rows.map((item) => item.id));
-    expect(slots.slice(-rows.length).every((slot) => slot.label === 'card-history')).toBe(true);
 
-    const sensitive = [
-      scanId,
-      row.org_id,
-      row.pass_id,
-      row.template_id,
-      row.scanner_id,
-      row.actor_key,
-      row.request_hash,
-      row.action_id,
-      row.scanner_name,
-      row.event_json,
-      row.current_personalization,
-      row.recorded_personalization,
-      row.recorded_manifest,
-      row.recorded_wallet_manifest,
-      row.event_active_manifest,
-      row.event_legacy_manifest,
-    ].filter((value): value is string => typeof value === 'string' && value.length > 0);
-    for (const value of [
-      ...sensitive,
-      row.at,
-      row.pass_version,
-      row.recorded_wallet_version,
-      row.current_credential_generation,
-      row.current_lifecycle_generation,
-      row.current_pending_transfer,
-    ]) {
-      expect(
-        slots.some((slot, index) => slot.label === 'card-history' && fence.params[index] === value),
-      ).toBe(true);
-    }
-    const packed = packScanPredicate(fence.sql, fence.params, 'card_history_test');
-    if (!packed || typeof packed.params[0] !== 'string')
-      throw new Error('Card fence could not be packed');
-    const metadata = JSON.parse(packed.params[0]) as unknown[];
-    for (const value of sensitive) {
-      expect(metadata).not.toContain(value);
-      expect(packed.params.slice(1)).toContain(value);
-    }
-
-    // A sensitive field must promote a deduplicated slot first seen as an enum value.
-    const collision = cardHistoryFence(query, [{ ...row, reason: row.outcome }]);
-    if (!collision) throw new Error('Missing collision fence');
-    const collisionSlots = scanSecretSlots(collision.sql, collision.params.length);
-    if (!collisionSlots) throw new Error('Invalid collision bind labels');
-    expect(
-      collisionSlots.some(
-        (slot, index) => slot.label === 'card-history' && collision.params[index] === row.outcome,
-      ),
-    ).toBe(true);
-
-    const sql = `SELECT CASE WHEN (${packed.sql}) THEN 1 ELSE 0 END AS current`;
-    expect(await first(kit.env.DB, sql, packed.params)).toEqual({ current: 1 });
+    const sql = `SELECT CASE WHEN (${fence.sql}) THEN 1 ELSE 0 END AS current`;
+    expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 1 });
+    // The rows are one snapshot: renaming the scanner after the read does not unread them.
     await run(kit.env.DB, 'UPDATE scanners SET name=? WHERE id=?', ['Changed lobby', scanner.id]);
-    expect(await first(kit.env.DB, sql, packed.params)).toEqual({ current: 0 });
+    expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 1 });
+    // An undo does: the card must not show an undone scan as undoable.
+    await run(kit.env.DB, 'UPDATE scans SET undone_by=id WHERE id=?', [rows[0]?.id]);
+    expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 0 });
+    await run(kit.env.DB, 'UPDATE scans SET undone_by=NULL WHERE id=?', [rows[0]?.id]);
+    expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 1 });
+    // A moved pass does: every row was read for the lineage the fence names.
+    await run(
+      kit.env.DB,
+      'UPDATE passes SET lifecycle_generation=lifecycle_generation+1 WHERE id=?',
+      [pass.id],
+    );
+    expect(await first(kit.env.DB, sql, [...fence.params])).toEqual({ current: 0 });
   });
 
   it('fits three distinct proven card scans within the bounded secret-bind fence', async () => {
@@ -124,73 +85,107 @@ describe('card last-scan privacy', () => {
     });
   });
 
-  it.each(['receipt', 'actor'] as const)(
-    'clears stale history but keeps the authorized card and counts when the %s changes',
-    async (changed) => {
+  /** Run one resolve, applying `change` at the first batch that carries the card history read. */
+  async function resolveWithChange(
+    scannerHeaders: Record<string, string>,
+    passId: string,
+    when: 'before' | 'after',
+    change: () => Promise<void>,
+  ): Promise<{ raced: boolean; outcome: ScanOutcome }> {
+    const real = kit.env.DB;
+    const historyStatements = new WeakSet<D1PreparedStatement>();
+    let raced = false;
+    const db = new Proxy(real, {
+      get(target, prop) {
+        if (prop === 'prepare')
+          return (sql: string) => {
+            const statement = target.prepare(sql);
+            if (!sql.includes('WITH selected_scans AS MATERIALIZED')) return statement;
+            return new Proxy(statement, {
+              get(prepared, member) {
+                if (member === 'bind')
+                  return (...values: unknown[]) => {
+                    const bound = prepared.bind(...values);
+                    historyStatements.add(bound);
+                    return bound;
+                  };
+                const value = Reflect.get(prepared, member, prepared);
+                return typeof value === 'function' ? value.bind(prepared) : value;
+              },
+            });
+          };
+        if (prop === 'batch')
+          return async (statements: D1PreparedStatement[]) => {
+            const carries = statements.some((statement) => historyStatements.has(statement));
+            if (when === 'before' && !raced && carries) {
+              raced = true;
+              await change();
+            }
+            const result = await target.batch(statements);
+            if (when === 'after' && !raced && carries) {
+              raced = true;
+              await change();
+            }
+            return result;
+          };
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    Object.assign(kit.env, { DB: db });
+    try {
+      const response = await kit.post(scannerHeaders, '/resolve', body(passId));
+      expect(response.status).toBe(200);
+      return { raced, outcome: (await response.json()) as ScanOutcome };
+    } finally {
+      Object.assign(kit.env, { DB: real });
+    }
+  }
+
+  // A change before the read redacts; a change after it leaves the snapshot's answer, and the next
+  // request shows the change. The positive control is the unchanged card in both cases.
+  it.each([
+    ['receipt', 'before'],
+    ['actor', 'before'],
+    ['receipt', 'after'],
+    ['actor', 'after'],
+  ] as const)(
+    'answers the %s change %s the history read from its snapshot',
+    async (changed, when) => {
       const { templateId, pass, scanner } = await simple('Race entry');
       const other = await kit.scanner({ templateIds: [templateId] });
       const scanId = await act(scanner.headers, pass.id);
-      const real = kit.env.DB;
-      const historyStatements = new WeakSet<D1PreparedStatement>();
-      let raced = false;
-      const db = new Proxy(real, {
-        get(target, prop) {
-          if (prop === 'prepare')
-            return (sql: string) => {
-              const statement = target.prepare(sql);
-              if (!sql.includes('WITH selected_scans AS MATERIALIZED')) return statement;
-              return new Proxy(statement, {
-                get(prepared, member) {
-                  if (member === 'bind')
-                    return (...values: unknown[]) => {
-                      const bound = prepared.bind(...values);
-                      historyStatements.add(bound);
-                      return bound;
-                    };
-                  const value = Reflect.get(prepared, member, prepared);
-                  return typeof value === 'function' ? value.bind(prepared) : value;
-                },
-              });
-            };
-          if (prop === 'batch')
-            return async (statements: D1PreparedStatement[]) => {
-              const result = await target.batch(statements);
-              if (!raced && statements.some((statement) => historyStatements.has(statement))) {
-                raced = true;
-                if (changed === 'receipt') {
-                  await run(
-                    real,
-                    `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProjection')
-                  WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
-                    [pass.id, scanId],
-                  );
-                } else {
-                  await run(real, 'UPDATE scans SET actor_id=? WHERE id=?', [other.id, scanId]);
-                }
-              }
-              return result;
-            };
-          const value = Reflect.get(target, prop, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        },
-      });
-      Object.assign(kit.env, { DB: db });
-      let response: Response;
-      try {
-        response = await kit.post(scanner.headers, '/resolve', body(pass.id));
-      } finally {
-        Object.assign(kit.env, { DB: real });
-      }
+      const change = async () => {
+        if (changed === 'receipt')
+          await run(
+            kit.env.DB,
+            `UPDATE pass_events SET data=json_remove(data,'$.authority.eventProjection')
+          WHERE pass_id=? AND json_extract(data,'$.scanId')=?`,
+            [pass.id, scanId],
+          );
+        else await run(kit.env.DB, 'UPDATE scans SET actor_id=? WHERE id=?', [other.id, scanId]);
+      };
+      const { raced, outcome } = await resolveWithChange(scanner.headers, pass.id, when, change);
       expect(raced).toBe(true);
-      expect(response.status).toBe(200);
-      const outcome = (await response.json()) as ScanOutcome;
       expect(outcome).toMatchObject({
         kind: 'ready',
         reason: 'choose',
-        card: { passId: pass.id, lastScans: [] },
+        card: { passId: pass.id },
         counts: { today: 1 },
       });
-      expect(JSON.stringify(outcome.card?.lastScans)).not.toContain(scanId);
+      const seen = outcome.card?.lastScans.map((row) => row.scanId);
+      expect(seen).toEqual(when === 'before' ? [] : [scanId]);
+      // The next request reads the changed state.
+      const next = await card(scanner.headers, pass.id);
+      expect(next.lastScans).toEqual([]);
     },
   );
+
+  it('shows the scan on an unchanged card (positive control)', async () => {
+    const { pass, scanner } = await simple('Control entry');
+    const scanId = await act(scanner.headers, pass.id);
+    expect((await card(scanner.headers, pass.id)).lastScans.map((row) => row.scanId)).toEqual([
+      scanId,
+    ]);
+  });
 });

@@ -163,7 +163,7 @@ describe('org config epoch at the door', () => {
     for (const kind of ['rename', 'suspend-restore'] as const) {
       const s = await scanning(`History ${kind}`);
       const done = await outcome(await s.act());
-      const read = await outcome(await racing('hp_snapshot', kind, s.read));
+      const read = await outcome(await racing('FROM passes lineage', kind, s.read));
       if (kind === 'suspend-restore') {
         expect(read).toMatchObject({ kind: 'refused', reason: 'not_found', card: null });
         continue;

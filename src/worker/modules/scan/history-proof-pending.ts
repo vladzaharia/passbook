@@ -1,11 +1,13 @@
 import type { ScanDisplayNeeds } from '../../../passkit/template/scan-display/index.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
-import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { captureDisplayHistoryScope, sameDisplayHistoryScope } from './history-display-scope.ts';
-import { type VerifiedHistoryProof, verifyHistoryProofRow } from './history-proof.ts';
+import { type PlannedDisplayScan, plannedDisplayScan } from './history-planned-display.ts';
 import { validCredentialKeysetCommitment } from './repo-credential-tombstones.ts';
-import { type HistoryProofRow, historyProofRowsStmt } from './repo-history-proof-read.ts';
+import {
+  type PendingDisplayRow,
+  pendingDisplayHistoryStmt,
+} from './repo-pending-display-history.ts';
 import type { Finalize } from './repo-scans.ts';
 import type { Found } from './resolve.ts';
 import { releaseClass as recordedReleaseClass } from './scan-event-proof-envelope.ts';
@@ -26,7 +28,7 @@ export interface PendingDisplayHistorySource {
 }
 interface PendingState {
   operation: ServiceContext;
-  row: HistoryProofRow;
+  row: PendingDisplayRow;
   capturedWithoutEvent: readonly unknown[];
   scanId: string;
   keyset: string;
@@ -44,7 +46,6 @@ export function planPendingDisplayHistorySource(
   stmts: D1PreparedStatement[];
   finish(results: readonly ProofBatchResult[]): PendingDisplayHistorySource | null;
 } {
-  const operation = credentialKeysetContext(ctx);
   const requested = needs.history.length > 0 || needs.ledger.length > 0;
   const capturedWithoutEvent = captureDisplayHistoryScope({ ...actor, event: null }, found);
   const keyset = found.credentialKeysetCommitment;
@@ -58,23 +59,16 @@ export function planPendingDisplayHistorySource(
   const stmts =
     requested && valid
       ? [
-          historyProofRowsStmt(
-            operation,
-            {
-              pending: { scanId, passId: found.pass.id, walletVersion },
-            },
-            `s.actor_key=?/* scan-ephemeral-actor-key */ AND s.org_id=? AND s.mode=?
-    AND p.org_id=? AND p.mode=? AND p.template_id=?/* scan-ephemeral-template-id */`,
-            [
-              actor.actorKey,
-              actor.orgId,
-              actor.mode,
-              actor.orgId,
-              actor.mode,
-              found.pass.templateId,
-            ],
-            keyset,
-          ),
+          pendingDisplayHistoryStmt(ctx.env.DB, {
+            scanId,
+            actorKey: actor.actorKey,
+            orgId: actor.orgId,
+            mode: actor.mode,
+            passId: found.pass.id,
+            templateId: found.pass.templateId,
+            walletVersion,
+            now: ctx.clock.now(),
+          }),
         ]
       : [];
   let consumed = false;
@@ -96,7 +90,7 @@ export function planPendingDisplayHistorySource(
       )
         return null;
       consumed = true;
-      const row = results[0].results[0] as unknown as HistoryProofRow;
+      const row = results[0].results[0] as unknown as PendingDisplayRow;
       if (
         row.id !== scanId ||
         row.org_id !== actor.orgId ||
@@ -131,20 +125,20 @@ export function planPendingDisplayHistorySource(
       )
         return null;
       const token = Object.freeze({ [brand]: true as const });
-      pendingSources.set(token, { operation, row, capturedWithoutEvent, scanId, keyset });
+      pendingSources.set(token, { operation: ctx, row, capturedWithoutEvent, scanId, keyset });
       return token;
     },
   };
 }
 
-/** Verify the signed planned scan before creating its exact post-finalization proof fence. */
+/** Verify the signed planned scan, then evaluate its display row from the pass state it was claimed under. */
 export async function preparePlannedDisplayHistoryProof(
   source: PendingDisplayHistorySource,
   actor: ScanActor,
   found: Found,
   retained: PreparedScanRetentionProof,
   finalized: Finalize,
-): Promise<VerifiedHistoryProof | null> {
+): Promise<PlannedDisplayScan | null> {
   const state = pendingSources.get(source);
   if (
     !state ||
@@ -239,40 +233,18 @@ export async function preparePlannedDisplayHistoryProof(
     (releaseClass !== 'approved' && releaseClass !== 'legacy')
   )
     return null;
-  const projected: HistoryProofRow = {
-    ...row,
-    pass_id: final.passId,
-    template_id: final.templateId,
-    event_id: scan.eventId,
-    state: 'done',
-    outcome: final.outcome,
-    reason: final.reason,
-    action_id: final.actionId,
-    action_kind: final.actionKind,
-    override_of: final.overrideOf,
-    approved_by: final.approvedBy,
-    pass_version: final.passVersion,
-    direction: final.direction ?? null,
-    presence_scope: final.presenceScope ?? null,
-    approved_proof: releaseClass === 'approved' ? 1 : 0,
-    legacy_proof: releaseClass === 'legacy' ? 1 : 0,
-    ledger_id: event.id,
-    ledger_org_id: event.org_id,
-    ledger_pass_id: event.pass_id,
-    ledger_mode: event.mode,
-    ledger_kind: event.kind,
-    ledger_device: event.device,
-    ledger_actor_type: event.actor_type,
-    ledger_actor_id: event.actor_id,
-    ledger_data: event.data,
-    ledger_at: event.at,
-  };
-  const verified = await verifyHistoryProofRow(state.operation, projected, keyset);
-  return verified &&
+  const planned = await plannedDisplayScan(state.operation.env, actor, found, {
+    row,
+    keyset,
+    event,
+    final,
+    eventId: scan.eventId,
+  });
+  return planned &&
     sameDisplayHistoryScope(
       state.capturedWithoutEvent,
       captureDisplayHistoryScope({ ...actor, event: null }, found),
     )
-    ? verified
+    ? planned
     : null;
 }
