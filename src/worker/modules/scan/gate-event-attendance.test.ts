@@ -154,3 +154,64 @@ it('counts attendance only when both ledger scopes match the same live witness',
     inside: 1,
   });
 });
+
+it('counts only the live witness of each pass, however many historical witnesses the ledger holds', async () => {
+  const templateId = await kit.scanTemplate('Live witness only', {
+    actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'always' }],
+  });
+  const event = await kit.event({ templateIds: [templateId] });
+  await run(kit.env.DB, 'UPDATE scan_events SET capacity=2 WHERE id=?', [event.id]);
+  const scanner = await kit.scanner({ eventId: event.id });
+  const scope = `event:${event.id}`;
+  const [a, b, c] = [
+    await kit.scanPass(templateId),
+    await kit.scanPass(templateId),
+    await kit.scanPass(templateId),
+  ];
+  async function witness(id: string, pass: Pass, undoneBy: string | null = null) {
+    await run(
+      kit.env.DB,
+      `INSERT INTO scans
+        (id,org_id,mode,pass_id,template_id,scanner_id,event_id,actor_type,actor_id,actor_key,
+         idempotency_key,request_hash,method,state,outcome,action_id,action_kind,direction,presence_scope,at,undone_by)
+      VALUES (?,?,?,?,?,?,?,'scanner',?,?,?,?,'camera','done','ok','check_in','check_in','in',?,?,?)`,
+      [
+        id,
+        kit.org.id,
+        pass.mode,
+        pass.id,
+        templateId,
+        scanner.id,
+        event.id,
+        scanner.id,
+        `s:${scanner.id}`,
+        id,
+        id,
+        scope,
+        kit.clock.now(),
+        undoneBy,
+      ],
+    );
+  }
+  // Pass a: a superseded witness, an undone one and the live one. Pass b: a witness with no presence row.
+  const [stale, undone, live, orphan] = [1, 2, 3, 4].map(() => kit.fx.ids.id());
+  await witness(stale as string, a);
+  await witness(live as string, a);
+  await witness(undone as string, a, live as string);
+  await witness(orphan as string, b);
+  await run(
+    kit.env.DB,
+    `INSERT INTO scan_presence
+      (pass_id,org_id,scope,state,tracking,entered_at,first_at,last_entry_at,last_scan_id)
+     VALUES (?,?,?,'in',1,?,?,?,?)`,
+    [a.id, kit.org.id, scope, kit.clock.now(), kit.clock.now(), kit.clock.now(), live as string],
+  );
+  expect(await eventTotalsStmt(kit.env.DB, kit.org.id, a.mode, event.id).first()).toEqual({
+    arrived: 1,
+    inside: 1,
+  });
+  // One more admission fills the event (2 of 2); the third pass is refused although the ledger has 4 witnesses.
+  expect(await action(scanner, b)).toMatchObject({ kind: 'ok' });
+  expect(await action(scanner, c)).toMatchObject({ kind: 'heads_up', reason: 'capacity_full' });
+  expect(await action(scanner, a)).toMatchObject({ kind: 'ok' });
+});

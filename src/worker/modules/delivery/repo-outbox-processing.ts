@@ -13,12 +13,12 @@ export async function markDueEnqueued(
     db,
     `UPDATE outbox SET state = 'enqueued', enqueued_at = ?
      WHERE id IN (SELECT o.id FROM outbox o WHERE o.state = 'pending' AND o.available_at <= ?
-                  AND (? IS NULL OR o.pass_id = ?)
+                  ${passId === undefined ? '' : 'AND o.pass_id = ?'}
                   AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
                     WHERE t.pass_id = o.pass_id AND t.state = 'pending')
                   ORDER BY o.available_at, o.created_at LIMIT ?)
      RETURNING id, kind`,
-    [now, now, passId ?? null, passId ?? null, limit],
+    [now, now, ...(passId === undefined ? [] : [passId]), limit],
   );
 }
 

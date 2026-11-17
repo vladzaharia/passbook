@@ -6,7 +6,11 @@ import { listEvents } from '../src/worker/modules/events/repo.ts';
 import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
 import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
-import { quietUnqueuedTemplates } from '../src/worker/modules/templates/repo-stale.ts';
+import { eventTotalsStmt } from '../src/worker/modules/scan/repo-event-attendance.ts';
+import {
+  olderLivePasses,
+  quietUnqueuedTemplates,
+} from '../src/worker/modules/templates/repo-stale.ts';
 import { listUsers } from '../src/worker/modules/users/repo.ts';
 
 /** Runs a repo function against a DB that records its statements, then explains each one. */
@@ -147,5 +151,32 @@ describe('list and search query plans', () => {
     expect(count.join('\n')).toContain(
       'passes_scan_population (org_id=? AND mode=? AND template_id=?)',
     );
+  });
+});
+
+describe('scan and template sweep plans', () => {
+  it('event totals read the ledger only for live witnesses, by primary key', async () => {
+    const lines = await plans((db) => eventTotalsStmt(db, 'o', 'live', 'e').first());
+    expect(fullScans(lines, 'scans')).toEqual([]);
+    const text = lines.join('\n');
+    expect(text.indexOf('MATERIALIZE live')).toBeLessThan(text.indexOf('MATERIALIZE common'));
+    const common = text.slice(
+      text.indexOf('MATERIALIZE common'),
+      text.indexOf('MATERIALIZE candidate'),
+    );
+    expect(common).toContain('SEARCH witness USING INDEX sqlite_autoindex_scans_1 (id=?)');
+    expect(common).toContain('LIST SUBQUERY');
+  });
+
+  it('olderLivePasses: scope and join use passes_active_scope, never a passes scan', async () => {
+    for (const orgId of [undefined, 'o']) {
+      const lines = await plans((db) => olderLivePasses(db, 't', 'live', orgId));
+      expect(fullScans(lines, 'passes'), String(orgId)).toEqual([]);
+      const text = lines.join('\n');
+      expect(text).toMatch(/SEARCH passes USING INDEX passes_active_scope \(template_id=\?/);
+      expect(text).toContain(
+        'SEARCH p USING INDEX passes_active_scope (template_id=? AND org_id=? AND mode=?)',
+      );
+    }
   });
 });

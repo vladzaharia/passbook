@@ -93,21 +93,16 @@ export async function reserveWorkflowReleases(
       ]
     : [];
 
+  const scope = [
+    ['template_id', q.templateId],
+    ['org_id', q.orgId],
+    ['identity_id', q.identityId],
+    ['mode', q.mode],
+  ].filter((c): c is [string, string] => c[1] !== null && c[1] !== undefined);
   const scopesSql = `SELECT DISTINCT p.org_id, p.mode, p.template_id
     FROM passes p
-    WHERE (? IS NULL OR p.template_id = ?) AND (? IS NULL OR p.org_id = ?)
-      AND (? IS NULL OR p.identity_id = ?) AND (? IS NULL OR p.mode = ?)
-      AND p.status = 'active' AND p.deleted_at IS NULL AND p.test_data_quarantined = 0`;
-  const scopeParams: SqlValue[] = [
-    q.templateId,
-    q.templateId,
-    q.orgId,
-    q.orgId,
-    q.identityId,
-    q.identityId,
-    q.mode,
-    q.mode,
-  ];
+    WHERE ${scope.map(([column]) => `p.${column} = ? AND `).join('')}p.status = 'active' AND p.deleted_at IS NULL AND p.test_data_quarantined = 0`;
+  const scopeParams: SqlValue[] = scope.map(([, value]) => value);
   const effectiveHeadSql = `r.id = (${effectiveReleaseIdSql({
     templateIdSql: 'pass_scope.template_id',
     orgIdSql: 'pass_scope.org_id',

@@ -13,7 +13,7 @@ import type { TemplateAuthority } from './access.ts';
 import { APPLE_ADAPTER_CAPABILITIES } from './release-content.ts';
 import { approvable, candidateTemplate, headGeneration, publishable } from './repo-grant-checks.ts';
 import { templateGrant } from './repo-grants.ts';
-import { eventIdsForRelease, invalidateEventCache } from './repo-release-effects.ts';
+import { invalidateEventCache } from './repo-release-effects.ts';
 import type { ApprovalRow, CandidateRow } from './repo-releases.ts';
 import { type VersionHashes, versionHashesSql } from './repo-version-hashes.ts';
 
@@ -250,7 +250,6 @@ export async function writeRelease(
 ): Promise<void> {
   const c = input.candidate;
   const mode: Mode = c.mode;
-  const eventIds = await eventIdsForRelease(ctx.env.DB, c.templateId, mode, c.orgId);
   const g = templateGrant(ctx, authority, 'release', {
     target: input.id,
     codes: CODES,
@@ -295,7 +294,7 @@ export async function writeRelease(
       require: 'one',
       returning: ['id'],
     });
-  invalidateEventCache(g, eventIds, mode);
+  invalidateEventCache(g, c.templateId, mode, c.orgId);
   g.add(
     audit(
       g,
