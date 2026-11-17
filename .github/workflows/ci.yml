@@ -33,25 +33,6 @@ jobs:
       - name: Generated files are committed
         run: git diff --exit-code -- src/generated test/setup/schema-snapshot.generated.json worker-configuration.d.ts src/web/routeTree.gen.ts
 
-  # Each worker test file migrates a fresh D1, so the suite is sharded to fit runner time.
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-          cache: npm
-      - run: npm ci
-      - run: npx vitest run --shard=${{ matrix.shard }}/8
-        env:
-          NODE_OPTIONS: --no-experimental-webstorage
-
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -106,16 +87,17 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - name: Coverage thresholds (unit, web)
+      - name: Unit and web tests with coverage thresholds
         run: npm run coverage:node
 
+  # The worker suite runs once, here, under istanbul; the merge job applies the thresholds.
   coverage-worker:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -124,7 +106,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Worker coverage shard (thresholds apply after the merge)
-        run: npm run coverage:worker -- --shard=${{ matrix.shard }}/8 --reporter=blob --reporter=default
+        run: npm run coverage:worker -- --shard=${{ matrix.shard }}/16 --reporter=blob --reporter=default
         env:
           COVERAGE_SHARD: '1'
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -157,7 +139,7 @@ jobs:
     if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [check, test]
+    needs: [check, coverage-node, coverage-worker-merge]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
