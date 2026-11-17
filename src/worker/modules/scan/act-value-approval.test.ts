@@ -138,6 +138,9 @@ describe('a Manager PIN with no one named', () => {
   });
 
   it('works for an undo past the window', async () => {
+    // Same scanner-local day: the kit clock starts at the wall clock, so pin it to the next noon.
+    const day = 86_400_000;
+    kit.clock.set(Math.ceil(kit.clock.now() / day) * day + day / 2);
     const boss = await manager('333444');
     const t = await kit.scanTemplate('PIN undo', { actions: [ADD] });
     const s = await kit.scanner({ templateIds: [t], settings: { roleWithoutSignIn: 'desk' } });

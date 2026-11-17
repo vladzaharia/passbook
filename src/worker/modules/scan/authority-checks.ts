@@ -176,6 +176,13 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
       ),
     );
   }
+  // An invalid scope is redacted by the caller: it must carry no scope at all.
+  if (
+    read.invalidScope &&
+    actor.invalidScannerScope &&
+    (actor.event || actor.templateIds.length > 0 || actor.settings.acceptAllTemplates === true)
+  )
+    return [rawCheck('config', '0')];
   const { templateId } = input;
   const scoped = !(read.invalidScope && actor.invalidScannerScope);
   if (templateId && scoped) {

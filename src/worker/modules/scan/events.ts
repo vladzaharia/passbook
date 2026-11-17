@@ -7,18 +7,20 @@ import { AppError, ForbiddenError, NotFoundError } from '../../platform/errors.t
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
-import { actorCsrfFence } from './actor-csrf.ts';
+import { captureScanEpochs } from './authority-checks.ts';
 import { sessionGrant } from './repo-admin-grant.ts';
 import { EXPECTED_TTL_MS } from './repo-counts.ts';
 import { eventCacheChecks } from './repo-event-authority.ts';
-import { type EventAuthority, eventSessionAuthorityValid } from './repo-event-keyset.ts';
+import type { EventAuthority } from './repo-event-keyset.ts';
 import {
   type ConsoleEventRow,
   getAuthorizedConsoleEvent,
   getCommittedConsoleEvent,
+  getConsoleEventTarget,
   listConsoleEvents,
 } from './repo-events.ts';
 import { addEventCache } from './repo-events-write.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
 import { releaseHeadsComplete } from './repo-scope-releases.ts';
 
 export { checkTemplates, checkWindow } from './events-validation.ts';
@@ -120,9 +122,16 @@ export async function captureEventAuthority(
   actor.platformSessionId = session.sessionId;
   actor.role = tenantScanRole(authority);
   if (!actor.role) throw new ForbiddenError();
-  const csrfFence = await actorCsrfFence(ctx, actor);
-  if (!csrfFence) throw new ForbiddenError();
-  return { ...authority, csrfFence };
+  await captureScanEpochs(ctx.env.DB, actor);
+  return { ...authority, actor };
+}
+
+const readAuth = (ctx: ServiceContext, authority: EventAuthority) =>
+  scanReadAuthority(authority.actor, { now: ctx.clock.now() });
+
+/** Where an event lives, before any tenant authority exists for it. */
+export async function eventTarget(ctx: ServiceContext, id: string) {
+  return getConsoleEventTarget(ctx.env.DB, id);
 }
 
 export async function listEvents(
@@ -133,24 +142,21 @@ export async function listEvents(
 ) {
   if (!canReadEvents(authority) || query.orgId !== authority.orgId || mode !== authority.mode)
     return { items: [], nextCursor: null };
-  const initial = await listConsoleEvents(ctx.env.DB, {
+  const initial = await listConsoleEvents(ctx.env.DB, readAuth(ctx, authority), {
     ...query,
-    mode,
     now: ctx.clock.now(),
-    authority,
     limit: query.limit + 1,
   });
   const cacheBudget = { remaining: LIST_CACHE_WRITES };
-  for (const row of initial.slice(0, query.limit))
+  for (const row of initial.rows.slice(0, query.limit))
     await refreshExpectedCache(ctx, row, authority, cacheBudget);
   const now = ctx.clock.now();
-  const rows = await listConsoleEvents(ctx.env.DB, {
+  const { authorized, rows } = await listConsoleEvents(ctx.env.DB, readAuth(ctx, authority), {
     ...query,
-    mode,
     now,
-    authority,
     limit: query.limit + 1,
   });
+  if (!authorized) return { items: [], nextCursor: null };
   const page = rows.slice(0, query.limit);
   return {
     items: page.map((row) => toDto(row, now)),
@@ -183,13 +189,14 @@ async function scopedEventRow(
   authority: EventAuthority,
   now: number,
 ): Promise<ConsoleEventRow> {
-  const row = await getAuthorizedConsoleEvent(ctx.env.DB, id, authority, now);
-  if (!row) {
-    if (!(await eventSessionAuthorityValid(ctx.env.DB, authority, now))) throw new ForbiddenError();
-    throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
-  }
-  if (row.orgId !== authority.orgId || row.mode !== authority.mode)
-    throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
+  const { authorized, row } = await getAuthorizedConsoleEvent(
+    ctx.env.DB,
+    id,
+    scanReadAuthority(authority.actor, { now }),
+    now,
+  );
+  if (!authorized) throw new ForbiddenError();
+  if (!row) throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   return row;
 }
 

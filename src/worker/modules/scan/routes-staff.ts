@@ -9,24 +9,19 @@ import {
 import type { AuthContext } from '../../platform/auth.ts';
 import { currentUserId, modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { bump } from '../../platform/counters.ts';
-import {
-  ForbiddenError,
-  NotFoundError,
-  RateLimitedError,
-  UnauthenticatedError,
-} from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
-import { getStaff } from './repo-staff.ts';
 import { STAFF_PAGE_MAX } from './repo-staff-page.ts';
 import {
   createStaff,
   listStaff,
   resetStaffPin,
   type StaffAuthority,
+  staffRateLimit,
+  staffTarget,
   updateStaff,
 } from './staff-admin.ts';
 
@@ -39,12 +34,11 @@ scanStaffRoutes.use('*', async (c, next) => {
 guard(scanStaffRoutes, requireTenantSession);
 scanStaffRoutes.use('*', limitBody(16 * 1024));
 scanStaffRoutes.use('*', async (c, next) => {
-  const now = c.var.clock.now();
-  const window = now - (now % 60_000);
-  const write = c.req.method !== 'GET' && c.req.method !== 'HEAD';
-  const key = `scan:staff-admin:${write ? 'write' : 'read'}:${currentUserId(c)}`;
-  if ((await bump(c.env.DB, key, window)) > (write ? 60 : 240))
-    throw new RateLimitedError(Math.ceil((window + 60_000 - now) / 1000));
+  await staffRateLimit(
+    serviceContext(c),
+    currentUserId(c),
+    c.req.method !== 'GET' && c.req.method !== 'HEAD',
+  );
   await next();
 });
 
@@ -81,7 +75,7 @@ async function staffAuthority(
 
 /** Resolve the staff row in the selected organization before authorizing its actual organization. */
 async function authorizedStaff(ctx: ServiceContext, auth: AuthContext, orgId: string, id: string) {
-  const staff = await getStaff(ctx.env.DB, orgId, id);
+  const staff = await staffTarget(ctx, orgId, id);
   if (!staff || !(await membershipFor(ctx, auth, staff.orgId)))
     throw new NotFoundError('Staff member not found.', 'SCAN_STAFF_NOT_FOUND');
   const authority = await staffAuthority(ctx, auth, staff.orgId, 'scanning:manage');
