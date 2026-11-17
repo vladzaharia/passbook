@@ -84,8 +84,8 @@ async function addVersion(
   await run(
     kit.env.DB,
     `INSERT OR IGNORE INTO templates
-       (id, org_id, slug, name, origin, active_version, created_at, updated_at)
-     VALUES (?, NULL, ?, ?, 'uploaded', ?, ?, ?)`,
+       (id, org_id, slug, name, origin, active_version, shared, created_at, updated_at)
+     VALUES (?, NULL, ?, ?, 'uploaded', ?, 1, ?, ?)`,
     [id, id, manifest.name, version, kit.clock.now(), kit.clock.now()],
   );
   await run(

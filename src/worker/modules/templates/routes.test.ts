@@ -10,7 +10,9 @@ import {
   makeOrg,
   makePass,
   makeSession,
+  makeTemplate,
   makeUser,
+  persistTemplate,
 } from '../../../../test/helpers/index.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import { createApp } from '../../app.ts';
@@ -1754,6 +1756,27 @@ describe('org assignment', () => {
       'UPLOAD_NOT_FOUND',
     );
     expect((await call(`/uploads/${tenantId}`, {}, key)).status).toBe(200);
+  });
+
+  it('keeps an unshared platform template visible to an org that holds a pass on it', async () => {
+    const template = makeTemplate({ id: `held-${f.ids.token(6)}`, orgId: null });
+    await persistTemplate(f, template.resolved);
+    await makePass(f, { orgId: otherOrg.id, template: template.resolved });
+    await run(env.DB, 'UPDATE templates SET shared = 0 WHERE id = ?', [template.resolved.id]);
+    const holder = auth.apiKey({ orgId: otherOrg.id, scopes: ['templates:read'] });
+    const bystander = auth.apiKey({ orgId: org.id, scopes: ['templates:read'] });
+    const listed = async (headers: Record<string, string>, orgId: string) => {
+      const res = await call(`?orgId=${orgId}&limit=100`, {}, headers);
+      return ((await res.json()) as { items: { id: string }[] }).items.map((t) => t.id);
+    };
+    expect((await call(`/${template.resolved.id}`, {}, holder)).status).toBe(200);
+    expect(await listed(holder, otherOrg.id)).toContain(template.resolved.id);
+    await expectProblem(
+      await call(`/${template.resolved.id}`, {}, bystander),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
+    expect(await listed(bystander, org.id)).not.toContain(template.resolved.id);
   });
 
   it('hides a staged platform upload from other orgs, by key and by session, until it is shared', async () => {

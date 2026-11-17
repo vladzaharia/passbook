@@ -21,9 +21,9 @@ beforeEach(async () => {
   ] as const) {
     await run(
       env.DB,
-      `INSERT INTO templates (id, slug, name, origin, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 1, 1)`,
-      [id, id, id, origin],
+      `INSERT INTO templates (id, slug, name, origin, shared, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, 1)`,
+      [id, id, id, origin, origin === 'uploaded' ? 1 : 0],
     );
     await run(
       env.DB,

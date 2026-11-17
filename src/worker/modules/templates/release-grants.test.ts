@@ -401,7 +401,7 @@ describe('release impact, restore and platform counts', () => {
   it('shows platform pass counts for shared templates to a platform admin', async () => {
     const t = await uploaded('Shared Counted');
     const platform = await member(org.id, ['org_admin'], true);
-    await run(env.DB, 'UPDATE templates SET org_id = NULL WHERE id = ?', [t.templateId]);
+    await run(env.DB, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [t.templateId]);
     const template = await createTemplateRegistry(env).resolve(t.templateId, t.version);
     await makePass(f, { orgId: org.id, template });
     await makePass(f, { orgId: otherOrg.id, template });
@@ -412,7 +412,7 @@ describe('release impact, restore and platform counts', () => {
   it('restores an archived shared template through a platform admin only', async () => {
     const t = await uploaded('Shared Restore');
     const platform = await member(org.id, ['org_admin'], true);
-    await run(env.DB, 'UPDATE templates SET org_id = NULL WHERE id = ?', [t.templateId]);
+    await run(env.DB, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [t.templateId]);
     expect((await post(`/${t.templateId}/archive`, {}, platform)).status).toBe(200);
     expect((await post(`/${t.templateId}/restore`, {}, publisher)).status).toBeGreaterThanOrEqual(
       403,
@@ -542,7 +542,7 @@ describe('grant-level refusals', () => {
 
   it('refuses a member grant on a shared template', async () => {
     const t = await uploaded('Shared Archive');
-    await run(env.DB, 'UPDATE templates SET org_id = NULL WHERE id = ?', [t.templateId]);
+    await run(env.DB, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [t.templateId]);
     const row = await getTemplate(env.DB, t.templateId);
     if (!row) throw new Error('Template missing');
     const grantee = await authorityOf(publisher, org.id, 'templates:publish');
@@ -678,7 +678,7 @@ describe('restore without an approved Live head', () => {
   it('lets a platform admin restore a shared template that has an org’s history', async () => {
     const t = await uploaded('Shared History Restore');
     await candidateOf(t.templateId, t.version);
-    await run(env.DB, 'UPDATE templates SET org_id = NULL WHERE id = ?', [t.templateId]);
+    await run(env.DB, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [t.templateId]);
     const admin = await member(org.id, ['org_admin'], true);
     expect((await archive(t.templateId, admin)).status).toBe(200);
     const detail = await (await request(`/${t.templateId}`, admin)).json();
@@ -691,7 +691,7 @@ describe('restore without an approved Live head', () => {
 describe('moving a template', () => {
   it('lets a platform admin who belongs to neither org move a shared template', async () => {
     const t = await uploaded('Admin Moves');
-    await run(env.DB, 'UPDATE templates SET org_id = NULL WHERE id = ?', [t.templateId]);
+    await run(env.DB, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [t.templateId]);
     const user = await makeUser(f);
     const session = await makeSession(f, { userId: user.id, roles: ['admin', 'user'] });
     const outsider: Actor = {
@@ -714,7 +714,7 @@ describe('moving a template', () => {
 
   it('refuses a move to a suspended org', async () => {
     const t = await uploaded('Admin Moves Suspended');
-    await run(env.DB, 'UPDATE templates SET org_id = NULL WHERE id = ?', [t.templateId]);
+    await run(env.DB, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [t.templateId]);
     await run(env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [otherOrg.id]);
     const admin = await member(org.id, ['org_admin'], true);
     const res = await request(`/${t.templateId}`, admin, {

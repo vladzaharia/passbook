@@ -103,14 +103,15 @@ async function version(
   await run(
     kit.env.DB,
     `INSERT OR IGNORE INTO templates
-     (id, org_id, slug, name, origin, active_version, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 'uploaded', ?, ?, ?)`,
+     (id, org_id, slug, name, origin, active_version, shared, created_at, updated_at)
+     VALUES (?, ?, ?, ?, 'uploaded', ?, ?, ?, ?)`,
     [
       id,
       options.global ? null : kit.org.id,
       id,
       manifest.name,
       v,
+      options.global ? 1 : 0,
       kit.clock.now(),
       kit.clock.now(),
     ],

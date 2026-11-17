@@ -19,7 +19,7 @@ describe('template search at any length', () => {
       ids[key] = id;
       await run(
         env.DB,
-        "INSERT INTO templates (id, org_id, slug, name, origin, active_version, created_at, updated_at) VALUES (?, NULL, ?, ?, 'uploaded', 'v1', 1, 1)",
+        "INSERT INTO templates (id, org_id, slug, name, origin, active_version, shared, created_at, updated_at) VALUES (?, NULL, ?, ?, 'uploaded', 'v1', 1, 1, 1)",
         [id, row.slug, row.name],
       );
     }
