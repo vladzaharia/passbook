@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
+import { pairScanner } from './helpers/pair.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -43,9 +44,7 @@ test('choose flow Check in button commits the selected action exactly once', asy
     await page.addInitScript(() => {
       Object.assign(window, { PassBookNative: { onmessage: null, postMessage() {} } });
     });
-    await page.goto(`/scan#pair=${encodeURIComponent(scanner.pairing.code)}`);
-    await page.getByRole('heading', { name: 'Pair this device?' }).waitFor();
-    await page.getByRole('button', { name: 'Pair', exact: true }).click();
+    await pairScanner(page, scanner.pairing.code);
     await page.getByTestId('scan-start').click();
     await page.evaluate((code) => {
       (

@@ -18,6 +18,7 @@ export function PairView({
   busy,
   inputRef,
   onAdmin,
+  initialCode = '',
 }: {
   onPair: (code: string) => void;
   /** Opens the camera to read a pairing QR. */
@@ -26,9 +27,11 @@ export function PairView({
   busy?: boolean;
   inputRef?: Ref<HTMLInputElement>;
   onAdmin?: () => void;
+  /** A code whose preview failed (a link, refused or offline), so Pair can be pressed again. */
+  initialCode?: string;
 }) {
   const id = useId();
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode.slice(0, PAIR_LENGTH));
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (code.length === PAIR_LENGTH) onPair(code);

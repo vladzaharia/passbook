@@ -13,6 +13,8 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           include: ['src/passkit/**/*.test.ts', 'src/shared/**/*.test.ts', 'tools/**/*.test.ts'],
+          // Image and package tests decode PNGs; under v8 coverage (coverage-node) they pass 5 s.
+          testTimeout: 30_000,
         },
       },
       {
