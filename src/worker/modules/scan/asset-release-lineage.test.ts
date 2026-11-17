@@ -3,6 +3,7 @@ import { run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
 import { assetGrantValid, mintAssetGrant } from './assets.ts';
+import { issueUnderOlderAdapter } from './release-policy-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -15,10 +16,11 @@ beforeAll(async () => {
   });
 });
 
-async function setup() {
+async function setup(older = false) {
   const scanner = await kit.scanner({ templateIds: [template] });
   const actor = await assetActorFor(kit, scanner);
   const pass = await kit.scanPass(template);
+  if (older) await issueUnderOlderAdapter(kit, pass.id);
   const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
   if (
     !candidate?.activeReleaseId ||
@@ -41,8 +43,37 @@ async function setup() {
 }
 
 describe('scanner asset approved-release lineage', () => {
-  it('rejects a previous approved release after the same version is republished', async () => {
-    const { scanner, actor, pass, candidate, grant } = await setup();
+  it('keeps the pass snapshot when the same version is republished identically', async () => {
+    const { scanner, actor, pass, candidate } = await setup();
+    await approveAppleRelease(kit, {
+      orgId: kit.org.id,
+      mode: 'live',
+      templateId: template,
+      version: candidate.activeReleaseVersion!,
+    });
+    const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
+    if (!current) throw new Error('Pass fixture missing');
+    // The pass is still used under its own release: the snapshot does not move, and a grant minted
+    // on the current read is served.
+    expect(current.activeReleaseId).not.toBe(candidate.activeReleaseId);
+    expect(current.templateSnapshot?.raw).toBe(candidate.templateSnapshot?.raw);
+    const next = await mintAssetGrant(
+      kit.ctx,
+      actor,
+      current,
+      current.connectionGeneration,
+      current.activeTemplateVersion,
+      undefined,
+      false,
+      'commit',
+    );
+    expect(
+      (await kit.get(scanner.headers, `/passes/${pass.id}/assets/icon.png?g=${next}`)).status,
+    ).toBe(200);
+  });
+
+  it('rejects a previous approved release after the same version is republished with other adapter capabilities', async () => {
+    const { scanner, actor, pass, candidate, grant } = await setup(true);
     await approveAppleRelease(kit, {
       orgId: kit.org.id,
       mode: 'live',

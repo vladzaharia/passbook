@@ -35,7 +35,7 @@ const actor = { type: 'system', id: null } as const;
 const makeEnv = installKeysetTestEnv();
 const testDatabase = async () => (await makeEnv()).DB;
 
-describe.sequential('pass provider lifecycle', () => {
+describe('pass provider lifecycle', () => {
   it('durably stages update, removal and restore and rejects a stale revision notification', async () => {
     const t = await setupSamsungCallbacks({ db: await testDatabase() });
     const db = t.kit.env.DB;

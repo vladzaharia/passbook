@@ -1,6 +1,4 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { deleteInBatches } from '../../platform/batched.ts';
-import { bump, prune } from '../../platform/counters.ts';
 import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
 import {
   type AppleCredential,
@@ -41,6 +39,20 @@ export async function registrationExists(
   return row !== null;
 }
 
+/** New registrations on a pass since `since`, for the per-pass new-device limit. */
+export async function registrationsSince(
+  db: D1Database,
+  passId: string,
+  since: number,
+): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    'SELECT count(*) AS n FROM registrations WHERE pass_id = ? AND created_at >= ?',
+    [passId, since],
+  );
+  return row?.n ?? 0;
+}
+
 export async function registrationCount(db: D1Database, passId: string): Promise<number> {
   const row = await first<{ n: number }>(
     db,
@@ -54,7 +66,8 @@ export async function registrationCount(db: D1Database, passId: string): Promise
 }
 
 /**
- * Device and registration in one transaction; the `registrations_cap` trigger enforces the cap.
+ * Device and registration in one transaction. A pass at the cap refuses new devices (the
+ * `registrations_cap` trigger aborts the batch); nothing is evicted.
  * The push token is stored on the registration: one identity serves every org, so the device row
  * is shared and a token written there by one pass would redirect the others.
  */
@@ -291,38 +304,4 @@ export async function anyRegisteredDevice(
     [pass.id, pass.serial, pass.credentialGeneration, ...ids],
   );
   return row !== null;
-}
-
-/** Adds `lines` to the hourly window and returns the new total. */
-export const GLOBAL_LOG_KEY = 'apple.log';
-
-export const bumpLogCounter = (db: D1Database, key: string, windowStart: number, lines: number) =>
-  bump(db, key, windowStart, lines);
-
-export async function insertLogs(
-  db: D1Database,
-  lines: string[],
-  identityId: string | null,
-  now: number,
-): Promise<void> {
-  await batch(
-    db,
-    lines.map((line) =>
-      stmt(db, 'INSERT INTO wallet_logs (at, identity_id, line) VALUES (?, ?, ?)', [
-        now,
-        identityId,
-        line,
-      ]),
-    ),
-  );
-}
-
-export async function purgeLogs(db: D1Database, before: number): Promise<number> {
-  const logs = await deleteInBatches(db, 'wallet_logs', 'at < ?', [before]);
-  await prune(db, 'apple.log%', before);
-  return logs;
-}
-
-export async function purgeRevisions(db: D1Database, before: number): Promise<number> {
-  return deleteInBatches(db, 'revisions', 'at < ?', [before]);
 }

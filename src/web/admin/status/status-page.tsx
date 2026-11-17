@@ -49,14 +49,9 @@ export function StatusPage() {
             onRecheck={onRecheck}
           />
           <section aria-labelledby="dependencies-title" className="flex flex-col gap-3">
-            <div>
-              <h2 id="dependencies-title" className="text-lg font-semibold text-fg-strong">
-                Dependencies
-              </h2>
-              <p className="text-sm text-fg-muted">
-                Reported component results and their latest check times.
-              </p>
-            </div>
+            <h2 id="dependencies-title" className="text-lg font-semibold text-fg-strong">
+              Dependencies
+            </h2>
             {data.components.length === 0 ? (
               <Card>
                 <EmptyState inline art="pulse" title="No components" />

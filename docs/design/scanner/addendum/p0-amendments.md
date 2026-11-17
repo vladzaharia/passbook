@@ -1,5 +1,7 @@
 # Phase 0 amendments: stations, Access cards and occupancy
 
+> **Status:** P0-9 (`scans.actor_type` `system`, `method` `auto`) is in `0014`. The zone and station items depend on `0019` and `0020`, which do not exist (see `../README.md`).
+
 > **Revision 2026-11-05, later** (occupancy and desk overrides, SA §20, `occupancy/occupancy.md` **OC** §9): two more
 > items, **P0-9** (two CHECK values on `scans` in `0014`) and **P0-10** (two heads-up reasons and their default copy).
 > OC proposed four more (P0-11 to P0-14); they are additive, so they land with stream OC and SV, not in P0 (see "Not in

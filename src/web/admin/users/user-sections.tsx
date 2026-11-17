@@ -245,7 +245,7 @@ export function AccountCard({ user }: { user: UserDetail }) {
         <div className="mt-3">
           <Button asChild variant="outline" size="sm">
             <Link to="/admin/passes" search={{ q: user.primaryEmail }}>
-              Search primary email in selected mode
+              Find passes
             </Link>
           </Button>
         </div>

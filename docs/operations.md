@@ -571,7 +571,7 @@ keep retired pass ids and credentials from being reused.
     Passes keep working; the pass type ID must match.
   Status warns 30 days before expiry.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts;
-  keep older ones for existing data. The oldest KEK also derives scan PIN, asset-grant,
+  keep older ones for existing data. The oldest KEK also derives scan PIN, pair-code, asset-grant,
   credential-tombstone and pass/bundle link (`h1:`) HMAC keys; losing it breaks every stored link lookup. The credential-reference keyset sentinel initializes only when
   no prior keyed references or proof provenance remain, including tombstones, scanner grants and
   retention proofs, retained webhook/workflow bindings and native-provider history.

@@ -10,7 +10,7 @@ import { credentialRefKeysetCommitment, ensureCredentialRefKeyset } from './cred
 
 const makeEnv = installKeysetTestEnv();
 
-describe.sequential('credential keyset retained references', () => {
+describe('credential keyset retained references', () => {
   it('fails closed on detached scanner retention proof even without the source event', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
