@@ -4,6 +4,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { act } from './act.ts';
 import type { ActRequest } from './act-claim.ts';
 import { scannerActor, withRole } from './actor.ts';
+import { deepFreeze } from './freeze.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { key, proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
@@ -17,7 +18,7 @@ beforeAll(async () => {
   });
 });
 
-it('uses the captured actor and request even when the caller mutates them during preflight', async () => {
+it('freezes the actor and request: a mutation during preflight throws and the gate commits what was read', async () => {
   const pass = await kit.scanPass(templateId);
   const scanner = await kit.scanner({ templateIds: [templateId] });
   const row = await getScanner(kit.env.DB, scanner.id);
@@ -28,12 +29,15 @@ it('uses the captured actor and request even when the caller mutates them during
     withRole(scannerActor(kit.ctx, row, row.mode, 'cookie', scope), null),
   );
   const actorKey = actor.actorKey;
-  const request: ActRequest = {
-    input: { passId: pass.id, method: 'manual' },
+  // The routes freeze both once; nothing below them changes either.
+  const request: ActRequest = deepFreeze({
+    input: { passId: pass.id, method: 'manual' as const },
     idempotencyKey: key(),
     clientTs: kit.clock.now(),
     actionId: 'check_in',
-  };
+  });
+  deepFreeze(actor);
+  const refused: unknown[] = [];
   let fired = false;
   const matching = new WeakSet<D1PreparedStatement>();
   const db = new Proxy(kit.env.DB, {
@@ -59,9 +63,22 @@ it('uses the captured actor and request even when the caller mutates them during
         return async (statements: D1PreparedStatement[]) => {
           if (!fired && statements.some((statement) => matching.has(statement))) {
             fired = true;
-            actor.actorKey = 's:untrusted-mutated-key';
-            actor.actor.id = 'untrusted-mutated-actor';
-            request.input.method = 'wedge';
+            for (const mutate of [
+              () => {
+                actor.actorKey = 's:untrusted-mutated-key';
+              },
+              () => {
+                actor.actor.id = 'untrusted-mutated-actor';
+              },
+              () => {
+                (request.input as { method: string }).method = 'wedge';
+              },
+            ])
+              try {
+                mutate();
+              } catch (error) {
+                refused.push(error);
+              }
           }
           return target.batch(statements);
         };
@@ -72,6 +89,8 @@ it('uses the captured actor and request even when the caller mutates them during
   const env: AppEnv = { ...kit.env, DB: db };
   const outcome = await act({ ...kit.ctx, env }, actor, request);
   expect(fired).toBe(true);
+  expect(refused).toHaveLength(3);
+  for (const error of refused) expect(error).toBeInstanceOf(TypeError);
   expect(outcome.outcome).toMatchObject({ kind: 'ok' });
   if (!outcome.outcome.scanId) throw new Error('Missing committed scan');
   const scan = await first(kit.env.DB, 'SELECT actor_key,actor_id,method FROM scans WHERE id=?', [
