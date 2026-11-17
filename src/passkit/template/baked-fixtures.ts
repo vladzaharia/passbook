@@ -27,16 +27,19 @@ export function bakedSlugs(): string[] {
   return listTemplateDirs(TEMPLATES_ROOT);
 }
 
-// A stamps package draws its strips on read; do it once per slug.
+// A stamps package draws its strips on read; do it once per slug. A test that reads only the
+// manifest and pass.json passes `{ strips: false }` and skips the drawing.
 const packages = new Map<string, Promise<TemplatePackage>>();
 
 export async function loadBaked(
   slug: string,
+  options: { strips?: boolean } = {},
 ): Promise<{ template: ResolvedTemplate; registry: TemplateRegistry; pkg: TemplatePackage }> {
-  let reading = packages.get(slug);
+  const cacheKey = `${slug}|${options.strips !== false}`;
+  let reading = packages.get(cacheKey);
   if (!reading) {
-    reading = readTemplateDir(join(TEMPLATES_ROOT, slug));
-    packages.set(slug, reading);
+    reading = readTemplateDir(join(TEMPLATES_ROOT, slug), options);
+    packages.set(cacheKey, reading);
   }
   const pkg = await reading;
   const template: ResolvedTemplate = {

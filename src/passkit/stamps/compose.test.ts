@@ -90,17 +90,37 @@ describe('stampStrips', { timeout: 120_000 }, () => {
     expect(await sha1Hex(a[0]?.bytes as Uint8Array)).toBe(await sha1Hex(b[0]?.bytes as Uint8Array));
   });
 
-  it('keeps a goal-20 version under the Worker CPU limit', () => {
-    const t = process.cpuUsage();
-    stampStrips({ goal: 20, art, base });
-    const ms = (process.cpuUsage(t).user + process.cpuUsage(t).system) / 1000;
-    // cpu_ms is 10000 in production; leave room for a loaded test machine.
-    expect(ms).toBeLessThan(8000);
+  it('keeps a goal-20 version under the Worker CPU limit', { timeout: 120_000 }, () => {
+    // cpu_ms is 10000 in production; 8000 on a quiet machine leaves room. Coverage
+    // instrumentation (v8) slows every script several times over, so the budget scales with a
+    // fixed reference kernel timed in this process: 250 ms on the machine the 8000 was set on,
+    // and about 5x that under coverage, where the drawing is 6x slower.
+    const cpu = (run: () => void) => {
+      const t = process.cpuUsage();
+      run();
+      const used = process.cpuUsage(t);
+      return (used.user + used.system) / 1000;
+    };
+    const reference = cpu(() => {
+      const a = new Float32Array(1 << 16);
+      const b = new Float32Array(1 << 16);
+      let sum = 0;
+      for (let k = 0; k < 3000; k++)
+        for (let i = 0; i < a.length; i++) {
+          a[i] = (a[i] as number) * 0.5 + (b[i] as number) * 0.25 + i;
+          sum += a[i] as number;
+        }
+      expect(sum).toBeGreaterThan(0);
+    });
+    const ms = cpu(() => stampStrips({ goal: 20, art, base }));
+    expect(ms).toBeLessThan(8000 * Math.max(1, reference / 250));
   });
 });
 
 describe('compositor memory', () => {
-  it('holds at most 48 MB of mips and patches for 4 x 1000 px art at goal 20', () => {
+  it('holds at most 48 MB of mips and patches for 4 x 1000 px art at goal 20', {
+    timeout: 180_000,
+  }, () => {
     const big = (v: number): Rgba => {
       const data = new Uint8Array(1000 * 1000 * 4);
       for (let i = 0; i < data.length; i += 4) data.set([v, 255 - v, (i >> 8) & 255, 200], i);

@@ -96,13 +96,15 @@ function parseJson<T>(files: Record<string, Uint8Array>, name: string): T {
 /** Reads a package given as name -> bytes (an unzipped .pkpasstemplate plus wallet.template.json). */
 export async function readTemplatePackage(
   input: Record<string, Uint8Array>,
+  options: { strips?: boolean } = {},
 ): Promise<TemplatePackage> {
   let files = input;
   const manifest = parseJson<TemplateManifest>(files, 'wallet.template.json');
   const passJson = parseJson<PassJson>(files, 'pass.json');
   const assets: AssetEntry[] = [];
   const bytes: Record<string, Uint8Array> = {};
-  if (manifest.stamps) {
+  // `strips: false` is for callers that read only the manifest: drawing every strip is the cost.
+  if (manifest.stamps && options.strips !== false) {
     const drawn = renderStampFiles(manifest.stamps, files);
     const first = drawn.issues.find((i) => i.severity === 'error');
     if (first) throw new Error(`${first.code}: ${first.message}`);

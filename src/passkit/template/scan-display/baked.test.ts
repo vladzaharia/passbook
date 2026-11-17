@@ -10,7 +10,7 @@ import { scanDisplayIssues } from './validate.ts';
 
 describe.each(bakedSlugs())('%s default display', (slug) => {
   it('is a valid doc with no errors', async () => {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     const display = defaultScanDisplay(template.manifest, template.passJson as PassJson);
     const manifest: TemplateManifest = {
       ...template.manifest,
@@ -26,7 +26,7 @@ describe.each(bakedSlugs())('%s default display', (slug) => {
   });
 
   it('matches its snapshot, and so does each screen it renders', async () => {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     const display = defaultScanDisplay(template.manifest, template.passJson as PassJson);
     expect(display).toMatchSnapshot('doc');
     const scope = sampleScope(template.manifest, { now: NOW, fields: sampleFields(display) });
