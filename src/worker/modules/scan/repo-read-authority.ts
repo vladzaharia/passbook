@@ -52,6 +52,10 @@ export function scanRead(
   return exactStmt(db, text, all);
 }
 
+/** `authorized` is 1 when the actor's checks all hold now. */
+export const scanAuthorizedStmt = (db: D1Database, auth: ScanReadAuthority) =>
+  scanRead(db, auth, `SELECT ${auth.ok} AS authorized`);
+
 /** The fence as one scalar `EXISTS`, for a statement that cannot take a `WITH` (an `UPDATE`'s guard). */
 export function scanReadFence(auth: ScanReadAuthority): { sql: string; params: SqlValue[] } {
   return { sql: `EXISTS (WITH ${auth.ctes} SELECT 1 FROM actor_ok)`, params: auth.params };

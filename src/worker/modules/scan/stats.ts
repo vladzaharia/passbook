@@ -6,7 +6,12 @@ import {
 } from '../passes/credential-keyset.ts';
 import { planCounts } from './counts.ts';
 import type { ScanActor } from './guard.ts';
-import { SESSION_READ, scanRead, scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
+import {
+  SESSION_READ,
+  scanAuthorizedStmt,
+  scanReadAuthority,
+  scanReadFence,
+} from './repo-read-authority.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { staleScanRead } from './stale-read.ts';
 
@@ -26,10 +31,7 @@ export async function statsFor(
   const auth = scanReadAuthority(actor, { now: ctx.clock.now(), read: SESSION_READ });
   const plan = planCounts(ctx, actor, dayStart, actor, scanReadFence(auth));
   // The door polls this: only a lost credential unpairs, drift is a 409 the client reloads.
-  const results = await ctx.env.DB.batch([
-    scanRead(ctx.env.DB, auth, `SELECT ${auth.ok} AS authorized`),
-    ...plan.stmts,
-  ]);
+  const results = await ctx.env.DB.batch([scanAuthorizedStmt(ctx.env.DB, auth), ...plan.stmts]);
   if ((results[0]?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)
     throw await staleScanRead(ctx, actor);
   return (await plan.read(results.slice(1))).counts;

@@ -3,7 +3,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingKey } from '../orgs/branding-files.ts';
 import { readBranding } from '../passes/branding.ts';
 import type { ScanActor } from './actor.ts';
-import { SESSION_READ, scanRead, scanReadAuthority } from './repo-read-authority.ts';
+import { SESSION_READ, scanReadAuthority } from './repo-read-authority.ts';
+import { orgBrandingForActorStmt } from './repo-session.ts';
 import { staleScanRead } from './stale-read.ts';
 
 const missing = () => new NotFoundError('Image not found.', 'IMAGE_NOT_FOUND');
@@ -20,12 +21,7 @@ export async function openScanBrandingLogo(
   const db = ctx.env.DB;
   const auth = scanReadAuthority(actor, { now: ctx.clock.now(), read: SESSION_READ });
   // Only a lost credential unpairs; drift is a 409 the client reloads.
-  const row = await scanRead(
-    db,
-    auth,
-    `SELECT (SELECT o.branding FROM orgs o WHERE o.id = (SELECT org_id FROM actor_ok)) AS branding
-     WHERE ${auth.ok}`,
-  ).first<{ branding: string | null }>();
+  const row = await orgBrandingForActorStmt(db, auth).first<{ branding: string | null }>();
   if (!row) throw await staleScanRead(ctx, actor);
   const stored = row.branding;
   const logo = readBranding(stored ? JSON.parse(stored) : {}).images.find(
