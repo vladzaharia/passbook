@@ -1,6 +1,11 @@
-import { first, type SqlValue, stmt } from '../../platform/db.ts';
-import type { AssetGrantGuardParts } from './repo-asset-lineage.ts';
-import { boundOutputPredicate } from './repo-output-predicates.ts';
+import { stmt } from '../../platform/db.ts';
+import type { ScanActor } from './actor.ts';
+import { effectiveReleaseIs, usedRelease } from './effective-release.ts';
+import { CREDENTIAL_REF_PREFIX } from './repo-credential-tombstones.ts';
+import type { Candidate } from './repo-lookup.ts';
+import { passVisibleSql } from './repo-pass-visible.ts';
+import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
+import { actorPassScopeSql } from './repo-recipient-scope.ts';
 
 /** Asset choice is read in the same batch as the original candidate. */
 export interface ScannerAssetResource {
@@ -33,43 +38,53 @@ export function scannerAssetResourceFromResult(
     : null;
 }
 
-/** Split oversized scalar fences into one atomic D1 batch, never packing secrets. */
-export async function assetGrantPredicatesCurrent(
+/**
+ * The scanner's own image read fence: its authority holds, and the pass is live at the generations
+ * the candidate was read at (the image generation too, for a photo), under the release it was used
+ * under, inside the actor's scope. One statement; a row only when every part holds.
+ */
+export async function assetReadCurrent(
   db: D1Database,
-  guard: AssetGrantGuardParts,
-  template?: { sql: string; params: readonly SqlValue[] },
+  auth: ScanReadAuthority,
+  actor: ScanActor,
+  candidate: Pick<Candidate, 'pass' | 'templateSnapshot'>,
+  photo: boolean,
+  /** Leading hex of the refs of the credential the grant was scanned from (none for a pass-id card). */
+  refPrefixes: readonly string[] = [],
 ): Promise<boolean> {
-  const boundedTemplate = template ? boundOutputPredicate(template) : undefined;
-  if (boundedTemplate?.sql === '0') return false;
-  const templateParams = boundedTemplate?.params ?? [];
-  const authoritySql = `FROM passes p ${boundedTemplate ? 'JOIN passes scope ON scope.id=p.id' : ''}
-    WHERE (${guard.authority.sql}) AND (${boundedTemplate?.sql ?? '1'})`;
-  const authorityParams = [...guard.authority.params, ...templateParams];
-  if (templateParams.length >= 100) return false;
-  if (authorityParams.length + guard.csrf.params.length < 100)
-    return (
-      (await first(db, `SELECT 1 ${authoritySql} AND (${guard.csrf.sql}) LIMIT 1`, [
-        ...authorityParams,
-        ...guard.csrf.params,
-      ])) !== null
-    );
-  if (guard.checks.some((check) => check.params.length >= 100)) return false;
-  const statements = guard.checks.map((check) =>
-    stmt(db, `SELECT 1 AS authorized WHERE (${check.sql})`, check.params),
-  );
-  if (boundedTemplate)
-    statements.push(
-      stmt(
-        db,
-        `SELECT 1 AS authorized FROM passes scope WHERE (${boundedTemplate.sql}) LIMIT 1`,
-        templateParams,
-      ),
-    );
-  const results = await db.batch<{ authorized: number }>(statements);
-  if (results.length !== statements.length) return false;
-  for (let index = 0; index < statements.length; index++) {
-    const result = results[index];
-    if (result?.success !== true || result.results?.[0]?.authorized !== 1) return false;
-  }
-  return true;
+  const scope = actorPassScopeSql(actor, 'p');
+  const release = usedRelease(candidate.templateSnapshot?.raw);
+  const { pass } = candidate;
+  if (!scope || release === false || refPrefixes.length > 3) return false;
+  const rest = 64 - CREDENTIAL_REF_PREFIX;
+  if (
+    !refPrefixes.every((prefix) => new RegExp(`^[0-9a-f]{${CREDENTIAL_REF_PREFIX}}$`).test(prefix))
+  )
+    return false;
+  const row = await scanRead(
+    db,
+    auth,
+    `SELECT 1 AS ok FROM passes p
+      WHERE ${auth.ok} AND p.id = ? AND ${auth.tenant('p', 'passes')}
+        AND ${passVisibleSql('p', { credential: '?', lifecycle: '?' })}
+        ${photo ? 'AND p.image_generation = ?' : ''}
+        AND ${effectiveReleaseIs('p')} AND ${scope.sql}
+        ${
+          refPrefixes.length
+            ? `AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tombstone
+          WHERE tombstone.org_id = p.org_id AND tombstone.mode = p.mode
+            AND (${refPrefixes.map(() => 'tombstone.credential_hash BETWEEN ? AND ?').join(' OR ')}))`
+            : ''
+        }`,
+    [
+      pass.id,
+      pass.credentialGeneration,
+      pass.lifecycleGeneration,
+      ...(photo ? [pass.imageGeneration] : []),
+      release === null ? null : release[0],
+      ...scope.params,
+      ...refPrefixes.flatMap((prefix) => [prefix + '0'.repeat(rest), prefix + 'f'.repeat(rest)]),
+    ],
+  ).first();
+  return row !== null;
 }

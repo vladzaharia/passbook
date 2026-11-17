@@ -3,9 +3,7 @@ import { toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { ScanActor } from './actor.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import type { AssetSessionSnapshot } from './asset-types.ts';
-import type { AssetGrantCsrfResults, AssetGrantGuardInput } from './repo-asset-lineage.ts';
 import { matchesEvent } from './resolve-candidates.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
@@ -13,52 +11,6 @@ import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 /** Clone only original internal fields; no raw scanner CSRF enters a structured clone. */
 export function captureActor(actor: ScanActor): ScanActor {
   return cloneObservedScanActor(actor);
-}
-
-/** Copy authority before asynchronous work without cloning raw credential material. */
-export function captureAssetGrantGuard(input: AssetGrantGuardInput): AssetGrantGuardInput {
-  return {
-    passId: input.passId,
-    snapshotProof: input.snapshotProof,
-    actor: captureActor(input.actor),
-    source: input.source
-      ? {
-          sourceId: input.source.sourceId,
-          eventId: input.source.eventId,
-          actor: captureActor(input.source.actor),
-        }
-      : undefined,
-    recipientSession: input.recipientSession ? { ...input.recipientSession } : null,
-    sourceSession: input.sourceSession ? { ...input.sourceSession } : null,
-    connectionGeneration: input.connectionGeneration,
-    activeVersion: input.activeVersion,
-    credentialRefPrefixes: [...input.credentialRefPrefixes],
-    requirePhoto: input.requirePhoto,
-    purpose: input.purpose,
-  };
-}
-
-/** Retain supplied CSRF scalars only in a request-local copy, never a structured clone. */
-export function captureAssetGrantCsrf(
-  results: AssetGrantCsrfResults | undefined,
-): AssetGrantCsrfResults | undefined {
-  if (!results) return undefined;
-  const snapshot = (value: ActorCsrfSnapshot | undefined): ActorCsrfSnapshot | undefined =>
-    value && {
-      session: value.session ? { ...value.session } : null,
-      scanner: value.scanner ? { ...value.scanner } : null,
-    };
-  const result = (value: D1Result | undefined): D1Result | undefined => {
-    if (value?.success !== true) return undefined;
-    const row = value.results?.[0] as Record<string, unknown> | undefined;
-    return { ...value, results: row ? [{ ...row }] : [] };
-  };
-  return {
-    recipient: result(results.recipient),
-    source: result(results.source),
-    recipientSnapshot: snapshot(results.recipientSnapshot),
-    sourceSnapshot: snapshot(results.sourceSnapshot),
-  };
 }
 
 /** Only authority-defining scalars enter the MAC, not a serialized actor or a DTO. */

@@ -111,7 +111,7 @@ describe('live scanner evaluated asset lineage', () => {
     expect(row).toMatchObject({ passId: pass.id, holder: 'LIVE-PRIVATE-MEMBER' });
     if (!row?.photoUrl) throw new Error('Authorized live photo is missing');
     const url = new URL(row.photoUrl, 'https://wallet.test');
-    expect([...url.searchParams.keys()].sort()).toEqual(['event', 'g']);
+    expect([...url.searchParams.keys()].sort()).toEqual(['event']);
     expect(row.photoUrl).not.toContain('LIVE-PRIVATE-MEMBER');
     expect(row.photoUrl).not.toContain(actor.scanner?.tokenHash ?? 'missing-token');
     const keyset = result.evaluatedSnapshot?.credentialKeysetCommitment;
@@ -143,14 +143,13 @@ describe('live scanner evaluated asset lineage', () => {
     ).run();
     await updateScannerStmt(kit.env.DB, source.id, { name: scanner.name }, kit.clock.now()).run();
     expect((await kit.get(monitor.headers, path)).status).toBe(200);
-    // A configuration change moves the source's config epoch and ends it.
+    // The recipient is re-checked, not the source: a configuration change on the source scanner
+    // after the scan leaves the row and its photo with the monitor.
     await run(kit.env.DB, "UPDATE scanners SET time_zone = 'Pacific/Honolulu' WHERE id=?", [
       source.id,
     ]);
-    const stale = await kit.get(monitor.headers, path);
-    expect(stale.status).toBe(404);
-    expect(await stale.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
-    expect(await publishedRows(fixture)).toEqual([]);
+    expect((await kit.get(monitor.headers, path)).status).toBe(200);
+    expect(await publishedRows(fixture)).toMatchObject([{ passId: pass.id }]);
   });
 
   it('carries the original evaluation alongside a committed check-in, not in its DTO', async () => {
@@ -233,7 +232,7 @@ describe('live scanner evaluated asset lineage', () => {
     expect(row).toMatchObject({ passId: fixture.pass.id, holder: 'LIVE-PRIVATE-MEMBER' });
   });
 
-  it('does not republish an old evaluation under a newer approved release of the same version', async () => {
+  it('keeps publishing an old evaluation after an identical republish of its release', async () => {
     const fixture = await setup();
     const snapshot = fixture.result.evaluatedSnapshot;
     if (!snapshot?.activeReleaseVersion) throw new Error('Approved release fixture missing');
@@ -251,9 +250,9 @@ describe('live scanner evaluated asset lineage', () => {
       fixture.result.credentialContext,
       'camera',
     );
+    // An identical republish changes nothing a scanner sees or may do (decision 3).
     const [row] = await publishedRows(fixture);
-    expect(row).toMatchObject({ passId: null, holder: null, photoUrl: null });
-    expect(JSON.stringify(row)).not.toContain('LIVE-PRIVATE-MEMBER');
+    expect(row).toMatchObject({ passId: fixture.pass.id, holder: 'LIVE-PRIVATE-MEMBER' });
   });
 
   it.each(['missing', 'other pass'] as const)(

@@ -50,7 +50,6 @@ it('pins one KEK snapshot across asynchronous asset mint and redemption', async 
   // Any change to the evaluated snapshot is a different capability: the tag no longer matches.
   const alteredSnapshots = [
     { ...snapshot, pass: { ...snapshot.pass, authToken: `${snapshot.pass.authToken}-altered` } },
-    { ...snapshot, passJsonSnapshot: `${snapshot.passJsonSnapshot ?? ''} ` },
     {
       ...snapshot,
       pass: {

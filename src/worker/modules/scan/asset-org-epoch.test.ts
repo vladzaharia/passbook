@@ -12,6 +12,7 @@ import { makePng } from '../templates/package/fixtures.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
 import { photoAssetGrantFor } from './asset-test-fixtures.ts';
 import { assetGrantValid, mintAssetGrant } from './assets.ts';
+import { captureScanEpochs } from './authority-checks.ts';
 import { candidateById } from './repo-lookup.ts';
 import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -57,6 +58,7 @@ async function adminPhotoActor(cookieValue: string) {
   actor.platformSessionId = auth.sessionId;
   actor.tenantAuthority = await captureScanTenantAuthority(kit.ctx, auth, authority);
   actor.role = tenantScanRole(actor.tenantAuthority);
+  await captureScanEpochs(kit.env.DB, actor);
   return actor;
 }
 

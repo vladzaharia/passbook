@@ -4,7 +4,6 @@ import type { ScanActor } from './actor.ts';
 import { captureActor } from './asset-authority.ts';
 import { activeWallet, grantData } from './asset-claim.ts';
 import { mac, parseGrant, prepareAssetGrant, tagMatches } from './asset-grant-mint.ts';
-import { assetSnapshotInput, assetSnapshotProofFromInput } from './asset-secrets.ts';
 import { takeAssetGrantToken } from './asset-sidecar.ts';
 import {
   type AssetGrantPurpose,
@@ -15,13 +14,10 @@ import {
   photoGrantPurpose,
 } from './asset-types.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
+import { pinKeyset } from './keyset-pin.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
-import { type AssetGrantGuardInput, prepareAssetGrantGuardParts } from './repo-asset-lineage.ts';
-import { assetGrantPredicatesCurrent } from './repo-asset-read.ts';
-import {
-  scanCandidateTemplateReadPredicate,
-  scanTemplateSnapshotPredicate,
-} from './repo-live-template-snapshot.ts';
+import { assetReadCurrent } from './repo-asset-read.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
 const missing = () => new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
@@ -100,7 +96,14 @@ export async function mintAssetGrant(
 }
 
 /** A verified capability: the guard input for every later SQL fence, and its own expiry. */
-export type VerifiedAssetGrant = AssetGrantGuardInput & { expiresAt: number };
+export interface VerifiedAssetGrant {
+  passId: string;
+  purpose: AssetGrantPurpose;
+  requirePhoto: boolean;
+  /** Leading hex of the keyed refs of the credential the grant was scanned from. */
+  credentialRefPrefixes: readonly string[];
+  expiresAt: number;
+}
 
 /** A well-formed capability string, before any read. */
 export const assetGrantWellFormed = (grant: string | undefined): boolean =>
@@ -129,21 +132,17 @@ export async function prepareAssetGrantVerification(
   const capturedSource = source
     ? { sourceId: source.sourceId, eventId: source.eventId, actor: captureActor(source.actor) }
     : undefined;
-  const capturedInput = assetSnapshotInput(snapshot);
   const activeVersion = snapshot.activeReleaseVersion ?? snapshot.pass.templateVersion;
-  const [snapshotProof, data] = await Promise.all([
-    assetSnapshotProofFromInput(pinned.env, capturedInput),
-    grantData(
-      pinned,
-      capturedActor,
-      snapshot,
-      connectionGeneration,
-      activeVersion,
-      capturedSource,
-      requirePhoto,
-      purpose,
-    ),
-  ]);
+  const data = await grantData(
+    pinned,
+    capturedActor,
+    snapshot,
+    connectionGeneration,
+    activeVersion,
+    capturedSource,
+    requirePhoto,
+    purpose,
+  );
   if (!data) return null;
   const purposes: AssetGrantPurpose[] =
     purpose === 'read' && !requirePhoto && snapshot.displayTemplateVersion === activeVersion
@@ -167,13 +166,6 @@ export async function prepareAssetGrantVerification(
   if (!verifiedPurpose || parsed.expiresAt <= pinned.clock.now()) return null;
   return {
     passId,
-    snapshotProof,
-    actor: capturedActor,
-    recipientSession: data.recipientSession,
-    source: capturedSource,
-    sourceSession: data.sourceSession,
-    connectionGeneration,
-    activeVersion,
     credentialRefPrefixes: parsed.refs,
     requirePhoto,
     purpose: verifiedPurpose,
@@ -204,20 +196,21 @@ export async function assetGrantValid(
     purpose,
     requirePhoto,
   );
-  if (!verified) return false;
+  if (!verified || snapshot.credentialKeysetCommitment !== (await pinKeyset(pinned))) return false;
   const templates =
     verified.purpose === 'read'
       ? resolveCandidateReadTemplates(snapshot)
       : await verifyLiveTemplateSnapshot(pinned, snapshot, snapshot.templateSnapshot, 'commit');
   if (!templates) return false;
-  const template =
-    verified.purpose === 'read'
-      ? scanCandidateTemplateReadPredicate(snapshot)
-      : scanTemplateSnapshotPredicate(snapshot, snapshot.templateSnapshot, 'commit');
-  const makeGuard = await prepareAssetGrantGuardParts(pinned, verified, undefined, snapshot);
-  return makeGuard
-    ? assetGrantPredicatesCurrent(pinned.env.DB, makeGuard(pinned.clock.now()), template)
-    : false;
+  const now = pinned.clock.now();
+  return assetReadCurrent(
+    pinned.env.DB,
+    scanReadAuthority(capturedActor, { now }),
+    capturedActor,
+    snapshot,
+    verified.requirePhoto,
+    verified.credentialRefPrefixes,
+  );
 }
 
 export function assetWalletActive(snapshot: AssetWalletSnapshot, now: number): boolean {
