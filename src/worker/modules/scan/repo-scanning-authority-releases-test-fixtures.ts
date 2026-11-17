@@ -1,5 +1,6 @@
 /* istanbul ignore file -- @preserve */
 import { expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makePass } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import {
@@ -73,7 +74,7 @@ export function registerScanningAuthorityReleases() {
         },
         { ...admin, 'x-passbook-mode': 'test' },
       );
-      expect(wrongMode.status).toBe(404);
+      await expectProblem(wrongMode, 404, 'TEMPLATE_NOT_FOUND');
     },
   );
 
@@ -129,7 +130,11 @@ export function registerScanningAuthorityReleases() {
       timeZone: 'UTC',
       accepts: { templateIds: [templateId] },
     };
-    expect((await request('POST', '/scanning-sessions', input)).status).toBe(404);
+    await expectProblem(
+      await request('POST', '/scanning-sessions', input),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
     const testHeaders = { ...admin, 'x-passbook-mode': 'test' };
     const made = await request('POST', '/scanning-sessions', input, testHeaders);
     expect(made.status).toBe(201);

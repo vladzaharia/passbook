@@ -431,7 +431,10 @@ describe('tenant scoping', () => {
       `/uploads/${imported.p.uploadId}`,
     ]) {
       expect((await call(path, {}, reader.headers)).status, path).toBe(200);
-      expect((await call(path, {}, foreign.headers)).status, path).toBe(404);
+      await expectProblem(await call(path, {}, foreign.headers), 404, [
+        'TEMPLATE_NOT_FOUND',
+        'UPLOAD_NOT_FOUND',
+      ]);
       expect((await call(path, {}, passOperator.headers)).status, path).toBe(200);
       expect((await call(path, {}, integrationOnly.headers)).status, path).toBe(200);
     }
@@ -562,7 +565,7 @@ describe('tenant scoping', () => {
       `/${id}/versions/${shared.version}/assets/${encodeURIComponent(asset.name)}`,
       `/${id}/package`,
     ]) {
-      expect((await call(path, {}, reader.headers)).status, path).toBe(403);
+      await expectProblem(await call(path, {}, reader.headers), 403, 'ORG_REQUIRED');
       expect((await call(`${path}?orgId=${org.id}`, {}, reader.headers)).status, path).toBe(200);
       expect((await call(`${path}?orgId=${otherOrg.id}`, {}, reader.headers)).status, path).toBe(
         404,

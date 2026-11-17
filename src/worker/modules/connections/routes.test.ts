@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   editApiKeyIdentity,
   makeApiKey,
@@ -81,7 +82,7 @@ describe('auth', () => {
   it('requires the CSRF token for writes', async () => {
     const { 'x-csrf-token': _csrf, ...noCsrf } = admin();
     const res = await call('POST', '/api/v1/connections', { orgId: kit.org.id }, noCsrf);
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'CSRF_TOKEN');
   });
 });
 
@@ -239,7 +240,7 @@ describe('tenant capability gates', () => {
       await call('PATCH', `/api/v1/connections/${id}`, { name: 'Forbidden' }, headers),
       await call('DELETE', `/api/v1/connections/${id}`, undefined, headers),
     ];
-    for (const response of denied) expect(response.status).toBe(403);
+    for (const response of denied) await expectProblem(response, 403, 'FORBIDDEN');
     expect(await first(kit.env.DB, 'SELECT * FROM connections WHERE id = ?', [id])).toEqual(
       connection,
     );
@@ -1092,7 +1093,11 @@ describe('connections', () => {
 
     const del = await call('DELETE', `/api/v1/connections/${id}`);
     expect(del.json).toEqual({ ok: true });
-    expect((await call('GET', `/api/v1/connections/${id}`)).status).toBe(404);
+    await expectProblem(
+      await call('GET', `/api/v1/connections/${id}`),
+      404,
+      'CONNECTION_NOT_FOUND',
+    );
   });
 
   it('pages the list by cursor without repeats or gaps', async () => {

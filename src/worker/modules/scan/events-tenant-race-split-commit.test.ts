@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession } from '../../../../test/helpers/index.ts';
 import { ScanEventSchema } from '../../../shared/contracts/index.ts';
 import { run } from '../../platform/db.ts';
@@ -136,7 +137,7 @@ describe('event mutation commit authority', () => {
           }
         }
       }, operation);
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, ['ACTOR_CHANGED', 'ORG_ACCESS_CHANGED']);
       expect(await state()).toEqual(before);
     });
   }

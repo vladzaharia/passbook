@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makePass, persistTemplate, runOne } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -257,7 +258,7 @@ describe('scan console and feed privacy', () => {
         reason: null,
       });
     }
-    for (const row of invalid) expect((await get(`/${row.id}`)).status).toBe(404);
+    for (const row of invalid) await expectProblem(await get(`/${row.id}`), 404, 'SCAN_NOT_FOUND');
     const response = await get(exportPath());
     expect(response.status).toBe(200);
     const csv = await response.text();

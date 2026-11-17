@@ -51,7 +51,10 @@ describe('staff route tenant authorization', () => {
       ['PATCH', staffPath(person.id), { disabled: true }],
       ['POST', resetPath(person.id), undefined],
     ] as const) {
-      expect((await call(method, path, body)).status).toBe(404);
+      await expectProblem(await call(method, path, body), 404, [
+        'ORG_NOT_FOUND',
+        'SCAN_STAFF_NOT_FOUND',
+      ]);
     }
     expect(await state()).toEqual(before);
     expect(

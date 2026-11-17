@@ -132,7 +132,7 @@ describe('event mutation commit authority', () => {
         expect(response.status).toBe(200);
         expect(await response.json()).toEqual({ items: [], nextCursor: null });
       } else {
-        expect(response.status).toBe(403);
+        await expectProblem(response, 403, ['ACTOR_CHANGED', 'FORBIDDEN']);
       }
       expect(await state()).toEqual(before);
     },

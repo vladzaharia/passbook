@@ -56,7 +56,10 @@ describe('staff administration authorization', () => {
     expect(read.status).toBe(200);
     expect(await read.json()).toEqual({ items: [] });
     for (const [method, path, body] of requests.slice(1)) {
-      expect((await send(method, path, body, headers)).status).toBe(404);
+      await expectProblem(await send(method, path, body, headers), 404, [
+        'ORG_NOT_FOUND',
+        'SCAN_STAFF_NOT_FOUND',
+      ]);
     }
     expect(await credential(person.id)).toEqual(before);
     expect((await list()).map((staff) => staff.id)).toEqual([person.id]);
@@ -82,7 +85,10 @@ describe('staff administration authorization', () => {
         ['PATCH', itemPath(person.id), { disabled: true }],
         ['POST', resetPath(person.id), undefined],
       ] as const) {
-        expect((await send(method, path, body, bad)).status).toBe(403);
+        await expectProblem(await send(method, path, body, bad), 403, [
+          'CSRF_ORIGIN',
+          'CSRF_TOKEN',
+        ]);
       }
     }
     expect((await send('GET', query(), undefined, noToken)).status).toBe(200);

@@ -2,7 +2,7 @@ import { createExecutionContext } from 'cloudflare:test';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
+import { expectProblem, expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -743,12 +743,24 @@ describe('durable connection webhook retention', () => {
     await addMembership(kit, reader.id, ['read_only']);
     const readSession = await makeSession(kit, { userId: reader.id });
     expect(await list(id, readSession.headers)).toEqual([item]);
-    expect((await call('POST', replayPath(id, item.id), readSession.headers)).status).toBe(403);
+    await expectProblem(
+      await call('POST', replayPath(id, item.id), readSession.headers),
+      403,
+      'FORBIDDEN',
+    );
     const testHeaders = { ...session.headers, 'x-passbook-mode': 'test' };
     expect((await call('GET', failuresPath(id), testHeaders)).status).toBe(404);
-    expect((await call('POST', replayPath(id, item.id), testHeaders)).status).toBe(404);
+    await expectProblem(
+      await call('POST', replayPath(id, item.id), testHeaders),
+      404,
+      'CONNECTION_NOT_FOUND',
+    );
     const { 'x-csrf-token': _csrf, ...withoutCsrf } = session.headers;
-    expect((await call('POST', replayPath(id, item.id), withoutCsrf)).status).toBe(403);
+    await expectProblem(
+      await call('POST', replayPath(id, item.id), withoutCsrf),
+      403,
+      'CSRF_TOKEN',
+    );
     expect(await retainedRow(item.id)).toEqual(before);
     expect(webhookJobs()).toHaveLength(1);
     expect(kit.seams.created).toEqual([]);
@@ -768,11 +780,23 @@ describe('durable connection webhook retention', () => {
     const before = await retainedRow(item.id);
 
     expect(await list(id, reader.headers)).toEqual([item]);
-    expect((await call('POST', replayPath(id, item.id), reader.headers)).status).toBe(403);
+    await expectProblem(
+      await call('POST', replayPath(id, item.id), reader.headers),
+      403,
+      'MISSING_SCOPE',
+    );
     expect((await call('GET', failuresPath(id), writer.headers)).status).toBe(403);
     // Another organization's key cannot tell that the connection exists.
-    expect((await call('GET', failuresPath(id), foreign.headers)).status).toBe(404);
-    expect((await call('POST', replayPath(id, item.id), foreign.headers)).status).toBe(404);
+    await expectProblem(
+      await call('GET', failuresPath(id), foreign.headers),
+      404,
+      'CONNECTION_NOT_FOUND',
+    );
+    await expectProblem(
+      await call('POST', replayPath(id, item.id), foreign.headers),
+      404,
+      'CONNECTION_NOT_FOUND',
+    );
     expect(await retainedRow(item.id)).toEqual(before);
     expect(await replayAudits(item.id)).toEqual([]);
     expect(webhookJobs()).toHaveLength(1);
@@ -2104,7 +2128,11 @@ describe('durable connection webhook retention', () => {
     const [item] = await list(id);
     if (!item) throw new Error('Missing failed event');
     expect((await call('POST', replayPath(id, item.id))).status).toBe(202);
-    expect((await call('POST', replayPath(id, item.id))).status).toBe(409);
+    await expectProblem(
+      await call('POST', replayPath(id, item.id)),
+      409,
+      'WEBHOOK_REPLAY_CONFLICT',
+    );
     expect(webhookJobs()).toHaveLength(2);
     const replayJob = webhookJobs()[1];
     if (!replayJob) throw new Error('Missing replay job');
@@ -2118,7 +2146,11 @@ describe('durable connection webhook retention', () => {
     );
     expect(rows).toEqual([{ external_ref: 'first', n: 1 }]);
     expect((await retainedRow(item.id))?.state).toBe('resolved');
-    expect((await call('POST', replayPath(id, item.id))).status).toBe(409);
+    await expectProblem(
+      await call('POST', replayPath(id, item.id)),
+      409,
+      'WEBHOOK_ALREADY_FINISHED',
+    );
     expect(webhookJobs()).toHaveLength(2);
   });
 

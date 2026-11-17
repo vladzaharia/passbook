@@ -118,7 +118,7 @@ describe('event read authority', () => {
           },
           () => call('GET', kind === 'detail' ? `/${eventId}` : `?orgId=${orgId}`),
         );
-        if (kind === 'detail') expect(response.status).toBe(403);
+        if (kind === 'detail') await expectProblem(response, 403, 'FORBIDDEN');
         else {
           expect(response.status).toBe(200);
           expect(await response.json()).toEqual({ items: [], nextCursor: null });

@@ -290,7 +290,7 @@ describe('scan console and feed privacy', () => {
     const expected = [global.id, valid.id];
     expect((await page(`?orgId=${kit.org.id}`)).items.map((row) => row.id)).toEqual(expected);
     expect((await page('', apiKey)).items.map((row) => row.id)).toEqual(expected);
-    for (const row of hidden) expect((await get(`/${row.id}`)).status).toBe(404);
+    for (const row of hidden) await expectProblem(await get(`/${row.id}`), 404, 'SCAN_NOT_FOUND');
     const globalDetail = await get(`/${global.id}`);
     expect(globalDetail.status).toBe(200);
     expect(await globalDetail.json()).toMatchObject({

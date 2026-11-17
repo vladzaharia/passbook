@@ -106,7 +106,7 @@ describe('scan display preview tenant authorization', () => {
     ] as const) {
       const session = await memberSession([role], org.id, true);
       const response = await preview(own, session.headers);
-      expect(response.status, role).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(response.headers.get('cache-control')).toContain('no-store');
       expect(await previewAudits(session.userId)).toEqual([]);
     }

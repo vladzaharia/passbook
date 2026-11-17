@@ -548,7 +548,10 @@ describe('other principals', () => {
       principal: { kind: 'api_key', keyId: s.key.id, scope: 'passes:write' },
     });
     platformKey.update('orgs', { set: { status: 'active' }, where: { id: s.org.id } });
-    expect((await refused(platformKey.commit())).status).toBe(403);
+    expect(await refused(platformKey.commit())).toMatchObject({
+      status: 403,
+      code: 'ACTOR_CHANGED',
+    });
   });
 
   it('scanners: a rotated credential is a re-pair (401), a config change is a 409', async () => {

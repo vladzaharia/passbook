@@ -436,7 +436,11 @@ describe('tenant pass authorization', () => {
     const body = createBody();
 
     for (const headers of denied) {
-      expect((await issue(headers, body, key)).status).toBe(403);
+      await expectProblem(await issue(headers, body, key), 403, [
+        'FORBIDDEN',
+        'MISSING_SCOPE',
+        'ORG_FORBIDDEN',
+      ]);
       expect(await reservation(kit.env.DB, key)).toBeNull();
     }
     const created = await issue(operator.session.headers, body, key);
@@ -444,7 +448,11 @@ describe('tenant pass authorization', () => {
     const { id } = (await created.json()) as { id: string };
     const original = await effects(id);
     for (const headers of denied) {
-      expect((await issue(headers, body, key)).status).toBe(403);
+      await expectProblem(await issue(headers, body, key), 403, [
+        'FORBIDDEN',
+        'MISSING_SCOPE',
+        'ORG_FORBIDDEN',
+      ]);
       expect([403, 404]).toContain((await patch(headers, id, { externalId: unique() })).status);
     }
     expect(await effects(id)).toEqual(original);

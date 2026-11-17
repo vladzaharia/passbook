@@ -323,7 +323,7 @@ describe('tenant broadcast reads', () => {
       ['POST', `/broadcasts/${foreign.id}/cancel`, undefined],
       ['POST', `/broadcasts/${foreign.id}/retry`, undefined],
     ] as const) {
-      expect((await call(method, path, headers, body)).status, path).toBe(404);
+      await expectProblem(await call(method, path, headers, body), 404, 'BROADCAST_NOT_FOUND');
     }
     expect(await persisted(otherOrg)).toEqual(before);
   });
@@ -396,7 +396,7 @@ describe('tenant broadcast mutations', () => {
       ['POST', `/broadcasts/${editable.id}/cancel`, undefined],
       ['POST', `/broadcasts/${cancelled.id}/retry`, undefined],
     ] as const) {
-      expect((await call(method, path, reader.session.headers, body)).status, path).toBe(403);
+      await expectProblem(await call(method, path, reader.session.headers, body), 403, 'FORBIDDEN');
     }
     expect(await persisted()).toEqual(before);
   });

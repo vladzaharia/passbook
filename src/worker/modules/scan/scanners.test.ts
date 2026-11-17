@@ -290,7 +290,7 @@ describe('create and list', () => {
     ];
     for (const headers of [readHeaders, operatorHeaders, outsiderHeaders])
       for (const [method, path, body] of writes)
-        expect((await consoleCall(method, path, body, headers)).status, path).toBe(403);
+        await expectProblem(await consoleCall(method, path, body, headers), 403, 'FORBIDDEN');
 
     expect(await all(env.DB, sql, ids)).toEqual(before);
     expect(await first(env.DB, "SELECT id FROM scanners WHERE name='Denied'")).toBeNull();

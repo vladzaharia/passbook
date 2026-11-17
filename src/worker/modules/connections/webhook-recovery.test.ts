@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { signWebhook } from '../../connectors/lib/hmac.ts';
@@ -183,13 +184,13 @@ describe('resolving an uncertain webhook', () => {
     const reader = await makeUser(kit);
     await addMembership(kit, reader.id, ['read_only']);
     const readHeaders = (await makeSession(kit, { userId: reader.id })).headers;
-    expect((await call('POST', path, readHeaders)).status).toBe(403);
+    await expectProblem(await call('POST', path, readHeaders), 403, 'FORBIDDEN');
 
     const otherOrg = await makeOrg(kit);
     const outsider = await makeUser(kit);
     await addMembership(kit, outsider.id, ['integration_admin'], otherOrg.id);
     const foreign = (await makeSession(kit, { userId: outsider.id })).headers;
-    expect((await call('POST', path, foreign)).status).toBe(404);
+    await expectProblem(await call('POST', path, foreign), 404, 'CONNECTION_NOT_FOUND');
     expect((await call('POST', path, { ...headers, 'x-passbook-mode': 'test' })).status).toBe(404);
 
     await run(

@@ -116,7 +116,7 @@ describe('tenant Test inbox routes', () => {
         kit.org.id,
         path.endsWith('/send-to-me') ? 'POST' : 'GET',
       );
-      expect(res.status, path).toBe(404);
+      await expectProblem(res, 404, 'CAPTURED_EMAIL_NOT_FOUND');
       const body = await res.text();
       expect(body).not.toContain(capture.recipient);
       expect(body).not.toContain(capture.html);
