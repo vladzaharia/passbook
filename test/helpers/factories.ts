@@ -196,8 +196,8 @@ export async function persistTemplate(
   const now = f.clock.now();
   await run(
     db,
-    `INSERT OR IGNORE INTO templates (id, org_id, slug, name, origin, active_version, created_at, updated_at)
-     SELECT ?, ?, ?, ?, ?, ?, ?, ?
+    `INSERT OR IGNORE INTO templates (id, org_id, slug, name, origin, active_version, shared, created_at, updated_at)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
      WHERE NOT EXISTS (
        SELECT 1 FROM template_version_tombstones WHERE template_id = ? AND version = ?
      )`,
@@ -208,6 +208,8 @@ export async function persistTemplate(
       template.manifest.name,
       template.origin,
       template.version,
+      // A platform upload is shared, like the uploads the migration backfills; staged ones are made explicitly.
+      template.orgId === null && template.origin !== 'baked' ? 1 : 0,
       now,
       now,
       template.id,
