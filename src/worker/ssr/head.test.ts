@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../test/helpers/index.ts';
+import { fakeAuth, linkToken } from '../../../test/helpers/index.ts';
 import { createApp } from '../app.ts';
 import { confirmPage, expiredPage } from '../modules/auth/pages.ts';
 import { jobCtxOf } from '../modules/delivery/delivery-test-fixtures.ts';
@@ -54,11 +54,11 @@ describe('pass page head', () => {
 
   it('previews the org and the state, never the holder or a pass field', async () => {
     const pass = await kit.pass({ memberName: 'Zed Quill', holderEmail: 'zed@holder.test' });
-    const html = await page(pass.downloadToken);
+    const html = await page(await linkToken(kit.env, pass));
     expect(html).toContain('Zed Quill');
     const tags = metas(html);
     expect(tags).not.toMatch(/Zed|Quill|holder\.test/);
-    expect(tags).not.toContain(pass.downloadToken);
+    expect(tags).not.toContain(await linkToken(kit.env, pass));
     const org = escapeHtml(kit.org.name);
     expect(content(html, 'og:title')).toBe(`${org} pass`);
     expect(content(html, 'og:description')).toBe('Add it to Apple Wallet.');
@@ -73,7 +73,7 @@ describe('pass page head', () => {
   it('previews a voided pass as voided', async () => {
     const pass = await kit.pass();
     await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
-    const html = await page(pass.downloadToken);
+    const html = await page(await linkToken(kit.env, pass));
     expect(content(html, 'og:description')).toBe('This pass was voided.');
   });
 });

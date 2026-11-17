@@ -1,6 +1,7 @@
 import { type Check, rowIs } from '../../platform/authority-checks.ts';
 import { lte, orNull } from '../../platform/authority-expr.ts';
 import { writePart } from '../../platform/authority-include.ts';
+import { type IssuedToken, sealPart } from '../../platform/capability-token.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
 import type { Pass } from './repo-map.ts';
@@ -50,17 +51,21 @@ export async function softDeletePassGranted(
 export async function setDownloadTokenGranted(
   ctx: ServiceContext,
   pass: Pass,
-  token: string,
+  token: IssuedToken,
   authority: TenantPassWrite,
 ): Promise<boolean> {
   if (!permitsPassWrite(authority)) return false;
-  const g = passWriteGrant(ctx, 'org_mode.pass.rotate_link', authority, pass);
+  const g = passWriteGrant(ctx, 'org_mode.pass.rotate_link', authority, pass, [
+    'passes',
+    'pass_token_seals',
+  ]);
   g.update('passes', {
-    set: { download_token: token, download_token_rotated_at: ctx.clock.now() },
+    set: { download_token: token.mac, download_token_rotated_at: ctx.clock.now() },
     inc: ['link_generation'],
     where: { id: pass.id, deleted_at: null },
     returning: ['id'],
   });
+  g.include(sealPart('pass', pass.id, token.mac, token.seal));
   return ((await commitRows(g)) ?? []).length === 1;
 }
 

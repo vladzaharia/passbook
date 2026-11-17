@@ -51,7 +51,11 @@ export const DEFAULT_SCAN_ACTION: ScanAction = {
   kind: 'check_in',
 };
 
-function resolveAction(action: ScanAction, access: boolean): ResolvedScanAction {
+function resolveAction(
+  action: ScanAction,
+  access: boolean,
+  stamps?: { input: string; goal: number },
+): ResolvedScanAction {
   // An access template lets a member in on every visit: no once, no daily, no already_done.
   const repeat =
     access && action.kind === 'check_in' ? 'always' : (action.repeat ?? REPEAT[action.kind]);
@@ -64,7 +68,9 @@ function resolveAction(action: ScanAction, access: boolean): ResolvedScanAction 
     notify: action.notify ?? false,
     allowOnConnected: action.allowOnConnected ?? false,
   };
-  if (action.kind === 'add' || action.kind === 'take') resolved.amount = action.amount ?? 1;
+  // A stamp card's reward takes its goal, unless the template names another amount.
+  const goal = stamps && action.kind === 'take' && stamps.input === action.input ? stamps.goal : 1;
+  if (action.kind === 'add' || action.kind === 'take') resolved.amount = action.amount ?? goal;
   if (repeat === 'cooldown') {
     resolved.cooldownMinutes = action.cooldownMinutes ?? DEFAULT_COOLDOWN_MINUTES;
   }
@@ -73,11 +79,15 @@ function resolveAction(action: ScanAction, access: boolean): ResolvedScanAction 
 
 /** The manifest's scan block with defaults applied (SA 4.1). */
 export function scanOf(
-  manifest: Pick<TemplateManifest, 'scan'> | null | undefined,
+  manifest: Pick<TemplateManifest, 'scan' | 'stamps'> | null | undefined,
 ): ResolvedScanManifest {
   const scan = manifest?.scan;
   if (!scan) return { actions: [resolveAction(DEFAULT_SCAN_ACTION, false)] };
-  return { ...scan, actions: scan.actions.map((a) => resolveAction(a, scan.access !== undefined)) };
+  const stamps = manifest?.stamps;
+  return {
+    ...scan,
+    actions: scan.actions.map((a) => resolveAction(a, scan.access !== undefined, stamps)),
+  };
 }
 
 /** Whether the ready action can be armed so the next scans apply it, and how long it stays armed. */

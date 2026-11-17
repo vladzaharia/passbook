@@ -3,7 +3,9 @@ import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderBundleEmail } from '../../email/bundle.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishSent } from '../delivery/email-finish.ts';
 import { recordEmailOutcome, uncertainEmail } from '../delivery/email-outcome.ts';
@@ -56,7 +58,7 @@ export async function deliverBundleEmail(
   }
   const snapshot = await bundleEmailSnapshot(db, intent.bundleId);
   const first = snapshot?.passes[0];
-  if (!snapshot || !first || !(await matchesBundle(snapshot, intent))) {
+  if (!snapshot || !first || !(await matchesBundle(ctx.env, snapshot, intent))) {
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'DELIVERY_STALE');
     return;
   }
@@ -73,14 +75,24 @@ export async function deliverBundleEmail(
       await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'ORG_INACTIVE');
       return false;
     }
-    if (!current || !(await matchesBundle(current, intent))) {
+    if (!current || !(await matchesBundle(ctx.env, current, intent))) {
       await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'DELIVERY_STALE');
       return false;
     }
     return true;
   };
   const base = baseUrl(ctx.env);
-  const page = `${base}/b/${bundle.token}`;
+  let bundleToken: string;
+  let firstToken: string;
+  try {
+    bundleToken = await revealToken(ctx.env, 'bundle', bundle.id, bundle.org_id, bundle.token);
+    firstToken = await revealToken(ctx.env, 'pass', first.id, first.orgId, first.downloadToken);
+  } catch (error) {
+    if (!(error instanceof AppError) || !error.code.startsWith('TOKEN_SEAL_')) throw error;
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'DELIVERY_STALE');
+    return;
+  }
+  const page = `${base}/b/${bundleToken}`;
   const [org, platform, settings, support, images] = await Promise.all([
     getOrg(db, bundle.org_id),
     getPlatformSettings(ctx),
@@ -92,7 +104,7 @@ export async function deliverBundleEmail(
     }),
   ]);
   const { iconUrl } = passEmailImages(
-    bundleImages(images, first.downloadToken, bundle.token, first.id),
+    bundleImages(images, firstToken, bundleToken, first.id),
     base,
   );
   const email = renderBundleEmail({

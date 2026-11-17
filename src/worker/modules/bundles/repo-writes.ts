@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
+import { type IssuedToken, type SealRow, sealPart } from '../../platform/capability-token.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -21,7 +22,9 @@ export interface NewBundle {
   orgId: string;
   mode: Mode;
   name: string;
+  /** The token column value: the lookup MAC. */
   token: string;
+  tokenSeal: SealRow;
   holderEmail: string | null;
   actor: Actor;
   passes: Pick<
@@ -42,10 +45,16 @@ function bundleGrant(
     checks: Check[];
     target: string;
     codes: DenialOptions['codes'];
+    tables?: string[];
   },
 ): Grant {
   const { authority } = o;
-  const common = { checks: o.checks, target: o.target, codes: o.codes };
+  const common = {
+    checks: o.checks,
+    target: o.target,
+    codes: o.codes,
+    ...(o.tables ? { tables: o.tables } : {}),
+  };
   return authority
     ? grant(ctx, {
         ...common,
@@ -94,6 +103,7 @@ export function createBundleGrant(
     mode: b.mode,
     target: b.id,
     codes: CREATE_CODES,
+    tables: ['bundles', 'bundle_passes', 'bundle_token_seals'],
     checks: [
       ...b.passes.map((p) => rowIs('passes', p.id)),
       rawCheck(
@@ -116,6 +126,7 @@ export function createBundleGrant(
     ['id', 'name', 'token', 'holder_email', 'created_by_type', 'created_by_id', 'created_at'],
     [b.id, b.name, b.token, b.holderEmail, b.actor.type, b.actor.id, b.now],
   );
+  g.include(sealPart('bundle', b.id, b.token, b.tokenSeal));
   for (const [position, pass] of b.passes.entries())
     g.insertJoined('bundle_passes', {
       parents: { bundle_id: b.id, pass_id: pass.id },
@@ -146,7 +157,7 @@ export function bundleMutationGrant(
     authority: TenantPassWrite | undefined;
     actor: Actor;
     action: 'rotate_link' | 'delete';
-    token?: string;
+    token?: IssuedToken;
   },
 ): Grant {
   const g = bundleGrant(ctx, {
@@ -157,6 +168,7 @@ export function bundleMutationGrant(
     target: o.id,
     codes: MUTATE_CODES,
     checks: [rowIs('bundles', o.id), noQuarantinedMembers(o.id)],
+    ...(o.action === 'rotate_link' ? { tables: ['bundles', 'bundle_token_seals'] } : {}),
   });
   g.add(
     grantedAudit(g, ctx, {
@@ -168,12 +180,14 @@ export function bundleMutationGrant(
       targetId: o.id,
     }),
   );
-  if (o.action === 'rotate_link')
+  if (o.action === 'rotate_link') {
+    if (!o.token) throw new Error('A link rotation needs its new token.');
     g.update('bundles', {
-      set: { token: o.token ?? '', token_rotated_at: ctx.clock.now() },
+      set: { token: o.token.mac, token_rotated_at: ctx.clock.now() },
       where: { id: o.id },
       require: 'one',
     });
-  else g.delete('bundles', { where: { id: o.id }, require: 'one' });
+    g.include(sealPart('bundle', o.id, o.token.mac, o.token.seal));
+  } else g.delete('bundles', { where: { id: o.id }, require: 'one' });
   return g;
 }

@@ -251,7 +251,7 @@ describe('scan console and feed privacy', () => {
           template.id,
           template.version,
           kit.fx.ids.token(),
-          kit.fx.ids.token(),
+          `h1:${kit.fx.ids.token()}`,
           `${ORIGIN}/wallet`,
           `passes/${id}/legacy.pkpass`,
           now,

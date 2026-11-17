@@ -1,6 +1,7 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ConnectionMode } from '../../../shared/contracts/connections.ts';
+import type { SealRow } from '../../platform/capability-token.ts';
 import type { PassIssuanceExecution } from './create-types.ts';
 import type { FieldSources } from './repo-map.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
@@ -16,7 +17,9 @@ export interface NewPassRow {
   /** Approved release snapshot used to build the pass. */
   release: PassReleaseSnapshot;
   authToken: string;
+  /** The token column value: the lookup MAC. */
   downloadToken: string;
+  tokenSeal: SealRow;
   webServiceUrl: string;
   credentialKeysetCommitment: string;
   credentialRefs: string[];

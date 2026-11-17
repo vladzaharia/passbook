@@ -41,7 +41,7 @@ it('cancels an image stream when a real transfer starts while its first chunk op
     },
     { kind: 'system' },
   );
-  const token = bundle.url.split('/b/')[1] ?? '';
+  const token = bundle.url?.split('/b/')[1] ?? '';
   const opened = deferred.withResolvers<void>();
   const resume = deferred.withResolvers<void>();
   const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
@@ -135,7 +135,7 @@ it('streams a single file on after a transfer between chunk 2 and N, then refuse
     { orgId: pass.orgId, name: 'Stream', passIds: [pass.id, other.id] },
     { kind: 'system' },
   );
-  const token = created.url.split('/b/')[1] ?? '';
+  const token = created.url?.split('/b/')[1] ?? '';
   const bundle = await bundleForToken(ctx, token);
   const stream = fenceBundleStream(ctx, bundle, [pass], numbered(6), false);
   const reader = stream.getReader();
@@ -178,7 +178,7 @@ it('stops an archive at the first chunk after a transfer, even with one member',
     { orgId: pass.orgId, name: 'Archive', passIds: [pass.id, other.id] },
     { kind: 'system' },
   );
-  const bundle = await bundleForToken(ctx, created.url.split('/b/')[1] ?? '');
+  const bundle = await bundleForToken(ctx, created.url?.split('/b/')[1] ?? '');
   const reader = fenceBundleStream(ctx, bundle, [pass], numbered(6), true).getReader();
   const seen: number[] = [];
   for (let i = 0; i < 2; i++) seen.push(...((await reader.read()).value ?? []));

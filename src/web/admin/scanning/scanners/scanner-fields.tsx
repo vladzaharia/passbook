@@ -157,7 +157,8 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
                   <p className="text-xs text-fg-muted">
                     Add staff and share their PINs from the Staff tab before enabling this. The
                     scanner requires sign-in to scan. Staff accounts are shared across this
-                    organization’s live and test modes.
+                    organization’s live and test modes. With several managers, turn this on: a
+                    manager PIN is then checked against the manager chosen, not all of them.
                   </p>
                 </div>
               )}

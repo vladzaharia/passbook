@@ -28,9 +28,10 @@ export type CaptureSnapshot =
  * snapshot in its final SQL predicate: this read alone cannot fence a transfer or quarantine.
  */
 export async function resolveCaptureSnapshot(
-  db: D1Database,
+  env: { DB: D1Database },
   ref: CaptureReference,
 ): Promise<CaptureSnapshot | null> {
+  const db = env.DB;
   if (!ref.intent) return null;
   let value: unknown;
   try {
@@ -66,7 +67,7 @@ export async function resolveCaptureSnapshot(
     )
       return null;
     const snapshot = await bundleEmailSnapshot(db, ref.bundle_id);
-    return snapshot && (await matchesBundle(snapshot, intent))
+    return snapshot && (await matchesBundle(env, snapshot, intent))
       ? { kind: 'bundle', snapshot }
       : null;
   }

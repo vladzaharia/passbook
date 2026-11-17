@@ -158,7 +158,10 @@ function effectValid(
     after.kind !== data.actionKind ||
     after.scope !== scope ||
     after.lastScanId !== data.scanId ||
-    after.state !== (data.direction ?? 'in') ||
+    after.state !==
+      (data.actionKind === 'check_in' || data.actionKind === null
+        ? (data.direction ?? 'in')
+        : 'used') ||
     after.holderState !== 'done' ||
     after.holderUndoneBy !== null
   )

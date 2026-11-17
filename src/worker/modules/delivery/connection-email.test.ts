@@ -233,10 +233,12 @@ const races = [
 describe('connection pass email enqueue fence', () => {
   it.each([
     ['the pass version', 'UPDATE passes SET version = version + 1 WHERE id = ?'],
-    ['the download token', "UPDATE passes SET download_token = 'rotated-' || id WHERE id = ?"],
+    ['the download token', "UPDATE passes SET download_token = 'h1:rotated-' || id WHERE id = ?"],
   ])(
     'still queues when %s changes after prefetch (content, not authority)',
     async (_label, sql) => {
+      // The point is that content changes alone do not refuse: the token rule needs a link bump.
+      await kit.env.DB.prepare('DROP TRIGGER IF EXISTS passes_token_change_moves_link').run();
       const f = await bound();
       const seam = atInsert(f.pass.id, () => update(sql, [f.pass.id]));
       await expect(

@@ -1,4 +1,5 @@
 import { strictEmail } from '../../../shared/email.ts';
+import { issueToken } from '../../platform/capability-token.ts';
 import { type Envelope, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
@@ -148,8 +149,14 @@ export async function startCredentialTransfer(
         : undefined;
     throw new CredentialTransferReissueRequired(credentialKeysetCommitment, unchanged);
   }
-  const token = ctx.ids.token();
-  if (token === source.pass.downloadToken) throw conflict();
+  const token = await issueToken(
+    ctx.env,
+    'pass',
+    source.pass.id,
+    source.pass.orgId,
+    ctx.ids.token(),
+  );
+  if (token.mac === source.pass.downloadToken) throw conflict();
   const transferId = ctx.ids.id();
   const proof =
     authority.kind === 'connection'
