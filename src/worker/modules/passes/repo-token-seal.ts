@@ -49,7 +49,7 @@ const ORG_ACTIVE = (table: string) =>
 /** A suspended org may come back, so its rows keep a copy; a deleted org and a deleted pass never need one. */
 const ORG_KEEPS = (table: string) =>
   `COALESCE((SELECT o.status != 'deleted' FROM orgs o WHERE o.id = ${table}.org_id), 0)`;
-/** The column's work-list predicate: the device token's is case-sensitive (0065), the older ones are not. */
+/** The column's work-list predicate. Both are case-sensitive (0059, 0065): an uppercase `H1:` is a plain token. The partial indexes carry the same text. */
 const PLAIN = {
   download_token: "download_token NOT GLOB 'h1:*'",
   auth_token: "auth_token NOT GLOB 'h1:*'",
