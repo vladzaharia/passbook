@@ -107,9 +107,9 @@ export function appendProtected(value: unknown, values: string[]): void {
   }
 }
 
-const FIELD_LABELS = new Set(['label', 'attributedLabel']);
+const FIELD_LABELS = new Set(['label', 'attributedLabel', 'key']);
 
-/** Like appendProtected, but without field labels, which come from the template and not the holder. */
+/** Like appendProtected, but without field labels and keys, which come from the template and not the holder. */
 export function appendFieldValues(value: unknown, values: string[]): void {
   if (Array.isArray(value)) {
     value.forEach((item) => {

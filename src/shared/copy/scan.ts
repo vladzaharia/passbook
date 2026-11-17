@@ -79,6 +79,10 @@ export function scanLine(text: string, values: Record<string, string | number> =
 export const SCAN_DISPLAY_COPY = {
   moreFor: '{n} more for {reward}',
   rewardsReady: { one: '{n} reward ready', other: '{n} rewards ready' },
+  rewardReadySaved: {
+    one: '{n} reward ready · {saved} saved',
+    other: '{n} rewards ready · {saved} saved',
+  },
   changedElsewhere: 'Changed elsewhere',
   noPhoto: 'No photo',
   lowBalance: 'Low balance',

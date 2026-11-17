@@ -1,5 +1,6 @@
 import { Gift, Plus, Stamp as StampIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { SCAN_STAMPS_MAX, scanGrid } from '../../../passkit/stamps/layout.ts';
 import type { ScanDisplayRow } from '../../../shared/contracts/scan-display.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { cn } from '../../lib/cn.ts';
@@ -8,8 +9,9 @@ import { scanIcon } from './icons.ts';
 
 type Row<T extends ScanDisplayRow['type']> = Extract<ScanDisplayRow, { type: T }>;
 
-/** Stamps up to 10; a longer goal always paints as a bar (the server refuses stamps over 10). */
-const MAX_STAMPS = 10;
+/** The width the stamp row is laid out for on a phone and on an iPad (`scanGrid`). */
+const COMPACT = 318;
+const WIDE = 548;
 
 function Caption({ text, gift }: { text: string; gift: boolean }) {
   // The first number in the system caption is the one that matters: "2 more for Free coffee".
@@ -27,12 +29,14 @@ function Caption({ text, gift }: { text: string; gift: boolean }) {
 }
 
 export function ProgressRow({ row }: { row: Row<'progress'> }) {
-  const stamps = row.style === 'stamps' && row.goal <= MAX_STAMPS;
+  const stamps = row.style === 'stamps' && row.goal <= SCAN_STAMPS_MAX;
   const Icon = scanIcon(row.icon) ?? StampIcon;
   const value = Math.max(0, Math.min(row.value, row.goal));
   const before = row.before === null ? null : Math.max(0, Math.min(row.before, row.goal));
   const moved = before !== null && before !== value;
   const pct = (n: number) => `${(n / row.goal) * 100}%`;
+  const compact = stamps ? scanGrid(row.goal, COMPACT) : null;
+  const wide = stamps ? scanGrid(row.goal, WIDE) : null;
   return (
     <div className="sd-progress">
       <p className="sd-readout">
@@ -52,7 +56,18 @@ export function ProgressRow({ row }: { row: Row<'progress'> }) {
         </span>
       </p>
       {stamps ? (
-        <div className="sd-stamps" aria-hidden style={{ '--goal': row.goal } as CSSProperties}>
+        <div
+          className="sd-stamps"
+          aria-hidden
+          style={
+            {
+              '--cols-c': compact?.rows[0],
+              '--d-c': `${compact?.d}px`,
+              '--cols-w': wide?.rows[0],
+              '--d-w': `${wide?.d}px`,
+            } as CSSProperties
+          }
+        >
           {Array.from({ length: row.goal }, (_, i) => {
             const filled = i < value;
             const fresh = filled && before !== null && i >= before;
@@ -63,7 +78,9 @@ export function ProgressRow({ row }: { row: Row<'progress'> }) {
                 className={cn('sd-stamp', filled && 'is-filled', fresh && 'is-new')}
                 style={{ '--i': i - (before ?? 0) } as CSSProperties}
               >
-                {filled ? <Icon size={20} strokeWidth={2.25} /> : null}
+                {filled ? (
+                  <Icon size={Math.round((compact?.d ?? 44) * 0.45)} strokeWidth={2.25} />
+                ) : null}
                 {fresh ? (
                   <span className="sd-stamp-badge">
                     <Plus size={11} strokeWidth={3.5} />

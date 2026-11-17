@@ -39,7 +39,10 @@ export function scopeOf(
   const actions = found.scan.actions.filter((action) =>
     visibleAction(found, actor, action, privacy),
   );
-  const goals = actionGoals({ scan: { actions } });
+  const goals = actionGoals({
+    scan: { actions },
+    ...(manifest.stamps ? { stamps: manifest.stamps } : {}),
+  });
   return {
     inputs: safe(projectScanInputs(found, actor)) ?? {},
     fields: visibleFields(found, actor),

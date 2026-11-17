@@ -102,7 +102,12 @@ function cardValues(found: Found, actor: ScanActor, privacy: CardPrivacy): ScanV
       label: privacy.safe(label) ? label : 'Value',
       before,
       after: null,
-      goal: action.kind === 'take' && typeof action.amount === 'number' ? action.amount : null,
+      goal:
+        found.template.manifest.stamps?.input === action.input
+          ? found.template.manifest.stamps.goal
+          : action.kind === 'take' && typeof action.amount === 'number'
+            ? action.amount
+            : null,
       format:
         prop?.['x-format'] === 'currency'
           ? 'currency'

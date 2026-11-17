@@ -143,6 +143,12 @@ export function stampGrid(
   return { goal, rows, d, gapX, gapY, cells };
 }
 
+/**
+ * The most stamps the scanner draws as discs; a longer goal paints as a bar. Two rows of eight
+ * stay 32 px wide on a phone. Goals 17 to 20 are legible on paper only: raise it after a device check.
+ */
+export const SCAN_STAMPS_MAX = 16;
+
 /** A scanner panel is "compact" under 400 px (a phone), "wide" from 400 (iPad). */
 export const SCAN_WIDE = 400;
 
