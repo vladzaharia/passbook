@@ -159,6 +159,10 @@ describe('session CSRF secret immutability', () => {
         [scanner.id],
       ),
     ).rejects.toThrow('UNIQUE constraint failed: scanners.id');
+    await run(e.DB, 'UPDATE scanners SET token_prefix = ? WHERE id = ?', [
+      `different-${scanner.id}`,
+      scanner.id,
+    ]);
     await run(e.DB, 'UPDATE scanners SET pair_code_hash = ? WHERE id = ?', [
       `pair-${scanner.id}`,
       scanner.id,
