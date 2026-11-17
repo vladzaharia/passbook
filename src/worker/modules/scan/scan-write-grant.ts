@@ -149,9 +149,9 @@ export const retentionPart = (statement: D1PreparedStatement): GrantPart =>
   capturedPart(statement, 'retention');
 
 /**
- * Decoration after a scan commits, in one batch outside any grant: the PIN attempt is returned
- * (counters hold no authority) and the photo grant is minted. A failure is logged and never fails or
- * undoes the scan: the attempt stays counted and the photo is omitted. Returns the photo results.
+ * Decoration after a scan commits, outside any grant: the PIN attempt is returned (counters hold no
+ * authority) in its own batch, then the photo grant is minted. A failure is logged and never fails or
+ * undoes the scan or the refund: the photo is omitted. Returns the photo results.
  */
 export async function decorateScan(
   ctx: ServiceContext,
@@ -160,10 +160,12 @@ export async function decorateScan(
 ): Promise<D1Result[]> {
   try {
     const refund = reservation?.refundStatements() ?? [];
-    const statements = [...refund, ...photo];
-    const results = statements.length ? await ctx.env.DB.batch(statements) : [];
-    reservation?.markRefunded();
-    return results.slice(refund.length);
+    // The refund goes first and alone: a failing photo statement must not undo it.
+    if (refund.length) {
+      await ctx.env.DB.batch(refund);
+      reservation?.markRefunded();
+    }
+    return photo.length ? await ctx.env.DB.batch([...photo]) : [];
   } catch (error) {
     ctx.log.error('scan.finish_degraded', {
       code: 'SCAN_FINISH_DEGRADED',

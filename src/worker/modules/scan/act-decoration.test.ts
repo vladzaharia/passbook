@@ -4,6 +4,7 @@ import { putPassCheckIn } from '../passes/check-in.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { act, kit, out, setupActionFixture, tpl } from './act-test-fixtures.ts';
+import { decorateScan } from './scan-write-grant.ts';
 import { codeOf } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
@@ -72,5 +73,32 @@ describe('scan decoration after the commit', () => {
     expect(logged.mock.calls.some(([line]) => String(line).includes('SCAN_FINISH_DEGRADED'))).toBe(
       true,
     );
+  });
+});
+
+describe('decorateScan', () => {
+  it('keeps the PIN refund when the photo statements fail', async () => {
+    const insert = () =>
+      kit.env.DB.prepare(
+        "INSERT INTO counters (key, window_start, count) VALUES ('decorate-refund', 0, 1)",
+      );
+    let refunded = false;
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // The photo statement repeats the refund's primary key, so it fails after the refund committed.
+    const results = await decorateScan(
+      kit.ctx,
+      {
+        refundStatements: () => [insert()],
+        markRefunded: () => {
+          refunded = true;
+        },
+      },
+      [insert()],
+    );
+    expect(results).toEqual([]);
+    expect(refunded).toBe(true);
+    expect(
+      await first(kit.env.DB, "SELECT count FROM counters WHERE key = 'decorate-refund'"),
+    ).toEqual({ count: 1 });
   });
 });
