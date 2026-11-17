@@ -279,13 +279,13 @@ passes keep the old one until a template change or Identities, Re-sign all rebui
 
 ## Cutover from schema 0024
 
-Production D1 is at 0024. Migrations 0025–0066 have never run there; they land together (0040, 0060, 0062 and 0065 do not exist). All data
+Production D1 is at 0024. Migrations 0025–0065 have never run there; they land together (0040, 0060 and 0062 do not exist). All data
 is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, secrets, and every
 `--apply` or `--remote` command. An agent never runs them. `test/cutover/` rehearses this order on
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
 `docs/design/authority-epochs.md` §6.
 
-Migrations 0056 to 0066 add no window rule except the last: blueprints (0056), indexes (0057), `scans.session_id` (0058), token seal tables (0059), stateless asset grants (0061: drops `scan_asset_grant_provenance`), scan core (0063: drops the `scanners_credential_revision` trigger), trigger narrowing (0064), and 0066, which drops `scanning_config_revisions`. The old Worker writes that table when a scanning session or device is edited, so those edits fail between migrate and promote; door scans do not. Retry them after promote.
+Migrations 0056 to 0065 add no window rule: blueprints (0056), indexes (0057), `scans.session_id` (0058), token seal tables (0059), stateless asset grants (0061: drops `scan_asset_grant_provenance`), scan core (0063: drops the `scanners_credential_revision` trigger), trigger narrowing (0064). `scanning_config_revisions` stays: the pre-cutover Worker writes it when a scanning session or device is edited.
 
 Old pass download and bundle tokens are sealed by the minute cron `tokens.seal` (0059, 50 of each a run, id cursor in the setting `tokens.sealCursor`, log codes `TOKEN_SEAL_RUN` and `TOKEN_SEAL_REFUSED`); no owner step. Passes and bundles of a deleted or non-active org stay plain until the org is active (nothing serves them). A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining`. Backups from before 0059 hold working links: rotate in bulk if one leaks.
 
@@ -455,7 +455,7 @@ writes.
 
 1. **Owner**: WAF rule on. Sources of new work stopped (pre-check 6).
 2. **Owner**: `npm run deploy -- --migrate-only --apply`. Checks secrets, uploads the version (not
-   serving), records a D1 bookmark, applies 0025–0066 and stops with
+   serving), records a D1 bookmark, applies 0025–0065 and stops with
    `Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.`
 3. **Owner**: bootstrap. The tool never touches production; it prints the commands. First:
 

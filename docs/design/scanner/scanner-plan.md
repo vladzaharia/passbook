@@ -180,7 +180,7 @@ The Test-a-reader dialog and the reader key flow work before approval, so a VTAP
 | SA §3.1: pairing in `routes.ts` | `routes-pair.ts` (stream SC), mounted at `/api/v1/scan` beside `routes.ts` | Avoids two streams in one file |
 | SA §4.1: `scanOf` in `modules/scan/rules.ts` | `src/shared/scan-defaults.ts` | The designer needs the same defaults |
 | SA §4.2: `UuidV7Schema`, `TimeZoneSchema` | Define them in `contracts/scan.ts` | Neither exists in `common.ts` |
-| SA §6.1 "0014 is independent" | Keep it so. Any later scanner migration takes the next free number (`0017` was reserved for n5). Built so far: `0058` (`scans.session_id`), `0061`, `0063`, `0066` | `AGENTS.md` n5 row |
+| SA §6.1 "0014 is independent" | Keep it so. Any later scanner migration takes the next free number (`0017` was reserved for n5). Built so far: `0058` (`scans.session_id`), `0061`, `0063`, `0064` | `AGENTS.md` n5 row |
 | SA §13.2: SPA budget 232,500 B | Measure first. Raise by at most 1 kB, with a comment in `check-bundle.ts` | Owner already accepted measured steps |
 | SA §3.2: `src/shared/mask.ts` | `maskEmail` in `src/shared/email.ts` | One email module (AGENTS.md "Data") |
 | SV owning `staff-session.ts` while SC owns `repo-scanners.ts` | SV gets `repo-device.ts` for the device-side `scanners` SQL | No file shared by two streams |

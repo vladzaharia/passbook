@@ -1,6 +1,6 @@
 # Authority epochs and grant rows
 
-Replaces column-equality fences with trigger-maintained epochs plus one authority grant row per batch. Built in migrations `0029` to `0066` (`0052` carries the epochs and the grant table). The code is the reference: `src/worker/platform/authority*.ts`, `tools/authority-scope.ts`.
+Replaces column-equality fences with trigger-maintained epochs plus one authority grant row per batch. Built in migrations `0029` to `0065` (`0052` carries the epochs and the grant table). The code is the reference: `src/worker/platform/authority*.ts`, `tools/authority-scope.ts`.
 
 - **Wallet providers** ship dark and keep their column-equality fences (section 7.3).
 
@@ -69,7 +69,7 @@ The classification test (`authority-columns.test.ts`) reads `PRAGMA table_info` 
 **`updated_at` columns become timestamps.** `orgs`, `templates`, `scanners`, `scan_staff` and `scan_events` keep `updated_at` only as a timestamp. `tools/authority-scope.ts --strict` (part of `check:rules`) fails `updated_at = ?` in worker SQL.
 
 **`scanning_config_revisions` (`0024`, in production; the 0024-era Worker writes it):**
-- `config_epoch` replaces it. Nothing reads or writes it; migration `0066` drops it.
+- `config_epoch` replaces it. Nothing in the current Worker reads or writes it. The table stays for now: the pre-cutover Worker writes it during the migrate to promote window. Drop it one release after cutover.
 
 **Trigger shape.** The passes bump set has about 45 columns. To bound expression depth, it is split into three triggers by column group (`passes_row_version_a`, `_b`, `_c`), because D1 allows expression depth 100.
 
@@ -461,7 +461,6 @@ The runbook is `docs/operations.md` ("Cutover from schema 0024"): order, pre-che
 | `0061` | drops `scan_asset_grant_provenance` and its triggers; `credential_ref_keyset_insert_guard` recreated without the provenance term. Grants are stateless |
 | `0063` | drops `scanners_credential_revision`; scanner authority is `credential_epoch`. Adds `scanners_updated_at_monotonic`. Additive-safe: the old Worker's writes satisfy no trigger and need none |
 | `0064` | `scanners_revision_no_replace_update` and `pass_credential_no_replace_update` fire only when a guarded column is written (`BEFORE UPDATE OF ...`); same checks and messages |
-| `0066` | drops `scanning_config_revisions` |
 
 Migrations already applied are never edited; new schema takes the next free number.
 
@@ -475,7 +474,6 @@ The old Worker serves against the new schema until the bootstrap and promote ste
 | Owner link on pass create or sign-in, self-remove | succeeds | `0055` |
 | Org settings upsert, profile and branding | ok; each moves `orgs.config_revision` | `0052` triggers |
 | Template upload, baked upsert, scanner pairing and heartbeat, scan check-in claim, connection sync | ok | |
-| Edit of a scanning session or device (writes `scanning_config_revisions`) | fails | `0066` drops the table |
 | Template sync `INSERT ... ON CONFLICT (slug) DO NOTHING` for an existing org, and a re-sent `INSERT OR IGNORE INTO template_versions` | fails | BEFORE INSERT guards ignore `ON CONFLICT` and `OR IGNORE` |
 
 The sync break is reachable only when a fresh baked build reaches the old Worker (a new build hash) or `templates.baked_hash` is cleared. The batch aborts as a whole and retries, so the effect is a delayed baked sync, not corruption. The new Worker has no `ensureOrgStmt` (deleted); the sync does not insert orgs.
@@ -504,11 +502,12 @@ Roll forward only once migrations have run (owner answer 6). A Worker-only rollb
 
 The scan and fence rewrite is complete. What is left:
 - Wallet providers stay on column equality (7.3).
+- Drop `scanning_config_revisions` one release after cutover (the pre-cutover Worker writes it during the migrate to promote window).
 - `LEGACY_REVISION_MS` (org status accepts a pre-cutover `updated_at` as a revision): remove one release after cutover.
 
 Done:
 
-- Done: `scan/repo-scanner-configuration-scope.ts` is deleted; the workspace observation carries the scanner's `config_epoch`. Migration `0066` drops `scanning_config_revisions`.
+- Done: `scan/repo-scanner-configuration-scope.ts` is deleted; the workspace observation carries the scanner's `config_epoch`.
 - Done: the balancer, `sql-tokens`, `repo-secret-binds` and the legacy fence families are deleted; migration `0063` drops `scanners_credential_revision`. A scanner's `updated_at` is a label: authority is `credential_epoch`. The live ring's `revision` is an in-memory self-check of one actor snapshot, not a database compare. One credential-loss rule: every scanner path uses `scannerCredentialLost`.
 
 ### 7.3 Provider track

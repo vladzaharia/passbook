@@ -181,7 +181,7 @@ Conventions (layering, errors, clock and ids, logs, registries, file size, copy 
 - **Passes:** `pass_credential_transfers`, `pass_credential_tombstones`, `credential_ref_keyset` (`0042`); `pass_issuance_deliveries` (`0045`); `pass_check_in`, `scan_presence` (`0022`); `member_photos` (`0021`); `pass_events` (`0010`); `bundles` (`0011`); `broadcasts` (`0013`).
 - **Delivery and sandbox:** `sandbox_forwards` (`0028`); `branding_gc_queue` (`0053`).
 - **Connections:** `connection_webhook_retention`, `connection_webhook_items` (`0033`, `0044`).
-- **Scanning:** `scanners`, `scans`, `scan_gates`, `scan_staff`, `scan_events` (`0014`); `scanner_setups` (`0023`); `scanning_sessions`, `scanning_devices` (`0024`); retention proofs (`0041`); `scans.session_id` (`0058`). Dropped: `scan_asset_grant_provenance` (`0061`, grants are stateless), the `scanners_credential_revision` trigger (`0063`), `scanning_config_revisions` (`0066`).
+- **Scanning:** `scanners`, `scans`, `scan_gates`, `scan_staff`, `scan_events` (`0014`); `scanner_setups` (`0023`); `scanning_sessions`, `scanning_devices` (`0024`); retention proofs (`0041`); `scans.session_id` (`0058`). Dropped: `scan_asset_grant_provenance` (`0061`, grants are stateless), the `scanners_credential_revision` trigger (`0063`).
 - **Capability token seals:** `pass_token_seals`, `bundle_token_seals` (`0059`). Indexes `0054`, `0057`; trigger narrowing `0064`.
 - **Wallet providers (dark):** `wallet_provider_*` (`0037`).
 
