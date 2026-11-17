@@ -1742,7 +1742,18 @@ describe('org assignment', () => {
     const key = auth.apiKey({ orgId: scopedOrg.id, scopes: ['templates:read'] });
     const keyIds = await uploadIds(scopedPath, key);
     expect(keyIds).toContain(tenantId);
-    expect(keyIds).toContain(globalId);
+    expect(keyIds).not.toContain(globalId);
+    // A platform key keeps the platform view; an org-bound key cannot read a platform import by id.
+    const platformKey = auth.apiKey({ orgId: null, scopes: ['templates:read'] });
+    expect(await uploadIds(scopedPath, platformKey)).toContain(globalId);
+    expect((await call(`/uploads/${globalId}`, {}, platformKey)).status).toBe(200);
+    await expectProblem(await call(`/uploads/${globalId}`, {}, key), 404, 'UPLOAD_NOT_FOUND');
+    await expectProblem(
+      await call(`/uploads/${globalId}`, {}, reader.headers),
+      404,
+      'UPLOAD_NOT_FOUND',
+    );
+    expect((await call(`/uploads/${tenantId}`, {}, key)).status).toBe(200);
   });
 });
 

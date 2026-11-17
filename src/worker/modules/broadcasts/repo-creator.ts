@@ -17,9 +17,9 @@ export async function creatorIsActive(
   if (row.created_by_type === 'api_key') {
     const key = await first<{ one: number }>(
       db,
-      `SELECT 1 AS one FROM api_keys WHERE id = ? AND revoked_at IS NULL
-         AND (expires_at IS NULL OR expires_at > ?)`,
-      [row.created_by_id, now],
+      `SELECT 1 AS one FROM api_keys WHERE id = ? AND (org_id IS NULL OR org_id = ?)
+         AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > ?)`,
+      [row.created_by_id, row.org_id, now],
     );
     return key !== null;
   }
@@ -59,7 +59,7 @@ export function creatorLive(
       if (!row.created_by_id) return '1 = 1';
       if (row.created_by_type === 'api_key')
         return `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ${b.bind(row.created_by_id)}
-          AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ${b.bind(now)}))`;
+          AND (k.org_id IS NULL OR k.org_id = a.org_id) AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ${b.bind(now)}))`;
       if (row.created_by_type !== 'user') return '1 = 1';
       const holds = (capability: 'messages:manage' | 'passes:operate') =>
         `EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.type = 'text'

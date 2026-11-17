@@ -42,7 +42,10 @@ export interface RecentImport {
   createdAt: number;
 }
 
-/** Newest imports first. Undefined org means all, null means platform, and a string selects an org. */
+/**
+ * Newest imports first. Undefined org means all, null means platform, and a string selects that org's
+ * imports; `includeGlobal` adds the platform's, which only a platform principal may ask for.
+ */
 export async function listRecentImports(
   db: D1Database,
   filter: { orgId?: string | null; includeGlobal?: boolean; limit: number },
@@ -52,9 +55,9 @@ export async function listRecentImports(
       ? ''
       : filter.orgId === null
         ? 'WHERE i.org_id IS NULL'
-        : filter.includeGlobal === false
-          ? 'WHERE i.org_id = ?'
-          : 'WHERE (i.org_id = ? OR i.org_id IS NULL)';
+        : filter.includeGlobal
+          ? 'WHERE (i.org_id = ? OR i.org_id IS NULL)'
+          : 'WHERE i.org_id = ?';
   const rows = await all<{
     upload_id: string;
     name: string | null;

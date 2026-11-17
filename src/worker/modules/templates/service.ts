@@ -31,6 +31,7 @@ import { hasApprovedLiveHead } from './repo-mutations.ts';
 import { olderLivePassesForOrg } from './repo-usage.ts';
 import {
   isPlatformAdmin,
+  isPlatformPrincipal,
   loadTemplate,
   passUsageOrg,
   requireTemplateOrgRead,
@@ -246,7 +247,7 @@ export async function recentUploads(
   const orgId = await templateCollectionOrg(ctx, auth, query.orgId);
   const items = await listRecentImports(ctx.env.DB, {
     orgId,
-    includeGlobal: auth?.kind === 'api_key',
+    includeGlobal: auth?.kind === 'api_key' && auth.orgId === null,
     limit: query.limit,
   });
   return { items };
@@ -265,7 +266,7 @@ export async function importStatus(
   if (!row) throw notFound();
   if (orgId && row.orgId !== orgId) throw notFound();
   if (row.orgId) await requireTemplateOrgRead(ctx, auth, row.orgId, notFound);
-  else if (auth.kind === 'session' && !auth.roles.includes('admin')) throw notFound();
+  else if (!isPlatformPrincipal(auth)) throw notFound();
   return {
     uploadId,
     status: row.workflowStatus ?? 'queued',

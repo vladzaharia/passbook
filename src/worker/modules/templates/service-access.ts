@@ -71,6 +71,11 @@ export function isPlatformAdmin(auth: AuthContext | undefined): boolean {
   return auth?.kind === 'session' && auth.roles.includes('admin');
 }
 
+/** A platform administrator session or a platform (org-less) API key: the principals of platform-wide data. */
+export function isPlatformPrincipal(auth: AuthContext | undefined): boolean {
+  return isPlatformAdmin(auth) || (auth?.kind === 'api_key' && auth.orgId === null);
+}
+
 /** Count only the selected or stored tenant's passes, unless a platform key has global access. */
 export function passUsageOrg(
   auth: AuthContext | undefined,

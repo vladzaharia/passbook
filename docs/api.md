@@ -23,7 +23,7 @@ curl "https://passbook.mobile/api/v1/passes?orgId=$ORG_ID" \
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
 | `scans:read` | scoped scanner event and scan-log reads |
 | `connections:read` | scoped connection reads |
-| `connections:write` | scoped connection changes and actions |
+| `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 
 Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
 and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly
