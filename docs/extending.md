@@ -89,8 +89,32 @@ A top-level `stamps` block turns a strip card (store card, coupon, event ticket)
   shows as a bar.
 - Changing the goal of a template with live passes: `GET /api/v1/templates/{id}/stamps-impact?goal=`
   says who is affected. A lowering alerts the cards it makes ready; a raise keeps ready cards ready
-  when the version sets `stamps.keepReady`. Publishing a release is refused (`STAMPS_ABOVE_MAX`)
-  while a live count is above the input's `maximum`.
+  when the version sets `stamps.keepReady`. A reissue, `PATCH` or transfer that would leave a card
+  above the new version's input `maximum` fails for that card with `STAMPS_ABOVE_MAX` (the card
+  stays on its version; a bulk reissue reports it as `aboveMax`). Stamps are never dropped.
+
+## Add scan actions
+
+A top-level `scan.actions` array (1 to 6) lists what staff can do with the pass at a scanner.
+`starter-stamp-card` is the reference. Saving a version validates it (`SCAN_*`
+issues, `src/passkit/template/scan-actions.ts`).
+
+- `id` (lower case, up to 32), `label` (up to 24, unique) and `kind`: `check_in`, `add`, `take`,
+  `set` or `use_up`. Other keys: `input`, `amount`, `value`, `repeat` (`once`, `daily`, `cooldown`,
+  `always`) with `cooldownMinutes`, `minRole` (`door`, `desk`, `manager`), `confirm`,
+  `confirmAbove`, `allowAgain`, `rewardLabel`, `notify`, `allowOnConnected`.
+- `add` and `take` need a number input. `amount` is a fixed number, or `{ max, presets, default }`
+  for staff to pick (at most 1000). `confirmAbove` asks first above an amount. Add stops at the
+  input's `maximum`; a take beyond the balance is refused `no_balance`.
+- `set` needs a single-value input; with no `value` the desk offers typed entry from the input's
+  schema (`ScanCardAction.input`). `use_up` voids the pass and wants `{{pass.scanCode}}` as the
+  barcode message.
+- An input a connection syncs is refused `managed_elsewhere` unless `allowOnConnected`; the write is
+  then `manual`. A value action publishes the pass with the scan's rows in the same batch; staff can
+  undo it. `notify` spends the holder's daily push budget (warning `SCAN_NOTIFY_BUDGET`, except on
+  the stamps input).
+- An amount over `amount.max`, or an action above the staff role, asks for a Manager PIN
+  (`docs/api.md`, "Scanner device actions").
 
 ## Add a behavior
 
