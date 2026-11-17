@@ -67,7 +67,9 @@ describe('assign-bulk', () => {
 
   it('applies every item when a settings save lands after authorization', async () => {
     const member = await eventMember(kit, kit.org.id, ['pass_operator']);
-    const session = await createAuthStores(kit.env).sessions.resolve(member.session.cookieValue);
+    const session = await createAuthStores(kit.env, kit.clock).sessions.resolve(
+      member.session.cookieValue,
+    );
     if (!session) throw new Error('Missing session fixture');
     const a = await kit.pass();
     const b = await kit.pass();

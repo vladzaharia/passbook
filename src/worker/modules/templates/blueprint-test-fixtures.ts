@@ -7,6 +7,7 @@ import {
   makeOrg,
   makeSession,
   makeUser,
+  TEST_NOW,
 } from '../../../../test/helpers/index.ts';
 import { renderStampFiles } from '../../../passkit/stamps/package.ts';
 import type { StampsManifest } from '../../../passkit/types.ts';
@@ -97,8 +98,7 @@ export interface BlueprintKit {
 }
 
 export async function blueprintKit(): Promise<BlueprintKit> {
-  // Real clock: the cutover and blueprint apps under test read wall time.
-  const clock = new ManualClock(Date.now());
+  const clock = new ManualClock(TEST_NOW);
   const env = await makeEnv({ ASSETS: await bakedAssets() });
   const f = fixtures(env, clock);
   const app = createApp({
