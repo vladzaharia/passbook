@@ -7,6 +7,7 @@ import type { Env, MachineState } from './internal.ts';
 import { same } from './internal.ts';
 import { pick } from './reduce-action.ts';
 import { answer, fail } from './reduce-answer.ts';
+import { amount, approve, cancel, confirm } from './reduce-desk.ts';
 import {
   arm,
   disarm,
@@ -61,12 +62,16 @@ export function reduce(state: ScanState, event: ScanEvent, deps: ScanMachineDeps
       return tick(s, env);
     case 'pick':
       return pick(s, event, env);
-    // Value-action regions arrive with CC.6: review, confirm, cancel, amount and approval.
     case 'amount':
-    case 'review':
+      return amount(s, event, env);
     case 'confirm':
+      return confirm(s, env);
     case 'cancel':
+      return cancel(s, env);
     case 'approve':
+      return approve(s, event, env);
+    // The picker is the review: its consequence line shows before and after.
+    case 'review':
     case 'offline':
       return same(s);
     default:

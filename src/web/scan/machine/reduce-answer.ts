@@ -71,6 +71,7 @@ export function answer(s: MachineState, ev: Answer, env: Env): Out {
       outcome: ev.outcome,
       resumeCamera: l.s === 'checking',
       next: l.next,
+      ...(l.s === 'applying' ? { draft: l.draft } : {}),
     },
     env,
   );

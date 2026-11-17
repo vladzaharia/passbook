@@ -78,6 +78,8 @@ export type Loop =
       /** From here a different code replaces the verdict (T0 + NEXT_SCAN_AFTER_VERDICT). */
       openFrom: number;
       next: ScanInput | null;
+      /** What was sent, so a Manager's PIN can re-send the same draft (`needs_approval`). */
+      draft?: Draft;
     }
   | { s: 'paused'; reason: 'idle' | 'hidden' | 'camera_lost' };
 

@@ -1,13 +1,15 @@
 import { Info } from 'lucide-react';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { SCAN_COPY, SCAN_REASON_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { formatDateTime, formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { DisplayPanels } from '../display/display-panels.tsx';
 import { scanIcon } from '../display/icons.ts';
-import type { ScanOutcome } from '../machine/types.ts';
+import type { Draft, ScanOutcome } from '../machine/types.ts';
+import { ApprovalSheet } from './approval-sheet.tsx';
 import { IdentityRow } from './identity-row.tsx';
+import { ValuePicker } from './value-picker.tsx';
 import { VerdictGlyph } from './verdict-glyph.tsx';
 import './result.css';
 import './identity.css';
@@ -20,6 +22,7 @@ export function ResultCard({
   eventNote,
   holdMs,
   onPass,
+  desk,
 }: {
   outcome: ScanOutcome;
   phase?: string;
@@ -27,7 +30,17 @@ export function ResultCard({
   eventNote?: string | null;
   holdMs?: number | null;
   onPass?: (card: ScanCard | null) => void;
+  /** The desk's value regions: the open picker, and a Manager's PIN for a `needs_approval` verdict. */
+  desk?: {
+    picker: Draft | null;
+    onAmount: (value: number) => void;
+    onConfirm: () => void;
+    onCancel: () => void;
+    managers: { id: string; name: string }[];
+    onApprove: (staffId: string, pin: string) => void;
+  };
 }) {
+  const [pin, setPin] = useState(false);
   const root = useRef<HTMLElement>(null);
   const d = o.display;
   const ok = o.kind === 'ok';
@@ -181,18 +194,41 @@ export function ResultCard({
               </div>
             </div>
           ) : null}
-          {ready &&
-            o.card?.actions
-              .filter((a) => a.kind === 'check_in')
-              .map((action) => (
-                <Button
-                  key={action.id}
-                  disabled={!action.available}
-                  onClick={() => onAction?.(action.id)}
-                >
-                  {action.label}
-                </Button>
-              ))}
+          {ready && o.card && desk?.picker ? (
+            <ValuePicker
+              card={o.card}
+              draft={desk.picker}
+              onAmount={desk.onAmount}
+              onConfirm={desk.onConfirm}
+              onCancel={desk.onCancel}
+            />
+          ) : (
+            ready &&
+            o.card?.actions.map((action) => (
+              <Button
+                key={action.id}
+                data-testid={`scan-action-${action.id}`}
+                variant={action.kind === 'check_in' ? 'primary' : 'outline'}
+                disabled={!action.available && action.lock !== 'approval'}
+                onClick={() => onAction?.(action.id)}
+              >
+                {action.label}
+              </Button>
+            ))
+          )}
+          {o.reason === 'needs_approval' && desk && o.approvals ? (
+            pin ? (
+              <ApprovalSheet
+                managers={desk.managers}
+                onApprove={desk.onApprove}
+                onCancel={() => setPin(false)}
+              />
+            ) : (
+              <Button data-testid="scan-manager-pin" onClick={() => setPin(true)}>
+                Manager PIN
+              </Button>
+            )
+          ) : null}
         </div>
       ) : null}
     </section>
