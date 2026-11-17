@@ -20,6 +20,12 @@ export function platformSettingsStmt(db: D1Database): D1PreparedStatement {
   return stmt(db, 'SELECT key, value FROM settings WHERE scope = ?', ['platform']);
 }
 
+export function orgSettingsStmt(db: D1Database, orgId: string) {
+  return stmt(db, 'SELECT key, value, updated_by, updated_at FROM settings WHERE scope = ?', [
+    `org:${orgId}`,
+  ]);
+}
+
 export function readScopeRows(db: D1Database, scope: string): Promise<SettingRow[]> {
   return all<SettingRow>(
     db,

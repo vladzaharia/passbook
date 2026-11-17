@@ -5,12 +5,15 @@ export interface CountedD1 {
   count(): number;
   /** The SQL text of each single statement run, in order. Batches list their statements too. */
   sql(): string[];
+  /** The SQL of each round trip, in order (a batch is one entry with its statements). */
+  tripLog(): string[][];
   reset(): void;
 }
 
 export function countD1(real: D1Database): CountedD1 {
   let trips = 0;
   let log: string[] = [];
+  let tripSql: string[][] = [];
   const texts = new WeakMap<D1PreparedStatement, string>();
   const reals = new WeakMap<D1PreparedStatement, D1PreparedStatement>();
   const wrapStatement = (st: D1PreparedStatement, text: string): D1PreparedStatement => {
@@ -23,6 +26,7 @@ export function countD1(real: D1Database): CountedD1 {
           return (...args: unknown[]) => {
             trips++;
             log.push(text);
+            tripSql.push([text]);
             return (value as (...a: unknown[]) => unknown).apply(target, args);
           };
         return typeof value === 'function' ? value.bind(target) : value;
@@ -39,12 +43,14 @@ export function countD1(real: D1Database): CountedD1 {
         return (statements: D1PreparedStatement[]) => {
           trips++;
           for (const s of statements) log.push(texts.get(s) ?? '?');
+          tripSql.push(statements.map((s) => texts.get(s) ?? '?'));
           return target.batch(statements.map((s) => reals.get(s) ?? s));
         };
       if (prop === 'exec')
         return (sql: string) => {
           trips++;
           log.push(sql);
+          tripSql.push([sql]);
           return target.exec(sql);
         };
       const value = Reflect.get(target, prop, target);
@@ -55,9 +61,11 @@ export function countD1(real: D1Database): CountedD1 {
     db,
     count: () => trips,
     sql: () => [...log],
+    tripLog: () => tripSql.map((t) => [...t]),
     reset() {
       trips = 0;
       log = [];
+      tripSql = [];
     },
   };
 }

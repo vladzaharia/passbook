@@ -65,11 +65,21 @@ export async function initializeCredentialRefKeyset(
   db: D1Database,
   commitment: string,
 ): Promise<boolean> {
+  return (await initializeKeysetWith(db, commitment, [])).ok;
+}
+
+/** Initialize (or match) the keyset and run `extra` statements in the same trip, after it. */
+export async function initializeKeysetWith(
+  db: D1Database,
+  commitment: string,
+  extra: D1PreparedStatement[],
+): Promise<{ ok: boolean; extra: D1Result[] }> {
   const results = await db.batch<{ matches: number }>([
     credentialRefKeysetInitializeStmt(db, commitment),
     stmt(db, `SELECT 1 AS matches WHERE ${credentialRefKeysetSql}`, [commitment]),
+    ...extra,
   ]);
-  return results[1]?.results[0]?.matches === 1;
+  return { ok: results[1]?.results[0]?.matches === 1, extra: results.slice(2) };
 }
 
 export async function matchesCredentialRefKeyset(

@@ -1,13 +1,13 @@
 import { writeEvent } from '../../platform/analytics.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { registrationCount } from '../apple/repo.ts';
+import { registrationCountStmt } from '../apple/repo.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { recordPassEvents } from '../events/record.ts';
 import { notifiesHolder } from './change-messages.ts';
 import type { PublishOptions, PublishResult } from './publish.ts';
 import type { PreparedPublishAttempt } from './publish-flow-prepare.ts';
-import { getPass } from './repo-read-pass.ts';
+import { getPassStmt, passFromResult } from './repo-read-pass.ts';
 
 /** Revalidate the committed pass before recording delivery events and scheduling dispatch. */
 export async function completePublishAttempt(
@@ -19,7 +19,13 @@ export async function completePublishAttempt(
 ): Promise<PublishResult> {
   const db = ctx.env.DB;
   const { current, next, artifact, previousParsed, credentialKeysetCommitment } = prepared;
-  const pass = await getPass(db, current.id);
+  const pushes = options.cause !== 'resign';
+  const [passResult, devicesResult] = await db.batch([
+    getPassStmt(db, current.id),
+    ...(pushes ? [registrationCountStmt(db, current.id)] : []),
+  ]);
+  const pass = passFromResult(passResult);
+  const devices = (devicesResult?.results?.[0] as { n: number } | undefined)?.n ?? 0;
   if (
     !pass ||
     (options.connectionContext &&
@@ -44,7 +50,6 @@ export async function completePublishAttempt(
     outcome: options.cause,
     mode: pass.mode,
   });
-  const pushes = options.cause !== 'resign';
   const base = { orgId: pass.orgId, passId: pass.id, mode: pass.mode };
   await recordPassEvents(ctx, [
     {
@@ -65,11 +70,17 @@ export async function completePublishAttempt(
           {
             ...base,
             kind: 'push.queued' as const,
-            data: { version: pass.version, devices: await registrationCount(db, pass.id) },
+            data: { version: pass.version, devices },
           },
         ]
       : []),
   ]);
   if (options.dispatch !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
-  return { pass, changed: true, credentialKeysetCommitment, ...(silenced ? { silenced } : {}) };
+  return {
+    pass,
+    changed: true,
+    credentialKeysetCommitment,
+    passJson: prepared.passJson,
+    ...(silenced ? { silenced } : {}),
+  };
 }

@@ -12,10 +12,11 @@ import type {
 import { type FieldIssue, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
 import { brandingWarnings, readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
-import { readBuildInputs } from './build-reads.ts';
+import { type BuildInputs, readBuildInputs } from './build-reads.ts';
 import { applyChangeMessages, stripChangeMessages } from './change-messages.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
@@ -52,6 +53,12 @@ export interface BuildRequest {
   removal?: Removal;
   /** Excludes the current holder's uploaded assets and member photo from this build. */
   omitPassAssets?: boolean;
+  /** Reads the caller already made in a batch; each is used only when it still applies. */
+  prefetched?: {
+    identityRow: IdentityRow | null;
+    /** Inputs read for `templateId`; ignored when the template resolves to another id. */
+    inputs: BuildInputs;
+  };
 }
 
 export interface Artifact {
@@ -206,10 +213,16 @@ async function brandedOverrides(
 export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Promise<Artifact> {
   const deps = depsOf(ctx.env);
   const resolved = await resolveTemplate(ctx, req.orgId, req.templateId, req.templateVersion);
-  const identity = await deps.identities.byId(req.identityId);
+  const row = req.prefetched?.identityRow;
+  const identity =
+    row && row.id === req.identityId && deps.identities.byRow
+      ? await deps.identities.byRow(row)
+      : await deps.identities.byId(req.identityId);
   const branding = readBranding(req.branding);
   const [{ overrides: originalOverrides, photo, artHashes }, contacts] = await Promise.all([
-    readBuildInputs(ctx.env.DB, req, resolved.id),
+    req.prefetched && resolved.id === req.templateId && !req.omitPassAssets
+      ? req.prefetched.inputs
+      : readBuildInputs(ctx.env.DB, req, resolved.id),
     backContactsFor(ctx, req.orgId, req.branding),
   ]);
   const passOverrides = photo

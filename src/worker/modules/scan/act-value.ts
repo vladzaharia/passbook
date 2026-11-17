@@ -37,7 +37,6 @@ import type * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { filledSinceRedeem } from './repo-scan-amount.ts';
 import { dailyAmountCheck, doneOkPredicate } from './repo-scan-checks.ts';
-import { transferPending } from './repo-scan-transfer.ts';
 import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
 import { displayRequiresHistory } from './scan-display-history.ts';
@@ -189,8 +188,8 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     },
   };
 
+  let writtenJson: string | undefined;
   const stamps = manifest.stamps?.input === input;
-  if (await transferPending(ctx.env.DB, found.pass.id)) throw passChanged();
   const filledBefore =
     stamps && action.kind === 'add' && manifest.stamps
       ? await filledSinceRedeem(
@@ -214,6 +213,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       ...(action.notify || stamps ? {} : { notify: false }),
       budgetExempt: () => fills && !filledBefore,
       commit,
+      transferPendingError: passChanged,
       mutate(current) {
         assertPassStill(current, found.pass, action);
         const effect = valueEffect(action, manifest, current, body, cap);
@@ -228,6 +228,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
         };
       },
     });
+    if (published.changed) writtenJson = published.passJson;
     const { effect, planned, results, granted } = st;
     if (!effect) throw new StaleScanAuthority();
     // A write that renders the same pass is stored without a version of its own, still in the batch.
@@ -265,7 +266,12 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       i.onFailureCommitted();
       return heldAnswer(p, r, g);
     }
-    const passJson = plan ? await publishedPassJson(ctx, pass.id) : null;
+    // A changed publish hands back the pass.json it wrote; an unchanged one stored no version of its own.
+    const passJson = !plan
+      ? null
+      : writtenJson !== undefined
+        ? (JSON.parse(writtenJson) as Found['passJson'])
+        : await publishedPassJson(ctx, pass.id);
     return finishValueResult({
       ctx,
       actor,

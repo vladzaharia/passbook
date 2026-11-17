@@ -1,21 +1,40 @@
 import { tokenKeys } from '../../platform/capability-token.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, stmt } from '../../platform/db.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
 import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
 
 /** Null scope = platform-wide. A pass outside the scope (org, or an API key's mode) reads as missing. */
+export function getPassStmt(db: D1Database, id: string, scope: ScopeArg = null) {
+  const orgScope = scopeOrg(scope);
+  const mode = readMode(scope);
+  return stmt(
+    db,
+    `${PASS_SELECT} WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
+    [id, orgScope, orgScope, mode, mode],
+  );
+}
+
+/** The pass a `getPassStmt` returned in a batch. */
+export function passFromResult(result: D1Result | undefined): Pass | null {
+  const row = result?.results?.[0] as PassDbRow | undefined;
+  return row ? mapPass(row) : null;
+}
+
+/** A credential transfer is under way: one row when it is. */
+export function transferPendingStmt(db: D1Database, passId: string) {
+  return stmt(
+    db,
+    "SELECT 1 AS n FROM pass_credential_transfers WHERE pass_id = ? AND state = 'pending'",
+    [passId],
+  );
+}
+
 export async function getPass(
   db: D1Database,
   id: string,
   scope: ScopeArg = null,
 ): Promise<Pass | null> {
-  const orgScope = scopeOrg(scope);
-  const mode = readMode(scope);
-  const row = await first<PassDbRow>(
-    db,
-    `${PASS_SELECT} WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
-    [id, orgScope, orgScope, mode, mode],
-  );
+  const row = await getPassStmt(db, id, scope).first<PassDbRow>();
   return row ? mapPass(row) : null;
 }
 
