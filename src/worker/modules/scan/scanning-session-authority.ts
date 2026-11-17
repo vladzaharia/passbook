@@ -1,11 +1,11 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import type { SessionCountAuthority } from './scanning-session-dto.ts';
+import type { SessionReadAuthority } from './scanning-session-dto.ts';
 
 function sameSessionAuthority(
   authority: TenantPassWrite,
-  captured: SessionCountAuthority['tenant'],
+  captured: SessionReadAuthority['tenant'],
 ): boolean {
   if (authority.kind !== 'session' || !captured) return false;
   const same = (a: readonly string[], b: readonly string[]) =>
@@ -26,7 +26,7 @@ function sameSessionAuthority(
 export function assertSessionReadAuthority(
   mode: Mode,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ): void {
   if (
     authority.kind !== 'session' ||
@@ -45,7 +45,7 @@ export function assertSessionReadAuthority(
 export function assertSessionWriteCountAuthority(
   userId: string,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ): void {
   if (
     authority.kind !== 'session' ||

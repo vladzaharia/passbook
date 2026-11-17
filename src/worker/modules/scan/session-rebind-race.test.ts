@@ -260,7 +260,7 @@ function interleave(real: D1Database, f: Fixture, phase: Phase, change: Change) 
             (phase === 'unbind' && /UPDATE scanners SET staff_id = \?/.test(sql));
           const final =
             (phase === 'final guard' || phase === 'final report') &&
-            sql.includes('WITH session_scope AS MATERIALIZED (');
+            sql.includes('session_row AS MATERIALIZED');
           if (!report && !final) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
@@ -321,9 +321,7 @@ interface Outcome {
 /**
  * What the race does to the request, by what moved. Only the credential (token, CSRF secret) unpairs
  * the device. Configuration that moved after the actor derived it is a 409 and the client refetches;
- * a volatile change (names, revisions, report time) refuses nothing where the write is a grant. The
- * session read's column snapshot is still the old one, so a volatile change there is a 409 until it
- * moves to epochs (WP7).
+ * a volatile change (names, revisions, report time) refuses nothing, in a grant or in a read.
  */
 function outcome(phase: Phase, change: Change): Outcome {
   const credential = change === 'token' || change === 'csrf';
@@ -335,10 +333,10 @@ function outcome(phase: Phase, change: Change): Outcome {
     change === 'device report time' ||
     change === 'scanner name';
   if (phase === 'final guard' || phase === 'final report') {
-    // Template status and the release head are not scanner, session or event authority.
-    // An event rename moves no epoch.
+    // The session's counts are read under the scanner, staff, session and event epochs. Labels,
+    // timestamps, template status and the release head are not authority and refuse nothing.
     if (
-      change === 'parent revision' ||
+      volatile ||
       change === 'template status' ||
       change === 'release head' ||
       change === 'event row'

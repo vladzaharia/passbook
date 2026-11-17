@@ -114,8 +114,7 @@ describe('scanning session count authority', () => {
   // Reads carry no credential keyset, so a different one moves nothing and counts are plain.
   it('counts normally when the original keyset differs', async () => {
     const f = await freshFixture(await makeEnv());
-    const other =
-      f.proof.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
+    const other = '1'.repeat(64);
     await run(f.env.DB, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [other]);
     await expect(sessionDto(f.ctx, f.row, f.proof)).resolves.toMatchObject({ id: f.id });
     const response = await f.request(`/scanning-sessions/${f.id}`);
@@ -125,8 +124,7 @@ describe('scanning session count authority', () => {
 
   it('does not disclose keyset availability after the captured membership is revoked', async () => {
     const f = await freshFixture(await makeEnv());
-    const other =
-      f.proof.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
+    const other = '1'.repeat(64);
     await run(f.env.DB, 'INSERT INTO credential_ref_keyset (id,commitment) VALUES (1,?)', [other]);
     await run(f.env.DB, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
       f.clock.now(),
@@ -140,8 +138,7 @@ describe('scanning session count authority', () => {
 
   it('counts normally when another keyset appears immediately before the count batch', async () => {
     const f = await freshFixture(await makeEnv());
-    const other =
-      f.proof.credentialKeysetCommitment === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
+    const other = '1'.repeat(64);
     const { result } = await atCountBatch(
       f.env,
       () =>

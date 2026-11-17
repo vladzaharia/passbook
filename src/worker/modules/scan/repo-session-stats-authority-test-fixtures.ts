@@ -103,7 +103,7 @@ export async function atCountBatch<T>(
   operation: () => Promise<T>,
   intervene: (db: D1Database) => Promise<void>,
   corrupt?: (results: D1Result[], statements: (Captured | undefined)[]) => D1Result[],
-  match: RegExp = /WITH\s+session_scope\s+AS\s+MATERIALIZED/i,
+  match: RegExp = /session_row\s+AS\s+MATERIALIZED/i,
 ): Promise<{ result: T; captured: Captured[] }> {
   const real = env.DB;
   const bound = new WeakMap<D1PreparedStatement, Captured>();
