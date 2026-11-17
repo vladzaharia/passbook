@@ -35,6 +35,10 @@ describe('reads after a grant (commitWith)', () => {
       'SELECT 1 /* hidden */',
       'SELECT 1 -- hidden',
       'VALUES (1)',
+      "WITH [a'] AS (SELECT 1) DELETE FROM counters AS [b']",
+      "WITH `a'` AS (SELECT 1) UPDATE counters AS `b'` SET count=0",
+      `WITH "a'" AS (SELECT 1) DELETE FROM counters AS "b'"`,
+      'SELECT "x" FROM counters',
       "WITH x AS (SELECT 1) INSERT INTO counters (key, window_start, count) SELECT 'k', 0, 1 FROM x",
     ])
       expect(
