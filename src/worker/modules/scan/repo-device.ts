@@ -5,7 +5,7 @@ import { tenantCheck } from '../../platform/authority-cond.ts';
 import { inList, maxNow } from '../../platform/authority-expr.ts';
 import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { AppError, ConflictError } from '../../platform/errors.ts';
+import { AppError } from '../../platform/errors.ts';
 import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
 
 type Db = D1Database;
@@ -222,18 +222,8 @@ export async function bindStaff(
     where: { id: scanner.id },
     returning: ['id'],
   });
-  try {
-    await g.commit();
-  } catch (error) {
-    // Only a lost credential unpairs the device; a moved credential epoch is configuration drift.
-    if (
-      error instanceof AppError &&
-      error.code === 'SCANNER_REPAIR' &&
-      !(await credentialGone(ctx.env.DB, scanner, now))
-    )
-      throw new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');
-    throw error;
-  }
+  // A refusal as `actor` is classified by the caller (`scannerRefusal`): only a lost credential unpairs.
+  await g.commit();
 }
 
 /**

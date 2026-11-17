@@ -25,6 +25,7 @@ import {
 import { staffSearchStmt } from './repo-session.ts';
 import { getStaff } from './repo-staff.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
+import { scannerRefusal } from './scanner-credential-lost.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
 import { buildSession } from './session.ts';
 import { boundStaff } from './staff-binding.ts';
@@ -147,7 +148,9 @@ export function registerScanStaffRoutes(scanRoutes: OpenAPIHono<AppBindings>): v
         scanner,
         { id: staff.id, authEpoch: staff.authEpoch },
         bound && sessionEpoch ? { id: bound.id, configEpoch: sessionEpoch.config } : undefined,
-      );
+      ).catch(async (error: unknown) => {
+        throw await scannerRefusal(ctx, actor, error);
+      });
       const session = await staffSession(ctx, actor);
       const auth = c.var.auth;
       if (auth?.kind === 'scanner' && auth.transport === 'cookie')

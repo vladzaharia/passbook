@@ -9,15 +9,11 @@ import {
   UnauthenticatedError,
   UnavailableError,
 } from '../../platform/errors.ts';
-import { safeEqualBytes } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
-import { scanScannerCsrfProof } from './actor.ts';
 import { planCounts } from './counts.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { undoWindowMinutes } from './outcome.ts';
-import { credentialGone, getScanner } from './repo-device.ts';
 import {
   orgBrandingStmt,
   orgNameStmt,
@@ -31,6 +27,7 @@ import {
   sessionCountStatusStmt,
   unrestrictedSessionCountScope,
 } from './repo-session-counts.ts';
+import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import type { SessionCountAuthority } from './scanning-session-dto.ts';
 import {
   scanningWorkspaceScopeFence,
@@ -41,29 +38,14 @@ import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { FORMATS, templatesOf } from './session-templates.ts';
 
 /**
- * Why the session read lost its authority. Only a credential that moved on (revoked, expired, another
- * token or CSRF secret) unpairs the device. An admin-driven device is refused (403); any other drift, a moved
- * credential epoch included, is a 409 and the client refetches.
+ * Why the session read lost its authority. Only a lost credential (`scannerCredentialLost`) unpairs the
+ * device. An admin-driven device is refused (403); any other drift, a moved credential epoch included, is
+ * a 409 and the client refetches.
  */
-/** The CSRF secret the guard proved is no longer the scanner's (the guard drops the secret itself). */
-async function csrfRotated(ctx: ServiceContext, actor: ScanActor, id: string): Promise<boolean> {
-  if (!actor.scannerCsrfProof) return false;
-  const fresh = await getScanner(ctx.env.DB, id);
-  if (!fresh?.csrfSecret) return true;
-  const proof = await scanScannerCsrfProof(captureCredentialKeyEnv(ctx.env), id, fresh.csrfSecret);
-  const enc = new TextEncoder();
-  return !safeEqualBytes(enc.encode(proof), enc.encode(actor.scannerCsrfProof));
-}
-
 async function authorityLost(ctx: ServiceContext, actor: ScanActor): Promise<AppError> {
-  const scanner = actor.scanner;
   if (actor.principal !== 'scanner')
     return new ForbiddenError('Your access changed. Reload and retry.', 'SCAN_ACCESS_CHANGED');
-  if (
-    !scanner ||
-    (await credentialGone(ctx.env.DB, scanner, ctx.clock.now())) ||
-    (await csrfRotated(ctx, actor, scanner.id))
-  )
+  if (!actor.scanner || (await scannerCredentialLost(ctx, actor)))
     return new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
   return new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');
 }
