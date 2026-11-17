@@ -4,21 +4,16 @@ import { create as createConnection } from '../connections/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { setBinding } from '../passes/repo-write.ts';
-import { scannerActor, withRole } from './actor.ts';
-import { actorAuthorityCurrent } from './repo-actor-authority.ts';
-import { getScanner } from './repo-device.ts';
+import { CONTENT_CHANGES, racedResolve } from './output-authority-raced-resolve-test-fixtures.ts';
 import {
   fixture,
   kit,
   noDisclosure,
-  racedResolve,
   raceFence,
   system,
   templateId,
 } from './repo-output-authority-split-test-fixtures.ts';
-import { passSnapshotCurrent } from './repo-pass-authority.ts';
-import { readScannerScope } from './repo-scope.ts';
-import { key, proofedScanActor } from './test-kit.ts';
+import { key } from './test-kit.ts';
 
 describe('atomic scanner response authority', () => {
   it('keeps the authorized ready, heads-up, audit and lookup responses unchanged', async () => {
@@ -228,61 +223,43 @@ describe('atomic scanner response authority', () => {
   it.each([
     'scanner',
     'quarantine',
-    'wallet',
-    'wallet-personalization',
-    'wallet-lineage',
-    'wallet-version',
-    'identity-aba',
     'credential-generation',
     'lifecycle-generation',
     'release-adapter',
-    'rules',
     'photo',
     'photo-version',
     'photo-key',
     'photo-digest',
     'photo-inclusion',
     'photo-aba',
-    'source-privacy',
   ] as const)('suppresses a ready card when %s changes after projection', async (change) => {
-    const f = await fixture({
-      photo: true,
-      lagWallet: change === 'wallet-version',
-      olderAdapter: change === 'release-adapter',
-    });
+    const f = await fixture({ photo: true, olderAdapter: change === 'release-adapter' });
     await racedResolve(f, change);
   });
+
+  it.each(CONTENT_CHANGES)(
+    'answers the card it read when only content (%s) changes after projection',
+    async (change) => {
+      const f = await fixture({ photo: true, lagWallet: change === 'wallet-version' });
+      await racedResolve(f, change);
+    },
+  );
 
   it('serves a ready card when an identical release of the pass version lands after projection', async () => {
     await racedResolve(await fixture({ photo: true }), 'release');
   });
 
-  it('rejects when separately successful actor and Wallet checks never shared a snapshot', async () => {
+  it('suppresses the card when the actor is revoked while the pass content is restored around it', async () => {
     const f = await fixture();
     const real = kit.env.DB;
-    const scanner = await getScanner(real, f.scanner.id);
-    if (!scanner || !f.candidate.passJsonSnapshot) throw new Error('Missing original snapshot.');
-    const scope = await readScannerScope(real, scanner, null);
-    const actor = await proofedScanActor(
-      kit.ctx,
-      withRole(scannerActor(kit.ctx, scanner, scanner.mode, 'cookie', scope), null),
-    );
     const originalWallet = f.candidate.passJsonSnapshot;
+    if (!originalWallet) throw new Error('Missing original snapshot.');
     const race = raceFence(real, async () => {
       await run(
         real,
         "UPDATE pass_versions SET pass_json=json_set(pass_json,'$.description','changed') WHERE pass_id=? AND version=?",
         [f.pass.id, f.candidate.walletVersion],
       );
-      expect(
-        await actorAuthorityCurrent(real, {
-          actor,
-          event: actor.event,
-          now: kit.clock.now(),
-          templateId,
-          adminEventTemplates: false,
-        }),
-      ).toBe(true);
       await run(real, 'UPDATE scanners SET revoked_at=? WHERE id=?', [
         kit.clock.now(),
         f.scanner.id,
@@ -292,18 +269,6 @@ describe('atomic scanner response authority', () => {
         f.pass.id,
         f.candidate.walletVersion,
       ]);
-      expect(
-        await passSnapshotCurrent(
-          real,
-          f.candidate.pass,
-          f.candidate.connectionGeneration,
-          f.candidate.activeTemplateVersion,
-          f.candidate.orgRevision,
-          f.candidate.templateRevision,
-          kit.clock.now(),
-          f.candidate,
-        ),
-      ).toBe(true);
     });
     Object.assign(kit.env, { DB: race.db });
     try {
@@ -404,48 +369,62 @@ describe('atomic scanner response authority', () => {
     },
   );
 
-  it('rejects when the original connection generation changes after projection', async () => {
-    const f = await fixture();
-    const connection = await createConnection(jobCtxOf(kit), system, {
-      orgId: kit.org.id,
-      connectorType: 'demo',
-      name: 'Output race connection',
-      config: { count: 1 },
-      mode: 'manual',
-    });
-    const pass = await getPass(kit.env.DB, f.pass.id);
-    if (!pass) throw new Error('Missing pass.');
-    expect(
-      await setBinding(jobCtxOf(kit), pass, {
-        connectionId: connection.id,
-        generation: 1,
-        connectionMode: 'manual',
-        externalRef: 'output-race',
-        fieldSources: pass.fieldSources,
-      }),
-    ).toBe(true);
-    const real = kit.env.DB;
-    const race = raceFence(real, () =>
-      run(real, 'UPDATE connections SET generation=generation+1 WHERE id=?', [connection.id]),
-    );
-    Object.assign(kit.env, { DB: race.db });
-    try {
-      const response = await kit.post(f.scanner.headers, '/resolve', {
-        idempotencyKey: key(),
-        input: { passId: f.pass.id, method: 'manual' },
-        clientTs: kit.clock.now(),
+  it.each(['generation', 'disabled'] as const)(
+    'a connection %s change after projection: only a disabled connection stops the card',
+    async (change) => {
+      const f = await fixture();
+      const connection = await createConnection(jobCtxOf(kit), system, {
+        orgId: kit.org.id,
+        connectorType: 'demo',
+        name: 'Output race connection',
+        config: { count: 1 },
+        mode: 'manual',
       });
-      expect(race.fired()).toBe(true);
-      const text = await response.text();
-      expect(JSON.parse(text)).toMatchObject({
-        kind: 'refused',
-        reason: 'not_found',
-        card: null,
-        display: null,
-      });
-      noDisclosure(text, f.pass.id);
-    } finally {
-      Object.assign(kit.env, { DB: real });
-    }
-  });
+      const pass = await getPass(kit.env.DB, f.pass.id);
+      if (!pass) throw new Error('Missing pass.');
+      expect(
+        await setBinding(jobCtxOf(kit), pass, {
+          connectionId: connection.id,
+          generation: 1,
+          connectionMode: 'manual',
+          externalRef: 'output-race',
+          fieldSources: pass.fieldSources,
+        }),
+      ).toBe(true);
+      const real = kit.env.DB;
+      const race = raceFence(real, () =>
+        run(
+          real,
+          change === 'generation'
+            ? 'UPDATE connections SET generation=generation+1 WHERE id=?'
+            : 'UPDATE connections SET enabled=0 WHERE id=?',
+          [connection.id],
+        ),
+      );
+      Object.assign(kit.env, { DB: race.db });
+      try {
+        const response = await kit.post(f.scanner.headers, '/resolve', {
+          idempotencyKey: key(),
+          input: { passId: f.pass.id, method: 'manual' },
+          clientTs: kit.clock.now(),
+        });
+        expect(race.fired()).toBe(true);
+        const text = await response.text();
+        if (change === 'generation') {
+          // The sync generation is content: the card is the one the read saw.
+          expect(JSON.parse(text)).toMatchObject({ kind: 'ready', card: { passId: f.pass.id } });
+          return;
+        }
+        expect(JSON.parse(text)).toMatchObject({
+          kind: 'refused',
+          reason: 'not_found',
+          card: null,
+          display: null,
+        });
+        noDisclosure(text, f.pass.id);
+      } finally {
+        Object.assign(kit.env, { DB: real });
+      }
+    },
+  );
 });

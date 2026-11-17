@@ -4,7 +4,7 @@ import {
   tombstoneWithoutKeyset,
 } from '../../../../test/helpers/credential-keyset.ts';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
-import { first, run } from '../../platform/db.ts';
+import { first, run, type SqlValue } from '../../platform/db.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { withKitDatabase } from '../passes/pass-test-fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
@@ -19,12 +19,7 @@ import {
   bySerialStmt,
 } from './repo-lookup.ts';
 import { readScannerScope } from './repo-scope.ts';
-import {
-  searchInputWindowChangedPredicate,
-  searchObservedCandidatePredicate,
-  searchPassesStmt,
-  searchRowsOf,
-} from './repo-search.ts';
+import { searchPassesStmt, searchRowsOf, searchWindowUnchanged } from './repo-search.ts';
 import { scanSecretSlots } from './repo-secret-binds.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import { makeLegacyScanPass, proofedScanActor, setupScanKit } from './test-kit.ts';
@@ -181,7 +176,6 @@ it('reads the first scoped search page in the same bootstrap batch', async () =>
     kit.clock.now(),
     0,
     keys.credentialTombstoneRefs,
-    keys.credentialKeysetCommitment,
   );
   if (!query) throw new Error('Missing scoped search query');
   const results = await kit.env.DB.batch([...plan.stmts, query]);
@@ -193,33 +187,44 @@ it('reads the first scoped search page in the same bootstrap batch', async () =>
   ]);
 });
 
-it('rechecks a same-mode observed input match, including a pending transfer', async () => {
+/** Run a miss's window check (`{org}` and `{mode}` are the grant's) for the actor's tenant. */
+async function holds(
+  kit: Awaited<ReturnType<typeof fixture>>['kit'],
+  actor: { orgId: string; mode: string },
+  window: { sql: string; params: readonly SqlValue[] } | null,
+) {
+  if (!window) return null;
+  const sql = window.sql
+    .replaceAll('{org}', `'${actor.orgId}'`)
+    .replaceAll('{mode}', `'${actor.mode}'`);
+  const row = await first<{ ok: number }>(
+    kit.env.DB,
+    `SELECT CASE WHEN (${sql}) THEN 1 ELSE 0 END AS ok`,
+    window.params,
+  );
+  return row?.ok;
+}
+
+it('keeps a miss only while the same eligible match window stands, pending transfers included', async () => {
   const { kit, pass, actor } = await fixture();
   const keys = await scanCredentialKeys(kit.env, actor.orgId, actor.mode, pass.id, false);
-  const predicate = searchObservedCandidatePredicate(actor, pass.id, null, keys, pass.id);
-  const slots = scanSecretSlots(predicate.sql, predicate.params.length);
-  expect(slots?.filter((slot) => slot.label !== null)).toHaveLength(9);
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${predicate.sql}) THEN 1 ELSE 0 END AS matches`,
-      predicate.params,
-    ),
-  ).toEqual({ matches: 1 });
-  const wrongMode = searchObservedCandidatePredicate(
-    { ...actor, mode: 'test' },
-    pass.id,
-    null,
-    keys,
-    pass.id,
+  const window = (observed: number, scope = actor) =>
+    searchWindowUnchanged(
+      scope,
+      pass.id,
+      null,
+      keys,
+      kit.clock.now(),
+      keys.credentialTombstoneRefs,
+      observed,
+    );
+  expect(await holds(kit, actor, window(1))).toBe(1);
+  // The read saw no match, and one exists now: the miss is stale.
+  expect(await holds(kit, actor, window(0))).toBe(0);
+  // The same input in the other mode is not this window.
+  expect(await holds(kit, { ...actor, mode: 'test' }, window(1, { ...actor, mode: 'test' }))).toBe(
+    0,
   );
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${wrongMode.sql}) THEN 1 ELSE 0 END AS matches`,
-      wrongMode.params,
-    ),
-  ).toEqual({ matches: 0 });
   // A transfer reserves provider placeholders under the keyset (0043), so it needs one.
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   await stagePendingCredentialTransfer(kit.env.DB, pass.id, {
@@ -227,41 +232,37 @@ it('rechecks a same-mode observed input match, including a pending transfer', as
     token: kit.fx.ids.token(),
     now: kit.clock.now(),
   });
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${predicate.sql}) THEN 1 ELSE 0 END AS matches`,
-      predicate.params,
-    ),
-  ).toEqual({ matches: 1 });
+  expect(await holds(kit, actor, window(1))).toBe(0);
 });
 
-it('escapes name prefixes in the shared search and miss match', async () => {
+it('escapes name prefixes in the shared search and miss window', async () => {
   const { kit, pass, actor } = await fixture();
   await run(kit.env.DB, 'UPDATE passes SET display_title=? WHERE id=?', [
     'Alpha% literal',
     pass.id,
   ]);
-  const match = searchObservedCandidatePredicate(actor, 'Alpha%', null, undefined, pass.id);
-  const nonmatch = searchObservedCandidatePredicate(actor, 'Alpha_', null, undefined, pass.id);
+  const window = async (q: string) => {
+    const keys = await scanCredentialKeys(kit.env, actor.orgId, actor.mode, q, false);
+    return holds(
+      kit,
+      actor,
+      searchWindowUnchanged(actor, q, null, keys, kit.clock.now(), keys.credentialTombstoneRefs, 1),
+    );
+  };
+  expect(await window('Alpha%')).toBe(1);
+  expect(await window('Alpha_')).toBe(0);
+  const keys = await scanCredentialKeys(kit.env, actor.orgId, actor.mode, 'a@', false);
   expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${match.sql}) THEN 1 ELSE 0 END AS matches`,
-      match.params,
+    searchWindowUnchanged(
+      actor,
+      'a@',
+      null,
+      undefined,
+      kit.clock.now(),
+      keys.credentialTombstoneRefs,
+      1,
     ),
-  ).toEqual({ matches: 1 });
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${nonmatch.sql}) THEN 1 ELSE 0 END AS matches`,
-      nonmatch.params,
-    ),
-  ).toEqual({ matches: 0 });
-  expect(searchObservedCandidatePredicate(actor, 'a@', null, undefined, pass.id)).toEqual({
-    sql: '0',
-    params: [],
-  });
+  ).toBeNull();
 });
 
 it('fences a hidden-only search window and detects pending matching transfers', async () => {
@@ -273,61 +274,31 @@ it('fences a hidden-only search window and detects pending matching transfers', 
     pass.id,
   ]);
   const keys = await scanCredentialKeys(kit.env, actor.orgId, actor.mode, 'Alpha', false);
-  const changed = searchInputWindowChangedPredicate(
-    actor,
-    'Alpha',
-    null,
-    keys,
-    kit.clock.now(),
-    keys.credentialTombstoneRefs,
-    keys.credentialKeysetCommitment,
-    1,
-  );
-  const observed = searchObservedCandidatePredicate(actor, 'Alpha', null, keys, pass.id);
-  expect(scanSecretSlots(changed.sql, changed.params.length)).not.toBeNull();
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${changed.sql}) THEN 1 ELSE 0 END AS changed`,
-      changed.params,
-    ),
-  ).toEqual({ changed: 0 });
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${observed.sql}) THEN 1 ELSE 0 END AS matches`,
-      observed.params,
-    ),
-  ).toEqual({ matches: 1 });
-
+  const window = () =>
+    holds(
+      kit,
+      actor,
+      searchWindowUnchanged(
+        actor,
+        'Alpha',
+        null,
+        keys,
+        kit.clock.now(),
+        keys.credentialTombstoneRefs,
+        1,
+      ),
+    );
+  expect(await window()).toBe(1);
+  // A second match enlarges the window.
   const replacement = await makeLegacyScanPass(kit.fx, { orgId: kit.org.id, template });
   await run(kit.env.DB, 'UPDATE passes SET display_title=? WHERE id=?', [
     'Alpha replacement',
     replacement.id,
   ]);
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${changed.sql}) THEN 1 ELSE 0 END AS changed`,
-      changed.params,
-    ),
-  ).toEqual({ changed: 1 });
+  expect(await window()).toBe(0);
+  // The window keeps its size when one match leaves: only its size is compared, not who is in it.
   await run(kit.env.DB, 'UPDATE passes SET display_title=? WHERE id=?', ['Not matched', pass.id]);
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${changed.sql}) THEN 1 ELSE 0 END AS changed`,
-      changed.params,
-    ),
-  ).toEqual({ changed: 0 });
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${observed.sql}) THEN 1 ELSE 0 END AS matches`,
-      observed.params,
-    ),
-  ).toEqual({ matches: 0 });
-
+  expect(await window()).toBe(1);
   await run(kit.env.DB, 'UPDATE passes SET display_title=? WHERE id=?', [
     'Alpha original',
     pass.id,
@@ -341,13 +312,7 @@ it('fences a hidden-only search window and detects pending matching transfers', 
     token: kit.fx.ids.token(),
     now: kit.clock.now(),
   });
-  expect(
-    await first(
-      kit.env.DB,
-      `SELECT CASE WHEN (${changed.sql}) THEN 1 ELSE 0 END AS changed`,
-      changed.params,
-    ),
-  ).toEqual({ changed: 1 });
+  expect(await window()).toBe(0);
 });
 
 it('selects a deterministic latest scan within the same organization and mode', async () => {
@@ -398,7 +363,6 @@ it('selects a deterministic latest scan within the same organization and mode', 
     at,
     0,
     keys.credentialTombstoneRefs,
-    keys.credentialKeysetCommitment,
   );
   if (!query) throw new Error('Missing scoped search query');
   expect(searchRowsOf(await query.all())).toEqual([

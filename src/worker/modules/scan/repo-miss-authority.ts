@@ -1,132 +1,25 @@
 import type { GrantCond } from '../../platform/authority-cond.ts';
+import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
-import { actorAuthorityPredicate } from './repo-actor-authority.ts';
-import { csrfFenceBelongsTo } from './repo-actor-csrf-authority.ts';
-import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
-import { boundOutputPredicate } from './repo-output-predicates.ts';
-
-interface Predicate {
-  sql: string;
-  params: readonly SqlValue[];
-}
-
-export interface ReadMissFence {
-  /** The original actor CSRF proof, verified before constructing its scalar SQL fence. */
-  csrf: Predicate;
-  /** Null only if the read did not observe credential input. */
-  credentials: {
-    credentialKeysetCommitment: string;
-    credentialTombstoneRefs: readonly string[];
-  } | null;
-  /** True if the original candidate observation is stale or a matching transfer is pending.
-   * Raw input and candidate values must use the structural scan-ephemeral bind labels. */
-  candidates: Predicate;
-  /** Separately bound candidate/window snapshots; sensitive values must be structurally labeled. */
-  assertions?: readonly Predicate[];
-  /** Exact predicates used by the final item projection; empty for a confirmed empty projection. */
-  visible: readonly Predicate[];
-}
-
-/** Bind a read miss to the original actor, credential snapshot, and final visible-item predicates. */
-export function readMissAuthorityPredicate(
-  actor: ScanActor,
-  now: number,
-  fence: ReadMissFence,
-): Predicate {
-  const denied = { sql: '0', params: [] };
-  if (
-    !fence?.csrf ||
-    typeof fence.csrf.sql !== 'string' ||
-    !Array.isArray(fence.csrf.params) ||
-    !fence.candidates ||
-    typeof fence.candidates.sql !== 'string' ||
-    !Array.isArray(fence.candidates.params) ||
-    !Array.isArray(fence.visible) ||
-    fence.visible.some(
-      (item) => !item || typeof item.sql !== 'string' || !Array.isArray(item.params),
-    ) ||
-    (fence.assertions !== undefined &&
-      (!Array.isArray(fence.assertions) ||
-        fence.assertions.some(
-          (item) => !item || typeof item.sql !== 'string' || !Array.isArray(item.params),
-        )))
-  )
-    return denied;
-
-  // The fence must come from actorCsrfSnapshotFence for this actor: a valid fence captured for
-  // another actor must not authorize this actor's counter.
-  if (!csrfFenceBelongsTo(fence.csrf, actor)) return denied;
-
-  const authority = actorAuthorityPredicate({
-    actor,
-    now,
-    event: actor.event,
-    adminEventTemplates: actor.adminEventTemplates === true,
-  });
-  const parts = [`(${authority.sql})`, `(${fence.csrf.sql})`];
-  const params: SqlValue[] = [...authority.params, ...fence.csrf.params];
-  if (fence.credentials === null) {
-    if (actor.credentialKeysetCommitment !== undefined) return denied;
-  } else {
-    const credentials = fence.credentials;
-    if (!credentials || credentials.credentialKeysetCommitment !== actor.credentialKeysetCommitment)
-      return denied;
-    const clear = noCredentialTombstonesSql(
-      credentials.credentialTombstoneRefs,
-      { orgIdSql: '?', modeSql: '?' },
-      credentials.credentialKeysetCommitment,
-    );
-    if (clear.sql === '0') return denied;
-    parts.push(`(${clear.sql})`);
-    if (credentials.credentialTombstoneRefs.length) params.push(actor.orgId, actor.mode);
-    params.push(...clear.params);
-  }
-  // A changed candidate observation or matching pending transfer makes the miss uncertain.
-  // NULL is uncertain too, rather than evidence that the observation is current.
-  parts.push(`COALESCE((${fence.candidates.sql}),1)=0`);
-  params.push(...fence.candidates.params);
-  for (const item of fence.visible) {
-    // Match outputPredicateStmt: SQL NULL also means that the item is not visible.
-    parts.push(`NOT COALESCE((${item.sql}),0)`);
-    params.push(...item.params);
-  }
-  // This parser keeps each labeled secret in a standalone bind, never packed metadata.
-  return boundOutputPredicate({ sql: parts.join(' AND '), params });
-}
-
-/** Abort the whole caller batch if an independently bound observation is no longer current. */
-export function requireReadMissObservationStmt(
-  db: D1Database,
-  predicate: Predicate,
-): D1PreparedStatement {
-  const bound = boundOutputPredicate(predicate);
-  return stmt(
-    db,
-    `SELECT CASE WHEN (${bound.sql}) THEN 1
-    ELSE json_extract('[]', '$[scan_read_miss_stale]') END AS current`,
-    bound.params,
-  );
-}
-
-/** Only the deliberate stale-observation sentinel maps to a generic stale read. */
-export function isReadMissStale(error: unknown): boolean {
-  return error instanceof Error && error.message.includes('scan_read_miss_stale');
-}
 
 /** Misses for one actor are independent across tenants and live/test modes. */
 export function missCounterKey(actor: ScanActor): string {
   return `scan:miss:${JSON.stringify([actor.orgId, actor.mode, actor.actorKey])}`;
 }
 
+const INCREMENT = (when: string) =>
+  `INSERT INTO counters (key, window_start, count) SELECT ?, ?, 1 WHERE ${when}{grant}
+    ON CONFLICT (key, window_start) DO UPDATE SET count=count+excluded.count RETURNING count`;
+
 /** The increment of a stop grant's miss: it applies only when the statement before it changed a row (the scan closed here). */
 export const missIncrementPart = (key: string, window: number): GrantPart =>
-  writePart(
-    `INSERT INTO counters (key, window_start, count) SELECT ?, ?, 1 WHERE changes()=1 AND {grant}
-    ON CONFLICT (key, window_start) DO UPDATE SET count=count+excluded.count RETURNING count`,
-    [key, window],
-  );
+  writePart(INCREMENT('changes()=1 AND '), [key, window]);
+
+/** The increment of a read miss: the grant's own checks are the condition, nothing precedes it. */
+export const readMissIncrementPart = (key: string, window: number): GrantPart =>
+  writePart(INCREMENT(''), [key, window]);
 
 /** The audit row's condition: the increment just before it crossed the cap. */
 export const crossedCap = (key: string, window: number, threshold: number): GrantCond => ({
@@ -134,64 +27,45 @@ export const crossedCap = (key: string, window: number, threshold: number): Gran
     `changes()=1 AND EXISTS (SELECT 1 FROM counters WHERE key=${b.bind(key)} AND window_start=${b.bind(window)} AND count=${b.bind(threshold)})`,
 });
 
-/** The immediately preceding increment must have crossed the cap in this transaction. */
-export function cappedMissAuditStmt(
-  db: D1Database,
-  input: {
-    actor: ScanActor;
-    key: string;
-    window: number;
-    threshold: number;
-    at: number;
-    requestId: string | null;
-  },
-): D1PreparedStatement {
-  const { actor, key, window, threshold, at, requestId } = input;
-  return stmt(
-    db,
-    `INSERT INTO audit_log
-    (at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, ip_prefix, detail)
-    SELECT ?, ?, ?, ?, 'scan.misses_capped', ?, ?, ?, NULL, NULL
-    WHERE changes()=1 AND EXISTS (SELECT 1 FROM counters
-      WHERE key=? AND window_start=? AND count=?)`,
-    [
-      at,
-      actor.orgId,
-      actor.actor.type,
-      actor.actor.id,
-      actor.scanner ? 'scanner' : null,
-      actor.scanner?.id ?? null,
-      requestId,
-      key,
-      window,
-      threshold,
-    ],
-  );
-}
-
-/** An eligible miss cannot commit without its counter update. */
-export function requireMissIncrementStmt(db: D1Database, eligible: Predicate): D1PreparedStatement {
-  return stmt(
-    db,
-    `SELECT CASE WHEN changes()<>1 AND (${eligible.sql})
-    THEN json_extract('[]', '$[scan_effect_incomplete]') ELSE 1 END AS complete`,
-    eligible.params,
-  );
-}
-
-/** The increment crossing the cap cannot commit without its audit row. */
-export function requireMissAuditStmt(
-  db: D1Database,
-  eligible: Predicate,
+/** The cap was crossed by this miss, or its audit row exists. */
+export const auditedAtCap = (
+  actor: ScanActor,
   key: string,
   window: number,
   threshold: number,
-): D1PreparedStatement {
-  return stmt(
-    db,
-    `SELECT CASE WHEN changes()<>1 AND (${eligible.sql})
-    AND EXISTS (SELECT 1 FROM counters WHERE key=? AND window_start=? AND count=?)
-    THEN json_extract('[]', '$[scan_effect_incomplete]') ELSE 1 END AS complete`,
-    [...eligible.params, key, window, threshold],
-  );
+  at: number,
+): GrantCond => ({
+  render: (b, _scope, tenant) =>
+    `NOT EXISTS (SELECT 1 FROM counters WHERE key=${b.bind(key)} AND window_start=${b.bind(window)} AND count=${b.bind(threshold)})
+    OR EXISTS (SELECT 1 FROM audit_log WHERE org_id=${tenant}.org_id AND action='scan.misses_capped'
+      AND actor_id IS ${b.bind(actor.actor.id)} AND at=${b.bind(at)})`,
+});
+
+/** The counter row of an actor's window: one read, in the first batch of a read that could be a miss. */
+export const missCountStmt = (db: D1Database, key: string, window: number) =>
+  stmt(db, 'SELECT count FROM counters WHERE key = ? AND window_start = ?', [key, window]);
+
+declare const windowBrand: unique symbol;
+
+/**
+ * What a read saw when it found nothing, as SQL a grant can assert: it holds while no pass the read
+ * could have returned matches the input. It names the tenant only as `{org}` and `{mode}` (the
+ * grant's own). Made by `missWindow`, which refuses SQL that could name another tenant, write, or
+ * bind the wrong number of values; only `repo-search.ts` and `resolve-passless-read.ts` make one.
+ */
+export interface MissWindow {
+  readonly sql: string;
+  readonly params: readonly SqlValue[];
+  readonly [windowBrand]: true;
+}
+
+export function missWindow(sql: string, params: readonly SqlValue[]): MissWindow {
+  const marks = sql.match(/\?/g)?.length ?? 0;
+  const bad = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE', message);
+  if (marks !== params.length) throw bad('A miss window binds as many values as it has marks.');
+  if (/\b(?:org_id|mode)\s*(?:=|IS)\s*\?/i.test(sql) || /\b[ag]\./.test(sql))
+    throw bad('A miss window names its tenant only as {org} and {mode}.');
+  if (/;|--|\/\*|\b(?:insert|update|delete|replace|attach|pragma|drop|create|alter)\b/i.test(sql))
+    throw bad('A miss window is read-only fixed SQL.');
+  return Object.freeze({ sql, params: Object.freeze([...params]) }) as MissWindow;
 }

@@ -1,25 +1,14 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { actorCsrfFence } from './actor-csrf.ts';
 import type { ScanActor } from './guard.ts';
-import { prepareReadMiss } from './misses.ts';
+import { grantReadMiss } from './misses.ts';
+import { missWindow } from './repo-miss-authority.ts';
+import { captureTestEpochs } from './test-kit-epochs.ts';
 
-/** Count a confirmed read-only miss without credential input in its own transaction. */
+/** Count a confirmed read-only miss without credential input, in its own grant. */
 export async function countMiss(ctx: ServiceContext, actor: ScanActor): Promise<void> {
-  const csrf = await actorCsrfFence(ctx, actor);
-  if (!csrf) return;
-  const credentials =
-    actor.credentialKeysetCommitment === undefined
-      ? null
-      : {
-          credentialKeysetCommitment: actor.credentialKeysetCommitment,
-          credentialTombstoneRefs: [],
-        };
-  const plan = prepareReadMiss(ctx, actor, {
-    csrf,
-    credentials,
-    candidates: { sql: '0', params: [] },
-    visible: [],
+  await captureTestEpochs(ctx, actor);
+  await grantReadMiss(ctx, actor, {
+    refs: [],
+    unchanged: missWindow('{org} IS NOT NULL', []),
   });
-  const results = await ctx.env.DB.batch(plan.stmts);
-  plan.throwIfCapped(plan.result(results));
 }

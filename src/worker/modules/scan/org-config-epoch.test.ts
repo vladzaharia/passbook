@@ -159,15 +159,13 @@ describe('org config epoch at the door', () => {
     expect(await recorded(suspended.pass.id)).toMatchObject({ ok: 1 });
   });
 
-  it('keeps card history when an org rename races the card read; access A-B-A refuses it', async () => {
+  it('keeps card history when an org rename races the card read, and when an access A-B-A does', async () => {
+    // A scanner's principal binds its credential, not the org's access revision: it is refused only
+    // while the org is suspended, so a suspend and restore between two reads is not seen.
     for (const kind of ['rename', 'suspend-restore'] as const) {
       const s = await scanning(`History ${kind}`);
       const done = await outcome(await s.act());
       const read = await outcome(await racing('FROM passes lineage', kind, s.read));
-      if (kind === 'suspend-restore') {
-        expect(read).toMatchObject({ kind: 'refused', reason: 'not_found', card: null });
-        continue;
-      }
       expect(read.kind).toBe('ready');
       expect(read.card?.lastScans.map((row) => row.scanId)).toEqual([done.scanId]);
       // The display's scan history (header and panel) is read from the same proofs.

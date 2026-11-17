@@ -4,11 +4,6 @@ import type { ResolvedScanAction, ResolvedScanManifest } from '../../../shared/s
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
-import {
-  actorCsrfAuthorityStmt,
-  actorCsrfSnapshotFence,
-  actorCsrfSnapshotFromResult,
-} from './actor-csrf.ts';
 import { type CountsPlan, planCounts } from './counts.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -16,7 +11,7 @@ import {
   snapshotCredentialEnv,
 } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
-import { actorAuthorityPredicate } from './repo-actor-authority.ts';
+import { missCounterRead, refuseOverCap } from './misses.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import { resolveObserved, unknown } from './resolve-outcome-observed.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
@@ -66,67 +61,35 @@ export async function resolveOutcome(
     credentialTombstoneRefs: Object.freeze([...observed.credentialTombstoneRefs]),
     otherModeCredentialTombstoneRefs: Object.freeze([...observed.otherModeCredentialTombstoneRefs]),
   });
-  actor.credentialKeysetCommitment = credentialContext.credentialKeysetCommitment;
-  const csrfStmt = actorCsrfAuthorityStmt(ctx.env.DB, actor);
-  if (!csrfStmt)
-    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
-  const [csrfResult, settingsResult] = await ctx.env.DB.batch([
-    csrfStmt,
+  actor = { ...actor, credentialKeysetCommitment: credentialContext.credentialKeysetCommitment };
+  const refused = { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
+  const plan = await planCandidateReads(ctx, actor, req.input, credentialContext);
+  if (!plan.stmts.length) return refused;
+  const countPlan = planCounts({ ...ctx, clock: { now: () => plan.now } }, actor, req.dayStart);
+  // One round trip: the candidates, the day's counts, the platform settings and the miss counter.
+  const results = await ctx.env.DB.batch([
+    ...plan.stmts,
+    ...countPlan.stmts,
     platformSettingsStmt(ctx.env.DB),
+    missCounterRead(ctx.env.DB, actor, plan.now),
   ]);
-  const csrfSnapshot = await actorCsrfSnapshotFromResult(ctx, actor, csrfResult);
-  if (!settingsResult)
-    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
-  const settings = decodePlatformSettings(settingsResult);
-  if (!csrfSnapshot)
-    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
-  const csrfAt = (now: number) =>
-    actorCsrfSnapshotFence(
-      actor,
-      csrfSnapshot.session
-        ? { ...csrfSnapshot, session: { ...csrfSnapshot.session, now } }
-        : csrfSnapshot,
-    );
-  const plan = await planCandidateReads(ctx, actor, req.input, credentialContext, (now) => {
-    const csrf = csrfAt(now);
-    if (!csrf) return null;
-    const authority = actorAuthorityPredicate({
-      actor,
-      now,
-      event: actor.event,
-      adminEventTemplates: actor.adminEventTemplates === true,
-    });
-    return {
-      sql: `(${authority.sql}) AND (${csrf.sql})`,
-      params: [...authority.params, ...csrf.params],
-    };
-  });
-  if (!plan.stmts.length)
-    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
-  const csrf = csrfAt(plan.now);
-  if (!csrf)
-    return { outcome: unknown().outcome, evaluatedSnapshot: null, credentialContext: null };
-  const countPlan = planCounts(
-    { ...ctx, clock: { now: () => plan.now } },
-    actor,
-    req.dayStart,
-    actor,
-    csrf,
-  );
-  const results = await ctx.env.DB.batch([...plan.stmts, ...countPlan.stmts]);
   const candidateRead = { candidates: plan.finish(results.slice(0, plan.stmts.length)) };
   const countResults = results.slice(plan.stmts.length, plan.stmts.length + countPlan.stmts.length);
+  const settingsResult = results[plan.stmts.length + countPlan.stmts.length];
+  // Past its miss cap an actor reads nothing, a hit included: guessing is throttled, not just its misses.
+  refuseOverCap(results[plan.stmts.length + countPlan.stmts.length + 1]?.results?.[0], plan.now);
+  if (!settingsResult) return refused;
+  const settings = decodePlatformSettings(settingsResult);
   const counts: CountsPlan = { stmts: [], read: () => countPlan.read(countResults) };
-  const { unconfirmed, ...result } = await resolveObserved(
+  const { unconfirmed: notConfirmed, ...result } = await resolveObserved(
     ctx,
     actor,
     req,
     credentialContext,
-    csrfSnapshot,
     candidateRead,
     counts,
     settings['scan.undoWindowMinutes'],
     defaultAction,
   );
-  return { ...result, credentialContext: unconfirmed ? null : credentialContext };
+  return { ...result, credentialContext: notConfirmed ? null : credentialContext };
 }

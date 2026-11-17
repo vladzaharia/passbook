@@ -72,4 +72,31 @@ describe('lookup output authority', () => {
       Object.assign(kit.env, { DB: real });
     }
   });
+
+  it.each([
+    ['a hit', (pass: { id: string }) => pass.id, 5],
+    ['a counted miss', () => 'not-present-731', 4],
+  ] as const)(
+    'keeps a cold lookup %s within its trips after the guard',
+    async (_name, query, limit) => {
+      const pass = await setupPhoto();
+      const { scanner } = await scannerForLookup();
+      const real = kit.env.DB;
+      const counted = countD1(real);
+      Object.assign(kit.env, { DB: counted.db });
+      try {
+        await kit.post(scanner.headers, '/resolve', {});
+        const guard = counted.count();
+        counted.reset();
+        clearSettingsCache(counted.db);
+        const response = await kit.post(scanner.headers, '/lookup', { q: query(pass) });
+        expect(response.status).toBe(200);
+        const body = (await response.json()) as { items: { passId: string }[] };
+        expect(body.items.length).toBe(query(pass) === pass.id ? 1 : 0);
+        expect(counted.count() - guard).toBeLessThanOrEqual(limit);
+      } finally {
+        Object.assign(kit.env, { DB: real });
+      }
+    },
+  );
 });

@@ -483,10 +483,11 @@ describe('scanner evaluated policy revisions', () => {
     expect(await ledgerOf(s.pass.id)).toEqual({ gates: 0, events: 0 });
   };
 
-  // Suspending and restoring the org moves its access revision: the read fences refuse the original
-  // read. The scanner's own access never lapsed (the org is active again), so an action is retried.
+  // Suspending and restoring the org moves its access revision. A scanner's principal checks the org
+  // is active at the final fence, not that it never lapsed: a read that raced the ABA answers, and
+  // an action is retried (its claim is a write). An org still suspended at the fence refuses.
   for (const route of ['resolve', 'lookup', 'actions'] as const) {
-    it(`does not expose or act on a candidate after an organization ABA in ${route}`, async () => {
+    it(`${route === 'actions' ? 'retries an action' : 'answers a read'} after an organization ABA in ${route}`, async () => {
       const s = await scenario();
       const idempotencyKey = key();
       const response = await afterCandidateRead(
@@ -503,6 +504,33 @@ describe('scanner evaluated policy revisions', () => {
         return;
       }
       expect(response.status).toBe(200);
+      const body = (await response.json()) as { items?: unknown[]; kind?: string };
+      if (route === 'lookup') expect(body.items).toMatchObject([{ passId: s.pass.id }]);
+      else expect(body).toMatchObject({ kind: 'ready', card: { passId: s.pass.id } });
+      expect(await ledgerOf(s.pass.id)).toEqual({ gates: 0, events: 0 });
+    });
+  }
+
+  for (const route of ['resolve', 'lookup'] as const) {
+    it(`withholds a candidate while the organization is still suspended at the fence in ${route}`, async () => {
+      const s = await scenario();
+      let response: Response;
+      try {
+        response = await afterCandidateRead(
+          s.pass.id,
+          (db) =>
+            run(db, "UPDATE orgs SET status='suspended',updated_at=updated_at+1 WHERE id=?", [
+              kit.org.id,
+            ]).then(() => {}),
+          () => post(s, route),
+        );
+      } finally {
+        await run(
+          kit.env.DB,
+          "UPDATE orgs SET status='active',updated_at=updated_at+1 WHERE id=?",
+          [kit.org.id],
+        );
+      }
       const text = await response.text();
       expect(text).not.toContain(s.pass.id);
       expect(text).not.toContain('Revision Private Person');
@@ -563,13 +591,9 @@ describe('scanner evaluated policy revisions', () => {
           }
           expect(response.status).toBe(200);
           const text = await response.text();
-          // Cross-mode detection is a bare refusal; a voided pass under an unchanged org is refused as such.
-          const reason =
-            kind === 'mode mismatch'
-              ? 'test_pass'
-              : policy === 'organization'
-                ? 'not_found'
-                : 'voided';
+          // Cross-mode detection is a bare refusal; a voided pass is refused as such (an org that was
+          // suspended and restored is active again at the fence).
+          const reason = kind === 'mode mismatch' ? 'test_pass' : 'voided';
           expect(JSON.parse(text)).toMatchObject({
             kind: 'refused',
             reason,

@@ -3,7 +3,6 @@ import type { ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts
 import type { ResolvedScanAction, ResolvedScanManifest } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound } from '../passes/builder.ts';
-import { type ActorCsrfSnapshot, actorCsrfSnapshotFence } from './actor-csrf.ts';
 import { type CardRead, historyPlan, readCard, readyOutcome, renderCardDisplay } from './card.ts';
 import type { CountsPlan } from './counts.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
@@ -11,19 +10,18 @@ import type { ScanActor } from './guard.ts';
 import { knownPhotoUrl } from './member-photo.ts';
 import { blankOutcome, notAcceptedOutcome, stopOutcome } from './outcome.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { outputAuthorityPredicate } from './repo-output-authority.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
-import { sessionReadAuthorityCurrent } from './repo-session-authority.ts';
+import { SESSION_READ, scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
+import { ACTOR_TENANT, passLineageFence } from './repo-read-fences.ts';
+import { matchingPassSql } from './repo-resolve-passless-read.ts';
 import { accepts, candidateAudit, matchesEvent } from './resolve-candidates.ts';
 import { evaluate } from './resolve-evaluate.ts';
 import { currentFound } from './resolve-outcome-current.ts';
 import {
   acceptedFilter,
-  candidateDetectionProof,
   candidateEligible,
-  candidateReadProof,
-  currentInputActor,
-  inputCandidates,
+  countNotFound,
+  inputMatch,
+  passlessCurrent,
 } from './resolve-passless-read.ts';
 import type { FinalizedDisplayHistory } from './scan-display-history.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
@@ -50,7 +48,6 @@ export async function resolveObserved(
   actor: ScanActor,
   req: z.infer<typeof ScanResolveRequestSchema>,
   credentials: CredentialTombstoneSnapshot,
-  csrfSnapshot: ActorCsrfSnapshot,
   candidateRead: { candidates: Candidate[] | null },
   counts: CountsPlan,
   undoWindowMinutes: number,
@@ -81,7 +78,6 @@ export async function resolveObserved(
       actor,
       evaluated.found,
       displayHistory,
-      csrfSnapshot,
       photoGrant,
       historyFence,
       passViewGrant,
@@ -111,7 +107,6 @@ export async function resolveObserved(
       actor,
       found,
       displayHistory,
-      csrfSnapshot,
       photoGrant,
       historyFence,
       passViewGrant,
@@ -140,22 +135,15 @@ export async function resolveObserved(
       (candidate) => candidate.pass.mode !== actor.mode,
     );
     if (!other.length) return unknown();
-    const proofs = () =>
-      other.map((candidate) => candidateDetectionProof(actor, candidate, credentials));
-    const absence = await inputCandidates(ctx, actor, req.input, credentials, candidateEligible);
+    if (!Array.isArray(evaluated.otherModeCredentialTombstoneRefs)) return unknown();
+    const match = await inputMatch(ctx, actor, req.input, credentials);
     if (
-      !(await currentInputActor(
-        ctx,
-        actor,
-        csrfSnapshot,
-        evaluated.credentialTombstoneRefs,
-        evaluated.credentialKeysetCommitment,
-        evaluated.otherModeCredentialTombstoneRefs,
-        true,
-        undefined,
-        proofs,
-        absence,
-      ))
+      !(await passlessCurrent(ctx, actor, {
+        refs: evaluated.credentialTombstoneRefs,
+        otherRefs: evaluated.otherModeCredentialTombstoneRefs,
+        appeared: matchingPassSql(match, ACTOR_TENANT, candidateEligible),
+        lineage: other.map((candidate) => passLineageFence(actor, candidate.pass, false)),
+      }))
     )
       return unknown();
     return {
@@ -167,7 +155,7 @@ export async function resolveObserved(
   let photoUrl: string | null = null;
   if (found) {
     if (!displayHistory) return unknown();
-    const proof = await currentFound(ctx, actor, found, displayHistory, csrfSnapshot, photoGrant);
+    const proof = await currentFound(ctx, actor, found, displayHistory, photoGrant);
     if (!proof) return unknown();
     history = proof.history;
     photoUrl = proof.photoUrl;
@@ -183,40 +171,15 @@ export async function resolveObserved(
         JSON.stringify(evaluated.auditPassSnapshot)
     )
       return unknown();
-    const now = ctx.clock.now();
-    const csrf = actorCsrfSnapshotFence(
-      actor,
-      csrfSnapshot.session
-        ? { ...csrfSnapshot, session: { ...csrfSnapshot.session, now } }
-        : csrfSnapshot,
-    );
-    if (!csrf) return unknown();
-    const authority = outputAuthorityPredicate({
-      actor,
-      now,
-      event: actor.event,
-      templateId: candidate.pass.templateId,
-      credentialTombstoneRefs: candidate.credentialTombstoneRefs,
-      credentialKeysetCommitment: candidate.credentialKeysetCommitment,
-      pass: candidate.pass,
-      connectionGeneration: candidate.connectionGeneration,
-      activeTemplateVersion: candidate.activeTemplateVersion,
-      orgRevision: candidate.orgRevision,
-      templateRevision: candidate.templateRevision,
-      release: candidate,
-      displayTemplateVersion: candidate.displayTemplateVersion,
-      checkInRules: candidate.checkInRules,
-      lookupHash: candidate.lookupHash,
-      extra: csrf,
-    });
-    const result = await outputPredicateStmt(ctx.env.DB, authority).first<{ authorized: number }>();
-    if (result?.authorized !== 1) return unknown();
+    if (
+      !(await passlessCurrent(ctx, actor, {
+        refs: candidate.credentialTombstoneRefs,
+        lineage: [passLineageFence(actor, candidate.pass, true)],
+      }))
+    )
+      return unknown();
   } else {
     const reason = evaluated.reason;
-    const candidates =
-      reason === 'not_found'
-        ? await inputCandidates(ctx, actor, req.input, credentials)
-        : undefined;
     const configOnly =
       actor.principal === 'scanner' &&
       actor.templateIds.length === 0 &&
@@ -224,8 +187,9 @@ export async function resolveObserved(
     // An invalid scope accepts nothing: the bare refusal `act` gives, under the same redacted-scope
     // authority the session read uses (the scan fence refuses every invalid scope).
     if (configOnly && actor.invalidScannerScope) {
-      if (!(await sessionReadAuthorityCurrent(ctx, actor, ctx.clock.now())))
-        throw await staleScanRead(ctx, actor);
+      const auth = scanReadAuthority(actor, { now: ctx.clock.now(), read: SESSION_READ });
+      const current = await scanAuthorizedStmt(ctx.env.DB, auth).first<{ authorized: number }>();
+      if (current?.authorized !== 1) throw await staleScanRead(ctx, actor);
       return { outcome: notAcceptedOutcome().outcome, evaluatedSnapshot: null };
     }
     const sameMode = (candidateRead.candidates ?? []).filter(
@@ -239,42 +203,34 @@ export async function resolveObserved(
               (candidate) => accepts(actor, candidate.pass) && matchesEvent(actor, candidate.pass),
             )
           : sameMode;
-    if (
+    const observed =
       !configOnly &&
-      (reason === 'wrong_event' || reason === 'not_accepted' || reason === 'ambiguous') &&
-      relevant.length < (reason === 'ambiguous' ? 2 : 1)
-    )
-      return unknown();
-    const proofs = (now: number) =>
-      !configOnly &&
-      (reason === 'wrong_event' || reason === 'not_accepted' || reason === 'ambiguous')
-        ? relevant.map((candidate) => candidateReadProof(actor, candidate, credentials, now))
-        : [];
-    const absence =
-      !configOnly && (reason === 'wrong_event' || reason === 'not_accepted')
-        ? await inputCandidates(
-            ctx,
-            actor,
-            req.input,
-            credentials,
-            acceptedFilter(actor, reason === 'wrong_event'),
-          )
-        : undefined;
-    if (
-      !(await currentInputActor(
-        ctx,
-        actor,
-        csrfSnapshot,
-        evaluated.credentialTombstoneRefs,
-        evaluated.credentialKeysetCommitment,
-        undefined,
-        false,
-        candidates,
-        proofs,
-        absence,
-      ))
-    )
-      return unknown();
+      (reason === 'wrong_event' || reason === 'not_accepted' || reason === 'ambiguous');
+    if (observed && relevant.length < (reason === 'ambiguous' ? 2 : 1)) return unknown();
+    const match =
+      reason === 'not_found' || (observed && reason !== 'ambiguous')
+        ? await inputMatch(ctx, actor, req.input, credentials)
+        : null;
+    // A miss is counted, in one grant that also holds the actor and the credential's refs.
+    const current =
+      reason === 'not_found'
+        ? await countNotFound(ctx, actor, match, evaluated.credentialTombstoneRefs)
+        : await passlessCurrent(ctx, actor, {
+            refs: evaluated.credentialTombstoneRefs,
+            ...(observed
+              ? { lineage: relevant.map((c) => passLineageFence(actor, c.pass, false)) }
+              : {}),
+            ...(observed && reason !== 'ambiguous'
+              ? {
+                  appeared: matchingPassSql(
+                    match,
+                    ACTOR_TENANT,
+                    acceptedFilter(actor, reason === 'wrong_event'),
+                  ),
+                }
+              : {}),
+          });
+    if (!current) return unknown();
   }
   return {
     outcome: stopOutcome(ctx, actor, evaluated, read, {

@@ -18,7 +18,6 @@ import { knownPhotoUrl, photoGrantUrl } from './member-photo.ts';
 import { candidateById } from './repo-lookup.ts';
 import { missCounterKey } from './repo-miss-authority.ts';
 import { isFinalFenceBatch } from './repo-read-grant-expiry-test-fixtures.ts';
-import { scanSecretSlots } from './repo-secret-binds.ts';
 import { foundOf } from './resolve.ts';
 
 registerLookupOutputFixture();
@@ -147,44 +146,27 @@ describe('lookup output authority', () => {
     );
   });
 
-  it('keeps original credentials and contact information out of packed bindings', async () => {
+  it('binds only ids, generations and release ids in the final pass read, never credentials or contact data', async () => {
     const pass = await setupPhoto();
-    const { scanner, actor } = await scannerForLookup();
-    const original = await first<{ csrf_secret: string }>(
-      kit.env.DB,
-      'SELECT csrf_secret FROM scanners WHERE id=?',
-      [scanner.id],
-    );
+    const { actor } = await scannerForLookup();
     const { db, bindings } = interceptBatches(kit.env.DB);
     const ctx = { ...kit.ctx, env: { ...kit.env, DB: db } };
     overrideDeps(ctx.env, depsOf(kit.env));
     expect((await lookup(ctx, actor, pass.scanCode!)).items.map((item) => item.passId)).toEqual([
       pass.id,
     ]);
-    const packed = bindings.flatMap(({ sql, values }) => {
-      const slots = scanSecretSlots(sql, values.length);
-      if (!slots) return [];
-      return slots.flatMap((slot, index) =>
-        sql.slice(slot.offset - 5, slot.offset) === 'json(' &&
-        /^\?\)\s+AS\s+(?:data|segment_\d+)/i.test(sql.slice(slot.offset))
-          ? [values[index]]
-          : [],
-      );
-    });
-    expect(packed.length).toBeGreaterThan(0);
-    for (const value of packed) {
-      expect(typeof value).toBe('string');
-      for (const secret of [
-        pass.serial,
-        pass.authToken,
-        pass.downloadToken,
-        pass.scanCode!,
-        'hidden@example.test',
-        original!.csrf_secret,
-      ])
-        expect(value).not.toContain(secret);
-    }
-    expect(bindings.some(({ values }) => values.includes(original!.csrf_secret))).toBe(true);
+    const final = bindings.filter(({ sql }) => sql.includes('ring AS MATERIALIZED'));
+    expect(final.length).toBeGreaterThan(0);
+    for (const { values } of final)
+      for (const value of values)
+        for (const secret of [
+          pass.serial,
+          pass.authToken,
+          pass.downloadToken,
+          pass.scanCode!,
+          'hidden@example.test',
+        ])
+          expect(String(value)).not.toContain(secret);
   });
 
   it('retains the identity but withholds a photo removed before the final transaction', async () => {

@@ -68,10 +68,11 @@ describe('lookup output authority', () => {
         window,
       ]),
     ).toEqual({ count: 1 });
+    // The miss is its own grant: the actor, the credential's refs and the search window hold with it.
     const missBatch = batches.find(
       (batch) =>
         batch.some((sql) => sql.includes('INSERT INTO counters')) &&
-        batch.some((sql) => sql.includes('actor_authorized') || sql.includes('AS authorized')),
+        batch.some((sql) => sql.includes('INSERT INTO authority_grants')),
     );
     expect(missBatch).toBeDefined();
   });
@@ -90,19 +91,16 @@ describe('lookup output authority', () => {
     ).toEqual({ count: 1 });
   });
 
-  it('does not count a hidden lookup when its original candidate changes before final CAS', async () => {
+  it('does not count a hidden lookup when its original candidate leaves the window before the count', async () => {
     const { pass, actor } = await hiddenLookupFixture();
     const real = kit.env.DB;
     let changed = false;
     const { db } = interceptBatches(real, async (sql) => {
-      if (!changed && sql.some((text) => text.includes('scan_read_miss_stale'))) {
+      if (!changed && sql.some((text) => text.includes('INSERT INTO authority_grants'))) {
         changed = true;
-        await run(
-          real,
-          `UPDATE passes SET personalization=json_set(personalization,'$.memberName',?)
-          WHERE id=?`,
-          ['Changed hidden member', pass.id],
-        );
+        await run(real, "UPDATE passes SET status='voided', revision=revision+1 WHERE id=?", [
+          pass.id,
+        ]);
       }
     });
     const ctx = { ...kit.ctx, env: { ...kit.env, DB: db } };
