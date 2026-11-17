@@ -44,7 +44,7 @@ export async function servePassFile(
     'content-type': PKPASS_CONTENT_TYPE,
     etag,
     'last-modified': new Date(modifiedSeconds * 1000).toUTCString(),
-    'cache-control': 'private, no-cache',
+    'cache-control': 'private, no-store',
     'x-content-type-options': 'nosniff',
     ...extraHeaders,
   });

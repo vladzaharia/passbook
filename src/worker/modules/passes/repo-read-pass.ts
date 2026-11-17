@@ -1,6 +1,7 @@
 import { tokenKeys } from '../../platform/capability-token.ts';
 import { all, first, stmt } from '../../platform/db.ts';
-import { knownEmailSql, personLabelSql } from '../../platform/known-email-sql.ts';
+import { knownEmailSql } from '../../platform/known-email-sql.ts';
+import { userLabelSql } from '../orgs/repo-user-label.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
 import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
 
@@ -45,7 +46,7 @@ export async function getPassByDownloadToken(
 ): Promise<Pass | null> {
   const row = await first<PassDbRow>(
     env.DB,
-    `${PASS_SELECT} WHERE download_token IN (?, ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
+    `${PASS_SELECT} WHERE download_token IN (?, ?, ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
     await tokenKeys(env, 'pass', token),
   );
   return row ? mapPass(row) : null;
@@ -75,14 +76,16 @@ export async function currentPassJson(db: D1Database, passId: string): Promise<s
   return row?.pass_json ?? null;
 }
 
+/** Users blocked from attaching, labelled for the caller (see `userLabelSql`). */
 export async function listBlockedUsers(
   db: D1Database,
   passId: string,
+  platform: boolean,
 ): Promise<{ id: string; name: string | null }[]> {
   return all<{ id: string; name: string | null }>(
     db,
-    `SELECT u.id, ${personLabelSql('u.name', 'u.primary_email')} AS name FROM pass_attach_blocks b
-     JOIN users u ON u.id = b.user_id WHERE b.pass_id = ? ORDER BY b.created_at`,
+    `SELECT b.user_id AS id, ${userLabelSql('b.user_id', '(SELECT org_id FROM passes WHERE id = b.pass_id)', platform)} AS name
+     FROM pass_attach_blocks b WHERE b.pass_id = ? ORDER BY b.created_at`,
     [passId],
   );
 }

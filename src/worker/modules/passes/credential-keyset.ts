@@ -1,4 +1,4 @@
-import { derivedHmacKey } from '../../platform/crypto.ts';
+import { derivedHmacKey, isKeyEnvName } from '../../platform/crypto.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { toHex } from '../../platform/ids.ts';
 import {
@@ -13,7 +13,7 @@ const encoder = new TextEncoder();
 export function captureCredentialKeyEnv(env: object): Readonly<Record<string, string>> {
   const snapshot: Record<string, string> = {};
   for (const [name, value] of Object.entries(env)) {
-    if (/^KEK_V\d+$/.test(name) && typeof value === 'string') snapshot[name] = value;
+    if (isKeyEnvName(name) && typeof value === 'string') snapshot[name] = value;
   }
   return Object.freeze(snapshot);
 }

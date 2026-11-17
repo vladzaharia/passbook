@@ -66,6 +66,6 @@ export async function createCandidate(
   return toCandidate(
     candidate,
     [],
-    await userNames(ctx.env.DB, [candidate.authorId, candidate.versionAuthorId]),
+    await userNames(ctx.env.DB, [candidate.authorId, candidate.versionAuthorId], body.orgId, false),
   );
 }

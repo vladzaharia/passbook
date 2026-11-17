@@ -1,7 +1,14 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { fakeAuth, fixtures, makeEnv, makeOrg, TEST_NOW } from '../../../../test/helpers/index.ts';
+import {
+  fakeAuth,
+  fixtures,
+  makeEnv,
+  makeOrg,
+  makeScanStaff,
+  TEST_NOW,
+} from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -173,6 +180,51 @@ describe('status components', () => {
     const bad = await status({ KEK_V1: 'not-a-key' } as Partial<AppEnv>);
     expect(find(bad, 'kek')).toMatchObject({ state: 'failing' });
     expect(JSON.stringify(bad)).not.toContain('not-a-key');
+  });
+
+  it('fails the key check on a wrong MAC key rotation setting', async () => {
+    for (const settings of [
+      { MAC_KEY_VERSION: '3' },
+      { MAC_KEY_VERSION: 'two' },
+      { MAC_KEY_VERSION: '1', MAC_KEY_VERSION_PREVIOUS: '1' },
+    ]) {
+      clearStatusCache(env.DB);
+      const bad = await status(settings as Partial<AppEnv>);
+      expect(find(bad, 'kek')).toMatchObject({ state: 'failing' });
+      expect(find(bad, 'kek')?.detail).toContain('MAC_KEY_VERSION');
+    }
+    clearStatusCache(env.DB);
+    const ok = await status({
+      KEK_V2: base.KEK_V1,
+      MAC_KEY_VERSION: '2',
+      MAC_KEY_VERSION_PREVIOUS: '1',
+    } as Partial<AppEnv>);
+    expect(find(ok, 'kek')).toMatchObject({ state: 'verified' });
+  });
+
+  it('counts staff PINs still on the previous root during a rotation', async () => {
+    const fx = fixtures(base);
+    const org = await makeOrg(fx);
+    await makeScanStaff(fx, { orgId: org.id });
+    const rotating = {
+      KEK_V2: base.KEK_V1,
+      MAC_KEY_VERSION: '2',
+      MAC_KEY_VERSION_PREVIOUS: '1',
+    } as Partial<AppEnv>;
+    clearStatusCache(env.DB);
+    const during = find(await status(rotating), 'kek');
+    expect(during).toMatchObject({ state: 'degraded' });
+    expect(during?.detail).toMatch(/^\d+ staff PINs still on the previous root\.$/);
+    // With no previous root set the count is not asked for.
+    clearStatusCache(env.DB);
+    expect(
+      find(await status({ KEK_V2: base.KEK_V1, MAC_KEY_VERSION: '2' } as Partial<AppEnv>), 'kek'),
+    ).toMatchObject({
+      state: 'verified',
+    });
+    await run(env.DB, 'UPDATE scan_staff SET pin_mac_version = 2');
+    clearStatusCache(env.DB);
+    expect(find(await status(rotating), 'kek')).toMatchObject({ state: 'verified' });
   });
 
   it('counts retained terminal failures by kind', async () => {

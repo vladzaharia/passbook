@@ -356,7 +356,7 @@ describe('GET /p/:token/pass.pkpass', () => {
     expect(res.headers.get('content-disposition')).toContain('attachment');
     expect(res.headers.get('etag')).toBe(`"${pass.objectSha256}"`);
     expect(res.headers.get('last-modified')).toBeTruthy();
-    expect(res.headers.get('cache-control')).toBe('private, no-cache');
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
     expect(res.headers.get('referrer-policy')).toBe('no-referrer');
     const bytes = new Uint8Array(await res.arrayBuffer());
     expect(bytes.length).toBe(pass.objectSize);

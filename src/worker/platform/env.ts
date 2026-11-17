@@ -22,6 +22,10 @@ export interface AppEnv
   MAGIC_LINK_DAILY_CAP?: string;
   /** Optional chain override; defaults to the bundled WWDR G4. */
   SIGNER_PLATFORM_INTERMEDIATE?: string;
+  /** KEK version the MAC keys derive from; unset means the oldest KEK. See docs/operations.md, MAC key rotation. */
+  MAC_KEY_VERSION?: string;
+  /** Set only while `tokens.remac` rewrites MACs after MAC_KEY_VERSION changed: the version they were under. */
+  MAC_KEY_VERSION_PREVIOUS?: string;
   KEK_V2?: string;
   KEK_V3?: string;
 }
