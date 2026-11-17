@@ -21,22 +21,12 @@ import {
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import {
-  captureCredentialKeyEnv,
-  credentialRefKeysetCommitment,
-} from '../passes/credential-keyset.ts';
 import { act } from './act.ts';
 import { snapshotActionContext } from './act-snapshot.ts';
-import { planCounts } from './counts.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
-import {
-  packedScanAuthorityPredicate,
-  sessionReadAuthorityPredicate,
-} from './repo-session-authority.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
@@ -45,7 +35,7 @@ import { reportScanDevice } from './scanning-workspace.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { buildSession } from './session.ts';
 import { sessionActivityFor } from './session-activity.ts';
-import { staleScanRead } from './stale-read.ts';
+import { statsFor } from './stats.ts';
 import { undo } from './undo.ts';
 
 /** Device API: /api/v1/scan. */
@@ -243,30 +233,8 @@ register(
   scanRoutes,
   'scan',
   { method: 'get', path: '/stats', summary: 'Counts', query: DayStart, response: ScanCountsSchema },
-  async (c) => {
-    const source = serviceContext(c);
-    const ctx = { ...source, env: { ...source.env } };
-    const actor = cloneObservedScanActor(scanActorOf(c));
-    // Counts are reads: no keyset bootstrap. The commitment only fences the expected-count cache write.
-    actor.credentialKeysetCommitment = await credentialRefKeysetCommitment(
-      captureCredentialKeyEnv(ctx.env),
-    );
-    // Epochs cover credential, configuration and staff changes; reads carry no CSRF proof.
-    const authority = packedScanAuthorityPredicate(
-      actor,
-      sessionReadAuthorityPredicate(actor, ctx.clock.now()),
-    );
-    // The door polls this: only a lost credential unpairs, drift is a 409 the client reloads.
-    if (authority.sql === '0') throw await staleScanRead(ctx, actor);
-    const plan = planCounts(ctx, actor, c.req.valid('query').dayStart, actor, authority);
-    const results = await ctx.env.DB.batch([
-      outputPredicateStmt(ctx.env.DB, authority),
-      ...plan.stmts,
-    ]);
-    if ((results[0]?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)
-      throw await staleScanRead(ctx, actor);
-    return c.json((await plan.read(results.slice(1))).counts);
-  },
+  async (c) =>
+    c.json(await statsFor(serviceContext(c), scanActorOf(c), c.req.valid('query').dayStart)),
 );
 
 registerScanAssetRoute(scanRoutes);

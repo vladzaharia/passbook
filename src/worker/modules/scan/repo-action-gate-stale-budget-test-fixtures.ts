@@ -78,11 +78,6 @@ export async function effects(db: D1Database, s: Scenario): Promise<EffectState>
       'SELECT * FROM scan_retention_proofs WHERE org_id=? ORDER BY scan_id',
       [s.kit.org.id],
     ),
-    grants: await all(
-      db,
-      'SELECT * FROM scan_asset_grant_provenance WHERE org_id=? ORDER BY token_hash',
-      [s.kit.org.id],
-    ),
   };
 }
 

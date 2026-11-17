@@ -33,18 +33,13 @@ const ALLOWED_UPDATES: Record<string, RegExp> = {
   // the event's expected-count cache, an idempotent fill (repo-counts.ts)
   scan_events: /^expected\s*=/i,
 };
-/**
- * Inserts a GET may make. Asset grants are minted on read until they become stateless HMAC tokens
- * (W3-02); the write-once version-hash row is the template package's allowlist.
- */
+/** Inserts a GET may make; the write-once version-hash row is the template package's allowlist. */
 const ALLOWED_INSERTS = new Set<string>([
   ...READ_PATH_WRITE_ALLOWLIST,
   // the credential keyset singleton: `INSERT OR IGNORE`, written once on first use
   'credential_ref_keyset',
   // metrics counters (the export count), which hold no authority
   'counters',
-  'scan_asset_grants',
-  'scan_asset_grant_provenance',
 ]);
 
 interface Write {
@@ -88,12 +83,12 @@ describe('write detection', () => {
       writesIn([
         'SELECT 1 FROM scans WHERE note = "UPDATE passes SET x = 1"',
         'UPDATE passes AS p SET scan_code = ? WHERE p.id = ?',
-        'WITH a AS (SELECT 1) INSERT INTO scan_asset_grants (x) SELECT 1',
+        'WITH a AS (SELECT 1) INSERT INTO scan_notes (x) SELECT 1',
         'DELETE FROM scan_gates WHERE id = ?',
       ]),
     ).toEqual([
       { kind: 'update', table: 'passes', set: 'scan_code = ?' },
-      { kind: 'insert', table: 'scan_asset_grants', set: '' },
+      { kind: 'insert', table: 'scan_notes', set: '' },
       { kind: 'delete', table: 'scan_gates', set: '' },
     ]);
     expect(forbidden(writesIn(['UPDATE scanners SET revoked_at = 1 WHERE id = ?']))).toHaveLength(

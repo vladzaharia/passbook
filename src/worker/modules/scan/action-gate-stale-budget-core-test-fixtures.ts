@@ -61,7 +61,6 @@ export interface EffectState {
   retention: unknown[];
   ledgerAll: unknown[];
   retentionAll: unknown[];
-  grants: unknown[];
 }
 export interface MeasuredResult {
   outcome: ScanOutcome;

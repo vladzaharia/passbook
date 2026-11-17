@@ -20,9 +20,7 @@ import {
 } from './repo-asset-lineage-predicate.ts';
 import { nonempty } from './repo-asset-session-authority.ts';
 
-export interface AssetGrantGuardInput extends AssetGuardPlan {
-  storedGrant?: { tokenHash: string; expiresAt: number; credentialRefsJson: string };
-}
+export type AssetGrantGuardInput = AssetGuardPlan;
 
 type Predicate = { sql: string; params: SqlValue[] };
 
@@ -61,7 +59,6 @@ export async function prepareAssetGrantGuardParts(
     typeof input.snapshotProof !== 'string' ||
     !/^[A-Za-z0-9_-]{43}$/.test(input.snapshotProof) ||
     !input.actor ||
-    !Array.isArray(input.credentialTombstoneRefs) ||
     !actorMatchesPass(input.actor, originalSnapshot) ||
     (input.recipientSession && Object.hasOwn(input.recipientSession, 'csrf_secret')) ||
     (input.sourceSession && Object.hasOwn(input.sourceSession, 'csrf_secret')) ||

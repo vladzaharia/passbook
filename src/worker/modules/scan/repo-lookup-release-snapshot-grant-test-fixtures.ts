@@ -1,21 +1,19 @@
 import { expect, it } from 'vitest';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { grantInsertConfirmed } from './asset-grant-results.ts';
+import { takeAssetGrantToken } from './asset-sidecar.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
-import { confirmAssetGrantToken } from './assets.ts';
 import { buildCard, cardAssetStmt, cardAssets } from './dto.ts';
 import { knownPhotoUrl } from './member-photo.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import { candidateById } from './repo-lookup.ts';
 import { CHECK_IN, kit } from './repo-lookup-release-test-fixtures.ts';
 import { foundOf } from './resolve.ts';
 import { evaluate } from './resolve-evaluate.ts';
 
 export function registerLookupReleaseSnapshotGrantCase() {
-  it('prepares card and photo grants without persisting or disclosing their tokens', async () => {
+  it('prepares card and photo grants without disclosing their tokens', async () => {
     const templateId = await kit.scanTemplate('Deferred scanner grants', {
       actions: [CHECK_IN],
       display: { v: 1, header: {}, photo: { minRole: 'door' } },
@@ -40,10 +38,6 @@ export function registerLookupReleaseSnapshotGrantCase() {
     const actor = await assetActorFor(kit, scanner);
     const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
     if (!candidate) throw new Error('Missing evaluated candidate');
-    const before = await first<{ n: number }>(
-      kit.env.DB,
-      'SELECT count(*) AS n FROM scan_asset_grant_provenance',
-    );
     const found = await foundOf(kit.ctx, candidate, actor);
     if (!found) throw new Error('Missing evaluated pass');
     expect(found).not.toHaveProperty('photoGrant');
@@ -99,37 +93,17 @@ export function registerLookupReleaseSnapshotGrantCase() {
     expect(photo).not.toHaveProperty('url');
     for (const plan of [built.passViewGrant, photo.grant]) {
       expect(plan).not.toHaveProperty('token');
-      expect(confirmAssetGrantToken(plan, undefined)).toBeNull();
-      expect(plan.guard).not.toHaveProperty('snapshot');
+      expect(plan).not.toHaveProperty('guard');
+      expect(plan).not.toHaveProperty('snapshot');
       const serialized = JSON.stringify(plan);
       for (const secret of [pass.authToken, pass.downloadToken, pass.scanCode]) {
         if (secret) expect(serialized).not.toContain(secret);
       }
-      expect(
-        await first(
-          kit.env.DB,
-          'SELECT token_hash FROM scan_asset_grant_provenance WHERE token_hash=?',
-          [plan.tokenHash],
-        ),
-      ).toBeNull();
     }
-    expect(
-      await first(kit.env.DB, 'SELECT count(*) AS n FROM scan_asset_grant_provenance'),
-    ).toEqual(before);
-    const prepareInsert = await prepareAssetGrantInsertion(
-      kit.ctx,
-      built.passViewGrant,
-      undefined,
-      candidate,
-    );
-    const inserts = prepareInsert(kit.clock.now(), undefined);
-    const results = await kit.env.DB.batch(inserts);
-    expect(grantInsertConfirmed(results)).toBe(true);
-    const token = confirmAssetGrantToken(built.passViewGrant, results);
-    if (!token) throw new Error('Confirmed grant token missing');
-    expect(token).toMatch(/^[A-Za-z0-9_-]{54}$/);
+    const token = takeAssetGrantToken(built.passViewGrant);
+    if (!token) throw new Error('Grant token missing');
+    expect(token).toMatch(/^[A-Za-z0-9_-]{51,83}$/);
     expect(JSON.stringify(built.passViewGrant)).not.toContain(token);
-    expect(confirmAssetGrantToken(built.passViewGrant, results)).toBeNull();
     const path = `${built.card.passView.assetBaseUrl}icon.png?g=${token}`.replace(
       '/api/v1/scan',
       '',
@@ -157,20 +131,13 @@ export function registerLookupReleaseSnapshotGrantCase() {
     expect(
       await cardAssets(kit.ctx, found, await cardAssetStmt(kit.env.DB, found).all()),
     ).toBeNull();
-    const prepareStaleInsert = await prepareAssetGrantInsertion(
-      kit.ctx,
-      stale.passViewGrant,
-      undefined,
-      candidate,
+    // The photo moved after the grant was minted: it no longer redeems, where the first one did.
+    const staleToken = takeAssetGrantToken(stale.passViewGrant);
+    if (!staleToken) throw new Error('Second grant token missing');
+    const stalePath = `${stale.card.passView.assetBaseUrl}icon.png?g=${staleToken}`.replace(
+      '/api/v1/scan',
+      '',
     );
-    const staleInserts = prepareStaleInsert(kit.clock.now(), undefined);
-    await expect(kit.env.DB.batch(staleInserts)).rejects.toThrow();
-    expect(
-      await first(
-        kit.env.DB,
-        'SELECT token_hash FROM scan_asset_grant_provenance WHERE token_hash=?',
-        [stale.passViewGrant.tokenHash],
-      ),
-    ).toBeNull();
+    expect((await kit.get(scanner.headers, stalePath)).status).toBe(404);
   });
 }

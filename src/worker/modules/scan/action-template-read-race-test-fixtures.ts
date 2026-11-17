@@ -206,13 +206,43 @@ export function expectUnavailable(result: ScanOutcome, passId: string) {
     expect(text).not.toContain(value);
 }
 
+/** The batch each phase commits in: a race lands before it, so the change is content for the commit. */
+export const COMMIT_MARKER = {
+  gate: 'INSERT INTO scan_gates',
+  choose: 'DELETE FROM scans',
+  stop: 'UPDATE scans SET state',
+} as const;
+
+/** Every image URL a result carries must refuse: the lineage it was minted from moved. */
+export async function expectGrantsUnredeemable(
+  kit: ScanKit,
+  headers: Record<string, string>,
+  result: ScanOutcome,
+) {
+  const urls = [
+    result.display?.identity.photo?.url,
+    result.card?.display.identity.photo?.url,
+    result.card &&
+      `${result.card.passView.assetBaseUrl}icon.png?g=${result.card.passView.assetGrant}`,
+  ].filter((url): url is string => typeof url === 'string');
+  for (const url of urls) {
+    const response = await kit.get(headers, url.replace('/api/v1/scan', ''));
+    expect(response.status, url).toBe(404);
+    await response.body?.cancel();
+  }
+  return urls.length;
+}
+
 /**
- * The stop commits in its own batch and its photo grants in the next. A template change between
- * them is content: the stop stays recorded and only the grants are withheld.
+ * The commit asks no template or release state (authority-epochs.md F4): a change landing before it is
+ * content and the stop is recorded. The capabilities were minted from the read, so they no longer redeem.
  */
-export function expectStopRecordedWithoutGrants(result: ScanOutcome) {
+export async function expectStopRecordedUnredeemable(
+  kit: ScanKit,
+  headers: Record<string, string>,
+  result: ScanOutcome,
+) {
   expect(result).toMatchObject({ kind: 'heads_up', reason: 'check_required' });
   expect(result.scanId).toEqual(expect.any(String));
-  expect(result.display?.identity.photo?.url ?? null).toBeNull();
-  expect(JSON.stringify(result)).not.toContain('assetGrant');
+  expect(await expectGrantsUnredeemable(kit, headers, result)).toBeGreaterThan(0);
 }

@@ -88,9 +88,10 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
 }
 
 /** Every table a scan write grant may name; each purpose lists what it writes. */
-export const SCAN_HELD_TABLES = ['scans', 'pass_events', 'scan_retention_proofs'];
+export const SCAN_STOP_TABLES = ['scans', 'pass_events', 'scan_retention_proofs'];
+/** A held or committed scan also returns its verified PIN's attempt (`counters`). */
+export const SCAN_HELD_TABLES = [...SCAN_STOP_TABLES, 'counters'];
 export const SCAN_COMMIT_TABLES = [...SCAN_HELD_TABLES, 'scan_gates', 'scan_presence'];
-export const SCAN_STOP_TABLES = [...SCAN_HELD_TABLES];
 
 /** "This scan took the gate." */
 export const wonGate = (
@@ -147,30 +148,3 @@ function capturedPart(statement: D1PreparedStatement, what: string): GrantPart {
 /** The retention proof row commits in the grant's batch, right after its ledger row (it inserts only when that row did). */
 export const retentionPart = (statement: D1PreparedStatement): GrantPart =>
   capturedPart(statement, 'retention');
-
-/**
- * Decoration after a scan commits, outside any grant: the PIN attempt is returned (counters hold no
- * authority) in its own batch, then the photo grant is minted. A failure is logged and never fails or
- * undoes the scan or the refund: the photo is omitted. Returns the photo results.
- */
-export async function decorateScan(
-  ctx: ServiceContext,
-  reservation: { refundStatements(): D1PreparedStatement[]; markRefunded(): void } | null,
-  photo: readonly D1PreparedStatement[] = [],
-): Promise<D1Result[]> {
-  try {
-    const refund = reservation?.refundStatements() ?? [];
-    // The refund goes first and alone: a failing photo statement must not undo it.
-    if (refund.length) {
-      await ctx.env.DB.batch(refund);
-      reservation?.markRefunded();
-    }
-    return photo.length ? await ctx.env.DB.batch([...photo]) : [];
-  } catch (error) {
-    ctx.log.error('scan.finish_degraded', {
-      code: 'SCAN_FINISH_DEGRADED',
-      message: error instanceof Error ? error.message : 'unknown',
-    });
-    return [];
-  }
-}

@@ -163,34 +163,6 @@ export function passSnapshotFence(
   );
 }
 
-/** A replay reprojects the recorded result under current policy without requiring a compatible build. */
-export function passHistoricalSnapshotFence(
-  db: Db,
-  pass: Pass,
-  rules: CheckInPolicy | undefined,
-  connection: number | null | undefined,
-  version: string | null | undefined,
-  org: number | null | undefined,
-  template: number | null | undefined,
-  now: number,
-  env: object,
-  release: ReleaseSnapshot | null | undefined,
-): Promise<ActionPassFence | null> {
-  return snapshotFence(
-    db,
-    pass,
-    rules,
-    connection,
-    version,
-    org,
-    template,
-    now,
-    env,
-    release,
-    'read',
-  );
-}
-
 /** Prepare the active-pass read for an atomic claim/effect authority batch. */
 export function prepareActionPassFence(
   db: Db,

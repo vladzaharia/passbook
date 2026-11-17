@@ -53,17 +53,18 @@ export interface AssetGuardPlan {
   sourceSession: AssetSessionSnapshot | null;
   connectionGeneration: number | null;
   activeVersion: string | null;
-  credentialTombstoneRefs: readonly string[];
+  /** Leading hex of the keyed refs of the credential the grant was scanned from. */
+  credentialRefPrefixes: readonly string[];
   purpose: AssetGrantPurpose;
   requirePhoto: boolean;
 }
 
-/** Cloneable plan: bearer token and actor credential identifiers remain in a sidecar. */
+/** A minted capability: the token stays in the sidecar (`asset-sidecar.ts`), never in this object. */
 export interface PreparedAssetGrant {
-  tokenHash: string;
   orgId: string;
   mode: Mode;
+  passId: string;
   expiresAt: number;
-  credentialRefsJson: string;
-  guard: Omit<AssetGuardPlan, 'actor' | 'source' | 'recipientSession' | 'sourceSession'>;
+  requirePhoto: boolean;
+  purpose: AssetGrantPurpose;
 }

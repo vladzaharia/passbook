@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  assetGrant,
   envA,
   envB,
   expectKeysetInitializationBlocked,
   installKeysetTestEnv,
+  tombstoneWithoutKeyset,
   unavailable,
 } from '../../../../test/helpers/credential-keyset.ts';
 import { fixtures, makeOrg, makePass, makeTemplate } from '../../../../test/helpers/index.ts';
@@ -24,7 +24,6 @@ const makeEnv = installKeysetTestEnv();
 describe('credential keyset SQL guards', () => {
   it('checks the reference stores in the same D1 transaction as initialization', async () => {
     const f = fixtures(await makeEnv());
-    const org = await makeOrg(f);
     const db = f.env.DB;
     let intervened = false;
     const raced = new Proxy(db, {
@@ -32,7 +31,7 @@ describe('credential keyset SQL guards', () => {
         if (property === 'batch')
           return async (statements: D1PreparedStatement[]) => {
             intervened = true;
-            await assetGrant(target, org.id, JSON.stringify(['d'.repeat(64)]));
+            await tombstoneWithoutKeyset(target);
             return target.batch(statements);
           };
         const value = Reflect.get(target, property, target);
@@ -42,8 +41,8 @@ describe('credential keyset SQL guards', () => {
     await expect(ensureCredentialRefKeyset(raced, envA)).rejects.toMatchObject(unavailable);
     expect(intervened).toBe(true);
     expect(await first(db, 'SELECT * FROM credential_ref_keyset')).toBeNull();
-    expect(await first(db, 'SELECT token_hash FROM scan_asset_grant_provenance')).toEqual({
-      token_hash: 'a'.repeat(64),
+    expect(await first(db, 'SELECT credential_hash FROM pass_credential_tombstones')).toEqual({
+      credential_hash: 'b'.repeat(64),
     });
   });
 
@@ -128,7 +127,6 @@ describe('credential keyset SQL guards', () => {
 
   it('initializes after ordered reference migrations without rebinding surviving refs', async () => {
     const f = fixtures(await makeEnv());
-    const org = await makeOrg(f);
     const db = f.env.DB;
     const names = [
       '0041_scan_event_retention_provenance.sql',
@@ -147,7 +145,7 @@ describe('credential keyset SQL guards', () => {
     expect(await ensureCredentialRefKeyset(db, envA)).toBe(
       await credentialRefKeysetCommitment(envA),
     );
-    await assetGrant(db, org.id, JSON.stringify(['d'.repeat(64)]));
+    await tombstoneWithoutKeyset(db);
     expect(await ensureCredentialRefKeyset(db, envA)).toBe(
       await credentialRefKeysetCommitment(envA),
     );

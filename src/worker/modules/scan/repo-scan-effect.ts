@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { type SqlValue, stmt } from '../../platform/db.ts';
+import type { SqlValue } from '../../platform/db.ts';
 import type { AdmissionPlan } from './admission-types.ts';
 import type { GateClaim, GateKey } from './repo-gates.ts';
 
@@ -205,10 +205,6 @@ export function credentialSnapshotMatches(
   );
 }
 
-export function andEffectFences(left: Predicate, right: Predicate): Predicate {
-  return { sql: `(${left.sql}) AND (${right.sql})`, params: [...left.params, ...right.params] };
-}
-
 /** Bind the durable intent and every original pending-claim identity field. */
 export function pendingEffectPredicate(claim: GateClaim, beforeIntent = false): Predicate {
   const actor = claim.authority.actor;
@@ -237,86 +233,9 @@ export function pendingEffectPredicate(claim: GateClaim, beforeIntent = false): 
   };
 }
 
-export function pendingEffectFence(fence: Predicate, claim: GateClaim): Predicate {
-  const pending = pendingEffectPredicate(claim);
-  return {
-    sql: `(${fence.sql}) AND (${pending.sql})`,
-    params: [...fence.params, ...pending.params],
-  };
-}
-
-/** Keep the finalized idempotency identity bound through the response fence. */
-export function recordedClaimFence(fence: Predicate, claim: GateClaim): Predicate {
-  return {
-    sql: `(${fence.sql}) AND EXISTS (SELECT 1 FROM scans q
-      WHERE q.id=?/* scan-ephemeral-scan-id */ AND q.idempotency_key=?/* scan-ephemeral-idempotency-key */ AND q.request_hash=?/* scan-ephemeral-request-hash */)`,
-    params: [...fence.params, claim.scanId, claim.idempotencyKey, claim.requestHash],
-  };
-}
-
-/** Keep verified CSRF material in scalar binds, outside packed predicates. */
-export function csrfFenceStmt(
-  db: D1Database,
-  fence: { sql: string; params: readonly SqlValue[] },
-  abortOnMismatch: boolean,
-): D1PreparedStatement {
-  const mismatch = abortOnMismatch ? "json_extract('[]', '$[scan_effect_incomplete]')" : '0';
-  return stmt(
-    db,
-    `SELECT CASE WHEN (${fence.sql}) THEN 1 ELSE ${mismatch} END AS valid`,
-    fence.params,
-  );
-}
-
-/** Abort rather than commit a gate without its signed ledger and retention proof. */
-export function requireRecordedEffectStmt(
-  db: D1Database,
-  gate: GateKey,
-  scanId: string,
-  requiredWhen?: { sql: string; params: readonly SqlValue[] },
-): D1PreparedStatement {
-  const when = requiredWhen ?? { sql: '1', params: [] };
-  return stmt(
-    db,
-    `SELECT CASE WHEN changes()<>1 AND (${when.sql}) AND EXISTS (SELECT 1 FROM scan_gates
-    WHERE pass_id=?/* scan-ephemeral-pass-id */ AND action_id=?/* scan-ephemeral-action-id */ AND scope=?/* scan-ephemeral-event-scope */ AND last_scan_id=?/* scan-ephemeral-scan-id */)
-    THEN json_extract('[]', '$[scan_effect_incomplete]') ELSE 1 END AS complete`,
-    [...when.params, gate.passId, gate.actionId, gate.scope, scanId],
-  );
-}
-
-/** A finalized stop must also have its signed ledger and retention proof. */
-export function requireRecordedStopStmt(
-  db: D1Database,
-  scanId: string,
-  claimAt: number,
-  outcome: 'heads_up' | 'refused',
-): D1PreparedStatement {
-  return stmt(
-    db,
-    `SELECT CASE WHEN changes()<>1 AND EXISTS (SELECT 1 FROM scans
-    WHERE id=? AND at=? AND state='done' AND outcome=?)
-    THEN json_extract('[]', '$[scan_effect_incomplete]') ELSE 1 END AS complete`,
-    [scanId, claimAt, outcome],
-  );
-}
-
 /** A transaction observed an incomplete effect and rolled it back. */
 export class ObservedScanAmbiguity extends Error {
   constructor(cause: Error) {
     super('Scan effect could not be committed', { cause });
-  }
-}
-
-export async function effectBatch(
-  db: D1Database,
-  statements: D1PreparedStatement[],
-): Promise<D1Result[]> {
-  try {
-    return await db.batch(statements);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('scan_effect_incomplete'))
-      throw new ObservedScanAmbiguity(error);
-    throw error;
   }
 }

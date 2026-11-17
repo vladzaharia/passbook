@@ -48,12 +48,11 @@ from being accepted again. Rotating only the public link does not create a crede
   restore the original key rather than silently reinitializing it. Lazy bootstrap is allowed only
   for an empty reference store and is fenced in the same D1 transaction by the requesting actor's
   current authority.
-- Scanner asset grants are short-lived opaque capabilities bound to the recipient, pass, relevant
-  source and credential lineage. Provenance stores the token hash, organization, mode, expiry and
-  keyed credential references, not raw credentials. Redemption rechecks current authority and
-  lineage, including after opening the stream; expired provenance is cleaned up in bounded batches.
-  Grant URLs and logs must not expose raw credentials or proof material, and logs must not contain
-  the grant itself.
+- Scanner asset grants are short-lived stateless capabilities: an expiry and an HMAC over the
+  recipient, pass, release, photo and credential lineage; nothing is stored. Redemption rereads
+  that lineage, recomputes the HMAC in constant time and rechecks current authority, including
+  after opening the stream. Grant URLs and logs must not expose raw credentials or proof material,
+  and logs must not contain the grant itself.
 - Internal DTOs, URLs and logs must not carry raw credentials or CSRF secrets. The authorized
   `/api/v1/scan/session` `csrfToken` response is the deliberate browser handshake exception; it
   must not be propagated into internal DTOs, URLs or logs.

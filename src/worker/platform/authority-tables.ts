@@ -151,7 +151,6 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'scan_retention_delete_intents',
   'scan_retained_gates',
   'pass_holder_reissue_required',
-  'scan_asset_grant_provenance',
   'pass_token_seals',
   'bundle_token_seals',
 ]);
@@ -174,7 +173,6 @@ export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'scan_retention_delete_intents',
   'scan_retained_gates',
   'pass_holder_reissue_required',
-  'scan_asset_grant_provenance',
 ]);
 /**
  * Unguarded tables a holder grant may also write although they carry no `pass_id`: the column that names

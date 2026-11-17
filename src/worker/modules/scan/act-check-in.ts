@@ -9,7 +9,6 @@ import { type Override, StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import { snapshotActionContext, snapshotActionFound } from './act-snapshot.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { gateRule, gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
@@ -29,7 +28,6 @@ interface CommitInput {
   requestHash: string;
   credentialTombstoneRefs: readonly string[];
   credentialKeysetCommitment: string;
-  csrfSnapshot: ActorCsrfSnapshot;
   preflight: ActionPreflight;
   held: HeldGateSnapshot;
   history: ActionHistoryPreflight | null;
@@ -50,7 +48,6 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     authorityActor: inputAuthority,
     found: originalFound,
     req: originalReq,
-    csrfSnapshot,
     preflight,
     held,
     history,
@@ -215,8 +212,6 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       capacityFull: held.capacityFull === true,
       history: history?.preloaded,
       photo,
-      csrfSnapshot,
-      originalCandidate,
       facts,
       dayStart: req.dayStart,
       reservation,
@@ -227,7 +222,6 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     actor,
     found,
     req,
-    csrfSnapshot,
     history,
     photo,
     reservation,

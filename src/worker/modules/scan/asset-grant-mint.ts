@@ -1,10 +1,15 @@
 import { derivedHmacKey } from '../../platform/crypto.ts';
-import { randomBytes, sha256Hex, toBase64Url } from '../../platform/ids.ts';
+import {
+  fromBase64Url,
+  randomBytes,
+  safeEqualBytes,
+  toBase64Url,
+  toHex,
+} from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { captureActor } from './asset-authority.ts';
-import { grantData, validRefs } from './asset-claim.ts';
-import { assetSnapshotInput, assetSnapshotProofFromInput } from './asset-secrets.ts';
+import { grantData } from './asset-claim.ts';
 import { holdAssetGrantSidecar } from './asset-sidecar.ts';
 import type {
   AssetGrantPurpose,
@@ -13,13 +18,27 @@ import type {
   PreparedAssetGrant,
 } from './asset-types.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
+import {
+  CREDENTIAL_REF_PREFIX,
+  validCredentialTombstoneRefs,
+} from './repo-credential-tombstones.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
 const HOUR = 3_600_000;
-export const NONCE_BYTES = 16;
+export const NONCE_BYTES = 8;
+export const EXPIRY_BYTES = 6;
 export const TAG_BYTES = 24;
-export const TOKEN_BYTES = NONCE_BYTES + TAG_BYTES;
+/** Each retired-credential ref a grant was minted from travels as its leading bytes. */
+export const REF_BYTES = CREDENTIAL_REF_PREFIX / 2;
+const MAX_REFS = 3;
+const MAX_EXPIRY = 2 ** (8 * EXPIRY_BYTES) - 1;
 
+/**
+ * A grant is its own proof: nonce, expiry, a truncated HMAC and the prefixes of the keyed refs of
+ * the credential it was scanned from. The tag covers the lineage `grantData` reads (recipient, pass,
+ * release, photo), the purpose, the expiry, the nonce and those prefixes. Nothing is stored; a
+ * redemption rereads the lineage, recomputes the tag and checks no such credential has been retired.
+ */
 export async function mac(
   ctx: ServiceContext,
   fields: unknown[],
@@ -29,11 +48,11 @@ export async function mac(
   purpose: AssetGrantPurpose,
   requirePhoto: boolean,
 ): Promise<Uint8Array> {
-  const key = await derivedHmacKey(ctx.env, 'scan-asset');
+  const key = await derivedHmacKey(ctx.env, 'scan-asset-grant-v2');
   const data = new TextEncoder().encode(
     JSON.stringify([
       ...fields,
-      'scan-asset-capability-v1',
+      'scan-asset-capability-v2',
       purpose,
       requirePhoto ? 'photo' : 'generic',
       expiresAt,
@@ -44,6 +63,64 @@ export async function mac(
   return new Uint8Array(await crypto.subtle.sign('HMAC', key, data));
 }
 
+function encodeExpiry(expiresAt: number): Uint8Array {
+  const bytes = new Uint8Array(EXPIRY_BYTES);
+  let rest = expiresAt;
+  for (let index = EXPIRY_BYTES - 1; index >= 0; index--) {
+    bytes[index] = rest % 256;
+    rest = Math.floor(rest / 256);
+  }
+  return bytes;
+}
+
+const hexBytes = (hex: string): Uint8Array =>
+  Uint8Array.from({ length: hex.length / 2 }, (_, index) =>
+    Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16),
+  );
+
+/** The parts of a grant string, or null when it is not one. */
+export function parseGrant(grant: string | undefined): {
+  nonce: Uint8Array;
+  expiresAt: number;
+  tag: Uint8Array;
+  refs: string[];
+} | null {
+  const head = NONCE_BYTES + EXPIRY_BYTES + TAG_BYTES;
+  if (!grant || grant.length > 120 || !/^[A-Za-z0-9_-]+$/.test(grant)) return null;
+  try {
+    const bytes = fromBase64Url(grant);
+    const refBytes = bytes.length - head;
+    if (
+      refBytes < 0 ||
+      refBytes % REF_BYTES !== 0 ||
+      refBytes / REF_BYTES > MAX_REFS ||
+      toBase64Url(bytes) !== grant
+    )
+      return null;
+    return {
+      nonce: bytes.subarray(0, NONCE_BYTES),
+      expiresAt: decodeExpiry(bytes.subarray(NONCE_BYTES, NONCE_BYTES + EXPIRY_BYTES)),
+      tag: bytes.subarray(NONCE_BYTES + EXPIRY_BYTES, head),
+      refs: Array.from({ length: refBytes / REF_BYTES }, (_, index) =>
+        toHex(bytes.subarray(head + index * REF_BYTES, head + (index + 1) * REF_BYTES)),
+      ),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function decodeExpiry(bytes: Uint8Array): number {
+  let value = 0;
+  for (const byte of bytes) value = value * 256 + byte;
+  return value;
+}
+
+/** True when `tag` is the (truncated) MAC of the grant, compared in constant time. */
+export const tagMatches = (tag: Uint8Array, expected: Uint8Array): boolean =>
+  safeEqualBytes(tag, expected.subarray(0, TAG_BYTES));
+
+/** Mint a capability from the evaluated snapshot. Writes nothing. */
 export async function prepareAssetGrant(
   ctx: ServiceContext,
   actor: ScanActor,
@@ -54,23 +131,24 @@ export async function prepareAssetGrant(
   requirePhoto: boolean,
   purpose: AssetGrantPurpose,
 ): Promise<PreparedAssetGrant | null> {
+  if (
+    !validCredentialTombstoneRefs(snapshot.credentialTombstoneRefs) ||
+    new Set(snapshot.credentialTombstoneRefs).size !== snapshot.credentialTombstoneRefs.length
+  )
+    return null;
+  const refs = snapshot.credentialTombstoneRefs.map((ref) => ref.slice(0, CREDENTIAL_REF_PREFIX));
   const capturedActor = captureActor(actor);
   const passId = snapshot.pass.id;
-  const capturedInput = assetSnapshotInput(snapshot);
   const capturedSource = source
     ? { sourceId: source.sourceId, eventId: source.eventId, actor: captureActor(source.actor) }
     : undefined;
-  if (!validRefs(snapshot.credentialTombstoneRefs)) return null;
-  const refs = Object.freeze([...snapshot.credentialTombstoneRefs]);
-  const [snapshotProof, data, templates] = await Promise.all([
-    assetSnapshotProofFromInput(ctx.env, capturedInput),
+  const [data, templates] = await Promise.all([
     grantData(
       ctx,
       capturedActor,
       snapshot,
       connectionGeneration,
       activeVersion,
-      refs,
       capturedSource,
       requirePhoto,
       purpose,
@@ -80,39 +158,24 @@ export async function prepareAssetGrant(
       : verifyLiveTemplateSnapshot(ctx, snapshot, snapshot.templateSnapshot, 'commit'),
   ]);
   if (!data || !templates) return null;
-  const now = ctx.clock.now();
-  const expiresAt = now + HOUR;
-  if (!Number.isSafeInteger(expiresAt)) return null;
+  const expiresAt = ctx.clock.now() + HOUR;
+  if (!Number.isSafeInteger(expiresAt) || expiresAt > MAX_EXPIRY) return null;
   const nonce = randomBytes(NONCE_BYTES);
   const tag = await mac(ctx, data.fields, expiresAt, refs, nonce, purpose, requirePhoto);
-  const bytes = new Uint8Array(TOKEN_BYTES);
+  const bytes = new Uint8Array(NONCE_BYTES + EXPIRY_BYTES + TAG_BYTES + refs.length * REF_BYTES);
   bytes.set(nonce);
-  bytes.set(tag.subarray(0, TAG_BYTES), NONCE_BYTES);
-  const token = toBase64Url(bytes);
-  const tokenHash = await sha256Hex(token);
-  if (assetSnapshotInput(snapshot) !== capturedInput) return null;
+  bytes.set(encodeExpiry(expiresAt), NONCE_BYTES);
+  bytes.set(tag.subarray(0, TAG_BYTES), NONCE_BYTES + EXPIRY_BYTES);
+  for (const [index, ref] of refs.entries())
+    bytes.set(hexBytes(ref), NONCE_BYTES + EXPIRY_BYTES + TAG_BYTES + index * REF_BYTES);
   const plan: PreparedAssetGrant = Object.freeze({
-    tokenHash,
     orgId: capturedActor.orgId,
     mode: capturedActor.mode,
+    passId,
     expiresAt,
-    credentialRefsJson: JSON.stringify(refs),
-    guard: Object.freeze({
-      passId,
-      snapshotProof,
-      connectionGeneration,
-      activeVersion,
-      credentialTombstoneRefs: refs,
-      requirePhoto,
-      purpose,
-    }),
+    requirePhoto,
+    purpose,
   });
-  holdAssetGrantSidecar(plan, {
-    token,
-    actor: capturedActor,
-    source: capturedSource,
-    recipientSession: data.recipientSession,
-    sourceSession: data.sourceSession,
-  });
+  holdAssetGrantSidecar(plan, { token: toBase64Url(bytes), actor: capturedActor });
   return plan;
 }

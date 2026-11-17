@@ -36,11 +36,12 @@ export function registerCatchupDamageTests() {
       await liveRowsFor(contextWithDb(kit.ctx, baseline.db), fixture.recipient, fixture.rows),
     ).toHaveLength(3);
     expect(new Set(named.map(({ row }) => `${row.live_row_index}:${row.live_row_kind}`))).toEqual(
-      new Set(['0:1', '0:2', '1:1', '1:2', '2:2']),
+      new Set(['0:1', '0:2', '1:1', '1:2', '1:3', '2:2']),
     );
+    // The photo fence (kind 3) only withholds a photo: the next test damages it.
     const firstNamed = named[0];
     if (!firstNamed) throw new Error('Missing named row results.');
-    for (const target of named) {
+    for (const target of named.filter(({ row }) => row.live_row_kind !== 3)) {
       const targetInput = fixture.inputs[target.row.live_row_index];
       if (!targetInput) throw new Error('Missing input for named row.');
       const damages =
@@ -100,20 +101,16 @@ export function registerCatchupDamageTests() {
     }
   }, 120_000);
 
-  it('does not release a photo bearer when any grant result or the transaction receipt is damaged', async () => {
+  it('does not release a photo URL when its fence result or the transaction receipt is damaged', async () => {
     const fixture = await catchupFixture();
     let grant: number[] = [];
     let receipt = -1;
     const baseline = traceLiveD1(kit.env.DB, (statements, results) => {
       if (isFinal(statements)) {
-        const start = statements.findIndex(({ sql }) =>
-          sql.includes('INTO scan_asset_grant_provenance'),
+        grant = statements.flatMap(({ sql }, index) =>
+          sql.includes('3 AS live_row_kind') ? [index] : [],
         );
-        const end = statements.findIndex(
-          (statement, index) => index > start && statement.sql.includes('AS live_row_index'),
-        );
-        if (start < 0 || end <= start) throw new Error('Missing guarded grant statements.');
-        grant = Array.from({ length: end - start }, (_, index) => start + index);
+        if (!grant.length) throw new Error('Missing photo fence statements.');
         receipt = statements.length - 1;
         const receiptRow = results[receipt]?.results?.[0];
         expect(
@@ -130,16 +127,10 @@ export function registerCatchupDamageTests() {
       fixture.rows,
     );
     expect(valid[1]?.photoUrl).toBeTruthy();
-    expect(grant.length).toBeGreaterThan(3);
-    const [firstGrant, secondGrant, thirdGrant] = grant;
-    if (firstGrant === undefined || secondGrant === undefined || thirdGrant === undefined)
-      throw new Error('Missing guarded grant results.');
+    const [firstGrant] = grant;
+    if (firstGrant === undefined) throw new Error('Missing photo fence results.');
     for (const index of [...grant, receipt]) {
-      const damages =
-        index === grant[0] || index === grant.at(-1) || index === receipt
-          ? (['missing', 'failed', 'empty'] as const)
-          : (['failed'] as const);
-      for (const damage of damages) {
+      for (const damage of ['missing', 'failed', 'empty'] as const) {
         let intercepted = false;
         const trace = traceLiveD1(kit.env.DB, (statements, results) => {
           if (!isFinal(statements)) return results;
@@ -166,11 +157,7 @@ export function registerCatchupDamageTests() {
         expect(output.map((row) => row.id)).toEqual(fixture.rows.map((row) => row.id));
       }
     }
-    for (const [firstIndex, secondIndex] of [
-      [firstGrant, secondGrant],
-      [secondGrant, thirdGrant],
-      [receipt, firstGrant],
-    ] as const) {
+    for (const [firstIndex, secondIndex] of [[receipt, firstGrant]] as const) {
       const trace = traceLiveD1(kit.env.DB, (statements, results) => {
         if (!isFinal(statements)) return results;
         const changed = [...results];

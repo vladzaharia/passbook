@@ -25,7 +25,7 @@ export function registerRoundTrips() {
     return trips(() => kit.post(headers, '/actions', {}));
   }
 
-  it('a door check-in takes at most 6 after the guard, for a winner and for a loser', async () => {
+  it('a door check-in takes at most 5 after the guard, for a winner and for a loser', async () => {
     const s = await kit.scanner({ templateIds: [tpl] });
     const warm = await kit.scanPass(tpl);
     await act(s.headers, codeOf(warm));
@@ -33,11 +33,11 @@ export function registerRoundTrips() {
     const base = await guardTrips(s.headers);
     const winner = (await trips(() => act(s.headers, codeOf(pass)))) - base;
     const loser = (await trips(() => act(s.headers, codeOf(pass)))) - base;
-    expect(winner).toBeLessThanOrEqual(6);
-    expect(loser).toBeLessThanOrEqual(6);
+    expect(winner).toBeLessThanOrEqual(5);
+    expect(loser).toBeLessThanOrEqual(5);
   });
 
-  it('keeps a cold policy-and-photo admission within six trips after the guard', async () => {
+  it('keeps a cold policy-and-photo admission within five trips after the guard', async () => {
     const scanner = await kit.scanner({ templateIds: [tpl] });
     const pass = await kit.scanPass(tpl);
     await putPassCheckIn(kit.ctx, { type: 'system', id: null }, pass.id, { mode: 'in_out' }, null);
@@ -60,14 +60,14 @@ export function registerRoundTrips() {
       const result = await out(await act(scanner.headers, codeOf(pass)));
       expect(result.kind).toBe('ok');
       expect(result.display?.identity.photo?.url).toContain('/assets/member.png?g=');
-      // Five for the scan; the photo grant is decoration in one batch after the commit (PIN refund too).
-      expect(counted.count() - guard).toBeLessThanOrEqual(6);
+      // Five for the scan: the photo capability is stateless and a PIN refund rides in the commit grant.
+      expect(counted.count() - guard).toBeLessThanOrEqual(5);
     } finally {
       Object.assign(kit.env, { DB: original });
     }
   });
 
-  it('proves the newly committed visit in a cold history-and-photo check-in within six trips', async () => {
+  it('proves the newly committed visit in a cold history-and-photo check-in within five trips', async () => {
     const templateId = await kit.scanTemplate('Cold authenticated visit history', {
       actions: [{ ...CHECK_IN, repeat: 'always' }],
       display: {
@@ -118,8 +118,8 @@ export function registerRoundTrips() {
       });
       expect(JSON.stringify(outcome.display)).toContain('Check in');
       expect(outcome.display?.identity.photo?.url).toContain('/assets/member.png?g=');
-      // Five for the scan; the photo grant is decoration in one batch after the commit (PIN refund too).
-      expect(counted.count() - guard).toBeLessThanOrEqual(6);
+      // Five for the scan: the photo capability is stateless and a PIN refund rides in the commit grant.
+      expect(counted.count() - guard).toBeLessThanOrEqual(5);
     } finally {
       Object.assign(kit.env, { DB: original });
     }

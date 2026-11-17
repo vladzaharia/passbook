@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  assetGrant,
   envA,
   expectKeysetInitializationBlocked,
   installKeysetTestEnv,
@@ -14,16 +13,6 @@ import { credentialRefKeysetInitializeStmt } from './repo-credential-keyset.ts';
 const makeEnv = installKeysetTestEnv();
 
 describe('credential keyset legacy references', () => {
-  it.each(['[]', JSON.stringify(['d'.repeat(64)])])(
-    'fails closed on a preexisting asset grant with refs %s',
-    async (refs) => {
-      const f = fixtures(await makeEnv());
-      const org = await makeOrg(f);
-      await assetGrant(f.env.DB, org.id, refs);
-      await expectKeysetInitializationBlocked(f.env.DB);
-    },
-  );
-
   it('fails closed on a preexisting retained connection claim', async () => {
     const { DB: db } = await makeEnv();
     await retainedClaimWithoutKeyset(db);

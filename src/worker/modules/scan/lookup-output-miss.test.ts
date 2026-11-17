@@ -16,6 +16,7 @@ import {
   templateId,
 } from './lookup-output-test-fixtures.ts';
 import { missCounterKey } from './repo-miss-authority.ts';
+import { isFinalFenceBatch } from './repo-read-grant-expiry-test-fixtures.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 
 registerLookupOutputFixture();
@@ -27,10 +28,7 @@ describe('lookup output authority', () => {
     const real = kit.env.DB;
     let invalidated = false;
     const { db } = interceptBatches(real, async (sql) => {
-      if (
-        !invalidated &&
-        sql.some((text) => text.includes('INSERT OR IGNORE INTO scan_asset_grant_provenance'))
-      ) {
+      if (!invalidated && isFinalFenceBatch(sql)) {
         invalidated = true;
         await run(real, "UPDATE passes SET status='voided', revision=revision+1 WHERE id=?", [
           pass.id,

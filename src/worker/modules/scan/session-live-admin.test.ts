@@ -14,7 +14,7 @@ import { scanHub } from './live.ts';
 import { liveRecipient } from './live-auth.ts';
 import { liveRowFor } from './live-render.ts';
 import { asDeskDisplay } from './live-screen-test-fixtures.ts';
-import { scanPhotoUrl } from './member-photo-url.ts';
+import { scanPhotoUrl } from './member-photo-url-test-fixtures.ts';
 import { getEvent } from './repo-scope.ts';
 import { joinAdminScanningSession, updateScanningDevice } from './scanning-devices.ts';
 import {
