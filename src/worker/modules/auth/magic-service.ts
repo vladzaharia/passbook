@@ -1,5 +1,6 @@
 import type { MagicPrefer } from '../../../shared/contracts/session.ts';
 import { renderSignInEmail } from '../../email/sign-in.ts';
+import { keyedDigest } from '../../platform/crypto.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { BadRequestError, ForbiddenError, UnavailableError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
@@ -270,16 +271,14 @@ export async function consumeMagicCode(
   if (!input.bindingCookie) throw invalid();
   const db = ctx.env.DB;
   const now = ctx.clock.now();
-  const failKey = `magic:fail:${(await sha256Hex(input.email)).slice(0, 32)}`;
+  const bindingHash = await sha256Hex(input.bindingCookie);
+  // Per browser: a stranger's wrong guesses on a link bound to their own cookie cannot lock the
+  // address's owner out. Guessing stays bounded by the per-link attempts and the hourly link cap.
+  const failKey = `magic:fail:${await keyedDigest(ctx.env, 'counter.magic-fail.v1', `${input.email}\n${bindingHash}`)}`;
   const windowStart = now - (now % DAY);
   // Failures count across links, so reissuing a link does not reset the guess budget.
   if ((await repo.readCounter(db, failKey, windowStart)) >= CODE_FAILURE_CAP) throw invalid();
-  const link = await repo.findLinkForCode(
-    db,
-    input.email,
-    await sha256Hex(input.bindingCookie),
-    now,
-  );
+  const link = await repo.findLinkForCode(db, input.email, bindingHash, now);
   if (!link?.code_hash) throw invalid();
   if (!link.pending_identity) await requireSignInEnabled(ctx);
   if (!(await repo.spendAttempt(db, link.token_hash, MAX_CODE_ATTEMPTS))) throw invalid();

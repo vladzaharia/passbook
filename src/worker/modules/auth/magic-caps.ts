@@ -1,4 +1,4 @@
-import { sha256Hex } from '../../platform/ids.ts';
+import { keyedDigest } from '../../platform/crypto.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import * as repo from './repo-magic.ts';
@@ -17,7 +17,7 @@ export const dayStart = (now: number): number => now - (now % DAY);
 
 export async function withinCaps(ctx: ServiceContext, email: string): Promise<boolean> {
   const now = ctx.clock.now();
-  const emailKey = (await sha256Hex(`magic-email:${email}`)).slice(0, 32);
+  const emailKey = await keyedDigest(ctx.env, 'counter.magic-email.v1', email);
   if (!(await checkRateLimit(ctx.env, 'RL_MAGIC_LINK', `email:${emailKey}`))) return false;
   const perEmail = await repo.bumpCounter(
     ctx.env.DB,
@@ -36,7 +36,7 @@ export async function withinDailyCap(ctx: ServiceContext): Promise<boolean> {
 /** Per-network sends for known addresses. Requests with no usable address are not capped. */
 export async function withinIpCap(ctx: ServiceContext, prefix: string | null): Promise<boolean> {
   if (!prefix) return true;
-  const key = `magic:ip:${await sha256Hex(prefix)}`;
+  const key = `magic:ip:${await keyedDigest(ctx.env, 'counter.magic-ip.v1', prefix)}`;
   const now = ctx.clock.now();
   return (await repo.bumpCounter(ctx.env.DB, key, dayStart(now))) <= IP_DAILY_CAP;
 }

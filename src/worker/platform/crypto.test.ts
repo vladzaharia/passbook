@@ -4,6 +4,7 @@ import {
   decryptSecret,
   decryptSecretText,
   encryptSecret,
+  keyedDigest,
   loadKekRing,
   rewrapSecret,
 } from './crypto.ts';
@@ -65,5 +66,31 @@ describe('envelope encryption', () => {
   it('fails clearly without a KEK or with a bad one', async () => {
     await expect(loadKekRing({})).rejects.toThrow(/KEK/);
     await expect(loadKekRing({ KEK_V1: toBase64(randomBytes(16)) })).rejects.toThrow(/32 bytes/);
+  });
+});
+
+describe('keyedDigest', () => {
+  it('is stable per key, label and value, and differs across each', async () => {
+    const env = { KEK_V1: kek() };
+    const a = await keyedDigest(env, 'counter.a', 'x@example.test');
+    expect(a).toMatch(/^[0-9a-f]{32}$/);
+    expect(await keyedDigest(env, 'counter.a', 'x@example.test')).toBe(a);
+    expect(await keyedDigest(env, 'counter.b', 'x@example.test')).not.toBe(a);
+    expect(await keyedDigest(env, 'counter.a', 'y@example.test')).not.toBe(a);
+    expect(await keyedDigest({ KEK_V1: kek() }, 'counter.a', 'x@example.test')).not.toBe(a);
+  });
+
+  it('is not the bare hash of the value', async () => {
+    const value = 'x@example.test';
+    const bare = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+    const hex = [...new Uint8Array(bare)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    expect(await keyedDigest({ KEK_V1: kek() }, 'counter.a', value)).not.toBe(hex.slice(0, 32));
+  });
+
+  it('keeps counting under the oldest KEK when a newer one is added', async () => {
+    const v1 = kek();
+    expect(await keyedDigest({ KEK_V1: v1, KEK_V2: kek() }, 'counter.a', 'x')).toBe(
+      await keyedDigest({ KEK_V1: v1 }, 'counter.a', 'x'),
+    );
   });
 });
