@@ -146,12 +146,15 @@ describe('cutover: runbook queries', () => {
   it('has every query the runbook names', () => {
     expect([...runbook.keys()].sort()).toEqual([
       'verify-archived',
+      'verify-broadcasts-due',
       'verify-counts',
       'verify-email-unbound',
       'verify-heads',
       'verify-memberships',
       'verify-moved',
+      'verify-orphan-removed',
       'verify-outbox',
+      'verify-snapshot-size',
       'verify-stale-after',
       'verify-stale-before',
     ]);
@@ -174,6 +177,11 @@ describe('cutover: runbook queries', () => {
     expect(await rows('verify-moved')).toEqual([
       { id: 'up-moved', template_org: 'org-a', org_id: 'org-b', passes: 1, live: 0 },
     ]);
+    expect(await rows('verify-orphan-removed')).toEqual([]);
+    expect(await rows('verify-broadcasts-due')).toEqual([]);
+    const size = (await rows('verify-snapshot-size'))[0]?.est_bytes as number;
+    expect(size).toBeGreaterThan(0);
+    expect(size).toBeLessThan(1_500_000);
   });
 
   it('after the cutover: only the archived template lacks a head (a deleted org is ignored); mail and memberships are bound', async () => {
