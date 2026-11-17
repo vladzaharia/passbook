@@ -2,7 +2,7 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { tenantFilter } from '../../platform/authority-read.ts';
 import { listConsoleEvents } from './repo-events.ts';
-import { listScanRows } from './repo-feed.ts';
+import { countScanRows, getScanRow, listScanRows, type ScanLogFilter } from './repo-feed.ts';
 import type { ScanReadAuthority } from './repo-read-authority.ts';
 import { listConsoleScanners } from './repo-scanners.ts';
 
@@ -13,6 +13,14 @@ const fixedAuth: ScanReadAuthority = {
   params: [],
   ok: 'EXISTS (SELECT 1 FROM actor_ok)',
   tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
+};
+
+/** A platform key naming no org: the mode only, as `apiKeyReadAuthority` gives it. */
+const platformAuth: ScanReadAuthority = {
+  ...fixedAuth,
+  ctes: `actor AS MATERIALIZED (SELECT NULL AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
+    actor_ok AS MATERIALIZED (SELECT org_id, mode FROM actor)`,
+  tenant: (alias) => `${alias}.mode = (SELECT mode FROM actor_ok)`,
 };
 
 /** Runs a repo function against a DB that records its statements, then explains each one. */
@@ -56,27 +64,41 @@ const fullScans = (lines: string[], table: string) =>
 const base = { mode: 'live', limit: 51 } as const;
 
 describe('console list query plans (SC)', () => {
-  const scanFilters: [string, Parameters<typeof listScanRows>[1], string | null][] = [
-    ['an org', { ...base, orgId: 'o' }, 'scans_org'],
-    ['a scanner', { ...base, scannerId: 's' }, 'scans_scanner'],
-    ['staff', { ...base, staffId: 'p' }, 'scans_staff'],
-    ['an event', { ...base, eventId: 'e' }, 'scans_event'],
-    ['a pass', { ...base, passId: 'x' }, 'scans_pass'],
-    ['a window only', { ...base, from: 1, to: 2 }, 'scans_mode_at'],
-    ['an outcome and reason', { ...base, orgId: 'o', outcome: 'refused', reason: 'voided' }, null],
-    ['a cursor', { ...base, orgId: 'o', cursor: 'c' }, null],
+  const scanFilters: [string, ScanLogFilter, ScanReadAuthority, string | null][] = [
+    ['an org', { ...base, orgId: 'o' }, fixedAuth, 'scans_org'],
+    ['an org and a scanner', { ...base, orgId: 'o', scannerId: 's' }, fixedAuth, null],
+    ['a scanner', { ...base, scannerId: 's' }, platformAuth, 'scans_scanner'],
+    ['staff', { ...base, staffId: 'p' }, platformAuth, 'scans_staff'],
+    ['an event', { ...base, eventId: 'e' }, platformAuth, 'scans_event'],
+    ['a pass', { ...base, passId: 'x' }, platformAuth, 'scans_pass'],
+    ['a window only', { ...base, from: 1, to: 2 }, platformAuth, 'scans_mode_at'],
+    [
+      'an outcome and reason',
+      { ...base, orgId: 'o', outcome: 'refused', reason: 'voided' },
+      fixedAuth,
+      null,
+    ],
+    ['a position', { ...base, orgId: 'o', internalCursor: { at: 5, id: 'c' } }, fixedAuth, null],
   ];
-  it.each(scanFilters)('scans: %s uses an index', async (_name, filter, index) => {
-    const lines = await plans((db) => listScanRows(db, filter));
+  it.each(scanFilters)('scans: %s uses an index', async (_name, filter, auth, index) => {
+    const lines = await plans((db) => listScanRows(db, auth, filter, 5));
     expect(fullScans(lines, 's')).toEqual([]);
     expect(fullScans(lines, 'scans')).toEqual([]);
+    // The joins of the page are probes by key, never scans of a large table.
+    for (const table of ['p', 'l', 'recorded', 'cw', 'sc', 'st', 'e'])
+      expect(fullScans(lines, table), `SCAN ${table}`).toEqual([]);
     if (index) expect(lines.join('\n')).toContain(index);
   });
 
+  it('scans: the detail of one scan is a primary key probe', async () => {
+    const lines = await plans((db) => getScanRow(db, fixedAuth, 'x', 5));
+    expect(fullScans(lines, 's')).toEqual([]);
+    expect(fullScans(lines, 'scans')).toEqual([]);
+  });
+
   it('scans: the export count is bounded by an index', async () => {
-    const { countScanRows } = await import('./repo-feed.ts');
     const lines = await plans((db) =>
-      countScanRows(db, { ...base, orgId: 'o', from: 1, to: 2 }, 100_000),
+      countScanRows(db, fixedAuth, { ...base, orgId: 'o', from: 1, to: 2 }, 100_000),
     );
     expect(fullScans(lines, 's')).toEqual([]);
   });

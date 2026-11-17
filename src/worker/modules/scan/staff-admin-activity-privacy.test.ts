@@ -213,7 +213,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
           };
         if (prop === 'prepare')
           return (sql: string) =>
-            /\bWITH starts AS\b/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
+            /\bstarts AS \(/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;
       },

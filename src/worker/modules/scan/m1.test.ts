@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
-import { listScanRows } from './repo-feed.ts';
+import { listScanRows as list, type ScanLogFilter } from './repo-feed.ts';
+import { testFence } from './repo-history-row-test-support.ts';
 import type { ScanKit } from './test-kit.ts';
 import { codeOf, key, setupScanKit } from './test-kit.ts';
 
@@ -13,6 +14,8 @@ beforeEach(async () => {
     actions: [{ id: 'enter', label: 'Check in', kind: 'check_in', repeat: 'once' }],
   });
 });
+const listScanRows = async (_db: D1Database, filter: ScanLogFilter) =>
+  (await list(kit.env.DB, testFence(kit.org.id, filter.mode), filter, kit.clock.now())).rows;
 const scope = () => ({ orgId: kit.org.id, timeZone: 'UTC' });
 const checkIn = async () => {
   const pass = await kit.scanPass(templateId);

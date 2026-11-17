@@ -1,7 +1,6 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { ScanLogFilter } from './repo-feed.ts';
-import { policyCandidateSql } from './repo-feed-select.ts';
 import { scanPasslessCandidateSql } from './repo-scan-passless.ts';
 import { scanRetentionCandidateSql, scanRetentionExcludedSql } from './repo-scan-retention.ts';
 
@@ -111,18 +110,20 @@ const scopedReferenceSql = (scan: 's' | 'cs', ref: ScopedReference) => `EXISTS (
     ${ref.mode ? `AND x.mode = ${scan}.mode` : ''}
     ${ref.table === 'scan_events' ? `AND (${scan}.pass_id IS NOT NULL OR x.archived_at IS NULL)` : ''}
 )`;
-export function where(f: ScanLogFilter, now: number): { sql: string; params: SqlValue[] } {
-  // With a scanner, staff, event or pass filter and no org, the `+` keeps the planner on that
-  // column's index: `scans_mode_at` would read every scan of the mode and sort them.
-  const narrow = !f.orgId && (f.scannerId || f.staffId || f.eventId || f.passId);
-  const clauses = [narrow ? '+s.mode = ?' : 's.mode = ?', scanLedgerScopeSql('s')];
-  const params: SqlValue[] = [f.mode];
+/**
+ * The filter conditions over `s`, without the tenant: the org and mode come from the fence of the
+ * statement (`auth.tenant`), never from the request. A scanner, staff, event or pass filter rides
+ * its own index; callers without an org narrow the mode with `+s.mode` so the planner keeps it.
+ * Position continuation is the decoded `(at, id)` of a row of the same snapshot.
+ */
+export function where(f: ScanLogFilter): { sql: string; params: SqlValue[] } {
+  const clauses = [scanLedgerScopeSql('s')];
+  const params: SqlValue[] = [];
   const eq = (column: string, value: string | undefined, label?: 'pass-id' | 'history-reason') => {
     if (value === undefined) return;
     clauses.push(`${column} = ?${label ? `/* scan-ephemeral-${label} */` : ''}`);
     params.push(value);
   };
-  eq('s.org_id', f.orgId);
   const references = [
     { table: 'scanners', field: 'scanner_id', mode: true, label: 'scanner-id', value: f.scannerId },
     { table: 'scan_staff', field: 'staff_id', mode: false, label: 'staff-id', value: f.staffId },
@@ -141,11 +142,6 @@ export function where(f: ScanLogFilter, now: number): { sql: string; params: Sql
   // Name searches are projected in the service before pagination; repository callers may still
   // select an exact pass id without consulting the untrusted cached display title.
   if (f.q) eq('s.pass_id', f.q, 'pass-id');
-  const passIdFilter = f.passId ?? (f.q || undefined);
-  if (passIdFilter !== undefined) {
-    clauses.push(`${policyCandidateSql('s')} = 1`);
-    params.push(now);
-  }
   eq('s.reason', f.reason, 'history-reason');
   if (f.from !== undefined) {
     clauses.push('s.at >= ?');
@@ -158,26 +154,6 @@ export function where(f: ScanLogFilter, now: number): { sql: string; params: Sql
   if (f.internalCursor) {
     clauses.push('(s.at, s.id) < (?, ?/* scan-ephemeral-scan-id */)');
     params.push(f.internalCursor.at, f.internalCursor.id);
-  } else if (f.cursor) {
-    const scopedPass =
-      passIdFilter === undefined
-        ? ''
-        : ` AND cs.pass_id = ?/* scan-ephemeral-pass-id */ AND ${policyCandidateSql('cs')} = 1`;
-    const scopedReferences = references
-      .filter((ref) => ref.value !== undefined)
-      .map(
-        (ref) =>
-          ` AND cs.${ref.field} = ?/* scan-ephemeral-${ref.label} */ AND ${scopedReferenceSql('cs', ref)}`,
-      )
-      .join('');
-    clauses.push(
-      `(s.at, s.id) < (SELECT cs.at, cs.id FROM scans cs
-       WHERE cs.id = ?/* scan-ephemeral-scan-id */ AND cs.mode = ?${f.orgId !== undefined ? ' AND cs.org_id = ?' : ''}
-         AND ${scanLedgerScopeSql('cs')}${scopedPass}${scopedReferences})`,
-    );
-    params.push(f.cursor, f.mode, ...(f.orgId !== undefined ? [f.orgId] : []));
-    if (passIdFilter !== undefined) params.push(passIdFilter, now);
-    for (const ref of references) if (ref.value !== undefined) params.push(ref.value);
   }
   return { sql: clauses.join(' AND '), params };
 }

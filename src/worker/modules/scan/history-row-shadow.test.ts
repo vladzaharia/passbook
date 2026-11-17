@@ -156,6 +156,9 @@ describe('history row flags against the old builders', () => {
       "UPDATE pass_events SET data = json_set(data, '$.authority', 'x') WHERE pass_id = ?",
       [garbled.passId],
     );
+    const restored = await pass('removed then restored pass');
+    await run(db, 'UPDATE passes SET removed_at = ? WHERE id = ?', [at, restored.passId]);
+    await run(db, 'UPDATE passes SET removed_at = NULL WHERE id = ?', [restored.passId]);
     const noMatch = await recordedNoMatch(scanner);
     cases.push({ name: 'passless refusal', scanId: noMatch.id });
 

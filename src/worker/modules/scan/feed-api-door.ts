@@ -1,11 +1,7 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { historyOf } from './feed-projection-history.ts';
 import type { HistoryPolicy } from './history-policy.ts';
-import { historyProofSnapshotsForScopes } from './history-proof.ts';
-import type { ScanLogRow } from './repo-feed.ts';
-import type { ScanEventProofCache } from './scan-event-proof.ts';
-
-const BATCH = 32;
+import type { HistoryRow } from './history-row.ts';
+import { type HistoryEvidenceCache, historyEvidenceOf } from './history-row-evidence.ts';
 
 /**
  * The door's event-time history policy for each verified row with an effect value. An API key has
@@ -13,34 +9,16 @@ const BATCH = 32;
  */
 export async function doorHistories(
   ctx: ServiceContext,
-  rows: readonly ScanLogRow[],
-  credentialKeysetCommitment: string,
-  proofCache: ScanEventProofCache,
+  rows: readonly HistoryRow[],
+  cache: HistoryEvidenceCache,
 ): Promise<Map<string, HistoryPolicy>> {
-  const valued = rows.filter(
-    (row) =>
-      row.policyAvailable &&
-      row.passId !== null &&
-      row.eventProof &&
-      (row.before !== null || row.after !== null),
-  );
+  const evidence = await historyEvidenceOf(ctx, rows, {
+    role: 'door',
+    cache,
+    requireAvailable: true,
+    wanted: (row) => row.passId !== null && (row.before !== null || row.after !== null),
+  });
   const result = new Map<string, HistoryPolicy>();
-  if (!valued.length) return result;
-  const proofs = await historyProofSnapshotsForScopes(
-    ctx,
-    valued.map((row) => ({ orgId: row.orgId, mode: row.mode, scanId: row.id })),
-    new Map(),
-    credentialKeysetCommitment,
-    proofCache,
-  );
-  for (let start = 0; start < valued.length; start += BATCH) {
-    await Promise.all(
-      valued.slice(start, start + BATCH).map(async (row) => {
-        const proof = proofs.get(row.id);
-        const history = proof ? await historyOf(ctx, row, proof, 'door', proofCache) : null;
-        if (history) result.set(row.id, history);
-      }),
-    );
-  }
+  for (const [id, found] of evidence) if (found.policy) result.set(id, found.policy);
   return result;
 }

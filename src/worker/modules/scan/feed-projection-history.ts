@@ -1,41 +1,7 @@
 import { ScanReasonSchema, type ScanRecordDto } from '../../../shared/contracts/index.ts';
-import type { ScanRole } from '../../../shared/contracts/scan.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
-import { canonicalJson } from '../templates/package/hash.ts';
 import type { ScanActor } from './guard.ts';
-import { type HistoryPolicy, historyPolicy } from './history-policy.ts';
-import { historyProofPolicySources, type VerifiedHistoryProof } from './history-proof.ts';
-import type { ScanLogRow } from './repo-feed.ts';
-import type { ScanEventProofCache } from './scan-event-proof.ts';
-
-/** Verify the event-time policy against the same current pass snapshot used for projection. */
-export async function historyOf(
-  ctx: ServiceContext,
-  row: ScanLogRow,
-  proof: VerifiedHistoryProof,
-  role: ScanRole | null,
-  proofCache: ScanEventProofCache,
-): Promise<HistoryPolicy | null> {
-  const original = row.eventProof;
-  if (!row.policyAvailable || !original || !proof.projectionCurrent || !role) return null;
-  const sources = historyProofPolicySources(proof);
-  if (
-    !sources ||
-    canonicalJson(original.event) !== canonicalJson(sources.event) ||
-    sources.currentScannerName !== row.scannerName
-  )
-    return null;
-  const scan = sources.scan as unknown as Record<string, unknown>;
-  if (Object.entries(original.scan).some(([key, value]) => !Object.is(scan[key], value)))
-    return null;
-  return historyPolicy(ctx.env, {
-    ...sources,
-    credentialKeysetCommitment: proof.credentialKeysetCommitment,
-    role,
-    currentScannerName: row.scannerName,
-    proofCache,
-  });
-}
+import type { HistoryPolicy } from './history-policy.ts';
+import type { HistoryRow } from './history-row.ts';
 
 /** A stored effect value, or null when the viewer's policy finds it unsafe (contact data, a hidden input). */
 export function effectValue(
@@ -54,7 +20,7 @@ export function effectValue(
 
 /** Project only after the row's provenance and the viewer's current policy have been checked. */
 export function projectScanRecord(
-  row: ScanLogRow,
+  row: HistoryRow,
   currentTitle: string | null,
   actor: ScanActor,
   history: HistoryPolicy | null,

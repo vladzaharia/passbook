@@ -1,7 +1,9 @@
 // The feed keeps a scan's pass across an org rename (config_revision is settings, not authority);
-// a suspension (access_revision) between the page read and its output still withholds it.
+// a suspension (access_revision) before the page statement refuses the read, and one after it
+// leaves the answer the page's snapshot gave.
 import { describe, expect, it } from 'vitest';
 import { runOne } from '../../../../test/helpers/index.ts';
+import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import { recordedCheckIn } from './console-privacy-actions-test-fixtures.ts';
 import {
   get,
@@ -16,83 +18,62 @@ setupPrivacyKit();
 
 type Change = 'rename' | 'suspend';
 
-/** Apply `kind` once, right after the feed's page read and before its output fence. */
-async function pageRacing(kind: Change) {
-  const db = kit.env.DB;
-  let raced = false;
-  const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-    new Proxy(statement, {
-      get(target, property) {
-        if (property === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
-        if (property === 'all')
-          return async () => {
-            const result = await target.all();
-            if (!raced) {
-              raced = true;
-              if (kind === 'rename')
-                await runOne(db, "UPDATE orgs SET name = name || ' (renamed)' WHERE id = ?", [
-                  kit.org.id,
-                ]);
-              else
-                for (const status of ['suspended', 'active'])
-                  await runOne(db, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
-            }
-            return result;
-          };
-        const value = Reflect.get(target, property, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-    });
-  const proxy = new Proxy(db, {
-    get(target, property) {
-      if (property === 'prepare')
-        return (sql: string) => {
-          const statement = target.prepare(sql);
-          return /FROM\s+scans\s+s[\s\S]*ORDER BY s\.at DESC/i.test(sql)
-            ? wrap(statement)
-            : statement;
-        };
-      const value = Reflect.get(target, property, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  Object.assign(kit.env, { DB: proxy });
-  try {
-    const response = await get(`?orgId=${kit.org.id}`);
-    expect(raced).toBe(true);
-    return response;
-  } finally {
-    Object.assign(kit.env, { DB: db });
-  }
+const change = (kind: Change) => async (db: D1Database) => {
+  if (kind === 'rename')
+    await runOne(db, "UPDATE orgs SET name = name || ' (renamed)' WHERE id = ?", [kit.org.id]);
+  else
+    for (const status of ['suspended', 'active'])
+      await runOne(db, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
+};
+
+/** Apply `kind` once around the feed's page statement. */
+async function pageRacing(kind: Change, when: 'before' | 'after') {
+  const { result, fired } = await (when === 'before' ? beforeBatch : afterBatch)(
+    kit.env,
+    /page AS MATERIALIZED/,
+    change(kind),
+    () => get(`?orgId=${kit.org.id}`),
+  );
+  expect(fired).toBe(true);
+  return result;
 }
 
 describe('scan feed and the org epochs', () => {
-  it('keeps a feed row and its pass when an org rename races the page', async () => {
+  it.each(['before', 'after'] as const)(
+    'keeps a feed row and its pass when an org rename comes %s the page',
+    async (when) => {
+      const pass = await privatePass();
+      const scanner = await kit.scanner({ templateIds: [templateId] });
+      const row = await recordedCheckIn(scanner, pass.id);
+      await runOne(kit.env.DB, "UPDATE orgs SET name = name || ' (before)' WHERE id = ?", [
+        kit.org.id,
+      ]);
+      const response = await pageRacing('rename', when);
+      expect(response.status).toBe(200);
+      const page = (await response.json()) as { items: { id: string; passId: string | null }[] };
+      expect(page.items.find((item) => item.id === row.id)).toMatchObject({
+        passId: pass.id,
+        passTitle: PUBLIC,
+      });
+    },
+  );
+
+  it('refuses the read when a suspension comes before the page', async () => {
     const pass = await privatePass();
     const scanner = await kit.scanner({ templateIds: [templateId] });
-    const row = await recordedCheckIn(scanner, pass.id);
-    await runOne(kit.env.DB, "UPDATE orgs SET name = name || ' (before)' WHERE id = ?", [
-      kit.org.id,
-    ]);
-    const response = await pageRacing('rename');
-    expect(response.status).toBe(200);
-    const page = (await response.json()) as { items: { id: string; passId: string | null }[] };
-    expect(page.items.find((item) => item.id === row.id)).toMatchObject({
-      passId: pass.id,
-      passTitle: PUBLIC,
-    });
+    await recordedCheckIn(scanner, pass.id);
+    const response = await pageRacing('suspend', 'before');
+    expect(response.status).toBe(403);
+    expect(await response.text()).not.toContain(PUBLIC);
   });
 
-  it('withholds the pass when a suspension races the page', async () => {
+  it('answers from the page snapshot when a suspension comes after it', async () => {
     const pass = await privatePass();
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const row = await recordedCheckIn(scanner, pass.id);
-    const response = await pageRacing('suspend');
-    const text = await response.text();
-    expect(text).not.toContain(PUBLIC);
-    if (response.status === 200) {
-      const page = JSON.parse(text) as { items: { id: string; passId: string | null }[] };
-      expect(page.items.find((item) => item.id === row.id)?.passId ?? null).toBeNull();
-    }
+    const response = await pageRacing('suspend', 'after');
+    expect(response.status).toBe(200);
+    const page = (await response.json()) as { items: { id: string; passId: string | null }[] };
+    expect(page.items.find((item) => item.id === row.id)?.passId).toBe(pass.id);
   });
 });

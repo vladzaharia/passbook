@@ -5,6 +5,7 @@ import { run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { buildKey as templateBuildKey } from '../templates/package/hash.ts';
+import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { recordedCheckIn } from './console-privacy-actions-test-fixtures.ts';
 import {
   EMAIL,
@@ -245,7 +246,7 @@ describe('scan console and feed privacy', () => {
   });
 
   it.each(['list', 'detail', 'export'] as const)(
-    'does not return a stale %s projection when the approved head changes during its read',
+    'answers a %s from one snapshot when the approved head changes around its read',
     async (kind) => {
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const pass = await privatePass();
@@ -260,88 +261,33 @@ describe('scan console and feed privacy', () => {
         assets: { 'icon.png': ICON_PNG },
       });
       await insertVersion(active, initialBuildKey);
-      const db = kit.env.DB;
-      let intercepted = 0;
-      const wrap = (statement: D1PreparedStatement, sql: string): D1PreparedStatement =>
-        new Proxy(statement, {
-          get(target, member) {
-            if (member === 'bind')
-              return (...values: unknown[]) => wrap(target.bind(...values), sql);
-            if (member === 'all')
-              return async () => {
-                const result = await target.all();
-                // The history proof read: the head moves before the final fence.
-                if (intercepted === 0 && sql.includes('WITH ids(id) AS (VALUES')) {
-                  intercepted++;
-                  await approveAppleRelease(kit, {
-                    orgId: kit.org.id,
-                    mode: 'live',
-                    templateId,
-                    version: active.version,
-                    db,
-                  });
-                }
-                return result;
-              };
-            const value = Reflect.get(target, member, target);
-            return typeof value === 'function' ? value.bind(target) : value;
-          },
-        });
-      const proxy = new Proxy(db, {
-        get(target, property) {
-          if (property === 'prepare') return (sql: string) => wrap(target.prepare(sql), sql);
-          const value = Reflect.get(target, property, target);
-          return typeof value === 'function' ? value.bind(target) : value;
+      const path =
+        kind === 'list' ? `?orgId=${kit.org.id}` : kind === 'detail' ? `/${row.id}` : exportPath();
+      const moveHead = (db: D1Database) =>
+        approveAppleRelease(kit, {
+          orgId: kit.org.id,
+          mode: 'live',
+          templateId,
+          version: active.version,
+          db,
+        }).then(() => undefined);
+      // Before the page the read sees the new head, and after it the old one. Either way the
+      // policy and the pass it projects are one snapshot, never a mix.
+      const { result, fired } = await beforeBatch(
+        kit.env,
+        /page AS MATERIALIZED/,
+        moveHead,
+        async () => {
+          const response = await get(path);
+          return { status: response.status, text: await response.text() };
         },
-      });
-      Object.assign(kit.env, { DB: proxy });
-      let response: Response;
-      let text: string;
-      try {
-        const path =
-          kind === 'list'
-            ? `?orgId=${kit.org.id}`
-            : kind === 'detail'
-              ? `/${row.id}`
-              : exportPath();
-        response = await get(path);
-        text = await response.text();
-      } finally {
-        Object.assign(kit.env, { DB: db });
-      }
-      expect(intercepted).toBe(1);
-      expect(response.status).toBe(200);
+      );
+      expect(fired).toBe(true);
+      expect(result.status).toBe(200);
+      const { text } = result;
       expectNoSecrets(text, pass);
-      expect(text).not.toContain(PUBLIC);
-      expect(text).not.toContain(pass.id);
-      expect(text).not.toContain(templateId);
-      const redacted = {
-        id: row.id,
-        passId: null,
-        templateId: null,
-        passTitle: null,
-        kind: null,
-        actionId: null,
-        actionLabel: null,
-        amount: null,
-        before: null,
-        after: null,
-        outcome: 'ok',
-        reason: null,
-      };
-      if (kind === 'list') {
-        expect(JSON.parse(text)).toMatchObject({ items: [redacted], nextCursor: null });
-      } else if (kind === 'detail') {
-        expect(JSON.parse(text)).toMatchObject(redacted);
-      } else {
-        expect(
-          text
-            .replace(/^\uFEFF/, '')
-            .trimEnd()
-            .split('\r\n'),
-        ).toHaveLength(2);
-        expect(text).toContain(new Date(row.at).toISOString());
-      }
+      if (kind !== 'export') expect(text).toContain(pass.id);
+      expect(text).toContain(PUBLIC);
       const fresh = await get(`/${row.id}`);
       expect(fresh.status).toBe(200);
       expect(await fresh.json()).toMatchObject({ id: row.id, passId: pass.id, passTitle: PUBLIC });

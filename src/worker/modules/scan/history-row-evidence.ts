@@ -36,6 +36,21 @@ export const createHistoryEvidenceCache = (): HistoryEvidenceCache => ({
 });
 
 /**
+ * Run `work` beside the keyset pin of the page's pass-bearing rows: a deployment whose stored keyset
+ * is not this one's fails such a page closed (503), and an empty or passless page needs no keyset.
+ * The pin is read once per request, in parallel with the page's other reads.
+ */
+export async function withKeyset<T>(
+  ctx: ServiceContext,
+  rows: readonly HistoryRow[],
+  work: () => Promise<T>,
+): Promise<T> {
+  const pin = rows.some((row) => row.passId !== null) ? pinKeyset(ctx) : null;
+  const [result] = await Promise.all([work(), pin]);
+  return result;
+}
+
+/**
  * The row's provenance: a passless refusal is its own fact; a pass-bearing scan needs the pass and
  * recorded-proof checks of its snapshot and a valid event MAC. Rows come back marked.
  */
