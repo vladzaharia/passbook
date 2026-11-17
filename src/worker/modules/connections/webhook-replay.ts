@@ -17,6 +17,7 @@ import {
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import { getDeps } from './deps.ts';
 import { syncKeysetCurrent } from './keyset-current.ts';
+import { isReleaseBlockCode } from './record-issuance.ts';
 import { type ConnectionReleaseSnapshot, captureConnectionRelease } from './records.ts';
 import { getConnection } from './repo.ts';
 import { summarizeItems } from './repo-webhook-items.ts';
@@ -129,7 +130,10 @@ export async function replayRetainedWebhook(
   const rebind = Boolean(summary.blocked) && current?.kind === 'approved';
   // Nothing left to replay is the finding, whatever the release did since receipt.
   if (!rebind && !summary.pending && !summary.failed && row.itemCount > 0) {
-    const code = summary.uncertain ? 'WEBHOOK_EFFECT_UNCERTAIN' : 'TEMPLATE_RELEASE_REQUIRED';
+    const blocked = isReleaseBlockCode(summary.blockedCode)
+      ? summary.blockedCode
+      : 'TEMPLATE_RELEASE_REQUIRED';
+    const code = summary.uncertain ? 'WEBHOOK_EFFECT_UNCERTAIN' : blocked;
     throw new ConflictError('No webhook items can be replayed safely.', code);
   }
   let pinned = previous;

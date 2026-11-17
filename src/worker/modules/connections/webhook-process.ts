@@ -5,6 +5,7 @@ import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { closeRun } from './health.ts';
+import { isReleaseBlockCode } from './record-issuance.ts';
 import { captureConnectionRelease, emptyTotals } from './records.ts';
 import { getConnection } from './repo.ts';
 import { insertRun } from './repo-runs.ts';
@@ -216,11 +217,7 @@ export async function processWebhook(
   });
   if (!applied) return;
   const summary = await summarizeRetainedWebhookItems(sctx, job, revision);
-  const blockedCode =
-    summary.blockedCode === 'TEMPLATE_RELEASE_REQUIRED' ||
-    summary.blockedCode === 'TEMPLATE_RELEASE_CONFLICT'
-      ? summary.blockedCode
-      : undefined;
+  const blockedCode = isReleaseBlockCode(summary.blockedCode) ? summary.blockedCode : undefined;
   if (summary.blocked > 0 && !blockedCode) {
     throw new UnavailableError(
       'Webhook retention is unavailable.',
