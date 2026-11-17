@@ -3,7 +3,7 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import { type Check, passRow } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
-import { AppError, ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
+import { AppError, PreconditionFailedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   type PublishCommit,
@@ -19,7 +19,8 @@ import { heldOutcome } from './act-held.ts';
 import type { HeldHolder } from './act-held-holder.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import { pendingCap } from './act-value-guard.ts';
-import { finishValueResult } from './act-value-result.ts';
+import { assertPassStill, fillsCard, passChanged } from './act-value-mutate.ts';
+import { finishValueResult, publishedPassJson } from './act-value-result.ts';
 import {
   addValueStatements,
   gateUnchanged,
@@ -28,13 +29,15 @@ import {
 } from './act-value-statements.ts';
 import { historyPlan } from './card.ts';
 import { type CountsPlan, localDayStart, planCommitCounts } from './counts.ts';
-import { amountOf, ScanEffectStop, type ValueEffect, valueEffect } from './effects-value.ts';
+import { appliedAmount, ScanEffectStop, type ValueEffect, valueEffect } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import type { LedgerFacts } from './ledger.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import type * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
+import { filledSinceRedeem } from './repo-scan-amount.ts';
 import { dailyAmountCheck, doneOkPredicate } from './repo-scan-checks.ts';
+import { transferPending } from './repo-scan-transfer.ts';
 import type { Found } from './resolve.ts';
 import { afterReads, capturingDb } from './scan-capture.ts';
 import { displayRequiresHistory } from './scan-display-history.ts';
@@ -106,19 +109,29 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     approvedBy,
     eventId: event?.id ?? null,
   };
+  // Set by the publish's attempt that commits; closures cannot narrow a plain `let`.
+  const st: {
+    effect?: ValueEffect;
+    planned?: Planned;
+    results?: { writes: D1Result[]; after: D1Result[] };
+    granted?: ReturnType<typeof open>;
+  } = {};
   // The scanner's daily amount, held in the batch itself: two desks at the cap cannot both pass.
   const limit = actor.settings.dailyAmount;
-  const dailyLimit =
-    limit != null && (action.kind === 'add' || action.kind === 'take')
+  // The amount the effect applied (set by the attempt's `mutate`), not the one asked for.
+  const dailyLimit = () => {
+    const applied = st.effect ? appliedAmount(st.effect) : 0;
+    return limit != null && applied > 0 && (action.kind === 'add' || action.kind === 'take')
       ? [
           dailyAmountCheck(
             actor.actorKey,
             localDayStart(ctx.clock.now(), actor.timeZone),
-            amountOf(action, req.amount),
+            applied,
             limit,
           ),
         ]
       : [];
+  };
   const open = (passChecks: Check[]) =>
     scanWriteGrant(ctx, authority, {
       purpose: 'org_mode.scan.value',
@@ -127,7 +140,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       pass: { id: found.pass.id, facts: { pass: found.pass, credential } },
       approver: i.approver,
       credentialRefs: claim.credentialTombstoneRefs,
-      checks: [...passChecks, ...dailyLimit],
+      checks: [...passChecks, ...dailyLimit()],
       tables: VALUE_TABLES,
       codes: CODES,
     });
@@ -138,7 +151,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     effect: ValueEffect,
   ): Promise<Planned> => {
     const statements = await addValueStatements(g, scan, passWon, pass, {
-      amount: action.kind === 'add' || action.kind === 'take' ? amountOf(action, req.amount) : null,
+      amount: action.kind === 'add' || action.kind === 'take' ? appliedAmount(effect) : null,
       before: json(effect.before),
       after: json(effect.after),
     });
@@ -152,13 +165,6 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     };
   };
 
-  // Set by the publish's attempt that commits; closures cannot narrow a plain `let`.
-  const st: {
-    effect?: ValueEffect;
-    planned?: Planned;
-    results?: { writes: D1Result[]; after: D1Result[] };
-    granted?: ReturnType<typeof open>;
-  } = {};
   let fills = false;
   const commit: PublishCommit = {
     open: (passChecks) => open(passChecks),
@@ -183,6 +189,15 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
   };
 
   const stamps = manifest.stamps?.input === input;
+  if (await transferPending(ctx.env.DB, found.pass.id)) throw passChanged();
+  const filledBefore =
+    stamps && action.kind === 'add' && manifest.stamps
+      ? await filledSinceRedeem(
+          ctx.env.DB,
+          { orgId: actor.orgId, passId: found.pass.id },
+          manifest.stamps.goal,
+        )
+      : false;
   const cap = await pendingCap(ctx, found, action);
   try {
     const published = await publishPass(ctx, {
@@ -196,22 +211,13 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
         : {}),
       // A stamp card alerts once by itself (its template message); nothing else notifies unless asked.
       ...(action.notify || stamps ? {} : { notify: false }),
-      budgetExempt: () => fills,
+      budgetExempt: () => fills && !filledBefore,
       commit,
       mutate(current) {
-        if (current.templateVersion !== found.pass.templateVersion)
-          throw new ConflictError('The pass changed. Retry.', 'PASS_CONFLICT');
-        if (current.status === 'voided') throw new ScanEffectStop('voided');
+        assertPassStill(current, found.pass, action);
         const effect = valueEffect(action, manifest, current, body, cap);
         st.effect = effect;
-        const before = effect.before;
-        fills =
-          stamps &&
-          action.kind === 'add' &&
-          typeof before === 'number' &&
-          typeof effect.after === 'number' &&
-          before < (manifest.stamps?.goal ?? Infinity) &&
-          effect.after >= (manifest.stamps?.goal ?? Infinity);
+        fills = fillsCard(action, manifest.stamps, effect);
         return {
           personalization: effect.personalization,
           status: effect.status,
@@ -259,6 +265,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       i.onFailureCommitted();
       return heldAnswer(p, r, g);
     }
+    const passJson = plan ? await publishedPassJson(ctx, pass.id) : null;
     return finishValueResult({
       ctx,
       actor,
@@ -270,8 +277,9 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       undoWindow: i.undoWindow,
       read,
       effect: fx,
-      amount: action.kind === 'add' || action.kind === 'take' ? amountOf(action, req.amount) : null,
+      amount: action.kind === 'add' || action.kind === 'take' ? appliedAmount(fx) : null,
       history: p.bound?.finalize(r.after.slice(p.counts.stmts.length)) ?? null,
+      passJson,
     });
   }
 

@@ -6,9 +6,10 @@ import { resolveTemplate } from '../passes/builder.ts';
 import { type PublishCommit, publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { schemaOf } from './effects-value.ts';
+import { holderMoved } from './repo-scan-transfer.ts';
 import { addUndoWrites, openUndoGrant, UNDO_CODES, type UndoCommit } from './repo-undo-grant.ts';
 import { readScanValue } from './repo-undo-value.ts';
-import { superseded } from './undo-authority.ts';
+import { notFound, superseded } from './undo-authority.ts';
 
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 
@@ -25,11 +26,14 @@ export async function commitValueUndo(c: UndoCommit): Promise<void> {
     getPass(db, target.passId, actor.orgId),
   ]);
   if (!value || !pass) throw superseded();
+  // As before: a pass whose credential is moving answers as a scan that is not there.
+  if (await holderMoved(db, pass.id, target.id)) throw notFound();
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   const action = scanOf(template.manifest).actions.find((a) => a.id === target.actionId);
   const input = action?.input ?? '';
   if (!action || (target.actionKind !== 'use_up' && !input)) throw superseded();
-  const minimum = schemaOf(template.manifest, input)?.minimum;
+  const schema = schemaOf(template.manifest, input);
+  const [minimum, maximum] = [schema?.minimum, schema?.maximum];
   let committed = false;
   const commit: PublishCommit = {
     open: (checks) =>
@@ -55,6 +59,11 @@ export async function commitValueUndo(c: UndoCommit): Promise<void> {
     mutate(current) {
       if (current.templateVersion !== pass.templateVersion) throw superseded();
       const kind = target.actionKind;
+      // Anything that touched the pass since a void or a set (an admin's void, a sync) is not ours to reverse.
+      if ((kind === 'use_up' || kind === 'set') && current.version !== target.passVersion)
+        throw superseded();
+      if (input && current.fieldSources[input] === 'connection' && !action.allowOnConnected)
+        throw superseded();
       if (kind === 'use_up') {
         if (current.status !== 'voided' || current.removedAt !== null) throw superseded();
         return { status: 'active' };
@@ -67,7 +76,8 @@ export async function commitValueUndo(c: UndoCommit): Promise<void> {
       } else {
         const delta = num(value.after) - num(value.before);
         const back = num(now) - delta;
-        next = typeof minimum === 'number' ? Math.max(minimum, back) : back;
+        const floored = typeof minimum === 'number' ? Math.max(minimum, back) : back;
+        next = typeof maximum === 'number' ? Math.min(maximum, floored) : floored;
       }
       return { personalization: { ...current.personalization, [input]: next } };
     },

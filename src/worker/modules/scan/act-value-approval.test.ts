@@ -1,10 +1,12 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeScanStaff } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { act, kit, out, rows, setupActionFixture } from './act-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
+// A PIN's counters are windowed by the clock: each test starts in a fresh hour.
+beforeEach(() => kit.clock.advance(2 * 60 * 60_000));
 
 const ADD = {
   id: 'add',
@@ -56,35 +58,83 @@ describe('a Manager PIN with no one named', () => {
 
   it('is a plain miss for a wrong PIN or a Desk PIN, and writes nothing', async () => {
     await makeScanStaff(kit.fx, { orgId: kit.org.id, role: 'desk', pin: '777888' });
-    const { pass, add } = await door();
     for (const pin of ['000000', '777888']) {
+      const { pass, add } = await door();
       const res = await add({ pin });
       expect(res.status).toBe(400);
       expect(((await res.json()) as { code: string }).code).toBe('PIN_INVALID');
+      expect(await balanceOf(pass.id)).toBe(0);
     }
-    expect(await balanceOf(pass.id)).toBe(0);
   });
 
-  it('refuses two managers with the same PIN, clearly', async () => {
+  it('answers two managers with one PIN exactly as a wrong PIN, and tells the log', async () => {
     await manager('111222');
     await manager('111222');
-    const { pass, add } = await door();
-    const res = await add({ pin: '111222' });
-    expect(res.status).toBe(409);
-    expect(((await res.json()) as { code: string }).code).toBe('PIN_AMBIGUOUS');
-    expect(await balanceOf(pass.id)).toBe(0);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const err = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const wrong = await (await door()).add({ pin: '000002' });
+      const { pass, add } = await door();
+      const both = await add({ pin: '111222' });
+      const strip = async (res: Response) => {
+        const body = (await res.json()) as Record<string, unknown>;
+        return { status: res.status, code: body.code, detail: body.detail, issues: body.issues };
+      };
+      expect(await strip(both)).toEqual(await strip(wrong));
+      expect(await balanceOf(pass.id)).toBe(0);
+      const lines = [...warn.mock.calls, ...log.mock.calls, ...err.mock.calls].map((c) =>
+        String(c[0]),
+      );
+      const logged = lines.find((line) => line.includes('scan.pin_ambiguous'));
+      expect(logged).toContain(kit.org.id);
+      expect(logged).not.toContain('111222');
+    } finally {
+      warn.mockRestore();
+      log.mockRestore();
+      err.mockRestore();
+    }
   });
 
-  it('counts a wrong PIN like a sign-in does and locks the scanner after five', async () => {
-    const { add, pass } = await door();
+  it('costs a PIN-only miss one guess per manager tested, on the scanner and on the org', async () => {
+    const [{ n }] = (await rows<{ n: number }>(
+      "SELECT COUNT(*) AS n FROM scan_staff WHERE org_id = ? AND role = 'manager' AND disabled_at IS NULL",
+      [kit.org.id],
+    )) as [{ n: number }];
+    const burst = Math.max(1, Math.floor(5 / n));
+    const { add } = await door();
     const codes: string[] = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < burst + 1; i++) {
       const res = await add({ pin: '000001' });
       codes.push(res.status === 400 ? 'PIN_INVALID' : String(res.status));
     }
-    expect(codes.slice(0, 5)).toEqual(Array(5).fill('PIN_INVALID'));
-    expect(codes[5]).toBe('429');
-    expect(await balanceOf(pass.id)).toBe(0);
+    expect(codes).toEqual([...Array(burst).fill('PIN_INVALID'), '429']);
+    // another device of the same org: only the org's hourly budget is left
+    const orgBudget = Math.max(1, Math.floor(20 / n));
+    let used = burst;
+    let locked = false;
+    for (let i = 0; i < orgBudget + 1 && !locked; i++) {
+      const res = await (await door()).add({ pin: '000003' });
+      if (res.status === 429) locked = true;
+      else used++;
+    }
+    expect(locked).toBe(true);
+    expect(used).toBe(orgBudget);
+  });
+
+  it('asks for the manager when the scanner has staff sign-in on', async () => {
+    const t = await kit.scanTemplate('Named only', { actions: [ADD] });
+    const s = await kit.scanner({ templateIds: [t], settings: { staffSignIn: true } });
+    const pass = await kit.scanPass(t, { balance: 0 });
+    const clerk = await kit.staff('door');
+    const signedIn = await kit.post(s.headers, '/staff', { staffId: clerk.id, pin: clerk.pin });
+    expect(signedIn.status, await signedIn.clone().text()).toBe(200);
+    const res = await act(s.headers, codeOf(pass), {
+      actionId: 'add',
+      approval: { pin: '123456' },
+    });
+    expect(res.status, await res.clone().text()).toBe(422);
+    expect(((await res.json()) as { code: string }).code).toBe('PIN_MANAGER_REQUIRED');
   });
 
   it('works for an undo past the window', async () => {

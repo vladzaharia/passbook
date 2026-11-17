@@ -1,4 +1,4 @@
-import { UnavailableError } from '../../platform/errors.ts';
+import { UnavailableError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
 import { type ActRequest, claimOf, rememberHistoryCapacities, requestHashOf } from './act-claim.ts';
@@ -42,6 +42,8 @@ export async function act(
 ): Promise<ScanEvaluation> {
   ctx = snapshotActionContext(ctx);
   actor = cloneObservedScanActor(actor);
+  if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
+    throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
   const { input, approval, ...request } = req;
   req = {
     ...structuredClone(request),

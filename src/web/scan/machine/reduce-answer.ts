@@ -48,6 +48,8 @@ function enterMember(s: MachineState, ev: Answer, env: Env): Out {
   return out(next.state, [...cmds, ...next.cmds]);
 }
 
+const withoutApproval = ({ approval: _pin, ...draft }: Draft): Draft => draft;
+
 const asDraft = (d: Draft | 'auto'): Draft =>
   d === 'auto' ? { actionId: 'auto', amount: null } : d;
 
@@ -71,7 +73,8 @@ export function answer(s: MachineState, ev: Answer, env: Env): Out {
       outcome: ev.outcome,
       resumeCamera: l.s === 'checking',
       next: l.next,
-      ...(l.s === 'applying' ? { draft: l.draft } : {}),
+      // The Manager's PIN is spent: the draft a later approval re-sends never holds one.
+      ...(l.s === 'applying' ? { draft: withoutApproval(l.draft) } : {}),
     },
     env,
   );

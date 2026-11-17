@@ -118,9 +118,10 @@ export const dailyAmountCheck = (
   amount: number,
   limit: number,
 ): Check =>
-  rawCheck(
+  tenantCheck(
     'retention',
-    `COALESCE((SELECT SUM(s.amount) FROM scans s WHERE s.actor_key = ? AND s.action_kind IN ('add', 'take')
+    `COALESCE((SELECT SUM(s.amount) FROM scans s WHERE s.org_id = {org} AND s.mode = {mode}
+       AND s.actor_key = ? AND s.action_kind IN ('add', 'take')
        AND s.outcome = 'ok' AND s.undone_by IS NULL AND s.at >= ?), 0) + ? <= ?`,
     [actorKey, since, amount, limit],
   );

@@ -53,7 +53,7 @@ export const managerRosterStatement = (db: Db, orgId: string): D1PreparedStateme
   stmt(
     db,
     `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? AND role = 'manager' AND disabled_at IS NULL
-     ORDER BY id LIMIT 20`,
+     ORDER BY id`,
     [orgId],
   );
 

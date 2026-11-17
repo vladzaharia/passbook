@@ -120,7 +120,7 @@ export async function finishEffectStop(
     hard: true,
   };
   const have =
-    stop.have === null ? null : scanValueOf(found, s.actor, action, stop.have, stop.have);
+    stop.have === null ? null : scanValueOf(s.ctx, found, s.actor, action, stop.have, stop.have);
   const outcome = await finishStop(s, refusal, authority);
   const card = reason === 'stale' ? await freshCard(s.ctx, s.actor, req) : null;
   return { ...outcome, value: have, ...(card ? { card } : {}) };

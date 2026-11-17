@@ -174,6 +174,7 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
           scannerId: authorityActor.scanner?.id ?? authorityActor.actorKey,
           orgId: authorityActor.orgId,
           staffId: approval.staffId ?? ANY_MANAGER,
+          ...(approval.staffId ? {} : { testedManagers: approver.length }),
         },
         guard,
       )

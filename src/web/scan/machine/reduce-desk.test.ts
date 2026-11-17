@@ -128,6 +128,22 @@ describe('the desk picks a value action', () => {
     expect(sent.state.loop).toMatchObject({ s: 'applying', draft: { actionId: 'gold' } });
   });
 
+  it('does not keep the PIN once it was sent', () => {
+    const locked = ready({ available: false, lock: 'approval', amount: { fixed: 1 } });
+    const tried = step(locked, { type: 'pick', actionId: 'stamp' }, at(200));
+    const needs = step(
+      tried.state,
+      answerOf(requestKey(tried.cmds), 'heads_up', 'needs_approval', {
+        action: { id: 'stamp', label: 'Add stamp', kind: 'add' },
+      }),
+      at(300),
+    );
+    const approved = step(needs.state, { type: 'approve', pin: '123456' }, at(400));
+    const done = step(approved.state, answerOf(requestKey(approved.cmds), 'ok', null), at(500));
+    expect(done.state.loop).toMatchObject({ s: 'verdict', draft: { actionId: 'stamp' } });
+    expect(JSON.stringify(done.state.loop)).not.toContain('123456');
+  });
+
   it('ignores a PIN when the verdict is not needs_approval', () => {
     const state = step(
       step(ready({ amount: { fixed: 1 } }), { type: 'pick', actionId: 'stamp' }, at(200)).state,

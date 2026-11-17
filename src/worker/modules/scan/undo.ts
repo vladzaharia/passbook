@@ -1,5 +1,5 @@
 import { classifyD1Error } from '../../platform/db.ts';
-import { AppError, ForbiddenError } from '../../platform/errors.ts';
+import { AppError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, type ScanActor, tenantScanRole } from './actor.ts';
@@ -32,6 +32,8 @@ export async function undo(
   req: UndoRequest,
   maxAgeMs?: number,
 ): Promise<ScanEvaluation> {
+  if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
+    throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
   const read = await readUndo(
     ctx.env.DB,
     actor.orgId,

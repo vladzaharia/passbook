@@ -8,6 +8,11 @@ import type { PassStatus } from '../passes/repo-map.ts';
 /** A staff-entered or fixed amount never exceeds this (the template validator's bound). */
 export const MAX_AMOUNT = 1000;
 
+/** What an add or take actually moved: the daily amount counts this, not what was asked. */
+export function appliedAmount(effect: Pick<ValueEffect, 'before' | 'after'>): number {
+  return Math.abs(numberOf(effect.after) - numberOf(effect.before));
+}
+
 export type EffectStopReason =
   | 'no_balance'
   | 'card_full'
@@ -139,7 +144,8 @@ export function valueEffect(
       if (next === null) throw new ScanEffectStop('card_full', have);
       return keep(next);
     }
-    return keep(Math.min(have + amount, maximum));
+    // Never below what it holds: a cap that fell under the count leaves it as it is.
+    return keep(have >= maximum ? have : Math.min(have + amount, maximum));
   }
   // take: a stamp card's reward takes the goal off, and nothing short of it
   if (stamps && amount === stamps.goal) {

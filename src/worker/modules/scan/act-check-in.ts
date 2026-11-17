@@ -175,7 +175,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     gate:
       override && (override.reason === 'already_done' || override.reason === 'cooldown')
         ? { rule: 'always' }
-        : found.checkInRules?.mode || actor.settings.checkIn?.mode
+        : action.kind === 'check_in' && (found.checkInRules?.mode || actor.settings.checkIn?.mode)
           ? { rule: 'always' }
           : gateRule(action),
   };

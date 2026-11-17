@@ -3,6 +3,7 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { currentPassJson } from '../passes/repo-read-pass.ts';
 import { visibleSource } from './card-semantics.ts';
 import type { CountsRead } from './counts.ts';
 import { buildDisplay } from './display.ts';
@@ -18,6 +19,7 @@ type ScanValue = NonNullable<ScanOutcome['value']>;
 
 /** The change as the staff sees it, or null when its input is not theirs to see. */
 export function scanValueOf(
+  ctx: ServiceContext,
   found: Found,
   actor: ScanActor,
   action: ResolvedScanAction,
@@ -53,7 +55,9 @@ export function scanValueOf(
             ? 'text'
             : 'number',
     };
-  } catch {
+  } catch (error) {
+    // A policy that cannot be read shows no value; the scan itself stands.
+    ctx.log.warn('scan.value_unreadable', { code: 'SCAN_VALUE_UNREADABLE', error });
     return null;
   }
 }
@@ -83,6 +87,8 @@ interface ValueResult {
   effect: ValueEffect;
   amount: number | null;
   history: FinalizedDisplayHistory | null;
+  /** The pass.json the commit published; the display's pass fields read it. */
+  passJson: Found['passJson'] | null;
 }
 
 /** The committed value scan: its change, the screen rendered from the pass as it now stands, and the milestone. */
@@ -95,7 +101,7 @@ export function finishValueResult(i: ValueResult): ScanOutcome {
     activeFlags(found, actor).map((flag) => flag.label),
   );
   recordResult(ctx, actor, found.pass.templateId, 'ok');
-  const value = scanValueOf(found, actor, action, effect.before, effect.after);
+  const value = scanValueOf(ctx, found, actor, action, effect.before, effect.after);
   return {
     ...blankOutcome('ok', read),
     scanId: i.scanId,
@@ -113,7 +119,9 @@ function displayOf(i: ValueResult, value: ScanOutcome['value']): ScanOutcome['di
   const next: Found = {
     ...found,
     pass,
-    passJson: effect.status === 'voided' ? { ...found.passJson, voided: true } : found.passJson,
+    passJson:
+      i.passJson ??
+      (effect.status === 'voided' ? { ...found.passJson, voided: true } : found.passJson),
   };
   try {
     return buildDisplay(ctx, {
@@ -132,6 +140,21 @@ function displayOf(i: ValueResult, value: ScanOutcome['value']): ScanOutcome['di
     });
   } catch {
     ctx.log.error('scan.display_failed', { code: 'SCAN_DISPLAY_FAILED', screen: 'ok' });
+    return null;
+  }
+}
+
+/** The pass.json the commit wrote, so the display's pass fields show the new value. Null: use the old. */
+export async function publishedPassJson(
+  ctx: ServiceContext,
+  passId: string,
+): Promise<Found['passJson'] | null> {
+  const raw = await currentPassJson(ctx.env.DB, passId);
+  if (raw === null) return null;
+  try {
+    return JSON.parse(raw) as Found['passJson'];
+  } catch (error) {
+    ctx.log.warn('scan.pass_json_unreadable', { code: 'SCAN_PASS_JSON_UNREADABLE', error });
     return null;
   }
 }
