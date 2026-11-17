@@ -97,12 +97,23 @@ describe('scanner history event and source proofs', () => {
       [s.pass.id],
     );
     if (!originalEvent) throw new Error('Missing event');
+    // A change after the read leaves the read's answer (positive control: `history` above); the
+    // same change before the read redacts every row of the display.
     await run(
       kit.env.DB,
       "UPDATE pass_events SET data=json_set(data,'$.authority.role','manager') WHERE pass_id=? AND kind='scan.checked_in'",
       [s.pass.id],
     );
-    const changedFence = plan.bind(now, authority);
+    const afterRead = plan.bind(now, authority);
+    expect(afterRead.finalize(await kit.env.DB.batch(afterRead.stmts))?.value).toMatchObject({
+      visits: { total: 1 },
+      list: { scans: [{ label: 'Check in' }] },
+    });
+    const changedPlan = await prepareDisplayHistory(kit.ctx, s.actor, found, {
+      history: ['visits', 'scans'],
+      ledger: [],
+    });
+    const changedFence = changedPlan.bind(now, authority);
     const changed = changedFence.finalize(await kit.env.DB.batch(changedFence.stmts));
     expect(changed?.value).toMatchObject({ scans: { total: 1 } });
     expect(changed?.value).not.toHaveProperty('visits');

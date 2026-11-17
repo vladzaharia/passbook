@@ -83,7 +83,20 @@ export interface HistoryEvidence {
   policy: HistoryPolicy | null;
 }
 
-function privateValues(raw: HistoryRaw): string[] | null {
+/** The pass's credentials and Wallet values, which a history must never repeat; null when unreadable. */
+export function privateValues(
+  raw: Pick<
+    HistoryRaw,
+    | 'current_wallet_private_values'
+    | 'pass_serial'
+    | 'pass_auth_token'
+    | 'pass_download_token'
+    | 'pass_web_service_url'
+    | 'pass_scan_code'
+    | 'pass_external_id'
+    | 'pass_holder_email'
+  >,
+): string[] | null {
   if (!raw.current_wallet_private_values) return null;
   try {
     const values = [

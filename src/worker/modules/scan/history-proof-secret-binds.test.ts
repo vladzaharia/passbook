@@ -309,7 +309,7 @@ describe('history proof secret bindings', () => {
     expect(
       recorder.prepared.some(
         (entry) =>
-          entry.sql.includes('/* scan-history-proof-page */') && entry.values.length <= 100,
+          entry.sql.includes('WITH page AS MATERIALIZED') && entry.values.length <= 100,
       ),
     ).toBe(true);
     const preloaded = await plan.finish(await recorder.db.batch(plan.stmts));
@@ -413,10 +413,10 @@ describe('history proof secret bindings', () => {
     const complete = await consumeDisplayHistoryRead(preloaded, actor, found, needs);
     expect(complete?.total).toBe(102);
     expect(complete?.ids).toHaveLength(102);
-    expect(complete?.proofs.size).toBe(1);
-    expect(complete?.proofs.has(s.scanId)).toBe(true);
+    expect(complete?.rows.size).toBe(1);
+    expect(complete?.rows.has(s.scanId)).toBe(true);
     expect(
-      recorder.prepared.filter((entry) => entry.sql.includes('/* scan-history-proof-page */')),
+      recorder.prepared.filter((entry) => entry.sql.includes('WITH page AS MATERIALIZED')),
     ).toHaveLength(2);
     const batched = planDisplayHistoryRead(ctx, actor, found, needs, 102);
     expect(batched.stmts).toHaveLength(2);
@@ -424,7 +424,7 @@ describe('history proof secret bindings', () => {
     if (!allPages) throw new Error('Missing batched history pages');
     const combined = await consumeDisplayHistoryRead(allPages, actor, found, needs);
     expect(combined?.ids).toHaveLength(102);
-    expect(combined?.proofs.size).toBe(1);
+    expect(combined?.rows.size).toBe(1);
   });
 
   it('captures pending scan sources opaquely and rejects an unowned planned proof', async () => {
@@ -483,7 +483,7 @@ describe('history proof secret bindings', () => {
     expect(
       recorder.prepared.some(
         (entry) =>
-          entry.sql.includes('/* scan-history-proof-pending */') && entry.values.length <= 100,
+          entry.sql.includes("s.state = 'pending'") && entry.values.length <= 100,
       ),
     ).toBe(true);
     expect(
