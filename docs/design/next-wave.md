@@ -588,8 +588,8 @@ Migration order:
     nothing, the audit rows survive the `audit_log` rebuild, and `scanner` becomes a valid actor;
   - both schemas match except the position of `passes.lookup_hash`, which `ADD COLUMN` appends. No code reads
     `passes` by column position.
-- `0018` is taken by `0018_broadcasts_mode.sql`. The scanner plan's later files (`0018_templates_build_key` for PT.7,
-  then ST's and AX's) take the next free numbers when they land. `0017` stays reserved for n5.
+- `0018` is taken by `0018_broadcasts_mode.sql`. PT.7's `templates_build_key` was built as `0027_templates_build_key.sql`;
+  ST's and AX's files were not built. `0017` stays reserved for n5.
 
 Open risks:
 

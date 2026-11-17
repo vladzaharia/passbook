@@ -57,8 +57,7 @@ Android unit tests, lint and signed assembly pass. APK updates use the original 
 
 ## Remaining milestones and device checks
 
-M1 is the door software milestone. Value actions and staff sign-in/admin are M2; live displays,
-occupancy, access plans and NFC backend verification belong to later scanner milestones.
+M1 is the door software milestone. Value actions (add, take, set, use up, stamps), their undo and Manager PIN approval were built afterwards (#43); live displays and the hub exist. Occupancy, access plans and NFC backend verification belong to later scanner milestones (see README, "Status against the code").
 Those unfinished streams and the separate Blueprints worktrees were not represented as complete.
 Encrypted Apple VAS reads receive an error acknowledgement and direct the operator to the barcode.
 The APK remains a pilot: physical P400 RF behavior, venue glare, Safari/home-screen and accessibility
