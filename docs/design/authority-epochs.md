@@ -1,9 +1,8 @@
 # Authority epochs and grant rows
 
-Replaces the column-equality fences (audit item 1.4, W3-01, W3-02). Owner decision: trigger-maintained epochs plus one authority grant row per batch.
+Replaces column-equality fences with trigger-maintained epochs plus one authority grant row per batch. Built in migrations `0029` to `0057` (`0052` carries the epochs and the grant table). The code is the reference: `src/worker/platform/authority*.ts`, `tools/authority-scope.ts`.
 
-- **Wallet providers:** they ship dark this release and keep their current fences (see "Provider track" in section 7).
-- **Revision 2:** answers the critique in `.wrangler/agent-logs/authority-critique.md` (B1, M1-M7, the minors and the missing items).
+- **Wallet providers** ship dark and keep their column-equality fences (section 7.3).
 
 ## 0. Rules
 
@@ -41,11 +40,11 @@ Each column of an epoch'd table falls in exactly one class:
 - **volatile:** changes never move an epoch;
 - **fixed:** immutable after insert, guarded by a trigger.
 
-The WP0 classification test reads `PRAGMA table_info` and requires each column in exactly one class. With two epochs on one table, the two bump sets must be disjoint and every column must sit in one bump set, volatile or fixed.
+The classification test (`authority-columns.test.ts`) reads `PRAGMA table_info` and requires each column in exactly one class. With two epochs on one table, the two bump sets must be disjoint and every column must sit in one bump set, volatile or fixed.
 
 | Epoch | Bump set | Volatile | Fixed | On mismatch |
 | --- | --- | --- | --- | --- |
-| `orgs.access_revision` (amend `0029`) | `status` | | `id`, `created_at` | 403 `ORG_ACCESS_CHANGED` |
+| `orgs.access_revision` (`0029`) | `status` | | `id`, `created_at` | 403 `ORG_ACCESS_CHANGED` |
 | `orgs.config_revision` (`0052`) | `name`, `slug`, `branding`, `default_identity_id`; settings rows with scope `'org:'\|\|id` (insert, update, delete; a row moved to another scope or key bumps both orgs) | `updated_at`, `branding_dirty_at` | | 409 `SETTINGS_CHANGED` (edit CAS only) |
 | `passes.row_version` (`0052`) | everything not volatile or fixed. `scan_code`, `barcode_hash` and `lookup_hash` bump only when `OLD.x IS NOT NULL` (minor 5) | `next_sync_at`, `last_synced_at`, `sync_error_code`, `sync_failures`, `refresh_requested_at`, `last_refreshed_at`, `modified_collision`, `pending_cause`, `pending_actor_type`, `pending_actor_id`, `pending_pass_json`, `pending_source`, `object_sha256`, `object_size`, `content_hash`, `download_token_rotated_at` | `id`, `created_at`, `created_by` | 409 `PASS_CHANGED` (derived writes) |
 | `passes.credential_generation`, `lifecycle_generation`, `link_generation` | unchanged (`0030`, `0042`) | | | `authority_denied:lineage` |
@@ -54,10 +53,11 @@ The WP0 classification test reads `PRAGMA table_info` and requires each column i
 | `scan_staff.auth_epoch` (`0052`) | `role`, `pin_hash`, `pin_set_at`, `disabled_at`, `org_id` | `name`, `updated_at` | `id`, `created_at`, `created_by` | 409 `SCAN_STAFF_CHANGED` |
 | `scan_events.config_epoch` (`0052`) | `match_input`, `match_values`, `opens_at`, `closes_at`, `time_zone`, `capacity`, `reentry`, `archived_at`, `org_id`, `mode`; insert, update (both events) and delete of `scan_event_templates` | `name`, `note`, `expected`, `expected_at`, `updated_at` | `id`, `created_at`, `created_by` | 409 `SCAN_CONFIG_CHANGED` |
 | `scanning_sessions.config_epoch` (`0052`) | `status`, `accepts`, `settings`, `time_zone`, `org_id`, `mode` | `name`, `updated_at` | `id`, `created_at`, `created_by` | 409 `SCAN_CONFIG_CHANGED` |
-| `connections.generation`, made trigger-owned (`0052`). This is W3-01's `authority_epoch`. | `enabled`, `mode`, `org_id`, `connector_type`, `connector_version`, `config`, `credential_id`, `webhook_credential_id`, `mapping`, `default_template_id`, `holder_email_field`, `auto_create`, `auto_email`, `on_missing` | all other columns | `id`, `created_at` | `STALE_GENERATION` |
-| `template_release_heads (template_id, org_scope TEXT NOT NULL, mode, provider) -> release_id, generation` (`0052`). `org_scope` is `''` for platform. | upserted after insert on `template_releases`, including the `legacy` source added by the cutover amendment of `0031`/`0038` | | | 409 `TEMPLATE_RELEASE_CHANGED` (create and publish only) |
+| `connections.generation`, bumped by `connections_generation_bump` (`0044`); `0052` adds the monotonic, fixed-column and no-replace guards. | `enabled`, `mode`, `org_id`, `connector_type`, `connector_version`, `config`, `credential_id`, `webhook_credential_id`, `mapping`, `default_template_id`, `holder_email_field`, `auto_create`, `auto_email`, `on_missing` | all other columns | `id`, `created_at` | `STALE_GENERATION` |
+| `users.access_revision` (`0052`) | `status` | | | Deferred work captures it; a disable then enable cannot revive work queued before. 403 `ACTOR_CHANGED` |
+| `template_release_heads` (`0052`): a **view** of the newest `template_releases` row per `(template_id, org_scope, mode, provider)`; `org_scope` is `''` for the platform | none: it is derived, so it cannot be written, replaced or drift. A table would add a trigger change to every release insert, and D1 counts those in `meta.changes` | | | 409 `TEMPLATE_RELEASE_CHANGED` (create and publish only) |
 
-**Head lookup precedence:** the org head first, then the platform head (`org_scope = ''`), and the platform head only for `origin = 'baked'` templates.
+**Head lookup precedence** (`effectiveReleaseIdSql` and `releaseHead` agree): the scope org's head, only for an uploaded template or a baked one assigned to that org; otherwise the platform head (`org_scope = ''`) of an unassigned baked template. A legacy release is effective only as the scope's head at the template's active version, so it never outlives the first approved release. The view's `COALESCE(org_id,'')` hides `org_id` from the index, so `releaseHead` reads `template_releases` directly (index `template_releases_head`).
 
 **Rows checked by value, with no epoch:**
 - **Sessions:** `revoked_at IS NULL AND expires_at > now AND idle_expires_at > now`.
@@ -66,13 +66,13 @@ The WP0 classification test reads `PRAGMA table_info` and requires each column i
 - **Users:** `status = 'active'`.
 - **Templates:** `status = 'active' AND (org_id = g.org_id OR org_id IS NULL)`.
 
-**`updated_at` columns become timestamps.** `orgs`, `templates`, `scanners`, `scan_staff` and `scan_events` keep `updated_at` only as a timestamp. A `check:rules` assertion (WP8) forbids `updated_at\s*=\s*\?` in any non-provider SQL.
+**`updated_at` columns become timestamps.** `orgs`, `templates`, `scanners`, `scan_staff` and `scan_events` keep `updated_at` only as a timestamp. `tools/authority-scope.ts --strict` (part of `check:rules`) fails `updated_at = ?` in worker SQL.
 
 **`scanning_config_revisions` (`0024`, in production, read by 10 scan files):**
-- WP9 stops writing and reading it; `config_epoch` replaces it.
-- The table is dropped by a migration one release later, after a release with no readers. It cannot be amended, because it is in production.
+- No production code reads or writes it; `config_epoch` replaces it. Only test fixtures still mention it.
+- A later migration drops it. It cannot be amended, because it is in production.
 
-**Trigger shape.** The passes bump set has about 45 columns. To bound expression depth, it is split into three triggers by column group, each with 16 or fewer `IS NOT` terms. WP0's spike runs `EXPLAIN` on them.
+**Trigger shape.** The passes bump set has about 45 columns. To bound expression depth, it is split into three triggers by column group (`passes_row_version_a`, `_b`, `_c`), because D1 allows expression depth 100.
 
 ```sql
 ALTER TABLE passes ADD COLUMN row_version INTEGER NOT NULL DEFAULT 1;
@@ -85,8 +85,10 @@ WHEN NEW.row_version < OLD.row_version BEGIN SELECT RAISE(ABORT, 'epoch_monotoni
 ```
 
 - Several triggers, and `pass_published` re-firing, can bump one publish more than once. That is allowed (Rule 3).
-- **Loop safety:** the inner UPDATE touches only the epoch, so the triggers cannot loop whatever `recursive_triggers` is set to. WP0 records D1's actual setting.
+- **Loop safety:** the inner UPDATE touches only the epoch, so the triggers cannot loop. D1 runs with `recursive_triggers = 0`.
 - **RETURNING:** returns the epoch from before the AFTER triggers ran. Read the new value with a SELECT later in the same batch.
+- **`meta.changes` counts trigger changes.** An `UPDATE` that fires a bump reports 2. Count rows with `RETURNING` (the builder's `returning`; `runOne` / `runExactly` in tests), never `meta.changes`.
+- **BEFORE INSERT guards ignore `OR IGNORE` and `ON CONFLICT`.** On guarded tables an insert that hits an existing key fails with `UNIQUE constraint failed`; use `INSERT ... SELECT ... WHERE NOT EXISTS`.
 
 ### 1.2 The grant
 
@@ -113,12 +115,15 @@ CREATE TABLE authority_grants (
 CREATE TRIGGER authority_grants_deny BEFORE INSERT ON authority_grants WHEN NEW.denied IS NOT NULL
 BEGIN SELECT CASE NEW.denied
   WHEN 'org' THEN RAISE(ABORT,'authority_denied:org') WHEN 'actor' THEN RAISE(ABORT,'authority_denied:actor')
+  WHEN 'staff' THEN RAISE(ABORT,'authority_denied:staff')
   WHEN 'config' THEN RAISE(ABORT,'authority_denied:config') WHEN 'lineage' THEN RAISE(ABORT,'authority_denied:lineage')
   WHEN 'stale' THEN RAISE(ABORT,'authority_denied:stale') WHEN 'release' THEN RAISE(ABORT,'authority_denied:release')
   WHEN 'retention' THEN RAISE(ABORT,'authority_denied:retention') ELSE RAISE(ABORT,'authority_denied:other') END; END;
 CREATE TRIGGER authority_grants_immutable BEFORE UPDATE ON authority_grants
 BEGIN SELECT RAISE(ABORT,'authority grant is immutable'); END;
 ```
+
+Abridged: `0052` also restricts the holder purposes to a `holder` principal. `leak_guard` is mandatory: D1 enforces the deferred foreign key at batch commit, so a batch that commits with its grant row present fails. The failure message is opaque (`internal error`), so treat it as ambiguous, never as a refusal.
 
 **Scope by purpose:**
 - `org_mode`: pass, scan, delivery, connection and bundle writes.
@@ -144,14 +149,14 @@ const results = await g.commit();                         // one batch: [grant i
 ```
 
 - **Principals.** A membership is `via: 'session'` (a synchronous request: `sessionIdHash` is required and must be live) or `via: 'deferred'` (queued work: the captured `orgAccessRevision` is required, no session is checked, Rule 4). There is no third form. A `platform` or `system` principal that names an org (`orgId`) acts on it only while the org is active. A holder acts only while its pass's org is active, except a session holder with `unlink: true` (`holder_remove`, built only by `unlinkOwner`): an owner can take a pass off their account in a suspended or deleted org, which unlinks it as it is (`holders/service-remove.ts`). The transfer grants of the same holder (START, FINISH) need an active org; `pass_credential_transfer_insert_guard` also refuses a re-sign there.
-- **No raw statements leak.** Statements are opaque values that only that grant can commit. They are not `D1PreparedStatement`s until `commit()` runs, so they cannot run outside their batch. `Grant.prepare` is module-private; `prepareGrantForTest` exists for tests, and the lint rejects it elsewhere.
+- **No raw statements leak.** Statements are opaque values that only that grant can commit. They are not `D1PreparedStatement`s until `commit()` runs, so they cannot run outside their batch. `Grant.prepare` is module-private; `prepareGrantForTest` exists for tests, and the lint rejects it elsewhere. The `GrantedStatement` constructor is token-gated (the lint flags `new GrantedStatement`). Two escape hatches stay inside the grant: `Grant.audit(entry, when?)` appends an `audit_log` row (append-only table; `when` is evaluated at its batch position), and `Grant.unguarded(sql, params)` runs SQL on unguarded tables only.
 - **Cross-grant mixing throws** `GRANT_FOREIGN_STATEMENT`.
 - **One grant per batch.**
   - Choose one. Several grants may share a batch (`grantedBatch`) only when their `codes` are identical, else `GRANT_BATCH_MIXED`: a refusal is translated with the codes of the grants together, not of the one that failed.
   - They run in order: grant B's checks see grant A's writes, because B's insert comes after A's statements.
 - **The builder owns the tenant and the epochs.**
   - **Owned columns** come from `TableScope.org`: `org_id`, `scope` (settings) and `id` (orgs), plus the mode column for an `org_mode` grant. A non-platform write cannot name them in `set`, `inc`, `where`, `columns`, an upsert `update`, or a check's conditions (`GRANT_SCOPE_OVERRIDE`).
-  - **Epoch columns** are derived per table from `EPOCH_TABLES` and cannot be set, incremented or inserted. A table whose bump trigger is still pending keeps its app-written epoch (`connections.generation` until WP4).
+  - **Epoch columns** are derived per table from `EPOCH_TABLES` and cannot be set, incremented or inserted.
   - Orgs: `where` may be empty (the grant pins the row) and an org grant cannot create one.
 - **Org-less children.** `GUARDED_TABLES` declares each child's foreign-key `edges` (`scan_event_templates.event_id -> scan_events.id`; `bundle_passes` has two). `joined` (update or delete) goes through one edge (`via`, default the first) and the parent supplies the tenant; `insertJoined` selects every parent key from the parent rows, which must all be in the tenant, so a cross-tenant link inserts nothing. A parent key cannot be set, so a child cannot be re-parented. `joined` on a table with its own org column is `GRANT_NO_EDGE`. A test checks every edge against `PRAGMA foreign_key_list`.
 - **Platform tables.** `users` (`status`) and `sessions` (`revoked_at`) are written only by a `platform` grant, only those columns, and are never deleted through a grant.
@@ -163,28 +168,40 @@ const results = await g.commit();                         // one batch: [grant i
 - **No post-batch hooks.** Hooks such as `w.commit?.()` (`passes/repo-write-publish.ts:139`) must return grant statements for the same batch.
 - **Reads after the release.** `commitWith(reads)` takes only `afterRead` values (`platform/authority-after.ts`): fixed read-only SQL, checked when built, run after the release in the same transaction so they see the grant's writes. A write that must commit with the grant is a part (`include(writePart(...))` with `{grant}`); decoration that may fail on its own (a scan's PIN refund and photo grant) runs in one batch after the commit and logs `SCAN_FINISH_DEGRADED`, so it never rolls back the scan.
 - **`system:` grants** come only from `jobGrant(ctx)`, and the purpose must contain `.job.` (`GRANT_BAD_PURPOSE`; the CHECK is the second net). `ctx` must be built by `createJobContext(env, kind)` for queue, cron or workflow; it carries a branded `JobAuthority` whose token is private to `job-authority.ts`. `createDetachedContext(env)` (stores, the scan hub, the template registry) has no brand, and so does a route's `ServiceContext`. `check:rules` fails any importer of `job-authority.ts` other than `service-context.ts` and `authority.ts`, and any `createJobContext` outside `jobs/` and `workflows/`.
-- **`check:rules` (WP0 adds; WP8 makes blocking):**
+- **`check:rules`** (`tools/authority-scope.ts --strict`, blocking):
   - no INSERT, UPDATE or DELETE on a guarded table (Appendix B) through `stmt`, `run`, `batch` or `db.prepare` outside `platform/authority.ts`;
   - no `OR REPLACE` / `REPLACE INTO` outside the explicit allowlist in §1.3 (it names `push_results` at `delivery/repo-devices.ts:142`);
   - no `updated_at = ?`.
   - The allowlist covers wallet providers, migrations helpers and test fixtures.
 
-**Deny precedence:** org, then actor, then config, then lineage, release and retention, then stale.
+**Deny precedence and mapping** (`DENY_REASONS`, `authorityDenied` in `platform/errors.ts`; a purpose may override the code):
+
+| Reason | HTTP and code |
+| --- | --- |
+| `org` | 403 `ORG_ACCESS_CHANGED` |
+| `actor` | 403 `ACTOR_CHANGED`; a scanner: 401 `SCANNER_REPAIR` |
+| `staff` | 409 `SCAN_STAFF_CHANGED` (a bound staff member changed; the device stays paired) |
+| `config` | 409 `SCAN_CONFIG_CHANGED` |
+| `lineage` | 409 `LINEAGE_CHANGED` |
+| `release` | 409 `TEMPLATE_RELEASE_CHANGED` |
+| `retention` | 409 `RETENTION_CHANGED` |
+| `stale` | 409 `STALE` |
+| anything else | 403 `AUTHORITY_DENIED` |
+
+The 401 for a scanner applies only when its credential is lost (`scannerCredentialLost`, the `credential_epoch` row in section 1.1).
 
 **Why no usable stale grant can exist:**
 1. A D1 batch is one transaction on a single-writer database. No other write runs between statement 1 and the last statement, so the check holds for the whole batch.
 2. The grant is inserted and deleted in the same transaction, so no other transaction ever sees it. A crash, a thrown error or a lost connection rolls back the grant together with every write.
 3. A failed check aborts at the insert, which rolls back the whole batch. There is no path where the grant is missing and later statements no-op into a half-commit.
 4. If a builder bug ever kept a row, its id is a 128-bit token that no later code path sends again (`grant()` mints the id per call).
-   - Detection: a global worker-test `afterEach` asserts the table is empty, and a daily sweep deletes leftover rows and logs `AUTHORITY_GRANT_LEAK` at `error`.
-   - Hard stop: a deferred foreign key to an always-empty sentinel table makes such a batch fail at commit. WP0's spike decides whether D1 enforces deferred FKs at batch commit: if it does, the sentinel FK is mandatory; otherwise nothing load-bearing depends on it.
+   - Detection: a global worker-test `afterEach` asserts the table is empty, and the daily `authority.sweep` cron hook (`sweepLeakedGrants`) deletes leftover rows and logs `AUTHORITY_GRANT_LEAK` at `error`.
+   - Hard stop: a deferred foreign key to an always-empty sentinel table (`authority_grant_leaks`) makes such a batch fail at commit.
 5. Captured epochs are read on the primary. If D1 read replication is ever enabled, capture reads must use the session bookmark. A replica read is never a safety hole (the grant runs on the primary); it only produces spurious `stale` refusals.
 
-**Lost response (minor 14).**
-- Derived writes accept `Idempotency-Key`.
-- Without a key, a `stale` refusal re-reads the row. If the row already equals the requested post-state, the response is 200, not 409.
+**Lost response.** Pass create and the issuance email accept `Idempotency-Key`. A stale write without a key returns 409 and the client refetches; the server does not compare the row with the requested post-state.
 
-**`/api/v1` (minor 10).**
+**`/api/v1`.**
 - `If-Match: <version>` with 412 stays: the client-visible CAS is `passes.version`.
 - `row_version` is captured by the server during the same request, never sent by clients.
 
@@ -205,10 +222,9 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 
 | Table | Migration |
 | --- | --- |
-| `org_memberships`, `org_invitations` | amend `0029` |
-| `api_keys` | amend `0039` |
-| `template_releases` | amend `0031` |
-| `template_release_heads` | `0052`; the head trigger is the only writer |
+| `org_memberships`, `org_invitations` | `0029` (role names are validated once at insert: a JSON array of distinct, known roles) |
+| `api_keys` | `0039` |
+| `template_releases` | `0031` |
 | `scan_staff`, `scan_events`, `scanning_sessions`, `scanning_devices` (`scanner_id` is the key) | `0052` |
 | `api_keys` ids after delete | `0052`: `retired_api_key_ids` records every deleted id and `api_keys_no_id_reuse` aborts a re-insert, so a deleted key's id is never issued again (D1 counts the retire row in a delete's `meta.changes`) |
 | `template_versions` | none new: `template_versions_insert_immutable` (`0049`) aborts on an existing `(template_id, version)` or tombstone, so REPLACE cannot recreate a version |
@@ -219,8 +235,8 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
   - `INSERT OR REPLACE INTO push_results` in `src/worker/modules/delivery/repo-devices.ts:142`. Safe: `push_results` is not a guarded or Rule-2 table, the row is a per-outbox result keyed `(outbox_id, device_id)` that holds no authority, and the statement is fenced by `pushFenceSql` and the registration check.
   - Wallet providers, migration helpers and test fixtures (§1.2).
   - Anything else needs a reviewed entry here, with the reason it is safe.
-- **UPSERT:** `ON CONFLICT DO UPDATE` reaches the update guards, which already reject identity changes. WP0 tests UPSERT on every Rule-2 table anyway.
-- **WP0 negative tests:**
+- **UPSERT:** `ON CONFLICT DO UPDATE` reaches the update guards, which already reject identity changes. Tests cover UPSERT on every Rule-2 table anyway.
+- **Tests:**
   - `INSERT OR REPLACE`, `REPLACE INTO` and `INSERT … ON CONFLICT DO UPDATE` on every Rule-2 table must abort, with the row unchanged;
   - the same for each epoch'd table, with the epoch never decreasing;
   - the same for `template_versions`, `sessions` and `credential_ref_keyset`, which rely on their existing guards.
@@ -235,7 +251,7 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 
 **Where it is used:** feeds, live polling, lookup, history, assets, exports.
 
-**What GET handlers may write (corpus test, WP0):** only these allowlisted side effects:
+**What GET handlers may write (corpus test):** only these allowlisted side effects:
 - session idle slide (`auth/repo-sessions.ts:75`);
 - scanner `last_seen_*`;
 - rate-limit counters;
@@ -249,43 +265,36 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 - **JS-once:** checked once at request start because the input is immutable.
 - **Dropped:** removed. Every drop is justified in the row.
 
-| Family (current site) | Durable | Epoch | JS-once | Dropped, and why |
+| Family | Durable | Epoch | JS-once | Dropped, and why |
 | --- | --- | --- | --- | --- |
-| F1 Tenant session and API-key authority (`passes/repo-authority.ts:11-43`, 41 files) | org active; membership id not revoked; user active; session live (synchronous requests only); key not revoked or expired; target `org_id`/`mode` = grant | `access_revision` | capability from membership roles or key scopes; session roles and amr | `o.updated_at`: settings and branding bump it (`settings/repo.ts:106`), it is not authority. `json(s.roles)`, `json(m.roles)` and the `json_each` role validation: immutable. |
-| F2 Platform admin (`platformAdminSessionSql`, `orgs/repo-members.ts:29` bypass) | session live; user active | | admin role (session roles immutable) | `? = 1` bypass, replaced by the session check (W1-15) |
-| F3 Pass snapshot equality (`scan/repo-pass-predicates.ts:140-210`, `passes/repo-connection-context.ts:40-55`, transfer source 38 columns, create-row post-check, `me` snapshot, sandbox capture) | id, org, mode; `lifecycle_generation`; `credential_generation`; `link_generation` where a link is disclosed; no pending transfer; `test_data_quarantined=0` for delivery | `row_version`, for derived writes only: publish, edit, image, member photo, removal claim, transfer, connection apply and refresh, bulk | | **Pass content and credential columns:** version, revision, personalization, image_generation, template_version and release_id. Content changes are not authority, and derived writers catch them through `row_version`. Holder email, owner, serial, auth token, scan code, barcode hash, download token and object key rotate only together with a credential or link generation (`0042:257` reservation trigger), except `barcode_hash` and `lookup_hash`, which a publish can rewrite (the scan grant compares the scanned hash directly; see the revision 2 changes below). `connection_id` is covered by `row_version`. **Snapshot re-reads:** the post-commit re-read compare (`create-row.ts:244-274`) and `me` `sameSnapshot` are reads, not authority (W1-16). |
-| F4 Evaluated policy (`repo-pass-predicates.ts:282+`) | `t.status`, `t.org_id` direct; event match evaluated on the current pass row | release head (create and publish only) | keyset commitment | **Revision stamps:** `o.updated_at` (F1) and `t.updated_at` (a stamp). **Display-only state:** the wallet snapshot (pass JSON hash, identity revision, wallet version, personalization hash). **At scan commit:** the release head, because a newer release does not invalidate a ticket. **Tombstones at commit:** a matching `credential_generation` implies none, because the tombstone insert guard requires the generation to advance (`0042:398-410`). Tombstones stay at resolve time. |
-| F5 Scan actor (`scan/repo-actor-authority.ts:27-150`, `repo-actor-scanner-authority.ts`, `repo-actor-csrf-authority.ts`) | org; admin per F1 plus session; scanner `revoked_at IS NULL`; `sc.staff_id = ?` bound staff; staff `disabled_at IS NULL`; scanning session `status='active'`; event `archived_at IS NULL`; scanned pass's template in `scan_event_templates` | `credential_epoch`, `config_epoch`, `auth_epoch`, event and session `config_epoch` | CSRF proof, verified against secrets that cannot change without a credential epoch bump (scanners) or at all (sessions, `0047`) | **Per-template release proofs for every scoped template:** only the scanned pass's template matters (W1-18). **Equality on 11 event columns and the `updated_at` revisions:** replaced by epochs. **CSRF proofs in SQL and in ledger rows:** checked in JS; the ledger copy was a leak (W1-05). |
-| F6 Override ledger authority (`repo-action-authority-ledger.ts:102-153`, `repo-gates-authority.ts:245`) | immutable heads-up facts: scan id, org, mode, pass, action, scope, `actor_key`, outcome `heads_up`, `at` within the window, `scans_override_once`; current actor (F5); manager approval: staff role manager, not disabled | approver `auth_epoch` | approver PIN check (at request) | Historical org, template, scanner, session, event and staff revisions and CSRF proofs being equal to current ones. Authority is the current actor's, not a replay of the past one. |
-| F7 Undo (`repo-undo-target.ts:28-115`, `repo-undo-gate-proof.ts`, `-presence-proof`, `-approval-guard`, `-replay-guard`, `-commit-guard`) | target scan: id, org, mode, `state='done'`, `outcome='ok'`, kind, `undone_by IS NULL`; gate CAS `last_scan_id=target AND last_at=target.at`; presence CAS; not in `scan_quarantine_exclusions`; actor F5 with the undo capability; approval when policy requires | actor epochs only | | **Pass and template drift:** pass version and revision, template and release, wallet, identity and the org and template revisions (W1-06). **Proof machinery:** the signed undo envelope, the JSON tokenizer, retention HMAC re-proof and the post-commit `answer()` fence. **Replay:** checks only the idempotency row. **Superseded undo:** a gate CAS miss with `last_scan_id ≠ target` returns 409 `UNDO_SUPERSEDED`. |
-| F8 Output and disclosure (`repo-output-authority.ts:131-146`, `repo-output-predicates.ts`) | actor F5; pass lifecycle and credential generation; photo policy from the current row | | | `modified_at`, `refresh_requested_at`, `last_refreshed_at`, `sync_error_code`, `content_hash`, object sha256 and size, the `field_sources` json_tree, revision, `image_generation`, download token and object key. These are sync metadata (scan-write-2). The silent `'0'` fallbacks go away because statements are now bounded. |
-| F9 Retention (`repo-scan-retention.ts`, `0041`, `0051`) | row flags (`excluded=0`, `invalidated=0`), quarantine exclusion and pass existence, read directly; purge uses a `system:` grant | | | Per-statement HMAC re-verification of server-held rows. Insert triggers already guarantee integrity once. Anyone able to forge rows can also run the Worker, so the HMAC protects against no actor in scope. W3-02 decides which proof tables to drop. |
-| F10 Credential keyset (`credentialRefKeysetSql`, 80 files) | | | commitment pinned once per request (`requireCredentialRefKeyset`) | Inline SQL in non-provider modules: the row is immutable (`0042:491-494`). The helper stays exported for wallet providers. |
-| F11 Connections: context, runs, item claims (`repo-connection-context.ts`, `repo-webhook-item-claims.ts:88-170`, `repo-runs.ts:106-113`, SYNC_GUARD, REFRESH_GUARD) | connection id and org; `enabled=1`; org access; pass bound to (`connection_id`, `external_ref`); lifecycle and credential generation; no pending transfer; retention row state | `connections.generation`; `passes.row_version`; release head (admit and create) | keyset | **Pass snapshot and keyset:** the 23-value pass snapshot, the retained binding triple and the keyset SQL. **Legacy proof columns:** the 12 `legacy_*` columns become `legacy_pass_row_version`. **JS rechecks:** the repeated `fenced()` rechecks (`records.ts:158-246`) are dropped; there is one grant per write batch. |
-| F12 Delivery binding, P1-1 (`delivery/repo-binding.ts:42-131`, `binding.ts`) | recipient = `p.holder_email`; owner; credential, lifecycle and link generation; `status='active'`, not removed or quarantined; no pending transfer; org access | `access_revision` | | Version, revision, object key, download-token hash and release. The send attaches the current artifact (the claiming UPDATE returns `object_key`). A content refresh no longer cancels mail; this was P1-1's listed side effect. |
-| F13 Issuance intent (`repo-issuance-intent-fence.ts:12-164`) | lineage: intent pass, org, mode, identity, lifecycle generation, recipient, and either the source credential generation or a completed transfer whose `target_generation = p.credential_generation`; principal membership not revoked and user active, or key not revoked | org `access_revision` captured at intent | capability | **Session liveness:** the creator's session, idle expiry, `o.updated_at` and the roles JSON (W1-07). **Unreachable check:** the sample scanner scope (delivery finding 11). **Snapshot and secrets:** the version, revision, serial, auth token, download token and object key snapshot. The stored secrets are removed. **Release at output:** a created pass may be sent. The release is checked at create. |
-| F14 Bundles (`bundles/repo.ts:218-228`, `repo-public.ts:56-98`, `public-service.ts:94`) | bundle token; each member row still present in `bundle_passes`, checked once when the stream opens (transfer START deletes it) | | | **NOT NULL error-text matching:** the grant's RAISE reasons replace it. **Per-chunk re-fence:** dropped; responses are immutable-cached anyway (delivery finding). |
-| F15 Releases (`templates/repo-releases.ts:199-310`) | release id (immutable row); template status and org | head table | adapter revision and capabilities constants | Re-proof of the candidate and approval join on every read. The `template_releases_insert` trigger (`0031:92`) enforces it once, and rows are immutable. |
-| F16 Settings and org edits (`settings/repo.ts:80-112`, `orgs/repo.ts:95`) | F1 | `config_revision` (CAS, 409) | | Bumping `updated_at` as an authority epoch |
-| F17 Sandbox capture (`sandbox/repo-capture.ts:49`, W1-14) | org, mode, membership; for forwarding only: pass lifecycle and credential generation; `PROVIDER_RETIREMENT_COMPLETE` unchanged | | | Snapshot fence on visibility |
-| F18 Display history, asset grants, live hub (W1-08, W3-02) | actor F5 when fetched | | asset grant = stateless HMAC token (purpose, pass, generation, expiry) | Per-row history proof CAS statements (`scan-display-history.ts:243`) |
+| F1 Tenant session and API-key authority | org active; membership id not revoked; user active; session live (synchronous requests only); key not revoked or expired; target `org_id`/`mode` = grant | `access_revision` | capability from membership roles or key scopes; session roles and amr | `o.updated_at`: settings and branding bump it (`settings/repo.ts`), it is not authority. `json(s.roles)`, `json(m.roles)` and the `json_each` role validation: immutable. |
+| F2 Platform admin | session live; user active | | admin role (session roles immutable) | `? = 1` bypass, replaced by the session check (W1-15) |
+| F3 Pass snapshot equality | id, org, mode; `lifecycle_generation`; `credential_generation`; `link_generation` where a link is disclosed; no pending transfer; `test_data_quarantined=0` for delivery | `row_version`, for derived writes only: publish, edit, image, member photo, removal claim, transfer, connection apply and refresh, bulk | | **Pass content and credential columns:** version, revision, personalization, image_generation, template_version and release_id. Content changes are not authority, and derived writers catch them through `row_version`. Holder email, owner, serial, auth token, scan code, barcode hash, download token and object key rotate only together with a credential or link generation (`0042:257` reservation trigger), except `barcode_hash` and `lookup_hash`, which a publish can rewrite (the scan grant compares the scanned hash directly; see the revision 2 changes below). `connection_id` is covered by `row_version`. **Snapshot re-reads:** the post-commit re-read compare (`create-row.ts`) and `me` `sameSnapshot` are reads, not authority (W1-16). |
+| F4 Evaluated policy | `t.status`, `t.org_id` direct; event match evaluated on the current pass row | release head (create and publish only) | keyset commitment | **Revision stamps:** `o.updated_at` (F1) and `t.updated_at` (a stamp). **Display-only state:** the wallet snapshot (pass JSON hash, identity revision, wallet version, personalization hash). **At scan commit:** the release head, because a newer release does not invalidate a ticket. **Tombstones at commit:** a matching `credential_generation` implies none, because the tombstone insert guard requires the generation to advance (`0042:398-410`). Tombstones stay at resolve time. |
+| F5 Scan actor | org; admin per F1 plus session; scanner `revoked_at IS NULL`; `sc.staff_id = ?` bound staff; staff `disabled_at IS NULL`; scanning session `status='active'`; event `archived_at IS NULL`; scanned pass's template in `scan_event_templates` | `credential_epoch`, `config_epoch`, `auth_epoch`, event and session `config_epoch` | CSRF proof, verified against secrets that cannot change without a credential epoch bump (scanners) or at all (sessions, `0047`) | **Per-template release proofs for every scoped template:** only the scanned pass's template matters (W1-18). **Equality on 11 event columns and the `updated_at` revisions:** replaced by epochs. **CSRF proofs in SQL and in ledger rows:** checked in JS; the ledger copy was a leak (W1-05). |
+| F6 Override ledger authority | immutable heads-up facts: scan id, org, mode, pass, action, scope, `actor_key`, outcome `heads_up`, `at` within the window, `scans_override_once`; current actor (F5); manager approval: staff role manager, not disabled | approver `auth_epoch` | approver PIN check (at request) | Historical org, template, scanner, session, event and staff revisions and CSRF proofs being equal to current ones. Authority is the current actor's, not a replay of the past one. |
+| F7 Undo | target scan: id, org, mode, `state='done'`, `outcome='ok'`, kind, `undone_by IS NULL`; gate CAS `last_scan_id=target AND last_at=target.at`; presence CAS; not in `scan_quarantine_exclusions`; actor F5 with the undo capability; approval when policy requires | actor epochs only | | **Pass and template drift:** pass version and revision, template and release, wallet, identity and the org and template revisions (W1-06). **Proof machinery:** the signed undo envelope, the JSON tokenizer, retention HMAC re-proof and the post-commit `answer()` fence. **Replay:** checks only the idempotency row. **Superseded undo:** a gate CAS miss with `last_scan_id ≠ target` returns 409 `UNDO_SUPERSEDED`. |
+| F8 Output and disclosure | actor F5; pass lifecycle and credential generation; photo policy from the current row | | | `modified_at`, `refresh_requested_at`, `last_refreshed_at`, `sync_error_code`, `content_hash`, object sha256 and size, the `field_sources` json_tree, revision, `image_generation`, download token and object key. These are sync metadata (scan-write-2). The silent `'0'` fallbacks go away because statements are now bounded. |
+| F9 Retention | row flags (`excluded=0`, `invalidated=0`), quarantine exclusion and pass existence, read directly; purge uses a `system:` grant | | | Per-statement HMAC re-verification of server-held rows. Insert triggers already guarantee integrity once. Anyone able to forge rows can also run the Worker, so the HMAC protects against no actor in scope. W3-02 decides which proof tables to drop. |
+| F10 Credential keyset | | | commitment pinned once per request (`requireCredentialRefKeyset`) | Inline SQL in non-provider modules: the row is immutable (`0042:491-494`). The helper stays exported for wallet providers. |
+| F11 Connections: context, runs, item claims | connection id and org; `enabled=1`; org access; pass bound to (`connection_id`, `external_ref`); lifecycle and credential generation; no pending transfer; retention row state | `connections.generation`; `passes.row_version`; release head (admit and create) | keyset | **Pass snapshot and keyset:** the 23-value pass snapshot, the retained binding triple and the keyset SQL. **Legacy proof columns:** the 12 `legacy_*` columns become `legacy_pass_row_version`. **JS rechecks:** the repeated `fenced()` rechecks (`records.ts`) are dropped; there is one grant per write batch. |
+| F12 Delivery binding, P1-1 | recipient = `p.holder_email`; owner; credential, lifecycle and link generation; `status='active'`, not removed or quarantined; no pending transfer; org access | `access_revision` | | Version, revision, object key, download-token hash and release. The send attaches the current artifact (the claiming UPDATE returns `object_key`). A content refresh no longer cancels mail; this was P1-1's listed side effect. |
+| F13 Issuance intent | lineage: intent pass, org, mode, identity, lifecycle generation, recipient, and either the source credential generation or a completed transfer whose `target_generation = p.credential_generation`; principal membership not revoked and user active, or key not revoked | org `access_revision` captured at intent | capability | **Session liveness:** the creator's session, idle expiry, `o.updated_at` and the roles JSON (W1-07). **Unreachable check:** the sample scanner scope (delivery finding 11). **Snapshot and secrets:** the version, revision, serial, auth token, download token and object key snapshot. The stored secrets are removed. **Release at output:** a created pass may be sent. The release is checked at create. |
+| F14 Bundles | bundle token; each member row still present in `bundle_passes`, checked once when the stream opens (transfer START deletes it) | | | **NOT NULL error-text matching:** the grant's RAISE reasons replace it. **Per-chunk re-fence:** dropped; responses are immutable-cached anyway (delivery finding). |
+| F15 Releases | release id (immutable row); template status and org | head table | adapter revision and capabilities constants | Re-proof of the candidate and approval join on every read. The `template_releases_insert` trigger (`0031:92`) enforces it once, and rows are immutable. |
+| F16 Settings and org edits | F1 | `config_revision` (CAS, 409) | | Bumping `updated_at` as an authority epoch |
+| F17 Sandbox capture | org, mode, membership; for forwarding only: pass lifecycle and credential generation; `PROVIDER_RETIREMENT_COMPLETE` unchanged | | | Snapshot fence on visibility |
+| F18 Display history, asset grants, live hub | actor F5 when fetched | | asset grant = stateless HMAC token (purpose, pass, generation, expiry) | Per-row history proof CAS statements (`scan-display-history.ts`) |
 
 **Revision 2 changes to the table:**
 
-**F3 pass snapshot (minor 4).** A publish rewrites `barcode_hash` and `lookup_hash` with only a version bump (`passes/repo-write-publish.ts:150`), so "credentials rotate only with a generation" is false for those two columns. The scan grant therefore also compares the scanned credential directly against the current row: `p.barcode_hash = ?`, `p.lookup_hash = ?` or `p.scan_code = ?` (one, by input kind). A ticket whose code was replaced by a publish is refused with `lineage`.
+**F3 pass snapshot (minor 4).** A publish rewrites `barcode_hash` and `lookup_hash` with only a version bump (`passes/repo-write-publish.ts`), so "credentials rotate only with a generation" is false for those two columns. The scan grant therefore also compares the scanned credential directly against the current row: `p.barcode_hash = ?`, `p.lookup_hash = ?` or `p.scan_code = ?` (one, by input kind). A ticket whose code was replaced by a publish is refused with `lineage`.
 
 **F5 scan actor (minor 7).**
 - Add `sc.expires_at IS NULL OR sc.expires_at > now`.
 - `guard.ts` reads `credential_epoch` in the same row read that verifies `token_hash` and the CSRF secret.
 
-**F5 / F10 against the W1-15 staff PIN reset (M6).**
-- **What W1-15 did:** put CSRF and keyset fences in SQL (`scan/staff-admin.ts:262-290`).
-- **Rule:** under Rules 2 and 5, both checks run once in JS:
-  - the session CSRF secret is immutable (`0047`);
-  - the keyset is an immutable singleton.
-- **What WP9 does:** converts the reset to `grant` with membership, session, `auth_epoch` and org checks.
-- **Security level:** equal. The SQL copies re-checked values that cannot change under the request.
-- **Until WP9 lands,** the W1-15 SQL stays as it is.
+**F5 / F10 and the staff PIN reset.** Under Rules 2 and 5 the session CSRF secret (`0047`) and the credential keyset (an immutable singleton) are checked once in JS, at the request (`scan/staff-admin.ts`). The reset is a grant with membership, session, `auth_epoch` and org checks. SQL copies of those two checks would re-check values that cannot change under the request.
 
 **F6 / P1-3e (minor 16).** Native acknowledgements (W2-08) bind to `scanners.config_epoch` plus the scan id, so an acknowledgement for an older configuration is rejected.
 
@@ -304,7 +313,7 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 - `system:` work checks only org status or `access_revision`, plus lineage.
 
 **F14 bundles (minor 9).**
-- **Load-bearing for P1-1:** the transfer START batch runs `DELETE FROM bundle_passes WHERE pass_id = ?` (`passes/repo-credential-transfer.ts:233`).
+- **Load-bearing for P1-1:** the transfer START batch runs `DELETE FROM bundle_passes WHERE pass_id = ?` (`passes/repo-credential-transfer.ts`).
 - When the stream opens, the check is that the bundle token is valid and each member row still exists in `bundle_passes`. There is no per-member generation compare.
 - Test: start a transfer, then the old bundle link no longer serves that pass.
 
@@ -359,7 +368,7 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 - `system:` grants cannot come from routes.
 
 **W1-15 items stay closed:**
-- API-key scope delegation: `delegableScopes` in JS against the creator's immutable membership roles, and the grant binds the creator's membership id. Equivalent to the current SQL check (WP1 keeps that SQL until it converts).
+- API-key scope delegation: `delegableScopes` in JS against the creator's immutable membership roles, and the grant binds the creator's membership id. 
 - Broadcast creator: membership not revoked, with `messages:manage` derived from immutable roles.
 - Platform-admin `AdminFence`: the F2 grant check.
 - Last-org_admin protection: a grant CTE counting other active `org_admin` memberships, evaluated in the same transaction.
@@ -367,7 +376,7 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 - OIDC mail proof: unchanged.
 - Staff PIN reset: see F5/F10 above.
 
-**Events API (M6).** `toEventDto` strips `authority`, `*Proof`, `*Csrf*` and keyset fields from every row, old rows included. WP5b adds the test.
+**Events API (M6).** `toEventDto` strips `authority`, `*Proof`, `*Csrf*` and keyset fields from every row, old rows included. A test covers it.
 
 **More residual risks** (in addition to R1-R7 above):
 - **R8.** Settings policy is not fenced at commit (above). Accepted (owner answer 8).
@@ -378,28 +387,28 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 
 | Finding | Removed by |
 | --- | --- |
-| Lost gate race shows `refused/not_found` (`scan/act.ts:177`) | The gate UPSERT and finalize run in the grant batch. Finalize writes `ok` only if the gate points at this scan, otherwise `heads_up` naming `gate.last_scan_id`. `StaleScanAuthority` catch-alls go; the remaining refusals carry a reason (`config` → `SCAN_CONFIG_CHANGED`, `actor` → 401/403). |
-| An assertion rollback quarantines the idempotency key (`act-claim-lifecycle.ts:124`) | Assertions become RAISE reasons. A classified abort is definite, so the key is released. |
-| "Let in again" fails after a staff sign-in or any revision (`repo-action-authority-ledger.ts:140`, `repo-device.ts:122`) | F6. Staff sign-in moves no epoch. |
-| Committed check-in returns 409 `SCAN_UNCONFIRMED` (`act-check-in-result.ts:95`) | No post-commit fence. Display history comes from aggregates (W1-08). |
-| Bind overflow silently becomes `'0'` (`repo-gates.ts:257`, `repo-output-predicates.ts:205`) | Statements are ≤40 parameters by construction, and `stmt()` throws `SQL_BIND_BUDGET`. |
-| Output fences fail on sync fields (`repo-output-authority.ts:131`) | F8 |
-| Undo returns 404 after any org, template or pass revision (`repo-undo-target.ts:112`, `scan-undo-proof.ts:96`) | F7 |
-| Undo replay is not idempotent (`repo-undo-replay-guard.ts:39`) | Replay checks the idempotency row only |
-| `UNDO_SUPERSEDED` removed (`undo-replay.ts:22`) | A gate CAS miss returns 409 `UNDO_SUPERSEDED` |
-| Scans from before the branch cannot be undone (`repo-undo-proof.ts:143`) | No ledger authority is needed |
-| Issuance mail cancelled by sign-out, idle expiry or an org edit (`repo-issuance-intent-fence.ts:83`) | F13 |
-| `DELIVERY_STALE` on any version bump (P1-1 residual) | F12 |
-| Idempotent replay returns 409 (`issuance-intent.ts:124`); committed create returns 409 (`create-row.ts:241`) | The replay returns the stored result, and there is no post-commit re-fence |
-| Issuance INSERT binds 94 parameters (`repo-issued-email.ts:168`) | ≤40 (section 5) |
-| `orgs.updated_at` used as an epoch gives 403 on settings saves, and bulk actions abort (`repo-authority.ts:23`, `settings/repo.ts:107`, `repo-scanner-configuration-predicate.ts:92`) | `access_revision`; settings CAS returns 409; each bulk item gets its own grant |
-| Transfer START binds 97 parameters; a release approved mid-transfer wedges it (`repo-credential-transfer.ts:153`, `credential-transfer.ts:233`) | `row_version` and INSERT…SELECT. Finish compares `row_version` and the current head. W1-11 owns the abandon path. |
-| One unusable template disables the door (`repo-scope.ts:146`) | F5: only the scanned pass's template is checked |
-| A revision race logs the device out (`guard.ts:263`, `session-activity.ts:233`) | Only a lost credential unpairs (`scannerCredentialLost`, the `credential_epoch` row above). Any other move returns 409 and the client refetches. |
-| Report and staff sign-in return 409 after commit (`scanning-workspace-report.ts:169`, `routes-staff-session.ts:97`) | The grant is the check; the post-commit compare is deleted |
-| Captures vanish after a pass edit (`sandbox/repo-capture.ts:49`) | F17 |
-| The connection fence budget is unmeasured, about 40+33 queries per ref (`query-budget.ts:16`, `records.ts:158`) | One grant per item write; budget re-measured in WP4 |
-| sql-balance would corrupt expression-position `FROM` (`platform/db.ts:20`) | Removed (WP8) |
+| Lost gate race shows `refused/not_found` | The gate UPSERT and finalize run in the grant batch. Finalize writes `ok` only if the gate points at this scan, otherwise `heads_up` naming `gate.last_scan_id`. `StaleScanAuthority` catch-alls go; the remaining refusals carry a reason (`config` → `SCAN_CONFIG_CHANGED`, `actor` → 401/403). |
+| An assertion rollback quarantines the idempotency key | Assertions become RAISE reasons. A classified abort is definite, so the key is released. |
+| "Let in again" fails after a staff sign-in or any revision | F6. Staff sign-in moves no epoch. |
+| Committed check-in returns 409 `SCAN_UNCONFIRMED` | No post-commit fence. Display history comes from aggregates (W1-08). |
+| Bind overflow silently becomes `'0'` | Statements are ≤40 parameters by construction, and `stmt()` throws `SQL_BIND_BUDGET`. |
+| Output fences fail on sync fields | F8 |
+| Undo returns 404 after any org, template or pass revision | F7 |
+| Undo replay is not idempotent | Replay checks the idempotency row only |
+| `UNDO_SUPERSEDED` removed | A gate CAS miss returns 409 `UNDO_SUPERSEDED` |
+| Scans from before the branch cannot be undone | No ledger authority is needed |
+| Issuance mail cancelled by sign-out, idle expiry or an org edit | F13 |
+| `DELIVERY_STALE` on any version bump | F12 |
+| Idempotent replay returns 409 | The replay returns the stored result, and there is no post-commit re-fence |
+| Issuance INSERT binds 94 parameters | ≤40 (section 5) |
+| `orgs.updated_at` used as an epoch gives 403 on settings saves, and bulk actions abort | `access_revision`; settings CAS returns 409; each bulk item gets its own grant |
+| Transfer START binds 97 parameters; a release approved mid-transfer wedges it | `row_version` and INSERT…SELECT. Finish compares `row_version` and the current head. W1-11 owns the abandon path. |
+| One unusable template disables the door | F5: only the scanned pass's template is checked |
+| A revision race logs the device out | Only a lost credential unpairs (`scannerCredentialLost`, the `credential_epoch` row above). Any other move returns 409 and the client refetches. |
+| Report and staff sign-in return 409 after commit | The grant is the check; the post-commit compare is deleted |
+| Captures vanish after a pass edit | F17 |
+| The connection fence budget is unmeasured, about 40+33 queries per ref | One grant per item write |
+| sql-balance rewrites expression-position `FROM` | Open: still in `db.ts` (section 7.2) |
 
 **Revision 2 additions:**
 - **Retry after a lost response returns 409 for the user's own change:** removed by the idempotency key or the post-state check (§1.2).
@@ -411,227 +420,100 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 
 ## 5. Limits
 
-Estimates come from the statement shapes above. WP0's corpus test records the real numbers and enforces them.
+Measured by `platform/authority.test.ts` ("statement corpus") and `authority-corpus.test.ts`, which also compile every statement on local D1.
 
-| Statement | Parameters | Size | Nesting (EXISTS levels) |
-| --- | --- | --- | --- |
-| Grant, tenant session (pass write) | 11-13 | ~1.6 KB | 1 |
-| Grant, API key | 10 | ~1.3 KB | 1 |
-| Grant, scan check-in (scanner, staff, session, event, pass, scope) | ≤22 (+3 for an admin principal) | ~2.5 KB | 1 |
-| Gate UPSERT / scan finalize / ledger insert | ≤14 / ≤30 / ≤8 | <2 KB | 1 |
-| Grant, undo; gate restore; undo scan insert | ≤20; ≤6; ≤30 | <2.5 KB | 1 |
-| Pass publish UPDATE | ≤30 | <2 KB | 1 |
-| Transfer START: grant; transfer INSERT…SELECT; rotate UPDATE; tombstone INSERT…SELECT | 12; ≤15; ≤10; ≤6 | <2 KB | 1 |
-| Issuance: grant + outbox INSERT; output claim | 14 + 6; ≤14 | <2 KB | 1 |
-| Connection item: grant + claim UPDATE | ≤14 + 6 | <2 KB | 1 |
-| Settings save: grant + per-key upsert | 11 + 4 | <1.5 KB | 1 |
-
-- **Depth:** CTE bodies are flat joins, and the CASE reads CTEs that are FROM items, so the D1 height problem does not arise. The worst case is roughly 10 against a limit of 100.
-- **Hard caps in `db.ts`:** writes ≤40 parameters (asserted in tests), all statements ≤90 parameters and ≤32 KB. A breach throws `SQL_BIND_BUDGET` or `SQL_SIZE_BUDGET`.
-- **`sql-balance.ts` and `sql-tokens.ts`:** removable once WP5-WP7 land. The statement-corpus test runs every statement the worker tests produce with balancing off, using `EXPLAIN` on local D1. Statements that may still need it are reads I have not measured: `repo-feed-scope.ts` and `repo-scope-release-predicates.ts`. The release-head table should remove their depth. Any statement that still fails is restructured into CTEs in its own package; none is re-balanced. Triggers never went through `stmt()`.
-
-**Revision 2 additions:**
-- The grant insert binds one more value (`scope`).
-- The pass bump trigger is split into three (§1.1).
-
-Every write is still at most 40 parameters.
-
-## 6. Migration and cutover (M1, M4)
-
-### 6.1 Migration ownership
-
-| Migration | Change | Owner |
+| Statement | Binds | Size |
 | --- | --- | --- |
-| `0029` | `access_revision` with its bump and monotonic triggers; role-name insert guard; no-replace guards | WP0 |
-| `0031` (with the cutover agent's `legacy` source) | `template_releases` no-replace guard | WP0 |
-| `0039` | `api_keys` no-replace guard | WP0 |
-| `0042` | **Transfer guards.** `pass_credential_transfer_insert_guard` (85-117), `pass_credential_transfer_complete_guard` (119-171) and `pass_credential_generation_reserved` (257-269) compare `row_version` (a new `pass_credential_transfers.source_row_version` column) and the current release head instead of version and revision, version + 1, connection generation and the release equalities. **Kept:** generation, link and holder checks. **Untouched:** provider-instance clauses. | WP2, merged with W1-11 |
-| `0043` (with the alias fix as baseline), `0050` | none | provider track |
-| `0044` | `legacy_*` and `claim_snapshot` become `legacy_pass_row_version` and `claim_row_version` | WP4, after W1-12a lands its `0044` changes |
-| `0045` (with the cutover agent's push payload backfill) | `pass_issuance_delivery_insert_guard` (49-64) and the snapshot columns become generations plus `transfer_id`; drop the secret copies | WP3 |
-| `0047` | add `roles` and `amr` to `sessions_authority_immutable`. Keep `scanners_credential_revision` until WP8 proves (with `check:rules`) that no `updated_at = ?` comparison remains, then drop it in WP8. | WP0 (roles and amr), WP8 (the drop) |
-| `0041`, `0051` | drop unreferenced proof tables and triggers | WP7 (retention), WP5b (passless) |
-| `0052_authority_epochs.sql` | epochs and triggers, heads, grants, no-replace guards for the new guarded tables, sentinel FK (mandatory if the WP0 spike shows D1 enforces deferred FKs) | WP0 |
-| `0052` (amended by WP-T) | `template_version_hashes (template_id, version, content_hash, asset_hashes, created_at)`: the per-version content hash and per-asset sha256 (W1-09), write-once (update, delete and replace abort), beside the immutable `template_versions`. Written at candidate creation and baked sync; issuance compares `content_hash` with the release in SQL. No backfill: a release whose version has no row is verified from its bytes at its first issuance and the row is then saved; a row that differs from the release makes it ineffective; `legacy` releases are exempt. | WP-T |
+| Grant, tenant session with the org revision and five epoch checks | 23 | 1.76 KB |
+| Grant, API key | 19 | 1.55 KB |
+| Grant, scanner | 20 | 1.57 KB |
+| Grant, platform admin | 23 | 1.75 KB |
+| A one-column write | 3 | |
 
-Integration signs off on every migration change.
+Each epoch check adds 2 binds and about 150 bytes.
 
-**Backfill:**
-- Default 1 on the new columns, with no row rewrites.
-- Heads are filled from `template_releases`, including `legacy` rows created by the bootstrap tool through the trigger.
-- `pass_credential_transfers.source_row_version` gets `1` (no production rows exist).
+- **Caps** (`authority-statements.ts`): a write binds at most 40 values (`WRITE_PARAM_BUDGET`), an included read part and the grant at most 90 (`PARAM_BUDGET`), any statement at most 32 KB. A breach throws `SQL_BIND_BUDGET` or `SQL_SIZE_BUDGET`.
+- **D1 limits that shape the SQL:** the bind limit is the highest `?N` index, not the number of uses. Expression depth is 100 (a flat `OR` chain of 95 terms passes, 98 fail; `EXISTS` nesting 12 levels pass, 14 fail). A table or result has at most 100 columns (`passes` has 61). Keep checks flat: at most 2 nested `EXISTS` inside the grant `CASE`.
+- **Not removed:** `platform/sql-balance.ts` still wraps every statement in `db.ts`, and `scan/repo-secret-binds.ts` still exists. Removing them is open work (section 7.2).
 
-**Fixtures that abort after the `0047` amendment** (they update `sessions.roles`) are obsolete:
-- `scan/repo-commit-fence-action-test-fixtures.ts:122`
-- `repo-act-authority-sessions-cases-test-fixtures.ts:204`
-- `repo-scanning-authority-admin-session-test-fixtures.ts:95`
-- `repo-counts-cache-admin-cases-test-fixtures.ts:46`
+## 6. Migration and cutover
 
-Revoke the session instead.
+The runbook is `docs/operations.md` ("Cutover from schema 0024"): order, pre-checks, the temporary WAF rule, failure steps. This section keeps the design decisions.
 
-### 6.2 Cutover window
+### 6.1 Migrations
 
-**`tools/deploy.ts` (cutover agent), run as `--migrate-only` and `--promote` (§6.4):**
-1. Secret list.
-2. `versions upload`.
-3. Bookmark.
-4. Migrate 0025–0055. `--migrate-only` stops here.
-5. `tools/bootstrap-tenancy.ts`: memberships, legacy releases, queued mail bound (owner runs it, remote).
-6. `versions deploy` (`--promote`).
-
-Between steps 4 and 5 the baseline Worker serves against the new schema. Migrations 0025-0051 already break some baseline writes. `0052` adds one known break (the baseline `ensureOrgStmt`, below): every new column has a default, guards reject only decreases, grants are unused, and the no-replace guards refuse only a statement that hits an existing key.
-
-**Baseline write paths, as an allowlist for the compatibility test (WP0).** The test applies all migrations, then runs each baseline write from `8f5bee02` and asserts the expected result.
-
-| Baseline path | Expected in the window | Why |
-| --- | --- | --- |
-| Holder edit (`holders/repo.ts:220,234`) | **fails** | `0042 pass_credential_transfer_required` |
-| Pass create without a release (`passes/repo-write.ts` `insertPass`) | ok (verified): `0031` requires a release for a published pass, not at insert | release at publish |
-| Org settings upsert, org profile and branding stamp | ok (verified); each moves `orgs.config_revision` | `0052` triggers |
-| Template upload (uploaded template and first version), baked template upsert | ok (verified) | |
-| Template sync `ensureOrgStmt` (`orgs/repo.ts`, `INSERT ... ON CONFLICT (slug) DO NOTHING`, HEAD `templates/sync.ts:80`) | **fails** for an existing slug, ok for a new one | `0052 orgs_no_replace` aborts where `DO NOTHING` skipped (BEFORE INSERT guards ignore `ON CONFLICT`) |
-| Template sync version insert (`INSERT OR IGNORE INTO template_versions`) re-sent | **fails** | `0049` insert guard |
-| Scanner pairing, pair-code issue and heartbeat; scan check-in claim (`INSERT INTO scans ... ON CONFLICT DO NOTHING`) | ok (verified) | |
-| Connection sync writes | ok (verified): the generation fence still works | `0044` guards; the bump trigger waits for WP4 |
-| Every other baseline write | listed by the test, never assumed | |
-
-**In-window break: `ensureOrgStmt` and template sync.**
-- The baseline sync batch runs only when the stored build hash differs from the Worker's. The baseline build already synced its own hash, so the old Worker skips the batch for the whole window; the break appears only if a fresh baked build reaches it (a new build hash) or the `templates.baked_hash` system setting is cleared.
-- In that case the batch aborts as a whole (the `orgs` insert hits `orgs.slug`) and the next request retries it. No data is written, so the effect is a delayed baked-template sync, not corruption. The new Worker's `ensureOrgStmt` is `INSERT ... SELECT ... WHERE NOT EXISTS` and is unaffected.
-- Accepted as a known break; `authority-baseline.test.ts` pins both outcomes.
-
-**Containment:**
-- The window is automated (seconds to minutes).
-- Known-failing admin write routes (holder edit) are blocked between migrate and promote with a temporary Cloudflare WAF rule that returns a short maintenance response. The baseline Worker cannot read a new flag. Pass pages, Wallet updates and scanning are not blocked. Owner answer 5.
-
-**Queues:**
-- Draining is best-effort, because the baseline keeps enqueuing during the window.
-- The guarantee is that the new consumer accepts baseline-shaped messages (W1-12a: logged and retained as ignored; W1-02: push payload backfill).
-
-### 6.3 Rollback runbook
-
-Forward-only database. Once migrations have run, roll forward only (owner answer 6). The Worker-only rollback below is an emergency degraded mode, not a normal option.
-
-**Before rolling back:**
-1. Pause queue consumers (`wrangler queues pause-delivery`), so the baseline never sees new-shape messages. The baseline would ack them as invalid.
-2. Block transfer-starting routes with the WAF rule.
-
-**While rolled back:**
-- Pending transfers, `0045` delivery rows and paused messages stay as they are. Holder edits keep failing under `0042`.
-- Rollback is therefore an emergency degraded mode, used only to stop an outage.
-- The fix is to roll forward: redeploy, then resume delivery.
-
-**Tests:**
-- Rollback with new-shape messages is exercised on a preview database.
-- A Time Travel restore to the bookmark is the last resort; it loses writes made after the migration (W1-03).
-
-### 6.4 Cutover rehearsal and decisions (2026-11-11)
-
-`test/cutover/` migrates a populated 0024 database through 0055, runs the bootstrap and the baked sync, and exercises it. Shapes: unassigned baked, baked assigned to an org, baked assigned with no passes, a starter assigned to an org by the old `PATCH` (`baked-patched`), uploaded active, uploaded archived, uploaded with no passes; plus a live pass in a deleted org. Each has live passes (except the empty ones), a pre-cutover check-in, a queued push and a queued pass email. The runbook is `docs/operations.md`, "Cutover from schema 0024"; its SQL blocks are executed by the test.
-
-**Findings and fixes:**
-
-| Finding | Fix |
+| Migration | Authority change |
 | --- | --- |
-| Queued pass email (`{ to, attach }`, no `intent`) cancelled as `DELIVERY_UNBOUND`; the legacy intent path was unreachable for real 0024 rows. | `bootstrap-tenancy` writes `payload.intent` (no `actor`, so `legacy: true`) for unsent pass and bundle mail from the current pass and bundle state. SQL cannot hash the download token, so this is the tool's job, not a migration's. The row is bound only while the pass is the one the snapshot saw. |
-| Assigned baked templates have no release until the baked sync runs. | See below: the sync owns it. No code change. |
-| Passes pinned to an older template version were refused (scan `not_found`, refresh `TEMPLATE_RELEASE_CONFLICT`); a new baked build makes every baked pass stale. | Fixed: issuance and use are separate. Use of an existing pass (scan, display, undo, history, refresh at its own version) depends on the pass being live, its template not deleted and its own issued release (or, with no `release_id`, its own `template_version`). A compatible head (same version or build) is still followed so display-only edits reach old passes. `reissueStaleTemplates` upgrades the rest. |
-| Archived uploaded templates: no effective release; scan refused (`SCAN_PASS_CHANGED`). | Fixed: archived templates keep scanning and refreshing existing passes; new issuance still needs the head, so it is refused. Only `deleted` stops a pass. |
-| Deploy ran migrate and promote in one command, leaving no slot for the bootstrap. | `--migrate-only` and `--promote`. |
-| `wrangler d1 execute --command` with the snapshot SQL was fragile to quote. | The tool writes `.wrangler/bootstrap-snapshot.sql` (`--print-remote`); the owner passes it as `--command "$(cat …)"`. Not `--file`: a remote `--file` runs through D1's import API, which returns counts, never rows (`tools/lib/bootstrap-tenancy.test.ts`). |
-| Compound `SELECT` is capped at 5 terms in D1 (found by running the runbook queries). | The count query is one `json_object`. |
-| Deleting an org keeps its passes. An active uploaded template in a deleted org gets no legacy release (the bootstrap skips deleted orgs), so `verify-heads` listed it and `--promote` would exit 1. | `verify-heads` skips deleted orgs; nothing serves their passes. |
-| `0055` lets the old Worker's owner link (pass create, sign-in) and self-remove succeed in the window. | WAF table updated; `test/cutover/window.test.ts` runs the old statements. |
+| `0029` | `org_memberships`, `org_invitations`, `orgs.access_revision` with bump and monotonic triggers, role-name guard, no-replace guards |
+| `0030`, `0042` | pass lifecycle and credential generations; transfer guards compare `pass_credential_transfers.source_row_version` and the current release head |
+| `0031`, `0038` | `template_releases` (immutable, no-replace), the `legacy` source |
+| `0039` | `api_keys` identity immutable, no-replace |
+| `0044` | `connections_generation_bump`; item claims carry `legacy_pass_row_version` and `claim_row_version` |
+| `0045` | issuance delivery guard on generations plus `transfer_id` |
+| `0047` | `sessions` identity, CSRF secret, lifetime, `roles` and `amr` immutable; `scanners_credential_revision` is still defined |
+| `0041`, `0051` | unreferenced proof tables and triggers dropped |
+| `0052` | epochs and their triggers, `authority_grants`, the sentinel table, the head view, fixed-column and no-replace guards, `retired_api_key_ids`, `template_version_hashes` (write-once content hash per version and per asset), the three cancel-broadcast triggers |
+| `0053` | `branding_gc_queue` |
+| `0055` | a verified holder attaches to a pass with a static credential without a transfer |
+| `0056`, `0057` | blueprints; indexes. Additive: they do not touch the cutover window |
 
-**Assigned baked templates: the baked sync creates the org-scoped release, not the bootstrap.**
+Migrations already applied are never edited; new schema takes the next free number.
 
-- `effectiveReleaseIdSql` honors a `legacy` release only for `origin = 'uploaded'`; a baked template needs a `system` release with `org_id = templates.org_id`. A bootstrap `legacy` release for a baked template would be ignored, or would need the predicate widened (module code) and a second provenance for baked content.
-- A `system` release needs the verified content hash, the `template_version_hashes` row and the sealed preview extras. Only the sync computes them.
-- The sync already scopes by the stored `templates.org_id`, so a PATCH assignment (or a manifest `org`) from the old Worker gets its org release and an unassigned template gets the platform release. The test proves both (`baked-assigned`, `baked-patched`: a starter with no manifest org, assigned by PATCH, gets `system` releases in that org, none from the bootstrap, and its passes scan, refresh, undo and send queued mail), including the legacy `templates.baked_hash` adoption path.
-- Cost: until the sync runs, baked templates cannot issue new passes; existing baked passes still scan at their own version. `--promote` calls `GET /api/v1/templates` with a `templates:read` key, which runs the sync, and waits for `verify-heads`; the minute cron (`templates.sync`) is the fallback.
-- Adoption needs `CF_VERSION` (`version_metadata` binding) so the new build's upload time is ordered after the old Worker's last sync; without it a changed hash counts as superseded and the sync skips.
+### 6.2 The window between migrate and promote
 
-**Deploy mode.** `wrangler.jsonc` is identical at `main` and HEAD, so the normal version flow applies (§6.2); `--first` would serve before the bootstrap.
+The old Worker serves against the new schema until the bootstrap and promote steps. Every new column has a default, guards reject only decreases, grants are unused by it, and the no-replace guards refuse only a statement that re-inserts a key. `authority-baseline.test.ts` pins each old write path against the migrated schema; `test/cutover/window.test.ts` pins the old holder writes.
 
-**In-window old writes.** `authority-baseline.test.ts` pins the list above; `test/cutover/window.test.ts` pins the old holder writes against 0025–0055. Holder edits and delete of an owned pass fail. Since `0055`, the old attach hooks (pass create for a holder with an account, sign-in of a holder with a waiting pass) and owner release (`DELETE /api/v1/me/passes/{id}`, block row first) succeed, without the new credential the new Worker would issue. The WAF rule covers the admin and integration writes and owner release; sign-in is left open (operations.md, "Temporary WAF rule").
-
-## 7. Implementation plan (B1, M6)
-
-### 7.1 Order
-
-1. WP0
-2. WP1, WP-T and WP5a in parallel
-3. WP2, WP3, WP4, WP5b, WP6, WP7 and WP9 in parallel
-4. WP8
-
-Every file matching these patterns has exactly one owner (Appendix A, generated on 2026-11-11 from the code):
-- `updated_at\s*=\s*\?`
-- `tenantPassAuthoritySql|tenantPassWriteSql`
-- `repo-secret-binds`
-- `credentialRefKeysetSql`
-- `platformAdminSessionSql`
-- `activeRelease*|noScopedReleaseSql`
-- `changes()`
-- a write to a guarded table
-
-WP0 adds `tools/authority-scope.ts`, which re-runs the scan and fails when a new match has no owner.
-
-### 7.2 Packages
-
-| WP | Scope | Safety (must refuse) | Liveness (must succeed) |
-| --- | --- | --- | --- |
-| WP0 Platform | `0052`; amendments to `0029`, `0031`, `0039` and `0047` (roles); `platform/{authority.ts,db.ts,errors.ts}`; `jobs` context brand; `test/setup` leak check; classification, immutability, REPLACE and corpus tests; `tools/authority-scope.ts`; `check:rules` entries (warn mode). **Spike:** `recursive_triggers`, deferred FK, RAISE inside CASE, `?NNN` counting, depth of the split triggers, RETURNING. | REPLACE and UPSERT on Rule-2 tables; a statement mentioning the grant with a request-bound org fails lint; a statement run outside its batch throws; `g.joined` with a request-bound org or mode fails lint and the corpus test; a `system:` grant from a route is refused; deny precedence (org beats stale); a leaked grant is detected | volatile columns never bump; baseline allowlist matches |
-| WP1 Tenant authority | Appendix A, WP1. Keeps the `tenantPassAuthoritySql` and `tenantPassAuthorityParams` signatures as a compact drop-in, so the three wallet-provider callers (`repo-{samsung-verification,account-writes,status}.ts`) compile unchanged (minor 15). Converts W1-15's `api-keys/repo.ts`, `orgs/repo-members.ts` and `broadcasts` checks to grants. Replaces the `users/repo.ts:155-165` `changes()` chain with a platform grant (minor 13). | revoked membership, session or key; suspended org; suspend then reactivate; cross-org; cross-mode; last org_admin; key scope escalation | settings or branding save during create, bulk or import; stale settings save returns 409 |
-| WP-T Release heads | Appendix A, WP-T | unapproved or foreign-org release never becomes head; legacy release only when the scope is empty | baked fallback with org-over-platform precedence; a release approved mid-request does not refuse unrelated scans |
-| WP2 Pass writes | Appendix A, WP2; `0042` transfer guards; with W1-07 (create) and W1-11 | concurrent edit returns 409; transfer or void between read and write gives `lineage` | with a transfer pending, approve a release and edit the connection: the transfer completes or abandons, never aborts; sync metadata does not fail an edit; transfer finish works with providers dark; lost-response retry returns 200 |
-| WP3 Delivery, bundles, sandbox capture | Appendix A, WP3; `0045` | holder transfer, revoked membership or key, suspended org, quarantined pass; transfer start removes the pass from old bundle links | sign-out, idle expiry, branding edit, content refresh: mail is sent; idempotent replay returns 201 |
-| WP4 Connections | Appendix A, WP4; `0044` | config change mid-run gives `STALE_GENERATION`; disabled connection; a test-mode grant for a connection purpose violates the CHECK | health, cursor and `next_run_at` writes; suspend then reactivate resumes syncs |
-| WP5a Scan actor checks | Appendix A, WP5a; `guard.ts` captures epochs | scanner credential rotated between auth and grant gives 401; expired scanner; disabled staff | staff sign-in elsewhere |
-| WP5b Scan write | Appendix A, WP5b, including `events/service.ts`, `rules.ts`, `outcome.ts`, `src/web/scan/api/to-fail.ts`; W1-05 criteria; `0051` passless drops | void or transfer between preflight and commit; a publish-replaced barcode is refused; capacity override needs a manager; `/passes/:id/events` never returns authority or proof fields, including old rows | 10-scanner race gives 1 `ok` and 9 `already_done`; override after staff re-sign-in; round trips ≤5 / ≤4 |
-| WP6 Scan undo | Appendix A, WP6; W1-06 criteria | `UNDO_SUPERSEDED`; revoked actor; quarantined scan | undo after a settings save, a publish, a release approval; undo of scans from before the branch; retry after commit |
-| WP7 Scan reads | Appendix A, WP7, via `authorityPredicate`; `0041` retention drops. **Coordination:** W1-17 owns the projection logic in `repo-feed*` (WP7 changes only their authority predicate); W1-13 keeps the backfill logic in `repo-lookup-backfill.ts` and WP7 converts its fence. | revoked actor cannot read feed, live data or assets; cross-mode | sync touch does not blank output; GET issues no writes outside the allowlist |
-| WP9 Scan admin and config writes | Appendix A, WP9: scanners, pairing, devices (P1-3c contract from W1-18 kept), sessions, setups, events, staff (including the W1-15 PIN reset), configuration, workspace report, staff session; retire `scanning_config_revisions` readers | revoked or rotated scanner; cross-org event or staff; name-only PATCH keeps the role (403 `SCREEN_ONLY`) | report and staff sign-in never 409 after commit; config edit returns 409 then refetch, without unpairing |
-| WP8 Cleanup | delete `platform/{sql-balance.ts,sql-tokens.ts}` and `scan/repo-secret-binds.ts`; drop `scanners_credential_revision`; `credentialRefKeysetSql` stays only in `passes/repo-credential-keyset.ts` and wallet providers; `check:rules` blocking | corpus with balancing off | `npm run check` green |
-
-### 7.3 Wave-1 reconciliation (M6)
-
-| Wave-1 task | Status | Effect here |
+| Old write | In the window | Why |
 | --- | --- | --- |
-| W1-05, W1-06, W1-07, W1-10, W1-11, W1-18 | owner answer 1 | built as WP5b, WP6, WP2/WP3, WP1, WP2 and WP9 |
-| W1-15 | done | WP1 and WP9 convert its SQL fences to grants with equal security (§3); until then they stay |
-| W1-17 | | owns feed projections; WP7 changes only predicate imports in `repo-feed*` |
-| W1-13 | | keeps the backfill logic in `repo-lookup-backfill.ts`; WP7 converts its fence (Appendix A). The `OLD IS NOT NULL` trigger rule makes it bump-free |
-| W1-12a | | lands `0044` first; WP4 amends after it |
-| W1-02, W1-03 | done | §6.2 builds on the cutover agent's `0030`, `0031`/`0038`, `0043` and `0045` amendments and the new `deploy.ts` order |
-| W1-04 | done | `/api/v1` keeps `If-Match` / 412 on `version` |
+| Holder edit, delete of an owned pass | fails | `0042` `pass_credential_transfer_required` |
+| Owner link on pass create or sign-in, self-remove | succeeds | `0055` |
+| Org settings upsert, profile and branding | ok; each moves `orgs.config_revision` | `0052` triggers |
+| Template upload, baked upsert, scanner pairing and heartbeat, scan check-in claim, connection sync | ok | |
+| Template sync `INSERT ... ON CONFLICT (slug) DO NOTHING` for an existing org, and a re-sent `INSERT OR IGNORE INTO template_versions` | fails | BEFORE INSERT guards ignore `ON CONFLICT` and `OR IGNORE` |
 
-### 7.4 Obsolete tests
+The sync break is reachable only when a fresh baked build reaches the old Worker (a new build hash) or `templates.baked_hash` is cleared. The batch aborts as a whole and retries, so the effect is a delayed baked sync, not corruption. The new Worker has no `ensureOrgStmt` (deleted); the sync does not insert orgs.
 
-**Tests that become obsolete:**
-- `platform/sql-balance.test.ts` (rewriter removed).
-- `scan/repo-secret-binds.test.ts` (packing removed).
-- Bind-budget tests and fixtures: `session-activity-authority-{bind,count}-budget.test.ts` and `repo-{action-approval,action-gate-stale,asset-bind}-budget-test-fixtures.ts`. They test packing under the 100-parameter cap; the corpus ≤40 assertion replaces them.
-- Split-snapshot refusal tests: `output-authority-split-*.test.ts`, `routes-display-authority-split-*.test.ts` and the `repo-*-split-test-fixtures`. They assert refusal on volatile-column changes, which are now benign. Invert them into liveness tests.
-- Undo 404 expectations: `undo-authority-races.test.ts` and the undo-console 404 expectations. Invert them.
-- Revision-toggling cases: `repo-act-authority-{release,identity,history,screens,sessions}-cases` toggle `updated_at` revisions. Rewrite them as epoch-specific safety cases.
-- Proof and envelope fixtures: `repo-undo-event-*`, `scan-undo-proof*`, `repo-scan-retention-proof-*` and `repo-history-proof-cas.test.ts` (proofs removed).
-- Keyset-in-SQL assertions: `passes/credential-keyset-sql.test.ts` and the per-statement keyset assertions. Keep the init tests and the provider-facing helper tests.
-- Delivery stale assertions: the `delivery/{binding,transfer-fences}.test.ts` cases that assert `DELIVERY_STALE` on a version bump. Invert them.
-- The four `sessions.roles` fixtures listed in §6.1.
+Containment: the window is automated (seconds to minutes). Routes known to fail are blocked between migrate and promote by a temporary WAF rule (owner answer 5). Queue draining is best-effort; the new consumer accepts old-shaped messages and retains them as ignored (`queue.legacy_job_ignored`).
 
-### 7.5 Provider track
+### 6.3 Rollback
 
-**Provider track (later, not this release).** Leave these sites on column equality and keep them working:
-- **Pass-column fences** (`docs/design/wallet-providers/current-state.md` §5): `wallet-providers/repo-instance-proof.ts:41-109` (`walletInstanceProofSql`), `repo-instance.ts`, `repo-instance-mutations.ts`, `repo-instance-offers.ts`, `repo-offers.ts`, `repo-sync-{queue,targets,retention}.ts`, `repo-instance-retirement-staging.ts`, `repo-status.ts`, `repo-callbacks{,-tombstone,-tombstone-retirement}.ts`, `repo-google-callback.ts`, `repo-accounts.ts`, `repo-account-writes.ts`, `repo-projection{,-write}.ts`, `repo-samsung-verification.ts`.
-- **Keyset helpers:** the keyset-commitment helpers listed in §5, and the about 70 files carrying the commitment.
-- **Triggers:** the triggers in `0043` and `0050`.
-- **Columns they compare stay as they are:** `p.version`, `p.revision`, `p.release_id`, `p.credential_generation` and `p.lifecycle_generation` keep their semantics, and `credentialRefKeysetSql` and `credential-keyset.ts` stay exported.
-- **Shared callers:** `repo-credential-transfer-finish.ts`, `repo-ops-retention.ts` and `sandbox/repo.ts` keep calling `providerRetirementCompleteSql` inside their grant checks. It is parameter-free and vacuous while providers are dark.
-- **Later adoption:** an instance stores `pass_row_version` plus an account epoch, the proof becomes one equality inside a grant, and the keyset becomes one pin per request.
+Roll forward only once migrations have run (owner answer 6). A Worker-only rollback is an emergency degraded mode: pause queue consumers first, keep transfer-starting routes blocked, then redeploy forward. A Time Travel restore to the pre-migration bookmark is the last resort and loses later writes.
 
-## Appendix A. Fence-site ownership (generated 2026-11-11)
+### 6.4 Baked and legacy releases
 
-Paths are relative to `src/worker/modules/` unless they start with `src/`. Wallet-provider files are excluded.
+- **Issuance and use are separate** (the issued-release rule). New issuance needs the scope's head. An existing pass is used under its template's head when the head is its own version or build, else under its own release and template version. Archived templates keep their passes working; deleted templates stop them.
+- **Baked templates** get `system` releases only from the baked sync, because only the sync computes the verified content hash, the `template_version_hashes` row and the sealed preview extras. The sync scopes by the stored `templates.org_id`: an assigned baked template gets an org release, an unassigned one the platform release. Until the sync runs, baked templates cannot issue; existing baked passes still scan.
+- **Uploaded templates** get a `legacy` release at their active version from `tools/bootstrap-tenancy.ts`. It is effective only as the scope's head at that version.
+- **Adoption** needs `CF_VERSION` (`version_metadata`), so the new build's upload time orders after the old Worker's last sync.
+- **Queued mail** (`{ to, attach }`, no `intent`) is bound by the bootstrap: it writes `payload.intent` without an actor (`legacy: true`) from the current pass and bundle state. Unbound rows cancel with `DELIVERY_UNBOUND`.
+
+## 7. Enforcement and open work
+
+### 7.1 Ownership scan
+
+`tools/authority-scope.ts --strict` (in `npm run check:rules`) fails on a raw write to a guarded table, `OR REPLACE`, `updated_at = ?`, `new GrantedStatement`, a job context built outside `jobs/` and `workflows/`, and a fence-pattern match in a file that Appendix A does not list. Appendix A is machine-read: keep its `**WPx:**` headings and path tokens.
+
+### 7.2 Open work
+
+- Remove `platform/sql-balance.ts`, `platform/sql-tokens.ts` and `scan/repo-secret-binds.ts`, then drop the `scanners_credential_revision` trigger (`0047`) in a new migration.
+- Old release helpers still have callers (`activeReleaseIdSql`, `activeReleasePredicate`, `activeReleaseBindingPredicate`, `noScopedReleaseSql`): `passes/repo-release.ts`, `passes/repo-workflow-releases.ts`, `connections/repo-pass-snapshot.ts`, `connections/repo-webhook-replay.ts`, `connections/repo-webhook-item-claims.ts`, several `scan/repo-*` readers, and `wallet-providers/repo-projection.ts`.
+- One credential-loss rule for scanners: `session.ts`, `act-stale-refusal.ts` and `scanning-workspace.ts` call `scannerCredentialLost`; `repo-device.ts` `bindStaff` uses `credentialGone`, which misses a rotated CSRF secret, the token prefix and idle expiry.
+- Drop `scanning_config_revisions`.
+- `TenantPassWrite.orgUpdatedAt` and `tenantOrgUpdatedAt` carry `access_revision` under old names.
+
+### 7.3 Provider track
+
+Wallet providers (Google, Samsung) ship dark and stay on column equality:
+- pass-column fences in `wallet-providers/` (`walletInstanceProofSql` in `repo-instance-proof.ts`, `repo-instance*.ts`, `repo-offers.ts`, `repo-sync-*.ts`, `repo-callbacks*.ts`, `repo-accounts.ts`, `repo-projection*.ts`, `repo-samsung-verification.ts`);
+- keyset helpers (`credentialRefKeysetSql`, `credential-keyset.ts`) and the triggers in `0043` and `0050`;
+- `p.version`, `p.revision`, `p.release_id`, `p.credential_generation` and `p.lifecycle_generation` keep their meaning;
+- `passes/repo-credential-transfer-finish.ts`, `passes/repo-ops-retention.ts` and `sandbox/repo.ts` call `providerRetirementCompleteSql` inside their grant checks; it takes no parameters and is vacuous while providers are dark.
+
+Later adoption: an instance stores `pass_row_version` plus an account epoch, the proof becomes one equality inside a grant, and the keyset one pin per request.
+
+## Appendix A. Fence-site ownership
+
+Read by `tools/authority-scope.ts`: a file with a fence pattern must be listed here or be an authority file. The `WPx` names are keys of that scan, not live work packages. Paths are relative to `src/worker/modules/` unless they start with `src/`. Wallet-provider files are excluded.
 
 **WP1:**
 - `api-keys/repo.ts`
@@ -690,7 +572,7 @@ Raw writes to these tables are banned outside `platform/authority.ts`:
 
 ## Owner answers (2026-11-11)
 
-1. Wave 1 tasks that rewrite the same fences (W1-05, W1-06, W1-07, W1-10, W1-11, W1-18) are built as WP1-WP7 on WP0, not patched first.
+1. The fence rewrites were built on the grant builder, not patched first.
 2. Queued work (issuance email, scheduled broadcast, import) survives the initiator's sign-out and idle timeout. It stops only on membership or API-key revocation, org suspension, or a pass change such as void or holder transfer.
 3. Work queued before a suspension stays cancelled after reactivation.
 4. If a release is withdrawn after create, the issuance email still sends the pass that was created. Release checks apply at create and publish only.
@@ -700,104 +582,45 @@ Raw writes to these tables are banned outside `platform/authority.ts`:
 8. Settings race: a scan racing an org settings save may use the previous settings for that one scan (R8 accepted). No fence, no 409 at the door.
 9. Interpretations confirmed by the coordinator under answers 2 and 3: perpetual connection syncs are standing jobs, not queued one-off work, so they pause while an org is suspended and resume after reactivation. Disabling a user counts as revocation: it stops that user's queued work, which stays cancelled if the user is re-enabled, consistent with answer 3.
 
-## WP0 spike results
+## As built: decisions
 
-Run on local D1 (miniflare, `vitest --project worker`). Everything below is covered by a test in `src/worker/platform/authority*.test.ts`.
+Decisions that differ from, or add to, the sections above. Each is checked against the code.
 
-| Question | Result | Effect |
-| --- | --- | --- |
-| `recursive_triggers` | `0`. `foreign_keys = 1`, `defer_foreign_keys = 0`. A trigger that updates its own table ran once, not recursively. | The epoch triggers update only the epoch column, so they cannot loop under either setting. |
-| Deferred FK at batch commit | **Enforced.** A batch whose final state violates a `DEFERRABLE INITIALLY DEFERRED` FK fails as a whole and rolls back. A batch that violates it midway but ends valid commits. The error is opaque (`internal error; reference=...`, no constraint text). | The sentinel FK is **mandatory** and is in `0052`: `authority_grants.leak_guard` references `authority_grant_leaks`, a table whose insert trigger always aborts. A batch that commits with its grant row present fails. The failure cannot be classified, so treat it as ambiguous (a bug, never a refusal). |
-| `RAISE` inside `CASE` | Works in a trigger body (`SELECT CASE NEW.denied WHEN ... RAISE`) and for an `INSERT ... SELECT` whose `denied` column is computed in a `MATERIALIZED` CTE chain. A BEFORE trigger fires before the table's `CHECK`s, so a missing actor reaches `authority_denied:actor`, not a CHECK error. | The grant design works as written. |
-| `?NNN` and the 100 limit | The limit is the highest index, not the number of uses: `?1` reused 95 times counts once. `?101` fails (`variable number must be between ?1 and ?100`); 101 anonymous `?` fail. The bind count must equal the highest index exactly (extras fail). | Parameter counting is by distinct index. `authority.ts` uses positional `?` and checks `<= 90` (grant) and `<= 40` (writes) from the bound list. |
-| Expression depth | **D1 allows 100, not 1000.** A chain `a+b+...` of 101 terms fails. A flat `OR` chain: 95 terms ok, 98 fail. `EXISTS(... WHERE EXISTS(...))` nesting: 12 ok, 14 fail (about 7 levels each). A flat `MATERIALIZED` CTE chain: 30 ok, 60 fail. A `CASE` with 30 `WHEN`s ok. | The 16-term split of the passes trigger is conservative (41 bump terms would fit in one). Kept as 15/15/11. A hand-written check nested more than 2 `EXISTS` deep inside the grant `CASE` is at risk; keep checks flat. |
-| Table and result width | At most 100 columns per table and about 100 per result set (`too many columns`). | `passes` has 61 columns (60 + `row_version`). Room for about 39 more. |
-| `EXPLAIN` / compile of the split triggers | All `0052` triggers compile; the passes triggers have 15, 15 and 11 `IS NOT` terms. | None. |
-| `RETURNING` and the epoch | Returns the value **before** the AFTER trigger ran (`1`), a later `SELECT` shows `2`. | As designed. |
-| **New: `meta.changes` counts trigger changes** | `UPDATE passes SET display_title = ...` reports `meta.changes = 2` (the row plus the `row_version` bump); a volatile-column update reports `1`; `UPDATE orgs SET status` reports `2`. The SQL function `changes()` in the next statement of the batch returns `1`. `RETURNING` returns 1 row. | **Changes later packages.** Any `result.changes === 1` / `meta.changes === 1` after a write to an epoch'd table now sees 2 whenever a bump fires. Packages must count rows with `RETURNING` (the builder's `returning`, or `test/helpers` `runOne` in tests), never `meta.changes`; the grant builder never uses `meta.changes` as an authority signal. Sites to re-check are the `=== 1` / `!== 1` comparisons (about 56 outside tests) whose statement updates a bump-set column of `passes`, `scanners`, `scan_staff`, `scan_events`, `scanning_sessions`, `connections` or `orgs`, or inserts into `settings`, `scanning_devices` or `scan_event_templates`; each owning package re-checks its own. `settings/repo.ts:112` is not affected: its last statement only writes `orgs.updated_at`, a volatile column |
-| **New: BEFORE INSERT guards ignore `OR IGNORE` / `ON CONFLICT`** | A guard that raises `ABORT` on an existing key aborts `INSERT OR IGNORE` and `ON CONFLICT DO NOTHING` / `DO UPDATE` too, where plain SQLite would skip or update. | On the guarded Rule-2 and epoch tables an insert that hits an existing key fails with `UNIQUE constraint failed: <table>.<column>` instead of being a no-op. One production statement did this: `ensureOrgStmt` (`orgs/repo.ts`, `ON CONFLICT (slug) DO NOTHING`, run on every template sync); it is now `INSERT ... SELECT ... WHERE NOT EXISTS (slug)`. The `api_keys` bundle fixture got the same rewrite. |
+**Builder and grants**
+- `grant(ctx, input)` returns synchronously; nothing runs until `commit()`. Scope comes from the purpose prefix. `grantedBatch(db, grants)` runs grants with identical `codes` in one transaction; mixing codes is `GRANT_BATCH_MIXED`. `jobGrant(ctx, input)` builds `system:` grants.
+- A job brand: `createJobContext(env, kind)` for queue, cron and workflows; `createDetachedContext(env)` for `stores.ts`, the scan hub and the template registry. The token is private to `job-authority.ts`; `check:rules` lints importers.
+- A platform principal or `system:` job that names an org needs it active. Connection purposes are `org_mode` and live (`CHECK`).
+- Declared `edges` in `GUARDED_TABLES` bound child writes (`joined`, `insertJoined`); a test checks each edge against `PRAGMA foreign_key_list`.
+- `retired_api_key_ids` and `api_keys_no_id_reuse`: a deleted key's id is never issued again.
+- Re-keying `scanning_devices.scanner_id`, `settings.scope` or `key`, or `scan_event_templates` rows bumps the old and the new owner.
+- Fixed-column guards (`<table>_fixed_columns`) cover `orgs`, `passes`, `scanners`, `scan_staff`, `scan_events`, `scanning_sessions` and `connections`. `created_by` may become NULL only when the user row is gone.
 
-### What WP0 changed against the design
+**Org revisions**
+- `orgs.access_revision` is the principal's staleness check; settings and branding saves move `config_revision` only. Org and settings responses carry `configRevision`; `PATCH /orgs/{id}`, `PUT /orgs/{id}/branding/{slot}` and `PUT /settings` accept it (stale: 409 `SETTINGS_CHANGED`, see `docs/api.md`). The web clients share `lib/stale-save.ts`.
+- A revision of at least `1e12` is a pre-cutover `updated_at` and is accepted on org status only (`LEGACY_REVISION_MS` in `authority-principal.ts`; `orgEpochMatchSql`). Remove it one release after cutover.
 
-- **Fixed-column guards** (`<table>_fixed_columns`) exist for `orgs`, `passes`, `scanners`, `scan_staff`, `scan_events`, `scanning_sessions` and `connections`. `created_by` may become NULL only when the user row is gone (same exception as `0039`). `scanners.id` keeps `scanners_id_immutable`.
-- **`connections.generation`: the bump trigger moves to WP4.** Tests simulate a concurrent edit with a raw `UPDATE connections SET mode = ...` that must leave `generation` alone (`sync.test.ts`, `webhooks.test.ts`: the mode fence is exercised separately from the generation fence). A trigger over `mode`, `config` and the other bump columns changes which fence fires first. So `0052` ships only the monotonic guard, the fixed-column guard and the no-replace guard for `connections`; the app keeps writing `generation` as today. WP4 adds the trigger (`AFTER UPDATE OF <14 bump columns> ON connections WHEN NEW.generation = OLD.generation AND (...)`, the shape of the other epochs; the column list is in `authority-columns.ts`) together with the removal of the explicit bumps and the fence rewrite.
-- **`template_release_heads` is a view, not a table.** The design's trigger-maintained table adds a second change to every `template_releases` insert, and production release writes and wallet-provider fixtures check `changes === 1` on that insert (`runtime-integration-fixtures.ts:67` and more). A view over `template_releases` (the row with the newest generation per template, org scope, mode and provider) gives the same `(template_id, org_scope, mode, provider) -> release_id, generation` rows, is always current, cannot be written, replaced or drift, and needs no backfill or guard triggers. WP-T reads it the same way; the view's `COALESCE(org_id,'')` hides `org_id` from the index, so WP-T reads the newest generation straight from `template_releases` (`org_id IS ? ORDER BY generation DESC LIMIT 1`, full `template_releases_head` prefix) and keeps the view for readers that do not need the index. A table can still replace it later if a read needs to join without the subquery.
-- **Role names** are validated once at insert for `org_memberships` and `org_invitations` (`..._roles_valid`): a JSON array of distinct, known role names.
-- **`authority_grants.leak_guard`** is the sentinel FK column (not in the design's column list).
-- **Builder API:** `grant(ctx, input)` returns a `Grant` synchronously (no round trip until `commit()`); the scope comes from the purpose prefix. `g.update`, `g.delete`, `g.insertSelect`, `g.upsert`, `g.joined`, `g.insertJoined`, `g.add(...)`, `g.commit()`, `grantedBatch(db, grants)` (grants with identical `codes`, one transaction), `jobGrant(ctx, input)`. The full contract, including owned columns, the declared edges and the expression set, is in section 1.2. A statement injects the grant's org (and mode, for `org_mode`) with an `EXISTS` on its own grant row. `platform` grants inject nothing, and are the only ones that write `users` and `sessions`.
-- **Real statement sizes** (`authority.test.ts`, "statement corpus"): a tenant-session grant with the session, the org revision and five epoch checks binds 23 values (1.76 KB); API key 19 (1.55 KB); scanner 20 (1.57 KB); platform admin 23 (1.75 KB). The §5 estimates of 10-13 cover the bare principal check; each epoch check adds 2 and about 150 bytes. Writes bind 3 for a one-column update. All well inside 90 / 40 / 32 KB.
-- **Test helpers for the new guards** (`test/helpers/triggers.ts`; the worker setup restores any dropped trigger after each test):
-  - `editSessionAuthority` for tests that rewrite `sessions.roles` / `amr` (27 sites in 19 files, more than the four fixtures in section 6.1; WP1, WP5b and WP9 delete these cases when they convert the fences);
-  - `editFixedColumns` for tests that age `passes.created_at` (sandbox purge, 11 sites);
-  - `allowInvalidRoleNames` for tests that insert unknown or duplicate role names (`settings`, `audit` and `metrics` tenant-access tests).
-- **`meta.changes` assertions:** about 50 test assertions of the form `expect(await run(...)).toEqual({ changes: 1 })` on a statement that now moves an epoch had become `changes >= 1`. The review restored them: tests use `runOne` / `runExactly` (`test/helpers/exact-rows.ts`), which append `RETURNING 1` and assert the exact row count, or a fixed `meta.changes` where the trigger set is deterministic (a `scanning_devices` insert is 2). The tombstone and cascade tests that already failed at the baseline keep their strict form.
-- **Daily sweep:** `authority.sweep` (`sweepLeakedGrants`) is a daily cron hook. With the sentinel FK a leaked row cannot commit, so it is a second net.
+**Queued work**
+- Triggers cancel scheduled broadcasts: `users_disable_cancels_broadcasts`, `orgs_inactive_cancels_broadcasts` (suspended or deleted) and `memberships_revoke_cancels_broadcasts`. They stay cancelled on reactivation (owner answers 3 and 9).
+- `launchBroadcast` revives a broadcast to `scheduled` only while the org and the creator are live, else `failed`. `sendStepAllowed` (`broadcasts/run.ts`) runs before each chunk through a `jobGrant` (`org_mode.job.broadcast.send`). A re-invited creator does not pass: the membership must predate the broadcast.
+- Platform grants for org create, status and delete take the admin session from the route.
 
-### WP0 review fixes (2026-11-11)
+**Releases and issuance**
+- Issuance reads no asset bytes. `verifyStoredContent` checks the saved hash against the release's, recomputes the content hash from stored documents and metadata, and heads each stored R2 object for its declared size. Publication (`verifyCandidate` with `deep`) hashes the bytes. `registry.openAsset` verifies size and sha1 of an R2 asset on every open, so a bad swap is never cached by the pass build (`TEMPLATE_CONTENT_CHANGED`).
+- `READ_PATH_WRITE_ALLOWLIST` (`repo-version-hashes.ts`) lists `template_version_hashes`: the first issuance of a pre-hash release writes its write-once row on a read.
+- `bakedSyncComplete` requires the system head's `content_hash` to equal the saved hash, so a settled isolate resyncs after a migration.
 
-Answers `.wrangler/agent-logs/wp0-review.md`. `0052` and the amendments were unapplied, so they were amended in place.
+**Scanning**
+- Content is not authority. A publish, a version bump, a link generation change, a Wallet JSON replacement or a newer release never refuses a ticket; a void, removal, transfer, quarantine, template reassignment or replaced barcode does (`scan/scan-pass-checks.ts`).
+- Undo re-derives the actor from the request and checks its epochs at commit. The `scan.undone` event carries no authority or MAC, and nothing stored is read as authority, so undo works on scans from before the epoch cutover. The approver is checked by value (role, disabled, `pin_hash`).
+- Staff changes refuse with `staff` (409 `SCAN_STAFF_CHANGED`); the device stays paired.
+- Mode: creates and event writes are `org_mode`; edits of an existing scanner, session, device or staff row are `org` scope, by id.
+- A scan grant leaves decoration that may fail on its own (PIN refund, photo grant) to one batch after the commit; it logs `SCAN_FINISH_DEGRADED` and never rolls back the scan.
+- `commitWith(reads)` takes `afterRead` values (`platform/authority-after.ts`): fixed read-only SQL run after the release in the same transaction.
 
-| Finding | Fix |
-| --- | --- |
-| B1 `joined` writes outside the grant | Declared `edges` in `GUARDED_TABLES`; `joined` only for org-less children; parent keys cannot be set; `via` names a declared edge, not a column pair. |
-| B2 `settings.scope` unprotected | Owned columns derive from `TableScope.org` and are refused in `set`, `inc`, `where`, `columns`, upsert `update` and check conditions. |
-| B3 builder gaps | `insertJoined`, platform writes to `users.status` and `sessions.revoked_at`, `upsert` with a fixed target, `maxNow` / `jsonSet` / `coalesceTo` / `inList` / `gt` / `lt` / `isNotNull`. |
-| M1 job brand | The token is private to `job-authority.ts`; `createJobContext(env, kind)` for queue, cron and workflows, `createDetachedContext(env)` for `stores.ts`, the scan hub and the template registry (`createServiceContext` remains as its alias for tests); `check:rules` lints importers. |
-| M2 silent no-op | `require: 'one'` and `returning`. |
-| M3 reads | `tenantFilter(alias, table, scope)`. |
-| M4 multi-grant batches | One grant per batch unless all share `codes` (`GRANT_BATCH_MIXED`); later grants' checks see earlier grants' writes. |
-| M5 | `Grant.prepare` is private; `prepareGrantForTest` for tests, linted elsewhere. |
-| M6 | `MembershipLiveness`: `via: 'session'` (session hash required) or `via: 'deferred'` (revision required). |
-| M7 | `authority-baseline.test.ts` covers pass create, template upload and sync, scan check-in; the `ensureOrgStmt` break is in section 6.2. |
-| M8 | `leak_guard NOT NULL` with `CHECK (leak_guard = id)`, so the sentinel key cannot be skipped with NULL. |
-| M9 | Non-partial `template_releases_head` index; `releaseHead` check with org-over-platform and baked precedence. |
-| Minors 1-3 | Re-keying `scanning_devices.scanner_id`, `settings.scope` / `key` and `scan_event_templates` rows bumps old and new owners; `scanning_devices_no_replace`. |
-| Minor 4 | The lint matches `\bOR\s+REPLACE\b` (so `UPDATE OR REPLACE`). |
-| Minor 5 | `retired_api_key_ids`, `api_keys_no_id_reuse`. |
-| Minor 6 | Connection purposes must be `org_mode` and live: `purpose NOT GLOB '*.connection.*' OR IFNULL(mode, '') = 'live'`. |
-| Minors 7-13 | `jobGrant` validates `.job.`; epoch columns derived per table; `rawCheck` is read-only and tenant-column-free; `tenantMatch` throws `AuthorityError`; the two dead lint rules fire (builder call naming `org_id` / `mode`; raw writes to the authority tables); a test ties the `0029` role list to `OrgRoleSchema`; a platform principal that names an org needs it active (section 1.2). |
+**Holders**
+- The transfer START and FINISH grants need an active org; `pass_credential_transfer_insert_guard` also refuses a re-sign there. A session holder with `unlink: true` (`holder_remove`, built only by `unlinkOwner`) may take a pass off its account in a suspended or deleted org.
 
-**Open item (M8): confirm on a remote preview D1.** Local D1 logs `broken.inputGateBroken` for the batch that the sentinel foreign key fails. A preview database should confirm the failure is still an ordinary rejected batch (the rows roll back, the Worker keeps serving) before the first production migration. Agents do not run `--remote`; the owner or the cutover agent does.
+**Tests**
+- `test/helpers/triggers.ts`: `editSessionAuthority`, `editFixedColumns`, `allowInvalidRoleNames` (the worker setup restores dropped triggers after each test). `runOne` / `runExactly` (`test/helpers/exact-rows.ts`) append `RETURNING 1` and assert the row count.
 
-### WP-T results (2026-11-11)
-
-**Fences replaced** (head reads now use `template_release_heads`):
-- `templates/repo-releases.ts` `getActiveRelease` (was `activeReleaseIdSql`, a `NOT EXISTS newer` subquery) and `getLatestRelease` (was `ORDER BY generation DESC LIMIT 1`).
-- `repo-eligible.ts` and the three queries in `repo-stale.ts` (`quietUnqueuedTemplates`, `claimTemplateReissue`, `olderLivePasses`): `effectiveReleaseIdSql` (`repo-release-heads.ts`).
-- `repo-sync-release.ts`: generation, `previous_release_id`, the "no release yet", "replace head" and "already current" checks (five head subqueries).
-- `repo-release-write.ts` `activateReleaseStmt`: expected generation, expected release id, and the adapter and audience monotonic checks; `updateTemplateAfterReleaseStmt`: `NOT EXISTS newer` became "is a head".
-- `repo-sync.ts` `bakedSyncComplete`: head subquery, plus a saved-hash check so a settled isolate resyncs after `0052`.
-- `releases-active.ts`: the separate platform-fallback query is gone (the head query has the precedence); the asset byte re-read is replaced by `verifyStoredContent`.
-- `platform/authority-checks.ts` `releaseHead`: now reads the view, and applies the same precedence as `effectiveReleaseIdSql`. An org release left by a past assignment no longer shadows the platform head of an unassigned baked template, and the platform head counts only for a baked template with `org_id IS NULL` (it was any baked template).
-
-**Precedence** (`effectiveReleaseIdSql` and `releaseHead` agree): the scope org's head, only for an uploaded template or a baked one assigned to that org; otherwise the platform head of an unassigned baked template. Provenance is then checked on that one row. A legacy release is effective only as the scope's head at the template's active version, so it never outlives the first approved release. Legacy rows are exempt from the saved-hash check.
-
-**Issuance without byte reads.** `verifyStoredContent`: the saved hash equals the release's (in SQL and in JS; a version with none is verified from its bytes once and saved), the content hash recomputed from the stored documents, asset metadata, saved asset sha256 and extras equals it, and each stored object still exists with its declared size (`R2 head`). Publication (`verifyCandidate` with `deep`) hashes the bytes. The pass build trusts the metadata sha1 and crc32, so `registry.openAsset` checks size and sha1 of an R2 asset before the asset cache can keep it (`TEMPLATE_CONTENT_CHANGED`); a same-size substitution is therefore refused when the asset is first opened, not at the issuance fence.
-
-**Still on the old helper** (deprecated `activeReleaseIdSql`, `effectiveReleasePredicateSql`, `activeReleasePredicate`, `activeReleaseBindingPredicate`, `noScopedReleaseSql`): WP2 `passes/repo-release.ts`, `passes/repo-workflow-releases.ts`; WP4 `connections/repo-pass-snapshot.ts`, `repo-webhook-replay.ts`, `repo-webhook-item-claims.ts`; scan files `repo-actor-legacy-authority`, `repo-counts`, `repo-feed-select`, `repo-feed-snapshot`, `repo-history-proof-cas`, `repo-history-proof-read`, `repo-live-template-snapshot`, `repo-lookup`, `repo-pass-predicates`, `repo-scope-release-predicates`, `repo-scope-releases`, `repo-search` (WP5a, WP5b, WP7) and their test fixtures; and wallet-providers `repo-projection.ts`.
-
-### WP1 results (2026-11-11)
-
-Tenant authority and W1-10. Fences replaced:
-
-| Site | Old | New |
-| --- | --- | --- |
-| `passes/repo-authority.ts` `tenantPassAuthoritySql` / `Params` (same signatures) | `o.updated_at = ?`, `s.amr`, `json(s.roles)`, `json(m.roles)`, role validation and distinct count, `json(k.scopes)` | `o.access_revision = ?`; membership, user, org, session or key live; capability and scope still derived from the row's own roles and scopes. 13 binds became 9 (session), 9 became 8 (key) |
-| `settings/repo.ts` `writeScope` | `o.updated_at = ?` on every statement, last `UPDATE orgs` with `changes() === 1`, 403 | grant `org.settings.update` with `epochIs(orgs.config_revision)`: stale is 409 `SETTINGS_CHANGED`. Platform scope: `platform.settings.update` (live admin session). A save no longer touches `orgs.updated_at` |
-| `orgs/repo-org-writes.ts` `updateOrgRow`, `saveOrgBranding` | `writeAuthority` plus `updated_at` | grant `org.org.update` plus `config_revision` CAS (409); platform path is CAS only |
-| `api-keys/repo.ts` | `mutationAuthority`, `NOT EXISTS json_each` scopes, `changes() = 1` audit | grants `org_mode.api_key.create`, `platform.api_key.create`, `*.api_key.revoke`; each scope checked against the creator's own roles; audit row in the same batch (`audit/repo-granted.ts`) |
-| `orgs/repo-members.ts` writes | manager SQL, `? = 1` admin bypass, `changes()` audit, `isLastOrgAdmin` after the fact | grants `org.member.invite`, `uninvite`, `revoke`; last org_admin is a grant check (409 `LAST_ORG_ADMIN`); principal is a live admin session or a member with `members:manage` |
-| `users/repo.ts` `setStatus` | `changes() = 1` chain | `platform.user.disable` / `enable` grant (`setStatusAsAdmin`); disabling cancels the user's scheduled broadcasts, and so does re-enabling |
-| `orgs/repo.ts` `setOrgStatus`, `markOrgDeleted` | none | suspend or delete cancels the org's scheduled broadcasts in the same batch; they stay cancelled on reactivation |
-
-`TenantPassWrite.orgUpdatedAt` and `tenantOrgUpdatedAt` keep their names but carry `access_revision`; WP8 renames them.
-
-Left for other packages: threading the admin session into `orgs/service.ts` (create, status, delete) and `users` trusted callers; `settings` system-scope writes (`writeSystemValue`, jobs); invitation accept; `broadcasts` is not in Appendix B, so its writes stay raw behind the drop-in; `pass_issuance_deliveries` and import work need their own cancel on user disable (WP3, WP-T); `passes/repo-credential-transfer-source.ts` still compares `o.updated_at` and `o.branding`, so a branding save fails a holder reassign (WP2). Grant batches cannot carry an audit row through the public API: `audit/repo-granted.ts` builds a `GrantedStatement` directly, and a `Grant.audit()` would replace it.
-
-**WP-T review fixes.**
-- Asset bytes: `registry.openAsset` verifies size and sha1 for R2 assets on every open, so a bad swap is never cached by the pass build.
-- `createCandidate` (now `releases-create.ts`) writes the hash row only if its candidate row was inserted in the same batch.
-- `releaseHead` also requires uploaded-template ownership and an active template for `issue` (not deleted for `existing`); callers take the release id from `effectiveReleaseIdSql` / `activeRelease` in the same request (legacy `active_version`, policy and hash rules live there). Head lookups read `template_releases` directly; `olderLivePasses` computes the effective release once per scope.
-- `bakedSyncComplete` requires the system head's `content_hash` to equal the saved hash.
-- `READ_PATH_WRITE_ALLOWLIST` (`repo-version-hashes.ts`) lists `template_version_hashes`: the first issuance of a pre-hash release writes its write-once row on a read; WP7's "GET issues no writes" corpus test imports it.
-- Open, WP2: the three approved-reissue legacy no-op race tests (`passes/publish-service-release.ts`).
+**Open: remote D1 check.** Local D1 logs `broken.inputGateBroken` for the batch the sentinel foreign key fails. Confirm on a remote preview D1 that it is still an ordinary rejected batch (rows roll back, the Worker keeps serving). Agents do not run `--remote`; the owner does.
