@@ -172,8 +172,14 @@ describe('undo over the wire', () => {
       'SELECT csrf_secret,token_hash FROM scanners WHERE id=?',
       [s.scanner.id],
     );
+    // scans.session_id is the id of the scanning session row, not a credential: judge the rest.
+    const scanRows = await all<Record<string, unknown>>(
+      kit.env.DB,
+      'SELECT * FROM scans WHERE id=?',
+      [done.outcome.scanId ?? ''],
+    );
     const rows = JSON.stringify([
-      await all(kit.env.DB, 'SELECT * FROM scans WHERE id=?', [done.outcome.scanId ?? '']),
+      scanRows.map(({ session_id: _sessionId, ...row }) => row),
       await all(kit.env.DB, "SELECT * FROM pass_events WHERE kind='scan.undone' AND pass_id=?", [
         s.pass.id,
       ]),

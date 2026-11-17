@@ -1,11 +1,16 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeApiKey, makeSession, makeUser, runOne } from '../../../../test/helpers/index.ts';
+import {
+  makeApiKey,
+  makeSession,
+  makeUser,
+  runOne,
+  saveOrgSettings,
+} from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { getOrgRow } from '../orgs/repo.ts';
 import { saveOrgBranding } from '../orgs/repo-org-writes.ts';
-import { updateSettings } from '../settings/service.ts';
 import { grantKitMembership } from './apple-release-test-fixtures.ts';
 import { tenantAuthorityOf } from './http.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
@@ -42,13 +47,11 @@ describe('access epoch: org edits do not move it', () => {
     if (!keyAuth) throw new Error('key fixture missing');
     const before = await epochs();
 
-    await updateSettings(
-      kit.ctx,
-      { type: 'system', id: null },
-      {
-        scope: `org:${kit.org.id}`,
-        values: { 'support.email': `${kit.fx.ids.id()}@example.test` },
-      },
+    await saveOrgSettings(
+      kit.ctx.env.DB,
+      kit.org.id,
+      { 'support.email': `${kit.fx.ids.id()}@example.test` },
+      kit.ctx.clock.now(),
     );
     const row = await getOrgRow(kit.env.DB, kit.org.id);
     if (!row) throw new Error('org fixture missing');
@@ -102,7 +105,7 @@ describe('access epoch: org edits do not move it', () => {
     const captured = {
       kind: 'api_key' as const,
       orgId: kit.org.id,
-      orgUpdatedAt: (await epochs())?.access_revision ?? 0,
+      orgAccessRevision: (await epochs())?.access_revision ?? 0,
       keyId: key.id,
       keyOrgId: kit.org.id,
       scopes: ['passes:write' as const],
@@ -126,10 +129,10 @@ describe('access epoch: org edits do not move it', () => {
   it('accepts work queued before cutover (a persisted updated_at in ms) while the org is active', async () => {
     const authority = await sessionAuthority();
     if (authority.kind !== 'session') throw new Error('expected session authority');
-    const legacy = { ...authority, orgUpdatedAt: kit.clock.now() };
+    const legacy = { ...authority, orgAccessRevision: kit.clock.now() };
     expect(await valid(legacy)).toBe(true);
     // A small wrong revision is still refused: only the ms-sized legacy shape is relaxed.
-    expect(await valid({ ...authority, orgUpdatedAt: 999 })).toBe(false);
+    expect(await valid({ ...authority, orgAccessRevision: 999 })).toBe(false);
     await runOne(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
     expect(await valid(legacy)).toBe(false);
     await runOne(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);

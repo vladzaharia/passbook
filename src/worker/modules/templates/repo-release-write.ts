@@ -4,6 +4,7 @@ import type { Grant } from '../../platform/authority.ts';
 import { releaseHead } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
+import { writePart } from '../../platform/authority-include.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -11,7 +12,7 @@ import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TemplateAuthority } from './access.ts';
 import { APPLE_ADAPTER_CAPABILITIES } from './release-content.ts';
 import { approvable, candidateTemplate, headGeneration, publishable } from './repo-grant-checks.ts';
-import { grantRow, inGrant, templateGrant } from './repo-grants.ts';
+import { templateGrant } from './repo-grants.ts';
 import { eventIdsForRelease, invalidateEventCache } from './repo-release-effects.ts';
 import type { ApprovalRow, CandidateRow } from './repo-releases.ts';
 import { type VersionHashes, versionHashesSql } from './repo-version-hashes.ts';
@@ -184,7 +185,7 @@ export async function writeCandidate(
     ),
   );
   const h = versionHashesSql(c.templateId, c.version, hashes, c.createdAt, c.id);
-  g.add(inGrant(g, `${h.sql} AND ${grantRow(g).sql}`, [...h.params, g.id]));
+  g.include(writePart(`${h.sql} AND {grant}`, h.params));
   const [inserted] = await g.commit();
   if (!wrote(inserted)) throw releaseChanged();
 }
@@ -265,11 +266,18 @@ export async function writeRelease(
         expectedGeneration: input.expectedGeneration,
       }),
       headGeneration(c.templateId, mode, c.provider, input.expectedGeneration),
-      // releaseHead requires an active template; an archived one is restored by a rollback, and the
-      // generation check above already pins its head.
-      ...(input.expectedReleaseId === null || input.expectedStatus === 'archived'
+      // An archived template is restored by a rollback: its head counts under the existing-use rule.
+      ...(input.expectedReleaseId === null
         ? []
-        : [releaseHead(c.templateId, mode, c.provider, input.expectedReleaseId)]),
+        : [
+            releaseHead(
+              c.templateId,
+              mode,
+              c.provider,
+              input.expectedReleaseId,
+              input.expectedStatus === 'archived' ? 'existing' : 'issue',
+            ),
+          ]),
     ],
   });
   g.insertSelect('template_releases', RELEASE_COLUMNS, releaseValues(input), RETURN_ID);

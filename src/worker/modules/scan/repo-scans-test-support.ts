@@ -1,26 +1,11 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
+// Raw claim and finalize statements for the reconcile and recovery tests; the door writes through scan.* grants.
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { EventRow } from '../events/repo.ts';
 import { type GateKey, wonGate } from './repo-gates.ts';
 
-type Db = D1Database;
+import type { Claim, Finalize } from './repo-scans.ts';
 
-export interface Claim {
-  id: string;
-  orgId: string;
-  mode: Mode;
-  scannerId: string | null;
-  eventId: string | null;
-  actorType: 'scanner' | 'user';
-  actorId: string;
-  actorKey: string;
-  staffId: string | null;
-  idempotencyKey: string;
-  requestHash: string;
-  method: string;
-  clientTs: number;
-  now: number;
-}
+type Db = D1Database;
 
 /** Claim the key only while the optional original authority remains current. */
 export function claimScanStmt(
@@ -32,8 +17,8 @@ export function claimScanStmt(
   return stmt(
     db,
     `INSERT INTO scans (id, org_id, mode, scanner_id, event_id, actor_type, actor_id, actor_key, staff_id,
-       idempotency_key, request_hash, method, state, client_ts, at)
-     SELECT ?/* scan-ephemeral-scan-id */, ?, ?, ?/* scan-ephemeral-scanner-id */, ?/* scan-ephemeral-event-id */, ?, ?/* scan-ephemeral-actor-id */, ?/* scan-ephemeral-actor-key */, ?/* scan-ephemeral-staff-id */, ?/* scan-ephemeral-idempotency-key */, ?/* scan-ephemeral-request-hash */, ?, 'pending', ?, ?
+       session_id, idempotency_key, request_hash, method, state, client_ts, at)
+     SELECT ?/* scan-ephemeral-scan-id */, ?, ?, ?/* scan-ephemeral-scanner-id */, ?/* scan-ephemeral-event-id */, ?, ?/* scan-ephemeral-actor-id */, ?/* scan-ephemeral-actor-key */, ?/* scan-ephemeral-staff-id */, ?, ?/* scan-ephemeral-idempotency-key */, ?/* scan-ephemeral-request-hash */, ?, 'pending', ?, ?
      WHERE (${bound.sql}) ON CONFLICT (actor_key, idempotency_key) DO NOTHING RETURNING id`,
     [
       c.id,
@@ -45,6 +30,7 @@ export function claimScanStmt(
       c.actorId,
       c.actorKey,
       c.staffId,
+      c.sessionId ?? null,
       c.idempotencyKey,
       c.requestHash,
       c.method,
@@ -57,23 +43,6 @@ export function claimScanStmt(
 
 export async function claimScan(db: Db, c: Claim): Promise<boolean> {
   return (await claimScanStmt(db, c).first<{ id: string }>()) !== null;
-}
-
-export interface Finalize {
-  id: string;
-  claimAt: number;
-  outcome: 'ok' | 'heads_up' | 'refused';
-  reason: string | null;
-  passId: string | null;
-  templateId: string | null;
-  actionId: string | null;
-  actionKind: string | null;
-  passVersion: number | null;
-  overrideOf: string | null;
-  approvedBy: string | null;
-  direction?: 'in' | 'out';
-  presenceScope?: string;
-  eventId?: string;
 }
 
 type Predicate = { sql: string; params: readonly SqlValue[] };

@@ -18,9 +18,16 @@ describe('atomic scanner response authority', () => {
     'identity-aba',
     'credential-generation',
     'lifecycle-generation',
-    'release',
+    'release-adapter',
   ] as const)('suppresses a heads-up card when %s changes after projection', async (change) => {
-    await racedResolve(await fixture({ tier: 'overdue', photo: true }), change);
+    await racedResolve(
+      await fixture({ tier: 'overdue', photo: true, olderAdapter: change === 'release-adapter' }),
+      change,
+    );
+  });
+
+  it('serves a heads-up card when an identical release of the pass version lands', async () => {
+    await racedResolve(await fixture({ tier: 'overdue', photo: true }), 'release');
   });
 
   it('suppresses a pass-bearing refused stop after its actor is revoked', async () => {
@@ -132,11 +139,11 @@ describe('atomic scanner response authority', () => {
     'identity-aba',
     'credential-generation',
     'lifecycle-generation',
-    'release',
+    'release-adapter',
   ] as const)(
     'rechecks actor and source together after lookup auditing when %s changes',
     async (change) => {
-      const f = await fixture({ photo: true });
+      const f = await fixture({ photo: true, olderAdapter: change === 'release-adapter' });
       const real = kit.env.DB;
       // The first combined read precedes audit; mutate only after it, at the final read.
       const race = raceFence(real, () => changeAfterProjection(f, real, change), 2);
@@ -144,15 +151,38 @@ describe('atomic scanner response authority', () => {
       try {
         const response = await kit.post(f.scanner.headers, '/lookup', { q: f.pass.id });
         expect(race.fired()).toBe(true);
-        expect(response.status).toBe(200);
         const text = await response.text();
-        expect(JSON.parse(text)).toEqual({ items: [], more: false });
+        if (change === 'release-adapter') {
+          // The release differs from the pass's own: a real race, retryable, nothing disclosed.
+          expect(response.status).toBe(409);
+          expect(JSON.parse(text)).toMatchObject({ code: 'SCAN_PASS_CHANGED' });
+        } else {
+          expect(response.status).toBe(200);
+          expect(JSON.parse(text)).toEqual({ items: [], more: false });
+        }
         noDisclosure(text, f.pass.id);
       } finally {
         Object.assign(kit.env, { DB: real });
       }
     },
   );
+
+  it('still lists the pass when an identical release of its version lands during the audit', async () => {
+    const f = await fixture({ photo: true });
+    const real = kit.env.DB;
+    const race = raceFence(real, () => changeAfterProjection(f, real, 'release'), 2);
+    Object.assign(kit.env, { DB: race.db });
+    try {
+      const response = await kit.post(f.scanner.headers, '/lookup', { q: f.pass.id });
+      expect(race.fired()).toBe(true);
+      expect(response.status).toBe(200);
+      expect((await response.json()) as { items: unknown[] }).toMatchObject({
+        items: [{ passId: f.pass.id }],
+      });
+    } finally {
+      Object.assign(kit.env, { DB: real });
+    }
+  });
 
   it.each([
     'photo',

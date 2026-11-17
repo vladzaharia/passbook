@@ -44,7 +44,7 @@ export class GrantedStatement {
     if (token !== BUILDER)
       throw new AuthorityError(
         'GRANT_FOREIGN_STATEMENT',
-        'Statements are built by the grant (update, insertSelect, audit, unguarded), never constructed.',
+        'Statements are built by the grant (update, insertSelect, audit, include), never constructed.',
       );
     registry.set(this, { grantId, ...built });
   }

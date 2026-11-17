@@ -6,4 +6,5 @@ export * from './factories.ts';
 export * from './fake-auth.ts';
 export * from './fakes.ts';
 export * from './grant-leak.ts';
+export * from './org-writes.ts';
 export * from './triggers.ts';

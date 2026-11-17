@@ -8,12 +8,11 @@ import {
   makeSession,
   makeTemplate,
   makeUser,
+  setUserStatus,
 } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
-import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { harness, type TestHarness, waitingPass } from '../auth/test-support.ts';
-import { setUserStatus } from './service.ts';
 
 let h: TestHarness;
 const f = () => fixtures(h.env, h.clock);
@@ -192,11 +191,9 @@ describe('disable and enable', () => {
   });
 
   it('commits revocation before a concurrent re-enable and leaves new sessions intact', async () => {
-    const a = await admin();
     const user = await makeUser(f());
     const oldSession = await makeSession(f(), { userId: user.id });
     const store = createSessionStore(h.env, h.clock);
-    const ctx = createServiceContext(h.env, { clock: h.clock });
     let interleaved = false;
     let newCookie = '';
     const db = new Proxy(h.env.DB, {
@@ -207,7 +204,7 @@ describe('disable and enable', () => {
             interleaved = true;
             const newSession = await makeSession(f(), { userId: user.id });
             newCookie = newSession.cookieValue;
-            await setUserStatus(ctx, a.user.id, user.id, 'active');
+            await setUserStatus(h.env.DB, user.id, 'active', h.clock.now());
             expect(await store.resolve(oldSession.cookieValue)).toBeNull();
             expect(await store.resolve(newCookie)).not.toBeNull();
             return results;
@@ -216,7 +213,7 @@ describe('disable and enable', () => {
         return typeof value === 'function' ? value.bind(target) : value;
       },
     });
-    await setUserStatus({ ...ctx, env: { ...h.env, DB: db } }, a.user.id, user.id, 'disabled');
+    await setUserStatus(db, user.id, 'disabled', h.clock.now());
     expect(interleaved).toBe(true);
     expect(await store.resolve(oldSession.cookieValue)).toBeNull();
     expect(await store.resolve(newCookie)).not.toBeNull();

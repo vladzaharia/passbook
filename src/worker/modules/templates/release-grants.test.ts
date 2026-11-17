@@ -34,7 +34,7 @@ import { basicPackage, passJson, zipOf } from './package/fixtures.ts';
 import { createTemplateRegistry } from './registry.ts';
 import { getTemplate } from './repo.ts';
 import { archiveUploadedTemplate } from './repo-mutations.ts';
-import { writeApproval } from './repo-release-write.ts';
+import { writeApproval, writeRelease } from './repo-release-write.ts';
 import { getCandidate } from './repo-releases.ts';
 import { resetBakedSync, syncBakedTemplates } from './sync.ts';
 import { bakedFrom, fakeAssets, importZip, sourceOf, watchBatch } from './testing.ts';
@@ -501,6 +501,43 @@ describe('grant-level refusals', () => {
       ),
     ).rejects.toMatchObject({ status: 409, code: 'TEMPLATE_RELEASE_CONFLICT' });
     expect(await approvals(c.id)).toEqual([]);
+  });
+
+  it('checks the head of an archived template on a rollback', async () => {
+    const { t, c, a } = await reviewed('Archived Head Check');
+    const published = await post(`/${t.templateId}/releases`, publishBody(c, a.id), publisher);
+    expect(published.status).toBe(201);
+    const live = (await published.json()) as { id: string };
+    expect((await post(`/${t.templateId}/archive`, {}, publisher)).status).toBe(200);
+    const row = await getCandidate(env.DB, c.id);
+    if (!row) throw new Error('Candidate missing');
+    const grantee = await authorityOf(publisher, org.id, 'templates:publish');
+    const rollback = (expectedReleaseId: string) =>
+      writeRelease(
+        ctx(),
+        grantee,
+        {
+          id: f.ids.id(),
+          candidate: row,
+          approvalId: a.id,
+          expectedGeneration: 1,
+          expectedReleaseId,
+          targetReleaseId: live.id,
+          action: 'rollback',
+          expectedStatus: 'archived',
+          createdBy: publisher.userId,
+          createdAt: clock.now(),
+          metadata: null,
+        },
+        {},
+      );
+    await expect(rollback(f.ids.id())).rejects.toMatchObject({
+      status: 409,
+      code: 'TEMPLATE_RELEASE_CONFLICT',
+    });
+    expect(await releaseCount(t.templateId)).toBe(1);
+    await rollback(live.id);
+    expect(await releaseCount(t.templateId)).toBe(2);
   });
 
   it('refuses a member grant on a shared template', async () => {

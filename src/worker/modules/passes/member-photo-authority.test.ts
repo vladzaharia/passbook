@@ -1,9 +1,8 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
-import { makeOrg, makeSession } from '../../../../test/helpers/index.ts';
+import { makeOrg, makeSession, revokeMembership } from '../../../../test/helpers/index.ts';
 import { hashSessionCookie } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { revokeMembership } from '../orgs/repo-members.ts';
 import { grantKitMembership } from './apple-release-test-fixtures.ts';
 import type { TenantPassWrite } from './http.ts';
 import { deleteMemberPhoto, putMemberPhoto, updateMemberPhoto } from './member-photo.ts';
@@ -14,7 +13,7 @@ import {
   png,
   setupPhotoTestKit,
 } from './member-photo-test-fixtures.ts';
-import { tenantOrgUpdatedAt } from './repo-authority.ts';
+import { tenantOrgAccessRevision } from './repo-authority.ts';
 import { capturePassImageGeneration } from './repo-history-image.ts';
 import { type MemberPhotoRow, memberPhoto } from './repo-member-photo.ts';
 import { replaceMemberPhotoGranted } from './repo-member-photo-grant.ts';
@@ -42,8 +41,8 @@ describe('member photo tenant authority', () => {
       }
       const before = await memberPhoto(kit.env.DB, pass.orgId, pass.id);
       const prior = (await getPass(kit.env.DB, pass.id))!;
-      const orgUpdatedAt = await tenantOrgUpdatedAt(kit.env.DB, pass.orgId);
-      if (orgUpdatedAt === null) throw new Error('Organization snapshot is missing');
+      const orgAccessRevision = await tenantOrgAccessRevision(kit.env.DB, pass.orgId);
+      if (orgAccessRevision === null) throw new Error('Organization snapshot is missing');
       const userId = `photo-${kit.ctx.ids.token(12)}`;
       const membershipId = await grantKitMembership(kit, pass.orgId, userId);
       const session = await makeSession(kit.fx, { userId });
@@ -52,7 +51,7 @@ describe('member photo tenant authority', () => {
       const authority: TenantPassWrite = {
         kind: 'session' as const,
         orgId: pass.orgId,
-        orgUpdatedAt,
+        orgAccessRevision,
         mode: pass.mode,
         userId,
         sessionId,
@@ -75,8 +74,6 @@ describe('member photo tenant authority', () => {
                   pass.orgId,
                   membershipId,
                   kit.clock.now(),
-                  'admin-1',
-                  true,
                 ).run();
                 expect(result.meta.changes).toBe(1);
                 await grantKitMembership(kit, pass.orgId, userId);
@@ -144,8 +141,8 @@ describe('member photo tenant authority', () => {
       );
       const before = (await memberPhoto(kit.env.DB, pass.orgId, pass.id))!;
       const prior = (await getPass(kit.env.DB, pass.id))!;
-      const orgUpdatedAt = await tenantOrgUpdatedAt(kit.env.DB, pass.orgId);
-      if (orgUpdatedAt === null) throw new Error('Organization snapshot is missing');
+      const orgAccessRevision = await tenantOrgAccessRevision(kit.env.DB, pass.orgId);
+      if (orgAccessRevision === null) throw new Error('Organization snapshot is missing');
       const userId = `photo-${kit.ctx.ids.token(12)}`;
       const membershipId = await grantKitMembership(kit, pass.orgId, userId);
       const session = await makeSession(kit.fx, { userId });
@@ -154,7 +151,7 @@ describe('member photo tenant authority', () => {
       const authority: TenantPassWrite = {
         kind: 'session' as const,
         orgId: pass.orgId,
-        orgUpdatedAt,
+        orgAccessRevision,
         mode: pass.mode,
         userId,
         sessionId,
@@ -180,8 +177,6 @@ describe('member photo tenant authority', () => {
             pass.orgId,
             membershipId,
             kit.clock.now(),
-            'admin-1',
-            true,
           ).run();
           expect(result.meta.changes).toBe(1);
         }
@@ -235,11 +230,11 @@ describe('member photo tenant authority', () => {
     const before = (await memberPhoto(kit.env.DB, pass.orgId, pass.id))!;
     const prior = (await getPass(kit.env.DB, pass.id))!;
     const imageGeneration = await capturePassImageGeneration(kit.env.DB, prior, kit.clock.now());
-    const orgUpdatedAt = await tenantOrgUpdatedAt(kit.env.DB, pass.orgId);
-    if (imageGeneration === null || orgUpdatedAt === null)
+    const orgAccessRevision = await tenantOrgAccessRevision(kit.env.DB, pass.orgId);
+    if (imageGeneration === null || orgAccessRevision === null)
       throw new Error('Pass snapshot is missing');
     const foreign = await makeOrg(kit.fx);
-    const foreignOrgUpdatedAt = await tenantOrgUpdatedAt(kit.env.DB, foreign.id);
+    const foreignOrgUpdatedAt = await tenantOrgAccessRevision(kit.env.DB, foreign.id);
     if (foreignOrgUpdatedAt === null) throw new Error('Organization snapshot is missing');
     const foreignMembershipId = await grantKitMembership(kit, foreign.id);
     const session = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin', 'user'] });
@@ -248,7 +243,7 @@ describe('member photo tenant authority', () => {
     const authority: TenantPassWrite = {
       kind: 'session',
       orgId: foreign.id,
-      orgUpdatedAt: foreignOrgUpdatedAt,
+      orgAccessRevision: foreignOrgUpdatedAt,
       mode: pass.mode,
       userId: 'admin-1',
       sessionId,
@@ -272,7 +267,7 @@ describe('member photo tenant authority', () => {
       authority: {
         ...authority,
         orgId: pass.orgId,
-        orgUpdatedAt,
+        orgAccessRevision,
         membershipId: adminMembershipId,
       },
     });

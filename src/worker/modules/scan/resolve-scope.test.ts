@@ -5,6 +5,8 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { normalizeLookup } from '../../../shared/scan-lookup.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import { issueUnderOlderAdapter } from './release-policy-test-fixtures.ts';
 import { installVersion } from './repo-resolve-test-fixtures.ts';
 import {
   body,
@@ -184,7 +186,7 @@ describe('misses', () => {
 });
 
 describe('resolve: projection revalidation', () => {
-  it.each(['pass', 'snapshot', 'scanner', 'template'] as const)(
+  it.each(['pass', 'snapshot', 'scanner', 'template', 'release-adapter', 'release'] as const)(
     'does not disclose a card when %s changes after the card read',
     async (change) => {
       const templateId = await kit.scanTemplate('Resolve race', { actions: [CHECK_IN] });
@@ -193,6 +195,7 @@ describe('resolve: projection revalidation', () => {
         { memberName: 'Resolve Private Person' },
         { holderEmail: 'resolve-private@example.test' },
       );
+      if (change === 'release-adapter') await issueUnderOlderAdapter(kit, pass.id);
       const scanner = await kit.scanner({ templateIds: [templateId] });
       const real = kit.env.DB;
       const cardStatements = new WeakSet<D1PreparedStatement>();
@@ -238,6 +241,14 @@ describe('resolve: projection revalidation', () => {
                   await run(target, "UPDATE scanners SET device_role='monitor' WHERE id=?", [
                     scanner.id,
                   ]);
+                else if (change === 'release' || change === 'release-adapter')
+                  await approveAppleRelease(kit, {
+                    db: target,
+                    orgId: kit.org.id,
+                    mode: 'live',
+                    templateId,
+                    version: pass.templateVersion,
+                  });
                 else {
                   const base = await kit.registry.resolve(templateId);
                   await installVersion(
@@ -263,19 +274,30 @@ describe('resolve: projection revalidation', () => {
         Object.assign(kit.env, { DB: real });
       }
       expect(raced).toBe(true);
-      expect(response).toMatchObject({
-        status: 200,
-        out: {
-          kind: 'refused',
-          reason: 'not_found',
-          scanId: null,
-          card: null,
-          display: null,
-          template: null,
-          previous: null,
-          counts: { today: 0, event: null, asOf: 0, configRev: 0 },
-        },
-      });
+      if (change === 'release') {
+        // Identical to the pass's own release: nothing a scanner sees or may do changed.
+        expect(response).toMatchObject({ status: 200, out: { kind: 'ready' } });
+        return;
+      }
+      if (change === 'template' || change === 'release-adapter') {
+        // Another template version, or a release that differs from the pass's own, is a real
+        // change: retryable, and nothing of the pass is disclosed.
+        expect(response.status).toBe(409);
+        expect(response.out).toMatchObject({ code: 'SCAN_PASS_CHANGED' });
+      } else
+        expect(response).toMatchObject({
+          status: 200,
+          out: {
+            kind: 'refused',
+            reason: 'not_found',
+            scanId: null,
+            card: null,
+            display: null,
+            template: null,
+            previous: null,
+            counts: { today: 0, event: null, asOf: 0, configRev: 0 },
+          },
+        });
       const text = JSON.stringify(response.out);
       for (const secret of [
         pass.id,

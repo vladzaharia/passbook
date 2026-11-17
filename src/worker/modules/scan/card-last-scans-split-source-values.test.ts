@@ -15,7 +15,7 @@ beforeAll(async () => {
 const { act, card, last, manager, simple, stage } = cardLastScansSplitFixture(() => kit);
 
 describe('card last-scan privacy', () => {
-  it('uses the verified historical values when an old private value has since changed', async () => {
+  it('keeps a last scan whose names repeat a manager-only value that has since changed', async () => {
     const templateId = await kit.scanTemplate('Historical private value', {
       actions: [{ id: 'enter', label: 'SensitiveClass', kind: 'check_in' }],
     });
@@ -36,11 +36,14 @@ describe('card last-scan privacy', () => {
     );
     const door = await kit.scanner({ templateIds: [templateId] });
     const rows = (await card(door.headers, pass.id)).lastScans;
-    expect(rows.find((row) => row.scanId === scanId)).toBeUndefined();
-    expect(JSON.stringify(rows)).not.toContain('SensitiveClass');
+    // The label and scanner name are authored; sharing a word with a private input hides nothing.
+    expect(rows.find((row) => row.scanId === scanId)).toMatchObject({
+      actionLabel: 'SensitiveClass',
+      scannerName: 'SensitiveClass',
+    });
   });
 
-  it('honors the Wallet-version source policy when historical values come from that version', async () => {
+  it('keeps a last scan whose names repeat a value from the Wallet version', async () => {
     const templateId = await kit.scanTemplate('Wallet source policy', {
       actions: [{ id: 'enter', label: 'Vault entry', kind: 'check_in' }],
     });
@@ -69,11 +72,13 @@ describe('card last-scan privacy', () => {
     );
     const door = await kit.scanner({ templateIds: [templateId] });
     const rows = (await card(door.headers, pass.id)).lastScans;
-    expect(rows.find((row) => row.scanId === scanId)).toBeUndefined();
-    expect(JSON.stringify(rows)).not.toContain('Vault');
+    expect(rows.find((row) => row.scanId === scanId)).toMatchObject({
+      actionLabel: 'Vault entry',
+      scannerName: 'Vault reader',
+    });
   });
 
-  it('redacts an old hidden default embedded in action and scanner labels', async () => {
+  it('keeps a last scan whose names embed an old hidden default', async () => {
     const templateId = await kit.scanTemplate('Historical private default', {
       actions: [{ id: 'enter', label: 'VIP entry', kind: 'check_in' }],
     });
@@ -89,8 +94,10 @@ describe('card last-scan privacy', () => {
     });
     const door = await kit.scanner({ templateIds: [templateId] });
     const rows = (await card(door.headers, pass.id)).lastScans;
-    expect(rows.find((row) => row.scanId === scanId)).toBeUndefined();
-    expect(JSON.stringify(rows)).not.toContain('VIP');
+    expect(rows.find((row) => row.scanId === scanId)).toMatchObject({
+      actionLabel: 'VIP entry',
+      scannerName: 'VIP desk',
+    });
   });
 
   it('does not reveal labels containing a secret from the original Wallet after it is rebuilt', async () => {

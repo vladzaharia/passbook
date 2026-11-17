@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { first, run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
-import { credentialGone, getScanner } from './repo-device.ts';
+import { credentialGone, getScanner, scannerEpochsOf } from './repo-device.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
 import { setupScanKit } from './test-kit.ts';
@@ -88,7 +88,9 @@ describe('only a changed device credential unpairs', () => {
       ]);
     // A pair code issued, a mode move: the credential epoch moves, the token and secret stay.
     await change("pair_code_hash = 'x', pair_expires_at = ?", kit.clock.now() + 1000);
-    expect((await read()).credentialEpoch).toBeGreaterThan(held.credentialEpoch ?? 0);
+    expect(scannerEpochsOf(await read()).credential).toBeGreaterThan(
+      scannerEpochsOf(held).credential,
+    );
     expect(await gone()).toBe(false);
     await change("csrf_secret = 'rotated'");
     expect(await gone()).toBe(true);

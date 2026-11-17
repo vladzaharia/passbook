@@ -7,7 +7,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { staffEpochStmt } from './repo-authority-capture.ts';
-import { getScanner } from './repo-device.ts';
+import { getScanner, scannerEpochsOf } from './repo-device.ts';
 import { tenantAuthorityCurrent } from './repo-session-read-predicate.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import { scannerCredentialLost } from './scanner-credential-lost.ts';
@@ -23,7 +23,7 @@ async function adminAccessLost(ctx: ServiceContext, actor: ScanActor): Promise<A
   const fresh = await getScanner(ctx.env.DB, scanner.id);
   return !fresh ||
     fresh.revokedAt !== null ||
-    fresh.credentialEpoch !== scanEpochsOf(actor)?.scanner?.credential
+    scannerEpochsOf(fresh).credential !== scanEpochsOf(actor)?.scanner?.credential
     ? new ForbiddenError('You no longer have access.', 'ACTOR_CHANGED')
     : null;
 }

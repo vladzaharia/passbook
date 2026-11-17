@@ -40,7 +40,7 @@ export function attachLookupHistory(
       source.scan.passId !== entry.source.pass.id ||
       source.scan.templateId !== entry.source.pass.templateId ||
       source.scan.at !== row.last_scan_at ||
-      !safeTimestamp(entry.found, actor, cardPrivacy(entry.found, actor), source.scan.at)
+      !safeTimestamp(cardPrivacy(entry.found, actor), source.scan.at)
     )
       continue;
     entry.item.lastScanAt = source.scan.at;

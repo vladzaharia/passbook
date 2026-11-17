@@ -10,6 +10,7 @@ export interface ScanRow {
   eventId: string | null;
   actorKey: string;
   staffId: string | null;
+  sessionId?: string | null;
   requestHash: string;
   state: 'pending' | 'done' | 'failed';
   outcome: 'ok' | 'heads_up' | 'refused' | null;
@@ -36,6 +37,7 @@ export interface Raw {
   event_id: string | null;
   actor_key: string;
   staff_id: string | null;
+  session_id: string | null;
   request_hash: string;
   state: ScanRow['state'];
   outcome: ScanRow['outcome'];
@@ -62,6 +64,7 @@ export const toScan = (r: Raw): ScanRow => ({
   eventId: r.event_id,
   actorKey: r.actor_key,
   staffId: r.staff_id,
+  sessionId: r.session_id,
   requestHash: r.request_hash,
   state: r.state,
   outcome: r.outcome,

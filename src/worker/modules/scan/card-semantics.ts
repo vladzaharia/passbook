@@ -1,11 +1,12 @@
 import { conditionInputs } from '../../../passkit/template/expr.ts';
 import { applyDefaults } from '../../../passkit/template/manifest.ts';
+import { isPrivateName } from '../../../passkit/template/scan-display/privacy.ts';
 import { passFields } from '../../../passkit/template/scan-display/scope.ts';
 import { parseParts, pathTokens } from '../../../passkit/template/scan-display/text.ts';
 import type { Json } from '../../../passkit/types.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { privateKey, safeJson } from './card-semantics-privacy.ts';
+import { safeJson } from './card-semantics-privacy.ts';
 import type { BuildDisplayInput } from './display.ts';
 import { type CardPrivacy, cardPrivacy } from './dto-projection.ts';
 import { eventSafeProjection } from './event-safe-projection.ts';
@@ -62,7 +63,7 @@ export function visibleSource(
   let value: unknown = personalization;
   for (const key of input.split('.')) {
     const object = record(value);
-    if (privateKey(key) || !privacy.safe(key) || !Object.hasOwn(object, key)) return false;
+    if (isPrivateName(key) || !privacy.safe(key) || !Object.hasOwn(object, key)) return false;
     value = object[key];
   }
   const projected = safeJson(found, actor, value, privacy);
@@ -88,13 +89,13 @@ function visibleExpression(
     for (const token of tokens) {
       if (token.startsWith('[')) {
         const selector = token.slice(1, -1).trim();
-        if (privateKey(selector) || !privacy.safe(selector)) return false;
+        if (isPrivateName(selector) || !privacy.safe(selector)) return false;
         if (
           Object.hasOwn(found.pass.personalization, selector) &&
           !visibleSource(found, actor, selector, privacy)
         )
           return false;
-      } else if (tokens[0] === 'lookups' && (privateKey(token) || !privacy.safe(token))) {
+      } else if (tokens[0] === 'lookups' && (isPrivateName(token) || !privacy.safe(token))) {
         return false;
       }
     }
@@ -170,7 +171,7 @@ export function visibleFields(found: Found, actor: ScanActor): Record<string, Js
   for (const field of passFields(found.passJson)) {
     if (
       privacy.hidden.has(field.key) ||
-      privateKey(field.key) ||
+      isPrivateName(field.key) ||
       !privacy.fieldVisible(field.key) ||
       !fieldSourcesVisible(found, actor, privacy, field.key) ||
       !privacy.safe(field.key)

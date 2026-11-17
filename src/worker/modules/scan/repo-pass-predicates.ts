@@ -1,7 +1,8 @@
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
-import { activeReleasePredicate, issuedReleasePredicateSql } from '../templates/repo-releases.ts';
+import { boundHeadPredicateSql } from '../templates/repo-release-heads.ts';
+import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import {
   noCredentialTombstonesSql,
   validCredentialKeysetCommitment,
@@ -248,15 +249,12 @@ export function evaluatedPolicyPredicate(
     // The release in use is the pass's own issued one, or a compatible head (lookup `usedReleaseIdSql`).
     // Its own release is checked as immutable provenance, so a newer, withdrawn or missing head never
     // refuses the pass; only a head used in its place is fenced.
-    const bound = activeReleasePredicate(
-      {
-        id: release.activeReleaseId,
-        generation: release.activeReleaseGeneration,
-        version: release.activeReleaseVersion,
-        candidateHash: release.activeReleaseCandidateHash,
-      },
-      scope,
-    );
+    const bound = boundHeadPredicateSql(scope, {
+      id: release.activeReleaseId,
+      generation: release.activeReleaseGeneration,
+      version: release.activeReleaseVersion,
+      candidateHash: release.activeReleaseCandidateHash,
+    });
     const own = issuedReleasePredicateSql(
       {
         releaseIdSql: 'p.release_id',

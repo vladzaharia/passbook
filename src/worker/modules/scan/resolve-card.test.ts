@@ -43,7 +43,7 @@ describe('resolve: the card', () => {
     expect(out.card?.passView.assetNames).toContain('icon.png');
   });
 
-  it('keeps hidden stop flags effective without disclosing the flag', async () => {
+  it('keeps hidden stop flags effective under a generic label', async () => {
     const templateId = await kit.scanTemplate('Private hold', {
       actions: [CHECK_IN],
       flags: [{ input: 'tier', label: 'Private hold reason', equals: ['blocked'], stop: true }],
@@ -55,8 +55,12 @@ describe('resolve: the card', () => {
     const pass = await kit.scanPass(templateId, { tier: 'blocked' });
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const { out } = await resolve(scanner.headers, codeOf(pass));
-    expect(out).toMatchObject({ kind: 'heads_up', reason: 'check_required', flags: [] });
-    expect(out.card?.flags).toEqual([]);
+    expect(out).toMatchObject({
+      kind: 'heads_up',
+      reason: 'check_required',
+      flags: ['Check required'],
+    });
+    expect(out.card?.flags).toEqual([{ label: 'Check required', tone: 'warning', stop: true }]);
     expect(JSON.stringify(out)).not.toContain('Private hold reason');
     expect(JSON.stringify(out)).not.toContain('blocked');
   });

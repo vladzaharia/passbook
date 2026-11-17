@@ -767,23 +767,18 @@ describe('organization settings authorization', () => {
     expect(removed.audit).toHaveLength(0);
   });
 
-  it('retains trusted service writes without weakening HTTP membership checks', async () => {
+  it('refuses an org write with no session authority, and keeps HTTP membership checks', async () => {
     const org = await makeOrg(fx);
     const ctx = createServiceContext(appEnv, { clock: fx.clock });
-    const start = (await orgEffects(org.id)).org;
-    await updateSettings(
-      ctx,
-      { type: 'system', id: null },
-      {
-        scope: `org:${org.id}`,
-        values: { 'email.buddy': true },
-      },
-    );
-    const after = await orgEffects(org.id);
-    expect(after.org?.updated_at).toBe(start?.updated_at);
-    expect(after.org?.config_revision).toBeGreaterThan(start?.config_revision ?? 0);
-    expect(after.settings).toHaveLength(1);
-    expect(after.audit).toHaveLength(1);
+    const start = await orgEffects(org.id);
+    await expect(
+      updateSettings(
+        ctx,
+        { type: 'system', id: null },
+        { scope: `org:${org.id}`, values: { 'email.buddy': true } },
+      ),
+    ).rejects.toMatchObject({ status: 403 });
+    expect(await orgEffects(org.id)).toEqual(start);
     expect((await call('GET', `?scope=org:${org.id}`, undefined, tenantUser.headers)).status).toBe(
       403,
     );

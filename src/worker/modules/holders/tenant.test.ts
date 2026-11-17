@@ -6,6 +6,7 @@ import {
   makeOrg,
   makeSession,
   makeUser,
+  saveOrgSettings,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -22,7 +23,6 @@ import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { updateSettings } from '../settings/service.ts';
 import { getHolderPass } from './repo.ts';
 import {
   assignHolder,
@@ -695,13 +695,11 @@ describe('holder tenant access', () => {
         );
       const before = await revisions();
       const restore = interceptHolderMutation(db, 'before', () =>
-        updateSettings(
-          jobCtxOf(kit),
-          { type: 'system', id: null },
-          {
-            scope: `org:${kit.org.id}`,
-            values: { 'support.email': `${kit.fx.ids.id()}@example.test` },
-          },
+        saveOrgSettings(
+          jobCtxOf(kit).env.DB,
+          kit.org.id,
+          { 'support.email': `${kit.fx.ids.id()}@example.test` },
+          jobCtxOf(kit).clock.now(),
         ),
       );
       const requester = { type: 'user' as const, id: member.user.id };

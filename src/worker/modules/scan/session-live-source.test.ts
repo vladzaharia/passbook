@@ -1,12 +1,11 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { makeSession, makeUser, revokeMembership } from '../../../../test/helpers/index.ts';
 import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { run } from '../../platform/db.ts';
 import { revokeSession } from '../auth/repo-sessions.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { revokeMembership } from '../orgs/repo-members.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -221,8 +220,6 @@ describe('administrator source authority', () => {
       kit.org.id,
       membershipId,
       kit.clock.now(),
-      'admin-1',
-      true,
     ).run();
     expect(revokedMembership.meta.changes).toBe(1);
     await expectProblem(await kit.get({ cookie }, path), 404, 'ASSET_NOT_FOUND');

@@ -94,6 +94,11 @@ export function createDisplayFixture() {
         value: { const: 'Available' },
         when: { input: 'privateNotes', eq: SECRET },
       },
+      { to: { field: 'mirror' }, value: 'Copied: {{privateNotes}}' },
+      { to: { field: 'mirror_html' }, value: 'Copied: {{privateNotes}}' },
+      { to: { field: 'mirror_url' }, value: 'Copied: {{privateNotes}}' },
+      { to: { field: 'unknown_copy' }, value: '{{undeclaredValue}}' },
+      { to: { field: 'count_copy' }, value: '{{hiddenCount}}' },
       { to: { field: 'scan_ref' }, value: '{{pass.scanCode}}' },
       { to: { barcode: 0, prop: 'message' }, value: '{{ticketNumber}}' },
     ];
@@ -101,8 +106,8 @@ export function createDisplayFixture() {
       directory: {
         public: { label: 'Atrium access' },
         [EMAIL]: { label: 'Contact entry' },
-        [SECRET]: { label: 'Secret entry' },
-        mirror: { label: `Copied: ${SECRET}` },
+        [SCAN_CODE]: { label: 'Secret entry' },
+        mirror: { label: `Copied: ${SCAN_CODE}` },
       },
     };
     const display: ScanDisplayDoc = {

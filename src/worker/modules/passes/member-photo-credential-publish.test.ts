@@ -17,7 +17,7 @@ import {
   setupPhotoTestKit,
 } from './member-photo-test-fixtures.ts';
 
-import { tenantOrgUpdatedAt } from './repo-authority.ts';
+import { tenantOrgAccessRevision } from './repo-authority.ts';
 import { memberPhoto } from './repo-member-photo.ts';
 import { getPass } from './repo-read-pass.ts';
 import type { PassScope } from './scope.ts';
@@ -50,8 +50,8 @@ describe('member photo publication authority', () => {
       );
       const before = (await memberPhoto(kit.env.DB, pass.orgId, pass.id))!;
       const prior = (await getPass(kit.env.DB, pass.id))!;
-      const orgUpdatedAt = await tenantOrgUpdatedAt(kit.env.DB, pass.orgId);
-      if (orgUpdatedAt === null) throw new Error('Organization snapshot is missing');
+      const orgAccessRevision = await tenantOrgAccessRevision(kit.env.DB, pass.orgId);
+      if (orgAccessRevision === null) throw new Error('Organization snapshot is missing');
       let scope: PassScope;
       let authority: TenantPassWrite;
       let user: Actor;
@@ -63,7 +63,7 @@ describe('member photo publication authority', () => {
         authority = {
           kind: 'session',
           orgId: pass.orgId,
-          orgUpdatedAt,
+          orgAccessRevision,
           mode: pass.mode,
           userId: 'admin-1',
           sessionId,
@@ -81,7 +81,7 @@ describe('member photo publication authority', () => {
         authority = {
           kind: 'api_key',
           orgId: pass.orgId,
-          orgUpdatedAt,
+          orgAccessRevision,
           keyOrgId: pass.orgId,
           keyId: key.id,
           scopes: ['passes:write'],

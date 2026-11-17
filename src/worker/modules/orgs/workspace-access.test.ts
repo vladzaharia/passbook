@@ -794,7 +794,7 @@ describe('organization mutation-time authority', () => {
     const ownRow = await getOrgRow(fx.env.DB, org.id);
     const otherRow = await getOrgRow(fx.env.DB, other.id);
     if (!ownRow || !otherRow) throw new Error('Both organizations must exist.');
-    const forged = { ...manage, orgId: other.id, orgUpdatedAt: otherRow.updated_at };
+    const forged = { ...manage, orgId: other.id, orgAccessRevision: otherRow.updated_at };
     const branding = JSON.stringify({ accent: '#112233' });
     const refused = { status: 403 };
 

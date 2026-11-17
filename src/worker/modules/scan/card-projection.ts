@@ -35,7 +35,7 @@ export function scopeOf(
   const names = visibleIdentity(found, actor, privacy);
   const safe = (value: unknown) => safeJson(found, actor, value, privacy);
   const safeTime = (value: number | null) =>
-    value !== null && safeTimestamp(found, actor, privacy, value) ? value : null;
+    value !== null && safeTimestamp(privacy, value) ? value : null;
   const actions = found.scan.actions.filter((action) =>
     visibleAction(found, actor, action, privacy),
   );

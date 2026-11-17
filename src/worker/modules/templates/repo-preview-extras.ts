@@ -1,7 +1,7 @@
 import type { Grant } from '../../platform/authority.ts';
+import { writePart } from '../../platform/authority-include.ts';
 import { all, first } from '../../platform/db.ts';
 import { candidateHash, ReleaseContentError } from './release-content.ts';
-import { grantRow, inGrant } from './repo-grants.ts';
 
 /** Immutable metadata for one versioned, non-bundle asset. */
 export interface TemplateVersionExtra {
@@ -72,22 +72,11 @@ export function addVersionExtra(
   version: string,
   extra: TemplateVersionExtra,
 ): void {
-  const gate = grantRow(g);
-  g.add(
-    inGrant(
-      g,
+  g.include(
+    writePart(
       `INSERT INTO template_version_extras (template_id, version, name, size, sha1, sha256, r2_key)
-       SELECT ?, ?, ?, ?, ?, ?, ? WHERE ${gate.sql}`,
-      [
-        templateId,
-        version,
-        extra.name,
-        extra.size,
-        extra.sha1,
-        extra.sha256,
-        extra.r2Key,
-        ...gate.params,
-      ],
+       SELECT ?, ?, ?, ?, ?, ?, ? WHERE {grant}`,
+      [templateId, version, extra.name, extra.size, extra.sha1, extra.sha256, extra.r2Key],
     ),
   );
 }
@@ -98,13 +87,11 @@ export function sealVersionExtras(
   version: string,
   hash: string,
 ): void {
-  const gate = grantRow(g);
-  g.add(
-    inGrant(
-      g,
+  g.include(
+    writePart(
       `INSERT INTO template_version_extra_sets (template_id, version, extras_hash)
-       SELECT ?, ?, ? WHERE ${gate.sql}`,
-      [templateId, version, hash, ...gate.params],
+       SELECT ?, ?, ? WHERE {grant}`,
+      [templateId, version, hash],
     ),
   );
 }

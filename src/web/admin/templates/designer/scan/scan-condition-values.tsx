@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, FormField, Input, Select } from '../../../../ui/index.ts';
 import type { Option } from './scan-fields.tsx';
-import { safePreviewNumber, safePreviewText } from './scan-preview-policy.ts';
+import { safePreviewText } from './scan-preview-policy.ts';
 import { useRejection } from './use-rejection.ts';
 
 const scalar = (value: unknown): value is string | number | boolean | null =>
@@ -13,7 +13,6 @@ const scalar = (value: unknown): value is string | number | boolean | null =>
 /** Condition values are template data too: never surface contact-like or opaque identifier text. */
 const safeScalar = (value: unknown): value is string | number | boolean | null => {
   if (!scalar(value)) return false;
-  if (typeof value === 'number') return safePreviewNumber(String(value));
   if (typeof value !== 'string') return true;
   // A short code like VIP2 is a value; a long mixed run (nine or more) reads as an opaque token.
   return (
@@ -82,10 +81,6 @@ export function NumberValue({
           value={draft}
           onChange={(event) => {
             const text = event.target.value;
-            if (text !== '' && !safePreviewNumber(text)) {
-              setFault('Use fewer than 10 digits.');
-              return;
-            }
             setFault(undefined);
             setDraft(text);
             if (text.trim() === '') return;

@@ -58,7 +58,7 @@ export function tenantPassAuthorityParams(authority: TenantPassWrite, now: numbe
       authority.membershipId,
       authority.orgId,
       authority.userId,
-      ...orgEpochParams(authority.orgUpdatedAt),
+      ...orgEpochParams(authority.orgAccessRevision),
       authority.sessionId,
       now,
       now,
@@ -68,7 +68,7 @@ export function tenantPassAuthorityParams(authority: TenantPassWrite, now: numbe
   return [
     authority.orgId,
     authority.orgId,
-    ...orgEpochParams(authority.orgUpdatedAt),
+    ...orgEpochParams(authority.orgAccessRevision),
     authority.keyId,
     authority.keyOrgId,
     authority.mode,
@@ -88,14 +88,14 @@ export function tenantPrincipal(authority: TenantPassWrite): Principal {
         membershipId: authority.membershipId,
         via: 'session',
         sessionIdHash: authority.sessionId,
-        ...legacyRevision(authority.orgUpdatedAt),
+        ...legacyRevision(authority.orgAccessRevision),
         mode: authority.mode,
       }
     : {
         kind: 'api_key',
         keyId: authority.keyId,
         scope: authority.scope,
-        ...legacyRevision(authority.orgUpdatedAt),
+        ...legacyRevision(authority.orgAccessRevision),
         ...(authority.keyOrgId === null ? { orgId: authority.orgId } : {}),
       };
 }
@@ -161,7 +161,10 @@ export async function tenantPassAuthorityValid(
  * The org's `access_revision`. It moves only with the org status, so a branding or settings save
  * does not invalidate authority captured earlier. The name is kept for existing callers.
  */
-export async function tenantOrgUpdatedAt(db: D1Database, orgId: string): Promise<number | null> {
+export async function tenantOrgAccessRevision(
+  db: D1Database,
+  orgId: string,
+): Promise<number | null> {
   const row = await first<{ access_revision: number }>(
     db,
     "SELECT access_revision FROM orgs WHERE id = ? AND status = 'active'",

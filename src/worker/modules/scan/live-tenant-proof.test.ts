@@ -86,7 +86,10 @@ describe('user-backed live tenant proof validation', () => {
       ['user', { ...authority, userId: 'another-user' }],
       ['session', { ...authority, sessionId: 'another-session' }],
       ['membership', { ...authority, membershipId: 'another-membership' }],
-      ['organization revision', { ...authority, orgUpdatedAt: authority.orgUpdatedAt + 1 }],
+      [
+        'organization revision',
+        { ...authority, orgAccessRevision: authority.orgAccessRevision + 1 },
+      ],
       // Session roles and amr are immutable (0047) and not compared: a well-formed change is moot.
       ['missing session creation', { ...authority, sessionCreatedAt: undefined }],
       [

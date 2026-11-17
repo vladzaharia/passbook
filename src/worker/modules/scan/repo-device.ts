@@ -10,6 +10,9 @@ import { createDetachedContext, type ServiceContext } from '../../platform/servi
 
 type Db = D1Database;
 
+const EPOCHS: unique symbol = Symbol('scanner.epochs');
+type Epochs = { credential: number; config: number };
+
 /** The device side of a `scanners` row. Console CRUD SQL lives in repo-scanners.ts (stream SC). */
 export interface ScannerRow {
   id: string;
@@ -32,10 +35,8 @@ export interface ScannerRow {
   staffSince: number | null;
   staffSeenAt: number | null;
   updatedAt: number;
-  /** Read with the credential columns in the same row: the epochs the actor is later checked against. */
-  credentialEpoch?: number;
-  configEpoch?: number;
   hasScreens?: boolean;
+  [EPOCHS]?: Epochs;
 }
 
 interface Raw {
@@ -71,16 +72,11 @@ const COLUMNS = `id, org_id, mode, kind, device_role, name, event_id, settings, 
     AND screen.device_role!='scan' AND screen.revoked_at IS NULL AND screen.token_hash IS NOT NULL) AS has_screens`;
 
 /**
- * The epochs ride on the row without being enumerable: snapshots that serialize the row (sealed
- * proofs with strict schemas) keep their shape, and the guard reads them straight off this row.
+ * Read with the credential columns in the same row, they are the epochs the actor is later checked
+ * against. They hang off the row under a symbol key, like `scan-epochs.ts`: a spread keeps them,
+ * `JSON.stringify` and strict zod schemas ignore them.
  */
-const toRow = (r: Raw): ScannerRow =>
-  Object.defineProperties(toRowFields(r), {
-    credentialEpoch: { value: r.credential_epoch, enumerable: false },
-    configEpoch: { value: r.config_epoch, enumerable: false },
-  });
-
-const toRowFields = (r: Raw): ScannerRow => ({
+const toRow = (r: Raw): ScannerRow => ({
   id: r.id,
   orgId: r.org_id,
   mode: r.mode,
@@ -102,6 +98,7 @@ const toRowFields = (r: Raw): ScannerRow => ({
   staffSeenAt: r.staff_seen_at,
   updatedAt: r.updated_at,
   hasScreens: r.has_screens === 1,
+  [EPOCHS]: { credential: r.credential_epoch, config: r.config_epoch },
 });
 
 export async function getScannerByPrefix(db: Db, prefix: string): Promise<ScannerRow | null> {
@@ -155,10 +152,11 @@ export async function touchScanner(
 const STAFF_CODES = { config: 'SCAN_STAFF_CHANGED', lineage: 'SCAN_STAFF_CHANGED' } as const;
 
 /** Every scanner row is read with its epochs; a row without them was built outside the guard. */
-export const scannerEpochsOf = (scanner: ScannerRow) => {
-  if (scanner.credentialEpoch === undefined || scanner.configEpoch === undefined)
+export const scannerEpochsOf = (scanner: ScannerRow): Epochs => {
+  const epochs = scanner[EPOCHS];
+  if (!epochs)
     throw new AppError('SCAN_EPOCHS_MISSING', 500, 'Scanner epochs were not read with the row.');
-  return { credential: scanner.credentialEpoch, config: scanner.configEpoch };
+  return epochs;
 };
 
 export const credentialEpochOf = (scanner: ScannerRow): number =>

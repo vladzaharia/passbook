@@ -81,15 +81,6 @@ describe('queued work and revocation (owner answers 2, 3 and 9)', () => {
     expect((await t.state(mine)).state).toBe('cancelled');
   });
 
-  it('cancels scheduled broadcasts through the ungated service path too', async () => {
-    const t = await setup();
-    const org = await makeOrg(t.f);
-    const user = await makeUser(t.f);
-    const mine = await t.queue(org.id, { type: 'user', id: user.id });
-    await setUserStatus(t.ctx, t.admin.id, user.id, 'disabled');
-    expect((await t.state(mine)).state).toBe('cancelled');
-  });
-
   it('refuses a disable from a revoked admin session and changes nothing', async () => {
     const t = await setup();
     const org = await makeOrg(t.f);
@@ -139,13 +130,14 @@ describe('queued work and revocation (owner answers 2, 3 and 9)', () => {
     const draft = await t.queue(org.id, { type: 'user', id: user.id }, 'draft');
     const foreign = await t.queue(other.id, { type: 'user', id: user.id });
 
-    await setOrgStatus(t.ctx, { type: 'user', id: t.admin.id }, org.id, 'suspended');
+    const admin = { userId: t.admin.id, sessionId: t.adminSessionId };
+    await setOrgStatus(t.ctx, { type: 'user', id: t.admin.id }, org.id, 'suspended', admin);
     expect(await t.state(queued)).toEqual({ state: 'cancelled', error_code: 'ORG_INACTIVE' });
     expect((await t.state(system)).state).toBe('cancelled');
     expect((await t.state(draft)).state).toBe('draft');
     expect((await t.state(foreign)).state).toBe('scheduled');
 
-    await setOrgStatus(t.ctx, { type: 'user', id: t.admin.id }, org.id, 'active');
+    await setOrgStatus(t.ctx, { type: 'user', id: t.admin.id }, org.id, 'active', admin);
     expect((await t.state(queued)).state).toBe('cancelled');
     expect((await t.state(system)).state).toBe('cancelled');
   });

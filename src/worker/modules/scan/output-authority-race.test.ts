@@ -161,10 +161,12 @@ describe('atomic scanner response authority', () => {
         card: {
           passId: pass.id,
           lastScans: [],
-          // History that changed under the final batch is dropped whole, not shown unproven.
-          display: { variant: null, header: { title: null } },
+          // Visits that changed under the final batch are dropped, not shown unproven: the
+          // returning variant goes, and the one that needs only the proven scan count stays.
+          display: { variant: 'generic', header: { title: null } },
         },
       });
+      expect(text).not.toContain('Returning member');
     } finally {
       Object.assign(kit.env, { DB: real });
     }
@@ -218,7 +220,7 @@ describe('atomic scanner response authority', () => {
     'identity-aba',
     'credential-generation',
     'lifecycle-generation',
-    'release',
+    'release-adapter',
     'rules',
     'photo',
     'photo-version',
@@ -228,8 +230,16 @@ describe('atomic scanner response authority', () => {
     'photo-aba',
     'source-privacy',
   ] as const)('suppresses a ready card when %s changes after projection', async (change) => {
-    const f = await fixture({ photo: true, lagWallet: change === 'wallet-version' });
+    const f = await fixture({
+      photo: true,
+      lagWallet: change === 'wallet-version',
+      olderAdapter: change === 'release-adapter',
+    });
     await racedResolve(f, change);
+  });
+
+  it('serves a ready card when an identical release of the pass version lands after projection', async () => {
+    await racedResolve(await fixture({ photo: true }), 'release');
   });
 
   it('rejects when separately successful actor and Wallet checks never shared a snapshot', async () => {

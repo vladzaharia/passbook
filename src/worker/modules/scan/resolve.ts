@@ -1,4 +1,5 @@
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
+import { HIDDEN_STOP_LABEL } from '../../../passkit/template/scan-display/privacy.ts';
 import type { PassJson, PassStyle } from '../../../passkit/types.ts';
 import { PASS_STYLES } from '../../../passkit/types.ts';
 import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
@@ -237,20 +238,28 @@ export async function foundOf(
   }
 }
 
-/** The flags that are on for this pass (SA 4.1); a stop flag holds the check-in until confirmed. */
+/**
+ * The flags that are on for this pass (SA 4.1); a stop flag holds the check-in until confirmed.
+ * For a scanner, a flag whose source or label it may not read is left out, except a stop flag:
+ * it still holds the door, so it shows as a generic one rather than as no reason at all.
+ */
 export function activeFlags(found: Found, actor?: ScanActor): { label: string; stop: boolean }[] {
   const privacy = actor ? cardPrivacy(found, actor) : null;
-  return (found.scan.flags ?? []).flatMap((f) => {
-    if (
-      actor &&
-      privacy &&
-      (!visibleSource(found, actor, f.input, privacy) || !privacy.safe(f.label))
-    )
-      return [];
+  const flags: { label: string; stop: boolean }[] = [];
+  for (const f of found.scan.flags ?? []) {
     const value = found.pass.personalization[f.input];
     const on = f.equals
       ? f.equals.includes(String(value))
       : value !== undefined && value !== null && value !== '' && value !== false && value !== 0;
-    return on ? [{ label: f.label, stop: f.stop === true }] : [];
-  });
+    if (!on) continue;
+    const hidden =
+      actor &&
+      privacy &&
+      (!visibleSource(found, actor, f.input, privacy) || !privacy.safe(f.label));
+    const label = hidden ? HIDDEN_STOP_LABEL : f.label;
+    if (hidden && f.stop !== true) continue;
+    if (!flags.some((flag) => flag.label === label && flag.stop === (f.stop === true)))
+      flags.push({ label, stop: f.stop === true });
+  }
+  return flags;
 }

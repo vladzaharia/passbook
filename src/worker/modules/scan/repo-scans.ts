@@ -1,22 +1,50 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { all, first, type SqlValue, stmt } from '../../platform/db.ts';
-import type { Claim } from './repo-scans-write.ts';
 
 type Db = D1Database;
 
 export type { ScanRow } from './repo-scan-map.ts';
-export type { Claim, Finalize } from './repo-scans-write.ts';
-export {
-  claimScan,
-  claimScanStmt,
-  finalizeStmt,
-  ledgerIfFinalizedStmt,
-} from './repo-scans-write.ts';
+
+export interface Claim {
+  id: string;
+  orgId: string;
+  mode: Mode;
+  scannerId: string | null;
+  eventId: string | null;
+  actorType: 'scanner' | 'user';
+  actorId: string;
+  actorKey: string;
+  staffId: string | null;
+  /** The scanning session the device belongs to, kept for passless replays. */
+  sessionId?: string | null;
+  idempotencyKey: string;
+  requestHash: string;
+  method: string;
+  clientTs: number;
+  now: number;
+}
+
+export interface Finalize {
+  id: string;
+  claimAt: number;
+  outcome: 'ok' | 'heads_up' | 'refused';
+  reason: string | null;
+  passId: string | null;
+  templateId: string | null;
+  actionId: string | null;
+  actionKind: string | null;
+  passVersion: number | null;
+  overrideOf: string | null;
+  approvedBy: string | null;
+  direction?: 'in' | 'out';
+  presenceScope?: string;
+  eventId?: string;
+}
 
 import { type Raw, type ScanRow, toScan } from './repo-scan-map.ts';
 
-const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, actor_key, staff_id, request_hash,
+const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, actor_key, staff_id, session_id, request_hash,
   state, outcome, reason, action_id, action_kind, override_of, approved_by, pass_version, method, at, undone_by, direction, presence_scope`;
 
 export async function scanByKey(db: Db, actorKey: string, key: string): Promise<ScanRow | null> {

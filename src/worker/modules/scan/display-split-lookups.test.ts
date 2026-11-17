@@ -2,18 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { ScanDisplaySchema } from '../../../shared/contracts/scan-display.ts';
 import { scopeOf } from './card-projection.ts';
 import { buildDisplay } from './display.ts';
-import { createDisplayFixture, ctx, SECRET } from './display-split-fixture.ts';
+import { createDisplayFixture, ctx, SCAN_CODE } from './display-split-fixture.ts';
 
 const { fixture, inputOf } = createDisplayFixture();
 
 describe('live scanner display privacy', () => {
   it('filters protected defaults before formatting a copied input', () => {
     const found = fixture();
-    found.template.manifest.inputs.properties!.privateNotes = {
-      type: 'string',
-      'x-scan': 'hidden',
-      default: 'sapphire confidential',
-    };
+    // Provenance decides: the door may not read `seat`, so nothing derived from it appears.
+    found.template.manifest.inputs.properties!.seat = { type: 'string', 'x-scan': 'desk' };
     found.pass.personalization.seat = 'sapphire confidential';
     found.template.manifest.lookups!.directory!['sapphire confidential'] = {
       label: 'Balcony access',
@@ -46,15 +43,15 @@ describe('live scanner display privacy', () => {
     expect(text).not.toContain('sapphire confidential');
     expect(text).not.toContain('SAPPHIRE CONFIDENTIAL');
     expect(text).not.toContain('Balcony access');
+    // Positive control: a role that may read `seat` gets the lookup.
+    const desk = JSON.stringify(buildDisplay(ctx, inputOf(found, 'desk')));
+    expect(desk).toContain('Balcony access');
   });
 
   it('does not use a lookup of a protected source for either identity or the fallback', () => {
     const found = fixture();
-    found.template.manifest.inputs.properties!.privateNotes = {
-      type: 'string',
-      'x-scan': 'hidden',
-      default: 'sapphire confidential',
-    };
+    // Provenance decides: the door may not read `seat`, so nothing derived from it appears.
+    found.template.manifest.inputs.properties!.seat = { type: 'string', 'x-scan': 'desk' };
     found.pass.personalization.seat = 'sapphire confidential';
     found.template.manifest.lookups!.directory!['sapphire confidential'] = {
       label: 'Balcony access',
@@ -66,12 +63,18 @@ describe('live scanner display privacy', () => {
     found.scan.display = {
       v: 1,
       holder: '{{pass.title}}',
-      header: { title: `Secret ${SECRET}` },
+      header: { title: `Secret ${SCAN_CODE}` },
       panels: [],
     };
     const fallback = ScanDisplaySchema.parse(buildDisplay(ctx, input));
-    expect(fallback.identity.holder).toBe('Pass');
+    // The unreadable title leaves the holder to the template name; the bad header title goes alone.
+    expect(fallback.identity.holder).toBe('Test template');
+    expect(fallback.header.title).toBeNull();
     expect(JSON.stringify(fallback)).not.toContain('Balcony access');
+    expect(JSON.stringify(fallback)).not.toContain(SCAN_CODE);
+    expect(
+      (scopeOf(ctx, inputOf(found, 'desk'), found).pass as Record<string, unknown>).title,
+    ).toBe('Balcony access');
   });
 
   it('does not fall back to a literal lookup key for a restricted selector', () => {

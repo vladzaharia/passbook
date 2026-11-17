@@ -6,7 +6,7 @@ import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { loadUserAccessRevision } from '../passes/repo-access-revision.ts';
-import { tenantOrgUpdatedAt } from '../passes/repo-authority.ts';
+import { tenantOrgAccessRevision } from '../passes/repo-authority.ts';
 
 /**
  * Who a queued email acts for. Captured when the work is queued; checked again when it runs
@@ -45,14 +45,14 @@ export function actorOfAuthority(
     ? {
         kind: 'membership',
         membershipId: authority.membershipId,
-        orgRevision: authority.orgUpdatedAt,
+        orgRevision: authority.orgAccessRevision,
         ...(userRevision ? { userRevision } : {}),
         mode: authority.mode,
       }
     : {
         kind: 'api_key',
         keyId: authority.keyId,
-        orgRevision: authority.orgUpdatedAt,
+        orgRevision: authority.orgAccessRevision,
         mode: authority.mode,
         scope: authority.scope,
         ...(authority.keyOrgId === null ? { orgId: authority.orgId } : {}),
@@ -131,7 +131,7 @@ export function deliveryGrant(
 
 /** A queue, cron or workflow acts for a mail with no principal row; it pins the org revision it saw. */
 export async function systemActor(db: D1Database, orgId: string): Promise<DeliveryActor> {
-  const orgRevision = await tenantOrgUpdatedAt(db, orgId);
+  const orgRevision = await tenantOrgAccessRevision(db, orgId);
   return orgRevision === null ? { kind: 'system' } : { kind: 'system', orgRevision };
 }
 
