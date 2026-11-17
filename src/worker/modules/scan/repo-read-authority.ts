@@ -1,3 +1,4 @@
+import { AuthorityError } from '../../platform/authority-error.ts';
 import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
@@ -58,9 +59,18 @@ export function scanReadAuthority(actor: ScanActor, input: ScanChecksInput): Sca
 }
 
 /**
+ * A read statement may be 64 KiB of UTF-8 (grant writes stay at 32 KiB): a history page carries
+ * its flags and joins in one statement. D1 refuses 100,000 bytes, so a green corpus test proves fit.
+ */
+export const READ_SQL_BYTE_BUDGET = 64 * 1024;
+
+const encoder = new TextEncoder();
+
+/**
  * Prepare `WITH <fence>[, <extra CTEs>] <sql>`. `sql` is the statement after the CTE list and
- * binds `params` in order. At most 90 binds in total, so a green test proves the statement fits D1.
- * `extra` adds CTEs (a deep witness goes in its own `MATERIALIZED` CTE, not in the main WHERE).
+ * binds `params` in order. At most 90 binds and 64 KiB in total, so a green test proves the
+ * statement fits D1. `extra` adds CTEs (a deep witness goes in its own `MATERIALIZED` CTE, not in
+ * the main WHERE).
  */
 export function scanRead(
   db: D1Database,
@@ -71,7 +81,13 @@ export function scanRead(
 ): D1PreparedStatement {
   const all = [...auth.params, ...(extra?.params ?? []), ...params];
   const text = `WITH ${auth.ctes}${extra ? `,\n${extra.ctes}` : ''}\n${sql}`;
-  assertBudget(text, all, PARAM_BUDGET);
+  assertBudget('', all, PARAM_BUDGET);
+  const bytes = encoder.encode(text).length;
+  if (bytes > READ_SQL_BYTE_BUDGET)
+    throw new AuthorityError(
+      'SQL_SIZE_BUDGET',
+      `Statement is ${bytes} bytes (limit ${READ_SQL_BYTE_BUDGET}).`,
+    );
   return exactStmt(db, text, all);
 }
 
@@ -90,3 +106,40 @@ export const SESSION_READ = {
   stafflessMonitor: true,
   invalidScope: true,
 } as const;
+
+/**
+ * The fence of an API key's scan feed: the key is live and lists `scans:read` now. An org-bound key
+ * reads its own org, which must be active. A platform key reads the org it names (suspended or not:
+ * history outlives the org's access) or, naming none, every org of its mode. That allowance, and the
+ * named org not being checked to exist, make it a read fence only: it is `Relaxed`, so
+ * `scanReadFence` refuses it as a write guard. A platform key's tenant asserts in SQL that the stored
+ * key really has no org.
+ */
+export function apiKeyReadAuthority(
+  key: { keyId: string; orgId: string | null },
+  namedOrgId: string | undefined,
+  now: number,
+): RelaxedReadAuthority {
+  const bound = key.orgId !== null;
+  const { ctes, params } = authorityPredicate(
+    {
+      kind: 'api_key',
+      keyId: key.keyId,
+      scope: 'scans:read',
+      ...(typeof key.orgId === 'string' ? { orgId: key.orgId } : {}),
+    },
+    { scope: bound ? 'org_mode' : 'platform', now },
+  );
+  assertBudget(ctes, params, PARAM_BUDGET);
+  const named = !bound && namedOrgId !== undefined;
+  return {
+    ctes: named ? `${ctes},\n    named AS MATERIALIZED (SELECT ? AS org_id)` : ctes,
+    params: named ? [...params, namedOrgId] : params,
+    ok: 'EXISTS (SELECT 1 FROM actor_ok)',
+    tenant: (alias, table) =>
+      bound
+        ? tenantFilter(alias, table, 'org_mode')
+        : `(SELECT org_id FROM actor_ok) IS NULL AND ${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = (SELECT mode FROM actor_ok)`,
+    relaxed: true,
+  };
+}

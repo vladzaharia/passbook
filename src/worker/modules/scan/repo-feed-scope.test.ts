@@ -1,58 +1,48 @@
 import { describe, expect, it } from 'vitest';
 import { where } from './repo-feed-scope.ts';
-import { packScanPredicate } from './repo-secret-binds.ts';
 
-describe('feed filter SQL secret bindings', () => {
-  it('keeps relation, pass, search and continuation IDs out of packed metadata', () => {
-    const sensitive = [
-      'scanner-private-710',
-      'staff-private-711',
-      'event-private-712',
-      'pass-private-713',
-      'query-private-714',
-      'cursor-private-715',
-      'reason-private-716',
-    ];
-    const [scannerId, staffId, eventId, passId, q, cursor, reason] = sensitive;
-    const filter = where(
-      {
-        mode: 'live',
-        orgId: 'org-1',
-        scannerId,
-        staffId,
-        eventId,
-        passId,
-        q,
-        cursor,
-        reason,
-        limit: 10,
-      },
-      1_800_000_000_000,
-    );
-    const packed = packScanPredicate(filter.sql, filter.params, 'feed_filter_snapshot');
-    expect(packed).not.toBeNull();
-    if (!packed) throw new Error('The feed filter must be packable.');
-    const metadata = String(packed.params[0]);
-    for (const value of sensitive) {
-      expect(metadata).not.toContain(value);
-      expect(packed.params.slice(1)).toContain(value);
-    }
+describe('feed filter SQL', () => {
+  it('leaves the org and mode to the fence and binds every filter value in order', () => {
+    const filter = where({
+      mode: 'live',
+      orgId: 'org-1',
+      scannerId: 'scanner-1',
+      staffId: 'staff-1',
+      eventId: 'event-1',
+      passId: 'pass-1',
+      outcome: 'ok',
+      reason: 'voided',
+      from: 10,
+      to: 20,
+      limit: 10,
+    });
+    expect(filter.sql).not.toMatch(/s\.(org_id|mode) = \?/);
+    expect(filter.params).toEqual([
+      'scanner-1',
+      'staff-1',
+      'event-1',
+      'pass-1',
+      'ok',
+      'voided',
+      10,
+      20,
+    ]);
   });
 
-  it('keeps opaque internal continuation IDs in scalar binds', () => {
-    const filter = where(
-      {
-        mode: 'live',
-        orgId: 'org-1',
-        limit: 10,
-        internalCursor: { at: 42, id: 'internal-cursor-private' },
-      },
-      1_800_000_000_000,
-    );
-    const packed = packScanPredicate(filter.sql, filter.params, 'feed_cursor_snapshot');
-    expect(packed).not.toBeNull();
-    if (!packed) throw new Error('The feed cursor must be packable.');
-    expect(String(packed.params[0])).not.toContain('internal-cursor-private');
-    expect(packed.params.slice(1)).toContain('internal-cursor-private');
+  it('continues only from a decoded position, never from a raw row id', () => {
+    const raw = where({ mode: 'live', orgId: 'org-1', cursor: 'raw-row-id', limit: 10 });
+    expect(raw.params).toEqual([]);
+    const decoded = where({
+      mode: 'live',
+      orgId: 'org-1',
+      limit: 10,
+      internalCursor: { at: 42, id: 'scan-9' },
+    });
+    expect(decoded.params).toEqual([42, 'scan-9']);
+    expect(decoded.sql).toContain('(s.at, s.id) < (?, ?');
+  });
+
+  it('keeps a pass search to the exact pass id', () => {
+    expect(where({ mode: 'live', q: 'pass-1', limit: 10 }).params).toEqual(['pass-1']);
   });
 });

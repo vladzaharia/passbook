@@ -36,7 +36,7 @@ import {
 } from './console-privacy-test-fixtures.ts';
 import { historyPolicy } from './history-policy.ts';
 import { scanInputVisible } from './projection-privacy.ts';
-import { getScanRow } from './repo-feed.ts';
+import { testHistoryProof } from './repo-history-row-test-support.ts';
 import { candidateById } from './repo-lookup.ts';
 import { foundOf } from './resolve.ts';
 import { grantScanMembership, ORIGIN } from './test-kit.ts';
@@ -130,9 +130,8 @@ describe('scan action record projection', () => {
       settings: { staffSignIn: true },
     });
     const proven = await recordedCheckIn(scanner, pass.id);
-    const provenRow = await getScanRow(kit.env.DB, proven.id, kit.clock.now(), 'live');
-    const proof = provenRow?.eventProof;
-    if (!proof?.eventPinnedManifest || !proof.eventActiveVersion || !proof.eventActiveManifest)
+    const proof = await testHistoryProof(kit.env.DB, kit.org.id, proven.id, kit.clock.now());
+    if (!proof.eventPinnedManifest || !proof.eventActiveVersion || !proof.eventActiveManifest)
       throw new Error('The genuine check-in must expose its immutable policy proof.');
     for (const spec of [
       {

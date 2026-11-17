@@ -5,6 +5,7 @@ import { createApp } from '../../app.ts';
 import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { createScannerStore } from './auth-store.ts';
+import { afterBatch } from './batch-interceptor-test-support.ts';
 import {
   codeOf,
   grantScanMembership,
@@ -58,8 +59,13 @@ async function scenario(count: number) {
 
 type Page = { items: { id: string; passId: string | null }[]; nextCursor: string | null };
 
+/*
+ * A page is one snapshot: its rows, their pass state and their disclosure policy were read in one
+ * statement. A change that lands while the cursor is encrypted is not in the snapshot, so this
+ * page answers as it read, and the next one (a new statement) sees the change.
+ */
 it.each(['console', 'key'] as const)(
-  're-fences %s rows after cursor encryption races a credential transfer',
+  'answers a %s page from its snapshot when a credential transfer races cursor encryption',
   async (surface) => {
     const s = await scenario(2);
     const path = surface === 'console' ? `?orgId=${s.kit.org.id}&limit=1` : '?limit=1';
@@ -86,15 +92,13 @@ it.each(['console', 'key'] as const)(
       expect(response.status).toBe(200);
       const page = (await response.json()) as Page;
       expect(transferred).toBe(true);
-      expect(page.items).toMatchObject([{ id: s.ids[1], passId: null }]);
+      expect(page.items).toMatchObject([{ id: s.ids[1], passId: s.pass.id }]);
       expect(page.nextCursor).toEqual(expect.any(String));
-      expect(JSON.stringify(page)).not.toContain(s.pass.id);
       const next = await s.get(`${path}&cursor=${encodeURIComponent(page.nextCursor!)}`, headers);
       expect(next.status).toBe(200);
-      expect(await next.json()).toMatchObject({
-        items: [{ id: s.ids[0], passId: null }],
-        nextCursor: null,
-      });
+      const rest = (await next.json()) as Page;
+      expect(rest).toMatchObject({ items: [{ id: s.ids[0], passId: null }], nextCursor: null });
+      expect(JSON.stringify(rest)).not.toContain(s.pass.id);
     } finally {
       spy.mockRestore();
     }
@@ -102,7 +106,7 @@ it.each(['console', 'key'] as const)(
 );
 
 it.each(['console', 'key'] as const)(
-  'rejects %s output when the keyset changes during cursor encryption',
+  'serves the %s page it pinned the keyset for, and fails the next page when the keyset changes during cursor encryption',
   async (surface) => {
     const s = await scenario(2);
     const path = surface === 'console' ? `?orgId=${s.kit.org.id}&limit=1` : '?limit=1';
@@ -132,8 +136,12 @@ it.each(['console', 'key'] as const)(
       try {
         const response = await s.get(path, headers);
         expect(changed).toBe(true);
-        expect(response.status).toBe(503);
-        const body = await response.text();
+        expect(response.status).toBe(200);
+        const page = (await response.json()) as Page;
+        expect(page.items).toMatchObject([{ id: s.ids[1], passId: s.pass.id }]);
+        const next = await s.get(`${path}&cursor=${encodeURIComponent(page.nextCursor!)}`, headers);
+        expect(next.status).toBe(503);
+        const body = await next.text();
         expect(JSON.parse(body)).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
         expect(body).not.toContain(s.pass.id);
       } finally {
@@ -147,7 +155,7 @@ it.each(['console', 'key'] as const)(
 );
 
 it.each(['console', 'key'] as const)(
-  'does not emit a %s cursor when its hidden boundary becomes quarantined',
+  'continues a %s page from its snapshot position when its hidden boundary is quarantined after it',
   async (surface) => {
     const s = await scenario(1);
     await run(
@@ -190,8 +198,14 @@ it.each(['console', 'key'] as const)(
     try {
       const response = await s.get(path, headers);
       expect(quarantined).toBe(true);
-      expect(response.status).toBe(409);
-      expect(await response.json()).toMatchObject({ code: 'SCAN_HISTORY_CHANGED' });
+      expect(response.status).toBe(200);
+      const raced = (await response.json()) as Page;
+      expect(raced.items).toEqual([]);
+      expect(raced.nextCursor).toEqual(expect.any(String));
+      // The position is a row of the snapshot; the next page applies the quarantine.
+      const next = await s.get(`${path}&cursor=${encodeURIComponent(raced.nextCursor!)}`, headers);
+      expect(next.status).toBe(200);
+      expect(JSON.stringify(await next.json())).not.toContain(s.pass.id);
     } finally {
       spy.mockRestore();
     }
@@ -210,56 +224,29 @@ it('does not initialize a missing keyset on the staff-hidden key feed', async ()
   expect(await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id=1')).toBeNull();
 });
 
-it('re-fences detail after the final asynchronous session proof read', async () => {
+it('answers a detail from its snapshot when a credential transfer follows the read', async () => {
   const s = await scenario(1);
   const path = `/${s.ids[0]}`;
   const baseline = await s.get(path);
   expect(baseline.status).toBe(200);
   expect(await baseline.json()).toMatchObject({ id: s.ids[0], passId: s.pass.id });
   const db = s.kit.env.DB;
-  let reads = 0;
-  let transferred = false;
-  const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-    new Proxy(statement, {
-      get(target, property) {
-        if (property === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
-        if (property === 'all')
-          return async () => {
-            const result = await target.all();
-            if (++reads === 2) {
-              transferred = true;
-              expect(await startScanCredentialTransfer(s.kit, s.pass.id, { db })).toMatchObject({
-                state: 'completed',
-              });
-            }
-            return result;
-          };
-        const value = Reflect.get(target, property, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-    });
-  const proxy = new Proxy(db, {
-    get(target, property) {
-      if (property === 'prepare')
-        return (sql: string) => {
-          const statement = target.prepare(sql);
-          return sql.includes('session.csrf_secret AS session_secret')
-            ? wrap(statement)
-            : statement;
-        };
-      const value = Reflect.get(target, property, target);
-      return typeof value === 'function' ? value.bind(target) : value;
+  const { result: response, fired } = await afterBatch(
+    s.kit.env,
+    /page AS MATERIALIZED/,
+    async () => {
+      expect(await startScanCredentialTransfer(s.kit, s.pass.id, { db })).toMatchObject({
+        state: 'completed',
+      });
     },
-  });
-  Object.assign(s.kit.env, { DB: proxy });
-  try {
-    const response = await s.get(path);
-    expect(response.status).toBe(200);
-    expect(transferred).toBe(true);
-    const body = await response.text();
-    expect(JSON.parse(body)).toMatchObject({ id: s.ids[0], passId: null, actionId: null });
-    expect(body).not.toContain(s.pass.id);
-  } finally {
-    Object.assign(s.kit.env, { DB: db });
-  }
+    () => s.get(path),
+  );
+  expect(fired).toBe(true);
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({ id: s.ids[0], passId: s.pass.id });
+  const next = await s.get(path);
+  expect(next.status).toBe(200);
+  const body = await next.text();
+  expect(JSON.parse(body)).toMatchObject({ id: s.ids[0], passId: null, actionId: null });
+  expect(body).not.toContain(s.pass.id);
 });

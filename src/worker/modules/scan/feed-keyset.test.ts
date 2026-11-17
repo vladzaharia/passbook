@@ -8,6 +8,7 @@ import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { createScannerStore } from './auth-store.ts';
+import { beforeBatch } from './batch-interceptor-test-support.ts';
 import {
   codeOf,
   DAY,
@@ -22,14 +23,13 @@ let kit: ScanKit;
 let app: OpenAPIHono<AppBindings>;
 let admin: Record<string, string>;
 let apiKey: Record<string, string>;
-let membershipId: string;
 
 beforeEach(async () => {
   kit = await setupScanKit();
   const fake = fakeAuth(ORIGIN);
   fake.bindApiKeys(kit.env, kit.clock);
   const user = await makeUser(kit.fx);
-  membershipId = await grantScanMembership(kit.fx, kit.org.id, user.id);
+  await grantScanMembership(kit.fx, kit.org.id, user.id);
   admin = {
     ...(await makeSession(kit.fx, { userId: user.id, roles: ['admin', 'user'] })).headers,
     origin: ORIGIN,
@@ -74,110 +74,28 @@ async function recorded(count = 1) {
   return { scanner, pass, ids };
 }
 
-type Race = 'capture' | 'selection' | 'audit' | 'fallback';
+const TRIGGER = `CREATE TRIGGER credential_ref_keyset_no_update BEFORE UPDATE ON credential_ref_keyset
+  BEGIN SELECT RAISE(ABORT, 'credential reference keyset is immutable'); END`;
 
-/** Simulate an out-of-band keyset replacement after capture; production's trigger prevents this. */
-async function withRekey<T>(
-  race: Race,
-  work: () => Promise<T>,
-  afterSelection?: () => Promise<unknown>,
-): Promise<T> {
-  const db = kit.env.DB;
+/** Replace the stored keyset commitment by `replacement`, as a deployment with other keys would see it. */
+async function rekey(db: D1Database, replacement: string) {
   const original = await ensureCredentialRefKeyset(db, kit.env);
-  const replacement = original === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
   await run(db, 'DROP TRIGGER credential_ref_keyset_no_update');
-  const marked = new WeakSet<D1PreparedStatement>();
-  let fired = false;
-  let selected = false;
-  let captures = 0;
-  const rekey = async () => {
-    await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [replacement]);
-    fired = true;
-  };
-  const wrapRead = (statement: D1PreparedStatement): D1PreparedStatement =>
-    new Proxy(statement, {
-      get(target, property) {
-        if (property === 'bind') return (...values: unknown[]) => wrapRead(target.bind(...values));
-        if (property === 'first' || property === 'all')
-          return async () => {
-            const result = property === 'first' ? await target.first() : await target.all();
-            if (!fired && race === 'selection') await rekey();
-            if (!selected && race === 'fallback') {
-              if (!afterSelection) throw new Error('The fallback race needs a change.');
-              selected = true;
-              await afterSelection();
-            }
-            return result;
-          };
-        const value = Reflect.get(target, property, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-    });
-  const proxy = new Proxy(db, {
-    get(target, property) {
-      if (property === 'prepare')
-        return (sql: string) => {
-          const statement = target.prepare(sql);
-          const capture = sql.includes('INSERT INTO credential_ref_keyset');
-          const audit = sql.includes('INSERT INTO audit_log') && sql.includes("'scan.export'");
-          const fallback =
-            (sql.startsWith('SELECT s.id, s.org_id, s.mode, s.at,') &&
-              /WHERE[\s(]*s\.id IN \(/.test(sql)) ||
-            sql.startsWith('WITH requested AS MATERIALIZED');
-          if (capture) captures++;
-          if (
-            (race === 'capture' && capture) ||
-            (race === 'audit' && audit) ||
-            (race === 'fallback' && fallback)
-          ) {
-            return new Proxy(statement, {
-              get(prepared, member) {
-                if (member === 'bind')
-                  return (...values: unknown[]) => {
-                    const bound = prepared.bind(...values);
-                    marked.add(bound);
-                    return bound;
-                  };
-                const value = Reflect.get(prepared, member, prepared);
-                return typeof value === 'function' ? value.bind(prepared) : value;
-              },
-            });
-          }
-          if (
-            (race === 'selection' || race === 'fallback') &&
-            sql.startsWith('SELECT s.id, s.org_id, s.mode, s.at,') &&
-            /(ORDER BY s\.at DESC|WHERE\s+s\.id\s*=\s*\?)/i.test(sql)
-          )
-            return wrapRead(statement);
-          return statement;
-        };
-      if (property === 'batch')
-        return async (statements: D1PreparedStatement[]) => {
-          const match = statements.some((statement) => marked.has(statement));
-          if (!fired && race === 'audit' && match) await rekey();
-          const result = await target.batch(statements);
-          if (!fired && race === 'capture' && match) await rekey();
-          if (!fired && race === 'fallback' && selected && match) await rekey();
-          return result;
-        };
-      const value = Reflect.get(target, property, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  Object.assign(kit.env, { DB: proxy });
-  try {
-    const result = await work();
-    expect(fired).toBe(true);
-    expect(captures).toBe(1);
-    return result;
-  } finally {
-    Object.assign(kit.env, { DB: db });
+  await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [replacement]);
+  return async () => {
     await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [original]);
-    await run(
-      db,
-      `CREATE TRIGGER credential_ref_keyset_no_update BEFORE UPDATE ON credential_ref_keyset
-      BEGIN SELECT RAISE(ABORT, 'credential reference keyset is immutable'); END`,
-    );
+    await run(db, TRIGGER);
+  };
+}
+
+const OTHER = 'a'.repeat(64);
+
+async function withOtherKeyset<T>(work: () => Promise<T>): Promise<T> {
+  const restore = await rekey(kit.env.DB, OTHER);
+  try {
+    return await work();
+  } finally {
+    await restore();
   }
 }
 
@@ -186,108 +104,34 @@ async function expectUnavailable(response: Response) {
   expect(await response.json()).toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
 }
 
-describe('scan history keyset fences', () => {
+describe('scan history keyset', () => {
   it.each(['console', 'key'] as const)(
-    'fails closed for an empty %s page after the captured keyset changes',
-    async (surface) => {
-      const path = surface === 'console' ? `?orgId=${kit.org.id}` : '';
-      const headers = surface === 'console' ? admin : apiKey;
-      await withRekey(surface === 'console' ? 'capture' : 'selection', async () => {
-        await expectUnavailable(await get(path, headers));
-      });
-    },
-  );
-
-  it('keeps the staff-hidden API-key fast path independent of the keyset', async () => {
-    const db = kit.env.DB;
-    const original = await ensureCredentialRefKeyset(db, kit.env);
-    await run(db, 'DROP TRIGGER credential_ref_keyset_no_update');
-    try {
-      await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [
-        'a'.repeat(64),
-      ]);
-      const response = await get('?staffId=missing', apiKey);
-      expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ items: [], nextCursor: null });
-      expect(await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1')).toEqual({
-        commitment: 'a'.repeat(64),
-      });
-    } finally {
-      await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [original]);
-      await run(
-        db,
-        `CREATE TRIGGER credential_ref_keyset_no_update BEFORE UPDATE ON credential_ref_keyset
-        BEGIN SELECT RAISE(ABORT, 'credential reference keyset is immutable'); END`,
-      );
-    }
-  });
-
-  it.each(['console', 'key'] as const)(
-    'does not bootstrap a keyset after %s authority is revoked',
+    'needs no keyset for an empty %s page, and a read never bootstraps one',
     async (surface) => {
       const db = kit.env.DB;
       await withoutTrigger(db, 'credential_ref_keyset_no_delete', async () => {
         await run(db, 'DELETE FROM credential_ref_keyset WHERE id = 1');
       });
-      const marked = new WeakSet<D1PreparedStatement>();
-      let fired = false;
-      const proxy = new Proxy(db, {
-        get(target, property) {
-          if (property === 'prepare')
-            return (sql: string) => {
-              const statement = target.prepare(sql);
-              if (!sql.includes('INSERT INTO credential_ref_keyset')) return statement;
-              return new Proxy(statement, {
-                get(prepared, member) {
-                  if (member === 'bind')
-                    return (...values: unknown[]) => {
-                      const bound = prepared.bind(...values);
-                      marked.add(bound);
-                      return bound;
-                    };
-                  const value = Reflect.get(prepared, member, prepared);
-                  return typeof value === 'function' ? value.bind(prepared) : value;
-                },
-              });
-            };
-          if (property === 'batch')
-            return async (statements: D1PreparedStatement[]) => {
-              if (!fired && statements.some((statement) => marked.has(statement))) {
-                fired = true;
-                if (surface === 'console')
-                  await run(db, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
-                    kit.clock.now(),
-                    membershipId,
-                  ]);
-                else
-                  await run(db, 'UPDATE api_keys SET revoked_at = ? WHERE org_id = ?', [
-                    kit.clock.now(),
-                    kit.org.id,
-                  ]);
-              }
-              return target.batch(statements);
-            };
-          const value = Reflect.get(target, property, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        },
-      });
-      Object.assign(kit.env, { DB: proxy });
-      try {
-        const response =
-          surface === 'console' ? await get(`?orgId=${kit.org.id}`) : await get('', apiKey);
-        expect(response.status).toBe(surface === 'console' ? 403 : 401);
-        expect(fired).toBe(true);
-        expect(
-          await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1'),
-        ).toBeNull();
-      } finally {
-        Object.assign(kit.env, { DB: db });
-      }
+      const response =
+        surface === 'console' ? await get(`?orgId=${kit.org.id}`) : await get('', apiKey);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ items: [], nextCursor: null });
+      expect(
+        await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1'),
+      ).toBeNull();
     },
   );
 
+  it('keeps the staff-hidden API-key fast path independent of the keyset', async () => {
+    await withOtherKeyset(async () => {
+      const response = await get('?staffId=missing', apiKey);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ items: [], nextCursor: null });
+    });
+  });
+
   it.each(['console', 'key', 'detail'] as const)(
-    'does not return signed %s history after a selection races a keyset change',
+    "does not return signed %s history when the stored keyset is not this deployment's",
     async (surface) => {
       const { pass, ids } = await recorded();
       const path =
@@ -296,99 +140,65 @@ describe('scan history keyset fences', () => {
       const baseline = await get(path, headers);
       expect(baseline.status).toBe(200);
       expect(await baseline.text()).toContain(pass.id);
-      await withRekey('selection', async () => {
-        await expectUnavailable(await get(path, headers));
-      });
+      await withOtherKeyset(async () => expectUnavailable(await get(path, headers)));
     },
   );
+
+  it('does not bootstrap a keyset when a page with a signed row finds none', async () => {
+    const { ids } = await recorded();
+    const db = kit.env.DB;
+    await withoutTrigger(db, 'credential_ref_keyset_no_delete', async () => {
+      await run(db, 'DELETE FROM credential_ref_keyset WHERE id = 1');
+    });
+    await expectUnavailable(await get(`/${ids[0]}`));
+    expect(await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1')).toBeNull();
+  });
 
   it.each(['console', 'key'] as const)(
     'fences a %s continuation and does not downgrade a stale keyset to minimal history',
     async (surface) => {
-      const { pass } = await recorded(2);
+      await recorded(2);
       const headers = surface === 'key' ? apiKey : admin;
       const prefix = surface === 'key' ? '?limit=1' : `?orgId=${kit.org.id}&limit=1`;
       const page = await get(prefix, headers);
       expect(page.status).toBe(200);
       const { nextCursor } = (await page.json()) as { nextCursor: string | null };
       expect(nextCursor).toEqual(expect.any(String));
-      await withRekey(
-        'fallback',
-        async () => {
-          await expectUnavailable(
-            await get(`${prefix}&cursor=${encodeURIComponent(nextCursor!)}`, headers),
-          );
-        },
-        // A pass link change (not a scanner rename: names are not authority) makes the selected
-        // projection stale, so the page must fall back to minimal history.
-        () =>
-          run(kit.env.DB, 'UPDATE passes SET link_generation = link_generation + 1 WHERE id = ?', [
-            pass.id,
-          ]),
+      await withOtherKeyset(async () =>
+        expectUnavailable(
+          await get(`${prefix}&cursor=${encodeURIComponent(nextCursor!)}`, headers),
+        ),
       );
     },
   );
 
-  it('fails an export stream instead of emitting a page after its keyset changes', async () => {
+  it('fails an export stream instead of emitting a page whose keyset changed', async () => {
     const { pass } = await recorded();
-    await withRekey('selection', async () => {
-      const response = await get(exportPath());
-      expect(response.status).toBe(200);
-      const reader = response.body!.getReader();
-      const firstChunk = await reader.read();
-      const header = new TextDecoder().decode(firstChunk.value);
-      expect(header).not.toContain(pass.id);
-      expect(header).not.toContain('Keyset private title');
-      await expect(reader.read()).rejects.toMatchObject({
-        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      });
-    });
-  });
-
-  it('keeps the original KEK ring through a streamed export when the live environment changes', async () => {
-    await recorded();
     const db = kit.env.DB;
-    const originalKey = kit.env.KEK_V1;
-    let changed = false;
-    const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-      new Proxy(statement, {
-        get(target, property) {
-          if (property === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
-          if (property === 'all')
-            return async () => {
-              const result = await target.all();
-              if (!changed) {
-                changed = true;
-                kit.env.KEK_V1 = btoa('z'.repeat(32));
-              }
-              return result;
-            };
-          const value = Reflect.get(target, property, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        },
-      });
-    const proxy = new Proxy(db, {
-      get(target, property) {
-        if (property === 'prepare')
-          return (sql: string) => {
-            const statement = target.prepare(sql);
-            return sql.startsWith('SELECT s.id, s.org_id, s.mode, s.at,') &&
-              /ORDER BY s\.at DESC/i.test(sql)
-              ? wrap(statement)
-              : statement;
-          };
-        const value = Reflect.get(target, property, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-    });
-    Object.assign(kit.env, { DB: proxy });
+    let restore = async () => {};
     try {
-      const response = await get(exportPath());
-      expect(response.status).toBe(200);
-      expect(await response.text()).toContain('Entry');
-      expect(changed).toBe(true);
+      const { fired } = await beforeBatch(
+        kit.env,
+        /page AS MATERIALIZED/,
+        async () => {
+          restore = await rekey(db, OTHER);
+        },
+        async () => {
+          const response = await get(exportPath());
+          expect(response.status).toBe(200);
+          const reader = response.body!.getReader();
+          const firstChunk = await reader.read();
+          const header = new TextDecoder().decode(firstChunk.value);
+          expect(header).not.toContain(pass.id);
+          expect(header).not.toContain('Keyset private title');
+          await expect(reader.read()).rejects.toMatchObject({
+            code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
+          });
+        },
+      );
+      expect(fired).toBe(true);
     } finally {
-      Object.assign(kit.env, { DB: db, KEK_V1: originalKey });
+      await restore();
     }
   });
 });

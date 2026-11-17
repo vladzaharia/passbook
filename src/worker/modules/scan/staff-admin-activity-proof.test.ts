@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { makeSession } from '../../../../test/helpers/index.ts';
+import { countD1, makeSession } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
+import { beforeStatement } from './batch-interceptor-test-support.ts';
 import { getStaff } from './repo-staff.ts';
 import { listStaff, updateStaff } from './staff-admin.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
@@ -75,7 +76,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
             };
           if (prop === 'prepare')
             return (sql: string) =>
-              /\bWITH starts AS\b/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
+              /\bstarts AS \(/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
           const value = Reflect.get(target, prop, target);
           return typeof value === 'function' ? value.bind(target) : value;
         },
@@ -103,7 +104,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
             keyset.commitment === 'f'.repeat(64) ? 'e'.repeat(64) : 'f'.repeat(64),
           ]),
         ),
-      ).rejects.toMatchObject({ code: 'SCAN_STAFF_CHANGED', status: 409 });
+      ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE', status: 503 });
     } finally {
       await run(kit.env.DB, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [
         keyset.commitment,
@@ -134,9 +135,9 @@ describe('mode-specific staff activity and device PIN locks', () => {
     const tampered = await beforeFinalRead(() =>
       run(
         kit.env.DB,
-        `UPDATE pass_events SET data = json_set(data, '$.authority.eventProof.mac', ?)
+        `UPDATE pass_events SET data = json_set(data, '$.outcome', 'refused')
        WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?`,
-        ['0'.repeat(64), pass.id, outcome.scanId],
+        [pass.id, outcome.scanId],
       ),
     );
     expect(tampered?.lastScan).toMatchObject({ scannerName: 'Scanner' });
@@ -173,12 +174,12 @@ describe('mode-specific staff activity and device PIN locks', () => {
     expect(await current()).toMatchObject({ today: 1, lastScan: { scannerName: 'Scanner' } });
   });
 
-  it('verifies every scanner-name proof fragment with the roster in one transaction', async () => {
+  it('reads the roster and every scanner-name proof in one statement', async () => {
     const kit = await setupScanKit();
     const template = await kit.scanTemplate('Paged staff proofs', {
       actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'always' }],
     });
-    const people: Array<{ id: string; scannerName: string; scanId: string }> = [];
+    const people: Array<{ id: string; scannerName: string; scanId: string; passId: string }> = [];
     for (let index = 0; index < 3; index++) {
       const person = await kit.staff('manager', `Staff ${index}`);
       const scanner = await kit.scanner({
@@ -199,152 +200,92 @@ describe('mode-specific staff activity and device PIN locks', () => {
       const outcome = (await response.json()) as { kind: string; scanId: string | null };
       expect(outcome.kind).toBe('ok');
       if (!outcome.scanId) throw new Error('Missing scan proof');
-      people.push({ id: person.id, scannerName, scanId: outcome.scanId });
+      people.push({ id: person.id, scannerName, scanId: outcome.scanId, passId: pass.id });
     }
     const fixture = await makeSession(kit.fx, { userId: 'admin-1', roles: ['user'] });
     const session = await createSessionStore(kit.env, kit.clock).resolve(fixture.cookieValue);
     if (!session) throw new Error('Missing session');
     const authority = await tenantAuthorityOf(kit.ctx, session, kit.org.id, 'scanning:read');
     if (authority.kind !== 'session') throw new Error('Expected session authority');
-    const rosterStatements = new WeakSet<D1PreparedStatement>();
-    const proofStatements = new WeakMap<D1PreparedStatement, string>();
-    let proofFragments = 0;
-    let invalidateFragment = false;
-    let misidentifyFragment = false;
-    let omitFragment = false;
-    let invalidatedScanId: string | undefined;
-    const db = new Proxy(kit.env.DB, {
-      get(target, prop) {
-        if (prop === 'prepare')
-          return (sql: string) => {
-            const statement = target.prepare(sql);
-            const roster = /\bWITH starts AS\b/i.test(sql);
-            const proof = sql.includes('AS scan_id, EXISTS (SELECT 1 FROM scans recent_scan');
-            if (!roster && !proof) return statement;
-            return new Proxy(statement, {
-              get(prepared, member) {
-                if (member === 'bind')
-                  return (...values: unknown[]) => {
-                    const bound = prepared.bind(...values);
-                    if (roster) rosterStatements.add(bound);
-                    if (proof) {
-                      if (typeof values[0] !== 'string') throw new Error('Missing proof scan ID');
-                      proofStatements.set(bound, values[0]);
-                    }
-                    expect(values.some((value) => value === session.csrfSecret)).toBe(true);
-                    expect(
-                      values.some(
-                        (value) =>
-                          typeof value === 'string' &&
-                          value !== session.csrfSecret &&
-                          value.includes(session.csrfSecret),
-                      ),
-                    ).toBe(false);
-                    return bound;
-                  };
-                const value = Reflect.get(prepared, member, prepared);
-                return typeof value === 'function' ? value.bind(prepared) : value;
-              },
-            });
-          };
-        if (prop === 'batch')
-          return async (statements: D1PreparedStatement[]) => {
-            const fragments = statements.filter((statement) => proofStatements.has(statement));
-            if (fragments.length) {
-              expect(statements.some((statement) => rosterStatements.has(statement))).toBe(true);
-              proofFragments = fragments.length;
-            }
-            const results = await target.batch(
-              statements.map((statement) => {
-                const scanId = proofStatements.get(statement);
-                if ((invalidateFragment || misidentifyFragment) && !invalidatedScanId && scanId) {
-                  invalidatedScanId = scanId;
-                  return target
-                    .prepare('SELECT ? AS scan_id, ? AS verified')
-                    .bind(
-                      misidentifyFragment ? 'wrong-scan-id' : scanId,
-                      misidentifyFragment ? 1 : 0,
-                    );
-                }
-                return statement;
-              }),
-            );
-            return omitFragment && fragments.length ? results.slice(0, -1) : results;
-          };
-        const value = Reflect.get(target, prop, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-    });
+    const counted = countD1(kit.env.DB);
     const result = await listStaff(
-      { ...kit.ctx, env: { ...kit.env, DB: db } },
+      { ...kit.ctx, env: { ...kit.env, DB: counted.db } },
       session,
       authority,
       kit.org.id,
       'live',
     );
-    expect(proofFragments).toBeGreaterThan(people.length);
     for (const person of people) {
       expect(result.items.find((item) => item.id === person.id)).toMatchObject({
         today: 1,
         lastScan: { scannerName: person.scannerName },
       });
     }
-    invalidateFragment = true;
-    const stale = await listStaff(
-      { ...kit.ctx, env: { ...kit.env, DB: db } },
-      session,
-      authority,
-      kit.org.id,
-      'live',
+    // Zones, the roster with every name proof, then the manifests and keyset: no statement per person.
+    const statements = counted.sql();
+    const roster = statements.findIndex((sql) => /\bstarts AS \(/.test(sql));
+    expect(statements.filter((sql) => /\bstarts AS \(/.test(sql))).toHaveLength(1);
+    // After the roster only the manifests and the keyset pin are read, together.
+    expect(statements.length - roster - 1).toBeLessThanOrEqual(2);
+
+    // One person's event is tampered with: only that person's scanner name falls back.
+    const [tampered] = people;
+    if (!tampered) throw new Error('Missing person');
+    await run(
+      kit.env.DB,
+      `UPDATE pass_events SET data = json_set(data, '$.outcome', 'refused')
+       WHERE pass_id = ? AND json_extract(data, '$.scanId') = ?`,
+      [tampered.passId, tampered.scanId],
     );
-    const invalidated = people.find((person) => person.scanId === invalidatedScanId);
-    if (!invalidated) throw new Error('Missing invalidated proof');
+    const stale = await listStaff(kit.ctx, session, authority, kit.org.id, 'live');
     for (const person of people) {
       expect(stale.items.find((item) => item.id === person.id)).toMatchObject({
         today: 1,
-        lastScan: { scannerName: person.id === invalidated.id ? 'Scanner' : person.scannerName },
+        lastScan: { scannerName: person.id === tampered.id ? 'Scanner' : person.scannerName },
       });
     }
-    invalidateFragment = false;
-    misidentifyFragment = true;
-    invalidatedScanId = undefined;
-    const misidentified = await listStaff(
-      { ...kit.ctx, env: { ...kit.env, DB: db } },
-      session,
-      authority,
-      kit.org.id,
-      'live',
+  });
+
+  it('refuses a roster whose scanner time zones changed since they were read', async () => {
+    const kit = await setupScanKit();
+    const template = await kit.scanTemplate('Zone staff', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'always' }],
+    });
+    const person = await kit.staff('manager', 'Zoned');
+    const scanner = await kit.scanner({ staffId: person.id, templateIds: [template] });
+    const fixture = await makeSession(kit.fx, { userId: 'admin-1', roles: ['user'] });
+    const session = await createSessionStore(kit.env, kit.clock).resolve(fixture.cookieValue);
+    if (!session) throw new Error('Missing session');
+    const authority = await tenantAuthorityOf(kit.ctx, session, kit.org.id, 'scanning:read');
+    if (authority.kind !== 'session') throw new Error('Expected session authority');
+    const { fired, result } = await beforeStatement(
+      kit.ctx.env,
+      /\bstarts AS \(/,
+      () =>
+        run(kit.env.DB, "UPDATE scanners SET time_zone = 'Pacific/Auckland' WHERE id = ?", [
+          scanner.id,
+        ]),
+      () =>
+        listStaff(kit.ctx, session, authority, kit.org.id, 'live').then(
+          () => null,
+          (error: unknown) => error,
+        ),
     );
-    const mismatched = people.find((person) => person.scanId === invalidatedScanId);
-    if (!mismatched) throw new Error('Missing mismatched proof');
-    expect(
-      misidentified.items.find((item) => item.id === mismatched.id)?.lastScan?.scannerName,
-    ).toBe('Scanner');
-    misidentifyFragment = false;
-    omitFragment = true;
-    await expect(
-      listStaff(
-        { ...kit.ctx, env: { ...kit.env, DB: db } },
-        session,
-        authority,
-        kit.org.id,
-        'live',
-      ),
-    ).rejects.toMatchObject({ status: 409, code: 'SCAN_STAFF_CHANGED' });
+    expect(fired).toBe(true);
+    expect(result).toMatchObject({ status: 409, code: 'SCAN_STAFF_CHANGED' });
     const manage = await tenantAuthorityOf(kit.ctx, session, kit.org.id, 'scanning:manage');
     if (manage.kind !== 'session') throw new Error('Expected session authority');
-    const observed = await getStaff(kit.env.DB, kit.org.id, mismatched.id);
+    const observed = await getStaff(kit.env.DB, kit.org.id, person.id);
     if (!observed) throw new Error('Missing staff');
     // The edit committed; an activity read that cannot be verified never fails it. The answer is the
     // plain account, with no activity.
-    const updated = await updateStaff(
-      { ...kit.ctx, env: { ...kit.env, DB: db } },
-      session,
-      manage,
-      observed,
-      'live',
-      { role: 'desk' },
+    const updated = await beforeStatement(
+      kit.ctx.env,
+      /\bstarts AS \(/,
+      () =>
+        run(kit.env.DB, "UPDATE scanners SET time_zone = 'Asia/Tokyo' WHERE id = ?", [scanner.id]),
+      () => updateStaff(kit.ctx, session, manage, observed, 'live', { role: 'desk' }),
     );
-    expect(updated).toMatchObject({ id: mismatched.id, role: 'desk', today: 0, lastScan: null });
+    expect(updated.result).toMatchObject({ id: person.id, role: 'desk', today: 0, lastScan: null });
   });
 });

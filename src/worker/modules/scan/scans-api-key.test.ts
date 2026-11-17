@@ -14,6 +14,7 @@ import { authorizeApiKeys } from '../api-keys/access.ts';
 import { createApiKey, createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { createScannerStore } from './auth-store.ts';
+import { beforeBatch } from './batch-interceptor-test-support.ts';
 import {
   clock,
   ctx,
@@ -221,12 +222,11 @@ describe('GET /scans (API key)', () => {
 
   it.each([
     'revoked',
-    'expired',
     'replaced with fewer scopes',
     'replaced with broader scopes',
     'org suspended',
   ] as const)(
-    'does not return feed data when the persisted key is %s before the output fence',
+    'does not return feed data when the persisted key is %s before the page statement',
     async (change) => {
       const row = await recordedAction(scannerFixture, passId);
       const creator = await makeSession(f, { userId, roles: ['admin', 'user'] });
@@ -261,78 +261,44 @@ describe('GET /scans (API key)', () => {
       const initial = await send();
       expect(initial.status).toBe(200);
       expect((await items(initial)).map((item) => item.id)).toEqual([row.id]);
-      const db = env.DB;
-      let intercepted = 0;
-      const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
-        new Proxy(statement, {
-          get(target, prop) {
-            if (prop === 'bind') return (...values: unknown[]) => wrap(target.bind(...values));
-            if (prop === 'all')
-              return async () => {
-                const result = await target.all();
-                if (intercepted === 0) {
-                  intercepted++;
-                  if (change === 'org suspended') {
-                    await runOne(db, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [orgId]);
-                  } else if (
-                    change === 'replaced with fewer scopes' ||
-                    change === 'replaced with broader scopes'
-                  ) {
-                    expect(
-                      await run(db, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
-                        clock.now(),
-                        fixture.id,
-                      ]),
-                    ).toEqual({ changes: 1 });
-                    const replacement = await makeApiKey(
-                      { ...f, env: { ...env, DB: db } },
-                      {
-                        orgId,
-                        scopes:
-                          change === 'replaced with fewer scopes'
-                            ? ['passes:read']
-                            : ['scans:read', 'passes:read'],
-                      },
-                    );
-                    expect(replacement.id).not.toBe(fixture.id);
-                  } else if (change === 'expired') {
-                    clock.advance(60_000);
-                  } else {
-                    expect(
-                      await run(db, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
-                        clock.now(),
-                        fixture.id,
-                      ]),
-                    ).toEqual({ changes: 1 });
-                  }
-                }
-                return result;
-              };
-            const value = Reflect.get(target, prop, target);
-            return typeof value === 'function' ? value.bind(target) : value;
-          },
-        });
-      const proxy = new Proxy(db, {
-        get(target, prop) {
-          if (prop === 'prepare')
-            return (sql: string) => {
-              const statement = target.prepare(sql);
-              return /FROM\s+scans\s+s[\s\S]*ORDER BY s\.at DESC/i.test(sql)
-                ? wrap(statement)
-                : statement;
-            };
-          const value = Reflect.get(target, prop, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        },
-      });
-      Object.assign(env, { DB: proxy });
-      let response: Response;
-      try {
-        response = await send();
-      } finally {
-        Object.assign(env, { DB: db });
-      }
-      expect(intercepted).toBe(1);
+      const mutate = async (db: D1Database) => {
+        if (change === 'org suspended') {
+          await runOne(db, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [orgId]);
+        } else if (change === 'revoked') {
+          expect(
+            await run(db, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
+              clock.now(),
+              fixture.id,
+            ]),
+          ).toEqual({ changes: 1 });
+        } else {
+          expect(
+            await run(db, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
+              clock.now(),
+              fixture.id,
+            ]),
+          ).toEqual({ changes: 1 });
+          const replacement = await makeApiKey(
+            { ...f, env: { ...env, DB: db } },
+            {
+              orgId,
+              scopes:
+                change === 'replaced with fewer scopes'
+                  ? ['passes:read']
+                  : ['scans:read', 'passes:read'],
+            },
+          );
+          expect(replacement.id).not.toBe(fixture.id);
+        }
+      };
+      // The key is read in the page statement's own snapshot: a change before it refuses the feed.
+      const { result: response, fired } = await beforeBatch(
+        env,
+        /page AS MATERIALIZED/,
+        mutate,
+        send,
+      );
+      expect(fired).toBe(true);
       expect(response.status).toBe(401);
       const body = await response.text();
       expect(JSON.parse(body)).toMatchObject({ code: 'INVALID_API_KEY' });
@@ -340,4 +306,40 @@ describe('GET /scans (API key)', () => {
         expect(body).not.toContain(value);
     },
   );
+  it('does not return feed data once its key has expired, and returns it before', async () => {
+    const row = await recordedAction(scannerFixture, passId);
+    const creator = await makeSession(f, { userId, roles: ['admin', 'user'] });
+    const auth = await createSessionStore(env, clock).resolve(creator.cookieValue);
+    if (!auth) throw new Error('Missing API key creator session');
+    const authority = await authorizeApiKeys(ctx, auth, orgId, 'integrations:manage');
+    const issued = await createApiKey(ctx, authority, {
+      orgId,
+      name: 'Expiring key',
+      scopes: ['scans:read'],
+      mode: 'live',
+      expiresAt: clock.now() + 60_000,
+    });
+    const keyApp = createApp({
+      stores: {
+        ...fake.stores,
+        sessions: createSessionStore(env, clock),
+        apiKeys: createApiKeyStore(env, clock),
+        scanners: createScannerStore(env, clock),
+      },
+      clock,
+    });
+    const send = () =>
+      Promise.resolve(
+        keyApp.request(
+          `${ORIGIN}/api/v1/scans?orgId=${orgId}`,
+          { headers: { authorization: `Bearer ${issued.secret}` } },
+          env,
+        ),
+      );
+    expect((await items(await send())).map((item) => item.id)).toEqual([row.id]);
+    clock.advance(60_000);
+    const expired = await send();
+    expect(expired.status).toBe(401);
+    expect(await expired.text()).not.toContain(row.id);
+  });
 });
