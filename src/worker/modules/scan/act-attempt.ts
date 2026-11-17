@@ -241,7 +241,6 @@ export async function attempt(
       claimAt,
       requestHash,
       credentials,
-      csrfSnapshot,
       found,
       photo,
       undoWindow,

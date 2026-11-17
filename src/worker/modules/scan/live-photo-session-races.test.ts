@@ -152,7 +152,7 @@ describe('user-backed live photo stream', () => {
       (trip) => trip.kind === 'batch' && photoAcquisition(trip.statements),
     );
     expect(index).toBeGreaterThanOrEqual(0);
-    expect(trace.trips[index]!.statements).toHaveLength(7);
+    expect(trace.trips[index]!.statements).toHaveLength(6);
     expect(trace.trips.length - index).toBeLessThanOrEqual(5);
     const final = trace.trips.slice(index + 1).flatMap((trip) => trip.statements);
     for (const label of ['csrf:source:session', 'csrf:recipient:session'])

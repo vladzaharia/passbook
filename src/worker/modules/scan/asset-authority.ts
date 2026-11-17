@@ -32,10 +32,9 @@ export function captureAssetGrantGuard(input: AssetGrantGuardInput): AssetGrantG
     sourceSession: input.sourceSession ? { ...input.sourceSession } : null,
     connectionGeneration: input.connectionGeneration,
     activeVersion: input.activeVersion,
-    credentialTombstoneRefs: [...input.credentialTombstoneRefs],
+    credentialRefPrefixes: [...input.credentialRefPrefixes],
     requirePhoto: input.requirePhoto,
     purpose: input.purpose,
-    ...(input.storedGrant ? { storedGrant: { ...input.storedGrant } } : {}),
   };
 }
 

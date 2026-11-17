@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { ManualClock } from '../../platform/clock.ts';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import {
   catchupFixture,
   catchupPlans,
@@ -92,17 +92,11 @@ export function registerCatchupRaceTests() {
     expect(trace.trips).toHaveLength(1);
     const trip = trace.trips[0];
     if (!trip) throw new Error('Missing final D1 trip.');
-    expect(
-      trip.statements.every(({ sql }) => !sql.includes('INTO scan_asset_grant_provenance')),
-    ).toBe(true);
+    expect(trip.statements.every(({ sql }) => !sql.includes('3 AS live_row_kind'))).toBe(true);
   });
 
-  it('rolls back a stale photo grant and independently rechecks every row without a bearer', async () => {
+  it('masks a row whose pass changed after acquisition and checks every row in one final trip', async () => {
     const fixture = await catchupFixture();
-    const before = await first<{ n: number }>(
-      kit.env.DB,
-      'SELECT COUNT(*) AS n FROM scan_asset_grant_provenance',
-    );
     let raced = false;
     const trace = traceLiveD1(kit.env.DB, async (statements, results) => {
       if (!isAcquisition(statements) || raced) return results;
@@ -124,14 +118,8 @@ export function registerCatchupRaceTests() {
     expect(rows[2]).toMatchObject({ passId: null, holder: null, photoUrl: null });
     expect(rows.every((row) => row.photoUrl === null)).toBe(true);
     expect(
-      await first<{ n: number }>(
-        kit.env.DB,
-        'SELECT COUNT(*) AS n FROM scan_asset_grant_provenance',
-      ),
-    ).toEqual(before);
-    expect(
       trace.trips.filter((trip) => trip.kind === 'batch' && isFinal(trip.statements)),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(trace.trips.length).toBeLessThanOrEqual(5);
   });
 

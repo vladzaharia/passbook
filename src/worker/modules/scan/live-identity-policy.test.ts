@@ -7,7 +7,7 @@ import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { knownPhotoUrl } from './member-photo.ts';
-import { scanPhotoUrl } from './member-photo-url.ts';
+import { scanPhotoUrl } from './member-photo-url-test-fixtures.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { hub, kit, publish, row, screen, template } from './scan-hub-test-fixtures.ts';

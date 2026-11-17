@@ -11,7 +11,6 @@ import { StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight } from './act-preflight.ts';
 import { ledgerAuthoritySnapshot } from './act-result-authority.ts';
 import type { ScanActor } from './actor.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { historyPlan } from './card.ts';
 import { planCommitCounts } from './counts.ts';
 import { preparePlannedDisplayHistoryProof } from './history-proof-pending.ts';
@@ -19,7 +18,6 @@ import { appendPlannedDisplayHistory, rebindDisplayHistoryRead } from './history
 import { type LedgerFacts, ledgerRow } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { doneOkPredicate } from './repo-scan-checks.ts';
@@ -33,12 +31,7 @@ import {
   prepareDisplayHistory,
 } from './scan-display-history.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
-import {
-  capacityOpen,
-  decorateScan,
-  SCAN_COMMIT_TABLES,
-  scanWriteGrant,
-} from './scan-write-grant.ts';
+import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import type { Finalize } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';
 
@@ -47,7 +40,6 @@ interface CheckInSuccessInput {
   actor: ScanActor;
   found: Found;
   req: ActRequest;
-  csrfSnapshot: ActorCsrfSnapshot;
   history: ActionHistoryPreflight | null;
   photo: PreparedPhotoGrant | null;
   reservation: PinReservation | null;
@@ -69,7 +61,7 @@ interface CheckInSuccessInput {
  * give one `ok` and nine `already_done`, and nothing is half written.
  */
 export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<ScanOutcome> {
-  const { ctx, actor, found, req, csrfSnapshot, history, photo, reservation, action } = input;
+  const { ctx, actor, found, req, history, photo, reservation, action } = input;
   const { undoWindow, gate, claim, presencePlan, stopAuthority, originalCandidate } = input;
   const { facts, approver, onFailureCommitted } = input;
   const { scanId, claimAt, effect } = claim;
@@ -175,18 +167,6 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       history.preloaded,
     );
   } else displayPlan = await historyPlan(ctx, actor, found);
-  if (photo && !originalCandidate) throw new StaleScanAuthority();
-  const photoPlan =
-    photo && originalCandidate
-      ? await prepareAssetGrantInsertion(
-          ctx,
-          photo.grant,
-          { recipientSnapshot: csrfSnapshot },
-          originalCandidate,
-          { soft: true },
-        )
-      : null;
-
   const g = scanWriteGrant(ctx, authorityActor, {
     purpose: 'org_mode.scan.check_in',
     now: authorityNow,
@@ -222,12 +202,15 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   if (!statements) throw new StaleScanAuthority();
   const { finalOk, finalAdmit, finalCap, holder, presenceHolder } = statements;
 
+  // The verified PIN's attempt comes back with the scan, in the same commit.
+  if (reservation) g.include(...reservation.refundParts());
   // One transaction: the grant, then the reads that must see its writes.
   const counts = planCommitCounts(ctx, actor, req.dayStart);
   const finishAt = ctx.clock.now();
   const done = doneOkPredicate(scanId);
   const bound = displayPlan.bind(finishAt, done);
   const committed = await g.commitWith(afterReads([...counts.stmts, ...bound.stmts]));
+  reservation?.markRefunded();
   const results = committed.writes;
   const at = (s: Parameters<typeof g.indexOf>[0]) => results[g.indexOf(s)] as D1Result;
   const rows = (s: Parameters<typeof g.indexOf>[0]) => (at(s).results ?? []).length;
@@ -239,12 +222,6 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       ? 'capacity_full'
       : lost;
   if (!wonIt) onFailureCommitted();
-  // Decoration follows the commit in one batch: a failed refund or photo grant never undoes the scan.
-  const photoResults = await decorateScan(
-    ctx,
-    reservation,
-    wonIt && photoPlan ? photoPlan(finishAt, done, { sql: '1', params: [] }) : [],
-  );
   const read = await counts.read(committed.after);
   const rest = committed.after.slice(counts.stmts.length);
   if (!wonIt) {
@@ -279,7 +256,6 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       results: rest.slice(0, bound.stmts.length),
     },
     photo,
-    photoResults,
     hasPresence: !!presencePlan,
   });
 }

@@ -44,7 +44,7 @@ async function missing(response: Response) {
 describe('scanner asset lineage', () => {
   it('uses an opaque, actor-specific proof and masks malformed grants and paths', async () => {
     const { device, pass, grant, image } = await photoPass();
-    expect(grant).toMatch(/^[A-Za-z0-9_-]{54}$/);
+    expect(grant).toMatch(/^[A-Za-z0-9_-]{51,83}$/);
     expect(grant).not.toContain(device.id);
     expect(grant).not.toContain(pass.id);
     expect((await image()).status).toBe(200);
@@ -331,25 +331,25 @@ describe('scanner asset lineage', () => {
     expect((await fixture.image()).status).toBe(200);
   });
 
-  it('refuses to mint from an evaluated snapshot before a same-tick organization policy ABA', async () => {
+  it('never redeems a grant minted from a snapshot read before a same-tick organization policy ABA', async () => {
     const fixture = await photoPass();
     const actor = await assetActorFor(kit, fixture.device);
     const evaluated = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
     if (!evaluated) throw new Error('Pass fixture missing');
     await setOrgStatus(kit.env.DB, kit.org.id, 'suspended', kit.clock.now());
     await setOrgStatus(kit.env.DB, kit.org.id, 'active', kit.clock.now());
-    await expect(
-      mintAssetGrant(
-        kit.ctx,
-        actor,
-        evaluated,
-        evaluated.connectionGeneration,
-        evaluated.activeTemplateVersion,
-        undefined,
-        false,
-        'commit',
-      ),
-    ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
+    const stale = await mintAssetGrant(
+      kit.ctx,
+      actor,
+      evaluated,
+      evaluated.connectionGeneration,
+      evaluated.activeTemplateVersion,
+      undefined,
+      false,
+      'commit',
+    );
+    await missing(await fixture.image(stale));
+    // Positive control: a grant minted after the ABA redeems.
     expect(
       (await fixture.image(await photoAssetGrantFor(kit, fixture.device, fixture.pass.id))).status,
     ).toBe(200);

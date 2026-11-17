@@ -7,7 +7,6 @@ import { prepareCommittedDisplay } from './act-display.ts';
 import { type HeldHolder, heldGateHolder } from './act-held-holder.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import { ledgerAuthoritySnapshot } from './act-result-authority.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { type CountsRead, planCommitCounts } from './counts.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
@@ -17,7 +16,6 @@ import type { PreparedPhotoGrant } from './member-photo.ts';
 import { blankOutcome, canOverride, safeOutcomeDetails } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import * as gates from './repo-gates.ts';
-import type { Candidate } from './repo-lookup.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
@@ -26,7 +24,6 @@ import { afterReads, capturingDb } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
 import {
   capacityOpen,
-  decorateScan,
   retentionPart,
   SCAN_HELD_TABLES,
   scanIs,
@@ -52,8 +49,6 @@ export interface HeldGateInput {
   capacityFull: boolean;
   history?: PreloadedDisplayHistory;
   photo: PreparedPhotoGrant | null;
-  csrfSnapshot: ActorCsrfSnapshot;
-  originalCandidate: Candidate | null;
   facts: Omit<LedgerFacts, 'outcome' | 'reason'>;
   dayStart?: number;
   reservation: PinReservation | null;
@@ -118,7 +113,7 @@ export function heldOutcome(i: HeldOutcomeInput): ScanOutcome {
 /** A preflight-held gate is recorded without a gate write: one grant batch closes the scan as a heads-up. */
 export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome> {
   const { ctx, actor, found, action, scanId, claimAt, gate, claim, observed, holderResult } = input;
-  const { capacityRequired, capacityFull, history, photo, csrfSnapshot, originalCandidate } = input;
+  const { capacityRequired, capacityFull, history, photo } = input;
   const { facts, reservation, stopAuthority, onFailureCommitted } = input;
   const event = actor.event;
   const holder = heldGateHolder(holderResult, observed);
@@ -170,8 +165,6 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
     stopAuthority.actor,
     'heads_up',
     photo,
-    csrfSnapshot,
-    originalCandidate,
     history,
   );
   const now = ctx.clock.now();
@@ -229,12 +222,14 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
   ledgerEvent(g, row, scanId, 'heads_up', reason);
   g.include(retentionPart(retentionProofIfRecordedStmt(side.env.DB, retention)));
   g.assert('stale', [scanIs(scanId, { state: 'done' })]);
+  // The verified PIN's attempt comes back with the scan, in the same commit.
+  if (reservation) g.include(...reservation.refundParts());
   const counts = planCommitCounts(ctx, actor, input.dayStart);
   const bound = display.bind(ctx.clock.now(), doneScanPredicate(scanId));
   const committed = await g.commitWith(afterReads([...counts.stmts, ...bound.reads]));
+  reservation?.markRefunded();
   const results = committed.writes;
   const won = !!((results[g.indexOf(finalized)]?.results ?? []) as unknown[]).length;
-  const photoResults = await decorateScan(ctx, reservation, won ? bound.photo : []);
   if (!won) {
     onFailureCommitted();
     throw new StaleScanAuthority();
@@ -251,7 +246,7 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
     reason,
     holder,
     read,
-    display: bound.finish(committed.after.slice(counts.stmts.length), photoResults),
+    display: bound.finish(committed.after.slice(counts.stmts.length)),
     now: finishAt,
   });
 }

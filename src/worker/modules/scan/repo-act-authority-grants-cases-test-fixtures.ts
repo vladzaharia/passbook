@@ -1,6 +1,5 @@
 import { expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { expectBlocked, photoGrantFixture, raceGate } from './act-authority-test-fixtures.ts';
@@ -9,7 +8,7 @@ import { codeOf, key } from './test-kit.ts';
 
 export function registerAuthorityGrants() {
   it.each(['choose', 'stop'] as const)(
-    'publishes only confirmed photo and applicable generic grants for an authorized %s result',
+    'publishes photo and applicable generic grants that redeem for an authorized %s result',
     async (phase) => {
       const { scanner, pass } = await photoGrantFixture(phase === 'stop');
       const outcome = await out(await act(scanner.headers, codeOf(pass)));
@@ -20,14 +19,6 @@ export function registerAuthorityGrants() {
       const photoUrl = new URL(photo.url, 'https://wallet.test');
       const photoToken = photoUrl.searchParams.get('g');
       if (!photoToken) throw new Error('Missing confirmed photo token');
-      expect(
-        await first(
-          kit.env.DB,
-          `SELECT token_hash FROM scan_asset_grant_provenance
-        WHERE token_hash=? AND org_id=? AND mode='live'`,
-          [await sha256Hex(photoToken), kit.org.id],
-        ),
-      ).toEqual({ token_hash: await sha256Hex(photoToken) });
       expect(
         (
           await kit.get(
@@ -40,26 +31,20 @@ export function registerAuthorityGrants() {
         const generic = outcome.card?.passView.assetGrant;
         if (!generic) throw new Error('Missing confirmed pass-view grant');
         expect(generic).not.toBe(photoToken);
-        expect(
-          await first(
-            kit.env.DB,
-            `SELECT token_hash FROM scan_asset_grant_provenance
-          WHERE token_hash=? AND org_id=? AND mode='live'`,
-            [await sha256Hex(generic), kit.org.id],
-          ),
-        ).toEqual({ token_hash: await sha256Hex(generic) });
+        const icon = await kit.get(
+          scanner.headers,
+          `/passes/${pass.id}/assets/icon.png?g=${encodeURIComponent(generic)}`,
+        );
+        expect(icon.status).toBe(200);
+        await icon.body?.cancel();
       }
     },
   );
 
   it.each(['choose', 'stop'] as const)(
-    'rolls back %s and every deferred grant when output authority changes',
+    'rolls back %s and publishes no grant when output authority changes',
     async (phase) => {
       const { scanner, pass } = await photoGrantFixture(phase === 'stop');
-      const before = await rows<{ token_hash: string }>(
-        'SELECT token_hash FROM scan_asset_grant_provenance WHERE org_id=? ORDER BY token_hash',
-        [kit.org.id],
-      );
       const idempotencyKey = key();
       // The scanner is revoked before the commit: the grant refuses (401 re-pair) and no deferred
       // grant, scan or ledger row is written.
@@ -75,12 +60,6 @@ export function registerAuthorityGrants() {
       expect(body).not.toContain(pass.id);
       expect(body).not.toContain('member.png');
       expect(body).not.toContain('assetGrant');
-      expect(
-        await rows<{ token_hash: string }>(
-          'SELECT token_hash FROM scan_asset_grant_provenance WHERE org_id=? ORDER BY token_hash',
-          [kit.org.id],
-        ),
-      ).toEqual(before);
       expect(
         await rows("SELECT id FROM scans WHERE pass_id=? AND state='done'", [pass.id]),
       ).toHaveLength(0);
@@ -117,10 +96,6 @@ export function registerAuthorityGrants() {
       null,
     );
     expect((await out(await act(scanner.headers, codeOf(pass)))).kind).toBe('ok');
-    const before = await rows<{ token_hash: string }>(
-      'SELECT token_hash FROM scan_asset_grant_provenance WHERE org_id=? ORDER BY token_hash',
-      [kit.org.id],
-    );
     const response = await raceGate(scanner.headers, codeOf(pass), (db) =>
       run(db, 'UPDATE scan_gates SET count=count+1 WHERE pass_id=?', [pass.id]),
     );
@@ -135,12 +110,6 @@ export function registerAuthorityGrants() {
     expect(await rows('SELECT count FROM scan_gates WHERE pass_id=?', [pass.id])).toEqual([
       { count: 3 },
     ]);
-    expect(
-      await rows<{ token_hash: string }>(
-        'SELECT token_hash FROM scan_asset_grant_provenance WHERE org_id=? ORDER BY token_hash',
-        [kit.org.id],
-      ).then((r) => r.length),
-    ).toBeGreaterThanOrEqual(before.length);
   });
 
   it('does not claim a key after the original scanner CSRF authority changes', async () => {

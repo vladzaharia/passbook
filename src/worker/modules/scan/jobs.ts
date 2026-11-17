@@ -11,7 +11,6 @@ import { getPlatformSettings } from '../settings/service.ts';
 import { lookupHashOf } from './codes.ts';
 import { scanCredentialKeys } from './credential-input.ts';
 import { recoverScans } from './recover.ts';
-import { pruneExpiredScanAssetGrants } from './repo-asset-grants.ts';
 import {
   type BackfillKeys,
   type BackfillRow,
@@ -225,6 +224,5 @@ export async function dailyScans(ctx: ServiceContext): Promise<void> {
     'test',
     now - settings['sandbox.purgeDays'] * DAY,
   );
-  await pruneExpiredScanAssetGrants(ctx.env.DB, now);
   ctx.log.info('scan.retention', { live, test });
 }

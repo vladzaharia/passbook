@@ -146,7 +146,6 @@ describe('scanner asset approved-release lineage', () => {
       { ...candidate, activeReleaseCandidateHash: null },
       { ...candidate, displayTemplateVersion: null },
       { ...candidate, displayTemplateVersion: 'another-version' },
-      { ...candidate, activeReleaseId: 'another-release' },
       { ...candidate, activeReleaseGeneration: (candidate.activeReleaseGeneration ?? 0) + 1 },
       { ...candidate, activeReleaseVersion: 'another-version' },
       { ...candidate, activeReleaseCandidateHash: '0'.repeat(64) },

@@ -6,11 +6,9 @@ import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { deleteMemberPhoto, putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { replaceCallbackKeysetForTest } from '../wallet-providers/callbacks-test-fixtures.ts';
-import { grantInsertConfirmed } from './asset-grant-results.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
-import { confirmedPhotoUrl, knownPhotoUrl, scannerPassActive } from './member-photo.ts';
-import { scanPhotoUrl } from './member-photo-url.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
+import { knownPhotoUrl, photoGrantUrl, scannerPassActive } from './member-photo.ts';
+import { scanPhotoUrl } from './member-photo-url-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -58,9 +56,6 @@ describe('scanner member photos', () => {
     });
     expect(
       await first(scoped.env.DB, 'SELECT id FROM credential_ref_keyset WHERE id=1'),
-    ).toBeNull();
-    expect(
-      await first(scoped.env.DB, 'SELECT token_hash FROM scan_asset_grant_provenance'),
     ).toBeNull();
   });
   it('renders a private photo and binds its image grant to the scanning device', async () => {
@@ -200,7 +195,7 @@ describe('scanner member photos', () => {
     ).toBe(false);
   });
 
-  it('keeps a cloneable photo plan tokenless until its guarded insert is confirmed', async () => {
+  it('keeps a cloneable photo plan tokenless and releases its URL only to the recipient it was minted for', async () => {
     const pass = await kit.scanPass(template);
     await putMemberPhoto(
       kit.ctx,
@@ -218,39 +213,26 @@ describe('scanner member photos', () => {
     if (!prepared) throw new Error('Photo grant plan missing');
     const clone = structuredClone(prepared);
     expect(prepared).not.toHaveProperty('url');
-    expect(confirmedPhotoUrl(actor, pass.id, prepared.grant, undefined)).toBeNull();
-    const cloneBind = await prepareAssetGrantInsertion(kit.ctx, clone.grant, undefined, candidate);
-    await expect(kit.env.DB.batch(cloneBind(kit.clock.now(), undefined))).rejects.toThrow(
-      'scan_asset_authority_failed',
-    );
-    const bind = await prepareAssetGrantInsertion(kit.ctx, prepared.grant, undefined, candidate);
-    const inserted = await kit.env.DB.batch(bind(kit.clock.now(), undefined));
-    expect(grantInsertConfirmed(inserted)).toBe(true);
-    expect(confirmedPhotoUrl(actor, pass.id, clone.grant, inserted)).toBeNull();
+    expect(photoGrantUrl(actor, pass.id, clone.grant)).toBeNull();
     const otherScanner = await kit.scanner({ templateIds: [template] });
     const otherActor = await assetActorFor(kit, otherScanner);
-    expect(confirmedPhotoUrl(otherActor, pass.id, prepared.grant, inserted)).toBeNull();
+    expect(photoGrantUrl(otherActor, pass.id, prepared.grant)).toBeNull();
     const changedSettings = {
       ...actor,
       settings: { ...actor.settings, lookup: !actor.settings.lookup },
     };
-    expect(confirmedPhotoUrl(changedSettings, pass.id, prepared.grant, inserted)).toBeNull();
+    expect(photoGrantUrl(changedSettings, pass.id, prepared.grant)).toBeNull();
     const changedKeyset = { ...actor, credentialKeysetCommitment: '0'.repeat(64) };
-    expect(confirmedPhotoUrl(changedKeyset, pass.id, prepared.grant, inserted)).toBeNull();
-    expect(confirmedPhotoUrl(actor, `${pass.id}-other`, prepared.grant, inserted)).toBeNull();
-    const wrongHash = inserted.map((result, index) =>
-      index === 0 ? { ...result, results: [{ token_hash: '0'.repeat(64) }] } : result,
-    );
-    expect(confirmedPhotoUrl(actor, pass.id, prepared.grant, wrongHash)).toBeNull();
-    const url = confirmedPhotoUrl(actor, pass.id, prepared.grant, inserted);
-    if (!url) throw new Error('Confirmed photo URL missing');
-    expect(confirmedPhotoUrl(actor, pass.id, prepared.grant, inserted)).toBeNull();
+    expect(photoGrantUrl(changedKeyset, pass.id, prepared.grant)).toBeNull();
+    expect(photoGrantUrl(actor, `${pass.id}-other`, prepared.grant)).toBeNull();
+    const url = photoGrantUrl(actor, pass.id, prepared.grant);
+    if (!url) throw new Error('Photo URL missing');
     const after = await kit.get(scanner.headers, url.replace('/api/v1/scan', ''));
     expect(after.status).toBe(200);
     expect(new Uint8Array(await after.arrayBuffer())).toEqual(bytes);
   });
 
-  it('does not insert a prepared grant after the observed photo is removed', async () => {
+  it('does not serve a photo that was removed after its grant was minted', async () => {
     const pass = await kit.scanPass(template);
     await putMemberPhoto(
       kit.ctx,
@@ -266,54 +248,40 @@ describe('scanner member photos', () => {
     const pinned = await kit.registry.resolve(template, candidate.pass.templateVersion);
     const prepared = await knownPhotoUrl(kit.ctx, actor, candidate, pinned);
     if (!prepared) throw new Error('Photo grant plan missing');
-    const bind = await prepareAssetGrantInsertion(kit.ctx, prepared.grant, undefined, candidate);
+    const url = photoGrantUrl(actor, pass.id, prepared.grant)?.replace('/api/v1/scan', '');
+    if (!url) throw new Error('Photo URL missing');
+    // Positive control: served before the photo is removed.
+    expect((await kit.get(scanner.headers, url)).status).toBe(200);
     await deleteMemberPhoto(kit.ctx, { type: 'system', id: null }, pass.id, null);
-    await expect(kit.env.DB.batch(bind(kit.clock.now(), undefined))).rejects.toThrow(
-      'scan_asset_authority_failed',
-    );
-    expect(confirmedPhotoUrl(actor, pass.id, prepared.grant, undefined)).toBeNull();
-    expect(
-      await first(
-        kit.env.DB,
-        'SELECT token_hash FROM scan_asset_grant_provenance WHERE token_hash=?',
-        [prepared.grant.tokenHash],
-      ),
-    ).toBeNull();
+    const gone = await kit.get(scanner.headers, url);
+    expect(gone.status).toBe(404);
+    expect(await gone.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
   });
 
-  it.each([0, 1])(
-    'does not insert a photo grant %i ms at or after its prepared expiry',
-    async (offset) => {
-      const pass = await kit.scanPass(template);
-      await putMemberPhoto(
-        kit.ctx,
-        { type: 'system', id: null },
-        pass.id,
-        { png, includeInPass: false },
-        null,
-      );
-      const scanner = await kit.scanner({ templateIds: [template] });
-      const actor = await assetActorFor(kit, scanner);
-      const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
-      if (!candidate) throw new Error('Pass fixture missing');
-      const pinned = await kit.registry.resolve(template, candidate.pass.templateVersion);
-      const prepared = await knownPhotoUrl(kit.ctx, actor, candidate, pinned);
-      if (!prepared) throw new Error('Photo grant plan missing');
-      expect(prepared.grant.expiresAt).toBeGreaterThan(kit.clock.now());
-      const bind = await prepareAssetGrantInsertion(kit.ctx, prepared.grant, undefined, candidate);
-      kit.clock.advance(prepared.grant.expiresAt - kit.clock.now() + offset);
-      expect(kit.clock.now()).toBe(prepared.grant.expiresAt + offset);
-      await expect(kit.env.DB.batch(bind(kit.clock.now(), undefined))).rejects.toThrow(
-        'scan_asset_authority_failed',
-      );
-      expect(confirmedPhotoUrl(actor, pass.id, prepared.grant, undefined)).toBeNull();
-      expect(
-        await first(
-          kit.env.DB,
-          'SELECT token_hash FROM scan_asset_grant_provenance WHERE token_hash=?',
-          [prepared.grant.tokenHash],
-        ),
-      ).toBeNull();
-    },
-  );
+  it.each([0, 1])('does not serve a photo grant %i ms at or after its expiry', async (offset) => {
+    const pass = await kit.scanPass(template);
+    await putMemberPhoto(
+      kit.ctx,
+      { type: 'system', id: null },
+      pass.id,
+      { png, includeInPass: false },
+      null,
+    );
+    const scanner = await kit.scanner({ templateIds: [template] });
+    const actor = await assetActorFor(kit, scanner);
+    const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
+    if (!candidate) throw new Error('Pass fixture missing');
+    const pinned = await kit.registry.resolve(template, candidate.pass.templateVersion);
+    const prepared = await knownPhotoUrl(kit.ctx, actor, candidate, pinned);
+    if (!prepared) throw new Error('Photo grant plan missing');
+    expect(prepared.grant.expiresAt).toBeGreaterThan(kit.clock.now());
+    const url = photoGrantUrl(actor, pass.id, prepared.grant)?.replace('/api/v1/scan', '');
+    if (!url) throw new Error('Photo URL missing');
+    // Positive control: one millisecond before expiry it is served.
+    kit.clock.advance(prepared.grant.expiresAt - kit.clock.now() - 1);
+    expect((await kit.get(scanner.headers, url)).status).toBe(200);
+    kit.clock.advance(1 + offset);
+    expect(kit.clock.now()).toBe(prepared.grant.expiresAt + offset);
+    expect((await kit.get(scanner.headers, url)).status).toBe(404);
+  });
 });

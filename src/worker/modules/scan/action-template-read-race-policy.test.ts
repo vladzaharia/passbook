@@ -180,11 +180,6 @@ describe('action policy from captured D1 template rows', () => {
         pass: { templateVersion: 'v1' },
         activeTemplateVersion: 'v2',
       });
-      const before = await first(
-        kit.env.DB,
-        'SELECT count(*) AS n FROM scan_asset_grant_provenance WHERE org_id=?',
-        [kit.org.id],
-      );
       const result = await action(kit, f.scanner.headers, body(kit, f.pass.id));
       expect(result).toMatchObject({ kind: 'refused', card: null, display: null, template: null });
       expect(JSON.stringify(result)).not.toContain(PRIVATE);
@@ -198,13 +193,6 @@ describe('action policy from captured D1 template rows', () => {
           [f.pass.id],
         ),
       ).toBeNull();
-      expect(
-        await first(
-          kit.env.DB,
-          'SELECT count(*) AS n FROM scan_asset_grant_provenance WHERE org_id=?',
-          [kit.org.id],
-        ),
-      ).toEqual(before);
     },
   );
 

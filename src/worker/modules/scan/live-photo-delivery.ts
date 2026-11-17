@@ -5,7 +5,11 @@ import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { memberPhotoFromResult, memberPhotoStmt } from '../passes/repo-member-photo.ts';
 import type { ScanActor } from './actor.ts';
 import { photoGrantPurpose } from './asset-types.ts';
-import { assetGrantTokenHash, assetWalletActive, prepareAssetGrantVerification } from './assets.ts';
+import {
+  assetGrantWellFormed,
+  assetWalletActive,
+  prepareAssetGrantVerification,
+} from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import {
   cloneLiveAttachment,
@@ -18,11 +22,7 @@ import { openLiveSourceProof } from './live-provenance.ts';
 import { type PhotoProof, sameSnapshot } from './live-render.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { photoPolicyForResolved } from './member-photo.ts';
-import {
-  assetGrantFromResult,
-  getAssetGrantStmt,
-  prepareStoredAssetGrantFence,
-} from './repo-asset-grants.ts';
+import { prepareAssetGrantFence } from './repo-asset-fence.ts';
 import { liveDisclosureCsrfStmts, liveDisclosureCurrent } from './repo-live-authority.ts';
 import { livePhotoDeliveryPredicate } from './repo-live-photo-delivery.ts';
 import { scanTemplateSnapshotPredicate } from './repo-live-template-snapshot.ts';
@@ -62,14 +62,13 @@ export async function prepareLivePhoto(
   )
     return null;
   try {
-    const [proof, tokenHash, keyset] = await Promise.all([
+    const [proof, keyset] = await Promise.all([
       openLiveSourceProof(ctx.env, observedRef.sourceProof),
-      assetGrantTokenHash(grant),
       credentialRefKeysetCommitment(ctx.env),
     ]);
     if (
       !proof ||
-      !tokenHash ||
+      !assetGrantWellFormed(grant) ||
       !proof.actor.scanner ||
       !proof.actor.role ||
       proof.eventId !== observedRef.eventId ||
@@ -93,11 +92,10 @@ export async function prepareLivePhoto(
       recipientStmts.stamps,
       byIdStmt(ctx.env.DB, actor.orgId, passId),
       memberPhotoStmt(ctx.env.DB, actor.orgId, passId),
-      getAssetGrantStmt(ctx.env.DB, tokenHash, actor.orgId, actor.mode, ctx.clock.now()),
       csrfStmts.source,
       csrfStmts.recipient,
     ]);
-    if (results.length !== 7 || results.some((result) => result?.success !== true)) return null;
+    if (results.length !== 6 || results.some((result) => result?.success !== true)) return null;
     const recipient = liveRecipientFromResults(ctx, actor, capturedAttachment, {
       watch: results[0],
       stamps: results[1],
@@ -105,12 +103,10 @@ export async function prepareLivePhoto(
     const candidates = candidatesOf(results[2]);
     const loaded = candidates.length === 1 ? candidates[0] : null;
     const photo = memberPhotoFromResult(results[3]);
-    const stored = assetGrantFromResult(results[4]);
     if (
       !recipient ||
       !loaded ||
       !photo ||
-      !stored ||
       loaded.credentialKeysetCommitment !== proof.credentialContext.credentialKeysetCommitment ||
       (!recipient.watch.allOrg && !recipient.watch.scannerIds.includes(proof.actor.scanner.id))
     )
@@ -155,22 +151,12 @@ export async function prepareLivePhoto(
       candidate,
       candidate.connectionGeneration,
       grant,
-      stored,
       { sourceId: proof.actor.scanner.id, eventId: observedRef.eventId, actor: proof.actor },
       purpose,
       true,
     );
-    if (
-      !verified ||
-      verified.credentialTombstoneRefs.length !==
-        proof.credentialContext.credentialTombstoneRefs.length ||
-      verified.credentialTombstoneRefs.some(
-        (value, index) => value !== proof.credentialContext.credentialTombstoneRefs[index],
-      )
-    )
-      return null;
-    const original = { ...candidate, credentialTombstoneRefs: verified.credentialTombstoneRefs };
-    const grantFence = await prepareStoredAssetGrantFence(ctx, verified, original);
+    if (!verified) return null;
+    const grantFence = await prepareAssetGrantFence(ctx, verified, candidate);
     const templateFence = scanTemplateSnapshotPredicate(
       candidate,
       candidate.templateSnapshot,
@@ -211,7 +197,7 @@ export async function prepareLivePhoto(
           requirePhoto: true,
           extra,
         },
-        { sourceResult: results[5], recipientResult: results[6] },
+        { sourceResult: results[4], recipientResult: results[5] },
       );
     };
     if (!(await check(false))) return null;
