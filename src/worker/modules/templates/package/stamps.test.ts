@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { stampKey } from '../../../../passkit/stamps/key.ts';
 import { type Analysis, analyzePackage } from './analyze.ts';
 import { basicPackage, makePng } from './fixtures.ts';
+import { sha256BytesHex } from './hash.ts';
 
 const storeCard = {
   formatVersion: 1,
@@ -130,6 +132,27 @@ describe('stamps in a package', { timeout: 180_000 }, () => {
     expect(a.assets.filter((x) => x.stamps !== undefined).map((x) => x.stamps)).toEqual([1, 1]);
     expect(keys[0]).toBe(keys[1]);
     expect(new Set(keys).size).toBe(3);
+  });
+
+  it('keys on the SHA-256 of the art and strip bytes', async () => {
+    const files = pkg(4);
+    const keys: string[] = [];
+    await analyzePackage(files, {
+      uploaded: true,
+      fallbackName: 'x',
+      stamps: {
+        counts: [1],
+        carry: async (key) => {
+          keys.push(key);
+          return null;
+        },
+      },
+    });
+    const hashes = new Map<string, string>();
+    for (const name of ['stamps/filled.png', 'stamps/empty.png', 'strip@2x.png', 'strip@3x.png'])
+      hashes.set(name, await sha256BytesHex(files.get(name) as Uint8Array));
+    const block = JSON.parse(new TextDecoder().decode(files.get('wallet.template.json'))).stamps;
+    expect(keys[0]).toBe(await stampKey(block, (name) => hashes.get(name)));
   });
 
   it('refuses uploaded generated strips', async () => {

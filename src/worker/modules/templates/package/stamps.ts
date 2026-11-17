@@ -1,7 +1,7 @@
 import { stampKey } from '../../../../passkit/stamps/key.ts';
 import { renderStampFiles, type StampFiles } from '../../../../passkit/stamps/package.ts';
 import type { AssetEntry, TemplateManifest, ValidationIssue } from '../../../../passkit/types.ts';
-import { crc32, sha1Hex } from './hash.ts';
+import { crc32, sha1Hex, sha256BytesHex } from './hash.ts';
 import type { CheckedImage } from './images.ts';
 import { byteLru } from './stamps-cache.ts';
 
@@ -67,10 +67,10 @@ export async function stampOutput(
   options: StampOptions = {},
 ): Promise<StampOutput> {
   const out: StampOutput = { files: new Map(), assets: [], issues: [] };
-  const sha1 = new Map<string, string>();
+  const digest = new Map<string, string>();
   for (const [name, bytes] of art) {
     const m = await meta(name, bytes);
-    sha1.set(name, m.sha1);
+    digest.set(name, await sha256BytesHex(bytes));
     out.files.set(name, bytes);
     out.assets.push({ ...m, slot: 'source', scale: 1 });
   }
@@ -81,9 +81,9 @@ export async function stampOutput(
     if (!s.locale && (s.scale === 2 || s.scale === 3)) {
       const name = `strip@${s.scale}x.png`;
       inputs.set(name, s.bytes);
-      sha1.set(name, await sha1Hex(s.bytes));
+      digest.set(name, await sha256BytesHex(s.bytes));
     }
-  const key = await stampKey(block, (name) => sha1.get(name));
+  const key = await stampKey(block, (name) => digest.get(name));
   const carried = options.carry ? await options.carry(key) : null;
   const counts = carried ? (options.sample ?? options.counts ?? []) : options.counts;
   const id = counts ? `${key}|${counts.join(',')}` : null;
