@@ -16,8 +16,9 @@ import { readUndo } from './repo-undo-read.ts';
 import { scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
+import { planUndoAnswer } from './undo-answer.ts';
 import { notFound, planUndo, superseded } from './undo-authority.ts';
-import { answer, replayUndo, type UndoRequest } from './undo-replay.ts';
+import { replayUndo, type UndoRequest } from './undo-replay.ts';
 import { commitValueUndo } from './undo-value.ts';
 
 /**
@@ -128,15 +129,24 @@ async function run(
     approver = { id: staff.id, authEpoch: staff.authEpoch };
   }
   const id = ctx.ids.ordered();
+  const answer = planUndoAnswer(ctx, actor, target.passId);
+  let after: D1Result[];
   try {
-    const commit = { ctx, actor, ...plan, approver, id, key: req.idempotencyKey };
-    if (target.actionKind === 'check_in') await commitUndo(commit);
-    else await commitValueUndo(commit);
+    const commit = {
+      ctx,
+      actor,
+      ...plan,
+      approver,
+      id,
+      key: req.idempotencyKey,
+      reads: answer.reads,
+    };
+    after = await (target.actionKind === 'check_in' ? commitUndo(commit) : commitValueUndo(commit));
   } catch (error) {
     if (error instanceof AppError && error.code === UNDO_CODES.stale) throw notFound();
     throw error;
   }
-  return answer(ctx, actor, target.passId, id, false);
+  return answer.finish(after, id);
 }
 
 export const consoleUndo: ConsoleUndo = async (ctx, session, input) => {

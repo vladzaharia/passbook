@@ -73,14 +73,13 @@ it('stays inside the bind limits with every actor part at once', async () => {
   expect(event.id).toBeTruthy();
 });
 
-it('takes few round trips: a read batch, settings, the commit and the answer', async () => {
-  // The answer reads the pass and the counts in parallel, so it is one hop for two calls.
+it('takes few round trips: a read batch, settings and one commit that carries the answer', async () => {
   const hops = (calls: string[]) => calls.length - 1;
   const s = await scenario();
   const plain = counted();
   await undo(plain.ctx, s.actor, s.targetId, { idempotencyKey: key() });
-  expect(plain.calls.filter((c) => c === 'batch')).toHaveLength(3);
-  expect(hops(plain.calls)).toBeLessThanOrEqual(4);
+  expect(plain.calls.filter((c) => c === 'batch')).toHaveLength(2);
+  expect(hops(plain.calls)).toBeLessThanOrEqual(2);
 
   const approved = await full();
   kit.clock.advance(11 * 60_000);
@@ -90,7 +89,7 @@ it('takes few round trips: a read batch, settings, the commit and the answer', a
     approval: { staffId: approved.manager.id, pin: approved.manager.pin },
   });
   // Plus the PIN reservation and its refund.
-  expect(hops(withApproval.calls)).toBeLessThanOrEqual(6);
+  expect(hops(withApproval.calls)).toBeLessThanOrEqual(4);
 });
 
 async function full() {
