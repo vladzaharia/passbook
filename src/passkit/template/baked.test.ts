@@ -19,7 +19,7 @@ beforeAll(async () => {
   freezeNow();
   // A stamps package draws its strips on first read.
   await Promise.all(bakedSlugs().map((slug) => loadBaked(slug)));
-});
+}, 120_000); // PNG composition and decoding under v8 coverage in coverage-node runs far slower than locally (about 10x)
 const buildBaked = (slug: string, input?: Personalization) => build(slug, material, input);
 
 describe.each(bakedSlugs())('baked template %s', (slug) => {
