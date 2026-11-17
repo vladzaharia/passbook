@@ -9,7 +9,6 @@ import type { ScanActor } from './actor.ts';
 import { assetActorScope } from './asset-authority.ts';
 import {
   type AssetGrantPurpose,
-  type AssetGrantSource,
   type AssetPassSnapshot,
   type AssetWalletSnapshot,
   photoGrantPurpose,
@@ -44,7 +43,6 @@ export async function grantData(
   snapshot: AssetPassSnapshot,
   connectionGeneration: number | null,
   activeVersion: string | null,
-  source: AssetGrantSource | undefined,
   requirePhoto: boolean,
   purpose: AssetGrantPurpose,
 ) {
@@ -88,9 +86,7 @@ export async function grantData(
         !assetPhoto.key ||
         typeof assetPhoto.sha1 !== 'string' ||
         !/^[a-f0-9]{40}$/.test(assetPhoto.sha1) ||
-        (assetPhoto.includeInPass !== 0 && assetPhoto.includeInPass !== 1))) ||
-    (source &&
-      (!source.eventId || !source.sourceId || source.actor.scanner?.id !== source.sourceId))
+        (assetPhoto.includeInPass !== 0 && assetPhoto.includeInPass !== 1)))
   )
     return null;
   const release = usedRelease(snapshot.templateSnapshot?.raw);
@@ -162,8 +158,6 @@ export async function grantData(
   const photoVersion = assetPhoto?.version ?? null;
   const photoSha1 = assetPhoto?.sha1 ?? null;
   const photoIncluded = assetPhoto?.includeInPass ?? null;
-  const sourceId = source?.sourceId ?? null;
-  const sourceEventId = source?.eventId ?? null;
   const sensitive = [
     canonicalJson(wallet),
     versionPersonalization,
@@ -179,10 +173,7 @@ export async function grantData(
     pass.externalRef,
     assetPhoto?.key ?? null,
   ];
-  const actorResults = Promise.all([
-    assetActorScope(ctx, actor, pass),
-    source ? assetActorScope(ctx, source.actor, pass) : Promise.resolve(null),
-  ]).then(
+  const actorResults = assetActorScope(ctx, actor, pass).then(
     (value) => ({ value }),
     (error: unknown) => ({ error }),
   );
@@ -190,8 +181,8 @@ export async function grantData(
   const actors = await actorResults;
   if (!keyset || !(await safeEqual(credentialKeysetCommitment, keyset))) return null;
   if ('error' in actors) throw actors.error;
-  const [recipient, sender] = actors.value;
-  if (!recipient || (source && !sender)) return null;
+  const recipient = actors.value;
+  if (!recipient) return null;
   const claimKey = await derivedHmacKey(ctx.env, 'scan-asset-claim');
   const [
     walletDigest,
@@ -210,11 +201,9 @@ export async function grantData(
   ] = await Promise.all(sensitive.map((value) => sensitiveDigest(claimKey, value)));
   return {
     recipientSession: recipient.session,
-    sourceSession: sender?.session ?? null,
     fields: [
-      'scan-asset-v3',
+      'scan-asset-v4',
       recipient.fields,
-      sourceId !== null ? [sourceId, sourceEventId, sender?.fields] : null,
       credentialKeysetCommitment,
       id,
       orgId,

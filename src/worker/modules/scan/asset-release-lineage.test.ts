@@ -35,7 +35,6 @@ async function setup(older = false) {
     candidate,
     candidate.connectionGeneration,
     candidate.activeTemplateVersion,
-    undefined,
     false,
     'commit',
   );
@@ -66,7 +65,6 @@ describe('scanner asset approved-release lineage', () => {
       current,
       current.connectionGeneration,
       current.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );
@@ -102,7 +100,6 @@ describe('scanner asset approved-release lineage', () => {
         staleRelease,
         current.connectionGeneration,
         current.activeTemplateVersion,
-        undefined,
         false,
         'commit',
       ),
@@ -114,7 +111,6 @@ describe('scanner asset approved-release lineage', () => {
         current,
         current.connectionGeneration,
         grant,
-        undefined,
         'commit',
         false,
       ),
@@ -131,7 +127,6 @@ describe('scanner asset approved-release lineage', () => {
       current,
       current.connectionGeneration,
       current.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );
@@ -160,7 +155,6 @@ describe('scanner asset approved-release lineage', () => {
           stale,
           candidate.connectionGeneration,
           candidate.activeTemplateVersion,
-          undefined,
           false,
           'commit',
         ),
@@ -187,7 +181,6 @@ describe('scanner asset approved-release lineage', () => {
         forged,
         forged.connectionGeneration,
         forged.activeTemplateVersion,
-        undefined,
         false,
         'commit',
       ),
@@ -216,7 +209,6 @@ describe('scanner asset approved-release lineage', () => {
         candidate,
         candidate.connectionGeneration,
         candidate.activeTemplateVersion,
-        undefined,
         false,
         'commit',
       );

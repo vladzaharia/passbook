@@ -56,7 +56,6 @@ const mintPhoto = (f: Awaited<ReturnType<typeof photoFixture>>) =>
     f.candidate,
     f.candidate.connectionGeneration,
     f.candidate.activeTemplateVersion,
-    undefined,
     true,
     'commit',
   );
@@ -152,7 +151,6 @@ describe('stateless asset capability', () => {
         f.candidate,
         f.candidate.connectionGeneration,
         grant,
-        undefined,
         'commit',
         true,
       );
@@ -215,7 +213,6 @@ describe('stateless asset capability', () => {
         f.candidate,
         f.candidate.connectionGeneration,
         token,
-        undefined,
         'commit',
         true,
       );
@@ -227,7 +224,6 @@ describe('stateless asset capability', () => {
       f.candidate,
       f.candidate.connectionGeneration,
       f.candidate.activeTemplateVersion,
-      undefined,
       true,
     );
     expect(await redeem(admin, own)).toBe(true);
@@ -238,7 +234,6 @@ describe('stateless asset capability', () => {
         f.candidate,
         f.candidate.connectionGeneration,
         own,
-        undefined,
         'commit',
         true,
       ),

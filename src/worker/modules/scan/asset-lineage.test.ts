@@ -107,7 +107,6 @@ describe('scanner asset lineage', () => {
           forged,
           forged.connectionGeneration,
           fixture.grant,
-          undefined,
           'commit',
           true,
         ),
@@ -352,7 +351,6 @@ describe('scanner asset lineage', () => {
       evaluated,
       evaluated.connectionGeneration,
       evaluated.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );

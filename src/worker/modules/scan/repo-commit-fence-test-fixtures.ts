@@ -8,7 +8,7 @@ import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import type { Pass } from '../passes/repo.ts';
 import {
   captureConsoleSessionCountAuthority,
-  type SessionCountAuthority,
+  type SessionReadAuthority,
 } from './scanning-session-dto.ts';
 import { codeOf, grantScanMembership, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -18,7 +18,7 @@ export let managerTemplate: string;
 export let otherOwner: string;
 export let sessionCreator: string;
 export let sessionWriteAuthority: TenantPassWrite;
-export let sessionCountAuthority: SessionCountAuthority;
+export let sessionCountAuthority: SessionReadAuthority;
 
 export async function setupCommitFenceFixture() {
   kit = await setupScanKit();

@@ -50,7 +50,6 @@ describe('scanner asset capability provenance', () => {
       candidate,
       candidate.connectionGeneration,
       candidate.activeTemplateVersion,
-      undefined,
       true,
       'commit',
     );
@@ -61,7 +60,6 @@ describe('scanner asset capability provenance', () => {
         candidate,
         candidate.connectionGeneration,
         token,
-        undefined,
         'commit',
         true,
       ),
@@ -97,7 +95,6 @@ describe('scanner asset capability provenance', () => {
         candidate,
         candidate.connectionGeneration,
         token,
-        undefined,
         'commit',
         true,
       ),

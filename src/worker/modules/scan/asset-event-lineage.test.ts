@@ -43,7 +43,6 @@ describe('scanner asset event scope', () => {
         candidate,
         candidate.connectionGeneration,
         candidate.activeTemplateVersion,
-        undefined,
         false,
         'commit',
       ),
@@ -173,7 +172,6 @@ describe('scanner asset event scope', () => {
       candidate,
       candidate.connectionGeneration,
       candidate.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );
@@ -189,7 +187,6 @@ describe('scanner asset event scope', () => {
       candidate,
       candidate.connectionGeneration,
       candidate.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );
