@@ -35,14 +35,14 @@ export interface SamsungInboundRequestInput {
     signedAt: number,
     queryBound: boolean,
   ) => Promise<boolean>;
-  now?: number;
+  now: number;
 }
 
 export async function verifySamsungInboundRequest(
   account: ValidatedSamsungCallbackCredentials,
   input: SamsungInboundRequestInput,
 ): Promise<VerifiedSamsungRequest> {
-  const now = input.now ?? Date.now();
+  const now = input.now;
   assertSamsungCallbackCredentialsCurrent(account, now);
   const { request, refId } = input;
   if (

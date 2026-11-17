@@ -615,25 +615,27 @@ describe('Samsung notifications', () => {
   });
 
   it('classifies bounded retries and never exposes provider response bodies', async () => {
-    expect(classifySamsungFailure({ status: 204, attempt: 1 })).toMatchObject({
+    expect(classifySamsungFailure({ status: 204, attempt: 1, now: NOW })).toMatchObject({
       kind: 'not_found',
       retryable: false,
     });
-    expect(classifySamsungFailure({ status: 401, attempt: 1 })).toMatchObject({
+    expect(classifySamsungFailure({ status: 401, attempt: 1, now: NOW })).toMatchObject({
       kind: 'authentication',
       retryable: false,
     });
-    expect(classifySamsungFailure({ status: 429, attempt: 1, retryAfter: '99999' })).toMatchObject({
+    expect(
+      classifySamsungFailure({ status: 429, attempt: 1, retryAfter: '99999', now: NOW }),
+    ).toMatchObject({
       kind: 'rate_limit',
       retryable: true,
       retryAfterMs: 300_000,
     });
-    expect(classifySamsungFailure({ status: 503, attempt: 3 })).toMatchObject({
+    expect(classifySamsungFailure({ status: 503, attempt: 3, now: NOW })).toMatchObject({
       kind: 'unavailable',
       retryable: false,
       ambiguous: true,
     });
-    expect(classifySamsungFailure({ attempt: 1 })).toMatchObject({
+    expect(classifySamsungFailure({ attempt: 1, now: NOW })).toMatchObject({
       kind: 'network',
       retryable: true,
       ambiguous: true,

@@ -59,9 +59,9 @@ function header(account: ValidatedSamsungCredentials, cty: 'AUTH' | 'CARD', now:
 /** Samsung's v3 JWS header and request-binding payload: https://developer.samsung.com/wallet/securityauthentication/restapiauthorizationtoken.html */
 export async function createSamsungAuthorizationToken(
   account: ValidatedSamsungCredentials,
-  input: { method: 'GET' | 'POST'; path: string; refId?: string; now?: number },
+  input: { method: 'GET' | 'POST'; path: string; refId?: string; now: number },
 ): Promise<string> {
-  const now = input.now ?? Date.now();
+  const now = input.now;
   assertSamsungCredentialsCurrent(account, now);
   if (
     (input.method !== 'GET' && input.method !== 'POST') ||
@@ -130,7 +130,7 @@ function checkProjection(projection: SamsungCardProjection): void {
 export async function createSamsungCardDataToken(
   account: ValidatedSamsungCredentials,
   projection: SamsungCardProjection,
-  now = Date.now(),
+  now: number,
 ): Promise<string> {
   assertSamsungCredentialsCurrent(account, now);
   checkProjection(projection);
@@ -175,7 +175,7 @@ export async function verifySamsungRequest(
   account: ValidatedSamsungCredentials,
   input: SamsungInboundRequestInput,
 ): Promise<VerifiedSamsungRequest> {
-  const now = input.now ?? Date.now();
+  const now = input.now;
   assertSamsungCredentialsCurrent(account, now);
   const result = await verifySamsungInboundRequest(account, { ...input, now });
   verifiedRequests.set(result, account);
@@ -195,7 +195,7 @@ export async function samsungCardDataResponse(
   account: ValidatedSamsungCredentials,
   request: VerifiedSamsungRequest,
   projection: SamsungCardProjection,
-  now = Date.now(),
+  now: number,
 ): Promise<{ cdata: string }> {
   assertSamsungCredentialsCurrent(account, now);
   if (

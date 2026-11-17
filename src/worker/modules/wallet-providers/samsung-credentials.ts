@@ -115,7 +115,7 @@ function validateCallbackIdentity(input: SamsungCallbackCredentials, now: number
 /** The caller must retrieve the exact trusted historical certificate from onboarding, not the request. */
 export async function validateSamsungCallbackCredentials(
   input: SamsungCallbackCredentials,
-  now = Date.now(),
+  now: number,
 ): Promise<ValidatedSamsungCallbackCredentials> {
   validateCallbackIdentity(input, now);
   const samsung = await certificate(input.samsungCertificatePem, now);
@@ -138,7 +138,7 @@ export async function validateSamsungCallbackCredentials(
  */
 export async function validateSamsungCredentials(
   input: SamsungPartnerCredentials,
-  now = Date.now(),
+  now: number,
 ): Promise<ValidatedSamsungCredentials> {
   validateCallbackIdentity(input, now);
 
