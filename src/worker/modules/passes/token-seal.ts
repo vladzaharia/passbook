@@ -2,13 +2,13 @@ import { issueToken, type TokenPurpose } from '../../platform/capability-token.t
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
+import { sealTrusted } from './repo-pass-trusted.ts';
 import {
   countPlain,
   type PlainTokenRow,
   plainBundles,
   plainPasses,
   sealGrant,
-  sealTrusted,
 } from './repo-token-seal.ts';
 
 const BATCH = 50;

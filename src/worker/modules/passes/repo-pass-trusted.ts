@@ -1,4 +1,9 @@
-import { type IssuedToken, sealStatement } from '../../platform/capability-token.ts';
+import {
+  type IssuedToken,
+  type SealRow,
+  sealStatement,
+  type TokenPurpose,
+} from '../../platform/capability-token.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import type { Pass } from './repo-map.ts';
 import {
@@ -7,6 +12,12 @@ import {
   refreshPredicate,
   validRefreshEpochs,
 } from './repo-refresh-snapshot.ts';
+import {
+  BUNDLE_RESERVED,
+  PASS_PENDING,
+  PASS_RESERVED,
+  type PlainTokenRow,
+} from './repo-token-seal.ts';
 
 // Raw writes for callers that hold no tenant authority (holder refresh, fixtures, service tests). Tenant
 // requests take the grants in repo-pass-grants.ts; this file is allowlisted in tools/authority-scope.ts.
@@ -104,4 +115,30 @@ export async function softDeletePass(db: D1Database, pass: Pass, now: number): P
     ),
   ]);
   return (deleted?.results?.length ?? 0) === 1;
+}
+
+/**
+ * Seals the row of an org no job grant can write (suspended, deleted). Sealing changes no authority, so it
+ * is a plain batch: the update holds only for the plain token read, the copy only for the row that took it.
+ */
+export async function sealTrusted(
+  db: D1Database,
+  purpose: TokenPurpose,
+  row: PlainTokenRow,
+  mac: string,
+  seal: SealRow,
+): Promise<boolean> {
+  const pass = purpose === 'pass';
+  const [updated] = await batch(db, [
+    stmt(
+      db,
+      pass
+        ? `UPDATE passes SET download_token = ? WHERE id = ? AND download_token = ?
+             AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED} RETURNING id`
+        : `UPDATE bundles SET token = ? WHERE id = ? AND token = ? AND NOT ${BUNDLE_RESERVED} RETURNING id`,
+      [mac, row.id, row.token],
+    ),
+    sealStatement(db, purpose, row.id, mac, seal),
+  ]);
+  return (updated?.results.length ?? 0) === 1;
 }

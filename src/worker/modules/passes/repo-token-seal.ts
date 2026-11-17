@@ -1,12 +1,7 @@
 import { type Grant, jobGrant } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
-import {
-  type SealRow,
-  sealPart,
-  sealStatement,
-  type TokenPurpose,
-} from '../../platform/capability-token.ts';
-import { all, batch, first, stmt } from '../../platform/db.ts';
+import { type SealRow, sealPart, type TokenPurpose } from '../../platform/capability-token.ts';
+import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 
 /** A row whose token column still holds the plain token (written before the tokens were sealed). */
@@ -39,10 +34,10 @@ const map = (r: Raw): PlainTokenRow => ({
   orgActive: r.org_active === 1,
 });
 
-const PASS_PENDING = `EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = passes.id AND t.state = 'pending')`;
-const PASS_RESERVED = `EXISTS (SELECT 1 FROM sandbox_forward_passes fp JOIN sandbox_forwards f ON f.id = fp.forward_id
+export const PASS_PENDING = `EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = passes.id AND t.state = 'pending')`;
+export const PASS_RESERVED = `EXISTS (SELECT 1 FROM sandbox_forward_passes fp JOIN sandbox_forwards f ON f.id = fp.forward_id
   WHERE fp.pass_id = passes.id AND f.state IN ('sending', 'unknown'))`;
-const BUNDLE_RESERVED = `EXISTS (SELECT 1 FROM sandbox_forwards f
+export const BUNDLE_RESERVED = `EXISTS (SELECT 1 FROM sandbox_forwards f
   WHERE f.bundle_id = bundles.id AND f.state IN ('sending', 'unknown'))`;
 const ORG_ACTIVE = (table: string) =>
   `COALESCE((SELECT o.status = 'active' FROM orgs o WHERE o.id = ${table}.org_id), 0)`;
@@ -89,32 +84,6 @@ export async function countPlain(db: D1Database): Promise<number> {
           + (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS n`,
   );
   return row?.n ?? 0;
-}
-
-/**
- * Seals the row of an org no job grant can write (suspended, deleted). Sealing changes no authority, so it
- * is a plain batch: the update holds only for the plain token read, the copy only for the row that took it.
- */
-export async function sealTrusted(
-  db: D1Database,
-  purpose: TokenPurpose,
-  row: PlainTokenRow,
-  mac: string,
-  seal: SealRow,
-): Promise<boolean> {
-  const pass = purpose === 'pass';
-  const [updated] = await batch(db, [
-    stmt(
-      db,
-      pass
-        ? `UPDATE passes SET download_token = ? WHERE id = ? AND download_token = ?
-             AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED} RETURNING id`
-        : `UPDATE bundles SET token = ? WHERE id = ? AND token = ? AND NOT ${BUNDLE_RESERVED} RETURNING id`,
-      [mac, row.id, row.token],
-    ),
-    sealStatement(db, purpose, row.id, mac, seal),
-  ]);
-  return (updated?.results.length ?? 0) === 1;
 }
 
 const noPendingTransfer = (passId: string): Check =>
