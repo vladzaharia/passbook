@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { e2eOrigin } from '../tools/lib/e2e-ports.ts';
 import { apiAs, createPass, uid } from './helpers/api.ts';
 import { MAC_SAFARI } from './helpers/devices.ts';
 import { readSeed } from './helpers/seed.ts';
 
-const pathOf = (url: string) => new URL(url, 'http://localhost:5173').pathname;
+const pathOf = (url: string) => new URL(url, e2eOrigin).pathname;
 
 test('bundle link serves its passes without sign-in and dies when rotated', async ({ browser }) => {
   const admin = await apiAs('admin');

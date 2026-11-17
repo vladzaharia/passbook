@@ -1,9 +1,8 @@
-import { applyD1Migrations } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
 import { afterEach, beforeEach } from 'vitest';
-import { assertNoLeakedGrants } from '../helpers/grant-leak.ts';
+import { applySchemaSnapshot } from './schema-snapshot.ts';
 
-await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
+await applySchemaSnapshot(env.DB);
 
 const triggers = async () =>
   new Map(
@@ -14,12 +13,31 @@ const triggers = async () =>
       }>()
     ).results.map((row) => [row.name, row.sql]),
   );
-const keyset = () => env.DB.prepare('SELECT id, commitment FROM credential_ref_keyset').all();
-const migrated = await triggers();
 type KeysetRow = { id: number; commitment: string };
+// One round trip: a trigger fingerprint (count, total sql length and rowids: a dropped, added or
+// re-created trigger changes it; the sqlite_master walk below runs only then), the keyset,
+// and, when `leaks`, the grant rows that outlived their batch (authority-epochs.md section 1.2).
+const state = async (leaks: boolean) => {
+  const { DB } = env;
+  const [print, keyset, grants] = await DB.batch([
+    DB.prepare(
+      "SELECT count(*) || ':' || total(length(sql)) || ':' || total(rowid) AS v FROM sqlite_master WHERE type='trigger'",
+    ),
+    DB.prepare('SELECT id, commitment FROM credential_ref_keyset'),
+    DB.prepare(leaks ? 'DELETE FROM authority_grants RETURNING id, purpose' : 'SELECT 1 WHERE 0'),
+    ...(leaks ? [DB.prepare('DELETE FROM authority_grant_leaks')] : []),
+  ]);
+  return {
+    print: String((print?.results[0] as { v: string } | undefined)?.v),
+    keyset: (keyset?.results ?? []) as KeysetRow[],
+    grants: (grants?.results ?? []) as { id: string; purpose: string }[],
+  };
+};
+const migrated = await triggers();
+const migratedPrint = (await state(false)).print;
 let keysetBefore: KeysetRow[] = [];
 beforeEach(async () => {
-  keysetBefore = (await keyset()).results as KeysetRow[];
+  keysetBefore = (await state(false)).keyset;
 });
 
 // Storage lasts for the whole file, so a trigger or the keyset singleton changed by one test
@@ -28,11 +46,13 @@ beforeEach(async () => {
 // is immutable by trigger, so restoring it drops the guards first; migrated triggers are
 // recreated right after.
 afterEach(async () => {
-  const current = await triggers();
-  for (const [name, sql] of current)
-    if (migrated.get(name) !== sql) await env.DB.prepare(`DROP TRIGGER "${name}"`).run();
-  const rows = (await keyset()).results as KeysetRow[];
-  if (keysetBefore.length > 0 && JSON.stringify(rows) !== JSON.stringify(keysetBefore)) {
+  const now = await state(true);
+  if (now.print !== migratedPrint) {
+    const current = await triggers();
+    for (const [name, sql] of current)
+      if (migrated.get(name) !== sql) await env.DB.prepare(`DROP TRIGGER "${name}"`).run();
+  }
+  if (keysetBefore.length > 0 && JSON.stringify(now.keyset) !== JSON.stringify(keysetBefore)) {
     for (const name of [
       'credential_ref_keyset_insert_guard',
       'credential_ref_keyset_no_update',
@@ -45,7 +65,12 @@ afterEach(async () => {
         .bind(row.id, row.commitment)
         .run();
   }
-  const remaining = await triggers();
-  for (const [name, sql] of migrated) if (!remaining.has(name)) await env.DB.prepare(sql).run();
-  await assertNoLeakedGrants(env.DB);
+  if (now.print !== migratedPrint) {
+    const remaining = await triggers();
+    for (const [name, sql] of migrated) if (!remaining.has(name)) await env.DB.prepare(sql).run();
+  }
+  if (now.grants.length > 0)
+    throw new Error(
+      `AUTHORITY_GRANT_LEAK: ${now.grants.map((r) => r.purpose).join(', ')} left a grant row behind`,
+    );
 });

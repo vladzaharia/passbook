@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { apiAs, createPass, uid } from './helpers/api.ts';
+import { apiAs, BASE, createPass, uid } from './helpers/api.ts';
 import { MAC_SAFARI } from './helpers/devices.ts';
 import { readPkpass } from './helpers/pkpass.ts';
 import { readSeed } from './helpers/seed.ts';
@@ -10,7 +10,7 @@ test('public link works without sign-in and dies when rotated', async ({ browser
   const orgId = readSeed().org.id;
   const pass = await createPass(admin, orgId, { holder });
   const detail = await admin.get(`/api/v1/passes/${pass.id}`);
-  const publicPath = new URL(detail.publicUrl, 'http://localhost:5173').pathname;
+  const publicPath = new URL(detail.publicUrl, BASE).pathname;
 
   // Anonymous visitor on a Mac (the badge shows beside the QR): no cookies at all.
   const anon = await browser.newContext({ userAgent: MAC_SAFARI });
@@ -50,7 +50,7 @@ test('public link works without sign-in and dies when rotated', async ({ browser
   // The new link serves the pass.
   const fresh = await admin.get(`/api/v1/passes/${pass.id}`);
   expect(fresh.publicUrl).not.toBe(detail.publicUrl);
-  const ok = await anon.request.get(new URL(fresh.publicUrl, 'http://localhost:5173').pathname);
+  const ok = await anon.request.get(new URL(fresh.publicUrl, BASE).pathname);
   expect(ok.status()).toBe(200);
 
   await anon.close();

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { e2eOrigin } from '../tools/lib/e2e-ports.ts';
 import { apiAs, requireActiveTemplateRelease, uid } from './helpers/api.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
@@ -16,7 +17,7 @@ test('issuing from a blueprint is refused; a template made from it issues', asyn
     const release = await requireActiveTemplateRelease(api, seed.org.id, BALANCE, 'live');
     const refused = await api.ctx.post('/api/v1/passes', {
       headers: {
-        Origin: 'http://localhost:5173',
+        Origin: e2eOrigin,
         'X-CSRF-Token': (await (await api.ctx.get('/api/v1/session')).json()).csrfToken,
         'Idempotency-Key': uid('bp'),
       },

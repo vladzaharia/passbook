@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { type APIRequestContext, expect, request } from '@playwright/test';
+import { e2eOrigin } from '../../tools/lib/e2e-ports.ts';
 import { type Role, stateFile } from './auth.ts';
 
-export const BASE = 'http://localhost:5173';
+export const BASE = e2eOrigin;
 
 // biome-ignore lint/suspicious/noExplicitAny: loosely typed test-side API payloads
 type Json = any;
