@@ -1,8 +1,19 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { tenantFilter } from '../../platform/authority-read.ts';
 import { listConsoleEvents } from './repo-events.ts';
 import { listScanRows } from './repo-feed.ts';
+import type { ScanReadAuthority } from './repo-read-authority.ts';
 import { listConsoleScanners } from './repo-scanners.ts';
+
+/** A fence whose actor is a fixed org and mode: only the plan of the read itself is under test. */
+const fixedAuth: ScanReadAuthority = {
+  ctes: `actor AS MATERIALIZED (SELECT 'o' AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
+    actor_ok AS MATERIALIZED (SELECT org_id, mode FROM actor)`,
+  params: [],
+  ok: 'EXISTS (SELECT 1 FROM actor_ok)',
+  tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
+};
 
 /** Runs a repo function against a DB that records its statements, then explains each one. */
 async function plans(run: (db: D1Database) => Promise<unknown>): Promise<string[]> {
@@ -89,9 +100,7 @@ describe('console list query plans (SC)', () => {
   it('events: an org list, with each status, uses scan_events_org', async () => {
     for (const status of [undefined, 'upcoming', 'live', 'ended', 'archived'] as const) {
       const lines = await plans((db) =>
-        listConsoleEvents(db, {
-          mode: 'live',
-          orgId: 'o',
+        listConsoleEvents(db, fixedAuth, {
           now: 5,
           limit: 51,
           status,

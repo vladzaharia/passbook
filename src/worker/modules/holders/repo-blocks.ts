@@ -1,4 +1,4 @@
-import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
+import { type Check, rowIs } from '../../platform/authority-checks.ts';
 import { tenantSql } from '../../platform/authority-cond.ts';
 import { writePart } from '../../platform/authority-include.ts';
 import { batch, stmt } from '../../platform/db.ts';
@@ -9,7 +9,6 @@ import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { eligibleOwner } from '../passes/repo-credential-transfer-fences.ts';
 import { commitRows, noPendingTransfer, tenantPassGrant } from '../passes/repo-pass-grant.ts';
 import type { HolderConnectionFence, HolderPass, ReissueSource } from './repo.ts';
@@ -129,7 +128,6 @@ export async function markHolderReissueGranted(
   passId: string,
   source: ReissueSource,
   userId: string,
-  credentialKeysetCommitment: string,
   authority: TenantPassWrite,
   connection: HolderConnectionFence | undefined,
   entry: AuditEntry,
@@ -160,7 +158,6 @@ export async function markHolderReissueGranted(
       'lineage',
     ),
     eligibleOwner(passId, { holderEmail: source.holderEmail, ownerUserId: userId }),
-    rawCheck('lineage', credentialRefKeysetSql, [credentialKeysetCommitment]),
   ];
   if (connection)
     checks.push(

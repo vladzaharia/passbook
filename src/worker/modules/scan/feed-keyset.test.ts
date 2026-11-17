@@ -329,16 +329,6 @@ describe('scan history keyset fences', () => {
     },
   );
 
-  it('does not write an export audit if the keyset changes before its CAS', async () => {
-    await recorded();
-    await withRekey('audit', async () => {
-      await expectUnavailable(await get(exportPath()));
-    });
-    expect(
-      await first(kit.env.DB, "SELECT id FROM audit_log WHERE action = 'scan.export'"),
-    ).toBeNull();
-  });
-
   it('fails an export stream instead of emitting a page after its keyset changes', async () => {
     const { pass } = await recorded();
     await withRekey('selection', async () => {

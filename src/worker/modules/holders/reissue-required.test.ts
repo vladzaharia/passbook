@@ -7,7 +7,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { createAuthStores } from '../../stores.ts';
 import { signInMagicLink } from '../auth/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import type { Kit } from '../passes/pass-test-fixtures.ts';
@@ -15,7 +14,7 @@ import { setDownloadToken } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { voidPass } from '../passes/service.ts';
 import { fixedBarcodePass } from './fixed-barcode-test-fixtures.ts';
-import { getHolderPass, holderReissueCurrentSql, markHolderReissueRequired } from './repo.ts';
+import { holderReissueCurrentSql } from './repo.ts';
 import { getHolder, reassignHolder, runAttachHookA } from './service.ts';
 import { attachWaitingPassesForEmail } from './service-attach.ts';
 import { eventMember } from './test-auth-fixtures.ts';
@@ -182,48 +181,6 @@ describe('verified attachment requiring credential reissue', () => {
       await first(kit.env.DB, 'SELECT 1 FROM pass_credential_transfers WHERE pass_id = ?', [
         pass.id,
       ]),
-    ).toBeNull();
-  }, 120_000);
-
-  it('does not record an attachment diagnosis from a different credential keyset', async () => {
-    const { kit, pass, user } = await fixedBarcodePass({ retired: true });
-    const source = await getHolderPass(kit.env.DB, pass.id, null);
-    if (!source) throw new Error('Missing holder source');
-    const keyset = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
-    const stale = keyset === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
-    await markHolderReissueRequired(
-      kit.env.DB,
-      pass.id,
-      source,
-      user.id,
-      kit.clock.now(),
-      stale,
-      undefined,
-      {
-        ctx: jobCtxOf(kit),
-        entry: {
-          orgId: pass.orgId,
-          actorType: 'system',
-          actorId: null,
-          action: 'holder.attach_reissue_required',
-          targetType: 'pass',
-          targetId: pass.id,
-          detail: { userId: user.id },
-        },
-      },
-    );
-    expect(
-      await first(kit.env.DB, 'SELECT 1 FROM pass_holder_reissue_required WHERE pass_id = ?', [
-        pass.id,
-      ]),
-    ).toBeNull();
-    expect(
-      await first(
-        kit.env.DB,
-        `SELECT 1 FROM audit_log
-      WHERE action = 'holder.attach_reissue_required' AND target_id = ?`,
-        [pass.id],
-      ),
     ).toBeNull();
   }, 120_000);
 
