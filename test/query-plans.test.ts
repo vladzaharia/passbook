@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { listAuditRows } from '../src/worker/modules/audit/repo.ts';
 import { listBundleRows } from '../src/worker/modules/bundles/repo.ts';
 import { listEvents } from '../src/worker/modules/events/repo.ts';
+import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
+import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
+import { quietUnqueuedTemplates } from '../src/worker/modules/templates/repo-stale.ts';
 import { listUsers } from '../src/worker/modules/users/repo.ts';
 
 /** Runs a repo function against a DB that records its statements, then explains each one. */
@@ -125,5 +128,24 @@ describe('list and search query plans', () => {
     const lines = rows.results.map((r) => r.detail);
     expect(fullScans(lines, 'scans')).toEqual([]);
     expect(lines.join('\n')).toContain('scans_pass_ok');
+  });
+
+  it('passes: the holder sweep, the quiet-template sweep and the expected count use partial indexes', async () => {
+    const sweep = await plans((db) => listSweepWaitingPasses(db, { after: null, upper: 'z' }, 10));
+    expect(sweep.join('\n')).toContain('passes_waiting_holder');
+    const quiet = await plans((db) => quietUnqueuedTemplates(db, 1, 10));
+    expect(quiet.join('\n')).toContain('passes_active_scope');
+    expect(quiet.join('\n')).not.toContain('USE TEMP B-TREE FOR DISTINCT');
+    const count = await plans((db) =>
+      expectedCount(
+        db,
+        { orgId: 'o', mode: 'live', matchInput: null, matchValues: null },
+        ['t'],
+        1,
+      ),
+    );
+    expect(count.join('\n')).toContain(
+      'passes_scan_population (org_id=? AND mode=? AND template_id=?)',
+    );
   });
 });

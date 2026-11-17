@@ -20,7 +20,7 @@ import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
 import { getOrg as getPassOrg } from '../passes/repo-read-issuance.ts';
 import { previewPass } from './build-check.ts';
 import { createTemplateRegistry } from './registry.ts';
-import { getOrgName, listVersions } from './repo.ts';
+import { getOrgName, latestVersionName } from './repo.ts';
 import { loadTemplate, requireTemplateOrgRead, requireTemplateReader } from './service-access.ts';
 
 /** Default-sample previews for several templates; one that fails or is out of reach is skipped. */
@@ -60,7 +60,7 @@ export async function preview(
   const row = await loadTemplate(ctx, auth, id, selectedOrgId);
   const version =
     body.version ??
-    (row.activeVersion === null ? (await listVersions(ctx.env.DB, id))[0]?.version : undefined);
+    (row.activeVersion === null ? await latestVersionName(ctx.env.DB, id) : undefined);
   if (version === undefined && row.activeVersion === null)
     throw new NotFoundError('Template has no saved version.', 'TEMPLATE_NOT_FOUND');
   const resolved: ResolvedTemplate = await createTemplateRegistry(ctx.env, { ctx }).resolve(
