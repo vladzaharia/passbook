@@ -1,6 +1,6 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import { type CSSProperties, createContext, useContext } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { formatDay } from '../../lib/format.ts';
 import type { Swatch } from '../../lib/swatches.ts';
 import { Checkbox, RowLink, StatusIcon } from '../../ui/index.ts';
@@ -113,7 +113,7 @@ function TemplateCell({ pass }: { pass: PassSummaryDto }) {
 }
 
 /** Stable columns: only the org scope changes the set. */
-export function passColumns(showOrg: boolean): ColumnDef<PassSummaryDto, never>[] {
+export function passColumns(showOrg: boolean): DataColumnDef<PassSummaryDto, never>[] {
   return [
     {
       id: 'select',
@@ -151,7 +151,7 @@ export function passColumns(showOrg: boolean): ColumnDef<PassSummaryDto, never>[
             header: 'Organization',
             meta: { hideBelow: 'xl', nowrap: true, stackHidden: true },
             cell: ({ row }) => <OrgCell pass={row.original} />,
-          } satisfies ColumnDef<PassSummaryDto, never>,
+          } satisfies DataColumnDef<PassSummaryDto, never>,
         ]
       : []),
     {

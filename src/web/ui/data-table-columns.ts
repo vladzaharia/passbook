@@ -1,9 +1,10 @@
-import type { ColumnDef } from '@tanstack/react-table';
+import type { RowData } from '@tanstack/react-table';
 import { type ReactNode, useRef } from 'react';
+import type { DataColumnDef } from './data-table-meta.ts';
 
 type Render = (props: never) => ReactNode;
 
-function columnKey<T>(column: ColumnDef<T, never>, index: number): string {
+function columnKey<T extends RowData>(column: DataColumnDef<T, never>, index: number): string {
   return column.id ?? ('accessorKey' in column ? String(column.accessorKey) : String(index));
 }
 
@@ -12,7 +13,9 @@ function columnKey<T>(column: ColumnDef<T, never>, index: number): string {
  * (columns declared in the page body) would remount every cell: focus, open menus and animations
  * reset. Each column gets one forwarding function that calls its latest definition.
  */
-export function useStableColumns<T>(columns: ColumnDef<T, never>[]): ColumnDef<T>[] {
+export function useStableColumns<T extends RowData>(
+  columns: DataColumnDef<T, never>[],
+): DataColumnDef<T, unknown>[] {
   const latest = useRef(columns);
   latest.current = columns;
   const forwards = useRef(new Map<string, Render>());
@@ -33,6 +36,6 @@ export function useStableColumns<T>(columns: ColumnDef<T, never>[]): ColumnDef<T
       }
       stable[part] = forward;
     }
-    return { ...column, ...stable } as ColumnDef<T>;
+    return { ...column, ...stable } as DataColumnDef<T, unknown>;
   });
 }

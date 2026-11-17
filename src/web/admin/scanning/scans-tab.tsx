@@ -1,5 +1,4 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import { type ScanRecordDto, ScanRecordListSchema } from '@/shared/contracts/scanners.ts';
@@ -7,6 +6,7 @@ import { api } from '@/web/lib/api.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { Button, DataTable, EmptyState, ErrorState, LoadMore, StatusPill } from '@/web/ui/index.ts';
 import { ScanFilters } from './scans/filters.tsx';
 import { ScanDetail } from './scans/scan-detail.tsx';
@@ -64,7 +64,7 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     refetchInterval: 30_000,
   });
-  const columns: ColumnDef<ScanRecordDto>[] = [
+  const columns: DataColumnDef<ScanRecordDto>[] = [
     {
       accessorKey: 'at',
       header: 'When',
