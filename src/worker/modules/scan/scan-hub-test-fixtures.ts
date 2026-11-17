@@ -21,7 +21,8 @@ import { proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
 export let kit: ScanKit;
 export let template: string;
 beforeAll(async () => {
-  kit = await setupScanKit();
+  // Real clock: the live hub's ring and photo streams are windowed by wall time.
+  kit = await setupScanKit({ clockStart: Date.now() });
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   template = await kit.scanTemplate('Live membership', {
     actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],

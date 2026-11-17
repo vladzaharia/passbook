@@ -116,7 +116,6 @@ describe('sample pass', () => {
   });
 
   it('makes one test pass of the first accepted template with its sample inputs', async () => {
-    clock.set(Date.now());
     const made = makeTemplate({ id: f.ids.id(), orgId });
     await persistTemplate(f, made.resolved, { registry: made.registry });
     overrideDeps(env, { registry: made.registry });

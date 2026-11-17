@@ -25,7 +25,8 @@ const png = makePng(270, 270);
 const encoded = btoa(String.fromCharCode(...png));
 
 beforeAll(async () => {
-  kit = await setupScanKit();
+  // Real clock: the live hub's ring and photo streams are windowed by wall time.
+  kit = await setupScanKit({ clockStart: Date.now() });
   template = await kit.scanTemplate('Live asset lineage', {
     actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
   });

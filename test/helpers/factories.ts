@@ -15,6 +15,9 @@ import { createIds, type Ids, sha256Hex } from '../../src/worker/platform/ids.ts
 import { createServiceContext } from '../../src/worker/platform/service-context.ts';
 import { fixtureToken } from './tokens.ts';
 
+/** The one fixed epoch test kits start at: 2026-06-01 12:00 UTC, mid-day in every time zone. */
+export const TEST_NOW = Date.UTC(2026, 5, 1, 12);
+
 /** Clock and ids shared by factories. Ids are UUIDv7 so tests do not collide across a file. */
 export interface Fixtures {
   env: AppEnv;

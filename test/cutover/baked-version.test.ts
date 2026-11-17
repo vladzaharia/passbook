@@ -8,7 +8,7 @@ import { publishPass } from '../../src/worker/modules/passes/publish.ts';
 import { reissueStaleTemplates } from '../../src/worker/modules/passes/stale-reissue.ts';
 import { key, type ScanKit, setupScanKit } from '../../src/worker/modules/scan/test-kit.ts';
 import { createTemplateRegistry } from '../../src/worker/modules/templates/registry.ts';
-import { type Cutover, effective, runCutover } from './setup.ts';
+import { type Cutover, effective, NOW, runCutover } from './setup.ts';
 
 let c: Cutover;
 let kit: ScanKit;
@@ -16,7 +16,7 @@ const pass1 = () => c.legacy.passes.find((p) => p.id === 'pass-baked-unassigned-
 
 beforeAll(async () => {
   c = await runCutover(28, { bumpStarter: true });
-  kit = await withKitDatabase(c.legacy.db, () => setupScanKit());
+  kit = await withKitDatabase(c.legacy.db, () => setupScanKit({ clockStart: NOW })); // real clock: the cutover seed is wall-time based
   overrideDeps(kit.env, { registry: createTemplateRegistry(kit.env) });
 });
 

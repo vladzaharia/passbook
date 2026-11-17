@@ -1,12 +1,13 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeScanStaff } from '../../../../test/helpers/index.ts';
+import { makeScanStaff, TEST_NOW } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { act, kit, out, rows, setupActionFixture } from './act-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
-// A PIN's counters are windowed by the clock: each test starts in a fresh hour.
-beforeEach(() => kit.clock.advance(2 * 60 * 60_000));
+// A PIN's counters are windowed by the clock: each test starts in a fresh hour, all within one UTC day.
+let tick = 0;
+beforeEach(() => kit.clock.set(TEST_NOW + ++tick * 61 * 60_000));
 
 const ADD = {
   id: 'add',
@@ -138,9 +139,6 @@ describe('a Manager PIN with no one named', () => {
   });
 
   it('works for an undo past the window', async () => {
-    // Same scanner-local day: the kit clock starts at the wall clock, so pin it to the next noon.
-    const day = 86_400_000;
-    kit.clock.set(Math.ceil(kit.clock.now() / day) * day + day / 2);
     const boss = await manager('333444');
     const t = await kit.scanTemplate('PIN undo', { actions: [ADD] });
     const s = await kit.scanner({ templateIds: [t], settings: { roleWithoutSignIn: 'desk' } });

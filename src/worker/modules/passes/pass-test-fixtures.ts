@@ -135,6 +135,8 @@ export async function setupKit(
     JOBS: queue as unknown as Queue,
     BULK_REISSUE: workflow as unknown as Workflow,
   });
+  // Real clock by default: holder and passes apps under test read wall time for sessions.
+  // Scan kits start at TEST_NOW (setupScanKit).
   const clock = new ManualClock(options.clockStart ?? Date.now());
   const fx = fixtures(env, clock);
   const templateId = `tpl-${fx.ids.token(4)}`;

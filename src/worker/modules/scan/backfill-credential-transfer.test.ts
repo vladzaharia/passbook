@@ -17,6 +17,8 @@ it.each(['same pass', 'different pass'] as const)(
     });
     const template = await kit.registry.resolve(templateId);
     const target = await makeLegacyScanPass(kit.fx, { orgId: kit.org.id, template });
+    // Pass ids are time-ordered and the sweep walks them in order; a fixed clock would tie them.
+    kit.clock.advance(1);
     const source =
       which === 'same pass'
         ? target
