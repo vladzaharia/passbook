@@ -106,7 +106,7 @@ describe('standalone scanner statistics authority', () => {
     });
   });
 
-  it('keeps the event-cache keyset and scanner CSRF fences as labeled scalar binds', async () => {
+  it('binds the event-cache fence as labeled scalars and no keyset or CSRF secret', async () => {
     const kit = await setupScanKit();
     const templateId = await kit.scanTemplate('Stats event', {
       actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
@@ -127,23 +127,19 @@ describe('standalone scanner statistics authority', () => {
     expect(captured.some((entry) => entry.sql.includes('UPDATE scan_events SET expected ='))).toBe(
       true,
     );
-    let proofBinds = 0;
     for (const entry of captured) {
-      const slots = scanSecretSlots(entry.sql, entry.params.length);
-      if (!slots) throw new Error('Malformed statistics bind labels');
-      for (const [index, value] of entry.params.entries()) {
-        if (value === commitment) {
-          expect(slots[index]?.label).toBe('proof');
-          proofBinds++;
-        } else if (value === secret) {
-          throw new Error('A stats read binds no CSRF secret.');
-        } else if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
+      if (!scanSecretSlots(entry.sql, entry.params.length))
+        throw new Error('Malformed statistics bind labels');
+      for (const value of entry.params) {
+        // A read carries no keyset commitment and never the CSRF secret.
+        expect(value).not.toBe(commitment);
+        expect(value).not.toBe(secret);
+        if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
           expect(value).not.toContain(commitment);
           expect(value).not.toContain(secret);
         }
       }
     }
-    expect(proofBinds).toBeGreaterThan(0);
   });
 
   it.each(['revoked', 'csrf'] as const)(

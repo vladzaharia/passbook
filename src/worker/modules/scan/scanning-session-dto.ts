@@ -8,45 +8,48 @@ import {
   ScanningSessionSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
-import type { SqlValue } from '../../platform/db.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
-import {
-  actorCsrfAuthorityStmt,
-  actorCsrfSnapshotFence,
-  actorCsrfSnapshotFromResult,
-} from './actor-csrf.ts';
 import { localDayStart } from './counts.ts';
-import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { parseSettings } from './dto-console.ts';
-import { actorAuthorityPredicate } from './repo-actor-authority.ts';
+import { captureConsoleFeed } from './feed-console-page.ts';
 import { scannerHasTemplates } from './repo-device.ts';
+import { type ScanReadAuthority, scanReadAuthority } from './repo-read-authority.ts';
+import { getConsoleScanner } from './repo-scanners.ts';
 import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 import { type ScanningSessionRow, scanningSessionStats } from './repo-scanning-sessions.ts';
-import { countOrgTemplates, readValidEventScope, type ScanEventRow } from './repo-scope.ts';
+import {
+  countOrgTemplates,
+  readScannerScope,
+  readValidEventScope,
+  type ScanEventRow,
+} from './repo-scope.ts';
 
-/** Request-local evidence; SQL secret binds must never be serialized into the DTO. */
-export interface SessionCountAuthority {
+/**
+ * What a session read is authorized by: the org and mode, the session a device is bound to, and
+ * the read fence at a clock reading (membership for the console, scanner for a device). The actor's
+ * epochs were captured with it; nothing here carries a secret.
+ */
+export interface SessionReadAuthority {
   orgId: string;
   mode: Mode;
   /** Device authorities are restricted to their originally bound session. */
   sessionId?: string;
-  /** Present only for a console proof, bound to its exact membership and session. */
+  /** Present only for a console read, bound to its exact membership and session. */
   tenant?: Extract<TenantPassWrite, { kind: 'session' }>;
-  credentialKeysetCommitment: string;
-  guard: { sql: string; params: readonly SqlValue[] };
-  guardAt(now: number): { sql: string; params: readonly SqlValue[] } | null;
+  at(now: number): ScanReadAuthority;
 }
 
-/** Capture the original tenant session and CSRF proof before any count is read. */
+/** The name the live paths and fixtures use for the same authority. */
+export type SessionCountAuthority = SessionReadAuthority;
+
+/** Capture the console viewer's membership and session with the epochs the reads are fenced on. */
 export async function captureConsoleSessionCountAuthority(
   ctx: ServiceContext,
   session: SessionAuth,
   authority: TenantPassWrite,
-): Promise<SessionCountAuthority> {
+): Promise<SessionReadAuthority> {
   if (
     authority.kind !== 'session' ||
     authority.capability !== 'scanning:read' ||
@@ -60,55 +63,13 @@ export async function captureConsoleSessionCountAuthority(
     roles: [...authority.roles],
     sessionRoles: [...authority.sessionRoles],
   };
-  const authenticated = { ...session, roles: [...session.roles] };
-  const pinned = credentialKeysetContext(ctx);
-  const [credentialKeysetCommitment, tenant] = await Promise.all([
-    credentialRefKeysetCommitment(pinned.env),
-    captureScanTenantAuthority(pinned, authenticated, original),
-  ]);
-  const actor = adminActor(authenticated, original.mode, {
-    orgId: original.orgId,
-    event: null,
-    templateIds: [],
-    timeZone: 'UTC',
-  });
-  actor.tenantAuthority = tenant;
-  actor.platformSessionId = authenticated.sessionId;
-  actor.role = tenantScanRole(tenant);
+  const actor = await captureConsoleFeed(ctx, { ...session, roles: [...session.roles] }, original);
   if (!actor.role) throw new ForbiddenError();
-  const csrfStmt = actorCsrfAuthorityStmt(pinned.env.DB, actor);
-  const snapshot = await actorCsrfSnapshotFromResult(
-    pinned,
-    actor,
-    csrfStmt ? await csrfStmt.all() : undefined,
-  );
-  if (!snapshot) throw new ForbiddenError();
-  const guardAt = (now: number) => {
-    const csrf = actorCsrfSnapshotFence(actor, {
-      ...snapshot,
-      session: snapshot.session ? { ...snapshot.session, now } : null,
-    });
-    if (!csrf) return null;
-    const current = actorAuthorityPredicate({
-      actor,
-      now,
-      event: null,
-      adminEventTemplates: false,
-    });
-    return {
-      sql: `(${current.sql}) AND (${csrf.sql})`,
-      params: [...current.params, ...csrf.params],
-    };
-  };
-  const guard = guardAt(ctx.clock.now());
-  if (!guard) throw new ForbiddenError();
   return {
     orgId: original.orgId,
     mode: original.mode,
     tenant: original,
-    credentialKeysetCommitment,
-    guard,
-    guardAt,
+    at: (now) => scanReadAuthority(actor, { now }),
   };
 }
 
@@ -233,19 +194,21 @@ export const deviceDto = (row: ScanningDeviceRow, now: number, settings?: Scanne
 export async function sessionDto(
   ctx: ServiceContext,
   row: ScanningSessionRow,
-  authority: SessionCountAuthority,
+  authority: SessionReadAuthority,
 ) {
-  const scope = await resolveSessionScope(ctx, row);
   const settings = effectiveSessionSettings(row);
   const now = ctx.clock.now();
-  const stats = await scanningSessionStats(
-    ctx.env.DB,
-    row,
-    localDayStart(now, row.time_zone),
-    now - 120_000,
-    authority,
-    now,
-  );
+  const [scope, stats] = await Promise.all([
+    resolveSessionScope(ctx, row),
+    scanningSessionStats(
+      ctx.env.DB,
+      row,
+      localDayStart(now, row.time_zone),
+      now - 120_000,
+      authority,
+      now,
+    ),
+  ]);
   if (!stats) throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   return ScanningSessionSchema.parse({
     id: row.id,
@@ -265,4 +228,37 @@ export async function sessionDto(
     onlineCount: stats.online,
     today: stats.today,
   });
+}
+
+/** The session's devices as the console shows them, each with its scope as it holds now. */
+export function sessionDeviceViews(
+  ctx: ServiceContext,
+  row: ScanningSessionRow,
+  session: { settings: { acceptAllTemplates?: boolean } },
+  scope: ResolvedSessionScope,
+  devices: readonly ScanningDeviceRow[],
+) {
+  return Promise.all(
+    devices.map(async (d) => {
+      const settings = effectiveSessionSettings(row, d);
+      const scanner = await getConsoleScanner(ctx.env.DB, d.scanner_id);
+      const invalidScannerScope =
+        !scanner ||
+        scanner.mode !== row.mode ||
+        !(await readScannerScope(ctx.env.DB, scanner, null)).valid;
+      const conflict =
+        !!scanner && !!settings && (await conflictsWithAllScope(ctx, scanner, scope, settings));
+      return deviceDto(
+        d,
+        ctx.clock.now(),
+        settings
+          ? {
+              ...settings,
+              acceptAllTemplates:
+                !invalidScannerScope && !conflict && session.settings.acceptAllTemplates === true,
+            }
+          : { ...parseSettings(d.settings), acceptAllTemplates: false, lookup: false },
+      );
+    }),
+  );
 }

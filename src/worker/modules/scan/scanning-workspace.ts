@@ -1,7 +1,6 @@
 import type { ScanDeviceCapabilities } from '../../../shared/contracts/scanning-sessions.ts';
 import { reportedCapabilities } from '../../../shared/scan-surfaces.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import type { SqlValue } from '../../platform/db.ts';
 import {
   AppError,
   ConflictError,
@@ -10,28 +9,24 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { listMyOrgMemberships } from '../orgs/access.ts';
-import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import type { ScanActor } from './actor.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { scannerHasTemplates } from './repo-device.ts';
+import { SESSION_READ, scanReadAuthority } from './repo-read-authority.ts';
 import { captureConfigurationScope } from './repo-scanner-configuration-scope.ts';
 import { getConsoleScanner } from './repo-scanners.ts';
 import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { scanningSessionForDevice } from './repo-scanning-sessions.ts';
 import { readScannerScope, readValidEventScope } from './repo-scope.ts';
-import {
-  packedScanAuthorityPredicate,
-  sessionReadAuthorityPredicate,
-} from './repo-session-authority.ts';
 import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import {
   conflictsWithAllScope,
   deviceDto,
   effectiveSessionSettings,
   resolveSessionScope,
-  type SessionCountAuthority,
+  type SessionReadAuthority,
   sessionDto,
 } from './scanning-session-dto.ts';
 import {
@@ -90,43 +85,20 @@ export async function readableScanningPage<
   };
 }
 
-/** Capture the original actor proof and key ring for presence-bearing session counts. */
-export async function scanSessionCountAuthority(
-  context: ServiceContext,
-  sourceActor: ScanActor,
-  originalKeyset?: string,
-): Promise<SessionCountAuthority> {
-  const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
+/**
+ * The device's read fence for its workspace, session counts and activity: its scanner, staff and
+ * session epochs, with the relaxations a session read has (`SESSION_READ`). The epochs were read
+ * with the rows the actor derived from; credential, configuration and staff changes since then
+ * refuse the read.
+ */
+export function scanSessionCountAuthority(sourceActor: ScanActor): SessionReadAuthority {
   const actor = cloneObservedScanActor(sourceActor);
-  const credentialKeysetCommitment =
-    originalKeyset === undefined ? await credentialRefKeysetCommitment(ctx.env) : originalKeyset;
-  // Credential, configuration and staff changes are epoch comparisons inside the predicate; a CSRF
-  // secret cannot change without a credential epoch bump.
-  const guardAt = (now: number) => {
-    const authority = packedScanAuthorityPredicate(
-      actor,
-      sessionReadAuthorityPredicate(actor, now),
-    );
-    return authority.sql === '0' ? null : authority;
-  };
-  const guard = guardAt(ctx.clock.now());
-  if (!guard)
-    throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
   return {
     orgId: actor.orgId,
     mode: actor.mode,
     sessionId: actor.scanningSession?.id,
-    credentialKeysetCommitment,
-    guard,
-    guardAt,
+    at: (now) => scanReadAuthority(actor, { now, read: SESSION_READ }),
   };
-}
-/** Fence every original workspace scope row and release in the count transaction. */
-export function scanningWorkspaceScopeFence(actor: ScanActor): { sql: string; params: SqlValue[] } {
-  // Scanner, session and event configuration are epoch comparisons in the read predicate.
-  return actor.scanningSession && !observedScanningSession(actor)
-    ? { sql: '0', params: [] }
-    : { sql: '1', params: [] };
 }
 
 export async function bindScanningSession(ctx: ServiceContext, actor: ScanActor) {
@@ -209,7 +181,7 @@ export async function bindScanningSession(ctx: ServiceContext, actor: ScanActor)
 export async function scanWorkspace(
   context: ServiceContext,
   sourceActor: ScanActor,
-  authority: SessionCountAuthority,
+  authority: SessionReadAuthority,
 ) {
   const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
   const actor = cloneObservedScanActor(sourceActor);
@@ -219,20 +191,7 @@ export async function scanWorkspace(
   // restriction dropped (below) and the device stays paired.
   if (!observed)
     throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
-  const scope = scanningWorkspaceScopeFence(actor);
-  const guardAt = (now: number) => {
-    const guard = authority.guardAt(now);
-    return !guard || scope.sql === '0'
-      ? null
-      : {
-          sql: `(${guard.sql}) AND (${scope.sql})`,
-          params: [...guard.params, ...scope.params],
-        };
-  };
-  const guard = guardAt(ctx.clock.now());
-  if (!guard)
-    throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
-  const session = await sessionDto(ctx, observed.parent, { ...authority, guard, guardAt }).catch(
+  const session = await sessionDto(ctx, observed.parent, authority).catch(
     async (error: unknown) => {
       // A lost credential unpairs the device; any other refusal keeps the generic not-found.
       if (
@@ -276,8 +235,6 @@ export async function reportScanDevice(
     );
   }
   const capabilities = reportedCapabilities(raw);
-  const credentialKeysetCommitment = await credentialRefKeysetCommitment(ctx.env);
   await commitReportedDevice(ctx, actor, observed, capabilities, bindScanningSession);
-  const authority = await scanSessionCountAuthority(ctx, actor, credentialKeysetCommitment);
-  return scanWorkspace(ctx, actor, authority);
+  return scanWorkspace(ctx, actor, scanSessionCountAuthority(actor));
 }

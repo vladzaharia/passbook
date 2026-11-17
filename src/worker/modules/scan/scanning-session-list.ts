@@ -6,14 +6,14 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { listScanningSessionRows } from './repo-scanning-sessions.ts';
 import { assertSessionReadAuthority } from './scanning-session-authority.ts';
-import { type SessionCountAuthority, sessionDto } from './scanning-session-dto.ts';
+import { type SessionReadAuthority, sessionDto } from './scanning-session-dto.ts';
 
 export async function listScanningSessions(
   ctx: ServiceContext,
   mode: Mode,
   query: z.infer<typeof ScanningSessionQuerySchema>,
   authority: TenantPassWrite,
-  countAuthority: SessionCountAuthority,
+  countAuthority: SessionReadAuthority,
 ) {
   assertSessionReadAuthority(mode, authority, countAuthority);
   if (query.orgId !== authority.orgId) throw new ForbiddenError();

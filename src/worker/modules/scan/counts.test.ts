@@ -61,9 +61,11 @@ describe('event expected-count cache authority', () => {
         'today',
         'managers',
         'event totals',
-        'cache CAS',
+        ...(principal === 'admission' ? [] : ['cache CAS']),
         'expected fallback',
       ];
+      // An admission-selected event has no captured epoch: it is counted, never cached.
+      const stmtCount = principal === 'admission' ? 4 : 5;
       for (const guarded of [false, true]) {
         const guard = guarded ? await csrfFence(actor) : undefined;
         const captured: { sql: string; params: unknown[] }[] = [];
@@ -95,8 +97,8 @@ describe('event expected-count cache authority', () => {
           actor,
           guard,
         );
-        expect(plan.stmts.length).toBe(5);
-        expect(captured.length).toBe(5);
+        expect(plan.stmts.length).toBe(stmtCount);
+        expect(captured.length).toBe(stmtCount);
         const failures: string[] = [];
         for (const [index, { sql, params }] of captured.entries()) {
           try {
