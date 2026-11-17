@@ -189,17 +189,10 @@ export async function withMutableScannerSecret<T>(
   secret: string,
   work: () => Promise<T>,
 ) {
-  const trigger = await first<{ sql: string }>(
-    db,
-    "SELECT sql FROM sqlite_master WHERE type='trigger' AND name='scanners_credential_revision'",
-  );
-  if (!trigger?.sql) throw new Error('Missing scanner credential guard');
-  await run(db, 'DROP TRIGGER scanners_credential_revision');
   try {
     return await work();
   } finally {
     await run(db, 'UPDATE scanners SET csrf_secret=? WHERE id=?', [secret, scannerId]);
-    await run(db, trigger.sql);
   }
 }
 

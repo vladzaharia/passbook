@@ -40,9 +40,11 @@ export function registerCountsCacheAuthorityCases() {
         [id],
       );
       if (!original) throw new Error('Missing CSRF secret fixture');
-      const trigger =
-        principal === 'scanner' ? 'scanners_credential_revision' : 'sessions_csrf_secret_immutable';
-      await withMutableTrigger(trigger, async () => {
+      const mutable = (work: () => Promise<unknown>) =>
+        principal === 'scanner'
+          ? work()
+          : withMutableTrigger('sessions_csrf_secret_immutable', work);
+      await mutable(async () => {
         try {
           const race = raceCache((db) =>
             run(db, `UPDATE ${table} SET csrf_secret=? WHERE ${key}=?`, ['rotated-csrf', id]),
