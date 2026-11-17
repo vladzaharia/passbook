@@ -266,7 +266,7 @@ function expectAbsent(page: EligiblePage, ...ids: string[]) {
 }
 
 beforeEach(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   assets = fakeAssets();
   env = await makeEnv({
     ASSETS: assets,

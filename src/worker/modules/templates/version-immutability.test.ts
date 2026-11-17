@@ -193,7 +193,7 @@ function newVersion(body = commit.body, buildKey = commit.buildKey): NewVersion 
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   env = await makeEnv({ ASSETS: fakeAssets() });
   f = fixtures(env, clock);
   ctx = createServiceContext(env, { clock });

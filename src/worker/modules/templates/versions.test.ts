@@ -177,7 +177,7 @@ async function seed(org: string, name: string, extra: Record<string, Uint8Array>
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   env = await makeEnv();
   f = fixtures(env, clock);
   app = createApp({ stores: { ...auth.stores, sessions: createSessionStore(env, clock) }, clock });

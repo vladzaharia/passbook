@@ -70,7 +70,7 @@ beforeAll(async () => {
 
 async function googleFixture() {
   const env = await makeEnv({ KEK_V1, KEK_V2: undefined, KEK_V3: undefined });
-  const clock = new ManualClock(Date.now());
+  const clock = new ManualClock();
   const f = fixtures(env, clock);
   const org = await makeOrg(f);
   const user = await makeUser(f);

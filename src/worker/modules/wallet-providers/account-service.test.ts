@@ -48,7 +48,7 @@ import { saveAccountConfiguration, transitionAccount } from './repo-accounts.ts'
 const origin = 'https://wallet.test';
 const base = `${origin}/api/v1/wallet-providers/accounts`;
 const kek = btoa(String.fromCharCode(...new Uint8Array(32).fill(7)));
-const clock = new ManualClock(Date.now());
+const clock = new ManualClock();
 let env: AppEnv;
 let f: Fixtures;
 let app: OpenAPIHono<AppBindings>;

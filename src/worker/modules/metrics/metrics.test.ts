@@ -29,7 +29,7 @@ beforeAll(async () => {
 beforeEach(() => clearMetricsCache(env.DB));
 
 function setup() {
-  const clock = new ManualClock(Date.now());
+  const clock = new ManualClock();
   return { clock, f: fixtures(base, clock), ctx: createServiceContext(base, { clock }) };
 }
 

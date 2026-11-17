@@ -339,7 +339,7 @@ async function expectedCache(id: string) {
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   assets = fakeAssets();
   env = await makeEnv({
     ASSETS: assets,

@@ -178,7 +178,7 @@ const releaseCount = async (id: string) =>
   )?.n;
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   assets = fakeAssets();
   env = await makeEnv({
     ASSETS: assets,

@@ -143,7 +143,7 @@ interface ProjectionFixture {
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   env = await makeEnv({
     KEK_V1,
     KEK_V2,

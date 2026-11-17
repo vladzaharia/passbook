@@ -33,7 +33,7 @@ const STARTERS = [
 ] as const;
 
 it('starter clones open in the designer as inactive drafts, and a draft can be saved', async () => {
-  const clock = new ManualClock(Date.now());
+  const clock = new ManualClock();
   const assets = fakeAssets();
   // Workerd has no filesystem; Vite embeds the source bytes used to build the baked index.
   const bakedFiles = import.meta.glob<string>('../../../../templates/**/*.{png,strings}', {

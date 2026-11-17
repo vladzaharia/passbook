@@ -33,7 +33,7 @@ let env: AppEnv;
 let call: (path: string, init?: { body?: unknown; method?: string }) => Promise<Response>;
 
 beforeAll(async () => {
-  const clock = new ManualClock(Date.now());
+  const clock = new ManualClock();
   const assets = fakeAssets();
   const files = import.meta.glob<string>(
     '../../../../templates/starter-stamp-card/**/*.{png,strings}',

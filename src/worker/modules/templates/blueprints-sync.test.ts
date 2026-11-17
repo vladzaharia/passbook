@@ -22,7 +22,7 @@ describe('the baked sync', () => {
   it('writes the blueprint flag from each build, on and off', async () => {
     const assets = fakeAssets();
     const env = await makeEnv({ ASSETS: assets });
-    const clock = new ManualClock(Date.now());
+    const clock = new ManualClock();
     fixtures(env, clock);
     const flag = async () =>
       (

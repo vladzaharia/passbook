@@ -49,7 +49,7 @@ const storedAssets = (fixture: BakedFixture) =>
   }));
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   assets = fakeAssets();
   env = await makeEnv({ ASSETS: assets });
   org = await makeOrg(fixtures(env, clock), { slug: 'acme', name: 'Acme' });

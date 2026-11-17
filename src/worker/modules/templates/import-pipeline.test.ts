@@ -21,7 +21,7 @@ const assets = fakeAssets();
 
 beforeAll(async () => {
   env = await makeEnv({ ASSETS: assets });
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   const f = fixtures(env, clock);
   orgId = (await makeOrg(f)).id;
   userId = (await makeUser(f)).id;

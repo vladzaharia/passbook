@@ -22,7 +22,7 @@ beforeEach(() => clearMetricsCache(env.DB));
 
 describe('first-run setup counts', () => {
   it('counts orgs, assigned templates, passes and sent pass emails platform-wide', async () => {
-    const clock = new ManualClock(Date.now());
+    const clock = new ManualClock();
     const f = fixtures(base, clock);
     const ctx = createServiceContext(base, { clock });
     const before = (await getOverview(ctx, { range: '7d' })).setup;
@@ -68,7 +68,7 @@ describe('first-run setup counts', () => {
   });
 
   it('skips the short cache until the first pass email, then caches again', async () => {
-    const clock = new ManualClock(Date.now());
+    const clock = new ManualClock();
     const f = fixtures(base, clock);
     const ctx = createServiceContext(base, { clock });
     await run(env.DB, "DELETE FROM outbox WHERE kind = 'email'");

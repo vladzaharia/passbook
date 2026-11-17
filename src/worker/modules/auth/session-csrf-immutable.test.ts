@@ -8,7 +8,7 @@ import type { AppEnv } from '../../platform/env.ts';
 describe('session CSRF secret immutability', () => {
   it('requires a new session for rotation while allowing ordinary updates', async () => {
     const e = env as AppEnv;
-    const user = await makeUser(fixtures(e, new ManualClock(Date.now())));
+    const user = await makeUser(fixtures(e, new ManualClock()));
     const id = `csrf-immutable-${user.id}`;
     await run(
       e.DB,
@@ -60,7 +60,7 @@ describe('session CSRF secret immutability', () => {
 
   it('keeps session identity and absolute expiry fixed while allowing revocation', async () => {
     const e = env as AppEnv;
-    const f = fixtures(e, new ManualClock(Date.now()));
+    const f = fixtures(e, new ManualClock());
     const user = await makeUser(f);
     const other = await makeUser(f);
     const id = `session-authority-${user.id}`;
@@ -99,7 +99,7 @@ describe('session CSRF secret immutability', () => {
 
   it('permanently retires IDs on deletion and user cascade', async () => {
     const e = env as AppEnv;
-    const f = fixtures(e, new ManualClock(Date.now()));
+    const f = fixtures(e, new ManualClock());
     const user = await makeUser(f);
     const survivingUser = await makeUser(f);
     const directId = `direct-retired-${user.id}`;
@@ -145,7 +145,7 @@ describe('session CSRF secret immutability', () => {
 
   it('requires scanner credential changes to advance a monotonic revision', async () => {
     const e = env as AppEnv;
-    const f = fixtures(e, new ManualClock(Date.now()));
+    const f = fixtures(e, new ManualClock());
     const org = await makeOrg(f);
     const scanner = await makeScanner(f, { orgId: org.id });
     for (const [column, value] of [
@@ -221,7 +221,7 @@ describe('session CSRF secret immutability', () => {
 
   it('permanently retires scanner IDs after deletion or organization cascade', async () => {
     const e = env as AppEnv;
-    const f = fixtures(e, new ManualClock(Date.now()));
+    const f = fixtures(e, new ManualClock());
     const org = await makeOrg(f);
     const survivingOrg = await makeOrg(f);
     const direct = await makeScanner(f, { orgId: org.id });

@@ -182,7 +182,7 @@ async function seed(
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   // Workerd has no filesystem; Vite embeds the source bytes matching generated metadata.
   const bakedFiles = import.meta.glob<string>('../../../../templates/**/*.{png,strings}', {
     eager: true,

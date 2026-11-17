@@ -36,7 +36,7 @@ const actor = { type: 'system', id: null } as const;
 const previousSource = { ...generatedSource };
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   const baked = await bakedFrom('starter-e2e', basicPackage(), { name: 'Starter E2E' });
   for (const [path, bytes] of baked.files) assets.files.set(path, bytes);
   Object.assign(generatedSource, sourceOf([baked], 'e2e-registry'));

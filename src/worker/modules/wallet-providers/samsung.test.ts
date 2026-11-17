@@ -25,7 +25,7 @@ import {
   verifySamsungTombstoneRequest,
 } from './samsung.ts';
 
-const NOW = Date.now();
+const NOW = Date.UTC(2026, 0, 1);
 const utf8 = new TextEncoder();
 const text = new TextDecoder();
 const engine = new pki.CryptoEngine({

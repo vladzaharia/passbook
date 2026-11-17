@@ -16,7 +16,7 @@ let h: TestHarness;
 let clock: ManualClock;
 
 beforeEach(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   h = await harness({}, { clock });
 });
 afterEach(() => h.restore());

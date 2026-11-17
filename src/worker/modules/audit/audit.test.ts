@@ -159,7 +159,7 @@ describe('audit api', () => {
 
 describe('audit labels', () => {
   it('names actors and targets, null when gone or unknown', async () => {
-    const f = fixtures(appEnv, new ManualClock(Date.now()));
+    const f = fixtures(appEnv, new ManualClock());
     const org = await makeOrg(f, { name: 'Acme Gym' });
     const user = await makeUser(f);
     await run(env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Fatima Zahra', user.id]);

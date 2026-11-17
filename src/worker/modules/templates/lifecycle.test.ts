@@ -85,7 +85,7 @@ async function seedPreviouslyPublished(id: string, version: string) {
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   const assets = fakeAssets();
   const bakedFiles = import.meta.glob<string>('../../../../templates/**/*.{png,strings}', {
     eager: true,
