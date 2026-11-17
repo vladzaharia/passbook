@@ -7,6 +7,7 @@ import {
   UnauthenticatedError,
 } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
+import { ipRatePrefix } from '../../platform/ip.ts';
 import { redactString } from '../../platform/log.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo.ts';
@@ -29,10 +30,14 @@ import { bumpLogCounter, GLOBAL_LOG_KEY, insertLogs } from './repo-logs.ts';
 const MAX_SERIALS = 200;
 const MAX_LOG_LINES = 100;
 const MAX_LOG_LINE = 1000;
+/** Soft global ceiling: past it only quiet prefixes still log. */
 const LOG_LINES_PER_HOUR = 5000;
-const LOG_LINES_PER_IP_HOUR = 100;
-/** Past the global ceiling, an IP that has spent this much of its hour is shed; quiet ones still log. */
-const LOG_LINES_RESERVED_PER_IP = 25;
+/** Hard global ceiling: past it nobody logs, so rotating addresses cannot grow wallet_logs unbounded. */
+const LOG_LINES_HARD_PER_HOUR = 2 * LOG_LINES_PER_HOUR;
+/** Per /24 (v4) or /64 (v6) and hour. Counted in lines but sized for several full 100-line posts. */
+const LOG_LINES_PER_PREFIX_HOUR = 500;
+/** Past the soft ceiling, a prefix that has spent this much of its hour is shed. */
+const LOG_LINES_RESERVED_PER_PREFIX = 100;
 const HOUR = 3_600_000;
 /** New devices one pass may register per hour; the RL bindings only count per minute. */
 const NEW_REGISTRATIONS_PER_HOUR = 5;
@@ -253,8 +258,9 @@ const clean = (line: string) =>
 
 /**
  * Stores redacted, truncated lines. /log carries no credential (Apple's protocol), so each client
- * IP has its own hourly budget. A global ceiling behind it sheds only IPs already past a small
- * reserve, so a few noisy addresses cannot lock every device out of logging.
+ * network prefix (/24, /64) has its own hourly budget; fresh addresses inside one prefix share it.
+ * A soft global ceiling sheds only prefixes already past a small reserve, so a few noisy networks
+ * cannot lock every device out; a hard ceiling behind it admits no one.
  */
 export async function recordDeviceLogs(
   ctx: ServiceContext,
@@ -267,12 +273,18 @@ export async function recordDeviceLogs(
   if (kept.length === 0) return 0;
   const now = ctx.clock.now();
   const window = Math.floor(now / HOUR) * HOUR;
-  const ipKey = `apple.log.ip:${(await sha256Hex(ip)).slice(0, 16)}`;
-  const own = await bumpLogCounter(ctx.env.DB, ipKey, window, kept.length);
+  const prefixKey = `apple.log.ip:${(await sha256Hex(ipRatePrefix(ip) ?? 'unknown')).slice(0, 16)}`;
+  const own = await bumpLogCounter(ctx.env.DB, prefixKey, window, kept.length);
   const budget = () => new AppError('LOG_BUDGET', 429, 'Too many log lines. Try again later.');
-  if (own > LOG_LINES_PER_IP_HOUR) throw budget();
+  if (own > LOG_LINES_PER_PREFIX_HOUR) throw budget();
   const total = await bumpLogCounter(ctx.env.DB, GLOBAL_LOG_KEY, window, kept.length);
-  if (total > LOG_LINES_PER_HOUR && own > LOG_LINES_RESERVED_PER_IP) throw budget();
+  if (
+    total > LOG_LINES_HARD_PER_HOUR ||
+    (total > LOG_LINES_PER_HOUR && own > LOG_LINES_RESERVED_PER_PREFIX)
+  ) {
+    ctx.log.warn('apple.log_shed', { code: 'LOG_BUDGET' });
+    throw budget();
+  }
   await insertLogs(ctx.env.DB, kept, null, now);
   // Attaching is best effort: a failure must not turn Wallet's log post into a 500.
   await attachLogLines(ctx, kept).catch((error: unknown) =>

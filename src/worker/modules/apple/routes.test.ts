@@ -419,10 +419,10 @@ describe('log', () => {
     await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'apple.log%'");
   });
 
-  const post = (logs: unknown, size?: number) =>
+  const post = (logs: unknown, size?: number, ip?: string) =>
     call('/log', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...(ip ? { 'cf-connecting-ip': ip } : {}) },
       body: JSON.stringify({ logs, pad: size ? 'x'.repeat(size) : undefined }),
     });
 
@@ -462,23 +462,46 @@ describe('log', () => {
       "INSERT OR REPLACE INTO counters (key, window_start, count) VALUES ('apple.log', ?, 4990)",
       [Math.floor(Date.now() / hour) * hour],
     );
+    // The first 100 lines fit the reserve; a prefix past it is shed.
+    expect((await post(Array.from({ length: 100 }, (_, i) => `k${i}`))).status).toBe(200);
+    await run(kit.env.DB, 'DELETE FROM wallet_logs');
     const res = await post(Array.from({ length: 30 }, (_, i) => `l${i}`));
     expect(res.status).toBe(429);
     expect(await first(kit.env.DB, 'SELECT 1 FROM wallet_logs')).toBeNull();
   });
 
-  it('keeps logging for quiet IPs once the global ceiling is spent, and caps each IP at 100', async () => {
-    await run(kit.env.DB, 'DELETE FROM wallet_logs');
-    const hour = 3_600_000;
-    await run(
+  const seedGlobal = (count: number) =>
+    run(
       kit.env.DB,
-      "INSERT OR REPLACE INTO counters (key, window_start, count) VALUES ('apple.log', ?, 5000)",
-      [Math.floor(Date.now() / hour) * hour],
+      "INSERT OR REPLACE INTO counters (key, window_start, count) VALUES ('apple.log', ?, ?)",
+      [Math.floor(Date.now() / 3_600_000) * 3_600_000, count],
     );
-    expect((await post(['a', 'b', 'c'])).status).toBe(200);
+  const hundred = (tag: string) => Array.from({ length: 100 }, (_, i) => `${tag}${i}`);
+
+  it('keeps logging for quiet prefixes past the soft ceiling, and caps each prefix at 500 lines', async () => {
+    await run(kit.env.DB, 'DELETE FROM wallet_logs');
+    await seedGlobal(5000);
+    expect((await post(['a', 'b', 'c'], undefined, '192.0.2.5')).status).toBe(200);
     expect(await first(kit.env.DB, 'SELECT 1 FROM wallet_logs')).not.toBeNull();
     await run(kit.env.DB, 'DELETE FROM counters WHERE key = ?', ['apple.log']);
-    expect((await post(Array.from({ length: 100 }, (_, i) => `m${i}`))).status).toBe(429);
+    // One full post does not spend the hour; the sixth does.
+    for (let i = 0; i < 5; i++)
+      expect((await post(hundred(`m${i}-`), undefined, '203.0.113.9')).status).toBe(200);
+    expect((await post(['x'], undefined, '203.0.113.200')).status).toBe(429);
+  });
+
+  it('shares one budget across rotating addresses inside a /64', async () => {
+    for (let i = 0; i < 5; i++)
+      expect((await post(hundred('v'), undefined, `2001:db8:1:2:${i}::${i + 1}`)).status).toBe(200);
+    expect((await post(['x'], undefined, '2001:DB8:1:2:ffff:0:0:1')).status).toBe(429);
+    expect((await post(['x'], undefined, '2001:db8:1:3::1')).status).toBe(200);
+  });
+
+  it('refuses everyone past the hard ceiling, quiet prefixes included', async () => {
+    await run(kit.env.DB, 'DELETE FROM wallet_logs');
+    await seedGlobal(9999);
+    expect((await post(['a', 'b'], undefined, '198.51.100.7')).status).toBe(429);
+    expect(await first(kit.env.DB, 'SELECT 1 FROM wallet_logs')).toBeNull();
   });
 });
 
