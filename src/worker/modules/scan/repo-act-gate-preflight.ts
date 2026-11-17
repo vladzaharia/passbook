@@ -33,18 +33,19 @@ export function heldGateCapacityStmt(
   const witness = `SELECT witness.id AS witness_id FROM scans witness JOIN scope
     ON witness.org_id=scope.org_id AND witness.mode=scope.mode AND witness.event_id=scope.event_id
     WHERE (witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'
-      AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL)`;
+      AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL
+      AND witness.id IN (SELECT witness_id FROM live))`;
   return stmt(
     db,
     `WITH scope AS MATERIALIZED (
       SELECT org_id,mode,id AS event_id,capacity,reentry,?/* scan-ephemeral-pass-id */ AS pass_id
       FROM scan_events WHERE id=?/* scan-ephemeral-event-id */ AND org_id=? AND mode=?
+    ), live AS MATERIALIZED (
+      ${liveEventPresenceSql(org, mode, event, '1', true, true)}
     ), common AS MATERIALIZED (
       ${witness} AND ${scanLedgerCommonScopeSql('witness')}
     ), candidate AS MATERIALIZED (
       ${witness} AND ${scanLedgerSuccessfulCandidateSql('witness')}
-    ), live AS MATERIALIZED (
-      ${liveEventPresenceSql(org, mode, event, '1', true, true)}
     ), verified AS MATERIALIZED (
       SELECT live.pass_id,live.state FROM live
       JOIN common USING(witness_id) JOIN candidate USING(witness_id)

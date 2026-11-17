@@ -12,7 +12,7 @@ import { StaleScanAuthority } from './act-override.ts';
 import { snapshotActionContext } from './act-snapshot.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { planAdmission } from './admission.ts';
-import { type CredentialTombstoneSnapshot, credentialInputValid } from './credential-input.ts';
+import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { policyActor } from './dto.ts';
 import { verifyEventActionLabelHash } from './event-safe-projection.ts';
 import type { ScanActor } from './guard.ts';
@@ -57,7 +57,6 @@ export async function replayOutcome(
   csrfSnapshot: ActorCsrfSnapshot,
 ): Promise<ScanEvaluation> {
   ctx = snapshotActionContext(ctx);
-  if (!credentialInputValid(req.input, credentialContext)) throw new StaleScanAuthority();
   // A passless refusal is scoped by the session it was made in; a device now in another one cannot replay it.
   if (
     row.passId === null &&

@@ -120,18 +120,6 @@ export async function getScanner(db: Db, id: string): Promise<ScannerRow | null>
   return row ? toRow(row) : null;
 }
 
-/** The row half of `scannerCredentialLost` (revoked, expired, replaced token or stored CSRF secret); classify with that. */
-export async function credentialGone(db: Db, scanner: ScannerRow, now: number): Promise<boolean> {
-  const fresh = await getScanner(db, scanner.id);
-  return (
-    !fresh ||
-    fresh.revokedAt !== null ||
-    fresh.tokenHash !== scanner.tokenHash ||
-    (scanner.csrfSecret !== null && fresh.csrfSecret !== scanner.csrfSecret) ||
-    (fresh.expiresAt !== null && fresh.expiresAt <= now)
-  );
-}
-
 /** Callers skip the call inside `everyMs` of the last touch; the WHERE keeps it safe against races. */
 export async function touchScanner(
   db: Db,

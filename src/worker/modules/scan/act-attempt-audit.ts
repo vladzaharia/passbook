@@ -1,6 +1,7 @@
 import type { Pass } from '../passes/repo-map.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
+import { usedRelease } from './effective-release.ts';
 import type { Stop } from './resolve.ts';
 
 /** Retain an inactive pass for audit only when its captured candidate still matches. */
@@ -44,10 +45,8 @@ export function stoppedAuditPass(
       candidate.identityTeamIdentifier !== snapshot.identityTeamIdentifier ||
       candidate.identityRevision !== snapshot.identityRevision ||
       candidate.activeTemplateVersion !== snapshot.activeTemplateVersion ||
-      candidate.activeReleaseId !== snapshot.activeReleaseId ||
-      candidate.activeReleaseGeneration !== snapshot.activeReleaseGeneration ||
-      candidate.activeReleaseVersion !== snapshot.activeReleaseVersion ||
-      candidate.activeReleaseCandidateHash !== snapshot.activeReleaseCandidateHash ||
+      JSON.stringify(usedRelease(candidate.templateSnapshot?.raw)) !==
+        JSON.stringify(snapshot.effectiveRelease) ||
       // Not `templateRevision` (`config_revision`): a rename is not door authority (R8).
       candidate.orgRevision !== snapshot.orgRevision ||
       fields.some((field) => candidate.pass[field] !== snapshot[field])
