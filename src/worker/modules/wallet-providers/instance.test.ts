@@ -995,7 +995,7 @@ describe('native wallet instance lifecycle', () => {
     await expect(
       run(
         db,
-        `UPDATE OR REPLACE passes SET download_token =
+        `UPDATE OR REPLACE passes SET link_generation = link_generation + 1, download_token =
       (SELECT download_token FROM passes WHERE id = ?) WHERE id = ?`,
         [f.pass.id, other.id],
       ),

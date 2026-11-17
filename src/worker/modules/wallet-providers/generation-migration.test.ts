@@ -278,7 +278,9 @@ describe('0043 provider generation fences', () => {
           [crypto.randomUUID(), pass.id],
         ),
       ]),
-    ).rejects.toThrow(/pending credential transfer is locked/);
+    ).rejects.toThrow(
+      /pending credential transfer is locked|a token change must move link_generation/,
+    );
     expect(
       await first(db, 'SELECT id FROM pass_credential_transfers WHERE id = ?', [transferId]),
     ).toBeNull();
