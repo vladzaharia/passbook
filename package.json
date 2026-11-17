@@ -19,7 +19,7 @@
     "format": "biome check --write .",
     "lint": "biome check .",
     "ci:lint": "biome ci --error-on-warnings .",
-    "typecheck": "tsc -p tsconfig.worker.json && tsc -p tsconfig.web.json && tsc -p tsconfig.node.json",
+    "typecheck": "tsc -p tsconfig.worker.json --incremental --tsBuildInfoFile .wrangler/tsc/worker.tsbuildinfo && tsc -p tsconfig.web.json --incremental --tsBuildInfoFile .wrangler/tsc/web.tsbuildinfo && tsc -p tsconfig.node.json --incremental --tsBuildInfoFile .wrangler/tsc/node.tsbuildinfo",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "test:unit": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project unit",
     "test:worker": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project worker",
