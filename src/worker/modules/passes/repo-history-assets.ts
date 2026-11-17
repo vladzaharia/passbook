@@ -22,17 +22,39 @@ export interface AssetRow {
   createdAt: number;
 }
 
+interface RawAsset {
+  name: string;
+  r2_key: string;
+  sha1: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  crc32: number | null;
+  created_at: number;
+}
+
+/** Batchable, so a build can read the pass's assets in the same trip as its other inputs. */
+export const listAssetsStmt = (db: D1Database, passId: string) =>
+  stmt(db, 'SELECT * FROM pass_assets WHERE pass_id = ? ORDER BY name', [passId]);
+
+export const assetsFromResult = (result: D1Result | undefined): AssetRow[] =>
+  ((result?.results ?? []) as unknown as RawAsset[]).map((r) => ({
+    name: r.name,
+    r2Key: r.r2_key,
+    sha1: r.sha1,
+    size: r.size,
+    width: r.width,
+    height: r.height,
+    crc32: r.crc32,
+    createdAt: r.created_at,
+  }));
+
 export async function listAssets(db: D1Database, passId: string): Promise<AssetRow[]> {
-  const rows = await all<{
-    name: string;
-    r2_key: string;
-    sha1: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-    crc32: number | null;
-    created_at: number;
-  }>(db, 'SELECT * FROM pass_assets WHERE pass_id = ? ORDER BY name', [passId]);
+  const rows = await all<RawAsset>(
+    db,
+    'SELECT * FROM pass_assets WHERE pass_id = ? ORDER BY name',
+    [passId],
+  );
   return rows.map((r) => ({
     name: r.name,
     r2Key: r.r2_key,

@@ -2,6 +2,7 @@ import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
+import { first, run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putBrandingImage } from '../orgs/branding.ts';
@@ -82,5 +83,57 @@ describe('asset rate limit', () => {
       (await get(`/p/${token}/assets/icon@3x.png`, env, { 'cf-connecting-ip': '7.7.7.7' })).status;
     expect(await hit('short1')).toBe(404);
     expect(await hit('short2')).toBe(429);
+  });
+
+  const seedMisses = (prefix: string, count: number) =>
+    run(kit.env.DB, 'INSERT OR REPLACE INTO counters (key, window_start, count) VALUES (?, ?, ?)', [
+      `asset.miss:${prefix}`,
+      Math.floor(Date.now() / 60_000) * 60_000,
+      count,
+    ]);
+  const missCount = async (prefix: string) =>
+    (
+      await first<{ count: number }>(kit.env.DB, 'SELECT count FROM counters WHERE key = ?', [
+        `asset.miss:${prefix}`,
+      ])
+    )?.count ?? 0;
+  const randomToken = () => `${'a'.repeat(21)}${Math.random().toString(36).slice(2, 8)}`;
+
+  it('charges only misses, per prefix, and never valid requests', async () => {
+    const a = await kit.pass();
+    const hit = async (token: string, ip: string) => {
+      const res = await get(`/p/${token}/assets/icon@3x.png`, kit.env, { 'cf-connecting-ip': ip });
+      await res.arrayBuffer();
+      return res.status;
+    };
+    await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'asset.miss:%'");
+    for (let i = 0; i < 5; i++) expect(await hit(a.downloadToken, '5.5.5.1')).toBe(200);
+    expect(await missCount('5.5.5.0/24')).toBe(0);
+    expect(await hit(randomToken(), '5.5.5.2')).toBe(404);
+    expect(await hit(randomToken(), '5.5.5.3')).toBe(404);
+    expect(await missCount('5.5.5.0/24')).toBe(2);
+  });
+
+  it('refuses a prefix over the miss threshold before any token lookup, valid tokens included', async () => {
+    const a = await kit.pass();
+    await seedMisses('4.4.4.0/24', 300);
+    const hit = async (token: string, ip: string) =>
+      (await get(`/p/${token}/assets/icon@3x.png`, kit.env, { 'cf-connecting-ip': ip })).status;
+    expect(await hit(a.downloadToken, '4.4.4.9')).toBe(429);
+    expect(await hit(randomToken(), '4.4.4.10')).toBe(429);
+    // Refused requests are not charged further, and other prefixes are untouched.
+    expect(await missCount('4.4.4.0/24')).toBe(300);
+    expect(await hit(a.downloadToken, '4.4.5.9')).toBe(200);
+  });
+
+  it('keys IPv6 by the normalized /64', async () => {
+    const a = await kit.pass();
+    await seedMisses('2001:0db8:0001:0002::/64', 300);
+    const hit = async (ip: string) =>
+      (await get(`/p/${a.downloadToken}/assets/icon@3x.png`, kit.env, { 'cf-connecting-ip': ip }))
+        .status;
+    expect(await hit('2001:DB8:1:2::7')).toBe(429);
+    expect(await hit('2001:db8:1:2:abcd:ef01:2345:6789')).toBe(429);
+    expect(await hit('2001:db8:1:3::7')).toBe(200);
   });
 });

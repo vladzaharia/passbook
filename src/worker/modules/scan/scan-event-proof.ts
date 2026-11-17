@@ -39,7 +39,7 @@ export type ScanEventReference = Pick<
 /** Reuse only within one request and environment; keys include the exact event and scan. */
 export type ScanEventProofCache = Map<string, Promise<boolean>>;
 
-/** Record the evaluated decision: validate its shape and add the plain release class. No proof material. */
+/** Record the evaluated decision: validate its shape and add the plain release class. Adds no signature; the digests it validates are the ones act-result-authority stores. */
 export async function sealScanEvent(
   _env: object,
   row: EventRow,

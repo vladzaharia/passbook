@@ -1,5 +1,7 @@
 # Stations: scanners, customer screens and desk monitors
 
+> **Status:** device roles, the customer and monitor screens and the live hub are built (`device_role`, `scan/scan-hub.ts`). The `scan_stations` table, `station_id` and the station console routes are not; scanning sessions (`0024`, `scanning-sessions.md`) group devices instead. Where this file says `requireAdmin`, read `scanning:manage` on the session's org membership.
+
 > **Superseded in part 2026-11-05, later** (desk overrides, SA §20.9 wins): S8 and the read-only monitor hold only by
 > default. A Desk monitor with **Desk actions** on and a staff member signed in by PIN may override soft refusals and
 > in/out holds of scanners in its watch and mark people out, through three routes (`/scan/overrides`, `/scan/mark-out`,

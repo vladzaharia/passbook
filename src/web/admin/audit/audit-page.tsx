@@ -102,7 +102,7 @@ export function AuditPage({
             {
               header: 'Organization',
               id: 'org',
-              meta: { nowrap: true },
+              meta: { nowrap: true, hideBelow: 'lg' as const },
               cell: ({ row }: { row: { original: (typeof rows)[number] } }) =>
                 row.original.orgId
                   ? (orgName(row.original.orgId) ?? row.original.orgId)

@@ -199,11 +199,16 @@ export function decodeBoundLiveTemplateSnapshot(
       s.active.buildKey !== null &&
       s.pinned.buildKey === s.active.buildKey);
   const displayVersion = compatible ? r.version : null;
+  // A head that says the same as the pass's own release about everything a scanner sees or may do
+  // (ownReleaseSaysSameSql, which builds the snapshot) leaves the pass's own release in the snapshot.
+  const sameVersionHead = r.id === s.issuedId && r.id !== binding.activeReleaseId;
   return (purpose === 'read' || compatible) &&
-    r.id === binding.activeReleaseId &&
-    r.generation === binding.activeReleaseGeneration &&
+    (sameVersionHead
+      ? binding.activeReleaseId !== null
+      : r.id === binding.activeReleaseId &&
+        r.generation === binding.activeReleaseGeneration &&
+        r.candidateHash === binding.activeReleaseCandidateHash) &&
     r.version === binding.activeReleaseVersion &&
-    r.candidateHash === binding.activeReleaseCandidateHash &&
     r.version === s.active.version &&
     binding.displayTemplateVersion === displayVersion
     ? s

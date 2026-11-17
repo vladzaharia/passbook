@@ -13,7 +13,7 @@ import { credentialRefKeysetInitializeStmt } from './repo-credential-keyset.ts';
 
 const makeEnv = installKeysetTestEnv();
 
-describe.sequential('credential keyset legacy references', () => {
+describe('credential keyset legacy references', () => {
   it.each(['[]', JSON.stringify(['d'.repeat(64)])])(
     'fails closed on a preexisting asset grant with refs %s',
     async (refs) => {

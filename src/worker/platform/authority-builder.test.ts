@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
-import { runOne } from '../../../test/helpers/index.ts';
+import { makeTemplate, persistTemplate, runOne } from '../../../test/helpers/index.ts';
 import { grant, grantedBatch, prepareGrantForTest } from './authority.ts';
 import { exactlyOne, rawCheck, rowIs } from './authority-checks.ts';
 import type { AuthorityError } from './authority-error.ts';
@@ -216,6 +216,45 @@ describe('B3: what the next packages need', () => {
     });
     const [r] = await g.commit();
     expect(r?.results).toEqual([{ event_id: s.event.id }]);
+  });
+
+  it('insertJoined inserts several rows in one statement, only under a parent in the tenant', async () => {
+    const { s, route, member } = await setupGrant('b3-bulk');
+    const other = await setupGrant('b3-bulk-other');
+    const second = makeTemplate({ id: 'tpl-b3-bulk-second' });
+    await persistTemplate(s.f, second.resolved);
+    const templates = [s.template.resolved.id, second.resolved.id];
+    const g = grant(route, { purpose: 'org_mode.scan.update', principal: member() });
+    const insert = (eventId: string) =>
+      g.insertJoined('scan_event_templates', {
+        parents: { event_id: eventId },
+        columns: ['template_id'],
+        rows: templates.map((id) => [id]),
+        returning: ['template_id'],
+      });
+    insert(other.s.event.id);
+    insert(s.event.id);
+    const [foreign, own] = await g.commit();
+    expect(foreign?.results).toEqual([]);
+    expect(own?.results.map((r) => (r as { template_id: string }).template_id).sort()).toEqual(
+      [...templates].sort(),
+    );
+    expect(
+      await count('SELECT count(*) AS n FROM scan_event_templates WHERE event_id = ?', [
+        other.s.event.id,
+      ]),
+    ).toBe(0);
+    const h = grant(route, { purpose: 'org_mode.scan.update', principal: member() });
+    const base = { parents: { event_id: s.event.id }, columns: ['template_id'] };
+    expect(code(() => h.insertJoined('scan_event_templates', { ...base, rows: [] }))).toBe(
+      'GRANT_BAD_PURPOSE',
+    );
+    expect(
+      code(() => h.insertJoined('scan_event_templates', { ...base, rows: [['a', 'b']] })),
+    ).toBe('GRANT_BAD_PURPOSE');
+    expect(
+      code(() => h.insertJoined('scan_event_templates', { ...base, values: ['a'], rows: [['a']] })),
+    ).toBe('GRANT_BAD_PURPOSE');
   });
 
   it('insertJoined under another tenant inserts nothing, and a wrong parent set is refused', async () => {

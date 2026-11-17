@@ -14,6 +14,7 @@ import {
   observeCancellation,
   photoAssetGrantFor,
 } from './asset-test-fixtures.ts';
+import { issueUnderOlderAdapter } from './release-policy-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { updateScannerStmt } from './repo-scanners-test-support.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
@@ -31,9 +32,10 @@ beforeAll(async () => {
   });
 });
 
-async function photoPass() {
+async function photoPass(older = false) {
   const device = await kit.scanner({ templateIds: [template] });
   const pass = await kit.scanPass(template);
+  if (older) await issueUnderOlderAdapter(kit, pass.id);
   await putMemberPhoto(jobCtxOf(kit), system, pass.id, { png: encoded, includeInPass: true }, null);
   const grant = await photoAssetGrantFor(kit, device, pass.id);
   const image = () => kit.get(device.headers, `/passes/${pass.id}/assets/member.png?g=${grant}`);
@@ -296,36 +298,49 @@ describe('scanner asset stream races', () => {
     },
   );
 
-  it('cancels a photo when its approved release changes during R2 access', async () => {
-    const fixture = await photoPass();
-    const photo = await memberPhoto(kit.env.DB, kit.org.id, fixture.pass.id);
-    const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
-    if (!photo || !candidate?.activeReleaseVersion) throw new Error('Release fixture missing');
-    const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
-    let opened = false;
-    let cancelled = 0;
-    const spy = vi.spyOn(kit.env.BUCKET, 'get').mockImplementation(async (key, options) => {
-      const object = await originalGet(key, options);
-      if (key !== photo.r2_key || !object) return object;
-      opened = true;
-      await approveAppleRelease(kit, {
-        orgId: kit.org.id,
-        mode: 'live',
-        templateId: template,
-        version: candidate.activeReleaseVersion!,
+  it.each([
+    ['an identical', false],
+    ['an other-adapter', true],
+  ] as const)(
+    'serves or cancels a photo when %s release of the pass version lands during R2 access',
+    async (_name, older) => {
+      const fixture = await photoPass(older);
+      const photo = await memberPhoto(kit.env.DB, kit.org.id, fixture.pass.id);
+      const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
+      if (!photo || !candidate?.activeReleaseVersion) throw new Error('Release fixture missing');
+      const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
+      let opened = false;
+      let cancelled = 0;
+      const spy = vi.spyOn(kit.env.BUCKET, 'get').mockImplementation(async (key, options) => {
+        const object = await originalGet(key, options);
+        if (key !== photo.r2_key || !object) return object;
+        opened = true;
+        await approveAppleRelease(kit, {
+          orgId: kit.org.id,
+          mode: 'live',
+          templateId: template,
+          version: candidate.activeReleaseVersion!,
+        });
+        return observeCancellation(object, () => cancelled++);
       });
-      return observeCancellation(object, () => cancelled++);
-    });
-    let response: Response;
-    try {
-      response = await fixture.image();
-    } finally {
-      spy.mockRestore();
-    }
-    expect(opened).toBe(true);
-    expect(cancelled).toBe(1);
-    await missing(response);
-  });
+      let response: Response;
+      try {
+        response = await fixture.image();
+      } finally {
+        spy.mockRestore();
+      }
+      expect(opened).toBe(true);
+      if (older) {
+        // The release differs from the pass's own in the adapter: a real change.
+        expect(cancelled).toBe(1);
+        await missing(response);
+      } else {
+        // Identical to the pass's own release: nothing a scanner sees or may do changed.
+        expect(cancelled).toBe(0);
+        expect(response.status).toBe(200);
+      }
+    },
+  );
 
   it('cancels a photo after signing identity A→B→A during the R2 read', async () => {
     const device = await kit.scanner({ templateIds: [template] });

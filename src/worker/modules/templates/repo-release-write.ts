@@ -266,11 +266,18 @@ export async function writeRelease(
         expectedGeneration: input.expectedGeneration,
       }),
       headGeneration(c.templateId, mode, c.provider, input.expectedGeneration),
-      // releaseHead requires an active template; an archived one is restored by a rollback, and the
-      // generation check above already pins its head.
-      ...(input.expectedReleaseId === null || input.expectedStatus === 'archived'
+      // An archived template is restored by a rollback: its head counts under the existing-use rule.
+      ...(input.expectedReleaseId === null
         ? []
-        : [releaseHead(c.templateId, mode, c.provider, input.expectedReleaseId)]),
+        : [
+            releaseHead(
+              c.templateId,
+              mode,
+              c.provider,
+              input.expectedReleaseId,
+              input.expectedStatus === 'archived' ? 'existing' : 'issue',
+            ),
+          ]),
     ],
   });
   g.insertSelect('template_releases', RELEASE_COLUMNS, releaseValues(input), RETURN_ID);

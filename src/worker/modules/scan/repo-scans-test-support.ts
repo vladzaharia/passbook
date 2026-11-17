@@ -17,8 +17,8 @@ export function claimScanStmt(
   return stmt(
     db,
     `INSERT INTO scans (id, org_id, mode, scanner_id, event_id, actor_type, actor_id, actor_key, staff_id,
-       idempotency_key, request_hash, method, state, client_ts, at)
-     SELECT ?/* scan-ephemeral-scan-id */, ?, ?, ?/* scan-ephemeral-scanner-id */, ?/* scan-ephemeral-event-id */, ?, ?/* scan-ephemeral-actor-id */, ?/* scan-ephemeral-actor-key */, ?/* scan-ephemeral-staff-id */, ?/* scan-ephemeral-idempotency-key */, ?/* scan-ephemeral-request-hash */, ?, 'pending', ?, ?
+       session_id, idempotency_key, request_hash, method, state, client_ts, at)
+     SELECT ?/* scan-ephemeral-scan-id */, ?, ?, ?/* scan-ephemeral-scanner-id */, ?/* scan-ephemeral-event-id */, ?, ?/* scan-ephemeral-actor-id */, ?/* scan-ephemeral-actor-key */, ?/* scan-ephemeral-staff-id */, ?, ?/* scan-ephemeral-idempotency-key */, ?/* scan-ephemeral-request-hash */, ?, 'pending', ?, ?
      WHERE (${bound.sql}) ON CONFLICT (actor_key, idempotency_key) DO NOTHING RETURNING id`,
     [
       c.id,
@@ -30,6 +30,7 @@ export function claimScanStmt(
       c.actorId,
       c.actorKey,
       c.staffId,
+      c.sessionId ?? null,
       c.idempotencyKey,
       c.requestHash,
       c.method,

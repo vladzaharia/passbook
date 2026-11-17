@@ -18,18 +18,23 @@ function grantedSql(g: Grant, sql: string, params: SqlValue[] = []): GrantedStat
  * Template links are a guarded child of `scanners` (their triggers move the scanner's config epoch):
  * each write reaches the link through a scanner in the grant's org and mode.
  */
-export const addScannerTemplates = (
+export function addScannerTemplates(
   g: Grant,
   scannerId: string,
   templateIds: readonly string[],
-): GrantedStatement[] =>
-  templateIds.map((templateId) =>
-    g.insertJoined('scanner_templates', {
-      parents: { scanner_id: scannerId },
-      columns: ['template_id'],
-      values: [templateId],
-    }),
-  );
+): GrantedStatement[] {
+  const out: GrantedStatement[] = [];
+  // A write statement carries a bounded number of parameters.
+  for (let at = 0; at < templateIds.length; at += 10)
+    out.push(
+      g.insertJoined('scanner_templates', {
+        parents: { scanner_id: scannerId },
+        columns: ['template_id'],
+        rows: templateIds.slice(at, at + 10).map((templateId) => [templateId]),
+      }),
+    );
+  return out;
+}
 
 export const replaceScannerTemplates = (
   g: Grant,

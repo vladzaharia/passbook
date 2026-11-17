@@ -199,14 +199,8 @@ export function OrgDetailPage({
         <Card>
           <CardHeader title="Lifecycle" actions={<OrgStatus status={org.status} />} />
           <CardBody className="flex flex-col gap-2 text-sm text-fg-muted">
-            <p>
-              Suspending this organization stops pass updates and its API keys from working.
-              Reactivate it to allow those functions again.
-            </p>
-            <p>
-              Deletion removes the organization from use, but retains pass and audit references.
-              Neither action erases an offline Wallet copy.
-            </p>
+            <p>Suspending stops pass updates and API keys until you reactivate.</p>
+            <p>Deleting keeps pass and audit records. Wallet copies stay on devices.</p>
           </CardBody>
         </Card>
         <BootstrapOrgAdmin orgId={org.id} active={org.status === 'active'} />
@@ -220,8 +214,7 @@ export function OrgDetailPage({
             }
           />
           <CardBody className="text-sm text-fg-muted">
-            Manage platform signing identities in the directory. The organization&apos;s saved
-            default is available in its authorized workspace.
+            Platform signing identities are managed in the directory.
           </CardBody>
         </Card>
       </TwoPane>

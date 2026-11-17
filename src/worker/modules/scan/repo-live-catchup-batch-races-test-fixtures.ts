@@ -43,7 +43,13 @@ export function registerCatchupRaceTests() {
       );
       expect(raced).toBe(true);
       expect(rows.map((row) => row.id)).toEqual(fixture.rows.map((row) => row.id));
-      expect(rows[0]).toMatchObject({ passId: null, holder: null, photoUrl: null });
+      // A same-version release head is not a change to the pass; only the pass edit redacts.
+      if (change === 'template')
+        expect(rows[0]).toMatchObject({
+          passId: fixture.passes[0].id,
+          holder: 'Catchup Ordinary',
+        });
+      else expect(rows[0]).toMatchObject({ passId: null, holder: null, photoUrl: null });
       expect(rows[1]).toMatchObject({ passId: fixture.passes[1].id, holder: 'Catchup Photo' });
       if (!rows[1]) throw new Error('Missing photo row.');
       expect(rows[1].photoUrl).toBeTruthy();
@@ -53,8 +59,10 @@ export function registerCatchupRaceTests() {
         photoUrl: null,
         kind: 'refused',
       });
-      expect(JSON.stringify(rows[0])).not.toContain('Catchup Ordinary');
-      expect(JSON.stringify(rows[0])).not.toContain(fixture.passes[0].id);
+      if (change === 'pass') {
+        expect(JSON.stringify(rows[0])).not.toContain('Catchup Ordinary');
+        expect(JSON.stringify(rows[0])).not.toContain(fixture.passes[0].id);
+      }
       expect(trace.trips.length).toBeLessThanOrEqual(5);
     },
   );

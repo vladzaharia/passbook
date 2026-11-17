@@ -58,6 +58,13 @@ export async function replayOutcome(
 ): Promise<ScanEvaluation> {
   ctx = snapshotActionContext(ctx);
   if (!credentialInputValid(req.input, credentialContext)) throw new StaleScanAuthority();
+  // A passless refusal is scoped by the session it was made in; a device now in another one cannot replay it.
+  if (
+    row.passId === null &&
+    row.templateId === null &&
+    (row.sessionId ?? null) !== (actor.scanningSession?.id ?? null)
+  )
+    throw new StaleScanAuthority();
   const evidence = await readReplayEvidence(ctx, actor, row, credentialContext);
   const receipt: ScanEvaluation = {
     outcome: minimalReceipt(row),

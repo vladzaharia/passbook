@@ -16,6 +16,8 @@ export interface Claim {
   actorId: string;
   actorKey: string;
   staffId: string | null;
+  /** The scanning session the device belongs to, kept for passless replays. */
+  sessionId?: string | null;
   idempotencyKey: string;
   requestHash: string;
   method: string;
@@ -42,7 +44,7 @@ export interface Finalize {
 
 import { type Raw, type ScanRow, toScan } from './repo-scan-map.ts';
 
-const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, actor_key, staff_id, request_hash,
+const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, actor_key, staff_id, session_id, request_hash,
   state, outcome, reason, action_id, action_kind, override_of, approved_by, pass_version, method, at, undone_by, direction, presence_scope`;
 
 export async function scanByKey(db: Db, actorKey: string, key: string): Promise<ScanRow | null> {
