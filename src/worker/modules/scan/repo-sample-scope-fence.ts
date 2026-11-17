@@ -93,13 +93,15 @@ export function sampleScannerScopePredicate(
     },
     finish(): Predicate {
       // Another configured template deleted or without a release head in this mode invalidates the
-      // whole resolved scope (a platform head counts only for an unassigned baked template).
+      // whole resolved scope (a platform head counts only for an unassigned baked template; an org head
+      // counts for an uploaded template or a baked one assigned to the org, as in `releaseHead`).
       if (ids.size) {
         parts.push(`NOT EXISTS (SELECT 1 FROM json_each(?) selected WHERE NOT EXISTS (
       SELECT 1 FROM templates t WHERE t.id=selected.value AND ${templateUsableSql('t', 'existing')}
         AND (t.org_id IS NULL OR t.org_id={org})
         AND (EXISTS (SELECT 1 FROM template_releases r WHERE r.template_id=t.id AND r.mode={mode}
             AND r.provider='apple' AND r.org_id={org})
+            AND NOT (t.origin='baked' AND t.org_id IS NULL)
           OR (t.org_id IS NULL AND t.origin='baked' AND EXISTS (SELECT 1 FROM template_releases pr
             WHERE pr.template_id=t.id AND pr.mode={mode} AND pr.provider='apple' AND pr.org_id IS NULL)))))`);
         params.push(JSON.stringify([...ids].sort()));
