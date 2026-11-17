@@ -10,7 +10,12 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { brandingWarnings, readBranding, tenantPassJson } from '../passes/branding.ts';
+import {
+  brandingWarnings,
+  readBranding,
+  sourceArtHashes,
+  tenantPassJson,
+} from '../passes/branding.ts';
 import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
 import { getOrg as getPassOrg } from '../passes/repo-read-issuance.ts';
 import { previewPass } from './build-check.ts';
@@ -92,7 +97,12 @@ export async function preview(
     );
     return {
       passJson: result.passJson,
-      warnings: [...result.issues, ...(tenant ? brandingWarnings(template, branding, []) : [])],
+      warnings: [
+        ...result.issues,
+        ...(tenant
+          ? brandingWarnings(template, branding, [], await sourceArtHashes(ctx.env.DB, template.id))
+          : []),
+      ],
       assetNames: [
         ...new Set([
           ...template.assets.map((a) => a.name),

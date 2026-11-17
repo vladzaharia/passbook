@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { bakedTemplates } from '../../../generated/baked-templates.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import type { BrandingImageRef } from '../orgs/branding-files.ts';
+import { sourceBlueprintAssets } from './repo-blueprint-art.ts';
 
 /**
  * The org's pass branding, read leniently from `orgs.branding` (shape owned by the orgs module):
@@ -101,6 +102,25 @@ function placeholders(): ReadonlySet<string> {
   return placeholderHashes;
 }
 
+/**
+ * The logo and icon hashes of every stored version of the blueprint a template was made from: the
+ * blueprint's art may have changed since, and the template keeps the copy it was made with.
+ */
+export async function sourceArtHashes(
+  db: D1Database,
+  templateId: string,
+): Promise<ReadonlySet<string>> {
+  const hashes = new Set<string>();
+  for (const stored of await sourceBlueprintAssets(db, templateId)) {
+    const assets = z
+      .array(z.object({ slot: z.string(), sha1: z.string() }))
+      .catch([])
+      .parse(JSON.parse(stored));
+    for (const a of assets) if (SLOTS.some((s) => s === a.slot)) hashes.add(a.sha1);
+  }
+  return hashes;
+}
+
 /** Test hook: replace the blueprint file hashes; null restores the generated set. */
 export function setPlaceholderHashes(hashes: ReadonlySet<string> | null): void {
   placeholderHashes = hashes;
@@ -110,10 +130,13 @@ export function setPlaceholderHashes(hashes: ReadonlySet<string> | null): void {
 function placeholderSlots(
   templateId: string,
   assets: readonly { slot: string; sha1: string }[],
+  sourceHashes: ReadonlySet<string>,
 ): string[] {
   if (templateId.startsWith('baked:starter-')) return [...SLOTS];
   const hashes = placeholders();
-  return SLOTS.filter((slot) => assets.some((a) => a.slot === slot && hashes.has(a.sha1)));
+  return SLOTS.filter((slot) =>
+    assets.some((a) => a.slot === slot && (hashes.has(a.sha1) || sourceHashes.has(a.sha1))),
+  );
 }
 
 const slotOfName = (name: string) => name.replace(/(@[23]x)?\.png$/, '');
@@ -126,12 +149,13 @@ export function brandingWarnings(
   template: { id: string; assets: readonly { slot: string; sha1: string }[] },
   branding: TenantBranding,
   overrideNames: readonly string[],
+  sourceHashes: ReadonlySet<string> = new Set(),
 ): { severity: 'warning'; code: string; message: string; path?: string }[] {
   const replaced = new Set([
     ...branding.images.map((i) => i.slot),
     ...overrideNames.map(slotOfName),
   ]);
-  const missing = placeholderSlots(template.id, template.assets).filter(
+  const missing = placeholderSlots(template.id, template.assets, sourceHashes).filter(
     (slot) => !replaced.has(slot),
   );
   if (missing.length === 0) return [];

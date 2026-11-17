@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { OrgMembership } from '../src/shared/contracts/org-membership.ts';
 import type { SessionResponse } from '../src/shared/contracts/session.ts';
 import { apiAs, createPass, uid } from './helpers/api.ts';
+import { templateFromBlueprint } from './helpers/releases.ts';
 import { addOrgMember, createOrgWithRoles, readSeed } from './helpers/seed.ts';
 
 const ORG_FILTER = 'wallet-org-filter';
@@ -199,7 +200,12 @@ test.describe('platform administrator', () => {
       const membership = memberships.items.find((item) => item.orgId === org.id);
       if (!membership) throw new Error('Expected the created administrator membership');
       revoke = { orgId: org.id, id: membership.id };
-      const pass = await createPass(api, org.id, { holder: uid('Revocation proof') });
+      // Templates belong to one org: this org makes its own from the blueprint.
+      const template = await templateFromBlueprint(api, org.id, 'Shell revocation');
+      const pass = await createPass(api, org.id, {
+        holder: uid('Revocation proof'),
+        templateId: template.id,
+      });
       const listPath = `/api/v1/passes?orgId=${encodeURIComponent(org.id)}`;
       const visible = await api.get<{ items: { id: string }[] }>(listPath);
       expect(visible.items).toContainEqual(expect.objectContaining({ id: pass.id }));

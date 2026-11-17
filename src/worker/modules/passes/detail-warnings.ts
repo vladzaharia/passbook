@@ -2,7 +2,7 @@ import { validatePass } from '../../../passkit/index.ts';
 import type { PassJson, ValidationIssue } from '../../../passkit/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { brandingWarnings, readBranding } from './branding.ts';
+import { brandingWarnings, readBranding, sourceArtHashes } from './branding.ts';
 import { resolveTemplate } from './builder.ts';
 import { depsOf } from './deps.ts';
 import { listAssets } from './repo-history-assets.ts';
@@ -34,6 +34,7 @@ export async function warningsFor(ctx: ServiceContext, pass: Pass, passJson: Pas
       template,
       readBranding(org?.branding),
       overrides.map((a) => a.name),
+      await sourceArtHashes(ctx.env.DB, template.id),
     );
     return { pass: [...own, ...branding], template: shared };
   } catch (error) {

@@ -252,6 +252,71 @@ describe('placeholder art', () => {
   });
 });
 
+describe('placeholder art of an older blueprint build', () => {
+  it('warns when the art matches any stored version of the source blueprint', async () => {
+    const resolved = kit.registry.add({
+      id: `tpl-old-art-${kit.fx.ids.token(4)}`,
+      orgId: kit.org.id,
+      version: 'v1',
+      manifest: kit.template.manifest,
+      passJson: kit.template.passJson,
+      assets: { 'icon.png': ICON_PNG },
+    });
+    await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      orgId: kit.org.id,
+      mode: 'live',
+      templateId: resolved.id,
+      version: resolved.version,
+    });
+    const icon = resolved.assets.find((a) => a.slot === 'icon');
+    if (!icon) throw new Error('The icon is missing');
+    // The current build knows none of the old art: only the blueprint's stored versions do.
+    setPlaceholderHashes(new Set());
+    onTestFinished(() => setPlaceholderHashes(null));
+    const db = kit.env.DB;
+    const blueprintId = `bp-old-${kit.fx.ids.token(4)}`;
+    await run(
+      db,
+      `INSERT INTO templates (id, org_id, slug, name, origin, active_version, status, styles, blueprint, created_at, updated_at)
+       VALUES (?, NULL, ?, 'Old blueprint', 'baked', 'v2', 'active', '[]', 1, 1, 1)`,
+      [blueprintId, blueprintId],
+    );
+    for (const [version, sha1] of [
+      ['v1', icon.sha1],
+      ['v2', 'f'.repeat(40)],
+    ] as const)
+      await run(
+        db,
+        `INSERT INTO template_versions (template_id, version, manifest, pass_json, assets, report, created_at)
+         VALUES (?, ?, '{}', '{}', ?, '{}', 1)`,
+        [blueprintId, version, JSON.stringify([{ name: 'icon.png', slot: 'icon', sha1 }])],
+      );
+    const create = async () =>
+      PassDetailSchema.parse(
+        await (
+          await post('/passes', {
+            orgId: kit.org.id,
+            templateId: resolved.id,
+            templateVersion: release.version,
+            releaseId: release.id,
+            releaseGeneration: release.generation,
+            mode: 'live',
+            input: { memberName: 'Old art' },
+          })
+        ).json(),
+      );
+    expect((await create()).warnings.map((w) => w.code)).not.toContain('PLATFORM_BRANDING');
+    await run(db, 'UPDATE templates SET source_blueprint = ? WHERE id = ?', [
+      blueprintId,
+      resolved.id,
+    ]);
+    expect((await create()).warnings.find((w) => w.code === 'PLATFORM_BRANDING')).toMatchObject({
+      path: 'icon',
+    });
+  });
+});
+
 describe('tenant identity', () => {
   it('names the org, warns on blueprint art and downloads under the org and title', async () => {
     const resolved = kit.registry.add({
