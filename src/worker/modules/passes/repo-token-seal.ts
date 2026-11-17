@@ -49,9 +49,9 @@ const ORG_ACTIVE = (table: string) =>
 /** A suspended org may come back, so its rows keep a copy; a deleted org and a deleted pass never need one. */
 const ORG_KEEPS = (table: string) =>
   `COALESCE((SELECT o.status != 'deleted' FROM orgs o WHERE o.id = ${table}.org_id), 0)`;
-/** The column's work-list predicate: the device token's is case-sensitive (0065), the older ones are not. */
+/** The column's work-list predicate. Both are case-sensitive (0059, 0065): an uppercase `H1:` is a plain token. The partial indexes carry the same text. */
 const PLAIN = {
-  download_token: "download_token NOT LIKE 'h1:%'",
+  download_token: "download_token NOT GLOB 'h1:*'",
   auth_token: "auth_token NOT GLOB 'h1:*'",
 } as const;
 
@@ -87,7 +87,7 @@ export async function plainBundles(
     db,
     `SELECT id, org_id, mode, NULL AS row_version, token, ${ORG_ACTIVE('bundles')} AS org_active,
        ${ORG_KEEPS('bundles')} AS keep_seal
-     FROM bundles WHERE token NOT LIKE 'h1:%' AND (? IS NULL OR id > ?)
+     FROM bundles WHERE token NOT GLOB 'h1:*' AND (? IS NULL OR id > ?)
        AND NOT ${BUNDLE_RESERVED}
      ORDER BY id LIMIT ?`,
     [after, after, limit],
@@ -99,9 +99,9 @@ export async function plainBundles(
 export async function countPlain(db: D1Database): Promise<number> {
   const row = await first<{ n: number }>(
     db,
-    `SELECT (SELECT count(*) FROM passes WHERE download_token NOT LIKE 'h1:%')
+    `SELECT (SELECT count(*) FROM passes WHERE download_token NOT GLOB 'h1:*')
           + (SELECT count(*) FROM passes WHERE ${PLAIN.auth_token})
-          + (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS n`,
+          + (SELECT count(*) FROM bundles WHERE token NOT GLOB 'h1:*') AS n`,
   );
   return row?.n ?? 0;
 }

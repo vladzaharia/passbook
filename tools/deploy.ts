@@ -10,7 +10,8 @@
 //   npm run deploy -- --promote --apply         serve the version uploaded by --migrate-only, then wait for the
 //                                    baked sync (WALLET_API_KEY starts it at once; else the minute cron)
 //                                    (with --first: `wrangler deploy` after --migrate-only --first)
-// Refuses while wrangler.jsonc still has placeholder ids or keys, or a required secret is unset; a
+// Refuses unless the working tree is clean and dist/ was built from HEAD (tools/stamp-build.ts writes the
+// stamp; --promote checks the commit --migrate-only uploaded). Refuses while wrangler.jsonc still has placeholder ids or keys, or a required secret is unset; a
 // flag before `--`; a full deploy while 0029_org_memberships is pending (the cutover); a promote while
 // any migration is pending. Migrations are forward-only. Once they run, roll forward; the previous Worker version is an
 // emergency degraded mode only (docs/operations.md, Rollback). Never restore D1 to undo a deploy.
@@ -30,6 +31,7 @@ import {
   singleSelect,
   waitForBakedHeads,
 } from './lib/baked-sync-wait.ts';
+import { buildProblem, gitState, stampPath } from './lib/build-stamp.ts';
 import {
   deployFlags,
   deployStage,
@@ -92,7 +94,9 @@ if (args.has('--check')) {
 const first = args.has('--first');
 const stage = deployStage(args);
 const versionFile = resolve(root, '.wrangler/deploy-version.txt');
+const shaFile = resolve(root, '.wrangler/deploy-sha.txt');
 const steps = {
+  build: `refuses unless the working tree is clean and ${stage === 'promote' && !first ? 'the uploaded version was built from HEAD' : 'dist/ was built from HEAD (npm run build)'}`,
   secrets: `wrangler secret list   (fails unless all of ${required.join(', ') || 'none'} are set)`,
   pending:
     stage === 'promote'
@@ -110,6 +114,7 @@ const steps = {
     : 'wrangler versions deploy <version>@100%   (promote)',
 };
 const plan = [
+  steps.build,
   steps.secrets,
   ...(stage === 'migrate' ? [] : [steps.pending]),
   ...(stage === 'promote' ? (first ? [] : [steps.readVersion]) : first ? [] : [steps.upload]),
@@ -122,6 +127,18 @@ if (!args.has('--apply')) {
   process.exit(0);
 }
 
+// Migrations come from this working tree and the Worker from dist/: both must be the same clean HEAD.
+const git = gitState(root);
+const buildRefusal = buildProblem({
+  servesUploaded: stage === 'promote' && !first,
+  git,
+  stamp: existsSync(stampPath(root)) ? readFileSync(stampPath(root), 'utf8') : null,
+  uploadedSha: existsSync(shaFile) ? readFileSync(shaFile, 'utf8').trim() : null,
+});
+if (buildRefusal) {
+  console.error(`Not deploying. ${buildRefusal}`);
+  process.exit(1);
+}
 checkSecrets();
 if (stage !== 'migrate') {
   const refusal = pendingRefusal(
@@ -194,7 +211,10 @@ if (stage === 'promote') {
 
 const outputFile = resolve(root, '.wrangler/deploy-output.ndjson');
 const versionId = uploadAndMigrate({
-  clearVersion: () => rmSync(versionFile, { force: true }),
+  clearVersion: () => {
+    rmSync(versionFile, { force: true });
+    rmSync(shaFile, { force: true });
+  },
   upload: () => {
     if (first) return null;
     writeFileSync(outputFile, '');
@@ -221,7 +241,10 @@ const versionId = uploadAndMigrate({
     );
   },
   migrate: () => console.log(wrangler('d1', 'migrations', 'apply', database, '--remote')),
-  saveVersion: (id) => writeFileSync(versionFile, `${id}\n`),
+  saveVersion: (id) => {
+    writeFileSync(versionFile, `${id}\n`);
+    writeFileSync(shaFile, `${git.head}\n`);
+  },
 });
 if (stage === 'migrate')
   console.log('Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.');

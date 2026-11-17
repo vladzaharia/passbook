@@ -353,8 +353,10 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
 
 ### Pre-checks
 
-1. `npm run check` passes on the commit to deploy. A second person reviews the diff and this
-   runbook. `npm run deploy -- --migrate-only` and `npm run deploy -- --promote` print the plans
+1. **Owner**: a fresh worktree on the commit to deploy: `git worktree add ../wallet-cutover <sha>`,
+   then there `npm ci` and `npm run check`, which must pass. Every later step runs in that worktree;
+   deploy refuses any other tree with uncommitted or untracked files. A second person reviews the
+   diff and this runbook. `npm run deploy -- --migrate-only` and `npm run deploy -- --promote` print the plans
    above.
 2. **Owner**: `npm run deploy:check -- --secrets` prints `wrangler.jsonc is ready to deploy.`
 3. **Owner**: sign in once on passbook.mobile with the email you pass as `--owner` (the bootstrap
@@ -373,8 +375,8 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
    `wallet-broadcast`, `wallet-connection-sync` and `wallet-template-import`. Wait for them to
    finish; an instance resuming on the new code would run old params.
 8. **Owner**: read-only SQL. Paste each block into the dashboard's D1 console (`wallet-platform`),
-   or save it as `q.sql` and run
-   `npx wrangler d1 execute wallet-platform --remote --command "$(cat q.sql)"` (the blocks hold
+   or save it as `.wrangler/q.sql` (the tree must stay clean) and run
+   `npx wrangler d1 execute wallet-platform --remote --command "$(cat .wrangler/q.sql)"` (the blocks hold
    quotes; never paste them into `--command "..."`). Queued work (pending pass and bundle email is
    bound by the bootstrap):
 
@@ -538,7 +540,9 @@ writes.
 ### Order
 
 1. **Owner**: WAF rule on. Sources of new work stopped (pre-check 7).
-2. **Owner**: `npm run deploy -- --migrate-only --apply`. Checks secrets, uploads the version (not
+2. **Owner**: `npm run deploy -- --migrate-only --apply`, from the pre-check 1 worktree. It lists the
+   uncommitted or untracked files and stops on a dirty tree or a `dist/` not built from HEAD, and
+   `--promote` refuses if HEAD moved since the upload. Checks secrets, uploads the version (not
    serving), records a D1 bookmark, applies the 38 files 0025–0065 and stops with
    `Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.`
 3. **Owner**: bootstrap. The tool never touches production; it prints the commands. First:
@@ -635,7 +639,7 @@ keep retired pass ids and credentials from being reused.
 | Where | What to do |
 | --- | --- |
 | Pre-checks, or step 2 before a migration ran | Nothing changed. Fix and rerun. |
-| Step 2, a migration errors | Applied migrations stay; the old Worker keeps serving. Fix the failing migration file (it never ran in production) and rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort, only if no fix is possible: Time Travel restore to the step 2 bookmark, which loses Wallet registrations and scans written since. |
+| Step 2, a migration errors | Applied migrations stay and the database sits at the last one that applied. Stopped in 0043–0049: updates of passes.credential_generation, wallet_provider_instances.lifecycle and pass_credential_transfers.state fail; the old Worker writes none of them. From 0059: creating or publishing a pass. Fix the failing migration file (it never ran in production), commit, run `npm run check`, then rerun `--migrate-only --apply`; it resumes. Keep the WAF rule on. Last resort, only if no fix is possible: Time Travel restore to the step 2 bookmark, which loses Wallet registrations and scans written since. |
 | Step 3 | Stop before promote. Take a fresh snapshot and rerun all three commands. A refused statement names the trigger; fix the tool, not the data. |
 | Step 4, promote fails | The version stays uploaded and the old Worker serves. Rerun `--promote --apply`. Refused because migrations are pending, or no saved version: rerun step 2 (it resumes), then step 3. |
 | Step 4, exit 1 after promote | The new Worker serves; the listed templates cannot issue new passes. An `uploaded` row: rerun step 3, then `--promote --apply` (it repeats only the wait). A `baked` row: check the logs for `TEMPLATE_BUILD_SUPERSEDED` or `BAKED_RELEASE_CONTENT_UNAVAILABLE` (baked assets missing from ASSETS), fix and ship a new version with the same two runs (`--migrate-only` finds nothing to migrate). Do not roll back. |
