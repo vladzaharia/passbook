@@ -30,6 +30,7 @@ import { TemplateScopeQuerySchema } from './route-scope.ts';
 import {
   registerLifecycle,
   registerPreviewBatch,
+  registerStampsImpact,
   registerUploadList,
   registerVersions,
 } from './routes-more.ts';
@@ -281,5 +282,6 @@ register(
 registerVersionReads(templatesRoutes);
 
 registerVersions(templatesRoutes);
+registerStampsImpact(templatesRoutes);
 registerLifecycle(templatesRoutes);
 registerTemplateReleases(templatesRoutes);

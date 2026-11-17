@@ -1,3 +1,4 @@
+import { stampCountOf, stampedName, stampedView } from '../../../passkit/build-assets.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { safeMail, safeUrl } from '../../email/safe.ts';
 import { NotFoundError } from '../../platform/errors.ts';
@@ -110,8 +111,9 @@ export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassI
     width: a.width ?? null,
     height: a.height ?? null,
   });
+  // A stamp card shows the strip drawn for this pass's count under the plain strip name.
   const images = [
-    ...template.assets
+    ...(stampedView(template, pass.personalization) ?? template.assets)
       .filter((a) => a.name.endsWith('.png') && !taken(a.name))
       .map((a) => image(a, a.sha1 || template.version)),
     ...orgFiles.map((f) => image(f, f.version)),
@@ -198,10 +200,11 @@ export async function openPublicAsset(
     return { body: object.body, etag: `"${file.version}-${name}"` };
   }
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-  const entry = template.assets.find((a) => a.name === name);
+  const stored = stampedName(template, name, stampCountOf(template, pass.personalization));
+  const entry = template.assets.find((a) => a.name === stored);
   if (!entry) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
   return {
-    body: await depsOf(ctx.env).registry.openAsset(template, name),
+    body: await depsOf(ctx.env).registry.openAsset(template, stored),
     etag: `"${entry.sha1 || `${template.version}-${name}`}"`,
   };
 }

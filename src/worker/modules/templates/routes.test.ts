@@ -197,6 +197,8 @@ beforeAll(async () => {
   const assets = fakeAssets();
   for (const t of generatedSource.templates) {
     for (const asset of t.assets) {
+      // Generated stamp strips have no source file; nothing here opens them.
+      if (asset.stamps !== undefined) continue;
       const bytes = bytesFor(t.slug, asset.name);
       if (
         bytes.length !== asset.size ||

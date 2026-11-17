@@ -3,6 +3,7 @@ import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './com
 import { REMOVE_MESSAGE_MAX } from './events.ts';
 import { ScanTargetSchema } from './scan.ts';
 import { PUSH_BUDGET_DEFAULT } from './settings.ts';
+import { PassStampsSchema } from './stamps.ts';
 import { ValidationIssueSchema } from './templates.ts';
 
 export const PassStatusSchema = z.enum(['active', 'voided']);
@@ -123,6 +124,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
   assetBaseUrl: z.string(),
   /** Image files the pass can load: template files plus per-pass overrides. */
   assetNames: z.array(z.string()),
+  /** A stamp card's count against its own template version; null for any other pass. */
+  stamps: PassStampsSchema.nullable().optional(),
   /** Users removed this pass from their account; hook B skips them until cleared. */
   blockedUsers: z.array(z.object({ id: IdSchema, name: z.string().nullable() })),
   downloadUrl: z.string(),

@@ -5,6 +5,7 @@ import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { publishPass } from './publish.ts';
 import { passesForReissue } from './repo.ts';
 import { hasWorkflowReleaseSnapshots, passesForWorkflowReissue } from './repo-workflow-releases.ts';
+import { type KeepReady, keepReadyPlan } from './stamps-keep.ts';
 
 const REISSUE_PAGE = 100;
 
@@ -92,6 +93,13 @@ export async function reissuePage(
     });
   }
   const result: ReissuePageResult = { nextCursor: null, changed: 0, unchanged: 0, failed: 0 };
+  const plans = new Map<string, Promise<KeepReady>>();
+  const keepReady = (r: Release) => {
+    const id = `${r.orgId}|${r.mode}|${r.templateId}|${r.version}`;
+    const planned = plans.get(id) ?? keepReadyPlan(ctx, r);
+    plans.set(id, planned);
+    return planned;
+  };
   for (const row of rows) {
     try {
       const release = row.release;
@@ -110,6 +118,7 @@ export async function reissuePage(
           'TEMPLATE_RELEASE_CONFLICT',
         );
       }
+      const keep = release ? await keepReady(release) : null;
       const published = await publishPass(ctx, {
         orgScope: release
           ? { orgId: release.orgId, mode: release.mode, principal: 'session' }
@@ -138,7 +147,7 @@ export async function reissuePage(
             throw new ConflictError('The pass changed. Retry.', 'PASS_CONFLICT');
           }
           // Resigning and restyling keep each pass on its current template version.
-          return release ? { templateVersion: release.version } : {};
+          return release && keep ? { templateVersion: release.version, ...keep(current) } : {};
         },
       });
       if (published.changed) result.changed++;

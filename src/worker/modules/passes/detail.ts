@@ -1,3 +1,4 @@
+import { stampedView } from '../../../passkit/build-assets.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import type { PassSource } from '../../../shared/contracts/passes.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -15,6 +16,7 @@ import { listAssets } from './repo-history-assets.ts';
 import { memberPhotoAsset } from './repo-member-photo.ts';
 import { currentPassJson, getOwnerLabel, getPass, listBlockedUsers } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
+import { stampsOf } from './stamps-view.ts';
 
 export function holderStateOf(pass: Pass): 'unassigned' | 'waiting' | 'owned' {
   if (pass.ownerUserId) return 'owned';
@@ -51,7 +53,7 @@ export function toSummary(pass: Pass) {
 /** Image files a pass can load: template files plus per-pass overrides. */
 export async function assetNamesOf(
   ctx: ServiceContext,
-  pass: Pick<Pass, 'id' | 'orgId' | 'templateId' | 'templateVersion'>,
+  pass: Pick<Pass, 'id' | 'orgId' | 'templateId' | 'templateVersion' | 'personalization'>,
 ): Promise<string[]> {
   const names = new Set<string>();
   const original = await listAssets(ctx.env.DB, pass.id);
@@ -62,7 +64,9 @@ export async function assetNamesOf(
   const replaced = replacedBy(overrides.map((a) => a.name));
   try {
     const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-    for (const a of template.assets) if (!replaced(a.name)) names.add(a.name);
+    // A stamp card loads the strip drawn for this pass's count under the plain strip name.
+    for (const a of stampedView(template, pass.personalization) ?? template.assets)
+      if (!replaced(a.name)) names.add(a.name);
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
     ctx.log.warn('pass.asset_names_unavailable', { passId: pass.id, code: error.code });
@@ -176,6 +180,7 @@ export async function detailOf(
     passJson,
     ...linksOf(ctx, pass),
     assetNames: await assetNamesOf(ctx, pass),
+    stamps: await stampsOf(ctx, pass),
     blockedUsers,
     registrations: devices.length,
     devices,

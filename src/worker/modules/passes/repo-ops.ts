@@ -214,3 +214,17 @@ export const setWorkflowStatus = (
   now: number,
   errorCode: string | null = null,
 ) => finishRun(db, instanceId, status, now, { errorCode });
+
+/** Distinct template versions a template's live passes sit on, in one organization and mode. */
+export async function liveVersions(
+  db: D1Database,
+  q: { templateId: string; orgId: string; mode: Mode },
+): Promise<string[]> {
+  const rows = await all<{ v: string }>(
+    db,
+    `SELECT DISTINCT template_version AS v FROM passes
+     WHERE template_id = ? AND org_id = ? AND mode = ? AND status = 'active' AND deleted_at IS NULL`,
+    [q.templateId, q.orgId, q.mode],
+  );
+  return rows.map((r) => r.v);
+}

@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { PassBuildError } from '../../../passkit/build.ts';
+import { stampCountOf, stampedView } from '../../../passkit/build-assets.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type {
   PreviewBatchSchema,
@@ -90,16 +91,23 @@ export async function preview(
       org?.name ?? 'Organization',
       new Date(ctx.clock.now()),
     );
+    // A stamp card shows the strip drawn for the input's count under the plain strip name.
+    const input = body.input ?? template.manifest.sample;
+    const stamps = stampCountOf(template, input);
+    const query = new URLSearchParams({
+      ...(selectedOrgId ? { orgId: selectedOrgId } : {}),
+      ...(stamps !== undefined ? { stamps: String(stamps) } : {}),
+    }).toString();
     return {
       passJson: result.passJson,
       warnings: [...result.issues, ...(tenant ? brandingWarnings(id, branding, []) : [])],
       assetNames: [
         ...new Set([
-          ...template.assets.map((a) => a.name),
+          ...(stampedView(template, input) ?? template.assets).map((a) => a.name),
           ...(template.manifest.previewOnlyAssets ?? []),
         ]),
       ],
-      assetBaseUrl: `${baseUrl(ctx.env)}/api/v1/templates/${encodeURIComponent(id)}/versions/${template.version}/assets${selectedOrgId ? `?orgId=${encodeURIComponent(selectedOrgId)}` : ''}`,
+      assetBaseUrl: `${baseUrl(ctx.env)}/api/v1/templates/${encodeURIComponent(id)}/versions/${template.version}/assets${query ? `?${query}` : ''}`,
     };
   } catch (error) {
     if (error instanceof PassBuildError)

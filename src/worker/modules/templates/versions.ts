@@ -22,6 +22,7 @@ import { commitVersion } from './persist.ts';
 import { clearTemplateCache, r2Key } from './registry.ts';
 import { getOrgName, getTemplate, getVersion } from './repo.ts';
 import { detail, loadTemplate } from './service.ts';
+import { stampsForSave } from './stamps-save.ts';
 import { resolveVersionFiles } from './version-files.ts';
 
 type Body = z.infer<typeof SaveVersionSchema>;
@@ -67,6 +68,7 @@ export async function saveVersion(
     fallbackName: row.name,
     images,
     behaviors,
+    stamps: stampsForSave(ctx, id, manifest, body.dryRun === true, carried),
   });
   if (!('version' in analysis)) return rejected(body, analysis.report, null);
 
