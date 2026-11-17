@@ -143,7 +143,7 @@ g.insertJoined('bundle_passes', { parents: { bundle_id, pass_id }, columns: ['po
 const results = await g.commit();                         // one batch: [grant insert, ...statements, grant delete]
 ```
 
-- **Principals.** A membership is `via: 'session'` (a synchronous request: `sessionIdHash` is required and must be live) or `via: 'deferred'` (queued work: the captured `orgAccessRevision` is required, no session is checked, Rule 4). There is no third form. A `platform` or `system` principal that names an org (`orgId`) acts on it only while the org is active.
+- **Principals.** A membership is `via: 'session'` (a synchronous request: `sessionIdHash` is required and must be live) or `via: 'deferred'` (queued work: the captured `orgAccessRevision` is required, no session is checked, Rule 4). There is no third form. A `platform` or `system` principal that names an org (`orgId`) acts on it only while the org is active. A holder acts only while its pass's org is active, except the session holder (`holder_remove`): an owner can take a pass off their account in a suspended or deleted org, which unlinks it as it is (`holders/service-remove.ts`); a re-sign there is still refused by `pass_credential_transfer_insert_guard`.
 - **No raw statements leak.** Statements are opaque values that only that grant can commit. They are not `D1PreparedStatement`s until `commit()` runs, so they cannot run outside their batch. `Grant.prepare` is module-private; `prepareGrantForTest` exists for tests, and the lint rejects it elsewhere.
 - **Cross-grant mixing throws** `GRANT_FOREIGN_STATEMENT`.
 - **One grant per batch.**

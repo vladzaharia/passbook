@@ -1,4 +1,4 @@
-import { type Check, passRow, rowIs } from '../../platform/authority-checks.ts';
+import { type Check, passRow, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -14,6 +14,8 @@ import {
 import {
   type CredentialTransferAuthority,
   readTransferConnection,
+  readTransferPass,
+  type TransferPass,
 } from './repo-credential-transfer-read.ts';
 import { matchesCredentialSource } from './repo-credential-transfer-source.ts';
 
@@ -94,12 +96,42 @@ type SelfRemove = Extract<CredentialTransferAuthority, { kind: 'self-remove' }>;
  * The owner removes a pass whose credential cannot change: block re-attachment and clear the owner in
  * one grant, with no rotation. False when the pass or the owner's session moved since the read.
  */
-export async function unlinkSelfRemove(
+export const unlinkSelfRemove = (
   ctx: ServiceContext,
   a: SelfRemove,
   unchanged: UnchangedCredential,
+) => unlinkOwner(ctx, a, unchanged.source, noTargetTombstone(unchanged.stableRefs));
+
+/**
+ * The owner removes a pass of an org that is not active: a suspended org issues nothing, so the pass is
+ * unlinked as it is (block and owner cleared, credential unchanged) while the org is still inactive.
+ */
+export async function unlinkInactiveOrg(
+  ctx: ServiceContext,
+  passId: string,
+  a: SelfRemove,
 ): Promise<boolean> {
-  const { source: s, stableRefs } = unchanged;
+  const source = await readTransferPass(ctx.env.DB, passId);
+  return (
+    !!source &&
+    unlinkOwner(
+      ctx,
+      a,
+      source,
+      rawCheck(
+        'stale',
+        "NOT EXISTS (SELECT 1 FROM orgs o WHERE o.id = a.org_id AND o.status = 'active')",
+      ),
+    )
+  );
+}
+
+async function unlinkOwner(
+  ctx: ServiceContext,
+  a: SelfRemove,
+  s: TransferPass,
+  check: Check,
+): Promise<boolean> {
   const p = s.pass;
   if (!matchesCredentialSource(s, a.expected) || p.ownerUserId !== a.userId) return false;
   const g = await transferGrant(ctx, a, 'start', p, [
@@ -118,7 +150,7 @@ export async function unlinkSelfRemove(
       'lineage',
     ),
     ...noOpenClaims(p.id),
-    noTargetTombstone(stableRefs),
+    check,
   ]);
   if (!g) return false;
   g.include(attachBlockPart(a.userId, ctx.clock.now()));
