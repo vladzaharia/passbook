@@ -155,6 +155,37 @@ describe('a check-in admits a pass once when another scan commits first', () => 
     expect(await gates(p)).toEqual({ check_in: won.scanId });
   });
 
+  it('an in/out pass scanned out at two doors: one exit, the loser is already outside', async () => {
+    const p = await pass({ mode: 'in_out' });
+    const inside = await kit.scanner({ templateIds: [template], settings: { direction: 'in' } });
+    const a = await kit.scanner({ templateIds: [template], settings: { direction: 'out' } });
+    const b = await kit.scanner({ templateIds: [template], settings: { direction: 'out' } });
+    expect((await act(inside.headers, p)).kind).toBe('ok');
+    kit.clock.set(baseline + 60_000);
+    const { lost, won } = await race(
+      () => act(a.headers, p),
+      () => act(b.headers, p),
+    );
+    expect(won.kind).toBe('ok');
+    expect(lost).toMatchObject({
+      kind: 'heads_up',
+      reason: 'not_inside',
+      overridable: false,
+      previous: { scanId: won.scanId },
+    });
+    expect(await presence(p)).toEqual({ state: 'out', last_scan_id: won.scanId });
+    expect(await gates(p)).toEqual({ check_in: won.scanId });
+    expect(
+      (
+        await all<{ id: string }>(
+          kit.env.DB,
+          "SELECT id FROM scans WHERE pass_id=? AND outcome='ok' AND direction='out'",
+          [p.id],
+        )
+      ).map((s) => s.id),
+    ).toEqual([won.scanId]);
+  });
+
   it('control: a rival scan of another pass leaves the entry admitted', async () => {
     const p = await pass({ mode: 'in_out' });
     const other = await pass({ mode: 'in_out' });
