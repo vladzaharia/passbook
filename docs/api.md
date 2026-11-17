@@ -326,6 +326,23 @@ curl -X PATCH https://passbook.mobile/api/v1/passes/$ID \
   -d '{ "input": { "points": 1300 } }'
 ```
 
+## Stamp cards
+
+On a template with `manifest.stamps`, `GET /api/v1/passes/{id}` carries `stamps` (`input`, `goal`, `count`, `card`, `ready`, `maximum`), counted by the pass's own template version.
+
+`POST /api/v1/passes/{id}/stamps` (`passes:write`; session `passes:operate`) takes `{ "action": "add", "count": 1 }` (`count` 1 to 20, default 1) or `{ "action": "redeem" }`. It counts from the freshly read pass, publishes the pass and returns the pass detail. The input is then `manual` (a connection no longer owns it).
+
+| Status | Code | When |
+|---|---|---|
+| 409 | `STAMPS_NONE` | the pass's template has no stamps |
+| 409 | `STAMPS_CARD_FULL` | add on a full card; redeem first |
+| 409 | `STAMPS_NO_REWARD` | redeem before the goal |
+| 409 | `PASS_CONFLICT` | the pass changed during the write; re-read and retry |
+
+A card never climbs above the maximum of a release waiting to reissue it. The stamp that fills the card alerts the holder even when the daily push budget is spent.
+
+`GET /api/v1/templates/{id}/stamps-impact?goal=` (`orgId` optional) counts what a new goal does to live cards: `passes`, `readyNow`, `readyLost`, `newlyReady`, `highest`, `highestKept`. A template without stamps answers 409 `STAMPS_NONE`.
+
 ## Holders
 
 `GET /api/v1/holders` lists assignments for an organization (see Authenticate for `orgId`).
@@ -423,6 +440,19 @@ Console routes need a session and `scanning:manage`. They act on the console mod
 - `GET /scan-staff?orgId=&q=&limit=&cursor=` returns `items`, and `hasMore` with `nextCursor` when there are more. Pass `nextCursor` as `cursor` for the next page.
 - `GET /scan/staff?q=` (paired scanner) finds staff by name. The scanner session sets `staffTruncated: true` when its `staffList` was cut at 500.
 
+## Scanner device actions
+
+The paired scanner (or an admin session joining a scanning session) calls `/api/v1/scan/*`. `POST /scan/resolve` returns a card with `actions[]`; `POST /scan/actions` runs one.
+
+- A request carries `idempotencyKey`, `actionId` and, by kind: `amount` (add, take), `value` and `expectedVersion` (set), `approval`. A repeat of a key replays the stored answer.
+- Value actions: `add`, `take`, `set`, `use_up` change an input of the pass and publish it. Stamp cards use the same kinds. Add is capped at the input's maximum; take beyond the balance is refused `no_balance`; a stamp on a full card is `card_full`; an input owned by a connection is `managed_elsewhere` unless the action allows it; a daily amount cap is `limit_reached`. A `set` with a stale `expectedVersion` is a heads-up `stale` carrying a fresh card. Invalid amounts or values answer 422 `SCAN_AMOUNT_INVALID` or `SCAN_VALUE_INVALID`.
+- `ScanCardAction.input` (`type`, `label`, `min`, `max`, `step`, `maxLength`, `enum`) is present on a `set` with no fixed value and says what it accepts; the server validates again.
+- `ScanCardAction.lock` is `role`, `approval` or `max`. `approval` is unlocked by a Manager PIN: send `approval: { pin }` (six digits) on the same action under a new idempotency key, or on `POST /scan/scans/{id}/undo`. `approval.staffId` is optional: without it the PIN is matched against the org's active managers. When the scanner's staff sign-in is on, `staffId` is required: 422 `PIN_MANAGER_REQUIRED`. A wrong PIN (also one that two managers share) is 400 `PIN_INVALID` with `triesLeft`. Five misses per manager in five minutes, or 20 per scanner in an hour, answer 429 `RATE_LIMITED`; a PIN with no manager named divides both limits by the number of managers it is tested against, and counts against one org-wide hourly counter. The approver is recorded on the scan.
+- Undo reverses add, take, set and use up. `UNDO_SUPERSEDED` (409) when a newer scan or edit moved the gate or value.
+- Codes not found are counted per scanner (or admin actor) in 10-minute windows: after 30, 429 `SCAN_TOO_MANY_MISSES` with `Retry-After`. The first crossing of the cap is audited (`scan.misses_capped`).
+- 409 `SCAN_UNCONFIRMED`: the action committed but the answer could not be confirmed (its template changed meanwhile). Scan again; the key replays the result.
+- Photo and asset links in answers are short-lived grants (`docs/security.md`); an expired or voided one is 404 `ASSET_NOT_FOUND`.
+
 ## Scanner history
 
 Scanning lists and forms use an explicit `orgId` and the caller's scanning capabilities. The
@@ -464,6 +494,7 @@ quarantine at deletion permanently excludes their historical rows.
 - Most lists take `limit` (1 to 200) and `cursor`; scanner history has the tighter limit above.
   The response has `nextCursor` (null at the end).
 - `void` and `unvoid` toggle a pass; `rotate-link` invalidates the old download link.
+- Links are stored as a MAC plus a sealed copy (`docs/security.md`). If the sealed copy is unreadable, `downloadUrl` in `GET /me/passes` and `url` on a bundle are `null`; `rotate-link` issues a working one. Pass detail and mail answer 503 `TOKEN_SEAL_MISSING`.
 - `POST /passes/{id}/remove` (`{ message? }`) publishes a last version that is voided and expired, so Wallet
   moves it to Expired passes; no API deletes a pass from a device. `POST /passes/{id}/restore` undoes it.
   Bulk: `POST /passes/bulk` with `action: "remove"`.

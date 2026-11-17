@@ -548,13 +548,17 @@ replaces the token. Bearer only, no cookie, no CSRF.
 - A PIN works only on a paired scanner (or admin session) of the staff member's org.
 - Sign-in: `POST /api/v1/scan/staff { staffId, pin }` binds `scanners.staff_id`, `staff_since`, `staff_seen_at`.
   Ends at 15 min idle, 12 h, **Switch staff** (`DELETE /api/v1/scan/staff`), revoke, or the staff member's disable.
-- Approval: the action request carries `approval: { staffId, pin }` of an active Manager of the org. Verified in the
-  request; nothing is stored but `scans.approved_by`.
+- Approval: the action or undo request carries `approval: { staffId?, pin }` of an active Manager of the org. Verified in the
+  request; nothing is stored but `scans.approved_by`. Without `staffId` the PIN is matched against every active
+  manager (constant-time compare over their hashes); that is allowed only while staff sign-in is off (else 422
+  `PIN_MANAGER_REQUIRED`), and two managers with the same PIN answer as a wrong PIN (`PIN_INVALID`, logged `PIN_AMBIGUOUS`).
 - Misses: counter `scan:pin:<scannerId>:<staffId>`, 5 per 5 min, then that person is locked on that scanner for the
   window (400 `PIN_INVALID` with `triesLeft`, then 429), audited `scan_staff.pin_locked` once per window. Space 10⁶,
   so a stolen device needs about two years of lockouts per name. A second counter, `scan:pinall:<scannerId>`, caps
   misses across every name at 20 per hour; past it the scanner takes no PIN (sign-in or approval) until the hour
-  ends, audited `scanner.pin_flood` once. Without it, an org with 20 managers would give a thief 20× the tries.
+  ends, audited `scanner.pin_flood` once. Without it, an org with 20 managers would give a thief 20× the tries. A PIN
+  with no name tested against *n* managers divides both caps by *n* (at least 1) and counts its misses in one org-wide
+  hourly counter, `scan:pinany:<orgId>`, instead of `scan:pinall:<scannerId>`, so a fleet of paired devices shares one budget.
 
 ### 2.8 Principal errors (HTTP)
 
@@ -570,7 +574,9 @@ replaces the token. Bearer only, no cookie, no CSRF.
 | `PIN_INVALID` | 400 | **Wrong PIN. {n} tries left.** |
 | `SCAN_ACTION_UNKNOWN`, `SCAN_AMOUNT_INVALID`, `SCAN_VALUE_INVALID`, `SCAN_OVERRIDE_INVALID`, `SCAN_SCOPE_NOT_ALLOWED`, `SCAN_SCOPE_REQUIRED`, `SCAN_BODY_INVALID` | 422 | refused band (client bug or a template change mid-shift) |
 | `IDEMPOTENCY_KEY_REUSED` | 422 | system `server` |
+| `PIN_MANAGER_REQUIRED` | 422 | the Manager select on the approval sheet |
 | `SCAN_IN_PROGRESS` | 409 + `Retry-After: 1` | retried by the client with the same key |
+| `SCAN_UNCONFIRMED` | 409 | the action committed but its answer could not be confirmed; the client replays the key |
 | `RATE_LIMITED`, `SCAN_TOO_MANY_MISSES` | 429 + `Retry-After` | system `rate_limited` |
 | `ORG_FORBIDDEN`, `MISSING_SCOPE` | 403 | API only |
 
@@ -604,6 +610,7 @@ D1 counters (`platform/counters.ts`):
 | `scan:pairfail:<ipPrefix>` | 1 h | 30 | 429; > 500 platform-wide logs error `SCAN_PAIR_FLOOD` |
 | `scan:pin:<scannerId>:<staffId>` | 5 min | 5 | 429 for that person on that scanner |
 | `scan:pinall:<scannerId>` | 1 h | 20 misses, any name | 429 for every PIN on that scanner; audit `scanner.pin_flood` once |
+| `scan:pinany:<orgId>` | 1 h | 20 ÷ managers tested, PIN with no name | 429 for every nameless PIN in the org |
 | `scan:amt:<scannerId>` | scanner-local day | `dailyAmount` | `limit_reached` |
 | `scan:export:<userId>` | 1 h | 10 | 429 |
 | `scan:ovr:<actorKey>` (20.9) | 1 h | 120 overrides and Mark-as-outs | 429 `SCAN_TOO_MANY_OVERRIDES`; audit `scan.overrides_capped` once |
@@ -2030,11 +2037,11 @@ Rendered display strings are never logged; the suite-wide log check also scans f
 | --- | --- | --- |
 | Door check-in (`actions`, auto) | claim 1, candidates 1-2, policy reads 1 (batched), commit grant batch 1 (with counts and the display reads), 5 in all | p95 ≤ 150 ms |
 | Value action | 10 in all: the check-in trips + `publishPass` (R2 put + CAS batch, ≤ 3 attempts) | p95 ≤ 400 ms |
-| Undo | ≤ 2 hops: one read batch, one grant batch | p95 ≤ 150 ms |
+| Undo | ≤ 2 hops: one read batch, one grant batch (≤ 4 with a Manager PIN: its reservation and refund are separate trips) | p95 ≤ 150 ms |
 | Resolve (desk card) | candidates 1-2, card reads 1 batch | p95 ≤ 120 ms |
 | Lookup | ≤ 5 after the guard (candidates, pass reads, history) | p95 ≤ 120 ms |
 
-A photo adds none (its capability is stateless, §5.1) and neither does a verified manager PIN: its
+A photo adds none (its capability is stateless, §5.1) and neither does a verified manager PIN on an action (5, asserted by `action-approval-budget-trace.test.ts`): its
 attempt is returned by parts of the commit grant (`include(writePart(… {grant}))`), which apply only while the grant
 holds and cannot fail it.
 
@@ -2222,7 +2229,7 @@ mismatch across two orgs on one pass type ID; the verdict read at arm's length a
 | --- | --- | --- |
 | **0. Foundation PR** (integration) | `ScannerAuth`, store port, CSRF, `Actor`, `reportDenied`; `scans:read`; `RL_SCAN_*` 1010-1013; `derivedHmacKey`; `/scan` headers; vite second input, `'!/scan'` in `VITE_DEV_PATHS`; `check-bundle` second budget; event kinds and group; settings keys; `AuditActorType` | `npm run check` green, behaviour unchanged (`denyAllStores` resolves null) |
 | **1. Door core** | 0014; scanners, pairing, pair here, revoke, mode; events (with the staff note); resolve; `check_in` with gates and the fast path; ledger; counts; asset route; test-mode rules; the display model, validator, renderer, presets, defaults, role filter, history and the server display (every result renders a default or a blueprint's display); `/scan` entry, session, pairing, reducer with the card layer, wedge, manual, camera and decoder, the B shell, result card and display painter, sound, the dock-seated buddy, v1 unsure; console Scanners, Events, Scans tabs; blueprints switched, with displays | a paired phone checks in a ticket and shows its Ticket panel; two doors can't double admit; e2e green |
-| **2. Desk** | `add`, `take`, `set`, `use_up` with the `commit` hook; undo; lookup search; miss caps; manifest, validator, designer **Scanning**; desk panel, action area, keypad, review, ready action, promoted actions; staff, PINs, sign-in, approvals; display-only versions (`build_key`, 0018); the designer's **Scan screen** mode | a desk adds a stamp, redeems a reward, undoes; a Manager PIN approves a `set`; a display edit goes live on the next scan with no reissue |
+| **2. Desk** | `add`, `take`, `set`, `use_up` with the `commit` hook; undo; lookup search; miss caps; manifest, validator, designer **Scanning**; desk panel, action area, keypad, review, ready action, promoted actions; staff, PINs, sign-in, approvals; display-only versions (`build_key`, 0027); the designer's **Scan screen** mode | a desk adds a stamp, redeems a reward, undoes; a Manager PIN approves a `set`; a display edit goes live on the next scan with no reissue |
 | **3. Door depth** | capacity (re-entry moved to 3B), bundle check-in, live dashboard, summaries, milestones, buddy beats and the beat API, metrics and overview, feed and CSV, broadcast and list targets, Sync log, portal `lastScan`, terminals, the designer's real-pass sample (`/api/v1/scan-display/preview`) | dashboard live at 5 s; overview cards |
 | **4. NFC (off)** | manifest `nfc`, `vas_keys`, gates, build injection, scoped reissue, identity NFC card, browser keys, reader test, designer **NFC**, serial rule, docs | all gates tested; flag off in every environment |
 | **5. Offline** | v2 roster, decide, queue, batch; then v3 service worker | conflicts shown without interrupting the door |
