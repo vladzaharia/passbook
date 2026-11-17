@@ -10,17 +10,15 @@ import { recordAppleEvents } from './events.ts';
 import { attachLogLines } from './log-events.ts';
 import {
   addRegistration,
-  bumpLogCounter,
   currentSerials,
-  GLOBAL_LOG_KEY,
   identityByPassType,
-  insertLogs,
   registrationExists,
   removeRegistration,
   serialsSince,
   updatePushToken,
 } from './repo.ts';
 import { type AppleCredential, appleCredentialCurrent } from './repo-credential.ts';
+import { bumpLogCounter, GLOBAL_LOG_KEY, insertLogs } from './repo-logs.ts';
 
 const MAX_SERIALS = 200;
 const MAX_LOG_LINES = 100;
@@ -98,7 +96,6 @@ export async function registerDevice(
       deviceId: input.deviceId,
       pass,
       pushToken: input.pushToken,
-      now,
     });
     if (updated) {
       await assertAppleCredential(ctx, pass);

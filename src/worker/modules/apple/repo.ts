@@ -1,6 +1,4 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { deleteInBatches } from '../../platform/batched.ts';
-import { bump, prune } from '../../platform/counters.ts';
 import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
 import {
   type AppleCredential,
@@ -54,7 +52,7 @@ export async function registrationCount(db: D1Database, passId: string): Promise
 }
 
 /**
- * Device and registration in one transaction; the cap evicts the least recently active
+ * Device and registration in one transaction; the cap evicts the oldest
  * registration, and the `registrations_cap` trigger stays as the backstop.
  * The push token is stored on the registration: one identity serves every org, so the device row
  * is shared and a token written there by one pass would redirect the others.
@@ -88,14 +86,11 @@ export async function addRegistration(
         ...appleCredentialParams(pass),
       ],
     ),
-    // At the cap a new device replaces the least recently active registration instead of being refused.
+    // At the cap a new device replaces the oldest registration instead of being refused.
     stmt(
       db,
       `DELETE FROM registrations WHERE rowid = (
-         SELECT x.rowid FROM registrations x
-         LEFT JOIN devices d ON d.device_id = x.device_id AND d.identity_id = x.identity_id
-         WHERE x.pass_id = ?
-         ORDER BY COALESCE(d.updated_at, x.created_at), x.created_at LIMIT 1)
+         SELECT x.rowid FROM registrations x WHERE x.pass_id = ? ORDER BY x.created_at, x.rowid LIMIT 1)
        AND (SELECT count(*) FROM registrations WHERE pass_id = ?) >= ${REGISTRATIONS_PER_PASS}
        AND NOT EXISTS (SELECT 1 FROM registrations
          WHERE device_id = ? AND identity_id = ? AND pass_id = ?)
@@ -124,7 +119,7 @@ export async function addRegistration(
 
 export async function updatePushToken(
   db: D1Database,
-  r: { deviceId: string; pass: AppleCredential; pushToken: string; now: number },
+  r: { deviceId: string; pass: AppleCredential; pushToken: string },
 ): Promise<boolean> {
   const { pass } = r;
   const result = await run(
@@ -141,14 +136,7 @@ export async function updatePushToken(
       ...appleCredentialParams(pass),
     ],
   );
-  if (result.changes === 0) return false;
-  // Activity for the cap's eviction order.
-  await run(db, 'UPDATE devices SET updated_at = ? WHERE device_id = ? AND identity_id = ?', [
-    r.now,
-    r.deviceId,
-    pass.identityId,
-  ]);
-  return true;
+  return result.changes > 0;
 }
 
 export async function removeRegistration(
@@ -317,38 +305,4 @@ export async function anyRegisteredDevice(
     [pass.id, pass.serial, pass.credentialGeneration, ...ids],
   );
   return row !== null;
-}
-
-/** Adds `lines` to the hourly window and returns the new total. */
-export const GLOBAL_LOG_KEY = 'apple.log';
-
-export const bumpLogCounter = (db: D1Database, key: string, windowStart: number, lines: number) =>
-  bump(db, key, windowStart, lines);
-
-export async function insertLogs(
-  db: D1Database,
-  lines: string[],
-  identityId: string | null,
-  now: number,
-): Promise<void> {
-  await batch(
-    db,
-    lines.map((line) =>
-      stmt(db, 'INSERT INTO wallet_logs (at, identity_id, line) VALUES (?, ?, ?)', [
-        now,
-        identityId,
-        line,
-      ]),
-    ),
-  );
-}
-
-export async function purgeLogs(db: D1Database, before: number): Promise<number> {
-  const logs = await deleteInBatches(db, 'wallet_logs', 'at < ?', [before]);
-  await prune(db, 'apple.log%', before);
-  return logs;
-}
-
-export async function purgeRevisions(db: D1Database, before: number): Promise<number> {
-  return deleteInBatches(db, 'revisions', 'at < ?', [before]);
 }

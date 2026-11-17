@@ -179,15 +179,15 @@ describe('register', () => {
     expect(noBody.status).toBe(400);
   });
 
-  it('evicts the least recently active registration at 20 instead of refusing a new device', async () => {
+  it('evicts the oldest registration at 20 instead of refusing a new device', async () => {
     const pass = await kit.pass();
     for (let i = 0; i < 20; i++) {
       kit.clock.advance(1000);
       expect((await register(pass, `cap-${i}`)).status).toBe(201);
     }
     kit.clock.advance(1000);
-    // cap-0 is the oldest, but a fresh registration makes it the most recently active.
-    expect((await register(pass, 'cap-0', token('c'))).status).toBe(200);
+    // A registered device refreshing its token is not a new slot.
+    expect((await register(pass, 'cap-5', token('c'))).status).toBe(200);
     expect((await register(pass, 'cap-20')).status).toBe(201);
     const ids = (
       await all<{ device_id: string }>(
@@ -198,8 +198,9 @@ describe('register', () => {
     ).map((r) => r.device_id);
     expect(ids).toHaveLength(20);
     expect(ids).toContain('cap-20');
-    expect(ids).toContain('cap-0');
-    expect(ids).not.toContain('cap-1');
+    expect(ids).toContain('cap-5');
+    expect(ids).not.toContain('cap-0');
+    expect(ids).toContain('cap-1');
   });
 });
 
