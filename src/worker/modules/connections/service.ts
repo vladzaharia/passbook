@@ -10,6 +10,7 @@ import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
 import { percentile, toDto } from './dto.ts';
 import { schedules } from './health.ts';
+import { assertMayIssue, createIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
 import { type ConnectionRow, deleteConnection, insertConnection } from './repo.ts';
 import { listConnections } from './repo-list.ts';
@@ -86,6 +87,8 @@ export async function create(
   authority?: ConnectionAuthority,
 ): Promise<Created> {
   if (authority && authority.orgId !== input.orgId) throw new ForbiddenError();
+  const issues = createIssues(input);
+  if (issues) assertMayIssue(authority);
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
   const config = parseWith(def.configSchema, input.config, 'config');
@@ -177,7 +180,7 @@ export async function create(
       );
       newCredentials.push(row.webhookCredentialId);
     }
-    await insertConnection(sctx, row, { orgId: row.orgId, authority });
+    await insertConnection(sctx, row, { orgId: row.orgId, authority, issuing: issues });
   } catch (error) {
     await dropCredentials(sctx, newCredentials);
     throw error;
