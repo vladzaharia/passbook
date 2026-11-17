@@ -30,23 +30,23 @@ async function audited() {
   return { candidate, credentials, stop };
 }
 
-describe('the audit of a stopped scan compares the release the pass is used under', () => {
+describe('the audit of a stopped scan', () => {
   it('keeps the pass when nothing moved', async () => {
     const { candidate, credentials, stop } = await audited();
     expect(stoppedAuditPass(stop(), credentials)?.id).toBe(candidate.pass.id);
   });
 
-  it('ignores a head that only republishes the release, and refuses another effective release', async () => {
+  it('refuses a pass that is not the one captured, and does not compare the head release', async () => {
     const { candidate, credentials, stop } = await audited();
-    // The head's own id, generation, version or hash moving is not a change by itself.
+    expect(() =>
+      stoppedAuditPass(stop({ version: candidate.pass.version + 1 }), credentials),
+    ).toThrow(StaleScanAuthority);
+    // The release is the commit grant's to check; a head that only republished never refuses here.
     expect(
       stoppedAuditPass(
         stop({ activeReleaseId: 'republished', activeReleaseGeneration: 99 }),
         credentials,
       )?.id,
     ).toBe(candidate.pass.id);
-    expect(() =>
-      stoppedAuditPass(stop({ effectiveRelease: ['other', 2, '2.0', 'hash'] }), credentials),
-    ).toThrow(StaleScanAuthority);
   });
 });

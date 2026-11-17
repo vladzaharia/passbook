@@ -7,7 +7,7 @@ import {
 import { batch, chunk } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { type EventRow, insertEventStmt } from './repo.ts';
+import { type EventRow, insertEventStmt, passExists } from './repo.ts';
 
 export interface PassEventInput {
   orgId: string;
@@ -93,15 +93,17 @@ export async function recordPassEvents(
         ctx.env.DB,
         part.map((row) => insertEventStmt(ctx.env.DB, row)),
       );
-      results.forEach((result, index) => {
-        if (result.meta.changes === 1) return;
-        ctx.log.error('events.org_mismatch', {
-          code: 'EVENT_ORG_MISMATCH',
-          orgId: part[index]?.org_id,
-          passId: part[index]?.pass_id,
-          kind: part[index]?.kind,
+      for (const [index, result] of results.entries()) {
+        const row = part[index];
+        if (result.meta.changes === 1 || !row) continue;
+        const missing = !(await passExists(ctx.env.DB, row.pass_id));
+        ctx.log.error(missing ? 'events.pass_missing' : 'events.org_mismatch', {
+          code: missing ? 'EVENT_PASS_MISSING' : 'EVENT_ORG_MISMATCH',
+          orgId: row.org_id,
+          passId: row.pass_id,
+          kind: row.kind,
         });
-      });
+      }
     }
   } catch (error) {
     ctx.log.error('events.record_failed', {

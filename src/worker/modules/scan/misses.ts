@@ -1,4 +1,4 @@
-import type { Grant } from '../../platform/authority.ts';
+import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { bumpIfStmt } from '../../platform/counters.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -93,12 +93,20 @@ function missPlan(
  * statement that closes the scan. The increment applies only if that statement changed its row
  * (`changes()`), so a claim counts once; the audit row follows the increment that crossed the cap.
  */
-export function grantMiss(g: Grant, ctx: ServiceContext, actor: ScanActor, now: number) {
+export function grantMiss(
+  g: Grant,
+  closing: GrantedStatement,
+  ctx: ServiceContext,
+  actor: ScanActor,
+  now: number,
+) {
   const window = now - (now % WINDOW_MS);
   const key = missCounterKey(actor);
   const threshold = MISSES_PER_WINDOW + 1;
   const [increment] = g.include(missIncrementPart(key, window));
-  if (!increment) throw new Error('The miss counter was not added.');
+  // `changes()` reads the statement before it: anything between them would silently stop the count.
+  if (!increment || g.indexOf(increment) !== g.indexOf(closing) + 1)
+    throw new Error('The miss increment must follow the statement that closes the scan.');
   g.audit(
     {
       at: now,

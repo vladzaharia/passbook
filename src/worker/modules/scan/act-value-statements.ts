@@ -12,7 +12,7 @@ import type { StopAuthority } from './repo-action-authority.ts';
 import type * as gates from './repo-gates.ts';
 import { holderPart } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
-import { retentionProofPart } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { Found } from './resolve.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
 import { scanIs, wonGate } from './scan-write-grant.ts';

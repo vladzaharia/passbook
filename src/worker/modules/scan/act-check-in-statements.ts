@@ -5,7 +5,7 @@ import type { EventRow } from '../events/repo.ts';
 import type { AdmissionPlan } from './admission-types.ts';
 import type * as gates from './repo-gates.ts';
 import { holderPart, presenceHolderPart } from './repo-scan-checks.ts';
-import { retentionProofPart } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { PreparedScanRetentionProof } from './scan-retention-proof.ts';
 import { scanIs, wonGate } from './scan-write-grant.ts';
 import {

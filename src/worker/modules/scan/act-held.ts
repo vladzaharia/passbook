@@ -18,7 +18,7 @@ import type { StopAuthority } from './repo-action-authority.ts';
 import * as gates from './repo-gates.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
-import { retentionProofPart } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import { activeFlags, type Found } from './resolve.ts';
 import { afterReads, capturingDb } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';

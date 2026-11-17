@@ -1,7 +1,6 @@
 import type { Pass } from '../passes/repo-map.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
-import { usedRelease } from './effective-release.ts';
 import type { Stop } from './resolve.ts';
 
 /** Retain an inactive pass for audit only when its captured candidate still matches. */
@@ -45,8 +44,8 @@ export function stoppedAuditPass(
       candidate.identityTeamIdentifier !== snapshot.identityTeamIdentifier ||
       candidate.identityRevision !== snapshot.identityRevision ||
       candidate.activeTemplateVersion !== snapshot.activeTemplateVersion ||
-      JSON.stringify(usedRelease(candidate.templateSnapshot?.raw)) !==
-        JSON.stringify(snapshot.effectiveRelease) ||
+      // No release comparison: the snapshot and the candidate come from one read, so it could not
+      // fail. The commit grant (`scanPassChecks`, the template usable check) is the release gate.
       // Not `templateRevision` (`config_revision`): a rename is not door authority (R8).
       candidate.orgRevision !== snapshot.orgRevision ||
       fields.some((field) => candidate.pass[field] !== snapshot[field])

@@ -9,6 +9,7 @@ import { type Override, StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
 import { commitValue } from './act-value.ts';
+import { deepFreeze } from './freeze.ts';
 import { gateRule, gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
@@ -56,6 +57,8 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     onFailureCommitted,
     ...source
   } = input;
+  // What was read is not changed from here on: the grant batch decides, not a copy.
+  deepFreeze(found);
   const originalCandidate = found.liveCandidate ?? null;
   const {
     scanId,

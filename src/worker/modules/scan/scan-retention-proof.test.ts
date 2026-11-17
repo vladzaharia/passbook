@@ -7,10 +7,10 @@ import {
   clearScanRetentionDeleteStmt,
   readVerifiedScanRetentionProofs,
   retentionProofCurrentPredicate,
-  retentionProofPart,
   scanRetentionCandidateSql,
   stageScanRetentionDeleteStmt,
 } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import { registerRetentionOccupancyTests } from './repo-scan-retention-proof-occupancy-test-fixtures.ts';
 import {
   ACTION,
@@ -509,6 +509,29 @@ describe('detached scan retention provenance', () => {
     for (const { section, field, prepared } of sources)
       expect((await insertPart(prepared)).changes, `${section}.${field}`).toBe(0);
     expect((await insertPart(signed)).changes).toBe(1);
+  });
+
+  it('writes no proof when the stored ledger row differs from the signed one', async () => {
+    const db = kit.env.DB;
+    await run(
+      db,
+      `CREATE TRIGGER retention_tamper AFTER INSERT ON pass_events
+       WHEN NEW.kind='scan.checked_in'
+       BEGIN UPDATE pass_events SET device='tampered' WHERE id=NEW.id; END`,
+    );
+    try {
+      const s = await scenario();
+      // The scan itself is unaffected; only the trusted index is refused.
+      expect(s.outcome.kind).toBe('ok');
+      expect(
+        await first(db, 'SELECT scan_id FROM scan_retention_proofs WHERE scan_id=?', [s.scanId]),
+      ).toBeNull();
+      expect(await first(db, 'SELECT outcome FROM scans WHERE id=?', [s.scanId])).toEqual({
+        outcome: 'ok',
+      });
+    } finally {
+      await run(db, 'DROP TRIGGER retention_tamper');
+    }
   });
 
   it('requires the exact non-null gate and presence snapshots', async () => {

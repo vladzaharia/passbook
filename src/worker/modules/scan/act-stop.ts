@@ -16,7 +16,7 @@ import { grantMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
-import { retentionProofPart } from './repo-scan-retention.ts';
+import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { Claim } from './repo-scans.ts';
 import type { Stop } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
@@ -119,7 +119,7 @@ export async function finishStop(
     ...(authority.event ? { eventId: authority.event.id } : {}),
   });
   // Counted by the same batch, right after the statement that closes the scan.
-  const miss = s.countMiss ? grantMiss(g, ctx, authority.actor, ctx.clock.now()) : null;
+  const miss = s.countMiss ? grantMiss(g, finalized, ctx, authority.actor, ctx.clock.now()) : null;
   if (ledger && retention) {
     ledgerEvent(g, ledger, s.scanId, stop.kind, stop.reason);
     g.include(retentionProofPart(retention));
@@ -156,6 +156,8 @@ export async function finishStop(
   const history = bound && after ? bound.finalize(after.slice(0, bound.stmts.length)) : undefined;
   const photoUrl =
     photo && stop.found ? photoGrantUrl(authority.actor, stop.found.pass.id, photo.grant) : null;
+  if (miss && missResult === 'not_committed')
+    ctx.log.warn('scan.miss_uncounted', { orgId: actor.orgId, code: 'SCAN_MISS_UNCOUNTED' });
   if (miss && missResult) miss.throwIfCapped(missResult);
   recordResult(ctx, actor, pass?.templateId ?? null, stop.reason, pass?.mode);
   const outcome = stopOutcome(ctx, actor, stop, read, {

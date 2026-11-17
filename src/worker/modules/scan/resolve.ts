@@ -13,7 +13,6 @@ import type { AdmissionPlan } from './admission-types.ts';
 import { visibleIdentity, visibleSource } from './card-semantics.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { cardPrivacy } from './dto-projection.ts';
-import type { EffectiveRelease } from './effective-release.ts';
 import type { ScanActor } from './guard.ts';
 import { scannerPassActive } from './member-photo.ts';
 import {
@@ -99,8 +98,6 @@ export interface Stop
       activeTemplateVersion: string | null;
       orgRevision: number | null;
       templateRevision: number | null;
-      /** The release the pass is used under: a head that only republishes its own release is not a change. */
-      effectiveRelease: EffectiveRelease | null | false;
     };
   connectionGeneration?: number | null;
   activeTemplateVersion?: string | null;

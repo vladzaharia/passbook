@@ -16,7 +16,6 @@ import {
   scanCredentialKeys,
   snapshotCredentialEnv,
 } from './credential-input.ts';
-import { usedRelease } from './effective-release.ts';
 import type { ScanActor } from './guard.ts';
 import { boundedClaimPredicate } from './repo-act-claim-lifecycle.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
@@ -297,7 +296,6 @@ export function candidateAudit(one: Candidate) {
       activeTemplateVersion: one.activeTemplateVersion,
       orgRevision: one.orgRevision,
       templateRevision: one.templateRevision,
-      effectiveRelease: usedRelease(one.templateSnapshot?.raw),
     },
   };
 }

@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { EventKind } from '../../../shared/contracts/events.ts';
-import { all, run, stmt } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 
 export interface EventRow {
   id: string;
@@ -17,14 +17,15 @@ export interface EventRow {
 
 /**
  * The row's org comes from the pass: a pass of another org writes nothing (`changes` is 0), so the
- * caller can name the mismatch. The mode is the event's own (a sandbox capture is a `test` event on a
- * pass of either mode).
+ * caller can name the mismatch. A `live` event needs a live pass; a `test` event (a sandbox capture)
+ * may sit on a pass of either mode.
  */
 export function insertEventStmt(db: D1Database, row: EventRow): D1PreparedStatement {
   return stmt(
     db,
     `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, device, actor_type, actor_id, data, at)
-     SELECT ?, p.org_id, p.id, ?, ?, ?, ?, ?, ?, ? FROM passes p WHERE p.id = ? AND p.org_id = ?`,
+     SELECT ?, p.org_id, p.id, ?, ?, ?, ?, ?, ?, ? FROM passes p
+     WHERE p.id = ? AND p.org_id = ? AND (p.mode = ? OR ? = 'test')`,
     [
       row.id,
       row.mode,
@@ -36,6 +37,8 @@ export function insertEventStmt(db: D1Database, row: EventRow): D1PreparedStatem
       row.at,
       row.pass_id,
       row.org_id,
+      row.mode,
+      row.mode,
     ],
   );
 }
@@ -138,4 +141,9 @@ export function registrationsOfPass(
     `SELECT device_id, created_at FROM registrations WHERE pass_id = ? AND ${passReadFenceSql}`,
     [passId, ...passReadFenceParams(passId, fence)],
   );
+}
+
+/** Whether a pass row exists at all: tells a missing pass from one of another org or mode. */
+export async function passExists(db: D1Database, passId: string): Promise<boolean> {
+  return (await first(db, 'SELECT 1 AS present FROM passes WHERE id = ?', [passId])) !== null;
 }
