@@ -409,7 +409,7 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 | Report and staff sign-in return 409 after commit | The grant is the check; the post-commit compare is deleted |
 | Captures vanish after a pass edit | F17 |
 | The connection fence budget is unmeasured, about 40+33 queries per ref | One grant per item write |
-| sql-balance rewrites expression-position `FROM` | Open: still in `db.ts` (section 7.2) |
+| sql-balance rewrites expression-position `FROM` | Deleted: `stmt` binds the SQL as written; statements are built within D1's depth |
 
 **Revision 2 additions:**
 - **Retry after a lost response returns 409 for the user's own change:** removed by the idempotency key or the post-state check (§1.2).
@@ -435,7 +435,7 @@ Each epoch check adds 2 binds and about 150 bytes.
 
 - **Caps** (`authority-statements.ts`): a write binds at most 40 values (`WRITE_PARAM_BUDGET`), an included read part and the grant at most 90 (`PARAM_BUDGET`), any statement at most 32 KB. A breach throws `SQL_BIND_BUDGET` or `SQL_SIZE_BUDGET`.
 - **D1 limits that shape the SQL:** the bind limit is the highest `?N` index, not the number of uses. Expression depth is 100 (a flat `OR` chain of 95 terms passes, 98 fail; `EXISTS` nesting 12 levels pass, 14 fail). A table or result has at most 100 columns (`passes` has 61). Keep checks flat: at most 2 nested `EXISTS` inside the grant `CASE`.
-- **Not removed:** `platform/sql-balance.ts` still wraps every statement in `db.ts`, and `scan/repo-secret-binds.ts` still exists. Removing them is open work (section 7.2).
+- **Removed:** `platform/sql-balance.ts`, `platform/sql-tokens.ts` and `scan/repo-secret-binds.ts`. `stmt` (alias `exactStmt`) prepares the SQL unchanged, so depth is the author's: staged CTEs and `scanConjunction` grouping keep scan guards under 100. `tools/authority-scope-bans.ts` fails a `scan-ephemeral` bind label, `json_extract('[]'`, a `balanceSql*` name, an import of a deleted fence module, and `credentialRefKeysetSql` outside the keyset module, `passes/repo-ops-retention.ts` and `scan/repo-credential-tombstones.ts`.
 
 ## 6. Migration and cutover
 
@@ -451,12 +451,13 @@ The runbook is `docs/operations.md` ("Cutover from schema 0024"): order, pre-che
 | `0039` | `api_keys` identity immutable, no-replace |
 | `0044` | `connections_generation_bump`; item claims carry `legacy_pass_row_version` and `claim_row_version` |
 | `0045` | issuance delivery guard on generations plus `transfer_id` |
-| `0047` | `sessions` identity, CSRF secret, lifetime, `roles` and `amr` immutable; `scanners_credential_revision` is still defined |
+| `0047` | `sessions` identity, CSRF secret, lifetime, `roles` and `amr` immutable; `scanners_credential_revision` dropped by `0063` |
 | `0041`, `0051` | unreferenced proof tables and triggers dropped |
 | `0052` | epochs and their triggers, `authority_grants`, the sentinel table, the head view, fixed-column and no-replace guards, `retired_api_key_ids`, `template_version_hashes` (write-once content hash per version and per asset), the three cancel-broadcast triggers |
 | `0053` | `branding_gc_queue` |
 | `0055` | a verified holder attaches to a pass with a static credential without a transfer |
 | `0056`, `0057` | blueprints; indexes. Additive: they do not touch the cutover window |
+| `0063` | drops `scanners_credential_revision`; scanner authority is `credential_epoch`. Additive-safe: the old Worker's writes satisfy no trigger and need none |
 
 Migrations already applied are never edited; new schema takes the next free number.
 
@@ -496,9 +497,9 @@ Roll forward only once migrations have run (owner answer 6). A Worker-only rollb
 
 ### 7.2 Open work
 
-- Remove `platform/sql-balance.ts`, `platform/sql-tokens.ts`, `scan/repo-secret-binds.ts` and `scan/repo-scanner-configuration-scope.ts`, then drop the `scanners_credential_revision` trigger (`0047`) in a new migration. They go together: the scan snapshot fences still build deep AND trees (D1 expression depth 100) and pack binds through `repo-secret-binds`, and `live-auth`, `counts` and `act-result-authority` still compare `scanner.updatedAt`. Moving those fences onto grants removes all five.
-- One credential-loss rule for scanners: `session.ts`, `act-stale-refusal.ts` and `scanning-workspace.ts` call `scannerCredentialLost`; `repo-device.ts` `bindStaff` uses `credentialGone`, which misses a rotated CSRF secret, the token prefix and idle expiry.
+- Remove `scan/repo-scanner-configuration-scope.ts` (still read by `scanning-workspace*.ts`).
 - Drop `scanning_config_revisions`.
+- Done: the balancer, `sql-tokens`, `repo-secret-binds` and the legacy fence families are deleted; migration `0063` drops `scanners_credential_revision`. A scanner's `updated_at` is a label: authority is `credential_epoch`. The live ring's `revision` is an in-memory self-check of one actor snapshot, not a database compare. One credential-loss rule: every scanner path uses `scannerCredentialLost`.
 
 ### 7.3 Provider track
 
@@ -523,7 +524,7 @@ Read by `tools/authority-scope.ts`: a file with a fence pattern must be listed h
 - `broadcasts/repo.ts`
 - `holders/{repo,repo-blocks}.ts`
 
-**WP-T:** `templates/{repo-authority,repo-eligible,repo-imports,repo-release-write,repo-releases,repo-releases-active,repo-source,repo-stale,repo-sync-release,repo-sync,repo-upload}.ts`
+**WP-T:** `templates/{repo-authority,repo-eligible,repo-imports,repo-release-write,repo-releases,repo-source,repo-stale,repo-sync-release,repo-sync,repo-upload}.ts`
 
 **WP2:**
 - `passes/{repo-check-in,repo-connection-context,repo-credential-transfer,repo-credential-transfer-fences,repo-credential-transfer-finish,repo-credential-transfer-source,repo-detail-read,repo-history-image,repo-ops,repo-ops-retention,repo-release,repo-remove,repo-transfer-asset-gc,repo-workflow-releases,repo-write,repo-write-authority,repo-write-backfill,repo-write-insert-statement,repo-write-publish,repo-write-publish-snapshot,repo-write-retained,repo}.ts`
@@ -535,21 +536,21 @@ Read by `tools/authority-scope.ts`: a file with a fence pattern must be listed h
 - `bundles/repo.ts`
 - `sandbox/repo-capture.ts`
 
-**WP4:** `connections/{access,repo,repo-legacy-admission,repo-legacy-inbox,repo-legacy-quarantine,repo-pass-refresh,repo-pass-snapshot,repo-runs,repo-sync,repo-sync-retention,repo-webhook-item-claims,repo-webhook-items,repo-webhook-legacy-unproven,repo-webhook-replay,repo-webhook-resolve,repo-webhook-retention,repo-webhook-retention-dispatch,repo-webhook-retention-stage}.ts`
+**WP4:** `connections/{access,repo,repo-legacy-inbox,repo-legacy-quarantine,repo-pass-refresh,repo-pass-snapshot,repo-runs,repo-sync,repo-sync-retention,repo-webhook-item-claims,repo-webhook-items,repo-webhook-legacy-unproven,repo-webhook-replay,repo-webhook-resolve,repo-webhook-retention,repo-webhook-retention-dispatch,repo-webhook-retention-stage}.ts`
 
-**WP5a:** `scan/{repo-actor-authority,repo-actor-csrf-authority,repo-actor-event-authority,repo-actor-legacy-authority,repo-actor-scanner-authority,repo-credential-keyset-authority,repo-credential-tombstones,repo-sample-scope-fence,guard}.ts`, plus the new `scan/authority-checks.ts`
+**WP5a:** `scan/{repo-credential-keyset-authority,repo-credential-tombstones,repo-sample-scope-fence,guard}.ts`, plus the new `scan/authority-checks.ts`
 
 **WP5b:**
-- `scan/{act-check-in-success,act-held,act-stop,misses,repo-act,repo-act-answer,repo-act-authority,repo-act-choose,repo-act-claim,repo-act-claim-lifecycle,repo-act-effect-assertions,repo-action-authority,repo-admission,repo-asset-grant-statements,repo-gate-bindings,repo-gates,repo-gates-authority,repo-miss-authority,repo-pass-predicates,repo-scan-effect,repo-scans,repo-scans-write,rules,outcome}.ts`
+- `scan/{act-check-in-success,act-held,act-stop,misses,repo-act-authority,repo-act-claim,repo-act-claim-current,repo-act-pass-fence,repo-pass-fence-release,repo-admission,repo-gates,repo-miss-authority,repo-scan-effect,repo-scans,rules,outcome}.ts`
 - all other `scan/act*.ts`
 - `events/service.ts`
 - `src/web/scan/api/to-fail.ts`
 
 **WP6:** `scan/{repo-undo,repo-undo-*,undo*,scan-undo-*}.ts`
 
-**WP7:** `scan/{lookup,repo-lookup,repo-counts,repo-counts-query,repo-feed,repo-feed-console,repo-feed-projection,repo-feed-select,repo-feed-snapshot,repo-history-authority,repo-history-proof-cas,repo-history-proof-fields,repo-history-proof-plan-query,repo-history-proof-read,repo-scan-history,repo-live,repo-live-lifetime,repo-live-photo-delivery,repo-live-recipient,repo-live-template-snapshot,repo-output-predicates,repo-output-authority,repo-routes,repo-routes-display,repo-search,repo-scan-retention,repo-scan-passless,repo-scope-release-predicates,repo-scope-releases,repo-session-read-event,repo-session-read-predicate,repo-session-counts,repo-session-activity,repo-session-activity-fences,session-activity}.ts`
+**WP7:** `scan/{lookup,repo-lookup,repo-counts,repo-counts-query,repo-feed,repo-feed-console,repo-scan-history,repo-live-template-snapshot,repo-read-authority,repo-feed-scope,scan-predicate,repo-routes-display,repo-search,repo-scan-retention,repo-scan-passless,repo-scope-releases,repo-session-activity,session-activity}.ts`
 
-**WP9:** `scan/{repo-device,repo-scanners-pair,pairing,pairing-session,pairing-token,scanners,scanning-devices,scanning-device-revocation,scanning-sessions,repo-scanning-sessions,setups,staff-admin,staff-admin-views,staff-pin,repo-staff-authority,repo-staff-activity,repo-staff-pin-counters,events,events-mutations,repo-event-authority,repo-event-keyset,repo-events,repo-scanner-configuration,repo-scanner-configuration-authority,repo-scanner-configuration-predicate,repo-scanner-configuration-report-guard,scanning-workspace-report,routes-staff-session,repo-session-authority}.ts`
+**WP9:** `scan/{repo-device,repo-scanners-pair,pairing,pairing-session,pairing-token,scanners,scanning-devices,scanning-device-revocation,scanning-sessions,repo-scanning-sessions,setups,staff-admin,staff-admin-views,staff-pin,repo-staff-activity,repo-staff-pin-counters,events,events-mutations,repo-event-authority,repo-event-keyset,repo-events,repo-scanner-configuration-authority,scanning-workspace-report,routes-staff-session}.ts`
 
 **WP7 (fence) and W1-13 (logic):** `scan/repo-lookup-backfill.ts`. WP7 converts its fence; W1-13 keeps the backfill logic.
 

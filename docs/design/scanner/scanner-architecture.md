@@ -1177,7 +1177,7 @@ credential and lifecycle generations and transfer state; Wallet snapshot and sig
 identity; org access epoch and the credential keyset commitment; the pass's *effective* release (its own release when
 the head only republishes it, `ownReleaseSaysSameSql`, so an identical same-version republish keeps a minted grant and a
 successor that changes the adapter, capabilities or audience policy does not); and photo version and identity. Raw
-credentials and proof material do not appear in grant URLs or logs. Minting writes nothing to D1.
+credentials and proof material do not appear in grant URLs or logs. Minting writes nothing to D1. A grant names its recipient only: it has no sender (a live row's photo is re-derived from the hub's ring row and the recipient's own read authority).
 Redemption is **not** a no-D1-read operation: the server rereads the current actor, pass, connection, release,
 Wallet and photo lineage, recomputes the HMAC from those values and compares it in constant time, then fences the same
 values in SQL (and that no tombstone starts with a carried ref prefix). Any move of a bound value, an expired grant or
@@ -2029,9 +2029,10 @@ Rendered display strings are never logged; the suite-wide log check also scans f
 | Path | D1 round trips (asserted by a counting D1 wrapper in tests) | Target Worker wall time |
 | --- | --- | --- |
 | Door check-in (`actions`, auto) | claim 1, candidates 1-2, policy reads 1 (batched), commit grant batch 1 (with counts and the display reads), 5 in all | p95 ≤ 150 ms |
-| Value action | as above + `publishPass` (R2 put + CAS batch, ≤ 3 attempts) | p95 ≤ 400 ms |
+| Value action | 10 in all: the check-in trips + `publishPass` (R2 put + CAS batch, ≤ 3 attempts) | p95 ≤ 400 ms |
+| Undo | ≤ 2 hops: one read batch, one grant batch | p95 ≤ 150 ms |
 | Resolve (desk card) | candidates 1-2, card reads 1 batch | p95 ≤ 120 ms |
-| Lookup | 1-2 | p95 ≤ 120 ms |
+| Lookup | ≤ 5 after the guard (candidates, pass reads, history) | p95 ≤ 120 ms |
 
 A photo adds none (its capability is stateless, §5.1) and neither does a verified manager PIN: its
 attempt is returned by parts of the commit grant (`include(writePart(… {grant}))`), which apply only while the grant
@@ -2453,6 +2454,7 @@ evaluated pass snapshot; a stale or unauthorized projection must not disclose th
   undo → `undo`; v2 batch → `scan` to monitors only. Admin "Scan as admin" publishes to `w:org` and `w:ev` only.
   Occupancy (20.8, 20.9): an override publishes to the **original** scan's station and watches, plus `resolved` to
   `dev:<refusing scanner>`; auto tap-outs publish from the cron to orgs with monitors (monitor rows only).
+- **Ring rows** are plain: the rendered row plus `scanId`, `passId`, `at`, `scannerId`, `eventId`, the pass's credential and lifecycle generations and its effective release, as the commit saw them. No sealed proof, actor or keyset rides a row. Catch-up and push re-check each row per recipient in one D1 statement: the recipient's read authority, the scan (same org and mode, `done`, not retained out) and the pass (visible at the row's generations, same effective release, in the recipient's scope). A scan or pass that fails the check delivers the redacted shape; a recipient that fails authority gets nothing and closes (4401/4403/4409). A photo is only the authenticated recipient plus the ring id, which only the hub keeps. Rows from before this shape are redacted until their 15-minute TTL.
 - **Rendering:** the Worker renders at most three bodies per scan (`customer`, `door`, `desk`) with the display model
   and the data the request already loaded; the hub never builds content. `actor.live` (two scalar subqueries in the
   guard's scanner read: a Customer screen in the station; the monitor audiences in the org and mode) skips rendering
