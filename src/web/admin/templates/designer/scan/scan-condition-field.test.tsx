@@ -148,7 +148,7 @@ describe('scan condition builder', () => {
           ...manifest.inputs.properties,
           category: {
             type: 'string',
-            enum: ['person@example.test', '+1 212 555 0199', 'ABC-12345', 'VIP'],
+            enum: ['person@example.test', 'ABC-12345', 'VIP'],
           },
         },
       },
@@ -163,7 +163,7 @@ describe('scan condition builder', () => {
     );
     await user.click(screen.getByRole('combobox', { name: 'Value' }));
     expect(screen.getByRole('option', { name: 'VIP' })).toBeInTheDocument();
-    expect(screen.queryByText(/person@example|212 555|ABC-12345/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/person@example|ABC-12345/)).not.toBeInTheDocument();
     await user.keyboard('{Escape}');
     rerender(
       <ScanConditionField

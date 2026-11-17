@@ -11,31 +11,12 @@ import type { Json, PassJson, ScanRole, TemplateManifest } from '@/passkit/types
 import { PASS_STYLES } from '@/passkit/types.ts';
 import { type DesignDoc, isRecord } from '../model.ts';
 
-const PHONE = /(?:^|[^A-Za-z0-9])\+?\d[\d ().-]*\d(?=$|[^A-Za-z0-9])/g;
-/** Dates, clock times and year ranges are not contact data, whatever their digit count. */
-const BENIGN_DIGITS = [
-  /(?<![\d-])\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?Z?)?(?![\d-])/g,
-  /(?<![\d.])\d{1,2}[./]\d{1,2}[./](?:19|20)\d{2}(?![\d.])/g,
-  /(?<![\d-])(?:19|20)\d{2}\s?[-\u2013]\s?(?:(?:19|20)\d{2}|\d{2})(?![\d-])/g,
-  /(?<![\d.:])(?:[01]?\d|2[0-3])[.:][0-5]\d(?![\d]|[.:]\d)/g,
-];
-
-/** A number this long reads as a phone or account number; amounts and counts stay shorter. */
-export function safePreviewNumber(text: string): boolean {
-  return (text.match(/\d/g) ?? []).length < 10;
-}
-
 /**
- * Authored text typed into the designer: stricter than what the scanner hides, because an author
- * has no reason to type a phone number or raw JSON into a label. Holder values are not judged by
- * their digits; see {@link safePreviewValue}.
+ * Authored text typed into the designer: what the scanner would hide (an address or a link), plus
+ * an expression or raw JSON, which a label never holds. Digits are not judged; see {@link safePreviewValue}.
  */
 export function safePreviewText(value: string): boolean {
-  if (value.includes('{{') || hasContactShape(value) || /^\s*[[{]/.test(value)) return false;
-  const rest = BENIGN_DIGITS.reduce((text, pattern) => text.replace(pattern, ' '), value);
-  return !Array.from(rest.matchAll(PHONE)).some(
-    (match) => (match[0].match(/\d/g) ?? []).length >= 7,
-  );
+  return !value.includes('{{') && !hasContactShape(value) && !/^\s*[[{]/.test(value);
 }
 
 /** Why an authored literal is refused, in a sentence for the field; null when it is fine. */

@@ -1,9 +1,9 @@
 import type { ScanRowDoc } from '@/passkit/template/scan-display/schema.ts';
 import type { ScanRole } from '@/passkit/types.ts';
-import { Button, FormField, NumberField, Select } from '../../../../ui/index.ts';
+import { FormField, NumberField, Select } from '../../../../ui/index.ts';
 import { isRecord } from '../model.ts';
 import type { Manifest, Pass } from './scan-fields.tsx';
-import { safePreviewNumber, safePreviewText } from './scan-preview-policy.ts';
+import { safePreviewText } from './scan-preview-policy.ts';
 
 export type RowProps = {
   row: ScanRowDoc;
@@ -58,20 +58,6 @@ export function Numeric({
   integer?: boolean;
   placeholder?: string;
 }) {
-  if (typeof value === 'number' && !safePreviewNumber(String(value)))
-    return (
-      <div className="grid gap-2 text-sm text-fg-muted">
-        <span>{label}: Sensitive value hidden and preserved.</span>
-        <Button
-          size="sm"
-          variant="outline"
-          className="justify-self-start"
-          onClick={() => onChange(undefined)}
-        >
-          Replace {label}
-        </Button>
-      </div>
-    );
   return (
     <FormField label={label}>
       {(control) => (
@@ -86,7 +72,6 @@ export function Numeric({
             if (v === null) onChange(undefined, mergeKey);
             else if (
               Number.isFinite(v) &&
-              safePreviewNumber(String(v)) &&
               (!integer || Number.isInteger(v)) &&
               (min === undefined || v >= min) &&
               (max === undefined || v <= max)

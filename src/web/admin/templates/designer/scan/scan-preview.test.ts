@@ -353,20 +353,17 @@ describe('safePreviewText', () => {
       'Open 30.11.2026',
       'VIP2',
       'Order 12345',
+      // Digits are not judged: the scanner shows these, so the preview does too.
+      'Order 12345678',
+      '+1 (212) 555-0100',
+      '212-555-0100',
+      '2026-11-30 call 212 555 0100',
     ])
       expect(safePreviewText(text), text).toBe(true);
   });
 
-  it('still refuses phone numbers, contact details and templates', () => {
-    for (const text of [
-      '+1 (212) 555-0100',
-      '212-555-0100',
-      '01.23.45.67.89',
-      '2026-11-30 call 212 555 0100',
-      'ada@example.com',
-      'https://example.com',
-      '{{inputs.email}}',
-    ])
+  it('still refuses contact details, links, JSON and templates', () => {
+    for (const text of ['ada@example.com', '{"a":1}', 'https://example.com', '{{inputs.email}}'])
       expect(safePreviewText(text), text).toBe(false);
   });
 });
