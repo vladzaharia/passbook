@@ -92,17 +92,26 @@ export const UNDO_CODES = {
  * `UNDO_SUPERSEDED` before any write. The actor is the request's own, checked by epochs.
  */
 export function undoGrant(c: UndoCommit): Grant {
-  const { ctx, actor, target, gate, presence, event, approver, id } = c;
+  return addUndoWrites(openUndoGrant(c), c);
+}
+
+/** The undo's grant: the actor's epochs, the target's retention and holder, and the approving manager. */
+export function openUndoGrant(
+  c: UndoCommit,
+  extra: { checks?: Check[]; codes?: typeof UNDO_CODES | Record<string, string> } = {},
+): Grant {
+  const { ctx, actor, target, event, approver } = c;
   const now = ctx.clock.now();
-  const g = grant(ctx, {
+  return grant(ctx, {
     purpose: 'org_mode.scan.undo',
     principal: scanPrincipal(actor),
     target: target.id,
-    codes: UNDO_CODES,
+    codes: (extra.codes ?? UNDO_CODES) as typeof UNDO_CODES,
     checks: [
       ...scanActorChecks(actor, { now, event, templateId: target.templateId ?? undefined }),
       ...notQuarantined(target),
       currentHolder(target),
+      ...(extra.checks ?? []),
       ...(approver
         ? [
             rowIs(
@@ -115,31 +124,59 @@ export function undoGrant(c: UndoCommit): Grant {
         : []),
     ],
   });
+}
+
+/** An add, take or set holds a gate only as a clock (`cooldown`): it goes back to the scan before. */
+const restoresGate = (kind: string | null) => kind === 'add' || kind === 'take' || kind === 'set';
+
+/** The undo's writes: the gate, the target, the undo scan, its ledger event and the audit row. */
+export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
+  const { ctx, actor, target, gate, presence, approver, id } = c;
+  const now = ctx.clock.now();
+  const gateWhere = {
+    pass_id: target.passId,
+    action_id: target.actionId,
+    scope: gate.scope,
+    last_scan_id: target.id,
+    // The gate's own `last_at`, not `target.at`: gate recovery moves it back to `prev_last_at`.
+    last_at: gate.last_at,
+    count: gate.count,
+    state: gate.state,
+    prev_state: gate.prev_state,
+  };
+  const gateWrite = restoresGate(target.actionKind)
+    ? gate.prev_state === null
+      ? g.delete('scan_gates', { where: gateWhere, require: 'one', returning: ['last_scan_id'] })
+      : g.update('scan_gates', {
+          set: {
+            state: gate.prev_state,
+            count: Math.max(0, gate.count - 1),
+            last_at: gate.prev_last_at,
+            last_scan_id: gate.prev_scan_id,
+            prev_state: null,
+            prev_last_at: null,
+            prev_scan_id: null,
+          },
+          where: gateWhere,
+          require: 'one',
+          returning: ['last_scan_id'],
+        })
+    : g.update('scan_gates', {
+        set: {
+          state: target.presenceScope != null ? (gate.prev_state ?? 'undone') : 'undone',
+          count: Math.max(0, gate.count - 1),
+          last_at: now,
+          last_scan_id: id,
+          prev_state: null,
+          prev_last_at: null,
+          prev_scan_id: null,
+        },
+        where: gateWhere,
+        require: 'one',
+        returning: ['last_scan_id'],
+      });
   const writes = [
-    g.update('scan_gates', {
-      set: {
-        state: target.presenceScope != null ? (gate.prev_state ?? 'undone') : 'undone',
-        count: Math.max(0, gate.count - 1),
-        last_at: now,
-        last_scan_id: id,
-        prev_state: null,
-        prev_last_at: null,
-        prev_scan_id: null,
-      },
-      where: {
-        pass_id: target.passId,
-        action_id: target.actionId,
-        scope: gate.scope,
-        last_scan_id: target.id,
-        // The gate's own `last_at`, not `target.at`: gate recovery moves it back to `prev_last_at`.
-        last_at: gate.last_at,
-        count: gate.count,
-        state: gate.state,
-        prev_state: gate.prev_state,
-      },
-      require: 'one',
-      returning: ['last_scan_id'],
-    }),
+    gateWrite,
     g.update('scans', {
       set: { undone_by: id, undone_at: now },
       where: {
@@ -147,7 +184,7 @@ export function undoGrant(c: UndoCommit): Grant {
         undone_by: null,
         state: 'done',
         outcome: 'ok',
-        action_kind: 'check_in',
+        action_kind: target.actionKind ?? 'check_in',
         at: target.at,
         actor_key: target.actorKey,
       },
@@ -235,7 +272,7 @@ export function undoGrant(c: UndoCommit): Grant {
       targetId: target.id,
       requestId: ctx.requestId,
       ipPrefix: null,
-      detail: JSON.stringify({ kind: 'check_in' }),
+      detail: JSON.stringify({ kind: target.actionKind ?? 'check_in' }),
     }),
   ];
   if (presence) {

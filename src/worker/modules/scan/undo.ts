@@ -18,6 +18,7 @@ import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
 import { notFound, planUndo, superseded } from './undo-authority.ts';
 import { answer, replayUndo, type UndoRequest } from './undo-replay.ts';
+import { commitValueUndo } from './undo-value.ts';
 
 /**
  * Undo a check-in: one read batch, then one grant batch whose gate, presence and target
@@ -124,7 +125,9 @@ async function run(
   }
   const id = ctx.ids.ordered();
   try {
-    await commitUndo({ ctx, actor, ...plan, approver, id, key: req.idempotencyKey });
+    const commit = { ctx, actor, ...plan, approver, id, key: req.idempotencyKey };
+    if (target.actionKind === 'check_in') await commitUndo(commit);
+    else await commitValueUndo(commit);
   } catch (error) {
     if (error instanceof AppError && error.code === UNDO_CODES.stale) throw notFound();
     throw error;
