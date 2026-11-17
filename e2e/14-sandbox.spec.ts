@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { apiAs, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
+import { apiAs, requireActiveTemplateRelease, seedTemplateId, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -12,7 +12,7 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   const name = `Sandbox ${uid('S')}`;
   const to = `${uid('sandbox').toLowerCase()}@example.test`;
   const search = `/admin/passes?orgId=${encodeURIComponent(orgId)}&q=${encodeURIComponent(name)}`;
-  const release = await requireActiveTemplateRelease(admin, orgId, GENERIC, 'test');
+  const release = await requireActiveTemplateRelease(admin, orgId, seedTemplateId(), 'test');
 
   await page.goto(`/admin/passes?orgId=${encodeURIComponent(orgId)}`);
   const toggle = page.getByRole('switch', { name: 'Test mode' });
@@ -26,7 +26,7 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
     '/api/v1/passes',
     {
       orgId,
-      templateId: GENERIC,
+      templateId: seedTemplateId(),
       releaseId: release.id,
       releaseGeneration: release.generation,
       templateVersion: release.version,

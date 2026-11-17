@@ -1,6 +1,6 @@
 import { type Browser, expect, type Page, test } from '@playwright/test';
 import { unzipSync } from 'fflate';
-import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
@@ -109,7 +109,7 @@ test('paired customer and legacy desk views follow real check-ins, exits and rev
     const orgId = readSeed().org.id;
     const template = await api.send(
       'POST',
-      `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
+      `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
       { orgId, name: uid('Membership view') },
     );
     const release = await publishTemplateVersion(
