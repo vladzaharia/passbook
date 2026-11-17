@@ -4,7 +4,7 @@ import {
   expectPhoto,
   origin,
 } from './asset-cross-pass-provenance-setup-test-fixtures.ts';
-import { parseGrant } from './asset-grant-mint.ts';
+import { grantRefsOf } from './asset-grant-test-fixtures.ts';
 import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { candidateById } from './repo-lookup.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
@@ -30,7 +30,7 @@ export async function crossPassRevocationFixture() {
   const explicitToken = new URL(explicitUrl, origin).searchParams.get('g');
   if (!explicitToken) throw new Error('Explicit pass ID capability missing');
   // A pass-ID evaluation presents no credential, so its capability carries no retired-ref check.
-  expect(parseGrant(explicitToken)?.refs).toEqual([]);
+  expect(await grantRefsOf(f.t.kit.ctx, explicitToken)).toEqual([]);
   await expectPhoto(await f.request(explicitUrl));
   const expectCrossPassRevoked = async () => {
     expect(

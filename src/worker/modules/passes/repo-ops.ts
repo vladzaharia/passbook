@@ -107,11 +107,15 @@ export async function passesForReissue(
     activeOnly?: boolean;
   },
 ): Promise<{ id: string }[]> {
+  const scope = [
+    ['template_id', q.templateId],
+    ['org_id', q.orgId],
+    ['identity_id', q.identityId ?? null],
+    ['mode', q.mode ?? null],
+  ].filter((c): c is [string, string] => c[1] !== null);
   return all<{ id: string }>(
     db,
-    `SELECT id FROM passes WHERE (? IS NULL OR template_id = ?) AND (? IS NULL OR org_id = ?)
-       AND (? IS NULL OR identity_id = ?) AND (? IS NULL OR mode = ?)
-       AND id > ? AND deleted_at IS NULL AND test_data_quarantined = 0
+    `SELECT id FROM passes WHERE ${scope.map(([column]) => `${column} = ? AND `).join('')}id > ? AND deleted_at IS NULL AND test_data_quarantined = 0
        AND (? IS NULL OR (template_version != ? AND NOT EXISTS (
          SELECT 1 FROM template_versions current_version
          JOIN template_versions target_version
@@ -123,14 +127,7 @@ export async function passesForReissue(
        )))
        AND (? = 0 OR status = 'active') ORDER BY id LIMIT ?`,
     [
-      q.templateId,
-      q.templateId,
-      q.orgId,
-      q.orgId,
-      q.identityId ?? null,
-      q.identityId ?? null,
-      q.mode ?? null,
-      q.mode ?? null,
+      ...scope.map(([, value]) => value),
       q.afterId ?? '',
       q.skipVersion,
       q.skipVersion,

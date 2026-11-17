@@ -1,8 +1,8 @@
 import type { ScannerFixture } from '../../../../test/helpers/index.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { scannerActor, withRole } from './actor.ts';
+import { mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { photoGrantPurpose } from './asset-types.ts';
-import { mintAssetGrant } from './assets.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { readScannerScope } from './repo-scope.ts';

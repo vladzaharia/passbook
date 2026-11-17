@@ -9,7 +9,9 @@ import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import type { PreloadedDisplayHistory } from './history-proof-plan.ts';
 import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
+import { candidateTemplateFenceStmt, templateFenceHolds } from './repo-resolve-outcome-current.ts';
 import type { Found } from './resolve.ts';
+import { afterReads, capturingDb } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 
@@ -80,11 +82,15 @@ export async function chooseAction(input: ChooseInput): Promise<ScanEvaluation> 
     where: { id: scanId, state: 'pending', at: claimAt },
     returning: ['id'],
   });
-  const committed = await g.commit();
-  if (!(committed[g.indexOf(released)]?.results ?? []).length) {
+  // The card was read under a template snapshot: it is served only while that snapshot still stands.
+  const committed = await g.commitWith(
+    afterReads([candidateTemplateFenceStmt(capturingDb(ctx.env.DB), found.liveCandidate)]),
+  );
+  if (!(committed.writes[g.indexOf(released)]?.results ?? []).length) {
     onFailureCommitted();
     throw stale();
   }
+  if (!templateFenceHolds(committed.after[0])) throw new CommittedScanUnconfirmed();
   // The pending key is released. The card needs its history, so a failure here is an error the
   // client can retry with the same key; the photo only decorates it.
   const now = ctx.clock.now();

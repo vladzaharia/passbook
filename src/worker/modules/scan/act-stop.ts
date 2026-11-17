@@ -3,7 +3,7 @@ import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { ActRequest } from './act-claim.ts';
-import { StaleScanAuthority } from './act-override.ts';
+import { CommittedScanUnconfirmed, StaleScanAuthority } from './act-override.ts';
 import { ledgerAuthoritySnapshot } from './act-result-authority.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { historyPlan } from './card.ts';
@@ -15,6 +15,7 @@ import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
 import { grantMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
+import { candidateTemplateFenceStmt, templateFenceHolds } from './repo-resolve-outcome-current.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { Claim } from './repo-scans.ts';
@@ -128,13 +129,21 @@ export async function finishStop(
   const dayCounts: CountsPlan | null = s.suppressCounts
     ? null
     : planCommitCounts(ctx, actor, s.dayStart);
-  const committed = await g.commitWith(afterReads(dayCounts?.stmts ?? []));
+  // The answer was read under a template snapshot: it is served only while that snapshot still stands.
+  const fence = stop.found?.liveCandidate;
+  const committed = await g.commitWith(
+    afterReads([
+      ...(fence ? [candidateTemplateFenceStmt(ctx.env.DB, fence)] : []),
+      ...(dayCounts?.stmts ?? []),
+    ]),
+  );
   const results = committed.writes;
   if (!(results[g.indexOf(finalized)]?.results ?? []).length) {
     s.onFailureCommitted();
     throw new StaleScanAuthority();
   }
 
+  if (fence && !templateFenceHolds(committed.after[0])) throw new CommittedScanUnconfirmed();
   // Recorded with its counts and its miss. The card follows; a failure only degrades the answer.
   const finishAt = ctx.clock.now();
   const done = doneScanPredicate(s.scanId);
@@ -151,7 +160,7 @@ export async function finishStop(
     });
   }
   const read = dayCounts
-    ? await dayCounts.read(committed.after)
+    ? await dayCounts.read(committed.after.slice(fence ? 1 : 0))
     : { approvals: false, counts: { today: 0, event: null, asOf: 0, configRev: 0 } };
   const history = bound && after ? bound.finalize(after.slice(0, bound.stmts.length)) : undefined;
   const photoUrl =

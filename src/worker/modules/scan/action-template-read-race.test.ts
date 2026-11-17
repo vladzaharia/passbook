@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
-import { type ScanOutcome, ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
+import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
@@ -12,7 +12,7 @@ import {
   COMMIT_MARKER,
   expectClassified,
   expectGrantsUnredeemable,
-  expectStopRecordedUnredeemable,
+  expectUnconfirmed,
   fixture,
   race,
   raceRaw,
@@ -29,17 +29,20 @@ beforeAll(async () => {
 });
 
 /**
- * The scan grant asks no template or release state (authority-epochs.md F4): a change landing before
- * the commit is content. The visit is recorded; its capabilities, minted from the read, no longer redeem.
+ * The gate commit asks no template or release state (authority-epochs.md F4): a change landing before
+ * it is content, the visit is recorded and its capabilities, minted from the read, no longer redeem.
+ * A choose card or a stop answer is read under the snapshot: the commit's after-read finds it gone and
+ * the answer is withheld (409 SCAN_UNCONFIRMED).
  */
-async function expectRecordedUnredeemable(
+async function expectRaced(
   phase: 'gate' | 'choose' | 'stop',
   headers: Record<string, string>,
-  result: ScanOutcome,
+  response: Response,
 ) {
-  if (phase === 'stop') return expectStopRecordedUnredeemable(kit, headers, result);
-  if (phase === 'choose') expect(result).toMatchObject({ kind: 'ready', reason: 'choose' });
-  else expect(result).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
+  if (phase !== 'gate') return expectUnconfirmed(response);
+  expect(response.status).toBe(200);
+  const result = ScanOutcomeSchema.parse(await response.json());
+  expect(result).toMatchObject({ kind: 'ok', scanId: expect.any(String) });
   expect(await expectGrantsUnredeemable(kit, headers, result)).toBeGreaterThan(0);
 }
 
@@ -84,7 +87,7 @@ describe('captured action template reads at the final CAS', () => {
         expect(original.activeTemplateVersion).toBe(source === 'active' ? 'v2' : 'v1');
         const request = body(kit, f.pass.id);
         let rejectedRewrite = false;
-        const result = await race(
+        const response = await raceRaw(
           kit,
           f.scanner.headers,
           request,
@@ -115,7 +118,7 @@ describe('captured action template reads at the final CAS', () => {
           },
         );
         expect(rejectedRewrite).toBe(true);
-        await expectRecordedUnredeemable(phase, f.scanner.headers, result);
+        await expectRaced(phase, f.scanner.headers, response);
         if (phase === 'gate')
           expect(
             await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
@@ -194,7 +197,7 @@ describe('captured action template reads at the final CAS', () => {
 
   // A gate, stop or choose commit keeps the policy it evaluated; the capabilities it minted do not redeem.
   it.each(['gate', 'choose', 'stop'] as const)(
-    'voids %s grants when a newly approved head tightens the captured policy',
+    'withholds a choose or stop answer, and voids the grants of a gate, when a newly approved head tightens the captured policy',
     async (phase) => {
       const f = await fixture(kit, {
         compatiblePin: true,
@@ -213,10 +216,10 @@ describe('captured action template reads at the final CAS', () => {
         'same-build',
       );
       const request = body(kit, f.pass.id);
-      const result = await race(kit, f.scanner.headers, request, COMMIT_MARKER[phase], (db) =>
+      const response = await raceRaw(kit, f.scanner.headers, request, COMMIT_MARKER[phase], (db) =>
         approveAppleRelease(kit, { db, templateId: f.templateId, version: 'v2', mode: 'live' }),
       );
-      await expectRecordedUnredeemable(phase, f.scanner.headers, result);
+      await expectRaced(phase, f.scanner.headers, response);
       if (phase === 'gate')
         expect(
           await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id),
@@ -226,6 +229,20 @@ describe('captured action template reads at the final CAS', () => {
       );
     },
   );
+
+  it('withholds an approval-needed answer when a newly approved head tightens the captured policy', async () => {
+    const f = await fixture(kit, { compatiblePin: true, photo: true, minRole: 'manager' });
+    await stageVersion(kit, f.templateId, 'v2', () => {}, 'same-build');
+    // Positive control: with nothing moved the answer is a heads-up that offers the photo.
+    const calm = await action(kit, f.scanner.headers, body(kit, f.pass.id));
+    expect(calm.kind).toBe('heads_up');
+    expect(calm.display?.identity.photo?.url ?? null).not.toBeNull();
+    await expectUnconfirmed(
+      await raceRaw(kit, f.scanner.headers, body(kit, f.pass.id), 'DELETE FROM scans', (db) =>
+        approveAppleRelease(kit, { db, templateId: f.templateId, version: 'v2', mode: 'live' }),
+      ),
+    );
+  });
 
   // Releases and archiving are content at commit; only a deleted template stops the pass.
   it.each(['same head', 'away and back', 'owner archived', 'owner deleted'] as const)(

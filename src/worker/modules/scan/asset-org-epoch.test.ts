@@ -10,8 +10,8 @@ import { tenantAuthorityOf } from '../passes/http.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
+import { assetGrantValid, mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { photoAssetGrantFor } from './asset-test-fixtures.ts';
-import { assetGrantValid, mintAssetGrant } from './assets.ts';
 import { candidateById } from './repo-lookup.ts';
 import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
 
