@@ -14,6 +14,7 @@ import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
+import { deskOf } from './result/desk.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
@@ -248,14 +249,7 @@ export function ScanLoop({
               eventNote={session.event?.note}
               holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
-              desk={{
-                picker: l.s === 'member' ? l.picker : null,
-                onAmount: (value) => dispatch({ type: 'amount', value }),
-                onConfirm: () => dispatch({ type: 'confirm' }),
-                onCancel: () => dispatch({ type: 'cancel' }),
-                managers: (session.staffList ?? []).filter((m) => m.role === 'manager'),
-                onApprove: (staffId, pin) => dispatch({ type: 'approve', staffId, pin }),
-              }}
+              desk={deskOf(l, session.staffList, dispatch)}
             />
           ) : l.s === 'paused' ? (
             <BootCard title="Paused">

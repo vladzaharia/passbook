@@ -384,3 +384,34 @@ async function syncAfterScan(passId: string, fields: Record<string, number>) {
     cause: 'connection',
   });
 }
+
+describe('value actions: an admin session', () => {
+  it('adds and undoes as the admin, published by the user and recorded as the console', async () => {
+    const t = await kit.scanTemplate('Admin credit', { actions: [{ ...ADD, amount: 3 }] });
+    await showBalance(t);
+    const pass = await kit.scanPass(t, { balance: 4 });
+    const scope = { orgId: kit.org.id, timeZone: 'UTC' };
+    const res = await kit.post(kit.admin(), '/actions', {
+      scope,
+      idempotencyKey: key(),
+      input: codeOf(pass),
+      clientTs: kit.clock.now(),
+      actionId: 'add',
+    });
+    expect(res.status, await res.clone().text()).toBe(200);
+    const o = await out(res);
+    expect(o).toMatchObject({ kind: 'ok', value: { before: 4, after: 7 } });
+    expect((await balanceOf(pass.id)).balance).toBe(7);
+    const [version] = await rows<{ cause: string; source: string | null }>(
+      'SELECT cause, source FROM pass_versions WHERE pass_id = ? ORDER BY version DESC LIMIT 1',
+      [pass.id],
+    );
+    expect(version).toEqual({ cause: 'admin', source: 'scan' });
+    const undone = await kit.post(kit.admin(), `/scans/${o.scanId}/undo`, {
+      idempotencyKey: key(),
+      scope,
+    });
+    expect(undone.status, await undone.clone().text()).toBe(200);
+    expect((await balanceOf(pass.id)).balance).toBe(4);
+  });
+});

@@ -88,6 +88,10 @@ test('a desk stamps a card by the amount it picks, then redeems the reward', asy
     await expect(page.getByTestId('scan-result')).toContainText('Add stamp', { timeout: 10_000 });
     await expect(page.getByTestId('scan-result')).toHaveAttribute('data-kind', 'ok');
     expect(await stampsOf()).toBe(10);
+    const feed = await api.get<{ items: { actionId: string; outcome: string }[] }>(
+      `/api/v1/scans?orgId=${orgId}&passId=${pass.id}`,
+    );
+    expect(feed.items).toMatchObject([{ actionId: 'stamp', outcome: 'ok' }]);
 
     const redeemed = page.waitForRequest(
       (request) => request.url().endsWith('/api/v1/scan/actions') && request.method() === 'POST',
