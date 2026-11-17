@@ -4,14 +4,12 @@ import type { PassJson } from '../../../passkit/types.ts';
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound, resolveTemplate } from '../passes/builder.ts';
-import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { takePhotoGrantToken } from './asset-sidecar.ts';
 import type { PreparedAssetGrant } from './asset-types.ts';
 import { assetBaseUrl, preparePhotoGrant } from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
-import { type Candidate, candidateById } from './repo-lookup.ts';
-import { passSnapshotCurrentStrict } from './repo-pass-authority.ts';
+import type { Candidate } from './repo-lookup.ts';
 import { matchesEvent } from './resolve-candidates.ts';
 import { ROLE_RANK } from './rules.ts';
 import { walletIdentityMatches } from './wallet-snapshot.ts';
@@ -204,49 +202,6 @@ export async function photoPolicyAllowed(
     if (isNotFound(error)) return false;
     throw error;
   }
-}
-
-/** A current photo restriction applies even when the active template cannot rebuild this pass. */
-export async function canShowPhotoForCandidate(
-  ctx: ServiceContext,
-  actor: ScanActor,
-  candidate: Candidate,
-  pinned?: ResolvedTemplate,
-  currentTemplate?: ResolvedTemplate,
-  sourceRole?: ScanRole | null,
-): Promise<boolean> {
-  if (!(await photoPolicyAllowed(ctx, actor, candidate, pinned, currentTemplate, sourceRole)))
-    return false;
-  return passSnapshotCurrentStrict(
-    ctx.env.DB,
-    candidate.pass,
-    candidate.connectionGeneration,
-    candidate.activeTemplateVersion,
-    candidate.orgRevision,
-    candidate.templateRevision,
-    ctx.clock.now(),
-    candidate,
-  );
-}
-
-export async function memberPhotoCandidate(
-  ctx: ServiceContext,
-  actor: ScanActor,
-  passId: string,
-  sourceRole?: ScanRole | null,
-): Promise<Candidate | null> {
-  const pinned = { ...ctx, env: snapshotCredentialEnv(ctx.env) };
-  const keyset = await requireCredentialRefKeyset(pinned.env.DB, pinned.env);
-  const candidate = await candidateById(pinned.env.DB, actor.orgId, passId);
-  return candidate &&
-    candidate.credentialKeysetCommitment === keyset &&
-    (await canShowPhotoForCandidate(ctx, actor, candidate, undefined, undefined, sourceRole))
-    ? candidate
-    : null;
-}
-
-export async function canShowMemberPhoto(ctx: ServiceContext, actor: ScanActor, passId: string) {
-  return (await memberPhotoCandidate(ctx, actor, passId)) !== null;
 }
 
 /** A minted photo capability, released as a URL only to the recipient it was minted for. */

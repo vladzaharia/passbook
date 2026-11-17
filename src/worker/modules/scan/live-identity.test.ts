@@ -9,7 +9,7 @@ import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { updatePass } from '../passes/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { liveRecipient } from './live-auth.ts';
-import { canShowPhotoForCandidate, scannerCandidateAllowed } from './member-photo.ts';
+import { photoPolicyAllowed, scannerCandidateAllowed } from './member-photo.ts';
 import { candidateById } from './repo-lookup.ts';
 import {
   hub,
@@ -114,7 +114,7 @@ describe('live identity authority', () => {
       settings: { ...recipient.actor.settings, acceptAllTemplates: false },
     };
     expect(scannerCandidateAllowed(standalone, candidate, passJson, kit.clock.now())).toBe(true);
-    expect(await canShowPhotoForCandidate(kit.ctx, standalone, candidate)).toBe(true);
+    expect(await photoPolicyAllowed(kit.ctx, standalone, candidate)).toBe(true);
 
     const unassigned = {
       ...standalone,
@@ -125,7 +125,7 @@ describe('live identity authority', () => {
       },
     };
     expect(scannerCandidateAllowed(unassigned, candidate, passJson, kit.clock.now())).toBe(false);
-    expect(await canShowPhotoForCandidate(kit.ctx, unassigned, candidate)).toBe(false);
+    expect(await photoPolicyAllowed(kit.ctx, unassigned, candidate)).toBe(false);
   });
 
   it('derives staffless monitor visibility from a real signed-in source without changing its authority', async () => {

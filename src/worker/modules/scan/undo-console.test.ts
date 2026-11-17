@@ -7,7 +7,8 @@ import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { adminActor, captureScanTenantAuthority, type ScanActor, tenantScanRole } from './actor.ts';
 import { captureScanEpochs } from './authority-checks.ts';
-import { canShowMemberPhoto } from './member-photo.ts';
+import { photoPolicyAllowed } from './member-photo.ts';
+import { candidateById } from './repo-lookup.ts';
 import {
   expectNoUndo,
   kit,
@@ -17,6 +18,11 @@ import {
 } from './repo-undo-authority-test-fixtures.ts';
 import { grantScanMembership, key } from './test-kit.ts';
 import { consoleUndo, undo } from './undo.ts';
+
+async function canShow(actor: ScanActor, passId: string): Promise<boolean> {
+  const candidate = await candidateById(kit.env.DB, kit.org.id, passId);
+  return candidate ? photoPolicyAllowed(kit.ctx, actor, candidate) : false;
+}
 
 describe('undo replay and console authority', () => {
   it('uses a pass operator tenant membership for console undo without a platform admin role', async () => {
@@ -255,7 +261,7 @@ describe('undo replay and console authority', () => {
       tenantAuthority: await captureScanTenantAuthority(kit.ctx, session, authority),
     };
     expect(actor.role).toBe('door');
-    expect(await canShowMemberPhoto(kit.ctx, actor, pass.id)).toBe(false);
+    expect(await canShow(actor, pass.id)).toBe(false);
 
     const manager = await makeUser(kit.fx);
     await grantScanMembership(kit.fx, kit.org.id, manager.id);
@@ -281,6 +287,6 @@ describe('undo replay and console authority', () => {
       tenantAuthority: await captureScanTenantAuthority(kit.ctx, managerSession, managerAuthority),
     };
     expect(managerActor.role).toBe('manager');
-    expect(await canShowMemberPhoto(kit.ctx, managerActor, pass.id)).toBe(true);
+    expect(await canShow(managerActor, pass.id)).toBe(true);
   });
 });

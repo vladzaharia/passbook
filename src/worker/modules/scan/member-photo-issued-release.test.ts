@@ -12,7 +12,7 @@ import { makePng } from '../templates/package/fixtures.ts';
 import { takeAssetGrantToken } from './asset-sidecar.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
 import { mintAssetGrant } from './assets.ts';
-import { canShowPhotoForCandidate, knownPhotoUrl } from './member-photo.ts';
+import { knownPhotoUrl, photoPolicyAllowed } from './member-photo.ts';
 import { scanPhotoUrl } from './member-photo-url-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
@@ -87,7 +87,7 @@ describe('member photos under the issued-release rule', () => {
     await moveHead(fixture.templateId);
     const candidate = await current(fixture.pass.id);
     expect(candidate).toMatchObject({ activeReleaseVersion: 'v2', displayTemplateVersion: null });
-    expect(await canShowPhotoForCandidate(kit.ctx, fixture.actor, candidate)).toBe(true);
+    expect(await photoPolicyAllowed(kit.ctx, fixture.actor, candidate)).toBe(true);
     const photo = await cardPhoto(fixture);
     expect(photo?.purpose).toBe('read');
     if (!photo?.token) throw new Error('Photo grant not minted.');
@@ -113,7 +113,7 @@ describe('member photos under the issued-release rule', () => {
     });
     const candidate = await current(fixture.pass.id);
     expect(candidate.displayTemplateVersion).toBeNull();
-    expect(await canShowPhotoForCandidate(kit.ctx, fixture.actor, candidate)).toBe(false);
+    expect(await photoPolicyAllowed(kit.ctx, fixture.actor, candidate)).toBe(false);
     expect(await cardPhoto(fixture)).toBeNull();
     expect(await scanPhotoUrl(kit.ctx, fixture.actor, fixture.pass.id)).toBeNull();
   });

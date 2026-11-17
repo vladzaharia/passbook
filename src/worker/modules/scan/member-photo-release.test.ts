@@ -11,9 +11,11 @@ import { scannerActor, withRole } from './actor.ts';
 import { takeAssetGrantToken } from './asset-sidecar.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
 import { assetGrantValid, prepareGenericAssetGrant, preparePhotoGrant } from './assets.ts';
-import { canShowPhotoForCandidate, knownPhotoUrl, scannerReleaseAllowed } from './member-photo.ts';
+import { knownPhotoUrl, photoPolicyAllowed, scannerReleaseAllowed } from './member-photo.ts';
+import { assetReadCurrent } from './repo-asset-read.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
 import { proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -245,7 +247,7 @@ describe('scanner member photo release authority', () => {
       ),
       null,
     );
-    expect(await canShowPhotoForCandidate(kit.ctx, actor, candidate)).toBe(true);
+    expect(await photoPolicyAllowed(kit.ctx, actor, candidate)).toBe(true);
     for (const invalid of [
       { ...candidate, activeReleaseId: null },
       { ...candidate, activeReleaseGeneration: null },
@@ -255,7 +257,7 @@ describe('scanner member photo release authority', () => {
       { ...candidate, activeReleaseCandidateHash: 'invalid' },
       { ...candidate, activeReleaseVersion: 'different-release' },
     ]) {
-      expect(await canShowPhotoForCandidate(kit.ctx, actor, invalid)).toBe(false);
+      expect(await photoPolicyAllowed(kit.ctx, actor, invalid)).toBe(false);
     }
     const incompatible = {
       ...candidate,
@@ -266,7 +268,7 @@ describe('scanner member photo release authority', () => {
     // that is neither null nor the head is not. The pinned version here does not exist.
     expect(scannerReleaseAllowed(incompatible)).toBe(true);
     expect(scannerReleaseAllowed({ ...incompatible, displayTemplateVersion: 'other' })).toBe(false);
-    expect(await canShowPhotoForCandidate(kit.ctx, actor, incompatible)).toBe(false);
+    expect(await photoPolicyAllowed(kit.ctx, actor, incompatible)).toBe(false);
     expect(
       scannerReleaseAllowed({
         ...incompatible,
@@ -288,7 +290,18 @@ describe('scanner member photo release authority', () => {
     expect(scannerReleaseAllowed({ ...legacy, activeTemplateVersion: 'unapproved-draft' })).toBe(
       false,
     );
-    // Shape alone does not prove that no approved release has appeared in D1.
-    expect(await canShowPhotoForCandidate(kit.ctx, actor, legacy)).toBe(false);
+    // Shape alone does not prove that no approved release has appeared in D1: the read fence does.
+    const auth = scanReadAuthority(actor, { now: kit.clock.now() });
+    expect(await assetReadCurrent(kit.env.DB, auth, actor, candidate, false)).toBe(true);
+    const raw = candidate.templateSnapshot?.raw;
+    if (!candidate.templateSnapshot || !raw) throw new Error('Missing template snapshot.');
+    const unreleased = {
+      ...legacy,
+      templateSnapshot: {
+        ...candidate.templateSnapshot,
+        raw: JSON.stringify({ ...JSON.parse(raw), release: null }),
+      },
+    };
+    expect(await assetReadCurrent(kit.env.DB, auth, actor, unreleased, false)).toBe(false);
   });
 });
