@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../test/helpers/index.ts';
+import { fakeAuth, linkToken } from '../../../test/helpers/index.ts';
 import { THEME_COLOR } from '../../generated/resolved-tokens.ts';
 import { createApp } from '../app.ts';
 import { breakglassPage, expiredPage } from '../modules/auth/pages.ts';
@@ -81,11 +81,11 @@ describe('theme cookie on Worker pages', () => {
 
   it('stamps the pass page; the Apple badge art is the same in each theme', async () => {
     const pass = await kit.pass();
-    const dark = await get(`/p/${pass.downloadToken}`, 'dark');
+    const dark = await get(`/p/${await linkToken(kit.env, pass)}`, 'dark');
     expect(dark).toContain('<html lang="en" data-theme="dark">');
-    const light = await get(`/p/${pass.downloadToken}`, 'light');
+    const light = await get(`/p/${await linkToken(kit.env, pass)}`, 'light');
     expect(light).toContain('<html lang="en" data-theme="light">');
-    const system = await get(`/p/${pass.downloadToken}`, 'system');
+    const system = await get(`/p/${await linkToken(kit.env, pass)}`, 'system');
     expect(system).toContain('<html lang="en"><head>');
     for (const html of [dark, light, system]) {
       expect(html).toContain('/apple/badge/en/black.svg');

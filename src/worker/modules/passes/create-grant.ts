@@ -86,4 +86,9 @@ export function createGrant(
   });
 }
 
-const CREATE_TABLES = ['passes', 'pass_events', 'pass_issuance_deliveries'] as const;
+const CREATE_TABLES = [
+  'passes',
+  'pass_events',
+  'pass_issuance_deliveries',
+  'pass_token_seals',
+] as const;

@@ -29,7 +29,7 @@ it('fences one pass at its first chunk only and an archive at every chunk', asyn
     { orgId: a.orgId, name: 'Fence', passIds: [a.id, b.id] },
     { kind: 'system' },
   );
-  const bundle = await bundleForToken(ctx, created.url.split('/b/')[1] ?? '');
+  const bundle = await bundleForToken(ctx, created.url?.split('/b/')[1] ?? '');
   const prepare = vi.spyOn(kit.env.DB, 'prepare');
   const queries = async (passes: (typeof a)[], archive: boolean) => {
     prepare.mockClear();

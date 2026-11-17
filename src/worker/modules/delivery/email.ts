@@ -3,7 +3,9 @@ import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
 import { passSummary } from '../../email/pass-summary.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
@@ -117,12 +119,21 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     return;
   }
   const passJson = parseStoredPassJson(artifact.pass_json);
+  let plainToken: string;
+  try {
+    plainToken = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
+  } catch (error) {
+    // The link changed since the pass was read, or its copy is unreadable (logged): nothing goes out.
+    if (!(error instanceof AppError) || !error.code.startsWith('TOKEN_SEAL_')) throw error;
+    await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'DELIVERY_STALE');
+    return;
+  }
   const { iconUrl, logo } = passEmailImages(images, base);
   const email = renderPassEmail({
     orgName: org?.name ?? 'PassBook',
     ...emailSupport(ctx.env, orgSettings, branding),
-    downloadUrl: `${base}/p/${pass.downloadToken}/pass.pkpass`,
-    manageUrl: `${base}/p/${pass.downloadToken}`,
+    downloadUrl: `${base}/p/${plainToken}/pass.pkpass`,
+    manageUrl: `${base}/p/${plainToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     publicBaseUrl: base,
     walletOffers,

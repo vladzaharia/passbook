@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { stubIssuedToken } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { checksHold, jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { reassignHolder } from '../holders/service.ts';
@@ -16,6 +17,7 @@ const actor = { type: 'system', id: null } as const;
 
 function delayedBundle(kit: Kit, pass: Pass) {
   const id = kit.ctx.ids.id();
+  const stub = stubIssuedToken(kit.ctx.ids.token());
   return {
     id,
     grant: createBundleGrant(
@@ -25,7 +27,8 @@ function delayedBundle(kit: Kit, pass: Pass) {
         orgId: pass.orgId,
         mode: pass.mode,
         name: 'Delayed',
-        token: kit.ctx.ids.token(),
+        token: stub.mac,
+        tokenSeal: stub.seal,
         holderEmail: pass.holderEmail,
         actor,
         passes: [pass],
@@ -82,10 +85,10 @@ it('binds the credential generation independently of the link, including members
     },
     { kind: 'system' },
   );
-  const authorized = await bundleForToken(jobCtxOf(kit), replacement.url.split('/b/')[1] ?? '');
+  const authorized = await bundleForToken(jobCtxOf(kit), replacement.url?.split('/b/')[1] ?? '');
   const currentSnapshot = await bundleEmailSnapshot(kit.env.DB, replacement.id);
   if (!currentSnapshot?.passes[0]) throw new Error('Missing replacement snapshot');
-  const intent = await bindBundle(currentSnapshot, 'holder@example.test');
+  const intent = await bindBundle(kit.env, currentSnapshot, 'holder@example.test');
   const member = intent.members[0];
   if (!member) throw new Error('Missing intent member');
   const stalePass = {
@@ -99,8 +102,8 @@ it('binds the credential generation independently of the link, including members
   const hold = (checks: ReturnType<typeof bundleChecks>) =>
     checksHold(jobCtxOf(kit), { orgId: pass.orgId, mode: pass.mode, checks });
   const staleInsert = delayedBundle(kit, stalePass);
-  expect(await matchesBundle(currentSnapshot, intent)).toBe(true);
-  expect(await matchesBundle(currentSnapshot, staleIntent)).toBe(false);
+  expect(await matchesBundle(kit.env, currentSnapshot, intent)).toBe(true);
+  expect(await matchesBundle(kit.env, currentSnapshot, staleIntent)).toBe(false);
   expect(await hold(bundleChecks(currentSnapshot))).toBe(true);
   expect(await hold(bundleChecks({ ...currentSnapshot, passes: [stalePass] }))).toBe(false);
   expect(await currentBundleMembers(kit.env.DB, authorized, [currentSnapshot.passes[0]])).toBe(

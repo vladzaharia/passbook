@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeUser } from '../../../../test/helpers/index.ts';
+import { linkToken, makeUser } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { clearBlock, reassignHolder } from '../holders/service.ts';
 import { removePassFromUser } from '../holders/service-remove.ts';
@@ -39,6 +39,7 @@ async function moveAndPersonalize(passId: string, email: string) {
 describe('durable pass email intent', () => {
   it('cancels a queued A email after reassignment and sends only B the replacement link and artifact', async () => {
     const original = await kit.pass({ holderEmail: 'old-delivery@example.com' });
+    const originalToken = await linkToken(kit.env, original);
     const old = await enqueuePassEmail(job(), {
       passId: original.id,
       to: 'old-delivery@example.com',
@@ -65,8 +66,8 @@ describe('durable pass email intent', () => {
     const sent = kit.mailer.sent.at(-1);
     expect(kit.mailer.sent).toHaveLength(before + 1);
     expect(sent?.to).toBe('new-delivery@example.com');
-    expect(sent?.html).toContain(replacement.downloadToken);
-    expect(sent?.html).not.toContain(original.downloadToken);
+    expect(sent?.html).toContain(await linkToken(kit.env, replacement));
+    expect(sent?.html).not.toContain(originalToken);
     const artifact = await kit.env.BUCKET.get(replacement.objectKey);
     expect(artifact).not.toBeNull();
     expect(sent?.attachments?.[0]?.content).toEqual(new Uint8Array(await artifact!.arrayBuffer()));
@@ -143,7 +144,7 @@ describe('durable pass email intent', () => {
       expected: current!,
     });
     await handleEmailSend({ kind: 'email.send', outboxId: reviewed.outboxId }, job());
-    expect(kit.mailer.sent.at(-1)?.html).toContain(current!.downloadToken);
+    expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, current!));
   });
 
   it('does not revive an intent when the same owner is detached and reattached', async () => {

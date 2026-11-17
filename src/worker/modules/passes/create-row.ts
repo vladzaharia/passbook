@@ -1,5 +1,6 @@
 import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
+import { issueToken } from '../../platform/capability-token.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
@@ -83,7 +84,7 @@ export async function createPassRowWithRelease(
   const personalizable = template.assets.some((a) => a.name === 'personalization.json');
   const serial = personalizable ? ctx.ids.id() : (p.serial ?? ctx.ids.id());
   const authToken = ctx.ids.token();
-  const downloadToken = ctx.ids.token();
+  const downloadToken = await issueToken(ctx.env, 'pass', id, p.orgId, ctx.ids.token());
   const webServiceUrl = `${baseUrl(ctx.env)}/wallet`;
   const artifact = await buildArtifact(ctx, {
     orgId: p.orgId,
@@ -142,7 +143,8 @@ export async function createPassRowWithRelease(
         provider: 'apple',
       },
       authToken,
-      downloadToken,
+      downloadToken: downloadToken.mac,
+      tokenSeal: downloadToken.seal,
       webServiceUrl,
       personalization: p.input,
       // A bound pass takes its fields from the connection until an admin edits them.
@@ -248,7 +250,7 @@ export async function createPassRowWithRelease(
       pass.releaseId !== release.id ||
       pass.serial !== serial ||
       pass.authToken !== authToken ||
-      pass.downloadToken !== downloadToken ||
+      pass.downloadToken !== downloadToken.mac ||
       pass.webServiceUrl !== webServiceUrl ||
       pass.scanCode !== scanCode ||
       pass.objectKey !== objectKey ||

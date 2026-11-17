@@ -131,7 +131,7 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
             {voided || pass.inWallet || !qr || !publicUrl ? null : (
               <ShowQrButton passTitle={name} url={publicUrl} />
             )}
-            {voided || pass.inWallet ? null : (
+            {voided || pass.inWallet || !pass.downloadUrl ? null : (
               <AppleWalletBadge href={pass.downloadUrl} onClick={() => setDip((n) => n + 1)} />
             )}
           </div>

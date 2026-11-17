@@ -8,6 +8,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import type { Grant } from '../../platform/authority.ts';
+import { issueToken, revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -34,13 +35,27 @@ function executionAuth(execution: BundleWriteExecution): AuthContext | undefined
 
 export const bundleUrl = (ctx: ServiceContext, token: string) => `${baseUrl(ctx.env)}/b/${token}`;
 
-function toDto(ctx: ServiceContext, row: repo.BundleRow, members: repo.MemberRow[]): BundleDto {
+/** A row whose stored link cannot be shown (logged by the reveal) lists without one: rotate it. */
+async function linkOf(ctx: ServiceContext, row: repo.BundleRow): Promise<string | null> {
+  try {
+    return bundleUrl(ctx, await revealToken(ctx.env, 'bundle', row.id, row.org_id, row.token));
+  } catch (error) {
+    if (error instanceof AppError && error.code.startsWith('TOKEN_SEAL_')) return null;
+    throw error;
+  }
+}
+
+async function toDto(
+  ctx: ServiceContext,
+  row: repo.BundleRow,
+  members: repo.MemberRow[],
+): Promise<BundleDto> {
   return {
     id: row.id,
     orgId: row.org_id,
     mode: row.mode,
     name: row.name,
-    url: bundleUrl(ctx, row.token),
+    url: await linkOf(ctx, row),
     holderEmail: row.holder_email,
     passes: members.map((m) => ({
       id: m.pass_id,
@@ -58,11 +73,13 @@ async function withMembers(ctx: ServiceContext, rows: repo.BundleRow[]): Promise
     ctx.env.DB,
     rows.map((r) => r.id),
   );
-  return rows.map((row) =>
-    toDto(
-      ctx,
-      row,
-      members.filter((m) => m.bundle_id === row.id),
+  return Promise.all(
+    rows.map((row) =>
+      toDto(
+        ctx,
+        row,
+        members.filter((m) => m.bundle_id === row.id),
+      ),
     ),
   );
 }
@@ -131,12 +148,15 @@ export async function createBundle(
   const holdersOnly = actor.type !== 'user';
   if (input.sendEmail && holdersOnly && passes.some((p) => p.holderEmail !== holderEmail))
     throw new ValidationError(RECIPIENT_NOT_HOLDER, [], 'RECIPIENT_NOT_HOLDER');
+  const id = ctx.ids.id();
+  const issued = await issueToken(ctx.env, 'bundle', id, input.orgId, ctx.ids.token());
   const row = {
-    id: ctx.ids.id(),
+    id,
     orgId: input.orgId,
     mode,
     name: input.name,
-    token: ctx.ids.token(),
+    token: issued.mac,
+    tokenSeal: issued.seal,
     holderEmail,
     actor: { type: actor.type, id: actor.id },
     passes,
@@ -217,7 +237,7 @@ export async function rotateBundleLink(
       authority,
       actor,
       action: 'rotate_link',
-      token: ctx.ids.token(),
+      token: await issueToken(ctx.env, 'bundle', id, row.org_id, ctx.ids.token()),
     }),
   );
   return getBundleDto(ctx, id, orgScope);

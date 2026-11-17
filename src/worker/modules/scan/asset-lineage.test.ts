@@ -4,6 +4,7 @@ import {
   setOrgBranding,
   setOrgStatus,
 } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { deleteMemberPhoto, putMemberPhoto } from '../passes/member-photo.ts';
@@ -76,7 +77,9 @@ describe('scanner asset lineage', () => {
     'does not redeem a grant after its %s changes without a version change',
     async (_name, sql) => {
       const fixture = await photoPass();
-      await run(kit.env.DB, sql, [fixture.pass.id]);
+      await withoutTrigger(kit.env.DB, 'passes_token_change_moves_link', () =>
+        run(kit.env.DB, sql, [fixture.pass.id]),
+      );
       await missing(await fixture.image());
     },
   );

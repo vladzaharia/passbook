@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { saveOrgSettings } from '../../../../test/helpers/index.ts';
+import { linkToken, saveOrgSettings } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
@@ -44,8 +44,10 @@ describe('pass email wallet availability', () => {
     const pass = await kit.pass();
     const { html, text } = await sendOne(pass);
     const base = baseUrl(kit.env);
-    expect(html).toContain(`href="${base}/p/${pass.downloadToken}/pass.pkpass"`);
-    expect(text).toContain(`Add to Apple Wallet: ${base}/p/${pass.downloadToken}/pass.pkpass`);
+    expect(html).toContain(`href="${base}/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
+    expect(text).toContain(
+      `Add to Apple Wallet: ${base}/p/${await linkToken(kit.env, pass)}/pass.pkpass`,
+    );
     expect(html).not.toContain('/icons/wallet-providers/');
     expect(text).not.toMatch(/Add to (Google|Samsung) Wallet/);
   });
@@ -70,14 +72,15 @@ describe('pass email buddy (email.buddy)', () => {
 });
 
 describe("the pass's icon and logo", () => {
-  const assets = (pass: Pass) => `${baseUrl(kit.env)}/p/${pass.downloadToken}/assets`;
+  const assets = async (pass: Pass) =>
+    `${baseUrl(kit.env)}/p/${await linkToken(kit.env, pass)}/assets`;
 
   it('come from the public assets route with the pass token, fixed in size', async () => {
     const pass = await kit.pass();
     const plain = await sendOne(pass);
     // The kit template ships an icon and no logo.
     expect(plain.html).toContain(
-      `<img src="${assets(pass)}/icon.png?v=${kit.template.version}" alt="" width="24" height="24"`,
+      `<img src="${await assets(pass)}/icon.png?v=${kit.template.version}" alt="" width="24" height="24"`,
     );
     expect(plain.html).not.toContain('/assets/logo');
 
@@ -86,7 +89,7 @@ describe("the pass's icon and logo", () => {
     const { html } = await sendOne(pass);
     expect(html).toMatch(
       new RegExp(
-        `<img src="${assets(pass)}/logo@2x\\.png\\?v=[0-9a-f]{40}" alt="${kit.org.name}" width="100" height="30"`,
+        `<img src="${await assets(pass)}/logo@2x\\.png\\?v=[0-9a-f]{40}" alt="${kit.org.name}" width="100" height="30"`,
       ),
     );
   });

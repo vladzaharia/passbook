@@ -37,7 +37,7 @@ async function reserved() {
   if (!cap) throw new Error('capture missing');
   const authority = await inboxAuthority(kit, member.session);
   const ref = await getCapturedReference(kit.env.DB, cap.id, authority, kit.clock.now());
-  const snapshot = ref ? await resolveCaptureSnapshot(kit.env.DB, ref) : null;
+  const snapshot = ref ? await resolveCaptureSnapshot(kit.env, ref) : null;
   if (!ref || !snapshot) throw new Error('reference missing');
   const id = kit.fx.ids.id();
   expect(await reserveForward(jobCtxOf(kit), id, ref, snapshot, authority, user.primaryEmail)).toBe(

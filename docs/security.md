@@ -30,7 +30,7 @@ approval and replay-safe Save behavior can be verified.
 | Secret | Stored | Notes |
 | --- | --- | --- |
 | Session, magic link, API key | hashed | Shown once. |
-| Download token (`/p/<token>`) | retrievable | Recorded call: admins re-send it. Rotatable. Never logged. |
+| Download token (`/p/<token>`), bundle token (`/b/<token>`) | MAC + sealed copy | Lookup by HMAC (`h1:`); the link is shown again from an AES-GCM copy bound to id, org and purpose. A database read yields no link. Rotatable. Never logged. |
 | ApplePass token | retrievable | Devices need it back. Rotatable. Never logged. |
 | Pass serial | plain | The personalization capability (SEC-1). NFC identities must not use caller-chosen or guessable serials. |
 
