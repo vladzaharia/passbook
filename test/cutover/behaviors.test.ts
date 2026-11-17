@@ -21,7 +21,7 @@ import { createTemplateRegistry } from '../../src/worker/modules/templates/regis
 import { ManualClock } from '../../src/worker/platform/clock.ts';
 import { createServiceContext } from '../../src/worker/platform/service-context.ts';
 import { MOVED_AWAY_PASS, type Shape } from './legacy-seed.ts';
-import { type Cutover, runCutover } from './setup.ts';
+import { type Cutover, NOW, runCutover } from './setup.ts';
 
 let c: Cutover;
 let kit: ScanKit;
@@ -38,7 +38,7 @@ const ALL: Shape[] = [...SERVED, 'uploaded-archived'];
 
 beforeAll(async () => {
   c = await runCutover(29);
-  kit = await withKitDatabase(c.legacy.db, () => setupScanKit());
+  kit = await withKitDatabase(c.legacy.db, () => setupScanKit({ clockStart: NOW })); // real clock: the cutover seed is wall-time based
   overrideDeps(kit.env, { registry: createTemplateRegistry(kit.env) });
 });
 

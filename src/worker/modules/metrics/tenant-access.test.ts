@@ -50,6 +50,7 @@ async function addMember(f: Fixtures, orgId: string, userId: string, role = 'rea
 }
 
 async function setup(mode: 'live' | 'test' = 'live') {
+  // Real clock: the metrics routes bucket rows by wall-clock time.
   const clock = new ManualClock(Date.now());
   const f = fixtures(base, clock);
   const a = await makeOrg(f);

@@ -67,7 +67,8 @@ export function liveTenantFixture() {
   let app: OpenAPIHono<AppBindings>;
   let credentialKeysetCommitment: string;
   async function setup() {
-    kit = await setupScanKit();
+    // Real clock: the live hub's ring is windowed by wall time.
+    kit = await setupScanKit({ clockStart: Date.now() });
     credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
     app = createApp({
       stores: {

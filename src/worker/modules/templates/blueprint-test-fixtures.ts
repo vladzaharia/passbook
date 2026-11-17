@@ -97,6 +97,7 @@ export interface BlueprintKit {
 }
 
 export async function blueprintKit(): Promise<BlueprintKit> {
+  // Real clock: the cutover and blueprint apps under test read wall time.
   const clock = new ManualClock(Date.now());
   const env = await makeEnv({ ASSETS: await bakedAssets() });
   const f = fixtures(env, clock);

@@ -8,6 +8,7 @@ import {
   makeScanStaff,
   makeUser,
   persistTemplate,
+  TEST_NOW,
 } from '../../../../test/helpers/index.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { PassJson, ScanManifest, TemplateManifest } from '../../../passkit/types.ts';
@@ -207,7 +208,7 @@ export async function approveScanReleases(
 
 /** The passes kit plus a scan template factory, a real app with the scanner store, and fixtures. */
 export async function setupScanKit(options: { clockStart?: number } = {}): Promise<ScanKit> {
-  const kit = await setupKit(options);
+  const kit = await setupKit({ ...options, clockStart: options.clockStart ?? TEST_NOW });
   // Storage is per file, and kits are often built in beforeEach.
   const adminId = 'admin-1';
   if (!(await first(kit.env.DB, 'SELECT 1 FROM users WHERE id=?', [adminId])))
