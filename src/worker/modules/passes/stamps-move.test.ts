@@ -156,7 +156,7 @@ describe('a card above the new maximum', () => {
     expect(await full.json()).toMatchObject({ code: 'STAMPS_CARD_FULL' });
     expect(await stamps(card.id)).toBe(9);
     // The reissue moves it: 9 fits.
-    expect(await reissueStamps(kit, id)).toMatchObject({ failed: 0, aboveMax: 0 });
+    expect(await reissueStamps(kit, id)).toMatchObject({ failed: 0 });
     expect(await versionOf(card.id)).toBe('v2');
   }, 120_000);
 

@@ -29,8 +29,8 @@ export interface ReissuePageResult {
   changed: number;
   unchanged: number;
   failed: number;
-  /** Failed because the card holds more stamps than the new version allows. */
-  aboveMax: number;
+  /** Present when some failed because the card holds more stamps than the new version allows. */
+  aboveMax?: number;
 }
 
 /**
@@ -99,7 +99,6 @@ export async function reissuePage(
     changed: 0,
     unchanged: 0,
     failed: 0,
-    aboveMax: 0,
   };
   const plans = new Map<string, Promise<StampMove>>();
   const movePlan = (r: Release) => {
@@ -163,7 +162,7 @@ export async function reissuePage(
     } catch (error) {
       if (!(error instanceof AppError)) throw error;
       result.failed++;
-      if (error.code === 'STAMPS_ABOVE_MAX') result.aboveMax++;
+      if (error.code === 'STAMPS_ABOVE_MAX') result.aboveMax = (result.aboveMax ?? 0) + 1;
       ctx.log.warn('bulk_reissue.pass_failed', {
         passId: row.id,
         templateId: params.templateId,
