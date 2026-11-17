@@ -20,6 +20,7 @@ import {
   insertWorkflowRun,
   setWorkflowStatus,
 } from './repo.ts';
+import { reissuePrincipalOf } from './repo-bulk-principal.ts';
 import { reserveWorkflowReleases } from './repo-workflow-releases.ts';
 import type { Actor } from './service.ts';
 
@@ -154,6 +155,11 @@ export async function startBulkReissue(
       now: ctx.clock.now(),
     });
   }
+  const principal = await reissuePrincipalOf(
+    ctx.env.DB,
+    options?.authority,
+    options?.platformSession,
+  );
   const params: ReissueParams = {
     templateId,
     version,
@@ -163,6 +169,7 @@ export async function startBulkReissue(
     ...(cause === 'template_upgrade' ? { workflowInstanceId: instanceId } : {}),
     ...(release ? { releaseId: release.id, releaseGeneration: release.generation } : {}),
     cause,
+    ...(principal ? { principal } : {}),
   };
   try {
     await ctx.env.BULK_REISSUE.create({ id: instanceId, params });
