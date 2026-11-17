@@ -17,7 +17,7 @@ import { getScanner } from './repo-device.ts';
 import { historyProofSnapshotPredicates } from './repo-history-proof-cas.ts';
 import { candidateById } from './repo-lookup.ts';
 import { outputAuthorityPredicate } from './repo-output-authority.ts';
-import { claimScanStmt } from './repo-scans.ts';
+import { claimScanStmt } from './repo-scans-test-support.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { packScanPredicate, scanSecretSlots } from './repo-secret-binds.ts';
 import { foundOf } from './resolve.ts';

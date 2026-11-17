@@ -144,6 +144,25 @@ describe('cutover window: old Worker holder writes', () => {
   });
 });
 
+describe('cutover window: old Worker baked-org sync', () => {
+  // The old sync batch runs only when a fresh baked build reaches it; the next request retries the batch.
+  const ensureOrg = (slug: string) =>
+    write(
+      `INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, 'Baked', 1, 1)
+       ON CONFLICT (slug) DO NOTHING`,
+      `baked-${slug}`,
+      slug,
+    );
+
+  it('the baked-org insert fails for an existing slug (0052 orgs_no_replace) and succeeds for a new one', async () => {
+    const existing = await db.prepare('SELECT slug FROM orgs LIMIT 1').first<{ slug: string }>();
+    if (!existing) throw new Error('seeded org missing');
+    await expect(ensureOrg(existing.slug)).rejects.toThrow(/UNIQUE constraint failed: orgs.slug/);
+    const created = await ensureOrg(`${existing.slug}-new`);
+    expect(created.meta.changes).toBe(1);
+  });
+});
+
 describe('cutover window: promote', () => {
   it('a templates:read key from before the migrations runs the baked sync through GET /api/v1/templates', async () => {
     await runBootstrap(db, OWNER, Date.now());

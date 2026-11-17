@@ -1,9 +1,9 @@
 import type { Grant } from '../../platform/authority.ts';
 import { inList, maxNow } from '../../platform/authority-expr.ts';
+import { readPart, writePart } from '../../platform/authority-include.ts';
 import type { NewVersion } from './repo.ts';
 import { versionStatementSql } from './repo.ts';
 import { adoptionUnchanged } from './repo-grant-checks.ts';
-import { grantRow, inGrant } from './repo-grants.ts';
 import {
   ADOPTION_KEY,
   type BakedAdoptionSnapshot,
@@ -130,7 +130,6 @@ export function addArchiveStale(g: Grant, ids: readonly string[], now: number): 
 /** The immutable version row (inserted once) and the read-back that proves its content is unchanged. */
 export function addVersion(g: Grant, v: NewVersion): void {
   const [insert, verify] = versionStatementSql(v);
-  const gate = grantRow(g);
-  g.add(inGrant(g, `${insert.sql} AND ${gate.sql}`, [...insert.params, ...gate.params]));
-  g.add(inGrant(g, verify.sql, verify.params));
+  g.include(writePart(`${insert.sql} AND {grant}`, insert.params));
+  g.include(readPart(`${verify.sql} WHERE {grant}`, verify.params));
 }

@@ -495,11 +495,9 @@ Roll forward only once migrations have run (owner answer 6). A Worker-only rollb
 
 ### 7.2 Open work
 
-- Remove `platform/sql-balance.ts`, `platform/sql-tokens.ts` and `scan/repo-secret-binds.ts`, then drop the `scanners_credential_revision` trigger (`0047`) in a new migration.
-- Old release helpers still have callers (`activeReleaseIdSql`, `activeReleasePredicate`, `activeReleaseBindingPredicate`, `noScopedReleaseSql`): `passes/repo-release.ts`, `passes/repo-workflow-releases.ts`, `connections/repo-pass-snapshot.ts`, `connections/repo-webhook-replay.ts`, `connections/repo-webhook-item-claims.ts`, several `scan/repo-*` readers, and `wallet-providers/repo-projection.ts`.
+- Remove `platform/sql-balance.ts`, `platform/sql-tokens.ts`, `scan/repo-secret-binds.ts` and `scan/repo-scanner-configuration-scope.ts`, then drop the `scanners_credential_revision` trigger (`0047`) in a new migration. They go together: the scan snapshot fences still build deep AND trees (D1 expression depth 100) and pack binds through `repo-secret-binds`, and `live-auth`, `counts` and `act-result-authority` still compare `scanner.updatedAt`. Moving those fences onto grants removes all five.
 - One credential-loss rule for scanners: `session.ts`, `act-stale-refusal.ts` and `scanning-workspace.ts` call `scannerCredentialLost`; `repo-device.ts` `bindStaff` uses `credentialGone`, which misses a rotated CSRF secret, the token prefix and idle expiry.
 - Drop `scanning_config_revisions`.
-- `TenantPassWrite.orgUpdatedAt` and `tenantOrgUpdatedAt` carry `access_revision` under old names.
 
 ### 7.3 Provider track
 

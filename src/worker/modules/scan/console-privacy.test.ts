@@ -34,7 +34,7 @@ import {
   templateId,
 } from './console-privacy-test-fixtures.ts';
 import { historyPolicy } from './history-policy.ts';
-import { scanInputVisible, scanValueSafe } from './projection-privacy.ts';
+import { scanInputVisible } from './projection-privacy.ts';
 import { getScanRow } from './repo-feed.ts';
 import { candidateById } from './repo-lookup.ts';
 import { foundOf } from './resolve.ts';
@@ -209,9 +209,7 @@ describe('scan action record projection', () => {
         const viewer = { ...actor, role };
         const allowed = role === 'manager' || (role === 'desk' && spec.minimum === 'desk');
         expect(scanInputVisible(found, viewer, spec.source)).toBe(allowed);
-        expect(scanValueSafe(found, spec.value, viewer)).toBe(allowed);
         expect(historical.inputVisible(spec.source)).toBe(allowed);
-        expect(historical.valueSafe(spec.value)).toBe(allowed);
         expect(historical.action(spec.id, spec.kind)).toBeNull();
       }
     }

@@ -182,8 +182,7 @@ describe('scan row editor', () => {
     expect(screen.queryByRole('option', { name: 'phone' })).not.toBeInTheDocument();
   });
 
-  it('hides unsafe action labels and numeric literals without changing the row', async () => {
-    const user = userEvent.setup();
+  it('hides unsafe action labels and shows a long number as typed, without changing the row', () => {
     const changed = vi.fn();
     const row: ScanRowDoc = {
       id: 'balance',
@@ -200,10 +199,9 @@ describe('scan row editor', () => {
     render(<ScanRowEditor row={row} manifest={privateLabels} onChange={changed} />);
     expect(screen.queryByText('person@example.test')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Action')).toBeInTheDocument();
-    expect(screen.queryByDisplayValue('12125550199')).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('12125550199')).toBeInTheDocument();
     expect(row.lowBelow).toBe(12125550199);
-    await user.click(screen.getByRole('button', { name: 'Replace Low balance below' }));
-    expect(changed).toHaveBeenCalledWith({ ...row, lowBelow: undefined }, undefined);
+    expect(changed).not.toHaveBeenCalled();
   });
 
   it('opens incomplete drafts without assuming item arrays or history sources', () => {

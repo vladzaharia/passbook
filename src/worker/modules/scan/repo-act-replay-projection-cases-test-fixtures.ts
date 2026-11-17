@@ -15,7 +15,7 @@ export function registerReplayProjection() {
   it('hides fields, flags and action labels after the scanner role is lowered', async () => {
     const secret = 'DESK-ONLY-TIER-449';
     const template = await kit.scanTemplate('Role replay', {
-      actions: [{ ...CHECK_IN, label: secret }],
+      actions: [{ ...CHECK_IN, label: 'Desk entry', minRole: 'desk' }],
       flags: [{ input: 'tier', label: 'Desk tier flag' }],
       display: {
         v: 1,
@@ -42,6 +42,7 @@ export function registerReplayProjection() {
     const idempotencyKey = key();
     const original = await out(await act(scanner.headers, codeOf(pass), { idempotencyKey }));
     expect(original.kind).toBe('ok');
+    expect(original.action).toMatchObject({ label: 'Desk entry' });
     await run(
       kit.env.DB,
       "UPDATE scanners SET settings = json_set(settings, '$.roleWithoutSignIn', 'door'), updated_at = updated_at + 1 WHERE id = ?",
@@ -54,6 +55,7 @@ export function registerReplayProjection() {
     expect(replay.action).toBeNull();
     await expectOriginalLedger(pass.id, original.scanId);
     expect(JSON.stringify(replay)).not.toContain(secret);
+    expect(JSON.stringify(replay)).not.toContain('Desk entry');
     expect(JSON.stringify(replay)).not.toContain('Desk tier flag');
     if (pass.scanCode === null) throw new Error('Missing pass scan code');
     expect(JSON.stringify(replay)).not.toContain(pass.scanCode);

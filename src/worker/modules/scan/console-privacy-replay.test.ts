@@ -138,7 +138,7 @@ describe('idempotent scanner replay privacy', () => {
     await expectOneClaim(scanner, request.idempotencyKey);
   });
 
-  it('redacts receipt replays whose action label or source becomes private after a role downgrade', async () => {
+  it('redacts receipt replays whose action or source becomes private after a role downgrade', async () => {
     const base = await kit.registry.resolve(templateId, 'v1');
     const manifest = structuredClone(base.manifest);
     manifest.inputs = {
@@ -153,7 +153,7 @@ describe('idempotent scanner replay privacy', () => {
     };
     if (!manifest.scan) throw new Error('The template must have scan actions.');
     manifest.scan.actions = [
-      { id: 'private_label', label: MANAGER, kind: 'check_in' },
+      { id: 'private_label', label: 'Manager entry', kind: 'check_in', minRole: 'manager' },
       { id: 'private_source', label: 'Entry count', kind: 'check_in', input: 'entryCount' },
     ];
     const restricted = kit.registry.add({
@@ -202,7 +202,7 @@ describe('idempotent scanner replay privacy', () => {
       { holderEmail: EMAIL },
     );
     const { original, request, send } = await action(scanner, pass, 'private_label');
-    expect(original.action).toMatchObject({ id: 'private_label', label: MANAGER });
+    expect(original.action).toMatchObject({ id: 'private_label', label: 'Manager entry' });
     expectNoSecrets(original, pass, true);
     const sourcePass = await kit.scanPass(
       restricted.id,
@@ -226,6 +226,7 @@ describe('idempotent scanner replay privacy', () => {
     const sourceBefore = await replayEffects(sourcePass);
     const labelReceipt = await replay(send);
     expectSafeReceipt(labelReceipt, original, pass);
+    expect(JSON.stringify(labelReceipt)).not.toContain('Manager entry');
     const sourceReceipt = await replay(source.send);
     expectSafeReceipt(sourceReceipt, source.original, sourcePass);
     expect(JSON.stringify(sourceReceipt)).not.toContain('Entry count');

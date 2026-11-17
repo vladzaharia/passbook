@@ -1,6 +1,6 @@
 import { grant } from '../../platform/authority.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
-import { all, batch, first, stmt } from '../../platform/db.ts';
+import { all, first, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
@@ -51,9 +51,9 @@ const UPDATE = ['value', 'updated_by', 'updated_at'];
  * Writes one settings scope in one batch. An org scope commits only while the actor holds `org:manage`
  * with a live session and the org's `config_revision` is the one the caller read: a stale save is a
  * 409 `SETTINGS_CHANGED`, a revoked actor or suspended org a 403 (grant `org.settings.update`). A save
- * does not move `access_revision` or `updated_at`, so it never fails a pass create, bulk action or import. Without an
- * `authority` (trusted service callers and fixtures) an org write applies to any existing org with no CAS.
- * The platform scope always needs the admin's session (`platform.settings.update`).
+ * does not move `access_revision` or `updated_at`, so it never fails a pass create, bulk action or import.
+ * The platform scope always needs the admin's session (`platform.settings.update`); an org scope without
+ * an authority is refused.
  */
 export async function writeScope(
   ctx: ServiceContext,
@@ -65,7 +65,6 @@ export async function writeScope(
   authority?: SettingsAuthority,
   admin?: SettingsAdmin,
 ): Promise<boolean> {
-  const db = ctx.env.DB;
   const now = ctx.clock.now();
   const orgId = orgIdOfScope(scope);
   if (
@@ -112,22 +111,7 @@ export async function writeScope(
     return true;
   }
 
-  const live = `EXISTS (SELECT 1 FROM orgs o WHERE o.id = ? AND o.status != 'deleted')`;
-  await batch(db, [
-    ...entries.map(([key, value]) =>
-      stmt(
-        db,
-        `INSERT INTO settings (scope, key, value, updated_by, updated_at)
-         SELECT ?, ?, ?, ?, ? WHERE ${live}
-         ON CONFLICT (scope, key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at`,
-        [scope, key, value, by, now, orgId],
-      ),
-    ),
-    ...deletes.map((key) =>
-      stmt(db, `DELETE FROM settings WHERE scope = ? AND key = ? AND ${live}`, [scope, key, orgId]),
-    ),
-  ]);
-  return true;
+  return false;
 }
 
 /** Internal state (cron runs, identity checks). Not exposed through the settings API. */

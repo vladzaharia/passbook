@@ -161,10 +161,12 @@ describe('atomic scanner response authority', () => {
         card: {
           passId: pass.id,
           lastScans: [],
-          // History that changed under the final batch is dropped whole, not shown unproven.
-          display: { variant: null, header: { title: null } },
+          // Visits that changed under the final batch are dropped, not shown unproven: the
+          // returning variant goes, and the one that needs only the proven scan count stays.
+          display: { variant: 'generic', header: { title: null } },
         },
       });
+      expect(text).not.toContain('Returning member');
     } finally {
       Object.assign(kit.env, { DB: real });
     }

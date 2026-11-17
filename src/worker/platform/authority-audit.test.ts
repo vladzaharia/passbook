@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { grant } from './authority.ts';
 import { tenantSql } from './authority-cond.ts';
 import { GrantedStatement } from './authority-granted.ts';
+import { writePart } from './authority-include.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { all } from './db.ts';
 
@@ -32,31 +33,6 @@ describe('statements cannot be forged', () => {
         params: [],
       });
     expect(forged).toThrowError(expect.objectContaining({ code: 'GRANT_FOREIGN_STATEMENT' }));
-  });
-
-  it('unguarded refuses guarded, authority and append-only tables, and a write without the grant row', async () => {
-    const { route, member } = await setupGrant('unguarded');
-    const g = grant(route, {
-      purpose: 'org_mode.scan.update',
-      principal: member(),
-      tables: ['counters'],
-    });
-    const gp = ' FROM authority_grants g WHERE g.id = ?';
-    for (const sql of [
-      `UPDATE passes SET status = 'voided' WHERE EXISTS (SELECT 1${gp})`,
-      `DELETE FROM audit_log WHERE EXISTS (SELECT 1${gp})`,
-      `INSERT INTO authority_grants (id) SELECT 1${gp}`,
-      `INSERT INTO settings (scope, key, value) SELECT 'platform', 'k', 'v'${gp}`,
-    ])
-      expect(() => g.unguarded(sql, [g.id]), sql).toThrowError(
-        expect.objectContaining({ code: 'GRANT_UNGUARDED_TABLE' }),
-      );
-    expect(() => g.unguarded('INSERT INTO counters (key) VALUES (1)', [])).toThrowError(
-      expect.objectContaining({ code: 'GRANT_FOREIGN_STATEMENT' }),
-    );
-    expect(() =>
-      g.unguarded(`INSERT INTO counters (key, window_start, count) SELECT 'k', 1, 1${gp}`, [g.id]),
-    ).not.toThrow();
   });
 });
 
@@ -88,13 +64,14 @@ describe('Grant.audit', () => {
       tenantSql('EXISTS (SELECT 1 FROM counters c WHERE c.key = ?)', [key]),
     ];
     const put = (key: string) =>
-      g.unguarded(
-        `INSERT INTO counters (key, window_start, count) SELECT ?, 1, 1 FROM authority_grants g WHERE g.id = ?`,
-        [key, g.id],
+      g.include(
+        writePart('INSERT INTO counters (key, window_start, count) SELECT ?, 1, 1 WHERE {grant}', [
+          key,
+        ]),
       );
-    // Statements run in the order they were added; audit() adds itself, unguarded() waits for add().
+    // Statements run in the order they were added; audit() and include() add themselves.
     g.audit(row(1, 'audit.order.before', s.org.id), seen('order-key'));
-    g.add(put('order-key'));
+    put('order-key');
     g.audit(row(1, 'audit.order.after', s.org.id), seen('order-key'));
     await g.commit();
     // The audit added after the insert sees the row; the one added before it does not.

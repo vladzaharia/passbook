@@ -2,6 +2,7 @@ import type { Json } from '../../../shared/contracts/common.ts';
 import { type Grant, grant, grantedBatch } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { exists, type GrantCond } from '../../platform/authority-cond.ts';
+import { writePart } from '../../platform/authority-include.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -130,12 +131,12 @@ export function addQueueWrites(g: Grant, ctx: ServiceContext, w: QueueWrite): vo
     [w.rate.recipientKey, w.rate.recipientWindow],
     [w.rate.orgKey, w.rate.orgWindow],
   ] as const)
-    g.add(
-      g.unguarded(
+    g.include(
+      writePart(
         `INSERT INTO counters (key, window_start, count)
-          SELECT ?, ?, 1 FROM authority_grants g WHERE g.id = ?
+          SELECT ?, ?, 1 WHERE {grant}
           ON CONFLICT (key, window_start) DO UPDATE SET count = count + 1`,
-        [key, window, g.id],
+        [key, window],
       ),
     );
   if (w.audit) g.add(grantedAudit(g, ctx, w.audit.entry, w.audit.when));

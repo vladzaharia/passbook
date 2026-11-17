@@ -317,6 +317,32 @@ describe('scan designer preview safety', () => {
   });
 });
 
+describe('scan designer preview values', () => {
+  it('keeps a sample value that merely looks like a phone number, and hides by name instead', () => {
+    const doc = fixture();
+    const manifest = doc.manifest as {
+      inputs: { properties: Record<string, unknown> };
+      sample: Record<string, unknown>;
+    };
+    manifest.sample.memberName = 'Order 20261105 0042';
+    manifest.inputs.properties.billingAddress = { type: 'string' };
+    manifest.sample.billingAddress = '12 Harbour Road';
+    const text = JSON.stringify(syntheticScope(doc, 'door', NOW));
+    expect(text).toContain('Order 20261105 0042');
+    // The server hides address, contact and nfc names; the preview follows the same policy.
+    expect(text).not.toContain('12 Harbour Road');
+    expect(text).not.toContain('212 555 0199');
+  });
+
+  it('still drops a sample value that is an address or a link', () => {
+    const doc = fixture();
+    (doc.manifest.sample as Record<string, unknown>).memberName = 'https://example.test/x';
+    expect(JSON.stringify(syntheticScope(doc, 'door', NOW))).not.toContain('example.test/x');
+    expect(hasUnsafeRenderedText({ title: 'Order 20261105 0042' })).toBe(false);
+    expect(hasUnsafeRenderedText({ title: 'ada@example.test' })).toBe(true);
+  });
+});
+
 describe('safePreviewText', () => {
   it('allows dates, times, ranges and short codes', () => {
     for (const text of [
@@ -327,20 +353,17 @@ describe('safePreviewText', () => {
       'Open 30.11.2026',
       'VIP2',
       'Order 12345',
+      // Digits are not judged: the scanner shows these, so the preview does too.
+      'Order 12345678',
+      '+1 (212) 555-0100',
+      '212-555-0100',
+      '2026-11-30 call 212 555 0100',
     ])
       expect(safePreviewText(text), text).toBe(true);
   });
 
-  it('still refuses phone numbers, contact details and templates', () => {
-    for (const text of [
-      '+1 (212) 555-0100',
-      '212-555-0100',
-      '01.23.45.67.89',
-      '2026-11-30 call 212 555 0100',
-      'ada@example.com',
-      'https://example.com',
-      '{{inputs.email}}',
-    ])
+  it('still refuses contact details, links, JSON and templates', () => {
+    for (const text of ['ada@example.com', '{"a":1}', 'https://example.com', '{{inputs.email}}'])
       expect(safePreviewText(text), text).toBe(false);
   });
 });

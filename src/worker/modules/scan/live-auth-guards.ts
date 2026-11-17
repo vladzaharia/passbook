@@ -53,8 +53,8 @@ export function tenantReadAuthority(a: LiveAttachmentTenant): ScanTenantAuthorit
     !/^[A-Za-z0-9_-]{43}$/.test(authority.sessionCsrfProof) ||
     typeof authority.membershipId !== 'string' ||
     !authority.membershipId ||
-    !Number.isSafeInteger(authority.orgUpdatedAt) ||
-    authority.orgUpdatedAt < 0 ||
+    !Number.isSafeInteger(authority.orgAccessRevision) ||
+    authority.orgAccessRevision < 0 ||
     (authority.amr !== 'oidc' &&
       authority.amr !== 'magic_link' &&
       authority.amr !== 'breakglass') ||

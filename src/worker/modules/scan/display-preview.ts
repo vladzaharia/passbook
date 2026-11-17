@@ -1,9 +1,13 @@
 import {
+  hasContactShape,
+  isPrivateName,
+  leaksSecret,
+} from '../../../passkit/template/scan-display/privacy.ts';
+import {
   hiddenFieldKeys,
   type InputSchema,
   inputProps,
   inputVisibleTo,
-  nameSegments,
   passFields,
   secretInputs,
 } from '../../../passkit/template/scan-display/scope.ts';
@@ -18,68 +22,13 @@ import { scopeOf } from './card-projection.ts';
 import { safeJson, sourcePolicyProven, visibleIdentity } from './card-semantics.ts';
 import type { BuildDisplayInput } from './display.ts';
 import { cardPrivacy } from './dto-projection.ts';
+import { passSecretSpellings } from './projection-privacy.ts';
 import type { Found } from './resolve.ts';
-
-const PRIVATE_SEGMENTS: Record<string, true> = {
-  email: true,
-  phone: true,
-  tel: true,
-  mobile: true,
-  password: true,
-  passcode: true,
-  secret: true,
-  token: true,
-  pin: true,
-  private: true,
-  credential: true,
-  authorization: true,
-  cookie: true,
-};
-const PRIVATE_KEYS: Record<string, true> = {
-  barcode: true,
-  apikey: true,
-  barcodes: true,
-  scancode: true,
-  serial: true,
-  serialnumber: true,
-  webserviceurl: true,
-  messageencoding: true,
-};
-
-/** Even explicitly annotated contacts and secrets must not leave this preview API. */
-function privateKey(key: string): boolean {
-  return (
-    Object.hasOwn(PRIVATE_KEYS, key.replace(/[^a-z0-9]/gi, '').toLowerCase()) ||
-    nameSegments(key).some((part) => Object.hasOwn(PRIVATE_SEGMENTS, part))
-  );
-}
 
 const object = (value: unknown): Record<string, Json> | undefined =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, Json>)
     : undefined;
-
-function remember(value: unknown, denied: Set<string>): void {
-  if (typeof value === 'string' && value !== '') {
-    denied.add(value);
-    // Pass bindings can transform the same protected value before it appears in a field.
-    if (/[&<>"']/.test(value))
-      denied.add(
-        value
-          .replaceAll('&', '&amp;')
-          .replaceAll('<', '&lt;')
-          .replaceAll('>', '&gt;')
-          .replaceAll('"', '&quot;')
-          .replaceAll("'", '&#39;'),
-      );
-    if (/[^A-Za-z0-9_.!~*'()-]/.test(value)) denied.add(encodeURIComponent(value.toWellFormed()));
-  } else if (typeof value === 'number' && Number.isFinite(value)) denied.add(String(value));
-  else if (Array.isArray(value)) for (const entry of value) remember(entry, denied);
-  else {
-    const record = object(value);
-    if (record) for (const entry of Object.values(record)) remember(entry, denied);
-  }
-}
 
 /** Collect nested, untyped and role-hidden input values before filtering the other scope roots. */
 function inputForPreview(
@@ -88,19 +37,16 @@ function inputForPreview(
   schema: InputSchema | undefined,
   role: ScanRole,
   secrets: Set<string>,
-  deniedValues: Set<string>,
   deniedKeys: Set<string>,
 ): Json | undefined {
-  if (!schema || privateKey(name) || !inputVisibleTo(name, schema, role, secrets)) {
+  if (!schema || isPrivateName(name) || !inputVisibleTo(name, schema, role, secrets)) {
     deniedKeys.add(name);
-    remember(value, deniedValues);
     return undefined;
   }
   if (Array.isArray(value)) {
     const itemSchema = object(schema.items);
     return value.map(
-      (entry) =>
-        inputForPreview(name, entry, itemSchema, role, secrets, deniedValues, deniedKeys) ?? null,
+      (entry) => inputForPreview(name, entry, itemSchema, role, secrets, deniedKeys) ?? null,
     );
   }
   const record = object(value);
@@ -108,32 +54,15 @@ function inputForPreview(
   const properties = object(schema.properties);
   const result: Record<string, Json> = {};
   for (const [key, entry] of Object.entries(record)) {
-    const child = inputForPreview(
-      key,
-      entry,
-      object(properties?.[key]),
-      role,
-      secrets,
-      deniedValues,
-      deniedKeys,
-    );
+    const child = inputForPreview(key, entry, object(properties?.[key]), role, secrets, deniedKeys);
     if (child !== undefined) result[key] = child;
   }
   return result;
 }
 
-const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*/iu;
-const PHONE = /(?:^|[^A-Za-z0-9])\+?\d[\d ().-]*\d(?=$|[^A-Za-z0-9])/g;
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}.*)?$/;
-
-function contactOrExpression(value: string): boolean {
-  if (value.includes('{{') || EMAIL.test(value) || /\b(?:https?:\/\/|mailto:|tel:)/i.test(value))
-    return true;
-  if (ISO_DATE.test(value)) return false;
-  for (const match of value.matchAll(PHONE))
-    if ((match[0].match(/\d/g) ?? []).length >= 7) return true;
-  return false;
-}
+/** An expression left in a value, an address or a link is not display text. */
+const contactOrExpression = (value: string): boolean =>
+  value.includes('{{') || hasContactShape(value);
 
 /** The projection and pass fields can themselves be derived from a protected path. */
 function privateExpression(value: unknown, deniedKeys: Set<string>): boolean {
@@ -146,15 +75,9 @@ function privateExpression(value: unknown, deniedKeys: Set<string>): boolean {
     if (!tokens || tokens[0] === 'pass') return true;
     for (const token of tokens) {
       const key = token.startsWith('[') ? token.slice(1, -1).trim() : token;
-      if (deniedKeys.has(key) || privateKey(key)) return true;
+      if (deniedKeys.has(key) || isPrivateName(key)) return true;
     }
   }
-  return false;
-}
-
-function containsDenied(value: string, deniedValues: Set<string>): boolean {
-  for (const denied of deniedValues)
-    if (value === denied || (denied.length >= 3 && value.includes(denied))) return true;
   return false;
 }
 
@@ -165,23 +88,21 @@ function containsDenied(value: string, deniedValues: Set<string>): boolean {
  */
 function clean(
   value: Json | undefined,
-  deniedValues: Set<string>,
+  secrets: readonly string[],
   deniedKeys: Set<string>,
 ): Json | undefined {
   if (typeof value === 'string') {
-    if (contactOrExpression(value) || containsDenied(value, deniedValues)) return undefined;
+    if (contactOrExpression(value) || leaksSecret(value, secrets)) return undefined;
     return value;
   }
-  if (typeof value === 'number') return deniedValues.has(String(value)) ? undefined : value;
+  if (typeof value === 'number') return leaksSecret(value, secrets) ? undefined : value;
   if (value === null || typeof value === 'boolean' || value === undefined) return value;
-  if (Array.isArray(value))
-    return value.map((entry) => clean(entry, deniedValues, deniedKeys) ?? null);
+  if (Array.isArray(value)) return value.map((entry) => clean(entry, secrets, deniedKeys) ?? null);
   const result: Record<string, Json> = {};
   for (const [key, entry] of Object.entries(value)) {
-    if (privateKey(key) || deniedKeys.has(key) || contactOrExpression(key)) continue;
-    // Lookup keys can themselves be protected input values.
-    if (containsDenied(key, deniedValues)) continue;
-    const safe = clean(entry, deniedValues, deniedKeys);
+    if (isPrivateName(key) || deniedKeys.has(key) || contactOrExpression(key)) continue;
+    if (leaksSecret(key, secrets)) continue;
+    const safe = clean(entry, secrets, deniedKeys);
     if (safe !== undefined) result[key] = safe;
   }
   return result;
@@ -211,10 +132,9 @@ export function previewScope(
     secrets: secretInputs(manifest),
   }));
   const deniedKeys = new Set<string>();
-  const deniedValues = new Set<string>();
   for (const { props, secrets } of policies) {
     for (const [name, schema] of Object.entries(props)) {
-      if (privateKey(name) || !inputVisibleTo(name, schema, role, secrets)) deniedKeys.add(name);
+      if (isPrivateName(name) || !inputVisibleTo(name, schema, role, secrets)) deniedKeys.add(name);
     }
     for (const name of Object.keys(found.pass.personalization))
       if (!Object.hasOwn(props, name)) deniedKeys.add(name);
@@ -223,7 +143,7 @@ export function previewScope(
     let safe: Json | undefined = value;
     for (const { props, secrets } of policies) {
       if (safe === undefined) break;
-      safe = inputForPreview(name, safe, props[name], role, secrets, deniedValues, deniedKeys);
+      safe = inputForPreview(name, safe, props[name], role, secrets, deniedKeys);
     }
   }
 
@@ -247,29 +167,10 @@ export function previewScope(
     }
   }
   for (const field of passFields(found.passJson)) {
-    if (hidden.has(field.key) || privateKey(field.key)) {
+    if (hidden.has(field.key) || isPrivateName(field.key)) {
       deniedKeys.add(field.key);
-      remember(field.value, deniedValues);
     }
   }
-  const { pass, passJson } = found;
-  for (const value of [
-    pass.serial,
-    pass.scanCode,
-    pass.authToken,
-    pass.downloadToken,
-    pass.webServiceUrl,
-    pass.holderEmail,
-    passJson.serialNumber,
-    passJson.authenticationToken,
-    passJson.webServiceURL,
-    passJson.barcode?.message,
-    passJson.barcode?.altText,
-    ...(passJson.barcodes ?? []).flatMap((barcode) => [barcode.message, barcode.altText]),
-    passJson.nfc?.message,
-  ])
-    remember(value, deniedValues);
-
   const privacy = cardPrivacy(found, input.actor);
   const scope = scopeOf(ctx, input, found);
   // Keep the canonical input projection. The editor uses the active template's lookups and
@@ -298,5 +199,5 @@ export function previewScope(
       delete passScope.subtitle;
     else passScope.subtitle = subtitle;
   }
-  return (clean(scope as Json, deniedValues, deniedKeys) ?? {}) as ScanDisplayScope;
+  return (clean(scope as Json, passSecretSpellings(found), deniedKeys) ?? {}) as ScanDisplayScope;
 }

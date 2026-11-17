@@ -241,7 +241,7 @@ export async function finishForward(
       kind: 'membership',
       membershipId: authority.membershipId,
       via: 'deferred',
-      orgAccessRevision: authority.orgUpdatedAt,
+      orgAccessRevision: authority.orgAccessRevision,
       userAccessRevision,
       allowRequestContext: true,
       mode: authority.mode,

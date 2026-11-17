@@ -2,6 +2,7 @@ import { BAKED_BUILD_HASH, bakedTemplates } from '../../../generated/baked-templ
 import type { AssetEntry, PassJson } from '../../../passkit/types.ts';
 import { SYNC_CONFLICT, templateSyncGrant } from '../../jobs/template-sync.ts';
 import { grantedBatch } from '../../platform/authority.ts';
+import { writePart } from '../../platform/authority-include.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { BakedTemplate } from './baked-types.ts';
@@ -14,7 +15,6 @@ import {
   ReleaseContentError,
 } from './release-content.ts';
 import { type NewVersion, versionContentMatches } from './repo.ts';
-import { grantRow, inGrant } from './repo-grants.ts';
 import {
   addVersionExtra,
   sealVersionExtras,
@@ -218,8 +218,7 @@ async function sync(
       const { contentHash, assetHashes } = prepared;
       unit.steps.push((g) => {
         const h = versionHashesSql(t.id, t.version, { contentHash, assetHashes }, now);
-        const gate = grantRow(g);
-        g.add(inGrant(g, `${h.sql} AND ${gate.sql}`, [...h.params, ...gate.params]));
+        g.include(writePart(`${h.sql} AND {grant}`, h.params));
       });
       const planned = await planBakedReleases(ctx, {
         template: t,

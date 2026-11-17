@@ -86,7 +86,7 @@ describe('real-pass scan display preview', () => {
     }
   });
 
-  it('protects an absent pinned hidden default from newer preview metadata and lookups', async () => {
+  it('keeps an absent pinned hidden default out of the preview inputs, whatever newer metadata says', async () => {
     const { f, orgId, env, clock, preview, query } = fixture;
     const protectedDefault = 'CONFIDENTIAL-ORCHID';
     const pinned = makeTemplate({ id: f.ids.id(), orgId, version: 'v1' });
@@ -148,9 +148,11 @@ describe('real-pass scan display preview', () => {
       query({ templateId: pinned.resolved.id, passId: pass.id, role: 'manager' }),
     );
     expect(response.status).toBe(200);
-    const text = await response.text();
-    expect(text).not.toContain(protectedDefault);
-    const body = ScanDisplayPreviewSchema.parse(JSON.parse(text));
+    const body = ScanDisplayPreviewSchema.parse(await response.json());
+    // The newer release's own name and lookup repeat the default; they are authored, so they stay.
+    // The hidden input and its default never reach the inputs.
+    expect(JSON.stringify(body.scope.inputs)).not.toContain(protectedDefault);
+    expect(body.scope.inputs).not.toHaveProperty('internalNote');
     expect(body.scope.inputs).toHaveProperty('memberName', 'Public visitor');
     expect(body.scope.pass).toHaveProperty('title', 'Welcome Public visitor');
   });
@@ -197,10 +199,9 @@ describe('real-pass scan display preview', () => {
     );
     const door = await preview(query());
     expect(door.status).toBe(200);
-    const doorText = await door.text();
-    expect(doorText).not.toContain('Observatory access');
-    const doorBody = ScanDisplayPreviewSchema.parse(JSON.parse(doorText));
+    const doorBody = ScanDisplayPreviewSchema.parse(await door.json());
     expect(doorBody.scope.fields).not.toHaveProperty('mapped_access');
+    expect(doorBody.scope.pass).not.toHaveProperty('title', 'Observatory access');
     const manager = await preview(query({ role: 'manager' }));
     expect(manager.status).toBe(200);
     const body = ScanDisplayPreviewSchema.parse(await manager.json());

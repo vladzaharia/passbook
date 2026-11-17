@@ -206,7 +206,7 @@ describe('manual email carries its actor to the send', () => {
     const keyAuthority: TenantPassWrite = {
       kind: 'api_key',
       orgId: kit.org.id,
-      orgUpdatedAt: m.authority.orgUpdatedAt,
+      orgAccessRevision: m.authority.orgAccessRevision,
       keyId: key.id,
       keyOrgId: kit.org.id,
       scopes: ['passes:write'],
@@ -273,7 +273,7 @@ describe('issuance queued by the pre-cutover Worker', () => {
     }
     context.execution = {
       kind: 'tenant',
-      authority: { ...m.authority, orgUpdatedAt: 1_760_000_000_000 },
+      authority: { ...m.authority, orgAccessRevision: 1_760_000_000_000 },
     };
     await run(
       kit.env.DB,

@@ -82,13 +82,7 @@ export async function commitReportedDevice(
   if (!updated || updated.revokedAt !== null || updated.tokenHash !== old.tokenHash)
     throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
   // The row as committed, secret-free: anything else (a rename elsewhere) is just the current state.
-  actor.scanner = Object.defineProperties(
-    { ...updated, csrfSecret: null },
-    {
-      credentialEpoch: { value: updated.credentialEpoch, enumerable: false },
-      configEpoch: { value: updated.configEpoch, enumerable: false },
-    },
-  );
+  actor.scanner = { ...updated, csrfSecret: null };
   // The report moved the scanner's configuration epoch: the actor is re-derived and re-captured, so
   // the answer is built from the committed state rather than refused for the actor's own write.
   for (let attempt = 0; ; attempt++) {

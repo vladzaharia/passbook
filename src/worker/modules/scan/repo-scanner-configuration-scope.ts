@@ -193,10 +193,3 @@ export function configurationScopeTemplatesPredicate(
     params: [snapshot.templateIds, snapshot.templateRows],
   };
 }
-
-export const hasScannerTemplates = async (db: Db, scannerId: string): Promise<boolean> =>
-  !!(await first<{ present: number }>(
-    db,
-    'SELECT 1 AS present FROM scanner_templates WHERE scanner_id=? LIMIT 1',
-    [scannerId],
-  ));

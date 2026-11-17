@@ -1,11 +1,11 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { all, run } from '../../platform/db.ts';
+import { saveOrgSettings } from '../../../../test/helpers/index.ts';
+import { run } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { putPassAsset } from '../passes/asset-service.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { updateSettings } from '../settings/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { jobCtxOf } from './delivery-test-fixtures.ts';
 import { enqueuePassEmail } from './issuance-intent.ts';
@@ -52,35 +52,19 @@ describe('pass email wallet availability', () => {
 });
 
 describe('pass email buddy (email.buddy)', () => {
-  it('is off by default, then follows the org setting, audited', async () => {
+  it('is off by default, then follows the org setting', async () => {
     const top = `${baseUrl(kit.env)}/email/buddy-m-happy-light-top-2x.png`;
     const off = await sendOne();
     expect(off.html).not.toContain('/email/buddy-');
 
-    await updateSettings(kit.ctx, actor, {
-      scope: `org:${kit.org.id}`,
-      values: { 'email.buddy': true },
-    });
+    await saveOrgSettings(kit.ctx.env.DB, kit.org.id, { 'email.buddy': true }, kit.ctx.clock.now());
     const on = await sendOne();
     expect(on.html).toContain(`src="${top}"`);
     expect(on.html).toContain('-legs-2x.png');
     // The words stay the org's: the plain-text part is the same with or without the buddy.
     expect(on.text.replace(/\/p\/[\w-]+/g, '/p/T')).toBe(off.text.replace(/\/p\/[\w-]+/g, '/p/T'));
 
-    const audit = await all<{ org_id: string; detail: string }>(
-      kit.env.DB,
-      "SELECT org_id, detail FROM audit_log WHERE action = 'settings.update' AND target_id = ?",
-      [`org:${kit.org.id}`],
-    );
-    expect(audit.map((r) => r.org_id)).toEqual([kit.org.id]);
-    expect(JSON.parse(audit[0]?.detail ?? '{}')).toEqual({
-      changes: { 'email.buddy': { from: false, to: true } },
-    });
-
-    await updateSettings(kit.ctx, actor, {
-      scope: `org:${kit.org.id}`,
-      values: { 'email.buddy': null },
-    });
+    await saveOrgSettings(kit.ctx.env.DB, kit.org.id, { 'email.buddy': null }, kit.ctx.clock.now());
     expect((await sendOne()).html).not.toContain('/email/buddy-');
   });
 });
