@@ -1,4 +1,5 @@
 export * from './count-d1.ts';
+export * from './denial.ts';
 export * from './env.ts';
 export * from './exact-rows.ts';
 export * from './factories.ts';

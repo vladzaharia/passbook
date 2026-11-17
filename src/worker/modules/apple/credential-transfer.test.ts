@@ -81,7 +81,7 @@ describe('Apple credential transfer fences', () => {
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM devices WHERE device_id = ?', ['apple-transfer-new']),
     ).toBeNull();
-  }, 120_000);
+  });
 
   const races = [
     {
@@ -164,7 +164,7 @@ describe('Apple credential transfer fences', () => {
         [pass.id],
       ),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('rechecks a captured update list after a transfer starts during event recording', async () => {
     const { kit, pass } = await setupSamsungCallbacks({ db: await testDatabase() });
@@ -195,7 +195,7 @@ describe('Apple credential transfer fences', () => {
         [pass.id],
       ),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('rechecks the captured serial after the pass file is read from R2', async () => {
     const { kit, pass } = await setupSamsungCallbacks({ db: await testDatabase() });
@@ -217,7 +217,7 @@ describe('Apple credential transfer fences', () => {
     expect(hits).toBe(1);
     expect(response.status).toBe(401);
     expect(response.headers.get('etag')).toBeNull();
-  }, 120_000);
+  });
 
   it('does not return 304 for a transfer beginning after the initial authorization', async () => {
     const { kit, pass } = await setupSamsungCallbacks({ db: await testDatabase() });
@@ -239,7 +239,7 @@ describe('Apple credential transfer fences', () => {
     expect(gate.hits()).toBe(1);
     expect(response.status).toBe(401);
     expect(response.headers.get('etag')).toBeNull();
-  }, 120_000);
+  });
   it('rotates the installed credential and lists only registrations of the new incarnation', async () => {
     const kit = await setupKit({ db: await testDatabase() });
     const old = await kit.pass({ memberName: 'Previous Holder' });
@@ -319,7 +319,7 @@ describe('Apple credential transfer fences', () => {
     expect(await (await http.list('old-wallet')).json()).toMatchObject({
       serialNumbers: [fresh.serial],
     });
-  }, 120_000);
+  });
 
   it('does not attribute a new holder fetch to an old holder check-in', async () => {
     const kit = await setupKit({ db: await testDatabase() });
@@ -342,7 +342,7 @@ describe('Apple credential transfer fences', () => {
         0,
       ),
     ).toEqual([]);
-  }, 120_000);
+  });
 
   it('rejects an old registration paused until after a complete credential rotation', async () => {
     const kit = await setupKit({ db: await testDatabase() });
@@ -371,5 +371,5 @@ describe('Apple credential transfer fences', () => {
     const fresh = await getPass(kit.env.DB, old.id);
     if (!fresh) throw new Error('Missing transferred pass');
     expect((await http.register(fresh, 'race-completed')).status).toBe(201);
-  }, 120_000);
+  });
 });

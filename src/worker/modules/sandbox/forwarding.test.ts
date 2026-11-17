@@ -347,7 +347,7 @@ describe('durable test inbox forwarding', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('allows another send after the verified address of a sent copy was removed', async () => {
     const user = await makeUser(kit.fx, { primaryEmail: uniqueEmail() });
@@ -368,7 +368,7 @@ describe('durable test inbox forwarding', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('keeps the per-admin send limit before creating a reservation', async () => {
     const firstCapture = await capturePass();
@@ -392,7 +392,7 @@ describe('durable test inbox forwarding', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it.each(['pass', 'bundle'] as const)(
     'fences a stale %s snapshot at reservation',
@@ -550,7 +550,7 @@ describe('durable test inbox forwarding', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it.each(['pass', 'bundle'] as const)(
     'blocks transfer, quarantine and key rotation while a %s forward is in flight',
@@ -697,7 +697,7 @@ describe('durable test inbox forwarding', () => {
     // The org was suspended and reactivated mid-flight: its owner can no longer settle the
     // reservation (the org epoch moved), so it stays `sending` until its lease expires.
     expect((await detail(fixture.id)).forwarding).toBe('sending');
-  }, 60_000);
+  });
 
   it('keeps a preselected expired pass and its R2 objects while forwarding is in flight', async () => {
     const fixture = await capturePass();
@@ -767,7 +767,7 @@ describe('durable test inbox forwarding', () => {
     await deleteObjects(kit.env.BUCKET, deleted.objectKeys);
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [pass.id])).toBeNull();
     expect(await kit.env.BUCKET.head(pass.objectKey)).toBeNull();
-  }, 60_000);
+  });
 
   it('makes only one provider call for concurrent duplicate requests and persists the in-flight state', async () => {
     const fixture = await captureBundle();
@@ -826,7 +826,7 @@ describe('durable test inbox forwarding', () => {
       ...fixture.passes.map((pass) => pass.downloadToken),
     ])
       expect(serialized).not.toContain(secret);
-  }, 60_000);
+  });
 
   it('persists an accepted-then-disconnected outcome as unknown and never resends it', async () => {
     const fixture = await capturePass();
@@ -953,5 +953,5 @@ describe('durable test inbox forwarding', () => {
       spy.mockRestore();
       await kit.env.BUCKET.put(pass.objectKey, bytes);
     }
-  }, 60_000);
+  });
 });

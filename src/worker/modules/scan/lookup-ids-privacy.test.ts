@@ -166,7 +166,7 @@ describe('lookup privacy', () => {
     const serialized = JSON.stringify(result);
     for (const id of [hidden.id, ...hiddenIds]) expect(serialized).not.toContain(id);
     expect(serialized).not.toContain('Paged Alpha');
-  }, 60_000);
+  });
 
   it('excludes quarantined, deleted, removed, voided and invalid Wallet passes before the page cap', async () => {
     const common = 'shared-external-id-495';
@@ -221,7 +221,7 @@ describe('lookup privacy', () => {
     expect((await search(valid.id, scanner.headers)).items.map((row) => row.passId)).toEqual([
       valid.id,
     ]);
-  }, 60_000);
+  });
 
   it('includes a valid expiry at the current instant but excludes an expired Wallet pass', async () => {
     const scanner = await kit.scanner({ templateIds: [templateId] });

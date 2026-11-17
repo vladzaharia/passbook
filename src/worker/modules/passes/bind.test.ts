@@ -21,7 +21,7 @@ beforeAll(async () => {
   release = active;
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
-}, 60_000);
+});
 
 type Headers = Record<string, string>;
 const api = (path: string, init: RequestInit & { headers?: Headers } = {}) =>

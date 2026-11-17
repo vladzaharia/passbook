@@ -257,7 +257,7 @@ describe('native offers on public and holder surfaces', () => {
     } finally {
       await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
     }
-  }, 120_000);
+  });
 
   it('does not return a public page after its bearer changes during offer lookup', async () => {
     const pass = await ownPass();
@@ -276,5 +276,5 @@ describe('native offers on public and holder surfaces', () => {
     expect(html).not.toContain('/wallet/google');
     expect(html).not.toContain('/wallet/samsung');
     expect(html).not.toContain('private-google-token');
-  }, 120_000);
+  });
 });

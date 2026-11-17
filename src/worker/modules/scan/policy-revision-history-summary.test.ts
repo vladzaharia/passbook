@@ -207,5 +207,5 @@ describe('scanner history event and source proofs', () => {
       ok: 101,
       byAction: [{ actionId: 'check_in', label: 'Check in', count: 101, amount: 0 }],
     });
-  }, 120_000);
+  });
 });

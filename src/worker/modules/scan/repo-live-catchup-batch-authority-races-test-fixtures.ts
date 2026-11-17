@@ -57,7 +57,7 @@ export function registerCatchupAuthorityRaceTests() {
     expect(JSON.stringify(rows)).not.toContain(fixture.inputs[0].code);
     expect(JSON.stringify(rows)).not.toContain(fixture.passes[0].id);
     expect(trace.trips.length).toBeLessThanOrEqual(5);
-  }, 120_000);
+  });
 
   it.each(['recipient-revoked', 'recipient-csrf', 'watch', 'tenant'] as const)(
     'rechecks the shared %s after acquisition and discloses no row or token',

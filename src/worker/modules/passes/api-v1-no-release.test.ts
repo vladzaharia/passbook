@@ -11,7 +11,7 @@ beforeAll(async () => {
   kit = await setupKit({ approvedReleases: false });
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
-}, 60_000);
+});
 
 it('answers 409 TEMPLATE_RELEASE_REQUIRED with guidance and creates nothing', async () => {
   const key = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:write'] });

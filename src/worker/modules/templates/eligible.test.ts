@@ -349,7 +349,7 @@ describe('eligible template releases', () => {
     expectAbsent(bTest, owned.id, foreign.id, sandbox.id, shared.id);
     expectAbsent(await eligible(scope(third.id), thirdReader), shared.id, owned.id, foreign.id);
     expectAbsent(await eligible(scope(third.id, 'test'), thirdReader), shared.id, sandbox.id);
-  }, 60_000);
+  });
 
   it('uses the effective release manifest and replaces superseded release generations', async () => {
     const checkedIn = await imported('Eligible Scan Policy', org, own.author, {
@@ -418,7 +418,7 @@ describe('eligible template releases', () => {
     const afterRollback = await eligible(scope(org.id), own.author);
     expectUploaded(afterRollback, checkedIn, rollback, org.id, true);
     expect(afterRollback.items.map((item) => item.releaseId)).not.toContain(thirdLive.id);
-  }, 60_000);
+  });
 
   it('excludes archived templates even when they have an approved release', async () => {
     const template = await imported('Eligible Archived');
@@ -486,7 +486,7 @@ describe('eligible template releases', () => {
       [clock.now(), org.id, operator.userId],
     );
     expect((await eligibleRequest(scope(org.id), operator.headers)).status).toBe(403);
-  }, 60_000);
+  });
 
   it('rejects unsupported providers, missing scope, mismatched modes and invalid limits', async () => {
     for (const provider of ['google', 'samsung']) {
@@ -559,7 +559,7 @@ describe('eligible template releases', () => {
     expect(cursor).toBeNull();
     expect(new Set(seen).size).toBe(seen.length);
     expect(seen).toEqual(whole.items.map((item) => item.templateId));
-  }, 60_000);
+  });
 
   it('falls back only to verified global or matching-org baked system releases', async () => {
     const global = await bakedFrom('eligible-global', basicPackage(), {
@@ -664,5 +664,5 @@ describe('eligible template releases', () => {
       }
       resetBakedSync();
     }
-  }, 60_000);
+  });
 });

@@ -57,7 +57,7 @@ describe('owner removes a pass whose credential cannot change', () => {
     // The block stops the next sign-in from linking it again.
     expect(await attachWaitingPassesForEmail(jobCtxOf(kit), user.id, email)).toBe(0);
     expect(await owner(kit, pass.id)).toBeNull();
-  }, 120_000);
+  });
 
   it.each(['changed', 'disabled', 'signed-out'] as const)(
     'does not unlink when the pass or user is %s at the write',
@@ -87,5 +87,5 @@ describe('owner removes a pass whose credential cannot change', () => {
     await expect(
       removePassFromUser(jobCtxOf(kit), pass.id, kit.fx.ids.id(), sessionId),
     ).rejects.toMatchObject({ code: 'PASS_CONFLICT' });
-  }, 120_000);
+  });
 });

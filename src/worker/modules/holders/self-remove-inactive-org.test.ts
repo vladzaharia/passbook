@@ -78,7 +78,7 @@ describe('the owner removes a pass of an inactive org', () => {
     const after = await getPass(kit.env.DB, pass.id);
     expect(after?.ownerUserId).toBeNull();
     expect(after?.authToken).not.toBe(before?.authToken);
-  }, 120_000);
+  });
 
   it('refuses the unlink when the org is reactivated before it commits', async () => {
     const { user, pass, session } = await owned();
@@ -89,7 +89,7 @@ describe('the owner removes a pass of an inactive org', () => {
     });
     expect(race.fired()).toBe(true);
     expect((await getPass(kit.env.DB, pass.id))?.ownerUserId).toBe(user.id);
-  }, 120_000);
+  });
 
   it('still refuses a re-sign in a suspended org (transfer insert guard)', async () => {
     const { user, pass, session } = await owned();
@@ -109,5 +109,5 @@ describe('the owner removes a pass of an inactive org', () => {
     const transfers = 'SELECT count(*) AS n FROM pass_credential_transfers WHERE pass_id = ?';
     expect(await count(transfers, pass.id)).toBe(0);
     expect((await getPass(kit.env.DB, pass.id))?.ownerUserId).toBe(user.id);
-  }, 120_000);
+  });
 });

@@ -75,7 +75,7 @@ beforeAll(async () => {
   }
   const env = await makeEnv({ ASSETS: assets });
   await syncBakedTemplates(createServiceContext(env, { clock: new ManualClock() }));
-}, 60_000);
+});
 
 beforeEach(async () => {
   const env = await makeEnv({ ASSETS: assets });

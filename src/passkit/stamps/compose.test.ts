@@ -69,7 +69,7 @@ describe('renderStrip', () => {
   });
 });
 
-describe('stampStrips', { timeout: 120_000 }, () => {
+describe('stampStrips', () => {
   it.each([GOAL_MIN, 10, GOAL_MAX])(
     'goal %i yields two files per count with exact sizes',
     (goal) => {
@@ -90,7 +90,7 @@ describe('stampStrips', { timeout: 120_000 }, () => {
     expect(await sha1Hex(a[0]?.bytes as Uint8Array)).toBe(await sha1Hex(b[0]?.bytes as Uint8Array));
   });
 
-  it('keeps a goal-20 version under the Worker CPU limit', { timeout: 120_000 }, () => {
+  it('keeps a goal-20 version under the Worker CPU limit', () => {
     // cpu_ms is 10000 in production; 8000 on a quiet machine leaves room. Coverage
     // instrumentation (v8) slows every script several times over, so the budget scales with a
     // fixed reference kernel timed in this process: 250 ms on the machine the 8000 was set on,

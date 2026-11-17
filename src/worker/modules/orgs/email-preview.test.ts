@@ -78,7 +78,7 @@ beforeAll(async () => {
   f = fixtures(appEnv, clock);
   const user = await makeUser(f);
   orgAdmin = await makeSession(f, { userId: user.id });
-}, 60_000);
+});
 
 async function join(
   orgId: string,

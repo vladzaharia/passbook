@@ -477,7 +477,7 @@ describe('public credential transfer fence', () => {
     const freshOwner = await get(`/api/v1/me/passes/${pass.id}`, nextOwnerHeaders);
     expect(freshOwner.status).toBe(200);
     expect(await freshOwner.text()).toContain(fresh.downloadToken);
-  }, 120_000);
+  });
 
   it('does not resolve a bearer whose transfer commits after the token lookup', async () => {
     const pass = await kit.pass();
@@ -500,7 +500,7 @@ describe('public credential transfer fence', () => {
     const fresh = await getPass(kit.env.DB, pass.id);
     if (!fresh) throw new Error('Missing completed pass');
     expect((await passForToken(kit.ctx, fresh.downloadToken)).id).toBe(pass.id);
-  }, 120_000);
+  });
 
   it.each(['page', 'barcode'] as const)(
     'rejects a stale %s when the transfer completes during the stored JSON read',
@@ -629,7 +629,7 @@ describe('public asset fencing', () => {
     expect(icon.headers.get('cache-control')).toBe('private, no-store');
     expect(icon.headers.get('cross-origin-resource-policy')).toBe('cross-origin');
     expect(new Uint8Array(await icon.arrayBuffer())).toEqual(TINY_PNG);
-  }, 120_000);
+  });
 
   it.each([
     {
@@ -872,7 +872,7 @@ describe('public asset fencing', () => {
     expect(current.status).toBe(200);
     expect(current.headers.get('cache-control')).toBe('private, no-store');
     expect(new Uint8Array(await current.arrayBuffer())).toEqual(newPhoto);
-  }, 120_000);
+  });
 
   it('cancels a downloaded pass if its link changes during the R2 read', async () => {
     const pass = await kit.pass();
@@ -934,7 +934,7 @@ describe('public page fencing', () => {
     const current = await get(`/p/${newToken}`);
     expect(current.status).toBe(200);
     expect(await current.text()).toContain(newName);
-  }, 120_000);
+  });
 
   it('fences the page when its bearer changes while wallet offers are being read', async () => {
     // Offers are only read once providers are released.
@@ -980,7 +980,7 @@ describe('public page fencing', () => {
     expect(currentHtml).toContain(`href="/p/${newToken}/pass.pkpass"`);
     expect(currentHtml).not.toContain(`href="/p/${newToken}/wallet/google"`);
     expect(currentHtml).not.toContain(`href="/p/${newToken}/wallet/samsung"`);
-  }, 90_000);
+  });
 
   it('uses the latest JSON at or before a metadata-only version, never a future version', async () => {
     const currentName = 'Pinned Holder Charlie';

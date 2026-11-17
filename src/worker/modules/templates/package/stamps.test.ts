@@ -66,7 +66,7 @@ const errors = (r: Awaited<ReturnType<typeof run>>) =>
   r.report.issues.filter((i) => i.severity === 'error').map((i) => i.code);
 
 // Drawing runs in workerd on a shared machine: most cases draw one count, the full set once.
-describe('stamps in a package', { timeout: 180_000 }, () => {
+describe('stamps in a package', () => {
   it('draws a strip pair per count and keeps the art as source', async () => {
     const result = (await run(pkg(5), all(5))) as Analysis;
     expect(errors(result)).toEqual([]);
@@ -206,5 +206,5 @@ describe('stamps in a package', { timeout: 180_000 }, () => {
     // CPU time is asserted in src/passkit/stamps/compose.test.ts; workerd has no CPU meter.
     const result = (await run(pkg(20), all(20))) as Analysis;
     expect(result.assets.filter((a) => a.stamps !== undefined)).toHaveLength(42);
-  }, 180_000);
+  });
 });

@@ -120,5 +120,5 @@ describe('scan event tenant routes', () => {
     } finally {
       Object.assign(env, { DB: real });
     }
-  }, 120_000);
+  });
 });

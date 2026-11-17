@@ -112,7 +112,7 @@ describe('Samsung callback authority fences', () => {
       t.kit.env.KEK_V1 = oldKey;
       await replaceCallbackKeysetForTest(db, t.credentialKeysetCommitment);
     }
-  }, 120_000);
+  });
 
   it('pins KEKs across decryptions and rechecks the singleton before disclosing a reference', async () => {
     const t = await setupSamsungCallbacks();
@@ -161,7 +161,7 @@ describe('Samsung callback authority fences', () => {
       refId: t.refId,
       countryCodes: [],
     });
-  }, 120_000);
+  });
 
   it('does not adopt an unproven legacy reference under the current keyset', async () => {
     const t = await setupSamsungCallbacks();
@@ -210,7 +210,7 @@ describe('Samsung callback authority fences', () => {
       refId: t.refId,
       countryCodes: [],
     });
-  }, 120_000);
+  });
 
   it('rejects stale pass revisions, cross-tenant/mode references and rotated accounts', async () => {
     const t = await setupSamsungCallbacks();
@@ -278,7 +278,7 @@ describe('Samsung callback authority fences', () => {
       credentials: rotated.samsung,
     });
     expect((await rotated.call({ token: await rotated.token() })).status).toBe(401);
-  }, 90_000);
+  });
 
   it('retains refresh across link rotation but fences an old ref during a pending transfer', async () => {
     const t = await setupSamsungCallbacks({ holderEmail: 'first@example.test' });
@@ -358,7 +358,7 @@ describe('Samsung callback authority fences', () => {
       ),
     ).toBe(false);
     expect((await t.call({ token: await t.token() })).status).toBe(401);
-  }, 60_000);
+  });
 
   it('atomically refuses a refresh if materialized pass data changes after capture', async () => {
     const t = await setupSamsungCallbacks();
@@ -401,7 +401,7 @@ describe('Samsung callback authority fences', () => {
         'A'.repeat(43),
       ]),
     ).toBeNull();
-  }, 60_000);
+  });
 
   it('does not repeat replay claims or receipts for the same token, even with the same claim id', async () => {
     const t = await setupSamsungCallbacks();
@@ -470,7 +470,7 @@ describe('Samsung callback authority fences', () => {
     expect(receipts).toHaveLength(1);
     expect(hints.map((hint) => hint.country_code)).toEqual(['GB']);
     expect(instance?.installation_state).toBe('unknown');
-  }, 60_000);
+  });
 
   it('rejects replay admission and final disclosure at the exact provider-evidence expiry', async () => {
     const t = await setupSamsungCallbacks();
@@ -510,5 +510,5 @@ describe('Samsung callback authority fences', () => {
         'D'.repeat(43),
       ]),
     ).toBeNull();
-  }, 60_000);
+  });
 });

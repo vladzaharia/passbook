@@ -37,7 +37,7 @@ beforeAll(async () => {
     },
     clock: kit.clock,
   });
-}, 60_000);
+});
 
 async function operator(orgId = kit.org.id, roles = ['pass_operator']) {
   const user = await makeUser(kit.fx);

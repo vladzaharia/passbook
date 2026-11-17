@@ -63,7 +63,7 @@ export const setupPairingAuthorityFixture = () =>
     });
     expect(releaseResponse.status).toBe(201);
     releaseId = ((await releaseResponse.json()) as { id: string }).id;
-  }, 60_000);
+  });
 
 export async function member(roles: OrgRole[] = ['org_admin'], platformAdmin = false) {
   const user = await makeUser(kit.fx);

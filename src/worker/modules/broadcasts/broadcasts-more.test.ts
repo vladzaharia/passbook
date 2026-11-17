@@ -133,7 +133,7 @@ describe('chunk budget', () => {
     // About 30 queries a pass at most: the whole chunk stays inside the queue budget of 800.
     expect(queries).toBeLessThan(CHUNK * 30);
     expect(CHUNK * 30).toBeLessThanOrEqual(800);
-  }, 60_000);
+  });
 });
 
 describe('mode', () => {

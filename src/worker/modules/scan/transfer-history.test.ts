@@ -525,5 +525,5 @@ describe('provider-backed transfer and scanner history', () => {
       ]),
     ).toBeNull();
     expect(await effects(db, pass.id)).toEqual(completedEffects);
-  }, 180_000);
+  });
 });

@@ -29,7 +29,7 @@ beforeAll(async () => {
   kit = { ...local, ctx, credentialKeysetCommitment };
   resetDeps();
   setDeps({ sleep: async () => {}, resolver: publicResolver });
-}, 60_000);
+});
 
 async function sync(connectionId: string, generation: number) {
   const id = `holder-${++n}`;
@@ -205,5 +205,5 @@ describe('connection sync changing the holder of an existing pass', () => {
         passes[0]?.id,
       ]),
     ).toBeNull();
-  }, 120_000);
+  });
 });

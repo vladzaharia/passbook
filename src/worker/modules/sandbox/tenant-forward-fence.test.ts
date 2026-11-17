@@ -190,7 +190,7 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it.each(['membership', 'session'] as const)(
     'marks the reservation failed, without sending, if %s is revoked before the provider boundary',
@@ -390,5 +390,5 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
     expect(
       await first(kit.env.DB, 'SELECT state FROM sandbox_forwards WHERE id = ?', [id]),
     ).toEqual({ state: 'failed' });
-  }, 60_000);
+  });
 });

@@ -108,7 +108,7 @@ describe('Apple personalization transfer fence', () => {
       await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [pass.id]),
     ).toBeNull();
     expect((await post(kit, pass)).status).toBe(404);
-  }, 120_000);
+  });
 
   it('cannot insert old holder data if transfer starts before the real D1 insert', async () => {
     const { kit, pass } = await personalizableFixture();
@@ -137,7 +137,7 @@ describe('Apple personalization transfer fence', () => {
       ),
     ).toBeNull();
     expect((await getPass(kit.env.DB, pass.id))?.version).toBe(pass.version);
-  }, 120_000);
+  });
 
   it('does not mark personalization published after transfer has started', async () => {
     const { kit, pass } = await personalizableFixture();
@@ -158,7 +158,7 @@ describe('Apple personalization transfer fence', () => {
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [pass.id]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('does not sign a retry after its already-personalized serial is retired', async () => {
     const { kit, pass } = await personalizableFixture();
@@ -183,7 +183,7 @@ describe('Apple personalization transfer fence', () => {
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [pass.id]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('allows the new serial to personalize independently after completion', async () => {
     const { kit, pass: old } = await personalizableFixture();
@@ -214,5 +214,5 @@ describe('Apple personalization transfer fence', () => {
         old.id,
       ]),
     ).toEqual({ token_sha256: await sha256Hex(token) });
-  }, 120_000);
+  });
 });

@@ -261,7 +261,7 @@ describe('approved release reissue', () => {
       release_id: testRelease.id,
     });
     expect(await snapshot(otherPass.id)).toEqual(otherBefore);
-  }, 60_000);
+  });
 
   it('rejects draft and submitted-but-unapproved versions even when the draft pointer names them', async () => {
     const id = templateId();
@@ -289,7 +289,7 @@ describe('approved release reissue', () => {
       template_version: 'v1',
       release_id: old.id,
     });
-  }, 60_000);
+  });
 
   it('fences an old queued generation even when approval changes after artifact upload', async () => {
     const id = templateId();
@@ -358,7 +358,7 @@ describe('approved release reissue', () => {
       (await requireApprovedRelease(kit.ctx, id, kit.org.id, 'live', 'apple')).generation,
     ).toBeGreaterThan(target.generation);
     expect(await snapshot(pass.id)).toEqual(settled);
-  }, 60_000);
+  });
 
   it('allows a same-version refresh and resign after approval advances without replacing provenance', async () => {
     const id = templateId();
@@ -406,7 +406,7 @@ describe('approved release reissue', () => {
     const resigned = await snapshot(pass.id);
     expect(resigned.pass).toMatchObject({ template_version: 'v1', release_id: initial.id });
     expect(resigned.objects).toHaveLength(refreshed.objects.length + 1);
-  }, 60_000);
+  });
 
   it('keeps legacy provenance empty for matching or absent heads, and maintains at its own version when the head moves', async () => {
     const id = templateId();
@@ -479,7 +479,7 @@ describe('approved release reissue', () => {
     await expect(
       updatePass(jobCtxOf(kit), admin, pass.id, { templateVersion: 'v3' }, { scope: null }),
     ).rejects.toMatchObject({ code: expect.stringMatching(/^TEMPLATE_/) });
-  }, 60_000);
+  });
 
   it.each([
     ['no-op', 'absent'],
@@ -662,7 +662,7 @@ describe('approved release reissue', () => {
       outbox: before.outbox,
       events: before.events,
     });
-  }, 60_000);
+  });
 
   it('fans a baked global fallback out into isolated organization-scoped reissues', async () => {
     const slug = `approved-fallback-${sequence++}`;
@@ -741,7 +741,7 @@ describe('approved release reissue', () => {
       template_version: v2.template.version,
       release_id: fallback.id,
     });
-  }, 60_000);
+  });
 });
 
 describe('issued release provenance', () => {
@@ -798,5 +798,5 @@ describe('issued release provenance', () => {
     expect(await check({ hash: '0'.repeat(64) })).toBeNull();
     expect(await check({ orgId: 'foreign-org' })).toBeNull();
     expect(await check({ mode: 'test' })).toBeNull();
-  }, 60_000);
+  });
 });

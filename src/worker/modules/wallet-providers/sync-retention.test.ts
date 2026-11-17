@@ -440,5 +440,5 @@ describe('wallet sync of unissued transfer targets', () => {
         [pass.id],
       ),
     ).toEqual(retired);
-  }, 120_000);
+  });
 });

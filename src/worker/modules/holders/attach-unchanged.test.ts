@@ -67,7 +67,7 @@ describe('verified attach of a pass whose credential cannot change', () => {
         pass.id,
       ]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('clears a recorded reissue requirement when it links', async () => {
     const { kit, pass, user } = await fixedBarcodePass();
@@ -100,7 +100,7 @@ describe('verified attach of a pass whose credential cannot change', () => {
       ownerUserId: user.id,
     });
     await noMarker(kit, pass.id);
-  }, 120_000);
+  });
 
   it('links at magic-link sign-in', async () => {
     const { kit, pass, user, email } = await fixedBarcodePass();
@@ -113,7 +113,7 @@ describe('verified attach of a pass whose credential cannot change', () => {
       state: 'owned',
       reissueRequired: false,
     });
-  }, 120_000);
+  });
 
   it('still requires a reissue when a target reference was retired', async () => {
     const { kit, pass, user, email } = await fixedBarcodePass({ retired: true });
@@ -125,7 +125,7 @@ describe('verified attach of a pass whose credential cannot change', () => {
     expect(await getHolder(jobCtxOf(kit), pass.id, null)).toMatchObject({ reissueRequired: true });
     expect(await attachAudits(kit, pass.id, 'holder.attach_reissue_required')).toBe(1);
     expect(await attachAudits(kit, pass.id, 'holder.attach')).toBe(0);
-  }, 120_000);
+  });
 
   it.each(['disabled', 'unverified', 'blocked', 'changed'] as const)(
     'does not link when the user or pass is %s at the write',
@@ -176,7 +176,7 @@ describe('verified attach of a pass whose credential cannot change', () => {
     expect(race.fired()).toBe(true);
     expect((await getPass(kit.env.DB, pass.id))?.ownerUserId).toBeNull();
     expect(await attachAudits(kit, pass.id, 'holder.attach')).toBe(0);
-  }, 120_000);
+  });
 
   it('does not link after its source connection is disabled', async () => {
     const { kit, pass } = await fixedBarcodePass();
@@ -207,7 +207,7 @@ describe('verified attach of a pass whose credential cannot change', () => {
     ).toBeNull();
     expect(race.fired()).toBe(true);
     expect((await getPass(kit.env.DB, pass.id))?.ownerUserId).toBeNull();
-  }, 120_000);
+  });
 
   it('links a connection-backed pass', async () => {
     const { kit, pass } = await fixedBarcodePass();
@@ -234,5 +234,5 @@ describe('verified attach of a pass whose credential cannot change', () => {
       ),
     ).toMatchObject({ state: 'completed' });
     expect((await getPass(kit.env.DB, pass.id))?.ownerUserId).not.toBeNull();
-  }, 120_000);
+  });
 });

@@ -18,7 +18,7 @@ let kit: MemberPhotoFixture['kit'];
 beforeAll(async () => {
   fx = await setupPhotoTestKit();
   kit = fx.kit;
-}, 60_000);
+});
 
 async function operator(orgId = kit.org.id) {
   const user = await makeUser(kit.fx);

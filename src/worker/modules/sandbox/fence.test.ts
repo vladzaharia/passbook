@@ -286,7 +286,7 @@ describe('atomic test email capture', () => {
       });
       await assertNoCapture(result.outboxId, result.pass.id);
     }
-  }, 60_000);
+  });
 
   it('does not capture after a pending or completed transfer, token rotation or lifecycle change', async () => {
     for (const field of ['pending', 'completed', 'token', 'lifecycle'] as const) {
@@ -347,7 +347,7 @@ describe('atomic test email capture', () => {
         }
       }
     }
-  }, 120_000);
+  });
 
   it('checks the outbox payload again in the insert, not just the claimed copy', async () => {
     const result = await capturePassWithRace(async (_pass, id) => {
@@ -421,7 +421,7 @@ describe('atomic test email capture', () => {
       });
       await assertNoCapture(result.outboxId, result.passes[0]!.id);
     }
-  }, 120_000);
+  });
 
   it('captures unchanged test pass and bundle intents without invoking the provider', async () => {
     const pass = await queuedPass();
@@ -448,7 +448,7 @@ describe('atomic test email capture', () => {
     }
     expect((await api('/test-inbox')).headers.get('cache-control')).toBe('no-store');
     expect(kit.mailer.sent).toHaveLength(before);
-  }, 60_000);
+  });
 });
 
 describe('existing capture exposure', () => {
@@ -489,7 +489,7 @@ describe('existing capture exposure', () => {
         await first(kit.env.DB, 'SELECT id FROM captured_emails WHERE id = ?', [id]),
       ).not.toBeNull();
     }
-  }, 120_000);
+  });
 
   it('keeps bundle captures readable after a member or the token changes, but refuses to forward them', async () => {
     for (const change of ['removed', 'quarantined', 'token', 'pending', 'transfer'] as const) {
@@ -530,7 +530,7 @@ describe('existing capture exposure', () => {
       const list = CapturedEmailListSchema.parse(await (await api('/test-inbox?limit=200')).json());
       expect(list.items.some((item) => item.id === id)).toBe(true);
     }
-  }, 120_000);
+  });
 
   it('uses the final read predicate when quarantine wins after intent validation', async () => {
     const queued = await queuedPass();
@@ -588,7 +588,7 @@ describe('existing capture exposure', () => {
       await (await api(`/test-inbox?limit=1&cursor=${encodeURIComponent(visibleId)}`)).json(),
     );
     expect(second.items.map((item) => item.id)).toEqual([olderId]);
-  }, 60_000);
+  });
 
   it('shows an unbound legacy capture but never forwards it, and keeps a bound capture after outbox retention', async () => {
     const legacy = await queuedPass();
@@ -600,7 +600,7 @@ describe('existing capture exposure', () => {
     const currentId = await deliver(current.outboxId);
     await run(kit.env.DB, 'DELETE FROM outbox WHERE id = ?', [current.outboxId]);
     expect((await api(`/test-inbox/${currentId}`)).status).toBe(200);
-  }, 60_000);
+  });
 
   it('hides captures when their organization becomes inactive', async () => {
     const org = await makeOrg(kit.fx, { name: 'Suspended sandbox org' });

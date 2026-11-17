@@ -35,7 +35,7 @@ beforeEach(async () => {
     stores: { ...denyAllStores, sessions: createSessionStore(kit.env, kit.clock) },
     clock: kit.clock,
   });
-}, 60_000);
+});
 
 async function pushConnection() {
   const dto = await createDemo(kit, {
@@ -163,7 +163,7 @@ describe('resolving an uncertain webhook', () => {
     const again = await call('POST', `${failures(id)}/${retentionId}/resolve`);
     expect(again.status).toBe(409);
     expect(again.json).toMatchObject({ code: 'WEBHOOK_ALREADY_FINISHED' });
-  }, 60_000);
+  });
 
   it('keeps a chunk with other unfinished items open and replayable', async () => {
     const { id, retentionId } = await uncertainChunk(1);
@@ -173,7 +173,7 @@ describe('resolving an uncertain webhook', () => {
       { ordinal: 0, state: 'success', error_code: 'WEBHOOK_OPERATOR_RESOLVED' },
       { ordinal: 1, state: 'pending', error_code: null },
     ]);
-  }, 60_000);
+  });
 
   it('refuses without the manage capability, outside the organization, in Test mode, or while running', async () => {
     const { id, pass, retentionId } = await uncertainChunk();
@@ -211,7 +211,7 @@ describe('resolving an uncertain webhook', () => {
       ),
     ).toEqual([]);
     await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow();
-  }, 60_000);
+  });
 });
 
 describe('webhook dispatch recovery', () => {
@@ -239,7 +239,7 @@ describe('webhook dispatch recovery', () => {
     ).toEqual({ state: 'pending', error_code: null, dispatch_complete: 1 });
     await reconcileConnections(kit.sctx);
     expect(kit.seams.jobs).toHaveLength(1);
-  }, 60_000);
+  });
 
   it('keeps two identical chunks of one event apart by their ordinal', async () => {
     const { id } = await pushConnection();
@@ -263,7 +263,7 @@ describe('webhook dispatch recovery', () => {
     expect(rows).toHaveLength(2);
     expect(new Set(rows.map((row) => row.ref_hash)).size).toBe(2);
     expect(await chunkHash(0, refs.slice(0, 20))).not.toBe(await chunkHash(1, refs.slice(0, 20)));
-  }, 60_000);
+  });
 });
 
 describe('retained payload lifetime', () => {
@@ -302,7 +302,7 @@ describe('retained payload lifetime', () => {
       await all(kit.env.DB, 'SELECT 1 FROM webhook_events WHERE connection_id = ?', [id]),
     ).toEqual([]);
     expect((await itemStates(uncertain.retentionId))[0]).toMatchObject({ state: 'uncertain' });
-  }, 60_000);
+  });
 
   it("purges a deleted connection's envelopes and releases the claims that still fenced a pass", async () => {
     const { id, secret } = await pushConnection();
@@ -347,7 +347,7 @@ describe('retained payload lifetime', () => {
       ),
     ).toBeNull();
     expect(await getConnection(kit.env.DB, id)).toBeNull();
-  }, 60_000);
+  });
 });
 
 describe('stuck scheduled runs', () => {
@@ -382,7 +382,7 @@ describe('stuck scheduled runs', () => {
     await reconcileConnections(sctx);
     expect(created).toHaveLength(1);
     expect(created[0]?.id).not.toBe(instanceId);
-  }, 60_000);
+  });
 });
 
 describe('dead-letter queue', () => {
@@ -426,5 +426,5 @@ describe('dead-letter queue', () => {
     } finally {
       error.mockRestore();
     }
-  }, 60_000);
+  });
 });

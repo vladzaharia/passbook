@@ -29,7 +29,7 @@ beforeAll(async () => {
     },
     clock: kit.clock,
   });
-}, 60_000);
+});
 
 async function operator(orgId = kit.org.id) {
   const user = await makeUser(kit.fx);

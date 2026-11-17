@@ -22,7 +22,7 @@ beforeAll(async () => {
   app = createApp({ stores: auth.stores, clock: kit.clock });
   await stampVersion(kit, ID, 'v1', 10);
   release = await releaseStamps(kit, ID, 'v1');
-}, 60_000);
+});
 
 const stamp = (passId: string, body: unknown, headers = auth.admin()) =>
   app.request(

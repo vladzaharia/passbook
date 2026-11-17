@@ -36,7 +36,7 @@ beforeAll(async () => {
     orgId: kit.org.id,
     scopes: ['passes:read', 'passes:write', 'holders:write'],
   });
-}, 60_000);
+});
 
 describe('/api/v1 baseline request shapes (8f5bee02)', () => {
   it('creates with orgId, templateId and input only, fencing the effective release', async () => {

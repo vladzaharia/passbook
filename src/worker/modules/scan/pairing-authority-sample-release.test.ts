@@ -70,7 +70,7 @@ describe('pairing tenant authority', () => {
     expect([409, 412]).toContain(response.status);
     expect(await scannerState(scanner.id)).toEqual(beforeScanner);
     expect(await passState()).toEqual(beforePass);
-  }, 60_000);
+  });
 
   it('uses the approved release version and sample instead of the legacy version pointer', async () => {
     const actor = await member();
@@ -117,7 +117,7 @@ describe('pairing tenant authority', () => {
         templateId,
       ]);
     }
-  }, 60_000);
+  });
 
   it('issues a sample from an organization-approved global Test release', async () => {
     const actor = await member();
@@ -170,7 +170,7 @@ describe('pairing tenant authority', () => {
     );
     expect([409, 422]).toContain(denied.status);
     expect(await passState()).toEqual(beforePass);
-  }, 60_000);
+  });
 
   it('issues a test sample with an authorized tenant session', async () => {
     const actor = await member();
@@ -192,5 +192,5 @@ describe('pairing tenant authority', () => {
       holder_email: null,
       release_id: releaseId,
     });
-  }, 60_000);
+  });
 });

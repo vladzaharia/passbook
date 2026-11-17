@@ -118,7 +118,7 @@ describe('publish credential transfer fences', () => {
     } finally {
       put.mockRestore();
     }
-  }, 60_000);
+  });
 
   it.each(['credential_generation', 'lifecycle_generation'] as const)(
     'rejects an in-flight %s change before writing an artifact',
@@ -207,7 +207,7 @@ describe('publish credential transfer fences', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('fences binding writes against lifecycle ABA and both stale and current pending snapshots', async () => {
     const pass = await kit.pass();
@@ -244,7 +244,7 @@ describe('publish credential transfer fences', () => {
       }),
     ).toBe(false);
     expect(await snapshot(lifecycle.id)).toEqual(after);
-  }, 60_000);
+  });
 
   it('rejects binding when connection mode changes without a generation change', async () => {
     const pass = await kit.pass();
@@ -268,7 +268,7 @@ describe('publish credential transfer fences', () => {
       }),
     ).toBe(false);
     expect(await snapshot(pass.id)).toEqual(before);
-  }, 60_000);
+  });
 
   it('rejects image ABA between the artifact build and final publish CAS', async () => {
     const pass = await kit.pass();
@@ -331,7 +331,7 @@ describe('publish credential transfer fences', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('rejects an image writer whose staged generation was superseded before rebuild', async () => {
     const pass = await kit.pass();
@@ -370,7 +370,7 @@ describe('publish credential transfer fences', () => {
     } finally {
       put.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('does not acknowledge a no-op after image ABA during its build', async () => {
     const pass = await kit.pass();
@@ -419,5 +419,5 @@ describe('publish credential transfer fences', () => {
       put.mockRestore();
       overrideDeps(kit.env, { registry: kit.registry });
     }
-  }, 60_000);
+  });
 });

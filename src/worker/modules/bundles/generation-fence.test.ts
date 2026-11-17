@@ -114,7 +114,7 @@ it('binds the credential generation independently of the link, including members
   expect(
     await first(kit.env.DB, 'SELECT id FROM bundles WHERE id = ?', [staleInsert.id]),
   ).toBeNull();
-}, 120_000);
+});
 
 it('checks every member against the complete delivery authority in output SQL', async () => {
   const kit = await setupKit();
@@ -168,4 +168,4 @@ it('checks every member against the complete delivery authority in output SQL', 
       }
     }
   }
-}, 120_000);
+});

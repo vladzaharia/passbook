@@ -15,7 +15,7 @@ import { BRANDING_QUIET_MS, reissueStaleBranding } from './stale-reissue.ts';
 let kit: Kit;
 beforeAll(async () => {
   kit = await setupKit();
-}, 60_000);
+});
 
 beforeEach(async () => {
   await kit.env.DB.prepare('UPDATE orgs SET branding_dirty_at = NULL').run();
@@ -81,7 +81,7 @@ describe('branding reissue trigger', () => {
       expect(dto.passesToUpdate, label).toBe(1);
       expect(await dirtyAt(org.id), label).not.toBeNull();
     }
-  }, 60_000);
+  });
 
   it('ignores a save that leaves the pass look alone', async () => {
     const { org } = await orgWithPass();
@@ -95,7 +95,7 @@ describe('branding reissue trigger', () => {
     kit.clock.set(kit.clock.now() + BRANDING_QUIET_MS * 2);
     await reissueStaleBranding(kit.ctx);
     expect(kit.workflow.created).toHaveLength(0);
-  }, 60_000);
+  });
 
   it('does not flag an org with no live passes', async () => {
     const org = await makeOrg(kit.fx, { name: 'Empty Co' });
@@ -134,7 +134,7 @@ describe('branding reissue coalescing', () => {
       [org.id],
     );
     expect(audit).toEqual({ target_type: 'org', target_id: org.id });
-  }, 60_000);
+  });
 
   it('keeps the mark when the workflow cannot start and retries later', async () => {
     const { org } = await orgWithPass();
@@ -164,7 +164,7 @@ describe('branding reissue coalescing', () => {
         );
       }),
     ).toHaveLength(1);
-  }, 60_000);
+  });
 });
 
 describe('branding reissue run', () => {
@@ -221,5 +221,5 @@ describe('branding reissue run', () => {
 
     const voidedAfter = await getPass(kit.env.DB, voided.id);
     expect(voidedAfter?.version).toBe(voidedBefore?.version);
-  }, 60_000);
+  });
 });

@@ -169,7 +169,7 @@ describe('self-removal credential transfers', () => {
     expect(after?.scanCode).not.toBe(before.scanCode);
     expect(await attachWaitingPassesForEmail(jobCtxOf(kit), user.id, email)).toBe(0);
     expect((await getPass(kit.env.DB, t.pass.id))?.ownerUserId).toBeNull();
-  }, 120_000);
+  });
 
   it('returns completed only after an immediately settled removal', async () => {
     const kit = await setupProviderKit();
@@ -195,7 +195,7 @@ describe('self-removal credential transfers', () => {
       kit.env,
     );
     expect(await receipt.json()).toEqual(result);
-  }, 120_000);
+  });
 
   it('fences an archive object when a transfer starts while its bytes are read', async () => {
     const { kit, user, pass } = await ownedWithProvider();
@@ -227,7 +227,7 @@ describe('self-removal credential transfers', () => {
     } finally {
       get.mockRestore();
     }
-  }, 120_000);
+  });
 
   it.each(['list', 'detail'] as const)(
     'does not return a stale %s DTO after the credential generation changes',

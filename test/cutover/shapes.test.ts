@@ -12,7 +12,7 @@ let legacy: Legacy;
 beforeAll(async () => {
   c = await runCutover(30);
   legacy = c.legacy;
-}, 120_000);
+});
 
 describe('cutover: effective releases', () => {
   for (const shape of SHAPES.filter((s) => s !== 'uploaded-archived')) {

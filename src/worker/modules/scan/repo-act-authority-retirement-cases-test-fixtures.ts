@@ -178,7 +178,7 @@ export function registerAuthorityRetirement() {
     expect(
       await first(kit.env.DB, 'SELECT * FROM scans WHERE idempotency_key=?', [idempotencyKey]),
     ).toEqual(scan);
-  }, 60_000);
+  });
 
   it('masks a completed pass-backed receipt when its input credential is retired', async () => {
     const template = await kit.scanTemplate('Retired serial lookup', {
@@ -205,7 +205,7 @@ export function registerAuthorityRetirement() {
       gate,
     );
     await expectOriginalLedger(pass.id, original.scanId);
-  }, 60_000);
+  });
 
   it.each(['voided', 'generation'] as const)(
     'answers a %s change between evaluation and the batched preflight 409, and the retry decides',

@@ -96,7 +96,7 @@ beforeEach(async () => {
     },
     clock: kit.clock,
   });
-}, 60_000);
+});
 
 async function connection(kind: 'push' | 'refs' = 'push') {
   const dto = await createDemo(kit, {
@@ -469,7 +469,7 @@ describe('durable connection webhook retention', () => {
       warn.mockRestore();
       error.mockRestore();
     }
-  }, 60_000);
+  });
 
   it.each(['missing', 'mismatched'] as const)(
     'does not process or acknowledge a signed chunk with %s job proof',
@@ -704,7 +704,7 @@ describe('durable connection webhook retention', () => {
       expect(input.fields).toEqual({ memberName: 'Fetched after retry', exact: { active: true } });
     }
     for (const item of items) expect((await retainedRow(item.id))?.state).toBe('resolved');
-  }, 60_000);
+  });
 
   it('requires the stored tenant, manage capability, Live mode and CSRF for replay', async () => {
     const { id, secret } = await connection();
@@ -752,7 +752,7 @@ describe('durable connection webhook retention', () => {
     expect(webhookJobs()).toHaveLength(1);
     expect(kit.seams.created).toEqual([]);
     expect(kit.seams.applied).toEqual([]);
-  }, 60_000);
+  });
 
   it('enforces API-key scope and tenant isolation for failure listings and explicit replay', async () => {
     const { id, secret } = await connection();
@@ -792,7 +792,7 @@ describe('durable connection webhook retention', () => {
     await processWebhook(kit.sctx, queued);
     expect(kit.seams.created.map((input) => input.externalRef)).toEqual(['ref-key-replay']);
     expect((await retainedRow(item.id))?.state).toBe('resolved');
-  }, 60_000);
+  });
 
   it.each(['generation', 'mode', 'disabled', 'org-moved', 'org-suspended'] as const)(
     'ACKs stale DLQ work after a %s change and preserves its encrypted terminal outcome',
@@ -910,7 +910,7 @@ describe('durable connection webhook retention', () => {
         [id],
       ),
     ).toEqual({ state: 'failed', error_code: 'WEBHOOK_DEAD_LETTER' });
-  }, 60_000);
+  });
 
   it('refuses replay after the captured connection generation changes', async () => {
     const { id, secret } = await connection();
@@ -922,7 +922,7 @@ describe('durable connection webhook retention', () => {
     expect(webhookJobs()).toHaveLength(1);
     expect((await retainedRow(item.id))?.state).toBe('failed');
     expect(kit.seams.created).toEqual([]);
-  }, 60_000);
+  });
 
   it('refuses replay when the connection mode changes independently of its generation', async () => {
     const { id, secret } = await connection('refs');
@@ -941,7 +941,7 @@ describe('durable connection webhook retention', () => {
     expect(webhookJobs()).toHaveLength(1);
     expect((await retainedRow(item.id))?.state).toBe('failed');
     expect(kit.seams.created).toEqual([]);
-  }, 60_000);
+  });
 
   it('refuses replay if the connector reference semantics change after receipt', async () => {
     const { id, secret } = await connection('refs');
@@ -979,7 +979,7 @@ describe('durable connection webhook retention', () => {
     } finally {
       get.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('does not replay against a superseding approved release, even for the same template version', async () => {
     const { id, secret } = await connection();
@@ -998,7 +998,7 @@ describe('durable connection webhook retention', () => {
     expect(await replayAudits(item.id)).toEqual([]);
     expect((await retainedRow(item.id))?.state).toBe('failed');
     expect(kit.seams.created).toEqual([]);
-  }, 60_000);
+  });
 
   it('keeps an unapproved webhook blocked until an operator explicitly replays after approval', async () => {
     const { id, secret, template } = await connectionWithoutApproval();
@@ -1052,7 +1052,7 @@ describe('durable connection webhook retention', () => {
     await processWebhook(kit.sctx, replayJob);
     expect(kit.seams.created.map((input) => input.externalRef)).toEqual(['blocked-ref']);
     expect((await retainedRow(item.id))?.state).toBe('resolved');
-  }, 60_000);
+  });
 
   it('reports the blueprint code when a blocked webhook is replayed while still on a blueprint', async () => {
     const { id, secret } = await connection();
@@ -1073,7 +1073,7 @@ describe('durable connection webhook retention', () => {
     expect(replay.status).toBe(409);
     expect(replay.json).toMatchObject({ code: 'TEMPLATE_IS_BLUEPRINT' });
     expect(kit.seams.created).toEqual([]);
-  }, 60_000);
+  });
 
   it('rolls back the replay reservation and item reset when its audit insert fails', async () => {
     const { id, secret, template } = await connectionWithoutApproval();
@@ -1138,7 +1138,7 @@ describe('durable connection webhook retention', () => {
     expect((await call('POST', replayPath(id, item.id))).status).toBe(202);
     expect(await replayAudits(item.id)).toHaveLength(1);
     expect(webhookJobs()).toHaveLength(2);
-  }, 60_000);
+  });
 
   it.each(['same', 'missing', 'different'] as const)(
     'fences replay enqueue-failure bookkeeping when the singleton is %s',
@@ -1282,7 +1282,7 @@ describe('durable connection webhook retention', () => {
       { ordinal: 1, state: 'success' },
     ]);
     expect((await retainedRow(item.id))?.state).toBe('resolved');
-  }, 60_000);
+  });
 
   it('audits old and new approved releases when an effect-free blocked item is rebound', async () => {
     const { id, secret } = await connection();
@@ -1332,7 +1332,7 @@ describe('durable connection webhook retention', () => {
     await processWebhook(kit.sctx, replayJob);
     expect(kit.seams.created.map((input) => input.externalRef)).toEqual(['rebind-ref']);
     expect((await retainedRow(item.id))?.state).toBe('resolved');
-  }, 60_000);
+  });
 
   it('refuses release rebind when a started item may have committed before a crash', async () => {
     const { id, secret, template } = await connectionWithoutApproval();
@@ -1443,7 +1443,7 @@ describe('durable connection webhook retention', () => {
     expect(JSON.parse(persisted?.personalization ?? '{}')).toEqual({
       memberName: 'Possibly committed',
     });
-  }, 60_000);
+  });
 
   it('replays a safe pending item while leaving an uncertain sibling for manual review', async () => {
     const { id, secret } = await connection();
@@ -1502,7 +1502,7 @@ describe('durable connection webhook retention', () => {
     expect(denied.status).toBe(409);
     expect(denied.json).toMatchObject({ code: 'WEBHOOK_EFFECT_UNCERTAIN' });
     expect(webhookJobs()).toHaveLength(2);
-  }, 60_000);
+  });
 
   it('does not rebind a retried claim to a replacement pass for the same reference', async () => {
     const { id, secret } = await connection('refs');
@@ -1572,7 +1572,7 @@ describe('durable connection webhook retention', () => {
     expect(kit.seams.applied).toEqual([]);
     expect(kit.seams.created).toEqual([]);
     await expect(startPendingTransfer(kit.sctx, originalPass.id)).rejects.toThrow();
-  }, 60_000);
+  });
 
   it('keeps the original new-pass reservation when a competing pass is linked during the fetch', async () => {
     const { id, secret } = await connection('refs');
@@ -1634,7 +1634,7 @@ describe('durable connection webhook retention', () => {
     const denied = await call('POST', replayPath(id, item.id));
     expect(denied.status).toBe(409);
     expect(denied.json).toMatchObject({ code: 'WEBHOOK_EFFECT_UNCERTAIN' });
-  }, 60_000);
+  });
 
   it('retains but never rebinds a legacy multi-ref dead letter with unknown original effects', async () => {
     const { id } = await connection('refs');
@@ -1711,7 +1711,7 @@ describe('durable connection webhook retention', () => {
     expect(webhookJobs()).toEqual([]);
     expect(await replayAudits(item.id)).toEqual([]);
     expect((await retainedRow(item.id))?.state).toBe('failed');
-  }, 60_000);
+  });
 
   it('does not infer a bare ref or ACK an embedded legacy event whose source is incomplete', async () => {
     const { id } = await connection();
@@ -1785,7 +1785,7 @@ describe('durable connection webhook retention', () => {
       fetch.mockRestore();
       error.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('seals legacy inbox data and retains distinct signed duplicate bodies under keyed identities', async () => {
     const lines: string[] = [];
@@ -1950,7 +1950,7 @@ describe('durable connection webhook retention', () => {
       expect(await replayAudits(row.id)).toEqual([]);
     }
     expect(webhookJobs()).toEqual([]);
-  }, 60_000);
+  });
 
   it('parks repeatedly changed template content in the DLQ without exposing the upstream error', async () => {
     const lines: string[] = [];
@@ -2019,7 +2019,7 @@ describe('durable connection webhook retention', () => {
       warn.mockRestore();
       error.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('requires explicit replay after an enqueue may have succeeded and applies its item only once', async () => {
     const { id, secret } = await connection();
@@ -2062,7 +2062,7 @@ describe('durable connection webhook retention', () => {
     expect(kit.seams.created.map((input) => input.externalRef)).toEqual(['ambiguous-ref']);
     expect(await itemStates(item.id)).toEqual([{ ordinal: 0, state: 'success' }]);
     expect((await retainedRow(item.id))?.state).toBe('resolved');
-  }, 60_000);
+  });
 
   it('creates once on authorized replay even if the replay job is delivered twice', async () => {
     const { id, secret } = await connection();
@@ -2113,7 +2113,7 @@ describe('durable connection webhook retention', () => {
     expect((await retainedRow(item.id))?.state).toBe('resolved');
     expect((await call('POST', replayPath(id, item.id))).status).toBe(409);
     expect(webhookJobs()).toHaveLength(2);
-  }, 60_000);
+  });
 
   it('retries a connection DLQ message while its retention write fails and logs the final drop', async () => {
     const { id, secret } = await connection();
@@ -2173,7 +2173,7 @@ describe('durable connection webhook retention', () => {
       [id],
     );
     expect(rows).toEqual([{ state: 'pending' }]);
-  }, 60_000);
+  });
 
   it('retains and replays every chunk of a multi-chunk event without loss or duplication', async () => {
     const { id, secret } = await connection();
@@ -2227,5 +2227,5 @@ describe('durable connection webhook retention', () => {
     expect(actual.sort((a, b) => a.ref.localeCompare(b.ref))).toEqual(records);
     expect(new Set(actual.map((item) => item.ref)).size).toBe(records.length);
     expect(await list(id)).toEqual([]);
-  }, 60_000);
+  });
 });

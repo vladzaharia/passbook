@@ -48,7 +48,7 @@ describe('sample scope inside the create grant', () => {
     const { sample } = await sessionOnEvent();
     const response = await atCommit('pass', async () => {}, sample);
     expect(response.status).toBe(201);
-  }, 60_000);
+  });
 
   it.each(['event templates', 'event match', 'event archived'] as const)(
     "refuses when the session event's %s change at commit",

@@ -49,7 +49,7 @@ beforeAll(async () => {
   overrideDeps(env, { apns: createFakeApns(), mailer: createFakeMailer() });
   await ensurePlatformIdentity(env, clock.now());
   orgId = (await makeOrg(fixtures(env, clock), { name: 'E2E Gym' })).id;
-}, 60_000);
+});
 afterAll(() => {
   Object.assign(generatedSource, previousSource);
   resetBakedSync();
@@ -107,7 +107,7 @@ describe('registry to pkpass', () => {
     await putPassAsset(jobCtxOf({ ctx }), actor, pass.id, 'icon.png', ICON_PNG, null);
     const republished = await checkStored(pass.id);
     expect(republished?.version).toBe(2);
-  }, 60_000);
+  });
 
   it('drops expirationDate from the signed pass.json once the input is cleared', async () => {
     const manifest = {
@@ -178,7 +178,7 @@ describe('registry to pkpass', () => {
     const after = await passJsonOf(pass.id);
     expect(after).not.toHaveProperty('expirationDate');
     expect(after.description).toBeDefined();
-  }, 60_000);
+  });
 
   it('builds a pass from a baked template served by the ASSETS binding', async () => {
     await syncBakedTemplates(ctx);
@@ -198,5 +198,5 @@ describe('registry to pkpass', () => {
     });
     expect(pass.releaseId).toBe(release.id);
     await checkStored(pass.id);
-  }, 60_000);
+  });
 });

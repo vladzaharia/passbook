@@ -60,7 +60,7 @@ describe('tenant clear-block', () => {
     expect(await audits(kit, pass.id, 'holder.clear_block')).toBe(1);
     expect(await markers(kit, pass.id)).toBe(1);
     expect(await audits(kit, pass.id, 'holder.attach_reissue_required')).toBe(1);
-  }, 120_000);
+  });
 
   it('refuses an authority without the operate capability and leaves the block', async () => {
     const { kit, pass, user } = await blockedRetiredPass();
@@ -76,7 +76,7 @@ describe('tenant clear-block', () => {
     ).rejects.toMatchObject({ code: 'BLOCK_NOT_FOUND' });
     expect(await blocks(kit, pass.id)).toBe(1);
     expect(await audits(kit, pass.id, 'holder.clear_block')).toBe(0);
-  }, 120_000);
+  });
 
   it('refuses a snapshot that claims a capability the membership does not hold', async () => {
     const { kit, pass, user } = await blockedRetiredPass();
@@ -95,7 +95,7 @@ describe('tenant clear-block', () => {
       ),
     ).rejects.toBeDefined();
     expect(await blocks(kit, pass.id)).toBe(1);
-  }, 120_000);
+  });
 });
 
 describe('tenant reissue requirement', () => {
@@ -133,7 +133,7 @@ describe('tenant reissue requirement', () => {
     await mark();
     expect(await markers(kit, pass.id)).toBe(1);
     expect(await audits(kit, pass.id, 'holder.attach_reissue_required')).toBe(1);
-  }, 120_000);
+  });
 
   it('records nothing for a read-only authority', async () => {
     const { kit, pass, user } = await fixedBarcodePass({ retired: true });
@@ -152,5 +152,5 @@ describe('tenant reissue requirement', () => {
     );
     expect(await markers(kit, pass.id)).toBe(0);
     expect(await audits(kit, pass.id, 'holder.attach_reissue_required')).toBe(0);
-  }, 120_000);
+  });
 });

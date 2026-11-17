@@ -141,7 +141,7 @@ describe('credential transfer', () => {
         [pass.id],
       ),
     ).not.toBeNull();
-  }, 120_000);
+  });
 
   it('rolls back the transfer reservation and revocations if the start audit fails', async () => {
     const kit = await setupKit();
@@ -201,7 +201,7 @@ describe('credential transfer', () => {
         [pass.id],
       ),
     ).toEqual(providerAuthority);
-  }, 120_000);
+  });
 
   it('pins the keyset for the entire transfer despite environment mutation', async () => {
     const kit = await setupKit();
@@ -252,7 +252,7 @@ describe('credential transfer', () => {
         [pass.id, hash],
       ),
     ).not.toBeNull();
-  }, 120_000);
+  });
 
   it.each(['barcode', 'lookup'] as const)(
     'rejects an unchanged accepted %s before revoking anything',
@@ -356,7 +356,7 @@ describe('credential transfer', () => {
         pass.id,
       ]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('rechecks a tenant session after signing and leaves the reservation uncreated when revoked', async () => {
     const kit = await setupKit();
@@ -475,7 +475,7 @@ describe('credential transfer', () => {
       holderEmail: pass.holderEmail,
       objectKey: pass.objectKey,
     });
-  }, 120_000);
+  });
 
   it('keeps a provider-backed transfer pending until retirement is durable, then resumes it', async () => {
     // Reuse the same KEK that issued the source pass and initialized the reference keyset.
@@ -530,7 +530,7 @@ describe('credential transfer', () => {
     expect(after?.holderEmail).toBe(target.holderEmail);
     expect(after?.serial).not.toBe(pass.serial);
     expect(after?.scanCode).not.toBe(pass.scanCode);
-  }, 120_000);
+  });
 
   it('encrypts a connector target and still completes it after the connection is edited', async () => {
     const kit = await setupKit();
@@ -628,7 +628,7 @@ describe('credential transfer', () => {
       gate.release();
       gate.spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it('does not commit or retain an artifact built under a superseded approved release', async () => {
     const kit = await setupKit();
@@ -657,7 +657,7 @@ describe('credential transfer', () => {
       gate.release();
       gate.spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it('leaves the transfer pending and deletes the losing artifact if the target owner loses eligibility', async () => {
     const kit = await setupKit();
@@ -701,5 +701,5 @@ describe('credential transfer', () => {
       gate.release();
       gate.spy.mockRestore();
     }
-  }, 120_000);
+  });
 });

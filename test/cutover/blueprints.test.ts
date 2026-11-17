@@ -19,7 +19,7 @@ beforeAll(async () => {
   c = await runCutover(31, { bumpStarters: true });
   kit = await withKitDatabase(c.legacy.db, () => setupScanKit());
   overrideDeps(kit.env, { registry: createTemplateRegistry(kit.env) });
-}, 180_000);
+});
 
 const flag = async (id: string) =>
   (

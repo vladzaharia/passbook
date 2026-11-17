@@ -121,7 +121,7 @@ describe('tenant Test inbox routes', () => {
       expect(body).not.toContain(capture.html);
     }
     await noEffects(capture.id, before);
-  }, 60_000);
+  });
 
   it('lets read-only members preview but reserves sending for pass operators', async () => {
     const capture = await captureInboxPass(kit);
@@ -179,7 +179,7 @@ describe('tenant Test inbox routes', () => {
         [capture.id],
       ),
     ).toEqual({ actor_id: operator.user.id, org_id: kit.org.id, detail: null });
-  }, 60_000);
+  });
 
   it('uses the actual capture org and hides foreign, missing, and non-Test captures', async () => {
     const actor = await member();
@@ -240,7 +240,7 @@ describe('tenant Test inbox routes', () => {
     }
     await noEffects(foreign.id, before);
     await noEffects(live.id, before);
-  }, 60_000);
+  });
 
   it('requires Test mode, with an explicit mode query for the iframe', async () => {
     const actor = await member();
@@ -320,7 +320,7 @@ describe('tenant Test inbox routes', () => {
       ).status,
     ).toBe(404);
     await noEffects(capture.id, before);
-  }, 60_000);
+  });
 
   it('enforces verified email independently of tenant access', async () => {
     const user = await makeUser(kit.fx, { verified: false });
@@ -337,7 +337,7 @@ describe('tenant Test inbox routes', () => {
     expect(response.status).toBe(422);
     expect(await response.json()).toMatchObject({ code: 'NO_VERIFIED_EMAIL' });
     await noEffects(capture.id, before);
-  }, 60_000);
+  });
 
   it('rejects revoked memberships and sessions and never permits API keys', async () => {
     const capture = await captureInboxPass(kit);
@@ -420,5 +420,5 @@ describe('tenant Test inbox routes', () => {
     );
     expect(denied.status).toBe(401);
     await noEffects(capture.id, before);
-  }, 60_000);
+  });
 });

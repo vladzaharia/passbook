@@ -92,7 +92,7 @@ describe('Samsung authenticated callback route', () => {
     ).toBe(401);
     const signedQuery = await t.token({ signedPath: `${t.path}?fields=title` });
     expect((await t.call({ token: signedQuery, query: '?fields=providerName' })).status).toBe(401);
-  }, 60_000);
+  });
 
   it('refreshes an already-promoted ref, prevents replay and survives the old offer window', async () => {
     const t = await setupSamsungCallbacks();
@@ -130,7 +130,7 @@ describe('Samsung authenticated callback route', () => {
     t.kit.clock.advance(300_001);
     await t.renewEvidence();
     expect((await t.call({ token: await t.token() })).status).toBe(200);
-  }, 60_000);
+  });
 
   it('denies new offers and does not promote an unpromoted ref without market proof', async () => {
     const t = await setupSamsungCallbacks({ promoted: false });
@@ -167,7 +167,7 @@ describe('Samsung authenticated callback route', () => {
       [t.referenceId],
     );
     expect(row?.promoted_at).toBeNull();
-  }, 60_000);
+  });
 
   it('encrypts untrusted callback bodies, deduplicates replay, and never infers installation', async () => {
     const t = await setupSamsungCallbacks();
@@ -232,7 +232,7 @@ describe('Samsung authenticated callback route', () => {
       [instance?.id],
     );
     expect(hints.map((h) => h.country_code)).toEqual(['GB', 'US']);
-  }, 60_000);
+  });
 
   it('rejects stale pass revisions, cross-tenant/mode references and rotated accounts', async () => {
     const t = await setupSamsungCallbacks();
@@ -275,7 +275,7 @@ describe('Samsung authenticated callback route', () => {
       credentials: rotated.samsung,
     });
     expect((await rotated.call({ token: await rotated.token() })).status).toBe(401);
-  }, 90_000);
+  });
 
   it('fences captured offers, refreshes and callbacks when a real credential transfer starts', async () => {
     const t = await setupSamsungCallbacks({ holderEmail: 'first@example.test' });
@@ -415,7 +415,7 @@ describe('Samsung authenticated callback route', () => {
         snapshot.instanceId,
       ]),
     ).toEqual([]);
-  }, 120_000);
+  });
 
   it('atomically refuses a refresh if materialized pass data changes after capture', async () => {
     const t = await setupSamsungCallbacks();
@@ -458,7 +458,7 @@ describe('Samsung authenticated callback route', () => {
         'A'.repeat(43),
       ]),
     ).toBeNull();
-  }, 60_000);
+  });
 
   it('does not repeat replay claims or receipts for the same token, even with the same claim id', async () => {
     const t = await setupSamsungCallbacks();
@@ -527,7 +527,7 @@ describe('Samsung authenticated callback route', () => {
     expect(receipts).toHaveLength(1);
     expect(hints.map((hint) => hint.country_code)).toEqual(['GB']);
     expect(instance?.installation_state).toBe('unknown');
-  }, 60_000);
+  });
 
   it('rejects replay admission and final disclosure at the exact provider-evidence expiry', async () => {
     const t = await setupSamsungCallbacks();
@@ -567,5 +567,5 @@ describe('Samsung authenticated callback route', () => {
         'D'.repeat(43),
       ]),
     ).toBeNull();
-  }, 60_000);
+  });
 });

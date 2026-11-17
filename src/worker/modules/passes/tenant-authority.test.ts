@@ -73,7 +73,7 @@ beforeAll(async () => {
     },
     clock: kit.clock,
   });
-}, 60_000);
+});
 
 async function membership(orgId: string, user: UserRow, roles: OrgRole[]) {
   const invitationId = kit.fx.ids.id();
@@ -455,7 +455,7 @@ describe('tenant pass authorization', () => {
         .status,
     ).toBe(200);
     expect(await getPass(kit.env.DB, id)).toMatchObject({ version: 2 });
-  }, 60_000);
+  });
 
   it('requires the reviewed mode and approved release for real tenant credentials', async () => {
     const operator = await member();
@@ -552,7 +552,7 @@ describe('tenant pass authorization', () => {
     };
     expect(keyDetail).toMatchObject({ mode: 'test', templateVersion: releases.test.version });
     expect(await getPass(kit.env.DB, keyDetail.id)).toMatchObject({ releaseId: releases.test.id });
-  }, 60_000);
+  });
 
   it('requires explicit org scope for sessions and API keys without widening tenant access', async () => {
     const operator = await member();
@@ -610,7 +610,7 @@ describe('tenant pass authorization', () => {
     }
     expect((await list(foreignKey.headers, `?orgId=${kit.org.id}`)).status).toBe(403);
     expect((await list(ownKey.headers, `?orgId=${kit.org.id}`)).status).toBe(200);
-  }, 60_000);
+  });
 
   it('maps every capability to exactly its granting roles and returns independent arrays', () => {
     const expected: Record<OrgCapability, OrgRole[]> = {
@@ -698,7 +698,7 @@ describe('tenant pass authorization', () => {
     await expect(
       tenantAuthorityOf(kit.ctx, readerAuth, kit.org.id, 'passes:operate'),
     ).rejects.toMatchObject({ status: 403 });
-  }, 60_000);
+  });
 });
 
 describe('issuance commit authority', () => {
@@ -1105,7 +1105,7 @@ describe('issuance commit authority', () => {
     const replay = await issue(replacement.session.headers, body, key);
     expect(replay.status).toBe(201);
     expect(await replay.json()).toMatchObject({ id: passId });
-  }, 60_000);
+  });
 
   it('records a committed issuance and still queues its email after the initiator signs out (owner answer 2)', async () => {
     const actor = await member();
@@ -1159,7 +1159,7 @@ describe('issuance commit authority', () => {
     const replacement = await member();
     const replay = await issue(replacement.session.headers, body, key);
     expect(replay.status).toBe(201);
-  }, 60_000);
+  });
 
   it.each(['deleted', 'quarantined'] as const)(
     'keeps the reservation when its committed pass is %s before the issuance re-read',
@@ -1223,7 +1223,7 @@ describe('issuance commit authority', () => {
     ).toBeNull();
     const replay = await issue(actor.session.headers, body, key);
     expect(replay.status).toBe(201);
-  }, 60_000);
+  });
 });
 
 describe('direct pass compare-and-swap authority', () => {
@@ -1393,7 +1393,7 @@ describe('direct pass compare-and-swap authority', () => {
       version: 2,
       externalId: 'scope-writer',
     });
-  }, 60_000);
+  });
 
   it.each(['session', 'api key'] as const)(
     'uses the current clock when a %s expires during a publish upload',
@@ -1495,7 +1495,7 @@ describe('bulk selection and reissue authority', () => {
     expect(allowed.status).toBe(200);
     expect(await allowed.json()).toEqual({ done: 1, skipped: [] });
     expect(await getPass(kit.env.DB, live.id)).toMatchObject({ status: 'voided', version: 2 });
-  }, 60_000);
+  });
 
   it('does not mutate any selected pass when membership is revoked before the first bulk CAS', async () => {
     const operator = await member();
@@ -1517,7 +1517,7 @@ describe('bulk selection and reissue authority', () => {
     );
     expect([403, 409, 412]).toContain(response.status);
     expect(await Promise.all(passes.map((pass) => effects(pass.id)))).toEqual(before);
-  }, 60_000);
+  });
 
   it('restricts scoped and unscoped reissues and carries the reviewed mode to workflows', async () => {
     const operator = await member();
@@ -1582,7 +1582,7 @@ describe('bulk selection and reissue authority', () => {
     const systemRun = kit.workflow.created.at(-1);
     expect(systemRun?.params).toMatchObject({ orgId: kit.org.id, templateId: kit.template.id });
     expect(systemRun?.params).not.toHaveProperty('mode');
-  }, 60_000);
+  });
 
   it('rolls back partial workflow snapshots when an affected scope is unavailable', async () => {
     const other = await makeOrg(kit.fx, { name: 'Unavailable workflow tenant' });
@@ -1629,7 +1629,7 @@ describe('bulk selection and reissue authority', () => {
         { org_id: other.id, release_id: otherPass.releaseId },
       ]),
     );
-  }, 60_000);
+  });
 
   it('rejects a stale reviewed release without leaving a workflow or snapshot marker', async () => {
     const query = {
@@ -1670,7 +1670,7 @@ describe('bulk selection and reissue authority', () => {
         },
       }),
     ).toBe('inserted');
-  }, 60_000);
+  });
 
   it('does not enqueue a scoped reissue when membership is revoked at workflow insertion', async () => {
     const operator = await member();
@@ -1712,7 +1712,7 @@ describe('bulk selection and reissue authority', () => {
         })
       ).status,
     ).toBe(202);
-  }, 60_000);
+  });
 
   it('does not reserve an unscoped reissue if the admin session is revoked during template resolution', async () => {
     const user = await makeUser(kit.fx);
@@ -1753,7 +1753,7 @@ describe('bulk selection and reissue authority', () => {
         'SELECT instance_id FROM workflow_runs WHERE org_id IS NULL ORDER BY instance_id',
       ),
     ).toEqual(before);
-  }, 60_000);
+  });
 
   it.each([
     'revoked',
@@ -1929,7 +1929,7 @@ describe('resend audit atomicity', () => {
       await run(kit.env.DB, 'DROP TRIGGER test_resend_audit_failure');
     }
     expect(await effects(pass.id)).toEqual(before);
-  }, 60_000);
+  });
 });
 
 describe('tenant publish grant (authority-epochs.md F3)', () => {
@@ -2003,5 +2003,5 @@ describe('tenant publish grant (authority-epochs.md F3)', () => {
     );
     expect(again.status).toBe(200);
     expect((await getPass(kit.env.DB, pass.id))?.version).toBe(pass.version + 1);
-  }, 60_000);
+  });
 });

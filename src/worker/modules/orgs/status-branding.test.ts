@@ -91,7 +91,7 @@ beforeAll(async () => {
   const tenantUser = await makeUser(f);
   platformAdmin = await makeSession(f, { userId: platformUser.id, roles: ['admin', 'user'] });
   orgAdmin = await makeSession(f, { userId: tenantUser.id });
-}, 60_000);
+});
 
 async function join(orgId: string) {
   const invitationId = f.ids.id();

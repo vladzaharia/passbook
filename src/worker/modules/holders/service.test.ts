@@ -167,7 +167,7 @@ describe('hook B: a user verifies an address', () => {
         [pass.id],
       ),
     ).toEqual({ state: 'completed', target_owner_user_id: user.id });
-  }, 120_000);
+  });
 
   it('pages eligible waiting passes within a fixed high-water mark', async () => {
     const isolated = await setupKit();
@@ -195,7 +195,7 @@ describe('hook B: a user verifies an address', () => {
     );
     const eligible = await listSweepWaitingPasses(isolated.env.DB, { after: null, upper }, 10);
     expect(eligible.map((row) => row.id)).not.toContain(passes[0]!.id);
-  }, 120_000);
+  });
 
   it('attaches an address verified while its preceding transfer was pending', async () => {
     const t = await setupSamsungCallbacks({ db: (await makeEnv()).DB });
@@ -266,7 +266,7 @@ describe('hook B: a user verifies an address', () => {
         [t.pass.id],
       ),
     ).toEqual({ n: 2 });
-  }, 120_000);
+  });
 
   it('does not take the caller’s word that an address is verified', async () => {
     const e = email();

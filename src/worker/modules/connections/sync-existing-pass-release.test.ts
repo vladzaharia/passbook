@@ -25,7 +25,7 @@ beforeAll(async () => {
   kit = { ...local, ctx, credentialKeysetCommitment };
   resetDeps();
   setDeps({ sleep: async () => {}, resolver: publicResolver });
-}, 60_000);
+});
 
 async function sync(connectionId: string, generation: number) {
   const id = `existing-${++n}`;
@@ -89,5 +89,5 @@ describe('connection sync of an existing pass', () => {
       [before?.id],
     );
     expect(pushes.length).toBeGreaterThanOrEqual(1);
-  }, 60_000);
+  });
 });

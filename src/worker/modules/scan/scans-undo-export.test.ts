@@ -192,7 +192,7 @@ describe('GET /scans/export', () => {
     await run(env.DB, "DELETE FROM scans WHERE id LIKE 'bulk-%'");
     for (let i = 0; i < 10; i++) expect((await get(`/export${window()}`)).status).toBe(200);
     expect((await get(`/export${window()}`)).status).toBe(429);
-  }, 120_000);
+  });
 
   it('allows ten exports an hour per admin', async () => {
     for (let i = 0; i < 10; i++) expect((await get(`/export${window()}`)).status).toBe(200);

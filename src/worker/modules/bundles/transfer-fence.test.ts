@@ -213,7 +213,7 @@ describe('bundle credential transfer fences', () => {
     expect(expectValidZip(new Uint8Array(await newArchive.arrayBuffer()))).toEqual([
       `${pass.id}.pkpass`,
     ]);
-  }, 120_000);
+  });
 
   it('aborts a multi-member archive if a later member transfers while its object opens', async () => {
     const kit = await setupKit({ db: await testDatabase() });
@@ -255,7 +255,7 @@ describe('bundle credential transfer fences', () => {
       resume.resolve();
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it('does not return a member file when transfer commits during the R2 open', async () => {
     const kit = await setupKit({ db: await testDatabase() });
@@ -297,7 +297,7 @@ describe('bundle credential transfer fences', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it('cannot expose a new holder photo when transfer wins just before the photo lookup', async () => {
     const kit = await setupKit({ db: await testDatabase() });
@@ -386,5 +386,5 @@ describe('bundle credential transfer fences', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 });

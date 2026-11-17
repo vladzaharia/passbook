@@ -23,7 +23,7 @@ let build = 0;
 beforeAll(async () => {
   kit = await setupKit({ approvedReleases: false });
   kit.env.ASSETS = assets;
-}, 60_000);
+});
 
 const step = {
   do: async (_name: string, a: unknown, b?: unknown) =>
@@ -134,5 +134,5 @@ describe('a starter becomes a blueprint', () => {
     });
     // Wallet alerts only for a changed field value with a changeMessage: every field is as before.
     expect(now.generic).toEqual(old.generic);
-  }, 60_000);
+  });
 });

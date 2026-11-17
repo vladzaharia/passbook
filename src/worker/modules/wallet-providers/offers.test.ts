@@ -111,7 +111,7 @@ describe('native wallet availability', () => {
         }),
       ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_UNSUPPORTED' });
     }
-  }, 120_000);
+  });
 
   it.each(['absent', 'configured', 'published'] as OfferFixtureState[])(
     'never exposes Samsung with %s card setup but no verified recipient-market capability',

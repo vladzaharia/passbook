@@ -250,5 +250,5 @@ export function registerCatchupIntegrityTests() {
         expect(projected.every((row) => row.photoUrl === null)).toBe(true);
       }
     }
-  }, 120_000);
+  });
 }

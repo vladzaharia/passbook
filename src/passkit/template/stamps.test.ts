@@ -16,7 +16,7 @@ beforeAll(async () => {
   freezeNow();
   await createFixtureIdentity();
   ({ template, registry } = await loadBaked(SLUG));
-}, 120_000);
+});
 
 const server = {
   serial: 's',

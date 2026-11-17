@@ -31,7 +31,7 @@ let kit: Kit;
 
 beforeAll(async () => {
   kit = await setupKit();
-}, 60_000);
+});
 
 function upload(kind: Kind, ctx: ServiceContext, passId: string, authority?: TenantPassWrite) {
   return kind === 'asset'
@@ -267,7 +267,7 @@ describe('holder image write fences', () => {
       photoGate.resolve();
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it.each(['asset', 'photo'] as const)(
     'does not PUT a retired %s key or overwrite an existing R2 object',
@@ -581,7 +581,7 @@ describe('holder image write fences', () => {
       gate.resolve();
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it.each(['asset', 'photo'] as const)(
     'rejects a %s upload when transfer completes between preflight and D1 CAS',

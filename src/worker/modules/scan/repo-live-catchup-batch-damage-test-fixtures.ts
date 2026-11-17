@@ -98,7 +98,7 @@ export function registerCatchupDamageTests() {
           expect(output.every((row) => row.photoUrl === null)).toBe(true);
       }
     }
-  }, 120_000);
+  });
 
   it('does not release a photo bearer when any grant result or the transaction receipt is damaged', async () => {
     const fixture = await catchupFixture();
@@ -188,7 +188,7 @@ export function registerCatchupDamageTests() {
       );
       expect(output.every((row) => row.photoUrl === null)).toBe(true);
     }
-  }, 120_000);
+  });
 
   it('accepts reordered tagged read results only for the right original row', async () => {
     const fixture = await catchupFixture();

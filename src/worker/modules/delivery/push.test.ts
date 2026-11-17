@@ -378,7 +378,7 @@ describe('guarded refresh push', () => {
       await first(kit.env.DB, 'SELECT last_refreshed_at FROM passes WHERE id = ?', [pass.id]),
     ).toEqual({ last_refreshed_at: kit.clock.now() });
     await kit.settle();
-  }, 120_000);
+  });
 
   it('rejects a transfer started at the final write and a matching post-start snapshot', async () => {
     const { kit: pendingKit, pass } = await setupSamsungCallbacks({
@@ -449,7 +449,7 @@ describe('guarded refresh push', () => {
         pass.id,
       ]),
     ).toEqual([]);
-  }, 120_000);
+  });
 
   it('rejects Test connector bindings even if a caller supplies a matching Test snapshot', async () => {
     const { pass, snapshot } = await bound(kit.org.id, 'test');
@@ -888,7 +888,7 @@ describe('push credential transfer fences', () => {
         device,
       ]),
     ).not.toBeNull();
-  }, 120_000);
+  });
 
   it.each([
     { stage: 'result', sql: /INSERT OR REPLACE INTO push_results/i, saved: 0 },
@@ -959,7 +959,7 @@ describe('push credential transfer fences', () => {
         [pass.id, device],
       ),
     ).toEqual({ credential_generation: pass.credentialGeneration + 1, push_token: A });
-  }, 120_000);
+  });
 
   it('rejects an old outbox if a previously claimed delivery is reclaimed after transfer', async () => {
     const { pass, device, outboxId } = await onePush();
@@ -986,7 +986,7 @@ describe('push credential transfer fences', () => {
         [pass.id, device],
       ),
     ).toEqual({ credential_generation: pass.credentialGeneration + 1, push_token: A });
-  }, 120_000);
+  });
 
   it('keeps the new registration after an in-flight bad-token response and rejects the old Apple credential', async () => {
     const { pass, device, outboxId } = await onePush();
@@ -1053,7 +1053,7 @@ describe('push credential transfer fences', () => {
         await devicesForPass(kit.env.DB, pass.id, pass.identityId, current.credentialGeneration)
       ).map((target) => target.deviceId),
     ).toEqual([device]);
-  }, 120_000);
+  });
 
   it('cannot overwrite a later result when transfer commits before the result batch', async () => {
     const { pass, device, outboxId } = await onePush();
@@ -1105,7 +1105,7 @@ describe('push credential transfer fences', () => {
         [pass.id, device],
       ),
     ).toEqual({ credential_generation: pass.credentialGeneration + 1 });
-  }, 120_000);
+  });
 
   it('fences delayed event writes when transfer starts after the result was saved', async () => {
     const { pass, device, outboxId } = await onePush();
@@ -1143,7 +1143,7 @@ describe('push credential transfer fences', () => {
         [pass.id, device],
       ),
     ).toEqual({ credential_generation: pass.credentialGeneration + 1 });
-  }, 120_000);
+  });
 
   it('rechecks the originating generation during cleanup even if its lease is still present', async () => {
     const { pass, device, outboxId } = await onePush();
@@ -1192,7 +1192,7 @@ describe('push credential transfer fences', () => {
       ].sort((a, b) => a.pass_id.localeCompare(b.pass_id)),
     );
     expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({ state: 'cancelled' });
-  }, 120_000);
+  });
 
   it('cleans only snapshotted shared registrations, not a transferred or newly attached pass', async () => {
     const { pass, device, outboxId } = await onePush();
@@ -1233,7 +1233,7 @@ describe('push credential transfer fences', () => {
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM devices WHERE device_id = ?', [device]),
     ).not.toBeNull();
-  }, 120_000);
+  });
 
   it('does not change identity health when the pass transfers before the health write', async () => {
     const { pass, device, outboxId } = await onePush();
@@ -1264,7 +1264,7 @@ describe('push credential transfer fences', () => {
       ]),
     ).toEqual({ apns_health: 'healthy' });
     expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({ state: 'cancelled' });
-  }, 120_000);
+  });
 
   it('does not deliver even a matching-generation registration while a transfer is pending', async () => {
     const fixture = await setupSamsungCallbacks({ db: await isolatedKeysetDatabase() });
@@ -1331,7 +1331,7 @@ describe('push credential transfer fences', () => {
         [pass.id, device],
       ),
     ).not.toBeNull();
-  }, 120_000);
+  });
 });
 
 describe('dead letters', () => {

@@ -151,7 +151,7 @@ beforeAll(async () => {
       roles: ['admin', 'user'],
     })
   ).headers;
-}, 60_000);
+});
 
 describe('versions', () => {
   it('keeps existing passes on their published version until a separate release', async () => {

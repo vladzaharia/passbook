@@ -44,7 +44,7 @@ const draftOf = async (id: string) => {
 
 beforeAll(async () => {
   kit = await blueprintKit();
-}, 60_000);
+});
 
 describe('the blueprint flag', () => {
   it('comes from the manifest, on the starters only, and the sync writes it', async () => {

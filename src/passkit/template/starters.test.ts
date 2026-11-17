@@ -13,7 +13,7 @@ beforeAll(async () => {
   freezeNow();
   // A stamps package draws its strips on first read.
   await loadBaked('starter-stamp-card');
-}, 120_000);
+});
 
 const STYLE_OF: Record<string, string> = {
   'starter-generic': 'generic',

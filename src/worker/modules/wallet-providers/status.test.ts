@@ -43,7 +43,7 @@ const makeEnv = installKeysetTestEnv();
 let kit: Kit;
 beforeEach(async () => {
   kit = await setupKit({ db: (await makeEnv()).DB });
-}, 60_000);
+});
 
 /** Exercise the independently mountable group using real session and API-key stores. */
 function appFor(fixture: Kit) {
@@ -194,7 +194,7 @@ describe('provider pass status read', () => {
       issuance: { state: 'disabled', reason: 'not_released' },
     });
     expect(JSON.stringify(result)).not.toMatch(/configured|unconfigured/i);
-  }, 90_000);
+  });
 
   it('returns only sanitized current operation results, never provider or holder secrets', async () => {
     const f = await setupSamsungCallbacks({
@@ -271,7 +271,7 @@ describe('provider pass status read', () => {
       issuance: { state: 'enabled' },
       desiredOperation: { version: ref.version, kind: 'upsert', state: 'succeeded', reason: 'ok' },
     });
-  }, 90_000);
+  });
 
   it('reports the current staged incarnation and unresolved older retirement during transfer', async () => {
     const f = await setupSamsungCallbacks({
@@ -379,7 +379,7 @@ describe('provider pass status read', () => {
         issuance: { state: 'enabled' },
       },
     ]);
-  }, 120_000);
+  });
 
   it('does not initialize a missing credential keyset from a read-only status request', async () => {
     const f = await setupKit({ db: kit.env.DB });
@@ -415,7 +415,7 @@ describe('provider pass status read', () => {
         issuance: { state: 'enabled' },
       },
     ]);
-  }, 90_000);
+  });
 
   it('pins the KEK bindings before asynchronous pass authorization', async () => {
     const pass = await kit.pass();
@@ -620,7 +620,7 @@ describe('provider pass status read', () => {
       }
     }
     expect(await read(await call(f.kit, f.pass.id, member.session.headers))).toEqual(baseline);
-  }, 120_000);
+  });
 
   it.each(['membership', 'session', 'key'] as const)(
     'rechecks %s at the final D1 read',
@@ -678,5 +678,5 @@ describe('provider pass status read', () => {
     );
     expect(response.status).toBe(404);
     expect(await response.text()).not.toContain('old-holder@example.test');
-  }, 90_000);
+  });
 });

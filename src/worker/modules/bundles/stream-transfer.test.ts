@@ -108,7 +108,7 @@ it('cancels an image stream when a real transfer starts while its first chunk op
     resume.resolve();
     spy.mockRestore();
   }
-}, 120_000);
+});
 
 const numbered = (total: number) => {
   let next = 0;

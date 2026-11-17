@@ -227,4 +227,4 @@ it('starter clones open in the designer as inactive drafts, and a draft can be s
       });
     }
   }
-}, 60_000);
+});

@@ -785,7 +785,7 @@ describe('authenticated Samsung card-state evidence', () => {
       ),
     ).toBe(true);
     expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate, f.proof)).toBe(true);
-  }, 120_000);
+  });
 
   it.each(['candidate', 'approval', 'current', 'history'] as const)(
     'does not reuse legacy %s provenance without a keyset commitment',
@@ -967,7 +967,7 @@ describe('authenticated Samsung card-state evidence', () => {
     } finally {
       f.kit.env.KEK_V1 = oldKey;
     }
-  }, 120_000);
+  });
 
   it.each(['changed', 'missing'] as const)(
     'does not contact Samsung or report evidence if the singleton becomes %s after opening credentials',

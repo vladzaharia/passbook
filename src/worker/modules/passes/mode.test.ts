@@ -60,7 +60,7 @@ beforeAll(async () => {
   otherOrg = await makeOrg(kit.fx, { name: 'Other Org' });
   otherTestRelease = await approveAppleRelease(kit, { orgId: otherOrg.id, mode: 'test' });
   await auth.addOrg(otherOrg.id);
-}, 60_000);
+});
 
 type Headers = Record<string, string>;
 const api = (path: string, init: RequestInit & { headers?: Headers } = {}) =>

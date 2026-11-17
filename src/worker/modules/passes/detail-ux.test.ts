@@ -26,7 +26,7 @@ beforeAll(async () => {
   kit = await setupKit();
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
-}, 60_000);
+});
 
 const api = (path: string, init: RequestInit = {}) =>
   app.request(`${ORIGIN}/api/v1${path}`, init, kit.env);

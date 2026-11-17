@@ -168,7 +168,7 @@ describe('transfer asset garbage collection', () => {
         [shared],
       ),
     ).rejects.toThrow();
-  }, 120_000);
+  });
 
   it('rolls back retirement when a later statement in the final transfer transaction fails', async () => {
     const kit = await setupKit();
@@ -245,7 +245,7 @@ describe('transfer asset garbage collection', () => {
     } finally {
       logError.mockRestore();
     }
-  }, 120_000);
+  });
 
   it('leaves all assets live on a lost source snapshot and retires the new snapshot only on retry', async () => {
     const kit = await setupKit();
@@ -292,7 +292,7 @@ describe('transfer asset garbage collection', () => {
       gate.resolve();
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it('blocks references racing the R2 deletion and collects a late stale PUT on a later sweep', async () => {
     const kit = await setupKit();
@@ -343,7 +343,7 @@ describe('transfer asset garbage collection', () => {
     kit.clock.advance(TRANSFER_ASSET_GC_RECHECK_MS);
     await sweepOneTransferAssetGc(jobCtxOf(kit), key);
     expect(await kit.env.BUCKET.head(key)).toBeNull();
-  }, 120_000);
+  });
 
   describe('ambiguous claim and R2 recovery', () => {
     const makeEnv = installKeysetTestEnv();
@@ -428,7 +428,7 @@ describe('transfer asset garbage collection', () => {
       } finally {
         spy.mockRestore();
       }
-    }, 120_000);
+    });
   });
 
   it('never deletes unknown namespaces and caps a sweep even with a larger due backlog', async () => {
@@ -473,7 +473,7 @@ describe('transfer asset garbage collection', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 });
 
 describe('retired asset reference and lease fences', () => {
@@ -520,7 +520,7 @@ describe('retired asset reference and lease fences', () => {
     await expect(asset(kit, one.id, key)).rejects.toThrow('retired pass asset key');
     await sweepOneTransferAssetGc(jobCtxOf(kit), key);
     expect(await kit.env.BUCKET.head(key)).toBeNull();
-  }, 120_000);
+  });
 
   it('preserves an asset namespace key already referenced by a template version', async () => {
     const kit = await setupKit();
@@ -545,7 +545,7 @@ describe('retired asset reference and lease fences', () => {
     ]);
     await sweepOneTransferAssetGc(jobCtxOf(kit), key);
     expect(await kit.env.BUCKET.head(key)).toBeNull();
-  }, 120_000);
+  });
 
   it('does not let an expired claimant acknowledge or release a newer claim', async () => {
     const kit = await setupKit();
@@ -598,7 +598,7 @@ describe('retired asset reference and lease fences', () => {
         [key],
       ),
     ).toEqual({ claim_token: null, last_deleted_at: retryAt });
-  }, 120_000);
+  });
 });
 
 it('does not retire anything when START loses its source snapshot', async () => {
@@ -633,7 +633,7 @@ it('does not retire anything when START loses its source snapshot', async () => 
   ).toBeNull();
   expect(await kit.env.BUCKET.head(assetKey)).not.toBeNull();
   expect(await kit.env.BUCKET.head(photoKey)).not.toBeNull();
-}, 120_000);
+});
 
 it('retries after a crash between an R2 delete and its D1 acknowledgement', async () => {
   const kit = await setupKit();
@@ -675,7 +675,7 @@ it('retries after a crash between an R2 delete and its D1 acknowledgement', asyn
   expect(
     await first(db, 'SELECT last_deleted_at FROM pass_transfer_asset_gc WHERE r2_key = ?', [key]),
   ).toEqual({ last_deleted_at: kit.clock.now() });
-}, 120_000);
+});
 
 describe('upload and operation-specific rollback holds', () => {
   async function reserve(kit: Kit, passId: string, key: string) {
@@ -732,7 +732,7 @@ describe('upload and operation-specific rollback holds', () => {
     expect(
       await first(kit.env.DB, 'SELECT r2_key FROM pass_assets WHERE pass_id = ?', [pass.id]),
     ).toEqual({ r2_key: live });
-  }, 120_000);
+  });
 
   it('retires both a crashed staged replacement and a pre-PUT reservation on transfer', async () => {
     const kit = await setupKit();
@@ -794,7 +794,7 @@ describe('upload and operation-specific rollback holds', () => {
     kit.clock.advance(TRANSFER_ASSET_GC_RECHECK_MS);
     await sweepOneTransferAssetGc(jobCtxOf(kit), late);
     expect(await kit.env.BUCKET.head(late)).toBeNull();
-  }, 120_000);
+  });
 
   it('reclaims a crashed upload reservation and keeps its late PUT permanently unreferenceable', async () => {
     const kit = await setupKit();
@@ -816,7 +816,7 @@ describe('upload and operation-specific rollback holds', () => {
     kit.clock.advance(TRANSFER_ASSET_GC_RECHECK_MS);
     await sweepOneTransferAssetGc(jobCtxOf(kit), key);
     expect(await kit.env.BUCKET.head(key)).toBeNull();
-  }, 120_000);
+  });
 
   it('settles a tombstone after a bounded number of re-checks and keeps it as the key guard', async () => {
     const kit = await setupKit();
@@ -849,7 +849,7 @@ describe('upload and operation-specific rollback holds', () => {
     await sweepOneTransferAssetGc(jobCtxOf(kit), key);
     expect(await kit.env.BUCKET.head(key)).not.toBeNull();
     await expect(asset(kit, pass.id, key)).rejects.toThrow('retired pass asset key');
-  }, 120_000);
+  });
 
   it('does not let one completed operation release a sibling rollback hold for the same key', async () => {
     const kit = await setupKit();
@@ -910,7 +910,7 @@ describe('upload and operation-specific rollback holds', () => {
     });
     await sweepOneTransferAssetGc(jobCtxOf(kit), key);
     expect(await kit.env.BUCKET.head(key)).toBeNull();
-  }, 120_000);
+  });
 
   it('allows the original pass to roll back a shared retired key only while its hold exists', async () => {
     const kit = await setupKit();
@@ -954,7 +954,7 @@ describe('upload and operation-specific rollback holds', () => {
     await sweepOneTransferAssetGc(jobCtxOf(kit), key);
     expect(await kit.env.BUCKET.head(key)).toBeNull();
     await expect(asset(kit, other.id, key)).rejects.toThrow('retired pass asset key');
-  }, 120_000);
+  });
 
   it('increments the image epoch on direct A to B to A mutations', async () => {
     const kit = await setupKit();
@@ -973,7 +973,7 @@ describe('upload and operation-specific rollback holds', () => {
     expect(
       await first(kit.env.DB, 'SELECT image_generation FROM passes WHERE id = ?', [pass.id]),
     ).toEqual({ image_generation: before.image_generation + 2 });
-  }, 120_000);
+  });
 });
 
 describe('transfer image epoch and cascade fences', () => {
@@ -1017,7 +1017,7 @@ describe('transfer image epoch and cascade fences', () => {
       await first(kit.env.DB, 'SELECT 1 FROM pass_transfer_asset_gc WHERE r2_key IN (?,?)', [a, b]),
     ).toBeNull();
     expect(await kit.env.BUCKET.head(a)).not.toBeNull();
-  }, 120_000);
+  });
 
   it('rejects FINISH after the exact same image rows undergo A to B to A', async () => {
     const kit = await setupKit();
@@ -1064,7 +1064,7 @@ describe('transfer image epoch and cascade fences', () => {
       gate.resolve();
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it('physically deletes a pass and cascades its image rows without aborting or resurrecting it', async () => {
     const kit = await setupKit();
@@ -1099,7 +1099,7 @@ describe('transfer image epoch and cascade fences', () => {
     expect(await kit.env.BUCKET.head(assetKey)).toBeNull();
     expect(await kit.env.BUCKET.head(photoKey)).toBeNull();
     expect(await first(kit.env.DB, 'SELECT 1 FROM passes WHERE id = ?', [pass.id])).toBeNull();
-  }, 120_000);
+  });
 });
 
 describe('crashed image-stage recovery', () => {
@@ -1153,7 +1153,7 @@ describe('crashed image-stage recovery', () => {
     ).not.toBeNull();
     expect(await kit.env.BUCKET.head(old)).not.toBeNull();
     expect(await kit.env.BUCKET.head(staged)).toBeNull();
-  }, 120_000);
+  });
 
   it('restores a deleted image and an unacknowledged scanner-only photo', async () => {
     const kit = await setupKit();
@@ -1184,7 +1184,7 @@ describe('crashed image-stage recovery', () => {
     expect(await kit.env.BUCKET.head(deleted)).not.toBeNull();
     expect(await kit.env.BUCKET.head(oldPhoto)).not.toBeNull();
     expect(await kit.env.BUCKET.head(nextPhoto)).toBeNull();
-  }, 120_000);
+  });
 
   it('recovers multi-slot stages in reverse order without deleting a still-needed rollback key', async () => {
     const kit = await setupKit();
@@ -1233,7 +1233,7 @@ describe('crashed image-stage recovery', () => {
     ).toEqual({ r2_key: oldLogo });
     expect(await kit.env.BUCKET.head(newLogo)).toBeNull();
     expect(await kit.env.BUCKET.head(newIcon)).toBeNull();
-  }, 120_000);
+  });
 
   it('does not restore a prior key after a newer pass version committed', async () => {
     const kit = await setupKit();
@@ -1252,7 +1252,7 @@ describe('crashed image-stage recovery', () => {
     ).toEqual({ r2_key: next });
     expect(await kit.env.BUCKET.head(old)).toBeNull();
     expect(await kit.env.BUCKET.head(next)).not.toBeNull();
-  }, 120_000);
+  });
 
   it('does not release or restore image holds while holder transfer is pending', async () => {
     const kit = await setupKit();
@@ -1336,7 +1336,7 @@ describe('crashed image-stage recovery', () => {
       gate.resolve();
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 });
 
 it('rechecks newest operation ownership when a candidate races recovery', async () => {
@@ -1374,7 +1374,7 @@ it('rechecks newest operation ownership when a candidate races recovery', async 
     await first(kit.env.DB, 'SELECT 1 FROM pass_transfer_asset_gc WHERE r2_key = ?', [a]),
   ).toBeNull();
   expect(await kit.env.BUCKET.head(a)).not.toBeNull();
-}, 120_000);
+});
 
 it('keeps a shared template key queued until its last independent reference disappears', async () => {
   const kit = await setupKit();
@@ -1418,7 +1418,7 @@ it('keeps a shared template key queued until its last independent reference disa
   ]);
   await sweepOneTransferAssetGc(jobCtxOf(kit), old);
   expect(await kit.env.BUCKET.head(old)).toBeNull();
-}, 120_000);
+});
 
 it('does not retire the live key for a successful metadata-only photo update', async () => {
   const kit = await setupKit();
@@ -1452,7 +1452,7 @@ it('does not retire the live key for a successful metadata-only photo update', a
     ]),
   ).toEqual({ version: 'updated', r2_key: key });
   expect(await kit.env.BUCKET.head(key)).not.toBeNull();
-}, 120_000);
+});
 
 it('rolls back recovery if displaced-key retirement cannot commit', async () => {
   const kit = await setupKit();
@@ -1506,4 +1506,4 @@ it('rolls back recovery if displaced-key retirement cannot commit', async () => 
     await first(kit.env.DB, 'SELECT r2_key FROM pass_assets WHERE pass_id = ?', [pass.id]),
   ).toEqual({ r2_key: old });
   expect(await kit.env.BUCKET.head(next)).toBeNull();
-}, 120_000);
+});

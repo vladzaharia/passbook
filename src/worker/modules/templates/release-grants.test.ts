@@ -190,7 +190,7 @@ beforeAll(async () => {
   author = await member(org.id, ['template_author']);
   reviewer = await member(org.id, ['template_reviewer']);
   publisher = await member(org.id, ['template_publisher']);
-}, 60_000);
+});
 
 afterEach(async () => {
   await run(env.DB, "UPDATE orgs SET status = 'active' WHERE id IN (?, ?)", [org.id, otherOrg.id]);

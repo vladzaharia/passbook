@@ -877,7 +877,7 @@ describe('sync bookkeeping snapshot fence', () => {
     } finally {
       resetBakedSync();
     }
-  }, 60_000);
+  });
 });
 
 describe('scheduled pass isolation', () => {

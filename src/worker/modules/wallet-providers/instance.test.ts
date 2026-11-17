@@ -970,7 +970,7 @@ describe('native wallet instance lifecycle', () => {
       await completeWalletOperation(f.kit.ctx, { ...claim, result: { kind: 'success' } }),
     ).toBe('succeeded');
     expect(await getWalletOperation(db, reference(existing))).toMatchObject({ state: 'succeeded' });
-  }, 120_000);
+  });
 
   it('blocks both target incarnations until old in-flight work and retirement settle', async () => {
     // Retirement gating applies to historical instances, which exist only while a provider is enabled.
@@ -1137,7 +1137,7 @@ describe('native wallet instance lifecycle', () => {
     expect(
       newest.every((row) => row.lifecycle === 'ready' && !staged.some((old) => old.id === row.id)),
     ).toBe(true);
-  }, 120_000);
+  });
 
   it('retires an expired historical Samsung ref and denies a new ref after restore', async () => {
     const f = await fixture();

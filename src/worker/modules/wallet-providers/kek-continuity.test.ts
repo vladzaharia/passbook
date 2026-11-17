@@ -622,7 +622,7 @@ describe('provider identity continuity across KEK rotation', () => {
       refId: f.refId,
       countryCodes: [],
     });
-  }, 120_000);
+  });
 
   it('pins retirement keys before awaiting and never retires under a mismatched entry keyset', async () => {
     const f = await historicalSamsung(false);
@@ -682,7 +682,7 @@ describe('provider identity continuity across KEK rotation', () => {
         [f.instanceId],
       ),
     ).toEqual([{ id: f.refRowId, ref_hash: f.refHash, retired_at: f.kit.clock.now() }]);
-  }, 120_000);
+  });
 
   it('does not stage a provider generation or retirement when the credential keyset changes', async () => {
     const f = await historicalSamsung();
@@ -847,5 +847,5 @@ describe('provider identity continuity across KEK rotation', () => {
       kit.env.KEK_V2 = originalV2;
     }
     expect(await ensureCredentialRefKeyset(db, kit.env)).toBe(commitment);
-  }, 120_000);
+  });
 });

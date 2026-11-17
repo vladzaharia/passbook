@@ -131,7 +131,7 @@ export function registerReplayReceipts() {
       await rows("SELECT * FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [pass.id]),
     ).toEqual(ledger);
     await expectOriginalLedger(pass.id, original.scanId);
-  }, 60_000);
+  });
 
   it('masks a completed receipt while a real provider-backed transfer is pending', async () => {
     const scoped = await setupScanKit();
@@ -220,7 +220,7 @@ export function registerReplayReceipts() {
     expect(
       await all(db, "SELECT * FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [pass.id]),
     ).toEqual(events);
-  }, 180_000);
+  });
 
   it('returns a heads-up receipt without the previous scan or override affordance', async () => {
     const a = await kit.scanner({ templateIds: [tpl] });

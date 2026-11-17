@@ -648,7 +648,7 @@ describe('0042 pending transfer snapshots', () => {
     expect(
       await first(db, 'SELECT state FROM pass_credential_transfers WHERE id = ?', [transferId]),
     ).toEqual({ state: 'pending' });
-  }, 120_000);
+  });
 
   it.each(['current', 'stale'] as const)(
     'retains connection proof and encrypted target content until a %s-connection completion',

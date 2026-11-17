@@ -272,7 +272,7 @@ describe('legacy webhook cleanup quarantine', () => {
     expect(kit.seams.jobs).toEqual([]);
     expect(kit.seams.applied).toEqual([]);
     expect(kit.seams.created).toEqual([]);
-  }, 60_000);
+  });
 
   it.each(['missing', 'different'] as const)(
     'does not seal or delete legacy inbox data when the keyset sentinel is %s',
@@ -347,7 +347,7 @@ describe('legacy webhook cleanup quarantine', () => {
     expect(await inboxRows(id)).toEqual([]);
     expect((await markers(id)).every((row) => row.state === 'failed')).toBe(true);
     expect(await quarantineLegacyWebhookEvents(kit.sctx, before, 1)).toBe(0);
-  }, 60_000);
+  });
 
   it('rolls back the marker and preserves the original rows if plaintext deletion fails', async () => {
     const { id } = await webhookConnection();
@@ -389,7 +389,7 @@ describe('legacy webhook cleanup quarantine', () => {
     expect(await eventRows(id)).toEqual(originalEvents);
     expect(await inboxRows(id)).toEqual([]);
     expect((await sources(id)).map((source) => source.id)).toContain(sourceId);
-  }, 60_000);
+  });
 
   it('atomically stages each marker and its items, retaining earlier progress and safe retry data', async () => {
     const { id } = await webhookConnection();
@@ -468,7 +468,7 @@ describe('legacy webhook cleanup quarantine', () => {
     expect(await first(kit.env.DB, envelopeSql, [second.id])).toEqual(envelope);
     expect(await itemRows(second.id)).toEqual(itemsBefore);
     expect(await eventRows(id)).toEqual(originalEvents);
-  }, 60_000);
+  });
 
   it('preserves a late inbox write when the observed source changes before staging', async () => {
     const { id } = await webhookConnection();
@@ -529,7 +529,7 @@ describe('legacy webhook cleanup quarantine', () => {
     expect(await inboxRows(id)).toEqual([]);
     expect(await sources(id)).toEqual(expect.arrayContaining(sealed));
     expect(await quarantineLegacyWebhookEvents(kit.sctx, before, 10)).toBe(0);
-  }, 60_000);
+  });
 
   it('quarantines disabled non-webhook connections without granting execution authority', async () => {
     const { id } = await createDemo(kit);
@@ -563,7 +563,7 @@ describe('legacy webhook cleanup quarantine', () => {
     expect(kit.seams.jobs).toEqual([]);
     expect(kit.seams.applied).toEqual([]);
     expect(kit.seams.created).toEqual([]);
-  }, 60_000);
+  });
 
   it('quarantines before retention deletion, fails closed, and never logs sensitive data', async () => {
     const { id, webhookSecret } = await webhookConnection();
@@ -679,5 +679,5 @@ describe('legacy webhook cleanup quarantine', () => {
       warn.mockRestore();
       error.mockRestore();
     }
-  }, 60_000);
+  });
 });
