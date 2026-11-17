@@ -1,7 +1,7 @@
 // Playwright webServer: mock Pocket ID + local D1 + Vite on E2E_PORT (default 5173; OIDC on +1).
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import { copyFileSync, rmSync } from 'node:fs';
+import { copyFileSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
 import { writeDevVars } from './lib/dev-vars.ts';
@@ -60,6 +60,12 @@ if (mode === 'preview') {
   execFileSync('npx', ['vite', 'build'], { cwd: root, stdio: 'inherit', env });
   // Vite's emitted vars omit non-secret overrides such as the local OIDC issuer.
   copyFileSync(varsFile, resolve(root, 'dist/wallet/.dev.vars'));
+  // The build flattens the config without vite.config.ts's `env.e2e`, so its raised RL_SCAN_PAIR
+  // never reaches preview: 30 pairs a minute from one IP refused the 3rd-Nth device of a run.
+  const built = resolve(root, 'dist/wallet/wrangler.json');
+  const config = JSON.parse(readFileSync(built, 'utf8'));
+  for (const r of config.ratelimits ?? []) if (r.name === 'RL_SCAN_PAIR') r.simple.limit = 100_000;
+  writeFileSync(built, JSON.stringify(config));
 }
 
 children.push(
