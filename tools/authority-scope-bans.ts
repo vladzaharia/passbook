@@ -27,16 +27,13 @@ const DELETED_MODULES = [
   'repo-action-authority',
   'repo-act',
   'repo-act-claim-lifecycle',
+  'repo-scanner-configuration-scope',
 ];
 
 const DELETED_IMPORT = new RegExp(`from\\s+'[^']*/(?:${DELETED_MODULES.join('|')})(?:\\.ts)?'`);
 
 /** Only the keyset module itself and wallet-providers build on the raw keyset predicate. */
-export const KEYSET_SQL_OWNERS = new Set([
-  'src/worker/modules/passes/repo-credential-keyset.ts',
-  'src/worker/modules/passes/repo-ops-retention.ts',
-  'src/worker/modules/scan/repo-credential-tombstones.ts',
-]);
+export const KEYSET_SQL_OWNERS = new Set(['src/worker/modules/passes/repo-credential-keyset.ts']);
 
 export function scanBans(rel: string, text: string): Finding[] {
   const found: Finding[] = [];

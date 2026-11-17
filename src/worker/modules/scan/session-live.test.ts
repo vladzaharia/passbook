@@ -5,7 +5,10 @@ import { scanHub } from './live.ts';
 import { openLiveAttachment, sealLiveAttachment } from './live-attachment.ts';
 import { liveRecipient } from './live-auth.ts';
 import { liveRowFor } from './live-render.ts';
-import { captureObservedScanningSession } from './scanning-workspace-observation.ts';
+import {
+  captureObservedScanningSession,
+  validatedScanningObservation,
+} from './scanning-workspace-observation.ts';
 import { type SessionLiveFixtures, sessionLiveFixtures } from './session-live-test-fixtures.ts';
 
 let fixtures: SessionLiveFixtures;
@@ -80,6 +83,17 @@ describe('session display authorization', () => {
     const recipient = await liveRecipient(kit.ctx, resumed);
     if (!recipient) throw new Error('Resumed paired display was rejected.');
     expect(captureObservedScanningSession(recipient.actor)).toEqual(attachment.observation);
+    // The observation carries the session row with its config_epoch; no scope snapshot rides along.
+    const observation = attachment.observation;
+    if (!observation) throw new Error('Missing observation.');
+    expect(Object.keys(observation).sort()).toEqual(['accepts', 'device', 'parent']);
+    expect(validatedScanningObservation(recipient.actor, observation)).not.toBeNull();
+    expect(
+      validatedScanningObservation(recipient.actor, {
+        ...observation,
+        parent: { ...observation.parent, updated_at: observation.parent.updated_at + 1 },
+      }),
+    ).toBeNull();
     for (const crossed of [
       { ...resumed, orgId: foreignOrg.id },
       { ...resumed, mode: 'test' as const },

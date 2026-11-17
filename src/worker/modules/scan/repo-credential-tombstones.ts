@@ -1,5 +1,5 @@
 import { type SqlValue, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+import { credentialRefKeysetMatch } from '../passes/repo-credential-keyset.ts';
 
 type Scope = { orgIdSql: string; modeSql: string };
 type Predicate = { sql: string; params: SqlValue[] };
@@ -26,13 +26,13 @@ export function noCredentialTombstonesSql(
     !validCredentialKeysetCommitment(credentialKeysetCommitment)
   )
     return { sql: '0', params: [] };
-  if (refs.length === 0)
-    return { sql: credentialRefKeysetSql, params: [credentialKeysetCommitment] };
+  if (refs.length === 0) return credentialRefKeysetMatch(credentialKeysetCommitment);
+  const keyset = credentialRefKeysetMatch(credentialKeysetCommitment);
   return {
     sql: `(NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tombstone
       WHERE tombstone.org_id=${scope.orgIdSql} AND tombstone.mode=${scope.modeSql}
-        AND tombstone.credential_hash IN (SELECT value FROM json_each(?))) AND ${credentialRefKeysetSql})`,
-    params: [JSON.stringify(refs), credentialKeysetCommitment],
+        AND tombstone.credential_hash IN (SELECT value FROM json_each(?))) AND ${keyset.sql})`,
+    params: [JSON.stringify(refs), ...keyset.params],
   };
 }
 
@@ -54,16 +54,16 @@ export function noCredentialTombstonePrefixesSql(
     !validCredentialKeysetCommitment(credentialKeysetCommitment)
   )
     return { sql: '0', params: [] };
-  if (prefixes.length === 0)
-    return { sql: credentialRefKeysetSql, params: [credentialKeysetCommitment] };
+  if (prefixes.length === 0) return credentialRefKeysetMatch(credentialKeysetCommitment);
   const rest = 64 - CREDENTIAL_REF_PREFIX;
+  const keyset = credentialRefKeysetMatch(credentialKeysetCommitment);
   return {
     sql: `(NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tombstone
       WHERE tombstone.org_id=${scope.orgIdSql} AND tombstone.mode=${scope.modeSql}
-        AND (${prefixes.map(() => 'tombstone.credential_hash BETWEEN ? AND ?').join(' OR ')})) AND ${credentialRefKeysetSql})`,
+        AND (${prefixes.map(() => 'tombstone.credential_hash BETWEEN ? AND ?').join(' OR ')})) AND ${keyset.sql})`,
     params: [
       ...prefixes.flatMap((prefix) => [prefix + '0'.repeat(rest), prefix + 'f'.repeat(rest)]),
-      credentialKeysetCommitment,
+      ...keyset.params,
     ],
   };
 }

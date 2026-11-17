@@ -107,11 +107,6 @@ export async function deviceState(id: string) {
       [id],
     ),
     audit: await all(kit.env.DB, 'SELECT * FROM audit_log WHERE target_id=? ORDER BY id', [id]),
-    revisions: await all(
-      kit.env.DB,
-      'SELECT * FROM scanning_config_revisions WHERE target_id=? ORDER BY kind,revision',
-      [id],
-    ),
   };
 }
 
@@ -125,11 +120,7 @@ export function intercept(db: D1Database, race?: () => Promise<void>) {
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (
-            !sql.includes('INSERT INTO scanning_config_revisions') &&
-            !sql.includes('UPDATE scanning_devices SET capabilities')
-          )
-            return prepared;
+          if (!sql.includes('UPDATE scanning_devices SET capabilities')) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

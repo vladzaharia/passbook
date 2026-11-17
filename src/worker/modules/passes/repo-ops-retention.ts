@@ -5,7 +5,7 @@ import {
 } from '../scan/repo-scan-retention.ts';
 import type { PreparedScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { providerRetirementCompleteSql } from '../wallet-providers/repo-sync-retention.ts';
-import { credentialRefKeysetSql } from './repo-credential-keyset.ts';
+import { matchesCredentialRefKeyset } from './repo-credential-keyset.ts';
 import { assetsFromResult, listAssetsStmt } from './repo-history-assets.ts';
 import { mapPass, type Pass } from './repo-map.ts';
 import { memberPhotoFromResult, memberPhotoStmt } from './repo-member-photo.ts';
@@ -45,6 +45,9 @@ export async function deletePassRows(
     retention.mode !== pass.mode
   )
     return { deleted: false, objectKeys: [], deviceIds: [] };
+  // The keyset row is an immutable singleton: once it matches, it matches for the statements below.
+  if (!(await matchesCredentialRefKeyset(db, credentialKeysetCommitment)))
+    return { deleted: false, objectKeys: [], deviceIds: [] };
   const [versionRows, assetRows, deviceRows, photoRow] = await batch(db, [
     stmt(db, 'SELECT object_key FROM pass_versions WHERE pass_id = ? AND object_key IS NOT NULL', [
       pass.id,
@@ -69,7 +72,7 @@ export async function deletePassRows(
       AND row_version = ? AND link_generation = ?
       AND credential_generation = ? AND lifecycle_generation = ?
       AND removed_at IS ? AND deleted_at IS ? AND test_data_quarantined = ?
-      AND ${credentialRefKeysetSql} AND NOT ${purgeBlockedSql}
+      AND NOT ${purgeBlockedSql}
       AND ${providerRetirementCompleteSql('passes.id')}
       ${guard ? "AND mode = 'test' AND created_at < ? AND lifecycle_generation = ?" : ''} RETURNING id`,
       [
@@ -83,7 +86,6 @@ export async function deletePassRows(
         pass.removedAt,
         pass.deletedAt,
         pass.testDataQuarantined ? 1 : 0,
-        credentialKeysetCommitment,
         ...(guard ? [guard.testBefore, guard.lifecycleGeneration] : []),
       ],
     ),

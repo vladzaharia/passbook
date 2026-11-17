@@ -5,6 +5,11 @@ import { UnavailableError } from '../../platform/errors.ts';
 export const credentialRefKeysetSql =
   'EXISTS (SELECT 1 FROM credential_ref_keyset WHERE id = 1 AND commitment = ?)';
 
+/** The same check as a bindable predicate, for statements outside wallet-providers that must deny a foreign keyset themselves. */
+export function credentialRefKeysetMatch(commitment: string): { sql: string; params: [string] } {
+  return { sql: credentialRefKeysetSql, params: [commitment] };
+}
+
 function unavailable(): UnavailableError {
   return new UnavailableError(
     'Credential references are unavailable.',
