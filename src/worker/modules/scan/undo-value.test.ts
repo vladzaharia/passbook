@@ -17,11 +17,8 @@ const passOf = async (id: string) => {
     'SELECT personalization, status, version FROM passes WHERE id = ?',
     [id],
   );
-  return {
-    ...(JSON.parse(row?.personalization ?? '{}') as Record<string, unknown>),
-    status: row?.status,
-    version: row?.version ?? 0,
-  };
+  const input = JSON.parse(row?.personalization ?? '{}') as { balance?: number; tier?: string };
+  return { ...input, status: row?.status, version: row?.version ?? 0 };
 };
 
 describe('undo of value scans', () => {

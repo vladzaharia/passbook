@@ -6,7 +6,7 @@ import { resolveTemplate } from '../passes/builder.ts';
 import { type PublishCommit, publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { schemaOf } from './effects-value.ts';
-import { addUndoWrites, openUndoGrant, UNDO_CODES, type UndoCommit } from './repo-undo.ts';
+import { addUndoWrites, openUndoGrant, UNDO_CODES, type UndoCommit } from './repo-undo-grant.ts';
 import { readScanValue } from './repo-undo-value.ts';
 import { superseded } from './undo-authority.ts';
 
