@@ -79,7 +79,6 @@ export async function attempt(
     csrfSnapshot,
     history: reads.preloaded,
     photo,
-    otherModeCredentialTombstoneRefs: [],
     dayStart: req.dayStart,
     action,
     overrideOf: req.overrideOf ?? null,
@@ -151,7 +150,6 @@ export async function attempt(
           ...stopFor(null),
           overrideOf: null,
           suppressCounts: true,
-          otherModeCredentialTombstoneRefs: credentials.otherModeCredentialTombstoneRefs,
         },
         generic,
         {

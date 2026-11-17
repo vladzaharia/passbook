@@ -138,11 +138,22 @@ export function epochIs(
 }
 
 /**
+ * What a template is relied on for (the issued-release rule): new issuance (`issue`) needs an active
+ * template; an existing pass or a scope that already holds the template (`existing`) keeps working while
+ * it is archived and stops once it is deleted.
+ */
+export type TemplateUse = 'issue' | 'existing';
+
+/** The template status `use` accepts, for a `templates` row aliased `alias`. */
+export const templateUsableSql = (alias: string, use: TemplateUse): string =>
+  use === 'issue' ? `${alias}.status = 'active'` : `${alias}.status != 'deleted'`;
+
+/**
  * The release is the current head for (template, mode, provider), read from `template_release_heads`: the
  * org's own head wins (for a baked template only when it is assigned to that org), and the platform head
  * counts only for an unassigned baked template. Releases are immutable and ordered by `generation`. Under an
- * `org_mode` grant the mode must equal the grant's mode. It checks headship and the template's status and
- * ownership only: callers take `releaseId` from `effectiveReleaseIdSql` / `activeRelease` in the same request, which
+ * `org_mode` grant the mode must equal the grant's mode. It checks headship and the template's status
+ * (`use`, default `issue`) and ownership only: callers take `releaseId` from `effectiveReleaseIdSql` / `activeRelease` in the same request, which
  * also applies the legacy `active_version`, policy and content-hash rules. WP-T's `effectiveReleaseIdSql` applies the same
  * precedence to the SQL reads (templates/repo-release-heads.ts).
  */
@@ -151,7 +162,9 @@ export function releaseHead(
   mode: string,
   provider: string,
   releaseId: string,
+  use: TemplateUse = 'issue',
 ): Check {
+  const usable = templateUsableSql('t', use);
   return {
     reason: 'release',
     ok: (b, scope) => {
@@ -160,11 +173,11 @@ export function releaseHead(
           WHERE t.id = ${b.bind(templateId)} AND h.mode = ${b.bind(mode)} AND h.provider = ${b.bind(provider)}
             AND ${orgScope} AND ${guard} ORDER BY h.generation DESC LIMIT 1)`;
       const org = head(
-        "t.status = 'active' AND (t.origin = 'uploaded' AND (t.org_id IS NULL OR t.org_id = a.org_id) OR t.origin = 'baked' AND t.org_id = a.org_id)",
+        `${usable} AND (t.origin = 'uploaded' AND (t.org_id IS NULL OR t.org_id = a.org_id) OR t.origin = 'baked' AND t.org_id = a.org_id)`,
         'h.org_id = a.org_id',
       );
       const platform = head(
-        "t.status = 'active' AND t.origin = 'baked' AND t.org_id IS NULL",
+        `${usable} AND t.origin = 'baked' AND t.org_id IS NULL`,
         'h.org_id IS NULL',
       );
       const eq = `COALESCE(${org}, ${platform}) = ${b.bind(releaseId)}`;

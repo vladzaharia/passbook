@@ -349,7 +349,7 @@ function outcome(phase: Phase, change: Change): Outcome {
     return { status: 404, code: 'SCANNING_SESSION_NOT_FOUND' };
   }
   if (phase === 'unbind') {
-    if (credential) return { status: 401, code: 'SCANNER_UNAUTHENTICATED' };
+    if (credential) return { status: 401, code: 'SCANNER_REPAIR' };
     if (
       volatile ||
       change === 'template status' ||

@@ -35,7 +35,7 @@ export type QueueActors =
       allowRequestContext?: true;
     };
 
-export type QueueResult = 'queued' | 'limited' | 'stale' | 'org' | 'denied';
+export type QueueResult = 'queued' | 'limited' | 'stale' | 'org' | 'actor' | 'denied';
 
 const RATE_LIMITED = 'EMAIL_RATE_LIMITED';
 const CODES = { ...DELIVERY_CODES, stale: RATE_LIMITED };
@@ -151,6 +151,7 @@ export async function commitQueue(ctx: ServiceContext, grants: Grant[]): Promise
       if (error.code === RATE_LIMITED) return 'limited';
       if (error.code === 'DELIVERY_STALE') return 'stale';
       if (error.code === 'ORG_ACCESS_CHANGED') return 'org';
+      if (error.code === 'ACTOR_CHANGED') return 'actor';
       if (error.status === 403) return 'denied';
     }
     throw error;

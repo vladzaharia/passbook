@@ -37,6 +37,7 @@ import {
 } from './repo-scans.ts';
 import { staffStatement } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
+import { afterReads } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { pinStaffFromResult } from './staff-pin.ts';
 
@@ -192,12 +193,14 @@ export async function replayOrReopenClaim(
     const reopened = reopenOnGrant(g, claim, row.at, claimAt, row.state);
     if (row.state === 'failed') quarantineOnGrant(g, claim, row.at);
     keysetOnGrant(g, ctx.env.DB, credentials.credentialKeysetCommitment);
-    const done = await g.commitWith([
-      ...plan.stmts,
-      ...(plan.capacityStmt ? [plan.capacityStmt] : []),
-      ...(overrideQuery ? [overrideQuery] : []),
-      ...(req.approval ? [staffStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
-    ]);
+    const done = await g.commitWith(
+      afterReads([
+        ...plan.stmts,
+        ...(plan.capacityStmt ? [plan.capacityStmt] : []),
+        ...(overrideQuery ? [overrideQuery] : []),
+        ...(req.approval ? [staffStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
+      ]),
+    );
     const results = done.after;
     const reopenedAt = (done.writes[g.indexOf(reopened)]?.results?.[0] as { at?: unknown })?.at;
     if (reopenedAt !== claimAt) {

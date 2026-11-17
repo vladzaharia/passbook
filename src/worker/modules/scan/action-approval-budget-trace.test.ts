@@ -66,7 +66,7 @@ async function managed(kit: ScanKit, template: string) {
 }
 
 describe('approval action D1 budget and original scalar authority', () => {
-  it('captures the manager and override with the claim and keeps a cold photo/history override within five trips', async () => {
+  it('captures the manager and override with the claim and keeps a cold photo/history override within seven trips', async () => {
     const { kit } = f;
     const template = await kit.scanTemplate('Approval, history and photo', {
       actions: [ACTION],
@@ -145,7 +145,9 @@ describe('approval action D1 budget and original scalar authority', () => {
         `/passes/${pass.id}/assets/member.png?g=`,
       );
       expect(JSON.stringify(result.display)).toContain('Check in');
-      expect(counted.count() - guard).toBeLessThanOrEqual(5);
+      // Five for the scan; the photo grant is decoration in one batch after the commit (PIN refund too);
+      // the photo rebuild reads the blueprint art hashes once (branding warnings).
+      expect(counted.count() - guard).toBeLessThanOrEqual(7);
 
       for (const { values } of trace.batches.flat()) expect(values).not.toContain(manager.pin);
       expect(JSON.stringify(result)).not.toContain(hashRow.pin_hash);

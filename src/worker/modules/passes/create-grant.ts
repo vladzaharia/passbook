@@ -1,19 +1,11 @@
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
-import { type Check, exactlyOne, releaseHead } from '../../platform/authority-checks.ts';
+import { type Check, releaseHead } from '../../platform/authority-checks.ts';
 import { AppError, type DenyReason } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
-import { sampleScannerScopeFence } from '../scan/sample-scope-fence.ts';
+import { sampleScannerScopeCheck } from '../scan/sample-scope-fence.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
-import {
-  fenceHolds,
-  notBlueprintCheck,
-  releaseOrgCheck,
-  releaseSnapshotCheck,
-  scannerHasNoDevicesCheck,
-  scannerTemplatesCheck,
-  templateHeadCheck,
-} from './repo-create-checks.ts';
+import { notBlueprintCheck, releaseOrgCheck, releaseSnapshotCheck } from './repo-create-checks.ts';
 import { type RetainedIssuanceScope, retainedIssuanceChecks } from './repo-write-retained.ts';
 import type { NewPassRow } from './repo-write-types.ts';
 
@@ -35,14 +27,6 @@ const REASON_OF = new Map<string, DenyReason>(
 
 export const createRefusal = (error: unknown): DenyReason | null =>
   error instanceof AppError ? (REASON_OF.get(error.code) ?? null) : null;
-
-/** The scan module's whole sample-scope fence, read immediately before the create commits. */
-export async function sampleScopeCurrent(db: D1Database, row: NewPassRow): Promise<boolean> {
-  const ex = row.execution;
-  if (ex.kind !== 'tenant' || ex.sampleScannerScope === undefined) return true;
-  const fence = sampleScannerScopeFence(ex.sampleScannerScope, row.orgId, row.mode, row.templateId);
-  return fenceHolds(db, fence);
-}
 
 /** The grant of a pass create: its principal, the checks that hold at commit, and the table bound. */
 export function createGrant(
@@ -69,73 +53,11 @@ export function createGrant(
       }),
     );
   if (retained) checks.push(...retainedIssuanceChecks(retained));
-  if (ex.kind === 'tenant' && ex.sampleScannerScope !== undefined) {
-    // The scanner row and its scope are proved in the grant; the rest of the scan module's fence
-    // (session, event, template usability) is read by `sampleScopeCurrent` just before the commit.
-    const { scanner, scannerScope } = ex.sampleScannerScope;
+  // The scan module's whole sample-scope fence, evaluated in the grant against its own tenant.
+  if (ex.kind === 'tenant' && ex.sampleScannerScope !== undefined)
     checks.push(
-      exactlyOne(
-        'scanners',
-        {
-          id: scanner.id,
-          kind: scanner.kind,
-          device_role: scanner.deviceRole,
-          event_id: scanner.eventId,
-          settings: scanner.settings,
-          time_zone: scanner.timeZone,
-          revoked_at: scanner.revokedAt,
-        },
-        undefined,
-        'config',
-      ),
-      scannerTemplatesCheck(scanner.id, scannerScope.templateIds),
+      sampleScannerScopeCheck(ex.sampleScannerScope, row.orgId, row.mode, row.templateId),
     );
-    // Every template the scanner (or its session) may scan keeps an effective release head.
-    const scoped = ex.sampleScannerScope.session?.scope.templateIds ?? scannerScope.templateIds;
-    for (const templateId of scoped) checks.push(templateHeadCheck(templateId, row.orgId));
-    const { event } = scannerScope;
-    if (event)
-      checks.push(
-        exactlyOne(
-          'scan_events',
-          { id: event.id, updated_at: event.updatedAt, archived_at: null },
-          undefined,
-          'config',
-        ),
-      );
-    const session = ex.sampleScannerScope.session;
-    if (session === null) checks.push(scannerHasNoDevicesCheck(scanner.id));
-    else
-      checks.push(
-        exactlyOne(
-          'scanning_sessions',
-          {
-            id: session.row.id,
-            status: session.row.status,
-            accepts: session.row.accepts,
-            settings: session.row.settings,
-            time_zone: session.row.time_zone,
-            updated_at: session.row.updated_at,
-          },
-          undefined,
-          'config',
-        ),
-        exactlyOne(
-          'scanning_devices',
-          {
-            scanner_id: scanner.id,
-            session_id: session.row.id,
-            surface: session.device.surface,
-            effective_surface: session.device.effective_surface,
-            overrides: session.device.overrides,
-            admin_user_id: session.device.admin_user_id,
-            device_key: session.device.device_key,
-          },
-          undefined,
-          'config',
-        ),
-      );
-  }
   if (ex.kind === 'connection' || ex.kind === 'system')
     return jobGrant(ctx, {
       purpose:

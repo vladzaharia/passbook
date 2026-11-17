@@ -80,6 +80,35 @@ describe('pairing tenant authority', () => {
     60_000,
   );
 
+  it('refuses a sample when an unassigned baked template has only an org release', async () => {
+    const actor = await member();
+    const approved = await kit.registry.resolve(templateId, 'v1');
+    const baked = kit.registry.add({
+      id: `${templateId}-baked-org-release`,
+      orgId: kit.org.id,
+      manifest: approved.manifest,
+      passJson: approved.passJson,
+      assets: { 'icon.png': ICON_PNG },
+    });
+    await persistTemplate(kit.fx, baked, { registry: kit.registry });
+    await approveScanReleases(kit, baked.id, { modes: ['test'] });
+    // Unassigned baked: no org of its own, so only a platform head may carry it.
+    await run(kit.env.DB, "UPDATE templates SET org_id=NULL, origin='baked' WHERE id=?", [
+      baked.id,
+    ]);
+    const scanner = await kit.scanner({ mode: 'test', templateIds: [templateId, baked.id] });
+    const beforePass = await passState();
+    const response = await request(
+      'POST',
+      scannerPath(scanner.id, 'sample-pass'),
+      actor.session.headers,
+    );
+    // The fence refuses it at commit; the scope looked fine when it was read.
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'PASS_CONFLICT' });
+    expect(await passState()).toEqual(beforePass);
+  }, 60_000);
+
   it('never samples from a blueprint: a template beside it is used, a blueprint alone is unassigned', async () => {
     const actor = await member();
     const blueprint = await kit.scanTemplate('Blueprint sample', {

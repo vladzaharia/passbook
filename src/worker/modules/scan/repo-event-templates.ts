@@ -24,22 +24,6 @@ export async function countScopedTemplates(
   return row?.n ?? 0;
 }
 
-/** The archived templates among `ids`: attached ones keep scanning but have no issuance head. */
-export async function archivedTemplateIds(
-  db: Db,
-  orgId: string,
-  ids: readonly string[],
-): Promise<string[]> {
-  if (ids.length === 0) return [];
-  const rows = await all<{ id: string }>(
-    db,
-    `SELECT id FROM templates WHERE (org_id=? OR org_id IS NULL) AND status='archived'
-       AND id IN (${placeholders(ids.length)})`,
-    [orgId, ...ids],
-  );
-  return rows.map((row) => row.id);
-}
-
 /** Read only the immutable versions captured by the scoped release/legacy authority snapshot. */
 export async function templateManifests(
   db: Db,
