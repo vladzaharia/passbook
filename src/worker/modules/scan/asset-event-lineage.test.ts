@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PassJson } from '../../../passkit/types.ts';
 import { run } from '../../platform/db.ts';
+import { mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
-import { mintAssetGrant } from './assets.ts';
 import { scannerCandidateAllowed } from './member-photo.ts';
 import { candidateById } from './repo-lookup.ts';
 import { candidateInScope } from './resolve.ts';

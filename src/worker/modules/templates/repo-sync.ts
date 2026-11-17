@@ -1,4 +1,4 @@
-import { all, first } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
 import { bakedExtrasComplete } from './repo-sync-extras.ts';
 
 export const ADOPTION_KEY = 'templates.baked_adoption';
@@ -136,14 +136,4 @@ export function bakedVersionSnapshot(
 
 export function bakedOrgId(db: D1Database, slug: string): Promise<{ id: string } | null> {
   return first(db, 'SELECT id FROM orgs WHERE slug = ?', [slug]);
-}
-
-/** Active baked templates the build no longer ships. */
-export async function staleBakedIds(db: D1Database, keepIds: readonly string[]): Promise<string[]> {
-  const rows = await all<{ id: string }>(
-    db,
-    "SELECT id FROM templates WHERE origin = 'baked' AND status = 'active'",
-  );
-  const keep = new Set(keepIds);
-  return rows.map((r) => r.id).filter((id) => !keep.has(id));
 }

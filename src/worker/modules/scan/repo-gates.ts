@@ -90,18 +90,19 @@ export function capacityFullPredicate(
   const witness = `SELECT witness.id AS witness_id FROM scans witness JOIN capacity_scope scope
     ON witness.org_id=scope.org_id AND witness.mode=scope.mode AND witness.event_id=scope.event_id
     WHERE witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'
-      AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL`;
+      AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL
+      AND witness.id IN (SELECT witness_id FROM live)`;
   const eligible = reentry ? "WHERE verified.state='in'" : '';
   return {
     sql: `(WITH capacity_scope AS MATERIALIZED (
       SELECT ? AS org_id, ? AS mode, ?/* scan-ephemeral-event-id */ AS event_id,
         ?/* scan-ephemeral-pass-id */ AS pass_id, ? AS maximum
+    ), live AS MATERIALIZED (
+      ${liveEventPresenceSql(org, modeScope, event, '1', true, true)}
     ), common AS MATERIALIZED (
       ${witness} AND ${scanLedgerCommonScopeSql('witness')}
     ), candidate AS MATERIALIZED (
       ${witness} AND ${scanLedgerSuccessfulCandidateSql('witness')}
-    ), live AS MATERIALIZED (
-      ${liveEventPresenceSql(org, modeScope, event, '1', true, true)}
     ), verified AS MATERIALIZED (
       SELECT live.pass_id,live.state FROM live
       JOIN common USING(witness_id) JOIN candidate USING(witness_id)

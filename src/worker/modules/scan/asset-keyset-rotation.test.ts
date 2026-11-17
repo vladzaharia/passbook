@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { assetGrantValid, mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
-import { assetGrantValid, mintAssetGrant } from './assets.ts';
 import { scanCredentialKeys } from './credential-input.ts';
 import { candidateById } from './repo-lookup.ts';
 import { setupScanKit } from './test-kit.ts';

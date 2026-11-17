@@ -292,7 +292,7 @@ describe('live plain rows', () => {
   });
 
   it('stops showing identity and the photo once the Wallet expiry passes', async () => {
-    const expiry = new Date(kit.clock.now() + 2_500).toISOString();
+    const expiry = new Date(kit.clock.now() + 6_000).toISOString();
     const f = await fixture({
       wallet: async (passId) => {
         await run(
@@ -305,8 +305,8 @@ describe('live plain rows', () => {
     expect(await f.shown()).toMatchObject({ passId: f.pass.id, holder: 'Plain Row Member' });
     expect(await f.photoStatus()).toBe(200);
     // The hub reads the system clock, the request path the kit's.
-    kit.clock.advance(3_000);
-    await new Promise((resolve) => setTimeout(resolve, 3_000));
+    kit.clock.advance(7_000);
+    await new Promise((resolve) => setTimeout(resolve, 7_000));
     expect(await f.shown()).toMatchObject(REDACTED);
     expect(await f.photoStatus()).toBe(404);
   });

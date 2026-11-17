@@ -4,7 +4,7 @@ import { createSessionStore } from '../auth/sessions.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
-import { assetGrantValid, mintAssetGrant } from './assets.ts';
+import { assetGrantValid, mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { candidateById } from './repo-lookup.ts';
 import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
