@@ -375,6 +375,8 @@ describe('presentation barcode', () => {
     if (state === 'expired') json.expirationDate = '2026-01-01T00:00:00Z';
     if (state === 'JSON-voided') json.voided = true;
     const pass = await passWith({ json });
+    // Before the state change: a deleted pass keeps no sealed copy to reveal the link from.
+    const link = await linkToken(h.env, pass);
     if (state === 'status-voided') {
       await run(h.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]);
     } else if (state === 'removed') {
@@ -387,7 +389,7 @@ describe('presentation barcode', () => {
         org.id,
       ]);
     }
-    for (const res of [await publicGet(await publicPath(pass)), await ownerGet(ownerPath(pass))]) {
+    for (const res of [await publicGet(`/p/${link}/barcode`), await ownerGet(ownerPath(pass))]) {
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     }
 
@@ -404,7 +406,7 @@ describe('presentation barcode', () => {
         expect(json).not.toContain(secret);
     }
 
-    const preview = await publicGet(`/p/${await linkToken(h.env, pass)}`);
+    const preview = await publicGet(`/p/${link}`);
     expect(preview.status).toBe(canBeMissing ? 404 : 200);
     const previewHtml = await preview.text();
     for (const secret of [PRIMARY, SECONDARY, LEGACY, SCAN_CODE, ALT_TEXT])
