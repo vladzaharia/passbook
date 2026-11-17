@@ -13,6 +13,7 @@ import { getWalletInstanceById, getWalletOperation } from '../wallet-providers/i
 import { reconcileWalletInstance } from '../wallet-providers/lifecycle.ts';
 import { runWalletProviderOperation } from '../wallet-providers/sync-operation.ts';
 import { outputRaceDatabase } from './output-authority-race-database-test-fixtures.ts';
+import { issueUnderOlderAdapter } from './release-policy-test-fixtures.ts';
 import { type Candidate, candidateById } from './repo-lookup.ts';
 import { key, type ScanKit, setupScanKit, startScanCredentialTransfer } from './test-kit.ts';
 
@@ -61,6 +62,7 @@ export async function fixture(
     lagWallet?: boolean;
     memberName?: string;
     memberNo?: string;
+    olderAdapter?: boolean;
   } = {},
 ): Promise<OutputFixture> {
   const pass = await kit.scanPass(
@@ -83,6 +85,7 @@ export async function fixture(
       },
       null,
     );
+  if (options.olderAdapter) await issueUnderOlderAdapter(kit, pass.id);
   if (options.lagWallet)
     await run(kit.env.DB, 'UPDATE passes SET version=version+1 WHERE id=?', [pass.id]);
   const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
@@ -170,6 +173,7 @@ type Change =
   | 'credential-generation'
   | 'lifecycle-generation'
   | 'release'
+  | 'release-adapter'
   | 'rules'
   | 'photo'
   | 'photo-version'
@@ -235,7 +239,7 @@ export async function changeAfterProjection(f: OutputFixture, db: D1Database, ch
       team,
       pass.identityId,
     ]);
-  } else if (change === 'release') {
+  } else if (change === 'release' || change === 'release-adapter') {
     if (!candidate.activeTemplateVersion) throw new Error('Missing active template version.');
     await approveAppleRelease(kit, {
       db,
@@ -302,15 +306,17 @@ export async function racedResolve(f: OutputFixture, change: Change) {
       clientTs: kit.clock.now(),
     });
     expect(race.fired()).toBe(true);
-    expect(response.status).toBe(200);
     const text = await response.text();
-    expect(JSON.parse(text)).toMatchObject({
-      kind: 'refused',
-      reason: 'not_found',
-      card: null,
-      display: null,
-      template: null,
-    });
+    const body = JSON.parse(text);
+    // Identical to the pass's own release, nothing changed; one that differs from it is a real
+    // change: retryable, nothing disclosed. Every other change refuses as an absent pass.
+    if (change === 'release') return expect(body).toMatchObject({ card: expect.anything() });
+    expect(response.status).toBe(change === 'release-adapter' ? 409 : 200);
+    expect(body).toMatchObject(
+      change === 'release-adapter'
+        ? { code: 'SCAN_PASS_CHANGED' }
+        : { kind: 'refused', reason: 'not_found', card: null, display: null, template: null },
+    );
     noDisclosure(text, f.pass.id);
   } finally {
     Object.assign(kit.env, { DB: real });

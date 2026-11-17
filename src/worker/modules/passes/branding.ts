@@ -110,8 +110,13 @@ export async function sourceArtHashes(
   db: D1Database,
   templateId: string,
 ): Promise<ReadonlySet<string>> {
+  return artHashesOf(await sourceBlueprintAssets(db, templateId));
+}
+
+/** `sourceArtHashes` for stored asset lists already read (a build reads them with its other inputs). */
+export function artHashesOf(storedLists: readonly string[]): ReadonlySet<string> {
   const hashes = new Set<string>();
-  for (const stored of await sourceBlueprintAssets(db, templateId)) {
+  for (const stored of storedLists) {
     const assets = z
       .array(z.object({ slot: z.string(), sha1: z.string() }))
       .catch([])

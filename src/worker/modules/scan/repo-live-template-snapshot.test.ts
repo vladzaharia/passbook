@@ -7,6 +7,7 @@ import { createTemplateRegistry, r2Key } from '../templates/registry.ts';
 import { rollbackRelease } from '../templates/releases.ts';
 import type { FakeAssets } from '../templates/testing.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
+import { issueUnderOlderAdapter } from './release-policy-test-fixtures.ts';
 import {
   liveTemplateSnapshotFromResult,
   liveTemplateSnapshotStmt,
@@ -103,17 +104,38 @@ describe('live template snapshots', () => {
       expectedGeneration: second.generation,
       reason: 'Restore the previously approved template version',
     });
-    expect(await current(kit, original.binding, original.snapshot)).toBe(false);
+    // The rollback head republishes v1 with identical content: the pass's own release still stands.
+    expect(await current(kit, original.binding, original.snapshot)).toBe(true);
     expect(await current(kit, next.binding, next.snapshot)).toBe(false);
     const restored = await capture(kit, pass.id);
     expect(restored.binding.activeReleaseVersion).toBe('v1');
-    expect(restored.binding.activeReleaseGeneration).toBe(second.generation + 1);
+    // The rollback head republishes v1 identically, so the capture is the pass's own release again.
+    expect(restored.binding.activeReleaseGeneration).toBe(release.generation);
+    expect(restored.snapshot).toEqual(original.snapshot);
     expect(
       await verifyLiveTemplateSnapshot(kit.ctx, restored.binding, restored.snapshot, 'commit'),
     ).toEqual({
       pinned: await registry.resolve(id, 'v1'),
       active: await registry.resolve(id, 'v1'),
     });
+  });
+
+  it('fences a same-version release only when it differs from the pass own release', async () => {
+    const { kit, id, pass } = await fixture();
+    const original = await capture(kit, pass.id);
+    await approveAppleRelease(kit, { templateId: id, version: 'v1', mode: 'live' });
+    // Identical content, adapter and audience policy: nothing a scanner sees or may do changed.
+    expect(await current(kit, original.binding, original.snapshot)).toBe(true);
+    expect((await capture(kit, pass.id)).snapshot).toEqual(original.snapshot);
+    await issueUnderOlderAdapter(kit, pass.id);
+    const older = await capture(kit, pass.id);
+    expect(await current(kit, older.binding, older.snapshot)).toBe(true);
+    await approveAppleRelease(kit, { templateId: id, version: 'v1', mode: 'live' });
+    // The successor carries other adapter capabilities: the old capture is fenced.
+    expect(await current(kit, older.binding, older.snapshot)).toBe(false);
+    const fresh = await capture(kit, pass.id);
+    expect(fresh.snapshot).not.toEqual(older.snapshot);
+    expect(await current(kit, fresh.binding, fresh.snapshot)).toBe(true);
   });
 
   it('prevents replacing, updating or deleting a referenced immutable version', async () => {

@@ -126,6 +126,7 @@ export function captureTemplateStampsStmt(
     LEFT JOIN template_releases head ON head.id=COALESCE((${effectiveReleaseIdSql(scope)}),
       (SELECT lr.id FROM template_releases lr WHERE lr.template_id=t.id AND lr.mode=scope.mode
         AND lr.provider='apple'
+        AND NOT EXISTS (SELECT 1 FROM passes fb WHERE ${legacyPassSql('fb', scope)})
         AND ((lr.org_id=scope.org_id AND (t.origin='uploaded' OR t.org_id=scope.org_id))
           OR (lr.org_id IS NULL AND t.origin='baked' AND t.org_id IS NULL))
         ORDER BY (lr.org_id IS NOT NULL) DESC, lr.generation DESC LIMIT 1))`,
