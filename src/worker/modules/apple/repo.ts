@@ -39,6 +39,20 @@ export async function registrationExists(
   return row !== null;
 }
 
+/** New registrations on a pass since `since`, for the per-pass new-device limit. */
+export async function registrationsSince(
+  db: D1Database,
+  passId: string,
+  since: number,
+): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    'SELECT count(*) AS n FROM registrations WHERE pass_id = ? AND created_at >= ?',
+    [passId, since],
+  );
+  return row?.n ?? 0;
+}
+
 export async function registrationCount(db: D1Database, passId: string): Promise<number> {
   const row = await first<{ n: number }>(
     db,
@@ -52,18 +66,15 @@ export async function registrationCount(db: D1Database, passId: string): Promise
 }
 
 /**
- * Device and registration in one transaction; the cap evicts the oldest
- * registration, and the `registrations_cap` trigger stays as the backstop.
+ * Device and registration in one transaction. A pass at the cap refuses new devices (the
+ * `registrations_cap` trigger aborts the batch); nothing is evicted.
  * The push token is stored on the registration: one identity serves every org, so the device row
  * is shared and a token written there by one pass would redirect the others.
  */
-/** Mirrors the `registrations_cap` trigger (migration 0001). */
-const REGISTRATIONS_PER_PASS = 20;
-
 export async function addRegistration(
   db: D1Database,
   r: { deviceId: string; pass: AppleCredential; pushToken: string; now: number },
-): Promise<false | 'created' | 'evicted'> {
+): Promise<boolean> {
   const { pass } = r;
   const results = await batch(db, [
     stmt(
@@ -86,17 +97,6 @@ export async function addRegistration(
         ...appleCredentialParams(pass),
       ],
     ),
-    // At the cap a new device replaces the oldest registration instead of being refused.
-    stmt(
-      db,
-      `DELETE FROM registrations WHERE rowid = (
-         SELECT x.rowid FROM registrations x WHERE x.pass_id = ? ORDER BY x.created_at, x.rowid LIMIT 1)
-       AND (SELECT count(*) FROM registrations WHERE pass_id = ?) >= ${REGISTRATIONS_PER_PASS}
-       AND NOT EXISTS (SELECT 1 FROM registrations
-         WHERE device_id = ? AND identity_id = ? AND pass_id = ?)
-       AND EXISTS (SELECT 1 FROM passes p WHERE ${appleCredentialSql})`,
-      [pass.id, pass.id, r.deviceId, pass.identityId, pass.id, ...appleCredentialParams(pass)],
-    ),
     stmt(
       db,
       `INSERT INTO registrations (device_id, identity_id, pass_id, push_token, created_at, credential_generation)
@@ -113,8 +113,7 @@ export async function addRegistration(
       ],
     ),
   ]);
-  if ((results[3]?.meta.changes ?? 0) === 0) return false;
-  return (results[2]?.meta.changes ?? 0) > 0 ? 'evicted' : 'created';
+  return (results[2]?.meta.changes ?? 0) > 0;
 }
 
 export async function updatePushToken(

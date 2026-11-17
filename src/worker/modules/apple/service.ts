@@ -1,6 +1,11 @@
 import { writeEvent } from '../../platform/analytics.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import { AppError, BadRequestError, UnauthenticatedError } from '../../platform/errors.ts';
+import {
+  AppError,
+  BadRequestError,
+  RateLimitedError,
+  UnauthenticatedError,
+} from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { redactString } from '../../platform/log.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -13,6 +18,7 @@ import {
   currentSerials,
   identityByPassType,
   registrationExists,
+  registrationsSince,
   removeRegistration,
   serialsSince,
   updatePushToken,
@@ -28,6 +34,8 @@ const LOG_LINES_PER_IP_HOUR = 100;
 /** Past the global ceiling, an IP that has spent this much of its hour is shed; quiet ones still log. */
 const LOG_LINES_RESERVED_PER_IP = 25;
 const HOUR = 3_600_000;
+/** New devices one pass may register per hour; the RL bindings only count per minute. */
+const NEW_REGISTRATIONS_PER_HOUR = 5;
 
 const DEVICE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 /** APNs device tokens vary in length; APNs rejects bad ones (BadDeviceToken cleans them up). */
@@ -104,12 +112,20 @@ export async function registerDevice(
     // An ordinary concurrent unregister may have removed the row; a retired credential cannot retry it.
     await assertAppleCredential(ctx, pass);
   }
-  // Only a lost race for the last slot reaches the cap trigger; the oldest registration is evicted first.
   const full = new AppError(
     'REGISTRATION_LIMIT',
     429,
     'This pass has too many registered devices.',
   );
+  // A bearer cannot push the real holder's devices out: past the cap a new device is refused.
+  if ((await registrationsSince(db, pass.id, now - HOUR)) >= NEW_REGISTRATIONS_PER_HOUR) {
+    ctx.log.warn('apple.registration_throttled', {
+      code: 'REGISTRATION_THROTTLED',
+      orgId: pass.orgId,
+      passId: pass.id,
+    });
+    throw new RateLimitedError(3600);
+  }
   try {
     const created = await addRegistration(db, {
       deviceId: input.deviceId,
@@ -118,11 +134,16 @@ export async function registerDevice(
       now,
     });
     if (!created) throw unauthorized();
-    if (created === 'evicted')
-      ctx.log.info('apple.registration_evicted', { orgId: pass.orgId, passId: pass.id });
   } catch (error) {
-    // Lost the race for the last slot: the trigger aborts the batch.
-    if (classifyD1Error(error)?.kind === 'abort') throw full;
+    // The pass is at the cap: the trigger aborts the batch.
+    if (classifyD1Error(error)?.kind === 'abort') {
+      ctx.log.warn('apple.registration_cap', {
+        code: 'REGISTRATION_LIMIT',
+        orgId: pass.orgId,
+        passId: pass.id,
+      });
+      throw full;
+    }
     throw error;
   }
   writeEvent(ctx.env, {

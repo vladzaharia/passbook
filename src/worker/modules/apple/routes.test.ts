@@ -38,6 +38,12 @@ const register = (
     body: JSON.stringify({ pushToken }),
   });
 
+/** The app reads the real clock, so age rows in place to move them out of the hourly window. */
+const ageRegistrations = (pass: Pass) =>
+  run(kit.env.DB, 'UPDATE registrations SET created_at = created_at - 7200000 WHERE pass_id = ?', [
+    pass.id,
+  ]);
+
 describe('quarantined legacy test passes', () => {
   it('treats stale registrations as unknown and omits them from device updates', async () => {
     const blocked = await kit.pass({ mode: 'test' });
@@ -179,28 +185,43 @@ describe('register', () => {
     expect(noBody.status).toBe(400);
   });
 
-  it('evicts the oldest registration at 20 instead of refusing a new device', async () => {
+  it('refuses a new device at the cap and evicts nothing', async () => {
     const pass = await kit.pass();
     for (let i = 0; i < 20; i++) {
-      kit.clock.advance(1000);
       expect((await register(pass, `cap-${i}`)).status).toBe(201);
+      await ageRegistrations(pass);
     }
-    kit.clock.advance(1000);
     // A registered device refreshing its token is not a new slot.
     expect((await register(pass, 'cap-5', token('c'))).status).toBe(200);
-    expect((await register(pass, 'cap-20')).status).toBe(201);
-    const ids = (
-      await all<{ device_id: string }>(
-        kit.env.DB,
-        'SELECT device_id FROM registrations WHERE pass_id = ?',
-        [pass.id],
-      )
-    ).map((r) => r.device_id);
+    expect((await register(pass, 'cap-20')).status).toBe(429);
+    const ids = await all<{ device_id: string }>(
+      kit.env.DB,
+      'SELECT device_id FROM registrations WHERE pass_id = ?',
+      [pass.id],
+    );
     expect(ids).toHaveLength(20);
-    expect(ids).toContain('cap-20');
-    expect(ids).toContain('cap-5');
-    expect(ids).not.toContain('cap-0');
-    expect(ids).toContain('cap-1');
+    expect(ids.map((r) => r.device_id)).toContain('cap-0');
+  });
+
+  it('lets a bearer registering many fake devices neither evict a holder nor pass the hourly limit', async () => {
+    const pass = await kit.pass();
+    expect((await register(pass, 'real-phone')).status).toBe(201);
+    let refused = 0;
+    for (let i = 0; i < 20; i++) if ((await register(pass, `fake-${i}`)).status === 429) refused++;
+    expect(refused).toBe(16);
+    expect(
+      await first(kit.env.DB, "SELECT 1 FROM registrations WHERE device_id = 'real-phone'"),
+    ).not.toBeNull();
+  });
+
+  it('refuses the 6th new device on a pass within an hour and recovers after it', async () => {
+    const pass = await kit.pass();
+    for (let i = 0; i < 5; i++) expect((await register(pass, `hr-${i}`)).status).toBe(201);
+    const sixth = await register(pass, 'hr-5');
+    expect(sixth.status).toBe(429);
+    expect((await register(pass, 'hr-0', token('d'))).status).toBe(200);
+    await ageRegistrations(pass);
+    expect((await register(pass, 'hr-5')).status).toBe(201);
   });
 });
 
