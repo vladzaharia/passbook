@@ -61,7 +61,7 @@ describe('scan display preview tenant authorization', () => {
     ]);
   });
 
-  it('does not return a scope after its check-in policy changes during audit', async () => {
+  it('still returns a scope after its check-in policy changes during audit (content, not authority)', async () => {
     const { clock, org, own, memberSession, atPreviewAudit, preview } = fixture;
     const session = await memberSession(['pass_operator']);
     const response = await atPreviewAudit(
@@ -76,11 +76,11 @@ describe('scan display preview tenant authorization', () => {
       },
       () => preview(own, session.headers),
     );
-    expect(response.status).toBe(404);
-    expect(await response.text()).not.toContain('Alex Morgan');
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('scope');
   });
 
-  it('fences same-version release supersession even if legacy version and timestamp match', async () => {
+  it('masks a preview when a release is approved for a pass that had none, even if timestamps match', async () => {
     const { env, org, own, ownReleaseFixture, memberSession, atPreviewAudit, preview } = fixture;
     const session = await memberSession(['pass_operator']);
     const original = await first<{ updated_at: number }>(
@@ -154,7 +154,7 @@ describe('scan display preview tenant authorization', () => {
     ],
     ['quarantined pass', 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?'],
     ['removed pass', 'UPDATE passes SET removed_at = 1 WHERE id = ?'],
-  ])('does not return a captured scope after %s changes during audit', async (_change, sql) => {
+  ])('%s changes during audit', async (change, sql) => {
     const { own, memberSession, atPreviewAudit, preview } = fixture;
     const session = await memberSession(['pass_operator']);
     const response = await atPreviewAudit(
@@ -163,8 +163,15 @@ describe('scan display preview tenant authorization', () => {
       },
       () => preview(own, session.headers),
     );
-    expect(response.status).toBe(404);
-    expect(await response.text()).not.toContain('Alex Morgan');
+    const authority = ['changed lifecycle generation', 'quarantined pass', 'removed pass'];
+    if (authority.includes(change)) {
+      expect(response.status).toBe(404);
+      expect(await response.text()).not.toContain('Alex Morgan');
+    } else {
+      // Content and sync metadata are not authority (F8): the scope is still served.
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain('scope');
+    }
   });
 
   it('does not return a captured scope after a real credential transfer during audit', async () => {
@@ -192,7 +199,7 @@ describe('scan display preview tenant authorization', () => {
     expect(await response.text()).not.toContain('Alex Morgan');
   });
 
-  it('fences the exact bounded Wallet row even when a newer row has identical contents', async () => {
+  it('serves the scope when only a newer Wallet row with identical contents appears', async () => {
     const { env, own, memberSession, atPreviewAudit, preview } = fixture;
     const session = await memberSession(['pass_operator']);
     await run(env.DB, 'UPDATE passes SET version = version + 1 WHERE id = ?', [own.passId]);
@@ -211,11 +218,11 @@ describe('scan display preview tenant authorization', () => {
       },
       () => preview(own, session.headers),
     );
-    expect(response.status).toBe(404);
-    expect(await response.text()).not.toContain('Alex Morgan');
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('scope');
   });
 
-  it('fences signing identity revision across an ABA change during audit', async () => {
+  it('serves the scope across a signing identity ABA change during audit', async () => {
     const { env, own, memberSession, atPreviewAudit, preview } = fixture;
     const session = await memberSession(['pass_operator']);
     const identity = await first<{ id: string; team_identifier: string }>(
@@ -238,8 +245,8 @@ describe('scan display preview tenant authorization', () => {
       },
       () => preview(own, session.headers),
     );
-    expect(response.status).toBe(404);
-    expect(await response.text()).not.toContain('Alex Morgan');
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('scope');
   });
 
   it.each([

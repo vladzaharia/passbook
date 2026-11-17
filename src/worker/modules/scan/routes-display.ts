@@ -12,24 +12,18 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { getOrgAccess } from '../orgs/access.ts';
+import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
-import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
 import { activeRelease } from '../templates/releases.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
-import { actorCsrfFence } from './actor-csrf.ts';
+import { captureScanEpochs } from './authority-checks.ts';
 import { safeJson, safeTimestamp, visibleFields } from './card-semantics.ts';
-import { captureCredentialKeyset, credentialKeysetContext } from './credential-keyset-authority.ts';
+import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { previewScope } from './display-preview.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import { candidateById } from './repo-lookup.ts';
-import { passOutputPredicate } from './repo-output-authority.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
-import {
-  previewCsrfStmt,
-  previewPreflightAuthority,
-  previewProjectionAuthority,
-  previewSessionLifetime,
-} from './repo-routes-display.ts';
+import { scanReadAuthority } from './repo-read-authority.ts';
+import { previewActorStmt, previewCurrentStmt } from './repo-routes-display.ts';
 import { foundOf } from './resolve.ts';
 import { ROLE_RANK } from './rules.ts';
 
@@ -77,15 +71,14 @@ register(
     actor.tenantAuthority = capturedAuthority;
     actor.platformSessionId = auth.sessionId;
     actor.role = role;
-    const csrfFence = await actorCsrfFence(ctx, actor);
-    if (!csrfFence) throw new ForbiddenError();
-    const lifetime = previewSessionLifetime(capturedAuthority);
-    const preflightNow = ctx.clock.now();
-    const credentialKeysetCommitment = await captureCredentialKeyset(
-      ctx,
-      previewPreflightAuthority(previewAuthority, authority, lifetime, csrfFence, preflightNow),
-    );
-    if (!credentialKeysetCommitment) throw new ForbiddenError();
+    await captureScanEpochs(ctx.env.DB, actor);
+    const viewer = await previewActorStmt(
+      ctx.env.DB,
+      scanReadAuthority(actor, { now: ctx.clock.now(), templateId }),
+    ).first<{ actor_ok: number }>();
+    if (viewer?.actor_ok !== 1) throw new ForbiddenError();
+    // Authorized by now, so the credential keyset may be created on first use; then it is pinned.
+    const credentialKeysetCommitment = await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
     actor.credentialKeysetCommitment = credentialKeysetCommitment;
 
     const candidate = await candidateById(ctx.env.DB, orgId, passId);
@@ -176,43 +169,14 @@ register(
     // The scope is assembled across several reads; do not return it after any of the
     // evaluated pass, template, organization, session or membership snapshots change.
     const assertCurrent = async () => {
-      const now = ctx.clock.now();
-      const pass = passOutputPredicate({
-        pass: found.pass,
-        connectionGeneration: found.connectionGeneration,
-        activeTemplateVersion: found.activeVersion,
-        orgRevision: found.orgRevision,
-        templateRevision: found.templateRevision,
-        // Preview is an explicitly authorized pass-ID selection, not a submitted credential.
-        credentialTombstoneRefs: [],
-        credentialKeysetCommitment,
-        release: found,
-        purpose: 'read',
-        displayTemplateVersion: found.displayTemplateVersion,
-        checkInRules: found.checkInRules,
-        requireActive: true,
-        now,
-      });
-      const [projection, csrf] = await ctx.env.DB.batch([
-        outputPredicateStmt(
-          ctx.env.DB,
-          previewProjectionAuthority(pass, previewAuthority, authority, lifetime, now),
-        ),
-        previewCsrfStmt(ctx.env.DB, csrfFence),
-      ]);
-      const current =
-        (projection?.results?.[0] as { authorized?: number } | undefined)?.authorized === 1;
-      const csrfCurrent =
-        (csrf?.results?.[0] as { csrf_authorized?: number } | undefined)?.csrf_authorized === 1;
-      if (!csrfCurrent) throw new ForbiddenError();
-      if (!current) {
-        if (
-          !(await tenantPassAuthorityValid(ctx.env.DB, previewAuthority, ctx.clock.now())) ||
-          !(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now()))
-        )
-          throw new ForbiddenError();
-        throw notFound();
-      }
+      const stmt = previewCurrentStmt(
+        ctx.env.DB,
+        scanReadAuthority(actor, { now: ctx.clock.now(), templateId }),
+        candidate,
+      );
+      const row = stmt ? await stmt.first<{ actor_ok: number; pass_ok: number }>() : null;
+      if (row?.actor_ok !== 1) throw new ForbiddenError();
+      if (row.pass_ok !== 1) throw notFound();
     };
     await assertCurrent();
     await auditStmt(ctx.env.DB, ctx, {

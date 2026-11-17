@@ -61,10 +61,6 @@ export interface PreviewAuthorityFixture {
   problem(response: Response): Promise<unknown>;
   previewAudits(userId: string): Promise<{ org_id: string; target_id: string }[]>;
   withMutableKeyset(work: (original: string, replacement: string) => Promise<void>): Promise<void>;
-  atPreviewKeysetBootstrap(
-    intervene: (db: D1Database) => Promise<void>,
-    operation: () => Promise<Response>,
-  ): Promise<Response>;
   atPreviewRead(
     matches: (sql: string) => boolean,
     intervene: (db: D1Database) => Promise<void>,
@@ -77,7 +73,6 @@ export interface PreviewAuthorityFixture {
   atPreviewOutputFence(
     intervene: (db: D1Database) => Promise<void>,
     operation: () => Promise<Response>,
-    observeBind?: (sql: string, values: readonly unknown[]) => void,
   ): Promise<Response>;
 }
 
