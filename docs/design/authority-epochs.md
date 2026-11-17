@@ -1,6 +1,6 @@
 # Authority epochs and grant rows
 
-Replaces column-equality fences with trigger-maintained epochs plus one authority grant row per batch. Built in migrations `0029` to `0057` (`0052` carries the epochs and the grant table). The code is the reference: `src/worker/platform/authority*.ts`, `tools/authority-scope.ts`.
+Replaces column-equality fences with trigger-maintained epochs plus one authority grant row per batch. Built in migrations `0029` to `0065` (`0052` carries the epochs and the grant table). The code is the reference: `src/worker/platform/authority*.ts`, `tools/authority-scope.ts`.
 
 - **Wallet providers** ship dark and keep their column-equality fences (section 7.3).
 
@@ -68,9 +68,8 @@ The classification test (`authority-columns.test.ts`) reads `PRAGMA table_info` 
 
 **`updated_at` columns become timestamps.** `orgs`, `templates`, `scanners`, `scan_staff` and `scan_events` keep `updated_at` only as a timestamp. `tools/authority-scope.ts --strict` (part of `check:rules`) fails `updated_at = ?` in worker SQL.
 
-**`scanning_config_revisions` (`0024`, in production, read by 10 scan files):**
-- No production code reads or writes it; `config_epoch` replaces it. Only test fixtures still mention it.
-- Migration `0066` drops it.
+**`scanning_config_revisions` (`0024`, in production; the 0024-era Worker writes it):**
+- `config_epoch` replaces it. Nothing in the current Worker reads or writes it. The table stays for now: the pre-cutover Worker writes it during the migrate to promote window. Drop it one release after cutover.
 
 **Trigger shape.** The passes bump set has about 45 columns. To bound expression depth, it is split into three triggers by column group (`passes_row_version_a`, `_b`, `_c`), because D1 allows expression depth 100.
 
@@ -391,7 +390,7 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 | Lost gate race shows `refused/not_found` | The gate UPSERT and finalize run in the grant batch. Finalize writes `ok` only if the gate points at this scan, otherwise `heads_up` naming `gate.last_scan_id`. `StaleScanAuthority` catch-alls go; the remaining refusals carry a reason (`config` → `SCAN_CONFIG_CHANGED`, `actor` → 401/403). |
 | An assertion rollback quarantines the idempotency key | Assertions become RAISE reasons. A classified abort is definite, so the key is released. |
 | "Let in again" fails after a staff sign-in or any revision | F6. Staff sign-in moves no epoch. |
-| Committed check-in returns 409 `SCAN_UNCONFIRMED` | No post-commit fence. Display history comes from aggregates (W1-08). |
+| Committed check-in returns 409 `SCAN_UNCONFIRMED` | No post-commit fence on check-in. Display history comes from aggregates (W1-08). The code remains only where a live candidate's template fence is read after the commit (stop, choose, answer): the action committed, the response cannot be confirmed. |
 | Bind overflow silently becomes `'0'` | Statements are ≤40 parameters by construction, and `stmt()` throws `SQL_BIND_BUDGET`. |
 | Output fences fail on sync fields | F8 |
 | Undo returns 404 after any org, template or pass revision | F7 |
@@ -435,7 +434,7 @@ Each epoch check adds 2 binds and about 150 bytes.
 
 - **Caps** (`authority-statements.ts`): a write binds at most 40 values (`WRITE_PARAM_BUDGET`), an included read part and the grant at most 90 (`PARAM_BUDGET`), any statement at most 32 KB. A breach throws `SQL_BIND_BUDGET` or `SQL_SIZE_BUDGET`.
 - **D1 limits that shape the SQL:** the bind limit is the highest `?N` index, not the number of uses. Expression depth is 100 (a flat `OR` chain of 95 terms passes, 98 fail; `EXISTS` nesting 12 levels pass, 14 fail). A table or result has at most 100 columns (`passes` has 61). Keep checks flat: at most 2 nested `EXISTS` inside the grant `CASE`.
-- **Removed:** `platform/sql-balance.ts`, `platform/sql-tokens.ts` and `scan/repo-secret-binds.ts`. `stmt` (alias `exactStmt`) prepares the SQL unchanged, so depth is the author's: staged CTEs and `scanConjunction` grouping keep scan guards under 100. `tools/authority-scope-bans.ts` fails a `scan-ephemeral` bind label, `json_extract('[]'`, a `balanceSql*` name, an import of a deleted fence module, and `credentialRefKeysetSql` outside the keyset module, `passes/repo-ops-retention.ts` and `scan/repo-credential-tombstones.ts`.
+- **Removed:** `platform/sql-balance.ts`, `platform/sql-tokens.ts` and `scan/repo-secret-binds.ts`. `stmt` (alias `exactStmt`) prepares the SQL unchanged, so depth is the author's: staged CTEs and `scanConjunction` grouping keep scan guards under 100. `tools/authority-scope-bans.ts` fails a `scan-ephemeral` bind label, `json_extract('[]'`, a `balanceSql*` name, an import of a deleted fence module, and `credentialRefKeysetSql` outside `passes/repo-credential-keyset.ts` and `wallet-providers/` (`KEYSET_SQL_OWNERS`).
 
 ## 6. Migration and cutover
 
@@ -457,8 +456,11 @@ The runbook is `docs/operations.md` ("Cutover from schema 0024"): order, pre-che
 | `0053` | `branding_gc_queue` |
 | `0055` | a verified holder attaches to a pass with a static credential without a transfer |
 | `0056`, `0057` | blueprints; indexes. Additive: they do not touch the cutover window |
+| `0058` | `scans.session_id`: a passless replay must come from the scanning session that claimed the scan. Additive |
 | `0059`, `0065` | pass download, bundle and device tokens stored as MACs with sealed copies; `pass_versions.pass_json` never carries `authenticationToken`. One-way: the previous Worker fails against them (6.2, 6.3) |
-| `0063` | drops `scanners_credential_revision`; scanner authority is `credential_epoch`. Additive-safe: the old Worker's writes satisfy no trigger and need none |
+| `0061` | drops `scan_asset_grant_provenance` and its triggers; `credential_ref_keyset_insert_guard` recreated without the provenance term. Grants are stateless |
+| `0063` | drops `scanners_credential_revision`; scanner authority is `credential_epoch`. Adds `scanners_updated_at_monotonic`. Additive-safe: the old Worker's writes satisfy no trigger and need none |
+| `0064` | `scanners_revision_no_replace_update` and `pass_credential_no_replace_update` fire only when a guarded column is written (`BEFORE UPDATE OF ...`); same checks and messages |
 
 Migrations already applied are never edited; new schema takes the next free number.
 
@@ -500,7 +502,14 @@ Roll forward only once migrations have run (owner answer 6). `0059` and `0065` m
 
 ### 7.2 Open work
 
-- Done: `scan/repo-scanner-configuration-scope.ts` is deleted; the workspace observation carries the scanner's `config_epoch`. Migration `0066` drops `scanning_config_revisions`.
+The scan and fence rewrite is complete. What is left:
+- Wallet providers stay on column equality (7.3).
+- Drop `scanning_config_revisions` one release after cutover (the pre-cutover Worker writes it during the migrate to promote window).
+- `LEGACY_REVISION_MS` (org status accepts a pre-cutover `updated_at` as a revision): remove one release after cutover.
+
+Done:
+
+- Done: `scan/repo-scanner-configuration-scope.ts` is deleted; the workspace observation carries the scanner's `config_epoch`.
 - Done: the balancer, `sql-tokens`, `repo-secret-binds` and the legacy fence families are deleted; migration `0063` drops `scanners_credential_revision`. A scanner's `updated_at` is a label: authority is `credential_epoch`. The live ring's `revision` is an in-memory self-check of one actor snapshot, not a database compare. One credential-loss rule: every scanner path uses `scannerCredentialLost`.
 
 - Open: drop the plain-to-MAC exception (0059 `passes_token_change_moves_link`, `passes_row_version_a`, wallet-provider triggers; 0065 `passes_auth_token_change_follows_generation`, `pass_credential_transfer_required`, `passes_row_version_a`) in a new migration once `TOKEN_SEAL_RUN remaining = 0` and `unscrubbed = 0` in production. SQL cannot verify the HMAC, so until then any `h1:` value passes the exception.
@@ -618,7 +627,7 @@ Decisions that differ from, or add to, the sections above. Each is checked again
 - Undo re-derives the actor from the request and checks its epochs at commit. The `scan.undone` event carries no authority or MAC, and nothing stored is read as authority, so undo works on scans from before the epoch cutover. The approver is checked by value (role, disabled, `pin_hash`).
 - Staff changes refuse with `staff` (409 `SCAN_STAFF_CHANGED`); the device stays paired.
 - Mode: creates and event writes are `org_mode`; edits of an existing scanner, session, device or staff row are `org` scope, by id.
-- A scan grant leaves decoration that may fail on its own (PIN refund, photo grant) to one batch after the commit; it logs `SCAN_FINISH_DEGRADED` and never rolls back the scan.
+- A scan grant leaves display-history rows, which may fail on their own, to one batch after the commit; it logs `SCAN_FINISH_DEGRADED` and never rolls back the scan. The PIN refund rides in the commit grant (`refundParts`, no guarded table, so it cannot fail the scan); photo grants are stateless HMACs and write nothing.
 - `commitWith(reads)` takes `afterRead` values (`platform/authority-after.ts`): fixed read-only SQL run after the release in the same transaction.
 
 **Holders**
