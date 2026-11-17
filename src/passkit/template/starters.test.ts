@@ -11,12 +11,15 @@ let material: SigningMaterial;
 beforeAll(async () => {
   material = await createFixtureIdentity();
   freezeNow();
-});
+  // A stamps package draws its strips on first read.
+  await loadBaked('starter-stamp-card');
+}, 120_000);
 
 const STYLE_OF: Record<string, string> = {
   'starter-generic': 'generic',
   'starter-poster-generic': 'posterGeneric',
   'starter-store-card': 'storeCard',
+  'starter-stamp-card': 'storeCard',
   'starter-coupon': 'coupon',
   'starter-event-ticket': 'eventTicket',
   'starter-boarding-pass': 'boardingPass',
@@ -60,7 +63,10 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
 
   it('ships every image at @2x and @3x, sized and trimmed by the HIG rules', async () => {
     const { pkg, template } = await loadBaked(slug);
-    const images = pkg.assets.filter((a) => a.slot !== 'strings' && a.slot !== 'other');
+    const images = pkg.assets.filter(
+      (a) =>
+        a.slot !== 'strings' && a.slot !== 'other' && a.slot !== 'source' && a.stamps === undefined,
+    );
     expect(images.length).toBeGreaterThan(0);
     for (const a of images) {
       expect(checkImageSize(a.name, a.slot, a.scale, a.width ?? 0, a.height ?? 0), a.name).toEqual({
@@ -112,9 +118,17 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
       .filter((f): f is PassField => typeof f === 'object' && f !== null && 'changeMessage' in f)
       .map((f) => f.key.replace(/-poster$/, ''));
     for (const key of keys)
-      expect(['message', 'gate', 'departs', 'date', 'time', 'status', 'balance', 'tier']).toContain(
-        key,
-      );
+      expect([
+        'message',
+        'gate',
+        'departs',
+        'date',
+        'time',
+        'status',
+        'balance',
+        'tier',
+        'stamps',
+      ]).toContain(key);
   });
 
   it('uses only slots its style draws', async () => {

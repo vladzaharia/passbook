@@ -1,3 +1,4 @@
+import type { StampScope } from '../stamps/rules.ts';
 import type { Condition, Expr, Json, Personalization, TemplateManifest } from '../types.ts';
 
 /** Evaluation scope for expressions: user input plus the manifest's static lookup tables. */
@@ -12,6 +13,7 @@ export interface ExprScope {
 
 export interface PassScope {
   scanCode?: string;
+  stamps?: StampScope;
 }
 
 export const EXPR_LIMITS = {
@@ -205,12 +207,18 @@ export function isEmpty(value: Json | undefined): boolean {
 
 const MAX_CONDITION_DEPTH = 8;
 
+/** A condition may read a server value: `{ "input": "pass.stamps.ready", "eq": true }`. */
+const isPassPath = (input: string, scope: ExprScope) =>
+  input.startsWith('pass.') && !scope.passIsInput;
+
 export function testCondition(condition: Condition, scope: ExprScope, depth = 0): boolean {
   if (depth > MAX_CONDITION_DEPTH) throw new ExprError('Condition is nested too deeply', '');
   if ('all' in condition) return condition.all.every((c) => testCondition(c, scope, depth + 1));
   if ('any' in condition) return condition.any.some((c) => testCondition(c, scope, depth + 1));
   if ('not' in condition) return !testCondition(condition.not, scope, depth + 1);
-  const value = scope.input[condition.input];
+  const value = isPassPath(condition.input, scope)
+    ? lookupPath(condition.input, scope)
+    : scope.input[condition.input];
   if (condition.eq !== undefined) return JSON.stringify(value) === JSON.stringify(condition.eq);
   if (condition.in) return condition.in.some((v) => JSON.stringify(v) === JSON.stringify(value));
   if (condition.empty !== undefined) return isEmpty(value) === condition.empty;
@@ -222,5 +230,5 @@ export function conditionInputs(condition: Condition, depth = 0): string[] {
   if ('all' in condition) return condition.all.flatMap((c) => conditionInputs(c, depth + 1));
   if ('any' in condition) return condition.any.flatMap((c) => conditionInputs(c, depth + 1));
   if ('not' in condition) return conditionInputs(condition.not, depth + 1);
-  return [condition.input];
+  return condition.input.startsWith('pass.') ? [] : [condition.input];
 }

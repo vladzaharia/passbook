@@ -74,11 +74,14 @@ export function setSlotImage(doc: DesignDoc, slot: string, asset: DraftAsset | n
 
 /** The request body of the versions endpoint. */
 export function assetsPayload(assets: readonly DraftAsset[]) {
-  return assets.map((a) =>
-    a.upload !== undefined
-      ? { name: a.name, upload: a.upload }
-      : { name: a.name, sha1: a.sha1 ?? '' },
-  );
+  // Generated stamp strips are the server's to draw; a save never sends them back.
+  return assets
+    .filter((a) => !a.name.startsWith('stamps/strips/'))
+    .map((a) =>
+      a.upload !== undefined
+        ? { name: a.name, upload: a.upload }
+        : { name: a.name, sha1: a.sha1 ?? '' },
+    );
 }
 
 /** Preview URLs: new files as data URLs, saved ones from the template's asset route. */

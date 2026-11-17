@@ -13,6 +13,7 @@ import { dryRunReport, dryRunTemplate } from './dry-run-report.ts';
 import { type Analysis, analyzePackage } from './package/analyze.ts';
 import type { ImageTools } from './package/images.ts';
 import { getOrgName } from './repo.ts';
+import { stampsForSave } from './stamps-save.ts';
 import { resolveVersionFiles } from './version-files.ts';
 
 type Body = Pick<z.infer<typeof SaveVersionSchema>, 'passJson' | 'manifest' | 'assets'>;
@@ -36,7 +37,8 @@ const encoder = new TextEncoder();
 /**
  * Validates a version written from JSON (the designer) with the upload pipeline's own steps:
  * package analysis with image checks, then the dry-run build for `orgId`. `source` is the template
- * whose stored files the body may name by hash.
+ * whose stored files the body may name by hash. `stamps.carry` off draws every strip (a new
+ * template cannot carry another's).
  */
 export async function checkVersion(
   ctx: ServiceContext,
@@ -44,6 +46,7 @@ export async function checkVersion(
   orgId: string | null,
   body: Body,
   images: ImageTools,
+  stamps: { dryRun: boolean; carry?: boolean },
 ): Promise<CheckedVersion | { refused: RefusedVersion }> {
   // tooling.json of an uploaded version is not carried into designer versions; it only serves the import pipeline.
   const { files, carried } = await resolveVersionFiles(ctx, source.id, body.assets);
@@ -56,6 +59,7 @@ export async function checkVersion(
     fallbackName: source.name,
     images,
     behaviors,
+    stamps: stampsForSave(ctx, source.id, manifest, stamps.dryRun, carried, stamps.carry),
   });
   if (!('version' in analysis)) return { refused: { report: analysis.report, analysis: null } };
 

@@ -1,6 +1,6 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import { Ban, QrCode } from 'lucide-react';
 import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { Badge, Button, RowActions, RowLink, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { RelTime } from '../../passes/detail/rel-time.tsx';
@@ -46,7 +46,7 @@ export function scannerColumns(
   now: number,
   eventName: (id: string) => string | undefined,
   canManage: boolean,
-): ColumnDef<ScannerDto, never>[] {
+): DataColumnDef<ScannerDto, never>[] {
   return [
     {
       header: 'Name',

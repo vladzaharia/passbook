@@ -7,7 +7,7 @@ import {
 import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { TemplateScopeQuerySchema } from './route-scope.ts';
+import { TemplateAssetQuerySchema, TemplateScopeQuerySchema } from './route-scope.ts';
 import { openVersionAsset, versionDetail } from './service.ts';
 
 type Router = OpenAPIHono<AppBindings>;
@@ -46,17 +46,19 @@ export function registerVersionReads(router: Router): void {
       path: '/{id}/versions/{version}/assets/{name}',
       summary: 'Template asset bytes',
       params: TemplateAssetParamSchema,
-      query: TemplateScopeQuerySchema,
+      query: TemplateAssetQuerySchema,
     },
     async (c) => {
       const p = c.req.valid('param');
+      const q = c.req.valid('query');
       const asset = await openVersionAsset(
         serviceContext(c),
         c.var.auth,
         p.id,
         p.version,
         p.name,
-        c.req.valid('query').orgId,
+        q.orgId,
+        q.stamps,
       );
       const etag = asset.sha1 ? `"${asset.sha1}"` : null;
       // Version bytes are immutable, but membership and session authorization are not.

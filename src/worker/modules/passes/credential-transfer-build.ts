@@ -1,3 +1,4 @@
+import { keptGoalOf, withKeptGoal } from '../../../passkit/stamps/rules.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
@@ -21,6 +22,7 @@ import {
 import { getOrg } from './repo-read-issuance.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
 import { lookupValueOf, newScanCode, primaryBarcodeMessage } from './scan-code.ts';
+import { stampMovePlan } from './stamps-keep.ts';
 
 export const conflict = () =>
   new ConflictError(
@@ -161,9 +163,25 @@ export async function buildTransfer(
   ctx: ServiceContext,
   source: TransferPass,
   release: AppleRelease,
-  content: ConnectionTransferContent,
+  captured: ConnectionTransferContent,
 ): Promise<TransferBuild> {
   const p = source.pass;
+  // A pass with no issued release moves to the head: its stamps move like any other version change.
+  const moved =
+    release.version === p.templateVersion
+      ? {}
+      : (
+          await stampMovePlan(
+            ctx,
+            { orgId: p.orgId, templateId: p.templateId, version: release.version },
+            [p.templateVersion],
+          )
+        )({
+          templateVersion: p.templateVersion,
+          personalization: captured.personalization,
+          fieldSources: withKeptGoal(captured.fieldSources, keptGoalOf(p.fieldSources), 'manual'),
+        });
+  const content: ConnectionTransferContent = { ...captured, ...moved };
   const org = await getOrg(ctx.env.DB, p.orgId);
   if (org?.status !== 'active') throw conflict();
   const credentials = {

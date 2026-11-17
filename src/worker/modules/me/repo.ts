@@ -38,6 +38,8 @@ export interface MyPassRow {
   org_name: string;
   org_status: string;
   pass_json: string | null;
+  /** The input; only a stamp card's count is read from it, to pick the strip. */
+  personalization: string;
   /** 1 when a device registered the pass. */
   registered: number;
 }
@@ -47,7 +49,7 @@ const SELECT = `
   SELECT p.id, p.org_id, p.identity_id, p.template_id, p.template_version, p.display_title, p.display_subtitle, p.status, p.mode, p.modified_at, p.removed_at, p.removal_message, p.last_refreshed_at,
          p.version, p.revision, p.row_version, p.release_id, p.link_generation, p.credential_generation, p.lifecycle_generation,
          p.holder_email, p.connection_id, p.external_ref, p.test_data_quarantined, p.deleted_at,
-         p.refresh_requested_at, p.download_token, t.name AS template_name, o.name AS org_name, o.status AS org_status,
+         p.refresh_requested_at, p.download_token, p.personalization, t.name AS template_name, o.name AS org_name, o.status AS org_status,
          COALESCE(pv.pass_json, p.pending_pass_json) AS pass_json,
          EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id) AS registered
   FROM passes p

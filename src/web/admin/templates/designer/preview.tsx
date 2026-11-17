@@ -45,25 +45,31 @@ export function DesignerPreview({
   assets,
   assetBase,
   checking,
+  stripUrl,
 }: {
   passJson: Record<string, unknown> | null | undefined;
   assets: readonly DraftAsset[];
   assetBase: string;
   checking: boolean;
+  /** A stamp card's strip, drawn in the browser for the preview count. */
+  stripUrl?: string | null;
 }) {
   const [face, setFace] = useState<PassSide>('front');
   const host = usePartDrop(passJson);
   const view = useMemo(() => {
     if (!passJson) return null;
     try {
-      return normalize(passJson as unknown as PassJson, {
-        assets: previewAssetMap(assets, assetBase),
-      });
+      const files = previewAssetMap(assets, assetBase);
+      if (stripUrl) {
+        files['strip@2x.png'] = stripUrl;
+        files['strip@3x.png'] = stripUrl;
+      }
+      return normalize(passJson as unknown as PassJson, { assets: files });
     } catch {
       // A pass the card cannot read shows the fallback line; the issues list says why.
       return null;
     }
-  }, [passJson, assets, assetBase]);
+  }, [passJson, assets, assetBase, stripUrl]);
   return (
     <div className="flex flex-col items-center gap-3" data-testid="designer-preview">
       <div ref={host} className="relative w-full">

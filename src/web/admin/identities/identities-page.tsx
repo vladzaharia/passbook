@@ -1,11 +1,11 @@
 import { Link } from '@tanstack/react-router';
-import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { IdentitySchema } from '@/shared/contracts/identities.ts';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { formatCount } from '@/web/lib/format.ts';
+import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
   Badge,
   Button,
@@ -44,7 +44,7 @@ export function IdentitiesPage() {
       Upload
     </Button>
   );
-  const columns = useMemo<ColumnDef<Identity, never>[]>(() => {
+  const columns = useMemo<DataColumnDef<Identity, never>[]>(() => {
     const now = Date.now();
     return [
       {

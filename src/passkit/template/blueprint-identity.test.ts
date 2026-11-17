@@ -61,6 +61,13 @@ const IDENTITY: Record<string, { bg: Rgb; fg: Rgb; label: Rgb; text: number; lab
     text: 13.5,
     labels: 8.9,
   },
+  'starter-stamp-card': {
+    bg: [252, 244, 230],
+    fg: [49, 28, 15],
+    label: [162, 64, 25],
+    text: 14.7,
+    labels: 5.9,
+  },
   'starter-boarding-pass': {
     bg: [3, 82, 142],
     fg: [255, 255, 255],
@@ -72,7 +79,7 @@ const IDENTITY: Record<string, { bg: Rgb; fg: Rgb; label: Rgb; text: number; lab
 
 describe.each(Object.entries(IDENTITY))('%s identity', (slug, want) => {
   it('ships the identity colours and meets AA for text and labels', async () => {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     const pass = template.passJson;
     expect(parseColor(pass.backgroundColor)).toEqual(want.bg);
     expect(parseColor(pass.foregroundColor)).toEqual(want.fg);
@@ -86,7 +93,7 @@ describe.each(Object.entries(IDENTITY))('%s identity', (slug, want) => {
 it('gives every blueprint its own background', async () => {
   const seen = new Set<string>();
   for (const slug of Object.keys(IDENTITY)) {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     seen.add(String(template.passJson.backgroundColor));
   }
   expect(seen.size).toBe(Object.keys(IDENTITY).length);
@@ -100,9 +107,10 @@ it('names each blueprint and gives it a curated glyph', async () => {
     'starter-coupon': ['Coupon', 'percent'],
     'starter-event-ticket': ['Event ticket', 'music'],
     'starter-boarding-pass': ['Boarding pass', 'plane'],
+    'starter-stamp-card': ['Stamp card', 'stamp'],
   };
   for (const [slug, [name, icon]] of Object.entries(names)) {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     expect(template.manifest).toMatchObject({ name, blueprint: true, display: { icon } });
   }
 });
@@ -117,6 +125,8 @@ it('names the store card a Balance card and leads with the balance', async () =>
 });
 
 const PRE = join(import.meta.dirname, '__fixtures__/pre-blueprint');
+// The Stamp card is new with blueprints: no earlier build to compare.
+const UPGRADED = Object.keys(IDENTITY).filter((slug) => slug !== 'starter-stamp-card');
 const IDENTITY_KEYS = ['backgroundColor', 'foregroundColor', 'labelColor', 'description'];
 const walk = (v: unknown, path = ''): [string, unknown][] =>
   v && typeof v === 'object'
@@ -124,28 +134,23 @@ const walk = (v: unknown, path = ''): [string, unknown][] =>
     : [[path, v]];
 
 describe('upgrade impact', () => {
-  it.each(Object.keys(IDENTITY))(
-    '%s reissues silently: only colours and description change',
-    async (slug) => {
-      const before = JSON.parse(
-        readFileSync(join(PRE, `${slug}.sample.golden`), 'utf8'),
-      ) as PassJson;
-      const after = (await buildBaked(slug, material)).passJson;
-      const a = new Map(walk(before));
-      const b = new Map(walk(after));
-      const changed = [...new Set([...a.keys(), ...b.keys()])].filter((k) => a.get(k) !== b.get(k));
-      // Serial, token and the organization name are server-supplied and fixed in the fixture.
-      const unexpected = changed.filter((k) => !IDENTITY_KEYS.includes(k.slice(1)));
-      expect(unexpected).toEqual([]);
-      expect(changed.length).toBeGreaterThan(0);
-      // Wallet alerts only for a changed field value that carries a changeMessage: none changes.
-      const fields = changed.filter((k) => /Fields\//.test(k));
-      expect(fields).toEqual([]);
-    },
-  );
+  it.each(UPGRADED)('%s reissues silently: only colours and description change', async (slug) => {
+    const before = JSON.parse(readFileSync(join(PRE, `${slug}.sample.golden`), 'utf8')) as PassJson;
+    const after = (await buildBaked(slug, material)).passJson;
+    const a = new Map(walk(before));
+    const b = new Map(walk(after));
+    const changed = [...new Set([...a.keys(), ...b.keys()])].filter((k) => a.get(k) !== b.get(k));
+    // Serial, token and the organization name are server-supplied and fixed in the fixture.
+    const unexpected = changed.filter((k) => !IDENTITY_KEYS.includes(k.slice(1)));
+    expect(unexpected).toEqual([]);
+    expect(changed.length).toBeGreaterThan(0);
+    // Wallet alerts only for a changed field value that carries a changeMessage: none changes.
+    const fields = changed.filter((k) => /Fields\//.test(k));
+    expect(fields).toEqual([]);
+  });
 
   it('keeps every changeMessage and field key as before', async () => {
-    for (const slug of Object.keys(IDENTITY)) {
+    for (const slug of UPGRADED) {
       const before = JSON.parse(
         readFileSync(join(PRE, `${slug}.sample.golden`), 'utf8'),
       ) as PassJson;

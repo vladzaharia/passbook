@@ -9,13 +9,18 @@ import { useDesigner } from './context.tsx';
 import { isSlotImage, placeImage, previewAssetMap } from './images.ts';
 import { SLOT_LABEL, slotsOf } from './model.ts';
 
+const STAMP_STRIP_NEEDS =
+  'needs 750 × 288 px (@2x) and 1125 × 432 px (@3x); stamps are drawn on it';
+
 function SlotDrop({ slot }: { slot: string }) {
   const { doc, edit, assetBase } = useDesigner();
   const [problem, setProblem] = useState<string>();
   const [soft, setSoft] = useState<string>();
   const current = doc.assets.find((a) => isSlotImage(a, slot));
   const url = current ? previewAssetMap([current], assetBase)[current.name] : undefined;
-  const label = SLOT_LABEL[slot] ?? slot;
+  // With stamps the strip is the background they are drawn on.
+  const behindStamps = slot === 'strip' && doc.manifest.stamps !== undefined;
+  const label = behindStamps ? 'Strip background' : (SLOT_LABEL[slot] ?? slot);
   const ground =
     typeof doc.passJson.backgroundColor === 'string' ? doc.passJson.backgroundColor : undefined;
 
@@ -42,7 +47,7 @@ function SlotDrop({ slot }: { slot: string }) {
           ? `@${current.scale}x${current.width ? `: ${current.width} × ${current.height} px` : ''}`
           : undefined
       }
-      needs={slotNeeds(slot)}
+      needs={behindStamps ? STAMP_STRIP_NEEDS : slotNeeds(slot)}
       error={problem}
       warning={soft}
       onFile={(f) => void take(f)}

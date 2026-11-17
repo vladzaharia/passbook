@@ -1,4 +1,4 @@
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { flexRender, type RowData, useTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type CSSProperties, Fragment, type ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
@@ -6,13 +6,13 @@ import { BELOW_MD, useMediaQuery } from '../lib/media.ts';
 import { useArrivalMode, useInsertHighlight } from '../lib/motion.ts';
 import { CARD_SURFACE } from './card.tsx';
 import { useStableColumns } from './data-table-columns.ts';
-import { HIDE_BELOW } from './data-table-meta.ts';
+import { type DataColumnDef, dataTableFeatures, HIDE_BELOW } from './data-table-meta.ts';
 import { EdgeFade, useEdgeFade } from './edge-fade.tsx';
 import { LoadingRail, useDelayed } from './loading-rail.tsx';
 import { SkeletonRows } from './skeleton.tsx';
 
-export interface DataTableProps<T> {
-  columns: ColumnDef<T, never>[];
+export interface DataTableProps<T extends RowData> {
+  columns: DataColumnDef<T, never>[];
   data: readonly T[];
   caption: string;
   getRowId?: (row: T) => string;
@@ -49,7 +49,7 @@ export interface DataTableProps<T> {
  * rows (keepPreviousData), dim them after 150 ms and run the loading rail. New rows get the insert
  * highlight; rows carry data-row-id for removeWithTransition.
  */
-export function DataTable<T>({
+export function DataTable<T extends RowData>({
   columns,
   data,
   caption,
@@ -69,11 +69,11 @@ export function DataTable<T>({
   stack = true,
 }: DataTableProps<T>) {
   const narrow = useMediaQuery(BELOW_MD) && stack;
-  const table = useReactTable<T>({
+  const table = useTable({
+    features: dataTableFeatures,
     data: data as T[],
     columns: useStableColumns(columns),
     getRowId: getRowId ? (row) => getRowId(row) : undefined,
-    getCoreRowModel: getCoreRowModel(),
   });
   const rows = table.getRowModel().rows;
   const { ref: scrollRef, fade, measure } = useEdgeFade();
@@ -115,13 +115,13 @@ export function DataTable<T>({
   const last = virtual?.[virtual.length - 1];
   const padTop = first ? first.start : 0;
   const padBottom = last ? virtualizer.getTotalSize() - last.end : 0;
-  const span = table.getVisibleLeafColumns().length;
+  const span = table.getAllLeafColumns().length;
 
   const metaOf = (c: { columnDef: { meta?: unknown } }) =>
-    (c.columnDef.meta ?? {}) as NonNullable<ColumnDef<T>['meta']>;
-  const leadCol = table.getVisibleLeafColumns().find((c) => metaOf(c).stackLead);
+    (c.columnDef.meta ?? {}) as NonNullable<DataColumnDef<T>['meta']>;
+  const leadCol = table.getAllLeafColumns().find((c) => metaOf(c).stackLead);
   const stackCols = table
-    .getVisibleLeafColumns()
+    .getAllLeafColumns()
     .filter((c) => !metaOf(c).stackHidden && !metaOf(c).stackLead);
   const [titleCol, ...restCols] = stackCols;
   // On its own the table is a card (same surface and shadow); inside one it uses the card's.
@@ -145,7 +145,7 @@ export function DataTable<T>({
             className={cn('wl-dim divide-y divide-border', stagger, frame)}
           >
             {rows.map((row, index) => {
-              const cells = new Map(row.getVisibleCells().map((c) => [c.column.id, c]));
+              const cells = new Map(row.getAllCells().map((c) => [c.column.id, c]));
               const render = (id: string) => {
                 const cell = cells.get(id);
                 return cell ? flexRender(cell.column.columnDef.cell, cell.getContext()) : null;
@@ -259,7 +259,7 @@ export function DataTable<T>({
                         )}
                         onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                       >
-                        {row.getVisibleCells().map((cell) => {
+                        {row.getAllCells().map((cell) => {
                           const meta = metaOf(cell.column);
                           return (
                             <td
