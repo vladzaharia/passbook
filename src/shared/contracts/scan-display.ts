@@ -10,7 +10,10 @@ export const ScanIconSchema = z.enum(SCAN_ICONS);
  * What a scanner client reads: an icon id this build does not know becomes the info glyph, so an
  * older bundle still parses an outcome that uses an icon added later. Authoring stays strict.
  */
-const ScanIconReadSchema = ScanIconSchema.catch('info');
+const ScanIconReadSchema = z.preprocess(
+  (id) => (SCAN_ICONS.some((known) => known === id) ? id : 'info'),
+  ScanIconSchema,
+);
 export const ScanDisplayToneSchema = z.enum(['neutral', 'teal', 'violet', 'gold']);
 export const ScanNoteToneSchema = z.enum(['neutral', 'info', 'attention']);
 export const ScanDisplayScreenSchema = z.enum(['ready', 'ok', 'heads_up', 'refused']);
