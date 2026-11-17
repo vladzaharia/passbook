@@ -185,6 +185,7 @@ describe('scanner history event and source proofs', () => {
     }
   });
 
+  // Writes and reads up to five history pages; over 30 s under istanbul coverage in CI.
   it('aggregates proven contributors across bounded history pages', async () => {
     const s = await scenario();
     for (let index = 0; index < 101; index++) {
@@ -207,5 +208,5 @@ describe('scanner history event and source proofs', () => {
       ok: 101,
       byAction: [{ actionId: 'check_in', label: 'Check in', count: 101, amount: 0 }],
     });
-  });
+  }, 120_000);
 });
