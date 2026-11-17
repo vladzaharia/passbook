@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { sha1Hex } from '../sign/index.ts';
-import { renderStrip, type StampArt } from './compose.ts';
+import { compositorMemory, renderStrip, type StampArt } from './compose.ts';
 import { GOAL_MAX, GOAL_MIN } from './layout.ts';
 import { decodePng, encodePng, PngError, type Rgba } from './png.ts';
 import { stampStrips } from './strips.ts';
@@ -99,7 +99,30 @@ describe('stampStrips', { timeout: 120_000 }, () => {
   });
 });
 
+describe('compositor memory', () => {
+  it('holds at most 48 MB of mips and patches for 4 x 1000 px art at goal 20', () => {
+    const big = (v: number): Rgba => {
+      const data = new Uint8Array(1000 * 1000 * 4);
+      for (let i = 0; i < data.length; i += 4) data.set([v, 255 - v, (i >> 8) & 255, 200], i);
+      return { width: 1000, height: 1000, data };
+    };
+    const arts: StampArt = {
+      filled: big(10),
+      empty: big(60),
+      reward: big(110),
+      rewardEarned: big(160),
+    };
+    compositorMemory.live = 0;
+    compositorMemory.peak = 0;
+    const strips = stampStrips({ goal: 20, art: arts, base: {} });
+    expect(strips).toHaveLength(42);
+    expect(compositorMemory.peak).toBeGreaterThan(0);
+    expect(compositorMemory.peak).toBeLessThan(48_000_000);
+    expect(compositorMemory.live).toBe(0);
+  });
+});
+
 const GOLDEN_G10_C7: string[] = [
-  'be3db081cdbe7078db381ddbe9b369da6ec2a477',
+  'b107e9144d815e7fb69d50530bb37064c84cd1c5',
   '5666dcd77637d3f74e12ad03234c9da6d4025471',
 ];

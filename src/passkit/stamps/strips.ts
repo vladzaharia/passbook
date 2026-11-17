@@ -1,4 +1,4 @@
-import { renderStrip, type StampArt } from './compose.ts';
+import { forgetArt, forgetPatches, renderStrip, type StampArt } from './compose.ts';
 import { encodePng, type Rgba } from './png.ts';
 
 export interface StampStrip {
@@ -28,25 +28,33 @@ export interface StampStripsRequest {
 /** One PNG pair per count. Pure and deterministic, so a version can store the result. */
 export function stampStrips(req: StampStripsRequest): StampStrip[] {
   const counts = req.counts ?? Array.from({ length: req.goal + 1 }, (_, i) => i);
-  const out: StampStrip[] = [];
-  for (const count of counts)
-    for (const scale of [2, 3] as const) {
-      const image = renderStrip({
-        goal: req.goal,
-        count,
-        scale,
-        base: req.base[scale] ?? 'transparent',
-        art: req.art,
-        ...(req.tilt === false ? { tilt: false } : {}),
+  const scales = [2, 3] as const;
+  const out: StampStrip[] = new Array(counts.length * scales.length);
+  try {
+    // Scale by scale: a scale's resampled patches are shared by every count, then dropped.
+    scales.forEach((scale, si) => {
+      counts.forEach((count, ci) => {
+        const image = renderStrip({
+          goal: req.goal,
+          count,
+          scale,
+          base: req.base[scale] ?? 'transparent',
+          art: req.art,
+          ...(req.tilt === false ? { tilt: false } : {}),
+        });
+        out[ci * scales.length + si] = {
+          count,
+          scale,
+          name: stampStripName(count, scale),
+          width: image.width,
+          height: image.height,
+          bytes: encodePng(image),
+        };
       });
-      out.push({
-        count,
-        scale,
-        name: stampStripName(count, scale),
-        width: image.width,
-        height: image.height,
-        bytes: encodePng(image),
-      });
-    }
+      forgetPatches(req.art);
+    });
+  } finally {
+    forgetArt(req.art);
+  }
   return out;
 }

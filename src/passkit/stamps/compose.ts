@@ -69,45 +69,79 @@ const ROT: [number, number][] = [
 interface Mip {
   w: number;
   h: number;
-  p: Float64Array;
+  p: Float32Array;
 }
-const mips = new WeakMap<Rgba, Mip[]>();
+interface Chain {
+  levels: Mip[];
+  /** The largest span (px) the chain was built to serve. */
+  span: number;
+}
+const mips = new WeakMap<Rgba, Chain>();
 
-function mipChain(img: Rgba): Mip[] {
+/** Live bytes of the mip chains and patches held between strips (the compositor's own memory). */
+export const compositorMemory = { live: 0, peak: 0 };
+function held(bytes: number): void {
+  compositorMemory.live += bytes;
+  if (compositorMemory.live > compositorMemory.peak) compositorMemory.peak = compositorMemory.live;
+}
+
+function halve(last: Mip, read: (yy: number, xx: number, c: number) => number): Mip {
+  const w = last.w >> 1;
+  const h = last.h >> 1;
+  const q = new Float32Array(w * h * 4);
+  held(q.byteLength);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++)
+      for (let c = 0; c < 4; c++)
+        q[(y * w + x) * 4 + c] =
+          (read(2 * y, 2 * x, c) +
+            read(2 * y, 2 * x + 1, c) +
+            read(2 * y + 1, 2 * x, c) +
+            read(2 * y + 1, 2 * x + 1, c)) /
+          4;
+  return { w, h, p: q };
+}
+
+/**
+ * The art's mips from the smallest level at or above `span` down to 8 px. Levels above it are
+ * never sampled, so the first one is made straight from the pixels and the full-size float copy
+ * of the art never exists.
+ */
+function mipChain(img: Rgba, span: number): Mip[] {
   const hit = mips.get(img);
-  if (hit) return hit;
-  const p = new Float64Array(img.width * img.height * 4);
-  for (let i = 0; i < img.width * img.height; i++) {
-    const a = (img.data[i * 4 + 3] as number) / 255;
-    p[i * 4] = (img.data[i * 4] as number) * a;
-    p[i * 4 + 1] = (img.data[i * 4 + 1] as number) * a;
-    p[i * 4 + 2] = (img.data[i * 4 + 2] as number) * a;
-    p[i * 4 + 3] = a * 255;
+  if (hit && hit.span >= span) return hit.levels;
+  let steps = 0;
+  for (let w = img.width, h = img.height; w > 8 && h > 8 && w >> 1 >= span; w >>= 1, h >>= 1)
+    steps++;
+  const premult = (yy: number, xx: number, c: number) => {
+    const i = (yy * img.width + xx) * 4;
+    const a = (img.data[i + 3] as number) / 255;
+    return c === 3 ? a * 255 : (img.data[i + c] as number) * a;
+  };
+  let top: Mip;
+  if (steps === 0) {
+    const p = new Float32Array(img.width * img.height * 4);
+    held(p.byteLength);
+    for (let y = 0; y < img.height; y++)
+      for (let x = 0; x < img.width; x++)
+        for (let c = 0; c < 4; c++) p[(y * img.width + x) * 4 + c] = premult(y, x, c);
+    top = { w: img.width, h: img.height, p };
+  } else {
+    top = halve({ w: img.width, h: img.height, p: new Float32Array(0) }, premult);
+    for (let i = 1; i < steps; i++) {
+      const prev = top;
+      top = halve(prev, (yy, xx, c) => prev.p[(yy * prev.w + xx) * 4 + c] as number);
+      compositorMemory.live -= prev.p.byteLength;
+    }
   }
-  const chain: Mip[] = [{ w: img.width, h: img.height, p }];
-  for (
-    let last = chain[0] as Mip;
-    last.w > 8 && last.h > 8;
-    last = chain[chain.length - 1] as Mip
-  ) {
-    const w = last.w >> 1;
-    const h = last.h >> 1;
-    const q = new Float64Array(w * h * 4);
-    for (let y = 0; y < h; y++)
-      for (let x = 0; x < w; x++)
-        for (let c = 0; c < 4; c++) {
-          const at = (yy: number, xx: number) => last.p[(yy * last.w + xx) * 4 + c] as number;
-          q[(y * w + x) * 4 + c] =
-            (at(2 * y, 2 * x) +
-              at(2 * y, 2 * x + 1) +
-              at(2 * y + 1, 2 * x) +
-              at(2 * y + 1, 2 * x + 1)) /
-            4;
-        }
-    chain.push({ w, h, p: q });
+  const levels: Mip[] = [top];
+  for (let last = top; last.w > 8 && last.h > 8; last = levels[levels.length - 1] as Mip) {
+    const prev = last;
+    levels.push(halve(prev, (yy, xx, c) => prev.p[(yy * prev.w + xx) * 4 + c] as number));
   }
-  mips.set(img, chain);
-  return chain;
+  if (hit) compositorMemory.live -= hit.levels.reduce((n, m) => n + m.p.byteLength, 0);
+  mips.set(img, { levels, span });
+  return levels;
 }
 
 /** A rendered piece of art for one cell: premultiplied RGBA floats over a pixel rectangle. */
@@ -116,12 +150,12 @@ interface Patch {
   y: number;
   w: number;
   h: number;
-  p: Float64Array;
+  p: Float32Array;
 }
 
 /** Resamples art for one cell: rotate, scale through the mip chain, 2 x 2 samples per pixel. */
 function patchOf(art: Rgba, cell: StampCell, s: number, nudge: boolean, tilt: number): Patch {
-  const chain = mipChain(art);
+  const chain = mipChain(art, cell.d * ART_SPAN * 3);
   const span = cell.d * ART_SPAN * s;
   let m = chain[0] as Mip;
   for (const c of chain) if (c.w >= span) m = c;
@@ -134,7 +168,8 @@ function patchOf(art: Rgba, cell: StampCell, s: number, nudge: boolean, tilt: nu
   const y = Math.floor(cy - half);
   const w = Math.ceil(cx + half) - x;
   const h = Math.ceil(cy + half) - y;
-  const p = new Float64Array(w * h * 4);
+  const p = new Float32Array(w * h * 4);
+  held(p.byteLength);
   const mw = m.w;
   const mh = m.h;
   const src = m.p;
@@ -219,6 +254,26 @@ function cached(art: Rgba, cell: StampCell, s: number, nudge: boolean, tilt: num
     byKey.set(key, hit);
   }
   return hit;
+}
+
+const arts = (art: StampArt): Rgba[] =>
+  [art.filled, art.empty, art.reward, art.rewardEarned].filter((a): a is Rgba => !!a);
+
+/** Drops the resampled patches (call between scales: they are not shared across scales). */
+export function forgetPatches(art: StampArt): void {
+  for (const img of arts(art))
+    for (const patch of patches.get(img)?.values() ?? [])
+      compositorMemory.live -= patch.p.byteLength;
+  for (const img of arts(art)) patches.delete(img);
+}
+
+/** Drops the art's mip chains and patches once all its strips are drawn. */
+export function forgetArt(art: StampArt): void {
+  forgetPatches(art);
+  for (const img of arts(art)) {
+    for (const m of mips.get(img)?.levels ?? []) compositorMemory.live -= m.p.byteLength;
+    mips.delete(img);
+  }
 }
 
 function drawArt(
