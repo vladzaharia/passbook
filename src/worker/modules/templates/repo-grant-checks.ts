@@ -5,6 +5,7 @@ import {
   APPLE_ADAPTER_REVISION,
   AUDIENCE_POLICY_REVISION,
 } from './release-content.ts';
+import { templateVisibleSql } from './repo-visibility.ts';
 
 const capabilities = JSON.stringify(APPLE_ADAPTER_CAPABILITIES);
 
@@ -25,7 +26,7 @@ export const userIsActiveAdmin = (userId: string, accessRevision: number): Check
       AND EXISTS (SELECT 1 FROM json_each(u.last_roles) r WHERE r.value = 'admin'))`,
   );
 
-/** The version exists, was written by `versionAuthorId`, and its template is an active uploaded one in reach. */
+/** The version exists, was written by `versionAuthorId`, and its template is an active uploaded one the org may see. */
 export const candidateTemplate = (
   templateId: string,
   version: string,
@@ -35,7 +36,7 @@ export const candidateTemplate = (
     'lineage',
     (p) => `EXISTS (SELECT 1 FROM templates t
       JOIN template_versions v ON v.template_id = t.id AND v.version = ${p(version)}
-      WHERE t.id = ${p(templateId)} AND (t.org_id IS NULL OR t.org_id = a.org_id)
+      WHERE t.id = ${p(templateId)} AND ${templateVisibleSql('t', 'a.org_id')}
         AND t.origin = 'uploaded' AND t.status = 'active' AND v.created_by IS ${p(versionAuthorId)})`,
   );
 

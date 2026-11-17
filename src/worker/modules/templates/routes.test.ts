@@ -1815,7 +1815,8 @@ describe('org assignment', () => {
 
     expect((await share(false)).status).toBe(200);
     await hiddenFromOther();
-    expect((await share(true, user)).status).toBe(403);
+    // Staged again, it does not exist for a non-admin; shared, only an administrator may change it.
+    expect((await share(true, user)).status).toBe(404);
     // A template that belongs to an org is not shared.
     const owned = await seed(org.id, 'Owned Not Shareable');
     const res = await call(`/${owned.id}/share`, { method: 'POST', ...json({ shared: true }) });

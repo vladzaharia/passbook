@@ -33,7 +33,10 @@ import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { assertTemplateUsable } from '../connections/validate.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { countScopedTemplates } from '../scan/repo-event-templates.ts';
+import { firstSampleTemplate } from '../scan/repo-scanners.ts';
 import { setWalletProvidersEnabledForTest } from '../wallet-providers/provider-policy.ts';
 import { basicPackage, makePng, passJson, zipOf } from './package/fixtures.ts';
 import { canonicalJson, crc32 } from './package/hash.ts';
@@ -42,7 +45,7 @@ import { templateContentHash } from './release-content.ts';
 import { getVersion } from './repo.ts';
 import { listVersionExtras } from './repo-preview-extras.ts';
 import { generatedSource, resetBakedSync, syncBakedTemplates } from './sync.ts';
-import { bakedFrom, beforeBatch, fakeAssets, importZip, sourceOf } from './testing.ts';
+import { bakedFrom, beforeBatch, fakeAssets, importZip, sourceOf, watchBatch } from './testing.ts';
 
 const ORIGIN = 'https://wallet.test';
 const ROLLBACK_REASON = 'Restore the previously approved release';
@@ -738,8 +741,8 @@ describe('template release API', () => {
     expect(
       (await post(`/${v1.id}/candidates`, { ...orgB, version: v1.version }, authorB)).status,
     ).toBe(404);
-    // Sharing is for platform administrators.
-    expect((await share(true, authorB)).status).toBe(403);
+    // Sharing is for platform administrators; to anyone else a staged upload does not exist.
+    expect((await share(true, authorB)).status).toBe(404);
     expect(await audits()).toEqual([]);
 
     const shared = await share(true);
@@ -747,6 +750,7 @@ describe('template release API', () => {
     expect(await shared.json()).toMatchObject({ shared: true, orgId: null });
     expect((await share(true)).status).toBe(200);
     expect(await audits()).toEqual(['template.shared']);
+    expect((await share(false, authorB)).status).toBe(403);
     expect((await call(`/${v1.id}?orgId=${otherOrg.id}`, authorB)).status).toBe(200);
     const visible = await call(`?orgId=${otherOrg.id}`, authorB);
     expect(
@@ -765,6 +769,124 @@ describe('template release API', () => {
 
     // Only an unassigned upload can be shared.
     expect((await assignOrg(v1.id, otherOrg.id)).status).toBe(409);
+  });
+
+  it('refuses a candidate when the upload is unshared between the read and the commit', async () => {
+    const v1 = await imported('Unshared Mid Flight');
+    expect((await assignGlobal(v1.id)).status).toBe(200);
+    const authorB = await member(otherOrg.id, ['template_author']);
+    const raced = watchBatch(env, /INSERT\s+INTO\s+template_candidates/i, async () => {
+      await run(env.DB, 'UPDATE templates SET shared = 0 WHERE id = ?', [v1.id]);
+    });
+    const response = await app.request(
+      `${ORIGIN}/api/v1/templates/${v1.id}/candidates`,
+      {
+        method: 'POST',
+        headers: { ...headersFor(authorB), 'content-type': 'application/json' },
+        body: JSON.stringify({ ...scope('live', otherOrg.id), version: v1.version }),
+      },
+      raced.env,
+    );
+    expect(raced.fired()).toBe(1);
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(
+      await all(env.DB, 'SELECT id FROM template_candidates WHERE template_id = ? AND org_id = ?', [
+        v1.id,
+        otherOrg.id,
+      ]),
+    ).toEqual([]);
+    // The same call, shared again, commits.
+    await run(env.DB, 'UPDATE templates SET shared = 1 WHERE id = ?', [v1.id]);
+    expect(
+      (await candidate(v1.id, v1.version, authorB, scope('live', otherOrg.id))).id,
+    ).toBeTruthy();
+  });
+
+  it('hides a staged platform upload from every other path of another org, and opens them when shared', async () => {
+    const v1 = await imported('Hidden Upload Paths');
+    expect((await assignOrg(v1.id, null)).status).toBe(200);
+    const other = await member(otherOrg.id, [
+      'template_author',
+      'pass_operator',
+      'integration_admin',
+    ]);
+    const orgQ = `orgId=${otherOrg.id}`;
+    const json = (body: unknown) => ({
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const hidden = async (path: string, init: RequestInit = {}) =>
+      (await call(path, other, init)).status;
+    const probes: [string, () => Promise<number>][] = [
+      ['version', () => hidden(`/${v1.id}/versions/${v1.version}?${orgQ}`)],
+      ['asset', () => hidden(`/${v1.id}/versions/${v1.version}/assets/icon.png?${orgQ}`)],
+      [
+        'preview',
+        () => hidden(`/${v1.id}/preview`, json({ orgId: otherOrg.id, version: v1.version })),
+      ],
+      ['clone', () => hidden(`/${v1.id}/clone`, json({ orgId: otherOrg.id }))],
+      [
+        'save version',
+        () =>
+          hidden(
+            `/${v1.id}/versions`,
+            json({ passJson: {}, manifest: manifest('Hidden Upload Paths'), dryRun: true }),
+          ),
+      ],
+      [
+        'candidate',
+        () =>
+          hidden(
+            `/${v1.id}/candidates`,
+            json({ ...scope('live', otherOrg.id), version: v1.version }),
+          ),
+      ],
+    ];
+    for (const [name, probe] of probes) expect(await probe(), `${name} (staged)`).toBe(404);
+
+    const createPass = async () =>
+      (
+        await app.request(
+          `${ORIGIN}/api/v1/passes`,
+          {
+            ...json({
+              orgId: otherOrg.id,
+              templateId: v1.id,
+              mode: 'live',
+              templateVersion: v1.version,
+              releaseId: 'rel-1',
+              releaseGeneration: 1,
+              input: { name: 'Alex' },
+            }),
+            headers: { ...headersFor(other), 'content-type': 'application/json' },
+          },
+          env,
+        )
+      ).status;
+    expect(await createPass()).toBe(404);
+
+    const ctx = createServiceContext(env, { clock });
+    const staged = {
+      scoped: await countScopedTemplates(env.DB, otherOrg.id, [v1.id]),
+      sample: await firstSampleTemplate(env.DB, otherOrg.id, [v1.id]),
+      usable: await assertTemplateUsable(ctx, otherOrg.id, v1.id).then(
+        () => 'usable',
+        (error: { code?: string }) => error.code,
+      ),
+    };
+    expect(staged).toEqual({ scoped: 0, sample: null, usable: 'TEMPLATE_NOT_FOUND' });
+
+    const shared = await post(`/${v1.id}/share`, { shared: true }, platformAdmin);
+    expect(shared.status).toBe(200);
+    for (const [name, probe] of probes.slice(0, 4))
+      expect(await probe(), `${name} (shared)`).not.toBe(404);
+    expect(await createPass()).toBe(409);
+    expect({
+      scoped: await countScopedTemplates(env.DB, otherOrg.id, [v1.id]),
+      sample: (await firstSampleTemplate(env.DB, otherOrg.id, [v1.id]))?.id,
+      usable: await assertTemplateUsable(ctx, otherOrg.id, v1.id).then(() => 'usable'),
+    }).toEqual({ scoped: 1, sample: v1.id, usable: 'usable' });
   });
 
   it('isolates releases of a shared uploaded template by organization and mode', async () => {

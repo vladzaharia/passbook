@@ -9,7 +9,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { getTemplate, type TemplateRow } from './repo.ts';
-import { globalTemplateVisible } from './repo-list.ts';
+import { templateVisibleToOrg } from './repo-list.ts';
 import { syncBakedTemplates } from './sync.ts';
 
 export function requireTemplateReader(
@@ -107,11 +107,14 @@ export async function loadTemplate(
   if (selectedOrgId && row.orgId !== null && row.orgId !== selectedOrgId) throw notFound();
   if (selectedOrgId) await requireTemplateOrgRead(ctx, auth, selectedOrgId, notFound);
   else if (row.orgId) await requireTemplateOrgRead(ctx, auth, row.orgId, notFound);
-  else if (auth.kind === 'session' && !auth.roles.includes('admin'))
+  else if (auth.kind === 'session' && !auth.roles.includes('admin')) {
+    // Without an org the caller cannot hold a release: a staged upload is as unknown as a missing id.
+    if (row.origin === 'uploaded' && !row.shared) throw notFound();
     throw new ForbiddenError(
       'An organization is required to access this template.',
       'ORG_REQUIRED',
     );
+  }
   // A tenant sees a platform upload only once it is shared or the org works with it; a staged one is for the platform.
   const tenantOrg = selectedOrgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
   if (
@@ -119,7 +122,7 @@ export async function loadTemplate(
     row.origin === 'uploaded' &&
     !row.shared &&
     !isPlatformPrincipal(auth) &&
-    !(tenantOrg && (await globalTemplateVisible(ctx.env.DB, row.id, tenantOrg)))
+    !(tenantOrg && (await templateVisibleToOrg(ctx.env.DB, row.id, tenantOrg)))
   )
     throw notFound();
   return row;

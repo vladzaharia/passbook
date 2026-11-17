@@ -279,7 +279,7 @@ passes keep the old one until a template change or Identities, Re-sign all rebui
 
 ## Cutover from schema 0024
 
-Production D1 is at 0024. Migrations 0025–0065 have never run there; they land together (0040, 0060 and 0062 do not exist: 38 files). All data
+Production D1 is at 0024. Migrations 0025–0069 have never run there; they land together (0040, 0060, 0062, 0066 and 0068 do not exist: 40 files). All data
 is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, secrets, and every
 `--apply` or `--remote` command. An agent never runs them. `test/cutover/` rehearses this order on
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
@@ -366,8 +366,8 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
    it keeps working after the migrations.
 5. **Owner**: `npx wrangler d1 time-travel info wallet-platform`; note the bookmark. The deploy
    records its own in `.wrangler/d1-bookmarks.log`.
-6. **Owner**: `npx wrangler d1 migrations list wallet-platform --remote` lists exactly the 38 files
-   0025–0065, none of 0040, 0060, 0062 (`--migrate-only` never prints what it will apply).
+6. **Owner**: `npx wrangler d1 migrations list wallet-platform --remote` lists exactly the 40 files
+   0025–0069, none of 0040, 0060, 0062, 0066, 0068 (`--migrate-only` never prints what it will apply).
    Anything else: stop and decide again.
 7. Stop sources of new work: connection syncs, broadcasts, bulk actions. Dashboard, Queues:
    `wallet-jobs` and `wallet-jobs-dlq` at zero backlog. **Owner**: no Workflow instance is running
@@ -603,7 +603,7 @@ writes.
 2. **Owner**: `npm run deploy -- --migrate-only --apply`, from the pre-check 1 worktree. It lists the
    uncommitted or untracked files and stops on a dirty tree or a `dist/` not built from HEAD, and
    `--promote` refuses if HEAD moved since the upload. Checks secrets, uploads the version (not
-   serving), records a D1 bookmark, applies the 38 files 0025–0065 and stops with
+   serving), records a D1 bookmark, applies the 40 files 0025–0069 and stops with
    `Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.`
 3. **Owner**: bootstrap. The tool never touches production; it prints the commands. First:
 
@@ -671,6 +671,9 @@ writes.
    - Memberships: no rows. Unbound mail: 0. Stale: the `verify-stale-before` rows plus
      `baked:henrys-blue` and `baked:henrys-copper`, shrinking to none as the reissue runs (a
      minute after promote, then batch by batch).
+   - Platform uploads (0067 shares every existing one, so orgs keep what they see): run
+     `SELECT id, name FROM templates WHERE org_id IS NULL AND origin = 'uploaded'` and unshare any
+     staged for one customer (Templates, "Stop sharing"). Orgs that already hold a release of it keep it.
    - Rerun `verify-counts`: `users`, `orgs`, `templates`, `template_versions`, `passes` and
      `api_keys` not below the pre-check numbers; the rest may differ.
    - `curl -sI https://passbook.mobile/health` is 200. Status is green. `wallet-jobs-dlq` is empty.
