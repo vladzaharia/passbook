@@ -120,7 +120,9 @@ describe('resolving an uncertain webhook', () => {
     expect(listed.json.items).toEqual([
       expect.objectContaining({ id: retentionId, state: 'failed', uncertainItems: 1 }),
     ]);
-    await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow();
+    await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow(
+      /unresolved retained webhook claim/,
+    );
 
     const resolved = await call('POST', `${failures(id)}/${retentionId}/resolve`);
     expect(resolved).toEqual({
@@ -210,7 +212,9 @@ describe('resolving an uncertain webhook', () => {
         [id],
       ),
     ).toEqual([]);
-    await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow();
+    await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow(
+      /unresolved retained webhook claim/,
+    );
   });
 });
 

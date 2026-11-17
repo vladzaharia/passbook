@@ -228,7 +228,7 @@ describe('0043 provider generation fences', () => {
       run(db, 'UPDATE passes SET credential_generation = credential_generation + 1 WHERE id = ?', [
         pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     expect(await instances(db, pass.id)).toEqual([]);
     const statements = startStatements(db, pass.id, crypto.randomUUID(), f.clock.now());
     await statements[0]!.run();
@@ -277,7 +277,7 @@ describe('0043 provider generation fences', () => {
           [crypto.randomUUID(), pass.id],
         ),
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/pending credential transfer is locked/);
     expect(
       await first(db, 'SELECT id FROM pass_credential_transfers WHERE id = ?', [transferId]),
     ).toBeNull();
@@ -471,7 +471,9 @@ describe('0043 provider generation fences', () => {
         [operationId],
       ),
     ).toEqual({ pass_credential_generation: nextGeneration, kind: 'revoke' });
-    await expect(finish(db, pass.id, transferId, kit.clock.now() + 1)).rejects.toThrow();
+    await expect(finish(db, pass.id, transferId, kit.clock.now() + 1)).rejects.toThrow(
+      /credential transfer is not ready to complete/,
+    );
     expect(
       await first(db, 'SELECT state FROM pass_credential_transfers WHERE id = ?', [transferId]),
     ).toEqual({ state: 'pending' });

@@ -411,7 +411,7 @@ describe('native projection approval', () => {
         sourceReleaseId: test.source.id,
         projection,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Template not found\./);
     await expect(
       createProjectionCandidate(test.ctx, { ...test.author, mode: 'test' }, test.templateId, {
         ...test.scope,
@@ -661,7 +661,7 @@ describe('native projection approval', () => {
     );
     await expect(
       insertDirectProjectionRelease(test, candidate, approval, { approvalId: otherApproval.id }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/provider release keyset unavailable/);
     expect(
       await insertDirectProjectionRelease(test, candidate, approval, {
         createdAt: evidence.expires_at - 1,
@@ -856,7 +856,7 @@ describe('native projection approval', () => {
         '{}',
         candidate.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template candidates are immutable/);
     const stored = await getProjectionCandidate(env.DB, candidate.id);
     if (!stored) throw new Error('Candidate missing.');
     expect(await candidateHash(projectionCandidateEnvelope(stored))).toBe(candidate.candidateHash);

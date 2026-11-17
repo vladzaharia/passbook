@@ -244,7 +244,7 @@ describe('member photo lineage', () => {
     ).toBe(false);
     await expect(
       replace({ ...original, include_in_pass: 2 }, original.version, generation),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/CHECK constraint failed: include_in_pass IN \(0,1\)/);
     expect(await memberPhoto(kit.env.DB, pass.orgId, pass.id)).toEqual(original);
     expect((await getPass(kit.env.DB, pass.id))!.linkGeneration).toBe(generation);
 

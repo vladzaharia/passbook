@@ -240,14 +240,14 @@ describe('authenticated Samsung card-state evidence', () => {
         'UPDATE wallet_provider_projection_evidence_history SET country_code = ? WHERE candidate_id = ?',
         ['US', c.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable Samsung provider evidence/);
     await expect(
       run(
         f.kit.env.DB,
         'DELETE FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
         [c.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable Samsung provider evidence/);
     expect(
       await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, orgId: 'another-org' }, f.proof),
     ).toBe(false);

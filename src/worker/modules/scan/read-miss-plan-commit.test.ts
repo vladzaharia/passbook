@@ -142,7 +142,9 @@ describe('batched read-miss authority', () => {
         action: 'scan.lookup',
         detail: { count: 0 },
       });
-      await expect(kit.env.DB.batch([callerAudit, ...plan.stmts])).rejects.toThrow();
+      await expect(kit.env.DB.batch([callerAudit, ...plan.stmts])).rejects.toThrow(
+        /bad JSON path: '\$\[scan_effect_incomplete\]'/,
+      );
       expect(await f.counter()).toEqual({ count: 30 });
       expect(await f.auditCount()).toEqual({ count: 0 });
       expect(

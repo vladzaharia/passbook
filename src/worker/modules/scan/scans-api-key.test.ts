@@ -197,7 +197,7 @@ describe('GET /scans (API key)', () => {
     const fixture = await makeApiKey(f, { orgId, scopes: ['scans:read'] });
     await expect(
       run(env.DB, 'UPDATE api_keys SET scopes = ? WHERE id = ?', ['["passes:read"]', fixture.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/api key identity is immutable/);
     expect(
       await first(env.DB, 'SELECT scopes, revoked_at FROM api_keys WHERE id = ?', [fixture.id]),
     ).toEqual({ scopes: '["scans:read"]', revoked_at: null });

@@ -175,15 +175,15 @@ describe('0042 credential and lifecycle generations', () => {
     });
     await expect(
       run(db, 'UPDATE passes SET credential_generation = 0 WHERE id = ?', [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     await expect(
       run(db, 'UPDATE passes SET credential_generation = 1.5 WHERE id = ?', [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     await expect(
       run(db, 'UPDATE passes SET credential_generation = credential_generation + 1 WHERE id = ?', [
         pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     await expect(
       run(
         db,
@@ -191,11 +191,11 @@ describe('0042 credential and lifecycle generations', () => {
       download_token = ?, link_generation = link_generation + 1 WHERE id = ?`,
         [crypto.randomUUID(), pass.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     await start(db, pass.id, f.clock.now());
     await expect(
       run(db, 'UPDATE passes SET credential_generation = 1 WHERE id = ?', [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/pending credential transfer is locked/);
     expect(await getPass(db, pass.id)).toMatchObject({
       credentialGeneration: 2,
       lifecycleGeneration: 0,
@@ -220,7 +220,7 @@ describe('0042 credential and lifecycle generations', () => {
     ] as const) {
       await expect(
         run(db, `UPDATE passes SET ${column} = ? WHERE id = ?`, [value, pass.id]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential transfer required/);
       await expect(
         run(
           db,
@@ -228,17 +228,17 @@ describe('0042 credential and lifecycle generations', () => {
         WHERE id = ?`,
           [value, pass.id],
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential transfer required/);
     }
     // Old passes may receive their very first scan code without becoming a new holder.
     await run(db, 'UPDATE passes SET scan_code = ? WHERE id = ?', ['BACKFILLEDCODE', pass.id]);
     expect((await snapshot(db, pass.id)).credential_generation).toBe(before.credential_generation);
     await expect(
       run(db, 'UPDATE passes SET scan_code = ? WHERE id = ?', ['REPLACEMENT', pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer required/);
     await expect(
       run(db, 'UPDATE passes SET scan_code = NULL WHERE id = ?', [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer required/);
     await run(
       db,
       'UPDATE passes SET scan_code = scan_code, holder_email = holder_email WHERE id = ?',
@@ -258,12 +258,12 @@ describe('0042 credential and lifecycle generations', () => {
         'UPDATE passes SET owner_user_id = ?, credential_generation = credential_generation + 1 WHERE id = ?',
         [user.id, pass.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     await run(db, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [user.id, pass.id]);
     for (const value of [other.id, null])
       await expect(
         run(db, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [value, pass.id]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential transfer required/);
     // The owner removing the pass writes the block first; only then may the owner clear.
     await run(
       db,
@@ -283,10 +283,10 @@ describe('0042 credential and lifecycle generations', () => {
     const before = await snapshot(db, pass.id);
     await expect(
       run(db, 'UPDATE passes SET barcode_hash = ? WHERE id = ?', ['c'.repeat(64), pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/barcode or lookup change requires a new pass version/);
     await expect(
       run(db, 'UPDATE passes SET lookup_hash = NULL WHERE id = ?', [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/barcode or lookup change requires a new pass version/);
     await run(
       db,
       `UPDATE passes SET barcode_hash = ?, lookup_hash = ?, version = version + 1 WHERE id = ?`,
@@ -324,7 +324,7 @@ describe('0042 credential and lifecycle generations', () => {
     ] as const) {
       await expect(
         run(db, `UPDATE passes SET ${column} = ? WHERE id = ?`, [value, pass.id]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential transfer required/);
       await expect(
         run(
           db,
@@ -332,7 +332,7 @@ describe('0042 credential and lifecycle generations', () => {
         WHERE id = ?`,
           [value, pass.id],
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential transfer required/);
     }
     expect(await snapshot(db, pass.id)).toEqual(before);
   });
@@ -406,7 +406,7 @@ describe('0042 credential and lifecycle generations', () => {
         stmt(db, "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]),
         stmt(db, 'UPDATE passes SET credential_generation = 0 WHERE id = ?', [pass.id]),
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     expect(await snapshot(db, pass.id)).toEqual(before);
   });
 
@@ -417,13 +417,13 @@ describe('0042 credential and lifecycle generations', () => {
     const otherBefore = await snapshot(db, other.id);
     await expect(
       run(db, 'INSERT OR REPLACE INTO passes SELECT * FROM passes WHERE id = ?', [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/UNIQUE constraint failed: passes\.id/);
     await expect(
       run(db, 'UPDATE OR REPLACE passes SET download_token = ? WHERE id = ?', [
         before.download_token,
         other.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/UNIQUE constraint failed: passes\.download_token/);
     expect(await snapshot(db, pass.id)).toEqual(before);
     expect(await snapshot(db, other.id)).toEqual(otherBefore);
   });
@@ -454,7 +454,7 @@ describe('0042 pending transfer snapshots', () => {
             field,
           ),
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/invalid credential transfer snapshot/);
       expect(await snapshot(db, pass.id)).toEqual(before);
       expect(
         await first(db, 'SELECT id FROM pass_credential_transfers WHERE pass_id = ?', [pass.id]),
@@ -470,7 +470,7 @@ describe('0042 pending transfer snapshots', () => {
         db,
         startStatements(db, pass.id, crypto.randomUUID(), before.download_token, f.clock.now()),
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/pending credential transfer is locked/);
     expect(await snapshot(db, pass.id)).toEqual(before);
     expect(
       await first(db, 'SELECT id FROM pass_credential_transfers WHERE pass_id = ?', [pass.id]),
@@ -494,7 +494,7 @@ describe('0042 pending transfer snapshots', () => {
       if (_label === 'removed') {
         await expect(
           run(db, "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]),
-        ).rejects.toThrow();
+        ).rejects.toThrow(/pending credential transfer is locked/);
       }
       await batch(db, finishStatements(db, pass.id, transferId, f.clock.now() + 1));
       const after = await snapshot(db, pass.id);
@@ -547,37 +547,39 @@ describe('0042 pending transfer snapshots', () => {
         "UPDATE pass_credential_transfers SET state = 'completed', completed_at = ? WHERE id = ?",
         [f.clock.now() + 1, transferId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer is not ready to complete/);
     await expect(
       run(db, 'UPDATE pass_credential_transfers SET target_holder_email = ? WHERE id = ?', [
         'attacker@example.test',
         transferId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer is not ready to complete/);
     await expect(
       run(db, 'DELETE FROM pass_credential_transfers WHERE id = ?', [transferId]),
-    ).rejects.toThrow();
-    await expect(run(db, 'DELETE FROM passes WHERE id = ?', [pass.id])).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer history is immutable/);
+    await expect(run(db, 'DELETE FROM passes WHERE id = ?', [pass.id])).rejects.toThrow(
+      /provider retirement incomplete/,
+    );
     await expect(
       run(db, 'UPDATE passes SET credential_generation = credential_generation + 1 WHERE id = ?', [
         pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/pending credential transfer is locked/);
     await expect(
       run(db, 'UPDATE passes SET holder_email = ? WHERE id = ?', [
         'new-holder@example.test',
         pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/pending credential transfer is locked/);
     await expect(
       run(db, 'UPDATE passes SET serial = ?, version = version + 1 WHERE id = ?', [
         crypto.randomUUID(),
         pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/pending credential transfer is locked/);
     await expect(
       run(db, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/pending credential transfer revision is locked/);
     for (const sql of [
       "UPDATE passes SET external_ref = 'other-source' WHERE id = ?",
       "UPDATE passes SET web_service_url = 'https://other.example/wallet' WHERE id = ?",
@@ -585,7 +587,9 @@ describe('0042 pending transfer snapshots', () => {
       'UPDATE passes SET field_sources = \'{"memberName":"connection"}\' WHERE id = ?',
       "UPDATE passes SET display_title = 'changed while pending' WHERE id = ?",
     ])
-      await expect(run(db, sql, [pass.id])).rejects.toThrow();
+      await expect(run(db, sql, [pass.id])).rejects.toThrow(
+        /pending credential transfer is locked/,
+      );
     await expect(
       run(
         db,
@@ -598,7 +602,7 @@ describe('0042 pending transfer snapshots', () => {
        requested_by_type,requested_by_id,requested_at,completed_at FROM pass_credential_transfers WHERE id = ?`,
         [transferId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid credential transfer snapshot/);
     expect(await snapshot(db, pass.id)).toEqual(pending);
 
     await batch(db, finishStatements(db, pass.id, transferId, f.clock.now() + 1));
@@ -626,16 +630,16 @@ describe('0042 pending transfer snapshots', () => {
         "UPDATE pass_credential_transfers SET state = 'pending', completed_at = NULL WHERE id = ?",
         [transferId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer is not ready to complete/);
     await expect(
       run(db, 'DELETE FROM pass_credential_transfers WHERE id = ?', [transferId]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer history is immutable/);
     await expect(
       run(db, 'UPDATE passes SET credential_generation = ? WHERE id = ?', [
         before.credential_generation,
         pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
   });
 
   it('does not expose a target credential when an older issued provider has not retired', async () => {
@@ -643,7 +647,9 @@ describe('0042 pending transfer snapshots', () => {
     const { db, passId, now } = { db: t.kit.env.DB, passId: t.pass.id, now: t.kit.clock.now() };
     const transferId = await start(db, passId, now);
     const pending = await snapshot(db, passId);
-    await expect(batch(db, finishStatements(db, passId, transferId, now + 1))).rejects.toThrow();
+    await expect(batch(db, finishStatements(db, passId, transferId, now + 1))).rejects.toThrow(
+      /credential transfer is not ready to complete/,
+    );
     expect(await snapshot(db, passId)).toEqual(pending);
     expect(
       await first(db, 'SELECT state FROM pass_credential_transfers WHERE id = ?', [transferId]),
@@ -704,11 +710,15 @@ describe('0042 pending transfer snapshots', () => {
           [crypto.randomUUID(), pass.id],
         ),
       ];
-      await expect(batch(db, connectionStart(2))).rejects.toThrow();
+      await expect(batch(db, connectionStart(2))).rejects.toThrow(
+        /invalid credential transfer snapshot/,
+      );
       expect(await snapshot(db, pass.id)).toEqual(original);
       await batch(db, connectionStart(1));
       const pending = await snapshot(db, pass.id);
-      await expect(batch(db, finishStatements(db, pass.id, transferId, now + 1))).rejects.toThrow();
+      await expect(batch(db, finishStatements(db, pass.id, transferId, now + 1))).rejects.toThrow(
+        /credential transfer is not ready to complete/,
+      );
       expect(await snapshot(db, pass.id)).toEqual(pending);
 
       const ring = await loadKekRing(kit.env);
@@ -758,19 +768,19 @@ describe('0042 pending transfer snapshots', () => {
           sealed.wrappedDek,
           sealed.ciphertext,
         ]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/invalid credential transfer payload/);
       await expect(
         run(db, 'DELETE FROM pass_credential_transfer_payloads WHERE transfer_id = ?', [
           transferId,
         ]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential transfer payload is immutable/);
       await expect(
         run(
           db,
           'UPDATE pass_credential_transfers SET source_connection_generation = 2 WHERE id = ?',
           [transferId],
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/credential transfer is not ready to complete/);
 
       if (connectionState === 'stale') {
         // A connection edit while the transfer is pending must not wedge its completion (F11).
@@ -822,10 +832,10 @@ describe('0042 pending transfer snapshots', () => {
         'test',
         pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential tombstone is immutable/);
     await expect(
       run(db, 'DELETE FROM pass_credential_tombstones WHERE pass_id = ?', [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential tombstone is immutable/);
     await expect(
       run(db, insert.replace('INSERT INTO', 'INSERT OR REPLACE INTO'), [
         pass.id,
@@ -834,7 +844,7 @@ describe('0042 pending transfer snapshots', () => {
         hash,
         f.clock.now() + 1,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid credential tombstone/);
     await expect(
       run(db, insert, [
         pass.id,
@@ -843,10 +853,12 @@ describe('0042 pending transfer snapshots', () => {
         'b'.repeat(64),
         f.clock.now(),
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid credential tombstone/);
     await expect(
       run(db, insert, [pass.id, org.id, before.credential_generation, 'not-a-hash', f.clock.now()]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(
+      /CHECK constraint failed: length\(credential_hash\) = 64 AND credential_hash NOT GL/,
+    );
     await batch(db, finishStatements(db, pass.id, transferId, f.clock.now() + 1));
     expect(
       await first(
@@ -886,16 +898,18 @@ describe('0042 holder reissue requirement', () => {
       SELECT id,org_id,mode,?,credential_generation,version,revision,lifecycle_generation,
        link_generation,release_id,? FROM passes WHERE id = ?`;
     const params = [user.id, f.clock.now(), pass.id] as const;
-    await expect(run(db, insert, [stranger.id, f.clock.now(), pass.id])).rejects.toThrow();
+    await expect(run(db, insert, [stranger.id, f.clock.now(), pass.id])).rejects.toThrow(
+      /invalid holder reissue requirement/,
+    );
     await run(db, "UPDATE users SET status = 'disabled' WHERE id = ?", [user.id]);
-    await expect(run(db, insert, params)).rejects.toThrow();
+    await expect(run(db, insert, params)).rejects.toThrow(/invalid holder reissue requirement/);
     await run(db, "UPDATE users SET status = 'active' WHERE id = ?", [user.id]);
     await run(db, 'INSERT INTO pass_attach_blocks(pass_id,user_id,created_at) VALUES (?,?,?)', [
       pass.id,
       user.id,
       f.clock.now(),
     ]);
-    await expect(run(db, insert, params)).rejects.toThrow();
+    await expect(run(db, insert, params)).rejects.toThrow(/invalid holder reissue requirement/);
     await run(db, 'DELETE FROM pass_attach_blocks WHERE pass_id = ? AND user_id = ?', [
       pass.id,
       user.id,
@@ -909,7 +923,7 @@ describe('0042 holder reissue requirement', () => {
         ),
         params,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid holder reissue requirement/);
     await run(db, insert, params);
     expect(await run(db, insert, params)).toEqual({ changes: 0 });
     expect(
@@ -933,7 +947,7 @@ describe('0042 holder reissue requirement', () => {
         stmt(db, 'UPDATE passes SET version = version + 1 WHERE id = ?', [pass.id]),
         stmt(db, 'UPDATE passes SET credential_generation = 0 WHERE id = ?', [pass.id]),
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     expect(
       await first(db, 'SELECT pass_id FROM pass_holder_reissue_required WHERE pass_id = ?', [
         pass.id,
@@ -952,6 +966,6 @@ describe('0042 holder reissue requirement', () => {
         pass.id,
       ]),
     ).toBeNull();
-    await expect(run(db, insert, params)).rejects.toThrow();
+    await expect(run(db, insert, params)).rejects.toThrow(/invalid holder reissue requirement/);
   });
 });

@@ -325,7 +325,9 @@ describe('scoped atomic miss accounting', () => {
           WHEN NEW.key LIKE 'scan:miss:%' BEGIN SELECT RAISE(IGNORE); END`;
       await run(kit.env.DB, ddl);
       try {
-        await expect(countMiss(kit.ctx, actor)).rejects.toThrow();
+        await expect(countMiss(kit.ctx, actor)).rejects.toThrow(
+          /bad JSON path: '\$\[scan_effect_incomplete\]'/,
+        );
         expect(await counter(counterKey)).toEqual({ count: before });
         expect(await audits(scanner.id)).toHaveLength(0);
       } finally {

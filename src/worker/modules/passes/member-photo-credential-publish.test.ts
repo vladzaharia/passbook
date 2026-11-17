@@ -109,7 +109,7 @@ describe('member photo publication authority', () => {
       try {
         await expect(
           updateMemberPhoto(kit.ctx, user, pass.id, true, scope, authority),
-        ).rejects.toThrow();
+        ).rejects.toThrow(/You no longer have access\./);
       } finally {
         spy.mockRestore();
       }

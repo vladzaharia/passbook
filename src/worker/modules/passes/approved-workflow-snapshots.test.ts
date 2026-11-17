@@ -354,7 +354,7 @@ describe('approved workflow release snapshots', () => {
         'UPDATE workflow_release_snapshots SET generation = generation + 1 WHERE instance_id = ?',
         [bothModes.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/workflow release snapshots are immutable/);
 
     expect(await execute(live)).toEqual({ changed: 2, unchanged: 0, failed: 0 });
     expect(await getPass(kit.env.DB, aLive.id)).toMatchObject({

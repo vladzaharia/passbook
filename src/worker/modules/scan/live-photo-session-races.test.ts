@@ -195,7 +195,7 @@ describe('user-backed live photo stream', () => {
         replacement.csrf,
         originalSession.sessionId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/session csrf secret is immutable/);
     const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
     let opened = false;
     let cancelled = 0;

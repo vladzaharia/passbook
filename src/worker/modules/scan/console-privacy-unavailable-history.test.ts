@@ -172,10 +172,10 @@ describe('scan console and feed privacy', () => {
         '0'.repeat(64),
         orphanedScan.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable scan retention proof/);
     await expect(
       run(kit.env.DB, 'DELETE FROM scan_retention_proofs WHERE scan_id = ?', [orphanedScan.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scan retention proof belongs to scan/);
     await run(kit.env.DB, 'DELETE FROM passes WHERE id = ?', [hardDeleted.id]);
     expect(
       await first(kit.env.DB, 'SELECT pass_id, template_id FROM scans WHERE id = ?', [

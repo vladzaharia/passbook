@@ -200,7 +200,7 @@ describe('broadcast tenant targets and outcomes', () => {
     const pass = await kit.makePass();
     const job = await schedule(kit, { target: { templateIds: [] } });
     await sendable(kit, job.id);
-    await expect(applyChunk(jobCtxOf(kit), job.id, null)).rejects.toThrow();
+    await expect(applyChunk(jobCtxOf(kit), job.id, null)).rejects.toThrow(/\[/);
     expect((await getPass(kit.env.DB, pass.id))?.personalization.message).toBeUndefined();
     expect(await versionsOf(kit, pass.id)).toBe(1);
     expect((await listItems(kit.env.DB, job.id, job.orgId, job.mode, { limit: 100 })).rows).toEqual(

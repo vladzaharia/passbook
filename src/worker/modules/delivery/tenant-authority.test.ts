@@ -402,7 +402,7 @@ describe('tenant email enqueue authority', () => {
           authority,
           auditEntry,
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/audit unavailable/);
       expect(await effects(pass.id)).toEqual(before);
     } finally {
       await run(kit.env.DB, 'DROP TRIGGER reject_resend_audit');

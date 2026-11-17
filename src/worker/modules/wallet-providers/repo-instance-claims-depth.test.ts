@@ -219,7 +219,9 @@ describe('wallet operation claim SQL and atomicity', () => {
     // A failure in the provenance insert must roll the preceding operation UPDATE back.
     await expect(
       finishOperation(captured, { ...finish, raw: { ...raw, eventHash: 'invalid' } }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(
+      /CHECK constraint failed: length\(event_hash\) = 64 AND event_hash NOT GLOB '\*\[\^0-9/,
+    );
     expect(
       await first(
         db,

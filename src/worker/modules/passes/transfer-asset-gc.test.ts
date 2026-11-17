@@ -159,7 +159,7 @@ describe('transfer asset garbage collection', () => {
     expect(await kit.env.BUCKET.head(shared)).toBeNull();
     await expect(
       run(kit.env.DB, 'DELETE FROM pass_transfer_asset_gc WHERE r2_key = ?', [shared]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/retired pass asset key is immutable/);
     await expect(
       run(
         kit.env.DB,
@@ -167,7 +167,7 @@ describe('transfer asset garbage collection', () => {
       (r2_key,retired_at,next_attempt_at) VALUES (?,0,0)`,
         [shared],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/retired pass asset key is immutable/);
   });
 
   it('rolls back retirement when a later statement in the final transfer transaction fails', async () => {

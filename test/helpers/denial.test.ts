@@ -8,6 +8,7 @@ const problem = (status: number, code: string) =>
     headers: { 'content-type': 'application/problem+json' },
   });
 
+// The bare toThrow() calls below mean "the helper failed": the message is vitest's own, not ours.
 describe('denial helpers', () => {
   it('passes when status and code match and leaves the body readable', async () => {
     const res = problem(403, 'FORBIDDEN');

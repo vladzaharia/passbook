@@ -546,7 +546,7 @@ describe('sandbox native wallet retention', () => {
             attempt.passId,
           ],
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/provider issuance is unavailable/);
     }
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [other.id]);
 

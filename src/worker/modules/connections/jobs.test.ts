@@ -464,7 +464,7 @@ describe('pass.refresh', () => {
     const pass = await linkedPass(kit, dto.id, 'm-001');
     await expect(
       run(kit.env.DB, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential transfer required/);
   });
 
   it.each([

@@ -269,11 +269,11 @@ describe('pass event and device tenant races', () => {
           if (change === 'organization')
             await expect(
               run(db, 'UPDATE passes SET org_id = ? WHERE id = ?', [otherOrg.id, pass.id]),
-            ).rejects.toThrow();
+            ).rejects.toThrow(/credential transfer required/);
           else
             await expect(
               run(db, "UPDATE passes SET mode = 'test' WHERE id = ?", [pass.id]),
-            ).rejects.toThrow();
+            ).rejects.toThrow(/credential transfer required/);
         },
         async () => app.request(path(pass, resource), { headers: key.headers }, kit.env),
       );
@@ -304,7 +304,7 @@ describe('pass event and device tenant races', () => {
       async (db) => {
         await expect(
           run(db, 'UPDATE passes SET org_id = ? WHERE id = ?', [otherOrg.id, pass.id]),
-        ).rejects.toThrow();
+        ).rejects.toThrow(/credential transfer required/);
       },
       async () => app.request(path(pass, 'devices'), { headers: key.headers }, kit.env),
     );

@@ -70,7 +70,7 @@ describe('provider outcome capture', () => {
         'PATCH',
         responses.onProviderResponse,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Provider response exceeds the capture limit\./);
     expect(responses.envelopes).toHaveLength(0);
   });
 });

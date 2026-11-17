@@ -1043,7 +1043,7 @@ describe('template release API', () => {
         [f.ids.id(), publisher.userId, clock.now(), releaseId],
       );
     // The SQL boundary must reject a current-head rollback while the template is still active.
-    await expect(rawRollback(live.id)).rejects.toThrow();
+    await expect(rawRollback(live.id)).rejects.toThrow(/invalid template rollback/);
     const beforeActiveAttempt = await first(
       env.DB,
       'SELECT status, active_version, updated_at FROM templates WHERE id = ?',
@@ -1072,7 +1072,7 @@ describe('template release API', () => {
     );
     expect(archived).toMatchObject({ status: 'archived', active_version: t.version });
     // Archiving does not authorize a Test-mode restore, even through direct SQL.
-    await expect(rawRollback(test.id)).rejects.toThrow();
+    await expect(rawRollback(test.id)).rejects.toThrow(/invalid template release scope/);
     const beforeTestAttempt = await audits(t.id);
     const testAttempt = await post(
       `/${t.id}/releases/rollback`,
@@ -2372,7 +2372,9 @@ describe('trusted baked template releases', () => {
       await env.BUCKET.put(key, newBytes);
       try {
         await expectRejectsCode(readExtra(name), 'ASSET_NOT_FOUND');
-        await expect(templateContentHash(nextCtx, oldVersion, pinnedExtras)).rejects.toThrow();
+        await expect(templateContentHash(nextCtx, oldVersion, pinnedExtras)).rejects.toThrow(
+          /Template extra hash mismatch: background\.png|Template extra hash mismatch: strip\.png/,
+        );
       } finally {
         await env.BUCKET.put(key, bytes);
       }
@@ -2444,7 +2446,7 @@ describe('trusted baked template releases', () => {
       WHEN OLD.id = '${blocked.id}' BEGIN SELECT RAISE(ABORT, 'cache down'); END`,
     );
     try {
-      await expect(syncBakedTemplates(nextCtx, nextSource)).rejects.toThrow();
+      await expect(syncBakedTemplates(nextCtx, nextSource)).rejects.toThrow(/cache down/);
     } finally {
       await run(env.DB, 'DROP TRIGGER fail_baked_event_cache');
     }
@@ -2511,7 +2513,7 @@ describe('trusted baked template releases', () => {
       BEGIN SELECT RAISE(ABORT, 'audit down'); END`,
     );
     try {
-      await expect(syncBakedTemplates(ctx, source)).rejects.toThrow();
+      await expect(syncBakedTemplates(ctx, source)).rejects.toThrow(/audit down/);
     } finally {
       await run(env.DB, 'DROP TRIGGER fail_baked_release_audit');
     }

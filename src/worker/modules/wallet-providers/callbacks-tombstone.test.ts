@@ -471,7 +471,7 @@ describe('Samsung tombstone retention', () => {
         envelope,
         credentialKeysetCommitment: t.credentialKeysetCommitment,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/retired Samsung reference cannot be reused/);
     expect(
       await putSamsungFetchRef(db, refScope, {
         id: referenceId,

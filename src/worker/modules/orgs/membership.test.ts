@@ -382,10 +382,10 @@ describe('organization memberships', () => {
       run(env.DB, 'UPDATE org_invitations SET revoked_at = NULL WHERE id = ?', [
         revoked.invitation.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable invitation/);
     await expect(
       run(env.DB, 'DELETE FROM org_invitations WHERE id = ?', [revoked.invitation.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable invitation/);
     const other = await makeUser(f);
     const used = await invite(org.id, other.primaryEmail);
     expect((await accept(used.token, other.id)).status).toBe(200);
@@ -556,16 +556,16 @@ describe('organization memberships', () => {
         '["org_admin"]',
         invitation.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable invitation/);
     await expect(
       run(env.DB, 'UPDATE org_memberships SET roles = ? WHERE id = ?', [
         '["org_admin"]',
         membership.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable membership/);
     await expect(
       run(env.DB, 'DELETE FROM org_memberships WHERE id = ?', [membership.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable membership/);
     expect(
       (await getOrgAccess(createServiceContext(env, { clock }), person.id, org.id))?.roles,
     ).toEqual(['read_only']);

@@ -676,7 +676,7 @@ describe('M8 and the 0052 amendments', () => {
   it('leak_guard is mandatory and equals the id, so the sentinel foreign key cannot be skipped', async () => {
     await expect(insertGrant(null)).rejects.toThrow(/NOT NULL|constraint/i);
     await expect(insertGrant('other')).rejects.toThrow(/CHECK|constraint/i);
-    await expect(insertGrant('m8-1')).rejects.toThrow();
+    await expect(insertGrant('m8-1')).rejects.toThrow(/internal error; reference = [a-z0-9]+/);
     expect(await count("SELECT count(*) AS n FROM authority_grants WHERE id = 'm8-1'")).toBe(0);
   });
 

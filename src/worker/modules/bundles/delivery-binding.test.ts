@@ -359,7 +359,7 @@ describe('durable bundle email intent', () => {
         action: 'rotate_link',
         token: kit.ctx.ids.token(),
       }).commit(),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/The pass changed\. Reload and retry\./);
     expect(
       (
         await first<{ token: string }>(kit.env.DB, 'SELECT token FROM bundles WHERE id = ?', [

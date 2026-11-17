@@ -224,7 +224,7 @@ async function decryptedCard(token: string): Promise<unknown> {
       key,
       encrypted,
     ),
-  ).rejects.toThrow();
+  ).rejects.toThrow(/Decryption failed/);
   return JSON.parse(text.decode(plain));
 }
 

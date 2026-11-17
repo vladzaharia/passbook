@@ -109,7 +109,9 @@ describe('scanner asset lineage', () => {
           true,
         ),
       ).toBe(false);
-      await expect(run(kit.env.DB, sql, [fixture.pass.id])).rejects.toThrow();
+      await expect(run(kit.env.DB, sql, [fixture.pass.id])).rejects.toThrow(
+        /credential transfer required/,
+      );
       expect((await fixture.image()).status).toBe(200);
     },
   );

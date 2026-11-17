@@ -651,7 +651,7 @@ describe('version repository batch helper', () => {
         draft.version,
       ]),
     ).toEqual({ changes: 1 });
-    await expect(env.DB.batch(insertVersionStmts(env.DB, draft))).rejects.toThrow();
+    await expect(env.DB.batch(insertVersionStmts(env.DB, draft))).rejects.toThrow(/malformed JSON/);
     expect(await snapshot()).toEqual(baseline);
   });
 
@@ -665,7 +665,7 @@ describe('version repository batch helper', () => {
           ...insertVersionStmts(env.DB, pending),
           ...insertVersionStmts(env.DB, newVersion(altered.body, altered.buildKey)),
         ]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/malformed JSON/);
       expect(
         await first(
           env.DB,

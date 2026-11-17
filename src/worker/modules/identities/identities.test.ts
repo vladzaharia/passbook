@@ -157,7 +157,9 @@ describe('identity authority revision', () => {
     for (const invalid of [0, -1, 1.5, null]) {
       await expect(
         run(env.DB, 'UPDATE signing_identities SET revision = ? WHERE id = ?', [invalid, dto.id]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(
+        /CHECK constraint failed: typeof\(revision\) = 'integer' AND revision > 0|NOT NULL constraint failed: signing_identities\.revision/,
+      );
     }
     expect(await identityRevision(dto.id)).toBe(initial);
 

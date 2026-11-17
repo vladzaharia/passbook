@@ -50,7 +50,9 @@ describe('db helpers', () => {
           "INSERT INTO settings (scope, key, value, updated_at) VALUES ('bogus', 'b2', '1', 1)",
         ),
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(
+      /CHECK constraint failed: scope IN \('platform', 'system'\) OR scope GLOB 'org:\*'/,
+    );
     expect(await all(env.DB, "SELECT 1 FROM settings WHERE key = 'b1'")).toHaveLength(0);
   });
 

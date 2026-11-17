@@ -470,7 +470,8 @@ describe('durable test inbox forwarding', () => {
                 member.id,
               ]);
         // A bundle token is locked while a forward is in flight; a pass's download token is content.
-        if (fixture.kind === 'bundle') await expect(mutation).rejects.toThrow();
+        if (fixture.kind === 'bundle')
+          await expect(mutation).rejects.toThrow(/forwarding reservation is locked/);
         else await mutation;
       }, 'provider');
       const spy = vi.spyOn(kit.mailer, 'send');
@@ -539,7 +540,7 @@ describe('durable test inbox forwarding', () => {
           user.id,
           user.primaryEmail,
         ]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/forwarding reservation is locked/);
     }, 'provider');
     const spy = vi.spyOn(kit.mailer, 'send');
     try {
@@ -617,7 +618,7 @@ describe('durable test inbox forwarding', () => {
           expect(protectedMembers.map((row) => row.pass_id).sort()).toEqual(
             fixture.passes.map((pass) => pass.id).sort(),
           );
-          await expect(mutate()).rejects.toThrow();
+          await expect(mutate()).rejects.toThrow(/forwarding reservation is locked/);
           expect(
             await first(
               kit.env.DB,
@@ -686,7 +687,8 @@ describe('durable test inbox forwarding', () => {
             ADMIN_EMAIL,
           ]),
       ];
-      for (const mutate of mutations) await expect(mutate()).rejects.toThrow();
+      for (const mutate of mutations)
+        await expect(mutate()).rejects.toThrow(/forwarding reservation is locked/);
       // Suspending the org is a kill switch: an in-flight forward never holds it.
       await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
       await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
@@ -864,10 +866,10 @@ describe('durable test inbox forwarding', () => {
       const pass = fixture.passes[0]!;
       await expect(
         reassignHolder(jobCtxOf(kit), system, { passId: pass.id, email: uniqueEmail() }, null),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/forwarding reservation is locked/);
       await expect(
         run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/forwarding reservation is locked/);
       expect((await detail(fixture.id)).forwarding).toBe('unknown');
       expect(spy).toHaveBeenCalledTimes(1);
       expect(kit.mailer.sent).toHaveLength(before + 1);

@@ -1369,7 +1369,9 @@ describe('durable connection webhook retention', () => {
           transferPending: false,
           credentialKeysetCommitment: kit.credentialKeysetCommitment,
         });
-        await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow();
+        await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow(
+          /unresolved retained webhook claim/,
+        );
         await run(kit.env.DB, 'UPDATE passes SET personalization = ? WHERE id = ?', [
           JSON.stringify(input.fields),
           input.passId,
@@ -1402,7 +1404,9 @@ describe('durable connection webhook retention', () => {
       passId: pass.id,
       credentialKeysetCommitment: kit.credentialKeysetCommitment,
     });
-    await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow();
+    await expect(startPendingTransfer(kit.sctx, pass.id)).rejects.toThrow(
+      /unresolved retained webhook claim/,
+    );
     await startPendingTransfer(kit.sctx, unrelated.id);
     expect(
       await first(kit.env.DB, 'SELECT state FROM pass_credential_transfers WHERE pass_id = ?', [
@@ -1572,7 +1576,9 @@ describe('durable connection webhook retention', () => {
     );
     expect(kit.seams.applied).toEqual([]);
     expect(kit.seams.created).toEqual([]);
-    await expect(startPendingTransfer(kit.sctx, originalPass.id)).rejects.toThrow();
+    await expect(startPendingTransfer(kit.sctx, originalPass.id)).rejects.toThrow(
+      /unresolved retained webhook claim/,
+    );
   });
 
   it('keeps the original new-pass reservation when a competing pass is linked during the fetch', async () => {

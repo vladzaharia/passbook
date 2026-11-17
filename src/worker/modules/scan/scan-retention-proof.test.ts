@@ -223,7 +223,7 @@ describe('detached scan retention provenance', () => {
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined=0 WHERE id=?', [s.pass.id]);
     await expect(
       run(kit.env.DB, 'UPDATE scan_retention_proofs SET excluded=0 WHERE scan_id=?', [s.scanId]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable scan retention proof/);
     await run(kit.env.DB, 'DELETE FROM passes WHERE id=?', [s.pass.id]);
     expect(
       (
@@ -282,7 +282,7 @@ describe('detached scan retention provenance', () => {
           (scan_id,org_id,mode,event_id,pass_ref,state,presence_state) VALUES (?,?,?,?,?,?,?)`,
             [s.scanId, kit.org.id, 'live', s.event.id, prepared.passRef, state, presence],
           ),
-        ).rejects.toThrow();
+        ).rejects.toThrow(/invalid retained gate source/);
       }
     } finally {
       await clearScanRetentionDeleteStmt(kit.env.DB, prepared).run();
@@ -331,7 +331,7 @@ describe('detached scan retention provenance', () => {
       FROM scan_retention_proofs WHERE scan_id=?`,
         [replacement, s.scanId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/invalid scan retention source/);
     expect(
       await first(kit.env.DB, 'SELECT invalidated FROM scan_retention_proofs WHERE scan_id=?', [
         s.scanId,
@@ -736,10 +736,10 @@ describe('detached scan retention provenance', () => {
         '0'.repeat(64),
         s.scanId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/immutable scan retention proof/);
     await expect(
       run(kit.env.DB, 'DELETE FROM scan_retention_proofs WHERE scan_id=?', [s.scanId]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scan retention proof belongs to scan/);
     await run(kit.env.DB, "UPDATE scans SET reason='altered' WHERE id=?", [s.scanId]);
     expect(
       await first(kit.env.DB, `SELECT 1 AS valid WHERE ${fence.sql}`, fence.params),

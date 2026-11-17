@@ -46,7 +46,7 @@ describe('live display transport and authorization', () => {
     for (const field of ['actor', 'observation'] as const) {
       const missing = { ...monitor.attachment };
       Reflect.deleteProperty(missing, field);
-      await expect(sealLiveAttachment(kit.env, missing)).rejects.toThrow();
+      await expect(sealLiveAttachment(kit.env, missing)).rejects.toThrow(/Invalid live attachment/);
       expect((await hub().snapshot(missing)).rows).toEqual([]);
     }
   });

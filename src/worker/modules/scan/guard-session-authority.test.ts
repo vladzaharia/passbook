@@ -128,7 +128,7 @@ describe('requireScanActor: tenant session authority', () => {
         'rotated',
         authority.sessionId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/session csrf secret is immutable/);
     expect(
       actorCsrfSnapshotFence(
         {
@@ -177,7 +177,7 @@ describe('requireScanActor: tenant session authority', () => {
     ).toBe(false);
     await expect(
       run(env.DB, 'UPDATE scanners SET csrf_secret=? WHERE id=?', ['rotated', scanner.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/scanner credential revision must advance/);
     await run(env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
       'rotated',
       scanner.id,

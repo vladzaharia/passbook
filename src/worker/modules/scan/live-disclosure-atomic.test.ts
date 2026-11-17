@@ -229,7 +229,7 @@ describe('atomic live disclosure', () => {
       const next = `rotated-${kit.ctx.ids.token()}`;
       await expect(
         run(kit.env.DB, 'UPDATE scanners SET csrf_secret = ? WHERE id = ?', [next, id]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/scanner credential revision must advance/);
       await run(
         kit.env.DB,
         'UPDATE scanners SET csrf_secret = ?, updated_at = updated_at + 1 WHERE id = ?',

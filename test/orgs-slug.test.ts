@@ -12,7 +12,9 @@ const insert = (slug: string) =>
 describe('orgs.slug constraint', () => {
   it('rejects slugs with characters outside [a-z0-9-]', async () => {
     for (const bad of ['a B/../x', 'a/b', 'ab_c', 'aB', '-ab', 'a b']) {
-      await expect(insert(bad), bad).rejects.toThrow();
+      await expect(insert(bad), bad).rejects.toThrow(
+        /CHECK constraint failed: slug GLOB '\[a-z0-9\]\*' AND slug NOT GLOB '\*\[\^a-z0-9-\]\*' /,
+      );
     }
   });
 
@@ -20,7 +22,9 @@ describe('orgs.slug constraint', () => {
     await insert('acme-2');
     await expect(
       run(env.DB, "UPDATE orgs SET slug = 'a/../b' WHERE id = ?", ['id-acme-2']),
-    ).rejects.toThrow();
+    ).rejects.toThrow(
+      /CHECK constraint failed: slug GLOB '\[a-z0-9\]\*' AND slug NOT GLOB '\*\[\^a-z0-9-\]\*' /,
+    );
     await run(env.DB, "UPDATE orgs SET slug = 'acme-3' WHERE id = ?", ['id-acme-2']);
   });
 });

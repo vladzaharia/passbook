@@ -136,7 +136,9 @@ describe('sign out to switch', () => {
     expect(ok.mock.calls[0]?.[0]).toBe('/auth/logout?all=1');
     expect(new Headers(ok.mock.calls[0]?.[1]?.headers).get('x-csrf-token')).toBe('csrf');
     vi.stubGlobal('fetch', answer({ code: 'CSRF_TOKEN', status: 403, detail: 'Reload.' }, 403));
-    await expect(endSession('stale', { everywhere: true })).rejects.toThrow();
+    await expect(endSession('stale', { everywhere: true })).rejects.toMatchObject({
+      status: 403,
+    });
     // A single sign-out still leaves: the sign-in page re-checks the session.
     await expect(endSession('stale')).resolves.toBe('/login');
   });

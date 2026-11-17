@@ -189,9 +189,9 @@ describe('user-backed live tenant authority', () => {
     const session = await makeSession(kit.fx, { userId: outsider.id, roles: ['admin', 'user'] });
     const resolved = await createSessionStore(kit.env, kit.clock).resolve(session.cookieValue);
     if (!resolved) throw new Error('Missing outsider platform session.');
-    await expect(
-      tenantAuthorityOf(kit.ctx, resolved, kit.org.id, 'scanning:read'),
-    ).rejects.toThrow();
+    await expect(tenantAuthorityOf(kit.ctx, resolved, kit.org.id, 'scanning:read')).rejects.toThrow(
+      /You do not have access\./,
+    );
     // Obtain an authentic outsider attachment, then remove its explicit tenant access.
     const outsiderMembership = await grantScanMembership(kit.fx, kit.org.id, outsider.id);
     await run(kit.env.DB, 'UPDATE scanner_setups SET admin_user_id=? WHERE scanner_id=?', [

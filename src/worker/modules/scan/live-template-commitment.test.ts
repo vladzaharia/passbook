@@ -295,7 +295,7 @@ describe('live template commitment', () => {
       SET manifest=json_set(manifest, '$.name', 'Changed') WHERE template_id=? AND version=?`,
         params,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template versions are immutable/);
     await expect(
       run(
         kit.env.DB,
@@ -306,7 +306,7 @@ describe('live template commitment', () => {
       FROM template_versions WHERE template_id=? AND version=?`,
         params,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template versions are immutable/);
     const after = await candidateFor(pass.id);
     expect(after.templateSnapshot?.raw).toBe(candidate.templateSnapshot?.raw);
   });

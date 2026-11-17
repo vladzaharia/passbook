@@ -771,7 +771,7 @@ describe('approved issuance over tenant HTTP', () => {
           actor: { type: 'system', id: null },
           passId,
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/holder audit unavailable/);
     } finally {
       await run(kit.env.DB, 'DROP TRIGGER fail_initial_holder_attach');
     }

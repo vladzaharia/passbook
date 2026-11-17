@@ -164,7 +164,7 @@ export function registerLookupReleaseSnapshotGrantCase() {
       candidate,
     );
     const staleInserts = prepareStaleInsert(kit.clock.now(), undefined);
-    await expect(kit.env.DB.batch(staleInserts)).rejects.toThrow();
+    await expect(kit.env.DB.batch(staleInserts)).rejects.toThrow(/bad JSON path/);
     expect(
       await first(
         kit.env.DB,

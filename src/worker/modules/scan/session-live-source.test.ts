@@ -189,7 +189,7 @@ describe('administrator source authority', () => {
         'attempted-session-secret-rotation',
         admin.sessionId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/session csrf secret is immutable/);
     expect((await kit.get({ cookie }, path)).status).toBe(200);
     const otherAuth = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin'] });
     const otherAdmin = await createSessionStore(kit.env, kit.clock).resolve(otherAuth.cookieValue);

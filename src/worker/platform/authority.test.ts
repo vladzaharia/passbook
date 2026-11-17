@@ -358,7 +358,9 @@ describe('statements stay inside their batch', () => {
     const stmt = a.update('passes', { set: { display_title: 'x' }, where: { id: s.pass.id } });
     for (const call of [() => stmt.run(), () => stmt.first(), () => stmt.all(), () => stmt.bind()])
       expect(call).toThrow(/inside its grant batch/);
-    await expect(env.DB.batch([stmt as never])).rejects.toThrow();
+    await expect(env.DB.batch([stmt as never])).rejects.toThrow(
+      /Failed to parse body as JSON, got: ZodError/,
+    );
     expect(() => b.add(stmt)).toThrow(/different grant/);
     expect((await title(s.pass.id))?.t).not.toBe('x');
     await a.commit();
@@ -399,7 +401,7 @@ describe('statements stay inside their batch', () => {
     const [insert, write] = prepareGrantForTest(g);
     await expect(
       db.batch([insert as D1PreparedStatement, write as D1PreparedStatement]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/internal error; reference = [a-z0-9]+/);
     expect(await grants()).toBe(0);
     expect((await title(s.pass.id))?.t).not.toBe('leaky');
   });
