@@ -10,10 +10,9 @@ import {
   StaleScanAuthority,
 } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
-import { actionCsrfAt } from './act-snapshot.ts';
 import type { StopContext } from './act-stop.ts';
 import { finishEffectStop, valueRefusal } from './act-value-guard.ts';
-import type { ActorCsrfSnapshot } from './actor-csrf.ts';
+import { type ActorCsrfSnapshot, actionCsrfAt } from './actor-csrf.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { policyActor } from './dto.ts';
 import { amountOf, ScanEffectStop } from './effects-value.ts';

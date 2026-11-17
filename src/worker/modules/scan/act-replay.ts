@@ -9,7 +9,6 @@ import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
 import { StaleScanAuthority } from './act-override.ts';
-import { snapshotActionContext } from './act-snapshot.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { planAdmission } from './admission.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
@@ -25,6 +24,7 @@ import { type ActionPassFence, prepareActionPassFence } from './repo-pass-author
 import type { ScanRow } from './repo-scans.ts';
 import { foundOf } from './resolve.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
+import { capturingContext } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 
 /** A validated historical receipt with no current-policy-derived data or mutation affordances. */
@@ -56,7 +56,7 @@ export async function replayOutcome(
   credentialContext: CredentialTombstoneSnapshot,
   csrfSnapshot: ActorCsrfSnapshot,
 ): Promise<ScanEvaluation> {
-  ctx = snapshotActionContext(ctx);
+  ctx = capturingContext(ctx);
   // A passless refusal is scoped by the session it was made in; a device now in another one cannot replay it.
   if (
     row.passId === null &&
