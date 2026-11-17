@@ -2,6 +2,7 @@
   "schema": 1,
   "name": "Stamp card",
   "description": "Stamps fill the strip; a full card earns a reward.",
+  "blueprint": true,
   "inputs": {
     "type": "object",
     "required": [
@@ -282,6 +283,7 @@
     }
   ],
   "display": {
+    "icon": "stamp",
     "title": "{{holder}}",
     "subtitle": "{{pass.stamps.card}} of {{pass.stamps.goal}} · {{cardNumber}}",
     "status": "{{pass.stamps.card}} of {{pass.stamps.goal}}",
