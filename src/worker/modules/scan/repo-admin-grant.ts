@@ -1,5 +1,10 @@
 import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
-import { type Check, epochIs, exactlyOne } from '../../platform/authority-checks.ts';
+import {
+  type Check,
+  epochIs,
+  exactlyOne,
+  templateUsableSql,
+} from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
@@ -106,15 +111,13 @@ export const eventsOpen = (ids: readonly (string | null | undefined)[]): Check[]
   );
 
 const TEMPLATE_STATUS = {
-  active: "t.status = 'active'",
-  attached: "t.status != 'deleted'",
-  archived: "t.status = 'archived'",
+  active: templateUsableSql('t', 'issue'),
+  attached: templateUsableSql('t', 'existing'),
 } as const;
 
 /**
  * Every template belongs to this org or the platform (one bind, any count) and is `active` (a new
- * attachment), `attached` (already on the scope: archived keeps scanning, deleted stops) or
- * still `archived` (an attached template without an issuance head).
+ * attachment) or `attached` (already on the scope: archived keeps scanning, deleted stops).
  */
 export function templatesUsable(
   ids: readonly string[],
