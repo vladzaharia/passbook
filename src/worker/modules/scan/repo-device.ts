@@ -123,7 +123,7 @@ export async function getScanner(db: Db, id: string): Promise<ScannerRow | null>
   return row ? toRow(row) : null;
 }
 
-/** The presented credential is gone: revoked, expired, or a replaced token or CSRF secret. Epoch drift alone is not. */
+/** The row half of `scannerCredentialLost` (revoked, expired, replaced token or stored CSRF secret); classify with that. */
 export async function credentialGone(db: Db, scanner: ScannerRow, now: number): Promise<boolean> {
   const fresh = await getScanner(db, scanner.id);
   return (
