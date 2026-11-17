@@ -96,7 +96,13 @@ function SlotTile({
       detail={size ? `@${scale}x: ${size[0]} × ${size[1]} px` : undefined}
       needs={slotNeeds(slot)}
       error={error}
-      warning={heavy ? 'Over 200 KB; a smaller file loads faster.' : undefined}
+      warning={
+        slot === 'strip' && shown && pass.stamps
+          ? 'This strip hides the stamps. Remove it to show them.'
+          : heavy
+            ? 'Over 200 KB; a smaller file loads faster.'
+            : undefined
+      }
       onFile={(f) => void take(f)}
       busy={busy}
       disabled={pass.status === 'voided' || readOnly}
