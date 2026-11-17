@@ -515,6 +515,7 @@ Done:
 - Open: drop the plain-to-MAC exception (0059 `passes_token_change_moves_link`, `passes_row_version_a`, wallet-provider triggers; 0065 `passes_auth_token_change_follows_generation`, `pass_credential_transfer_required`, `passes_row_version_a`) in a new migration once `TOKEN_SEAL_RUN remaining = 0` and `unscrubbed = 0` in production. SQL cannot verify the HMAC, so until then any `h1:` value passes the exception.
 - Done: migration `0069` also lets a MAC replace a MAC (cron `tokens.remac`, after `MAC_KEY_VERSION` moved) while a `token_remac_marks` row names exactly that value; the job writes and deletes the mark in one batch. `token_remac_marks` is a guarded table (raw writes only in `passes/repo-pass-trusted.ts`). Drop the marks with the exception above.
 - Open (post-cutover): the credential-reference evidence (tombstones, retention proofs, webhook and action references, the keyset commitment) derives from the oldest KEK, not from `MAC_KEY_VERSION`. KEK_V1 cannot be retired until a reviewed rekey of that evidence exists; no rekey tool exists.
+- Open (post-cutover): no job rewraps envelope-encrypted secrets and token seals to a newer KEK (`rewrapSecret` has no caller; 14 envelope tables with their own AADs, and a `credentials` rewrite bumps signing-identity revisions). Until one exists, answer a KEK compromise by rotating links and credentials; the key itself stays.
 
 ### 7.3 Provider track
 
