@@ -91,3 +91,17 @@ export function unhealthyConnections(
     [limit],
   );
 }
+
+/** Staff PINs whose hash was made under MAC root `version` (a NULL column is the oldest KEK, `oldest`). */
+export async function staffPinsOnRoot(
+  db: D1Database,
+  version: number,
+  oldest: number,
+): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    'SELECT count(*) AS n FROM scan_staff WHERE COALESCE(pin_mac_version, ?) = ?',
+    [oldest, version],
+  );
+  return row?.n ?? 0;
+}

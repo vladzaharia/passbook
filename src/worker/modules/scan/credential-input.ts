@@ -1,4 +1,5 @@
 import type { ScanInput } from '../../../shared/contracts/scan.ts';
+import { isKeyEnvName } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -45,9 +46,9 @@ export function snapshotCredentialEnv<T extends object>(
   capturedKeyEnv: Readonly<Record<string, string>> = captureCredentialKeyEnv(env),
 ): T {
   const snapshot = { ...env } as Record<string, unknown>;
-  for (const key of Object.keys(snapshot)) if (/^KEK_V\d+$/.test(key)) delete snapshot[key];
+  for (const key of Object.keys(snapshot)) if (isKeyEnvName(key)) delete snapshot[key];
   for (const [key, value] of Object.entries(capturedKeyEnv))
-    if (/^KEK_V\d+$/.test(key) && typeof value === 'string') snapshot[key] = value;
+    if (isKeyEnvName(key) && typeof value === 'string') snapshot[key] = value;
   return Object.freeze(snapshot) as unknown as T;
 }
 

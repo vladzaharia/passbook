@@ -1,5 +1,5 @@
 import { all, first } from '../../platform/db.ts';
-import { personLabelSql } from '../../platform/known-email-sql.ts';
+import { userLabelSql } from '../orgs/repo-user-label.ts';
 
 export interface PassDevice {
   shortId: string;
@@ -39,12 +39,13 @@ export async function listPassDevices(db: D1Database, passId: string): Promise<P
 export async function lastVoidEvent(
   db: D1Database,
   passId: string,
+  platform: boolean,
 ): Promise<{ at: number; actorType: string; actorLabel: string | null } | null> {
   const row = await first<{ at: number; actor_type: string; label: string | null }>(
     db,
     `SELECT a.at, a.actor_type,
        CASE a.actor_type
-         WHEN 'user' THEN (SELECT ${personLabelSql('name', 'primary_email')} FROM users WHERE id = a.actor_id)
+         WHEN 'user' THEN ${userLabelSql('a.actor_id', 'a.org_id', platform)}
          WHEN 'api_key' THEN (SELECT name FROM api_keys WHERE id = a.actor_id)
          WHEN 'connection' THEN (SELECT name FROM connections WHERE id = a.actor_id)
        END AS label

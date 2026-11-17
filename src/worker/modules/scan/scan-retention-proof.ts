@@ -1,4 +1,4 @@
-import { derivedHmacKey } from '../../platform/crypto.ts';
+import { derivedHmacKey, isKeyEnvName } from '../../platform/crypto.ts';
 import { toHex } from '../../platform/ids.ts';
 import type { EventRow } from '../events/repo.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
@@ -20,7 +20,7 @@ const encoder = new TextEncoder();
 function retentionKeyEnv(env: object): Record<string, string> {
   const keys: Record<string, string> = {};
   for (const [name, value] of Object.entries(env))
-    if (/^KEK_V\d+$/.test(name) && typeof value === 'string') keys[name] = value;
+    if (isKeyEnvName(name) && typeof value === 'string') keys[name] = value;
   return keys;
 }
 

@@ -337,7 +337,7 @@ describe('latest pass', () => {
     expect(res.headers.get('last-modified')).toBe(
       new Date(Math.floor(pass.modifiedAt / 1000) * 1000).toUTCString(),
     );
-    expect(res.headers.get('cache-control')).toBe('private, no-cache');
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
     const bytes = new Uint8Array(await res.arrayBuffer());
     expect([bytes[0], bytes[1]]).toEqual([0x50, 0x4b]);
   });

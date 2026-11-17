@@ -1,7 +1,15 @@
-import { decryptSecret, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
+import {
+  decryptSecret,
+  encryptSecret,
+  kekVersionsOf,
+  loadKekRing,
+  macPreviousVersion,
+} from '../../platform/crypto.ts';
 import { all } from '../../platform/db.ts';
+import { macKeyProblems } from '../../platform/mac-key-config.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Draft } from './checks.ts';
+import { staffPinsOnRoot } from './repo.ts';
 
 /** Present and usable: the ring loads and a round trip decrypts. Reports versions, never key material. */
 export async function checkKek(ctx: ServiceContext): Promise<Draft> {
@@ -12,12 +20,30 @@ export async function checkKek(ctx: ServiceContext): Promise<Draft> {
     const sealed = await encryptSecret(ring, probe, 'status:kek');
     const opened = await decryptSecret(ring, sealed, 'status:kek');
     if (opened.length !== probe.length) throw new Error('KEK round trip mismatch');
-    return {
-      ...base,
-      state: 'verified',
-      detail: null,
-      data: { currentVersion: ring.current, versions: ring.keys.size },
-    };
+    const env = ctx.env as { MAC_KEY_VERSION?: string; MAC_KEY_VERSION_PREVIOUS?: string };
+    const macProblems = macKeyProblems(
+      { pin: env.MAC_KEY_VERSION, previous: env.MAC_KEY_VERSION_PREVIOUS },
+      kekVersionsOf(ctx.env),
+    );
+    if (macProblems.length > 0) {
+      ctx.log.error('status.mac_key_config', { code: 'MAC_KEY_CONFIG_INVALID' });
+      return { ...base, state: 'failing', detail: macProblems.join(' ') };
+    }
+    const data = { currentVersion: ring.current, versions: ring.keys.size };
+    // During a rotation, staff PINs hashed under the previous root must be reset before it is unset.
+    const previous = macPreviousVersion(ctx.env);
+    const pins =
+      previous === null
+        ? 0
+        : await staffPinsOnRoot(ctx.env.DB, previous, kekVersionsOf(ctx.env)[0] ?? 1);
+    if (pins > 0)
+      return {
+        ...base,
+        state: 'degraded',
+        detail: `${pins} staff PINs still on the previous root.`,
+        data: { ...data, staffPinsOnPreviousRoot: pins },
+      };
+    return { ...base, state: 'verified', detail: null, data };
   } catch (error) {
     ctx.log.error('status.kek_unavailable', { code: 'KEK_UNAVAILABLE', error });
     return { ...base, state: 'failing', detail: 'No usable KEK_V1 secret.' };

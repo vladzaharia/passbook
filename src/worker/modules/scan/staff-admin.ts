@@ -8,6 +8,7 @@ import type {
 import type { SessionAuth } from '../../platform/auth.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
 import { bump } from '../../platform/counters.ts';
+import { macKeyVersion } from '../../platform/crypto.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import {
   AppError,
@@ -38,7 +39,7 @@ import {
   type StaffPage,
 } from './repo-staff-page.ts';
 import { staffViews } from './staff-admin-views.ts';
-import { hashPin } from './staff-pin.ts';
+import { hashPin, pinMatches } from './staff-pin.ts';
 
 /** One minute window per user: 60 writes or 240 reads. */
 export async function staffRateLimit(ctx: ServiceContext, userId: string, write: boolean) {
@@ -177,7 +178,15 @@ export async function createStaff(
     STAFF_CODES,
     id,
   );
-  addStaffInsert(g, { id, name: input.name, role: input.role, pinHash, createdBy: userId, now });
+  addStaffInsert(g, {
+    id,
+    name: input.name,
+    role: input.role,
+    pinHash,
+    pinMacVersion: macKeyVersion(ctx.env),
+    createdBy: userId,
+    now,
+  });
   g.add(
     audited(g, ctx, {
       orgId: input.orgId,
@@ -250,14 +259,12 @@ export async function resetStaffPin(
   const { userId, mode } = authority;
   assertAuthority(authority, session, orgId, mode, 'scanning:manage');
   let pin = ctx.ids.code(6);
-  let pinHash = await hashPin(ctx.env, id, pin);
-  // Even a random collision must not leave the old credential valid.
-  for (let i = 0; pinHash === staff.pinHash && i < 10; i++) {
+  // Even a random collision must not leave the old credential valid (under either root mid-rotation).
+  for (let i = 0; (await pinMatches(ctx.env, id, pin, staff.pinHash)) && i < 10; i++)
     pin = ctx.ids.code(6);
-    pinHash = await hashPin(ctx.env, id, pin);
-  }
-  if (pinHash === staff.pinHash)
+  if (await pinMatches(ctx.env, id, pin, staff.pinHash))
     throw new UnavailableError('Could not generate a new PIN. Try again.', 'PIN_GENERATION_FAILED');
+  const pinHash = await hashPin(ctx.env, id, pin);
   const now = ctx.clock.now();
   const g = adminGrant(
     ctx,
@@ -269,7 +276,7 @@ export async function resetStaffPin(
     STAFF_CODES,
     id,
   );
-  addStaffPinRotate(g, id, pinHash, now);
+  addStaffPinRotate(g, id, pinHash, macKeyVersion(ctx.env), now);
   addUnbindStaffEverywhere(g, id, now);
   g.add(
     audited(g, ctx, {

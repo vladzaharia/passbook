@@ -1,3 +1,4 @@
+import { isKeyEnvName } from '../../platform/crypto.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -12,7 +13,7 @@ import { credentialKeysetAuthorityStmt } from './repo-credential-keyset-authorit
 export function credentialKeysetContext(ctx: ServiceContext): ServiceContext {
   const keys = captureCredentialKeyEnv(ctx.env);
   const env = { ...ctx.env } as typeof ctx.env & Record<string, unknown>;
-  for (const name of Object.keys(env)) if (/^KEK_V\d+$/.test(name)) delete env[name];
+  for (const name of Object.keys(env)) if (isKeyEnvName(name)) delete env[name];
   Object.assign(env, keys);
   return { ...ctx, env: Object.freeze(env) };
 }

@@ -24,7 +24,6 @@ export async function insertCredential(
     orgId: string;
     kind: 'connector' | 'webhook';
     envelope: Envelope;
-    fingerprint: string;
     createdBy: string | null;
     now: number;
   },
@@ -34,8 +33,8 @@ export async function insertCredential(
     writer === 'system' ? null : connectionAuthPredicate(writer, 'subject.org_id', c.now);
   const result = await run(
     db,
-    `INSERT INTO credentials (id, org_id, kind, kek_version, iv, wrapped_dek, ciphertext, fingerprint, created_by, created_at)
-     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${auth ? ` FROM (SELECT ? AS org_id) subject WHERE ${auth.sql}` : ''}`,
+    `INSERT INTO credentials (id, org_id, kind, kek_version, iv, wrapped_dek, ciphertext, created_by, created_at)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?${auth ? ` FROM (SELECT ? AS org_id) subject WHERE ${auth.sql}` : ''}`,
     [
       c.id,
       c.orgId,
@@ -44,7 +43,6 @@ export async function insertCredential(
       c.envelope.iv,
       c.envelope.wrappedDek,
       c.envelope.ciphertext,
-      c.fingerprint,
       c.createdBy,
       c.now,
       ...(auth ? [c.orgId, ...auth.params] : []),

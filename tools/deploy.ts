@@ -25,6 +25,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { resolve } from 'node:path';
+import { macKeyProblems } from '../src/worker/platform/mac-key-config.ts';
 import {
   activeMissingHeads,
   runbookSql,
@@ -39,6 +40,7 @@ import {
   parseVersionId,
   pendingMigrations,
   pendingRefusal,
+  secretNames,
   uploadAndMigrate,
 } from './lib/deploy-plan.ts';
 import { readJsonc } from './lib/jsonc.ts';
@@ -77,9 +79,22 @@ const wrangler = (...a: string[]) =>
 
 const required = config.secrets?.required ?? [];
 const checkSecrets = () => {
-  const missing = missingSecrets(required, wrangler('secret', 'list', '--format', 'json'));
+  const listed = wrangler('secret', 'list', '--format', 'json');
+  const missing = missingSecrets(required, listed);
   if (missing.length > 0) {
     console.error(`Not migrating. Set with wrangler secret put: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+  const keks = secretNames(listed).flatMap((name) => {
+    const match = /^KEK_V(\d+)$/.exec(name);
+    return match ? [Number(match[1])] : [];
+  });
+  const macProblems = macKeyProblems(
+    { pin: config.vars?.MAC_KEY_VERSION, previous: config.vars?.MAC_KEY_VERSION_PREVIOUS },
+    keks,
+  );
+  if (macProblems.length > 0) {
+    console.error(`Not migrating:\n${macProblems.map((p) => `- ${p}`).join('\n')}`);
     process.exit(1);
   }
 };

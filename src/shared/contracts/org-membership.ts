@@ -59,7 +59,8 @@ export const OrgMembershipListSchema = z.object({ items: z.array(OrgMembershipSc
 /** A member as org managers see them: the person, not just the user id. */
 export const OrgMemberSchema = OrgMembershipSchema.extend({
   userName: z.string().nullable(),
-  userEmail: z.string(),
+  /** The address to show; null for an account with no verified email (never the placeholder). */
+  userEmail: z.string().nullable(),
 });
 export type OrgMember = z.infer<typeof OrgMemberSchema>;
 export const OrgMemberListSchema = z.object({ items: z.array(OrgMemberSchema) });

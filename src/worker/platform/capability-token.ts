@@ -4,6 +4,7 @@ import {
   derivedHmacKey,
   encryptSecret,
   loadKekRing,
+  macPreviousVersion,
 } from './crypto.ts';
 import { NotFoundError, UnavailableError } from './errors.ts';
 import { safeEqual, toHex } from './ids.ts';
@@ -39,8 +40,13 @@ const MAC_KEYS: Record<TokenPurpose, string> = {
   'apple-auth': 'apple-auth-token.v1',
 };
 
-export async function tokenMac(env: object, purpose: TokenPurpose, token: string): Promise<string> {
-  const key = await derivedHmacKey(env, MAC_KEYS[purpose]);
+export async function tokenMac(
+  env: object,
+  purpose: TokenPurpose,
+  token: string,
+  version?: number,
+): Promise<string> {
+  const key = await derivedHmacKey(env, MAC_KEYS[purpose], version);
   const mac = await crypto.subtle.sign(
     'HMAC',
     key,
@@ -49,17 +55,29 @@ export async function tokenMac(env: object, purpose: TokenPurpose, token: string
   return MAC_PREFIX + toHex(new Uint8Array(mac));
 }
 
+/** Every MAC a stored column may hold for `token`: the current root's, then (mid-rotation) the previous one's. */
+export async function tokenMacs(
+  env: object,
+  purpose: TokenPurpose,
+  token: string,
+): Promise<[string, ...string[]]> {
+  const previous = macPreviousVersion(env);
+  const mac = await tokenMac(env, purpose, token);
+  return previous === null ? [mac] : [mac, await tokenMac(env, purpose, token, previous)];
+}
+
 /**
- * The two column values a presented token can match: its MAC and the plain value of a row not yet
- * backfilled. A presented value shaped like a MAC never matches itself, so a leaked MAC is no link.
+ * The three column values a presented token can match: its MAC, the plain value of a row not yet
+ * backfilled, and its MAC under the previous root (the MAC again when no rotation is running). A
+ * presented value shaped like a MAC never matches itself, so a leaked MAC is no link.
  */
 export async function tokenKeys(
   env: object,
   purpose: TokenPurpose,
   token: string,
-): Promise<[string, string]> {
-  const mac = await tokenMac(env, purpose, token);
-  return [mac, isTokenMac(token) ? mac : token];
+): Promise<[string, string, string]> {
+  const [mac, previous = mac] = await tokenMacs(env, purpose, token);
+  return [mac, isTokenMac(token) ? mac : token, previous];
 }
 
 /** A new token as it is stored: the MAC for the token column and the sealed copy. */
@@ -105,8 +123,10 @@ export async function tokenMatches(
   presented: string,
 ): Promise<boolean> {
   // The MAC is computed for every row, so a sealed, an unsealed and an unknown row cost the same.
-  const mac = await tokenMac(env, purpose, presented);
-  return isTokenMac(stored) ? safeEqual(mac, stored) : safeEqual(presented, stored);
+  const macs = await tokenMacs(env, purpose, presented);
+  if (!isTokenMac(stored)) return safeEqual(presented, stored);
+  const matches = await Promise.all(macs.map((mac) => safeEqual(mac, stored)));
+  return matches.includes(true);
 }
 
 const bytes = (v: number[] | ArrayBuffer) => new Uint8Array(v);
@@ -154,7 +174,7 @@ export async function unsealToken(
     throw new UnavailableError('The link is unavailable. Rotate it.', 'TOKEN_SEAL_UNREADABLE');
   }
   // A copy that is not of the token this row holds (a write that skipped the seal) must not be shown.
-  if ((await tokenMac(env, purpose, plain)) !== stored) {
+  if (!(await tokenMacs(env, purpose, plain)).includes(stored)) {
     log.error('token.seal_mismatch', { code: 'TOKEN_SEAL_MISMATCH', purpose, id });
     // The row moved to another token since the caller read it: the caller's snapshot is stale.
     throw new NotFoundError('This link is not valid.', 'TOKEN_SEAL_MISMATCH');

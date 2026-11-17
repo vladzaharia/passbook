@@ -4,7 +4,7 @@ import { ScanWatchSchema } from '../../../shared/contracts/scan-setups.ts';
 import type { Grant } from '../../platform/authority.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { all, chunk, first, placeholders } from '../../platform/db.ts';
-import { personLabelSql } from '../../platform/known-email-sql.ts';
+import { userLabelSql } from '../orgs/repo-user-label.ts';
 
 export interface SetupMeta {
   scanner_id: string;
@@ -20,8 +20,7 @@ export async function setupMetas(db: D1Database, orgId: string | null, ids: stri
     chunk(ids, 90).map((part) =>
       all<SetupMeta>(
         db,
-        `SELECT m.*,(SELECT d.session_id FROM scanning_devices d WHERE d.scanner_id=m.scanner_id AND d.org_id=m.org_id) AS session_id,${personLabelSql('u.name', 'u.primary_email')} AS admin_name FROM scanner_setups m
-    LEFT JOIN users u ON u.id=m.admin_user_id WHERE m.scanner_id IN (${placeholders(part.length)})${orgId === null ? '' : ' AND m.org_id=?'}`,
+        `SELECT m.*,(SELECT d.session_id FROM scanning_devices d WHERE d.scanner_id=m.scanner_id AND d.org_id=m.org_id) AS session_id,${userLabelSql('m.admin_user_id', 'm.org_id', false)} AS admin_name FROM scanner_setups m WHERE m.scanner_id IN (${placeholders(part.length)})${orgId === null ? '' : ' AND m.org_id=?'}`,
         [...part, ...(orgId === null ? [] : [orgId])],
       ),
     ),
@@ -32,8 +31,7 @@ export async function setupMetas(db: D1Database, orgId: string | null, ids: stri
 export const setupMeta = (db: D1Database, orgId: string, scannerId: string) =>
   first<SetupMeta>(
     db,
-    `SELECT m.*,(SELECT d.session_id FROM scanning_devices d WHERE d.scanner_id=m.scanner_id AND d.org_id=m.org_id) AS session_id,${personLabelSql('u.name', 'u.primary_email')} AS admin_name FROM scanner_setups m
-    LEFT JOIN users u ON u.id=m.admin_user_id WHERE m.org_id=? AND m.scanner_id=?`,
+    `SELECT m.*,(SELECT d.session_id FROM scanning_devices d WHERE d.scanner_id=m.scanner_id AND d.org_id=m.org_id) AS session_id,${userLabelSql('m.admin_user_id', 'm.org_id', false)} AS admin_name FROM scanner_setups m WHERE m.org_id=? AND m.scanner_id=?`,
     [orgId, scannerId],
   );
 

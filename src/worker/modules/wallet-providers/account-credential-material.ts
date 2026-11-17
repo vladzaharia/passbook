@@ -4,7 +4,12 @@ import {
   type SamsungWalletCredentials,
   SamsungWalletCredentialsSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
-import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
+import {
+  credentialAad,
+  decryptSecretText,
+  isKeyEnvName,
+  loadKekRing,
+} from '../../platform/crypto.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { fromBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -51,7 +56,7 @@ export function snapshotWalletCredentialContext(ctx: ServiceContext): ServiceCon
   const keyEnv = captureCredentialKeyEnv(ctx.env);
   const env = { ...ctx.env };
   for (const name of Object.keys(env)) {
-    if (/^KEK_V\d+$/.test(name)) delete (env as unknown as Record<string, unknown>)[name];
+    if (isKeyEnvName(name)) delete (env as unknown as Record<string, unknown>)[name];
   }
   return { ...ctx, env: { ...env, ...keyEnv } };
 }

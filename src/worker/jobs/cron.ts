@@ -11,6 +11,7 @@ import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
+import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
 import { sealCapabilityTokens } from '../modules/passes/token-seal.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
 import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
@@ -41,6 +42,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'scan.reconcile', run: reconcileScans },
     { name: 'scan.backfill', run: backfillScanLookups },
     { name: 'tokens.seal', run: sealCapabilityTokens },
+    { name: 'tokens.remac', run: remacCapabilityTokens },
     { name: 'wallet.sync', run: drainWalletProviderSync },
     {
       name: 'passes.credential_transfers',

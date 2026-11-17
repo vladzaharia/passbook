@@ -43,7 +43,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, string> = {
   'src/worker/modules/passes/repo-remove-compensate.ts':
     "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority; routes take the grants in repo-remove.ts",
   'src/worker/modules/passes/repo-pass-trusted.ts':
-    'link rotation, refresh claim, soft delete and the seal of an old plain pass or bundle link token (org no job grant can write; MAC under a CAS on the plain value, no authority change) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
+    'link rotation, refresh claim, soft delete, the seal of an old plain pass or bundle link token (org no job grant can write; MAC under a CAS on the plain value, no authority change) and the re-MAC of a stored token MAC under a new root (cron tokens.remac: a token_remac_marks row, the CAS update and the mark removal in one batch) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
   'src/worker/modules/passes/repo-connection-state.ts':
     'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
   'src/worker/modules/passes/repo-history-assets.ts':
