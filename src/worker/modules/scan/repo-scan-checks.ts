@@ -130,9 +130,13 @@ export const dailyAmountCheck = (
 
 /**
  * The pass is still used under the release the answer was evaluated under (`lineage`, 409
- * `SCAN_PASS_CHANGED`): a head that says something else about what a scanner may do refuses; an
- * identical republish leaves the effective release as it was. A snapshot without a release id is
- * false. In a grant that is the commit itself, so no read of this rides before it.
+ * `SCAN_PASS_CHANGED`), by content: it holds when the release the pass would be used under now is
+ * the one evaluated, or says the same about everything a scanner sees or may do (version,
+ * content hash, adapter revision and capabilities, audience policy revision, org: FIX35's
+ * `ownReleaseSaysSameSql`). A republish, or the first head of a legacy pass that is its own
+ * pinned version, is no change; another version or adapter is. A legacy pass (no release) holds
+ * while it has no head, or the head is its pinned version. A snapshot without a release is false.
+ * In a grant that is the commit itself, so no read of this rides before it.
  *
  * The release SQL names org and mode columns of its own (`tenantCheck` refuses that), so this is a
  * hand-built `Check`, made only here: the pass is pinned by the grant's tenant (`tenantMatch`
@@ -152,9 +156,19 @@ export function effectiveReleaseCheck(
       if (scope === 'platform')
         throw new AuthorityError('GRANT_SCOPE_OVERRIDE', 'A release check needs a tenant.');
       const before = b.params.length;
-      const text = `EXISTS (SELECT 1 FROM passes p WHERE p.id = ${b.bind(passId)}
-        AND ${tenantMatch('passes', 'p', scope, 'a')}
-        AND ${effectiveReleaseIdSql('p')} IS ${b.bind(used === null ? null : used[0])})`;
+      const head = `LEFT JOIN template_releases cur ON cur.id = ${effectiveReleaseIdSql('p')}`;
+      const pinned = `p.id = ${b.bind(passId)} AND ${tenantMatch('passes', 'p', scope, 'a')}`;
+      const same =
+        used === null
+          ? '(cur.id IS NULL OR cur.version = p.template_version)'
+          : `(cur.id IS ${b.bind(used[0])} OR EXISTS (SELECT 1 FROM template_releases ev
+              WHERE ev.id = ${b.bind(used[0])} AND ev.version = cur.version
+                AND ev.content_hash = cur.content_hash
+                AND ev.adapter_revision = cur.adapter_revision
+                AND ev.adapter_capabilities = cur.adapter_capabilities
+                AND ev.audience_policy_revision = cur.audience_policy_revision
+                AND ev.org_id IS cur.org_id))`;
+      const text = `EXISTS (SELECT 1 FROM passes p ${head} WHERE ${pinned} AND ${same})`;
       assertReleaseCheckText(text, b.params.length - before, scope);
       return text;
     },

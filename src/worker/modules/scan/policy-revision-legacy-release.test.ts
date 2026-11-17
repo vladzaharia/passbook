@@ -289,7 +289,9 @@ describe('scanner evaluated policy revisions', () => {
     expect(await scanEvents()).toHaveLength(1);
   });
 
-  // A release is content at commit (authority-epochs.md F4): the scan grant does not ask for the head.
+  // A release is content at commit (authority-epochs.md F4), and a head equal to the pass's own build
+  // (same version and content: FIX35's same-version rule) is no change: the grant's release check
+  // refuses only a head that says something else (action-template-read-race, act-value-race).
   for (const phase of ['before', 'after'] as const) {
     it(`admits a legacy action when its first head appears ${phase} the gate`, async () => {
       const templateId = await kit.scanTemplate(

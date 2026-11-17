@@ -10,13 +10,13 @@ describe('effectiveReleaseCheck', () => {
   it('pins its pass by the grant tenant and binds exactly the pass and the release', () => {
     const b = new Binds();
     const text = effectiveReleaseCheck('pass-1', RAW).ok(b, 'org_mode');
-    expect(b.params).toEqual(['pass-1', 'r1']);
+    expect(b.params).toEqual(['pass-1', 'r1', 'r1']);
     expect([...text.matchAll(/\b(?:FROM|JOIN)\s+passes\s+(\w+)/gi)].map((m) => m[1])).toEqual([
       'p',
     ]);
     expect(text).toContain('p.org_id = a.org_id');
     expect(text).toContain('p.mode = a.mode');
-    expect(text.match(/\?/g)).toHaveLength(2);
+    expect(text.match(/\?/g)).toHaveLength(3);
     expect(text).not.toMatch(/\bg\./);
     expect([...text.matchAll(/\ba\.(\w+)/g)].map((m) => m[1])).toEqual(['org_id', 'mode']);
   });
@@ -24,21 +24,21 @@ describe('effectiveReleaseCheck', () => {
   it('binds null for a pass without a release, and is false without a snapshot', () => {
     const b = new Binds();
     effectiveReleaseCheck('pass-1', JSON.stringify({ release: null })).ok(b, 'org_mode');
-    expect(b.params).toEqual(['pass-1', null]);
+    expect(b.params).toEqual(['pass-1']);
     expect(effectiveReleaseCheck('pass-1', undefined).ok(new Binds(), 'org_mode')).toBe('0');
   });
 
   it('refuses text that is not pinned, binds a tenant column, or names a reserved alias', () => {
     const ok = effectiveReleaseCheck('p', RAW).ok(new Binds(), 'org_mode');
-    expect(() => assertReleaseCheckText(ok, 2, 'org_mode')).not.toThrow();
+    expect(() => assertReleaseCheckText(ok, 3, 'org_mode')).not.toThrow();
     const cases: [string, string, number][] = [
-      ['unpinned pass', ok.replace('p.org_id = a.org_id', '1 = 1'), 2],
-      ['unpinned mode', ok.replace('p.mode = a.mode', '1 = 1'), 2],
-      ['bound org', `${ok} AND p.org_id = ?`, 3],
-      ['grant alias', `${ok} AND g.org_id = p.org_id`, 2],
-      ['actor column', `${ok} AND a.status = 1`, 2],
-      ['second passes alias', `${ok} AND EXISTS (SELECT 1 FROM passes q WHERE q.id = p.id)`, 2],
-      ['wrong bind count', ok, 3],
+      ['unpinned pass', ok.replace('p.org_id = a.org_id', '1 = 1'), 3],
+      ['unpinned mode', ok.replace('p.mode = a.mode', '1 = 1'), 3],
+      ['bound org', `${ok} AND p.org_id = ?`, 4],
+      ['grant alias', `${ok} AND g.org_id = p.org_id`, 3],
+      ['actor column', `${ok} AND a.status = 1`, 3],
+      ['second passes alias', `${ok} AND EXISTS (SELECT 1 FROM passes q WHERE q.id = p.id)`, 3],
+      ['wrong bind count', ok, 4],
     ];
     for (const [, text, bound] of cases)
       expect(() => assertReleaseCheckText(text, bound, 'org_mode')).toThrow();
