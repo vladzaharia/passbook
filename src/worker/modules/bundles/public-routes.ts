@@ -186,7 +186,7 @@ register(
       throw error;
     }
     return response.body
-      ? new Response(fenceBundleStream(ctx, bundle, [pass], response.body), response)
+      ? new Response(fenceBundleStream(ctx, bundle, [pass], response.body, false), response)
       : response;
   },
 );
@@ -224,6 +224,6 @@ register(
       await asset.body.cancel();
       return new Response(null, { status: 304, headers });
     }
-    return new Response(fenceBundleStream(ctx, bundle, [pass], asset.body), { headers });
+    return new Response(fenceBundleStream(ctx, bundle, [pass], asset.body, false), { headers });
   },
 );

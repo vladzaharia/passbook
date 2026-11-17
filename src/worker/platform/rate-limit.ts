@@ -1,9 +1,9 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import type { AppBindings } from './context.ts';
+import { bump, read as readCounter } from './counters.ts';
 import type { AppEnv, RateLimitName } from './env.ts';
 import { RateLimitedError, UnavailableError } from './errors.ts';
-import { bump, read as readCounter } from './counters.ts';
 import { ipRatePrefix } from './ip.ts';
 import { createLogger } from './log.ts';
 

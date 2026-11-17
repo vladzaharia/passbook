@@ -31,14 +31,17 @@ it('fences one pass at its first chunk only and an archive at every chunk', asyn
   );
   const bundle = await bundleForToken(ctx, created.url.split('/b/')[1] ?? '');
   const prepare = vi.spyOn(kit.env.DB, 'prepare');
-  const queries = async (passes: (typeof a)[]) => {
+  const queries = async (passes: (typeof a)[], archive: boolean) => {
     prepare.mockClear();
-    await drain(fenceBundleStream(ctx, bundle, passes, chunks(6)));
+    await drain(fenceBundleStream(ctx, bundle, passes, chunks(6), archive));
     return prepare.mock.calls.length;
   };
-  const single = await queries([a]);
-  const archive = await queries([a, b]);
+  const single = await queries([a], false);
+  const archive = await queries([a, b], true);
+  const oneMember = await queries([a], true);
   prepare.mockRestore();
   expect(single).toBeGreaterThan(0);
   expect(archive).toBeGreaterThan(single * 2);
+  // A one-member archive is still an archive.
+  expect(oneMember).toBeGreaterThan(single * 2);
 });
