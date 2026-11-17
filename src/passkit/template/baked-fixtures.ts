@@ -27,10 +27,18 @@ export function bakedSlugs(): string[] {
   return listTemplateDirs(TEMPLATES_ROOT);
 }
 
+// A stamps package draws its strips on read; do it once per slug.
+const packages = new Map<string, Promise<TemplatePackage>>();
+
 export async function loadBaked(
   slug: string,
 ): Promise<{ template: ResolvedTemplate; registry: TemplateRegistry; pkg: TemplatePackage }> {
-  const pkg = await readTemplateDir(join(TEMPLATES_ROOT, slug));
+  let reading = packages.get(slug);
+  if (!reading) {
+    reading = readTemplateDir(join(TEMPLATES_ROOT, slug));
+    packages.set(slug, reading);
+  }
+  const pkg = await reading;
   const template: ResolvedTemplate = {
     id: slug,
     version: 'test',

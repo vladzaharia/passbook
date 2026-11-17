@@ -1,4 +1,5 @@
 import { sha1Hex } from '../sign/index.ts';
+import { renderStampFiles } from '../stamps/package.ts';
 import type { AssetEntry, ImageSlot, PassJson, TemplateManifest } from '../types.ts';
 
 const decoder = new TextDecoder();
@@ -14,6 +15,8 @@ const SLOTS: readonly ImageSlot[] = [
   'footer',
 ];
 const IMAGE_NAME = /^(?:([\w-]+)\.lproj\/)?([A-Za-z]+)(?:@([23])x)?\.png$/;
+/** A generated strip: `stamps/strips/<count>/strip@2x.png`. */
+export const STAMP_STRIP = /^stamps\/strips\/(\d{1,2})\/strip@([23])x\.png$/;
 const STRINGS_NAME = /^([\w-]+)\.lproj\/pass\.strings$/;
 /** Files that live in a template package but are never signed into a pass. */
 const NEVER_SHIPPED = new Set(['pass.json', 'wallet.template.json', 'tooling.json']);
@@ -44,8 +47,14 @@ export function pngSize(bytes: Uint8Array): { width: number; height: number } | 
 }
 
 /** Classifies a package file name. Returns null for files that never ship. */
-export function classifyAsset(name: string): Pick<AssetEntry, 'slot' | 'scale' | 'locale'> | null {
+export function classifyAsset(
+  name: string,
+): Pick<AssetEntry, 'slot' | 'scale' | 'locale' | 'stamps'> | null {
   if (NEVER_SHIPPED.has(name)) return null;
+  const generated = STAMP_STRIP.exec(name);
+  if (generated)
+    return { slot: 'strip', scale: generated[2] === '3' ? 3 : 2, stamps: Number(generated[1]) };
+  if (name.startsWith('stamps/') && name.endsWith('.png')) return { slot: 'source', scale: 1 };
   const strings = STRINGS_NAME.exec(name);
   if (strings) return { slot: 'strings', scale: 1, locale: strings[1] as string };
   const image = IMAGE_NAME.exec(name);
@@ -86,12 +95,20 @@ function parseJson<T>(files: Record<string, Uint8Array>, name: string): T {
 
 /** Reads a package given as name -> bytes (an unzipped .pkpasstemplate plus wallet.template.json). */
 export async function readTemplatePackage(
-  files: Record<string, Uint8Array>,
+  input: Record<string, Uint8Array>,
 ): Promise<TemplatePackage> {
+  let files = input;
   const manifest = parseJson<TemplateManifest>(files, 'wallet.template.json');
   const passJson = parseJson<PassJson>(files, 'pass.json');
   const assets: AssetEntry[] = [];
   const bytes: Record<string, Uint8Array> = {};
+  if (manifest.stamps) {
+    const drawn = renderStampFiles(manifest.stamps, files);
+    const first = drawn.issues.find((i) => i.severity === 'error');
+    if (first) throw new Error(`${first.code}: ${first.message}`);
+    files = { ...files };
+    for (const strip of drawn.strips) files[strip.name] = strip.bytes;
+  }
   for (const name of Object.keys(files).sort()) {
     const classified = classifyAsset(name);
     const data = files[name];
