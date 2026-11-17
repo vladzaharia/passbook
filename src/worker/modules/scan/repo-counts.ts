@@ -90,6 +90,9 @@ function admissionReleaseChecks(actor: ScanActor, fences: Predicate[]): Predicat
   };
 }
 
+/** A cached count younger than this is not rewritten; every read still counts live. */
+export const EXPECTED_TTL_MS = 60_000;
+
 /**
  * Compute and cache in one statement only for the original authorized actor, complete event
  * selection, and currently valid release heads. The count and every release/Wallet check share
@@ -244,7 +247,7 @@ export function setExpectedStmt(
     event.id,
     actor.orgId,
     event.mode,
-    now,
+    now - EXPECTED_TTL_MS,
     ...eventFence.params,
     templateIds.length,
     templates,

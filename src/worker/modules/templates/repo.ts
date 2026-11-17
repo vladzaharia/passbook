@@ -138,27 +138,43 @@ export async function isBlueprint(db: D1Database, id: string): Promise<boolean> 
   return row?.blueprint === 1;
 }
 
-export async function countPasses(db: D1Database, templateId: string): Promise<number> {
+export async function hasPasses(db: D1Database, templateId: string): Promise<boolean> {
   const row = await first<{ n: number }>(
     db,
-    'SELECT COUNT(*) AS n FROM passes WHERE template_id = ?',
+    'SELECT EXISTS (SELECT 1 FROM passes WHERE template_id = ?) AS n',
     [templateId],
   );
-  return row?.n ?? 0;
+  return row?.n === 1;
 }
 
-/** Live passes of orgs other than `orgId` that use any version of the template. */
-export async function countPassesOutsideOrg(
+/** True when a live pass of an org other than `orgId` uses any version of the template. */
+export async function hasPassesOutsideOrg(
   db: D1Database,
   templateId: string,
   orgId: string,
-): Promise<number> {
+): Promise<boolean> {
   const row = await first<{ n: number }>(
     db,
-    'SELECT COUNT(*) AS n FROM passes WHERE template_id = ? AND org_id != ? AND deleted_at IS NULL',
+    `SELECT EXISTS (
+       SELECT 1 FROM passes WHERE template_id = ? AND org_id != ? AND deleted_at IS NULL
+     ) AS n`,
     [templateId, orgId],
   );
-  return row?.n ?? 0;
+  return row?.n === 1;
+}
+
+/** The newest version's name, without reading its manifest and pass JSON. */
+export async function latestVersionName(
+  db: D1Database,
+  templateId: string,
+): Promise<string | undefined> {
+  const row = await first<{ version: string }>(
+    db,
+    `SELECT version FROM template_versions WHERE template_id = ?
+     ORDER BY created_at DESC, version DESC LIMIT 1`,
+    [templateId],
+  );
+  return row?.version;
 }
 
 export async function listVersions(db: D1Database, templateId: string): Promise<VersionRow[]> {

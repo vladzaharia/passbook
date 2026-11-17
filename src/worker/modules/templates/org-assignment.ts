@@ -4,7 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertTemplateAuthority, authorizeTemplateWrite } from './access.ts';
 import { audit } from './mutations.ts';
 import { clearTemplateCache } from './registry.ts';
-import { countPassesOutsideOrg, findTemplateBySlug, getOrgName } from './repo.ts';
+import { findTemplateBySlug, getOrgName, hasPassesOutsideOrg } from './repo.ts';
 import { assignTemplateOrg, hasAssignmentHistory, hasScanReferences } from './repo-assignment.ts';
 import { detail, loadTemplate } from './service.ts';
 
@@ -50,7 +50,7 @@ export async function assignOrg(
       );
     if (row.origin === 'uploaded' && row.activeVersion !== null) throw releaseRequired();
     if (orgId) {
-      if ((await countPassesOutsideOrg(ctx.env.DB, id, orgId)) > 0) throw usedByOtherOrg();
+      if (await hasPassesOutsideOrg(ctx.env.DB, id, orgId)) throw usedByOtherOrg();
     }
     const clash = await findTemplateBySlug(ctx.env.DB, orgId, row.slug);
     if (clash && clash.id !== id)
@@ -72,7 +72,7 @@ export async function assignOrg(
         current.activeVersion !== null
       )
         throw releaseRequired();
-      if (orgId && (await countPassesOutsideOrg(ctx.env.DB, id, orgId)) > 0) throw usedByOtherOrg();
+      if (orgId && (await hasPassesOutsideOrg(ctx.env.DB, id, orgId))) throw usedByOtherOrg();
       throw new ConflictError('The template changed. Reload and retry.', 'TEMPLATE_CONFLICT');
     }
     clearTemplateCache(ctx.env, id);
