@@ -463,7 +463,9 @@ describe('issuance review isolation', () => {
       expect((await kit.env.BUCKET.list({ prefix: `passes/${passId}/` })).objects).toHaveLength(0);
     } finally {
       spy.mockRestore();
-      await run(kit.env.DB, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [kit.template.id]);
+      await run(kit.env.DB, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [
+        kit.template.id,
+      ]);
       await run(kit.env.DB, "UPDATE templates SET status = 'active' WHERE id = ?", [
         kit.template.id,
       ]);
