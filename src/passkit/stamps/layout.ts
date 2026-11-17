@@ -2,8 +2,9 @@
 // scanner's stamp row (proposed home: src/shared/stamps/layout.ts). Pure arithmetic: no trig,
 // no sqrt, so the result is identical in workerd, Node and every browser.
 
-export const GOAL_MIN = 3;
-export const GOAL_MAX = 20;
+import { GOAL_MAX, GOAL_MIN } from './goal.ts';
+
+export { GOAL_MAX, GOAL_MIN };
 
 export interface Box {
   x: number;

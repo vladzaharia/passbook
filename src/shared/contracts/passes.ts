@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
+import { PassStampsSchema } from './pass-stamps.ts';
 import { ScanTargetSchema } from './scan.ts';
 import { PUSH_BUDGET_DEFAULT } from './settings.ts';
-import { PassStampsSchema } from './stamps.ts';
 import { ValidationIssueSchema } from './templates.ts';
 
 export const PassStatusSchema = z.enum(['active', 'voided']);
