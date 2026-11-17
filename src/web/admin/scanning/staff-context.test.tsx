@@ -50,7 +50,7 @@ describe('Scanning staff', () => {
         "3 successful, not-undone scans since each scanner's local midnight for Sam K.; removed scanners use UTC",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Staff and PINs are shared/)).toHaveTextContent('Test mode');
+    expect(screen.getByText(/Staff are shared by Live and Test/)).toHaveTextContent('Test mode');
     await openAction('Sam K.', 'Reset PIN');
     const user = userEvent.setup();
     const confirm = screen.getByRole('alertdialog', { name: "Reset Sam K.'s PIN?" });
@@ -66,7 +66,7 @@ describe('Scanning staff', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText('Locked on a scanner')).not.toBeInTheDocument();
-    expect(screen.getByText(/Staff and PINs are shared/)).toHaveTextContent('Live mode');
+    expect(screen.getByText(/Staff are shared by Live and Test/)).toHaveTextContent('Live mode');
     expect(modes).toContain('test');
     expect(modes).toContain(undefined);
   });

@@ -203,8 +203,7 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
         <div>
           <p className="text-sm font-semibold text-fg-strong">Scanning staff</p>
           <p className="mt-1 text-sm text-fg-muted">
-            Staff and PINs are shared across live and test. PINs are used when a session requires
-            staff sign-in. Activity and PIN locks below reflect {mode === 'test' ? 'Test' : 'Live'}{' '}
+            Staff are shared by Live and Test. Activity shows {mode === 'test' ? 'Test' : 'Live'}{' '}
             mode. Successful today excludes undone scans and starts at each scanner&apos;s local
             midnight; removed scanners use UTC.
           </p>
