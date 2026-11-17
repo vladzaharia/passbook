@@ -99,8 +99,9 @@ export async function portfolioSnapshot(db: Db, userId: string, ids: readonly st
       db,
       `SELECT p.id AS passId, o.name AS orgName, o.id AS orgId, p.display_title AS title
       FROM passes p JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
-      WHERE ${holderReissueCurrentSql('p', '?')} ORDER BY p.id DESC`,
-      [userId],
+      WHERE p.id IN (SELECT pass_id FROM pass_holder_reissue_required WHERE user_id = ?)
+        AND ${holderReissueCurrentSql('p', '?')} ORDER BY p.id DESC`,
+      [userId, userId],
     ),
   ]);
   return {
