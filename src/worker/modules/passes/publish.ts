@@ -12,11 +12,15 @@ import { capturePublishSnapshot, type PublishSnapshotState } from './publish-ser
 import type { ConnectionPassContext } from './repo-connection-context.ts';
 import type { FieldSources, Pass, PassCause, PassStatus } from './repo-map.ts';
 import type { ConnectionStateWrite } from './repo-write-publish.ts';
+import type { PublishCommit } from './repo-write-publish-granted.ts';
 import type { PublishRemovalSnapshot } from './repo-write-publish-snapshot.ts';
 import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
 
 export const MAX_CAS_ATTEMPTS = 3;
+
+export type { PublishCommit, PublishCommitDone } from './repo-write-publish-granted.ts';
+export { PublishDeclined } from './repo-write-publish-granted.ts';
 
 export interface Mutation {
   personalization?: Personalization;
@@ -67,6 +71,8 @@ export interface PublishOptions {
    * message that would otherwise be lost for good (the stamp that fills a card).
    */
   budgetExempt?: () => boolean;
+  /** A scan's own grant: its rows commit in the pass write's batch (no tenant `authority` then). */
+  commit?: PublishCommit;
 }
 
 export interface PublishResult {

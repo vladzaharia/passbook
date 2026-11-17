@@ -172,10 +172,10 @@ export function where(f: ScanLogFilter, now: number): { sql: string; params: Sql
       .join('');
     clauses.push(
       `(s.at, s.id) < (SELECT cs.at, cs.id FROM scans cs
-       WHERE cs.id = ?/* scan-ephemeral-scan-id */ AND cs.mode = ? AND (? IS NULL OR cs.org_id = ?)
+       WHERE cs.id = ?/* scan-ephemeral-scan-id */ AND cs.mode = ?${f.orgId !== undefined ? ' AND cs.org_id = ?' : ''}
          AND ${scanLedgerScopeSql('cs')}${scopedPass}${scopedReferences})`,
     );
-    params.push(f.cursor, f.mode, f.orgId ?? null, f.orgId ?? null);
+    params.push(f.cursor, f.mode, ...(f.orgId !== undefined ? [f.orgId] : []));
     if (passIdFilter !== undefined) params.push(passIdFilter, now);
     for (const ref of references) if (ref.value !== undefined) params.push(ref.value);
   }

@@ -3,6 +3,7 @@ import { type Check, passRow, releaseHead, rowIs } from '../../platform/authorit
 import { exists, notExists } from '../../platform/authority-cond.ts';
 import { inList, ne } from '../../platform/authority-expr.ts';
 import { writePart } from '../../platform/authority-include.ts';
+import { type IssuedToken, sealPart } from '../../platform/capability-token.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -36,7 +37,7 @@ export interface StartTransferInput {
   target: CredentialTransferTarget;
   authority: CredentialTransferAuthority;
   actor: { type: string; id: string | null };
-  token: string;
+  token: IssuedToken;
   now: number;
   release: PassReleaseSnapshot;
   releaseVersion: string;
@@ -142,13 +143,16 @@ function writes(g: Grant, ctx: ServiceContext, i: StartTransferInput): void {
     { returning: ['id'] },
   );
   g.update('passes', {
-    set: { download_token: i.token, download_token_rotated_at: now },
+    set: { download_token: i.token.mac, download_token_rotated_at: now },
     inc: ['credential_generation', 'link_generation'],
     where: { id: p.id },
     when: [exists('pass_credential_transfers', { id: i.id, state: 'pending' })],
     require: 'one',
     returning: ['id'],
   });
+  g.include(
+    sealPart('pass', p.id, i.token.mac, i.token.seal, { holder: g.principal.kind === 'holder' }),
+  );
   g.add(
     ...grantTransferStart(g, {
       passId: p.id,

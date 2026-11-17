@@ -26,7 +26,8 @@ export const MyPassSchema = z.object({
   removalMessage: z.string().nullable().default(null),
   lastRefreshedAt: TimestampSchema.nullable(),
   refreshRequestedAt: TimestampSchema.nullable(),
-  downloadUrl: z.string(),
+  /** Null when the link cannot be shown (a stored link that must be rotated). */
+  downloadUrl: z.string().nullable(),
   /** Native alternatives, independently of the Apple registration in inWallet. */
   walletOffers: z.array(WalletOfferSchema),
   /** The release gate per native wallet; a disabled one is not offered. */
@@ -34,7 +35,7 @@ export const MyPassSchema = z.object({
   /** Server-checked eligibility for showing this pass's barcode. */
   presentationEligible: z.boolean().optional(),
   passJson: z.record(z.string(), z.unknown()),
-  assetBaseUrl: z.string(),
+  assetBaseUrl: z.string().nullable(),
   /** Image files the pass can load: template files plus per-pass overrides. */
   assetNames: z.array(z.string()),
   /** Apple device registration was reported; current installation is unknown (leaves Add all). */

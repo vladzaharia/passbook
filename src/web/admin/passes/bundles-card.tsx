@@ -68,7 +68,7 @@ function BundleRow({
         }
         trailing={
           <span className="flex items-center gap-1">
-            <CopyButton value={absoluteUrl(bundle.url)} label="Copy link" />
+            {bundle.url ? <CopyButton value={absoluteUrl(bundle.url)} label="Copy link" /> : null}
             <RowActions
               label={`Actions for ${bundle.name}`}
               actions={[
@@ -131,7 +131,7 @@ function BundleRow({
         open={!readOnly && ask === 'rotate'}
         onOpenChange={(o) => !o && setAsk(null)}
         description="The current link stops working. The passes stay."
-        rotate={async () => (await actions.rotate.mutateAsync()).url}
+        rotate={async () => (await actions.rotate.mutateAsync()).url ?? ''}
         holderEmail={bundle.holderEmail}
         mode={bundle.mode}
         sendEmail={() => actions.sendEmail.mutateAsync()}

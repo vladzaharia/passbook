@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { issueToken } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
 import { createAuthStores } from '../../stores.ts';
 import { signInMagicLink } from '../auth/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import type { Kit } from '../passes/pass-test-fixtures.ts';
 import { setDownloadToken } from '../passes/repo.ts';
@@ -79,7 +79,6 @@ describe('verified attach of a pass whose credential cannot change', () => {
       source,
       user.id,
       kit.clock.now(),
-      await ensureCredentialRefKeyset(kit.env.DB, kit.env),
       undefined,
       {
         ctx: jobCtxOf(kit),
@@ -147,7 +146,12 @@ describe('verified attach of a pass whose credential cannot change', () => {
           );
         const current = await getPass(kit.env.DB, pass.id);
         if (!current) throw new Error('Missing pass');
-        return setDownloadToken(kit.env.DB, current, kit.fx.ids.token(), kit.clock.now());
+        return setDownloadToken(
+          kit.env.DB,
+          current,
+          await issueToken(kit.env, 'pass', current.id, current.orgId, kit.fx.ids.token()),
+          kit.clock.now(),
+        );
       });
       expect(await runAttachHookA(race.ctx, pass.id)).toBeNull();
       expect(race.fired()).toBe(true);

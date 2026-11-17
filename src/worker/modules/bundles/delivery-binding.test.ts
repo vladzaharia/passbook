@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg, stubIssuedToken } from '../../../../test/helpers/index.ts';
+import { issueToken, tokenMac } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
 import { beginAttemptFor, checksHold, jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { failEmail } from '../delivery/email-outcome.ts';
@@ -35,7 +36,7 @@ beforeAll(async () => {
   kit = await setupKit();
 });
 const actor = { type: 'system', id: null } as const;
-const tokenOf = (url: string) => url.split('/b/')[1] ?? '';
+const tokenOf = (url: string | null) => url?.split('/b/')[1] ?? '';
 
 async function bundle(passIds: string[], email: string) {
   return createBundle(
@@ -53,7 +54,8 @@ async function bundle(passIds: string[], email: string) {
 }
 
 async function enqueue(id: string, token: string, to: string) {
-  return enqueueBundleEmail(job(), id, to, { token, holderEmail: to });
+  const mac = await tokenMac(kit.env, 'bundle', token);
+  return enqueueBundleEmail(job(), id, to, { token: mac, holderEmail: to });
 }
 
 describe('durable bundle email intent', () => {
@@ -190,7 +192,7 @@ describe('durable bundle email intent', () => {
         new Error('pre-provider storage unavailable'),
       ),
     ).rejects.toMatchObject({ code: 'EMAIL_FAILED' });
-    const authorizedBeforeRotation = await getBundleByToken(kit.env.DB, token);
+    const authorizedBeforeRotation = await getBundleByToken(kit.env, token);
     expect(authorizedBeforeRotation).not.toBeNull();
     await rotateBundleLink(job(), actor, original.id, null, { kind: 'system' });
     const before = kit.mailer.sent.length;
@@ -356,7 +358,7 @@ describe('durable bundle email intent', () => {
         authority: undefined,
         actor,
         action: 'rotate_link',
-        token: kit.ctx.ids.token(),
+        token: await issueToken(kit.env, 'bundle', original.id, pass.orgId, kit.ctx.ids.token()),
       }).commit(),
     ).rejects.toThrow();
     expect(
@@ -365,7 +367,7 @@ describe('durable bundle email intent', () => {
           original.id,
         ])
       )?.token,
-    ).toBe(token);
+    ).toBe(await tokenMac(kit.env, 'bundle', token));
     kit.clock.advance(1001);
     await sweepDelivery(job());
     for (const row of [passRow, bundleRow]) {
@@ -385,6 +387,7 @@ describe('durable bundle email intent', () => {
   it('does not insert a stale bundle membership after transfer commits', async () => {
     const pass = await kit.pass({ holderEmail: 'bundle-race-old@example.com' });
     const id = kit.ctx.ids.id();
+    const stub = stubIssuedToken(kit.ctx.ids.token());
     const pending = createBundleGrant(
       job(),
       {
@@ -392,7 +395,8 @@ describe('durable bundle email intent', () => {
         orgId: pass.orgId,
         mode: pass.mode,
         name: 'Delayed',
-        token: kit.ctx.ids.token(),
+        token: stub.mac,
+        tokenSeal: stub.seal,
         holderEmail: pass.holderEmail,
         actor,
         passes: [pass],

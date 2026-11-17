@@ -1,6 +1,7 @@
 import { stampedView } from '../../../passkit/build-assets.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import type { PassSource } from '../../../shared/contracts/passes.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -75,12 +76,15 @@ export async function assetNamesOf(
   return [...names];
 }
 
-export function linksOf(ctx: ServiceContext, pass: Pass) {
+/** The pass's links; `token` is the plain token when the caller just made it. */
+export async function linksOf(ctx: ServiceContext, pass: Pass, token?: string) {
   const base = baseUrl(ctx.env);
+  const plain =
+    token ?? (await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken));
   return {
-    publicUrl: `${base}/p/${pass.downloadToken}`,
-    downloadUrl: `${base}/p/${pass.downloadToken}/pass.pkpass`,
-    assetBaseUrl: `${base}/p/${pass.downloadToken}/assets/`,
+    publicUrl: `${base}/p/${plain}`,
+    downloadUrl: `${base}/p/${plain}/pass.pkpass`,
+    assetBaseUrl: `${base}/p/${plain}/assets/`,
   };
 }
 
@@ -178,7 +182,7 @@ export async function detailOf(
     personalization: pass.personalization,
     fieldSources: pass.fieldSources,
     passJson,
-    ...linksOf(ctx, pass),
+    ...(await linksOf(ctx, pass)),
     assetNames: await assetNamesOf(ctx, pass),
     stamps: await stampsOf(ctx, pass),
     blockedUsers,

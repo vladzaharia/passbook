@@ -7,6 +7,7 @@ import { sanitizeEventData } from '../events/record.ts';
 import type { EventRow } from '../events/repo.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { ScanActor } from './guard.ts';
+import { okEventKind } from './scan-event-kind.ts';
 
 export interface LedgerFacts {
   pass: Pass;
@@ -50,7 +51,12 @@ export function ledgerRow(ctx: ServiceContext, actor: ScanActor, f: LedgerFacts)
     org_id: f.pass.orgId,
     pass_id: f.pass.id,
     mode: f.pass.mode,
-    kind: f.outcome === 'ok' && f.direction === 'out' ? 'scan.checked_out' : KIND[f.outcome],
+    kind:
+      f.outcome === 'ok'
+        ? f.direction === 'out'
+          ? 'scan.checked_out'
+          : okEventKind(f.action?.kind)
+        : KIND[f.outcome],
     device: null,
     actor_type: actor.actor.type,
     actor_id: actor.actor.id,

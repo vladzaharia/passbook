@@ -6,11 +6,12 @@ import {
 } from '../passes/credential-keyset.ts';
 import { planCounts } from './counts.ts';
 import type { ScanActor } from './guard.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
 import {
-  packedScanAuthorityPredicate,
-  sessionReadAuthorityPredicate,
-} from './repo-session-authority.ts';
+  SESSION_READ,
+  scanAuthorizedStmt,
+  scanReadAuthority,
+  scanReadFence,
+} from './repo-read-authority.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { staleScanRead } from './stale-read.ts';
 
@@ -27,17 +28,12 @@ export async function statsFor(
     captureCredentialKeyEnv(ctx.env),
   );
   // Epochs cover credential, configuration and staff changes; reads carry no CSRF proof.
-  const authority = packedScanAuthorityPredicate(
-    actor,
-    sessionReadAuthorityPredicate(actor, ctx.clock.now()),
-  );
+  const auth = scanReadAuthority(actor, { now: ctx.clock.now(), read: SESSION_READ });
+  // The cache write is guarded by the strict fence: a paused or staffless actor reads but never fills.
+  const strict = scanReadAuthority(actor, { now: ctx.clock.now() });
+  const plan = planCounts(ctx, actor, dayStart, actor, scanReadFence(strict));
   // The door polls this: only a lost credential unpairs, drift is a 409 the client reloads.
-  if (authority.sql === '0') throw await staleScanRead(ctx, actor);
-  const plan = planCounts(ctx, actor, dayStart, actor, authority);
-  const results = await ctx.env.DB.batch([
-    outputPredicateStmt(ctx.env.DB, authority),
-    ...plan.stmts,
-  ]);
+  const results = await ctx.env.DB.batch([scanAuthorizedStmt(ctx.env.DB, auth), ...plan.stmts]);
   if ((results[0]?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)
     throw await staleScanRead(ctx, actor);
   return (await plan.read(results.slice(1))).counts;

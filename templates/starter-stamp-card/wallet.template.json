@@ -314,5 +314,32 @@
       "rewardEarned": "stamps/reward-earned.png"
     },
     "tilt": true
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "stamp",
+        "label": "Add stamp",
+        "kind": "add",
+        "input": "stamps",
+        "amount": {
+          "max": 5,
+          "presets": [
+            1,
+            2,
+            3
+          ],
+          "default": 1
+        }
+      },
+      {
+        "id": "redeem",
+        "label": "Redeem reward",
+        "kind": "take",
+        "input": "stamps",
+        "rewardLabel": "Free item",
+        "amount": 10
+      }
+    ]
   }
 }

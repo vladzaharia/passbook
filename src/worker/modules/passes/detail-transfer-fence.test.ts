@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeApiKey, makeUser } from '../../../../test/helpers/index.ts';
+import { linkToken, makeApiKey, makeUser } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/passes.ts';
 import { createApp } from '../../app.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -49,7 +49,7 @@ async function reserve(db: D1Database, passId: string, advance = true): Promise<
           stmt(
             db,
             `UPDATE passes SET credential_generation = credential_generation + 1,
-      link_generation = link_generation + 1, download_token = ? WHERE id = ?`,
+      link_generation = link_generation + 1, download_token = 'h1:' || ? WHERE id = ?`,
             [token, passId],
           ),
         ]
@@ -78,7 +78,7 @@ async function withRace<T>(
   operation: () => Promise<T>,
 ): Promise<T> {
   const real = kit.env.DB;
-  const statements = new WeakMap<D1PreparedStatement, D1PreparedStatement>();
+  const statements = new WeakMap<D1PreparedStatement, [D1PreparedStatement, string]>();
   let seen = 0;
   let intervened = false;
   const before = async (sql: string) => {
@@ -110,15 +110,20 @@ async function withRace<T>(
         return typeof value === 'function' ? value.bind(target) : value;
       },
     });
-    statements.set(wrapped, statement);
+    statements.set(wrapped, [statement, sql]);
     return wrapped;
   };
   const proxy = new Proxy(real, {
     get(target, prop) {
       if (prop === 'prepare') return (sql: string) => wrap(target.prepare(sql), sql);
       if (prop === 'batch')
-        return (items: D1PreparedStatement[]) =>
-          target.batch(items.map((item) => statements.get(item) ?? item));
+        return async (items: D1PreparedStatement[]) => {
+          for (const item of items) {
+            const known = statements.get(item);
+            if (known) await before(known[1]);
+          }
+          return target.batch(items.map((item) => statements.get(item)?.[0] ?? item));
+        };
       const value = Reflect.get(target, prop, target);
       return typeof value === 'function' ? value.bind(target) : value;
     },
@@ -146,15 +151,16 @@ describe('pass detail transfer disclosure fences', () => {
       memberName: 'Private current holder',
       holderEmail: 'private-old@example.test',
     });
+    const plain = await linkToken(kit.env, pass);
     const good = await request(`/passes/${pass.id}`);
     expect(good.status).toBe(200);
     const detail = PassDetailSchema.parse(await good.json());
-    expect(detail.publicUrl).toContain(pass.downloadToken);
+    expect(detail.publicUrl).toContain(plain);
     expect(detail.reissueRequired).toBe(false);
     const other = await kit.pass({ memberName: 'Other current pass' });
     const reserved = await reserve(kit.env.DB, pass.id);
     const secrets = [
-      pass.downloadToken,
+      plain,
       reserved,
       pass.serial,
       'Private current holder',
@@ -185,6 +191,7 @@ describe('pass detail transfer disclosure fences', () => {
 
   it('drops an in-flight detail when START commits just before its final SQL fence', async () => {
     const pass = await kit.pass({ memberName: 'Private raced holder' });
+    const plain = await linkToken(kit.env, pass);
     let token = '';
     const response = await withRace(
       detailFence,
@@ -197,11 +204,12 @@ describe('pass detail transfer disclosure fences', () => {
     expect(response.status).toBe(409);
     const body = await response.text();
     expect(body).toContain('PASS_TRANSFER_PENDING');
-    noDisclosure(body, [pass.downloadToken, token, pass.serial, 'Private raced holder']);
+    noDisclosure(body, [plain, token, pass.serial, 'Private raced holder']);
   }, 60_000);
 
   it('does not reveal even pending status if tenant authority is revoked at the final fence', async () => {
     const pass = await kit.pass({ memberName: 'Revoked tenant private' });
+    const plain = await linkToken(kit.env, pass);
     const key = await makeApiKey(kit.fx, { orgId: pass.orgId, scopes: ['passes:read'] });
     const response = await withRace(
       detailFence,
@@ -215,7 +223,7 @@ describe('pass detail transfer disclosure fences', () => {
     expect(response.status).toBe(403);
     noDisclosure(await response.text(), [
       'PASS_TRANSFER_PENDING',
-      pass.downloadToken,
+      plain,
       pass.serial,
       'Revoked tenant private',
     ]);
@@ -223,6 +231,7 @@ describe('pass detail transfer disclosure fences', () => {
 
   it('drops an in-flight detail after a complete transfer even when no pending row remains', async () => {
     const pass = await kit.pass({ memberName: 'Previous incarnation' });
+    const plain = await linkToken(kit.env, pass);
     const response = await withRace(
       detailFence,
       2,
@@ -240,16 +249,12 @@ describe('pass detail transfer disclosure fences', () => {
     expect(response.status).toBe(409);
     const body = await response.text();
     expect(body).toContain('PASS_CONFLICT');
-    noDisclosure(body, [
-      pass.downloadToken,
-      pass.serial,
-      'Previous incarnation',
-      'new-holder@example.test',
-    ]);
+    noDisclosure(body, [plain, pass.serial, 'Previous incarnation', 'new-holder@example.test']);
   }, 60_000);
 
   it('drops an in-flight detail when its lifecycle incarnation changes', async () => {
     const pass = await kit.pass({ memberName: 'Lifecycle race private' });
+    const plain = await linkToken(kit.env, pass);
     const response = await withRace(
       detailFence,
       2,
@@ -263,22 +268,19 @@ describe('pass detail transfer disclosure fences', () => {
       () => request(`/passes/${pass.id}`),
     );
     expect(response.status).toBe(409);
-    noDisclosure(await response.text(), [
-      pass.downloadToken,
-      pass.serial,
-      'Lifecycle race private',
-    ]);
+    noDisclosure(await response.text(), [plain, pass.serial, 'Lifecycle race private']);
   }, 60_000);
 
   it('does not return a link rotated after the initial detail snapshot', async () => {
     const pass = await kit.pass({ memberName: 'Rotated link private' });
+    const plain = await linkToken(kit.env, pass);
     const response = await withRace(
       detailFence,
       2,
       async (db) => {
         await run(
           db,
-          `UPDATE passes SET download_token = ?, link_generation = link_generation + 1
+          `UPDATE passes SET download_token = 'h1:' || ?, link_generation = link_generation + 1
         WHERE id = ?`,
           [kit.fx.ids.token(), pass.id],
         );
@@ -286,11 +288,12 @@ describe('pass detail transfer disclosure fences', () => {
       () => request(`/passes/${pass.id}`),
     );
     expect(response.status).toBe(409);
-    noDisclosure(await response.text(), [pass.downloadToken, pass.serial, 'Rotated link private']);
+    noDisclosure(await response.text(), [plain, pass.serial, 'Rotated link private']);
   }, 60_000);
 
   it('excludes a pass whose transfer starts immediately before the list query', async () => {
     const pass = await kit.pass({ memberName: 'Raced list private' });
+    const plain = await linkToken(kit.env, pass);
     let token = '';
     const response = await withRace(
       listRead,
@@ -305,7 +308,7 @@ describe('pass detail transfer disclosure fences', () => {
     expect(PassListSchema.parse(JSON.parse(body)).items.some((item) => item.id === pass.id)).toBe(
       false,
     );
-    noDisclosure(body, [pass.downloadToken, token, pass.serial, 'Raced list private']);
+    noDisclosure(body, [plain, token, pass.serial, 'Raced list private']);
   }, 60_000);
 
   it('reports reissue only while the exact waiting pass and uniquely verified user remain eligible', async () => {
@@ -382,7 +385,7 @@ describe('pass detail transfer disclosure fences', () => {
         () => rotateLink(kit.ctx, actor, pass.id, null),
       ),
     ).rejects.toMatchObject({ code: 'PASS_CONFLICT' });
-    expect((await getPass(kit.env.DB, pass.id))?.downloadToken).toBe(token);
+    expect((await getPass(kit.env.DB, pass.id))?.downloadToken).toBe(`h1:${token}`);
   }, 60_000);
 
   it('does not rotate a system link for a pending reservation at the same generation', async () => {

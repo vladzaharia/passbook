@@ -50,6 +50,8 @@ export function createRunner(deps: ScanDeps, host: Host) {
       ...(d && d.amount !== null ? { amount: d.amount } : {}),
       ...(state.scope.direction === 'out' ? { direction: 'out' as const } : {}),
       ...(d?.overrideOf ? { overrideOf: d.overrideOf } : {}),
+      ...(d?.value !== undefined ? { value: d.value as ActBody['value'] } : {}),
+      ...(d?.expectedVersion !== undefined ? { expectedVersion: d.expectedVersion } : {}),
       ...(d?.confirmed ? { confirmed: true } : {}),
       ...(d?.approval ? { approval: d.approval } : {}),
     };

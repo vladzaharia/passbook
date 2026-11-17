@@ -20,6 +20,7 @@ import { enqueuePassEmail } from '../delivery/issuance-intent.ts';
 import { handleEmailSend } from '../delivery/jobs.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { clearSettingsCache } from '../settings/service.ts';
+import { openBody } from './captured-body.ts';
 import { dailySandbox } from './jobs.ts';
 import { inboxApp, inboxHeaders, inboxMember, scopedInboxPath } from './test-tenant-fixtures.ts';
 
@@ -78,7 +79,7 @@ describe('test mode mail is captured, never sent', () => {
     expect(sent).toBe(0);
     const row = await first<Record<string, unknown>>(
       kit.env.DB,
-      'SELECT org_id, pass_id, bundle_id, recipient, subject, html, text FROM captured_emails WHERE outbox_id = ?',
+      'SELECT id, org_id, pass_id, bundle_id, recipient, subject, html, text FROM captured_emails WHERE outbox_id = ?',
       [outboxId],
     );
     expect(row).toMatchObject({
@@ -88,7 +89,11 @@ describe('test mode mail is captured, never sent', () => {
       recipient: 'holder-a@example.com',
     });
     expect(String(row?.subject).length).toBeGreaterThan(0);
-    expect(String(row?.html)).toContain('<');
+    // Stored sealed: the links in it work, so the database holds no readable copy.
+    expect(String(row?.html)).toMatch(/^enc1:/);
+    const html = await openBody(kit.env, String(row?.id), kit.org.id, String(row?.html));
+    expect(html).toContain('<');
+    expect(html).toContain('/p/');
     expect(String(row?.text).length).toBeGreaterThan(0);
     expect(
       await first(kit.env.DB, 'SELECT state, error_code FROM outbox WHERE id = ?', [outboxId]),
@@ -252,7 +257,7 @@ describe('daily purge', () => {
       await run(
         kit.env.DB,
         `INSERT INTO bundles (id, org_id, mode, name, token, created_at) VALUES (?, ?, ?, 'B', ?, ?)`,
-        [id, kit.org.id, mode, kit.fx.ids.token(), kit.clock.now() - age * DAY],
+        [id, kit.org.id, mode, `h1:${kit.fx.ids.token()}`, kit.clock.now() - age * DAY],
       );
     const fresh = await makePass('test');
     const freshCap = await capture('test', 'fresh@example.com');
@@ -349,7 +354,9 @@ describe('GET /test-inbox/{id}/html', () => {
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(res.headers.get('x-frame-options')).toBe('SAMEORIGIN');
-    expect(await res.text()).toBe(row?.html);
+    expect(await res.text()).toBe(
+      await openBody(kit.env, row?.id ?? '', kit.org.id, row?.html ?? ''),
+    );
     const json = await api(`/test-inbox/${row?.id}`, { headers: inboxHeaders(admin) });
     expect(json.headers.get('content-security-policy')).toContain("default-src 'none'");
     expect(json.headers.get('content-security-policy')).not.toContain("style-src 'unsafe-inline'");

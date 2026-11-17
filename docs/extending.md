@@ -82,6 +82,11 @@ A top-level `stamps` block turns a strip card (store card, coupon, event ticket)
 - `POST /api/v1/passes/{id}/stamps` with `{ "action": "add", "count": 1 }` or
   `{ "action": "redeem" }` adds stamps or takes the goal off. A full card refuses an add
   (`STAMPS_CARD_FULL`); a card short of the goal refuses a redeem (`STAMPS_NO_REWARD`).
+- At the scanner, an `add` on the count stamps and a `take` redeems (the goal comes off; extra stamps
+  carry over). A `take` on the count must set `amount` to the goal, and the designer keeps it in step
+  when the goal changes. A full card refuses an add as `card_full`. Only the stamp that fills the card
+  alerts the holder, past the daily push limit too. The scanner draws up to 16 stamps; a longer goal
+  shows as a bar.
 - Changing the goal of a template with live passes: `GET /api/v1/templates/{id}/stamps-impact?goal=`
   says who is affected. A lowering alerts the cards it makes ready; a raise keeps ready cards ready
   when the version sets `stamps.keepReady`. Publishing a release is refused (`STAMPS_ABOVE_MAX`)

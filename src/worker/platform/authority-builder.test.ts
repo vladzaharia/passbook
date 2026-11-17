@@ -312,7 +312,7 @@ describe('B3: what the next packages need', () => {
       await run(
         db,
         "INSERT INTO bundles (id, org_id, mode, name, token, created_at) VALUES (?, ?, 'live', 'b', ?, 1)",
-        [id, orgId, s.f.ids.token()],
+        [id, orgId, `h1:${s.f.ids.token()}`],
       );
       return id;
     };

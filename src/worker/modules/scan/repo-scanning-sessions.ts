@@ -26,11 +26,11 @@ export interface ScanningSessionRow {
 const SELECT = `SELECT s.*,o.name AS org_name FROM scanning_sessions s JOIN orgs o ON o.id=s.org_id`;
 
 export const scanningSessionRow = (db: D1Database, orgId: string | null, id: string) =>
-  first<ScanningSessionRow>(db, `${SELECT} WHERE s.id=? AND (? IS NULL OR s.org_id=?)`, [
-    id,
-    orgId,
-    orgId,
-  ]);
+  first<ScanningSessionRow>(
+    db,
+    `${SELECT} WHERE s.id=?${orgId === null ? '' : ' AND s.org_id=?'}`,
+    orgId === null ? [id] : [id, orgId],
+  );
 export const scanningSessionForDevice = (db: D1Database, orgId: string, scannerId: string) =>
   first<ScanningSessionRow>(
     db,
@@ -46,14 +46,12 @@ export const listScanningSessionRows = (
 ) =>
   all<ScanningSessionRow>(
     db,
-    `${SELECT} WHERE s.mode=? AND (? IS NULL OR s.org_id=?) AND (? IS NULL OR s.id<?)
+    `${SELECT} WHERE s.mode=?${query.orgId !== undefined ? ' AND s.org_id=?' : ''}${query.cursor !== undefined ? ' AND s.id<?' : ''}
     ORDER BY s.id DESC LIMIT ?`,
     [
       mode,
-      query.orgId ?? null,
-      query.orgId ?? null,
-      query.cursor ?? null,
-      query.cursor ?? null,
+      ...(query.orgId !== undefined ? [query.orgId] : []),
+      ...(query.cursor !== undefined ? [query.cursor] : []),
       query.limit + 1,
     ],
   );

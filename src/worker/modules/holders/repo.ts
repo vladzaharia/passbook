@@ -1,6 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, batch, chunk, first, placeholders, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
 import { type MutationAudit, mutationAudit } from './repo-blocks.ts';
 
@@ -194,7 +193,6 @@ export async function markHolderReissueRequired(
   source: ReissueSource,
   userId: string,
   now: number,
-  credentialKeysetCommitment: string,
   connection: HolderConnectionFence | undefined,
   audit: MutationAudit,
 ): Promise<void> {
@@ -216,7 +214,6 @@ export async function markHolderReissueRequired(
       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
         WHERE t.pass_id = p.id AND t.state = 'pending')
       AND ${verifiedAttachSql('p', 'candidate.user_id', 'p.holder_email')}
-      AND ${credentialRefKeysetSql}
       ${
         connection
           ? `AND p.connection_id = ? AND p.org_id = ? AND p.external_ref IS ? AND p.mode = 'live'
@@ -254,7 +251,6 @@ export async function markHolderReissueRequired(
       source.releaseId,
       source.downloadToken,
       source.linkGeneration,
-      credentialKeysetCommitment,
       ...(connection
         ? [
             connection.connectionId,
