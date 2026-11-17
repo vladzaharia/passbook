@@ -1,13 +1,8 @@
 import { env } from 'cloudflare:workers';
 import { afterEach, beforeEach } from 'vitest';
-import snapshot from './schema-snapshot.generated.json';
+import { applySchemaSnapshot } from './schema-snapshot.ts';
 
-// The fully migrated schema and seed data in one batch (tools/build-test-schema.ts).
-// test/schema-snapshot.test.ts proves it equals what the real migrations produce.
-await env.DB.batch([
-  env.DB.prepare('PRAGMA defer_foreign_keys = ON'),
-  ...(snapshot as string[]).map((sql) => env.DB.prepare(sql)),
-]);
+await applySchemaSnapshot(env.DB);
 
 const triggers = async () =>
   new Map(

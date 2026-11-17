@@ -1,4 +1,3 @@
-import { applyD1Migrations } from 'cloudflare:test';
 import { env as bindings } from 'cloudflare:workers';
 import { afterAll, beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import {
@@ -12,6 +11,7 @@ import {
   makeUser,
   type OrgRow,
 } from '../../../../test/helpers/index.ts';
+import { applySchemaSnapshot } from '../../../../test/setup/schema-snapshot.ts';
 import type {
   TemplateApproval,
   TemplateCandidate,
@@ -768,7 +768,7 @@ describe('native projection approval', () => {
   it('accepts a content-verified baked Apple source only after a separate native review', async () => {
     const db = (bindings as unknown as Record<string, D1Database | undefined>).KEYSET_TEST_DB_0;
     if (!db) throw new Error('No isolated D1 binding for baked projection test');
-    await applyD1Migrations(db, bindings.TEST_MIGRATIONS);
+    await applySchemaSnapshot(db);
     const testEnv = { ...env, DB: db };
     const test = await setup(testEnv, fixtures(testEnv, clock));
     const fixture = await bakedFrom(
