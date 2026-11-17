@@ -67,7 +67,7 @@ export async function bakedSyncComplete(
          LEFT JOIN templates t ON t.id = json_extract(entry.value, '$.id')
          WHERE t.id IS NULL OR t.origin != 'baked' OR t.status != 'active'
            OR t.active_version IS NOT json_extract(entry.value, '$.version')
-           OR t.blueprint != json_extract(entry.value, '$.blueprint')
+           OR t.blueprint != CASE WHEN t.org_id IS NULL THEN json_extract(entry.value, '$.blueprint') ELSE 0 END
            OR NOT EXISTS (
              SELECT 1 FROM template_version_extra_sets s
              WHERE s.template_id = t.id AND s.version = t.active_version

@@ -76,6 +76,8 @@ export function addBakedTemplate(
   existing: BakedTemplateSnapshot | null,
 ): void {
   const styles = JSON.stringify(t.styles);
+  // A starter an org holds is that org's template; only platform-owned rows are blueprints.
+  const blueprint = t.blueprint && (existing ? existing.org_id : t.orgId) === null ? 1 : 0;
   if (!existing) {
     g.insertSelect('templates', TEMPLATE_COLUMNS, [
       t.id,
@@ -87,7 +89,7 @@ export function addBakedTemplate(
       t.version,
       'active',
       styles,
-      t.blueprint ? 1 : 0,
+      blueprint,
       t.now,
       t.now,
     ]);
@@ -99,7 +101,7 @@ export function addBakedTemplate(
     existing.active_version === t.version &&
     existing.status === 'active' &&
     existing.styles === styles &&
-    existing.blueprint === (t.blueprint ? 1 : 0);
+    existing.blueprint === blueprint;
   if (!same)
     g.update('templates', {
       set: {
@@ -108,7 +110,7 @@ export function addBakedTemplate(
         active_version: t.version,
         status: 'active',
         styles,
-        blueprint: t.blueprint ? 1 : 0,
+        blueprint,
         updated_at: maxNow(t.now),
       },
       where: { id: t.id, origin: 'baked' },
