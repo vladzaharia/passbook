@@ -1,5 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { TimeZoneSchema } from '../../../shared/contracts/scan.ts';
+import { type Check, rawCheck } from '../../platform/authority-checks.ts';
+import { tenantCheck } from '../../platform/authority-cond.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import {
   denySampleScannerScope as deny,
@@ -125,8 +127,24 @@ function sameIds(left: readonly string[], right: readonly string[]): boolean {
   return right.every((id) => expected.has(id));
 }
 
-/** Rechecks the scanner, its exact scope, and any session binding in the pass INSERT. */
-export function sampleScannerScopeFence(
+/**
+ * The scanner, its exact scope and any session binding as the sample observed them, checked inside the
+ * pass create grant (`config`) against the grant's own org and mode. A malformed or mismatched
+ * snapshot refuses.
+ */
+export function sampleScannerScopeCheck(
+  snapshot: SampleScannerScope,
+  orgId: string,
+  mode: Mode,
+  templateId: string,
+): Check {
+  const fence = sampleScopePredicate(snapshot, orgId, mode, templateId);
+  return fence.sql === '0'
+    ? rawCheck('config', '0 = 1')
+    : tenantCheck('config', fence.sql, fence.params);
+}
+
+function sampleScopePredicate(
   snapshot: SampleScannerScope,
   orgId: string,
   mode: Mode,
@@ -160,7 +178,7 @@ export function sampleScannerScopeFence(
   )
     return deny();
 
-  const predicate = sampleScannerScopePredicate(scanner, scannerScope, orgId, mode);
+  const predicate = sampleScannerScopePredicate(scanner, scannerScope);
 
   const session = snapshot.session;
   let effective = scannerScope.templateIds;

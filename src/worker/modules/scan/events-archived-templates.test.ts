@@ -113,7 +113,8 @@ describe('archived templates on an event', () => {
       /UPDATE scan_events SET/i,
       async (db) =>
         void (await run(db, "UPDATE templates SET status='deleted' WHERE id=?", [kept])),
-      () => call('PATCH', `/${body.id}`, { match: { input: 'memberName', values: ['Alex'] } }),
+      async () =>
+        call('PATCH', `/${body.id}`, { match: { input: 'memberName', values: ['Alex'] } }),
     );
     expect(fired).toBe(true);
     expect(result.status).toBe(409);
