@@ -45,8 +45,11 @@ import { FORMATS, templatesOf } from './session-templates.ts';
 async function authorityLost(ctx: ServiceContext, actor: ScanActor): Promise<AppError> {
   if (actor.principal !== 'scanner')
     return new ForbiddenError('Your access changed. Reload and retry.', 'SCAN_ACCESS_CHANGED');
-  if (!actor.scanner || (await scannerCredentialLost(ctx, actor)))
+  if (!actor.scanner)
     return new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
+  // The credential authenticated at the guard and is gone now: the same answer as every grant refusal.
+  if (await scannerCredentialLost(ctx, actor))
+    return new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR');
   return new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');
 }
 

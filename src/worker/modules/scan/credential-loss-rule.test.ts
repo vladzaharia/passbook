@@ -41,7 +41,7 @@ describe('the session read classifies a lost credential with the shared rule', (
     expect(fired).toBe(true);
     expect(await result.json()).toMatchObject(
       lost(change)
-        ? { status: 401, code: 'SCANNER_UNAUTHENTICATED' }
+        ? { status: 401, code: 'SCANNER_REPAIR' }
         : { status: 409, code: 'SCAN_CONFIG_CHANGED' },
     );
   });
