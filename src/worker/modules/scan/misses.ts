@@ -1,5 +1,4 @@
 import type { Grant } from '../../platform/authority.ts';
-import { writePart } from '../../platform/authority-include.ts';
 import { bumpIfStmt } from '../../platform/counters.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -7,7 +6,9 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import {
   cappedMissAuditStmt,
+  crossedCap,
   missCounterKey,
+  missIncrementPart,
   type ReadMissFence,
   readMissAuthorityPredicate,
   requireMissAuditStmt,
@@ -96,13 +97,7 @@ export function grantMiss(g: Grant, ctx: ServiceContext, actor: ScanActor, now: 
   const window = now - (now % WINDOW_MS);
   const key = missCounterKey(actor);
   const threshold = MISSES_PER_WINDOW + 1;
-  const [increment] = g.include(
-    writePart(
-      `INSERT INTO counters (key, window_start, count) SELECT ?, ?, 1 WHERE changes()=1 AND {grant}
-      ON CONFLICT (key, window_start) DO UPDATE SET count=count+excluded.count RETURNING count`,
-      [key, window],
-    ),
-  );
+  const [increment] = g.include(missIncrementPart(key, window));
   if (!increment) throw new Error('The miss counter was not added.');
   g.audit(
     {
@@ -117,12 +112,7 @@ export function grantMiss(g: Grant, ctx: ServiceContext, actor: ScanActor, now: 
       ipPrefix: null,
       detail: null,
     },
-    [
-      {
-        render: (b) =>
-          `changes()=1 AND EXISTS (SELECT 1 FROM counters WHERE key=${b.bind(key)} AND window_start=${b.bind(window)} AND count=${b.bind(threshold)})`,
-      },
-    ],
+    [crossedCap(key, window, threshold)],
   );
   return {
     /** From the grant's writes: nothing counted (the scan did not close here), counted, or past the cap. */

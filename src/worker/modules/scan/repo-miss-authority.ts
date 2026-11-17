@@ -1,3 +1,5 @@
+import type { GrantCond } from '../../platform/authority-cond.ts';
+import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
@@ -117,6 +119,20 @@ export function isReadMissStale(error: unknown): boolean {
 export function missCounterKey(actor: ScanActor): string {
   return `scan:miss:${JSON.stringify([actor.orgId, actor.mode, actor.actorKey])}`;
 }
+
+/** The increment of a stop grant's miss: it applies only when the statement before it changed a row (the scan closed here). */
+export const missIncrementPart = (key: string, window: number): GrantPart =>
+  writePart(
+    `INSERT INTO counters (key, window_start, count) SELECT ?, ?, 1 WHERE changes()=1 AND {grant}
+    ON CONFLICT (key, window_start) DO UPDATE SET count=count+excluded.count RETURNING count`,
+    [key, window],
+  );
+
+/** The audit row's condition: the increment just before it crossed the cap. */
+export const crossedCap = (key: string, window: number, threshold: number): GrantCond => ({
+  render: (b) =>
+    `changes()=1 AND EXISTS (SELECT 1 FROM counters WHERE key=${b.bind(key)} AND window_start=${b.bind(window)} AND count=${b.bind(threshold)})`,
+});
 
 /** The immediately preceding increment must have crossed the cap in this transaction. */
 export function cappedMissAuditStmt(
