@@ -25,8 +25,9 @@ curl "https://passbook.mobile/api/v1/passes?orgId=$ORG_ID" \
 | `connections:read` | scoped connection reads |
 | `connections:write` | scoped connection changes and actions |
 
-Tenant list requests name an organization with `orgId`. An org-bound key may omit it (it defaults
-to the key's org) and must otherwise send exactly that org; another org is `403`. A global key
+Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
+and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly
+that org; another org is `403`. `GET /delivery` always needs `orgId` and `passId`. A global key
 sends `orgId=<org>`, or `orgId=null` for a platform-wide list. A platform-scoped bearer
 key has no tenant membership and is authorized by its scopes and each route's organization rules.
 Tenant sessions require an active membership with the operation's capability; a platform role
@@ -81,8 +82,8 @@ API keys are managed with a session; a key cannot list, create or revoke keys. P
 (`orgId=null`) need a platform admin and no membership. An organization's keys need membership with
 `integrations:read` (list) or `integrations:manage` (create, revoke) in that org; a platform
 admin without membership cannot manage them. A creator can delegate only scopes their own roles
-grant (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`); a platform admin can delegate any. Overview and audit
-`orgId` values are explicit platform filters and never grant tenant authority.
+grant (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`); a platform admin can delegate any. Overview and audit `orgId` values are explicit platform
+filters and never grant tenant authority.
 Select the platform with `orgId=null` in GET or DELETE queries and `"orgId": null` in POST bodies;
 select a tenant by its explicit org ID.
 
@@ -121,15 +122,13 @@ management check and must not be used as a general tenant capability grant.
 
 Clients written against the earlier API keep working with these differences.
 
-- **Org-bound keys**: `orgId` is optional on pass create and on pass, holder and bundle lists, and
-  defaults to the key's org. A foreign org is `403`.
 - **Pass create with a key**: `templateVersion`, `releaseId` and `releaseGeneration` are optional
   together. Send none and the server uses the scope's effective approved release; with none it
   returns `409 TEMPLATE_RELEASE_REQUIRED` (approve and publish a release in the admin console, then
   retry). Send only some and it returns `422`. `mode` defaults to the key's mode; a mismatch is
   `409 MODE_MISMATCH`.
-- **Holder and bundle lists**: a global key or a session without `orgId` gets `422 ORG_REQUIRED`.
-  A session listing a forbidden org's passes gets `403`, not an empty `200`.
+- **Lists**: a global key or a session without `orgId` gets `422 ORG_REQUIRED`. A session listing a
+  forbidden org's passes gets `403`, not an empty `200`.
 - **Cutover**: uploaded templates start with a `legacy` release at their active version, so
   existing integrations keep creating passes. New versions need a candidate, a second reviewer
   and a release (see [Approved template releases](#approved-template-releases)).
@@ -329,8 +328,8 @@ curl -X PATCH https://passbook.mobile/api/v1/passes/$ID \
 
 ## Holders
 
-`GET /api/v1/holders?orgId={orgId}` lists assignments for the specified organization. `orgId` is
-required even for an organization-scoped API key; optional filters include `email` and `state`.
+`GET /api/v1/holders` lists assignments for an organization (see Authenticate for `orgId`).
+Filters: `email`, `state`.
 
 ```
 POST /api/v1/holders/assign        { "passId": "…", "email": "alex@example.com" }
@@ -470,10 +469,8 @@ quarantine at deletion permanently excludes their historical rows.
   Bulk: `POST /passes/bulk` with `action: "remove"`.
 - `GET /passes/{id}/events` is the sync log, newest first: `kind` (one or a comma list) or `group`
   (`delivery`, `devices`, `changes`). `GET /passes/{id}/devices` is per-device sync and push state.
-- `GET /delivery?orgId={orgId}` lists delivery entries for the specified organization; `orgId` is
-  required, including for organization-scoped API keys. Optionally filter by `passId`.
-- `GET /bundles?orgId={orgId}` lists bundles for the specified organization and caller mode;
-  `orgId` is required, including for organization-scoped API keys. Optionally filter by `passId`.
+- `GET /delivery?orgId=&passId=` lists a pass's outbox entries.
+- `GET /bundles` lists bundles for an organization and the caller's mode. Optional filter: `passId`.
 - `POST /bundles` (`{ orgId, passIds, name, holderEmail?, sendEmail? }`) shares 1 to 10 passes of one org
   behind one link, `/b/{token}`. Then `send-email`, `rotate-link` and `DELETE` on `/bundles/{id}`.
 - `POST /broadcasts` sends a message, or a scheduled change of any inputs, to the active passes a `target`

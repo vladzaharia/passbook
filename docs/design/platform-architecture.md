@@ -1,6 +1,6 @@
 # Wallet platform — architecture and build spec
 
-Status: approved for build (owner delegated all decisions on 2026-10-31). Supersedes the single-tenant design in the baseline commit. Inputs: the seven audits in `docs/audits/2026-10-31/` (A pass engine, B pipeline/data, C security/auth, D frontend, E Cloudflare ops, F quality/tests, G polaris-key reference) and the PassKit catalog in `docs/research/passkit-feature-catalog.md`.
+Status: built. This is the architecture reference; sections 17 and 18 record how it was started. Supersedes the single-tenant design in the baseline commit. Inputs: the seven audits in `docs/audits/2026-10-31/` (A pass engine, B pipeline/data, C security/auth, D frontend, E Cloudflare ops, F quality/tests, G polaris-key reference) and the PassKit catalog in `docs/research/passkit-feature-catalog.md`.
 
 Decisions marked **(call)** were made by the architect without owner input; everything else is the owner's stated requirement.
 
@@ -17,11 +17,13 @@ A modular, multi-tenant Apple Wallet pass platform on Cloudflare at `https://pas
 4. **Remote updates:** manual (admin UI/API) or via API connections (polling, webhooks, inbound machine API). Users can force-refresh their own passes.
 5. **Users and admins:** sign in with Pocket ID OIDC (`https://id.plrs.im`) or email magic link. Passes are linked to accounts by email (polaris-key licence-assignment semantics). Direct pass links keep working without sign-in. Admin/user roles come from Pocket ID groups; the shared admin token is removed.
 6. **Admin console:** dark-mode-preferred modern redesign. Create/update passes, pass detail with rendered front and back plus status/history, connection and component health, users, orgs, templates, Apple identities, system settings, audit log, API keys.
-7. **Cloudflare-native:** use every Cloudflare product that genuinely fits (see §10).
+7. **Cloudflare-native:** use every Cloudflare product that genuinely fits (see §14).
 
-### Non-goals (v1)
-- Per-organization admins / org-scoped RBAC. Admins are platform-global. The schema keeps `org_id` on every tenant row so `org_members` can be added later without rewriting queries. **(call)**
-- Google Wallet. Order tracking (Wallet Orders). Custom domains per tenant. Running tenant-supplied code.
+### Non-goals
+
+Organization roles and Google and Samsung Wallet were non-goals of the first cut. Both are built: roles in section 10, providers in `docs/design/wallet-providers/` (they ship dark).
+
+- Order tracking (Wallet Orders). Custom domains per tenant. Running tenant-supplied code.
 - Preserving existing issued passes or data (owner: can be wiped). The new `0001` migration replaces the old schema.
 
 ### Anti-goals (failure even if it "works")
@@ -46,7 +48,8 @@ A modular, multi-tenant Apple Wallet pass platform on Cloudflare at `https://pas
 | Data access | Raw SQL only inside `repo.ts` files, typed row mappers; hand-written migrations. Tenant-scoped repo functions take `orgId` explicitly. **(call)** |
 | Sessions | Opaque 256-bit id in `__Host-wallet_sid` cookie; only SHA-256 stored in D1. Revocable. Not JWT. |
 | Email→pass linking | polaris-key licence semantics: `passes.holder_email` + `passes.owner_user_id`, attach on verified email, sticky ownership, explicit reassign, user-removal blocks (§8). One holder per pass. |
-| Scheduling | Cron (every minute) finds due connections → starts a `ConnectionSync` Workflow instance with deterministic id (dedupe). No Durable Object in v1. **(call)** |
+| Scheduling | Cron (every minute) finds due connections → starts a `ConnectionSync` Workflow instance with deterministic id (dedupe). The only Durable Object is `ScanHub` (scanner live screens). **(call)** |
+| Authority | Org roles and capabilities on `org_memberships`. Every write to a guarded table is one batch behind a grant row; staleness is compared through trigger-owned epochs. See `docs/design/authority-epochs.md`. |
 | Delivery | D1 outbox is the ledger; Queues deliver; consumers throw on transient errors; DLQ consumer finalizes; cron sweeps stale leases. |
 | Secrets at rest | AES-256-GCM envelope encryption in D1; KEK is a Worker secret `KEK_V1` (versioned). Secrets Store skipped (single Worker). |
 | Tests | vitest 4 projects: `unit` (node), `worker` (`@cloudflare/vitest-pool-workers`, real D1/R2/Queues, all migrations), `web` (jsdom + Testing Library + vitest-axe). Playwright e2e with a local mock OIDC provider. |
@@ -95,7 +98,7 @@ flowchart LR
 wallet/
 ├─ AGENTS.md                      # conventions below, binding for all agents
 ├─ biome.json  tsconfig*.json  vite.config.ts  vitest.config.ts  wrangler.jsonc  worker-configuration.d.ts
-├─ migrations/0001_platform.sql   # single owner per phase (foundation, then integration)
+├─ migrations/                    # 0001_platform.sql, then one file per change; applied files are never edited
 ├─ templates/                     # BAKED template packages (data only)
 │  ├─ henrys-copper/  (pass.json, wallet.template.json, images, *.lproj/)
 │  ├─ henrys-blue/
@@ -118,10 +121,11 @@ wallet/
 │  │  │                           # security-headers, csrf, rate-limit, db helpers, analytics, safe-fetch
 │  │  ├─ modules/<area>/          # routes.ts service.ts repo.ts *.test.ts — one owner per module
 │  │  │   auth/ users/ orgs/ identities/ templates/ passes/ holders/ delivery/ apple/ public/
-│  │  │   connections/ settings/ audit/ status/ metrics/ api-keys/ me/
+│  │  │   connections/ settings/ audit/ status/ metrics/ api-keys/ me/ events/ bundles/
+│  │   broadcasts/ sandbox/ scan/ nfc/ wallet-providers/
 │  │  ├─ connectors/<type>/       # connector plugins (http-json, webhook, demo)
 │  │  ├─ jobs/                    # queue router (kind → handler), cron dispatcher, DLQ
-│  │  ├─ workflows/               # TemplateImport, BulkReissue, ConnectionSync
+│  │  ├─ workflows/               # TemplateImport, BulkReissue, ConnectionSync, Broadcast
 │  │  ├─ ssr/                     # React SSR for /p/:token and auth confirm pages
 │  │  └─ email/                   # email templates (HTML + text)
 │  ├─ web/                        # React SPA
@@ -136,33 +140,19 @@ wallet/
 └─ docs/ (design/, audits/, research/, api.md, operations.md, extending.md)
 ```
 
-Rules (also written to `AGENTS.md`):
-- `routes.ts` (HTTP + validation) → `service.ts` (rules, no Hono import) → `repo.ts` (the only place SQL appears).
-- Domain code throws `AppError` subclasses with stable codes; only `platform/errors.ts` maps to HTTP.
-- Inject `clock` and `ids` via context; no direct `Date.now()`/`crypto.randomUUID()` in services.
-- Structured logs `{event, requestId, orgId, code}`; never log personalization, emails, tokens, or URLs containing capability tokens.
-- Registries (behaviors, connectors, baked templates) are generated by `tools/build-templates.ts`/codegen. Adding one never edits a shared index by hand.
-- Files ≤ ~300 lines; named exports; kebab-case; tests beside code (`*.test.ts`), worker integration tests in `test/` or beside modules under the `worker` vitest project.
-
-### 4a. Copy and docs (owner rule)
-
-No pompous, extraneous or unnecessary text anywhere — UI, emails, status, errors, docs, comments, commits.
-- UI: short plain labels; no marketing tone or filler ("seamlessly", "powerful", "Welcome to…", "Successfully…"); no explanatory paragraph where a label or empty state suffices. Errors: what happened + what to do, one sentence.
-- Docs: task-oriented and terse; no restating the obvious, no verification narratives.
-- Comments: only for a non-obvious why. No banners, no restating code.
-- Commits: one-line subject; body only when needed.
+Conventions (layering, errors, clock and ids, logs, registries, file size, copy and docs) live in `AGENTS.md`, which wins on them.
 
 ---
 
-## 5. Data model (`migrations/0001_platform.sql`)
+## 5. Data model
 
-Base: audit B §5.2, with these changes. IDs are TEXT (UUIDv7 or ULID); timestamps INTEGER ms; emails normalized (`trim().toLowerCase().normalize('NFC')`, no plus/dot stripping); every FK child column indexed; `PRAGMA foreign_keys` honored by D1.
+`0001_platform.sql` started from audit B §5.2 with these changes; later migrations follow the list below. IDs are TEXT (UUIDv7 or ULID); timestamps INTEGER ms; emails normalized (`trim().toLowerCase().normalize('NFC')`, no plus/dot stripping); every FK child column indexed; `PRAGMA foreign_keys` honored by D1.
 
 - **orgs** (id, slug UNIQUE, name, status, default_identity_id NULL → platform default, branding JSON (accent, logo asset), created/updated).
 - **users** (id, name, primary_email, status active|disabled, created_at, last_login_at, last_roles JSON informational). No stored role authority — roles are decided at sign-in from OIDC groups and stored on the session.
 - **user_emails** (email PK, user_id, verified_via magic_link|oidc|admin, verified_at).
 - **auth_identities** (provider, subject, user_id, email_claim, email_verified, groups JSON, created_at, last_used_at; PK provider+subject).
-- **sessions** (id_hash PK, user_id, amr oidc|magic_link, roles JSON, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at, revoked_at, ip_prefix, user_agent).
+- **sessions** (id_hash PK, user_id, amr oidc|magic_link|breakglass, roles JSON, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at, revoked_at, ip_prefix, user_agent).
 - **magic_links** (token_hash PK, code_hash, purpose sign_in|verify_email, email, user_id NULL, browser_binding_hash, redirect_path, created_at, expires_at, consumed_at, attempt_count).
 - **counters** (key, window_start, count; PK key+window_start) for daily/global caps the Rate Limiting binding can't express.
 - **workflow_runs** (instance_id PK, kind, org_id, target_id, status, started_at, finished_at, error_code) — Workflow instances can't be listed via the binding.
@@ -183,6 +173,15 @@ Base: audit B §5.2, with these changes. IDs are TEXT (UUIDv7 or ULID); timestam
 - **wallet_logs** (redacted device log lines, capped, 7-day retention).
 - **audit_log**, **settings** (scope platform|org:<id>, key, JSON value; typed registry), as audit B.
 - Triggers: `pass_published` / `pass_created` as audit B (revision bump, `pass_versions` insert with cause from a `passes.pending_cause` column the app sets in the same statement, coalesced push outbox row).
+
+**Added since `0001`** (one file per change; the migration is the schema):
+- **Tenancy and authority:** `org_memberships`, `org_invitations` (`0029`), `orgs.access_revision` and `config_revision`, `users.access_revision`, `passes.row_version`, scanner, staff, event, session epochs, `authority_grants` (`0052`).
+- **Templates and releases:** `template_candidates`, `template_approvals`, `template_releases`, `template_version_hashes`, `template_version_extras` (`0031`, `0035`, `0052`); `templates.blueprint` (`0056`).
+- **Passes:** `pass_credential_transfers`, `pass_credential_tombstones`, `credential_ref_keyset` (`0042`); `pass_issuance_deliveries` (`0045`); `pass_check_in`, `scan_presence` (`0022`); `member_photos` (`0021`); `pass_events` (`0010`); `bundles` (`0011`); `broadcasts` (`0013`).
+- **Delivery and sandbox:** `sandbox_forwards` (`0028`); `branding_gc_queue` (`0053`).
+- **Connections:** `connection_webhook_retention`, `connection_webhook_items` (`0033`, `0044`).
+- **Scanning:** `scanners`, `scans`, `scan_gates`, `scan_staff`, `scan_events` (`0014`); `scanner_setups` (`0023`); `scanning_sessions`, `scanning_devices` (`0024`); retention proofs (`0041`).
+- **Wallet providers (dark):** `wallet_provider_*` (`0037`).
 
 Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 objects deleted in batches, `purged_at` set); revisions 7 d; outbox sent 30 d / failed 90 d; connection_runs 30 d or last 1 000; webhook_events, magic_links, oidc_flows, expired sessions 7 d; wallet_logs 7 d; audit_log 1 y.
 
@@ -271,6 +270,8 @@ Health in admin: status, last success vs interval, failures, breaker, last 20 ru
 
 **Sessions:** `__Host-wallet_sid` (`Secure; HttpOnly; Path=/; SameSite=Lax`). Admin-capable sessions: 1 h idle / 12 h absolute; user sessions: 30 d idle / 90 d absolute **(call)**. Rotate on login; sign-out revokes; admins can revoke any user's sessions; disabled users are refused at the next request. CSRF: every non-GET with cookie auth requires same-origin (`Origin` or `Sec-Fetch-Site: same-origin`) **and** `X-CSRF-Token` matching the session's `csrf_secret` (exposed by `GET /api/v1/session`). API-key requests are cookie-free and exempt.
 
+**Organization access.** Platform roles (`admin`, `user`) come from Pocket ID groups and are frozen on the session. Tenant access is separate: an `org_memberships` row with roles (`org_admin`, `integration_admin`, `template_author`, `template_reviewer`, `template_publisher`, `pass_operator`, `read_only`) that map to capabilities (`org:read`, `templates:publish`, `scanning:manage`, ...). A platform admin has no tenant authority without a membership. `requireAdmin` guards the platform surface only: orgs, users, settings, status, audit, metrics, identities. Tenant routes take a membership session with the capability or an API key with the scope (`requireTenantSessionOrApiKey`). Role and capability tables: `docs/api.md`.
+
 **Users admin:** list/search users, detail (emails, identities with groups, sessions, linked passes, audit), disable/enable, add/remove verified email (`admin`), revoke sessions. Roles are read-only (managed in Pocket ID) with a link to `https://id.plrs.im`.
 
 **Orgs admin:** CRUD orgs (slug, name, branding accent/logo, default identity), per-org view of templates, connections, passes, API keys.
@@ -293,10 +294,10 @@ Health in admin: status, last success vs interval, failures, breaker, last 20 ru
 | Path | Auth | Purpose |
 |---|---|---|
 | `/` , `/passes/:id`, `/account`, `/login` | SPA (portal) | user portal |
-| `/admin/*` | SPA (admin) — API enforces admin | admin console |
+| `/admin/*` | SPA (admin console) | platform pages need the `admin` role; tenant pages need a membership with the capability |
 | `/api/v1/session` | cookie | current user, roles, csrf token |
 | `/api/v1/me/*` | user session | my passes, refresh, emails, sessions |
-| `/api/v1/{orgs,templates,passes,holders,connections,connectors,identities,users,api-keys,settings,audit,status,metrics}` | admin session or scoped API key | admin + machine API (OpenAPI) |
+| `/api/v1/{orgs,templates,passes,holders,connections,connectors,identities,users,api-keys,settings,audit,status,metrics}` | platform: admin session; tenant: membership capability or scoped API key | admin + machine API (OpenAPI) |
 | `/api/v1/openapi.json` | public | API description |
 | `/auth/oidc/start`, `/auth/oidc/callback`, `/auth/magic/request`, `/auth/magic`, `/auth/magic/consume`, `/auth/logout` | — | sign-in flows |
 | `/wallet/v1/*` | ApplePass token / none per protocol | Apple web service |
@@ -329,7 +330,8 @@ Health in admin: status, last success vs interval, failures, breaker, last 20 ru
 | R2 | pass versions `passes/<passId>/v<version>-<rand>.pkpass`, template assets, `uploads/` (lifecycle: delete after 1 day) |
 | Queues (`wallet-jobs`, `wallet-jobs-dlq` with consumer) | push, email, refresh, sync fan-out |
 | Cron Triggers (`* * * * *`, `17 3 * * *`) | sweeper + connection scheduling; daily retention + cert expiry |
-| Workflows (`TemplateImport`, `BulkReissue`, `ConnectionSync`) | durable multi-step jobs with visible status |
+| Workflows (`TemplateImport`, `BulkReissue`, `ConnectionSync`, `Broadcast`) | durable multi-step jobs with visible status |
+| Durable Object (`ScanHub`, SQLite) | scanner live screens |
 | Email Sending | pass delivery + sign-in |
 | mTLS certificates | APNs per identity (`APNS` = platform) |
 | Images binding | template image validation + @1x/@2x derivation |
@@ -340,7 +342,7 @@ Health in admin: status, last success vs interval, failures, breaker, last 20 ru
 | Workers Logs + sampled traces | observability; invocation logs stay off and traces stay disabled until capability-token paths (`/p/:token`, `/auth/magic?t=`) are confirmed absent from span attributes |
 | Cache API | OIDC discovery/JWKS |
 
-Skipped with reason: KV (needs strong consistency), Durable Objects (v1 covered by D1 CAS + Workflow ids), Secrets Store (single Worker), Access/Zero Trust (in-app OIDC is the requirement), Hyperdrive, Vectorize, Workers AI, Browser Rendering, Containers, Workers for Platforms (no requirement yet).
+Skipped with reason: KV (needs strong consistency), Secrets Store (single Worker), Access/Zero Trust (in-app OIDC is the requirement), Hyperdrive, Vectorize, Workers AI, Browser Rendering, Containers, Workers for Platforms (no requirement yet).
 
 ---
 
@@ -356,32 +358,17 @@ Constant-time token comparison; all tokens ≥ 256-bit from `crypto.getRandomVal
 - `worker` (vitest-pool-workers): every route via `SELF.fetch`; Apple protocol suite (frozen); outbox/queue/DLQ/cron; CAS conflicts; tenant isolation suite; auth flows with a mock OIDC (jose-signed tokens, mocked discovery/JWKS fetch); magic link single use; CSRF; rate limits; webhook signatures; workflows via test helpers.
 - `web` (jsdom): components, forms, `<PassCard>` per style, axe checks.
 - `e2e` (Playwright, `vite dev`/`wrangler dev`, local D1 seeded by factories, mock OIDC server in `test/mock-oidc/`): admin sign-in, create pass, edit with conflict, upload template, delete uploaded template (baked delete refused), connection create + test + sync with `demo` connector, user magic-link sign-in → sees email-linked pass → force refresh, public link without sign-in, mobile layouts, dark/light screenshots.
-- `npm run check` = gen → biome ci → typecheck → test (all projects) → build (vite + wrangler dry-run). Must be green before any merge.
+- `npm run check` = gen → biome ci → `check:rules` (log codes, file sizes, SQL ownership, authority scope, knip) → typecheck → test (all projects) → build (vite, bundle budget, wrangler dry-run). Must be green before any merge.
 
 ---
 
-## 17. Build plan
+## 17. Build and go-live
 
-1. **Foundation** (one agent, sequential): scaffold per §4, dependencies (latest stable, ≥ 2 weeks old, exact pins), Biome, tsconfigs, Vite + Cloudflare plugin, vitest projects, `wrangler.jsonc` with all bindings (§14) + `wrangler types`, `platform/` layer, full `0001` migration, shared contracts for every API area (§12), module stubs with mounted routers, SPA shell with router, design tokens, `ui/` primitives, `AGENTS.md`, CI workflow, removal of the old `src/`/`scripts/` (git history keeps them), test harness + factories + mock OIDC skeleton. Exit: `npm run check` green.
-2. **Parallel build** (one agent per workstream, each in its own git worktree/branch, owning only its directories): (a) passkit engine; (b) pass-view + PassCard renderer; (c) templates module + TemplateImport + baked packages (Henry's + starters) + codegen; (d) passes + holders + delivery + Apple web service + public page + BulkReissue + retention; (e) auth + users + sessions + api-keys + me; (f) connections + connectors + ConnectionSync + force refresh; (g) orgs + identities + settings + audit + status + metrics; (h) admin SPA shell + overview/status/settings/audit/users/orgs/identities/api-keys pages; (i) admin passes + templates + connections pages; (j) portal + login + email templates.
-3. **Integration** (one agent): merge branches in dependency order, resolve conflicts, wire registries, make `npm run check` and e2e green.
-4. **Review** (parallel reviewers by dimension: security, Apple/PassKit correctness, data/concurrency, Cloudflare best practices, frontend UX/a11y/design, test quality) → adversarial verification → fix agents → re-check.
-5. **Docs:** README, `docs/api.md` (from OpenAPI), `docs/operations.md` (go-live), `docs/extending.md` (templates, behaviors, connectors).
+The build started from a foundation commit with one workstream per area (ownership table in `AGENTS.md`). Go-live steps are in `docs/operations.md` ("Go-live checklist"); extension points in `docs/extending.md`; the HTTP reference in `docs/api.md`.
 
 ---
 
-## 18. Go-live steps that need the owner
-
-1. Pocket ID (`id.plrs.im`): create groups `wallet-admins` and `wallet-users`; create an OIDC client "Wallet" with callback `https://passbook.mobile/auth/oidc/callback` (and `http://localhost:5173/auth/oidc/callback` for dev), PKCE enabled, groups claim included; provide client id/secret.
-2. Upload the new platform certificate as a Cloudflare mTLS certificate for APNs (`tools/identity-add.ts` does it with wrangler) and set `SIGNER_PLATFORM_*` secrets.
-3. Turnstile widget for `passbook.mobile`; set `TURNSTILE_SECRET`/site key.
-4. Generate `KEK_V1`.
-5. Create the new queues/workflows/rate-limit namespaces/AE dataset (wrangler deploy auto-provisions most), apply `0001` to a **fresh** D1 (owner approved wiping), deploy.
-6. Device acceptance test: add a Henry's pass on an iPhone, verify lock-screen relevance near a club, update push, and barcode scan.
-
----
-
-## 19. Decisions after builder review (2026-10-31)
+## 18. Decisions after builder review (2026-10-31)
 
 - **Henry's live data:** no connector at launch. MemberSpot has no verified API (`docs/research/memberspot/README.md`); Henry's passes are maintained by admins or the machine API. A snapshot connector is a follow-up.
 - **Per-pass images** are in v1 (`pass_assets`), uploaded from pass detail or the API and validated with the template image rules.

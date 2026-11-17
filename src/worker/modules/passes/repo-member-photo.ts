@@ -136,7 +136,11 @@ export async function memberPhotoAsset(
   orgId: string,
   passId: string,
 ): Promise<AssetRow | null> {
-  const photo = await memberPhoto(db, orgId, passId);
+  return photoAssetOf(await memberPhoto(db, orgId, passId));
+}
+
+/** The synthetic thumbnail override a photo adds to a build, when it is part of the pass. */
+export function photoAssetOf(photo: MemberPhotoRow | null): AssetRow | null {
   return photo?.include_in_pass
     ? {
         name: 'thumbnail@3x.png',

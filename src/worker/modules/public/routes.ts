@@ -4,9 +4,14 @@ import { normalize } from '../../../shared/pass-view/index.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
-import { ipPrefix } from '../../platform/ip.ts';
+import { ipRatePrefix } from '../../platform/ip.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
+import {
+  ASSET_MISSES_PER_MINUTE,
+  clientIp,
+  gateMisses,
+  rateLimit,
+} from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import {
@@ -31,14 +36,16 @@ import { assertPassSnapshot, capturePassSnapshot } from './snapshot.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
-// Mail proxies fetch every emailed pass's images from a few IPs, so assets are limited per
-// token and IP prefix; a malformed token (no pass behind it) falls back to the IP alone.
+// Mail proxies fetch every emailed pass's images from a few IPs, so valid assets are limited per
+// token and network prefix only. Random tokens each get a fresh per-token bucket, so a prefix's
+// misses are counted and, past a threshold, refused before any lookup.
+publicRoutes.use('/:token/assets/*', gateMisses(ASSET_MISSES_PER_MINUTE));
 publicRoutes.use(
   '/:token/assets/*',
   rateLimit('RL_PUBLIC_ASSET', (c) => {
-    const ip = clientIp(c);
+    const prefix = ipRatePrefix(clientIp(c)) ?? 'unknown';
     const token = c.req.param('token') ?? '';
-    return isTokenShape(token) ? `${token}:${ipPrefix(ip) ?? ip}` : `ip:${ip}`;
+    return isTokenShape(token) ? `${token}:${prefix}` : `prefix:${prefix}`;
   }),
 );
 publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));

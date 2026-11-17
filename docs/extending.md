@@ -103,7 +103,7 @@ A behavior is trusted code that edits a pass after bindings run (for example add
    export default plugin;
    ```
 
-2. Tests beside it (`index.test.ts`). `venue-locations` is the model.
+2. Tests beside it. `venue-locations` is the model; the others are `expiry-from-input`, `relevance-window`, `upcoming-events` and `beacons`.
 3. `npm run gen`. Templates reference it with `behaviors: [{ "use": "my-behavior", … }]`.
 
 Bump `version` when `configSchema` changes in a way that breaks stored configs.
@@ -125,7 +125,8 @@ A connector pulls records from an upstream system and maps them to pass inputs.
      (write-only, never returned)
    - `outputFields`: the fields templates can bind to
    - `defaults`: `intervalSeconds`, `maxConcurrency`, `requestsPerMinute`, `timeoutMs`
-   - `urls(config)`: every URL it will fetch, checked against the SSRF rules when saved
+   - optional `urls(config)`: every URL it will fetch, checked against the SSRF rules when saved
+   - optional `hasList(config)`, `migrate(oldVersion, config)`
    - `fetchRecord(ctx, ref)`: required; returns `ok`, `not_modified` or `not_found`
    - optional `test`, `listChanges` (cursor paging), `verifyWebhook`, `importRecords`
 2. Network only through `ctx.fetch` (HTTPS, public hosts, no redirects, size and time caps).

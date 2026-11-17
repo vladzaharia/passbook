@@ -7,6 +7,7 @@ import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { livePassCommitment, livePassCommitmentValid } from './live-pass-commitment.ts';
 import { livePassSnapshot, openLiveSourceProof } from './live-provenance.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
+import { issueUnderOlderAdapter } from './release-policy-test-fixtures.ts';
 import { type Candidate, candidateById } from './repo-lookup.ts';
 import { kit, proven, row, template } from './scan-hub-test-fixtures.ts';
 
@@ -91,24 +92,35 @@ describe('live template commitment', () => {
     },
   );
 
-  it('invalidates the earlier proof when the same version is approved at a new head generation', async () => {
-    const templateId = await kit.scanTemplate('Same-version commitment policy', {
-      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
-    });
-    const pass = await kit.scanPass(templateId);
-    const keyEnv = captureCredentialKeyEnv(kit.env);
-    const first = await candidateFor(pass.id);
-    const commitment = await livePassCommitment(keyEnv, first);
-    expect(commitment).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(await livePassCommitmentValid(keyEnv, first, commitment)).toBe(true);
-    await approveAppleRelease(kit, { templateId, version: first.pass.templateVersion });
-    const current = await candidateFor(pass.id);
-    expect(current.pass.templateVersion).toBe(first.pass.templateVersion);
-    expect(current.activeReleaseVersion).toBe(first.activeReleaseVersion);
-    expect(current.activeReleaseGeneration).toBeGreaterThan(first.activeReleaseGeneration!);
-    expect(current.templateSnapshot?.raw).not.toBe(first.templateSnapshot?.raw);
-    expect(await livePassCommitmentValid(keyEnv, current, commitment)).toBe(false);
-  });
+  it.each([
+    ['an identical', false],
+    ['an other-adapter', true],
+  ] as const)(
+    'invalidates the earlier proof when %s release of the same version is approved at a new head generation',
+    async (_name, older) => {
+      const templateId = await kit.scanTemplate('Same-version commitment policy', {
+        actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+      });
+      const pass = await kit.scanPass(templateId);
+      if (older) await issueUnderOlderAdapter(kit, pass.id);
+      const keyEnv = captureCredentialKeyEnv(kit.env);
+      const first = await candidateFor(pass.id);
+      const commitment = await livePassCommitment(keyEnv, first);
+      expect(commitment).toMatch(/^[A-Za-z0-9_-]{43}$/);
+      expect(await livePassCommitmentValid(keyEnv, first, commitment)).toBe(true);
+      await approveAppleRelease(kit, { templateId, version: first.pass.templateVersion });
+      const current = await candidateFor(pass.id);
+      expect(current.pass.templateVersion).toBe(first.pass.templateVersion);
+      expect(current.activeReleaseVersion).toBe(first.activeReleaseVersion);
+      expect(current.activeReleaseGeneration).toBeGreaterThan(first.activeReleaseGeneration!);
+      // An identical release leaves the pass's own release in the snapshot; one that differs from
+      // it in the adapter changes the snapshot. Either way the commitment also binds the head's
+      // id, so it is void: it fails closed and the next read signs a new one.
+      if (older) expect(current.templateSnapshot?.raw).not.toBe(first.templateSnapshot?.raw);
+      else expect(current.templateSnapshot?.raw).toBe(first.templateSnapshot?.raw);
+      expect(await livePassCommitmentValid(keyEnv, current, commitment)).toBe(false);
+    },
+  );
 
   it('keeps both earlier proofs stale when changed policy returns at a new release generation', async () => {
     const templateId = await kit.scanTemplate('Original commitment policy', {

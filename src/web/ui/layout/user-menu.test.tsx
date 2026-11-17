@@ -32,8 +32,15 @@ afterEach(() => {
 });
 
 const openMenu = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(await screen.findByRole('button', { name: 'Account menu' }));
-  return screen.findByRole('menu');
+  // A click that lands as the lazy chunk swaps in is lost to the fallback button; click again until open.
+  let menu: HTMLElement | null = null;
+  await waitFor(async () => {
+    menu = screen.queryByRole('menu');
+    if (menu) return;
+    await user.click(screen.getByRole('button', { name: 'Account menu' }));
+    menu = await screen.findByRole('menu', {}, { timeout: 1500 });
+  });
+  return menu as unknown as HTMLElement;
 };
 
 const items = (menu: HTMLElement) =>

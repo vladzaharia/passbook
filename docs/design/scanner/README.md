@@ -31,3 +31,11 @@ on build structure, `scanner-architecture.md` on design.
   inputs. Their decisions are in the revision notes at the top of the plan, SA and DM.
 
 `addendum/` holds the stations and Access card designs the plan cites (ST, AX), the Phase 0 amendments, the customer and desk UX and, in `addendum/occupancy/occupancy.md` (OC), occupancy and desk overrides. Its sheets, shots, gen scripts and pass fixtures are not shipped; paths to them name where they belong.
+
+## Status against the code
+
+Built: scanners, events, staff, scans and gates (`0014`, `0022`), pairing, setups (`0023`), scanning sessions and devices (`0024`, which group devices where `stations.md` has stations), device roles `scan`, `customer` and `monitor` with the live hub (`modules/scan/scan-hub.ts`, `routes-live.ts`), the scan display and its preview, NFC server pieces, member photos (`0021`) and `template_versions.build_key` (`0027`; the docs call it `0018`).
+
+Not built: the `scan_stations` table and `station_id` (`0019`), access zones, plans and `scan_zones` (`0020`), occupancy, tap-out and desk overrides (`/scan/overrides`, `/scan/mark-out`). Those documents (`addendum/stations.md`, `addendum/access.md`, `addendum/occupancy/occupancy.md`, and the parts of `scanner-plan.md`, `scanner-architecture.md`, `display-model.md` and `ux-*.md` that cite them) are design only. There is no migration `0019` or `0020`; migration numbers in these files are the plan's, not the repository's.
+
+Authority: console routes and scanner writes follow `docs/design/authority-epochs.md`. A scanner is unpaired (401 `SCANNER_REPAIR`) only when its credential is lost (`scannerCredentialLost`); every other `credential_epoch` move is 409 `SCAN_CONFIG_CHANGED`. Where older text says `requireAdmin` for a scanning route, read: the session's org membership must hold `scanning:manage` (console) or `scanning:read`; `requireAdmin` is the platform-admin guard and does not apply (`docs/api.md`, "Scanner console").

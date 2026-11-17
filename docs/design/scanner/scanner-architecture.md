@@ -77,7 +77,7 @@ record below for subsequent changes.
 >   `display.identity`. Decisions D21-D26, conflicts in section 1.
 > - **No per-event display.** Events keep check-in logic plus an optional staff note (`scan_events.note`, ≤ 140).
 > - **Display-only template versions activate on save** without a reissue (`template_versions.build_key`, migration
->   `0018_templates_build_key.sql`; `SaveVersionRequest.activate: 'display-only'`).
+>   `0027_templates_build_key.sql`; `SaveVersionRequest.activate: 'display-only'`).
 > - **Client loop for B strengthened** (7.5): the camera stays live during results, a card layer rises from the
 >   buddy's pass and tucks back, a different code is accepted from T0 + 350 and interrupts the card, desk `ready`
 >   renders as a panel with a system action area, the buddy has one seat on the dock.
@@ -1476,7 +1476,7 @@ Rules for the file:
 - No table stores rendered displays, visits or a balance ledger: history is computed from `scans` (D24), and `scans`
   rows stay free of holder data.
 
-### 6.1a `migrations/0018_templates_build_key.sql`
+### 6.1a `migrations/0027_templates_build_key.sql`
 
 The templates module's half of display-only versions (D25). `0017` is reserved for n5.
 
@@ -2231,7 +2231,7 @@ src/web/admin/scanning/**, src/web/routes/admin/scanning/**, migrations/0014_sca
 | `modules/broadcasts/*`, `admin/messages/{audience,composer-state}.tsx` | n7 | scan target |
 | `src/passkit/types.ts`, `template/{manifest,scan}.ts`, `templates/starter-*` | a2 | manifest (with `display`, without `values`/`identity`), validator calls, blueprints with displays |
 | `modules/templates/package/{manifest,manifest-rules}.ts` | c | persist `scan` (with `display`) and `nfc`; `nfc` out of `DATA_ROOTS`; the 16 KB display cap |
-| `modules/templates/{persist,repo-stale,versions}.ts`, `contracts/templates.ts`, `migrations/0018_templates_build_key.sql` | c | `build_key`, stale by build key, `activate: 'display-only'`, `displayOnly` (4.6) |
+| `modules/templates/{persist,repo-stale,versions}.ts`, `contracts/templates.ts`, `migrations/0027_templates_build_key.sql` | c | `build_key`, stale by build key, `activate: 'display-only'`, `displayOnly` (4.6) |
 | `admin/templates/designer/*` | n5 | **Scanning** and **NFC** sections; the Scan screen mode's hooks in `model`, `apply`, `reducer`, `targets`, `outline`, `designer`, `designer-page`, `api`, `section-inputs` (DM §10.2) |
 | `admin/templates/{template-overview,versions-panel}.tsx` | i | **Scan screen** card; "Scan screen only" badge |
 | `admin/identities/*` | n2 | NFC card, key and test dialogs |

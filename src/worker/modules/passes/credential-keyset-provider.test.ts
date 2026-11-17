@@ -18,7 +18,7 @@ import { credentialRefKeysetCommitment, ensureCredentialRefKeyset } from './cred
 
 const makeEnv = installKeysetTestEnv();
 
-describe.sequential('credential keyset provider history', () => {
+describe('credential keyset provider history', () => {
   it('fails closed when provider instances survive a forcibly removed singleton', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
