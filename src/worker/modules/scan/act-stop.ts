@@ -12,7 +12,7 @@ import type { ScanActor } from './guard.ts';
 import type { PreloadedDisplayHistory } from './history-proof-plan.ts';
 import { ledgerRow, recordResult } from './ledger.ts';
 import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
-import { prepareMiss } from './misses.ts';
+import { grantMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
@@ -102,7 +102,7 @@ export async function finishStop(
     // A pass or a miss: the scanner's mode may not have retired the presented credential.
     ...(checked || s.countMiss ? { credentialRefs: s.credentialTombstoneRefs } : {}),
     ...(checked ? { pass: { id: checked.id, facts: { pass: checked, credential: {} } } } : {}),
-    tables: SCAN_STOP_TABLES,
+    tables: s.countMiss ? [...SCAN_STOP_TABLES, 'counters'] : SCAN_STOP_TABLES,
   });
   const finalized = finalizeScan(g, {
     id: s.scanId,
@@ -118,6 +118,8 @@ export async function finishStop(
     approvedBy: null,
     ...(authority.event ? { eventId: authority.event.id } : {}),
   });
+  // Counted by the same batch, right after the statement that closes the scan.
+  const miss = s.countMiss ? grantMiss(g, ctx, authority.actor, ctx.clock.now()) : null;
   if (ledger && retention) {
     ledgerEvent(g, ledger, s.scanId, stop.kind, stop.reason);
     g.include(retentionProofPart(retention));
@@ -133,13 +135,12 @@ export async function finishStop(
     throw new StaleScanAuthority();
   }
 
-  // Recorded with its counts. The miss counter and card follow; a failure only degrades the answer.
+  // Recorded with its counts and its miss. The card follows; a failure only degrades the answer.
   const finishAt = ctx.clock.now();
   const done = doneScanPredicate(s.scanId);
-  const clock = { ...ctx, clock: { now: () => finishAt } };
-  const miss = s.countMiss ? prepareMiss(clock, authority.actor, s.scanId, s.claimAt) : null;
+  const missResult = miss ? miss.result(results) : null;
   const bound = displayPlan?.bind(finishAt, done);
-  const statements = [...(miss?.stmts ?? []), ...(bound?.stmts ?? [])];
+  const statements = bound?.stmts ?? [];
   let after: D1Result[] | null = null;
   try {
     after = statements.length ? await ctx.env.DB.batch(statements) : [];
@@ -149,16 +150,10 @@ export async function finishStop(
       message: error instanceof Error ? error.message : 'unknown',
     });
   }
-  const missEnd = miss?.stmts.length ?? 0;
-  const missResult = miss && after ? miss.result(after.slice(0, missEnd)) : null;
   const read = dayCounts
     ? await dayCounts.read(committed.after)
     : { approvals: false, counts: { today: 0, event: null, asOf: 0, configRev: 0 } };
-  const boundStart = missEnd;
-  const history =
-    bound && after
-      ? bound.finalize(after.slice(boundStart, boundStart + bound.stmts.length))
-      : undefined;
+  const history = bound && after ? bound.finalize(after.slice(0, bound.stmts.length)) : undefined;
   const photoUrl =
     photo && stop.found ? photoGrantUrl(authority.actor, stop.found.pass.id, photo.grant) : null;
   if (miss && missResult) miss.throwIfCapped(missResult);

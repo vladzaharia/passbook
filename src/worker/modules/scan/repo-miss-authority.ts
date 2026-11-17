@@ -153,23 +153,6 @@ export function cappedMissAuditStmt(
   );
 }
 
-interface CompletedMiss {
-  actor: ScanActor;
-  scanId: string;
-  claimAt: number;
-}
-
-/** Bind the counter to this exact finalized generation, not another completed claim. */
-export function completedMissPredicate(input: CompletedMiss): Predicate {
-  const { actor, scanId, claimAt } = input;
-  return {
-    sql: `EXISTS (SELECT 1 FROM scans miss_scan WHERE miss_scan.id=? AND miss_scan.at=?
-      AND miss_scan.org_id=? AND miss_scan.mode=? AND miss_scan.actor_key=?
-      AND miss_scan.state='done' AND miss_scan.reason='not_found')`,
-    params: [scanId, claimAt, actor.orgId, actor.mode, actor.actorKey],
-  };
-}
-
 /** An eligible miss cannot commit without its counter update. */
 export function requireMissIncrementStmt(db: D1Database, eligible: Predicate): D1PreparedStatement {
   return stmt(
