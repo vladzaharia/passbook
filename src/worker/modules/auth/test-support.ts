@@ -112,7 +112,10 @@ export async function harness(
     const url = new Request(input, init).url;
     if (url.startsWith('https://challenges.cloudflare.com/')) {
       const body = new URLSearchParams(String((init as RequestInit | undefined)?.body ?? ''));
-      return Response.json({ success: turnstileOk.value && body.get('response') === 'ok' });
+      return Response.json({
+        success: turnstileOk.value && body.get('response') === 'ok',
+        hostname: new URL(env.PUBLIC_BASE_URL).hostname,
+      });
     }
     throw new Error(`unexpected fetch ${url}`);
   });
