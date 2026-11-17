@@ -7,8 +7,8 @@ import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { noScopedReleaseSql } from '../templates/repo-releases.ts';
 import { setTemplateStatus } from '../templates/testing.ts';
+import { mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { assetActorFor, observeCancellation } from './asset-test-fixtures.ts';
-import { mintAssetGrant } from './assets.ts';
 import { candidateById } from './repo-lookup.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 

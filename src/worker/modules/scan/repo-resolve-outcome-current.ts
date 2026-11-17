@@ -2,7 +2,7 @@ import { first, stmt } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import { scanCandidateTemplateReadPredicate } from './repo-live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
-import type { OutputPredicate } from './repo-output-predicates.ts';
+import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
 import { snapshotReleaseIdSql, usedReleaseIdSql } from './repo-pass-release-sql.ts';
 
 export function currentFoundTemplate(candidate: Candidate): OutputPredicate | null {
@@ -71,3 +71,11 @@ export function headReleasesStmt(
     [orgId, JSON.stringify(passIds)],
   );
 }
+
+/** Whether the template snapshot the candidate was read under still stands: a read after a commit. */
+export const candidateTemplateFenceStmt = (db: D1Database, candidate: Candidate) =>
+  outputPredicateStmt(db, scanCandidateTemplateReadPredicate(candidate));
+
+/** The fence's answer, read from the result `candidateTemplateFenceStmt` produced. */
+export const templateFenceHolds = (result: D1Result | undefined): boolean =>
+  (result?.results?.[0] as { authorized?: number } | undefined)?.authorized === 1;

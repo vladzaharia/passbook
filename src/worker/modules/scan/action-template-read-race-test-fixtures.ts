@@ -26,12 +26,14 @@ export async function fixture(
     history?: boolean;
     compatiblePin?: boolean;
     includeInPass?: boolean;
+    /** The action asks a manager: a scan without approval is answered with a heads-up, no row. */
+    minRole?: 'manager';
   } = {},
 ) {
   let templateId = await kit.scanTemplate(
     'Captured action template',
     {
-      actions: [ACTION],
+      actions: [options.minRole ? { ...ACTION, minRole: options.minRole } : ACTION],
       ...(options.stop
         ? { flags: [{ input: 'tier', label: 'Review', equals: ['review'], stop: true }] }
         : {}),
@@ -233,16 +235,11 @@ export async function expectGrantsUnredeemable(
   return urls.length;
 }
 
-/**
- * The commit asks no template or release state (authority-epochs.md F4): a change landing before it is
- * content and the stop is recorded. The capabilities were minted from the read, so they no longer redeem.
- */
-export async function expectStopRecordedUnredeemable(
-  kit: ScanKit,
-  headers: Record<string, string>,
-  result: ScanOutcome,
-) {
-  expect(result).toMatchObject({ kind: 'heads_up', reason: 'check_required' });
-  expect(result.scanId).toEqual(expect.any(String));
-  expect(await expectGrantsUnredeemable(kit, headers, result)).toBeGreaterThan(0);
+/** The answer was withheld after its commit: the client retries with the same key. */
+export async function expectUnconfirmed(response: Response) {
+  const text = await response.text();
+  expect(`${response.status} ${(JSON.parse(text) as { code?: string }).code}`).toBe(
+    '409 SCAN_UNCONFIRMED',
+  );
+  for (const value of [PRIVATE, 'member.png', 'assetGrant']) expect(text).not.toContain(value);
 }

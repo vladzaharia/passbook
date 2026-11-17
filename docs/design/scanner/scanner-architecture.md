@@ -1169,7 +1169,8 @@ All JSON, zod-validated, problem+json errors, `Cache-Control: no-store` on scan 
 **Asset grant.** A desk card (`ready`) and a lookup row need not write a `scans` row. The short-lived opaque `g` is
 stateless: nothing is stored per grant. It encodes an 8-byte nonce, a 6-byte expiry, a 24-byte truncated HMAC
 (`derivedHmacKey(env, 'scan-asset-grant-v2')`) and, when it was minted from a scanned credential, the leading 8 bytes
-of each of that credential's keyed tombstone refs (at most 3). The HMAC covers the recipient (actor scope and the
+of each of that credential's keyed tombstone refs (at most 3), masked with bytes derived from the nonce so two grants
+for one credential share none. Redemption refuses an expiry more than an hour and a minute away. The HMAC covers the recipient (actor scope and the
 epochs the actor proof uses), the pass, its asset class (photo or other), the purpose, the expiry, the nonce and those
 ref prefixes. Authenticated lineage includes actor scope and epochs; pass org, mode, version, revision, link,
 credential and lifecycle generations and transfer state; Wallet snapshot and signing identity; pass and connection
@@ -1183,7 +1184,8 @@ values in SQL (and that no tombstone starts with a carried ref prefix). Any move
 a forged part denies the asset (404 `ASSET_NOT_FOUND`, as before). Pending transfer, quarantine, inactive or deleted
 passes, stale scope or policy, invalid Wallet identity/validity, and changed lineage deny the asset. The stream is
 fenced again after opening, including photo visibility and the pass snapshot; failures close the stream. Assets are
-private and no-store, without an ETag; logs must not contain the grant.
+private and no-store, without an ETag; logs must not contain the grant. A choose card or a stop answer is read under a
+template snapshot and served only if the commit's after-read finds it standing (409 `SCAN_UNCONFIRMED` otherwise).
 
 Why no stored refs: a retirement of the pass's own credentials always moves a generation the HMAC binds. The only
 tombstone writer is a credential transfer, and `pass_credential_tombstones_insert_guard` (0042) admits a row only

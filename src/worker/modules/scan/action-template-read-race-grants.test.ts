@@ -218,6 +218,56 @@ describe('policy-selected event action grants', () => {
     );
   }
 
+  // The answer is out before the credential moves: its capabilities are bound to the credential as it was.
+  it.each([
+    ['choose', 'csrf'],
+    ['stop', 'csrf'],
+    ['choose', 'scanner token'],
+    ['stop', 'scanner token'],
+  ] as const)(
+    "voids a %s answer's capabilities when the scanner %s changes after it",
+    async (phase, change) => {
+      const f = await fixture(kit, {
+        choose: phase === 'choose',
+        stop: phase === 'stop',
+        photo: true,
+      });
+      const result = await action(kit, f.scanner.headers, body(kit, f.pass.id));
+      const urls = [
+        result.display?.identity.photo?.url,
+        result.card?.display.identity.photo?.url,
+        result.card &&
+          `${result.card.passView.assetBaseUrl}icon.png?g=${encodeURIComponent(result.card.passView.assetGrant)}`,
+      ]
+        .filter((url): url is string => typeof url === 'string')
+        .map((url) => url.replace('/api/v1/scan', ''));
+      expect(urls.length).toBeGreaterThan(0);
+      for (const url of urls) {
+        const served = await kit.get(f.scanner.headers, url);
+        expect(served.status).toBe(200);
+        await served.body?.cancel();
+      }
+      if (change === 'csrf')
+        await run(
+          kit.env.DB,
+          'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?',
+          ['rotated-scanner-csrf-secret', f.scanner.id],
+        );
+      else
+        await run(
+          kit.env.DB,
+          'UPDATE scanners SET token_hash=?,updated_at=updated_at+1 WHERE id=?',
+          ['d'.repeat(64), f.scanner.id],
+        );
+      for (const url of urls) {
+        const gone = await kit.get(f.scanner.headers, url);
+        // A rotated secret still authenticates and the grant refuses; a rotated token no longer does.
+        expect(gone.status).toBe(change === 'csrf' ? 404 : 401);
+        await gone.body?.cancel();
+      }
+    },
+  );
+
   it('rejects the previously confirmed grants after original CSRF authority changes', async () => {
     const f = await cardGrantFixture();
     await run(kit.env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [

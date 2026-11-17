@@ -573,10 +573,12 @@ keep retired pass ids and credentials from being reused.
 - **KEK rotation**: add `KEK_V2` (`wrangler secret put KEK_V2`). The highest version encrypts;
   keep older ones for existing data. The oldest KEK also derives scan PIN, pair-code, asset-grant,
   credential-tombstone and pass/bundle link (`h1:`) HMAC keys; losing it breaks every stored link lookup. The credential-reference keyset sentinel initializes only when
-  no prior keyed references or proof provenance remain, including tombstones, scanner grants and
+  no prior keyed references or proof provenance remain, including tombstones and
   retention proofs, retained webhook/workflow bindings and native-provider history.
   Plain unsigned legacy scan events do not prevent initialization, but remain untrusted and are
   never promoted to authenticated history merely because a sentinel was installed.
+  Scanner asset grants are stateless: to void every outstanding one, deploy with a new label in
+  `asset-grant-mint.ts` (`scan-asset-grant-v2` to `-v3`).
   Removing or changing the oldest KEK causes a commitment mismatch: scanner, transfer, provider
   and connection credential-reference operations fail closed. Restore the original KEK, confirm
   the deployed keyset commitment matches the retained records, then retry the blocked operation.
