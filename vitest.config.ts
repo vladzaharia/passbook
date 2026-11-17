@@ -13,6 +13,8 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           include: ['src/passkit/**/*.test.ts', 'src/shared/**/*.test.ts', 'tools/**/*.test.ts'],
+          // Image and package tests decode PNGs; under v8 coverage (coverage-node) they pass 5 s.
+          testTimeout: 30_000,
         },
       },
       {
@@ -64,6 +66,7 @@ export default defineConfig({
           testTimeout: 30_000,
           hookTimeout: 30_000,
           setupFiles: [
+            './test/setup/als-disable.ts',
             './test/setup/block-network.ts',
             './test/setup/check-responses.ts',
             './test/setup/apply-migrations.ts',

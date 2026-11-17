@@ -1,5 +1,7 @@
 # Occupancy: in and out, tap-out, capacity and desk overrides
 
+> **Status: not built.** No zones, in/out tracking, tap-out, `/scan/overrides` or `/scan/mark-out`. Design only. Where this file says `requireAdmin`, read a scanning capability on the session's org membership.
+
 > **Folded 2026-11-05** into SA §20, SD §18, DM §12, BM §6.1 and §6.8, the plan (§5.17, M3B) and P0A; those win.
 > Changes made in the fold: Phase 0 takes **P0-9** and **P0-10** only (P0-10 with one default line per reason;
 > variants with OC.1); P0-11 to P0-13 land additively in OC.1, and P0-14 becomes a new guard option

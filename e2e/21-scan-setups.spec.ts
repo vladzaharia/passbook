@@ -2,6 +2,7 @@ import { type Browser, expect, type Page, test } from '@playwright/test';
 import { unzipSync } from 'fflate';
 import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
+import { pairScanner } from './helpers/pair.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -15,8 +16,7 @@ async function paired(browser: Browser, code: string, reader = false) {
     await page.addInitScript(() => {
       Object.assign(window, { PassBookNative: { onmessage: null, postMessage() {} } });
     });
-  await page.goto(`/scan#pair=${encodeURIComponent(code)}`);
-  await page.getByRole('button', { name: 'Pair', exact: true }).click();
+  await pairScanner(page, code);
   return { context, page };
 }
 const nativeRead = (page: Page, value: string) =>

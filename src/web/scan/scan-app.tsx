@@ -72,6 +72,7 @@ function ScanBoot() {
     mode: 'live' | 'test';
   } | null>(null);
   const [error, setError] = useState('');
+  const [failedCode, setFailedCode] = useState('');
   const [busy, setBusy] = useState(false);
   const previewPair = useCallback(
     (code: string) => {
@@ -81,7 +82,10 @@ function ScanBoot() {
         .pairPreview(code)
         .then(
           (data) => setPreview({ code, ...data }),
-          (e) => setError(errorMessage(e)),
+          (e) => {
+            setFailedCode(code);
+            setError(errorMessage(e));
+          },
         )
         .finally(() => setBusy(false));
     },
@@ -204,6 +208,7 @@ function ScanBoot() {
   ) : (
     <PairView
       onPair={previewPair}
+      initialCode={failedCode}
       error={error}
       busy={busy}
       onAdmin={canManage ? () => setAdminStart(true) : undefined}

@@ -10,7 +10,7 @@ How to build PassBook's scanner. Written for engineers who have only this file a
 >   those two streams (§3 rule). CC's machine gains the card layer; `NEXT_SCAN_AFTER_VERDICT` is 350.
 > - **Ownership fixed** so no two streams share a file (§3); new frozen contracts C15-C19 (§4.1).
 > - **Migrations:** `0014` gains `scan_events.note` and the `scans_pass_ok` index; new
->   `0018_templates_build_key.sql` (PT.7) for display-only versions. No ledger or visit tables: history is computed.
+>   `0027_templates_build_key.sql` (PT.7) for display-only versions. No ledger or visit tables: history is computed.
 > - **Milestones:** M1 ships the default and blueprint displays, the renderer and the B result card; M2 the Scan screen
 >   editor and display-only versions; M3 the real-pass preview. New e2e specs `16-scan-display` and
 >   `16-scan-designer`; the definition of done adds the fit test, display safety and the direction-isolation check.
@@ -190,7 +190,7 @@ The Test-a-reader dialog and the reader key flow work before approval, so a VTAP
 | DM §10.2: `designer/scan/ops-scan.ts`, ops named `scan-*` | `designer/scan/ops-display.ts` (+ `ops-display-items.ts`), ops named `display-*` (`display-panel-add`, …) | The Scanning section already has `designer/ops-scan.ts` and `scan-action-*` ops |
 | AD.6 (designer Scanning) and AD.8's designer NFC section in AD | Moved to TD (TD.1, TD.5) | One stream owns every designer file (`apply.ts`, `outline.tsx`, `model.ts` were shared) |
 | DM §10.7: a preview endpoint under `/templates/{id}/scan-preview` | `GET /api/v1/scan-display/preview` in `modules/scan/routes-display.ts` (DS.5, M3) | Keeps the templates module's routes untouched |
-| DM §7.2: `00NN_templates_build_key.sql` | `0018_templates_build_key.sql` (PT.7) | `0017` is reserved for n5; next free number |
+| DM §7.2: `00NN_templates_build_key.sql` | `0027_templates_build_key.sql` (PT.7) | `0018` was taken by `0018_broadcasts_mode`; built as `0027` |
 | DM §2.3: snapshots in `src/passkit/template/__snapshots__/` | `src/passkit/template/scan-display/__snapshots__/` | Inside DS's folder |
 | BF open item 1: Balance plus keypad doesn't fit a phone card | The phone keypad sits in a dock tray (SD §5.4) | Keeps the ledger visible; a screens-only decision |
 | BF open item 3, SD vs UD: **Not found** sub | **This code isn't a pass here.** | One sub for door and desk |
@@ -516,7 +516,7 @@ streams. Unlisted files belong to their usual `AGENTS.md` owner, and need a requ
 | **SV** scan server, device API | `src/worker/modules/scan/{routes,guard,rules,auth-store,staff-pin,staff-session,resolve,act,effects,undo,group,lookup,outcome,counts,assets,roster,batch,jobs,dto,repo-device,repo-scans,repo-gates,repo-lookup,repo-counts}.ts` and their tests | none |
 | **SC** scan server, console | `src/worker/modules/scan/{routes-pair,routes-scanners,routes-events,routes-staff,routes-scans,pairing,scanners,events,staff-admin,feed,live,dto-console,repo-scanners,repo-staff,repo-events,repo-target}.ts` | `modules/metrics/{repo,analytics-sql,service}.ts` (g) |
 | **DS** display | `src/passkit/template/scan-display/**` except `schema.ts` and `icons.ts` (validate, scope, condition, format, render, density, needs, presets, defaults, migrate, sample, snapshots), `src/worker/modules/scan/{display,repo-history,routes-display}.ts` and their tests | none |
-| **PT** passes, templates, NFC server | `src/worker/modules/nfc/**`, `src/passkit/template/scan.ts`, `src/shared/pass-view/validity.ts`, `migrations/0018_templates_build_key.sql` | `modules/passes/{publish,repo-write,builder,create,repo-list}.ts` (d); `src/passkit/template/manifest.ts` (a2); `templates/starter-*` (a2); `modules/templates/package/{manifest,manifest-rules}.ts`, `modules/templates/{persist,repo-stale,versions}.ts`, `src/shared/contracts/templates.ts` (c); `src/shared/pass-view/normalize.ts`, `src/web/pass-card/*` (b); `src/web/admin/passes/pass-preview.tsx` (i); `modules/identities/*` for the `identity.nfc_change` audit (n2) |
+| **PT** passes, templates, NFC server | `src/worker/modules/nfc/**`, `src/passkit/template/scan.ts`, `src/shared/pass-view/validity.ts`, `migrations/0027_templates_build_key.sql` | `modules/passes/{publish,repo-write,builder,create,repo-list}.ts` (d); `src/passkit/template/manifest.ts` (a2); `templates/starter-*` (a2); `modules/templates/package/{manifest,manifest-rules}.ts`, `modules/templates/{persist,repo-stale,versions}.ts`, `src/shared/contracts/templates.ts` (c); `src/shared/pass-view/normalize.ts`, `src/web/pass-card/*` (b); `src/web/admin/passes/pass-preview.tsx` (i); `modules/identities/*` for the `identity.nfc_change` audit (n2) |
 | **CC** scan client core | `src/web/scan/{main.tsx,machine,input,camera,platform,api,offline,dev}/**` (except the P0 files), `src/web/scan/boot/{use-scan-session,pair-link}.ts` | `vite.config.ts` (the v3 service-worker emit only, via integration) |
 | **UI** scan screens (visual direction) | `src/web/scan/{app.tsx,ui,result,display,lookup,desk}/**`, `src/web/scan/boot/*.tsx` | `src/web/ui/code-field.tsx` (moved from `src/web/portal/code-field.tsx`; h0, j) |
 | **BU** buddy, sound, art (visual direction) | `src/web/scan/{buddy,sound}/**` | `src/web/ui/art/{buddy,buddy-art,replay,registry}.ts(x)`, entity art files and `scenes/*` (h0); `src/web/ui/art/art.test.tsx` budgets (h0); `src/web/lib/gaze.ts` (new, h0) and its callers `src/web/portal/login-{scene,email-face}.tsx` (j) |
@@ -1120,7 +1120,7 @@ under 300 lines.
 - **Done when:** M4 server exit.
 
 **PT.7 Display-only versions** (M2; needs P0.2; consumer TD.4)
-- **Files:** `migrations/0018_templates_build_key.sql` (SA §6.1a), `modules/templates/{persist,repo-stale,versions}.ts`,
+- **Files:** `migrations/0027_templates_build_key.sql` (SA §6.1a), `modules/templates/{persist,repo-stale,versions}.ts`,
   `src/shared/contracts/templates.ts` (C19); tests beside each; `test/migrations.test.ts` case.
 - **Build** (SA §4.6 "Versions", DM §2.5):
   - `build_key` = SHA-256 of `pass.json`, assets and the manifest without `scan.display`, `description` and
@@ -2197,10 +2197,10 @@ A gate passes when all of these hold:
 | No. | File | Stream | Contents |
 | --- | --- | --- | --- |
 | **0014** | `migrations/0014_scan.sql` | P0.1 | `scan_events`, `scan_event_templates`, `scan_staff`, `scanners`, `scanner_templates`, `scans`, `scan_gates`, `vas_keys`, `passes.lookup_hash` + `passes_lookup_hash`, `passes_org_title`, `passes_org_subtitle`, the `audit_log` rebuild with `scanner`, `scan_events.note` (≤ 140) and the partial index `scans_pass_ok` for display history. Verbatim from SA §6.1 |
-| **0018** | `migrations/0018_templates_build_key.sql` | PT.7 (M2) | `template_versions.build_key TEXT` and `template_versions_build (template_id, build_key)`; no backfill (the immutability trigger forbids it; `NULL` keeps today's behaviour). SA §6.1a |
+| **0027** | `migrations/0027_templates_build_key.sql` | PT.7 (M2) | `template_versions.build_key TEXT` and `template_versions_build (template_id, build_key)`; no backfill (the immutability trigger forbids it; `NULL` keeps today's behaviour). SA §6.1a |
 | **0014** (amended) | `migrations/0014_scan.sql` | P0.8 | `scanners.kind` + `display`; `device_role` with its two CHECKs; the terminal-only CSRF CHECK (P0A P0-1). Before the P0 merge |
-| **0019** | `migrations/0019_scan_stations.sql` | ST.1 (M3A) | `scan_stations`; `scanners.station_id`, `.watch`, `.screen`; `scans.station_id`; indexes `scanners_station`, `scanners_org_role`, `scans_station` (SA §18.7) |
-| **0020** | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7). **Extended** (2026-11-05 later, SA §20.13): `scan_zones.occupancy`, `.capacity`, `.max_stay_minutes`, `.clear_at` with CHECKs; `scans.out_cause`, `.override_note`; unique `scans_override_once`; `scan_gates.due_at` + partial `scan_gates_due`; table `scan_place_revs`. Touches SV's `scans` and `scan_gates` additively (reported) |
+| **0019** (not built) | `migrations/0019_scan_stations.sql` | ST.1 (M3A) | `scan_stations`; `scanners.station_id`, `.watch`, `.screen`; `scans.station_id`; indexes `scanners_station`, `scanners_org_role`, `scans_station` (SA §18.7) |
+| **0020** (not built) | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7). **Extended** (2026-11-05 later, SA §20.13): `scan_zones.occupancy`, `.capacity`, `.max_stay_minutes`, `.clear_at` with CHECKs; `scans.out_cause`, `.override_note`; unique `scans_override_once`; `scan_gates.due_at` + partial `scan_gates_due`; table `scan_place_revs`. Touches SV's `scans` and `scan_gates` additively (reported) |
 | **0014** (amended) | `migrations/0014_scan.sql` | P0.9 | `scans.actor_type` + `system`; `scans.method` + `auto` (P0A P0-9). Before the P0 merge; otherwise auto tap-outs need a `scans` rebuild |
 
 **No ledger or visit table.** The balance ledger, visits and last visit are computed from `scans` (which already holds

@@ -8,9 +8,14 @@ import { passDevice } from '../../../shared/device.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
-import { ipPrefix } from '../../platform/ip.ts';
+import { ipRatePrefix } from '../../platform/ip.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
+import {
+  ASSET_MISSES_PER_MINUTE,
+  clientIp,
+  gateMisses,
+  rateLimit,
+} from '../../platform/rate-limit.ts';
 import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
@@ -32,12 +37,15 @@ import {
 
 /** /b: bearer-link bundle page, its .pkpasses and per-pass files. No sign-in. */
 export const bundlePublicRoutes = createRouter();
+// Valid assets are limited per token and network prefix; a prefix's misses are counted and, past
+// a threshold, refused before any lookup.
+bundlePublicRoutes.use('/:token/:passId/assets/*', gateMisses(ASSET_MISSES_PER_MINUTE));
 bundlePublicRoutes.use(
   '/:token/:passId/assets/*',
   rateLimit('RL_PUBLIC_ASSET', (c) => {
-    const ip = clientIp(c);
+    const prefix = ipRatePrefix(clientIp(c)) ?? 'unknown';
     const token = c.req.param('token') ?? '';
-    return isTokenShape(token) ? `${token}:${ipPrefix(ip) ?? ip}` : `ip:${ip}`;
+    return isTokenShape(token) ? `${token}:${prefix}` : `prefix:${prefix}`;
   }),
 );
 bundlePublicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
@@ -178,7 +186,7 @@ register(
       throw error;
     }
     return response.body
-      ? new Response(fenceBundleStream(ctx, bundle, [pass], response.body), response)
+      ? new Response(fenceBundleStream(ctx, bundle, [pass], response.body, false), response)
       : response;
   },
 );
@@ -216,6 +224,6 @@ register(
       await asset.body.cancel();
       return new Response(null, { status: 304, headers });
     }
-    return new Response(fenceBundleStream(ctx, bundle, [pass], asset.body), { headers });
+    return new Response(fenceBundleStream(ctx, bundle, [pass], asset.body, false), { headers });
   },
 );

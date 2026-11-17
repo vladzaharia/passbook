@@ -38,10 +38,7 @@ export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: Acc
   }, [verified, onVerifiedShown]);
   return (
     <div className="max-w-5xl">
-      <PageHeader
-        title="Account"
-        className="rounded-2xl border border-border bg-surface-raised p-5 sm:p-6"
-      />
+      <PageHeader title="Account" />
       <div className="grid items-start gap-6 lg:grid-cols-2">
         {authed ? (
           <Card>

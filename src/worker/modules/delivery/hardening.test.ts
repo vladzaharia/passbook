@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { renderPassEmail } from '../../email/pass.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { purgeLogs } from '../apple/repo.ts';
+import { purgeLogs } from '../apple/repo-logs.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { createMtlsApnsTransport } from './apns.ts';

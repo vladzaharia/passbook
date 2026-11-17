@@ -1,17 +1,17 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { makePng } from '../src/worker/modules/templates/package/fixtures.ts';
 import { apiAs } from './helpers/api.ts';
+import { pairScanner } from './helpers/pair.ts';
 import { readSeed } from './helpers/seed.ts';
 
 const encode = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64');
 
 async function pair(page: Page, code: string, sha: string) {
-  await page.goto(`/scan#pair=${code}`);
   const logoResponse = page.waitForResponse(
     (response) =>
       response.url().includes('/api/v1/scan/branding/logo') && response.status() === 200,
   );
-  await page.getByRole('button', { name: 'Pair', exact: true }).click();
+  await pairScanner(page, code);
   await expect(page.locator('.scan-capsule-logo, .scan-live-logo')).toBeVisible();
   const image = await logoResponse;
   expect(image.headers()['content-type']).toBe('image/png');

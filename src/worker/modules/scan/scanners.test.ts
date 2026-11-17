@@ -7,7 +7,9 @@ import {
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { createScannerStore } from './auth-store.ts';
+import { hashPairCode } from './pairing.ts';
 import {
   admin,
   CODE,
@@ -46,6 +48,8 @@ describe('create and list', () => {
     );
     expect(row?.token_hash).toBeNull();
     expect(row?.pair_code_hash).not.toContain(body.pairing?.code);
+    expect(row?.pair_code_hash).toBe(await hashPairCode(env, body.pairing?.code ?? ''));
+    expect(row?.pair_code_hash).not.toBe(await sha256Hex(body.pairing?.code ?? ''));
   });
 
   it('a terminal gets no pairing; its token is shown once and replaced by the next', async () => {

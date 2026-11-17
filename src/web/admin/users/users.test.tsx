@@ -85,7 +85,7 @@ describe('users list', () => {
       '/admin/users/u2',
     );
     const passes = screen.getByRole('link', {
-      name: 'Search primary email ada@example.com in the selected mode',
+      name: 'Find passes for ada@example.com',
     });
     expect(passes.getAttribute('href')).toBe('/admin/passes?q=ada%40example.com');
     expect(screen.getByText('3', { selector: 'span.tabular-nums' }).closest('a')).toBeNull();
@@ -200,9 +200,10 @@ describe('user detail', () => {
     expect(screen.getByText('wallet-users')).toBeInTheDocument();
     expect(screen.getByText('Safari on iOS')).toBeInTheDocument();
     expect(screen.queryByText(/Mozilla/)).toBeNull();
-    expect(
-      screen.getByRole('link', { name: 'Search primary email in selected mode' }),
-    ).toHaveAttribute('href', '/admin/passes?q=ada%40example.com');
+    expect(screen.getByRole('link', { name: 'Find passes' })).toHaveAttribute(
+      'href',
+      '/admin/passes?q=ada%40example.com',
+    );
     expect(
       within(screen.getByRole('main')).getByRole('link', { name: 'Audit log' }),
     ).toBeInTheDocument();

@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { type CSSProperties, type ReactNode, useId } from 'react';
 import { cn } from '../../lib/cn.ts';
+import { ENTITY } from '../../lib/entities.ts';
 import { useMediaQuery } from '../../lib/media.ts';
 import { useArrival } from '../../lib/motion.ts';
 import {
@@ -229,8 +230,10 @@ export function TemplateStep({
                     ) : (
                       <span
                         aria-hidden
-                        className="block aspect-[320/420] w-10 shrink-0 rounded-sm border border-border bg-surface-sunken"
-                      />
+                        className="flex aspect-[320/420] w-10 shrink-0 items-center justify-center rounded-sm border border-border bg-surface-sunken text-fg-subtle"
+                      >
+                        <ENTITY.template.icon className="size-4" />
+                      </span>
                     )
                   }
                   label={name}

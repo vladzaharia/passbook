@@ -264,7 +264,6 @@ export function MyPassesPage() {
     <>
       <PageHeader
         title="My passes"
-        className="rounded-2xl border border-border bg-surface-raised p-5 sm:p-6"
         actions={
           <Button asChild variant="outline">
             <Link to="/account">Manage account</Link>
