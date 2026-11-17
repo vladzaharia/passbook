@@ -3,7 +3,6 @@ import { first, run } from '../../platform/db.ts';
 import { createAuthStores } from '../../stores.ts';
 import { signInMagicLink } from '../auth/service.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import type { Kit } from '../passes/pass-test-fixtures.ts';
 import { setDownloadToken } from '../passes/repo.ts';
@@ -79,7 +78,6 @@ describe('verified attach of a pass whose credential cannot change', () => {
       source,
       user.id,
       kit.clock.now(),
-      await ensureCredentialRefKeyset(kit.env.DB, kit.env),
       undefined,
       {
         ctx: jobCtxOf(kit),
