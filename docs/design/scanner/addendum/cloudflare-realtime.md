@@ -1,5 +1,7 @@
 # Cloudflare realtime for scanner stations
 
+> **Status:** research record. The hub is built as `ScanHub` (`modules/scan/scan-hub.ts`, `routes-live.ts`). Where this file says `requireAdmin` for desk monitors, the code checks `scanning:read` on the session's org membership.
+
 > **Folded 2026-11-05** into SA §18.5 and `stations.md` §4, which win on audiences (no `manager`, no admin sockets,
 > no tickets), close codes (4409 for reconfigure) and the customer buffer (30 s, replay < 10 s).
 

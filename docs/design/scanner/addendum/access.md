@@ -1,5 +1,7 @@
 # Access card: blueprint, zones and access types
 
+> **Status: not built.** No `scan_zones`, `scanner_zones`, access plans or `orgs.zones_rev`, and no migration `0020`. Design only. Where this file says `requireAdmin`, read `scanning:manage` on the session's org membership.
+
 > **Superseded in part 2026-11-05, later** (occupancy, SA §20 wins): X7 and §1.2's "Why not anti-passback" no longer
 > hold. The owner asked for "next entry only allowed after a tap out is recorded", so zones offer **Track who's
 > inside** and **Require tap out**, both off by default (SA D38). X7's reason still stands for a one-phone desk, which
