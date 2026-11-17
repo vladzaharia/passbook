@@ -11,10 +11,10 @@ import { tenantAuthorityOf } from '../passes/http.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
-import { parseGrant } from './asset-grant-mint.ts';
+import { assetGrantValid, grantRefsOf, mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { takePhotoGrantToken } from './asset-sidecar.ts';
 import { assetActorFor, genericAssetGrantFor, photoAssetGrantFor } from './asset-test-fixtures.ts';
-import { assetGrantValid, mintAssetGrant, preparePhotoGrant } from './assets.ts';
+import { prepareAssetGrantVerification, preparePhotoGrant } from './assets.ts';
 import { scanCredentialKeys } from './credential-input.ts';
 import { candidateById } from './repo-lookup.ts';
 import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
@@ -108,11 +108,11 @@ describe('stateless asset capability', () => {
     const f = await photoFixture();
     expect(f.keys.credentialTombstoneRefs.length).toBeGreaterThan(0);
     const scanned = await mintPhoto(f);
-    expect(parseGrant(scanned)?.refs).toEqual(
+    expect(await grantRefsOf(kit.ctx, scanned)).toEqual(
       f.keys.credentialTombstoneRefs.map((ref) => ref.slice(0, 16)),
     );
     const byId = await photoAssetGrantFor(kit, f.device, f.pass.id);
-    expect(parseGrant(byId)?.refs).toEqual([]);
+    expect(await grantRefsOf(kit.ctx, byId)).toEqual([]);
     for (const grant of [scanned, byId]) expect((await f.url(grant)).status).toBe(200);
   });
 
@@ -127,6 +127,37 @@ describe('stateless asset capability', () => {
     await missing(await f.url(toBase64Url(bytes.subarray(0, bytes.length - 8))));
     await missing(await f.url(`${grant}A`));
     await missing(await f.url(grant.slice(1)));
+  });
+
+  it('masks the carried ref prefixes: two grants for one credential share no bytes, and both redeem', async () => {
+    const f = await photoFixture();
+    const [one, two] = [await mintPhoto(f), await mintPhoto(f)];
+    const carried = (grant: string) => fromBase64Url(grant).subarray(38);
+    expect(carried(one).length).toBeGreaterThan(0);
+    expect(carried(one)).not.toEqual(carried(two));
+    const plain = f.keys.credentialTombstoneRefs.map((ref) => ref.slice(0, 16));
+    expect(await grantRefsOf(kit.ctx, one)).toEqual(plain);
+    expect(await grantRefsOf(kit.ctx, two)).toEqual(plain);
+    for (const grant of [one, two]) expect((await f.url(grant)).status).toBe(200);
+  });
+
+  it('refuses a grant whose expiry is further out than a grant is ever minted for', async () => {
+    const f = await photoFixture();
+    const grant = await mintPhoto(f);
+    const verify = (skew: number) =>
+      prepareAssetGrantVerification(
+        { ...kit.ctx, clock: { now: () => kit.clock.now() - skew } },
+        f.actor,
+        f.candidate,
+        f.candidate.connectionGeneration,
+        grant,
+        undefined,
+        'commit',
+        true,
+      );
+    // Within an hour and a minute of its expiry it verifies; further out it never does.
+    expect(await verify(30_000)).not.toBeNull();
+    expect(await verify(61_000)).toBeNull();
   });
 
   it('refuses a later expiry that was not minted', async () => {

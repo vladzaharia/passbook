@@ -24,7 +24,9 @@ import {
 } from './repo-credential-tombstones.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
-const HOUR = 3_600_000;
+/** Every grant lives one hour; redemption refuses anything minted for longer than this plus clock skew. */
+export const GRANT_TTL_MS = 3_600_000;
+export const GRANT_SKEW_MS = 60_000;
 export const NONCE_BYTES = 8;
 export const EXPIRY_BYTES = 6;
 export const TAG_BYTES = 24;
@@ -83,7 +85,8 @@ export function parseGrant(grant: string | undefined): {
   nonce: Uint8Array;
   expiresAt: number;
   tag: Uint8Array;
-  refs: string[];
+  /** The ref prefixes as carried: masked by the nonce (`grantRefs` opens them). */
+  maskedRefs: Uint8Array;
 } | null {
   const head = NONCE_BYTES + EXPIRY_BYTES + TAG_BYTES;
   if (!grant || grant.length > 120 || !/^[A-Za-z0-9_-]+$/.test(grant)) return null;
@@ -101,13 +104,40 @@ export function parseGrant(grant: string | undefined): {
       nonce: bytes.subarray(0, NONCE_BYTES),
       expiresAt: decodeExpiry(bytes.subarray(NONCE_BYTES, NONCE_BYTES + EXPIRY_BYTES)),
       tag: bytes.subarray(NONCE_BYTES + EXPIRY_BYTES, head),
-      refs: Array.from({ length: refBytes / REF_BYTES }, (_, index) =>
-        toHex(bytes.subarray(head + index * REF_BYTES, head + (index + 1) * REF_BYTES)),
-      ),
+      maskedRefs: bytes.slice(head),
     };
   } catch {
     return null;
   }
+}
+
+/**
+ * The carried ref prefixes are masked with bytes only the server can derive from the nonce, so two
+ * grants minted from the same credential share no bytes in their URLs.
+ */
+async function refMask(
+  ctx: ServiceContext,
+  nonce: Uint8Array,
+  length: number,
+): Promise<Uint8Array> {
+  const key = await derivedHmacKey(ctx.env, 'scan-asset-grant-v2');
+  const data = new TextEncoder().encode(
+    JSON.stringify(['scan-asset-ref-mask-v2', toBase64Url(nonce)]),
+  );
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, data)).subarray(0, length);
+}
+
+const xor = (a: Uint8Array, b: Uint8Array) => a.map((byte, index) => byte ^ (b[index] ?? 0));
+
+/** The ref prefixes (hex) a parsed grant carries. */
+export async function grantRefs(
+  ctx: ServiceContext,
+  parsed: { nonce: Uint8Array; maskedRefs: Uint8Array },
+): Promise<string[]> {
+  const plain = xor(parsed.maskedRefs, await refMask(ctx, parsed.nonce, parsed.maskedRefs.length));
+  return Array.from({ length: plain.length / REF_BYTES }, (_, index) =>
+    toHex(plain.subarray(index * REF_BYTES, (index + 1) * REF_BYTES)),
+  );
 }
 
 function decodeExpiry(bytes: Uint8Array): number {
@@ -158,7 +188,7 @@ export async function prepareAssetGrant(
       : verifyLiveTemplateSnapshot(ctx, snapshot, snapshot.templateSnapshot, 'commit'),
   ]);
   if (!data || !templates) return null;
-  const expiresAt = ctx.clock.now() + HOUR;
+  const expiresAt = ctx.clock.now() + GRANT_TTL_MS;
   if (!Number.isSafeInteger(expiresAt) || expiresAt > MAX_EXPIRY) return null;
   const nonce = randomBytes(NONCE_BYTES);
   const tag = await mac(ctx, data.fields, expiresAt, refs, nonce, purpose, requirePhoto);
@@ -166,8 +196,11 @@ export async function prepareAssetGrant(
   bytes.set(nonce);
   bytes.set(encodeExpiry(expiresAt), NONCE_BYTES);
   bytes.set(tag.subarray(0, TAG_BYTES), NONCE_BYTES + EXPIRY_BYTES);
-  for (const [index, ref] of refs.entries())
-    bytes.set(hexBytes(ref), NONCE_BYTES + EXPIRY_BYTES + TAG_BYTES + index * REF_BYTES);
+  const plain = Uint8Array.from(refs.flatMap((ref) => [...hexBytes(ref)]));
+  bytes.set(
+    xor(plain, await refMask(ctx, nonce, plain.length)),
+    NONCE_BYTES + EXPIRY_BYTES + TAG_BYTES,
+  );
   const plan: PreparedAssetGrant = Object.freeze({
     orgId: capturedActor.orgId,
     mode: capturedActor.mode,

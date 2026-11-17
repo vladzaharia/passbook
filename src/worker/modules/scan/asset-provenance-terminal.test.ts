@@ -5,8 +5,8 @@ import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
+import { assetGrantValid, mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { assetActorFor, observeCancellation } from './asset-test-fixtures.ts';
-import { assetGrantValid, mintAssetGrant } from './assets.ts';
 import { candidateById } from './repo-lookup.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 

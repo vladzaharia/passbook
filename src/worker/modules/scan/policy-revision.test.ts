@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
-import { mintAssetGrant } from './assets.ts';
+import { mintAssetGrant } from './asset-grant-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import {
   actionPassFence,

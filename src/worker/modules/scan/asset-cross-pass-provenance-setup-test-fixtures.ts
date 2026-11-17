@@ -14,7 +14,7 @@ import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
 import { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
-import { parseGrant } from './asset-grant-mint.ts';
+import { grantRefsOf } from './asset-grant-test-fixtures.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
 import { createScannerStore } from './auth-store.ts';
 import { scanCredentialKeys } from './credential-input.ts';
@@ -178,7 +178,7 @@ export async function crossPassFixture() {
         /credentialTombstoneRefs|credentialKeysetCommitment|credentialRefsJson|assetPhoto/,
       );
       // Only the leading bytes of each keyed ref travel in the capability, and the tag covers them.
-      expect(parseGrant(token)?.refs).toEqual(
+      expect(await grantRefsOf(t.kit.ctx, token)).toEqual(
         keys.credentialTombstoneRefs.map((ref) => ref.slice(0, 16)),
       );
       return { snapshot: result.evaluatedSnapshot, photoUrl, token };
