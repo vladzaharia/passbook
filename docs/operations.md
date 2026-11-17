@@ -467,6 +467,41 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
      'auth_tokens', (SELECT count(auth_token) FROM passes)) AS counts
    ```
 
+9. **Owner**: sign-in accounts that never proved their address. Before this build a Pocket ID sign-in
+   (`oidc.trustEmail` off) gave the account the provider's email as its primary email and no
+   `user_emails` row. The new Worker treats such an account as unproven: the first magic link for
+   that address makes a separate account for the person, and the old account keeps its sign-in,
+   roles and memberships but loses the address (and a disabled one stays refused). Each row below
+   is a person you must classify before the cutover. Read-only; expect rows (record them):
+
+   ```sql verify-unproven-primaries
+   SELECT u.id, u.status, u.primary_email, max(a.email_verified) AS idp_verified,
+     (SELECT count(*) FROM passes p WHERE p.holder_email = u.primary_email AND p.deleted_at IS NULL) AS passes
+   FROM users u JOIN auth_identities a ON a.user_id = u.id AND a.provider != 'breakglass'
+   WHERE NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.user_id = u.id AND e.email = u.primary_email)
+   GROUP BY u.id ORDER BY u.id
+   ```
+
+   For a row you recognize as the person who owns that address, backfill it: replace the
+   placeholder list with exactly the ids you confirmed (one quoted id each) and run this write once.
+   The address then counts as verified (`verified_via = 'admin'`) and waiting passes for it attach.
+   Leave every other row alone: that person proves the address by mail, or signs in as the same
+   account and verifies it in My account first:
+
+   ```sql backfill-proven-primaries
+   INSERT OR IGNORE INTO user_emails (email, user_id, verified_via, verified_at)
+   SELECT u.primary_email, u.id, 'admin', unixepoch() * 1000 FROM users u
+   WHERE u.id IN ('REPLACE-WITH-USER-ID', 'REPLACE-WITH-ANOTHER-USER-ID')
+   ```
+
+   Addresses an admin added by hand already count as verified, and their passes are attached. Review
+   them once for any that are not the account's own:
+
+   ```sql verify-admin-emails
+   SELECT e.email, e.user_id, datetime(e.verified_at / 1000, 'unixepoch') AS verified_utc
+   FROM user_emails e WHERE e.verified_via = 'admin' ORDER BY e.verified_at
+   ```
+
 ### Temporary WAF rule
 
 **Owner**, Cloudflare console, passbook.mobile zone, Security, WAF, Custom rules. Name `cutover`,
