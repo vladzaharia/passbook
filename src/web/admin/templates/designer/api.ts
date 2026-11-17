@@ -14,7 +14,7 @@ import { assetsPayload } from './images.ts';
 import type { DesignDoc, DraftAsset } from './model.ts';
 import { signature } from './reducer.ts';
 
-type VersionOptions = Pick<SaveVersionRequest, 'dryRun'>;
+type VersionOptions = Partial<Pick<SaveVersionRequest, 'dryRun'>>;
 
 const body = (doc: DesignDoc, extra: VersionOptions) => ({
   passJson: doc.passJson,
@@ -39,20 +39,35 @@ export function useBaseVersion(templateId: string, version: string | null) {
   });
 }
 
-/** Live check: the report, the built pass and the file list, once typing pauses. */
-export function useDesignCheck(templateId: string, doc: DesignDoc, enabled = true) {
+/**
+ * Live check: the report, the built pass and the file list, once typing pauses. `asNew` checks a
+ * draft of a blueprint as the named template of that organization.
+ */
+export function useDesignCheck(
+  templateId: string,
+  doc: DesignDoc,
+  enabled = true,
+  asNew?: { orgId: string; name: string },
+) {
   const { orgId } = useOrgScope();
   const settled = useDebounced(doc, 450);
   const sig = useMemo(() => signature(settled), [settled]);
   const query = useQuery({
-    queryKey: ['admin', 'templates', 'design-check', templateId, orgId, sig],
+    queryKey: ['admin', 'templates', 'design-check', templateId, orgId, asNew ?? null, sig],
     queryFn: ({ signal }) =>
-      api.post(
-        `/api/v1/templates/${templateId}/versions`,
-        SaveVersionResponseSchema,
-        body(settled, { dryRun: true }),
-        { signal, query: { orgId } },
-      ),
+      asNew
+        ? api.post(
+            `/api/v1/templates/${templateId}/use/check`,
+            SaveVersionResponseSchema,
+            { ...asNew, version: body(settled, {}) },
+            { signal },
+          )
+        : api.post(
+            `/api/v1/templates/${templateId}/versions`,
+            SaveVersionResponseSchema,
+            body(settled, { dryRun: true }),
+            { signal, query: { orgId } },
+          ),
     enabled: enabled && Boolean(orgId),
     placeholderData: keepPreviousData,
     staleTime: 60_000,

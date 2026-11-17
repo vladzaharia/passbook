@@ -6,6 +6,7 @@ import { useArrivalMode } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { Badge, EntityAvatar, Skeleton } from '../../ui/index.ts';
 import { PassPreview } from '../passes/pass-preview.tsx';
+import { displayName } from '../passes/template-groups.ts';
 import { useTemplatePreview } from './api.ts';
 
 export const originLabel = (origin: string) => (origin === 'baked' ? 'Built-in' : 'Uploaded');
@@ -47,18 +48,18 @@ export function TemplateStill({
   );
 }
 
-const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4';
-const CARD =
+export const GALLERY_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4';
+export const GALLERY_CARD =
   'relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-surface-raised shadow-elevation-1';
 
 /** The gallery's card shell and grid, so the page does not jump when the cards arrive. */
 export function TemplateGallerySkeleton({ cards = 8 }: { cards?: number }) {
   return (
-    <div role="status" aria-busy className={GRID}>
+    <div role="status" aria-busy className={GALLERY_GRID}>
       <span className="sr-only">Loading templates</span>
       {Array.from({ length: cards }, (_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
-        <div key={i} className={CARD}>
+        <div key={i} className={GALLERY_CARD}>
           <div className="flex justify-center bg-surface-sunken px-8 pt-6 pb-0">
             <Skeleton className="h-48 w-full max-w-44 rounded-b-none rounded-t-xl" />
           </div>
@@ -91,13 +92,13 @@ export function TemplateGallery({
   const arrival = useArrivalMode(loading && items.length === 0);
   if (loading && items.length === 0) return <TemplateGallerySkeleton />;
   return (
-    <ul aria-label="Templates" className={cn('wl-dim', GRID)}>
+    <ul aria-label="Templates" className={cn('wl-dim', GALLERY_GRID)}>
       {items.map((t, i) => (
         <li
           key={t.id}
           style={{ '--i': i } as CSSProperties}
           className={cn(
-            CARD,
+            GALLERY_CARD,
             'wl-colors hover:border-border-strong has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus',
           )}
         >
@@ -126,14 +127,16 @@ export function TemplateGallery({
                 search={{ orgId }}
                 className="block truncate text-sm font-medium text-fg-strong after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
               >
-                {t.name}
+                {displayName(t)}
               </Link>
               <p className="truncate text-xs text-fg-muted">
-                {t.orgName ?? 'All organizations'} · {t.passCount}{' '}
-                {t.passCount === 1 ? 'pass' : 'passes'}
+                {t.passCount} {t.passCount === 1 ? 'pass' : 'passes'}
               </p>
             </div>
-            <Badge>{t.status === 'archived' ? 'Archived' : originLabel(t.origin)}</Badge>
+            {/* Built-in names a template that ships with PassBook; an uploaded one needs no badge. */}
+            {t.status === 'archived' || t.origin === 'baked' ? (
+              <Badge>{t.status === 'archived' ? 'Archived' : originLabel(t.origin)}</Badge>
+            ) : null}
           </div>
         </li>
       ))}
