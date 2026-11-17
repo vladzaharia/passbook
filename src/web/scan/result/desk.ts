@@ -10,6 +10,7 @@ export function deskOf(
   return {
     picker: loop.s === 'member' ? loop.picker : null,
     onAmount: (value: number) => dispatch({ type: 'amount', value }),
+    onValue: (value: unknown) => dispatch({ type: 'value', value }),
     onConfirm: () => dispatch({ type: 'confirm' }),
     onCancel: () => dispatch({ type: 'cancel' }),
     managers: (staffList ?? []).filter((m) => m.role === 'manager'),

@@ -7,7 +7,7 @@ import type { Env, MachineState } from './internal.ts';
 import { same } from './internal.ts';
 import { pick } from './reduce-action.ts';
 import { answer, fail } from './reduce-answer.ts';
-import { amount, approve, cancel, confirm } from './reduce-desk.ts';
+import { amount, approve, cancel, confirm, value } from './reduce-desk.ts';
 import {
   arm,
   disarm,
@@ -64,6 +64,8 @@ export function reduce(state: ScanState, event: ScanEvent, deps: ScanMachineDeps
       return pick(s, event, env);
     case 'amount':
       return amount(s, event, env);
+    case 'value':
+      return value(s, event, env);
     case 'confirm':
       return confirm(s, env);
     case 'cancel':

@@ -182,6 +182,20 @@ export const ScanValueSchema = z.object({
   format: z.enum(['number', 'currency', 'text']),
   currency: z.string().optional(),
 });
+/** What a `set` may be set to: the input's own schema, so the desk can offer typed entry. The server still validates. */
+export const ScanActionInputSchema = z.object({
+  type: z.enum(['string', 'number', 'integer', 'boolean']),
+  label: z.string(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  step: z.number().optional(),
+  maxLength: z.number().int().optional(),
+  enum: z
+    .array(z.union([z.string(), z.number()]))
+    .max(50)
+    .optional(),
+});
+export type ScanActionInput = z.infer<typeof ScanActionInputSchema>;
 export const ScanCardActionSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -205,6 +219,8 @@ export const ScanCardActionSchema = z.object({
   cooldownRemainingMs: z.number().int().nullable(),
   armable: z.enum(['sticky', 'once']).nullable(),
   rewardLabel: z.string().nullable(),
+  /** A `set` with no fixed value: what it accepts. */
+  input: ScanActionInputSchema.optional(),
 });
 export const ScanTemplateRefSchema = z.object({ name: z.string(), style: z.string() });
 export const ScanCardSchema = z.object({

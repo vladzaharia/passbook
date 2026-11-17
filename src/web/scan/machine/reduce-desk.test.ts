@@ -102,6 +102,32 @@ describe('the desk picks a value action', () => {
     expect(requestKey(approved.cmds)).not.toBe(key);
   });
 
+  it('opens a typed set at the value the card holds, and sends it with the card version', () => {
+    const set = ready({
+      id: 'tier',
+      kind: 'set',
+      amount: null,
+      input: { type: 'string', label: 'Tier', enum: ['Silver', 'Gold'] },
+    });
+    const open = step(set, { type: 'pick', actionId: 'tier' }, at(200));
+    expect(open.cmds).toEqual([]);
+    expect(open.state.loop).toMatchObject({ picker: { actionId: 'tier', value: 5 } });
+    const typed = step(open.state, { type: 'value', value: 'Gold' }, at(210));
+    const sent = step(typed.state, { type: 'confirm' }, at(220));
+    expect(sent.cmds).toContainEqual(
+      expect.objectContaining({
+        c: 'act',
+        draft: expect.objectContaining({ actionId: 'tier', value: 'Gold', expectedVersion: 1 }),
+      }),
+    );
+  });
+
+  it('sends a set with a fixed value at once', () => {
+    const fixed = ready({ id: 'gold', kind: 'set', amount: null });
+    const sent = step(fixed, { type: 'pick', actionId: 'gold' }, at(200));
+    expect(sent.state.loop).toMatchObject({ s: 'applying', draft: { actionId: 'gold' } });
+  });
+
   it('ignores a PIN when the verdict is not needs_approval', () => {
     const state = step(
       step(ready({ amount: { fixed: 1 } }), { type: 'pick', actionId: 'stamp' }, at(200)).state,

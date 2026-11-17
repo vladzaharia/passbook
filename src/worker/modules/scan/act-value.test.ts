@@ -187,6 +187,28 @@ describe('value actions: set and use_up', () => {
     expect(((await bad.json()) as { code: string }).code).toBe('SCAN_VALUE_INVALID');
   });
 
+  it('offers the ready card the input a set accepts, unless the action fixes the value', async () => {
+    const t = await kit.scanTemplate('Set input', {
+      actions: [
+        { id: 'free', label: 'Set seats', kind: 'set', input: 'balance', minRole: 'desk' },
+        { id: 'fixed', label: 'Gold', kind: 'set', input: 'tier', value: 'Gold', minRole: 'desk' },
+      ],
+    });
+    const s = await kit.scanner({
+      templateIds: [t],
+      settings: { flow: 'choose', roleWithoutSignIn: 'desk' },
+    });
+    const pass = await kit.scanPass(t, { balance: 2 });
+    const o = await out(await act(s.headers, codeOf(pass), { actionId: 'auto' }));
+    const actions = o.card?.actions ?? [];
+    expect(actions.find((a) => a.id === 'free')?.input).toEqual({
+      type: 'integer',
+      label: 'balance',
+      min: 0,
+    });
+    expect(actions.find((a) => a.id === 'fixed')?.input).toBeUndefined();
+  });
+
   it('a set with a stale card version is a stale heads-up carrying the value now', async () => {
     const t = await kit.scanTemplate('Tier stale', { actions: [SET] });
     const s = await desk([t]);

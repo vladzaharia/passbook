@@ -1,4 +1,4 @@
-import type { ScanCard } from '../../../shared/contracts/scan.ts';
+import type { ScanActionInput, ScanCard } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import { armable, type ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -10,6 +10,7 @@ import { assetBaseUrl, prepareGenericAssetGrant } from './assets.ts';
 import { passViewJson } from './card-pass-view.ts';
 import { visibleIdentity, visibleSource } from './card-semantics.ts';
 import { type CardPrivacy, cardPrivacy } from './dto-projection.ts';
+import { schemaOf } from './effects-value.ts';
 import { gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
 import { activeFlags, type Found } from './resolve.ts';
@@ -70,6 +71,44 @@ function cardAction(
     cooldownRemainingMs: remaining,
     armable: armable(action),
     rewardLabel: action.rewardLabel ?? null,
+  };
+}
+
+/** What a `set` without a fixed value accepts, from its input's schema; null when any part of it is not safe to show. */
+function setInput(
+  found: Found,
+  action: ResolvedScanAction,
+  privacy: CardPrivacy,
+): ScanActionInput | null {
+  const schema = action.input ? schemaOf(found.template.manifest, action.input) : null;
+  const type = schema?.type;
+  if (
+    !schema ||
+    (type !== 'string' && type !== 'number' && type !== 'integer' && type !== 'boolean')
+  )
+    return null;
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  const choices = Array.isArray(schema.enum)
+    ? schema.enum.filter(
+        (v): v is string | number => typeof v === 'string' || typeof v === 'number',
+      )
+    : undefined;
+  const label = String(schema['x-label'] ?? schema.title ?? action.input);
+  if (!privacy.safe(label) || choices?.some((v) => !privacy.safe(v))) return null;
+  const [min, max, step, maxLength] = [
+    num(schema.minimum),
+    num(schema.maximum),
+    num(schema.multipleOf),
+    num(schema.maxLength),
+  ];
+  return {
+    type,
+    label,
+    ...(min !== undefined ? { min } : {}),
+    ...(max !== undefined ? { max } : {}),
+    ...(step !== undefined ? { step } : {}),
+    ...(maxLength !== undefined ? { maxLength: Math.floor(maxLength) } : {}),
+    ...(choices?.length ? { enum: choices.slice(0, 50) } : {}),
   };
 }
 
@@ -254,6 +293,12 @@ export async function buildCard(
       .slice(0, 6)
       .map((a) => ({
         ...cardAction(actor, a, reads.gates, now),
+        ...(a.kind === 'set' && a.value === undefined
+          ? (() => {
+              const input = setInput(found, a, privacy);
+              return input ? { input } : {};
+            })()
+          : {}),
         ...(a.kind === 'check_in' && found.admission?.state.direction === 'out'
           ? { label: 'Check out' }
           : {}),

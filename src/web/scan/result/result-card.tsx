@@ -34,6 +34,7 @@ export function ResultCard({
   desk?: {
     picker: Draft | null;
     onAmount: (value: number) => void;
+    onValue: (value: unknown) => void;
     onConfirm: () => void;
     onCancel: () => void;
     managers: { id: string; name: string }[];
@@ -199,6 +200,7 @@ export function ResultCard({
               card={o.card}
               draft={desk.picker}
               onAmount={desk.onAmount}
+              onValue={desk.onValue}
               onConfirm={desk.onConfirm}
               onCancel={desk.onCancel}
             />

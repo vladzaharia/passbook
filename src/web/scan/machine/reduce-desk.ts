@@ -17,6 +17,16 @@ export function amount(s: MachineState, ev: Of<'amount'>, env: Env): Out {
   });
 }
 
+export function value(s: MachineState, ev: Of<'value'>, env: Env): Out {
+  const l = s.loop;
+  if (l.s !== 'member' || !l.picker) return same(s);
+  return out({
+    ...s,
+    loop: { ...l, picker: { ...l.picker, value: ev.value } },
+    lastActivity: env.now,
+  });
+}
+
 /** Confirm: the open picker's draft goes to the server. */
 export function confirm(s: MachineState, env: Env): Out {
   const l = s.loop;

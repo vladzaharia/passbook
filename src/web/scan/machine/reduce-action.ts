@@ -13,9 +13,11 @@ export function startAmount(action: Action): number | null {
   return 'fixed' in a ? a.fixed : (a.default ?? a.presets[0] ?? 1);
 }
 
-/** An amount to choose or a consequence to confirm comes before the request. */
+/** An amount to choose, a value to type or a consequence to confirm comes before the request. */
 const needsInput = (action: Action) =>
-  action.confirm || (action.amount !== null && !('fixed' in action.amount));
+  action.confirm ||
+  (action.kind === 'set' && action.input !== undefined) ||
+  (action.amount !== null && !('fixed' in action.amount));
 
 /** Sends `draft` under a new key: the loop moves to `applying`. */
 export function apply(
@@ -63,6 +65,12 @@ export function pick(s: MachineState, ev: Extract<ScanEvent, { type: 'pick' }>, 
   if (!action || action.lock === 'role' || (!action.available && action.lock !== 'approval'))
     return same(s);
   const draft: Draft = { actionId: action.id, amount: startAmount(action) };
+  if (action.kind === 'set' && action.input) {
+    // The value starts as the card holds it; the version it was read at rides along.
+    const now = l.card.values.length === 1 ? l.card.values[0]?.before : undefined;
+    draft.value = now ?? (action.input.enum ? action.input.enum[0] : '');
+    draft.expectedVersion = l.card.version;
+  }
   if (action.kind !== 'check_in' && needsInput(action) && action.lock === null)
     return out({ ...s, loop: { ...l, picker: draft }, lastActivity: env.now });
   return apply(s, l, draft, env);

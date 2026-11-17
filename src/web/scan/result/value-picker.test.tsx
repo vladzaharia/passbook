@@ -37,6 +37,7 @@ const card = (over: Partial<Card> = {}) =>
 const desk = (over = {}) => ({
   picker: null,
   onAmount: vi.fn(),
+  onValue: vi.fn(),
   onConfirm: vi.fn(),
   onCancel: vi.fn(),
   managers: [{ id: 'm1', name: 'Mara' }],
@@ -86,6 +87,30 @@ describe('the desk panel of the result card', () => {
     expect(d.onAmount).toHaveBeenCalledWith(3);
     fireEvent.click(screen.getByTestId('scan-picker-commit'));
     expect(d.onConfirm).toHaveBeenCalled();
+  });
+
+  it('types a value into a set, and holds the button until it fits', () => {
+    const set = {
+      ...action,
+      id: 'seats',
+      label: 'Set seats',
+      kind: 'set' as const,
+      amount: null,
+      input: { type: 'integer' as const, label: 'Seats', min: 0, max: 9 },
+    };
+    const d = desk({ picker: { actionId: 'seats', amount: null, value: 12 } });
+    render(
+      <ResultCard
+        outcome={fixtureOutcome('ready', 'choose', {
+          card: card({ actions: [set] }),
+          display: fixtureDisplay('ready'),
+        })}
+        desk={d}
+      />,
+    );
+    expect(screen.getByTestId('scan-picker-commit')).toBeDisabled();
+    fireEvent.change(screen.getByTestId('scan-value-input'), { target: { value: '4' } });
+    expect(d.onValue).toHaveBeenCalledWith(4);
   });
 
   it('will not take more than the card holds', () => {

@@ -27,6 +27,8 @@ export interface Draft {
   actionId: string;
   amount: number | null;
   value?: unknown;
+  /** A `set`: the card's version the staff read, so a card that moved answers `stale`. */
+  expectedVersion?: number;
   override?: boolean;
   overrideOf?: string;
   confirmed?: boolean;
@@ -174,6 +176,8 @@ export type ScanEvent =
   | { type: 'offline'; key: string; outcome: ScanOutcome }
   | { type: 'pick'; actionId: string }
   | { type: 'amount'; value: number | null }
+  /** A `set`'s typed value. */
+  | { type: 'value'; value: unknown }
   | { type: 'review' }
   | { type: 'confirm' }
   | { type: 'cancel' }
