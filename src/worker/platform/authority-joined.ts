@@ -87,7 +87,10 @@ export interface InsertJoinedOptions extends Omit<InsertOptions, 'from'> {
   /** One value per declared edge, keyed by the child column. The parent row must be in the tenant. */
   parents: Record<string, string>;
   columns: string[];
-  values: SqlValue[];
+  /** One row of values. Give `rows` instead to insert several rows under the same parents. */
+  values?: SqlValue[];
+  /** Several rows, one statement: every row must have a value per column. */
+  rows?: SqlValue[][];
 }
 
 /** `INSERT ... SELECT <parent keys>, ? FROM <parents> WHERE key = ? AND <parent in tenant>`. */
@@ -113,10 +116,13 @@ export function buildInsertJoined(
           'GRANT_SCOPE_OVERRIDE',
           `${table}.${e.column} must be the holder's pass.`,
         );
-  if (o.columns.length !== o.values.length)
+  if ((o.values === undefined) === (o.rows === undefined))
+    throw new AuthorityError('GRANT_BAD_PURPOSE', 'An insert takes either values or rows.');
+  const rows = o.rows ?? [o.values ?? []];
+  if (rows.length === 0 || rows.some((row) => row.length !== o.columns.length))
     throw new AuthorityError('GRANT_BAD_PURPOSE', 'An insert needs matching columns and values.');
   rejectOwned(table, scope, o.columns, 'insertJoined');
-  const params: SqlValue[] = [...o.values];
+  const params: SqlValue[] = rows.flat();
   const where = edges.map((e, i) => {
     params.push(o.parents[e.column] ?? null);
     return `p${i}.${e.key} = ? AND ${scopePredicate(grantId, scope, e.parent, `p${i}`, params, undefined, undefined, pin)}`;
@@ -127,8 +133,13 @@ export function buildInsertJoined(
       'insertJoined takes its values from the parents.',
     );
   const all = [...edges.map((e) => e.column), ...o.columns];
-  const select = [...edges.map((e, i) => `p${i}.${e.key}`), ...o.columns.map(() => '?')];
-  const from = edges.map((e, i) => `${e.parent} p${i}`).join(', ');
+  const bulk = o.rows !== undefined;
+  const select = [
+    ...edges.map((e, i) => `p${i}.${e.key}`),
+    ...o.columns.map((_, i) => (bulk ? `v.column${i + 1}` : '?')),
+  ];
+  const values = `(VALUES ${rows.map(() => `(${o.columns.map(() => '?').join(', ')})`).join(', ')}) v`;
+  const from = [...edges.map((e, i) => `${e.parent} p${i}`), ...(bulk ? [values] : [])].join(', ');
   let gate = '';
   if (o.when && o.when.length > 0) {
     params.push(grantId);

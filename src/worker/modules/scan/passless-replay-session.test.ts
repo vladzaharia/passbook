@@ -19,7 +19,7 @@ describe('a passless replay stays in the session it was made in', () => {
     };
     const first = await call('POST', '/scan/actions', request, headers);
     expect(first.status).toBe(200);
-    const miss = await first.json();
+    const miss = (await first.json()) as { scanId: string };
     expect(miss).toMatchObject({ kind: 'refused', reason: 'not_found', replay: false });
 
     // Positive control: the same device and session replays the receipt.
