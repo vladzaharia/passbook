@@ -158,8 +158,7 @@ export function stampsIssues(
   if (!tellsReady) warn('STAMPS_SILENT', 'No field tells holders a reward is ready.');
 
   // A scan take on the count redeems the reward: it takes the goal, so extra stamps carry over.
-  const scan = isRecord(manifest.scan) ? manifest.scan : {};
-  const actions = Array.isArray(scan.actions) ? scan.actions : [];
+  const actions: unknown[] = Array.isArray(manifest.scan?.actions) ? manifest.scan.actions : [];
   actions.forEach((a, i) => {
     if (
       isRecord(a) &&

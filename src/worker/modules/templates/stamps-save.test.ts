@@ -85,7 +85,7 @@ beforeAll(async () => {
     [f.ids.id(), org.id, adminId, invitationId, roles, now],
   );
   const admin = (await makeSession(f, { userId: adminId, roles: ['user'] })).headers;
-  call = (path, init = {}) =>
+  call = async (path, init = {}) =>
     app.request(
       `https://wallet.test/api/v1/templates${path}`,
       {
@@ -108,6 +108,7 @@ const latest = async () => {
   const detail = TemplateDetailSchema.parse(await (await call(`/${cloneId}`)).json());
   return version(detail.versions[0]?.version ?? '');
 };
+const manifestOf = (v: Version) => v.manifest as Record<string, unknown>;
 const strips = (v: Version) => v.assets.filter((a) => a.name.startsWith('stamps/strips/'));
 /** The designer's body: generated strips are never sent back. */
 const draft = (v: Version, manifest = v.manifest, passJson = v.passJson) => ({
@@ -147,8 +148,8 @@ describe('a Stamp card in the designer', () => {
     expect(res.report.issues.filter((i) => i.severity === 'error')).toEqual([]);
     expect(res).toMatchObject({ saved: false, created: false, version: v.version });
     expect(header(res.passJson)).toBe('7 of 10');
-    const sample = { ...(v.manifest.sample as object), stamps: 12 };
-    const ready = await save({ ...draft(v, { ...v.manifest, sample }), dryRun: true });
+    const sample = { ...(manifestOf(v).sample as object), stamps: 12 };
+    const ready = await save({ ...draft(v, { ...manifestOf(v), sample }), dryRun: true });
     expect(header(ready.passJson)).toBe('Reward ready');
   });
 
@@ -184,7 +185,7 @@ describe('a Stamp card in the designer', () => {
 
   it('points a preview at the strip for its count', async () => {
     const v = await latest();
-    const input = { ...(v.manifest.sample as object), stamps: 5 };
+    const input = { ...(manifestOf(v).sample as object), stamps: 5 };
     const res = await call(`/${cloneId}/preview`, { body: { input } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { assetBaseUrl: string; assetNames: string[] };
@@ -200,6 +201,6 @@ describe('a Stamp card in the designer', () => {
     const res = await put(withGoal(v, 6));
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({ code: 'STAMPS_REDRAW' });
-    expect((await put({ ...v.manifest, description: 'Edited' })).status).toBe(200);
+    expect((await put({ ...manifestOf(v), description: 'Edited' })).status).toBe(200);
   });
 });
