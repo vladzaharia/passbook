@@ -175,11 +175,13 @@ export async function settleClaim(
         WHERE op.id = target.operation_id AND op.state = 'retry') THEN ? + MIN(300000, 1000 * (1 << MIN(target.attempts - 1, 8))) ELSE NULL END,
       reason_code = 'timeout', updated_at = ?
       WHERE target.state IN ('inflight', 'uncertain') AND changes() = 1
+        AND target.operation_id = (SELECT o2.id FROM wallet_provider_instance_operations o2
+          WHERE o2.instance_id = ? AND o2.version = ?)
         AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
           JOIN wallet_provider_instances i ON i.id = op.instance_id
           WHERE op.id = target.operation_id AND ${SCOPE} AND op.version = ? AND op.last_result_at = ?
             AND op.state IN ('retry', 'failed', 'superseded'))`,
-      [p.now, p.now, ...scope(p), p.version, p.now],
+      [p.now, p.now, p.instanceId, p.version, ...scope(p), p.version, p.now],
     ),
   ]);
   return (results[0]?.meta.changes ?? 0) === 1;
