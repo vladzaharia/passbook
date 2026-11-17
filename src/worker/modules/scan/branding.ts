@@ -3,12 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingKey } from '../orgs/branding-files.ts';
 import { readBranding } from '../passes/branding.ts';
 import type { ScanActor } from './actor.ts';
-import { outputPredicateStmt } from './repo-output-predicates.ts';
-import { orgBrandingStmt } from './repo-session.ts';
-import {
-  packedScanAuthorityPredicate,
-  sessionReadAuthorityPredicate,
-} from './repo-session-authority.ts';
+import { SESSION_READ, scanRead, scanReadAuthority } from './repo-read-authority.ts';
 import { staleScanRead } from './stale-read.ts';
 
 const missing = () => new NotFoundError('Image not found.', 'IMAGE_NOT_FOUND');
@@ -23,19 +18,16 @@ export async function openScanBrandingLogo(
   ifNoneMatch: string | undefined,
 ): Promise<Response> {
   const db = ctx.env.DB;
-  const authority = packedScanAuthorityPredicate(
-    actor,
-    sessionReadAuthorityPredicate(actor, ctx.clock.now()),
-  );
+  const auth = scanReadAuthority(actor, { now: ctx.clock.now(), read: SESSION_READ });
   // Only a lost credential unpairs; drift is a 409 the client reloads.
-  if (authority.sql === '0') throw await staleScanRead(ctx, actor);
-  const [status, row] = await db.batch([
-    outputPredicateStmt(db, authority),
-    orgBrandingStmt(db, actor.orgId),
-  ]);
-  if ((status?.results?.[0] as { authorized?: number } | undefined)?.authorized !== 1)
-    throw await staleScanRead(ctx, actor);
-  const stored = (row?.results?.[0] as { branding?: string } | undefined)?.branding;
+  const row = await scanRead(
+    db,
+    auth,
+    `SELECT (SELECT o.branding FROM orgs o WHERE o.id = (SELECT org_id FROM actor_ok)) AS branding
+     WHERE ${auth.ok}`,
+  ).first<{ branding: string | null }>();
+  if (!row) throw await staleScanRead(ctx, actor);
+  const stored = row.branding;
   const logo = readBranding(stored ? JSON.parse(stored) : {}).images.find(
     (image) => image.slot === 'logo',
   );

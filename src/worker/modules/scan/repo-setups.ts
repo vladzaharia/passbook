@@ -19,9 +19,8 @@ export async function setupMetas(db: D1Database, orgId: string | null, ids: stri
       all<SetupMeta>(
         db,
         `SELECT m.*,(SELECT d.session_id FROM scanning_devices d WHERE d.scanner_id=m.scanner_id AND d.org_id=m.org_id) AS session_id,COALESCE(u.name,u.primary_email) AS admin_name FROM scanner_setups m
-    LEFT JOIN users u ON u.id=m.admin_user_id WHERE (? IS NULL OR m.org_id=?)
-    AND m.scanner_id IN (${placeholders(part.length)})`,
-        [orgId, orgId, ...part],
+    LEFT JOIN users u ON u.id=m.admin_user_id WHERE m.scanner_id IN (${placeholders(part.length)})${orgId === null ? '' : ' AND m.org_id=?'}`,
+        [...part, ...(orgId === null ? [] : [orgId])],
       ),
     ),
   );

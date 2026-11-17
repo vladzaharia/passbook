@@ -148,7 +148,7 @@ function listAdminStaffStmt(
        recent_sc.name AS scanner_name
      FROM scope
      LEFT JOIN scan_staff st ON scope.auth_ok = 1 AND scope.snapshot_ok = 1
-       AND st.org_id = ? AND (? IS NULL OR st.id = ?)
+       AND st.org_id = ?${staffId === undefined ? '' : ' AND st.id = ?'}
        AND ${name.sql} ${cursor.sql}
      LEFT JOIN scans recent_scan ON recent_scan.id = (
        SELECT s.id FROM scans s
@@ -178,8 +178,7 @@ function listAdminStaffStmt(
       authority.mode,
       dayStartMs('UTC', now),
       authority.orgId,
-      staffId ?? null,
-      staffId ?? null,
+      ...(staffId === undefined ? [] : [staffId]),
       ...name.params,
       ...cursor.params,
       authority.mode,

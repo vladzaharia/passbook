@@ -40,6 +40,8 @@ const ALLOWED_INSERTS = new Set<string>([
   'credential_ref_keyset',
   // metrics counters (the export count), which hold no authority
   'counters',
+  // the export's audit grant: one row, released in the same batch (grant lifecycle, no authority state)
+  'authority_grants',
 ]);
 
 interface Write {
@@ -71,7 +73,7 @@ function writesIn(statements: readonly string[]): Write[] {
 function forbidden(writes: readonly Write[]): Write[] {
   return writes.filter((w) => {
     if (w.kind === 'insert') return !ALLOWED_INSERTS.has(w.table);
-    if (w.kind === 'delete') return true;
+    if (w.kind === 'delete') return w.table !== 'authority_grants';
     const allowed = ALLOWED_UPDATES[w.table];
     return !allowed?.test(w.set);
   });

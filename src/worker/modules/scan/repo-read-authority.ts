@@ -51,3 +51,15 @@ export function scanRead(
   assertBudget(text, all, PARAM_BUDGET);
   return exactStmt(db, text, all);
 }
+
+/** The fence as one scalar `EXISTS`, for a statement that cannot take a `WITH` (an `UPDATE`'s guard). */
+export function scanReadFence(auth: ScanReadAuthority): { sql: string; params: SqlValue[] } {
+  return { sql: `EXISTS (WITH ${auth.ctes} SELECT 1 FROM actor_ok)`, params: auth.params };
+}
+
+/** The relaxations of the scanner's own session reads (session DTO, counts, branding). */
+export const SESSION_READ = {
+  pausedSession: true,
+  stafflessMonitor: true,
+  invalidScope: true,
+} as const;

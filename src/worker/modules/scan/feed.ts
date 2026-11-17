@@ -2,7 +2,6 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanOutcome, ScanRecordDto } from '../../../shared/contracts/index.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { bump, read } from '../../platform/counters.ts';
-import { batch } from '../../platform/db.ts';
 import {
   ConflictError,
   ForbiddenError,
@@ -26,7 +25,6 @@ import { csvRow, EXPORT_COLUMNS, exportCells } from './feed-csv.ts';
 import {
   assertFeedKey,
   type ConsoleAuthority,
-  consoleFeedAuthorityPredicate,
   type Feed,
   fenceRecords,
   recordsOf,
@@ -35,6 +33,7 @@ import {
 import { createFeedProofCache, verifyRows } from './feed-proof.ts';
 import {
   apiKeyFeedGuard,
+  auditScanExport,
   countScanRows,
   getApiKeyFeedStatus,
   getScanForUndo,
@@ -42,7 +41,6 @@ import {
   listScanRows,
   type ScanLogFilter,
   type ScanLogRow,
-  scanExportAuditStmt,
 } from './repo-feed.ts';
 
 const DAY = 86_400_000;
@@ -276,18 +274,8 @@ export async function exportScans(
   if (rows > EXPORT_MAX_ROWS)
     throw new ValidationError('Export up to 100,000 scans at a time.', [], 'SCAN_EXPORT_TOO_LARGE');
   if ((await bump(ctx.env.DB, exportKey, hour)) > EXPORTS_PER_HOUR) throw limited();
-  const [audit] = await batch(ctx.env.DB, [
-    scanExportAuditStmt(
-      ctx.env.DB,
-      ctx,
-      authority,
-      { from: req.from, to: req.to, rows },
-      credentialKeysetCommitment,
-      await consoleFeedAuthorityPredicate(ctx, actor),
-    ),
-  ]);
+  await auditScanExport(ctx, authority, { from: req.from, to: req.to, rows });
   await assertConsoleAuthority(ctx, actor, credentialKeysetCommitment);
-  if (audit?.meta.changes !== 1) throw new ForbiddenError();
   const encoder = new TextEncoder();
   let cursor: string | undefined;
   let started = false;
