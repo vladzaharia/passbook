@@ -58,6 +58,14 @@
   font: inherit;
   text-align: start;
   cursor: pointer;
+  position: relative;
+}
+/* The strip is 40 px; the tap area is 44. */
+.scan-strip-main::after {
+  content: "";
+  position: absolute;
+  inset-block: -2px;
+  inset-inline: 0;
 }
 .scan-strip-disc {
   display: grid;

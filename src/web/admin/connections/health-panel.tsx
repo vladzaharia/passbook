@@ -123,7 +123,9 @@ function RunStrip({ runs }: { runs: readonly Run[] }) {
   const last = [...runs.slice(0, 20)].reverse();
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-xs text-fg-muted">Last {last.length} runs</span>
+      <span className="text-xs text-fg-muted">
+        Last {last.length} {last.length === 1 ? 'run' : 'runs'}
+      </span>
       <ol aria-label="Recent runs" className="flex h-6 items-end gap-1">
         {last.map((r) => (
           <li key={r.id} className="flex h-full min-w-0 flex-1 max-w-3">

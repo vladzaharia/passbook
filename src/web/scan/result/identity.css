@@ -52,8 +52,9 @@
   border: 0;
   background: none;
   color: var(--sd-muted);
-  min-width: 28px;
+  min-width: 44px;
   min-height: 44px;
+  margin-inline-end: -12px;
   display: grid;
   place-items: center;
   cursor: pointer;

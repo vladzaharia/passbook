@@ -60,10 +60,7 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
       <div className="mb-4 flex min-w-0 items-start gap-3 rounded-lg border border-border bg-surface-raised p-4">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-fg-strong">Scanners and displays</p>
-          <p className="mt-1 text-sm text-fg-muted">
-            Existing devices keep their setup. Create a session to add a Scanner, Operator or
-            Customer display.
-          </p>
+          <p className="mt-1 text-sm text-fg-muted">Create a session to add a device.</p>
         </div>
       </div>
       <DataTable
