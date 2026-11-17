@@ -3,7 +3,6 @@ import { countD1, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import type { ManualClock } from '../../platform/clock.ts';
-import { fromBase64Url, toBase64Url } from '../../platform/ids.ts';
 import { insertSession } from '../auth/repo-sessions.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -11,7 +10,7 @@ import { clearSettingsCache } from '../settings/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { interceptBatches, kit, templateId } from './lookup-output-test-fixtures.ts';
 import { setPhotoGroup } from './repo-lookup-output-test-fixtures.ts';
-import { countAssetGrants, hasAssetGrantInsert } from './repo-read-grant-expiry-test-fixtures.ts';
+import { isFinalFenceBatch } from './repo-read-grant-expiry-test-fixtures.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
 import { grantScanMembership, ORIGIN } from './test-kit.ts';
 
@@ -115,130 +114,40 @@ function jsonArray(data: BufferSource): unknown[] | null {
   }
 }
 
-function scannerProofFrame(data: BufferSource, scannerId: string): boolean {
-  const bytes = ArrayBuffer.isView(data)
-    ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
-    : new Uint8Array(data);
-  if (bytes.length < 4) return false;
-  const size = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0);
-  return (
-    size <= bytes.length - 4 && new TextDecoder().decode(bytes.subarray(4, 4 + size)) === scannerId
-  );
-}
-
-// The Worker targets ES2023; its test runtime provides Promise.withResolvers.
-const deferred = Promise as PromiseConstructor & {
-  withResolvers<T>(): { promise: Promise<T>; resolve: (value: T) => void };
-};
-
 interface GrantRace {
   events: string[];
   fired(): boolean;
-  snapshots(): number;
+  signs(): number;
   restore(): void;
 }
 
 interface GrantRaceOptions {
   passId: string;
   orgId: string;
-  snapshotOccurrence: number;
+  /** The capability signed for `passId` after which the clock advances (photo, then pass view). */
+  occurrence: number;
   advance: number;
-  firstPhotoId?: string;
-  staggerAdvance?: number;
-  scannerId?: string;
 }
 
-/** Use real WebCrypto, delaying one photo MAC and advancing inside the later insert-guard proof. */
+/** Use real WebCrypto, advancing the clock inside the nth capability MAC of one pass. */
 export function clockDuringGrant(clock: ManualClock, options: GrantRaceOptions) {
   const nativeSign = crypto.subtle.sign.bind(crypto.subtle);
-  const nativeDigest = crypto.subtle.digest.bind(crypto.subtle);
   const events: string[] = [];
-  let snapshots = 0;
+  let signs = 0;
   let fired = false;
-  let firstToken: string | null = null;
-  let firstSnapshots = 0;
-  let firstGuardProof = false;
-  let firstGuardSignalled = false;
-  const firstPhoto = deferred.withResolvers<void>();
-  const firstGuard = deferred.withResolvers<void>();
-  const digest = vi.spyOn(crypto.subtle, 'digest').mockImplementation(async (algorithm, data) => {
-    const result = await nativeDigest(algorithm, data);
-    if (firstToken && new TextDecoder().decode(data) === firstToken) {
-      firstToken = null;
-      // Complete the early capability before allowing the second photo's real MAC to start.
-      setTimeout(() => {
-        events.push('first photo prepared');
-        firstPhoto.resolve();
-      }, 0);
-    }
-    return result;
-  });
   const sign = vi.spyOn(crypto.subtle, 'sign').mockImplementation(async (algorithm, key, data) => {
     const fields = jsonArray(data);
     const capability =
-      fields?.[0] === 'scan-asset-v3' && fields.includes('scan-asset-capability-v1');
-    const marker = capability ? fields.indexOf('scan-asset-capability-v1') : -1;
-    const isPhoto = marker >= 0 && fields?.[marker + 2] === 'photo';
-    const passId = capability ? fields?.[4] : undefined;
-    if (options.firstPhotoId && isPhoto && passId === options.passId) {
-      await firstPhoto.promise;
-      events.push('second photo signing');
-    }
-    const isSnapshot =
-      fields?.[0] === options.passId && fields[1] === options.orgId && fields.length > 35;
-    const occurrence = isSnapshot ? ++snapshots : 0;
-    const firstOccurrence =
-      options.firstPhotoId &&
-      fields?.[0] === options.firstPhotoId &&
-      fields[1] === options.orgId &&
-      fields.length > 35
-        ? ++firstSnapshots
-        : 0;
-    if (options.firstPhotoId && options.staggerAdvance && occurrence === 1) {
-      await firstPhoto.promise;
-      clock.advance(options.staggerAdvance);
-      events.push('clock staggered');
-    }
-    if (options.firstPhotoId && options.scannerId && occurrence === options.snapshotOccurrence)
-      await firstGuard.promise;
+      fields?.[0] === 'scan-asset-v3' && fields.includes('scan-asset-capability-v2');
     const result = await nativeSign(algorithm, key, data);
-    if (firstOccurrence === 2) firstGuardProof = true;
-    if (
-      firstGuardProof &&
-      !firstGuardSignalled &&
-      options.scannerId &&
-      scannerProofFrame(data, options.scannerId)
-    ) {
-      firstGuardSignalled = true;
-      // Let the early guard finish its verified CSRF snapshot and return its plan first.
-      setTimeout(() => {
-        events.push('first guard prepared');
-        firstGuard.resolve();
-      }, 0);
-    }
-    if (options.firstPhotoId && isPhoto && passId === options.firstPhotoId && fields) {
-      const nonce = fromBase64Url(String(fields[fields.length - 1]));
-      const bytes = new Uint8Array(nonce.length + 24);
-      bytes.set(nonce);
-      bytes.set(new Uint8Array(result).subarray(0, 24), nonce.length);
-      firstToken = toBase64Url(bytes);
-    }
-    if (occurrence === options.snapshotOccurrence && !fired) {
+    if (capability && fields?.[4] === options.passId && ++signs === options.occurrence && !fired) {
       fired = true;
       events.push('clock advanced');
       clock.advance(options.advance);
     }
     return result;
   });
-  return {
-    events,
-    fired: () => fired,
-    snapshots: () => snapshots,
-    restore() {
-      sign.mockRestore();
-      digest.mockRestore();
-    },
-  };
+  return { events, fired: () => fired, signs: () => signs, restore: () => sign.mockRestore() };
 }
 
 /** Count the request separately from its real route guard and retain the final batch trace. */
@@ -255,7 +164,7 @@ export async function measured(
   const counted = countD1(real);
   let grantBatchAt: number | null = null;
   const traced = interceptBatches(counted.db, async (sql) => {
-    if (grantBatchAt === null && hasAssetGrantInsert(sql)) {
+    if (grantBatchAt === null && isFinalFenceBatch(sql)) {
       grantBatchAt = kit.clock.now();
       await options.beforeGrantBatch?.();
     }
@@ -272,7 +181,7 @@ export async function measured(
     if (race) {
       if (!options.race) throw new Error('Missing grant race options');
       expect(race.fired()).toBe(true);
-      expect(race.snapshots()).toBeGreaterThanOrEqual(options.race.snapshotOccurrence);
+      expect(race.signs()).toBeGreaterThanOrEqual(options.race.occurrence);
     }
     expect(counted.count() - guard).toBeLessThanOrEqual(5);
     return { response, events: race?.events ?? [], grantBatchAt, trips: counted.count() - guard };
@@ -280,8 +189,4 @@ export async function measured(
     race?.restore();
     Object.assign(kit.env, { DB: real });
   }
-}
-
-export async function grants() {
-  return countAssetGrants(kit.env.DB, kit.org.id);
 }

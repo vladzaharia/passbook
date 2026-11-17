@@ -1,10 +1,8 @@
 import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
-import { type SqlValue, stmt } from '../../platform/db.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
+import type { SqlValue } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { ScanActor } from './actor.ts';
-import { actorCsrfFence } from './actor-csrf.ts';
 import { eventPassPredicate } from './repo-action-authority.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
@@ -257,20 +255,6 @@ export function outputAuthorityPredicate(input: OutputAuthority): OutputPredicat
     matchingPass,
     ...(input.extra ? [input.extra] : []),
   ]);
-}
-
-/** Verify the original actor secret before binding its final scalar fence. */
-export async function actorOutputFenceStmt(
-  ctx: ServiceContext,
-  actor: ScanActor,
-): Promise<D1PreparedStatement | null> {
-  const fence = await actorCsrfFence(ctx, actor);
-  if (!fence) return null;
-  return stmt(
-    ctx.env.DB,
-    `SELECT CASE WHEN (${fence.sql}) THEN 1 ELSE 0 END AS actor_authorized`,
-    fence.params,
-  );
 }
 
 /** All results, including large lists, are checked against the same D1 read snapshot. */

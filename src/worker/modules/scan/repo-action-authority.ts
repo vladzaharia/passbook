@@ -70,15 +70,6 @@ export function stopAuthorityPredicate(
   return actionAuthorityPredicate(input, pass, now, 'commit', actionDirect);
 }
 
-/** A receipt may project only under current read policy and current actor authority. */
-export function replayAuthorityPredicate(
-  input: StopAuthority,
-  pass: Pass | null,
-  now: number,
-): Predicate {
-  return actionAuthorityPredicate(input, pass, now, 'read');
-}
-
 function actionAuthorityPredicate(
   input: StopAuthority,
   pass: Pass | null,

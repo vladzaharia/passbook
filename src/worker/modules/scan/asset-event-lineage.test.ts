@@ -182,23 +182,24 @@ describe('scanner asset event scope', () => {
       "UPDATE passes SET personalization = json_set(personalization, '$.tier', 'silver') WHERE id = ?",
       [pass.id],
     );
-    await expect(
-      mintAssetGrant(
-        kit.ctx,
-        actor,
-        candidate,
-        candidate.connectionGeneration,
-        candidate.activeTemplateVersion,
-        undefined,
-        false,
-        'commit',
-      ),
-    ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
-    const response = await kit.get(
-      scanner.headers,
-      `/passes/${pass.id}/assets/icon.png?g=${grant}`,
+    // A grant minted from the evaluated snapshot is for lineage that no longer exists: it never redeems.
+    const stale = await mintAssetGrant(
+      kit.ctx,
+      actor,
+      candidate,
+      candidate.connectionGeneration,
+      candidate.activeTemplateVersion,
+      undefined,
+      false,
+      'commit',
     );
-    expect(response.status).toBe(404);
-    expect(await response.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
+    for (const token of [stale, grant]) {
+      const response = await kit.get(
+        scanner.headers,
+        `/passes/${pass.id}/assets/icon.png?g=${token}`,
+      );
+      expect(response.status).toBe(404);
+      expect(await response.json()).toMatchObject({ code: 'ASSET_NOT_FOUND' });
+    }
   });
 });

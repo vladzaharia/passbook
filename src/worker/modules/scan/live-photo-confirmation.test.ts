@@ -4,7 +4,7 @@ import { liveRecipient } from './live-auth.ts';
 import { liveRowFor } from './live-render.ts';
 import {
   contextWithDb,
-  grantInsertion,
+  photoFence,
   traceLiveD1,
 } from './repo-live-photo-d1-trace-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
@@ -58,40 +58,42 @@ describe('live photo capability disclosure', () => {
 
   it.each([
     'missing',
-    'middle-missing',
-    'reordered',
-    'empty',
+    'photo-missing',
+    'photo-empty',
+    'photo-not-current',
     'no-marker',
-    'wrong-hash',
     'failed',
-  ] as const)('does not render a URL when the insert has a %s confirmation', async (damage) => {
-    const fixture = await photoFixture();
-    const recipient = await liveRecipient(kit.ctx, fixture.monitor.attachment);
-    const sourceProof = await hub().sourceProof(fixture.event.id);
-    if (!recipient || !sourceProof) throw new Error('Missing live render fixture.');
-    let intercepted = false;
-    const trace = traceLiveD1(kit.env.DB, (statements, results) => {
-      if (!grantInsertion(statements)) return results;
-      intercepted = true;
-      if (damage === 'missing') return results.slice(0, -1);
-      if (damage === 'middle-missing') return results.filter((_, index) => index !== 1);
-      if (damage === 'reordered')
-        return [results[0]!, results[2]!, results[1]!, ...results.slice(3)];
-      return results.map((result, index) => {
-        if (damage === 'empty' && index === 0) return { ...result, results: [] };
-        if (damage === 'wrong-hash' && index === 0)
-          return { ...result, results: [{ token_hash: '0'.repeat(64) }] };
-        if (damage === 'no-marker' && index === results.length - 1)
-          return { ...result, results: [{ authorized: 1 }] };
-        if (damage === 'failed' && index === results.length - 1)
-          return { ...result, success: false as const };
-        return result;
+  ] as const)(
+    'does not render a URL when the photo fence has a %s confirmation',
+    async (damage) => {
+      const fixture = await photoFixture();
+      const recipient = await liveRecipient(kit.ctx, fixture.monitor.attachment);
+      const sourceProof = await hub().sourceProof(fixture.event.id);
+      if (!recipient || !sourceProof) throw new Error('Missing live render fixture.');
+      let intercepted = false;
+      const trace = traceLiveD1(kit.env.DB, (statements, results) => {
+        if (!photoFence(statements)) return results;
+        intercepted = true;
+        const photo = statements.findIndex(({ sql }) => sql.includes('3 AS live_row_kind'));
+        if (photo < 0) throw new Error('Missing photo fence statement.');
+        if (damage === 'missing') return results.slice(0, -1);
+        if (damage === 'photo-missing') return results.filter((_, index) => index !== photo);
+        return results.map((result, index) => {
+          if (damage === 'photo-empty' && index === photo) return { ...result, results: [] };
+          if (damage === 'photo-not-current' && index === photo)
+            return { ...result, results: [{ ...(result.results[0] as object), current: 0 }] };
+          if (damage === 'no-marker' && index === results.length - 1)
+            return { ...result, results: [{ live_render_final: 0 }] };
+          if (damage === 'failed' && index === results.length - 1)
+            return { ...result, success: false as const };
+          return result;
+        });
       });
-    });
-    const internal = { ...fixture.event, sourceProof };
-    const rendered = await liveRowFor(contextWithDb(kit.ctx, trace.db), recipient, internal);
-    expect(intercepted).toBe(true);
-    expect(rendered).toMatchObject({ passId: fixture.pass.id, photoUrl: null });
-    expect(rendered).not.toHaveProperty('sourceProof');
-  });
+      const internal = { ...fixture.event, sourceProof };
+      const rendered = await liveRowFor(contextWithDb(kit.ctx, trace.db), recipient, internal);
+      expect(intercepted).toBe(true);
+      expect(rendered).toMatchObject({ passId: fixture.pass.id, photoUrl: null });
+      expect(rendered).not.toHaveProperty('sourceProof');
+    },
+  );
 });

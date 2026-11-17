@@ -3,12 +3,12 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { countD1, makeOrg } from '../../../../test/helpers/index.ts';
 import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import {
   action,
   body,
+  COMMIT_MARKER,
   expectClassified,
   expectUnavailable,
   fixture,
@@ -26,9 +26,6 @@ beforeAll(async () => {
   kit = await setupScanKit();
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
 });
-const marker = 'INTO scan_asset_grant_provenance';
-/** A check-in's photo grant follows its commit, so a gate race intervenes at the gate write. */
-const COMMIT = 'INSERT INTO scan_gates';
 
 async function cardGrantFixture() {
   const f = await fixture(kit, { choose: true, event: true, photo: true, includeInPass: true });
@@ -69,17 +66,6 @@ describe('policy-selected event action grants', () => {
   it('confirms distinct photo and generic grants for the original scanner, not the derived event actor', async () => {
     const f = await cardGrantFixture();
     expect(f.photoToken).not.toBe(f.genericToken);
-    for (const token of [f.photoToken, f.genericToken]) {
-      const hash = await sha256Hex(token);
-      expect(
-        await first(
-          kit.env.DB,
-          `SELECT token_hash FROM scan_asset_grant_provenance
-        WHERE token_hash=? AND org_id=? AND mode='live'`,
-          [hash, kit.org.id],
-        ),
-      ).toEqual({ token_hash: hash });
-    }
     expect((await kit.get(f.scanner.headers, f.photoPath)).status).toBe(200);
     expect((await kit.get(f.scanner.headers, f.genericPath)).status).toBe(200);
     expect(
@@ -121,14 +107,6 @@ describe('policy-selected event action grants', () => {
       const photo = new URL(url, 'https://wallet.test');
       const token = photo.searchParams.get('g');
       if (!token) throw new Error('Missing event photo token');
-      const hash = await sha256Hex(token);
-      expect(
-        await first(
-          kit.env.DB,
-          'SELECT token_hash FROM scan_asset_grant_provenance WHERE token_hash=?',
-          [hash],
-        ),
-      ).toEqual({ token_hash: hash });
       expect(
         (
           await kit.get(
@@ -170,10 +148,9 @@ describe('policy-selected event action grants', () => {
     });
   });
 
-  // After event evaluation: scanner credentials are authority (a lost credential unpairs the device,
-  // or a recorded stop drops its output); an event archive or filter edit refuses a write (409) and a
-  // foreign event on the pass is content. A read-only card and a recorded stop keep their output when
-  // only the event moves.
+  // After event evaluation and before the phase's commit: scanner credentials are authority (a lost
+  // credential unpairs the device) and an event archive or filter edit refuses the write (409); a
+  // foreign event on the pass is content, and the result is served.
   for (const phase of ['gate', 'choose', 'stop'] as const) {
     it.each(['event archived', 'event filter', 'foreign event', 'csrf', 'scanner token'] as const)(
       `${phase} grants when %s changes after event evaluation`,
@@ -189,7 +166,7 @@ describe('policy-selected event action grants', () => {
         const other = foreign ? await kit.event({ orgId: foreign.id }) : null;
         const request = body(kit, f.pass.id);
         const before = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
-        const at = phase === 'gate' ? COMMIT : marker;
+        const at = COMMIT_MARKER[phase];
         const response = await raceRaw(kit, f.scanner.headers, request, at, async (db) => {
           if (change === 'event archived') {
             await run(
@@ -223,30 +200,21 @@ describe('policy-selected event action grants', () => {
           }
         });
         const credential = change === 'csrf' || change === 'scanner token';
-        if ((phase === 'gate' || phase === 'choose') && credential) {
-          await expectClassified(response, 'SCANNER_REPAIR');
-        } else if (phase === 'gate' && change !== 'foreign event') {
+        if (credential) await expectClassified(response, 'SCANNER_REPAIR');
+        else if (change !== 'foreign event')
           await expectClassified(response, 'SCAN_CONFIG_CHANGED');
-        } else {
+        else {
           expect(response.status).toBe(200);
           const result = ScanOutcomeSchema.parse(await response.json());
           if (phase === 'choose') {
             expect(result).toMatchObject({ kind: 'ready', reason: 'choose' });
             expect(result.card?.passView.assetGrant).toEqual(expect.any(String));
-          } else if (phase === 'stop' && credential) {
-            // The stop was recorded before the credential moved; the photo grant is not issued.
-            expect(result).toMatchObject({ kind: 'heads_up', reason: 'check_required' });
-            expect(result.display?.identity.photo?.url).toBeNull();
-            expect(JSON.stringify(result)).not.toContain('assetGrant');
           } else {
             expect(result.kind).toBe(phase === 'gate' ? 'ok' : 'heads_up');
           }
         }
         const after = await effects(kit.env.DB, f.pass.id, request.idempotencyKey, kit.org.id);
-        const refused = phase === 'gate' ? change !== 'foreign event' : false;
-        const grantsUnchanged = (phase === 'choose' || phase === 'stop') && credential;
-        if (refused) expect(after).toEqual(before);
-        else if (grantsUnchanged) expect(after).toMatchObject({ grants: before?.grants });
+        if (change !== 'foreign event') expect(after).toEqual(before);
       },
     );
   }
@@ -281,7 +249,7 @@ describe('policy-selected event action grants', () => {
     expect((await kit.get(f.scanner.headers, f.genericPath)).status).toBe(200);
   });
 
-  it('performs a cold history and photo override in at most six post-guard D1 trips', async () => {
+  it('performs a cold history and photo override in at most five post-guard D1 trips', async () => {
     const f = await fixture(kit, { photo: true, history: true });
     const firstResult = await action(
       kit,
@@ -312,13 +280,12 @@ describe('policy-selected event action grants', () => {
       expect(outcome.display?.identity.photo?.url).toContain(
         `/passes/${f.pass.id}/assets/member.png?g=`,
       );
-      // Five for the scan; the photo grant is decoration in one batch after the commit (PIN refund too).
-      expect(counted.count() - guard).toBeLessThanOrEqual(6);
+      // Five for the scan: the photo capability and a PIN refund add none.
+      expect(counted.count() - guard).toBeLessThanOrEqual(5);
       const sql = counted.sql().join('\n');
       expect(sql).toContain('template_versions');
       expect(sql).toContain('pass_events');
       expect(sql).toContain('override_of');
-      expect(sql).toContain('scan_asset_grant_provenance');
     } finally {
       Object.assign(kit.env, { DB: real });
     }

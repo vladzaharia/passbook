@@ -233,12 +233,18 @@ describe('scanner evaluated policy revisions', () => {
           snapshot,
         ),
       ).toBeNull();
-      await expect(
-        mintAssetGrant(kit.ctx, s.actor, snapshot, snapshot.connectionGeneration, version),
-      ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
-      expect(
-        (await kit.get(s.scanner.headers, `${assetPath}${encodeURIComponent(grant)}`)).status,
-      ).toBe(404);
+      // A grant minted from the stale snapshot is for lineage that moved: neither it nor the old one redeems.
+      const stale = await mintAssetGrant(
+        kit.ctx,
+        s.actor,
+        snapshot,
+        snapshot.connectionGeneration,
+        version,
+      );
+      for (const token of [stale, grant])
+        expect(
+          (await kit.get(s.scanner.headers, `${assetPath}${encodeURIComponent(token)}`)).status,
+        ).toBe(404);
       const freshGrant = await mintAssetGrant(
         kit.ctx,
         s.actor,

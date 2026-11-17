@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { run } from '../../platform/db.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
-import { assetGrantTokenHash } from './assets.ts';
 import { photoAcquisition, traceLiveD1 } from './repo-live-photo-d1-trace-test-fixtures.ts';
 import { setSetupWatchStmt } from './repo-setups-test-support.ts';
 import { kit, photoFixture } from './scan-hub-test-fixtures.ts';
@@ -42,7 +41,7 @@ describe('cold live photo acquisition', () => {
       (trip) => trip.kind === 'batch' && photoAcquisition(trip.statements),
     );
     expect(index).toBeGreaterThanOrEqual(0);
-    expect(trace.trips[index]!.statements).toHaveLength(7);
+    expect(trace.trips[index]!.statements).toHaveLength(6);
     expect(
       trace.trips.filter((trip) => trip.kind === 'batch' && photoAcquisition(trip.statements)),
     ).toHaveLength(1);
@@ -53,12 +52,12 @@ describe('cold live photo acquisition', () => {
     'fails closed without opening R2 for each %s acquisition result',
     async (damage) => {
       const fixture = await photoFixture();
-      for (let index = 0; index < 7; index++) {
+      for (let index = 0; index < 6; index++) {
         let intercepted = false;
         const trace = traceLiveD1(kit.env.DB, (statements, results) => {
           if (!photoAcquisition(statements)) return results;
           intercepted = true;
-          expect(results).toHaveLength(7);
+          expect(results).toHaveLength(6);
           return damage === 'partial'
             ? results.filter((_, at) => at !== index)
             : results.map((result, at) =>
@@ -74,7 +73,7 @@ describe('cold live photo acquisition', () => {
     },
   );
 
-  it.each([0, 2, 3, 4, 5, 6])(
+  it.each([0, 2, 3, 4, 5])(
     'does not treat an empty acquisition result %s as authority',
     async (index) => {
       const fixture = await photoFixture();
@@ -101,7 +100,7 @@ describe('cold live photo acquisition', () => {
     'source-mode',
     'source-scope',
     'watch',
-    'grant',
+    'grant-expiry',
     'photo',
     'pass',
   ] as const)(
@@ -109,9 +108,6 @@ describe('cold live photo acquisition', () => {
     async (change) => {
       const fixture = await photoFixture();
       const db = kit.env.DB;
-      const grant = new URL(fixture.path, 'https://wallet.test').searchParams.get('g');
-      const hash = await assetGrantTokenHash(grant ?? undefined);
-      if (!hash) throw new Error('Missing photo grant.');
       let raced = false;
       const trace = traceLiveD1(db, async (statements, results) => {
         if (!photoAcquisition(statements) || raced) return results;
@@ -149,8 +145,8 @@ describe('cold live photo acquisition', () => {
             scannerIds: [],
             allOrg: false,
           }).run();
-        } else if (change === 'grant') {
-          await run(db, 'DELETE FROM scan_asset_grant_provenance WHERE token_hash=?', [hash]);
+        } else if (change === 'grant-expiry') {
+          kit.clock.advance(3_600_001);
         } else if (change === 'photo') {
           await run(db, 'UPDATE member_photos SET updated_at=updated_at WHERE pass_id=?', [
             fixture.pass.id,

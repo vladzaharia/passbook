@@ -16,11 +16,6 @@ export function scanRetentionCandidateSql(scanAlias: string): string {
     AND NOT ${scanRetentionExcludedSql(scanAlias)})`;
 }
 
-/** Includes damaged and cross-scope proofs, so they cannot masquerade as passless refusals. */
-export function scanHasRetentionProofSql(scanAlias: string): string {
-  return `EXISTS (SELECT 1 FROM scan_retention_proofs retention_any WHERE retention_any.scan_id=${scanAlias}.id)`;
-}
-
 /** Quarantine is separate from proof validity and also latches for pre-index scans. */
 export function scanRetentionExcludedSql(scanAlias: string): string {
   return `(EXISTS (SELECT 1 FROM scan_quarantine_exclusions quarantine WHERE quarantine.scan_id=${scanAlias}.id)
@@ -190,23 +185,6 @@ export function clearScanRetentionDeleteStmt(
     db,
     'DELETE FROM scan_retention_delete_intents WHERE org_id=? AND mode=? AND pass_ref=?',
     [prepared.orgId, prepared.mode, prepared.passRef],
-  );
-}
-
-/** Optional explicit latch, for a deletion transaction whose eligibility has already been fenced. */
-export function excludeQuarantinedScanRetentionStmt(
-  db: D1Database,
-  passId: string,
-  orgId: string,
-  mode: Mode,
-): D1PreparedStatement {
-  return stmt(
-    db,
-    `UPDATE scan_retention_proofs SET excluded=1 WHERE excluded=0 AND scan_id IN (
-    SELECT s.id FROM scans s JOIN passes p ON p.id=s.pass_id AND p.org_id=s.org_id AND p.mode=s.mode
-    WHERE p.id=?/* scan-ephemeral-pass-id */ AND p.org_id=? AND p.mode=? AND p.test_data_quarantined=1
-  )`,
-    [passId, orgId, mode],
   );
 }
 

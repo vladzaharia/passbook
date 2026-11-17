@@ -5,7 +5,7 @@ import { completedAdmission } from './admission.ts';
 import type { CountsRead } from './counts.ts';
 import type { ScanActor } from './guard.ts';
 import { recordResult } from './ledger.ts';
-import { confirmedPhotoUrl, type PreparedPhotoGrant } from './member-photo.ts';
+import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
 import { blankOutcome, safeDisplay, safeOutcomeDetails } from './outcome.ts';
 import { activeFlags, type Found } from './resolve.ts';
 import type { FinalizedDisplayHistory } from './scan-display-history.ts';
@@ -25,13 +25,12 @@ interface CheckInResult {
     results: D1Result[];
   };
   photo: PreparedPhotoGrant | null;
-  photoResults: D1Result[];
   hasPresence: boolean;
 }
 
 /**
- * Render the committed check-in. The gate and finalize are certain by now, so a display or photo that
- * cannot be confirmed degrades to a plainer card; it never turns a recorded scan into an error.
+ * Render the committed check-in. The gate and finalize are certain by now, so a display that cannot be
+ * finalized degrades to a plainer card; it never turns a recorded scan into an error.
  */
 export function finishCheckInResult(input: CheckInResult): ScanOutcome {
   const { ctx, actor, authorityActor, found, action, scanId, now, undoWindow, read } = input;
@@ -42,7 +41,7 @@ export function finishCheckInResult(input: CheckInResult): ScanOutcome {
     activeFlags(found, actor).map((flag) => flag.label),
   );
   const photoUrl = input.photo
-    ? confirmedPhotoUrl(authorityActor, found.pass.id, input.photo.grant, input.photoResults)
+    ? photoGrantUrl(authorityActor, found.pass.id, input.photo.grant)
     : null;
   recordResult(ctx, actor, found.pass.templateId, 'ok');
   const arrived = read.counts.event?.arrived ?? 0;

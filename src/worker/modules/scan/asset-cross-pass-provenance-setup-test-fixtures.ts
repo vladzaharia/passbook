@@ -14,10 +14,10 @@ import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
 import { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
+import { parseGrant } from './asset-grant-mint.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
 import { createScannerStore } from './auth-store.ts';
 import { scanCredentialKeys } from './credential-input.ts';
-import { assetGrantCredentialRefs } from './repo-asset-cross-pass-provenance-test-fixtures.ts';
 import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { candidateById } from './repo-lookup.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
@@ -40,11 +40,6 @@ export async function expectPhoto(response: Response) {
   expect(response.headers.get('cache-control')).toBe('private, no-store');
   expect(response.headers.get('etag')).toBeNull();
   expect(new Uint8Array(await response.arrayBuffer())).toEqual(photoBytes);
-}
-
-export async function sha256Token(token: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /** Pass A's actual Wallet barcode is pass B's serial; only B is transferred. */
@@ -164,7 +159,6 @@ export async function crossPassFixture() {
       const parsed = new URL(photoUrl, origin);
       expect([...parsed.searchParams.keys()]).toEqual(['g']);
       const token = parsed.searchParams.get('g');
-      expect(token).toMatch(/^[A-Za-z0-9_-]{54}$/);
       if (!token) throw new Error('Photo capability missing');
       const dto = JSON.stringify(result.outcome);
       for (const secret of [
@@ -183,8 +177,10 @@ export async function crossPassFixture() {
       expect(dto).not.toMatch(
         /credentialTombstoneRefs|credentialKeysetCommitment|credentialRefsJson|assetPhoto/,
       );
-      const row = await assetGrantCredentialRefs(t.kit.env.DB, await sha256Token(token));
-      expect(row?.credential_refs).toBe(JSON.stringify(keys.credentialTombstoneRefs));
+      // Only the leading bytes of each keyed ref travel in the capability, and the tag covers them.
+      expect(parseGrant(token)?.refs).toEqual(
+        keys.credentialTombstoneRefs.map((ref) => ref.slice(0, 16)),
+      );
       return { snapshot: result.evaluatedSnapshot, photoUrl, token };
     } finally {
       for (const spy of logs) spy.mockRestore();

@@ -8,7 +8,7 @@ import {
   registerLookupOutputFixture,
   templateId,
 } from './lookup-output-test-fixtures.ts';
-import { grants, principal } from './read-grant-expiry-core-test-fixtures.ts';
+import { principal } from './read-grant-expiry-core-test-fixtures.ts';
 import { key } from './test-kit.ts';
 
 registerLookupOutputFixture();
@@ -36,7 +36,6 @@ describe('passless resolve final-clock authority', () => {
         reason: 'test_pass',
         card: null,
       });
-      expect(await grants()).toBe(0);
 
       const real = kit.env.DB;
       const counted = countD1(real);
@@ -90,7 +89,6 @@ describe('passless resolve final-clock authority', () => {
       } finally {
         Object.assign(kit.env, { DB: real });
       }
-      expect(await grants()).toBe(0);
     },
   );
 });

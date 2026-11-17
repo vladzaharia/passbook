@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
-import { first } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { putPassCheckIn } from '../passes/check-in.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -131,13 +130,6 @@ describe('card last-scan privacy', () => {
     if (!photo) throw new Error('Missing authorized photo plan');
     expect(photo).not.toHaveProperty('url');
     expect(photo.grant).not.toHaveProperty('token');
-    expect(
-      await first(
-        kit.env.DB,
-        'SELECT token_hash FROM scan_asset_grant_provenance WHERE token_hash=?',
-        [photo.grant.tokenHash],
-      ),
-    ).toBeNull();
 
     const preview = await readCard(kit.ctx, actor, found, planCounts(kit.ctx, actor), 'read', 10);
     const committing = await readCard(
@@ -149,20 +141,13 @@ describe('card last-scan privacy', () => {
       10,
     );
     if (!preview || !committing) throw new Error('Missing card draft');
-    expect(preview.passViewGrant.guard.purpose).toBe('read');
-    expect(committing.passViewGrant.guard.purpose).toBe('commit');
+    expect(preview.passViewGrant.purpose).toBe('read');
+    expect(committing.passViewGrant.purpose).toBe('commit');
     for (const draft of [preview, committing]) {
       expect(draft.card.passView.assetNames).not.toContain('thumbnail@3x.png');
       expect(draft.card.passView).not.toHaveProperty('assetGrant');
       expect(draft.passViewGrant).not.toHaveProperty('token');
       expect(draft.card.display.identity.photo).toBeNull();
-      expect(
-        await first(
-          kit.env.DB,
-          'SELECT token_hash FROM scan_asset_grant_provenance WHERE token_hash=?',
-          [draft.passViewGrant.tokenHash],
-        ),
-      ).toBeNull();
     }
 
     const response = await kit.post(scanner.headers, '/resolve', body(pass.id));

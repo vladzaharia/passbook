@@ -28,7 +28,6 @@ export function credentialRefKeysetInitializeStmt(
     SELECT 1, ${guard ? 'keyset_proposal.commitment FROM keyset_proposal' : '?/* scan-ephemeral-proof */'} WHERE (
       NOT EXISTS (SELECT 1 FROM credential_ref_keyset)
       AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones)
-      AND NOT EXISTS (SELECT 1 FROM scan_asset_grant_provenance)
       AND NOT EXISTS (SELECT 1 FROM connection_webhook_retention)
       AND NOT EXISTS (SELECT 1 FROM workflow_runs WHERE credential_keyset_commitment IS NOT NULL)
     ) AND (

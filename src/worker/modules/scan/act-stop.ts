@@ -11,12 +11,10 @@ import { type CountsPlan, planCommitCounts } from './counts.ts';
 import type { ScanActor } from './guard.ts';
 import type { PreloadedDisplayHistory } from './history-proof-plan.ts';
 import { ledgerRow, recordResult } from './ledger.ts';
-import { confirmedPhotoUrl, type PreparedPhotoGrant } from './member-photo.ts';
+import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
 import { prepareMiss } from './misses.ts';
 import { stopOutcome } from './outcome.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
-import { boundOutputPredicate } from './repo-output-predicates.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import type { Claim } from './repo-scans.ts';
@@ -93,18 +91,7 @@ export async function finishStop(
       })
     : null;
   const photo = s.photo;
-  if (photo && !stop.found?.liveCandidate) throw new StaleScanAuthority();
   const displayPlan = stop.found ? await historyPlan(ctx, actor, stop.found, s.history) : null;
-  const photoPlan =
-    photo && stop.found?.liveCandidate
-      ? await prepareAssetGrantInsertion(
-          ctx,
-          photo.grant,
-          { recipientSnapshot: s.csrfSnapshot },
-          stop.found.liveCandidate,
-          { soft: true },
-        )
-      : null;
 
   const now = ctx.clock.now();
   const checked = stop.found?.pass ?? stop.pass ?? stop.auditCandidate?.pass ?? null;
@@ -153,8 +140,7 @@ export async function finishStop(
   const clock = { ...ctx, clock: { now: () => finishAt } };
   const miss = s.countMiss ? prepareMiss(clock, authority.actor, s.scanId, s.claimAt) : null;
   const bound = displayPlan?.bind(finishAt, done);
-  const photoInsert = photoPlan ? photoPlan(finishAt, boundOutputPredicate(done), done) : [];
-  const statements = [...(miss?.stmts ?? []), ...(bound?.stmts ?? []), ...photoInsert];
+  const statements = [...(miss?.stmts ?? []), ...(bound?.stmts ?? [])];
   let after: D1Result[] | null = null;
   try {
     after = statements.length ? await ctx.env.DB.batch(statements) : [];
@@ -175,14 +161,7 @@ export async function finishStop(
       ? bound.finalize(after.slice(boundStart, boundStart + bound.stmts.length))
       : undefined;
   const photoUrl =
-    photo && stop.found && after
-      ? confirmedPhotoUrl(
-          authority.actor,
-          stop.found.pass.id,
-          photo.grant,
-          after.slice(boundStart + (bound?.stmts.length ?? 0)),
-        )
-      : null;
+    photo && stop.found ? photoGrantUrl(authority.actor, stop.found.pass.id, photo.grant) : null;
   if (miss && missResult) miss.throwIfCapped(missResult);
   recordResult(ctx, actor, pass?.templateId ?? null, stop.reason, pass?.mode);
   const outcome = stopOutcome(ctx, actor, stop, read, {

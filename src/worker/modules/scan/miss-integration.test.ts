@@ -19,7 +19,8 @@ import {
   WINDOW_MS,
   windowStart,
 } from './miss-integration-test-fixtures.ts';
-import { countMiss, prepareReadMiss } from './misses.ts';
+import { prepareReadMiss } from './misses.ts';
+import { countMiss } from './misses-test-fixtures.ts';
 import { missCounterKey } from './repo-miss-authority.ts';
 import { grantScanMembership, key } from './test-kit.ts';
 

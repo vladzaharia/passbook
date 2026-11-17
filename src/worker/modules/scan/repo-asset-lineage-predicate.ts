@@ -6,7 +6,7 @@ import { eventPassPredicate } from './repo-action-authority.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
 import type { AssetGrantGuardInput } from './repo-asset-lineage.ts';
 import { nonempty, sessionPredicate } from './repo-asset-session-authority.ts';
-import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
+import { noCredentialTombstonePrefixesSql } from './repo-credential-tombstones.ts';
 import { boundOutputPredicate } from './repo-output-predicates.ts';
 import { evaluatedPolicyPredicate, passPredicate } from './repo-pass-predicates.ts';
 
@@ -137,37 +137,14 @@ export function assetGrantPredicate(
   )
     return deniedGroups();
 
-  const refs = input.credentialTombstoneRefs;
-  const tombstones = noCredentialTombstonesSql(
-    refs,
+  // The credential the grant was scanned from may be retired by another pass's transfer, which moves
+  // none of this pass's generations; its ref prefixes ride in the grant (a pass-ID card has none).
+  const tombstones = noCredentialTombstonePrefixesSql(
+    input.credentialRefPrefixes,
     { orgIdSql: 'p.org_id', modeSql: 'p.mode' },
     snapshot.credentialKeysetCommitment,
   );
-  if (tombstones.sql === '0' || new Set(refs).size !== refs.length) return deniedGroups();
-
-  const stored = input.storedGrant;
-  if (stored !== undefined) {
-    if (
-      !stored ||
-      typeof stored.tokenHash !== 'string' ||
-      !/^[a-f0-9]{64}$/.test(stored.tokenHash) ||
-      !Number.isSafeInteger(stored.expiresAt) ||
-      stored.expiresAt <= now ||
-      typeof stored.credentialRefsJson !== 'string'
-    )
-      return deniedGroups();
-    try {
-      const storedRefs: unknown = JSON.parse(stored.credentialRefsJson);
-      if (
-        !Array.isArray(storedRefs) ||
-        storedRefs.length !== refs.length ||
-        !storedRefs.every((ref, index) => ref === refs[index])
-      )
-        return deniedGroups();
-    } catch {
-      return deniedGroups();
-    }
-  }
+  if (tombstones.sql === '0') return deniedGroups();
 
   const clauses: string[] = [];
   const params: SqlValue[] = [];
@@ -187,7 +164,7 @@ export function assetGrantPredicate(
       input.activeVersion,
       snapshot.orgRevision,
       snapshot.templateRevision,
-      { ...snapshot, credentialTombstoneRefs: refs },
+      { ...snapshot, credentialTombstoneRefs: [] },
       input.purpose,
       now,
       'active',
@@ -221,16 +198,6 @@ export function assetGrantPredicate(
         },
   );
   add(tombstones);
-  if (stored) {
-    add({
-      sql: `EXISTS (SELECT 1 FROM scan_asset_grant_provenance grant_row
-        WHERE grant_row.token_hash IS ?/* scan-ephemeral-asset-token-hash */
-          AND grant_row.org_id=p.org_id AND grant_row.mode=p.mode
-          AND grant_row.expires_at IS ? AND grant_row.expires_at>?
-          AND grant_row.credential_refs IS ?/* scan-ephemeral-asset-credential-refs */)`,
-      params: [stored.tokenHash, stored.expiresAt, now, stored.credentialRefsJson],
-    });
-  }
   const passClauseCount = clauses.length;
   const passParamCount = params.length;
   add(

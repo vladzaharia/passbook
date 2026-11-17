@@ -103,7 +103,7 @@ async function gateFixture(fixture: {
 }
 
 describe('atomic live disclosure', () => {
-  it('redeems within five post-guard D1 trips with both CSRFs and grant in each atomic final fence', async () => {
+  it('redeems within five post-guard D1 trips with both CSRFs and each atomic final fence', async () => {
     const fixture = await photoFixture();
     const candidate = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
     if (!candidate?.passJsonSnapshot) throw new Error('Missing wallet snapshot.');
@@ -123,10 +123,8 @@ describe('atomic live disclosure', () => {
       Object.assign(kit.env, { DB: original });
     }
     expect(response.status).toBe(200);
-    const acquisition = trace.trips.findIndex(
-      (trip) =>
-        trip.some(({ sql }) => sql.includes('SELECT * FROM member_photos')) &&
-        trip.some(({ sql }) => sql.includes('FROM scan_asset_grant_provenance')),
+    const acquisition = trace.trips.findIndex((trip) =>
+      trip.some(({ sql }) => sql.includes('SELECT * FROM member_photos')),
     );
     expect(acquisition).toBeGreaterThanOrEqual(0);
     expect(trace.trips.length - acquisition).toBeLessThanOrEqual(5);
@@ -146,7 +144,6 @@ describe('atomic live disclosure', () => {
       ).toBe(true);
       expect(combinedSql).toMatch(/\bpasses\b/i);
       expect(combinedSql).toContain('credential_ref_keyset');
-      expect(combinedSql).toContain('scan_asset_grant_provenance');
       expect(combinedSql).toContain('scan-ephemeral-wallet-json');
       const bound = trip.find(
         ({ sql }) =>

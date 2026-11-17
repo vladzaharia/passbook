@@ -3,8 +3,8 @@ import { countD1 } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { clearSettingsCache } from '../settings/service.ts';
-import { actorCsrfAuthorityStmt } from './actor-csrf.ts';
-import { confirmAssetGrantToken, prepareGenericAssetGrant } from './assets.ts';
+import { takeAssetGrantToken } from './asset-sidecar.ts';
+import { prepareGenericAssetGrant } from './assets.ts';
 import { lookup } from './lookup.ts';
 import {
   interceptBatches,
@@ -14,10 +14,10 @@ import {
   scannerForLookup,
   setupPhoto,
 } from './lookup-output-test-fixtures.ts';
-import { confirmedPhotoUrl, knownPhotoUrl } from './member-photo.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
+import { knownPhotoUrl, photoGrantUrl } from './member-photo.ts';
 import { candidateById } from './repo-lookup.ts';
 import { missCounterKey } from './repo-miss-authority.ts';
+import { isFinalFenceBatch } from './repo-read-grant-expiry-test-fixtures.ts';
 import { scanSecretSlots } from './repo-secret-binds.ts';
 import { foundOf } from './resolve.ts';
 
@@ -100,7 +100,7 @@ describe('lookup output authority', () => {
     }
   });
 
-  it('keeps photo and pass-view capabilities out of Found and cloneable plans until confirmed', async () => {
+  it('keeps photo and pass-view capabilities out of Found and cloneable plans', async () => {
     const pass = await setupPhoto();
     const { actor } = await scannerForLookup();
     const candidate = await candidateById(kit.env.DB, actor.orgId, pass.id);
@@ -127,46 +127,22 @@ describe('lookup output authority', () => {
     if (!photo || !generic) throw new Error('Missing grant plans');
     for (const plan of [photo.grant, generic]) {
       expect(plan).not.toHaveProperty('token');
-      expect(plan.guard).not.toHaveProperty('actor');
-      expect(plan.guard).not.toHaveProperty('source');
-      expect(plan.guard).not.toHaveProperty('recipientSession');
-      expect(plan.guard).not.toHaveProperty('sourceSession');
+      expect(plan).not.toHaveProperty('actor');
+      expect(plan).not.toHaveProperty('guard');
       expect(JSON.stringify(plan)).not.toContain('/assets/member.png?g=');
     }
-    expect(confirmedPhotoUrl(actor, pass.id, photo.grant, [])).toBeNull();
-    expect(confirmAssetGrantToken(generic, [])).toBeNull();
-    const csrfStmt = actorCsrfAuthorityStmt(kit.env.DB, actor);
-    if (!csrfStmt) throw new Error('Missing scanner CSRF statement');
-    const csrf = await csrfStmt.all();
-    const genericInsert = await prepareAssetGrantInsertion(
-      kit.ctx,
-      generic,
-      { recipient: csrf },
-      candidate,
-    );
-    const genericResults = await kit.env.DB.batch(genericInsert(kit.clock.now(), undefined));
-    expect(confirmAssetGrantToken(structuredClone(generic), genericResults)).toBeNull();
-    expect(confirmedPhotoUrl(actor, pass.id, photo.grant, genericResults)).toBeNull();
-    const token = confirmAssetGrantToken(generic, genericResults);
-    if (!token) throw new Error('Generic grant was not confirmed');
-    expect(token).toMatch(/^[A-Za-z0-9_-]{54}$/);
+    const token = takeAssetGrantToken(generic);
+    if (!token) throw new Error('Generic grant has no token');
+    expect(token).toMatch(/^[A-Za-z0-9_-]{51,83}$/);
     expect(JSON.stringify(generic)).not.toContain(token);
+    expect(JSON.stringify(structuredClone(generic))).not.toContain(token);
     expect(JSON.stringify(found)).not.toContain(token);
-    const photoInsert = await prepareAssetGrantInsertion(
-      kit.ctx,
-      photo.grant,
-      { recipient: csrf },
-      candidate,
-    );
-    const photoResults = await kit.env.DB.batch(photoInsert(kit.clock.now(), undefined));
-    expect(
-      confirmedPhotoUrl(actor, pass.id, structuredClone(photo.grant), photoResults),
-    ).toBeNull();
-    expect(
-      confirmedPhotoUrl({ ...actor, orgId: 'other-org' }, pass.id, photo.grant, photoResults),
-    ).toBeNull();
-    expect(confirmedPhotoUrl(actor, `${pass.id}-other`, photo.grant, photoResults)).toBeNull();
-    expect(confirmedPhotoUrl(actor, pass.id, photo.grant, photoResults)).toContain(
+    // A clone is not the plan: it carries no capability, and the URL goes only to its recipient.
+    expect(takeAssetGrantToken(structuredClone(generic))).toBeNull();
+    expect(photoGrantUrl(actor, pass.id, structuredClone(photo.grant))).toBeNull();
+    expect(photoGrantUrl({ ...actor, orgId: 'other-org' }, pass.id, photo.grant)).toBeNull();
+    expect(photoGrantUrl(actor, `${pass.id}-other`, photo.grant)).toBeNull();
+    expect(photoGrantUrl(actor, pass.id, photo.grant)).toContain(
       `/passes/${pass.id}/assets/member.png?g=`,
     );
   });
@@ -217,10 +193,7 @@ describe('lookup output authority', () => {
     const real = kit.env.DB;
     let removed = false;
     const { db } = interceptBatches(real, async (sql) => {
-      if (
-        !removed &&
-        sql.some((text) => text.includes('INSERT OR IGNORE INTO scan_asset_grant_provenance'))
-      ) {
+      if (!removed && isFinalFenceBatch(sql)) {
         removed = true;
         await run(real, 'DELETE FROM member_photos WHERE pass_id=?', [pass.id]);
       }
@@ -239,10 +212,7 @@ describe('lookup output authority', () => {
     const real = kit.env.DB;
     let changed = false;
     const { db } = interceptBatches(real, async (sql) => {
-      if (
-        !changed &&
-        sql.some((text) => text.includes('INSERT OR IGNORE INTO scan_asset_grant_provenance'))
-      ) {
+      if (!changed && isFinalFenceBatch(sql)) {
         changed = true;
         await run(real, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
           'rotated-csrf-secret',
@@ -254,11 +224,6 @@ describe('lookup output authority', () => {
     overrideDeps(ctx.env, depsOf(kit.env));
     expect(await lookup(ctx, actor, pass.id)).toEqual({ items: [], more: false });
     expect(changed).toBe(true);
-    expect(
-      await first(real, 'SELECT token_hash FROM scan_asset_grant_provenance WHERE org_id=?', [
-        kit.org.id,
-      ]),
-    ).toBeNull();
     const window = kit.clock.now() - (kit.clock.now() % 600_000);
     expect(
       await first(real, 'SELECT count FROM counters WHERE key=? AND window_start=?', [

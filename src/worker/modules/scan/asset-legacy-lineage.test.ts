@@ -102,18 +102,21 @@ describe('legacy scanner asset lineage', () => {
       templateId,
       version: template.version,
     });
-    await expect(
-      mintAssetGrant(
-        kit.ctx,
-        actor,
-        candidate,
-        candidate.connectionGeneration,
-        candidate.activeTemplateVersion,
-        undefined,
-        false,
-        'commit',
-      ),
-    ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
+    const stale = await mintAssetGrant(
+      kit.ctx,
+      actor,
+      candidate,
+      candidate.connectionGeneration,
+      candidate.activeTemplateVersion,
+      undefined,
+      false,
+      'commit',
+    );
+    const staleResponse = await kit.get(
+      scanner.headers,
+      `/passes/${pass.id}/assets/icon.png?g=${stale}`,
+    );
+    expect(staleResponse.status).toBe(404);
     const oldResponse = await kit.get(
       scanner.headers,
       `/passes/${pass.id}/assets/icon.png?g=${grant}`,
@@ -193,7 +196,7 @@ describe('legacy scanner asset lineage', () => {
 
   // Archived templates keep their passes: with no usable head a legacy pass keeps its own lineage.
   it('keeps a legacy pass of an archived template on its own lineage until the template is deleted', async () => {
-    const { templateId, template, pass, actor } = await legacyPass();
+    const { templateId, template, pass, scanner, actor } = await legacyPass();
     await approveAppleRelease(kit, {
       orgId: kit.org.id,
       mode: 'live',
@@ -227,8 +230,14 @@ describe('legacy scanner asset lineage', () => {
         false,
         'commit',
       );
-    expect(await mint()).toMatch(/^[A-Za-z0-9_-]{54}$/);
+    const token = await mint();
+    expect(token).toMatch(/^[A-Za-z0-9_-]{51,83}$/);
+    const image = (grant: string) =>
+      kit.get(scanner.headers, `/passes/${pass.id}/assets/icon.png?g=${grant}`);
+    expect((await image(token)).status).toBe(200);
     await setTemplateStatus(kit.env.DB, templateId, 'deleted', kit.clock.now());
-    await expect(mint()).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
+    // Deleting the template stops its passes: neither the old nor a fresh grant redeems.
+    expect((await image(token)).status).toBe(404);
+    expect((await image(await mint())).status).toBe(404);
   });
 });

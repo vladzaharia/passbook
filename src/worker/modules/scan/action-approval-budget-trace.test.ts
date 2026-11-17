@@ -145,9 +145,8 @@ describe('approval action D1 budget and original scalar authority', () => {
         `/passes/${pass.id}/assets/member.png?g=`,
       );
       expect(JSON.stringify(result.display)).toContain('Check in');
-      // Five for the scan; the photo grant is decoration in one batch after the commit (PIN refund too);
-      // the photo rebuild reads the blueprint art hashes once (branding warnings).
-      expect(counted.count() - guard).toBeLessThanOrEqual(7);
+      // Five for the scan: the photo capability is stateless and the PIN refund rides in the commit grant.
+      expect(counted.count() - guard).toBeLessThanOrEqual(5);
 
       for (const { values } of trace.batches.flat()) expect(values).not.toContain(manager.pin);
       expect(JSON.stringify(result)).not.toContain(hashRow.pin_hash);
