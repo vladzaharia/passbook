@@ -186,7 +186,9 @@ describe('event-time scanner disclosure', () => {
     );
   });
 
-  it('does not let an admin/staff actor leak a manager-only value into lower-role text', async () => {
+  it('decides by source, not by wording: a manager-only title stays manager-only', async () => {
+    // The action and scanner names are authored, so sharing a word with a manager-only value
+    // ("Roof Lounge") hides nothing. The title reads that input, so lower roles lose it.
     const action: ScanAction = { ...PUBLIC_ACTION, label: 'Use Roof Lounge' };
     const sample = fixture({ action, scannerName: 'Entry Roof Lounge', title: '{{lounge}}' });
     sample.actor.staff = { role: 'manager' } as ScanActor['staff'];
@@ -197,10 +199,13 @@ describe('event-time scanner disclosure', () => {
       sample.action,
       'scan-1',
     );
-    expect(projection.roles.door).toEqual({ action: null, scannerNameHash: null, titleHash: null });
-    expect(projection.roles.desk).toEqual({ action: null, scannerNameHash: null, titleHash: null });
+    for (const role of ['door', 'desk'] as const) {
+      expect(projection.roles[role]?.action?.kind).toBe('check_in');
+      expect(projection.roles[role]?.scannerNameHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(projection.roles[role]?.titleHash).toBeNull();
+    }
     const manager = projection.roles.manager!;
-    expect(manager.action?.kind).toBe('check_in');
+    expect(manager.titleHash).toMatch(/^[0-9a-f]{64}$/);
     expect(
       await verifyEventActionLabelHash(env, {
         orgId: 'org-1',
@@ -235,11 +240,16 @@ describe('event-time scanner disclosure', () => {
       eventSafeProjection(drift.found, drift.actor, drift.action).roles.manager?.action,
     ).toBeNull();
     const active = fixture({
-      activeAction: { ...PUBLIC_ACTION, label: 'Private PRIVATE-NOTE-FOUND' },
+      activeAction: { ...PUBLIC_ACTION, label: 'Private BARCODE-PRIVATE' },
     });
     expect(
       eventSafeProjection(active.found, active.actor, active.action).roles.manager?.action,
     ).toBeNull();
+    // Positive control: the same shape of label without a secret is kept.
+    const plain = fixture({ action: { ...PUBLIC_ACTION, label: 'Private entry' } });
+    expect(
+      eventSafeProjection(plain.found, plain.actor, plain.action).roles.manager?.action,
+    ).toEqual(visible);
     const forged = fixture();
     expect(
       eventSafeProjection(forged.found, forged.actor, { ...forged.action, label: 'Changed' }).roles
@@ -247,25 +257,25 @@ describe('event-time scanner disclosure', () => {
     ).toBeNull();
   });
 
-  it('does not persist an action id copied from a visible input or opaque Wallet data', () => {
-    const sample = fixture({ action: { ...PUBLIC_ACTION, id: 'silver' } });
-    sample.found.pass.personalization.tier = 'silver';
-    sample.found.versionPersonalization = JSON.stringify({ ...personalization, tier: 'silver' });
-    expect(
-      eventSafeProjection(sample.found, sample.actor, sample.action).roles.manager?.action,
-    ).toBeNull();
+  it('does not persist an action id copied from opaque Wallet data', () => {
     const opaque = fixture({ action: { ...PUBLIC_ACTION, id: 'raw_wallet_identifier' } });
     opaque.found.passJson.userInfo = { nested: { external: 'raw_wallet_identifier' } };
     expect(
       eventSafeProjection(opaque.found, opaque.actor, opaque.action).roles.manager?.action,
     ).toBeNull();
+    // An id that merely equals a visible input value is authored text, not a copy of it.
+    const sample = fixture({ action: { ...PUBLIC_ACTION, id: 'silver' } });
+    sample.found.pass.personalization.tier = 'silver';
+    expect(
+      eventSafeProjection(sample.found, sample.actor, sample.action).roles.manager?.action,
+    ).toEqual(visible);
   });
 
   it.each([
     'BARCODE-PRIVATE',
     'prefix BARCODE-PRIVATE suffix',
     'prefix AUTH-PRIVATE-111 suffix',
-    'prefix PRIVATE-NOTE-FOUND suffix',
+    'prefix SCAN-PRIVATE suffix',
   ])('never persists a label containing protected data: %s', (label) => {
     const sample = fixture({ action: { ...PUBLIC_ACTION, label } });
     const projection = eventSafeProjection(sample.found, sample.actor, sample.action);
@@ -273,17 +283,20 @@ describe('event-time scanner disclosure', () => {
     expect(JSON.stringify(projection)).not.toContain(label);
   });
 
-  it('checks denied values from the bounded Wallet personalization as well as the current pass', () => {
-    const sample = fixture({ action: { ...PUBLIC_ACTION, label: 'Old WALLET-PRIVATE-NOTE' } });
-    sample.found.versionPersonalization = JSON.stringify({
-      ...personalization,
-      privateNote: 'WALLET-PRIVATE-NOTE',
-    });
+  it('checks the Wallet row as well as the current pass for secrets', () => {
+    const sample = fixture({ action: { ...PUBLIC_ACTION, label: 'Old WALLET-AUTH-SECRET' } });
+    sample.found.passJson.authenticationToken = 'WALLET-AUTH-SECRET';
     expect(
       Object.values(eventSafeProjection(sample.found, sample.actor, sample.action).roles).every(
         (value) => value?.action === null,
       ),
     ).toBe(true);
+    // Positive control: a manager-only input's value is not a secret; provenance, not a match,
+    // decides who reads it.
+    const lounge = fixture({ action: { ...PUBLIC_ACTION, label: 'Old Roof Lounge' } });
+    expect(
+      eventSafeProjection(lounge.found, lounge.actor, lounge.action).roles.manager?.action,
+    ).toEqual(visible);
   });
 
   it('returns a minimal projection without Found or with an invalid actor/policy', () => {
@@ -297,7 +310,7 @@ describe('event-time scanner disclosure', () => {
     expect(eventSafeProjection(sample.found, sample.actor, sample.action)).toEqual(minimal);
   });
 
-  it('retains safe actions with optional or different Wallet personalization and protects unknown leaves', async () => {
+  it('retains safe actions with optional or different Wallet personalization', async () => {
     const sample = fixture();
     for (const value of [null, '{bad', '[]', 'null']) {
       sample.found.versionPersonalization = value;
@@ -316,7 +329,7 @@ describe('event-time scanner disclosure', () => {
     );
     expect(projection.roles.manager?.action?.kind).toBe('check_in');
     expect(projection.roles.manager?.scannerNameHash).toMatch(/^[0-9a-f]{64}$/);
-    expect(projection.roles.manager?.titleHash).toBeNull();
+    expect(projection.roles.manager?.titleHash).toMatch(/^[0-9a-f]{64}$/);
     const publicDescription = fixture({ action: { ...PUBLIC_ACTION, label: 'Ticket' } });
     expect(
       eventSafeProjection(
@@ -358,17 +371,19 @@ describe('Wallet values in scanner privacy predicates', () => {
       'prefix <hidden&value> suffix',
       'prefix &lt;hidden&amp;value&gt; suffix',
       `prefix ${encodeURIComponent('<hidden&value>')} suffix`,
-      'prefix xyz suffix',
     ]) {
-      expect(scanValueSafe(found, value, actor)).toBe(false);
+      expect(scanValueSafe(found, value)).toBe(false);
       expect(policy.safe(value)).toBe(false);
     }
-    expect(scanValueSafe(found, 'General entry', actor)).toBe(true);
+    expect(scanValueSafe(found, 'General entry')).toBe(true);
     expect(policy.safe('General entry')).toBe(true);
+    // A Wallet value shorter than 6 characters is not a secret: it would collide with ordinary text.
+    expect(scanValueSafe(found, 'prefix xyz suffix')).toBe(true);
+    expect(policy.safe('prefix xyz suffix')).toBe(true);
     // Opaque Wallet numbers and booleans protect their spelling in strings, not unrelated scalars.
-    expect(scanValueSafe(found, 42, actor)).toBe(true);
+    expect(scanValueSafe(found, 42)).toBe(true);
     expect(policy.safe(42)).toBe(true);
-    expect(scanValueSafe(found, true, actor)).toBe(true);
+    expect(scanValueSafe(found, true)).toBe(true);
     expect(policy.safe(true)).toBe(true);
   });
 
@@ -394,7 +409,7 @@ describe('Wallet values in scanner privacy predicates', () => {
     expect(JSON.stringify(projection)).not.toContain('NFC-SECRET');
   });
 
-  it('rejects opaque Wallet metadata without blocking source-authorized display fields', async () => {
+  it('does not treat unknown Wallet field metadata as a secret or a display source', async () => {
     const sample = fixture({
       action: { ...PUBLIC_ACTION, label: 'Use opaque-private-value' },
       scannerName: 'Gate opaque-private-value',
@@ -412,18 +427,18 @@ describe('Wallet values in scanner privacy predicates', () => {
       sample.action,
       'scan-1',
     );
-    expect(projection.roles.manager?.action).toBeNull();
-    expect(projection.roles.manager?.scannerNameHash).toBeNull();
+    expect(projection.roles.manager?.action?.kind).toBe('check_in');
+    expect(projection.roles.manager?.scannerNameHash).toMatch(/^[0-9a-f]{64}$/);
     expect(projection.roles.manager?.titleHash).toMatch(/^[0-9a-f]{64}$/);
     expect(JSON.stringify(projection)).not.toContain('opaque-private-value');
     expect(JSON.stringify(projection)).not.toContain('Morgan Rider');
   });
 
-  it('keeps an action visible when its label shares a word with a field label, but not with a field value', async () => {
+  it('keeps an action visible when its label shares a word with a field, but not when it holds the barcode', async () => {
     const sample = fixture({ action: { ...PUBLIC_ACTION, label: 'Add Points' } });
     sample.found.versionPersonalization = null;
     sample.found.passJson.storeCard = {
-      primaryFields: [{ key: 'balance', label: 'Points', value: '120 credits' }],
+      primaryFields: [{ key: 'balance', label: 'Points', value: 'Add Points' }],
     };
     const shared = await eventSafeProjectionWithCommitments(
       env,
@@ -433,20 +448,29 @@ describe('Wallet values in scanner privacy predicates', () => {
       'scan-1',
     );
     expect(shared.roles.manager?.action).not.toBeNull();
-    sample.found.passJson.storeCard = {
-      primaryFields: [{ key: 'balance', label: 'Points', value: 'Add Points' }],
-    };
+    const barcode = fixture({ action: { ...PUBLIC_ACTION, label: 'Add BARCODE-PRIVATE' } });
+    barcode.found.versionPersonalization = null;
     const copied = await eventSafeProjectionWithCommitments(
       env,
-      sample.found,
-      sample.actor,
-      sample.action,
+      barcode.found,
+      barcode.actor,
+      barcode.action,
       'scan-1',
     );
     expect(copied.roles.manager?.action).toBeNull();
   });
 
-  it('does not commit a scanner name copied from a Wallet field while allowing a source-authorized title', async () => {
+  it('does not commit a scanner name holding a secret, and keeps an ordinary one beside the title', async () => {
+    const secret = fixture({ scannerName: 'Gate BARCODE-PRIVATE' });
+    const blocked = await eventSafeProjectionWithCommitments(
+      env,
+      secret.found,
+      secret.actor,
+      secret.action,
+      'scan-1',
+    );
+    expect(blocked.roles.manager?.scannerNameHash).toBeNull();
+    expect(blocked.roles.manager?.titleHash).toMatch(/^[0-9a-f]{64}$/);
     const sample = fixture({ scannerName: 'Morgan Rider' });
     sample.found.passJson.generic = {
       primaryFields: [{ key: 'name', value: 'Morgan Rider' }],
@@ -458,7 +482,7 @@ describe('Wallet values in scanner privacy predicates', () => {
       sample.action,
       'scan-1',
     );
-    expect(projection.roles.manager?.scannerNameHash).toBeNull();
+    expect(projection.roles.manager?.scannerNameHash).toMatch(/^[0-9a-f]{64}$/);
     expect(projection.roles.manager?.titleHash).toMatch(/^[0-9a-f]{64}$/);
     expect(JSON.stringify(projection)).not.toContain('Morgan Rider');
   });

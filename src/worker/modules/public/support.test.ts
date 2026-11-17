@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { saveOrgSettings } from '../../../../test/helpers/index.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { backContactsFor, passServiceText, withBackContacts } from '../passes/contacts.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
-import { updateSettings } from '../settings/service.ts';
 import { supportContacts } from './service.ts';
 
 let kit: Kit;
@@ -44,10 +44,11 @@ describe('PassBook support', () => {
       url: null,
       platform: true,
     });
-    await updateSettings(
-      kit.ctx,
-      { type: 'user', id: 'admin-1' },
-      { scope: `org:${kit.org.id}`, values: { 'support.email': 'help@acme.test' } },
+    await saveOrgSettings(
+      kit.ctx.env.DB,
+      kit.org.id,
+      { 'support.email': 'help@acme.test' },
+      kit.ctx.clock.now(),
     );
     expect(await supportContacts(kit.ctx, kit.org.id)).toEqual({
       email: 'help@acme.test',

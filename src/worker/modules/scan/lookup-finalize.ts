@@ -16,6 +16,11 @@ import {
 } from './repo-lookup-finalize.ts';
 import { type OutputAuthority, outputAuthorityPredicate } from './repo-output-authority.ts';
 import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
+import {
+  capturedReleaseId,
+  headReleasesStmt,
+  passChanged,
+} from './repo-resolve-outcome-current.ts';
 
 export async function finalizeLookup(
   ctx: ServiceContext,
@@ -127,6 +132,14 @@ export async function finalizeLookup(
     : null;
   const actorIndex = statements.length;
   statements.push(actorFence, ...(miss?.stmts ?? []));
+  const headIndex = statements.length;
+  statements.push(
+    headReleasesStmt(
+      db,
+      actor.orgId,
+      entries.map((entry) => entry.source.pass.id),
+    ),
+  );
   let results: D1Result<Record<string, unknown>>[];
   try {
     results = await db.batch<Record<string, unknown>>(statements);
@@ -135,11 +148,10 @@ export async function finalizeLookup(
     throw error;
   }
   if (results[actorIndex]?.results?.[0]?.authorized !== 1) return null;
-  const missStatus = miss
-    ? miss.result(results.slice(actorIndex + 1, actorIndex + 1 + miss.stmts.length))
-    : null;
+  const missStatus = miss ? miss.result(results.slice(actorIndex + 1, headIndex)) : null;
   if (miss && missStatus) miss.throwIfCapped(missStatus);
   const visible: LookupEntry[] = [];
+  const lost: Candidate[] = [];
   let at = 0;
   for (const [index, entry] of entries.entries()) {
     const authorized = results[at++]?.results?.[0]?.authorized === 1;
@@ -153,7 +165,10 @@ export async function finalizeLookup(
     const photo = plan.photo;
     const photoResults = results.slice(at, at + photo.length);
     at += photo.length;
-    if (!authorized) continue;
+    if (!authorized) {
+      lost.push(entry.source);
+      continue;
+    }
     entry.item.lastScanAt = historyCurrent ? entry.item.lastScanAt : null;
     entry.item.photoUrl =
       photo.length && entry.photoGrant
@@ -161,6 +176,15 @@ export async function finalizeLookup(
         : null;
     visible.push(entry);
   }
+  // A release that changed how the pass is used is a real race, not an absent pass.
+  const heads = new Map(
+    ((results[headIndex]?.results ?? []) as { id: string; releaseId: string | null }[]).map(
+      (row) => [row.id, row.releaseId],
+    ),
+  );
+  for (const source of lost)
+    if (heads.has(source.pass.id) && heads.get(source.pass.id) !== capturedReleaseId(source))
+      throw passChanged();
   if (visible.length === 0 && (entries.length > 0 || missStatus === 'not_committed')) return null;
   return visible;
 }

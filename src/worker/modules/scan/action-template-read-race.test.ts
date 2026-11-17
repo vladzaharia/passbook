@@ -296,7 +296,8 @@ describe('captured action template reads at the final CAS', () => {
         ).toEqual({ status: 'archived' });
       } else {
         const current = await candidateById(kit.env.DB, kit.org.id, f.pass.id);
-        expect(current?.templateSnapshot?.raw).not.toBe(original.templateSnapshot.raw);
+        // A same-version head leaves the captured template unchanged: it is not counted.
+        expect(current?.templateSnapshot?.raw).toBe(original.templateSnapshot.raw);
         expect(current?.activeTemplateVersion).toBe('v1');
         expect(current?.activeReleaseId).not.toBe(original.activeReleaseId);
       }

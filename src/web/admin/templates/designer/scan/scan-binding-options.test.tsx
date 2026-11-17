@@ -72,7 +72,8 @@ describe('scan binding fields', () => {
     expect(safeScanExpression('{{inputs.quantity|html}}', available)).toBe(false);
     expect(safeScanExpression('{{inputs.quantity', available)).toBe(false);
     expect(safeScanExpression('Contact person@example.test', available)).toBe(false);
-    expect(safeScanExpression('+1 212 555 0199', available)).toBe(false);
+    // Digits are not judged: the scanner shows them, so the preview does too.
+    expect(safeScanExpression('+1 212 555 0199', available)).toBe(true);
     expect(safeScanExpression('{"private":"data"}', available)).toBe(false);
     expect(safeScanExpression('{{inputs.quantity}}'.repeat(9), available)).toBe(false);
   });

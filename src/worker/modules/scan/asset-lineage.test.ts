@@ -1,8 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { ScannerFixture } from '../../../../test/helpers/index.ts';
+import {
+  type ScannerFixture,
+  setOrgBranding,
+  setOrgStatus,
+} from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { setOrgBranding, setOrgStatus } from '../orgs/repo.ts';
 import { deleteMemberPhoto, putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { setTemplateStatus } from '../templates/testing.ts';

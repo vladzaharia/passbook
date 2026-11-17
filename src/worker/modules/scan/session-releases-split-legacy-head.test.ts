@@ -15,7 +15,7 @@ import {
 import { setupScanKit } from './test-kit.ts';
 
 describe('scanner session approved releases', () => {
-  it('does not fall back to a legacy pin when an ineligible release is the latest history', async () => {
+  it('keeps a legacy pin when an ineligible release is the latest history', async () => {
     const kit = await setupScanKit();
     const { id, pinned } = await legacyVersions(kit);
     await legacyPass(kit, pinned);
@@ -113,7 +113,7 @@ describe('scanner session approved releases', () => {
               deviceRole,
               settings: { acceptAllTemplates: true },
             });
-      // With no eligible head the scope uses the latest release in scope, never the legacy pin.
+      // With no eligible head a legacy pass is used under its own pin, so the session shows the pin.
       const result = await session(kit, device.headers);
       expect(result).toMatchObject({
         state: 'ready',
@@ -121,9 +121,9 @@ describe('scanner session approved releases', () => {
         scanner: { id: device.id, orgId: kit.org.id, mode: 'live', deviceRole },
       });
       expect(result.templates).toEqual(
-        deviceRole === 'scan' ? [expect.objectContaining({ id, name: 'Unapproved draft' })] : [],
+        deviceRole === 'scan' ? [expect.objectContaining({ id, name: 'Legacy version' })] : [],
       );
-      expect(JSON.stringify(result)).not.toContain('Legacy version');
+      expect(JSON.stringify(result)).not.toContain('Unapproved draft');
     }
   });
 

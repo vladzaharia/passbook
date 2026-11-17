@@ -7,8 +7,7 @@ import { createDisplayFixture, ctx } from './display-split-fixture.ts';
 const { fixture, inputOf } = createDisplayFixture();
 
 describe('scan display photo URL', () => {
-  // A UUIDv7 pass id with two all-digit groups ("-7134-8435-") matches the privacy filter's
-  // phone-number pattern; the URL is server-built, so the filter must not drop it.
+  // Digit runs in a server-built URL (UUIDv7 groups, org and setup ids) are not contact data.
   it.each([
     '/api/v1/scan/passes/01a1cb28-5eef-7134-8435-08a2d8a1361f/assets/member.png?g=abc',
     '/api/v1/scan/passes/01a1cb2a-1a16-7671-8928-1a566ce95b23/assets/member.png?g=abc',
@@ -33,7 +32,7 @@ describe('scan display photo URL', () => {
 
   it.each([
     'https://evil.example/api/v1/scan/passes/p1/assets/member.png?g=abc',
-    '/api/v1/scan/passes/p1/assets/member.png?g=abc&x=1',
+    '/api/v1/scan/passes/p1/assets/member.png?g=a<b>',
     '/elsewhere/member.png?g=abc',
   ])('drops a photo URL that is not ours: %s', (photoUrl) => {
     const found = fixture();

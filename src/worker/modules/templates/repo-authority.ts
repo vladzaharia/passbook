@@ -70,7 +70,7 @@ function deferredPredicate(
       authority.membershipId,
       authority.orgId,
       authority.userId,
-      ...orgEpochParams(authority.orgUpdatedAt),
+      ...orgEpochParams(authority.orgAccessRevision),
       JSON.stringify(rolesGranting(authority.capability)),
     ],
   };

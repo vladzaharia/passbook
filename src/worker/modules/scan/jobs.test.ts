@@ -11,7 +11,8 @@ import { registerReconcileHolderCases } from './repo-jobs-reconcile-holder-cases
 import { registerReconcilePresenceCases } from './repo-jobs-reconcile-presence-cases-fixtures.ts';
 import { registerReconcileRaceCases } from './repo-jobs-reconcile-race-cases-fixtures.ts';
 import { DAY, kit, registerJobsFixture, scanners, tpl } from './repo-jobs-test-fixtures.ts';
-import { claimScan, reopenScan } from './repo-scans.ts';
+import { reopenScan } from './repo-scans.ts';
+import { claimScan } from './repo-scans-test-support.ts';
 import { codeOf, key, makeLegacyScanPass } from './test-kit.ts';
 
 registerJobsFixture();

@@ -1,5 +1,6 @@
 import { grantedBatch } from '../../platform/authority.ts';
 import { type Check, rowIs } from '../../platform/authority-checks.ts';
+import { writePart } from '../../platform/authority-include.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -10,7 +11,7 @@ import {
   importMatches,
   sharedCloneSource,
 } from './repo-grant-checks.ts';
-import { grantRow, inGrant, templateGrant, templateGrants } from './repo-grants.ts';
+import { templateGrant, templateGrants } from './repo-grants.ts';
 
 const CODES = {
   lineage: 'TEMPLATE_VERSION_CONFLICT',
@@ -31,7 +32,7 @@ export async function versionIsRetired(
   return !!row;
 }
 
-/** Row written by the version insert as read back inside the batch, to verify immutable content. */
+/** The stored version row, read back to verify immutable content. */
 export interface CommittedVersion {
   version: string | null;
   build_key: string | null;
@@ -137,23 +138,21 @@ export async function writeVersion(
       { returning: ['id'] },
     );
   const insertIndex = plan.isNew ? 1 : 0;
-  const gate = grantRow(writer);
   const content: SqlValue[] = [
     JSON.stringify(body.manifest),
     JSON.stringify(body.passJson),
     JSON.stringify(body.assets),
     JSON.stringify(body.report),
   ];
-  writer.add(
-    inGrant(
-      writer,
+  writer.include(
+    writePart(
       `INSERT INTO template_versions
          (template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at)
        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
        WHERE EXISTS (SELECT 1 FROM templates WHERE id = ?)
          AND NOT EXISTS (SELECT 1 FROM template_versions WHERE template_id = ? AND version = ?)
          AND NOT EXISTS (SELECT 1 FROM template_version_tombstones WHERE template_id = ? AND version = ?)
-         AND ${gate.sql}
+         AND {grant}
        RETURNING version`,
       [
         plan.templateId,
@@ -167,22 +166,18 @@ export async function writeVersion(
         body.version,
         plan.templateId,
         body.version,
-        ...gate.params,
       ],
     ),
   );
-  writer.add(
-    inGrant(
-      writer,
-      `SELECT v.version, v.build_key, v.manifest, v.pass_json, v.assets, v.report
-       FROM templates LEFT JOIN template_versions v ON v.template_id = templates.id AND v.version = ?
-       WHERE templates.id = ?`,
-      [body.version, plan.templateId],
-    ),
-  );
   const results = (await grantedBatch(ctx.env.DB, all)).at(-1) ?? [];
+  const stored = await first<CommittedVersion>(
+    ctx.env.DB,
+    `SELECT version, build_key, manifest, pass_json, assets, report
+     FROM template_versions WHERE template_id = ? AND version = ?`,
+    [plan.templateId, body.version],
+  );
   return {
     created: (results[insertIndex]?.results.length ?? 0) > 0,
-    stored: results[insertIndex + 1]?.results[0] as CommittedVersion | undefined,
+    stored: stored ?? undefined,
   };
 }

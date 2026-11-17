@@ -1,6 +1,7 @@
 import { exprReferences } from '@/passkit/template/expr.ts';
 import { condPaths } from '@/passkit/template/scan-display/condition.ts';
 import { PRESETS } from '@/passkit/template/scan-display/presets.ts';
+import { isPrivateName } from '@/passkit/template/scan-display/privacy.ts';
 import type {
   ScanChipDoc,
   ScanDisplayDoc,
@@ -20,7 +21,6 @@ import {
   previewManifest,
   previewPassFields,
   previewSecrets,
-  privatePreviewKey,
   safePreviewText,
 } from './scan-preview-policy.ts';
 
@@ -56,8 +56,7 @@ const typedPass = (doc: DesignDoc) => previewPassFields(doc);
 function bindingDoc(doc: DesignDoc): DesignDoc {
   const manifest = typedManifest(doc);
   const denied = previewSecrets(manifest);
-  for (const name of Object.keys(inputProps(manifest)))
-    if (privatePreviewKey(name)) denied.add(name);
+  for (const name of Object.keys(inputProps(manifest))) if (isPrivateName(name)) denied.add(name);
   const deniedFields = new Set(denied);
   for (const binding of manifest.bindings) {
     if (

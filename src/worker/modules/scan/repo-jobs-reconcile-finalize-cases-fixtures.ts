@@ -5,13 +5,12 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { reconcileScans } from './jobs.ts';
 import { gate, kit, pending, scanners, tpl } from './repo-jobs-test-fixtures.ts';
 import {
-  finalizeStmt,
-  ledgerIfFinalizedStmt,
   markScanEffectIntentStmt,
   quarantineGateClaimStmt,
   releaseClaimStmt,
   reopenScan,
 } from './repo-scans.ts';
+import { finalizeStmt, ledgerIfFinalizedStmt } from './repo-scans-test-support.ts';
 
 export function registerReconcileFinalizeCases() {
   it('allows an atomic finalized outcome to replace the pending effect intent', async () => {

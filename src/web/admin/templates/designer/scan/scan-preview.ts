@@ -8,6 +8,7 @@ import {
   titlesOf,
   titleTwoLines,
 } from '@/passkit/template/scan-display/density.ts';
+import { isPrivateName } from '@/passkit/template/scan-display/privacy.ts';
 import {
   type RenderScanDisplayOptions,
   renderScanDisplay,
@@ -27,7 +28,6 @@ import {
   previewManifest,
   previewPassFields,
   privateExpression,
-  privatePreviewKey,
   safePreviewText,
 } from './scan-preview-policy.ts';
 
@@ -49,8 +49,7 @@ export function syntheticScope(
   const safeProps = Object.fromEntries(
     Object.entries(policy.props)
       .filter(
-        ([key, schema]) =>
-          !privatePreviewKey(key) && inputVisibleTo(key, schema, role, policy.secrets),
+        ([key, schema]) => !isPrivateName(key) && inputVisibleTo(key, schema, role, policy.secrets),
       )
       .map(([key, schema]) => {
         const copy = { ...schema };
@@ -104,7 +103,7 @@ export function syntheticScope(
       const value = clean(evaluate(binding.value, { input: inputs, lookups }), policy.deniedKeys);
       if (value === undefined || (typeof value === 'object' && value !== null)) continue;
       for (const key of [binding.to.field].flat())
-        if (!hidden.has(key) && !privatePreviewKey(key)) fields[key] = value;
+        if (!hidden.has(key) && !isPrivateName(key)) fields[key] = value;
     } catch {
       /* An incomplete binding is reported by validation, not painted. */
     }
@@ -174,7 +173,7 @@ export function safeRealScope(
     if (
       key === 'inputs' ||
       key === 'pass' ||
-      privatePreviewKey(key) ||
+      isPrivateName(key) ||
       policy.deniedKeys.has(key) ||
       !safePreviewText(key)
     )
