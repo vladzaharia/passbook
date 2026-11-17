@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -288,7 +289,7 @@ describe('auth', () => {
   it('enforces CSRF on admin writes', async () => {
     const { 'x-csrf-token': _drop, ...noCsrf } = admin;
     const res = await call(`/${templateId}`, { method: 'DELETE' }, noCsrf);
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'CSRF_TOKEN');
     expect(
       await first(env.DB, 'SELECT id FROM templates WHERE id = ?', [templateId]),
     ).not.toBeNull();
@@ -320,13 +321,17 @@ describe('tenant scoping', () => {
     expect(keyPreviews.status).toBe(200);
     const keyPreviewBody = (await keyPreviews.json()) as { items: { id: string }[] };
     expect(keyPreviewBody.items.map((item) => item.id)).toContain(templateId);
-    expect((await call(`/${templateId}`, {}, other)).status).toBe(404);
-    expect((await call(`/${templateId}/versions/${version}`, {}, other)).status).toBe(404);
+    await expectProblem(await call(`/${templateId}`, {}, other), 404, 'TEMPLATE_NOT_FOUND');
+    await expectProblem(
+      await call(`/${templateId}/versions/${version}`, {}, other),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
     expect(
       (await call(`/${templateId}/versions/${version}/assets/icon.png`, {}, other)).status,
     ).toBe(404);
-    expect((await call(`/${templateId}/package`, {}, other)).status).toBe(404);
-    expect((await call(`?orgId=${org.id}`, {}, other)).status).toBe(403);
+    await expectProblem(await call(`/${templateId}/package`, {}, other), 404, 'TEMPLATE_NOT_FOUND');
+    await expectProblem(await call(`?orgId=${org.id}`, {}, other), 403, 'ORG_FORBIDDEN');
     expect((await call('/baked:starter-generic', {}, other)).status).toBe(200);
   });
 
@@ -347,8 +352,8 @@ describe('tenant scoping', () => {
     const noScope = auth.apiKey({ orgId: org.id, scopes: ['passes:read'] });
     const other = auth.apiKey({ orgId: otherOrg.id, scopes: ['templates:read'] });
     expect((await call(`/uploads/${r.p.uploadId}`, {}, mine)).status).toBe(200);
-    expect((await call(`/uploads/${r.p.uploadId}`, {}, noScope)).status).toBe(403);
-    expect((await call(`/uploads/${r.p.uploadId}`, {}, other)).status).toBe(404);
+    await expectProblem(await call(`/uploads/${r.p.uploadId}`, {}, noScope), 403, 'MISSING_SCOPE');
+    await expectProblem(await call(`/uploads/${r.p.uploadId}`, {}, other), 404, 'UPLOAD_NOT_FOUND');
     expect((await call(`/uploads/${r.p.uploadId}`)).status).toBe(200);
   });
 
@@ -371,17 +376,29 @@ describe('tenant scoping', () => {
     expect(mismatch.status).toBe(404);
     expect(await mismatch.json()).toMatchObject({ code: 'UPLOAD_NOT_FOUND' });
     expect((await call(`${path}?orgId=${org.id}`, {}, admin)).status).toBe(200);
-    expect((await call(`${path}?orgId=${otherOrg.id}`, {}, admin)).status).toBe(404);
+    await expectProblem(
+      await call(`${path}?orgId=${otherOrg.id}`, {}, admin),
+      404,
+      'UPLOAD_NOT_FOUND',
+    );
 
     const keyA = auth.apiKey({ orgId: org.id, scopes: ['templates:read'] });
     const keyB = auth.apiKey({ orgId: otherOrg.id, scopes: ['templates:read'] });
     const platformKey = auth.apiKey({ scopes: ['templates:read'] });
     expect((await call(`${path}?orgId=${org.id}`, {}, keyA)).status).toBe(200);
-    expect((await call(`${path}?orgId=${otherOrg.id}`, {}, keyA)).status).toBe(403);
-    expect((await call(`${path}?orgId=${org.id}`, {}, keyB)).status).toBe(403);
-    expect((await call(`${path}?orgId=${otherOrg.id}`, {}, keyB)).status).toBe(404);
+    await expectProblem(await call(`${path}?orgId=${otherOrg.id}`, {}, keyA), 403, 'ORG_FORBIDDEN');
+    await expectProblem(await call(`${path}?orgId=${org.id}`, {}, keyB), 403, 'ORG_FORBIDDEN');
+    await expectProblem(
+      await call(`${path}?orgId=${otherOrg.id}`, {}, keyB),
+      404,
+      'UPLOAD_NOT_FOUND',
+    );
     expect((await call(`${path}?orgId=${org.id}`, {}, platformKey)).status).toBe(200);
-    expect((await call(`${path}?orgId=${otherOrg.id}`, {}, platformKey)).status).toBe(404);
+    await expectProblem(
+      await call(`${path}?orgId=${otherOrg.id}`, {}, platformKey),
+      404,
+      'UPLOAD_NOT_FOUND',
+    );
   });
 
   it('scopes tenant lists, detail, versions, assets, previews, packages, and imports by membership', async () => {
@@ -402,7 +419,7 @@ describe('tenant scoping', () => {
     expect(body.items.every((item) => item.orgId === org.id || item.orgId === null)).toBe(true);
     expect(body.items.map((item) => item.id)).not.toContain(otherTemplate.id);
     expect((await call('', {}, reader.headers)).status).toBe(422);
-    expect((await call(`?orgId=${otherOrg.id}`, {}, reader.headers)).status).toBe(403);
+    await expectProblem(await call(`?orgId=${otherOrg.id}`, {}, reader.headers), 403, 'FORBIDDEN');
     expect((await call(`?orgId=${org.id}`, {}, passOperator.headers)).status).toBe(200);
     expect((await call(`?orgId=${org.id}`, {}, integrationOnly.headers)).status).toBe(200);
 
@@ -419,7 +436,11 @@ describe('tenant scoping', () => {
       expect((await call(path, {}, integrationOnly.headers)).status, path).toBe(200);
     }
     expect((await post(`/${templateId}/preview`, {}, reader.headers)).status).toBe(200);
-    expect((await post(`/${templateId}/preview`, {}, foreign.headers)).status).toBe(404);
+    await expectProblem(
+      await post(`/${templateId}/preview`, {}, foreign.headers),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
     expect((await post(`/${templateId}/preview`, {}, passOperator.headers)).status).toBe(200);
     expect((await post(`/${templateId}/preview`, {}, integrationOnly.headers)).status).toBe(200);
     const previews = await call(
@@ -436,7 +457,11 @@ describe('tenant scoping', () => {
     expect(uploads.status).toBe(200);
     const uploadBody = (await uploads.json()) as { items: { uploadId: string }[] };
     expect(uploadBody.items.map((item) => item.uploadId)).toContain(imported.p.uploadId);
-    expect((await call(`/uploads?orgId=${org.id}`, {}, foreign.headers)).status).toBe(403);
+    await expectProblem(
+      await call(`/uploads?orgId=${org.id}`, {}, foreign.headers),
+      403,
+      'FORBIDDEN',
+    );
     expect((await call('/uploads', {}, reader.headers)).status).toBe(422);
   });
 
@@ -447,13 +472,29 @@ describe('tenant scoping', () => {
         roles: ['admin', 'user'],
       })
     ).headers;
-    expect((await call(`?orgId=${org.id}`, {}, platform)).status).toBe(403);
-    expect((await call(`/${templateId}`, {}, platform)).status).toBe(404);
-    expect((await call(`/${templateId}/versions/${version}`, {}, platform)).status).toBe(404);
-    expect((await call(`/${templateId}/package`, {}, platform)).status).toBe(404);
-    expect((await post(`/${templateId}/activate`, { version }, platform)).status).toBe(404);
+    await expectProblem(await call(`?orgId=${org.id}`, {}, platform), 403, 'FORBIDDEN');
+    await expectProblem(await call(`/${templateId}`, {}, platform), 404, 'TEMPLATE_NOT_FOUND');
+    await expectProblem(
+      await call(`/${templateId}/versions/${version}`, {}, platform),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
+    await expectProblem(
+      await call(`/${templateId}/package`, {}, platform),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
+    await expectProblem(
+      await post(`/${templateId}/activate`, { version }, platform),
+      404,
+      'NOT_FOUND',
+    );
     expect((await call('/baked:starter-generic', {}, platform)).status).toBe(200);
-    expect((await call(`/baked:starter-generic?orgId=${org.id}`, {}, platform)).status).toBe(404);
+    await expectProblem(
+      await call(`/baked:starter-generic?orgId=${org.id}`, {}, platform),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
   });
 
   it('counts the selected tenant’s passes on shared templates, and every org’s for a platform admin', async () => {
@@ -534,7 +575,7 @@ describe('tenant scoping', () => {
         path,
       ).toBe(200);
     }
-    expect((await post(`/${id}/preview`, {}, reader.headers)).status).toBe(403);
+    await expectProblem(await post(`/${id}/preview`, {}, reader.headers), 403, 'ORG_REQUIRED');
     const preview = await post(`/${id}/preview`, { orgId: org.id }, reader.headers);
     expect(preview.status).toBe(200);
     const previewBody = (await preview.json()) as { assetBaseUrl: string };
@@ -544,8 +585,12 @@ describe('tenant scoping', () => {
     expect((await app.request(assetUrl.toString(), { headers: reader.headers }, env)).status).toBe(
       200,
     );
-    expect((await post(`/${id}/preview`, { orgId: otherOrg.id }, reader.headers)).status).toBe(404);
-    expect((await call(`/previews?ids=${id}`, {}, reader.headers)).status).toBe(403);
+    await expectProblem(
+      await post(`/${id}/preview`, { orgId: otherOrg.id }, reader.headers),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
+    await expectProblem(await call(`/previews?ids=${id}`, {}, reader.headers), 403, 'ORG_REQUIRED');
     expect((await call(`/previews?ids=${id}&orgId=${org.id}`, {}, reader.headers)).status).toBe(
       200,
     );
@@ -639,7 +684,11 @@ describe('read', () => {
     };
     expect(body.report.ok).toBe(true);
     expect(body.manifest.name).toBe('Route Card');
-    expect((await call(`/${templateId}/versions/nope`)).status).toBe(404);
+    await expectProblem(
+      await call(`/${templateId}/versions/nope`),
+      404,
+      'TEMPLATE_VERSION_NOT_FOUND',
+    );
   });
 
   it('serves assets with revalidation, ETag and 304', async () => {
@@ -656,9 +705,21 @@ describe('read', () => {
     });
     expect(cached.status).toBe(304);
     expect(cached.headers.get('cache-control')).toBe('private, no-cache');
-    expect((await call(`/${templateId}/versions/${version}/assets/missing.png`)).status).toBe(404);
-    expect((await call(`/${templateId}/versions/${version}/assets/pass.json`)).status).toBe(404);
-    expect((await call(`/${templateId}/versions/deadbeef/assets/icon.png`)).status).toBe(404);
+    await expectProblem(
+      await call(`/${templateId}/versions/${version}/assets/missing.png`),
+      404,
+      'ASSET_NOT_FOUND',
+    );
+    await expectProblem(
+      await call(`/${templateId}/versions/${version}/assets/pass.json`),
+      404,
+      'ASSET_NOT_FOUND',
+    );
+    await expectProblem(
+      await call(`/${templateId}/versions/deadbeef/assets/icon.png`),
+      404,
+      'TEMPLATE_VERSION_NOT_FOUND',
+    );
   });
 
   it.each(['session', 'membership'] as const)(
@@ -827,7 +888,7 @@ describe('upload', () => {
     expect(notZip.status).toBe(400);
     expect(await notZip.json()).toMatchObject({ code: 'NOT_A_ZIP' });
     const noOrg = await upload(zip(), 'orgId=01900000-0000-7000-8000-000000000000');
-    expect(noOrg.status).toBe(403);
+    await expectProblem(noOrg, 403, 'FORBIDDEN');
     expect((await upload(new Uint8Array(), `orgId=${org.id}`)).status).toBe(400);
   });
 
@@ -891,7 +952,7 @@ describe('upload', () => {
     });
     expect((await call(`/${done.templateId}/versions/${done.version}`)).status).toBe(200);
     expect((await call(`/${done.templateId}/package`)).status).toBe(200);
-    expect((await call('/uploads/nope')).status).toBe(404);
+    await expectProblem(await call('/uploads/nope'), 404, 'UPLOAD_NOT_FOUND');
   });
 
   it('audits the upload', async () => {
@@ -913,7 +974,11 @@ describe('template author capability', () => {
     const t = await seed(org.id, 'Author Manifest');
     const changed = { ...manifest('Author Manifest'), display: { title: 'Draft title' } };
     for (const headers of [publisher.headers, platformReader.headers, integrationOnly.headers]) {
-      expect((await upload(zipOf(basicPackage()), `orgId=${org.id}`, headers)).status).toBe(403);
+      await expectProblem(
+        await upload(zipOf(basicPackage()), `orgId=${org.id}`, headers),
+        403,
+        'FORBIDDEN',
+      );
       expect(
         (
           await post(
@@ -1022,7 +1087,11 @@ describe('clone', () => {
       (await post('/baked:henrys-blue/clone', { orgId: '01900000-0000-7000-8000-000000000000' }))
         .status,
     ).toBe(403);
-    expect((await post('/baked:nope/clone', { orgId: org.id })).status).toBe(404);
+    await expectProblem(
+      await post('/baked:nope/clone', { orgId: org.id }),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
   });
 
   it('clones an uploaded template and names it by default', async () => {
@@ -1043,8 +1112,16 @@ describe('clone source lineage', () => {
     await addMembership(noDestAuthor.userId, otherOrg.id, ['read_only']);
 
     const body = { orgId: otherOrg.id, name: 'Scoped Source Copy' };
-    expect((await post(`/${templateId}/clone`, body, destOnly.headers)).status).toBe(404);
-    expect((await post(`/${templateId}/clone`, body, noDestAuthor.headers)).status).toBe(403);
+    await expectProblem(
+      await post(`/${templateId}/clone`, body, destOnly.headers),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
+    await expectProblem(
+      await post(`/${templateId}/clone`, body, noDestAuthor.headers),
+      403,
+      'FORBIDDEN',
+    );
 
     const cloned = await post(`/${templateId}/clone`, body, sourceReader.headers);
     expect(cloned.status).toBe(201);
@@ -1245,16 +1322,20 @@ describe('activation route', () => {
         [t.id],
       ),
     ).toBeNull();
-    expect((await post('/baked:henrys-blue/activate', { version: 'x' })).status).toBe(404);
+    await expectProblem(
+      await post('/baked:henrys-blue/activate', { version: 'x' }),
+      404,
+      'NOT_FOUND',
+    );
   });
 
   it('lets publishers archive and restore a template that was never released', async () => {
     const t = await seed(org.id, 'Scoped Archive');
     const author = await member(org.id, ['template_author']);
     const publisher = await member(org.id, ['template_publisher']);
-    expect((await post(`/${t.id}/archive`, {}, author.headers)).status).toBe(403);
+    await expectProblem(await post(`/${t.id}/archive`, {}, author.headers), 403, 'FORBIDDEN');
     expect((await post(`/${t.id}/archive`, {}, publisher.headers)).status).toBe(200);
-    expect((await post(`/${t.id}/restore`, {}, author.headers)).status).toBe(403);
+    await expectProblem(await post(`/${t.id}/restore`, {}, author.headers), 403, 'FORBIDDEN');
     expect((await post(`/${t.id}/restore`, {}, publisher.headers)).status).toBe(200);
     expect(
       await first(env.DB, 'SELECT status, active_version FROM templates WHERE id = ?', [t.id]),
@@ -1344,7 +1425,7 @@ describe('manifest', () => {
       method: 'PUT',
       ...json({ manifest: manifest('x') }),
     });
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'TEMPLATE_BAKED');
   });
 });
 
@@ -1369,8 +1450,8 @@ describe('delete', () => {
       await first(env.DB, 'SELECT 1 FROM template_versions WHERE template_id = ?', [t.id]),
     ).toBeNull();
     expect((await env.BUCKET.list({ prefix })).objects).toEqual([]);
-    expect((await call(`/${t.id}`)).status).toBe(404);
-    expect((await call(`/${t.id}`, { method: 'DELETE' })).status).toBe(404);
+    await expectProblem(await call(`/${t.id}`), 404, 'TEMPLATE_NOT_FOUND');
+    await expectProblem(await call(`/${t.id}`, { method: 'DELETE' }), 404, 'TEMPLATE_NOT_FOUND');
   });
 
   it('archives instead when any pass references any version', async () => {
@@ -1498,12 +1579,12 @@ describe('org assignment', () => {
     const owner = auth.apiKey({ orgId: bakedOrg.id, scopes: ['templates:read'] });
     const other = auth.apiKey({ orgId: otherOrg.id, scopes: ['templates:read'] });
     expect((await call(`/${id}`, {}, owner)).status).toBe(200);
-    expect((await call(`/${id}`, {}, other)).status).toBe(404);
+    await expectProblem(await call(`/${id}`, {}, other), 404, 'TEMPLATE_NOT_FOUND');
     expect((await patch(id, { orgId: null }, other)).status).toBe(401);
     const author = await member(bakedOrg.id, ['template_author']);
     await addMembership(author.userId, org.id, ['template_author']);
-    expect((await patch(id, { orgId: org.id }, author.headers)).status).toBe(403);
-    expect((await patch(id, { orgId: null }, user)).status).toBe(404);
+    await expectProblem(await patch(id, { orgId: org.id }, author.headers), 403, 'FORBIDDEN');
+    await expectProblem(await patch(id, { orgId: null }, user), 404, 'TEMPLATE_NOT_FOUND');
     for (const destination of [org.id, otherOrg.id, null]) {
       const res = await patch(id, { orgId: destination });
       expect(res.status).toBe(409);
@@ -1521,11 +1602,11 @@ describe('org assignment', () => {
     ).toEqual(before);
     expect(await systemReleases(id)).toEqual(releases);
     expect(await assignmentAudits(id)).toEqual([]);
-    expect((await call(`/${id}`, {}, other)).status).toBe(404);
+    await expectProblem(await call(`/${id}`, {}, other), 404, 'TEMPLATE_NOT_FOUND');
   });
 
   it('hides assignments from non-members and keeps API keys read-only', async () => {
-    expect((await patch(templateId, { orgId: null }, user)).status).toBe(404);
+    await expectProblem(await patch(templateId, { orgId: null }, user), 404, 'TEMPLATE_NOT_FOUND');
     const key = auth.apiKey({ scopes: ['templates:read', 'passes:write'] });
     expect((await patch(templateId, { orgId: null }, key)).status).toBe(401);
     expect((await patch(templateId, { orgId: null }, {})).status).toBe(401);
@@ -1537,7 +1618,7 @@ describe('org assignment', () => {
     expect(
       (await patch(templateId, { orgId: '01900000-0000-7000-8000-000000000000' })).status,
     ).toBe(404);
-    expect((await patch('baked:nope', { orgId: null })).status).toBe(404);
+    await expectProblem(await patch('baked:nope', { orgId: null }), 404, 'TEMPLATE_NOT_FOUND');
   });
 
   it('prevents moving a previously published template without an approved release', async () => {
@@ -1576,14 +1657,22 @@ describe('org assignment', () => {
     if (!imported.result) throw new Error('Draft import failed');
     const t = { id: imported.result.templateId };
     const author = await member(org.id, ['template_author']);
-    expect((await patch(t.id, { orgId: otherOrg.id }, author.headers)).status).toBe(403);
+    await expectProblem(
+      await patch(t.id, { orgId: otherOrg.id }, author.headers),
+      403,
+      'FORBIDDEN',
+    );
     expect(await orgOf(t.id)).toBe(org.id);
     await addMembership(author.userId, otherOrg.id, ['template_author']);
     // Only a platform grant sets a template's org, so an author of both orgs cannot move it either.
-    expect((await patch(t.id, { orgId: otherOrg.id }, author.headers)).status).toBe(403);
+    await expectProblem(
+      await patch(t.id, { orgId: otherOrg.id }, author.headers),
+      403,
+      'FORBIDDEN',
+    );
     expect(await orgOf(t.id)).toBe(org.id);
     expect((await patch(t.id, { orgId: otherOrg.id })).status).toBe(200);
-    expect((await patch(t.id, { orgId: null }, author.headers)).status).toBe(403);
+    await expectProblem(await patch(t.id, { orgId: null }, author.headers), 403, 'FORBIDDEN');
     const list = (await (await call(`?orgId=${otherOrg.id}`)).json()) as {
       items: { id: string; orgId: string | null; orgName: string | null }[];
     };
@@ -1606,12 +1695,16 @@ describe('org assignment', () => {
   it('reserves unscoped platform uploads for a platform administrator', async () => {
     const zip = zipOf(basicPackage({ 'wallet.template.json': JSON.stringify(manifest('No Org')) }));
     const author = await member(org.id, ['template_author']);
-    expect((await upload(zip, 'name=No+Org', author.headers)).status).toBe(403);
+    await expectProblem(await upload(zip, 'name=No+Org', author.headers), 403, 'FORBIDDEN');
     const accepted = await upload(zip, 'name=No+Org');
     expect(accepted.status).toBe(202);
     const { uploadId } = (await accepted.json()) as { uploadId: string };
     expect((await call(`/uploads/${uploadId}`)).status).toBe(200);
-    expect((await call(`/uploads/${uploadId}`, {}, author.headers)).status).toBe(404);
+    await expectProblem(
+      await call(`/uploads/${uploadId}`, {}, author.headers),
+      404,
+      'UPLOAD_NOT_FOUND',
+    );
     expect(
       (await call(`/uploads/${uploadId}`, {}, auth.apiKey({ scopes: ['templates:read'] }))).status,
     ).toBe(200);

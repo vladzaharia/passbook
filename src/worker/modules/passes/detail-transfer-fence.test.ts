@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeUser } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/passes.ts';
 import { createApp } from '../../app.ts';
@@ -166,13 +167,13 @@ describe('pass detail transfer disclosure fences', () => {
       `/passes/${pass.id}/diff?from=${pass.version}&to=${pass.version}`,
     ]) {
       const response = await request(path);
-      expect(response.status).toBe(409);
+      await expectProblem(response, 409, 'PASS_TRANSFER_PENDING');
       const body = await response.text();
       expect(body).toContain('PASS_TRANSFER_PENDING');
       noDisclosure(body, secrets);
     }
     const unauthorized = await request(`/passes/${pass.id}`, auth.user());
-    expect(unauthorized.status).toBe(403);
+    await expectProblem(unauthorized, 403, 'FORBIDDEN');
     noDisclosure(await unauthorized.text(), [...secrets, 'PASS_TRANSFER_PENDING']);
     const listed = await request(`/passes?orgId=${encodeURIComponent(pass.orgId)}&limit=200`);
     expect(listed.status).toBe(200);
@@ -194,7 +195,7 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_TRANSFER_PENDING');
     const body = await response.text();
     expect(body).toContain('PASS_TRANSFER_PENDING');
     noDisclosure(body, [pass.downloadToken, token, pass.serial, 'Private raced holder']);
@@ -212,7 +213,7 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`, key.headers),
     );
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     noDisclosure(await response.text(), [
       'PASS_TRANSFER_PENDING',
       pass.downloadToken,
@@ -237,7 +238,7 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_CONFLICT');
     const body = await response.text();
     expect(body).toContain('PASS_CONFLICT');
     noDisclosure(body, [
@@ -262,7 +263,7 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_CONFLICT');
     noDisclosure(await response.text(), [
       pass.downloadToken,
       pass.serial,
@@ -285,7 +286,7 @@ describe('pass detail transfer disclosure fences', () => {
       },
       () => request(`/passes/${pass.id}`),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_CONFLICT');
     noDisclosure(await response.text(), [pass.downloadToken, pass.serial, 'Rotated link private']);
   });
 
@@ -317,7 +318,7 @@ describe('pass detail transfer disclosure fences', () => {
       PassDetailSchema.parse(await (await request(`/passes/${pass.id}`)).json()).reissueRequired,
     ).toBe(true);
     const unauthorized = await request(`/passes/${pass.id}`, auth.user());
-    expect(unauthorized.status).toBe(403);
+    await expectProblem(unauthorized, 403, 'FORBIDDEN');
     expect(await unauthorized.text()).not.toContain('reissueRequired');
     const raced = await withRace(
       detailFence,

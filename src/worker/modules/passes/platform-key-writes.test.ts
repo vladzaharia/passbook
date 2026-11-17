@@ -1,5 +1,6 @@
 // A platform (null-org) API key acts on the org of the pass it names: every write commits under that org.
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { first } from '../../platform/db.ts';
@@ -92,10 +93,18 @@ describe('a platform API key on a stated org', () => {
   it('is still refused without the scope, and an org key cannot reach another org', async () => {
     const readOnly = await auth.apiKey({ orgId: null, scopes: ['passes:read'] });
     const pass = await kit.pass();
-    expect((await call('POST', `/passes/${pass.id}/void`, readOnly)).status).toBe(403);
+    await expectProblem(
+      await call('POST', `/passes/${pass.id}/void`, readOnly),
+      403,
+      'MISSING_SCOPE',
+    );
     const other = await makeOrg(kit.fx);
     const foreign = await auth.apiKey({ orgId: other.id });
-    expect((await call('POST', `/passes/${pass.id}/void`, foreign)).status).toBe(404);
+    await expectProblem(
+      await call('POST', `/passes/${pass.id}/void`, foreign),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect((await getPass(kit.env.DB, pass.id))?.status).toBe('active');
   });
 });

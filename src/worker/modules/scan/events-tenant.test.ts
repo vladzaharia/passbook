@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { ProblemSchema, ScanEventSchema } from '../../../shared/contracts/index.ts';
 import { first, run } from '../../platform/db.ts';
 import {
@@ -30,7 +31,7 @@ describe('scan event tenant routes', () => {
     expect(create.status).toBe(404);
     expect(ProblemSchema.parse(await create.json()).code).toBe('ORG_NOT_FOUND');
     expect((await call(admin, 'PATCH', `/${eventId}`, { name: 'Changed' })).status).toBe(404);
-    expect((await call(admin, 'POST', `/${eventId}/archive`)).status).toBe(404);
+    await expectProblem(await call(admin, 'POST', `/${eventId}/archive`), 404, 'EVENT_NOT_FOUND');
     expect(
       (await call(admin, 'POST', `/${eventId}/scanners`, { scannerIds: [freeScannerId] })).status,
     ).toBe(404);

@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fakeAuth,
   fixtures,
@@ -275,11 +276,11 @@ describe('metrics api', () => {
 
   it('validates tenant input and reserves platform metrics for admins', async () => {
     expect((await get('?range=1y')).status).toBe(422);
-    expect((await get('?orgId=missing')).status).toBe(404);
+    await expectProblem(await get('?orgId=missing'), 404, 'METRICS_NOT_FOUND');
     expect((await get('')).status).toBe(422);
     const platform = (headers = fake.admin(), q = '') =>
       app.request(`/api/v1/metrics/platform/overview${q}`, { headers }, base);
-    expect((await platform(fake.user())).status).toBe(403);
+    await expectProblem(await platform(fake.user()), 403, 'FORBIDDEN');
     expect((await platform(fake.apiKey())).status).toBe(401);
     expect((await platform(fake.admin(), '?orgId=missing')).status).toBe(422);
     const ok = await platform(fake.admin(), '?range=24h');

@@ -1,5 +1,6 @@
 import { compactVerify, importX509 } from 'jose';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
@@ -1295,7 +1296,7 @@ describe('authenticated Samsung card-state evidence', () => {
         f.kit.env,
       );
     expect((await request({ 'content-type': 'application/json' })).status).toBe(401);
-    expect((await request({ ...headers, 'x-csrf-token': 'wrong' })).status).toBe(403);
+    await expectProblem(await request({ ...headers, 'x-csrf-token': 'wrong' }), 403, 'CSRF_TOKEN');
     const response = await request(headers);
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');

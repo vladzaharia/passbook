@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeEnv } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { createApp } from '../../app.ts';
@@ -122,15 +123,19 @@ describe('push key routes', () => {
 
   it('requires an admin, a CSRF header and a known identity', async () => {
     const body = { keyId: KEY_ID, p8: (await makeP8()).pem };
-    expect((await putKey(a, body, fake.user())).status).toBe(403);
-    expect((await putKey(a, body, { cookie: fake.admin().cookie ?? '' })).status).toBe(403);
+    await expectProblem(await putKey(a, body, fake.user()), 403, 'FORBIDDEN');
+    await expectProblem(
+      await putKey(a, body, { cookie: fake.admin().cookie ?? '' }),
+      403,
+      'CSRF_ORIGIN',
+    );
     for (const as of [fake.apiKey(), fake.apiKey({ mode: 'test' })]) {
       expect([401, 403]).toContain((await putKey(a, body, as)).status);
       const del = await request(`/api/v1/identities/${a}/push-key`, { method: 'DELETE', as });
       expect([401, 403]).toContain(del.status);
     }
     expect((await putKey(a, body, fake.admin({ mode: 'test' }))).status).toBe(200);
-    expect((await putKey('nope', body)).status).toBe(404);
+    await expectProblem(await putKey('nope', body), 404, 'IDENTITY_NOT_FOUND');
     expect((await request('/api/v1/identities/nope/push-key', { method: 'DELETE' })).status).toBe(
       404,
     );
@@ -168,7 +173,7 @@ describe('push key routes', () => {
     expect(res.status).toBe(200);
     expect(await get(a)).toMatchObject({ pushMethod: 'none', pushKey: null });
     const again = await request(`/api/v1/identities/${a}/push-key`, { method: 'DELETE' });
-    expect(again.status).toBe(409);
+    await expectProblem(again, 409, 'PUSH_KEY_NONE');
     expect(
       await first(env.DB, "SELECT 1 FROM audit_log WHERE action = 'identity.push_key_remove'"),
     ).not.toBeNull();

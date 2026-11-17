@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import type { TemplateManifest } from '../../../passkit/types.ts';
 import { first } from '../../platform/db.ts';
@@ -132,8 +133,16 @@ describe('action policy from captured D1 template rows', () => {
     const base = ready.card.passView.assetBaseUrl.replace('/api/v1/scan', '');
     const token = encodeURIComponent(ready.card.passView.assetGrant);
     expect((await kit.get(chooser.headers, `${base}icon.png?g=${token}`)).status).toBe(200);
-    expect((await kit.get(chooser.headers, `${base}member.png?g=${token}`)).status).toBe(404);
-    expect((await kit.get(chooser.headers, `${base}thumbnail@3x.png?g=${token}`)).status).toBe(404);
+    await expectProblem(
+      await kit.get(chooser.headers, `${base}member.png?g=${token}`),
+      404,
+      'ASSET_NOT_FOUND',
+    );
+    await expectProblem(
+      await kit.get(chooser.headers, `${base}thumbnail@3x.png?g=${token}`),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it('allows the unchanged legacy pin and admits the first approved head at commit', async () => {

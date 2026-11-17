@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fakeAuth,
   fixtures,
@@ -139,7 +140,7 @@ describe('organization memberships', () => {
     expect((await call('GET', `/${org.id}/memberships`, undefined, user(person.id))).status).toBe(
       403,
     );
-    expect((await call('GET', '', undefined, user(person.id))).status).toBe(403);
+    await expectProblem(await call('GET', '', undefined, user(person.id)), 403, 'FORBIDDEN');
     expect(
       (await call('PATCH', `/${org.id}`, { name: 'Not allowed' }, user(person.id))).status,
     ).toBe(403);
@@ -405,7 +406,7 @@ describe('organization memberships', () => {
     expect(
       (await call('DELETE', `/${otherOrg.id}/invitations/${pending.invitation.id}`)).status,
     ).not.toBe(200);
-    expect((await call('GET', '', undefined, user(person.id))).status).toBe(403);
+    await expectProblem(await call('GET', '', undefined, user(person.id)), 403, 'FORBIDDEN');
     // org:manage lets an org_admin edit its own org (docs/api.md); isolation and lifecycle stay closed.
     expect((await call('PATCH', `/${otherOrg.id}`, { name: 'No' }, user(person.id))).status).toBe(
       403,

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makePass } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -303,6 +304,6 @@ describe('lookup privacy', () => {
     expect(url).toContain(`/passes/${pass.id}/assets/member.png?g=`);
     const path = (url ?? '').replace('/api/v1/scan', '');
     expect((await kit.get(desk.headers, path)).status).toBe(200);
-    expect((await kit.get(door.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(door.headers, path), 404, 'ASSET_NOT_FOUND');
   });
 });

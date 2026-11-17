@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { editSessionAuthority, makeApiKey } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -110,7 +111,7 @@ describe('API key commit authority', () => {
             ? create(session.headers, { ...keyBody(org.id), scopes: ['connections:read'] })
             : revoke(session.headers, key.id, org.id),
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(await keyState()).toEqual(before);
       expect(await createApiKeyStore(h.env, h.clock).resolve(key.secret)).toMatchObject({
         keyId: key.id,
@@ -162,7 +163,7 @@ describe('API key commit authority', () => {
             ? create(session.headers, { ...keyBody(org.id), scopes: ['connections:read'] })
             : revoke(session.headers, key.id, org.id),
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(await keyState()).toEqual(before);
     },
   );
@@ -199,7 +200,7 @@ describe('API key commit authority', () => {
             ? create(session.headers, keyBody(null))
             : revoke(session.headers, key.id),
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'ACTOR_CHANGED');
       expect(await keyState()).toEqual(before);
       expect(await createApiKeyStore(h.env, h.clock).resolve(key.secret)).toMatchObject({
         keyId: key.id,

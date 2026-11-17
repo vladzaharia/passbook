@@ -1,6 +1,7 @@
 import { unzlibSync, zlibSync } from 'fflate';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { isolatedKeysetDatabase } from '../../../../test/helpers/credential-keyset.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
@@ -472,7 +473,11 @@ describe('public credential transfer fence', () => {
     const freshFile = await get(`/p/${fresh.downloadToken}/pass.pkpass`);
     expect(freshFile.status).toBe(200);
     expect(new Uint8Array(await freshFile.arrayBuffer())).not.toEqual(oldBytes);
-    expect((await get(`/api/v1/me/passes/${pass.id}/barcode`, oldOwnerHeaders)).status).toBe(404);
+    await expectProblem(
+      await get(`/api/v1/me/passes/${pass.id}/barcode`, oldOwnerHeaders),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect((await get(`/api/v1/me/passes/${pass.id}/barcode`, nextOwnerHeaders)).status).toBe(200);
     const freshOwner = await get(`/api/v1/me/passes/${pass.id}`, nextOwnerHeaders);
     expect(freshOwner.status).toBe(200);
@@ -867,7 +872,7 @@ describe('public asset fencing', () => {
     expect(opened).toBe(true);
     expect(cancelled).toBe(1);
     await expectNoImage(response);
-    expect((await get(assetPath(pass.downloadToken))).status).toBe(404);
+    await expectProblem(await get(assetPath(pass.downloadToken)), 404, 'LINK_NOT_FOUND');
     const current = await get(assetPath(newToken));
     expect(current.status).toBe(200);
     expect(current.headers.get('cache-control')).toBe('private, no-store');

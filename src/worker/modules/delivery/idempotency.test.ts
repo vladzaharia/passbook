@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -62,7 +63,7 @@ describe('bulk email honours Idempotency-Key', () => {
     expect((await post('/passes/bulk', body)).status).toBe(200);
     expect(await emails(a.id)).toHaveLength(2);
     const bad = await post('/passes/bulk', { ...body, ids: ['missing-pass'] }, 'bulk-key-2');
-    expect(bad.status).toBe(404);
+    await expectProblem(bad, 404, 'PASS_NOT_FOUND');
     const retry = await post('/passes/bulk', body, 'bulk-key-2');
     expect(retry.status).toBe(200);
   });

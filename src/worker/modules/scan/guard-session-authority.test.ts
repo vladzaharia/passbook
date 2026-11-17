@@ -1,5 +1,6 @@
 import type { Hono } from 'hono';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeScanner, makeTemplate, makeUser } from '../../../../test/helpers/index.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { first, run } from '../../platform/db.ts';
@@ -50,7 +51,7 @@ describe('requireScanActor: tenant session authority', () => {
 
   it('requires membership even for a platform administrator and another tenant', async () => {
     const outsider = fake.session({ userId: 'outsider', roles: ['admin', 'user'] });
-    expect((await get(app, env, `/capture-read${scope()}`, outsider)).status).toBe(403);
+    await expectProblem(await get(app, env, `/capture-read${scope()}`, outsider), 403, 'FORBIDDEN');
     const other = await makeOrg(f);
     expect(
       (await get(app, env, `/capture-manage?orgId=${other.id}&timeZone=UTC`, fake.admin())).status,
@@ -83,8 +84,16 @@ describe('requireScanActor: tenant session authority', () => {
       env,
     );
     expect(readPost.status).toBe(200);
-    expect((await get(app, env, `/capture-operate${scope()}`, headers)).status).toBe(403);
-    expect((await get(app, env, `/capture-manage${scope()}`, headers)).status).toBe(403);
+    await expectProblem(
+      await get(app, env, `/capture-operate${scope()}`, headers),
+      403,
+      'FORBIDDEN',
+    );
+    await expectProblem(
+      await get(app, env, `/capture-manage${scope()}`, headers),
+      403,
+      'FORBIDDEN',
+    );
   });
 
   it('binds the original session proof to its actor without packing raw CSRF', async () => {
@@ -240,7 +249,11 @@ describe('requireScanActor: tenant session authority', () => {
     expect(await current(original)).toBe(false);
     const readerId = await grantScanMembership(f, orgId, user.id, ['read_only']);
     expect(await current(original)).toBe(false);
-    expect((await get(app, env, `/capture-manage${scope()}`, headers)).status).toBe(403);
+    await expectProblem(
+      await get(app, env, `/capture-manage${scope()}`, headers),
+      403,
+      'FORBIDDEN',
+    );
     expect((await get(app, env, `/capture-read${scope()}`, headers)).status).toBe(200);
     const reader = captured();
     expect(await current(reader)).toBe(true);

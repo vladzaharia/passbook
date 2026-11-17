@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { run } from '../../platform/db.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { assetGrantTokenHash } from './assets.ts';
@@ -85,7 +86,7 @@ describe('cold live photo acquisition', () => {
       });
       const { response, opened } = await capturedRequest(fixture, trace);
       expect(intercepted).toBe(true);
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'ASSET_NOT_FOUND');
       expect(opened()).toBe(0);
     },
   );

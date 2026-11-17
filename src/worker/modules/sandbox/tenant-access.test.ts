@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -153,7 +154,11 @@ describe('tenant Test inbox routes', () => {
       CapturedEmailListSchema.parse(await (await request('/test-inbox', author.session)).json())
         .items,
     ).toEqual([]);
-    expect((await request(`/test-inbox/${capture.id}`, author.session)).status).toBe(404);
+    await expectProblem(
+      await request(`/test-inbox/${capture.id}`, author.session),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
     await noEffects(capture.id, before);
     const sent = await request(
       `/test-inbox/${capture.id}/send-to-me`,
@@ -352,7 +357,11 @@ describe('tenant Test inbox routes', () => {
         await (await request('/test-inbox', revokedMember.session)).json(),
       ).items,
     ).toEqual([]);
-    expect((await request(`/test-inbox/${capture.id}`, revokedMember.session)).status).toBe(404);
+    await expectProblem(
+      await request(`/test-inbox/${capture.id}`, revokedMember.session),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
     expect(
       (
         await request(

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeSession } from '../../../../test/helpers/index.ts';
 import { hashSessionCookie } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -200,7 +201,7 @@ describe('member photo tenant authority', () => {
                   scope,
                   authority,
                 );
-        await expect(pending).rejects.toThrow();
+        await expectRejectsCode(pending, 'ACTOR_CHANGED');
       } finally {
         spy.mockRestore();
       }

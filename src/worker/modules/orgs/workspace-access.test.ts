@@ -3,6 +3,7 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   editSessionAuthority,
   type Fixtures,
@@ -189,7 +190,7 @@ describe('organization workspace authorization', () => {
       name: org.name,
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0 },
     });
-    expect((await call('GET', `/${org.id}`, headers)).status).toBe(403);
+    await expectProblem(await call('GET', `/${org.id}`, headers), 403, 'FORBIDDEN');
 
     const patch = await call('PATCH', `/${org.id}`, headers, {
       name: 'Renamed Workspace',
@@ -210,10 +211,18 @@ describe('organization workspace authorization', () => {
     const removed = await call('DELETE', `/${org.id}/branding/logo`, headers);
     expect(removed.status).toBe(200);
     expect(OrgSchema.parse(await removed.json()).branding).not.toHaveProperty('logo');
-    expect((await call('GET', `/${org.id}/branding/logo/3x`, headers)).status).toBe(404);
+    await expectProblem(
+      await call('GET', `/${org.id}/branding/logo/3x`, headers),
+      404,
+      'IMAGE_NOT_FOUND',
+    );
 
     const { 'x-csrf-token': _csrf, ...withoutCsrf } = headers;
-    expect((await call('PATCH', `/${org.id}`, withoutCsrf, { name: 'No CSRF' })).status).toBe(403);
+    await expectProblem(
+      await call('PATCH', `/${org.id}`, withoutCsrf, { name: 'No CSRF' }),
+      403,
+      'CSRF_TOKEN',
+    );
   });
 
   it('applies the same provisioning and membership boundaries to HEAD requests', async () => {
@@ -321,7 +330,7 @@ describe('organization workspace authorization', () => {
     const detail = await call('GET', `/${org.id}/workspace`, headers);
     expect(detail.status).toBe(200);
     expect(await detail.json()).toMatchObject({ id: org.id, name: org.name });
-    expect((await call('GET', `/${org.id}`, headers)).status).toBe(403);
+    await expectProblem(await call('GET', `/${org.id}`, headers), 403, 'FORBIDDEN');
     expect(await image(headers)).toEqual(logo3);
     expect(await image(headers, '2x')).toEqual(logo2);
     const preview = await call('GET', `/${org.id}/email-preview`, headers);
@@ -334,7 +343,7 @@ describe('organization workspace authorization', () => {
       await call('PUT', `/${org.id}/branding/logo`, headers, replacementLogo),
       await call('DELETE', `/${org.id}/branding/logo`, headers),
     ])
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
     expect(await orgState()).toEqual(before);
     expect(await auditState()).toEqual(audits);
     expect(await image(manager.session.headers)).toEqual(logo3);
@@ -348,7 +357,11 @@ describe('organization workspace authorization', () => {
     expect(preview.status).toBe(200);
     expect(preview.headers.get('content-type')).toContain('text/html');
     expect(await preview.text()).toContain(org.name);
-    expect((await call('PATCH', `/${org.id}`, headers, { name: 'Forbidden' })).status).toBe(403);
+    await expectProblem(
+      await call('PATCH', `/${org.id}`, headers, { name: 'Forbidden' }),
+      403,
+      'FORBIDDEN',
+    );
   });
 
   it('denies a non-member platform admin workspace access but allows provisioning and lifecycle', async () => {
@@ -366,7 +379,7 @@ describe('organization workspace authorization', () => {
       await call('GET', `/${org.id}/branding/logo/3x`, headers),
       await call('GET', `/${org.id}/email-preview`, headers),
     ])
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
     expect(await orgState()).toEqual(before);
     expect(await auditState()).toEqual(audits);
     expect(await image(manager.session.headers)).toEqual(logo3);
@@ -394,7 +407,7 @@ describe('organization workspace authorization', () => {
     });
     expect(created.status).toBe(201);
     const { id } = OrgSchema.parse(await created.json());
-    expect((await call('GET', `/${id}/workspace`, headers)).status).toBe(403);
+    await expectProblem(await call('GET', `/${id}/workspace`, headers), 403, 'FORBIDDEN');
     expect((await call('GET', `/${id}`, headers)).status).toBe(200);
     const suspended = await call('POST', `/${id}/status`, headers, { status: 'suspended' });
     expect(suspended.status).toBe(200);
@@ -419,7 +432,7 @@ describe('organization workspace authorization', () => {
       await call('PATCH', `/${org.id}`, headers, { status: 'suspended' }),
       await call('PATCH', `/${org.id}`, headers, { name: 'Partial write', status: 'suspended' }),
     ])
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
     expect(await orgState()).toEqual(before);
     expect(await auditState()).toEqual(audits);
   });
@@ -446,7 +459,7 @@ describe('organization workspace authorization', () => {
         operation.body,
       );
       const absent = await call(operation.method, operation.path(missing), headers, operation.body);
-      expect(foreign.status).toBe(403);
+      await expectProblem(foreign, 403, 'FORBIDDEN');
       expect(absent.status).toBe(foreign.status);
       const a = ProblemSchema.parse(await foreign.json());
       const b = ProblemSchema.parse(await absent.json());
@@ -461,7 +474,7 @@ describe('organization workspace authorization', () => {
           sessionHeaders,
           operation.body,
         );
-        expect(response.status).toBe(403);
+        await expectProblem(response, 403, 'FORBIDDEN');
       }
     }
     expect(await orgState(other.id)).toEqual(before);
@@ -501,7 +514,11 @@ describe('organization workspace authorization', () => {
     expect(await (await call('GET', '/memberships/me', operator.session.headers)).json()).toEqual({
       items: [],
     });
-    expect((await call('GET', `/${org.id}/workspace`, operator.session.headers)).status).toBe(403);
+    await expectProblem(
+      await call('GET', `/${org.id}/workspace`, operator.session.headers),
+      403,
+      'FORBIDDEN',
+    );
   });
 
   it('requires a live session and an active membership, user and organization', async () => {
@@ -516,7 +533,11 @@ describe('organization workspace authorization', () => {
       fx.clock.now(),
       member.membershipId,
     ]);
-    expect((await call('GET', `/${org.id}/workspace`, member.session.headers)).status).toBe(403);
+    await expectProblem(
+      await call('GET', `/${org.id}/workspace`, member.session.headers),
+      403,
+      'FORBIDDEN',
+    );
     expect((await call('GET', `/${org.id}/branding/logo/3x`, member.session.headers)).status).toBe(
       403,
     );
@@ -542,7 +563,11 @@ describe('organization workspace authorization', () => {
       (await call('POST', `/${org.id}/status`, platform.session.headers, { status: 'suspended' }))
         .status,
     ).toBe(200);
-    expect((await call('GET', `/${org.id}/workspace`, active.session.headers)).status).toBe(403);
+    await expectProblem(
+      await call('GET', `/${org.id}/workspace`, active.session.headers),
+      403,
+      'FORBIDDEN',
+    );
   });
 });
 

@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { editFixedColumns, makeUser, type SessionFixture } from '../../../../test/helpers/index.ts';
 import {
   CapturedEmailDetailSchema,
@@ -432,7 +433,10 @@ describe('durable test inbox forwarding', () => {
         const spy = vi.spyOn(kit.mailer, 'send');
         try {
           const authority = await inboxAuthority(kit, adminSession);
-          await expect(sendCapturedToMe(race.ctx, authority, fixture.id)).rejects.toThrow();
+          await expectRejectsCode(
+            sendCapturedToMe(race.ctx, authority, fixture.id),
+            'TEST_FORWARD_CHANGED',
+          );
           expect(race.intercepted()).toBe(true);
           expect(spy).not.toHaveBeenCalled();
           expect(
@@ -509,7 +513,10 @@ describe('durable test inbox forwarding', () => {
     });
     const spy = vi.spyOn(kit.mailer, 'send');
     try {
-      await expect(sendCapturedToMe(race.ctx, authority, fixture.id)).rejects.toThrow();
+      await expectRejectsCode(
+        sendCapturedToMe(race.ctx, authority, fixture.id),
+        'NO_VERIFIED_EMAIL',
+      );
       expect(race.intercepted()).toBe(true);
       expect(spy).not.toHaveBeenCalled();
       expect(

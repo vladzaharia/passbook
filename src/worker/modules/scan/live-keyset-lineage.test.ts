@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { first, run } from '../../platform/db.ts';
@@ -96,7 +97,7 @@ describe('live credential keyset authority', () => {
           { headers: fixture.monitor.headers },
           env,
         );
-        expect(response.status).toBe(404);
+        await expectProblem(response, 404, 'ASSET_NOT_FOUND');
         if (change === 'after-open') {
           expect(opened).toBe(true);
           expect(cancelled).toBe(1);

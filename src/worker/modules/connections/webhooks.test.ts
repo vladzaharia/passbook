@@ -1,5 +1,6 @@
 import { createExecutionContext } from 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeOrg, makeTemplate, withoutTrigger } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { signWebhook } from '../../connectors/lib/hmac.ts';
@@ -2119,7 +2120,7 @@ describe('POST /hooks/connections/:id', () => {
       await signedRequest(secret, event('evt-http-3')),
       kit.env,
     );
-    expect(unknown.status).toBe(404);
+    await expectProblem(unknown, 404, 'NOT_FOUND');
   });
 
   it('needs no session or CSRF token', async () => {

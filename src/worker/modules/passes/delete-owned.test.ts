@@ -1,5 +1,6 @@
 // Deleting an owned pass clears the owner behind an attach block (the 0055 trigger refuses it otherwise).
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { first, run } from '../../platform/db.ts';
@@ -91,7 +92,7 @@ describe('DELETE /passes/:id on an owned pass', () => {
       { method: 'DELETE', headers: readOnly },
       kit.env,
     );
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'MISSING_SCOPE');
     expect(await deletedRow(pass.id)).toEqual({ deleted: 0, owner: user.id });
     expect(await block(pass.id, user.id)).toBeNull();
   });

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -63,9 +64,17 @@ describe('authentication', () => {
   it('rejects anonymous callers, plain users and keys without the scope', async () => {
     const pass = await kit.pass();
     expect((await api('/passes')).status).toBe(401);
-    expect((await api(`/passes/${pass.id}`, { headers: auth.user() })).status).toBe(403);
+    await expectProblem(
+      await api(`/passes/${pass.id}`, { headers: auth.user() }),
+      403,
+      'FORBIDDEN',
+    );
     const wrongScope = await auth.apiKey({ orgId: kit.org.id, scopes: ['templates:read'] });
-    expect((await api(`/passes/${pass.id}`, { headers: wrongScope })).status).toBe(403);
+    await expectProblem(
+      await api(`/passes/${pass.id}`, { headers: wrongScope }),
+      403,
+      'MISSING_SCOPE',
+    );
     const readOnly = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] });
     expect((await api(`/passes/${pass.id}`, { headers: readOnly })).status).toBe(200);
     expect(
@@ -220,7 +229,11 @@ describe('update', () => {
     expect((await app.request(created.publicUrl, {}, kit.env)).status).toBe(404);
     const del = await api(`/passes/${created.id}`, { method: 'DELETE', headers: auth.admin() });
     expect(del.status).toBe(200);
-    expect((await api(`/passes/${created.id}`, { headers: auth.admin() })).status).toBe(404);
+    await expectProblem(
+      await api(`/passes/${created.id}`, { headers: auth.admin() }),
+      404,
+      'PASS_NOT_FOUND',
+    );
   });
 });
 
@@ -347,7 +360,7 @@ describe('refresh, email and bulk reissue', () => {
       [created.id],
     );
     expect(count?.n).toBe(1);
-    expect((await send({ attach: true }, 'k1')).status).toBe(409);
+    await expectProblem(await send({ attach: true }, 'k1'), 409, 'IDEMPOTENCY_KEY_REUSED');
   });
 
   it('starts a tenant bulk reissue for a session and records the run', async () => {
@@ -432,7 +445,7 @@ describe('tenant isolation', () => {
     async (method, path, body) => {
       const init = body === undefined ? { method, headers: keyA } : json(keyA, body, method);
       const res = await api(path.replace('{id}', foreign.id), init);
-      expect(res.status).toBe(404);
+      await expectProblem(res, 404, 'PASS_NOT_FOUND');
     },
   );
 
@@ -442,7 +455,7 @@ describe('tenant isolation', () => {
       headers: { ...keyA, 'content-type': 'image/png' },
       body: ICON_PNG,
     });
-    expect(upload.status).toBe(404);
+    await expectProblem(upload, 404, 'PASS_NOT_FOUND');
     expect(
       (
         await create(keyA, {
@@ -454,7 +467,7 @@ describe('tenant isolation', () => {
       ).status,
     ).toBe(403);
     const foreignList = await api(`/passes?orgId=${orgB.id}`, { headers: keyA });
-    expect(foreignList.status).toBe(403);
+    await expectProblem(foreignList, 403, 'ORG_FORBIDDEN');
     const list = PassListSchema.parse(
       await (await api(`/passes?orgId=${kit.org.id}&limit=200`, { headers: keyA })).json(),
     );
@@ -471,7 +484,11 @@ describe('tenant isolation', () => {
       ['/holders/assign-bulk', { items: [{ passId: foreign.id, email: 'x@example.com' }] }],
     ] as const)
       expect((await api(path, json(keyA, body))).status, path).toBe(404);
-    expect((await api(`/holders?orgId=${orgB.id}`, { headers: keyA })).status).toBe(403);
+    await expectProblem(
+      await api(`/holders?orgId=${orgB.id}`, { headers: keyA }),
+      403,
+      'ORG_FORBIDDEN',
+    );
     const mine = (await (
       await api(`/holders?orgId=${kit.org.id}&limit=200`, { headers: keyA })
     ).json()) as {

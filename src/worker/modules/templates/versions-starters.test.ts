@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import { expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
   makeEnv,
@@ -187,8 +188,16 @@ it('starter clones open in the designer as inactive drafts, and a draft can be s
     expect(body.passJson, slug).not.toBeNull();
 
     if (slug === 'generic') {
-      expect((await call(`/${cloned.id}`, undefined, outsider)).status).toBe(404);
-      expect((await call(`/${cloned.id}/versions`, draft, outsider)).status).toBe(404);
+      await expectProblem(
+        await call(`/${cloned.id}`, undefined, outsider),
+        404,
+        'TEMPLATE_NOT_FOUND',
+      );
+      await expectProblem(
+        await call(`/${cloned.id}/versions`, draft, outsider),
+        404,
+        'TEMPLATE_NOT_FOUND',
+      );
       const saved = await call(`/${cloned.id}/versions`, {
         ...draft,
         passJson: { ...draft.passJson, description: 'Edited starter draft' },
@@ -216,7 +225,7 @@ it('starter clones open in the designer as inactive drafts, and a draft can be s
         passJson: { ...v.passJson, description: 'Edited starter draft' },
       });
       const activation = await call(`/${cloned.id}/activate`, { version: savedVersion });
-      expect(activation.status).toBe(404);
+      await expectProblem(activation, 404, 'NOT_FOUND');
       const savedDetail = await call(`/${cloned.id}`);
       expect(savedDetail.status).toBe(200);
       expect(TemplateDetailSchema.parse(await savedDetail.json())).toMatchObject({

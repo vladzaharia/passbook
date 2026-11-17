@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { WalletOffer } from '../../../shared/contracts/me.ts';
 import type {
@@ -192,7 +193,7 @@ describe('pending native wallets on holder surfaces', () => {
     const pass = await kit.pass({ mode: 'test', holderEmail });
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
     expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
-    expect((await get(`/api/v1/me/passes/${pass.id}`, headers)).status).toBe(404);
+    await expectProblem(await get(`/api/v1/me/passes/${pass.id}`, headers), 404, 'PASS_NOT_FOUND');
   });
 
   it('suppresses choices for a suspended organization', async () => {

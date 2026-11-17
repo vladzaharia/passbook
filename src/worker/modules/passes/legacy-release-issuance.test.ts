@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -312,7 +313,7 @@ describe('legacy template releases', () => {
     ]);
     // The superseded legacy binding no longer issues.
     const stale = await issue(operator.session.headers, passBody(template, legacy));
-    expect(stale.status).toBe(409);
+    await expectProblem(stale, 409, 'TEMPLATE_RELEASE_CONFLICT');
     const key = await makeApiKey(kit.fx, { orgId, scopes: ['passes:write'] });
     const viaKey = await issue(key.headers, passBody(template));
     expect(viaKey.status, await viaKey.clone().text()).toBe(201);
@@ -327,7 +328,7 @@ describe('legacy template releases', () => {
       expectedGeneration: 2,
       reason: 'Restore the grandfathered release',
     });
-    expect(rollback.status).toBe(409);
+    await expectProblem(rollback, 409, 'TEMPLATE_RELEASE_CONFLICT');
     expect((await releases(template)).active?.id).toBe(next.id);
   });
 
@@ -340,6 +341,6 @@ describe('legacy template releases', () => {
     ]);
     const key = await makeApiKey(kit.fx, { orgId, scopes: ['passes:write'] });
     const response = await issue(key.headers, passBody(template));
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'TEMPLATE_RELEASE_REQUIRED');
   });
 });

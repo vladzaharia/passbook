@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../test/helpers/denial.ts';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { createApp } from '../app.ts';
 import type { AppEnv } from './env.ts';
@@ -148,7 +149,7 @@ describe('host policy in the app', () => {
       const res = await call(`${CANONICAL}${path}`, {}, appEnv(fetched));
       expect(res.status, path).toBe(404);
     }
-    expect((await call(`${CANONICAL}/login`, { method: 'POST' })).status).toBe(404);
+    await expectProblem(await call(`${CANONICAL}/login`, { method: 'POST' }), 404, 'NOT_FOUND');
     expect(fetched).toEqual([]);
   });
 });

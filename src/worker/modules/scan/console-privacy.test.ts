@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser, runOne } from '../../../../test/helpers/index.ts';
 import { ScanRecordSchema } from '../../../shared/contracts/scanners.ts';
 import { first, run } from '../../platform/db.ts';
@@ -317,7 +318,7 @@ describe('scan console and feed privacy', () => {
     expect(feed.items[0]).not.toHaveProperty('passTitle');
     expectNoSecrets(feed, pass);
     expect(JSON.stringify(feed)).not.toContain(PUBLIC);
-    expect((await get('?q=Public', apiKey)).status).toBe(403);
+    await expectProblem(await get('?q=Public', apiKey), 403, 'SCAN_SEARCH_FORBIDDEN');
 
     const csvResponse = await get(exportPath());
     expect(csvResponse.status).toBe(200);

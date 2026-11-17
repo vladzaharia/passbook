@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -117,7 +118,7 @@ describe('archived templates on an event', () => {
         call('PATCH', `/${body.id}`, { match: { input: 'memberName', values: ['Alex'] } }),
     );
     expect(fired).toBe(true);
-    expect(result.status).toBe(409);
+    await expectProblem(result, 409, 'SCAN_EVENT_CHANGED');
   });
 
   it('refuses a newly attached archived template with 422 TEMPLATE_ARCHIVED, and takes an active one', async () => {

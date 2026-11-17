@@ -2,6 +2,7 @@ import { createExecutionContext } from 'cloudflare:test';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -1385,7 +1386,7 @@ describe('durable connection webhook retention', () => {
       }),
     );
     const original = onlyJob();
-    await expect(processWebhook(kit.sctx, original)).rejects.toThrow();
+    await expectRejectsCode(processWebhook(kit.sctx, original), 'WEBHOOK_INTERNAL');
     expect(attempts).toBe(1);
     expect((await deadLetter(original)).acked).toBe(true);
     const [item] = await list(id);
@@ -1471,7 +1472,7 @@ describe('durable connection webhook retention', () => {
       }),
     );
     const original = onlyJob();
-    await expect(processWebhook(kit.sctx, original)).rejects.toThrow();
+    await expectRejectsCode(processWebhook(kit.sctx, original), 'WEBHOOK_INTERNAL');
     expect(attempts).toBe(1);
     expect((await deadLetter(original)).acked).toBe(true);
     const [item] = await list(id);

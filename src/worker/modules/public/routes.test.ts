@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
@@ -329,7 +330,7 @@ describe('GET /p/:token', () => {
     expect(body).not.toMatch(/class="btn"/);
     await rotateLink(kit.ctx, actor, pass.id, null);
     expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
-    expect((await get(`/p/${pass.downloadToken}/pass.pkpass`)).status).toBe(404);
+    await expectProblem(await get(`/p/${pass.downloadToken}/pass.pkpass`), 404, 'LINK_NOT_FOUND');
   });
 });
 
@@ -424,7 +425,11 @@ describe('GET /p/:token/assets/:name', () => {
   it('rejects names outside the pass image set', async () => {
     const pass = await kit.pass();
     for (const name of ['pass.json', 'missing.png', '..%2Fpass.png', 'icon.svg'])
-      expect((await get(`/p/${pass.downloadToken}/assets/${name}`)).status).toBe(404);
+      await expectProblem(
+        await get(`/p/${pass.downloadToken}/assets/${name}`),
+        404,
+        'ASSET_NOT_FOUND',
+      );
   });
 });
 

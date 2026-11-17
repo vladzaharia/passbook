@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -51,7 +52,11 @@ describe('GET /scans (API key)', () => {
     });
     const res = await get('', fake.apiKey({ orgId, scopes: ['scans:read'] }));
     expect(res.status).toBe(200);
-    expect((await get('?q=Anna', fake.apiKey({ orgId, scopes: ['scans:read'] }))).status).toBe(403);
+    await expectProblem(
+      await get('?q=Anna', fake.apiKey({ orgId, scopes: ['scans:read'] })),
+      403,
+      'SCAN_SEARCH_FORBIDDEN',
+    );
     const rows = await items(res);
     expect(rows.map((r) => r.id)).toEqual([mine.id]);
     expect(rows[0]).toMatchObject({
@@ -126,7 +131,7 @@ describe('GET /scans (API key)', () => {
     const other = await makeOrg(f);
     await seed();
     const key = fake.apiKey({ orgId, scopes: ['scans:read'] });
-    expect((await get(`?orgId=${other.id}`, key)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${other.id}`, key), 403, 'ORG_FORBIDDEN');
     expect(
       await items(
         await get(`?orgId=${orgId}`, fake.apiKey({ orgId: null, scopes: ['scans:read'] })),
@@ -168,7 +173,11 @@ describe('GET /scans (API key)', () => {
 
   it('needs the scans:read scope, and opens no other scans route', async () => {
     const row = await seed();
-    expect((await get('', fake.apiKey({ orgId, scopes: ['passes:read'] }))).status).toBe(403);
+    await expectProblem(
+      await get('', fake.apiKey({ orgId, scopes: ['passes:read'] })),
+      403,
+      'MISSING_SCOPE',
+    );
     const key = fake.apiKey({ orgId, scopes: ['scans:read'] });
     expect((await get(`/${row.id}`, key)).status).toBe(401);
     expect((await get(`/export?orgId=${orgId}&from=0&to=1`, key)).status).toBe(401);

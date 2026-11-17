@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../test/helpers/denial.ts';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { createApp } from '../app.ts';
 import type { AppEnv } from './env.ts';
@@ -159,7 +160,7 @@ describe('auth ports', () => {
 
   it('refuses non-admin sessions on admin routes', async () => {
     const res = await call('/api/v1/users', { headers: auth.user() });
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'FORBIDDEN');
   });
 
   it('reports an authenticated refusal once, and nothing for anonymous or unknown callers', async () => {
@@ -281,7 +282,11 @@ describe('csrf', () => {
 describe('api keys', () => {
   it('enforces scopes by method', async () => {
     const readOnly = auth.apiKey({ scopes: ['passes:read'] });
-    expect((await call('/api/v1/passes/p1', { headers: readOnly })).status).toBe(404);
+    await expectProblem(
+      await call('/api/v1/passes/p1', { headers: readOnly }),
+      404,
+      'PASS_NOT_FOUND',
+    );
     const write = await call('/api/v1/passes/p1', {
       method: 'PATCH',
       headers: { ...readOnly, 'content-type': 'application/json' },

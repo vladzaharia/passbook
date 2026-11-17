@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../test/helpers/denial.ts';
 import { fixtures, makeApiKey, makeEnv, makeSession, makeUser } from '../../test/helpers/index.ts';
 import { createApp } from './app.ts';
 import { ManualClock } from './platform/clock.ts';
@@ -37,7 +38,11 @@ describe('createAuthStores', () => {
       await Promise.allSettled(pending);
       return res;
     };
-    expect((await send('/api/v1/users', { headers: session.headers })).status).toBe(403);
+    await expectProblem(
+      await send('/api/v1/users', { headers: session.headers }),
+      403,
+      'FORBIDDEN',
+    );
     expect(
       (
         await send('/api/v1/passes/p1', {

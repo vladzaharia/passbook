@@ -1,5 +1,6 @@
 import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
 import { MemberPhotoSchema } from '../../../shared/contracts/check-in.ts';
@@ -207,7 +208,7 @@ describe('member photos', () => {
   it('requires authentication, write access, matching organization and mode', async () => {
     const pass = await kit.pass();
     expect((await api(pass.id, 'GET', undefined, {})).status).toBe(401);
-    expect((await api(pass.id, 'PUT', { png: encoded }, auth.user())).status).toBe(403);
+    await expectProblem(await api(pass.id, 'PUT', { png: encoded }, auth.user()), 403, 'FORBIDDEN');
     const other = await makeOrg(kit.fx);
     await expect(getMemberPhoto(kit.ctx, pass.id, other.id)).rejects.toMatchObject({ status: 404 });
     await expect(

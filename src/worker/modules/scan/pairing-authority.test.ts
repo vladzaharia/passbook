@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
@@ -284,7 +285,11 @@ describe('pairing tenant authority', () => {
           (await request('POST', scannerPath(device.id, action), inTest(headers))).status,
         ).toBe(403);
       }
-      expect((await request('POST', scannerPath(terminal.id, 'token'), headers)).status).toBe(403);
+      await expectProblem(
+        await request('POST', scannerPath(terminal.id, 'token'), headers),
+        403,
+        'FORBIDDEN',
+      );
     }
   });
 

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   countD1,
   type Fixtures,
@@ -438,14 +439,22 @@ describe('eligible template releases', () => {
     expectUploaded(await eligible(scope(org.id), operator), template, published, org.id);
     // integration_admin holds templates:read, which is enough for this route.
     expectUploaded(await eligible(scope(org.id), integration), template, published, org.id);
-    expect((await eligibleRequest(scope(org.id), other.author.headers)).status).toBe(403);
+    await expectProblem(
+      await eligibleRequest(scope(org.id), other.author.headers),
+      403,
+      'FORBIDDEN',
+    );
     expect((await eligibleRequest(scope(org.id), {})).status).toBe(401);
     const platformUser = await makeUser(f);
     const platformSession = await makeSession(f, {
       userId: platformUser.id,
       roles: ['admin', 'user'],
     });
-    expect((await eligibleRequest(scope(org.id), platformSession.headers)).status).toBe(403);
+    await expectProblem(
+      await eligibleRequest(scope(org.id), platformSession.headers),
+      403,
+      'FORBIDDEN',
+    );
 
     const templateKey = await makeApiKey(f, { orgId: org.id, scopes: ['templates:read'] });
     const passKey = await makeApiKey(f, { orgId: org.id, scopes: ['passes:read'] });
@@ -455,10 +464,22 @@ describe('eligible template releases', () => {
       const response = await eligibleRequest(scope(org.id), key.headers);
       expect(response.status).toBe(200);
       expectUploaded(EligiblePageSchema.parse(await response.json()), template, published, org.id);
-      expect((await eligibleRequest(scope(org.id, 'test'), key.headers)).status).toBe(403);
+      await expectProblem(
+        await eligibleRequest(scope(org.id, 'test'), key.headers),
+        403,
+        'TEMPLATE_MODE_MISMATCH',
+      );
     }
-    expect((await eligibleRequest(scope(org.id), wrongScope.headers)).status).toBe(403);
-    expect((await eligibleRequest(scope(org.id), wrongOrg.headers)).status).toBe(403);
+    await expectProblem(
+      await eligibleRequest(scope(org.id), wrongScope.headers),
+      403,
+      'MISSING_SCOPE',
+    );
+    await expectProblem(
+      await eligibleRequest(scope(org.id), wrongOrg.headers),
+      403,
+      'ORG_FORBIDDEN',
+    );
     const sandboxRelease = await release(template, scope(org.id, 'test'), own);
     const testKey = await makeApiKey(f, { orgId: org.id, scopes: ['passes:read'], mode: 'test' });
     const testResponse = await eligibleRequest(scope(org.id, 'test'), testKey.headers, {}, 'live');
@@ -469,11 +490,19 @@ describe('eligible template releases', () => {
       sandboxRelease,
       org.id,
     );
-    expect((await eligibleRequest(scope(org.id), testKey.headers)).status).toBe(403);
+    await expectProblem(
+      await eligibleRequest(scope(org.id), testKey.headers),
+      403,
+      'TEMPLATE_MODE_MISMATCH',
+    );
     expect(
       (await eligibleRequest(scope(org.id, 'test'), operator.headers, {}, 'live')).status,
     ).toBe(403);
-    expect((await eligibleRequest(scope(org.id), operator.headers, {}, 'test')).status).toBe(403);
+    await expectProblem(
+      await eligibleRequest(scope(org.id), operator.headers, {}, 'test'),
+      403,
+      'TEMPLATE_MODE_MISMATCH',
+    );
 
     for (const kind of ['device', 'terminal'] as const) {
       const scanner = await makeScanner(f, { orgId: org.id, kind });
@@ -485,7 +514,7 @@ describe('eligible template releases', () => {
       'UPDATE org_memberships SET revoked_at = ? WHERE org_id = ? AND user_id = ?',
       [clock.now(), org.id, operator.userId],
     );
-    expect((await eligibleRequest(scope(org.id), operator.headers)).status).toBe(403);
+    await expectProblem(await eligibleRequest(scope(org.id), operator.headers), 403, 'FORBIDDEN');
   });
 
   it('rejects unsupported providers, missing scope, mismatched modes and invalid limits', async () => {

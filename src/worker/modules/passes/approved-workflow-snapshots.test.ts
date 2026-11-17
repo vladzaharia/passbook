@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makePass, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
 import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
@@ -308,7 +309,11 @@ describe('approved workflow release snapshots', () => {
     const testB = await approve(id, 'v5', other.id, 'test');
     await kit.settle();
 
-    expect((await postReissue({ templateId: id }, 'live', auth.user())).status).toBe(403);
+    await expectProblem(
+      await postReissue({ templateId: id }, 'live', auth.user()),
+      403,
+      'FORBIDDEN',
+    );
     const live = await enqueue({ templateId: id });
     const test = await enqueue({ templateId: id }, 'test');
     const runsBeforeMismatch = await reservations(id);
@@ -681,7 +686,7 @@ describe('approved workflow release snapshots', () => {
       },
       () => postReissue({ templateId: id }, 'live', session.headers),
     );
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     expect(
       await all(
         kit.env.DB,

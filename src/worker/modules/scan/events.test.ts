@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -246,8 +247,12 @@ describe('events', () => {
   it("another org's templates are a 404", async () => {
     const other = await makeOrg(f);
     const theirs = await template(other.id);
-    expect((await create({ templateIds: [theirs] })).res.status).toBe(404);
+    await expectProblem((await create({ templateIds: [theirs] })).res, 404, 'TEMPLATE_NOT_FOUND');
     const { body } = await create();
-    expect((await call('PATCH', `/${body.id}`, { templateIds: [theirs] })).status).toBe(404);
+    await expectProblem(
+      await call('PATCH', `/${body.id}`, { templateIds: [theirs] }),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
   });
 });

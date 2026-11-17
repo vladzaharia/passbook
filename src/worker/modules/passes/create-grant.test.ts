@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   assertNoLeakedGrants,
   makeApiKey,
@@ -153,7 +154,7 @@ describe('pass create as a grant', () => {
     ]);
     const payload = body();
     const response = await issue(actor.session.headers, payload);
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM passes WHERE external_id = ?', [payload.externalId]),
     ).toBeNull();

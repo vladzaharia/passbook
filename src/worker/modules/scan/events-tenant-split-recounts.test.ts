@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeScanEvent, makeScanner } from '../../../../test/helpers/index.ts';
 import { ScanEventSchema } from '../../../shared/contracts/index.ts';
 import { first } from '../../platform/db.ts';
@@ -29,21 +30,29 @@ describe('scan event tenant routes', () => {
     expect((await call(operator, 'GET', `?orgId=${orgId}`)).status).toBe(200);
     expect((await call(operator, 'GET', `/${eventId}`)).status).toBe(200);
     const before = await state();
-    expect((await call(reader, 'POST', '', input())).status).toBe(403);
-    expect((await call(reader, 'PATCH', `/${eventId}`, { name: 'Changed' })).status).toBe(403);
-    expect((await call(reader, 'POST', `/${eventId}/archive`)).status).toBe(403);
+    await expectProblem(await call(reader, 'POST', '', input()), 403, 'FORBIDDEN');
+    await expectProblem(
+      await call(reader, 'PATCH', `/${eventId}`, { name: 'Changed' }),
+      403,
+      'FORBIDDEN',
+    );
+    await expectProblem(await call(reader, 'POST', `/${eventId}/archive`), 403, 'FORBIDDEN');
     expect(
       (await call(reader, 'POST', `/${eventId}/scanners`, { scannerIds: [freeScannerId] })).status,
     ).toBe(403);
-    expect((await call(operator, 'POST', '', input())).status).toBe(403);
-    expect((await call(operator, 'PATCH', `/${eventId}`, { name: 'Changed' })).status).toBe(403);
-    expect((await call(operator, 'POST', `/${eventId}/archive`)).status).toBe(403);
+    await expectProblem(await call(operator, 'POST', '', input()), 403, 'FORBIDDEN');
+    await expectProblem(
+      await call(operator, 'PATCH', `/${eventId}`, { name: 'Changed' }),
+      403,
+      'FORBIDDEN',
+    );
+    await expectProblem(await call(operator, 'POST', `/${eventId}/archive`), 403, 'FORBIDDEN');
     expect(
       (await call(operator, 'POST', `/${eventId}/scanners`, { scannerIds: [freeScannerId] }))
         .status,
     ).toBe(403);
-    expect((await call(unrelatedRole, 'GET', `?orgId=${orgId}`)).status).toBe(403);
-    expect((await call(unrelatedRole, 'GET', `/${eventId}`)).status).toBe(403);
+    await expectProblem(await call(unrelatedRole, 'GET', `?orgId=${orgId}`), 403, 'FORBIDDEN');
+    await expectProblem(await call(unrelatedRole, 'GET', `/${eventId}`), 403, 'FORBIDDEN');
     expect(await state()).toEqual(before);
   });
 
@@ -97,13 +106,17 @@ describe('scan event tenant routes', () => {
       items: [],
       nextCursor: null,
     });
-    expect((await call(member, 'GET', `/${testId}`)).status).toBe(404);
+    await expectProblem(await call(member, 'GET', `/${testId}`), 404, 'EVENT_NOT_FOUND');
     const testSession = { headers: { ...member.headers, 'x-passbook-mode': 'test' } };
     const testEvents = await page(await call(testSession, 'GET', `?orgId=${orgId}`));
     expect(testEvents.items.map((item) => item.id)).toContain(testId);
     expect((await call(testSession, 'GET', `/${testId}`)).status).toBe(200);
-    expect((await call(member, 'PATCH', `/${testId}`, { name: 'Wrong mode' })).status).toBe(404);
-    expect((await call(member, 'POST', `/${testId}/archive`)).status).toBe(404);
+    await expectProblem(
+      await call(member, 'PATCH', `/${testId}`, { name: 'Wrong mode' }),
+      404,
+      'EVENT_NOT_FOUND',
+    );
+    await expectProblem(await call(member, 'POST', `/${testId}/archive`), 404, 'EVENT_NOT_FOUND');
     expect(
       (await call(member, 'POST', `/${testId}/scanners`, { scannerIds: [freeScannerId] })).status,
     ).toBe(404);

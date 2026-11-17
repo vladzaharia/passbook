@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeScanner, makeScanStaff, makeSession } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { makeStaffTenantFixture, type StaffTenantFixture } from './staff-tenant-split-fixture.ts';
@@ -140,7 +141,7 @@ describe('staff route tenant authorization', () => {
       ['PATCH', staffPath(person.id), { disabled: true }],
       ['POST', resetPath(person.id), undefined],
     ] as const) {
-      expect((await call(method, path, body)).status).toBe(403);
+      await expectProblem(await call(method, path, body), 403, 'FORBIDDEN');
     }
     expect(await state()).toEqual(before);
   });

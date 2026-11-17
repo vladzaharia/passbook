@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeEnv } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { createApp } from '../../app.ts';
@@ -177,9 +178,9 @@ describe('apns-check route', () => {
   });
 
   it('rejects non-admins, missing CSRF and unknown identities', async () => {
-    expect((await post(fake.user())).status).toBe(403);
+    await expectProblem(await post(fake.user()), 403, 'FORBIDDEN');
     const { cookie } = fake.admin();
-    expect((await post({ cookie: cookie ?? '' })).status).toBe(403);
-    expect((await post(fake.admin(), 'nope')).status).toBe(404);
+    await expectProblem(await post({ cookie: cookie ?? '' }), 403, 'CSRF_ORIGIN');
+    await expectProblem(await post(fake.admin(), 'nope'), 404, 'IDENTITY_NOT_FOUND');
   });
 });

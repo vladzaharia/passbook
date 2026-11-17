@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
+import { expectProblem, expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { createApp } from '../../app.ts';
 import { first, run } from '../../platform/db.ts';
 import { checksHold, jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -109,11 +110,11 @@ describe('bundle credential transfer fences', () => {
       ),
     ).toBeNull();
     expect(await holds(snapshot)).toBe(false);
-    await expect(delayed.grant.commit()).rejects.toThrow();
+    await expectRejectsCode(delayed.grant.commit(), 'BUNDLE_STALE');
     const pendingPass = await getPass(kit.env.DB, pass.id);
     if (!pendingPass) throw new Error('Missing pending pass');
     const pendingInsert = delayedBundle(kit, pendingPass);
-    await expect(pendingInsert.grant.commit()).rejects.toThrow();
+    await expectRejectsCode(pendingInsert.grant.commit(), 'BUNDLE_STALE');
     expect(
       await first(kit.env.DB, 'SELECT id FROM bundles WHERE id = ?', [pendingInsert.id]),
     ).toBeNull();
@@ -148,8 +149,8 @@ describe('bundle credential transfer fences', () => {
     const html = await page.text();
     expect(html).toContain(`/b/${token}/${other.id}/pass.pkpass`);
     expect(html).not.toContain(`/b/${token}/${pass.id}/pass.pkpass`);
-    expect((await get(`/b/${token}/${pass.id}/pass.pkpass`)).status).toBe(404);
-    expect((await get(`/b/${token}/${pass.id}/assets/icon.png`)).status).toBe(404);
+    await expectProblem(await get(`/b/${token}/${pass.id}/pass.pkpass`), 404, 'LINK_NOT_FOUND');
+    await expectProblem(await get(`/b/${token}/${pass.id}/assets/icon.png`), 404, 'LINK_NOT_FOUND');
     expect((await get(`/b/${token}/${other.id}/pass.pkpass`)).status).toBe(200);
     const archive = await get(`/b/${token}/passes.pkpasses`);
     expect(archive.status).toBe(200);
@@ -195,8 +196,8 @@ describe('bundle credential transfer fences', () => {
       credentialGeneration: pass.credentialGeneration + 1,
       holderEmail: 'bundle-new@example.test',
     });
-    expect((await get(`/b/${token}/${pass.id}/pass.pkpass`)).status).toBe(404);
-    expect((await get(`/b/${token}/${pass.id}/assets/icon.png`)).status).toBe(404);
+    await expectProblem(await get(`/b/${token}/${pass.id}/pass.pkpass`), 404, 'LINK_NOT_FOUND');
+    await expectProblem(await get(`/b/${token}/${pass.id}/assets/icon.png`), 404, 'LINK_NOT_FOUND');
     expect((await get(`/b/${token}/${other.id}/pass.pkpass`)).status).toBe(200);
     const oldPage = await (await get(`/b/${token}`)).text();
     expect(oldPage).toContain(`/b/${token}/${other.id}/pass.pkpass`);
@@ -287,7 +288,7 @@ describe('bundle credential transfer fences', () => {
         kit.env,
       );
       expect(transferred).toBe(true);
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'LINK_NOT_FOUND');
       const unaffected = await app.request(
         `${origin}/b/${token}/${other.id}/pass.pkpass`,
         {},
@@ -370,7 +371,7 @@ describe('bundle credential transfer fences', () => {
       );
       expect(changed).toBe(true);
       expect(opened).toBe(true);
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'LINK_NOT_FOUND');
       const bytes = new Uint8Array(await response.arrayBuffer());
       expect(Array.from(bytes.subarray(0, 8))).not.toEqual(Array.from(png.subarray(0, 8)));
       const replacement = await getPass(kit.env.DB, pass.id);

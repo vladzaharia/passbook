@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type ApiKeyFixture,
   editApiKeyIdentity,
@@ -243,7 +244,11 @@ describe('tenant broadcast reads', () => {
     expect(
       (await call('GET', `/broadcasts?orgId=${kit.org.id}`, platformAdmin.headers)).status,
     ).toBe(403);
-    expect((await call('GET', `/broadcasts/${own.id}`, platformAdmin.headers)).status).toBe(404);
+    await expectProblem(
+      await call('GET', `/broadcasts/${own.id}`, platformAdmin.headers),
+      404,
+      'BROADCAST_NOT_FOUND',
+    );
     expect((await call('GET', `/broadcasts?orgId=${kit.org.id}`, {})).status).toBe(401);
   });
 
@@ -299,9 +304,17 @@ describe('tenant broadcast reads', () => {
     const reader = await member(kit.org.id, 'org_admin');
     const headers = reader.session.headers;
     const before = await persisted(otherOrg);
-    expect((await call('GET', `/broadcasts?orgId=${otherOrg}`, headers)).status).toBe(403);
-    expect((await preview(headers, otherOrg)).status).toBe(403);
-    expect((await call('POST', '/broadcasts', headers, message(otherOrg))).status).toBe(403);
+    await expectProblem(
+      await call('GET', `/broadcasts?orgId=${otherOrg}`, headers),
+      403,
+      'FORBIDDEN',
+    );
+    await expectProblem(await preview(headers, otherOrg), 403, 'FORBIDDEN');
+    await expectProblem(
+      await call('POST', '/broadcasts', headers, message(otherOrg)),
+      403,
+      'FORBIDDEN',
+    );
     for (const [method, path, body] of [
       ['GET', `/broadcasts/${foreign.id}`, undefined],
       ['GET', `/broadcasts/${foreign.id}/items`, undefined],
@@ -471,13 +484,21 @@ describe('API-key scope, organization and mode', () => {
     });
     const own = await draft(onlyMessages.headers);
     const before = await persisted();
-    expect((await call('GET', '/broadcasts', noMessages.headers)).status).toBe(403);
-    expect((await call('POST', '/broadcasts', noMessages.headers, message())).status).toBe(403);
+    await expectProblem(await call('GET', '/broadcasts', noMessages.headers), 403, 'MISSING_SCOPE');
+    await expectProblem(
+      await call('POST', '/broadcasts', noMessages.headers, message()),
+      403,
+      'MISSING_SCOPE',
+    );
     expect((await call('GET', `/broadcasts/${own.id}/items`, onlyMessages.headers)).status).toBe(
       403,
     );
     const change = message(kit.org.id, { kind: 'change', patch: { gate: 'A1' } });
-    expect((await call('POST', '/broadcasts', onlyMessages.headers, change)).status).toBe(403);
+    await expectProblem(
+      await call('POST', '/broadcasts', onlyMessages.headers, change),
+      403,
+      'MISSING_SCOPE',
+    );
     expect(await persisted()).toEqual(before);
     expect((await call('GET', `/broadcasts/${own.id}/items`, full.headers)).status).toBe(200);
     const created = await call('POST', '/broadcasts', full.headers, change);
@@ -522,8 +543,12 @@ describe('API-key scope, organization and mode', () => {
     const misleadingMode = { ...liveKey.headers, 'x-passbook-mode': 'test' };
     expect(await ids(misleadingMode)).toContain(live.id);
     expect(await ids(misleadingMode)).not.toContain(test.id);
-    expect((await call('GET', `/broadcasts?orgId=${otherOrg}`, liveKey.headers)).status).toBe(403);
-    expect((await preview(liveKey.headers, otherOrg)).status).toBe(403);
+    await expectProblem(
+      await call('GET', `/broadcasts?orgId=${otherOrg}`, liveKey.headers),
+      403,
+      'ORG_FORBIDDEN',
+    );
+    await expectProblem(await preview(liveKey.headers, otherOrg), 403, 'ORG_FORBIDDEN');
     expect((await call('POST', '/broadcasts', liveKey.headers, message(otherOrg))).status).toBe(
       403,
     );
@@ -540,7 +565,11 @@ describe('API-key scope, organization and mode', () => {
         ['POST', '/retry', undefined],
         ['PATCH', '', message()],
       ] as const) {
-        expect((await call(method, `/broadcasts/${id}${suffix}`, headers, body)).status).toBe(404);
+        await expectProblem(
+          await call(method, `/broadcasts/${id}${suffix}`, headers, body),
+          404,
+          'BROADCAST_NOT_FOUND',
+        );
       }
     }
     expect(await persisted()).toEqual(before);
@@ -563,7 +592,11 @@ describe('API-key scope, organization and mode', () => {
     expect(test.mode).toBe('test');
     expect((await call('GET', '/broadcasts', testKey.headers)).status).toBe(422);
     expect(await ids(testKey.headers, otherOrg)).toEqual([test.id]);
-    expect((await call('GET', `/broadcasts/${foreign.id}`, testKey.headers)).status).toBe(404);
+    await expectProblem(
+      await call('GET', `/broadcasts/${foreign.id}`, testKey.headers),
+      404,
+      'BROADCAST_NOT_FOUND',
+    );
     expect((await call('POST', `/broadcasts/${foreign.id}/send`, testKey.headers, {})).status).toBe(
       404,
     );

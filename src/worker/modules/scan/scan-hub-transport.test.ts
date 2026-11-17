@@ -1,5 +1,6 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { fromBase64Url } from '../../platform/ids.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -299,7 +300,11 @@ describe('live display transport and authorization', () => {
     const image = await kit.get(monitor.headers, url.replace('/api/v1/scan', ''));
     expect(image.status).toBe(200);
     const other = await screen('monitor', [source.id]);
-    expect((await kit.get(other.headers, url.replace('/api/v1/scan', ''))).status).toBe(404);
+    await expectProblem(
+      await kit.get(other.headers, url.replace('/api/v1/scan', '')),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it('rejects stale credentials and settings revisions before returning history', async () => {

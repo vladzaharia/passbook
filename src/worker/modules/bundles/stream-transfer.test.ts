@@ -1,4 +1,5 @@
 import { expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { createApp } from '../../app.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { reassignHolder } from '../holders/service.ts';
@@ -163,7 +164,7 @@ it('streams a single file on after a transfer between chunk 2 and N, then refuse
     {},
     kit.env,
   );
-  expect(next.status).toBe(404);
+  await expectProblem(next, 404, 'LINK_NOT_FOUND');
 });
 
 it('stops an archive at the first chunk after a transfer, even with one member', async () => {

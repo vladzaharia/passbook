@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   editApiKeyIdentity,
   makeApiKey,
@@ -102,7 +103,7 @@ describe('holder tenant access', () => {
     const session = await makeSession(kit.fx, { userId: user.id, roles: ['admin', 'user'] });
     const pass = await kit.pass();
     expect((await request('', session.headers)).status).toBe(422);
-    expect((await request(`?orgId=${kit.org.id}`, session.headers)).status).toBe(403);
+    await expectProblem(await request(`?orgId=${kit.org.id}`, session.headers), 403, 'FORBIDDEN');
     expect(
       (await request('/assign', session.headers, { passId: pass.id, email: 'new@example.com' }))
         .status,
@@ -118,7 +119,7 @@ describe('holder tenant access', () => {
     const foreign = await kit.pass({ orgId: other.id });
     expect((await request(`?orgId=${kit.org.id}`, reader.session.headers)).status).toBe(200);
     expect((await request(`/${own.id}`, reader.session.headers)).status).toBe(200);
-    expect((await request(`/${foreign.id}`, reader.session.headers)).status).toBe(403);
+    await expectProblem(await request(`/${foreign.id}`, reader.session.headers), 403, 'FORBIDDEN');
     expect(
       (
         await request('/assign', reader.session.headers, {
@@ -131,7 +132,11 @@ describe('holder tenant access', () => {
       (await request('/assign', ordinary.headers, { passId: own.id, email: 'member@example.com' }))
         .status,
     ).toBe(200);
-    expect((await request('/unassign', ordinary.headers, { passId: foreign.id })).status).toBe(404);
+    await expectProblem(
+      await request('/unassign', ordinary.headers, { passId: foreign.id }),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect(
       (
         await request(
@@ -209,7 +214,7 @@ describe('holder tenant access', () => {
         env,
       );
       expect(revoked).toBe(true);
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
     },
   );
 
@@ -224,8 +229,16 @@ describe('holder tenant access', () => {
     const operator = await eventMember(kit, kit.org.id, ['pass_operator']);
     const own = await kit.pass();
     const foreign = await kit.pass({ orgId: (await makeOrg(kit.fx)).id });
-    expect((await request(path, reader.session.headers, body(own.id))).status).toBe(404);
-    expect((await request(path, operator.session.headers, body(foreign.id))).status).toBe(404);
+    await expectProblem(
+      await request(path, reader.session.headers, body(own.id)),
+      404,
+      'PASS_NOT_FOUND',
+    );
+    await expectProblem(
+      await request(path, operator.session.headers, body(foreign.id)),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect((await getPass(kit.env.DB, own.id))?.holderEmail).toBeNull();
     expect((await getPass(kit.env.DB, foreign.id))?.holderEmail).toBeNull();
   });
@@ -261,7 +274,11 @@ describe('holder tenant access', () => {
     const foreign = await kit.pass({ orgId: foreignOrg.id });
     // /api/v1 compatibility: an organization-bound key defaults to its own organization.
     expect((await request('', read.headers)).status).toBe(200);
-    expect((await request(`?orgId=${foreignOrg.id}`, read.headers)).status).toBe(403);
+    await expectProblem(
+      await request(`?orgId=${foreignOrg.id}`, read.headers),
+      403,
+      'ORG_FORBIDDEN',
+    );
     expect(
       (
         await request('/assign', write.headers, {
@@ -271,8 +288,8 @@ describe('holder tenant access', () => {
       ).status,
     ).toBe(404);
     expect((await request(`/${pass.id}`, read.headers)).status).toBe(200);
-    expect((await request(`/${foreign.id}`, read.headers)).status).toBe(404);
-    expect((await request(`/${pass.id}`, write.headers)).status).toBe(403);
+    await expectProblem(await request(`/${foreign.id}`, read.headers), 404, 'PASS_NOT_FOUND');
+    await expectProblem(await request(`/${pass.id}`, write.headers), 403, 'MISSING_SCOPE');
     expect((await request(`?orgId=${kit.org.id}`, read.headers)).status).toBe(200);
     expect(
       (await request('/assign', read.headers, { passId: pass.id, email: 'no@example.com' })).status,

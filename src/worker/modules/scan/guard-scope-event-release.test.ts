@@ -1,5 +1,6 @@
 import type { Hono } from 'hono';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type makeEnv,
   makeOrg,
@@ -115,7 +116,7 @@ describe('requireScanActor: scope: event release validation', () => {
           const response = await post(app, env, fake.admin(), {
             scope: { orgId, eventId: ev.id, templateIds, timeZone: 'UTC' },
           });
-          expect(response.status).toBe(404);
+          await expectProblem(response, 404, 'NOT_FOUND');
         }
         const explicit = await makeScanner(f, {
           orgId,

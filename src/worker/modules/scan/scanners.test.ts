@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeOrg,
   makeScanEvent,
@@ -109,9 +110,17 @@ describe('create and list', () => {
     const other = await makeOrg(f);
     const o = makeTemplate({ id: f.ids.id(), orgId: other.id });
     await persistTemplate(f, o.resolved, { registry: o.registry });
-    expect((await create({ accepts: { templateIds: [o.resolved.id] } })).res.status).toBe(404);
+    await expectProblem(
+      (await create({ accepts: { templateIds: [o.resolved.id] } })).res,
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
     const foreign = await makeScanEvent(f, { orgId: other.id, templateIds: [o.resolved.id] });
-    expect((await create({ accepts: { eventId: foreign.id } })).res.status).toBe(404);
+    await expectProblem(
+      (await create({ accepts: { eventId: foreign.id } })).res,
+      404,
+      'EVENT_NOT_FOUND',
+    );
     const testEvent = await makeScanEvent(f, { orgId, mode: 'test', templateIds: [templateId] });
     const { res } = await create({ accepts: { eventId: testEvent.id } });
     expect(res.status).toBe(422);
@@ -145,7 +154,7 @@ describe('create and list', () => {
     await persistTemplate(f, missing.resolved, { registry: missing.registry });
     for (const id of [liveOnly.resolved.id, missing.resolved.id]) {
       const result = await create({ accepts: { templateIds: [id] } }, admin('test'));
-      expect(result.res.status).toBe(404);
+      await expectProblem(result.res, 404, 'TEMPLATE_NOT_FOUND');
       expect(await codeOf(result.res)).toBe('TEMPLATE_NOT_FOUND');
       const event = await makeScanEvent(f, {
         orgId,
@@ -153,7 +162,7 @@ describe('create and list', () => {
         templateIds: [templateId, id],
       });
       const eventResult = await create({ accepts: { eventId: event.id } }, admin('test'));
-      expect(eventResult.res.status).toBe(404);
+      await expectProblem(eventResult.res, 404, 'EVENT_NOT_FOUND');
       expect(await codeOf(eventResult.res)).toBe('EVENT_NOT_FOUND');
     }
   });
@@ -204,7 +213,7 @@ describe('create and list', () => {
       (await consoleCall('PATCH', `/${body.id}`, { accepts: { templateIds: [o.resolved.id] } }))
         .status,
     ).toBe(404);
-    expect((await create({ name: 'main' })).res.status).toBe(409);
+    await expectProblem((await create({ name: 'main' })).res, 409, 'SCANNER_NAME_TAKEN');
     const renamed = await consoleCall('PATCH', `/${body.id}`, {
       name: 'Back door',
       settings: { flow: 'choose' },
@@ -219,7 +228,11 @@ describe('create and list', () => {
   });
 
   it('requires tenant access', async () => {
-    expect((await consoleCall('GET', `?orgId=${orgId}`, undefined, fake.user())).status).toBe(403);
+    await expectProblem(
+      await consoleCall('GET', `?orgId=${orgId}`, undefined, fake.user()),
+      403,
+      'FORBIDDEN',
+    );
     expect((await consoleCall('GET', '', undefined, {})).status).toBe(401);
   });
 
@@ -249,7 +262,11 @@ describe('create and list', () => {
       ).toBe(200);
     }
     for (const path of [`?orgId=${orgId}`, `/${deviceScanner.id}`, `/${deviceScanner.id}/pairing`])
-      expect((await consoleCall('GET', path, undefined, outsiderHeaders)).status).toBe(403);
+      await expectProblem(
+        await consoleCall('GET', path, undefined, outsiderHeaders),
+        403,
+        'FORBIDDEN',
+      );
 
     const writes: [string, string, unknown?][] = [
       [

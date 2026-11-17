@@ -1,5 +1,6 @@
 import type { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type makeEnv,
   makeOrg,
@@ -168,8 +169,8 @@ describe('requireScanActor: scope: requests and admin', () => {
     const foreign = await post(app, env, fake.admin(), {
       scope: { orgId, eventId: otherEvent.id, timeZone: 'UTC' },
     });
-    expect(unknown.status).toBe(404);
-    expect(foreign.status).toBe(404);
+    await expectProblem(unknown, 404, 'NOT_FOUND');
+    await expectProblem(foreign, 404, 'NOT_FOUND');
     const strip = (b: Record<string, unknown>) => ({ ...b, requestId: undefined });
     expect(strip((await unknown.json()) as never)).toEqual(strip((await foreign.json()) as never));
     expect(
@@ -182,7 +183,7 @@ describe('requireScanActor: scope: requests and admin', () => {
     const res = await post(app, env, fake.admin(), {
       scope: { orgId, eventId: testEvent.id, timeZone: 'UTC' },
     });
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'NOT_FOUND');
     const template = makeTemplate({ id: f.ids.id(), orgId });
     await persistApprovedTemplate(template);
     const live = await makeScanEvent(f, { orgId, templateIds: [template.resolved.id] });
@@ -193,7 +194,7 @@ describe('requireScanActor: scope: requests and admin', () => {
     const bad = await post(app, env, fake.admin(), {
       scope: { orgId, templateIds: ['nope'], timeZone: 'UTC' },
     });
-    expect(bad.status).toBe(404);
+    await expectProblem(bad, 404, 'NOT_FOUND');
   });
 
   it('an admin undoes with a scope in the body and reads an asset with it in the query', async () => {

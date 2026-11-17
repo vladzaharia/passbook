@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { beginAttemptFor, checksHold, jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -407,7 +408,7 @@ describe('durable bundle email intent', () => {
       { passId: pass.id, email: 'bundle-race-new@example.com' },
       null,
     );
-    await expect(pending.commit()).rejects.toThrow();
+    await expectRejectsCode(pending.commit(), 'BUNDLE_STALE');
     expect(await getBundle(kit.env.DB, id, null)).toBeNull();
     expect(
       await first(kit.env.DB, 'SELECT pass_id FROM bundle_passes WHERE bundle_id = ?', [id]),

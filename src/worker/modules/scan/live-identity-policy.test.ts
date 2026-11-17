@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { materializeTemplateAssets } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -63,7 +64,7 @@ describe('live identity template policy', () => {
       ],
     );
     await approveAppleRelease(kit, { templateId: id, version: active.version });
-    expect((await kit.get(monitor.headers, oldPath)).status).toBe(404);
+    await expectProblem(await kit.get(monitor.headers, oldPath), 404, 'ASSET_NOT_FOUND');
     const stale = (await hub().snapshot(monitor.attachment)).rows.find(
       (entry) => entry.id === prior.id,
     );

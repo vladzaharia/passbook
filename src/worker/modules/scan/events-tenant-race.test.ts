@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { pageOf, ScanEventSchema } from '../../../shared/contracts/index.ts';
 import { run } from '../../platform/db.ts';
 import { hashSessionCookie } from '../auth/sessions.ts';
@@ -42,7 +43,7 @@ describe('event read authority', () => {
           () => call('GET', kind === 'detail' ? `/${eventId}` : `?orgId=${orgId}`),
         );
         if (kind === 'detail') {
-          expect(response.status).toBe(403);
+          await expectProblem(response, 403, 'FORBIDDEN');
         } else {
           expect(response.status).toBe(200);
           expect(pageOf(ScanEventSchema).parse(await response.json())).toEqual({

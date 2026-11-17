@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -19,7 +20,6 @@ import {
   type OfferFixtureState,
   setupWalletOfferKit as setupOfferFixture,
 } from './offers-test-fixtures.ts';
-
 import { createProjectionCandidate, getApprovedProjection } from './projection-service.ts';
 
 const testEnv = installKeysetTestEnv();
@@ -289,7 +289,7 @@ describe('native wallet availability', () => {
     const app = createApp({ clock: f.kit.clock });
     const path = `/p/${f.pass.downloadToken}/wallet/samsung`;
     const response = await app.request(`https://passbook.mobile${path}`, {}, f.kit.env);
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'WALLET_PROVIDER_DISABLED');
     expect(response.headers.get('location')).toBeNull();
     expect(response.headers.get('cache-control')).toContain('no-store');
     expect((await app.request(`https://passbook.mobile${path}`, {}, f.kit.env)).status).toBe(429);

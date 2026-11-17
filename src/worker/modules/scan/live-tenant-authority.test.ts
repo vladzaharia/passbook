@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { ScanLiveSnapshotSchema } from '../../../shared/contracts/scan-setups.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -172,7 +173,7 @@ describe('user-backed live tenant authority', () => {
         screen.membershipId,
       ]);
       const denied = await app.request(url, { headers: screen.session.headers }, kit.env);
-      expect(denied.status).toBe(403);
+      await expectProblem(denied, 403, 'FORBIDDEN');
       const deniedBody = await denied.text();
       expect(deniedBody.includes(entry.id)).toBe(false);
       expect(deniedBody.includes(screen.resolved.sessionId)).toBe(false);
@@ -218,7 +219,7 @@ describe('user-backed live tenant authority', () => {
       { headers: session.headers },
       kit.env,
     );
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     const body = await response.text();
     expect(body.includes(resolved.sessionId)).toBe(false);
     expect(body.includes(screen.membershipId)).toBe(false);

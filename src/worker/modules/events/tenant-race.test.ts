@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   editApiKeyIdentity,
   makeApiKey,
@@ -197,7 +198,7 @@ describe('pass event and device tenant races', () => {
       const headers = invalidation === 'api key' ? key.headers : member.session.headers;
       const response = await racing.request(path(pass, resource), { headers }, kit.env);
       expect(changed).toBe(true);
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'PASS_NOT_FOUND');
     },
     60_000,
   );
@@ -233,7 +234,7 @@ describe('pass event and device tenant races', () => {
         { headers: member.session.headers },
         kit.env,
       );
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'PASS_NOT_FOUND');
     },
     60_000,
   );

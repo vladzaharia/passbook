@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, onTestFinished } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
 import {
   BulkPassActionResponseSchema,
@@ -114,7 +115,11 @@ describe('bulk actions', () => {
     const theirs = await kit.pass({ memberName: 'Theirs', orgId: orgB.id });
     const ids = [mine.id, theirs.id];
     const scopedKey = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:write'] });
-    expect((await post('/passes/bulk', { action: 'void', ids }, scopedKey)).status).toBe(404);
+    await expectProblem(
+      await post('/passes/bulk', { action: 'void', ids }, scopedKey),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect((await post('/passes/bulk', { action: 'void', ids, orgId: kit.org.id })).status).toBe(
       404,
     );

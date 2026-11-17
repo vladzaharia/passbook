@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
   makeApiKey,
@@ -39,7 +40,7 @@ describe('access', () => {
     expect((await h.call('/api/v1/users')).status).toBe(401);
     const user = await makeUser(f());
     const s = await makeSession(f(), { userId: user.id, roles: ['user'] });
-    expect((await get('/api/v1/users', s.headers)).status).toBe(403);
+    await expectProblem(await get('/api/v1/users', s.headers), 403, 'FORBIDDEN');
     const key = await makeApiKey(f());
     expect((await get('/api/v1/users', key.headers)).status).toBe(401);
   });
@@ -52,7 +53,7 @@ describe('access', () => {
       json: { status: 'disabled' },
       headers: { cookie: a.headers.cookie ?? '', 'sec-fetch-site': 'same-origin' },
     });
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'CSRF_TOKEN');
   });
 });
 
@@ -158,7 +159,7 @@ describe('detail', () => {
 
   it('404s for unknown users', async () => {
     const a = await admin();
-    expect((await get('/api/v1/users/nope', a.headers)).status).toBe(404);
+    await expectProblem(await get('/api/v1/users/nope', a.headers), 404, 'USER_NOT_FOUND');
   });
 });
 
@@ -232,7 +233,7 @@ describe('disable and enable', () => {
     const self = await send('PATCH', `/api/v1/users/${a.user.id}`, a.headers, {
       status: 'disabled',
     });
-    expect(self.status).toBe(409);
+    await expectProblem(self, 409, 'SELF_DISABLE');
     expect(
       (await send('PATCH', '/api/v1/users/nope', a.headers, { status: 'disabled' })).status,
     ).toBe(404);
@@ -292,9 +293,9 @@ describe('emails', () => {
     await send('POST', `/api/v1/users/${user.id}/emails`, a.headers, { email: extra });
     const del = (email: string) =>
       send('DELETE', `/api/v1/users/${user.id}/emails/${encodeURIComponent(email)}`, a.headers);
-    expect((await del(user.primaryEmail)).status).toBe(409);
+    await expectProblem(await del(user.primaryEmail), 409, 'PRIMARY_EMAIL');
     expect((await del(extra)).status).toBe(200);
-    expect((await del(extra)).status).toBe(404);
+    await expectProblem(await del(extra), 404, 'EMAIL_NOT_FOUND');
     expect(await first(h.env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [extra])).toBeNull();
   });
 });

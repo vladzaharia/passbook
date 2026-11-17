@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { updatePass } from '../passes/service.ts';
@@ -19,7 +20,11 @@ describe('live metadata-only pass personalization', () => {
         'UPDATE pass_versions SET personalization = ? WHERE pass_id = ? AND version = ?',
         [raw, fixture.pass.id, before.walletVersion],
       );
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
       const event = row(fixture.source.id, { passId: fixture.pass.id });
       await publish(event);
       const fresh = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
@@ -47,7 +52,7 @@ describe('live metadata-only pass personalization', () => {
         'UPDATE pass_versions SET personalization = ? WHERE pass_id = ? AND version = ?',
         [`${raw} `, fixture.pass.id, candidate.walletVersion],
       );
-      expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
+      await expectProblem(await kit.get(fixture.monitor.headers, path), 404, 'ASSET_NOT_FOUND');
       const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
         (entry) => entry.id === event.id,
       );
@@ -64,7 +69,11 @@ describe('live metadata-only pass personalization', () => {
       'UPDATE pass_versions SET template_version = ? WHERE pass_id = ? AND version = ?',
       ['different-wallet-version', fixture.pass.id, before.walletVersion],
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const event = row(fixture.source.id, { passId: fixture.pass.id });
     await publish(event);
     const fresh = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
@@ -83,7 +92,7 @@ describe('live metadata-only pass personalization', () => {
       'UPDATE pass_versions SET template_version = ? WHERE pass_id = ? AND version = ?',
       ['later-wallet-version', fixture.pass.id, before.walletVersion],
     );
-    expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === event.id,
     );
@@ -124,7 +133,11 @@ describe('live metadata-only pass personalization', () => {
     expect(JSON.parse(candidate.versionPersonalization)).not.toEqual(
       candidate.pass.personalization,
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === fixture.event.id,
     );
@@ -171,7 +184,7 @@ describe('live metadata-only pass personalization', () => {
       WHERE pass_id = ? AND version = ?`,
       ['ALTERED-WALLET', fixture.pass.id, candidate.walletVersion],
     );
-    expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     const altered = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === event.id,
     );

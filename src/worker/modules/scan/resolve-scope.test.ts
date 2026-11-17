@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { normalizeLookup } from '../../../shared/scan-lookup.ts';
@@ -50,7 +51,7 @@ describe('resolve: tenant isolation', () => {
       a.headers,
       `/passes/${passB.id}/assets/icon.png?g=${'A'.repeat(54)}`,
     );
-    expect(asset.status).toBe(404);
+    await expectProblem(asset, 404, 'ASSET_NOT_FOUND');
     const unknown = await kit.get(a.headers, `/passes/nope/assets/icon.png?g=${'A'.repeat(54)}`);
     const problem = async (r: Response) => ({ ...((await r.json()) as object), requestId: null });
     expect(await problem(asset)).toEqual(await problem(unknown));
@@ -69,13 +70,13 @@ describe('asset grant', () => {
     const ok = await kit.get(s.headers, url);
     expect(ok.status).toBe(200);
     expect(ok.headers.get('content-type')).toBe('image/png');
-    expect((await kit.get(other.headers, url)).status).toBe(404);
+    await expectProblem(await kit.get(other.headers, url), 404, 'ASSET_NOT_FOUND');
     const forged = url.replace(/g=(.)/, (_, c: string) => `g=${c === 'A' ? 'B' : 'A'}`);
-    expect((await kit.get(s.headers, forged)).status).toBe(404);
+    await expectProblem(await kit.get(s.headers, forged), 404, 'ASSET_NOT_FOUND');
     const after = await first<{ n: number }>(kit.env.DB, 'SELECT COUNT(*) AS n FROM scans');
     expect(after?.n).toBe(before?.n);
     kit.clock.advance(HOUR + 1);
-    expect((await kit.get(s.headers, url)).status).toBe(404);
+    await expectProblem(await kit.get(s.headers, url), 404, 'ASSET_NOT_FOUND');
   });
 });
 
@@ -93,7 +94,11 @@ describe('admin scope', () => {
     const send = (headers: Record<string, string>, input: unknown, s?: unknown) =>
       kit.post(headers, '/resolve', { ...body(input), ...(s ? { scope: s } : {}) });
     expect((await send(kit.admin(), codeOf(pass))).status).toBe(422);
-    expect((await send(kit.admin(), codeOf(pass), scope({ orgId: 'nope' }))).status).toBe(404);
+    await expectProblem(
+      await send(kit.admin(), codeOf(pass), scope({ orgId: 'nope' })),
+      404,
+      'NOT_FOUND',
+    );
     const live = (await (await send(kit.admin(), codeOf(pass), scope())).json()) as ScanOutcome;
     expect(live.kind).toBe('ready');
     const asTest = (await (await send(kit.admin(), codeOf(pass), scope())).json()) as ScanOutcome;

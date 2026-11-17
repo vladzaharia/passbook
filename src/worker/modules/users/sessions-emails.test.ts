@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
   makeOrg,
@@ -115,7 +116,7 @@ describe('make primary', () => {
       `/api/v1/users/${user.id}/emails/${encodeURIComponent(other.primaryEmail)}/primary`,
       a.headers,
     );
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'EMAIL_NOT_FOUND');
   });
 });
 

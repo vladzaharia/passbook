@@ -1,5 +1,6 @@
 import { env as bindings } from 'cloudflare:workers';
 import { afterAll, beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   countD1,
   type Fixtures,
@@ -990,7 +991,11 @@ describe('native projection approval', () => {
     const denied = await post(outsider.headers, body);
     expect(denied.status).toBeGreaterThanOrEqual(400);
     expect(denied.status).toBeLessThan(500);
-    expect((await post({ ...own.headers, 'x-passbook-mode': 'test' }, body)).status).toBe(403);
+    await expectProblem(
+      await post({ ...own.headers, 'x-passbook-mode': 'test' }, body),
+      403,
+      'TEMPLATE_MODE_MISMATCH',
+    );
     const created = await post(own.headers, body);
     expect(created.status).toBe(201);
     const result = (await created.json()) as TemplateCandidate & {
@@ -1011,7 +1016,7 @@ describe('native projection approval', () => {
       },
       env,
     );
-    expect(reviewed.status).toBe(403);
+    await expectProblem(reviewed, 403, 'TEMPLATE_SELF_APPROVAL');
   });
 
   it('uses compare-and-swap when two independently approved candidates race to publish', async () => {

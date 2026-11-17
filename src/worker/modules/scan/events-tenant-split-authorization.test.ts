@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeScanEvent,
   makeScanner,
@@ -57,9 +58,17 @@ describe('scan event tenant routes', () => {
         nextCursor: null,
       },
     );
-    expect((await call(member, 'GET', `/${otherEventId}`)).status).toBe(404);
-    expect((await call(member, 'PATCH', `/${otherEventId}`, { name: 'Changed' })).status).toBe(404);
-    expect((await call(member, 'POST', `/${otherEventId}/archive`)).status).toBe(404);
+    await expectProblem(await call(member, 'GET', `/${otherEventId}`), 404, 'EVENT_NOT_FOUND');
+    await expectProblem(
+      await call(member, 'PATCH', `/${otherEventId}`, { name: 'Changed' }),
+      404,
+      'EVENT_NOT_FOUND',
+    );
+    await expectProblem(
+      await call(member, 'POST', `/${otherEventId}/archive`),
+      404,
+      'EVENT_NOT_FOUND',
+    );
     expect(
       (await call(member, 'POST', `/${otherEventId}/scanners`, { scannerIds: [attachedScannerId] }))
         .status,

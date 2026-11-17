@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
@@ -83,12 +84,16 @@ describe('self-removal credential transfers', () => {
     expect(result).toEqual({ transferId: expect.any(String), state: 'pending' });
     const receiptPath = `/api/v1/me/pass-removals/${result.transferId}`;
     expect(await (await call(receiptPath)).json()).toEqual(result);
-    expect((await call(receiptPath, other.headers)).status).toBe(404);
+    await expectProblem(await call(receiptPath, other.headers), 404, 'REMOVAL_NOT_FOUND');
     expect((await call(receiptPath, {})).status).toBe(401);
-    expect((await call(passPath, session.headers, 'DELETE')).status).toBe(409);
-    expect((await call(passPath)).status).toBe(404);
-    expect((await call(`${passPath}/barcode`)).status).toBe(404);
-    expect((await call('/api/v1/me/passes.pkpasses')).status).toBe(404);
+    await expectProblem(
+      await call(passPath, session.headers, 'DELETE'),
+      409,
+      'HOLDER_TRANSFER_PENDING',
+    );
+    await expectProblem(await call(passPath), 404, 'PASS_NOT_FOUND');
+    await expectProblem(await call(`${passPath}/barcode`), 404, 'PASS_NOT_FOUND');
+    await expectProblem(await call('/api/v1/me/passes.pkpasses'), 404, 'BUNDLE_EMPTY');
 
     const pendingPass = await getPass(kit.env.DB, t.pass.id);
     if (!pendingPass) throw new Error('Missing pending pass');

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fakeRateLimiter,
   makeApiKey,
@@ -52,8 +53,8 @@ describe('scan display preview tenant authorization', () => {
     const session = await makeSession(f, { userId: user.id, roles: ['admin', 'user'] });
     const denied = await preview(own, session.headers);
     const unknown = await preview({ ...own, passId: f.ids.id() }, session.headers);
-    expect(denied.status).toBe(404);
-    expect(unknown.status).toBe(404);
+    await expectProblem(denied, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
+    await expectProblem(unknown, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await problem(denied)).toEqual(await problem(unknown));
     expect(denied.headers.get('cache-control')).toContain('no-store');
     expect(await previewAudits(user.id)).toEqual([]);
@@ -156,9 +157,9 @@ describe('scan display preview tenant authorization', () => {
     const unknown = await preview({ ...own, passId: f.ids.id() }, session.headers);
     const forgedOrg = await preview({ ...foreign, orgId: org.id }, session.headers);
     const foreignOrg = await preview(foreign, session.headers);
-    expect(unknown.status).toBe(404);
-    expect(forgedOrg.status).toBe(404);
-    expect(foreignOrg.status).toBe(404);
+    await expectProblem(unknown, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
+    await expectProblem(forgedOrg, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
+    await expectProblem(foreignOrg, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     const expected = await problem(unknown);
     expect(await problem(forgedOrg)).toEqual(expected);
     expect(await problem(foreignOrg)).toEqual(expected);
@@ -166,7 +167,7 @@ describe('scan display preview tenant authorization', () => {
 
     await grantScanMembership(f, otherOrg.id, session.userId, ['pass_operator']);
     const wrongSelection = await preview({ ...own, orgId: otherOrg.id }, session.headers);
-    expect(wrongSelection.status).toBe(404);
+    await expectProblem(wrongSelection, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await problem(wrongSelection)).toEqual(expected);
     expect((await preview(own, session.headers)).status).toBe(200);
     expect((await preview(foreign, session.headers)).status).toBe(200);

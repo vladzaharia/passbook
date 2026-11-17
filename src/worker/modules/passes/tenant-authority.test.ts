@@ -1,6 +1,7 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   editSessionAuthority,
   makeApiKey,
@@ -537,7 +538,7 @@ describe('tenant pass authorization', () => {
     });
     const keyRequest = unique();
     const keyBody = createBody();
-    expect((await issue(apiKey.headers, keyBody, keyRequest)).status).toBe(409);
+    await expectProblem(await issue(apiKey.headers, keyBody, keyRequest), 409, 'MODE_MISMATCH');
     expect(await reservation(kit.env.DB, keyRequest)).toBeNull();
     const fromTestKey = await issue(
       { ...apiKey.headers, 'x-passbook-mode': 'live' },
@@ -584,8 +585,8 @@ describe('tenant pass authorization', () => {
     expect(defaulted.status).toBe(200);
     const defaultedPage = (await defaulted.json()) as { items: { orgId: string }[] };
     expect(defaultedPage.items.every((item) => item.orgId === kit.org.id)).toBe(true);
-    expect((await list(ownKey.headers, '?orgId=null')).status).toBe(403);
-    expect((await list(platformSession.headers, '?orgId=null')).status).toBe(403);
+    await expectProblem(await list(ownKey.headers, '?orgId=null'), 403, 'ORG_FORBIDDEN');
+    await expectProblem(await list(platformSession.headers, '?orgId=null'), 403, 'ORG_FORBIDDEN');
     const global = await list(globalKey.headers, '?orgId=null&limit=200');
     expect(global.status).toBe(200);
     const globalPage = (await global.json()) as { items: { id: string; orgId: string }[] };
@@ -606,9 +607,13 @@ describe('tenant pass authorization', () => {
     // A session with no membership in the org is refused like a foreign key is, rather than shown an empty list.
     for (const headers of [foreignOperator.session.headers, nonmemberSession.headers]) {
       const response = await list(headers, `?orgId=${kit.org.id}`);
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
     }
-    expect((await list(foreignKey.headers, `?orgId=${kit.org.id}`)).status).toBe(403);
+    await expectProblem(
+      await list(foreignKey.headers, `?orgId=${kit.org.id}`),
+      403,
+      'ORG_FORBIDDEN',
+    );
     expect((await list(ownKey.headers, `?orgId=${kit.org.id}`)).status).toBe(200);
   });
 
@@ -981,7 +986,7 @@ describe('issuance commit authority', () => {
         },
         () => issue(headers, body, key),
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(await reservation(kit.env.DB, key)).toBeNull();
       expect(
         await first(kit.env.DB, 'SELECT id FROM passes WHERE org_id = ? AND external_id = ?', [
@@ -1137,7 +1142,7 @@ describe('issuance commit authority', () => {
     );
     // Sign-out is not revocation of authority: the committed issuance keeps its mail (owner answer 2), even though
     // the signed-out caller can no longer read the result.
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     expect(await reservation(kit.env.DB, key)).toMatchObject({ resource_id: passId });
     expect(
       await first(
@@ -1190,13 +1195,13 @@ describe('issuance commit authority', () => {
         },
         () => issue(headers, body, key),
       );
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'PASS_NOT_FOUND');
       expect(await getPass(kit.env.DB, passId)).toBeNull();
       expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [passId])).toEqual({
         id: passId,
       });
       expect(await reservation(kit.env.DB, key)).toMatchObject({ resource_id: passId });
-      expect((await issue(headers, body, key)).status).toBe(409);
+      await expectProblem(await issue(headers, body, key), 409, 'IDEMPOTENCY_IN_PROGRESS');
     },
     60_000,
   );
@@ -1472,10 +1477,26 @@ describe('bulk selection and reissue authority', () => {
     expect(
       (await bulk('bulk', operator.session.headers, action([live.id, foreign.id]))).status,
     ).toBe(404);
-    expect((await bulk('bulk', key.headers, action([live.id, foreign.id]))).status).toBe(404);
-    expect((await bulk('bulk', key.headers, action([test.id, live.id]))).status).toBe(404);
-    expect((await bulk('bulk', key.headers, action([live.id, test.id]))).status).toBe(404);
-    expect((await bulk('bulk', reader.session.headers, action([live.id]))).status).toBe(403);
+    await expectProblem(
+      await bulk('bulk', key.headers, action([live.id, foreign.id])),
+      404,
+      'PASS_NOT_FOUND',
+    );
+    await expectProblem(
+      await bulk('bulk', key.headers, action([test.id, live.id])),
+      404,
+      'PASS_NOT_FOUND',
+    );
+    await expectProblem(
+      await bulk('bulk', key.headers, action([live.id, test.id])),
+      404,
+      'PASS_NOT_FOUND',
+    );
+    await expectProblem(
+      await bulk('bulk', reader.session.headers, action([live.id])),
+      403,
+      'FORBIDDEN',
+    );
     expect(await getPass(kit.env.DB, live.id)).toMatchObject({ status: 'active', version: 1 });
     expect(await getPass(kit.env.DB, foreign.id)).toMatchObject({ status: 'active', version: 1 });
     expect(await getPass(kit.env.DB, test.id)).toMatchObject({ status: 'active', version: 1 });
@@ -1529,8 +1550,16 @@ describe('bulk selection and reissue authority', () => {
     const pass = await kit.pass();
     await kit.pass({ mode: 'test' });
     const scoped = { orgId: kit.org.id, templateId: kit.template.id };
-    expect((await bulk('bulk-reissue', reader.session.headers, scoped)).status).toBe(403);
-    expect((await bulk('bulk-reissue', foreignOperator.session.headers, scoped)).status).toBe(403);
+    await expectProblem(
+      await bulk('bulk-reissue', reader.session.headers, scoped),
+      403,
+      'FORBIDDEN',
+    );
+    await expectProblem(
+      await bulk('bulk-reissue', foreignOperator.session.headers, scoped),
+      403,
+      'FORBIDDEN',
+    );
     expect((await bulk('bulk-reissue', key.headers, scoped)).status).toBe(401);
     expect(
       (await bulk('bulk-reissue', operator.session.headers, { templateId: kit.template.id }))
@@ -1694,7 +1723,7 @@ describe('bulk selection and reissue authority', () => {
           templateId: kit.template.id,
         }),
     );
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     expect(kit.workflow.created).toHaveLength(workflows);
     expect(
       await all(
@@ -1741,7 +1770,7 @@ describe('bulk selection and reissue authority', () => {
         templateId: kit.template.id,
         version: kit.template.version,
       });
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(revoked).toBe(true);
     } finally {
       kit.registry.resolve = resolve;
@@ -1830,7 +1859,7 @@ describe('bulk selection and reissue authority', () => {
         ).toEqual({ user_id: user.id });
         return;
       }
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(kit.workflow.created).toHaveLength(workflows);
       expect(
         await all(

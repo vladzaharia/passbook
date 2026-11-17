@@ -1,6 +1,7 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeUser, type SessionFixture } from '../../../../test/helpers/index.ts';
 import { CapturedEmailListSchema } from '../../../shared/contracts/index.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -526,7 +527,11 @@ describe('existing capture exposure', () => {
       }
       expect((await api(`/test-inbox/${id}`)).status).toBe(200);
       expect((await api(`/test-inbox/${id}/html`)).status).toBe(200);
-      expect((await api(`/test-inbox/${id}/send-to-me`, { method: 'POST' })).status).toBe(409);
+      await expectProblem(
+        await api(`/test-inbox/${id}/send-to-me`, { method: 'POST' }),
+        409,
+        'TEST_FORWARD_CHANGED',
+      );
       const list = CapturedEmailListSchema.parse(await (await api('/test-inbox?limit=200')).json());
       expect(list.items.some((item) => item.id === id)).toBe(true);
     }
@@ -595,7 +600,11 @@ describe('existing capture exposure', () => {
     const legacyId = await deliver(legacy.outboxId);
     await run(kit.env.DB, 'UPDATE captured_emails SET intent = NULL WHERE id = ?', [legacyId]);
     expect((await api(`/test-inbox/${legacyId}`)).status).toBe(200);
-    expect((await api(`/test-inbox/${legacyId}/send-to-me`, { method: 'POST' })).status).toBe(409);
+    await expectProblem(
+      await api(`/test-inbox/${legacyId}/send-to-me`, { method: 'POST' }),
+      409,
+      'TEST_FORWARD_CHANGED',
+    );
     const current = await queuedPass();
     const currentId = await deliver(current.outboxId);
     await run(kit.env.DB, 'DELETE FROM outbox WHERE id = ?', [current.outboxId]);
@@ -615,7 +624,11 @@ describe('existing capture exposure', () => {
     });
     const id = await deliver(queued.outboxId);
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
-    expect((await api(`/test-inbox/${id}`, {}, org.id)).status).toBe(404);
+    await expectProblem(
+      await api(`/test-inbox/${id}`, {}, org.id),
+      404,
+      'CAPTURED_EMAIL_NOT_FOUND',
+    );
     expect((await api(`/test-inbox/${id}/send-to-me`, { method: 'POST' }, org.id)).status).toBe(
       404,
     );

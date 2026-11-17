@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makePass } from '../../../../test/helpers/index.ts';
 import type { TemplateManifest } from '../../../passkit/types.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -175,7 +176,7 @@ describe('use a blueprint', () => {
     const reader = await kit.member(kit.org.id, ['read_only']);
     const author = await kit.member(kit.org.id, ['template_author']);
     const body = { orgId: kit.org.id, name: 'Author Card' };
-    expect((await kit.post(`/${STORE}/use`, body, reader.headers)).status).toBe(403);
+    await expectProblem(await kit.post(`/${STORE}/use`, body, reader.headers), 403, 'FORBIDDEN');
     expect(
       (await kit.post(`/${STORE}/use`, { ...body, orgId: kit.other.id }, author.headers)).status,
     ).toBe(404);

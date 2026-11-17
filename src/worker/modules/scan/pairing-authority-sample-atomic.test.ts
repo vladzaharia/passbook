@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { run } from '../../platform/db.ts';
 import {
   atCommit,
@@ -79,7 +80,7 @@ describe('sample scope inside the create grant', () => {
         },
         sample,
       );
-      expect(response.status).toBe(409);
+      await expectProblem(response, 409, 'PASS_CONFLICT');
       expect(await passState()).toEqual(before);
     },
     60_000,

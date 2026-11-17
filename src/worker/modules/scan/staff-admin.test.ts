@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeOrg,
   makeScanner,
@@ -105,10 +106,10 @@ describe('staff administration authorization', () => {
     expect((await list(other.id)).map((staff) => staff.id)).toEqual([theirs.id]);
     for (const id of [theirs.id, 'missing-staff']) {
       const patch = await send('PATCH', itemPath(id), { role: 'manager', disabled: true });
-      expect(patch.status).toBe(404);
+      await expectProblem(patch, 404, 'SCAN_STAFF_NOT_FOUND');
       expect(await codeOf(patch)).toBe('SCAN_STAFF_NOT_FOUND');
       const reset = await send('POST', resetPath(id));
-      expect(reset.status).toBe(404);
+      await expectProblem(reset, 404, 'SCAN_STAFF_NOT_FOUND');
       expect(await codeOf(reset)).toBe('SCAN_STAFF_NOT_FOUND');
     }
     expect(await credential(theirs.id)).toEqual(before);
@@ -147,14 +148,14 @@ describe('staff administration authorization', () => {
       expect(read.status).toBe(200);
       expect(await read.json()).toEqual({ items: [] });
       const create = await send('POST', '', { orgId: org, name: 'Inactive org', role: 'door' });
-      expect(create.status).toBe(404);
+      await expectProblem(create, 404, 'ORG_NOT_FOUND');
       expect(await codeOf(create)).toBe('ORG_NOT_FOUND');
       for (const [method, path, body] of [
         ['PATCH', itemPath(person.id, org), { name: 'Changed' }],
         ['POST', resetPath(person.id, org), undefined],
       ] as const) {
         const res = await send(method, path, body);
-        expect(res.status).toBe(404);
+        await expectProblem(res, 404, 'SCAN_STAFF_NOT_FOUND');
         expect(await codeOf(res)).toBe('SCAN_STAFF_NOT_FOUND');
       }
     }

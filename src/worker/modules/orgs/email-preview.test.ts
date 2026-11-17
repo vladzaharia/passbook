@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fixtures,
@@ -130,7 +131,11 @@ describe('email preview art', () => {
     expect(html.match(/\/p\/[^"/]+/g)?.every((p) => p.startsWith('/p/sample'))).toBe(true);
     const asset = new URL(imgSrc(html, 'icon@3x.png') ?? '');
     const outsider = await makeSession(f, { userId: (await makeUser(f)).id });
-    expect((await get(`${asset.pathname}${asset.search}`, outsider.headers)).status).toBe(404);
+    await expectProblem(
+      await get(`${asset.pathname}${asset.search}`, outsider.headers),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
   });
 
   it("uses the org's upload for its slot and the template's for the other", async () => {
@@ -194,12 +199,16 @@ describe('email preview art', () => {
     const own = await get(`${asset.pathname}${asset.search}`);
     expect(own.status).toBe(200);
     expect(new Uint8Array(await own.arrayBuffer())).toEqual(bytes);
-    expect((await get(`${asset.pathname}${asset.search}`, outsider.headers)).status).toBe(404);
+    await expectProblem(
+      await get(`${asset.pathname}${asset.search}`, outsider.headers),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
     expect(
       (await get(`${asset.pathname}?orgId=${encodeURIComponent(other.id)}`, outsider.headers))
         .status,
     ).toBe(404);
-    expect((await get(asset.pathname, outsider.headers)).status).toBe(404);
+    await expectProblem(await get(asset.pathname, outsider.headers), 404, 'TEMPLATE_NOT_FOUND');
   });
 
   it('keeps fixture versions immutable across reuse and retirement', async () => {

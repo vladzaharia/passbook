@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { unzipSync } from 'fflate';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type ApiKeyFixture,
   makeApiKey,
@@ -1315,7 +1316,7 @@ describe('approved issuance over tenant HTTP', () => {
             key,
           ),
       );
-      expect(response.status).toBe(409);
+      await expectProblem(response, 409, 'DELIVERY_STALE');
       expect(
         await all(kit.env.DB, 'SELECT id FROM pass_credential_transfers WHERE pass_id = ?', [
           passId,
@@ -1411,7 +1412,7 @@ describe('approved issuance over tenant HTTP', () => {
           key,
         ),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'DELIVERY_STALE');
     expect(
       await all(kit.env.DB, 'SELECT id FROM pass_credential_transfers WHERE pass_id = ?', [passId]),
     ).toEqual([]);
@@ -1633,7 +1634,7 @@ describe('approved issuance over tenant HTTP', () => {
       kit.clock.now(),
       operator.membershipId,
     ]);
-    expect((await issue(operator.session.headers, data, key)).status).toBe(403);
+    await expectProblem(await issue(operator.session.headers, data, key), 403, 'FORBIDDEN');
     expect(await reservation(own.orgId, key)).toEqual(originalReservation);
     expect(await objects()).toEqual(beforeReplay);
     const different = await issue(
@@ -2689,7 +2690,7 @@ describe('approved connection issuance', () => {
       },
       () => issue(own.operator.session.headers, data, key),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_CONFLICT');
     await assertNoPass(passId);
     await assertNoIssue(own, data.externalId, key, before);
 
