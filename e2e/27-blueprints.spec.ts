@@ -52,6 +52,11 @@ test('Use blueprint: designer draft, Create template, release, then a pass', asy
   await page.waitForURL((u) => u.pathname === '/admin/templates/new');
   await expect(page.getByRole('heading', { level: 1, name: `Design ${name}` })).toBeVisible();
   await expect(page.getByText('Not saved', { exact: true })).toBeVisible();
+  // Create template waits for a clean check, like Save version.
+  await expect(page.getByRole('region', { name: 'Issues' }).getByRole('status')).toHaveText(
+    /to review|None/,
+    { timeout: 30_000 },
+  );
   await page.getByRole('button', { name: 'Create template' }).click();
   await page.waitForURL((u) => /^\/admin\/templates\/[0-9a-f-]+$/.test(u.pathname));
   await expect(
