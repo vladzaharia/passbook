@@ -150,15 +150,19 @@ export function hiddenFieldKeys(
 
 /** Take actions give a `progress` row its goal and reward label, by input. */
 export function actionGoals(
-  manifest: Pick<TemplateManifest, 'scan'>,
+  manifest: Pick<TemplateManifest, 'scan' | 'stamps'>,
 ): Record<string, { goal: number; reward?: string }> {
   const out: Record<string, { goal: number; reward?: string }> = {};
+  const stamps = manifest.stamps;
   for (const action of manifest.scan?.actions ?? []) {
     if (action.kind !== 'take' || !action.input) continue;
+    // A stamp card's goal is the card's: its reward takes that many whatever the action says.
     const goal =
-      typeof action.amount === 'number'
-        ? action.amount
-        : (action.amount?.default ?? action.amount?.max ?? 1);
+      stamps?.input === action.input
+        ? stamps.goal
+        : typeof action.amount === 'number'
+          ? action.amount
+          : (action.amount?.default ?? action.amount?.max ?? 1);
     if (!(action.input in out))
       out[action.input] = action.rewardLabel ? { goal, reward: action.rewardLabel } : { goal };
   }

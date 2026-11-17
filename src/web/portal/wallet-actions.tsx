@@ -24,8 +24,11 @@ import { myPassesKey, removePass } from './api.ts';
 import { browserDevice } from './device.ts';
 
 /** `/p/:token/pass.pkpass` -> `/p/:token`. The list contract has no public URL field. */
-export function publicUrlOf(downloadUrl: string, origin = window.location.origin): string | null {
-  const m = /^(.*\/p\/[^/?#]+)\/pass\.pkpass(?:[?#].*)?$/.exec(downloadUrl);
+export function publicUrlOf(
+  downloadUrl: string | null,
+  origin = window.location.origin,
+): string | null {
+  const m = downloadUrl ? /^(.*\/p\/[^/?#]+)\/pass\.pkpass(?:[?#].*)?$/.exec(downloadUrl) : null;
   if (!m?.[1]) return null;
   return new URL(m[1], origin).toString();
 }

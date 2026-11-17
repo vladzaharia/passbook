@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fakeAuth, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { fakeAuth, linkToken, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { WalletOffer } from '../../../shared/contracts/me.ts';
 import type { createApp as CreateApp } from '../../app.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -74,8 +74,8 @@ beforeEach(() => {
 
 const get = (path: string, requestHeaders: Record<string, string> = {}) =>
   app.request(`${ORIGIN}${path}`, { headers: requestHeaders }, kit.env);
-const pathFor = (pass: Pass, provider: 'google' | 'samsung') =>
-  `/p/${pass.downloadToken}/wallet/${provider}`;
+const pathFor = async (pass: Pass, provider: 'google' | 'samsung') =>
+  `/p/${await linkToken(kit.env, pass)}/wallet/${provider}`;
 
 async function ownPass(mode: 'live' | 'test' = 'live') {
   return kit.pass({ mode, holderEmail });
@@ -98,17 +98,17 @@ async function transfer(pass: Pass) {
   return fresh;
 }
 
-function offersFor(pass: Pass) {
+async function offersFor(pass: Pass) {
   return [
     {
       provider: 'google' as const,
-      href: pathFor(pass, 'google'),
+      href: await pathFor(pass, 'google'),
       installation: 'unknown' as const,
       providerToken: 'private-google-token',
     },
     {
       provider: 'samsung' as const,
-      href: pathFor(pass, 'samsung'),
+      href: await pathFor(pass, 'samsung'),
       installation: 'unknown' as const,
       providerToken: 'private-samsung-token',
     },
@@ -121,8 +121,7 @@ function offersFor(pass: Pass) {
 }
 
 function offerLookup(pass: Pass) {
-  const offers = offersFor(pass);
-  lookup.mockImplementation(async (_ctx, id) => (id === pass.id ? offers : []));
+  lookup.mockImplementation(async (_ctx, id) => (id === pass.id ? await offersFor(pass) : []));
 }
 
 describe('native offers on public and holder surfaces', () => {
@@ -131,12 +130,12 @@ describe('native offers on public and holder surfaces', () => {
     async (mode) => {
       const pass = await ownPass(mode);
       offerLookup(pass);
-      const htmlResponse = await get(`/p/${pass.downloadToken}`);
+      const htmlResponse = await get(`/p/${await linkToken(kit.env, pass)}`);
       expect(htmlResponse.status).toBe(200);
       const html = await htmlResponse.text();
-      expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
-      expect(html).toContain(`href="${pathFor(pass, 'google')}"`);
-      expect(html).toContain(`href="${pathFor(pass, 'samsung')}"`);
+      expect(html).toContain(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
+      expect(html).toContain(`href="${await pathFor(pass, 'google')}"`);
+      expect(html).toContain(`href="${await pathFor(pass, 'samsung')}"`);
       expect(html).not.toContain('/p/another-bearer/');
       expect(html).not.toContain('private-google-token');
       expect(html).not.toContain('private-samsung-token');
@@ -146,8 +145,8 @@ describe('native offers on public and holder surfaces', () => {
       const detailText = await detailResponse.text();
       const detail = JSON.parse(detailText) as { walletOffers: WalletOffer[]; inWallet: boolean };
       const expected = [
-        { provider: 'google', href: pathFor(pass, 'google'), installation: 'unknown' },
-        { provider: 'samsung', href: pathFor(pass, 'samsung'), installation: 'unknown' },
+        { provider: 'google', href: await pathFor(pass, 'google'), installation: 'unknown' },
+        { provider: 'samsung', href: await pathFor(pass, 'samsung'), installation: 'unknown' },
       ];
       expect(detail.walletOffers).toEqual(expected);
       expect(detail.inWallet).toBe(false);
@@ -168,10 +167,12 @@ describe('native offers on public and holder surfaces', () => {
     'does not expose a new incarnation to a prior owner during %s lookup',
     async (surface) => {
       const pass = await ownPass();
+      const oldToken = await linkToken(kit.env, pass);
       lookup.mockImplementation(async (_ctx, id) => {
         if (id !== pass.id) return [];
+        const offers = await offersFor(pass);
         await transfer(pass);
-        return offersFor(pass);
+        return offers;
       });
       const path = surface === 'list' ? '/api/v1/me/passes' : `/api/v1/me/passes/${pass.id}`;
       const response = await get(path, headers);
@@ -182,7 +183,7 @@ describe('native offers on public and holder surfaces', () => {
         const body = JSON.parse(text) as { items: { id: string }[] };
         expect(body.items.some((item) => item.id === pass.id)).toBe(false);
       }
-      expect(text).not.toContain(pass.downloadToken);
+      expect(text).not.toContain(oldToken);
       expect(text).not.toContain('private-google-token');
       expect(text).not.toContain('private-samsung-token');
     },
@@ -264,10 +265,11 @@ describe('native offers on public and holder surfaces', () => {
     let replacement = '';
     lookup.mockImplementation(async (_ctx, id) => {
       if (id !== pass.id) return [];
-      replacement = (await transfer(pass)).downloadToken;
-      return offersFor(pass);
+      const offers = await offersFor(pass);
+      replacement = await linkToken(kit.env, await transfer(pass));
+      return offers;
     });
-    const response = await get(`/p/${pass.downloadToken}`);
+    const response = await get(`/p/${await linkToken(kit.env, pass)}`);
     expect(response.status).toBe(404);
     expect(response.headers.get('cache-control')).toBe('private, no-store');
     expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id);

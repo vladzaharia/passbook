@@ -66,7 +66,8 @@ register(
     const nonce = c.var.nonce;
     const theme = requestTheme(c);
     try {
-      const bundle = await bundleForToken(ctx, c.req.valid('param').token);
+      const { token } = c.req.valid('param');
+      const bundle = await bundleForToken(ctx, token);
       const members = await bundleMembers(ctx, bundle);
       const lang = langOf(c.req.header('accept-language'));
       const zone = zoneOf(c) ?? 'UTC';
@@ -88,7 +89,7 @@ register(
               : pass.status === 'voided' || view.voided
                 ? ('voided' as const)
                 : ('active' as const),
-          downloadHref: `/b/${bundle.token}/${pass.id}/pass.pkpass`,
+          downloadHref: `/b/${token}/${pass.id}/pass.pkpass`,
         };
       });
       const org = members[0]?.model.orgName ?? '';
@@ -100,8 +101,8 @@ register(
         name: bundle.name,
         mode: bundle.mode,
         items,
-        addAllHref: `/b/${bundle.token}/passes.pkpasses`,
-        publicUrl: `${baseUrl(c.env)}/b/${bundle.token}`,
+        addAllHref: `/b/${token}/passes.pkpasses`,
+        publicUrl: `${baseUrl(c.env)}/b/${token}`,
         device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(ctx, bundle.org_id),
       });

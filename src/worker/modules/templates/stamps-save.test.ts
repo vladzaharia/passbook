@@ -127,6 +127,8 @@ const withGoal = (v: Version, goal: number) => {
   const m = structuredClone(v.manifest) as Record<string, any>;
   m.stamps.goal = goal;
   m.inputs.properties.stamps.maximum = 2 * goal - 1;
+  // Redeeming at the scanner takes the goal.
+  for (const a of m.scan?.actions ?? []) if (a.kind === 'take') a.amount = goal;
   return m;
 };
 

@@ -1,15 +1,31 @@
 import type { Env, MachineState, Out } from './internal.ts';
 import { out, same } from './internal.ts';
 import { localOutcome } from './outcome.ts';
-import type { Cmd, ScanEvent } from './types.ts';
+import type { Card, Cmd, Draft, ScanEvent } from './types.ts';
 import { enterVerdict } from './verdict.ts';
 
-/** The ready card's explicit check-in; value-action pickers belong to the desk milestone. */
-export function pick(s: MachineState, ev: Extract<ScanEvent, { type: 'pick' }>, env: Env): Out {
-  const l = s.loop;
-  if (!s.started || s.block || l.s !== 'member') return same(s);
-  const action = l.card.actions.find((a) => a.id === ev.actionId);
-  if (action?.kind !== 'check_in' || !action.available || action.lock) return same(s);
+type Action = Card['actions'][number];
+
+/** The amount a draft starts at: the action's fixed one, its default, or none. */
+export function startAmount(action: Action): number | null {
+  const a = action.amount;
+  if (!a) return null;
+  return 'fixed' in a ? a.fixed : (a.default ?? a.presets[0] ?? 1);
+}
+
+/** An amount to choose, a value to type or a consequence to confirm comes before the request. */
+const needsInput = (action: Action) =>
+  action.confirm ||
+  (action.kind === 'set' && action.input !== undefined) ||
+  (action.amount !== null && !('fixed' in action.amount));
+
+/** Sends `draft` under a new key: the loop moves to `applying`. */
+export function apply(
+  s: MachineState,
+  l: Extract<MachineState['loop'], { s: 'member' }>,
+  draft: Draft,
+  env: Env,
+): Out {
   if (!s.online)
     return enterVerdict(
       s,
@@ -18,7 +34,6 @@ export function pick(s: MachineState, ev: Extract<ScanEvent, { type: 'pick' }>, 
     );
   // The previous auto/resolve request selected a card; this mutation needs its own replay key.
   const key = env.id();
-  const draft = { actionId: action.id, amount: null };
   const cmds: Cmd[] = [];
   if (s.camera === 'live') cmds.push({ c: 'camera', op: 'pause' });
   cmds.push({ c: 'act', key, input: l.input, draft });
@@ -39,4 +54,24 @@ export function pick(s: MachineState, ev: Extract<ScanEvent, { type: 'pick' }>, 
     },
     cmds,
   );
+}
+
+/** The ready card's explicit action: a check-in or a fixed value action applies at once, the rest open a picker. */
+export function pick(s: MachineState, ev: Extract<ScanEvent, { type: 'pick' }>, env: Env): Out {
+  const l = s.loop;
+  if (!s.started || s.block || l.s !== 'member') return same(s);
+  const action = l.card.actions.find((a) => a.id === ev.actionId);
+  // A locked action is the desk's to try: `needs_approval` offers the Manager PIN.
+  if (!action || action.lock === 'role' || (!action.available && action.lock !== 'approval'))
+    return same(s);
+  const draft: Draft = { actionId: action.id, amount: startAmount(action) };
+  if (action.kind === 'set' && action.input) {
+    // The value starts as the card holds it; the version it was read at rides along.
+    const now = l.card.values.length === 1 ? l.card.values[0]?.before : undefined;
+    draft.value = now ?? (action.input.enum ? action.input.enum[0] : '');
+    draft.expectedVersion = l.card.version;
+  }
+  if (action.kind !== 'check_in' && needsInput(action) && action.lock === null)
+    return out({ ...s, loop: { ...l, picker: draft }, lastActivity: env.now });
+  return apply(s, l, draft, env);
 }

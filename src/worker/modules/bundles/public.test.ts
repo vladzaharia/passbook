@@ -47,7 +47,7 @@ async function bundleWith(count: number, mode: 'live' | 'test' = 'live') {
     kit.env,
   );
   const bundle = BundleSchema.parse(await res.json());
-  return { passes, bundle, token: bundle.url.split('/b/')[1] ?? '' };
+  return { passes, bundle, token: bundle.url?.split('/b/')[1] ?? '' };
 }
 const get = (path: string, headers: Record<string, string> = {}, env = kit.env) =>
   app.request(`${ORIGIN}${path}`, { headers }, env);

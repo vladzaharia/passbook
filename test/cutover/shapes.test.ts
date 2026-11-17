@@ -2,7 +2,11 @@
 // and baked-synced, then checked for effective releases and lost data.
 import { beforeAll, describe, expect, it } from 'vitest';
 import operations from '../../docs/operations.md?raw';
+import { sealCapabilityTokens } from '../../src/worker/modules/passes/token-seal.ts';
 import { effectiveReleaseIdSql } from '../../src/worker/modules/templates/repo-release-heads.ts';
+import { revealToken } from '../../src/worker/platform/capability-token.ts';
+import { ManualClock } from '../../src/worker/platform/clock.ts';
+import { createJobContext } from '../../src/worker/platform/service-context.ts';
 import { dataFingerprint, type Legacy, MOVED_AWAY_PASS, OWNER, SHAPES } from './legacy-seed.ts';
 import { runBootstrap } from './run-bootstrap.ts';
 import { type Cutover, effective, NOW, runCutover, TABLES } from './setup.ts';
@@ -193,5 +197,41 @@ describe('cutover: runbook queries', () => {
       if (table in after) expect(after[table] as number, table).toBeGreaterThanOrEqual(n);
     expect(after.download_tokens).toBe(after.passes);
     expect(after.auth_tokens).toBe(after.passes);
+  });
+});
+
+describe('cutover: capability tokens', () => {
+  it('seals every old download and bundle token, keeps each link and moves no row_version', async () => {
+    const db = legacy.db;
+    const versions = () =>
+      db.prepare('SELECT id, row_version, link_generation FROM passes ORDER BY id').all();
+    const before = await versions();
+    const ctx = createJobContext(c.env, 'cron', { clock: new ManualClock(NOW + 10_000) });
+    for (let run = 0; run < 3; run++) await sealCapabilityTokens(ctx);
+    const plain = await db
+      .prepare(
+        `SELECT (SELECT count(*) FROM passes WHERE download_token NOT LIKE 'h1:%') AS passes,
+         (SELECT count(*) FROM bundles WHERE token NOT LIKE 'h1:%') AS bundles`,
+      )
+      .first();
+    // pass-gone belongs to a deleted org: the trusted write seals it too.
+    expect(plain).toEqual({ passes: 0, bundles: 0 });
+    expect((await versions()).results).toEqual(before.results);
+    for (const p of legacy.passes) {
+      const row = await db
+        .prepare('SELECT org_id, download_token FROM passes WHERE id = ?')
+        .bind(p.id)
+        .first<{ org_id: string; download_token: string }>();
+      expect(row).not.toBeNull();
+      expect(
+        await revealToken(c.env, 'pass', p.id, row?.org_id ?? '', row?.download_token ?? ''),
+      ).toBe(p.downloadToken);
+    }
+    const bundle = await db
+      .prepare("SELECT org_id, token FROM bundles WHERE id = 'bundle-1'")
+      .first<{ org_id: string; token: string }>();
+    expect(
+      await revealToken(c.env, 'bundle', 'bundle-1', bundle?.org_id ?? '', bundle?.token ?? ''),
+    ).toBe('bundle-token-1');
   });
 });

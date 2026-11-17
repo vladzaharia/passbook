@@ -305,7 +305,7 @@ describe('connector snapshot fencing', () => {
     await run(
       kit.env.DB,
       "INSERT INTO bundles (id, org_id, name, token, created_at) VALUES (?, ?, 'B', ?, 1)",
-      [bundleId, pass.orgId, kit.fx.ids.token()],
+      [bundleId, pass.orgId, `h1:${kit.fx.ids.token()}`],
     );
     await run(
       kit.env.DB,
@@ -344,7 +344,7 @@ describe('connector snapshot fencing', () => {
     await run(
       kit.env.DB,
       "INSERT INTO bundles (id, org_id, name, token, created_at) VALUES (?, ?, 'B', ?, 1)",
-      [bundleId, pass.orgId, kit.fx.ids.token()],
+      [bundleId, pass.orgId, `h1:${kit.fx.ids.token()}`],
     );
     await run(
       kit.env.DB,
@@ -600,7 +600,7 @@ describe('connector snapshot fencing', () => {
     const pass = await kit.pass({ mode: 'test' });
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
     expect(await getPass(kit.env.DB, pass.id)).toBeNull();
-    expect(await getPassByDownloadToken(kit.env.DB, pass.downloadToken)).toBeNull();
+    expect(await getPassByDownloadToken(kit.env, pass.downloadToken)).toBeNull();
     expect(await getPassBySerial(kit.env.DB, pass.identityId, pass.serial)).toBeNull();
     expect(
       (await listPasses(kit.env.DB, { orgId: pass.orgId, mode: 'test', limit: 100 })).items.map(

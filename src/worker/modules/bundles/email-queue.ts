@@ -37,7 +37,7 @@ export async function enqueueBundleEmail(
   // Not a mail relay for keys: the members' holder emails are pinned again when it sends.
   if (options.holdersOnly && snapshot.passes.some((p) => p.holderEmail !== to))
     throw new ValidationError(RECIPIENT_NOT_HOLDER, [], 'RECIPIENT_NOT_HOLDER');
-  const intent = await bindBundle(snapshot, to);
+  const intent = await bindBundle(ctx.env, snapshot, to);
   return queueEmail(ctx, {
     orgId: bundle.org_id,
     passId: first.id,

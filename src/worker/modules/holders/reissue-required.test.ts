@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeUser } from '../../../../test/helpers/index.ts';
+import { issueToken } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -119,9 +120,14 @@ describe('verified attachment requiring credential reissue', () => {
     expect((await getHolder(jobCtxOf(kit), pass.id, null)).reissueRequired).toBe(true);
     const current = await getPass(kit.env.DB, pass.id);
     if (!current) throw new Error('Missing pass');
-    expect(await setDownloadToken(kit.env.DB, current, kit.fx.ids.token(), kit.clock.now())).toBe(
-      true,
-    );
+    expect(
+      await setDownloadToken(
+        kit.env.DB,
+        current,
+        await issueToken(kit.env, 'pass', current.id, current.orgId, kit.fx.ids.token()),
+        kit.clock.now(),
+      ),
+    ).toBe(true);
     expect((await getHolder(jobCtxOf(kit), pass.id, null)).reissueRequired).toBe(false);
     await resumeVerifiedHolderAttachments(jobCtxOf(kit));
     expect((await getHolder(jobCtxOf(kit), pass.id, null)).reissueRequired).toBe(true);
@@ -284,7 +290,12 @@ describe('verified attachment requiring credential reissue', () => {
           ]);
         const current = await getPass(kit.env.DB, pass.id);
         if (!current) throw new Error('Missing pass');
-        return setDownloadToken(kit.env.DB, current, kit.fx.ids.token(), kit.clock.now());
+        return setDownloadToken(
+          kit.env.DB,
+          current,
+          await issueToken(kit.env, 'pass', current.id, current.orgId, kit.fx.ids.token()),
+          kit.clock.now(),
+        );
       });
       expect(await runAttachHookA(race.ctx, pass.id)).toBeNull();
       expect(race.fired()).toBe(true);

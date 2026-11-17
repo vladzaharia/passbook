@@ -4,6 +4,7 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
+import { tokenMac } from '../../platform/capability-token.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -321,7 +322,7 @@ describe('bundle tenant authorization', () => {
       'SELECT token FROM bundles WHERE id = ?',
       [bundle.id],
     );
-    expect(bundle.url.endsWith(`/b/${row?.token}`)).toBe(true);
+    expect(row?.token).toBe(await tokenMac(kit.env, 'bundle', bundle.url?.split('/b/')[1] ?? ''));
     expect(
       await all(
         kit.env.DB,
@@ -431,7 +432,7 @@ describe('bundle tenant authorization', () => {
         () =>
           change === 'deleted'
             ? run(kit.env.DB, 'DELETE FROM bundles WHERE id = ?', [bundle.id])
-            : run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [
+            : run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
                 kit.ctx.ids.token(),
                 bundle.id,
               ]),

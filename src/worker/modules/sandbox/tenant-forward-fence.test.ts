@@ -323,7 +323,7 @@ describe('Test inbox tenant authority at D1 boundaries', () => {
     const authority = await inboxAuthority(kit, actor.session);
     const ref = await getCapturedReference(kit.env.DB, capture.id, authority, kit.clock.now());
     if (!ref) throw new Error('Capture reference missing');
-    const snapshot = await resolveCaptureSnapshot(kit.env.DB, ref);
+    const snapshot = await resolveCaptureSnapshot(kit.env, ref);
     if (!snapshot) throw new Error('Capture snapshot missing');
     const key = await makeApiKey(kit.fx, {
       orgId: kit.org.id,

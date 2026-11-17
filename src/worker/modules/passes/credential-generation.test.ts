@@ -8,6 +8,7 @@ import {
   makeTemplate,
   makeUser,
 } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import {
   credentialAad,
   decryptSecretText,
@@ -120,7 +121,7 @@ function startStatements(
 
 async function start(db: D1Database, passId: string, now: number) {
   const id = crypto.randomUUID();
-  await batch(db, startStatements(db, passId, id, crypto.randomUUID(), now));
+  await batch(db, startStatements(db, passId, id, `h1:${crypto.randomUUID()}`, now));
   return id;
 }
 
@@ -165,7 +166,7 @@ describe('0042 credential and lifecycle generations', () => {
     });
     await run(
       db,
-      `UPDATE passes SET download_token = ?, link_generation = link_generation + 1 WHERE id = ?`,
+      `UPDATE passes SET download_token = 'h1:' || ?, link_generation = link_generation + 1 WHERE id = ?`,
       [crypto.randomUUID(), pass.id],
     );
     expect(await snapshot(db, pass.id)).toMatchObject({
@@ -188,7 +189,7 @@ describe('0042 credential and lifecycle generations', () => {
       run(
         db,
         `UPDATE passes SET credential_generation = credential_generation + 1,
-      download_token = ?, link_generation = link_generation + 1 WHERE id = ?`,
+      download_token = 'h1:' || ?, link_generation = link_generation + 1 WHERE id = ?`,
         [crypto.randomUUID(), pass.id],
       ),
     ).rejects.toThrow(/credential generation requires a pending reservation/);
@@ -419,10 +420,12 @@ describe('0042 credential and lifecycle generations', () => {
       run(db, 'INSERT OR REPLACE INTO passes SELECT * FROM passes WHERE id = ?', [pass.id]),
     ).rejects.toThrow(/UNIQUE constraint failed: passes\.id/);
     await expect(
-      run(db, 'UPDATE OR REPLACE passes SET download_token = ? WHERE id = ?', [
-        before.download_token,
-        other.id,
-      ]),
+      withoutTrigger(db, 'passes_token_change_moves_link', () =>
+        run(db, 'UPDATE OR REPLACE passes SET download_token = ? WHERE id = ?', [
+          before.download_token,
+          other.id,
+        ]),
+      ),
     ).rejects.toThrow(/UNIQUE constraint failed: passes\.download_token/);
     expect(await snapshot(db, pass.id)).toEqual(before);
     expect(await snapshot(db, other.id)).toEqual(otherBefore);
@@ -449,7 +452,7 @@ describe('0042 pending transfer snapshots', () => {
             db,
             pass.id,
             crypto.randomUUID(),
-            crypto.randomUUID(),
+            `h1:${crypto.randomUUID()}`,
             f.clock.now(),
             field,
           ),
@@ -706,7 +709,7 @@ describe('0042 pending transfer snapshots', () => {
         stmt(
           db,
           `UPDATE passes SET credential_generation = credential_generation + 1,
-          download_token = ?, link_generation = link_generation + 1 WHERE id = ?`,
+          download_token = 'h1:' || ?, link_generation = link_generation + 1 WHERE id = ?`,
           [crypto.randomUUID(), pass.id],
         ),
       ];

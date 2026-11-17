@@ -1,5 +1,6 @@
 import { describe, expect, it, onTestFinished } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { randomBytes, sha256Hex, toBase64Url } from '../../platform/ids.ts';
@@ -531,10 +532,12 @@ describe('native wallet instance lifecycle', () => {
         hash,
       ]),
     ).toEqual({ consumed_at: null });
-    await run(db, 'UPDATE passes SET download_token = ? WHERE id = ?', [
-      crypto.randomUUID(),
-      f.pass.id,
-    ]);
+    await withoutTrigger(db, 'passes_token_change_moves_link', () =>
+      run(db, `UPDATE passes SET download_token = 'h1:' || ? WHERE id = ?`, [
+        crypto.randomUUID(),
+        f.pass.id,
+      ]),
+    );
     expect(
       await readOffer(db, await sha256Hex(secondRef), input.now, op.credentialKeysetCommitment),
     ).toBeNull();

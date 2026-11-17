@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
 import { makeUser } from '../../../../test/helpers/index.ts';
+import { issueToken } from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { createPassRow } from '../passes/create.ts';
@@ -348,9 +349,14 @@ describe('removal and blocks', () => {
     const pass = await kit.pass({ holderEmail: e });
     const source = await getPass(kit.env.DB, pass.id);
     if (!source) throw new Error('Missing owned pass');
-    expect(await setDownloadToken(kit.env.DB, source, kit.fx.ids.token(), kit.clock.now())).toBe(
-      true,
-    );
+    expect(
+      await setDownloadToken(
+        kit.env.DB,
+        source,
+        await issueToken(kit.env, 'pass', source.id, source.orgId, kit.fx.ids.token()),
+        kit.clock.now(),
+      ),
+    ).toBe(true);
     await expect(
       removePassFromUser(
         jobCtxOf(kit),

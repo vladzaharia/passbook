@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
 import { expectProblem, expectRejectsCode } from '../../../../test/helpers/denial.ts';
+import { stubIssuedToken } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { first, run } from '../../platform/db.ts';
 import { checksHold, jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -31,7 +32,7 @@ import { createBundle } from './service.ts';
 
 const actor = { type: 'system', id: null } as const;
 const origin = 'https://wallet.test';
-const tokenOf = (url: string) => url.split('/b/')[1] ?? '';
+const tokenOf = (url: string | null) => url?.split('/b/')[1] ?? '';
 
 async function makeBundle(kit: Kit, passes: Pass[]) {
   return createBundle(
@@ -49,6 +50,7 @@ async function makeBundle(kit: Kit, passes: Pass[]) {
 
 function delayedBundle(kit: Kit, pass: Pass) {
   const id = kit.ctx.ids.id();
+  const stub = stubIssuedToken(kit.ctx.ids.token());
   return {
     id,
     grant: createBundleGrant(
@@ -58,7 +60,8 @@ function delayedBundle(kit: Kit, pass: Pass) {
         orgId: pass.orgId,
         mode: pass.mode,
         name: 'Delayed',
-        token: kit.ctx.ids.token(),
+        token: stub.mac,
+        tokenSeal: stub.seal,
         holderEmail: pass.holderEmail,
         actor,
         passes: [pass],

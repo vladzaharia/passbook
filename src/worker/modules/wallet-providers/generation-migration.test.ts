@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
 import { fixtures, makeOrg, makePass, makeTemplate } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -67,7 +68,7 @@ function startStatements(db: D1Database, passId: string, id: string, now: number
     stmt(
       db,
       `UPDATE passes SET credential_generation = credential_generation + 1,
-      download_token = ?, link_generation = link_generation + 1 WHERE id = ?`,
+      download_token = 'h1:' || ?, link_generation = link_generation + 1 WHERE id = ?`,
       [crypto.randomUUID(), passId],
     ),
   ];
@@ -272,7 +273,7 @@ describe('0043 provider generation fences', () => {
         statements[0]!,
         stmt(
           db,
-          `UPDATE passes SET credential_generation = credential_generation + 1, download_token = ?
+          `UPDATE passes SET credential_generation = credential_generation + 1, download_token = 'h1:' || ?
         WHERE id = ?`,
           [crypto.randomUUID(), pass.id],
         ),
@@ -618,10 +619,12 @@ describe('0043 provider generation fences', () => {
     ).rejects.toThrow(/UNIQUE constraint failed/);
     const other = await kit.pass();
     await expect(
-      run(db, 'UPDATE OR REPLACE passes SET download_token = ? WHERE id = ?', [
-        pass.downloadToken,
-        other.id,
-      ]),
+      withoutTrigger(db, 'passes_token_change_moves_link', () =>
+        run(db, 'UPDATE OR REPLACE passes SET download_token = ? WHERE id = ?', [
+          pass.downloadToken,
+          other.id,
+        ]),
+      ),
     ).rejects.toThrow(/UNIQUE constraint failed/);
     expect(await first(db, 'SELECT id FROM passes WHERE id = ?', [pass.id])).toEqual({
       id: pass.id,

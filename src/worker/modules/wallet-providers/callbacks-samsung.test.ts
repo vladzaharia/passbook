@@ -2,6 +2,7 @@ import { constants, privateDecrypt } from 'node:crypto';
 import { compactVerify, importX509 } from 'jose';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { issueToken } from '../../platform/capability-token.ts';
 import {
   credentialAad,
   decryptSecretText,
@@ -280,9 +281,14 @@ describe('Samsung authenticated callback route', () => {
   it('fences captured offers, refreshes and callbacks when a real credential transfer starts', async () => {
     const t = await setupSamsungCallbacks({ holderEmail: 'first@example.test' });
     const db = t.kit.env.DB;
-    expect(await setDownloadToken(db, t.pass, t.kit.ctx.ids.token(32), t.kit.clock.now())).toBe(
-      true,
-    );
+    expect(
+      await setDownloadToken(
+        db,
+        t.pass,
+        await issueToken(t.kit.env, 'pass', t.pass.id, t.pass.orgId, t.kit.ctx.ids.token(32)),
+        t.kit.clock.now(),
+      ),
+    ).toBe(true);
     expect((await t.call({ token: await t.token() })).status).toBe(200);
     const pass = await getPass(db, t.pass.id);
     const expected = await getHolderPass(db, t.pass.id, null);

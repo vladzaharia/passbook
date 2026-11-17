@@ -1,3 +1,4 @@
+import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -48,6 +49,14 @@ export async function listWalletOffers(
   const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const snapshot = await offerPassSnapshot(ctx, passId, credentialKeysetCommitment);
   if (!snapshot) return [];
+  const { pass: offered } = snapshot;
+  const plainToken = await revealToken(
+    ctx.env,
+    'pass',
+    offered.id,
+    offered.orgId,
+    offered.downloadToken,
+  );
   const candidates: { eligible: EligibleWalletProvider; offer: WalletOffer }[] = [];
   for (const provider of ['google', 'samsung'] as const) {
     const eligible = await eligibleWalletProvider(ctx, snapshot, provider);
@@ -64,7 +73,7 @@ export async function listWalletOffers(
       eligible,
       offer: {
         provider,
-        href: `/p/${snapshot.pass.downloadToken}/wallet/${provider}`,
+        href: `/p/${plainToken}/wallet/${provider}`,
         installation: 'unknown',
       },
     });
@@ -127,7 +136,8 @@ export async function issueWalletOffer(
     requestKey: ctx.ids.token(32),
     now: ctx.clock.now(),
     newId: () => ctx.ids.id(),
-    authority: { kind: 'download', token },
+    // The stored value (the token's MAC): the bearer check compares it with the row at commit.
+    authority: { kind: 'download', token: pass.downloadToken },
   });
   if (!created) throw notFound();
   const { operation, ref, expiresAt } = created;

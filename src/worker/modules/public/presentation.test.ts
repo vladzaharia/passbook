@@ -4,6 +4,7 @@ import {
   type Fixtures,
   fakeAuth,
   fixtures,
+  linkToken,
   makeOrg,
   makeSession,
   makeTemplate,
@@ -13,6 +14,7 @@ import {
   type SessionFixture,
   type UserRow,
 } from '../../../../test/helpers/index.ts';
+import { fixtureToken } from '../../../../test/helpers/tokens.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
 import type { InMemoryTemplateRegistry } from '../../../passkit/template/in-memory-registry.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
@@ -86,6 +88,7 @@ async function passWith(
   const id = f.ids.id();
   const objectKey = `passes/${id}/v1-${f.ids.token(4)}.pkpass`;
   await h.env.BUCKET.put(objectKey, new Uint8Array([1, 2, 3]));
+  const link = await fixtureToken(h.env, id, org.id, f.ids.token());
   await run(
     h.env.DB,
     `INSERT INTO passes
@@ -101,7 +104,7 @@ async function passWith(
       template.id,
       template.version,
       f.ids.token(),
-      f.ids.token(),
+      link.mac,
       `${f.env.PUBLIC_BASE_URL}/wallet`,
       JSON.stringify({ memberName: 'Alex Morgan' }),
       options.holderEmail ?? null,
@@ -114,6 +117,7 @@ async function passWith(
       f.clock.now(),
     ],
   );
+  await link.seal();
   // The pass_created trigger inserts the current version.
   const version = await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
     JSON.stringify({
@@ -131,7 +135,7 @@ async function passWith(
   return pass;
 }
 
-const publicPath = (pass: Pass) => `/p/${pass.downloadToken}/barcode`;
+const publicPath = async (pass: Pass) => `/p/${await linkToken(h.env, pass)}/barcode`;
 const ownerPath = (pass: Pass) => `/api/v1/me/passes/${pass.id}/barcode`;
 const publicGet = (path: string) => h.call(path, { headers: { accept: 'text/html' } });
 const ownerGet = (path: string, headers = session.headers) =>
@@ -230,7 +234,7 @@ describe('presentation barcode', () => {
     const dto = (await detail.json()) as { passJson: Record<string, unknown> };
     expect(dto.passJson).toMatchObject(primaryJson);
 
-    for (const res of [await publicGet(publicPath(pass)), await ownerGet(ownerPath(pass))]) {
+    for (const res of [await publicGet(await publicPath(pass)), await ownerGet(ownerPath(pass))]) {
       const html = await presentationHtml(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE, ALT_TEXT]);
       expectDrawing(html, 'code128', 'Code 128', {
         text: PRIMARY,
@@ -254,7 +258,10 @@ describe('presentation barcode', () => {
       square: true,
       encoding: 'utf-8',
     });
-    const html = await presentationHtml(await publicGet(publicPath(pass)), [LEGACY, SCAN_CODE]);
+    const html = await presentationHtml(await publicGet(await publicPath(pass)), [
+      LEGACY,
+      SCAN_CODE,
+    ]);
     expectDrawing(html, 'qrcode', 'QR', { text: LEGACY });
   });
 
@@ -267,7 +274,7 @@ describe('presentation barcode', () => {
       square: true,
       encoding: 'utf-8',
     });
-    for (const res of [await publicGet(publicPath(pass)), await ownerGet(ownerPath(pass))]) {
+    for (const res of [await publicGet(await publicPath(pass)), await ownerGet(ownerPath(pass))]) {
       const html = await presentationHtml(res, [SCAN_CODE, pass.serial, pass.authToken]);
       expectDrawing(html, 'qrcode', 'QR', { text: SCAN_CODE });
     }
@@ -287,14 +294,17 @@ describe('presentation barcode', () => {
       square: true,
       encoding: 'iso-8859-1',
     });
-    const html = await presentationHtml(await publicGet(publicPath(pass)), [message, SCAN_CODE]);
+    const html = await presentationHtml(await publicGet(await publicPath(pass)), [
+      message,
+      SCAN_CODE,
+    ]);
     expectDrawing(html, 'qrcode', 'QR', { text: message, binarytext: true });
   });
 
   it('shows an unavailable state instead of inventing a code when no code was persisted', async () => {
     const pass = await passWith({ json: { barcodes: [] }, scanCode: null });
     expect((await presentationForPass(ctx, pass)).barcode).toBeNull();
-    for (const res of [await publicGet(publicPath(pass)), await ownerGet(ownerPath(pass))]) {
+    for (const res of [await publicGet(await publicPath(pass)), await ownerGet(ownerPath(pass))]) {
       await expectUnavailable(res, [pass.serial, pass.authToken]);
     }
   });
@@ -320,7 +330,7 @@ describe('presentation barcode', () => {
       },
     });
     expect((await presentationForPass(ctx, pass)).barcode).toBeNull();
-    for (const res of [await publicGet(publicPath(pass)), await ownerGet(ownerPath(pass))]) {
+    for (const res of [await publicGet(await publicPath(pass)), await ownerGet(ownerPath(pass))]) {
       await expectUnavailable(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     }
   });
@@ -345,7 +355,7 @@ describe('presentation barcode', () => {
       message,
       encoding,
     });
-    for (const res of [await publicGet(publicPath(pass)), await ownerGet(ownerPath(pass))]) {
+    for (const res of [await publicGet(await publicPath(pass)), await ownerGet(ownerPath(pass))]) {
       await expectUnavailable(res, [message, SECONDARY, LEGACY, SCAN_CODE]);
     }
   });
@@ -375,7 +385,7 @@ describe('presentation barcode', () => {
         org.id,
       ]);
     }
-    for (const res of [await publicGet(publicPath(pass)), await ownerGet(ownerPath(pass))]) {
+    for (const res of [await publicGet(await publicPath(pass)), await ownerGet(ownerPath(pass))]) {
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     }
 
@@ -392,7 +402,7 @@ describe('presentation barcode', () => {
         expect(json).not.toContain(secret);
     }
 
-    const preview = await publicGet(`/p/${pass.downloadToken}`);
+    const preview = await publicGet(`/p/${await linkToken(h.env, pass)}`);
     expect(preview.status).toBe(canBeMissing ? 404 : 200);
     const previewHtml = await preview.text();
     for (const secret of [PRIMARY, SECONDARY, LEGACY, SCAN_CODE, ALT_TEXT])
@@ -446,12 +456,12 @@ describe('presentation barcode', () => {
     const safe = await passWith({ scanCode: null });
     const current = await getPass(h.env.DB, pass.id);
     if (!current) throw new Error('Test pass fixture was not stored');
-    const pagePath = `/p/${pass.downloadToken}`;
+    const pagePath = `/p/${await linkToken(h.env, pass)}`;
 
     const preview = await publicGet(pagePath);
     expect(preview.status).toBe(200);
     expect(await preview.text()).toContain(holder);
-    await presentationHtml(await publicGet(publicPath(pass)), [PRIMARY, SCAN_CODE]);
+    await presentationHtml(await publicGet(await publicPath(pass)), [PRIMARY, SCAN_CODE]);
     await presentationHtml(await ownerGet(ownerPath(pass)), [PRIMARY, SCAN_CODE]);
     const file = await h.call(`${pagePath}/pass.pkpass`);
     expect(file.status).toBe(200);
@@ -488,7 +498,7 @@ describe('presentation barcode', () => {
       SCAN_CODE,
       pass.authToken,
     ];
-    for (const path of [pagePath, publicPath(pass), `${pagePath}/pass.pkpass`]) {
+    for (const path of [pagePath, await publicPath(pass), `${pagePath}/pass.pkpass`]) {
       const response = await h.call(path);
       expect(response.status).toBe(404);
       response.headers.forEach((value) => {
@@ -547,9 +557,10 @@ describe('presentation barcode', () => {
 
   it('denies malformed, unknown and rotated bearer links but accepts the new link', async () => {
     const pass = await passWith({ json: primaryJson });
-    await presentationHtml(await publicGet(publicPath(pass)), [PRIMARY, SCAN_CODE]);
+    await presentationHtml(await publicGet(await publicPath(pass)), [PRIMARY, SCAN_CODE]);
+    const oldPath = await publicPath(pass);
     const rotated = await rotateLink(ctx, { type: 'user', id: user.id }, pass.id, null);
-    for (const path of ['/p/short/barcode', `/p/${'z'.repeat(43)}/barcode`, publicPath(pass)]) {
+    for (const path of ['/p/short/barcode', `/p/${'z'.repeat(43)}/barcode`, oldPath]) {
       const res = await publicGet(path);
       expect(res.status).toBe(404);
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
@@ -567,7 +578,7 @@ describe('presentation barcode', () => {
 
   it('keeps the page-opening QR distinct from the presentation action', async () => {
     const pass = await passWith({ json: primaryJson });
-    const page = `/p/${pass.downloadToken}`;
+    const page = `/p/${await linkToken(h.env, pass)}`;
     const res = await h.call(page, {
       headers: {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36',
@@ -619,7 +630,7 @@ describe('presentation barcode', () => {
       if (source === 'primary') expect(barcode.message).not.toBe(pass.scanCode);
 
       const app = createApp({ stores: fakeAuth(SCAN_ORIGIN).stores, clock: kit.clock });
-      const page = await app.request(`${SCAN_ORIGIN}${publicPath(pass)}`, {}, kit.env);
+      const page = await app.request(`${SCAN_ORIGIN}${await publicPath(pass)}`, {}, kit.env);
       const html = await presentationHtml(page, [barcode.message]);
       expectDrawing(html, 'qrcode', 'QR', { text: barcode.message });
 

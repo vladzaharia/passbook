@@ -1,7 +1,7 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { fakeAuth, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { fakeAuth, linkToken, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { WalletOffer } from '../../../shared/contracts/me.ts';
 import type {
   GoogleWalletCredentials,
@@ -89,12 +89,14 @@ describe('pending native wallets on holder surfaces', () => {
     ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36'],
   ])('keeps Apple available and withholds unverified providers on %s', async (_name, ua) => {
     const { pass, google, samsung } = fixture;
-    const response = await get(`/p/${pass.downloadToken}`, { 'user-agent': ua });
+    const response = await get(`/p/${await linkToken(fixture.kit.env, pass)}`, {
+      'user-agent': ua,
+    });
     expect(response.status).toBe(200);
     const html = await response.text();
-    expect(html).toContain(`href="/p/${pass.downloadToken}/pass.pkpass"`);
-    expect(html).not.toContain(pathFor(pass.downloadToken, 'google'));
-    expect(html).not.toContain(pathFor(pass.downloadToken, 'samsung'));
+    expect(html).toContain(`href="/p/${await linkToken(fixture.kit.env, pass)}/pass.pkpass"`);
+    expect(html).not.toContain(pathFor(await linkToken(fixture.kit.env, pass), 'google'));
+    expect(html).not.toContain(pathFor(await linkToken(fixture.kit.env, pass), 'samsung'));
     expect(html).toContain('alt="Add to Apple Wallet"');
     expect(html).not.toContain('alt="Add to Google Wallet"');
     expect(html).not.toContain('alt="Add to Samsung Wallet"');
@@ -132,7 +134,7 @@ describe('pending native wallets on holder surfaces', () => {
   it('rejects direct provider links without generating a bearer offer', async () => {
     const { kit, pass } = fixture;
     for (const provider of ['google', 'samsung'] as const) {
-      const response = await get(pathFor(pass.downloadToken, provider));
+      const response = await get(pathFor(await linkToken(fixture.kit.env, pass), provider));
       expect(response.status).toBe(403);
       expect(response.headers.get('location')).toBeNull();
       const body = await response.text();
@@ -168,11 +170,11 @@ describe('pending native wallets on holder surfaces', () => {
           'UPDATE pass_versions SET pass_json = json_set(pass_json, ?, ?) WHERE pass_id = ? AND version = ?',
           ['$.expirationDate', '2020-01-01T00:00:00Z', pass.id, pass.version],
         );
-      const response = await get(`/p/${pass.downloadToken}`);
+      const response = await get(`/p/${await linkToken(fixture.kit.env, pass)}`);
       expect(response.status).toBe(200);
       const html = await response.text();
-      expect(html).not.toContain(pathFor(pass.downloadToken, 'google'));
-      expect(html).not.toContain(pathFor(pass.downloadToken, 'samsung'));
+      expect(html).not.toContain(pathFor(await linkToken(fixture.kit.env, pass), 'google'));
+      expect(html).not.toContain(pathFor(await linkToken(fixture.kit.env, pass), 'samsung'));
       expect((await holderOffers(pass.id)).walletOffers).toEqual([]);
     },
     120_000,
@@ -184,7 +186,7 @@ describe('pending native wallets on holder surfaces', () => {
       fixture.kit.clock.now(),
       pass.id,
     ]);
-    expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
+    expect((await get(`/p/${await linkToken(fixture.kit.env, pass)}`)).status).toBe(404);
     expect((await holderOffers(pass.id)).walletOffers).toEqual([]);
   });
 
@@ -192,7 +194,7 @@ describe('pending native wallets on holder surfaces', () => {
     const { kit } = fixture;
     const pass = await kit.pass({ mode: 'test', holderEmail });
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
-    expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
+    expect((await get(`/p/${await linkToken(fixture.kit.env, pass)}`)).status).toBe(404);
     await expectProblem(await get(`/api/v1/me/passes/${pass.id}`, headers), 404, 'PASS_NOT_FOUND');
   });
 
@@ -200,7 +202,7 @@ describe('pending native wallets on holder surfaces', () => {
     const { kit, pass } = fixture;
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
     try {
-      expect((await get(`/p/${pass.downloadToken}`)).status).toBe(404);
+      expect((await get(`/p/${await linkToken(fixture.kit.env, pass)}`)).status).toBe(404);
       expect((await holderOffers(pass.id)).walletOffers).toEqual([]);
     } finally {
       await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
@@ -215,9 +217,9 @@ describe('pending native wallets on holder surfaces', () => {
       provider: 'google',
       expectedRevision: 1,
     });
-    const html = await (await get(`/p/${pass.downloadToken}`)).text();
-    expect(html).not.toContain(pathFor(pass.downloadToken, 'google'));
-    expect(html).not.toContain(pathFor(pass.downloadToken, 'samsung'));
+    const html = await (await get(`/p/${await linkToken(fixture.kit.env, pass)}`)).text();
+    expect(html).not.toContain(pathFor(await linkToken(fixture.kit.env, pass), 'google'));
+    expect(html).not.toContain(pathFor(await linkToken(fixture.kit.env, pass), 'samsung'));
     expect((await holderOffers(pass.id)).walletOffers).toEqual([]);
   });
 });

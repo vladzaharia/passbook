@@ -18,6 +18,7 @@ import { finishStop, type StopContext } from './act-stop.ts';
 import type { ActorCsrfSnapshot } from './actor-csrf.ts';
 import { photoGrantPurpose } from './asset-types.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
+import { valueRequestIssue } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import { knownPhotoUrl, type PreparedPhotoGrant } from './member-photo.ts';
 import { unknownOutcome } from './outcome.ts';
@@ -48,7 +49,7 @@ export async function attempt(
   csrfSnapshot: ActorCsrfSnapshot,
   undoWindow: number,
   capturedOverride: Override | null,
-  approver: PinStaffSnapshot | null,
+  approver: readonly PinStaffSnapshot[],
   onFailureCommitted: () => void,
 ): Promise<ScanEvaluation> {
   const authorityActor = actor;
@@ -96,7 +97,14 @@ export async function attempt(
       direction: req.direction,
     },
     credentials,
-    { candidateRead: { candidates }, prepareReads: reads.prepare },
+    {
+      candidateRead: { candidates },
+      prepareReads: reads.prepare,
+      admits: (found) => {
+        const picked = pickAction(actor, found.scan, req.actionId);
+        return !picked || picked === 'choose' || picked.kind === 'check_in';
+      },
+    },
   );
   invalidFound = evaluated.found;
   if (evaluated.stop && evaluated.stale) throw stale();
@@ -247,7 +255,7 @@ export async function attempt(
       history: reads.preloaded,
       onFailureCommitted,
     });
-  if (picked?.kind !== 'check_in')
+  if (!picked)
     return invalid(
       ctx,
       ownedClaim,
@@ -258,6 +266,17 @@ export async function attempt(
       onFailureCommitted,
     );
   const action = picked;
+  const issue = valueRequestIssue(action, found.template.manifest, req);
+  if (issue)
+    return invalid(
+      ctx,
+      ownedClaim,
+      claimAt,
+      issue.code,
+      issue.message,
+      invalidAuthority,
+      onFailureCommitted,
+    );
   if (
     override &&
     (!action.allowAgain ||

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { linkToken } from '../../../../test/helpers/index.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { assertPassSnapshot, capturePassSnapshot, type PassSnapshot } from '../public/snapshot.ts';
 import { deleteMemberPhoto, putMemberPhoto, updateMemberPhoto } from './member-photo.ts';
@@ -90,12 +91,12 @@ describe('member photo lineage', () => {
         expect(duringPhoto!.r2_key).not.toBe(before?.r2_key);
         expect(await kit.env.BUCKET.get(duringPhoto!.r2_key)).toBeNull();
       }
-      const download = await get(`/p/${pass.downloadToken}/pass.pkpass`);
+      const download = await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
       expect(download.status).toBe(200);
       expectValidZip(new Uint8Array(await download.arrayBuffer()));
-      const page = await get(`/p/${pass.downloadToken}`);
+      const page = await get(`/p/${await linkToken(kit.env, pass)}`);
       expect(page.status).toBe(200);
-      expect(await page.text()).toContain(`/p/${pass.downloadToken}/pass.pkpass`);
+      expect(await page.text()).toContain(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
       const contents = await files(pass.id);
       if (operation === 'delete') expect(contents['thumbnail@3x.png']).toEqual(png);
       else expect(contents['thumbnail@3x.png']).toBeUndefined();
@@ -158,10 +159,10 @@ describe('member photo lineage', () => {
     for (const snapshot of snapshots)
       await expect(assertPassSnapshot(kit.ctx, snapshot)).rejects.toMatchObject({ status: 404 });
 
-    const page = await get(`/p/${pass.downloadToken}`);
+    const page = await get(`/p/${await linkToken(kit.env, pass)}`);
     expect(page.status).toBe(200);
-    expect(await page.text()).toContain(`/p/${pass.downloadToken}/pass.pkpass`);
-    const download = await get(`/p/${pass.downloadToken}/pass.pkpass`);
+    expect(await page.text()).toContain(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
+    const download = await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
     expect(download.status).toBe(200);
     expectValidZip(new Uint8Array(await download.arrayBuffer()));
   });

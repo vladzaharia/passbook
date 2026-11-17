@@ -1,4 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { tokenKeys } from '../../platform/capability-token.ts';
 import { all, chunk, first, placeholders } from '../../platform/db.ts';
 import type { PassDbRow } from '../passes/repo-map.ts';
 import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
@@ -39,12 +40,13 @@ export function getBundle(db: D1Database, id: string, scope: ScopeArg) {
   );
 }
 
-export const getBundleByToken = (db: D1Database, token: string) =>
-  first<BundleRow>(
-    db,
-    `SELECT * FROM bundles WHERE token = ? AND ${noQuarantinedMembers('bundles.id')}`,
-    [token],
+export async function getBundleByToken(env: { DB: D1Database }, token: string) {
+  return first<BundleRow>(
+    env.DB,
+    `SELECT * FROM bundles WHERE token IN (?, ?) AND ${noQuarantinedMembers('bundles.id')}`,
+    await tokenKeys(env, 'bundle', token),
   );
+}
 
 export interface BundleListFilter {
   orgId: string;

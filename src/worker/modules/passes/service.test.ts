@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeOrg, makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
+import { linkToken, makeOrg, makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -525,7 +525,7 @@ describe('void, links, delete', () => {
     const { publicUrl } = await rotateLink(kit.ctx, actor, pass.id, null);
     const after = await getPass(kit.env.DB, pass.id);
     expect(after?.downloadToken).not.toBe(pass.downloadToken);
-    expect(publicUrl).toContain(after?.downloadToken ?? 'x');
+    expect(publicUrl).toContain(after ? await linkToken(kit.env, after) : 'x');
   });
 
   it('soft-deletes, keeps serving the voided pass, and hard-deletes after the grace period', async () => {
@@ -543,7 +543,7 @@ describe('void, links, delete', () => {
     );
     await deletePass(jobCtxOf(kit), actor, pass.id, null);
     expect(await getPass(kit.env.DB, pass.id)).toBeNull();
-    expect(await getPassByDownloadToken(kit.env.DB, pass.downloadToken)).toBeNull();
+    expect(await getPassByDownloadToken(kit.env, pass.downloadToken)).toBeNull();
     expect(
       (await listPasses(kit.env.DB, { orgId: pass.orgId, limit: 200 })).items.some(
         (p) => p.id === pass.id,

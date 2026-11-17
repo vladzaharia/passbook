@@ -56,14 +56,18 @@ export function prepareCheckInReads(
     found,
   );
   if (!prepared) return null;
-  const eventId =
-    actor.event?.id ?? found.checkInRules?.eventId ?? actor.settings.checkIn?.eventId ?? null;
+  // Admission, presence and capacity belong to a check-in; a value action reads only its gate.
+  const checkIn = action.kind === 'check_in';
+  const eventId = checkIn
+    ? (actor.event?.id ?? found.checkInRules?.eventId ?? actor.settings.checkIn?.eventId ?? null)
+    : null;
   const admissionScope = eventId ? `event:${eventId}` : '';
   const configured =
-    Object.keys(found.checkInRules ?? {}).length > 0 ||
-    Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
-    actor.settings.direction === 'out' ||
-    actor.settings.direction === 'both';
+    checkIn &&
+    (Object.keys(found.checkInRules ?? {}).length > 0 ||
+      Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
+      actor.settings.direction === 'out' ||
+      actor.settings.direction === 'both');
   const scoped =
     action.repeat === 'once' && eventId ? admissionScope : gateScope(action, actor, now);
   const gate = {
@@ -74,7 +78,7 @@ export function prepareCheckInReads(
         ? admissionScope
         : scoped,
   };
-  const presenceScope = configured || actor.event ? admissionScope : gate.scope;
+  const presenceScope = checkIn && (configured || actor.event) ? admissionScope : gate.scope;
   const heldReads = heldGateReads(ctx.env.DB, actor, gate, eventId);
   let current: ActionPreflight | null = null;
   return {

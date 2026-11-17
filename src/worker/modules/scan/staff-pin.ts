@@ -1,21 +1,36 @@
-import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import type { GrantPart } from '../../platform/authority-include.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import { AppError, RateLimitedError } from '../../platform/errors.ts';
-import { safeEqual, toHex } from '../../platform/ids.ts';
+import { toHex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
-import { type ScanStaffRow, type StaffRaw, toStaff } from './repo-staff.ts';
 import { preparePinCounters } from './repo-staff-pin-counters.ts';
+import { anyManagerDecision, personDecision } from './staff-pin-decide.ts';
+import {
+  ANY_MANAGER,
+  hideHash,
+  type PinCheck,
+  type PinFailure,
+  type PinReservation,
+  type PinStaffSnapshot,
+  type PinSubject,
+  type VerifiedPinSnapshot,
+} from './staff-pin-snapshot.ts';
+
+export {
+  ANY_MANAGER,
+  pinStaffFromResult,
+  pinStaffListFromResult,
+} from './staff-pin-snapshot.ts';
+export type { PinCheck, PinReservation, PinStaffSnapshot, PinSubject, VerifiedPinSnapshot };
 
 const MINUTE = 60_000;
 export const PIN_MISSES_PER_PERSON = 5;
 export const PIN_PERSON_WINDOW_MS = 5 * MINUTE;
 export const PIN_MISSES_PER_SCANNER = 20;
 export const PIN_SCANNER_WINDOW_MS = 60 * MINUTE;
-const DUMMY_PIN_HASH = '0'.repeat(64);
 const windowOf = (now: number, size: number) => now - (now % size);
 
 /** HMAC-SHA256(K_pin, id:pin), hex. A database leak alone cannot be brute-forced offline. */
@@ -25,81 +40,11 @@ export async function hashPin(env: object, staffId: string, pin: string): Promis
   return toHex(new Uint8Array(mac));
 }
 
-export interface PinSubject {
-  scannerId: string;
-  orgId: string;
-  staffId: string;
-}
-
-export interface PinCheck extends PinSubject {
-  /** The caller's org-scoped snapshot, including null for an unknown or unusable person. */
-  staff: Pick<ScanStaffRow, 'orgId' | 'pinHash' | 'disabledAt'> | null;
-  pin: string;
-}
-
-export type PinStaffSnapshot = Readonly<{
-  id: string;
-  orgId: string;
-  role: ScanRole;
-  disabledAt: number | null;
-  updatedAt: number;
-  /** From the row the PIN was verified against (the approver's epoch). */
-  authEpoch: number;
-  pinHash: string;
-}>;
-export type VerifiedPinSnapshot = PinStaffSnapshot;
-
-function hideHash<T extends object>(value: T, pinHash: string): Readonly<T & { pinHash: string }> {
-  Object.defineProperty(value, 'pinHash', { value: pinHash, enumerable: false });
-  return Object.freeze(value) as Readonly<T & { pinHash: string }>;
-}
-
-export function pinStaffFromResult(result: D1Result | undefined): PinStaffSnapshot | null {
-  const raw = result?.results?.[0] as StaffRaw | undefined;
-  if (!raw) return null;
-  const staff = toStaff(raw);
-  return hideHash(
-    {
-      id: staff.id,
-      orgId: staff.orgId,
-      role: staff.role,
-      disabledAt: staff.disabledAt,
-      updatedAt: staff.updatedAt,
-      authEpoch: raw.auth_epoch,
-    },
-    staff.pinHash,
-  );
-}
-
 export type PinReservationGuard = { sql: string; params: readonly SqlValue[] };
 const lockedError = (millisecondsLeft: number) =>
   new RateLimitedError(Math.ceil(millisecondsLeft / 1000), 'Too many wrong PINs. Try again later.');
 const resultCount = (result: D1Result | undefined) =>
   (result?.results?.[0] as { count?: number } | undefined)?.count;
-type PinFailure = {
-  failureStatements: D1PreparedStatement[];
-  onFailureCommitted(): void;
-};
-type PinCandidate = Pick<ScanStaffRow, 'orgId' | 'pinHash' | 'disabledAt'> &
-  Partial<Pick<ScanStaffRow, 'id' | 'role'>>;
-
-export interface PinReservation {
-  readonly stmts: D1PreparedStatement[];
-  verify(
-    results: readonly D1Result[],
-    staff: PinStaffSnapshot | null,
-    pin: string,
-    managerOnly: boolean,
-    failure?: PinFailure,
-  ): Promise<VerifiedPinSnapshot | null>;
-  verifyLogin(results: readonly D1Result[], staff: PinCheck['staff'], pin: string): Promise<void>;
-  refundStatements(): D1PreparedStatement[];
-  /** The refund as parts of the scan's own grant batch; `markRefunded` once it commits. */
-  refundParts(): GrantPart[];
-  markRefunded(): void;
-  refund(failure?: PinFailure): Promise<void>;
-}
-
 /**
  * A reservation is serialized in D1 with both fixed-window counters. A private counter marker
  * records its state, so cleanup remains exactly-once even if a committed batch's response is lost.
@@ -118,18 +63,24 @@ export function preparePinReservation(
   const now = ctx.clock.now();
   const personWindow = windowOf(now, PIN_PERSON_WINDOW_MS);
   const allWindow = windowOf(now, PIN_SCANNER_WINDOW_MS);
+  const anyone = staffId === ANY_MANAGER;
+  // A PIN with no one named tests every manager: the caps shrink by that factor, and an org-wide
+  // hourly counter (not per device) bounds the guesses a fleet of paired devices can make.
+  const factor = anyone ? Math.max(1, subject.testedManagers ?? 1) : 1;
+  const personCap = Math.max(1, Math.floor(PIN_MISSES_PER_PERSON / factor));
+  const scannerCap = Math.max(1, Math.floor(PIN_MISSES_PER_SCANNER / factor));
   const personKey = `scan:pin:${scannerId}:${staffId}`;
-  const allKey = `scan:pinall:${scannerId}`;
+  const allKey = anyone ? `scan:pinany:${orgId}` : `scan:pinall:${scannerId}`;
   const markerKey = `scan:pin-reservation:${ctx.ids.token()}`;
   const counters = preparePinCounters(db, {
     guard,
     markerKey,
     personKey,
     personWindow,
-    personCap: PIN_MISSES_PER_PERSON,
+    personCap,
     allKey,
     allWindow,
-    scannerCap: PIN_MISSES_PER_SCANNER,
+    scannerCap,
   });
   const stmts = counters.stmts;
   let used = false;
@@ -155,9 +106,7 @@ export function preparePinReservation(
 
   const verifyCandidate = async (
     results: readonly D1Result[],
-    staff: PinCandidate | null,
-    pin: string,
-    managerOnly: boolean,
+    decide: () => Promise<'match' | 'miss' | 'ambiguous'>,
     failure?: PinFailure,
   ): Promise<boolean> => {
     if (used) throw new Error('A PIN reservation can only be checked once');
@@ -199,7 +148,7 @@ export function preparePinReservation(
       await finishFailure([]);
       throw lockedError(personWindow + PIN_PERSON_WINDOW_MS - now);
     }
-    if (person < 1 || person > PIN_MISSES_PER_PERSON || resultCount(results[2]) !== 2)
+    if (person < 1 || person > personCap || resultCount(results[2]) !== 2)
       throw new Error('Incomplete PIN person reservation');
     const scanner = resultCount(results[3]);
     if (scanner === undefined) {
@@ -215,19 +164,14 @@ export function preparePinReservation(
     }
     if (
       scanner < 1 ||
-      scanner > PIN_MISSES_PER_SCANNER ||
+      scanner > scannerCap ||
       !shape(1, 1, 1, 1, 1, 0, 0) ||
       resultCount(results[4]) !== 4
     )
       throw new Error('Incomplete PIN scanner reservation');
 
-    const usable =
-      staff?.orgId === orgId &&
-      staff.disabledAt === null &&
-      (!managerOnly || (staff.id === staffId && staff.role === 'manager'));
-    const expected = await hashPin(pinEnv, staffId, pin);
-    const matches = await safeEqual(expected, usable ? staff.pinHash : DUMMY_PIN_HASH);
-    if (usable && matches) {
+    const verdict = await decide();
+    if (verdict === 'match') {
       verified = true;
       return true;
     }
@@ -244,12 +188,14 @@ export function preparePinReservation(
         targetId,
       });
     const audits: D1PreparedStatement[] = [];
-    if (person === PIN_MISSES_PER_PERSON)
-      audits.push(audit('scan_staff.pin_locked', 'scan_staff', staffId));
-    if (scanner === PIN_MISSES_PER_SCANNER)
-      audits.push(audit('scanner.pin_flood', 'scanner', scannerId));
+    if (person === personCap) audits.push(audit('scan_staff.pin_locked', 'scan_staff', staffId));
+    if (scanner === scannerCap) audits.push(audit('scanner.pin_flood', 'scanner', scannerId));
     await finishFailure(audits);
-    const triesLeft = Math.max(0, PIN_MISSES_PER_PERSON - person);
+    // Two managers with one PIN answer exactly as a wrong one (a different answer would say so);
+    // the owner is told in the log, with no PIN in it.
+    if (verdict === 'ambiguous')
+      ctx.log.warn('scan.pin_ambiguous', { orgId, scannerId, code: 'PIN_AMBIGUOUS' });
+    const triesLeft = Math.max(0, personCap - person);
     throw new AppError(
       'PIN_INVALID',
       400,
@@ -277,12 +223,32 @@ export function preparePinReservation(
               },
               staff.pinHash,
             );
-      if (!(await verifyCandidate(results, captured, pin, managerOnly, failure))) return null;
+      if (
+        !(await verifyCandidate(
+          results,
+          personDecision({ pinEnv, orgId, staffId }, captured, pin, managerOnly, hashPin),
+          failure,
+        ))
+      )
+        return null;
       if (!captured) throw new Error('Verified PIN has no staff snapshot');
       return captured;
     },
+    async verifyAny(results, managers, pin, failure) {
+      if (resultCount(results[0]) === undefined) {
+        await verifyCandidate(results, async () => 'miss', failure);
+        return null;
+      }
+      const any = anyManagerDecision({ pinEnv, orgId, staffId }, managers, pin, hashPin);
+      return (await verifyCandidate(results, () => any.decide(), failure)) ? any.found() : null;
+    },
     async verifyLogin(results, staff, pin) {
-      if (!(await verifyCandidate(results, staff, pin, false)))
+      if (
+        !(await verifyCandidate(
+          results,
+          personDecision({ pinEnv, orgId, staffId }, staff, pin, false, hashPin),
+        ))
+      )
         throw new Error('PIN reservation was not authorized');
     },
     refundStatements: () => (refundable() ? refundStatements() : []),

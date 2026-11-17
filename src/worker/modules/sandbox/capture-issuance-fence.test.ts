@@ -19,6 +19,7 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
 import type { CaptureSnapshot } from './binding.ts';
 import { captureEmail } from './capture.ts';
+import { openBody } from './captured-body.ts';
 import { snapshotFence } from './repo-snapshot-fence.ts';
 import { grantInboxMembership, inboxAuthority, inboxMember } from './test-tenant-fixtures.ts';
 
@@ -143,13 +144,21 @@ describe('issuance authority at the Test capture boundary', () => {
     const issued = await tenantIssued();
     const sent = kit.mailer.sent.length;
     expect(await capture(issued.outboxId, issued.pass.id, issued.to)).toBe(true);
-    expect(
-      await first(
-        kit.env.DB,
-        "SELECT recipient, html, json_extract(intent, '$.issuanceId') AS issuance_id FROM captured_emails WHERE outbox_id = ?",
-        [issued.outboxId],
-      ),
-    ).toEqual({ recipient: issued.to, html: message.html, issuance_id: issued.pass.id });
+    const stored = await first<{
+      id: string;
+      recipient: string;
+      html: string;
+      issuance_id: string;
+    }>(
+      kit.env.DB,
+      "SELECT id, recipient, html, json_extract(intent, '$.issuanceId') AS issuance_id FROM captured_emails WHERE outbox_id = ?",
+      [issued.outboxId],
+    );
+    expect({
+      recipient: stored?.recipient,
+      html: await openBody(kit.env, stored?.id ?? '', kit.org.id, stored?.html ?? ''),
+      issuance_id: stored?.issuance_id,
+    }).toEqual({ recipient: issued.to, html: message.html, issuance_id: issued.pass.id });
     expect(await getOutbox(kit.env.DB, issued.outboxId)).toMatchObject({
       state: 'sent',
       errorCode: 'TEST_MODE',

@@ -63,7 +63,7 @@ describe('self-removal credential transfers', () => {
     await run(
       kit.env.DB,
       "INSERT INTO bundles (id, org_id, name, token, created_at) VALUES (?, ?, 'B', ?, 1)",
-      [bundleId, t.pass.orgId, kit.fx.ids.token()],
+      [bundleId, t.pass.orgId, `h1:${kit.fx.ids.token()}`],
     );
     await run(
       kit.env.DB,

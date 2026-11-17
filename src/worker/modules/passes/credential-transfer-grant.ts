@@ -29,6 +29,7 @@ const START_TABLES = [
   'registrations',
   'bundle_passes',
   'outbox',
+  'pass_token_seals',
 ];
 const FINISH_TABLES = [
   'passes',

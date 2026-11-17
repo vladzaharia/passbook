@@ -1,8 +1,9 @@
 import type { z } from 'zod';
 import type { Personalization } from '../../../passkit/types.ts';
 import type { MyPassSchema } from '../../../shared/contracts/index.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
+import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { removePassFromUser } from '../holders/service-remove.ts';
@@ -39,7 +40,18 @@ function parsePassJson(raw: string | null): Record<string, unknown> {
 }
 
 async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassDto> {
-  const base = `${baseUrl(ctx.env)}/p/${row.download_token}`;
+  // A stored link that cannot be shown (logged by the reveal) lists without links: rotate it.
+  const plainToken = await revealToken(
+    ctx.env,
+    'pass',
+    row.id,
+    row.org_id,
+    row.download_token,
+  ).catch((error: unknown) => {
+    if (error instanceof AppError && error.code.startsWith('TOKEN_SEAL_')) return null;
+    throw error;
+  });
+  const base = plainToken === null ? null : `${baseUrl(ctx.env)}/p/${plainToken}`;
   const passJson = parsePassJson(row.pass_json);
   const presentationEligible =
     row.org_status === 'active' &&
@@ -59,9 +71,9 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
   }
   // Never attach a replacement bearer capability to an older owned row.
   const walletOffers: MyPassDto['walletOffers'] = [];
-  if (presentationEligible) {
+  if (presentationEligible && plainToken !== null) {
     for (const { provider, href } of await listWalletOffers(ctx, row.id)) {
-      if (href === `/p/${row.download_token}/wallet/${provider}`) {
+      if (href === `/p/${plainToken}/wallet/${provider}`) {
         // Provider credentials and short-lived offer tokens stay server-side.
         walletOffers.push({ provider, href, installation: 'unknown' });
       }
@@ -87,12 +99,12 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
     removalMessage: row.removal_message,
     lastRefreshedAt: row.last_refreshed_at,
     refreshRequestedAt: row.refresh_requested_at,
-    downloadUrl: `${base}/pass.pkpass`,
+    downloadUrl: base === null ? null : `${base}/pass.pkpass`,
     presentationEligible,
     walletOffers,
     walletIssuance: walletIssuanceByProvider(),
     passJson,
-    assetBaseUrl: `${base}/assets/`,
+    assetBaseUrl: base === null ? null : `${base}/assets/`,
     assetNames,
     inWallet: row.registered === 1,
   };

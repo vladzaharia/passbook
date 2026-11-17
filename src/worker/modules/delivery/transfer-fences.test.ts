@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeUser } from '../../../../test/helpers/index.ts';
+import { linkToken, makeUser } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { reassignHolder, runAttachHookA } from '../holders/service.ts';
@@ -240,7 +240,7 @@ describe('delivery transfer fences', () => {
     await dispatchOutbox(job(), { passId });
     await handleEmailSend({ kind: 'email.send', outboxId: recovered.outbox_id }, job());
     expect(kit.mailer.sent).toHaveLength(sent + 1);
-    expect(kit.mailer.sent.at(-1)?.html).toContain(pass.downloadToken);
+    expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, pass));
     expect(
       await all(kit.env.DB, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'email'", [passId]),
     ).toHaveLength(1);
@@ -305,6 +305,7 @@ describe('delivery transfer fences', () => {
   it('moves a queued, unattempted issuance email through the exact verified attach without duplicate sends', async () => {
     const email = `${kit.ctx.ids.id()}@example.test`;
     const source = await issueWithEmail(email);
+    const sourceToken = await linkToken(kit.env, source);
     await kit.settle();
     const initial = await intent(source.id);
     if (!initial.outbox_id) throw new Error('Missing first outbox row');
@@ -326,8 +327,8 @@ describe('delivery transfer fences', () => {
     await handleEmailSend({ kind: 'email.send', outboxId: next.outbox_id }, job());
     expect(kit.mailer.sent).toHaveLength(before + 1);
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
-    expect(kit.mailer.sent.at(-1)?.html).toContain(current.downloadToken);
-    expect(kit.mailer.sent.at(-1)?.html).not.toContain(source.downloadToken);
+    expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, current));
+    expect(kit.mailer.sent.at(-1)?.html).not.toContain(sourceToken);
   });
 
   it('does not rotate during an irreversible provider attempt or re-send an accepted issuance', async () => {

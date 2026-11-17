@@ -18,6 +18,7 @@ import type { MailAttachment, Mailer } from '../delivery/mailer.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { resolveCaptureSnapshot } from './binding.ts';
+import { openBody } from './captured-body.ts';
 import { verifiedEmailOf } from './repo.ts';
 import {
   type CapturedRow,
@@ -83,7 +84,11 @@ export async function getCapturedEmail(
   if (!row) throw new NotFoundError('Email not found.', 'CAPTURED_EMAIL_NOT_FOUND');
   const forwarding = await forwardingState(ctx.env.DB, id, authority, ctx.clock.now());
   if (forwarding === null) throw new NotFoundError('Email not found.', 'CAPTURED_EMAIL_NOT_FOUND');
-  return { ...summaryOf(row), html: row.html, text: row.text, forwarding };
+  const [html, text] = await Promise.all([
+    openBody(ctx.env, row.id, row.org_id, row.html),
+    openBody(ctx.env, row.id, row.org_id, row.text),
+  ]);
+  return { ...summaryOf(row), html, text, forwarding };
 }
 
 /** Forward one captured message only after durably reserving its exact current snapshot. */
@@ -101,7 +106,7 @@ export async function sendCapturedToMe(
   const db = ctx.env.DB;
   const ref = await getCapturedReference(db, id, authority, ctx.clock.now());
   if (!ref) throw new NotFoundError('Email not found.', 'CAPTURED_EMAIL_NOT_FOUND');
-  const snapshot = await resolveCaptureSnapshot(db, ref);
+  const snapshot = await resolveCaptureSnapshot(ctx.env, ref);
   if (!snapshot || !(await readCaptured(db, ref, snapshot, false, authority, ctx.clock.now())))
     throw new ConflictError(
       'The email or account changed. Reload and try again.',
@@ -178,8 +183,8 @@ export async function sendCapturedToMe(
     await mailer.send({
       to,
       subject: `[Test] ${email.subject}`,
-      html: email.html,
-      text: email.text,
+      html: await openBody(ctx.env, email.id, email.org_id, email.html),
+      text: await openBody(ctx.env, email.id, email.org_id, email.text),
       fromName,
       ...(attachments ? { attachments } : {}),
     });
