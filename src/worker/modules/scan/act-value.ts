@@ -3,7 +3,7 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import { type Check, passRow } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
-import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
+import { AppError, ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   type PublishCommit,
@@ -18,6 +18,7 @@ import type { ActRequest } from './act-claim.ts';
 import { heldOutcome } from './act-held.ts';
 import type { HeldHolder } from './act-held-holder.ts';
 import { StaleScanAuthority } from './act-override.ts';
+import { pendingCap } from './act-value-guard.ts';
 import { finishValueResult } from './act-value-result.ts';
 import {
   addValueStatements,
@@ -26,14 +27,14 @@ import {
   type ValueStatements,
 } from './act-value-statements.ts';
 import { historyPlan } from './card.ts';
-import { type CountsPlan, planCommitCounts } from './counts.ts';
+import { type CountsPlan, localDayStart, planCommitCounts } from './counts.ts';
 import { amountOf, ScanEffectStop, type ValueEffect, valueEffect } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import type { LedgerFacts } from './ledger.ts';
 import type { StopAuthority } from './repo-action-authority.ts';
 import type * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { doneOkPredicate } from './repo-scan-checks.ts';
+import { dailyAmountCheck, doneOkPredicate } from './repo-scan-checks.ts';
 import type { Found } from './resolve.ts';
 import { afterReads, capturingDb } from './scan-capture.ts';
 import { displayRequiresHistory } from './scan-display-history.ts';
@@ -59,6 +60,7 @@ export interface ValueInput {
 
 const VALUE_TABLES = [...SCAN_COMMIT_TABLES, 'passes'];
 const CODES = {
+  retention: 'SCAN_DAILY_LIMIT',
   stale: 'PASS_CONFLICT',
   lineage: 'PASS_CONFLICT',
   release: 'TEMPLATE_RELEASE_CONFLICT',
@@ -104,6 +106,19 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     approvedBy,
     eventId: event?.id ?? null,
   };
+  // The scanner's daily amount, held in the batch itself: two desks at the cap cannot both pass.
+  const limit = actor.settings.dailyAmount;
+  const dailyLimit =
+    limit != null && (action.kind === 'add' || action.kind === 'take')
+      ? [
+          dailyAmountCheck(
+            actor.actorKey,
+            localDayStart(ctx.clock.now(), actor.timeZone),
+            amountOf(action, req.amount),
+            limit,
+          ),
+        ]
+      : [];
   const open = (passChecks: Check[]) =>
     scanWriteGrant(ctx, authority, {
       purpose: 'org_mode.scan.value',
@@ -112,7 +127,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       pass: { id: found.pass.id, facts: { pass: found.pass, credential } },
       approver: i.approver,
       credentialRefs: claim.credentialTombstoneRefs,
-      checks: passChecks,
+      checks: [...passChecks, ...dailyLimit],
       tables: VALUE_TABLES,
       codes: CODES,
     });
@@ -168,6 +183,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
   };
 
   const stamps = manifest.stamps?.input === input;
+  const cap = await pendingCap(ctx, found, action);
   try {
     const published = await publishPass(ctx, {
       passId: found.pass.id,
@@ -186,7 +202,7 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
         if (current.templateVersion !== found.pass.templateVersion)
           throw new ConflictError('The pass changed. Retry.', 'PASS_CONFLICT');
         if (current.status === 'voided') throw new ScanEffectStop('voided');
-        const effect = valueEffect(action, manifest, current, body);
+        const effect = valueEffect(action, manifest, current, body, cap);
         st.effect = effect;
         const before = effect.before;
         fills =
@@ -217,6 +233,8 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
     if (error instanceof PublishDeclined && planned && results && granted)
       return await heldAnswer(planned, results, granted);
     if (error instanceof PreconditionFailedError) throw await staleStop();
+    if (error instanceof AppError && error.code === CODES.retention)
+      throw new ScanEffectStop('limit_reached');
     throw error;
   }
 

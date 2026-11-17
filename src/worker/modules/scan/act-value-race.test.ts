@@ -144,6 +144,41 @@ describe('value actions: races', () => {
   });
 });
 
+describe('value actions: the daily amount', () => {
+  it('concurrent adds at the cap never pass it', async () => {
+    const t = await kit.scanTemplate('Cap race', { actions: [{ ...ADD, amount: 1 }] });
+    await showBalance(t);
+    const s = await kit.scanner({
+      templateIds: [t],
+      settings: { roleWithoutSignIn: 'desk', dailyAmount: 3 },
+    });
+    const pass = await kit.scanPass(t, { balance: 0 });
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => act(s.headers, codeOf(pass), { actionId: 'add' })),
+    );
+    const kinds: string[] = [];
+    for (const res of results) {
+      if (res.status === 200) {
+        const o = await out(res);
+        kinds.push(o.kind === 'ok' ? 'ok' : String(o.reason));
+      } else kinds.push(((await res.json()) as { code: string }).code);
+    }
+    const oks = kinds.filter((k) => k === 'ok').length;
+    expect(oks).toBeLessThanOrEqual(3);
+    expect(oks).toBeGreaterThan(0);
+    expect(
+      kinds.filter((k) => k !== 'ok').every((k) => ['limit_reached', 'PASS_CONFLICT'].includes(k)),
+    ).toBe(true);
+    expect(await balanceOf(pass.id)).toBe(oks);
+    expect(
+      await count(
+        "SELECT COALESCE(SUM(amount), 0) AS n FROM scans WHERE pass_id = ? AND outcome = 'ok'",
+        [pass.id],
+      ),
+    ).toBe(oks);
+  });
+});
+
 describe('value actions: push budget', () => {
   it('a default add leaves the budget; notify: true counts and the fourth in 24 h goes out silent', async () => {
     const quiet = await kit.scanTemplate('Quiet', { actions: [{ ...ADD, amount: 1 }] });

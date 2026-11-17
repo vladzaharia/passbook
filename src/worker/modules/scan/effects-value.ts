@@ -103,6 +103,8 @@ export function valueEffect(
   manifest: TemplateManifest,
   current: { personalization: Personalization; status: PassStatus },
   body: { amount?: number | undefined; value?: unknown },
+  /** A lower maximum than the input's own: a release waiting to reissue the card sets one. */
+  cap?: number,
 ): ValueEffect {
   const input = action.input ?? '';
   const values = applyDefaults(manifest, current.personalization);
@@ -130,7 +132,8 @@ export function valueEffect(
   const schema = schemaOf(manifest, input);
   const stamps = manifest.stamps?.input === input ? manifest.stamps : undefined;
   if (action.kind === 'add') {
-    const maximum = typeof schema?.maximum === 'number' ? schema.maximum : Number.POSITIVE_INFINITY;
+    const own = typeof schema?.maximum === 'number' ? schema.maximum : Number.POSITIVE_INFINITY;
+    const maximum = Math.min(own, cap ?? Number.POSITIVE_INFINITY);
     if (stamps) {
       const next = addStamps(have, amount, maximum);
       if (next === null) throw new ScanEffectStop('card_full', have);

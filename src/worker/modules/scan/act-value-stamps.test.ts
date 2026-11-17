@@ -75,6 +75,37 @@ describe('stamp card scans', () => {
     expect(await stampsOf(pass.id)).toBe(19);
   });
 
+  it('caps an add at the maximum of a release waiting to reissue the card', async () => {
+    const id = `stamps-cap-${sequence++}-${kit.fx.ids.token(3)}`;
+    await stampVersion(kit, id, 'v1', 10);
+    const first = await releaseStamps(kit, id, 'v1');
+    const pass = await stampCard(kit, first, 8);
+    await stampVersion(kit, id, 'v2', 5);
+    await releaseStamps(kit, id, 'v2');
+    const s = await kit.scanner({ templateIds: [id], settings: { roleWithoutSignIn: 'desk' } });
+    const over = await out(
+      await act(
+        s.headers,
+        { code: pass.scanCode ?? '', method: 'camera' },
+        { actionId: 'stamp', amount: 2 },
+      ),
+    );
+    expect(over).toMatchObject({ kind: 'refused', reason: 'card_full' });
+    expect(await stampsOf(pass.id)).toBe(8);
+  });
+
+  it('lists the redeem action on the ready card of a template with a field called reward', async () => {
+    const { pass } = await setup(3);
+    const s = await kit.scanner({
+      templateIds: [pass.templateId],
+      settings: { flow: 'choose', roleWithoutSignIn: 'desk' },
+    });
+    const o = await out(
+      await act(s.headers, { code: pass.scanCode ?? '', method: 'camera' }, { actionId: 'auto' }),
+    );
+    expect(o.card?.actions.map((a) => a.label)).toEqual(['Add stamp', 'Redeem reward']);
+  });
+
   it('redeems the goal by default, carries the extra over and refuses a short card', async () => {
     const { pass, scan } = await setup(12);
     const redeemed = await out(await scan('redeem'));

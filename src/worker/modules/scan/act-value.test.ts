@@ -200,6 +200,11 @@ describe('value actions: set and use_up', () => {
       }),
     );
     expect(o).toMatchObject({ kind: 'heads_up', reason: 'stale', value: { after: 'Gold' } });
+    expect(o.card).toMatchObject({
+      passId: pass.id,
+      values: [{ input: 'tier', before: 'Gold' }],
+    });
+    expect(o.card?.version).toBeGreaterThan(pass.version);
     expect(await scansOf(pass.id)).toHaveLength(2);
   });
 

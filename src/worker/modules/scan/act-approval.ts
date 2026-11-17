@@ -77,13 +77,21 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
   } = input;
   const pa = policyActor(actor);
   const settleEffectStop = (stop: ScanEffectStop) =>
-    finishEffectStop(stopFor(action), found, action, stop, {
-      actor: authorityActor,
-      event: found.admission?.event ?? null,
-      templateId: found.pass.templateId,
-      adminEventTemplates: authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
-      passFence: preflight.passFence,
-    });
+    finishEffectStop(
+      stopFor(action),
+      found,
+      action,
+      stop,
+      {
+        actor: authorityActor,
+        event: found.admission?.event ?? null,
+        templateId: found.pass.templateId,
+        adminEventTemplates:
+          authorityActor.principal === 'admin' && !req.scope?.templateIds?.length,
+        passFence: preflight.passFence,
+      },
+      req,
+    );
   const sized = action.kind === 'add' || action.kind === 'take';
   const checks = [
     scanPolicy(pa, {
