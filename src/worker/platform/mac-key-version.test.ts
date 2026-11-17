@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { makeEnv } from '../../../test/helpers/index.ts';
 import { tokenKeys, tokenMac, tokenMacs, tokenMatches } from './capability-token.ts';
 import { derivedHmacKey, isKeyEnvName, macKeyVersion, macPreviousVersion } from './crypto.ts';
-import { macKeyProblems } from './mac-key-config.ts';
+import { macKeyProblems, parseKekVersion } from './mac-key-config.ts';
 
 const kek = (byte: number) => btoa(String.fromCharCode(...new Uint8Array(32).fill(byte)));
 const mac = async (key: CryptoKey) =>
@@ -116,5 +116,23 @@ describe('macKeyProblems', () => {
     ]);
     // Without the secrets (a config-only check) existence is not judged.
     expect(macKeyProblems({ pin: '7' }, null)).toEqual([]);
+  });
+});
+
+describe('one parser for the rotation settings', () => {
+  it('takes an integer or a digit string of 1 or more, nothing else', () => {
+    expect(parseKekVersion(2)).toBe(2);
+    expect(parseKekVersion('2')).toBe(2);
+    expect(parseKekVersion(' 12 ')).toBe(12);
+    for (const bad of [0, -1, 1.5, '0', '01', '2.0', 'two', '', null, undefined, {}, '1e3'])
+      expect(parseKekVersion(bad)).toBeNull();
+  });
+
+  it('is what the runtime and the checks both accept (a JSON number in wrangler vars works)', async () => {
+    const base = { ...(await makeEnv({ KEK_V1: kek(1) })), KEK_V2: kek(2) };
+    expect(macKeyVersion({ ...base, MAC_KEY_VERSION: 2 })).toBe(2);
+    expect(macKeyProblems({ pin: 2, previous: 1 }, [1, 2])).toEqual([]);
+    expect(() => macKeyVersion({ ...base, MAC_KEY_VERSION: '2.0' })).toThrow('MAC_KEY_VERSION');
+    expect(macKeyProblems({ pin: '2.0' }, [1, 2])).toHaveLength(1);
   });
 });

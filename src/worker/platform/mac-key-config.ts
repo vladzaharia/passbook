@@ -1,3 +1,13 @@
+/** A KEK version setting: an integer or a digit string, 1 or more; null for anything else. */
+export function parseKekVersion(raw: unknown): number | null {
+  if (typeof raw === 'number') return Number.isSafeInteger(raw) && raw >= 1 ? raw : null;
+  if (typeof raw === 'string' && /^[1-9]\d*$/.test(raw.trim())) {
+    const version = Number(raw);
+    return Number.isSafeInteger(version) ? version : null;
+  }
+  return null;
+}
+
 /**
  * Problems with `MAC_KEY_VERSION` / `MAC_KEY_VERSION_PREVIOUS` (shared by Status and deploy:check). Each
  * must be a KEK version number, name a configured KEK, and differ from the other when both are set.
@@ -14,8 +24,8 @@ export function macKeyProblems(
     ['MAC_KEY_VERSION_PREVIOUS', settings.previous],
   ] as const) {
     if (raw === undefined || raw === null || raw === '') continue;
-    const version = typeof raw === 'string' && /^[1-9]\d*$/.test(raw.trim()) ? Number(raw) : NaN;
-    if (!Number.isSafeInteger(version)) {
+    const version = parseKekVersion(raw);
+    if (version === null) {
       problems.push(`${name} must be a KEK version number (1, 2, ...).`);
       continue;
     }

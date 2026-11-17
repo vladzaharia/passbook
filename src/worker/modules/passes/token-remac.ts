@@ -4,7 +4,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { remacTrusted } from './repo-pass-trusted.ts';
-import { type MacRow, macRows } from './repo-token-remac.ts';
+import { type MacRow, macRows, macSample } from './repo-token-remac.ts';
 
 /** Rows read per kind and run; the D1 batches (rewrites) a run may make are capped by `WRITE_BUDGET`. */
 const BATCH = 100;
@@ -133,9 +133,10 @@ async function remacOne(ctx: ServiceContext, purpose: TokenPurpose, row: MacRow)
 }
 
 /**
- * With no previous root, a stored MAC that matches the current root under no copy of its token means the
- * pin moved without `MAC_KEY_VERSION_PREVIOUS`: every such link and device call fails. Samples a few rows
- * every few hours and logs an error when any does not match.
+ * With no previous root, stored MACs that match the current root under no copy of their token mean the
+ * pin moved without `MAC_KEY_VERSION_PREVIOUS`: those links and device calls fail. Every few hours it
+ * samples a few rows from a random place in each table and logs an error when every sampled row
+ * mismatches (a single stale row is the remac job's or a row-level fault, not a wrong pin).
  */
 async function probeMacRoot(ctx: ServiceContext): Promise<void> {
   const db = ctx.env.DB;
@@ -145,7 +146,7 @@ async function probeMacRoot(ctx: ServiceContext): Promise<void> {
   let mismatched = 0;
   let sampled = 0;
   for (const purpose of PURPOSES) {
-    for (const row of await macRows(db, purpose, null, 3)) {
+    for (const row of await macSample(db, purpose, 3)) {
       if (!row.seal) continue;
       sampled++;
       try {
@@ -155,7 +156,7 @@ async function probeMacRoot(ctx: ServiceContext): Promise<void> {
       }
     }
   }
-  if (mismatched > 0)
+  if (sampled > 0 && mismatched === sampled)
     ctx.log.error('tokens.mac_root_mismatch', {
       code: 'TOKEN_MAC_ROOT_MISMATCH',
       sampled,

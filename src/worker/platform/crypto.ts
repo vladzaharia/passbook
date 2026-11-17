@@ -1,4 +1,5 @@
 import { fromBase64, randomBytes } from './ids.ts';
+import { parseKekVersion } from './mac-key-config.ts';
 
 /**
  * Envelope encryption. Each secret gets a random 256-bit DEK (AES-256-GCM); the DEK is wrapped
@@ -175,9 +176,8 @@ export function macKeyVersion(env: object): number {
 function versionSetting(env: object, name: string): number | null {
   const raw = (env as Record<string, unknown>)[name];
   if (raw === undefined || raw === null || raw === '') return null;
-  const version = Number(raw);
-  if (!Number.isInteger(version) || version < 1)
-    throw new Error(`${name} must be a KEK version number`);
+  const version = parseKekVersion(raw);
+  if (version === null) throw new Error(`${name} must be a KEK version number`);
   return version;
 }
 

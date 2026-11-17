@@ -101,7 +101,7 @@ describe('tokens.remac sweeps belong to one version pair', () => {
     expect(done?.[1]).toMatchObject({ code: 'TOKEN_REMAC_DONE', stamp: '2>1', unreadable: 0 });
   });
 
-  it('logs an error when stored MACs match the root and no previous root is set', async () => {
+  it('alarms only when every sampled row mismatches the root and no previous root is set', async () => {
     // Rows sit under root 1; pinning root 2 without a previous root breaks every link.
     env().MAC_KEY_VERSION = '2';
     delete env().MAC_KEY_VERSION_PREVIOUS;
@@ -123,5 +123,19 @@ describe('tokens.remac sweeps belong to one version pair', () => {
     env().MAC_KEY_VERSION = '1';
     await remacCapabilityTokens(ctx);
     expect(codes()).not.toContain('TOKEN_MAC_ROOT_MISMATCH');
+  });
+
+  it('does not alarm on a partly moved table', async () => {
+    // One run under 1>2 moves the links first (the budget stops short of the device tokens), then the
+    // previous root is dropped: the samples of the moved kind match, so it is no wrong pin.
+    pin(2, 1);
+    await remacCapabilityTokens(job());
+    delete env().MAC_KEY_VERSION_PREVIOUS;
+    kit.clock.advance(7 * 60 * 60_000);
+    const ctx = job();
+    const error = vi.spyOn(ctx.log, 'error');
+    await remacCapabilityTokens(ctx);
+    const codes = error.mock.calls.map(([, f]) => (f as { code?: string })?.code);
+    expect(codes).not.toContain('TOKEN_MAC_ROOT_MISMATCH');
   });
 });

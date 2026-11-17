@@ -86,3 +86,8 @@ END;
 -- confirm a guess at a low-entropy secret. Nothing reads it; new credentials store none. (A signing
 -- identity's fingerprint is its public certificate digest and stays.)
 UPDATE credentials SET fingerprint = NULL WHERE kind IN ('connector', 'webhook') AND fingerprint IS NOT NULL;
+
+-- The MAC root a staff PIN hash was made under (NULL: the oldest KEK, as before). Written with every PIN, so a
+-- rotation can count the PINs still on the previous root. It only changes together with pin_hash, which moves
+-- auth_epoch, so it is not an epoch column itself.
+ALTER TABLE scan_staff ADD COLUMN pin_mac_version INTEGER;
