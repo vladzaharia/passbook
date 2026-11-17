@@ -155,7 +155,14 @@ export async function prepareLivePhoto(
       purpose,
       true,
     );
-    if (!verified) return null;
+    // The capability was minted from this row's credential: its ref prefixes are the proof's.
+    const refs = proof.credentialContext.credentialTombstoneRefs;
+    if (
+      !verified ||
+      verified.credentialRefPrefixes.length !== refs.length ||
+      verified.credentialRefPrefixes.some((prefix, index) => !refs[index]?.startsWith(prefix))
+    )
+      return null;
     const grantFence = await prepareAssetGrantFence(ctx, verified, candidate);
     const templateFence = scanTemplateSnapshotPredicate(
       candidate,
