@@ -3,6 +3,7 @@ import { renderStampFiles, type StampFiles } from '../../../../passkit/stamps/pa
 import type { AssetEntry, TemplateManifest, ValidationIssue } from '../../../../passkit/types.ts';
 import { crc32, sha1Hex } from './hash.ts';
 import type { CheckedImage } from './images.ts';
+import { byteLru } from './stamps-cache.ts';
 
 type Analyzed = Omit<AssetEntry, 'source'>;
 
@@ -44,15 +45,15 @@ const meta = async (name: string, bytes: Uint8Array) => ({
 });
 
 // The designer's live check draws the sample on every pause; the same key and count draw the same
-// bytes, so an isolate keeps the last few.
-const drawn = new Map<string, StampFiles>();
-const DRAWN_MAX = 24;
+// bytes, so an isolate keeps recent ones. Bounded by bytes (strips are PNGs of tens of KB to MB),
+// not by count: tenants' art must not add up past a few MB of a 128 MB isolate.
+const DRAWN_MAX_BYTES = 8 * 1024 * 1024;
+const drawn = byteLru<StampFiles>(DRAWN_MAX_BYTES, (f) =>
+  f.strips.reduce((n, s) => n + s.bytes.length, 0),
+);
 
 function remember(id: string, files: StampFiles): void {
-  if (files.strips.length === 0) return;
-  drawn.delete(id);
-  drawn.set(id, files);
-  while (drawn.size > DRAWN_MAX) drawn.delete(drawn.keys().next().value as string);
+  if (files.strips.length > 0) drawn.set(id, files);
 }
 
 /**
