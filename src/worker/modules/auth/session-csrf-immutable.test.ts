@@ -143,6 +143,37 @@ describe('session CSRF secret immutability', () => {
     }
   });
 
+  it('a raw scanner credential change bumps credential_epoch by one', async () => {
+    const e = env as AppEnv;
+    const f = fixtures(e, new ManualClock());
+    const scanner = await makeScanner(f, { orgId: (await makeOrg(f)).id });
+    const epoch = async () =>
+      (
+        await first<{ v: number }>(
+          e.DB,
+          'SELECT credential_epoch AS v FROM scanners WHERE id = ?',
+          [scanner.id],
+        )
+      )?.v;
+    for (const column of ['csrf_secret', 'token_hash', 'token_prefix']) {
+      const before = await epoch();
+      await run(e.DB, `UPDATE scanners SET ${column} = ? WHERE id = ?`, [
+        `raw-${column}-${scanner.id}`,
+        scanner.id,
+      ]);
+      expect(await epoch(), column).toBe((before ?? 0) + 1);
+    }
+  });
+
+  it('refuses a raw scanner updated_at decrease', async () => {
+    const e = env as AppEnv;
+    const f = fixtures(e, new ManualClock());
+    const scanner = await makeScanner(f, { orgId: (await makeOrg(f)).id });
+    await expect(
+      run(e.DB, 'UPDATE scanners SET updated_at = updated_at - 1 WHERE id = ?', [scanner.id]),
+    ).rejects.toThrow('scanner updated_at must not decrease');
+  });
+
   it('refuses replacing a scanner row', async () => {
     const e = env as AppEnv;
     const f = fixtures(e, new ManualClock());

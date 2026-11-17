@@ -108,7 +108,7 @@ describe('paired live scanner authority', () => {
     const fresh = liveAttachment(kit.ctx, proofed);
     expect(await liveRecipient(kit.ctx, fresh)).not.toBeNull();
     expect(JSON.stringify(fresh).includes(replacement)).toBe(false);
-    await run(kit.env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
+    await run(kit.env.DB, 'UPDATE scanners SET csrf_secret=? WHERE id=?', [
       originalSecret,
       paired.device.id,
     ]);
