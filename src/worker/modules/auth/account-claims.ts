@@ -13,6 +13,30 @@ export async function createUser(ctx: ServiceContext, email: string, name: strin
   return user;
 }
 
+/** The browser's current session, as far as a claim on an address cares. */
+export interface ClaimSession {
+  sessionUserId?: string | null;
+  sessionAmr?: string | null;
+}
+
+/**
+ * The proving browser is the claimant's own: its session was made by Pocket ID (a mail-link session
+ * can be planted by anyone who can get a victim to open a link) and the provider's claim names
+ * this very address.
+ */
+async function isOwnSession(
+  ctx: ServiceContext,
+  claimantId: string,
+  email: string,
+  sign: ClaimSession,
+): Promise<boolean> {
+  return (
+    sign.sessionUserId === claimantId &&
+    sign.sessionAmr === 'oidc' &&
+    (await repo.identityClaims(ctx.env.DB, claimantId, email))
+  );
+}
+
 /** Frees `email` from an account that holds it unproven; audits only when this call did it. */
 async function releaseClaim(ctx: ServiceContext, holderId: string, email: string): Promise<void> {
   if (!(await repo.releaseUnprovenPrimary(ctx.env.DB, holderId, email))) return;
@@ -43,11 +67,11 @@ export async function accountForProvenEmail(
   ctx: ServiceContext,
   email: string,
   name: string | null,
-  sessionUserId?: string | null,
+  sign: ClaimSession = {},
 ): Promise<repo.UserRow> {
   return (
     (await repo.findUserByProvenEmail(ctx.env.DB, email)) ??
-    (await createUserForProvenEmail(ctx, email, name, sessionUserId))
+    (await createUserForProvenEmail(ctx, email, name, sign))
   );
 }
 
@@ -56,7 +80,7 @@ export async function createUserForProvenEmail(
   ctx: ServiceContext,
   email: string,
   name: string | null,
-  sessionUserId?: string | null,
+  sign: ClaimSession = {},
 ): Promise<repo.UserRow> {
   const claimant = await repo.findUserByPrimaryEmail(ctx.env.DB, email);
   if (claimant) {
@@ -64,20 +88,16 @@ export async function createUserForProvenEmail(
       ctx.log.warn('auth.claimant_disabled', { code: 'CLAIMANT_DISABLED', userId: claimant.id });
       throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
     }
-    if (claimant.id === sessionUserId) return claimant;
+    if (await isOwnSession(ctx, claimant.id, email, sign)) return claimant;
     await releaseClaim(ctx, claimant.id, email);
   }
   return createUser(ctx, email, name);
 }
 
 /** The account that owns an address its holder just proved by mail; the address is recorded on it. */
-export async function accountProvenByMail(
-  ctx: ServiceContext,
-  email: string,
-  sign: { sessionUserId?: string | null },
-) {
+export async function accountProvenByMail(ctx: ServiceContext, email: string, sign: ClaimSession) {
   const db = ctx.env.DB;
-  const user = await accountForProvenEmail(ctx, email, null, sign.sessionUserId);
+  const user = await accountForProvenEmail(ctx, email, null, sign);
   if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
   const { ownerId } = await repo.addUserEmail(db, email, user.id, 'magic_link', ctx.clock.now());
   if (ownerId !== user.id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');

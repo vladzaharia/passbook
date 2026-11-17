@@ -322,6 +322,7 @@ describe('legacy accounts: claimants that are real people', () => {
     const session = await signInMagicLink(ctx(), email, {
       ...sign,
       sessionUserId: claimant.user.id,
+      sessionAmr: 'oidc',
     });
     expect(session.userId).toBe(claimant.user.id);
     expect(await usersCount()).toBe(before);
@@ -329,6 +330,51 @@ describe('legacy accounts: claimants that are real people', () => {
     expect(await primaryOf(claimant.user.id)).toBe(email);
     expect(await ownerOf(pass.id)).toBe(claimant.user.id);
     expect(await unprovenAudits(claimant.user.id)).toBe(0);
+  });
+
+  it('a mail-link session for the claimant does not keep the address (login CSRF)', async () => {
+    const email = `csrf-${uniq()}@example.test`;
+    const pass = await waitingPass(email);
+    const claimant = await legacyClaimant(email);
+    // The attacker plants its own mail-link session in the victim's browser, then the victim
+    // follows the link mailed to the victim's address.
+    const f = fixtures(h.env, h.clock);
+    const planted = await makeSession(f, { userId: claimant.user.id, amr: 'magic_link' });
+    const jar: Jar = new Map([['__Host-wallet_sid', planted.cookieValue]]);
+    const requested = await h.call('/auth/magic/request', {
+      method: 'POST',
+      json: { email, turnstileToken: 'ok' },
+    });
+    expect(requested.status).toBe(202);
+    const token = /t=([\w-]+)/.exec(h.mail.at(-1)?.text ?? '')?.[1] ?? '';
+    const res = await h.call('/auth/magic/consume', {
+      method: 'POST',
+      body: new URLSearchParams({ token }),
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      cookies: jar,
+    });
+    expect(res.status).toBe(303);
+    expect(await verifiedRows(email)).toHaveLength(1);
+    expect((await verifiedRows(email))[0]?.user_id).not.toBe(claimant.user.id);
+    expect(await ownerOf(pass.id)).not.toBe(claimant.user.id);
+    expect(await unprovenAudits(claimant.user.id)).toBe(1);
+  });
+
+  it('a Pocket ID session whose claim names another address does not keep this one', async () => {
+    const email = `claim-${uniq()}@example.test`;
+    const claimant = await legacyClaimant(email);
+    await run(
+      h.env.DB,
+      "UPDATE auth_identities SET email_claim = 'else@example.test' WHERE user_id = ?",
+      [claimant.user.id],
+    );
+    const session = await signInMagicLink(ctx(), email, {
+      ...sign,
+      sessionUserId: claimant.user.id,
+      sessionAmr: 'oidc',
+    });
+    expect(session.userId).not.toBe(claimant.user.id);
+    expect(await unprovenAudits(claimant.user.id)).toBe(1);
   });
 
   it('a different signed-in account does not count as the claimant', async () => {

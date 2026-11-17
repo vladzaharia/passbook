@@ -110,6 +110,25 @@ describe('list', () => {
 });
 
 describe('detail', () => {
+  it('does not match the placeholder of an account with no verified email', async () => {
+    const a = await admin();
+    const id = f().ids.id();
+    const user = await makeUser(f(), {
+      id,
+      primaryEmail: `${id}@unverified.invalid`,
+      verified: false,
+    });
+    const search = async (q: string) =>
+      (
+        (await (await get(`/api/v1/users?q=${encodeURIComponent(q)}`, a.headers)).json()) as {
+          items: { id: string }[];
+        }
+      ).items.map((u) => u.id);
+    expect(await search(id.slice(0, 14))).not.toContain(user.id);
+    expect(await search('unverified')).not.toContain(user.id);
+    expect(await search(id)).toContain(user.id);
+  });
+
   it('returns emails, identities with groups, sessions, passes and audit', async () => {
     const a = await admin();
     const f1 = f();

@@ -58,6 +58,17 @@ export async function findUserByProvenEmail(db: Db, email: string): Promise<User
   return byPrimary && !(await hasExternalIdentity(db, byPrimary.id)) ? byPrimary : null;
 }
 
+/** A provider identity of the account whose email claim is this address. */
+export async function identityClaims(db: Db, userId: string, email: string): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      "SELECT 1 FROM auth_identities WHERE user_id = ? AND provider <> 'breakglass' AND email_claim = ?",
+      [userId, email],
+    )) !== null
+  );
+}
+
 /**
  * Frees the address from an account that holds it unproven. One conditional statement: it only
  * acts while the account still has the address as primary, has a provider identity and no verified

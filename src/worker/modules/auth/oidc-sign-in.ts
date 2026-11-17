@@ -91,9 +91,7 @@ export async function signInOidc(
     // created from the claim: the mail round trip proves the address first, and the account is
     // made or found then.
     if (!trust) await sendIdentityProof(ctx, owner?.id ?? null, email, claims, sign);
-    user =
-      owner ??
-      (await createUserForProvenEmail(ctx, email, claims.name ?? null, sign.sessionUserId));
+    user = owner ?? (await createUserForProvenEmail(ctx, email, claims.name ?? null, sign));
     linkVia = owner ? 'trusted_email' : 'new_user';
   }
   if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');

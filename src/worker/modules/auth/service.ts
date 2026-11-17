@@ -27,6 +27,8 @@ export interface SignInContext {
   previousCookie?: string;
   /** User of the live session the browser holds, if any. */
   sessionUserId?: string | null;
+  /** How that session was made (`oidc`, `magic_link`, ...). */
+  sessionAmr?: string | null;
   /** Hash of a fresh browser-binding cookie, set by the caller if the proof mail is sent. */
   bindingHash?: string | null;
   next?: string | null;

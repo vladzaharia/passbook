@@ -39,14 +39,3 @@ describe('ipBucket', () => {
     expect(ipBucket(undefined)).toBeNull();
   });
 });
-
-describe('ipBucket', () => {
-  it('keeps the whole IPv4 address and takes the /64 of IPv6', () => {
-    expect(ipBucket('203.0.113.7')).toBe('203.0.113.7');
-    expect(ipBucket('::ffff:203.0.113.7')).toBe('203.0.113.7');
-    expect(ipBucket('2001:db8:1:2:aaaa::1')).toBe(ipRatePrefix('2001:db8:1:2::9'));
-    expect(ipBucket('unknown')).toBeNull();
-    expect(ipBucket('not-an-ip')).toBeNull();
-    expect(ipBucket(undefined)).toBeNull();
-  });
-});

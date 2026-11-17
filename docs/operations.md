@@ -485,13 +485,38 @@ deploy would serve the new Worker before the bootstrap. The dry runs print:
    For a row you recognize as the person who owns that address, backfill it: replace the
    placeholder list with exactly the ids you confirmed (one quoted id each) and run this write once.
    The address then counts as verified (`verified_via = 'admin'`) and waiting passes for it attach.
-   Leave every other row alone: that person proves the address by mail, or signs in as the same
-   account and verifies it in My account first:
+   It skips placeholder primaries and addresses some account already has verified. Leave every
+   other row alone: that person proves the address by mail, or signs in as the same account and
+   verifies it in My account first:
 
    ```sql backfill-proven-primaries
    INSERT OR IGNORE INTO user_emails (email, user_id, verified_via, verified_at)
    SELECT u.primary_email, u.id, 'admin', unixepoch() * 1000 FROM users u
    WHERE u.id IN ('REPLACE-WITH-USER-ID', 'REPLACE-WITH-ANOTHER-USER-ID')
+     AND u.primary_email NOT LIKE '%@unverified.invalid'
+     AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = u.primary_email)
+   ```
+
+   Rerun `verify-unproven-primaries` and confirm every id you listed is gone; one still listed was
+   skipped by a guard.
+
+   A disabled account that still holds an address blocks that person's mail sign-in
+   (`ACCOUNT_DISABLED`, log event `auth.claimant_disabled`, field `userId`). If the owner decides
+   the address is not that account's, release it, naming the id (it writes the audit row first;
+   rerunning does nothing):
+
+   ```sql release-disabled-claimant
+   INSERT INTO audit_log (at, actor_type, action, target_type, target_id, detail)
+   SELECT unixepoch() * 1000, 'system', 'auth.primary_email_unproven', 'user', u.id, '{"by":"owner"}'
+   FROM users u WHERE u.id IN ('REPLACE-WITH-USER-ID') AND u.status = 'disabled'
+     AND u.primary_email NOT LIKE '%@unverified.invalid'
+     AND EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = u.id AND a.provider != 'breakglass')
+     AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = u.primary_email);
+   UPDATE users SET primary_email = id || '@unverified.invalid'
+   WHERE id IN ('REPLACE-WITH-USER-ID') AND status = 'disabled'
+     AND primary_email NOT LIKE '%@unverified.invalid'
+     AND EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = users.id AND a.provider != 'breakglass')
+     AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = users.primary_email)
    ```
 
    Addresses an admin added by hand already count as verified, and their passes are attached. Review
@@ -651,12 +676,15 @@ writes.
    - Sign-in link: issue a `henrys-blue` pass to an address that has no account, then request a
      sign-in link for it at `/login` and open it. The pass is listed under the account at once,
      and the Wallet copy still scans with the same barcode.
+   - SPA tabs opened before the deploy must reload before signing in by mail; expect brief
+     `auth.turnstile_action` warnings.
    - Logs (Workers Observability), by event and code. Expected: `templates.baked_synced`,
      `delivery.legacy_intent` (`DELIVERY_LEGACY_INTENT`), `queue.legacy_job_ignored`
      (`LEGACY_JOB_IGNORED`), `template.reissue_started`. Act on:
      `templates.baked_release_unavailable` (`BAKED_RELEASE_CONTENT_UNAVAILABLE`),
      `templates.baked_sync_skipped` (`TEMPLATE_BUILD_SUPERSEDED`), `bulk_reissue.pass_failed`,
-     `queue.invalid_message` (`INVALID_MESSAGE`), `queue.dead_letter` (`DEAD_LETTER`).
+     `queue.invalid_message` (`INVALID_MESSAGE`), `queue.dead_letter` (`DEAD_LETTER`),
+     `auth.claimant_disabled` (`CLAIMANT_DISABLED`: see pre-check 9).
 6. **Owner**: delete the WAF rule and the `WALLET_API_KEY` key. Restart the stopped sources.
 
 ### If a step fails

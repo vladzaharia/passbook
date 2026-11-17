@@ -119,6 +119,7 @@ async function runConsume(c: Context<AppBindings>, body: unknown): Promise<Magic
     userAgent: c.req.header('user-agent') ?? null,
     previousCookie,
     sessionUserId: session?.userId ?? null,
+    sessionAmr: session?.amr ?? null,
   };
   const data = parsed.data;
   return 'token' in data
