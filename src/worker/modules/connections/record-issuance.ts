@@ -2,12 +2,25 @@ import type { Json } from '../../../shared/contracts/common.ts';
 import { AppError, ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type ConnectionDeps, getDeps } from './deps.ts';
-import { releaseBlockCode } from './record-outcomes.ts';
 import type { Applied, ApplyIncomingOptions } from './records.ts';
 import type { ConnectionRow } from './repo.ts';
 import { hasBinding, templateScope } from './repo-passes.ts';
 
-export type ReleaseBlockCode = 'TEMPLATE_RELEASE_REQUIRED' | 'TEMPLATE_RELEASE_CONFLICT';
+export const RELEASE_BLOCK_CODES = [
+  'TEMPLATE_RELEASE_REQUIRED',
+  'TEMPLATE_RELEASE_CONFLICT',
+  'TEMPLATE_IS_BLUEPRINT',
+] as const;
+export type ReleaseBlockCode = (typeof RELEASE_BLOCK_CODES)[number];
+
+export function isReleaseBlockCode(code: unknown): code is ReleaseBlockCode {
+  return RELEASE_BLOCK_CODES.includes(code as ReleaseBlockCode);
+}
+
+export function releaseBlockCode(error: unknown): ReleaseBlockCode | null {
+  if (!(error instanceof ConflictError)) return null;
+  return isReleaseBlockCode(error.code) ? error.code : null;
+}
 export type ConnectionReleaseSnapshot =
   | { kind: 'approved'; id: string; generation: number; version: string }
   | { kind: 'blocked'; code: ReleaseBlockCode }
@@ -20,12 +33,30 @@ export class ReleaseContentRetryError extends ConflictError {
   }
 }
 
+/** Once per sync run or webhook delivery, not per capture. */
+export function logRecordsSkipped(
+  sctx: ServiceContext,
+  conn: ConnectionRow,
+  release: ConnectionReleaseSnapshot,
+): void {
+  if (release?.kind !== 'blocked' || release.code !== 'TEMPLATE_IS_BLUEPRINT') return;
+  sctx.log.warn('connections.records_skipped', {
+    orgId: conn.orgId,
+    connectionId: conn.id,
+    code: release.code,
+  });
+}
+
 /** Capture once before fetching; never adopt a later release for this run. */
 export async function captureConnectionRelease(
   sctx: ServiceContext,
   conn: ConnectionRow,
 ): Promise<ConnectionReleaseSnapshot> {
   if (!conn.autoCreate || !conn.defaultTemplateId) return null;
+  // A connection left on a blueprint keeps its passes updating; new records wait for a template.
+  if ((await templateScope(sctx.env.DB, conn.defaultTemplateId))?.blueprint) {
+    return { kind: 'blocked', code: 'TEMPLATE_IS_BLUEPRINT' };
+  }
   try {
     const release = await getDeps().requireApprovedRelease(
       sctx,

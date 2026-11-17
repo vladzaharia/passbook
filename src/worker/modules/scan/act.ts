@@ -29,6 +29,7 @@ import { outputPredicateStmt } from './repo-output-predicates.ts';
 import { pristineClaimFence } from './repo-scans.ts';
 import { staffStatement } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
+import { afterReads } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
@@ -116,20 +117,22 @@ export async function act(
     const claimed = claimOnGrant(g, claim);
     keysetOnGrant(g, ctx.env.DB, captured.credentialKeysetCommitment);
     // One round trip: the grant claims the key, and the reads that follow see that claim.
-    const done = await g.commitWith([
-      ...plan.stmts,
-      ...(plan.capacityStmt ? [plan.capacityStmt] : []),
-      ...(overrideQuery ? [overrideQuery] : []),
-      ...(req.approval ? [staffStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
-      replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
-      credentialTombstonesClearStmt(
-        ctx.env.DB,
-        actor.orgId,
-        actor.mode,
-        captured.credentialTombstoneRefs,
-        captured.credentialKeysetCommitment,
-      ),
-    ]);
+    const done = await g.commitWith(
+      afterReads([
+        ...plan.stmts,
+        ...(plan.capacityStmt ? [plan.capacityStmt] : []),
+        ...(overrideQuery ? [overrideQuery] : []),
+        ...(req.approval ? [staffStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
+        replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
+        credentialTombstonesClearStmt(
+          ctx.env.DB,
+          actor.orgId,
+          actor.mode,
+          captured.credentialTombstoneRefs,
+          captured.credentialKeysetCommitment,
+        ),
+      ]),
+    );
     const results = done.after;
     const candidates = plan.finish(results.slice(0, plan.stmts.length));
     if (plan.capacityStmt) rememberHistoryCapacities(candidates, results[plan.stmts.length]);

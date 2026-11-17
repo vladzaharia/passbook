@@ -10,10 +10,13 @@ import {
   eligibleOwner,
   noOpenClaims,
   noTargetTombstone,
+  orgInactive,
 } from './repo-credential-transfer-fences.ts';
 import {
   type CredentialTransferAuthority,
   readTransferConnection,
+  readTransferPass,
+  type TransferPass,
 } from './repo-credential-transfer-read.ts';
 import { matchesCredentialSource } from './repo-credential-transfer-source.ts';
 
@@ -94,32 +97,58 @@ type SelfRemove = Extract<CredentialTransferAuthority, { kind: 'self-remove' }>;
  * The owner removes a pass whose credential cannot change: block re-attachment and clear the owner in
  * one grant, with no rotation. False when the pass or the owner's session moved since the read.
  */
-export async function unlinkSelfRemove(
+export const unlinkSelfRemove = (
   ctx: ServiceContext,
   a: SelfRemove,
   unchanged: UnchangedCredential,
+) => unlinkOwner(ctx, a, unchanged.source, noTargetTombstone(unchanged.stableRefs));
+
+/**
+ * The owner removes a pass of an org that is not active: a suspended org issues nothing, so the pass is
+ * unlinked as it is (block and owner cleared, credential unchanged) while the org is still inactive.
+ */
+export async function unlinkInactiveOrg(
+  ctx: ServiceContext,
+  passId: string,
+  a: SelfRemove,
 ): Promise<boolean> {
-  const { source: s, stableRefs } = unchanged;
+  const source = await readTransferPass(ctx.env.DB, passId);
+  return !!source && unlinkOwner(ctx, a, source, orgInactive());
+}
+
+async function unlinkOwner(
+  ctx: ServiceContext,
+  a: SelfRemove,
+  s: TransferPass,
+  check: Check,
+): Promise<boolean> {
   const p = s.pass;
   if (!matchesCredentialSource(s, a.expected) || p.ownerUserId !== a.userId) return false;
-  const g = await transferGrant(ctx, a, 'start', p, [
-    ...passRow(p.id, p.rowVersion),
-    rowIs(
-      'passes',
-      p.id,
-      {
-        credential_generation: s.credentialGeneration,
-        lifecycle_generation: s.lifecycleGeneration,
-        link_generation: p.linkGeneration,
-        holder_email: p.holderEmail,
-        owner_user_id: a.userId,
-        test_data_quarantined: 0,
-      },
-      'lineage',
-    ),
-    ...noOpenClaims(p.id),
-    noTargetTombstone(stableRefs),
-  ]);
+  const g = await transferGrant(
+    ctx,
+    a,
+    'start',
+    p,
+    [
+      ...passRow(p.id, p.rowVersion),
+      rowIs(
+        'passes',
+        p.id,
+        {
+          credential_generation: s.credentialGeneration,
+          lifecycle_generation: s.lifecycleGeneration,
+          link_generation: p.linkGeneration,
+          holder_email: p.holderEmail,
+          owner_user_id: a.userId,
+          test_data_quarantined: 0,
+        },
+        'lineage',
+      ),
+      ...noOpenClaims(p.id),
+      check,
+    ],
+    true,
+  );
   if (!g) return false;
   g.include(attachBlockPart(a.userId, ctx.clock.now()));
   g.update('passes', {

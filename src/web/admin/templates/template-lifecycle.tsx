@@ -109,7 +109,7 @@ export function useTemplateLifecycle(t: Template, canPublish: boolean) {
 }
 
 /** How the template page was reached from a create flow (markCreated `template:<id>`). */
-export type TemplateCreated = 'imported' | 'version' | 'duplicated';
+export type TemplateCreated = 'imported' | 'version' | 'duplicated' | 'fromBlueprint';
 
 /** After an upload or a duplicate: what happened and the next steps, until dismissed. */
 export function TemplateCreatedCallout({
@@ -129,14 +129,22 @@ export function TemplateCreatedCallout({
       ? 'Template duplicated'
       : how === 'version'
         ? `${versionLabel ?? 'Version'} imported`
-        : 'Template imported';
+        : how === 'fromBlueprint'
+          ? `Template created · Version 1, from the ${t.fromBlueprint?.name ?? ''} blueprint. Release it to issue passes.`
+          : 'Template imported';
   const title = what;
   return (
     <CreatedCallout
       title={title}
       onDismiss={onDismiss}
       actions={
-        how === 'duplicated' ? (
+        how === 'fromBlueprint' ? (
+          <Button size="sm" variant="outline" asChild>
+            <Link to="." search={{ tab: 'versions', orgId }}>
+              Review release
+            </Link>
+          </Button>
+        ) : how === 'duplicated' ? (
           <Button
             size="sm"
             variant="outline"

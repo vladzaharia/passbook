@@ -142,6 +142,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.archive': a('Template archived', Archive, 'neutral'),
   'template.assign_org': a('Template organization changed', ENTITY.org.icon, 'info'),
   'template.clone': a('Template duplicated', I.duplicate, 'success'),
+  'template.use_blueprint': a('Template made from a blueprint', ENTITY.blueprint.icon, 'success'),
   'template.delete': a('Template deleted', I.delete, 'danger'),
   'template.manifest': a('Template manifest changed', I.edit, 'info'),
   'template.release': a('Template version released', CircleCheck, 'success'),

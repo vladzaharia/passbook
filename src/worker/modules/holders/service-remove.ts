@@ -1,11 +1,12 @@
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { unlinkSelfRemove } from '../passes/credential-link.ts';
+import { unlinkInactiveOrg, unlinkSelfRemove } from '../passes/credential-link.ts';
 import type { CredentialTransferSource } from '../passes/credential-transfer.ts';
 import {
   CredentialTransferReissueRequired,
   startCredentialTransfer,
 } from '../passes/credential-transfer.ts';
+import { tenantOrgUpdatedAt } from '../passes/repo-authority.ts';
 import { getHolderPass } from './repo.ts';
 import { assertNoTransfer, type TransferResult } from './service-operations.ts';
 
@@ -36,6 +37,12 @@ export async function removePassFromUser(
       detail: { block: true },
     },
   } as const;
+  // An inactive org cannot re-sign: the owner still takes the pass off their account, as it is.
+  if ((await tenantOrgUpdatedAt(ctx.env.DB, pass.orgId)) === null) {
+    if (!(await unlinkInactiveOrg(ctx, pass.id, authority)))
+      throw new ConflictError('The pass changed. Reload and retry.', 'PASS_CONFLICT');
+    return { transferId: null, state: 'completed' };
+  }
   try {
     return await startCredentialTransfer(
       ctx,

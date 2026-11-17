@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { JsonSchema } from './common.ts';
+import { IdSchema, JsonSchema } from './common.ts';
 import { AssetEntrySchema, TemplateDetailSchema, ValidationReportSchema } from './templates.ts';
 
 const NameSchema = z.string().min(1).max(200);
@@ -35,3 +35,15 @@ export const SaveVersionResponseSchema = z.object({
 });
 export type SaveVersionRequest = z.infer<typeof SaveVersionSchema>;
 export type SaveVersionResponse = z.infer<typeof SaveVersionResponseSchema>;
+
+/** Make a template in `orgId` from a blueprint. `version` is the designer's draft; without it the copy is exact. */
+export const UseBlueprintSchema = z.object({
+  orgId: IdSchema,
+  name: z.string().trim().min(1).max(120),
+  version: SaveVersionSchema.pick({ passJson: true, manifest: true, assets: true }).optional(),
+});
+export type UseBlueprintRequest = z.infer<typeof UseBlueprintSchema>;
+
+/** The designer's live check of a draft made from a blueprint; nothing is saved. */
+export const UseBlueprintCheckSchema = UseBlueprintSchema.required({ version: true });
+export type UseBlueprintCheckRequest = z.infer<typeof UseBlueprintCheckSchema>;

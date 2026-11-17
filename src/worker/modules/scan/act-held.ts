@@ -22,11 +22,11 @@ import { doneScanPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import { retentionProofIfRecordedStmt } from './repo-scan-retention.ts';
 import { activeFlags, type Found } from './resolve.ts';
-import { capturingDb } from './scan-capture.ts';
+import { afterReads, capturingDb } from './scan-capture.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
 import {
   capacityOpen,
-  refundPin,
+  decorateScan,
   retentionPart,
   SCAN_HELD_TABLES,
   scanIs,
@@ -183,7 +183,7 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
     pass: { id: found.pass.id, facts: { pass: found.pass, credential: {} } },
     holder: observed.gateBefore ? { ...gate, lastScanId: observed.gateBefore.lastScanId } : null,
     // Another pass's transfer can retire the presented credential after resolve (shared hash).
-    credentialRefs: { current: claim.credentialTombstoneRefs, other: [] },
+    credentialRefs: claim.credentialTombstoneRefs,
   });
   if (capacityRequired && claim.capacity)
     g.assert('stale', [
@@ -231,10 +231,11 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
   g.assert('stale', [scanIs(scanId, { state: 'done' })]);
   const counts = planCommitCounts(ctx, actor, input.dayStart);
   const bound = display.bind(ctx.clock.now(), doneScanPredicate(scanId));
-  const committed = await g.commitWith([...counts.stmts, ...bound.stmts]);
+  const committed = await g.commitWith(afterReads([...counts.stmts, ...bound.reads]));
   const results = committed.writes;
-  await refundPin(ctx, reservation);
-  if (!((results[g.indexOf(finalized)]?.results ?? []) as unknown[]).length) {
+  const won = !!((results[g.indexOf(finalized)]?.results ?? []) as unknown[]).length;
+  const photoResults = await decorateScan(ctx, reservation, won ? bound.photo : []);
+  if (!won) {
     onFailureCommitted();
     throw new StaleScanAuthority();
   }
@@ -250,7 +251,7 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
     reason,
     holder,
     read,
-    display: bound.finish(committed.after.slice(counts.stmts.length)),
+    display: bound.finish(committed.after.slice(counts.stmts.length), photoResults),
     now: finishAt,
   });
 }

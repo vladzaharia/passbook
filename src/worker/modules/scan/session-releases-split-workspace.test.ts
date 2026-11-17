@@ -198,7 +198,7 @@ describe('scanner session approved releases', () => {
       const body = (await response.json()) as Record<string, unknown>;
       expect(body).toMatchObject(
         change === 'revoked'
-          ? { status, code: 'SCANNER_UNAUTHENTICATED', detail: 'Pair this scanner to continue.' }
+          ? { status, code: 'SCANNER_REPAIR', detail: 'Pair this device again.' }
           : { status, code: 'SCAN_CONFIG_CHANGED' },
       );
       for (const field of ['state', 'scanner', 'event', 'templates', 'formats', 'csrfToken']) {

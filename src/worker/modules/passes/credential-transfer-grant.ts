@@ -95,6 +95,7 @@ export async function transferGrant(
   phase: TransferPhase,
   pass: TransferPassRef,
   checks: Check[],
+  unlink = false,
 ): Promise<Grant | null> {
   const tables = phase === 'start' ? START_TABLES : FINISH_TABLES;
   const base = { target: pass.id, codes: TRANSFER_CODES, tables };
@@ -120,7 +121,12 @@ export async function transferGrant(
     return holder('org_mode.pass.holder_remove', {
       kind: 'holder',
       passId: pass.id,
-      proof: { via: 'session', userId: authority.userId, sessionIdHash: authority.sessionId },
+      proof: {
+        via: 'session',
+        userId: authority.userId,
+        sessionIdHash: authority.sessionId,
+        ...(unlink ? { unlink: true as const } : {}),
+      },
     });
   const purpose =
     phase === 'finish'

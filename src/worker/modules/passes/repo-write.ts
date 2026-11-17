@@ -1,6 +1,6 @@
 import { ConnectionModeSchema } from '../../../shared/contracts/connections.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { createGrant, createRefusal, sampleScopeCurrent } from './create-grant.ts';
+import { createGrant, createRefusal } from './create-grant.ts';
 import { addCreateStatements } from './create-records.ts';
 import { validPassReleaseSnapshot } from './repo-release.ts';
 import { permitsPassMutation } from './repo-write-authority.ts';
@@ -126,7 +126,6 @@ export async function insertPass(
       return false;
     }
   }
-  if (!(await sampleScopeCurrent(ctx.env.DB, row))) return false;
   let owner = await attachableOwner(ctx.env.DB, row);
   for (let attempt = 0; ; attempt++) {
     const g = createGrant(ctx, row, retainedScope);

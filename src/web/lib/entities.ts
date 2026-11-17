@@ -5,6 +5,7 @@ import {
   Building2,
   Cable,
   CalendarCheck,
+  DraftingCompass,
   FileBadge,
   History,
   IdCard,
@@ -41,6 +42,13 @@ export interface Entity {
 export const ENTITY = {
   pass: { label: 'Pass', plural: 'passes', icon: Ticket, art: 'passes' },
   template: { label: 'Template', plural: 'templates', icon: LayoutTemplate, art: 'template' },
+  /** A PassBook design to start from. It borrows the template art (the art kit is at its budget). */
+  blueprint: {
+    label: 'Blueprint',
+    plural: 'blueprints',
+    icon: DraftingCompass,
+    art: 'template',
+  },
   connection: { label: 'Connection', plural: 'connections', icon: Cable, art: 'plugs' },
   user: { label: 'User', plural: 'users', icon: User, art: 'people' },
   org: { label: 'Organization', plural: 'organizations', icon: Building2, art: 'building' },

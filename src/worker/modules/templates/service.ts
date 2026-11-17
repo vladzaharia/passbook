@@ -17,6 +17,7 @@ import {
   countPassesByVersion,
   getImport,
   getOrgName,
+  getTemplate,
   getVersion,
   listRecentImports,
   listVersions,
@@ -44,7 +45,14 @@ type Summary = z.infer<typeof TemplateSummarySchema>;
 type Detail = z.infer<typeof TemplateDetailSchema>;
 type VersionDetail = z.infer<typeof TemplateVersionDetailSchema>;
 
-export function summaryOf(row: TemplateRow, passCount: number, orgName: string | null): Summary {
+type Lineage = Pick<Summary, 'icon' | 'fromBlueprint'>;
+
+export function summaryOf(
+  row: TemplateRow,
+  passCount: number,
+  orgName: string | null,
+  lineage: Lineage = { icon: null, fromBlueprint: null },
+): Summary {
   return {
     id: row.id,
     orgId: row.orgId,
@@ -56,6 +64,9 @@ export function summaryOf(row: TemplateRow, passCount: number, orgName: string |
     status: row.status,
     activeVersion: row.activeVersion,
     styles: row.styles,
+    blueprint: row.blueprint,
+    icon: lineage.icon,
+    fromBlueprint: lineage.fromBlueprint,
     passCount,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -97,6 +108,7 @@ export async function list(
   const rows: ListedTemplate[] = await listTemplates(ctx.env.DB, {
     orgId,
     origin: query.origin,
+    blueprint: query.blueprint ?? false,
     status: query.status,
     includeArchived: query.includeArchived,
     ...(query.q ? { q: query.q } : {}),
@@ -111,7 +123,7 @@ export async function list(
   const page = rows.slice(0, query.limit);
   const last = page.at(-1);
   return {
-    items: page.map((r) => summaryOf(r, r.passCount, r.orgName)),
+    items: page.map((r) => summaryOf(r, r.passCount, r.orgName, r)),
     nextCursor: rows.length > query.limit && last ? `${last.createdAt}:${last.id}` : null,
   };
 }
@@ -133,6 +145,8 @@ export async function detail(
   if (!display) throw new NotFoundError('Template has no saved version.', 'TEMPLATE_NOT_FOUND');
   let total = 0;
   for (const n of counts.values()) total += n;
+  const source = row.sourceBlueprint ? await getTemplate(ctx.env.DB, row.sourceBlueprint) : null;
+  const icon = display.manifest.display?.icon;
   const { older, settled } =
     passOrgId === null
       ? { older: 0, settled: false }
@@ -144,6 +158,10 @@ export async function detail(
       row,
       total,
       row.orgId ? ((await getOrgName(ctx.env.DB, row.orgId))?.name ?? null) : null,
+      {
+        icon: typeof icon === 'string' ? icon : null,
+        fromBlueprint: source ? { id: source.id, name: source.name } : null,
+      },
     ),
     inputSchema: display.manifest.inputs as Json,
     sample: display.manifest.sample,

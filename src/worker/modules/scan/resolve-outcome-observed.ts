@@ -1,7 +1,6 @@
 import type { z } from 'zod';
 import type { ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction, ResolvedScanManifest } from '../../../shared/scan-defaults.ts';
-import { ConflictError, UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound } from '../passes/builder.ts';
 import { type ActorCsrfSnapshot, actorCsrfSnapshotFence } from './actor-csrf.ts';
@@ -28,7 +27,7 @@ import {
 } from './resolve-passless-read.ts';
 import type { FinalizedDisplayHistory } from './scan-display-history.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
-import { scannerCredentialLost } from './scanner-credential-lost.ts';
+import { staleScanRead } from './stale-read.ts';
 
 type ObservedEvaluation = Omit<ScanEvaluation, 'credentialContext'> & { unconfirmed?: true };
 
@@ -226,9 +225,7 @@ export async function resolveObserved(
     // authority the session read uses (the scan fence refuses every invalid scope).
     if (configOnly && actor.invalidScannerScope) {
       if (!(await sessionReadAuthorityCurrent(ctx, actor, ctx.clock.now())))
-        throw (await scannerCredentialLost(ctx, actor))
-          ? new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR')
-          : new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');
+        throw await staleScanRead(ctx, actor);
       return { outcome: notAcceptedOutcome().outcome, evaluatedSnapshot: null };
     }
     const sameMode = (candidateRead.candidates ?? []).filter(

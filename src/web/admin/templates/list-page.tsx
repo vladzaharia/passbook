@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Upload } from 'lucide-react';
+import { DraftingCompass, Upload } from 'lucide-react';
 import { useMemo } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
@@ -182,8 +182,14 @@ export function TemplatesListPage({
   const upload = (variant: 'primary' | 'outline') => (
     <Button asChild variant={variant} iconStart={<Upload aria-hidden />}>
       <Link to="/admin/templates/upload" search={{ orgId }}>
-        Upload template
+        Upload
       </Link>
+    </Button>
+  );
+  // New templates start from a blueprint.
+  const blueprints = (label: string) => (
+    <Button asChild iconStart={<DraftingCompass aria-hidden />}>
+      <Link to="/admin/blueprints">{label}</Link>
     </Button>
   );
   const footer = (
@@ -199,7 +205,14 @@ export function TemplatesListPage({
     <>
       <PageHeader
         title="Templates"
-        actions={canAuthor ? upload(truth ? 'outline' : 'primary') : undefined}
+        actions={
+          canAuthor ? (
+            <>
+              {upload('outline')}
+              {blueprints('New template')}
+            </>
+          ) : undefined
+        }
       />
       {canAuthor && uploadsFirst ? <RecentUploads orgId={orgId} className="mt-0 mb-6" /> : null}
       {list.isError ? (
@@ -212,7 +225,15 @@ export function TemplatesListPage({
         <EmptyState
           art="template"
           title="No templates yet"
-          action={canAuthor ? upload('primary') : undefined}
+          description="Start from a blueprint or upload a package."
+          action={
+            canAuthor ? (
+              <div className="flex flex-wrap gap-2 max-sm:[&>*]:flex-1">
+                {blueprints('Browse blueprints')}
+                {upload('outline')}
+              </div>
+            ) : undefined
+          }
         />
       ) : view === 'gallery' ? (
         <div

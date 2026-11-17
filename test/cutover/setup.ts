@@ -15,6 +15,7 @@ import {
   OWNER,
   SCAN,
   seedLegacy,
+  starterPackage,
 } from './legacy-seed.ts';
 import { runBootstrap } from './run-bootstrap.ts';
 
@@ -65,7 +66,7 @@ export interface Cutover {
 /** 0024 data, then migrations 0025+, then the bootstrap, then the baked sync: the cutover in production order. */
 export async function runCutover(
   slot: number,
-  options: { bumpStarter?: boolean } = {},
+  options: { bumpStarter?: boolean; bumpStarters?: boolean } = {},
 ): Promise<Cutover> {
   const db = await legacyDatabase(slot);
   const legacy = await seedLegacy(db, bindings.BUCKET);
@@ -104,6 +105,33 @@ export async function runCutover(
       sourceOf([bumped, ...legacy.baked.slice(1)], 'cutover-hash-2'),
     );
     legacy.bumpedVersion = bumped.template.version;
+  }
+  if (options.bumpStarters) {
+    // The two shipped starters get new content: the unassigned blueprint and the org-assigned one.
+    const bumped = [
+      await bakedFrom('starter-generic', starterPackage('Membership card', 130), {
+        name: 'Membership card',
+      }),
+      await bakedFrom('starter-coupon', starterPackage('Coupon', 140), { name: 'Coupon' }),
+    ];
+    for (const f of bumped) {
+      f.template.manifest = { ...f.template.manifest, scan: SCAN } as never;
+      for (const [k, v] of f.files) legacy.assets.files.set(k, v);
+    }
+    const later = {
+      ...env,
+      CF_VERSION: {
+        id: 'cutover-worker-3',
+        tag: '',
+        timestamp: new Date(NOW + 3000).toISOString(),
+      },
+    };
+    resetBakedSync();
+    await syncBakedTemplates(
+      createServiceContext(later, { clock: new ManualClock(NOW + 4000) }),
+      sourceOf([...legacy.baked.slice(0, 4), ...bumped], 'cutover-hash-3'),
+    );
+    legacy.bumpedStarters = bumped.map((f) => f.template.version);
   }
   return { legacy, before, beforeSync, env, bootstrapPlan: plan, bootstrapSql: sql };
 }

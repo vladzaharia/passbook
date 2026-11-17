@@ -1,0 +1,124 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(31,41,55)",
+  "barcodes": [
+    {
+      "altText": "ID-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "ID-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Membership card",
+  "featuredActions": [],
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "generic": {
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Present the barcode when asked."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "Your tier is now %@.",
+        "key": "tier",
+        "label": "Tier",
+        "value": "Plus"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Alex Morgan"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true,
+        "key": "since",
+        "label": "Since",
+        "timeStyle": "PKDateStyleNone",
+        "value": "2026-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "labelColor": "rgb(199,210,254)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "posterGeneric": {
+    "additionalInfoFields": [
+      {
+        "key": "plan-poster",
+        "label": "Plan",
+        "value": "Annual"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "terms-poster",
+        "label": "Terms",
+        "value": "Present the barcode when asked."
+      },
+      {
+        "key": "contact-poster",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service-poster",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "footerFields": [
+      {
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true,
+        "key": "since-poster",
+        "label": "Since",
+        "timeStyle": "PKDateStyleNone",
+        "value": "2026-01-01T00:00:00Z"
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "Your tier is now %@.",
+        "key": "tier-poster",
+        "label": "Tier",
+        "value": "Plus"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder-poster",
+        "value": "Alex Morgan"
+      }
+    ]
+  },
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

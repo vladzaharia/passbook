@@ -19,6 +19,10 @@ export interface TemplateRow {
   activeVersion: string | null;
   status: 'active' | 'archived' | 'deleted';
   styles: PassStyle[];
+  /** A platform design to start from; never issues passes. */
+  blueprint: boolean;
+  /** The blueprint this template was made from. */
+  sourceBlueprint: string | null;
   createdBy: string | null;
   createdAt: number;
   updatedAt: number;
@@ -46,6 +50,8 @@ export interface TemplateSql {
   active_version: string | null;
   status: 'active' | 'archived' | 'deleted';
   styles: string;
+  blueprint: number;
+  source_blueprint: string | null;
   created_by: string | null;
   created_at: number;
   updated_at: number;
@@ -64,7 +70,7 @@ interface VersionSql {
 }
 
 export const TEMPLATE_COLUMNS =
-  'id, org_id, slug, name, description, origin, active_version, status, styles, created_by, created_at, updated_at';
+  'id, org_id, slug, name, description, origin, active_version, status, styles, blueprint, source_blueprint, created_by, created_at, updated_at';
 
 export function templateRow(row: TemplateSql): TemplateRow {
   return {
@@ -77,6 +83,8 @@ export function templateRow(row: TemplateSql): TemplateRow {
     activeVersion: row.active_version,
     status: row.status,
     styles: JSON.parse(row.styles) as PassStyle[],
+    blueprint: row.blueprint === 1,
+    sourceBlueprint: row.source_blueprint,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -118,6 +126,16 @@ export async function findTemplateBySlug(
     [orgId, slug],
   );
   return row ? templateRow(row) : null;
+}
+
+/** True for a blueprint; false for anything else, an unknown id included. */
+export async function isBlueprint(db: D1Database, id: string): Promise<boolean> {
+  const row = await first<{ blueprint: number }>(
+    db,
+    'SELECT blueprint FROM templates WHERE id = ?',
+    [id],
+  );
+  return row?.blueprint === 1;
 }
 
 export async function countPasses(db: D1Database, templateId: string): Promise<number> {

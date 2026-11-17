@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import bwipjs from 'bwip-js/node';
 import { e2ePorts } from '../../tools/lib/e2e-ports.ts';
-import { type Api, createPass, GENERIC, uid } from './api.ts';
+import { type Api, createPass, GENERIC_BLUEPRINT, uid } from './api.ts';
 import { publishTemplateVersion } from './releases.ts';
 
 export const cameraFormats = [
@@ -23,7 +23,7 @@ export async function cameraFixture(api: Api, orgId: string, reader: 'none' | 'b
   ]) {
     const cloned = await api.send(
       'POST',
-      `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
+      `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
       { orgId, name: uid('Camera formats') },
     );
     const initialVersion = cloned.versions[0]?.version;

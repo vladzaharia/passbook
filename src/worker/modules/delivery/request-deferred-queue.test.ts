@@ -46,7 +46,7 @@ describe('queueing under a request-context deferred principal', () => {
     ).not.toBeNull();
   });
 
-  it('refuses a revoked membership with 403', async () => {
+  it('refuses a revoked membership with 403 ACTOR_CHANGED', async () => {
     await expect(
       resume(async ({ membershipId }) => {
         await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
@@ -54,7 +54,7 @@ describe('queueing under a request-context deferred principal', () => {
           membershipId,
         ]);
       }),
-    ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ status: 403, code: 'ACTOR_CHANGED' });
   });
 
   it('refuses a moved org access revision with 403 ORG_ACCESS_CHANGED', async () => {
@@ -69,7 +69,7 @@ describe('queueing under a request-context deferred principal', () => {
     ).rejects.toMatchObject({ status: 403, code: 'ORG_ACCESS_CHANGED' });
   });
 
-  it('refuses a moved user access revision with 403', async () => {
+  it('refuses a moved user access revision with 403 ACTOR_CHANGED', async () => {
     await expect(
       resume(async ({ userId }) => {
         await run(
@@ -78,6 +78,6 @@ describe('queueing under a request-context deferred principal', () => {
           [userId],
         );
       }),
-    ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ status: 403, code: 'ACTOR_CHANGED' });
   });
 });

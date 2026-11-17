@@ -1,7 +1,6 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
+import { templateUsableSql } from '../../platform/authority-checks.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ScanEventRow } from './repo-scope.ts';
-import { usableScanTemplateSql } from './repo-scope-releases.ts';
 import type { SampleScannerScope } from './sample-scope-fence.ts';
 
 type Predicate = { sql: string; params: SqlValue[] };
@@ -10,23 +9,20 @@ export const denySampleScannerScope = (): Predicate => ({ sql: '0', params: [] }
 
 /**
  * Scanner, event and session are compared by their configuration columns (the bump sets of their
- * config epochs), never by `updated_at` or by volatile columns such as names and notes.
+ * config epochs), never by `updated_at` or by volatile columns such as names and notes. The tenant is
+ * the grant's (`{org}`, `{mode}`): the predicate runs inside the pass create grant.
  * Build the SQL only after the caller has validated the corresponding snapshot fields. */
 export function sampleScannerScopePredicate(
   scanner: SampleScannerScope['scanner'],
   scannerScope: SampleScannerScope['scannerScope'],
-  orgId: string,
-  mode: Mode,
 ) {
   const parts = [
-    `EXISTS (SELECT 1 FROM scanners s WHERE s.id=? AND s.org_id=? AND s.mode=?
+    `EXISTS (SELECT 1 FROM scanners s WHERE s.id=? AND s.org_id={org} AND s.mode={mode}
     AND s.kind=? AND s.device_role=? AND s.event_id IS ?
     AND s.settings IS ? AND s.time_zone=? AND s.revoked_at IS ?)`,
   ];
   const params: SqlValue[] = [
     scanner.id,
-    orgId,
-    mode,
     scanner.kind,
     scanner.deviceRole,
     scanner.eventId,
@@ -36,14 +32,12 @@ export function sampleScannerScopePredicate(
   ];
   const ids = new Set(scannerScope.templateIds);
   const appendEvent = (event: Readonly<ScanEventRow>, templateIds: readonly string[]) => {
-    parts.push(`EXISTS (SELECT 1 FROM scan_events e WHERE e.id=? AND e.org_id=? AND e.mode=?
+    parts.push(`EXISTS (SELECT 1 FROM scan_events e WHERE e.id=? AND e.org_id={org} AND e.mode={mode}
       AND e.match_input IS ? AND e.match_values IS ? AND e.opens_at=? AND e.closes_at=?
       AND e.time_zone=? AND e.capacity IS ? AND e.reentry=?
       AND e.archived_at IS NULL)`);
     params.push(
       event.id,
-      orgId,
-      mode,
       event.matchInput,
       event.matchValues,
       event.opensAt,
@@ -76,15 +70,13 @@ export function sampleScannerScopePredicate(
       scope: NonNullable<SampleScannerScope['session']>['scope'],
     ): void {
       parts.push(`EXISTS (SELECT 1 FROM scanning_devices d JOIN scanning_sessions ss
-      ON ss.id=d.session_id AND ss.org_id=d.org_id AND ss.mode=d.mode
-      WHERE d.scanner_id=? AND d.org_id=? AND d.mode=? AND d.session_id=?
+      ON ss.id=d.session_id AND ss.org_id={org} AND ss.mode={mode}
+      WHERE d.scanner_id=? AND d.org_id={org} AND d.mode={mode} AND d.session_id=?
         AND d.surface=? AND d.effective_surface=? AND d.overrides IS ?
         AND d.admin_user_id IS ? AND d.device_key IS ?
         AND ss.status=? AND ss.accepts IS ? AND ss.settings IS ? AND ss.time_zone=?)`);
       params.push(
         scanner.id,
-        orgId,
-        mode,
         row.id,
         device.surface,
         device.effective_surface,
@@ -100,21 +92,21 @@ export function sampleScannerScopePredicate(
       for (const id of scope.templateIds) ids.add(id);
     },
     finish(): Predicate {
-      // Another configured template becoming unusable invalidates the whole resolved scope.
+      // Another configured template deleted or without a release head in this mode invalidates the
+      // whole resolved scope (a platform head counts only for an unassigned baked template; an org head
+      // counts for an uploaded template or a baked one assigned to the org, as in `releaseHead`).
       if (ids.size) {
-        parts.push(`NOT EXISTS (SELECT 1 FROM json_each(?) selected
-      CROSS JOIN (SELECT ? AS org_id, ? AS mode) scope
-      LEFT JOIN templates t ON t.id=selected.value AND (t.org_id=scope.org_id OR t.org_id IS NULL)
-        AND t.status!='deleted'
-      WHERE t.id IS NULL OR NOT ${usableScanTemplateSql({
-        templateIdSql: 't.id',
-        orgIdSql: 'scope.org_id',
-        modeSql: 'scope.mode',
-        providerSql: "'apple'",
-      })})`);
-        params.push(JSON.stringify([...ids].sort()), orgId, mode);
+        parts.push(`NOT EXISTS (SELECT 1 FROM json_each(?) selected WHERE NOT EXISTS (
+      SELECT 1 FROM templates t WHERE t.id=selected.value AND ${templateUsableSql('t', 'existing')}
+        AND (t.org_id IS NULL OR t.org_id={org})
+        AND (EXISTS (SELECT 1 FROM template_releases r WHERE r.template_id=t.id AND r.mode={mode}
+            AND r.provider='apple' AND r.org_id={org})
+            AND NOT (t.origin='baked' AND t.org_id IS NULL)
+          OR (t.org_id IS NULL AND t.origin='baked' AND EXISTS (SELECT 1 FROM template_releases pr
+            WHERE pr.template_id=t.id AND pr.mode={mode} AND pr.provider='apple' AND pr.org_id IS NULL)))))`);
+        params.push(JSON.stringify([...ids].sort()));
       }
-      // Keep the pass INSERT below D1's bound-parameter limit even for event/session scopes.
+      // Keep the grant insert below D1's bound-parameter limit even for event/session scopes.
       // All placeholders here are generated by this helper; user values live only in the JSON.
       let index = 0;
       const predicate = parts

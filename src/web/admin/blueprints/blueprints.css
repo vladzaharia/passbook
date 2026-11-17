@@ -1,0 +1,103 @@
+/* Blueprint identity: the pass's own colours on a drafting grid with a glow underneath. Opacity and transform only. */
+
+/* Before the preview arrives the stage and glyph are neutral. */
+.bp-tile,
+.bp-hero,
+.bp-avatar {
+  --bp: var(--pk-accent);
+  --bp-fg: var(--pk-accent-on);
+  --bp-label: var(--pk-accent-on);
+  --bp-glow: var(--pk-accent);
+  /* Dark ground: the grid takes the label colour, the glow is strong. */
+  --bp-line: var(--bp-label);
+  --bp-glow-strength: 70%;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) :is(.bp-tile, .bp-hero, .bp-avatar) {
+    --bp-line: var(--bp-glow);
+    --bp-glow-strength: 26%;
+  }
+}
+[data-theme="light"] :is(.bp-tile, .bp-hero, .bp-avatar) {
+  --bp-line: var(--bp-glow);
+  --bp-glow-strength: 26%;
+}
+
+.bp-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 2rem 0;
+  background-color: var(--pk-surface-sunken);
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--bp-line) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--bp-line) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 16px 16px;
+}
+/* The glow is its own layer so hover can lift it without repainting the grid. */
+.bp-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    85% 70% at 50% 100%,
+    color-mix(in srgb, var(--bp-glow) var(--bp-glow-strength), transparent),
+    transparent
+  );
+  opacity: 0.85;
+  transition: opacity var(--wl-dur-hover) var(--wl-ease-out);
+}
+.bp-tile:hover .bp-stage::before,
+.bp-tile:has(a:focus-visible) .bp-stage::before {
+  opacity: 1;
+}
+.bp-stage[data-size="lg"] {
+  padding: 1.5rem 1rem;
+  border: 1px solid var(--pk-border-subtle);
+}
+
+/* The glyph: the pass background with the icon in the label colour and a 1 px ring in the text colour. */
+.bp-glyph {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bp);
+  color: var(--bp-label);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bp-fg) 14%, transparent);
+}
+.bp-glyph > svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+.bp-glyph[data-size="48"] {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+.bp-glyph[data-size="48"] > svg {
+  width: 24px;
+  height: 24px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bp-tile .bp-glyph {
+    transition: transform var(--wl-dur-hover) var(--wl-ease-out);
+  }
+  .bp-tile:hover .bp-glyph {
+    transform: translateY(-1px) rotate(-4deg);
+  }
+}

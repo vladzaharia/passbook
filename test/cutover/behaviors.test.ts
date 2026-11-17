@@ -29,6 +29,8 @@ const SERVED: Shape[] = [
   'baked-unassigned',
   'baked-assigned',
   'baked-patched',
+  'baked-blueprint',
+  'baked-starter-org',
   'uploaded-active',
   'uploaded-moved',
 ];

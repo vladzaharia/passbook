@@ -1,3 +1,4 @@
+import { Navigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import type { z } from 'zod';
 import { isApiError } from '../../lib/errors.ts';
@@ -92,6 +93,11 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
       header: <PageHeader title="Template" breadcrumbs={crumbs} />,
     });
   }
+  // A blueprint has its own page.
+  if (template.data?.blueprint)
+    return (
+      <Navigate to="/admin/blueprints/$blueprintId" params={{ blueprintId: templateId }} replace />
+    );
   if (resourceScope === 'pending' || !template.data)
     return (
       <>

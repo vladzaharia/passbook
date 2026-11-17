@@ -408,7 +408,7 @@ describe('issued email authority at the outbox commit', () => {
         connection: f.connection,
         authority,
       },
-      'FORBIDDEN',
+      'ACTOR_CHANGED',
       () => update('UPDATE api_keys SET revoked_at = ? WHERE id = ?', [kit.clock.now(), key.id]),
     );
   });
@@ -430,7 +430,7 @@ describe('issued email authority at the outbox commit', () => {
           additionalAuthority: api.authority,
           auditEntry: resendAudit(f.pass.id, f.pass.orgId),
         },
-        'FORBIDDEN',
+        'ACTOR_CHANGED',
         () =>
           revoked === 'primary'
             ? update('UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [

@@ -108,13 +108,16 @@ describe('useOrgTemplates organization scope', () => {
     const { router, requests } = setup('o1', [northwind, harbor], 'templates');
     expect(await screen.findByText(/Gala ticket/)).toBeInTheDocument();
     expect(screen.getByTestId('events')).toHaveTextContent('Shared ticket');
+    expect(screen.getByTestId('events')).toHaveTextContent('Membership card');
     expect(screen.queryByText(/Foreign ticket/)).not.toBeInTheDocument();
-    expect(requests).toEqual(['o1']);
+    // Templates and blueprints: a scanner may hold either.
+    expect(requests).toEqual(['o1', 'o1']);
     await act(async () => {
       await router.navigate({ to: '/admin/scanning', search: { orgId: 'o2' } });
     });
     await waitFor(() => expect(screen.getByTestId('events')).toHaveTextContent('No data'));
     expect(screen.queryByText(/Gala ticket/)).not.toBeInTheDocument();
-    expect(requests).toEqual(['o1']);
+    // Templates and blueprints: a scanner may hold either.
+    expect(requests).toEqual(['o1', 'o1']);
   });
 });

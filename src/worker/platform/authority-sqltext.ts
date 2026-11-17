@@ -24,16 +24,21 @@ export function mapOutsideLiterals(sql: string, fn: (text: string) => string): s
   return out + fn(sql.slice(last));
 }
 
+const override = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE', message);
+
 const WRITE_WORDS =
   /\b(?:insert|update|delete|replace|attach|pragma|drop|create|alter)\b|;|--|\/\*/i;
 
-/** Refuses write words, `;` and comments outside string literals. */
+/**
+ * Refuses write words, `;` and comments outside string literals, and quoted, bracketed or backticked
+ * identifiers: a `'` inside one would open a fake literal that hides a write from the lint.
+ */
 export function assertReadOnly(sql: string, what: string): void {
-  if (WRITE_WORDS.test(stripLiterals(sql)))
+  const text = stripLiterals(sql);
+  if (/["`[]/.test(text)) throw override(`${what} cannot use quoted or bracketed identifiers.`);
+  if (WRITE_WORDS.test(text))
     throw new AuthorityError('GRANT_SCOPE_OVERRIDE', `${what} is read-only SQL.`);
 }
-
-const override = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE', message);
 
 /**
  * Caller SQL that is spliced into a builder predicate: no quoted, bracketed or backticked identifiers

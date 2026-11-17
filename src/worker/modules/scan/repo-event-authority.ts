@@ -7,17 +7,23 @@ import type { TemplateStamps } from './repo-scope-releases.ts';
 
 /**
  * Every approved release an event's templates were validated against is still the head for this
- * organization and mode (create and edit only: a newer release does not unscope a scan). An
- * `archived` template already on the event has no issuance head; the caller pins it as archived.
+ * organization and mode (create and edit only: a newer release does not unscope a scan). A template
+ * already on the event (`kept`) keeps its head while archived; a new one needs an active template.
  */
 export const eventReleaseChecks = (
   stamps: TemplateStamps | undefined,
   mode: Mode,
-  archived: readonly string[] = [],
+  kept: readonly string[] = [],
 ): Check[] =>
-  (stamps?.releases ?? [])
-    .filter((s) => !archived.includes(s.templateId))
-    .map((s) => releaseHead(s.templateId, mode, 'apple', s.id));
+  (stamps?.releases ?? []).map((s) =>
+    releaseHead(
+      s.templateId,
+      mode,
+      'apple',
+      s.id,
+      kept.includes(s.templateId) ? 'existing' : 'issue',
+    ),
+  );
 
 /** A cache fill derived from this exact read of the event: same epoch, same cached value. */
 export const eventCacheChecks = (row: ConsoleEventRow): Check[] => [
@@ -30,23 +36,18 @@ export const eventCacheChecks = (row: ConsoleEventRow): Check[] => [
 ];
 
 /**
- * New templates must be active with an unchanged head. Templates already on the event stay usable
- * when archived (they keep scanning, with no issuance head to pin); deleted ones stop.
+ * New templates must be active with an unchanged head. Templates already on the event keep scanning
+ * with an unchanged head while archived; deleted ones stop (the issued-release rule, `releaseHead`).
  */
 export function attachedTemplateChecks(
   added: readonly string[],
   kept: readonly string[],
-  archived: readonly string[],
   stamps: TemplateStamps | undefined,
   mode: Mode,
 ): Check[] {
   return [
     ...templatesUsable(added),
-    ...templatesUsable(
-      kept.filter((id) => !archived.includes(id)),
-      'attached',
-    ),
-    ...templatesUsable(archived, 'archived'),
-    ...eventReleaseChecks(stamps, mode, archived),
+    ...templatesUsable(kept, 'attached'),
+    ...eventReleaseChecks(stamps, mode, kept),
   ];
 }

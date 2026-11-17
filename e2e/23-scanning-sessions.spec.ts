@@ -1,5 +1,11 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
-import { apiAs, createPass, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
+import {
+  apiAs,
+  createPass,
+  requireActiveTemplateRelease,
+  seedTemplateId,
+  uid,
+} from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -16,7 +22,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
   const contexts: BrowserContext[] = [];
   try {
     const orgId = readSeed().org.id;
-    const release = await requireActiveTemplateRelease(api, orgId, GENERIC, 'live');
+    const release = await requireActiveTemplateRelease(api, orgId, seedTemplateId(), 'live');
     const admin = await browser.newContext({
       storageState: stateFile('admin'),
       reducedMotion: 'reduce',
@@ -93,7 +99,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     const pass = await createPass(api, orgId, { holder: 'Shared Session Member', memberId });
     expect(pass).toMatchObject({
       orgId,
-      templateId: GENERIC,
+      templateId: seedTemplateId(),
       templateVersion: release.version,
       mode: 'live',
     });

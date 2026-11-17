@@ -158,4 +158,32 @@ describe('release head precedence', () => {
     await expect(pending.commit()).rejects.toMatchObject({ code: 'TEMPLATE_RELEASE_CHANGED' });
     expect(await effective(templateId, g.s.org.id)).toBeNull();
   });
+
+  it('an existing use keeps the head of an archived template and stops once it is deleted', async () => {
+    const g = await setupGrant('rh-existing');
+    const templateId = g.s.template.resolved.id;
+    const version = await bakedTemplate(templateId, g.s.org.id);
+    const release = await systemRelease(g.s, templateId, version, g.s.org.id, 1, null);
+    const use = (kind: 'issue' | 'existing', releaseId = release) =>
+      grant(g.route, {
+        purpose: 'org_mode.pass.publish',
+        principal: g.member(),
+        checks: [releaseHead(templateId, 'live', 'apple', releaseId, kind)],
+      })
+        .commit()
+        .then(() => 'ok')
+        .catch((e: { code: string }) => e.code);
+    expect(await use('issue')).toBe('ok');
+    expect(await use('existing')).toBe('ok');
+    // Still a head check: a newer release refuses the older one.
+    const newer = await systemRelease(g.s, templateId, version, g.s.org.id, 2, release);
+    expect(await use('existing')).toBe('TEMPLATE_RELEASE_CHANGED');
+    await run(db, "UPDATE templates SET status = 'archived' WHERE id = ?", [templateId]);
+    expect(await use('issue', newer)).toBe('TEMPLATE_RELEASE_CHANGED');
+    expect(await use('existing', newer)).toBe('ok');
+    expect(await use('existing')).toBe('TEMPLATE_RELEASE_CHANGED');
+    await run(db, "UPDATE templates SET status = 'deleted' WHERE id = ?", [templateId]);
+    expect(await use('existing', newer)).toBe('TEMPLATE_RELEASE_CHANGED');
+    expect(await use('issue', newer)).toBe('TEMPLATE_RELEASE_CHANGED');
+  });
 });

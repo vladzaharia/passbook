@@ -6,6 +6,7 @@ import { type FieldIssue, ValidationError } from '../../platform/errors.ts';
 import { assertPublicHost, assertSafeUrl, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { blueprintRefusal } from '../templates/blueprint-guard.ts';
 import { getDeps, resolverOf } from './deps.ts';
 import type { Mode } from './repo.ts';
 import { templateScope } from './repo-passes.ts';
@@ -94,6 +95,7 @@ export async function assertTemplateUsable(
       'TEMPLATE_NOT_FOUND',
     );
   }
+  if (scope.blueprint) throw blueprintRefusal();
 }
 
 export async function assertOrg(sctx: ServiceContext, orgId: string): Promise<void> {

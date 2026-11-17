@@ -25,7 +25,7 @@ import type { Candidate } from './repo-lookup.ts';
 import { doneOkPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
-import { capturingDb } from './scan-capture.ts';
+import { afterReads, capturingDb } from './scan-capture.ts';
 import {
   type DisplayHistoryPlan,
   displayNeedsFor,
@@ -33,7 +33,12 @@ import {
   prepareDisplayHistory,
 } from './scan-display-history.ts';
 import { prepareScanRetentionProof } from './scan-retention-proof.ts';
-import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
+import {
+  capacityOpen,
+  decorateScan,
+  SCAN_COMMIT_TABLES,
+  scanWriteGrant,
+} from './scan-write-grant.ts';
 import type { Finalize } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';
 
@@ -198,7 +203,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     },
     approver,
     // Another pass's transfer can retire the presented credential after resolve (shared hash).
-    credentialRefs: { current: claim.credentialTombstoneRefs, other: [] },
+    credentialRefs: claim.credentialTombstoneRefs,
     tables: SCAN_COMMIT_TABLES,
   });
   const statements = addCheckInStatements(g, {
@@ -217,20 +222,12 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   if (!statements) throw new StaleScanAuthority();
   const { finalOk, finalAdmit, finalCap, holder, presenceHolder } = statements;
 
-  // One transaction: the grant, then the reads and decoration that must see its writes.
+  // One transaction: the grant, then the reads that must see its writes.
   const counts = planCommitCounts(ctx, actor, req.dayStart);
   const finishAt = ctx.clock.now();
   const done = doneOkPredicate(scanId);
   const bound = displayPlan.bind(finishAt, done);
-  const photoInsert = photoPlan ? photoPlan(finishAt, done, { sql: '1', params: [] }) : [];
-  const refund = reservation?.refundStatements() ?? [];
-  const committed = await g.commitWith([
-    ...counts.stmts,
-    ...bound.stmts,
-    ...photoInsert,
-    ...refund,
-  ]);
-  reservation?.markRefunded();
+  const committed = await g.commitWith(afterReads([...counts.stmts, ...bound.stmts]));
   const results = committed.writes;
   const at = (s: Parameters<typeof g.indexOf>[0]) => results[g.indexOf(s)] as D1Result;
   const rows = (s: Parameters<typeof g.indexOf>[0]) => (at(s).results ?? []).length;
@@ -242,6 +239,12 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       ? 'capacity_full'
       : lost;
   if (!wonIt) onFailureCommitted();
+  // Decoration follows the commit in one batch: a failed refund or photo grant never undoes the scan.
+  const photoResults = await decorateScan(
+    ctx,
+    reservation,
+    wonIt && photoPlan ? photoPlan(finishAt, done, { sql: '1', params: [] }) : [],
+  );
   const read = await counts.read(committed.after);
   const rest = committed.after.slice(counts.stmts.length);
   if (!wonIt) {
@@ -276,7 +279,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       results: rest.slice(0, bound.stmts.length),
     },
     photo,
-    photoResults: rest.slice(bound.stmts.length, bound.stmts.length + photoInsert.length),
+    photoResults,
     hasPresence: !!presencePlan,
   });
 }
