@@ -29,7 +29,13 @@ export type MembershipLiveness =
  * snapshot the serial resolved to (Apple personalize).
  */
 export type HolderProof =
-  | { via: 'session'; userId: string; sessionIdHash: string }
+  | {
+      via: 'session';
+      userId: string;
+      sessionIdHash: string;
+      /** An unlink (no re-sign) holds while the org is not active. Without it the org must be active. */
+      unlink?: true;
+    }
   | { via: 'verified_email'; userId: string }
   | {
       via: 'device';
@@ -167,9 +173,9 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
     }
     case 'holder': {
       const live = `${holderProof(p.proof, now, b)} AND p.deleted_at IS NULL AND p.test_data_quarantined = 0`;
-      // A session holder only removes the pass from their account (`holder_remove`), which a suspended
-      // org cannot refuse; a re-sign there is still refused by the transfer insert guard.
-      const org = p.proof.via === 'session' ? '1' : flag(`o.status = 'active'`);
+      // Only an unlink drops the pass from the account without re-signing it, which a
+      // suspended org cannot refuse. Every other holder grant needs an active org.
+      const org = p.proof.via === 'session' && p.proof.unlink ? '1' : flag(`o.status = 'active'`);
       return `SELECT p.org_id AS org_id, p.mode AS mode, ${flag(live)} AS actor_ok,
         ${org} AS org_ok
         FROM passes p JOIN orgs o ON o.id = p.org_id WHERE p.id = ${b.bind(p.passId)}`;

@@ -19,8 +19,12 @@ const holder = (passId: string, proof: HolderProof): Principal => ({
   passId,
   proof,
 });
-const commit = (x: Setup, passId: string, proof: HolderProof) =>
-  grant(x.route, { purpose: PURPOSE[proof.via], principal: holder(passId, proof) }).commit();
+const commit = (
+  x: Setup,
+  passId: string,
+  proof: HolderProof,
+  purpose: string = PURPOSE[proof.via],
+) => grant(x.route, { purpose, principal: holder(passId, proof) }).commit();
 const setOrg = (x: Setup, status: 'active' | 'suspended' | 'deleted') =>
   run(db, 'UPDATE orgs SET status = ? WHERE id = ?', [status, x.s.org.id]);
 
@@ -85,13 +89,19 @@ describe('holder principals and an inactive org (37)', () => {
   });
 
   it.each(['suspended', 'deleted'] as const)(
-    'only the session holder (holder_remove) acts when the org is %s',
+    'only the session unlink acts when the org is %s',
     async (status) => {
       const { x, cases } = await proofs(`ho-${status}`);
       await setOrg(x, status);
       for (const [via, passId, proof] of cases)
-        if (via === 'session') await expect(commit(x, passId, proof), via).resolves.toBeDefined();
-        else
+        if (via === 'session') {
+          const unlink = { ...proof, unlink: true } as HolderProof;
+          await expect(commit(x, passId, unlink), via).resolves.toBeDefined();
+          // The same purpose without the unlink flag (a transfer) needs an active org.
+          expect(await refusal(commit(x, passId, proof)), 'holder_remove').toMatchObject({
+            code: 'ORG_ACCESS_CHANGED',
+          });
+        } else
           expect(await refusal(commit(x, passId, proof)), via).toMatchObject({
             code: 'ORG_ACCESS_CHANGED',
           });

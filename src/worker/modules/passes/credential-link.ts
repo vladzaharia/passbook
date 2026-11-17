@@ -124,24 +124,31 @@ async function unlinkOwner(
 ): Promise<boolean> {
   const p = s.pass;
   if (!matchesCredentialSource(s, a.expected) || p.ownerUserId !== a.userId) return false;
-  const g = await transferGrant(ctx, a, 'start', p, [
-    ...passRow(p.id, p.rowVersion),
-    rowIs(
-      'passes',
-      p.id,
-      {
-        credential_generation: s.credentialGeneration,
-        lifecycle_generation: s.lifecycleGeneration,
-        link_generation: p.linkGeneration,
-        holder_email: p.holderEmail,
-        owner_user_id: a.userId,
-        test_data_quarantined: 0,
-      },
-      'lineage',
-    ),
-    ...noOpenClaims(p.id),
-    check,
-  ]);
+  const g = await transferGrant(
+    ctx,
+    a,
+    'start',
+    p,
+    [
+      ...passRow(p.id, p.rowVersion),
+      rowIs(
+        'passes',
+        p.id,
+        {
+          credential_generation: s.credentialGeneration,
+          lifecycle_generation: s.lifecycleGeneration,
+          link_generation: p.linkGeneration,
+          holder_email: p.holderEmail,
+          owner_user_id: a.userId,
+          test_data_quarantined: 0,
+        },
+        'lineage',
+      ),
+      ...noOpenClaims(p.id),
+      check,
+    ],
+    true,
+  );
   if (!g) return false;
   g.include(attachBlockPart(a.userId, ctx.clock.now()));
   g.update('passes', {
