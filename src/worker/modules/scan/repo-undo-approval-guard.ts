@@ -1,6 +1,6 @@
 import { actorSql, Binds } from '../../platform/authority-principal.ts';
 import { authorityPredicate } from '../../platform/authority-read.ts';
-import { stmt } from '../../platform/db.ts';
+import { exactStmt } from '../../platform/db.ts';
 import { authorityDenied } from '../../platform/errors.ts';
 import type { ScanActor } from './actor.ts';
 import { scanPrincipal } from './authority-checks.ts';
@@ -32,7 +32,7 @@ export function undoApprovalGuard(actor: ScanActor, plan: UndoPlan, now: number)
  */
 export async function guardMiss(db: D1Database, actor: ScanActor, now: number) {
   const b = new Binds();
-  const row = await stmt(
+  const row = await exactStmt(
     db,
     `SELECT a.actor_ok, a.org_ok FROM (${actorSql(scanPrincipal(actor), now, b)}) a`,
     b.params,

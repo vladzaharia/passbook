@@ -37,7 +37,7 @@ import {
   type WriteOptions,
 } from './authority-statements.ts';
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
-import { type SqlValue, stmt } from './db.ts';
+import { exactStmt, type SqlValue } from './db.ts';
 import { authorityDenied, type DenyReason } from './errors.ts';
 import { hasJobAuthority } from './job-authority.ts';
 import type { ServiceContext } from './service-context.ts';
@@ -245,12 +245,12 @@ export class Grant {
     this.#committed = true;
     const writes = this.#statements.map((s) => {
       const { sql, params } = builtOf(s);
-      return stmt(this.#db, sql, params);
+      return exactStmt(this.#db, sql, params);
     });
     return [
-      stmt(this.#db, insert.sql, insert.params),
+      exactStmt(this.#db, insert.sql, insert.params),
       ...writes,
-      stmt(this.#db, 'DELETE FROM authority_grants WHERE id = ?', [this.id]),
+      exactStmt(this.#db, 'DELETE FROM authority_grants WHERE id = ?', [this.id]),
     ];
   }
 

@@ -1,6 +1,6 @@
 import { type Check, rowIs } from '../../platform/authority-checks.ts';
 import { actorSql, Binds } from '../../platform/authority-principal.ts';
-import { stmt } from '../../platform/db.ts';
+import { exactStmt } from '../../platform/db.ts';
 import {
   AppError,
   authorityDenied,
@@ -56,7 +56,7 @@ export async function staleActorRefusal(
   const b = new Binds();
   const principal = actorSql(scanPrincipal(actor), now, b);
   const columns = checks.map((c, i) => `, COALESCE((${c.ok(b, 'org_mode')}), 0) AS c${i}`);
-  const row = await stmt(
+  const row = await exactStmt(
     ctx.env.DB,
     `WITH actor AS MATERIALIZED (${principal})
      SELECT a.actor_ok, a.org_ok${columns.join('')} FROM actor a`,
