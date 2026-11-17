@@ -39,15 +39,6 @@ export async function isolatedKeysetDatabase(): Promise<D1Database> {
   return db;
 }
 
-export async function assetGrant(db: D1Database, orgId: string, refs: string) {
-  await run(
-    db,
-    `INSERT INTO scan_asset_grant_provenance
-    (token_hash, org_id, mode, expires_at, credential_refs) VALUES (?, ?, 'live', ?, ?)`,
-    ['a'.repeat(64), orgId, 5_000_000, refs],
-  );
-}
-
 export async function tombstoneWithoutKeyset(db: D1Database) {
   const trigger = await first<{ sql: string }>(
     db,

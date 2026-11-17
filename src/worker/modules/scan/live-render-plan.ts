@@ -17,7 +17,6 @@ import type { LivePassSnapshot, LiveSourceProof } from './live-provenance.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { photoPolicyForResolved, scannerCandidateAllowed } from './member-photo.ts';
 import { scanIdentity } from './projection-privacy.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import {
   type LiveDisclosureCsrfResults,
   prepareLiveDisclosurePredicates,
@@ -40,7 +39,8 @@ export interface PreparedLiveRow {
   fallbackFences: readonly Predicate[] | null;
   grant: {
     plan: PreparedAssetGrant;
-    statementsAt(now: number, fresh: readonly Predicate[]): D1PreparedStatement[];
+    /** The disclosure fences a photo needs, on top of the row's own. */
+    photoFences: readonly Predicate[];
     actor: ScanActor;
     passId: string;
   } | null;
@@ -245,23 +245,9 @@ export async function prepareLiveRow(
       csrfResults,
     );
     if (!photoFences) return prepared;
-    const insertion = await prepareAssetGrantInsertion(
-      ctx,
-      plan,
-      {
-        source: csrfResults.sourceResult,
-        recipient: csrfResults.recipientResult,
-      },
-      candidate,
-    );
     return {
       ...prepared,
-      grant: {
-        plan,
-        statementsAt: (now, fresh) => insertion(now, [...photoFences, ...fresh]),
-        actor: recipient.actor,
-        passId: row.passId,
-      },
+      grant: { plan, photoFences, actor: recipient.actor, passId: row.passId },
     };
   } catch (error) {
     if (error instanceof ZodError || error instanceof SyntaxError) return fallback;

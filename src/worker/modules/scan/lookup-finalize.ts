@@ -3,17 +3,12 @@ import { type ActorCsrfSnapshot, actorCsrfSnapshotFence } from './actor-csrf.ts'
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { type LookupEntry, lookupHistoryStmts } from './lookup-history.ts';
-import { confirmedPhotoUrl } from './member-photo.ts';
+import { photoGrantUrl } from './member-photo.ts';
 import { isReadMissStale, prepareReadMiss } from './misses.ts';
 import { actorAuthorityPredicate } from './repo-actor-authority.ts';
-import { isAssetGrantAuthorityFailure, prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import { scanCandidateTemplateReadPredicate } from './repo-live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
-import {
-  andLookupPredicates,
-  deniedLookupPredicate,
-  lookupPhotoSnapshotPredicate,
-} from './repo-lookup-finalize.ts';
+import { andLookupPredicates, lookupPhotoSnapshotPredicate } from './repo-lookup-finalize.ts';
 import { type OutputAuthority, outputAuthorityPredicate } from './repo-output-authority.ts';
 import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
 import {
@@ -26,7 +21,6 @@ export async function finalizeLookup(
   ctx: ServiceContext,
   actor: ScanActor,
   entries: readonly LookupEntry[],
-  csrfResult: D1Result | undefined,
   csrfSnapshot: ActorCsrfSnapshot,
   credentials: CredentialTombstoneSnapshot | null,
   candidatesAt: (now: number) => OutputPredicate,
@@ -36,19 +30,6 @@ export async function finalizeLookup(
 ): Promise<LookupEntry[] | null> {
   if (countMiss && observedMatches.length !== observed.length) return null;
   const db = ctx.env.DB;
-  const prepared = await Promise.all(
-    entries.map(async (entry) => {
-      const requiredPhoto = lookupPhotoSnapshotPredicate(entry.source);
-      if (!entry.photoGrant) return null;
-      const insert = await prepareAssetGrantInsertion(
-        ctx,
-        entry.photoGrant.grant,
-        { recipient: csrfResult },
-        entry.source,
-      );
-      return { insert, requiredPhoto };
-    }),
-  );
   const now = ctx.clock.now();
   const csrf = actorCsrfSnapshotFence(
     actor,
@@ -80,21 +61,20 @@ export async function finalizeLookup(
       extra: andLookupPredicates(csrf, template),
     };
   };
-  const plans = entries.map((entry, index) => {
+  const plans = entries.map((entry) => {
     const predicate = outputAuthorityPredicate(authority(entry.source));
-    const preparedPhoto = prepared[index];
-    const photoAuthority = preparedPhoto
-      ? outputAuthorityPredicate({ ...authority(entry.source, false), requirePhoto: true })
-      : null;
+    // The photo is shown only while the pass still has the photo the capability was minted for.
     const photo =
-      preparedPhoto && photoAuthority
-        ? preparedPhoto.insert(
-            now,
-            photoAuthority,
-            entry.photoGrant && entry.photoGrant.grant.expiresAt > now
-              ? andLookupPredicates(preparedPhoto.requiredPhoto, photoAuthority)
-              : deniedLookupPredicate(),
-          )
+      entry.photoGrant && entry.photoGrant.grant.expiresAt > now
+        ? [
+            outputPredicateStmt(
+              db,
+              andLookupPredicates(
+                lookupPhotoSnapshotPredicate(entry.source),
+                outputAuthorityPredicate({ ...authority(entry.source, false), requirePhoto: true }),
+              ),
+            ),
+          ]
         : [];
     return { predicate, photo };
   });
@@ -144,7 +124,7 @@ export async function finalizeLookup(
   try {
     results = await db.batch<Record<string, unknown>>(statements);
   } catch (error) {
-    if (isAssetGrantAuthorityFailure(error) || isReadMissStale(error)) return null;
+    if (isReadMissStale(error)) return null;
     throw error;
   }
   if (results[actorIndex]?.results?.[0]?.authorized !== 1) return null;
@@ -162,17 +142,16 @@ export async function finalizeLookup(
       history.length > 0 &&
       history.every((_, offset) => results[at + offset]?.results?.[0]?.authorized === 1);
     at += history.length;
-    const photo = plan.photo;
-    const photoResults = results.slice(at, at + photo.length);
-    at += photo.length;
+    const photoAuthorized = plan.photo.length > 0 && results[at]?.results?.[0]?.authorized === 1;
+    at += plan.photo.length;
     if (!authorized) {
       lost.push(entry.source);
       continue;
     }
     entry.item.lastScanAt = historyCurrent ? entry.item.lastScanAt : null;
     entry.item.photoUrl =
-      photo.length && entry.photoGrant
-        ? confirmedPhotoUrl(actor, entry.source.pass.id, entry.photoGrant.grant, photoResults)
+      photoAuthorized && entry.photoGrant
+        ? photoGrantUrl(actor, entry.source.pass.id, entry.photoGrant.grant)
         : null;
     visible.push(entry);
   }

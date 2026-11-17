@@ -75,14 +75,10 @@ export function registerCatchupIntegrityTests() {
       'scan-ephemeral-template-snapshot',
       'scan-ephemeral-csrf:source:scanner',
       'scan-ephemeral-csrf:recipient:scanner',
-      'asset_grant_step',
-      'asset_grant_final',
+      '3 AS live_row_kind',
       'AS live_row_index',
     ])
       expect(finalSql).toContain(part);
-    expect(
-      final.statements.some(({ sql }) => sql.includes('INTO scan_asset_grant_provenance')),
-    ).toBe(true);
     expect(final.statements.at(-1)?.sql).toContain('live_render_final');
     expect(
       final.statements.reduce((n, statement) => n + statement.params.length, 0),

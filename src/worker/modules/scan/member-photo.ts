@@ -249,7 +249,7 @@ export async function canShowMemberPhoto(ctx: ServiceContext, actor: ScanActor, 
   return (await memberPhotoCandidate(ctx, actor, passId)) !== null;
 }
 
-/** Internal until the guarded grant insert has been confirmed. */
+/** A minted photo capability, released as a URL only to the recipient it was minted for. */
 export interface PreparedPhotoGrant {
   grant: PreparedAssetGrant;
 }
@@ -278,14 +278,12 @@ export async function knownPhotoUrl(
   }
 }
 
-/** Construct the URL only after the exact grant's atomic insert is confirmed. */
-export function confirmedPhotoUrl(
+export function photoGrantUrl(
   actor: ScanActor,
   passId: string,
   grant: PreparedAssetGrant,
-  results: readonly D1Result[] | undefined,
 ): string | null {
-  const token = takePhotoGrantToken(actor, passId, grant, results);
+  const token = takePhotoGrantToken(actor, passId, grant);
   return token ? photoUrlFor(actor, passId, token) : null;
 }
 

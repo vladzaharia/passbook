@@ -1,39 +1,16 @@
 import type { ScanActor } from './actor.ts';
-import { type AssetGrantBatchResult, grantInsertConfirmed } from './asset-grant-results.ts';
-import type { AssetGrantSource, AssetSessionSnapshot, PreparedAssetGrant } from './asset-types.ts';
+import type { PreparedAssetGrant } from './asset-types.ts';
 
-/** Request-local capability and actor credentials are never part of a cloneable plan. */
+/** The capability and its recipient stay out of any cloneable plan. */
 interface AssetGrantSidecar {
   token: string;
-  tokenHash: string;
   actor: ScanActor;
-  source: AssetGrantSource | undefined;
-  recipientSession: AssetSessionSnapshot | null;
-  sourceSession: AssetSessionSnapshot | null;
 }
 
 const sidecars = new WeakMap<PreparedAssetGrant, AssetGrantSidecar>();
 
-export function holdAssetGrantSidecar(
-  plan: PreparedAssetGrant,
-  sidecar: Omit<AssetGrantSidecar, 'tokenHash'>,
-): void {
-  sidecars.set(plan, { ...sidecar, tokenHash: plan.tokenHash });
-}
-
-/** Materialize only actor authority; the capability remains in the private sidecar. */
-export function assetGrantAuthority(
-  plan: PreparedAssetGrant,
-): Pick<AssetGrantSidecar, 'actor' | 'source' | 'recipientSession' | 'sourceSession'> | undefined {
-  const sidecar = sidecars.get(plan);
-  return sidecar && sidecar.tokenHash === plan.tokenHash
-    ? {
-        actor: sidecar.actor,
-        source: sidecar.source,
-        recipientSession: sidecar.recipientSession,
-        sourceSession: sidecar.sourceSession,
-      }
-    : undefined;
+export function holdAssetGrantSidecar(plan: PreparedAssetGrant, sidecar: AssetGrantSidecar): void {
+  sidecars.set(plan, sidecar);
 }
 
 /** Compare captured authority without cloning or serializing credentials. */
@@ -58,45 +35,29 @@ function sameSnapshotValue(actual: unknown, expected: unknown, ignore?: string):
   );
 }
 
-/** Check that URL scope still names the exact recipient and pass used at preparation. */
+/** The token of a photo grant, only for the recipient and pass it was minted for. */
 export function takePhotoGrantToken(
   actor: ScanActor,
   passId: string,
   plan: PreparedAssetGrant,
-  results: readonly AssetGrantBatchResult[] | undefined,
 ): string | null {
-  const expected = assetGrantAuthority(plan)?.actor;
+  const sidecar = sidecars.get(plan);
+  const expected = sidecar?.actor;
   if (
+    !sidecar ||
     !expected ||
     // The photo plan's purpose follows its release state (`photoGrantPurpose`, checked at mint).
-    !plan.guard.requirePhoto ||
-    plan.guard.passId !== passId ||
+    !plan.requirePhoto ||
+    plan.passId !== passId ||
     actor.orgId !== plan.orgId ||
     actor.mode !== plan.mode ||
     !sameSnapshotValue(actor, expected, 'scanner') ||
     !sameSnapshotValue(actor.scanner, expected.scanner, 'csrfSecret')
   )
     return null;
-  return takeAssetGrantToken(plan, results);
+  return sidecar.token;
 }
 
-/** Release the token only for this exact, fully confirmed INSERT and assertion slice. */
-export function takeAssetGrantToken(
-  plan: PreparedAssetGrant,
-  results: readonly AssetGrantBatchResult[] | undefined,
-): string | null {
-  const sidecar = sidecars.get(plan);
-  const inserted = results?.[0]?.results?.[0];
-  if (
-    !sidecar ||
-    plan.tokenHash !== sidecar.tokenHash ||
-    !grantInsertConfirmed(results) ||
-    !inserted ||
-    typeof inserted !== 'object' ||
-    !('token_hash' in inserted) ||
-    inserted.token_hash !== sidecar.tokenHash
-  )
-    return null;
-  sidecars.delete(plan);
-  return sidecar.token;
+export function takeAssetGrantToken(plan: PreparedAssetGrant): string | null {
+  return sidecars.get(plan)?.token ?? null;
 }

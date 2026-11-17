@@ -46,16 +46,15 @@ export async function effects(
   db: D1Database,
   passId: string,
   idempotencyKey: string,
-  orgId: string,
+  _orgId: string,
 ) {
-  return first<{ scans: number; gates: number; presence: number; events: number; grants: number }>(
+  return first<{ scans: number; gates: number; presence: number; events: number }>(
     db,
     `SELECT
     (SELECT count(*) FROM scans WHERE idempotency_key=? AND NOT (state='failed' AND outcome IS NULL)) AS scans,
     (SELECT count(*) FROM scan_gates WHERE pass_id=?) AS gates,
     (SELECT count(*) FROM scan_presence WHERE pass_id=?) AS presence,
-    (SELECT count(*) FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%') AS events,
-    (SELECT count(*) FROM scan_asset_grant_provenance WHERE org_id=?) AS grants`,
-    [idempotencyKey, passId, passId, passId, orgId],
+    (SELECT count(*) FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%') AS events`,
+    [idempotencyKey, passId, passId, passId],
   );
 }

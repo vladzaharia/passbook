@@ -4,7 +4,6 @@ import { run } from '../../platform/db.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
-import { assetGrantTokenHash } from './assets.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { candidateById } from './repo-lookup.ts';
 import { kit, observeCancellation, photoFixture } from './scan-hub-test-fixtures.ts';
@@ -18,7 +17,7 @@ describe('live photo open-to-commit fence', () => {
     'source-mode',
     'recipient-mode',
     'source-scope',
-    'grant',
+    'grant-expiry',
     'photo-key',
     'photo-version',
     'photo-hash',
@@ -42,9 +41,6 @@ describe('live photo open-to-commit fence', () => {
     if (!assetObject) throw new Error('Missing pinned template bytes.');
     const originalBytes = new Uint8Array(await assetObject.arrayBuffer());
     if (!originalBytes.length) throw new Error('Empty pinned template asset.');
-    const grant = new URL(fixture.path, 'https://wallet.test').searchParams.get('g');
-    const hash = await assetGrantTokenHash(grant ?? undefined);
-    if (!hash) throw new Error('Missing live grant.');
     const originalGet = kit.env.BUCKET.get.bind(kit.env.BUCKET);
     let opened = false;
     let cancelled = 0;
@@ -79,8 +75,8 @@ describe('live photo open-to-commit fence', () => {
           'DELETE FROM scanner_templates WHERE scanner_id=? AND template_id=?',
           [fixture.source.id, fixture.pass.templateId],
         );
-      } else if (change === 'grant') {
-        await run(kit.env.DB, 'DELETE FROM scan_asset_grant_provenance WHERE token_hash=?', [hash]);
+      } else if (change === 'grant-expiry') {
+        kit.clock.advance(3_600_001);
       } else if (change === 'template-bytes') {
         const changed = originalBytes.slice();
         changed[0] = originalBytes[0]! ^ 1;

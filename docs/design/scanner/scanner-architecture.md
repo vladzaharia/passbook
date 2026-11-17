@@ -1166,19 +1166,34 @@ All JSON, zod-validated, problem+json errors, `Cache-Control: no-store` on scan 
 | `GET /roster` (v2) | scanner with `offline`, accepts an event | `?cursor` → `ScanRoster` |
 | `POST /batch` (v2) | scanner with `offline` | `ScanBatchRequest` → `ScanBatchResult` |
 
-**Asset grant.** A desk card (`ready`) and a lookup row need not write a `scans` row. The short-lived opaque `g`
-encodes a 16-byte nonce and a 24-byte truncated HMAC authenticating the recipient, evaluated pass, source where
-applicable, credential tombstone references and expiry. `scan_asset_grant_provenance` stores only the SHA-256
-token hash, org, mode, expiry and keyed credential tombstone references; it has no commitment column. Raw
-credentials and proof material do not appear in grant URLs or logs. Authenticated lineage includes actor scope
-and revisions; pass org, mode, version, revision, link, credential and lifecycle generations and transfer state;
-Wallet snapshot and signing identity; pass and connection identity; org, template and approved release ID,
-generation, version and candidate hash; and photo version and identity. Validation is **not** a no-D1-read
-operation: the server rereads current actor, pass, connection, release, Wallet and photo lineage, and rechecks
-the tombstone references at mint, redemption and after opening the stream. Pending transfer, quarantine,
-inactive or deleted passes, stale scope or policy, invalid Wallet identity/validity, and changed lineage deny
-the asset. The stream is fenced again after opening, including photo visibility and the pass snapshot; failures
-close the stream. Assets are private and no-store, without an ETag; logs must not contain the grant.
+**Asset grant.** A desk card (`ready`) and a lookup row need not write a `scans` row. The short-lived opaque `g` is
+stateless: nothing is stored per grant. It encodes an 8-byte nonce, a 6-byte expiry, a 24-byte truncated HMAC
+(`derivedHmacKey(env, 'scan-asset-grant-v2')`) and, when it was minted from a scanned credential, the leading 8 bytes
+of each of that credential's keyed tombstone refs (at most 3). The HMAC covers the recipient (actor scope and the
+epochs the actor proof uses), the pass, its asset class (photo or other), the purpose, the expiry, the nonce and those
+ref prefixes. Authenticated lineage includes actor scope and epochs; pass org, mode, version, revision, link,
+credential and lifecycle generations and transfer state; Wallet snapshot and signing identity; pass and connection
+identity; org access epoch and the credential keyset commitment; the pass's *effective* release (its own release when
+the head only republishes it, `ownReleaseSaysSameSql`, so an identical same-version republish keeps a minted grant and a
+successor that changes the adapter, capabilities or audience policy does not); and photo version and identity. Raw
+credentials and proof material do not appear in grant URLs or logs. Minting writes nothing to D1.
+Redemption is **not** a no-D1-read operation: the server rereads the current actor, pass, connection, release,
+Wallet and photo lineage, recomputes the HMAC from those values and compares it in constant time, then fences the same
+values in SQL (and that no tombstone starts with a carried ref prefix). Any move of a bound value, an expired grant or
+a forged part denies the asset (404 `ASSET_NOT_FOUND`, as before). Pending transfer, quarantine, inactive or deleted
+passes, stale scope or policy, invalid Wallet identity/validity, and changed lineage deny the asset. The stream is
+fenced again after opening, including photo visibility and the pass snapshot; failures close the stream. Assets are
+private and no-store, without an ETag; logs must not contain the grant.
+
+Why no stored refs: a retirement of the pass's own credentials always moves a generation the HMAC binds. The only
+tombstone writer is a credential transfer, and `pass_credential_tombstones_insert_guard` (0042) admits a row only
+while the pass's pending transfer has already advanced `credential_generation`; that advance needs a pending
+reservation (`pass_credential_generation_reserved`), the transfer also moves link generation and download token, a
+pending transfer is itself a bound, denying state, and a holder, serial, auth-token, identity or scan-code change
+without a transfer is refused (`pass_credential_transfer_required`; barcode and lookup changes need a new pass
+version, which is bound). One retirement moves none of the scanned pass's generations: another pass's transfer that
+retires the credential the scan *presented* (a shared digest). That is why a grant minted from a scan carries the ref
+prefixes; a pass-ID grant presents no credential and carries none.
 
 The `credential_ref_keyset` singleton binds `credentialKeysetCommitment` in the final scanner credential-reference
 CAS, including an empty reference list. A missing or mismatched keyset fails closed rather than treating old
@@ -2011,10 +2026,14 @@ Rendered display strings are never logged; the suite-wide log check also scans f
 
 | Path | D1 round trips (asserted by a counting D1 wrapper in tests) | Target Worker wall time |
 | --- | --- | --- |
-| Door check-in (`actions`, auto) | claim 1, candidates 1-2, policy reads 1 (batched), fast-path batch 1, counts 1 | p95 ≤ 150 ms |
+| Door check-in (`actions`, auto) | claim 1, candidates 1-2, policy reads 1 (batched), commit grant batch 1 (with counts and the display reads), 5 in all | p95 ≤ 150 ms |
 | Value action | as above + `publishPass` (R2 put + CAS batch, ≤ 3 attempts) | p95 ≤ 400 ms |
 | Resolve (desk card) | candidates 1-2, card reads 1 batch | p95 ≤ 120 ms |
 | Lookup | 1-2 | p95 ≤ 120 ms |
+
+A photo adds none (its capability is stateless, §5.1) and neither does a verified manager PIN: its
+attempt is returned by parts of the commit grant (`include(writePart(… {grant}))`), which apply only while the grant
+holds and cannot fail it.
 
 The display adds **no round trips** to any path: `fields` and history statements (≤ 4) join the existing card or
 counts batch, and only when the compiled doc's `needs` lists them. Rendering is CPU only, targeted under 1 ms; a test

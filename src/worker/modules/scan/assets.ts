@@ -1,11 +1,9 @@
 import { NotFoundError } from '../../platform/errors.ts';
-import { fromBase64Url, safeEqualBytes, sha256Hex, toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { captureActor } from './asset-authority.ts';
-import { activeWallet, grantData, validRefs } from './asset-claim.ts';
-import { mac, NONCE_BYTES, prepareAssetGrant, TAG_BYTES, TOKEN_BYTES } from './asset-grant-mint.ts';
-import type { AssetGrantBatchResult } from './asset-grant-results.ts';
+import { activeWallet, grantData } from './asset-claim.ts';
+import { mac, parseGrant, prepareAssetGrant, tagMatches } from './asset-grant-mint.ts';
 import { assetSnapshotInput, assetSnapshotProofFromInput } from './asset-secrets.ts';
 import { takeAssetGrantToken } from './asset-sidecar.ts';
 import {
@@ -18,11 +16,6 @@ import {
 } from './asset-types.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
-import {
-  getAssetGrant,
-  isAssetGrantAuthorityFailure,
-  prepareAssetGrantInsertion,
-} from './repo-asset-grants.ts';
 import { type AssetGrantGuardInput, prepareAssetGrantGuardParts } from './repo-asset-lineage.ts';
 import { assetGrantPredicatesCurrent } from './repo-asset-read.ts';
 import {
@@ -38,7 +31,7 @@ function pinnedContext(ctx: ServiceContext): ServiceContext {
   return { ...ctx, env: snapshotCredentialEnv(ctx.env) };
 }
 
-/** An internal cloneable plan; the caller must confirm its guarded insert before exposing token. */
+/** A photo capability; its URL is built only for the recipient it was minted for (`confirmedPhotoUrl`). */
 export function preparePhotoGrant(
   ctx: ServiceContext,
   actor: ScanActor,
@@ -59,7 +52,7 @@ export function preparePhotoGrant(
   );
 }
 
-/** Generic card assets share the deferred guarded-insert contract with photos. */
+/** A capability for the pass card's other images. */
 export const prepareGenericAssetGrant = (
   ctx: ServiceContext,
   actor: ScanActor,
@@ -80,15 +73,7 @@ export const prepareGenericAssetGrant = (
     purpose,
   );
 
-/** Release the request-local capability only after every guarded batch assertion succeeds. */
-export function confirmAssetGrantToken(
-  plan: PreparedAssetGrant,
-  results: readonly AssetGrantBatchResult[] | undefined,
-): string | null {
-  return takeAssetGrantToken(plan, results);
-}
-
-/** Insert a short-lived opaque capability only when all original authority is still current. */
+/** Mint a short-lived capability for the evaluated snapshot. It is the proof itself: nothing is stored. */
 export async function mintAssetGrant(
   ctx: ServiceContext,
   actor: ScanActor,
@@ -99,9 +84,8 @@ export async function mintAssetGrant(
   requirePhoto = false,
   purpose: AssetGrantPurpose = 'commit',
 ): Promise<string> {
-  const pinned = pinnedContext(ctx);
   const plan = await prepareAssetGrant(
-    pinned,
+    pinnedContext(ctx),
     actor,
     snapshot,
     connectionGeneration,
@@ -110,84 +94,51 @@ export async function mintAssetGrant(
     requirePhoto,
     purpose,
   );
-  if (!plan) throw missing();
-  try {
-    const bind = await prepareAssetGrantInsertion(pinned, plan, undefined, snapshot);
-    const statements = bind(pinned.clock.now(), undefined);
-    const token = confirmAssetGrantToken(plan, await pinned.env.DB.batch(statements));
-    if (!token) throw missing();
-    return token;
-  } catch (error) {
-    if (isAssetGrantAuthorityFailure(error)) throw missing();
-    throw error;
-  }
+  const token = plan && takeAssetGrantToken(plan);
+  if (!token) throw missing();
+  return token;
 }
 
-/** A verified capability retains its original keyed refs for every later SQL fence. */
-export type VerifiedAssetGrant = AssetGrantGuardInput & {
-  storedGrant: { tokenHash: string; expiresAt: number; credentialRefsJson: string };
-};
+/** A verified capability: the guard input for every later SQL fence, and its own expiry. */
+export type VerifiedAssetGrant = AssetGrantGuardInput & { expiresAt: number };
 
-function tokenBytes(grant: string | undefined): Uint8Array | null {
-  if (!grant || !/^[A-Za-z0-9_-]{54}$/.test(grant)) return null;
-  try {
-    const bytes = fromBase64Url(grant);
-    return bytes.length === TOKEN_BYTES && toBase64Url(bytes) === grant ? bytes : null;
-  } catch {
-    return null;
-  }
-}
+/** A well-formed capability string, before any read. */
+export const assetGrantWellFormed = (grant: string | undefined): boolean =>
+  parseGrant(grant) !== null;
 
-export async function assetGrantTokenHash(grant: string | undefined): Promise<string | null> {
-  return tokenBytes(grant) && grant ? sha256Hex(grant) : null;
-}
-
-/** Verify the capability against a batch-loaded provenance row without performing D1 reads. */
+/**
+ * Recompute the capability from the lineage `snapshot` was just read with and compare in constant
+ * time. Any move of the actor, pass, release or photo since the mint changes the tag.
+ */
 export async function prepareAssetGrantVerification(
   ctx: ServiceContext,
   actor: ScanActor,
   snapshot: AssetPassSnapshot,
   connectionGeneration: number | null,
   grant: string | undefined,
-  stored: { expiresAt: number; credentialRefs: string } | null,
   source?: AssetGrantSource,
   purpose: AssetGrantPurpose = 'commit',
   requirePhoto = false,
 ): Promise<VerifiedAssetGrant | null> {
   const pinned = pinnedContext(ctx);
+  const parsed = parseGrant(grant);
+  if (!parsed || !Number.isSafeInteger(parsed.expiresAt) || parsed.expiresAt <= pinned.clock.now())
+    return null;
   const capturedActor = captureActor(actor);
   const passId = snapshot.pass.id;
   const capturedSource = source
     ? { sourceId: source.sourceId, eventId: source.eventId, actor: captureActor(source.actor) }
     : undefined;
-  const bytes = tokenBytes(grant);
-  if (
-    !bytes ||
-    !grant ||
-    !stored ||
-    !Number.isSafeInteger(stored.expiresAt) ||
-    stored.expiresAt <= pinned.clock.now()
-  )
-    return null;
-  let refs: unknown;
-  try {
-    refs = JSON.parse(stored.credentialRefs);
-  } catch {
-    return null;
-  }
-  if (!validRefs(refs) || stored.credentialRefs !== JSON.stringify(refs)) return null;
-  const originalSnapshot = { ...snapshot, credentialTombstoneRefs: refs };
-  const capturedInput = assetSnapshotInput(originalSnapshot);
+  const capturedInput = assetSnapshotInput(snapshot);
   const activeVersion = snapshot.activeReleaseVersion ?? snapshot.pass.templateVersion;
   const [snapshotProof, data] = await Promise.all([
     assetSnapshotProofFromInput(pinned.env, capturedInput),
     grantData(
       pinned,
       capturedActor,
-      originalSnapshot,
+      snapshot,
       connectionGeneration,
       activeVersion,
-      refs,
       capturedSource,
       requirePhoto,
       purpose,
@@ -203,22 +154,17 @@ export async function prepareAssetGrantVerification(
       mac(
         pinned,
         data.fields,
-        stored.expiresAt,
-        refs,
-        bytes.subarray(0, NONCE_BYTES),
+        parsed.expiresAt,
+        parsed.refs,
+        parsed.nonce,
         candidate,
         requirePhoto,
       ),
     ),
   );
-  const matched = expected.findIndex((tag) =>
-    safeEqualBytes(bytes.subarray(NONCE_BYTES), tag.subarray(0, TAG_BYTES)),
-  );
-  if (matched < 0 || stored.expiresAt <= pinned.clock.now()) return null;
+  const matched = expected.findIndex((tag) => tagMatches(parsed.tag, tag));
   const verifiedPurpose = purposes[matched];
-  if (!verifiedPurpose) return null;
-  const tokenHash = await sha256Hex(grant);
-  if (assetSnapshotInput(originalSnapshot) !== capturedInput) return null;
+  if (!verifiedPurpose || parsed.expiresAt <= pinned.clock.now()) return null;
   return {
     passId,
     snapshotProof,
@@ -228,14 +174,10 @@ export async function prepareAssetGrantVerification(
     sourceSession: data.sourceSession,
     connectionGeneration,
     activeVersion,
-    credentialTombstoneRefs: refs,
+    credentialRefPrefixes: parsed.refs,
     requirePhoto,
     purpose: verifiedPurpose,
-    storedGrant: {
-      tokenHash,
-      expiresAt: stored.expiresAt,
-      credentialRefsJson: stored.credentialRefs,
-    },
+    expiresAt: parsed.expiresAt,
   };
 }
 
@@ -251,51 +193,28 @@ export async function assetGrantValid(
   requirePhoto = false,
 ): Promise<boolean> {
   const pinned = pinnedContext(ctx);
-  const input = assetSnapshotInput(snapshot);
   const capturedActor = captureActor(actor);
-  const capturedSource = source
-    ? { sourceId: source.sourceId, eventId: source.eventId, actor: captureActor(source.actor) }
-    : undefined;
-  const tokenHash = await assetGrantTokenHash(grant);
-  if (!tokenHash) return false;
-  const stored = await getAssetGrant(
-    pinned.env.DB,
-    tokenHash,
-    capturedActor.orgId,
-    capturedActor.mode,
-    pinned.clock.now(),
-  );
   const verified = await prepareAssetGrantVerification(
     pinned,
     capturedActor,
     snapshot,
     connectionGeneration,
     grant,
-    stored,
-    capturedSource,
+    source,
     purpose,
     requirePhoto,
   );
-  if (!verified || assetSnapshotInput(snapshot) !== input) return false;
+  if (!verified) return false;
   const templates =
     verified.purpose === 'read'
       ? resolveCandidateReadTemplates(snapshot)
       : await verifyLiveTemplateSnapshot(pinned, snapshot, snapshot.templateSnapshot, 'commit');
-  if (!templates || assetSnapshotInput(snapshot) !== input) return false;
+  if (!templates) return false;
   const template =
     verified.purpose === 'read'
       ? scanCandidateTemplateReadPredicate(snapshot)
       : scanTemplateSnapshotPredicate(snapshot, snapshot.templateSnapshot, 'commit');
-  const originalSnapshot = {
-    ...snapshot,
-    credentialTombstoneRefs: verified.credentialTombstoneRefs,
-  };
-  const makeGuard = await prepareAssetGrantGuardParts(
-    pinned,
-    verified,
-    undefined,
-    originalSnapshot,
-  );
+  const makeGuard = await prepareAssetGrantGuardParts(pinned, verified, undefined, snapshot);
   return makeGuard
     ? assetGrantPredicatesCurrent(pinned.env.DB, makeGuard(pinned.clock.now()), template)
     : false;

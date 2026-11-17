@@ -173,7 +173,6 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       reservation,
       credentialTombstoneRefs: credentials.credentialTombstoneRefs,
       credentialKeysetCommitment: credentials.credentialKeysetCommitment,
-      csrfSnapshot,
       undoWindow,
       preflight,
       held,

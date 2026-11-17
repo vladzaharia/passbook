@@ -6,14 +6,12 @@ import { first, run } from '../../platform/db.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { assetGrantTokenHash } from './assets.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { lookup } from './lookup.ts';
 import { kit, registerLookupOutputFixture, templateId } from './lookup-output-test-fixtures.ts';
 import {
   clockDuringGrant,
   GROUP,
-  grants,
   measured,
   PRIVATE_EMAIL,
   photoPass,
@@ -59,16 +57,10 @@ async function expireWallet(passId: string) {
   ).toEqual({ changes: 1 });
 }
 
-async function expectOnlyPhotoGrant(url: string) {
+function photoToken(url: string) {
   const token = new URL(url, 'https://wallet.test').searchParams.get('g');
-  const tokenHash = await assetGrantTokenHash(token ?? undefined);
-  expect(tokenHash).not.toBeNull();
-  expect(
-    await first(kit.env.DB, 'SELECT token_hash FROM scan_asset_grant_provenance WHERE org_id=?', [
-      kit.org.id,
-    ]),
-  ).toEqual({ token_hash: tokenHash });
-  expect(await grants()).toBe(1);
+  expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
+  return token;
 }
 
 describe('read grant final-clock authority', () => {
@@ -89,12 +81,11 @@ describe('read grant final-clock authority', () => {
       const passes = [await photoPass(names[0]!)];
       if (route === 'lookup') passes.push(await photoPass(names[1]!));
       const actor = await principal(kind);
-      expect(await grants()).toBe(0);
       const body = route === 'resolve' ? request(passes[0]!.id) : { q: GROUP };
       const result = await measured(actor.post, route, body, {
         race: {
           passId: passes[0]!.id,
-          snapshotOccurrence: route === 'resolve' ? 3 : 2,
+          occurrence: route === 'resolve' ? 2 : 1,
           advance: actor.advance,
         },
       });
@@ -113,7 +104,6 @@ describe('read grant final-clock authority', () => {
         expect(ScanLookupResultSchema.parse(JSON.parse(text))).toEqual({ items: [], more: false });
       }
       noDisclosure(text, passes, names);
-      expect(await grants()).toBe(0);
     },
   );
 
@@ -142,7 +132,7 @@ describe('read grant final-clock authority', () => {
       const race = clockDuringGrant(kit.clock, {
         passId: pass.id,
         orgId: kit.org.id,
-        snapshotOccurrence: route === 'resolve' ? 3 : 2,
+        occurrence: route === 'resolve' ? 2 : 1,
         advance: 2_000,
       });
       let result: unknown;
@@ -160,7 +150,6 @@ describe('read grant final-clock authority', () => {
         expect(result).toMatchObject({ reason: 'not_found', card: null, display: null });
       else expect(result).toEqual({ items: [], more: false });
       noDisclosure(JSON.stringify(result), [pass], [name]);
-      expect(await grants()).toBe(0);
     },
   );
 
@@ -172,7 +161,7 @@ describe('read grant final-clock authority', () => {
     const result = await measured(actor.post, 'resolve', request(pass.id), {
       race: {
         passId: pass.id,
-        snapshotOccurrence: 3,
+        occurrence: 2,
         advance: 2_000,
       },
     });
@@ -181,10 +170,9 @@ describe('read grant final-clock authority', () => {
     const text = await result.response.text();
     expect(JSON.parse(text)).toMatchObject({ reason: 'not_found', card: null, display: null });
     noDisclosure(text, [pass], [name]);
-    expect(await grants()).toBe(0);
   });
 
-  it('resamples after an earlier photo plan when another guard finishes, masking only the expired Wallet', async () => {
+  it('masks only the expired Wallet when authority is resampled at the final clock', async () => {
     const expiredName = 'Expired Early Photo Member';
     const validName = 'Current Late Photo Member';
     const expired = await photoPass(expiredName);
@@ -196,22 +184,9 @@ describe('read grant final-clock authority', () => {
       actor.post,
       'lookup',
       { q: GROUP },
-      {
-        race: {
-          passId: valid.id,
-          firstPhotoId: expired.id,
-          scannerId: actor.scannerId,
-          snapshotOccurrence: 2,
-          advance: 2_000,
-        },
-      },
+      { race: { passId: valid.id, occurrence: 1, advance: 2_000 } },
     );
-    expect(result.events).toEqual([
-      'first photo prepared',
-      'second photo signing',
-      'first guard prepared',
-      'clock advanced',
-    ]);
+    expect(result.events).toEqual(['clock advanced']);
     expect(result.grantBatchAt).toBe(kit.clock.now());
     expect(result.response.status).toBe(200);
     const text = await result.response.text();
@@ -226,57 +201,33 @@ describe('read grant final-clock authority', () => {
     noDisclosure(text, [expired], [expiredName], true);
     const url = body.items[0]!.photoUrl!;
     expect(url).toContain(`/passes/${valid.id}/assets/member.png?g=`);
-    await expectOnlyPhotoGrant(url);
     expect((await kit.get(actor.headers, url.replace('/api/v1/scan', ''))).status).toBe(200);
   });
 
-  it('masks an earlier expired photo grant while retaining a later still-valid grant', async () => {
-    const earlier = await photoPass('Earlier Grant Member');
-    const later = await photoPass('Later Grant Member');
+  it('withholds a photo whose capability expired by the final clock, keeping the identity', async () => {
+    const first = await photoPass('Earlier Grant Member');
+    const second = await photoPass('Later Grant Member');
     const actor = await principal('valid');
     if (!actor.scannerId || !actor.headers) throw new Error('Missing scanner fixture');
-    const start = kit.clock.now();
     const result = await measured(
       actor.post,
       'lookup',
       { q: GROUP },
-      {
-        race: {
-          passId: later.id,
-          firstPhotoId: earlier.id,
-          scannerId: actor.scannerId,
-          staggerAdvance: 2_000,
-          snapshotOccurrence: 2,
-          advance: 3_598_001,
-        },
-      },
+      { race: { passId: second.id, occurrence: 1, advance: 3_600_001 } },
     );
-    expect(result.events).toEqual([
-      'first photo prepared',
-      'clock staggered',
-      'second photo signing',
-      'first guard prepared',
-      'clock advanced',
-    ]);
-    expect(kit.clock.now()).toBe(start + 3_600_001);
-    expect(result.grantBatchAt).toBe(kit.clock.now());
     expect(result.response.status).toBe(200);
     const body = ScanLookupResultSchema.parse(await result.response.json());
-    expect(body.more).toBe(false);
     expect(body.items).toHaveLength(2);
-    expect(body.items.find((item) => item.passId === earlier.id)).toMatchObject({
-      title: 'Earlier Grant Member',
-      photoUrl: null,
-    });
-    const url = body.items.find((item) => item.passId === later.id)?.photoUrl;
-    expect(url).toContain(`/passes/${later.id}/assets/member.png?g=`);
-    await expectOnlyPhotoGrant(url!);
-    expect(
-      await first(kit.env.DB, 'SELECT expires_at FROM scan_asset_grant_provenance WHERE org_id=?', [
-        kit.org.id,
-      ]),
-    ).toEqual({ expires_at: start + 3_602_000 });
-    expect((await kit.get(actor.headers, url!.replace('/api/v1/scan', ''))).status).toBe(200);
+    for (const pass of [first, second])
+      expect(body.items.find((item) => item.passId === pass.id)).toMatchObject({ photoUrl: null });
+    // Control: the same lookup with the clock left alone offers both photos.
+    const fresh = ScanLookupResultSchema.parse(
+      await (await actor.post('lookup', { q: GROUP })).json(),
+    );
+    for (const pass of [first, second])
+      expect(fresh.items.find((item) => item.passId === pass.id)?.photoUrl).toEqual(
+        expect.any(String),
+      );
   });
 
   it('keeps a photo-removed identity masked without disturbing an independently valid photo', async () => {
@@ -307,7 +258,7 @@ describe('read grant final-clock authority', () => {
     expect(body.items.find((item) => item.passId === hidden.id)).toMatchObject({ photoUrl: null });
     const url = body.items.find((item) => item.passId === valid.id)?.photoUrl;
     expect(url).toContain(`/passes/${valid.id}/assets/member.png?g=`);
-    await expectOnlyPhotoGrant(url!);
+    expect(photoToken(url!)).not.toBeNull();
   });
 
   it('retains fresh photo and pass-view capabilities for a resolve and multi-entry lookup', async () => {
@@ -320,13 +271,12 @@ describe('read grant final-clock authority', () => {
     expect(resolved.response.status).toBe(200);
     const outcome = ScanOutcomeSchema.parse(await resolved.response.json());
     expect(outcome).toMatchObject({ kind: 'ready', card: { passId: firstPass.id } });
-    expect(outcome.card?.passView.assetGrant).toMatch(/^[A-Za-z0-9_-]{54}$/);
+    expect(outcome.card?.passView.assetGrant).toMatch(/^[A-Za-z0-9_-]{51,83}$/);
     const resolvedPhoto = outcome.card?.display.identity.photo?.url;
     expect(resolvedPhoto).toContain(`/passes/${firstPass.id}/assets/member.png?g=`);
     expect((await kit.get(actor.headers, resolvedPhoto!.replace('/api/v1/scan', ''))).status).toBe(
       200,
     );
-    expect(await grants()).toBe(2);
 
     const searched = await measured(actor.post, 'lookup', { q: GROUP });
     expect(searched.grantBatchAt).toBe(kit.clock.now());
@@ -341,6 +291,5 @@ describe('read grant final-clock authority', () => {
       expect(url).toContain(`/passes/${pass.id}/assets/member.png?g=`);
       expect((await kit.get(actor.headers, url!.replace('/api/v1/scan', ''))).status).toBe(200);
     }
-    expect(await grants()).toBe(4);
   });
 });

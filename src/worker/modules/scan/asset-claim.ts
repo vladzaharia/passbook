@@ -16,13 +16,29 @@ import {
 } from './asset-types.ts';
 import { walletIdentityMatches } from './wallet-snapshot.ts';
 
-export function validRefs(value: unknown): value is string[] {
-  return (
-    Array.isArray(value) &&
-    value.length <= 3 &&
-    value.every((ref) => typeof ref === 'string' && /^[a-f0-9]{64}$/.test(ref)) &&
-    new Set(value).size === value.length
-  );
+/**
+ * The release the pass is used under, as its template snapshot captured it: the pass's own when the
+ * head only republishes it (`ownReleaseSaysSameSql`), so an identical republish keeps a minted grant
+ * valid and a successor that changes what a scanner sees or may do does not.
+ */
+function usedRelease(snapshot: AssetPassSnapshot): [string, number, string, string] | null | false {
+  const raw = snapshot.templateSnapshot?.raw;
+  if (!raw) return false;
+  let release: unknown;
+  try {
+    release = (JSON.parse(raw) as { release?: unknown }).release;
+  } catch {
+    return false;
+  }
+  if (release === null) return null;
+  const r = release as Record<string, unknown> | undefined;
+  return r &&
+    typeof r.id === 'string' &&
+    typeof r.generation === 'number' &&
+    typeof r.version === 'string' &&
+    typeof r.candidateHash === 'string'
+    ? [r.id, r.generation, r.version, r.candidateHash]
+    : false;
 }
 
 /** Keep credentials and identifying scalars out of the serialized MAC input. */
@@ -52,7 +68,6 @@ export async function grantData(
   snapshot: AssetPassSnapshot,
   connectionGeneration: number | null,
   activeVersion: string | null,
-  refs: readonly string[],
   source: AssetGrantSource | undefined,
   requirePhoto: boolean,
   purpose: AssetGrantPurpose,
@@ -85,7 +100,6 @@ export async function grantData(
     typeof snapshot.passPersonalizationSnapshot !== 'string' ||
     typeof snapshot.fieldSourcesSnapshot !== 'string' ||
     !originalPassData(snapshot) ||
-    !validRefs(refs) ||
     typeof snapshot.credentialKeysetCommitment !== 'string' ||
     !/^[a-f0-9]{64}$/.test(snapshot.credentialKeysetCommitment) ||
     !Object.hasOwn(snapshot, 'assetPhoto') ||
@@ -103,6 +117,8 @@ export async function grantData(
       (!source.eventId || !source.sourceId || source.actor.scanner?.id !== source.sourceId))
   )
     return null;
+  const release = usedRelease(snapshot);
+  if (release === false) return null;
   const noRelease =
     snapshot.activeReleaseId === null &&
     snapshot.activeReleaseGeneration === null &&
@@ -115,7 +131,10 @@ export async function grantData(
       activeVersion !== pass.templateVersion
     )
       return null;
+    if (release !== null) return null;
   } else if (
+    release === null ||
+    release[2] !== snapshot.activeReleaseVersion ||
     !snapshot.activeReleaseId ||
     !snapshot.activeReleaseVersion ||
     !snapshot.activeReleaseCandidateHash ||
@@ -163,10 +182,6 @@ export async function grantData(
     versionPersonalization,
     orgRevision,
     displayTemplateVersion,
-    activeReleaseId,
-    activeReleaseGeneration,
-    activeReleaseVersion,
-    activeReleaseCandidateHash,
   } = snapshot;
   const photoVersion = assetPhoto?.version ?? null;
   const photoSha1 = assetPhoto?.sha1 ?? null;
@@ -269,10 +284,7 @@ export async function grantData(
       orgRevision,
       activeVersion,
       displayTemplateVersion,
-      activeReleaseId,
-      activeReleaseGeneration,
-      activeReleaseVersion,
-      activeReleaseCandidateHash,
+      release,
       photoVersion !== null ? [photoVersion, photoKeyDigest, photoSha1, photoIncluded] : null,
     ],
   };

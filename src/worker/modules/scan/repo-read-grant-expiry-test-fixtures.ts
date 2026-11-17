@@ -1,15 +1,11 @@
-import { first } from '../../platform/db.ts';
-
-export function hasAssetGrantInsert(sql: readonly string[]) {
-  return sql.some((text) => text.includes('INSERT OR IGNORE INTO scan_asset_grant_provenance'));
-}
-
-export async function countAssetGrants(db: D1Database, orgId: string) {
-  return (
-    await first<{ n: number }>(
-      db,
-      'SELECT COUNT(*) AS n FROM scan_asset_grant_provenance WHERE org_id=?',
-      [orgId],
-    )
-  )?.n;
+/**
+ * The last batch of a read: the output fences that decide what the answer discloses. A resolve ends in
+ * the actor check of `currentFoundActorStmt`; a lookup ends in the batch that reads the passes' heads.
+ */
+export function isFinalFenceBatch(sql: readonly string[]) {
+  return sql.some(
+    (text) =>
+      text.includes('AS actor_authorized') ||
+      (text.includes('AS releaseId') && text.includes('json_each')),
+  );
 }

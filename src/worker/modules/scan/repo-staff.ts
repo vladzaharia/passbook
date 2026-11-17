@@ -1,7 +1,7 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { coalesceTo, maxNow, type SetValue } from '../../platform/authority-expr.ts';
-import { all, stmt } from '../../platform/db.ts';
+import { stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -52,16 +52,6 @@ export const staffStatement = (db: Db, orgId: string, id: string): D1PreparedSta
 export async function getStaff(db: Db, orgId: string, id: string): Promise<ScanStaffRow | null> {
   const row = await staffStatement(db, orgId, id).first<StaffRaw>();
   return row ? toStaff(row) : null;
-}
-
-export async function listActiveManagers(db: Db, orgId: string): Promise<ScanStaffRow[]> {
-  const rows = await all<StaffRaw>(
-    db,
-    `SELECT ${COLUMNS} FROM scan_staff
-     WHERE org_id = ? AND role = 'manager' AND disabled_at IS NULL ORDER BY name COLLATE NOCASE`,
-    [orgId],
-  );
-  return rows.map(toStaff);
 }
 
 export interface NewStaff {

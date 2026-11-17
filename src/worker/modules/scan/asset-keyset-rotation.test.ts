@@ -1,15 +1,8 @@
 import { expect, it } from 'vitest';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { grantInsertConfirmed } from './asset-grant-results.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
-import {
-  assetGrantValid,
-  confirmAssetGrantToken,
-  mintAssetGrant,
-  prepareGenericAssetGrant,
-} from './assets.ts';
+import { assetGrantValid, mintAssetGrant } from './assets.ts';
 import { scanCredentialKeys } from './credential-input.ts';
-import { prepareAssetGrantInsertion } from './repo-asset-grants.ts';
 import { candidateById } from './repo-lookup.ts';
 import { setupScanKit } from './test-kit.ts';
 
@@ -54,16 +47,7 @@ it('pins one KEK snapshot across asynchronous asset mint and redemption', async 
     kit.env.KEK_V1 = oldKey;
   }
 
-  const deferred = await prepareGenericAssetGrant(
-    kit.ctx,
-    actor,
-    snapshot,
-    snapshot.connectionGeneration,
-    snapshot.activeTemplateVersion,
-    'commit',
-  );
-  if (!deferred) throw new Error('Generic grant plan missing');
-  expect(confirmAssetGrantToken(deferred, undefined)).toBeNull();
+  // Any change to the evaluated snapshot is a different capability: the tag no longer matches.
   const alteredSnapshots = [
     { ...snapshot, pass: { ...snapshot.pass, authToken: `${snapshot.pass.authToken}-altered` } },
     { ...snapshot, passJsonSnapshot: `${snapshot.passJsonSnapshot ?? ''} ` },
@@ -71,36 +55,16 @@ it('pins one KEK snapshot across asynchronous asset mint and redemption', async 
       ...snapshot,
       pass: {
         ...snapshot.pass,
-        personalization: {
-          ...snapshot.pass.personalization,
-          testChange: 'altered',
-        },
+        personalization: { ...snapshot.pass.personalization, testChange: 'altered' },
       },
     },
   ];
-  for (const altered of alteredSnapshots) {
-    const bind = await prepareAssetGrantInsertion(kit.ctx, deferred, undefined, altered);
-    await expect(kit.env.DB.batch(bind(kit.clock.now(), undefined))).rejects.toThrow(
-      'scan_asset_authority_failed',
-    );
-  }
-  const originalAuthToken = snapshot.pass.authToken;
-  const pendingInsert = prepareAssetGrantInsertion(kit.ctx, deferred, undefined, snapshot);
-  snapshot.pass.authToken = `${originalAuthToken}-changed`;
-  try {
-    const bind = await pendingInsert;
-    await expect(kit.env.DB.batch(bind(kit.clock.now(), undefined))).rejects.toThrow(
-      'scan_asset_authority_failed',
-    );
-  } finally {
-    snapshot.pass.authToken = originalAuthToken;
-  }
-  const bind = await prepareAssetGrantInsertion(kit.ctx, deferred, undefined, snapshot);
-  const inserted = await kit.env.DB.batch(bind(kit.clock.now(), undefined));
-  expect(grantInsertConfirmed(inserted)).toBe(true);
-  const deferredToken = confirmAssetGrantToken(deferred, inserted);
-  if (!deferredToken) throw new Error('Confirmed generic asset grant missing');
+  for (const altered of alteredSnapshots)
+    expect(
+      await assetGrantValid(kit.ctx, actor, altered, snapshot.connectionGeneration, token),
+    ).toBe(false);
+  // Positive control: the unaltered snapshot still redeems.
   expect(
-    await assetGrantValid(kit.ctx, actor, snapshot, snapshot.connectionGeneration, deferredToken),
+    await assetGrantValid(kit.ctx, actor, snapshot, snapshot.connectionGeneration, token),
   ).toBe(true);
 });

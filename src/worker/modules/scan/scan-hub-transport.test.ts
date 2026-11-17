@@ -260,7 +260,8 @@ describe('live display transport and authorization', () => {
       expect([...url.searchParams.keys()].sort()).toEqual(['event', 'g']);
       const grant = url.searchParams.get('g');
       if (!grant) throw new Error('Missing live grant.');
-      expect(fromBase64Url(grant)).toHaveLength(40);
+      // nonce, expiry and tag, then the ref prefixes of the scanned credential (none for a pass-ID row).
+      expect(fromBase64Url(grant).length).toBeGreaterThanOrEqual(38);
       expect(url.toString()).not.toContain(fixture.source.id);
       expect(url.toString()).not.toContain(opened.actor.scanner.tokenHash);
       expect(url.toString()).not.toContain(scannerSecret);

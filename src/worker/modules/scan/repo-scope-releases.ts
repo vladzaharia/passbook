@@ -1,13 +1,8 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { type SqlValue, stmt } from '../../platform/db.ts';
+import { stmt } from '../../platform/db.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 import type { ReleaseScopeSql } from '../templates/repo-releases.ts';
-import {
-  effectiveReleaseBindingPredicate,
-  legacyPassSql,
-  releaseHeadsComplete,
-  sessionTemplateStampsPredicate,
-} from './repo-scope-release-predicates.ts';
+import { legacyPassSql, sessionTemplateStampsPredicate } from './repo-scope-release-predicates.ts';
 
 export {
   releaseHeadsComplete,
@@ -47,12 +42,6 @@ export function templateReleaseHeadsSql(idsSql: string, orgIdSql: string, modeSq
         providerSql: "'apple'",
       })})
       ORDER BY ids.template_id))`;
-}
-
-export function releaseHeadsOf(
-  rows: readonly { id: string; release: ScopedReleaseHead['release'] }[],
-): string {
-  return JSON.stringify(rows.map((row) => ({ templateId: row.id, release: row.release })));
 }
 
 export interface SessionReleaseStamp {
@@ -203,34 +192,4 @@ export async function captureTemplateStamps(
   const query = captureTemplateStampsStmt(db, orgId, mode, templateIds);
   if (!query) return null;
   return templateStampsFromResult(templateIds, await query.all());
-}
-
-/** Revalidate the precise heads used by an earlier scope or count evaluation. */
-export function releaseHeadsPredicate(
-  snapshot: string,
-  orgIdSql: string,
-  modeSql: string,
-): { sql: string; params: SqlValue[] } {
-  if (!releaseHeadsComplete(snapshot)) return { sql: '0', params: [] };
-  const predicate = effectiveReleaseBindingPredicate(
-    {
-      idSql: "json_extract(h.value,'$.release.id')",
-      generationSql: "json_extract(h.value,'$.release.generation')",
-      versionSql: "json_extract(h.value,'$.release.version')",
-      candidateHashSql: "json_extract(h.value,'$.release.candidateHash')",
-    },
-    {
-      templateIdSql: 'scoped_t.id',
-      orgIdSql,
-      modeSql,
-      providerSql: "'apple'",
-    },
-  );
-  return {
-    sql: `NOT EXISTS (SELECT 1 FROM json_each(?) h
-      LEFT JOIN templates scoped_t ON scoped_t.id=json_extract(h.value,'$.templateId')
-        AND (scoped_t.org_id=${orgIdSql} OR scoped_t.org_id IS NULL) AND scoped_t.status!='deleted'
-      WHERE scoped_t.id IS NULL OR COALESCE((${predicate}),0)!=1)`,
-    params: [snapshot],
-  };
 }
