@@ -1,4 +1,4 @@
-import { type BrowserContext, expect, type Page, test } from '@playwright/test';
+import { type BrowserContext, expect, test } from '@playwright/test';
 import {
   apiAs,
   createPass,
@@ -8,18 +8,12 @@ import {
 } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
 import { pairScanner } from './helpers/pair.ts';
+import { hardwareCode, refreshScannerSession } from './helpers/scan-input.ts';
 import { readSeed } from './helpers/seed.ts';
-
-async function hardwareCode(page: Page, value: string) {
-  // Real HID readers send Shift for uppercase keys; Playwright typing alone omits it.
-  for (const char of value) await page.keyboard.press(/[A-Z]/.test(char) ? `Shift+${char}` : char);
-  await page.keyboard.press('Enter');
-}
 
 test('shared sessions pair multiple devices, configure live, and keep lookup and customer display private', async ({
   browser,
 }) => {
-  test.setTimeout(120_000);
   const api = await apiAs('admin');
   const contexts: BrowserContext[] = [];
   try {
@@ -144,9 +138,14 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await configuration.getByRole('combobox', { name: 'Reader', exact: true }).click();
     await page.getByRole('option', { name: 'Camera', exact: true }).click();
     await configuration.getByRole('button', { name: 'Save device', exact: true }).click();
-    await expect(phone.getByRole('complementary', { name: 'Operator view' })).toBeVisible({
-      timeout: 20000,
-    });
+    await expect(configuration).toBeHidden();
+    // A refresh that raced the save returns the old configuration; each retry reads again.
+    await expect(async () => {
+      await refreshScannerSession(phone);
+      await expect(phone.getByRole('complementary', { name: 'Operator view' })).toBeVisible({
+        timeout: 1_000,
+      });
+    }).toPass({ timeout: 15_000 });
     await expect(phone.getByTestId('scan-start')).toHaveCount(0);
     await expect(phone.locator('video')).toHaveCount(0);
     await phone.screenshot({ path: 'test-results/shared-session-phone-operator.png' });
@@ -155,22 +154,11 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       settings: { flow: 'choose' },
     });
     await expect
-      .poll(async () =>
-        desk.evaluate(
-          async () => (await (await fetch('/api/v1/scan/session')).json()).scanner.settings.flow,
-        ),
-      )
-      .toBe('choose');
-    await expect
       .poll(async () => await desk.locator('.scan-shell').getAttribute('data-surface'))
       .toBe('operator');
     // Configuration refresh keeps this device started. A hardware scanner follows review mode.
     await expect(desk.getByTestId('scan-start')).toHaveCount(0);
-    const sessionRefresh = desk.waitForResponse(
-      (r) => r.url().includes('/api/v1/scan/session') && r.status() === 200,
-    );
-    await desk.bringToFront();
-    await sessionRefresh;
+    await refreshScannerSession(desk, (session) => session.scanner.settings.flow === 'choose');
     await field.focus();
     await hardwareCode(desk, memberId);
     await expect(desk.getByTestId('scan-result')).toContainText(holderName);
@@ -182,12 +170,12 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       status: 'paused',
       revision: update.updatedAt,
     });
-    await expect(phone.getByRole('heading', { name: 'Session paused', exact: true })).toBeVisible({
-      timeout: 20000,
-    });
+    await refreshScannerSession(phone);
+    await expect(phone.getByRole('heading', { name: 'Session paused', exact: true })).toBeVisible();
+    await refreshScannerSession(customer);
     await expect(
       customer.getByRole('heading', { name: 'Session paused', exact: true }),
-    ).toBeVisible({ timeout: 20000 });
+    ).toBeVisible();
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
     await api.dispose();
