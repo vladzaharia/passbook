@@ -14,8 +14,8 @@ export function heldGateHolderStmt(db: D1Database, gate: GateKey): D1PreparedSta
       s.override_of, sc.name AS scanner_name, st.name AS staff_name
     FROM scan_gates g LEFT JOIN scans s ON s.id=g.last_scan_id
     LEFT JOIN scanners sc ON sc.id=s.scanner_id LEFT JOIN scan_staff st ON st.id=s.staff_id
-    WHERE g.pass_id=?/* scan-ephemeral-pass-id */ AND g.action_id=?/* scan-ephemeral-action-id */
-      AND g.scope=?/* scan-ephemeral-event-scope */`,
+    WHERE g.pass_id=? AND g.action_id=?
+      AND g.scope=?`,
     [gate.passId, gate.actionId, gate.scope],
   );
 }
@@ -38,8 +38,8 @@ export function heldGateCapacityStmt(
   return stmt(
     db,
     `WITH scope AS MATERIALIZED (
-      SELECT org_id,mode,id AS event_id,capacity,reentry,?/* scan-ephemeral-pass-id */ AS pass_id
-      FROM scan_events WHERE id=?/* scan-ephemeral-event-id */ AND org_id=? AND mode=?
+      SELECT org_id,mode,id AS event_id,capacity,reentry,? AS pass_id
+      FROM scan_events WHERE id=? AND org_id=? AND mode=?
     ), live AS MATERIALIZED (
       ${liveEventPresenceSql(org, mode, event, '1', true, true)}
     ), common AS MATERIALIZED (

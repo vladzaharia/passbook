@@ -1,6 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Pass } from '../passes/repo-map.ts';
-import type { ScanActor } from './actor.ts';
 import type { Candidate } from './repo-lookup.ts';
 import type { WalletSnapshot } from './wallet-snapshot.ts';
 
@@ -14,13 +13,6 @@ export interface AssetWalletSnapshot extends WalletSnapshot {
 
 /** The original, request-local candidate SELECT; never serialized into a grant. */
 export type AssetPassSnapshot = Candidate;
-
-/** Server-only source recovered from the authenticated retained live-event proof. */
-export interface AssetGrantSource {
-  sourceId: string;
-  eventId: string;
-  actor: ScanActor;
-}
 
 /** Nonsecret original session incarnation; idle expiry is rechecked, not pinned. */
 export interface AssetSessionSnapshot {

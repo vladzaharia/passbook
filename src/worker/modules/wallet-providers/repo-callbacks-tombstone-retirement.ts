@@ -250,11 +250,14 @@ export async function putSamsungTombstone(
     // tombstone. A same-holder void/restore may keep its existing promoted reference.
     stmt(
       db,
-      `${retirementCtes}
+      // The tombstone check is its own CTE: inside the UPDATE it adds enough nesting to pass D1's depth limit.
+      `${retirementCtes},
+      all_tombstoned AS MATERIALIZED (
+        SELECT 1 AS ok FROM retirement_scope retirement
+        WHERE retirement.retirement_requested_at IS NOT NULL AND ${allReferencesTombstoned}
+      )
       UPDATE wallet_samsung_fetch_refs AS ref SET retired_at = ?
-      WHERE ref.instance_id = ? AND ref.retired_at IS NULL AND EXISTS (
-        SELECT 1 FROM retirement_scope retirement WHERE retirement.retirement_requested_at IS NOT NULL
-          AND ${allReferencesTombstoned})`,
+      WHERE ref.instance_id = ? AND ref.retired_at IS NULL AND EXISTS (SELECT 1 FROM all_tombstoned)`,
       [...values, now, scope.instanceId],
     ),
     stmt(

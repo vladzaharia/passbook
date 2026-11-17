@@ -209,12 +209,12 @@ export function credentialSnapshotMatches(
 export function pendingEffectPredicate(claim: GateClaim, beforeIntent = false): Predicate {
   const actor = claim.authority.actor;
   return {
-    sql: `EXISTS (SELECT 1 FROM scans q WHERE q.id=?/* scan-ephemeral-scan-id */ AND q.state='pending' AND q.reason ${beforeIntent ? 'IS NULL' : "= 'stale'"}
-      AND q.at=? AND q.org_id=? AND q.mode=? AND q.actor_key=?/* scan-ephemeral-actor-key */
-      AND q.scanner_id IS ?/* scan-ephemeral-scanner-id */ AND q.staff_id IS ?/* scan-ephemeral-staff-id */
-      AND q.actor_type=? AND q.actor_id=?/* scan-ephemeral-actor-id */ AND q.method=?
-      AND q.event_id IS ?/* scan-ephemeral-event-id */ AND q.idempotency_key=?/* scan-ephemeral-idempotency-key */
-      AND q.request_hash=?/* scan-ephemeral-request-hash */)`,
+    sql: `EXISTS (SELECT 1 FROM scans q WHERE q.id=? AND q.state='pending' AND q.reason ${beforeIntent ? 'IS NULL' : "= 'stale'"}
+      AND q.at=? AND q.org_id=? AND q.mode=? AND q.actor_key=?
+      AND q.scanner_id IS ? AND q.staff_id IS ?
+      AND q.actor_type=? AND q.actor_id=? AND q.method=?
+      AND q.event_id IS ? AND q.idempotency_key=?
+      AND q.request_hash=?)`,
     params: [
       claim.scanId,
       claim.claimAt,

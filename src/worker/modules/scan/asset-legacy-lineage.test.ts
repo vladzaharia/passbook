@@ -72,7 +72,6 @@ describe('legacy scanner asset lineage', () => {
       candidate,
       candidate.connectionGeneration,
       candidate.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );
@@ -92,7 +91,6 @@ describe('legacy scanner asset lineage', () => {
       candidate,
       candidate.connectionGeneration,
       candidate.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );
@@ -108,7 +106,6 @@ describe('legacy scanner asset lineage', () => {
       candidate,
       candidate.connectionGeneration,
       candidate.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );
@@ -132,7 +129,6 @@ describe('legacy scanner asset lineage', () => {
       current,
       current.connectionGeneration,
       current.activeTemplateVersion,
-      undefined,
       false,
       'commit',
     );
@@ -163,7 +159,6 @@ describe('legacy scanner asset lineage', () => {
       candidate,
       candidate.connectionGeneration,
       candidate.activeTemplateVersion,
-      undefined,
       true,
       'commit',
     );
@@ -226,7 +221,6 @@ describe('legacy scanner asset lineage', () => {
         current,
         current.connectionGeneration,
         template.version,
-        undefined,
         false,
         'commit',
       );

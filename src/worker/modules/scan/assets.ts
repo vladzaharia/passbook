@@ -13,7 +13,6 @@ import {
 } from './asset-grant-mint.ts';
 import {
   type AssetGrantPurpose,
-  type AssetGrantSource,
   type AssetPassSnapshot,
   type AssetWalletSnapshot,
   type PreparedAssetGrant,
@@ -33,7 +32,6 @@ export function preparePhotoGrant(
   snapshot: AssetPassSnapshot,
   connectionGeneration: number | null,
   activeVersion: string | null,
-  source?: AssetGrantSource,
 ): Promise<PreparedAssetGrant | null> {
   return prepareAssetGrant(
     pinnedContext(ctx),
@@ -41,7 +39,6 @@ export function preparePhotoGrant(
     snapshot,
     connectionGeneration,
     activeVersion,
-    source,
     true,
     photoGrantPurpose(snapshot),
   );
@@ -55,7 +52,6 @@ export const prepareGenericAssetGrant = (
   connectionGeneration: number | null,
   activeVersion: string | null,
   purpose: AssetGrantPurpose,
-  source?: AssetGrantSource,
 ): Promise<PreparedAssetGrant | null> =>
   prepareAssetGrant(
     pinnedContext(ctx),
@@ -63,7 +59,6 @@ export const prepareGenericAssetGrant = (
     snapshot,
     connectionGeneration,
     activeVersion,
-    source,
     false,
     purpose,
   );
@@ -92,7 +87,6 @@ export async function prepareAssetGrantVerification(
   snapshot: AssetPassSnapshot,
   connectionGeneration: number | null,
   grant: string | undefined,
-  source?: AssetGrantSource,
   purpose: AssetGrantPurpose = 'commit',
   requirePhoto = false,
 ): Promise<VerifiedAssetGrant | null> {
@@ -110,9 +104,6 @@ export async function prepareAssetGrantVerification(
   const refs = await grantRefs(pinned, parsed);
   const capturedActor = captureActor(actor);
   const passId = snapshot.pass.id;
-  const capturedSource = source
-    ? { sourceId: source.sourceId, eventId: source.eventId, actor: captureActor(source.actor) }
-    : undefined;
   const activeVersion = snapshot.activeReleaseVersion ?? snapshot.pass.templateVersion;
   const data = await grantData(
     pinned,
@@ -120,7 +111,6 @@ export async function prepareAssetGrantVerification(
     snapshot,
     connectionGeneration,
     activeVersion,
-    capturedSource,
     requirePhoto,
     purpose,
   );

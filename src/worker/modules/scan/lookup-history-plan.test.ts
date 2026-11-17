@@ -3,7 +3,7 @@ import { stagePendingCredentialTransfer } from '../../../../test/helpers/credent
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { run } from '../../platform/db.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { planHistoryProofSnapshotsForOrg } from './history-proof-plan.ts';
+import { planHistoryProofSnapshotsForOrg } from './display-history-plan.ts';
 import { lookupHistoryStmts } from './lookup-history.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 

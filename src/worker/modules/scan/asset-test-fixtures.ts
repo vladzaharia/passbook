@@ -49,7 +49,6 @@ async function grantForPurpose(
     candidate,
     candidate.connectionGeneration,
     candidate.activeTemplateVersion,
-    undefined,
     requirePhoto,
     requirePhoto ? photoGrantPurpose(candidate) : 'commit',
   );

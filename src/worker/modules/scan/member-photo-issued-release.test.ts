@@ -101,7 +101,7 @@ describe('member photos under the issued-release rule', () => {
     const generation = candidate.connectionGeneration;
     const version = candidate.activeTemplateVersion;
     await expect(
-      mintAssetGrant(kit.ctx, fixture.actor, candidate, generation, version, undefined, true),
+      mintAssetGrant(kit.ctx, fixture.actor, candidate, generation, version, true),
     ).rejects.toMatchObject({ code: 'ASSET_NOT_FOUND' });
   });
 

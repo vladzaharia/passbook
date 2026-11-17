@@ -11,12 +11,7 @@ import type { ScanActor } from './actor.ts';
 import { captureActor } from './asset-authority.ts';
 import { grantData } from './asset-claim.ts';
 import { holdAssetGrantSidecar } from './asset-sidecar.ts';
-import type {
-  AssetGrantPurpose,
-  AssetGrantSource,
-  AssetPassSnapshot,
-  PreparedAssetGrant,
-} from './asset-types.ts';
+import type { AssetGrantPurpose, AssetPassSnapshot, PreparedAssetGrant } from './asset-types.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import {
   CREDENTIAL_REF_PREFIX,
@@ -157,7 +152,6 @@ export async function prepareAssetGrant(
   snapshot: AssetPassSnapshot,
   connectionGeneration: number | null,
   activeVersion: string | null,
-  source: AssetGrantSource | undefined,
   requirePhoto: boolean,
   purpose: AssetGrantPurpose,
 ): Promise<PreparedAssetGrant | null> {
@@ -169,9 +163,6 @@ export async function prepareAssetGrant(
   const refs = snapshot.credentialTombstoneRefs.map((ref) => ref.slice(0, CREDENTIAL_REF_PREFIX));
   const capturedActor = captureActor(actor);
   const passId = snapshot.pass.id;
-  const capturedSource = source
-    ? { sourceId: source.sourceId, eventId: source.eventId, actor: captureActor(source.actor) }
-    : undefined;
   const [data, templates] = await Promise.all([
     grantData(
       ctx,
@@ -179,7 +170,6 @@ export async function prepareAssetGrant(
       snapshot,
       connectionGeneration,
       activeVersion,
-      capturedSource,
       requirePhoto,
       purpose,
     ),

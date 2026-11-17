@@ -18,7 +18,7 @@ export interface PassLineage {
 export function passLineagePredicate(lineage: PassLineage): ScanPredicate {
   return {
     sql: `EXISTS (SELECT 1 FROM passes lineage
-      WHERE lineage.id = ?/* scan-ephemeral-pass-id */ AND lineage.org_id = ? AND lineage.mode = ?
+      WHERE lineage.id = ? AND lineage.org_id = ? AND lineage.mode = ?
         AND lineage.deleted_at IS NULL AND lineage.test_data_quarantined = 0
         AND lineage.lifecycle_generation = ? AND lineage.credential_generation = ?
         AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer

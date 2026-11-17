@@ -25,8 +25,8 @@ export function replayScanByKeyStmt(
 ): D1PreparedStatement {
   return stmt(
     db,
-    `SELECT * FROM scans WHERE actor_key=?/* scan-ephemeral-actor-key */
-    AND idempotency_key=?/* scan-ephemeral-idempotency-key */`,
+    `SELECT * FROM scans WHERE actor_key=?
+    AND idempotency_key=?`,
     [actorKey, key],
   );
 }
@@ -120,7 +120,7 @@ export async function readReplayEvidence(
             db,
             `SELECT id,org_id,mode,name,match_input,match_values,opens_at,closes_at,time_zone,
         capacity,reentry,note,updated_at,archived_at FROM scan_events
-        WHERE id=?/* scan-ephemeral-event-id */ AND org_id=?`,
+        WHERE id=? AND org_id=?`,
             [row.eventId, actor.orgId],
           ),
         )
@@ -130,7 +130,7 @@ export async function readReplayEvidence(
         stmt(
           db,
           `SELECT * FROM scans WHERE org_id=?
-    AND id=?/* scan-ephemeral-scan-id */`,
+    AND id=?`,
           [actor.orgId, row.overrideOf],
         ),
       )
@@ -149,7 +149,7 @@ export async function readReplayEvidence(
       CASE WHEN json_valid(l.data) THEN CASE WHEN (${RECORDED_PROOF}) THEN 1 ELSE 0 END ELSE 0 END AS approved_proof
       FROM scans q JOIN passes p ON p.id=q.pass_id AND p.org_id=q.org_id AND p.mode=q.mode AND p.test_data_quarantined=0
       JOIN pass_events l ON l.id=${uniqueScanEventIdSql('q')}
-      WHERE q.id=?/* scan-ephemeral-scan-id */ AND q.org_id=? AND q.mode=?
+      WHERE q.id=? AND q.org_id=? AND q.mode=?
         AND (${NO_PENDING_TRANSFER}) AND (p.release_id IS NULL OR (${CURRENT_ISSUANCE}))`,
         [row.id, actor.orgId, actor.mode],
       ),
@@ -160,7 +160,7 @@ export async function readReplayEvidence(
       stmt(
         db,
         `SELECT s.id AS scanId,s.org_id AS orgId,s.mode,s.at FROM scans s
-      WHERE s.id=?/* scan-ephemeral-scan-id */ AND s.org_id=? AND s.mode=?
+      WHERE s.id=? AND s.org_id=? AND s.mode=?
         AND ${scanPasslessCandidateSql('s')}`,
         [row.id, actor.orgId, actor.mode],
       ),
@@ -177,7 +177,7 @@ export async function readReplayEvidence(
       s.approved_by AS approvedBy,s.method,s.state,s.outcome,s.reason,s.action_id AS actionId,
       s.action_kind AS actionKind,s.direction,s.pass_version AS passVersion,s.presence_scope AS presenceScope,
       s.at,s.undoes,(s.override_of IS NOT NULL) AS override FROM scans s
-      JOIN scan_retention_proofs r ON r.scan_id=s.id WHERE s.id=?/* scan-ephemeral-scan-id */
+      JOIN scan_retention_proofs r ON r.scan_id=s.id WHERE s.id=?
         AND s.org_id=? AND s.mode=? AND ${scanRetentionCandidateSql('s')}`,
         [row.id, actor.orgId, actor.mode],
       ),

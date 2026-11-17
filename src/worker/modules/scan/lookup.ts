@@ -11,10 +11,10 @@ import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-key
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
 import { visibleIdentity } from './card-semantics.ts';
 import { scanCredentialKeys, snapshotCredentialEnv } from './credential-input.ts';
+import { planHistoryProofSnapshotsForOrg } from './display-history-plan.ts';
 import { policyActor } from './dto.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
-import { planHistoryProofSnapshotsForOrg } from './history-proof-plan.ts';
 import { finalizeLookup } from './lookup-finalize.ts';
 import { attachLookupHistory, type LookupEntry } from './lookup-history.ts';
 import { knownPhotoUrl } from './member-photo.ts';

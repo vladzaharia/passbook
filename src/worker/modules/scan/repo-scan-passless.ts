@@ -60,7 +60,7 @@ export async function readPasslessScans(
     const rows = await all<{ id: string; orgId: string; mode: Mode; at: number }>(
       db,
       `SELECT s.id,s.org_id AS orgId,s.mode,s.at FROM scans s
-      WHERE s.id IN (${ids.map(() => '?/* scan-ephemeral-scan-id */').join(',')}) AND s.mode=?
+      WHERE s.id IN (${ids.map(() => '?').join(',')}) AND s.mode=?
         ${orgId === undefined ? '' : 'AND s.org_id=?'} AND ${scanPasslessCandidateSql('s')}`,
       [...ids, mode, ...(orgId === undefined ? [] : [orgId])],
     );
@@ -75,7 +75,7 @@ export function scanPasslessSnapshotPredicate(
   scan: PasslessScan,
 ): { sql: string; params: SqlValue[] } {
   return {
-    sql: `(${scanPasslessCandidateSql(scanAlias)} AND ${scanAlias}.id=?/* scan-ephemeral-scan-id */
+    sql: `(${scanPasslessCandidateSql(scanAlias)} AND ${scanAlias}.id=?
       AND ${scanAlias}.org_id=? AND ${scanAlias}.mode=? AND ${scanAlias}.at=?)`,
     params: [scan.scanId, scan.orgId, scan.mode, scan.at],
   };

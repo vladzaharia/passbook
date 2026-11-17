@@ -53,9 +53,9 @@ const CARD_HISTORY_SQL = `WITH selected_scans AS MATERIALIZED (
          AND p.template_id = s.template_id
        JOIN templates t ON t.id = p.template_id AND (t.org_id IS NULL OR t.org_id = p.org_id)
          AND t.status != 'deleted'
-       WHERE p.org_id = ?/* scan-ephemeral-card-history */ AND p.mode = ?
-         AND p.id = ?/* scan-ephemeral-card-history */
-         AND p.template_id = ?/* scan-ephemeral-card-history */
+       WHERE p.org_id = ? AND p.mode = ?
+         AND p.id = ?
+         AND p.template_id = ?
          AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.status = 'active'
          AND p.test_data_quarantined = 0
          AND (p.release_id IS NULL OR ${issuedReleasePredicateSql(
@@ -197,7 +197,7 @@ export function cardHistoryFence(
   });
   return {
     sql: `(${lineage.sql}) AND NOT EXISTS (SELECT 1 FROM scans shown
-      WHERE shown.id IN (${rows.map(() => '?/* scan-ephemeral-scan-id */').join(', ')})
+      WHERE shown.id IN (${rows.map(() => '?').join(', ')})
         AND shown.undone_by IS NOT NULL)`,
     params: [...lineage.params, ...rows.map((shown) => shown.id)],
   };

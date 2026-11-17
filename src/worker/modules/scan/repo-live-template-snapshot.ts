@@ -135,7 +135,7 @@ function snapshotFenceSql(scopeParts: readonly string[]): string {
     ...scopeParts,
     'p.deleted_at IS NULL',
     `(p.release_id IS NULL OR (${issuedPredicate}))`,
-    `${snapshotExpressionSql()} IS ?/* scan-ephemeral-template-snapshot */`,
+    `${snapshotExpressionSql()} IS ?`,
   ]);
   return `EXISTS (SELECT 1 FROM passes p ${snapshotJoins}
     JOIN (SELECT 1) scan_template_guard ON ${predicate})`;
@@ -198,7 +198,7 @@ export function scanTemplateSnapshotPredicate(
     return { sql: '0', params: [] };
   return {
     sql: snapshotFenceSql([
-      'p.id=?/* scan-ephemeral-pass-id */',
+      'p.id=?',
       'p.org_id=scope.org_id',
       'p.mode=scope.mode',
       'p.org_id=?',

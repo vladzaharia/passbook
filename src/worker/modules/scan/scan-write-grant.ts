@@ -126,8 +126,7 @@ export function capacityOpen(full: {
 export { not };
 
 /**
- * Side statements were written for the old fences: they carry `scan-ephemeral` comments and read the
- * tenant from their JSON. In a grant the tenant is the grant's: `{org}` and `{mode}` replace those reads,
+ * Side statements were written for the old fences: they read the tenant from their JSON. In a grant the tenant is the grant's: `{org}` and `{mode}` replace those reads,
  * so a part can never name another tenant.
  */
 export function partSql(sql: string): string {

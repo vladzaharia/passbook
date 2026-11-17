@@ -37,7 +37,7 @@ export function tenantPassAuthoritySql(authority: TenantPassWrite, tableAlias?: 
       JOIN orgs o ON o.id = m.org_id
       WHERE m.id = ? AND m.org_id = ? AND m.user_id = ? AND m.revoked_at IS NULL
         AND u.status = 'active' AND ${orgEpochMatchSql('o')}
-        AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ?/* scan-ephemeral-session-id-hash */
+        AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ?
           AND s.user_id = u.id AND s.revoked_at IS NULL AND s.expires_at > ? AND s.idle_expires_at > ?)
         AND EXISTS (SELECT 1 FROM json_each(m.roles) r JOIN json_each(?) g ON g.value = r.value WHERE r.type = 'text')
     ))`;
@@ -130,7 +130,7 @@ export function membershipCapability(membershipId: string, capability: OrgCapabi
 /** Platform-wide actions have no tenant membership, but still require a live admin session. */
 export const platformAdminSessionSql = `EXISTS (
   SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
-  WHERE s.id_hash = ?/* scan-ephemeral-session-id-hash */ AND s.user_id = ? AND u.status = 'active'
+  WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active'
     AND s.revoked_at IS NULL AND s.expires_at > ? AND s.idle_expires_at > ?
     AND json_type(s.roles) = 'array'
     AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.type = 'text' AND r.value = 'admin')

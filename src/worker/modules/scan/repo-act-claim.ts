@@ -14,13 +14,13 @@ export function failPendingActionClaimStmt(
     db,
     `UPDATE scans SET state='failed',
       reason=CASE WHEN ? OR NOT (${pristine.sql}) THEN 'stale' ELSE NULL END
-    WHERE scans.id=?/* scan-ephemeral-scan-id */ AND scans.at=? AND scans.state='pending'
-      AND scans.org_id=? AND scans.mode=? AND scans.scanner_id IS ?/* scan-ephemeral-scanner-id */
-      AND scans.event_id IS ?/* scan-ephemeral-event-id */ AND scans.actor_type=?
-      AND scans.actor_id=?/* scan-ephemeral-actor-id */ AND scans.actor_key=?/* scan-ephemeral-actor-key */
-      AND scans.staff_id IS ?/* scan-ephemeral-staff-id */ AND scans.method=?
-      AND scans.idempotency_key=?/* scan-ephemeral-idempotency-key */
-      AND scans.request_hash=?/* scan-ephemeral-request-hash */ RETURNING id,reason`,
+    WHERE scans.id=? AND scans.at=? AND scans.state='pending'
+      AND scans.org_id=? AND scans.mode=? AND scans.scanner_id IS ?
+      AND scans.event_id IS ? AND scans.actor_type=?
+      AND scans.actor_id=? AND scans.actor_key=?
+      AND scans.staff_id IS ? AND scans.method=?
+      AND scans.idempotency_key=?
+      AND scans.request_hash=? RETURNING id,reason`,
     [
       observedAmbiguous,
       ...pristine.params,

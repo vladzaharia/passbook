@@ -206,7 +206,7 @@ export function registerCountsCacheReleaseCases() {
   it('reads the exact count without a cache write when the cache fence exceeds the bind budget', async () => {
     const s = await scenario();
     const csrf = await csrfFence(s.actor);
-    const extra = Array.from({ length: 90 }, () => '?/* scan-ephemeral-proof */ IS NOT NULL');
+    const extra = Array.from({ length: 90 }, () => '? IS NOT NULL');
     const guard = {
       sql: `(${csrf.sql}) AND ${extra.join(' AND ')}`,
       params: [...csrf.params, ...extra.map(() => 'overflow-fixture')],

@@ -91,23 +91,14 @@ describe('photo URLs and the org epochs', () => {
       if (!candidate) throw new Error('Pass fixture missing');
       const generation = candidate.connectionGeneration;
       const version = candidate.activeTemplateVersion;
-      return mintAssetGrant(kit.ctx, actor, candidate, generation, version, undefined, true);
+      return mintAssetGrant(kit.ctx, actor, candidate, generation, version, true);
     };
     const valid = async (grant: string) => {
       const actor = await adminPhotoActor(session.cookieValue);
       const candidate = await candidateById(kit.env.DB, kit.org.id, pass.id);
       if (!candidate) throw new Error('Pass fixture missing');
       const generation = candidate.connectionGeneration;
-      return assetGrantValid(
-        kit.ctx,
-        actor,
-        candidate,
-        generation,
-        grant,
-        undefined,
-        'commit',
-        true,
-      );
+      return assetGrantValid(kit.ctx, actor, candidate, generation, grant, 'commit', true);
     };
     const grant = await mint();
     expect(await valid(grant)).toBe(true);

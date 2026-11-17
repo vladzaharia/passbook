@@ -3,8 +3,8 @@ import type { AdmissionHistory, PresenceRow } from './admission-types.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 
 /** A configured but absent event uses the same unscoped admission history as before. */
-const selectedEventSql = `CASE WHEN ?=1 THEN ?/* scan-ephemeral-event-id */
-  ELSE (SELECT id FROM scan_events WHERE id=?/* scan-ephemeral-event-id */ AND org_id=?) END`;
+const selectedEventSql = `CASE WHEN ?=1 THEN ?
+  ELSE (SELECT id FROM scan_events WHERE id=? AND org_id=?) END`;
 
 function historyStmt(
   db: D1Database,
@@ -17,10 +17,10 @@ function historyStmt(
     db,
     `WITH selected_event(id) AS (SELECT ${selectedEventSql}),
     entries AS (SELECT at FROM scans
-      WHERE org_id=? AND pass_id=?/* scan-ephemeral-pass-id */
+      WHERE org_id=? AND pass_id=?
         AND ((SELECT id FROM selected_event) IS NULL OR event_id=(SELECT id FROM selected_event))
         AND outcome='ok' AND action_kind='check_in' AND (direction IS NULL OR direction='in') AND undone_by IS NULL
-      UNION ALL SELECT last_at FROM scan_gates WHERE org_id=? AND pass_id=?/* scan-ephemeral-pass-id */
+      UNION ALL SELECT last_at FROM scan_gates WHERE org_id=? AND pass_id=?
         AND ((SELECT id FROM selected_event) IS NULL OR scope='event:'||(SELECT id FROM selected_event))
         AND kind='check_in' AND state IN ('in','out'))
     SELECT MIN(at) AS first_at,MAX(at) AS last_at FROM entries`,
@@ -29,11 +29,11 @@ function historyStmt(
 }
 
 export const presenceOf = (db: D1Database, orgId: string, passId: string, scope: string) =>
-  first<PresenceRow>(
-    db,
-    'SELECT * FROM scan_presence WHERE org_id=? AND pass_id=?/* scan-ephemeral-pass-id */ AND scope=?/* scan-ephemeral-event-scope */',
-    [orgId, passId, scope],
-  );
+  first<PresenceRow>(db, 'SELECT * FROM scan_presence WHERE org_id=? AND pass_id=? AND scope=?', [
+    orgId,
+    passId,
+    scope,
+  ]);
 
 export async function admissionReads(
   db: D1Database,
@@ -49,7 +49,7 @@ export async function admissionReads(
     stmt(
       db,
       `WITH selected_event(id) AS (SELECT ${selectedEventSql})
-      SELECT * FROM scan_presence WHERE org_id=? AND pass_id=?/* scan-ephemeral-pass-id */
+      SELECT * FROM scan_presence WHERE org_id=? AND pass_id=?
         AND scope=COALESCE('event:'||(SELECT id FROM selected_event),'')`,
       [knownEvent ? 1 : 0, eventId, eventId, orgId, orgId, passId],
     ),
@@ -60,7 +60,7 @@ export async function admissionReads(
             `SELECT id,org_id AS orgId,mode,name,match_input AS matchInput,
       match_values AS matchValues,opens_at AS opensAt,closes_at AS closesAt,time_zone AS timeZone,
       capacity,reentry,note,updated_at AS updatedAt,archived_at AS archivedAt
-      FROM scan_events WHERE id=?/* scan-ephemeral-event-id */ AND org_id=?`,
+      FROM scan_events WHERE id=? AND org_id=?`,
             [eventId, orgId],
           ),
         ]

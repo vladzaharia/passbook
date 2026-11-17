@@ -119,7 +119,7 @@ export function pendingDisplayHistoryStmt(
         AND (ar.id IS NOT NULL OR legacy.version IS NOT NULL)
         AND ${walletSnapshotPredicateSql({ nowSql: '?' })} THEN 1 ELSE 0 END AS projection_current
     FROM scans s
-    LEFT JOIN passes p ON p.id = ?/* scan-ephemeral-pass-id */
+    LEFT JOIN passes p ON p.id = ?
     LEFT JOIN pass_versions recorded ON recorded.pass_id = p.id AND recorded.version = ?
       AND recorded.version > 0 AND recorded.version <= p.version
     LEFT JOIN template_releases ar ON ar.id = (${usedReleaseIdSql('p')})
@@ -142,9 +142,9 @@ export function pendingDisplayHistoryStmt(
       AND (template.org_id IS NULL OR template.org_id = p.org_id)
     LEFT JOIN scanners scanner ON scanner.id = s.scanner_id AND scanner.org_id = s.org_id
       AND scanner.mode = s.mode
-    WHERE s.id = ?/* scan-ephemeral-scan-id */ AND s.state = 'pending'
-      AND s.actor_key = ?/* scan-ephemeral-actor-key */ AND s.org_id = ? AND s.mode = ?
-      AND p.org_id = ? AND p.mode = ? AND p.template_id = ?/* scan-ephemeral-template-id */`,
+    WHERE s.id = ? AND s.state = 'pending'
+      AND s.actor_key = ? AND s.org_id = ? AND s.mode = ?
+      AND p.org_id = ? AND p.mode = ? AND p.template_id = ?`,
     [
       input.now,
       input.passId,

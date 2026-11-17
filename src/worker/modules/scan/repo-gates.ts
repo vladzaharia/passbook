@@ -66,7 +66,7 @@ export interface GateClaim extends GateKey {
 
 /** SQL and params for "this scan holds the gate": the guard on every statement that follows a claim. */
 export const wonGate = (g: GateKey, scanId: string) => ({
-  sql: `EXISTS (SELECT 1 FROM scan_gates WHERE pass_id = ?/* scan-ephemeral-pass-id */ AND action_id = ?/* scan-ephemeral-action-id */ AND scope = ?/* scan-ephemeral-event-scope */ AND last_scan_id = ?/* scan-ephemeral-scan-id */)`,
+  sql: `EXISTS (SELECT 1 FROM scan_gates WHERE pass_id = ? AND action_id = ? AND scope = ? AND last_scan_id = ?)`,
   params: [g.passId, g.actionId, g.scope, scanId],
 });
 
@@ -94,8 +94,8 @@ export function capacityFullPredicate(
   const eligible = reentry ? "WHERE verified.state='in'" : '';
   return {
     sql: `(WITH capacity_scope AS MATERIALIZED (
-      SELECT ? AS org_id, ? AS mode, ?/* scan-ephemeral-event-id */ AS event_id,
-        ?/* scan-ephemeral-pass-id */ AS pass_id, ? AS maximum
+      SELECT ? AS org_id, ? AS mode, ? AS event_id,
+        ? AS pass_id, ? AS maximum
     ), live AS MATERIALIZED (
       ${liveEventPresenceSql(org, modeScope, event, '1', true, true)}
     ), common AS MATERIALIZED (

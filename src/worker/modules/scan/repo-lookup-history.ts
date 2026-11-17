@@ -20,7 +20,7 @@ export function lookupHistoryPageStmt(
   return scopedHistoryPageStmt(
     db,
     {
-      sql: `s.org_id = ? AND s.mode = ? AND s.id IN (${ids.map(() => '?/* scan-ephemeral-scan-id */').join(',')})
+      sql: `s.org_id = ? AND s.mode = ? AND s.id IN (${ids.map(() => '?').join(',')})
         AND ${HISTORICAL_SCOPE_SQL}`,
       params: [scope.orgId, scope.mode, ...ids],
       limit: ids.length,
@@ -33,8 +33,8 @@ export function lookupHistoryPageStmt(
 export function lookupHistoryPredicate(history: LookupHistoryProof): ScanPredicate {
   const lineage = passLineagePredicate(history.lineage);
   return {
-    sql: `(${lineage.sql}) AND EXISTS (SELECT 1 FROM scans s WHERE s.id = ?/* scan-ephemeral-scan-id */
-      AND s.pass_id = ?/* scan-ephemeral-pass-id */ AND s.org_id = ? AND s.mode = ? AND s.state = 'done')`,
+    sql: `(${lineage.sql}) AND EXISTS (SELECT 1 FROM scans s WHERE s.id = ?
+      AND s.pass_id = ? AND s.org_id = ? AND s.mode = ? AND s.state = 'done')`,
     params: [
       ...lineage.params,
       history.scan.id,

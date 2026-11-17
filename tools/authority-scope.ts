@@ -14,6 +14,7 @@ import {
   REPLACE_ALLOWLIST,
   UNTENANTED_CHECK_ALLOWLIST,
 } from './authority-scope-allowlists.ts';
+import { scanBans } from './authority-scope-bans.ts';
 
 export {
   DYNAMIC_WRITE_ALLOWLIST,
@@ -37,6 +38,7 @@ export type Rule =
   | 'job-authority-import'
   | 'builder-internal'
   | 'forged-statement'
+  | 'banned'
   | 'stale-allowlist'
   | 'allowlist-growth';
 
@@ -385,6 +387,7 @@ export function scanTree(markdown: string, files: Iterable<[string, string]>): F
       ...scanFile(rel, text, owners),
       ...scanJobContext(rel, text),
       ...scanBrandImport(rel, text),
+      ...(skipFile(rel) ? [] : scanBans(rel, text)),
     ]),
     ...scanAllowlist(new Map(all)),
   ];

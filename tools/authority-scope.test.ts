@@ -15,6 +15,7 @@ import {
   UNTENANTED_CHECK_ALLOWLIST,
   untenantedChecks,
 } from './authority-scope.ts';
+import { scanBans } from './authority-scope-bans.ts';
 
 const doc = readFileSync(new URL('../docs/design/authority-epochs.md', import.meta.url), 'utf8');
 const owners = parseAppendixA(doc);
@@ -394,5 +395,29 @@ describe('authority-scope rawCheck tenant terms', () => {
     expect(
       rules(text.replace('api_keys k', 'passes k'), `${MOD}/passes/repo-authority.ts`),
     ).toEqual(['untenanted-check']);
+  });
+
+  it('bans the retired scan fence machinery', () => {
+    const rel = `${MOD}/scan/repo-x.ts`;
+    const cases: [string, string][] = [
+      ['label', "stmt(db, 'SELECT ?/* scan-ephemeral-x */')"],
+      ['slot', "stmt(db, \"SELECT json_extract('[]','$[0]')\")"],
+      ['keyset', 'WHERE x AND credentialRefKeysetSql'],
+      ['import', "import { x } from './repo-session-authority.ts';"],
+      ['import', "import { balanceSqlAnd } from '../../platform/sql-balance.ts';"],
+      ['balancer', 'balanceSqlAnd(sql)'],
+    ];
+    for (const [name, text] of cases)
+      expect(
+        scanBans(rel, text).map((f) => f.rule),
+        name,
+      ).toContain('banned');
+    expect(
+      scanBans(rel, "import { x } from './repo-output-authority-split-test-fixtures.ts';"),
+    ).toEqual([]);
+    expect(scanBans(rel, "stmt(db, 'SELECT 1 WHERE a = ?', [1])")).toEqual([]);
+    expect(scanBans(`${MOD}/passes/repo-credential-keyset.ts`, 'credentialRefKeysetSql')).toEqual(
+      [],
+    );
   });
 });

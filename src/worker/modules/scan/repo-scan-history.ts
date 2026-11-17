@@ -29,10 +29,10 @@ export function historyPassScopePredicate(
   until: number,
 ): { sql: string; params: SqlValue[] } {
   return {
-    sql: `s.org_id=? AND s.mode=? AND s.pass_id=?/* scan-ephemeral-pass-id */
-      AND s.template_id=?/* scan-ephemeral-template-id */ AND s.at<=?
+    sql: `s.org_id=? AND s.mode=? AND s.pass_id=?
+      AND s.template_id=? AND s.at<=?
       AND s.state='done' AND s.outcome='ok' AND s.undone_by IS NULL AND s.action_kind IS NOT 'undo'
-      AND ${HISTORICAL_SCOPE_SQL}${scope.eventId !== null ? ' AND s.event_id=?/* scan-ephemeral-event-id */' : ''}`,
+      AND ${HISTORICAL_SCOPE_SQL}${scope.eventId !== null ? ' AND s.event_id=?' : ''}`,
     params: [
       scope.orgId,
       scope.mode,
@@ -69,10 +69,10 @@ export function ownScansWhere(actor: ScanActor): { sql: string; params: SqlValue
     `(s.event_id IS NULL OR EXISTS (SELECT 1 FROM scan_events own_event
       WHERE own_event.id = s.event_id AND own_event.org_id = s.org_id AND own_event.mode = s.mode
         AND own_event.archived_at IS NULL))`,
-    's.actor_key = ?/* scan-ephemeral-actor-key */',
+    's.actor_key = ?',
     's.actor_type = ?',
-    's.actor_id = ?/* scan-ephemeral-actor-id */',
-    's.scanner_id IS ?/* scan-ephemeral-scanner-id */',
+    's.actor_id = ?',
+    's.scanner_id IS ?',
   ];
   const params: SqlValue[] = [
     actor.actorKey,
@@ -81,13 +81,11 @@ export function ownScansWhere(actor: ScanActor): { sql: string; params: SqlValue
     actor.scanner?.id ?? null,
   ];
   const inTemplates = () => {
-    clauses.push(
-      '(s.template_id IS NULL OR s.template_id IN (SELECT value FROM json_each(?/* scan-ephemeral-template-ids */)))',
-    );
+    clauses.push('(s.template_id IS NULL OR s.template_id IN (SELECT value FROM json_each(?)))');
     params.push(JSON.stringify([...actor.templateIds].sort()));
   };
   if (actor.event) {
-    clauses.push('s.event_id IS ?/* scan-ephemeral-event-id */');
+    clauses.push('s.event_id IS ?');
     params.push(actor.event.id);
     if (actor.scanner || actor.templateIds.length) inTemplates();
   } else if (actor.templateIds.length) inTemplates();

@@ -35,7 +35,7 @@ function activityScope(row: ScanningSessionRow): Predicate | null {
   if ('eventId' in parsed.data)
     return {
       // The `+` keeps the planner on the devices' scans, not the whole event's.
-      sql: `+s.event_id=?/* scan-ephemeral-event-id */ AND EXISTS (
+      sql: `+s.event_id=? AND EXISTS (
       SELECT 1 FROM scan_events event_scope WHERE event_scope.id=s.event_id
         AND event_scope.org_id=s.org_id AND event_scope.mode=s.mode AND event_scope.archived_at IS NULL)
       AND ((s.pass_id IS NULL AND s.template_id IS NULL) OR EXISTS (SELECT 1 FROM scan_event_templates et
@@ -43,7 +43,7 @@ function activityScope(row: ScanningSessionRow): Predicate | null {
       params: [parsed.data.eventId],
     };
   return {
-    sql: 's.template_id IN (SELECT value FROM json_each(?/* scan-ephemeral-template-ids */))',
+    sql: 's.template_id IN (SELECT value FROM json_each(?))',
     params: [JSON.stringify([...new Set(parsed.data.templateIds)])],
   };
 }
@@ -55,7 +55,7 @@ export function activitySelector(row: ScanningSessionRow): HistorySelector | nul
   return {
     where: `s.scanner_id IN (SELECT a.scanner_id FROM scanning_devices a
         JOIN scanners d ON d.id=a.scanner_id AND d.org_id=a.org_id AND d.mode=a.mode
-        WHERE a.org_id=? AND a.session_id=?/* scan-ephemeral-session-id */ AND a.mode=?)
+        WHERE a.org_id=? AND a.session_id=? AND a.mode=?)
       AND (${scope.sql}) AND s.outcome IS NOT NULL AND ${scanLedgerScopeSql('s')}`,
     params: [row.org_id, row.id, row.mode, ...scope.params],
     limit: ACTIVITY_LIMIT,

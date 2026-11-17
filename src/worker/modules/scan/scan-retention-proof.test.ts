@@ -391,7 +391,7 @@ describe('detached scan retention provenance', () => {
     expect(await deleting).toEqual(expected);
   });
 
-  it('keeps raw source values out of packed JSON and marks them as ephemeral scalars', async () => {
+  it('keeps raw source values out of packed JSON', async () => {
     const s = await scenario();
     const prepared = await prepareScanRetentionProof(kit.env, s.eventRow, `s:${s.scanner.id}`, {
       actionId: ACTION,
@@ -403,9 +403,6 @@ describe('detached scan retention provenance', () => {
       expect(packed).not.toContain(secret);
     for (const value of [s.pass.id, ACTION, s.scanner.id, s.eventRow.data])
       expect(fence.params).toContain(value);
-    expect(fence.sql).toContain('?/* scan-ephemeral-pass-id */');
-    expect(fence.sql).toContain('?/* scan-ephemeral-action-id */');
-    expect(fence.sql).toContain('?/* scan-ephemeral-event-json */');
     expect(await first(kit.env.DB, `SELECT 1 AS valid WHERE ${fence.sql}`, fence.params)).toEqual({
       valid: 1,
     });

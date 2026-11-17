@@ -1,6 +1,5 @@
 import { type AfterRead, afterRead } from '../../platform/authority-after.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
-import { mapOutsideLiterals } from '../../platform/authority-sqltext.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
@@ -61,18 +60,12 @@ export function capturedStatement(statement: D1PreparedStatement): Captured | un
   return captured.get(statement);
 }
 
-// A bind label (`?/* scan-ephemeral-x */`) only names its placeholder for packing; it is not SQL.
-const BIND_LABEL = /\/\*\s*scan-ephemeral-[a-z0-9:-]*\s*\*\//g;
-
 /** Captured reads re-issued after a grant's release (`Grant.commitWith`); a write is refused there. */
 export function afterReads(statements: readonly D1PreparedStatement[]): AfterRead[] {
   return statements.map((statement) => {
     const seen = captured.get(statement);
     if (!seen)
       throw new AuthorityError('GRANT_FOREIGN_STATEMENT', 'A read after a grant was not captured.');
-    return afterRead(
-      mapOutsideLiterals(seen.sql, (text) => text.replace(BIND_LABEL, '')),
-      seen.params,
-    );
+    return afterRead(seen.sql, seen.params);
   });
 }

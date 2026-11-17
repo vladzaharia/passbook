@@ -20,16 +20,16 @@ import { scanConjunction } from './scan-conjunction.ts';
 import { predicateStmt, type ScanPredicate } from './scan-predicate.ts';
 
 const SCAN_MATCH = scanConjunction([
-  'q.id=?/* scan-ephemeral-scan-id */ AND q.org_id=? AND q.mode=?',
-  'q.actor_key=?/* scan-ephemeral-actor-key */ AND q.scanner_id IS ?/* scan-ephemeral-scanner-id */',
-  "q.state='done' AND q.outcome IS ? AND q.reason IS ?/* scan-ephemeral-history-reason */",
-  'q.pass_id IS ?/* scan-ephemeral-pass-id */ AND q.template_id IS ?/* scan-ephemeral-template-id */',
-  'q.event_id IS ?/* scan-ephemeral-event-id */ AND q.staff_id IS ?/* scan-ephemeral-staff-id */',
-  'q.action_id IS ?/* scan-ephemeral-action-id */ AND q.action_kind IS ?',
-  'q.override_of IS ?/* scan-ephemeral-history-override-of */ AND q.approved_by IS ?/* scan-ephemeral-approver-id */',
+  'q.id=? AND q.org_id=? AND q.mode=?',
+  'q.actor_key=? AND q.scanner_id IS ?',
+  "q.state='done' AND q.outcome IS ? AND q.reason IS ?",
+  'q.pass_id IS ? AND q.template_id IS ?',
+  'q.event_id IS ? AND q.staff_id IS ?',
+  'q.action_id IS ? AND q.action_kind IS ?',
+  'q.override_of IS ? AND q.approved_by IS ?',
   'q.pass_version IS ? AND q.method=? AND q.at=?',
-  'q.idempotency_key=?/* scan-ephemeral-idempotency-key */ AND q.request_hash=?/* scan-ephemeral-request-hash */',
-  'q.direction IS ? AND q.presence_scope IS ?/* scan-ephemeral-event-scope */',
+  'q.idempotency_key=? AND q.request_hash=?',
+  'q.direction IS ? AND q.presence_scope IS ?',
 ]);
 
 function scanParams(row: ScanRow, req: ActRequest): SqlValue[] {
@@ -92,10 +92,10 @@ export async function replayCurrent(
       receiptPart({ sql: `(p.release_id IS NULL OR (${CURRENT_ISSUANCE}))`, params: [] }, joins),
       receiptPart(
         {
-          sql: `l.id=?/* scan-ephemeral-history-ledger-id */ AND l.org_id=? AND l.pass_id=?/* scan-ephemeral-pass-id */
-       AND l.mode=? AND l.kind=? AND l.device IS ?/* scan-ephemeral-event-device */
-       AND l.actor_type IS ? AND l.actor_id IS ?/* scan-ephemeral-event-actor */
-       AND l.data=?/* scan-ephemeral-source-event-json */ AND l.at=?`,
+          sql: `l.id=? AND l.org_id=? AND l.pass_id=?
+       AND l.mode=? AND l.kind=? AND l.device IS ?
+       AND l.actor_type IS ? AND l.actor_id IS ?
+       AND l.data=? AND l.at=?`,
           params: [
             l.id,
             l.org_id,
@@ -148,13 +148,13 @@ export async function replayCurrent(
     receiptParts.push(
       receiptPart({ sql: scanRetentionCandidateSql('q'), params: [] }),
       receiptPart({
-        sql: `q.actor_type=? AND q.actor_id=?/* scan-ephemeral-actor-id */
-      AND q.undoes IS ?/* scan-ephemeral-scan-id */ AND (q.override_of IS NOT NULL)=?
+        sql: `q.actor_type=? AND q.actor_id=?
+      AND q.undoes IS ? AND (q.override_of IS NOT NULL)=?
       AND EXISTS (SELECT 1 FROM scan_retention_proofs r WHERE r.scan_id=q.id AND r.org_id=? AND r.mode=?
-        AND r.ledger_event_id=?/* scan-ephemeral-history-ledger-id */ AND r.pass_ref=?/* scan-ephemeral-proof */
-        AND r.event_digest=?/* scan-ephemeral-proof */ AND r.scan_digest=?/* scan-ephemeral-proof */
-        AND r.gate_snapshot IS ?/* scan-ephemeral-gate-snapshot */
-        AND r.presence_snapshot IS ?/* scan-ephemeral-presence-snapshot */ AND r.mac=?/* scan-ephemeral-proof */
+        AND r.ledger_event_id=? AND r.pass_ref=?
+        AND r.event_digest=? AND r.scan_digest=?
+        AND r.gate_snapshot IS ?
+        AND r.presence_snapshot IS ? AND r.mac=?
         AND r.excluded=0 AND r.invalidated=0)`,
         params: [
           scan.actorType,

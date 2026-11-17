@@ -1,8 +1,8 @@
 import type { ScanDisplay } from '../../../shared/contracts/scan-display.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { historyPlan } from './card.ts';
+import type { PreloadedDisplayHistory } from './display-history-plan.ts';
 import type { ScanActor } from './guard.ts';
-import type { PreloadedDisplayHistory } from './history-proof-plan.ts';
 import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
 import { safeDisplay } from './outcome.ts';
 import type { Found } from './resolve.ts';

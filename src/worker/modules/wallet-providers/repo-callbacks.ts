@@ -183,14 +183,16 @@ export function findSamsungFetchSnapshot(
 
 /** Compare every captured operation component again at the actual promotion/response boundary. */
 export function samsungSnapshotPredicate(): string {
-  return `r.id = ? AND r.ref_hash = ? AND i.id = ? AND i.org_id = ? AND i.mode = ?
-    AND i.account_id = ? AND op.account_revision = ? AND op.version = ?
-    AND i.pass_id = ? AND op.pass_version = ? AND op.pass_revision = ?
-    AND i.credential_generation = ? AND op.pass_credential_generation = ?
-    AND p.credential_generation = op.pass_credential_generation
-    AND p.template_id = ? AND p.template_version = ? AND op.issuing_release_id = ?
-    AND op.projection_release_id = ? AND r.retired_at IS NULL AND ${upsert}
-    AND r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql}`;
+  // Grouped so the chain stays shallow: callers add their own terms under D1's expression depth limit.
+  return `(r.id = ? AND r.ref_hash = ? AND i.id = ? AND i.org_id = ? AND i.mode = ?)
+    AND (i.account_id = ? AND op.account_revision = ? AND op.version = ?)
+    AND (i.pass_id = ? AND op.pass_version = ? AND op.pass_revision = ?)
+    AND (i.credential_generation = ? AND op.pass_credential_generation = ?
+      AND p.credential_generation = op.pass_credential_generation)
+    AND (p.template_id = ? AND p.template_version = ? AND op.issuing_release_id = ?
+      AND op.projection_release_id = ? AND r.retired_at IS NULL)
+    AND (${upsert})
+    AND (r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql})`;
 }
 
 /** Metadata-only pass versions may reuse the latest earlier materialized pass JSON. */

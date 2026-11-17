@@ -7,18 +7,13 @@ import { scanOf } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound, resolveTemplate } from '../passes/builder.ts';
 import type { ScanActor } from './actor.ts';
-import {
-  captureTemplateStamps,
-  type SessionLegacyStamp,
-  type SessionReleaseStamp,
-} from './repo-scope-releases.ts';
+import { captureTemplateStamps, type SessionLegacyStamp } from './repo-scope-releases.ts';
 import { styleOf } from './resolve.ts';
 
 type Format = z.infer<typeof CodeFormatSchema>;
 
 interface ScopedTemplates {
   templates: ScanSession['templates'];
-  releases: SessionReleaseStamp[];
   legacy: SessionLegacyStamp[];
 }
 
@@ -140,5 +135,5 @@ export async function templatesOf(
       throw error;
     }
   }
-  return { templates: out, releases: captured.releases, legacy: captured.legacy };
+  return { templates: out, legacy: captured.legacy };
 }

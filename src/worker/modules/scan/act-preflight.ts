@@ -1,10 +1,10 @@
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type HeldGateSnapshot, heldGateReads } from './act-gate-preflight.ts';
+import type { PendingDisplayHistorySource } from './display-history-pending.ts';
+import type { PreloadedDisplayHistory } from './display-history-plan.ts';
 import { gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
-import type { PendingDisplayHistorySource } from './history-proof-pending.ts';
-import type { PreloadedDisplayHistory } from './history-proof-plan.ts';
 import {
   type ActionPassFence,
   type PreparedActionPassFence,

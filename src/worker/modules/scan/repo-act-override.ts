@@ -20,8 +20,8 @@ export function overrideEvidenceForTargetStmt(
   return stmt(
     db,
     `SELECT q.*,
-    EXISTS (SELECT 1 FROM scans o WHERE o.actor_key=?/* scan-ephemeral-actor-key */
-      AND o.at>=? AND o.override_of=?/* scan-ephemeral-scan-id */ AND o.outcome='ok') AS taken,
+    EXISTS (SELECT 1 FROM scans o WHERE o.actor_key=?
+      AND o.at>=? AND o.override_of=? AND o.outcome='ok') AS taken,
     l.id AS evidence_id,l.org_id AS evidence_org_id,l.pass_id AS evidence_pass_id,l.mode AS evidence_mode,
     l.kind AS evidence_kind,l.device AS evidence_device,l.actor_type AS evidence_actor_type,
     l.actor_id AS evidence_actor_id,l.data AS evidence_data,l.at AS evidence_at,
@@ -34,8 +34,8 @@ export function overrideEvidenceForTargetStmt(
       AND recorded.version<=q.pass_version
       AND recorded.version=(SELECT v.version FROM pass_versions v
         WHERE v.pass_id=q.pass_id AND v.version<=q.pass_version ORDER BY v.version DESC LIMIT 1)
-    WHERE q.id=?/* scan-ephemeral-scan-id */ AND q.org_id=? AND q.mode=?
-      AND q.actor_key=?/* scan-ephemeral-actor-key */ AND q.state='done' AND q.outcome='heads_up'
+    WHERE q.id=? AND q.org_id=? AND q.mode=?
+      AND q.actor_key=? AND q.state='done' AND q.outcome='heads_up'
       AND q.at>=? AND q.actor_type=l.actor_type AND q.actor_id=l.actor_id`,
     [actor.actorKey, since, targetId, targetId, actor.orgId, actor.mode, actor.actorKey, since],
   );

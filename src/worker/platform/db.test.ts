@@ -141,9 +141,7 @@ describe('prefixMatch and containsMatch', () => {
     for (const bad of ['x */ OR 1 /*', 'a b', 'Tag', 'scan_ephemeral', '*/'])
       for (const match of [prefixMatch, containsMatch])
         expect(() => match('c', 'ab', bad), bad).toThrow('Invalid SQL comment tag');
-    expect(containsMatch('c', 'ab', 'scan-ephemeral-2').sql).toBe(
-      "c LIKE ?/* scan-ephemeral-2 */ ESCAPE '\\'",
-    );
+    expect(containsMatch('c', 'ab', 'tag-2').sql).toBe("c LIKE ?/* tag-2 */ ESCAPE '\\'");
     expect(prefixMatch('c', 'x'.repeat(80), 'tag').sql).toContain('/* tag */');
   });
 });

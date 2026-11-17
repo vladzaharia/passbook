@@ -178,7 +178,6 @@ export async function withMutableTrigger(
   name:
     | 'template_releases_immutable'
     | 'credential_ref_keyset_no_update'
-    | 'scanners_credential_revision'
     | 'sessions_csrf_secret_immutable',
   work: () => Promise<unknown>,
 ) {

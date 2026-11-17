@@ -100,7 +100,6 @@ export async function openScannerAsset(
       candidate,
       candidate.connectionGeneration,
       grant,
-      undefined,
       photo ? photoGrantPurpose(candidate) : 'read',
       photo,
     );

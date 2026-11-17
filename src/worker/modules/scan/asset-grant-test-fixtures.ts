@@ -4,7 +4,7 @@ import type { ScanActor } from './actor.ts';
 import { captureActor } from './asset-authority.ts';
 import { grantRefs, parseGrant, prepareAssetGrant } from './asset-grant-mint.ts';
 import { takeAssetGrantToken } from './asset-sidecar.ts';
-import type { AssetGrantPurpose, AssetGrantSource, AssetPassSnapshot } from './asset-types.ts';
+import type { AssetGrantPurpose, AssetPassSnapshot } from './asset-types.ts';
 import { prepareAssetGrantVerification } from './assets.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { pinKeysetOrNull } from './keyset-pin.ts';
@@ -27,7 +27,6 @@ export async function mintAssetGrant(
   snapshot: AssetPassSnapshot,
   connectionGeneration: number | null,
   activeVersion: string | null,
-  source?: AssetGrantSource,
   requirePhoto = false,
   purpose: AssetGrantPurpose = 'commit',
 ): Promise<string> {
@@ -37,7 +36,6 @@ export async function mintAssetGrant(
     snapshot,
     connectionGeneration,
     activeVersion,
-    source,
     requirePhoto,
     purpose,
   );
@@ -53,7 +51,6 @@ export async function assetGrantValid(
   snapshot: AssetPassSnapshot,
   connectionGeneration: number | null,
   grant: string | undefined,
-  source?: AssetGrantSource,
   purpose: AssetGrantPurpose = 'commit',
   requirePhoto = false,
 ): Promise<boolean> {
@@ -65,7 +62,6 @@ export async function assetGrantValid(
     snapshot,
     connectionGeneration,
     grant,
-    source,
     purpose,
     requirePhoto,
   );

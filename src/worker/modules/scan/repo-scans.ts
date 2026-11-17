@@ -52,18 +52,17 @@ const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, a
 export async function scanByKey(db: Db, actorKey: string, key: string): Promise<ScanRow | null> {
   const row = await first<Raw>(
     db,
-    `SELECT ${COLUMNS} FROM scans WHERE actor_key = ?/* scan-ephemeral-actor-key */ AND idempotency_key = ?/* scan-ephemeral-idempotency-key */`,
+    `SELECT ${COLUMNS} FROM scans WHERE actor_key = ? AND idempotency_key = ?`,
     [actorKey, key],
   );
   return row ? toScan(row) : null;
 }
 
 export async function scanById(db: Db, orgId: string, id: string): Promise<ScanRow | null> {
-  const row = await first<Raw>(
-    db,
-    `SELECT ${COLUMNS} FROM scans WHERE id = ?/* scan-ephemeral-scan-id */ AND org_id = ?`,
-    [id, orgId],
-  );
+  const row = await first<Raw>(db, `SELECT ${COLUMNS} FROM scans WHERE id = ? AND org_id = ?`, [
+    id,
+    orgId,
+  ]);
   return row ? toScan(row) : null;
 }
 
@@ -123,10 +122,10 @@ export function pristineClaimFence(
     sql: scanConjunction([
       `NOT (${AMBIGUOUS_SCAN})`,
       'scans.org_id=? AND scans.mode=?',
-      'scans.scanner_id IS ?/* scan-ephemeral-scanner-id */ AND scans.event_id IS ?/* scan-ephemeral-event-id */',
-      'scans.actor_type=? AND scans.actor_id=?/* scan-ephemeral-actor-id */ AND scans.actor_key=?/* scan-ephemeral-actor-key */',
-      'scans.staff_id IS ?/* scan-ephemeral-staff-id */ AND scans.method=?',
-      'scans.idempotency_key=?/* scan-ephemeral-idempotency-key */ AND scans.request_hash=?/* scan-ephemeral-request-hash */',
+      'scans.scanner_id IS ? AND scans.event_id IS ?',
+      'scans.actor_type=? AND scans.actor_id=? AND scans.actor_key=?',
+      'scans.staff_id IS ? AND scans.method=?',
+      'scans.idempotency_key=? AND scans.request_hash=?',
     ]),
     params: [
       c.orgId,
@@ -150,7 +149,7 @@ export function presenceOfScansStmt(db: Db, ids: readonly string[]): D1PreparedS
   return stmt(
     db,
     `SELECT last_scan_id,prev_scan_id FROM scan_presence
-    WHERE last_scan_id IN (SELECT value FROM json_each(?/* scan-ephemeral-scan-id-list */)) OR prev_scan_id IN (SELECT value FROM json_each(?/* scan-ephemeral-scan-id-list */))`,
+    WHERE last_scan_id IN (SELECT value FROM json_each(?)) OR prev_scan_id IN (SELECT value FROM json_each(?))`,
     [values, values],
   );
 }
@@ -160,13 +159,13 @@ export async function reopenScan(db: Db, id: string, now: number): Promise<numbe
   const results = await db.batch([
     stmt(
       db,
-      `UPDATE scans SET reason = 'stale' WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'failed'
+      `UPDATE scans SET reason = 'stale' WHERE id = ? AND state = 'failed'
       AND reason IS NULL AND (${AMBIGUOUS_SCAN})`,
       [id],
     ),
     stmt(
       db,
-      `UPDATE scans SET state = 'pending', at = MAX(at + 1, ?) WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'failed'
+      `UPDATE scans SET state = 'pending', at = MAX(at + 1, ?) WHERE id = ? AND state = 'failed'
       AND reason IS NULL RETURNING at`,
       [now, id],
     ),
@@ -184,7 +183,7 @@ export function releaseClaimStmt(
   claimAt: number,
   extra?: PristineClaimFence,
 ): D1PreparedStatement {
-  const sql = `DELETE FROM scans WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending' AND at = ?
+  const sql = `DELETE FROM scans WHERE id = ? AND state = 'pending' AND at = ?
        AND ${extra ? `(${extra.sql})` : `NOT (${AMBIGUOUS_SCAN})`}
      RETURNING id`;
   const params = [id, claimAt, ...(extra?.params ?? [])];
@@ -202,7 +201,7 @@ export const quarantineGateClaimStmt = (
   stmt(
     db,
     `UPDATE scans SET state = 'failed', reason = 'stale'
-  WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending' AND at = ?
+  WHERE id = ? AND state = 'pending' AND at = ?
     AND ((${AMBIGUOUS_SCAN})${original ? ` OR NOT (${original.sql})` : ''})`,
     [id, at, ...(original?.params ?? [])],
   );
@@ -216,7 +215,7 @@ export const markScanEffectIntentStmt = (
 ) =>
   stmt(
     db,
-    `UPDATE scans SET reason = 'stale' WHERE id = ?/* scan-ephemeral-scan-id */ AND state = 'pending'
+    `UPDATE scans SET reason = 'stale' WHERE id = ? AND state = 'pending'
       AND at = ? AND NOT (${AMBIGUOUS_SCAN})${guard ? ` AND (${guard.sql})` : ''} RETURNING id`,
     [id, at, ...(guard?.params ?? [])],
   );
@@ -234,7 +233,7 @@ export function failScanStmt(
     db,
     `UPDATE scans SET state = 'failed', reason = CASE WHEN ? OR (${AMBIGUOUS_SCAN})
        THEN 'stale' ELSE NULL END
-     WHERE id = ?/* scan-ephemeral-scan-id */ AND at = ? AND (state = 'pending' OR (? AND state = 'failed' AND reason IS NULL))
+     WHERE id = ? AND at = ? AND (state = 'pending' OR (? AND state = 'failed' AND reason IS NULL))
      RETURNING id, reason`,
     [recovery.observedAmbiguous, id, recovery.at, recovery.observedAmbiguous],
   );

@@ -118,13 +118,7 @@ describe('requireScanActor: tenant session authority', () => {
     expect(actor.scanner?.csrfSecret).toBeNull();
     expect(actor.scannerCsrfProof).toBe(await scanScannerCsrfProof(env, scanner.id, secret));
     expect(await current(actor)).toBe(true);
-    await expect(
-      run(env.DB, 'UPDATE scanners SET csrf_secret=? WHERE id=?', ['rotated', scanner.id]),
-    ).rejects.toThrow(/scanner credential revision must advance/);
-    await run(env.DB, 'UPDATE scanners SET csrf_secret=?,updated_at=updated_at+1 WHERE id=?', [
-      'rotated',
-      scanner.id,
-    ]);
+    await run(env.DB, 'UPDATE scanners SET csrf_secret=? WHERE id=?', ['rotated', scanner.id]);
     // A rotated secret moves the credential epoch the actor was captured with.
     expect(await current(actor)).toBe(false);
     const terminal = await makeScanner(f, { orgId, kind: 'terminal' });

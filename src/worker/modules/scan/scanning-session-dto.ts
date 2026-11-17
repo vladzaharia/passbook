@@ -41,9 +41,6 @@ export interface SessionReadAuthority {
   at(now: number): ScanReadAuthority;
 }
 
-/** The name the live paths and fixtures use for the same authority. */
-export type SessionCountAuthority = SessionReadAuthority;
-
 /** Capture the console viewer's membership and session with the epochs the reads are fenced on. */
 export async function captureConsoleSessionCountAuthority(
   ctx: ServiceContext,
