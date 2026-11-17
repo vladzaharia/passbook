@@ -79,7 +79,7 @@ const IDENTITY: Record<string, { bg: Rgb; fg: Rgb; label: Rgb; text: number; lab
 
 describe.each(Object.entries(IDENTITY))('%s identity', (slug, want) => {
   it('ships the identity colours and meets AA for text and labels', async () => {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     const pass = template.passJson;
     expect(parseColor(pass.backgroundColor)).toEqual(want.bg);
     expect(parseColor(pass.foregroundColor)).toEqual(want.fg);
@@ -93,7 +93,7 @@ describe.each(Object.entries(IDENTITY))('%s identity', (slug, want) => {
 it('gives every blueprint its own background', async () => {
   const seen = new Set<string>();
   for (const slug of Object.keys(IDENTITY)) {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     seen.add(String(template.passJson.backgroundColor));
   }
   expect(seen.size).toBe(Object.keys(IDENTITY).length);
@@ -110,7 +110,7 @@ it('names each blueprint and gives it a curated glyph', async () => {
     'starter-stamp-card': ['Stamp card', 'stamp'],
   };
   for (const [slug, [name, icon]] of Object.entries(names)) {
-    const { template } = await loadBaked(slug);
+    const { template } = await loadBaked(slug, { strips: false });
     expect(template.manifest).toMatchObject({ name, blueprint: true, display: { icon } });
   }
 });

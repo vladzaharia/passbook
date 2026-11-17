@@ -1,3 +1,4 @@
+import { createDeflate } from 'node:zlib';
 import { zlibSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { decodeAlpha } from './schema/image-pixels.ts';
@@ -38,17 +39,48 @@ function withIdat(idat: Uint8Array, size: [number, number] = [200, 200]): Uint8A
 }
 
 // 100 MB of zeros deflates to about 100 KB: a decompression bomb for a 200x200 image.
-const bomb = () => withIdat(zlibSync(new Uint8Array(100_000_000), { level: 9 }));
+// Streamed in 1 MB pieces by native zlib: no 100 MB input to allocate or draw on.
+async function bomb(): Promise<Uint8Array> {
+  const deflate = createDeflate({ level: 9 });
+  const parts: Buffer[] = [];
+  deflate.on('data', (part: Buffer) => parts.push(part));
+  const done = new Promise<void>((resolve, reject) => {
+    deflate.on('end', resolve);
+    deflate.on('error', reject);
+  });
+  const zeros = Buffer.alloc(1_000_000);
+  for (let i = 0; i < 100; i++) deflate.write(zeros);
+  deflate.end();
+  await done;
+  return withIdat(new Uint8Array(Buffer.concat(parts)));
+}
 
 describe('PNG decoding is bounded', () => {
-  it('refuses an IDAT bomb quickly and without a big allocation', () => {
-    const png = bomb();
+  it('refuses an IDAT bomb quickly and without a big allocation', { timeout: 30_000 }, async () => {
+    const png = await bomb();
+    // Coverage instrumentation slows the decoder several times over, so the budget scales with a
+    // fixed reference kernel timed in this process: 250 ms on the machine the 2000 was set on.
+    const cpu = (run: () => void) => {
+      const t = process.cpuUsage();
+      run();
+      const used = process.cpuUsage(t);
+      return (used.user + used.system) / 1000;
+    };
+    const reference = cpu(() => {
+      const a = new Float32Array(1 << 16);
+      let sum = 0;
+      for (let k = 0; k < 3000; k++)
+        for (let i = 0; i < a.length; i++) {
+          a[i] = (a[i] as number) * 0.5 + i;
+          sum += a[i] as number;
+        }
+      expect(sum).toBeGreaterThan(0);
+    });
     const before = process.memoryUsage().arrayBuffers;
     let peak = 0;
-    const t = Date.now();
-    expect(() => decodePng(png)).toThrow(PngError);
+    const ms = cpu(() => expect(() => decodePng(png)).toThrow(PngError));
     peak = process.memoryUsage().arrayBuffers - before;
-    expect(Date.now() - t).toBeLessThan(2000);
+    expect(ms).toBeLessThan(2000 * Math.max(1, reference / 250));
     expect(peak).toBeLessThan(20_000_000);
     expect(decodeAlpha(png)).toBeNull();
   });

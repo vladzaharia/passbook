@@ -8,6 +8,8 @@ import {
   makeSession,
   makeUser,
 } from '../../../../test/helpers/index.ts';
+import { renderStampFiles } from '../../../passkit/stamps/package.ts';
+import type { StampsManifest } from '../../../passkit/types.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
@@ -22,6 +24,12 @@ import { fakeAssets } from './testing.ts';
 
 const ORIGIN = 'https://wallet.test';
 
+function decodeDataUrl(data: string): Uint8Array {
+  if (!data.startsWith('data:') || !data.includes(';base64,'))
+    throw new Error('Baked fixture is not an inlined asset.');
+  return Uint8Array.from(atob(data.slice(data.indexOf(',') + 1)), (c) => c.charCodeAt(0));
+}
+
 /** The generated baked packages' files, as the Worker's static assets. */
 async function bakedAssets() {
   const assets = fakeAssets();
@@ -31,26 +39,32 @@ async function bakedAssets() {
     query: '?url&inline',
     import: 'default',
   });
-  // The Stamp card's strips are drawn by `npm run gen` into public/, not kept in templates/.
-  const strips = import.meta.glob<string>(
-    '../../../../public/templates/*/*/stamps/strips/**/*.png',
-    {
-      eager: true,
-      query: '?url&inline',
-      import: 'default',
-    },
+  const manifests = import.meta.glob<{ stamps?: StampsManifest }>(
+    '../../../../templates/*/wallet.template.json',
+    { eager: true, import: 'default' },
   );
-  const bytesFor = (slug: string, name: string, path?: string) => {
-    const data = path
-      ? strips[`../../../../public${path}`]
-      : files[`../../../../templates/${slug}/${name}`];
-    if (!data?.startsWith('data:') || !data.includes(';base64,'))
-      throw new Error(`Missing baked fixture bytes: ${slug}/${name}`);
-    return Uint8Array.from(atob(data.slice(data.indexOf(',') + 1)), (c) => c.charCodeAt(0));
+  // The Stamp card's strips are drawn by `npm run gen` into public/ (not in git); draw them here.
+  const drawn = new Map<string, Uint8Array>();
+  for (const [file, manifest] of Object.entries(manifests)) {
+    if (!manifest.stamps) continue;
+    const slug = file.split('/').at(-2) as string;
+    const prefix = `../../../../templates/${slug}/`;
+    const inputs: Record<string, Uint8Array> = {};
+    for (const [path, data] of Object.entries(files))
+      if (path.startsWith(prefix)) inputs[path.slice(prefix.length)] = decodeDataUrl(data);
+    for (const strip of renderStampFiles(manifest.stamps, inputs).strips)
+      drawn.set(`${slug}/${strip.name}`, strip.bytes);
+  }
+  const bytesFor = (slug: string, name: string) => {
+    const strip = drawn.get(`${slug}/${name}`);
+    if (strip) return strip;
+    const data = files[`../../../../templates/${slug}/${name}`];
+    if (!data) throw new Error(`Missing baked fixture bytes: ${slug}/${name}`);
+    return decodeDataUrl(data);
   };
   for (const t of generatedSource.templates) {
     for (const a of t.assets) {
-      const bytes = bytesFor(t.slug, a.name, a.stamps === undefined ? undefined : a.source.path);
+      const bytes = bytesFor(t.slug, a.name);
       if (bytes.length !== a.size || (await sha1Hex(bytes)) !== a.sha1 || crc32(bytes) !== a.crc32)
         throw new Error(`Baked fixture does not match generated metadata: ${t.slug}/${a.name}`);
       assets.files.set(a.source.path, bytes);

@@ -6,7 +6,9 @@ export class PngError extends Error {}
 
 /** Largest width or height either decoder accepts. */
 export const PNG_MAX_SIDE = 16_384;
-const PUSH = 64 * 1024;
+// Small pushes: one push can expand thousands of times over, so this bounds the allocation made
+// before the size check runs.
+const PUSH = 1024;
 
 /** Refuses empty or oversize dimensions. */
 export function assertPngDimensions(width: number, height: number): void {
