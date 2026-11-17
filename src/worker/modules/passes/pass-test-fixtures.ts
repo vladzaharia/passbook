@@ -13,6 +13,7 @@ import {
   makeTemplate,
   type OrgRow,
   persistTemplate,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
@@ -135,9 +136,8 @@ export async function setupKit(
     JOBS: queue as unknown as Queue,
     BULK_REISSUE: workflow as unknown as Workflow,
   });
-  // Real clock by default: holder and passes apps under test read wall time for sessions.
-  // Scan kits start at TEST_NOW (setupScanKit).
-  const clock = new ManualClock(options.clockStart ?? Date.now());
+  // Fixed epoch by default; kits that read wall time pass clockStart.
+  const clock = new ManualClock(options.clockStart ?? TEST_NOW);
   const fx = fixtures(env, clock);
   const templateId = `tpl-${fx.ids.token(4)}`;
   const { resolved, registry } = options.template?.(templateId) ?? makeTemplate({ id: templateId });
