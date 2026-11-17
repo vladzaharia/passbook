@@ -207,11 +207,11 @@ export async function listDuePassRefs(
 export async function templateScope(
   db: D1Database,
   templateId: string,
-): Promise<{ orgId: string | null; status: string } | null> {
-  const r = await first<{ org_id: string | null; status: string }>(
+): Promise<{ orgId: string | null; status: string; blueprint: boolean } | null> {
+  const r = await first<{ org_id: string | null; status: string; blueprint: number }>(
     db,
-    'SELECT org_id, status FROM templates WHERE id = ?',
+    'SELECT org_id, status, blueprint FROM templates WHERE id = ?',
     [templateId],
   );
-  return r ? { orgId: r.org_id, status: r.status } : null;
+  return r ? { orgId: r.org_id, status: r.status, blueprint: r.blueprint === 1 } : null;
 }

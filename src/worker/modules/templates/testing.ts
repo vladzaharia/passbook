@@ -83,6 +83,7 @@ export async function bakedFrom(
       name: a.manifest.name,
       description: a.manifest.description ?? null,
       org: options.org ?? null,
+      blueprint: a.manifest.blueprint === true,
       styles: a.styles,
       manifest: a.manifest,
       passJson: a.passJson,

@@ -197,6 +197,7 @@ async function sync(
           description: t.description,
           version: t.version,
           styles: t.styles,
+          blueprint: t.blueprint,
           now,
         },
         template,

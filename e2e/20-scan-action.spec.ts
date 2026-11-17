@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -15,7 +15,7 @@ test('choose flow Check in button commits the selected action exactly once', asy
   try {
     const template = await api.send(
       'POST',
-      `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
+      `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
       { orgId, name: uid('Choose flow') },
     );
     const release = await publishTemplateVersion(

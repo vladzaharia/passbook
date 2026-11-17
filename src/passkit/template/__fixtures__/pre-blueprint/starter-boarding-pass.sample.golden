@@ -1,0 +1,140 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(31,41,55)",
+  "barcodes": [
+    {
+      "altText": "BOARD-0001",
+      "format": "PKBarcodeFormatPDF417",
+      "message": "BOARD-0001",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "boardingPass": {
+    "auxiliaryFields": [
+      {
+        "dateStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true,
+        "key": "boardsAt",
+        "label": "Boards",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-06-01T07:15:00-07:00"
+      },
+      {
+        "key": "seat",
+        "label": "Seat",
+        "value": "14A"
+      }
+    ],
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Be at the gate 30 minutes before departure."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "flight",
+        "label": "Flight",
+        "value": "WA100"
+      },
+      {
+        "changeMessage": "Your gate is now %@.",
+        "key": "gate",
+        "label": "Gate",
+        "value": "B12"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "origin",
+        "label": "San Francisco",
+        "value": "SFO"
+      },
+      {
+        "key": "destination",
+        "label": "New York",
+        "value": "JFK"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "passenger",
+        "label": "Passenger",
+        "value": "Alex Morgan"
+      },
+      {
+        "changeMessage": "Departure is now %@.",
+        "dateStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true,
+        "key": "departs",
+        "label": "Departs",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-06-01T08:00:00-07:00"
+      }
+    ],
+    "transitType": "PKTransitTypeAir"
+  },
+  "description": "Boarding pass",
+  "expirationDate": "2030-06-01T16:30:00-04:00",
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "labelColor": "rgb(199,210,254)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "preferredStyleSchemes": [
+    "semanticBoardingPass",
+    "boardingPass"
+  ],
+  "relevantDate": "2030-06-01T14:15:00Z",
+  "relevantDates": [
+    {
+      "endDate": "2030-06-01T20:30:00Z",
+      "startDate": "2030-06-01T13:15:00Z"
+    }
+  ],
+  "semantics": {
+    "airlineCode": "WA",
+    "departureAirportCode": "SFO",
+    "departureCityName": "San Francisco",
+    "departureGate": "B12",
+    "departureLocationTimeZone": "America/Los_Angeles",
+    "destinationAirportCode": "JFK",
+    "destinationCityName": "New York",
+    "destinationLocationTimeZone": "America/New_York",
+    "flightNumber": 100,
+    "originalArrivalDate": "2030-06-01T16:30:00-04:00",
+    "originalBoardingDate": "2030-06-01T07:15:00-07:00",
+    "originalDepartureDate": "2030-06-01T08:00:00-07:00",
+    "passengerName": {
+      "familyName": "Morgan",
+      "givenName": "Alex"
+    },
+    "seats": [
+      {
+        "seatNumber": "14A"
+      }
+    ]
+  },
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

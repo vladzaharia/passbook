@@ -44,6 +44,12 @@ export const TemplateSummarySchema = z.object({
   status: z.enum(['active', 'archived', 'deleted']),
   activeVersion: z.string().nullable(),
   styles: z.array(PassStyleSchema),
+  /** A PassBook design to start from. Passes are issued from templates, never from a blueprint. */
+  blueprint: z.boolean().default(false),
+  /** `display.icon` of the shown version: a curated icon id (a blueprint's glyph). */
+  icon: z.string().nullable().default(null),
+  /** The blueprint this template was made from. */
+  fromBlueprint: z.object({ id: IdSchema, name: z.string() }).nullable().default(null),
   passCount: z.number().int(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
@@ -88,6 +94,8 @@ export const TemplateListQuerySchema = z.object({
   orgId: IdSchema.optional(),
   includeArchived: BoolQuery.optional(),
   origin: z.enum(['baked', 'uploaded']).optional(),
+  /** true lists blueprints only; the default lists templates only. */
+  blueprint: BoolQuery.optional(),
   status: z.enum(['active', 'archived']).optional(),
   /** Matches name or slug, case-insensitive. */
   q: z.string().trim().max(100).optional(),

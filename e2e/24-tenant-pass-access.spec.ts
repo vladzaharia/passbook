@@ -2,7 +2,8 @@ import { expect, test } from '@playwright/test';
 import type { OrgMembership } from '../src/shared/contracts/org-membership.ts';
 import type { PassDetailDto } from '../src/shared/contracts/passes.ts';
 import type { SessionResponse } from '../src/shared/contracts/session.ts';
-import { apiAs, GENERIC, requireActiveTemplateRelease, uid } from './helpers/api.ts';
+import { apiAs, requireActiveTemplateRelease, uid } from './helpers/api.ts';
+import { templateFromBlueprint } from './helpers/releases.ts';
 import { addOrgMember, createOrgWithRoles } from './helpers/seed.ts';
 
 test('a pass operator can issue only in an organization where they are a member', async () => {
@@ -30,6 +31,13 @@ test('a pass operator can issue only in an organization where they are a member'
         name: `Tenant foreign ${foreignSlug}`,
       });
       expect(memberOrg.id).not.toBe(foreignOrg.id);
+      // Passes come from each organization's own template, made from the Generic blueprint.
+      const memberTemplate = await templateFromBlueprint(admin, memberOrg.id, uid('Member card'));
+      const foreignTemplate = await templateFromBlueprint(
+        admin,
+        foreignOrg.id,
+        uid('Foreign card'),
+      );
 
       const membership = await addOrgMember(admin, memberOrg.id, operator, ['pass_operator']);
       membershipToRevoke = { orgId: memberOrg.id, id: membership.id };
@@ -53,18 +61,18 @@ test('a pass operator can issue only in an organization where they are a member'
       const memberRelease = await requireActiveTemplateRelease(
         admin,
         memberOrg.id,
-        GENERIC,
+        memberTemplate.id,
         'live',
       );
       const foreignRelease = await requireActiveTemplateRelease(
         admin,
         foreignOrg.id,
-        GENERIC,
+        foreignTemplate.id,
         'live',
       );
       const input = { holder: uid('Tenant guest'), memberId: uid('MEMBER').toUpperCase() };
       const issue = {
-        templateId: GENERIC,
+        templateId: memberTemplate.id,
         releaseId: memberRelease.id,
         releaseGeneration: memberRelease.generation,
         templateVersion: memberRelease.version,
@@ -73,6 +81,7 @@ test('a pass operator can issue only in an organization where they are a member'
       };
       const foreignIssue = {
         ...issue,
+        templateId: foreignTemplate.id,
         releaseId: foreignRelease.id,
         releaseGeneration: foreignRelease.generation,
         templateVersion: foreignRelease.version,
@@ -87,7 +96,7 @@ test('a pass operator can issue only in an organization where they are a member'
       expect(pass).toMatchObject({
         id: expect.any(String),
         orgId: memberOrg.id,
-        templateId: GENERIC,
+        templateId: memberTemplate.id,
         templateVersion: memberRelease.version,
         status: 'active',
         mode: 'live',
@@ -119,7 +128,7 @@ test('a pass operator can issue only in an organization where they are a member'
       expect(control).toMatchObject({
         id: expect.any(String),
         orgId: foreignOrg.id,
-        templateId: GENERIC,
+        templateId: foreignTemplate.id,
         templateVersion: foreignRelease.version,
         status: 'active',
         mode: 'live',

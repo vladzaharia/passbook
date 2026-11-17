@@ -18,6 +18,7 @@ import {
   SkeletonRows,
   SkeletonTileGrid,
 } from '../../ui/index.ts';
+import { LinkedBlueprint } from './new-pass-blueprint.tsx';
 import { useReleasedPreview } from './new-pass-preview.tsx';
 import { PassPreview } from './pass-preview.tsx';
 import { type GroupableTemplate, groupTemplates } from './template-groups.ts';
@@ -179,25 +180,31 @@ export function TemplateStep({
   const staged = useMediaQuery('(min-width: 1024px)');
   if (loading) return <SkeletonTileGrid label="Loading templates" />;
   if (error) return <ErrorState inline error={error} onRetry={onRetry} />;
+  const browse = (
+    <Button asChild variant="outline" size="sm">
+      <Link to="/admin/blueprints">Browse blueprints</Link>
+    </Button>
+  );
   if (templates.length === 0)
     return (
-      <EmptyState
-        art="template"
-        title={
-          hasMore
-            ? 'No eligible templates on this page'
-            : 'No eligible templates for this organization and mode'
-        }
-        action={
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin/templates">Review templates</Link>
-          </Button>
-        }
-      />
+      <div className="flex flex-col gap-6">
+        <LinkedBlueprint orgId={orgId} listed={templates} />
+        <EmptyState
+          art="template"
+          title={
+            hasMore
+              ? 'No eligible templates on this page'
+              : 'No eligible templates for this organization and mode'
+          }
+          description="Make one from a blueprint, or release one in this mode."
+          action={browse}
+        />
+      </div>
     );
   let i = 0;
   return (
     <ChoiceGroup label="Template" error={choiceError} className="flex flex-col gap-6">
+      <LinkedBlueprint orgId={orgId} listed={templates} />
       {groupTemplates(templates, orgName).map((g) => (
         <fieldset key={g.key} className="min-w-0">
           <legend className="mb-3 text-xs font-medium text-fg-muted">{g.label}</legend>
@@ -234,6 +241,12 @@ export function TemplateStep({
           </div>
         </fieldset>
       ))}
+      <p className="text-sm text-fg-muted">
+        Need another design?{' '}
+        <Link to="/admin/blueprints" className="text-accent-fg underline-offset-2 hover:underline">
+          Browse blueprints
+        </Link>
+      </p>
     </ChoiceGroup>
   );
 }

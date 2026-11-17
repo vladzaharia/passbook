@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { apiAs, createPass, GENERIC, uid } from './helpers/api.ts';
+import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -12,7 +12,7 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
   try {
     const template = await api.send(
       'POST',
-      `/api/v1/templates/${encodeURIComponent(GENERIC)}/clone`,
+      `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
       { orgId, name: uid('Hidden lookup ID') },
     );
     const initialVersion = template.versions[0]?.version;

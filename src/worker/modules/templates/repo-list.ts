@@ -6,6 +6,8 @@ export interface ListFilter {
   /** String: that org plus platform templates. Null: platform only. Undefined: everything. */
   orgId?: string | null;
   origin?: 'baked' | 'uploaded';
+  /** True: blueprints only. False: templates only. Undefined: both. */
+  blueprint?: boolean;
   status?: TemplateRow['status'];
   includeArchived?: boolean;
   /** Substring of the name or slug. */
@@ -21,6 +23,9 @@ export interface ListFilter {
 export interface ListedTemplate extends TemplateRow {
   passCount: number;
   orgName: string | null;
+  /** `display.icon` of the version shown. */
+  icon: string | null;
+  fromBlueprint: { id: string; name: string } | null;
 }
 
 export async function listTemplates(db: D1Database, f: ListFilter): Promise<ListedTemplate[]> {
@@ -34,6 +39,10 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
   else if (f.orgId !== undefined) {
     where.push('(t.org_id = ? OR t.org_id IS NULL)');
     params.push(f.orgId);
+  }
+  if (f.blueprint !== undefined) {
+    where.push('t.blueprint = ?');
+    params.push(f.blueprint ? 1 : 0);
   }
   if (f.origin) {
     where.push('t.origin = ?');
@@ -50,16 +59,33 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     where.push('(t.created_at < ? OR (t.created_at = ? AND t.id < ?))');
     params.push(f.cursor.createdAt, f.cursor.createdAt, f.cursor.id);
   }
-  const rows = await all<TemplateSql & { pass_count: number; org_name: string | null }>(
+  const rows = await all<
+    TemplateSql & {
+      pass_count: number;
+      org_name: string | null;
+      icon: unknown;
+      from_name: string | null;
+    }
+  >(
     db,
     `SELECT ${TEMPLATE_COLUMNS.split(', ')
       .map((c) => `t.${c}`)
       .join(', ')},
        (SELECT COUNT(*) FROM passes p WHERE p.template_id = t.id AND p.deleted_at IS NULL AND p.mode = ?${f.passOrgId === undefined ? '' : ' AND p.org_id = ?'}) AS pass_count,
-       (SELECT o.name FROM orgs o WHERE o.id = t.org_id) AS org_name
+       (SELECT o.name FROM orgs o WHERE o.id = t.org_id) AS org_name,
+       (SELECT json_extract(v.manifest, '$.display.icon') FROM template_versions v
+         WHERE v.template_id = t.id AND v.version = t.active_version) AS icon,
+       (SELECT b.name FROM templates b WHERE b.id = t.source_blueprint) AS from_name
      FROM templates t WHERE ${where.join(' AND ')}
      ORDER BY t.created_at DESC, t.id DESC LIMIT ?`,
     [f.mode ?? 'live', ...(f.passOrgId === undefined ? [] : [f.passOrgId]), ...params, f.limit],
   );
-  return rows.map((r) => ({ ...templateRow(r), passCount: r.pass_count, orgName: r.org_name }));
+  return rows.map((r) => ({
+    ...templateRow(r),
+    passCount: r.pass_count,
+    orgName: r.org_name,
+    icon: typeof r.icon === 'string' ? r.icon : null,
+    fromBlueprint:
+      r.source_blueprint && r.from_name ? { id: r.source_blueprint, name: r.from_name } : null,
+  }));
 }

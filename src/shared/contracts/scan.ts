@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { CheckInPolicySchema, CheckInStateSchema, SetupDirectionSchema } from './check-in.ts';
 import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
-import { ScanDisplaySchema } from './scan-display.ts';
+import { ScanDisplayReadSchema } from './scan-display.ts';
 
 /** Idempotency keys: UUIDv7, made by the client. */
 export const UuidV7Schema = z
@@ -224,7 +224,7 @@ export const ScanCardSchema = z.object({
   values: z.array(ScanValueSchema).max(3),
   actions: z.array(ScanCardActionSchema).max(6),
   /** Screen `ready`, for the desk panel. A result card never paints this one (DM 1.11 rule 13). */
-  display: ScanDisplaySchema,
+  display: ScanDisplayReadSchema,
   lastScans: z
     .array(
       z.object({
@@ -301,7 +301,7 @@ export const ScanOutcomeSchema = z.object({
   undoUntil: TimestampSchema.nullable(),
   access: ScanAccessSchema.nullable().default(null),
   /** The outcome's screen. Null for system screens and unknown passes, so refusals stay byte-equal across orgs. */
-  display: ScanDisplaySchema.nullable(),
+  display: ScanDisplayReadSchema.nullable(),
 });
 export type ScanOutcome = z.infer<typeof ScanOutcomeSchema>;
 export type ScanCard = z.infer<typeof ScanCardSchema>;

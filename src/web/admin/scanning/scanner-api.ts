@@ -113,12 +113,21 @@ export function useOrgTemplates(orgId: string | undefined) {
   );
   return useQuery({
     queryKey: ['admin', 'scanning', 'templates', allowed ? orgId : null, allowed],
-    queryFn: ({ signal }) => {
+    queryFn: async ({ signal }) => {
       if (!allowed || !orgId) throw new Error('Choose an authorized organization.');
-      return api.get('/api/v1/templates', TemplateListSchema, {
-        query: { orgId, limit: 200 },
-        signal,
-      });
+      // Scanners may hold a blueprint's passes, so names come from templates and blueprints alike.
+      const [templates, blueprints] = await Promise.all([
+        api.get('/api/v1/templates', TemplateListSchema, { query: { orgId, limit: 200 }, signal }),
+        api.get('/api/v1/templates', TemplateListSchema, {
+          query: { orgId, blueprint: true, limit: 200 },
+          signal,
+        }),
+      ]);
+      const seen = new Set(templates.items.map((t) => t.id));
+      return {
+        ...templates,
+        items: [...templates.items, ...blueprints.items.filter((t) => !seen.has(t.id))],
+      };
     },
     select: (page) => ({
       ...page,
@@ -129,7 +138,7 @@ export function useOrgTemplates(orgId: string | undefined) {
   });
 }
 
-/** Approved Apple releases eligible for the selected organization and console mode. */
+/** Approved Apple releases the selected organization's scanners can use in the console mode, blueprints with live passes included. */
 export function useEligibleTemplates(
   orgId: string | undefined,
   enabled = true,
@@ -164,7 +173,7 @@ export function useEligibleTemplates(
     queryFn: ({ pageParam, signal }) => {
       if (!allowed || !orgId) throw new Error('Choose an authorized organization and mode.');
       return api.get('/api/v1/templates/eligible', EligibleTemplateListSchema, {
-        query: { orgId, mode, provider: 'apple', cursor: pageParam, limit: 200 },
+        query: { orgId, mode, provider: 'apple', purpose: 'scan', cursor: pageParam, limit: 200 },
         signal,
       });
     },

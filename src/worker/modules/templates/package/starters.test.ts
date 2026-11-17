@@ -12,7 +12,9 @@ describe('baked packages as uploads', () => {
   it.each(generatedSource.templates.map((t) => [t.slug, t] as const))(
     '%s passes the uploaded-manifest rules',
     (_slug, t) => {
-      const errors = validateManifest(t.manifest, t.passJson as PassJson, {
+      // A template made from a blueprint drops the flag; only the flag itself may differ.
+      const { blueprint: _flag, ...manifest } = t.manifest;
+      const errors = validateManifest(manifest, t.passJson as PassJson, {
         uploaded: true,
         behaviors,
       }).filter((i) => i.severity === 'error');

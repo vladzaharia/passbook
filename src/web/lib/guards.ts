@@ -57,7 +57,7 @@ export function isTenantResourceDetail(pathname: string, view?: string): boolean
   const item = /^\/admin\/(passes|connections|templates|messages)\/([^/]+)$/.exec(path);
   if (item) {
     const [, resource, id] = item;
-    return resource === 'templates' ? id !== 'upload' : id !== 'new';
+    return id !== 'new' && (resource !== 'templates' || id !== 'upload');
   }
   return (
     (view === 'workspace' && /^\/admin\/orgs\/[^/]+$/.test(path)) ||
@@ -99,9 +99,14 @@ export function canAccessAdminPath(
       path === '/admin/passes/new' ? 'passes:operate' : 'passes:read',
     );
   }
+  // Blueprints are platform-wide: any template reader may browse them and make a template.
+  if (within(path, '/admin/blueprints'))
+    return platformAdmin || hasCapability(membership, 'templates:read');
   if (within(path, '/admin/templates')) {
     const editing =
-      path === '/admin/templates/upload' || /^\/admin\/templates\/[^/]+\/design$/.test(path);
+      path === '/admin/templates/upload' ||
+      path === '/admin/templates/new' ||
+      /^\/admin\/templates\/[^/]+\/design$/.test(path);
     if (!hasCapability(membership, 'templates:read')) return false;
     if (editing) return hasCapability(membership, 'templates:author');
     // Pass issuance can read templates without granting access to template management.

@@ -31,6 +31,7 @@ export const ADMIN_NAV_GROUPS: readonly (readonly NavItem[])[] = [
   [
     page('Passes', '/admin/passes', 'pass', true),
     page('Templates', '/admin/templates', 'template', true),
+    page('Blueprints', '/admin/blueprints', 'blueprint', false, ['starter', 'blueprint']),
     page('Connections', '/admin/connections', 'connection', true),
   ],
   [

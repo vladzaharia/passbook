@@ -38,6 +38,15 @@ export function releaseOrgCheck(release: NewPassRow['release']): Check {
   );
 }
 
+/** The template is not a blueprint: the release head may serve old passes, never a new one. */
+export function notBlueprintCheck(templateId: string): Check {
+  return rawCheck(
+    'release',
+    'NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = ? AND t.blueprint = 1)',
+    [templateId],
+  );
+}
+
 export function scannerTemplatesCheck(scannerId: string, templateIds: Iterable<string>): Check {
   return rawCheck(
     'config',

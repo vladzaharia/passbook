@@ -27,6 +27,7 @@ import {
   Mic,
   Music,
   Percent,
+  Plane,
   Shirt,
   Sparkles,
   SquareParking,
@@ -89,6 +90,7 @@ export const SCAN_ICON_COMPONENTS: Record<ScanIconId, LucideIcon> = {
   calendar: Calendar,
   infinity: InfinityIcon,
   clock: Clock,
+  plane: Plane,
 };
 
 const KNOWN = new Set<string>(SCAN_ICONS);
