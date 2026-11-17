@@ -10,16 +10,19 @@ import type { BroadcastRow } from './repo.ts';
  */
 export async function creatorIsActive(
   db: D1Database,
-  row: Pick<BroadcastRow, 'created_by_type' | 'created_by_id' | 'org_id' | 'kind' | 'created_at'>,
+  row: Pick<
+    BroadcastRow,
+    'created_by_type' | 'created_by_id' | 'org_id' | 'mode' | 'kind' | 'created_at'
+  >,
   now: number,
 ): Promise<boolean> {
   if (!row.created_by_id) return true;
   if (row.created_by_type === 'api_key') {
     const key = await first<{ one: number }>(
       db,
-      `SELECT 1 AS one FROM api_keys WHERE id = ? AND revoked_at IS NULL
-         AND (expires_at IS NULL OR expires_at > ?)`,
-      [row.created_by_id, now],
+      `SELECT 1 AS one FROM api_keys WHERE id = ? AND (org_id IS NULL OR org_id = ?) AND mode = ?
+         AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > ?)`,
+      [row.created_by_id, row.org_id, row.mode, now],
     );
     return key !== null;
   }
@@ -50,7 +53,7 @@ export async function creatorIsActive(
  * does not revive their work), or the creating key is live. System-made broadcasts have no creator.
  */
 export function creatorLive(
-  row: Pick<BroadcastRow, 'created_by_type' | 'created_by_id' | 'created_at' | 'kind'>,
+  row: Pick<BroadcastRow, 'created_by_type' | 'created_by_id' | 'created_at' | 'kind' | 'mode'>,
   now: number,
 ): Check {
   return {
@@ -59,6 +62,7 @@ export function creatorLive(
       if (!row.created_by_id) return '1 = 1';
       if (row.created_by_type === 'api_key')
         return `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ${b.bind(row.created_by_id)}
+          AND (k.org_id IS NULL OR k.org_id = a.org_id) AND k.mode = ${b.bind(row.mode)}
           AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ${b.bind(now)}))`;
       if (row.created_by_type !== 'user') return '1 = 1';
       const holds = (capability: 'messages:manage' | 'passes:operate') =>

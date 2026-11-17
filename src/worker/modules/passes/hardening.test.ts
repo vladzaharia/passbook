@@ -57,8 +57,8 @@ async function persistBuiltTemplate(template: ResolvedTemplate) {
   const now = kit.clock.now();
   await run(
     kit.env.DB,
-    `INSERT OR IGNORE INTO templates (id, org_id, slug, name, origin, active_version, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT OR IGNORE INTO templates (id, org_id, slug, name, origin, active_version, shared, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       template.id,
       template.orgId,
@@ -66,6 +66,7 @@ async function persistBuiltTemplate(template: ResolvedTemplate) {
       template.manifest.name,
       template.origin,
       template.version,
+      template.orgId === null && template.origin !== 'baked' ? 1 : 0,
       now,
       now,
     ],

@@ -21,6 +21,8 @@ export interface TemplateRow {
   styles: PassStyle[];
   /** A platform design to start from; never issues passes. */
   blueprint: boolean;
+  /** A platform upload offered to every org; unshared ones are staged for the platform. */
+  shared: boolean;
   /** The blueprint this template was made from. */
   sourceBlueprint: string | null;
   createdBy: string | null;
@@ -51,6 +53,7 @@ export interface TemplateSql {
   status: 'active' | 'archived' | 'deleted';
   styles: string;
   blueprint: number;
+  shared: number;
   source_blueprint: string | null;
   created_by: string | null;
   created_at: number;
@@ -70,7 +73,7 @@ interface VersionSql {
 }
 
 export const TEMPLATE_COLUMNS =
-  'id, org_id, slug, name, description, origin, active_version, status, styles, blueprint, source_blueprint, created_by, created_at, updated_at';
+  'id, org_id, slug, name, description, origin, active_version, status, styles, blueprint, shared, source_blueprint, created_by, created_at, updated_at';
 
 export function templateRow(row: TemplateSql): TemplateRow {
   return {
@@ -84,6 +87,7 @@ export function templateRow(row: TemplateSql): TemplateRow {
     status: row.status,
     styles: JSON.parse(row.styles) as PassStyle[],
     blueprint: row.blueprint === 1,
+    shared: row.shared === 1,
     sourceBlueprint: row.source_blueprint,
     createdBy: row.created_by,
     createdAt: row.created_at,

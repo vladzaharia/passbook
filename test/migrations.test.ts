@@ -1,5 +1,8 @@
+/// <reference types="vite/client" />
+
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
+import migration from '../migrations/0067_templates_shared.sql?raw';
 import { all, first, run } from '../src/worker/platform/db.ts';
 import {
   fixtures,
@@ -108,6 +111,49 @@ describe('0001_platform migration', () => {
         "INSERT INTO orgs (id, slug, name, status, created_at, updated_at) VALUES ('x', 'xx', 'X', 'bogus', 1, 1)",
       ),
     ).rejects.toThrow(/CHECK constraint failed: status IN \('active', 'suspended', 'deleted'\)/);
+  });
+});
+
+describe('0067_templates_shared migration', () => {
+  const insert = (id: string, orgId: string | null, origin: string) =>
+    run(
+      env.DB,
+      `INSERT INTO templates (id, org_id, slug, name, origin, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, 1)`,
+      [id, orgId, id, id, origin],
+    );
+
+  it('starts new templates staged, rejects other values, and backfills only platform uploads', async () => {
+    const { org } = await setup();
+    await insert('shared-global-upload', null, 'uploaded');
+    await insert('shared-global-baked', null, 'baked');
+    await insert('shared-org-upload', org.id, 'uploaded');
+    const state = async () =>
+      Object.fromEntries(
+        (
+          await all<{ id: string; shared: number }>(
+            env.DB,
+            "SELECT id, shared FROM templates WHERE id LIKE 'shared-%'",
+          )
+        ).map((r) => [r.id, r.shared]),
+      );
+    expect(await state()).toEqual({
+      'shared-global-upload': 0,
+      'shared-global-baked': 0,
+      'shared-org-upload': 0,
+    });
+    await expect(
+      run(env.DB, "UPDATE templates SET shared = 2 WHERE id = 'shared-org-upload'"),
+    ).rejects.toThrow(/CHECK constraint failed/);
+    // The migration's own backfill statement, as production runs it over rows that already exist.
+    const backfill = migration.split('\n').find((line) => line.startsWith('UPDATE templates'));
+    if (!backfill) throw new Error('The backfill statement is missing.');
+    await run(env.DB, backfill);
+    expect(await state()).toEqual({
+      'shared-global-upload': 1,
+      'shared-global-baked': 0,
+      'shared-org-upload': 0,
+    });
   });
 });
 

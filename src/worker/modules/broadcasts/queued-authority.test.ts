@@ -5,6 +5,7 @@ import {
   makeOrg,
   makeSession,
   makeUser,
+  orgManager,
   runOne,
 } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
@@ -153,12 +154,22 @@ describe('cancel triggers cover every path (one mechanism)', () => {
     expect(await t.state(raw)).toEqual({ state: 'cancelled', error_code: 'CREATOR_REVOKED' });
 
     const patched = await t.queue(org.id, { type: 'system', id: null });
-    await updateOrg(t.ctx, { type: 'user', id: t.admin.id }, org.id, { status: 'suspended' });
+    await updateOrg(
+      t.ctx,
+      { type: 'user', id: t.admin.id },
+      org.id,
+      { status: 'suspended' },
+      await orgManager(t.f, t.ctx, org.id),
+      { userId: t.admin.id, sessionId: t.adminSessionId },
+    );
     expect(await t.state(patched)).toEqual({ state: 'cancelled', error_code: 'ORG_INACTIVE' });
 
     const doomed = await makeOrg(t.f);
     const gone = await t.queue(doomed.id, { type: 'system', id: null });
-    await deleteOrg(t.ctx, { type: 'user', id: t.admin.id }, doomed.id);
+    await deleteOrg(t.ctx, { type: 'user', id: t.admin.id }, doomed.id, {
+      userId: t.admin.id,
+      sessionId: t.adminSessionId,
+    });
     expect(await t.state(gone)).toEqual({ state: 'cancelled', error_code: 'ORG_INACTIVE' });
   });
 

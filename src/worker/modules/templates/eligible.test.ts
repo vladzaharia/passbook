@@ -315,7 +315,7 @@ describe('eligible template releases', () => {
     });
     expect(assign.status).toBe(200);
     // A legacy global pointer is not a release and must never serve as a fallback.
-    await run(env.DB, 'UPDATE templates SET active_version = ? WHERE id = ?', [
+    await run(env.DB, 'UPDATE templates SET active_version = ?, shared = 1 WHERE id = ?', [
       shared.version,
       shared.id,
     ]);

@@ -1,5 +1,6 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import type { PassSource } from '../../../shared/contracts/passes.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -74,6 +75,8 @@ export interface PublishOptions {
   budgetExempt?: () => boolean;
   /** A scan's own grant: its rows commit in the pass write's batch (no tenant `authority` then). */
   commit?: PublishCommit;
+  /** Extra grant checks for deferred work (a bulk rebuild's starter must still hold the right). */
+  extraChecks?: readonly Check[];
   /** Refuses (with this error) when a credential transfer is pending; checked in the first read trip. */
   transferPendingError?: () => Error;
 }

@@ -106,8 +106,10 @@ async function seedSession(
   await db.batch([
     stmt(
       db,
-      'INSERT INTO users (id, primary_email, created_at) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING',
-      [session.userId, `${crypto.randomUUID()}@fake-auth.test`, now],
+      // A sign-in records the roles it granted, as `recordLogin` does; deferred platform work reads them.
+      `INSERT INTO users (id, primary_email, created_at, last_roles) VALUES (?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET last_roles = excluded.last_roles`,
+      [session.userId, `${crypto.randomUUID()}@fake-auth.test`, now, JSON.stringify(session.roles)],
     ),
     stmt(
       db,

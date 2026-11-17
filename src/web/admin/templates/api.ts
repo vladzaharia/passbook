@@ -167,6 +167,11 @@ export function useTemplateActions(id: string) {
         api.patch(`/api/v1/templates/${id}`, TemplateDetailSchema, { orgId }),
       onSuccess: done,
     }),
+    share: useMutation({
+      mutationFn: (shared: boolean) =>
+        api.post(`/api/v1/templates/${id}/share`, TemplateDetailSchema, { shared }),
+      onSuccess: done,
+    }),
     clone: useMutation({
       mutationFn: (input: { orgId: string; name?: string }) =>
         api.post(`/api/v1/templates/${id}/clone`, TemplateDetailSchema, input),

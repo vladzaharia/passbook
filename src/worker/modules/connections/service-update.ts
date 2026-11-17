@@ -5,6 +5,7 @@ import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
 import { toDto } from './dto.ts';
 import { schedules } from './health.ts';
+import { assertMayIssue, updateIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
 import { type ConnectionPatch, patchConnection } from './repo.ts';
 import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
@@ -34,6 +35,8 @@ export async function update(
 ): Promise<Created> {
   const conn = await requireConnection(sctx, id);
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
+  const issues = await updateIssues(sctx.env.DB, input, conn);
+  if (issues) assertMayIssue(authority);
   const def = requireConnector(conn.connectorType);
   const now = sctx.clock.now();
   const patch: ConnectionPatch = { updatedAt: now };
@@ -164,7 +167,7 @@ export async function update(
       patch.webhookCredentialId = credentialId;
     }
     const updated = await patchConnection(sctx, id, patch, {
-      actor: { orgId: conn.orgId, authority },
+      actor: { orgId: conn.orgId, authority, issuing: issues },
       ...(fenced ? { generation: conn.generation } : {}),
     });
     if (updated === 0) {

@@ -6,7 +6,12 @@ import { writePart } from '../../platform/authority-include.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import { AppError, authorityDenied, type DenyReason } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import {
+  capabilityChecks,
+  keyScope,
+  membershipCapability,
+  tenantPrincipal,
+} from '../passes/repo-authority.ts';
 import type { ConnectionAuthority } from './access.ts';
 
 /** Refusal codes of every connection grant. `config` is the connection's generation (a config change). */
@@ -36,6 +41,8 @@ const REASON_OF = new Map<string, DenyReason>(
 export interface ConnectionActor {
   orgId: string;
   authority?: ConnectionAuthority | undefined;
+  /** The write sets an issuing switch: the principal must also still hold pass rights. */
+  issuing?: boolean;
 }
 
 /** Every table a connection grant writes: the typed ones and the parts. Anything else is refused. */
@@ -112,11 +119,20 @@ export function connectionGrant(
     purpose: `org_mode.connection.${action}`,
     // A null-org (platform) key names the org it acts on; the grant needs it active. Scopes still apply.
     principal: tenantPrincipal(a),
-    checks: [...capabilityChecks(a), ...checks],
+    checks: [...capabilityChecks(a), ...(actor.issuing ? issuingChecks(a) : []), ...checks],
     codes: CONNECTION_CODES,
     tables: CONNECTION_TABLES,
     ...(target ? { target } : {}),
   });
+}
+
+/** Re-derives pass rights from the principal's own row: roles for a member, scopes for a key. */
+function issuingChecks(a: ConnectionAuthority): Check[] {
+  return [
+    a.kind === 'session'
+      ? membershipCapability(a.membershipId, 'passes:operate')
+      : keyScope(a.keyId, 'passes:write'),
+  ];
 }
 
 /** The refusal reason of a connection grant, or null for any other error. */

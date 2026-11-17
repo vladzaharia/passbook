@@ -3,6 +3,7 @@ import {
   makeApiKey,
   makeSession,
   makeUser,
+  orgManager,
   runOne,
   saveOrgSettings,
 } from '../../../../test/helpers/index.ts';
@@ -60,6 +61,7 @@ describe('access epoch: org edits do not move it', () => {
       row,
       JSON.stringify({ accent: kit.fx.ids.id() }),
       kit.clock.now(),
+      await orgManager(kit.fx, kit.ctx, kit.org.id),
     );
     await runOne(kit.env.DB, 'UPDATE orgs SET name = ? WHERE id = ?', ['Renamed', kit.org.id]);
 

@@ -706,6 +706,36 @@ describe('template detail', () => {
     expect(bodies).toEqual([{ orgId: 'org2', name: 'Copper card copy' }]);
   });
 
+  it('shares an unassigned upload with all orgs and stops sharing', async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    let shared = false;
+    await renderApp('/admin/templates/b1', {
+      session: 'admin',
+      ...orgAccess,
+      handlers: {
+        '/api/v1/orgs': directoryOrgs,
+        '/api/v1/templates/b1/share': (_u, init) => {
+          bodies.push(JSON.parse(String(init?.body)));
+          shared = !shared;
+          return json(templateDetail({ id: 'b1', origin: 'uploaded', orgId: null, shared }));
+        },
+        '/api/v1/templates/b1': () =>
+          json(
+            templateDetail({ id: 'b1', origin: 'uploaded', orgId: null, orgName: null, shared }),
+          ),
+        '/api/v1/templates/previews': previewsHandler,
+        '/api/v1/templates/b1/preview': preview,
+      },
+    });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Platform only')).toBeInTheDocument();
+    await user.click(main.getByRole('button', { name: 'Share with all orgs' }));
+    expect(await main.findByRole('button', { name: 'Stop sharing' })).toBeInTheDocument();
+    await user.click(main.getByRole('button', { name: 'Stop sharing' }));
+    await waitFor(() => expect(bodies).toEqual([{ shared: true }, { shared: false }]));
+  });
+
   it('assigns the organization and shows the conflict as the form error', async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];

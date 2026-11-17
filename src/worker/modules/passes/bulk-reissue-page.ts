@@ -4,6 +4,11 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { publishPass } from './publish.ts';
 import { passesForReissue } from './repo.ts';
+import {
+  type ReissuePrincipal,
+  reissuePrincipalCheck,
+  reissuePrincipalValid,
+} from './repo-bulk-principal.ts';
 import { hasWorkflowReleaseSnapshots, passesForWorkflowReissue } from './repo-workflow-releases.ts';
 import { releaseMovePlan, type StampMove } from './stamps-keep.ts';
 
@@ -22,6 +27,8 @@ export interface ReissueParams {
   releaseId?: string;
   releaseGeneration?: number;
   cause: 'template_upgrade' | 'resign' | 'branding';
+  /** Who started the run; absent for system runs. Re-checked before every page. */
+  principal?: ReissuePrincipal;
 }
 
 export interface ReissuePageResult {
@@ -31,6 +38,8 @@ export interface ReissuePageResult {
   failed: number;
   /** Present when some failed because the card holds more stamps than the new version allows. */
   aboveMax?: number;
+  /** The starter lost access: the run stops without touching this page. */
+  revoked?: true;
 }
 
 /**
@@ -42,6 +51,13 @@ export async function reissuePage(
   params: ReissueParams,
   cursor: string | null,
 ): Promise<ReissuePageResult> {
+  if (
+    params.principal &&
+    !(await reissuePrincipalValid(ctx.env.DB, params.orgId, params.principal, ctx.clock.now()))
+  ) {
+    ctx.log.warn('bulk_reissue.principal_revoked', { code: 'REISSUE_PRINCIPAL_REVOKED' });
+    return { nextCursor: null, changed: 0, unchanged: 0, failed: 0, revoked: true };
+  }
   type Release = {
     orgId: string;
     mode: Mode;
@@ -137,6 +153,12 @@ export async function reissuePage(
         actor: { type: 'system', id: null },
         force: params.cause === 'resign',
         dispatch: false,
+        // Each publish re-proves the starter in its own grant, so a revocation mid-page stops the next write.
+        ...(params.principal
+          ? {
+              extraChecks: [reissuePrincipalCheck(params.orgId, params.principal, ctx.clock.now())],
+            }
+          : {}),
         ...(release
           ? { expectedRelease: { id: release.releaseId, generation: release.generation } }
           : {}),
@@ -161,6 +183,14 @@ export async function reissuePage(
       else result.unchanged++;
     } catch (error) {
       if (!(error instanceof AppError)) throw error;
+      if (
+        params.principal &&
+        !(await reissuePrincipalValid(ctx.env.DB, params.orgId, params.principal, ctx.clock.now()))
+      ) {
+        ctx.log.warn('bulk_reissue.principal_revoked', { code: 'REISSUE_PRINCIPAL_REVOKED' });
+        result.revoked = true;
+        break;
+      }
       result.failed++;
       if (error.code === 'STAMPS_ABOVE_MAX') result.aboveMax = (result.aboveMax ?? 0) + 1;
       ctx.log.warn('bulk_reissue.pass_failed', {
@@ -169,6 +199,10 @@ export async function reissuePage(
         code: error.code,
       });
     }
+  }
+  if (result.revoked) {
+    if (result.changed > 0) await dispatchSafely(ctx);
+    return result;
   }
   if (rows.length === REISSUE_PAGE) result.nextCursor = rows[rows.length - 1]?.id ?? null;
   if (result.changed > 0) await dispatchSafely(ctx);

@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, chunk, containsMatch, first, placeholders, run, stmt } from '../../platform/db.ts';
+import { all, chunk, containsMatch, first, placeholders, stmt } from '../../platform/db.ts';
 
 export const COUNT_CAP = 100_000;
 
@@ -54,35 +54,6 @@ export function listOrgRows(db: D1Database, before: string | undefined, limit: n
        ${name && slug ? `AND (${name.sql} OR ${slug.sql})` : ''}
      ORDER BY id DESC LIMIT ?`,
     name && slug ? [before ?? '￿', ...name.params, ...slug.params, limit] : [before ?? '￿', limit],
-  );
-}
-
-export async function insertOrg(
-  db: D1Database,
-  row: Omit<OrgRow, 'config_revision'>,
-): Promise<void> {
-  await run(
-    db,
-    `INSERT INTO orgs (id, slug, name, status, default_identity_id, branding, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      row.id,
-      row.slug,
-      row.name,
-      row.status,
-      row.default_identity_id,
-      row.branding,
-      row.created_at,
-      row.updated_at,
-    ],
-  );
-}
-
-export async function markOrgDeleted(db: D1Database, id: string, now: number): Promise<void> {
-  await run(
-    db,
-    "UPDATE orgs SET status = 'deleted', default_identity_id = NULL, updated_at = MAX(updated_at + 1, ?) WHERE id = ? AND status != 'deleted'",
-    [now, id],
   );
 }
 

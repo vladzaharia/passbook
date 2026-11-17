@@ -43,6 +43,18 @@ export async function runBulkReissue(
       totals.changed += result.changed;
       totals.unchanged += result.unchanged;
       totals.failed += result.failed;
+      if (result.revoked) {
+        await step.do('revoked', () =>
+          setWorkflowStatus(
+            env.DB,
+            instanceId,
+            'errored',
+            ctx.clock.now(),
+            'REISSUE_PRINCIPAL_REVOKED',
+          ),
+        );
+        return totals;
+      }
       if (result.aboveMax) totals.aboveMax = (totals.aboveMax ?? 0) + result.aboveMax;
       if (!result.nextCursor) break;
       cursor = result.nextCursor;

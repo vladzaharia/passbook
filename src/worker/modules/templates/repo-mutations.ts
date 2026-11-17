@@ -155,3 +155,29 @@ export async function deleteUploadedTemplate(
     return ((await g.commit())[0]?.results.length ?? 0) === 1;
   });
 }
+
+/**
+ * Offers an unassigned upload to every org, or stages it again. Only a platform grant writes it, and only
+ * while the row is still an unassigned upload; orgs that already hold a release or candidate keep it.
+ */
+export async function shareTemplate(
+  ctx: ServiceContext,
+  row: TemplateRow,
+  shared: boolean,
+  authority: TemplateAuthority,
+  now: number,
+): Promise<boolean> {
+  return attempt(async () => {
+    const g = templateGrant(ctx, authority, shared ? 'share' : 'unshare', {
+      target: row.id,
+      codes: CODES,
+    });
+    g.update('templates', {
+      set: { shared: shared ? 1 : 0, updated_at: maxNow(now) },
+      where: { ...target(row, authority), blueprint: 0, shared: row.shared ? 1 : 0 },
+      require: 'one',
+      returning: ['id'],
+    });
+    return ((await g.commit())[0]?.results.length ?? 0) === 1;
+  });
+}

@@ -98,7 +98,7 @@ describe('release head precedence', () => {
     const templateId = g.s.template.resolved.id;
     const version = await bakedTemplate(templateId, g.s.org.id);
     const historic = await systemRelease(g.s, templateId, version, g.s.org.id, 1, null);
-    await run(db, 'UPDATE templates SET org_id = NULL WHERE id = ?', [templateId]);
+    await run(db, 'UPDATE templates SET org_id = NULL, shared = 1 WHERE id = ?', [templateId]);
     const platform = await systemRelease(g.s, templateId, version, null, 1, null);
     // Unassigned again: the platform head is the head for the org that once owned it.
     expect(await attempt(g, templateId, platform)).toBe('ok');

@@ -64,6 +64,7 @@ export async function commitPublishArtifact(
       authority: options.authority,
       holder: options.holder,
       commit: options.commit,
+      extraChecks: options.extraChecks,
       clock: ctx.clock,
     });
   } catch (error) {

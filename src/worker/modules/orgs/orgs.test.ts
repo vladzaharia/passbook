@@ -141,7 +141,14 @@ describe('orgs api', () => {
       countsCapped: false,
     });
 
-    const patched = await call('PATCH', `/${org.id}`, { name: 'Acme Inc', status: 'suspended' });
+    // A status change travels alone: mixing it with edits would be two commits that can half-apply.
+    const mixed = await call('PATCH', `/${org.id}`, { name: 'Acme Inc', status: 'suspended' });
+    await expectProblem(mixed, 400, 'ORG_STATUS_ALONE');
+    const renamed = await call('PATCH', `/${org.id}`, { name: 'Acme Inc' });
+    expect(await renamed.json()).toMatchObject({ name: 'Acme Inc', status: 'active' });
+    const stale = await call('PATCH', `/${org.id}`, { status: 'suspended', configRevision: 0 });
+    await expectProblem(stale, 409, 'SETTINGS_CHANGED');
+    const patched = await call('PATCH', `/${org.id}`, { status: 'suspended' });
     expect(await patched.json()).toMatchObject({ name: 'Acme Inc', status: 'suspended' });
 
     expect((await call('DELETE', `/${org.id}`)).status).toBe(200);
@@ -156,7 +163,12 @@ describe('orgs api', () => {
       'SELECT action, detail FROM audit_log WHERE target_id = ? ORDER BY id',
       [org.id],
     );
-    expect(actions.map((a) => a.action)).toEqual(['org.create', 'org.suspend', 'org.delete']);
+    expect(actions.map((a) => a.action)).toEqual([
+      'org.create',
+      'org.update',
+      'org.suspend',
+      'org.delete',
+    ]);
     expect(JSON.parse(actions[1]?.detail ?? '{}').changes.name).toEqual({
       from: 'Acme',
       to: 'Acme Inc',

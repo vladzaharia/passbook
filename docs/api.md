@@ -23,7 +23,7 @@ curl "https://passbook.mobile/api/v1/passes?orgId=$ORG_ID" \
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
 | `scans:read` | scoped scanner event and scan-log reads |
 | `connections:read` | scoped connection reads |
-| `connections:write` | scoped connection changes and actions |
+| `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 
 Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
 and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly
@@ -104,7 +104,7 @@ The server-owned role mapping unions capabilities when a membership has multiple
 | Role | Capabilities in addition to `org:read` |
 |---|---|
 | `org_admin` | All capabilities below, plus `org:manage`, `members:read` and `members:manage` |
-| `integration_admin` | `integrations:read`, `integrations:manage`, `templates:read` |
+| `integration_admin` | `integrations:read`, `integrations:manage`, `templates:read`. Turning on a connection's issuing switches (`autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping`, `onMissing`), and changing the source of one that issues or has bound passes (config, secrets, webhook secret or its rotation, mode, `holderEmailField`, re-enabling), also needs `passes:operate` (a key needs `passes:write`). Turning issuing off does not |
 | `template_author` | `templates:read`, `templates:author` |
 | `template_reviewer` | `templates:read`, `templates:review` |
 | `template_publisher` | `templates:read`, `templates:publish` |
@@ -162,6 +162,10 @@ The list includes org-owned and shared uploaded templates only when the selected
 approved release, and generated baked templates with a trusted system release. Blueprints are never
 listed. It never falls back to another org's release or an unapproved draft. `supportsCheckIn` is derived from the
 released version. Issuance rechecks the selected release and its assets.
+
+An upload with no organization is staged: only platform administrators see it. `POST /templates/{id}/share`
+with `{shared: true}` (platform administrator) offers it to every org, `{shared: false}` stages it again;
+an org that already holds a candidate or release of it keeps seeing it. Baked templates are always shared.
 
 For an uploaded template, a `templates:author` session creates a candidate with
 `POST /templates/{id}/candidates` and `{orgId, mode, provider: "apple", version}`. A different

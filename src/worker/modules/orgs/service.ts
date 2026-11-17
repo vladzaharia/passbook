@@ -9,6 +9,7 @@ import type {
 } from '../../../shared/contracts/orgs.ts';
 import type { Actor } from '../../platform/context.ts';
 import {
+  BadRequestError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
@@ -22,9 +23,7 @@ import {
   countsFor,
   getOrgRow,
   identityUsableBy,
-  insertOrg,
   listOrgRows,
-  markOrgDeleted,
   type OrgRow,
   slugTaken,
 } from './repo.ts';
@@ -123,7 +122,7 @@ export async function createOrg(
   ctx: ServiceContext,
   actor: Actor,
   input: z.infer<typeof CreateOrgSchema>,
-  admin?: OrgAdmin,
+  admin: OrgAdmin,
 ): Promise<OrgDto> {
   await checkSlug(ctx, input.slug);
   await checkIdentity(ctx, null, input.defaultIdentityId ?? null);
@@ -139,8 +138,7 @@ export async function createOrg(
     updated_at: now,
     config_revision: 1,
   };
-  if (admin) await insertOrgAsAdmin(ctx, row, admin);
-  else await insertOrg(ctx.env.DB, row);
+  await insertOrgAsAdmin(ctx, row, admin);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.id,
@@ -157,44 +155,72 @@ export async function updateOrg(
   actor: Actor,
   id: string,
   input: z.infer<typeof UpdateOrgSchema>,
-  authority?: OrgWriteAuthority,
+  authority: OrgWriteAuthority,
+  admin?: OrgAdmin,
 ): Promise<OrgDto> {
   const before = await requireOrg(ctx, id);
-  if (input.slug !== undefined && input.slug !== before.slug) await checkSlug(ctx, input.slug, id);
-  if (input.defaultIdentityId !== undefined) await checkIdentity(ctx, id, input.defaultIdentityId);
-  const next: OrgRow = {
-    ...before,
-    slug: input.slug ?? before.slug,
-    name: input.name ?? before.name,
-    status: input.status ?? before.status,
-    default_identity_id:
-      input.defaultIdentityId === undefined ? before.default_identity_id : input.defaultIdentityId,
-    branding: input.branding ? keepImages(input.branding, before.branding) : before.branding,
-    updated_at: ctx.clock.now(),
-    config_revision: input.configRevision ?? before.config_revision,
-  };
-  const saved = await updateOrgRow(ctx, next, authority);
-  if (!saved) throw new ForbiddenError();
-  const passesToUpdate = await markPassesStale(ctx, id, before, saved);
-  const view = (row: OrgRow) => ({ ...toDto(row) }) as Record<string, unknown>;
-  const changes = diffFields(view(before), view(saved), [
-    'slug',
-    'name',
-    'status',
-    'defaultIdentityId',
-    'branding',
-  ]);
-  if (Object.keys(changes).length > 0)
-    await recordAudit(ctx, {
-      ...auditActor(actor),
-      orgId: id,
-      action:
-        input.status && input.status !== before.status ? statusAction(input.status) : 'org.update',
-      targetType: 'org',
-      targetId: id,
-      detail: { changes },
-    });
-  return withUpdates(toDto(saved), passesToUpdate);
+  const toStatus =
+    input.status !== undefined && input.status !== before.status ? input.status : null;
+  // A status move is the platform operation of POST /status, with the same grant and audit.
+  if (toStatus && !admin) throw new ForbiddenError();
+  const edits =
+    input.slug !== undefined ||
+    input.name !== undefined ||
+    input.defaultIdentityId !== undefined ||
+    input.branding !== undefined;
+  // Two commits can half-apply, so a status move travels alone.
+  if (toStatus && edits)
+    throw new BadRequestError(
+      'Send the status change on its own, then the other edits.',
+      'ORG_STATUS_ALONE',
+    );
+  if (
+    toStatus &&
+    input.configRevision !== undefined &&
+    input.configRevision !== before.config_revision
+  )
+    throw new ConflictError('The organization changed. Reload and retry.', 'SETTINGS_CHANGED');
+  let out: OrgDto = toDto(before);
+  if (edits || !toStatus) {
+    if (input.slug !== undefined && input.slug !== before.slug)
+      await checkSlug(ctx, input.slug, id);
+    if (input.defaultIdentityId !== undefined)
+      await checkIdentity(ctx, id, input.defaultIdentityId);
+    const next: OrgRow = {
+      ...before,
+      slug: input.slug ?? before.slug,
+      name: input.name ?? before.name,
+      default_identity_id:
+        input.defaultIdentityId === undefined
+          ? before.default_identity_id
+          : input.defaultIdentityId,
+      branding: input.branding ? keepImages(input.branding, before.branding) : before.branding,
+      updated_at: ctx.clock.now(),
+      config_revision: input.configRevision ?? before.config_revision,
+    };
+    const saved = await updateOrgRow(ctx, next, authority);
+    if (!saved) throw new ForbiddenError();
+    const passesToUpdate = await markPassesStale(ctx, id, before, saved);
+    const view = (row: OrgRow) => ({ ...toDto(row) }) as Record<string, unknown>;
+    const changes = diffFields(view(before), view(saved), [
+      'slug',
+      'name',
+      'defaultIdentityId',
+      'branding',
+    ]);
+    if (Object.keys(changes).length > 0)
+      await recordAudit(ctx, {
+        ...auditActor(actor),
+        orgId: id,
+        action: 'org.update',
+        targetType: 'org',
+        targetId: id,
+        detail: { changes },
+      });
+    out = withUpdates(toDto(saved), passesToUpdate);
+  }
+  if (toStatus && admin) out = { ...out, ...(await setOrgStatus(ctx, actor, id, toStatus, admin)) };
+  return out;
 }
 
 const statusAction = (status: 'active' | 'suspended') =>
@@ -224,7 +250,13 @@ export async function setOrgStatus(
   const saved = (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin))
     ? await getOrgRow(ctx.env.DB, id)
     : null;
-  if (!saved) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  if (!saved) {
+    // The org moved under us (status, deletion): a gone org is a 404, a changed one a conflict.
+    const now = await getOrgRow(ctx.env.DB, id);
+    if (!now || now.status === 'deleted')
+      throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+    throw new ConflictError('The organization changed. Reload and retry.', 'ORG_CONFLICT');
+  }
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: id,
@@ -241,11 +273,10 @@ export async function deleteOrg(
   ctx: ServiceContext,
   actor: Actor,
   id: string,
-  admin?: OrgAdmin,
+  admin: OrgAdmin,
 ): Promise<void> {
   const row = await requireOrg(ctx, id);
-  if (admin) await moveOrgStatusAsAdmin(ctx, id, row.status, 'deleted', admin);
-  else await markOrgDeleted(ctx.env.DB, id, ctx.clock.now());
+  await moveOrgStatusAsAdmin(ctx, id, row.status, 'deleted', admin);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: id,

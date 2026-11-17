@@ -1,5 +1,6 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import type { PassSource } from '../../../shared/contracts/passes.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import { coalesceTo, type SetValue } from '../../platform/authority-expr.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
 import type { Clock } from '../../platform/clock.ts';
@@ -55,6 +56,8 @@ export interface PublishWrite {
   commit?: PublishCommit | undefined;
   /** Required with authority, so its expiry is checked immediately before the batch. */
   clock?: Clock | undefined;
+  /** Further checks of the same grant (deferred work re-proves its starter). */
+  extraChecks?: readonly Check[] | undefined;
 }
 
 export interface ConnectionStateWrite {
@@ -132,6 +135,7 @@ export async function casPublish(ctx: ServiceContext, w: PublishWrite): Promise<
       requireNoReleaseHistory: w.requireNoReleaseHistory ?? false,
       set,
       removalClaim: w.publishedRemovalGeneration !== undefined,
+      extraChecks: w.extraChecks,
     };
     // A tenant publish is one grant. A connector (or legacy no-principal) publish is a connection job grant.
     if (w.commit && !w.connectionContext) return casGranted(ctx, { ...common, commit: w.commit });
@@ -176,6 +180,7 @@ export async function casMeta(
     commit?: PublishCommit | undefined;
     /** Required with authority, so its expiry is checked immediately before the batch. */
     clock?: Clock | undefined;
+    extraChecks?: readonly Check[] | undefined;
   },
 ): Promise<number | null> {
   if (!permitsPassMutation(set.authority)) return null;
@@ -211,6 +216,7 @@ export async function casMeta(
       scan_code: coalesceTo(set.scanCode),
       ...(set.connectionState ? { sync_error_code: set.connectionState.syncErrorCode } : {}),
     },
+    extraChecks: set.extraChecks,
   };
   if (set.commit && !set.connectionContext)
     return casGranted(ctx, { ...common, commit: set.commit });

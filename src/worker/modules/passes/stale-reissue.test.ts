@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg, orgManager } from '../../../../test/helpers/index.ts';
 import { all, first } from '../../platform/db.ts';
 import { runBulkReissue } from '../../workflows/bulk-reissue.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -22,6 +22,21 @@ beforeEach(async () => {
 });
 
 const admin = { type: 'user', id: 'admin-1' } as const;
+type Slot = Parameters<typeof deleteBrandingImage>[3];
+const put = async (orgId: string, slot: Slot, upload: Parameters<typeof putBrandingImage>[4]) =>
+  putBrandingImage(
+    kit.ctx,
+    admin,
+    orgId,
+    slot,
+    upload,
+    undefined,
+    await orgManager(kit.fx, kit.ctx, orgId),
+  );
+const del = async (orgId: string, slot: Slot) =>
+  deleteBrandingImage(kit.ctx, admin, orgId, slot, await orgManager(kit.fx, kit.ctx, orgId));
+const edit = async (orgId: string, input: Parameters<typeof updateOrg>[3]) =>
+  updateOrg(kit.ctx, admin, orgId, input, await orgManager(kit.fx, kit.ctx, orgId));
 const b64 = (png: Uint8Array) => btoa(String.fromCharCode(...png));
 const logo = () => ({ x3: b64(makePng(480, 150)) });
 const icon = { x3: b64(makePng(114, 114)) };
@@ -61,19 +76,19 @@ describe('branding reissue trigger', () => {
   it('flags the org for each pass-affecting change', async () => {
     const { org } = await orgWithPass();
     const changes: [string, () => Promise<{ passesToUpdate?: number | undefined }>][] = [
-      ['logo upload', () => putBrandingImage(kit.ctx, admin, org.id, 'logo', logo())],
-      ['icon upload', () => putBrandingImage(kit.ctx, admin, org.id, 'icon', icon)],
-      ['colours', () => updateOrg(kit.ctx, admin, org.id, { branding: { passColors: colors } })],
+      ['logo upload', () => put(org.id, 'logo', logo())],
+      ['icon upload', () => put(org.id, 'icon', icon)],
+      ['colours', () => edit(org.id, { branding: { passColors: colors } })],
       [
         'logoHasName',
         () =>
-          updateOrg(kit.ctx, admin, org.id, {
+          edit(org.id, {
             branding: { passColors: colors, logoHasName: true },
           }),
       ],
-      ['org name', () => updateOrg(kit.ctx, admin, org.id, { name: 'Brand Company' })],
-      ['logo delete', () => deleteBrandingImage(kit.ctx, admin, org.id, 'logo')],
-      ['icon delete', () => deleteBrandingImage(kit.ctx, admin, org.id, 'icon')],
+      ['org name', () => edit(org.id, { name: 'Brand Company' })],
+      ['logo delete', () => del(org.id, 'logo')],
+      ['icon delete', () => del(org.id, 'icon')],
     ];
     for (const [label, change] of changes) {
       await clean(org.id);
@@ -85,10 +100,10 @@ describe('branding reissue trigger', () => {
 
   it('ignores a save that leaves the pass look alone', async () => {
     const { org } = await orgWithPass();
-    const dto = await updateOrg(kit.ctx, admin, org.id, {
+    const dto = await edit(org.id, {
       branding: { supportEmail: 'help@example.com', accent: '#ff0000' },
     });
-    await updateOrg(kit.ctx, admin, org.id, { name: 'Brand Co' });
+    await edit(org.id, { name: 'Brand Co' });
     expect(dto.passesToUpdate).toBeUndefined();
     expect(await dirtyAt(org.id)).toBeNull();
     kit.workflow.created.length = 0;
@@ -99,7 +114,7 @@ describe('branding reissue trigger', () => {
 
   it('does not flag an org with no live passes', async () => {
     const org = await makeOrg(kit.fx, { name: 'Empty Co' });
-    const dto = await putBrandingImage(kit.ctx, admin, org.id, 'icon', icon);
+    const dto = await put(org.id, 'icon', icon);
     expect(dto.passesToUpdate).toBeUndefined();
     expect(await dirtyAt(org.id)).toBeNull();
   });
@@ -110,11 +125,11 @@ describe('branding reissue coalescing', () => {
     const { org } = await orgWithPass();
     await clean(org.id);
     kit.workflow.created.length = 0;
-    await putBrandingImage(kit.ctx, admin, org.id, 'logo', logo());
+    await put(org.id, 'logo', logo());
     kit.clock.set(kit.clock.now() + 30_000);
-    await putBrandingImage(kit.ctx, admin, org.id, 'icon', icon);
+    await put(org.id, 'icon', icon);
     kit.clock.set(kit.clock.now() + 30_000);
-    await updateOrg(kit.ctx, admin, org.id, { branding: { passColors: colors } });
+    await edit(org.id, { branding: { passColors: colors } });
 
     // 60 s after the first save, but only moments after the last.
     kit.clock.set(kit.clock.now() + 30_000);
@@ -138,7 +153,7 @@ describe('branding reissue coalescing', () => {
 
   it('keeps the mark when the workflow cannot start and retries later', async () => {
     const { org } = await orgWithPass();
-    await putBrandingImage(kit.ctx, admin, org.id, 'icon', icon);
+    await put(org.id, 'icon', icon);
     const at = await dirtyAt(org.id);
     const create = kit.workflow.create;
     try {
@@ -182,8 +197,8 @@ describe('branding reissue run', () => {
     kit.workflow.created.length = 0;
     await clean(org.id);
 
-    await putBrandingImage(kit.ctx, admin, org.id, 'logo', logo());
-    await updateOrg(kit.ctx, admin, org.id, { branding: { passColors: colors } });
+    await put(org.id, 'logo', logo());
+    await edit(org.id, { branding: { passColors: colors } });
     kit.clock.set(kit.clock.now() + BRANDING_QUIET_MS * 2);
     await reissueStaleBranding(kit.ctx);
     const started = kit.workflow.created[0];

@@ -385,6 +385,7 @@ describe('refresh, email and bulk reissue', () => {
         orgId: kit.org.id,
         version: release.version,
         cause: 'template_upgrade',
+        principal: { kind: 'membership', orgAccessRevision: expect.any(Number) },
       },
     });
     const run = await first<{ status: string; kind: string }>(
@@ -410,6 +411,9 @@ describe('refresh, email and bulk reissue', () => {
       (await api('/passes/bulk-reissue', json(auth.admin(), { cause: 'resign', identityId: 'i1' })))
         .status,
     ).toBe(202);
+    expect(kit.workflow.created.at(-1)).toMatchObject({
+      params: { principal: { kind: 'platform', userAccessRevision: expect.any(Number) } },
+    });
   });
 });
 

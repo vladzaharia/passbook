@@ -10,7 +10,9 @@ import {
   makeOrg,
   makePass,
   makeSession,
+  makeTemplate,
   makeUser,
+  persistTemplate,
 } from '../../../../test/helpers/index.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import { createApp } from '../../app.ts';
@@ -1742,7 +1744,83 @@ describe('org assignment', () => {
     const key = auth.apiKey({ orgId: scopedOrg.id, scopes: ['templates:read'] });
     const keyIds = await uploadIds(scopedPath, key);
     expect(keyIds).toContain(tenantId);
-    expect(keyIds).toContain(globalId);
+    expect(keyIds).not.toContain(globalId);
+    // A platform key keeps the platform view; an org-bound key cannot read a platform import by id.
+    const platformKey = auth.apiKey({ orgId: null, scopes: ['templates:read'] });
+    expect(await uploadIds(scopedPath, platformKey)).toContain(globalId);
+    expect((await call(`/uploads/${globalId}`, {}, platformKey)).status).toBe(200);
+    await expectProblem(await call(`/uploads/${globalId}`, {}, key), 404, 'UPLOAD_NOT_FOUND');
+    await expectProblem(
+      await call(`/uploads/${globalId}`, {}, reader.headers),
+      404,
+      'UPLOAD_NOT_FOUND',
+    );
+    expect((await call(`/uploads/${tenantId}`, {}, key)).status).toBe(200);
+  });
+
+  it('keeps an unshared platform template visible to an org that holds a pass on it', async () => {
+    const template = makeTemplate({ id: `held-${f.ids.token(6)}`, orgId: null });
+    await persistTemplate(f, template.resolved);
+    await makePass(f, { orgId: otherOrg.id, template: template.resolved });
+    await run(env.DB, 'UPDATE templates SET shared = 0 WHERE id = ?', [template.resolved.id]);
+    const holder = auth.apiKey({ orgId: otherOrg.id, scopes: ['templates:read'] });
+    const bystander = auth.apiKey({ orgId: org.id, scopes: ['templates:read'] });
+    const listed = async (headers: Record<string, string>, orgId: string) => {
+      const res = await call(`?orgId=${orgId}&limit=100`, {}, headers);
+      return ((await res.json()) as { items: { id: string }[] }).items.map((t) => t.id);
+    };
+    expect((await call(`/${template.resolved.id}`, {}, holder)).status).toBe(200);
+    expect(await listed(holder, otherOrg.id)).toContain(template.resolved.id);
+    await expectProblem(
+      await call(`/${template.resolved.id}`, {}, bystander),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
+    expect(await listed(bystander, org.id)).not.toContain(template.resolved.id);
+  });
+
+  it('hides a staged platform upload from other orgs, by key and by session, until it is shared', async () => {
+    const staged = await seed(org.id, 'Staged Platform Upload');
+    await run(env.DB, 'UPDATE templates SET org_id = NULL WHERE id = ?', [staged.id]);
+    const share = (shared: boolean, headers = admin) =>
+      call(`/${staged.id}/share`, { method: 'POST', ...json({ shared }) }, headers);
+    const other = auth.apiKey({ orgId: otherOrg.id, scopes: ['templates:read'] });
+    const platform = auth.apiKey({ orgId: null, scopes: ['templates:read'] });
+    const reader = await member(otherOrg.id, ['read_only']);
+    const listed = async (headers: Record<string, string>, query: string) => {
+      const res = await call(`?${query}`, {}, headers);
+      expect(res.status).toBe(200);
+      return ((await res.json()) as { items: { id: string }[] }).items.map((t) => t.id);
+    };
+    const hiddenFromOther = async () => {
+      await expectProblem(await call(`/${staged.id}`, {}, other), 404, 'TEMPLATE_NOT_FOUND');
+      await expectProblem(
+        await call(`/${staged.id}?orgId=${otherOrg.id}`, {}, reader.headers),
+        404,
+        'TEMPLATE_NOT_FOUND',
+      );
+      expect(await listed(other, `orgId=${otherOrg.id}&limit=100`)).not.toContain(staged.id);
+      expect(await listed(reader.headers, `orgId=${otherOrg.id}&limit=100`)).not.toContain(
+        staged.id,
+      );
+    };
+    await hiddenFromOther();
+    expect((await call(`/${staged.id}`, {}, platform)).status).toBe(200);
+    expect((await call(`/${staged.id}`)).status).toBe(200);
+
+    expect((await share(true)).status).toBe(200);
+    expect((await call(`/${staged.id}`, {}, other)).status).toBe(200);
+    expect(await listed(other, `orgId=${otherOrg.id}&limit=100`)).toContain(staged.id);
+    expect(await listed(reader.headers, `orgId=${otherOrg.id}&limit=100`)).toContain(staged.id);
+
+    expect((await share(false)).status).toBe(200);
+    await hiddenFromOther();
+    expect((await share(true, user)).status).toBe(403);
+    // A template that belongs to an org is not shared.
+    const owned = await seed(org.id, 'Owned Not Shareable');
+    const res = await call(`/${owned.id}/share`, { method: 'POST', ...json({ shared: true }) });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ code: 'TEMPLATE_NOT_SHAREABLE' });
   });
 });
 
