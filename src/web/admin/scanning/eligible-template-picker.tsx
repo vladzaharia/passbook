@@ -47,6 +47,13 @@ export function EligibleTemplatePicker({
   }, [searching, isFetchingNextPage, fetchNextPage]);
   const names = useOrgTemplates(available && missing.length > 0 ? orgId : undefined);
   const nameOf = (id: string) => names.data?.items.find((t) => t.id === id)?.name ?? 'Template';
+  const stateOf = (id: string) => {
+    if (templates.isFetching || searching) return 'checking release';
+    const template = names.data?.items.find((t) => t.id === id);
+    if (template?.status === 'archived') return 'archived';
+    if (template?.blueprint && template.passCount === 0) return 'blueprint, no live passes';
+    return 'no approved release';
+  };
   const canRead = Boolean(
     scope.membership?.capabilities.includes('templates:read') ||
       scope.membership?.capabilities.includes('passes:read'),
@@ -100,7 +107,7 @@ export function EligibleTemplatePicker({
         <CheckboxField
           key={`selected-${id}`}
           checked
-          label={`${nameOf(id)} · ${templates.isFetching || searching ? 'checking release' : 'no approved release'}`}
+          label={`${nameOf(id)} · ${stateOf(id)}`}
           onCheckedChange={(on) => {
             if (!on) set(id, false);
           }}

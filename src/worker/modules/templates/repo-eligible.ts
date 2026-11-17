@@ -12,11 +12,12 @@ export interface EligibleReleaseQuery {
   orgId: string;
   mode: Mode;
   provider: ReleaseProvider;
+  purpose?: 'issue' | 'scan';
   cursor?: string;
   limit: number;
 }
 
-/** List effective releases without exposing manifests or other release internals. Blueprints never issue. */
+/** List effective releases without exposing manifests or other release internals. Blueprints never issue; a scan picker also sees the ones the org has live passes on. */
 export async function listEligibleReleases(
   db: D1Database,
   query: EligibleReleaseQuery,
@@ -38,7 +39,13 @@ export async function listEligibleReleases(
        providerSql: 's.provider',
      })})
      JOIN template_versions v ON v.template_id = r.template_id AND v.version = r.version
-     WHERE t.status = 'active' AND t.blueprint = 0 AND s.mode = ?
+     WHERE t.status = 'active' AND s.mode = ?
+       AND (t.blueprint = 0 ${
+         query.purpose === 'scan'
+           ? `OR EXISTS (SELECT 1 FROM passes p WHERE p.template_id = t.id AND p.org_id = s.org_id
+              AND p.mode = s.mode AND p.deleted_at IS NULL)`
+           : ''
+       })
        AND ${tenantPassAuthoritySql(authority, 's')}
        ${query.cursor === undefined ? '' : 'AND t.id > ?'}
      ORDER BY t.id ASC LIMIT ?`,

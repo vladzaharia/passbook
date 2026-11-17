@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { makePass } from '../../../../test/helpers/index.ts';
 import type { TemplateManifest } from '../../../passkit/types.ts';
 import { all, first } from '../../platform/db.ts';
 import { type BlueprintKit, blueprintKit } from './blueprint-test-fixtures.ts';
@@ -260,5 +261,31 @@ describe('pickers', () => {
     expect(henrys).toEqual(expect.arrayContaining(['baked:henrys-blue', 'baked:henrys-copper']));
     expect(henrys.some((id) => id.startsWith('baked:starter-'))).toBe(false);
     expect((await eligible(kit.org.id)).some((id) => id.startsWith('baked:starter-'))).toBe(false);
+  });
+
+  it('offers a scan picker the blueprints the org has live passes on, and no one else', async () => {
+    const eligible = async (orgId: string, purpose?: string) => {
+      const q = purpose ? `&purpose=${purpose}` : '';
+      const res = await kit.call(`/eligible?orgId=${orgId}&mode=live&provider=apple&limit=200${q}`);
+      expect(res.status).toBe(200);
+      return ((await res.json()) as { items: { templateId: string }[] }).items.map(
+        (i) => i.templateId,
+      );
+    };
+    const active = (await (await kit.call(`/${STORE}`)).json()) as { activeVersion: string };
+    await makePass(kit.f, {
+      orgId: kit.org.id,
+      template: { id: STORE, version: active.activeVersion } as never,
+      persist: false,
+    });
+    // Positive control: the org with a pass sees the blueprint when scanning, never when issuing.
+    expect(await eligible(kit.org.id, 'scan')).toContain(STORE);
+    expect(await eligible(kit.org.id, 'issue')).not.toContain(STORE);
+    expect(await eligible(kit.org.id)).not.toContain(STORE);
+    // Another org has no pass on it, and the other blueprints stay out.
+    expect(await eligible(kit.other.id, 'scan')).not.toContain(STORE);
+    expect(
+      (await eligible(kit.org.id, 'scan')).filter((id) => id.startsWith('baked:starter-')),
+    ).toEqual([STORE]);
   });
 });
