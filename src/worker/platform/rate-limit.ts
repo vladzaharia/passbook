@@ -4,7 +4,7 @@ import type { AppBindings } from './context.ts';
 import { bump, read as readCounter } from './counters.ts';
 import type { AppEnv, RateLimitName } from './env.ts';
 import { RateLimitedError, UnavailableError } from './errors.ts';
-import { ipRatePrefix } from './ip.ts';
+import { ipBucket, ipRatePrefix } from './ip.ts';
 import { createLogger } from './log.ts';
 
 const warned = new Set<string>();
@@ -43,13 +43,16 @@ export function clientIp(c: Context): string {
   return c.req.header('cf-connecting-ip') ?? 'unknown';
 }
 
-/** The network (v4 /24, v6 /64) the request comes from: one IPv6 subscriber must not hold 2^64 buckets. */
+/** The default key: the IPv4 address or IPv6 /64, so one subscriber does not hold 2^64 buckets. */
+export const clientBucket = (c: Context): string => ipBucket(clientIp(c)) ?? 'unknown';
+
+/** The network (v4 /24, v6 /64) of the request: the key of login and guessing limits. */
 export const clientRatePrefix = (c: Context): string => ipRatePrefix(clientIp(c)) ?? 'unknown';
 
-/** Middleware: limits per `keyOf(c)` (default: client network prefix). */
+/** Middleware: limits per `keyOf(c)` (default: client IP bucket). */
 export function rateLimit(
   name: RateLimitName,
-  keyOf: (c: Context<AppBindings>) => string = clientRatePrefix,
+  keyOf: (c: Context<AppBindings>) => string = clientBucket,
 ): MiddlewareHandler<AppBindings> {
   return createMiddleware(async (c, next) => {
     await enforceRateLimit(c.env, name, `${name}:${keyOf(c)}`);

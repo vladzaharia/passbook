@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ipPrefix, ipRatePrefix } from './ip.ts';
+import { ipBucket, ipPrefix, ipRatePrefix } from './ip.ts';
 
 describe('ip prefixes', () => {
   it('normalizes v6 before taking the prefix', () => {
@@ -26,5 +26,27 @@ describe('ip prefixes', () => {
     expect(ipRatePrefix('1::2::3')).toBeNull();
     expect(ipRatePrefix('unknown')).toBeNull();
     expect(ipRatePrefix(undefined)).toBeNull();
+  });
+});
+
+describe('ipBucket', () => {
+  it('keeps the whole IPv4 address and takes the /64 of IPv6', () => {
+    expect(ipBucket('203.0.113.7')).toBe('203.0.113.7');
+    expect(ipBucket('::ffff:203.0.113.7')).toBe('203.0.113.7');
+    expect(ipBucket('2001:db8:1:2:aaaa::1')).toBe(ipRatePrefix('2001:db8:1:2::9'));
+    expect(ipBucket('unknown')).toBeNull();
+    expect(ipBucket('not-an-ip')).toBeNull();
+    expect(ipBucket(undefined)).toBeNull();
+  });
+});
+
+describe('ipBucket', () => {
+  it('keeps the whole IPv4 address and takes the /64 of IPv6', () => {
+    expect(ipBucket('203.0.113.7')).toBe('203.0.113.7');
+    expect(ipBucket('::ffff:203.0.113.7')).toBe('203.0.113.7');
+    expect(ipBucket('2001:db8:1:2:aaaa::1')).toBe(ipRatePrefix('2001:db8:1:2::9'));
+    expect(ipBucket('unknown')).toBeNull();
+    expect(ipBucket('not-an-ip')).toBeNull();
+    expect(ipBucket(undefined)).toBeNull();
   });
 });

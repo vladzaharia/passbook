@@ -37,3 +37,15 @@ export const ipPrefix = (ip: string | undefined): string | null => prefixOf(ip, 
 
 /** v4 /24, v6 /64 (one subscriber's LAN): the unit rate limits and budgets are keyed by. */
 export const ipRatePrefix = (ip: string | undefined): string | null => prefixOf(ip, 4, 64);
+
+/**
+ * The default rate-limit unit: the full IPv4 address, or the IPv6 /64 (one subscriber's LAN, which
+ * holds 2^64 addresses). A /24 here would pool the carrier NAT behind a venue.
+ */
+export function ipBucket(ip: string | undefined): string | null {
+  if (!ip || ip === 'unknown') return null;
+  const mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  if (mapped?.[1]) return mapped[1];
+  if (ip.includes(':')) return ipRatePrefix(ip);
+  return /^\d+\.\d+\.\d+\.\d+$/.test(ip) ? ip : null;
+}
