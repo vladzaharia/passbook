@@ -12,11 +12,13 @@ import {
   currentFoundActorStmt,
   currentFoundExtra,
   currentFoundTemplate,
+  headVersionMoved,
+  passChanged,
 } from './repo-resolve-outcome-current.ts';
 import type { Found } from './resolve.ts';
 import type { DisplayHistoryPlan, FinalizedDisplayHistory } from './scan-display-history.ts';
 
-export async function currentFound(
+async function currentFoundRead(
   ctx: ServiceContext,
   actor: ScanActor,
   found: Found,
@@ -125,4 +127,30 @@ export async function currentFound(
     if (isNotFound(error) || isAssetGrantAuthorityFailure(error)) return null;
     throw error;
   }
+}
+
+/** The fenced read, or null when the pass is gone; a head that moved to another version is a 409. */
+export async function currentFound(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  found: Found,
+  displayHistory: DisplayHistoryPlan,
+  csrfSnapshot: ActorCsrfSnapshot,
+  photoGrant: PreparedPhotoGrant | null,
+  historyFence?: CardRead['historyFence'],
+  passViewGrant?: CardRead['passViewGrant'],
+) {
+  const result = await currentFoundRead(
+    ctx,
+    actor,
+    found,
+    displayHistory,
+    csrfSnapshot,
+    photoGrant,
+    historyFence,
+    passViewGrant,
+  );
+  if (!result && found.liveCandidate && (await headVersionMoved(ctx.env.DB, found.liveCandidate)))
+    throw passChanged();
+  return result;
 }

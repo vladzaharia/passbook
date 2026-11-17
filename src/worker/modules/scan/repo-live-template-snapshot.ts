@@ -106,7 +106,10 @@ function snapshotExpressionSql(): string {
       'origin', snapshot_template.origin, 'status', snapshot_template.status),
     'pinned', json(${versionSql('pinned')}),
     'active', json(${versionSql('snapshot_active')}),
-    'release', json(${releaseSql('ar')}),
+    'release', json(CASE WHEN ar.id IS NOT p.release_id AND ar.version IS (
+        SELECT i.version FROM template_releases i WHERE i.id=p.release_id)
+      THEN (SELECT ${releaseSql('own')} FROM template_releases own WHERE own.id=p.release_id)
+      ELSE ${releaseSql('ar')} END),
     'issued', json((SELECT ${releaseSql('issued')} FROM template_releases issued
       WHERE issued.id=p.release_id))
   )`;

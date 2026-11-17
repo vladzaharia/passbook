@@ -105,6 +105,20 @@ export function registerLookupReleasePrivacyCases() {
       expect(fresh?.activeReleaseGeneration).toBeGreaterThan(original.generation);
       expect(fresh?.activeReleaseVersion).toBe(rollback ? 'v1' : 'v2');
       if (rollback) expect(fresh?.activeReleaseCandidateHash).toBe(original.candidateHash);
+      if (state === 'active' && route === 'resolve') {
+        // A head of another version is a real race (retryable 409); a rollback to the pass's own
+        // version changes nothing about how it is used, so the read is served.
+        if (rollback) {
+          expect(response.status).toBe(200);
+          expect(await response.json()).toMatchObject({ kind: 'ready' });
+        } else {
+          expect(response.status).toBe(409);
+          const text = await response.text();
+          expect(JSON.parse(text)).toMatchObject({ code: 'SCAN_PASS_CHANGED' });
+          expect(text).not.toContain('Release Race Private Person');
+        }
+        return;
+      }
       expect(response.status).toBe(200);
       const text = await response.text();
       // The release head is content, not authority: a new or rolled-back head does not void a ticket.

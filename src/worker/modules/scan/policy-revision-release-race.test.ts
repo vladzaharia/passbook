@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import { stageVersion } from './action-template-read-race-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
@@ -12,9 +13,9 @@ beforeAll(async () => {
 });
 
 describe('scanner evaluated policy revisions', () => {
-  // Reads fail closed when the head moved under them.
+  // The issued-release rule: a same-version head changes nothing about how the pass is used.
   for (const route of ['resolve', 'lookup'] as const) {
-    it(`does not disclose a candidate after a same-version release supersedes it in ${route}`, async () => {
+    it(`serves a candidate after a same-version release supersedes it in ${route}`, async () => {
       const s = await scenario('test', 'test');
       const snapshot = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
       if (!snapshot?.activeReleaseVersion) throw new Error('Missing release');
@@ -36,31 +37,41 @@ describe('scanner evaluated policy revisions', () => {
           ),
       );
       expect(response.status).toBe(200);
-      const text = await response.text();
-      expect(text).not.toContain(s.pass.id);
-      expect(text).not.toContain('Revision Private Person');
-      if (route === 'lookup') expect(JSON.parse(text)).toEqual({ items: [], more: false });
-      else
-        expect(JSON.parse(text)).toMatchObject({
-          kind: 'refused',
-          reason: 'not_found',
-          display: null,
-        });
+      const body = (await response.json()) as { items?: unknown[] };
+      if (route === 'lookup') expect(body.items).toHaveLength(1);
+      else expect(body).toMatchObject({ kind: 'ready' });
       const current = await candidateById(kit.env.DB, kit.org.id, s.pass.id);
-      expect(current).toMatchObject({
-        activeTemplateVersion: snapshot.activeTemplateVersion,
-        orgRevision: snapshot.orgRevision,
-        templateRevision: snapshot.templateRevision,
-      });
       expect(current?.activeReleaseId).not.toBe(snapshot.activeReleaseId);
       expect(
         await all(kit.env.DB, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [s.pass.id]),
       ).toHaveLength(0);
-      expect(
-        await all(kit.env.DB, "SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [
-          s.pass.id,
-        ]),
-      ).toHaveLength(0);
+    });
+
+    // A different version under a read is a real race: retryable 409, never a misleading not_found.
+    it(`answers a retryable conflict when a different version becomes the head in ${route}`, async () => {
+      const s = await scenario('test', 'test');
+      await stageVersion(kit, s.templateId, 'v2', () => {}, 'same-build');
+      const response = await afterCandidateRead(
+        s.pass.id,
+        async (db) => {
+          await approveAppleRelease(kit, {
+            db,
+            templateId: s.templateId,
+            mode: 'test',
+            version: 'v2',
+          });
+        },
+        () =>
+          kit.post(
+            s.scanner.headers,
+            `/${route}`,
+            route === 'lookup' ? { q: s.pass.id } : requestOf(s.pass.id),
+          ),
+      );
+      expect(response.status).toBe(409);
+      const text = await response.text();
+      expect(JSON.parse(text)).toMatchObject({ code: 'SCAN_PASS_CHANGED' });
+      expect(text).not.toContain('Revision Private Person');
     });
   }
 
