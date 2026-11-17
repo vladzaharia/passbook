@@ -97,6 +97,19 @@ function devPublicAtSign(): Plugin {
  */
 const e2e = process.env.WALLET_E2E === '1';
 
+type RateLimitConfig = { name: string; simple: { limit: number; period: number } };
+
+/**
+ * One run pairs dozens of devices from a single IP, far past production's 30 a minute. e2e raises
+ * only RL_SCAN_PAIR; the limiter's refusal is covered by
+ * src/worker/modules/scan/scanners-pairing-limit.test.ts.
+ */
+function e2eRatelimits(all: RateLimitConfig[] = []): RateLimitConfig[] {
+  return all.map((r) =>
+    r.name === 'RL_SCAN_PAIR' ? { ...r, simple: { ...r.simple, limit: 100_000 } } : r,
+  );
+}
+
 /** Radix packages that get their own chunk; the rest (tooltip, popper, primitives) share one. */
 const RADIX_OWN_CHUNK = new Set([
   'checkbox',
@@ -231,12 +244,12 @@ export default defineConfig(({ command }) => ({
       // tools/e2e-server.ts migrates a fresh database here on every start.
       ...(e2e ? { persistState: { path: '.wrangler/e2e-state' } } : {}),
       // Merged into wrangler.jsonc (arrays append). The build keeps the file's config as is.
-      config: (c: { vars?: Record<string, unknown> }) => ({
+      config: (c: { vars?: Record<string, unknown>; ratelimits?: RateLimitConfig[] }) => ({
         ...(command === 'serve' ? { assets: { run_worker_first: VITE_DEV_PATHS } } : {}),
         ...(e2e
           ? {
               vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '', ADMIN_SYNC_BUCKET_MS: '' },
-              env: { e2e: {} },
+              env: { e2e: { ratelimits: e2eRatelimits(c.ratelimits) } },
             }
           : {}),
       }),
