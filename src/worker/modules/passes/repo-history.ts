@@ -84,10 +84,10 @@ export async function versionsToPurge(
   const rows = await all<{ pass_id: string; version: number; object_key: string | null }>(
     db,
     `SELECT pv.pass_id, pv.version, pv.object_key FROM pass_versions pv
-     WHERE pv.purged_at IS NULL AND (? IS NULL OR pv.pass_id = ?)
+     WHERE pv.purged_at IS NULL ${passId === undefined ? '' : 'AND pv.pass_id = ?'}
        AND (SELECT count(*) FROM pass_versions n WHERE n.pass_id = pv.pass_id AND n.version > pv.version) > ?
      LIMIT ?`,
-    [passId ?? null, passId ?? null, keep, limit],
+    [...(passId === undefined ? [] : [passId]), keep, limit],
   );
   return rows.map((r) => ({ passId: r.pass_id, version: r.version, objectKey: r.object_key }));
 }

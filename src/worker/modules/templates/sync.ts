@@ -26,7 +26,6 @@ import {
   bakedSyncComplete,
   bakedTemplateSnapshot,
   bakedVersionSnapshot,
-  staleBakedIds,
 } from './repo-sync.ts';
 import {
   bakedExtrasUnchanged,
@@ -233,12 +232,12 @@ async function sync(
     }
   }
 
-  const stale = await staleBakedIds(
-    db,
-    source.templates.map((t) => t.id),
-  );
   head.steps.push((g) => {
-    addArchiveStale(g, stale, now);
+    addArchiveStale(
+      g,
+      source.templates.map((t) => t.id),
+      now,
+    );
     addAdoption(g, JSON.stringify(selected.value), source.hash, now);
   });
   const grants = units.map((unit) => {

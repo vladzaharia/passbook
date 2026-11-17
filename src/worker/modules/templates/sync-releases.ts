@@ -9,7 +9,7 @@ import {
   candidateHash,
 } from './release-content.ts';
 import { bakedHeadGeneration } from './repo-grant-checks.ts';
-import { eventIdsForRelease, invalidateEventCache } from './repo-release-effects.ts';
+import { invalidateEventCache } from './repo-release-effects.ts';
 import {
   addBakedRelease,
   type BakedSystemRelease,
@@ -80,11 +80,10 @@ export async function planBakedReleases(
     };
     const head = await bakedHeadOf(db, t.id, orgId, mode);
     if (!wantsBakedRelease(head, release)) continue;
-    const eventIds = await eventIdsForRelease(db, t.id, mode, orgId);
     planned.checks.push(bakedHeadGeneration(t.id, orgId, mode, head?.generation ?? 0));
     planned.steps.push((g) => {
       addBakedRelease(g, ctx, release, head);
-      invalidateEventCache(g, eventIds, mode);
+      invalidateEventCache(g, t.id, mode, orgId);
     });
   }
   return planned;

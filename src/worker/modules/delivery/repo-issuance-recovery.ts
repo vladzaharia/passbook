@@ -59,10 +59,10 @@ export async function dueIssuanceDeliveries(
   return all<{ pass_id: string }>(
     db,
     `SELECT i.pass_id FROM pass_issuance_deliveries i
-    WHERE i.state = 'pending' AND i.next_attempt_at <= ? AND (? IS NULL OR i.pass_id = ?)
+    WHERE i.state = 'pending' AND i.next_attempt_at <= ? ${passId === undefined ? '' : 'AND i.pass_id = ?'}
       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = i.pass_id AND t.state = 'pending')
     ORDER BY i.next_attempt_at,i.created_at,i.pass_id LIMIT 100`,
-    [now, passId ?? null, passId ?? null],
+    [now, ...(passId === undefined ? [] : [passId])],
   );
 }
 

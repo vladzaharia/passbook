@@ -81,7 +81,7 @@ export async function settleUncertainEmails(
     `UPDATE outbox SET state = CASE WHEN provider_id IS NULL THEN 'partial' ELSE 'sent' END,
        lease = NULL, finished_at = ?, coalesce_key = NULL,
        error_code = CASE WHEN provider_id IS NULL THEN ? ELSE NULL END
-     WHERE kind = 'email' AND error_code = ? AND (? IS NULL OR id = ?)
+     WHERE kind = 'email' AND error_code = ? ${options.id === undefined ? '' : 'AND id = ?'}
        AND ((state = 'processing' AND (? = 0 OR available_at < ?))
          OR (state = 'partial' AND provider_id IS NOT NULL))
      RETURNING id`,
@@ -89,8 +89,7 @@ export async function settleUncertainEmails(
       now,
       EMAIL_OUTCOME_UNKNOWN,
       EMAIL_OUTCOME_UNKNOWN,
-      options.id ?? null,
-      options.id ?? null,
+      ...(options.id === undefined ? [] : [options.id]),
       options.expiredOnly ? 1 : 0,
       now,
     ],
