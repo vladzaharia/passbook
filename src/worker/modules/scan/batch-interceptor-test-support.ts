@@ -3,7 +3,7 @@
 export async function beforeBatch<T>(
   env: { DB: D1Database },
   match: RegExp,
-  mutate: (db: D1Database) => Promise<void>,
+  mutate: (db: D1Database) => Promise<unknown>,
   call: () => Promise<T>,
 ): Promise<{ result: T; fired: boolean }> {
   const original = env.DB;
@@ -48,7 +48,7 @@ export async function beforeBatch<T>(
 export async function afterBatch<T>(
   env: { DB: D1Database },
   match: RegExp,
-  mutate: (db: D1Database) => Promise<void>,
+  mutate: (db: D1Database) => Promise<unknown>,
   call: () => Promise<T>,
 ): Promise<{ result: T; fired: boolean }> {
   const original = env.DB;

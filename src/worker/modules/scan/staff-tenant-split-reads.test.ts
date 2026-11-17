@@ -132,7 +132,7 @@ describe('staff read and response authority', () => {
         get(target, prop) {
           if (prop === 'bind') return (...values: unknown[]) => wrap(target.bind(...values), sql);
           const value = Reflect.get(target, prop, target);
-          if (prop === 'all' && /\bWITH starts AS\b/i.test(sql)) {
+          if (prop === 'all' && /\bstarts AS \(/i.test(sql)) {
             return async (...values: unknown[]) => {
               if (!intercepted++) {
                 if (change === 'session revoked') {
@@ -166,7 +166,7 @@ describe('staff read and response authority', () => {
       get(target, prop) {
         if (prop === 'prepare')
           return (sql: string) =>
-            /\bWITH starts AS\b/i.test(sql) ? wrap(target.prepare(sql), sql) : target.prepare(sql);
+            /\bstarts AS \(/i.test(sql) ? wrap(target.prepare(sql), sql) : target.prepare(sql);
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;
       },
@@ -183,7 +183,7 @@ describe('staff read and response authority', () => {
   });
 
   it.each(['empty roster', 'staff without scans'] as const)(
-    'rejects a changed keyset at the final read for %s',
+    'reads a %s without the keyset, which only a signed scan name needs',
     async (scenario) => {
       await grant();
       if (scenario === 'staff without scans') await makeScanStaff(f, { orgId });
@@ -207,7 +207,7 @@ describe('staff read and response authority', () => {
         get(target, prop) {
           if (prop === 'prepare')
             return (sql: string) =>
-              /\bWITH starts AS\b/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
+              /\bstarts AS \(/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
           const value = Reflect.get(target, prop, target);
           return typeof value === 'function' ? value.bind(target) : value;
         },
@@ -215,8 +215,10 @@ describe('staff read and response authority', () => {
       try {
         const response = await call('GET', orgQuery(), undefined, headers(), { ...env, DB: db });
         expect(intercepted).toBe(1);
-        expect(response.status).toBe(409);
-        expect(await response.json()).toMatchObject({ code: 'SCAN_STAFF_CHANGED' });
+        expect(response.status).toBe(200);
+        const body = (await response.json()) as { items: { lastScan: unknown }[] };
+        expect(body.items).toHaveLength(scenario === 'empty roster' ? 0 : 1);
+        for (const item of body.items) expect(item.lastScan).toBeNull();
       } finally {
         await forceKeyset(original);
       }

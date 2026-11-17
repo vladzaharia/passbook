@@ -26,6 +26,8 @@ export async function staffTimeZones(db: D1Database, auth: ScanReadAuthority): P
  * The staff page with each person's latest scan and everything its disclosure rests on, in one
  * statement under the actor's fence: the page, counts, lockouts and the scanner name's evidence
  * are one snapshot. A scanner whose time zone was not read means the zones changed: `snapshot_ok`.
+ * The `+` on the org and mode keeps each person's scans on `scans_staff`: with the mode taken from
+ * the fence the planner would walk the org's scans newest first to find one staff member's.
  */
 export async function readStaffActivity(
   db: D1Database,
@@ -69,14 +71,14 @@ export async function readStaffActivity(
           LEFT JOIN scanners day_sc ON day_sc.id = s.scanner_id
             AND day_sc.org_id = s.org_id AND day_sc.mode = s.mode
           LEFT JOIN starts ON starts.zone = day_sc.time_zone
-          WHERE s.org_id = st.org_id AND s.mode = ${mode} AND s.staff_id = st.id
+          WHERE +s.org_id = st.org_id AND +s.mode = ${mode} AND s.staff_id = st.id
             AND s.at >= CASE WHEN day_sc.id IS NULL THEN ? ELSE starts.since END
             AND s.state = 'done' AND s.outcome = 'ok'
             AND s.undone_at IS NULL AND s.undone_by IS NULL AND s.action_kind != 'undo'
             AND ${scanLedgerScopeSql('s')}
         ) AS m_today,
         (SELECT s.id FROM scans s
-          WHERE s.org_id = st.org_id AND s.mode = ${mode} AND s.staff_id = st.id AND s.state = 'done'
+          WHERE +s.org_id = st.org_id AND +s.mode = ${mode} AND s.staff_id = st.id AND s.state = 'done'
             AND ${scanLedgerScopeSql('s')}
           ORDER BY s.at DESC, s.id DESC LIMIT 1) AS scan_id
       FROM scope JOIN scan_staff st ON scope.auth_ok = 1 AND scope.snapshot_ok = 1

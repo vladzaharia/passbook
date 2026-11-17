@@ -98,7 +98,7 @@ export async function listScanFeed(ctx: ServiceContext, auth: ApiKeyAuth, filter
   const size = Math.min(Math.max(filter.limit + 1, 50), EXPORT_PAGE);
   const { authorized, rows } = await listScanRows(
     ctx.env.DB,
-    apiKeyReadAuthority(auth.keyId, scoped.orgId, now),
+    apiKeyReadAuthority(auth, scoped.orgId, now),
     {
       ...scoped,
       passId: undefined,

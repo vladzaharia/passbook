@@ -109,26 +109,34 @@ export const SESSION_READ = {
 
 /**
  * The fence of an API key's scan feed: the key is live and lists `scans:read` now. An org-bound key
- * reads its own org; a platform key reads the org it names, or every org of its mode.
+ * reads its own org, which must be active. A platform key reads the org it names (suspended or not:
+ * history outlives the org's access) or, naming none, every org of its mode.
  */
 export function apiKeyReadAuthority(
-  keyId: string,
-  orgId: string | undefined,
+  key: { keyId: string; orgId: string | null },
+  namedOrgId: string | undefined,
   now: number,
 ): StrictReadAuthority {
+  const bound = key.orgId !== null;
   const { ctes, params } = authorityPredicate(
-    { kind: 'api_key', keyId, scope: 'scans:read', ...(orgId === undefined ? {} : { orgId }) },
-    { scope: orgId === undefined ? 'platform' : 'org_mode', now },
+    {
+      kind: 'api_key',
+      keyId: key.keyId,
+      scope: 'scans:read',
+      ...(typeof key.orgId === 'string' ? { orgId: key.orgId } : {}),
+    },
+    { scope: bound ? 'org_mode' : 'platform', now },
   );
   assertBudget(ctes, params, PARAM_BUDGET);
+  const named = !bound && namedOrgId !== undefined;
   return {
-    ctes,
-    params,
+    ctes: named ? `${ctes},\n    named AS MATERIALIZED (SELECT ? AS org_id)` : ctes,
+    params: named ? [...params, namedOrgId] : params,
     ok: 'EXISTS (SELECT 1 FROM actor_ok)',
     tenant: (alias, table) =>
-      orgId === undefined
-        ? `${alias}.mode = (SELECT mode FROM actor_ok)`
-        : tenantFilter(alias, table, 'org_mode'),
+      bound
+        ? tenantFilter(alias, table, 'org_mode')
+        : `${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = (SELECT mode FROM actor_ok)`,
     relaxed: false,
   };
 }

@@ -5,6 +5,7 @@ import { listConsoleEvents } from './repo-events.ts';
 import { countScanRows, getScanRow, listScanRows, type ScanLogFilter } from './repo-feed.ts';
 import type { ScanReadAuthority } from './repo-read-authority.ts';
 import { listConsoleScanners } from './repo-scanners.ts';
+import { readStaffActivity } from './repo-staff-activity.ts';
 
 /** A fence whose actor is a fixed org and mode: only the plan of the read itself is under test. */
 const fixedAuth: ScanReadAuthority = {
@@ -101,6 +102,15 @@ describe('console list query plans (SC)', () => {
       countScanRows(db, fixedAuth, { ...base, orgId: 'o', from: 1, to: 2 }, 100_000),
     );
     expect(fullScans(lines, 's')).toEqual([]);
+  });
+
+  it('staff: the latest scan and day count of each person are index probes, never a scan of scans', async () => {
+    for (const page of [{ limit: 50 }, { limit: 50, q: 'ana' }, { limit: 1, staffId: 'p' }]) {
+      const lines = await plans((db) => readStaffActivity(db, fixedAuth, ['UTC'], 5, page));
+      expect(fullScans(lines, 's')).toEqual([]);
+      expect(fullScans(lines, 'scans')).toEqual([]);
+      expect(lines.join('\n')).toContain('scans_staff');
+    }
   });
 
   it('scanners: an org list, with each filter, uses an index', async () => {
