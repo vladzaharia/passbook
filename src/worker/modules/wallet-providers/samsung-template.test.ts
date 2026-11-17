@@ -8,7 +8,7 @@ import {
   validateSamsungCredentials,
 } from './samsung.ts';
 
-const NOW = Date.now();
+const NOW = Date.UTC(2026, 0, 1);
 const input = {
   cardType: 'loyalty',
   subType: 'others',

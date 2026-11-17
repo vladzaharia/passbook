@@ -1,5 +1,6 @@
 import { env as bindings } from 'cloudflare:workers';
 import { afterAll, beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   countD1,
   type Fixtures,
@@ -142,7 +143,7 @@ interface ProjectionFixture {
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   env = await makeEnv({
     KEK_V1,
     KEK_V2,
@@ -410,7 +411,7 @@ describe('native projection approval', () => {
         sourceReleaseId: test.source.id,
         projection,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Template not found\./);
     await expect(
       createProjectionCandidate(test.ctx, { ...test.author, mode: 'test' }, test.templateId, {
         ...test.scope,
@@ -660,7 +661,7 @@ describe('native projection approval', () => {
     );
     await expect(
       insertDirectProjectionRelease(test, candidate, approval, { approvalId: otherApproval.id }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/provider release keyset unavailable/);
     expect(
       await insertDirectProjectionRelease(test, candidate, approval, {
         createdAt: evidence.expires_at - 1,
@@ -855,7 +856,7 @@ describe('native projection approval', () => {
         '{}',
         candidate.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template candidates are immutable/);
     const stored = await getProjectionCandidate(env.DB, candidate.id);
     if (!stored) throw new Error('Candidate missing.');
     expect(await candidateHash(projectionCandidateEnvelope(stored))).toBe(candidate.candidateHash);
@@ -990,7 +991,11 @@ describe('native projection approval', () => {
     const denied = await post(outsider.headers, body);
     expect(denied.status).toBeGreaterThanOrEqual(400);
     expect(denied.status).toBeLessThan(500);
-    expect((await post({ ...own.headers, 'x-passbook-mode': 'test' }, body)).status).toBe(403);
+    await expectProblem(
+      await post({ ...own.headers, 'x-passbook-mode': 'test' }, body),
+      403,
+      'TEMPLATE_MODE_MISMATCH',
+    );
     const created = await post(own.headers, body);
     expect(created.status).toBe(201);
     const result = (await created.json()) as TemplateCandidate & {
@@ -1011,7 +1016,7 @@ describe('native projection approval', () => {
       },
       env,
     );
-    expect(reviewed.status).toBe(403);
+    await expectProblem(reviewed, 403, 'TEMPLATE_SELF_APPROVAL');
   });
 
   it('uses compare-and-swap when two independently approved candidates race to publish', async () => {

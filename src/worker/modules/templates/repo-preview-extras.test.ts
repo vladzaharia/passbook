@@ -63,8 +63,10 @@ describe('versioned preview extras', () => {
   it('accepts only baked sets and requires their immutable seal', async () => {
     await expect(listVersionExtras(env.DB, uploaded, 'v1')).resolves.toEqual([]);
     await expect(listVersionExtras(env.DB, baked, 'v1')).rejects.toThrow('not sealed');
-    await expect(insertExtra(uploaded)).rejects.toThrow();
-    await expect(seal(uploaded, '0'.repeat(64))).rejects.toThrow();
+    await expect(insertExtra(uploaded)).rejects.toThrow(/invalid template version extra/);
+    await expect(seal(uploaded, '0'.repeat(64))).rejects.toThrow(
+      /invalid template version extra set/,
+    );
     await insertExtra(baked);
     await seal(baked, await versionExtrasHash([extra]));
     await expect(listVersionExtras(env.DB, baked, 'v1')).resolves.toEqual([extra]);
@@ -73,22 +75,24 @@ describe('versioned preview extras', () => {
   it('does not permit modifying, deleting or extending sealed metadata', async () => {
     await insertExtra(baked);
     await seal(baked, await versionExtrasHash([extra]));
-    await expect(insertExtra(baked, 'another.png')).rejects.toThrow();
+    await expect(insertExtra(baked, 'another.png')).rejects.toThrow(
+      /invalid template version extra/,
+    );
     await expect(
       run(env.DB, 'UPDATE template_version_extras SET size = 2 WHERE template_id = ?', [baked]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template version extras are immutable/);
     await expect(
       run(env.DB, 'DELETE FROM template_version_extras WHERE template_id = ?', [baked]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template version extras are immutable/);
     await expect(
       run(env.DB, 'UPDATE template_version_extra_sets SET extras_hash = ? WHERE template_id = ?', [
         '0'.repeat(64),
         baked,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template version extra sets are immutable/);
     await expect(
       run(env.DB, 'DELETE FROM template_version_extra_sets WHERE template_id = ?', [baked]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template version extra sets are immutable/);
     await expect(listVersionExtras(env.DB, baked, 'v1')).resolves.toEqual([extra]);
   });
 

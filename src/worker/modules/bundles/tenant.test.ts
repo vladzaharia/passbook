@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -104,7 +105,11 @@ describe('bundle tenant authorization', () => {
     const pass = await kit.pass();
     const bundle = await create(operator.session.headers, pass.id, 'Member bundle');
     expect((await call('GET', '', session.headers)).status).toBe(422);
-    expect((await call('GET', `?orgId=${kit.org.id}`, session.headers)).status).toBe(403);
+    await expectProblem(
+      await call('GET', `?orgId=${kit.org.id}`, session.headers),
+      403,
+      'FORBIDDEN',
+    );
     expect(
       (
         await call('POST', '', session.headers, {
@@ -114,8 +119,16 @@ describe('bundle tenant authorization', () => {
         })
       ).status,
     ).toBe(403);
-    expect((await call('GET', `/${bundle.id}`, session.headers)).status).toBe(404);
-    expect((await call('DELETE', `/${bundle.id}`, session.headers)).status).toBe(404);
+    await expectProblem(
+      await call('GET', `/${bundle.id}`, session.headers),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
+    await expectProblem(
+      await call('DELETE', `/${bundle.id}`, session.headers),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
   });
 
   it('fails closed when a bundle write has no valid execution provenance', async () => {
@@ -153,12 +166,28 @@ describe('bundle tenant authorization', () => {
     expect((await call('POST', `/${bundle.id}/send-email`, readerSession.headers, {})).status).toBe(
       403,
     );
-    expect((await call('GET', `/${bundle.id}`, foreign.session.headers)).status).toBe(404);
-    expect((await call('DELETE', `/${bundle.id}`, foreign.session.headers)).status).toBe(404);
+    await expectProblem(
+      await call('GET', `/${bundle.id}`, foreign.session.headers),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
+    await expectProblem(
+      await call('DELETE', `/${bundle.id}`, foreign.session.headers),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
     expect((await call('GET', `/${bundle.id}`, operatorSession.headers)).status).toBe(200);
     const foreignKey = await makeApiKey(kit.fx, { orgId: foreignOrg.id });
-    expect((await call('GET', `/${bundle.id}`, foreignKey.headers)).status).toBe(404);
-    expect((await call('GET', `?orgId=${kit.org.id}`, foreignKey.headers)).status).toBe(403);
+    await expectProblem(
+      await call('GET', `/${bundle.id}`, foreignKey.headers),
+      404,
+      'BUNDLE_NOT_FOUND',
+    );
+    await expectProblem(
+      await call('GET', `?orgId=${kit.org.id}`, foreignKey.headers),
+      403,
+      'ORG_FORBIDDEN',
+    );
   });
 
   it('rejects a foreign pass before inserting the bundle, members, audit or email', async () => {
@@ -173,7 +202,7 @@ describe('bundle tenant authorization', () => {
       holderEmail: 'foreign@example.test',
       sendEmail: true,
     });
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'PASS_NOT_FOUND');
     expect(
       await all(kit.env.DB, "SELECT id FROM bundles WHERE name = 'Foreign pass'"),
     ).toHaveLength(0);
@@ -215,7 +244,7 @@ describe('bundle tenant authorization', () => {
           sendEmail: true,
         }),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'BUNDLE_STALE');
     expect(
       await all(kit.env.DB, "SELECT id FROM bundles WHERE name = 'Stale pass race'"),
     ).toHaveLength(0);

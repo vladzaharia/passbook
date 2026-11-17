@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import { CreatedScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
@@ -210,6 +211,6 @@ describe('legacy standalone monitors', () => {
       },
       headers,
     );
-    expect(action.status).toBe(403);
+    await expectProblem(action, 403, 'SCREEN_ONLY');
   });
 });

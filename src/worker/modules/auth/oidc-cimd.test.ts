@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { oidcSignIn } from './test-oidc.ts';
 import { harness, ISSUER, type Jar, ORIGIN, type TestHarness } from './test-support.ts';
@@ -60,7 +61,7 @@ describe('client ID metadata document', () => {
   it('is not served for a registered client id', async () => {
     h.restore();
     h = await harness();
-    expect((await h.call('/auth/oidc/client-metadata.json')).status).toBe(404);
+    await expectProblem(await h.call('/auth/oidc/client-metadata.json'), 404, 'NOT_FOUND');
   });
 
   it('is not served when the deployment is not https', async () => {
@@ -72,6 +73,6 @@ describe('client ID metadata document', () => {
       },
       { publicClient: true },
     );
-    expect((await h.call('/auth/oidc/client-metadata.json')).status).toBe(404);
+    await expectProblem(await h.call('/auth/oidc/client-metadata.json'), 404, 'NOT_FOUND');
   });
 });

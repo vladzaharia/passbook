@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { createApp } from '../../app.ts';
@@ -323,7 +324,8 @@ describe('status api', () => {
     app.request(`/api/v1/status${path}`, { headers }, base);
 
   it('is admin only and /health stays minimal', async () => {
-    expect((await get('', fake.user())).status).toBe(403);
+    expect((await get('')).status).toBe(200);
+    await expectProblem(await get('', fake.user()), 403, 'FORBIDDEN');
     expect((await get('', {})).status).toBe(401);
     const health = await app.request('/health', {}, base);
     expect(await health.json()).toEqual({ ok: true });

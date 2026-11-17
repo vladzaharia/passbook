@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
   makeApiKey,
@@ -252,7 +253,7 @@ describe('create', () => {
     expect(ok.res.status).toBe(201);
     expect(ok.key.orgId).toBe(org.id);
     const missing = await create({ name: 'o', scopes: ['passes:read'], orgId: 'nope' });
-    expect(missing.res.status).toBe(403);
+    await expectProblem(missing.res, 403, 'FORBIDDEN');
   });
 
   it('requires a session, an applicable privilege and CSRF', async () => {
@@ -396,7 +397,11 @@ describe('explicit management scope', () => {
     const { headers } = await adminHeaders();
     const body = { name: 'Unauthorized tenant', scopes: ['passes:read'], orgId: org.id };
 
-    expect((await h.call(`/api/v1/api-keys?orgId=${org.id}`, { headers })).status).toBe(403);
+    await expectProblem(
+      await h.call(`/api/v1/api-keys?orgId=${org.id}`, { headers }),
+      403,
+      'FORBIDDEN',
+    );
     expect((await h.call('/api/v1/api-keys', { method: 'POST', headers, json: body })).status).toBe(
       403,
     );
@@ -435,7 +440,11 @@ describe('explicit management scope', () => {
       [other.id, otherKey.id],
       ['null', platformKey.id],
     ] as const) {
-      expect((await h.call(`/api/v1/api-keys?orgId=${scope}`, { headers })).status).toBe(403);
+      await expectProblem(
+        await h.call(`/api/v1/api-keys?orgId=${scope}`, { headers }),
+        403,
+        'FORBIDDEN',
+      );
       expect(
         (await h.call(`/api/v1/api-keys/${id}?orgId=${scope}`, { method: 'DELETE', headers }))
           .status,
@@ -655,7 +664,7 @@ describe('use', () => {
     expect(write.status).toBe(403);
     expect(((await write.json()) as { code: string }).code).toBe('MISSING_SCOPE');
     const tmpl = await h.call('/api/v1/templates', { headers });
-    expect(tmpl.status).toBe(403);
+    await expectProblem(tmpl, 403, 'MISSING_SCOPE');
   });
 
   it('rejects malformed, wrong and revoked keys', async () => {

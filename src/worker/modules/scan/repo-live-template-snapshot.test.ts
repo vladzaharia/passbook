@@ -148,14 +148,14 @@ describe('live template snapshots', () => {
         ...pinned,
         manifest: { ...pinned.manifest, name: 'Attempted rewrite' },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Persisted fixture snapshot-[\w-]+@v1 differs or has been retired\./);
     await expect(
       run(kit.env.DB, 'UPDATE template_versions SET manifest=? WHERE template_id=? AND version=?', [
         '{}',
         id,
         'v1',
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template versions are immutable/);
     await expect(
       run(
         kit.env.DB,
@@ -163,13 +163,13 @@ describe('live template snapshots', () => {
        SELECT * FROM template_versions WHERE template_id=? AND version=?`,
         [id, 'v1'],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/template versions are immutable/);
     await expect(
       run(kit.env.DB, 'DELETE FROM template_versions WHERE template_id=? AND version=?', [
         id,
         'v1',
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/FOREIGN KEY constraint failed/);
     expect(await current(kit, binding, snapshot)).toBe(true);
     expect(await verifyLiveTemplateSnapshot(kit.ctx, binding, snapshot, 'commit')).not.toBeNull();
   });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, persistTemplate, runOne } from '../../../../test/helpers/index.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { first, run } from '../../platform/db.ts';
@@ -120,7 +121,7 @@ describe('scan console and feed privacy', () => {
         expect(
           (await page(`?orgId=${kit.org.id}&passId=${pass.id}`)).items.map((row) => row.id),
         ).toEqual([keep.id]);
-        expect((await get(`/${linked.id}`)).status).toBe(404);
+        await expectProblem(await get(`/${linked.id}`), 404, 'SCAN_NOT_FOUND');
         expect((await get(`/${keep.id}`)).status).toBe(200);
         expect((await get(`/${other.id}`)).status).toBe(200);
         expect((await page('', apiKey)).items.map((row) => row.id)).toEqual([other.id, keep.id]);
@@ -289,7 +290,7 @@ describe('scan console and feed privacy', () => {
     const expected = [global.id, valid.id];
     expect((await page(`?orgId=${kit.org.id}`)).items.map((row) => row.id)).toEqual(expected);
     expect((await page('', apiKey)).items.map((row) => row.id)).toEqual(expected);
-    for (const row of hidden) expect((await get(`/${row.id}`)).status).toBe(404);
+    for (const row of hidden) await expectProblem(await get(`/${row.id}`), 404, 'SCAN_NOT_FOUND');
     const globalDetail = await get(`/${global.id}`);
     expect(globalDetail.status).toBe(200);
     expect(await globalDetail.json()).toMatchObject({

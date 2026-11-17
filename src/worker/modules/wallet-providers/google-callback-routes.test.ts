@@ -588,7 +588,7 @@ describe('Google Wallet callbacks', () => {
       ),
     ).toEqual([]);
     expect(await listWalletOffers(f.f.kit.ctx, f.f.pass.id)).toEqual([]);
-  }, 120_000);
+  });
 
   it('rejects correctly signed wrong class, object and cross-tenant or issuer binding', async () => {
     const f = await fixture();

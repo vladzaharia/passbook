@@ -69,6 +69,7 @@ describe('renderStrip', () => {
   });
 });
 
+// PNG composition and decoding under v8 coverage in coverage-node runs far slower than locally (about 10x).
 describe('stampStrips', { timeout: 120_000 }, () => {
   it.each([GOAL_MIN, 10, GOAL_MAX])(
     'goal %i yields two files per count with exact sizes',

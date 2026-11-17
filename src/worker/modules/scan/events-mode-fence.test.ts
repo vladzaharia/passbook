@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { type FakeAuth, fakeAuth } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -51,8 +52,16 @@ describe('event writes are fenced to the console mode', () => {
     expect(
       (await call('POST', `/${event.id}/scanners`, { scannerIds: [free.id] }, 'test')).status,
     ).toBe(404);
-    expect((await call('POST', `/${event.id}/archive`, undefined, 'test')).status).toBe(404);
-    expect((await call('PATCH', `/${event.id}`, { name: 'Hijacked' }, 'test')).status).toBe(404);
+    await expectProblem(
+      await call('POST', `/${event.id}/archive`, undefined, 'test'),
+      404,
+      'EVENT_NOT_FOUND',
+    );
+    await expectProblem(
+      await call('PATCH', `/${event.id}`, { name: 'Hijacked' }, 'test'),
+      404,
+      'EVENT_NOT_FOUND',
+    );
     const rows = await eventsOf([attached.id, free.id]);
     expect(rows.find((r) => r.id === attached.id)?.event_id).toBe(event.id);
     expect(rows.find((r) => r.id === free.id)?.event_id).toBeNull();
@@ -69,7 +78,7 @@ describe('event writes are fenced to the console mode', () => {
       () => call('POST', `/${event.id}/scanners`, { scannerIds: [a.id, b.id] }),
     );
     expect(fired).toBe(true);
-    expect(result.status).toBe(409);
+    await expectProblem(result, 409, 'SCAN_EVENT_CHANGED');
     expect((await eventsOf([a.id, b.id])).every((r) => r.event_id === null)).toBe(true);
     expect(await auditActions()).not.toContain('scan_event.assign');
   });

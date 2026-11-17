@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, fixtures, makeEnv, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -150,15 +151,16 @@ describe('audit api', () => {
   });
 
   it('rejects a malformed cursor and non-admins', async () => {
+    expect((await get('')).status).toBe(200);
     expect((await get('?cursor=abc')).status).toBe(422);
-    expect((await get('', fake.user())).status).toBe(403);
+    await expectProblem(await get('', fake.user()), 403, 'FORBIDDEN');
     expect((await get('', {})).status).toBe(401);
   });
 });
 
 describe('audit labels', () => {
   it('names actors and targets, null when gone or unknown', async () => {
-    const f = fixtures(appEnv, new ManualClock(Date.now()));
+    const f = fixtures(appEnv, new ManualClock());
     const org = await makeOrg(f, { name: 'Acme Gym' });
     const user = await makeUser(f);
     await run(env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Fatima Zahra', user.id]);

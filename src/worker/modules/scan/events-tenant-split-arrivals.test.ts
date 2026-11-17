@@ -137,7 +137,7 @@ describe('scan event tenant routes', () => {
     expect(
       await all(env.DB, 'SELECT template_id FROM scan_event_templates WHERE event_id=?', [eventId]),
     ).toEqual([{ template_id: templateId }]);
-  }, 60_000);
+  });
 
   // An archived template keeps its passes; a deleted one leaves no current pass policy.
   it.each([

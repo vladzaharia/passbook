@@ -50,7 +50,7 @@ beforeAll(async () => {
   kit = await setupConnectionKit();
   resetDeps();
   setDeps({ sleep: async () => {}, resolver: publicResolver });
-}, 60_000);
+});
 
 let n = 0;
 async function sync(connectionId: string, generation: number) {
@@ -501,7 +501,7 @@ describe('connection sync through the real pass seams', () => {
         )
       )?.cursor,
     ).toBe('0:1');
-  }, 120_000);
+  });
 
   it.each(['missing', 'mismatched'] as const)(
     'rejects %s keyset proof for an already verified webhook',
@@ -1697,7 +1697,7 @@ describe('connection sync through the real pass seams', () => {
       resetDeps();
       setDeps({ sleep: async () => {}, resolver: publicResolver });
     }
-  }, 120_000);
+  });
 });
 
 const runOf = (id: string) =>

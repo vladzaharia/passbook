@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { type FakeAuth, fakeAuth, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import {
   AdminScannerStartedSchema,
@@ -67,7 +68,7 @@ describe('managed scanner setups', () => {
   it('requires an explicit membership even for a platform administrator', async () => {
     const other = await makeOrg(kit.fx);
     const body = { orgId: other.id, timeZone: 'UTC' };
-    expect((await send('/scan-setups/admin-session', 'POST', body)).status).toBe(403);
+    await expectProblem(await send('/scan-setups/admin-session', 'POST', body), 403, 'FORBIDDEN');
 
     const member = await makeUser(kit.fx);
     await grantScanMembership(kit.fx, other.id, member.id);
@@ -99,7 +100,7 @@ describe('managed scanner setups', () => {
       undefined,
       fake.session({ userId: other.id, roles: ['admin'] }),
     );
-    expect(denied.status).toBe(403);
+    await expectProblem(denied, 403, 'SCAN_ADMIN_SETUP_REQUIRED');
   });
 
   it('never issues a device credential for an admin-owned setup', async () => {
@@ -174,7 +175,11 @@ describe('managed scanner setups', () => {
   it('revokes an admin session and permits an explicitly started replacement', async () => {
     const setup = await start();
     expect((await send(`/scanners/${setup.setupId}/revoke`, 'POST')).status).toBe(200);
-    expect((await send(`/scan/session?${new URLSearchParams(setup)}`)).status).toBe(403);
+    await expectProblem(
+      await send(`/scan/session?${new URLSearchParams(setup)}`),
+      403,
+      'SCAN_ADMIN_SETUP_REQUIRED',
+    );
     expect((await start()).setupId).not.toBe(setup.setupId);
   });
 
@@ -242,6 +247,10 @@ describe('managed scanner setups', () => {
     expect((await send(`/scan-setups/${id}`, 'PATCH', { name: 'Nope' }, testMode)).status).toBe(
       404,
     );
-    expect((await send(`/scan-setups/${id}`, 'GET', undefined, testMode)).status).toBe(404);
+    await expectProblem(
+      await send(`/scan-setups/${id}`, 'GET', undefined, testMode),
+      404,
+      'SCANNER_NOT_FOUND',
+    );
   });
 });

@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { ScanLiveSnapshotSchema } from '../../../shared/contracts/scan-setups.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -172,7 +173,7 @@ describe('user-backed live tenant authority', () => {
         screen.membershipId,
       ]);
       const denied = await app.request(url, { headers: screen.session.headers }, kit.env);
-      expect(denied.status).toBe(403);
+      await expectProblem(denied, 403, 'FORBIDDEN');
       const deniedBody = await denied.text();
       expect(deniedBody.includes(entry.id)).toBe(false);
       expect(deniedBody.includes(screen.resolved.sessionId)).toBe(false);
@@ -188,9 +189,9 @@ describe('user-backed live tenant authority', () => {
     const session = await makeSession(kit.fx, { userId: outsider.id, roles: ['admin', 'user'] });
     const resolved = await createSessionStore(kit.env, kit.clock).resolve(session.cookieValue);
     if (!resolved) throw new Error('Missing outsider platform session.');
-    await expect(
-      tenantAuthorityOf(kit.ctx, resolved, kit.org.id, 'scanning:read'),
-    ).rejects.toThrow();
+    await expect(tenantAuthorityOf(kit.ctx, resolved, kit.org.id, 'scanning:read')).rejects.toThrow(
+      /You do not have access\./,
+    );
     // Obtain an authentic outsider attachment, then remove its explicit tenant access.
     const outsiderMembership = await grantScanMembership(kit.fx, kit.org.id, outsider.id);
     await run(kit.env.DB, 'UPDATE scanner_setups SET admin_user_id=? WHERE scanner_id=?', [
@@ -218,7 +219,7 @@ describe('user-backed live tenant authority', () => {
       { headers: session.headers },
       kit.env,
     );
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     const body = await response.text();
     expect(body.includes(resolved.sessionId)).toBe(false);
     expect(body.includes(screen.membershipId)).toBe(false);

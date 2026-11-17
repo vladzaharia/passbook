@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   allowInvalidRoleNames,
   type Fixtures,
@@ -118,23 +119,31 @@ describe('tenant audit access', () => {
     expect(second.items.map((item) => item.action)).toEqual(['north.old']);
     expect(second.nextCursor).toBeNull();
     expect((await get('', headers)).status).toBe(422);
-    expect((await get(`?orgId=${south.id}`, headers)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${south.id}`, headers), 403, 'FORBIDDEN');
     expect((await get(`?orgId=${north.id}&cursor=bad`, headers)).status).toBe(422);
 
     const integrationUser = await makeUser(f);
     await addMember(f, north.id, integrationUser.id, ['integration_admin']);
-    expect((await get(`?orgId=${north.id}`, fake.user(integrationUser.id))).status).toBe(403);
+    await expectProblem(
+      await get(`?orgId=${north.id}`, fake.user(integrationUser.id)),
+      403,
+      'FORBIDDEN',
+    );
 
     const invalidUser = await makeUser(f);
     await allowInvalidRoleNames(appEnv.DB);
     await addMember(f, north.id, invalidUser.id, ['read_only', 'read_only']);
-    expect((await get(`?orgId=${north.id}`, fake.user(invalidUser.id))).status).toBe(403);
+    await expectProblem(
+      await get(`?orgId=${north.id}`, fake.user(invalidUser.id)),
+      403,
+      'FORBIDDEN',
+    );
 
     await run(appEnv.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [reader.id]);
-    expect((await get(`?orgId=${north.id}`, headers)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${north.id}`, headers), 403, 'FORBIDDEN');
     await run(appEnv.DB, "UPDATE users SET status = 'active' WHERE id = ?", [reader.id]);
     await run(appEnv.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [north.id]);
-    expect((await get(`?orgId=${north.id}`, headers)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${north.id}`, headers), 403, 'FORBIDDEN');
     await run(appEnv.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [north.id]);
 
     const filter = { orgId: north.id, tenant: { userId: reader.id, membershipId } };
@@ -144,7 +153,7 @@ describe('tenant audit access', () => {
       f.clock.now(),
       membershipId,
     ]);
-    expect((await get(`?orgId=${north.id}`, headers)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${north.id}`, headers), 403, 'FORBIDDEN');
     expect(await listAuditRows(appEnv.DB, filter, 10)).toEqual([]);
   });
 
@@ -170,7 +179,7 @@ describe('tenant audit access', () => {
     });
     const author = await makeUser(f);
     await addMember(f, north.id, author.id, ['template_author']);
-    expect((await get(`?orgId=${north.id}`, fake.user(author.id))).status).toBe(403);
+    await expectProblem(await get(`?orgId=${north.id}`, fake.user(author.id)), 403, 'FORBIDDEN');
   });
 
   it('does not infer membership from a platform role and keeps platform reads explicit', async () => {
@@ -184,7 +193,7 @@ describe('tenant audit access', () => {
     await recordAudit(ctx, { actorType: 'system', action: 'platform.action' });
 
     expect((await get('', admin)).status).toBe(422);
-    expect((await get(`?orgId=${north.id}`, admin)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${north.id}`, admin), 403, 'FORBIDDEN');
     expect(
       (await page(`?orgId=${north.id}`, memberAdmin)).items.map((item) => item.action),
     ).toEqual(['north.action']);
@@ -196,7 +205,7 @@ describe('tenant audit access', () => {
     expect(
       (await page(`?orgId=${south.id}`, admin, true)).items.map((item) => item.action),
     ).toEqual(['south.action']);
-    expect((await get('', headers, true)).status).toBe(403);
+    await expectProblem(await get('', headers, true), 403, 'FORBIDDEN');
     expect((await get('', {}, false)).status).toBe(401);
     expect((await get(`?orgId=${north.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(401);
     expect((await get(`?orgId=${south.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(401);

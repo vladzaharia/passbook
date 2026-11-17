@@ -6,5 +6,5 @@ describe('scanner asset cross-pass provenance', () => {
     const { f, expectCrossPassRevoked } = await crossPassRevocationFixture();
     expect((await f.transfer()).state).toBe('pending');
     await expectCrossPassRevoked();
-  }, 180_000);
+  });
 });

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -31,10 +32,10 @@ describe('API key tenant authorization', () => {
     const key = await makeApiKey(f(), { orgId: org.id });
     const before = await keyState();
 
-    expect((await list(session.headers, org.id)).status).toBe(403);
-    expect((await create(session.headers, keyBody(org.id))).status).toBe(403);
-    expect((await revoke(session.headers, key.id, org.id)).status).toBe(403);
-    expect((await revoke(session.headers, key.id)).status).toBe(404);
+    await expectProblem(await list(session.headers, org.id), 403, 'FORBIDDEN');
+    await expectProblem(await create(session.headers, keyBody(org.id)), 403, 'FORBIDDEN');
+    await expectProblem(await revoke(session.headers, key.id, org.id), 403, 'FORBIDDEN');
+    await expectProblem(await revoke(session.headers, key.id), 404, 'API_KEY_NOT_FOUND');
     expect(await keyState()).toEqual(before);
   });
 
@@ -276,8 +277,8 @@ describe('API key tenant authorization', () => {
       expect(response.status).toBe(200);
       const page = (await response.json()) as KeyPage;
       expect(page.items).toEqual([expect.objectContaining({ id: own.id, orgId: org.id })]);
-      expect((await create(session.headers, keyBody(org.id))).status).toBe(403);
-      expect((await revoke(session.headers, own.id, org.id)).status).toBe(403);
+      await expectProblem(await create(session.headers, keyBody(org.id)), 403, 'FORBIDDEN');
+      await expectProblem(await revoke(session.headers, own.id, org.id), 403, 'FORBIDDEN');
       expect(await keyState()).toEqual(before);
     },
   );
@@ -286,14 +287,14 @@ describe('API key tenant authorization', () => {
     const { session: author } = await member('template_author');
     const key = await makeApiKey(f(), { orgId: org.id });
     const before = await keyState();
-    expect((await list(author.headers, org.id)).status).toBe(403);
-    expect((await create(author.headers, keyBody(org.id))).status).toBe(403);
-    expect((await revoke(author.headers, key.id, org.id)).status).toBe(403);
+    await expectProblem(await list(author.headers, org.id), 403, 'FORBIDDEN');
+    await expectProblem(await create(author.headers, keyBody(org.id)), 403, 'FORBIDDEN');
+    await expectProblem(await revoke(author.headers, key.id, org.id), 403, 'FORBIDDEN');
 
     const { session: manager } = await member('integration_admin');
     const noCsrf = { cookie: manager.headers.cookie ?? '' };
-    expect((await create(noCsrf, keyBody(org.id))).status).toBe(403);
-    expect((await revoke(noCsrf, key.id, org.id)).status).toBe(403);
+    await expectProblem(await create(noCsrf, keyBody(org.id)), 403, 'CSRF_TOKEN');
+    await expectProblem(await revoke(noCsrf, key.id, org.id), 403, 'CSRF_TOKEN');
     expect(await keyState()).toEqual(before);
   });
 
@@ -301,14 +302,18 @@ describe('API key tenant authorization', () => {
     const { session } = await member('integration_admin');
     const platform = await makeApiKey(f());
     const before = await keyState();
-    expect((await list(session.headers)).status).toBe(403);
-    expect((await list(session.headers, other.id)).status).toBe(403);
+    await expectProblem(await list(session.headers), 403, 'FORBIDDEN');
+    await expectProblem(await list(session.headers, other.id), 403, 'FORBIDDEN');
     expect(
       (await create(session.headers, { name: 'No org', scopes: ['passes:read'] })).status,
     ).toBe(400);
-    expect((await create(session.headers, keyBody(null))).status).toBe(403);
-    expect((await create(session.headers, keyBody(other.id))).status).toBe(403);
-    expect((await revoke(session.headers, platform.id, org.id)).status).toBe(404);
+    await expectProblem(await create(session.headers, keyBody(null)), 403, 'FORBIDDEN');
+    await expectProblem(await create(session.headers, keyBody(other.id)), 403, 'FORBIDDEN');
+    await expectProblem(
+      await revoke(session.headers, platform.id, org.id),
+      404,
+      'API_KEY_NOT_FOUND',
+    );
     expect(await keyState()).toEqual(before);
   });
 
@@ -320,7 +325,7 @@ describe('API key tenant authorization', () => {
     const problems = [];
     for (const id of ['missing-key', foreign.id, platform.id]) {
       const response = await revoke(session.headers, id, org.id);
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'API_KEY_NOT_FOUND');
       const { requestId: _requestId, ...problem } = (await response.json()) as Record<
         string,
         unknown
@@ -351,7 +356,7 @@ describe('API key tenant authorization', () => {
     expect(((await listed.json()) as KeyPage).items).toEqual([
       expect.objectContaining({ id: key.id, orgId: null }),
     ]);
-    expect((await revoke(session.headers, tenantKey.id)).status).toBe(404);
+    await expectProblem(await revoke(session.headers, tenantKey.id), 404, 'API_KEY_NOT_FOUND');
     expect((await revoke(session.headers, key.id)).status).toBe(200);
     expect(await createApiKeyStore(h.env, h.clock).resolve(key.secret)).toBeNull();
   });

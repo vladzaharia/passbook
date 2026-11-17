@@ -61,7 +61,7 @@ describe('serial of a personalizable pass (P1-5)', () => {
     // A template without personalization keeps the caller's serial.
     const plain = await create(kit.template.id, live.version, live.id, live.generation);
     expect(plain.serial).toBe('chosen-by-caller');
-  }, 120_000);
+  });
 });
 
 describe('pass file HEAD', () => {
@@ -133,5 +133,5 @@ describe('idempotent create with a server-resolved release', () => {
     ).rejects.toMatchObject({
       code: 'IDEMPOTENCY_KEY_REUSED',
     });
-  }, 120_000);
+  });
 });

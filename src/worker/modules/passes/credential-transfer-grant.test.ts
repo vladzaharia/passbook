@@ -96,7 +96,7 @@ describe('credential transfer grants (authority-epochs.md 8.5 test 32)', () => {
       gate.resolve();
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('runs start and finish each as one D1 batch after their reads', async () => {
     const kit = await setupKit();

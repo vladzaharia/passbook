@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
   linkToken,
@@ -125,7 +126,11 @@ describe('passes', () => {
       }[];
     };
     expect(list.items.some((item) => item.id === quarantined.id)).toBe(false);
-    expect((await get(`/api/v1/me/passes/${quarantined.id}`, session.headers)).status).toBe(404);
+    await expectProblem(
+      await get(`/api/v1/me/passes/${quarantined.id}`, session.headers),
+      404,
+      'PASS_NOT_FOUND',
+    );
     for (const pass of [active, voided, jsonVoided, expired, removed, deleted]) {
       const detail = (await (
         await get(`/api/v1/me/passes/${pass.id}`, session.headers)
@@ -225,7 +230,7 @@ describe('passes', () => {
       ['POST', `/api/v1/me/passes/${stranger.id}/refresh`],
       ['DELETE', `/api/v1/me/passes/${stranger.id}`],
     ] as const) {
-      expect((await send(method, path, session.headers)).status).toBe(404);
+      await expectProblem(await send(method, path, session.headers), 404, 'PASS_NOT_FOUND');
     }
   });
 
@@ -427,11 +432,11 @@ describe('emails', () => {
     );
     const del = (email: string) =>
       send('DELETE', `/api/v1/me/emails/${encodeURIComponent(email)}`, session.headers);
-    expect((await del(user.primaryEmail)).status).toBe(409);
+    await expectProblem(await del(user.primaryEmail), 409, 'PRIMARY_EMAIL');
     const ok = await del(extra);
     expect(ok.status).toBe(200);
     expect(((await ok.json()) as { items: unknown[] }).items).toHaveLength(1);
-    expect((await del(extra)).status).toBe(404);
+    await expectProblem(await del(extra), 404, 'EMAIL_NOT_FOUND');
     expect((await del('not-an-email')).status).toBe(422);
   });
 
@@ -455,7 +460,7 @@ describe('emails', () => {
       `/api/v1/me/emails/${encodeURIComponent(other.primaryEmail)}`,
       session.headers,
     );
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'EMAIL_NOT_FOUND');
     expect(
       await first(h.env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [other.primaryEmail]),
     ).not.toBeNull();
@@ -542,12 +547,20 @@ describe('bundle', () => {
     const names2 = entries(new Uint8Array(await second.arrayBuffer()));
     expect(names2).toHaveLength(2);
     expect([...names1, ...names2].sort()).toEqual(ids.map((id) => `${id}.pkpass`).sort());
-    expect((await get('/api/v1/me/passes.pkpasses?part=3', session.headers)).status).toBe(404);
+    await expectProblem(
+      await get('/api/v1/me/passes.pkpasses?part=3', session.headers),
+      404,
+      'BUNDLE_EMPTY',
+    );
   });
 
   it('is 404 without passes and requires a session', async () => {
     const { session } = await setup();
-    expect((await get('/api/v1/me/passes.pkpasses', session.headers)).status).toBe(404);
+    await expectProblem(
+      await get('/api/v1/me/passes.pkpasses', session.headers),
+      404,
+      'BUNDLE_EMPTY',
+    );
     expect((await h.call('/api/v1/me/passes.pkpasses')).status).toBe(401);
   });
 });

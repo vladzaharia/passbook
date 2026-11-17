@@ -47,7 +47,7 @@ describe('live tenant privacy and delivery', () => {
         passSnapshot: null,
         at: entry.at,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Invalid live source authority\./);
     const opened = await openLiveSourceProof(kit.env, entry.sourceProof);
     if (!opened) throw new Error('Missing paired source proof.');
     expect(opened.actor.scanner?.csrfSecret === null).toBe(true);

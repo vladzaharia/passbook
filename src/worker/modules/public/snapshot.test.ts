@@ -1,6 +1,7 @@
 import { unzlibSync, zlibSync } from 'fflate';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { isolatedKeysetDatabase } from '../../../../test/helpers/credential-keyset.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, linkToken, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { crc32 } from '../../../passkit/index.ts';
@@ -477,12 +478,16 @@ describe('public credential transfer fence', () => {
     const freshFile = await get(`/p/${await linkToken(kit.env, fresh)}/pass.pkpass`);
     expect(freshFile.status).toBe(200);
     expect(new Uint8Array(await freshFile.arrayBuffer())).not.toEqual(oldBytes);
-    expect((await get(`/api/v1/me/passes/${pass.id}/barcode`, oldOwnerHeaders)).status).toBe(404);
+    await expectProblem(
+      await get(`/api/v1/me/passes/${pass.id}/barcode`, oldOwnerHeaders),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect((await get(`/api/v1/me/passes/${pass.id}/barcode`, nextOwnerHeaders)).status).toBe(200);
     const freshOwner = await get(`/api/v1/me/passes/${pass.id}`, nextOwnerHeaders);
     expect(freshOwner.status).toBe(200);
     expect(await freshOwner.text()).toContain(await linkToken(kit.env, fresh));
-  }, 120_000);
+  });
 
   it('does not resolve a bearer whose transfer commits after the token lookup', async () => {
     const pass = await kit.pass();
@@ -506,7 +511,7 @@ describe('public credential transfer fence', () => {
     const fresh = await getPass(kit.env.DB, pass.id);
     if (!fresh) throw new Error('Missing completed pass');
     expect((await passForToken(kit.ctx, await linkToken(kit.env, fresh))).id).toBe(pass.id);
-  }, 120_000);
+  });
 
   it.each(['page', 'barcode'] as const)(
     'rejects a stale %s when the transfer completes during the stored JSON read',
@@ -637,7 +642,7 @@ describe('public asset fencing', () => {
     expect(icon.headers.get('cache-control')).toBe('private, no-store');
     expect(icon.headers.get('cross-origin-resource-policy')).toBe('cross-origin');
     expect(new Uint8Array(await icon.arrayBuffer())).toEqual(TINY_PNG);
-  }, 120_000);
+  });
 
   it.each([
     {
@@ -878,12 +883,12 @@ describe('public asset fencing', () => {
     expect(opened).toBe(true);
     expect(cancelled).toBe(1);
     await expectNoImage(response);
-    expect((await get(assetPath(oldToken))).status).toBe(404);
+    await expectProblem(await get(assetPath(oldToken)), 404, 'LINK_NOT_FOUND');
     const current = await get(assetPath(newToken));
     expect(current.status).toBe(200);
     expect(current.headers.get('cache-control')).toBe('private, no-store');
     expect(new Uint8Array(await current.arrayBuffer())).toEqual(newPhoto);
-  }, 120_000);
+  });
 
   it('cancels a downloaded pass if its link changes during the R2 read', async () => {
     const pass = await kit.pass();
@@ -947,7 +952,7 @@ describe('public page fencing', () => {
     const current = await get(`/p/${newToken}`);
     expect(current.status).toBe(200);
     expect(await current.text()).toContain(newName);
-  }, 120_000);
+  });
 
   it('fences the page when its bearer changes while wallet offers are being read', async () => {
     // Offers are only read once providers are released.
@@ -994,7 +999,7 @@ describe('public page fencing', () => {
     expect(currentHtml).toContain(`href="/p/${newToken}/pass.pkpass"`);
     expect(currentHtml).not.toContain(`href="/p/${newToken}/wallet/google"`);
     expect(currentHtml).not.toContain(`href="/p/${newToken}/wallet/samsung"`);
-  }, 90_000);
+  });
 
   it('uses the latest JSON at or before a metadata-only version, never a future version', async () => {
     const currentName = 'Pinned Holder Charlie';

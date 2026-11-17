@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeScanner, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import {
@@ -152,7 +153,7 @@ describe('GET /scans (admin)', () => {
   });
 
   it('requires scanning capability for a signed-in user', async () => {
-    expect((await get(`?orgId=${orgId}`, userHeaders)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${orgId}`, userHeaders), 403, 'FORBIDDEN');
     expect((await get(`?orgId=${orgId}`, {})).status).toBe(401);
   });
 });

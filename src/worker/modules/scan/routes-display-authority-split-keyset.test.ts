@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { hashSessionCookie } from '../auth/sessions.ts';
@@ -45,7 +46,7 @@ describe('scan display preview tenant authorization', () => {
         },
         () => preview(own, session.headers),
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(await response.text()).not.toContain('Alex Morgan');
       expect(
         await first(env.DB, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1'),
@@ -157,7 +158,7 @@ describe('scan display preview tenant authorization', () => {
         },
         () => preview(own, session.headers),
       );
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
       const text = await response.text();
       for (const secret of ['scope', 'Alex Morgan', original, replacement])
         expect(text).not.toContain(secret);

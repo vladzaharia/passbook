@@ -101,5 +101,5 @@ describe('transfer asset retirement', () => {
       gate.resolve();
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 });

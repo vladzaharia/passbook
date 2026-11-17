@@ -2,6 +2,7 @@
 
 import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fixtures,
@@ -91,7 +92,7 @@ beforeAll(async () => {
   const tenantUser = await makeUser(f);
   platformAdmin = await makeSession(f, { userId: platformUser.id, roles: ['admin', 'user'] });
   orgAdmin = await makeSession(f, { userId: tenantUser.id });
-}, 60_000);
+});
 
 async function join(orgId: string) {
   const invitationId = f.ids.id();
@@ -159,7 +160,11 @@ describe('org status', () => {
       ])
         expect(body).not.toHaveProperty(field);
     expect(await actionsOf(org.id)).toEqual(['org.suspend', 'org.reactivate']);
-    expect((await call('POST', '/missing/status', { status: 'active' })).status).toBe(404);
+    await expectProblem(
+      await call('POST', '/missing/status', { status: 'active' }),
+      404,
+      'ORG_NOT_FOUND',
+    );
   });
 });
 
@@ -242,7 +247,11 @@ describe('pass branding images', () => {
     const x3 = await tenantCall('GET', `/${org.id}/branding/logo/3x`);
     expect(x3.status).toBe(200);
     expect(x3.headers.get('content-type')).toBe('image/png');
-    expect((await tenantCall('GET', `/${org.id}/branding/logo/2x`)).status).toBe(404);
+    await expectProblem(
+      await tenantCall('GET', `/${org.id}/branding/logo/2x`),
+      404,
+      'IMAGE_NOT_FOUND',
+    );
   });
 
   it('reads legacy keys and collects superseded objects after each commit', async () => {
@@ -313,9 +322,17 @@ describe('pass branding images', () => {
       { x3: b64(x3) },
       { resize: async () => null },
     );
-    expect((await tenantCall('GET', `/${org.id}/branding/logo/2x`)).status).toBe(404);
+    await expectProblem(
+      await tenantCall('GET', `/${org.id}/branding/logo/2x`),
+      404,
+      'IMAGE_NOT_FOUND',
+    );
     expect((await tenantCall('DELETE', `/${org.id}/branding/logo`)).status).toBe(200);
-    expect((await tenantCall('GET', `/${org.id}/branding/logo/3x`)).status).toBe(404);
+    await expectProblem(
+      await tenantCall('GET', `/${org.id}/branding/logo/3x`),
+      404,
+      'IMAGE_NOT_FOUND',
+    );
     // Superseded objects outlive the commit by the grace period, then none is left.
     for (const file of [...legacyFiles, ...files, ...replacementFiles])
       expect(await appEnv.BUCKET.head(file.r2Key)).not.toBeNull();
@@ -599,6 +616,6 @@ describe('email preview', () => {
     expect(html).toContain('/email/buddy-');
     const plain = await (await tenantCall('GET', `/${org.id}/email-preview?buddy=0`)).text();
     expect(plain).not.toContain('/email/buddy-');
-    expect((await tenantCall('GET', '/missing/email-preview')).status).toBe(403);
+    await expectProblem(await tenantCall('GET', '/missing/email-preview'), 403, 'FORBIDDEN');
   });
 });

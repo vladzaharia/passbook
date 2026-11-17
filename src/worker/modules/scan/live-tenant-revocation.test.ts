@@ -78,15 +78,21 @@ describe('live tenant and workspace revocation', () => {
           value,
           original.id_hash,
         ]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/session authority is immutable|session csrf secret is immutable/);
     }
     expect(await liveRecipient(kit.ctx, screen.attachment)).not.toBeNull();
     await runOne(kit.env.DB, 'DELETE FROM sessions WHERE id_hash=?', [original.id_hash]);
-    await expect(insertSession(kit, original, second.csrf)).rejects.toThrow();
-    await expect(insertSession(kit, original, screen.session.csrf)).rejects.toThrow();
+    await expect(insertSession(kit, original, second.csrf)).rejects.toThrow(
+      /session ID is retired/,
+    );
+    await expect(insertSession(kit, original, screen.session.csrf)).rejects.toThrow(
+      /session ID is retired/,
+    );
     await assertClosed(screen.attachment);
     await runOne(kit.env.DB, 'DELETE FROM sessions WHERE id_hash=?', [replacementRow.id_hash]);
-    await expect(insertSession(kit, replacementRow, screen.session.csrf)).rejects.toThrow();
+    await expect(insertSession(kit, replacementRow, screen.session.csrf)).rejects.toThrow(
+      /session ID is retired/,
+    );
     await assertClosed(replacement);
     const freshSession = await makeSession(kit.fx, {
       userId: screen.user.id,

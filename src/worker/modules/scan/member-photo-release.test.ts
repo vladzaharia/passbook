@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -143,7 +144,7 @@ describe('scanner member photo release authority', () => {
         scanner.headers,
         `/passes/${pass.id}/assets/${name}?g=${genericToken}`,
       );
-      expect(denied.status).toBe(404);
+      await expectProblem(denied, 404, 'ASSET_NOT_FOUND');
       const body = await denied.text();
       expect(body).not.toContain(genericToken);
       expect(body).not.toContain(photoToken);
@@ -190,7 +191,7 @@ describe('scanner member photo release authority', () => {
       const image = (name: string) =>
         kit.get(scanner.headers, `/passes/${pass.id}/assets/${name}?g=${grant}`);
       expect((await image('icon.png')).status).toBe(200);
-      expect((await image('member.png')).status).toBe(404);
+      await expectProblem(await image('member.png'), 404, 'ASSET_NOT_FOUND');
       const pinned = await kit.registry.resolve(templateId, candidate.pass.templateVersion);
       // The photo has its own capability, read as the card reads this state.
       const photo = await knownPhotoUrl(kit.ctx, actor, candidate, pinned);
@@ -220,8 +221,8 @@ describe('scanner member photo release authority', () => {
         expect((await pendingImage()).status).toBe(200);
         return;
       }
-      expect((await pendingImage()).status).toBe(404);
-      expect((await image('icon.png')).status).toBe(404);
+      await expectProblem(await pendingImage(), 404, 'ASSET_NOT_FOUND');
+      await expectProblem(await image('icon.png'), 404, 'ASSET_NOT_FOUND');
     },
   );
 

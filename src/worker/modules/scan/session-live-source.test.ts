@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser, revokeMembership } from '../../../../test/helpers/index.ts';
 import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
@@ -188,7 +189,7 @@ describe('administrator source authority', () => {
         'attempted-session-secret-rotation',
         admin.sessionId,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/session csrf secret is immutable/);
     expect((await kit.get({ cookie }, path)).status).toBe(200);
     const otherAuth = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin'] });
     const otherAdmin = await createSessionStore(kit.env, kit.clock).resolve(otherAuth.cookieValue);
@@ -221,9 +222,9 @@ describe('administrator source authority', () => {
       kit.clock.now(),
     ).run();
     expect(revokedMembership.meta.changes).toBe(1);
-    expect((await kit.get({ cookie }, path)).status).toBe(404);
+    await expectProblem(await kit.get({ cookie }, path), 404, 'ASSET_NOT_FOUND');
     membershipId = await grantScanMembership(kit.fx, kit.org.id, 'admin-1');
-    expect((await kit.get({ cookie }, path)).status).toBe(404);
+    await expectProblem(await kit.get({ cookie }, path), 404, 'ASSET_NOT_FOUND');
     // The source's membership was revoked: its retained events are omitted, not replayed.
     const stale = (await hub.snapshot(attachment)).rows.find((item) => item.id === projection.id);
     expect(stale).toBeUndefined();
@@ -283,7 +284,7 @@ describe('administrator source authority', () => {
       });
     });
     try {
-      expect((await kit.get({ cookie }, freshPath)).status).toBe(404);
+      await expectProblem(await kit.get({ cookie }, freshPath), 404, 'ASSET_NOT_FOUND');
     } finally {
       spy.mockRestore();
     }
@@ -362,7 +363,7 @@ describe('administrator source authority', () => {
       );
       expect(await liveRecipient(kit.ctx, attachment)).toBeNull();
       expect((await hub.snapshot(attachment)).rows).toEqual([]);
-      expect((await kit.get({ cookie }, path)).status).toBe(404);
+      await expectProblem(await kit.get({ cookie }, path), 404, 'ASSET_NOT_FOUND');
     },
   );
 });

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { hashSessionCookie } from '../auth/sessions.ts';
@@ -15,6 +16,18 @@ beforeEach(async () => {
 });
 
 describe('scan display preview tenant authorization', () => {
+  it('projects the pass when nothing changes at the post-audit output read', async () => {
+    const { f, org, own, atPreviewOutputFence, preview } = fixture;
+    const user = await makeUser(f);
+    await grantScanMembership(f, org.id, user.id, ['pass_operator']);
+    const session = await makeSession(f, { userId: user.id });
+    const response = await atPreviewOutputFence(
+      async () => {},
+      () => preview(own, session.headers),
+    );
+    expect(response.status).toBe(200);
+  });
+
   it.each(['membership', 'session', 'pass', 'Wallet', 'source', 'credential', 'transfer'] as const)(
     'does not project a pass when %s changes at the post-audit output read',
     async (change) => {
@@ -120,7 +133,7 @@ describe('scan display preview tenant authorization', () => {
       );
       expect(packedReads).toBeGreaterThanOrEqual(2);
       expect(scalarReads).toBeGreaterThanOrEqual(2);
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(response.headers.get('cache-control')).toContain('no-store');
       const text = await response.text();
       for (const secret of ['scope', 'Alex Morgan', session.csrf, replacement])

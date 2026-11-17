@@ -35,7 +35,7 @@ beforeAll(async () => {
     .bind(AT)
     .run();
   await migrateForward(db);
-}, 120_000);
+});
 
 const write = (sql: string, ...params: (string | number)[]) =>
   db

@@ -546,7 +546,7 @@ describe('sandbox native wallet retention', () => {
             attempt.passId,
           ],
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/provider issuance is unavailable/);
     }
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [other.id]);
 
@@ -592,7 +592,7 @@ describe('sandbox native wallet retention', () => {
       await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [appleOnly.id]),
     ).toBeNull();
     expect(await kit.env.BUCKET.head(appleOnly.objectKey)).toBeNull();
-  }, 60_000);
+  });
 
   it('rechecks age at the transaction boundary after the real purge selected a pass', async () => {
     const kit = await setupKit({ db: await testDatabase(), template: makeProviderTestTemplate });
@@ -616,7 +616,7 @@ describe('sandbox native wallet retention', () => {
       ),
     ).toBeNull();
     expect(await kit.env.BUCKET.head(row.objectKey)).not.toBeNull();
-  }, 60_000);
+  });
 
   it('fails closed before selecting or staging retirement with a different credential keyset', async () => {
     const kit = await setupKit({ db: await testDatabase(), template: makeProviderTestTemplate });
@@ -642,7 +642,7 @@ describe('sandbox native wallet retention', () => {
     ).toBeNull();
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [row.id])).not.toBeNull();
     expect(await kit.env.BUCKET.head(row.objectKey)).not.toBeNull();
-  }, 60_000);
+  });
 
   it('keeps the pass if a provider instance appears after selection but before deletion', async () => {
     const kit = await setupKit({ db: await testDatabase(), template: makeProviderTestTemplate });
@@ -663,7 +663,7 @@ describe('sandbox native wallet retention', () => {
     expect(await requestState(kit, instance)).toMatchObject({
       retirement_requested_at: kit.clock.now(),
     });
-  }, 60_000);
+  });
 
   it('does not stage stale keyset, revision, transfer, link or forwarding-reserved snapshots', async () => {
     const kit = await setupKit({ db: await testDatabase(), template: makeProviderTestTemplate });
@@ -792,7 +792,7 @@ describe('sandbox native wallet retention', () => {
         [instance.id],
       ),
     ).toBeNull();
-  }, 90_000);
+  });
 
   it('holds an accepted Samsung revoke while another provider write is uncertain', async () => {
     const kit = await setupKit({ db: await testDatabase(), template: makeProviderTestTemplate });
@@ -847,7 +847,7 @@ describe('sandbox native wallet retention', () => {
     expect(await purgeTestPasses(kit.ctx, before)).toBe(1);
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [row.id])).toBeNull();
     expect(await kit.env.BUCKET.head(row.objectKey)).toBeNull();
-  }, 60_000);
+  });
 
   it('retains an unpromoted Samsung callback tombstone independently of the deleted pass', async () => {
     const { kit, row } = await samsungFixture();
@@ -933,7 +933,7 @@ describe('sandbox native wallet retention', () => {
       ]),
     ).toBeNull();
     expect(await kit.env.BUCKET.head(row.objectKey)).toBeNull();
-  }, 90_000);
+  });
 
   it('does not purge or close blocked placeholders during a pending credential transfer', async () => {
     const { kit, row, instance } = await samsungFixture();
@@ -989,7 +989,7 @@ describe('sandbox native wallet retention', () => {
     });
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [row.id])).not.toBeNull();
     expect(await kit.env.BUCKET.head(row.objectKey)).not.toBeNull();
-  }, 120_000);
+  });
 
   it('clears scanner deletion intent when transfer starts after sandbox selection', async () => {
     const kit = await withKitDatabase(await testDatabase(), setupScanKit);
@@ -1080,7 +1080,7 @@ describe('sandbox native wallet retention', () => {
       ),
     ).toBeNull();
     expect(await kit.env.BUCKET.head(pass.objectKey)).not.toBeNull();
-  }, 120_000);
+  });
 
   it('waits for provider retirement and preserves opaque scan provenance for the same expired pass', async () => {
     const kit = await withKitDatabase(await testDatabase(), setupScanKit);
@@ -1194,7 +1194,7 @@ describe('sandbox native wallet retention', () => {
     ]) {
       if (secret) expect(retained).not.toContain(secret);
     }
-  }, 90_000);
+  });
 
   it('closes an unissued Google placeholder without inventing provider evidence', async () => {
     const kit = await setupKit({ db: await testDatabase(), template: makeProviderTestTemplate });
@@ -1240,7 +1240,7 @@ describe('sandbox native wallet retention', () => {
     ).toBeNull();
     expect(await purgeTestPasses(kit.ctx, before)).toBe(1);
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [row.id])).toBeNull();
-  }, 90_000);
+  });
 
   it('advances past held candidates across bounded daily runs', async () => {
     const kit = await setupKit({ db: await testDatabase(), template: makeProviderTestTemplate });
@@ -1265,5 +1265,5 @@ describe('sandbox native wallet retention', () => {
     expect(await requestState(kit, instances[75]!)).toMatchObject({
       retirement_requested_at: kit.clock.now(),
     });
-  }, 180_000);
+  });
 });

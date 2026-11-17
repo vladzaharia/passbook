@@ -16,7 +16,7 @@ beforeAll(async () => {
   kit = await setupKit();
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
-}, 60_000);
+});
 
 const stamps = async (id: string) => (await getPass(kit.env.DB, id))?.personalization.stamps;
 const versionOf = async (id: string) => (await getPass(kit.env.DB, id))?.templateVersion;
@@ -56,7 +56,7 @@ describe('moving a Stamp card to another version', () => {
     await reissueStamps(kit, id);
     expect(await versionOf(card.id)).toBe('v2');
     expect(await stamps(card.id)).toBe(12);
-  }, 120_000);
+  });
 
   it('tops up once on a PATCH to the new version', async () => {
     const id = 'tpl-move-patch';
@@ -85,7 +85,7 @@ describe('moving a Stamp card to another version', () => {
     });
     expect(again.status).toBe(200);
     expect(await stamps(card.id)).toBe(12);
-  }, 120_000);
+  });
 
   it('refuses a PATCH that would put a card above the new maximum', async () => {
     const id = 'tpl-move-patch-max';
@@ -105,7 +105,7 @@ describe('moving a Stamp card to another version', () => {
     expect(await res.json()).toMatchObject({ code: 'STAMPS_ABOVE_MAX' });
     expect(await stamps(card.id)).toBe(15);
     expect(await versionOf(card.id)).toBe('v1');
-  }, 120_000);
+  });
 
   it('tops up a pass with no issued release that a transfer moves to the head', async () => {
     const id = 'tpl-move-transfer';
@@ -133,7 +133,7 @@ describe('moving a Stamp card to another version', () => {
       { personalization: source.pass.personalization, fieldSources: source.pass.fieldSources },
     );
     expect(same.content.personalization.stamps).toBe(10);
-  }, 120_000);
+  });
 });
 
 describe('a card above the new maximum', () => {
@@ -158,7 +158,7 @@ describe('a card above the new maximum', () => {
     // The reissue moves it: 9 fits.
     expect(await reissueStamps(kit, id)).toMatchObject({ failed: 0 });
     expect(await versionOf(card.id)).toBe('v2');
-  }, 120_000);
+  });
 
   it('is counted and left alone by the reissue, never trimmed', async () => {
     const id = 'tpl-move-above-reissue';
@@ -179,5 +179,5 @@ describe('a card above the new maximum', () => {
     expect(await versionOf(over.id)).toBe('v1');
     expect(await stamps(fits.id)).toBe(6);
     expect(await versionOf(fits.id)).toBe('v2');
-  }, 120_000);
+  });
 });

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import type { createApp } from '../../app.ts';
 import { type AppBindings, requestContext } from '../../platform/context.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -40,7 +41,7 @@ describe('GET /scans/{id}', () => {
       eventName: 'Event',
       templateName: 'Test template',
     });
-    expect((await get('/nope')).status).toBe(404);
+    await expectProblem(await get('/nope'), 404, 'SCAN_NOT_FOUND');
   });
 });
 
@@ -115,7 +116,7 @@ describe('POST /scans/{id}/undo', () => {
     const row = await seed({ at: clock.now() - 31 * DAY });
     const target = mini(async () => outcome as never);
     const res = await post(`/${row.id}/undo`, { idempotencyKey: key }, admin(), target);
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'SCAN_UNDO_EXPIRED');
     expect(await codeOf(res)).toBe('SCAN_UNDO_EXPIRED');
     expect((await post('/missing/undo', { idempotencyKey: key }, admin(), target)).status).toBe(
       404,
@@ -126,9 +127,13 @@ describe('POST /scans/{id}/undo', () => {
   it('needs a valid key, an admin, and a gate that still names the scan', async () => {
     const row = await seed();
     expect((await post(`/${row.id}/undo`, { idempotencyKey: 'nope' })).status).toBe(422);
-    expect((await post(`/${row.id}/undo`, { idempotencyKey: key }, userHeaders)).status).toBe(403);
+    await expectProblem(
+      await post(`/${row.id}/undo`, { idempotencyKey: key }, userHeaders),
+      403,
+      'FORBIDDEN',
+    );
     const res = await post(`/${row.id}/undo`, { idempotencyKey: key });
-    expect(res.status).toBe(409);
+    await expectProblem(res, 409, 'UNDO_SUPERSEDED');
     expect(await codeOf(res)).toBe('UNDO_SUPERSEDED');
   });
 });
@@ -192,7 +197,7 @@ describe('GET /scans/export', () => {
     await run(env.DB, "DELETE FROM scans WHERE id LIKE 'bulk-%'");
     for (let i = 0; i < 10; i++) expect((await get(`/export${window()}`)).status).toBe(200);
     expect((await get(`/export${window()}`)).status).toBe(429);
-  }, 120_000);
+  });
 
   it('allows ten exports an hour per admin', async () => {
     for (let i = 0; i < 10; i++) expect((await get(`/export${window()}`)).status).toBe(200);

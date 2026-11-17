@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
   makeOrg,
@@ -121,7 +122,7 @@ describe('make primary', () => {
         method: 'POST',
         headers: session.headers,
       });
-    expect((await post(other.primaryEmail)).status).toBe(404);
+    await expectProblem(await post(other.primaryEmail), 404, 'EMAIL_NOT_FOUND');
     expect((await post('nope')).status).toBe(422);
   });
 });

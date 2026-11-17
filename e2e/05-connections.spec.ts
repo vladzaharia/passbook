@@ -3,7 +3,6 @@ import { apiAs, requireActiveTemplateRelease, seedTemplateId, uid } from './help
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
-test.setTimeout(120_000);
 
 /** ADMIN_SYNC_BUCKET_MS in tools/e2e-server.ts. */
 const SYNC_BUCKET_MS = 2_000;

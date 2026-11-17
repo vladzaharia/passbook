@@ -174,7 +174,7 @@ describe('deleted-pass purge selection (W1-13)', () => {
       'passes.purge_blocked',
       expect.objectContaining({ code: 'PASS_PURGE_BLOCKED', count: 1, passIds: [blocked.id] }),
     );
-  }, 60_000);
+  });
 });
 
 describe('hard deletion snapshots', () => {
@@ -202,7 +202,7 @@ describe('hard deletion snapshots', () => {
     });
     expect(removed.deleted).toBe(true);
     expect(removed.objectKeys).toContain(pass.objectKey);
-  }, 60_000);
+  });
 
   it('does not delete after the selected pass revision changes', async () => {
     const pass = await kit.pass({ mode: 'test' });
@@ -216,7 +216,7 @@ describe('hard deletion snapshots', () => {
       }),
     ).toEqual({ deleted: false, objectKeys: [], deviceIds: [] });
     expect(await getPass(kit.env.DB, pass.id)).not.toBeNull();
-  }, 60_000);
+  });
 
   it('rejects absent and malformed commitments before deleting a pass', async () => {
     const pass = await kit.pass({ mode: 'test' });
@@ -235,7 +235,7 @@ describe('hard deletion snapshots', () => {
     expect(
       (await deletePassRows(db, pass, retention, credentialKeysetCommitment, guard)).deleted,
     ).toBe(true);
-  }, 60_000);
+  });
 
   it.each(['changed', 'missing'] as const)(
     'fails closed before retention when the keyset is already %s',

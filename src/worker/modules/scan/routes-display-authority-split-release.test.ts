@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makePass } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
@@ -62,9 +63,9 @@ describe('scan display preview tenant authorization', () => {
       const unknown = await preview({ ...local, passId: f.ids.id() }, session.headers);
       const forged = await preview({ ...other, orgId: org.id }, session.headers);
       const unowned = await preview(other, session.headers);
-      expect(unknown.status).toBe(404);
-      expect(forged.status).toBe(404);
-      expect(unowned.status).toBe(404);
+      await expectProblem(unknown, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
+      await expectProblem(forged, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
+      await expectProblem(unowned, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
       const expected = await problem(unknown);
       expect(await problem(forged)).toEqual(expected);
       expect(await problem(unowned)).toEqual(expected);
@@ -157,7 +158,7 @@ describe('scan display preview tenant authorization', () => {
       { ...session.headers, 'x-passbook-mode': 'test' },
       { mode: 'test' },
     );
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await previewAudits(session.userId)).toEqual([]);
   });
 
@@ -173,7 +174,7 @@ describe('scan display preview tenant authorization', () => {
     ]);
     const response = await preview(own, session.headers);
     const unknown = await preview({ ...own, passId: f.ids.id() }, session.headers);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await problem(response)).toEqual(await problem(unknown));
     expect(await previewAudits(session.userId)).toEqual([]);
   });
@@ -221,15 +222,23 @@ describe('scan display preview tenant authorization', () => {
       () =>
         preview(foreignTest, { ...session.headers, 'x-passbook-mode': 'test' }, { mode: 'test' }),
     );
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await response.text()).not.toContain('scope');
   });
 
   it('keeps Live and Test preview scoped to the selected request mode', async () => {
     const { org, ownTest, memberSession, preview, previewAudits } = fixture;
     const session = await memberSession(['pass_operator']);
-    expect((await preview(ownTest, session.headers)).status).toBe(404);
-    expect((await preview(ownTest, session.headers, { mode: 'test' })).status).toBe(404);
+    await expectProblem(
+      await preview(ownTest, session.headers),
+      404,
+      'SCAN_DISPLAY_PREVIEW_NOT_FOUND',
+    );
+    await expectProblem(
+      await preview(ownTest, session.headers, { mode: 'test' }),
+      404,
+      'SCAN_DISPLAY_PREVIEW_NOT_FOUND',
+    );
     const response = await preview(
       ownTest,
       { ...session.headers, 'x-passbook-mode': 'test' },

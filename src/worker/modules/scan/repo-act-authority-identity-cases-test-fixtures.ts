@@ -209,5 +209,5 @@ export function registerAuthorityIdentity() {
     expect(
       await rows("SELECT id FROM pass_events WHERE pass_id=? AND kind LIKE 'scan.%'", [pass.id]),
     ).toHaveLength(0);
-  }, 60_000);
+  });
 }

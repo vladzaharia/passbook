@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
@@ -40,7 +41,7 @@ describe('break-glass sign-in', () => {
   it('does not exist when the hash is unset or malformed', async () => {
     for (const value of [undefined, 'disabled', '']) {
       h = await harness(value === undefined ? {} : ({ BREAKGLASS_TOKEN_SHA256: value } as object));
-      expect((await h.call('/auth/breakglass')).status).toBe(404);
+      await expectProblem(await h.call('/auth/breakglass'), 404, 'NOT_FOUND');
       expect((await submit(TOKEN)).status).toBe(404);
       h.restore();
     }

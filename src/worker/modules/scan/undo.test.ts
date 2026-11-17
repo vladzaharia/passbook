@@ -85,7 +85,9 @@ describe('undo commit authority', () => {
       `CREATE TRIGGER omit_undo_ledger BEFORE INSERT ON pass_events
       WHEN NEW.kind='scan.undone' BEGIN SELECT RAISE(ABORT, 'ledger refused'); END`,
     );
-    await expect(undo(kit.ctx, s.actor, s.targetId, { idempotencyKey: undoKey })).rejects.toThrow();
+    await expect(undo(kit.ctx, s.actor, s.targetId, { idempotencyKey: undoKey })).rejects.toThrow(
+      /ledger refused/,
+    );
     await run(kit.env.DB, 'DROP TRIGGER omit_undo_ledger');
     await expectNoUndo(s, undoKey);
   });

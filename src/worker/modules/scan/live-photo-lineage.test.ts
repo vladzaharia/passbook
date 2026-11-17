@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { run } from '../../platform/db.ts';
 import { deleteMemberPhoto, putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
@@ -41,7 +42,11 @@ describe('live photo lineage', () => {
     const image = await kit.get(monitor.headers, url.replace('/api/v1/scan', ''));
     expect(image.status).toBe(200);
     const other = await screen('monitor', [source.id]);
-    expect((await kit.get(other.headers, url.replace('/api/v1/scan', ''))).status).toBe(404);
+    await expectProblem(
+      await kit.get(other.headers, url.replace('/api/v1/scan', '')),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it('separates ordinary grants from live grants and binds a live grant to its watched source', async () => {
@@ -138,15 +143,15 @@ describe('live photo lineage', () => {
     const otherSourceEvent = row(otherSource.id, { passId: fixture.pass.id });
     await publish(otherSourceEvent);
     url.searchParams.set('event', otherSourceEvent.id);
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path()), 404, 'ASSET_NOT_FOUND');
     const anotherEvent = row(fixture.source.id, { passId: fixture.pass.id });
     await publish(anotherEvent);
     url.searchParams.set('event', anotherEvent.id);
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path()), 404, 'ASSET_NOT_FOUND');
     url.searchParams.set('event', fixture.event.id);
     expect(url.searchParams.has('source')).toBe(false);
     url.searchParams.set('g', ordinary);
-    expect((await kit.get(fixture.monitor.headers, path())).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path()), 404, 'ASSET_NOT_FOUND');
   });
 
   it('omits retained rows without valid source proof', async () => {
@@ -175,7 +180,11 @@ describe('live photo lineage', () => {
       { png: fixture.png, includeInPass: false },
       null,
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
@@ -205,7 +214,11 @@ describe('live photo lineage', () => {
       "UPDATE passes SET connection_id = ?, external_ref = 'live-photo' WHERE id = ?",
       [connectionId, fixture.pass.id],
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
@@ -221,7 +234,7 @@ describe('live photo lineage', () => {
     await run(kit.env.DB, 'UPDATE connections SET generation = generation + 1 WHERE id = ?', [
       connectionId,
     ]);
-    expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     await run(kit.env.DB, 'UPDATE connections SET enabled = 0 WHERE id = ?', [connectionId]);
     const disabled = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === connectedEvent.id,
@@ -260,7 +273,7 @@ describe('live photo lineage', () => {
       'UPDATE scan_events SET match_values = ?, updated_at = updated_at + 1 WHERE id = ?',
       ['["silver"]', event.id],
     );
-    expect((await kit.get(monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     const current = (await hub().snapshot(monitor.attachment)).rows.find(
       (item) => item.id === entry.id,
     );
@@ -321,7 +334,11 @@ describe('live photo lineage', () => {
       'DELETE FROM scanner_templates WHERE scanner_id = ? AND template_id = ?',
       [fixture.source.id, template],
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const projection = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
@@ -335,7 +352,11 @@ describe('live photo lineage', () => {
   ])('does not project or serve a %s pass photo', async (_state, change) => {
     const fixture = await photoFixture();
     await run(kit.env.DB, `UPDATE passes SET ${change} WHERE id = ?`, [fixture.pass.id]);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const projection = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );
@@ -349,7 +370,11 @@ describe('live photo lineage', () => {
       "UPDATE scanners SET settings = json_set(settings, '$.showPhoto', json('false')), updated_at = updated_at + 1 WHERE id = ?",
       [fixture.source.id],
     );
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const projection = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );

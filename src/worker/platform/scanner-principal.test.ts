@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../test/helpers/denial.ts';
 import { fakeAuth, fakeRateLimiter, makeEnv } from '../../../test/helpers/index.ts';
 import { createApp } from '../app.ts';
 import {
@@ -104,13 +105,13 @@ describe('csrf for scanners', () => {
     expect((await post(app, wrong)).status).toBe(403);
     expect(fake.denied.at(-1)).toMatchObject({ code: 'CSRF_TOKEN', actorType: 'scanner' });
     const { 'x-csrf-token': _drop, ...missing } = fake.scanner();
-    expect((await post(app, missing)).status).toBe(403);
+    await expectProblem(await post(app, missing), 403, 'CSRF_TOKEN');
   });
 
   it('cookie from another origin is 403', async () => {
     const { app, fake } = csrfApp();
     const cross = { ...fake.scanner(), 'sec-fetch-site': 'cross-site' };
-    expect((await post(app, cross)).status).toBe(403);
+    await expectProblem(await post(app, cross), 403, 'CSRF_ORIGIN');
   });
 
   it('the bearer is exempt', async () => {

@@ -1,5 +1,6 @@
 import type { Hono } from 'hono';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   countD1,
   fakeRateLimiter,
@@ -118,7 +119,7 @@ describe('requireScanActor: guard order (SA 2.5)', () => {
   it('the cookie transport needs the CSRF token on POST; the bearer does not', async () => {
     const device = await makeScanner(f, { orgId });
     const { 'x-csrf-token': _t, ...noToken } = device.headers;
-    expect((await post(app, env, noToken)).status).toBe(403);
+    await expectProblem(await post(app, env, noToken), 403, 'CSRF_TOKEN');
     expect((await post(app, env, device.headers)).status).toBe(200);
     const terminal = await makeScanner(f, { orgId, kind: 'terminal' });
     expect((await post(app, env, terminal.headers)).status).toBe(200);

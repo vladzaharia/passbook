@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import {
   editFixedColumns,
   linkToken,
@@ -355,7 +356,7 @@ describe('durable test inbox forwarding', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('allows another send after the verified address of a sent copy was removed', async () => {
     const user = await makeUser(kit.fx, { primaryEmail: uniqueEmail() });
@@ -376,7 +377,7 @@ describe('durable test inbox forwarding', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it('keeps the per-admin send limit before creating a reservation', async () => {
     const firstCapture = await capturePass();
@@ -400,7 +401,7 @@ describe('durable test inbox forwarding', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it.each(['pass', 'bundle'] as const)(
     'fences a stale %s snapshot at reservation',
@@ -440,7 +441,10 @@ describe('durable test inbox forwarding', () => {
         const spy = vi.spyOn(kit.mailer, 'send');
         try {
           const authority = await inboxAuthority(kit, adminSession);
-          await expect(sendCapturedToMe(race.ctx, authority, fixture.id)).rejects.toThrow();
+          await expectRejectsCode(
+            sendCapturedToMe(race.ctx, authority, fixture.id),
+            'TEST_FORWARD_CHANGED',
+          );
           expect(race.intercepted()).toBe(true);
           expect(spy).not.toHaveBeenCalled();
           expect(
@@ -476,7 +480,8 @@ describe('durable test inbox forwarding', () => {
                 ]),
               );
         // A bundle token is locked while a forward is in flight; a pass's download token is content.
-        if (fixture.kind === 'bundle') await expect(mutation).rejects.toThrow();
+        if (fixture.kind === 'bundle')
+          await expect(mutation).rejects.toThrow(/forwarding reservation is locked/);
         else await mutation;
       }, 'provider');
       const spy = vi.spyOn(kit.mailer, 'send');
@@ -519,7 +524,10 @@ describe('durable test inbox forwarding', () => {
     });
     const spy = vi.spyOn(kit.mailer, 'send');
     try {
-      await expect(sendCapturedToMe(race.ctx, authority, fixture.id)).rejects.toThrow();
+      await expectRejectsCode(
+        sendCapturedToMe(race.ctx, authority, fixture.id),
+        'NO_VERIFIED_EMAIL',
+      );
       expect(race.intercepted()).toBe(true);
       expect(spy).not.toHaveBeenCalled();
       expect(
@@ -542,7 +550,7 @@ describe('durable test inbox forwarding', () => {
           user.id,
           user.primaryEmail,
         ]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/forwarding reservation is locked/);
     }, 'provider');
     const spy = vi.spyOn(kit.mailer, 'send');
     try {
@@ -560,7 +568,7 @@ describe('durable test inbox forwarding', () => {
     } finally {
       spy.mockRestore();
     }
-  }, 60_000);
+  });
 
   it.each(['pass', 'bundle'] as const)(
     'blocks transfer, quarantine and key rotation while a %s forward is in flight',
@@ -620,7 +628,7 @@ describe('durable test inbox forwarding', () => {
           expect(protectedMembers.map((row) => row.pass_id).sort()).toEqual(
             fixture.passes.map((pass) => pass.id).sort(),
           );
-          await expect(mutate()).rejects.toThrow();
+          await expect(mutate()).rejects.toThrow(/forwarding reservation is locked/);
           expect(
             await first(
               kit.env.DB,
@@ -689,7 +697,8 @@ describe('durable test inbox forwarding', () => {
             ADMIN_EMAIL,
           ]),
       ];
-      for (const mutate of mutations) await expect(mutate()).rejects.toThrow();
+      for (const mutate of mutations)
+        await expect(mutate()).rejects.toThrow(/forwarding reservation is locked/);
       // Suspending the org is a kill switch: an in-flight forward never holds it.
       await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
       await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
@@ -707,7 +716,7 @@ describe('durable test inbox forwarding', () => {
     // The org was suspended and reactivated mid-flight: its owner can no longer settle the
     // reservation (the org epoch moved), so it stays `sending` until its lease expires.
     expect((await detail(fixture.id)).forwarding).toBe('sending');
-  }, 60_000);
+  });
 
   it('keeps a preselected expired pass and its R2 objects while forwarding is in flight', async () => {
     const fixture = await capturePass();
@@ -777,7 +786,7 @@ describe('durable test inbox forwarding', () => {
     await deleteObjects(kit.env.BUCKET, deleted.objectKeys);
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [pass.id])).toBeNull();
     expect(await kit.env.BUCKET.head(pass.objectKey)).toBeNull();
-  }, 60_000);
+  });
 
   it('makes only one provider call for concurrent duplicate requests and persists the in-flight state', async () => {
     const fixture = await captureBundle();
@@ -837,7 +846,7 @@ describe('durable test inbox forwarding', () => {
       ...(await Promise.all(fixture.passes.map((pass) => linkToken(kit.env, pass)))),
     ])
       expect(serialized).not.toContain(secret);
-  }, 60_000);
+  });
 
   it('persists an accepted-then-disconnected outcome as unknown and never resends it', async () => {
     const fixture = await capturePass();
@@ -868,10 +877,10 @@ describe('durable test inbox forwarding', () => {
       const pass = fixture.passes[0]!;
       await expect(
         reassignHolder(jobCtxOf(kit), system, { passId: pass.id, email: uniqueEmail() }, null),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/forwarding reservation is locked/);
       await expect(
         run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/forwarding reservation is locked/);
       expect((await detail(fixture.id)).forwarding).toBe('unknown');
       expect(spy).toHaveBeenCalledTimes(1);
       expect(kit.mailer.sent).toHaveLength(before + 1);
@@ -964,5 +973,5 @@ describe('durable test inbox forwarding', () => {
       spy.mockRestore();
       await kit.env.BUCKET.put(pass.objectKey, bytes);
     }
-  }, 60_000);
+  });
 });

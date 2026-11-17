@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeScanner,
   makeScanStaff,
@@ -128,7 +129,7 @@ describe('staff mutations fence the captured authority at commit', () => {
     const requestEnv = { ...env, DB: db };
     const response = await requestMutation(fixture, operation, person.id, requestEnv);
     expect(intercepted).toBe(1);
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, ['ACTOR_CHANGED', 'ORG_ACCESS_CHANGED']);
     expect(await state()).toEqual(before);
   });
 });

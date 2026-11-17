@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { unzipSync } from 'fflate';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type ApiKeyFixture,
   linkToken,
@@ -222,7 +223,7 @@ beforeAll(async () => {
   });
   own = await workspace('Approved issue tenant');
   foreign = await workspace('Other approved issue tenant');
-}, 60_000);
+});
 
 afterAll(() => {
   Object.assign(generatedSource, originalGeneratedSource);
@@ -744,7 +745,7 @@ describe('approved issuance over tenant HTTP', () => {
     expect(kit.mailer.sent).toHaveLength(sent + 1);
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
     expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, current));
-  }, 60_000);
+  });
 
   it('rolls back the pass and delivery intent if the initial holder audit cannot commit', async () => {
     const { release } = await approved();
@@ -777,7 +778,7 @@ describe('approved issuance over tenant HTTP', () => {
           actor: { type: 'system', id: null },
           passId,
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/holder audit unavailable/);
     } finally {
       await run(kit.env.DB, 'DROP TRIGGER fail_initial_holder_attach');
     }
@@ -797,7 +798,7 @@ describe('approved issuance over tenant HTTP', () => {
     } finally {
       if (artifacts.length) await kit.env.BUCKET.delete(artifacts);
     }
-  }, 60_000);
+  });
 
   it('retains a committed artifact and recovers its email after an ambiguous D1 response', async () => {
     const { release } = await approved();
@@ -884,7 +885,7 @@ describe('approved issuance over tenant HTTP', () => {
     await handleEmailSend({ kind: 'email.send', outboxId: queued[0].id }, jobCtxOf(kit));
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
     expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, pass));
-  }, 60_000);
+  });
 
   it('selects a newly verified holder in the issuance INSERT, without a transfer', async () => {
     const { release } = await approved();
@@ -943,7 +944,7 @@ describe('approved issuance over tenant HTTP', () => {
         detail.id,
       ]),
     ).toHaveLength(1);
-  }, 60_000);
+  });
 
   it('does not issue a serial retired by a completed holder transfer', async () => {
     const { release } = await approved();
@@ -983,7 +984,7 @@ describe('approved issuance over tenant HTTP', () => {
     ).rejects.toMatchObject({ code: 'PASS_REISSUE_REQUIRED' });
     await assertNoPass(attemptedId);
     expect(await objects()).toEqual(before);
-  }, 60_000);
+  });
 
   it.each(['unverified', 'disabled'] as const)(
     'leaves an owner %s at the issuance INSERT waiting and still delivers the correct link',
@@ -1191,7 +1192,7 @@ describe('approved issuance over tenant HTTP', () => {
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
     expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, completed));
     expect(kit.mailer.sent.at(-1)?.html).not.toContain(initial.downloadToken);
-  }, 60_000);
+  });
 
   it('reports an unknown email outcome on replay rather than sending twice', async () => {
     const { release } = await approved();
@@ -1233,7 +1234,7 @@ describe('approved issuance over tenant HTTP', () => {
       await all(kit.env.DB, "SELECT id FROM outbox WHERE kind = 'email' AND pass_id = ?", [id]),
     ).toHaveLength(1);
     expect(kit.mailer.sent).toHaveLength(sent + 1);
-  }, 60_000);
+  });
 
   it('retains an issuance email across a temporary recipient rate cap', async () => {
     const { release } = await approved();
@@ -1285,7 +1286,7 @@ describe('approved issuance over tenant HTTP', () => {
     expect(kit.mailer.sent).toHaveLength(sent + 1);
     expect(kit.mailer.sent.at(-1)).toMatchObject({ to: email });
     expect(kit.mailer.sent.at(-1)?.html).toContain(await linkToken(kit.env, pass));
-  }, 60_000);
+  });
 
   it.each([
     [
@@ -1322,7 +1323,7 @@ describe('approved issuance over tenant HTTP', () => {
             key,
           ),
       );
-      expect(response.status).toBe(409);
+      await expectProblem(response, 409, 'DELIVERY_STALE');
       expect(
         await all(kit.env.DB, 'SELECT id FROM pass_credential_transfers WHERE pass_id = ?', [
           passId,
@@ -1418,7 +1419,7 @@ describe('approved issuance over tenant HTTP', () => {
           key,
         ),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'DELIVERY_STALE');
     expect(
       await all(kit.env.DB, 'SELECT id FROM pass_credential_transfers WHERE pass_id = ?', [passId]),
     ).toEqual([]);
@@ -1426,7 +1427,7 @@ describe('approved issuance over tenant HTTP', () => {
       await all(kit.env.DB, "SELECT id FROM outbox WHERE kind = 'email' AND pass_id = ?", [passId]),
     ).toEqual([]);
     expect(kit.mailer.sent).toHaveLength(sent);
-  }, 60_000);
+  });
 
   it('issues with the approved Test release in the reviewed Test mode', async () => {
     const { template, release: live } = await approved();
@@ -1459,7 +1460,7 @@ describe('approved issuance over tenant HTTP', () => {
     );
     expect(fromKey.status, await fromKey.clone().text()).toBe(201);
     await assertIssued(((await fromKey.json()) as { id: string }).id, own, test);
-  }, 60_000);
+  });
 
   it('requires the release identity and positive generation, not just the active version', async () => {
     const { release } = await approved();
@@ -1481,7 +1482,7 @@ describe('approved issuance over tenant HTTP', () => {
       expect((await issue(own.operator.session.headers, data, key)).status).toBe(422);
       await assertNoIssue(own, data.externalId, key, before);
     }
-  }, 60_000);
+  });
 
   it('rejects foreign, different-template, different-mode, version and generation release selections', async () => {
     const { template, release } = await approved();
@@ -1511,7 +1512,7 @@ describe('approved issuance over tenant HTTP', () => {
     const response = await issue(own.operator.session.headers, body(own, release), unique());
     expect(response.status, await response.clone().text()).toBe(201);
     await assertIssued(((await response.json()) as { id: string }).id, own, release);
-  }, 60_000);
+  });
 
   it('does not use another organization’s release for the same reassigned template and version', async () => {
     const { template, release } = await approved(foreign);
@@ -1531,7 +1532,7 @@ describe('approved issuance over tenant HTTP', () => {
     const response = await issue(own.operator.session.headers, data, key);
     expect([403, 404, 409, 412]).toContain(response.status);
     await assertNoIssue(own, data.externalId, key, before);
-  }, 60_000);
+  });
 
   it('cannot approve a non-Apple provider or issue with an invented release id', async () => {
     const template = await imported(own);
@@ -1566,7 +1567,7 @@ describe('approved issuance over tenant HTTP', () => {
     );
     expect([403, 404, 409, 412]).toContain(rejected.status);
     await assertNoIssue(own, externalId, key, before);
-  }, 60_000);
+  });
 
   it('replays a committed review after supersession without weakening idempotency or tenant authority', async () => {
     const { template, release: original } = await approved();
@@ -1640,7 +1641,7 @@ describe('approved issuance over tenant HTTP', () => {
       kit.clock.now(),
       operator.membershipId,
     ]);
-    expect((await issue(operator.session.headers, data, key)).status).toBe(403);
+    await expectProblem(await issue(operator.session.headers, data, key), 403, 'FORBIDDEN');
     expect(await reservation(own.orgId, key)).toEqual(originalReservation);
     expect(await objects()).toEqual(beforeReplay);
     const different = await issue(
@@ -1660,7 +1661,7 @@ describe('approved issuance over tenant HTTP', () => {
     const rejected = await issue(own.operator.session.headers, stale, staleKey);
     expect([409, 412]).toContain(rejected.status);
     await assertNoIssue(own, stale.externalId, staleKey, before);
-  }, 60_000);
+  });
 });
 
 describe('issuance commit fences', () => {
@@ -1711,7 +1712,7 @@ describe('issuance commit fences', () => {
     const issued = (await retry.json()) as { id: string; ownerUserId: string | null };
     expect(issued.ownerUserId).toBe(holder.id);
     await assertIssued(issued.id, own, current);
-  }, 60_000);
+  });
 
   it.each(['membership', 'session', 'API key', 'release'] as const)(
     'cleans up when the %s changes during the build',
@@ -1996,7 +1997,7 @@ describe('issuance commit fences', () => {
       expect(await insertPass(jobCtxOf(kit), row)).toBe(false);
       await assertNoPass(id);
     }
-  }, 60_000);
+  });
 
   it('rejects missing or mismatched execution at the atomic insertion boundary', async () => {
     const { release } = await approved();
@@ -2135,7 +2136,7 @@ describe('issuance commit fences', () => {
       expect(await insertPass(jobCtxOf(kit), row)).toBe(false);
       await assertNoPass(id);
     }
-  }, 60_000);
+  });
 });
 
 describe('direct issuance execution authority', () => {
@@ -2267,7 +2268,7 @@ describe('direct issuance execution authority', () => {
       });
       await assertIssued(pass.id, own, release);
     }
-  }, 60_000);
+  });
 
   it('requires the original connection execution, source and generation before any write', async () => {
     const { release } = await approved();
@@ -2343,7 +2344,7 @@ describe('direct issuance execution authority', () => {
       });
       await assertIssued(pass.id, own, release);
     }
-  }, 60_000);
+  });
 });
 
 describe('trusted system issuance', () => {
@@ -2392,7 +2393,7 @@ describe('trusted system issuance', () => {
     await assertNoPass(reviewed.passId ?? '');
     const pass = await createPassRow(jobCtxOf(kit), reviewed);
     await assertIssued(pass.id, own, release);
-  }, 60_000);
+  });
 });
 
 describe('global baked approval', () => {
@@ -2426,7 +2427,7 @@ describe('global baked approval', () => {
       expect(response.status, await response.clone().text()).toBe(201);
       await assertIssued(((await response.json()) as { id: string }).id, ws, release);
     }
-  }, 60_000);
+  });
 
   it('invalidates the global fallback when its baked template is reassigned at commit', async () => {
     const release = await activeRelease(
@@ -2518,7 +2519,7 @@ describe('global baked approval', () => {
     const issuedDetail = await created<{ id: string }>(issued);
     await assertIssued(issuedDetail.id, own, current);
     expect(await reservation(own.orgId, key)).toMatchObject({ resource_id: issuedDetail.id });
-  }, 60_000);
+  });
 });
 
 async function connection(ws: Workspace) {
@@ -2696,7 +2697,7 @@ describe('approved connection issuance', () => {
       },
       () => issue(own.operator.session.headers, data, key),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'PASS_CONFLICT');
     await assertNoPass(passId);
     await assertNoIssue(own, data.externalId, key, before);
 
@@ -2709,7 +2710,7 @@ describe('approved connection issuance', () => {
         issued.id,
       ]),
     ).toHaveLength(1);
-  }, 60_000);
+  });
 
   it('issues exactly the pass ID reserved by a live retained webhook claim', async () => {
     const { release } = await approved();
@@ -2722,7 +2723,7 @@ describe('approved connection issuance', () => {
         pass.id,
       ]),
     ).toHaveLength(1);
-  }, 60_000);
+  });
 
   it('uses the original immutable webhook claim even if its caller mutates the input during signing', async () => {
     const { release } = await approved();
@@ -2763,7 +2764,7 @@ describe('approved connection issuance', () => {
     );
     if (!outbox) throw new Error('Missing claimed issuance email');
     expect(JSON.parse(outbox.payload)).toMatchObject({ to: originalEmail });
-  }, 60_000);
+  });
 
   it.each([
     'uncertain',
@@ -2949,7 +2950,7 @@ describe('approved connection issuance', () => {
     });
     await assertNoPass(passId);
     expect(await objects()).toEqual(before);
-  }, 60_000);
+  });
 
   it('persists the approved release for a genuine connection run', async () => {
     const { template, release } = await approved();
@@ -2981,7 +2982,7 @@ describe('approved connection issuance', () => {
         passId,
       ]),
     ).toEqual({ connection_id: connectionId, external_ref: input.externalRef });
-  }, 60_000);
+  });
 
   it('does not let an active template version bypass approval for a connection', async () => {
     const template = await imported(own);
@@ -3014,7 +3015,7 @@ describe('approved connection issuance', () => {
       ),
     ).toBeNull();
     expect(await objects()).toEqual(before);
-  }, 60_000);
+  });
 
   it.each(['generation', 'strategy'] as const)(
     'keeps the issued pass but rejects email when the source %s changes at the outbox insert',

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeUser } from '../../../../test/helpers/index.ts';
 import { CreatedScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
 import { getScanner } from './repo-device.ts';
@@ -212,7 +213,7 @@ describe('session device authorization and live configuration', () => {
       },
       headers,
     );
-    expect(action.status).toBe(403);
+    await expectProblem(action, 403, 'SCREEN_ONLY');
   });
 
   it('applies admission immediately, preserves device overrides, and pauses every input route', async () => {

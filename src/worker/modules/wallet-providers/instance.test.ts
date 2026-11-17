@@ -524,9 +524,9 @@ describe('native wallet instance lifecycle', () => {
     expect(await walletOfferFresh(db, firstRef, input.now, op.credentialKeysetCommitment)).toBe(
       false,
     );
-    await expect(
-      consumeOffer(db, hash, input.now, op.credentialKeysetCommitment),
-    ).rejects.toThrow();
+    await expect(consumeOffer(db, hash, input.now, op.credentialKeysetCommitment)).rejects.toThrow(
+      /provider offer is unavailable/,
+    );
     expect(
       await first(db, 'SELECT consumed_at FROM wallet_provider_offer_refs WHERE ref_hash = ?', [
         hash,
@@ -825,7 +825,7 @@ describe('native wallet instance lifecycle', () => {
       installation_observed_at = ? WHERE id = ?`,
         [now, op.instanceId],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/CHECK constraint failed: installation_state = 'unknown'/);
     expect(await getWalletInstance(db, { ...f.scope, passId: f.pass.id })).toMatchObject({
       installationState: 'unknown',
       installationObservedAt: null,
@@ -973,7 +973,7 @@ describe('native wallet instance lifecycle', () => {
       await completeWalletOperation(f.kit.ctx, { ...claim, result: { kind: 'success' } }),
     ).toBe('succeeded');
     expect(await getWalletOperation(db, reference(existing))).toMatchObject({ state: 'succeeded' });
-  }, 120_000);
+  });
 
   it('blocks both target incarnations until old in-flight work and retirement settle', async () => {
     // Retirement gating applies to historical instances, which exist only while a provider is enabled.
@@ -985,19 +985,21 @@ describe('native wallet instance lifecycle', () => {
     const ref = await seedHistoricalOffer(db, op, now, now + 60_000);
     const oldClaim = { ...reference(op), claimHandle: newWalletClaimHandle(), now };
     expect(await claimWalletOperation(db, oldClaim)).toBe('claimed');
-    await expect(run(db, 'DELETE FROM passes WHERE id = ?', [f.pass.id])).rejects.toThrow();
+    await expect(run(db, 'DELETE FROM passes WHERE id = ?', [f.pass.id])).rejects.toThrow(
+      /provider retirement incomplete/,
+    );
     await expect(
       run(db, 'INSERT OR REPLACE INTO passes SELECT * FROM passes WHERE id = ?', [f.pass.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/UNIQUE constraint failed: passes\.id/);
     const other = await f.kit.pass();
     await expect(
       run(
         db,
-        `UPDATE OR REPLACE passes SET download_token =
+        `UPDATE OR REPLACE passes SET link_generation = link_generation + 1, download_token =
       (SELECT download_token FROM passes WHERE id = ?) WHERE id = ?`,
         [f.pass.id, other.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/UNIQUE constraint failed: passes\.download_token/);
 
     const expected = await getHolderPass(db, f.pass.id, null);
     if (!expected) throw new Error('Missing holder transfer snapshot');
@@ -1040,7 +1042,7 @@ describe('native wallet instance lifecycle', () => {
       run(db, 'UPDATE passes SET credential_generation = credential_generation + 1 WHERE id = ?', [
         f.pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/pending credential transfer is locked/);
     expect(
       await queueWalletOperation(db, {
         ...f.proof,
@@ -1140,7 +1142,7 @@ describe('native wallet instance lifecycle', () => {
     expect(
       newest.every((row) => row.lifecycle === 'ready' && !staged.some((old) => old.id === row.id)),
     ).toBe(true);
-  }, 120_000);
+  });
 
   it('retires an expired historical Samsung ref and denies a new ref after restore', async () => {
     const f = await fixture();

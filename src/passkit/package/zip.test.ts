@@ -168,7 +168,7 @@ describe('zipStream', () => {
     );
     await expect(
       collect(zipStream([{ name: 'x', body, size: 2, crc32: crc32(bytesOf('abc')) }])),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/longer than its size/);
     await expect(
       collect(zipStream([{ name: 'x', body, size: 9, crc32: crc32(bytesOf('abc')) }])),
     ).rejects.toThrow(/size/);

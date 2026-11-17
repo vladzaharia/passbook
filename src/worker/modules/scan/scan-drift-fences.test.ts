@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { first, run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { credentialGone, getScanner, scannerEpochsOf } from './repo-device.ts';
@@ -29,7 +30,7 @@ describe('scanning sessions are fenced to the console mode and write only what t
       { name: 'Hijacked' },
       fake.admin({ mode: 'test' }),
     );
-    expect(res.status).toBe(404);
+    await expectProblem(res, 404, 'SCANNING_SESSION_NOT_FOUND');
     const row = await first<{ name: string }>(
       kit.env.DB,
       'SELECT name FROM scanners WHERE id = ?',
@@ -145,7 +146,7 @@ describe('a PIN reset is derived from the credential it read', () => {
       () => Promise.resolve(staffKit.send('POST', staffKit.resetPath(person.staff.id))),
     );
     expect(fired).toBe(true);
-    expect(result.status).toBe(409);
+    await expectProblem(result, 409, 'SCAN_STAFF_CHANGED');
     const after = await first<{ pin_hash: string }>(
       staffKit.env.DB,
       'SELECT pin_hash FROM scan_staff WHERE name = ?',

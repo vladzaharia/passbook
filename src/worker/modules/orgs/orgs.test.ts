@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type ApiKeyFixture,
   type Fixtures,
@@ -89,7 +90,7 @@ describe('orgs api', () => {
   });
 
   it('requires an admin', async () => {
-    expect((await call('GET', '', undefined, orgAdmin.headers)).status).toBe(403);
+    await expectProblem(await call('GET', '', undefined, orgAdmin.headers), 403, 'FORBIDDEN');
     expect((await call('GET', '', undefined, {})).status).toBe(401);
     expect((await call('GET', '', undefined, apiKey.headers)).status).toBe(401);
   });
@@ -122,9 +123,13 @@ describe('orgs api', () => {
     expect(provisioningBody).not.toHaveProperty('supportUrl');
     expect(provisioningBody).not.toHaveProperty('support');
     expect(provisioningBody).not.toHaveProperty('defaultIdentityId');
-    expect((await call('GET', `/${org.id}/workspace`)).status).toBe(403);
+    await expectProblem(await call('GET', `/${org.id}/workspace`), 403, 'FORBIDDEN');
     await join(org.id);
-    expect((await call('GET', `/${org.id}`, undefined, orgAdmin.headers)).status).toBe(403);
+    await expectProblem(
+      await call('GET', `/${org.id}`, undefined, orgAdmin.headers),
+      403,
+      'FORBIDDEN',
+    );
     await join(org.id, platformAdmin.userId);
     const workspace = await call('GET', `/${org.id}/workspace`, undefined, orgAdmin.headers);
     expect(workspace.status).toBe(200);
@@ -140,11 +145,11 @@ describe('orgs api', () => {
     expect(await patched.json()).toMatchObject({ name: 'Acme Inc', status: 'suspended' });
 
     expect((await call('DELETE', `/${org.id}`)).status).toBe(200);
-    expect((await call('GET', `/${org.id}`)).status).toBe(404);
+    await expectProblem(await call('GET', `/${org.id}`), 404, 'ORG_NOT_FOUND');
     expect((await call('GET', `/${org.id}/workspace`, undefined, orgAdmin.headers)).status).toBe(
       403,
     );
-    expect((await call('DELETE', `/${org.id}`)).status).toBe(404);
+    await expectProblem(await call('DELETE', `/${org.id}`), 404, 'ORG_NOT_FOUND');
 
     const actions = await all<{ action: string; detail: string | null }>(
       env.DB,
@@ -173,7 +178,11 @@ describe('orgs api', () => {
   });
 
   it('masks unknown orgs and does not touch other orgs on update', async () => {
-    expect((await call('PATCH', '/missing', { name: 'x' }, orgAdmin.headers)).status).toBe(403);
+    await expectProblem(
+      await call('PATCH', '/missing', { name: 'x' }, orgAdmin.headers),
+      403,
+      'FORBIDDEN',
+    );
     const f = fixtures(appEnv);
     const a = await makeOrg(f);
     const b = await makeOrg(f);

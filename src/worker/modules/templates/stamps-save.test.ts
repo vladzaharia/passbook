@@ -33,7 +33,7 @@ let env: AppEnv;
 let call: (path: string, init?: { body?: unknown; method?: string }) => Promise<Response>;
 
 beforeAll(async () => {
-  const clock = new ManualClock(Date.now());
+  const clock = new ManualClock();
   const assets = fakeAssets();
   const files = import.meta.glob<string>(
     '../../../../templates/starter-stamp-card/**/*.{png,strings}',
@@ -98,7 +98,7 @@ beforeAll(async () => {
   const clone = await call(`/baked:${SLUG}/clone`, { body: { orgId: org.id, name: 'Coffee' } });
   if (clone.status !== 201) throw new Error(`Clone failed: ${clone.status}`);
   cloneId = TemplateDetailSchema.parse(await clone.json()).id;
-}, 120_000);
+});
 
 let cloneId = '';
 type Version = ReturnType<typeof TemplateVersionDetailSchema.parse>;

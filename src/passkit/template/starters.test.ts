@@ -13,7 +13,7 @@ beforeAll(async () => {
   freezeNow();
   // A stamps package draws its strips on first read.
   await loadBaked('starter-stamp-card');
-}, 120_000);
+}, 120_000); // PNG composition and decoding under v8 coverage in coverage-node runs far slower than locally (about 10x)
 
 const STYLE_OF: Record<string, string> = {
   'starter-generic': 'generic',

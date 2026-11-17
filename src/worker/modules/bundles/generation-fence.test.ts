@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { stubIssuedToken } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { checksHold, jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -68,7 +69,7 @@ it('binds the credential generation independently of the link, including members
   expect(
     await checksHold(jobCtxOf(kit), { orgId: pass.orgId, mode: pass.mode, checks: oldChecks }),
   ).toBe(false);
-  await expect(delayed.grant.commit()).rejects.toThrow();
+  await expectRejectsCode(delayed.grant.commit(), 'BUNDLE_STALE');
   expect(await first(kit.env.DB, 'SELECT id FROM bundles WHERE id = ?', [delayed.id])).toBeNull();
 
   const current = await getPass(kit.env.DB, pass.id);
@@ -113,11 +114,11 @@ it('binds the credential generation independently of the link, including members
   await expect(assertBundleMember(jobCtxOf(kit), authorized, stalePass)).rejects.toMatchObject({
     status: 404,
   });
-  await expect(staleInsert.grant.commit()).rejects.toThrow();
+  await expectRejectsCode(staleInsert.grant.commit(), 'BUNDLE_STALE');
   expect(
     await first(kit.env.DB, 'SELECT id FROM bundles WHERE id = ?', [staleInsert.id]),
   ).toBeNull();
-}, 120_000);
+});
 
 it('checks every member against the complete delivery authority in output SQL', async () => {
   const kit = await setupKit();
@@ -171,4 +172,4 @@ it('checks every member against the complete delivery authority in output SQL', 
       }
     }
   }
-}, 120_000);
+});

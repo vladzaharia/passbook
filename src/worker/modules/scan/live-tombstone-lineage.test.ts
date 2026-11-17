@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { createPassRow } from '../passes/create.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
@@ -233,7 +234,7 @@ describe('live credential tombstone provenance', () => {
       });
     });
     try {
-      expect((await kit.get(fixture.monitor.headers, qPath)).status).toBe(404);
+      await expectProblem(await kit.get(fixture.monitor.headers, qPath), 404, 'ASSET_NOT_FOUND');
       expect(opened).toBe(true);
       expect(cancelled).toBe(1);
       const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
@@ -250,7 +251,7 @@ describe('live credential tombstone provenance', () => {
       spy.mockRestore();
       if (gate.finish) await gate.finish();
     }
-    expect((await kit.get(fixture.monitor.headers, qPath)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, qPath), 404, 'ASSET_NOT_FOUND');
     expect((await kit.get(fixture.monitor.headers, explicitPath)).status).toBe(200);
   });
 });

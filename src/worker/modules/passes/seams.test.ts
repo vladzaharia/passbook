@@ -23,7 +23,7 @@ beforeAll(async () => {
   kit = await setupKit();
   liveRelease = await requireApprovedRelease(kit.ctx, kit.template.id, kit.org.id, 'live', 'apple');
   credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
-}, 60_000);
+});
 
 async function connection(generation = 1) {
   const id = kit.fx.ids.id();
@@ -262,7 +262,7 @@ describe('requestRefresh', () => {
     ).toEqual(afterTransfer);
     expect(jobs()).toEqual([]);
     await kit.settle();
-  }, 120_000);
+  });
 
   it('does not claim or enqueue if the authorized release binding changes before the claim', async () => {
     const pass = await kit.pass();
@@ -405,7 +405,7 @@ describe('requestRefresh', () => {
         pass.id,
       ]),
     ).toEqual({ refresh_requested_at: null });
-  }, 120_000);
+  });
 
   it.each(['credential transfer', 'removal and restoration'] as const)(
     'queues a fresh job after %s instead of coalescing with the old incarnation',

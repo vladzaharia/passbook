@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
@@ -27,7 +28,7 @@ describe('scan display preview tenant authorization', () => {
       clock.now(),
       membershipId,
     ]);
-    expect((await preview(own, session.headers)).status).toBe(404);
+    await expectProblem(await preview(own, session.headers), 404, 'SCAN_DISPLAY_PREVIEW_NOT_FOUND');
     expect(await previewAudits(user.id)).toEqual([{ org_id: org.id, target_id: own.passId }]);
   });
 
@@ -58,7 +59,7 @@ describe('scan display preview tenant authorization', () => {
         },
         () => preview(own, session.headers),
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(await response.text()).not.toContain('scope');
     },
   );
@@ -84,7 +85,7 @@ describe('scan display preview tenant authorization', () => {
         },
         () => preview(own, session.headers),
       );
-      expect(response.status).toBe(403);
+      await expectProblem(response, 403, 'FORBIDDEN');
       expect(await response.text()).not.toContain('Alex Morgan');
     },
   );
@@ -103,7 +104,7 @@ describe('scan display preview tenant authorization', () => {
       clock,
     });
     const response = await preview(own, session.headers);
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     expect(await previewAudits(session.userId)).toEqual([]);
   });
 });

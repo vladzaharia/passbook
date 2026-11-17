@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { getConnection } from '../connections/repo.ts';
@@ -43,20 +44,32 @@ describe('live connection lineage', () => {
       'first-transfer@example.test',
     );
     try {
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
     } finally {
       await finishFirst();
     }
     const first = await candidateById(kit.env.DB, kit.org.id, fixture.pass.id);
     if (!first) throw new Error('Missing first transferred pass.');
     expect(first.pass.credentialGeneration).toBe(before.pass.credentialGeneration + 1);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const finishSecond = await beginCredentialTransfer(
       fixture.pass.id,
       'second-transfer@example.test',
     );
     try {
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
     } finally {
       await finishSecond();
     }
@@ -64,7 +77,11 @@ describe('live connection lineage', () => {
     if (!restored) throw new Error('Missing second transferred pass.');
     expect(kit.clock.now()).toBe(now);
     expect(restored.pass.credentialGeneration).toBe(first.pass.credentialGeneration + 1);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === fixture.event.id,
     );
@@ -88,7 +105,11 @@ describe('live connection lineage', () => {
     expect(
       (await kit.get(fixture.monitor.headers, fresh.photoUrl.replace('/api/v1/scan', ''))).status,
     ).toBe(200);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it('does not revive a retained photo after same-version release supersession and rollback', async () => {
@@ -130,7 +151,11 @@ describe('live connection lineage', () => {
     const now = kit.clock.now();
     const newer = await approveAppleRelease(kit, { templateId: id, version: original.version });
     expect(newer.generation).toBeGreaterThan(original.generation);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const restored = await rollbackRelease(kit.ctx, newer.publisherAuth, id, {
       orgId: kit.org.id,
       mode: 'live',
@@ -159,7 +184,11 @@ describe('live connection lineage', () => {
     expect(after.pass.releaseId).toBe(before.pass.releaseId);
     expect(after.activeReleaseId).toBe(restored.id);
     expect(after.activeReleaseGeneration).toBe(restored.generation);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === fixture.event.id,
     );
@@ -178,7 +207,7 @@ describe('live connection lineage', () => {
       alternateId,
       fixture.pass.id,
     ]);
-    expect((await kit.get(fixture.monitor.headers, freshPath)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, freshPath), 404, 'ASSET_NOT_FOUND');
     const rebound = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === freshEvent.id,
     );
@@ -189,7 +218,7 @@ describe('live connection lineage', () => {
       fixture.pass.id,
     ]);
     expect(kit.clock.now()).toBe(now);
-    expect((await kit.get(fixture.monitor.headers, freshPath)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, freshPath), 404, 'ASSET_NOT_FOUND');
     const returned = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === freshEvent.id,
     );
@@ -233,7 +262,7 @@ describe('live connection lineage', () => {
     if (!changed) throw new Error('Missing updated pass.');
     expect(changed.releaseId).toBe(newer.id);
     expect(changed.version).toBeGreaterThan(pass.version);
-    expect((await kit.get(monitor.headers, firstPath)).status).toBe(404);
+    await expectProblem(await kit.get(monitor.headers, firstPath), 404, 'ASSET_NOT_FOUND');
 
     const restored = await rollbackRelease(kit.ctx, newer.publisherAuth, id, {
       orgId: kit.org.id,
@@ -257,7 +286,7 @@ describe('live connection lineage', () => {
     expect(returned.templateVersion).toBe(pass.templateVersion);
     expect(returned.releaseId).toBe(restored.id);
     expect(returned.version).toBeGreaterThan(changed.version);
-    expect((await kit.get(monitor.headers, firstPath)).status).toBe(404);
+    await expectProblem(await kit.get(monitor.headers, firstPath), 404, 'ASSET_NOT_FOUND');
     const stale = (await hub().snapshot(monitor.attachment)).rows.find(
       (item) => item.id === firstEvent.id,
     );
@@ -300,7 +329,11 @@ describe('live connection lineage', () => {
     // orgRevision is access_revision, which moves with status: suspend, then reactivate.
     for (const status of ['suspended', 'active'])
       await run(kit.env.DB, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === fixture.event.id,
     );
@@ -349,10 +382,10 @@ describe('live connection lineage', () => {
     expect((await kit.get(fixture.monitor.headers, path)).status).toBe(200);
     const now = kit.clock.now();
     await updateConnection(jobCtxOf(kit), system, connection.id, { enabled: false });
-    expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     await updateConnection(jobCtxOf(kit), system, connection.id, { enabled: true });
     expect((await getConnection(kit.env.DB, connection.id))?.generation).toBe(3);
-    expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === connectedEvent.id,
     );
@@ -368,7 +401,11 @@ describe('live connection lineage', () => {
     await bind(null, null);
     await bind(connection.id, 3);
     expect(kit.clock.now()).toBe(now);
-    expect((await kit.get(fixture.monitor.headers, refreshedPath)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, refreshedPath),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const rebound = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === refreshedEvent.id,
     );
@@ -401,7 +438,11 @@ describe('live connection lineage', () => {
     expect(restored.personalization.memberName).toBe(originalName);
     expect(restored.version).toBeGreaterThan(before.version);
     expect(kit.clock.now()).toBe(now);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === fixture.event.id,
     );

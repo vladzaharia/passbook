@@ -24,5 +24,5 @@ describe('milestones under concurrent arrivals', () => {
     const hits = results.filter((r) => r.milestone === 'count');
     expect(hits).toHaveLength(1);
     expect(hits[0]?.counts.event?.arrived).toBe(100);
-  }, 60_000);
+  });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeScanner, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import {
@@ -53,9 +54,13 @@ describe('scan log tenant authorization', () => {
     const list = await get(`?orgId=${orgId}`, headers);
     expect(list.status).toBe(200);
     expect(await items(list)).toEqual([]);
-    expect((await get(`/${row.id}`, headers)).status).toBe(404);
-    expect((await get(exportFor(orgId), headers)).status).toBe(404);
-    expect((await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, headers)).status).toBe(404);
+    await expectProblem(await get(`/${row.id}`, headers), 404, 'SCAN_NOT_FOUND');
+    await expectProblem(await get(exportFor(orgId), headers), 404, 'ORG_NOT_FOUND');
+    await expectProblem(
+      await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, headers),
+      404,
+      'SCAN_NOT_FOUND',
+    );
     expect(
       await first(env.DB, "SELECT id FROM audit_log WHERE action IN ('scan.export', 'scan.undo')"),
     ).toBeNull();
@@ -85,16 +90,20 @@ describe('scan log tenant authorization', () => {
     const list = await get(`?orgId=${other.id}`);
     expect(list.status).toBe(200);
     expect(await items(list)).toEqual([]);
-    expect((await get(`/${foreign.id}`)).status).toBe(404);
-    expect((await get(exportFor(other.id))).status).toBe(404);
-    expect((await post(`/${foreign.id}/undo`, { idempotencyKey: undoKey })).status).toBe(404);
+    await expectProblem(await get(`/${foreign.id}`), 404, 'SCAN_NOT_FOUND');
+    await expectProblem(await get(exportFor(other.id)), 404, 'ORG_NOT_FOUND');
+    await expectProblem(
+      await post(`/${foreign.id}/undo`, { idempotencyKey: undoKey }),
+      404,
+      'SCAN_NOT_FOUND',
+    );
   });
 
   it('rejects a same-org member whose role does not grant scanning access', async () => {
     const row = await seed();
-    expect((await get(`?orgId=${orgId}`, userHeaders)).status).toBe(403);
-    expect((await get(`/${row.id}`, userHeaders)).status).toBe(403);
-    expect((await get(exportFor(orgId), userHeaders)).status).toBe(403);
+    await expectProblem(await get(`?orgId=${orgId}`, userHeaders), 403, 'FORBIDDEN');
+    await expectProblem(await get(`/${row.id}`, userHeaders), 403, 'FORBIDDEN');
+    await expectProblem(await get(exportFor(orgId), userHeaders), 403, 'FORBIDDEN');
     expect((await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, userHeaders)).status).toBe(
       403,
     );
@@ -114,12 +123,20 @@ describe('scan log tenant authorization', () => {
       membership,
     ]);
     expect(await items(await get(`?orgId=${orgId}`, headers))).toEqual([]);
-    expect((await get(`/${row.id}`, headers)).status).toBe(404);
-    expect((await get(exportFor(orgId), headers)).status).toBe(404);
-    expect((await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, headers)).status).toBe(404);
+    await expectProblem(await get(`/${row.id}`, headers), 404, 'SCAN_NOT_FOUND');
+    await expectProblem(await get(exportFor(orgId), headers), 404, 'ORG_NOT_FOUND');
+    await expectProblem(
+      await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, headers),
+      404,
+      'SCAN_NOT_FOUND',
+    );
     await grantScanMembership(f, orgId, user.id, ['read_only']);
     expect((await get(`/${row.id}`, headers)).status).toBe(200);
-    expect((await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, headers)).status).toBe(403);
+    await expectProblem(
+      await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, headers),
+      403,
+      'FORBIDDEN',
+    );
   });
 
   it('lets a read-only member read but not undo a scan', async () => {
@@ -131,6 +148,10 @@ describe('scan log tenant authorization', () => {
       origin: ORIGIN,
     };
     expect((await get(`/${row.id}`, headers)).status).toBe(200);
-    expect((await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, headers)).status).toBe(403);
+    await expectProblem(
+      await post(`/${row.id}/undo`, { idempotencyKey: undoKey }, headers),
+      403,
+      'FORBIDDEN',
+    );
   });
 });

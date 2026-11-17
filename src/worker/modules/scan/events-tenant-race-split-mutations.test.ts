@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { ScanEventSchema } from '../../../shared/contracts/index.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -143,7 +144,7 @@ describe('event target scope races', () => {
       },
       operation,
     );
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'EVENT_NOT_FOUND');
     expect(await state()).toEqual(movedState);
   });
 });
@@ -198,7 +199,7 @@ describe('event release races', () => {
           },
         );
       }, operation);
-      expect(response.status).toBe(409);
+      await expectProblem(response, 409, 'SCAN_EVENT_CHANGED');
       expect(await state()).toEqual(before);
     },
   );
@@ -221,7 +222,7 @@ describe('event assignment races', () => {
       },
       () => call('POST', `/${eventId}/scanners`, { scannerIds: [freeScannerId] }),
     );
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'SCAN_EVENT_CHANGED');
     expect(await first(env.DB, 'SELECT * FROM scan_events WHERE id=?', [eventId])).toEqual(
       eventBefore,
     );

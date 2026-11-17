@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makePass, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { crc32 } from '../../../passkit/index.ts';
 import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
@@ -37,7 +38,7 @@ beforeAll(async () => {
   overrideDeps(kit.env, { registry: createTemplateRegistry(kit.env, { ctx: kit.ctx }) });
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
-}, 60_000);
+});
 
 type Workflow = { id: string; params: ReissueParams };
 type Step = Parameters<typeof runBulkReissue>[3];
@@ -308,7 +309,11 @@ describe('approved workflow release snapshots', () => {
     const testB = await approve(id, 'v5', other.id, 'test');
     await kit.settle();
 
-    expect((await postReissue({ templateId: id }, 'live', auth.user())).status).toBe(403);
+    await expectProblem(
+      await postReissue({ templateId: id }, 'live', auth.user()),
+      403,
+      'FORBIDDEN',
+    );
     const live = await enqueue({ templateId: id });
     const test = await enqueue({ templateId: id }, 'test');
     const runsBeforeMismatch = await reservations(id);
@@ -349,7 +354,7 @@ describe('approved workflow release snapshots', () => {
         'UPDATE workflow_release_snapshots SET generation = generation + 1 WHERE instance_id = ?',
         [bothModes.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/workflow release snapshots are immutable/);
 
     expect(await execute(live)).toEqual({ changed: 2, unchanged: 0, failed: 0 });
     expect(await getPass(kit.env.DB, aLive.id)).toMatchObject({
@@ -378,7 +383,7 @@ describe('approved workflow release snapshots', () => {
       releaseId: testB.id,
     });
     expect(await snapshots(bothModes.id)).toEqual(captured);
-  }, 120_000);
+  });
 
   it('keeps page pins and excludes scopes appearing after enqueue, even for a newer same-version release', async () => {
     const id = newTemplateId();
@@ -433,7 +438,7 @@ describe('approved workflow release snapshots', () => {
     expect(await effects(late.id)).toEqual(lateBefore);
     expect((await getPass(kit.env.DB, late.id))?.releaseId).toBe(lateInitial.id);
     expect(lateTarget.id).not.toBe(lateInitial.id);
-  }, 180_000);
+  });
 
   it('persists a valid zero-scope marker and never adopts passes added after reservation', async () => {
     const id = newTemplateId();
@@ -464,7 +469,7 @@ describe('approved workflow release snapshots', () => {
     ).toEqual({ status: 'complete', error_code: null });
     expect(await snapshots(workflow.id)).toEqual([]);
     expect(await effects(late.id)).toEqual(before);
-  }, 60_000);
+  });
 
   it('fails closed when snapshots are missing or an old workflow has no release pin', async () => {
     const id = newTemplateId();
@@ -565,7 +570,7 @@ describe('approved workflow release snapshots', () => {
       });
     }
     expect(await effects(pass.id)).toEqual(before);
-  }, 60_000);
+  });
 
   it('does not silently skip an affected legacy tenant with no approved release', async () => {
     const id = newTemplateId();
@@ -594,7 +599,7 @@ describe('approved workflow release snapshots', () => {
     expect(await snapshots(retry.id)).toEqual(
       ordered([expectedSnapshot(target, kit.org.id), expectedSnapshot(otherTarget, other.id)]),
     );
-  }, 120_000);
+  });
 
   it('rejects the whole unscoped reservation when an affected scope loses its effective release', async () => {
     const id = newTemplateId();
@@ -652,7 +657,7 @@ describe('approved workflow release snapshots', () => {
       ordered([expectedSnapshot(targetA, kit.org.id), expectedSnapshot(targetB, other.id)]),
     );
     expect(await execute(retry)).toEqual({ changed: 2, unchanged: 0, failed: 0 });
-  }, 120_000);
+  });
 
   it('does not reserve an unscoped upgrade after the real admin session is revoked at commit', async () => {
     const id = newTemplateId();
@@ -681,7 +686,7 @@ describe('approved workflow release snapshots', () => {
       },
       () => postReissue({ templateId: id }, 'live', session.headers),
     );
-    expect(response.status).toBe(403);
+    await expectProblem(response, 403, 'FORBIDDEN');
     expect(
       await all(
         kit.env.DB,
@@ -693,7 +698,7 @@ describe('approved workflow release snapshots', () => {
     expect(await effects(pass.id)).toEqual(before);
     const retry = await enqueue({ templateId: id });
     expect(await snapshots(retry.id)).toEqual([expectedSnapshot(target, kit.org.id)]);
-  }, 60_000);
+  });
 
   it('rolls back scoped reservation and the scheduler claim if the reviewed head changes at commit', async () => {
     const id = newTemplateId();
@@ -774,7 +779,7 @@ describe('approved workflow release snapshots', () => {
     expect(kit.workflow.created).toHaveLength(workflowCount);
     expect(await claim()).toEqual({ release_id: initial.id });
     expect(await effects(pass.id)).toEqual(before);
-  }, 120_000);
+  });
 
   it('does not rebuild display-only versions with equal build keys in a snapshotted workflow', async () => {
     const id = newTemplateId();
@@ -797,5 +802,5 @@ describe('approved workflow release snapshots', () => {
     expect(await execute(workflow)).toEqual({ changed: 0, unchanged: 0, failed: 0 });
     expect(await effects(pass.id)).toEqual(before);
     expect(await snapshots(workflow.id)).toEqual([expectedSnapshot(target, kit.org.id)]);
-  }, 60_000);
+  });
 });

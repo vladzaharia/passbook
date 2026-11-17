@@ -1,5 +1,6 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -35,7 +36,11 @@ describe('live photo streams', () => {
         return originalGet(key, options);
       });
       try {
-        expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+        await expectProblem(
+          await kit.get(fixture.monitor.headers, fixture.path),
+          404,
+          'ASSET_NOT_FOUND',
+        );
         expect(opened).toBe(false);
       } finally {
         spy.mockRestore();
@@ -47,7 +52,11 @@ describe('live photo streams', () => {
     } finally {
       await finish();
     }
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 
   it('rejects a retained event when the persisted Wallet-row personalization changes in place', async () => {
@@ -74,7 +83,11 @@ describe('live photo streams', () => {
     expect(after.passJsonSnapshot).toBe(before.passJsonSnapshot);
     expect(after.versionPersonalization).not.toBe(before.versionPersonalization);
     expect(kit.clock.now()).toBe(now);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
     const stale = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (entry) => entry.id === fixture.event.id,
     );
@@ -104,7 +117,11 @@ describe('live photo streams', () => {
       return originalGet(key, options);
     });
     try {
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
       expect(opened).toBe(false);
     } finally {
       spy.mockRestore();
@@ -162,7 +179,7 @@ describe('live photo streams', () => {
     }
     expect(opened).toBe(true);
     expect(cancelled).toBe(1);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'ASSET_NOT_FOUND');
     expect(kit.clock.now()).toBe(now);
     const after = await first<{ pass_type_identifier: string; revision: number }>(
       kit.env.DB,
@@ -210,7 +227,11 @@ describe('live photo streams', () => {
       return originalGet(key, options);
     });
     try {
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
       expect(opened).toBe(false);
     } finally {
       spy.mockRestore();

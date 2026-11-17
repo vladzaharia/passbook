@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { first, run } from '../../platform/db.ts';
@@ -107,8 +108,8 @@ describe('Apple personalization transfer fence', () => {
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [pass.id]),
     ).toBeNull();
-    expect((await post(kit, pass)).status).toBe(404);
-  }, 120_000);
+    await expectProblem(await post(kit, pass), 404, 'PERSONALIZATION_UNAVAILABLE');
+  });
 
   it('cannot insert old holder data if transfer starts before the real D1 insert', async () => {
     const { kit, pass } = await personalizableFixture();
@@ -125,7 +126,7 @@ describe('Apple personalization transfer fence', () => {
     );
     const response = await post(kit, pass, { ...kit.env, DB: gate.db } as AppEnv);
     expect(gate.hits()).toBe(1);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'PERSONALIZATION_UNAVAILABLE');
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [pass.id]),
     ).toBeNull();
@@ -137,7 +138,7 @@ describe('Apple personalization transfer fence', () => {
       ),
     ).toBeNull();
     expect((await getPass(kit.env.DB, pass.id))?.version).toBe(pass.version);
-  }, 120_000);
+  });
 
   it('does not mark personalization published after transfer has started', async () => {
     const { kit, pass } = await personalizableFixture();
@@ -154,11 +155,11 @@ describe('Apple personalization transfer fence', () => {
     );
     const response = await post(kit, pass, { ...kit.env, DB: gate.db } as AppEnv);
     expect(gate.hits()).toBe(1);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'PERSONALIZATION_UNAVAILABLE');
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [pass.id]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('does not sign a retry after its already-personalized serial is retired', async () => {
     const { kit, pass } = await personalizableFixture();
@@ -179,11 +180,11 @@ describe('Apple personalization transfer fence', () => {
     );
     const response = await post(kit, current, { ...kit.env, DB: gate.db } as AppEnv);
     expect(gate.hits()).toBe(1);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'PERSONALIZATION_UNAVAILABLE');
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [pass.id]),
     ).toBeNull();
-  }, 120_000);
+  });
 
   it('allows the new serial to personalize independently after completion', async () => {
     const { kit, pass: old } = await personalizableFixture();
@@ -194,7 +195,7 @@ describe('Apple personalization transfer fence', () => {
     expect(fresh.templateVersion).toBe(old.templateVersion);
     expect(fresh.releaseId).toBe(old.releaseId);
     expect(fresh.serial).not.toBe(old.serial);
-    expect((await post(kit, old)).status).toBe(404);
+    await expectProblem(await post(kit, old), 404, 'PERSONALIZATION_UNAVAILABLE');
     expect(
       await first(kit.env.DB, 'SELECT 1 FROM pass_personalizations WHERE pass_id = ?', [old.id]),
     ).toBeNull();
@@ -214,5 +215,5 @@ describe('Apple personalization transfer fence', () => {
         old.id,
       ]),
     ).toEqual({ token_sha256: await sha256Hex(token) });
-  }, 120_000);
+  });
 });

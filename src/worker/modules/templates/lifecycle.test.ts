@@ -2,6 +2,7 @@
 
 import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -84,7 +85,7 @@ async function seedPreviouslyPublished(id: string, version: string) {
 }
 
 beforeAll(async () => {
-  clock = new ManualClock(Date.now());
+  clock = new ManualClock();
   const assets = fakeAssets();
   const bakedFiles = import.meta.glob<string>('../../../../templates/**/*.{png,strings}', {
     eager: true,
@@ -151,7 +152,7 @@ beforeAll(async () => {
       roles: ['admin', 'user'],
     })
   ).headers;
-}, 60_000);
+});
 
 describe('versions', () => {
   it('keeps existing passes on their published version until a separate release', async () => {
@@ -165,7 +166,11 @@ describe('versions', () => {
     expect(v2.result).not.toBeNull();
     expect(v2.result?.templateId).toBe(id);
     expect(v2.result?.version).not.toBe(t1.version);
-    expect((await post(`/${id}/activate`, { version: v2.result?.version })).status).toBe(404);
+    await expectProblem(
+      await post(`/${id}/activate`, { version: v2.result?.version }),
+      404,
+      'NOT_FOUND',
+    );
 
     const draft = await detailOf(id);
     expect(draft.activeVersion).toBe(t1.version);
@@ -213,7 +218,7 @@ describe('archive and restore', () => {
     await seedPreviouslyPublished(id, version);
     const existing = await createTemplateRegistry(env).resolve(id);
     await makePass(f, { orgId: org.id, template: existing });
-    expect((await post(`/${id}/archive`, {}, outsider)).status).toBe(404);
+    await expectProblem(await post(`/${id}/archive`, {}, outsider), 404, 'TEMPLATE_NOT_FOUND');
     expect((await detailOf(id)).status).toBe('active');
 
     const archive = await post(`/${id}/archive`);
@@ -240,7 +245,7 @@ describe('archive and restore', () => {
         [id],
       ),
     ).not.toBeNull();
-    expect((await post('/baked:starter-generic/archive')).status).toBe(403);
+    await expectProblem(await post('/baked:starter-generic/archive'), 403, 'TEMPLATE_BAKED');
   });
 
   it('archives an unreleased draft and restores it without a release', async () => {
@@ -261,10 +266,10 @@ describe('archive and restore', () => {
     const author = await templateAuthor(env, clock, org.id);
     const authorHeaders = (await makeSession(f, { userId: author.userId })).headers;
     expect((await call(`/${id}`, {}, authorHeaders)).status).toBe(200);
-    expect((await post(`/${id}/archive`, {}, authorHeaders)).status).toBe(403);
+    await expectProblem(await post(`/${id}/archive`, {}, authorHeaders), 403, 'FORBIDDEN');
     expect((await detailOf(id)).status).toBe('active');
 
-    expect((await post(`/${id}/activate`, { version })).status).toBe(404);
+    await expectProblem(await post(`/${id}/activate`, { version }), 404, 'NOT_FOUND');
     expect((await detailOf(id)).activeVersion).toBeNull();
     // Restoring a template that is not archived changes nothing.
     expect((await post(`/${id}/restore`)).status).toBe(200);
@@ -276,7 +281,7 @@ describe('archive and restore', () => {
       activeVersion: null,
     });
     expect(await detailOf(id)).toMatchObject({ status: 'archived', restorable: true });
-    expect((await post(`/${id}/restore`, {}, authorHeaders)).status).toBe(403);
+    await expectProblem(await post(`/${id}/restore`, {}, authorHeaders), 403, 'FORBIDDEN');
     const restored = await post(`/${id}/restore`);
     expect(restored.status).toBe(200);
     expect(TemplateDetailSchema.parse(await restored.json())).toMatchObject({

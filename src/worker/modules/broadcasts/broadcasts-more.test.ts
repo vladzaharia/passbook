@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import {
   type BroadcastDto,
@@ -133,7 +134,7 @@ describe('chunk budget', () => {
     // About 30 queries a pass at most: the whole chunk stays inside the queue budget of 800.
     expect(queries).toBeLessThan(CHUNK * 30);
     expect(CHUNK * 30).toBeLessThanOrEqual(800);
-  }, 60_000);
+  });
 });
 
 describe('mode', () => {
@@ -176,7 +177,11 @@ describe('mode', () => {
     const copy = await dto(again);
     expect(copy).toMatchObject({ mode: 'test', name: 'Line one Line two', patch: made.patch });
     expect(copy.id).not.toBe(made.id);
-    expect((await send('POST', `/broadcasts/${copy.id}/retry`, test)).status).toBe(409);
+    await expectProblem(
+      await send('POST', `/broadcasts/${copy.id}/retry`, test),
+      409,
+      'BROADCAST_NOT_RETRYABLE',
+    );
   });
 });
 
@@ -206,7 +211,7 @@ describe('edit', () => {
     expect((await send('PATCH', `/broadcasts/${draft.id}`, auth.admin(), other)).status).toBe(422);
     await run(kit.env.DB, `UPDATE broadcasts SET state = 'sending' WHERE id = ?`, [draft.id]);
     const late = await send('PATCH', `/broadcasts/${draft.id}`, auth.admin(), body('Third'));
-    expect(late.status).toBe(409);
+    await expectProblem(late, 409, 'BROADCAST_NOT_EDITABLE');
   });
 });
 
@@ -232,7 +237,11 @@ describe('items', () => {
       await (await api(`/broadcasts/${made.id}/items?limit=1`, { headers: auth.admin() })).json(),
     );
     expect(page.nextCursor).not.toBeNull();
-    expect((await api('/broadcasts/missing/items', { headers: auth.admin() })).status).toBe(404);
+    await expectProblem(
+      await api('/broadcasts/missing/items', { headers: auth.admin() }),
+      404,
+      'BROADCAST_NOT_FOUND',
+    );
   });
 
   it('keeps successful and failed pass outcomes when a send is partial', async () => {
@@ -271,7 +280,7 @@ describe('items access', () => {
     const made = await dto(await send('POST', '/broadcasts', auth.admin(), body('Same')));
     const url = `/broadcasts/${made.id}/items`;
     const blind = await auth.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
-    expect((await api(url, { headers: blind })).status).toBe(403);
+    await expectProblem(await api(url, { headers: blind }), 403, 'MISSING_SCOPE');
     const reader = await auth.apiKey({
       orgId: kit.org.id,
       scopes: ['messages:write', 'passes:read'],
@@ -282,7 +291,7 @@ describe('items access', () => {
       scopes: ['messages:write', 'passes:read'],
       mode: 'test',
     });
-    expect((await api(url, { headers: testKey })).status).toBe(404);
+    await expectProblem(await api(url, { headers: testKey }), 404, 'BROADCAST_NOT_FOUND');
     // Sessions read either mode by id, as for GET /broadcasts/{id}.
     expect((await api(url, { headers: auth.admin({ mode: 'test' }) })).status).toBe(200);
   });

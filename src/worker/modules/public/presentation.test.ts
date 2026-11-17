@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fakeAuth,
@@ -508,7 +509,7 @@ describe('presentation barcode', () => {
     const conditionalFile = await h.call(`${pagePath}/pass.pkpass`, {
       headers: { 'if-none-match': fileEtag },
     });
-    expect(conditionalFile.status).toBe(404);
+    await expectProblem(conditionalFile, 404, 'LINK_NOT_FOUND');
     await expectDenied(conditionalFile, secrets);
     for (const name of assetNames) {
       const requests: Record<string, string>[] = [
@@ -517,14 +518,14 @@ describe('presentation barcode', () => {
       ];
       for (const headers of requests) {
         const response = await h.call(`${pagePath}/assets/${name}`, { headers });
-        expect(response.status).toBe(404);
+        await expectProblem(response, 404, 'LINK_NOT_FOUND');
         expect(response.headers.get('content-type')).not.toContain('image/png');
         await expectDenied(response, secrets);
       }
     }
     for (const path of [ownerPath(pass), `/api/v1/me/passes/${pass.id}`]) {
       const response = await ownerGet(path);
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'PASS_NOT_FOUND');
       await expectDenied(response, secrets);
     }
     const list = await ownerGet('/api/v1/me/passes');
@@ -540,7 +541,7 @@ describe('presentation barcode', () => {
     const stranger = await makeUser(f);
     const strangerSession = await makeSession(f, { userId: stranger.id });
     const foreign = await ownerGet(ownerPath(pass), strangerSession.headers);
-    expect(foreign.status).toBe(404);
+    await expectProblem(foreign, 404, 'PASS_NOT_FOUND');
     await expectDenied(foreign, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     const anonymous = await h.call(ownerPath(pass));
     expect(anonymous.status).toBe(401);

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
@@ -82,7 +83,7 @@ describe('pairing tenant authority', () => {
             200,
           );
         }
-      }, 60_000);
+      });
     }
   }
 
@@ -141,7 +142,7 @@ describe('pairing tenant authority', () => {
       if (previousCode) {
         expect((await request('POST', '/scan/pair', {}, { code: previousCode })).status).toBe(200);
       }
-    }, 60_000);
+    });
   }
 
   // Membership roles are fixed at grant (0029): the edit is refused, so nothing changes under the
@@ -166,7 +167,7 @@ describe('pairing tenant authority', () => {
         () => request('POST', scannerPath(scanner.id, action), actor.session.headers),
       );
       expect(response.status).toBe(200);
-    }, 60_000);
+    });
   }
 
   // A scanner revision is a timestamp, not authority: a bump between read and commit refuses nothing.
@@ -184,7 +185,7 @@ describe('pairing tenant authority', () => {
         () => request('POST', scannerPath(scanner.id, action), actor.session.headers),
       );
       expect(response.status).toBe(200);
-    }, 60_000);
+    });
   }
 
   it('issues and redeems scanner credentials without requiring a template release', async () => {
@@ -211,7 +212,7 @@ describe('pairing tenant authority', () => {
     expect((await request('POST', scannerPath(terminal.id, 'token'), testHeaders)).status).toBe(
       200,
     );
-  }, 60_000);
+  });
 
   for (const creation of ['scanner', 'setup', 'session device'] as const) {
     it(`does not issue a ${creation} pairing code after membership revocation`, async () => {
@@ -263,7 +264,7 @@ describe('pairing tenant authority', () => {
           ),
         ).toEqual([]);
       }
-    }, 60_000);
+    });
   }
 
   it('requires explicit manage membership even for a platform administrator', async () => {
@@ -284,7 +285,11 @@ describe('pairing tenant authority', () => {
           (await request('POST', scannerPath(device.id, action), inTest(headers))).status,
         ).toBe(403);
       }
-      expect((await request('POST', scannerPath(terminal.id, 'token'), headers)).status).toBe(403);
+      await expectProblem(
+        await request('POST', scannerPath(terminal.id, 'token'), headers),
+        403,
+        'FORBIDDEN',
+      );
     }
   });
 
@@ -322,7 +327,7 @@ describe('pairing tenant authority', () => {
     expect(await scannerState(device.id)).toEqual(beforeDevice);
     expect(await scannerState(terminal.id)).toEqual(beforeTerminal);
     expect(await passState()).toEqual(beforePass);
-  }, 60_000);
+  });
 
   it('preserves issued code redemption and valid device and terminal token rotation', async () => {
     const issuer = await member();
@@ -361,5 +366,5 @@ describe('pairing tenant authority', () => {
     expect(token2).not.toBe(token1);
     expect(await store.resolve(token1, 'bearer')).toBeNull();
     expect((await store.resolve(token2, 'bearer'))?.scannerId).toBe(terminal.id);
-  }, 60_000);
+  });
 });

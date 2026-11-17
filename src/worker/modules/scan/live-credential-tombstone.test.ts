@@ -1,5 +1,6 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { getHolderPass } from '../holders/repo.ts';
@@ -196,7 +197,7 @@ describe('live submitted credential authority', () => {
     const path = projection.photoUrl.replace('/api/v1/scan', '');
     expect((await kit.get(fixture.monitor.headers, path)).status).toBe(200);
     await retirePresentedCredential(fixture);
-    expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(fixture.monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     const after = (await hub().snapshot(fixture.monitor.attachment)).rows.find(
       (item) => item.id === projection.id,
     );
@@ -224,7 +225,7 @@ describe('live submitted credential authority', () => {
       });
     });
     try {
-      expect((await kit.get(fixture.monitor.headers, path)).status).toBe(404);
+      await expectProblem(await kit.get(fixture.monitor.headers, path), 404, 'ASSET_NOT_FOUND');
       expect(changed).toBe(true);
       expect(cancelled).toBe(true);
     } finally {

@@ -272,7 +272,7 @@ describe('recorded scan event facts', () => {
     data.authority.effect.gateAfter = { state: 'in' };
     await expect(
       sealScanEvent(env, { ...event, data: JSON.stringify(data) }, null, scan.at, null, null),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Invalid scan event input/);
     const broken = fixture(true);
     const release = JSON.parse(broken.event.data);
     release.authority.activeReleaseGeneration = null;
@@ -285,7 +285,7 @@ describe('recorded scan event facts', () => {
         null,
         null,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Invalid scan event input/);
     const legacy = fixture(false);
     const legacyData = JSON.parse(legacy.event.data);
     legacyData.authority.activeTemplateVersion = 'v2';
@@ -298,7 +298,7 @@ describe('recorded scan event facts', () => {
         null,
         null,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Invalid scan event input/);
     const emptyPin = fixture(true);
     const emptyPinData = JSON.parse(emptyPin.event.data);
     emptyPinData.authority.pinnedReleaseId = '';
@@ -311,6 +311,6 @@ describe('recorded scan event facts', () => {
         null,
         null,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Invalid scan event input/);
   });
 });

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeScanner, makeScanStaff } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { setupStaffAdminTestKit, WireStaffSchema } from './staff-admin-test-fixtures.ts';
@@ -112,7 +113,7 @@ describe('staff records and credentials', () => {
   it('enforces case-insensitive uniqueness among enabled staff and on re-enable', async () => {
     const firstPerson = await create('Jordan');
     const duplicate = await send('POST', '', { orgId, name: 'jORdAN', role: 'desk' });
-    expect(duplicate.status).toBe(409);
+    await expectProblem(duplicate, 409, 'STAFF_NAME_TAKEN');
     expect(await codeOf(duplicate)).toBe('STAFF_NAME_TAKEN');
     clock.advance(1000);
     const disabled = await send('PATCH', itemPath(firstPerson.staff.id), { disabled: true });
@@ -120,7 +121,7 @@ describe('staff records and credentials', () => {
     expect(await disabled.json()).toMatchObject({ disabledAt: clock.now() });
     const replacement = await create('JORDAN', 'manager');
     const reenable = await send('PATCH', itemPath(firstPerson.staff.id), { disabled: false });
-    expect(reenable.status).toBe(409);
+    await expectProblem(reenable, 409, 'STAFF_NAME_TAKEN');
     expect(await codeOf(reenable)).toBe('STAFF_NAME_TAKEN');
     expect((await credential(firstPerson.staff.id))?.disabled_at).toBe(clock.now());
     expect(

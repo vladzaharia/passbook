@@ -36,7 +36,7 @@ beforeAll(async () => {
   kit = await setupKit();
   liveRelease = await requireApprovedRelease(kit.ctx, kit.template.id, kit.org.id, 'live', 'apple');
   createPrincipal = await passOperator(kit.org.id);
-}, 60_000);
+});
 
 const actor = { type: 'user', id: 'admin-1' } as const;
 const reviewedRelease = () => ({
@@ -157,7 +157,7 @@ describe('create', () => {
         undefined,
       ),
     ).rejects.toMatchObject({ status: 404 });
-  }, 60_000);
+  });
 
   it('rejects a duplicate serial and removes the stored object', async () => {
     const first = await kit.pass();

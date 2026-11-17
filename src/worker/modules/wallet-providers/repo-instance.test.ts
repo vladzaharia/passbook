@@ -146,7 +146,7 @@ describe('wallet provider instance repository keyset authority', () => {
         operation_commitment: input.credentialKeysetCommitment,
       });
     });
-  }, 120_000);
+  });
 
   it('returns only the captured keyset on reads and fences dirty work across replacement or deletion', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
@@ -315,7 +315,7 @@ describe('wallet provider instance repository keyset authority', () => {
     }
     expect(await deferDirtyInstance(db, { ...dirty, nextAttemptAt: now + 10_000 })).toBe(true);
     expect(await ackDirtyInstance(db, dirty)).toBe(true);
-  }, 120_000);
+  });
 
   it('does not adopt or replace null and mismatched historical instance or operation commitments', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
@@ -391,7 +391,7 @@ describe('wallet provider instance repository keyset authority', () => {
         );
       }
     }
-  }, 120_000);
+  });
 
   it('supersedes only operations carrying the exact original commitment', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
@@ -458,7 +458,7 @@ describe('wallet provider instance repository keyset authority', () => {
         );
       }
     });
-  }, 120_000);
+  });
 
   it('guards claims, outcomes and finalization against changed stored commitments', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
@@ -554,7 +554,7 @@ describe('wallet provider instance repository keyset authority', () => {
       state: 'succeeded',
       credentialKeysetCommitment: op.credentialKeysetCommitment,
     });
-  }, 120_000);
+  });
 });
 
 describe('wallet provider due-operation selection', () => {
@@ -656,7 +656,7 @@ describe('wallet provider due-operation selection', () => {
         hash: await sha256Hex(crypto.randomUUID()),
       }),
     ).toBe('not_claimable');
-  }, 120_000);
+  });
 
   it('defers only the exact current operation with live projection evidence', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
@@ -720,5 +720,5 @@ describe('wallet provider due-operation selection', () => {
     );
     expect(await operationFresh(db, { ...claim, now: claim.now + 119_999 })).toBe(true);
     expect(await operationFresh(db, { ...claim, now: claim.now + 120_000 })).toBe(false);
-  }, 120_000);
+  });
 });

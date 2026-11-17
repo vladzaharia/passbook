@@ -221,7 +221,7 @@ describe('0043 provider generation fences', () => {
       'wallet_google_callback_bindings',
       googleCommitment,
     );
-  }, 120_000);
+  });
 
   it('stages blocked targets only after the reserved credential CAS', async () => {
     const { db, pass, f, credentialKeysetCommitment } = await fixture();
@@ -229,7 +229,7 @@ describe('0043 provider generation fences', () => {
       run(db, 'UPDATE passes SET credential_generation = credential_generation + 1 WHERE id = ?', [
         pass.id,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     expect(await instances(db, pass.id)).toEqual([]);
     const statements = startStatements(db, pass.id, crypto.randomUUID(), f.clock.now());
     await statements[0]!.run();
@@ -278,7 +278,9 @@ describe('0043 provider generation fences', () => {
           [crypto.randomUUID(), pass.id],
         ),
       ]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(
+      /pending credential transfer is locked|a token change must move link_generation/,
+    );
     expect(
       await first(db, 'SELECT id FROM pass_credential_transfers WHERE id = ?', [transferId]),
     ).toBeNull();
@@ -472,14 +474,16 @@ describe('0043 provider generation fences', () => {
         [operationId],
       ),
     ).toEqual({ pass_credential_generation: nextGeneration, kind: 'revoke' });
-    await expect(finish(db, pass.id, transferId, kit.clock.now() + 1)).rejects.toThrow();
+    await expect(finish(db, pass.id, transferId, kit.clock.now() + 1)).rejects.toThrow(
+      /credential transfer is not ready to complete/,
+    );
     expect(
       await first(db, 'SELECT state FROM pass_credential_transfers WHERE id = ?', [transferId]),
     ).toEqual({ state: 'pending' });
     expect(await first(db, 'SELECT holder_email FROM passes WHERE id = ?', [pass.id])).toEqual({
       holder_email: pass.holderEmail,
     });
-  }, 120_000);
+  });
 
   it('blocks unsettled deletion and prevents pass replacement', async () => {
     const historical = await runtimeSamsungLegacyFixture('refresh');
@@ -639,7 +643,7 @@ describe('0043 provider generation fences', () => {
     ).toEqual({ id: instanceId });
     await run(db, 'DELETE FROM passes WHERE id = ?', [pass.id]);
     expect(await first(db, 'SELECT id FROM passes WHERE id = ?', [pass.id])).toBeNull();
-  }, 120_000);
+  });
 
   it('keeps historical Samsung reference hashes and instance bindings immutable', async () => {
     const historical = await runtimeSamsungLegacyFixture('refresh');
@@ -720,7 +724,7 @@ describe('0043 provider generation fences', () => {
     expect(
       await first(db, 'SELECT id FROM wallet_samsung_fetch_refs WHERE id = ?', [refRow]),
     ).toEqual({ id: refRow });
-  }, 120_000);
+  });
 
   it.each(['google', 'samsung'] as const)(
     'denies direct %s issuance without a verifiable provider gate',

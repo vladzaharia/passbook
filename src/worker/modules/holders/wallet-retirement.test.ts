@@ -230,7 +230,7 @@ describe('holder changes and native wallet retirement', () => {
       { provider: 'samsung', lifecycle: 'ready', account_id: null, desired_operation_id: null },
     ]);
     expect(await listWalletOffers(jobCtxOf(t.kit), t.pass.id)).toEqual([]);
-  }, 120_000);
+  });
 
   it.each([
     ['revision', 'UPDATE passes SET revision = revision + 1 WHERE id = ?'],
@@ -351,7 +351,7 @@ describe('holder changes and native wallet retirement', () => {
         [t.pass.id, user.id],
       ),
     ).not.toBeNull();
-  }, 120_000);
+  });
 
   it.each(['assign', 'unassign'] as const)(
     'exposes %s as pending without changing the current holder or creating offers',
@@ -419,7 +419,7 @@ describe('holder changes and native wallet retirement', () => {
     });
     expect(await listWalletOffers(jobCtxOf(t.kit), t.pass.id)).toEqual([]);
     expect(await attachWaitingPassesForEmail(jobCtxOf(t.kit), user.id, email)).toBe(0);
-  }, 120_000);
+  });
 
   it('stages verified attachment through native retirement before exposing the new owner', async () => {
     const email = 'claimed@example.test';
@@ -435,7 +435,7 @@ describe('holder changes and native wallet retirement', () => {
         [t.operation.instanceId],
       ),
     ).toEqual({ retirement_requested_at: t.kit.clock.now() });
-  }, 120_000);
+  });
 
   it('does not permanently retire a credential for download-link rotation alone', async () => {
     const t = await setupSamsungCallbacks({ db: await testDatabase() });
@@ -456,5 +456,5 @@ describe('holder changes and native wallet retirement', () => {
         [t.operation.instanceId],
       ),
     ).toEqual({ retirement_requested_at: null });
-  }, 120_000);
+  });
 });

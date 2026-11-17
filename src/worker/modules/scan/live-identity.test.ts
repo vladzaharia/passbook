@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { run } from '../../platform/db.ts';
@@ -256,7 +257,7 @@ describe('live identity authority', () => {
       'UPDATE scan_staff SET disabled_at = ?, updated_at = updated_at + 1 WHERE id = ?',
       [kit.clock.now(), staff.id],
     );
-    expect((await kit.get(monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     // The source's staff authority moved (auth_epoch): its events are omitted, not replayed.
     const revoked = (await hub().snapshot(monitor.attachment)).rows.find(
       (item) => item.id === event.id,
@@ -267,7 +268,7 @@ describe('live identity authority', () => {
       'UPDATE scan_staff SET disabled_at = NULL, updated_at = updated_at + 1 WHERE id = ?',
       [staff.id],
     );
-    expect((await kit.get(monitor.headers, path)).status).toBe(404);
+    await expectProblem(await kit.get(monitor.headers, path), 404, 'ASSET_NOT_FOUND');
     const stale = (await hub().snapshot(monitor.attachment)).rows.find(
       (item) => item.id === event.id,
     );

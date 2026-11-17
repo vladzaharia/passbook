@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, linkToken, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { WalletOffer } from '../../../shared/contracts/me.ts';
 import type {
@@ -58,7 +59,7 @@ beforeAll(async () => {
     stores: { ...fakeAuth(ORIGIN).stores, sessions: createSessionStore(kit.env, kit.clock) },
     clock: kit.clock,
   });
-}, 90_000);
+});
 
 const get = (path: string, requestHeaders: Record<string, string> = {}) =>
   app.request(`${ORIGIN}${path}`, { headers: requestHeaders }, fixture.kit.env);
@@ -187,15 +188,15 @@ describe('pending native wallets on holder surfaces', () => {
     ]);
     expect((await get(`/p/${await linkToken(fixture.kit.env, pass)}`)).status).toBe(404);
     expect((await holderOffers(pass.id)).walletOffers).toEqual([]);
-  }, 120_000);
+  });
 
   it('does not expose a quarantined pass to either surface', async () => {
     const { kit } = fixture;
     const pass = await kit.pass({ mode: 'test', holderEmail });
     await run(kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [pass.id]);
     expect((await get(`/p/${await linkToken(fixture.kit.env, pass)}`)).status).toBe(404);
-    expect((await get(`/api/v1/me/passes/${pass.id}`, headers)).status).toBe(404);
-  }, 120_000);
+    await expectProblem(await get(`/api/v1/me/passes/${pass.id}`, headers), 404, 'PASS_NOT_FOUND');
+  });
 
   it('suppresses choices for a suspended organization', async () => {
     const { kit, pass } = fixture;

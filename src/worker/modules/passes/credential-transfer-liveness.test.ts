@@ -129,7 +129,7 @@ describe('credential transfer liveness (authority-epochs.md F11, F15)', () => {
       gate.release();
       gate.spy.mockRestore();
     }
-  }, 120_000);
+  });
 
   it('completes a connector transfer when the connection is disabled while it is pending', async () => {
     const kit = await setupKit();
@@ -176,5 +176,5 @@ describe('credential transfer liveness (authority-epochs.md F11, F15)', () => {
       gate.release();
       gate.spy.mockRestore();
     }
-  }, 120_000);
+  });
 });

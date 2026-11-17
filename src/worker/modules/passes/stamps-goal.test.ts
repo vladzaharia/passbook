@@ -15,7 +15,7 @@ import {
 let kit: Kit;
 beforeAll(async () => {
   kit = await setupKit();
-}, 60_000);
+});
 
 /** A program at goal 10, released, so every test moves its own cards. */
 async function program(id: string) {

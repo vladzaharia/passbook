@@ -16,7 +16,7 @@ beforeAll(async () => {
   freezeNow();
   await createFixtureIdentity();
   ({ template, registry } = await loadBaked(SLUG));
-}, 120_000);
+}, 120_000); // PNG composition and decoding under v8 coverage in coverage-node runs far slower than locally (about 10x)
 
 const server = {
   serial: 's',

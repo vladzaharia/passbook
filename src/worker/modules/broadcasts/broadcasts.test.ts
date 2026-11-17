@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { BroadcastListSchema, BroadcastSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
@@ -308,7 +309,7 @@ describe('tenant, mode and scope isolation', () => {
       await post('/broadcasts', auth.admin(), message('Mine', { send: 'draft' })),
     );
     const key = await auth.apiKey({ orgId: other.id, scopes: ['messages:write'] });
-    expect((await post('/broadcasts', key, message('Theirs'))).status).toBe(403);
+    await expectProblem(await post('/broadcasts', key, message('Theirs')), 403, 'ORG_FORBIDDEN');
     expect(
       (
         await post('/broadcasts/preview', key, {
@@ -317,9 +318,21 @@ describe('tenant, mode and scope isolation', () => {
         })
       ).status,
     ).toBe(403);
-    expect((await api(`/broadcasts/${created.id}`, { headers: key })).status).toBe(404);
-    expect((await post(`/broadcasts/${created.id}/cancel`, key)).status).toBe(404);
-    expect((await post(`/broadcasts/${created.id}/send`, key)).status).toBe(404);
+    await expectProblem(
+      await api(`/broadcasts/${created.id}`, { headers: key }),
+      404,
+      'BROADCAST_NOT_FOUND',
+    );
+    await expectProblem(
+      await post(`/broadcasts/${created.id}/cancel`, key),
+      404,
+      'BROADCAST_NOT_FOUND',
+    );
+    await expectProblem(
+      await post(`/broadcasts/${created.id}/send`, key),
+      404,
+      'BROADCAST_NOT_FOUND',
+    );
     const list = BroadcastListSchema.parse(
       await (await api('/broadcasts', { headers: key })).json(),
     );
@@ -362,9 +375,17 @@ describe('tenant, mode and scope isolation', () => {
       await post('/broadcasts', auth.admin(), message('Live draft', { send: 'draft' })),
     );
     const key = await auth.apiKey({ orgId: kit.org.id, mode: 'test', scopes: ['messages:write'] });
-    expect((await api(`/broadcasts/${live.id}`, { headers: key })).status).toBe(404);
-    expect((await post(`/broadcasts/${live.id}/send`, key)).status).toBe(404);
-    expect((await post(`/broadcasts/${live.id}/cancel`, key)).status).toBe(404);
+    await expectProblem(
+      await api(`/broadcasts/${live.id}`, { headers: key }),
+      404,
+      'BROADCAST_NOT_FOUND',
+    );
+    await expectProblem(await post(`/broadcasts/${live.id}/send`, key), 404, 'BROADCAST_NOT_FOUND');
+    await expectProblem(
+      await post(`/broadcasts/${live.id}/cancel`, key),
+      404,
+      'BROADCAST_NOT_FOUND',
+    );
     const testAdmin = auth.admin({ mode: 'test' });
     for (const action of ['send', 'cancel']) {
       const res = await post(`/broadcasts/${live.id}/${action}`, testAdmin);
@@ -401,8 +422,8 @@ describe('tenant, mode and scope isolation', () => {
 
   it('needs the messages:write scope', async () => {
     const key = await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read', 'passes:write'] });
-    expect((await api('/broadcasts', { headers: key })).status).toBe(403);
-    expect((await post('/broadcasts', key, message('x'))).status).toBe(403);
+    await expectProblem(await api('/broadcasts', { headers: key }), 403, 'MISSING_SCOPE');
+    await expectProblem(await post('/broadcasts', key, message('x')), 403, 'MISSING_SCOPE');
     const ok = await auth.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
     expect((await api('/broadcasts', { headers: ok })).status).toBe(200);
   });

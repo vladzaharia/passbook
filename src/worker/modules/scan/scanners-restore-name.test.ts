@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { consoleCall, create, setupScannerFixture } from './scanners-split-test-fixtures.ts';
 
 setupScannerFixture();
@@ -20,7 +21,7 @@ describe('restoring a removed scanner whose name was taken', () => {
     const { removed, twin } = await removedWithTwin('device');
     for (const path of ['pairing', 'pair-here']) {
       const res = await consoleCall('POST', `/${removed}/${path}?restore=true`);
-      expect(res.status).toBe(409);
+      await expectProblem(res, 409, 'SCANNER_NAME_TAKEN');
       expect(await res.json()).toMatchObject(TAKEN);
     }
     expect((await consoleCall('PATCH', `/${twin}`, { name: 'Twin renamed' })).status).toBe(200);
@@ -30,7 +31,7 @@ describe('restoring a removed scanner whose name was taken', () => {
   it('answers 409 SCANNER_NAME_TAKEN for a till token, then restores once renamed', async () => {
     const { removed, twin } = await removedWithTwin('terminal');
     const res = await consoleCall('POST', `/${removed}/token?restore=true`);
-    expect(res.status).toBe(409);
+    await expectProblem(res, 409, 'SCANNER_NAME_TAKEN');
     expect(await res.json()).toMatchObject(TAKEN);
     expect((await consoleCall('PATCH', `/${twin}`, { name: 'Till renamed' })).status).toBe(200);
     expect((await consoleCall('POST', `/${removed}/token?restore=true`)).ok).toBe(true);

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all } from '../../platform/db.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { oidcSignIn } from './test-oidc.ts';
@@ -89,7 +90,7 @@ describe('sign out', () => {
       cookies: new Map(here),
       headers: { accept: 'application/json' },
     });
-    expect(refused.status).toBe(403);
+    await expectProblem(refused, 403, 'CSRF_TOKEN');
     expect((await session(there)).authenticated).toBe(true);
 
     const res = await h.call('/auth/logout?all=1', {

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
   makeOrg,
@@ -114,9 +115,9 @@ describe('request', () => {
   it('fails closed on a bad Turnstile token or verifier failure', async () => {
     const email = await knownEmail();
     const bad = await requestLink(email, new Map(), { turnstileToken: 'nope' });
-    expect(bad.status).toBe(403);
+    await expectProblem(bad, 403, 'TURNSTILE_FAILED');
     h.turnstileOk.value = false;
-    expect((await requestLink(email)).status).toBe(403);
+    await expectProblem(await requestLink(email), 403, 'TURNSTILE_FAILED');
     expect(h.mail).toHaveLength(0);
   });
 
@@ -261,7 +262,7 @@ describe('request', () => {
       json: { email: addr(), turnstileToken: 'ok' },
       headers: { 'sec-fetch-site': 'cross-site' },
     });
-    expect(res.status).toBe(403);
+    await expectProblem(res, 403, 'CSRF_ORIGIN');
   });
 });
 
@@ -527,8 +528,8 @@ describe('verify email', () => {
 
   it('requires the CSRF token', async () => {
     const { jar } = await signedIn();
-    expect((await add(jar, null, addr())).status).toBe(403);
-    expect((await add(jar, 'wrong', addr())).status).toBe(403);
+    await expectProblem(await add(jar, null, addr()), 403, 'CSRF_TOKEN');
+    await expectProblem(await add(jar, 'wrong', addr()), 403, 'CSRF_TOKEN');
     expect(h.mail).toHaveLength(0);
   });
 

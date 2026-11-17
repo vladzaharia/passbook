@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { run } from '../../platform/db.ts';
 import { memberPhoto } from '../passes/repo-member-photo.ts';
 import { livePassCommitment, livePassCommitmentValid } from './live-pass-commitment.ts';
@@ -329,7 +330,11 @@ describe('live photo authority commitment', () => {
       return originalGet(key, options);
     });
     try {
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
       expect(opened).toBe(false);
     } finally {
       spy.mockRestore();
@@ -364,10 +369,18 @@ describe('live photo authority commitment', () => {
       });
     });
     try {
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
       expect(opened).toBe(1);
       expect(cancelled).toBe(1);
-      expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+      await expectProblem(
+        await kit.get(fixture.monitor.headers, fixture.path),
+        404,
+        'ASSET_NOT_FOUND',
+      );
       expect(opened).toBe(1);
     } finally {
       spy.mockRestore();
@@ -411,10 +424,14 @@ describe('live photo authority commitment', () => {
     }
     expect(opened).toBe(true);
     expect(cancelled).toBe(1);
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'ASSET_NOT_FOUND');
     const after = await photoCandidate(fixture.pass.id);
     expect(after.assetPhoto).toEqual(before.assetPhoto);
     expect(after.pass.imageGeneration).toBe(before.pass.imageGeneration + 2);
-    expect((await kit.get(fixture.monitor.headers, fixture.path)).status).toBe(404);
+    await expectProblem(
+      await kit.get(fixture.monitor.headers, fixture.path),
+      404,
+      'ASSET_NOT_FOUND',
+    );
   });
 });

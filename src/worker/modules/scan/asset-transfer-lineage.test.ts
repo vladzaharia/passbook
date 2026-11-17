@@ -332,7 +332,7 @@ describe('scanner asset credential lineage', () => {
         'UPDATE passes SET credential_generation = credential_generation + 1 WHERE id = ?',
         [pass.id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/credential generation requires a pending reservation/);
     const current = await candidateById(kit.env.DB, kit.org.id, pass.id);
     if (!current) throw new Error('Pass fixture missing');
     expect(current.pass.linkGeneration).toBe(candidate.pass.linkGeneration);

@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
   makeOrg,
@@ -43,7 +44,7 @@ const makeEnv = installKeysetTestEnv();
 let kit: Kit;
 beforeEach(async () => {
   kit = await setupKit({ db: (await makeEnv()).DB });
-}, 60_000);
+});
 
 /** Exercise the independently mountable group using real session and API-key stores. */
 function appFor(fixture: Kit) {
@@ -129,10 +130,14 @@ describe('provider pass status read', () => {
     const foreign = await makeApiKey(kit.fx, { orgId: other.id, scopes: ['passes:read'] });
     const noScope = await makeApiKey(kit.fx, { orgId: kit.org.id, scopes: ['passes:write'] });
     expect((await call(kit, pass.id)).status).toBe(401);
-    expect((await call(kit, pass.id, outsiderSession.headers)).status).toBe(404);
-    expect((await call(kit, pass.id, integrationOnly.session.headers)).status).toBe(404);
-    expect((await call(kit, pass.id, foreign.headers)).status).toBe(404);
-    expect((await call(kit, pass.id, noScope.headers)).status).toBe(403);
+    await expectProblem(await call(kit, pass.id, outsiderSession.headers), 404, 'PASS_NOT_FOUND');
+    await expectProblem(
+      await call(kit, pass.id, integrationOnly.session.headers),
+      404,
+      'PASS_NOT_FOUND',
+    );
+    await expectProblem(await call(kit, pass.id, foreign.headers), 404, 'PASS_NOT_FOUND');
+    await expectProblem(await call(kit, pass.id, noScope.headers), 403, 'MISSING_SCOPE');
     expect(
       (await call(kit, pass.id, { ...member.session.headers, 'x-passbook-mode': 'test' })).status,
     ).toBe(404);
@@ -157,8 +162,12 @@ describe('provider pass status read', () => {
     expect((await read(await call(kit, pass.id, key.headers))).credentialGeneration).toBe(1);
     expect((await read(await call(kit, pass.id, global.headers))).credentialGeneration).toBe(1);
     const testPass = await kit.pass({ mode: 'test' });
-    expect((await call(kit, testPass.id, key.headers)).status).toBe(404);
-    expect((await call(kit, testPass.id, member.session.headers)).status).toBe(404);
+    await expectProblem(await call(kit, testPass.id, key.headers), 404, 'PASS_NOT_FOUND');
+    await expectProblem(
+      await call(kit, testPass.id, member.session.headers),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect(
       (
         await read(
@@ -171,7 +180,7 @@ describe('provider pass status read', () => {
       scopes: ['passes:read'],
       mode: 'test',
     });
-    expect((await call(kit, pass.id, testKey.headers)).status).toBe(404);
+    await expectProblem(await call(kit, pass.id, testKey.headers), 404, 'PASS_NOT_FOUND');
     expect((await read(await call(kit, testPass.id, testKey.headers))).credentialGeneration).toBe(
       1,
     );
@@ -194,7 +203,7 @@ describe('provider pass status read', () => {
       issuance: { state: 'disabled', reason: 'not_released' },
     });
     expect(JSON.stringify(result)).not.toMatch(/configured|unconfigured/i);
-  }, 90_000);
+  });
 
   it('returns only sanitized current operation results, never provider or holder secrets', async () => {
     const f = await setupSamsungCallbacks({
@@ -271,7 +280,7 @@ describe('provider pass status read', () => {
       issuance: { state: 'enabled' },
       desiredOperation: { version: ref.version, kind: 'upsert', state: 'succeeded', reason: 'ok' },
     });
-  }, 90_000);
+  });
 
   it('reports the current staged incarnation and unresolved older retirement during transfer', async () => {
     const f = await setupSamsungCallbacks({
@@ -379,7 +388,7 @@ describe('provider pass status read', () => {
         issuance: { state: 'enabled' },
       },
     ]);
-  }, 120_000);
+  });
 
   it('does not initialize a missing credential keyset from a read-only status request', async () => {
     const f = await setupKit({ db: kit.env.DB });
@@ -415,7 +424,7 @@ describe('provider pass status read', () => {
         issuance: { state: 'enabled' },
       },
     ]);
-  }, 90_000);
+  });
 
   it('pins the KEK bindings before asynchronous pass authorization', async () => {
     const pass = await kit.pass();
@@ -511,7 +520,11 @@ describe('provider pass status read', () => {
       'private-holder@example.test',
     ])
       expect(mismatch).not.toContain(secret);
-    expect((await call(f.kit, f.pass.id, outsiderSession.headers, wrongEnv)).status).toBe(404);
+    await expectProblem(
+      await call(f.kit, f.pass.id, outsiderSession.headers, wrongEnv),
+      404,
+      'PASS_NOT_FOUND',
+    );
     expect(
       (
         await call(
@@ -571,7 +584,7 @@ describe('provider pass status read', () => {
         },
         (env) => call(f.kit, f.pass.id, revoked.session.headers, env),
       );
-      expect(revokedAndChanged.status).toBe(404);
+      await expectProblem(revokedAndChanged, 404, 'PASS_NOT_FOUND');
     } finally {
       try {
         await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [
@@ -620,7 +633,7 @@ describe('provider pass status read', () => {
       }
     }
     expect(await read(await call(f.kit, f.pass.id, member.session.headers))).toEqual(baseline);
-  }, 120_000);
+  });
 
   it.each(['membership', 'session', 'key'] as const)(
     'rechecks %s at the final D1 read',
@@ -650,7 +663,7 @@ describe('provider pass status read', () => {
         },
         (env) => call(kit, pass.id, headers, env),
       );
-      expect(response.status).toBe(404);
+      await expectProblem(response, 404, 'PASS_NOT_FOUND');
     },
   );
 
@@ -676,7 +689,7 @@ describe('provider pass status read', () => {
       },
       (env) => call(f.kit, f.pass.id, member.session.headers, env),
     );
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'PASS_NOT_FOUND');
     expect(await response.text()).not.toContain('old-holder@example.test');
-  }, 90_000);
+  });
 });

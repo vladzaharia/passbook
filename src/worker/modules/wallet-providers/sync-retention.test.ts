@@ -200,7 +200,7 @@ describe('wallet retirement fences', () => {
     ).toBe(false);
     await expect(
       run(db, 'DELETE FROM wallet_provider_instances WHERE id = ?', [google.id]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/provider retirement incomplete/);
     expect(
       await first(db, 'SELECT id FROM wallet_provider_instances WHERE id = ?', [google.id]),
     ).toEqual({ id: google.id });
@@ -358,7 +358,7 @@ describe('wallet retirement fences', () => {
     ).toBe(false);
     await expect(
       run(db, 'DELETE FROM wallet_provider_instances WHERE id = ?', [f.instanceId]),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/provider retirement incomplete/);
     expect(
       await first(db, 'SELECT id FROM wallet_provider_instances WHERE id = ?', [f.instanceId]),
     ).toEqual({ id: f.instanceId });
@@ -440,5 +440,5 @@ describe('wallet sync of unissued transfer targets', () => {
         [pass.id],
       ),
     ).toEqual(retired);
-  }, 120_000);
+  });
 });

@@ -218,7 +218,7 @@ describe('retained webhook issuance claim', () => {
     expect(
       await all(kit.env.DB, 'SELECT id FROM passes WHERE connection_id = ?', [input.connectionId]),
     ).toHaveLength(1);
-  }, 60_000);
+  });
 
   it('assigns the uniquely verified owner at insertion, not an unverified primary-email claimant', async () => {
     const { input } = await claimed();
@@ -251,7 +251,7 @@ describe('retained webhook issuance claim', () => {
         input.reservedPassId,
       ]),
     ).toBeNull();
-  }, 60_000);
+  });
 
   it('rejects a changed reference and a different concurrent winner instead of adopting it', async () => {
     const { input } = await claimed();
@@ -265,7 +265,7 @@ describe('retained webhook issuance claim', () => {
       status: 409,
     });
     expect(await getPass(kit.env.DB, input.reservedPassId)).toBeNull();
-  }, 60_000);
+  });
 
   it.each(['started', 'uncertain'] as const)(
     'holds a holder change when a %s retained item already binds the existing pass',

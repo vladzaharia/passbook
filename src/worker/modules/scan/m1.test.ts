@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { listScanRows } from './repo-feed.ts';
 import type { ScanKit } from './test-kit.ts';
@@ -107,7 +108,7 @@ describe('M1 door integration', () => {
       `/scans/${outcome.scanId}/undo`,
       { idempotencyKey: key(), scope: scope() },
     );
-    expect(response.status).toBe(404);
+    await expectProblem(response, 404, 'SCAN_NOT_FOUND');
   });
 
   it('searches prefixes and exact email, never echoes the email and never searches partial email', async () => {

@@ -34,18 +34,18 @@ describe('envelope encryption', () => {
     const envelope = await encryptSecret(ring, 'secret', credentialAad('c1', 'o', 'webhook'));
     await expect(
       decryptSecret(ring, envelope, credentialAad('c2', 'o', 'webhook')),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Decryption failed/);
     const tampered = {
       ...envelope,
       ciphertext: envelope.ciphertext.map((b, i) => (i === 0 ? b ^ 1 : b)),
     };
     await expect(
       decryptSecret(ring, tampered, credentialAad('c1', 'o', 'webhook')),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Decryption failed/);
     const other = await loadKekRing({ KEK_V1: kek() });
     await expect(
       decryptSecret(other, envelope, credentialAad('c1', 'o', 'webhook')),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Decryption failed/);
   });
 
   it('encrypts with the newest KEK and still reads old records; rewrap upgrades them', async () => {

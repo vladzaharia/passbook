@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { mintAssetGrant } from './asset-grant-test-fixtures.ts';
@@ -474,7 +475,7 @@ describe('scanner evaluated policy revisions', () => {
    * `SCAN_IN_PROGRESS`, nothing disclosed or written, and the same key retried decides afresh.
    */
   const expectRaced = async (s: Awaited<ReturnType<typeof scenario>>, response: Response) => {
-    expect(response.status).toBe(409);
+    await expectProblem(response, 409, 'SCAN_IN_PROGRESS');
     const text = await response.text();
     expect(text).not.toContain(s.pass.id);
     expect(text).not.toContain('Revision Private Person');

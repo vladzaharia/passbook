@@ -51,7 +51,9 @@ describe('live tenant final authority races', () => {
     expect(await liveRecipient(kit.ctx, screen.attachment)).not.toBeNull();
     const race = raceFinalFence(kit, async () => {
       await runOne(kit.env.DB, 'DELETE FROM sessions WHERE id_hash=?', [original.id_hash]);
-      await expect(insertSession(kit, original, replacementSecret)).rejects.toThrow();
+      await expect(insertSession(kit, original, replacementSecret)).rejects.toThrow(
+        /session ID is retired/,
+      );
     });
     expect((await liveRecipient(race.ctx, screen.attachment)) === null).toBe(true);
     expect(race.reached()).toBe(true);

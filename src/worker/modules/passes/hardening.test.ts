@@ -34,7 +34,7 @@ beforeAll(async () => {
   kit = await setupKit();
   credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   liveRelease = await requireApprovedRelease(kit.ctx, kit.template.id, kit.org.id, 'live', 'apple');
-}, 60_000);
+});
 
 const actor = { type: 'system', id: null } as const;
 const count = async (sql: string, params: (string | number)[] = []) =>
@@ -166,7 +166,7 @@ describe('image overrides', () => {
     expect(names).toContain('icon.png');
     const served = await assetNamesOf(kit.ctx, published ?? pass);
     expect(served.filter((n) => n.startsWith('logo'))).toEqual(['logo.png']);
-  }, 60_000);
+  });
 
   it('rejects truncated and corrupt PNGs', async () => {
     const pass = await kit.pass();
@@ -290,7 +290,7 @@ describe('template upgrades and re-sign', () => {
     expect(after?.releaseId).toBe(release.id);
     expect(after?.objectKey).toBe(pass.objectKey);
     expect(await pushes(pass.id)).toBe(before);
-  }, 60_000);
+  });
 
   it('publishes and pushes when the upgrade changes the pass', async () => {
     const { pass, add } = await upgradable();
@@ -312,7 +312,7 @@ describe('template upgrades and re-sign', () => {
     expect(after?.releaseId).toBe(release.id);
     expect(after?.objectKey).not.toBe(pass.objectKey);
     expect(await pushes(pass.id)).toBe(1);
-  }, 60_000);
+  });
 
   it('re-signs into a new object without queuing a push', async () => {
     const pass = await kit.pass();
@@ -575,7 +575,7 @@ describe('registry failures', () => {
     } finally {
       restore();
     }
-  }, 60_000);
+  });
 
   it('still reports a missing template as 404', async () => {
     const { resolved } = makeTemplate({ id: `missing-${kit.fx.ids.token(4)}` });

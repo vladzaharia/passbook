@@ -60,5 +60,5 @@ describe('credential transfer races', () => {
       gate.resolve();
       spy.mockRestore();
     }
-  }, 120_000);
+  });
 });

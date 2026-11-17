@@ -115,7 +115,7 @@ describe('session activity row scope', () => {
     const afterRace = await consoleRows(raced);
     expect(afterRace.map(({ id }) => id)).toEqual([refused.scanId, f.scanId]);
     expect(afterRace[1]).toMatchObject({ passId: f.pass.id, title: ACTIVITY_NAME });
-  }, 120_000);
+  });
 
   it('filters before applying the 20-row limit and orders equal timestamps by scan ID', async () => {
     const f = await activityFixture();
@@ -168,7 +168,7 @@ describe('session activity row scope', () => {
       );
       expect(rows[19]).toMatchObject({ id: f.scanId, passId: f.pass.id, title: ACTIVITY_NAME });
     }
-  }, 120_000);
+  });
 
   it('limits lookup-disabled devices to their own activity without narrowing the console', async () => {
     const f = await activityFixture();
