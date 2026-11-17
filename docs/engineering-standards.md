@@ -4,7 +4,7 @@ Rules `npm run check` enforces, and where.
 
 | Rule | Enforced by |
 | --- | --- |
-| Warnings are errors; no floating or misused promises; no import cycles | `biome ci --error-on-warnings` (`biome.json`) |
+| Warnings are errors; no floating or misused promises; no import cycles | `biome ci --error-on-warnings` (`biome.jsonc`) |
 | Every `log.warn` / `log.error` carries a `code` or an `error` | `tools/check-log-codes.ts` |
 | Source files stay under 330 lines; production code never imports `test-kit`, `test-support`, `test-oidc`, `test-utils`, `test-fixtures` or `testing` modules | `tools/check-sizes.ts` (allowlist entries name an owner and a reason) |
 | No unused files, dependencies or binaries | `knip` (`knip.json`) |
