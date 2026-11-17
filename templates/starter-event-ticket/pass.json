@@ -2,9 +2,9 @@
   "formatVersion": 1,
   "description": "Event ticket",
   "organizationName": "Organization",
-  "backgroundColor": "rgb(31,41,55)",
+  "backgroundColor": "rgb(94,6,54)",
   "foregroundColor": "rgb(255,255,255)",
-  "labelColor": "rgb(199,210,254)",
+  "labelColor": "rgb(246,197,214)",
   "logoText": "Organization",
   "eventLogoText": "Organization",
   "preferredStyleSchemes": [

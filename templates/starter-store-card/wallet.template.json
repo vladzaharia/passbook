@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "name": "PassBook · Store card",
-  "description": "Stored-value card with balance, strip image, relevance, two featured actions and optional beacons.",
+  "name": "Balance card",
+  "description": "A big balance up front, on a coin strip.",
   "blueprint": true,
   "inputs": {
     "type": "object",
@@ -318,6 +318,7 @@
     }
   ],
   "display": {
+    "icon": "coins",
     "title": "{{holder}}",
     "subtitle": "{{tier}} · {{cardNumber}}",
     "status": "{{tier}}",

@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "name": "PassBook · Boarding pass",
-  "description": "Air boarding pass with the semantic layout and a classic fallback.",
+  "name": "Boarding pass",
+  "description": "Flight, gate and seat, with a route footer.",
   "blueprint": true,
   "inputs": {
     "type": "object",
@@ -581,6 +581,7 @@
     }
   ],
   "display": {
+    "icon": "plane",
     "title": "{{passengerGiven}} {{passengerFamily}}",
     "subtitle": "{{origin}} to {{destination}}",
     "status": "{{airlineCode}}{{flightNumber}}",

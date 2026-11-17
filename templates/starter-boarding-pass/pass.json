@@ -2,9 +2,9 @@
   "formatVersion": 1,
   "description": "Boarding pass",
   "organizationName": "Organization",
-  "backgroundColor": "rgb(31,41,55)",
+  "backgroundColor": "rgb(3,82,142)",
   "foregroundColor": "rgb(255,255,255)",
-  "labelColor": "rgb(199,210,254)",
+  "labelColor": "rgb(191,228,251)",
   "logoText": "Organization",
   "preferredStyleSchemes": [
     "semanticBoardingPass",

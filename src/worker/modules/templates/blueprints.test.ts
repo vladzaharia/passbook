@@ -52,7 +52,7 @@ describe('the blueprint flag', () => {
     expect(blueprints.every((id) => id.startsWith('baked:starter-'))).toBe(true);
     const listed = await items('?blueprint=true&limit=200');
     expect(listed.map((i) => i.id).sort()).toEqual([...blueprints].sort());
-    expect(listed.every((i) => i.blueprint && i.orgId === null)).toBe(true);
+    expect(listed.every((i) => i.blueprint && i.orgId === null && i.icon !== null)).toBe(true);
     const rows = await all<{ id: string }>(
       kit.env.DB,
       'SELECT id FROM templates WHERE blueprint = 1 ORDER BY id',
@@ -71,7 +71,11 @@ describe('the blueprint flag', () => {
       blueprint: false,
       fromBlueprint: null,
     });
-    expect(await (await kit.call(`/${STORE}`)).json()).toMatchObject({ blueprint: true });
+    expect(await (await kit.call(`/${STORE}`)).json()).toMatchObject({
+      blueprint: true,
+      name: 'Balance card',
+      icon: 'coins',
+    });
   });
 
   it('is refused in an uploaded manifest, and display.icon must be curated', () => {

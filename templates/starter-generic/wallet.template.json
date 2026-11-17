@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "name": "PassBook · Generic",
-  "description": "Membership or ID card with a QR code, relevance and two featured actions.",
+  "name": "Membership card",
+  "description": "Name, tier and points with a QR code.",
   "blueprint": true,
   "inputs": {
     "type": "object",
@@ -315,6 +315,7 @@
     }
   ],
   "display": {
+    "icon": "id-card",
     "title": "{{holder}}",
     "subtitle": "{{tier}}",
     "status": "{{tier}}",
