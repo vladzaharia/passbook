@@ -2,7 +2,7 @@ import { first, stmt } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import { scanCandidateTemplateReadPredicate } from './repo-live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { type OutputPredicate, outputPredicateStmt } from './repo-output-predicates.ts';
+import { outputPredicateStmt } from './repo-output-predicates.ts';
 import { snapshotReleaseIdSql, usedReleaseIdSql } from './repo-pass-release-sql.ts';
 
 /** The release id a scan read captured in its template snapshot, null for none or no snapshot. */
