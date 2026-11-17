@@ -1,3 +1,9 @@
+/**
+ * Triggers `change` ahead of the statements that decide what an answer discloses: the output fence's
+ * history bind (a packed authority term), the passless read (`SELECT 1 AS ok FROM actor_ok`, run on
+ * its own), and a lookup's two batches (the first search's gate, `AS keyset`, and the final pass read,
+ * `AS pass_ok`).
+ */
 export function outputRaceDatabase(real: D1Database, trigger: () => Promise<void>) {
   const batchStatements = new WeakSet<D1PreparedStatement>();
   const unwrapped = new WeakMap<D1PreparedStatement, D1PreparedStatement>();
@@ -28,6 +34,23 @@ export function outputRaceDatabase(real: D1Database, trigger: () => Promise<void
       if (prop === 'prepare')
         return (sql: string) => {
           const statement = target.prepare(sql);
+          if (sql.includes('SELECT 1 AS ok FROM actor_ok')) return wrap(statement);
+          if (
+            sql.endsWith(' AS keyset') ||
+            (sql.includes('ring AS MATERIALIZED') && sql.includes(' AS pass_ok'))
+          )
+            return new Proxy(statement, {
+              get(inner, member) {
+                if (member === 'bind')
+                  return (...values: unknown[]) => {
+                    const bound = inner.bind(...values);
+                    batchStatements.add(bound);
+                    return bound;
+                  };
+                const value = Reflect.get(inner, member, inner);
+                return typeof value === 'function' ? value.bind(inner) : value;
+              },
+            });
           if (
             sql.includes(' AS result_0') &&
             (sql.includes('json_group_array') ||

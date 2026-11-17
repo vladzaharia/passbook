@@ -36,6 +36,10 @@ export function actorPassScopeSql(
       parts.push(`EXISTS (SELECT 1 FROM scanner_templates sc_st
         WHERE sc_st.scanner_id = ? AND sc_st.template_id = ${alias}.template_id)`);
       params.push(actor.scanner.id);
+    } else if (actor.principal === 'admin') {
+      // An admin's templates are the request's own, validated by the guard: no stored scope to read.
+      parts.push(`${alias}.template_id IN (SELECT value FROM json_each(?) WHERE type = 'text')`);
+      params.push(JSON.stringify(actor.templateIds));
     } else return null;
   }
   if (actor.event) {

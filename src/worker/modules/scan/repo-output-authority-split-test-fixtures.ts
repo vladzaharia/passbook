@@ -15,7 +15,7 @@ import { runWalletProviderOperation } from '../wallet-providers/sync-operation.t
 import { outputRaceDatabase } from './output-authority-race-database-test-fixtures.ts';
 import { issueUnderOlderAdapter } from './release-policy-test-fixtures.ts';
 import { type Candidate, candidateById } from './repo-lookup.ts';
-import { key, type ScanKit, setupScanKit, startScanCredentialTransfer } from './test-kit.ts';
+import { type ScanKit, setupScanKit, startScanCredentialTransfer } from './test-kit.ts';
 
 export let kit: ScanKit;
 export let templateId: string;
@@ -23,7 +23,7 @@ export const name = 'Output Fence Private Person';
 const email = 'output-fence-private@example.test';
 export const system = { type: 'system' as const, id: null };
 
-interface OutputFixture {
+export interface OutputFixture {
   pass: Pass;
   candidate: Candidate;
   scanner: ScannerFixture;
@@ -162,7 +162,7 @@ export async function finishProviderTransfer(
   });
 }
 
-type Change =
+export type Change =
   | 'scanner'
   | 'quarantine'
   | 'wallet'
@@ -292,33 +292,5 @@ export async function changeAfterProjection(f: OutputFixture, db: D1Database, ch
       ON CONFLICT(pass_id) DO UPDATE SET rules=excluded.rules,updated_at=excluded.updated_at`,
       [pass.id, kit.org.id, kit.clock.now()],
     );
-  }
-}
-
-export async function racedResolve(f: OutputFixture, change: Change) {
-  const real = kit.env.DB;
-  const race = raceFence(real, () => changeAfterProjection(f, real, change));
-  Object.assign(kit.env, { DB: race.db });
-  try {
-    const response = await kit.post(f.scanner.headers, '/resolve', {
-      idempotencyKey: key(),
-      input: { passId: f.pass.id, method: 'manual' },
-      clientTs: kit.clock.now(),
-    });
-    expect(race.fired()).toBe(true);
-    const text = await response.text();
-    const body = JSON.parse(text);
-    // Identical to the pass's own release, nothing changed; one that differs from it is a real
-    // change: retryable, nothing disclosed. Every other change refuses as an absent pass.
-    if (change === 'release') return expect(body).toMatchObject({ card: expect.anything() });
-    expect(response.status).toBe(change === 'release-adapter' ? 409 : 200);
-    expect(body).toMatchObject(
-      change === 'release-adapter'
-        ? { code: 'SCAN_PASS_CHANGED' }
-        : { kind: 'refused', reason: 'not_found', card: null, display: null, template: null },
-    );
-    noDisclosure(text, f.pass.id);
-  } finally {
-    Object.assign(kit.env, { DB: real });
   }
 }

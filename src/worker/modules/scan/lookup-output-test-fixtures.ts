@@ -115,9 +115,14 @@ export const resolveRequest = (code: string) => ({
   clientTs: kit.clock.now(),
 });
 
+/**
+ * Runs `before` with the statements' SQL ahead of every batch, and, with `singles`, ahead of every
+ * statement run on its own (`first`, `all`, `run`).
+ */
 export function interceptBatches(
   real: D1Database,
   before?: (sql: readonly string[]) => Promise<void>,
+  options: { singles?: boolean } = {},
 ) {
   const batches: string[][] = [];
   const bindings: { sql: string; values: unknown[] }[] = [];
@@ -130,6 +135,15 @@ export function interceptBatches(
           return (...args: unknown[]) => {
             bindings.push({ sql, values: args });
             return wrap(target.bind(...args), sql);
+          };
+        if (
+          options.singles &&
+          before &&
+          (property === 'first' || property === 'all' || property === 'run')
+        )
+          return async (...args: unknown[]) => {
+            await before([sql]);
+            return (target[property] as (...a: unknown[]) => Promise<unknown>)(...args);
           };
         const value = Reflect.get(target, property, target);
         return typeof value === 'function' ? value.bind(target) : value;

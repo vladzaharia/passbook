@@ -1,30 +1,29 @@
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ScanActor } from './guard.ts';
-import type { OutputPredicate } from './repo-output-predicates.ts';
 
 export type CandidateMatchInput =
   | { passId: string }
   | { scanCode: string | null; barcodeHash: string; lookupHash: string; serial: string | null };
 
-/** Match the same credential alternatives used by candidate reads, in their original bind order. */
-export function candidateMatchPredicate(input: CandidateMatchInput): OutputPredicate {
+/** Match the same credential alternatives used by candidate reads, over a `passes` row aliased `p`. */
+export function candidateMatchPredicate(input: CandidateMatchInput): {
+  sql: string;
+  params: SqlValue[];
+} {
   const matches: string[] = [];
   const params: SqlValue[] = [];
   if ('passId' in input) {
-    matches.push('p.id=?/* scan-ephemeral-pass-id */');
+    matches.push('p.id=?');
     params.push(input.passId);
   } else {
     if (input.scanCode) {
-      matches.push('p.scan_code=?/* scan-ephemeral-scan-code */');
+      matches.push('p.scan_code=?');
       params.push(input.scanCode);
     }
-    matches.push(
-      'p.barcode_hash=?/* scan-ephemeral-barcode-hash */',
-      'p.lookup_hash=?/* scan-ephemeral-lookup-hash */',
-    );
+    matches.push('p.barcode_hash=?', 'p.lookup_hash=?');
     params.push(input.barcodeHash, input.lookupHash);
     if (input.serial !== null) {
-      matches.push('p.serial=?/* scan-ephemeral-serial */');
+      matches.push('p.serial=?');
       params.push(input.serial);
     }
   }
@@ -46,14 +45,4 @@ export function candidateCapacityStmt(
     WHERE p.org_id=? AND p.mode=? AND (${matches.sql}) GROUP BY p.id`,
     [actor.orgId, actor.mode, ...matches.params],
   );
-}
-
-export function candidateReadGuard(
-  authority: OutputPredicate,
-  csrf: OutputPredicate,
-): OutputPredicate {
-  return {
-    sql: `(${authority.sql}) AND (${csrf.sql})`,
-    params: [...authority.params, ...csrf.params],
-  };
 }

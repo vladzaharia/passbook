@@ -20,7 +20,11 @@ function beforeAuthorityRead(change: () => Promise<unknown>) {
       if (prop === 'prepare')
         return (sql: string) => {
           const statement = target.prepare(sql);
-          if (fired || !sql.startsWith('SELECT (') || !sql.endsWith(') AS current'))
+          if (
+            fired ||
+            !sql.startsWith('WITH actor AS MATERIALIZED') ||
+            !sql.endsWith('AS authorized')
+          )
             return statement;
           return new Proxy(statement, {
             get(inner, member) {

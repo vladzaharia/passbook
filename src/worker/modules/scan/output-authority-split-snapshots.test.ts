@@ -42,6 +42,7 @@ import { packOutputPredicate } from './repo-output-predicates.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { grantScanMembership, key, proofedScanActor } from './test-kit.ts';
+import { captureTestEpochs } from './test-kit-epochs.ts';
 
 describe('atomic scanner response authority', () => {
   it.each(['membership', 'session'] as const)(
@@ -64,6 +65,7 @@ describe('atomic scanner response authority', () => {
       actor.platformSessionId = auth.sessionId;
       actor.tenantAuthority = await captureScanTenantAuthority(kit.ctx, auth, authority);
       actor.role = tenantScanRole(authority);
+      await captureTestEpochs(kit.ctx, actor);
       const real = kit.env.DB;
       const race = raceFence(real, () =>
         change === 'membership'

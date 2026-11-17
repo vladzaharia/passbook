@@ -1,37 +1,24 @@
-import type { Grant, GrantedStatement } from '../../platform/authority.ts';
-import { bumpIfStmt } from '../../platform/counters.ts';
-import type { SqlValue } from '../../platform/db.ts';
-import { AppError } from '../../platform/errors.ts';
+import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
+import type { GrantCond } from '../../platform/authority-cond.ts';
+import { AppError, DENY_REASONS } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
+import { scanActorChecks, scanCapabilityChecks, scanPrincipal } from './authority-checks.ts';
 import {
-  cappedMissAuditStmt,
+  auditedAtCap,
   crossedCap,
+  type MissWindow,
   missCounterKey,
+  missCountStmt,
   missIncrementPart,
-  type ReadMissFence,
-  readMissAuthorityPredicate,
-  requireMissAuditStmt,
-  requireMissIncrementStmt,
-  requireReadMissObservationStmt,
+  readMissIncrementPart,
 } from './repo-miss-authority.ts';
-
-export { isReadMissStale } from './repo-miss-authority.ts';
+import { credentialRefChecks } from './repo-scan-checks.ts';
 
 const WINDOW_MS = 10 * 60_000;
 export const MISSES_PER_WINDOW = 30;
 
 export type MissResult = 'not_committed' | 'counted' | 'capped';
-
-type MissBatchResult = { results: readonly unknown[] } & ({ success: true } | { success: false });
-
-export interface MissPlan {
-  stmts: D1PreparedStatement[];
-  result(results: readonly MissBatchResult[]): MissResult;
-  throwIfCapped(result: MissResult): void;
-}
-
-type Predicate = { sql: string; params: readonly SqlValue[] };
 
 /** `counted`, `capped` or `not_committed` from the increment's returned row. */
 function missResultOf(row: unknown): MissResult {
@@ -45,47 +32,6 @@ function throwCapped(result: MissResult, window: number, now: number): void {
   throw new AppError('SCAN_TOO_MANY_MISSES', 429, 'Too many codes not found. Wait a few minutes.', {
     headers: { 'retry-after': String(Math.ceil((window + WINDOW_MS - now) / 1000)) },
   });
-}
-
-function missPlan(
-  ctx: ServiceContext,
-  actor: ScanActor,
-  authority: Predicate,
-  now = ctx.clock.now(),
-  assertions: readonly D1PreparedStatement[] = [],
-): MissPlan {
-  const db = ctx.env.DB;
-  const window = now - (now % WINDOW_MS);
-  const key = missCounterKey(actor);
-  const threshold = MISSES_PER_WINDOW + 1;
-  const increment = bumpIfStmt(db, key, window, authority);
-  const audit = cappedMissAuditStmt(db, {
-    actor,
-    key,
-    window,
-    threshold,
-    at: now,
-    requestId: ctx.requestId,
-  });
-  const eligible = authority;
-  return {
-    stmts: [
-      ...assertions,
-      increment,
-      requireMissIncrementStmt(db, eligible),
-      audit,
-      requireMissAuditStmt(db, eligible, key, window, threshold),
-    ],
-    result(results) {
-      if (
-        results.length !== assertions.length + 4 ||
-        results.some((item) => !item || item.success === false)
-      )
-        return 'not_committed';
-      return missResultOf(results[assertions.length]?.results?.[0]);
-    },
-    throwIfCapped: (result) => throwCapped(result, window, now),
-  };
 }
 
 /**
@@ -131,23 +77,104 @@ export function grantMiss(
   };
 }
 
+const REFUSED = 'SCAN_READ_MISS_REFUSED';
+/** A counted miss at the cap without its audit row: the effect is incomplete, so the count is rolled back. */
+const INCOMPLETE = 'SCAN_MISS_INCOMPLETE';
+
+/** The observation as an assert condition: `{org}` and `{mode}` are the grant row's. */
+export const unchangedCond = (window: MissWindow): GrantCond => ({
+  render: (b, _scope, tenant) => {
+    let at = 0;
+    return window.sql
+      .replace(/\{org\}/g, `${tenant}.org_id`)
+      .replace(/\{mode\}/g, `${tenant}.mode`)
+      .replace(/\?/g, () => b.bind(window.params[at++]));
+  },
+});
+
+/** What a read saw when it found nothing, to be true when the miss is counted. */
+export interface ReadMissObservation {
+  /** Keyed refs of the presented credential in the actor's mode: none may be retired by a transfer. */
+  refs: readonly string[];
+  unchanged: MissWindow;
+}
+
+/** The actor's miss counter is past its cap in this window: refuse before any pass is read. */
+export function refuseOverCap(row: unknown, now: number): void {
+  const count = row && typeof row === 'object' && 'count' in row ? row.count : undefined;
+  if (typeof count === 'number' && count > MISSES_PER_WINDOW)
+    throwCapped('capped', now - (now % WINDOW_MS), now);
+}
+
+/** Window start and counter read of an actor's misses, for a first batch. */
+export const missCounterRead = (db: D1Database, actor: ScanActor, now: number) =>
+  missCountStmt(db, missCounterKey(actor), now - (now % WINDOW_MS));
+
 /**
- * Append this plan to the final actor/item batch. `candidates` must detect changes to
- * the original candidate observation and any matching pending transfer; passless resolve
- * must treat any matching pass as stale. `visible` uses that batch's final item predicates,
- * or is empty only for an established empty projection.
- * Pass just this plan's result slice to `result`.
+ * The checks of a read miss: the admin's capability, the actor's epochs and the credential's refs. None
+ * may carry `release`: that reason is the cap-audit assert's, answered as an incomplete effect.
  */
-export function prepareReadMiss(
+export const readMissChecks = (actor: ScanActor, now: number, refs: readonly string[]) => [
+  ...scanCapabilityChecks(actor),
+  ...scanActorChecks(actor, { now }),
+  ...credentialRefChecks(refs),
+];
+
+/**
+ * The miss of a read that found nothing, counted in its own grant (`org_mode.scan.miss`) after the
+ * read: the actor's checks, the credential's refs and the observation hold in the same transaction as
+ * the increment, so a revoked actor, a retired credential or a pass that appeared counts nothing.
+ * `counted` or `not_committed` (nothing counted, nothing to disclose: log `SCAN_MISS_UNCOUNTED`);
+ * past the cap it throws `SCAN_TOO_MANY_MISSES` after the count, and the cap crossing is audited.
+ */
+export async function grantReadMiss(
   ctx: ServiceContext,
   actor: ScanActor,
-  fence: ReadMissFence,
-): MissPlan {
+  observation: ReadMissObservation,
+): Promise<'counted' | 'not_committed'> {
   const now = ctx.clock.now();
-  const observations = Array.isArray(fence?.assertions)
-    ? fence.assertions
-        .filter((item) => item && typeof item.sql === 'string' && Array.isArray(item.params))
-        .map((item) => requireReadMissObservationStmt(ctx.env.DB, item))
-    : [];
-  return missPlan(ctx, actor, readMissAuthorityPredicate(actor, now, fence), now, observations);
+  const window = now - (now % WINDOW_MS);
+  const key = missCounterKey(actor);
+  const threshold = MISSES_PER_WINDOW + 1;
+  const g = grant(ctx, {
+    purpose: 'org_mode.scan.miss',
+    principal: scanPrincipal(actor),
+    checks: readMissChecks(actor, now, observation.refs),
+    tables: ['counters'],
+    // `release` names no check of a miss: it is the assert that its cap audit was written.
+    codes: Object.fromEntries(
+      DENY_REASONS.map((reason) => [reason, reason === 'release' ? INCOMPLETE : REFUSED]),
+    ),
+  });
+  g.assert('stale', [unchangedCond(observation.unchanged)]);
+  const [increment] = g.include(readMissIncrementPart(key, window));
+  if (!increment) throw new Error('The miss increment is missing.');
+  g.audit(
+    {
+      at: now,
+      orgId: actor.orgId,
+      actorType: actor.actor.type,
+      actorId: actor.actor.id,
+      action: 'scan.misses_capped',
+      targetType: actor.scanner ? 'scanner' : null,
+      targetId: actor.scanner?.id ?? null,
+      requestId: ctx.requestId,
+      ipPrefix: null,
+      detail: null,
+    },
+    [crossedCap(key, window, threshold)],
+  );
+  g.assert('release', [auditedAtCap(actor, key, window, threshold, now)]);
+  let result: MissResult = 'not_committed';
+  try {
+    result = missResultOf((await g.commit())[g.indexOf(increment)]?.results?.[0]);
+  } catch (error) {
+    if (error instanceof AppError && error.code === INCOMPLETE)
+      throw new AppError(INCOMPLETE, 500, 'The count was not recorded. Try again.');
+    if (!(error instanceof AppError && error.code === REFUSED)) throw error;
+  }
+  if (result === 'not_committed')
+    ctx.log.warn('scan.miss_uncounted', { orgId: actor.orgId, code: 'SCAN_MISS_UNCOUNTED' });
+  throwCapped(result, window, now);
+  return result === 'not_committed' ? 'not_committed' : 'counted';
 }

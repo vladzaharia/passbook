@@ -5,11 +5,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import {
-  actorCsrfAuthorityStmt,
-  actorCsrfSnapshotFence,
-  actorCsrfSnapshotFromResult,
-} from './actor-csrf.ts';
-import {
   type CredentialTombstoneSnapshot,
   captureCredentialTombstoneSnapshot,
   credentialInputValid,
@@ -18,7 +13,6 @@ import {
 } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { boundedClaimPredicate } from './repo-act-claim-lifecycle.ts';
-import { actorAuthorityPredicate } from './repo-actor-authority.ts';
 import {
   credentialTombstonesClearStmt,
   validCredentialKeysetCommitment,
@@ -33,12 +27,8 @@ import {
   type Candidate,
   candidatesOf,
 } from './repo-lookup.ts';
-import { boundOutputPredicate } from './repo-output-predicates.ts';
-import {
-  type CandidateMatchInput,
-  candidateCapacityStmt,
-  candidateReadGuard,
-} from './repo-resolve-candidates.ts';
+import { scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
+import { type CandidateMatchInput, candidateCapacityStmt } from './repo-resolve-candidates.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { walletIdentityMatches } from './wallet-snapshot.ts';
 
@@ -55,7 +45,10 @@ export interface CandidateReadPlan {
   finish(results: readonly D1Result[]): Candidate[] | null;
 }
 
-/** A claim guard proves the immediately preceding new claim; null makes a read-only plan. */
+/**
+ * A claim guard proves the immediately preceding new claim; null makes a read-only plan; without one
+ * (a resolve) the actor's read authority guards the keyset's first initialization.
+ */
 export async function planCandidateReads(
   ctx: ServiceContext,
   actor: ScanActor,
@@ -72,13 +65,6 @@ export async function planCandidateReads(
     return { now: ctx.clock.now(), stmts: [], capacityStmt: null, finish: () => null };
   refs = captureCredentialTombstoneSnapshot(refs);
   const initialize = initGuard !== null;
-  const csrfQuery = initGuard === undefined ? actorCsrfAuthorityStmt(db, actor) : null;
-  const csrfSnapshot =
-    initGuard === undefined && csrfQuery
-      ? await actorCsrfSnapshotFromResult(ctx, actor, await csrfQuery.all())
-      : null;
-  if (initGuard === undefined && !csrfSnapshot)
-    return { now: ctx.clock.now(), stmts: [], capacityStmt: null, finish: () => null };
   const stmts: D1PreparedStatement[] = [
     credentialTombstonesClearStmt(
       db,
@@ -115,22 +101,10 @@ export async function planCandidateReads(
     }
   }
   const now = ctx.clock.now();
-  let guard = initGuard?.(now) ?? null;
-  if (initGuard === undefined && csrfSnapshot) {
-    const csrf = actorCsrfSnapshotFence(
-      actor,
-      csrfSnapshot.session
-        ? { ...csrfSnapshot, session: { ...csrfSnapshot.session, now } }
-        : csrfSnapshot,
-    );
-    const authority = actorAuthorityPredicate({
-      actor,
-      now,
-      event: actor.event,
-      adminEventTemplates: actor.adminEventTemplates === true,
-    });
-    guard = csrf ? candidateReadGuard(authority, csrf) : null;
-  }
+  const guard =
+    initGuard === undefined
+      ? scanReadFence(scanReadAuthority(actor, { now }))
+      : (initGuard?.(now) ?? null);
   if (initialize && !guard) return { now, stmts: [], capacityStmt: null, finish: () => null };
   // On a grant, the keyset write is the grant's part: a placeholder keeps the result positions.
   if (guard && keysetOnGrant) stmts.unshift(stmt(db, 'SELECT 1 AS keyset_on_grant'));
@@ -139,7 +113,7 @@ export async function planCandidateReads(
       credentialRefKeysetInitializeStmt(
         db,
         refs.credentialKeysetCommitment,
-        initGuard ? boundedClaimPredicate(guard, 1) : boundOutputPredicate(guard),
+        initGuard ? boundedClaimPredicate(guard, 1) : guard,
       ),
     );
   const capacityStmt = candidateCapacityStmt(db, actor, capacityInput);

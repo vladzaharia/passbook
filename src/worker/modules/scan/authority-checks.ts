@@ -1,6 +1,7 @@
 import { type Check, exactlyOne, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { gt } from '../../platform/authority-expr.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
+import { capabilityChecks } from '../passes/repo-authority.ts';
 import { epochsMissing } from './authority-capture.ts';
 
 export { captureScanEpochs } from './authority-capture.ts';
@@ -41,6 +42,12 @@ export function scanPrincipal(actor: ScanActor): Principal {
     mode: actor.mode,
   };
 }
+
+/** An admin acts through its membership's roles: they must still grant the capability the guard admitted it for. */
+export const scanCapabilityChecks = (actor: ScanActor): Check[] =>
+  actor.principal === 'admin' && actor.tenantAuthority
+    ? capabilityChecks(actor.tenantAuthority)
+    : [];
 
 export interface ScanChecksInput {
   now: number;
