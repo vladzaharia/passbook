@@ -1,0 +1,47 @@
+[
+  {
+    "role": "anon",
+    "path": "/p/{passToken}",
+    "name": "ssr-hosted-pass"
+  },
+  {
+    "role": "anon",
+    "path": "/p/{passToken}/barcode",
+    "name": "ssr-presentation-public"
+  },
+  {
+    "role": "holder",
+    "path": "/api/v1/me/passes/{myPassId}/barcode",
+    "name": "ssr-presentation-holder"
+  },
+  {
+    "role": "anon",
+    "path": "/b/{bundleToken}",
+    "name": "ssr-bundle"
+  },
+  {
+    "role": "anon",
+    "path": "/j/{joinToken}",
+    "name": "ssr-join"
+  },
+  {
+    "role": "anon",
+    "path": "/p/not-a-real-token",
+    "name": "ssr-error-pass-not-found"
+  },
+  {
+    "role": "anon",
+    "path": "/b/not-a-real-token",
+    "name": "ssr-error-bundle-not-found"
+  },
+  {
+    "role": "anon",
+    "path": "/j/not-a-real-token",
+    "name": "ssr-error-join-not-found"
+  },
+  {
+    "role": "anon",
+    "path": "/no-such-page",
+    "name": "spa-not-found"
+  }
+]

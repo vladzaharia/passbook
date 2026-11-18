@@ -1,0 +1,12 @@
+[
+  {
+    "role": "anon",
+    "path": "/scan",
+    "name": "scan-unpaired"
+  },
+  {
+    "role": "org",
+    "path": "/scan",
+    "name": "scan-signed-in-unpaired"
+  }
+]

@@ -1,0 +1,202 @@
+[
+  {
+    "role": "org",
+    "path": "/admin",
+    "name": "admin-overview"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/account",
+    "name": "admin-account"
+  },
+  {
+    "role": "org",
+    "path": "/admin/api-keys",
+    "name": "admin-api-keys"
+  },
+  {
+    "role": "org",
+    "path": "/admin/audit",
+    "name": "admin-audit"
+  },
+  {
+    "role": "org",
+    "path": "/admin/blueprints",
+    "name": "admin-blueprints"
+  },
+  {
+    "role": "org",
+    "path": "/admin/blueprints/{blueprintId}",
+    "name": "admin-blueprint-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections",
+    "name": "admin-connections"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/{connectionId}",
+    "name": "admin-connection-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/new",
+    "name": "admin-connection-new"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/webhooks/{endpointId}",
+    "name": "admin-webhook-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/webhooks/new",
+    "name": "admin-webhook-new"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/identities",
+    "name": "admin-identities"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/identities/{identityId}",
+    "name": "admin-identity-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/messages",
+    "name": "admin-messages"
+  },
+  {
+    "role": "org",
+    "path": "/admin/messages/{broadcastId}",
+    "name": "admin-message-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/messages/new",
+    "name": "admin-message-new"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/orgs",
+    "name": "admin-orgs"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/orgs/{orgId}",
+    "name": "admin-org-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes",
+    "name": "admin-passes"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/{passId}",
+    "name": "admin-pass-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/new",
+    "name": "admin-pass-new"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/import",
+    "name": "admin-pass-import"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/import/{importId}",
+    "name": "admin-pass-import-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning",
+    "name": "admin-scanning"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/events/{eventId}",
+    "name": "admin-scan-event"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/scanners/{scannerId}",
+    "name": "admin-scanner"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/sessions/{sessionId}",
+    "name": "admin-scan-session"
+  },
+  {
+    "role": "org",
+    "path": "/admin/settings",
+    "name": "admin-settings"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/settings",
+    "name": "admin-settings-platform"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/status",
+    "name": "admin-status"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates",
+    "name": "admin-templates"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{templateId}",
+    "name": "admin-template-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{templateId}/design",
+    "name": "admin-template-design"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{templateId}/join-sign",
+    "name": "admin-template-join-sign"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/new",
+    "name": "admin-template-new"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/upload",
+    "name": "admin-template-upload"
+  },
+  {
+    "role": "org",
+    "path": "/admin/test-inbox",
+    "name": "admin-test-inbox"
+  },
+  {
+    "role": "org",
+    "path": "/admin/users",
+    "name": "admin-users-org"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/users",
+    "name": "admin-users"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/users/{userId}",
+    "name": "admin-user-detail"
+  }
+]

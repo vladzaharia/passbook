@@ -145,7 +145,7 @@ async function retryRateLimited<T>(run: () => Promise<T>): Promise<T> {
 
 // Local mail lands in <dir>/<id>/email-text (older wrangler) or, in current miniflare, in the
 // system temp dir as miniflare-*/email/email-text; every dev server shares that one.
-function mailFiles(dir: string): Set<string> {
+export function mailFiles(dir: string): Set<string> {
   const files = new Set<string>();
   for (const root of new Set([dir, tmpdir()])) {
     if (!existsSync(root)) continue;
@@ -159,7 +159,11 @@ function mailFiles(dir: string): Set<string> {
   return files;
 }
 
-async function nextMagicToken(dir: string, base: string, before: Set<string>): Promise<string> {
+export async function nextMagicToken(
+  dir: string,
+  base: string,
+  before: Set<string>,
+): Promise<string> {
   const deadline = Date.now() + 20_000;
   while (Date.now() < deadline) {
     for (const file of mailFiles(dir)) {
