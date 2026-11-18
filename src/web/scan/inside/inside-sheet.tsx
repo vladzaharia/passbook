@@ -131,10 +131,11 @@ export function InsideSheet({
               )
             ) : (
               <ol className="scan-in-list" data-testid="inside-list">
-                {state.rows.map((row) => (
+                {state.rows.map((row, index) => (
                   <InsideRowView
                     key={row.passId}
                     row={row}
+                    index={index}
                     now={now}
                     onOpen={onOpenRow}
                     trailing={

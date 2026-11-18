@@ -1,5 +1,5 @@
 import { Clock, LogOut } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
@@ -36,11 +36,14 @@ export function InsideRowView({
   now,
   onOpen,
   trailing,
+  index = 0,
 }: {
   row: InsideRow;
   now: number;
   onOpen: (row: InsideRow) => void;
   trailing: ReactNode;
+  /** The row's place in the list: the entrance stagger. */
+  index?: number;
 }) {
   const name = row.holder ?? ACCESS_COPY.inside.unnamed;
   return (
@@ -49,6 +52,7 @@ export function InsideRowView({
       data-row-id={row.passId}
       data-flag={flagged(row) ? 'amber' : undefined}
       data-testid="inside-row"
+      style={{ '--i': index } as CSSProperties}
     >
       <button type="button" className="scan-in-open" onClick={() => onOpen(row)}>
         {row.photoUrl ? (
