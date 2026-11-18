@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ISSUANCE_OUTCOMES } from '../copy/email.ts';
+import { InputMatchSchema } from './broadcasts.ts';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
 import { PassStampsSchema } from './pass-stamps.ts';
@@ -174,7 +175,7 @@ export const PassListQuerySchema = z.object({
   q: z.string().max(200).optional(),
   /** Exact match on the pass's externalId. */
   externalId: z.string().min(1).max(200).optional(),
-  /** A ScanTarget as a JSON string: checked in at an event, or not scanned for 30 or 90 days. */
+  /** A ScanTarget as a JSON string: checked in at an event, or not scanned for 1 to 730 days. */
   scan: z
     .string()
     .max(200)
@@ -187,6 +188,20 @@ export const PassListQuerySchema = z.object({
       }
     })
     .pipe(ScanTargetSchema)
+    .optional(),
+  /** An InputMatch as a JSON string: "Only passes where" rows. */
+  match: z
+    .string()
+    .max(2000)
+    .transform((raw, ctx) => {
+      try {
+        return JSON.parse(raw) as unknown;
+      } catch {
+        ctx.addIssue({ code: 'custom', message: 'Use a JSON match.' });
+        return z.NEVER;
+      }
+    })
+    .pipe(InputMatchSchema)
     .optional(),
   cursor: z.string().max(512).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
