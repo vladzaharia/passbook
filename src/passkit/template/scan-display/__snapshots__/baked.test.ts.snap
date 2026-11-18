@@ -422,6 +422,187 @@ exports[`henrys-copper default display > matches its snapshot, and so does each 
 }
 `;
 
+exports[`starter-access-card default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.memberName}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Valid until",
+          "type": "field",
+          "value": "{{fields.until}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-access-card default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-access-card default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-access-card default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-access-card default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
 exports[`starter-boarding-pass default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
 {
   "header": {},
