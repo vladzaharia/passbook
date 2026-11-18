@@ -26,6 +26,20 @@ CREATE TABLE retention_floors (
   PRIMARY KEY (org_id, class)
 );
 
+-- Moves on every change to a platform retention setting. A settings save that planned its floors from the
+-- old values commits only while this is still the revision it read (a platform save has no other fence).
+CREATE TABLE retention_platform_rev (id INTEGER PRIMARY KEY CHECK (id = 1), rev INTEGER NOT NULL);
+INSERT INTO retention_platform_rev (id, rev) VALUES (1, 0);
+CREATE TRIGGER retention_platform_rev_ins AFTER INSERT ON settings
+WHEN NEW.scope = 'platform' AND NEW.key LIKE 'retention.%'
+BEGIN UPDATE retention_platform_rev SET rev = rev + 1 WHERE id = 1; END;
+CREATE TRIGGER retention_platform_rev_upd AFTER UPDATE ON settings
+WHEN NEW.scope = 'platform' AND NEW.key LIKE 'retention.%'
+BEGIN UPDATE retention_platform_rev SET rev = rev + 1 WHERE id = 1; END;
+CREATE TRIGGER retention_platform_rev_del AFTER DELETE ON settings
+WHEN OLD.scope = 'platform' AND OLD.key LIKE 'retention.%'
+BEGIN UPDATE retention_platform_rev SET rev = rev + 1 WHERE id = 1; END;
+
 -- A floor change is a settings change: it moves the org's config_revision, so a save planned before it fails.
 CREATE TRIGGER retention_floors_config_ins AFTER INSERT ON retention_floors
 BEGIN UPDATE orgs SET config_revision = config_revision + 1 WHERE id = NEW.org_id; END;

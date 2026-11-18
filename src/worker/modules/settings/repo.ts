@@ -5,7 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import type { FloorWrite } from '../retention/changes.ts';
-import { addFloorWrites } from '../retention/repo-floors.ts';
+import { addFloorWrites, platformRevCheck } from '../retention/repo-floors.ts';
 import { orgIdOfScope } from './registry.ts';
 
 export type SettingsAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
@@ -73,6 +73,7 @@ export async function writeScope(
   authority?: SettingsAuthority,
   admin?: SettingsAdmin,
   floors: readonly FloorWrite[] = [],
+  platformRev?: number,
 ): Promise<boolean> {
   const now = ctx.clock.now();
   const orgId = orgIdOfScope(scope);
@@ -93,6 +94,9 @@ export async function writeScope(
       purpose: 'platform.settings.update',
       principal: { kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId },
       target: scope,
+      ...(platformRev === undefined
+        ? {}
+        : { checks: [platformRevCheck(platformRev)], codes: { config: 'SETTINGS_CHANGED' } }),
     });
     for (const [key, value] of entries)
       g.upsert('settings', ['scope', ...COLUMNS], [scope, key, value, by, now], {
@@ -110,7 +114,11 @@ export async function writeScope(
       purpose: 'org.settings.update',
       principal: tenantPrincipal(authority),
       target: scope,
-      checks: [...capabilityChecks(authority), epochIs('orgs', orgId, 'config_revision', revision)],
+      checks: [
+        ...capabilityChecks(authority),
+        epochIs('orgs', orgId, 'config_revision', revision),
+        ...(platformRev === undefined ? [] : [platformRevCheck(platformRev)]),
+      ],
       codes: { config: 'SETTINGS_CHANGED' },
     });
     for (const [key, value] of entries)

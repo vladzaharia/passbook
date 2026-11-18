@@ -3,7 +3,7 @@ import {
   RETENTION_CLASSES,
   type RetentionClass,
 } from '../../../shared/privacy/data-classes.ts';
-import { all } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
 import type { ActiveFloor, OrgRow, Raw } from './policy.ts';
 
@@ -137,4 +137,10 @@ export async function readOrgAdminEmails(db: D1Database, orgId: string): Promise
     [orgId],
   );
   return rows.flatMap((r) => (r.email ? [r.email] : []));
+}
+
+/** The revision of the platform retention settings, to fence a save planned from them. */
+export async function readPlatformRev(db: D1Database): Promise<number> {
+  const r = await first<{ rev: number }>(db, 'SELECT rev FROM retention_platform_rev WHERE id = 1');
+  return r?.rev ?? 0;
 }

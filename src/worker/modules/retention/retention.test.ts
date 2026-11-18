@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
+import { writeScope } from '../settings/repo.ts';
 import { clearSettingsCache, updateSettings } from '../settings/service.ts';
 import { orgRetention, retentionPlan } from './plan.ts';
 import { DAY } from './policy.ts';
@@ -391,5 +392,70 @@ describe('review fixes', () => {
     expect(await rejection(orgSave(o, { 'retention.scansDays': null }, before))).toMatchObject({
       status: 409,
     });
+  });
+
+  it('L3: a save planned before a platform retention change fails, org and platform side', async () => {
+    const o = await rk.org();
+    const rev = async () =>
+      (
+        await first<{ rev: number }>(
+          rk.kit.env.DB,
+          'SELECT rev FROM retention_platform_rev WHERE id = 1',
+        )
+      )?.rev ?? 0;
+    const planned = await rev();
+    await platformSave({ 'retention.scansDays': 100 });
+    expect(await rev()).toBeGreaterThan(planned);
+    const config = (
+      await first<{ config_revision: number }>(
+        rk.kit.env.DB,
+        'SELECT config_revision FROM orgs WHERE id = ?',
+        [o.orgId],
+      )
+    )?.config_revision;
+    const stale = writeScope(
+      ctx(),
+      `org:${o.orgId}`,
+      { 'retention.scansDays': 60 },
+      [],
+      o.userId,
+      config ?? 0,
+      o.authority,
+      undefined,
+      [],
+      planned,
+    );
+    await expect(stale).rejects.toMatchObject({ status: 409 });
+    const admin = await rk.platform();
+    await expect(
+      writeScope(
+        ctx(),
+        'platform',
+        { 'retention.scansDays': 50 },
+        [],
+        admin.userId,
+        null,
+        undefined,
+        admin,
+        [],
+        planned,
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+    // Read afresh, both commit.
+    const now = await rev();
+    expect(
+      await writeScope(
+        ctx(),
+        'platform',
+        { 'retention.scansDays': 50 },
+        [],
+        admin.userId,
+        null,
+        undefined,
+        admin,
+        [],
+        now,
+      ),
+    ).toBe(true);
   });
 });
