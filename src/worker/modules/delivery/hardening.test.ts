@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -265,6 +266,32 @@ describe('dead tokens on a shared device', () => {
     expect(left.map((r) => r.pass_id)).toEqual([mine.id]);
     expect(
       await first(kit.env.DB, "SELECT 1 FROM devices WHERE device_id = 'shared-dev'"),
+    ).not.toBeNull();
+  });
+});
+
+describe('dead tokens across orgs', () => {
+  it("keeps another org's registrations on the same device and token", async () => {
+    const otherOrg = await makeOrg(kit.fx, { name: 'Other Gym' });
+    const mine = await kit.pass();
+    const theirs = await kit.pass({ orgId: otherOrg.id });
+    await kit.device(mine, 'xorg-dev', 'c'.repeat(64));
+    await kit.device(theirs, 'xorg-dev', 'c'.repeat(64));
+    await enqueuePush(job(), mine.id, 'refresh');
+    await kit.settle();
+    kit.apns.results.set('c'.repeat(64), { status: 410, reason: 'Unregistered' });
+    try {
+      await handlePushDeliver({ kind: 'push.deliver', outboxId: await pushRow(mine.id) }, kit.ctx);
+    } finally {
+      kit.apns.results.delete('c'.repeat(64));
+    }
+    const left = await all<{ pass_id: string }>(
+      kit.env.DB,
+      "SELECT pass_id FROM registrations WHERE device_id = 'xorg-dev'",
+    );
+    expect(left.map((r) => r.pass_id)).toEqual([theirs.id]);
+    expect(
+      await first(kit.env.DB, "SELECT 1 FROM devices WHERE device_id = 'xorg-dev'"),
     ).not.toBeNull();
   });
 });
