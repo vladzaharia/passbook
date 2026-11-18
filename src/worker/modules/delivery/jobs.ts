@@ -1,13 +1,13 @@
 import type { Job, JobOf } from '../../jobs/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { sweepClass } from '../retention/sweep.ts';
 import { deliverEmail } from './email.ts';
 import { dispatchOutbox, redispatchLost } from './issuance-intent.ts';
 import { deliverPush } from './push.ts';
 import { settleUncertainEmails } from './repo-binding.ts';
-import { deleteFinishedOutbox, failOutbox, reclaimStaleLeases } from './repo-outbox-processing.ts';
+import { failOutbox, reclaimStaleLeases } from './repo-outbox-processing.ts';
 
-const DAY = 86_400_000;
 const LOST_ENQUEUE_GRACE_MS = 10 * 60_000;
 
 export async function handlePushDeliver(
@@ -35,11 +35,13 @@ export async function sweepDelivery(ctx: ServiceContext): Promise<void> {
     ctx.log.info('delivery.sweep', { uncertain, ...stale, lost, dispatched });
 }
 
-/** Outbox: sent and cancelled 30 days, failed and partial 90 days. push_results cascade. */
+/**
+ * Outbox by the retention plan: sent and cancelled rows after the class value, failed and partial rows after
+ * at least 90 days. push_results cascade.
+ */
 export async function dailyDelivery(ctx: ServiceContext): Promise<void> {
-  const now = ctx.clock.now();
-  const removed = await deleteFinishedOutbox(ctx.env.DB, now - 30 * DAY, now - 90 * DAY);
-  ctx.log.info('delivery.retention', { removed });
+  const removed = await sweepClass(ctx, 'delivery');
+  ctx.log.info('delivery.retention', { ...removed });
 }
 
 /** Finalizes a job that exhausted its retries: mark the outbox row failed and write an audit event. */

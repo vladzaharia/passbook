@@ -8,7 +8,7 @@ import {
   receiptMac,
   verifyChain,
 } from './receipts.ts';
-import { chainHead, chainRows, insertReceipt } from './repo-receipts.ts';
+import { chainHead, chainRows, insertReceipt, receiptInsertStmt } from './repo-receipts.ts';
 
 export interface ReceiptInput {
   /** NULL: the platform pass. */
@@ -25,36 +25,59 @@ export interface ReceiptInput {
   refsDigest?: string | null;
 }
 
+async function bodyFor(ctx: ServiceContext, input: ReceiptInput) {
+  const head = await chainHead(ctx.env.DB, input.orgId, input.cls);
+  const body: ReceiptBody = {
+    id: ctx.ids.id(),
+    orgId: input.orgId,
+    cls: input.cls,
+    kind: input.kind,
+    policyDays: input.policyDays ?? null,
+    cutoffAt: input.cutoffAt ?? null,
+    deleted: input.deleted,
+    anonymised: input.anonymised ?? 0,
+    requestId: input.requestId ?? null,
+    refsDigest: input.refsDigest ?? null,
+    ranAt: ctx.clock.now(),
+    seq: (head?.seq ?? 0) + 1,
+    prevMac: head?.mac ?? null,
+  };
+  return { body, head: head?.seq ?? 0, mac: await receiptMac(ctx.env, body) };
+}
+
 /**
  * Appends one receipt to the (org, class) chain. The chain head is read, the MAC computed, and the row lands
  * only while that head is still current; a racing writer makes it reread once.
  */
 export async function writeReceipt(ctx: ServiceContext, input: ReceiptInput): Promise<Receipt> {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const head = await chainHead(ctx.env.DB, input.orgId, input.cls);
-    const body: ReceiptBody = {
-      id: ctx.ids.id(),
-      orgId: input.orgId,
-      cls: input.cls,
-      kind: input.kind,
-      policyDays: input.policyDays ?? null,
-      cutoffAt: input.cutoffAt ?? null,
-      deleted: input.deleted,
-      anonymised: input.anonymised ?? 0,
-      requestId: input.requestId ?? null,
-      refsDigest: input.refsDigest ?? null,
-      ranAt: ctx.clock.now(),
-      seq: (head?.seq ?? 0) + 1,
-      prevMac: head?.mac ?? null,
-    };
-    const mac = await receiptMac(ctx.env, body);
-    if (await insertReceipt(ctx.env.DB, body, mac, head?.seq ?? 0)) {
+    const { body, head, mac } = await bodyFor(ctx, input);
+    if (await insertReceipt(ctx.env.DB, body, mac, head)) {
       await writeHead(ctx, { orgId: body.orgId, cls: body.cls, seq: body.seq, mac });
       return { ...body, mac };
     }
   }
   throw new ConflictError('Retention receipt chain is busy.', 'RETENTION_RECEIPT_BUSY');
 }
+
+export interface PreparedReceipt {
+  /** Runs first in a batch; the delete it records is gated on this row existing. */
+  stmt: D1PreparedStatement;
+  receipt: Receipt;
+}
+
+/** A receipt as a statement, for a caller that commits it in the same batch as the delete it records. */
+export async function prepareReceipt(
+  ctx: ServiceContext,
+  input: ReceiptInput,
+): Promise<PreparedReceipt> {
+  const { body, head, mac } = await bodyFor(ctx, input);
+  return { stmt: receiptInsertStmt(ctx.env.DB, body, mac, head), receipt: { ...body, mac } };
+}
+
+/** After the batch that carried a prepared receipt committed: records its head outside D1. */
+export const recordHead = (ctx: ServiceContext, r: Receipt) =>
+  writeHead(ctx, { orgId: r.orgId, cls: r.cls, seq: r.seq, mac: r.mac });
 
 /** Every receipt of one chain with whether it verifies, oldest first. */
 export async function readReceipts(

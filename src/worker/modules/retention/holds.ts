@@ -11,6 +11,7 @@ import {
   holdRow,
   insertHold,
   listHoldRows,
+  orgHasActiveHold,
   passHeld,
   passInOrg,
 } from './repo-holds.ts';
@@ -97,3 +98,7 @@ export const listHolds = (ctx: ServiceContext, orgId: string): Promise<HoldRow[]
 /** True while an org-wide hold or a hold on this pass is active: deletes and erasure skip it. */
 export const isPassHeld = (ctx: ServiceContext, orgId: string, passId: string): Promise<boolean> =>
   passHeld(ctx.env.DB, orgId, passId);
+
+/** True while any hold, org-wide or on a pass, is active: the org cannot be deleted. */
+export const orgIsHeld = (ctx: ServiceContext, orgId: string): Promise<boolean> =>
+  orgHasActiveHold(ctx.env.DB, orgId);

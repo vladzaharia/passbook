@@ -6,6 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
 import { newScanCode, primaryBarcodeMessage } from '../passes/scan-code.ts';
+import { sweepClass } from '../retention/sweep.ts';
 import { readSystemValue } from '../settings/repo.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { lookupHashOf } from './codes.ts';
@@ -210,15 +211,12 @@ async function commitAll(
   return refused;
 }
 
-/** Daily: expire asset grants and purge scans according to live and sandbox retention. */
+/** Daily: purge live scans by the retention plan and test scans by the sandbox window. */
 export async function dailyScans(ctx: ServiceContext): Promise<void> {
   const settings = await getPlatformSettings(ctx);
   const now = ctx.clock.now();
-  const live = await deleteScansBefore(
-    ctx.env.DB,
-    'live',
-    now - settings['retention.scansDays'] * DAY,
-  );
+  // Live scans follow the retention plan (org values, floors, holds); test scans keep the sandbox window.
+  const live = await sweepClass(ctx, 'scans');
   const test = await deleteScansBefore(
     ctx.env.DB,
     'test',

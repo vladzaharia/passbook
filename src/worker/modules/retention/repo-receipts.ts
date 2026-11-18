@@ -55,13 +55,13 @@ export async function chainHead(
  * Appends one receipt. It lands only while the chain head is still `head` (`seq` is `head + 1`); a racing
  * writer makes this a no-op and the caller rereads. Returns whether it was written.
  */
-export async function insertReceipt(
+export function receiptInsertStmt(
   db: D1Database,
   body: ReceiptBody,
   mac: string,
   head: number,
-): Promise<boolean> {
-  const { changes } = await stmt(
+): D1PreparedStatement {
+  return stmt(
     db,
     `INSERT INTO retention_receipts (${COLS})
      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
@@ -85,10 +85,16 @@ export async function insertReceipt(
       body.cls,
       head,
     ],
-  )
-    .run()
-    .then((r) => ({ changes: r.meta.changes ?? 0 }));
-  return changes === 1;
+  );
+}
+
+export async function insertReceipt(
+  db: D1Database,
+  body: ReceiptBody,
+  mac: string,
+  head: number,
+): Promise<boolean> {
+  return (await receiptInsertStmt(db, body, mac, head).run()).meta.changes === 1;
 }
 
 export async function chainRows(
