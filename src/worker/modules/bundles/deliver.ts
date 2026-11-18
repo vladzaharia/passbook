@@ -8,8 +8,9 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishSent } from '../delivery/email-finish.ts';
-import { orgFromName, replyToOf } from '../delivery/email-from.ts';
+import { orgFromName } from '../delivery/email-from.ts';
 import { recordEmailOutcome, uncertainEmail } from '../delivery/email-outcome.ts';
+import { replyToFor } from '../delivery/reply-to.ts';
 import { hasDeliveryLease } from '../delivery/repo-binding.ts';
 import type { OutboxRow } from '../delivery/repo-outbox-map.ts';
 import { finishOutbox } from '../delivery/repo-outbox-processing.ts';
@@ -104,6 +105,7 @@ export async function deliverBundleEmail(
       return [];
     }),
   ]);
+  const replyTo = await replyToFor(ctx, bundle.org_id, settings['support.email']);
   const { iconUrl } = passEmailImages(
     bundleImages(images, firstToken, bundleToken, first.id),
     base,
@@ -176,7 +178,6 @@ export async function deliverBundleEmail(
     );
     return;
   }
-  const replyTo = replyToOf(settings['support.email']);
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({

@@ -1278,7 +1278,7 @@ describe('approved issuance over tenant HTTP', () => {
       .toLowerCase()
       .replace(/[^a-z0-9]/g, 'x')}@example.com`;
     const recipient = await recipientKey(kit.env, email);
-    const counterKey = `pass-email:live:to:${recipient}`;
+    const counterKey = `pass-email:live:org:${own.orgId}:to:${recipient}`;
     const window = kit.clock.now() - (kit.clock.now() % 3_600_000);
     await run(kit.env.DB, 'INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)', [
       counterKey,
@@ -1290,7 +1290,12 @@ describe('approved issuance over tenant HTTP', () => {
     const sent = kit.mailer.sent.length;
     const response = await issue(own.operator.session.headers, data, key);
     expect(response.status, await response.clone().text()).toBe(201);
-    const { id } = (await response.json()) as { id: string };
+    const { id, email: outcome } = (await response.json()) as {
+      id: string;
+      email?: { outcome: string; cap?: string };
+    };
+    // The create response says what became of the email.
+    expect(outcome).toEqual({ outcome: 'limited_recipient', cap: 'recipient' });
     const pass = await getPass(kit.env.DB, id);
     if (!pass) throw new Error('Missing issued pass');
     expect(

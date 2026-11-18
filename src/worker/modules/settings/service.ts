@@ -7,6 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
+import { isPlatformAddress } from './reply-to-domain.ts';
 import {
   countEmailOnlyUsers,
   orgSettingsStmt,
@@ -178,10 +179,13 @@ export async function updateSettings(
       deletes.push(key);
     } else {
       const parsed = def.schema.safeParse(raw);
-      const refused =
-        parsed.success && key === 'email.fromName'
+      const refused = !parsed.success
+        ? null
+        : key === 'email.fromName'
           ? await fromNameRefusal(ctx, parsed.data as string)
-          : null;
+          : key === 'support.email' && isPlatformAddress(ctx.env, parsed.data as string)
+            ? 'Use an address on your own domain.'
+            : null;
       if (refused) issues.push({ path: key, message: refused });
       else if (parsed.success) upserts[key] = parsed.data;
       else issues.push({ path: key, message: parsed.error.issues[0]?.message ?? 'Invalid value.' });

@@ -17,7 +17,7 @@ import {
   type DeliveryActor,
   systemActor,
 } from './delivery-actor.ts';
-import { emailCaps, emailLimitError } from './email-limits.ts';
+import { emailLimitError, emailRate } from './email-limits.ts';
 import { dispatchSafely } from './issuance-intent.ts';
 import { recipientKey } from './recipient-key.ts';
 import { enqueueAuthorizedEmail, listAuthorizedOutboxForPass } from './repo.ts';
@@ -27,8 +27,8 @@ import { insertRefreshPush, type RefreshPushContext } from './repo-outbox-refres
 
 /** Workstream d owns this module. Keep the signatures. */
 
-const HOUR = 3_600_000;
-const DAY = 86_400_000;
+const _HOUR = 3_600_000;
+const _DAY = 86_400_000;
 
 /** Push to every registered device even if the pass didn't change (force refresh catch-up). */
 export async function enqueuePush(
@@ -146,8 +146,8 @@ export async function queueEmail(
       ? { ...input.payload, intent: { ...intent, actor } }
       : input.payload;
   // Captured test mail has its own counters: it must not use up the caps of real holder email.
-  const recipient = await recipientKey(ctx.env, input.to);
-  const now = ctx.clock.now();
+  const _recipient = await recipientKey(ctx.env, input.to);
+  const _now = ctx.clock.now();
   const outboxId = ctx.ids.id();
   const result = await enqueueAuthorizedEmail(ctx, {
     orgId: input.orgId,
@@ -159,13 +159,7 @@ export async function queueEmail(
     ...(input.bundleSnapshot ? { bundleSnapshot: input.bundleSnapshot } : {}),
     ...(input.auditEntry ? { audit: queuedAudit(input.auditEntry, outboxId) } : {}),
     outboxId,
-    rate: {
-      recipientKey: `pass-email:${input.mode}:to:${recipient}`,
-      orgKey: `pass-email:${input.mode}:org:${input.orgId}`,
-      recipientWindow: now - (now % HOUR),
-      orgWindow: now - (now % DAY),
-      ...(await emailCaps(ctx, input.orgId)),
-    },
+    rate: await emailRate(ctx, input.mode, input.orgId, input.to),
   });
   // A revoked membership or moved revision answers like every other principal's refusal.
   if (result === 'org' || result === 'actor') throw authorityDenied(result);
@@ -175,7 +169,7 @@ export async function queueEmail(
       'The bundle changed. Review the recipient and try again.',
       'DELIVERY_STALE',
     );
-  if (result === 'limited') throw await emailLimitError(ctx, input.mode, input.orgId);
+  if (result === 'limited') throw await emailLimitError(ctx, input.mode, input.orgId, input.to);
   ctx.waitUntil(dispatchSafely(ctx, { passId: input.passId }));
   return { outboxId };
 }

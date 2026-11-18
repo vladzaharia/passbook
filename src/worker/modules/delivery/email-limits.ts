@@ -1,49 +1,82 @@
 import { EMAIL_LIMIT_COPY } from '../../../shared/copy/email.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { getOrgSettings } from '../settings/service.ts';
+import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { recipientKey } from './recipient-key.ts';
 import { readCounter } from './repo-email-queue.ts';
 
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
 
-/** The org's caps from its settings; the schema supplies the defaults (3 per hour, 500 per day). */
+/** One address may get this many pass emails an hour across all orgs. Not a setting. */
+export const PLATFORM_RECIPIENT_HOURLY_CAP = 10;
+
+/** The org's caps from its settings (3 per hour, 500 per day by default); the day cap is clamped to the platform's. */
 export async function emailCaps(ctx: ServiceContext, orgId: string) {
-  const settings = await getOrgSettings(ctx, orgId);
+  const [settings, platform] = await Promise.all([
+    getOrgSettings(ctx, orgId),
+    getPlatformSettings(ctx),
+  ]);
   return {
     recipientCap: settings['email.recipientCapPerHour'],
-    orgCap: settings['email.orgCapPerDay'],
+    orgCap: Math.min(settings['email.orgCapPerDay'], platform['email.orgCapPerDayMax']),
   };
 }
 
-/** The cap that is used up, or null. Without a recipient, an unreached org cap reads as the recipient's. */
+/** The counters for one pass email to one address: per org, per org-and-address, and platform-wide. */
+export async function emailRate(
+  ctx: ServiceContext,
+  mode: 'live' | 'test',
+  orgId: string,
+  to: string,
+) {
+  const now = ctx.clock.now();
+  const digest = await recipientKey(ctx.env, to);
+  return {
+    recipientKey: `pass-email:${mode}:org:${orgId}:to:${digest}`,
+    orgKey: `pass-email:${mode}:org:${orgId}`,
+    recipientWindow: now - (now % HOUR),
+    orgWindow: now - (now % DAY),
+    ...(await emailCaps(ctx, orgId)),
+    platformKey: `pass-email:${mode}:to:${digest}`,
+    platformWindow: now - (now % HOUR),
+    platformCap: PLATFORM_RECIPIENT_HOURLY_CAP,
+  };
+}
+
+/**
+ * The org-visible cap that is used up, or null. The platform ceiling is null on purpose: it is
+ * shared across orgs, so naming it would tell one org about another's mail.
+ */
 export async function limitReached(
   ctx: ServiceContext,
   mode: 'live' | 'test',
   orgId: string,
-  to?: string,
+  to: string,
 ): Promise<'org' | 'recipient' | null> {
-  const now = ctx.clock.now();
-  const caps = await emailCaps(ctx, orgId);
+  const rate = await emailRate(ctx, mode, orgId, to);
   const db = ctx.env.DB;
-  const org = await readCounter(db, `pass-email:${mode}:org:${orgId}`, now - (now % DAY));
-  if (org >= caps.orgCap) return 'org';
-  if (!to) return 'recipient';
-  const key = `pass-email:${mode}:to:${await recipientKey(ctx.env, to)}`;
-  const used = await readCounter(db, key, now - (now % HOUR));
-  return used >= caps.recipientCap ? 'recipient' : null;
+  if ((await readCounter(db, rate.orgKey, rate.orgWindow)) >= rate.orgCap) return 'org';
+  if ((await readCounter(db, rate.recipientKey, rate.recipientWindow)) >= rate.recipientCap)
+    return 'recipient';
+  return null;
 }
 
-/** The 429 for a refused queue: names the cap that was hit (`limit` is `org` or `recipient`). */
+/** The 429 for a refused queue: the org's own cap by name, the platform ceiling generically. */
 export async function emailLimitError(
   ctx: ServiceContext,
   mode: 'live' | 'test',
   orgId: string,
+  to: string,
 ): Promise<AppError> {
-  const limit = (await limitReached(ctx, mode, orgId)) ?? 'recipient';
-  return new AppError('EMAIL_RATE_LIMITED', 429, EMAIL_LIMIT_COPY[limit], {
-    headers: { 'retry-after': limit === 'org' ? '86400' : '3600' },
-    issues: [{ path: 'limit', message: limit }],
-  });
+  const limit = await limitReached(ctx, mode, orgId, to);
+  return new AppError(
+    'EMAIL_RATE_LIMITED',
+    429,
+    limit ? EMAIL_LIMIT_COPY[limit] : 'Too many pass emails. Try again later.',
+    {
+      headers: { 'retry-after': limit === 'org' ? '86400' : '3600' },
+      ...(limit ? { issues: [{ path: 'limit', message: limit }] } : {}),
+    },
+  );
 }

@@ -21,6 +21,7 @@ import {
 } from '@/web/ui/index.ts';
 import { ORG_FIELDS } from '../settings/fields.ts';
 import { useSettings } from '../settings/queries.ts';
+import { ReplyToStatus } from '../settings/reply-to-status.tsx';
 import { SettingsForm } from '../settings/settings-form.tsx';
 import { AccessCard } from './org-access.tsx';
 import { CountsCard, OrgChecklist, OverviewCard, SigningCard } from './org-aside.tsx';
@@ -243,6 +244,7 @@ export function OrgWorkspacePage({
                   These contacts appear in the pass email preview.
                 </p>
                 <SettingsForm scope={`org:${org.id}`} fields={SUPPORT_FIELDS} />
+                <ReplyToStatus orgId={org.id} />
               </CardBody>
             </Card>
           </>

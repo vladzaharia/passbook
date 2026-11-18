@@ -3,6 +3,7 @@ import { type Grant, grant, grantedBatch } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { exists, type GrantCond } from '../../platform/authority-cond.ts';
 import { writePart } from '../../platform/authority-include.ts';
+import { run } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -24,6 +25,10 @@ export interface QueueRate {
   orgWindow: number;
   recipientCap: number;
   orgCap: number;
+  /** One address across every org: a fixed ceiling no setting changes. */
+  platformKey: string;
+  platformWindow: number;
+  platformCap: number;
 }
 
 /** Who queues the mail: callers holding live requests, or a durable actor captured earlier. */
@@ -52,6 +57,7 @@ export function rateChecks(r: QueueRate): Check[] {
   return [
     under(r.recipientKey, r.recipientWindow, r.recipientCap),
     under(r.orgKey, r.orgWindow, r.orgCap),
+    under(r.platformKey, r.platformWindow, r.platformCap),
   ];
 }
 
@@ -130,6 +136,7 @@ export function addQueueWrites(g: Grant, ctx: ServiceContext, w: QueueWrite): vo
   for (const [key, window] of [
     [w.rate.recipientKey, w.rate.recipientWindow],
     [w.rate.orgKey, w.rate.orgWindow],
+    [w.rate.platformKey, w.rate.platformWindow],
   ] as const)
     g.include(
       writePart(
@@ -224,3 +231,12 @@ export async function readCounter(db: D1Database, key: string, window: number): 
     .first<{ count: number }>();
   return row?.count ?? 0;
 }
+
+/** Adds one to a rate counter in its window. */
+export const bumpCounter = (db: D1Database, key: string, window: number) =>
+  run(
+    db,
+    `INSERT INTO counters (key, window_start, count) VALUES (?, ?, 1)
+     ON CONFLICT (key, window_start) DO UPDATE SET count = count + 1`,
+    [key, window],
+  );

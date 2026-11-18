@@ -5,12 +5,18 @@ import {
   SettingsListSchema,
   UpdateSettingsSchema,
 } from '../../../shared/contracts/index.ts';
+import {
+  ReplyToConfirmSchema,
+  ReplyToOrgSchema,
+  ReplyToStatusSchema,
+} from '../../../shared/contracts/settings.ts';
 import { requireAdmin } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
+import { confirmReplyTo, replyToStatus, resendReplyTo, syncReplyTo } from '../delivery/reply-to.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { orgIdOfScope } from './registry.ts';
 import { listSettings, settingsImpact, settingsRevision, updateSettings } from './service.ts';
@@ -93,6 +99,11 @@ register(
         ? { userId: auth.userId, sessionId: auth.sessionId }
         : undefined;
     const items = await updateSettings(ctx, requestActor(c), input, authority, admin);
+    const orgId = orgIdOfScope(input.scope);
+    if (orgId && 'support.email' in input.values) {
+      const support = items.find((item) => item.key === 'support.email')?.value;
+      await syncReplyTo(ctx, orgId, typeof support === 'string' ? support : null);
+    }
     return c.json({
       items,
       ...(await settingsRevision(ctx, input.scope)),
@@ -113,5 +124,61 @@ register(
   async (c) => {
     await requireAdmin(c, async () => {});
     return c.json(await settingsImpact(serviceContext(c)));
+  },
+);
+
+register(
+  settingsRoutes,
+  'settings',
+  {
+    method: 'get',
+    path: '/reply-to',
+    summary: "Whether the org's support address is confirmed as reply-to",
+    query: ReplyToOrgSchema,
+    response: ReplyToStatusSchema,
+  },
+  async (c) => {
+    const { orgId } = c.req.valid('query');
+    const ctx = serviceContext(c);
+    await scopeAuthority(c, ctx, `org:${orgId}`, 'org:read');
+    return c.json(await replyToStatus(ctx, orgId));
+  },
+);
+
+register(
+  settingsRoutes,
+  'settings',
+  {
+    method: 'post',
+    path: '/reply-to/resend',
+    summary: 'Send the reply-to confirmation link again',
+    body: ReplyToOrgSchema,
+    response: ReplyToStatusSchema,
+  },
+  async (c) => {
+    const { orgId } = c.req.valid('json');
+    const ctx = serviceContext(c);
+    await scopeAuthority(c, ctx, `org:${orgId}`, 'org:manage');
+    await resendReplyTo(ctx, orgId);
+    return c.json(await replyToStatus(ctx, orgId));
+  },
+);
+
+register(
+  settingsRoutes,
+  'settings',
+  {
+    method: 'post',
+    path: '/reply-to/confirm',
+    summary: 'Confirm the support address as reply-to with the emailed token',
+    body: ReplyToConfirmSchema,
+    response: ReplyToStatusSchema,
+  },
+  async (c) => {
+    const { orgId, token } = c.req.valid('json');
+    const ctx = serviceContext(c);
+    await scopeAuthority(c, ctx, `org:${orgId}`, 'org:manage');
+    await confirmReplyTo(ctx, orgId, token);
+    return c.json(await replyToStatus(ctx, orgId));
   },
 );

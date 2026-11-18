@@ -6,6 +6,7 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import { jobCtxOf } from './delivery-test-fixtures.ts';
 import { enqueuePassEmail } from './issuance-intent.ts';
 import { handleEmailSend } from './jobs.ts';
+import { confirmReplyTo, syncReplyTo } from './reply-to.ts';
 
 let kit: Kit;
 beforeAll(async () => {
@@ -46,9 +47,13 @@ describe('org From name and reply-to', () => {
   });
   it('uses the org name and its support address as reply-to', async () => {
     await save({ 'email.fromName': 'Harbor Gym', 'support.email': 'help@harbor.test' });
-    const sent = await send();
-    expect(sent.fromName).toBe('Harbor Gym');
-    expect(sent.replyTo).toBe('help@harbor.test');
+    const before = await send();
+    expect(before.fromName).toBe('Harbor Gym via PassBook');
+    expect(before.replyTo).toBeUndefined();
+    await syncReplyTo(kit.ctx, kit.org.id, 'help@harbor.test');
+    const token = /confirmReplyTo=([\w-]+)/.exec(kit.mailer.sent.at(-1)?.text ?? '')?.[1] ?? '';
+    await confirmReplyTo(kit.ctx, kit.org.id, token);
+    expect((await send()).replyTo).toBe('help@harbor.test');
   });
   it('ignores a stored name that now impersonates the platform', async () => {
     await save({ 'email.fromName': 'Harbor Gym' });

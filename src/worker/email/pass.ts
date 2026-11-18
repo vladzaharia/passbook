@@ -1,6 +1,7 @@
 import { APPLE_BADGE_ALT } from '../../shared/apple-badge.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { EMAIL_BADGE, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { displayFromName } from '../../shared/email-from-name.ts';
 import { contrast, parseColor } from '../../shared/pass-view/color.ts';
 import { NATIVE_WALLET_BADGES } from '../../shared/wallet-choice.ts';
 import type { WalletOffer } from '../modules/wallet-providers/offers.ts';
@@ -44,7 +45,7 @@ export interface PassEmailInput {
   logoText?: string | null;
   /** The platform sender name: the From name becomes "<Org> via <sender>". */
   senderName?: string | null;
-  /** The org's own From name (already checked): used instead of "<Org> via <sender>". */
+  /** The org's own From name (already checked): "<fromName> via <sender>" instead of "<Org> via <sender>". */
   fromName?: string | null;
   /** The template's own subject line (already rendered): used instead of "Your <Org> pass". */
   subject?: string | null;
@@ -217,6 +218,6 @@ ${footer.html}`;
     body,
   });
   const sender = input.senderName?.trim();
-  const fromName = input.fromName || (sender ? `${input.orgName} via ${sender}` : null);
+  const fromName = sender ? displayFromName(input.fromName || input.orgName, sender) : null;
   return { subject, html, text, ...(fromName ? { fromName } : {}) };
 }

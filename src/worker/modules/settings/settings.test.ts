@@ -1331,7 +1331,8 @@ describe('org email settings (PS-23)', () => {
     const { scope } = await orgScope();
     await call('PUT', '', { values: { 'email.senderName': 'Polaris' } });
     expect((await put(scope, { 'email.fromName': 'Polaris Desk' })).status).toBe(422);
-    expect((await put(scope, { 'email.fromName': 'Harbor via Polaris' })).status).toBe(200);
+    expect((await put(scope, { 'email.fromName': 'Harbor via Polaris' })).status).toBe(422);
+    expect((await put(scope, { 'email.fromName': 'Harbor Desk' })).status).toBe(200);
   });
 
   it.each([
@@ -1361,6 +1362,19 @@ describe('org email settings (PS-23)', () => {
       (await put(scope, { 'email.recipientCapPerHour': null, 'email.orgCapPerDay': null })).status,
     ).toBe(200);
     expect(await read()).toEqual([3, 500]);
+  });
+
+  it('refuses a support address on a platform domain, which would be the reply-to', async () => {
+    const { scope } = await orgScope();
+    const domain = (appEnv.EMAIL_FROM.match(/@([^>\s]+)/)?.[1] ?? 'passbook.mobile').toLowerCase();
+    expect((await put(scope, { 'support.email': `help@${domain}` })).status).toBe(422);
+    expect((await put(scope, { 'support.email': `help@mail.${domain}` })).status).toBe(422);
+    expect((await put(scope, { 'support.email': 'help@harbor.test' })).status).toBe(200);
+  });
+
+  it('clamps nothing at write but bounds the platform ceiling', async () => {
+    expect((await call('PUT', '', { values: { 'email.orgCapPerDayMax': 9 } })).status).toBe(422);
+    expect((await call('PUT', '', { values: { 'email.orgCapPerDayMax': 300 } })).status).toBe(200);
   });
 
   it('refuses a reply-to that is not a plain address', async () => {

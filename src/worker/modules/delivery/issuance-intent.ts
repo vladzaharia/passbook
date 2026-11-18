@@ -25,7 +25,7 @@ import {
   type DeliveryActor,
   systemActor,
 } from './delivery-actor.ts';
-import { emailCaps, emailLimitError } from './email-limits.ts';
+import { emailLimitError, emailRate } from './email-limits.ts';
 import { parseContext } from './issuance-context.ts';
 import { recipientKey } from './recipient-key.ts';
 import {
@@ -52,8 +52,8 @@ import {
 } from './repo-outbox-processing.ts';
 
 const SEND_BATCH = 100;
-const HOUR = 3_600_000;
-const DAY = 86_400_000;
+const _HOUR = 3_600_000;
+const _DAY = 86_400_000;
 
 export {
   EMAIL_ORG_DAILY_CAP,
@@ -277,7 +277,7 @@ export async function enqueuePassEmail(
     ...(also ? { also } : {}),
     ...(input.issuanceIntentId ? { issuanceId: input.issuanceIntentId } : {}),
   };
-  const recipient = await recipientKey(ctx.env, to);
+  const _recipient = await recipientKey(ctx.env, to);
   const outboxId = ctx.ids.id();
   const result = await insertIssuedPassEmail(ctx, {
     id: outboxId,
@@ -288,13 +288,7 @@ export async function enqueuePassEmail(
     ...(input.auditEntry ? { audit: queuedAudit(input.auditEntry, outboxId) } : {}),
     payload: { to, attach: input.attach, intent },
     now,
-    rate: {
-      recipientKey: `pass-email:${pass.mode}:to:${recipient}`,
-      orgKey: `pass-email:${pass.mode}:org:${pass.orgId}`,
-      recipientWindow: now - (now % HOUR),
-      orgWindow: now - (now % DAY),
-      ...(await emailCaps(ctx, pass.orgId)),
-    },
+    rate: await emailRate(ctx, pass.mode, pass.orgId, to),
   });
   // A revoked membership or moved revision answers like every other principal's refusal.
   if (result === 'org' || result === 'actor') throw authorityDenied(result);
@@ -304,7 +298,7 @@ export async function enqueuePassEmail(
       'The pass changed. Review the recipient and try again.',
       'DELIVERY_STALE',
     );
-  if (result === 'limited') throw await emailLimitError(ctx, pass.mode, pass.orgId);
+  if (result === 'limited') throw await emailLimitError(ctx, pass.mode, pass.orgId, to);
   if (input.schedule !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
   return { outboxId };
 }

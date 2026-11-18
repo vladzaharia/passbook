@@ -1,4 +1,3 @@
-import { strictEmail } from '../../../shared/email.ts';
 import { checkFromName } from '../../../shared/email-from-name.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 
@@ -13,9 +12,4 @@ export function orgFromName(
   if (checked.ok) return checked.value;
   ctx.log.warn('email.from_name_refused', { code: 'FROM_NAME_REFUSED' });
   return null;
-}
-
-/** Reply-to is the org's support address, when it is a valid one. */
-export function replyToOf(supportEmail: string | null | undefined): string | undefined {
-  return strictEmail(supportEmail) ?? undefined;
 }

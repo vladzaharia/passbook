@@ -41,6 +41,15 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     schema: P['email.senderName'],
   },
   {
+    key: 'email.orgCapPerDayMax',
+    group: 'Email',
+    label: 'Daily email limit ceiling',
+    kind: 'int',
+    help: 'The most one organization may set for its daily pass emails. 10 to 5000.',
+    range: [10, 5000],
+    schema: P['email.orgCapPerDayMax'],
+  },
+  {
     key: 'oidc.trustEmail',
     group: 'Identity trust',
     label: 'Trust Polaris ID emails',
@@ -156,6 +165,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Support email',
     kind: 'text',
     optional: true,
+    help: 'Shown to holders. A new address must be confirmed before replies go to it.',
     schema: O['support.email'],
   },
   {
@@ -170,7 +180,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Email From name',
     kind: 'text',
     optional: true,
-    help: 'Shown as the sender. Replies go to the support email. Empty: your name via PassBook.',
+    help: 'Shown as "Name via PassBook". Replies go to the confirmed support email. Empty: the organization name.',
     schema: O['email.fromName'],
   },
   {
@@ -185,7 +195,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     key: 'email.orgCapPerDay',
     label: 'Emails per day',
     kind: 'int',
-    help: 'Pass emails for this organization. 10 to 5000.',
+    help: 'Pass emails for this organization, up to the platform ceiling. 10 to 5000.',
     range: [10, 5000],
     schema: O['email.orgCapPerDay'],
   },

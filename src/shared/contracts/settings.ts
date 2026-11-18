@@ -32,6 +32,8 @@ export const PlatformSettingsSchema = z.object({
   'oidc.trustEmail': z.boolean().default(false),
   'auth.magicLinkEnabled': z.boolean().default(true),
   'email.senderName': PlainLineSchema(80).default('PassBook'),
+  /** The most any org may set its daily pass-email cap to; an org's own value is clamped to it. */
+  'email.orgCapPerDayMax': z.number().int().min(10).max(5000).default(EMAIL_ORG_DAILY_CAP),
   'refresh.userCooldownSeconds': z.number().int().min(5).max(3600).default(30),
   'retention.passVersionsKeep': z.number().int().min(1).max(50).default(3),
   'retention.auditDays': z.number().int().min(30).max(3650).default(365),
@@ -84,4 +86,15 @@ export const OrgSettingsSchema = z.object({
   'email.buddy': z.boolean().default(false),
   /** Third-party NFC tags. Off until an admin turns it on. */
   'nfc.tags': z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
+});
+
+export const ReplyToOrgSchema = z.object({ orgId: z.string().min(1) });
+export const ReplyToConfirmSchema = z.object({
+  orgId: z.string().min(1),
+  token: z.string().min(16).max(200),
+});
+/** `pending` until the support address's owner follows the emailed link. */
+export const ReplyToStatusSchema = z.object({
+  address: z.string().nullable(),
+  state: z.enum(['none', 'pending', 'confirmed']),
 });

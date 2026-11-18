@@ -22,7 +22,7 @@ import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { matchesPass, PassEmailIntentSchema } from './binding.ts';
 import { finishSent } from './email-finish.ts';
-import { orgFromName, replyToOf } from './email-from.ts';
+import { orgFromName } from './email-from.ts';
 import {
   failEmail,
   PermanentEmailError,
@@ -30,6 +30,7 @@ import {
   uncertainEmail,
 } from './email-outcome.ts';
 import { claimOrSettle } from './push.ts';
+import { replyToFor } from './reply-to.ts';
 import { orgBranding } from './repo.ts';
 import { hasDeliveryLease, passJsonForArtifact } from './repo-binding.ts';
 import { passEmailOutput } from './repo-issuance-intent-fence.ts';
@@ -135,6 +136,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   const { iconUrl, logo } = passEmailImages(images, base);
   const support = emailSupport(ctx.env, orgSettings, branding);
   const fromName = orgFromName(ctx, orgSettings['email.fromName'], platform['email.senderName']);
+  const replyTo = await replyToFor(ctx, pass.orgId, orgSettings['support.email']);
   const orgName = org?.name ?? 'PassBook';
   const templateKey = {
     orgId: pass.orgId,
@@ -236,7 +238,6 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     );
     return;
   }
-  const replyTo = replyToOf(orgSettings['support.email'] ?? branding.supportEmail);
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({
