@@ -30,6 +30,7 @@ import { lookup } from './lookup.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
+import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
 import { capturingContext } from './scan-capture.ts';
 import { reportScanDevice } from './scanning-workspace.ts';
@@ -67,6 +68,7 @@ scanRoutes.use(
   '/device',
   requireScanActor({ capability: 'scanning:manage', staffOptional: true, screens: true }),
 );
+scanRoutes.use('/role', manageSessionActor);
 scanRoutes.use('/staff', requireScanActor({ capability: 'scanning:manage', staffOptional: true }));
 scanRoutes.use('/actions', (c, next) =>
   (c.req.method === 'POST' ? operateActor : manageActor)(c, next),
@@ -111,6 +113,7 @@ register(
 );
 
 registerScanStaffRoutes(scanRoutes);
+registerScanRoleRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 
 register(

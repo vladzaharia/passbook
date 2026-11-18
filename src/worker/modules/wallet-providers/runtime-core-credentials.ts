@@ -63,6 +63,8 @@ export interface SamsungRuntimeRefresh {
 
 export interface RuntimeRefreshPurpose extends SamsungRuntimeRefresh {
   kind: 'refresh';
+  /** True for an inbound callback, which may use a ref's initial window; sync needs a promoted ref. */
+  inbound: boolean;
 }
 
 export type RuntimeCredentialPurpose = RuntimeRetirementPurpose | RuntimeRefreshPurpose;
@@ -202,6 +204,7 @@ async function snapshot(
         instanceId: purpose.instanceId,
         refHash: purpose.refHash,
         operationVersion: purpose.operationVersion,
+        window: purpose.inbound,
       });
     }
     if (

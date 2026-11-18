@@ -266,6 +266,7 @@ describe('createScanApi', () => {
         'resolve',
         'roster',
         'session',
+        'setRole',
         'signOut',
         'staffSearch',
         'staffSignIn',

@@ -27,7 +27,7 @@ export async function prepareLivePhoto(
     const role = actor.role ?? entry.sourceRole;
     const now = ctx.clock.now();
     if (
-      !watches(recipient, entry.row.scannerId) ||
+      !watches(recipient, entry) ||
       !role ||
       !entry.photoRoles.includes(role) ||
       actor.settings.showPhoto === false ||

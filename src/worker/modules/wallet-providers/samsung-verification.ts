@@ -121,6 +121,7 @@ async function probe(
       countryCode: candidate.projection.countryCode,
       mode: candidate.mode,
       now: startedAt,
+      requestId: ctx.ids.id().replaceAll('-', ''),
     });
     await requireOriginalKeyset(ctx, proof);
     if (

@@ -18,6 +18,7 @@ export * from './sandbox.ts';
 export * from './scan.ts';
 export * from './scan-display.ts';
 export * from './scan-display-preview.ts';
+export * from './scan-role.ts';
 export * from './scan-session.ts';
 export * from './scanners.ts';
 export * from './session.ts';

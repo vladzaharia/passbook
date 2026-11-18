@@ -192,7 +192,7 @@ function samsungContent(
   passJson: unknown,
 ): {
   source: Source;
-  extendedFields: string;
+  noticeDesc: string;
 } | null {
   const source = sourceOf(projection, passJson);
   if (
@@ -203,15 +203,12 @@ function samsungContent(
     source.fields.some((field) => field.label === undefined)
   )
     return null;
-  const extendedFields = JSON.stringify([
-    ...source.fields.map((field, index) => ({
-      label: field.label,
-      value: field.value,
-      order: index + 1,
-    })),
-    { label: 'Description', value: source.description, order: source.fields.length + 1 },
-  ]);
-  return encoder.encode(extendedFields).byteLength <= 1024 ? { source, extendedFields } : null;
+  // noticeDesc is the documented free-text slot of the loyalty card (5000); one "label: value" line each.
+  const noticeDesc = [
+    ...source.fields.map((field) => `${field.label}: ${field.value}`),
+    `Description: ${source.description}`,
+  ].join('\n');
+  return encoder.encode(noticeDesc).byteLength <= 5000 ? { source, noticeDesc } : null;
 }
 
 export function canRenderSamsungProjection(
@@ -221,25 +218,28 @@ export function canRenderSamsungProjection(
   return samsungContent(projection, passJson) !== null;
 }
 
-/** Samsung's loyalty attributes are flat paths; extendedFields is a JSON-encoded string. */
+/**
+ * Samsung's loyalty attributes are flat paths. `updatedAt` is the pass's own revision time, so a
+ * pull that changes nothing does not look like new content; it never precedes `createdAt`.
+ */
 export function renderSamsungProjection(
   projection: SamsungProjection,
   passJson: unknown,
   refId: string,
   createdAt: number,
-  now: number,
+  revisedAt: number,
 ): SamsungCardProjection | null {
   if (
     !/^[A-Za-z0-9_-]{32}$/.test(refId) ||
     !Number.isSafeInteger(createdAt) ||
-    !Number.isSafeInteger(now) ||
+    !Number.isSafeInteger(revisedAt) ||
     createdAt < 0 ||
-    now < createdAt
+    revisedAt < 0
   )
     return null;
   const content = samsungContent(projection, passJson);
   if (!content) return null;
-  const { source, extendedFields } = content;
+  const { source, noticeDesc } = content;
   return {
     card: {
       type: projection.cardType,
@@ -248,7 +248,7 @@ export function renderSamsungProjection(
         {
           refId,
           createdAt,
-          updatedAt: now,
+          updatedAt: Math.max(createdAt, revisedAt),
           state: 'ACTIVE',
           language: projection.language,
           attributes: {
@@ -258,7 +258,7 @@ export function renderSamsungProjection(
             appLinkLogo: projection.appLinkLogo,
             appLinkName: projection.appLinkName,
             appLinkData: projection.appLinkData,
-            extendedFields,
+            noticeDesc,
             ...(source.barcode
               ? {
                   'barcode.value': source.barcode.message,
