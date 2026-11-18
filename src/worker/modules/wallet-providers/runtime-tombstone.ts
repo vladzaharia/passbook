@@ -40,6 +40,8 @@ interface SamsungTombstoneRuntimeRequest {
     expiresAt: number,
     signedAt: number,
     queryBound: boolean,
+    /** Issued source only: the verifying credential may write state, not just authenticate. */
+    writable: boolean,
   ) => Promise<boolean>;
 }
 
@@ -134,7 +136,13 @@ export async function verifySamsungTombstoneRuntimeRequest(
       now: ctx.clock.now(),
       claimReplay: async (key, expiresAt, signedAt, queryBound) => {
         await assertKeyset();
-        const claimed = await claimReplay(key, expiresAt, signedAt, queryBound);
+        const claimed = await claimReplay(
+          key,
+          expiresAt,
+          signedAt,
+          queryBound,
+          'writable' in original && original.writable === true,
+        );
         await assertKeyset();
         return claimed;
       },

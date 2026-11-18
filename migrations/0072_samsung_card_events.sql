@@ -32,7 +32,9 @@ BEFORE UPDATE OF promoted_at, market_cc2, market_query_bound, served_at ON walle
 WHEN (OLD.promoted_at IS NOT NULL AND (NEW.promoted_at IS NOT OLD.promoted_at
     OR NEW.market_cc2 IS NOT OLD.market_cc2 OR NEW.market_query_bound IS NOT OLD.market_query_bound))
   OR (OLD.promoted_at IS NULL AND NEW.promoted_at IS NOT NULL
-    AND (OLD.retired_at IS NOT NULL OR NEW.market_cc2 IS NULL))
-  OR (OLD.promoted_at IS NULL AND NEW.promoted_at IS NULL AND NEW.market_cc2 IS NOT OLD.market_cc2)
+    AND (OLD.retired_at IS NOT NULL OR NEW.retired_at IS NOT NULL
+      OR NEW.market_cc2 IS NULL OR NEW.market_query_bound IS NULL))
+  OR (OLD.promoted_at IS NULL AND NEW.promoted_at IS NULL
+    AND (NEW.market_cc2 IS NOT OLD.market_cc2 OR NEW.market_query_bound IS NOT OLD.market_query_bound))
   OR (OLD.served_at IS NOT NULL AND NEW.served_at IS NOT OLD.served_at)
 BEGIN SELECT RAISE(ABORT, 'Samsung reference promotion is immutable'); END;

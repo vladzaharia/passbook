@@ -77,13 +77,15 @@ function effectStatements(
 ): D1PreparedStatement[] {
   const inserted = `EXISTS (SELECT 1 FROM wallet_samsung_callback_receipts rc
     WHERE rc.id = ? AND rc.event = ?)`;
+  // A retired ref belongs to a previous holder or generation: its callbacks are recorded, never applied.
+  const live = `EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs live WHERE live.id = ? AND live.retired_at IS NULL)`;
   if (receipt.event === 'DELETED')
     return [
       stmt(
         db,
         `UPDATE wallet_provider_instances SET holder_removed_at = MAX(COALESCE(holder_removed_at, 0), ?)
-        WHERE id = ? AND ${inserted}`,
-        [claim.now, ref.instanceId, receipt.id, 'DELETED'],
+        WHERE id = ? AND ${inserted} AND ${live}`,
+        [claim.now, ref.instanceId, receipt.id, 'DELETED', ref.referenceId],
       ),
     ];
   if (receipt.event !== 'ADDED') return [];
@@ -91,8 +93,8 @@ function effectStatements(
     stmt(
       db,
       `UPDATE wallet_provider_instances SET saved_at = MAX(COALESCE(saved_at, 0), ?)
-      WHERE id = ? AND ${inserted}`,
-      [claim.now, ref.instanceId, receipt.id, 'ADDED'],
+      WHERE id = ? AND ${inserted} AND ${live}`,
+      [claim.now, ref.instanceId, receipt.id, 'ADDED', ref.referenceId],
     ),
   ];
   // The market is the ADDED event's own cc2, never a hint from an earlier or other callback.
@@ -167,16 +169,18 @@ export function receiptStatements(
       stmt(
         db,
         `INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at)
-      SELECT ref_id, ?, ? FROM wallet_samsung_callback_receipts
-      WHERE id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
+      SELECT rc.ref_id, ?, ? FROM wallet_samsung_callback_receipts rc
+      JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
+      WHERE rc.id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
       ON CONFLICT(ref_id, country_code) DO NOTHING`,
         [receipt.countryHint, claim.now, receipt.id, ref.credentialKeysetCommitment],
       ),
       stmt(
         db,
         `INSERT INTO wallet_provider_instance_dirty (instance_id, generation)
-      SELECT instance_id, 1 FROM wallet_samsung_callback_receipts
-      WHERE id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
+      SELECT rc.instance_id, 1 FROM wallet_samsung_callback_receipts rc
+      JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
+      WHERE rc.id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
       ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1`,
         [receipt.id, ref.credentialKeysetCommitment],
       ),
@@ -190,7 +194,7 @@ export interface SamsungIssuedRef {
   orgId: string;
   mode: 'live' | 'test';
   accountId: string;
-  /** One row per account revision this instance has operated under, newest first. */
+  /** The newest revision of one credential this instance has operated under. */
   accountRevision: number;
   referenceId: string;
   instanceId: string;
@@ -201,7 +205,11 @@ export interface SamsungIssuedRef {
 const dead = `(r.retired_at IS NULL OR NOT EXISTS (
   SELECT 1 FROM wallet_samsung_tombstones tomb WHERE tomb.ref_hash = r.ref_hash))`;
 
-/** Any issued ref by hash that is not yet buried under a tombstone, whatever its operation state. */
+/**
+ * Any issued ref by hash that is not yet buried under a tombstone, whatever its operation state:
+ * one row per distinct credential the instance has operated under (newest revision of each), so
+ * the number of verifications is bounded by distinct certificates, not by revisions.
+ */
 export function findSamsungIssuedRefs(
   db: D1Database,
   refHash: string,
@@ -209,15 +217,18 @@ export function findSamsungIssuedRefs(
 ): Promise<SamsungIssuedRef[]> {
   return all<SamsungIssuedRef>(
     db,
-    `SELECT DISTINCT i.org_id AS orgId, i.mode, i.account_id AS accountId,
-      o.account_revision AS accountRevision, r.id AS referenceId, i.id AS instanceId,
+    `SELECT i.org_id AS orgId, i.mode, i.account_id AS accountId,
+      MAX(o.account_revision) AS accountRevision, r.id AS referenceId, i.id AS instanceId,
       r.ref_hash AS refHash, r.credential_keyset_commitment AS credentialKeysetCommitment
     FROM wallet_samsung_fetch_refs r JOIN wallet_provider_instances i ON i.id = r.instance_id
     JOIN wallet_provider_instance_operations o ON o.instance_id = i.id
+    JOIN wallet_provider_account_events e ON e.account_id = i.account_id AND e.org_id = i.org_id
+      AND e.mode = i.mode AND e.provider = 'samsung' AND e.kind = 'configure'
+      AND e.revision = o.account_revision
     WHERE r.ref_hash = ? AND i.provider = 'samsung' AND i.account_id IS NOT NULL
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
       AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql} AND ${dead}
-    ORDER BY o.account_revision DESC LIMIT 33`,
+    GROUP BY e.credential_id ORDER BY accountRevision DESC LIMIT 33`,
     [refHash, credentialKeysetCommitment, credentialKeysetCommitment],
   );
 }

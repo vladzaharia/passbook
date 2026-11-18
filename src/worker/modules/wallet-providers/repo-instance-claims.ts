@@ -10,6 +10,7 @@ import type {
 } from './instance-types.ts';
 import { isCredentialKeysetCommitment } from './instance-types.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 
 interface Claim extends WalletOperationRef, WalletCredentialKeysetProof {
   hash: string;
@@ -231,7 +232,7 @@ export async function finishOperation(
           ? `AND op.kind = 'revoke' AND EXISTS (
         SELECT 1 FROM wallet_provider_instances ni WHERE ni.id = op.instance_id AND ni.provider = 'samsung'
           AND NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs ref WHERE ref.instance_id = ni.id
-            AND (ref.retired_at IS NULL OR ref.promoted_at IS NOT NULL OR ref.served_at IS NOT NULL OR ref.initial_expires_at > ?)))`
+            AND (ref.retired_at IS NULL OR ref.promoted_at IS NOT NULL OR ref.served_at > ? OR ref.initial_expires_at > ?)))`
           : ''
       }`,
       [
@@ -257,7 +258,7 @@ export async function finishOperation(
         p.attempt,
         p.hash,
         ...scope(p),
-        ...(p.result.kind === 'not_issued' ? [p.now] : []),
+        ...(p.result.kind === 'not_issued' ? [p.now - SAMSUNG_UNCONFIRMED_SERVE_MS, p.now] : []),
       ],
     ),
   ];

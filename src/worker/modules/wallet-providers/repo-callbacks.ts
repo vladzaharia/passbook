@@ -3,9 +3,10 @@ import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
-import { samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
+import { samsungRevocableRefSql, samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
 import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 
 export interface SamsungOperationScope {
   orgId: string;
@@ -246,7 +247,7 @@ export async function samsungRefStillCurrent(
     `SELECT r.id FROM wallet_samsung_fetch_refs r ${join}
     WHERE r.id = ? AND i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
       AND op.version = ? AND r.retired_at IS NULL
-      AND ${forSync ? `r.promoted_at IS NOT NULL AND ${current}` : upsert}
+      AND ${forSync ? `${samsungRevocableRefSql('r', 'op')} AND ${current}` : upsert}
       AND r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql}`,
     [
       now,
@@ -255,6 +256,7 @@ export async function samsungRefStillCurrent(
       scope.orgId,
       scope.mode,
       scope.operationVersion,
+      ...(forSync ? [now - SAMSUNG_UNCONFIRMED_SERVE_MS] : []),
       scope.credentialKeysetCommitment,
       scope.credentialKeysetCommitment,
     ],
@@ -272,7 +274,7 @@ export function getSamsungRefForSync(
     db,
     `SELECT r.* FROM wallet_samsung_fetch_refs r ${join}
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung' AND op.version = ?
-      AND r.promoted_at IS NOT NULL AND r.retired_at IS NULL AND ${current}
+      AND ${samsungRevocableRefSql('r', 'op')} AND r.retired_at IS NULL AND ${current}
       AND r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql}`,
     [
       now,
@@ -280,6 +282,7 @@ export function getSamsungRefForSync(
       scope.orgId,
       scope.mode,
       scope.operationVersion,
+      now - SAMSUNG_UNCONFIRMED_SERVE_MS,
       scope.credentialKeysetCommitment,
       scope.credentialKeysetCommitment,
     ],

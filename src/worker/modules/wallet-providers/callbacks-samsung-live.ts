@@ -1,4 +1,4 @@
-import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
+import { credentialAad, type Envelope, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { canPresent } from '../public/presentation.ts';
@@ -89,19 +89,9 @@ export async function serveSamsungLive(
         )
       : null;
   if (method === 'GET' && !projection) return null;
+  // The receipt id is minted now, but the body is sealed only once a token has verified.
   const receiptId = method === 'POST' ? ctx.ids.id() : null;
-  const receiptEnvelope =
-    receiptId && body
-      ? await encryptSecret(
-          await loadKekRing(ctx.env),
-          body,
-          credentialAad(
-            receiptId,
-            snapshot.orgId,
-            `samsung-callback|${snapshot.mode}|${snapshot.instanceId}`,
-          ),
-        )
-      : null;
+  let sealed: Envelope | null = null;
   const delivery = { duplicate: false };
   let verified: VerifiedSamsungRuntimeRequest;
   try {
@@ -120,11 +110,20 @@ export async function serveSamsungLive(
           if (!canPresent(materialized.pass, materialized.passJson, claim.now)) return false;
           return claimSamsungFetch(ctx.env.DB, snapshot, claim, materialized.rawPassJson);
         }
-        if (!receiptId || !receiptEnvelope) return false;
+        if (!receiptId || !body) return false;
+        sealed ??= await encryptSecret(
+          await loadKekRing(ctx.env),
+          body,
+          credentialAad(
+            receiptId,
+            snapshot.orgId,
+            `samsung-callback|${snapshot.mode}|${snapshot.instanceId}`,
+          ),
+        );
         const receipt = {
           id: receiptId,
           signedAt,
-          envelope: receiptEnvelope,
+          envelope: sealed,
           countryHint,
           event,
           requestId,

@@ -3,7 +3,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { walletClaimHash } from './instance-claims.ts';
 import type { WalletClaimRef, WalletReasonCode } from './instance-types.ts';
-import { samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
+import { samsungRevocableRefSql, samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
+import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 
 export interface SamsungSyncTarget {
   countryCode: string;
@@ -67,7 +68,7 @@ export async function ensureSamsungSyncTargets(
       AND o.instance_id = i.id AND o.version = i.desired_version
     JOIN wallet_samsung_fetch_refs r ON r.instance_id = i.id
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
-      AND r.promoted_at IS NOT NULL AND (o.kind = 'revoke' OR r.retired_at IS NULL)
+      AND ${samsungRevocableRefSql('r', 'o')} AND (o.kind = 'revoke' OR r.retired_at IS NULL)
     JOIN ${samsungRouteCountriesSql} h ON h.ref_id = r.id
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
       AND ? = 'samsung' AND o.version = ? AND o.state = 'claimed'
@@ -89,6 +90,7 @@ export async function ensureSamsungSyncTargets(
     ON CONFLICT(operation_id, country_code) DO NOTHING`,
     [
       claim.now,
+      claim.now - SAMSUNG_UNCONFIRMED_SERVE_MS,
       claim.instanceId,
       claim.orgId,
       claim.mode,

@@ -555,6 +555,48 @@ describe('wallet provider operation fences', () => {
     expect(mocks.samsung).not.toHaveBeenCalled();
   });
 
+  it('settles a served ref nobody confirmed once its wait is over, and logs it with a code', async () => {
+    const samsung: WalletOperation = { ...operation, provider: 'samsung', kind: 'revoke' };
+    const warn = vi.fn();
+    ctx = { ...ctx, log: { warn, info: vi.fn(), error: vi.fn() } } as unknown as ServiceContext;
+    mocks.target.mockResolvedValue(null);
+    mocks.retireRef.mockResolvedValue('no_external_card');
+    mocks.getOperation.mockResolvedValue(claimed(samsung));
+    mocks.metadata.mockResolvedValue({
+      id: 'native-1',
+      generation: 1,
+      orgId: 'org-1',
+      mode: 'live',
+      provider: 'samsung',
+      accountId: 'account-1',
+      templateId: 'template-1',
+      version: 'v1',
+      sourceReleaseId: 'apple-1',
+      accountRevision: 4,
+      adapterRevision: 1,
+      policyRevision: 1,
+      credentialKeysetCommitment: samsung.credentialKeysetCommitment,
+      providerIdentityHash: 'a'.repeat(64),
+      projection: { provider: 'samsung' },
+    });
+    // Inside the wait a served ref is not closed.
+    mocks.inspectRef.mockResolvedValue('needs_notification');
+    expect(await runWalletProviderOperation(ctx, samsung)).toBe('deferred');
+    expect(mocks.retireRef).not.toHaveBeenCalled();
+    // Past it, with no market to notify, the revoke settles instead of waiting for evidence.
+    mocks.inspectRef.mockResolvedValue('served_unconfirmed');
+    expect(await runWalletProviderOperation(ctx, samsung)).toBe('completed');
+    expect(mocks.retireRef).toHaveBeenCalledOnce();
+    expect(mocks.complete).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({ result: { kind: 'not_issued' } }),
+    );
+    expect(warn).toHaveBeenCalledWith(
+      'wallet.samsung_served_unconfirmed',
+      expect.objectContaining({ code: 'WALLET_SAMSUNG_SERVED_UNCONFIRMED' }),
+    );
+  });
+
   it('records locally proven no-issuance without fabricating a provider response', async () => {
     const samsung: WalletOperation = { ...operation, provider: 'samsung', kind: 'revoke' };
     mocks.target.mockResolvedValue(null);

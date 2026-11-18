@@ -3,10 +3,17 @@ import { first } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { AccountRow } from './repo-accounts.ts';
 
+export type IssuedCredentialRow = AccountRow & {
+  /** The account's current revision and whether the account is revoked, beside the row's own revision. */
+  current_revision: number;
+  account_revoked_at: number | null;
+};
+
 /**
  * Verification material for a callback on an issued ref whose operation no longer fits the live
- * fences: the credential configured at a revision this instance has operated under. It never
- * signs or reads card data.
+ * fences: the credential configured at a revision this instance has operated under (or, with
+ * `operated: false`, the account's current one, to compare against). It never signs or reads card
+ * data, and says whether it is current so a caller can refuse to let an old credential write.
  */
 export function findSamsungIssuedRefCredential(
   db: D1Database,
@@ -17,11 +24,13 @@ export function findSamsungIssuedRefCredential(
     accountRevision: number;
     refHash: string;
     credentialKeysetCommitment: string;
+    operated: boolean;
   },
-): Promise<AccountRow | null> {
+): Promise<IssuedCredentialRow | null> {
   return first(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, e.revision, e.credential_id,
+      a.revision AS current_revision, a.revoked_at AS account_revoked_at,
       NULL AS revoked_at, e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
     FROM wallet_samsung_fetch_refs r
     JOIN wallet_provider_instances i ON i.id = r.instance_id
@@ -33,8 +42,8 @@ export function findSamsungIssuedRefCredential(
       AND c.org_id = a.org_id AND c.mode = a.mode AND c.provider = a.provider
     WHERE r.ref_hash = ? AND i.org_id = ? AND i.mode = ? AND i.account_id = ?
       AND r.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
-      AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations o
-        WHERE o.instance_id = i.id AND o.account_revision = e.revision)`,
+      AND (? = 0 OR EXISTS (SELECT 1 FROM wallet_provider_instance_operations o
+        WHERE o.instance_id = i.id AND o.account_revision = e.revision))`,
     [
       input.accountRevision,
       input.refHash,
@@ -43,6 +52,7 @@ export function findSamsungIssuedRefCredential(
       input.accountId,
       input.credentialKeysetCommitment,
       input.credentialKeysetCommitment,
+      input.operated ? 1 : 0,
     ],
   );
 }

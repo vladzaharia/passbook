@@ -174,9 +174,15 @@ describe('Samsung Send Card State events', () => {
     ]);
     expect([a.status, b.status]).toEqual([200, 200]);
     const ref = await refState(t);
-    expect(['GB', 'US']).toContain(ref?.market_cc2);
-    expect(ref?.promoted_at).not.toBeNull();
-    expect((await receipts(t)).map((r) => r.event)).toEqual(['ADDED', 'ADDED']);
+    // The first receipt committed is the one whose market was kept.
+    const committed = await all<{ cc2: string; received_at: number }>(
+      t.kit.env.DB,
+      'SELECT cc2, received_at FROM wallet_samsung_callback_receipts WHERE instance_id = ? ORDER BY rowid',
+      [t.operation.instanceId],
+    );
+    expect(committed).toHaveLength(2);
+    expect(ref?.market_cc2).toBe(committed[0]?.cc2);
+    expect(ref?.promoted_at).toBe(committed[0]?.received_at);
     expect((await instanceState(t))?.saved_at).toBe(ref?.promoted_at);
   });
 
@@ -200,6 +206,7 @@ describe('Samsung Send Card State events', () => {
     await expect(update("market_cc2 = 'GB'")).rejects.toThrow(/promotion is immutable/);
     await expect(update(`promoted_at = ${now}`)).rejects.toThrow(/promotion is immutable/);
     await expect(update('served_at = served_at + 1')).rejects.toThrow(/promotion is immutable/);
+    await expect(update('market_query_bound = 1')).rejects.toThrow(/promotion is immutable/);
     await update(`promoted_at = ${now}, market_cc2 = 'GB', market_query_bound = 0`);
     for (const set of [
       'promoted_at = NULL',
@@ -218,8 +225,19 @@ describe('Samsung Send Card State events', () => {
     await expect(
       run(
         gone.kit.env.DB,
-        `UPDATE wallet_samsung_fetch_refs SET promoted_at = ?, market_cc2 = 'GB' WHERE id = ?`,
+        `UPDATE wallet_samsung_fetch_refs SET promoted_at = ?, market_cc2 = 'GB', market_query_bound = 0
+        WHERE id = ?`,
         [gone.kit.clock.now(), gone.referenceId],
+      ),
+    ).rejects.toThrow(/promotion is immutable/);
+    // Nor is a ref promoted and retired in one statement.
+    const both = await setupSamsungCallbacks({ promoted: false });
+    await expect(
+      run(
+        both.kit.env.DB,
+        `UPDATE wallet_samsung_fetch_refs
+        SET promoted_at = ?, market_cc2 = 'GB', market_query_bound = 0, retired_at = ? WHERE id = ?`,
+        [both.kit.clock.now(), both.kit.clock.now(), both.referenceId],
       ),
     ).rejects.toThrow(/promotion is immutable/);
   });

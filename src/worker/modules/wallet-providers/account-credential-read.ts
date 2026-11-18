@@ -247,6 +247,15 @@ export async function readSamsungTombstoneVerification(
   };
 }
 
+export interface SamsungIssuedVerification extends SamsungTombstoneVerification {
+  /**
+   * True only when this credential is the account's current one (or equals it in partner,
+   * certificate id and Samsung certificate) and the account is not revoked. An older credential may
+   * authenticate a callback so it is answered; it may not write state.
+   */
+  writable: boolean;
+}
+
 /** Public verification material for a callback on an issued ref, from a revision it has operated under. */
 export async function readSamsungIssuedRefVerification(
   ctx: ServiceContext,
@@ -258,7 +267,7 @@ export async function readSamsungIssuedRefVerification(
     refHash: string;
     credentialKeysetCommitment: string;
   },
-): Promise<SamsungTombstoneVerification | null> {
+): Promise<SamsungIssuedVerification | null> {
   ctx = snapshotWalletCredentialContext(ctx);
   const pinned = { ...input };
   if (
@@ -275,12 +284,31 @@ export async function readSamsungIssuedRefVerification(
   )
     throw new ValidationError();
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
-  const row = await findSamsungIssuedRefCredential(ctx.env.DB, pinned);
+  const row = await findSamsungIssuedRefCredential(ctx.env.DB, { ...pinned, operated: true });
   const stored = row ? await decryptAccount(ctx, row) : null;
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
   if (!row || !stored) return null;
   if (stored.provider !== 'samsung') throw corrupt();
+  let writable = false;
+  if (row.account_revoked_at === null) {
+    if (row.current_revision === row.revision) writable = true;
+    else {
+      const currentRow = await findSamsungIssuedRefCredential(ctx.env.DB, {
+        ...pinned,
+        accountRevision: row.current_revision,
+        operated: false,
+      });
+      const current = currentRow ? await decryptAccount(ctx, currentRow) : null;
+      writable =
+        current?.provider === 'samsung' &&
+        current.credentials.partnerId === stored.credentials.partnerId &&
+        current.credentials.certificateId === stored.credentials.certificateId &&
+        current.credentials.samsungCertificatePem === stored.credentials.samsungCertificatePem;
+      await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+    }
+  }
   return {
+    writable,
     accountId: row.id,
     accountRevision: row.revision,
     partnerId: stored.credentials.partnerId,

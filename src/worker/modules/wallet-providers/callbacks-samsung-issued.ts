@@ -1,4 +1,4 @@
-import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
+import { credentialAad, type Envelope, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireSamsungCredentialKeyset } from './callbacks-ref.ts';
@@ -24,16 +24,10 @@ export async function answerSamsungIssuedRef(
 ): Promise<SamsungCallbackResult | null> {
   const { request, refId, refHash, method, countryHint, event, requestId, body } = input;
   const refs = await findSamsungIssuedRefs(ctx.env.DB, refHash, input.credentialKeysetCommitment);
+  // Nothing is sealed until a token has verified: crypto work before authentication is free for an attacker.
+  const receiptId = method === 'POST' ? ctx.ids.id() : null;
+  let sealed: Envelope | null = null;
   for (const ref of refs) {
-    const receiptId = method === 'POST' ? ctx.ids.id() : null;
-    const envelope =
-      receiptId && body
-        ? await encryptSecret(
-            await loadKekRing(ctx.env),
-            body,
-            credentialAad(receiptId, ref.orgId, `samsung-callback|${ref.mode}|${ref.instanceId}`),
-          )
-        : null;
     const delivery = { duplicate: false };
     try {
       await verifySamsungTombstoneRuntimeRequest(ctx, ref, {
@@ -41,18 +35,25 @@ export async function answerSamsungIssuedRef(
         refId,
         method,
         source: 'issued',
-        claimReplay: async (tokenHash, expiresAt, signedAt, queryBound) => {
+        claimReplay: async (tokenHash, expiresAt, signedAt, queryBound, writable) => {
           if (await samsungTokenRecorded(ctx.env.DB, tokenHash, ref.referenceId)) {
             delivery.duplicate = true;
             return true;
           }
           const claim = { tokenHash, expiresAt, claimId: ctx.ids.id(), now: ctx.clock.now() };
-          if (method === 'GET') return claimSamsungIssuedDelivery(ctx.env.DB, ref, claim, null);
-          if (!receiptId || !envelope) return false;
+          // An older or revoked credential may authenticate the callback, so it is answered and
+          // its token spent, but it records nothing and changes nothing.
+          if (method === 'GET' || !writable || !receiptId || !body)
+            return claimSamsungIssuedDelivery(ctx.env.DB, ref, claim, null);
+          sealed ??= await encryptSecret(
+            await loadKekRing(ctx.env),
+            body,
+            credentialAad(receiptId, ref.orgId, `samsung-callback|${ref.mode}|${ref.instanceId}`),
+          );
           const receipt = {
             id: receiptId,
             signedAt,
-            envelope,
+            envelope: sealed,
             countryHint,
             event,
             requestId,
