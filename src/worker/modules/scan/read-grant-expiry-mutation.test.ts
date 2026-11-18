@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ScanInput } from '../../../shared/contracts/scan.ts';
+import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import { createLogger } from '../../platform/log.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { credentialTombstoneRefsForInput } from './credential-input.ts';
@@ -103,8 +103,12 @@ describe('read credential input capture', () => {
     });
     const scope = { orgId: kit.org.id, templateIds: [templateId], timeZone: 'UTC' };
     const input = { code: originalCode, method: 'camera' as const };
-    const req: { idempotencyKey: string; input: ScanInput; clientTs: number; scope: typeof scope } =
-      { idempotencyKey: key(), input, clientTs: kit.clock.now(), scope };
+    const req: {
+      idempotencyKey: string;
+      input: ScanCodeInput;
+      clientTs: number;
+      scope: typeof scope;
+    } = { idempotencyKey: key(), input, clientTs: kit.clock.now(), scope };
     const logs: string[] = [];
     const log = createLogger(
       {},
@@ -203,7 +207,7 @@ describe('read credential input capture', () => {
     const actual = await pauseCrypto(
       'sign',
       KEYSET_FRAME,
-      () => credentialTombstoneRefsForInput(kit.ctx, kit.org.id, 'live', input as ScanInput),
+      () => credentialTombstoneRefsForInput(kit.ctx, kit.org.id, 'live', input as ScanCodeInput),
       () => {
         delete input.passId;
         input.code = otherCode;
