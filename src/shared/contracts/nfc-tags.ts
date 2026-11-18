@@ -131,6 +131,7 @@ export const TagSchema = z.object({
 });
 export type Tag = z.infer<typeof TagSchema>;
 export const TagListQuerySchema = z.object({
+  orgId: IdSchema,
   status: TagStateSchema.optional(),
   q: z.string().trim().max(80).optional(),
   cursor: z.string().max(200).optional(),
