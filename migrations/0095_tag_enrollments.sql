@@ -24,6 +24,7 @@ CREATE TABLE tag_enrollments (
 );
 CREATE UNIQUE INDEX tag_enrollments_scanner ON tag_enrollments (scanner_id) WHERE state = 'pending';
 CREATE UNIQUE INDEX tag_enrollments_pass ON tag_enrollments (pass_id) WHERE state = 'pending';
+CREATE INDEX tag_enrollments_org ON tag_enrollments (org_id, mode, created_at);
 CREATE INDEX tag_enrollments_ended ON tag_enrollments (ended_at) WHERE ended_at IS NOT NULL;
 CREATE INDEX tag_enrollments_binding ON tag_enrollments (binding_id) WHERE binding_id IS NOT NULL;
 
