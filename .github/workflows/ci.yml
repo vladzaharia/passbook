@@ -58,7 +58,7 @@ jobs:
         run: |
           for i in 1 2 3; do
             timeout 420 npx playwright install --with-deps chromium && exit 0
-            echo "retry $i"; sudo pkill -9 -f 'apt-get|dpkg' || true; sleep 3; sudo dpkg --configure -a || true
+            echo "retry $i"; sudo pkill -9 -x apt-get || true; sudo pkill -9 -x dpkg || true; sleep 3; sudo dpkg --configure -a || true
           done; exit 1
       - run: npm run test:e2e
         env:
@@ -92,7 +92,7 @@ jobs:
         run: |
           for i in 1 2 3; do
             timeout 420 npx playwright install --with-deps chromium firefox webkit && exit 0
-            echo "retry $i"; sudo pkill -9 -f 'apt-get|dpkg' || true; sleep 3; sudo dpkg --configure -a || true
+            echo "retry $i"; sudo pkill -9 -x apt-get || true; sudo pkill -9 -x dpkg || true; sleep 3; sudo dpkg --configure -a || true
           done; exit 1
       - run: npm run test:e2e:camera
         env:
