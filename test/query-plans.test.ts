@@ -6,13 +6,8 @@ import { deleteOldWebhookEvents } from '../src/worker/modules/connections/repo-s
 import { listEvents } from '../src/worker/modules/events/repo.ts';
 import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
 import { portfolioSnapshot } from '../src/worker/modules/me/repo.ts';
-import {
-  activeBinding,
-  listTags,
-  lostBinding,
-  passTagViews,
-  tagByRef,
-} from '../src/worker/modules/nfc/repo-tags.ts';
+import { activeBinding, lostBinding } from '../src/worker/modules/nfc/repo-tag-bindings.ts';
+import { listTags, passTagViews, tagByRef } from '../src/worker/modules/nfc/repo-tags.ts';
 import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
 import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';

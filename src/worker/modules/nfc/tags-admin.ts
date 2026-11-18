@@ -10,14 +10,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tagsEnabled } from './policy.ts';
-import {
-  activeBinding,
-  bindingTarget,
-  lostBinding,
-  passFacts,
-  tagTarget,
-  tagView,
-} from './repo-tags.ts';
+import { activeBinding, bindingTarget, lostBinding, passFacts } from './repo-tag-bindings.ts';
+import { tagTarget, tagView } from './repo-tags.ts';
 import { addBind, bindChecks, endBinding, type TagAuthority, tagGrant } from './repo-tags-write.ts';
 import { commitTag } from './tags.ts';
 

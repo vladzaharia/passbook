@@ -12,14 +12,8 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
-import {
-  bindingTarget,
-  listTags,
-  passFacts,
-  passTagViews,
-  tagTarget,
-  tagView,
-} from './repo-tags.ts';
+import { bindingTarget, passFacts } from './repo-tag-bindings.ts';
+import { listTags, passTagViews, tagTarget, tagView } from './repo-tags.ts';
 import {
   reportTagLost,
   restoreTag,

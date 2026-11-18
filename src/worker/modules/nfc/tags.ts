@@ -4,16 +4,8 @@ import { AppError, ConflictError, NotFoundError, ValidationError } from '../../p
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tagsEnabled } from './policy.ts';
-import {
-  activeBinding,
-  type BindingRow,
-  orgTagCount,
-  type PassFacts,
-  passFacts,
-  type TagRow,
-  tagByRef,
-  tagView,
-} from './repo-tags.ts';
+import { activeBinding, type BindingRow, type PassFacts, passFacts } from './repo-tag-bindings.ts';
+import { orgTagCount, type TagRow, tagByRef, tagView } from './repo-tags.ts';
 import {
   addBind,
   type BindPlan,
