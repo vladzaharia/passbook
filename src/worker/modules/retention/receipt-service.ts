@@ -9,7 +9,13 @@ import {
   receiptMac,
   verifyChain,
 } from './receipts.ts';
-import { chainHead, chainRows, insertReceipt, receiptInsertStmt } from './repo-receipts.ts';
+import {
+  assertGate,
+  chainHead,
+  chainRows,
+  insertReceipt,
+  receiptInsertStmt,
+} from './repo-receipts.ts';
 
 export interface ReceiptInput {
   /** NULL: the platform pass. */
@@ -74,6 +80,7 @@ export async function prepareReceipt(
   /** The insert lands only while this holds (the delete behind it is gated on the row). */
   gate?: { sql: string; params: readonly (string | number)[] },
 ): Promise<PreparedReceipt> {
+  if (gate) assertGate(gate.sql);
   const { body, head, mac } = await bodyFor(ctx, input);
   return {
     stmt: receiptStatement(receiptInsertStmt(ctx.env.DB, body, mac, head, gate)),

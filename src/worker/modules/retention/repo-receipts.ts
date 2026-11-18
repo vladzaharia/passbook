@@ -1,4 +1,6 @@
+import { assertReadOnly, assertSqlText } from '../../platform/authority-sqltext.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
+import { ConflictError } from '../../platform/errors.ts';
 import type { Anchor, Receipt, ReceiptBody } from './receipts.ts';
 
 interface Raw {
@@ -207,4 +209,12 @@ export async function trimChain(db: D1Database, anchor: Anchor): Promise<number>
     ]),
   ]);
   return removed?.meta.changes ?? 0;
+}
+
+/** A gate is one read-only count over still-eligible rows, with values bound: never free SQL. */
+export function assertGate(sql: string): void {
+  assertSqlText(sql, 'A receipt gate');
+  assertReadOnly(sql, 'A receipt gate');
+  if (!/^\(SELECT count\(\*\) FROM [a-z_]+ WHERE /.test(sql))
+    throw new ConflictError('A receipt gate counts eligible rows.', 'RETENTION_GATE_INVALID');
 }
