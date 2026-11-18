@@ -10,7 +10,7 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 export function assertLocal(url: string): string {
   const parsed = new URL(url);
   if (!/^https?:$/.test(parsed.protocol) || !LOCAL_HOSTS.has(parsed.hostname)) {
-    throw new Error(`Refusing to seed ${parsed.origin}: only localhost is allowed.`);
+    throw new Error(`Refusing to use ${parsed.origin}: only localhost is allowed.`);
   }
   return parsed.origin;
 }

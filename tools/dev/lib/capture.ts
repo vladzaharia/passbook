@@ -35,6 +35,9 @@ type Options = {
   values: Record<string, string | undefined>;
 };
 
+/** Index entries never carry pass, bundle or join capability tokens. */
+const redact = (text: string) => text.replace(/\/(p|b|j)\/[A-Za-z0-9_-]{20,}/g, '/$1/:token');
+
 const SETTLE = '[aria-busy="true"], .wl-skeleton';
 
 async function shoot(
@@ -82,13 +85,13 @@ async function shoot(
       'requestfailed',
       (r) =>
         r.failure()?.errorText !== 'net::ERR_ABORTED' &&
-        failedRequests.push(`${r.method()} ${r.url()} ${r.failure()?.errorText ?? ''}`),
+        failedRequests.push(redact(`${r.method()} ${r.url()} ${r.failure()?.errorText ?? ''}`)),
     );
     page.on(
       'response',
       (r) =>
         r.status() >= 400 &&
-        failedRequests.push(`${r.request().method()} ${r.url()} ${r.status()}`),
+        failedRequests.push(redact(`${r.request().method()} ${r.url()} ${r.status()}`)),
     );
     const file = shotName(route.name, viewport, theme);
     let status: number | null = null;
@@ -108,13 +111,14 @@ async function shoot(
         .catch(() => {
           note = [note, 'skeleton still showing'].filter(Boolean).join('; ');
         });
+      if (status !== null && status >= 400) note = `HTTP ${status}`;
       await page.screenshot({ path: resolve(o.out, file), fullPage: true });
     } catch (error) {
       note = `capture failed: ${(error as Error).message.split('\n')[0]}`;
     }
     shots.push({
       ...base,
-      route: path,
+      route: redact(path),
       file: note?.startsWith('capture failed') ? null : file,
       status,
       consoleErrors,

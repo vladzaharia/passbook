@@ -16,11 +16,13 @@ export function latestMailByKind(base: string): Mail[] {
     if (!dir.startsWith('miniflare-') || !existsSync(folder)) continue;
     for (const f of readdirSync(folder)) {
       const file = join(folder, f);
+      const mtime = statSync(file).mtimeMs;
+      if (Date.now() - mtime > 24 * 3_600_000) continue;
       const html = readFileSync(file, 'utf8');
       const kind = /<title>([^<]*)<\/title>/.exec(html)?.[1]?.trim();
       if (!kind) continue;
-      if (!html.includes(base)) continue;
-      const mail = { kind, html, mtime: statSync(file).mtimeMs };
+      if (!html.includes(`${base}/`)) continue;
+      const mail = { kind, html, mtime };
       if (mail.mtime > (byKind.get(kind)?.mtime ?? 0)) byKind.set(kind, mail);
     }
   }
