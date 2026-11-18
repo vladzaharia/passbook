@@ -201,7 +201,7 @@ describe('field coverage', () => {
       expect(barcodes?.length, slug).toBeGreaterThan(0);
       // A coupon's barcode is the scan code; its text is the typed code.
       const message = (b: { message: string }) =>
-        slug === 'starter-coupon' ? 'SCAN-0001' : b.message;
+        slug === 'starter-coupon' ? 'SNAPSHOT-SCAN-CODE' : b.message;
       // The access card's code is the server's {{pass.scanCode}}; its alt text is the member ID.
       expect(
         barcodes?.every((b) =>

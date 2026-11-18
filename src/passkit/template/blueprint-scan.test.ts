@@ -11,6 +11,7 @@ const SLUGS = [
   'starter-generic',
   'starter-poster-generic',
   'starter-stamp-card',
+  'starter-access-card',
 ];
 
 describe.each(SLUGS)('%s scan block', (slug) => {
