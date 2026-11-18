@@ -35,7 +35,7 @@ const InputKey = z.string().min(1).max(64);
 /** `YYYY-MM-DD`, a real calendar date. */
 export const IsoDateSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date as YYYY-MM-DD.')
+  .regex(/^(?:19|2\d)\d{2}-\d{2}-\d{2}$/, 'Use a date from 1900 to 2999 as YYYY-MM-DD.')
   .refine((v) => {
     const d = new Date(`${v}T00:00:00Z`);
     return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(v);

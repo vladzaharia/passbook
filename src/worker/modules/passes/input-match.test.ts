@@ -108,7 +108,7 @@ describe('input match: values', () => {
 });
 
 describe('input match: number and date ranges', () => {
-  it('number range is inclusive and ignores numeric text', async () => {
+  it('number range is inclusive', async () => {
     const { match } = await seed({
       low: '{"n":1}',
       mid: '{"n":5.5}',
@@ -117,8 +117,8 @@ describe('input match: number and date ranges', () => {
       none: '{"n":null}',
       bool: '{"n":true}',
     });
-    expect(await match([{ input: 'n', min: 5.5, max: 10 }])).toEqual(['high', 'mid']);
-    expect(await match([{ input: 'n', min: 2 }])).toEqual(['high', 'mid']);
+    expect(await match([{ input: 'n', min: 5.5, max: 10 }])).toEqual(['high', 'mid', 'text']);
+    expect(await match([{ input: 'n', min: 2 }])).toEqual(['high', 'mid', 'text']);
     expect(await match([{ input: 'n', max: 1 }])).toEqual(['low']);
   });
 
@@ -145,6 +145,39 @@ describe('input match: number and date ranges', () => {
     ).toEqual(['b']);
     expect(await match([{ input: 'd', to: '2026-06-10', timeZone: berlin }])).toEqual(['a']);
     expect(await match([{ input: 'd', from: '2026-06-21', timeZone: berlin }])).toEqual(['offset']);
+  });
+
+  it('date clauses ignore text that only looks date-sized', async () => {
+    const { match } = await seed({
+      real: '{"d":"2026-06-15"}',
+      name: '{"d":"John Smith"}',
+      code: '{"d":"ABCD-12345"}',
+      julian: '{"d":"2460000.50"}',
+      stamp: '{"d":"2026-06-15T10:00:00Z"}',
+    });
+    const zone = 'UTC';
+    expect(await match([{ input: 'd', from: '2026-01-01', timeZone: zone }])).toEqual([
+      'real',
+      'stamp',
+    ]);
+    expect(await match([{ input: 'd', to: '2999-01-01', timeZone: zone }])).toEqual([
+      'real',
+      'stamp',
+    ]);
+  });
+
+  it('number range also reads numeric text such as "42"', async () => {
+    const { match } = await seed({
+      text: '{"n":"42"}',
+      neg: '{"n":"-1.5"}',
+      word: '{"n":"42 apples"}',
+      dash: '{"n":"4-2"}',
+      empty: '{"n":""}',
+      num: '{"n":40}',
+    });
+    expect(await match([{ input: 'n', min: 41, max: 43 }])).toEqual(['text']);
+    expect(await match([{ input: 'n', max: 0 }])).toEqual(['neg']);
+    expect(await match([{ input: 'n', min: 40 }])).toEqual(['num', 'text']);
   });
 
   it('bounds the date-time range at the zone day start', () => {

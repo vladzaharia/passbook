@@ -82,6 +82,13 @@ register(
     }
     const holderEmail = q.holderEmail ? strictEmail(q.holderEmail) : undefined;
     if (q.holderEmail && !holderEmail) return c.json({ items: [], nextCursor: null });
+    // A match walks json_each per row: bound it by an organization and a template index.
+    if (q.match && (!orgId || !q.templateId))
+      throw new ValidationError(
+        'Pick an organization and a template to filter by input.',
+        [{ path: 'match', message: 'Needs orgId and templateId.' }],
+        'MATCH_NEEDS_TEMPLATE',
+      );
     // An event target is not scoped here: only "no scan in N days" is served.
     if (q.scan && 'eventId' in q.scan)
       throw new ValidationError('Use noScanDays.', [{ path: 'scan', message: 'Unsupported.' }]);

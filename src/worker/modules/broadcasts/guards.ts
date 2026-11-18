@@ -35,8 +35,10 @@ export async function checkTemplates(
   ctx: ServiceContext,
   body: CreateBroadcastBody,
 ): Promise<void> {
+  const defined = new Set<string>();
   for (const templateId of body.target.templateIds) {
     const { manifest } = await resolveTemplate(ctx, body.orgId, templateId);
+    for (const key of Object.keys(manifest.inputs.properties ?? {})) defined.add(key);
     if (body.kind === 'message') {
       if (!manifest.messaging)
         throw new ValidationError(
@@ -65,6 +67,13 @@ export async function checkTemplates(
         'BROADCAST_INVALID_INPUT',
       );
   }
+  const unknownMatch = body.target.match?.find((clause) => !defined.has(clause.input));
+  if (unknownMatch)
+    throw new ValidationError(
+      `No targeted template has an input "${unknownMatch.input}".`,
+      [{ path: 'target.match', message: 'Unknown input.' }],
+      'BROADCAST_UNKNOWN_INPUT',
+    );
 }
 
 export function checkTime(ctx: ServiceContext, at: number): void {
