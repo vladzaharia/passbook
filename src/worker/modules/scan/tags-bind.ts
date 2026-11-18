@@ -23,7 +23,6 @@ import {
   addBind,
   type BindPlan,
   bindChecks,
-  endBinding,
   type TagActor,
 } from '../nfc/repo-tags-write.ts';
 import { canonicalUid, tagRef } from '../nfc/tag-ref.ts';
