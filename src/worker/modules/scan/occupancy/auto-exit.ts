@@ -11,7 +11,7 @@ import { addExit } from './service.ts';
 
 export const OCCUPANCY_JOB = 'scan.occupancy';
 export const OCCUPANCY_ACTOR_KEY = 'sys:occupancy';
-const TABLES = ['scans', 'scan_presence', 'scan_place_revs'];
+const TABLES = ['scans', 'pass_events', 'scan_presence', 'scan_place_revs'];
 
 export type OutCause = 'stay' | 'clear' | 'zone';
 
@@ -77,6 +77,33 @@ export function exitGrant(
     when: [won],
     returning: ['id'],
   });
+  // The ledger row of a normal tap-out, without a signed proof: no scanner or action was involved.
+  g.insertSelect(
+    'pass_events',
+    ['id', 'pass_id', 'kind', 'device', 'actor_type', 'actor_id', 'data', 'at'],
+    [
+      ctx.ids.ordered(now),
+      row.pass_id,
+      'scan.checked_out',
+      null,
+      'system',
+      'occupancy',
+      JSON.stringify({
+        scanId,
+        actionKind: 'check_in',
+        outcome: 'ok',
+        method: 'auto',
+        direction: 'out',
+        outCause: cause,
+        place: row.scope,
+        eventId: null,
+        scannerId: null,
+        staffId: null,
+      }),
+      now,
+    ],
+    { when: [scanIs(scanId, { state: 'done', outcome: 'ok' })], returning: ['id'] },
+  );
   // A tap got there first: nothing happened, so no record of it.
   g.delete('scans', { where: { id: scanId, state: 'pending', at: now }, when: [not(won)] });
   return g;

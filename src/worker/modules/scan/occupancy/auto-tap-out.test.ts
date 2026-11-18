@@ -87,6 +87,14 @@ describe('auto tap-out', () => {
         state: 'done',
       }),
     ]);
+    const ev = await all<{ kind: string; actor_type: string; data: string }>(
+      fixture.kit.env.DB,
+      'SELECT kind, actor_type, data FROM pass_events WHERE pass_id = ?',
+      [p],
+    );
+    expect(ev).toHaveLength(1);
+    expect(ev[0]).toMatchObject({ kind: 'scan.checked_out', actor_type: 'system' });
+    expect(JSON.parse(ev[0]?.data ?? '{}')).toMatchObject({ method: 'auto', outCause: 'stay' });
     const scan = await first<{ actor_type: string; actor_id: string; outcome: string }>(
       fixture.kit.env.DB,
       "SELECT actor_type, actor_id, outcome FROM scans WHERE actor_key = 'sys:occupancy' AND pass_id = ?",
@@ -140,6 +148,9 @@ describe('auto tap-out', () => {
     await exitGrant(ctx(), row, exitAsGiven([], row.scope), 'stay', now).commit();
     expect(await rowOf(p, z)).toMatchObject({ state: 'in', last_scan_id: 'tap' });
     expect(await autoScans(p)).toEqual([]);
+    expect(
+      await all(fixture.kit.env.DB, 'SELECT 1 FROM pass_events WHERE pass_id = ?', [p]),
+    ).toEqual([]);
     const pending = await first(
       fixture.kit.env.DB,
       "SELECT 1 FROM scans WHERE actor_key = 'sys:occupancy' AND state = 'pending'",
