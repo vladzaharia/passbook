@@ -1,6 +1,8 @@
 import { Minus, Plus } from 'lucide-react';
+import { useId, useState } from 'react';
 import type { ScanActionInput, ScanCard } from '../../../shared/contracts/scan.ts';
-import { formatCount } from '../../lib/format.ts';
+import { digitsMessage, fromMinor, minorDigits, parseMoney } from '../../../shared/money.ts';
+import { formatCount, formatMoney } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { ScanTextField } from '../input/wedge-field.tsx';
 import type { Draft } from '../machine/types.ts';
@@ -42,6 +44,19 @@ export function ValuePicker({
   const after = before === null ? null : action.kind === 'take' ? before - amount : before + amount;
   const short = action.kind === 'take' && after !== null && after < 0;
   const max = range?.max ?? 1000;
+  if (only?.format === 'currency')
+    return (
+      <MoneyPicker
+        label={action.label}
+        take={action.kind === 'take'}
+        range={range}
+        value={only}
+        amount={draft.amount}
+        onAmount={onAmount}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />
+    );
   return (
     <div className="scan-picker" data-testid="scan-picker">
       <h2 className="scan-picker-title">{action.label}</h2>
@@ -96,6 +111,110 @@ export function ValuePicker({
         </Button>
         <Button size="lg" data-testid="scan-picker-commit" disabled={short} onClick={onConfirm}>
           {action.label} {formatCount(amount)}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** An add or take on money: preset chips and a decimal field, in the currency's own digits. */
+function MoneyPicker({
+  label,
+  take,
+  range,
+  value,
+  amount,
+  onAmount,
+  onConfirm,
+  onCancel,
+}: {
+  label: string;
+  take: boolean;
+  range: { presets: number[] } | null;
+  value: ScanCard['values'][number];
+  amount: number | null | undefined;
+  onAmount: (value: number) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const digits = minorDigits(value.currency);
+  const currency = value.currency ?? null;
+  const [text, setText] = useState(amount ? amount.toFixed(digits) : '');
+  const errorId = useId();
+  const parsed = parseMoney(text, digits);
+  const minor = 'minor' in parsed ? parsed.minor : 0;
+  const current = minor > 0 ? fromMinor(minor, digits) : 0;
+  const before = typeof value.before === 'number' ? value.before : null;
+  const beforeMinor = before === null ? null : Math.round(before * 10 ** digits);
+  const after =
+    beforeMinor === null || minor === 0
+      ? null
+      : fromMinor(take ? beforeMinor - minor : beforeMinor + minor, digits);
+  const short = take && after !== null && after < 0;
+  const error =
+    text === '' || 'minor' in parsed
+      ? null
+      : parsed.error === 'digits'
+        ? digitsMessage(digits)
+        : 'Enter an amount.';
+  const set = (next: string) => {
+    setText(next);
+    const p = parseMoney(next, digits);
+    if ('minor' in p && p.minor > 0) onAmount(fromMinor(p.minor, digits));
+  };
+  return (
+    <div className="scan-picker" data-testid="scan-picker">
+      <h2 className="scan-picker-title">{label}</h2>
+      {range?.presets.length ? (
+        <fieldset className="scan-picker-presets" aria-label="Amount">
+          {range.presets.map((n) => (
+            <Button
+              key={n}
+              size="lg"
+              variant={n === current ? 'primary' : 'outline'}
+              aria-pressed={n === current}
+              onClick={() => set(n.toFixed(digits))}
+            >
+              {formatMoney(n, currency)}
+            </Button>
+          ))}
+        </fieldset>
+      ) : null}
+      <ScanTextField
+        aria-label="Amount"
+        data-testid="scan-money-input"
+        inputMode="decimal"
+        autoComplete="off"
+        placeholder={(0).toFixed(digits)}
+        aria-invalid={error !== null}
+        {...(error ? { 'aria-describedby': errorId } : {})}
+        value={text}
+        onChange={(event) => set(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && minor > 0 && !short) onConfirm();
+        }}
+      />
+      {error ? (
+        <p id={errorId} className="scan-picker-change" role="alert" data-testid="scan-money-error">
+          {error}
+        </p>
+      ) : null}
+      {after !== null ? (
+        <p className="scan-picker-change" data-testid="scan-picker-change">
+          Balance after: {formatMoney(after, currency)}
+        </p>
+      ) : null}
+      <div className="scan-picker-actions">
+        <Button size="lg" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button
+          size="lg"
+          data-testid="scan-picker-commit"
+          disabled={minor === 0 || short}
+          onClick={onConfirm}
+        >
+          {minor > 0 ? `${label} ${formatMoney(current, currency)}` : label}
         </Button>
       </div>
     </div>

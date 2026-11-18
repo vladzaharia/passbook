@@ -341,7 +341,7 @@ Pass download tokens, bundle tokens and Apple web-service tokens are stored as M
   4. To go back, swap the two values; the job moves the rows again.
   A rotation restores availability only. The sealed copies sit under the KEK that wrapped them until `keys.rewrap` moves them (KEK rotation), and a copy of the database plus that KEK opens every link and device token, so after a KEK_V1 compromise rotate the links (`rotate-link`) and credentials (credential transfer) too. Credential-reference evidence (tombstones, retention proofs, webhook and action references, personalization proofs; bound to the keyset commitment) stays on root 1 (`KEK_V1`, or `MAC_ROOT_V1` once V1 is retired): no rekey tool exists.
 - **Retired ids**: `retired_session_ids`, `retired_scanner_ids` and `retired_api_key_ids` refuse
-  deletes and grow without bound. Storage only; leave them.
+  deletes for 400 days after retirement. The daily `authority.retired_ids` hook then purges them.
 - **Status**: admin console, Status. Dead letters in `wallet-jobs-dlq` show there.
 - **Suspended org**: public pages, Apple updates, pushes, syncs and webhooks stop for it.
 - **Icons and social image**: `node tools/build-icons.ts` after the mark or the wallet art changes,

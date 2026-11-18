@@ -48,6 +48,12 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   template_candidates: { org: 'org_id', mode: 'mode' },
   template_approvals: { org: null, edges: [edge('candidate_id', 'template_candidates')] },
   template_releases: { org: 'org_id', mode: 'mode' },
+  template_forks: { org: 'org_id' },
+  template_fork_updates: { org: 'org_id' },
+  template_version_bases: {
+    org: null,
+    edges: [edge('template_id', 'template_forks', 'template_id')],
+  },
   outbox: { org: 'org_id', pass: 'pass_id' },
   bundles: { org: 'org_id', mode: 'mode' },
   bundle_passes: {
@@ -93,12 +99,22 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },
+  nfc_tags: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'tag_ref'] },
+  // Its triggers check that tag and pass share the tenant and that a user binding is anchored on a pass the
+  // user owns; written only through both parents. `pass` lets a holder grant end a binding on its own pass.
+  tag_bindings: {
+    org: null,
+    edges: [edge('tag_id', 'nfc_tags'), edge('pass_id', 'passes')],
+    pass: 'pass_id',
+  },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
   pass_imports: { org: 'org_id', mode: 'mode' },
   pass_import_rows: { org: null, edges: [edge('import_id', 'pass_imports')] },
   // Org data, not per mode: a plan made in Test works in Live.
   pass_import_mappings: { org: 'org_id', conflict: ['org_id', 'template_id'] },
+  // The bundle counterpart (0087).
+  bundle_remac_marks: { org: null, edges: [edge('bundle_id', 'bundles')] },
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */

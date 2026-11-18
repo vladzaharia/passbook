@@ -83,6 +83,7 @@ export async function attempt(
     req.input,
     {
       window: !!capturedOverride && !!WINDOW_REASONS[capturedOverride.reason],
+      access: capturedOverride?.reason,
       confirmed: req.confirmed === true,
       direction: req.direction,
       override: !!req.overrideOf,
@@ -255,7 +256,7 @@ export async function attempt(
       onFailureCommitted,
     );
   const action = picked;
-  const issue = valueRequestIssue(action, found.template.manifest, req);
+  const issue = valueRequestIssue(action, found.template.manifest, req, found.pass.personalization);
   if (issue)
     return invalid(
       ctx,

@@ -1,5 +1,7 @@
 import { Validator } from '@cfworker/json-schema';
+import { minorDigits, toMinor } from '../../shared/money.ts';
 import type { Json, TemplateManifest } from '../types.ts';
+import { exprReferences } from './expr.ts';
 
 const ID = /^[a-z][a-z0-9_]{0,31}$/;
 const KINDS = new Set(['check_in', 'add', 'take', 'set', 'use_up']);
@@ -47,6 +49,47 @@ export function typeOf(schema: unknown): string | null {
   if (!isRecord(schema)) return null;
   const t = schema.type;
   return typeof t === 'string' ? t : null;
+}
+
+/** An input whose number is money (`x-format: currency`): amounts are exact in minor units. */
+export const isCurrencyInput = (schema: unknown) =>
+  isRecord(schema) && schema['x-format'] === 'currency';
+
+/**
+ * The ISO code a currency input is in: its own `x-currency`, else the `currencyCode` bound to the
+ * field that shows it (a literal, or an input read from `values`, falling back to its default).
+ */
+export function currencyOf(
+  manifest: TemplateManifest,
+  input: string,
+  values: Rec = {},
+): string | null {
+  const props = propertiesOf(manifest);
+  const own = isRecord(props[input]) ? props[input]['x-currency'] : undefined;
+  const code = /^[A-Z]{3}$/;
+  if (typeof own === 'string' && code.test(own)) return own;
+  const target = (b: { to: unknown }) => b.to as Rec;
+  const shown = manifest.bindings.find(
+    (b) =>
+      'field' in target(b) &&
+      (target(b).prop === undefined || target(b).prop === 'value') &&
+      typeof b.value === 'string' &&
+      exprReferences(b.value).inputs.includes(input),
+  );
+  const unit = shown
+    ? manifest.bindings.find(
+        (b) =>
+          target(b).prop === 'currencyCode' &&
+          JSON.stringify(target(b).field) === JSON.stringify(target(shown).field),
+      )
+    : undefined;
+  if (typeof unit?.value !== 'string') return null;
+  if (code.test(unit.value)) return unit.value;
+  const ref = /^\{\{\s*([\w-]+)\s*\}\}$/.exec(unit.value)?.[1];
+  if (!ref) return null;
+  const refSchema = props[ref];
+  const found = values[ref] ?? (isRecord(refSchema) ? refSchema.default : undefined);
+  return typeof found === 'string' && code.test(found) ? found : null;
 }
 
 export const isDateTime = (schema: unknown) =>
@@ -188,7 +231,10 @@ function kindIssues(a: Rec, path: string, ctx: ActionContext): void {
       );
       return;
     }
-    amountIssues(a, path, schema as Rec, error);
+    const digits = isCurrencyInput(schema)
+      ? minorDigits(currencyOf(ctx.manifest, String(a.input)))
+      : null;
+    amountIssues(a, path, schema as Rec, error, digits);
     return;
   }
   if (a.kind === 'set') {
@@ -214,28 +260,42 @@ function kindIssues(a: Rec, path: string, ctx: ActionContext): void {
   }
 }
 
-function amountIssues(a: Rec, path: string, schema: Rec, error: Report): void {
+/** `digits` is the currency's minor digits for a money input, else null (whole or plain numbers). */
+function amountIssues(
+  a: Rec,
+  path: string,
+  schema: Rec,
+  error: Report,
+  digits: number | null,
+): void {
   const integer = schema.type === 'integer';
   const cap = isNum(schema.maximum) ? Math.min(schema.maximum, MAX_AMOUNT) : MAX_AMOUNT;
+  const low = digits === null ? 1 : 10 ** -digits;
   const fits = (v: unknown, hi = cap): v is number =>
-    isNum(v) && v >= 1 && v <= hi && (!integer || Number.isInteger(v));
+    isNum(v) &&
+    v >= low - 1e-9 &&
+    v <= hi &&
+    (!integer || Number.isInteger(v)) &&
+    (digits === null || toMinor(v, digits) !== null);
+  const from = digits === null ? '1' : low.toFixed(digits);
   const bad = (message: string, where: string) =>
     error('SCAN_AMOUNT_RANGE', message, `${path}.${where}`);
   const amount = a.amount;
   if (amount !== undefined) {
     if (isRecord(amount)) {
-      if (!fits(amount.max)) bad(`amount.max must be 1 to ${cap}.`, 'amount.max');
+      if (!fits(amount.max)) bad(`amount.max must be ${from} to ${cap}.`, 'amount.max');
       const hi = fits(amount.max) ? amount.max : cap;
       if (amount.default !== undefined && !fits(amount.default, hi))
-        bad(`amount.default must be 1 to ${hi}.`, 'amount.default');
+        bad(`amount.default must be ${from} to ${hi}.`, 'amount.default');
       if (amount.presets !== undefined) {
         const ok =
           Array.isArray(amount.presets) &&
           amount.presets.length <= 6 &&
           amount.presets.every((p) => fits(p, hi));
-        if (!ok) bad(`amount.presets must be up to 6 values from 1 to ${hi}.`, 'amount.presets');
+        if (!ok)
+          bad(`amount.presets must be up to 6 values from ${from} to ${hi}.`, 'amount.presets');
       }
-    } else if (!fits(amount)) bad(`amount must be 1 to ${cap}.`, 'amount');
+    } else if (!fits(amount)) bad(`amount must be ${from} to ${cap}.`, 'amount');
   }
   if (a.confirmAbove !== undefined && !(isNum(a.confirmAbove) && a.confirmAbove >= 0))
     bad('confirmAbove must be 0 or more.', 'confirmAbove');

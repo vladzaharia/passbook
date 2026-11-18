@@ -129,20 +129,27 @@ describe('scanPolicy: Matrix B', () => {
     expect(allowed(terminal, { kind: 'cooldown_override' }).allow).toBe(false);
   });
 
-  it('a capacity override always needs a manager, even when anyone may let a pass in again', () => {
+  it('a capacity override follows letInAgain, and a Hard limit refuses every role', () => {
     expect(door.settings.letInAgain).toBe('anyone');
-    expect(allowed(door, { kind: 'let_in_again' }).allow).toBe(true);
-    expect(allowed(door, { kind: 'capacity_override' })).toEqual({
+    expect(allowed(door, { kind: 'capacity_override' }).allow).toBe(true);
+    const careful = { ...door, settings: { ...door.settings, letInAgain: 'manager' as const } };
+    expect(allowed(careful, { kind: 'capacity_override' })).toEqual({
       allow: false,
       why: 'needs_approval',
     });
-    expect(allowed(desk, { kind: 'capacity_override' }, true).allow).toBe(true);
-    expect(allowed(manager, { kind: 'capacity_override' }).allow).toBe(true);
+    expect(allowed(careful, { kind: 'capacity_override' }, true).allow).toBe(true);
+    const never = { ...door, settings: { ...door.settings, letInAgain: 'never' as const } };
+    expect(allowed(never, { kind: 'capacity_override' }).allow).toBe(false);
+    const hard = { ...manager, settings: { ...manager.settings, hardLimit: true } };
+    expect(allowed(hard, { kind: 'capacity_override' }).allow).toBe(false);
     expect(allowed(admin, { kind: 'capacity_override' }).allow).toBe(true);
     expect(allowed(terminal, { kind: 'capacity_override' }).allow).toBe(false);
     expect(overridePolicyKind('capacity_full')).toBe('capacity_override');
     expect(overridePolicyKind('cooldown')).toBe('cooldown_override');
     expect(overridePolicyKind('already_done')).toBe('let_in_again');
+    expect(overridePolicyKind('zone_not_included')).toBe('access_override');
+    expect(overridePolicyKind('not_yet_valid', 'refused')).toBe('access_override');
+    expect(overridePolicyKind('not_yet_valid', 'heads_up')).toBe('let_in_again');
   });
 
   describe('undo', () => {

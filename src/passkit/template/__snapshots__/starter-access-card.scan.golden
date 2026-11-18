@@ -1,0 +1,237 @@
+{
+  "access": {
+    "input": {
+      "from": "validFrom",
+      "plan": "plan",
+      "sponsor": "sponsor",
+      "until": "validUntil",
+      "visits": "visits",
+      "zones": "zones"
+    },
+    "plans": [
+      {
+        "id": "member",
+        "kind": "always",
+        "label": "24/7 Member",
+        "zones": [
+          {
+            "zone": "*"
+          }
+        ]
+      },
+      {
+        "hours": {
+          "fri": [
+            "06:00-16:00",
+            "20:00-23:00"
+          ],
+          "mon": [
+            "06:00-16:00",
+            "20:00-23:00"
+          ],
+          "sat": [
+            "08:00-20:00"
+          ],
+          "sun": [
+            "08:00-20:00"
+          ],
+          "thu": [
+            "06:00-16:00",
+            "20:00-23:00"
+          ],
+          "tue": [
+            "06:00-16:00",
+            "20:00-23:00"
+          ],
+          "wed": [
+            "06:00-16:00",
+            "20:00-23:00"
+          ]
+        },
+        "id": "off_peak",
+        "kind": "timed",
+        "label": "Off-peak",
+        "zones": [
+          {
+            "zone": "*"
+          }
+        ]
+      },
+      {
+        "days": 1,
+        "id": "guest",
+        "kind": "guest",
+        "label": "Guest",
+        "zones": [
+          {
+            "zone": "*"
+          }
+        ]
+      }
+    ],
+    "rules": {
+      "reentryMinutes": null,
+      "visitGapMinutes": 120
+    },
+    "suspend": {
+      "equals": [
+        "Suspended"
+      ],
+      "input": "status"
+    }
+  },
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "enter",
+      "kind": "check_in",
+      "label": "Let in",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "always"
+    }
+  ],
+  "display": {
+    "customer": {
+      "chips": [
+        "c_plan",
+        "c_timed",
+        "c_guest"
+      ],
+      "panel": null
+    },
+    "header": {
+      "chips": [
+        {
+          "icon": "infinity",
+          "id": "c_plan",
+          "text": "{{access.plan}}",
+          "tone": "violet"
+        }
+      ]
+    },
+    "holder": "{{memberName}}",
+    "notes": {
+      "refused": "Ask at the front desk."
+    },
+    "panels": [
+      {
+        "icon": "door-open",
+        "id": "p_visits",
+        "on": [
+          "ready",
+          "ok"
+        ],
+        "preset": {
+          "id": "membership",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_member",
+            "items": [
+              {
+                "id": "i_month",
+                "label": "This month",
+                "value": {
+                  "count": "{{history.visits.month}}",
+                  "one": "# visit",
+                  "other": "# visits",
+                  "zero": "First visit"
+                }
+              },
+              {
+                "id": "i_last",
+                "label": "Last visit",
+                "value": "{{history.lastVisit.at|ago}}"
+              }
+            ],
+            "type": "columns",
+            "when": {
+              "not": {
+                "eq": "guest",
+                "path": "access.kind"
+              }
+            }
+          },
+          {
+            "id": "r_guest",
+            "items": [
+              {
+                "id": "i_left",
+                "label": "Visits left",
+                "value": "{{access.visits.left}} of {{access.visits.limit}}"
+              },
+              {
+                "id": "i_until",
+                "label": "Until",
+                "value": "{{access.until|time}}"
+              }
+            ],
+            "type": "columns",
+            "when": {
+              "eq": "guest",
+              "path": "access.kind"
+            }
+          },
+          {
+            "id": "r_sponsor",
+            "label": "Guest of",
+            "minRole": "desk",
+            "type": "field",
+            "value": "{{inputs.sponsor}}",
+            "whenEmpty": "hide"
+          }
+        ],
+        "title": "Visits"
+      }
+    ],
+    "photo": {
+      "minRole": "door"
+    },
+    "v": 1,
+    "variants": [
+      {
+        "header": {
+          "chips": [
+            {
+              "icon": "clock",
+              "id": "c_timed",
+              "text": "{{access.plan}}",
+              "tone": "teal"
+            }
+          ]
+        },
+        "id": "timed",
+        "name": "Timed",
+        "when": {
+          "eq": "timed",
+          "path": "access.kind"
+        }
+      },
+      {
+        "header": {
+          "chips": [
+            {
+              "icon": "ticket",
+              "id": "c_guest",
+              "text": "{{access.plan}}",
+              "tone": "gold"
+            }
+          ]
+        },
+        "id": "guest",
+        "name": "Guest",
+        "when": {
+          "eq": "guest",
+          "path": "access.kind"
+        }
+      }
+    ]
+  },
+  "lookup": {
+    "input": "memberId"
+  }
+}

@@ -2,12 +2,13 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import { addLine, type DeviceInfo } from '../../shared/device.ts';
+import { addLine, type DeviceInfo, isAndroid } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { statusOf } from '../../web/lib/status.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
 import { AddBlock } from '../../web/portal/add/add-block.tsx';
+import { OUTLINE_ACTION_CLASS } from '../../web/portal/add/added.tsx';
 import { type AddAreaProps, addMode } from '../../web/portal/add/area.ts';
 import { HolderHeading } from '../../web/portal/holder-heading.tsx';
 import { Help, type HolderSupport, Notice, PortalLink } from '../../web/portal/holder-parts.tsx';
@@ -28,7 +29,7 @@ export const BUNDLE_COPY = {
   summary: (n: number, off: number) =>
     `${n} ${n === 1 ? 'pass' : 'passes'}${off ? ` · ${off} voided` : ''}`,
   qrAlt: (name: string) => `QR code for ${name}`,
-  preview: 'Add these passes to Apple Wallet.',
+  preview: 'Open these passes.',
 } as const;
 
 export interface BundlePageItem {
@@ -39,6 +40,8 @@ export interface BundlePageItem {
   state: 'active' | 'voided' | 'removed';
   /** `/b/:token/:passId/pass.pkpass`. */
   downloadHref: string;
+  /** `/b/:token/:passId/barcode`: the browser barcode, shown on Android. */
+  barcodeHref: string;
 }
 
 export interface BundlePageProps {
@@ -75,6 +78,7 @@ function BundleBody(props: BundlePageProps) {
   const { items, device, support } = props;
   const addable = items.filter((i) => i.state === 'active');
   const off = items.length - addable.length;
+  const android = isAndroid(device.device);
   const mode = addable.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
   const area: AddAreaProps | null =
     mode === 'off'
@@ -104,7 +108,9 @@ function BundleBody(props: BundlePageProps) {
           actions={<PortalLink href="/" />}
         />
         <div className="bd-top">
-          {area ? (
+          {area && android ? (
+            <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
+          ) : area ? (
             <section className="bd-add" aria-labelledby="bd-add">
               <h2 id="bd-add">{BUNDLE_COPY.addAll}</h2>
               <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
@@ -131,6 +137,14 @@ function BundleBody(props: BundlePageProps) {
               <div className="bd-way">
                 {item.state !== 'active' ? (
                   <OffBadge state={item.state} />
+                ) : android ? (
+                  <a
+                    className={OUTLINE_ACTION_CLASS}
+                    href={item.barcodeHref}
+                    aria-describedby={`bd-n-${item.id}`}
+                  >
+                    {HOLDER_COPY.showBarcode}
+                  </a>
                 ) : (
                   <AppleWalletBadge
                     href={item.downloadHref}

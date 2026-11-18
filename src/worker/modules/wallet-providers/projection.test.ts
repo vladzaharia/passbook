@@ -472,7 +472,7 @@ describe('native projection approval', () => {
         candidateHash: draft.candidateHash,
         expectedGeneration: 0,
       }),
-    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
+    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_SCHEMA' });
     expect(
       await getApprovedProjection(test.ctx, { ...lookup(test), provider: 'google' }, test.proof),
     ).toBeNull();
@@ -668,6 +668,55 @@ describe('native projection approval', () => {
       }),
     ).toEqual({ changes: 1 });
   }, 30_000);
+
+  it('refuses a Samsung schema 2 release in the database, even with verified evidence', async () => {
+    const test = await setup();
+    // Without an organization app link Samsung's report is Blocked, so there is no schema 2
+    // candidate to publish; the service says so, and the database refuses the row anyway.
+    await expect(
+      createProjectionCandidate(test.ctx, test.author, test.templateId, {
+        ...test.scope,
+        version: test.version,
+        sourceReleaseId: test.source.id,
+        projection: { schema: 2, provider: 'samsung', approvedOmissions: [] },
+      }),
+    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_BLOCKED' });
+
+    // Verified evidence and a review do not help: flip a schema 1 candidate to schema 2 in place.
+    const candidate = await nativeCandidate(test);
+    const approval = await nativeApproval(test, candidate);
+    expect(
+      await ensureSamsungProjectionEvidence(
+        test.ctx,
+        candidate.id,
+        candidate.candidateHash,
+        test.proof,
+      ),
+    ).toBe(true);
+    // Candidates are immutable by trigger; lift those triggers for the one in-place edit, then restore.
+    const triggers = (
+      await env.DB.prepare(
+        "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'template_candidates' AND sql LIKE '%BEFORE UPDATE%'",
+      ).all<{ name: string; sql: string }>()
+    ).results;
+    const setSchema = (schema: number) =>
+      run(
+        env.DB,
+        "UPDATE template_candidates SET projection_json = json_set(projection_json, '$.schema', ?) WHERE id = ?",
+        [schema, candidate.id],
+      );
+    for (const trigger of triggers) await run(env.DB, `DROP TRIGGER ${trigger.name}`);
+    try {
+      await setSchema(2);
+      await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(
+        'invalid provider release approval or source',
+      );
+      await setSchema(1);
+    } finally {
+      for (const trigger of triggers) await run(env.DB, trigger.sql);
+    }
+    expect(await insertDirectProjectionRelease(test, candidate, approval)).toEqual({ changes: 1 });
+  });
 
   it('rechecks the Apple source and provider account snapshots on direct release inserts', async () => {
     const staleSource = await setup();

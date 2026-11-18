@@ -144,6 +144,13 @@ function chainOf(zoneId: string | null, zones: readonly ZoneNode[]): ZoneLink[] 
   return out;
 }
 
+/** Refusals a Manager may let through. Suspended, voided, removed and expired stay final. */
+const ACCESS_WAIVABLE = new Set<string>([
+  'zone_not_included',
+  'outside_hours',
+  'guest_expired',
+  'not_yet_valid',
+]);
 const ON_HOLD = new Set<AccessDecision['reason']>(['suspended', 'not_yet_valid', 'guest_expired']);
 
 /**
@@ -158,6 +165,7 @@ export function accessStop(
   known: Pick<Stop, 'pass' | 'ref' | 'found' | 'connectionGeneration'>,
   reads: AccessReads | null,
   now: number,
+  waived?: string,
 ): Stop | null {
   const manifest = accessManifestOf(found);
   if (!manifest) return null;
@@ -198,7 +206,11 @@ export function accessStop(
       waitMs:
         manifest.rules?.reentryMinutes == null ? null : manifest.rules.reentryMinutes * MINUTE,
     } satisfies FoundAccess;
-  if (d.reason !== null && (!event || ON_HOLD.has(d.reason)))
+  if (
+    d.reason !== null &&
+    !(waived === d.reason && ACCESS_WAIVABLE.has(d.reason)) &&
+    (!event || ON_HOLD.has(d.reason))
+  )
     return stop('refused', d.reason, { ...known, at: d.at, access: scanAccessOf(d) });
   return null;
 }

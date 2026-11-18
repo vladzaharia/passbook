@@ -5,6 +5,7 @@ import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TemplateAuthority } from './access.ts';
 import { behaviors, dryRun } from './build-check.ts';
+import { editLineage } from './fork-edit.ts';
 import { readAll } from './mutations-assets.ts';
 import { contentVersion } from './package/hash.ts';
 import { validateManifest } from './package/manifest.ts';
@@ -61,6 +62,7 @@ export async function persistManifestReplacement(
     assets: current.assets,
   });
   if (version === current.version) return null;
+  const { lineage } = await editLineage(ctx, id, current.version);
   try {
     await commitVersion(ctx, {
       plan: { templateId: id, isNew: false, existing: row },
@@ -71,6 +73,7 @@ export async function persistManifestReplacement(
       createdBy: auth?.kind === 'session' ? auth.userId : null,
       authorities: [authority],
       guardActive: true,
+      ...(lineage ? { lineage } : {}),
       body: {
         version,
         manifest,

@@ -276,11 +276,18 @@ describe('wallet operation claim SQL and atomicity', () => {
     // stmt() parenthesizes AND chains; compare the fences without that grouping.
     const flat = (sql: string) => sql.replace(/[()\s]+/g, ' ');
     const updates = seen.filter(({ sql }) => sql.includes('WITH scoped_operation AS MATERIALIZED'));
-    const settlement = updates.find(({ sql }) => flat(sql).includes("op.state = 'uncertain'"));
-    const finalization = updates.find(({ sql }) =>
+    const operationUpdates = updates.filter(({ sql }) =>
+      sql.includes('UPDATE wallet_provider_instance_operations AS op'),
+    );
+    const settlement = operationUpdates.find(({ sql }) =>
+      flat(sql).includes("op.state = 'uncertain'"),
+    );
+    const finalization = operationUpdates.find(({ sql }) =>
       flat(sql).includes('op.claim_hash = ? AND op.state'),
     );
-    const notIssued = updates.find(({ sql }) => flat(sql).includes("AND op.kind = 'revoke'"));
+    const notIssued = operationUpdates.find(({ sql }) =>
+      flat(sql).includes("AND op.kind = 'revoke'"),
+    );
     const revoke = seen.find(({ sql }) =>
       sql.includes("UPDATE wallet_provider_instances AS i SET lifecycle = 'revoked'"),
     );

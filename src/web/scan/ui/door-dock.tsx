@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { holdVerbs } from '../machine/access-view.ts';
 import type { ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
@@ -9,11 +10,13 @@ export function DoorDock({
   runtime,
   open,
   onError,
+  inside,
 }: {
   outcome: ScanOutcome | null;
   runtime: ScanRuntime;
   open: (sheet: boolean) => void;
   onError: (message: string) => void;
+  inside?: { count: number; onOpen: () => void };
 }) {
   const { state, dispatch } = useScanMachine();
   const [torch, setTorch] = useState(false);
@@ -23,6 +26,7 @@ export function DoorDock({
   if (!outcome || (outcome.kind === 'ok' && !state.prefs.holdResults))
     return (
       <DoorThumbRow
+        {...(inside ? { inside } : {})}
         canTorch={runtime.camera.hasTorch()}
         torchOn={torch}
         onTorch={() => {
@@ -33,21 +37,35 @@ export function DoorDock({
         onLookUp={() => open(true)}
       />
     );
-  const override = outcome.overridable && outcome.action;
   const check = outcome.reason === 'check_required' && outcome.action;
+  const verbs = check ? [] : holdVerbs(outcome);
+  const more = Boolean(check) || verbs.length > 0;
   return (
     <>
-      {override || check ? (
+      {check ? (
         <DockButton
           onClick={() => dispatch({ type: 'override', actionId: outcome.action?.id ?? '' })}
         >
-          {check ? 'Check in' : 'Let in again'}
+          Check in
         </DockButton>
       ) : null}
+      {verbs.map((verb) => (
+        <DockButton
+          key={verb.label}
+          data-testid={verb.kind === 'turn' ? `dock-tap-${verb.direction}` : 'dock-let-in'}
+          onClick={() =>
+            verb.kind === 'turn'
+              ? dispatch({ type: 'turn', direction: verb.direction })
+              : dispatch({ type: 'override', actionId: outcome.action?.id ?? '' })
+          }
+        >
+          {verb.label}
+        </DockButton>
+      ))}
       <DockButton
         primary
         variant="filled"
-        shape={override || check ? 'fixed' : undefined}
+        shape={more ? 'fixed' : undefined}
         onClick={() => dispatch({ type: 'dismiss' })}
       >
         Done

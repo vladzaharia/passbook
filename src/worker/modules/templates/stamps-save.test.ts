@@ -172,7 +172,11 @@ describe('a Stamp card in the designer', () => {
   });
 
   it('serves the strip for a count, and leaves strips out of the package', async () => {
-    const v = await latest();
+    // Versions saved in the same tick have no stable order: pick the goal-8 version by its goal.
+    const detail = TemplateDetailSchema.parse(await (await call(`/${cloneId}`)).json());
+    const all = await Promise.all(detail.versions.map((x) => version(x.version)));
+    const v = all.find((x) => (manifestOf(x).stamps as { goal: number }).goal === 8);
+    if (!v) throw new Error('no goal-8 version');
     const bytes = async (path: string) =>
       sha1Hex(new Uint8Array(await (await call(path)).arrayBuffer()));
     const at = (name: string) => v.assets.find((a) => a.name === name)?.sha1;
