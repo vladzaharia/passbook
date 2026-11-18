@@ -1,3 +1,4 @@
+import { COUNTER_COPY } from '../../shared/copy/counters.ts';
 import type { Binding, Json, PassField, PassJson, Personalization } from '../types.ts';
 import { type ExprScope, evaluate, isEmpty, type PassScope, testCondition } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
@@ -157,6 +158,21 @@ function applyBinding(ctx: Context, binding: Binding): void {
   else if ('image' in to) applyImage(ctx, binding, to as never);
 }
 
+const COUNTER_READ = /\bpass\.counters\.\w+\.(left|text)\b/;
+
+/** A field that shows what is left tells the holder when it changes, unless the template says otherwise. */
+function defaultCounterMessages(pass: PassJson, bindings: Binding[]): void {
+  for (const b of bindings) {
+    const to = b.to as { field?: string | string[]; prop?: string };
+    const read = typeof b.value === 'string' ? COUNTER_READ.exec(b.value)?.[1] : undefined;
+    if (!read || to.field === undefined || (to.prop ?? 'value') !== 'value') continue;
+    const keys = Array.isArray(to.field) ? to.field : [to.field];
+    for (const f of allFields(pass))
+      if (keys.includes(f.key) && f.changeMessage === undefined)
+        f.changeMessage = read === 'left' ? COUNTER_COPY.changed : COUNTER_COPY.changedText;
+  }
+}
+
 /** Applies manifest bindings to a copy of the template's pass.json. */
 export function bindPass(
   template: ResolvedTemplate,
@@ -174,5 +190,6 @@ export function bindPass(
   };
   const ctx: Context = { pass, scope, dropped: new Set() };
   for (const binding of template.manifest.bindings) applyBinding(ctx, binding);
+  defaultCounterMessages(ctx.pass, template.manifest.bindings);
   return { pass, droppedImages: [...ctx.dropped].sort() };
 }

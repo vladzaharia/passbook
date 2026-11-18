@@ -47,6 +47,7 @@ export type PartId =
   | 'scan.access'
   | 'nfc'
   | 'stamps'
+  | 'counters'
   | 'wallets'
   | 'files.image'
   | 'files.stampArt'

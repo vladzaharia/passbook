@@ -1,4 +1,5 @@
 import type { TemplateManifest, ValidationIssue } from '../types.ts';
+import { unknownCounterRefs } from './counters.ts';
 
 /** Server values a template may read as `{{pass.<name>}}`. */
 export const PASS_VALUES: readonly string[] = ['scanCode'];
@@ -27,7 +28,11 @@ export function unknownPassValues(
   manifest?: Pick<TemplateManifest, 'stamps' | 'counters'>,
 ): string[] {
   const blocks = BLOCK_VALUES.filter((name) => manifest?.[name] !== undefined) as string[];
-  return [...expr.matchAll(/\bpass\.(\w+)/g)]
+  const unknown = [...expr.matchAll(/\bpass\.(\w+)/g)]
     .map((m) => m[1] ?? '')
     .filter((name) => !PASS_VALUES.includes(name) && !blocks.includes(name));
+  const counters = manifest?.counters
+    ? unknownCounterRefs(expr, { counters: manifest.counters })
+    : [];
+  return [...unknown, ...counters];
 }

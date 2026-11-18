@@ -101,9 +101,9 @@ describe('pass.counters scope', () => {
   it('says None left at zero', () => {
     expect(counterScope(0, 10)).toMatchObject({ left: 0, used: 10, none: true, text: 'None left' });
   });
-  it('clamps to 0..size and floors', () => {
+  it('floors at 0, keeps a refill that carries over, and never uses below 0', () => {
     expect(counterScope(-2, 5).left).toBe(0);
-    expect(counterScope(9, 5)).toMatchObject({ left: 5, used: 0 });
+    expect(counterScope(9, 5)).toMatchObject({ left: 9, used: 0 });
     expect(counterScope(2.9, 5).left).toBe(2);
   });
   it('reads left, used, size, none and text in expressions and conditions', () => {
@@ -248,7 +248,9 @@ describe('counters manifest checks', () => {
         ),
       ),
     ).toContain('COUNTER_INPUT');
-    expect(codes(edit((m) => (prop(m).maximum = SIZE + 1)))).toContain('COUNTER_INPUT');
+    expect(codes(edit((m) => (prop(m).maximum = SIZE - 1)))).toContain('COUNTER_INPUT');
+    expect(codes(edit((m) => (prop(m).maximum = SIZE + 1)))).not.toContain('COUNTER_INPUT');
+    expect(codes(edit((m) => delete prop(m).maximum))).not.toContain('COUNTER_INPUT');
     expect(codes(edit((m) => (prop(m).minimum = 1)))).toContain('COUNTER_INPUT');
   });
   it('refuses one input for two counters and for stamps', () => {
@@ -261,8 +263,21 @@ describe('counters manifest checks', () => {
     });
     expect(codes(both)).toContain('COUNTER_INPUT');
   });
-  it('warns when a new pass would not start full', () => {
-    expect(codes(edit((m) => delete prop(m).default))).toContain('COUNTER_DEFAULT');
+  it('reads a missing input as 0 whatever the default', () => {
+    const m = edit((x) => delete prop(x).default);
+    expect(codes(m)).not.toContain('COUNTER_DEFAULT');
+    expect(derivedPassScope(m, applyDefaults(m, { holder: 'Ana' })).counters?.visits).toMatchObject(
+      {
+        left: 0,
+        text: 'None left',
+      },
+    );
+    expect(
+      stripCount(
+        edit((x) => delete prop(x).default, withArt()),
+        { holder: 'Ana' },
+      ),
+    ).toBe(0);
   });
   it('wants art as stamps/ PNGs, one strip, a strip size and a style with a strip', () => {
     const art = (m: TemplateManifest) => m.counters as never as Record<string, { art: unknown }>;
@@ -299,27 +314,116 @@ describe('counters manifest checks', () => {
       'COUNTER_STYLE',
     );
   });
-  it('keeps scan amounts and set values within the size', () => {
-    const act = (a: Record<string, unknown>) =>
+  it('takes any value up to the input maximum for a set, and a staff-entered one', () => {
+    const set = (value?: unknown) =>
       edit((m) => {
         m.scan = {
-          actions: [{ id: 'use', label: 'Use', kind: 'take', input: 'left', ...a }],
+          actions: [
+            {
+              id: 'r',
+              label: 'Refill',
+              kind: 'set',
+              input: 'left',
+              ...(value === undefined ? {} : { value }),
+            },
+          ],
         } as never;
       });
-    expect(codes(act({ amount: SIZE + 1 }))).toContain('SCAN_COUNTER_AMOUNT');
-    expect(codes(act({ amount: { max: SIZE + 1 } }))).toContain('SCAN_COUNTER_AMOUNT');
-    expect(codes(act({ amount: 2 }))).not.toContain('SCAN_COUNTER_AMOUNT');
-    const set = (value: unknown) =>
-      edit((m) => {
-        m.scan = {
-          actions: [{ id: 'r', label: 'Refill', kind: 'set', input: 'left', value }],
-        } as never;
-      });
-    expect(codes(set(SIZE + 1))).toContain('SCAN_COUNTER_VALUE');
+    expect(codes(set())).not.toContain('SCAN_COUNTER_VALUE');
     expect(codes(set(SIZE))).not.toContain('SCAN_COUNTER_VALUE');
+    expect(codes(set(SIZE + 1))).toContain('SCAN_COUNTER_VALUE');
+    expect(codes(set(-1))).toContain('SCAN_COUNTER_VALUE');
   });
-  it('warns when nothing at the scanner takes from the counter', () => {
+  it('warns, softly, when nothing at the scanner takes from the counter', () => {
     expect(codes(edit((m) => delete m.scan))).toContain('COUNTER_NO_USE');
     expect(codes(manifest())).not.toContain('COUNTER_NO_USE');
+  });
+});
+
+describe('a per-pass size and a refill that carries over', () => {
+  // Pack: 0 to 200 uses, 10 or 20 per pass, refills add to what is left.
+  const pack = (): TemplateManifest => {
+    const m = manifest();
+    m.inputs = {
+      type: 'object',
+      properties: {
+        holder: { type: 'string' },
+        left: { type: 'integer', minimum: 0, maximum: 200, default: 10 },
+        size: { type: 'integer', minimum: 1, maximum: 200, default: 10 },
+      },
+    } as never;
+    m.counters = { uses: { input: 'left', size: { input: 'size' } } };
+    m.scan = {
+      actions: [
+        { id: 'use', label: 'Use one', kind: 'take', input: 'left', amount: 1 },
+        { id: 'refill', label: 'Refill', kind: 'add', input: 'left', amount: { max: 100 } },
+      ],
+    } as never;
+    return m;
+  };
+  it('accepts it, without strip art', () => {
+    expect(countersIssues(pack(), passJson())).toEqual([]);
+  });
+  it('reads size per pass, and used never goes below 0', () => {
+    const scope = (left: number, size: number) =>
+      derivedPassScope(pack(), { holder: 'A', left, size }).counters?.uses;
+    expect(scope(7, 10)).toMatchObject({ left: 7, used: 3, size: 10 });
+    expect(scope(23, 10)).toMatchObject({ left: 23, used: 0, text: '23 left' });
+    expect(scope(5, 20)).toMatchObject({ used: 15, size: 20 });
+  });
+  it('gives the row the size input default as its goal', () => {
+    expect(actionGoals(pack())).toEqual({ left: { goal: 10, counter: true } });
+  });
+  it('refuses art with a per-pass size, and a size input that is not an integer', () => {
+    const art = { filled: 'stamps/filled.png', empty: 'stamps/empty.png' };
+    const withPackArt = pack();
+    (withPackArt.counters as never as Record<string, { art: unknown }>).uses!.art = art;
+    expect(countersIssues(withPackArt, passJson()).map((i) => i.code)).toContain(
+      'COUNTER_STRIP_SIZE',
+    );
+    expect(stripBlock(withPackArt)).toBeUndefined();
+    const bad = pack();
+    (bad.counters as never as Record<string, { size: unknown }>).uses!.size = { input: 'holder' };
+    expect(countersIssues(bad, passJson()).map((i) => i.code)).toContain('COUNTER_SIZE');
+  });
+  // Guest admits: 0 to 99, default 0, no size worth showing.
+  it('allows a count that starts at 0', () => {
+    const m = pack();
+    const props = m.inputs.properties as Record<string, Record<string, unknown>>;
+    props.left = { type: 'integer', minimum: 0, maximum: 99, default: 0 };
+    m.counters = { guests: { input: 'left', size: 99 } };
+    expect(countersIssues(m, passJson())).toEqual([]);
+    expect(derivedPassScope(m, applyDefaults(m, {})).counters?.guests?.text).toBe('None left');
+  });
+});
+
+describe('references and messages', () => {
+  const refs = (expr: string, m = manifest()) => unknownPassValues(expr, m);
+  it('checks the id and the leaf of a counter reference', () => {
+    expect(refs('{{pass.counters.visits.left}}')).toEqual([]);
+    expect(refs('{{pass.counters.vists.left}}')).toEqual(['counters.vists.left']);
+    expect(refs('{{pass.counters.visits.nope}}')).toEqual(['counters.visits.nope']);
+    expect(refs('{{pass.counters.visits}}')).toEqual(['counters.visits']);
+  });
+  it('tells holders when what is left changes, unless the template says otherwise', async () => {
+    const t = await resolved(manifest());
+    t.manifest.bindings = [{ to: { field: 'left' }, value: '{{pass.counters.visits.text}}' }];
+    const field = (n: number, m = t) =>
+      (
+        bindPass(m, at(n), derivedPassScope(m.manifest, at(n))).pass.storeCard as {
+          secondaryFields: { changeMessage?: string }[];
+        }
+      ).secondaryFields[0]?.changeMessage;
+    expect(field(3)).toBe('%@.');
+    const left = structuredClone(t);
+    left.manifest.bindings = [{ to: { field: 'left' }, value: '{{pass.counters.visits.left}}' }];
+    expect(field(3, left)).toBe('%@ left.');
+    const own = structuredClone(left);
+    (own.passJson.storeCard as { secondaryFields: object[] }).secondaryFields[0] = {
+      key: 'left',
+      value: '',
+      changeMessage: 'Now %@',
+    };
+    expect(field(3, own)).toBe('Now %@');
   });
 });

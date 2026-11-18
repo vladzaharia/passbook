@@ -151,7 +151,9 @@ export function hiddenFieldKeys(
 
 /** Take actions give a `progress` row its goal and reward label, by input. */
 export function actionGoals(
-  manifest: Pick<TemplateManifest, 'scan' | 'stamps' | 'counters'>,
+  manifest: Pick<TemplateManifest, 'scan' | 'stamps' | 'counters'> & {
+    inputs?: TemplateManifest['inputs'];
+  },
 ): Record<string, { goal: number; reward?: string; counter?: true }> {
   const out: Record<string, { goal: number; reward?: string; counter?: true }> = {};
   const stamps = manifest.stamps;

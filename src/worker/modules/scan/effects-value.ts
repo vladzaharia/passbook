@@ -1,5 +1,6 @@
 import { Validator } from '@cfworker/json-schema';
 import { addStamps, redeem } from '../../../passkit/stamps/rules.ts';
+import { counterSizes } from '../../../passkit/template/counters.ts';
 import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import type { Json, Personalization, TemplateManifest } from '../../../passkit/types.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
@@ -143,6 +144,11 @@ export function valueEffect(
       const next = addStamps(have, amount, maximum);
       if (next === null) throw new ScanEffectStop('card_full', have);
       return keep(next);
+    }
+    // A refill carries over what is left: past the input's maximum it is refused, never clamped.
+    if (counterSizes(manifest)[input] !== undefined) {
+      if (have + amount > maximum) throw new ScanEffectStop('card_full', have);
+      return keep(have + amount);
     }
     // Never below what it holds: a cap that fell under the count leaves it as it is.
     return keep(have >= maximum ? have : Math.min(have + amount, maximum));
