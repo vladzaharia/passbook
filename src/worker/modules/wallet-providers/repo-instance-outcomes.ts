@@ -1,5 +1,5 @@
 import type { Envelope } from '../../platform/crypto.ts';
-import { first, run } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletCredentialKeysetProof,
@@ -30,7 +30,7 @@ export async function insertOutcome(
 ): Promise<OutcomeReceipt> {
   p = { ...p };
   if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return 'stale';
-  const result = await run(
+  const inserted = await first(
     db,
     `INSERT OR IGNORE INTO wallet_provider_instance_outcomes
       (id, operation_id, attempt, sequence, event_hash, payload_hash, reason_code, http_status,
@@ -39,7 +39,8 @@ export async function insertOutcome(
     FROM wallet_provider_instance_operations op JOIN wallet_provider_instances i ON i.id = op.instance_id
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND op.id = ?
       AND op.version = ? AND op.attempts = ? AND op.claim_hash = ? AND op.state IN ('claimed', 'uncertain')
-      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}`,
+      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+    RETURNING id`,
     [
       p.id,
       p.sequence,
@@ -65,7 +66,7 @@ export async function insertOutcome(
       p.credentialKeysetCommitment,
     ],
   );
-  if (result.changes === 1) return 'recorded';
+  if (inserted !== null) return 'recorded';
   const previous = await first<{
     sequence: number;
     event_hash: string;
