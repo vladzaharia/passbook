@@ -292,7 +292,7 @@ describe('legacy webhook cleanup quarantine', () => {
       await replaceKeysetForTest(kit.sctx, sentinel === 'missing' ? null : other);
       try {
         await expect(quarantineLegacyWebhookEvents(kit.sctx, before, 10)).rejects.toMatchObject({
-          code: 'WEBHOOK_RETENTION_FAILED',
+          code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
         });
         expect(await eventRows(id)).toEqual(originalEvents);
         expect(await inboxRows(id)).toEqual(originalInbox);
@@ -679,5 +679,49 @@ describe('legacy webhook cleanup quarantine', () => {
       warn.mockRestore();
       error.mockRestore();
     }
+  });
+
+  describe('on a fresh keyset', () => {
+    async function minuteCronLogs() {
+      const lines: string[] = [];
+      kit.sctx = {
+        ...kit.sctx,
+        log: createLogger({}, { level: 'debug', sink: (line) => lines.push(line) }),
+      };
+      const quiet = vi.spyOn(console, 'log').mockImplementation(() => {});
+      try {
+        await reconcileConnections(kit.sctx);
+      } finally {
+        quiet.mockRestore();
+      }
+      return lines.map(
+        (line) => JSON.parse(line) as { level: string; event: string; code?: string },
+      );
+    }
+
+    it('logs no error when there is nothing to retain', async () => {
+      // Storage is shared by the cases in this file.
+      await run(kit.env.DB, 'DELETE FROM connection_inbox');
+      await run(kit.env.DB, 'DELETE FROM webhook_events');
+      await replaceKeysetForTest(kit.sctx, null);
+      expect(await quarantineLegacyWebhookEvents(kit.sctx, kit.clock.now(), 10)).toBe(0);
+      expect((await minuteCronLogs()).filter((line) => line.level === 'error')).toEqual([]);
+    });
+
+    it('fails closed and logs the code once when old events need the missing keyset', async () => {
+      const { id } = await webhookConnection();
+      const before = kit.clock.now() - WEBHOOK_RETENTION_MS;
+      await seedEvent(id, 'fresh-keyset-event', before - 1, [
+        { ref: 'fresh-keyset-ref', record: { memberName: 'Member' }, deleted: false },
+      ]);
+      const originalInbox = await inboxRows(id);
+      await replaceKeysetForTest(kit.sctx, null);
+      const errors = (await minuteCronLogs()).filter((line) => line.level === 'error');
+      expect(errors).toMatchObject([
+        { event: 'connection.legacy_quarantine_failed', code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' },
+      ]);
+      expect(await inboxRows(id)).toEqual(originalInbox);
+      expect(await markers(id)).toEqual([]);
+    });
   });
 });
