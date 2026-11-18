@@ -580,5 +580,60 @@
   ],
   "messaging": {
     "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "check_in",
+        "label": "Check in",
+        "kind": "check_in",
+        "repeat": "once",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "ticketId"
+    },
+    "window": {
+      "from": "startsAt",
+      "until": "endsAt",
+      "earlyMinutes": 180,
+      "lateMinutes": 60
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.attendee}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_ticket",
+          "preset": {
+            "id": "ticket",
+            "v": 1
+          },
+          "title": "Ticket",
+          "icon": "ticket",
+          "rows": [
+            {
+              "id": "r_seat",
+              "slot": "seat",
+              "type": "big",
+              "label": "Seat",
+              "value": "{{inputs.seat}}"
+            },
+            {
+              "id": "r_type",
+              "slot": "type",
+              "type": "field",
+              "label": "Ticket",
+              "value": "{{inputs.admission}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the box office."
+      }
+    }
   }
 }

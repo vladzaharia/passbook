@@ -91,6 +91,7 @@ export async function buildBaked(slug: string, signing: SigningMaterial, input?:
     input: input ?? template.manifest.sample,
     server: {
       serial: 'SNAPSHOT-SERIAL',
+      scanCode: 'SCAN-0001',
       authToken: 'a'.repeat(32),
       webServiceURL: 'https://wallet.example/wallet',
       organizationName: template.manifest.org?.name ?? 'PassBook',

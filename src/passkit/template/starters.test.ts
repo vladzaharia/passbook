@@ -197,10 +197,18 @@ describe('field coverage', () => {
     for (const slug of Object.keys(STYLE_OF)) {
       const { barcodes } = (await build(slug, material)).passJson;
       expect(barcodes?.length, slug).toBeGreaterThan(0);
+      // A coupon's barcode is the scan code; its text is the typed code.
+      const message = (b: { message: string }) =>
+        slug === 'starter-coupon' ? 'SCAN-0001' : b.message;
       expect(
-        barcodes?.every((b) => b.altText === b.message),
+        barcodes?.every((b) => b.message === message(b) && b.altText),
         slug,
-      ).toBe(true);
+      ).toBeTruthy();
+      if (slug !== 'starter-coupon')
+        expect(
+          barcodes?.every((b) => b.altText === b.message),
+          slug,
+        ).toBe(true);
     }
   });
 });
