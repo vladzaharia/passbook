@@ -1,4 +1,5 @@
 import type { ScanReason } from '../contracts/scan.ts';
+import { SCAN_TAG_COPY } from './scan-tags.ts';
 
 /** Reasons that only the client makes: they never reach the wire. */
 export type ClientScanReason =
@@ -43,6 +44,9 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   guest_expired: { headline: 'Guest pass ended', sub: 'Ended {time}.' },
   guest_visits_used: { headline: 'No visits left', sub: 'Used {limit} of {limit}.' },
   suspended: { headline: 'Suspended', sub: 'Ask them to see the front desk.' },
+  tag_lost: { headline: 'Tag reported lost', sub: 'Keep it and call security.' },
+  tag_not_allowed: { headline: 'Tag not accepted', sub: "This tag isn't accepted here." },
+  tag_invalid: { headline: "Tag couldn't be checked", sub: 'Try again or use the card.' },
   already_done: { headline: 'Already checked in', sub: '{ago} · {scanner}' },
   cooldown: { headline: '{verb} {ago}', sub: 'Next {noun} in {wait}.' },
   not_yet_valid: { headline: 'Not open yet', sub: 'Opens {time}.' },
@@ -110,6 +114,7 @@ export const SCAN_OCCUPANCY_COPY: Record<string, ScanLine> = {
 export const SCAN_COPY = {
   reasons: SCAN_REASON_COPY,
   display: SCAN_DISPLAY_COPY,
+  tags: SCAN_TAG_COPY,
   verdict: {
     checkedIn: 'Checked in',
     checkedOut: 'Checked out',
