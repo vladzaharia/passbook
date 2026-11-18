@@ -3,12 +3,32 @@ import { BadRequestError, ConflictError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { actorFor, authOf, passScopeOf, svc } from './http.ts';
+import { newPassCode } from './new-code.ts';
 import { tenantPassForWrite } from './pass-access.ts';
 import { resendEmail } from './pass-service-delivery.ts';
 import { claimIdempotencyKey, getIdempotencyKey, releaseIdempotencyKey } from './repo-ops.ts';
 
 /** Holder email actions. */
 export function registerActionRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'post',
+      path: '/{id}/new-code',
+      summary: 'Mint a new scan code; the old code stops working',
+      params: IdParamSchema,
+      response: OkSchema,
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const id = c.req.valid('param').id;
+      const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      await newPassCode(ctx, actorFor(c), id, scope, authority);
+      return c.json({ ok: true as const });
+    },
+  );
+
   register(
     passesRoutes,
     'passes',

@@ -1,42 +1,72 @@
+import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { all } from '../../platform/db.ts';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
+import { fakeAuth } from '../../../../test/helpers/index.ts';
+import { BundleSchema } from '../../../shared/contracts/index.ts';
+import { createApp } from '../../app.ts';
+import { all, first } from '../../platform/db.ts';
 import { RateLimitedError } from '../../platform/errors.ts';
+import { seedBundlePrincipal } from '../bundles/test-auth-fixtures.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { NEW_CODES_PER_HOUR, newPassCode } from '../holders/new-code.ts';
+import { NEW_CODES_PER_HOUR, newPassCode } from '../passes/new-code.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { act, expectUnavailable, kit, out, setupActionFixture, tpl } from './act-test-fixtures.ts';
+import { act, kit, out, setupActionFixture, tpl } from './act-test-fixtures.ts';
 import { codeOf } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
 
 const system = { type: 'system', id: null } as const;
-const rotate = (passId: string) =>
-  newPassCode(jobCtxOf({ ctx: kit.ctx }), system, { passId }, null);
+const rotate = (passId: string) => newPassCode(jobCtxOf({ ctx: kit.ctx }), system, passId, null);
+const pushes = (passId: string) =>
+  all<{ id: number }>(
+    kit.env.DB,
+    "SELECT id FROM pass_events WHERE pass_id = ? AND kind = 'push.queued'",
+    [passId],
+  );
 
 describe('New code', () => {
-  it('rotates the code: the old one is refused, the new one is admitted', async () => {
+  it('rotates in place: same serial and token, old code refused, new code admitted, push queued', async () => {
     const s = await kit.scanner({ templateIds: [tpl] });
-    const pass = await kit.scanPass(tpl);
+    const pass = await kit.scanPass(tpl, {}, { holderEmail: 'holder@example.com' });
     const before = codeOf(pass);
     expect((await out(await act(s.headers, before))).kind).toBe('ok');
+    const pushed = (await pushes(pass.id)).length;
 
-    expect((await rotate(pass.id)).transfer).toMatchObject({ state: 'completed' });
+    await rotate(pass.id);
 
     const after = await getPass(kit.env.DB, pass.id);
+    expect(after).toMatchObject({
+      serial: pass.serial,
+      authToken: pass.authToken,
+      holderEmail: 'holder@example.com',
+      credentialGeneration: pass.credentialGeneration,
+    });
+    expect(after?.version).toBe(pass.version + 1);
     expect(after?.scanCode).toMatch(/^[A-Z2-7]{26}$/);
     expect(after?.scanCode).not.toBe(pass.scanCode);
-    expectUnavailable(await out(await act(s.headers, before)));
-    expect(
-      (await out(await act(s.headers, codeOf(after as never), { actionId: 'auto' }))).kind,
-    ).not.toBe('refused');
+    expect((await pushes(pass.id)).length).toBe(pushed + 1);
+    expect(await out(await act(s.headers, before))).toMatchObject({
+      kind: 'refused',
+      reason: 'not_found',
+      card: null,
+      action: null,
+    });
+    const admitted = await out(await act(s.headers, codeOf(after as never)));
+    expect(admitted.kind).not.toBe('refused');
+    const row = await first<{ barcode_hash: string }>(
+      kit.env.DB,
+      'SELECT barcode_hash FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    expect(row?.barcode_hash).toHaveLength(64);
   });
 
   it('writes an audit row without the code', async () => {
     const pass = await kit.scanPass(tpl);
     await rotate(pass.id);
-    const rows = await all<{ action: string; actor_type: string; detail: string | null }>(
+    const rows = await all<{ action: string; detail: string | null }>(
       kit.env.DB,
-      "SELECT action, actor_type, detail FROM audit_log WHERE action = 'pass.new_code' AND target_id = ?",
+      "SELECT action, detail FROM audit_log WHERE action = 'pass.new_code' AND target_id = ?",
       [pass.id],
     );
     expect(rows).toHaveLength(1);
@@ -50,5 +80,46 @@ describe('New code', () => {
     const pass = await kit.scanPass(tpl);
     for (let i = 0; i < NEW_CODES_PER_HOUR; i++) await rotate(pass.id);
     await expect(rotate(pass.id)).rejects.toBeInstanceOf(RateLimitedError);
+  });
+
+  it('refuses a template whose barcode is not the scan code', async () => {
+    const pass = await kit.pass();
+    await expect(rotate(pass.id)).rejects.toMatchObject({
+      status: 409,
+      code: 'NEW_CODE_UNSUPPORTED',
+    });
+    expect((await getPass(kit.env.DB, pass.id))?.scanCode).toBe(pass.scanCode);
+  });
+
+  it('shows the new code in a bundle that holds the pass', async () => {
+    const fake = fakeAuth('https://wallet.test');
+    const app = createApp({ stores: fake.stores, clock: kit.clock });
+    const pass = await kit.scanPass(tpl);
+    const headers = fake.admin();
+    await seedBundlePrincipal(kit, fake, headers);
+    const made = await app.request(
+      'https://wallet.test/api/v1/bundles',
+      {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ orgId: kit.org.id, name: 'Trip', passIds: [pass.id] }),
+      },
+      kit.env,
+    );
+    const token = BundleSchema.parse(await made.json()).url?.split('/b/')[1] ?? '';
+    await rotate(pass.id);
+    const res = await app.request(
+      `https://wallet.test/b/${token}/${pass.id}/pass.pkpass`,
+      {},
+      kit.env,
+    );
+    if (res.status !== 200) await expectProblem(res, 200, 'x');
+    const files = unzipSync(new Uint8Array(await res.arrayBuffer()));
+    const json = JSON.parse(new TextDecoder().decode(files['pass.json'])) as {
+      barcodes: { message: string }[];
+    };
+    const now = await getPass(kit.env.DB, pass.id);
+    expect(json.barcodes[0]?.message).toBe(now?.scanCode);
+    expect(json.barcodes[0]?.message).not.toBe(pass.scanCode);
   });
 });

@@ -44,6 +44,8 @@ export interface PublishWrite {
   lookupHash: string | null;
   /** Written only while the pass has none (lazy backfill). */
   scanCode: string;
+  /** Replaces the stored scan code instead of filling it once (a new code). */
+  rotateScanCode?: boolean | undefined;
   /** Owner/credentials and lifecycle observed when this publish began. */
   expectedPass: PublishPassSnapshot;
   /** Set only for an explicitly staged removal represented by this artifact. */
@@ -119,7 +121,7 @@ export async function casPublish(ctx: ServiceContext, w: PublishWrite): Promise<
       pending_source: w.source,
       barcode_hash: w.barcodeHash,
       lookup_hash: w.lookupHash,
-      scan_code: coalesceTo(w.scanCode),
+      scan_code: w.rotateScanCode ? w.scanCode : coalesceTo(w.scanCode),
       removal_published_generation:
         w.publishedRemovalGeneration ??
         (w.expectedPass.removedAt !== null &&

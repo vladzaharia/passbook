@@ -371,10 +371,7 @@ Filters: `email`, `state`.
 POST /api/v1/holders/assign        { "passId": "…", "email": "alex@example.com" }
 POST /api/v1/holders/assign-bulk   { "items": [ { "passId": "…", "email": "…" } ] }   (max 100)
 POST /api/v1/holders/unassign      { "passId": "…" }
-POST /api/v1/holders/new-code      { "passId": "…" }
 ```
-
-`new-code` mints a new scan code for the pass and sends it to the holder; the old code stops scanning. Three per pass per hour.
 
 `assign` works on an unowned pass. An owned pass changes hands through `reassign`.
 
@@ -535,6 +532,7 @@ quarantine at deletion permanently excludes their historical rows.
 - Most lists take `limit` (1 to 200) and `cursor`; scanner history has the tighter limit above.
   The response has `nextCursor` (null at the end).
 - `void` and `unvoid` toggle a pass; `rotate-link` invalidates the old download link.
+- `POST /passes/{id}/new-code` mints a new scan code in place and updates the holder's Wallet pass; the old code stops scanning. Same serial and holder. Three per pass per hour; 409 `NEW_CODE_UNSUPPORTED` when the barcode is not the scan code.
 - Links are stored as a MAC plus a sealed copy (`docs/security.md`). If the sealed copy is unreadable, `downloadUrl` in `GET /me/passes` and `url` on a bundle are `null`; `rotate-link` issues a working one. Pass detail and mail answer 503 `TOKEN_SEAL_MISSING`.
 - `POST /passes/{id}/remove` (`{ message? }`) publishes a last version that is voided and expired, so Wallet
   moves it to Expired passes; no API deletes a pass from a device. `POST /passes/{id}/restore` undoes it.
