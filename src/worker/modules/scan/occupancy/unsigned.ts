@@ -25,7 +25,9 @@ export async function readUnsigned(db: D1Database): Promise<UnsignedMap> {
 }
 
 export async function writeUnsigned(db: D1Database, m: UnsignedMap, now: number): Promise<void> {
-  const keep = [...m].sort((a, b) => b[1].retryAt - a[1].retryAt).slice(0, MAX_ENTRIES);
+  const keep = [...m]
+    .sort((a, b) => b[1].failures - a[1].failures || b[1].retryAt - a[1].retryAt)
+    .slice(0, MAX_ENTRIES);
   await writeSystemValue(db, KEY, Object.fromEntries(keep), now);
 }
 
