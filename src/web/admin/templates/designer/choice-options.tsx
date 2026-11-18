@@ -1,14 +1,14 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { Button, IconButton, Input } from '../../../ui/index.ts';
-import { useDesigner } from './context.tsx';
 import {
   addOption,
   type ChoiceOption,
-  type InputSpec,
   MAX_OPTIONS,
   optionsProblem,
   slugOf,
-} from './inputs.ts';
+} from './choice-model.ts';
+import { useDesigner } from './context.tsx';
+import type { InputSpec } from './inputs.ts';
 
 /** A value follows its label until someone types a value of their own. */
 const follows = (o: ChoiceOption) => o.value === slugOf(o.label) || /^option_\d+$/.test(o.value);

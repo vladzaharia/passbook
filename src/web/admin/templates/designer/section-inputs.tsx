@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { removeWithTransition } from '../../../lib/motion.ts';
 import { Button, IconButton, SwitchRow, toast } from '../../../ui/index.ts';
 import { inputUses } from './bindings.ts';
+import { seedOptions } from './choice-model.ts';
 import { ChoiceOptions } from './choice-options.tsx';
 import { useDesigner } from './context.tsx';
 import { NameEdit, PickEdit, TextEdit } from './controls.tsx';
@@ -15,7 +16,6 @@ import {
   readInputs,
   sampleFor,
   scalarInputs,
-  seedOptions,
   typeLabel,
 } from './inputs.ts';
 import { isRecord } from './model.ts';

@@ -6,9 +6,10 @@ import { axe } from 'vitest-axe';
 import '../../../lib/test-utils.tsx';
 import { TooltipProvider } from '../../../ui/index.ts';
 import { applyOp } from './apply.ts';
+import { optionsProblem, slugOf } from './choice-model.ts';
 import { DesignerProvider } from './context.tsx';
 import { sampleDoc } from './fixtures.ts';
-import { newInput, optionsProblem, readInputs, slugOf } from './inputs.ts';
+import { newInput, readInputs } from './inputs.ts';
 import type { DesignDoc, Dict } from './model.ts';
 import { designerReducer, initialState } from './reducer.ts';
 import { InputsSection } from './section-inputs.tsx';
@@ -161,6 +162,6 @@ describe('options editor', () => {
 
   it('has no axe violations', async () => {
     const { container } = render(<Harness doc={withChoice()} />);
-    expect(await axe(container)).toHaveNoViolations();
+    expect((await axe(container)).violations).toEqual([]);
   });
 });

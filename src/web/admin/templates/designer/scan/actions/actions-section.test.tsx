@@ -151,7 +151,7 @@ describe('actions section', () => {
     );
     for (const open of ['check_in', 'add', 'take', 'set', 'use_up']) {
       const { container, unmount } = render(<Harness doc={doc} open={open} />);
-      expect(await axe(container)).toHaveNoViolations();
+      expect((await axe(container)).violations).toEqual([]);
       unmount();
     }
   });
