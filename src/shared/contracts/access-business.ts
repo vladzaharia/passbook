@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EmailSchema, IdSchema, TimestampSchema } from './common.ts';
+import { EmailSchema, IdSchema } from './common.ts';
 import { UuidV7Schema } from './scan-base.ts';
 
 /** Offboard a person: name them by email or by the connection's external id. */
