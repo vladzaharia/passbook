@@ -143,6 +143,21 @@ describe('list and search query plans', () => {
     expect(text).toContain('user_emails_nc');
   });
 
+  it('pass imports: the expiry sweep and the committing guard use their partial indexes', async () => {
+    const sweep = await env.DB.prepare(
+      "EXPLAIN QUERY PLAN SELECT id FROM pass_imports WHERE expires_at < ? AND state IN ('mapping', 'checking', 'ready', 'stale')",
+    )
+      .bind(1)
+      .all<{ detail: string }>();
+    expect(sweep.results.map((r) => r.detail).join('\n')).toContain('pass_imports_expiry');
+    const running = await env.DB.prepare(
+      "EXPLAIN QUERY PLAN SELECT id FROM pass_imports WHERE org_id = ? AND mode = ? AND template_id = ? AND state = 'committing'",
+    )
+      .bind('o', 'live', 't')
+      .all<{ detail: string }>();
+    expect(running.results.map((r) => r.detail).join('\n')).toContain('pass_imports_one_running');
+  });
+
   it('scans: the ok-only history reads use the partial index', async () => {
     const rows = await env.DB.prepare(
       "EXPLAIN QUERY PLAN SELECT at FROM scans WHERE pass_id = ? AND action_kind = 'check_in' AND outcome = 'ok' ORDER BY at DESC LIMIT 5",

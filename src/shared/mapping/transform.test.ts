@@ -28,6 +28,15 @@ describe('date formats', () => {
     expect(date(value, input)).toBeUndefined();
   });
 
+  it('does not read a number as a day-first, month-first or year-first date', () => {
+    for (const input of ['dmy', 'mdy', 'ymd']) {
+      expect(
+        transform(20261231, { from: '', transform: { kind: 'date', options: { input } } }),
+      ).toBeUndefined();
+    }
+    expect(transform(1_700_000_000, { from: '', transform: { kind: 'date' } })).toBeDefined();
+  });
+
   it('accepts the new inputs in a mapping check', () => {
     const entry = (input: string) => ({
       d: { from: '/d', transform: { kind: 'date', options: { input } } },

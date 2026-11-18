@@ -82,6 +82,7 @@ function parseParts(text: string, input: 'dmy' | 'mdy' | 'ymd'): number | null {
 function toMillis(value: Json, input: string): number | null {
   let ms: number;
   if (typeof value === 'number') {
+    if (input === 'dmy' || input === 'mdy' || input === 'ymd') return null;
     ms = input === 'epoch-s' || (input === 'auto' && Math.abs(value) < 1e11) ? value * 1000 : value;
   } else if (typeof value === 'string') {
     if (input === 'dmy' || input === 'mdy' || input === 'ymd') return parseParts(value, input);

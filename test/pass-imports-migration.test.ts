@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { GUARDED_TABLES } from '../src/worker/platform/authority-tables.ts';
 import { all, first, run } from '../src/worker/platform/db.ts';
+import { fixtures, makeEnv, makeOrg, makePass, makeTemplate } from './helpers/index.ts';
 
 const migration = env.TEST_MIGRATIONS.find((m) => m.name.endsWith('_pass_imports.sql'));
 const start = (kind: string, id: string, commitment: string | null = null) =>
@@ -46,31 +47,67 @@ describe('pass imports migration', () => {
     await insert('i4', 'done');
   });
 
-  it('keeps workflow runs, their snapshot sets and the key-commitment lock across the rebuild', async () => {
+  it('keeps workflow runs, snapshot sets, snapshots and the key-commitment lock across the rebuild', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const template = makeTemplate();
+    await makePass(f, { orgId: org.id, template: template.resolved });
+    const version = await first<{ version: string }>(
+      env.DB,
+      'SELECT version FROM template_versions WHERE template_id = ?',
+      [template.resolved.id],
+    );
+    await run(
+      env.DB,
+      "UPDATE templates SET origin = 'baked', org_id = ?, status = 'active', active_version = ? WHERE id = ?",
+      [org.id, version?.version ?? '', template.resolved.id],
+    );
+    const hex = (n: number) => n.toString(16).padStart(64, '0');
+    await run(
+      env.DB,
+      `INSERT INTO template_releases (id, template_id, org_id, mode, provider, generation, version, candidate_hash,
+         content_hash, adapter_revision, adapter_capabilities, audience_policy_revision, source, action, created_at)
+       VALUES ('rel-keep', ?, ?, 'live', 'apple', 1, ?, ?, ?, 1, '["apple-passkit"]', 1, 'system', 'system', 1)`,
+      [template.resolved.id, org.id, version?.version ?? '', hex(1), hex(2)],
+    );
     const commitment = 'a'.repeat(64);
     await start('bulk_reissue', 'wr-keep', commitment);
+    await start('broadcast', 'wr-bare');
     await run(
       env.DB,
       "INSERT INTO workflow_release_snapshot_sets (instance_id) VALUES ('wr-keep')",
     );
+    for (const [mode, gen] of [
+      ['live', 1],
+      ['test', 2],
+    ] as const) {
+      await run(
+        env.DB,
+        `INSERT INTO workflow_release_snapshots (instance_id, org_id, mode, template_id, release_id, generation, version)
+         VALUES ('wr-keep', ?, ?, ?, 'rel-keep', ?, ?)`,
+        [org.id, mode, template.resolved.id, gen, version?.version ?? ''],
+      );
+    }
+    const state = async () => ({
+      runs: await all(env.DB, 'SELECT * FROM workflow_runs ORDER BY instance_id'),
+      sets: await all(env.DB, 'SELECT * FROM workflow_release_snapshot_sets ORDER BY instance_id'),
+      snapshots: await all(
+        env.DB,
+        'SELECT * FROM workflow_release_snapshots ORDER BY instance_id, mode',
+      ),
+    });
+    const before = await state();
+    expect(before.runs.length).toBeGreaterThanOrEqual(3);
+    expect(before.sets).toHaveLength(1);
+    expect(before.snapshots).toHaveLength(2);
+
     const rebuild = (migration?.queries ?? []).slice(
       (migration?.queries ?? []).findIndex((q) => q.includes('_keep_workflow_runs AS')),
     );
     expect(rebuild.length).toBeGreaterThan(5);
     for (const query of rebuild) await env.DB.prepare(query).run();
 
-    expect(
-      await first(
-        env.DB,
-        "SELECT kind, credential_keyset_commitment AS c FROM workflow_runs WHERE instance_id = 'wr-keep'",
-      ),
-    ).toEqual({ kind: 'bulk_reissue', c: commitment });
-    expect(
-      await first(
-        env.DB,
-        "SELECT instance_id FROM workflow_release_snapshot_sets WHERE instance_id = 'wr-keep'",
-      ),
-    ).toEqual({ instance_id: 'wr-keep' });
+    expect(await state()).toEqual(before);
     await expect(
       run(
         env.DB,

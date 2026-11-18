@@ -80,6 +80,18 @@ describe('parseCsv', () => {
     expect(code(() => parseCsv(`a\n${'x'.repeat(2_000_001)}`))).toBe('IMPORT_FILE_TOO_LARGE');
   });
 
+  it('counts UTF-8 bytes of a string, not characters', () => {
+    expect(code(() => parseCsv(`a\n${'é'.repeat(1_000_001)}`))).toBe('IMPORT_FILE_TOO_LARGE');
+    expect(code(() => parseCsv(`a\n${'é'.repeat(900_000)}`))).toBe('none');
+  });
+
+  it('refuses an unclosed quote and legacy .xls', () => {
+    expect(code(() => parseCsv('a,b\n1,"two\n3,4'))).toBe('IMPORT_NOT_CSV');
+    expect(code(() => parseCsv(new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1])))).toBe(
+      'IMPORT_NOT_CSV',
+    );
+  });
+
   it('keeps ragged rows for the caller to report', () => {
     expect(parseCsv('a,b\n1').rows[0]?.cells).toEqual(['1']);
   });

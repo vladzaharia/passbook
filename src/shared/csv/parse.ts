@@ -59,13 +59,23 @@ function decode(input: string | Uint8Array, maxBytes: number): string {
     ) {
       throw new CsvError('IMPORT_NOT_CSV', 'Save the sheet as CSV first.');
     }
+    // Legacy .xls: OLE compound file.
+    if (
+      bytes.length >= 4 &&
+      bytes[0] === 0xd0 &&
+      bytes[1] === 0xcf &&
+      bytes[2] === 0x11 &&
+      bytes[3] === 0xe0
+    ) {
+      throw new CsvError('IMPORT_NOT_CSV', 'Save the sheet as CSV first.');
+    }
     try {
       text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
     } catch {
       throw new CsvError('IMPORT_ENCODING', 'Save the file as UTF-8.');
     }
   }
-  if (!bytes && text.length > maxBytes && new TextEncoder().encode(text).length > maxBytes) {
+  if (!bytes && (text.length > maxBytes || new TextEncoder().encode(text).length > maxBytes)) {
     throw new CsvError('IMPORT_FILE_TOO_LARGE', 'The file is too large.');
   }
   if (text.startsWith('PK\u0003\u0004')) {
@@ -103,11 +113,7 @@ function records(text: string, delimiter: string): string[][] {
       i++;
       for (;;) {
         const q = text.indexOf('"', i);
-        if (q === -1) {
-          cell += text.slice(i);
-          i = n;
-          break;
-        }
+        if (q === -1) throw new CsvError('IMPORT_NOT_CSV', 'A quote is not closed.');
         cell += text.slice(i, q);
         if (text[q + 1] === '"') {
           cell += '"';
