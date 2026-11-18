@@ -28,7 +28,7 @@ All light and dark, in `sheets/` (`<name>-light.png`, `<name>-dark.png`). Pages:
 | `ux-roles` | Pair as a screen, Show to customer, Which scanner is it facing?, the facing chip, Back to scanning? |
 | `ux-access-phone` | Access card results on the scanner: 11 states |
 | `ux-access-ipad` | The same on iPad (split card) |
-| `x-admin` | Console (section 10): Devices grouped by station, Add device per role, pairing a screen, station settings, scanner station/role/Checks, Blueprints with the Access card, phone; AX's Zones, plan editor and Checks picker for reference |
+| `x-admin` | Console (section 10): Devices grouped by station, Add device per role, pairing a screen, station settings, scanner station/role/Zones, Blueprints with the Access card, phone; AX's Zones, plan editor and Zones picker for reference |
 | `../access/sheets/access-{zones,plans,pass,card,gate}` (AX) | Zones tab, plan editor, pass form, the blueprint's identity, the `gate` beat frames |
 
 ## 1. One family, four faces
@@ -208,7 +208,7 @@ Never **Already checked in** for access. Let in anyway appears on the five overr
 
 Console mocks: `sheets/x-admin-{light,dark}.png` (pages `pages/ad-*.html`, shots `shots/ad-*.png`, generator
 `gen/admin.mjs`, CSS `assets/x-admin.css`). 1440 × 900 and 390 × 844, light and dark. Concepts and copy: stations.md
-§1, §6; access.md §3.6, §4. Zones, the plan editor, the pass form and the scanner Checks picker are the access
+§1, §6; access.md §3.6, §4. Zones, the plan editor, the pass form and the scanner Zones picker are the access
 architect's mocks (`access/admin/shots/*`); the sheet shows them last for reference and this section does not restate
 them.
 
@@ -223,7 +223,7 @@ them.
   than one place.
 - Columns, fixed widths so groups align: **Device** (role tile 36, name, device line) · **Role** pill · **Shows or
   checks** · **Status** (Online, Offline, Not paired; as SD 10.2) · **Today** · **Last seen** · menu (or **Pair**).
-- Shows or checks, per role: Scanner **Checks** + zone chips (or the event, or **Accepts 2 templates**); Customer screen
+- Shows or checks, per role: Scanner **Zones** + zone chips (or the event, or **Accepts 2 templates**); Customer screen
   **Every result from {station}**; Desk monitor **Watches this station · Desk**, **Watches** + zone chips **· Door**,
   **Watches everything · Desk**; Till **Accepts 2 templates**.
 - A phone switched on the device: device line **Safari on iPhone · switched on the device 6:02 PM** and
@@ -238,7 +238,7 @@ them.
 - **What is it?** four option tiles, 2 × 2: **Scanner** *A phone or iPad that scans passes.* · **Customer screen**
   *Faces the customer and shows each result.* · **Desk monitor** *Shows scans as they happen.* · **Till** *A
   point-of-sale system with a token.*
-- Scanner: the SD 10.2 fields, plus **Station** (optional) and **Checks** (zones).
+- Scanner: the SD 10.2 fields, plus **Station** (optional) and **Zones**.
 - Customer screen: **Name** (help **Shown in the console and on the pairing screen.**), **Station** (required; help
   **Shows every result from Front desk's scanners.**; link **New station** creates one inline by name). Info callout:
   **Customer screens never show a reason, a staff note or a photo. Refusals read Please see the desk.**
@@ -270,10 +270,10 @@ the buddy waving).
 ### 10.5 Device dialog for a scanner (station, role, zones)
 
 **Name** · **Station** (help **Its results show on Pool's customer screen.**) · **Role** (kind `device` only):
-**Scanner** *Scans passes.* · **Customer screen** *Shows Pool's results to the customer.* · **Checks**: chips with
-the zone tree in a popover (checkbox per zone, indent 20 per level, `aria-level`, ≤ 8, **2 of 8**); help **Lets in a
-pass that opens either zone now. Empty: Any zone.** Under it a status line `DoorOpen` **Open now for 24/7, Off-peak.
-Closed for Guest day (Sauna: members only).** (access.md 3.6, "Open now for"). Event scanners disable Checks with
+**Scanner** *Scans passes.* · **Customer screen** *Shows Pool's results to the customer.* · **Zones**: chips with
+the zone tree in a popover (checkbox per zone, indent 20 per level, `aria-level`, ≤ 8, **2 of 8**); help **Lets in
+passes that open one of these zones.** Under it a status line `DoorOpen` **Open now for 24/7, Off-peak.
+Closed for Guest day (Sauna: members only).** (access.md 3.6, "Open now for"). Event scanners disable Zones with
 **Events check in once. Zones don't apply.**
 
 ### 10.6 Blueprints with the Access card
