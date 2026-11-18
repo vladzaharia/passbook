@@ -86,9 +86,9 @@ export async function backfillCandidates(
     `SELECT q.id, q.org_id, q.mode, q.serial, q.row_version, q.credential_generation,
     q.lifecycle_generation, q.scan_code, q.barcode_hash, q.lookup_hash,
     q.removed_at, q.personalization, q.pass_json, (${LOOKUP_INPUT}) AS lookup_input
-    ${SOURCE} WHERE (? IS NULL OR q.id>?) AND ${NEEDS_KEYS} AND NOT ${PENDING}
+    ${SOURCE} WHERE ${after === null ? '' : 'q.id>? AND'} ${NEEDS_KEYS} AND NOT ${PENDING}
     ORDER BY q.id LIMIT ?`,
-    [after, after, limit],
+    [...(after === null ? [] : [after]), limit],
   );
   return rows.map((r) => ({
     id: r.id,
