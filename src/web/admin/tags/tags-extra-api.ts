@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { TagHistorySchema, UserTagListSchema } from '@/shared/contracts/nfc-tag-admin.ts';
-import { type CreateTagEnrollmentSchema, TagSchema } from '@/shared/contracts/nfc-tags.ts';
+import type { CreateTagEnrollmentSchema } from '@/shared/contracts/nfc-tag-enrollments.ts';
+import { TagSchema } from '@/shared/contracts/nfc-tags.ts';
 import { api } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { tagKeys } from './api.ts';

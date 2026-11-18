@@ -15,7 +15,7 @@ import { EnrollArt } from './enroll-art.tsx';
 import { endedOutcome, WaitingFace } from './enroll-face.tsx';
 import { ResultFace } from './enroll-result.tsx';
 import { rememberScanner, ScannerPicker } from './scanner-picker.tsx';
-import { fill, lcFirst } from './words.ts';
+import { fill, lcFirst, tagErrorText } from './words.ts';
 import { type WorksWith, WorksWithChoice } from './works-with.tsx';
 
 const D = TAG_COPY.dialog;
@@ -92,7 +92,7 @@ export function AddTagDialog({
       rememberScanner(target.orgId, chosen);
       setPhase({ at: 'wait', id: made.id, scannerId: chosen, scannerName: label, scope });
     } catch (cause) {
-      toast.error(cause, 'Could not send the request');
+      toast.error(tagErrorText(cause), 'Could not send the request');
     }
   }
   function close(next: boolean) {
@@ -119,7 +119,7 @@ export function AddTagDialog({
       await mut.unbind.mutateAsync(binding.id);
       setPhase({ at: 'pick' });
     } catch (cause) {
-      toast.error(cause, 'Could not undo');
+      toast.error(tagErrorText(cause), 'Could not undo');
     }
   }
   const summary = waiting
@@ -130,7 +130,8 @@ export function AddTagDialog({
       )}`
     : '';
   const ended = enrollment && waiting ? endedOutcome(enrollment, waiting.scannerName) : null;
-  const done = enrollment?.state === 'done' && tag.data;
+  const hint = enrollment?.hint ?? tag.data?.hint;
+  const done = enrollment?.state === 'done' && hint !== undefined;
   const voided = status === NOT_FOUND;
   const busy = create.isPending;
 
@@ -169,7 +170,7 @@ export function AddTagDialog({
     body = <Refused tone="danger" title={D.voided} />;
     footer = <Button onClick={() => close(false)}>Close</Button>;
   } else if (done) {
-    body = <ResultFace tag={tag.data} name={name} onName={setName} />;
+    body = <ResultFace tag={tag.data} hint={hint} name={name} onName={setName} />;
     footer = (
       <>
         <Button variant="ghost" loading={mut.unbind.isPending} onClick={() => void undo()}>

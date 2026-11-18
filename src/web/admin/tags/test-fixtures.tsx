@@ -97,6 +97,7 @@ export function enrollmentFixture(over: Partial<Enrollment> = {}): Enrollment {
     binding: null,
     errorCode: null,
     shownAt: null,
+    hint: null,
     ...over,
   };
 }

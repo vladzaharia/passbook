@@ -5,7 +5,7 @@ import { ConfirmDialog, toast } from '@/web/ui/index.ts';
 import { useTagMutations } from './api.ts';
 import { lostTagConfirm, removeTagConfirm, restoreTagConfirm } from './confirms.ts';
 import { useExtraTagMutations } from './tags-extra-api.ts';
-import { fill, tagName } from './words.ts';
+import { fill, tagErrorText, tagName } from './words.ts';
 
 type Ask = { kind: 'remove' | 'lost' | 'restore'; tag: Tag };
 
@@ -63,7 +63,7 @@ export function useTagActions({ passes }: { passes?: number | undefined } = {}) 
     try {
       await extra.changeBinding.mutateAsync({ bindingId: b.id, binding, passId });
     } catch (cause) {
-      toast.error(cause, 'Could not change the tag');
+      toast.error(tagErrorText(cause), 'Could not change the tag');
       return;
     }
     const v = { tag: tagName(t), name };
@@ -90,7 +90,9 @@ export function useTagActions({ passes }: { passes?: number | undefined } = {}) 
     remove: (t: Tag) => {
       if (t.binding?.scope === 'user') setAsk({ kind: 'remove', tag: t });
       else
-        void removeNow(t).catch((cause: unknown) => toast.error(cause, 'Could not remove the tag'));
+        void removeNow(t).catch((cause: unknown) =>
+          toast.error(tagErrorText(cause), 'Could not remove the tag'),
+        );
     },
     changeTo,
     lost: (t: Tag) => setAsk({ kind: 'lost', tag: t }),

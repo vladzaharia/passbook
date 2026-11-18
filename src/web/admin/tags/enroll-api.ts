@@ -5,7 +5,7 @@ import {
   type CreateTagEnrollmentSchema,
   TagEnrollmentSchema,
   TagScannerSchema,
-} from '@/shared/contracts/nfc-tags.ts';
+} from '@/shared/contracts/nfc-tag-enrollments.ts';
 import { api } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { tagKeys } from './api.ts';

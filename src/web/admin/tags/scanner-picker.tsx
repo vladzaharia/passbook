@@ -3,7 +3,7 @@ import { Plus, Tablet } from 'lucide-react';
 import { useEffect } from 'react';
 import type { z } from 'zod';
 import type { Mode } from '@/shared/contracts/common.ts';
-import type { TagScannerSchema } from '@/shared/contracts/nfc-tags.ts';
+import type { TagScannerSchema } from '@/shared/contracts/nfc-tag-enrollments.ts';
 import { TAG_COPY } from '@/shared/copy/tags.ts';
 import { formatRelative } from '@/web/lib/format.ts';
 import {

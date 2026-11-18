@@ -73,6 +73,7 @@ describe('Assign tag dialog', () => {
             ? enrollmentFixture()
             : enrollmentFixture({
                 state: 'done',
+                hint: '7F3A',
                 binding: {
                   id: 'b1',
                   tagId: 't1',
@@ -101,6 +102,7 @@ describe('Assign tag dialog', () => {
     expect(
       await screen.findByText(TAG_COPY.dialog.done, {}, { timeout: 4000 }),
     ).toBeInTheDocument();
+    expect(screen.getByText('ends 7 F 3 A')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(calls(fetchMock, 'DELETE', '/bindings/b1')).toHaveLength(1));
   }, 10_000);
@@ -137,6 +139,17 @@ describe('Assign tag dialog', () => {
     await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
     expect(await screen.findByText(TAG_ERROR_COPY.TAG_LOST)).toBeInTheDocument();
     expect(screen.getByText('Tap the tag on Front desk iPad')).toBeInTheDocument();
+  });
+
+  it('says the pass changed hands when completion is refused', async () => {
+    const user = userEvent.setup();
+    renderTags(dialog(), {
+      ...handlers(() =>
+        json(enrollmentFixture({ state: 'failed', errorCode: 'TAG_HOLDER_CHANGED' })),
+      ),
+    });
+    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    expect(await screen.findByText(TAG_ERROR_COPY.TAG_HOLDER_CHANGED)).toBeInTheDocument();
   });
 
   it('reports a voided pass', async () => {

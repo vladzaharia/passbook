@@ -26,15 +26,18 @@ export function KindPill({ assurance }: { assurance: Tag['assurance'] }) {
 /** Tag assigned: the card with its kind and what it works with, and an optional name. */
 export function ResultFace({
   tag,
+  hint,
   name,
   onName,
 }: {
-  tag: Tag;
+  /** Still loading: the enrollment's own hint shows meanwhile. */
+  tag: Tag | undefined;
+  hint: string;
   name: string;
   onName: (value: string) => void;
 }) {
   const [touched, setTouched] = useState(false);
-  const value = touched ? name : (tag.label ?? '');
+  const value = touched ? name : (tag?.label ?? '');
   return (
     <div className="wl-enroll-face flex flex-col gap-4">
       <EnrollArt stage="done" />
@@ -44,11 +47,11 @@ export function ResultFace({
           {TAG_COPY.dialog.done}
         </p>
         <p className="flex flex-wrap items-center justify-center gap-2 text-sm text-fg">
-          <span>{tagName(tag)}</span>
-          <TagCode hint={tag.hint} className="text-fg-muted" />
-          <KindPill assurance={tag.assurance} />
+          <span>{tag ? tagName(tag) : 'Tag'}</span>
+          <TagCode hint={hint} className="text-fg-muted" />
+          <KindPill assurance={tag?.assurance ?? 'basic'} />
         </p>
-        {tag.binding ? (
+        {tag?.binding ? (
           <p className="text-sm text-fg-muted">{worksWithLabel(tag.binding)}</p>
         ) : null}
       </div>
