@@ -2,6 +2,28 @@ import type { CheckInPolicy } from '@/shared/contracts/check-in.ts';
 import type { ScannerSetup } from '@/shared/contracts/scan-setups.ts';
 import type { ScannerDto } from '@/shared/contracts/scanners.ts';
 
+/** What a monitor follows. A field that is present (even empty) is the chosen kind of watch. */
+export interface WatchDraft {
+  scannerIds: string[];
+  allOrg: boolean;
+  sessionIds?: string[];
+  eventId?: string;
+  zoneIds?: string[];
+}
+
+export type WatchKind = 'scanners' | 'sessions' | 'event' | 'zones';
+export const watchKind = (w: WatchDraft): WatchKind =>
+  w.zoneIds ? 'zones' : w.eventId !== undefined ? 'event' : w.sessionIds ? 'sessions' : 'scanners';
+
+/** The body's watch: empty parts drop out, the contract's strict object takes the rest. */
+export const watchOf = (w: WatchDraft) => ({
+  scannerIds: w.scannerIds,
+  allOrg: w.allOrg,
+  ...(w.sessionIds?.length ? { sessionIds: w.sessionIds } : {}),
+  ...(w.eventId ? { eventId: w.eventId } : {}),
+  ...(w.zoneIds?.length ? { zoneIds: w.zoneIds } : {}),
+});
+
 /** Scanner settings in editable admin forms, represented as text and booleans. */
 export interface ScannerDraft {
   name: string;
@@ -9,7 +31,7 @@ export interface ScannerDraft {
   accepts: 'all' | 'event' | 'templates';
   kind: 'device' | 'terminal' | 'display';
   deviceRole: 'scan' | 'customer' | 'monitor';
-  watch: { scannerIds: string[]; allOrg: boolean };
+  watch: WatchDraft;
   adminUserId: string;
   eventId: string;
   templateIds: string[];
@@ -23,6 +45,8 @@ export interface ScannerDraft {
   checkIn: CheckInPolicy;
   direction: 'pass' | 'in' | 'out' | 'both';
   showPhoto: boolean;
+  /** A desk monitor may let people in and mark them out. */
+  deskActions: boolean;
 }
 
 export const EMPTY_DRAFT: ScannerDraft = {
@@ -45,6 +69,7 @@ export const EMPTY_DRAFT: ScannerDraft = {
   checkIn: {},
   direction: 'pass',
   showPhoto: true,
+  deskActions: false,
 };
 
 export function draftOf(s: ScannerDto & Partial<ScannerSetup>): ScannerDraft {
@@ -70,7 +95,21 @@ export function draftOf(s: ScannerDto & Partial<ScannerSetup>): ScannerDraft {
     checkIn: s.settings.checkIn ?? {},
     direction: s.settings.direction ?? 'pass',
     showPhoto: s.settings.showPhoto ?? true,
+    deskActions: s.settings.deskActions ?? false,
   };
+}
+
+function watchError(w: WatchDraft): string | undefined {
+  switch (watchKind(w)) {
+    case 'zones':
+      return w.zoneIds?.length ? undefined : 'Choose a zone.';
+    case 'event':
+      return w.eventId ? undefined : 'Pick an event.';
+    case 'sessions':
+      return w.sessionIds?.length ? undefined : 'Choose a session.';
+    default:
+      return w.allOrg || w.scannerIds.length ? undefined : 'Choose a scanner to follow.';
+  }
 }
 
 /** Field errors for the values; the server's messages follow for the rest. */
@@ -84,9 +123,7 @@ export function draftErrors(d: ScannerDraft, needsOrg: boolean): Partial<Record<
     ...(d.deviceRole === 'scan' && d.accepts === 'templates' && d.templateIds.length === 0
       ? { templateIds: 'Pick at least one template.' }
       : {}),
-    ...(d.deviceRole !== 'scan' && !d.watch.allOrg && !d.watch.scannerIds.length
-      ? { watch: 'Choose a scanner to follow.' }
-      : {}),
+    ...(d.deviceRole !== 'scan' && watchError(d.watch) ? { watch: watchError(d.watch) } : {}),
   };
 }
 
@@ -108,4 +145,6 @@ export const settingsOf = (d: ScannerDraft) => ({
   checkIn: d.checkIn,
   direction: d.direction === 'pass' ? undefined : d.direction,
   showPhoto: d.showPhoto,
+  // Settings merge on the server: a monitor says it either way so Off sticks.
+  ...(d.deskActions || d.deviceRole === 'monitor' ? { deskActions: d.deskActions } : {}),
 });

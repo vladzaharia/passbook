@@ -16,7 +16,14 @@ import {
 } from '@/web/ui/index.ts';
 import { RelTime } from '../../../ui/rel-time.tsx';
 import { useUpdateScanner } from '../scanner-api.ts';
-import { acceptsOf, draftErrors, draftOf, type ScannerDraft, settingsOf } from './scanner-draft.ts';
+import {
+  acceptsOf,
+  draftErrors,
+  draftOf,
+  type ScannerDraft,
+  settingsOf,
+  watchOf,
+} from './scanner-draft.ts';
 import { ScannerFields } from './scanner-fields.tsx';
 
 /** The dialog's fields, saved through the SaveBar. */
@@ -38,7 +45,7 @@ export function SettingsCard({ scanner, canManage }: { scanner: ScannerDto; canM
         accepts: acceptsOf(draft),
         settings: settingsOf(draft),
         deviceRole: draft.deviceRole,
-        watch: draft.deviceRole === 'scan' ? null : draft.watch,
+        watch: draft.deviceRole === 'scan' ? null : watchOf(draft.watch),
       });
       setEdits({});
       check.reset();
