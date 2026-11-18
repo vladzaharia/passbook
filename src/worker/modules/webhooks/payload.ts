@@ -26,6 +26,9 @@ export interface FeedRow {
   at: number;
 }
 
+/** The contract's string bound: a longer value is dropped so the event always parses. */
+const MAX_STRING = 300;
+
 type Data = Record<string, unknown>;
 type Out = Record<string, string | number | boolean | null>;
 
@@ -47,6 +50,7 @@ function pick(
   const out: Out = {};
   for (const [field, type] of Object.entries(fields)) {
     const v = d[rename[field] ?? field];
+    if (type === 'string' && typeof v === 'string' && v.length > MAX_STRING) continue;
     if (typeof v === type || (type === 'string' && v === null)) out[field] = v as string;
   }
   return out;
@@ -82,15 +86,13 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
         firstDevice: row.deviceCount === 1,
       };
     case 'pass.uninstalled': {
-      const gone = d.reason === 'push_gone';
-      // A push-gone event is written before its registration is dropped, so the journal still counts it.
-      const count = Math.max((row.deviceCount ?? 0) - (gone ? 1 : 0), 0);
+      const count = row.deviceCount ?? 0;
       return {
         wallet: 'apple',
         device: row.device,
         deviceCount: count,
         lastDevice: count === 0,
-        cause: gone ? 'push_gone' : 'wallet',
+        cause: d.reason === 'push_gone' ? 'push_gone' : 'wallet',
       };
     }
     case 'pass.scanned': {

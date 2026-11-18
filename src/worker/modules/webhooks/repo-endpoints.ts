@@ -4,6 +4,7 @@ import type {
   WebhookEndpointStatus,
 } from '../../../shared/contracts/webhooks.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
+import { AuthorityError } from '../../platform/authority-error.ts';
 import { all, first } from '../../platform/db.ts';
 import type { FeedFence } from './repo-feed.ts';
 
@@ -98,6 +99,12 @@ export async function listEndpoints(db: D1Database, fence: FeedFence): Promise<E
   return rows.map(endpointOf);
 }
 
+/** Endpoints are per org and mode: any other grant scope would drop the mode fence or the org fence. */
+export function assertOrgModeGrant(g: Grant): void {
+  if (g.scope !== 'org_mode')
+    throw new AuthorityError('GRANT_BAD_PURPOSE', 'Webhook writes need an org_mode grant.');
+}
+
 export interface NewEndpoint {
   id: string;
   url: string;
@@ -111,6 +118,7 @@ export interface NewEndpoint {
 
 /** The grant supplies the org and mode. An 11th endpoint aborts in the cap trigger. */
 export function insertEndpoint(g: Grant, e: NewEndpoint): GrantedStatement {
+  assertOrgModeGrant(g);
   return g.insertSelect(
     'webhook_endpoints',
     [
@@ -155,6 +163,7 @@ export function updateEndpoint(
   c: EndpointChanges,
   now: number,
 ): GrantedStatement {
+  assertOrgModeGrant(g);
   const set: Record<string, string | number | null> = { updated_at: now };
   if (c.url !== undefined) set.url = c.url;
   if (c.description !== undefined) set.description = c.description;
@@ -170,10 +179,12 @@ export function updateEndpoint(
       set.failing_since = null;
     }
   }
-  return g.update('webhook_endpoints', { where: { id }, set, returning: ['id'] });
+  // `require: 'one'`: an endpoint outside the tenant aborts the batch (authority_denied:lineage), audit included.
+  return g.update('webhook_endpoints', { where: { id }, set, require: 'one', returning: ['id'] });
 }
 
 /** Deliveries, attempts and secrets go by cascade. */
 export function deleteEndpoint(g: Grant, id: string): GrantedStatement {
-  return g.delete('webhook_endpoints', { where: { id }, returning: ['id'] });
+  assertOrgModeGrant(g);
+  return g.delete('webhook_endpoints', { where: { id }, require: 'one', returning: ['id'] });
 }

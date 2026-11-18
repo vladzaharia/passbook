@@ -4,10 +4,13 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { recordAppleEvents } from '../apple/events.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { recordEmailOutcome } from '../delivery/email-outcome.ts';
 import { handlePushDeliver } from '../delivery/jobs.ts';
 import { enqueuePush } from '../delivery/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from '../scan/test-kit.ts';
+import { buildEnvelope } from './payload.ts';
+import { feedRowOf } from './repo-feed.ts';
 import {
   ALL_TYPES,
   countOf,
@@ -132,8 +135,68 @@ describe('every ledger writer path writes exactly one feed row, with ten endpoin
     }
     const rows = await expectFeed(pass.id, ['pass.issued', 'push.failed', 'pass.uninstalled']);
     expect(JSON.parse(rows[2]?.data ?? '{}')).toMatchObject({ reason: 'push_gone' });
-    // The event precedes the registration delete, so the journal counts the device still registered.
-    expect(rows[2]?.device_count).toBe(1);
+    // The registration is dropped before the event, so the journal counts the devices left.
+    expect(rows[2]?.device_count).toBe(0);
+  });
+
+  it('push gone for two devices: every event reports the devices left once the batch is dropped', async () => {
+    const pass = await kit.pass();
+    const A = 'a'.repeat(64);
+    const B = 'b'.repeat(64);
+    await kit.device(pass, `g1-${pass.id}`, A);
+    await kit.device(pass, `g2-${pass.id}`, B);
+    await enqueuePush(jobCtxOf(kit), pass.id, 'refresh');
+    await kit.settle();
+    const outbox = await first<{ id: string }>(
+      db(),
+      "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push' ORDER BY created_at DESC LIMIT 1",
+      [pass.id],
+    );
+    kit.apns.results.set(A, { status: 400, reason: 'BadDeviceToken' });
+    kit.apns.results.set(B, { status: 400, reason: 'BadDeviceToken' });
+    try {
+      await handlePushDeliver({ kind: 'push.deliver', outboxId: outbox?.id ?? '' }, jobCtxOf(kit));
+    } finally {
+      kit.apns.results.delete(A);
+      kit.apns.results.delete(B);
+    }
+    const gone = (await feedOf(db(), pass.id)).filter((r) => r.type === 'pass.uninstalled');
+    expect(gone).toHaveLength(2);
+    // Never `lastDevice: false` while no device is left (the receiver would wait for one that never comes).
+    for (const r of gone)
+      expect(buildEnvelope(feedRowOf(r)).data).toMatchObject({ deviceCount: 0, lastDevice: true });
+  });
+
+  it('deviceCount ignores registrations of another credential generation', async () => {
+    const pass = await kit.pass();
+    await kit.device(pass, `cur-${pass.id}`, 'c'.repeat(64));
+    await run(
+      db(),
+      `INSERT INTO devices (device_id, identity_id, push_token, updated_at)
+       SELECT ?, identity_id, ?, 1 FROM passes WHERE id = ?`,
+      [`old-${pass.id}`, 'd'.repeat(64), pass.id],
+    );
+    await run(
+      db(),
+      `INSERT INTO registrations (device_id, identity_id, pass_id, created_at, credential_generation)
+       SELECT ?, identity_id, id, 1, credential_generation + 1 FROM passes WHERE id = ?`,
+      [`old-${pass.id}`, pass.id],
+    );
+    await recordPassEvent(kit.ctx, { ...base(pass.id), kind: 'device.registered', device: 'x' });
+    expect((await feedOf(db(), pass.id)).at(-1)?.device_count).toBe(1);
+  });
+
+  it('email.failed through its real writer', async () => {
+    const pass = await kit.pass();
+    await recordEmailOutcome(
+      kit.ctx,
+      { id: 'outbox-1' } as never,
+      { orgId, passId: pass.id, mode: 'live', templateId: null, identityId: null },
+      'failed',
+      'EMAIL_FAILED',
+    );
+    const rows = await expectFeed(pass.id, ['pass.issued', 'email.failed']);
+    expect(buildEnvelope(feedRowOf(rows[1] as never)).data).toEqual({ code: 'EMAIL_FAILED' });
   });
 
   describe('scan', () => {
@@ -152,6 +215,34 @@ describe('every ledger writer path writes exactly one feed row, with ten endpoin
       templateId = await kit.scanTemplate('Door ticket', {
         actions: [{ id: 'enter', label: 'Check in', kind: 'check_in', repeat: 'once' }],
       });
+    });
+
+    it('redeem and adjust through the scanner API', async () => {
+      const t = await kit.scanTemplate('Credit', {
+        actions: [
+          { id: 'add', label: 'Add', kind: 'add', input: 'balance', repeat: 'always', amount: 1 },
+          { id: 'use', label: 'Use', kind: 'use_up' },
+        ],
+      });
+      const pass = await kit.scanPass(t, { balance: 5 });
+      const post = (actionId: string) =>
+        kit.post(kit.admin(), '/actions', {
+          idempotencyKey: key(),
+          input: codeOf(pass),
+          clientTs: kit.clock.now(),
+          actionId,
+          scope: scope(),
+        });
+      expect(((await (await post('add')).json()) as ScanOutcome).kind).toBe('ok');
+      expect(((await (await post('use')).json()) as ScanOutcome).kind).toBe('ok');
+      const rows = await feedOf(db(), pass.id);
+      // The value change also publishes (pass.updated); the scans are the scanned rows.
+      expect(rows.filter((r) => r.type === 'pass.scanned').map((r) => r.kind)).toEqual([
+        'scan.adjusted',
+        'scan.redeemed',
+      ]);
+      for (const r of rows)
+        expect(await countOf(db(), 'webhook_deliveries', `event_seq = ${r.seq}`)).toBe(10);
     });
 
     it('act, refuse and undo', async () => {
@@ -195,6 +286,21 @@ describe('feed exclusions', () => {
       data: { cause: 'resign' },
     });
     expect((await feedOf(db(), pass.id)).length).toBe(before);
+  });
+
+  it('keeps a pass.updated whose cause is absent or null', async () => {
+    const pass = await kit.pass();
+    await recordPassEvent(kit.ctx, { ...base(pass.id), kind: 'pass.updated', data: {} });
+    await recordPassEvent(kit.ctx, {
+      ...base(pass.id),
+      kind: 'pass.updated',
+      data: { cause: null },
+    });
+    expect((await feedOf(db(), pass.id)).map((r) => r.type)).toEqual([
+      'pass.issued',
+      'pass.updated',
+      'pass.updated',
+    ]);
   });
 
   it('skips a test row on a live pass', async () => {

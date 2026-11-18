@@ -195,7 +195,8 @@ export const CreateWebhookEndpointSchema = z.object({
 
 export const UpdateWebhookEndpointSchema = z.object({
   url: z.string().trim().min(1).max(2048).optional(),
-  description: z.string().trim().max(120).optional(),
+  /** An empty string clears it. */
+  description: z.union([z.literal(''), PlainLineSchema(120)]).optional(),
   eventTypes: EventTypeList.optional(),
   templateIds: TemplateIdList.nullable().optional(),
   status: z.enum(['active', 'paused']).optional(),
@@ -253,17 +254,19 @@ export const WebhookDeliveryListQuerySchema = PageQuerySchema.extend({
   type: WebhookEventTypeSchema.optional(),
 });
 
-export const WebhookReplaySchema = z.object({
-  from: TimestampSchema,
-  to: TimestampSchema,
-  include: z.enum(['failed', 'failed_and_cancelled', 'all']).default('failed'),
-  /** Also create deliveries for feed events the endpoint never had. */
-  missing: z.boolean().optional(),
-});
+export const WebhookReplaySchema = z
+  .object({
+    from: TimestampSchema,
+    to: TimestampSchema,
+    include: z.enum(['failed', 'failed_and_cancelled', 'all']).default('failed'),
+    /** Also create deliveries for feed events the endpoint never had. */
+    missing: z.boolean().optional(),
+  })
+  .refine((r) => r.from <= r.to, { message: 'from must not be after to', path: ['from'] });
 export const WebhookReplayResultSchema = z.object({ queued: z.number().int().nonnegative() });
 
 /** `ev1.<seq>`, or `now` for the head of the feed. */
-export const EVENT_FEED_CURSOR = /^(?:now|ev1\.[1-9]\d{0,15})$/;
+export const EVENT_FEED_CURSOR = /^(?:now|ev1\.[1-9]\d{0,14})$/;
 
 export const EventFeedQuerySchema = z.object({
   orgId: IdSchema.optional(),

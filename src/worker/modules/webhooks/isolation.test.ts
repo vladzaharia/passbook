@@ -23,26 +23,80 @@ beforeAll(async () => {
 });
 
 describe('proof 1: a wrong-tenant delivery cannot exist as a row', () => {
+  const FK = /FOREIGN KEY constraint failed/;
+  const insertDelivery = `INSERT INTO webhook_deliveries (endpoint_id, event_seq, org_id, mode) VALUES (?, ?, ?, ?)`;
+
   it('refuses a raw delivery joining one org endpoint to another org feed row', async () => {
     const passB = await kit.pass({ orgId: orgB });
     const [feedB] = await feedOf(db(), passB.id);
+    expect(feedB).toBeDefined();
+    const seq = feedB?.seq as number;
     const epA = await seedEndpoint(db(), { orgId: orgA });
-    const insert = `INSERT INTO webhook_deliveries (endpoint_id, event_seq, org_id, mode) VALUES (?, ?, ?, ?)`;
     // Named for org A: the feed row is B's. Named for org B: the endpoint is A's.
-    expect(await aborts(insert, [epA, feedB?.seq ?? 0, orgA, 'live'])).toMatch(/FOREIGN KEY/i);
-    expect(await aborts(insert, [epA, feedB?.seq ?? 0, orgB, 'live'])).toMatch(/FOREIGN KEY/i);
+    expect(await aborts(insertDelivery, [epA, seq, orgA, 'live'])).toMatch(FK);
+    expect(await aborts(insertDelivery, [epA, seq, orgB, 'live'])).toMatch(FK);
     expect(await deliveriesOf(db(), epA)).toEqual([]);
+    // Positive control: the same insert with B's own endpoint and B's feed row is accepted.
+    const epB = await seedEndpoint(db(), { orgId: orgB, eventTypes: ['pass.voided'] });
+    expect(await aborts(insertDelivery, [epB, seq, orgB, 'live'])).toBeNull();
+    expect((await deliveriesOf(db(), epB)).map((d) => d.event_seq)).toEqual([seq]);
+  });
+
+  it('refuses cross-tenant secrets and attempts, and accepts the consistent ones', async () => {
+    const epA = await seedEndpoint(db(), { orgId: orgA });
+    const passB = await kit.pass({ orgId: orgB });
+    const [feedB] = await feedOf(db(), passB.id);
+    const secret = (id: string, org: string) =>
+      aborts(
+        `INSERT INTO webhook_endpoint_secrets (id, endpoint_id, org_id, mode, kek_version, iv, wrapped_dek,
+           ciphertext, created_at) VALUES (?, ?, ?, 'live', 1, x'00', x'00', x'00', 1)`,
+        [id, epA, org],
+      );
+    expect(await secret('x-b', orgB)).toMatch(FK);
+    expect(await secret('x-a', orgA)).toBeNull();
+    const attempt = (id: string, endpoint: string, org: string, seq: number | null) =>
+      aborts(
+        `INSERT INTO webhook_attempts (id, endpoint_id, org_id, mode, event_seq, attempt, trigger,
+           duration_ms, at) VALUES (?, ?, ?, 'live', ?, 1, 'event', 1, 1)`,
+        [id, endpoint, org, seq],
+      );
+    expect(await attempt('t1', epA, orgB, null)).toMatch(FK);
+    expect(await attempt('t2', epA, orgA, feedB?.seq ?? null)).toMatch(FK);
+    expect(await attempt('t3', epA, orgA, null)).toBeNull();
+    // An attempt's key cannot be re-pointed at another tenant's consistent triple.
+    const epB = await seedEndpoint(db(), { orgId: orgB, eventTypes: ['pass.voided'] });
+    expect(await aborts(insertDelivery, [epB, feedB?.seq ?? 0, orgB, 'live'])).toBeNull();
+    expect(await attempt('t4', epB, orgB, feedB?.seq ?? null)).toBeNull();
+    for (const [column, value] of [
+      ['endpoint_id', epB],
+      ['org_id', orgB],
+      ['event_seq', feedB?.seq ?? 0],
+      ['mode', 'test'],
+    ] as const)
+      expect(
+        await aborts(`UPDATE webhook_attempts SET ${column} = ? WHERE id = 't3'`, [value]),
+      ).toMatch(/immutable webhook attempt key/);
+  });
+
+  it('refuses a feed row whose tenant is not its pass tenant, however it is written', async () => {
+    const pass = await kit.pass();
+    const insert = (org: string, mode: string) =>
+      aborts(
+        `INSERT INTO event_feed (event_id, org_id, mode, pass_id, template_id, type, kind, data, at)
+         VALUES (?, ?, ?, ?, 't', 'pass.voided', 'pass.voided', '{}', 1)`,
+        [`forged-${org}-${mode}`, org, mode, pass.id],
+      );
+    expect(await insert(orgB, 'live')).toMatch(/event feed tenant/);
+    expect(await insert(orgA, 'test')).toMatch(/event feed tenant/);
+    expect(await insert(orgA, 'live')).toBeNull();
   });
 
   it('refuses mixing modes', async () => {
     const pass = await kit.pass();
     const [feed] = await feedOf(db(), pass.id);
     const testEndpoint = await seedEndpoint(db(), { orgId: orgA, mode: 'test' });
-    const insert = `INSERT INTO webhook_deliveries (endpoint_id, event_seq, org_id, mode) VALUES (?, ?, ?, ?)`;
     for (const mode of ['live', 'test'])
-      expect(await aborts(insert, [testEndpoint, feed?.seq ?? 0, orgA, mode])).toMatch(
-        /FOREIGN KEY/i,
-      );
+      expect(await aborts(insertDelivery, [testEndpoint, feed?.seq ?? 0, orgA, mode])).toMatch(FK);
   });
 
   it('aborts an update of any delivery key', async () => {
@@ -127,6 +181,8 @@ describe('proof 4: test rows on live passes produce nothing', () => {
       mode: 'test',
       kind: 'pass.voided',
     });
+    // The test ledger row was written; only the journal ignored it.
+    expect(await countOf(db(), 'pass_events', `pass_id = '${pass.id}' AND mode = 'test'`)).toBe(1);
     expect(await countOf(db(), 'event_feed')).toBe(feed);
     await recordPassEvent(kit.ctx, {
       orgId: orgA,
@@ -189,6 +245,10 @@ describe('limits and immutability', () => {
     expect(
       await aborts("UPDATE webhook_endpoint_secrets SET kek_version = 2 WHERE id = 's1'"),
     ).toBeNull();
+    // An expired secret cannot be revived.
+    expect(
+      await aborts("UPDATE webhook_endpoint_secrets SET expires_at = NULL WHERE id = 's1'"),
+    ).toMatch(/immutable webhook secret/);
   });
 
   it('allows one current secret per endpoint', async () => {

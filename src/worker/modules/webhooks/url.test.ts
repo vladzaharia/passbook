@@ -18,6 +18,7 @@ describe('endpoint url', () => {
     'https://printer.local/a',
     'https://hooks.example.com/a/../b',
     'not a url',
+    'https://hooks.example.com./a',
   ])('refuses %s', (url) => {
     expect(() => normalizeEndpointUrl(url, [])).toThrow();
   });
@@ -29,6 +30,11 @@ describe('endpoint url', () => {
     expect(() =>
       normalizeEndpointUrl('https://a.wallet.example.org/x', ['wallet.example.org']),
     ).toThrow();
+  });
+
+  it('refuses a root-dot host that would slip past a deny list', () => {
+    for (const host of ['wallet.example.org.', 'a.wallet.example.org.'])
+      expect(() => normalizeEndpointUrl(`https://${host}/x`, ['wallet.example.org'])).toThrow();
   });
 
   it('shows only the host in logs and audit, and the host plus four path characters to readers', () => {

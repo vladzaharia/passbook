@@ -1,3 +1,4 @@
+import { ValidationError } from '../../platform/errors.ts';
 import { assertSafeUrl } from '../../platform/safe-fetch.ts';
 
 /**
@@ -7,6 +8,9 @@ import { assertSafeUrl } from '../../platform/safe-fetch.ts';
  */
 export function normalizeEndpointUrl(raw: string, platformHosts: string[]): string {
   const url = assertSafeUrl(raw, platformHosts);
+  // A root-dot host (`example.com.`) is refused outright, so no later comparison can be fooled by it.
+  if (url.hostname.endsWith('.'))
+    throw new ValidationError('The host is not allowed.', [], 'UNSAFE_URL');
   url.hash = '';
   return url.href;
 }

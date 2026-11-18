@@ -56,7 +56,7 @@ CREATE TRIGGER webhook_endpoint_secrets_immutable BEFORE UPDATE ON webhook_endpo
 WHEN NEW.id IS NOT OLD.id OR NEW.endpoint_id IS NOT OLD.endpoint_id OR NEW.org_id IS NOT OLD.org_id
   OR NEW.mode IS NOT OLD.mode OR NEW.iv IS NOT OLD.iv OR NEW.ciphertext IS NOT OLD.ciphertext
   OR NEW.created_at IS NOT OLD.created_at
-  OR (OLD.expires_at IS NOT NULL AND NEW.expires_at IS NOT OLD.expires_at AND NEW.expires_at > OLD.expires_at)
+  OR (OLD.expires_at IS NOT NULL AND (NEW.expires_at IS NULL OR NEW.expires_at > OLD.expires_at))
 BEGIN SELECT RAISE(ABORT, 'immutable webhook secret'); END;
 
 -- The journal: one row per catalog event, in commit order. Written only by the trigger below.
@@ -74,13 +74,16 @@ CREATE TABLE event_feed (
   device_count INTEGER,
   actor_type TEXT,
   data TEXT NOT NULL CHECK (json_valid(data)),
-  at INTEGER NOT NULL,
-  UNIQUE (seq, org_id, mode)
+  at INTEGER NOT NULL
 );
-CREATE INDEX event_feed_org ON event_feed (org_id, mode, seq);
-CREATE INDEX event_feed_org_type ON event_feed (org_id, mode, type, seq);
+-- Unique so it is also the parent key of the (seq, org_id, mode) foreign keys.
+CREATE UNIQUE INDEX event_feed_org ON event_feed (org_id, mode, seq);
 CREATE INDEX event_feed_pass ON event_feed (pass_id);
 CREATE INDEX event_feed_at ON event_feed (at);
+-- Whoever writes a feed row (the journal trigger, or any grant), its tenant is its pass's tenant.
+CREATE TRIGGER event_feed_tenant BEFORE INSERT ON event_feed
+WHEN NOT EXISTS (SELECT 1 FROM passes WHERE id = NEW.pass_id AND org_id = NEW.org_id AND mode = NEW.mode)
+BEGIN SELECT RAISE(ABORT, 'event feed tenant'); END;
 CREATE TRIGGER event_feed_no_update BEFORE UPDATE ON event_feed
 BEGIN SELECT RAISE(ABORT, 'append-only event feed'); END;
 
@@ -131,14 +134,20 @@ CREATE INDEX webhook_attempts_delivery ON webhook_attempts (endpoint_id, event_s
 CREATE INDEX webhook_attempts_endpoint_fk ON webhook_attempts (endpoint_id, org_id, mode);
 CREATE INDEX webhook_attempts_event_fk ON webhook_attempts (event_seq, org_id, mode);
 CREATE INDEX webhook_attempts_at ON webhook_attempts (at);
+CREATE TRIGGER webhook_attempts_key BEFORE UPDATE ON webhook_attempts
+WHEN NEW.id IS NOT OLD.id OR NEW.endpoint_id IS NOT OLD.endpoint_id OR NEW.event_seq IS NOT OLD.event_seq
+  OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
+BEGIN SELECT RAISE(ABORT, 'immutable webhook attempt key'); END;
 
 -- Journal and fan-out, in the ledger write's own transaction. The org and mode come from the pass row.
+-- Writers of pass_events must use a plain INSERT: SQLite applies the outer statement's conflict clause to a
+-- trigger's inserts, so INSERT OR REPLACE here would turn the OR IGNOREs below into REPLACE (a test enforces it).
 CREATE TRIGGER pass_events_feed AFTER INSERT ON pass_events
 WHEN NEW.kind IN ('pass.issued', 'pass.updated', 'pass.voided', 'pass.unvoided', 'pass.removed',
     'pass.restored', 'device.registered', 'device.unregistered', 'scan.checked_in', 'scan.redeemed',
     'scan.adjusted', 'scan.checked_out', 'scan.heads_up', 'scan.rejected', 'scan.undone',
     'push.failed', 'email.failed')
-  AND NOT (NEW.kind = 'pass.updated' AND json_extract(NEW.data, '$.cause') = 'resign')
+  AND NOT (NEW.kind = 'pass.updated' AND json_extract(NEW.data, '$.cause') IS 'resign')
   AND NOT EXISTS (SELECT 1 FROM settings WHERE scope = 'platform' AND key = 'events.feed' AND value = '"off"')
 BEGIN
   INSERT OR IGNORE INTO event_feed (event_id, org_id, mode, pass_id, template_id, external_id, type,
@@ -155,7 +164,8 @@ BEGIN
       ELSE NEW.kind END,
     NEW.kind, NEW.device,
     CASE WHEN NEW.kind IN ('device.registered', 'device.unregistered')
-      THEN (SELECT count(*) FROM registrations r WHERE r.pass_id = p.id) END,
+      THEN (SELECT count(*) FROM registrations r WHERE r.pass_id = p.id
+        AND r.credential_generation = p.credential_generation) END,
     NEW.actor_type, NEW.data, NEW.at
   FROM passes p JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
   WHERE p.id = NEW.pass_id AND p.org_id = NEW.org_id AND p.mode = NEW.mode

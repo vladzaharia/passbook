@@ -10,9 +10,11 @@ import {
   CreateWebhookEndpointSchema,
   EventFeedQuerySchema,
   SUBSCRIBABLE_EVENT_TYPES,
+  UpdateWebhookEndpointSchema,
   WEBHOOK_DATA_SCHEMAS,
   WEBHOOK_EVENT_TYPES,
   WebhookEventSchema,
+  WebhookReplaySchema,
 } from './webhooks.ts';
 
 const base = {
@@ -107,6 +109,22 @@ describe('webhook catalog', () => {
       expect(EventFeedQuerySchema.safeParse({ after }).success).toBe(true);
     for (const after of ['42', 'ev1.0', 'ev1.-1', 'ev2.1'])
       expect(EventFeedQuerySchema.safeParse({ after }).success).toBe(false);
+  });
+
+  it('keeps the update description to one plain line, and lets an empty one clear it', () => {
+    const ok = (description: string) =>
+      UpdateWebhookEndpointSchema.safeParse({ description }).success;
+    expect(ok('Door')).toBe(true);
+    expect(ok('')).toBe(true);
+    expect(ok('two\nlines')).toBe(false);
+    expect(ok('x'.repeat(121))).toBe(false);
+  });
+
+  it('bounds the cursor to a safe integer and requires a replay range in order', () => {
+    expect(EventFeedQuerySchema.safeParse({ after: 'ev1.9007199254740991' }).success).toBe(true);
+    expect(EventFeedQuerySchema.safeParse({ after: `ev1.${'9'.repeat(16)}` }).success).toBe(false);
+    expect(WebhookReplaySchema.safeParse({ from: 1, to: 2 }).success).toBe(true);
+    expect(WebhookReplaySchema.safeParse({ from: 3, to: 2 }).success).toBe(false);
   });
 
   it('labels responses', () => {

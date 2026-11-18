@@ -429,6 +429,13 @@ Only archived templates may be listed; the wait ignores them.
   Provider acceptance is not proof of inbox delivery. A crash immediately before or during the
   external call can also leave this conservative unknown result.
 
+### Event feed kill switch
+
+The `pass_events_feed` trigger journals catalog events into `event_feed` and fans them out to webhook
+endpoints. Set the platform setting `events.feed` to `"off"` to skip it without a deploy. Events written
+while it is off are never journaled, so webhook endpoints miss them and `GET /events` pollers see a silent
+gap; turning it back on does not backfill.
+
 ## Runtime decisions
 
 - **workerd versions**: `npm run test:worker` runs on the pool's miniflare (workerd 1.20260815), dev and prod on the root wrangler (1.20261012). The pool pins its own copy until a release catches up. The Dependabot `cloudflare` group tracks it; when one ships, align versions and drop the `overrides` entries in `package.json`. Stay on vitest 4 until the pool supports 5.

@@ -99,7 +99,7 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   webhook_endpoint_secrets: { org: 'org_id', mode: 'mode' },
   webhook_deliveries: { org: 'org_id', mode: 'mode', conflict: ['endpoint_id', 'event_seq'] },
   webhook_attempts: { org: 'org_id', mode: 'mode' },
-  event_feed: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
+  event_feed: { org: 'org_id', mode: 'mode' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
 };

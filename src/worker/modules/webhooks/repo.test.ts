@@ -13,7 +13,7 @@ import {
   updateEndpoint,
 } from './repo-endpoints.ts';
 import { feedHead, getFeedEvent, listFeed } from './repo-feed.ts';
-import { activeSecrets, expireSecrets, insertSecret } from './repo-secrets.ts';
+import { activeSecrets, insertSecret, rotateSecret } from './repo-secrets.ts';
 import { newEndpointSecret, openSecret, sealSecret } from './secrets.ts';
 
 async function setup(label: string) {
@@ -85,18 +85,19 @@ describe('endpoint repo', () => {
     expect(await getEndpoint(t.db, t.fence, 'ep1')).toBeNull();
   });
 
-  it('a grant of one org cannot update or delete an endpoint of another', async () => {
+  it('a grant of one org cannot update or delete an endpoint of another (the batch aborts)', async () => {
     const a = await setup('wh-a');
     const b = await setup('wh-b');
     const create = b.g('endpoint.create');
     insertEndpoint(create, { ...NEW, id: 'epb' });
     await create.commit();
+    // `require: 'one'`: the batch aborts, so no audit row can name the foreign endpoint.
     const attack = a.g('endpoint.update');
     updateEndpoint(attack, 'epb', { url: 'https://evil.example.com/x' }, 5);
+    await expect(attack.commit()).rejects.toThrow();
     const del = a.g('endpoint.delete');
     deleteEndpoint(del, 'epb');
-    await attack.commit();
-    await del.commit();
+    await expect(del.commit()).rejects.toThrow();
     expect((await getEndpoint(b.db, b.fence, 'epb'))?.url).toBe(NEW.url);
   });
 
@@ -110,6 +111,20 @@ describe('endpoint repo', () => {
     const g = t.g('endpoint.create');
     insertEndpoint(g, { ...NEW, id: 'cap10' });
     await expect(g.commit()).rejects.toThrow(/webhook endpoint limit/);
+  });
+});
+
+describe('grant scope', () => {
+  it('refuses a grant that is not org_mode', async () => {
+    const t = await setup('wh-scope');
+    const g = grant(t.route, {
+      purpose: 'org.webhooks.endpoint.create',
+      principal: t.member(),
+      tables: ['webhook_endpoints', 'webhook_endpoint_secrets'],
+    });
+    expect(() => insertEndpoint(g, { ...NEW, id: 'scope1' })).toThrow(/org_mode grant/);
+    expect(() => updateEndpoint(g, 'scope1', {}, 1)).toThrow(/org_mode grant/);
+    expect(() => deleteEndpoint(g, 'scope1')).toThrow(/org_mode grant/);
   });
 });
 
@@ -128,12 +143,12 @@ describe('secret repo', () => {
     });
     const rotate = async (id: string, now: number, overlapMs: number) => {
       const g = t.g('secret.rotate');
-      expireSecrets(g, 'ep1', now, overlapMs);
-      insertSecret(g, {
+      rotateSecret(g, {
         id,
         endpointId: 'ep1',
         envelope: await sealSecret(ring, `whsec_${id}`, bind(id)),
         now,
+        overlapMs,
       });
       await g.commit();
     };
@@ -168,27 +183,28 @@ describe('secret repo', () => {
     await expect(openSecret(ring, envelope, bind('ep1', 'test'))).rejects.toThrow();
   });
 
-  it('inserts nothing for an endpoint outside the grant tenant', async () => {
+  it('a rotation of a foreign endpoint aborts instead of returning an unstored secret', async () => {
     const a = await setup('wh-s-a');
     const b = await setup('wh-s-b');
     const create = b.g('endpoint.create');
     insertEndpoint(create, { ...NEW, id: 'epb2' });
     await create.commit();
     const ring = await loadKekRing(a.s.f.env);
-    const g = a.g('secret.rotate');
-    insertSecret(g, {
-      id: 'x',
+    const envelope = await sealSecret(ring, 'v', {
+      secretId: 'x',
+      orgId: a.fence.orgId,
       endpointId: 'epb2',
-      envelope: await sealSecret(ring, 'v', {
-        secretId: 'x',
-        orgId: a.fence.orgId,
-        endpointId: 'epb2',
-        mode: 'live',
-      }),
-      now: 1,
+      mode: 'live',
     });
-    await g.commit();
+    const g = a.g('secret.rotate');
+    rotateSecret(g, { id: 'x', endpointId: 'epb2', envelope, now: 1, overlapMs: 0 });
+    await expect(g.commit()).rejects.toThrow();
     expect(await first(a.db, "SELECT 1 FROM webhook_endpoint_secrets WHERE id = 'x'")).toBeNull();
+    // A bare insert is still inert for a foreign endpoint.
+    const bare = a.g('secret.rotate');
+    insertSecret(bare, { id: 'y', endpointId: 'epb2', envelope, now: 1 });
+    await bare.commit();
+    expect(await first(a.db, "SELECT 1 FROM webhook_endpoint_secrets WHERE id = 'y'")).toBeNull();
   });
 });
 

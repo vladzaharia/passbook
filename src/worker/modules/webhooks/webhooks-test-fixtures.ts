@@ -55,18 +55,24 @@ export interface FeedRowOut {
   seq: number;
   event_id: string;
   org_id: string;
-  mode: string;
+  mode: 'live' | 'test';
   pass_id: string;
+  template_id: string;
+  external_id: string | null;
   type: string;
   kind: string;
+  device: string | null;
   device_count: number | null;
+  actor_type: string | null;
   data: string;
+  at: number;
 }
 
 export const feedOf = (db: D1Database, passId: string) =>
   all<FeedRowOut>(
     db,
-    `SELECT seq, event_id, org_id, mode, pass_id, type, kind, device_count, data
+    `SELECT seq, event_id, org_id, mode, pass_id, template_id, external_id, type, kind, device,
+       device_count, actor_type, data, at
      FROM event_feed WHERE pass_id = ? ORDER BY seq`,
     [passId],
   );

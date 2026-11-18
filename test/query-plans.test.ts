@@ -363,11 +363,11 @@ describe('outbound webhook query plans', () => {
   const fence = { orgId: 'o', mode: 'live' as const };
 
   it.each([
-    ['feed', { after: 5, limit: 50 }, 'event_feed_org (org_id=? AND mode=? AND seq>?)'],
+    ['feed', { after: 5, limit: 50 }, 'USING INDEX event_feed_org (org_id=? AND mode=? AND seq>?)'],
     [
       'feed by type',
       { after: 5, types: ['pass.scanned', 'pass.issued'], limit: 50 },
-      'event_feed_org',
+      'USING INDEX event_feed_org (org_id=? AND mode=? AND seq>?)',
     ],
     ['feed by pass', { after: 5, passId: 'p', limit: 50 }, 'event_feed'],
   ])('%s: an index search, no full scan of the journal', async (_name, query, index) => {

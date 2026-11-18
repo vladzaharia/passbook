@@ -56,7 +56,8 @@ export interface FeedQuery {
 }
 
 /** Quarantined (sandbox-captured) passes never show in the feed. */
-const FENCED = `JOIN passes p ON p.id = f.pass_id AND p.test_data_quarantined = 0`;
+const FENCED = `JOIN passes p ON p.id = f.pass_id AND p.org_id = f.org_id AND p.mode = f.mode
+  AND p.test_data_quarantined = 0`;
 
 /** Ascending by seq, so a poller tails it. Asks for one extra row so the caller can set `hasMore`. */
 export function feedStmt(db: D1Database, fence: FeedFence, q: FeedQuery): D1PreparedStatement {

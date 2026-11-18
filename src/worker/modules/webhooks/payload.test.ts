@@ -156,7 +156,7 @@ describe('payload allowlist', () => {
       );
   });
 
-  it('counts a push-gone uninstall after the registration is dropped', () => {
+  it('derives lastDevice from the journal count and the cause from the ledger', () => {
     const r = (reason: string, deviceCount: number) =>
       buildEnvelope(
         row({
@@ -167,13 +167,24 @@ describe('payload allowlist', () => {
           data: JSON.stringify({ reason }),
         }),
       ).data;
-    expect(r('push_gone', 1)).toMatchObject({
+    expect(r('push_gone', 0)).toMatchObject({
       cause: 'push_gone',
       deviceCount: 0,
       lastDevice: true,
     });
-    expect(r('device', 0)).toMatchObject({ cause: 'wallet', deviceCount: 0, lastDevice: true });
-    expect(r('device', 2)).toMatchObject({ deviceCount: 2, lastDevice: false });
+    expect(r('device', 2)).toMatchObject({ cause: 'wallet', deviceCount: 2, lastDevice: false });
+  });
+
+  it('drops a string longer than the contract bound, so the event still parses', () => {
+    const event = buildEnvelope(
+      row({
+        type: 'push.failed',
+        kind: 'push.failed',
+        data: JSON.stringify({ status: 400, reason: 'x'.repeat(301), code: 'OK' }),
+      }),
+    );
+    expect(event.data).toEqual({ status: 400, code: 'OK' });
+    expect(WebhookEventSchema.safeParse(event).success).toBe(true);
   });
 
   it('is pure: a replay builds the identical event', () => {

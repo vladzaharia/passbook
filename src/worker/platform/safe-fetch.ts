@@ -145,7 +145,8 @@ export function assertSafeUrl(raw: string, platformHosts: string[] = []): URL {
   } catch {
     throw new ValidationError('The URL is invalid.', [], 'UNSAFE_URL');
   }
-  const host = url.hostname.toLowerCase();
+  // `example.com.` is the same host: compare without the root dot, or it slips past every deny list.
+  const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (url.protocol !== 'https:')
     throw new ValidationError('Only https URLs are allowed.', [], 'UNSAFE_URL');
   if (url.port && url.port !== '443')
