@@ -260,7 +260,7 @@ verify on a device.
 | --- | --- | --- | --- | --- | --- |
 | `session` (admin) | `__Host-wallet_sid` | Console: every org. `/scan`: one org it picks per request | `x-passbook-mode` (n6) | `x-csrf-token` | as today; `RL_SCAN` on scan routes |
 | `session` (user) | same | own passes | — | same | refused on every scan route (403) |
-| `api_key` | `Bearer wlt_…` | its org or all | key row | none | `RL_API_KEY`; scan feed (`scans:read`), or with `scans:write` and `x-passbook-device` one terminal of its own org and mode: `resolve`, `actions`, `lookup`, `undo`, Desk at most, no approvals |
+| `api_key` | `Bearer wlt_…` | its org or all | key row | none | `RL_API_KEY`; scan feed (`scans:read`), or with `scans:write` and `x-passbook-device` one of the terminals it was minted for (`api_key_terminals`, fixed): `resolve`, `actions`, own `undo`, Desk at most, no approvals |
 | **`scanner`** (new) | cookie `__Host-wallet_scan` (device) or `Bearer wls_…` (terminal) | one org; `/api/v1/scan/*` only | scanner row | cookie: `x-csrf-token` = scanner secret; bearer: none | `RL_SCAN`, `RL_SCAN_LOOKUP`, `RL_SCAN_ORG` |
 | Apple device | `ApplePass` | one pass | — | — | unchanged |
 

@@ -33,8 +33,12 @@ const ipOf = (c: Context<AppBindings>) => ipPrefix(c.req.header('cf-connecting-i
 
 /** Pairing, public: /api/v1/scan/pair*, and /unpair. Same-origin, rate limited per IP. */
 export const scanPairRoutes = createRouter();
-// Not '*': this router is mounted over the whole scan API, and a till's bearer call has no Origin.
-for (const path of ['/pair', '/pair/*', '/unpair']) scanPairRoutes.use(path, sameOriginOnly);
+// This router is mounted over the whole scan API. A terminal's or a till's bearer is no ambient
+// credential (a cross-site page cannot set it), so only those requests skip the origin check.
+const BEARER = /^Bearer\s+(?:wls|wlt)_\S+$/i;
+scanPairRoutes.use('*', (c, next) =>
+  BEARER.test(c.req.header('authorization') ?? '') ? next() : sameOriginOnly(c, next),
+);
 // A pairing code is a guess target: key on the /24 or /64, not the full address.
 scanPairRoutes.use('/pair/*', rateLimit('RL_SCAN_PAIR', clientRatePrefix));
 scanPairRoutes.use('/pair', rateLimit('RL_SCAN_PAIR', clientRatePrefix));

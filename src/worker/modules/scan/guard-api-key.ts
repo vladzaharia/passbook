@@ -9,22 +9,25 @@ import {
   UnauthenticatedError,
   ValidationError,
 } from '../../platform/errors.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
+import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
-import { apiKeyActs } from './repo-api-key.ts';
+import { scannerExpired } from './auth-store.ts';
+import { apiKeyActs, keyBoundTo, orgAccessRevisionOf } from './repo-api-key.ts';
 import { getScanner, type ScannerRow } from './repo-device.ts';
 
 export const DEVICE_HEADER = 'x-passbook-device';
 export const API_KEY_TOKEN = /^wlt_/;
 
-/** A key opens only these calls: read a code, act on it, look a pass up, undo its own scan. */
-const KEY_ROUTE = /^(?:\/api\/v1\/scan)?\/(?:resolve|actions|lookup|scans\/[^/]+\/undo)$/;
+/** A key opens only these calls: read a code, act on it, undo its own scan. */
+const KEY_ROUTE = /^\/api\/v1\/scan\/(?:resolve|actions|scans\/[^/]+\/undo)$/;
 
 /** A till's key acting as one named terminal of its own org and mode. */
 export interface KeyTerminal {
   keyId: string;
   auth: ScannerAuth;
   row: ScannerRow;
+  /** The org's `access_revision` as the key was admitted. */
+  orgRevision: number;
 }
 
 /**
@@ -48,15 +51,31 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
     throw new ForbiddenError('An API key cannot call this route.', 'API_KEY_ROUTE');
   }
   const scannerId = c.req.header(DEVICE_HEADER)?.trim();
-  if (!scannerId)
+  if (!scannerId) {
+    reportDenied(c, 'FORBIDDEN', key);
     throw new ValidationError(`Name the terminal in ${DEVICE_HEADER}.`, [], 'DEVICE_REQUIRED');
-  const row = await getScanner(c.env.DB, scannerId);
-  if (!row || row.orgId !== key.orgId || row.mode !== key.mode || row.revokedAt !== null)
+  }
+  const db = c.env.DB;
+  const row = await getScanner(db, scannerId);
+  // One answer for every way the header can be wrong: unknown, another org or mode, removed, expired
+  // or not one of this key's terminals.
+  if (
+    !row ||
+    row.orgId !== key.orgId ||
+    row.mode !== key.mode ||
+    row.revokedAt !== null ||
+    scannerExpired(row, serviceContext(c).clock.now()) ||
+    !(await keyBoundTo(db, key.keyId, row.id))
+  ) {
+    reportDenied(c, 'FORBIDDEN', key);
     throw new NotFoundError('Terminal not found.', 'TERMINAL_NOT_FOUND');
+  }
   if (row.kind !== 'terminal' || row.deviceRole !== 'scan') {
     reportDenied(c, 'FORBIDDEN', key);
     throw new ForbiddenError('A key acts only as a terminal.', 'TERMINAL_ONLY');
   }
+  const orgRevision = await orgAccessRevisionOf(db, key.orgId);
+  if (orgRevision === null) throw new NotFoundError('Terminal not found.', 'TERMINAL_NOT_FOUND');
   const auth: ScannerAuth = {
     kind: 'scanner',
     scannerId: row.id,
@@ -67,7 +86,7 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
     scannerKind: 'terminal',
     deviceRole: 'scan',
   };
-  return { keyId: key.keyId, auth, row };
+  return { keyId: key.keyId, auth, row, orgRevision };
 }
 
 /** A key never approves and never overrides, whatever the terminal's own settings say. */
@@ -87,7 +106,12 @@ export async function apiKeyRefusal(
   if (!actor.apiKeyId) return null;
   const acts = await apiKeyActs(
     ctx.env.DB,
-    { id: actor.apiKeyId, orgId: actor.orgId, mode: actor.mode },
+    {
+      id: actor.apiKeyId,
+      orgId: actor.orgId,
+      mode: actor.mode,
+      scannerId: actor.scanner?.id ?? '',
+    },
     ctx.clock.now(),
   );
   return acts

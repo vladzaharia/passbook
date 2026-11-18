@@ -86,6 +86,7 @@ async function run(
           scan: {
             actorKey: target.actorKey,
             staffId: target.staffId,
+            apiKeyId: target.apiKeyId ?? null,
             at: target.at,
             sameScannerToday:
               target.scannerId === actor.scanner?.id &&

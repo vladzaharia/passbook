@@ -1,25 +1,23 @@
 import { KeyRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { ApiScopeSchema, type Mode } from '@/shared/contracts/common.ts';
+import type { Mode } from '@/shared/contracts/common.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { getMode } from '@/web/lib/mode.ts';
 import {
   Button,
-  Checkbox,
   ConfirmDialog,
   Dialog,
   DialogContent,
   Form,
   FormField,
   Input,
-  Label,
   Select,
   useFormErrors,
 } from '@/web/ui/index.ts';
 import { KeyDisclosure } from './key-disclosure.tsx';
-import { type ApiKey, SCOPE_LABEL, useCreateKey } from './queries.ts';
+import { type ApiKey, useCreateKey } from './queries.ts';
+import { type SCOPES, ScopeRows, TerminalRows } from './scope-rows.tsx';
 
-const SCOPES = ApiScopeSchema.options;
 const DAY = 86_400_000;
 const EXPIRY = [
   { value: '30', label: '30 days' },
@@ -40,63 +38,6 @@ export interface CreateKeyDialogProps {
   orgName: string;
 }
 
-function ScopeRows({
-  value,
-  onChange,
-  error,
-  platform,
-}: {
-  value: readonly string[];
-  onChange: (next: string[]) => void;
-  error?: string | undefined;
-  /** A platform key has no org to scan for. */
-  platform: boolean;
-}) {
-  const offered = platform ? SCOPES.filter((s) => s !== 'scans:write') : SCOPES;
-  return (
-    <fieldset
-      className="flex min-w-0 flex-col"
-      aria-describedby={error ? 'scopes-error' : undefined}
-    >
-      <legend className="mb-2 text-sm font-medium text-fg">
-        Scopes
-        <span aria-hidden className="ml-0.5 text-danger">
-          *
-        </span>
-      </legend>
-      <ul className="divide-y divide-border rounded-md border border-border-strong">
-        {offered.map((s, i) => {
-          const id = `scope-${s.replace(':', '-')}`;
-          // The first box carries the group's error, so a blocked submit focuses it once.
-          const flagged = Boolean(error) && i === 0;
-          return (
-            <li key={s} className="flex min-h-11 items-center gap-3 px-3 py-2">
-              <Checkbox
-                id={id}
-                aria-invalid={flagged || undefined}
-                aria-describedby={flagged ? 'scopes-error' : undefined}
-                checked={value.includes(s)}
-                onCheckedChange={(c) =>
-                  onChange(c === true ? [...value, s] : value.filter((x) => x !== s))
-                }
-              />
-              <Label htmlFor={id} className="min-w-0 flex-1 font-normal">
-                {SCOPE_LABEL[s] ?? s}
-              </Label>
-              <code className="shrink-0 font-mono text-xs text-fg-muted">{s}</code>
-            </li>
-          );
-        })}
-      </ul>
-      {error ? (
-        <p id="scopes-error" className="mt-1 text-xs text-danger">
-          {error}
-        </p>
-      ) : null}
-    </fieldset>
-  );
-}
-
 export function CreateKeyDialog({
   open,
   onOpenChange,
@@ -107,6 +48,8 @@ export function CreateKeyDialog({
   const create = useCreateKey(principal);
   const [name, setName] = useState('');
   const [scopes, setScopes] = useState<string[]>([]);
+  const [terminalIds, setTerminalIds] = useState<string[]>([]);
+  const scansWrite = scopes.includes('scans:write');
   const [expiry, setExpiry] = useState('90');
   // A key made in Test mode is a Test key unless the admin picks Live.
   const [keyMode, setKeyMode] = useState<Mode>(getMode);
@@ -124,6 +67,7 @@ export function CreateKeyDialog({
   const check = useFormErrors({
     ...(name.trim() ? {} : { name: 'Required.' }),
     ...(scopes.length ? {} : { scopes: 'Pick at least one scope.' }),
+    ...(!scansWrite || terminalIds.length ? {} : { terminalIds: 'Pick at least one terminal.' }),
   });
   const errors: Record<string, string | undefined> = { ...server, ...check.errors };
 
@@ -131,6 +75,7 @@ export function CreateKeyDialog({
     onOpenChange(false);
     setName('');
     setScopes([]);
+    setTerminalIds([]);
     setExpiry('90');
     setKeyMode(getMode());
     setServer({});
@@ -147,6 +92,7 @@ export function CreateKeyDialog({
         name: name.trim(),
         orgId,
         scopes: scopes as (typeof SCOPES)[number][],
+        ...(scansWrite ? { terminalIds } : {}),
         mode: keyMode,
         expiresAt: expiry === 'never' ? null : Date.now() + Number(expiry) * DAY,
       });
@@ -265,6 +211,14 @@ export function CreateKeyDialog({
             error={errors.scopes}
             platform={orgId === null}
           />
+          {scansWrite && orgId !== null ? (
+            <TerminalRows
+              orgId={orgId}
+              value={terminalIds}
+              onChange={setTerminalIds}
+              error={errors.terminalIds}
+            />
+          ) : null}
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
         </Form>
       </DialogContent>

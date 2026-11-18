@@ -21,6 +21,7 @@ export interface HistoryRaw {
   raw_scanner_id: string | null;
   raw_event_id: string | null;
   raw_staff_id: string | null;
+  api_key_id: string | null;
   raw_undone_by: string | null;
   presence_scope: string | null;
   pass_version: number | null;
@@ -118,6 +119,7 @@ export interface HistoryRow {
   scannerName: string | null;
   staffId: string | null;
   staffName: string | null;
+  apiKeyId: string | null;
   approvedBy: string | null;
   method: HistoryRaw['method'];
   amount: number | null;
@@ -207,6 +209,7 @@ export const toHistoryRow = (r: HistoryRaw): HistoryRow => ({
   scannerName: r.scanner_name,
   staffId: r.staff_id,
   staffName: r.staff_name,
+  apiKeyId: r.api_key_id,
   approvedBy: r.approver_name,
   method: r.method,
   amount: r.amount,

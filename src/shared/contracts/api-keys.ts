@@ -42,6 +42,8 @@ export const CreateApiKeySchema = z.object({
   orgId: IdSchema.nullable(),
   name: z.string().min(1).max(120),
   scopes: z.array(ApiScopeSchema).min(1),
+  /** The terminals a `scans:write` key acts as, fixed for the key's life: at least one with that scope, none without. */
+  terminalIds: z.array(IdSchema).max(20).optional(),
   mode: ModeSchema.default('live'),
   expiresAt: TimestampSchema.nullable().optional(),
 });

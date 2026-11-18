@@ -13,6 +13,7 @@ import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { parseJsonArray } from '../../platform/json-column.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { AuditEntry } from '../audit/types.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
 import { type ApiKeyAuthority, authorityOrgId, delegableScopes } from './access.ts';
@@ -77,8 +78,16 @@ export async function createApiKey(
   ) {
     throw new ForbiddenError();
   }
-  if (orgId === null && input.scopes.includes('scans:write'))
+  const scans = input.scopes.includes('scans:write');
+  const terminalIds = [...new Set(input.terminalIds ?? [])];
+  if (scans && orgId === null)
     throw new ValidationError('A platform key cannot scan.', [], 'API_KEY_SCAN_ORG_REQUIRED');
+  if (scans !== terminalIds.length > 0)
+    throw new ValidationError(
+      scans ? 'Pick at least one terminal.' : 'Terminals need the scan scope.',
+      [{ path: 'terminalIds', message: scans ? 'Pick at least one terminal.' : 'Not needed.' }],
+      scans ? 'API_KEY_TERMINALS_REQUIRED' : 'API_KEY_TERMINALS_UNUSED',
+    );
   const delegable = delegableScopes(authority);
   if (input.scopes.some((scope) => !delegable.includes(scope))) {
     throw new ForbiddenError(
@@ -108,7 +117,7 @@ export async function createApiKey(
     expires_at: input.expiresAt ?? null,
     revoked_at: null,
   };
-  await repo.createKey(ctx, row, authority, {
+  const audit: AuditEntry = {
     orgId,
     actorType: 'user',
     actorId: authority.userId,
@@ -120,8 +129,10 @@ export async function createApiKey(
       scopes: parseScopes(row.scopes),
       mode: row.mode,
       expiresAt: row.expires_at,
+      ...(terminalIds.length ? { terminalIds } : {}),
     },
-  });
+  };
+  await repo.createKey(ctx, row, authority, audit, terminalIds);
   return { ...toDto(row), secret };
 }
 

@@ -147,6 +147,7 @@ g.insertJoined('bundle_passes', { parents: { bundle_id, pass_id }, columns: ['po
 const results = await g.commit();                         // one batch: [grant insert, ...statements, grant delete]
 ```
 
+- **A key acting as a terminal.** A `scans:write` key has no principal of its own in a scan grant: the grant's principal is the `scanner` it was bound to (`api_key_terminals`, written when the key is minted), with its credential epoch. The key is extra checks, in every scan write grant and read fence: the `api_keys` row of the grant's org and mode is live (not revoked or expired), lists `scans:write`, is bound to that terminal, and the org's `access_revision` is the one captured when the key was admitted. Refused as `actor` (401 `INVALID_API_KEY`) or `org` (403 `ORG_ACCESS_CHANGED`). Org-bound keys only; the actor stays `s:<terminalId>`, and `scans.api_key_id` records the key.
 - **Principals.** A membership is `via: 'session'` (a synchronous request: `sessionIdHash` is required and must be live) or `via: 'deferred'` (queued work: the captured `orgAccessRevision` is required, no session is checked, Rule 4). There is no third form. A `platform` or `system` principal that names an org (`orgId`) acts on it only while the org is active. A holder acts only while its pass's org is active, except a session holder with `unlink: true` (`holder_remove`, built only by `unlinkOwner`): an owner can take a pass off their account in a suspended or deleted org, which unlinks it as it is (`holders/service-remove.ts`). The transfer grants of the same holder (START, FINISH) need an active org; `pass_credential_transfer_insert_guard` also refuses a re-sign there.
 - **No raw statements leak.** Statements are opaque values that only that grant can commit. They are not `D1PreparedStatement`s until `commit()` runs, so they cannot run outside their batch. `Grant.prepare` is module-private; `prepareGrantForTest` exists for tests, and the lint rejects it elsewhere. The `GrantedStatement` constructor is token-gated (the lint flags `new GrantedStatement`). Two escape hatches stay inside the grant: `Grant.audit(entry, when?)` appends an `audit_log` row (append-only table; `when` is evaluated at its batch position), and `Grant.unguarded(sql, params)` runs SQL on unguarded tables only.
 - **Cross-grant mixing throws** `GRANT_FOREIGN_STATEMENT`.
@@ -223,6 +224,7 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 | --- | --- |
 | `org_memberships`, `org_invitations` | `0029` (role names are validated once at insert: a JSON array of distinct, known roles) |
 | `api_keys` | `0039` |
+| `api_key_terminals` (edges `key_id`, `scanner_id`) | `0075`: written once with its `scans:write` key by `createKey`; update and delete abort, and an insert for a used or revoked key aborts |
 | `template_releases` | `0031` |
 | `scan_staff`, `scan_events`, `scanning_sessions`, `scanning_devices` (`scanner_id` is the key) | `0052` |
 | `api_keys` ids after delete | `0052`: `retired_api_key_ids` records every deleted id and `api_keys_no_id_reuse` aborts a re-insert, so a deleted key's id is never issued again (D1 counts the retire row in a delete's `meta.changes`) |
@@ -448,6 +450,7 @@ The runbook is `docs/operations.md` ("Cutover from schema 0024"): order, pre-che
 | `0030`, `0042` | pass lifecycle and credential generations; transfer guards compare `pass_credential_transfers.source_row_version` and the current release head |
 | `0031`, `0038` | `template_releases` (immutable, no-replace), the `legacy` source |
 | `0039` | `api_keys` identity immutable, no-replace |
+| `0075` | `api_key_terminals` (fixed key-to-terminal binding), `scans.api_key_id` |
 | `0044` | `connections_generation_bump`; item claims carry `legacy_pass_row_version` and `claim_row_version` |
 | `0045` | issuance delivery guard on generations plus `transfer_id` |
 | `0047` | `sessions` identity, CSRF secret, lifetime, `roles` and `amr` immutable; `scanners_credential_revision` dropped by `0063` |

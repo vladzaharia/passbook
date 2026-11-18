@@ -123,9 +123,9 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
     const context = serviceContext(c);
     const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
     const original = await credentialOf(c);
-    const keyId = 'scanner' in original ? original.key?.keyId : undefined;
+    const key = 'scanner' in original ? original.key : undefined;
     const storeRow =
-      'scanner' in original ? (original.key?.row ?? resolvedRowOf(original.scanner)) : undefined;
+      'scanner' in original ? (key?.row ?? resolvedRowOf(original.scanner)) : undefined;
     const resolvedRow = storeRow ? { ...storeRow, csrfSecret: null } : undefined;
     const credential: Credential =
       'scanner' in original
@@ -143,7 +143,12 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
           [],
           'SCAN_SCOPE_NOT_ALLOWED',
         );
-      await admit(c, auth.orgId, `s:${auth.scannerId}`);
+      // A key's calls count apart from the terminal's own, so a key cannot lock the physical till out.
+      await admit(
+        c,
+        auth.orgId,
+        key ? `k:${key.keyId}:s:${auth.scannerId}` : `s:${auth.scannerId}`,
+      );
       if (auth.deviceRole !== 'scan' && !options.screens) {
         reportDenied(c, 'FORBIDDEN', auth);
         throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
@@ -175,7 +180,10 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         ? await scanScannerCsrfProof(ctx.env, scanner.id, csrfSecret)
         : null;
       pendingStaff = scope.staff;
-      if (keyId) actor.apiKeyId = keyId;
+      if (key) {
+        actor.apiKeyId = key.keyId;
+        actor.apiKeyOrgRevision = key.orgRevision;
+      }
       c.set('auth', auth);
       withRole(actor, null);
       c.set('scanActor', actor);

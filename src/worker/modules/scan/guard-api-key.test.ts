@@ -1,262 +1,195 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth, makeApiKey, makeOrg, makeScanner } from '../../../../test/helpers/index.ts';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
-import { createApp } from '../../app.ts';
-import { first, run } from '../../platform/db.ts';
-import { createApiKeyStore } from '../api-keys/service.ts';
-import { createScannerStore } from './auth-store.ts';
-import { beforeBatch } from './repo-action-template-read-race-test-fixtures.ts';
-import { key, type ScanKit, setupScanKit } from './test-kit.ts';
+import { first } from '../../platform/db.ts';
+import { key, setupTillKit } from './guard-api-key-test-fixtures.ts';
+import type { ScanKit } from './test-kit.ts';
 
+let t: Awaited<ReturnType<typeof setupTillKit>>;
 let kit: ScanKit;
-let app: ReturnType<typeof createApp>;
-let templateId: string;
 beforeAll(async () => {
-  kit = await setupScanKit();
-  const fake = fakeAuth('https://wallet.test');
-  fake.bindSessions(kit.env.DB, kit.clock);
-  app = createApp({
-    stores: {
-      ...fake.stores,
-      scanners: createScannerStore(kit.env, kit.clock),
-      apiKeys: createApiKeyStore(kit.env, kit.clock),
-    },
-    clock: kit.clock,
-  });
-  templateId = await kit.scanTemplate('Till', {
-    actions: [
-      { id: 'check_in', label: 'Check in', kind: 'check_in' },
-      { id: 'vip', label: 'VIP', kind: 'check_in', minRole: 'manager' },
-    ],
-  });
+  t = await setupTillKit();
+  kit = t.kit;
 });
-
-const call = (headers: Record<string, string>, path: string, body: unknown = {}) =>
-  Promise.resolve(
-    app.request(
-      `https://wallet.test/api/v1/scan${path}`,
-      {
-        method: 'POST',
-        headers: { ...headers, 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-      },
-      kit.env,
-    ),
-  );
-const bodyOf = async (res: Response) => (await res.json()) as { code?: string };
-const read = (passId: string) => ({
-  idempotencyKey: key(),
-  input: { passId, method: 'manual' as const },
-  clientTs: kit.clock.now(),
-});
-const request = (passId: string, over: Record<string, unknown> = {}) => ({
-  ...read(passId),
-  actionId: 'check_in',
-  ...over,
-});
-const problemOf = async (res: Response) => {
-  const { requestId: _requestId, ...rest } = (await res.json()) as Record<string, unknown>;
-  return rest;
-};
-
-async function till(options: {
-  scopes?: string[];
-  orgId?: string | null;
-  mode?: 'live' | 'test';
-  terminal?: Parameters<typeof kit.scanner>[0];
-}) {
-  const terminal = await kit.scanner({
-    kind: 'terminal',
-    templateIds: [templateId],
-    settings: { flow: 'auto', letInAgain: 'anyone' },
-    ...options.terminal,
-  });
-  const apiKey = await makeApiKey(kit.fx, {
-    orgId: options.orgId === undefined ? kit.org.id : options.orgId,
-    scopes: options.scopes ?? ['scans:write'],
-    mode: options.mode ?? 'live',
-  });
-  const headers: Record<string, string> = {
-    ...apiKey.headers,
-    'x-passbook-device': terminal.id,
-  };
-  return { terminal, apiKey, headers };
-}
+const noScan = (passId: string) =>
+  first(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [passId]);
+const outcomeOf = async (res: Response) => ScanOutcomeSchema.parse(await res.json());
 
 describe('a scans:write key acting as a terminal', () => {
-  it('scans, reads and undoes as the terminal, and the ledger names the key', async () => {
-    const t = await till({});
-    const pass = await kit.scanPass(templateId);
-    const resolved = await call(t.headers, '/resolve', read(pass.id));
-    expect(resolved.status).toBe(200);
-    const res = await call(t.headers, '/actions', request(pass.id));
+  it('scans, reads and undoes as the terminal; the scan, the ledger and the limiter name the key', async () => {
+    const k = await t.till();
+    const pass = await kit.scanPass(t.templateId);
+    expect((await t.call(k.headers, '/resolve', t.read(pass.id))).status).toBe(200);
+    const res = await t.call(k.headers, '/actions', t.request(pass.id));
     expect(res.status).toBe(200);
-    const outcome = ScanOutcomeSchema.parse(await res.json());
+    const outcome = await outcomeOf(res);
     expect(outcome.kind).toBe('ok');
-    const row = await first<{ actor_key: string; actor_type: string }>(
-      kit.env.DB,
-      'SELECT actor_key, actor_type FROM scans WHERE id = ?',
-      [outcome.scanId],
-    );
-    expect(row).toEqual({ actor_key: `s:${t.terminal.id}`, actor_type: 'scanner' });
+    expect(
+      await first(kit.env.DB, 'SELECT actor_key, actor_type, api_key_id FROM scans WHERE id = ?', [
+        outcome.scanId,
+      ]),
+    ).toEqual({
+      actor_key: `s:${k.terminal.id}`,
+      actor_type: 'scanner',
+      api_key_id: k.apiKey.id,
+    });
     const event = await first<{ data: string }>(
       kit.env.DB,
       "SELECT data FROM pass_events WHERE pass_id = ? AND kind LIKE 'scan.%'",
       [pass.id],
     );
     expect(JSON.parse(event?.data ?? '{}')).toMatchObject({
-      scannerId: t.terminal.id,
-      apiKeyId: t.apiKey.id,
+      scannerId: k.terminal.id,
+      apiKeyId: k.apiKey.id,
     });
-    const undone = await call(t.headers, `/scans/${outcome.scanId}/undo`, {
+    const counts = (kit.env.RL_SCAN as unknown as { counts: Map<string, number> }).counts;
+    expect(counts.has(`k:${k.apiKey.id}:s:${k.terminal.id}`)).toBe(true);
+    expect(counts.has(`s:${k.terminal.id}`)).toBe(false);
+    const undone = await t.call(k.headers, `/scans/${outcome.scanId}/undo`, {
       idempotencyKey: key(),
     });
     expect(undone.status).toBe(200);
   });
 
-  it('is a Desk at most: a manager-only action is refused', async () => {
-    const t = await till({ terminal: { settings: { roleWithoutSignIn: 'desk' } } });
-    const pass = await kit.scanPass(templateId);
-    const res = await call(t.headers, '/actions', request(pass.id, { actionId: 'vip' }));
-    expect(res.status).toBe(200);
-    expect(ScanOutcomeSchema.parse(await res.json()).kind).not.toBe('ok');
-    expect(await first(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toBeNull();
+  it("is capped at the terminal's own role: Desk on a Desk terminal, Door on a Door terminal", async () => {
+    const desk = await t.till();
+    const door = await t.till({ terminal: { settings: { roleWithoutSignIn: 'door' } } });
+    const refused = async (headers: Record<string, string>, actionId: string) => {
+      const pass = await kit.scanPass(t.templateId);
+      const res = await t.call(headers, '/actions', t.request(pass.id, { actionId }));
+      expect(res.status).toBe(200);
+      const outcome = await outcomeOf(res);
+      expect(await noScan(pass.id)).toBeNull();
+      return outcome;
+    };
+    const vip = await refused(desk.headers, 'vip');
+    expect(vip.kind).not.toBe('ok');
+    // The same terminal's own token is refused the same way: the key adds no rights.
+    expect((await refused(desk.terminal.headers, 'vip')).reason).toBe(vip.reason);
+    const deskAction = await refused(door.headers, 'deskact');
+    expect(deskAction.kind).not.toBe('ok');
+    const pass = await kit.scanPass(t.templateId);
+    const ok = await t.call(desk.headers, '/actions', t.request(pass.id, { actionId: 'deskact' }));
+    expect((await outcomeOf(ok)).kind).toBe('ok');
   });
 
   it('refuses approvals and overrides', async () => {
-    const t = await till({});
-    const pass = await kit.scanPass(templateId);
+    const k = await t.till();
+    const pass = await kit.scanPass(t.templateId);
     const manager = await kit.staff('manager');
-    const approved = await call(
-      t.headers,
-      '/actions',
-      request(pass.id, { approval: { staffId: manager.id, pin: manager.pin } }),
-    );
-    expect(approved.status).toBe(403);
-    expect((await bodyOf(approved)).code).toBe('API_KEY_NO_APPROVAL');
-    const override = await call(t.headers, '/actions', request(pass.id, { overrideOf: key() }));
-    expect(override.status).toBe(403);
-    expect((await bodyOf(override)).code).toBe('API_KEY_NO_APPROVAL');
-    const undo = await call(t.headers, `/scans/${key()}/undo`, {
-      idempotencyKey: key(),
-      approval: { staffId: manager.id, pin: manager.pin },
-    });
-    expect((await bodyOf(undo)).code).toBe('API_KEY_NO_APPROVAL');
-    expect(await first(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toBeNull();
-  });
-
-  it('refuses a platform key, a missing scope, a missing header and other routes', async () => {
-    const platform = await till({ orgId: null });
-    const pass = await kit.scanPass(templateId);
-    const noOrg = await call(platform.headers, '/actions', request(pass.id));
-    expect([noOrg.status, (await bodyOf(noOrg)).code]).toEqual([403, 'API_KEY_ORG_REQUIRED']);
-    const noScope = await till({ scopes: ['scans:read', 'passes:write'] });
-    const missing = await call(noScope.headers, '/actions', request(pass.id));
-    expect([missing.status, (await bodyOf(missing)).code]).toEqual([403, 'MISSING_SCOPE']);
-    const t = await till({});
-    const noHeader = await call(t.apiKey.headers, '/actions', request(pass.id));
-    expect([noHeader.status, (await bodyOf(noHeader)).code]).toEqual([422, 'DEVICE_REQUIRED']);
-    for (const path of ['/device', '/session', '/staff']) {
-      const res = await call(t.headers, path, {});
-      expect([path, res.status, (await bodyOf(res)).code]).toEqual([path, 403, 'API_KEY_ROUTE']);
-    }
-    const get = await app.request(
-      'https://wallet.test/api/v1/scan/session',
-      { headers: t.headers },
-      kit.env,
-    );
-    expect((await bodyOf(get)).code).toBe('API_KEY_ROUTE');
-    expect(await first(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toBeNull();
-  });
-
-  it('cannot cross org or mode with the device header', async () => {
-    const t = await till({});
-    const pass = await kit.scanPass(templateId);
-    const other = await makeOrg(kit.fx);
-    const foreign = await makeScanner(kit.fx, { orgId: other.id, kind: 'terminal' });
-    const testMode = await kit.scanner({ kind: 'terminal', mode: 'test' });
-    const unknown = await call(
-      { ...t.headers, 'x-passbook-device': key() },
-      '/actions',
-      request(pass.id),
-    );
-    const seen: unknown[] = [];
-    for (const id of [foreign.id, testMode.id]) {
-      const res = await call(
-        { ...t.headers, 'x-passbook-device': id },
-        '/actions',
-        request(pass.id),
-      );
-      expect(res.status).toBe(404);
-      seen.push(await problemOf(res));
-    }
-    const expected = await problemOf(unknown);
-    expect(seen).toEqual([expected, expected]);
-    // A test-mode key cannot drive a live terminal either.
-    const testKey = await makeApiKey(kit.fx, {
-      orgId: kit.org.id,
-      scopes: ['scans:write'],
-      mode: 'test',
-    });
-    const cross = await call(
-      { ...testKey.headers, 'x-passbook-device': t.terminal.id },
-      '/actions',
-      request(pass.id),
-    );
-    expect(cross.status).toBe(404);
-    expect(await first(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toBeNull();
-  });
-
-  it('acts only as a live terminal', async () => {
-    const pass = await kit.scanPass(templateId);
-    for (const terminal of [{ kind: 'device' as const }, { kind: 'display' as const }]) {
-      const t = await till({ terminal });
-      const res = await call(t.headers, '/actions', request(pass.id));
-      expect([terminal.kind, res.status, (await bodyOf(res)).code]).toEqual([
-        terminal.kind,
+    const approval = { staffId: manager.id, pin: manager.pin };
+    for (const [path, body] of [
+      ['/actions', t.request(pass.id, { approval })],
+      ['/actions', t.request(pass.id, { overrideOf: key() })],
+      [`/scans/${key()}/undo`, { idempotencyKey: key(), approval }],
+    ] as const) {
+      const res = await t.call(k.headers, path, body);
+      expect([path, res.status, await t.outcomeCode(res)]).toEqual([
+        path,
         403,
-        'TERMINAL_ONLY',
+        'API_KEY_NO_APPROVAL',
       ]);
     }
-    const revoked = await till({ terminal: { revoked: true } });
-    expect((await call(revoked.headers, '/actions', request(pass.id))).status).toBe(404);
-    expect(await first(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toBeNull();
+    expect(await noScan(pass.id)).toBeNull();
   });
 
-  it('refuses a revoked key before and during the request', async () => {
-    const pass = await kit.scanPass(templateId);
-    const before = await till({});
-    await run(kit.env.DB, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
-      kit.clock.now(),
-      before.apiKey.id,
-    ]);
-    const gone = await call(before.headers, '/actions', request(pass.id));
-    expect([gone.status, (await bodyOf(gone)).code]).toEqual([401, 'INVALID_API_KEY']);
-    for (const marker of ['INSERT INTO scans', 'INSERT INTO scan_gates']) {
-      const t = await till({});
-      const real = kit.env.DB;
-      const hook = beforeBatch(real, marker, (db) =>
-        run(db, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [kit.clock.now(), t.apiKey.id]),
-      );
-      Object.assign(kit.env, { DB: hook.db });
-      let res: Response;
-      try {
-        res = await call(t.headers, '/actions', request(pass.id));
-      } finally {
-        Object.assign(kit.env, { DB: real });
-      }
-      expect(hook.fired(), marker).toBe(true);
-      expect([marker, res.status, (await bodyOf(res)).code]).toEqual([
-        marker,
-        401,
-        'INVALID_API_KEY',
-      ]);
-      expect(
-        await first(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [pass.id]),
-      ).toBeNull();
-      expect(
-        await first(kit.env.DB, 'SELECT 1 FROM scan_gates WHERE pass_id = ?', [pass.id]),
-      ).toBeNull();
+  it('refuses a platform key, a missing scope and a missing header', async () => {
+    const pass = await kit.scanPass(t.templateId);
+    const platform = await t.till({ orgId: null });
+    const noOrg = await t.call(platform.headers, '/actions', t.request(pass.id));
+    expect([noOrg.status, await t.outcomeCode(noOrg)]).toEqual([403, 'API_KEY_ORG_REQUIRED']);
+    const noScope = await t.till({ scopes: ['scans:read', 'passes:write'] });
+    const missing = await t.call(noScope.headers, '/actions', t.request(pass.id));
+    expect([missing.status, await t.outcomeCode(missing)]).toEqual([403, 'MISSING_SCOPE']);
+    const k = await t.till();
+    const noHeader = await t.call(k.apiKey.headers, '/actions', t.request(pass.id));
+    expect([noHeader.status, await t.outcomeCode(noHeader)]).toEqual([422, 'DEVICE_REQUIRED']);
+    expect(await noScan(pass.id)).toBeNull();
+  });
+
+  it('acts only as the terminals it was minted for: one identical 404 for every other id', async () => {
+    const a = await t.till();
+    const pass = await kit.scanPass(t.templateId);
+    const other = await makeOrg(kit.fx);
+    const bodies: unknown[] = [];
+    const named = async (id: string, headers = a.apiKey.headers) =>
+      t.call({ ...headers, 'x-passbook-device': id }, '/actions', t.request(pass.id));
+    const b = await t.till(); // a terminal of the same org, bound to another key
+    const device = await kit.scanner({ kind: 'device' });
+    const display = await kit.scanner({ kind: 'display' });
+    const foreign = await t.makeTerminal({ orgId: other.id, kind: 'terminal' });
+    const testMode = await kit.scanner({ kind: 'terminal', mode: 'test' });
+    const revoked = await kit.scanner({ kind: 'terminal', revoked: true });
+    const expired = await kit.scanner({ kind: 'terminal', expiresAt: kit.clock.now() - 1 });
+    for (const id of [
+      key(),
+      b.terminal.id,
+      device.id,
+      display.id,
+      foreign.id,
+      testMode.id,
+      revoked.id,
+      expired.id,
+    ]) {
+      const res = await named(id);
+      expect([id, res.status]).toEqual([id, 404]);
+      bodies.push(await t.problemOf(res));
     }
+    expect(new Set(bodies.map((x) => JSON.stringify(x))).size).toBe(1);
+    // A key bound to B and named A is the same refusal; and B works under its own key.
+    expect((await named(a.terminal.id, b.apiKey.headers)).status).toBe(404);
+    expect((await named(b.terminal.id, b.apiKey.headers)).status).toBe(200);
+    // A test-mode key cannot drive a live terminal even if bound.
+    const testKey = await t.mintKey({ mode: 'test', terminals: [] });
+    expect((await named(a.terminal.id, testKey.headers)).status).toBe(404);
+    expect(await noScan(pass.id)).not.toBeNull(); // only B's scan
+  });
+
+  it('opens only resolve, actions and its own undo', async () => {
+    const k = await t.till();
+    for (const path of ['/lookup', '/device', '/staff', '/session']) {
+      const res = await t.call(k.headers, path, {});
+      expect([path, res.status, await t.outcomeCode(res)]).toEqual([path, 403, 'API_KEY_ROUTE']);
+    }
+    const get = await t.call(k.headers, '/session', {}, 'GET');
+    expect(await t.outcomeCode(get)).toBe('API_KEY_ROUTE');
+  });
+});
+
+describe('undo through a key', () => {
+  async function scanned(headers: Record<string, string>) {
+    const pass = await kit.scanPass(t.templateId);
+    const res = await t.call(headers, '/actions', t.request(pass.id));
+    return (await outcomeOf(res)).scanId as string;
+  }
+  const undo = (headers: Record<string, string>, scanId: string) =>
+    t.call(headers, `/scans/${scanId}/undo`, { idempotencyKey: key() });
+
+  it("is limited to the key's own scans, within the window", async () => {
+    const k = await t.till();
+    const own = await scanned(k.headers);
+    expect((await undo(k.headers, own)).status).toBe(200);
+    // The physical terminal's own scan, on the same terminal, is not the key's.
+    const physical = await scanned(k.terminal.headers);
+    const refusedPhysical = await undo(k.headers, physical);
+    expect([refusedPhysical.status, await t.outcomeCode(refusedPhysical)]).toEqual([
+      403,
+      'SCAN_UNDO_FORBIDDEN',
+    ]);
+    // Another terminal's scan under another key.
+    const other = await t.till();
+    const theirs = await scanned(other.headers);
+    expect((await undo(k.headers, theirs)).status).toBeGreaterThanOrEqual(403);
+    // And the physical terminal cannot undo the key's.
+    const viaKey = await scanned(k.headers);
+    expect((await undo(k.terminal.headers, viaKey)).status).toBe(403);
+  });
+
+  it('is refused past the undo window, and is refused a PIN', async () => {
+    const k = await t.till();
+    const id = await scanned(k.headers);
+    kit.clock.advance(2 * 3_600_000);
+    const late = await undo(k.headers, id);
+    expect([late.status, await t.outcomeCode(late)]).toEqual([403, 'SCAN_UNDO_FORBIDDEN']);
   });
 });

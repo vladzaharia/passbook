@@ -53,6 +53,7 @@ export function claimOf(
     actorId: actor.actor.id,
     actorKey: actor.actorKey,
     staffId: actor.staff?.id ?? null,
+    apiKeyId: actor.apiKeyId ?? null,
     sessionId: actor.scanningSession?.id ?? null,
     idempotencyKey: req.idempotencyKey,
     requestHash,
