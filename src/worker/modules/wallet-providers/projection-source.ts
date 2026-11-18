@@ -1,4 +1,4 @@
-import { isWalletArtName } from '../../../passkit/template/wallets/schema.ts';
+import { isWalletArtName, WALLETS_SCHEMA } from '../../../passkit/template/wallets/schema.ts';
 import type { AssetEntry } from '../../../passkit/types.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ConflictError } from '../../platform/errors.ts';
@@ -65,6 +65,7 @@ export function assertProjectionSource(
     const target = object(wallets) ? wallets[projection.provider] : undefined;
     if (
       !object(wallets) ||
+      wallets.schema !== WALLETS_SCHEMA ||
       (object(target) && target.type === 'off') ||
       (wallets.required !== undefined &&
         (!Array.isArray(wallets.required) || wallets.required.length > 0))

@@ -293,8 +293,6 @@ export async function storeReleaseArt(
   if (!pinsAcceptable(candidate, current, rule)) throw changed();
   await recordProjectionArt(ctx.env.DB, {
     candidateId: candidate.id,
-    templateId: candidate.templateId,
-    orgId: candidate.orgId,
     hashes: [...current.art.hashes],
     now: ctx.clock.now(),
   });

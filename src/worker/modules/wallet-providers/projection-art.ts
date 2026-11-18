@@ -3,6 +3,7 @@ import { classifyAsset } from '../../../passkit/template/package.ts';
 import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
 import type { WalletTarget } from '../../../passkit/template/wallets/art-rules.ts';
 import { baseUrl } from '../../platform/env.ts';
+import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   type ArtRequest,
@@ -97,7 +98,17 @@ export async function prepareProjectionArt(
       art.sizes.set(request.asset, size);
       continue;
     }
+    // Review sized this copy without cutting it; publication must produce exactly that, or say why not.
+    const planned = await sizeWalletArt(registry, template, request);
     const derived = await deriveWalletArt(ctx.env, registry, template, request, transform);
+    if (
+      planned &&
+      (!derived || derived.width !== planned.width || derived.height !== planned.height)
+    )
+      throw new ConflictError(
+        `${request.asset} cannot be cut to the size ${request.target} needs. Replace the image.`,
+        'WALLET_ART_MISMATCH',
+      );
     if (!derived) continue;
     art.urls.set(request.asset, `${origin}${derived.path}`);
     art.sizes.set(request.asset, { width: derived.width, height: derived.height });

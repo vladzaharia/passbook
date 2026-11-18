@@ -75,7 +75,11 @@ async function planWalletArt(
   const png = parsePng(source);
   if ('error' in png) return null;
   const out = artOutput(rule, png.width, png.height);
-  return out ? { source, rule, out, png } : null;
+  if (!out) return null;
+  // A copy that needs no cut is the source itself: its size is known now, the same as at publication.
+  const uncut = out.width === png.width && out.height === png.height;
+  if (uncut && rule.maxBytes !== undefined && source.length > rule.maxBytes) return null;
+  return { source, rule, out, png };
 }
 
 /**

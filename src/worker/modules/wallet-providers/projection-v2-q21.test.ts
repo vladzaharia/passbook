@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { makePass } from '../../../../test/helpers/index.ts';
 import type { ShippedAsset } from '../../../passkit/build-assets.ts';
+import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { removeTemplate } from '../templates/mutations.ts';
 import { artRequests, sizeShipped, type WalletArt } from './projection-art.ts';
-import { purgeWalletArt } from './projection-art-purge.ts';
+import { purgeOrgWalletArt, purgeWalletArt } from './projection-art-purge.ts';
 import { offersPaused, setPauseProbeForTest } from './projection-pause.ts';
 import { pipelineAddsLoss } from './projection-pins.ts';
 import {
@@ -25,6 +27,7 @@ import {
   setup,
   updateCompiler,
 } from './projection-v2-test-fixtures.ts';
+import { orgHasLivePasses } from './repo-projection-art.ts';
 
 installV2Env();
 
@@ -151,7 +154,7 @@ describe('Q21: a pipeline change that loses something pauses new offers', () => 
       ...kit.ctx,
       log: {
         ...kit.ctx.log,
-        warn: (event: string, data: Record<string, unknown>) => logged.push({ event, data }),
+        error: (event: string, data: Record<string, unknown>) => logged.push({ event, data }),
       },
     } as typeof kit.ctx;
     expect(await offersPaused(ctx, approved)).toBe(true);
@@ -167,6 +170,35 @@ describe('Q21: a pipeline change that loses something pauses new offers', () => 
     expect((await getApprovedProjection(kit.ctx, lookup(kit), await proof()))?.release.id).toBe(
       approved.release.id,
     );
+  });
+
+  it('remembers a failure for a minute and shares one computation between concurrent calls', async () => {
+    const kit = await setup();
+    const { approved } = await published(kit);
+    let calls = 0;
+    restore.push(
+      setPauseProbeForTest(async () => {
+        calls += 1;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        throw new Error('unreadable art');
+      }),
+    );
+    patch(undefined, 1);
+    // Concurrent callers share the one in-flight compile.
+    const first = await Promise.all([
+      offersPaused(kit.ctx, approved),
+      offersPaused(kit.ctx, approved),
+      offersPaused(kit.ctx, approved),
+    ]);
+    expect(first).toEqual([true, true, true]);
+    expect(calls).toBe(1);
+    // Later calls inside the window do not recompile either.
+    expect(await offersPaused(kit.ctx, approved)).toBe(true);
+    expect(calls).toBe(1);
+    // After the window it tries again.
+    S.clock.advance(61_000);
+    expect(await offersPaused(kit.ctx, approved)).toBe(true);
+    expect(calls).toBe(2);
   });
 
   it('refuses to approve a candidate whose pipeline moved', async () => {
@@ -267,6 +299,76 @@ describe('art: derived at publication, recorded, purged with the template', () =
 
     expect(await purgeWalletArt(other.ctx, { orgId: other.orgId })).toBe(1);
     expect((await rows(sha))?.n).toBe(0);
+    expect(await S.env.BUCKET.head(`wallet-art/${sha}`)).toBeNull();
+  });
+
+  it('keeps the tracking row when the object cannot be deleted, so the next purge retries', async () => {
+    await run(S.env.DB, 'DELETE FROM wallet_projection_art');
+    const kit = await setup();
+    await published(kit);
+    const art = await all<{ sha256: string }>(S.env.DB, 'SELECT sha256 FROM wallet_projection_art');
+    const sha = (art[0] as { sha256: string }).sha256;
+    const failing = {
+      ...kit.ctx,
+      env: {
+        ...S.env,
+        BUCKET: {
+          head: (key: string) => S.env.BUCKET.head(key),
+          delete: async () => {
+            throw new Error('R2 is down');
+          },
+        },
+      },
+    } as unknown as typeof kit.ctx;
+    // Never throws; nothing was removed and the row is still there.
+    expect(await purgeWalletArt(failing, { orgId: kit.orgId })).toBe(0);
+    expect((await rows(sha))?.n).toBe(1);
+    expect(await purgeWalletArt(kit.ctx, { orgId: kit.orgId })).toBe(1);
+    expect((await rows(sha))?.n).toBe(0);
+    expect(await S.env.BUCKET.head(`wallet-art/${sha}`)).toBeNull();
+  });
+
+  it('never throws when the database fails', async () => {
+    const kit = await setup();
+    const broken = {
+      ...kit.ctx,
+      env: {
+        ...S.env,
+        DB: {
+          prepare: () => ({
+            bind: () => ({
+              all: async () => {
+                throw new Error('D1 is down');
+              },
+            }),
+          }),
+        },
+      },
+    } as unknown as typeof kit.ctx;
+    expect(await purgeWalletArt(broken, { templateId: kit.templateId })).toBe(0);
+  });
+
+  it('leaves the art of an organization that still has a live pass', async () => {
+    await run(S.env.DB, 'DELETE FROM wallet_projection_art');
+    const kit = await setup();
+    await published(kit);
+    const sha = (
+      (await all<{ sha256: string }>(S.env.DB, 'SELECT sha256 FROM wallet_projection_art'))[0] as {
+        sha256: string;
+      }
+    ).sha256;
+    const pass = await makePass(S.f, {
+      orgId: kit.orgId,
+      template: { id: kit.templateId, version: kit.version } as ResolvedTemplate,
+      persist: false,
+    });
+    expect(await orgHasLivePasses(S.env.DB, kit.orgId)).toBe(true);
+    expect(await purgeOrgWalletArt(kit.ctx, kit.orgId)).toBe(0);
+    expect(await S.env.BUCKET.head(`wallet-art/${sha}`)).not.toBeNull();
+    // Once the last pass is removed the same call purges.
+    await run(S.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [S.clock.now(), pass.id]);
+    expect(await orgHasLivePasses(S.env.DB, kit.orgId)).toBe(false);
+    expect(await purgeOrgWalletArt(kit.ctx, kit.orgId)).toBe(1);
     expect(await S.env.BUCKET.head(`wallet-art/${sha}`)).toBeNull();
   });
 });

@@ -13,7 +13,8 @@ import {
   normalizeNativeProjection,
   type SamsungProjection,
 } from './projection-contract.ts';
-import { computeProjectionPins, pipelineRevision, walletsHash } from './projection-pins.ts';
+import { computeProjectionPins, walletsHash } from './projection-pins.ts';
+import { pipelineRevision } from './projection-pipeline.ts';
 import {
   approveProjectionCandidate,
   getApprovedProjection,
@@ -241,6 +242,8 @@ describe('schema 1 and the wallets block', () => {
       [samsung, { schema: 1, required: ['barcode.format'] }],
       [google, { schema: 1, required: ['role.memberId'] }],
       [google, 'not an object'],
+      [google, { schema: 2 }],
+      [google, {}],
     ] as const)
       expect(() => assertProjectionSource(projection, withWallets(wallets))).toThrow(
         /not supported/,
