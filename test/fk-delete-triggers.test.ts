@@ -1,15 +1,8 @@
 import { env as baseEnv } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
-import { all, first, run } from '../src/worker/platform/db.ts';
+import { first, run } from '../src/worker/platform/db.ts';
 import { makeEnv } from './helpers/env.ts';
-import {
-  fixtures,
-  makeOrg,
-  makePass,
-  makeTemplate,
-  makeUser,
-  persistTemplate,
-} from './helpers/factories.ts';
+import { fixtures, makeOrg, makeTemplate, persistTemplate } from './helpers/factories.ts';
 
 const count = async (sql: string, id: string) =>
   (await first<{ n: number }>(baseEnv.DB, sql, [id]))?.n;
@@ -44,25 +37,5 @@ describe('foreign-key deletes through triggers', () => {
         fork.resolved.id,
       ),
     ).toBe(0);
-  });
-
-  it('deletes a user who owns a pass and releases it', async () => {
-    const f = fixtures(await makeEnv());
-    const org = await makeOrg(f);
-    const user = await makeUser(f);
-    const template = makeTemplate({ id: 'tpl-owned', orgId: org.id });
-    const pass = await makePass(f, {
-      orgId: org.id,
-      template: template.resolved,
-      registry: template.registry,
-      ownerUserId: user.id,
-    });
-    await run(f.env.DB, 'DELETE FROM users WHERE id = ?', [user.id]);
-    const rows = await all<{ owner_user_id: string | null }>(
-      f.env.DB,
-      'SELECT owner_user_id FROM passes WHERE id = ?',
-      [pass.id],
-    );
-    expect(rows).toEqual([{ owner_user_id: null }]);
   });
 });

@@ -386,7 +386,7 @@ describe('constraints and cascades', () => {
     expect(await first(env.DB, "SELECT 1 FROM devices WHERE device_id = 'd1'")).not.toBeNull();
   });
 
-  it('deletes a user who owns a pass: the pass is released and sessions cascade', async () => {
+  it('rejects user deletion when it would clear a pass owner without a transfer', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
     const user = await makeUser(f);
@@ -400,7 +400,9 @@ describe('constraints and cascades', () => {
       "INSERT INTO sessions (id_hash, user_id, amr, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at) VALUES ('h', ?, 'oidc', 'c', 1, 1, 2, 2)",
       [user.id],
     );
-    await run(env.DB, 'DELETE FROM users WHERE id = ?', [user.id]);
+    await expect(run(env.DB, 'DELETE FROM users WHERE id = ?', [user.id])).rejects.toThrow(
+      /credential transfer required/,
+    );
     expect(
       (
         await first<{ owner_user_id: string | null }>(
@@ -409,8 +411,8 @@ describe('constraints and cascades', () => {
           [pass.id],
         )
       )?.owner_user_id,
-    ).toBeNull();
-    expect(await first(env.DB, "SELECT 1 FROM sessions WHERE id_hash = 'h'")).toBeNull();
+    ).toBe(user.id);
+    expect(await first(env.DB, "SELECT 1 FROM sessions WHERE id_hash = 'h'")).not.toBeNull();
   });
 
   it('cascades sessions when deleting a user without an owned pass', async () => {
