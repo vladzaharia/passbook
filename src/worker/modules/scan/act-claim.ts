@@ -1,5 +1,9 @@
 import type { z } from 'zod';
-import type { ScanActRequestSchema, ScanCodeInput } from '../../../shared/contracts/scan.ts';
+import type {
+  ScanActRequestSchema,
+  ScanCodeInput,
+  ScanInput,
+} from '../../../shared/contracts/scan.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
@@ -11,15 +15,24 @@ import { type Claim, pristineClaimFence } from './repo-scans.ts';
 export type ActRequest = Omit<z.infer<typeof ScanActRequestSchema>, 'input'> & {
   input: ScanCodeInput;
 };
+/** As sent: a tag read becomes an `ActRequest` once it has chosen its pass. */
+export type ActRequestInput = Omit<ActRequest, 'input'> & { input: ScanInput | ScanCodeInput };
 
 /**
  * The body of a request, by what it asks for: the pass id or the hash of the code (never the code
  * in clear), the action, amount, value, direction, override, confirmation, group, who approved
  * and the admin's scope (SA 7.2).
  */
-export async function requestHashOf(req: ActRequest): Promise<string> {
+export async function requestHashOf(req: ActRequestInput, tagRef?: string): Promise<string> {
+  const input = req.input;
+  // A tag read hashes by its keyed ref, so a replay matches whichever pass it chose.
   const target =
-    'passId' in req.input ? req.input.passId : await barcodeHashOfCode(cleanCode(req.input.code));
+    'tag' in input
+      ? `tag:${tagRef ?? ''}`
+      : 'passId' in input
+        ? input.passId
+        : await barcodeHashOfCode(cleanCode(input.code));
+  if ('tag' in input && !tagRef) throw new Error('A tag read hashes by its keyed ref.');
   return sha256Hex(
     JSON.stringify([
       target,
@@ -60,6 +73,7 @@ export function claimOf(
     idempotencyKey: req.idempotencyKey,
     requestHash,
     method: req.input.method,
+    tagId: actor.tag?.tagId ?? null,
     clientTs: req.clientTs,
     now: ctx.clock.now(),
   };

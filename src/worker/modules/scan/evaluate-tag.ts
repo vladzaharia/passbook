@@ -1,0 +1,244 @@
+import type { ScanTag, TagRead } from '../../../shared/contracts/nfc-tags.ts';
+import type { ScanReason } from '../../../shared/contracts/scan.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { tagRef } from '../nfc/tag-ref.ts';
+import { isGuestPass } from './access.ts';
+import type { ScanActor, ScanTagAuthority } from './actor.ts';
+import type { CredentialTombstoneSnapshot } from './credential-input.ts';
+import { type Candidate, candidatesOf } from './repo-lookup.ts';
+import {
+  otherModeTagStmt,
+  overriddenPassStmt,
+  passIdsOf,
+  type TagState,
+  tagCandidatesStmt,
+  tagInsideStmt,
+  tagStateOf,
+  tagStateStmt,
+  tagsOn,
+  tagsSwitchStmt,
+} from './repo-tags-resolve.ts';
+import { accepts, matchesEvent } from './resolve-candidates.ts';
+import { evaluate } from './resolve-evaluate.ts';
+import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
+
+/** At most this many of a user's passes are evaluated for one tag read (design §3.5). */
+const EVALUATED = 4;
+
+/** Step 1: a UID is a tag; a read with only NDEF text is a pass code on today's path. */
+export function tagReadOf(read: TagRead): { uid: string } | { code: string } | null {
+  if (read.uid && read.uidRandom !== true) return { uid: read.uid.toLowerCase() };
+  if (read.ndef) return { code: read.ndef.value };
+  return null;
+}
+
+export interface TagPlan {
+  /** The keyed ref of the tag in the actor's mode; the request hash names it, never the UID. */
+  ref: string;
+  stmts: D1PreparedStatement[];
+  read(results: readonly D1Result[]): TagFound;
+}
+
+export type TagFound =
+  | { stop: ScanReason; unknown?: true }
+  | {
+      stop: null;
+      tag: TagState & { binding: NonNullable<TagState['binding']> };
+      candidates: Candidate[];
+      inside: Set<string>;
+      overridden: string | null;
+    };
+
+/** Steps 2-4 in one batch: the org switch, the tag and its binding, the other mode, and the candidates. */
+export async function planTagReads(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  uid: string,
+  refs: CredentialTombstoneSnapshot,
+  overrideOf?: string,
+): Promise<TagPlan> {
+  const db = ctx.env.DB;
+  const other = actor.mode === 'live' ? 'test' : 'live';
+  const [own, otherRef] = await Promise.all([
+    tagRef(ctx.env, actor.orgId, actor.mode, uid),
+    tagRef(ctx.env, actor.orgId, other, uid),
+  ]);
+  const sessionId = actor.scanningSession?.id;
+  const exiting = actor.settings.direction === 'out' || actor.settings.direction === 'both';
+  const stmts = [
+    tagsSwitchStmt(db, actor.orgId),
+    tagStateStmt(db, actor.orgId, actor.mode, own.ref),
+    otherModeTagStmt(db, actor.orgId, other, otherRef.ref),
+    tagCandidatesStmt(db, actor.orgId, actor.mode, own.ref),
+  ];
+  const insideAt = sessionId && exiting ? stmts.length : -1;
+  if (sessionId && exiting)
+    stmts.push(tagInsideStmt(db, actor.orgId, actor.mode, own.ref, sessionId));
+  const overrideAt = overrideOf ? stmts.length : -1;
+  if (overrideOf) stmts.push(overriddenPassStmt(db, actor.orgId, actor.mode, overrideOf));
+  return {
+    ref: own.ref,
+    stmts,
+    read(results) {
+      if (!tagsOn(results[0])) return { stop: 'tag_not_allowed' };
+      const tag = tagStateOf(results[1]);
+      if (!tag) {
+        if (results[2]?.results?.length)
+          return { stop: actor.mode === 'live' ? 'test_pass' : 'live_pass' };
+        return { stop: 'not_found', unknown: true };
+      }
+      if (tag.kind !== 'uid') return { stop: 'tag_invalid' };
+      if (tag.status !== 'active') {
+        ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_RETIRED' });
+        return { stop: 'not_found' };
+      }
+      if (tag.lostAt !== null) return { stop: 'tag_lost' };
+      const binding = tag.binding;
+      if (!binding) return { stop: 'not_found' };
+      if (binding.scope === 'user' && !binding.userActive) {
+        ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_USER_DISABLED' });
+        return { stop: 'not_found' };
+      }
+      let candidates = candidatesOf(results[3]);
+      if (candidates.some((c) => c.credentialKeysetCommitment !== refs.credentialKeysetCommitment))
+        return { stop: 'not_found' };
+      for (const c of candidates) Object.assign(c, refs);
+      // A pending transfer is not ownership yet (review-t1 I4); a pass binding keeps today's answer.
+      if (binding.scope === 'user') candidates = candidates.filter((c) => !c.transferPending);
+      if (!candidates.length) return { stop: 'not_found' };
+      const overridden =
+        overrideAt < 0 ? null : (passIdsOf(results[overrideAt]).values().next().value ?? null);
+      return {
+        stop: null,
+        tag: { ...tag, binding },
+        candidates,
+        inside: insideAt < 0 ? new Set() : passIdsOf(results[insideAt]),
+        overridden,
+      };
+    },
+  };
+}
+
+/** Step 5: inside first on an exit, active, members before guests, the anchor, oldest, id. */
+function ordered(found: Extract<TagFound, { stop: null }>, list: Candidate[]): Candidate[] {
+  const rank = (c: Candidate) => [
+    found.inside.has(c.pass.id) ? 0 : 1,
+    c.pass.status === 'voided' || c.pass.removedAt !== null ? 1 : 0,
+    isGuestPass(c) ? 1 : 0,
+    c.pass.id === found.tag.binding.passId ? 0 : 1,
+    c.pass.createdAt,
+  ];
+  return [...list].sort((a, b) => {
+    const x = rank(a);
+    const y = rank(b);
+    for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return (x[i] ?? 0) - (y[i] ?? 0);
+    return a.pass.id < b.pass.id ? -1 : a.pass.id > b.pass.id ? 1 : 0;
+  });
+}
+
+export interface TagChoice {
+  chosen: Candidate;
+  actor: ScanActor;
+  view: ScanTag;
+}
+
+/**
+ * Steps 4-7. A pass binding is today's single pass. A user binding never answers `ambiguous`: its passes this
+ * scanner takes are evaluated in order; the first valid wins, else the first heads-up, else the first one's
+ * refusal. A pin (the pass a resolve showed, a replayed scan's or an overridden scan's) is used as is, and
+ * must still be one of the binding's passes.
+ */
+export async function chooseTagPass(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  found: Extract<TagFound, { stop: null }>,
+  options: { pin?: string | null; actionId?: string } = {},
+): Promise<TagChoice | null> {
+  const { tag } = found;
+  const all = found.candidates;
+  const choice = (chosen: Candidate, passes?: ScanTag['passes']): TagChoice => {
+    const authority: ScanTagAuthority = {
+      tagId: tag.id,
+      bindingId: tag.binding.id,
+      scope: tag.binding.scope,
+      userId: tag.binding.userId,
+      passId: chosen.pass.id,
+    };
+    const view: ScanTag = { hint: tag.hint, assurance: 'basic', scope: tag.binding.scope };
+    if (tag.binding.scope === 'user') {
+      view.count = all.length;
+      if (passes && actor.role !== null && actor.role !== 'door') view.passes = passes;
+    }
+    return { chosen, actor: { ...actor, tag: authority }, view };
+  };
+  const pin = options.pin ?? null;
+  if (pin !== null) {
+    const pinned = all.find((c) => c.pass.id === pin);
+    return pinned ? choice(pinned) : null;
+  }
+  const first = all[0];
+  if (!first) return null;
+  if (tag.binding.scope === 'pass' || all.length === 1) return choice(first);
+  const taken = all.filter((c) => accepts(actor, c.pass));
+  const matched = taken.filter((c) => matchesEvent(actor, c.pass));
+  // None here: the first pass gives today's not_accepted or wrong_event.
+  const tried = ordered(found, matched);
+  if (!tried.length) return choice(taken[0] ?? first);
+  const verdicts = new Map<
+    string,
+    { kind: 'ok' | 'heads_up' | 'refused'; reason: string | null }
+  >();
+  for (const c of tried.slice(0, EVALUATED)) {
+    const input = { passId: c.pass.id, method: 'nfc' as const };
+    const refs = {
+      credentialKeysetCommitment: c.credentialKeysetCommitment,
+      credentialTombstoneRefs: [],
+      otherModeCredentialTombstoneRefs: [],
+    };
+    const evaluated = await evaluate(ctx, actor, input, {}, refs, {
+      candidateRead: { candidates: [structuredClone(c)] },
+    });
+    const lacksAction =
+      !evaluated.stop &&
+      options.actionId !== undefined &&
+      options.actionId !== 'auto' &&
+      !evaluated.found.scan.actions.some((a) => a.id === options.actionId);
+    verdicts.set(
+      c.pass.id,
+      evaluated.stop
+        ? { kind: evaluated.kind, reason: evaluated.reason }
+        : lacksAction
+          ? { kind: 'refused', reason: 'not_accepted' }
+          : { kind: 'ok', reason: null },
+    );
+    if (!evaluated.stop && !lacksAction) break;
+  }
+  const pick =
+    tried.find((c) => verdicts.get(c.pass.id)?.kind === 'ok') ??
+    tried.find((c) => verdicts.get(c.pass.id)?.kind === 'heads_up') ??
+    tried[0];
+  if (!pick) return null;
+  const passes: NonNullable<ScanTag['passes']> = [
+    ...tried.map((c) => {
+      const verdict = verdicts.get(c.pass.id);
+      const state =
+        c === pick
+          ? 'used'
+          : !verdict
+            ? 'unchecked'
+            : verdict.kind === 'ok'
+              ? 'lets_in'
+              : 'refused';
+      return {
+        passId: c.pass.id,
+        templateName: resolveCandidateReadTemplates(c)?.active.manifest.name ?? null,
+        state,
+        reason: state === 'refused' ? (verdict?.reason ?? null) : null,
+      } as const;
+    }),
+    ...all
+      .filter((c) => !tried.includes(c))
+      .map(() => ({ passId: null, templateName: null, state: 'not_here', reason: null }) as const),
+  ];
+  return choice(pick, passes);
+}
