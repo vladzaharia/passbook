@@ -102,13 +102,25 @@ export async function chainRows(
       `SELECT ${COLS} FROM retention_receipts WHERE org_id IS ? AND class = ? ORDER BY seq`,
       [orgId, cls],
     ),
-    first<Anchor>(
+    first<{ seq: number; mac: string; ran_at: number; anchor_mac: string }>(
       db,
-      'SELECT seq, mac FROM retention_receipt_anchors WHERE org_id IS ? AND class = ?',
+      'SELECT seq, mac, ran_at, anchor_mac FROM retention_receipt_anchors WHERE org_id IS ? AND class = ?',
       [orgId, cls],
     ),
   ]);
-  return { rows: rows.map(toReceipt), anchor };
+  return {
+    rows: rows.map(toReceipt),
+    anchor: anchor
+      ? {
+          orgId,
+          cls,
+          seq: anchor.seq,
+          mac: anchor.mac,
+          ranAt: anchor.ran_at,
+          anchorMac: anchor.anchor_mac,
+        }
+      : null,
+  };
 }
 
 /** Newest receipt per class of one org, for the summary. */
@@ -147,40 +159,42 @@ export async function chainsWithOld(
   return rows.map((r) => ({ orgId: r.org_id, cls: r.class }));
 }
 
-/**
- * Removes up to `limit` of the oldest receipts older than `cutoff`, never the newest of the chain, after
- * writing the last removed one as the chain's anchor in the same batch. Returns how many went.
- */
-export async function trimChain(
+/** The newest of the oldest `limit` receipts older than `cutoff`, never the newest of the chain. */
+export async function trimTarget(
   db: D1Database,
   chain: Chain,
   cutoff: number,
   limit: number,
-): Promise<number> {
-  const last = await first<{ seq: number; mac: string }>(
+): Promise<{ seq: number; mac: string; ranAt: number } | null> {
+  const r = await first<{ seq: number; mac: string; ran_at: number }>(
     db,
-    `SELECT seq, mac FROM (
-       SELECT seq, mac FROM retention_receipts r
+    `SELECT seq, mac, ran_at FROM (
+       SELECT seq, mac, ran_at FROM retention_receipts r
        WHERE org_id IS ? AND class = ? AND ran_at < ?
          AND seq < (SELECT max(seq) FROM retention_receipts WHERE org_id IS r.org_id AND class = r.class)
        ORDER BY seq LIMIT ?) ORDER BY seq DESC LIMIT 1`,
     [chain.orgId, chain.cls, cutoff, limit],
   );
-  if (!last) return 0;
-  const [, , removed] = await batch(db, [
-    stmt(db, 'DELETE FROM retention_receipt_anchors WHERE org_id IS ? AND class = ?', [
-      chain.orgId,
-      chain.cls,
-    ]),
+  return r ? { seq: r.seq, mac: r.mac, ranAt: r.ran_at } : null;
+}
+
+/**
+ * Moves the chain's anchor forward to `anchor` and removes every receipt up to it, in one batch. The anchor
+ * only moves forward (a stale one changes nothing, and the trigger refuses it). Returns how many went.
+ */
+export async function trimChain(db: D1Database, anchor: Anchor): Promise<number> {
+  const [, removed] = await batch(db, [
     stmt(
       db,
-      'INSERT INTO retention_receipt_anchors (org_id, class, seq, mac) VALUES (?, ?, ?, ?)',
-      [chain.orgId, chain.cls, last.seq, last.mac],
+      `INSERT INTO retention_receipt_anchors (org_id, class, seq, mac, ran_at, anchor_mac) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (ifnull(org_id, ''), class) DO UPDATE SET seq = excluded.seq, mac = excluded.mac,
+         ran_at = excluded.ran_at, anchor_mac = excluded.anchor_mac WHERE excluded.seq > seq`,
+      [anchor.orgId, anchor.cls, anchor.seq, anchor.mac, anchor.ranAt, anchor.anchorMac],
     ),
     stmt(db, 'DELETE FROM retention_receipts WHERE org_id IS ? AND class = ? AND seq <= ?', [
-      chain.orgId,
-      chain.cls,
-      last.seq,
+      anchor.orgId,
+      anchor.cls,
+      anchor.seq,
     ]),
   ]);
   return removed?.meta.changes ?? 0;

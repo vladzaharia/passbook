@@ -1,5 +1,22 @@
 -- Trust pack: retention floors, legal holds, receipts, holder data requests.
 
+-- A stored platform default above the new table maximum keeps working: its maximum is seeded to it, so nothing
+-- gets shorter (the policy clamps a default to the maximum).
+INSERT INTO settings (scope, key, value, updated_at)
+SELECT 'platform', 'retention.scansMaxDays', value, CAST(unixepoch('subsec') * 1000 AS INTEGER)
+FROM settings
+WHERE scope = 'platform' AND key = 'retention.scansDays' AND json_valid(value) AND CAST(value AS INTEGER) > 1095
+ON CONFLICT (scope, key) DO NOTHING;
+INSERT INTO settings (scope, key, value, updated_at)
+SELECT 'platform', 'retention.eventsMaxDays', value, CAST(unixepoch('subsec') * 1000 AS INTEGER)
+FROM settings
+WHERE scope = 'platform' AND key = 'retention.eventsDays' AND json_valid(value) AND CAST(value AS INTEGER) > 730
+ON CONFLICT (scope, key) DO NOTHING;
+
+-- Audit retention is 365 days or more; an older stored value is lifted to the floor.
+UPDATE settings SET value = '365'
+WHERE scope = 'platform' AND key = 'retention.auditDays' AND json_valid(value) AND CAST(value AS INTEGER) < 365;
+
 -- A shortened retention keeps the old days until `until` (7 days), so a mistaken save cannot wipe data at once.
 CREATE TABLE retention_floors (
   org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
@@ -8,6 +25,14 @@ CREATE TABLE retention_floors (
   until INTEGER NOT NULL,
   PRIMARY KEY (org_id, class)
 );
+
+-- A floor change is a settings change: it moves the org's config_revision, so a save planned before it fails.
+CREATE TRIGGER retention_floors_config_ins AFTER INSERT ON retention_floors
+BEGIN UPDATE orgs SET config_revision = config_revision + 1 WHERE id = NEW.org_id; END;
+CREATE TRIGGER retention_floors_config_upd AFTER UPDATE ON retention_floors
+BEGIN UPDATE orgs SET config_revision = config_revision + 1 WHERE id = NEW.org_id; END;
+CREATE TRIGGER retention_floors_config_del AFTER DELETE ON retention_floors
+BEGIN UPDATE orgs SET config_revision = config_revision + 1 WHERE id = OLD.org_id; END;
 
 -- pass_id NULL holds the whole org. No FK on pass_id: a hold must outlive the pass it protected.
 CREATE TABLE retention_holds (
@@ -62,14 +87,28 @@ CREATE TABLE retention_receipts (
 CREATE UNIQUE INDEX retention_receipts_chain ON retention_receipts (ifnull(org_id, ''), class, seq);
 CREATE INDEX retention_receipts_ran ON retention_receipts (ran_at);
 
--- The last receipt removed from a chain, so the chain verifies from it after the 6-year sweep.
+-- The last receipt removed from a chain, so the chain verifies from it after the 6-year sweep. `anchor_mac` covers
+-- (org, class, seq, mac, ran_at): an anchor cannot be written or moved without the oldest KEK. It only moves forward.
 CREATE TABLE retention_receipt_anchors (
   org_id TEXT,
   class TEXT NOT NULL,
   seq INTEGER NOT NULL,
-  mac TEXT NOT NULL
+  mac TEXT NOT NULL,
+  ran_at INTEGER NOT NULL,
+  anchor_mac TEXT NOT NULL
 );
 CREATE UNIQUE INDEX retention_receipt_anchors_chain ON retention_receipt_anchors (ifnull(org_id, ''), class);
+
+CREATE TRIGGER retention_receipt_anchors_forward BEFORE UPDATE ON retention_receipt_anchors
+WHEN NEW.seq <= OLD.seq OR NEW.org_id IS NOT OLD.org_id OR NEW.class IS NOT OLD.class
+BEGIN
+  SELECT RAISE(ABORT, 'retention anchor only moves forward');
+END;
+CREATE TRIGGER retention_receipt_anchors_no_delete BEFORE DELETE ON retention_receipt_anchors
+WHEN EXISTS (SELECT 1 FROM retention_receipts r WHERE ifnull(r.org_id, '') = ifnull(OLD.org_id, '') AND r.class = OLD.class)
+BEGIN
+  SELECT RAISE(ABORT, 'retention anchor is permanent');
+END;
 
 CREATE TRIGGER retention_receipts_no_update BEFORE UPDATE ON retention_receipts
 BEGIN

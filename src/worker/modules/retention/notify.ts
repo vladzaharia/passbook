@@ -20,14 +20,35 @@ async function toAdmins(ctx: ServiceContext, orgId: string, message: Rendered): 
   }
 }
 
-/** Tells every org admin that a retention class shortens, and when. */
-export async function sendShortenNotices(
+const SEND_BATCH = 100;
+
+/**
+ * Queues one notice job per org and class: a platform change may reach hundreds of orgs, too many mails for
+ * one request. A queue failure is logged; the floor already protects the data.
+ */
+export async function enqueueShortenNotices(
   ctx: ServiceContext,
   notices: ShortenNotice[],
 ): Promise<void> {
-  const base = baseUrl(ctx.env);
-  for (const n of notices) await toAdmins(ctx, n.orgId, shortenEmail(base, n.cls, n.days, n.from));
+  for (let i = 0; i < notices.length; i += SEND_BATCH) {
+    try {
+      await ctx.env.JOBS.sendBatch(
+        notices
+          .slice(i, i + SEND_BATCH)
+          .map((n) => ({ body: { kind: 'retention.notice' as const, ...n } })),
+      );
+    } catch (error) {
+      ctx.log.error('retention.notice_enqueue_failed', {
+        code: 'RETENTION_NOTICE_ENQUEUE_FAILED',
+        error,
+      });
+    }
+  }
 }
+
+/** The queue job: mails the org's admins. */
+export const sendShortenNotice = (ctx: ServiceContext, n: ShortenNotice) =>
+  toAdmins(ctx, n.orgId, shortenEmail(baseUrl(ctx.env), n.cls, n.days, n.from));
 
 export const sendHoldNotice = (ctx: ServiceContext, orgId: string, placed: boolean) =>
   toAdmins(ctx, orgId, holdEmail(baseUrl(ctx.env), placed));

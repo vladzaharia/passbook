@@ -131,7 +131,6 @@ export async function readOrgAdminEmails(db: D1Database, orgId: string): Promise
     db,
     `SELECT DISTINCT ${knownEmailSql('u.primary_email')} AS email FROM org_memberships m
      JOIN users u ON u.id = m.user_id AND u.status = 'active'
-     JOIN orgs o ON o.id = m.org_id AND o.status = 'active'
      WHERE m.org_id = ? AND m.revoked_at IS NULL
        AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value = 'org_admin')
        AND u.primary_email NOT LIKE '%.invalid'`,

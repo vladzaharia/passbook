@@ -1,3 +1,4 @@
+import { env } from 'cloudflare:workers';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { clearSettingsCache, updateSettings } from '../settings/service.ts';
@@ -16,6 +17,7 @@ afterEach(async () => {
   );
   clearSettingsCache(rk.kit.env.DB);
   rk.mail.length = 0;
+  rk.kit.queue.sent.length = 0;
 });
 
 const ctx = () => rk.kit.ctx;
@@ -136,6 +138,8 @@ describe('shortening', () => {
     expect(JSON.parse(audit?.detail ?? '{}').retentionFloors).toEqual([
       { orgId: o.orgId, cls: 'scans', days: 800, until: now + 7 * DAY },
     ]);
+    expect(rk.mail).toHaveLength(0);
+    expect(await rk.drain()).toBe(1);
     expect(rk.mail).toHaveLength(1);
     expect(rk.mail[0]).toMatchObject({ to: o.email });
     expect(rk.mail[0]?.subject).toContain('90 days');
@@ -149,8 +153,10 @@ describe('shortening', () => {
     const o = await rk.org();
     await orgSave(o, { 'retention.scansDays': 90 });
     rk.mail.length = 0;
+    rk.kit.queue.sent.length = 0;
     await orgSave(o, { 'retention.scansDays': 500 });
     expect(await floorsOf(o.orgId)).toEqual([]);
+    expect(await rk.drain()).toBe(0);
     expect(rk.mail).toHaveLength(0);
   });
 
@@ -199,6 +205,12 @@ describe('shortening', () => {
     expect(await floorsOf(a.orgId)).toMatchObject([{ class: 'scans', days: 1000 }]);
     expect(await floorsOf(b.orgId)).toEqual([]);
     expect(await floorsOf(c.orgId)).toEqual([]);
+    // One queued notice per org and class, no mail in the request.
+    expect(rk.mail).toHaveLength(0);
+    const queued = rk.kit.queue.sent.map((m) => (m as { orgId: string }).orgId);
+    expect(queued.filter((id) => id === a.orgId)).toHaveLength(1);
+    expect(queued).not.toContain(b.orgId);
+    await rk.drain();
     expect(rk.mail.map((m) => m.to)).toContain(a.email);
     expect(rk.mail.map((m) => m.to)).not.toContain(b.email);
     expect(await scansDecision(a.orgId)).toMatchObject({
@@ -296,6 +308,88 @@ describe('retentionPlan', () => {
     expect((await orgRetention(ctx(), o.orgId, true)).scans).toMatchObject({
       kind: 'run',
       days: 120,
+    });
+  });
+});
+
+describe('review fixes', () => {
+  const migration = async (match: RegExp) => {
+    const all0101 = (env.TEST_MIGRATIONS as { name: string; queries: string[] }[]).find((m) =>
+      m.name.includes('0101'),
+    );
+    return (all0101?.queries ?? []).filter((q) => match.test(q));
+  };
+  const putPlatform = (key: string, json: string) =>
+    run(
+      rk.kit.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES ('platform', ?, ?, 1)",
+      [key, json],
+    );
+
+  it('H1: a stored default above the new table maximum is kept by seeding its maximum', async () => {
+    await putPlatform('retention.scansDays', '3650');
+    await putPlatform('retention.eventsDays', '900');
+    await putPlatform('retention.auditDays', '90');
+    for (const q of await migration(/MaxDays|auditDays/)) await run(rk.kit.env.DB, q);
+    const rows = await all<{ key: string; value: string }>(
+      rk.kit.env.DB,
+      "SELECT key, value FROM settings WHERE scope = 'platform' AND key LIKE 'retention.%' ORDER BY key",
+    );
+    expect(Object.fromEntries(rows.map((r) => [r.key, r.value]))).toMatchObject({
+      'retention.scansMaxDays': '3650',
+      'retention.eventsMaxDays': '900',
+      'retention.auditDays': '365',
+    });
+    const plan = await retentionPlan(ctx(), 'scans');
+    if (plan.blocked) throw new Error('blocked');
+    expect(plan.platformDays).toBe(3650);
+    const events = await retentionPlan(ctx(), 'events');
+    if (events.blocked) throw new Error('blocked');
+    expect(events.platformDays).toBe(900);
+  });
+
+  it('H1: defaults within the table maximum seed nothing', async () => {
+    await putPlatform('retention.scansDays', '500');
+    for (const q of await migration(/MaxDays/)) await run(rk.kit.env.DB, q);
+    expect(
+      await all(
+        rk.kit.env.DB,
+        "SELECT 1 FROM settings WHERE scope = 'platform' AND key = 'retention.scansMaxDays'",
+      ),
+    ).toHaveLength(0);
+  });
+
+  it('M1: fixing an invalid org value floors at the platform maximum, not at nothing', async () => {
+    const o = await rk.org();
+    await setRaw(o.orgId, '5');
+    expect(await scansDecision(o.orgId)).toEqual({ kind: 'skip', reason: 'invalid' });
+    await orgSave(o, { 'retention.scansDays': 60 });
+    expect(await floorsOf(o.orgId)).toMatchObject([{ class: 'scans', days: 1095 }]);
+    expect(await scansDecision(o.orgId)).toMatchObject({ days: 1095 });
+  });
+
+  it('M1: fixing an invalid platform value floors every org at the ceiling', async () => {
+    const o = await rk.org();
+    await putPlatform('retention.scansDays', '1');
+    await platformSave({ 'retention.scansDays': 100 });
+    expect(await floorsOf(o.orgId)).toMatchObject([{ class: 'scans', days: 3650 }]);
+  });
+
+  it('L1: a platform save moves the config revision of the orgs it floors, so a stale org save fails', async () => {
+    const o = await rk.org();
+    const rev = async () =>
+      (
+        await first<{ config_revision: number }>(
+          rk.kit.env.DB,
+          'SELECT config_revision FROM orgs WHERE id = ?',
+          [o.orgId],
+        )
+      )?.config_revision;
+    const before = await rev();
+    await platformSave({ 'retention.scansDays': 100 });
+    expect(await rev()).toBe((before ?? 0) + 1);
+    expect(await rejection(orgSave(o, { 'retention.scansDays': null }, before))).toMatchObject({
+      status: 409,
     });
   });
 });

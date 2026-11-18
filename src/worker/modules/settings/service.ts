@@ -6,7 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { planRetentionChange } from '../retention/changes.ts';
-import { sendShortenNotices } from '../retention/notify.ts';
+import { enqueueShortenNotices } from '../retention/notify.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
 import {
   countEmailOnlyUsers,
@@ -229,7 +229,7 @@ export async function updateSettings(
           : {}),
       },
     });
-  await sendShortenNotices(ctx, retention.notices);
+  await enqueueShortenNotices(ctx, retention.notices);
   return after;
 }
 

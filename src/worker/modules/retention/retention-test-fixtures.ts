@@ -1,11 +1,13 @@
 import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
+import type { JobOf } from '../../jobs/types.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import type { SettingsAdmin, SettingsAuthority } from '../settings/repo.ts';
+import { handleRetentionNotice } from './jobs.ts';
 
 export interface Mail {
   to: string;
@@ -21,6 +23,8 @@ export interface RetentionKit {
     roles?: OrgRole[],
   ): Promise<{ orgId: string; email: string; userId: string; authority: SettingsAuthority }>;
   platform(): Promise<SettingsAdmin>;
+  /** Runs the queued retention notice jobs, as the queue consumer would. */
+  drain(): Promise<number>;
 }
 
 export async function retentionKit(): Promise<RetentionKit> {
@@ -71,6 +75,16 @@ export async function retentionKit(): Promise<RetentionKit> {
       const authority = await tenantAuthorityOf(ctx, session, org.id, 'org:manage');
       if (authority.kind !== 'session') throw new Error('Expected session authority');
       return { orgId: org.id, email: user.primaryEmail, userId: user.id, authority };
+    },
+    async drain() {
+      const jobs = kit.queue.sent
+        .splice(0)
+        .filter(
+          (m): m is JobOf<'retention.notice'> =>
+            (m as { kind?: string }).kind === 'retention.notice',
+        );
+      for (const job of jobs) await handleRetentionNotice(job, ctx);
+      return jobs.length;
     },
     async platform() {
       const user = await makeUser(fx);

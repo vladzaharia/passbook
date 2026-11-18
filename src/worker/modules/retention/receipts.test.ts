@@ -3,9 +3,10 @@ import { makeEnv } from '../../../../test/helpers/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { headMatches } from './head-store.ts';
 import { dailyReceipts } from './jobs.ts';
 import { readReceipts, writeReceipt } from './receipt-service.ts';
-import { type Receipt, verifyChain } from './receipts.ts';
+import { type Anchor, anchorMac, type Receipt, verifyChain } from './receipts.ts';
 import { lastReceiptRows } from './repo-receipts.ts';
 import { type RetentionKit, retentionKit } from './retention-test-fixtures.ts';
 
@@ -88,13 +89,18 @@ describe('receipt chain', () => {
   });
 });
 
+const anchorOf = async (r: Receipt): Promise<Anchor> => {
+  const base = { orgId: r.orgId, cls: r.cls, seq: r.seq, mac: r.mac, ranAt: r.ranAt };
+  return { ...base, anchorMac: await anchorMac(ctx().env, base) };
+};
+
 describe('tamper detection', () => {
   const chain = async (): Promise<Receipt[]> => {
     const o = await rk.org();
     for (const n of [1, 2, 3, 4]) await sweep(o.orgId, 'scans', n);
     return (await readReceipts(ctx(), o.orgId, 'scans')).map((r) => r.receipt);
   };
-  const marks = async (rows: Receipt[], anchor = null as { seq: number; mac: string } | null) =>
+  const marks = async (rows: Receipt[], anchor = null as Anchor | null) =>
     (await verifyChain(ctx().env, rows, anchor)).map((r) => r.verified);
 
   it('a changed column fails that receipt, and the next one still links to its stored MAC', async () => {
@@ -137,11 +143,49 @@ describe('tamper detection', () => {
     const rows = await chain();
     expect(await marks(rows.slice(1))).toEqual([false, true, true]);
     const first = rows[0] as Receipt;
-    expect(await marks(rows.slice(1), { seq: first.seq, mac: first.mac })).toEqual([
-      true,
-      true,
-      true,
-    ]);
+    const a = await anchorOf(first);
+    expect(await marks(rows.slice(1), a)).toEqual([true, true, true]);
+  });
+
+  it('an anchor that was not MACed under the key, or was edited, fails every receipt', async () => {
+    const rows = await chain();
+    const first = rows[0] as Receipt;
+    const a = await anchorOf(first);
+    for (const bad of [
+      { ...a, anchorMac: '0'.repeat(64) },
+      { ...a, anchorMac: 'nope' },
+      { ...a, ranAt: a.ranAt + 1 },
+      { ...a, seq: 0 },
+      { ...a, cls: 'events' },
+    ])
+      expect(await marks(rows.slice(1), bad)).toEqual([false, false, false]);
+  });
+
+  it('a chain below the head kept outside D1 fails; so does a missing or different head object', async () => {
+    const o = await rk.org();
+    for (const n of [1, 2, 3]) await sweep(o.orgId, 'scans', n);
+    expect(await verdicts(o.orgId, 'scans')).toEqual([true, true, true]);
+    const bucket = rk.kit.env.BUCKET;
+    const key = (seq: number) =>
+      `retention/receipts/${o.orgId}/scans/${String(seq).padStart(12, '0')}.json`;
+    // The newest receipt was dropped from D1: R2 still holds seq 3, D1 stops at 2 (simulated by an extra head).
+    await bucket.put(key(4), JSON.stringify({ seq: 4, mac: 'a'.repeat(64) }));
+    expect(await verdicts(o.orgId, 'scans')).toEqual([false, false, false]);
+    await bucket.delete(key(4));
+    expect(await verdicts(o.orgId, 'scans')).toEqual([true, true, true]);
+    await bucket.put(key(3), JSON.stringify({ seq: 3, mac: 'b'.repeat(64) }));
+    expect(await verdicts(o.orgId, 'scans')).toEqual([false, false, false]);
+    await bucket.delete(key(3));
+    expect(await verdicts(o.orgId, 'scans')).toEqual([false, false, false]);
+  });
+
+  it('a whole chain dropped from D1 is caught by its head objects', async () => {
+    expect(await headMatches(ctx(), 'gone-org', 'scans', null)).toBe(true);
+    await rk.kit.env.BUCKET.put(
+      'retention/receipts/gone-org/scans/000000000001.json',
+      JSON.stringify({ seq: 1, mac: 'c'.repeat(64) }),
+    );
+    expect(await headMatches(ctx(), 'gone-org', 'scans', null)).toBe(false);
   });
 
   it('reordered receipts keep their own seq and still verify in seq order; a rewritten seq fails', async () => {
@@ -234,6 +278,38 @@ describe('6-year sweep', () => {
     expect((await rowsOf(o.orgId, 'scans')).map((r) => r.seq)).toEqual([2]);
     expect((await sweep(o.orgId, 'scans', 1)).seq).toBe(3);
     expect(await verdicts(o.orgId, 'scans')).toEqual([true, true]);
+  });
+
+  it('the anchor only moves forward and is never deleted while receipts remain', async () => {
+    const o = await rk.org();
+    const now = ctx().clock.now();
+    for (const years of [9, 8, 7])
+      await writeReceipt(at(now - years * YEAR), {
+        orgId: o.orgId,
+        cls: 'scans',
+        kind: 'sweep',
+        deleted: 1,
+      });
+    await sweep(o.orgId, 'scans', 1);
+    await dailyReceipts(ctx());
+    const db = rk.kit.env.DB;
+    await expect(
+      run(db, 'UPDATE retention_receipt_anchors SET seq = 1 WHERE org_id = ?', [o.orgId]),
+    ).rejects.toThrow(/forward/);
+    await expect(
+      run(db, 'DELETE FROM retention_receipt_anchors WHERE org_id = ?', [o.orgId]),
+    ).rejects.toThrow(/permanent/);
+    // A stale anchor (lower seq) written through the trim changes nothing.
+    const { trimChain } = await import('./repo-receipts.ts');
+    const stale = { orgId: o.orgId, cls: 'scans', seq: 1, mac: 'x', ranAt: 1, anchorMac: 'y' };
+    await trimChain(db, stale);
+    const row = await first<{ seq: number }>(
+      db,
+      'SELECT seq FROM retention_receipt_anchors WHERE org_id = ?',
+      [o.orgId],
+    );
+    expect(row?.seq).toBe(3);
+    expect(await verdicts(o.orgId, 'scans')).toEqual([true]);
   });
 
   it('leaves receipts under six years alone', async () => {

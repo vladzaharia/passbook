@@ -1,5 +1,8 @@
+import type { JobOf } from '../../jobs/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { chainsWithOld, trimChain } from './repo-receipts.ts';
+import { sendShortenNotice } from './notify.ts';
+import { anchorMac } from './receipts.ts';
+import { chainsWithOld, trimChain, trimTarget } from './repo-receipts.ts';
 
 /** Receipts are kept 6 years, then removed oldest-first behind an anchor. */
 export const RECEIPT_KEEP_MS = 6 * 365 * 86_400_000;
@@ -10,7 +13,21 @@ const TRIM_ROWS_PER_CHAIN = 200;
 export async function dailyReceipts(ctx: ServiceContext): Promise<void> {
   const cutoff = ctx.clock.now() - RECEIPT_KEEP_MS;
   let removed = 0;
-  for (const chain of await chainsWithOld(ctx.env.DB, cutoff, TRIM_CHAINS_PER_RUN))
-    removed += await trimChain(ctx.env.DB, chain, cutoff, TRIM_ROWS_PER_CHAIN);
+  for (const chain of await chainsWithOld(ctx.env.DB, cutoff, TRIM_CHAINS_PER_RUN)) {
+    const last = await trimTarget(ctx.env.DB, chain, cutoff, TRIM_ROWS_PER_CHAIN);
+    if (!last) continue;
+    const anchor = { ...chain, ...last };
+    removed += await trimChain(ctx.env.DB, {
+      ...anchor,
+      anchorMac: await anchorMac(ctx.env, anchor),
+    });
+  }
   if (removed > 0) ctx.log.info('retention.receipts_trimmed', { removed });
+}
+
+export async function handleRetentionNotice(
+  job: JobOf<'retention.notice'>,
+  ctx: ServiceContext,
+): Promise<void> {
+  await sendShortenNotice(ctx, job);
 }

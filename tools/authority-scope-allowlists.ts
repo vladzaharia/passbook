@@ -223,10 +223,9 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/retention/repo-receipts.ts': {
     reason:
-      'retention receipts and their anchors are append-only bookkeeping of platform jobs and the erasure finisher (no principal): a MAC-chained row per delete run, and the 6-year trim that anchors the chain first; table triggers refuse update and early delete',
+      'retention receipts and their anchors are append-only bookkeeping of platform jobs and the erasure finisher (no principal): a MAC-chained row per delete run, and the 6-year trim that moves the MACed anchor forward first; table triggers refuse update and early delete',
     writes: [
-      'retention_receipt_anchors:6078638e628a',
-      'retention_receipt_anchors:c9b9bca0ad42',
+      'retention_receipt_anchors:be676f0b2666',
       'retention_receipts:726f943d12d9',
       'retention_receipts:e58c2afc7e26',
     ],

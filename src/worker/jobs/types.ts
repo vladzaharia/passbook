@@ -1,10 +1,19 @@
 import { z } from 'zod';
 import { ConnectionModeSchema } from '../../shared/contracts/connections.ts';
+import { RETENTION_CLASSES } from '../../shared/privacy/data-classes.ts';
 
 /** Every queue message. Add a kind here, to JOB_HANDLERS in registry.ts, and implement it in the owning module. */
 export const JobSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('push.deliver'), outboxId: z.string() }),
   z.object({ kind: z.literal('email.send'), outboxId: z.string() }),
+  /** Tells an org's admins that a retention class shortens. One job per org and class. */
+  z.object({
+    kind: z.literal('retention.notice'),
+    orgId: z.string(),
+    cls: z.enum(RETENTION_CLASSES),
+    days: z.number().int().positive(),
+    from: z.number().int().nonnegative(),
+  }),
   z.object({
     kind: z.literal('pass.refresh'),
     passId: z.string(),

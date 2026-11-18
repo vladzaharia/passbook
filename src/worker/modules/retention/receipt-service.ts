@@ -1,5 +1,6 @@
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { headMatches, writeHead } from './head-store.ts';
 import {
   type Receipt,
   type ReceiptBody,
@@ -47,7 +48,10 @@ export async function writeReceipt(ctx: ServiceContext, input: ReceiptInput): Pr
       prevMac: head?.mac ?? null,
     };
     const mac = await receiptMac(ctx.env, body);
-    if (await insertReceipt(ctx.env.DB, body, mac, head?.seq ?? 0)) return { ...body, mac };
+    if (await insertReceipt(ctx.env.DB, body, mac, head?.seq ?? 0)) {
+      await writeHead(ctx, { orgId: body.orgId, cls: body.cls, seq: body.seq, mac });
+      return { ...body, mac };
+    }
   }
   throw new ConflictError('Retention receipt chain is busy.', 'RETENTION_RECEIPT_BUSY');
 }
@@ -59,5 +63,12 @@ export async function readReceipts(
   cls: string,
 ): Promise<{ receipt: Receipt; verified: boolean }[]> {
   const { rows, anchor } = await chainRows(ctx.env.DB, orgId, cls);
-  return verifyChain(ctx.env, rows, anchor);
+  const newest = rows.at(-1) ?? anchor;
+  const headOk = await headMatches(
+    ctx,
+    orgId,
+    cls,
+    newest ? { seq: newest.seq, mac: newest.mac } : null,
+  );
+  return verifyChain(ctx.env, rows, anchor, headOk);
 }

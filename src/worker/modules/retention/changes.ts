@@ -76,8 +76,13 @@ function orgChange(
       floor: org.floors.get(cls) ?? null,
     });
     const after = resolveOrg({ ...base, orgRaw: set ? upserts[key] : undefined, floor: null });
-    if (before.kind !== 'run' || after.kind !== 'run') continue;
-    const change = floorChange(before.days, after.days, now);
+    if (after.kind !== 'run') continue;
+    // A value that did not resolve was holding deletes back: its stand-in is the longest the platform allows.
+    const change = floorChange(
+      before.kind === 'run' ? before.days : platform.maxDays,
+      after.days,
+      now,
+    );
     if (change.kind === 'set') {
       out.floors.push({ orgId, cls, change });
       out.notices.push({ orgId, cls, days: after.days, from: change.until });
@@ -101,7 +106,10 @@ async function platformChange(
     const { key, maxKey } = DATA_CLASSES[cls];
     const touched = [key, maxKey].filter((k) => k in upserts || deletes.includes(k));
     if (touched.length === 0) continue;
-    const was = platformPolicyOf(before, cls);
+    const wasRaw = platformPolicyOf(before, cls);
+    // A platform value that did not resolve was holding every delete back: its stand-in is the hard ceiling.
+    const ceiling = DATA_CLASSES[cls].ceiling;
+    const was: Ok = wasRaw.ok ? wasRaw : { ok: true, defaultDays: ceiling, maxDays: ceiling };
     const raw = afterRaw.get(key) ?? DATA_CLASSES[cls].platformDefault;
     const max = afterRaw.get(maxKey) ?? DATA_CLASSES[cls].platformMax;
     if (typeof raw === 'number' && typeof max === 'number' && raw > max) {
@@ -113,7 +121,7 @@ async function platformChange(
       continue;
     }
     const next = platformPolicyOf(afterRaw, cls);
-    if (!was.ok || !next.ok) continue;
+    if (!next.ok) continue;
     const rows = await orgsFor(ctx, cls, was, next);
     if (rows === 'too_many') {
       out.issues.push({
@@ -133,12 +141,26 @@ async function platformChange(
         now,
       });
       const a = resolveOrg({ cls, platform: next, orgRaw: row.raw, floor: null, held: false, now });
-      if (b.kind !== 'run' || a.kind !== 'run') continue;
-      const change = floorChange(b.days, a.days, now);
+      if (a.kind !== 'run') continue;
+      const change = floorChange(b.kind === 'run' ? b.days : was.maxDays, a.days, now);
       if (change.kind !== 'set') continue;
       out.floors.push({ orgId: row.orgId, cls, change });
       out.notices.push({ orgId: row.orgId, cls, days: a.days, from: change.until });
     }
+  }
+  if (out.floors.length > MAX_FLOOR_ORGS) {
+    const path = Object.keys(upserts).find((k) => k.startsWith('retention.')) ?? 'retention';
+    return {
+      issues: [
+        {
+          path,
+          message: 'Too many organizations to shorten retention safely. Ask engineering.',
+          code: 'RETENTION_TOO_MANY_ORGS',
+        },
+      ],
+      floors: [],
+      notices: [],
+    };
   }
   return out;
 }

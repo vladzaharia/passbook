@@ -3,7 +3,8 @@ import type { FloorWrite } from './changes.ts';
 
 /**
  * Adds retention floor writes to a settings grant. An org grant supplies its own org. A platform grant (a
- * platform maximum or default moved) names the org each floor belongs to.
+ * platform maximum or default moved) names the org each floor belongs to. Floor writes move the org's
+ * `config_revision` by trigger, so an org save planned from the old values fails (SETTINGS_CHANGED).
  */
 export function addFloorWrites(g: Grant, floors: readonly FloorWrite[], platform: boolean): void {
   for (const f of floors) {

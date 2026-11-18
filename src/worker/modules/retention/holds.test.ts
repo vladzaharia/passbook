@@ -171,4 +171,13 @@ describe('legal holds', () => {
       run(db, 'UPDATE retention_holds SET released_at = NULL WHERE id = ?', [id]),
     ).rejects.toThrow(/immutable/);
   });
+
+  it('L5: a platform hold on a suspended org still emails its admins', async () => {
+    const o = await rk.org();
+    const admin = await rk.platform();
+    await run(rk.kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [o.orgId]);
+    rk.mail.length = 0;
+    await placeHold(ctx(), o.orgId, { reason: 'preservation' }, { kind: 'platform', admin });
+    expect(rk.mail.map((m) => m.to)).toEqual([o.email]);
+  });
 });

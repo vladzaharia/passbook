@@ -44,34 +44,68 @@ async function macMatches(env: object, body: ReceiptBody, mac: string): Promise<
   return crypto.subtle.verify('HMAC', key, signature, encoder.encode(canonicalJson(body)));
 }
 
-/** The last receipt a 6-year sweep removed from a chain; the rest verify from it. */
+export const ANCHOR_LABEL = 'retention-receipt-anchor.v1';
+
+/** The last receipt a 6-year sweep removed from a chain; the rest verify from it. MACed, so it cannot be forged. */
 export interface Anchor {
+  orgId: string | null;
+  cls: string;
   seq: number;
   mac: string;
+  ranAt: number;
+  anchorMac: string;
+}
+
+const anchorBody = (a: Omit<Anchor, 'anchorMac'>) => ({
+  orgId: a.orgId,
+  cls: a.cls,
+  seq: a.seq,
+  mac: a.mac,
+  ranAt: a.ranAt,
+});
+
+export async function anchorMac(env: object, a: Omit<Anchor, 'anchorMac'>): Promise<string> {
+  const key = await derivedHmacKey(env, ANCHOR_LABEL);
+  return toHex(
+    new Uint8Array(
+      await crypto.subtle.sign('HMAC', key, encoder.encode(canonicalJson(anchorBody(a)))),
+    ),
+  );
+}
+
+async function anchorValid(env: object, a: Anchor): Promise<boolean> {
+  if (!/^[0-9a-f]{64}$/.test(a.anchorMac)) return false;
+  const signature = Uint8Array.from(a.anchorMac.match(/../g) ?? [], (pair) =>
+    Number.parseInt(pair, 16),
+  );
+  const key = await derivedHmacKey(env, ANCHOR_LABEL);
+  return crypto.subtle.verify('HMAC', key, signature, encoder.encode(canonicalJson(anchorBody(a))));
 }
 
 /**
  * Marks each receipt of one chain. A receipt verifies when its MAC is right and it follows its predecessor:
  * seq +1 and `prevMac` equal to the predecessor's MAC. The first stored receipt follows the anchor, or is
  * seq 1 with no `prevMac`. Tampering with a column fails that row; a dropped or reordered row fails the
- * rows after the gap. Dropping the newest receipt leaves a valid shorter chain: the receipts table refuses
- * deletes, and a caller holding the expected head can compare it.
+ * rows after the gap. An anchor that does not verify, or a chain whose newest receipt is below the head kept
+ * outside D1 (`headOk` false: see head-store.ts), fails every receipt: nothing can be vouched for.
  */
 export async function verifyChain(
   env: object,
   rows: readonly Receipt[],
   anchor: Anchor | null,
+  headOk = true,
 ): Promise<{ receipt: Receipt; verified: boolean }[]> {
   const sorted = [...rows].sort((a, b) => a.seq - b.seq);
+  const base = headOk && (anchor === null || (await anchorValid(env, anchor)));
   const out: { receipt: Receipt; verified: boolean }[] = [];
-  let prev: Anchor | null = anchor;
+  let prev: { seq: number; mac: string } | null = anchor;
   for (const receipt of sorted) {
     const { mac, ...body } = receipt;
     const links =
       prev === null
         ? receipt.seq === 1 && receipt.prevMac === null
         : receipt.seq === prev.seq + 1 && receipt.prevMac === prev.mac;
-    const verified = links && (await macMatches(env, body, mac));
+    const verified = base && links && (await macMatches(env, body, mac));
     out.push({ receipt, verified });
     prev = { seq: receipt.seq, mac: receipt.mac };
   }
