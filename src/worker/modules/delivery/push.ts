@@ -262,8 +262,9 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     });
   }
   await savePushResults(db, fence, saved, now);
-  await recordPushEvents(ctx, fence, events);
+  // Drop first: the journal counts a pass's devices when each event is written.
   if (gone.length) await dropRegistrations(db, fence, gone);
+  await recordPushEvents(ctx, fence, events);
   if (count.cert > 0) await setApnsHealth(db, fence, 'failing');
   else if (count.ok > 0) await setApnsHealth(db, fence, 'healthy');
 

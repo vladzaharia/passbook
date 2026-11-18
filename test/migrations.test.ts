@@ -1348,5 +1348,46 @@ describe('0086_nfc_tags migration', () => {
     );
     await run(env.DB, 'DELETE FROM orgs WHERE id = ?', [bare.id]);
     expect(await first(env.DB, "SELECT 1 AS x FROM nfc_tags WHERE id = 't-bare'")).toBeNull();
+describe('0090 webhooks migration', () => {
+  it('creates the tables, the journal trigger and the tenant triggers', async () => {
+    const rows = await all<{ type: string; name: string }>(
+      env.DB,
+      "SELECT type, name FROM sqlite_master WHERE name LIKE 'webhook_%' OR name LIKE 'event_feed%' OR name = 'pass_events_feed'",
+    );
+    const names = new Set(rows.map((r) => `${r.type}:${r.name}`));
+    for (const expected of [
+      'table:webhook_endpoints',
+      'table:webhook_endpoint_secrets',
+      'table:webhook_deliveries',
+      'table:webhook_attempts',
+      'table:event_feed',
+      'trigger:pass_events_feed',
+      'trigger:event_feed_tenant',
+      'trigger:event_feed_no_update',
+      'trigger:webhook_endpoints_cap',
+      'trigger:webhook_endpoints_identity',
+      'trigger:webhook_deliveries_key',
+      'trigger:webhook_attempts_key',
+      'trigger:webhook_endpoint_secrets_immutable',
+      'index:event_feed_org',
+      'index:webhook_deliveries_due',
+    ])
+      expect(names, expected).toContain(expected);
+  });
+
+  it('rejects invalid enum values and a non-https url', async () => {
+    const { org } = await setup();
+    const insert = (url: string, mode: string, status: string) =>
+      run(
+        env.DB,
+        `INSERT INTO webhook_endpoints (id, org_id, mode, url, event_types, api_version, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, '["pass.issued"]', 'v', ?, 1, 1)`,
+        [`bad-${Math.random()}`, org.id, mode, url, status],
+      );
+    await expect(insert('http://example.com/x', 'live', 'active')).rejects.toThrow();
+    await expect(insert('https://example.com/x', 'staging', 'active')).rejects.toThrow();
+    await expect(insert('https://example.com/x', 'live', 'weird')).rejects.toThrow();
+    await expect(insert('https://example.com/x', 'live', 'disabled')).rejects.toThrow();
+    await expect(insert('https://example.com/x', 'live', 'active')).resolves.toBeDefined();
   });
 });

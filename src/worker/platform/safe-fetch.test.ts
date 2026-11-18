@@ -20,6 +20,10 @@ describe('assertSafeUrl', () => {
     'https://user:pw@example.com/x',
     'https://passbook.mobile/api',
     'https://sub.passbook.mobile/api',
+    'https://passbook.mobile./api',
+    'https://sub.passbook.mobile./api',
+    'https://127.0.0.1./x',
+    'https://intranet./x',
     'https://example.com/a/../b',
     'not a url',
   ])('rejects %s', (url) => {
