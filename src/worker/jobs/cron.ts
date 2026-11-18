@@ -22,6 +22,7 @@ import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
+import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { purgeRetiredIds } from '../platform/retired-ids.ts';
@@ -37,6 +38,7 @@ export const DAILY_CRON = '17 3 * * *';
 export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
   [MINUTE_CRON]: [
     { name: 'delivery.sweep', run: sweepDelivery },
+    { name: 'webhooks.sweep', run: sweepWebhooks },
     { name: 'sandbox.forwards', run: sweepSandboxForwards },
     { name: 'connections.schedule', run: reconcileConnections },
     { name: 'templates.sync', run: syncBakedOnDeploy },
@@ -74,6 +76,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'identities.apns_probe', run: dailyApnsProbe },
     { name: 'scan.retention', run: dailyScans },
     { name: 'orgs.branding_gc', run: sweepBrandingGc },
+    { name: 'webhooks.retention', run: dailyWebhooks },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
   ],

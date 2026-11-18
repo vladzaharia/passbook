@@ -41,6 +41,7 @@ import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbac
 import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-callbacks.ts';
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
 import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-status.ts';
+import { webhookKick } from './modules/webhooks/kick.ts';
 import { type AuthStores, denyAllStores } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
 import { type AppBindings, requestContext } from './platform/context.ts';
@@ -99,6 +100,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.use('*', securityHeaders);
   if (options.hostPolicy) app.use('*', hostPolicy);
   app.use('*', scanGate);
+  app.use('*', webhookKick);
   app.onError((error, c) => asBrowserPage(c, handleError(error, c) as Response));
   app.notFound(async (c) => (await spaPage(c)) ?? asBrowserPage(c, notFoundHandler(c)));
 

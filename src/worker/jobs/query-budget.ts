@@ -17,6 +17,10 @@ export function estimateQueries(job: Job): number {
       return 40 + (QUERIES_PER_RECORD + 8) * job.refs.length;
     case 'pass.refresh':
       return 40;
+    case 'webhook.deliver':
+      // 15 for the lane and a hand-off, plus 9 per failed attempt (extend, endpoint, due, claim, secrets,
+      // limit, batch, disable check), at most 20.
+      return 195;
     default:
       return 15;
   }

@@ -84,6 +84,7 @@
   "queues": {
     "producers": [
       { "binding": "JOBS", "queue": "wallet-jobs" },
+      { "binding": "WEBHOOK_JOBS", "queue": "wallet-webhooks" },
       { "binding": "JOBS_DLQ", "queue": "wallet-jobs-dlq" }
     ],
     "consumers": [
@@ -92,6 +93,15 @@
         "max_batch_size": 10,
         "max_batch_timeout": 2,
         "max_retries": 8,
+        "retry_delay": 30,
+        "dead_letter_queue": "wallet-jobs-dlq"
+      },
+      // Tenant receivers can be slow: their own queue and small batches keep push and email from waiting behind them.
+      {
+        "queue": "wallet-webhooks",
+        "max_batch_size": 2,
+        "max_batch_timeout": 2,
+        "max_retries": 4,
         "retry_delay": 30,
         "dead_letter_queue": "wallet-jobs-dlq"
       },
@@ -144,7 +154,9 @@
       "name": "RL_GOOGLE_CALLBACK",
       "namespace_id": "1014",
       "simple": { "limit": 6000, "period": 60 }
-    }
+    },
+    // Outbound webhooks: POSTs per destination host (key host:<name>), across every org.
+    { "name": "RL_WEBHOOK_HOST", "namespace_id": "1015", "simple": { "limit": 600, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],

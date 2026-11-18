@@ -1,10 +1,18 @@
 import { z } from 'zod';
+import { ModeSchema } from '../../shared/contracts/common.ts';
 import { ConnectionModeSchema } from '../../shared/contracts/connections.ts';
 
 /** Every queue message. Add a kind here, to JOB_HANDLERS in registry.ts, and implement it in the owning module. */
 export const JobSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('push.deliver'), outboxId: z.string() }),
   z.object({ kind: z.literal('email.send'), outboxId: z.string() }),
+  z.object({
+    kind: z.literal('webhook.deliver'),
+    endpointId: z.string(),
+    orgId: z.string(),
+    mode: ModeSchema,
+    lane: z.string(),
+  }),
   z.object({
     kind: z.literal('pass.refresh'),
     passId: z.string(),
