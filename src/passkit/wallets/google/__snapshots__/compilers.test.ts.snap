@@ -3210,7 +3210,7 @@ exports[`Google compilers over every starter and baked template > starter-generi
         "uri": "https://img.example/w/i/wallets-google-hero-png",
       },
     },
-    "hexBackgroundColor": "#141a2b",
+    "hexBackgroundColor": "#17346e",
     "logo": {
       "contentDescription": {
         "defaultValue": {
@@ -3337,7 +3337,7 @@ exports[`Google compilers over every starter and baked template > starter-generi
         "value": "Alex Morgan",
       },
     },
-    "hexBackgroundColor": "#141a2b",
+    "hexBackgroundColor": "#17346e",
     "state": "ACTIVE",
     "subheader": {
       "defaultValue": {

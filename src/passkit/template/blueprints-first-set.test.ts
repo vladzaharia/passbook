@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { scanOf } from '../../shared/scan-defaults.ts';
+import { CONTRAST_MIN, contrastRatio } from '../index.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
 import type { SigningMaterial } from '../types.ts';
 import { buildBaked, freezeNow, loadBaked } from './baked-fixtures.ts';
@@ -114,6 +115,22 @@ describe('stored passes keep rebuilding', () => {
     const fields = Object.values(pass.generic ?? {}).flat() as { key: string; value: unknown }[];
     expect(fields.find((f) => f.key === 'guests')?.value).toBe(0);
     expect(fields.find((f) => f.key === 'status')?.value).toBe('Active');
+  });
+
+  it.each([
+    ['Standard', 'rgb(20,26,43)'],
+    ['Plus', 'rgb(23,52,110)'],
+    ['Pro', 'rgb(76,29,149)'],
+  ])('a %s Membership takes its tier colours, readable', async (tier, bg) => {
+    const sample = await SAMPLE('starter-generic');
+    const { passJson: p } = await buildBaked('starter-generic', material, { ...sample, tier });
+    expect(p.backgroundColor).toBe(bg);
+    expect(contrastRatio(p.backgroundColor, p.foregroundColor)).toBeGreaterThanOrEqual(
+      CONTRAST_MIN.text,
+    );
+    expect(contrastRatio(p.backgroundColor, p.labelColor)).toBeGreaterThanOrEqual(
+      CONTRAST_MIN.label,
+    );
   });
 
   it('a cancelled Booking voids and stops at the door', async () => {
