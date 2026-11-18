@@ -16,6 +16,7 @@ import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 import androidx.webkit.WebMessageCompat;
 import java.util.Set;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -33,6 +34,7 @@ public final class WebSurface {
     private ReaderConfig config;
     private JavaScriptReplyProxy reply;
     private boolean ready;
+    private int version = 1;
 
     @SuppressLint("SetJavaScriptEnabled")
     public WebSurface(Activity activity, Listener listener) {
@@ -101,11 +103,13 @@ public final class WebSurface {
                 if (data == null || data.length() > 8192) return;
                 try {
                     JSONObject json = new JSONObject(data);
-                    if (json.optInt("version") != 1) return;
+                    int sent = json.optInt("version");
+                    if (sent != 1 && sent != 2) return;
                     if (json.optString("op").equals("hello")) {
                         reply = proxy;
                         ready = true;
-                    }
+                        version = negotiate(sent, json.optJSONArray("versions"));
+                    } else if (sent != version) return;
                     if (ready) listener.command(json);
                 } catch (JSONException exception) {
                     listener.notice("Verifier sent an invalid reader message.");
@@ -124,8 +128,18 @@ public final class WebSurface {
         return false;
     }
 
+    /** The highest version both sides speak: 2 only when the web offered it; a v1 hello stays v1. */
+    static int negotiate(int sent, JSONArray offered) {
+        if (sent != 2 || offered == null) return 1;
+        for (int index = 0; index < offered.length(); index++) if (offered.optInt(index) == 2) return 2;
+        return 1;
+    }
+
+    public int version() { return version; }
+
     public void invalidate() {
         ready = false;
+        version = 1;
         reply = null;
         listener.reset();
     }

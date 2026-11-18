@@ -28,6 +28,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.core.content.ContextCompat;
+import im.plrs.passbook.reader.protocol.NdefReader;
 import im.plrs.passbook.reader.protocol.VasReader;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -51,6 +52,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private boolean registered;
     private boolean configuring;
     private boolean lastNfcAvailable;
+    private boolean vasOn = true;
+    private boolean tagOn;
+    private String oneShot;
     private final CameraPermissions cameraPermissions = new CameraPermissions();
     private final BroadcastReceiver barcodeReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
@@ -75,6 +79,11 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         @Override public void onCameraUnavailable(String cameraId) {
             if (foreground) reportCapabilities();
         }
+    };
+    private final Runnable oneShotExpiry = () -> {
+        if (oneShot == null) return;
+        oneShot = null;
+        web.send(message("cancelled")); resumeReader(); reportCapabilities();
     };
     private final Runnable expiry = new Runnable() {
         @Override public void run() {
@@ -116,7 +125,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         settings.setText(R.string.settings); settings.setMinHeight(dp(48));
         settings.setOnClickListener(view -> {
             web.send(message("cancelled"));
-            configuring = true; nfc.stop(); gate.reset(); reportCapabilities();
+            configuring = true; endOneShot(); nfc.stop(); gate.reset(); reportCapabilities();
             SettingsDialog.show(this, config, next -> {
                 unregisterBarcode(); config = next; registerBarcode(); web.load(next);
             }, () -> { configuring = false; resumeReader(); reportCapabilities(); });
@@ -171,7 +180,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
     @Override protected void onPause() {
         web.send(message("cancelled"));
-        foreground = false; nfc.stop(); gate.reset(); unregisterBarcode(); unregisterReceiver(nfcReceiver);
+        foreground = false; endOneShot(); nfc.stop(); gate.reset(); unregisterBarcode(); unregisterReceiver(nfcReceiver);
         if (cameraManager != null) cameraManager.unregisterAvailabilityCallback(cameraAvailability);
         cameraPermissions.pause(); reportCapabilities();
         web.view.onPause(); super.onPause();
@@ -183,12 +192,17 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         if (web.view.canGoBack()) web.view.goBack();
         else super.onBackPressed();
     }
-    @Override public void reset() { cameraPermissions.cancel(); gate.reset(); nfc.stop(); }
+    @Override public void reset() {
+        cameraPermissions.cancel(); gate.reset(); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
+    }
     @Override public void notice(String text) { status.setTextColor(0xff34415d); status.setText(text); }
 
+    private void endOneShot() { oneShot = null; handler.removeCallbacks(oneShotExpiry); }
+
     private void resumeReader() {
-        if (!foreground || !web.isReady() || !armed || configuring) nfc.stop();
-        else nfc.start(config.passTypeIds());
+        boolean vas = armed && vasOn, tags = (armed && tagOn) || oneShot != null;
+        if (!foreground || !web.isReady() || configuring || !(vas || tags)) nfc.stop();
+        else nfc.start(config.passTypeIds(), vas, tags);
         lastNfcAvailable = nfc.available();
         scan.setText(armed ? "Pause NFC" : "Start NFC");
         notice(!web.isReady() ? "Waiting for verifier connection" : !armed || configuring ? "NFC paused"
@@ -197,6 +211,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
 
     @Override public void command(JSONObject json) {
         if (json.optString("op").equals("hello")) {
+            endOneShot(); vasOn = true; tagOn = false;
             if (foreground) resumeReader();
             JSONObject ready = message("ready");
             put(ready, "nfc", nfc.available()); put(ready, "ecp", false);
@@ -206,8 +221,13 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         }
         if (!foreground) return;
         switch (json.optString("op")) {
-            case "start": armed = true; resumeReader(); reportCapabilities(); break;
-            case "stop": armed = false; resumeReader(); reportCapabilities(); break;
+            case "start": case "stop": startStop(json); break;
+            case "tagRead": tagRead(json); break;
+            case "tagCancel":
+                if (web.version() == 2 && oneShot != null && oneShot.equals(json.optString("id"))) {
+                    endOneShot(); resumeReader(); reportCapabilities();
+                }
+                break;
             case "captured":
                 if (config.isLocal() && gate.finish(json.optString("id"), SystemClock.elapsedRealtime())) {
                     notice("Read captured · unverified");
@@ -226,6 +246,53 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         }
     }
 
+    /** v2 start/stop name the formats to read; without them (and on v1) they mean wallet-vas, as before. */
+    private void startStop(JSONObject json) {
+        boolean start = json.optString("op").equals("start");
+        JSONArray formats = web.version() == 2 ? json.optJSONArray("formats") : null;
+        if (formats == null) {
+            armed = start; vasOn = true; tagOn = false;
+        } else {
+            boolean vas = false, tags = false;
+            for (int index = 0; index < formats.length(); index++) {
+                vas |= formats.optString(index).equals("wallet-vas");
+                tags |= formats.optString(index).equals("tag");
+            }
+            if (start) { armed = true; vasOn = vas; tagOn = tags; }
+            else { vasOn &= !vas; tagOn &= !tags; armed = vasOn || tagOn; }
+        }
+        resumeReader(); reportCapabilities();
+    }
+
+    private void tagRead(JSONObject json) {
+        long timeout = json.optLong("timeoutMs");
+        String id = json.optString("id");
+        if (web.version() != 2 || id.isEmpty() || id.length() > 64 || timeout < 1 || timeout > 60000) return;
+        endOneShot();
+        oneShot = id;
+        handler.postDelayed(oneShotExpiry, timeout);
+        resumeReader(); reportCapabilities();
+    }
+
+    @Override public void tag(NdefReader.Tag tag) {
+        if (web.version() != 2) return;
+        JSONObject read = new JSONObject();
+        put(read, "uid", tag.uid()); put(read, "uidRandom", tag.uidRandom()); put(read, "tech", tag.tech());
+        String data = tag.uid();
+        if (tag.ndef() != null) {
+            JSONObject ndef = new JSONObject();
+            put(ndef, "type", tag.ndef().type()); put(ndef, "value", tag.ndef().value());
+            put(read, "ndef", ndef);
+            data += ":" + tag.ndef().type() + ":" + tag.ndef().value();
+        }
+        JSONObject event = message("scan");
+        put(event, "source", "nfc-tag"); put(event, "tag", read);
+        // The gate drops the same tag read again within two seconds.
+        if (deliver(event, fingerprint(data.getBytes(StandardCharsets.UTF_8))) && oneShot != null) {
+            endOneShot(); resumeReader(); reportCapabilities();
+        }
+    }
+
     @Override public void read(VasReader.Read read) {
         JSONObject event = message("scan");
         put(event, "source", "apple-vas"); put(event, "passTypeIdentifier", read.passTypeIdentifier());
@@ -241,14 +308,15 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         deliver(event, fingerprint(value.getBytes(StandardCharsets.UTF_8)));
     }
 
-    private void deliver(JSONObject event, String fingerprint) {
-        if (!foreground || !web.isReady()) { notice("Connect the verifier before scanning."); return; }
+    private boolean deliver(JSONObject event, String fingerprint) {
+        if (!foreground || !web.isReady()) { notice("Connect the verifier before scanning."); return false; }
         String id = gate.begin(fingerprint, SystemClock.elapsedRealtime());
-        if (id == null) return;
+        if (id == null) return false;
         put(event, "id", id); put(event, "readAt", System.currentTimeMillis());
         status.setTextColor(0xff34415d);
         notice(config.isLocal() ? "Read captured · unverified" : "Checking…");
-        if (!web.send(event)) { gate.reset(); notice("Verifier disconnected. Scan again."); }
+        if (!web.send(event)) { gate.reset(); notice("Verifier disconnected. Scan again."); return false; }
+        return true;
     }
 
     @Override public void error(String code) {
@@ -320,11 +388,17 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             shouldShowRequestPermissionRationale(Manifest.permission.CAMERA),
             getSharedPreferences("camera-permission", MODE_PRIVATE).getBoolean("denied", false));
         return capabilitySnapshot(BuildConfig.VERSION_NAME, cameraAvailable, permission,
-            nfc.supported(), nfc.available(), nfc.isReading());
+            nfc.supported(), nfc.available(), nfc.isReading(), web != null && web.version() == 2);
     }
 
     static JSONObject capabilitySnapshot(String version, boolean cameraAvailable, String cameraPermission,
                                          boolean nfcSupported, boolean nfcAvailable, boolean nfcReading) {
+        return capabilitySnapshot(version, cameraAvailable, cameraPermission, nfcSupported, nfcAvailable, nfcReading, false);
+    }
+
+    /** With tags (wire v2) formats add tag-uid and tag-sun, and continuous says tags need no tagRead. */
+    static JSONObject capabilitySnapshot(String version, boolean cameraAvailable, String cameraPermission,
+                                         boolean nfcSupported, boolean nfcAvailable, boolean nfcReading, boolean tags) {
         JSONObject capabilities = new JSONObject();
         put(capabilities, "platform", "android");
         put(capabilities, "appVersion", version.length() <= 32 ? version : version.substring(0, 32));
@@ -342,7 +416,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         put(nfc, "available", available); put(nfc, "reading", available && nfcReading);
         JSONArray formats = new JSONArray();
         if (nfcSupported) formats.put("wallet-vas");
-        put(nfc, "formats", formats); put(capabilities, "nfc", nfc);
+        if (nfcSupported && tags) { formats.put("tag-uid"); formats.put("tag-sun"); }
+        put(nfc, "formats", formats);
+        if (tags) put(nfc, "continuous", nfcSupported); put(capabilities, "nfc", nfc);
 
         JSONObject vas = new JSONObject();
         put(vas, "deviceSupported", nfcSupported); put(vas, "available", false);
@@ -368,8 +444,8 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         web.send(event);
     }
 
-    static JSONObject message(String event) {
-        JSONObject json = new JSONObject(); put(json, "version", 1); put(json, "event", event); return json;
+    private JSONObject message(String event) {
+        JSONObject json = new JSONObject(); put(json, "version", web == null ? 1 : web.version()); put(json, "event", event); return json;
     }
     static void put(JSONObject json, String key, Object value) {
         try { json.put(key, value); }
