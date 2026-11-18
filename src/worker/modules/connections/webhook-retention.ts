@@ -1,4 +1,4 @@
-import type { UpstreamRecord } from '../../connectors/types.ts';
+import type { WebhookDelivery } from '../../connectors/types.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, UnavailableError } from '../../platform/errors.ts';
@@ -34,12 +34,10 @@ export {
 } from './webhook-retention-recovery.ts';
 
 type WebhookJob = JobOf<'connection.webhook'>;
-type Verified = {
-  eventId: string;
-  refs: string[];
-  records?: Record<string, UpstreamRecord>;
-  deleted?: string[];
-};
+type Verified = Pick<
+  WebhookDelivery,
+  'eventId' | 'refs' | 'records' | 'deleted' | 'createRefs' | 'versions'
+>;
 
 /**
  * Store the signed bytes and all parsed chunks before acknowledging ingress or enqueueing.
@@ -89,7 +87,13 @@ export async function stageRetainedWebhook(
         source: 'ingress',
         payload: {
           refs,
-          items: itemsFor(refs, verified.records, verified.deleted),
+          items: itemsFor(
+            refs,
+            verified.records,
+            verified.deleted,
+            verified.createRefs,
+            verified.versions,
+          ),
           rawBody: i === 0 ? body : null,
           credentialKeysetCommitment,
           ...(i > 0 ? { chunk: i / MAX_RECORDS_PER_STEP } : {}),

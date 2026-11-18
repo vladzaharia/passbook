@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { RecipeIdSchema } from '../../../shared/contracts/connections.ts';
+import { parseJsonBody } from '../lib/decode.ts';
 import {
-  parseJsonBody,
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   verifySignedRequest,
@@ -9,11 +10,20 @@ import {
 import { isAllowedHeaderName } from '../lib/http.ts';
 import { getPointer, isPointer } from '../lib/pointer.ts';
 import { type ConnectorDefinition, ConnectorError, type UpstreamRecord } from '../types.ts';
+import { RECIPE_INFOS, RECIPES, verifyRecipe } from './recipes/index.ts';
 
 const MAX_RECORDS = 100;
 const pointer = z.string().max(200).refine(isPointer, 'Not a JSON pointer.');
 
 const config = z.object({
+  recipe: RecipeIdSchema.default('custom').meta({
+    'x-label': 'Sender',
+    'x-help': 'Fixed once the connection exists.',
+  }),
+  acceptTestEvents: z
+    .boolean()
+    .default(false)
+    .meta({ 'x-label': 'Accept test-mode events', 'x-group': 'Advanced' }),
   recordsPointer: pointer
     .default('/records')
     .meta({ 'x-label': 'Records', 'x-help': 'Where the list of records sits in the body.' }),
@@ -46,14 +56,20 @@ const config = z.object({
 /** Records arrive in the signed webhook body; nothing is fetched. */
 const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
   type: 'webhook-push',
-  version: 1,
+  version: 2,
   displayName: 'Webhook push',
   description: 'Your system sends signed records.',
   capabilities: { webhook: true },
   webhookReferenceMode: 'embedded-required',
   configSchema: config,
   outputFields: {},
+  fixedConfig: ['recipe'],
+  recipes: RECIPE_INFOS,
   defaults: { intervalSeconds: 3600, maxConcurrency: 1, requestsPerMinute: 60, timeoutMs: 15_000 },
+
+  migrate(_old, stored) {
+    return config.parse({ ...(stored as object), recipe: 'custom' });
+  },
 
   async test(ctx) {
     if (!ctx.webhookSecret) throw new ConnectorError('CONFIG', { permanent: true });
@@ -66,7 +82,10 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
 
   async verifyWebhook(ctx, req) {
     const c = ctx.connection.config;
-    const { body, signature } = await verifySignedRequest(req, {
+    if (c.recipe !== 'custom') {
+      return verifyRecipe(RECIPES[c.recipe], ctx, req, { acceptTestEvents: c.acceptTestEvents });
+    }
+    const { body, signature, signedAt, usedPrevious } = await verifySignedRequest(req, {
       secrets: webhookSecretsOf(ctx),
       now: ctx.now(),
       signatureHeader: c.signatureHeader,
@@ -103,7 +122,14 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
       typeof rawId === 'string' || typeof rawId === 'number'
         ? String(rawId).slice(0, 200)
         : `sig:${signature.slice(0, 32)}`;
-    return { eventId, refs, records, deleted };
+    return {
+      eventId,
+      refs,
+      records,
+      deleted,
+      signedAt,
+      ...(usedPrevious ? { usedPreviousSecret: true as const } : {}),
+    };
   },
 };
 export default definition;

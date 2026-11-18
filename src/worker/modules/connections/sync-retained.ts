@@ -4,6 +4,7 @@ import type { ConnectionRow } from './repo.ts';
 import { validSyncEpochs } from './repo-pass-snapshot.ts';
 import type { SyncPass } from './repo-passes.ts';
 import type { Change } from './sync-apply.ts';
+import { matchesVoidWhen } from './void-when.ts';
 import type { RetainedWebhookCandidate, RetainedWebhookClaim } from './webhook-retention-items.ts';
 
 export type RetainedClaimBinding = Extract<RetainedWebhookCandidate, { kind: 'existing' | 'new' }>;
@@ -33,7 +34,12 @@ export function retainedCandidate(
   credentialKeysetCommitment: string,
 ): RetainedWebhookCandidate {
   if (!pass) {
-    if (change.deleted || !conn.autoCreate || !conn.defaultTemplateId) return { kind: 'no-effect' };
+    // Nothing to claim when the record cannot create: update-only, or it only voids.
+    const cannotCreate =
+      change.create === false || (!!change.record && matchesVoidWhen(conn.voidWhen, change.record));
+    if (change.deleted || cannotCreate || !conn.autoCreate || !conn.defaultTemplateId) {
+      return { kind: 'no-effect' };
+    }
     return {
       kind: 'new',
       reservedPassId: sctx.ids.id(),

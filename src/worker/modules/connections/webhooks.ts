@@ -1,6 +1,8 @@
-import type { UpstreamRecord } from '../../connectors/types.ts';
+import { BODY_FUTURE_SKEW_MS, MAX_REPLAY_AGE_MS, withinWindow } from '../../connectors/lib/hmac.ts';
+import type { WebhookDelivery } from '../../connectors/types.ts';
 import type { NewConnectionWebhookJob } from '../../jobs/types.ts';
 import { mintVerifiedWebhook, withVerifiedWebhook } from '../../jobs/webhook-ingress.ts';
+import { claim } from '../../platform/counters.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import {
   AppError,
@@ -25,6 +27,8 @@ import {
   stageRetainedWebhook,
 } from './webhook-retention.ts';
 
+const HOUR_MS = 3_600_000;
+
 /**
  * Verifies the signature, dedupes on the event id and queues the work. A duplicate delivery is
  * acknowledged without being processed again. Unknown, disabled and non-webhook connections look
@@ -41,18 +45,15 @@ export async function receiveWebhook(
     throw new NotFoundError('Not found.');
   }
   if (!(await isOrgActive(sctx, conn.orgId))) throw new NotFoundError('Not found.');
-  let verified: {
-    eventId: string;
-    refs: string[];
-    records?: Record<string, UpstreamRecord>;
-    deleted?: string[];
-  };
+  let verified: WebhookDelivery;
   let rawRequest: Request;
+  let boundsReplay = false;
   try {
     rawRequest = req.clone();
     const prep = await prepare(sctx, conn);
     if (!prep.def.verifyWebhook) throw new NotFoundError('Not found.');
     verified = await prep.def.verifyWebhook(prep.cc, req);
+    boundsReplay = (prep.def.recipes?.length ?? 0) > 0;
   } catch (error) {
     if (error instanceof NotFoundError) throw error;
     const { code } = classify(error);
@@ -63,6 +64,41 @@ export async function receiveWebhook(
       throw new BadRequestError('The webhook body is invalid.', 'WEBHOOK_PAYLOAD');
     sctx.log.warn('connection.webhook_unavailable', { connectionId, code });
     throw new NotFoundError('Not found.');
+  }
+
+  if (
+    verified.usedPreviousSecret &&
+    (await claim(
+      sctx.env.DB,
+      `webhook-prev-secret:${conn.id}`,
+      Math.floor(sctx.clock.now() / HOUR_MS) * HOUR_MS,
+    ))
+  ) {
+    // At most once an hour per connection: the sender has not switched to the new secret yet.
+    sctx.log.info('connection.webhook_prev_secret', { connectionId, code: 'WEBHOOK_PREV_SECRET' });
+  }
+  if (verified.ignored) {
+    // Acknowledged so the sender does not retry or disable the endpoint; nothing is stored or applied.
+    sctx.log.info('connection.webhook_ignored', {
+      connectionId,
+      code: 'WEBHOOK_EVENT_IGNORED',
+      kind: verified.ignored,
+    });
+    return;
+  }
+  // Dedupe alone expires after the retention window, so a recipe delivery also needs a signed time in it.
+  if (
+    boundsReplay &&
+    (verified.signedAt === undefined ||
+      !withinWindow(sctx.clock.now(), verified.signedAt, MAX_REPLAY_AGE_MS, BODY_FUTURE_SKEW_MS))
+  ) {
+    throw new UnauthenticatedError('The webhook signature is invalid.', 'WEBHOOK_SIGNATURE');
+  }
+
+  // A far-future source version would pin the ref: every later record would read as stale.
+  const horizon = sctx.clock.now() + BODY_FUTURE_SKEW_MS;
+  if (Object.values(verified.versions ?? {}).some((v) => !(Number.isFinite(v) && v <= horizon))) {
+    throw new BadRequestError('The webhook body is invalid.', 'WEBHOOK_PAYLOAD');
   }
 
   // The signature is verified: from here the connection stages its own work.

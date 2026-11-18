@@ -14,7 +14,7 @@ import type { CreateInput, UpdateInput } from './service-shared.ts';
  */
 type IssuingInput = Pick<
   CreateInput,
-  'autoCreate' | 'autoEmail' | 'defaultTemplateId' | 'mapping' | 'onMissing'
+  'autoCreate' | 'autoEmail' | 'defaultTemplateId' | 'mapping' | 'onMissing' | 'voidWhen'
 >;
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
@@ -26,6 +26,7 @@ export function createIssues(input: IssuingInput): boolean {
     input.autoEmail === true ||
     input.defaultTemplateId !== undefined ||
     input.mapping !== undefined ||
+    (input.voidWhen?.length ?? 0) > 0 ||
     (input.onMissing !== undefined && input.onMissing !== 'flag')
   );
 }
@@ -37,6 +38,9 @@ function switchesUp(input: UpdateInput, conn: ConnectionRow): boolean {
     (input.autoEmail === true && !conn.autoEmail) ||
     (input.defaultTemplateId !== undefined && input.defaultTemplateId !== conn.defaultTemplateId) ||
     (input.mapping !== undefined && !same(input.mapping, conn.mapping)) ||
+    (input.voidWhen !== undefined &&
+      input.voidWhen.length > 0 &&
+      !same(input.voidWhen, conn.voidWhen)) ||
     (input.onMissing !== undefined &&
       input.onMissing !== conn.onMissing &&
       input.onMissing !== 'flag')
@@ -61,6 +65,7 @@ export async function isArmed(db: D1Database, conn: ConnectionRow): Promise<bool
     conn.autoCreate ||
     conn.autoEmail ||
     conn.onMissing === 'void' ||
+    conn.voidWhen.length > 0 ||
     (await hasBoundPasses(db, conn.id))
   );
 }

@@ -7,6 +7,7 @@ import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import type { RetainedIssuanceClaim } from '../passes/repo-write-retained.ts';
 import { getDeps } from './deps.ts';
 import { applyMapping } from './mapping.ts';
+import { gateRecord } from './record-gates.ts';
 import {
   describeFailure,
   errorCode,
@@ -125,6 +126,12 @@ export interface ApplyIncomingOptions {
   /** Passes prefetched for this batch, keyed by ref (null = none linked). */
   passes?: Map<string, SyncPass | null>;
   samples?: string[];
+  /** False: a record with no bound pass is skipped, not created (webhook recipes' createRefs). */
+  createAllowed?: boolean;
+  /** Source order of the record; one older than the last applied for this ref is skipped. */
+  sourceVersion?: number;
+  /** The delivery's event id: breaks a tie between records of the same source version. */
+  sourceEvent?: string;
 }
 
 /**
@@ -196,6 +203,18 @@ export async function applyIncoming(
       : result;
   }
 
+  const gated = await gateRecord(
+    sctx,
+    conn,
+    ref,
+    incoming.record,
+    snapshot,
+    pass,
+    options,
+    now,
+    nextSyncAt,
+  );
+  if (gated) return gated;
   const fields = applyMapping(conn.mapping, incoming.record);
   const fail = async (error: unknown): Promise<Applied> => {
     if (!snapshot && (await fenced())) return { outcome: 'fenced' };

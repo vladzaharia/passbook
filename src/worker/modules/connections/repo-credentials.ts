@@ -1,5 +1,5 @@
 import type { Envelope } from '../../platform/crypto.ts';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { type ConnectionWriter, connectionAuthPredicate } from './access.ts';
 
 // Credentials
@@ -91,6 +91,7 @@ export async function deleteCredentials(db: D1Database, ids: (string | null)[]):
         db,
         `DELETE FROM credentials WHERE id = ? AND NOT EXISTS (
         SELECT 1 FROM connections WHERE credential_id = credentials.id OR webhook_credential_id = credentials.id
+          OR webhook_prev_credential_id = credentials.id
       ) AND NOT EXISTS (
         SELECT 1 FROM signing_identities WHERE credential_id = credentials.id
       )`,
@@ -114,7 +115,8 @@ export async function discardCredential(
     `DELETE FROM credentials WHERE id = ? AND org_id = ? AND kek_version = ?
      AND iv = ? AND wrapped_dek = ? AND ciphertext = ?
      AND NOT EXISTS (SELECT 1 FROM connections
-       WHERE credential_id = credentials.id OR webhook_credential_id = credentials.id)
+       WHERE credential_id = credentials.id OR webhook_credential_id = credentials.id
+         OR webhook_prev_credential_id = credentials.id)
      AND NOT EXISTS (SELECT 1 FROM signing_identities WHERE credential_id = credentials.id)`,
     [
       credential.id,
@@ -124,5 +126,37 @@ export async function discardCredential(
       credential.envelope.wrappedDek,
       credential.envelope.ciphertext,
     ],
+  );
+}
+
+/** Connections whose previous webhook secret is past its overlap. */
+export function listExpiredPreviousSecrets(
+  db: D1Database,
+  now: number,
+  limit: number,
+): Promise<{ id: string; orgId: string; credentialId: string }[]> {
+  return all<{ id: string; org_id: string; webhook_prev_credential_id: string }>(
+    db,
+    `SELECT id, org_id, webhook_prev_credential_id FROM connections
+     WHERE webhook_prev_credential_id IS NOT NULL AND webhook_prev_until <= ? LIMIT ?`,
+    [now, limit],
+  ).then((rows) =>
+    rows.map((r) => ({ id: r.id, orgId: r.org_id, credentialId: r.webhook_prev_credential_id })),
+  );
+}
+
+/** True when another connection holds this secret fingerprint as its current or previous secret. */
+export async function secretFingerprintTaken(
+  db: D1Database,
+  fingerprint: string,
+  ownConnectionId: string | null,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 FROM connections WHERE (webhook_secret_fp = ? OR webhook_prev_secret_fp = ?)
+         AND id IS NOT ? LIMIT 1`,
+      [fingerprint, fingerprint, ownConnectionId],
+    )) !== null
   );
 }

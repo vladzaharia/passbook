@@ -17,6 +17,12 @@ import { listConnections } from './repo-list.ts';
 import { listRuns, runStats } from './repo-runs.ts';
 import { passCountsFor } from './repo-stats.ts';
 import { purgeConnectionWebhooks } from './repo-sync.ts';
+import {
+  assertSecretFree,
+  pastesSecret,
+  rethrowSecretReuse,
+  secretFingerprint,
+} from './secret-fingerprint.ts';
 import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
 import {
   auditActor,
@@ -34,6 +40,7 @@ import {
   parseWith,
   requireConnector,
 } from './validate.ts';
+import { validateVoidWhen } from './void-when.ts';
 
 export async function listAll(
   sctx: ServiceContext,
@@ -97,6 +104,7 @@ export async function create(
     (def.capabilities.poll ? 'poll' : def.capabilities.webhook ? 'webhook' : 'manual');
   assertModeSupported(def, mode);
   validateMapping(input.mapping);
+  if (input.voidWhen) validateVoidWhen(input.voidWhen);
   assertPointer(input.holderEmailField, 'holderEmailField');
   if (input.defaultTemplateId)
     await assertTemplateUsable(sctx, input.orgId, input.defaultTemplateId);
@@ -185,10 +193,14 @@ export async function create(
       );
       newCredentials.push(row.webhookCredentialId);
     }
+    if (input.webhookSecret && pastesSecret(def, row.config)) {
+      row.webhookSecretFp = await secretFingerprint(sctx, input.webhookSecret);
+      await assertSecretFree(sctx, row.webhookSecretFp, null);
+    }
     await insertConnection(sctx, row, { orgId: row.orgId, authority, issuing: issues });
   } catch (error) {
     await dropCredentials(sctx, newCredentials);
-    throw error;
+    return rethrowSecretReuse(sctx, error);
   }
   await recordAudit(sctx, {
     orgId: row.orgId,

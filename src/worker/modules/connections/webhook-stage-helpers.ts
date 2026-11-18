@@ -72,10 +72,14 @@ export function itemsFor(
   refs: string[],
   records?: Record<string, UpstreamRecord>,
   deleted?: string[],
+  createRefs?: string[],
+  versions?: Record<string, number>,
 ): InboxItem[] {
   return refs.map((ref) => ({
     ref,
     record: records?.[ref] ?? null,
     deleted: deleted?.includes(ref) ?? false,
+    ...(createRefs ? { create: createRefs.includes(ref) } : {}),
+    ...(versions?.[ref] === undefined ? {} : { version: versions[ref] }),
   }));
 }

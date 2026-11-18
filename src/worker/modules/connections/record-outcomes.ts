@@ -136,3 +136,47 @@ export async function markIncomingMissing(
     throw error;
   }
 }
+
+/**
+ * A void rule matched the upstream record: void the bound pass (RECORD_VOIDED). Never creates, never
+ * unvoids; a voided pass has no snapshot, so it reads as unlinked and nothing changes.
+ */
+export async function markIncomingVoided(
+  sctx: ServiceContext,
+  conn: ConnectionRow,
+  snapshot: SyncSnapshot | null,
+  pass: SyncPass | null,
+  preserveBinding: boolean,
+): Promise<Applied> {
+  if (!snapshot) return { outcome: 'unlinked' };
+  try {
+    const result = await getDeps().markPassMissing(sctx, snapshot, 'void', 'RECORD_VOIDED');
+    const fence = mutationFence(result, snapshot, pass, preserveBinding);
+    if (fence) return fence;
+    return {
+      outcome: 'changed',
+      version: result.version,
+      status: 'voided',
+      identityId: result.identityId,
+      credentialGeneration: result.credentialGeneration,
+      lifecycleGeneration: result.lifecycleGeneration,
+      transferPending: result.transferPending,
+      credentialKeysetCommitment: result.credentialKeysetCommitment,
+      templateId: result.templateId,
+      templateVersion: result.templateVersion,
+      releaseId: result.releaseId,
+      pushQueued: result.pushQueued,
+      ownerUserId: result.ownerUserId,
+      linkGeneration: result.linkGeneration,
+    };
+  } catch (error) {
+    const blocked = releaseBlockCode(error);
+    if (blocked) return { outcome: 'release_blocked', releaseBlocked: blocked };
+    if (error instanceof AppError && error.code === 'TEMPLATE_CONTENT_CHANGED') throw error;
+    if (error instanceof ConflictError) {
+      sctx.log.info('connection.record_fenced', { connectionId: conn.id, code: error.code });
+      return { outcome: 'fenced' };
+    }
+    throw error;
+  }
+}

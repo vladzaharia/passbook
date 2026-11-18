@@ -220,11 +220,15 @@ export async function applyConnectionRecord(
   };
 }
 
-/** Upstream record missing: flag or void only the exact pass that was fetched. */
+/**
+ * Upstream record missing (or matching a void rule): flag or void only the exact pass that was fetched.
+ * `code` is the sync error code the pass carries afterwards.
+ */
 export async function markPassMissing(
   ctx: ServiceContext,
   context: ConnectionPassContext,
   mode: 'flag' | 'void',
+  code: 'RECORD_MISSING' | 'RECORD_VOIDED' = 'RECORD_MISSING',
 ): Promise<ConnectionPassResult> {
   context = structuredClone(context);
   const pass = await checkedPass(ctx, context);
@@ -243,7 +247,7 @@ export async function markPassMissing(
           }
         : {}),
       expectedHolder: pass,
-      connectionState: { syncErrorCode: 'RECORD_MISSING' },
+      connectionState: { syncErrorCode: code },
       mutate: () => ({ status: 'voided' }),
     });
     if ((await captureConnectionTransferPending(ctx.env.DB, result.pass)) !== false)
@@ -265,7 +269,7 @@ export async function markPassMissing(
   }
   const proof = context.retainedReleaseProof;
   const release = proof ? await retainedRelease(ctx, pass, proof) : undefined;
-  const state = await applyConnectionState(ctx.env.DB, context, pass, 'RECORD_MISSING', release);
+  const state = await applyConnectionState(ctx.env.DB, context, pass, code, release);
   if (!state) {
     if (proof) await retainedRelease(ctx, pass, proof, release);
     throw stalePass();

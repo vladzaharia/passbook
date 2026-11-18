@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ConnectorError } from '../types.ts';
+import { decodeBase64_32, decodeHex32, decodeJsonStrict, parseStripeSignature } from './decode.ts';
 import {
-  decodeBase64_32,
-  decodeHex32,
-  decodeJsonStrict,
-  parseStripeSignature,
   REPLAY_WINDOW_MS,
   signWebhook,
   VERIFIERS,

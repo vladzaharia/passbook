@@ -50,6 +50,7 @@ const switches = (): [string, Record<string, unknown>][] => [
   ['defaultTemplateId', { defaultTemplateId: kit.templateId }],
   ['mapping', { mapping: { name: { from: 'name' } } }],
   ['onMissing', { onMissing: 'void' }],
+  ['voidWhen', { voidWhen: [{ from: '/status', op: 'present' }] }],
 ];
 
 describe('issuing switches on a connection', () => {
@@ -117,6 +118,7 @@ describe('issuing switches on a connection', () => {
     ['autoCreate', { autoCreate: true, defaultTemplateId: undefined }],
     ['autoEmail', { autoEmail: true }],
     ['onMissing void', { onMissing: 'void' }],
+    ['voidWhen', { voidWhen: [{ from: '/status', op: 'present' }] }],
   ] as const)(
     'refuses a source change by an integration_admin on a connection armed by %s',
     async (_name, armed) => {

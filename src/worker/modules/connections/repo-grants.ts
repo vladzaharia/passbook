@@ -49,6 +49,7 @@ export interface ConnectionActor {
 const CONNECTION_TABLES = [
   'connections',
   'connection_runs',
+  'connection_ref_versions',
   'connection_webhook_items',
   'connection_webhook_retention',
   'connection_webhook_legacy_sources',
@@ -164,6 +165,8 @@ export interface ConnectionIs {
   /** The connection's sync mode (poll, webhook, ...), not the live/test column. */
   syncMode?: string;
   enabled?: boolean;
+  /** The previous webhook credential the caller read (guards a sweep against a rotation in between). */
+  prevCredentialId?: string;
   /** Only for a closing (platform job) grant, which has no org of its own: names the org the row must be in. */
   orgId?: string;
 }
@@ -174,6 +177,7 @@ export function connectionIs(c: ConnectionIs): Check {
   if (c.generation !== undefined) where.generation = c.generation;
   if (c.syncMode !== undefined) where.mode = c.syncMode;
   if (c.enabled) where.enabled = 1;
+  if (c.prevCredentialId !== undefined) where.webhook_prev_credential_id = c.prevCredentialId;
   if (c.orgId !== undefined) where.org_id = c.orgId;
   return exactlyOne('connections', where, undefined, 'config');
 }

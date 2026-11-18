@@ -595,7 +595,7 @@ describe('receiveWebhook', () => {
   it('uses the rotated secret and drops the old one', async () => {
     const { dto, secret } = await pushConn();
     const { rotateWebhookSecret } = await import('./actions.ts');
-    const rotated = await rotateWebhookSecret(kit.sctx, kit.actor, dto.id);
+    const rotated = await rotateWebhookSecret(kit.sctx, kit.actor, dto.id, undefined, 0);
     await expect(
       receiveWebhook(kit.sctx, dto.id, await signedRequest(secret, event('evt-r1'))),
     ).rejects.toMatchObject({ code: 'WEBHOOK_SIGNATURE' });

@@ -38,6 +38,8 @@ export interface Seams {
   releaseLookups: { templateId: string; orgId: string; mode: string; provider: string }[];
   created: Parameters<ConnectionDeps['createPassFromConnection']>[1][];
   missing: { passId: string; mode: 'flag' | 'void' }[];
+  /** Passes voided by a void rule (code RECORD_VOIDED). */
+  voided: { passId: string }[];
   pushes: { passId: string; reason: string }[];
   jobs: Job[];
   /** What applyConnectionRecord reports. */
@@ -82,6 +84,7 @@ export async function makeKit(options: { realReleases?: boolean } = {}): Promise
     releaseLookups: [],
     created: [],
     missing: [],
+    voided: [],
     pushes: [],
     jobs: [],
     changed: true,
@@ -168,7 +171,7 @@ export async function makeKit(options: { realReleases?: boolean } = {}): Promise
       seams.created.push(input);
       return { passId: input.reservedPassId ?? `new-${input.externalRef}` };
     },
-    markPassMissing: async (ctx, input, mode) => {
+    markPassMissing: async (ctx, input, mode, code) => {
       const connection = await getConnection(ctx.env.DB, input.connectionId);
       if (
         !connection ||
@@ -177,7 +180,8 @@ export async function makeKit(options: { realReleases?: boolean } = {}): Promise
       ) {
         throw new ConflictError('The connection changed. Retry.', 'PASS_CONFLICT');
       }
-      seams.missing.push({ passId: input.passId, mode });
+      if (code === 'RECORD_VOIDED') seams.voided.push({ passId: input.passId });
+      else seams.missing.push({ passId: input.passId, mode });
       return {
         version: input.expectedVersion,
         ...(await passRelease(ctx, input.passId)),

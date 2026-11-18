@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { Json } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
+import { parseJsonBody } from '../lib/decode.ts';
 import {
-  parseJsonBody,
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   verifySignedRequest,
@@ -286,7 +286,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
 
   async verifyWebhook(ctx, req) {
     const { webhook } = ctx.connection.config;
-    const { body, signature } = await verifySignedRequest(req, {
+    const { body, signature, usedPrevious } = await verifySignedRequest(req, {
       secrets: webhookSecretsOf(ctx),
       now: ctx.now(),
       signatureHeader: webhook.signatureHeader,
@@ -306,7 +306,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
       typeof rawId === 'string' || typeof rawId === 'number'
         ? String(rawId).slice(0, 200)
         : `sig:${signature.slice(0, 32)}`;
-    return { eventId, refs };
+    return { eventId, refs, ...(usedPrevious ? { usedPreviousSecret: true as const } : {}) };
   },
 };
 export default definition;
