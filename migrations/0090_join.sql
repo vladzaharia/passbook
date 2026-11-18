@@ -22,6 +22,8 @@ CREATE TABLE join_links (
   UNIQUE (org_id, mode, template_id)
 );
 
+CREATE INDEX join_links_template ON join_links (template_id);
+
 -- The shape of pass_token_seals: org-bearing, written through the grant that rotates the token.
 CREATE TABLE join_link_seals (
   link_id TEXT PRIMARY KEY REFERENCES join_links (id) ON DELETE CASCADE,
