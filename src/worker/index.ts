@@ -8,6 +8,7 @@ export { ScanHub } from './modules/scan/scan-hub.ts';
 export { Broadcast } from './workflows/broadcast.ts';
 export { BulkReissue } from './workflows/bulk-reissue.ts';
 export { ConnectionSync } from './workflows/connection-sync.ts';
+export { PassImport } from './workflows/pass-import.ts';
 export { TemplateImport } from './workflows/template-import.ts';
 
 /** Holds routes only. Stores are built from each request's env inside the app. */
@@ -18,6 +19,7 @@ export default {
     app ??= createApp({ stores: createAuthStores, hostPolicy: true });
     return app.fetch(request, env, ctx);
   },
+  // Serves wallet-jobs, its DLQ and wallet-webhooks (separate queue so tenant receivers never delay push or email).
   queue: (batch: MessageBatch<unknown>, env: AppEnv, ctx: ExecutionContext) =>
     handleQueue(batch, env, ctx),
   scheduled: (controller: ScheduledController, env: AppEnv, ctx: ExecutionContext) =>

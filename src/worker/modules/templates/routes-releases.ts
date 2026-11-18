@@ -3,6 +3,7 @@ import {
   ApproveTemplateCandidateSchema,
   CreateTemplateCandidateSchema,
   IdParamSchema,
+  PromoteTemplateSchema,
   PublishTemplateReleaseSchema,
   RollbackTemplateReleaseSchema,
   TemplateApprovalSchema,
@@ -27,6 +28,7 @@ import {
   publishRelease,
   rollbackRelease,
 } from './releases.ts';
+import { promoteToLive } from './releases-promote.ts';
 
 type Router = OpenAPIHono<AppBindings>;
 
@@ -68,6 +70,30 @@ export function registerTemplateReleases(router: Router): void {
     async (c) =>
       c.json(
         await createCandidate(
+          serviceContext(c),
+          c.var.auth,
+          c.req.valid('param').id,
+          c.req.valid('json'),
+        ),
+        201,
+      ),
+  );
+
+  register(
+    router,
+    'templates',
+    {
+      method: 'post',
+      path: '/{id}/candidates/promote',
+      summary: 'Promote a version released in Test to a Live candidate',
+      params: IdParamSchema,
+      body: PromoteTemplateSchema,
+      response: TemplateCandidateSchema,
+      status: 201,
+    },
+    async (c) =>
+      c.json(
+        await promoteToLive(
           serviceContext(c),
           c.var.auth,
           c.req.valid('param').id,

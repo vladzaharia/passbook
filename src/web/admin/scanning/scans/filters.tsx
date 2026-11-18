@@ -5,12 +5,24 @@ import { Button, FormField, Input, Select } from '@/web/ui/index.ts';
 import { useScannerPages } from '../queries.ts';
 import { useScanEvents } from '../scanner-api.ts';
 import type { ScanningSearch } from '../search.ts';
+import { ExportButton } from './export-button.tsx';
+import { useStaffOptions } from './staff-options.ts';
 
-export function ScanFilters({ search, orgId }: { search: ScanningSearch; orgId?: string }) {
+export function ScanFilters({
+  search,
+  orgId,
+  from,
+}: {
+  search: ScanningSearch;
+  orgId?: string;
+  /** Start of the listed window; the export covers the same one. */
+  from?: number;
+}) {
   const navigate = useNavigate();
   const [q, setQ] = useState(search.q ?? '');
   const scanners = useScannerPages(orgId, false, Boolean(orgId));
   const events = useScanEvents(orgId, Boolean(orgId));
+  const staff = useStaffOptions(orgId);
   const set = (patch: Partial<ScanningSearch>) =>
     void navigate({ to: '.', search: (prev) => ({ ...prev, ...patch }), replace: true });
   return (
@@ -67,6 +79,19 @@ export function ScanFilters({ search, orgId }: { search: ScanningSearch; orgId?:
                 .flatMap((page) => page.items)
                 .filter((s) => s.orgId === orgId)
                 .map((s) => ({ value: s.id, label: s.name })) ?? []),
+            ]}
+          />
+        )}
+      </FormField>
+      <FormField label="Staff">
+        {(p) => (
+          <Select
+            {...p}
+            value={search.staffId ?? 'all'}
+            onValueChange={(value) => set({ staffId: value === 'all' ? undefined : value })}
+            options={[
+              { value: 'all', label: 'All staff' },
+              ...(staff.data?.items.map((s) => ({ value: s.id, label: s.name })) ?? []),
             ]}
           />
         )}
@@ -132,6 +157,9 @@ export function ScanFilters({ search, orgId }: { search: ScanningSearch; orgId?:
       >
         Clear filters
       </Button>
+      {orgId && from !== undefined ? (
+        <ExportButton orgId={orgId} from={from} search={search} />
+      ) : null}
     </div>
   );
 }

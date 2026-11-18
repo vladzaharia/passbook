@@ -7,6 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { loadUserAccessRevision } from '../passes/repo-access-revision.ts';
 import { tenantOrgAccessRevision } from '../passes/repo-authority.ts';
+import type { DeferredStarter } from '../passes/repo-bulk-principal.ts';
 
 /**
  * Who a queued email acts for. Captured when the work is queued; checked again when it runs
@@ -56,6 +57,30 @@ export function actorOfAuthority(
         mode: authority.mode,
         scope: authority.scope,
         ...(authority.keyOrgId === null ? { orgId: authority.orgId } : {}),
+      };
+}
+
+/** The durable actor of an import's starter: the revisions it captured at the commit. */
+export function actorOfStarter(
+  starter: DeferredStarter,
+  orgId: string,
+  mode: 'live' | 'test',
+): DeliveryActor {
+  return starter.kind === 'membership'
+    ? {
+        kind: 'membership',
+        membershipId: starter.membershipId,
+        orgRevision: starter.orgAccessRevision,
+        ...(starter.userAccessRevision > 0 ? { userRevision: starter.userAccessRevision } : {}),
+        mode,
+      }
+    : {
+        kind: 'api_key',
+        keyId: starter.keyId,
+        orgRevision: starter.orgAccessRevision,
+        mode: starter.mode,
+        scope: 'passes:write',
+        ...(starter.keyOrgId === null ? { orgId } : {}),
       };
 }
 

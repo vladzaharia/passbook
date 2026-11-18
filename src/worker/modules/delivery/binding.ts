@@ -71,6 +71,8 @@ export const PassEmailIntentSchema = z.object({
   to: z.string(),
   attach: z.boolean(),
   issuanceId: z.string().optional(),
+  /** Queued for a join link's address: the mail says why it was sent. */
+  joined: z.boolean().optional(),
   /** Who queued it; checked again when the mail goes out. Always written; absent only on rows queued before the cutover. */
   actor: DeliveryActorSchema.optional(),
   /** The second authority of a two-authority request. */

@@ -1,42 +1,35 @@
 import { Link } from '@tanstack/react-router';
 import { Upload } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
-import { cn } from '../../lib/cn.ts';
 import { useArrivalMode } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
-import { Button, EmptyState, ErrorState, PageHeader } from '../../ui/index.ts';
+import { Buddy, Button, EmptyState, ErrorState, FilterBar, PageHeader } from '../../ui/index.ts';
 import { TemplateGallerySkeleton } from '../templates/gallery.tsx';
 import { useBlueprints } from './api.ts';
 import { BlueprintTile } from './blueprint-tile.tsx';
+import { entriesOf, groupEntries, matches } from './gallery-model.ts';
 import { UseBlueprintDialog } from './use-dialog.tsx';
 
 const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
-/** Gallery order: Membership, Poster, the store cards side by side, Coupon, Event, Boarding. */
-const RANK: Record<string, number> = {
-  generic: 0,
-  posterGeneric: 1,
-  storeCard: 2,
-  coupon: 3,
-  eventTicket: 4,
-  boardingPass: 5,
-};
-const rank = (b: TemplateSummaryDto) => b.styles.reduce((r, s) => Math.max(r, RANK[s] ?? 6), 0);
 
-/** Platform designs to start from: read only, one tile each; Use makes a template in an org. */
+/**
+ * Platform designs to start from, grouped by the job they do. Read only: Use makes a tracked
+ * template in an org. The buddy sits on the search field, and is sorry when nothing matches.
+ */
 export function BlueprintsPage() {
   const list = useBlueprints();
   const { orgId, membership } = useOrgScope();
   const canUpload = membership?.capabilities.includes('templates:author') ?? false;
-  const items = useMemo(
-    () =>
-      [...(list.data?.items ?? [])].sort(
-        (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name),
-      ),
-    [list.data],
-  );
+  const [query, setQuery] = useState('');
+  const asked = useDeferredValue(query);
+  const entries = useMemo(() => entriesOf(list.data?.items ?? []), [list.data]);
+  const shown = useMemo(() => entries.filter((e) => matches(e, asked)), [entries, asked]);
+  const groups = useMemo(() => groupEntries(shown), [shown]);
   const arrival = useArrivalMode(list.isPending);
   const [using, setUsing] = useState<TemplateSummaryDto | null>(null);
+  const none = entries.length > 0 && shown.length === 0;
+  let index = 0;
   return (
     <>
       <PageHeader
@@ -60,20 +53,56 @@ export function BlueprintsPage() {
         />
       ) : list.isPending ? (
         <TemplateGallerySkeleton cards={7} />
-      ) : items.length === 0 ? (
+      ) : entries.length === 0 ? (
         <EmptyState art="template" title="No blueprints" />
       ) : (
-        <ul aria-label="Blueprints" className={cn('wl-dim', GRID)}>
-          {items.map((b, i) => (
-            <BlueprintTile
-              key={b.id}
-              blueprint={b}
-              index={i}
-              rise={arrival === 'rise'}
-              onUse={() => setUsing(b)}
+        <>
+          <div data-art-host="" className="relative mt-12 mb-6 sm:w-72">
+            <Buddy
+              size="sm"
+              at="end"
+              mood={none ? 'sad' : 'happy'}
+              scene={none ? 'sorry' : 'peek'}
             />
-          ))}
-        </ul>
+            <FilterBar
+              className="mb-0"
+              filters={[]}
+              onClear={() => setQuery('')}
+              search={{ value: query, onChange: setQuery, placeholder: 'Search blueprints' }}
+            />
+          </div>
+          <p role="status" className="sr-only">
+            {`${shown.length} blueprints`}
+          </p>
+          {none ? (
+            <EmptyState inline art="template" title="No blueprints match" />
+          ) : (
+            <div className="grid gap-8">
+              {groups.map((g) => (
+                <section key={g.id} aria-labelledby={`bp-group-${g.id}`}>
+                  <h2
+                    id={`bp-group-${g.id}`}
+                    className="mb-3 flex items-baseline gap-2 text-sm font-semibold text-fg-strong"
+                  >
+                    {g.label}
+                    <span className="text-xs font-normal text-fg-muted">{g.entries.length}</span>
+                  </h2>
+                  <ul aria-label={g.label} className={`wl-dim ${GRID}`}>
+                    {g.entries.map((entry) => (
+                      <BlueprintTile
+                        key={entry.id}
+                        entry={entry}
+                        index={index++}
+                        rise={arrival === 'rise'}
+                        onUse={setUsing}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+        </>
       )}
       {using ? (
         <UseBlueprintDialog

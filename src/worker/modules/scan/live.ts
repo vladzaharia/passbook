@@ -30,7 +30,16 @@ export const liveRowId = async (scanId: string): Promise<string> =>
 export const scanHub = (ctx: ServiceContext, orgId: string, mode: string) =>
   ctx.env.SCAN_HUB.getByName(`${orgId}:${mode}`);
 
-export function liveAttachment(ctx: ServiceContext, actor: ScanActor): LiveAttachment {
+/**
+ * The sealed attachment for a socket. A screen (`customer`, `monitor`) reads rows; `device` is the control
+ * socket of a scan-role device (paired scanner, never a till or a console): it carries `control`, `enroll`
+ * and `resolved` and no rows.
+ */
+export function liveAttachment(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  as: 'screen' | 'device' = 'screen',
+): LiveAttachment {
   const row = actor.scanner;
   if (
     actor.terminal ||
@@ -59,11 +68,24 @@ export function liveAttachment(ctx: ServiceContext, actor: ScanActor): LiveAttac
         ))
   )
     throw new UnauthenticatedError('Pair this screen to continue.', 'SCANNER_UNAUTHENTICATED');
-  if (row.deviceRole === 'scan')
-    throw new ForbiddenError('Choose a screen view in Scanning.', 'SCREEN_REQUIRED');
+  let role: LiveAttachment['role'];
+  if (as === 'device') {
+    if (row.deviceRole !== 'scan' || actor.principal !== 'scanner')
+      throw new ForbiddenError('Only a scanner opens a device connection.', 'DEVICE_REQUIRED');
+    role = 'device';
+  } else {
+    if (row.deviceRole === 'scan')
+      throw new ForbiddenError('Choose a screen view in Scanning.', 'SCREEN_REQUIRED');
+    role = row.deviceRole;
+  }
   const epochs = scanEpochsOf(actor);
   if (!epochs) throw epochsMissing();
   const capturedActor = cloneObservedScanActor(actor);
+  // A device socket outlives staff sign-in and sign-out: it is bound to the device, not to a person.
+  if (as === 'device') {
+    capturedActor.staff = null;
+    capturedActor.role = null;
+  }
   const observation = captureObservedScanningSession(capturedActor);
   if (capturedActor.scanningSession && !observation)
     throw new UnauthenticatedError('Pair this screen to continue.', 'SCANNER_UNAUTHENTICATED');
@@ -80,7 +102,7 @@ export function liveAttachment(ctx: ServiceContext, actor: ScanActor): LiveAttac
     orgId: actor.orgId,
     mode: actor.mode,
     scannerId: row.id,
-    role: row.deviceRole,
+    role,
     tokenHash: row.tokenHash ?? '',
     scannerCsrfProof: actor.scannerCsrfProof,
     credentialKeysetCommitment: actor.credentialKeysetCommitment,

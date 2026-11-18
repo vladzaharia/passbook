@@ -18,13 +18,15 @@ import {
   scopeOf,
 } from './authority-granted.ts';
 import { buildPart, type GrantPart } from './authority-include.ts';
+import { assertJobGrantInput, type JobGrantInput } from './authority-job-input.ts';
 import {
   buildInsertJoined,
   buildJoined,
   type InsertJoinedOptions,
   type JoinedOptions,
 } from './authority-joined.ts';
-import type { GrantScope, Mode, Principal } from './authority-principal.ts';
+import { joinLedgerRow, joinOnlyInserts, pinOf } from './authority-pin.ts';
+import type { GrantScope, Principal } from './authority-principal.ts';
 import {
   assertBudget,
   type BuiltStatement,
@@ -46,8 +48,8 @@ export type { AuditRow } from './authority-audit.ts';
 export { grantedBatch } from './authority-batch.ts';
 export type { GrantedStatement, GrantInput } from './authority-granted.ts';
 export { authorityDenial, sweepLeakedGrants } from './authority-granted.ts';
+export type { JobGrantInput } from './authority-job-input.ts';
 
-const JOB_PURPOSE = /\.job\./;
 type StatementSize = { params: number; bytes: number };
 
 export class Grant {
@@ -80,9 +82,14 @@ export class Grant {
     this.#db = db;
     this.#input = input;
     this.#now = now;
-    this.#pin = input.principal.kind === 'holder' ? input.principal.passId : undefined;
+    this.#pin = pinOf(input.principal, input.target);
     this.#tables = input.tables ? new Set(input.tables.map(identifier)) : undefined;
     this.#insert();
+  }
+
+  /** Whether writes are pinned to the grant's one pass (holder and join grants): pass `{ holder: g.pinned }` to `sealPart`. */
+  get pinned(): boolean {
+    return this.#pin !== undefined;
   }
 
   /** Built at prepare time: `require: 'one'` writes add their lineage checks to it. */
@@ -121,10 +128,12 @@ export class Grant {
   }
 
   update(table: string, options: WriteOptions): GrantedStatement {
+    joinOnlyInserts(this.principal, 'updating');
     return this.#push(buildUpdate(this.id, this.scope, this.#allow(table), options, this.#pin));
   }
 
   delete(table: string, options: Omit<WriteOptions, 'set' | 'inc'>): GrantedStatement {
+    joinOnlyInserts(this.principal, 'deleting');
     return this.#push(buildDelete(this.id, this.scope, this.#allow(table), options, this.#pin));
   }
 
@@ -134,6 +143,7 @@ export class Grant {
     values: SqlValue[],
     options?: InsertOptions,
   ): GrantedStatement {
+    joinLedgerRow(this.principal, table, columns, values);
     return this.#push(
       buildInsertSelect(
         this.id,
@@ -154,6 +164,7 @@ export class Grant {
     values: SqlValue[],
     options: UpsertOptions,
   ): GrantedStatement {
+    joinOnlyInserts(this.principal, 'upserting');
     return this.#push(
       buildUpsert(this.id, this.scope, this.#allow(table), columns, values, options, this.#pin),
     );
@@ -161,11 +172,13 @@ export class Grant {
 
   /** Update or delete an org-less child through a declared foreign key to a parent in the tenant. */
   joined(table: string, options: JoinedOptions): GrantedStatement {
+    joinOnlyInserts(this.principal, 'updating');
     return this.#push(buildJoined(this.id, this.scope, this.#allow(table), options, this.#pin));
   }
 
   /** Insert an org-less child under parents in the tenant; the parent rows supply its foreign keys. */
   insertJoined(table: string, options: InsertJoinedOptions): GrantedStatement {
+    joinOnlyInserts(this.principal, 'inserting children');
     return this.#push(
       buildInsertJoined(this.id, this.scope, this.#allow(table), options, this.#pin),
     );
@@ -294,24 +307,13 @@ export function grant(ctx: ServiceContext, input: GrantInput): Grant {
   return new Grant(ctx.env.DB, ctx.ids.token(), scope, full, ctx.clock.now());
 }
 
-export interface JobGrantInput extends Omit<GrantInput, 'principal'> {
-  job: string;
-  orgId?: string;
-  mode?: Mode;
-  orgAccessRevision?: number;
-}
-
 /** Only a context built by `createJobContext` (queue, cron, workflow) can mint a `system:` grant. */
 export function jobGrant(ctx: ServiceContext, input: JobGrantInput): Grant {
   if (!hasJobAuthority(ctx))
     throw new AuthorityError('GRANT_NOT_JOB', 'jobGrant needs a queue, cron or workflow context.');
-  if (!JOB_PURPOSE.test(input.purpose))
-    throw new AuthorityError(
-      'GRANT_BAD_PURPOSE',
-      'A job grant purpose names a job: <scope>.job.<name>.',
-    );
-  const { job, orgId, mode, orgAccessRevision, ...rest } = input;
-  const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision });
+  assertJobGrantInput(input);
+  const { job, orgId, mode, orgAccessRevision, inactiveOk, ...rest } = input;
+  const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision, inactiveOk });
   const full = { ...rest, principal };
   return new Grant(ctx.env.DB, ctx.ids.token(), scopeOf(full), full, ctx.clock.now());
 }

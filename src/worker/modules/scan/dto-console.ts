@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { IdSchema } from '../../../shared/contracts/common.ts';
-import { type ScannerSettings, ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
+import {
+  type ScannerSettings,
+  ScannerSettingsSchema,
+  TimeZoneSchema,
+} from '../../../shared/contracts/scan.ts';
 import { ScanListQuerySchema, type ScannerDto } from '../../../shared/contracts/scanners.ts';
 import type { ConsoleScannerRow } from './repo-scanners.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
@@ -119,5 +123,6 @@ export const ScanExportQuerySchema = ScanListQuerySchema.omit({ cursor: true, li
     orgId: IdSchema,
     from: z.coerce.number().int().nonnegative(),
     to: z.coerce.number().int().nonnegative(),
+    timeZone: TimeZoneSchema.optional(),
   },
 );

@@ -71,7 +71,7 @@ export function decideBind(
 }
 
 /** The refusals the tag triggers raise inside a batch (migration 0086). */
-function triggerRefusal(error: unknown): AppError | null {
+export function triggerRefusal(error: unknown): AppError | null {
   const text = error instanceof Error ? error.message : '';
   if (text.includes('tag_binding_limit'))
     return conflict('This pass or person has the most tags allowed.', 'TAG_BINDING_LIMIT');

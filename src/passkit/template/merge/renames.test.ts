@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyResolutions } from './apply.ts';
 import { mergePackages } from './index.ts';
 import { baseDoc, edit, ids, kinds, man, run, sha, style } from './merge-test-fixtures.ts';
+import { renameIn } from './renames.ts';
 
 const m = (d: any) => d.manifest;
 const renameField = (from: string, to: string) => (d: any) => {
@@ -265,5 +266,12 @@ describe('invalid, noop and two-way', () => {
     ).toBe('X');
     expect((applyResolutions(base, o, t, { [id]: 'ours' }).manifest as any).description).toBe('O');
     expect(mergePackages(base, o, t, { picks: { [id]: 'theirs' } }).conflicts).toEqual([]);
+  });
+
+  it('rewrites scan.window inputs and nothing named alike', () => {
+    const d = baseDoc();
+    m(d).scan.window = { from: 'level', until: 'level2' };
+    const x = m(renameIn(d, { kind: 'input', from: 'level', to: 'tier' }));
+    expect(x.scan.window).toEqual({ from: 'tier', until: 'level2' });
   });
 });

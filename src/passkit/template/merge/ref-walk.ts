@@ -14,6 +14,7 @@ const BEHAVIOR_INPUTS: Record<string, string[]> = {
   beacons: ['input'],
   'expiry-from-input': ['input'],
   'relevance-window': ['start', 'end'],
+  term: ['start', 'anchor'],
   'upcoming-events': ['input', 'timeZoneInput'],
   'venue-locations': ['homeInput', 'accessInput'],
 };
@@ -115,6 +116,11 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
   for (const [i] of search.entries()) set(search, i, 'input', `display/search/${searchIds[i]}`);
 
   direct(man.stamps, 'stamps/input');
+  for (const [id, c] of Object.entries(obj(man.counters) ?? {})) {
+    direct(c, `counters/${id}/input`);
+    const art = obj(obj(c)?.art);
+    for (const k of Object.keys(art ?? {})) set(art, k, 'art', `counters/${id}/art/${k}`);
+  }
   direct(man.messaging, 'messaging/input');
   const stampArt = obj(obj(man.stamps)?.art);
   for (const k of Object.keys(stampArt ?? {})) set(stampArt, k, 'art', `stamps/art/${k}`);
@@ -131,6 +137,8 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
 
   const scan = obj(man.scan);
   direct(scan?.lookup, 'scan/lookup');
+  const window = obj(scan?.window);
+  for (const k of ['from', 'until']) set(window, k, 'input', `scan/window/${k}`);
   const flags = arr(scan?.flags);
   const flagIds = nth(flags, (f) => String(obj(f)?.input));
   for (const [i, f] of flags.entries()) direct(f, `scan/flags/${flagIds[i]}`);

@@ -7,10 +7,11 @@ import { scanActorChecks, scanCapabilityChecks, scanPrincipal } from './authorit
 import type { ScanActor } from './guard.ts';
 import { credentialRefChecks } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
+import { tagBindingCheck } from './repo-tags-resolve.ts';
 import { type ScanPassFacts, scanPassChecks } from './scan-pass-checks.ts';
 
 export interface ScanWriteInput {
-  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo'}`;
+  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo' | 'tag.bind' | 'tag.unbind' | 'tag.enroll'}`;
   now: number;
   /** The operation's event when it is not the actor's. */
   event?: ScanEventRow | null;
@@ -18,7 +19,7 @@ export interface ScanWriteInput {
   templateId?: string;
   pass?: { id: string; facts: ScanPassFacts };
   /** A manager whose PIN was verified for this action. */
-  approver?: { id: string; authEpoch: number } | null;
+  approver?: { id: string; authEpoch: number; deskOk?: boolean } | null;
   /** Held: the answer shown names this gate holder and must still be true. */
   holder?: { passId: string; actionId: string; scope: string; lastScanId: string } | null;
   /** None of the presented credential's references may be retired by a transfer in this mode. */
@@ -34,8 +35,8 @@ export interface ScanWriteInput {
 }
 
 /**
- * The one grant every scan write goes through: the actor's epochs, the pass's lineage and, when
- * present, the approving manager. Refusals keep the device paired except `actor` (a re-pair).
+ * The one grant every scan write goes through: the actor's epochs, the pass's lineage, the tag and
+ * binding a tag read chose it by and, when present, the approving manager. Refusals keep the device paired except `actor` (a re-pair).
  */
 export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWriteInput): Grant {
   const templateId = i.templateId ?? i.pass?.facts.pass.templateId;
@@ -53,13 +54,19 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
       }),
       ...(i.pass ? scanPassChecks(i.pass.id, i.pass.facts) : []),
       ...credentialRefChecks(i.credentialRefs),
+      ...(actor.tag ? [tagBindingCheck(actor.tag)] : []),
       ...(i.checks ?? []),
       ...(i.approver
         ? [
             rowIs(
               'scan_staff',
               i.approver.id,
-              { role: 'manager', disabled_at: null, auth_epoch: i.approver.authEpoch },
+              {
+                // A Desk approver is pinned as Desk: the session allowed it, and a role change bumps `auth_epoch`.
+                role: i.approver.deskOk ? 'desk' : 'manager',
+                disabled_at: null,
+                auth_epoch: i.approver.authEpoch,
+              },
               'staff',
             ),
           ]

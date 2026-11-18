@@ -13,6 +13,11 @@ export interface SafeFetchOptions {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   maxBytes?: number;
+  /**
+   * Cancel the body once the headers are in and return an empty one. For a caller that reads only the
+   * status, so a large 200 answer is not mistaken for a failure by the size cap.
+   */
+  discardBody?: boolean;
 }
 
 export interface SafeResponse {
@@ -145,7 +150,8 @@ export function assertSafeUrl(raw: string, platformHosts: string[] = []): URL {
   } catch {
     throw new ValidationError('The URL is invalid.', [], 'UNSAFE_URL');
   }
-  const host = url.hostname.toLowerCase();
+  // `example.com.` is the same host: compare without the root dot, or it slips past every deny list.
+  const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (url.protocol !== 'https:')
     throw new ValidationError('Only https URLs are allowed.', [], 'UNSAFE_URL');
   if (url.port && url.port !== '443')
@@ -253,17 +259,21 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
       throw new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
     }
     let body: Uint8Array;
-    try {
-      body = await readCapped(
-        response.body,
-        maxBytes,
-        () => new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE'),
-        Number(response.headers.get('content-length') ?? 0),
-        signal,
-      );
-    } catch (error) {
-      throw error instanceof UpstreamError ? error : failure();
-    }
+    if (options.discardBody) {
+      await response.body?.cancel().catch(() => undefined);
+      body = new Uint8Array();
+    } else
+      try {
+        body = await readCapped(
+          response.body,
+          maxBytes,
+          () => new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE'),
+          Number(response.headers.get('content-length') ?? 0),
+          signal,
+        );
+      } catch (error) {
+        throw error instanceof UpstreamError ? error : failure();
+      }
     const decode = () => new TextDecoder().decode(body);
     return {
       status: response.status,

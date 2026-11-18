@@ -7,14 +7,15 @@ import { Buddy } from '../ui/art/buddy.tsx';
 import { Button } from '../ui/button.tsx';
 import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
+import { useTagUi } from './assign/use-tag-ui.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
-import { localOutcome } from './machine/outcome.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
-import { deskOf } from './result/desk.ts';
+import { useVerdictHaptic } from './platform/use-verdict-haptic.ts';
+import { deskOf, resultOf } from './result/desk.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
@@ -96,19 +97,8 @@ export function ScanLoop({
     (s.reader.kind === 'barcode' && nativeBarcode) ||
     (s.reader.kind === 'nfc' && nativeCapabilities?.vas.available === true);
   const last = s.recent[0];
-  const result: ScanOutcome | null =
-    l.s === 'verdict'
-      ? l.outcome
-      : l.s === 'member'
-        ? {
-            ...localOutcome('system', 'server', counts),
-            kind: 'ready',
-            reason: 'choose',
-            card: l.card,
-            display: l.card.display,
-            local: false,
-          }
-        : null;
+  const result: ScanOutcome | null = resultOf(l, counts);
+  useVerdictHaptic(l.s === 'verdict' ? l.outcome : null);
   useEffect(() => {
     if (needsSessionRefetch(session, s) && requestedRev.current !== counts.configRev) {
       requestedRev.current = counts.configRev;
@@ -132,6 +122,7 @@ export function ScanLoop({
     overlay: s.overlay,
     dispatch,
   });
+  const tags = useTagUi({ runtime, session, api, state: s, result, open, dispatch });
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
   const menu = (
     <ScanMenu
@@ -151,6 +142,7 @@ export function ScanLoop({
         setCameraChoice(choice);
         runtime.camera.choose(choice);
       }}
+      tags={tags.menu}
       hasReader={readerUsable}
       cameraOff={s.camera === 'disabled'}
       onCameraOff={(off) => {
@@ -220,6 +212,7 @@ export function ScanLoop({
               {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
               {!s.online ? <SyncChip state={{ kind: 'offline', queued: 0 }} /> : null}
               {access.chips}
+              {tags.chip}
             </>
           ),
         }}
@@ -229,7 +222,7 @@ export function ScanLoop({
               videoRef={videoRef}
               status={s.camera}
               checking={l.s === 'checking' || l.s === 'applying'}
-              result={Boolean(result) || l.s === 'paused' || Boolean(s.block)}
+              result={Boolean(result) || l.s === 'paused' || Boolean(s.block) || tags.dim}
               onRetry={runtime.camera.start}
               reader={readerUsable}
             />
@@ -244,6 +237,8 @@ export function ScanLoop({
             >
               <Button onClick={leave}>Pair again</Button>
             </BootCard>
+          ) : tags.card ? (
+            tags.card
           ) : result && s.card ? (
             <ResultCard
               key={s.card.id}
@@ -254,10 +249,12 @@ export function ScanLoop({
                 dispatch({ type: 'overlay', open: 'settings' });
               }}
               phase={s.card.phase}
+              clock={now}
               eventNote={session.event?.note}
               holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
-              desk={deskOf(l, session.staffList, dispatch)}
+              desk={deskOf(l, session, dispatch)}
+              tagRead={'input' in l && Boolean(l.input.tag)}
             />
           ) : l.s === 'paused' ? (
             <BootCard title="Paused">
@@ -265,29 +262,32 @@ export function ScanLoop({
             </BootCard>
           ) : null
         }
-        tint={view.tint}
+        tint={tags.tint ?? view.tint}
         buddy={
           <Buddy
             key={view.buddy.key}
             scene="scan"
             size="xl-scan"
             mood={view.buddy.mood === 'neutral' ? 'flat' : view.buddy.mood}
-            pose={view.buddy.pose}
+            pose={tags.pose ?? view.buddy.pose}
             beat={view.buddy.beat ?? undefined}
             card={view.buddy.card}
             immediate
           />
         }
         dockRow={
-          <DoorDock
-            outcome={result}
-            runtime={runtime}
-            open={open}
-            onError={setCameraError}
-            inside={access.inside}
-          />
+          tags.dock ?? (
+            <DoorDock
+              outcome={result}
+              runtime={runtime}
+              open={open}
+              onError={setCameraError}
+              inside={access.inside}
+              tags={tags}
+            />
+          )
         }
-        strip={stripOf(last, Boolean(lastUndo))}
+        strip={tags.strip ?? stripOf(last, Boolean(lastUndo), now)}
         announcement={announcement}
         on={{
           start: () => {
@@ -296,13 +296,16 @@ export function ScanLoop({
           },
           openRecent: () => showPanel('recent'),
           undo: () => {
-            if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
+            if (tags.strip && tags.onUndo) tags.onUndo();
+            else if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
           },
         }}
       />
       {access.layer}
+      {tags.layer}
       <ScanOverlays
         allowPeople={scanner?.settings.lookup ?? true}
+        sessionTotals={session.staff?.role === 'manager' && Boolean(session.workspace)}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
         timeZone={session.event?.timeZone}
         sheet={sheet}

@@ -82,9 +82,12 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
 
     // The author cannot approve their own candidate.
     await expect(
-      card.getByText('You cannot review a candidate or version you authored.'),
+      card.getByText(/^You wrote this version\. Another reviewer approves it/),
     ).toBeVisible();
-    const selfApprove = card.getByRole('button', { name: 'Approve candidate for Version 1' });
+    const selfApprove = card.getByRole('button', {
+      name: 'Approve candidate for Version 1',
+      exact: true,
+    });
     if (await selfApprove.count()) await expect(selfApprove).toBeDisabled();
     await expect(
       card.getByRole('button', { name: 'Publish candidate for Version 1' }),
@@ -100,7 +103,9 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
     await expect(reviewCard.getByRole('heading', { name: 'Version 1' })).toBeVisible();
     await expect(reviewCard).not.toHaveText(UUID, shown);
     await expect(reviewCard.getByRole('button', { name: /^Publish candidate/ })).toHaveCount(0);
-    await reviewCard.getByRole('button', { name: 'Approve candidate for Version 1' }).click();
+    await reviewCard
+      .getByRole('button', { name: 'Approve candidate for Version 1', exact: true })
+      .click();
     await expect(reviewerPage.getByText('Candidate approved')).toBeVisible();
     await expect(reviewCard.getByText('Approved', { exact: true })).toBeVisible();
     if (reviewerSession.user.name)

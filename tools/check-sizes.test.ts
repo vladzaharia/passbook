@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { testOnlyImports, tooLong } from './check-sizes.ts';
+import { boundaryImports, testOnlyImports, tooLong } from './check-sizes.ts';
 
 describe('check-sizes', () => {
   it('flags long source files but not tests or generated code', () => {
@@ -17,5 +17,21 @@ describe('check-sizes', () => {
     ]);
     expect(testOnlyImports('src/worker/modules/x/routes.test.ts', text)).toEqual([]);
     expect(testOnlyImports('src/worker/modules/x/test-support.ts', text)).toEqual([]);
+  });
+
+  it('limits who may import the webhook raw-write modules', () => {
+    const text = "import { finishStmt } from './repo-delivery-state.ts';";
+    const dir = 'src/worker/modules/webhooks';
+    expect(boundaryImports(`${dir}/routes.ts`, text)).toEqual([
+      `${dir}/routes.ts may not import ${dir}/repo-delivery-state.ts`,
+    ]);
+    expect(boundaryImports(`${dir}/deliver.ts`, text)).toEqual([]);
+    expect(boundaryImports(`${dir}/x.test.ts`, text)).toEqual([]);
+    expect(
+      boundaryImports(`${dir}/dispatch.ts`, "import { purge } from './repo-retention.ts';"),
+    ).toHaveLength(1);
+    expect(
+      boundaryImports(`${dir}/jobs.ts`, "import { purge } from './repo-retention.ts';"),
+    ).toEqual([]);
   });
 });

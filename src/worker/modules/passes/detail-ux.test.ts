@@ -79,7 +79,12 @@ describe('devices', () => {
     const d = await detail(on.id);
     expect(d.registrations).toBe(1);
     expect(d.devices).toEqual([
-      { shortId: 'abc123', createdAt: expect.any(Number), lastPush: null },
+      {
+        shortId: 'abc123',
+        device: expect.stringMatching(/^[0-9a-f]{12}$/),
+        createdAt: expect.any(Number),
+        lastPush: null,
+      },
     ]);
     expect(JSON.stringify(d)).not.toContain('device-library');
   });

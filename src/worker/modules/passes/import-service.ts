@@ -34,7 +34,7 @@ import {
 } from './import-source.ts';
 import { activeZoneKeys } from './repo-access-zones.ts';
 import { savedPlan, savePlan } from './repo-import-mappings.ts';
-import { insertRows } from './repo-import-rows.ts';
+import { createdRowNumbers, insertRows } from './repo-import-rows.ts';
 import {
   beginCheck,
   discardDraft,
@@ -119,7 +119,7 @@ async function runCheck(
   const zoneKeys = new Set(zones === undefined ? [] : await activeZoneKeys(ctx.env.DB, a.orgId));
   const rc = { manifest: tpl.manifest, plan, header: parsed.header, zoneKeys };
   const checkInputs = rowChecker(rc);
-  const planned = await planRows(
+  const planAll = await planRows(
     ctx.env.DB,
     { orgId: a.orgId, mode: a.mode, templateId: imp.template_id },
     plan,
@@ -128,6 +128,9 @@ async function runCheck(
     (row, input) => checkInputs(row, input, 'full'),
     ctx.log,
   );
+  // Rows an interrupted commit already created are not planned again.
+  const made = new Set(await createdRowNumbers(ctx.env.DB, imp.id));
+  const planned = planAll.filter((r) => !made.has(r.row));
   const checkId = ctx.ids.id();
   const summary = summarize(planned);
   await beginCheck(ctx, a, imp.id, {

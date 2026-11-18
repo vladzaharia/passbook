@@ -138,4 +138,33 @@ describe('customer live screen Buddy', () => {
     fireEvent.error(logo);
     expect(container.querySelector('.scan-live-brand-icon svg')).toBeInTheDocument();
   });
+
+  it('shows the server view, not the scanner name or "Customer display"', () => {
+    const base = sessionFixture();
+    const session = {
+      ...base,
+      scanner: base.scanner ? { ...base.scanner, deviceRole: 'customer' as const } : null,
+    };
+    const { container } = render(<LiveScreen session={session} refetch={vi.fn(async () => {})} />);
+    expect(container.textContent).not.toContain('Customer display');
+    expect(container.textContent).not.toContain(base.scanner?.name ?? 'no-name');
+    expect(container.querySelector('h2')).toHaveTextContent('Hold up your pass');
+    const customer = {
+      v: 1 as const,
+      screen: 'ok' as const,
+      ref: 'r1',
+      at: Date.now(),
+      where: 'Front',
+      band: { headline: "You're in", sub: null },
+      greet: 'Hi, Sam',
+      chips: [],
+      panel: null,
+      lines: [],
+      milestone: null,
+      test: false,
+    };
+    act(() => LiveSocket.instances[0]?.publish({ ...row('ok', `${ID.slice(0, -1)}9`), customer }));
+    expect(container.querySelector('h2')).toHaveTextContent("You're in");
+    expect(container).toHaveTextContent('Hi, Sam');
+  });
 });

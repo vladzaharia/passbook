@@ -72,6 +72,8 @@ export interface ScanReadRelaxations {
   pausedSession?: boolean;
   /** A monitor screen has no staff binding to check. */
   stafflessMonitor?: boolean;
+  /** A scan-role device's control socket is bound to the device, not to whoever is signed in. */
+  deviceSocket?: boolean;
   /** An invalid scanner scope is redacted by the caller, so no scope-derived check applies. */
   invalidScope?: boolean;
 }
@@ -138,7 +140,12 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
         );
       }
       // No staff was derived: the device must still have no valid binding (none, expired or disabled).
-      else if (!(read.stafflessMonitor && scanner.deviceRole === 'monitor'))
+      else if (
+        !(
+          (read.stafflessMonitor && scanner.deviceRole === 'monitor') ||
+          (read.deviceSocket && scanner.deviceRole === 'scan')
+        )
+      )
         checks.push(noStaffBindingCheck(scanner.id, input.now));
     }
   }

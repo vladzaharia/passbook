@@ -43,6 +43,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_assets: { org: null, edges: [edge('pass_id', 'passes')], pass: 'pass_id' },
   pass_credential_transfers: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   pass_credential_tombstones: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
+  // The mark a new scan code needs (0099); written with the pass update, in the publish grant.
+  scan_code_rotations: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   pass_issuance_deliveries: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   templates: { org: 'org_id' },
   template_candidates: { org: 'org_id', mode: 'mode' },
@@ -97,6 +99,10 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   // In now ordering: only raised (`inc`), in the batch that changes the place.
   scan_place_revs: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'place'] },
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
+  // Join links (0090). Written by the admin grant; the sealed copy is an org-bearing part (below).
+  join_links: { org: 'org_id', mode: 'mode' },
+  // The ledger a join grant appends to with its pass. Its triggers hold org, mode and generation to the link.
+  join_issues: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },
   nfc_tags: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'tag_ref'] },
@@ -107,6 +113,15 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     edges: [edge('tag_id', 'nfc_tags'), edge('pass_id', 'passes')],
     pass: 'pass_id',
   },
+  // Outbound webhooks (0090). Endpoints and secrets are written through grants; delivery bookkeeping by a
+  // reviewed raw-write allowlist entry. event_feed is written only by the pass_events trigger.
+  webhook_endpoints: { org: 'org_id', mode: 'mode' },
+  webhook_endpoint_secrets: { org: 'org_id', mode: 'mode' },
+  webhook_deliveries: { org: 'org_id', mode: 'mode', conflict: ['endpoint_id', 'event_seq'] },
+  webhook_attempts: { org: 'org_id', mode: 'mode' },
+  event_feed: { org: 'org_id', mode: 'mode' },
+  // A remote tag request: its triggers check scanner and pass share the tenant and that a user scope names the pass's owner.
+  tag_enrollments: { org: 'org_id', mode: 'mode' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
   pass_imports: { org: 'org_id', mode: 'mode' },
@@ -191,6 +206,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_token_seals',
   'pass_auth_seals',
   'bundle_token_seals',
+  'join_link_seals',
+  'org_reply_to',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',

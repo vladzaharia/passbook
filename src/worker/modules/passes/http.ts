@@ -17,6 +17,7 @@ import {
 import { type AppBindings, actorOf } from '../../platform/context.ts';
 import { reportDenied } from '../../platform/denied.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { requireOrgCapability } from '../orgs/access.ts';
 import { loadUserAccessRevision } from './repo-access-revision.ts';
@@ -27,6 +28,8 @@ import type { Actor } from './service.ts';
 export type C = Context<AppBindings>;
 
 export const svc = serviceContext;
+
+type Scopes = { read: ApiScope; write: ApiScope };
 
 // Only the endpoint guard can tag the key scope that was checked for this request.
 const tenantKeyScopes = new WeakMap<AuthContext, ApiScope>();
@@ -113,6 +116,8 @@ export async function tenantAuthorityOf(
         (scope === 'passes:write' || scope === 'holders:write')) ||
       (capability === 'integrations:read' && scope === 'connections:read') ||
       (capability === 'integrations:manage' && scope === 'connections:write') ||
+      ((capability === 'integrations:read' || capability === 'integrations:manage') &&
+        scope === 'webhooks:manage') ||
       (capability === 'templates:read' && scope === 'templates:read') ||
       (capability === 'scanning:read' && scope === 'scans:read') ||
       ((capability === 'messages:read' || capability === 'messages:manage') &&
@@ -152,7 +157,7 @@ export function requireTenantSessionOrApiKey(
   scope: ScopeSelector | readonly ApiScope[],
 ): MiddlewareHandler<AppBindings> {
   if (Array.isArray(scope)) {
-    return createMiddleware(async (c, next) => {
+    const guard = createMiddleware<AppBindings>(async (c, next) => {
       const bearer = /^Bearer\s+(\S+)$/i.exec(c.req.header('authorization') ?? '')?.[1];
       if (!bearer) return requireTenantSession(c, next);
       const auth = await c.var.stores.apiKeys.resolve(bearer);
@@ -168,10 +173,12 @@ export function requireTenantSessionOrApiKey(
       c.set('auth', scoped);
       await next();
     });
+    // The guard takes a key with one of the scopes for every method, so the document says so too.
+    return declareKeyAccess(guard, { read: scope, write: scope });
   }
   const selector = scope as ScopeSelector;
   const keyGuard = requireApiKeyOrAdmin(selector);
-  return createMiddleware(async (c, next) => {
+  const guard = createMiddleware<AppBindings>(async (c, next) => {
     if (/^Bearer\s+(\S+)$/i.test(c.req.header('authorization') ?? '')) {
       return keyGuard(c, async () => {
         const auth = authOf(c);
@@ -184,6 +191,10 @@ export function requireTenantSessionOrApiKey(
     }
     return requireTenantSession(c, next);
   });
+  const scopes = typeof selector === 'function' ? (selector as { scopes?: Scopes }).scopes : null;
+  if (typeof selector === 'string')
+    return declareKeyAccess(guard, { read: [selector], write: [selector] });
+  return scopes ? declareKeyAccess(guard, { read: [scopes.read], write: [scopes.write] }) : guard;
 }
 
 /** Org and mode for by-id access (see PassScope). */

@@ -8,11 +8,17 @@ import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { copyText } from '../../lib/clipboard.ts';
-import { clearHolderConfirm, deleteConfirm, voidConfirm } from '../../lib/confirms.ts';
+import {
+  clearHolderConfirm,
+  deleteConfirm,
+  newCodeConfirm,
+  voidConfirm,
+} from '../../lib/confirms.ts';
 import { useMode } from '../../lib/mode.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import { ConfirmDialog, confirmWord, TypedConfirmDialog, toast } from '../../ui/index.ts';
-import { usePassActions, usePassRemoval } from './api.ts';
+import { usePassActions } from './api.ts';
+import { usePassRemoval } from './api-removal.ts';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
 import { absoluteUrl } from './format.ts';
 import { RotateLink } from './rotated-link-dialog.tsx';
@@ -26,6 +32,7 @@ export type PassActionId =
   | 'restore'
   | 'open'
   | 'rotate'
+  | 'newcode'
   | 'download'
   | 'copy'
   | 'clear'
@@ -52,6 +59,7 @@ const LABEL: Record<PassActionId, string> = {
   restore: 'Restore',
   open: 'Open public page',
   rotate: 'Rotate link',
+  newcode: 'New code',
   download: 'Download .pkpass',
   copy: 'Copy link',
   clear: 'Clear holder',
@@ -66,6 +74,7 @@ const ICON: Record<PassActionId, LucideIcon> = {
   restore: ACTION_ICON.restoreToWallet,
   open: ACTION_ICON.openPublic,
   rotate: ACTION_ICON.rotate,
+  newcode: ACTION_ICON.refresh,
   download: ACTION_ICON.download,
   copy: Copy,
   clear: UserMinus,
@@ -104,6 +113,7 @@ export function actionsFor(pass: ActionPass, readOnly = false): PassActionDef[] 
           'void',
           'open',
           'rotate',
+          'newcode',
           'download',
           'copy',
           'remove',
@@ -152,7 +162,9 @@ export function usePassActionRunner(
   const mode = useMode();
   const foreign = pass.mode !== undefined && pass.mode !== mode;
   const canChange = options.canOperate && !foreign;
-  const [ask, setAsk] = useState<'void' | 'clear' | 'delete' | 'rotate' | 'remove' | null>(null);
+  const [ask, setAsk] = useState<
+    'void' | 'clear' | 'delete' | 'rotate' | 'newcode' | 'remove' | null
+  >(null);
   const [done, setDone] = useState<Partial<Record<PassActionId, number>>>({});
   const bump = (id: PassActionId) => setDone((d) => ({ ...d, [id]: (d[id] ?? 0) + 1 }));
   const name = pass.title ?? pass.serial;
@@ -216,7 +228,8 @@ export function usePassActionRunner(
       id === 'remove' ||
       id === 'clear' ||
       id === 'delete' ||
-      id === 'rotate'
+      id === 'rotate' ||
+      id === 'newcode'
     )
       setAsk(id);
   }
@@ -256,6 +269,16 @@ export function usePassActionRunner(
           if (holder.transfer?.state === 'pending')
             toast.info('Holder removal pending while existing wallet credentials are retired.');
           else toast.success('Holder cleared');
+        }}
+      />
+      <ConfirmDialog
+        open={ask === 'newcode'}
+        onOpenChange={close}
+        {...newCodeConfirm()}
+        onConfirm={async () => {
+          await actions.newCode.mutateAsync();
+          bump('newcode');
+          toast.success('New code made');
         }}
       />
       <RotateLink

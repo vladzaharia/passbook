@@ -219,6 +219,7 @@ export async function approveProjectionCandidate(
     candidateId,
     candidateHash: candidate.candidateHash,
     reviewerId: authority.userId,
+    kind: 'peer',
     createdAt: ctx.clock.now(),
   };
   const db = ctx.env.DB;

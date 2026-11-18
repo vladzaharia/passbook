@@ -71,7 +71,7 @@ export function setup(
               id: 'bp-empty',
               orgId: null,
               orgName: null,
-              name: 'Membership card',
+              name: 'Membership',
               origin: 'baked',
               blueprint: true,
             }),

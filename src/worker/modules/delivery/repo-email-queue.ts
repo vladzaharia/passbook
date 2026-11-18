@@ -3,6 +3,7 @@ import { type Grant, grant, grantedBatch } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { exists, type GrantCond } from '../../platform/authority-cond.ts';
 import { writePart } from '../../platform/authority-include.ts';
+import { first, run } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -24,6 +25,12 @@ export interface QueueRate {
   orgWindow: number;
   recipientCap: number;
   orgCap: number;
+  /** One address across every org: a fixed ceiling no setting changes. */
+  platformKey: string;
+  platformWindow: number;
+  platformCap: number;
+  /** When the outbox row becomes due: 0, or the window where this address still has room. */
+  platformAvailableAt: number;
 }
 
 /** Who queues the mail: callers holding live requests, or a durable actor captured earlier. */
@@ -41,7 +48,7 @@ export type QueueResult = 'queued' | 'limited' | 'stale' | 'org' | 'actor' | 'de
 const RATE_LIMITED = 'EMAIL_RATE_LIMITED';
 const CODES = { ...DELIVERY_CODES, stale: RATE_LIMITED };
 
-/** Both counters are under their cap when the batch runs (a concurrent queue can still lose). */
+/** The org's counters are under their cap when the batch runs (a concurrent queue can still lose). */
 export function rateChecks(r: QueueRate): Check[] {
   const under = (key: string, window: number, cap: number) =>
     rawCheck(
@@ -124,12 +131,22 @@ export function addQueueWrites(g: Grant, ctx: ServiceContext, w: QueueWrite): vo
   g.insertSelect(
     'outbox',
     ['id', 'kind', 'pass_id', 'coalesce_key', 'payload', 'state', 'available_at', 'created_at'],
-    [w.id, 'email', w.passId, null, JSON.stringify(w.payload), 'pending', 0, w.now],
+    [
+      w.id,
+      'email',
+      w.passId,
+      null,
+      JSON.stringify(w.payload),
+      'pending',
+      w.rate.platformAvailableAt,
+      w.now,
+    ],
     { returning: ['id'] },
   );
   for (const [key, window] of [
     [w.rate.recipientKey, w.rate.recipientWindow],
     [w.rate.orgKey, w.rate.orgWindow],
+    [w.rate.platformKey, w.rate.platformWindow],
   ] as const)
     g.include(
       writePart(
@@ -214,4 +231,32 @@ export async function recordQueuedEvent(
       error,
     });
   }
+}
+
+/** The current count of one rate counter; 0 when it has not been touched in its window. */
+export async function readCounter(db: D1Database, key: string, window: number): Promise<number> {
+  const row = await db
+    .prepare('SELECT count FROM counters WHERE key = ? AND window_start = ?')
+    .bind(key, window)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+/** Adds one to a rate counter in its window. */
+export const bumpCounter = (db: D1Database, key: string, window: number) =>
+  run(
+    db,
+    `INSERT INTO counters (key, window_start, count) VALUES (?, ?, 1)
+     ON CONFLICT (key, window_start) DO UPDATE SET count = count + 1`,
+    [key, window],
+  );
+
+/** When an outbox row becomes due (0 for a row due at once). */
+export async function outboxAvailableAt(db: D1Database, id: string): Promise<number> {
+  const row = await first<{ available_at: number }>(
+    db,
+    'SELECT available_at FROM outbox WHERE id = ?',
+    [id],
+  );
+  return row?.available_at ?? 0;
 }

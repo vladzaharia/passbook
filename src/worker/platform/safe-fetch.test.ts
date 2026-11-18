@@ -20,6 +20,10 @@ describe('assertSafeUrl', () => {
     'https://user:pw@example.com/x',
     'https://passbook.mobile/api',
     'https://sub.passbook.mobile/api',
+    'https://passbook.mobile./api',
+    'https://sub.passbook.mobile./api',
+    'https://127.0.0.1./x',
+    'https://intranet./x',
     'https://example.com/a/../b',
     'not a url',
   ])('rejects %s', (url) => {
@@ -147,6 +151,31 @@ describe('createSafeFetch', () => {
     await expect(safe('https://api.example.com')).rejects.toMatchObject({
       code: 'RESPONSE_TOO_LARGE',
     });
+  });
+
+  it('discardBody returns the status of a response larger than the cap', async () => {
+    const safe = createSafeFetch({
+      resolver: publicDns,
+      fetchImpl: respond('x'.repeat(1000)),
+      maxBytes: 100,
+      discardBody: true,
+    });
+    const res = await safe('https://api.example.com');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(0);
+  });
+
+  it('discardBody still blocks a redirect', async () => {
+    const fetchImpl = (async () =>
+      new Response(null, {
+        status: 301,
+        headers: { location: 'https://x.test/' },
+      })) as unknown as typeof fetch;
+    await expect(
+      createSafeFetch({ resolver: publicDns, fetchImpl, discardBody: true })(
+        'https://api.example.com',
+      ),
+    ).rejects.toMatchObject({ code: 'REDIRECT_BLOCKED' });
   });
 
   it('times out', async () => {

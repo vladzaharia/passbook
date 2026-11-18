@@ -1,0 +1,347 @@
+{
+  "schema": 1,
+  "name": "Timed ticket",
+  "description": "A time slot for a party, no seat.",
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "eventName",
+      "venueName",
+      "startsAt",
+      "endsAt",
+      "name",
+      "orderRef"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "eventName": {
+        "type": "string",
+        "x-label": "What",
+        "x-group": "Visit",
+        "x-order": 10,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "venueName": {
+        "type": "string",
+        "x-label": "Venue",
+        "x-group": "Visit",
+        "x-order": 20,
+        "maxLength": 80,
+        "minLength": 1
+      },
+      "startsAt": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Slot starts",
+        "x-group": "Visit",
+        "x-order": 30,
+        "x-widget": "datetime"
+      },
+      "endsAt": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Slot ends",
+        "x-group": "Visit",
+        "x-order": 40,
+        "x-widget": "datetime"
+      },
+      "venueTimeZone": {
+        "type": "string",
+        "x-label": "Time zone",
+        "x-group": "Visit",
+        "x-order": 45,
+        "maxLength": 64,
+        "x-timeZone": true
+      },
+      "name": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Party",
+        "x-order": 50,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "adults": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99,
+        "x-label": "Adults",
+        "x-group": "Party",
+        "x-order": 60,
+        "default": 1
+      },
+      "children": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99,
+        "x-label": "Children",
+        "x-group": "Party",
+        "x-order": 70,
+        "default": 0
+      },
+      "entrance": {
+        "type": "string",
+        "x-label": "Entrance",
+        "x-group": "Visit",
+        "x-order": 80,
+        "maxLength": 40
+      },
+      "orderRef": {
+        "type": "string",
+        "x-label": "Order reference",
+        "x-group": "Party",
+        "x-order": 90,
+        "maxLength": 64,
+        "minLength": 1,
+        "x-search": true
+      },
+      "slotKey": {
+        "type": "string",
+        "x-label": "Slot key",
+        "x-group": "Visit",
+        "x-order": 100,
+        "maxLength": 64,
+        "x-help": "Same value on every ticket for one slot. Scanning events match on it."
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 902,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      },
+      "admits": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 99,
+        "x-label": "Admits",
+        "x-group": "Party",
+        "x-order": 55,
+        "default": 1
+      }
+    }
+  },
+  "sample": {
+    "eventName": "Ocean Light",
+    "venueName": "Northfield Museum",
+    "venueTimeZone": "America/New_York",
+    "startsAt": "2030-11-21T14:00:00-05:00",
+    "endsAt": "2030-11-21T14:30:00-05:00",
+    "name": "Sam Reed",
+    "adults": 2,
+    "children": 1,
+    "entrance": "B",
+    "orderRef": "ORD-0001",
+    "slotKey": "ocean-light-2030-11-21-1400",
+    "admits": 3
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "event"
+      },
+      "value": "{{eventName}}"
+    },
+    {
+      "to": {
+        "field": "venue"
+      },
+      "value": "{{venueName}}"
+    },
+    {
+      "to": {
+        "field": "slot"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "field": "until"
+      },
+      "value": "{{endsAt}}"
+    },
+    {
+      "to": {
+        "field": "party"
+      },
+      "value": "Admits {{admits}}"
+    },
+    {
+      "to": {
+        "field": "entrance"
+      },
+      "value": "{{entrance}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{orderRef}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{endsAt}}"
+    }
+  ],
+  "display": {
+    "icon": "ticket",
+    "title": "{{eventName}}",
+    "subtitle": "{{name}}",
+    "status": "{{venueName}}",
+    "search": [
+      "eventName",
+      "name",
+      "orderRef"
+    ],
+    "group": "get-in",
+    "aliases": [
+      "time slot",
+      "admission",
+      "timed entry",
+      "tour"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "relevance-window",
+      "version": 1,
+      "config": {
+        "start": "startsAt",
+        "end": "endsAt",
+        "leadMinutes": 60
+      }
+    }
+  ],
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "admit",
+        "label": "Admit",
+        "kind": "check_in",
+        "repeat": "once",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "orderRef"
+    },
+    "window": {
+      "from": "startsAt",
+      "until": "endsAt",
+      "earlyMinutes": 15,
+      "lateMinutes": 30
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.name}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Adults",
+              "value": "{{inputs.adults}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Children",
+              "value": "{{inputs.children}}"
+            },
+            {
+              "id": "r_field3",
+              "slot": "field3",
+              "type": "field",
+              "label": "Entrance",
+              "value": "{{inputs.entrance}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the desk for the next slot."
+      }
+    }
+  }
+}

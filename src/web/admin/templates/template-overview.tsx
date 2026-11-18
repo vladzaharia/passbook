@@ -33,6 +33,7 @@ import {
 } from '../../ui/index.ts';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplateActions } from './api.ts';
+import { JoinSection } from './join/join-section.tsx';
 import { styleList } from './labels.ts';
 import { OrgDialog } from './template-dialogs.tsx';
 
@@ -144,6 +145,7 @@ export function TemplateOverview({
           />
         </CardBody>
       </Card>
+      <JoinSection template={t} />
       {warnings.length > 0 ? (
         <Callout
           tone="warning"

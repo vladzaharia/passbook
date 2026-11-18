@@ -1350,3 +1350,202 @@ describe('0086_nfc_tags migration', () => {
     expect(await first(env.DB, "SELECT 1 AS x FROM nfc_tags WHERE id = 't-bare'")).toBeNull();
   });
 });
+
+describe('0090 webhooks migration', () => {
+  it('creates the tables, the journal trigger and the tenant triggers', async () => {
+    const rows = await all<{ type: string; name: string }>(
+      env.DB,
+      "SELECT type, name FROM sqlite_master WHERE name LIKE 'webhook_%' OR name LIKE 'event_feed%' OR name = 'pass_events_feed'",
+    );
+    const names = new Set(rows.map((r) => `${r.type}:${r.name}`));
+    for (const expected of [
+      'table:webhook_endpoints',
+      'table:webhook_endpoint_secrets',
+      'table:webhook_deliveries',
+      'table:webhook_attempts',
+      'table:event_feed',
+      'trigger:pass_events_feed',
+      'trigger:event_feed_tenant',
+      'trigger:event_feed_no_update',
+      'trigger:webhook_endpoints_cap',
+      'trigger:webhook_endpoints_identity',
+      'trigger:webhook_deliveries_key',
+      'trigger:webhook_attempts_key',
+      'trigger:webhook_endpoint_secrets_immutable',
+      'index:event_feed_org',
+      'index:webhook_deliveries_due',
+    ])
+      expect(names, expected).toContain(expected);
+  });
+
+  it('rejects invalid enum values and a non-https url', async () => {
+    const { org } = await setup();
+    const insert = (url: string, mode: string, status: string) =>
+      run(
+        env.DB,
+        `INSERT INTO webhook_endpoints (id, org_id, mode, url, event_types, api_version, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, '["pass.issued"]', 'v', ?, 1, 1)`,
+        [`bad-${Math.random()}`, org.id, mode, url, status],
+      );
+    await expect(insert('http://example.com/x', 'live', 'active')).rejects.toThrow();
+    await expect(insert('https://example.com/x', 'staging', 'active')).rejects.toThrow();
+    await expect(insert('https://example.com/x', 'live', 'weird')).rejects.toThrow();
+    await expect(insert('https://example.com/x', 'live', 'disabled')).rejects.toThrow();
+    await expect(insert('https://example.com/x', 'live', 'active')).resolves.toBeDefined();
+  });
+});
+
+describe('0095_tag_enrollments migration', () => {
+  async function setup() {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const template = makeTemplate({ id: `tpl-${f.ids.token(4)}` }).resolved;
+    const pass = await makePass(f, { orgId: org.id, template });
+    const scanner = await makeScanner(f, { orgId: org.id });
+    const insert = (
+      id: string,
+      over: {
+        scanner?: string;
+        pass?: string;
+        org?: string;
+        ttl?: number;
+        scope?: string;
+        user?: string | null;
+        state?: string;
+      } = {},
+    ) =>
+      run(
+        env.DB,
+        `INSERT INTO tag_enrollments (id, org_id, mode, pass_id, scanner_id, requested_by, scope, user_id, state, created_at, expires_at, holder_generation)
+         VALUES (?, ?, 'live', ?, ?, 'admin', ?, ?, ?, 1000, ?, 0)`,
+        [
+          id,
+          over.org ?? org.id,
+          over.pass ?? pass.id,
+          over.scanner ?? scanner.id,
+          over.scope ?? 'pass',
+          over.user ?? null,
+          over.state ?? 'pending',
+          1000 + (over.ttl ?? 90_000),
+        ],
+      );
+    return { f, org, pass, scanner, insert };
+  }
+
+  it('holds one pending request per scanner and per pass, and frees them when one ends', async () => {
+    const { f, org, scanner, insert } = await setup();
+    const other = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-${f.ids.token(4)}` }).resolved,
+    });
+    await insert('e1');
+    await expect(insert('e2', { pass: other.id })).rejects.toThrow(/UNIQUE/);
+    const spare = await makeScanner(f, { orgId: org.id });
+    await expect(insert('e3', { scanner: spare.id })).rejects.toThrow(/UNIQUE/);
+    await run(
+      env.DB,
+      "UPDATE tag_enrollments SET state = 'cancelled', ended_at = 2000 WHERE id = 'e1'",
+    );
+    await insert('e4', { scanner: spare.id });
+    expect(scanner.id).not.toBe(spare.id);
+  });
+
+  it('refuses a window over 90 seconds, a scanner or pass of another tenant, and a user scope for a stranger', async () => {
+    const { f, pass, insert } = await setup();
+    await expect(insert('long', { ttl: 90_001 })).rejects.toThrow(/CHECK/);
+    const foreign = await makeOrg(f);
+    const foreignScanner = await makeScanner(f, { orgId: foreign.id });
+    await expect(insert('x1', { scanner: foreignScanner.id })).rejects.toThrow(/enrollment_tenant/);
+    await expect(insert('x2', { scope: 'user', user: 'nobody' })).rejects.toThrow(
+      /enrollment_owner/,
+    );
+    await expect(insert('x3', { state: 'done' })).rejects.toThrow(/enrollment_pending/);
+    expect(pass.id).toBeTruthy();
+  });
+
+  it('keeps identity columns fixed, leaves pending once, and cascades with the scanner', async () => {
+    const { scanner, insert } = await setup();
+    await insert('e5');
+    await expect(
+      run(env.DB, "UPDATE tag_enrollments SET expires_at = expires_at + 1 WHERE id = 'e5'"),
+    ).rejects.toThrow(/enrollment_immutable/);
+    await run(env.DB, "UPDATE tag_enrollments SET shown_at = 1500 WHERE id = 'e5'");
+    await expect(
+      run(env.DB, "UPDATE tag_enrollments SET shown_at = 1600 WHERE id = 'e5'"),
+    ).rejects.toThrow(/enrollment_immutable/);
+    await run(
+      env.DB,
+      "UPDATE tag_enrollments SET state = 'declined', ended_at = 2000 WHERE id = 'e5'",
+    );
+    await expect(
+      run(env.DB, "UPDATE tag_enrollments SET state = 'done' WHERE id = 'e5'"),
+    ).rejects.toThrow(/enrollment_immutable/);
+    await run(env.DB, 'DELETE FROM scanners WHERE id = ?', [scanner.id]);
+    expect(await first(env.DB, "SELECT 1 AS x FROM tag_enrollments WHERE id = 'e5'")).toBeNull();
+  });
+
+  /** A finished request pointing at a binding of its pass. */
+  async function done() {
+    const { f, org, pass, scanner, insert } = await setup();
+    const tagId = `t-${f.ids.token(4)}`;
+    const ref = f.ids
+      .token(32)
+      .replace(/[^0-9a-f]/g, 'a')
+      .padEnd(64, 'a')
+      .slice(0, 64);
+    const eid = `d-${f.ids.token(4)}`;
+    const bid = `b-${f.ids.token(4)}`;
+    await run(
+      env.DB,
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES (?, ?, 'live', ?, 'uid', ?, 1)",
+      [tagId, org.id, ref, ref.slice(0, 4).toUpperCase()],
+    );
+    await insert(eid);
+    await run(
+      env.DB,
+      `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by, holder_generation)
+       VALUES (?, ?, 'pass', ?, 'remote', 1, 'user', 'x', 0)`,
+      [bid, tagId, pass.id],
+    );
+    await run(
+      env.DB,
+      "UPDATE tag_enrollments SET state = 'done', ended_at = 2000, binding_id = ? WHERE id = ?",
+      [bid, eid],
+    );
+    return { org, pass, scanner, tagId, eid, bid };
+  }
+  const bindingOf = async (id: string) =>
+    (
+      await first<{ binding_id: string | null }>(
+        env.DB,
+        'SELECT binding_id FROM tag_enrollments WHERE id = ?',
+        [id],
+      )
+    )?.binding_id;
+  const rowOf = (id: string) =>
+    first(env.DB, 'SELECT 1 AS x FROM tag_enrollments WHERE id = ?', [id]);
+
+  it('lets the binding of a finished request go with its tag, and the row go with its pass', async () => {
+    const a = await done();
+    await run(env.DB, 'DELETE FROM nfc_tags WHERE id = ?', [a.tagId]);
+    expect(await bindingOf(a.eid)).toBeNull();
+    expect(await rowOf(a.eid)).not.toBeNull();
+    const b = await done();
+    await run(env.DB, 'DELETE FROM passes WHERE id = ?', [b.pass.id]);
+    expect(await rowOf(b.eid)).toBeNull();
+  });
+
+  it('lets a binding be deleted (as a user delete cascades) and still fixes the rest of a finished row', async () => {
+    const c = await done();
+    await run(env.DB, 'DELETE FROM tag_bindings WHERE id = ?', [c.bid]);
+    expect(await bindingOf(c.eid)).toBeNull();
+    for (const set of [
+      "error_code = 'X'",
+      "state = 'pending', ended_at = NULL",
+      'holder_generation = 9',
+    ])
+      await expect(
+        run(env.DB, `UPDATE tag_enrollments SET ${set} WHERE id = ?`, [c.eid]),
+      ).rejects.toThrow(/enrollment_immutable|CHECK/);
+  });
+});

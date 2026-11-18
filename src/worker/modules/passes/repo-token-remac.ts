@@ -17,7 +17,12 @@ interface Raw extends Partial<SealRaw> {
   mac: string;
 }
 
-const COLUMN = { pass: 'download_token', 'apple-auth': 'auth_token', bundle: 'token' } as const;
+const COLUMN = {
+  pass: 'download_token',
+  'apple-auth': 'auth_token',
+  bundle: 'token',
+  join: 'token',
+} as const;
 /** A stored MAC; case-sensitive, like the triggers of 0059 and 0065. */
 const MAC_GLOB = "GLOB 'h1:*'";
 

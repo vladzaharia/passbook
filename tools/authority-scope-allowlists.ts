@@ -55,8 +55,13 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/orgs/repo-members.ts': {
     reason:
-      'invitation accept (the token is the authority); manager writes are org.member.* grants',
-    writes: ['org_invitations:4b6bc4ab06f4', 'org_memberships:d5844d93f52c'],
+      'invitation accept (the token, or a sign-in link bound to the invitation, is the authority); manager writes are org.member.* grants',
+    writes: [
+      'org_invitations:4b6bc4ab06f4',
+      'org_invitations:2ed5ce3be6ec',
+      'org_memberships:d5844d93f52c',
+      'org_memberships:605b3e67a1a2',
+    ],
   },
   'src/worker/modules/settings/repo.ts': {
     reason: 'system-scope job values (cron runs, identity checks); the settings routes use grants',
@@ -122,11 +127,12 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/passes/repo-pass-trusted.ts': {
     reason:
-      'link rotation, refresh claim, soft delete and the re-MAC of a stored token MAC under a new root (cron tokens.remac: a token_remac_marks or bundle_remac_marks row, the CAS update and the mark removal in one batch) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
+      'link rotation, refresh claim, soft delete and the re-MAC of a stored token MAC under a new root (cron tokens.remac: a token_remac_marks or bundle_remac_marks row, the CAS update and the mark removal in one batch; a join link or bundle token is one CAS update) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
     writes: [
       'bundle_remac_marks:2335a17039ba',
       'bundle_remac_marks:c55ee2c8e29c',
       'bundles:4d66feaeeccb',
+      'join_links:4a5b982fa241',
       'passes:8dac9824a940',
       'passes:a565c31165b3',
       'passes:a978e7f9948b',
@@ -179,6 +185,33 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'passes:a92c1702af5b',
     ],
   },
+  'src/worker/modules/webhooks/repo-delivery-state.ts': {
+    reason:
+      'lane claim, attempt, retry, finish and cancel bookkeeping for deliveries created by the pass_events trigger (the trigger and composite FKs are the authority), plus the endpoint health and status writes no trigger authorizes (consecutive_failures, failing_since, last_success_at, lane_token, status = disabled with its cancel and audit row); no tenant principal at send time. Only webhooks/{deliver,dispatch,jobs,kick}.ts may import it (check-sizes boundary)',
+    writes: [
+      'webhook_attempts:14e5061ed595',
+      'webhook_deliveries:32f816eb0de2',
+      'webhook_deliveries:7aad02cd36d1',
+      'webhook_deliveries:c4b8616238e6',
+      'webhook_deliveries:f3354348cdcf',
+      'webhook_endpoints:15238020ed80',
+      'webhook_endpoints:42fc667a61e0',
+      'webhook_endpoints:641fa0530214',
+      'webhook_endpoints:a887b7fdf39d',
+      'webhook_endpoints:ce93d6a8adaa',
+      'webhook_endpoints:f0e71da67ea9',
+    ],
+  },
+  'src/worker/modules/webhooks/repo-retention.ts': {
+    reason: 'daily purge of event_feed, deliveries, attempts and expired secrets; platform job',
+    writes: [
+      'event_feed:64c24d3f1d97',
+      'webhook_attempts:5ff82e16f6e9',
+      'webhook_attempts:9017ace0b5c0',
+      'webhook_deliveries:160f2ac154d3',
+      'webhook_endpoint_secrets:3a87aa5ed8d1',
+    ],
+  },
   'src/worker/modules/delivery/repo-outbox-processing.ts': {
     reason:
       'outbox lease, retry and finish bookkeeping for a row already authorized at queue time, and the sent/failed outbox purge (deleteInBatches); the provider boundary is a grant (repo-provider-attempt.ts)',
@@ -224,7 +257,11 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/keys/repo-rewrap.ts': {
     reason:
       'cron keys.rewrap moves an envelope to the newest KEK (kek_version and wrapped_dek only), a compare-and-set on the envelope it read; platform job with no tenant principal, and no authority column changes (docs/design/authority-epochs.md, 7.2)',
-    writes: ['captured_emails:511fe05ea909', 'connection_webhook_retention:84821c1d359b'],
+    writes: [
+      'captured_emails:511fe05ea909',
+      'connection_webhook_retention:84821c1d359b',
+      'webhook_endpoint_secrets:b1f2bc9c7907',
+    ],
   },
 };
 

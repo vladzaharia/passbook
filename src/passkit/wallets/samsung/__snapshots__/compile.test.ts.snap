@@ -6,12 +6,19 @@ exports[`fidelity report > gives every template a status, none blocked 1`] = `
   "henrys-copper": "loyalty: Ready with omissions (2)",
   "starter-access-card": "loyalty: Ready with omissions (3)",
   "starter-boarding-pass": "loyalty: Ready with omissions (2)",
+  "starter-booking": "loyalty: Ready with omissions (3)",
   "starter-coupon": "coupon: Ready with omissions (1)",
   "starter-event-ticket": "ticket: Ready with omissions (3)",
   "starter-generic": "loyalty: Ready with omissions (3)",
+  "starter-id-card": "loyalty: Ready with omissions (3)",
+  "starter-pack": "coupon: Ready with omissions (2)",
+  "starter-permit": "loyalty: Ready with omissions (3)",
+  "starter-pickup": "loyalty: Ready with omissions (3)",
   "starter-poster-generic": "loyalty: Ready with omissions (2)",
   "starter-stamp-card": "loyalty: Ready with omissions (1)",
   "starter-store-card": "loyalty: Ready with omissions (2)",
+  "starter-timed-ticket": "ticket: Ready with omissions (1)",
+  "starter-transit-ticket": "loyalty: Ready with omissions (2)",
 }
 `;
 
@@ -194,10 +201,10 @@ exports[`samsung compiler over every starter and baked template > starter-boardi
       "appLinkData": "https://org.example",
       "appLinkLogo": "https://img.example/org-logo.png",
       "appLinkName": "Example Org",
-      "barcode.ptFormat": "BARCODESERIAL",
+      "barcode.ptFormat": "BARCODE",
       "barcode.ptSubFormat": "PDF_417",
       "barcode.serialType": "BARCODE",
-      "barcode.value": "BOARD-0001",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
       "bgColor": "#03528e",
       "endDate": "1906576200000",
       "fontColor": "#ffffff",
@@ -223,6 +230,7 @@ Terms: Be at the gate 30 minutes before departure.",
   "items": [
     "type | omitted | ",
     "colors.label | difference | ",
+    "barcode.altText | difference | ",
     "role.subtitle | text | secondaryFields.passenger",
     "role.seat | text | ",
     "role.memberName | text | ",
@@ -236,6 +244,55 @@ Terms: Be at the gate 30 minutes before departure.",
     "field.secondary | text | secondaryFields.departs",
     "field.auxiliary | text | auxiliaryFields.boardsAt",
     "field.back | text | backFields.terms",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-booking 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#fae6e4",
+      "endDate": "1921761000000",
+      "fontColor": "#3c1a24",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Status: Booked
+What: Cut and colour
+With: Sam
+Where: Soho
+Name: Ana Rivera
+Terms: Please arrive on time. Show the code at the desk.",
+      "providerName": "PassBook",
+      "startDate": "1921757400000",
+      "title": "2030-11-24T09:30:00-05:00",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.what",
+    "field.header | text | headerFields.status",
+    "field.secondary | text | secondaryFields.what",
+    "field.secondary | text | secondaryFields.with",
+    "field.auxiliary | text | auxiliaryFields.where",
+    "field.auxiliary | text | auxiliaryFields.holder",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],
@@ -295,10 +352,10 @@ exports[`samsung compiler over every starter and baked template > starter-event-
       "appLinkData": "https://org.example",
       "appLinkLogo": "https://img.example/org-logo.png",
       "appLinkName": "Example Org",
-      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptFormat": "QRCODE",
       "barcode.ptSubFormat": "QR_CODE",
       "barcode.serialType": "QRCODE",
-      "barcode.value": "TICKET-0001",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
       "bgColor": "#5e0636",
       "endDate": "1906606800000",
       "fontColor": "#ffffff",
@@ -318,7 +375,7 @@ Doors: 18:00 -07:00
 Admission: General
 Terms: No re-entry. Ticket is non-transferable.",
       "providerName": "PassBook",
-      "reservationNumber": "TICKET-0001",
+      "reservationNumber": "SNAPSHOT-SCAN-CODE",
       "startDate": "1906596000000",
       "title": "Sample Event",
     },
@@ -330,6 +387,7 @@ Terms: No re-entry. Ticket is non-transferable.",
   "items": [
     "colors.label | difference | ",
     "upcoming.multi | difference | events",
+    "barcode.altText | difference | ",
     "role.subtitle | text | secondaryFields.time",
     "role.venueName | text | ",
     "role.venueAddress | text | ",
@@ -363,16 +421,17 @@ exports[`samsung compiler over every starter and baked template > starter-generi
       "appLinkData": "https://org.example",
       "appLinkLogo": "https://img.example/org-logo.png",
       "appLinkName": "Example Org",
-      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptFormat": "QRCODE",
       "barcode.ptSubFormat": "QR_CODE",
       "barcode.serialType": "QRCODE",
-      "barcode.value": "ID-0001",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
       "bgColor": "#141a2b",
       "fontColor": "#ffffff",
       "logoImage": "https://img.example/logo@3x.png",
       "noticeDesc": "Tier: Plus
-Points: 1200
+Status: Active
 Since: 2026-01-01
+Guests left: 4
 Terms: Present the barcode when asked.",
       "providerName": "PassBook",
       "title": "Alex Morgan",
@@ -385,10 +444,204 @@ Terms: Present the barcode when asked.",
   "items": [
     "type | omitted | ",
     "colors.label | difference | ",
+    "barcode.altText | difference | ",
     "role.subtitle | text | secondaryFields.since",
     "field.header | text | headerFields.tier",
-    "field.header | text | headerFields.points",
+    "field.header | text | headerFields.status",
     "field.secondary | text | secondaryFields.since",
+    "field.auxiliary | text | auxiliaryFields.guests",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-id-card 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "BARCODESERIAL",
+      "barcode.ptSubFormat": "CODE_39",
+      "barcode.serialType": "BARCODE",
+      "barcode.value": "290014",
+      "bgColor": "#f4f4f0",
+      "endDate": "1914364800000",
+      "fontColor": "#141416",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Role: Student
+Number: 290014
+Year: Year 9
+Valid until: 2030-08-31
+Terms: Carry this card. It is yours only.",
+      "providerName": "PassBook",
+      "title": "Maya Chen",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.number",
+    "field.header | text | headerFields.role",
+    "field.secondary | text | secondaryFields.number",
+    "field.secondary | text | secondaryFields.unit",
+    "field.auxiliary | text | auxiliaryFields.until",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-pack 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#006874",
+      "deletableYn": "Y",
+      "displayRedeemButtonYn": "N",
+      "editableYn": "N",
+      "expiry": "1921190400000",
+      "fontColor": "#ffffff",
+      "issueDate": "1794909600000",
+      "mainImg": "https://img.example/strip@3x.png",
+      "noticeDesc": "Left: 7
+Name: Dana Ortiz
+Valid until: 2030-11-18
+Terms: Show the code each time. Packs don't refund.",
+      "notificationYn": "Y",
+      "title": "10 washes",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "coupon",
+  },
+  "items": [
+    "image.logo | omitted | logo",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.holder",
+    "role.offerDetails | text | backFields.fine",
+    "field.header | text | headerFields.left",
+    "field.secondary | text | secondaryFields.holder",
+    "field.secondary | text | secondaryFields.expires",
+    "field.back | text | backFields.fine",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "coupon",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-permit 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#aa1c2c",
+      "endDate": "1924905600000",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Zone: Zone C
+Valid to: 2030-12-31
+Type: Monthly
+Bay: 14
+Name: Lee Park
+Status: Active
+Terms: Display as the operator requires. Cameras read plates, not this code.",
+      "providerName": "PassBook",
+      "title": "AB12 CDE",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.until",
+    "field.header | text | headerFields.zone",
+    "field.secondary | text | secondaryFields.until",
+    "field.secondary | text | secondaryFields.type",
+    "field.auxiliary | text | auxiliaryFields.bay",
+    "field.auxiliary | text | auxiliaryFields.holder",
+    "field.back | text | backFields.status",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-pickup 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#cef2e2",
+      "fontColor": "#0c3426",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Status: Ready
+Order: 1042
+Collect by: 19:30 -05:00
+Where: Bay 3
+Name: Mia Kent
+Items: 2 mains, 1 side
+Terms: Show the code to collect. Bring ID if asked.",
+      "providerName": "PassBook",
+      "title": "4K7M",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.order",
+    "field.header | text | headerFields.status",
+    "field.secondary | text | secondaryFields.order",
+    "field.secondary | text | secondaryFields.collectBy",
+    "field.auxiliary | text | auxiliaryFields.bay",
+    "field.auxiliary | text | auxiliaryFields.holder",
+    "field.back | text | backFields.items",
     "field.back | text | backFields.terms",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
@@ -405,10 +658,10 @@ exports[`samsung compiler over every starter and baked template > starter-poster
       "appLinkData": "https://org.example",
       "appLinkLogo": "https://img.example/org-logo.png",
       "appLinkName": "Example Org",
-      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptFormat": "QRCODE",
       "barcode.ptSubFormat": "QR_CODE",
       "barcode.serialType": "QRCODE",
-      "barcode.value": "ID-0001",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
       "bgColor": "#361273",
       "bgImage": "https://img.example/artwork@3x.png",
       "fontColor": "#ffffff",
@@ -429,6 +682,7 @@ Terms: Present the barcode when asked.",
   "items": [
     "type | omitted | ",
     "colors.label | difference | ",
+    "barcode.altText | difference | ",
     "role.subtitle | text | secondaryFields.since",
     "field.header | text | headerFields.tier-poster",
     "field.footer | text | footerFields.since-poster",
@@ -452,15 +706,16 @@ exports[`samsung compiler over every starter and baked template > starter-stamp-
       "appLinkData": "https://org.example",
       "appLinkLogo": "https://img.example/org-logo.png",
       "appLinkName": "Example Org",
-      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptFormat": "QRCODE",
       "barcode.ptSubFormat": "QR_CODE",
       "barcode.serialType": "QRCODE",
-      "barcode.value": "CARD-0001",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
       "bgColor": "#fcf4e6",
       "bgImage": "https://img.example/strip@3x.png",
       "fontColor": "#311c0f",
       "logoImage": "https://img.example/logo@3x.png",
-      "noticeDesc": "Stamps: 7 of 10
+      "noticeDesc": "Member ID: CARD-0001
+Stamps: 7 of 10
 Reward: Free coffee
 Name: Alex Morgan
 How it works: One stamp per visit. A full card earns the reward.
@@ -475,7 +730,9 @@ Terms: One reward per full card. No cash value.",
   },
   "items": [
     "colors.label | difference | ",
+    "barcode.altText | difference | ",
     "role.subtitle | text | secondaryFields.reward",
+    "role.memberId | text | ",
     "role.memberId | text | ",
     "field.header | text | headerFields.stamps",
     "field.secondary | text | secondaryFields.reward",
@@ -496,15 +753,16 @@ exports[`samsung compiler over every starter and baked template > starter-store-
       "appLinkLogo": "https://img.example/org-logo.png",
       "appLinkName": "Example Org",
       "balance": "25 USD",
-      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptFormat": "QRCODE",
       "barcode.ptSubFormat": "QR_CODE",
       "barcode.serialType": "QRCODE",
-      "barcode.value": "CARD-0001",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
       "bgColor": "#004b41",
       "bgImage": "https://img.example/strip@3x.png",
       "fontColor": "#ffffff",
       "logoImage": "https://img.example/logo@3x.png",
-      "noticeDesc": "Tier: Gold
+      "noticeDesc": "Member ID: CARD-0001
+Tier: Gold
 Name: Alex Morgan
 Terms: Balance is not redeemable for cash.",
       "providerName": "PassBook",
@@ -517,12 +775,118 @@ Terms: Balance is not redeemable for cash.",
   },
   "items": [
     "colors.label | difference | ",
+    "barcode.altText | difference | ",
     "role.subtitle | text | secondaryFields.holder",
+    "role.memberId | text | ",
     "role.memberId | text | ",
     "field.header | text | headerFields.tier",
     "field.secondary | text | secondaryFields.holder",
     "field.back | text | backFields.terms",
     "relevance.beacons | unsupported | beacons",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-timed-ticket 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#264624",
+      "endDate": "1921519800000",
+      "fontColor": "#fff8e7",
+      "issueDate": "1794909600000",
+      "logoImage": "https://img.example/logo@3x.png",
+      "mainImg": "https://img.example/strip@3x.png",
+      "noticeDesc": "Slot: 14:00 -05:00
+Venue: Northfield Museum
+Until: 14:30 -05:00
+Party: Admits 3
+Entrance: B
+Terms: Arrive within your slot. Show the code at the entrance.",
+      "providerName": "PassBook",
+      "reservationNumber": "SNAPSHOT-SCAN-CODE",
+      "startDate": "1921514400000",
+      "title": "Ocean Light",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "ticket",
+  },
+  "items": [
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.venue",
+    "field.header | text | headerFields.slot",
+    "field.secondary | text | secondaryFields.venue",
+    "field.secondary | text | secondaryFields.until",
+    "field.auxiliary | text | auxiliaryFields.party",
+    "field.auxiliary | text | auxiliaryFields.entrance",
+    "field.back | text | backFields.terms",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "ticket",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-transit-ticket 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#30353c",
+      "endDate": "1921493700000",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Status: On time
+Lane: 4
+To: Harbor Point
+Name: Sam Reed
+Departs: 2030-11-21 07:15 -05:00
+Board by: 06:55 -05:00
+Party: Admits 3
+Vehicle: AB12 CDE
+Terms: Be at the quay by the board-by time. Show the code to board.",
+      "providerName": "PassBook",
+      "startDate": "1921488900000",
+      "title": "Newport",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.holder",
+    "field.header | text | headerFields.status",
+    "field.header | text | headerFields.lane",
+    "field.primary | text | primaryFields.destination",
+    "field.secondary | text | secondaryFields.holder",
+    "field.secondary | text | secondaryFields.departs",
+    "field.auxiliary | text | auxiliaryFields.boardBy",
+    "field.auxiliary | text | auxiliaryFields.party",
+    "field.auxiliary | text | auxiliaryFields.vehicle",
+    "field.back | text | backFields.terms",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],

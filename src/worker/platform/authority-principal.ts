@@ -58,8 +58,21 @@ export type Principal =
     }
   | { kind: 'scanner'; scannerId: string; credentialEpoch: number }
   | { kind: 'holder'; passId: string; proof: HolderProof }
+  /**
+   * A public join link (join-links design J1). Its actor row is the link: org and mode are the link's, it
+   * acts while enabled, at this generation (a new link bumps it) and its org is active. It holds one purpose.
+   */
+  | { kind: 'join'; linkId: string; generation: number }
   | { kind: 'platform'; userId: string; sessionIdHash: string; orgId?: string; mode?: Mode }
-  | { kind: 'system'; job: string; orgId?: string; mode?: Mode; orgAccessRevision?: number };
+  | {
+      kind: 'system';
+      job: string;
+      orgId?: string;
+      mode?: Mode;
+      orgAccessRevision?: number;
+      /** Terminal bookkeeping of a dead run (a stuck import): holds while the org is suspended. `jobGrant` allowlists the purposes. */
+      inactiveOk?: true;
+    };
 
 export type HolderPrincipal = Extract<Principal, { kind: 'holder' }>;
 
@@ -82,6 +95,8 @@ export function principalLabel(p: Principal): string {
       return `scanner:${p.scannerId}`;
     case 'holder':
       return p.proof.via === 'device' ? `device:${p.passId}` : `holder:${p.proof.userId}`;
+    case 'join':
+      return `join:${p.linkId}`;
     case 'platform':
       return `platform:${p.userId}`;
     case 'system':
@@ -174,6 +189,12 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
         ${org} AS org_ok
         FROM passes p JOIN orgs o ON o.id = p.org_id WHERE p.id = ${b.bind(p.passId)}`;
     }
+    case 'join': {
+      const live = `jl.enabled = 1 AND jl.generation = ${b.bind(p.generation)}`;
+      return `SELECT jl.org_id AS org_id, jl.mode AS mode, ${flag(live)} AS actor_ok,
+        ${flag(`o.status = 'active'`)} AS org_ok
+        FROM join_links jl JOIN orgs o ON o.id = jl.org_id WHERE jl.id = ${b.bind(p.linkId)}`;
+    }
     case 'platform':
     case 'system': {
       const mode = b.bind(p.mode ?? null);
@@ -182,7 +203,10 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       // A platform or system principal that names an org acts on it only while the org is active.
       if (p.orgId === undefined)
         return `SELECT NULL AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, 1 AS org_ok`;
-      const org = orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
+      const org =
+        p.kind === 'system' && p.inactiveOk
+          ? `o.status IN ('active', 'suspended')${p.orgAccessRevision === undefined ? '' : ` AND o.access_revision = ${b.bind(p.orgAccessRevision)}`}`
+          : orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
       return `SELECT o.id AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, ${flag(org)} AS org_ok
         FROM orgs o WHERE o.id = ${b.bind(p.orgId)}`;
     }

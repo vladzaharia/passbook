@@ -1,0 +1,74 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "verify",
+      "kind": "check_in",
+      "label": "Verify",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "always"
+    }
+  ],
+  "display": {
+    "header": {},
+    "holder": "{{inputs.plate}}",
+    "notes": {
+      "refused": "Send them to the parking office."
+    },
+    "panels": [
+      {
+        "icon": "info",
+        "id": "p_details",
+        "preset": {
+          "id": "details",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_field1",
+            "label": "Zone",
+            "slot": "field1",
+            "type": "field",
+            "value": "{{inputs.zone}}"
+          },
+          {
+            "id": "r_field2",
+            "label": "Type",
+            "slot": "field2",
+            "type": "field",
+            "value": "{{inputs.type}}"
+          },
+          {
+            "id": "r_field3",
+            "label": "Bay",
+            "slot": "field3",
+            "type": "field",
+            "value": "{{inputs.bay}}"
+          }
+        ],
+        "title": "Details"
+      }
+    ],
+    "v": 1
+  },
+  "flags": [
+    {
+      "equals": [
+        "Suspended"
+      ],
+      "input": "status",
+      "label": "Suspended",
+      "stop": true
+    }
+  ],
+  "lookup": {
+    "input": "plate"
+  },
+  "window": {
+    "from": "validFrom",
+    "until": "validTo"
+  }
+}

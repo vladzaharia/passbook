@@ -82,6 +82,55 @@ const IDENTITY: Record<string, { bg: Rgb; fg: Rgb; label: Rgb; text: number; lab
     text: 8.9,
     labels: 6.7,
   },
+  'starter-pack': {
+    bg: [0, 104, 116],
+    fg: [255, 255, 255],
+    label: [178, 240, 236],
+    text: 6.5,
+    labels: 5.1,
+  },
+  'starter-timed-ticket': {
+    bg: [38, 70, 36],
+    fg: [255, 248, 231],
+    label: [196, 226, 124],
+    text: 10.0,
+    labels: 7.3,
+  },
+  'starter-transit-ticket': {
+    bg: [48, 53, 60],
+    fg: [255, 255, 255],
+    label: [255, 210, 63],
+    text: 12.4,
+    labels: 8.6,
+  },
+  'starter-booking': {
+    bg: [250, 230, 228],
+    fg: [60, 26, 36],
+    label: [168, 58, 84],
+    text: 12.8,
+    labels: 5.2,
+  },
+  'starter-pickup': {
+    bg: [206, 242, 226],
+    fg: [12, 52, 38],
+    label: [10, 106, 70],
+    text: 11.4,
+    labels: 5.5,
+  },
+  'starter-permit': {
+    bg: [170, 28, 44],
+    fg: [255, 255, 255],
+    label: [255, 210, 212],
+    text: 7.2,
+    labels: 5.3,
+  },
+  'starter-id-card': {
+    bg: [244, 244, 240],
+    fg: [20, 20, 22],
+    label: [196, 30, 58],
+    text: 16.7,
+    labels: 5.3,
+  },
 };
 
 describe.each(Object.entries(IDENTITY))('%s identity', (slug, want) => {
@@ -108,7 +157,7 @@ it('gives every blueprint its own background', async () => {
 
 it('names each blueprint and gives it a curated glyph', async () => {
   const names: Record<string, [string, string]> = {
-    'starter-generic': ['Membership card', 'id-card'],
+    'starter-generic': ['Membership', 'id-card'],
     'starter-poster-generic': ['Poster card', 'sparkles'],
     'starter-store-card': ['Balance card', 'coins'],
     'starter-coupon': ['Coupon', 'percent'],
@@ -116,6 +165,13 @@ it('names each blueprint and gives it a curated glyph', async () => {
     'starter-boarding-pass': ['Boarding pass', 'plane'],
     'starter-stamp-card': ['Stamp card', 'stamp'],
     'starter-access-card': ['Access card', 'key'],
+    'starter-pack': ['Pack', 'ticket'],
+    'starter-timed-ticket': ['Timed ticket', 'ticket'],
+    'starter-transit-ticket': ['Transit ticket', 'ticket'],
+    'starter-booking': ['Booking', 'tag'],
+    'starter-pickup': ['Pickup', 'gift'],
+    'starter-permit': ['Permit', 'parking'],
+    'starter-id-card': ['ID card', 'id-card'],
   };
   for (const [slug, [name, icon]] of Object.entries(names)) {
     const { template } = await loadBaked(slug, { strips: false });
@@ -133,10 +189,14 @@ it('names the store card a Balance card and leads with the balance', async () =>
 });
 
 const PRE = join(import.meta.dirname, '__fixtures__/pre-blueprint');
-// The Stamp and Access cards are new: no earlier build to compare.
-const UPGRADED = Object.keys(IDENTITY).filter(
-  (slug) => slug !== 'starter-stamp-card' && slug !== 'starter-access-card',
-);
+// New blueprints have no earlier build to compare. The Membership upgrade (PS-19) adds status and guests.
+const UPGRADED = [
+  'starter-poster-generic',
+  'starter-store-card',
+  'starter-coupon',
+  'starter-event-ticket',
+  'starter-boarding-pass',
+];
 const IDENTITY_KEYS = ['backgroundColor', 'foregroundColor', 'labelColor', 'description'];
 const walk = (v: unknown, path = ''): [string, unknown][] =>
   v && typeof v === 'object'
@@ -151,9 +211,8 @@ describe('upgrade impact', () => {
     const b = new Map(walk(after));
     const changed = [...new Set([...a.keys(), ...b.keys()])].filter((k) => a.get(k) !== b.get(k));
     // Serial, token and the organization name are server-supplied and fixed in the fixture.
-    // A coupon's barcode is now the server's scan code (PS-02).
-    const allowed =
-      slug === 'starter-coupon' ? [...IDENTITY_KEYS, 'barcodes/0/message'] : IDENTITY_KEYS;
+    // Every blueprint's barcode is now the server's scan code (PS-02 for the coupon, PS-28 the rest).
+    const allowed = [...IDENTITY_KEYS, 'barcodes/0/message'];
     const unexpected = changed.filter((k) => !allowed.includes(k.slice(1)));
     expect(unexpected).toEqual([]);
     expect(changed.length).toBeGreaterThan(0);

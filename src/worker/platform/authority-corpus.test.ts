@@ -1,13 +1,15 @@
 // Representative scan write path statement sets (check-in, held, stop), built on the extended builder from
 // fixtures. Asserts the budgets and that every statement compiles on D1. The sizes feed the design record.
 import { describe, expect, it } from 'vitest';
+import { makePass } from '../../../test/helpers/index.ts';
+import { makeJoinLink } from '../../../test/helpers/join.ts';
 import { type Grant, grant } from './authority.ts';
 import type { Check } from './authority-checks.ts';
 import { epochIs, passRow, rawCheck, rowIs } from './authority-checks.ts';
 import { exists, not, tenantCheck, tenantSql } from './authority-cond.ts';
 import { lte, ne } from './authority-expr.ts';
 import { db, explains } from './authority-ext-fixtures.ts';
-import { builtOf, type GrantedStatement, grantInsert } from './authority-granted.ts';
+import { builtOf, type GrantedStatement, grantInsert, JOIN_TABLES } from './authority-granted.ts';
 import { readPart, writePart } from './authority-include.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { first } from './db.ts';
@@ -263,5 +265,56 @@ describe('statement corpus (22): the scan write path sets', () => {
     expect(sizes.check_in).toBeLessThanOrEqual(25);
     expect(sizes.held).toBeLessThanOrEqual(20);
     expect(sizes.stop).toBeLessThanOrEqual(20);
+  });
+});
+
+describe('statement corpus: the join create set', () => {
+  it('stays within the budgets and compiles on D1', async () => {
+    const x = await setupGrant('corpus-join');
+    const pass = await makePass(x.s.f, { orgId: x.s.org.id, template: x.s.template.resolved });
+    const link = await makeJoinLink(x.s.f, {
+      orgId: x.s.org.id,
+      templateId: x.s.template.resolved.id,
+    });
+    const g = grant(x.route, {
+      purpose: 'org_mode.pass.join',
+      principal: { kind: 'join', linkId: link.id, generation: link.generation },
+      target: pass.id,
+      tables: JOIN_TABLES,
+    });
+    const from = { table: 'passes', where: { id: pass.id }, copy: { pass_id: 'id' } };
+    const statements = [
+      g.insertSelect('pass_events', ['id', 'kind', 'data', 'at'], ['ev', 'pass.issued', '{}', 1], {
+        from,
+      }),
+      g.insertSelect(
+        'join_issues',
+        ['id', 'link_id', 'link_generation', 'created_at'],
+        ['ji', link.id, link.generation, 1],
+        { from },
+      ),
+    ];
+    const input = {
+      purpose: 'org_mode.pass.join',
+      principal: { kind: 'join' as const, linkId: link.id, generation: link.generation },
+      target: pass.id,
+    };
+    const { grant: gs, writes } = g.inspect();
+    expect(gs.params).toBeLessThanOrEqual(90);
+    expect(gs.bytes).toBeLessThan(32 * 1024);
+    for (const w of writes) {
+      expect(w.params).toBeLessThanOrEqual(40);
+      expect(w.bytes).toBeLessThan(32 * 1024);
+    }
+    const insert = grantInsert(g.id, 'org_mode', input, [], 0);
+    await explains(insert.sql, insert.params);
+    for (const st of statements) {
+      const { sql, params } = builtOf(st);
+      await explains(sql, params);
+    }
+    await g.commit();
+    expect(
+      await first(db, 'SELECT count(*) AS n FROM join_issues WHERE link_id = ?', [link.id]),
+    ).toEqual({ n: 1 });
   });
 });

@@ -384,7 +384,7 @@
         "barcode": "*",
         "prop": "message"
       },
-      "value": "{{ticketId}}"
+      "value": "{{pass.scanCode}}"
     },
     {
       "to": {
@@ -547,6 +547,15 @@
   ],
   "display": {
     "icon": "music",
+    "group": "get-in",
+    "aliases": [
+      "concert",
+      "festival",
+      "show",
+      "admission",
+      "appointment",
+      "reservation"
+    ],
     "title": "{{eventName}}",
     "subtitle": "{{attendee}}",
     "status": "{{venueName}}",

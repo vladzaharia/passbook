@@ -5,7 +5,7 @@ export const HOLDER_COPY = {
   /** The pass email's title (and its preview in the console). */
   passReady: 'Your pass is ready',
   /** Where this device cannot add to Apple Wallet. */
-  openOnApple: 'Open on iPhone or Mac to add to Apple Wallet.',
+  openOnApple: 'Open this page on your phone to add the pass to your wallet.',
   /** In an in-app web view, which cannot add to Wallet. */
   openInSafari: 'Open in Safari to add to Apple Wallet.',
   qrAlt: (pass: string) => `QR code for ${pass}`,
@@ -49,7 +49,7 @@ export const HOLDER_COPY = {
   connectToRefresh: 'Connect to refresh this pass.',
   saveOfflineFailed: 'Could not save. Try again.',
   /** The pass email, under the Apple badge: it reads the same on any phone. */
-  emailAddLine: 'The Apple Wallet button adds on iPhone or Mac. On other phones, open your pass.',
+  emailAddLine: 'Open this email on your phone to add the pass to your wallet.',
   /** The pass page's link preview when native wallets are offered too. */
   previewWallets: 'Add it to your wallet.',
   /** My passes. */

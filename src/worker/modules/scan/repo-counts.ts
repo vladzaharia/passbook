@@ -31,11 +31,11 @@ export const todayStmt = (db: Db, actorKey: string, orgId: string, mode: Mode, s
     [actorKey, orgId, mode, since],
   );
 
-export const managersStmt = (db: Db, orgId: string) =>
+export const managersStmt = (db: Db, orgId: string, deskOk = false) =>
   stmt(
     db,
     `SELECT EXISTS (SELECT 1 FROM scan_staff
-       WHERE org_id = ? AND role = 'manager' AND disabled_at IS NULL) AS has`,
+       WHERE org_id = ? AND role IN ('manager'${deskOk ? ",'desk'" : ''}) AND disabled_at IS NULL) AS has`,
     [orgId],
   );
 

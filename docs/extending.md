@@ -36,7 +36,7 @@ Minimal `wallet.template.json`:
 }
 ```
 
-- `inputs` is JSON Schema. `x-label`, `x-group`, `x-order`, `x-widget`, `x-search` drive the forms.
+- `inputs` is JSON Schema. `x-label`, `x-group`, `x-order`, `x-widget`, `x-search` drive the forms. `x-hidden: true` keeps an input valid for stored passes but out of the form.
 - `bindings` write input values into `pass.json` by field key, barcode, action or JSON pointer.
   Values are `{{input}}` expressions; `omitIfEmpty` and `remove` drop empty parts.
 - `behaviors` (optional): `[{ "use": "venue-locations", "version": 1, "config": { … } }]`.
@@ -183,7 +183,7 @@ A behavior is trusted code that edits a pass after bindings run (for example add
    export default plugin;
    ```
 
-2. Tests beside it. `venue-locations` is the model; the others are `expiry-from-input`, `relevance-window`, `upcoming-events` and `beacons`.
+2. Tests beside it. `venue-locations` is the model; the others are `expiry-from-input`, `term`, `relevance-window`, `upcoming-events` and `beacons`.
 3. `npm run gen`. Templates reference it with `behaviors: [{ "use": "my-behavior", … }]`.
 
 Bump `version` when `configSchema` changes in a way that breaks stored configs.

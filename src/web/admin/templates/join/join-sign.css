@@ -1,0 +1,135 @@
+/* The print sign (join-sign.tsx): one A5 page. On screen it is a paper on the page; printing shows
+   the paper alone, edge to edge. Colours are fixed: it is ink on paper in either theme. */
+@page {
+  size: A5;
+  margin: 0;
+}
+.jl-paper {
+  --jl-ink: #0b1b2b;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 22.5rem);
+  aspect-ratio: 148 / 210;
+  margin-inline: auto;
+  padding: 7% 8% 8%;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: #fff;
+  color: var(--jl-ink);
+  container-type: inline-size;
+  box-shadow:
+    0 18px 40px -12px rgb(0 0 0 / 0.5),
+    0 0 0 1px rgb(128 128 128 / 0.25);
+}
+.jl-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2.6%;
+  background: #1d6fa5;
+}
+.jl-org {
+  display: flex;
+  align-items: center;
+  gap: 3cqw;
+  align-self: flex-start;
+  max-width: 100%;
+  margin-top: 2%;
+  font-size: 5.4cqw;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.jl-org > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.jl-logo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 10cqw;
+  height: 10cqw;
+  overflow: hidden;
+  border-radius: 2.5cqw;
+  background: #1d6fa5;
+  color: #fff;
+  font-size: 4.4cqw;
+}
+.jl-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.jl-code {
+  width: 76%;
+  aspect-ratio: 1;
+  margin-top: 7%;
+}
+.jl-code img,
+.jl-code span {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.jl-paper h2 {
+  margin: 6% 0 0;
+  font-size: 8.4cqw;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  text-align: center;
+}
+.jl-paper p {
+  margin: 1% 0 0;
+  font-size: 4.4cqw;
+  line-height: 1.4;
+  color: #33485c;
+  text-align: center;
+}
+.jl-paper code {
+  margin-top: auto;
+  max-width: 100%;
+  padding: 1.2cqw 2.8cqw;
+  border-radius: 1.6cqw;
+  background: #eef3f8;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 3.7cqw;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .jl-paper {
+    animation: jl-paper 360ms var(--wl-ease-out, cubic-bezier(0.05, 0.7, 0.1, 1)) backwards;
+  }
+  @keyframes jl-paper {
+    from {
+      opacity: 0;
+      translate: 0 10px;
+    }
+  }
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .jl-paper,
+  .jl-paper * {
+    visibility: visible;
+  }
+  .jl-paper {
+    position: fixed;
+    inset: 0;
+    width: 148mm;
+    max-width: none;
+    height: 210mm;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

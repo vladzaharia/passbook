@@ -101,7 +101,7 @@ describe('GET /b/:token', () => {
     expect(html.match(/Show barcode/g)).toHaveLength(2);
     expect(html).not.toContain('Add all to Apple Wallet');
     expect(html).not.toContain('data-awb=');
-    expect(html).toContain('Open on iPhone or Mac to add to Apple Wallet.');
+    expect(html).toContain('Open this page on your phone to add the pass to your wallet.');
   });
 
   it('serves a member barcode page under the bundle token, with nothing to save', async () => {

@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TemplateRelease } from '../templates/releases.ts';
@@ -116,6 +116,10 @@ export async function createPassIdempotent(
   options: { serverResolvedRelease?: boolean } = {},
 ) {
   const p = structuredClone(input);
+  // Validates the execution first (a missing or unknown one is refused there), then keeps join out: a
+  // replay returns the pass behind a key, and a public join link never gets another visitor's card.
+  await assertTenantCreateAuthority(ctx, p);
+  if (p.execution.kind === 'join') throw new ForbiddenError();
   const credentialCtx = snapshotCredentialContext(ctx);
   if (!key) return issuanceDetail(ctx, p, await createPassFromSnapshot(ctx, p, credentialCtx));
   if (p.reservedPassId !== undefined)

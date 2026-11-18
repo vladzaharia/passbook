@@ -84,7 +84,7 @@ function callSites(text: string): Record<string, number> {
   return out;
 }
 
-const SEALS = ['pass_token_seals', 'pass_auth_seals', 'bundle_token_seals'];
+const SEALS = ['pass_token_seals', 'pass_auth_seals', 'bundle_token_seals', 'join_link_seals'];
 // File (under src/worker) -> the call counts it may have, and the places those calls write. `ephemeral`
 // envelopes are opened within a day or one call and never stored. A new call site, in a new file or a
 // listed one, fails until it is counted here with its table.
@@ -113,6 +113,8 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
     calls: { encryptSecret: 1 },
     tables: ['connection_webhook_retention'],
   },
+  'modules/join/links.ts': { calls: { issueToken: 2 }, tables: ['join_link_seals'] },
+  'modules/join/repo-links.ts': { calls: { sealPart: 2 }, tables: ['join_link_seals'] },
   'modules/identities/push-key-service.ts': { calls: { encryptSecret: 1 }, tables: ['apns_keys'] },
   'modules/identities/service.ts': { calls: { encryptSecret: 2 }, tables: ['credentials'] },
   'modules/passes/create-records.ts': { calls: { sealPart: 2 }, tables: SEALS },
@@ -134,6 +136,10 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
   'modules/scan/console-cursor.ts': { calls: { encryptSecret: 1 }, tables: 'ephemeral' },
   'modules/scan/live-attachment.ts': { calls: { encryptSecret: 1 }, tables: 'ephemeral' },
   'modules/status/checks-health.ts': { calls: { encryptSecret: 1 }, tables: 'ephemeral' },
+  'modules/webhooks/secrets.ts': {
+    calls: { encryptSecret: 1 },
+    tables: ['webhook_endpoint_secrets'],
+  },
   'modules/wallet-providers/account-service.ts': {
     calls: { encryptSecret: 1 },
     tables: ['wallet_provider_credentials'],

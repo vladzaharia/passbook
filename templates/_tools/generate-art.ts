@@ -8,6 +8,11 @@ import { WHITE, PALETTE } from './math.ts';
 import { icon, logo } from './marks.ts';
 import { balanceStrip, couponStrip, genericThumb, routeFooter } from './painters-cards.ts';
 import { accessThumb } from './painters-access.ts';
+import {
+  BOOKING, ID, PACK, PERMIT, PICKUP, TIMED, TRANSIT,
+  bookingThumb, idThumb, packStrip, permitThumb, pickupThumb, timedStrip, transitFooter,
+} from './painters-blueprints.ts';
+import { hex } from './math.ts';
 import { eventArt, eventBackground, eventThumb, posterArt } from './painters-scenes.ts';
 import { type Painter, png } from './png.ts';
 
@@ -60,6 +65,41 @@ export const BLUEPRINTS: Record<string, Slot[]> = {
     { file: 'icon', w: 38, h: 38, paint: icon(PALETTE.teal.bg) },
     { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
     { file: 'strip', w: 375, h: 144, paint: balanceStrip },
+  ],
+  'starter-pack': [
+    { file: 'icon', w: 38, h: 38, paint: icon(PACK.bg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
+    { file: 'strip', w: 375, h: 144, paint: packStrip },
+  ],
+  'starter-timed-ticket': [
+    { file: 'icon', w: 38, h: 38, paint: icon(TIMED.bg, hex('#FFF8E7')) },
+    { file: 'logo', w: 50, h: 50, paint: logo(hex('#FFF8E7')) },
+    { file: 'strip', w: 375, h: 144, paint: timedStrip },
+  ],
+  'starter-transit-ticket': [
+    { file: 'icon', w: 38, h: 38, paint: icon(TRANSIT.bg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
+    { file: 'footer', w: 268, h: 15, paint: transitFooter },
+  ],
+  'starter-booking': [
+    { file: 'icon', w: 38, h: 38, paint: icon(BOOKING.bg, BOOKING.fg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(BOOKING.fg) },
+    { file: 'thumbnail', w: 90, h: 90, paint: bookingThumb },
+  ],
+  'starter-pickup': [
+    { file: 'icon', w: 38, h: 38, paint: icon(PICKUP.bg, PICKUP.fg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(PICKUP.fg) },
+    { file: 'thumbnail', w: 90, h: 90, paint: pickupThumb },
+  ],
+  'starter-permit': [
+    { file: 'icon', w: 38, h: 38, paint: icon(PERMIT.bg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
+    { file: 'thumbnail', w: 90, h: 90, paint: permitThumb },
+  ],
+  'starter-id-card': [
+    { file: 'icon', w: 38, h: 38, paint: icon(ID.bg, ID.fg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(ID.fg) },
+    { file: 'thumbnail', w: 90, h: 90, paint: idThumb },
   ],
 };
 

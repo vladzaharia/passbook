@@ -8,6 +8,8 @@ const setup = {
   orgs: 2,
   assignedTemplates: 3,
   passes: 1200,
+  approvedTemplates: 2,
+  walletPasses: 800,
   passEmailsSent: 9,
   latestPassId: 'p9',
   scanners: 0,

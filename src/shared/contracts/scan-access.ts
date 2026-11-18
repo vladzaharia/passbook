@@ -47,6 +47,8 @@ export const ScanZoneSchema = OccupancyFieldsSchema.extend({
   sort: z.number().int(),
   depth: z.number().int().min(0).max(3),
   sessions: z.number().int(),
+  /** The live sessions that check this zone. */
+  checkedAt: z.array(z.object({ id: IdSchema, name: z.string() })),
   plans: z.array(
     z.object({
       templateId: IdSchema,

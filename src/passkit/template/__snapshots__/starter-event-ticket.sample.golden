@@ -5,7 +5,7 @@
     {
       "altText": "TICKET-0001",
       "format": "PKBarcodeFormatQR",
-      "message": "TICKET-0001",
+      "message": "SNAPSHOT-SCAN-CODE",
       "messageEncoding": "iso-8859-1"
     }
   ],

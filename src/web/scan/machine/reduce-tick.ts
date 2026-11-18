@@ -1,9 +1,12 @@
 /** `tick`: runs every deadline that has passed, earliest first. */
+import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import { deadlines } from './deadlines.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { out } from './internal.ts';
 import { expireUnsure, fail } from './reduce-answer.ts';
+import { close } from './reduce-assign.ts';
 import { closeVerdict, settle, toReady } from './reduce-door.ts';
+import { expire } from './reduce-enroll.ts';
 import { begin } from './reduce-read.ts';
 import type { Cmd } from './types.ts';
 
@@ -48,6 +51,18 @@ function runOne(s: MachineState, kind: string, key: string | undefined, env: Env
     }
     case 'unsure':
       return key ? expireUnsure(s, key) : out(s);
+    case 'assign':
+      if (s.assign && !s.assign.request)
+        return close(s, env, { kind: 'timedOut', at: env.now }, [
+          { c: 'announce', text: SCAN_TAG_COPY.strip.timedOut, polite: false },
+        ]);
+      return expire(s, env);
+    case 'request':
+      return expire(s, env);
+    case 'note':
+      return s.assign ? out({ ...s, assign: { ...s.assign, note: null } }) : out(s);
+    case 'strip':
+      return out({ ...s, assignStrip: null });
     default:
       return out(s);
   }

@@ -30,7 +30,8 @@ type SessionBinding = NonNullable<ScanActor['scanningSession']>;
 
 export interface LiveAttachment extends LiveAttachmentTenant {
   scannerId: string;
-  role: 'customer' | 'monitor';
+  /** `device`: the control socket of a scan-role device, which carries no rows. */
+  role: 'customer' | 'monitor' | 'device';
   tokenHash: string;
   /** The original scanner proof; null is an explicit unpaired-admin credential. */
   scannerCsrfProof: string | null;
@@ -92,7 +93,7 @@ function validLiveAttachment(a: LiveAttachment): boolean {
     typeof a.scannerId !== 'string' ||
     !a.scannerId ||
     (a.mode !== 'live' && a.mode !== 'test') ||
-    (a.role !== 'customer' && a.role !== 'monitor') ||
+    (a.role !== 'customer' && a.role !== 'monitor' && a.role !== 'device') ||
     typeof a.tokenHash !== 'string' ||
     !(
       a.scannerCsrfProof === null ||
@@ -132,7 +133,7 @@ function validLiveAttachment(a: LiveAttachment): boolean {
     actor.scanner.orgId !== actor.orgId ||
     actor.scanner.mode !== actor.mode ||
     actor.scanner.id !== a.scannerId ||
-    actor.scanner.deviceRole !== a.role ||
+    actor.scanner.deviceRole !== (a.role === 'device' ? 'scan' : a.role) ||
     actor.scanner.updatedAt !== a.revision ||
     (actor.scanner.tokenHash ?? '') !== a.tokenHash ||
     actor.scannerCsrfProof !== a.scannerCsrfProof ||
@@ -213,13 +214,17 @@ export async function liveRecipient(
   const actor = attachment.actor;
   const scanner = actor.scanner;
   if (!restoreObservedScanningSession(actor, attachment.observation) || !scanner) return null;
-  if (actor.invalidScannerScope || attachment.role !== scanner.deviceRole) return null;
+  if (
+    actor.invalidScannerScope ||
+    scanner.deviceRole !== (attachment.role === 'device' ? 'scan' : attachment.role)
+  )
+    return null;
   try {
     if ((await credentialRefKeysetCommitment(ctx.env)) !== attachment.credentialKeysetCommitment)
       return null;
     const auth = scanReadAuthority(actor, {
       now: ctx.clock.now(),
-      read: { stafflessMonitor: true },
+      read: attachment.role === 'device' ? { deviceSocket: true } : { stafflessMonitor: true },
     });
     const row = await liveRecipientStmt(ctx.env.DB, auth, actor, scanner.id).first<{
       watch?: unknown;
@@ -227,6 +232,14 @@ export async function liveRecipient(
       session_settings?: unknown;
     }>();
     if (!row) return null;
+    // A device socket watches nothing: it only proves the device is still entitled to its messages.
+    if (attachment.role === 'device')
+      return {
+        actor: cloneObservedScanActor(actor),
+        customer: {},
+        watch: ScanWatchSchema.parse({ scannerIds: [], allOrg: false }),
+        attachment,
+      };
     const watch = parseWatch(actor, scanner.id, row);
     if (!watch || (attachment.role === 'customer' && watch.allOrg)) return null;
     return {

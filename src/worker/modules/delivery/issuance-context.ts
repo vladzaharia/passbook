@@ -44,9 +44,36 @@ const AuthoritySchema = z.discriminatedUnion('kind', [
     mode: ModeSchema,
   }),
 ]);
+export const StarterSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('membership'),
+    membershipId: z.string(),
+    userId: z.string(),
+    userAccessRevision: z.number().int().nonnegative(),
+    orgAccessRevision: z.number().int().positive(),
+  }),
+  z.object({
+    kind: z.literal('api_key'),
+    keyId: z.string(),
+    keyOrgId: z.string().nullable(),
+    mode: ModeSchema,
+    orgAccessRevision: z.number().int().positive(),
+  }),
+]);
 const ContextSchema = z.object({
   execution: z.discriminatedUnion('kind', [
     z.object({ kind: z.literal('system') }),
+    z.object({
+      kind: z.literal('deferred'),
+      starter: StarterSchema,
+      guard: z.object({ externalId: z.string() }).optional(),
+    }),
+    z.object({
+      kind: z.literal('join'),
+      linkId: z.string(),
+      generation: z.number().int().positive(),
+      orgDailyCap: z.number().int().positive(),
+    }),
     z.object({
       kind: z.literal('connection'),
       connectionId: z.string(),

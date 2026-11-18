@@ -140,6 +140,7 @@ describe('api keys page', () => {
     expect(within(dialog).getByText('Pick at least one scope.')).toBeInTheDocument();
     expect(within(dialog).getByText('Platform-wide')).toBeInTheDocument();
     expect(within(dialog).queryByRole('checkbox', { name: 'Scan as a terminal' })).toBeNull();
+    expect(within(dialog).getByRole('checkbox', { name: 'Manage webhooks' })).toBeInTheDocument();
 
     await user.type(within(dialog).getByLabelText(/Name/), 'CI key');
     await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
@@ -317,12 +318,14 @@ describe('api keys page', () => {
     setMode('test');
     try {
       let body: Record<string, unknown> = {};
+      let sentMode: string | null = null;
       await renderApp('/admin/api-keys', {
         session: 'admin',
         handlers: {
           '/api/v1/api-keys': (_u, init) => {
             if (init?.method === 'POST') {
               body = JSON.parse(String(init.body));
+              sentMode = new Headers(init.headers).get('x-passbook-mode');
               return json({ ...key({ mode: 'test' }), secret: 'wlt_abc123_S' }, 201);
             }
             return page([]);
@@ -332,7 +335,11 @@ describe('api keys page', () => {
       const user = userEvent.setup();
       await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
       const dialog = await screen.findByRole('dialog');
-      expect(within(dialog).getByText(/Passes made with a Test key/)).toBeInTheDocument();
+      // The mode is shown, not offered: the server gives a key the console's mode.
+      expect(
+        within(dialog).getByText(/Test passes\. Their emails stay in the Test inbox/),
+      ).toBeInTheDocument();
+      expect(within(dialog).queryByRole('combobox', { name: /Mode/ })).not.toBeInTheDocument();
       await user.type(within(dialog).getByLabelText(/Name/), 'T');
       await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
       await user.click(within(dialog).getByRole('button', { name: 'Create' }));
@@ -342,6 +349,7 @@ describe('api keys page', () => {
         ).getByRole('button', { name: 'Create key' }),
       );
       await waitFor(() => expect(body.mode).toBe('test'));
+      expect(sentMode).toBe('test');
     } finally {
       resetModeForTests();
       vi.unstubAllGlobals();

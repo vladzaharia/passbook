@@ -5,6 +5,7 @@
  */
 import type { Json, PassJson, ScanRole, TemplateManifest } from '../../types.ts';
 import { PASS_STYLES } from '../../types.ts';
+import { counterSizes } from '../counters.ts';
 import { exprReferences } from '../expr.ts';
 
 export const ROLE_RANK: Record<ScanRole, number> = { door: 0, desk: 1, manager: 2 };
@@ -150,12 +151,21 @@ export function hiddenFieldKeys(
 
 /** Take actions give a `progress` row its goal and reward label, by input. */
 export function actionGoals(
-  manifest: Pick<TemplateManifest, 'scan' | 'stamps'>,
-): Record<string, { goal: number; reward?: string }> {
-  const out: Record<string, { goal: number; reward?: string }> = {};
+  manifest: Pick<TemplateManifest, 'scan' | 'stamps' | 'counters'> & {
+    inputs?: TemplateManifest['inputs'];
+  },
+): Record<string, { goal: number; reward?: string; counter?: true }> {
+  const out: Record<string, { goal: number; reward?: string; counter?: true }> = {};
   const stamps = manifest.stamps;
+  const sizes = counterSizes(manifest);
   for (const action of manifest.scan?.actions ?? []) {
     if (action.kind !== 'take' || !action.input) continue;
+    // A counter's row shows what is left out of its size: there is no reward.
+    const size = sizes[action.input];
+    if (size !== undefined) {
+      out[action.input] ??= { goal: size, counter: true };
+      continue;
+    }
     // A stamp card's goal is the card's: its reward takes that many whatever the action says.
     const goal =
       stamps?.input === action.input

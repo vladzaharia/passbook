@@ -1,6 +1,6 @@
 import { Lock } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { SIGN_IN_FOOTER } from '@/shared/copy/sign-in.ts';
+import { SIGN_IN_FOOTER, SIGN_IN_SENT } from '@/shared/copy/sign-in.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { Callout, Skeleton } from '../ui/index.ts';
 import { CodeFace } from './login-code-face.tsx';
@@ -143,8 +143,9 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
           title="Enter the code"
           lede={
             <>
-              Check <span className="font-medium text-fg-strong">{sent?.email ?? ''}</span> for a
-              code.
+              <span className="font-medium text-fg-strong">{sent?.email ?? ''}</span>
+              <br />
+              {SIGN_IN_SENT}
             </>
           }
         >

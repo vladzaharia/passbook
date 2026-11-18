@@ -57,7 +57,6 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
     const qrCodes: string[] = [];
     for (let i = 0; i < names.length; i++) {
       const qrCode = uid('QR').toUpperCase();
-      qrCodes.push(qrCode);
       const pass = await createPass(api, orgId, {
         templateId: template.id,
         release,
@@ -68,6 +67,11 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
       });
       expect(pass.templateVersion).toBe(saved.version);
       passIds.push(pass.id);
+      // The barcode carries the pass's scan code (PS-28), not the member ID: scan what it shows.
+      const detail = await api.get(`/api/v1/passes/${pass.id}?orgId=${orgId}`);
+      const shown = detail.passJson?.barcodes?.[0]?.message;
+      if (typeof shown !== 'string') throw new Error(`Pass ${pass.id} has no barcode message`);
+      qrCodes[i] = shown;
     }
     const ledger = async (i: number) =>
       (await api.get(`/api/v1/scans?orgId=${orgId}&passId=${passIds[i]}`)).items;

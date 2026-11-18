@@ -1,7 +1,8 @@
-import { Flashlight, Search, Users } from 'lucide-react';
+import { Flashlight, Nfc, Search, Users } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { CountUp } from '../../ui/count-up.tsx';
+import { TAG_EXTRA_COPY } from '../assign/copy.ts';
 import { ACCESS_COPY } from './copy-access.ts';
 
 /** The dock: the last-scan strip over the thumb row. Its height is reserved from the first frame. */
@@ -50,8 +51,11 @@ export function DoorThumbRow({
   torchOn,
   canTorch = true,
   inside,
+  tapToRead,
 }: {
   onLookUp: () => void;
+  /** iPhone and iPad: the system reader opens per tap. */
+  tapToRead?: () => void;
   onTorch?: () => void;
   torchOn?: boolean;
   canTorch?: boolean;
@@ -60,6 +64,12 @@ export function DoorThumbRow({
 }) {
   return (
     <>
+      {tapToRead ? (
+        <DockButton primary variant="filled" data-testid="scan-tap-to-read" onClick={tapToRead}>
+          <Nfc aria-hidden size={20} />
+          {TAG_EXTRA_COPY.tapToRead}
+        </DockButton>
+      ) : null}
       <DockButton onClick={onLookUp}>
         <Search aria-hidden size={20} />
         {SCAN_COPY.actions.lookUp}

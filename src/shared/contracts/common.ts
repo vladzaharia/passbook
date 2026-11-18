@@ -60,6 +60,8 @@ export const ApiScopeSchema = z.enum([
   'scans:write',
   'connections:read',
   'connections:write',
+  /** Manages the org's outbound webhook endpoints (`integrations:manage` for a session). */
+  'webhooks:manage',
 ]);
 export const RoleSchema = z.enum(['admin', 'user']);
 

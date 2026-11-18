@@ -50,6 +50,7 @@ function toDto(row: ConsoleEventRow, now: number): ScanEventDto {
     timeZone: row.timeZone,
     capacity: row.capacity,
     reentry: row.reentry,
+    hardLimit: row.hardLimit,
     note: row.note,
     status: eventStatus(row, now),
     arrived: row.arrived,

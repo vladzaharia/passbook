@@ -1,0 +1,284 @@
+{
+  "schema": 1,
+  "name": "Pack",
+  "description": "Ten washes, classes or trips. Use one.",
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "name",
+      "packId",
+      "left"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Pack",
+        "x-order": 10,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "packId": {
+        "type": "string",
+        "x-label": "Pack number",
+        "x-group": "Pack",
+        "x-order": 20,
+        "maxLength": 64,
+        "minLength": 1,
+        "x-search": true
+      },
+      "size": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 999,
+        "x-label": "Pack size",
+        "x-group": "Pack",
+        "x-order": 30,
+        "default": 10
+      },
+      "left": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 999,
+        "x-label": "Uses left",
+        "x-group": "Pack",
+        "x-order": 40
+      },
+      "unit": {
+        "type": "string",
+        "x-label": "What it buys",
+        "x-group": "Pack",
+        "x-order": 50,
+        "maxLength": 20,
+        "default": "uses",
+        "x-help": "Plural, like washes or classes."
+      },
+      "validUntil": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid until",
+        "x-group": "Pack",
+        "x-order": 60,
+        "x-widget": "datetime",
+        "x-noneLabel": "One year from sale"
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 902,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      }
+    }
+  },
+  "sample": {
+    "name": "Dana Ortiz",
+    "packId": "PACK-0001",
+    "size": 10,
+    "left": 7,
+    "unit": "washes",
+    "validUntil": "2030-11-18T00:00:00Z"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{name}}"
+    },
+    {
+      "to": {
+        "field": "left"
+      },
+      "value": "{{left}}"
+    },
+    {
+      "to": {
+        "field": "pack"
+      },
+      "value": "{{size}} {{unit}}"
+    },
+    {
+      "to": {
+        "field": "expires"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{packId}}"
+    }
+  ],
+  "display": {
+    "icon": "ticket",
+    "title": "{{name}}",
+    "subtitle": "{{left}} left",
+    "status": "{{left}} left",
+    "search": [
+      "name",
+      "packId"
+    ],
+    "group": "save-spend",
+    "aliases": [
+      "punch card",
+      "class pack",
+      "multi-pass",
+      "prepaid"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "expiry-from-input",
+      "version": 1,
+      "config": {
+        "input": "validUntil",
+        "fallbackDays": 365
+      }
+    }
+  ],
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "use",
+        "label": "Use",
+        "kind": "take",
+        "input": "left",
+        "amount": {
+          "max": 3,
+          "presets": [
+            1,
+            2,
+            3
+          ]
+        },
+        "repeat": "cooldown",
+        "cooldownMinutes": 5,
+        "minRole": "door"
+      },
+      {
+        "id": "refill",
+        "label": "Refill",
+        "kind": "add",
+        "input": "left",
+        "amount": {
+          "max": 50,
+          "presets": [
+            5,
+            10,
+            20
+          ]
+        },
+        "repeat": "always",
+        "minRole": "desk",
+        "confirm": true
+      }
+    ],
+    "lookup": {
+      "input": "packId"
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.name}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Left",
+              "value": "{{inputs.left}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Pack",
+              "value": "{{inputs.size}} {{inputs.unit}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the desk."
+      }
+    }
+  }
+}

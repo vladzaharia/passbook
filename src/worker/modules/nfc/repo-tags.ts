@@ -12,6 +12,7 @@ export interface TagRow {
   label: string | null;
   status: 'active' | 'retired';
   lostAt: number | null;
+  lostBy: string | null;
 }
 
 const VIEW = `SELECT t.id, t.mode, t.kind, t.hint, t.label, t.status, t.created_at, t.last_seen_at,
@@ -167,12 +168,27 @@ export async function passTagViews(
      WHERE b.user_id = ? AND b.scope = 'user' AND b.ended_at IS NULL`,
     [pass.orgId, pass.mode, pass.id, pass.orgId, pass.mode, pass.ownerUserId],
   );
+  return tagViewsByIds(
+    db,
+    pass.orgId,
+    pass.mode,
+    ids.map((r) => r.tag_id),
+  );
+}
+
+/** Active tags by id, newest binding first. */
+export async function tagViewsByIds(
+  db: Db,
+  orgId: string,
+  mode: Mode,
+  ids: string[],
+): Promise<Tag[]> {
   if (ids.length === 0) return [];
   const rows = await all<ViewRow>(
     db,
     `${VIEW} WHERE t.id IN (SELECT value FROM json_each(?)) AND t.org_id = ? AND t.mode = ? AND t.status = 'active'
      ORDER BY b.bound_at DESC, t.id DESC`,
-    [JSON.stringify(ids.map((r) => r.tag_id)), pass.orgId, pass.mode],
+    [JSON.stringify(ids), orgId, mode],
   );
   return rows.map(toTag);
 }
@@ -185,6 +201,7 @@ interface TagRaw {
   label: string | null;
   status: 'active' | 'retired';
   lost_at: number | null;
+  lost_by: string | null;
 }
 
 const toRow = (r: TagRaw): TagRow => ({
@@ -195,6 +212,7 @@ const toRow = (r: TagRaw): TagRow => ({
   label: r.label,
   status: r.status,
   lostAt: r.lost_at,
+  lostBy: r.lost_by,
 });
 
 export async function tagByRef(
@@ -205,7 +223,7 @@ export async function tagByRef(
 ): Promise<TagRow | null> {
   const r = await first<TagRaw>(
     db,
-    'SELECT id, org_id, mode, hint, label, status, lost_at FROM nfc_tags WHERE org_id = ? AND mode = ? AND tag_ref = ?',
+    'SELECT id, org_id, mode, hint, label, status, lost_at, lost_by FROM nfc_tags WHERE org_id = ? AND mode = ? AND tag_ref = ?',
     [orgId, mode, ref],
   );
   return r ? toRow(r) : null;
@@ -215,7 +233,7 @@ export async function tagByRef(
 export async function tagTarget(db: Db, id: string): Promise<TagRow | null> {
   const r = await first<TagRaw>(
     db,
-    'SELECT id, org_id, mode, hint, label, status, lost_at FROM nfc_tags WHERE id = ?',
+    'SELECT id, org_id, mode, hint, label, status, lost_at, lost_by FROM nfc_tags WHERE id = ?',
     [id],
   );
   return r ? toRow(r) : null;

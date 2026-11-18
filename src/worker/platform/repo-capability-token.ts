@@ -1,7 +1,7 @@
 import { type GrantPart, writePart } from './authority-include.ts';
 import { exactStmt } from './db.ts';
 
-export type TokenPurpose = 'pass' | 'bundle' | 'apple-auth';
+export type TokenPurpose = 'pass' | 'bundle' | 'apple-auth' | 'join';
 
 export interface SealRow {
   kekVersion: number;
@@ -32,6 +32,13 @@ export const SEALS = {
     owner: 'bundles',
     tokenColumn: 'token',
     kind: 'bundle-link',
+  },
+  join: {
+    table: 'join_link_seals',
+    column: 'link_id',
+    owner: 'join_links',
+    tokenColumn: 'token',
+    kind: 'join-link',
   },
 } as const;
 

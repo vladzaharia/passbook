@@ -162,15 +162,17 @@ describe('GET /test-inbox', () => {
     expect(second.items[0]?.id).not.toBe(first1.items[0]?.id);
   });
 
-  it('requires a member session; API keys cannot access the inbox', async () => {
+  it('requires a member session or a test key; a live key is refused', async () => {
     expect(
       CapturedEmailListSchema.parse(
         await (await api('/test-inbox', { headers: inboxHeaders(outsider) })).json(),
       ).items,
     ).toEqual([]);
-    expect(
-      (await api('/test-inbox', { headers: { ...keyHeaders, 'x-passbook-mode': 'test' } })).status,
-    ).toBe(401);
+    await expectProblem(
+      await api('/test-inbox', { headers: { ...keyHeaders, 'x-passbook-mode': 'test' } }),
+      403,
+      'TEST_KEY_REQUIRED',
+    );
     expect((await api('/test-inbox')).status).toBe(401);
   });
 

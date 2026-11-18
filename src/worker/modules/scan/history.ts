@@ -24,19 +24,22 @@ import {
   readSummary,
   SUMMARY_CONTRIBUTORS,
 } from './repo-scan-history.ts';
+import { readSummaryExtras } from './repo-summary-extras.ts';
+import { isPasslessReason, type PasslessReason } from './scan-passless.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { staleScanRead } from './stale-read.ts';
+import { sessionSummaryFor, summaryExtrasOf } from './summary-session.ts';
 
 const DAY = 86_400_000;
 const MINUTE = 60_000;
 
 /** A refusal that selected no pass (the ledger scope admits it only as such) names its own reason. */
-function passlessReason(row: HistoryRow): 'not_found' | 'ambiguous' | null {
+function passlessReason(row: HistoryRow): PasslessReason | null {
   return row.passId === null &&
     row.templateId === null &&
     row.actionId === null &&
     row.outcome === 'refused' &&
-    (row.reason === 'not_found' || row.reason === 'ambiguous')
+    isPasslessReason(row.reason)
     ? row.reason
     : null;
 }
@@ -130,7 +133,9 @@ export async function summaryFor(
   ctx: ServiceContext,
   source: ScanActor,
   since?: number,
+  scope: 'device' | 'session' = 'device',
 ): Promise<z.infer<typeof ScanSummarySchema>> {
+  if (scope === 'session') return sessionSummaryFor(ctx, source, since);
   const actor = cloneObservedScanActor(source);
   const now = ctx.clock.now();
   const from = Math.max(since ?? now - DAY, now - DAY);
@@ -145,11 +150,23 @@ export async function summaryFor(
     byAction: [],
     firstAt: null,
     lastAt: null,
+    scope: 'device' as const,
+    timeZone: actor.timeZone,
+    byHour: [],
+    byValue: [],
+    byReason: [],
+    byStaff: [],
+    overrides: { count: 0, latest: [] },
   };
   if (!historyReadable(actor)) return empty;
   const auth = scanReadAuthority(actor, { now, read: HISTORY_READ });
-  const read = await readSummary(ctx.env.DB, auth, actor, { from, to: now }, now);
-  if (!read.authorized) throw await staleScanRead(ctx, actor);
+  const own = ownScansWhere(actor);
+  // One trip: the page batch and the extra tallies go out together.
+  const [read, extras] = await Promise.all([
+    readSummary(ctx.env.DB, auth, actor, { from, to: now }, now),
+    readSummaryExtras(ctx.env.DB, auth, { where: own.sql, params: own.params }, { from, to: now }),
+  ]);
+  if (!read.authorized || !extras.authorized) throw await staleScanRead(ctx, actor);
   const { totals, rows } = read;
   if (!totals) throw new Error('Unable to read scan summary.');
   const projectable = historyProjectable(actor);
@@ -200,5 +217,8 @@ export async function summaryFor(
     byAction,
     firstAt: totals.first_at,
     lastAt: totals.last_at,
+    scope: 'device',
+    ...summaryExtrasOf(extras, actor.timeZone),
+    byStaff: [],
   };
 }

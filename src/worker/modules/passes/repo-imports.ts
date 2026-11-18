@@ -1,6 +1,6 @@
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
-import { inList, type WhereValue } from '../../platform/authority-expr.ts';
+import { inList, ne, orNull, type WhereValue } from '../../platform/authority-expr.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -21,7 +21,10 @@ export interface ImportRow {
   plan: string | null;
   state: string;
   error_code: string | null;
+  check_id: string | null;
   email: number;
+  skip_invalid: number;
+  starter: string | null;
   email_budget: number | null;
   rows: number;
   to_create: number;
@@ -199,7 +202,11 @@ export async function beginCheck(
       error_code: null,
     },
   });
-  g.joined('pass_import_rows', { where: { import_id: id }, delete: true });
+  // Rows an earlier commit created stay: remove-created and undo still reach those passes.
+  g.joined('pass_import_rows', {
+    where: { import_id: id, result: orNull(ne('created')) },
+    delete: true,
+  });
   await g.commit();
 }
 

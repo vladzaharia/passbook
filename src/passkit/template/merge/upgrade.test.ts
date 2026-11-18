@@ -162,9 +162,12 @@ describe('manifest rule coverage', () => {
     blueprint: 'dropped',
     previewOnlyAssets: 'rule',
     messaging: 'rule',
+    externalId: 'rule',
+    email: 'rule',
     scan: 'rule',
     nfc: 'rule',
     stamps: 'rule',
+    counters: 'rule',
     wallets: 'rule',
   } satisfies Record<keyof TemplateManifest, string>;
   it('every manifest key has a rule or sits on the explicit atomic, ours or dropped lists', () => {

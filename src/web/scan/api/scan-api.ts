@@ -7,6 +7,14 @@
  */
 import type { z } from 'zod';
 import {
+  ScanTagEnrollmentDoneSchema,
+  ScanTagEnrollmentPendingSchema,
+} from '../../../shared/contracts/nfc-tag-enrollments.ts';
+import {
+  ScanTagBindResultSchema,
+  ScanTagInspectResponseSchema,
+} from '../../../shared/contracts/nfc-tags.ts';
+import {
   type ScanActRequestSchema,
   type ScanAdminScopeSchema,
   ScanCountsSchema,
@@ -34,6 +42,7 @@ import {
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { modeHeaders } from '../../lib/mode.ts';
+import type { BindBody, TagRead } from '../assign/types.ts';
 import {
   InsideListSchema,
   type InsideQuery,
@@ -170,7 +179,14 @@ export function createScanApi(deps: ScanApiDeps) {
     call: Call = {},
   ): Promise<z.infer<S>> {
     const scope = deps.scope?.();
-    if (scope && body && typeof body === 'object' && !path.startsWith('/pair'))
+    // A bind body's own `scope` is the tag's, not the admin's.
+    if (
+      scope &&
+      body &&
+      typeof body === 'object' &&
+      !path.startsWith('/pair') &&
+      !path.startsWith('/tags')
+    )
       body = { ...body, scope };
     if (scope && method === 'GET' && !path.includes('orgId='))
       path += `${path.includes('?') ? '&' : '?'}${scopeQuery(scope).slice(1)}`;
@@ -256,8 +272,8 @@ export function createScanApi(deps: ScanApiDeps) {
         undefined,
         o.signal ? { signal: o.signal } : {},
       ),
-    summary: (since: number, call?: Call) =>
-      request('GET', `/summary?since=${since}`, ScanSummarySchema, undefined, call),
+    summary: (since: number, call?: Call, scope: 'device' | 'session' = 'device') =>
+      request('GET', `/summary?since=${since}&scope=${scope}`, ScanSummarySchema, undefined, call),
     signOut: () => request('POST', '/unpair', null),
     staffSignIn: (body: z.infer<typeof ScanStaffSignInSchema>) =>
       request('POST', '/staff', ScanSessionSchema, body),
@@ -288,6 +304,24 @@ export function createScanApi(deps: ScanApiDeps) {
         call,
       );
     },
+    tagInspect: (body: { tag: TagRead }, call?: Call) =>
+      request('POST', '/tags/inspect', ScanTagInspectResponseSchema, body, call),
+    tagBind: (body: BindBody, call?: Call) =>
+      request('POST', '/tags/bind', ScanTagBindResultSchema, body, call),
+    tagUndo: (bindingId: string, call?: Call) =>
+      request('POST', `/tags/bindings/${encodeURIComponent(bindingId)}/undo`, null, {}, call),
+    tagPending: (call?: Call) =>
+      request('GET', '/tag-enrollments/pending', ScanTagEnrollmentPendingSchema, undefined, call),
+    tagComplete: (id: string, body: { tag: TagRead }, call?: Call) =>
+      request(
+        'POST',
+        `/tag-enrollments/${encodeURIComponent(id)}/complete`,
+        ScanTagEnrollmentDoneSchema,
+        body,
+        call,
+      ),
+    tagDecline: (id: string, call?: Call) =>
+      request('POST', `/tag-enrollments/${encodeURIComponent(id)}/decline`, null, {}, call),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
   };

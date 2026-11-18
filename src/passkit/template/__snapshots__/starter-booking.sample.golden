@@ -1,0 +1,101 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(250,230,228)",
+  "barcodes": [
+    {
+      "altText": "BOOK-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "SNAPSHOT-SCAN-CODE",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Booking",
+  "expirationDate": "2030-11-24T09:30:00-05:00",
+  "featuredActions": [],
+  "foregroundColor": "rgb(60,26,36)",
+  "formatVersion": 1,
+  "generic": {
+    "auxiliaryFields": [
+      {
+        "key": "where",
+        "label": "Where",
+        "value": "Soho"
+      },
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Ana Rivera"
+      }
+    ],
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Please arrive on time. Show the code at the desk."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "Your booking is now %@.",
+        "key": "status",
+        "label": "Status",
+        "value": "Booked"
+      }
+    ],
+    "primaryFields": [
+      {
+        "changeMessage": "Your booking is now %@.",
+        "dateStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true,
+        "key": "when",
+        "label": "When",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-11-24T09:30:00-05:00"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "what",
+        "label": "What",
+        "value": "Cut and colour"
+      },
+      {
+        "key": "with",
+        "label": "With",
+        "value": "Sam"
+      }
+    ]
+  },
+  "labelColor": "rgb(168,58,84)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "relevantDate": "2030-11-24T14:30:00Z",
+  "relevantDates": [
+    {
+      "endDate": "2030-11-24T16:00:00Z",
+      "startDate": "2030-11-24T13:30:00Z"
+    }
+  ],
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "voided": false,
+  "webServiceURL": "https://wallet.example/wallet"
+}

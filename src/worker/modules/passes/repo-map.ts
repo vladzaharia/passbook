@@ -1,7 +1,7 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 export type PassStatus = 'active' | 'voided';
-export type FieldSources = Record<string, 'manual' | 'connection'>;
+export type FieldSources = Record<string, 'manual' | 'connection' | 'import'>;
 export type PassCause =
   | 'create'
   | 'admin'

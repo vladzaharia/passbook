@@ -208,12 +208,12 @@ export async function resolveObserved(
       (reason === 'wrong_event' || reason === 'not_accepted' || reason === 'ambiguous');
     if (observed && relevant.length < (reason === 'ambiguous' ? 2 : 1)) return unknown();
     const match =
-      reason === 'not_found' || (observed && reason !== 'ambiguous')
+      reason === 'not_found' || reason === 'code_replaced' || (observed && reason !== 'ambiguous')
         ? await inputMatch(ctx, actor, req.input, credentials)
         : null;
     // A miss is counted, in one grant that also holds the actor and the credential's refs.
     const current =
-      reason === 'not_found'
+      reason === 'not_found' || reason === 'code_replaced'
         ? await countNotFound(ctx, actor, match, evaluated.credentialTombstoneRefs)
         : await passlessCurrent(ctx, actor, {
             refs: evaluated.credentialTombstoneRefs,

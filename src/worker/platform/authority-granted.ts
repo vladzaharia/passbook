@@ -5,6 +5,7 @@ import {
   actorSql,
   Binds,
   type GrantScope,
+  type HolderProof,
   type Mode,
   missingReason,
   type Principal,
@@ -134,12 +135,16 @@ export function scopeOf(input: GrantInput): GrantScope {
   if (!match) throw new AuthorityError('GRANT_BAD_PURPOSE', `Bad grant purpose: ${input.purpose}`);
   const scope = match[1] as GrantScope;
   const p = input.principal;
-  if (scope === 'platform' && (p.kind === 'membership' || p.kind === 'scanner'))
+  if (
+    scope === 'platform' &&
+    (p.kind === 'membership' || p.kind === 'scanner' || p.kind === 'join')
+  )
     throw new AuthorityError(
       'GRANT_BAD_PRINCIPAL',
-      'A membership or scanner cannot hold a platform grant.',
+      'A membership, scanner or join link cannot hold a platform grant.',
     );
   if (p.kind === 'holder') assertHolderGrant(scope, p, input);
+  assertJoinGrant(scope, p, input);
   if (scope === 'platform' && p.kind === 'api_key' && p.orgId !== undefined)
     throw new AuthorityError('GRANT_BAD_PRINCIPAL', 'A platform grant names no org.');
   if (
@@ -147,6 +152,7 @@ export function scopeOf(input: GrantInput): GrantScope {
     p.kind !== 'api_key' &&
     p.kind !== 'scanner' &&
     p.kind !== 'holder' &&
+    p.kind !== 'join' &&
     p.mode === undefined
   )
     throw new AuthorityError(
@@ -176,11 +182,11 @@ export function assertDeferredContext(isJob: boolean, input: GrantInput): void {
   );
 }
 
-const HOLDER_PURPOSES = {
-  session: 'org_mode.pass.holder_remove',
-  verified_email: 'org_mode.pass.holder_attach',
-  device: 'org_mode.pass.personalize',
-} as const;
+const HOLDER_PURPOSES: Record<HolderProof['via'], readonly string[]> = {
+  session: ['org_mode.pass.holder_remove', 'org_mode.nfc.tag.holder_lost'],
+  verified_email: ['org_mode.pass.holder_attach'],
+  device: ['org_mode.pass.personalize'],
+};
 
 /** A holder grant is org_mode, has the one purpose its proof allows, and its target is its pass. */
 function assertHolderGrant(
@@ -188,13 +194,48 @@ function assertHolderGrant(
   p: Extract<Principal, { kind: 'holder' }>,
   input: GrantInput,
 ): void {
-  if (scope !== 'org_mode' || input.purpose !== HOLDER_PURPOSES[p.proof.via])
+  if (scope !== 'org_mode' || !HOLDER_PURPOSES[p.proof.via].includes(input.purpose))
     throw new AuthorityError(
       'GRANT_BAD_PRINCIPAL',
-      `A ${p.proof.via} holder holds ${HOLDER_PURPOSES[p.proof.via]} only.`,
+      `A ${p.proof.via} holder holds ${HOLDER_PURPOSES[p.proof.via].join(' or ')} only.`,
     );
   if (input.target !== undefined && input.target !== p.passId)
     throw new AuthorityError('GRANT_BAD_PRINCIPAL', "A holder grant's target is its pass.");
+}
+
+/** The one purpose a join link holds, and the tables it may write: the create list plus the ledger. */
+export const JOIN_PURPOSE = 'org_mode.pass.join';
+export const JOIN_TABLES: readonly string[] = [
+  'passes',
+  'pass_events',
+  'pass_issuance_deliveries',
+  'pass_token_seals',
+  'pass_auth_seals',
+  'join_issues',
+];
+
+/**
+ * A join principal holds `org_mode.pass.join` only, with a target (the new pass) and a table list inside
+ * `JOIN_TABLES`; no other principal holds that purpose.
+ */
+function assertJoinGrant(scope: GrantScope, p: Principal, input: GrantInput): void {
+  if (p.kind !== 'join') {
+    if (input.purpose === JOIN_PURPOSE)
+      throw new AuthorityError(
+        'GRANT_BAD_PRINCIPAL',
+        `${JOIN_PURPOSE} is held by a join link only.`,
+      );
+    return;
+  }
+  if (scope !== 'org_mode' || input.purpose !== JOIN_PURPOSE)
+    throw new AuthorityError('GRANT_BAD_PRINCIPAL', `A join link holds ${JOIN_PURPOSE} only.`);
+  if (input.target === undefined)
+    throw new AuthorityError('GRANT_BAD_PRINCIPAL', "A join grant's target is the new pass.");
+  if (!input.tables || input.tables.some((t) => !JOIN_TABLES.includes(t.toLowerCase())))
+    throw new AuthorityError(
+      'GRANT_BAD_PRINCIPAL',
+      'A join grant lists tables, all of them in the create list.',
+    );
 }
 
 /** The reason of an `authority_denied:*` abort, or null for any other error. */
@@ -217,6 +258,7 @@ export function jobPrincipal(j: {
   orgId: string | undefined;
   mode: Mode | undefined;
   orgAccessRevision: number | undefined;
+  inactiveOk?: true | undefined;
 }): Principal {
   return {
     kind: 'system',
@@ -224,5 +266,6 @@ export function jobPrincipal(j: {
     ...(j.orgId === undefined ? {} : { orgId: j.orgId }),
     ...(j.mode === undefined ? {} : { mode: j.mode }),
     ...(j.orgAccessRevision === undefined ? {} : { orgAccessRevision: j.orgAccessRevision }),
+    ...(j.inactiveOk ? { inactiveOk: true as const } : {}),
   };
 }

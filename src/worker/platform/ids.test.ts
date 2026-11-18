@@ -31,6 +31,12 @@ describe('ids', () => {
     expect(fromBase64Url(token)).toHaveLength(32);
   });
 
+  it('makes codes longer than nine digits', () => {
+    const ids = createIds(new ManualClock());
+    for (const digits of [10, 12, 18, 19])
+      expect(ids.code(digits)).toMatch(new RegExp(`^\\d{${digits}}$`));
+  });
+
   it('makes zero-padded numeric codes', () => {
     const code = createIds(new ManualClock()).code(6);
     expect(code).toMatch(/^\d{6}$/);

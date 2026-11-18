@@ -162,7 +162,8 @@
           "generic"
         ],
         "default": "air",
-        "x-widget": "select"
+        "x-widget": "select",
+        "x-hidden": true
       },
       "ticketId": {
         "type": "string",
@@ -353,7 +354,7 @@
         "barcode": "*",
         "prop": "message"
       },
-      "value": "{{ticketId}}"
+      "value": "{{pass.scanCode}}"
     },
     {
       "to": {
@@ -582,6 +583,15 @@
   ],
   "display": {
     "icon": "plane",
+    "group": "get-in",
+    "aliases": [
+      "flight",
+      "ferry",
+      "train",
+      "bus",
+      "travel",
+      "trip"
+    ],
     "title": "{{passengerGiven}} {{passengerFamily}}",
     "subtitle": "{{origin}} to {{destination}}",
     "status": "{{airlineCode}}{{flightNumber}}",

@@ -1,3 +1,4 @@
+import { stampInput } from '../../../passkit/behaviors/term/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { issueToken } from '../../platform/capability-token.ts';
@@ -19,8 +20,10 @@ import { requireCredentialRefKeyset } from './credential-keyset.ts';
 import { credentialReferences } from './credential-references.ts';
 import { depsOf } from './deps.ts';
 import { assertPassDetailReadable } from './detail.ts';
+import { assertExternalIdFree, uniqueExternalIds } from './external-id.ts';
 import { insertPass, type Pass } from './repo.ts';
 import { tombstoneExists } from './repo-credential-transfer-read.ts';
+import { livePassesBy } from './repo-import-lookup.ts';
 import { connectionForPass, connectionInOrg } from './repo-read-connection.ts';
 import { getOrg } from './repo-read-issuance.ts';
 import { getPass } from './repo-read-pass.ts';
@@ -74,8 +77,18 @@ export async function createPassRowWithRelease(
   const template = await resolveTemplate(ctx, p.orgId, p.templateId, release.version);
   if (template.id !== release.templateId || template.version !== release.version)
     throw releaseChanged();
+  const uniqueExternalId = uniqueExternalIds(template.manifest);
+  const scope = { orgId: p.orgId, mode: p.mode, templateId: template.id };
+  if (uniqueExternalId && p.externalId) await assertExternalIdFree(db, scope, p.externalId);
   await assertCreateAuthority(ctx, p, connectionGeneration, release);
-  await assertAccessInput(ctx, p.orgId, template, p.input);
+  // A term that starts at issue is stamped once, here, so no rebuild moves it.
+  const issueInput = stampInput(template.manifest, 'issue');
+  const issued = issueInput ? p.input[issueInput] : undefined;
+  const input =
+    issueInput && (issued === undefined || issued === null || issued === '')
+      ? { ...p.input, [issueInput]: new Date(ctx.clock.now()).toISOString() }
+      : p.input;
+  await assertAccessInput(ctx, p.orgId, template, input);
   const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
   if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
 
@@ -103,9 +116,12 @@ export async function createPassRowWithRelease(
     identityId: identity.id,
     templateId: template.id,
     templateVersion: template.version,
-    personalization: p.input,
+    personalization: input,
     status: 'active',
   });
+  // A public card's barcode is its scan code: a holder-typed value must never reach it.
+  if (p.execution.kind === 'join' && primaryBarcodeMessage(artifact.passJson) !== scanCode)
+    throw new ConflictError('This card is not ready for public sign-up.', 'JOIN_NOT_READY');
   const lookupInput = artifact.template.manifest.scan?.lookup?.input;
   const refs = await credentialReferences(credentialEnv, p.orgId, mode, {
     scanCode,
@@ -113,7 +129,7 @@ export async function createPassRowWithRelease(
     barcodeHash: artifact.barcodeHash,
     barcodeMessage: primaryBarcodeMessage(artifact.passJson),
     lookupHash: artifact.lookupHash,
-    lookupValue: lookupInput ? lookupValueOf(p.input, lookupInput) : null,
+    lookupValue: lookupInput ? lookupValueOf(input, lookupInput) : null,
   });
   const credentialRefs = [...new Set(refs.map((entry) => entry.ref))];
   // Building may await external assets or signing. Recheck authoritative state before storing.
@@ -152,14 +168,18 @@ export async function createPassRowWithRelease(
       downloadToken: downloadToken.mac,
       tokenSeal: downloadToken.seal,
       webServiceUrl,
-      personalization: p.input,
+      personalization: input,
       // A bound pass takes its fields from the connection until an admin edits them.
       fieldSources: Object.fromEntries(
-        Object.keys(p.input).map((k) => [k, p.connectionId ? 'connection' : p.source]),
+        Object.keys(input).map((k) => [
+          k,
+          p.connectionId ? 'connection' : (p.fieldSource ?? p.source),
+        ]),
       ),
       displayTitle: artifact.title,
       displaySubtitle: artifact.subtitle,
       externalId: p.externalId ?? null,
+      uniqueExternalId,
       holderEmail,
       connectionId: p.connectionId ?? null,
       connectionGeneration,
@@ -186,10 +206,12 @@ export async function createPassRowWithRelease(
         : {}),
       sendEmail: Boolean(p.sendEmail && holderEmail),
       execution: p.execution,
+      ...(p.joinKeys ? { joinKeys: p.joinKeys } : {}),
       now: ctx.clock.now(),
     });
     if (!inserted) {
       insertInFlight = false;
+      if (uniqueExternalId && p.externalId) await assertExternalIdFree(db, scope, p.externalId);
       await assertCreateAuthority(ctx, p, connectionGeneration, release);
       await requireCredentialRefKeyset(db, credentialEnv);
       if (await tombstoneExists(db, p.orgId, mode, credentialRefs))
@@ -207,6 +229,13 @@ export async function createPassRowWithRelease(
           'The scanner or its scope changed. Reload and retry.',
           'PASS_CONFLICT',
         );
+      if (p.execution.kind === 'deferred' && p.execution.guard) {
+        const taken = await livePassesBy(db, p.orgId, mode, 'external_id', [
+          p.execution.guard.externalId,
+        ]);
+        if (taken.length > 0)
+          throw new ConflictError('Another pass already has this External ID.', 'CREATE_STALE');
+      }
       throw releaseChanged();
     }
     issuedOwnerUserId = inserted.ownerUserId;

@@ -66,6 +66,11 @@
     },
     { "name": "wallet-vitest-broadcast", "binding": "BROADCAST", "class_name": "Broadcast" },
     {
+      "name": "wallet-vitest-pass-import",
+      "binding": "PASS_IMPORT",
+      "class_name": "PassImport"
+    },
+    {
       "name": "wallet-vitest-connection-sync",
       "binding": "CONNECTION_SYNC",
       "class_name": "ConnectionSync"
@@ -91,7 +96,15 @@
       "name": "RL_GOOGLE_CALLBACK",
       "namespace_id": "2014",
       "simple": { "limit": 6000, "period": 60 }
-    }
+    },
+    { "name": "RL_WEBHOOK_HOST", "namespace_id": "2016", "simple": { "limit": 600, "period": 60 } },
+    {
+      "name": "RL_WEBHOOK_HOST_ORG",
+      "namespace_id": "2017",
+      "simple": { "limit": 120, "period": 60 }
+    },
+    { "name": "RL_WEBHOOK_OUT", "namespace_id": "2018", "simple": { "limit": 10, "period": 60 } },
+    { "name": "RL_JOIN", "namespace_id": "2015", "simple": { "limit": 10, "period": 60 } }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_vitest_events" }],
   "version_metadata": { "binding": "CF_VERSION" }

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { scanIssues } from '@/passkit/template/scan.ts';
-import type { ScanActionKind, TemplateManifest } from '@/passkit/types.ts';
+import type { ScanAction, ScanActionKind, TemplateManifest } from '@/passkit/types.ts';
 import { applyOp, type Op } from '../../apply.ts';
 import { sampleDoc } from '../../fixtures.ts';
 import type { DesignDoc } from '../../model.ts';
 import { actionLocalIssues } from './issues.ts';
-import { readActions } from './model.ts';
+import { moneyDigits, readActions } from './model.ts';
 import { docWithInputs } from './test-fixtures.ts';
 
 const errors = (doc: DesignDoc) =>
@@ -159,5 +159,43 @@ describe('scan action ops', () => {
       input: 'balance',
       amount: 1,
     });
+  });
+});
+
+describe('scan action money', () => {
+  const money = (currency: string) => {
+    let doc = applyOp(docWithInputs(), { op: 'scan-enable' });
+    doc = applyOp(doc, { op: 'scan-action-add', kind: 'take' });
+    doc = applyOp(doc, { op: 'scan-action-set', id: 'take', patch: { input: 'balance' } });
+    const props = (doc.manifest.inputs as { properties: Record<string, Record<string, unknown>> })
+      .properties;
+    props.balance = { ...props.balance, 'x-format': 'currency', 'x-currency': currency };
+    return doc;
+  };
+
+  it('keeps a decimal amount exact through the manifest JSON', () => {
+    let doc = money('USD');
+    doc = applyOp(doc, {
+      op: 'scan-action-set',
+      id: 'take',
+      patch: { amount: { max: 99.99, presets: [0.1, 2.5], default: 4.5 } },
+    });
+    const again = JSON.parse(JSON.stringify(doc.manifest)) as DesignDoc['manifest'];
+    expect(readActions({ ...doc, manifest: again }).at(-1)?.amount).toEqual({
+      max: 99.99,
+      presets: [0.1, 2.5],
+      default: 4.5,
+    });
+    expect(errors(doc)).toEqual([]);
+  });
+
+  it('moneyDigits follows the currency, and the engine refuses decimals in JPY', () => {
+    const jpy = money('JPY');
+    const take = readActions(jpy).at(-1) as ScanAction;
+    expect(moneyDigits(jpy, take)).toBe(0);
+    expect(moneyDigits(money('USD'), take)).toBe(2);
+    expect(moneyDigits(money('BHD'), take)).toBe(3);
+    const bad = applyOp(jpy, { op: 'scan-action-set', id: 'take', patch: { amount: 1.5 } });
+    expect(errors(bad).length).toBeGreaterThan(0);
   });
 });

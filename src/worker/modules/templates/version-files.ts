@@ -3,11 +3,18 @@ import type { AssetEntry, ValidationIssue } from '../../../passkit/types.ts';
 import type { VersionAssetInputSchema } from '../../../shared/contracts/index.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { upstreamReadable } from './fork-base.ts';
 import { LIMITS } from './package/unzip.ts';
 import { createTemplateRegistry } from './registry.ts';
+import { ReleaseContentError, readReleaseAsset } from './release-content.ts';
 import { listVersions } from './repo.ts';
 
 type Input = z.infer<typeof VersionAssetInputSchema>;
+
+/** The upstream a fork's files may also come from. Server-derived from the fork row, never from a request. */
+export interface ForkFiles {
+  upstreamId: string;
+}
 
 /** Base64 inflates by a third: room for 15 MB of files and the documents. */
 export const VERSION_BODY_LIMIT = Math.ceil((LIMITS.totalBytes * 4) / 3) + 512 * 1024;
@@ -43,24 +50,36 @@ async function read(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
 /**
  * Turns the designer's asset list into files: `{ name, sha1 }` must match a file this template
  * already has (any version), `{ name, upload }` is a base64 PNG. Anything else is refused, so a
- * hash from another template never reaches its bytes.
+ * hash from another template never reaches its bytes. A fork's `lineage` also admits the files of
+ * its upstream's versions, when the upstream is baked or platform-wide; those are never `carried`
+ * (they are copied under the fork).
  */
 export async function resolveVersionFiles(
   ctx: ServiceContext,
   templateId: string,
   inputs: readonly Input[],
+  lineage?: ForkFiles,
 ): Promise<Resolved> {
   const files = new Map<string, Uint8Array>();
   const carried: Resolved['carried'] = new Map();
   const issues: ValidationIssue[] = [];
   const known = new Map<string, AssetEntry>();
   const versionOf = new Map<AssetEntry, string>();
+  const inherited = new Set<AssetEntry>();
   if (inputs.some((i) => 'sha1' in i)) {
     for (const v of await listVersions(ctx.env.DB, templateId))
       for (const a of v.assets) {
         known.set(`${a.name}|${a.sha1}`, a);
         versionOf.set(a, v.version);
       }
+    if (lineage && (await upstreamReadable(ctx.env.DB, lineage.upstreamId, templateId)))
+      for (const v of await listVersions(ctx.env.DB, lineage.upstreamId))
+        for (const a of v.assets) {
+          const key = `${a.name}|${a.sha1}`;
+          if (known.has(key)) continue;
+          known.set(key, a);
+          inherited.add(a);
+        }
   }
   const registry = createTemplateRegistry(ctx.env, { ctx });
   let total = 0;
@@ -74,6 +93,17 @@ export async function resolveVersionFiles(
     if ('sha1' in input) {
       const entry = known.get(`${input.name}|${input.sha1}`);
       const version = entry ? versionOf.get(entry) : undefined;
+      if (entry && inherited.has(entry)) {
+        try {
+          const bytes = await readReleaseAsset(ctx, entry);
+          files.set(input.name, bytes);
+          total += bytes.length;
+        } catch (error) {
+          if (!(error instanceof ReleaseContentError)) throw error;
+          bad('ASSET_UNKNOWN', `${input.name} is not available. Upload it again.`);
+        }
+        continue;
+      }
       if (!entry || !version) {
         bad('ASSET_UNKNOWN', `${input.name} is not a file of this template. Upload it again.`);
         continue;

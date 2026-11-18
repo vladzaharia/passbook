@@ -1,4 +1,5 @@
 export { type BoundPass, bindPass } from './bindings.ts';
+export { EMAIL_SUBJECT_MAX, emailManifestIssues, renderEmailSubject } from './email.ts';
 export {
   checkExpr,
   EXPR_LIMITS,

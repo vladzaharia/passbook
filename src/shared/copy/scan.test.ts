@@ -3,6 +3,7 @@ import { ScanReasonSchema } from '../contracts/scan.ts';
 import { OVERRIDE_NOTES } from '../contracts/scan-occupancy.ts';
 import {
   SCAN_COPY,
+  SCAN_COUNTER_COPY,
   SCAN_OCCUPANCY_COPY,
   SCAN_REASON_COPY,
   SCAN_REASON_VARIANTS,
@@ -28,7 +29,7 @@ describe('SCAN_COPY', () => {
   });
 
   it('the access reasons name only plan, zone, when, time and limit', () => {
-    const allowed = new Set(['plan', 'zone', 'when', 'time', 'limit']);
+    const allowed = new Set(['plan', 'zone', 'when', 'time', 'limit', 'used']);
     const lines = [
       ...(
         [
@@ -51,13 +52,13 @@ describe('SCAN_COPY', () => {
   it('has occupancy reasons with one default line each', () => {
     expect(SCAN_REASON_COPY.still_inside).toEqual({
       headline: 'Already in',
-      sub: 'Since {time} · {scanner}',
+      sub: 'Since {time} · {scanner}. Check ID.',
     });
     expect(SCAN_REASON_COPY.not_inside).toEqual({
       headline: 'Not tapped in',
-      sub: 'No entry recorded.',
+      sub: 'No entry recorded. Tap them in first.',
     });
-    expect(SCAN_REASON_COPY.capacity_full.headline).toBe('Event full');
+    expect(SCAN_REASON_COPY.capacity_full.headline).toBe('{place} full');
   });
 
   it('says what a screen is when it calls a scan route', () => {
@@ -76,7 +77,9 @@ describe('SCAN_COPY', () => {
 
   it('fills markers and leaves a missing one visible', () => {
     expect(scanLine(SCAN_REASON_COPY.rate_limited.sub, { seconds: 20 })).toBe('Try again in 20 s.');
-    expect(scanLine(SCAN_REASON_COPY.wrong_event.sub)).toBe('For {event}.');
+    expect(scanLine(SCAN_REASON_COPY.wrong_event.sub, { event: 'Gala', day: 'Sat' })).toBe(
+      'This scanner is for Gala, Sat.',
+    );
   });
 
   it('has the occupancy words, terse and without a trailing filler', () => {
@@ -118,5 +121,22 @@ describe('SCAN_COPY', () => {
           action: 'Redeem',
         }),
       ).not.toMatch(/\{\w+\}/);
+  });
+});
+
+describe('SCAN_COUNTER_COPY', () => {
+  it('words a counter refusal beside, not over, the balance and stamp lines', () => {
+    expect(SCAN_COUNTER_COPY.no_balance?.headline).toBe('None left');
+    expect(`${SCAN_COUNTER_COPY.card_full?.headline}. ${SCAN_COUNTER_COPY.card_full?.sub}`).toBe(
+      'Already full. Use some first.',
+    );
+    expect(SCAN_REASON_COPY.no_balance.headline).toBe('Not enough balance');
+    expect(SCAN_REASON_COPY.card_full.headline).toBe('Card is full');
+  });
+  it('has a headline and a sub for each reason it words', () => {
+    for (const line of Object.values(SCAN_COUNTER_COPY)) {
+      expect(line.headline.length).toBeGreaterThan(0);
+      expect(line.sub.length).toBeGreaterThan(0);
+    }
   });
 });

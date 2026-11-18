@@ -50,6 +50,10 @@ export const TemplateSummarySchema = z.object({
   shared: z.boolean().default(false),
   /** `display.icon` of the shown version: a curated icon id (a blueprint's glyph). */
   icon: z.string().nullable().default(null),
+  /** `display.group` of the shown version: a blueprint's gallery group. */
+  group: z.string().nullable().default(null),
+  /** `display.aliases` of the shown version: extra words the gallery search matches. */
+  aliases: z.array(z.string()).default([]),
   /** The blueprint this template was made from. */
   fromBlueprint: z.object({ id: IdSchema, name: z.string() }).nullable().default(null),
   passCount: z.number().int(),

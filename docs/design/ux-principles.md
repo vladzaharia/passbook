@@ -89,7 +89,7 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
 - iPhone, iPod and Mac can add. Off the phone (Mac included) the QR of the pass's `/p` page
   leads: the iPhone that scans it adds with the badge there. On the pass page a device that cannot
   add (iPad included) gets the QR alone, no badge. Elsewhere (tiles, Add all, email) it keeps the
-  badge with one line: `Open on iPhone or Mac to add to Apple Wallet.` In-app browsers: `Open in
+  badge with one line: `Open this page on your phone to add the pass to your wallet.` In-app browsers: `Open in
   Safari to add to Apple Wallet.` These are the only added sentences (`src/shared/device.ts`).
 - Never show the bare word "Wallet" as a brand in a view that shows the badge.
 - A pass already registered on a device shows `In Wallet` on its tile and leaves the Add all

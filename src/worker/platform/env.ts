@@ -4,11 +4,13 @@ import type { Job } from '../jobs/types.ts';
 export interface AppEnv
   extends Omit<
     Env,
-    'APNS' | 'BREAKGLASS_TOKEN_SHA256' | 'JOBS' | 'JOBS_DLQ' | 'OIDC_CLIENT_SECRET'
+    'APNS' | 'BREAKGLASS_TOKEN_SHA256' | 'JOBS' | 'JOBS_DLQ' | 'WEBHOOK_JOBS' | 'OIDC_CLIENT_SECRET'
   > {
   /** The generated type is Queue<unknown>; producers are checked against `Job`. */
   JOBS: Queue<Job>;
   JOBS_DLQ: Queue<Job>;
+  /** Outbound webhook lanes only (`wallet-webhooks`), served by the same consumer. */
+  WEBHOOK_JOBS: Queue<Job>;
   /**
    * Absent until the platform certificate is uploaded; treated as "push unavailable".
    * Omit keeps a generated required `APNS` (mtls_certificates uncommented) from clashing.
@@ -57,6 +59,10 @@ export const RATE_LIMITS = [
   'RL_SCAN_LOOKUP',
   'RL_SCAN_ORG',
   'RL_GOOGLE_CALLBACK',
+  'RL_WEBHOOK_HOST',
+  'RL_WEBHOOK_HOST_ORG',
+  'RL_WEBHOOK_OUT',
+  'RL_JOIN',
 ] as const satisfies readonly RateLimitName[];
 
 /**

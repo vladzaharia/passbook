@@ -36,6 +36,8 @@ export const NativeScannerCapabilitiesSchema = z.strictObject({
     continuous: z.boolean().optional(),
     formats: z.array(z.enum(['ndef', 'wallet-vas', 'tag-uid', 'tag-sun'])).max(4),
   }),
+  /** The shell plays `{op:'haptic', pattern}` (wire v1). */
+  haptics: z.boolean().optional(),
   vas: z.strictObject({
     deviceSupported: z.boolean(),
     available: z.boolean(),

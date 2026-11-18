@@ -129,16 +129,26 @@ export function formatEventTime(ms: number, timeZone: string): string {
 
 const WEEKDAY = new Map<string, Intl.DateTimeFormat>();
 
+/** "Sat", in `timeZone` when given, else the browser's. */
+export function formatWeekday(ms: number, timeZone?: string): string {
+  const key = timeZone ?? '';
+  let day = WEEKDAY.get(key);
+  if (!day) {
+    day = new Intl.DateTimeFormat(LOCALE, { weekday: 'short', ...(timeZone ? { timeZone } : {}) });
+    WEEKDAY.set(key, day);
+  }
+  return day.format(ms);
+}
+
 /** "Sat 8:00 AM" in a zone: when something opens next. */
 export function formatWeekdayTime(ms: number, timeZone: string): string {
-  let day = WEEKDAY.get(timeZone);
-  if (!day) {
-    day = new Intl.DateTimeFormat(LOCALE, { weekday: 'short', timeZone });
-    WEEKDAY.set(timeZone, day);
-  }
-  return `${day.format(ms)} ${formatTime(ms, timeZone)}`;
+  return `${formatWeekday(ms, timeZone)} ${formatTime(ms, timeZone)}`;
 }
 
 /** A person's label: the name, else the verified email, else a plain "no email" label. */
 export const personLabel = (person: { name: string | null; primaryEmail: string | null }): string =>
   person.name ?? person.primaryEmail ?? NO_EMAIL_LABEL;
+
+/** ISO currency codes the browser's money formatting knows; none where it cannot say. */
+export const supportedCurrencies = (): string[] =>
+  typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('currency') : [];

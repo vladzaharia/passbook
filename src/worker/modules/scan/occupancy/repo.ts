@@ -83,13 +83,15 @@ export const inRow = (passId: string, place: string, lastScanId?: string): Grant
     ...(lastScanId ? { last_scan_id: lastScanId } : {}),
   });
 
-/** The zone is still as the plan read it: same tracking, same parent, same archive state. */
+/** The zone is still as the plan read it: same tracking, parent, archive state and Hard limit. */
 export const zoneIs = (z: ZoneFence): GrantCond =>
   exists('scan_zones', {
     id: z.id,
     occupancy: z.occupancy,
     parent_id: z.parentId,
     archived_at: z.archivedAt,
+    // A Hard limit set after the read stops this admission: the commit never admits past it.
+    hard_limit: z.hardLimit ? 1 : 0,
   });
 
 const COLUMNS = [

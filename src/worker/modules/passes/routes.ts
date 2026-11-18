@@ -37,6 +37,7 @@ import { registerBulkRoutes } from './routes-bulk.ts';
 import { registerCheckInRoutes } from './routes-check-in.ts';
 import { registerMemberPhotoRoutes } from './routes-member-photo.ts';
 import { registerStampsRoutes } from './routes-stamps.ts';
+import { registerTermRoutes } from './routes-term.ts';
 import { registerWriteRoutes } from './routes-write.ts';
 import { deletePass, listPassSummaries, unvoidPass, voidPass } from './service.ts';
 
@@ -99,6 +100,7 @@ register(
           ? { noScanSince: ctx.clock.now() - q.scan.noScanDays * 86_400_000 }
           : {}),
         ...(q.q ? { q: q.q } : {}),
+        ...(q.externalId ? { externalId: q.externalId } : {}),
         ...(q.cursor ? { cursor: q.cursor } : {}),
         limit: q.limit,
       }),
@@ -298,6 +300,7 @@ registerAssetRoutes(passesRoutes);
 registerMemberPhotoRoutes(passesRoutes);
 registerCheckInRoutes(passesRoutes);
 registerStampsRoutes(passesRoutes);
+registerTermRoutes(passesRoutes);
 registerBulkRoutes(passesRoutes);
 registerEventRoutes(passesRoutes);
 registerRemoveRoutes(passesRoutes);

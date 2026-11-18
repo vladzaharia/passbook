@@ -698,15 +698,16 @@ Sheets `occ-monitor-desk` (1440), `occ-monitor-ipad` (1180).
 Sheet `occ-console`.
 - **Zone dialog**, section **Occupancy:** **Track who's inside** *Counts people in and out. Monitors show In now.* ·
   **Require tap out** *A second entry waits for a tap-out. Put an Out or Both scanner at the exit.* · **Capacity**
-  (*people*; help **Full stops new entries. A Manager can let someone in.**) · **Max stay** (help **Anyone still in
+  (*people*; help **Full stops new entries. Staff can let someone in, unless Hard limit is on.**) · **Hard limit**
+  (*Full is final: no one can let anyone in, whatever their role. Needs a capacity.*; the event form has the same switch) · **Max stay** (help **Anyone still in
   after this is tapped out.**) · **Clear at** (the zone's clock; help **Everyone still in is tapped out at this time.
   Empty: never.**) · status **25 inside now. Counted by Pool gate (Both).** Fields under Track disable when it is off.
 - **Zones tab:** columns **Occupancy** (**Tap out required** / **Counts** / —) and **In now** (**42 / 60**).
 - **Scanner dialog, Direction:** tiles **In** *Every scan taps in.* · **Out** *Every scan taps out.* · **Both** *Auto:
   in if they're out, out if they're in.*; help **A reader at a door: pick In or Out. One phone at the desk: Both.**;
   status **Counts people in Gym · 42 inside now.**
-- **Desk monitor dialog:** switch **Desk actions** *Staff sign in here to let people in and mark them out. Full and
-  guest limits ask for a Manager.*; callout **Every action is signed by the staff member and shows in the pass's
+- **Desk monitor dialog:** switch **Desk actions** *Staff sign in here to let people in and mark them out. Guest
+  limits ask for a Manager.*; callout **Every action is signed by the staff member and shows in the pass's
   activity.**
 - **Pass › Activity:** the where-now card and the trail (4.2).
 - Template designer, Access › Rules: the re-entry wait's help gains **Zones that require tap out usually don't need a
@@ -882,3 +883,13 @@ locally), Pool full, a Manager PIN override, Mark as out from **Inside**, max st
    usually a forgotten tap-out and the photo is on screen. Stricter gyms set the scanner to **Manager**. Keep anyone as
    the default?
 3. **Max stay defaults to 12 h** when a zone starts tracking. A 24/7 gym might want 6 h; an office 14 h. Keep 12?
+
+## Hard limit and approvals
+
+- **Who can admit again** decides who may let someone in at a full place. A **Hard limit** makes Full final for every
+  role. It is a switch on a zone (`scan_zones.hard_limit`), on an event (`scan_events.hard_limit`), and, as an extra,
+  on a session or scanner (`settings.hardLimit`). Any one of them closes the door: the scan's event, its zone, a zone
+  above it, or the door itself. The session switch stays; it is not migrated.
+- **Approvals** (session or scanner setting, `settings.approvals`): `managers` (default) or `desk`. With `desk`, a
+  Desk member's PIN approves what a Manager's would. A `set`, an amount over its max, undo, and every hard refusal
+  still need a Manager.

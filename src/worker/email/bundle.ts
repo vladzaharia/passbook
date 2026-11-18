@@ -1,6 +1,7 @@
 import { APPLE_BADGE_ALT } from '../../shared/apple-badge.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { EMAIL_BADGE, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { displayFromName } from '../../shared/email-from-name.ts';
 import type { RenderedEmail } from './pass.ts';
 import { safeMail, safeUrl } from './safe.ts';
 import {
@@ -28,6 +29,8 @@ export interface BundleEmailInput {
   passes: { title: string; addUrl: string | null }[];
   iconUrl?: string | null;
   senderName?: string | null;
+  /** The org's own From name (already checked): shown as "<fromName> via <sender>". */
+  fromName?: string | null;
   /** A test bundle's email carries the amber strip. */
   mode?: 'live' | 'test';
   buddyBase?: string | null;
@@ -94,5 +97,6 @@ ${footer.html}`;
     body,
   });
   const sender = input.senderName?.trim();
-  return { subject, html, text, ...(sender ? { fromName: `${input.orgName} via ${sender}` } : {}) };
+  const fromName = displayFromName(input.fromName || input.orgName, sender);
+  return { subject, html, text, fromName };
 }

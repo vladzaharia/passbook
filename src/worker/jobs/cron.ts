@@ -7,9 +7,12 @@ import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
 import { dailyEvents } from '../modules/events/jobs.ts';
 import { resumeVerifiedHolderAttachments } from '../modules/holders/transfer-jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
+import { dailyJoin } from '../modules/join/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
+import { dailyImports } from '../modules/passes/import-retention.ts';
+import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
@@ -18,8 +21,11 @@ import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
+import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
+import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
+import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { purgeRetiredIds } from '../platform/retired-ids.ts';
@@ -35,9 +41,11 @@ export const DAILY_CRON = '17 3 * * *';
 export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
   [MINUTE_CRON]: [
     { name: 'delivery.sweep', run: sweepDelivery },
+    { name: 'webhooks.sweep', run: sweepWebhooks },
     { name: 'sandbox.forwards', run: sweepSandboxForwards },
     { name: 'connections.schedule', run: reconcileConnections },
     { name: 'templates.sync', run: syncBakedOnDeploy },
+    { name: 'templates.fork_updates', run: (ctx) => planForkUpdates(ctx) },
     { name: 'passes.stale_reissue', run: reissueStalePasses },
     { name: 'broadcasts.start', run: startDueBroadcasts },
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
@@ -55,11 +63,13 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
       },
     },
     { name: 'passes.transfer_asset_gc', run: sweepTransferAssetGc },
+    { name: 'passes.import_stuck', run: sweepStuckImports },
   ],
   [DAILY_CRON]: [
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
     { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
+    { name: 'passes.import_retention', run: dailyImports },
     { name: 'connections.retention', run: dailyConnections },
     { name: 'delivery.retention', run: dailyDelivery },
     { name: 'auth.retention', run: dailyAuth },
@@ -69,7 +79,10 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
     { name: 'scan.retention', run: dailyScans },
+    { name: 'join.retention', run: dailyJoin },
     { name: 'orgs.branding_gc', run: sweepBrandingGc },
+    { name: 'webhooks.retention', run: dailyWebhooks },
+    { name: 'templates.fork_orphans', run: sweepForkOrphans },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
   ],

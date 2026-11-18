@@ -1,0 +1,96 @@
+{
+  "formatVersion": 1,
+  "description": "ID card",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(244,244,240)",
+  "foregroundColor": "rgb(20,20,22)",
+  "labelColor": "rgb(196,30,58)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-08-31T00:00:00Z",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatCode39",
+      "message": "290014",
+      "messageEncoding": "iso-8859-1",
+      "altText": "290014"
+    },
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "290014",
+      "messageEncoding": "iso-8859-1",
+      "altText": "290014"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "role",
+        "label": "Role",
+        "value": "Student"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Maya Chen"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "number",
+        "label": "Number",
+        "value": "290014"
+      },
+      {
+        "key": "unit",
+        "label": "Year",
+        "value": "Year 9"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "until",
+        "label": "Valid until",
+        "value": "2030-08-31T00:00:00Z",
+        "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "site",
+        "label": "Website",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Carry this card. It is yours only."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

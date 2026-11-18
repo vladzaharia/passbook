@@ -1,11 +1,20 @@
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
 import { type Check, releaseHead } from '../../platform/authority-checks.ts';
+import { condCheck, notExists } from '../../platform/authority-cond.ts';
 import { AppError, type DenyReason } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
+import { JOIN_CODES, joinCreateGrant } from '../join/grant.ts';
 import { sampleScannerScopeCheck } from '../scan/sample-scope-fence.ts';
-import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
+import {
+  capabilityChecks,
+  keyScope,
+  membershipCapability,
+  tenantPrincipal,
+} from './repo-authority.ts';
+import { reissuePrincipalCheck, starterPrincipal } from './repo-bulk-principal.ts';
 import { notBlueprintCheck, releaseOrgCheck, releaseSnapshotCheck } from './repo-create-checks.ts';
+import { externalIdFreeCheck } from './repo-external-id.ts';
 import { type RetainedIssuanceScope, retainedIssuanceChecks } from './repo-write-retained.ts';
 import type { NewPassRow } from './repo-write-types.ts';
 
@@ -22,7 +31,9 @@ export const CREATE_CODES = {
 } as const satisfies Record<DenyReason, string>;
 
 const REASON_OF = new Map<string, DenyReason>(
-  (Object.entries(CREATE_CODES) as [DenyReason, string][]).map(([reason, code]) => [code, reason]),
+  ([...Object.entries(CREATE_CODES), ...Object.entries(JOIN_CODES)] as [DenyReason, string][]).map(
+    ([reason, code]) => [code, reason],
+  ),
 );
 
 export const createRefusal = (error: unknown): DenyReason | null =>
@@ -41,6 +52,8 @@ export function createGrant(
     releaseSnapshotCheck(row),
     releaseOrgCheck(row.release),
   ];
+  if (row.uniqueExternalId && row.externalId !== null)
+    checks.push(externalIdFreeCheck(row.templateId, row.externalId));
   if (row.connectionId !== null)
     checks.push(
       connectionIs({
@@ -71,6 +84,49 @@ export function createGrant(
       codes: CREATE_CODES,
       target: row.id,
       tables: CREATE_TABLES,
+    });
+  if (ex.kind === 'deferred') {
+    const s = ex.starter;
+    return grant(ctx, {
+      purpose: 'org_mode.pass.create',
+      principal: starterPrincipal(s, row.orgId, row.mode),
+      target: row.id,
+      checks: [
+        s.kind === 'membership'
+          ? membershipCapability(s.membershipId, 'passes:operate')
+          : keyScope(s.keyId, 'passes:write'),
+        reissuePrincipalCheck(row.orgId, s, row.now),
+        ...checks,
+        // A pass made by hand or by API since the check took the External ID: this row fails, not the run.
+        ...(ex.guard
+          ? [
+              condCheck(
+                'stale',
+                notExists('passes', {
+                  external_id: ex.guard.externalId,
+                  removed_at: null,
+                  deleted_at: null,
+                  test_data_quarantined: 0,
+                }),
+              ),
+            ]
+          : []),
+      ],
+      codes: CREATE_CODES,
+      tables: CREATE_TABLES,
+    });
+  }
+  if (ex.kind === 'join')
+    return joinCreateGrant(ctx, {
+      linkId: ex.linkId,
+      generation: ex.generation,
+      orgDailyCap: ex.orgDailyCap,
+      orgId: row.orgId,
+      templateId: row.templateId,
+      passId: row.id,
+      holderEmail: row.holderEmail,
+      now: row.now,
+      checks,
     });
   return grant(ctx, {
     purpose: 'org_mode.pass.create',

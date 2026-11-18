@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { SIGN_IN_SENT } from '@/shared/copy/sign-in.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
 import { goTo } from './goto.ts';
 
@@ -60,7 +61,7 @@ describe('magic link', () => {
     ]);
     // Neutral: unknown or throttled addresses get no mail, so the face never says "sent".
     expect(screen.getByText('sam@example.com').parentElement).toHaveTextContent(
-      'Check sam@example.com for a code.',
+      `sam@example.com${SIGN_IN_SENT}`,
     );
     expect(container.querySelector('[data-side="email"]')).toHaveAttribute('inert');
     expect(screen.queryByRole('link', { name: 'Sign in with Polaris ID' })).toBeNull();

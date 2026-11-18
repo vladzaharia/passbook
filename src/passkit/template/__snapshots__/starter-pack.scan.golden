@@ -1,0 +1,83 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "amount": {
+        "max": 3,
+        "presets": [
+          1,
+          2,
+          3
+        ]
+      },
+      "confirm": true,
+      "cooldownMinutes": 5,
+      "id": "use",
+      "input": "left",
+      "kind": "take",
+      "label": "Use",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "cooldown"
+    },
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "amount": {
+        "max": 50,
+        "presets": [
+          5,
+          10,
+          20
+        ]
+      },
+      "confirm": true,
+      "id": "refill",
+      "input": "left",
+      "kind": "add",
+      "label": "Refill",
+      "minRole": "desk",
+      "notify": false,
+      "repeat": "always"
+    }
+  ],
+  "display": {
+    "header": {},
+    "holder": "{{inputs.name}}",
+    "notes": {
+      "refused": "Send them to the desk."
+    },
+    "panels": [
+      {
+        "icon": "info",
+        "id": "p_details",
+        "preset": {
+          "id": "details",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_field1",
+            "label": "Left",
+            "slot": "field1",
+            "type": "field",
+            "value": "{{inputs.left}}"
+          },
+          {
+            "id": "r_field2",
+            "label": "Pack",
+            "slot": "field2",
+            "type": "field",
+            "value": "{{inputs.size}} {{inputs.unit}}"
+          }
+        ],
+        "title": "Details"
+      }
+    ],
+    "v": 1
+  },
+  "lookup": {
+    "input": "packId"
+  }
+}

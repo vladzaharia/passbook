@@ -19,6 +19,7 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess, rolesGranting } from '../orgs/access.ts';
 import {
@@ -74,10 +75,13 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
   const keyOrSession = requireTenantSessionOrApiKey('scans:read');
   routes.use(
     '*',
-    createMiddleware<AppBindings>(async (c, next) => {
-      const isList = c.req.method === 'GET' && /\/scans\/?$/.test(c.req.path);
-      return isList ? keyOrSession(c, next) : requireTenantSession(c, next);
-    }),
+    declareKeyAccess(
+      createMiddleware<AppBindings>(async (c, next) => {
+        const isList = c.req.method === 'GET' && /\/scans\/?$/.test(c.req.path);
+        return isList ? keyOrSession(c, next) : requireTenantSession(c, next);
+      }),
+      { read: ['scans:read'], only: /\/scans\/?$/ },
+    ),
   );
   routes.use('*', limitBody(16 * 1024));
 
@@ -125,13 +129,13 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
       query: ScanExportQuerySchema,
     },
     async (c) => {
-      const { orgId, from, to, ...filter } = c.req.valid('query');
+      const { orgId, from, to, timeZone, ...filter } = c.req.valid('query');
       const session = c.var.auth;
       if (session?.kind !== 'session') throw new UnauthenticatedError();
       const ctx = serviceContext(c);
       const authority = await scanAuthority(ctx, session, orgId, 'scanning:read');
       if (!authority) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-      const out = await exportScans(ctx, session, authority, { orgId, from, to, filter });
+      const out = await exportScans(ctx, session, authority, { orgId, from, to, timeZone, filter });
       return new Response(out.body, {
         headers: {
           'content-type': 'text/csv; charset=utf-8',

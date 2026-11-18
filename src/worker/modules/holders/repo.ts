@@ -210,6 +210,7 @@ export async function markHolderReissueRequired(
       AND p.lifecycle_generation = ? AND p.release_id IS ? AND p.download_token = ?
       AND p.link_generation = ? AND p.holder_email IS NOT NULL
       AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
+      AND NOT EXISTS (SELECT 1 FROM join_issues ji WHERE ji.pass_id = p.id)
       AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = p.org_id AND o.status = 'active')
       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
         WHERE t.pass_id = p.id AND t.state = 'pending')
@@ -272,7 +273,8 @@ export async function waitingHolderSweepUpper(db: D1Database): Promise<string | 
     db,
     `SELECT MAX(p.id) AS id FROM passes p
     WHERE p.holder_email IS NOT NULL AND p.owner_user_id IS NULL
-      AND p.deleted_at IS NULL AND p.test_data_quarantined = 0`,
+      AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
+      AND NOT EXISTS (SELECT 1 FROM join_issues ji WHERE ji.pass_id = p.id)`,
   );
   return row?.id ?? null;
 }

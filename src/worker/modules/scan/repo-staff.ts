@@ -49,17 +49,25 @@ export const staffStatement = (db: Db, orgId: string, id: string): D1PreparedSta
   stmt(db, `SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ?`, [id, orgId]);
 
 /** The active managers of an org, for a PIN that names none: a PIN is matched against these. */
-export const managerRosterStatement = (db: Db, orgId: string): D1PreparedStatement =>
+export const managerRosterStatement = (
+  db: Db,
+  orgId: string,
+  deskOk = false,
+): D1PreparedStatement =>
   stmt(
     db,
-    `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? AND role = 'manager' AND disabled_at IS NULL
+    `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? AND role IN ('manager'${deskOk ? ",'desk'" : ''}) AND disabled_at IS NULL
      ORDER BY id`,
     [orgId],
   );
 
 /** The named person, or every active manager when the PIN names none. */
-export const approverStatement = (db: Db, orgId: string, staffId: string | undefined) =>
-  staffId ? staffStatement(db, orgId, staffId) : managerRosterStatement(db, orgId);
+export const approverStatement = (
+  db: Db,
+  orgId: string,
+  staffId: string | undefined,
+  deskOk = false,
+) => (staffId ? staffStatement(db, orgId, staffId) : managerRosterStatement(db, orgId, deskOk));
 
 /** Scoped to the org: another org's staff id is the same as an unknown one. */
 export async function getStaff(db: Db, orgId: string, id: string): Promise<ScanStaffRow | null> {

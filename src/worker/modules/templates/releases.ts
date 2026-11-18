@@ -11,7 +11,6 @@ import type {
   TemplateReleaseScope,
 } from '../../../shared/contracts/template-releases.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   activeProjectionRelease,
@@ -47,7 +46,9 @@ import {
   listCandidates as selectCandidates,
   listReleases as selectReleases,
 } from './repo-releases.ts';
+import { testReleasedVersions } from './repo-sole-reviewer.ts';
 import { isPlatformAdmin } from './service-access.ts';
+import { approvalKind } from './sole-reviewer.ts';
 
 export type { TemplateRelease } from '../../../shared/contracts/template-releases.ts';
 export { createCandidate } from './releases-create.ts';
@@ -87,14 +88,20 @@ export async function approveCandidate(
   writable(template, body);
   const authority = await authorizeTemplateWrite(ctx, auth, body.orgId, 'templates:review');
   const candidate = await scopedCandidate(ctx, templateId, candidateId, body, body.candidateHash);
-  if (authority.userId === candidate.authorId || authority.userId === candidate.versionAuthorId)
-    throw new ForbiddenError('The author cannot approve this candidate.', 'TEMPLATE_SELF_APPROVAL');
+  const kind = await approvalKind(ctx, {
+    orgId: body.orgId,
+    mode: body.mode,
+    selfAuthored:
+      authority.userId === candidate.authorId || authority.userId === candidate.versionAuthorId,
+    alone: body.alone,
+  });
   const now = ctx.clock.now();
   const approval: ApprovalRow = {
     id: ctx.ids.id(),
     candidateId,
     candidateHash: candidate.candidateHash,
     reviewerId: authority.userId,
+    kind,
     createdAt: now,
   };
   const head = await getLatestRelease(ctx.env.DB, repositoryScope(templateId, body));
@@ -158,9 +165,16 @@ export async function listReleases(
     scope.orgId,
     isPlatformAdmin(auth),
   );
+  const promotable =
+    scope.mode === 'live'
+      ? (await testReleasedVersions(ctx.env.DB, templateId, scope.orgId)).filter(
+          (v) => v !== active?.version,
+        )
+      : undefined;
   return {
     active: active ? { ...active, createdByName: names.get(active.createdBy ?? '') ?? null } : null,
     items: rows.map((r) => toRelease(r, names)),
+    ...(promotable?.length ? { promotable } : {}),
   };
 }
 

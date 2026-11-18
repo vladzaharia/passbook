@@ -1,7 +1,18 @@
+import {
+  EMAIL_LIMIT_COPY,
+  ISSUANCE_OUTCOME_COPY,
+  type IssuanceOutcome,
+} from '@/shared/copy/email.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { toast } from '../../ui/index.ts';
 
 export type EmailState = 'sent' | 'retrying' | 'failed' | 'unknown';
+
+/** The cap a 429 hit, when the API says so (`limit` is `org` or `recipient`). */
+function limitOf(error: { status: number; fields: Record<string, string> }) {
+  const limit = error.status === 429 ? error.fields.limit : undefined;
+  return limit === 'org' || limit === 'recipient' ? limit : null;
+}
 
 /** What a failed send request says about the email, and what to do next. */
 export function classifyEmailError(error: unknown): {
@@ -10,6 +21,13 @@ export function classifyEmailError(error: unknown): {
 } {
   if (!isApiError(error) || error.status === 0 || error.status === 504 || error.status === 408)
     return { state: 'unknown', action: 'Check the Delivery tab before sending again.' };
+  if (limitOf(error))
+    return { state: 'retrying', action: EMAIL_LIMIT_COPY[limitOf(error) ?? 'org'] };
+  if (error.status === 429 && error.code === 'EMAIL_RATE_LIMITED')
+    return {
+      state: 'retrying',
+      action: 'Limit is 3 emails per recipient an hour and 500 per org a day. Send again later.',
+    };
   if (error.status === 429 || error.status === 503)
     return { state: 'retrying', action: 'Wait a minute, then send again.' };
   if (error.status >= 500)
@@ -21,6 +39,18 @@ export function classifyEmailError(error: unknown): {
 export function reportEmailError(error: unknown, prefix = ''): void {
   const { state, action } = classifyEmailError(error);
   if (state === 'failed') toast.error(error, `${prefix}Could not send the email`);
-  else if (state === 'retrying') toast.info(`${prefix}Email service is busy. ${action}`);
-  else toast.info(`${prefix}Email status unknown. ${action}`);
+  else if (state === 'retrying' && isApiError(error) && limitOf(error))
+    toast.info(`${prefix}${action}`);
+  else if (state === 'retrying') {
+    const limited = isApiError(error) && error.code === 'EMAIL_RATE_LIMITED';
+    toast.info(`${prefix}${limited ? 'Email limit reached' : 'Email service is busy'}. ${action}`);
+  } else toast.info(`${prefix}Email status unknown. ${action}`);
+}
+
+/** The toast for a create that asked to send an email: success, info or warning by outcome. */
+export function reportIssuanceOutcome(outcome: IssuanceOutcome): void {
+  const line = ISSUANCE_OUTCOME_COPY[outcome];
+  if (outcome === 'queued') toast.success(line);
+  else if (outcome === 'limited_org' || outcome === 'limited_recipient') toast.warning(line);
+  else toast.info(line);
 }

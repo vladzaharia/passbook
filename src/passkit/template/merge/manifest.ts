@@ -25,6 +25,8 @@ const MANIFEST: Record<string, Rule> = {
   description: part('manifest.meta', under('description', leaf)),
   requires: part('manifest.meta', under('requires', c(mapOf({ styles: set })))),
   messaging: part('manifest.meta', under('messaging', leaf)),
+  externalId: part('manifest.meta', under('externalId', leaf)),
+  email: part('manifest.meta', under('email', leaf)),
   // inputs: by name in form order; `enum` and `x-enumLabels` are one unit; `required` is a set.
   inputs: part(
     'inputs',
@@ -39,13 +41,15 @@ const MANIFEST: Record<string, Rule> = {
   lookups: part('lookups', c(mapOf({}, mapOf({}, mapOf())))),
   // bindings: by target and n-th with that target; order matters because later bindings win.
   bindings: part('bindings', c(listOf(bindingTarget, mapOf(), true), [])),
-  display: part('display', c(mapOf({ search: set }))),
+  display: part('display', c(mapOf({ search: set, aliases: set }))),
   behaviors: part('behaviors', c(listOf(behaviorUse, mapOf({ config: mapOf() }), true), [])),
   previewOnlyAssets: part('previewOnlyAssets', set),
   scan: scanRule,
   nfc: part('nfc', c(mapOf())),
   // stamps: the goal and `keepReady` move together.
   stamps: part('stamps', c(mapOf({ art: c(mapOf()) }, leaf, [['goal', 'keepReady']]))),
+  // counters: by id; each one's input and size move together, art per key.
+  counters: part('counters', c(mapOf({}, mapOf({ art: c(mapOf()) }, leaf, [['input', 'size']])))),
   wallets: part(
     'wallets',
     c(mapOf({ roles: c(mapOf()), required: set, google: walletTarget, samsung: walletTarget })),

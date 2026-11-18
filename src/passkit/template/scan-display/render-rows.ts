@@ -2,6 +2,7 @@
 import type { ScanChip, ScanDisplayRow } from '../../../shared/contracts/scan-display.ts';
 import { scanLine } from '../../../shared/copy/scan.ts';
 import { SCAN_STAMPS_MAX } from '../../stamps/layout.ts';
+import { counterText } from '../../stamps/rules.ts';
 import { columnsUnits, DENSITY, oneLineCap } from './density.ts';
 import { graphemeLength, moneyText, toNumber, truncate } from './format.ts';
 import { history } from './render-history.ts';
@@ -51,13 +52,15 @@ function progress(
   const reward =
     text(row.reward, rc, 24) || (typeof taken?.reward === 'string' ? taken.reward : '');
   const earned = row.rewards !== undefined ? toNumber(evalExpr(row.rewards, rc)) : null;
-  const rewards = Math.max(0, Math.floor(earned ?? value / goal));
+  const counter = taken?.counter === true;
+  const rewards = counter ? 0 : Math.max(0, Math.floor(earned ?? value / goal));
   const style = row.style === 'bar' || goal > SCAN_STAMPS_MAX ? 'bar' : 'stamps';
   const left = Math.max(0, Math.ceil(goal - value));
   // Stamps past the reward carry over: "1 reward ready · 2 saved".
   const saved = Math.max(0, Math.floor(value - rewards * goal));
-  const caption =
-    rewards >= 1
+  const caption = counter
+    ? counterText(Math.min(goal, Math.max(0, Math.floor(value))))
+    : rewards >= 1
       ? scanLine(
           saved > 0
             ? rewards === 1

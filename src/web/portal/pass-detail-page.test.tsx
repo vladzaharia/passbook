@@ -91,7 +91,9 @@ describe('pass detail', () => {
     await screen.findByRole('heading', { name: 'Membership', level: 1 });
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Add to Google Wallet' })).toBeVisible();
-    expect(screen.getByText('Open on iPhone or Mac to add to Apple Wallet.')).toBeVisible();
+    expect(
+      screen.getByText('Open this page on your phone to add the pass to your wallet.'),
+    ).toBeVisible();
   });
 
   it('does not mistake an Apple registration for a native-wallet installation', async () => {

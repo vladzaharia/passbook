@@ -152,6 +152,54 @@ describe('scanPolicy: Matrix B', () => {
     expect(overridePolicyKind('not_yet_valid', 'heads_up')).toBe('let_in_again');
   });
 
+  describe('Full follows Who can admit again (OC A4)', () => {
+    const withAgain = (
+      a: PolicyActor,
+      letInAgain: 'anyone' | 'manager' | 'never',
+    ): PolicyActor => ({
+      ...a,
+      settings: { ...a.settings, letInAgain },
+    });
+    const full = { kind: 'capacity_override' } as const;
+    it('anyone: every person, no terminal', () => {
+      for (const a of [door, desk, manager, admin])
+        expect(allowed(withAgain(a, 'anyone'), full).allow).toBe(true);
+      expect(allowed(withAgain(terminal, 'anyone'), full).allow).toBe(false);
+    });
+    it('manager: a Manager outright, others with a PIN, never a terminal', () => {
+      expect(allowed(withAgain(manager, 'manager'), full).allow).toBe(true);
+      for (const a of [door, desk]) {
+        expect(allowed(withAgain(a, 'manager'), full)).toEqual({
+          allow: false,
+          why: 'needs_approval',
+        });
+        expect(allowed(withAgain(a, 'manager'), full, true).allow).toBe(true);
+      }
+      expect(allowed(withAgain(terminal, 'manager'), full)).toEqual({
+        allow: false,
+        why: 'forbidden',
+      });
+    });
+    it('never: no one, even approved', () => {
+      for (const a of [door, desk, manager, admin])
+        expect(allowed(withAgain(a, 'never'), full, true)).toEqual({
+          allow: false,
+          why: 'forbidden',
+        });
+    });
+    it('a Hard limit is final for every role, approved or not, whatever the door says', () => {
+      for (const letInAgain of ['anyone', 'manager', 'never'] as const)
+        for (const a of [door, desk, manager, admin, terminal])
+          expect(
+            allowed({ ...a, settings: { ...a.settings, letInAgain, hardLimit: true } }, full, true),
+          ).toEqual({ allow: false, why: 'forbidden' });
+    });
+    it('a Hard limit leaves a plain let-in-again alone', () => {
+      const hard = { ...manager, settings: { ...manager.settings, hardLimit: true } };
+      expect(allowed(hard, { kind: 'let_in_again' }).allow).toBe(true);
+    });
+  });
+
   describe('undo', () => {
     const now = 1_000_000_000;
     const own = (ageMin: number) => ({

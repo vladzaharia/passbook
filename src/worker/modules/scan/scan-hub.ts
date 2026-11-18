@@ -1,12 +1,12 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { ScanLiveResolvedSchema } from '../../../shared/contracts/scan-setups.ts';
-import { systemClock } from '../../platform/clock.ts';
+import {
+  ScanLiveEnrollSchema,
+  ScanLiveResolvedSchema,
+} from '../../../shared/contracts/scan-setups.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { problemResponse } from '../../platform/errors.ts';
 import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
-import { snapshotCredentialEnv } from './credential-input.ts';
 import { openLiveAttachment } from './live-attachment.ts';
 import {
   cloneLiveAttachment,
@@ -16,41 +16,17 @@ import {
 } from './live-auth.ts';
 import { livePlaces } from './live-places.ts';
 import { liveRowFor, liveRowsFor, watches } from './live-render.ts';
-import { LIVE_ROW_TTL_MS, type LiveRingRow, ringRowOf, scrubbedEntry } from './live-ring.ts';
+import { LIVE_ROW_TTL_MS, type LiveRingRow, scrubbedEntry } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
 import { liveRingStaleStmt } from './repo-live-render.ts';
-import { staleScanRead } from './stale-read.ts';
-
-const RING = 'recent';
-
-/** Pin one key ring for every asynchronous live operation. */
-function liveContext(env: AppEnv, callerNow?: number) {
-  // The caller's request clock, carried as an offset so time still advances inside the call. A
-  // Durable Object has no request clock of its own; without one it reads the system clock.
-  const offset = callerNow === undefined ? 0 : callerNow - systemClock.now();
-  const ctx = createDetachedContext(
-    env,
-    callerNow === undefined ? {} : { clock: { now: () => systemClock.now() + offset } },
-  );
-  return { ...ctx, env: snapshotCredentialEnv(env) };
-}
-
-/** The unexpired ring, oldest first; an entry from before plain rows is kept as a redacted row. */
-async function readRing(storage: DurableObjectStorage, now: number): Promise<LiveRingRow[]> {
-  const stored = (await storage.get<unknown[]>(RING)) ?? [];
-  return stored
-    .map(ringRowOf)
-    .filter((r): r is LiveRingRow => r !== null && now - r.row.at < LIVE_ROW_TTL_MS);
-}
-
-/** A sealed attachment the hub no longer serves: lost access is a bare 401, drift a 409 to reconnect. */
-async function refusedUpgrade(ctx: ServiceContext, attachment: LiveAttachment): Promise<Response> {
-  const captured = cloneLiveAttachment(attachment);
-  if (!captured || captured.expiresAt <= ctx.clock.now())
-    return new Response(null, { status: 401 });
-  const refusal = await staleScanRead(ctx, captured.actor);
-  return refusal.status === 409 ? problemResponse(refusal) : new Response(null, { status: 401 });
-}
+import {
+  DEVICE_TAG,
+  deviceTag,
+  liveContext,
+  RING,
+  readRing,
+  refusedUpgrade,
+} from './scan-hub-support.ts';
 
 /** One org and mode per object. HTTP mutations remain in D1; this is a bounded display feed. */
 export class ScanHub extends DurableObject<AppEnv> {
@@ -71,13 +47,20 @@ export class ScanHub extends DurableObject<AppEnv> {
       return new Response(null, { status: 403 });
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
-    const previous = this.ctx.getWebSockets(attachment.scannerId);
-    for (const socket of previous.slice(0, Math.max(0, previous.length - 2)))
-      socket.close(4408, 'Too many screens');
+    const device = attachment.role === 'device';
+    const previous = this.ctx.getWebSockets(
+      device ? deviceTag(attachment.scannerId) : attachment.scannerId,
+    );
+    // A device keeps its latest connection and the new one; a screen keeps two and the new one.
+    for (const socket of previous.slice(0, Math.max(0, previous.length - (device ? 1 : 2))))
+      socket.close(4408, device ? 'Replaced' : 'Too many screens');
     server.serializeAttachment(raw);
-    this.ctx.acceptWebSocket(server, [attachment.scannerId]);
+    this.ctx.acceptWebSocket(server, [
+      device ? deviceTag(attachment.scannerId) : attachment.scannerId,
+    ]);
     this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     await this.schedule(attachment.expiresAt);
+    if (device) return new Response(null, { status: 101, webSocket: client });
     server.send(JSON.stringify(await this.snapshotFor(ctx, attachment, undefined, recipient)));
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -114,6 +97,8 @@ export class ScanHub extends DurableObject<AppEnv> {
     await this.schedule(now + LIVE_ROW_TTL_MS);
     await Promise.all(
       this.ctx.getWebSockets().map(async (socket) => {
+        // Device sockets get no rows.
+        if (this.isDevice(socket)) return;
         const sealed: unknown = socket.deserializeAttachment();
         const attachment =
           typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;
@@ -145,11 +130,14 @@ export class ScanHub extends DurableObject<AppEnv> {
     after?: string | null,
     authenticated?: LiveRecipient,
   ) {
+    // The request's own time: the work below must not move the places' rev.
+    const at = ctx.clock.now();
     const captured = cloneLiveAttachment(attachment);
     if (!captured) return { rows: [], cursor: null };
     const recipient = authenticated ?? (await liveRecipient(ctx, captured));
     if (!recipient) return { rows: [], cursor: null };
     if (!(await this.tenant(captured.orgId, captured.mode))) return { rows: [], cursor: null };
+    if (captured.role === 'device') return { rows: [], cursor: null };
     const ring = await readRing(this.ctx.storage, ctx.clock.now());
     // A customer reconnect never replays a previous person's result.
     if (captured.role === 'customer') return { rows: [], cursor: ring.at(-1)?.row.id ?? null };
@@ -160,6 +148,7 @@ export class ScanHub extends DurableObject<AppEnv> {
       ctx,
       recipient,
       unseen.filter((entry) => watches(recipient, entry)),
+      at,
     );
     return { rows, cursor: ring.at(-1)?.row.id ?? null, ...(places.length ? { places } : {}) };
   }
@@ -173,7 +162,10 @@ export class ScanHub extends DurableObject<AppEnv> {
   }
 
   async kick(scannerId: string) {
-    const sockets = this.ctx.getWebSockets(scannerId);
+    const sockets = [
+      ...this.ctx.getWebSockets(scannerId),
+      ...this.ctx.getWebSockets(deviceTag(scannerId)),
+    ];
     for (const socket of sockets) {
       this.send(socket, JSON.stringify({ control: 'reset' }));
       socket.close(4409, 'Setup changed');
@@ -192,11 +184,43 @@ export class ScanHub extends DurableObject<AppEnv> {
     resolved: z.input<typeof ScanLiveResolvedSchema>;
     now?: number;
   }): Promise<number> {
+    return this.toDevice(input, { resolved: ScanLiveResolvedSchema.parse(input.resolved) }, true);
+  }
+
+  /**
+   * Ring a device: an admin's tag request, or its cancellation. A doorbell only: the request row is the truth,
+   * and the message carries an id and an expiry, no pass data. Returns how many sockets were told.
+   */
+  async enroll(input: {
+    orgId: string;
+    mode: Mode;
+    scannerId: string;
+    enrollment: z.input<typeof ScanLiveEnrollSchema>;
+    now?: number;
+  }): Promise<number> {
+    return this.toDevice(input, { enroll: ScanLiveEnrollSchema.parse(input.enrollment) }, false);
+  }
+
+  /** The ids with an open device socket. */
+  connected(scannerIds: string[]): string[] {
+    return scannerIds.filter((id) => this.ctx.getWebSockets(deviceTag(id)).length > 0);
+  }
+
+  private async toDevice(
+    input: { orgId: string; mode: Mode; scannerId: string; now?: number },
+    body: object,
+    /** Also the screen sockets tagged with the scanner's own id. Tag requests never go to screens. */
+    screens: boolean,
+  ): Promise<number> {
     const ctx = liveContext(this.env, input.now);
     if (!(await this.tenant(input.orgId, input.mode))) return 0;
-    const message = JSON.stringify({ resolved: ScanLiveResolvedSchema.parse(input.resolved) });
+    const message = JSON.stringify(body);
     let sent = 0;
-    for (const socket of this.ctx.getWebSockets(input.scannerId)) {
+    // The device's own socket, and for `resolved` the screens named by the scanner's id.
+    for (const socket of [
+      ...this.ctx.getWebSockets(deviceTag(input.scannerId)),
+      ...(screens ? this.ctx.getWebSockets(input.scannerId) : []),
+    ]) {
       const sealed: unknown = socket.deserializeAttachment();
       const attachment =
         typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;
@@ -208,6 +232,10 @@ export class ScanHub extends DurableObject<AppEnv> {
       sent++;
     }
     return sent;
+  }
+
+  private isDevice(socket: WebSocket): boolean {
+    return this.ctx.getTags(socket).some((t) => t.startsWith(DEVICE_TAG));
   }
 
   override webSocketMessage(socket: WebSocket) {

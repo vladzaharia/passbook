@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import { MagicLinkConsumeSchema, MagicLinkRequestSchema } from '../../../shared/contracts/index.ts';
 import { isSignInErrorCode, type SignInErrorCode } from '../../../shared/copy/sign-in.ts';
 import { strictEmail } from '../../../shared/email.ts';
+import { TURNSTILE_ACTION } from '../../../shared/turnstile.ts';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import {
@@ -46,7 +47,7 @@ export async function requestMagic(c: Context<AppBindings>) {
     throw new UnavailableError('Email sign-in is off.', 'MAGIC_LINK_DISABLED');
   }
   const input = MagicLinkRequestSchema.parse(await c.req.json());
-  if (!(await verifyTurnstile(c.env, input.turnstileToken, ip, ctx.log))) {
+  if (!(await verifyTurnstile(c.env, input.turnstileToken, ip, ctx.log, fetch, TURNSTILE_ACTION))) {
     ctx.log.warn('auth.turnstile_failed', { code: 'TURNSTILE_FAILED' });
     throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
   }

@@ -37,7 +37,7 @@ const capabilities = JSON.stringify(APPLE_ADAPTER_CAPABILITIES);
 const RETURN_ID = { returning: ['id'] };
 
 // The grant supplies org_id; the mode is the caller's (an org grant does not own it).
-const CANDIDATE_COLUMNS = [
+export const CANDIDATE_COLUMNS = [
   'id',
   'template_id',
   'mode',
@@ -74,7 +74,7 @@ const RELEASE_COLUMNS = [
   'created_at',
 ];
 
-function candidateValues(c: CandidateRow): SqlValue[] {
+export function candidateValues(c: CandidateRow): SqlValue[] {
   return [
     c.id,
     c.templateId,
@@ -190,7 +190,7 @@ export async function writeCandidate(
   if (!wrote(inserted)) throw releaseChanged();
 }
 
-/** Records a reviewer's approval; the reviewer must differ from the candidate and version authors. */
+/** Records a reviewer's approval: independent of the authors unless it is an audited sole or Test one. */
 export async function writeApproval(
   ctx: ServiceContext,
   authority: TemplateAuthority,
@@ -208,6 +208,8 @@ export async function writeApproval(
         a.candidateHash,
         a.reviewerId,
         authority.kind === 'session' ? authority.membershipId : '',
+        a.kind,
+        a.createdAt,
       ),
       ...(headId === null
         ? []
@@ -216,8 +218,8 @@ export async function writeApproval(
   });
   g.insertJoined('template_approvals', {
     parents: { candidate_id: a.candidateId },
-    columns: ['id', 'candidate_hash', 'reviewer_id', 'created_at'],
-    values: [a.id, a.candidateHash, a.reviewerId, a.createdAt],
+    columns: ['id', 'candidate_hash', 'reviewer_id', 'kind', 'created_at'],
+    values: [a.id, a.candidateHash, a.reviewerId, a.kind, a.createdAt],
     returning: ['id'],
   });
   g.add(
@@ -229,8 +231,8 @@ export async function writeApproval(
       a.id,
       candidate.orgId ?? '',
       candidate.templateId,
-      'template.approve',
-      detail,
+      a.kind === 'peer' ? 'template.approve' : 'template.approved_alone',
+      { ...detail, kind: a.kind },
     ),
   );
   const [inserted] = await g.commit();

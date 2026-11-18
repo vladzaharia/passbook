@@ -12,6 +12,7 @@ import {
 } from './scan-base.ts';
 import { ScanDisplayReadSchema } from './scan-display.ts';
 import { ScanOccupancySchema, ScanPlaceCountSchema } from './scan-occupancy.ts';
+import { ScanValueSchema } from './scan-value.ts';
 
 // Moved to leaf files so the access and occupancy contracts can use them without a cycle.
 export { type ScanAccess, ScanAccessSchema } from './scan-access.ts';
@@ -25,6 +26,7 @@ export {
   UuidV7Schema,
 } from './scan-base.ts';
 export { type ScanOccupancy, ScanOccupancySchema } from './scan-occupancy.ts';
+export { ScanValueSchema } from './scan-value.ts';
 
 export const ScanMethodSchema = z.enum(['camera', 'wedge', 'nfc', 'manual']);
 export type ScanMethod = z.infer<typeof ScanMethodSchema>;
@@ -53,6 +55,7 @@ export const ScanRecordKindSchema = z.enum([...ScanActionKindSchema.options, 'un
 /** Wire reasons. The client-only ones (network, timeout, ...) live in `src/web/scan/machine/types.ts`. */
 export const SCAN_REFUSED_REASONS = [
   'not_found',
+  'code_replaced',
   'ambiguous',
   'test_pass',
   'live_pass',
@@ -112,6 +115,8 @@ export const ScannerSettingsSchema = z.object({
   deskActions: z.boolean().optional(),
   /** A full place refuses every role: `capacity_full` is never overridable at this door. */
   hardLimit: z.boolean().optional(),
+  /** Whose PIN approves a risky action. Managers when absent; `set` and hard refusals never relax. */
+  approvals: z.enum(['managers', 'desk']).optional(),
   /** Who may assign tags here. Absent: desk for a pass, manager for a person. */
   tags: ScannerTagsSettingsSchema.optional(),
 });
@@ -124,8 +129,13 @@ export const ScanInputSchema = z.union([
   z.object({ tag: TagReadSchema, method: z.literal('nfc'), passId: IdSchema.optional() }),
 ]);
 export type ScanInput = z.infer<typeof ScanInputSchema>;
-/** What the code and pass-id paths take. Tag reads have their own path. */
-export type ScanCodeInput = Exclude<ScanInput, { tag: unknown }>;
+/**
+ * What the code and pass-id paths take. A tag read reaches them as the pass it chose, read by NFC
+ * (worker only: the wire never sends `passId` with `nfc`).
+ */
+export type ScanCodeInput =
+  | Exclude<ScanInput, { tag: unknown }>
+  | { passId: string; method: 'nfc' };
 
 const request = {
   idempotencyKey: UuidV7Schema,
@@ -164,15 +174,6 @@ export const ScanPreviousSchema = z.object({
   staffName: z.string().nullable(),
   actionLabel: z.string(),
   override: z.boolean(),
-});
-export const ScanValueSchema = z.object({
-  input: z.string(),
-  label: z.string(),
-  before: JsonSchema.nullable(),
-  after: JsonSchema.nullable(),
-  goal: z.number().nullable(),
-  format: z.enum(['number', 'currency', 'text']),
-  currency: z.string().optional(),
 });
 export const ScanCardActionSchema = z.object({
   id: z.string(),
@@ -279,6 +280,8 @@ export const ScanOutcomeSchema = z.object({
   action: z.object({ id: z.string(), label: z.string(), kind: ScanActionKindSchema }).nullable(),
   card: ScanCardSchema.nullable(),
   previous: ScanPreviousSchema.nullable(),
+  /** The scanner's event, on `wrong_event`, `not_yet_valid`, `ended` and `capacity_full`. */
+  event: z.object({ name: z.string(), startsAt: TimestampSchema }).nullable().optional(),
   /** Set whenever a pass was found; on test_pass and live_pass it is the only identity. */
   template: ScanTemplateRefSchema.nullable(),
   at: TimestampSchema.nullable(),

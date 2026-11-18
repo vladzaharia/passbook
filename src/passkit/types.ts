@@ -3,9 +3,11 @@
 import type { PassJson } from './schema/pass-types.ts';
 import type { ScanDisplayDoc } from './template/scan-display/schema.ts';
 import type { WalletsManifest } from './template/wallets/schema.ts';
+import type { CounterManifest } from './types-counters.ts';
 
 export type * from './schema/pass-types.ts';
 export type * from './schema/semantic-types.ts';
+export type { CounterManifest } from './types-counters.ts';
 
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -246,6 +248,10 @@ export interface NfcManifest {
   requiresAuthentication?: boolean;
 }
 
+/** The gallery's jobs, in order. A blueprint names one in `display.group`. */
+export const BLUEPRINT_GROUPS = ['get-in', 'save-spend', 'membership-id', 'prove-collect'] as const;
+export type BlueprintGroup = (typeof BLUEPRINT_GROUPS)[number];
+
 export interface TemplateManifest {
   schema: 1;
   name: string;
@@ -255,7 +261,17 @@ export interface TemplateManifest {
   lookups?: Record<string, Record<string, Record<string, Json>>>;
   bindings: Binding[];
   /** `icon` is a curated icon id (`SCAN_ICONS`): a blueprint's glyph. */
-  display: { title: Expr; subtitle?: Expr; status?: Expr; search?: string[]; icon?: string };
+  display: {
+    title: Expr;
+    subtitle?: Expr;
+    status?: Expr;
+    search?: string[];
+    icon?: string;
+    /** A blueprint's gallery group. Additive and optional, so the schema version stays 1. */
+    group?: BlueprintGroup;
+    /** Words the gallery search also matches ("gift", "punch card"). */
+    aliases?: string[];
+  };
   behaviors?: { use: string; version: number; config: Json }[];
   requires?: { styles?: PassStyle[]; nfc?: boolean };
   /** Baked templates belong to an org by slug; starters have none. */
@@ -269,12 +285,18 @@ export interface TemplateManifest {
    * so a new value shows on the lock screen.
    */
   messaging?: { input: string };
+  /** `unique`: at most one pass per externalId for this template, per org and mode. */
+  externalId?: { unique?: boolean };
+  /** Pass email settings. `subject` is an expression over the inputs: the email's subject line. */
+  email?: { subject?: Expr };
   /** What a scanner may do with this template's passes, and what its result screen says. */
   scan?: ScanManifest;
   /** Apple NFC (VAS). Off until the pass type is approved. */
   nfc?: NfcManifest;
   /** Stamp card: the goal, the art and the count input. */
   stamps?: StampsManifest;
+  /** Counters by id (lower-case letters, digits, _; up to 4): "7 left", refilled at the scanner. */
+  counters?: Record<string, CounterManifest>;
   /** Cross-wallet extras (roles, types, art). Never read by the Apple build. */
   wallets?: WalletsManifest;
 }

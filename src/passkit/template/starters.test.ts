@@ -24,7 +24,32 @@ const STYLE_OF: Record<string, string> = {
   'starter-event-ticket': 'eventTicket',
   'starter-boarding-pass': 'boardingPass',
   'starter-access-card': 'generic',
+  'starter-pack': 'coupon',
+  'starter-timed-ticket': 'eventTicket',
+  'starter-transit-ticket': 'boardingPass',
+  'starter-booking': 'generic',
+  'starter-pickup': 'generic',
+  'starter-permit': 'generic',
+  'starter-id-card': 'generic',
 };
+
+const SCAN_CODED = new Set([
+  'starter-coupon',
+  'starter-access-card',
+  'starter-generic',
+  'starter-pack',
+  'starter-timed-ticket',
+  'starter-transit-ticket',
+  'starter-booking',
+  'starter-pickup',
+  'starter-permit',
+  // PS-28: every blueprint's barcode is the scan code (the ID card keeps its number, PS-19).
+  'starter-event-ticket',
+  'starter-boarding-pass',
+  'starter-poster-generic',
+  'starter-stamp-card',
+  'starter-store-card',
+]);
 
 const groups = (pass: PassJson, style: string) =>
   Object.entries((pass[style] as Record<string, unknown>) ?? {})
@@ -130,6 +155,9 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
         'tier',
         'stamps',
         'plan',
+        'slot',
+        'lane',
+        'when',
       ]).toContain(key);
   });
 
@@ -199,17 +227,15 @@ describe('field coverage', () => {
     for (const slug of Object.keys(STYLE_OF)) {
       const { barcodes } = (await build(slug, material)).passJson;
       expect(barcodes?.length, slug).toBeGreaterThan(0);
-      // A coupon's barcode is the scan code; its text is the typed code.
-      const message = (b: { message: string }) =>
-        slug === 'starter-coupon' ? 'SNAPSHOT-SCAN-CODE' : b.message;
-      // The access card's code is the server's {{pass.scanCode}}; its alt text is the member ID.
+      // These carry the server's {{pass.scanCode}}; the alt text is the typed number.
+      const scanCoded = SCAN_CODED.has(slug);
       expect(
         barcodes?.every((b) =>
-          slug === 'starter-access-card' ? !!b.altText : b.message === message(b) && !!b.altText,
+          scanCoded ? b.message === 'SNAPSHOT-SCAN-CODE' && !!b.altText : !!b.altText,
         ),
         slug,
       ).toBeTruthy();
-      if (slug !== 'starter-coupon' && slug !== 'starter-access-card')
+      if (!scanCoded)
         expect(
           barcodes?.every((b) => b.altText === b.message),
           slug,

@@ -1,6 +1,7 @@
 import { sha1Hex } from '../sign/index.ts';
 import { renderStampFiles } from '../stamps/package.ts';
 import type { AssetEntry, ImageSlot, PassJson, TemplateManifest } from '../types.ts';
+import { stripBlock } from './counters.ts';
 import { isWalletArtName } from './wallets/schema.ts';
 
 const decoder = new TextDecoder();
@@ -106,8 +107,9 @@ export async function readTemplatePackage(
   const assets: AssetEntry[] = [];
   const bytes: Record<string, Uint8Array> = {};
   // `strips: false` is for callers that read only the manifest: drawing every strip is the cost.
-  if (manifest.stamps && options.strips !== false) {
-    const drawn = renderStampFiles(manifest.stamps, files);
+  const strip = stripBlock(manifest);
+  if (strip && options.strips !== false) {
+    const drawn = renderStampFiles(strip, files);
     const first = drawn.issues.find((i) => i.severity === 'error');
     if (first) throw new Error(`${first.code}: ${first.message}`);
     files = { ...files };

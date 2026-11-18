@@ -344,7 +344,7 @@ describe('tenant Test inbox routes', () => {
     await noEffects(capture.id, before);
   });
 
-  it('rejects revoked memberships and sessions and never permits API keys', async () => {
+  it('rejects revoked memberships and sessions, and lets only a test key read', async () => {
     const capture = await captureInboxPass(kit);
     const before = kit.mailer.sent.length;
     const revokedMember = await member();
@@ -400,22 +400,26 @@ describe('tenant Test inbox routes', () => {
       mode: 'test',
     });
     const rawKey = { ...key.headers, 'x-passbook-mode': 'test' };
-    for (const suffix of [
-      '',
-      `/${capture.id}`,
-      `/${capture.id}/html`,
-      `/${capture.id}/send-to-me`,
-    ]) {
-      const path = scopedInboxPath(`/test-inbox${suffix}`, kit.org.id);
-      const res = await app.request(
-        `${ORIGIN}/api/v1${path}`,
-        {
-          method: suffix.endsWith('/send-to-me') ? 'POST' : 'GET',
-          headers: rawKey,
-        },
+    const liveKey = await makeApiKey(kit.fx, {
+      orgId: kit.org.id,
+      scopes: ['passes:read', 'passes:write'],
+      mode: 'live',
+    });
+    const keyRequest = (suffix: string, headers: Record<string, string>) =>
+      app.request(
+        `${ORIGIN}/api/v1${scopedInboxPath(`/test-inbox${suffix}`, kit.org.id)}`,
+        { method: suffix.endsWith('/send-to-me') ? 'POST' : 'GET', headers },
         kit.env,
       );
-      expect(res.status).toBe(401);
+    // A test key reads the list and one message (PS-29); a live key never does.
+    for (const suffix of ['', `/${capture.id}`]) {
+      expect((await keyRequest(suffix, rawKey)).status, suffix).toBe(200);
+      expect((await keyRequest(suffix, liveKey.headers)).status, suffix).toBe(403);
+    }
+    // The raw HTML and a forward stay session-only, for every key.
+    for (const suffix of [`/${capture.id}/html`, `/${capture.id}/send-to-me`]) {
+      expect((await keyRequest(suffix, rawKey)).status, suffix).toBe(403);
+      expect((await keyRequest(suffix, liveKey.headers)).status, suffix).toBe(403);
     }
     await run(kit.env.DB, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
       kit.clock.now(),

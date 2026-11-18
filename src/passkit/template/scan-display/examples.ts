@@ -20,6 +20,12 @@ export function exampleManifest(base: TemplateManifest, example: ScanExample): T
     ...base,
     inputs: { ...base.inputs, properties },
     sample: { ...base.sample, ...example.sample },
-    scan: { ...base.scan, actions: example.actions, display: example.display },
+    // The gym screen is drawn with a photo and a chip; Membership's flag would not fit beside them.
+    scan: {
+      ...base.scan,
+      ...(example.id === 'gym' ? { flags: [] } : {}),
+      actions: example.actions,
+      display: example.display,
+    },
   };
 }

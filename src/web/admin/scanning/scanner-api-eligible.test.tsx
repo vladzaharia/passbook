@@ -162,7 +162,7 @@ describe('Event template choices', () => {
     setup('o1', [northwind, harbor], 'choices', undefined, ['bp-live', 'bp-empty']);
     expect(await screen.findByRole('checkbox', { name: 'Coupon blueprint' })).toBeChecked();
     const gone = await screen.findByRole('checkbox', {
-      name: 'Membership card · blueprint, no live passes',
+      name: 'Membership · blueprint, no live passes',
     });
     expect(gone).toBeChecked();
     expect(screen.queryByRole('checkbox', { name: /no approved release/ })).not.toBeInTheDocument();

@@ -6,13 +6,8 @@ import { resetModeForTests, setMode } from '../../lib/mode.ts';
 import { createQueryClient } from '../../lib/query-client.ts';
 import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import { json, membershipFixture, sessionFixture } from '../../lib/test-utils.tsx';
-import {
-  canMutatePass,
-  passKeys,
-  useBulkPassAction,
-  usePassActions,
-  usePassRemoval,
-} from './api.ts';
+import { canMutatePass, passKeys, useBulkPassAction, usePassActions } from './api.ts';
+import { usePassRemoval } from './api-removal.ts';
 import { bundleKeys, useBundleActions, useCreateBundle } from './bundle-api.ts';
 import { passSummary } from './test-fixtures.ts';
 

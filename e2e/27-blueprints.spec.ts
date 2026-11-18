@@ -48,7 +48,7 @@ test('Use blueprint: designer draft, Create template, release, then a pass', asy
   await dialog.getByRole('combobox', { name: /^Organization/ }).click();
   await page.getByRole('option', { name: seed.org.name }).click();
   await dialog.getByRole('textbox', { name: /^Name/ }).fill(name);
-  await dialog.getByRole('button', { name: 'Continue' }).click();
+  await dialog.getByRole('button', { name: 'Open designer' }).click();
 
   await page.waitForURL((u) => u.pathname === '/admin/templates/new');
   await expect(page.getByRole('heading', { level: 1, name: `Design ${name}` })).toBeVisible();

@@ -14,6 +14,7 @@ import { heldOutcome } from './act-held.ts';
 import type { HeldHolder } from './act-held-holder.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight } from './act-preflight.ts';
+import { deferTermStart } from './act-term-stamp.ts';
 import type { ScanActor } from './actor.ts';
 import { planCommitCounts } from './counts.ts';
 import type { LedgerFacts } from './ledger.ts';
@@ -45,7 +46,7 @@ interface CheckInSuccessInput {
   stopAuthority: StopAuthority;
   originalCandidate: Candidate | null;
   facts: Omit<LedgerFacts, 'outcome' | 'reason'>;
-  approver: { id: string; authEpoch: number } | null;
+  approver: { id: string; authEpoch: number; deskOk?: boolean } | null;
   onFailureCommitted(): void;
 }
 
@@ -243,6 +244,9 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       read,
       display: null,
       now: finishAt,
+      ...(place?.hard || (reason === 'capacity_full' && event?.hardLimit)
+        ? { hardLimit: true }
+        : {}),
     });
     const answer = {
       ...heldAnswer,
@@ -251,7 +255,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     };
     return admitLost ? { ...answer, overridable: false } : answer;
   }
-  return finishCheckInResult({
+  const outcome = finishCheckInResult({
     ctx,
     actor,
     authorityActor,
@@ -280,4 +284,15 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
         })
       : null,
   });
+  deferTermStart({
+    ctx,
+    actor,
+    found,
+    req,
+    action,
+    claim,
+    originalCandidate,
+    approver,
+  });
+  return outcome;
 }

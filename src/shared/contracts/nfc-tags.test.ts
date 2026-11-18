@@ -157,11 +157,11 @@ describe('live messages', () => {
 describe('tag requests', () => {
   it('binds to a pass by default and refuses a bad PIN', () => {
     const bind = { idempotencyKey: key, tag: read, card: { code: 'abc', method: 'camera' } };
-    expect(ScanTagBindRequestSchema.parse(bind)).toMatchObject({ scope: 'pass', preview: false });
+    expect(ScanTagBindRequestSchema.parse(bind)).toMatchObject({ binding: 'pass', preview: false });
     expect(ScanTagBindRequestSchema.safeParse({ ...bind, approval: { pin: '12' } }).success).toBe(
       false,
     );
-    expect(ScanTagBindRequestSchema.safeParse({ ...bind, scope: 'org' }).success).toBe(false);
+    expect(ScanTagBindRequestSchema.safeParse({ ...bind, binding: 'org' }).success).toBe(false);
   });
 
   it('keysets take entered keys or generate', () => {

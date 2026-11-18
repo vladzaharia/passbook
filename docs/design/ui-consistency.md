@@ -522,7 +522,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   Mac's own add needs Safari and iCloud's Wallet sync; the scan needs neither). A Mac gets the
   badge beside the QR; elsewhere (iPad, Android, Windows) the scan is the only way, so the pass
   page shows no badge and no line. Tiles, Add all and the email keep the badge everywhere, with
-  `Open on iPhone or Mac to add to Apple Wallet.` where it cannot add; an in-app web view on a
+  `Open this page on your phone to add the pass to your wallet.` where it cannot add; an in-app web view on a
   device that can, `Open in Safari…`.
 - **Portal tiles**: three rows of the list grid (subgrid): the pass (stage), title and org, the
   actions at the bottom, so a row of tiles lines them up however the actions wrap. Actions:
@@ -628,6 +628,6 @@ The trust and footer lines are the only explanatory text allowed on these pages:
   (`email.buddy`, org page `Pass email` card with a sample). Fluid container `width:100%;
   max-width:480px`; 2 px foil line (its first colour where gradients do not draw) over the header bar. One title line. The pass
   email shows the pass (title and two or three key fields) before the badge, then `Open your
-  pass` and `Open on iPhone or Mac to add to Apple Wallet.`. The sign-in code is a letter-spaced chip,
+  pass` and `Open this page on your phone to add the pass to your wallet.`. The sign-in code is a letter-spaced chip,
   not a field; asked from the installed app (`prefer: 'code'`) the email is `Your sign-in code`:
   the chip first, large and full width, then `Or open this link` and an outline `Sign in`. Buttons 44px. Footer note `12px`. Nothing wider than 320px. No animation.

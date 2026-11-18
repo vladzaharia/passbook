@@ -77,6 +77,8 @@ export interface PublishOptions {
   commit?: PublishCommit;
   /** Extra grant checks for deferred work (a bulk rebuild's starter must still hold the right). */
   extraChecks?: readonly Check[];
+  /** Mints a new scan code in place; the pass keeps its serial, token and holder. */
+  rotateScanCode?: boolean;
   /** Refuses (with this error) when a credential transfer is pending; checked in the first read trip. */
   transferPendingError?: () => Error;
 }

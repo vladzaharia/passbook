@@ -38,7 +38,7 @@ export function StyleSection() {
           label={poster}
           help={
             style === 'eventTicket'
-              ? 'Poster event ticket on iOS 18 and later.'
+              ? 'Poster layout on iOS 27. Classic ticket on earlier iOS.'
               : 'Semantic boarding pass on iOS 26 and later.'
           }
           checked={hasPoster(doc.passJson)}

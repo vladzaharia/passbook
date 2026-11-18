@@ -161,3 +161,12 @@ export async function problemTotals(
   const n = (s: string) => rows.find((r) => r.severity === s)?.n ?? 0;
   return { errors: n('error'), warnings: n('warning') };
 }
+
+export async function createdRowNumbers(db: D1Database, importId: string): Promise<number[]> {
+  const rows = await all<{ row_no: number }>(
+    db,
+    "SELECT row_no FROM pass_import_rows WHERE import_id = ? AND result = 'created'",
+    [importId],
+  );
+  return rows.map((r) => r.row_no);
+}

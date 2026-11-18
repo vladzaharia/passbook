@@ -32,6 +32,7 @@ export function ScanOverlays({
   orgId,
   timeZone,
   allowPeople,
+  sessionTotals,
 }: {
   sheet: boolean;
   panel: ScanPanel;
@@ -47,6 +48,7 @@ export function ScanOverlays({
   orgId?: string;
   timeZone?: string;
   allowPeople: boolean;
+  sessionTotals: boolean;
 }) {
   const { state } = useScanMachine();
   return (
@@ -86,6 +88,7 @@ export function ScanOverlays({
             ending={panel === 'end'}
             api={api}
             since={shiftStart}
+            sessionTotals={sessionTotals}
             pending={state.unsure.length + state.queue.pending}
             onClose={() => showPanel(null)}
             onEnd={() => location.reload()}

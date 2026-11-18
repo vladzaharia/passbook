@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { TagRead } from '../../../shared/contracts/nfc-tags.ts';
 import type { CodeFormatSchema, ScanMethod } from '../../../shared/contracts/scan.ts';
 
 export type CodeFormat = z.infer<typeof CodeFormatSchema>;
@@ -17,6 +18,8 @@ export interface RawRead {
   method: ScanMethod;
   /** Decoded text or identifier produced by the source. */
   code?: string;
+  /** A tag read by a reader: the native bridge or Web NFC. Method is `nfc`. */
+  tag?: TagRead;
   /** A row picked in lookup. */
   passId?: string;
   /** Camera only. */
@@ -34,7 +37,7 @@ export interface ScanInput extends RawRead {
   id: string;
   /** Epoch ms, from the injected clock. */
   at: number;
-  /** Dedupe signature: `c:` + code, or `p:` + passId. */
+  /** Dedupe signature: `c:` + code, `p:` + passId, or `t:` + tag ID. */
   sig: string;
   /** Set by normalize; never sent. */
   local?: LocalRefusal;

@@ -7,6 +7,7 @@ import { compactSearch } from '../../../lib/url-state.ts';
 const searchSchema = z.object({
   q: z.string().max(200).optional().catch(undefined),
   health: z.string().optional().catch(undefined),
+  tab: z.literal('webhooks').optional().catch(undefined),
 });
 
 function ConnectionsRoute() {

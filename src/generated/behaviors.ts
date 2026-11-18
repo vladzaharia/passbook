@@ -3,7 +3,8 @@ import type { BehaviorPlugin } from '../passkit/types.ts';
 import beacons from '../passkit/behaviors/beacons/index.ts';
 import expiryFromInput from '../passkit/behaviors/expiry-from-input/index.ts';
 import relevanceWindow from '../passkit/behaviors/relevance-window/index.ts';
+import term from '../passkit/behaviors/term/index.ts';
 import upcomingEvents from '../passkit/behaviors/upcoming-events/index.ts';
 import venueLocations from '../passkit/behaviors/venue-locations/index.ts';
 
-export const behaviorPlugins: readonly BehaviorPlugin[] = [beacons, expiryFromInput, relevanceWindow, upcomingEvents, venueLocations];
+export const behaviorPlugins: readonly BehaviorPlugin[] = [beacons, expiryFromInput, relevanceWindow, term, upcomingEvents, venueLocations];

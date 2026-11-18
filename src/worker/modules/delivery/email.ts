@@ -1,3 +1,4 @@
+import { renderEmailSubject } from '../../../passkit/template/email.ts';
 import { EMAIL_BADGE } from '../../../shared/email-art.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
@@ -9,6 +10,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
+import { isJoinCard } from '../join/repo-issues.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -16,10 +18,12 @@ import { getOrg } from '../passes/repo-read-issuance.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { passImages } from '../public/service.ts';
 import { captureEmail } from '../sandbox/capture.ts';
+import { loadManifests, manifestCacheKey } from '../scan/repo-template-manifests.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { matchesPass, PassEmailIntentSchema } from './binding.ts';
 import { finishSent } from './email-finish.ts';
+import { orgFromName } from './email-from.ts';
 import {
   failEmail,
   PermanentEmailError,
@@ -27,6 +31,7 @@ import {
   uncertainEmail,
 } from './email-outcome.ts';
 import { claimOrSettle } from './push.ts';
+import { replyToFor } from './reply-to.ts';
 import { orgBranding } from './repo.ts';
 import { hasDeliveryLease, passJsonForArtifact } from './repo-binding.ts';
 import { passEmailOutput } from './repo-issuance-intent-fence.ts';
@@ -94,6 +99,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   };
   const org = await getOrg(db, pass.orgId);
   const base = baseUrl(ctx.env);
+  const manifests = new Map<string, string | null>();
   const [platform, orgSettings, branding, artifact, images, walletOffers] = await Promise.all([
     getPlatformSettings(ctx),
     getOrgSettings(ctx, pass.orgId),
@@ -129,9 +135,26 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     return;
   }
   const { iconUrl, logo } = passEmailImages(images, base);
+  const support = emailSupport(ctx.env, orgSettings, branding);
+  const fromName = orgFromName(ctx, orgSettings['email.fromName'], platform['email.senderName']);
+  const replyTo = await replyToFor(ctx, pass.orgId, orgSettings['support.email']);
+  const orgName = org?.name ?? 'PassBook';
+  const templateKey = {
+    orgId: pass.orgId,
+    templateId: pass.templateId,
+    version: pass.templateVersion,
+  };
+  await loadManifests(db, manifests, [templateKey]);
+  const manifestJson = manifests.get(manifestCacheKey(templateKey));
   const email = renderPassEmail({
-    orgName: org?.name ?? 'PassBook',
-    ...emailSupport(ctx.env, orgSettings, branding),
+    orgName,
+    ...support,
+    subject: renderEmailSubject(
+      manifestJson ? JSON.parse(manifestJson) : null,
+      pass.personalization,
+      `Your ${orgName} pass`,
+    ),
+    fromName,
     downloadUrl: `${base}/p/${plainToken}/pass.pkpass`,
     manageUrl: `${base}/p/${plainToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
@@ -147,6 +170,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       branding.logoHasName || typeof passJson.logoText !== 'string' ? null : passJson.logoText,
     senderName: platform['email.senderName'],
     mode: pass.mode,
+    joined: intent.joined === true || (await isJoinCard(db, pass.id)),
     buddyBase: orgSettings['email.buddy'] ? base : null,
   });
   if (pass.mode === 'test') {
@@ -224,6 +248,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       html: email.html,
       text: email.text,
       fromName: email.fromName ?? platform['email.senderName'],
+      ...(replyTo ? { replyTo } : {}),
       ...(attachments ? { attachments } : {}),
     }));
   } catch {

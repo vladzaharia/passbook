@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { Personalization } from '../../../passkit/types.ts';
-import type { MyPassSchema } from '../../../shared/contracts/index.ts';
+import type { MyPassSchema, MyTag } from '../../../shared/contracts/index.ts';
 import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
@@ -16,6 +16,7 @@ import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts
 import { bundleSnapshot } from './bundle.ts';
 import { sameSnapshot } from './pass-snapshot.ts';
 import * as repo from './repo.ts';
+import { tagsByPass } from './repo-tags.ts';
 
 export type MyPassDto = z.infer<typeof MyPassSchema>;
 
@@ -39,7 +40,7 @@ function parsePassJson(raw: string | null): Record<string, unknown> {
   }
 }
 
-async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassDto> {
+async function toPass(ctx: ServiceContext, row: repo.MyPassRow, tags: MyTag[]): Promise<MyPassDto> {
   // A stored link that cannot be shown (logged by the reveal) lists without links: rotate it.
   const plainToken = await revealToken(
     ctx.env,
@@ -106,6 +107,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
     passJson,
     assetBaseUrl: base === null ? null : `${base}/assets/`,
     assetNames,
+    tags,
     inWallet: row.registered === 1,
   };
 }
@@ -117,7 +119,9 @@ export async function listMyPasses(
 ) {
   const rows = await repo.listMyPasses(ctx.env.DB, userId, query.cursor, query.limit);
   const page = rows.slice(0, query.limit);
-  const built = await Promise.all(page.map((row) => toPass(ctx, row)));
+  const tags = await tagsByPass(ctx.env.DB, userId, page, ctx.clock.now());
+  const build = (row: repo.MyPassRow) => toPass(ctx, row, tags.get(row.id) ?? []);
+  const built = await Promise.all(page.map(build));
   const snapshot = await repo.portfolioSnapshot(
     ctx.env.DB,
     userId,
@@ -131,7 +135,7 @@ export async function listMyPasses(
       page.map(async (row, index) => {
         const current = byId.get(row.id);
         if (!current) return null;
-        return sameSnapshot(row, current) ? built[index] : toPass(ctx, current);
+        return sameSnapshot(row, current) ? built[index] : build(current);
       }),
     )
   ).filter((item): item is MyPassDto => item != null);
@@ -162,7 +166,11 @@ const DETAIL_READS = 3;
 export async function getMyPass(ctx: ServiceContext, userId: string, passId: string) {
   let row = await ownedRow(ctx, userId, passId);
   for (let attempt = 1; ; attempt++) {
-    const [pass, support] = await Promise.all([toPass(ctx, row), supportContacts(ctx, row.org_id)]);
+    const tags = await tagsByPass(ctx.env.DB, userId, [row], ctx.clock.now());
+    const [pass, support] = await Promise.all([
+      toPass(ctx, row, tags.get(row.id) ?? []),
+      supportContacts(ctx, row.org_id),
+    ]);
     const current = await repo.getMyPass(ctx.env.DB, userId, passId);
     if (!current) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
     if (sameSnapshot(row, current)) return { ...pass, support };

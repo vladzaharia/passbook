@@ -1,6 +1,8 @@
 import { APPLE_BADGE_ALT } from '../../shared/apple-badge.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
+import { JOIN_COPY } from '../../shared/copy/join.ts';
 import { EMAIL_BADGE, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { displayFromName } from '../../shared/email-from-name.ts';
 import { contrast, parseColor } from '../../shared/pass-view/color.ts';
 import { NATIVE_WALLET_BADGES } from '../../shared/wallet-choice.ts';
 import type { WalletOffer } from '../modules/wallet-providers/offers.ts';
@@ -44,8 +46,14 @@ export interface PassEmailInput {
   logoText?: string | null;
   /** The platform sender name: the From name becomes "<Org> via <sender>". */
   senderName?: string | null;
+  /** The org's own From name (already checked): "<fromName> via <sender>" instead of "<Org> via <sender>". */
+  fromName?: string | null;
+  /** The template's own subject line (already rendered): used instead of "Your <Org> pass". */
+  subject?: string | null;
   /** A test pass's email carries the amber strip. */
   mode?: 'live' | 'test';
+  /** The card came from a join link: the mail says why the address got it. */
+  joined?: boolean;
   /**
    * PUBLIC_BASE_URL when the org opted in (`email.buddy`): the buddy sits at the band's right end,
    * as in the sign-in email. Absent, the band is the org's mark and name alone.
@@ -164,7 +172,8 @@ function walletActionsHtml(base: string, offers: readonly EmailWalletOffer[]): s
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const footer = supportFooter(safeMail(input.supportEmail), safeUrl(input.supportUrl));
   const wallets = emailWalletOffers(input);
-  const subject = `Your ${input.orgName} pass`;
+  const subject = input.subject?.trim() || `Your ${input.orgName} pass`;
+  const joinLine = input.joined ? JOIN_COPY.mailLine.replace('{org}', input.orgName) : null;
   const fields = (input.summary?.fields ?? [])
     .filter((f) => f.value !== input.passTitle)
     .slice(0, 3);
@@ -186,6 +195,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
         ]
       : []),
     ...(input.attached ? ['', 'The pass is also attached.'] : []),
+    ...(joinLine ? ['', joinLine] : []),
     '',
     PRIVATE_LINE,
     ...footer.text,
@@ -199,6 +209,7 @@ ${actionsHtml(input)}
 ${muted('0 0 24px', ADD_LINE)}
 ${wallets ? walletActionsHtml(wallets.base, wallets.offers) : ''}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
+${joinLine ? muted('0 0 16px', escapeHtml(joinLine)) : ''}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
 ${footer.html}`;
   // Images need an absolute URL, as in the sign-in email.
@@ -213,5 +224,6 @@ ${footer.html}`;
     body,
   });
   const sender = input.senderName?.trim();
-  return { subject, html, text, ...(sender ? { fromName: `${input.orgName} via ${sender}` } : {}) };
+  const fromName = displayFromName(input.fromName || input.orgName, sender);
+  return { subject, html, text, fromName };
 }

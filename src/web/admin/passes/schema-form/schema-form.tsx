@@ -20,7 +20,7 @@ import { locationPairs } from './location.ts';
 import { LocationInput } from './location-input.tsx';
 import { describeSchema, type FormValues, validateValues } from './schema.ts';
 
-export type FieldSources = Record<string, 'manual' | 'connection'>;
+export type FieldSources = Record<string, 'manual' | 'connection' | 'import'>;
 
 export interface SchemaFormProps {
   schema: unknown;

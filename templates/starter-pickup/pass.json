@@ -1,0 +1,100 @@
+{
+  "formatVersion": 1,
+  "description": "Pickup",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(206,242,226)",
+  "foregroundColor": "rgb(12,52,38)",
+  "labelColor": "rgb(10,106,70)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "1042"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "status",
+        "label": "Status",
+        "value": "Ready",
+        "changeMessage": "Order status: %@."
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "code",
+        "label": "Code",
+        "value": "4K7M"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "order",
+        "label": "Order",
+        "value": "1042"
+      },
+      {
+        "key": "collectBy",
+        "label": "Collect by",
+        "value": "2030-11-18T19:30:00-05:00",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "bay",
+        "label": "Where",
+        "value": "Bay 3"
+      },
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Mia Kent"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "items",
+        "label": "Items",
+        "value": ""
+      },
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "site",
+        "label": "Website",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Show the code to collect. Bring ID if asked."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

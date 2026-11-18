@@ -20,7 +20,7 @@ export interface ConfirmCopy {
 
 const CANNOT_UNDO = 'This cannot be undone.';
 
-export type DeletableEntity = 'org' | 'pass' | 'connection' | 'template' | 'identity';
+export type DeletableEntity = 'org' | 'pass' | 'connection' | 'template' | 'identity' | 'webhook';
 
 const DELETE: Record<DeletableEntity, { consequence: string; typed: boolean }> = {
   org: { consequence: 'Its templates, passes and connections stop working.', typed: true },
@@ -34,6 +34,7 @@ const DELETE: Record<DeletableEntity, { consequence: string; typed: boolean }> =
     consequence: 'Templates and orgs using this identity fall back to the default.',
     typed: false,
   },
+  webhook: { consequence: 'Pending deliveries are dropped.', typed: false },
 };
 
 /** "Delete Northwind?" with the entity's consequence. */
@@ -68,6 +69,29 @@ export function clearHolderConfirm(owner: string | null): ConfirmCopy {
     description: owner
       ? `${owner} loses the pass in their account.`
       : 'The pass goes back to having no holder.',
+    typed: false,
+  };
+}
+
+/** The author approving their own version: Test mode (any org) or as the org's only reviewer. */
+export function selfApproveConfirm(mode: 'live' | 'test'): ConfirmCopy {
+  const test = mode === 'test';
+  return {
+    title: test ? 'Approve in Test?' : 'Approve as sole reviewer?',
+    confirmLabel: test ? 'Approve alone' : 'Approve as sole reviewer',
+    description: test
+      ? 'Test passes reach only the test inbox. Your approval is recorded.'
+      : 'No one else can review in this organization. Your approval is recorded.',
+    typed: false,
+  };
+}
+
+/** A new scan code: a copy of the old barcode stops working at every scanner. */
+export function newCodeConfirm(): ConfirmCopy {
+  return {
+    title: 'Make a new code?',
+    confirmLabel: 'New code',
+    description: 'The old code stops working at every scanner. The holder gets the pass again.',
     typed: false,
   };
 }
@@ -228,6 +252,16 @@ export function resolveWebhookConfirm(event: string): ConfirmCopy {
     title: `Mark ${event} resolved?`,
     confirmLabel: 'Mark resolved',
     description: 'Confirm you checked the source system. The event stops needing attention.',
+    typed: false,
+  };
+}
+
+/** A holder reporting their tag lost: it stops opening doors, and only the org restores it. */
+export function reportTagLostConfirm(name: string, org: string, allPasses: boolean): ConfirmCopy {
+  return {
+    title: `Report ${name} lost?`,
+    confirmLabel: 'Report lost',
+    description: `It stops opening doors${allPasses ? ' on all your passes' : ''} now. Ask ${org} to restore it or replace it.`,
     typed: false,
   };
 }

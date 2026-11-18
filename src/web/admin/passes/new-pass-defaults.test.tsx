@@ -254,7 +254,13 @@ describe('new pass organization selection', () => {
         },
       },
     });
-    expect(await screen.findByText(/No active approved Apple Wallet release/i)).toBeInTheDocument();
+    expect(await screen.findByText(/A reviewer has to approve/i)).toBeInTheDocument();
+    expect(
+      new URL(
+        screen.getByRole('link', { name: 'Open Templates' }).getAttribute('href') ?? '',
+        'http://localhost',
+      ).pathname,
+    ).toBe('/admin/templates');
     expect(screen.queryByLabelText(/Member name/)).toBeNull();
     expect(versionRequests).toBe(0);
   });
@@ -360,7 +366,7 @@ describe('new pass organization selection', () => {
         },
       },
     });
-    expect(await screen.findByText(/No active approved Apple Wallet release/i)).toBeInTheDocument();
+    expect(await screen.findByText(/A reviewer has to approve/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Member name/)).toBeNull();
     expect(draftPreviews).toBe(0);
   });

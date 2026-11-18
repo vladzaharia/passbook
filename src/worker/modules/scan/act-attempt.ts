@@ -194,7 +194,10 @@ export async function attempt(
     const action = named ?? (evaluated.found ? defaultAction(actor, evaluated.found.scan) : null);
     return {
       outcome: await finishStop(
-        { ...stopFor(action), countMiss: evaluated.reason === 'not_found' },
+        {
+          ...stopFor(action),
+          countMiss: evaluated.reason === 'not_found' || evaluated.reason === 'code_replaced',
+        },
         evaluated,
         {
           actor: authorityActor,

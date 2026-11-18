@@ -1,0 +1,396 @@
+{
+  "schema": 1,
+  "name": "Booking",
+  "description": "An appointment or table at a set time.",
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "startsAt",
+      "what",
+      "where",
+      "name",
+      "bookingRef"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "startsAt": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "When",
+        "x-group": "Booking",
+        "x-order": 10,
+        "x-widget": "datetime"
+      },
+      "what": {
+        "type": "string",
+        "x-label": "What",
+        "x-group": "Booking",
+        "x-order": 20,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "where": {
+        "type": "string",
+        "x-label": "Where",
+        "x-group": "Booking",
+        "x-order": 30,
+        "maxLength": 80,
+        "minLength": 1
+      },
+      "with": {
+        "type": "string",
+        "x-label": "With",
+        "x-group": "Booking",
+        "x-order": 40,
+        "maxLength": 80
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Booking",
+        "x-order": 50,
+        "enum": [
+          "Booked",
+          "Moved",
+          "Cancelled"
+        ],
+        "x-widget": "select",
+        "default": "Booked"
+      },
+      "name": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Guest",
+        "x-order": 60,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "bookingRef": {
+        "type": "string",
+        "x-label": "Booking reference",
+        "x-group": "Guest",
+        "x-order": 70,
+        "maxLength": 64,
+        "minLength": 1,
+        "x-search": true
+      },
+      "rescheduleURL": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Reschedule link",
+        "x-group": "Links",
+        "x-order": 80,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      },
+      "directionsURL": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Directions link",
+        "x-group": "Links",
+        "x-order": 85,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      },
+      "discreet": {
+        "type": "boolean",
+        "x-label": "Discreet",
+        "x-group": "Booking",
+        "x-order": 90,
+        "default": false,
+        "x-help": "Shows Appointment in place of what and who."
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 902,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      }
+    }
+  },
+  "sample": {
+    "startsAt": "2030-11-24T09:30:00-05:00",
+    "what": "Cut and colour",
+    "where": "Soho",
+    "with": "Sam",
+    "status": "Booked",
+    "name": "Ana Rivera",
+    "bookingRef": "BOOK-0001"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "when"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "field": "what"
+      },
+      "value": "{{what}}"
+    },
+    {
+      "to": {
+        "field": "what"
+      },
+      "value": "Appointment",
+      "when": {
+        "input": "discreet",
+        "eq": true
+      }
+    },
+    {
+      "to": {
+        "field": "where"
+      },
+      "value": "{{where}}"
+    },
+    {
+      "to": {
+        "field": "with"
+      },
+      "value": "{{with}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "with"
+      },
+      "remove": {
+        "input": "discreet",
+        "eq": true
+      }
+    },
+    {
+      "to": {
+        "field": "status"
+      },
+      "value": "{{status}}"
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{name}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{bookingRef}}"
+    },
+    {
+      "to": {
+        "action": "reschedule",
+        "prop": "url"
+      },
+      "value": "{{rescheduleURL}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/directionsInformationURL"
+      },
+      "value": "{{directionsURL}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{startsAt}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/voided"
+      },
+      "value": "{{lookups.void[status].void}}"
+    }
+  ],
+  "display": {
+    "icon": "tag",
+    "title": "{{name}}",
+    "subtitle": "{{what}}",
+    "status": "{{status}}",
+    "search": [
+      "name",
+      "bookingRef"
+    ],
+    "group": "get-in",
+    "aliases": [
+      "appointment",
+      "reservation",
+      "table",
+      "time slot"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "relevance-window",
+      "version": 1,
+      "config": {
+        "start": "startsAt",
+        "leadMinutes": 60,
+        "fallbackMinutes": 90
+      }
+    }
+  ],
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "arrived",
+        "label": "Arrived",
+        "kind": "check_in",
+        "repeat": "once",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "bookingRef"
+    },
+    "window": {
+      "from": "startsAt",
+      "until": "startsAt",
+      "earlyMinutes": 60,
+      "lateMinutes": 30
+    },
+    "flags": [
+      {
+        "input": "status",
+        "label": "Moved",
+        "equals": [
+          "Moved"
+        ]
+      },
+      {
+        "input": "status",
+        "label": "Cancelled",
+        "equals": [
+          "Cancelled"
+        ],
+        "stop": true
+      }
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.name}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "What",
+              "value": "{{inputs.what}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "With",
+              "value": "{{inputs.with}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the front desk."
+      }
+    }
+  },
+  "lookups": {
+    "void": {
+      "Booked": {
+        "void": false
+      },
+      "Moved": {
+        "void": false
+      },
+      "Cancelled": {
+        "void": true
+      }
+    }
+  }
+}

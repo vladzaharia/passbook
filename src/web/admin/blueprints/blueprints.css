@@ -101,3 +101,52 @@
     transform: translateY(-1px) rotate(-4deg);
   }
 }
+
+/* Quick setup: the custom colour picker sits with the logo's own swatches. */
+.bp-swatch {
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: 9999px;
+  background: none;
+  cursor: pointer;
+}
+@media (pointer: coarse) {
+  .bp-swatch {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+/* One short lift of the pass: on arrival of the tile's choice and on a click. Transform only. */
+@media (prefers-reduced-motion: no-preference) {
+  .bp-stage .bp-pass {
+    transform-origin: 50% 100%;
+  }
+  .bp-stage.bp-play .bp-pass {
+    animation: bp-lift 560ms var(--wl-ease-out);
+  }
+  @keyframes bp-lift {
+    35% {
+      transform: translateY(-8px) rotate(-1.6deg);
+    }
+    70% {
+      transform: translateY(1px) rotate(0.4deg);
+    }
+  }
+}
+
+/* The staff view's result settles in once when the screen changes. */
+@media (prefers-reduced-motion: no-preference) {
+  .bp-door {
+    animation: bp-door-in 320ms var(--wl-ease-out);
+  }
+  @keyframes bp-door-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+}

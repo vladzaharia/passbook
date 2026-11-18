@@ -363,6 +363,38 @@ exports[`fidelityReport over every starter and baked template > starter-boarding
 }
 `;
 
+exports[`fidelityReport over every starter and baked template > starter-booking 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
 exports[`fidelityReport over every starter and baked template > starter-coupon 1`] = `
 {
   "compilerRevision": 1,
@@ -453,6 +485,143 @@ exports[`fidelityReport over every starter and baked template > starter-generic 
       "capability": "text.length",
       "chosen": false,
       "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-id-card 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "80d8863939bd8ef83126f8300c12689613a2d8cf997f4bde482c16078af5e6d8",
+  "items": [
+    {
+      "capability": "barcode.format.code39",
+      "chosen": false,
+      "message": "barcode.format.code39 omitted",
+      "path": "barcodes.0",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready with omissions (1)",
+  "schema": 1,
+  "status": {
+    "count": 1,
+    "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-pack 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-permit 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-pickup 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "faa828b5ca7d68a82df5233fa1be8cdbff04d3da76e654a725a76d83a0e7b4b0",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "May be shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
       "support": "difference",
@@ -576,6 +745,70 @@ exports[`fidelityReport over every starter and baked template > starter-store-ca
   "status": {
     "count": 1,
     "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-timed-ticket 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "8f84f05742e2c3e10abe931d7a1ca4c509d7366754ea765275b04a63af60991d",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "ticket",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-transit-ticket 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
   },
   "target": "samsung",
   "type": "loyalty",

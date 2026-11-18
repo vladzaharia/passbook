@@ -37,6 +37,7 @@ describe('MAC root version', () => {
     for (const label of [
       'capability-token.v1',
       'apple-auth-token.v1',
+      'join-link-token.v1',
       'scan-pin',
       'scan-pair-code.v1',
       'scan-asset-grant-v2',

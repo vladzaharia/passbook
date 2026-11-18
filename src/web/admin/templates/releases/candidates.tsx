@@ -4,19 +4,22 @@ import type {
   TemplateCandidate,
   TemplateRelease,
 } from '@/shared/contracts/template-releases.ts';
+import { selfApproveConfirm } from '../../../lib/confirms.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import {
+  Badge,
   Button,
   Callout,
   Card,
   CardBody,
   CardHeader,
+  ConfirmDialog,
   FormField,
   KeyValue,
   Select,
   TechnicalDetails,
 } from '../../../ui/index.ts';
-import { eligibleApproval } from './eligibility.ts';
+import { eligibleApproval, selfApproved } from './eligibility.ts';
 import { providerModeLabel, roleLabel } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
 
@@ -35,18 +38,22 @@ interface CandidateSectionProps {
   releasable: boolean;
   /** A create, approve, publish or rollback is in flight. */
   busy: boolean;
+  /** Versions released in Test that Live can take with one review. */
+  promotable: readonly string[];
   onCreate: (version: string) => Promise<void>;
-  onApprove: (candidate: TemplateCandidate) => Promise<void>;
+  onPromote: (version: string) => Promise<void>;
+  onApprove: (candidate: TemplateCandidate, alone: boolean) => Promise<void>;
   onPublish: (candidate: TemplateCandidate, approval: TemplateApproval) => void;
 }
 
 function CandidateCard({
   candidate,
   ...props
-}: Omit<CandidateSectionProps, 'candidates' | 'onCreate'> & {
+}: Omit<CandidateSectionProps, 'candidates' | 'onCreate' | 'onPromote' | 'promotable'> & {
   candidate: TemplateCandidate;
 }) {
   const approval = eligibleApproval(candidate);
+  const [asking, setAsking] = useState(false);
   const name = versionLabel(props.versions, candidate.version);
   const selfReview =
     props.currentUserId !== null &&
@@ -55,6 +62,8 @@ function CandidateCard({
   const alreadyPublished = props.releasedCandidates.has(candidate.id);
   const cannotReview =
     props.busy || selfReview || !props.currentUserId || alreadyPublished || Boolean(approval);
+  const cannotApproveAlone =
+    props.busy || !props.currentUserId || alreadyPublished || Boolean(approval);
   return (
     <li className="min-w-0 rounded-md border border-border p-4">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
@@ -77,7 +86,16 @@ function CandidateCard({
           ...candidate.approvals.map((a) => ({
             id: a.id,
             label: 'Approved by',
-            value: `${a.reviewerName ?? UNKNOWN} · ${formatDateTime(a.createdAt)}`,
+            value: (
+              <>
+                {a.reviewerName ?? UNKNOWN} · {formatDateTime(a.createdAt)}
+                {selfApproved(a) ? (
+                  <Badge tone="warning" className="ml-2">
+                    Self-approved
+                  </Badge>
+                ) : null}
+              </>
+            ),
           })),
         ]}
       />
@@ -102,9 +120,11 @@ function CandidateCard({
         {!approval && !selfReview ? (
           <p className="text-sm text-fg-muted">Approval required before publishing.</p>
         ) : null}
-        {selfReview ? (
+        {selfReview && !approval ? (
           <Callout tone="info">
-            You cannot review a candidate or version you authored. Ask a different reviewer.
+            {props.canReview
+              ? 'You wrote this version. Another reviewer approves it, or you approve it yourself if you are the only reviewer.'
+              : 'Needs a reviewer’s approval. Invite one from Members.'}
           </Callout>
         ) : null}
         {!props.currentUserId && props.canReview ? (
@@ -124,9 +144,20 @@ function CandidateCard({
               variant="outline"
               disabled={cannotReview}
               aria-label={`Approve candidate for ${name}`}
-              onClick={() => void props.onApprove(candidate)}
+              onClick={() => void props.onApprove(candidate, false)}
             >
               Approve
+            </Button>
+          ) : null}
+          {props.canReview && selfReview ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={cannotApproveAlone}
+              aria-label={`Approve candidate for ${name} alone`}
+              onClick={() => setAsking(true)}
+            >
+              {candidate.mode === 'test' ? 'Approve alone' : 'Approve as sole reviewer'}
             </Button>
           ) : null}
           {props.canPublish ? (
@@ -141,6 +172,12 @@ function CandidateCard({
           ) : null}
         </div>
       </div>
+      <ConfirmDialog
+        open={asking}
+        onOpenChange={setAsking}
+        {...selfApproveConfirm(candidate.mode)}
+        onConfirm={() => props.onApprove(candidate, true)}
+      />
     </li>
   );
 }
@@ -202,6 +239,29 @@ export function CandidateSection(props: CandidateSectionProps) {
           <p className="text-sm text-fg-muted">
             Only {roleLabel('templates:author')} can create candidates.
           </p>
+        ) : null}
+        {props.canAuthor && props.editable && props.promotable.length ? (
+          <section aria-label="Promote to Live" className="grid gap-2">
+            <h3 className="text-sm font-semibold text-fg-strong">Tried in Test</h3>
+            <ul className="grid gap-2">
+              {props.promotable.map((version) => (
+                <li key={version} className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="min-w-0 text-sm text-fg-strong">
+                    {versionLabel(props.versions, version)}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={props.busy}
+                    aria-label={`Promote ${versionLabel(props.versions, version)} to Live`}
+                    onClick={() => void props.onPromote(version)}
+                  >
+                    Promote to Live
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
         {props.canAuthor && props.editable && !options.length ? (
           <p className="text-sm text-fg-muted">No other saved versions. Upload a new version.</p>

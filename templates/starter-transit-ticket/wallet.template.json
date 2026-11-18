@@ -1,0 +1,460 @@
+{
+  "schema": 1,
+  "name": "Transit ticket",
+  "description": "Boat, bus or train, with party and vehicle.",
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "mode",
+      "origin",
+      "destination",
+      "departsAt",
+      "originTimeZone",
+      "serviceKey",
+      "bookingRef",
+      "name",
+      "status"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "mode": {
+        "type": "string",
+        "x-label": "Mode",
+        "x-group": "Trip",
+        "x-order": 10,
+        "enum": [
+          "boat",
+          "bus",
+          "train"
+        ],
+        "x-widget": "select",
+        "default": "boat",
+        "x-enumLabels": {
+          "boat": "Boat",
+          "bus": "Bus",
+          "train": "Train"
+        }
+      },
+      "origin": {
+        "type": "string",
+        "x-label": "From",
+        "x-group": "Trip",
+        "x-order": 20,
+        "maxLength": 80,
+        "minLength": 1
+      },
+      "destination": {
+        "type": "string",
+        "x-label": "To",
+        "x-group": "Trip",
+        "x-order": 30,
+        "maxLength": 80,
+        "minLength": 1
+      },
+      "departsAt": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Departs",
+        "x-group": "Trip",
+        "x-order": 40,
+        "x-widget": "datetime"
+      },
+      "boardBy": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Board by",
+        "x-group": "Trip",
+        "x-order": 45,
+        "x-widget": "datetime"
+      },
+      "originTimeZone": {
+        "type": "string",
+        "x-label": "Time zone",
+        "x-group": "Trip",
+        "x-order": 50,
+        "maxLength": 64,
+        "minLength": 1,
+        "x-timeZone": true
+      },
+      "serviceKey": {
+        "type": "string",
+        "x-label": "Service key",
+        "x-group": "Trip",
+        "x-order": 60,
+        "maxLength": 64,
+        "minLength": 1,
+        "x-help": "Same value on every ticket for one sailing or run. Scanning events match on it."
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Trip",
+        "x-order": 70,
+        "enum": [
+          "On time",
+          "Delayed",
+          "Cancelled"
+        ],
+        "x-widget": "select",
+        "default": "On time"
+      },
+      "vessel": {
+        "type": "string",
+        "x-label": "Vessel or vehicle",
+        "x-group": "Trip",
+        "x-order": 80,
+        "maxLength": 40
+      },
+      "lane": {
+        "type": "string",
+        "x-label": "Lane",
+        "x-group": "Trip",
+        "x-order": 90,
+        "maxLength": 20
+      },
+      "vehicleType": {
+        "type": "string",
+        "x-label": "Vehicle type",
+        "x-group": "Vehicle",
+        "x-order": 100,
+        "maxLength": 40
+      },
+      "plate": {
+        "type": "string",
+        "x-label": "Plate",
+        "x-group": "Vehicle",
+        "x-order": 110,
+        "maxLength": 20
+      },
+      "name": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Party",
+        "x-order": 120,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "bookingRef": {
+        "type": "string",
+        "x-label": "Booking reference",
+        "x-group": "Party",
+        "x-order": 130,
+        "maxLength": 64,
+        "minLength": 1,
+        "x-search": true
+      },
+      "adults": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99,
+        "x-label": "Adults",
+        "x-group": "Party",
+        "x-order": 140,
+        "default": 1
+      },
+      "children": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99,
+        "x-label": "Children",
+        "x-group": "Party",
+        "x-order": 150,
+        "default": 0
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 902,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      },
+      "admits": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 99,
+        "x-label": "Admits",
+        "x-group": "Party",
+        "x-order": 55,
+        "default": 1
+      }
+    }
+  },
+  "sample": {
+    "mode": "boat",
+    "origin": "Newport",
+    "destination": "Harbor Point",
+    "departsAt": "2030-11-21T07:15:00-05:00",
+    "boardBy": "2030-11-21T06:55:00-05:00",
+    "originTimeZone": "America/New_York",
+    "serviceKey": "newport-harbor-point-2030-11-21-0715",
+    "status": "On time",
+    "vessel": "Red Falcon",
+    "lane": "4",
+    "vehicleType": "Car",
+    "plate": "AB12 CDE",
+    "name": "Sam Reed",
+    "bookingRef": "BK-0001",
+    "adults": 2,
+    "children": 1,
+    "admits": 3
+  },
+  "lookups": {
+    "transit": {
+      "boat": {
+        "type": "PKTransitTypeBoat"
+      },
+      "bus": {
+        "type": "PKTransitTypeBus"
+      },
+      "train": {
+        "type": "PKTransitTypeTrain"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "to": {
+        "pointer": "/boardingPass/transitType"
+      },
+      "value": "{{lookups.transit[mode].type}}"
+    },
+    {
+      "to": {
+        "field": "status"
+      },
+      "value": "{{status}}"
+    },
+    {
+      "to": {
+        "field": "lane"
+      },
+      "value": "{{lane}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "origin"
+      },
+      "value": "{{origin}}"
+    },
+    {
+      "to": {
+        "field": "destination"
+      },
+      "value": "{{destination}}"
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{name}}"
+    },
+    {
+      "to": {
+        "field": "departs"
+      },
+      "value": "{{departsAt}}"
+    },
+    {
+      "to": {
+        "field": "boardBy"
+      },
+      "value": "{{boardBy}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "party"
+      },
+      "value": "Admits {{admits}}"
+    },
+    {
+      "to": {
+        "field": "vehicle"
+      },
+      "value": "{{plate}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{bookingRef}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{departsAt}}"
+    }
+  ],
+  "display": {
+    "icon": "ticket",
+    "title": "{{name}}",
+    "subtitle": "{{origin}} to {{destination}}",
+    "status": "{{status}}",
+    "search": [
+      "name",
+      "bookingRef"
+    ],
+    "group": "get-in",
+    "aliases": [
+      "bus",
+      "ferry",
+      "train",
+      "trip"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "relevance-window",
+      "version": 1,
+      "config": {
+        "start": "boardBy",
+        "end": "departsAt",
+        "leadMinutes": 60,
+        "fallbackMinutes": 120
+      }
+    }
+  ],
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "board",
+        "label": "Board",
+        "kind": "check_in",
+        "repeat": "once",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "bookingRef"
+    },
+    "window": {
+      "from": "boardBy",
+      "until": "departsAt",
+      "earlyMinutes": 120
+    },
+    "flags": [
+      {
+        "input": "status",
+        "label": "Cancelled",
+        "equals": [
+          "Cancelled"
+        ],
+        "stop": true
+      },
+      {
+        "input": "plate",
+        "label": "Vehicle"
+      }
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.name}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Party",
+              "value": "Admits {{inputs.admits}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Vehicle",
+              "value": "{{inputs.plate}}"
+            },
+            {
+              "id": "r_field3",
+              "slot": "field3",
+              "type": "field",
+              "label": "Lane",
+              "value": "{{inputs.lane}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the ticket desk."
+      }
+    }
+  }
+}

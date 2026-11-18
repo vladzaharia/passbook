@@ -1,7 +1,9 @@
 import { z } from 'zod';
+import { ISSUANCE_OUTCOMES } from '../copy/email.ts';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
 import { PassStampsSchema } from './pass-stamps.ts';
+import { PassTermSchema } from './pass-term.ts';
 import { ScanTargetSchema } from './scan.ts';
 import { PUSH_BUDGET_DEFAULT } from './settings.ts';
 import { ValidationIssueSchema } from './templates.ts';
@@ -9,7 +11,7 @@ import { ValidationIssueSchema } from './templates.ts';
 export const PassStatusSchema = z.enum(['active', 'voided']);
 /** List filter: the two statuses, plus passes removed from Wallet (which also read as voided). */
 export const PassListStatusSchema = z.enum(['active', 'voided', 'removed']);
-export const FieldSourceSchema = z.enum(['manual', 'connection']);
+export const FieldSourceSchema = z.enum(['manual', 'connection', 'import']);
 /** Why a version was published, beside its cause. Free text in the database, closed here. */
 export const PassSourceSchema = z.enum([
   'scan',
@@ -84,6 +86,8 @@ export const DeliveryEntrySchema = z.object({
 export const PassDeviceSchema = z.object({
   /** Last six characters of the device library id; enough to tell devices apart. */
   shortId: z.string(),
+  /** The same device as the sync log's `device`: first 12 hex characters of SHA-256(device id). */
+  device: z.string(),
   createdAt: TimestampSchema,
   /** The newest push since the device registered. */
   lastPush: z
@@ -110,7 +114,15 @@ export const PushBudgetSchema = z.object({
 
 export type PushBudgetDto = z.infer<typeof PushBudgetSchema>;
 
+/** What issuing a pass with an email came to; only on a create that asked to send one. */
+export const IssuanceEmailSchema = z.object({
+  outcome: z.enum(ISSUANCE_OUTCOMES),
+  /** The cap that held the email, for `limited_*`. */
+  cap: z.enum(['org', 'recipient']).optional(),
+});
+
 export const PassDetailSchema = PassSummarySchema.extend({
+  email: IssuanceEmailSchema.optional(),
   /** A verified waiting holder cannot be attached until this pass is replaced with fresh credentials. */
   reissueRequired: z.boolean(),
   pushBudget: PushBudgetSchema.default({ used: 0, limit: PUSH_BUDGET_DEFAULT, resetsAt: null }),
@@ -126,6 +138,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
   assetNames: z.array(z.string()),
   /** A stamp card's count against its own template version; null for any other pass. */
   stamps: PassStampsSchema.nullable().optional(),
+  /** The term of a pass whose template has one; null for any other pass. */
+  term: PassTermSchema.nullable().optional(),
   /** Users removed this pass from their account; hook B skips them until cleared. */
   blockedUsers: z.array(z.object({ id: IdSchema, name: z.string().nullable() })),
   downloadUrl: z.string(),
@@ -158,6 +172,8 @@ export const PassListQuerySchema = z.object({
     .transform((v) => v === 'true')
     .optional(),
   q: z.string().max(200).optional(),
+  /** Exact match on the pass's externalId. */
+  externalId: z.string().min(1).max(200).optional(),
   /** A ScanTarget as a JSON string: checked in at an event, or not scanned for 30 or 90 days. */
   scan: z
     .string()

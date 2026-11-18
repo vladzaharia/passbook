@@ -1,8 +1,14 @@
 import { ConflictError, UnavailableError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
-import { type ActRequest, claimOf, rememberHistoryCapacities, requestHashOf } from './act-claim.ts';
-import { claimGrant, claimOnGrant, keysetOnGrant } from './act-claim-grant.ts';
+import {
+  type ActRequest,
+  type ActRequestInput,
+  claimOf,
+  rememberHistoryCapacities,
+  requestHashOf,
+} from './act-claim.ts';
+import { claimGrant, claimOnGrant, keysetOnGrant, tagSeenOnGrant } from './act-claim-grant.ts';
 import {
   executeClaimedAction,
   replayOrReopenClaim,
@@ -10,6 +16,7 @@ import {
 } from './act-claim-lifecycle.ts';
 import { overrideEvidenceStmt, StaleScanAuthority } from './act-override.ts';
 import { passRaced, ScanAttemptRaced, staleActorRefusal } from './act-stale-refusal.ts';
+import { recordTagStop } from './act-tag-stop.ts';
 import {
   type CredentialTombstoneSnapshot,
   captureCredentialTombstoneSnapshot,
@@ -28,22 +35,27 @@ import { planCandidateReads } from './resolve-candidates.ts';
 import { afterReads, capturingContext } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
+import type { TagAct } from './tag-scan.ts';
 
-/** `POST /actions` (SA 8.4): claim the key, evaluate, decide, gate, finalize, answer. */
+/**
+ * `POST /actions` (SA 8.4): claim the key, evaluate, decide, gate, finalize, answer. A tag read brings
+ * its reads to the first batch and acts on the pass they choose (design §4.3).
+ */
 export async function act(
   ctx: ServiceContext,
   actor: ScanActor,
-  req: ActRequest,
+  request: ActRequestInput,
+  tag?: TagAct,
 ): Promise<ScanEvaluation> {
   ctx = capturingContext(ctx);
-  refuseKeyApproval(actor, req);
-  if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
+  refuseKeyApproval(actor, request);
+  if (request.approval && !request.approval.staffId && actor.settings.staffSignIn)
     throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
   let credentials: CredentialTombstoneSnapshot | null = null;
   try {
     const [hash, derived] = await Promise.all([
-      requestHashOf(req),
-      credentialTombstoneRefsForInput(ctx, actor.orgId, actor.mode, req.input, true, 'defer'),
+      requestHashOf(request, tag?.ref),
+      credentialTombstoneRefsForInput(ctx, actor.orgId, actor.mode, request.input, true, 'defer'),
     ]);
     const captured = captureCredentialTombstoneSnapshot(derived);
     credentials = captured;
@@ -51,7 +63,7 @@ export async function act(
     if (actor.role === null || actor.invalidScannerScope) throw staleScanAuthority();
     const authority = scanReadAuthority(actor, { now: ctx.clock.now() });
     const initial = await ctx.env.DB.batch<{ authorized?: unknown }>([
-      replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
+      replayScanByKeyStmt(ctx.env.DB, actor.actorKey, request.idempotencyKey),
       platformSettingsStmt(ctx.env.DB),
       scanAuthorizedStmt(ctx.env.DB, authority),
       credentialTombstonesClearStmt(
@@ -61,8 +73,26 @@ export async function act(
         captured.credentialTombstoneRefs,
         captured.credentialKeysetCommitment,
       ),
+      ...(tag?.stmts ?? []),
     ]);
     if (!initial[1] || initial[2]?.results?.[0]?.authorized !== 1) throw staleScanAuthority();
+    let req: ActRequest;
+    if ('tag' in request.input) {
+      if (!tag) throw staleScanAuthority();
+      // A finished scan replays with its stored pass (none for a refused tag), whatever the tag reads
+      // now. A claim that did not finish is retried on the pass the tag chooses now.
+      const replayed = replayScanFromResult(initial[0]);
+      const chosen =
+        replayed?.state === 'done'
+          ? { actor, input: { passId: replayed.passId ?? '', method: 'nfc' as const } }
+          : await tag.choose(initial.slice(4));
+      if (!('input' in chosen))
+        return replayed
+          ? unknownOutcome(captured)
+          : await recordTagStop(ctx, actor, request, hash, captured, chosen);
+      actor = chosen.actor;
+      req = { ...request, input: chosen.input };
+    } else req = { ...request, input: request.input };
     const undoWindow = decodePlatformSettings(initial[1])['scan.undoWindowMinutes'];
     actor = { ...actor, credentialKeysetCommitment: captured.credentialKeysetCommitment };
     if (!credentialInputValid(req.input, captured)) return unknownOutcome(captured);
@@ -86,6 +116,7 @@ export async function act(
     const overrideQuery = overrideEvidenceStmt(ctx, actor, req);
     const g = claimGrant(ctx, actor, claim);
     const claimed = claimOnGrant(g, claim);
+    tagSeenOnGrant(g, claim);
     keysetOnGrant(g, ctx.env.DB, captured.credentialKeysetCommitment);
     // One round trip: the grant claims the key, and the reads that follow see that claim.
     const done = await g.commitWith(
@@ -93,7 +124,16 @@ export async function act(
         ...plan.stmts,
         ...(plan.capacityStmt ? [plan.capacityStmt] : []),
         ...(overrideQuery ? [overrideQuery] : []),
-        ...(req.approval ? [approverStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
+        ...(req.approval
+          ? [
+              approverStatement(
+                ctx.env.DB,
+                actor.orgId,
+                req.approval.staffId,
+                actor.settings.approvals === 'desk',
+              ),
+            ]
+          : []),
         replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
         credentialTombstonesClearStmt(
           ctx.env.DB,

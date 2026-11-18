@@ -19,6 +19,7 @@ import { ResultCard } from './result/result-card.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
+import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
 import './visual-gallery.css';
 
 const ID = '01900000-0000-7000-8000-000000000001';
@@ -229,6 +230,12 @@ export function ScanVisualGallery() {
   if (surface === 'access')
     return (
       <AccessVisual scenario={ACCESS_SCENARIOS.find((c) => c === params.get('case')) ?? 'grant'} />
+    );
+  if (surface === 'tags')
+    return (
+      <TagVisual
+        scenario={TAG_SCENARIOS.find((c) => c === params.get('case')) ?? 'assign-tag-android'}
+      />
     );
   const session = sessionFor(surface);
   if (surface === 'customer') return <LiveVisual session={session} status={status} />;

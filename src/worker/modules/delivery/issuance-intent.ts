@@ -20,11 +20,13 @@ import {
   matchesPass,
 } from './binding.ts';
 import {
+  actorOfStarter,
   authorityMayQueue,
   captureActor,
   type DeliveryActor,
   systemActor,
 } from './delivery-actor.ts';
+import { emailLimitError, emailRate } from './email-limits.ts';
 import { parseContext } from './issuance-context.ts';
 import { recipientKey } from './recipient-key.ts';
 import {
@@ -51,11 +53,13 @@ import {
 } from './repo-outbox-processing.ts';
 
 const SEND_BATCH = 100;
-const HOUR = 3_600_000;
-const DAY = 86_400_000;
-/** Pass emails per recipient per hour, and per org per day. */
-export const EMAIL_RECIPIENT_HOURLY_CAP = 3;
-export const EMAIL_ORG_DAILY_CAP = 500;
+const _HOUR = 3_600_000;
+const _DAY = 86_400_000;
+
+export {
+  EMAIL_ORG_DAILY_CAP,
+  EMAIL_RECIPIENT_HOURLY_CAP,
+} from '../../../shared/contracts/settings.ts';
 
 function message(row: { id: string; kind: 'push' | 'email' }): MessageSendRequest<Job> {
   const kind = row.kind === 'push' ? ('push.deliver' as const) : ('email.send' as const);
@@ -153,6 +157,7 @@ export async function scheduleIssuanceDelivery(
     // A system or connection issuance has no principal row: only a queue, cron or workflow context
     // may act for it, so a request leaves it pending for the next sweep.
     if (execution.kind !== 'tenant' && !ctx.job) return 'deferred';
+    const starter = execution.kind === 'deferred' ? execution.starter : null;
     await enqueuePassEmail(ctx, {
       passId,
       to: row.recipient,
@@ -166,9 +171,11 @@ export async function scheduleIssuanceDelivery(
               [context.userRevision ?? undefined, context.additionalUserRevision ?? undefined],
             ),
           }
-        : context.orgRevision === undefined
-          ? {}
-          : { queuedFor: [{ kind: 'system' as const, orgRevision: context.orgRevision }] }),
+        : starter
+          ? { queuedFor: [actorOfStarter(starter, row.org_id, row.mode)] }
+          : context.orgRevision === undefined
+            ? {}
+            : { queuedFor: [{ kind: 'system' as const, orgRevision: context.orgRevision }] }),
       issuanceIntentId: passId,
       schedule: false,
     });
@@ -234,6 +241,8 @@ export async function enqueuePassEmail(
     /** Reserved for the durable issuance scheduler. */
     issuanceIntentId?: string;
     schedule?: boolean;
+    /** The mail answers a join link: it carries the "You asked for this card" line. */
+    joined?: boolean;
     /** Recorded in the queueing batch, as one transaction with the mail. */
     auditEntry?: AuditEntry;
   },
@@ -273,8 +282,9 @@ export async function enqueuePassEmail(
     actor,
     ...(also ? { also } : {}),
     ...(input.issuanceIntentId ? { issuanceId: input.issuanceIntentId } : {}),
+    ...(input.joined ? { joined: true } : {}),
   };
-  const recipient = await recipientKey(ctx.env, to);
+  const _recipient = await recipientKey(ctx.env, to);
   const outboxId = ctx.ids.id();
   const result = await insertIssuedPassEmail(ctx, {
     id: outboxId,
@@ -285,14 +295,7 @@ export async function enqueuePassEmail(
     ...(input.auditEntry ? { audit: queuedAudit(input.auditEntry, outboxId) } : {}),
     payload: { to, attach: input.attach, intent },
     now,
-    rate: {
-      recipientKey: `pass-email:${pass.mode}:to:${recipient}`,
-      orgKey: `pass-email:${pass.mode}:org:${pass.orgId}`,
-      recipientWindow: now - (now % HOUR),
-      orgWindow: now - (now % DAY),
-      recipientCap: EMAIL_RECIPIENT_HOURLY_CAP,
-      orgCap: EMAIL_ORG_DAILY_CAP,
-    },
+    rate: await emailRate(ctx, pass.mode, pass.orgId, to),
   });
   // A revoked membership or moved revision answers like every other principal's refusal.
   if (result === 'org' || result === 'actor') throw authorityDenied(result);
@@ -302,10 +305,7 @@ export async function enqueuePassEmail(
       'The pass changed. Review the recipient and try again.',
       'DELIVERY_STALE',
     );
-  if (result === 'limited')
-    throw new AppError('EMAIL_RATE_LIMITED', 429, 'Too many pass emails. Try again later.', {
-      headers: { 'retry-after': '3600' },
-    });
+  if (result === 'limited') throw await emailLimitError(ctx, pass.mode, pass.orgId, to);
   if (input.schedule !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
   return { outboxId };
 }

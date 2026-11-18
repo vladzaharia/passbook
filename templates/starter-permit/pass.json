@@ -1,0 +1,106 @@
+{
+  "formatVersion": 1,
+  "description": "Permit",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(170,28,44)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(255,210,212)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-12-31T00:00:00Z",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "AB12 CDE"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "zone",
+        "label": "Zone",
+        "value": "Zone C"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "plate",
+        "label": "Plate",
+        "value": "AB12 CDE"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "until",
+        "label": "Valid to",
+        "value": "2030-12-31T00:00:00Z",
+        "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "value": "Monthly"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "bay",
+        "label": "Bay",
+        "value": "14"
+      },
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Lee Park"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "status",
+        "label": "Status",
+        "value": "Active",
+        "changeMessage": "Your permit is now %@."
+      },
+      {
+        "key": "vehicle",
+        "label": "Vehicle",
+        "value": ""
+      },
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "site",
+        "label": "Website",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Display as the operator requires. Cameras read plates, not this code."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

@@ -15,7 +15,7 @@ const DONE = 'tokens.remacDone';
 const PROBE = 'tokens.macProbeAt';
 const PROBE_EVERY_MS = 6 * 60 * 60_000;
 const UNREADABLE = new Set(['TOKEN_SEAL_MISSING', 'TOKEN_SEAL_UNREADABLE', 'TOKEN_SEAL_MISMATCH']);
-const PURPOSES = ['pass', 'apple-auth', 'bundle'] as const;
+const PURPOSES = ['pass', 'apple-auth', 'bundle', 'join'] as const;
 
 type After = Record<TokenPurpose, string | null>;
 /** One sweep of one version pair: where it is, what it left, and what it could not read. */
@@ -29,7 +29,7 @@ type Outcome = 'moved' | 'current' | 'skipped' | 'unreadable';
 
 const fresh = (stamp: string): Cursor => ({
   stamp,
-  after: { pass: null, 'apple-auth': null, bundle: null },
+  after: { pass: null, 'apple-auth': null, bundle: null, join: null },
   skipped: 0,
   unreadable: 0,
 });
@@ -42,7 +42,12 @@ function parseCursor(value: unknown, stamp: string): Cursor {
     typeof v.after?.[k] === 'string' ? (v.after[k] as string) : null;
   return {
     stamp,
-    after: { pass: id('pass'), 'apple-auth': id('apple-auth'), bundle: id('bundle') },
+    after: {
+      pass: id('pass'),
+      'apple-auth': id('apple-auth'),
+      bundle: id('bundle'),
+      join: id('join'),
+    },
     skipped: typeof v.skipped === 'number' ? v.skipped : 0,
     unreadable: typeof v.unreadable === 'number' ? v.unreadable : 0,
   };

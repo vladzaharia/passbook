@@ -1,0 +1,91 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(244,244,240)",
+  "barcodes": [
+    {
+      "altText": "290014",
+      "format": "PKBarcodeFormatCode39",
+      "message": "290014",
+      "messageEncoding": "iso-8859-1"
+    },
+    {
+      "altText": "290014",
+      "format": "PKBarcodeFormatQR",
+      "message": "290014",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "ID card",
+  "expirationDate": "2030-08-31T00:00:00Z",
+  "foregroundColor": "rgb(20,20,22)",
+  "formatVersion": 1,
+  "generic": {
+    "auxiliaryFields": [
+      {
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true,
+        "key": "until",
+        "label": "Valid until",
+        "timeStyle": "PKDateStyleNone",
+        "value": "2030-08-31T00:00:00Z"
+      }
+    ],
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Carry this card. It is yours only."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "role",
+        "label": "Role",
+        "value": "Student"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Maya Chen"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "number",
+        "label": "Number",
+        "value": "290014"
+      },
+      {
+        "key": "unit",
+        "label": "Year",
+        "value": "Year 9"
+      }
+    ]
+  },
+  "labelColor": "rgb(196,30,58)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

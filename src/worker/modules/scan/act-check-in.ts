@@ -10,6 +10,7 @@ import { finishHeldGate } from './act-held.ts';
 import { type Override, StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
+import { deferTermStart } from './act-term-stamp.ts';
 import { commitValue } from './act-value.ts';
 import { deepFreeze } from './freeze.ts';
 import { gateRule, gateScope, settledAccessGate } from './gate.ts';
@@ -39,6 +40,8 @@ interface CommitInput {
   action: ResolvedScanAction;
   override: Override | null;
   approvedBy: string | null;
+  /** The verified approver's role: a Desk approver is pinned as such in the grant. */
+  approvedRole?: 'door' | 'desk' | 'manager' | null;
   approvedAuthEpoch: number | null;
   reservation: PinReservation | null;
   onFailureCommitted(): void;
@@ -148,7 +151,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     ...(action.kind === 'check_in' &&
     event?.capacity != null &&
     found.admission?.state.direction !== 'out' &&
-    override?.reason !== 'capacity_full'
+    (override?.reason !== 'capacity_full' || event.hardLimit === true)
       ? { capacity: { eventId: event.id, max: event.capacity, reentry: event.reentry } }
       : {}),
     orgId: actor.orgId,
@@ -240,8 +243,12 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       reservation,
       onFailureCommitted,
     });
-  if (action.kind !== 'check_in')
-    return commitValue({
+  if (action.kind !== 'check_in') {
+    const approver =
+      approvedBy && approvedAuthEpoch !== null
+        ? { id: approvedBy, authEpoch: approvedAuthEpoch, deskOk: input.approvedRole === 'desk' }
+        : null;
+    const outcome = await commitValue({
       ctx,
       actor,
       found,
@@ -254,12 +261,13 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       stopAuthority,
       originalCandidate,
       facts,
-      approver:
-        approvedBy && approvedAuthEpoch !== null
-          ? { id: approvedBy, authEpoch: approvedAuthEpoch }
-          : null,
+      approver,
       onFailureCommitted,
     });
+    if (outcome.kind === 'ok' && !outcome.replay)
+      deferTermStart({ ctx, actor, found, req, action, claim, originalCandidate, approver });
+    return outcome;
+  }
   return commitCheckInSuccess({
     ctx,
     actor,
@@ -278,7 +286,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     facts,
     approver:
       approvedBy && approvedAuthEpoch !== null
-        ? { id: approvedBy, authEpoch: approvedAuthEpoch }
+        ? { id: approvedBy, authEpoch: approvedAuthEpoch, deskOk: input.approvedRole === 'desk' }
         : null,
     onFailureCommitted,
   });

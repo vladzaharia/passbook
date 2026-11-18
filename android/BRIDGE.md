@@ -35,9 +35,12 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | App → web | `{version:1, event:'scan', id:string, readAt:number, source:'apple-vas', passTypeIdentifier:string, cryptogram:string}` |
 | App → web | `{version:1, event:'scan', id:string, readAt:number, source:'barcode', value:string}` |
 | Web → app | `{version:1, op:'result', id:string, outcome:'accepted'|'rejected'|'error'}` |
+| Web → app | `{version:1, op:'haptic', pattern:number[]}` |
 | App → web | `{version:1, event:'timeout'}` |
 
 `cryptogram` is standard Base64 of the VAS `9F27` value. `readAt` is the Android wall clock in milliseconds, useful for display, not authoritative freshness. Barcode values are bounded to 2048 characters without control characters. A single scan may be pending; results expire after 15 seconds. Repeated identical inputs are suppressed for two seconds. Pausing/navigating invalidates pending results. The bundled diagnostics uses a local-only `captured` acknowledgement, which cannot grant acceptance.
+
+`haptic` plays one verdict's feedback. `pattern` is on/off durations in milliseconds, starting with an on: at most 8 entries, each 0 to 500; anything else is dropped. The web sends it only when the capability snapshot has `haptics: true`, and uses `navigator.vibrate` otherwise. Android plays the waveform; iOS maps one pulse to an impact, two to a warning and three or more to an error notification.
 
 `ready` retains its v1 top-level fields. Both events carry the same nested capability snapshot:
 
@@ -49,6 +52,7 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | `nfc.available`, `nfc.reading`, `nfc.formats` | `available` means NFC reader hardware is present and enabled; `reading` means native reader mode is active. Supported hardware reports `["wallet-vas"]`, including while NFC is disabled; no hardware reports `[]`. This implementation does not read NDEF. |
 | `vas.deviceSupported`, `vas.available`, `vas.reader`, `vas.reason` | Native NFC hardware support is distinct from verification. `available` is always `false`: no dedicated backend verifier is integrated. `reader` is `"android-native"` when supported, otherwise `"none"`; `reason` explains the limitation. |
 | `externalReader.mode`, `externalReader.connected` | `"keyboard"` and `null`; this does not claim a connected scanner or generic USB/Bluetooth serial support. |
+| `haptics` | `true`: the app plays the `haptic` op. |
 | `customerDisplay.supported`, `customerDisplay.available`, `customerDisplay.active` | All `false`; no customer-display integration is implemented. |
 
 Snapshots are sent at handshake, when NFC is started/stopped or its adapter changes, on activity pause/resume, and after camera permission results or camera availability callbacks. A new page must handshake again. The supplied `ReaderClient` keeps the legacy ready envelope in `reader.capabilities`; on an update it replaces `reader.capabilities.capabilities`, refreshes the legacy `nfc` boolean, and dispatches a `capabilities` event whose `detail` is the nested snapshot.

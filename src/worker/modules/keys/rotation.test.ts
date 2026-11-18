@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isolatedKeysetDatabase } from '../../../../test/helpers/credential-keyset.ts';
 import { withoutTrigger } from '../../../../test/helpers/index.ts';
+import { makeJoinLink } from '../../../../test/helpers/join.ts';
 import { EPOCH_TABLES } from '../../platform/authority-columns.ts';
 import { revealToken, tokenMac } from '../../platform/capability-token.ts';
 import {
@@ -30,6 +31,8 @@ import { hashPin, pinMatches } from '../scan/staff-pin.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { checkKeys } from '../status/checks-keys.ts';
 import { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
+import { openSecret, sealSecret } from '../webhooks/secrets.ts';
+import { seedEndpoint } from '../webhooks/webhooks-test-fixtures.ts';
 import { recordMacRoots } from './mac-root-check.ts';
 import { packedEnvelopeColumns } from './packed-scan-test-fixtures.ts';
 import { DONE, rewrapEnvelopes } from './rewrap.ts';
@@ -84,6 +87,29 @@ async function rotate(macKeyRotation: boolean) {
 
   // 1. Secrets and evidence under KEK_V1, through the real services where there is one.
   const seeded = await seedEnvelopes(t);
+  // A join link's sealed token and an outbound webhook secret, through their writers.
+  const joinLink = await makeJoinLink(kit.fx, { orgId: org, templateId: t.pass.templateId });
+  const webhook = {
+    secretId: kit.ctx.ids.id(),
+    orgId: org,
+    endpointId: await seedEndpoint(db, { orgId: org }),
+    mode: 'live' as const,
+  };
+  const sealed = await sealSecret(await loadKekRing(kit.env), 'whsec_rotation', webhook);
+  await run(
+    db,
+    `INSERT INTO webhook_endpoint_secrets (id, endpoint_id, org_id, mode, kek_version, iv, wrapped_dek, ciphertext, created_at)
+     VALUES (?, ?, ?, 'live', ?, ?, ?, ?, 1)`,
+    [
+      webhook.secretId,
+      webhook.endpointId,
+      org,
+      sealed.kekVersion,
+      sealed.iv,
+      sealed.wrappedDek,
+      sealed.ciphertext,
+    ],
+  );
   const pass = t.pass;
   const bundle = await createBundle(
     jobCtx(),
@@ -201,6 +227,8 @@ async function rotate(macKeyRotation: boolean) {
   return {
     t,
     seeded,
+    joinLink,
+    webhook,
     bundle,
     plainTokens,
     stored,
@@ -271,6 +299,31 @@ async function expectEverythingOpens(r: Rotated) {
   );
   expect(await passForToken(r.jobCtx(), r.plainTokens.link)).toMatchObject({ id: t.pass.id });
   expect(await bundleForToken(r.jobCtx(), r.bundlePlain)).toMatchObject({ id: r.bundle.id });
+  const joinMac = await first<{ token: string }>(db, 'SELECT token FROM join_links WHERE id = ?', [
+    r.joinLink.id,
+  ]);
+  expect(await revealToken(kit.env, 'join', r.joinLink.id, org, joinMac?.token ?? '')).toBe(
+    r.joinLink.token,
+  );
+  const secret = await first<{
+    iv: ArrayBuffer;
+    wrapped_dek: ArrayBuffer;
+    ciphertext: ArrayBuffer;
+  }>(db, 'SELECT iv, wrapped_dek, ciphertext FROM webhook_endpoint_secrets WHERE id = ?', [
+    r.webhook.secretId,
+  ]);
+  expect(
+    await openSecret(
+      ring,
+      {
+        kekVersion: 2,
+        iv: new Uint8Array(secret?.iv ?? []),
+        wrappedDek: new Uint8Array(secret?.wrapped_dek ?? []),
+        ciphertext: new Uint8Array(secret?.ciphertext ?? []),
+      },
+      r.webhook,
+    ),
+  ).toBe('whsec_rotation');
   for (const row of await all<{ id: string; html: string; text: string }>(
     db,
     'SELECT id, html, text FROM captured_emails WHERE id = ?',

@@ -30,7 +30,12 @@ export function PreviewCard({
   const custom = screen === 'ok' && Boolean(rendered.header.title);
   const title =
     screen === 'heads_up'
-      ? SCAN_REASON_COPY.already_done.headline
+      ? scanLine(SCAN_REASON_COPY.already_done.headline, {
+          done:
+            tab.action?.kind === 'check_in' || !tab.action
+              ? SCAN_COPY.verdict.already.checkIn
+              : SCAN_COPY.verdict.already.other,
+        })
       : screen === 'refused'
         ? SCAN_REASON_COPY.voided.headline
         : tab.action?.kind === 'check_in'

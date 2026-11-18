@@ -891,11 +891,13 @@ describe('push credential transfer fences', () => {
   });
 
   it.each([
-    { stage: 'result', sql: /INSERT OR REPLACE INTO push_results/i, saved: 0 },
-    { stage: 'event', sql: /INSERT INTO pass_events/i, saved: 1 },
+    { stage: 'result', sql: /INSERT OR REPLACE INTO push_results/i, saved: 0, kept: true },
+    // Registrations are dropped before the events are written (the journal counts devices left).
+    { stage: 'cleanup', sql: /DELETE FROM registrations/i, saved: 1, kept: true },
+    { stage: 'event', sql: /INSERT INTO pass_events/i, saved: 1, kept: false },
   ])(
     'fences $stage and cleanup when the captured release changes in flight',
-    async ({ sql, saved }) => {
+    async ({ sql, saved, kept }) => {
       const { pass, device, outboxId } = await onePush();
       expect(pass.releaseId).not.toBeNull();
       kit.apns.results.set(A, { status: 400, reason: 'BadDeviceToken' });
@@ -919,12 +921,13 @@ describe('push credential transfer fences', () => {
           [pass.id],
         ),
       ).toBeNull();
-      expect(
-        await first(kit.env.DB, 'SELECT 1 FROM registrations WHERE pass_id = ? AND device_id = ?', [
-          pass.id,
-          device,
-        ]),
-      ).not.toBeNull();
+      const registration = await first(
+        kit.env.DB,
+        'SELECT 1 FROM registrations WHERE pass_id = ? AND device_id = ?',
+        [pass.id, device],
+      );
+      if (kept) expect(registration).not.toBeNull();
+      else expect(registration).toBeNull();
       expect(await getOutbox(kit.env.DB, outboxId)).toMatchObject({
         state: 'cancelled',
         errorCode: 'PASS_GONE',

@@ -25,6 +25,7 @@ export function passFixture(over: Partial<MyPass> = {}): MyPass {
     },
     assetBaseUrl: '/p/abcdefghijklmnopqrst/assets',
     assetNames: ['icon.png'],
+    tags: [],
     inWallet: false,
     ...over,
   };

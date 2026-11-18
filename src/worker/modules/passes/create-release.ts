@@ -90,7 +90,7 @@ export function validateCreateReview(p: CreateParams): boolean {
     throw new ValidationError('Review the mode and template version before issuing the pass.');
   const hasId = p.releaseId !== undefined;
   const hasGeneration = p.releaseGeneration !== undefined;
-  const requiresReview = p.execution.kind === 'tenant';
+  const requiresReview = p.execution.kind === 'tenant' || p.execution.kind === 'deferred';
   if (
     hasId !== hasGeneration ||
     (requiresReview && !hasId) ||

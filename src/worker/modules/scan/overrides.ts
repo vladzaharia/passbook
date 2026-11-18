@@ -71,7 +71,12 @@ export async function overrideScan(
     { kind: overridePolicyKind(target.reason, target.outcome) },
   );
   if (!verdict.allow && verdict.why === 'forbidden')
-    throw new ForbiddenError('This door does not let people in again.', 'SCAN_OVERRIDE_FORBIDDEN');
+    throw new ForbiddenError(
+      row.door_hard_limit === 1
+        ? 'Full. No one can let them in.'
+        : 'This door does not let people in again.',
+      'SCAN_OVERRIDE_FORBIDDEN',
+    );
   await assertUnderOverrideCap(ctx, actor);
   const request: ActRequest = {
     idempotencyKey: req.idempotencyKey,

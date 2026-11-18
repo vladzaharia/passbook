@@ -119,7 +119,8 @@ const PART_TENANT_BIND =
   /\b(?:writePart|readPart)\(\s*(['"`])(?:(?!\1)[\s\S])*?\b(?:org_id|mode)\s*=\s*\?/;
 const UPDATED_AT_PREDICATE = /\bWHERE\b[^;`]*?\bupdated_at\s*=\s*\?/is;
 /** The number of reviewed raw-write files. Removing one lowers it; a new entry fails until a design decision raises it. */
-export const RAW_WRITE_ALLOWLIST_LIMIT = 27;
+// 29: outbound webhooks add repo-delivery-state.ts and repo-retention.ts (design-webhooks.md section 11.3).
+export const RAW_WRITE_ALLOWLIST_LIMIT = 29;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 
 const TENANT_TABLES = new Set([
@@ -382,6 +383,10 @@ export function scanJobContext(rel: string, text: string): Finding[] {
  */
 export const JOB_FACTORY_IMPORTERS: Record<string, string | string[]> = {
   'template-sync': 'src/worker/modules/templates/sync.ts',
+  'template-merge': [
+    'src/worker/modules/templates/fork-updates-offer.ts',
+    'src/worker/modules/templates/fork-updates-write.ts',
+  ],
   'webhook-ingress': [
     'src/worker/modules/connections/repo-grants.ts',
     'src/worker/modules/connections/webhooks.ts',

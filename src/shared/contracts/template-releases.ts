@@ -18,6 +18,8 @@ export const TemplateApprovalSchema = z.object({
   candidateHash: z.string(),
   reviewerId: IdSchema,
   reviewerName: z.string().nullable().optional(),
+  /** `sole` and `test` are the author's own approval; the release shows them as self-approved. */
+  kind: z.enum(['peer', 'sole', 'test']).optional(),
   createdAt: TimestampSchema,
 });
 export type TemplateApproval = z.infer<typeof TemplateApprovalSchema>;
@@ -82,6 +84,8 @@ export type TemplateCandidateList = z.infer<typeof TemplateCandidateListSchema>;
 export const TemplateReleaseListSchema = z.object({
   active: TemplateReleaseSchema.nullable(),
   items: z.array(TemplateReleaseSchema),
+  /** Live scope: versions released in Test that Live can take with one review. */
+  promotable: z.array(z.string()).optional(),
 });
 export type TemplateReleaseList = z.infer<typeof TemplateReleaseListSchema>;
 
@@ -116,8 +120,19 @@ export type CreateTemplateCandidate = z.infer<typeof CreateTemplateCandidateSche
 
 export const ApproveTemplateCandidateSchema = TemplateReleaseScopeSchema.extend({
   candidateHash: z.string(),
+  /** The author confirms approving their own work (sole reviewer, or Test mode). */
+  alone: z.boolean().optional(),
 });
 export type ApproveTemplateCandidate = z.infer<typeof ApproveTemplateCandidateSchema>;
+
+/** A version released in Test becomes a Live candidate, the same version. */
+export const PromoteTemplateSchema = z.strictObject({
+  orgId: IdSchema,
+  mode: z.literal('live'),
+  provider: z.literal('apple'),
+  version: z.string(),
+});
+export type PromoteTemplate = z.infer<typeof PromoteTemplateSchema>;
 
 export const PublishTemplateReleaseSchema = TemplateReleaseScopeSchema.extend({
   candidateId: IdSchema,

@@ -14,6 +14,7 @@ import {
   Form,
   FormField,
   Input,
+  SwitchRow,
   useFormErrors,
 } from '@/web/ui/index.ts';
 import { isoToLocal, localToIso } from '../../passes/schema-form/datetime.ts';
@@ -41,6 +42,7 @@ export function EventDialog({
   });
   const [selected, setSelected] = useState(event?.templateIds ?? []);
   const [capacity, setCapacity] = useState(event?.capacity?.toString() ?? '');
+  const [hardLimit, setHardLimit] = useState(event?.hardLimit ?? false);
   const [note, setNote] = useState(event?.note ?? '');
   const [reentry, setReentry] = useState(event?.reentry ?? false);
   const [matchInput, setMatchInput] = useState(event?.match?.input ?? '');
@@ -59,6 +61,7 @@ export function EventDialog({
         closesAt: Date.parse(localToIso(closes?.local ?? '', closes?.zone ?? zone) ?? ''),
         timeZone: opens?.zone ?? zone,
         capacity: capacity ? Number(capacity) : null,
+        hardLimit: Boolean(capacity) && hardLimit,
         note: note.trim() || null,
         reentry,
         match: matchInput.trim()
@@ -174,6 +177,13 @@ export function EventDialog({
               />
             )}
           </FormField>
+          <SwitchRow
+            label="Hard limit"
+            help="Full is final: no one can let anyone in. Needs a capacity."
+            checked={Boolean(capacity) && hardLimit}
+            disabled={!capacity}
+            onCheckedChange={setHardLimit}
+          />
           <CheckboxField
             label="Allow re-entry"
             checked={reentry}
