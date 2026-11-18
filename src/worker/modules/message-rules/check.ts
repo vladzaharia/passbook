@@ -3,8 +3,8 @@ import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { safeTargetFilter } from '../broadcasts/apply.ts';
-import { insertRuleRunStmt } from '../broadcasts/repo.ts';
 import { creatorLive } from '../broadcasts/repo-creator.ts';
+import { insertRuleRunStmt } from '../broadcasts/repo-rule-run.ts';
 import { countTargeted } from '../broadcasts/repo-target.ts';
 import {
   getRule,
