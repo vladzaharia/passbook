@@ -3,6 +3,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import operations from '../../docs/operations.md?raw';
 import { effectiveReleaseIdSql } from '../../src/worker/modules/templates/repo-release-heads.ts';
+import { revealToken } from '../../src/worker/platform/capability-token.ts';
 import { dataFingerprint, type Legacy, MOVED_AWAY_PASS, OWNER, SHAPES } from './legacy-seed.ts';
 import { runBootstrap } from './run-bootstrap.ts';
 import { type Cutover, effective, NOW, runCutover, TABLES } from './setup.ts';
@@ -123,7 +124,38 @@ describe('cutover: nothing lost', () => {
     const after = await dataFingerprint(legacy.db, TABLES);
     for (const t of TABLES)
       expect(after.counts[t], t).toBeGreaterThanOrEqual(c.before.counts[t] ?? 0);
-    expect(after.creds).toEqual(c.before.creds);
+    // The tokens are sealed by now: every one reads back as the plain value the 0024 row held.
+    const revealed = [];
+    for (const row of after.creds as {
+      id: string;
+      serial: string;
+      auth_token: string;
+      download_token: string;
+    }[]) {
+      const org = await legacy.db
+        .prepare('SELECT org_id FROM passes WHERE id = ?')
+        .bind(row.id)
+        .first<{ org_id: string }>();
+      revealed.push({
+        id: row.id,
+        serial: row.serial,
+        auth_token: await revealToken(
+          c.env,
+          'apple-auth',
+          row.id,
+          org?.org_id ?? '',
+          row.auth_token,
+        ),
+        download_token: await revealToken(
+          c.env,
+          'pass',
+          row.id,
+          org?.org_id ?? '',
+          row.download_token,
+        ),
+      });
+    }
+    expect(revealed).toEqual(c.before.creds);
   });
 });
 

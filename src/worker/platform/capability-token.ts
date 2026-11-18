@@ -129,7 +129,12 @@ export async function tokenMatches(
 
 const bytes = (v: number[] | ArrayBuffer) => new Uint8Array(v);
 
-/** The plain token of a stored column value, unsealed; a token just made (not a MAC) is returned as it is. */
+function notSealed(purpose: TokenPurpose, id: string): UnavailableError {
+  log.error('token.not_sealed', { code: 'TOKEN_NOT_SEALED', purpose, id });
+  return new UnavailableError('The link is unavailable. Rotate it.', 'TOKEN_NOT_SEALED');
+}
+
+/** The plain token of a stored column value, unsealed. A value that is not a MAC is never stored (0070): it is refused. */
 export async function revealToken(
   env: { DB: D1Database },
   purpose: TokenPurpose,
@@ -137,7 +142,7 @@ export async function revealToken(
   orgId: string,
   stored: string,
 ): Promise<string> {
-  if (!isTokenMac(stored)) return stored;
+  if (!isTokenMac(stored)) throw notSealed(purpose, id);
   return unsealToken(env, purpose, id, orgId, stored, await readSeal(env.DB, purpose, id, orgId));
 }
 
@@ -150,7 +155,7 @@ export async function unsealToken(
   stored: string,
   row: SealRaw | null,
 ): Promise<string> {
-  if (!isTokenMac(stored)) return stored;
+  if (!isTokenMac(stored)) throw notSealed(purpose, id);
   if (!row) {
     log.error('token.seal_missing', { code: 'TOKEN_SEAL_MISSING', purpose, id });
     throw new UnavailableError('The link is unavailable. Rotate it.', 'TOKEN_SEAL_MISSING');

@@ -13,6 +13,7 @@ import {
   makeTemplate,
   makeUser,
   persistTemplate,
+  withoutAuthTokenGuards,
   withoutTrigger,
 } from './helpers/index.ts';
 
@@ -941,6 +942,30 @@ describe('0070 post-cutover', () => {
       env.DB,
       "UPDATE passes SET download_token = 'h1:restored', link_generation = link_generation + 1 WHERE id = ?",
       [pass.id],
+    );
+  });
+
+  it('no longer lets a MAC replace a plain device token outside a transfer', async () => {
+    const pass = await onePass();
+    const original = await first<{ auth_token: string }>(
+      env.DB,
+      'SELECT auth_token FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    // A row as it was before the seal sweep: only reachable with the guards dropped.
+    await withoutTrigger(env.DB, 'passes_auth_token_is_mac_update', () =>
+      withoutAuthTokenGuards(env.DB, () =>
+        run(env.DB, "UPDATE passes SET auth_token = 'plain-device' WHERE id = ?", [pass.id]),
+      ),
+    );
+    await expect(
+      run(env.DB, "UPDATE passes SET auth_token = 'h1:sealed' WHERE id = ?", [pass.id]),
+    ).rejects.toThrow(/credential transfer required|credential generation bump/);
+    await withoutAuthTokenGuards(env.DB, () =>
+      run(env.DB, 'UPDATE passes SET auth_token = ? WHERE id = ?', [
+        original?.auth_token ?? '',
+        pass.id,
+      ]),
     );
   });
 

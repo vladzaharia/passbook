@@ -10,6 +10,7 @@ import {
   fakeAssets,
 } from '../../src/worker/modules/templates/testing.ts';
 import { sha256Hex } from '../../src/worker/platform/ids.ts';
+import { sealSeed } from './seal-seed.ts';
 
 /** Three days before the test run, so scanner expiry and session windows behave like production. */
 export const AT = Date.now() - 3 * 86_400_000;
@@ -83,13 +84,27 @@ export async function legacyDatabase(slot: number, upTo = 24): Promise<D1Databas
   return db;
 }
 
-/** Applies 0025 and later, in order. */
+/** The last migration before 0070, which refuses a database that still holds a plain token. */
+const BEFORE_GUARD = 69;
+const allMigrations = () =>
+  (bindings as unknown as { TEST_MIGRATIONS: Migration[] }).TEST_MIGRATIONS;
+
+/** Applies 0025 to 0069, in order: the schema the cutover ran against. Tokens are still plain. */
 export async function migrateForward(db: D1Database): Promise<void> {
   await applyD1Migrations(
     db,
-    (bindings as unknown as { TEST_MIGRATIONS: Migration[] }).TEST_MIGRATIONS,
+    allMigrations().filter((m) => number(m) <= BEFORE_GUARD),
   );
 }
+
+/** The rest of the release, after the promote: the seed's tokens are sealed (the pre-0070 cron), then 0070 runs. */
+export async function finishMigrations(db: D1Database): Promise<void> {
+  await sealSeed(db);
+  await applyD1Migrations(db, allMigrations());
+}
+
+/** The whole chain on a database whose tokens are still plain: 0070 refuses it. */
+export const migrateUnsealed = (db: D1Database) => applyD1Migrations(db, allMigrations());
 
 export const q = (v: string | number | null) =>
   v === null ? 'NULL' : typeof v === 'number' ? String(v) : `'${v.replaceAll("'", "''")}'`;

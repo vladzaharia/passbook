@@ -1,5 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { isTokenMac, revealToken, sealToken, tokenMac } from '../../platform/capability-token.ts';
+import {
+  isTokenMac,
+  revealToken,
+  sealToken,
+  tokenMac,
+  unsealToken,
+} from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { bundleForToken } from '../bundles/public-service.ts';
 import { createBundle, getBundleDto } from '../bundles/service.ts';
@@ -144,5 +150,17 @@ describe('case-sensitive MAC guard', () => {
     await expect(
       run(kit.env.DB, "UPDATE bundles SET token = 'H1:abc' WHERE id = ?", [bundle.id]),
     ).rejects.toThrow(/token must be a MAC/);
+  });
+});
+
+describe('a stored value that is not a MAC', () => {
+  it('is never returned as a token: reveal and unseal refuse it with TOKEN_NOT_SEALED', async () => {
+    const pass = await kit.pass();
+    await expect(
+      revealToken(kit.env, 'pass', pass.id, pass.orgId, 'plain-value'),
+    ).rejects.toMatchObject({ code: 'TOKEN_NOT_SEALED' });
+    await expect(
+      unsealToken(kit.env, 'apple-auth', pass.id, pass.orgId, 'plain-value', null),
+    ).rejects.toMatchObject({ code: 'TOKEN_NOT_SEALED' });
   });
 });

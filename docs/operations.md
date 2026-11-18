@@ -284,13 +284,13 @@ passes keep the old one until a template change or Identities, Re-sign all rebui
 - Never restore D1 to undo a deploy: a restore drops every write since the bookmark, including Wallet registrations, scans and the tombstones that keep retired pass ids and credentials from being reused. Roll forward.
 - `tools/deploy.ts` still refuses a full deploy while `0029_org_memberships` is pending on a database with data. Production is past that.
 - The step-by-step runbook (pre-checks, the temporary WAF rule, order, failure table) is in git history before the commit that shortened this section.
-- `test/cutover/` stays as a regression over a populated 0024 database migrated to head. `tools/bootstrap-tenancy.ts` stays: it gives the first admin a membership on a new database (Go-live checklist, step 10) and seeds the local demo.
+- `test/cutover/` stays as a regression over a populated 0024 database: migrated to 0069, bootstrapped and synced as in production, then sealed and migrated to head. A database that was not sealed stops at 0070 (`guard.test.ts`). `tools/bootstrap-tenancy.ts` stays: it gives the first admin a membership on a new database (Go-live checklist, step 10) and seeds the local demo.
 
 ### Capability tokens at rest
 
-Pass download tokens, bundle tokens and Apple web-service tokens are stored as MACs with a sealed copy (0059, 0065); the database refuses a plain value (0070 removed the plain-to-MAC exception, the minute cron `tokens.seal` and the plain lookup). The only MAC-to-MAC rewrite is the cron `tokens.remac` after `MAC_KEY_VERSION` moves.
+Pass download tokens, bundle tokens and Apple web-service tokens are stored as MACs with a sealed copy (0059, 0065); the database refuses a plain value (triggers of 0059 and 0065). 0070 removed the plain-to-MAC exception, the minute cron `tokens.seal` and the plain lookup, and refuses to run while any plain token or stored device token is left (the migration is not recorded and rolls back). The only MAC-to-MAC rewrite is the cron `tokens.remac` after `MAC_KEY_VERSION` moves.
 
-- Backups from before 0059 hold working links and, from before 0065, working device tokens: rotate in bulk if one leaks (a credential transfer rotates the device token). D1 Time Travel keeps 30 days: a restore to a point before 0065 brings the plain device tokens back, so treat a restore as a rotation event.
+- Backups from before 0059 hold working links and, from before 0065, working device tokens: rotate in bulk if one leaks (a credential transfer rotates the device token). D1 Time Travel keeps 30 days: a restore to a point before 0065 brings the plain device tokens back, so treat a restore as a rotation event, and a restore to before 0065 must stop at 0069 and run bfd64602's `tokens.seal` to zero before 0070.
 - Every `.pkpass` object in R2 carries the device token that was current at its version (Wallet needs it in the signed bytes). Keep the bucket private (no public bucket, no `r2.dev`, an API token scoped to the Worker). Purged versions and purged deleted passes delete their objects.
 - A soft-deleted pass drops its sealed copies at once.
 

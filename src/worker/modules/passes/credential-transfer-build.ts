@@ -203,7 +203,7 @@ export async function buildTransfer(
     branding: org.branding,
     passId: p.id,
     serial: credentials.serial,
-    authToken: credentials.authToken,
+    authToken: { fresh: credentials.authToken },
     scanCode: credentials.scanCode,
     webServiceUrl: p.webServiceUrl,
     identityId: p.identityId,

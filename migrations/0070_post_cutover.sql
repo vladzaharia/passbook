@@ -1,3 +1,13 @@
+-- Refuse to run while any plain token is left: the check fails, the migration is not recorded and rolls back.
+-- A database restored to before 0065 must stop at 0069 and run bfd64602's tokens.seal to zero first.
+CREATE TABLE post_cutover_guard (n INTEGER NOT NULL CHECK (n = 0));
+INSERT INTO post_cutover_guard (n) SELECT
+  (SELECT count(*) FROM passes WHERE download_token NOT GLOB 'h1:*' OR auth_token NOT GLOB 'h1:*')
+  + (SELECT count(*) FROM bundles WHERE token NOT GLOB 'h1:*')
+  + (SELECT count(*) FROM pass_versions
+      WHERE CASE WHEN json_valid(pass_json) THEN json_type(pass_json, '$.authenticationToken') END IS NOT NULL);
+DROP TABLE post_cutover_guard;
+
 -- One release after the cutover. Nothing reads or writes scanning_config_revisions: config_epoch replaced it.
 DROP TABLE scanning_config_revisions;
 
@@ -84,3 +94,6 @@ BEGIN
   SELECT id, 1 FROM wallet_provider_instances WHERE pass_id = NEW.id
   ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0;
 END;
+
+-- The seal sweep's cursor.
+DELETE FROM settings WHERE scope = 'system' AND key = 'tokens.sealCursor';

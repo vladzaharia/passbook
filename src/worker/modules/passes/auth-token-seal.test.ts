@@ -5,6 +5,7 @@ import { createApp } from '../../app.ts';
 import { isTokenMac, tokenMac, tokenMatches } from '../../platform/capability-token.ts';
 import { first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { plainAuthToken } from './build-auth-token.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { updatePass } from './service.ts';
 
@@ -126,5 +127,20 @@ describe('device token guards', () => {
         [pass.id],
       ),
     ).rejects.toThrow(/must not carry the authenticationToken/);
+  });
+});
+
+describe('the device token a build embeds', () => {
+  it('takes a fresh token as given and a stored one only as a MAC', async () => {
+    const pass = await kit.pass();
+    const plain = deviceToken(pass);
+    const req = { passId: pass.id, orgId: pass.orgId };
+    expect(await plainAuthToken(kit.env, { ...req, authToken: { fresh: 'fresh-token' } })).toBe(
+      'fresh-token',
+    );
+    expect(await plainAuthToken(kit.env, { ...req, authToken: pass.authToken })).toBe(plain);
+    await expect(plainAuthToken(kit.env, { ...req, authToken: plain })).rejects.toMatchObject({
+      code: 'TOKEN_NOT_SEALED',
+    });
   });
 });
