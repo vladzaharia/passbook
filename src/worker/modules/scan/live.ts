@@ -173,6 +173,8 @@ export async function liveRingRow(
   scanId: string | null,
   /** The full keyed refs of the credential the scan presented. */
   credentialRefs: readonly string[] = [],
+  /** The checked zones and their ancestors, and the doc-named customer body, when the scan has them. */
+  extra: Pick<LiveRingRow, 'zoneIds' | 'customer'> = {},
 ): Promise<LiveRingRow | null> {
   const detail = candidate ? await passDetail(ctx, source, candidate, await pinKeyset(ctx)) : null;
   if (candidate && !detail) return null;
@@ -189,6 +191,10 @@ export async function liveRingRow(
     refPrefixes: detail ? credentialRefs.map((ref) => ref.slice(0, CREDENTIAL_REF_PREFIX)) : [],
     holderRoles: detail?.holderRoles ?? [],
     photoRoles: detail?.photoRoles ?? [],
+    sessionId: source.scanningSession?.id ?? null,
+    eventId: source.event?.id ?? null,
+    zoneIds: extra.zoneIds ?? [],
+    customer: detail ? (extra.customer ?? null) : null,
   };
 }
 
