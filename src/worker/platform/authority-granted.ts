@@ -5,6 +5,7 @@ import {
   actorSql,
   Binds,
   type GrantScope,
+  type HolderProof,
   type Mode,
   missingReason,
   type Principal,
@@ -181,11 +182,11 @@ export function assertDeferredContext(isJob: boolean, input: GrantInput): void {
   );
 }
 
-const HOLDER_PURPOSES = {
-  session: 'org_mode.pass.holder_remove',
-  verified_email: 'org_mode.pass.holder_attach',
-  device: 'org_mode.pass.personalize',
-} as const;
+const HOLDER_PURPOSES: Record<HolderProof['via'], readonly string[]> = {
+  session: ['org_mode.pass.holder_remove', 'org_mode.nfc.tag.holder_lost'],
+  verified_email: ['org_mode.pass.holder_attach'],
+  device: ['org_mode.pass.personalize'],
+};
 
 /** A holder grant is org_mode, has the one purpose its proof allows, and its target is its pass. */
 function assertHolderGrant(
@@ -193,10 +194,10 @@ function assertHolderGrant(
   p: Extract<Principal, { kind: 'holder' }>,
   input: GrantInput,
 ): void {
-  if (scope !== 'org_mode' || input.purpose !== HOLDER_PURPOSES[p.proof.via])
+  if (scope !== 'org_mode' || !HOLDER_PURPOSES[p.proof.via].includes(input.purpose))
     throw new AuthorityError(
       'GRANT_BAD_PRINCIPAL',
-      `A ${p.proof.via} holder holds ${HOLDER_PURPOSES[p.proof.via]} only.`,
+      `A ${p.proof.via} holder holds ${HOLDER_PURPOSES[p.proof.via].join(' or ')} only.`,
     );
   if (input.target !== undefined && input.target !== p.passId)
     throw new AuthorityError('GRANT_BAD_PRINCIPAL', "A holder grant's target is its pass.");

@@ -22,6 +22,7 @@ import { fieldRows } from './pass-fields.ts';
 import { PassHeader } from './pass-header.tsx';
 import { type HolderState, holderState, type MyPass, passName, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
+import { TagsCard } from './tags-card.tsx';
 import { publicUrlOf } from './wallet-actions.tsx';
 import './portal.css';
 
@@ -108,7 +109,12 @@ function Detail({
       inWallet={pass.inWallet}
       onAdd={() => setDip((n) => n + 1)}
       rise={dealt}
-      details={<DetailsCard pass={pass} view={view} state={state} />}
+      details={
+        <div className="flex flex-col gap-6">
+          {state === 'active' ? <TagsCard tags={pass.tags} orgName={pass.orgName} /> : null}
+          <DetailsCard pass={pass} view={view} state={state} />
+        </div>
+      }
       buddy={(props) => <Buddy {...props} />}
     />
   );

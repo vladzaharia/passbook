@@ -39,6 +39,7 @@ import {
   revokeAllMySessions,
   revokeMySession,
 } from './service-account.ts';
+import { reportMyTagLost } from './service-tags.ts';
 
 type C = Context<AppBindings>;
 const sessionId = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessionId : '');
@@ -178,6 +179,26 @@ register(
   },
   async (c) =>
     c.json(await getMyRemoval(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
+);
+register(
+  meRoutes,
+  'me',
+  {
+    method: 'post',
+    path: '/tags/{id}/lost',
+    summary: 'Report one of my tags lost (an admin restores it)',
+    params: IdParamSchema,
+    response: OkSchema,
+  },
+  async (c) =>
+    c.json(
+      await reportMyTagLost(
+        serviceContext(c),
+        currentUserId(c),
+        sessionId(c),
+        c.req.valid('param').id,
+      ),
+    ),
 );
 register(
   meRoutes,

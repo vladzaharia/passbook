@@ -91,3 +91,6 @@ export const makePrimaryEmail = (email: string) =>
 
 export const revokeSession = (id: string) =>
   api.delete(`/api/v1/me/sessions/${encodeURIComponent(id)}`);
+
+export const reportTagLost = (id: string) =>
+  api.post(`/api/v1/me/tags/${encodeURIComponent(id)}/lost`, OkSchema);

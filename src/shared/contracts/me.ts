@@ -10,6 +10,20 @@ export const WalletOfferSchema = z.object({
 });
 export type WalletOffer = z.infer<typeof WalletOfferSchema>;
 
+/** A tag the holder sees on a pass: no kind, assurance, who bound it or where it was seen. */
+export const MyTagSchema = z.object({
+  id: IdSchema,
+  label: z.string().nullable(),
+  /** Four characters that tell the holder's tags apart; not part of the UID. */
+  hint: z.string().regex(/^[0-9A-F]{4}$/),
+  /** `pass` opens this pass; `user` opens every pass of the holder in this org. */
+  scope: z.enum(['pass', 'user']),
+  boundAt: TimestampSchema,
+  /** Set on a tag reported lost, which stays listed for 30 days. */
+  lostAt: TimestampSchema.nullable(),
+});
+export type MyTag = z.infer<typeof MyTagSchema>;
+
 export const MyPassSchema = z.object({
   id: IdSchema,
   title: z.string().nullable(),
@@ -38,6 +52,8 @@ export const MyPassSchema = z.object({
   assetBaseUrl: z.string().nullable(),
   /** Image files the pass can load: template files plus per-pass overrides. */
   assetNames: z.array(z.string()),
+  /** Tags that open this pass: its own and the holder's account-wide ones in this org. */
+  tags: z.array(MyTagSchema).default([]),
   /** Apple device registration was reported; current installation is unknown (leaves Add all). */
   inWallet: z.boolean(),
   /** One pass only: the org's checked support contacts (the voided note names them). */
