@@ -38,8 +38,13 @@ export function textColors(bg: Rgb): { foreground: Rgb; label: Rgb } {
   return { foreground, label: contrast(soft, bg) >= 3 ? soft : foreground };
 }
 
-/** Codes offered besides the blueprint's own. */
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK'];
+/** The common codes lead; the rest are the ISO codes the browser's money formatting knows. */
+const COMMON = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK'];
+const currencies = (): string[] => {
+  const known =
+    typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('currency') : [];
+  return [...COMMON, ...known];
+};
 
 type Dict = Record<string, unknown>;
 const currencyNode = (doc: DesignDoc): Dict | null => {
@@ -65,7 +70,7 @@ export function choicesOf(doc: DesignDoc): Choices {
   const node = currencyNode(doc);
   if (node) {
     const own = typeof node.default === 'string' ? node.default : 'USD';
-    const options = [...new Set([own, ...CURRENCIES])].filter((c) => acceptable(node, c));
+    const options = [...new Set([own, ...currencies()])].filter((c) => acceptable(node, c));
     out.currency = { value: own, options };
   }
   return out;
