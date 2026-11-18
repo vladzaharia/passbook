@@ -7,6 +7,10 @@ export const LEGACY_SECRETS = [
 ];
 export const LIFECYCLE_RULE = 'expire-uploads';
 export const LIFECYCLE_PREFIX = 'uploads/';
+// Receipt heads (modules/retention/head-store.ts) stay as long as D1 keeps receipts (RECEIPT_KEEP_MS).
+export const RECEIPT_LOCK_RULE = 'retention-receipts';
+export const RECEIPT_LOCK_PREFIX = 'retention/receipts/';
+export const RECEIPT_LOCK_DAYS = 6 * 365;
 const ZERO_ID = '00000000-0000-0000-0000-000000000000';
 
 export interface WranglerNames {
@@ -83,6 +87,25 @@ export function buildSteps(n: WranglerNames): Step[] {
         LIFECYCLE_PREFIX,
         '--expire-days',
         '1',
+      ],
+    },
+    {
+      title: `R2 lock ${RECEIPT_LOCK_PREFIX} (${RECEIPT_LOCK_DAYS} days)`,
+      probe: {
+        args: ['r2', 'bucket', 'lock', 'list', n.bucket],
+        done: (o) => hasWord(o, RECEIPT_LOCK_RULE),
+      },
+      args: [
+        'r2',
+        'bucket',
+        'lock',
+        'add',
+        n.bucket,
+        RECEIPT_LOCK_RULE,
+        RECEIPT_LOCK_PREFIX,
+        '--retention-days',
+        String(RECEIPT_LOCK_DAYS),
+        '--force',
       ],
     },
     ...LEGACY_SECRETS.map(
