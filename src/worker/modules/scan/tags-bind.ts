@@ -19,12 +19,7 @@ import { grantedAudit } from '../audit/repo-granted.ts';
 import { tagsEnabled } from '../nfc/policy.ts';
 import { activeBinding, type PassFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
-import {
-  addBind,
-  type BindPlan,
-  bindChecks,
-  type TagActor,
-} from '../nfc/repo-tags-write.ts';
+import { addBind, type BindPlan, bindChecks, type TagActor } from '../nfc/repo-tags-write.ts';
 import { canonicalUid, tagRef } from '../nfc/tag-ref.ts';
 import { decideBind, TAGS_PER_ORG_MODE, triggerRefusal } from '../nfc/tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
