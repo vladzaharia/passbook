@@ -263,7 +263,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     writes: [
       'retention_receipt_anchors:be676f0b2666',
       'retention_receipts:726f943d12d9',
-      'retention_receipts:dc272aa87a05',
+      'retention_receipts:7df4923eaf10',
     ],
   },
   'src/worker/modules/keys/repo-rewrap.ts': {
