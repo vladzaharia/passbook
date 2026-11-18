@@ -51,7 +51,7 @@ async function messagingInput(
 }
 
 /** Notifying updates a pass may get a day from all automatic messages, plus one slot kept free. */
-const RULE_BUDGET_CAP = 3;
+export const RULE_BUDGET_CAP = 3;
 
 /** The rule and window of an automatic message's own run; its clearing follow-up has neither. */
 function ruleRun(row: BroadcastRow) {
@@ -165,7 +165,7 @@ async function applyOne(
 }
 
 export function targetFilter(
-  row: Pick<BroadcastRow, 'org_id' | 'mode' | 'target'> & { rule_id?: string | null },
+  row: Pick<BroadcastRow, 'org_id' | 'mode' | 'target'> & { id?: string; rule_id?: string | null },
   cursor: string | null,
   limit: number,
 ) {
@@ -179,8 +179,10 @@ export function targetFilter(
     ...(target.q ? { q: target.q } : {}),
     ...(target.scan ? { scan: target.scan } : {}),
     ...(target.match ? { match: target.match } : {}),
-    ...(target.window && row.rule_id ? { window: target.window, ruleId: row.rule_id } : {}),
+    ...(target.window ? { window: target.window, ruleId: row.rule_id ?? '' } : {}),
     ...(target.sentBy ? { sentBy: target.sentBy } : {}),
+    ...(target.passIds?.[0] ? { passId: target.passIds[0] } : {}),
+    ...(row.id ? { broadcastId: row.id } : {}),
     ...(cursor ? { cursor } : {}),
     limit,
   };

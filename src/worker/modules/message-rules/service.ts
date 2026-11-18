@@ -9,11 +9,14 @@ import { batch } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { listBroadcastDtos } from '../broadcasts/service.ts';
+import { insertAuthorizedBroadcastStmt } from '../broadcasts/repo.ts';
+import { getBroadcastDto, listBroadcastDtos } from '../broadcasts/service.ts';
+import { launchBroadcast } from '../broadcasts/start.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
-import { toRuleDto } from './dto.ts';
+import { anchorOf, offsetOf, toRuleDto } from './dto.ts';
 import * as repo from './repo.ts';
 import { checkRuleTemplates } from './validate.ts';
 import { firstCheckAt } from './windows.ts';
@@ -224,4 +227,62 @@ export async function listRuns(
     ruleId: rule.id,
     ...query,
   });
+}
+
+/**
+ * Sends the rule's text now to one of its own passes, as a one-pass run that notifies and counts
+ * toward the pass's limit. It writes no fire row, so the rule still sends on its day.
+ */
+export async function testRule(
+  ctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  passId: string,
+  authority: TenantPassWrite,
+): Promise<BroadcastDto> {
+  const row = await requireRule(ctx, id, authority.orgId);
+  if (row.mode !== authority.mode)
+    throw new NotFoundError('Automatic message not found.', 'RULE_NOT_FOUND');
+  const pass = await getPass(ctx.env.DB, passId, row.org_id);
+  const templateIds = JSON.parse(row.template_ids) as string[];
+  if (!pass || pass.mode !== row.mode || !templateIds.includes(pass.templateId))
+    throw new NotFoundError('Pass not found for this automatic message.', 'PASS_NOT_FOUND');
+  await checkRuleTemplates(ctx, row.org_id, templateIds, anchorOf(row), offsetOf(row));
+  const now = ctx.clock.now();
+  const broadcastId = ctx.ids.id();
+  const [inserted] = await batch(ctx.env.DB, [
+    insertAuthorizedBroadcastStmt(
+      ctx.env.DB,
+      {
+        id: broadcastId,
+        orgId: row.org_id,
+        mode: row.mode,
+        kind: 'message',
+        name: `Test: ${row.name}`.slice(0, 80),
+        state: 'scheduled',
+        target: { templateIds, passIds: [passId] },
+        patch: { message: row.message },
+        notify: true,
+        at: now,
+        clearAfter: row.clear_after,
+        ruleId: row.id,
+        windowKey: `test:${broadcastId}`,
+        actor: { type: actor.type, id: actor.id },
+        now,
+      },
+      authority,
+      now,
+    ),
+  ]);
+  if ((inserted?.meta.changes ?? 0) !== 1) throw new ForbiddenError();
+  await recordAudit(ctx, {
+    orgId: row.org_id,
+    actorType: actor.type,
+    actorId: actor.id,
+    action: 'message_rule.test',
+    targetType: 'message_rule',
+    targetId: id,
+  });
+  await launchBroadcast(ctx, { id: broadcastId, org_id: row.org_id });
+  return getBroadcastDto(ctx, broadcastId, row.org_id);
 }

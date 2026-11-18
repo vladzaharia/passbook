@@ -2,11 +2,15 @@ import { z } from 'zod';
 import {
   BroadcastListQuerySchema,
   BroadcastListSchema,
+  BroadcastSchema,
   IdParamSchema,
   MessageRuleBodySchema,
   MessageRuleListQuerySchema,
   MessageRuleListSchema,
   MessageRuleSchema,
+  RulePreviewBodySchema,
+  RulePreviewSchema,
+  RuleTestBodySchema,
   UpdateMessageRuleSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
@@ -22,6 +26,7 @@ import {
   type TenantPassWrite,
   tenantAuthorityOf,
 } from '../passes/http.ts';
+import { previewRule } from './preview.ts';
 import {
   createRule,
   deleteRule,
@@ -30,6 +35,7 @@ import {
   listRuns,
   pauseRule,
   requireRule,
+  testRule,
   updateRule,
 } from './service.ts';
 
@@ -207,5 +213,47 @@ register(
     const { id } = c.req.valid('param');
     const { row } = await authorityOf(c, id, 'messages:read');
     return c.json(await listRuns(svc(c), row, c.req.valid('query')));
+  },
+);
+
+register(
+  messageRulesRoutes,
+  'message-rules',
+  {
+    method: 'post',
+    path: '/preview',
+    summary: 'Count the passes due each of the next 14 days',
+    body: RulePreviewBodySchema,
+    response: RulePreviewSchema,
+  },
+  async (c) => {
+    const ctx = svc(c);
+    const auth = authOf(c);
+    const body = c.req.valid('json');
+    assertOrg(c, body.orgId);
+    await tenantAuthorityOf(ctx, auth, body.orgId, 'messages:read');
+    return c.json(await previewRule(ctx, modeOf(auth), body));
+  },
+);
+
+register(
+  messageRulesRoutes,
+  'message-rules',
+  {
+    method: 'post',
+    path: '/{id}/test',
+    summary: 'Send the text now to one pass',
+    params: IdParamSchema,
+    body: RuleTestBodySchema,
+    status: 201,
+    response: BroadcastSchema,
+  },
+  async (c) => {
+    const { id } = c.req.valid('param');
+    const { authority } = await authorityOf(c, id, 'messages:manage');
+    return c.json(
+      await testRule(svc(c), actorFor(c), id, c.req.valid('json').passId, authority),
+      201,
+    );
   },
 );

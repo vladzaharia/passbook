@@ -1,4 +1,4 @@
-import { run, type SqlValue } from '../../platform/db.ts';
+import { first, run, type SqlValue } from '../../platform/db.ts';
 import type { RuleWindow } from './windows.ts';
 
 type Sql = { sql: string; params: SqlValue[] };
@@ -52,15 +52,17 @@ function windowSql(w: RuleWindow): Sql {
 
 /**
  * The predicate for a rule run: the pass is inside the window and has no fire row for this
- * occurrence. Both sides use the same value, so the exclusion and the claim agree.
+ * occurrence, except a row this same run wrote (a retried chunk finishes its own claims, so a crash
+ * after the publish still gets counted). Both sides use the same value: exclusion and claim agree.
  */
-export function ruleWindowWhere(w: RuleWindow, ruleId: string): Sql {
+export function ruleWindowWhere(w: RuleWindow, ruleId: string, broadcastId = ''): Sql {
   const win = windowSql(w);
   const occ = occurrenceSql(w);
   return {
     sql: `(${win.sql}) AND NOT EXISTS (SELECT 1 FROM message_rule_fires f
-      WHERE f.rule_id = ? AND f.pass_id = ${PASS}.id AND f.occurrence = ${occ.sql})`,
-    params: [...win.params, ruleId, ...occ.params],
+      WHERE f.rule_id = ? AND f.pass_id = ${PASS}.id AND f.occurrence = ${occ.sql}
+        AND COALESCE(f.broadcast_id, '') <> ?)`,
+    params: [...win.params, ruleId, ...occ.params, broadcastId],
   };
 }
 
@@ -74,7 +76,10 @@ export interface Claim {
   now: number;
 }
 
-/** Writes the fire row before the publish. False when the pass already fired this occurrence. */
+/**
+ * Writes the fire row before the publish. False when another run already fired this occurrence;
+ * true again for this run's own row, so a retry resumes it (the publish is idempotent).
+ */
 export async function claimFire(db: D1Database, c: Claim): Promise<boolean> {
   const occ = occurrenceSql(c.window);
   const { changes } = await run(
@@ -84,7 +89,14 @@ export async function claimFire(db: D1Database, c: Claim): Promise<boolean> {
      FROM ${PASS} WHERE ${PASS}.id = ? AND ${PASS}.org_id = ? AND ${PASS}.mode = ? AND ${occ.sql} IS NOT NULL`,
     [c.ruleId, ...occ.params, c.broadcastId, c.now, c.passId, c.orgId, c.mode, ...occ.params],
   );
-  return changes === 1;
+  if (changes === 1) return true;
+  const own = await first<{ one: number }>(
+    db,
+    `SELECT 1 AS one FROM message_rule_fires f WHERE f.rule_id = ? AND f.pass_id = ? AND f.broadcast_id = ?
+       AND f.occurrence = (SELECT ${occ.sql} FROM ${PASS} WHERE ${PASS}.id = ?)`,
+    [c.ruleId, c.passId, c.broadcastId, ...occ.params, c.passId],
+  );
+  return own !== null;
 }
 
 /** A pass-level failure: the claim goes, so a later check inside the window retries. */

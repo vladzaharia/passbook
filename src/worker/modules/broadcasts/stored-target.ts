@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { BroadcastTargetSchema } from '../../../shared/contracts/broadcasts.ts';
 import { IdSchema } from '../../../shared/contracts/common.ts';
 import { RuleWindowSchema } from '../message-rules/windows.ts';
@@ -9,4 +10,6 @@ import { RuleWindowSchema } from '../message-rules/windows.ts';
 export const StoredBroadcastTargetSchema = BroadcastTargetSchema.extend({
   window: RuleWindowSchema.optional(),
   sentBy: IdSchema.optional(),
+  /** A test send of an automatic message: this pass only. */
+  passIds: z.array(IdSchema).max(1).optional(),
 });
