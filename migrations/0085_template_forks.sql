@@ -35,6 +35,7 @@ CREATE TABLE template_version_bases (
   inferred INTEGER NOT NULL DEFAULT 0 CHECK (inferred IN (0, 1)),
   created_at INTEGER NOT NULL,
   PRIMARY KEY (template_id, version, upstream_version),
+  FOREIGN KEY (template_id) REFERENCES template_forks (template_id) ON DELETE CASCADE,
   FOREIGN KEY (template_id, version) REFERENCES template_versions (template_id, version),
   FOREIGN KEY (upstream_id, upstream_version) REFERENCES template_versions (template_id, version)
 ) WITHOUT ROWID;
