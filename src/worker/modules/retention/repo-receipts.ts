@@ -1,4 +1,8 @@
-import { assertReadOnly, assertSqlText } from '../../platform/authority-sqltext.ts';
+import {
+  assertPlainParams,
+  assertReadOnly,
+  assertSqlText,
+} from '../../platform/authority-sqltext.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { Anchor, Receipt, ReceiptBody } from './receipts.ts';
@@ -69,7 +73,7 @@ export function receiptInsertStmt(
     `INSERT INTO retention_receipts (${COLS})
      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
      WHERE coalesce((SELECT max(seq) FROM retention_receipts WHERE org_id IS ? AND class = ?), 0) = ?
-     ${gate ? `AND ${gate.sql}` : ''}`,
+     ${gate ? `AND (${gate.sql})` : ''}`,
     [
       body.id,
       body.orgId,
@@ -215,6 +219,23 @@ export async function trimChain(db: D1Database, anchor: Anchor): Promise<number>
 export function assertGate(sql: string): void {
   assertSqlText(sql, 'A receipt gate');
   assertReadOnly(sql, 'A receipt gate');
-  if (!/^\(SELECT count\(\*\) FROM [a-z_]+ WHERE /.test(sql))
+  assertPlainParams(sql, 'A receipt gate');
+  const close = closingParen(sql);
+  // One count subquery, then at most a comparison with one bound value: nothing can widen it (OR 1=1).
+  if (
+    !/^\(SELECT count\(\*\) FROM [a-z_]+ WHERE /.test(sql) ||
+    close < 0 ||
+    !/^(\s*(=|<>|!=|<=|>=|<|>)\s*\?)?$/.test(sql.slice(close + 1))
+  )
     throw new ConflictError('A receipt gate counts eligible rows.', 'RETENTION_GATE_INVALID');
+}
+
+/** Index of the parenthesis closing the one at 0. */
+function closingParen(sql: string): number {
+  let depth = 0;
+  for (let i = 0; i < sql.length; i++) {
+    if (sql[i] === '(') depth++;
+    else if (sql[i] === ')' && --depth === 0) return i;
+  }
+  return -1;
 }

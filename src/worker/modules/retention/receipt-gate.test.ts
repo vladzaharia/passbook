@@ -23,6 +23,10 @@ describe('receipt gate', () => {
       '1 = 1',
       '(SELECT count(*) FROM event_feed WHERE 1); DELETE FROM scans',
       '(SELECT count(*) FROM event_feed WHERE 1) = 1 OR EXISTS (SELECT 1 FROM x WHERE 1) -- ',
+      '(SELECT count(*) FROM event_feed WHERE event_feed.at < ?) = ? OR 1=1',
+      '(SELECT count(*) FROM event_feed WHERE event_feed.at < ?) OR 1=1',
+      '(SELECT count(*) FROM event_feed WHERE event_feed.at < ?1) = ?',
+      '(SELECT count(*) FROM event_feed WHERE event_feed.at < :cutoff) = ?',
     ])
       await expect(prepareReceipt(rk.kit.ctx, input, { sql, params: [] })).rejects.toThrow();
   });
