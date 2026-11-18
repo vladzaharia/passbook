@@ -23,6 +23,8 @@ export interface UndoPlan {
   gate: UndoGate;
   presence: UndoPresence | null;
   event: ScanEventRow | null;
+  /** A scan at a tracked zone: its rows are undone by group (`addUndo`), not as presence. */
+  zone: boolean;
 }
 
 /**
@@ -72,6 +74,9 @@ export async function planUndo(actor: ScanActor, read: UndoRead): Promise<UndoPl
     gate.count < 1
   )
     throw superseded();
-  if (target.presenceScope != null && !presence) throw superseded();
-  return { target, gate, presence: target.presenceScope == null ? null : presence, event };
+  // A scan at a tracked zone wrote its in/out row by group, not as presence.
+  const zone = target.presenceScope?.startsWith('zone:') === true;
+  if (!zone && target.presenceScope != null && !presence) throw superseded();
+  const kept = zone || target.presenceScope == null ? null : presence;
+  return { target, gate, presence: kept, event, zone };
 }

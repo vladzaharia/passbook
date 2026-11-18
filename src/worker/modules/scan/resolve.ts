@@ -3,7 +3,7 @@ import { HIDDEN_STOP_LABEL } from '../../../passkit/template/scan-display/privac
 import type { PassJson, PassStyle } from '../../../passkit/types.ts';
 import { PASS_STYLES } from '../../../passkit/types.ts';
 import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
-import type { ScanAccess, ScanReason } from '../../../shared/contracts/scan.ts';
+import type { ScanAccess, ScanOccupancy, ScanReason } from '../../../shared/contracts/scan.ts';
 import {
   type ResolvedScanAction,
   type ResolvedScanManifest,
@@ -20,6 +20,7 @@ import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
 import { scannerPassActive } from './member-photo.ts';
+import type { FoundOccupancy } from './occupancy/admission.ts';
 import {
   type Candidate,
   hasScanPolicy,
@@ -57,6 +58,8 @@ export interface Found extends ReleaseSnapshot, WalletSnapshot, CredentialTombst
   eventAdmissionReason?: ScanReason | null;
   /** An Access card at a door: the verdict and the gate's rules (AX 3.4). Never on an event scanner. */
   access?: FoundAccess;
+  /** An Access card at a door with a tracked zone: where the scan counts and which way (SA §20.3). */
+  occupancy?: FoundOccupancy;
 }
 
 /** Everything a stop step knows: the pass and template only when a step got far enough to find them. */
@@ -75,6 +78,8 @@ export interface Stop
   access?: ScanAccess;
   /** A held re-entry: how long until the next. */
   cooldownRemainingMs?: number;
+  /** A held Auto flip: the place as read and the direction offered. */
+  occupancy?: ScanOccupancy;
   flags: string[];
   found: Found | null;
   /** Internal ledger linkage for an inactive pass; never an output identity. */

@@ -39,6 +39,8 @@ export interface EntryInput {
   waitMs?: number | null;
   /** AX's visit limit: holds when another visit is allowed (read in the same statement). */
   limit?: GrantCond | null;
+  /** The caller's own conditions on the entry (the visit gate's wait, an override still open). */
+  when?: GrantCond[];
 }
 
 export interface Moved {
@@ -60,6 +62,7 @@ export function addEntry(g: Grant, i: EntryInput): Moved {
   if (plan.parent) conds.push(repo.insideOf(passId, plan.parent, now));
   if (i.waitMs && !w.wait) conds.push(repo.waitedSince(passId, plan.place, now - i.waitMs));
   if (i.limit && !w.limit) conds.push(i.limit);
+  conds.push(...(i.when ?? []));
   const room = w.cap
     ? []
     : [plan, ...plan.implied].flatMap((p) =>
@@ -67,9 +70,10 @@ export function addEntry(g: Grant, i: EntryInput): Moved {
       );
   const inside = repo.insideOf(passId, plan.place, now);
   const row = { passId, place: plan.place, scanId, now, dueAt: plan.dueAt };
-  // A track-only repeat keeps `since`; it runs first, so the fresh entry below sees it inside.
+  // A track-only repeat keeps `since`; it runs first, so the fresh entry below sees it inside. It
+  // still enters an implied ancestor it is not in (past due, or tracked since), so their room holds.
   if (!plan.enforce && !w.inside)
-    repo.enterRow(g, { ...row, keep: true, when: [...conds, inside] });
+    repo.enterRow(g, { ...row, keep: true, when: [...conds, inside, ...room] });
   const fresh = w.inside ? [] : [not(inside)];
   repo.enterRow(g, { ...row, when: [...conds, ...room, ...fresh] });
   const won = repo.wrote(passId, plan.place, scanId);
@@ -102,7 +106,7 @@ export function addExit(
     now: number;
     plan: ExitPlan;
     lastScanId?: string;
-    /** Further conditions of the exit itself (the cron's pending claim). */
+    /** The caller's own conditions (its gate as read, an override still open). */
     when?: GrantCond[];
   },
 ): Moved {

@@ -205,6 +205,7 @@ export function stopOutcome(
     at: stop.at,
     cooldownRemainingMs: stop.cooldownRemainingMs ?? null,
     access: stop.access ?? null,
+    ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),
     flags: details.flags,
     checkIn: stop.found?.admission?.state,
     overridable:
