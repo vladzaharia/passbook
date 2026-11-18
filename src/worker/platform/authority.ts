@@ -305,7 +305,6 @@ export interface JobGrantInput extends Omit<GrantInput, 'principal'> {
 /** The purposes that may act while the org is suspended, with the tables each may write. */
 const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
   'org_mode.job.pass_import.finish': ['pass_imports', 'counters'],
-  // Scrubbing and deleting an ended import needs no live principal: a suspended org's data still ages out.
   'org_mode.job.pass_import.retention_clear': ['pass_imports', 'pass_import_rows'],
   'org_mode.job.pass_import.retention_delete': ['pass_imports', 'pass_import_rows'],
 };

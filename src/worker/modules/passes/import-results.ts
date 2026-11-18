@@ -3,11 +3,11 @@ import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditActor, recordAudit } from '../audit/service.ts';
+import { recordAudit } from '../audit/service.ts';
+import type { TenantPassWrite } from './http.ts';
 import { problemsOf } from './import-read.ts';
 import { passLinkRows, type ResultRow, resultRows } from './repo-import-results.ts';
 import type { ImportRow } from './repo-imports.ts';
-import type { Actor } from './service.ts';
 
 const PAGE = 500;
 const HEADER = [
@@ -35,7 +35,7 @@ const resultOf = (r: ResultRow): string => {
 export async function resultsCsv(
   ctx: ServiceContext,
   imp: ImportRow,
-  actor: Actor,
+  authority: TenantPassWrite,
 ): Promise<string> {
   if (imp.committed_at === null)
     throw new ConflictError('This import has not run yet.', 'IMPORT_STATE');
@@ -85,7 +85,8 @@ export async function resultsCsv(
   // Every pass link and email of the import left in one file: no tokens or addresses in the entry.
   await recordAudit(ctx, {
     orgId: imp.org_id,
-    ...auditActor(actor),
+    actorType: authority.kind === 'session' ? 'user' : 'api_key',
+    actorId: authority.kind === 'session' ? authority.userId : authority.keyId,
     action: 'pass_import.results_export',
     targetType: 'pass_import',
     targetId: imp.id,
