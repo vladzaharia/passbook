@@ -42,6 +42,7 @@ export const scopeCapability: Record<ApiScope, OrgCapability> = {
   'scans:write': 'passes:operate',
   'connections:read': 'integrations:read',
   'connections:write': 'integrations:manage',
+  'webhooks:manage': 'integrations:manage',
 };
 
 /** Scopes a creator may delegate: platform admins any, members only what their roles grant. */

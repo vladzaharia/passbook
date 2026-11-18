@@ -140,6 +140,7 @@ describe('api keys page', () => {
     expect(within(dialog).getByText('Pick at least one scope.')).toBeInTheDocument();
     expect(within(dialog).getByText('Platform-wide')).toBeInTheDocument();
     expect(within(dialog).queryByRole('checkbox', { name: 'Scan as a terminal' })).toBeNull();
+    expect(within(dialog).getByRole('checkbox', { name: 'Manage webhooks' })).toBeInTheDocument();
 
     await user.type(within(dialog).getByLabelText(/Name/), 'CI key');
     await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));

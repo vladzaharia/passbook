@@ -98,6 +98,7 @@ export const SCOPE_LABEL: Record<string, string> = {
   'scans:write': 'Scan as a terminal',
   'connections:read': 'Read connections',
   'connections:write': 'Create and update connections',
+  'webhooks:manage': 'Manage webhooks',
 };
 
 const TerminalListSchema = pageOf(
