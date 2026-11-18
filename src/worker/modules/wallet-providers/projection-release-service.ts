@@ -15,6 +15,7 @@ import {
   getRelease,
 } from '../templates/repo-releases.ts';
 import type { WalletCredentialKeysetProof } from './instance-types.ts';
+import { publishableSchema } from './projection-contract.ts';
 import {
   captureProjectionProof,
   changed,
@@ -23,6 +24,7 @@ import {
   pinProjectionContext,
   releaseDto,
   requireProjectionProof,
+  schemaRefused,
   scopedCandidate,
   scopedTemplate,
 } from './projection-service-support.ts';
@@ -54,8 +56,10 @@ async function publish(
   const db = ctx.env.DB;
   const head = await getLatestRelease(db, scope);
   if ((head?.generation ?? 0) !== expectedGeneration) throw changed();
+  if (!publishableSchema(candidate.provider, candidate.projection.schema))
+    throw schemaRefused(candidate.provider);
   if (
-    candidate.provider !== 'samsung' ||
+    candidate.provider === 'samsung' &&
     !(await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.candidateHash, proof))
   )
     throw changed();

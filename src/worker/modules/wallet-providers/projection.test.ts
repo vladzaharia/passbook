@@ -472,7 +472,7 @@ describe('native projection approval', () => {
         candidateHash: draft.candidateHash,
         expectedGeneration: 0,
       }),
-    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
+    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_SCHEMA' });
     expect(
       await getApprovedProjection(test.ctx, { ...lookup(test), provider: 'google' }, test.proof),
     ).toBeNull();

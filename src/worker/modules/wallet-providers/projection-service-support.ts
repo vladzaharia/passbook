@@ -16,6 +16,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { assertTemplateAuthority, type TemplateAuthority } from '../templates/access.ts';
 import { candidateHash } from '../templates/release-content.ts';
+import { getVersion } from '../templates/repo.ts';
 import type { ApprovalRow, ReleaseRow } from '../templates/repo-releases.ts';
 import { loadTemplate } from '../templates/service.ts';
 import {
@@ -31,6 +32,7 @@ import {
   projectionPolicy,
   providerIdentityHash,
 } from './projection-contract.ts';
+import { computeProjectionPins, samePins, unreleasable, walletsHash } from './projection-pins.ts';
 import { assertProjectionSource, verifiedAppleSource } from './projection-source.ts';
 import {
   getProjectionCandidate,
@@ -59,12 +61,21 @@ export interface ApprovedProjection extends WalletCredentialKeysetProof {
     providerIdentityHash: string;
   };
   projection: NativeProjection;
+  /** Q21: a compiler update added an omission; new offers wait for re-approval. */
+  offersPaused: boolean;
 }
 
 export const changed = () =>
   new ConflictError(
     'The wallet projection, source release or provider account changed.',
     'WALLET_PROJECTION_CONFLICT',
+  );
+export const schemaRefused = (provider: NativeProvider) =>
+  new ConflictError(
+    provider === 'google'
+      ? 'Create a new candidate: Google releases use the compiled wallet format.'
+      : 'Samsung releases are not open yet.',
+    'WALLET_PROJECTION_SCHEMA',
   );
 const missing = () =>
   new NotFoundError('Wallet projection candidate not found.', 'WALLET_PROJECTION_NOT_FOUND');
@@ -219,6 +230,8 @@ export async function verifiedCandidate(
     (await providerIdentityHash(account)) !== candidate.providerIdentityHash
   )
     return false;
+  if (candidate.projection.schema === 2)
+    return candidate.projection.wallets === (await walletsHash(source.version.manifest.wallets));
   try {
     assertProjectionSource(candidate.projection, source.version);
   } catch (error) {
@@ -226,6 +239,18 @@ export async function verifiedCandidate(
     throw error;
   }
   return true;
+}
+
+/**
+ * Review, approval and publication need the pins exactly as they are now: a compiler revision or a
+ * report that moved since the candidate was made re-opens review (architecture 4.3).
+ */
+async function currentPins(ctx: ServiceContext, candidate: ProjectionCandidate): Promise<boolean> {
+  if (candidate.projection.schema !== 2) return true;
+  const version = await getVersion(ctx.env.DB, candidate.templateId, candidate.version);
+  if (!version) return false;
+  const { pins, report } = await computeProjectionPins(ctx, candidate.provider, version);
+  return !unreleasable(report) && samePins(pins, candidate.projection);
 }
 export async function scopedCandidate(
   ctx: ServiceContext,
@@ -236,7 +261,11 @@ export async function scopedCandidate(
 ): Promise<ProjectionCandidate> {
   const candidate = await getProjectionCandidate(ctx.env.DB, id);
   if (!candidate || !sameScope(candidate, scope)) throw missing();
-  if (candidate.candidateHash !== hash || !(await verifiedCandidate(ctx, candidate, proof)))
+  if (
+    candidate.candidateHash !== hash ||
+    !(await verifiedCandidate(ctx, candidate, proof)) ||
+    !(await currentPins(ctx, candidate))
+  )
     throw changed();
   return candidate;
 }

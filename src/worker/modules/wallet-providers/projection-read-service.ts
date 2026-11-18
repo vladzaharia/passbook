@@ -8,13 +8,16 @@ import type {
 import type { AuthContext } from '../../platform/auth.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { getVersion } from '../templates/repo.ts';
 import { getLatestRelease, listReleases as selectReleases } from '../templates/repo-releases.ts';
 import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
   type NativeProvider,
   NativeProviderSchema,
   projectionPolicy,
+  publishableSchema,
 } from './projection-contract.ts';
+import { offersPausedByCompiler } from './projection-pins.ts';
 import {
   type ApprovedProjection,
   type ApprovedProjectionScope,
@@ -87,8 +90,9 @@ export async function getApprovedProjection(
     !(await verifiedCandidate(ctx, candidate, pinnedProof))
   )
     return null;
+  if (!publishableSchema(candidate.provider, candidate.projection.schema)) return null;
   if (
-    candidate.provider !== 'samsung' ||
+    candidate.provider === 'samsung' &&
     !(await ensureSamsungProjectionEvidence(
       ctx,
       candidate.id,
@@ -111,10 +115,17 @@ export async function getApprovedProjection(
     }))
   )
     return null;
+  const version =
+    candidate.projection.schema === 2
+      ? await getVersion(ctx.env.DB, scope.templateId, candidate.version)
+      : null;
   return {
     release: releaseDto(row, candidate),
     projection: candidate.projection,
     credentialKeysetCommitment,
+    offersPaused:
+      candidate.projection.schema === 2 &&
+      (!version || (await offersPausedByCompiler(ctx, candidate.projection, version))),
   };
 }
 

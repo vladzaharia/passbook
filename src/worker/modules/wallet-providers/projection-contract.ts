@@ -66,7 +66,7 @@ export const SamsungProjectionSchema = z.strictObject({
   appLinkName: z.string().min(1).max(32),
   appLinkData: HttpsUrlSchema,
 });
-export const NativeProjectionSchema = z
+const ProjectionV1Schema = z
   .discriminatedUnion('provider', [GoogleProjectionSchema, SamsungProjectionSchema])
   .superRefine((value, context) => {
     if (new Set(value.fields).size !== value.fields.length)
@@ -88,14 +88,62 @@ export const NativeProjectionSchema = z
         message: 'Artwork slots must be unique.',
       });
   });
+
+/**
+ * Schema 2 (architecture 4.3): the compiler is the content, so a candidate pins what it was
+ * approved against instead of mapping fields. `provider` is the architecture's `target`.
+ */
+const Sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
+export const ProjectionV2Schema = z.strictObject({
+  schema: z.literal(2),
+  provider: NativeProviderSchema,
+  type: z.string().min(1).max(32),
+  compilerRevision: z.number().int().positive(),
+  /** SHA-256 of the canonical `manifest.wallets` block (`null` when the version has none). */
+  wallets: Sha256Schema,
+  /** SHA-256 of the canonical fidelity report. */
+  report: Sha256Schema,
+  /** Every omission the reviewer approved, as `capability` or `capability@path`, sorted. */
+  approvedOmissions: z.array(z.string().min(1).max(200)).max(200),
+});
+export type ProjectionV2 = z.infer<typeof ProjectionV2Schema>;
+/** What an author sends: the server computes every pin and requires the omissions to match. */
+export const ProjectionV2RequestSchema = z.strictObject({
+  schema: z.literal(2),
+  provider: NativeProviderSchema,
+  approvedOmissions: ProjectionV2Schema.shape.approvedOmissions,
+});
+
+export type ProjectionV2Request = z.infer<typeof ProjectionV2RequestSchema>;
+
+export const NativeProjectionSchema = z.union([ProjectionV1Schema, ProjectionV2Schema]);
 export type NativeProjection = z.infer<typeof NativeProjectionSchema>;
+export type ProjectionV1 = Exclude<NativeProjection, ProjectionV2>;
 export type GoogleProjection = z.infer<typeof GoogleProjectionSchema>;
 export type SamsungProjection = z.infer<typeof SamsungProjectionSchema>;
 
-/** Normalize an unordered acknowledgement before it is hashed and shown to a reviewer. */
-export function normalizeNativeProjection(input: unknown): NativeProjection {
-  const value = NativeProjectionSchema.parse(input);
+/** Normalize an unordered schema 1 acknowledgement before it is hashed and shown to a reviewer. */
+export function normalizeNativeProjection(input: unknown): ProjectionV1 {
+  const value = ProjectionV1Schema.parse(input);
   return { ...value, sourceArtworkSlots: [...value.sourceArtworkSlots].sort() };
+}
+
+/** What a candidate request may carry: schema 1, or schema 2 as a request or with its pins. */
+export function parseProjectionInput(
+  input: unknown,
+): ProjectionV1 | ProjectionV2 | ProjectionV2Request {
+  const request = ProjectionV2RequestSchema.safeParse(input);
+  if (request.success) return request.data;
+  const pinned = ProjectionV2Schema.safeParse(input);
+  return pinned.success ? pinned.data : normalizeNativeProjection(input);
+}
+
+/**
+ * Schema 1 maps fields by hand and is refused for Google. Samsung keeps it only while its runtime
+ * and card evidence still read those fields (CW10b ports them); Samsung schema 2 stays unpublishable.
+ */
+export function publishableSchema(provider: NativeProvider, schema: 1 | 2): boolean {
+  return provider === 'google' ? schema === 2 : schema === 1;
 }
 
 /** The non-secret provider identity is hashed; private credentials never enter a projection. */

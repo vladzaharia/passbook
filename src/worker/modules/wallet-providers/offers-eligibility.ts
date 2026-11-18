@@ -142,6 +142,7 @@ export async function offerStillCurrent(
   );
   if (
     !current ||
+    current.offersPaused ||
     current.release.id !== approved.release.id ||
     current.release.candidateHash !== approved.release.candidateHash ||
     current.release.accountId !== runtimeScope.accountId ||
@@ -211,7 +212,7 @@ export async function eligibleWalletProvider(
     },
     { credentialKeysetCommitment: snapshot.credentialKeysetCommitment },
   );
-  if (!approved || approved.projection.provider !== provider) return null;
+  if (!approved || approved.offersPaused || approved.projection.provider !== provider) return null;
   const runtimeScope: WalletRuntimeScope = {
     orgId: pass.orgId,
     mode: pass.mode,

@@ -1,3 +1,4 @@
+import { isWalletArtName } from '../../../passkit/template/wallets/schema.ts';
 import type { AssetEntry } from '../../../passkit/types.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ConflictError } from '../../platform/errors.ts';
@@ -10,7 +11,7 @@ import {
 import { getVersion, type VersionRow } from '../templates/repo.ts';
 import { listVersionExtras } from '../templates/repo-preview-extras.ts';
 import { getCandidate, getRelease, type ReleaseRow } from '../templates/repo-releases.ts';
-import type { NativeProjection } from './projection-contract.ts';
+import type { GoogleProjection, SamsungProjection } from './projection-contract.ts';
 import { effectiveAppleSourceId } from './repo-projection.ts';
 
 const unsupported = () =>
@@ -31,7 +32,7 @@ export interface ProjectionSourceDocument {
 
 /** Every renderable source semantic must be represented; unknown extensions fail closed. */
 export function assertProjectionSource(
-  projection: NativeProjection,
+  projection: GoogleProjection | SamsungProjection,
   version: ProjectionSourceDocument,
 ): void {
   const manifest: unknown = version.manifest;
@@ -52,6 +53,7 @@ export function assertProjectionSource(
       'previewOnlyAssets',
       'scan',
       'nfc',
+      'wallets',
     ])
   )
     throw unsupported();
@@ -186,7 +188,8 @@ export function assertProjectionSource(
   const previewNames = new Set((preview ?? []) as string[]);
   const slots = new Set<string>();
   for (const asset of version.assets) {
-    if (previewNames.has(asset.name)) continue;
+    // `wallets/**` is art for the compiled wallets; schema 1 never reads it.
+    if (previewNames.has(asset.name) || isWalletArtName(asset.name)) continue;
     if ((asset.slot !== 'icon' && asset.slot !== 'logo') || asset.locale !== undefined)
       throw unsupported();
     slots.add(asset.slot);
