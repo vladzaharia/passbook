@@ -13,23 +13,26 @@ type Session = Extract<TenantPassWrite, { kind: 'session' }>;
 export type TagAuthority = Session & { capability: 'passes:operate' };
 
 const TAG_TABLES = ['nfc_tags', 'tag_bindings'] as const;
+/** What an enrollment grant writes: its own row, and the binding it creates. */
+export const ENROLL_TABLES = ['tag_enrollments', 'nfc_tags', 'tag_bindings'] as const;
 const TAG_CODES = { lineage: 'TAG_HOLDER_CHANGED', stale: 'TAG_HOLDER_CHANGED' } as const;
 
 export type TagPurpose =
-  `org_mode.nfc.tag.${'bind' | 'unbind' | 'retire' | 'restore' | 'lost' | 'update'}`;
+  `org_mode.nfc.tag.${'bind' | 'unbind' | 'retire' | 'restore' | 'lost' | 'update' | 'rebind' | 'enroll_request' | 'enroll_cancel'}`;
 
 export function tagGrant(
   ctx: ServiceContext,
   purpose: TagPurpose,
   authority: TagAuthority,
   checks: Check[] = [],
+  tables: readonly string[] = TAG_TABLES,
 ): Grant {
   return grant(ctx, {
     purpose,
     principal: tenantPrincipal(authority),
     checks: [...capabilityChecks(authority), ...checks],
     codes: TAG_CODES,
-    tables: TAG_TABLES,
+    tables: [...tables],
   });
 }
 
@@ -73,6 +76,10 @@ export interface BindPlan {
   holderOwner: string | null;
   /** The tag is reported lost: this bind (a move or a restore) clears that. */
   clearsLost: boolean;
+  /** The lost report this bind clears, kept on the binding so a scanner Undo can restore it. */
+  cleared?: { at: number; by: string } | null;
+  /** A scanner bind's idempotency key and request hash: a retry replays the result. */
+  idempotency?: { key: string; hash: string } | null;
   /** The caller writes its own audit row (restore). */
   audited?: boolean;
   source: 'scanner' | 'remote' | 'admin';
@@ -122,6 +129,10 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       'scanner_id',
       'holder_generation',
       'holder_owner',
+      'idempotency_key',
+      'request_hash',
+      'cleared_lost_at',
+      'cleared_lost_by',
     ],
     values: [
       p.bindingId,
@@ -134,6 +145,10 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       p.scannerId,
       p.holderGeneration,
       p.holderOwner,
+      p.idempotency?.key ?? null,
+      p.idempotency?.hash ?? null,
+      p.cleared?.at ?? null,
+      p.cleared?.by ?? null,
     ],
     returning: ['id'],
   });
@@ -143,8 +158,9 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       ctx,
       {
         orgId: p.orgId,
-        actorType: p.actor.type === 'staff' ? 'user' : p.actor.type,
-        actorId: p.actor.id,
+        // A staff member is not a user row: the scanner is the actor and the staff id rides in the detail.
+        actorType: p.actor.type === 'staff' ? 'scanner' : p.actor.type,
+        actorId: p.actor.type === 'staff' ? (p.scannerId ?? p.actor.id) : p.actor.id,
         action: p.end?.cause === 'moved' ? 'tag.move' : 'tag.bind',
         targetType: 'tag',
         targetId: p.tagId,
@@ -154,6 +170,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
           passId: p.passId,
           ...(p.end ? { replaced: p.end.cause } : {}),
           ...(p.scannerId ? { scannerId: p.scannerId } : {}),
+          ...(p.actor.type === 'staff' ? { staffId: p.actor.id } : {}),
         },
       },
       [exists('tag_bindings', { id: p.bindingId })],

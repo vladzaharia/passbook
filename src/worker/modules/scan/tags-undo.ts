@@ -34,12 +34,18 @@ export async function undoOnScanner(
       ? { type: 'staff', id: staff.id }
       : { type: 'scanner', id: scannerId };
     const g = scanWriteGrant(ctx, actor, {
-      purpose: 'org_mode.scan.tag_undo',
+      purpose: 'org_mode.scan.tag.unbind',
       now,
       codes: { stale: 'TAG_NOT_FOUND' },
       tables: TABLES,
     });
     endBinding(g, row, 'undo', by, now);
+    // Undoing the takeover of a lost tag puts the lost report back.
+    if (row.clearedLostAt !== null)
+      g.update('nfc_tags', {
+        set: { lost_at: row.clearedLostAt, lost_by: row.clearedLostBy ?? 'unknown' },
+        where: { id: row.tagId },
+      });
     grantedAudit(g, ctx, {
       orgId: actor.orgId,
       actorType: 'scanner',

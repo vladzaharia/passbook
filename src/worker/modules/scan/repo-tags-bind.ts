@@ -71,6 +71,9 @@ export interface BoundRow {
   endedAt: number | null;
   orgId: string;
   mode: 'live' | 'test';
+  /** The lost report this bind cleared. */
+  clearedLostAt: number | null;
+  clearedLostBy: string | null;
 }
 
 /** A binding with its tenant, for undo and for a retried bind. */
@@ -85,9 +88,12 @@ export async function boundRow(db: D1Database, id: string): Promise<BoundRow | n
     ended_at: number | null;
     org_id: string;
     mode: 'live' | 'test';
+    cleared_lost_at: number | null;
+    cleared_lost_by: string | null;
   }>(
     db,
-    `SELECT b.id, b.tag_id, b.scope, b.scanner_id, b.source, b.bound_at, b.ended_at, t.org_id, t.mode
+    `SELECT b.id, b.tag_id, b.scope, b.scanner_id, b.source, b.bound_at, b.ended_at, t.org_id, t.mode,
+       b.cleared_lost_at, b.cleared_lost_by
      FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id WHERE b.id = ?`,
     [id],
   );
@@ -102,6 +108,8 @@ export async function boundRow(db: D1Database, id: string): Promise<BoundRow | n
         endedAt: r.ended_at,
         orgId: r.org_id,
         mode: r.mode,
+        clearedLostAt: r.cleared_lost_at,
+        clearedLostBy: r.cleared_lost_by,
       }
     : null;
 }
@@ -110,4 +118,78 @@ export async function boundRow(db: D1Database, id: string): Promise<BoundRow | n
 export function liveActorGuard(actor: ScanActor, now: number) {
   const read = authorityPredicate(scanPrincipal(actor), { scope: 'org_mode', now });
   return { sql: `EXISTS (WITH ${read.ctes} SELECT 1 FROM actor_ok)`, params: read.params };
+}
+
+export interface ReplayRow {
+  bindingId: string;
+  requestHash: string | null;
+  scope: 'pass' | 'user';
+  boundAt: number;
+  endedAt: number | null;
+  passId: string;
+  title: string | null;
+  subtitle: string | null;
+  templateName: string;
+  holderName: string | null;
+  ownerActive: boolean;
+  hint: string;
+  lostAt: number | null;
+}
+
+/** The binding this device made with this key, and what the answer names. */
+export async function replayRow(
+  db: D1Database,
+  scannerId: string,
+  key: string,
+): Promise<ReplayRow | null> {
+  const r = await first<{
+    id: string;
+    request_hash: string | null;
+    scope: 'pass' | 'user';
+    bound_at: number;
+    ended_at: number | null;
+    pass_id: string;
+    display_title: string | null;
+    display_subtitle: string | null;
+    template_name: string | null;
+    holder: string | null;
+    owner_status: string | null;
+    hint: string;
+    lost_at: number | null;
+  }>(
+    db,
+    `SELECT b.id, b.request_hash, b.scope, b.bound_at, b.ended_at, b.pass_id, p.display_title, p.display_subtitle,
+       tp.name AS template_name, u.name AS holder, u.status AS owner_status, t.hint, t.lost_at
+     FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id JOIN passes p ON p.id = b.pass_id
+     LEFT JOIN templates tp ON tp.id = p.template_id LEFT JOIN users u ON u.id = p.owner_user_id
+     WHERE b.scanner_id = ? AND b.idempotency_key = ?`,
+    [scannerId, key],
+  );
+  return r
+    ? {
+        bindingId: r.id,
+        requestHash: r.request_hash,
+        scope: r.scope,
+        boundAt: r.bound_at,
+        endedAt: r.ended_at,
+        passId: r.pass_id,
+        title: r.display_title,
+        subtitle: r.display_subtitle,
+        templateName: r.template_name ?? '',
+        holderName: r.holder,
+        ownerActive: r.owner_status === 'active',
+        hint: r.hint,
+        lostAt: r.lost_at,
+      }
+    : null;
+}
+
+/** The template of a pass, for what a scanner may be told about it. */
+export async function passTemplate(db: D1Database, passId: string): Promise<string | null> {
+  const r = await first<{ template_id: string }>(
+    db,
+    'SELECT template_id FROM passes WHERE id = ?',
+    [passId],
+  );
+  return r?.template_id ?? null;
 }

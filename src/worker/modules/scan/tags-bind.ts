@@ -13,6 +13,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { tagsEnabled } from '../nfc/policy.ts';
@@ -30,6 +31,7 @@ import {
   cardFacts,
   liveActorGuard,
   ownerActiveCheck,
+  replayRow,
 } from './repo-tags-bind.ts';
 import { guardMiss } from './repo-undo-approval-guard.ts';
 import { ROLE_RANK } from './rules.ts';
@@ -62,6 +64,48 @@ async function approve(
   const verified = await verifyApproval(ctx, actor, approval, liveActorGuard(actor, now));
   if (!verified) throw (await guardMiss(ctx.env.DB, actor, now)) ?? new ForbiddenError();
   return { id: verified.id, authEpoch: verified.authEpoch };
+}
+
+export /** What a bind asked for, without the tag's UID or the card's code. */
+const requestHash = (req: BindRequest, ref: string) =>
+  sha256Hex(JSON.stringify([ref, req.card, req.binding, req.move ?? false, req.label ?? null]));
+
+/** A retry of a bind this device already made: the stored answer, even after Undo. The same key for another request is refused. */
+async function replay(
+  ctx: ServiceContext,
+  scannerId: string,
+  req: BindRequest,
+  ref: string,
+): Promise<BindResult | null> {
+  if (req.preview) return null;
+  const row = await replayRow(ctx.env.DB, scannerId, req.idempotencyKey);
+  if (!row) return null;
+  if (row.requestHash !== (await requestHash(req, ref)))
+    throw new ConflictError(
+      'That request key was used for another assign.',
+      'IDEMPOTENCY_KEY_REUSED',
+    );
+  const live = row.endedAt === null && ctx.clock.now() - row.boundAt <= TAG_UNDO_MS;
+  return {
+    status: 'bound',
+    hint: row.hint,
+    assurance: 'basic',
+    scope: row.scope,
+    bindingId: row.bindingId,
+    card: {
+      passId: row.passId,
+      title: row.title ?? row.templateName,
+      subtitle: row.subtitle,
+      templateName: row.templateName,
+      holderName: row.holderName,
+      photoUrl: null,
+    },
+    ownerAccount: row.ownerActive,
+    skipped: [],
+    warnings: [],
+    lostAt: row.lostAt,
+    undoUntil: live ? row.boundAt + TAG_UNDO_MS : null,
+  };
 }
 
 export const notFound = () => new NotFoundError('Tag not found.', 'TAG_NOT_FOUND');
@@ -97,6 +141,10 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
   await bumpTagCap(db, req.preview ? 'preview' : 'bind', scannerId, ctx.clock.now());
   const uid = tagUid(req.tag);
+  await ensureCredentialRefKeyset(db, ctx.env);
+  const { ref, hint } = await tagRef(ctx.env, orgId, mode, canonicalUid(uid));
+  const replayed = await replay(ctx, scannerId, req, ref);
+  if (replayed) return replayed;
 
   // A Manager PIN stands in for a role below the setting, and is the only way to look a card up by id.
   const manager = rights.role === 'manager';
@@ -133,8 +181,6 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     credentialGeneration: pass.credentialGeneration,
     deletedAt: pass.deletedAt,
   };
-  await ensureCredentialRefKeyset(db, ctx.env);
-  const { ref, hint } = await tagRef(ctx.env, orgId, mode, canonicalUid(uid));
   const summary = {
     passId: pass.id,
     title: pass.displayTitle ?? card.templateName,
@@ -207,6 +253,8 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       holderGeneration: pass.credentialGeneration,
       holderOwner: pass.ownerUserId,
       clearsLost: tag?.lostAt != null,
+      cleared: tag?.lostAt != null ? { at: tag.lostAt, by: tag.lostBy ?? 'unknown' } : null,
+      idempotency: { key: req.idempotencyKey, hash: await requestHash(req, ref) },
       source: 'scanner',
       actor: by,
       scannerId,
@@ -214,7 +262,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       mode,
     };
     const g = scanWriteGrant(ctx, actor, {
-      purpose: 'org_mode.scan.tag_bind',
+      purpose: 'org_mode.scan.tag.bind',
       now,
       pass: { id: pass.id, facts: { pass, credential: {} } },
       credentialRefs: refs.credentialTombstoneRefs,
@@ -253,6 +301,8 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       const refusal = triggerRefusal(error);
       if (refusal) throw refusal;
       if (classifyD1Error(error)?.kind !== 'unique' || attempt >= ATTEMPTS) throw error;
+      const again = await replay(ctx, scannerId, req, ref);
+      if (again) return again;
       continue;
     }
     // The tag row came from a concurrent bind under another id: read again.

@@ -1347,3 +1347,93 @@ describe('0086_nfc_tags migration', () => {
     expect(await first(env.DB, "SELECT 1 AS x FROM nfc_tags WHERE id = 't-bare'")).toBeNull();
   });
 });
+
+describe('0095_tag_enrollments migration', () => {
+  async function setup() {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const template = makeTemplate({ id: `tpl-${f.ids.token(4)}` }).resolved;
+    const pass = await makePass(f, { orgId: org.id, template });
+    const scanner = await makeScanner(f, { orgId: org.id });
+    const insert = (
+      id: string,
+      over: {
+        scanner?: string;
+        pass?: string;
+        org?: string;
+        ttl?: number;
+        scope?: string;
+        user?: string | null;
+        state?: string;
+      } = {},
+    ) =>
+      run(
+        env.DB,
+        `INSERT INTO tag_enrollments (id, org_id, mode, pass_id, scanner_id, requested_by, scope, user_id, state, created_at, expires_at)
+         VALUES (?, ?, 'live', ?, ?, 'admin', ?, ?, ?, 1000, ?)`,
+        [
+          id,
+          over.org ?? org.id,
+          over.pass ?? pass.id,
+          over.scanner ?? scanner.id,
+          over.scope ?? 'pass',
+          over.user ?? null,
+          over.state ?? 'pending',
+          1000 + (over.ttl ?? 90_000),
+        ],
+      );
+    return { f, org, pass, scanner, insert };
+  }
+
+  it('holds one pending request per scanner and per pass, and frees them when one ends', async () => {
+    const { f, org, scanner, insert } = await setup();
+    const other = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-${f.ids.token(4)}` }).resolved,
+    });
+    await insert('e1');
+    await expect(insert('e2', { pass: other.id })).rejects.toThrow(/UNIQUE/);
+    const spare = await makeScanner(f, { orgId: org.id });
+    await expect(insert('e3', { scanner: spare.id })).rejects.toThrow(/UNIQUE/);
+    await run(
+      env.DB,
+      "UPDATE tag_enrollments SET state = 'cancelled', ended_at = 2000 WHERE id = 'e1'",
+    );
+    await insert('e4', { scanner: spare.id });
+    expect(scanner.id).not.toBe(spare.id);
+  });
+
+  it('refuses a window over two minutes, a scanner or pass of another tenant, and a user scope for a stranger', async () => {
+    const { f, pass, insert } = await setup();
+    await expect(insert('long', { ttl: 120_001 })).rejects.toThrow(/CHECK/);
+    const foreign = await makeOrg(f);
+    const foreignScanner = await makeScanner(f, { orgId: foreign.id });
+    await expect(insert('x1', { scanner: foreignScanner.id })).rejects.toThrow(/enrollment_tenant/);
+    await expect(insert('x2', { scope: 'user', user: 'nobody' })).rejects.toThrow(
+      /enrollment_owner/,
+    );
+    await expect(insert('x3', { state: 'done' })).rejects.toThrow(/enrollment_pending/);
+    expect(pass.id).toBeTruthy();
+  });
+
+  it('keeps identity columns fixed, leaves pending once, and cascades with the scanner', async () => {
+    const { scanner, insert } = await setup();
+    await insert('e5');
+    await expect(
+      run(env.DB, "UPDATE tag_enrollments SET expires_at = expires_at + 1 WHERE id = 'e5'"),
+    ).rejects.toThrow(/enrollment_immutable/);
+    await run(env.DB, "UPDATE tag_enrollments SET shown_at = 1500 WHERE id = 'e5'");
+    await expect(
+      run(env.DB, "UPDATE tag_enrollments SET shown_at = 1600 WHERE id = 'e5'"),
+    ).rejects.toThrow(/enrollment_immutable/);
+    await run(
+      env.DB,
+      "UPDATE tag_enrollments SET state = 'declined', ended_at = 2000 WHERE id = 'e5'",
+    );
+    await expect(
+      run(env.DB, "UPDATE tag_enrollments SET state = 'done' WHERE id = 'e5'"),
+    ).rejects.toThrow(/enrollment_immutable/);
+    await run(env.DB, 'DELETE FROM scanners WHERE id = ?', [scanner.id]);
+    expect(await first(env.DB, "SELECT 1 AS x FROM tag_enrollments WHERE id = 'e5'")).toBeNull();
+  });
+});

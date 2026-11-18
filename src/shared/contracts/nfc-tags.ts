@@ -138,6 +138,7 @@ export const TagListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 export const TagListSchema = pageOf(TagSchema);
+
 export const UpdateTagSchema = z.strictObject({
   label: PlainLineSchema(40).nullable().optional(),
   pool: z.boolean().optional(),
@@ -162,6 +163,8 @@ export const TagEnrollmentSchema = z.object({
   createdAt: TimestampSchema,
   expiresAt: TimestampSchema,
   endedAt: TimestampSchema.nullable(),
+  /** The device fetched the request and shows it. */
+  shownAt: TimestampSchema.nullable(),
   /** Set when `state` is `done`. */
   binding: TagBindingSchema.nullable(),
   errorCode: TagErrorCodeSchema.nullable(),
@@ -183,6 +186,8 @@ export const TagScannerSchema = z.object({
   secureOnly: z.boolean(),
   lastUsedAt: TimestampSchema.nullable(),
 });
+
+export type TagScanner = z.infer<typeof TagScannerSchema>;
 
 /** The card a tag is assigned to: a possession credential, or a lookup that needs a Manager PIN. */
 const TagCardInputSchema = z.union([
