@@ -84,7 +84,7 @@ function callSites(text: string): Record<string, number> {
   return out;
 }
 
-const SEALS = ['pass_token_seals', 'pass_auth_seals', 'bundle_token_seals'];
+const SEALS = ['pass_token_seals', 'pass_auth_seals', 'bundle_token_seals', 'join_link_seals'];
 // File (under src/worker) -> the call counts it may have, and the places those calls write. `ephemeral`
 // envelopes are opened within a day or one call and never stored. A new call site, in a new file or a
 // listed one, fails until it is counted here with its table.

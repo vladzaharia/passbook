@@ -47,6 +47,8 @@ const SELECT: Record<PlaceTable, string> = {
     FROM pass_auth_seals t WHERE t.pass_id > ? AND t.kek_version < ? ORDER BY t.pass_id LIMIT ?`,
   bundle_token_seals: `SELECT t.bundle_id AS pk, t.kek_version, t.wrapped_dek, t.org_id AS x1, NULL AS x2, NULL AS x3, NULL AS x4
     FROM bundle_token_seals t WHERE t.bundle_id > ? AND t.kek_version < ? ORDER BY t.bundle_id LIMIT ?`,
+  join_link_seals: `SELECT t.link_id AS pk, t.kek_version, t.wrapped_dek, t.org_id AS x1, NULL AS x2, NULL AS x3, NULL AS x4
+    FROM join_link_seals t WHERE t.link_id > ? AND t.kek_version < ? ORDER BY t.link_id LIMIT ?`,
 };
 
 export function selectEnvelopes(
@@ -168,6 +170,13 @@ const CAS: Record<PlaceTable, (db: D1Database, m: Move) => D1PreparedStatement> 
       db,
       `UPDATE bundle_token_seals SET kek_version = ?, wrapped_dek = ?
        WHERE bundle_id = ? AND kek_version = ? AND wrapped_dek = ? RETURNING bundle_id`,
+      params(m),
+    ),
+  join_link_seals: (db, m) =>
+    stmt(
+      db,
+      `UPDATE join_link_seals SET kek_version = ?, wrapped_dek = ?
+       WHERE link_id = ? AND kek_version = ? AND wrapped_dek = ? RETURNING link_id`,
       params(m),
     ),
 };

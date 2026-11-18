@@ -1,4 +1,4 @@
-import { type TokenPurpose, tokenMac, unsealToken } from '../../platform/capability-token.ts';
+import { type RemacPurpose, tokenMac, unsealToken } from '../../platform/capability-token.ts';
 import { macKeyVersion, macPreviousVersion } from '../../platform/crypto.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -17,7 +17,7 @@ const PROBE_EVERY_MS = 6 * 60 * 60_000;
 const UNREADABLE = new Set(['TOKEN_SEAL_MISSING', 'TOKEN_SEAL_UNREADABLE', 'TOKEN_SEAL_MISMATCH']);
 const PURPOSES = ['pass', 'apple-auth', 'bundle'] as const;
 
-type After = Record<TokenPurpose, string | null>;
+type After = Record<RemacPurpose, string | null>;
 /** One sweep of one version pair: where it is, what it left, and what it could not read. */
 interface Cursor {
   stamp: string;
@@ -38,7 +38,7 @@ const fresh = (stamp: string): Cursor => ({
 function parseCursor(value: unknown, stamp: string): Cursor {
   const v = (value ?? {}) as Partial<Cursor> & { after?: Partial<After> };
   if (v.stamp !== stamp) return fresh(stamp);
-  const id = (k: TokenPurpose) =>
+  const id = (k: RemacPurpose) =>
     typeof v.after?.[k] === 'string' ? (v.after[k] as string) : null;
   return {
     stamp,
@@ -113,7 +113,7 @@ export async function remacCapabilityTokens(ctx: ServiceContext): Promise<void> 
 }
 
 /** One row on its own: a refused or failing row is counted and logged, and the sweep moves on. */
-async function remacOne(ctx: ServiceContext, purpose: TokenPurpose, row: MacRow): Promise<Outcome> {
+async function remacOne(ctx: ServiceContext, purpose: RemacPurpose, row: MacRow): Promise<Outcome> {
   try {
     const plain = await unsealToken(ctx.env, purpose, row.id, row.orgId, row.mac, row.seal);
     const to = await tokenMac(ctx.env, purpose, plain);

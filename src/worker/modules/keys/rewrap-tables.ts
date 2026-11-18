@@ -14,7 +14,8 @@ export type PlaceTable =
   | 'pass_credential_transfer_payloads'
   | 'pass_token_seals'
   | 'pass_auth_seals'
-  | 'bundle_token_seals';
+  | 'bundle_token_seals'
+  | 'join_link_seals';
 
 /** What a select returns: the key, the envelope's KEK and wrapped DEK, and up to four AAD inputs. */
 export interface Raw {
@@ -93,6 +94,7 @@ export const PLACES: readonly Place[] = [
   { table: 'pass_token_seals', aad: (r) => credentialAad(r.pk, text(r.x1), 'pass-link') },
   { table: 'pass_auth_seals', aad: (r) => credentialAad(r.pk, text(r.x1), 'apple-auth') },
   { table: 'bundle_token_seals', aad: (r) => credentialAad(r.pk, text(r.x1), 'bundle-link') },
+  { table: 'join_link_seals', aad: (r) => credentialAad(r.pk, text(r.x1), 'join-link') },
 ];
 
 /** Captured test emails keep their envelope packed in the body (sandbox/captured-body.ts). */

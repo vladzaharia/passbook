@@ -1,7 +1,7 @@
 import {
   type IssuedToken,
+  type RemacPurpose,
   sealStatement,
-  type TokenPurpose,
 } from '../../platform/capability-token.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import type { Pass } from './repo-map.ts';
@@ -123,7 +123,7 @@ const REMAC_SQL = {
  */
 export async function remacTrusted(
   db: D1Database,
-  purpose: TokenPurpose,
+  purpose: RemacPurpose,
   id: string,
   from: string,
   to: string,

@@ -35,6 +35,7 @@
       "!/favicon.svg",
       "!/fonts/*",
       "!/icons/*",
+      "!/join.js",
       "!/manifest.webmanifest",
       "!/og-image.png",
       "!/pass-tilt.js",
@@ -143,7 +144,8 @@
       "name": "RL_GOOGLE_CALLBACK",
       "namespace_id": "1014",
       "simple": { "limit": 6000, "period": 60 }
-    }
+    },
+    { "name": "RL_JOIN", "namespace_id": "1015", "simple": { "limit": 10, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],
