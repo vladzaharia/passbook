@@ -11,6 +11,7 @@ import { writeEvent } from '../../platform/analytics.ts';
 import { revealToken, tokenKeys } from '../../platform/capability-token.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { Refusal } from '../../ssr/join-page.tsx';
 import { verifyTurnstile } from '../auth/turnstile.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import {
@@ -26,7 +27,6 @@ import { deviceKeyOf, fieldsHashOf, ipKeyOf } from './cookie.ts';
 import { assembleInput, createJoinCard, type OpenRelease, openRelease } from './issue.ts';
 import { activeCardFor, deviceIssue, linkByToken, type PublicLink } from './repo-issues.ts';
 import { queueResend } from './resend.ts';
-import type { Refusal } from './stub-page.ts';
 
 const MINUTE = 60 * 1000;
 /** A double tap or the back button: the same device with the same fields gets its card again. */

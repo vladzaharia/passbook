@@ -49,6 +49,7 @@ import { Route as AdminScanningEventsEventIdRouteImport } from './routes/admin/s
 import { Route as AdminScanningScannersScannerIdRouteImport } from './routes/admin/scanning/scanners.$scannerId'
 import { Route as AdminScanningSessionsSessionIdRouteImport } from './routes/admin/scanning/sessions.$sessionId'
 import { Route as AdminTemplatesTemplateIdDesignRouteImport } from './routes/admin/templates/$templateId_.design'
+import { Route as AdminTemplatesTemplateIdJoinSignRouteImport } from './routes/admin/templates/$templateId_.join-sign'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -261,6 +262,12 @@ const AdminTemplatesTemplateIdDesignRoute =
     path: '/templates/$templateId/design',
     getParentRoute: () => AdminRouteRoute,
   } as any)
+const AdminTemplatesTemplateIdJoinSignRoute =
+  AdminTemplatesTemplateIdJoinSignRouteImport.update({
+    id: '/templates/$templateId_/join-sign',
+    path: '/templates/$templateId/join-sign',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -303,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
+  '/admin/templates/$templateId/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -344,6 +352,7 @@ export interface FileRoutesByTo {
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
+  '/admin/templates/$templateId/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -387,6 +396,7 @@ export interface FileRoutesById {
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId_/design': typeof AdminTemplatesTemplateIdDesignRoute
+  '/admin/templates/$templateId_/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -431,6 +441,7 @@ export interface FileRouteTypes {
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId/design'
+    | '/admin/templates/$templateId/join-sign'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -472,6 +483,7 @@ export interface FileRouteTypes {
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId/design'
+    | '/admin/templates/$templateId/join-sign'
   id:
     | '__root__'
     | '/'
@@ -514,6 +526,7 @@ export interface FileRouteTypes {
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId_/design'
+    | '/admin/templates/$templateId_/join-sign'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -806,6 +819,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTemplatesTemplateIdDesignRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/templates/$templateId_/join-sign': {
+      id: '/admin/templates/$templateId_/join-sign'
+      path: '/templates/$templateId/join-sign'
+      fullPath: '/admin/templates/$templateId/join-sign'
+      preLoaderRoute: typeof AdminTemplatesTemplateIdJoinSignRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
@@ -845,6 +865,7 @@ interface AdminRouteRouteChildren {
   AdminScanningScannersScannerIdRoute: typeof AdminScanningScannersScannerIdRoute
   AdminScanningSessionsSessionIdRoute: typeof AdminScanningSessionsSessionIdRoute
   AdminTemplatesTemplateIdDesignRoute: typeof AdminTemplatesTemplateIdDesignRoute
+  AdminTemplatesTemplateIdJoinSignRoute: typeof AdminTemplatesTemplateIdJoinSignRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
@@ -884,6 +905,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminScanningScannersScannerIdRoute: AdminScanningScannersScannerIdRoute,
   AdminScanningSessionsSessionIdRoute: AdminScanningSessionsSessionIdRoute,
   AdminTemplatesTemplateIdDesignRoute: AdminTemplatesTemplateIdDesignRoute,
+  AdminTemplatesTemplateIdJoinSignRoute: AdminTemplatesTemplateIdJoinSignRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
