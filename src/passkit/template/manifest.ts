@@ -17,6 +17,7 @@ import { validateRequires } from './requires.ts';
 import { reservedInputIssues, unknownPassValues } from './reserved.ts';
 import { scanManifestIssues } from './scan.ts';
 import { stampPassScope, stampsIssues } from './stamps.ts';
+import { walletsManifestIssues } from './wallets/validate.ts';
 
 /** Image target: drops the slot's files from the bundle when the binding's condition says so. */
 export interface ImageTarget {
@@ -239,6 +240,7 @@ export function validateManifest(
   issues.push(...messagingIssues(manifest, options.passJson));
   issues.push(...scanManifestIssues(manifest, options));
   issues.push(...stampsIssues(manifest, options.passJson, options.assetNames));
+  issues.push(...walletsManifestIssues(manifest, options));
 
   if (manifest.previewOnlyAssets && options.assetNames) {
     for (const name of manifest.previewOnlyAssets)

@@ -1,6 +1,7 @@
 import { sha1Hex } from '../sign/index.ts';
 import { renderStampFiles } from '../stamps/package.ts';
 import type { AssetEntry, ImageSlot, PassJson, TemplateManifest } from '../types.ts';
+import { isWalletArtName } from './wallets/schema.ts';
 
 const decoder = new TextDecoder();
 const SLOTS: readonly ImageSlot[] = [
@@ -50,7 +51,8 @@ export function pngSize(bytes: Uint8Array): { width: number; height: number } | 
 export function classifyAsset(
   name: string,
 ): Pick<AssetEntry, 'slot' | 'scale' | 'locale' | 'stamps'> | null {
-  if (NEVER_SHIPPED.has(name)) return null;
+  // `wallets/**` is art for other wallets: kept in the version, never signed into a pass.
+  if (NEVER_SHIPPED.has(name) || isWalletArtName(name)) return null;
   const generated = STAMP_STRIP.exec(name);
   if (generated)
     return { slot: 'strip', scale: generated[2] === '3' ? 3 : 2, stamps: Number(generated[1]) };
