@@ -9,7 +9,7 @@ import { ConflictError, RateLimitedError, ValidationError } from '../../platform
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
-import { decodeSeq, encodeSeq } from './cursor.ts';
+import { decodeCursor, encodeCursor } from './cursor.ts';
 import { buildEnvelope } from './payload.ts';
 import {
   type DeliveryRow,
@@ -73,9 +73,9 @@ async function seqCursor(
   cursor: string | undefined,
 ): Promise<number | undefined> {
   if (cursor === undefined) return undefined;
-  if (!/^[1-9]\d{0,14}$/.test(cursor))
+  if (!/^(?:[1-9]\d{0,14}|[A-Za-z0-9_-]{22})$/.test(cursor))
     throw new ValidationError('Invalid cursor.', [], 'INVALID_CURSOR');
-  return decodeSeq(ctx.env, fence, cursor);
+  return decodeCursor(ctx.env, fence, cursor);
 }
 
 /** Newest first. The cursor is opaque and per tenant (see cursor.ts). */
@@ -95,7 +95,7 @@ export async function deliveries(
   return {
     items: rows.map(dto),
     nextCursor: hasMore
-      ? await encodeSeq(ctx.env, fenceOf(access), rows[rows.length - 1]?.eventSeq ?? 0)
+      ? await encodeCursor(ctx.env, fenceOf(access), rows[rows.length - 1]?.eventSeq ?? 0)
       : null,
   };
 }

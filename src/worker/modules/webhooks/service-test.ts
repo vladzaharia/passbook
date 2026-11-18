@@ -67,12 +67,11 @@ export async function sendTest(
   const { orgId, mode } = access.authority;
   if (!(await checkRateLimit(ctx.env, 'RL_WEBHOOK_OUT', `test:${orgId}:${mode}`)))
     throw new RateLimitedError();
+  // The same two budgets a delivery spends: the org's share of the host first, then the host's.
+  const host = new URL(endpoint.url).host.toLowerCase();
   if (
-    !(await checkRateLimit(
-      ctx.env,
-      'RL_WEBHOOK_HOST',
-      `host:${new URL(endpoint.url).host.toLowerCase()}`,
-    ))
+    !(await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST_ORG', `host:${host}:${orgId}`)) ||
+    !(await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST', `host:${host}`))
   )
     throw new RateLimitedError();
   const secrets = await secretsOf(ctx, await loadKekRing(ctx.env), access, endpoint);

@@ -540,11 +540,11 @@ personalization value, device id, push token or capability URL appears in any pa
 catch-up. It needs `passes:read` (a key scope, or the session capability), not `webhooks:manage`, and
 follows the key's or session's mode. Take `orgId` as above.
 
-- Cursors are opaque and per org and mode: store and echo them, never compute with them. Query: `after` (`ev1.<n>` or `now`), `types` (comma list), `passId`, `limit` (1 to 200, default 50),
+- Cursors (`ev2.` and 22 characters) are opaque and per org and mode: store and echo them, never compute with them; another org's or mode's cursor is `422`. Cursors from the previous release (`ev1.<n>`) are still accepted for one more release, then dropped: switch to the `nextCursor` you get back. Query: `after` (a cursor or `now`), `types` (comma list), `passId`, `limit` (1 to 200, default 50),
   `apiVersion`.
 - Response: `{ items, nextCursor, hasMore }`, ascending. `nextCursor` is never null: the last item's cursor,
   or the cursor you sent when the page is empty. Store it and call again. With no `after` the feed starts at
-  the oldest retained event (`ev1.0` on an empty feed); `after=now` returns no items and the current head.
+  the oldest retained event; `after=now` returns no items and the current head.
 - An event written late (an offline scan) gets a new cursor, so a poller sees it on its next call.
 
 ### Retention and versions

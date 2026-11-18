@@ -50,6 +50,7 @@ export async function setupApi(): Promise<Api> {
     resetLimits() {
       Object.assign(env, {
         RL_WEBHOOK_HOST: fakeRateLimiter({ limit: 100_000 }),
+        RL_WEBHOOK_HOST_ORG: fakeRateLimiter({ limit: 100_000 }),
         RL_WEBHOOK_OUT: fakeRateLimiter({ limit: 10 }),
         RL_WEBHOOK_REPLAY: fakeRateLimiter({ limit: 1 }),
       });

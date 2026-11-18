@@ -46,6 +46,22 @@ describe('test sends', () => {
   });
 });
 
+describe('test sends and the org share', () => {
+  it('spend the org share of the host before the global budget', async () => {
+    const o = await org();
+    const a = await o.create('https://shared.example.com/a');
+    const host = fakeRateLimiter({ limit: 100 });
+    Object.assign(api.rig.kit.env, {
+      RL_WEBHOOK_HOST_ORG: fakeRateLimiter({ limit: 1 }),
+      RL_WEBHOOK_HOST: host,
+    });
+    expect((await api.call('POST', `${BASE}/${a}/test`, undefined, o.admin)).status).toBe(200);
+    expect((await api.call('POST', `${BASE}/${a}/test`, undefined, o.admin)).status).toBe(429);
+    // The refused one never reached the global key.
+    expect([...host.counts.values()]).toEqual([1]);
+  });
+});
+
 describe('creates', () => {
   it('stop at 20 an hour per org, and deleting does not reset the count', async () => {
     const o = await org();
@@ -154,8 +170,8 @@ describe('cursors', () => {
       [pa.id],
     );
     const seqA = seqs[0]?.seq ?? 0;
-    expect(ra.json.nextCursor).not.toBe(`ev1.${seqA}`);
-    expect(ra.json.nextCursor).toMatch(/^ev1\.[1-9]\d+$/);
+    expect(ra.json.nextCursor).not.toContain(String(seqA));
+    expect(ra.json.nextCursor).toMatch(/^ev2\.[A-Za-z0-9_-]{22}$/);
     expect(ra.json.nextCursor).not.toBe(rb.json.nextCursor);
     // Round trip: the cursor of the last item leaves nothing after it.
     const next = await api.call(

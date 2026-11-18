@@ -37,7 +37,7 @@ describe('GET /events', () => {
     expect(p1.status).toBe(200);
     expect(p1.json.items).toHaveLength(2);
     expect(p1.json.hasMore).toBe(true);
-    expect(p1.json.nextCursor).toMatch(/^ev1\.\d+$/);
+    expect(p1.json.nextCursor).toMatch(/^ev2\.[A-Za-z0-9_-]{22}$/);
     expect(p1.json.items[0]).toMatchObject({
       type: 'pass.issued',
       apiVersion: '2026-12-01',
@@ -58,10 +58,17 @@ describe('GET /events', () => {
     expect(empty.json).toEqual({ items: [], nextCursor: p3.json.nextCursor, hasMore: false });
   });
 
-  it('starts at the oldest event with no cursor, and at ev1.0 on an empty feed', async () => {
+  it('starts at the oldest event with no cursor, and at the start on an empty feed', async () => {
     const empty = await scene();
-    expect((await empty.get()).json).toEqual({ items: [], nextCursor: 'ev1.0', hasMore: false });
-    expect((await empty.get('?after=ev1.0')).json.nextCursor).toBe('ev1.0');
+    const start = (await empty.get()).json;
+    expect(start).toEqual({
+      items: [],
+      nextCursor: expect.stringMatching(/^ev2\./),
+      hasMore: false,
+    });
+    // The start cursor round-trips, and the older ev1.0 still means the start.
+    expect((await empty.get(`?after=${start.nextCursor}`)).json.nextCursor).toBe(start.nextCursor);
+    expect((await empty.get('?after=ev1.0')).json.nextCursor).toBe(start.nextCursor);
     const s = await scene(2);
     const all = await s.get();
     expect(all.json.items).toHaveLength(2);
@@ -71,12 +78,12 @@ describe('GET /events', () => {
     const s = await scene(2);
     const head = await s.get('?after=now');
     expect(head.json).toMatchObject({ items: [], hasMore: false });
-    expect(head.json.nextCursor).toMatch(/^ev1\.[1-9]/);
+    expect(head.json.nextCursor).toMatch(/^ev2\./);
     const added = await api.rig.kit.pass({ orgId: s.orgId });
     const next = await s.get(`?after=${head.json.nextCursor}`);
     expect(next.json.items.map((e: { pass: { id: string } }) => e.pass.id)).toEqual([added.id]);
     const emptyNow = await (await scene()).get('?after=now');
-    expect(emptyNow.json.nextCursor).toBe('ev1.0');
+    expect(emptyNow.json.nextCursor).toMatch(/^ev2\.[A-Za-z0-9_-]{22}$/);
   });
 
   it('shows a late (backdated) event after the cursor, with its real time', async () => {
