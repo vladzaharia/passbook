@@ -4,11 +4,10 @@ import {
   assertSamsungCallbackCredentialsCurrent,
   type ValidatedSamsungCallbackCredentials,
 } from './samsung-credentials.ts';
+import { SAMSUNG_CLOCK_SKEW_MS, SAMSUNG_TOKEN_WINDOW_MS } from './samsung-limits.ts';
 import { SamsungReplayStoreError, SamsungTokenError } from './samsung-token-errors.ts';
 
 const decoder = new TextDecoder();
-const TOKEN_AGE_MS = 30_000;
-export const SAMSUNG_CLOCK_SKEW_MS = 5_000;
 
 export interface VerifiedSamsungRequest {
   readonly method: 'GET' | 'POST';
@@ -54,7 +53,8 @@ export async function verifySamsungInboundRequest(
   )
     throw new SamsungTokenError();
   const url = new URL(request.url);
-  if (!url.pathname.endsWith(`/cards/${account.cardId}/${refId}`)) throw new SamsungTokenError();
+  const suffix = `/cards/${account.cardId}/${refId}`;
+  if (!url.pathname.endsWith(suffix)) throw new SamsungTokenError();
   const requestId = request.headers.get('x-request-id');
   if (!requestId || !/^[A-Za-z0-9_-]{1,64}$/.test(requestId)) throw new SamsungTokenError();
   const authorization = request.headers.get('Authorization');
@@ -76,7 +76,11 @@ export async function verifySamsungInboundRequest(
   const h = verified.protectedHeader;
   const utc = h.utc;
   const signedPath = payload?.API?.path;
-  const queryBound = url.search !== '' && signedPath === `${url.pathname}${url.search}`;
+  // Samsung builds the signed path from the configured partner URL: the full pathname, or only the
+  // /cards/{cardId}/{refId} suffix. Method, card id and ref id must match either way.
+  const queryBound =
+    url.search !== '' &&
+    (signedPath === `${url.pathname}${url.search}` || signedPath === `${suffix}${url.search}`);
   if (
     h.cty !== 'AUTH' ||
     (h.ver !== '3' && h.ver !== 3) ||
@@ -87,16 +91,16 @@ export async function verifySamsungInboundRequest(
     utc < account.validFrom ||
     utc >= account.validUntil ||
     utc > now + SAMSUNG_CLOCK_SKEW_MS ||
-    utc < now - TOKEN_AGE_MS ||
+    utc < now - SAMSUNG_TOKEN_WINDOW_MS ||
     !payload ||
     payload.API?.method !== input.method ||
-    // The primary spec signs only pathname; an older tutorial signs the query too.
-    (signedPath !== url.pathname && !queryBound) ||
+    // The primary spec signs only the path; an older tutorial signs the query too.
+    (signedPath !== url.pathname && signedPath !== suffix && !queryBound) ||
     (payload.refId !== undefined && payload.refId !== refId)
   )
     throw new SamsungTokenError();
   const replayKey = await sha256Base64Url(token);
-  const replayExpiresAt = utc + TOKEN_AGE_MS + SAMSUNG_CLOCK_SKEW_MS;
+  const replayExpiresAt = utc + SAMSUNG_TOKEN_WINDOW_MS + SAMSUNG_CLOCK_SKEW_MS;
   let claimed: boolean;
   try {
     claimed = await input.claimReplay(replayKey, replayExpiresAt, utc, queryBound);

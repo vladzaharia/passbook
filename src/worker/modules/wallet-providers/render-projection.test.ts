@@ -92,12 +92,19 @@ describe('approved native projection rendering', () => {
         'barcode.ptSubFormat': 'QR_CODE',
       },
     });
-    expect(JSON.parse(item?.attributes.extendedFields as string)).toEqual([
-      { label: 'Member', value: 'Alex Morgan', order: 1 },
-      { label: 'Number', value: '42', order: 2 },
-      { label: 'Description', value: 'Member admission', order: 3 },
-    ]);
+    expect(item?.attributes.noticeDesc).toBe(
+      'Member: Alex Morgan\nNumber: 42\nDescription: Member admission',
+    );
+    expect(item?.attributes).not.toHaveProperty('extendedFields');
     expect(JSON.stringify(item)).not.toContain('secret-auth-token');
+  });
+
+  it('sets updatedAt to the pass revision time, never before createdAt', () => {
+    const at = (revisedAt: number) =>
+      renderSamsungProjection(samsung, pass, ref, 1000, revisedAt)?.card.data[0]?.updatedAt;
+    expect(at(2000)).toBe(2000);
+    expect(at(2000)).toBe(2000);
+    expect(at(500)).toBe(1000);
   });
 
   it('supports explicitly approved absence of a barcode', () => {
@@ -193,15 +200,25 @@ describe('approved native projection rendering', () => {
     expect(renderGoogleProjection({ ...google, titleField: 'other' }, pass)).toBeNull();
     expect(samsungRender({ ...pass, organizationName: 'A'.repeat(33) })).toBeNull();
     expect(samsungRender({ ...pass, description: 'A'.repeat(501) })).toBeNull();
+    // noticeDesc holds 5000 bytes; four 500-character fields and a description of 4-byte characters overflow it.
+    const wide = '\u{1F600}'.repeat(500);
+    const extra = ['a', 'b', 'c'].map((key) => ({ key, value: wide, label: key }));
     const tooLong = {
       ...pass,
-      description: 'A'.repeat(500),
-      generic: {
-        ...pass.generic,
-        secondaryFields: [{ key: 'member.number', value: 'B'.repeat(500), label: 'Number' }],
-      },
+      description: wide,
+      generic: { ...pass.generic, secondaryFields: extra },
     };
-    expect(samsungRender(tooLong)).toBeNull();
+    const mapping = { ...samsung, fields: ['name', 'a', 'b', 'c'] };
+    expect(samsungRender(tooLong, mapping)).toBeNull();
+    expect(
+      samsungRender(
+        { ...tooLong, generic: { ...tooLong.generic, secondaryFields: extra.slice(0, 1) } },
+        {
+          ...mapping,
+          fields: ['name', 'a'],
+        },
+      ),
+    ).not.toBeNull();
   });
 
   it('checks Samsung renderability without allocating or persisting a reference', () => {
@@ -221,7 +238,8 @@ describe('approved native projection rendering', () => {
 
   it('requires a valid Samsung reference, time ordering and labels', () => {
     expect(renderSamsungProjection(samsung, pass, 'short', 1000, 2000)).toBeNull();
-    expect(renderSamsungProjection(samsung, pass, ref, 2000, 1000)).toBeNull();
+    expect(renderSamsungProjection(samsung, pass, ref, -1, 1000)).toBeNull();
+    expect(renderSamsungProjection(samsung, pass, ref, 1000, Number.NaN)).toBeNull();
     const noLabel = {
       ...pass,
       generic: { ...pass.generic, primaryFields: [{ key: 'name', value: 'Alex' }] },

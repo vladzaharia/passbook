@@ -84,7 +84,15 @@ describe('Samsung callback authority fences', () => {
           db,
           snapshot,
           receiptClaim,
-          { id: t.kit.ctx.ids.id(), signedAt: now, envelope, countryHint: 'GB' },
+          {
+            id: t.kit.ctx.ids.id(),
+            signedAt: now,
+            envelope,
+            countryHint: 'GB',
+            event: null,
+            requestId: 'req-1',
+            queryBound: false,
+          },
           raw,
         ),
       ).toBe(false);
@@ -264,7 +272,10 @@ describe('Samsung callback authority fences', () => {
       await whileDisabledForTest(ensureSamsungFetchRef, t.kit.ctx, { ...binding, mode: 'test' }),
     ).toBeNull();
     await run(t.kit.env.DB, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [t.pass.id]);
-    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    // Authentic but stale: answered with no card data, never served.
+    const stale = await t.call({ token: await t.token() });
+    expect(stale.status).toBe(204);
+    expect(await stale.text()).toBe('');
 
     const rotated = await setupSamsungCallbacks();
     const scope = {
@@ -278,7 +289,10 @@ describe('Samsung callback authority fences', () => {
       expectedRevision: account.revision,
       credentials: rotated.samsung,
     });
-    expect((await rotated.call({ token: await rotated.token() })).status).toBe(401);
+    // The instance still operated under the old revision's credential: authentic, answered, no card.
+    const answered = await rotated.call({ token: await rotated.token() });
+    expect(answered.status).toBe(204);
+    expect(await answered.text()).toBe('');
   });
 
   it('retains refresh across link rotation but fences an old ref during a pending transfer', async () => {
@@ -360,7 +374,7 @@ describe('Samsung callback authority fences', () => {
         raw,
       ),
     ).toBe(false);
-    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    expect((await t.call({ token: await t.token() })).status).toBe(204);
   });
 
   it('atomically refuses a refresh if materialized pass data changes after capture', async () => {
@@ -432,7 +446,15 @@ describe('Samsung callback authority fences', () => {
     ).toBe(false);
     const envelope = await encryptSecret(await loadKekRing(t.kit.env), 'untrusted', 'test');
     const postClaim = { ...claim, tokenHash: 'C'.repeat(43), claimId: t.kit.ctx.ids.id() };
-    const receipt = { id: t.kit.ctx.ids.id(), signedAt: now, envelope, countryHint: 'GB' };
+    const receipt = {
+      id: t.kit.ctx.ids.id(),
+      signedAt: now,
+      envelope,
+      countryHint: 'GB',
+      event: null,
+      requestId: 'req-1',
+      queryBound: false,
+    };
     expect(await claimSamsungReceipt(db, snapshot, postClaim, receipt, raw)).toBe(true);
     expect(
       await claimSamsungReceipt(db, snapshot, postClaim, { ...receipt, countryHint: 'US' }, raw),

@@ -1,6 +1,7 @@
 /** `scanDisplayIssues` (C16, DM 6.2): size, shape, then the semantic rules, errors first. */
 import type { z } from 'zod';
 import type { PassJson, TemplateManifest, ValidationIssue } from '../../types.ts';
+import { customerIssues } from './customer-issues.ts';
 import { SCAN_DISPLAY_MAX_BYTES, ScanDisplayDocSchema } from './schema.ts';
 import { hiddenFieldKeys, inputProps, secretInputs } from './scope.ts';
 import { checkIds, checkStructure } from './validate-refs.ts';
@@ -110,6 +111,7 @@ export function scanDisplayIssues(
   checkHolder(ctx);
   checkTitles(ctx, slots.texts);
   checkStructure(ctx, slots, manifest.scan?.flags?.length ?? 0);
+  issues.push(...customerIssues(doc));
   return [
     ...issues.filter((i) => i.severity === 'error'),
     ...issues.filter((i) => i.severity !== 'error'),
