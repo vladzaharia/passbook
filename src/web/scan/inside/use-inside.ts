@@ -51,6 +51,9 @@ export function useInside({
   const seq = useRef(0);
   const live = useRef(state);
   live.current = state;
+  // Callers pass fresh closures every render; the list must not reload because of that.
+  const hooks = useRef({ onFail, notify, failOf });
+  hooks.current = { onFail, notify, failOf };
 
   const load = useCallback(
     async (opts: { append?: boolean; keep?: boolean } = {}) => {
@@ -70,12 +73,12 @@ export function useInside({
         if (mine === seq.current) dispatch({ t: 'loaded', list, append: Boolean(opts.append) });
       } catch (error) {
         if (mine !== seq.current) return;
-        const info = failOf(error);
-        if (BLOCKING.has(info.error)) onFail?.(info);
+        const info = hooks.current.failOf(error);
+        if (BLOCKING.has(info.error)) hooks.current.onFail?.(info);
         dispatch({ t: 'failed' });
       }
     },
-    [api, onFail, failOf],
+    [api],
   );
 
   // A new query waits for the typing to stop; the first load and a place change do not.
@@ -106,18 +109,18 @@ export function useInside({
           place: row.place,
         });
         dispatch({ t: 'rev', place: done.place });
-        notify.undo(fill(ACCESS_COPY.inside.markedOut, { name }), async () => {
+        hooks.current.notify.undo(fill(ACCESS_COPY.inside.markedOut, { name }), async () => {
           await api.undoMarkOut(done.scanId, scanId());
           await load({ keep: true });
         });
       } catch (error) {
         dispatch({ t: 'restored', row });
-        const info = failOf(error);
-        if (BLOCKING.has(info.error)) onFail?.(info);
-        notify.error(error, 'Could not mark as out');
+        const info = hooks.current.failOf(error);
+        if (BLOCKING.has(info.error)) hooks.current.onFail?.(info);
+        hooks.current.notify.error(error, 'Could not mark as out');
       }
     },
-    [api, notify, load, onFail, failOf],
+    [api, load],
   );
 
   return {
