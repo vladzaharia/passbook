@@ -22,6 +22,7 @@ import {
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { act } from './act.ts';
+import { withCodeInput } from './credential-input.ts';
 import { deepFreeze } from './freeze.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
@@ -159,7 +160,7 @@ register(
   async (c) => {
     const ctx = capturingContext(serviceContext(c)),
       actor = cloneObservedScanActor(scanActorOf(c)),
-      req = c.req.valid('json');
+      req = withCodeInput(c.req.valid('json'));
     const { outcome, evaluatedSnapshot, credentialContext } = await resolveOutcome(ctx, actor, req);
     publishScan(
       ctx,
@@ -189,7 +190,7 @@ register(
     // The request and the actor are frozen once, here: nothing below changes either.
     const ctx = capturingContext(serviceContext(c)),
       actor = deepFreeze(cloneObservedScanActor(scanActorOf(c))),
-      req = deepFreeze(c.req.valid('json'));
+      req = deepFreeze(withCodeInput(c.req.valid('json')));
     const { outcome, evaluatedSnapshot, credentialContext } = await act(ctx, actor, req);
     if (!outcome.replay)
       publishScan(

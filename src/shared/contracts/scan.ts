@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CheckInPolicySchema, CheckInStateSchema, SetupDirectionSchema } from './check-in.ts';
 import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
+import { ScannerTagsSettingsSchema, ScanTagSchema, TagReadSchema } from './nfc-tags.ts';
 import { ScanAccessSchema } from './scan-access.ts';
 import { ScanActionInputSchema } from './scan-action-input.ts';
 import {
@@ -67,6 +68,9 @@ export const SCAN_REFUSED_REASONS = [
   'guest_expired',
   'guest_visits_used',
   'suspended',
+  'tag_lost',
+  'tag_not_allowed',
+  'tag_invalid',
 ] as const;
 export const SCAN_HEADS_UP_REASONS = [
   'already_done',
@@ -104,14 +108,20 @@ export const ScannerSettingsSchema = z.object({
   dailyAmount: z.number().int().min(1).max(10_000_000).nullable(),
   /** A monitor may act (Let in, Mark as out) when this is on. Off when absent. */
   deskActions: z.boolean().optional(),
+  /** Who may assign tags here. Absent: desk for a pass, manager for a person. */
+  tags: ScannerTagsSettingsSchema.optional(),
 });
 export type ScannerSettings = z.infer<typeof ScannerSettingsSchema>;
 
 export const ScanInputSchema = z.union([
   z.object({ code: z.string().min(1).max(1024), method: ScanMethodSchema }),
   z.object({ passId: IdSchema, method: z.literal('manual') }),
+  /** `passId` pins the pass a resolve showed; act only. */
+  z.object({ tag: TagReadSchema, method: z.literal('nfc'), passId: IdSchema.optional() }),
 ]);
 export type ScanInput = z.infer<typeof ScanInputSchema>;
+/** What the code and pass-id paths take. Tag reads have their own path. */
+export type ScanCodeInput = Exclude<ScanInput, { tag: unknown }>;
 
 const request = {
   idempotencyKey: UuidV7Schema,
@@ -228,6 +238,8 @@ export const ScanCardSchema = z.object({
     .nullable(),
   door: z.object({ state: z.enum(['in', 'out']).nullable() }).nullable(),
   access: ScanAccessSchema.nullable().default(null),
+  /** The tag this was read from. Desk and up only; never on a customer screen. */
+  tag: ScanTagSchema.nullable().optional(),
   /** Where the pass is now, for a scanner with a place. Null on every other card. */
   occupancy: ScanOccupancySchema.nullable().optional(),
   /** The pass JSON minus barcode, barcodes, nfc, authenticationToken, webServiceURL and serialNumber. */
@@ -285,6 +297,7 @@ export const ScanOutcomeSchema = z.object({
   milestone: ScanMilestoneSchema.nullable(),
   undoUntil: TimestampSchema.nullable(),
   access: ScanAccessSchema.nullable().default(null),
+  tag: ScanTagSchema.nullable().optional(),
   occupancy: ScanOccupancySchema.nullable().optional(),
   /** The outcome's screen. Null for system screens and unknown passes, so refusals stay byte-equal across orgs. */
   display: ScanDisplayReadSchema.nullable(),

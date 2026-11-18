@@ -23,6 +23,7 @@ export async function viewOf(
       webServiceURL: 'https://wallet.example/wallet',
       organizationName: template.manifest.org?.name ?? 'PassBook',
       identity: FIXTURE_IDENTITY,
+      scanCode: 'SNAPSHOT-SCAN-CODE',
     },
     signing: {} as SigningMaterial,
     behaviors: bakedBehaviors,
