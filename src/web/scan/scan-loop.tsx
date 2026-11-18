@@ -260,13 +260,7 @@ export function ScanLoop({
               eventNote={session.event?.note}
               holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
-              desk={deskOf(
-                l,
-                session.staffList,
-                dispatch,
-                scanner?.settings.approvals,
-                session.staff?.id,
-              )}
+              desk={deskOf(l, session, dispatch)}
             />
           ) : l.s === 'paused' ? (
             <BootCard title="Paused">

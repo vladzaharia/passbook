@@ -4,11 +4,14 @@ import type { ScanEvent, ScanState } from '../machine/types.ts';
 /** What the result card's desk regions need from the machine: the open picker and the PIN's managers. */
 export function deskOf(
   loop: ScanState['loop'],
-  staffList: ScanSession['staffList'],
+  session: Pick<ScanSession, 'staffList' | 'staff'> & {
+    scanner?: { settings: { approvals?: 'managers' | 'desk' | undefined } } | null;
+  },
   dispatch: (event: ScanEvent) => void,
-  approvals?: 'managers' | 'desk',
-  selfId?: string | null,
 ) {
+  const { staffList } = session;
+  const approvals = session.scanner?.settings.approvals;
+  const selfId = session.staff?.id;
   return {
     picker: loop.s === 'member' ? loop.picker : null,
     onAmount: (value: number) => dispatch({ type: 'amount', value }),
