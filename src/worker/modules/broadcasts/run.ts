@@ -6,7 +6,7 @@ import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishRun } from '../../platform/workflow-runs.ts';
-import { actorOf, targetFilter } from './apply.ts';
+import { actorOf, failInvalidTarget, safeTargetFilter } from './apply.ts';
 import { countsOf } from './dto.ts';
 import {
   type BroadcastRow,
@@ -38,10 +38,18 @@ export async function startedBroadcast(
     await finishRun(ctx.env.DB, instanceId, 'complete', ctx.clock.now());
     return false;
   }
+  const filter = safeTargetFilter(row, null, 1);
+  if (!filter) {
+    await failInvalidTarget(ctx, row);
+    await finishRun(ctx.env.DB, instanceId, 'errored', ctx.clock.now(), {
+      errorCode: 'BROADCAST_TARGET_INVALID',
+    });
+    return false;
+  }
   await setTargeted(
     ctx.env.DB,
     broadcastId,
-    await countTargeted(ctx.env.DB, targetFilter(row, null, 1), ctx.clock.now()),
+    await countTargeted(ctx.env.DB, filter, ctx.clock.now()),
   );
   await finishRun(ctx.env.DB, instanceId, 'running', ctx.clock.now());
   return true;

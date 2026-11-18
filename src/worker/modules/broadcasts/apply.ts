@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import type { Json } from '../../../shared/contracts/common.ts';
 import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -12,6 +13,7 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import {
   type BroadcastRow,
+  casState,
   getBroadcast,
   handledPassIds,
   type ItemRow,
@@ -164,6 +166,14 @@ async function applyOne(
   }
 }
 
+export async function failInvalidTarget(ctx: ServiceContext, row: BroadcastRow): Promise<void> {
+  ctx.log.warn('broadcast.blocked', { broadcastId: row.id, code: 'BROADCAST_TARGET_INVALID' });
+  await casState(ctx.env.DB, row.id, ['sending'], 'failed', {
+    finishedAt: ctx.clock.now(),
+    errorCode: 'BROADCAST_TARGET_INVALID',
+  });
+}
+
 export function targetFilter(
   row: Pick<BroadcastRow, 'org_id' | 'mode' | 'target'> & { id?: string; rule_id?: string | null },
   cursor: string | null,
@@ -188,6 +198,23 @@ export function targetFilter(
   };
 }
 
+/**
+ * `targetFilter`, or null when the stored target no longer parses (a time zone that left the tz
+ * database): the caller ends the run with `BROADCAST_TARGET_INVALID` instead of throwing forever.
+ */
+export function safeTargetFilter(
+  row: Parameters<typeof targetFilter>[0],
+  cursor: string | null,
+  limit: number,
+): ReturnType<typeof targetFilter> | null {
+  try {
+    return targetFilter(row, cursor, limit);
+  } catch (error) {
+    if (error instanceof ZodError || error instanceof RangeError) return null;
+    throw error;
+  }
+}
+
 /** One chunk of up to `CHUNK` passes. A pass that already has an outcome is skipped on retry. */
 export async function applyChunk(
   ctx: ServiceContext,
@@ -197,7 +224,12 @@ export async function applyChunk(
 ): Promise<{ nextCursor: string | null }> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
   if (row?.state !== 'sending') return { nextCursor: null };
-  const page = await targetPage(ctx.env.DB, targetFilter(row, cursor, chunk), ctx.clock.now());
+  const filter = safeTargetFilter(row, cursor, chunk);
+  if (!filter) {
+    await failInvalidTarget(ctx, row);
+    return { nextCursor: null };
+  }
+  const page = await targetPage(ctx.env.DB, filter, ctx.clock.now());
   const done = await handledPassIds(ctx.env.DB, broadcastId, page.ids);
   const cache: MessagingInputs = new Map();
   let updated = 0;

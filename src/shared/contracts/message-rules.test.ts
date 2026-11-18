@@ -92,6 +92,9 @@ describe('input match', () => {
     expect(bad({ input: 'a', timeZone: 'UTC' })).toBe(false);
     expect(bad({ input: 'a', from: '2026-02-30', timeZone: 'UTC' })).toBe(false);
     expect(bad({ input: 'a', from: '2026-03-01', to: '2026-02-01', timeZone: 'UTC' })).toBe(false);
+    expect(bad({ input: 'a', from: '0050-01-01', timeZone: 'UTC' })).toBe(false);
+    expect(bad({ input: 'a', from: '3000-01-01', timeZone: 'UTC' })).toBe(false);
+    expect(bad({ input: 'a', from: '1900-01-01', to: '2999-12-31', timeZone: 'UTC' })).toBe(true);
     expect(bad({ input: 'a', values: [] })).toBe(false);
     expect(bad({ input: 'a', values: new Array(21).fill('x') })).toBe(false);
     expect(bad({ input: 'a', values: ['x'.repeat(121)] })).toBe(false);

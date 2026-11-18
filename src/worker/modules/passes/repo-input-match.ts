@@ -3,6 +3,11 @@ import { addDays, startOfDay } from '../../../shared/zoned.ts';
 import { eventMatchSql } from '../scan/repo-event-match.ts';
 
 type Clause = InputMatch[number];
+/** A literal, never user text: the shape of a date-only value. */
+const DATE_ONLY = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
+/** Numeric text such as "42" or "-1.5" from an import; first character is a digit or a minus. */
+const NUMERIC_TEXT = `i.type = 'text' AND length(i.value) BETWEEN 1 AND 30
+    AND (i.value GLOB '[0-9]*' OR i.value GLOB '-[0-9]*') AND substr(i.value, 2) NOT GLOB '*[^0-9.]*'`;
 type Sql = { sql: string; params: (string | number)[] };
 
 /** Looks `key` up in the pass's personalization object; invalid JSON or a non-object matches nothing. */
@@ -25,8 +30,8 @@ function clauseSql(clause: Clause, passAlias: string): Sql {
   const params: (string | number)[] = [clause.input];
   if ('timeZone' in clause) {
     const { from, to, timeZone } = clause;
-    const dateOnly: string[] = ['length(i.value) = 10'];
-    const dateTime: string[] = ['length(i.value) > 10'];
+    const dateOnly: string[] = [`length(i.value) = 10 AND i.value GLOB '${DATE_ONLY}'`];
+    const dateTime: string[] = [`length(i.value) > 10 AND i.value GLOB '[0-9][0-9][0-9][0-9]-*'`];
     const dateParams: string[] = [];
     const timeParams: number[] = [];
     if (from) {
@@ -51,15 +56,18 @@ function clauseSql(clause: Clause, passAlias: string): Sql {
   }
   const bounds: string[] = [];
   if (clause.min !== undefined) {
-    bounds.push('i.value >= ?');
+    bounds.push('CAST(i.value AS REAL) >= ?');
     params.push(clause.min);
   }
   if (clause.max !== undefined) {
-    bounds.push('i.value <= ?');
+    bounds.push('CAST(i.value AS REAL) <= ?');
     params.push(clause.max);
   }
   return {
-    sql: inputRow(passAlias, `i.type IN ('integer','real') AND ${bounds.join(' AND ')}`),
+    sql: inputRow(
+      passAlias,
+      `(i.type IN ('integer','real') OR (${NUMERIC_TEXT})) AND ${bounds.join(' AND ')}`,
+    ),
     params,
   };
 }
