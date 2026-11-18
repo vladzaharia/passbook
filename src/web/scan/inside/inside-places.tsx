@@ -24,7 +24,7 @@ export function InsidePlaces({
     ...places.map((p) => ({ key: p.place, name: p.name, inNow: p.inNow, capacity: p.capacity })),
   ];
   return (
-    <div className="scan-in-places" role="group" aria-label="Places">
+    <fieldset className="scan-in-places" aria-label="Places">
       {all.map((p) => {
         const full = p.capacity !== null && p.inNow >= p.capacity;
         return (
@@ -50,6 +50,6 @@ export function InsidePlaces({
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

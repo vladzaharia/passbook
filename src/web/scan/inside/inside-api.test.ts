@@ -98,8 +98,8 @@ describe("the Who's in calls", () => {
     await expect(api.markOut(body)).rejects.toBeInstanceOf(ScanApiError);
     expect(calls[0]?.url).toBe('/api/v1/scan/mark-out');
     expect(calls[0]?.init.method).toBe('POST');
-    expect((calls[0]?.init.headers as Record<string, string>)['x-csrf-token']).toBe('csrf-1');
-    expect(JSON.parse(calls[0]?.init.body as string)).toEqual(body);
+    expect(calls[0]?.init.headers).toMatchObject({ 'x-csrf-token': 'csrf-1' });
+    expect(JSON.parse(String(calls[0]?.init.body))).toEqual(body);
   });
   it('takes a mark-out back through the ordinary undo route', async () => {
     const { api, calls } = setup(() => json({}, { status: 500 }));

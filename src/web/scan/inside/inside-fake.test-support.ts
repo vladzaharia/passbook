@@ -15,7 +15,6 @@ const MIN = 60_000;
 const id = (n: number) => `01900000-0000-7000-8000-${n.toString(16).padStart(12, '0')}`;
 
 export const GYM_KEY = 'zone:gym';
-export const POOL_KEY = 'zone:pool';
 
 export function insideRow(n: number, over: Partial<InsideRow> = {}): InsideRow {
   const names = ['Maya Okafor', 'Leo Park', 'Ana Ruiz', 'Sam Kim', 'Ira Novak', 'Tess Lund'];

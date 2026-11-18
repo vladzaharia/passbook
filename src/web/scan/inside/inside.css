@@ -22,6 +22,10 @@
   padding: 12px 16px 16px;
 }
 .scan-in-places {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
   display: flex;
   gap: 8px;
   overflow-x: auto;
