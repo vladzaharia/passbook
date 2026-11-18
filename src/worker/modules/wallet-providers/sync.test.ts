@@ -22,7 +22,9 @@ const mocks = vi.hoisted(() => ({
   deferOperation: vi.fn(),
   finishRetirement: vi.fn(),
   run: vi.fn(),
+  hasWork: vi.fn(),
 }));
+vi.mock('./repo-sync-work.ts', () => ({ walletSyncHasWork: mocks.hasWork }));
 vi.mock('./instance.ts', () => ({
   purgeExpiredWalletOffers: mocks.purge,
   expireWalletClaims: mocks.expire,
@@ -66,7 +68,7 @@ beforeEach(async () => {
   ctx = {
     env: { ...(await testEnv()), KEK_V1: btoa('0123456789abcdef0123456789abcdef') },
     clock: { now: () => 123_000 },
-    log: { warn: vi.fn() },
+    log: { warn: vi.fn(), error: vi.fn() },
   } as unknown as ServiceContext;
   const credentialKeysetCommitment = await credentialKeyset.ensureCredentialRefKeyset(
     ctx.env.DB,
@@ -108,18 +110,30 @@ beforeEach(async () => {
   mocks.ackPlaceholder.mockResolvedValue(true);
   mocks.due.mockResolvedValue([]);
   mocks.retirements.mockResolvedValue([]);
+  mocks.hasWork.mockResolvedValue(true);
 });
 
 describe('wallet sync dirty placeholders', () => {
   it('does not acknowledge or schedule anything when the keyset is unavailable', async () => {
     Object.assign(ctx.env, { KEK_V1: btoa('z'.repeat(32)) });
-    await expect(drainWalletProviderSync(ctx)).rejects.toMatchObject({
+    await drainWalletProviderSync(ctx);
+    expect(ctx.log.error).toHaveBeenCalledTimes(1);
+    expect(ctx.log.error).toHaveBeenCalledWith('wallet.sync_keyset_unavailable', {
       code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
     });
     expect(mocks.expire).not.toHaveBeenCalled();
     expect(mocks.dirty).not.toHaveBeenCalled();
     expect(mocks.ackPlaceholder).not.toHaveBeenCalled();
     expect(mocks.run).not.toHaveBeenCalled();
+  });
+
+  it('does not require the keyset when nothing is queued', async () => {
+    mocks.hasWork.mockResolvedValue(false);
+    Object.assign(ctx.env, { KEK_V1: btoa('z'.repeat(32)) });
+    await drainWalletProviderSync(ctx);
+    expect(ctx.log.error).not.toHaveBeenCalled();
+    expect(mocks.expire).not.toHaveBeenCalled();
+    expect(mocks.dirty).not.toHaveBeenCalled();
   });
 
   it('acknowledges only via the pristine generation-fenced placeholder proof', async () => {

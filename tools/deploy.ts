@@ -209,7 +209,7 @@ async function waitForBakedSync(): Promise<void> {
         .map((m) => `- ${m.id} (${m.origin}, org ${m.org_id}): ${m.passes} passes`)
         .join(
           '\n',
-        )}\nThese templates cannot issue new passes until this clears; existing passes keep scanning. See docs/operations.md, "If a step fails". Roll forward; do not roll back.`,
+        )}\nThese templates cannot issue new passes until this clears; existing passes keep scanning. See docs/operations.md, "Baked sync wait". Roll forward; do not roll back.`,
     );
     process.exit(1);
   }

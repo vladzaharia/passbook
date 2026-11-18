@@ -1,21 +1,14 @@
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
-import { LEGACY_REVISION_MS, type Principal } from '../../platform/authority-principal.ts';
+import type { Principal } from '../../platform/authority-principal.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { TenantPassWrite } from './http.ts';
 
-/**
- * Work queued by the pre-0052 Worker persisted `orgs.updated_at` (milliseconds) as its org revision. Such a
- * value can never equal an `access_revision`, so it is accepted on org status alone. Remove this, with
- * `orgEpochParams`, one release after cutover, when no such work can remain.
- */
-/** `o` is active and, unless the bound value is a legacy `updated_at`, at the captured access revision. */
+/** `o` is active and at the access revision captured with the authority. */
 export const orgEpochMatchSql = (alias: string) =>
-  `${alias}.status = 'active' AND (? >= ${LEGACY_REVISION_MS} OR ${alias}.access_revision = ?)`;
-export const orgEpochParams = (revision: number): [number, number] => [revision, revision];
-const legacyRevision = (revision: number) =>
-  revision >= LEGACY_REVISION_MS ? {} : { orgAccessRevision: revision };
+  `${alias}.status = 'active' AND ${alias}.access_revision = ?`;
+export const orgEpochParams = (revision: number): [number] => [revision];
 
 /**
  * Commit-time authority: the principal is live now and the org's `access_revision` is the one captured
@@ -88,14 +81,14 @@ export function tenantPrincipal(authority: TenantPassWrite): Principal {
         membershipId: authority.membershipId,
         via: 'session',
         sessionIdHash: authority.sessionId,
-        ...legacyRevision(authority.orgAccessRevision),
+        orgAccessRevision: authority.orgAccessRevision,
         mode: authority.mode,
       }
     : {
         kind: 'api_key',
         keyId: authority.keyId,
         scope: authority.scope,
-        ...legacyRevision(authority.orgAccessRevision),
+        orgAccessRevision: authority.orgAccessRevision,
         ...(authority.keyOrgId === null ? { orgId: authority.orgId } : {}),
       };
 }

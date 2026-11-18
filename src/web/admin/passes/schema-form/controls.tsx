@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { zoneOptions } from '../../../lib/timezones.ts';
 import { Button, Combobox, FileDrop, Input, Select, Switch, Textarea } from '../../../ui/index.ts';
+import { AccessPlanInput } from '../inputs/access-plan.tsx';
+import { AccessZonesInput } from '../inputs/access-zones.tsx';
 import { DateTimeInput } from './datetime-input.tsx';
 import type { FieldDef } from './schema.ts';
 
@@ -13,6 +15,8 @@ export const WIDE_WIDGETS: ReadonlySet<string> = new Set([
   'datetime',
   'url',
   'list',
+  'access-plan',
+  'access-zones',
 ]);
 
 function readDataUrl(file: File): Promise<string> {
@@ -128,6 +132,32 @@ export function Control({
           value={text || undefined}
           onValueChange={(z) => {
             onValue(z);
+            onBlur();
+          }}
+        />
+      );
+    case 'access-plan':
+      return (
+        <AccessPlanInput
+          field={field}
+          value={value}
+          control={control}
+          disabled={disabled}
+          onValue={(v) => {
+            onValue(v);
+            onBlur();
+          }}
+        />
+      );
+    case 'access-zones':
+      return (
+        <AccessZonesInput
+          field={field}
+          value={value}
+          control={control}
+          disabled={disabled}
+          onValue={(v) => {
+            onValue(v);
             onBlur();
           }}
         />

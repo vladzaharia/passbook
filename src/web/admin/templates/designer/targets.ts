@@ -1,4 +1,6 @@
 import type { ValidationIssue } from '@/passkit/types.ts';
+import { planIndexOf } from './access/issues.ts';
+import { readAccess } from './access/model.ts';
 import { bindingsOf, toOf } from './bindings.ts';
 import {
   type DesignDoc,
@@ -30,6 +32,11 @@ export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection |
   if (/^scan\.display\b/.test(path)) {
     const display = scanDisplayOf(doc);
     return { section: 'scan-display', key: display ? scanIssueTarget(display, path) : 'header' };
+  }
+  if (/^scan\.access\b/.test(path) || issue.code.startsWith('ACCESS_')) {
+    const at = planIndexOf(path);
+    const plan = at === null ? undefined : readAccess(doc)?.plans[at];
+    return { section: 'access', ...(plan ? { key: plan.id } : {}) };
   }
   if (issue.code === 'MISSING_ICON') return { section: 'images', key: 'icon' };
   const png = /^(?:[\w-]+\.lproj\/)?([A-Za-z]+)(?:@[23]x)?\.png$/.exec(path);

@@ -833,13 +833,12 @@ describe('organization mutation-time authority', () => {
     const ownRow = await getOrgRow(fx.env.DB, org.id);
     const otherRow = await getOrgRow(fx.env.DB, other.id);
     if (!ownRow || !otherRow) throw new Error('Both organizations must exist.');
-    const forged = { ...manage, orgId: other.id, orgAccessRevision: otherRow.updated_at };
+    const forged = { ...manage, orgId: other.id };
     const branding = JSON.stringify({ accent: '#112233' });
     const refused = { status: 403 };
 
     // An authority for another org is refused before any SQL; a forged one reaches the grant, which
     // takes the org from the membership row, so the other org's row never matches (409, nothing written).
-    // Its ms-sized revision is read as pre-cutover work, accepted on org status alone.
     expect(await saveOrgBranding(ctx, otherRow, branding, fx.clock.now(), manage)).toBeNull();
     expect(await updateOrgRow(ctx, { ...otherRow, name: 'Cross-tenant write' }, manage)).toBeNull();
     await expect(
