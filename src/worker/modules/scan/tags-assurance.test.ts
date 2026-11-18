@@ -1,11 +1,16 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
 import { assertBindable } from '../nfc/pass-state.ts';
+import { scannerActor, withRole } from './actor.ts';
+import { credentialTombstoneRefsForInput } from './credential-input.ts';
+import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
-import { candidateTakesTag, skippedTitles } from './tag-assurance.ts';
+import { readScannerScope } from './repo-scope.ts';
+import { evaluate } from './resolve-evaluate.ts';
+import { candidateTakesTag } from './tag-assurance.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
-import { key } from './test-kit.ts';
+import { key, proofedScanActor } from './test-kit.ts';
 
 const CHECK_IN = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
 let f: TagScanFixture;
@@ -79,7 +84,7 @@ describe('template tag minimum', () => {
   });
 
   it('a user fob opens basic passes, skips secure ones, and the preview names them', async () => {
-    const s = await f.manager();
+    const s = await f.manager({ templateIds: [f.tpl, secure] });
     const mgr = { headers: s.scanner.headers };
     const user = (await f.pass({ owner: true })) as Awaited<ReturnType<typeof f.pass>>;
     const owner = user.ownerId ?? '';
@@ -88,7 +93,11 @@ describe('template tag minimum', () => {
       await f.bind(s.scanner, { card: user.card, binding: 'user', preview: true }),
     );
     expect(preview).toMatchObject({ status: 'preview', skipped: [expect.any(String)] });
-    expect(await skippedTitles(f.kit.ctx, f.kit.org.id, 'live', owner)).toHaveLength(1);
+    // A scanner that does not take the secure template learns nothing about it.
+    const narrow = await f.manager();
+    expect(
+      await json(await f.bind(narrow.scanner, { card: user.card, binding: 'user', preview: true })),
+    ).toMatchObject({ skipped: [] });
     const tag = f.read();
     const bound = await f.bind(s.scanner, { card: user.card, binding: 'user', tag });
     expect(bound.status).toBe(200);
@@ -113,5 +122,36 @@ describe('template tag minimum', () => {
     expect(await post(s, '/resolve', tagInput(tag))).toMatchObject(refused);
     expect(await post(s, '/actions', tagInput(tag))).toMatchObject(refused);
     expect(await post(s, '/actions', tagInput(tag, { passId: pass.id }))).toMatchObject(refused);
+  });
+});
+
+describe('evaluateObserved', () => {
+  it('refuses a tag actor on a secure template and still admits a plain code actor', async () => {
+    const s = await f.desk({ templateIds: [secure] });
+    const { pass } = await f.pass({ template: secure });
+    const row = await getScanner(f.kit.env.DB, s.id);
+    if (!row) throw new Error('Missing scanner');
+    const scope = await readScannerScope(f.kit.env.DB, row, null);
+    const base = await proofedScanActor(
+      f.kit.ctx,
+      withRole(scannerActor(f.kit.ctx, row, 'live', 'cookie', scope), null),
+    );
+    const input = { passId: pass.id, method: 'nfc' as const };
+    const observed = await credentialTombstoneRefsForInput(f.kit.ctx, base.orgId, base.mode, input);
+    const tag = {
+      tagId: 't',
+      bindingId: 'b',
+      scope: 'pass' as const,
+      userId: null,
+      passId: pass.id,
+    };
+    expect(await evaluate(f.kit.ctx, { ...base, tag }, input, {}, observed)).toMatchObject({
+      stop: true,
+      kind: 'refused',
+      reason: 'tag_not_allowed',
+    });
+    expect(await evaluate(f.kit.ctx, base, input, {}, observed)).not.toMatchObject({
+      reason: 'tag_not_allowed',
+    });
   });
 });

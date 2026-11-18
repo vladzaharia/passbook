@@ -3,15 +3,16 @@ import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type Candidate, candidateById } from '../scan/repo-lookup.ts';
 import { candidateWallet } from '../scan/resolve-candidates.ts';
-import { candidateTakesTag } from '../scan/tag-assurance.ts';
+import { tagFit } from '../scan/tag-assurance.ts';
 
 const refused = (reason: 'removed' | 'voided' | 'expired') =>
   new ConflictError(`Can't assign a tag to a ${reason} pass.`, `TAG_PASS_${reason.toUpperCase()}`);
 
 /** A Basic tag cannot go to a pass whose template needs a secure one. */
 export function assertTakesTag(ctx: ServiceContext, candidate: Candidate): void {
-  if (!candidateTakesTag(ctx, candidate))
-    throw new ConflictError('This pass needs a secure tag.', 'TAG_ASSURANCE_LOW');
+  const fit = tagFit(ctx, candidate);
+  if (fit === 'unreadable') throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  if (fit === 'low') throw new ConflictError('This pass needs a secure tag.', 'TAG_ASSURANCE_LOW');
 }
 
 /** `assertTakesTag` for a pass id. A pass with no scan release cannot be admitted by any tag, so it passes. */
@@ -35,10 +36,10 @@ export async function assertBindable(
   const { pass } = candidate;
   if (pass.removedAt !== null) throw refused('removed');
   if (pass.status === 'voided') throw refused('voided');
-  assertTakesTag(ctx, candidate);
   const wallet = candidateWallet(candidate);
   if (!wallet) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const validity = validityOf(wallet, ctx.clock.now());
   if (validity.status === 'voided') throw refused('voided');
   if (validity.status === 'expired') throw refused('expired');
+  assertTakesTag(ctx, candidate);
 }

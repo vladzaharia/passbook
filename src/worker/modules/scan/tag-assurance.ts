@@ -1,8 +1,10 @@
 import type { TemplateManifest } from '../../../passkit/types.ts';
 import type { ScanTag } from '../../../shared/contracts/nfc-tags.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { ScanActor } from './actor.ts';
 import { type Candidate, candidatesByScopes } from './repo-lookup.ts';
 import { ownerPassIds } from './repo-tags-bind.ts';
+import { accepts } from './resolve-candidates.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
 type Assurance = ScanTag['assurance'];
@@ -20,22 +22,26 @@ const templateMinAssurance = (manifest: TemplateManifest): Assurance =>
 const meetsAssurance = (tag: Assurance, min: Assurance): boolean => RANK[tag] >= RANK[min];
 
 /** Whether a tag may admit on, or bind to, the candidate by its active release. An unreadable snapshot fails closed. */
-export function candidateTakesTag(
+export function tagFit(
   ctx: ServiceContext,
   c: Candidate,
   tag: Assurance = TAG_ASSURANCE,
-): boolean {
+): 'ok' | 'low' | 'unreadable' {
   const templates = resolveCandidateReadTemplates(c);
   if (!templates) {
     ctx.log.warn('scan.tag_refused', { orgId: c.pass.orgId, code: 'TAG_TEMPLATE_UNREADABLE' });
-    return false;
+    return 'unreadable';
   }
-  return meetsAssurance(tag, templateMinAssurance(templates.active.manifest));
+  return meetsAssurance(tag, templateMinAssurance(templates.active.manifest)) ? 'ok' : 'low';
 }
 
-/** Titles of the owner's live passes a Basic tag will not open, for the user-fob preview. */
+export const candidateTakesTag = (ctx: ServiceContext, c: Candidate): boolean =>
+  tagFit(ctx, c) === 'ok';
+
+/** Titles of the owner's live passes this scanner takes and a Basic tag will not open, for the user-fob preview. */
 export async function skippedTitles(
   ctx: ServiceContext,
+  actor: ScanActor,
   orgId: string,
   mode: 'live' | 'test',
   ownerUserId: string,
@@ -46,7 +52,7 @@ export async function skippedTitles(
     ids.map((passId) => ({ orgId, mode, passId })),
   );
   return found
-    .filter((c) => !candidateTakesTag(ctx, c))
+    .filter((c) => accepts(actor, c.pass) && tagFit(ctx, c) === 'low')
     .map(
       (c) =>
         c.pass.displayTitle ?? resolveCandidateReadTemplates(c)?.active.manifest.name ?? 'Pass',

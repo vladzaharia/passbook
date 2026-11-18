@@ -16,6 +16,7 @@ import {
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import { assertTakesTag } from '../nfc/pass-state.ts';
 import { tagsEnabled } from '../nfc/policy.ts';
 import { activeBinding, type PassFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
@@ -37,7 +38,7 @@ import { guardMiss } from './repo-undo-approval-guard.ts';
 import { ROLE_RANK } from './rules.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
-import { candidateTakesTag, skippedTitles, TAG_ASSURANCE } from './tag-assurance.ts';
+import { skippedTitles, TAG_ASSURANCE } from './tag-assurance.ts';
 import { cardPass, tagRights, tagUid } from './tags-inspect.ts';
 
 type BindRequest = z.infer<typeof ScanTagBindRequestSchema>;
@@ -166,8 +167,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       : { code: req.card.code, method: req.card.method };
   const { candidate, refs } = await cardPass(ctx, actor, input);
   const { pass } = candidate;
-  if (!candidateTakesTag(ctx, candidate))
-    throw new ConflictError('This pass needs a secure tag.', 'TAG_ASSURANCE_LOW');
+  assertTakesTag(ctx, candidate);
   const card = await cardFacts(db, pass.templateId, pass.ownerUserId);
   const ownerAccount = pass.ownerUserId !== null && card.ownerActive;
   if (req.binding === 'user' && !ownerAccount)
@@ -194,7 +194,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
   };
   const skipped =
     req.binding === 'user' && pass.ownerUserId
-      ? await skippedTitles(ctx, orgId, mode, pass.ownerUserId)
+      ? await skippedTitles(ctx, actor, orgId, mode, pass.ownerUserId)
       : [];
   const staff = actor.staff;
   const by: TagActor = staff ? { type: 'staff', id: staff.id } : { type: 'scanner', id: scannerId };
