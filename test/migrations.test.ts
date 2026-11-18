@@ -1004,3 +1004,143 @@ describe('0070 post-cutover', () => {
     ).toEqual({ ...before, download_token: 'h1:next' });
   });
 });
+
+describe('0073_scan_zones migration', () => {
+  const zone = (id: string, orgId: string, extra: Record<string, unknown> = {}) => {
+    const row = { id, org_id: orgId, key: id, name: id, created_at: 1, updated_at: 1, ...extra };
+    const keys = Object.keys(row);
+    return run(
+      env.DB,
+      `INSERT INTO scan_zones (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+      Object.values(row) as (string | number | null)[],
+    );
+  };
+
+  it('checks keys, child time zones and occupancy limits', async () => {
+    const org = await makeOrg(fixtures(await makeEnv()));
+    await zone('pool', org.id, { time_zone: 'UTC' });
+    await zone('lane-1', org.id, { parent_id: 'pool' });
+    for (const key of ['Pool', 'a b', '*', '-x', '', 'a'.repeat(41)])
+      await expect(zone(`k-${key.length}`, org.id, { key }), key).rejects.toThrow(/CHECK/);
+    await expect(zone('child-tz', org.id, { parent_id: 'pool', time_zone: 'UTC' })).rejects.toThrow(
+      /CHECK/,
+    );
+    const bad = [
+      { capacity: 5 },
+      { occupancy: 'track', capacity: 0 },
+      { occupancy: 'track', max_stay_minutes: 5 },
+      { occupancy: 'track', clear_at: '24:00' },
+      { occupancy: 'track', clear_at: '7:00' },
+      { occupancy: 'full' },
+    ];
+    for (const [i, extra] of bad.entries())
+      await expect(zone(`occ-${i}`, org.id, extra), JSON.stringify(extra)).rejects.toThrow(/CHECK/);
+    await zone('gym', org.id, {
+      occupancy: 'enforce',
+      capacity: 40,
+      max_stay_minutes: 120,
+      clear_at: '03:00',
+    });
+  });
+
+  it('keeps one active name and one key per org', async () => {
+    const f = fixtures(await makeEnv());
+    const [a, b] = [await makeOrg(f), await makeOrg(f)];
+    await zone('one', a.id, { name: 'Pool' });
+    await expect(zone('two', a.id, { name: 'POOL' })).rejects.toThrow(/UNIQUE/);
+    await expect(zone('one-b', a.id, { key: 'one', name: 'Other' })).rejects.toThrow(/UNIQUE/);
+    await zone('one-b', b.id, { key: 'one', name: 'Pool' });
+    await run(env.DB, "UPDATE scan_zones SET archived_at = 5 WHERE id = 'one'");
+    await zone('two', a.id, { name: 'Pool' });
+  });
+
+  it('cascades from the org and the parent, and indexes every foreign key', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    await zone('top', org.id, { time_zone: 'UTC' });
+    await zone('sub', org.id, { parent_id: 'top' });
+    await run(env.DB, "DELETE FROM scan_zones WHERE id = 'top'");
+    expect(await first(env.DB, "SELECT 1 AS x FROM scan_zones WHERE id = 'sub'")).toBeNull();
+    await zone('left', org.id);
+    await run(env.DB, 'DELETE FROM orgs WHERE id = ?', [org.id]);
+    expect(await first(env.DB, "SELECT 1 AS x FROM scan_zones WHERE id = 'left'")).toBeNull();
+    for (const table of ['scan_zones', 'scanning_session_zones']) {
+      const fks = await all<{ from: string }>(
+        env.DB,
+        `SELECT "from" FROM pragma_foreign_key_list('${table}')`,
+      );
+      const indexed = new Set<string>();
+      for (const index of await all<{ name: string }>(
+        env.DB,
+        `SELECT name FROM pragma_index_list('${table}')`,
+      ))
+        for (const col of await all<{ name: string; seqno: number }>(
+          env.DB,
+          `SELECT name, seqno FROM pragma_index_info('${index.name}')`,
+        ))
+          if (col.seqno === 0) indexed.add(col.name);
+      // A WITHOUT ROWID primary key is its own index.
+      if (table === 'scanning_session_zones') indexed.add('session_id');
+      for (const fk of fks) expect(indexed.has(fk.from), `${table}.${fk.from}`).toBe(true);
+    }
+  });
+
+  it('links a session to a zone, bumps the session epoch on every link change and cascades', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    await zone('door', org.id);
+    await run(
+      env.DB,
+      `INSERT INTO scanning_sessions (id, org_id, mode, name, settings, time_zone, created_at, updated_at)
+       VALUES ('sess', ?, 'live', 'Door', '{}', 'UTC', 1, 1)`,
+      [org.id],
+    );
+    const epoch = async () =>
+      (
+        await first<{ e: number }>(
+          env.DB,
+          "SELECT config_epoch AS e FROM scanning_sessions WHERE id = 'sess'",
+        )
+      )?.e ?? 0;
+    const e0 = await epoch();
+    await run(
+      env.DB,
+      "INSERT INTO scanning_session_zones (session_id, zone_id, sort) VALUES ('sess', 'door', 0)",
+    );
+    const e1 = await epoch();
+    expect(e1).toBeGreaterThan(e0);
+    await run(env.DB, "UPDATE scanning_session_zones SET sort = 1 WHERE session_id = 'sess'");
+    const e2 = await epoch();
+    expect(e2).toBeGreaterThan(e1);
+    await run(env.DB, "DELETE FROM scanning_session_zones WHERE session_id = 'sess'");
+    expect(await epoch()).toBeGreaterThan(e2);
+    await run(
+      env.DB,
+      "INSERT INTO scanning_session_zones (session_id, zone_id) VALUES ('sess', 'door')",
+    );
+    await run(env.DB, "DELETE FROM scan_zones WHERE id = 'door'");
+    expect(
+      await first(env.DB, "SELECT 1 AS x FROM scanning_session_zones WHERE session_id = 'sess'"),
+    ).toBeNull();
+    await expect(
+      run(
+        env.DB,
+        "INSERT INTO scanning_session_zones (session_id, zone_id) VALUES ('sess', 'gone')",
+      ),
+    ).rejects.toThrow(/FOREIGN KEY/);
+  });
+
+  it('adds nullable zone, visit and plan columns to scans', async () => {
+    const cols = await all<{ name: string; notnull: number }>(
+      env.DB,
+      "SELECT name, \"notnull\" FROM pragma_table_info('scans') WHERE name IN ('zone_id', 'visit', 'access_plan')",
+    );
+    expect(cols.map((c) => c.name).sort()).toEqual(['access_plan', 'visit', 'zone_id']);
+    expect(cols.every((c) => c.notnull === 0)).toBe(true);
+    const index = await first<{ sql: string }>(
+      env.DB,
+      "SELECT sql FROM sqlite_master WHERE name = 'scans_zone'",
+    );
+    expect(index?.sql).toContain('WHERE zone_id IS NOT NULL');
+  });
+});
