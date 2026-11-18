@@ -91,16 +91,6 @@ export async function nextDue(
   };
 }
 
-export async function hasDue(db: D1Database, lane: LaneKey, now: number): Promise<boolean> {
-  const row = await first(
-    db,
-    `SELECT 1 FROM webhook_deliveries
-     WHERE endpoint_id = ? AND org_id = ? AND mode = ? AND state = 'pending' AND next_at <= ? LIMIT 1`,
-    [lane.endpointId, lane.orgId, lane.mode, now],
-  );
-  return row !== null;
-}
-
 /** Active endpoints with a due delivery and a free lane. Drives from the endpoints (a handful per org). */
 export async function listDueLanes(db: D1Database, now: number, limit: number): Promise<LaneKey[]> {
   const rows = await all<{ id: string; org_id: string; mode: Mode }>(
