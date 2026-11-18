@@ -1,6 +1,6 @@
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { headMatches, writeHead } from './head-store.ts';
+import { headMatches, healHead, writeHead } from './head-store.ts';
 import {
   type Receipt,
   type ReceiptBody,
@@ -70,9 +70,11 @@ export interface PreparedReceipt {
 export async function prepareReceipt(
   ctx: ServiceContext,
   input: ReceiptInput,
+  /** The insert lands only while this holds (the delete behind it is gated on the row). */
+  gate?: { sql: string; params: readonly (string | number)[] },
 ): Promise<PreparedReceipt> {
   const { body, head, mac } = await bodyFor(ctx, input);
-  return { stmt: receiptInsertStmt(ctx.env.DB, body, mac, head), receipt: { ...body, mac } };
+  return { stmt: receiptInsertStmt(ctx.env.DB, body, mac, head, gate), receipt: { ...body, mac } };
 }
 
 /** After the batch that carried a prepared receipt committed: records its head outside D1. */
@@ -87,6 +89,7 @@ export async function readReceipts(
 ): Promise<{ receipt: Receipt; verified: boolean }[]> {
   const { rows, anchor } = await chainRows(ctx.env.DB, orgId, cls);
   const newest = rows.at(-1) ?? anchor;
+  if (newest) await healHead(ctx, orgId, cls, { seq: newest.seq, mac: newest.mac });
   const headOk = await headMatches(
     ctx,
     orgId,

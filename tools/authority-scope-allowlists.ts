@@ -181,7 +181,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/delivery/repo-outbox-processing.ts': {
     reason:
-      'outbox lease, retry and finish bookkeeping for a row already authorized at queue time, and the sent/failed outbox purge (deleteInBatches); the provider boundary is a grant (repo-provider-attempt.ts)',
+      'outbox lease, retry and finish bookkeeping for a row already authorized at queue time, (the outbox retention purge moved to retention/repo-sweep.ts); the provider boundary is a grant (repo-provider-attempt.ts)',
     writes: [
       'outbox:25f751c88a47',
       'outbox:2765ae869719',
@@ -221,8 +221,8 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/retention/repo-sweep.ts': {
     reason:
-      'the daily retention sweep (platform job, no principal) deletes server-selected rowids of live scans, live pass events and finished outbox rows; each delete runs only while the receipt that records it exists in the same batch and no org-wide or pass hold covers the row',
-    writes: ['outbox:66683029c5b8', 'pass_events:1147aaedb7b8', 'scans:c80bf2b78d15'],
+      'the daily retention sweep (platform job, no principal) deletes server-selected rowids of live scans, live pass events and finished outbox rows; each delete repeats the class condition, scope and hold check, and runs only while the receipt that records it exists in the same batch',
+    writes: ['outbox:90161c5a75f9', 'pass_events:4a717a8505a1', 'scans:06e74b44b9ac'],
   },
   'src/worker/modules/retention/repo-receipts.ts': {
     reason:
@@ -230,7 +230,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     writes: [
       'retention_receipt_anchors:be676f0b2666',
       'retention_receipts:726f943d12d9',
-      'retention_receipts:e58c2afc7e26',
+      'retention_receipts:dc272aa87a05',
     ],
   },
   'src/worker/modules/keys/repo-rewrap.ts': {

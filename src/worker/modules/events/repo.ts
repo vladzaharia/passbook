@@ -85,8 +85,7 @@ export function listEvents(db: D1Database, f: EventFilter): Promise<EventRow[]> 
   );
 }
 
-/** Deletes up to `limit` rows older than `cutoff`; returns how many. */
-/** Test-mode events only: live events are deleted by the retention sweep. */
+/** Deletes up to `limit` test-mode events older than `cutoff`; live events are deleted by the retention sweep. */
 export async function deleteTestEventsBefore(
   db: D1Database,
   cutoff: number,

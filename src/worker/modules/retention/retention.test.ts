@@ -279,7 +279,7 @@ describe('retentionPlan', () => {
       expect((await planOf(cls)).skipped.map((s) => s.orgId)).not.toContain(o.orgId);
   });
 
-  it('deleted orgs are left out, suspended orgs still run', async () => {
+  it('deleted and suspended orgs stay in the plan', async () => {
     const [gone, paused] = [await rk.org(), await rk.org()];
     await setRaw(gone.orgId, '60');
     await setRaw(paused.orgId, '60');
@@ -287,7 +287,7 @@ describe('retentionPlan', () => {
     await run(rk.kit.env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [gone.orgId]);
     const ids = (await planOf()).special.map((s) => s.orgId);
     expect(ids).toContain(paused.orgId);
-    expect(ids).not.toContain(gone.orgId);
+    expect(ids).toContain(gone.orgId);
   });
 
   it("one org's value never moves another org's cutoff", async () => {

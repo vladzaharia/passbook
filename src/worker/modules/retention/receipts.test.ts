@@ -175,8 +175,9 @@ describe('tamper detection', () => {
     expect(await verdicts(o.orgId, 'scans')).toEqual([true, true, true]);
     await bucket.put(key(3), JSON.stringify({ seq: 3, mac: 'b'.repeat(64) }));
     expect(await verdicts(o.orgId, 'scans')).toEqual([false, false, false]);
+    // A head whose put failed (no object at or after D1's newest) is re-put on read and verifies again.
     await bucket.delete(key(3));
-    expect(await verdicts(o.orgId, 'scans')).toEqual([false, false, false]);
+    expect(await verdicts(o.orgId, 'scans')).toEqual([true, true, true]);
   });
 
   it('a whole chain dropped from D1 is caught by its head objects', async () => {

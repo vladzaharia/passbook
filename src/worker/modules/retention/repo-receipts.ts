@@ -60,12 +60,14 @@ export function receiptInsertStmt(
   body: ReceiptBody,
   mac: string,
   head: number,
+  gate?: { sql: string; params: readonly (string | number)[] },
 ): D1PreparedStatement {
   return stmt(
     db,
     `INSERT INTO retention_receipts (${COLS})
      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-     WHERE coalesce((SELECT max(seq) FROM retention_receipts WHERE org_id IS ? AND class = ?), 0) = ?`,
+     WHERE coalesce((SELECT max(seq) FROM retention_receipts WHERE org_id IS ? AND class = ?), 0) = ?
+     ${gate ? `AND ${gate.sql}` : ''}`,
     [
       body.id,
       body.orgId,
@@ -84,6 +86,7 @@ export function receiptInsertStmt(
       body.orgId,
       body.cls,
       head,
+      ...(gate?.params ?? []),
     ],
   );
 }

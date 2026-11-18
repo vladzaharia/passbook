@@ -4,9 +4,10 @@ import { dailyDelivery } from '../delivery/jobs.ts';
 import { dailyEvents } from '../events/jobs.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { placeHold, releaseHold } from './holds.ts';
+import { retentionPlan } from './plan.ts';
 import { DAY } from './policy.ts';
 import { readReceipts } from './receipt-service.ts';
-import { deleteChunkStmt } from './repo-sweep.ts';
+import { deleteChunkStmt, receiptGate, type Scope } from './repo-sweep.ts';
 import { type RetentionKit, retentionKit } from './retention-test-fixtures.ts';
 import { sweepClass } from './sweep.ts';
 
@@ -156,39 +157,184 @@ describe('events sweep', () => {
   });
 });
 
-describe('the delete is gated on its receipt and on holds', () => {
-  it('deletes nothing when the receipt is not in the batch', async () => {
-    const o = await orgWithEvents([100]);
-    const rowid =
-      (
-        await all<{ rowid: number }>(db(), 'SELECT rowid FROM pass_events WHERE id = ?', [
-          o.ids[100],
-        ])
-      )[0]?.rowid ?? 0;
-    const [res] = await db().batch([deleteChunkStmt(db(), 'events', [rowid], 'no-such-receipt')]);
-    expect(res?.meta.changes).toBe(0);
-    expect(await present(o.ids[100] as string)).toBe(true);
+describe('the delete is gated on its receipt, its eligibility and holds', () => {
+  const cutoffs = () => ({ cutoff: now() - 90 * DAY, failedCutoff: now() - 90 * DAY });
+  const platformScope = { kind: 'platform' as const, exclude: [] };
+  const gated = async (
+    o: { orgId: string },
+    id: string,
+    over: { scope?: Scope; receipt?: string; cutoff?: number } = {},
+  ) => {
+    const c =
+      over.cutoff === undefined ? cutoffs() : { cutoff: over.cutoff, failedCutoff: over.cutoff };
+    const [res] = await db().batch([
+      deleteChunkStmt(
+        db(),
+        'events',
+        over.scope ?? { kind: 'org', orgId: o.orgId },
+        c,
+        [id],
+        over.receipt ?? receiptId,
+      ),
+    ]);
+    return res?.meta.changes ?? 0;
+  };
+  let receiptId = '';
+  beforeAll(async () => {
+    const { writeReceipt } = await import('./receipt-service.ts');
+    receiptId = (
+      await writeReceipt(ctx(), { orgId: null, cls: 'gate-test', kind: 'sweep', deleted: 1 })
+    ).id;
   });
 
-  it('a hold placed after the rows were chosen still stops the delete', async () => {
+  it('deletes an eligible row, and only with its receipt', async () => {
+    const o = await orgWithEvents([100, 100 - 1]);
+    expect(await gated(o, o.ids[100] as string, { receipt: 'no-such-receipt' })).toBe(0);
+    expect(await present(o.ids[100] as string)).toBe(true);
+    expect(await gated(o, o.ids[100] as string)).toBe(1);
+  });
+
+  it('refuses a row outside the scope, newer than the cutoff, or in test mode', async () => {
     const o = await orgWithEvents([100]);
-    const rowid =
-      (
-        await all<{ rowid: number }>(db(), 'SELECT rowid FROM pass_events WHERE id = ?', [
-          o.ids[100],
-        ])
-      )[0]?.rowid ?? 0;
+    const other = await orgWithEvents([100]);
+    expect(
+      await gated(o, o.ids[100] as string, { scope: { kind: 'org', orgId: other.orgId } }),
+    ).toBe(0);
+    expect(
+      await gated(o, o.ids[100] as string, { scope: { kind: 'platform', exclude: [o.orgId] } }),
+    ).toBe(0);
+    expect(await gated(o, o.ids[100] as string, { cutoff: now() - 200 * DAY })).toBe(0);
+    const t = await orgWithEvents([100], 'test');
+    expect(await gated(t, t.ids[100] as string)).toBe(0);
+    expect(await present(o.ids[100] as string)).toBe(true);
+    expect(await gated(o, o.ids[100] as string, { scope: platformScope })).toBe(1);
+  });
+
+  it('a hold placed after the rows were chosen stops the delete and the receipt', async () => {
+    const o = await orgWithEvents([100]);
     const admin = await rk.platform();
     await placeHold(ctx(), o.orgId, { reason: 'inquiry' }, { kind: 'platform', admin });
-    const { writeReceipt } = await import('./receipt-service.ts');
-    const r = await writeReceipt(ctx(), {
-      orgId: null,
-      cls: 'gate-test',
-      kind: 'sweep',
-      deleted: 1,
-    });
-    const [res] = await db().batch([deleteChunkStmt(db(), 'events', [rowid], r.id)]);
-    expect(res?.meta.changes).toBe(0);
+    expect(await gated(o, o.ids[100] as string)).toBe(0);
+    const { prepareReceipt } = await import('./receipt-service.ts');
+    const scope = { kind: 'org' as const, orgId: o.orgId };
+    const p = await prepareReceipt(
+      ctx(),
+      { orgId: o.orgId, cls: 'events', kind: 'sweep', deleted: 1 },
+      receiptGate('events', scope, cutoffs(), [o.ids[100] as string]),
+    );
+    const [r1, r2] = await db().batch([
+      p.stmt,
+      deleteChunkStmt(db(), 'events', scope, cutoffs(), [o.ids[100] as string], p.receipt.id),
+    ]);
+    expect([r1?.meta.changes, r2?.meta.changes]).toEqual([0, 0]);
+    expect(await readReceipts(ctx(), o.orgId, 'events')).toEqual([]);
+  });
+
+  it('a second run over rows already gone writes no receipt', async () => {
+    const o = await orgWithEvents([100]);
+    await setRaw(o.orgId, 'retention.eventsDays', '30');
+    await sweepClass(ctx(), 'events');
+    await sweepClass(ctx(), 'events');
+    const receipts = await readReceipts(ctx(), o.orgId, 'events');
+    expect(receipts).toHaveLength(1);
+    expect(receipts[0]?.receipt.deleted).toBe(1);
+  });
+});
+
+describe('throughput', () => {
+  const logs: { event: string; fields: Record<string, unknown> }[] = [];
+  const spy = () => ({
+    ...ctx(),
+    log: {
+      ...ctx().log,
+      warn: (event: string, fields: Record<string, unknown>) => void logs.push({ event, fields }),
+    },
+  });
+  const many = (orgId: string, passId: string, n: number) =>
+    run(
+      db(),
+      `WITH RECURSIVE s(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM s WHERE i < ?)
+       INSERT INTO pass_events (id, org_id, pass_id, mode, kind, data, at)
+       SELECT ? || '-' || i, ?, ?, 'live', 'page.opened', '{}', ? FROM s`,
+      [n, rk.kit.fx.ids.id(), orgId, passId, now() - 400 * DAY],
+    );
+
+  it('a target that stops at its cap logs retention.backlog and finishes next time', async () => {
+    const o = await orgWithEvents([]);
+    await setRaw(o.orgId, 'retention.eventsDays', '30');
+    await many(o.orgId, o.pass.id, 1001);
+    logs.length = 0;
+    const limits = { platformChunks: 50, orgChunks: 1, orgBudgetMs: 15_000 };
+    const first = await sweepClass(spy(), 'events', limits);
+    expect(first.orgs).toBe(1000);
+    expect(logs.some((l) => l.event === 'retention.backlog' && l.fields.orgId === o.orgId)).toBe(
+      true,
+    );
+    // The rotating cursor reaches the org again within a few visits.
+    for (let i = 0; i < 8; i++) await sweepClass(spy(), 'events', limits);
+    const left = await all(db(), 'SELECT 1 FROM pass_events WHERE org_id = ? AND at < ?', [
+      o.orgId,
+      now() - 30 * DAY,
+    ]);
+    expect(left).toEqual([]);
+  });
+
+  it('the org pass stops at its time budget, logs it and resumes after the last org visited', async () => {
+    const a = await orgWithEvents([100]);
+    const b = await orgWithEvents([100]);
+    for (const o of [a, b]) await setRaw(o.orgId, 'retention.eventsDays', '30');
+    logs.length = 0;
+    await run(
+      db(),
+      "DELETE FROM settings WHERE scope = 'system' AND key = 'retention.cursor:events'",
+    );
+    await sweepClass(spy(), 'events', { platformChunks: 50, orgChunks: 50, orgBudgetMs: -1 });
+    expect(logs.some((l) => l.event === 'retention.backlog' && l.fields.budget === true)).toBe(
+      true,
+    );
+    // Only the first org in id order was visited: the cursor rests on it.
+    const { readSystemValue } = await import('../settings/repo.ts');
+    const plan = await retentionPlan(ctx(), 'events');
+    if (plan.blocked) throw new Error('blocked');
+    expect(await readSystemValue(db(), 'retention.cursor:events')).toBe(plan.special[0]?.orgId);
+  });
+});
+
+describe('head object', () => {
+  it('a head whose put failed is re-put on the next read, so the chain verifies again', async () => {
+    const o = await orgWithEvents([100]);
+    await setRaw(o.orgId, 'retention.eventsDays', '30');
+    await sweepClass(ctx(), 'events');
+    const key = `retention/receipts/${o.orgId}/events/${String(1).padStart(12, '0')}.json`;
+    await rk.kit.env.BUCKET.delete(key);
+    const receipts = await readReceipts(ctx(), o.orgId, 'events');
+    expect(receipts.map((r) => r.verified)).toEqual([true]);
+    expect(await rk.kit.env.BUCKET.head(key)).not.toBeNull();
+  });
+});
+
+describe('org status', () => {
+  it('a soft delete is refused by the database while a hold is active', async () => {
+    const o = await rk.org();
+    const admin = await rk.platform();
+    const { id } = await placeHold(
+      ctx(),
+      o.orgId,
+      { reason: 'inquiry' },
+      { kind: 'platform', admin },
+    );
+    await expect(
+      run(db(), "UPDATE orgs SET status = 'deleted' WHERE id = ?", [o.orgId]),
+    ).rejects.toThrow(/legal hold/);
+    await releaseHold(ctx(), o.orgId, id, { kind: 'platform', admin });
+    await run(db(), "UPDATE orgs SET status = 'deleted' WHERE id = ?", [o.orgId]);
+  });
+
+  it('a soft-deleted org still follows its own longer value', async () => {
+    const o = await orgWithEvents([100]);
+    await setRaw(o.orgId, 'retention.eventsDays', '365');
+    await run(db(), "UPDATE orgs SET status = 'deleted' WHERE id = ?", [o.orgId]);
+    await sweepClass(ctx(), 'events');
     expect(await present(o.ids[100] as string)).toBe(true);
   });
 });

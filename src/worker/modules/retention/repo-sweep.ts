@@ -37,52 +37,82 @@ const heldSql = (table: string) =>
   `EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL AND h.org_id = ${table}.org_id
      AND (h.pass_id IS NULL OR h.pass_id = ${table}.pass_id))`;
 
-/** The next rowids past the cutoff in the scope, never a held row. */
+function scopeSql(table: string, scope: Scope): { sql: string; params: string[] } {
+  return scope.kind === 'org'
+    ? { sql: `${table}.org_id = ?`, params: [scope.orgId] }
+    : {
+        sql: `${table}.org_id NOT IN (SELECT value FROM json_each(?))`,
+        params: [JSON.stringify(scope.exclude)],
+      };
+}
+
+/** The class condition, the scope and "no hold": what a row must satisfy to be deleted, at select and at delete. */
+function eligible(cls: SweepClass, scope: Scope, cutoffs: Cutoffs) {
+  const { table, sql, params } = COND[cls];
+  const sc = scopeSql(table, scope);
+  return {
+    table,
+    sql: `${sql} AND ${sc.sql} AND NOT ${heldSql(table)}`,
+    params: [...params(cutoffs), ...sc.params],
+  };
+}
+
+/** The next row ids past the cutoff in the scope, never a held row. */
 export async function selectChunk(
   db: D1Database,
   cls: SweepClass,
   scope: Scope,
   cutoffs: Cutoffs,
-): Promise<number[]> {
-  const { table, sql, params } = COND[cls];
-  const scopeSql =
-    scope.kind === 'org'
-      ? { sql: `${table}.org_id = ?`, params: [scope.orgId] }
-      : {
-          sql: `${table}.org_id NOT IN (SELECT value FROM json_each(?))`,
-          params: [JSON.stringify(scope.exclude)],
-        };
-  const rows = await all<{ id: number }>(
+): Promise<string[]> {
+  const e = eligible(cls, scope, cutoffs);
+  const rows = await all<{ id: string }>(
     db,
-    `SELECT ${table}.rowid AS id FROM ${table}
-     WHERE ${sql} AND ${scopeSql.sql} AND NOT ${heldSql(table)} LIMIT ${CHUNK}`,
-    [...params(cutoffs), ...scopeSql.params],
+    `SELECT ${e.table}.id AS id FROM ${e.table} WHERE ${e.sql} LIMIT ${CHUNK}`,
+    e.params,
   );
   return rows.map((r) => r.id);
 }
 
+const IN_IDS = (table: string) => `${table}.id IN (SELECT value FROM json_each(?))`;
+
 /**
- * Deletes the chosen rows, but only while the receipt that records the delete exists (it is inserted
- * earlier in the same batch) and no hold has been placed since the rows were chosen.
+ * A condition for the receipt insert: it lands only while exactly `ids.length` of the chosen rows are still
+ * eligible, so the receipt's count is what the delete in the same batch removes.
+ */
+export function receiptGate(
+  cls: SweepClass,
+  scope: Scope,
+  cutoffs: Cutoffs,
+  ids: readonly string[],
+): { sql: string; params: (string | number)[] } {
+  const e = eligible(cls, scope, cutoffs);
+  return {
+    sql: `(SELECT count(*) FROM ${e.table} WHERE ${IN_IDS(e.table)} AND ${e.sql}) = ?`,
+    params: [JSON.stringify(ids), ...e.params, ids.length],
+  };
+}
+
+/**
+ * Deletes the chosen rows, but only while they are still eligible (class condition, scope, no hold) and the
+ * receipt that records the delete exists (inserted earlier in the same batch).
  */
 export function deleteChunkStmt(
   db: D1Database,
   cls: SweepClass,
-  ids: readonly number[],
+  scope: Scope,
+  cutoffs: Cutoffs,
+  ids: readonly string[],
   receiptId: string,
 ): D1PreparedStatement {
-  const params = [JSON.stringify(ids), receiptId];
-  const gate = `rowid IN (SELECT value FROM json_each(?)) AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
+  const e = eligible(cls, scope, cutoffs);
+  const params = [JSON.stringify(ids), ...e.params, receiptId];
+  const where = `${IN_IDS(e.table)} AND ${e.sql} AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
   switch (cls) {
     case 'scans':
-      return stmt(db, `DELETE FROM scans WHERE ${gate} AND NOT ${heldSql('scans')}`, params);
+      return stmt(db, `DELETE FROM scans WHERE ${where}`, params);
     case 'events':
-      return stmt(
-        db,
-        `DELETE FROM pass_events WHERE ${gate} AND NOT ${heldSql('pass_events')}`,
-        params,
-      );
+      return stmt(db, `DELETE FROM pass_events WHERE ${where}`, params);
     case 'delivery':
-      return stmt(db, `DELETE FROM outbox WHERE ${gate} AND NOT ${heldSql('outbox')}`, params);
+      return stmt(db, `DELETE FROM outbox WHERE ${where}`, params);
   }
 }
