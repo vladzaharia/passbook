@@ -10,11 +10,14 @@ import { processWebhook } from './webhook-process.ts';
 import { receiveWebhook } from './webhooks.ts';
 
 const enc = new TextEncoder();
-const STRIPE_SECRET = 'whsec_recipes_test_secret_01';
-const SHOPIFY_SECRET = 'shpss_recipes_test_secret_0123456789';
+// Unique per test: a pasted secret is unique platform-wide and the database outlives a test.
+let STRIPE_SECRET = '';
+let SHOPIFY_SECRET = '';
 
 let kit: Kit;
 beforeEach(async () => {
+  STRIPE_SECRET = `whsec_${crypto.randomUUID()}`;
+  SHOPIFY_SECRET = `shpss_${crypto.randomUUID()}`;
   kit = await makeKit();
   const template = makeTemplate({ id: kit.templateId, orgId: kit.org.id });
   const release = await approveAppleRelease(
@@ -139,6 +142,7 @@ describe('void when', () => {
   it('a voided pass is not matched again, and a later non-matching record does not unvoid it', async () => {
     const dto = await stripeConn();
     const pass = await linkedPass(kit, dto.id, 'sub_1');
+    const info = vi.spyOn(kit.sctx.log, 'info');
     await kit.env.DB.prepare("UPDATE passes SET status = 'voided' WHERE id = ?")
       .bind(pass.id)
       .run();
@@ -156,6 +160,10 @@ describe('void when', () => {
     );
     expect(kit.seams.voided).toEqual([]);
     expect(kit.seams.applied).toEqual([]);
+    // The sender has moved on from the void rule: logged for the health panel, nothing changes.
+    expect(info.mock.calls.filter((c) => c[0] === 'connection.void_would_clear')).toEqual([
+      ['connection.void_would_clear', { connectionId: dto.id, code: 'VOID_WOULD_CLEAR' }],
+    ]);
     const row = await first<{ status: string }>(
       kit.env.DB,
       'SELECT status FROM passes WHERE id = ?',
@@ -315,7 +323,7 @@ describe('ingress', () => {
 
   it('a delivery signed with another org connection secret is refused', async () => {
     const a = await stripeConn();
-    const b = await stripeConn({ webhookSecret: 'whsec_another_org_secret_99' });
+    const b = await stripeConn({ webhookSecret: `whsec_${crypto.randomUUID()}` });
     await expect(
       receiveWebhook(
         kit.sctx,
@@ -401,5 +409,136 @@ describe('recipe fixed after creation', () => {
         config: { recipe: 'stripe-subscriptions', acceptTestEvents: true },
       }),
     ).resolves.toBeDefined();
+  });
+});
+
+describe('ordering across deliveries', () => {
+  const sub = (id: string, type: string, status: string, created: number) =>
+    stripeEvent(id, type, subscription(status, { id: 'sub_9' }), created);
+  const checkout = (id: string, created: number) =>
+    stripeEvent(
+      id,
+      'checkout.session.completed',
+      { mode: 'subscription', subscription: 'sub_9', customer: 'cus_9' },
+      created,
+    );
+
+  it('a cancellation before its create leaves a tombstone: the older create is stale', async () => {
+    const dto = await stripeConn({ autoCreate: true, defaultTemplateId: kit.templateId });
+    const t = nowSec();
+    await apply(
+      dto.id,
+      await stripeRequest(sub('evt_del', 'customer.subscription.deleted', 'canceled', t)),
+    );
+    await apply(dto.id, await stripeRequest(checkout('evt_chk', t - 30)));
+    expect(kit.seams.created).toEqual([]);
+  });
+
+  it('a newer create after a cancellation (a re-subscription) still creates', async () => {
+    const dto = await stripeConn({ autoCreate: true, defaultTemplateId: kit.templateId });
+    const t = nowSec();
+    await apply(
+      dto.id,
+      await stripeRequest(sub('evt_del', 'customer.subscription.deleted', 'canceled', t)),
+    );
+    await apply(dto.id, await stripeRequest(checkout('evt_chk', t + 30)));
+    expect(kit.seams.created.map((c) => c.externalRef)).toEqual(['sub_9']);
+  });
+
+  it('create then cancellation voids the bound pass', async () => {
+    const dto = await stripeConn({ autoCreate: true, defaultTemplateId: kit.templateId });
+    const pass = await linkedPass(kit, dto.id, 'sub_9');
+    const t = nowSec();
+    await apply(dto.id, await stripeRequest(checkout('evt_chk', t)));
+    await apply(
+      dto.id,
+      await stripeRequest(sub('evt_del', 'customer.subscription.deleted', 'canceled', t + 5)),
+    );
+    expect(kit.seams.voided).toEqual([{ passId: pass.id }]);
+  });
+
+  it('an update that arrives before its create does not block the create', async () => {
+    const dto = await stripeConn({ autoCreate: true, defaultTemplateId: kit.templateId });
+    const t = nowSec();
+    await apply(
+      dto.id,
+      await stripeRequest(sub('evt_upd', 'customer.subscription.updated', 'active', t + 5)),
+    );
+    await apply(dto.id, await stripeRequest(checkout('evt_chk', t)));
+    expect(kit.seams.created.map((c) => c.externalRef)).toEqual(['sub_9']);
+  });
+
+  it.each([
+    [['evt_a', 'evt_b'], 2],
+    [['evt_b', 'evt_a'], 1],
+  ])('records of one version are ordered by event id: %j applies %d', async (order, applied) => {
+    const t = nowSec();
+    const dto = await stripeConn();
+    await linkedPass(kit, dto.id, 'sub_1');
+    for (const id of order) {
+      await apply(
+        dto.id,
+        await stripeRequest(
+          stripeEvent(id, 'customer.subscription.updated', subscription('active'), t),
+        ),
+      );
+    }
+    // The larger id wins: arriving first it blocks the smaller; arriving last it applies as well.
+    expect(kit.seams.applied).toHaveLength(applied);
+  });
+});
+
+describe('review hardening', () => {
+  it('a far-future source version is refused at ingress', async () => {
+    const dto = await stripeConn();
+    const far = nowSec() + 3 * 24 * 3600;
+    await expect(
+      receiveWebhook(
+        kit.sctx,
+        dto.id,
+        await stripeRequest(
+          stripeEvent('evt_far', 'customer.subscription.updated', subscription('active'), far),
+        ),
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(kit.seams.jobs).toEqual([]);
+  });
+
+  it('a Stripe event without livemode counts as test mode', async () => {
+    const dto = await stripeConn();
+    const evt = stripeEvent('evt_nl', 'customer.subscription.updated', subscription('active'));
+    const { livemode: _l, ...noLive } = evt;
+    const info = vi.spyOn(kit.sctx.log, 'info');
+    await receiveWebhook(kit.sctx, dto.id, await stripeRequest(noLive));
+    expect(kit.seams.jobs).toEqual([]);
+    expect(info.mock.calls.find((c) => c[0] === 'connection.webhook_ignored')?.[1]).toMatchObject({
+      kind: 'test_mode',
+    });
+  });
+
+  it('a pasted recipe secret cannot be used by a second connection', async () => {
+    await stripeConn();
+    await expect(stripeConn({ name: 'Second' })).rejects.toMatchObject({ status: 422 });
+    await expect(
+      stripeConn({ name: 'Third', webhookSecret: `whsec_${crypto.randomUUID()}` }),
+    ).resolves.toBeDefined();
+  });
+
+  it('the same secret may back custom connections, and a replaced secret frees the old one', async () => {
+    const sharedCustom = `custom_${crypto.randomUUID()}`;
+    const mk = (name: string) =>
+      createDemo(kit, {
+        connectorType: 'webhook-push',
+        config: {},
+        mode: 'webhook',
+        name,
+        webhookSecret: sharedCustom,
+      } as never);
+    await mk('a');
+    await expect(mk('b')).resolves.toBeDefined();
+    const { update } = await import('./service.ts');
+    const dto = await stripeConn();
+    await update(kit.sctx, kit.actor, dto.id, { webhookSecret: `whsec_${crypto.randomUUID()}` });
+    await expect(stripeConn({ name: 'Reuse old' })).resolves.toBeDefined();
   });
 });

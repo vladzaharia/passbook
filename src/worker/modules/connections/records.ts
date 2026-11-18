@@ -130,6 +130,8 @@ export interface ApplyIncomingOptions {
   createAllowed?: boolean;
   /** Source order of the record; one older than the last applied for this ref is skipped. */
   sourceVersion?: number;
+  /** The delivery's event id: breaks a tie between records of the same source version. */
+  sourceEvent?: string;
 }
 
 /**

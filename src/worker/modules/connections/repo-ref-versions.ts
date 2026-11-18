@@ -1,4 +1,5 @@
 import { lte } from '../../platform/authority-expr.ts';
+import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   type ConnectionActor,
@@ -9,8 +10,9 @@ import {
 } from './repo-grants.ts';
 
 /**
- * Records `version` as the newest applied for the ref, unless a newer one is already stored.
- * Equal versions apply (a retried delivery re-applies). `stale`: a newer version is stored. `fenced`: the connection changed.
+ * Records `version` as the newest applied for the ref, unless a newer one is already stored. Records of
+ * the same version are ordered by event id (the larger wins; the same event applies again, so a retry
+ * works). `stale`: a newer record is stored. `fenced`: the connection changed.
  */
 export async function advanceRefVersion(
   ctx: ServiceContext,
@@ -19,7 +21,14 @@ export async function advanceRefVersion(
   generation: number,
   ref: string,
   version: number,
+  eventId: string,
 ): Promise<'applied' | 'stale' | 'fenced'> {
+  const stored = await first<{ source_version: number; source_event: string }>(
+    ctx.env.DB,
+    'SELECT source_version, source_event FROM connection_ref_versions WHERE connection_id = ? AND ref = ?',
+    [connectionId, ref],
+  );
+  if (stored && stored.source_version === version && stored.source_event > eventId) return 'stale';
   const g = connectionGrant(
     ctx,
     actor,
@@ -29,10 +38,10 @@ export async function advanceRefVersion(
   );
   g.upsert(
     'connection_ref_versions',
-    ['connection_id', 'ref', 'source_version', 'updated_at'],
-    [connectionId, ref, version, ctx.clock.now()],
+    ['connection_id', 'ref', 'source_version', 'source_event', 'updated_at'],
+    [connectionId, ref, version, eventId, ctx.clock.now()],
     {
-      update: ['source_version', 'updated_at'],
+      update: ['source_version', 'source_event', 'updated_at'],
       where: { source_version: lte(version) },
       returning: ['ref'],
     },

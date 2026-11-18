@@ -81,6 +81,12 @@ export async function receiveWebhook(
     throw new UnauthenticatedError('The webhook signature is invalid.', 'WEBHOOK_SIGNATURE');
   }
 
+  // A far-future source version would pin the ref: every later record would read as stale.
+  const horizon = sctx.clock.now() + BODY_FUTURE_SKEW_MS;
+  if (Object.values(verified.versions ?? {}).some((v) => v > horizon)) {
+    throw new BadRequestError('The webhook body is invalid.', 'WEBHOOK_PAYLOAD');
+  }
+
   // The signature is verified: from here the connection stages its own work.
   sctx = withVerifiedWebhook(sctx, mintVerifiedWebhook(conn));
   let staged: 'fresh' | 'redispatch' | 'duplicate';

@@ -1,6 +1,7 @@
 import type { UpstreamRecord } from '../../connectors/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getDeps } from './deps.ts';
+import { noteUnboundRecord } from './record-gates.ts';
 import type { Incoming } from './record-helpers.ts';
 import {
   applyIncoming,
@@ -40,8 +41,9 @@ export type Change = {
   deleted?: boolean;
   /** False: only an update; a missing pass is not created. Absent: may create. */
   create?: boolean;
-  /** Source order (ms) for out-of-order protection. */
+  /** Source order (ms) and the delivery's event id (tie-break). */
   version?: number;
+  event?: string;
 };
 export type ChangeItemOutcome = 'success' | 'blocked' | 'retry' | 'failed' | 'uncertain';
 
@@ -178,6 +180,16 @@ export async function applyChanges(
       const pass = extra.passes.get(change.ref);
       let token: string | null = null;
       let retained: RetainedItemOptions = {};
+      if (
+        observer &&
+        !pass &&
+        change.record &&
+        change.version !== undefined &&
+        (await noteUnboundRecord(sctx, workConn, change))
+      ) {
+        markStale(extra);
+        return;
+      }
       if (observer) {
         const candidate = retainedCandidate(
           sctx,
@@ -224,7 +236,9 @@ export async function applyChanges(
         ...options,
         ...retained,
         ...(change.create === false ? { createAllowed: false } : {}),
-        ...(change.version === undefined ? {} : { sourceVersion: change.version }),
+        ...(change.version === undefined
+          ? {}
+          : { sourceVersion: change.version, sourceEvent: change.event ?? '' }),
       };
       let result: ChangeItemResult;
       try {

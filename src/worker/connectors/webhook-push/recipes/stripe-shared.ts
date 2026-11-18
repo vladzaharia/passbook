@@ -19,7 +19,7 @@ export function stripeEvent(body: unknown, acceptTest: boolean): StripeEvent | R
   // Thin events carry a related object, not the object: fetching it needs an API key we do not hold.
   const object = obj(obj(o.data)?.object);
   if (!object) return ignored('thin_event');
-  if (o.livemode === false && !acceptTest) return ignored('test_mode');
+  if (o.livemode !== true && !acceptTest) return ignored('test_mode');
   return { id, type, created: created * 1000, object };
 }
 
