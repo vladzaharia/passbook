@@ -33,6 +33,7 @@ import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
+import { registerScanTagRoutes } from './routes-tags.ts';
 import { capturingContext } from './scan-capture.ts';
 import { reportScanDevice } from './scanning-workspace.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
@@ -115,6 +116,7 @@ register(
 
 registerScanStaffRoutes(scanRoutes);
 registerScanRoleRoutes(scanRoutes);
+registerScanTagRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 
 register(
