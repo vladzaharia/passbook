@@ -24,6 +24,7 @@ import {
   type SamsungPromotedRefreshProof,
   type WalletProviderRetirementProof,
 } from './repo-accounts.ts';
+import { findSamsungIssuedRefCredential } from './repo-accounts-issued.ts';
 
 /** Public verification material only, usable solely for a retired Samsung reference callback. */
 export interface SamsungTombstoneVerification {
@@ -236,6 +237,49 @@ export async function readSamsungTombstoneVerification(
   )
     throw corrupt();
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  return {
+    accountId: row.id,
+    accountRevision: row.revision,
+    partnerId: stored.credentials.partnerId,
+    certificateId: stored.credentials.certificateId,
+    cardId: stored.credentials.cardId,
+    samsungCertificatePem: stored.credentials.samsungCertificatePem,
+  };
+}
+
+/** Public verification material for a callback on an issued ref, from a revision it has operated under. */
+export async function readSamsungIssuedRefVerification(
+  ctx: ServiceContext,
+  input: {
+    orgId: string;
+    mode: WalletProviderScope['mode'];
+    accountId: string;
+    accountRevision: number;
+    refHash: string;
+    credentialKeysetCommitment: string;
+  },
+): Promise<SamsungTombstoneVerification | null> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  const pinned = { ...input };
+  if (
+    !WalletProviderScopeSchema.safeParse({
+      orgId: pinned.orgId,
+      mode: pinned.mode,
+      provider: 'samsung',
+    }).success ||
+    !IdSchema.safeParse(pinned.accountId).success ||
+    !Number.isSafeInteger(pinned.accountRevision) ||
+    pinned.accountRevision <= 0 ||
+    !/^[0-9a-f]{64}$/.test(pinned.refHash) ||
+    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment)
+  )
+    throw new ValidationError();
+  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  const row = await findSamsungIssuedRefCredential(ctx.env.DB, pinned);
+  const stored = row ? await decryptAccount(ctx, row) : null;
+  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  if (!row || !stored) return null;
+  if (stored.provider !== 'samsung') throw corrupt();
   return {
     accountId: row.id,
     accountRevision: row.revision,

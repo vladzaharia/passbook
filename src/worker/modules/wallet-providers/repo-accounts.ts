@@ -38,6 +38,8 @@ export interface SamsungPromotedRefreshProof {
   instanceId: string;
   refHash: string;
   operationVersion: number;
+  /** Inbound callbacks may use a ref in its initial window; outbound sync needs a promoted ref. */
+  window?: boolean;
 }
 
 export interface AccountRow {
@@ -153,8 +155,9 @@ export function findRetirementAccount(
 }
 
 /**
- * A promoted reference, or one still inside its initial window (the first Get Card Data and the
- * ADDED that promotes it), can use the account only against the current pass and projection proof.
+ * A promoted reference can use the account only against the current pass and projection proof.
+ * With `window`, so can one still inside its initial window: the first Get Card Data and the ADDED
+ * that promotes it, which are inbound only. Outbound notifications never use the window.
  */
 export function findSamsungPromotedRefreshAccount(
   db: D1Database,
@@ -173,7 +176,7 @@ export function findSamsungPromotedRefreshAccount(
       AND i.mode = a.mode AND i.provider = a.provider
     JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id AND op.instance_id = i.id
     JOIN wallet_samsung_fetch_refs r ON r.instance_id = i.id AND r.ref_hash = ?
-      AND ${samsungInitialWindowSql} AND r.retired_at IS NULL
+      AND ${proof.window ? samsungInitialWindowSql : 'r.promoted_at IS NOT NULL'} AND r.retired_at IS NULL
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
     CROSS JOIN clock
     WHERE a.org_id = ? AND a.mode = ? AND a.provider = 'samsung' AND a.id = ? AND a.revision = ?
@@ -185,8 +188,7 @@ export function findSamsungPromotedRefreshAccount(
     [
       now,
       proof.refHash,
-      now,
-      now,
+      ...(proof.window ? [now, now] : []),
       proof.orgId,
       proof.mode,
       proof.accountId,

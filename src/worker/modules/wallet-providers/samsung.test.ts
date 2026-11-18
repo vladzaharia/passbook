@@ -131,6 +131,7 @@ async function signedAuth(
     path?: string;
     utc?: number;
     refId?: string;
+    omitRefId?: boolean;
     key?: CryptoKey;
     partnerId?: string;
     certificateId?: string;
@@ -142,7 +143,7 @@ async function signedAuth(
     utf8.encode(
       JSON.stringify({
         API: { method: input.method ?? 'GET', path },
-        refId: input.refId ?? refId,
+        refId: input.omitRefId ? undefined : (input.refId ?? refId),
       }),
     ),
   )
@@ -440,6 +441,20 @@ describe('Samsung authenticated requests', () => {
       await expect(
         verifySamsungRequest(account, {
           request: inbound(await signedAuth({ path }), { prefix }),
+          method: 'GET',
+          refId,
+          claimReplay: replayStore(),
+          now: NOW,
+        }),
+      ).rejects.toBeInstanceOf(SamsungTokenError);
+    // A path naming another ref is refused even when the payload carries no refId to contradict it.
+    for (const path of [
+      `/cards/card123/${'Z'.repeat(32)}`,
+      `${prefix}/cards/card123/${'Z'.repeat(32)}`,
+    ])
+      await expect(
+        verifySamsungRequest(account, {
+          request: inbound(await signedAuth({ path, omitRefId: true }), { prefix }),
           method: 'GET',
           refId,
           claimReplay: replayStore(),

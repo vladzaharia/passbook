@@ -196,7 +196,7 @@ describe('Samsung authenticated callback route', () => {
     ).toBeNull();
     t.kit.clock.advance(300_001);
     await t.renewEvidence();
-    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    expect((await t.call({ token: await t.token() })).status).toBe(204);
     expect(await refRow()).toEqual({ promoted_at: null, market_cc2: null });
   });
 
@@ -213,7 +213,7 @@ describe('Samsung authenticated callback route', () => {
     expect(
       (await t.call({ method: 'POST', token: post, query: '?cc2=us&event=DELETED', body })).status,
     ).toBe(200);
-    // The same token under another request id is a replay.
+    // Samsung retries with fresh trace ids: the same token is still the same delivery.
     expect(
       (
         await t.call({
@@ -224,7 +224,7 @@ describe('Samsung authenticated callback route', () => {
           requestId: 'other-request',
         })
       ).status,
-    ).toBe(401);
+    ).toBe(200);
     const deletion = await t.token({ method: 'POST' });
     expect(
       (await t.call({ method: 'POST', token: deletion, query: '?cc2=us&event=DELETED', body }))
@@ -304,7 +304,10 @@ describe('Samsung authenticated callback route', () => {
       await whileDisabledForTest(ensureSamsungFetchRef, t.kit.ctx, { ...binding, mode: 'test' }),
     ).toBeNull();
     await run(t.kit.env.DB, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [t.pass.id]);
-    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    // Authentic but stale: answered with no card data, never served.
+    const stale = await t.call({ token: await t.token() });
+    expect(stale.status).toBe(204);
+    expect(await stale.text()).toBe('');
 
     const rotated = await setupSamsungCallbacks();
     const scope = {
@@ -444,7 +447,8 @@ describe('Samsung authenticated callback route', () => {
         credentialKeysetCommitment: t.credentialKeysetCommitment,
       }),
     ).toBeNull();
-    expect((await t.call({ token: oldRequest })).status).toBe(401);
+    expect((await t.call({ token: oldRequest })).status).toBe(204);
+    // A pending transfer: the callback is answered but not recorded, it may speak for the new holder.
     expect(
       (
         await t.call({
@@ -453,7 +457,7 @@ describe('Samsung authenticated callback route', () => {
           body: '{"member":"new-holder-private"}',
         })
       ).status,
-    ).toBe(401);
+    ).toBe(200);
     expect(
       await all(db, 'SELECT id FROM wallet_samsung_fetch_refs WHERE instance_id = ?', [
         snapshot.instanceId,
@@ -542,6 +546,7 @@ describe('Samsung authenticated callback route', () => {
       countryHint: 'GB',
       event: null,
       requestId: 'req-1',
+      queryBound: false,
     };
     expect(await claimSamsungReceipt(db, snapshot, postClaim, receipt, raw)).toBe(true);
     expect(

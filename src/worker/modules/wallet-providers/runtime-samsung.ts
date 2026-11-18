@@ -98,6 +98,7 @@ export async function sendSamsungRuntimeUpdate(
       instanceId: inputRefresh.instanceId,
       refHash,
       operationVersion: inputRefresh.operationVersion,
+      inbound: false,
     };
   }
   const account = await runtimeSamsungAccount(ctx, scope, purpose);
@@ -185,6 +186,7 @@ export async function verifySamsungRuntimeRequest(
     instanceId: refresh.instanceId,
     refHash: refresh.refHash,
     operationVersion: refresh.operationVersion,
+    inbound: true,
   };
   const account = await runtimeSamsungAccount(ctx, scope, purpose);
   const call = runtimeExecution(ctx, scope, 'samsung', undefined, undefined, purpose);

@@ -1,5 +1,5 @@
 import { BadRequestError } from '../../platform/errors.ts';
-import type { SamsungCardEvent } from './repo-callbacks-events.ts';
+import type { SamsungCardEvent } from './repo-callbacks-state.ts';
 import type { SamsungCardProjection } from './samsung.ts';
 
 const invalid = () =>

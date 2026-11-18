@@ -231,7 +231,7 @@ export async function finishOperation(
           ? `AND op.kind = 'revoke' AND EXISTS (
         SELECT 1 FROM wallet_provider_instances ni WHERE ni.id = op.instance_id AND ni.provider = 'samsung'
           AND NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs ref WHERE ref.instance_id = ni.id
-            AND (ref.retired_at IS NULL OR ref.promoted_at IS NOT NULL OR ref.initial_expires_at > ?)))`
+            AND (ref.retired_at IS NULL OR ref.promoted_at IS NOT NULL OR ref.served_at IS NOT NULL OR ref.initial_expires_at > ?)))`
           : ''
       }`,
       [

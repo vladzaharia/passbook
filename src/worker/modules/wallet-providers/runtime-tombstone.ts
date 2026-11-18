@@ -3,6 +3,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
+  readSamsungIssuedRefVerification,
   readSamsungTombstoneVerification,
   snapshotWalletCredentialContext,
 } from './account-service.ts';
@@ -31,6 +32,8 @@ interface SamsungTombstoneRuntimeRequest {
   refId: string;
   /** Send Card State for a dead ref is authenticated and answered like Get Card Data. */
   method?: 'GET' | 'POST';
+  /** `issued`: an unretired or untombstoned ref whose live fences no longer hold (callbacks-samsung-issued.ts). */
+  source?: 'tombstone' | 'issued';
   /** Atomically claim replay protection and the matching tombstone in the same database fence. */
   claimReplay: (
     key: string,
@@ -54,6 +57,7 @@ export async function verifySamsungTombstoneRuntimeRequest(
   let request: Request;
   let refId: string;
   let method: 'GET' | 'POST';
+  let source: 'tombstone' | 'issued';
   let claimReplay: SamsungTombstoneRuntimeRequest['claimReplay'];
   if (
     typeof inputScope?.credentialKeysetCommitment !== 'string' ||
@@ -63,7 +67,7 @@ export async function verifySamsungTombstoneRuntimeRequest(
   try {
     const { orgId, mode, accountId, accountRevision, refHash, credentialKeysetCommitment } =
       inputScope;
-    ({ request, refId, method = 'GET', claimReplay } = input);
+    ({ request, refId, method = 'GET', source = 'tombstone', claimReplay } = input);
     if (
       typeof orgId !== 'string' ||
       !orgId.trim() ||
@@ -97,7 +101,9 @@ export async function verifySamsungTombstoneRuntimeRequest(
 
   async function readHistorical() {
     try {
-      const value = await readSamsungTombstoneVerification(ctx, scope);
+      const value = await (source === 'issued'
+        ? readSamsungIssuedRefVerification
+        : readSamsungTombstoneVerification)(ctx, scope);
       if (
         !value ||
         value.accountId !== scope.accountId ||

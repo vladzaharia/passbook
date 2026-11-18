@@ -43,6 +43,7 @@ export type { SamsungTombstoneVerification } from './account-credential-read.ts'
 export {
   readConfiguredWalletProviderCredentials,
   readGoogleCallbackVerification,
+  readSamsungIssuedRefVerification,
   readSamsungPromotedRefreshCredentials,
   readSamsungTombstoneVerification,
   readWalletProviderRetirementCredentials,

@@ -3,6 +3,7 @@ import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
+import { samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
 import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 
@@ -292,7 +293,7 @@ export async function listSamsungCountryHints(
 ): Promise<string[]> {
   const rows = await all<{ country_code: string }>(
     db,
-    'SELECT country_code FROM wallet_samsung_country_hints WHERE ref_id = ? ORDER BY country_code',
+    `SELECT country_code FROM ${samsungRouteCountriesSql} WHERE ref_id = ? ORDER BY country_code`,
     [referenceId],
   );
   return rows.map((row) => row.country_code);

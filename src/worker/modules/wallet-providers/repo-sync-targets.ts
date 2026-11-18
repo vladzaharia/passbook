@@ -3,6 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { walletClaimHash } from './instance-claims.ts';
 import type { WalletClaimRef, WalletReasonCode } from './instance-types.ts';
+import { samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
 
 export interface SamsungSyncTarget {
   countryCode: string;
@@ -12,7 +13,7 @@ export interface SamsungSyncTarget {
   reasonCode: WalletReasonCode | null;
   httpStatus: number | null;
 }
-/** Distinct untrusted fixed-host routing hints, used to version a Samsung reconciliation intent. */
+/** Distinct fixed-host routing countries (the ADDED market, else untrusted hints), used to version a Samsung reconciliation intent. */
 export async function samsungSyncCountryHints(
   ctx: ServiceContext,
   instance: {
@@ -30,7 +31,7 @@ export async function samsungSyncCountryHints(
       AND o.instance_id = i.id AND o.version = i.desired_version
       AND o.credential_keyset_commitment = i.credential_keyset_commitment
     JOIN wallet_samsung_fetch_refs r ON r.instance_id = i.id
-    JOIN wallet_samsung_country_hints h ON h.ref_id = r.id
+    JOIN ${samsungRouteCountriesSql} h ON h.ref_id = r.id
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
       AND i.credential_keyset_commitment = ? AND r.credential_keyset_commitment = i.credential_keyset_commitment
       AND ${credentialRefKeysetSql}
@@ -67,7 +68,7 @@ export async function ensureSamsungSyncTargets(
     JOIN wallet_samsung_fetch_refs r ON r.instance_id = i.id
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
       AND r.promoted_at IS NOT NULL AND (o.kind = 'revoke' OR r.retired_at IS NULL)
-    JOIN wallet_samsung_country_hints h ON h.ref_id = r.id
+    JOIN ${samsungRouteCountriesSql} h ON h.ref_id = r.id
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
       AND ? = 'samsung' AND o.version = ? AND o.state = 'claimed'
       AND o.claim_hash = ? AND o.claim_expires_at > ?

@@ -1,0 +1,290 @@
+import type { Envelope } from '../../platform/crypto.ts';
+import { all, batch, first, type SqlValue, stmt } from '../../platform/db.ts';
+import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+
+export type SamsungCardEvent = 'ADDED' | 'DELETED' | 'UPDATED' | 'PROVISIONED';
+
+export interface SamsungReplayClaim {
+  tokenHash: string;
+  claimId: string;
+  expiresAt: number;
+  now: number;
+}
+
+export function validClaim(c: SamsungReplayClaim): boolean {
+  return (
+    /^[A-Za-z0-9_-]{43}$/.test(c.tokenHash) &&
+    !!c.claimId &&
+    Number.isSafeInteger(c.now) &&
+    Number.isSafeInteger(c.expiresAt) &&
+    c.expiresAt > c.now
+  );
+}
+
+export interface SamsungReceipt {
+  id: string;
+  signedAt: number;
+  envelope: Envelope;
+  /** From the query, which the token does not sign unless `queryBound`: a routing hint until ADDED. */
+  countryHint: string | null;
+  event: SamsungCardEvent | null;
+  /** The validated `x-request-id`; a trace id that is also part of the delivery key. */
+  requestId: string;
+  /** True only when the token's signature covered the query that carried the hint. */
+  queryBound: boolean;
+}
+
+/** A ref and the instance it belongs to: all a receipt's effects need to name. */
+export interface SamsungStateRef {
+  referenceId: string;
+  instanceId: string;
+  credentialKeysetCommitment: string;
+}
+
+/** A token already recorded for this ref: the same delivery again, whatever its request id. */
+export async function samsungTokenRecorded(
+  db: D1Database,
+  tokenHash: string,
+  referenceId: string,
+): Promise<boolean> {
+  const row = await first(
+    db,
+    'SELECT 1 FROM wallet_samsung_callback_receipts WHERE token_hash = ? AND ref_id = ?',
+    [tokenHash, referenceId],
+  );
+  return row !== null;
+}
+
+export const stateJoins = `FROM wallet_samsung_fetch_refs r
+  JOIN wallet_provider_instances i ON i.id = r.instance_id
+  JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
+    AND op.instance_id = i.id AND op.version = i.desired_version
+  JOIN passes p ON p.id = i.pass_id CROSS JOIN (SELECT ? AS now) clock`;
+
+/**
+ * The effect of a receipt, applied in the receipt's own batch and only if it was inserted (so the
+ * fences of the receipt held): ADDED promotes the ref once, keeps its market and marks the
+ * instance saved; DELETED records the holder's removal. Nothing here erases or revokes.
+ * `requireServed` is for a ref outside its live fences: only one that served card data may be
+ * promoted then.
+ */
+function effectStatements(
+  db: D1Database,
+  ref: SamsungStateRef,
+  claim: SamsungReplayClaim,
+  receipt: SamsungReceipt,
+  requireServed: boolean,
+): D1PreparedStatement[] {
+  const inserted = `EXISTS (SELECT 1 FROM wallet_samsung_callback_receipts rc
+    WHERE rc.id = ? AND rc.event = ?)`;
+  if (receipt.event === 'DELETED')
+    return [
+      stmt(
+        db,
+        `UPDATE wallet_provider_instances SET holder_removed_at = MAX(COALESCE(holder_removed_at, 0), ?)
+        WHERE id = ? AND ${inserted}`,
+        [claim.now, ref.instanceId, receipt.id, 'DELETED'],
+      ),
+    ];
+  if (receipt.event !== 'ADDED') return [];
+  const statements = [
+    stmt(
+      db,
+      `UPDATE wallet_provider_instances SET saved_at = MAX(COALESCE(saved_at, 0), ?)
+      WHERE id = ? AND ${inserted}`,
+      [claim.now, ref.instanceId, receipt.id, 'ADDED'],
+    ),
+  ];
+  // The market is the ADDED event's own cc2, never a hint from an earlier or other callback.
+  if (receipt.countryHint)
+    statements.unshift(
+      stmt(
+        db,
+        `UPDATE wallet_samsung_fetch_refs SET promoted_at = ?, market_cc2 = ?, market_query_bound = ?
+        WHERE id = ? AND promoted_at IS NULL AND retired_at IS NULL
+          AND (? = 0 OR served_at IS NOT NULL) AND ${inserted}`,
+        [
+          claim.now,
+          receipt.countryHint,
+          receipt.queryBound ? 1 : 0,
+          ref.referenceId,
+          requireServed ? 1 : 0,
+          receipt.id,
+          'ADDED',
+        ],
+      ),
+    );
+  return statements;
+}
+
+/**
+ * Receipt insert, routing hint and effects, after a replay claim statement that must run just
+ * before them. `gate` is the fence the receipt is admitted under; its `?` values bind in order.
+ */
+export function receiptStatements(
+  db: D1Database,
+  ref: SamsungStateRef,
+  claim: SamsungReplayClaim,
+  receipt: SamsungReceipt,
+  gate: { sql: string; params: SqlValue[] },
+  requireServed: boolean,
+): D1PreparedStatement[] {
+  const { envelope } = receipt;
+  const statements = [
+    stmt(
+      db,
+      `INSERT INTO wallet_samsung_callback_receipts
+      (id, ref_id, instance_id, account_id, org_id, mode, operation_version, kind,
+       signed_at, received_at, kek_version, iv, wrapped_dek, ciphertext,
+       event, cc2, query_bound, token_hash, request_id)
+      SELECT ?, r.id, i.id, i.account_id, i.org_id, i.mode, op.version, 'state_callback',
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ${stateJoins}
+      WHERE changes() = 1 AND ${gate.sql}
+        AND EXISTS (SELECT 1 FROM wallet_samsung_auth_replays replay
+          WHERE replay.token_hash = ? AND replay.claim_id = ?)`,
+      [
+        receipt.id,
+        receipt.signedAt,
+        claim.now,
+        envelope.kekVersion,
+        envelope.iv,
+        envelope.wrappedDek,
+        envelope.ciphertext,
+        receipt.event,
+        receipt.countryHint,
+        receipt.queryBound ? 1 : 0,
+        claim.tokenHash,
+        receipt.requestId,
+        claim.now,
+        ...gate.params,
+        claim.tokenHash,
+        claim.claimId,
+      ],
+    ),
+  ];
+  if (receipt.countryHint) {
+    statements.push(
+      stmt(
+        db,
+        `INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at)
+      SELECT ref_id, ?, ? FROM wallet_samsung_callback_receipts
+      WHERE id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
+      ON CONFLICT(ref_id, country_code) DO NOTHING`,
+        [receipt.countryHint, claim.now, receipt.id, ref.credentialKeysetCommitment],
+      ),
+      stmt(
+        db,
+        `INSERT INTO wallet_provider_instance_dirty (instance_id, generation)
+      SELECT instance_id, 1 FROM wallet_samsung_callback_receipts
+      WHERE id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
+      ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1`,
+        [receipt.id, ref.credentialKeysetCommitment],
+      ),
+    );
+  }
+  statements.push(...effectStatements(db, ref, claim, receipt, requireServed));
+  return statements;
+}
+
+export interface SamsungIssuedRef {
+  orgId: string;
+  mode: 'live' | 'test';
+  accountId: string;
+  /** One row per account revision this instance has operated under, newest first. */
+  accountRevision: number;
+  referenceId: string;
+  instanceId: string;
+  refHash: string;
+  credentialKeysetCommitment: string;
+}
+
+const dead = `(r.retired_at IS NULL OR NOT EXISTS (
+  SELECT 1 FROM wallet_samsung_tombstones tomb WHERE tomb.ref_hash = r.ref_hash))`;
+
+/** Any issued ref by hash that is not yet buried under a tombstone, whatever its operation state. */
+export function findSamsungIssuedRefs(
+  db: D1Database,
+  refHash: string,
+  credentialKeysetCommitment: string,
+): Promise<SamsungIssuedRef[]> {
+  return all<SamsungIssuedRef>(
+    db,
+    `SELECT DISTINCT i.org_id AS orgId, i.mode, i.account_id AS accountId,
+      o.account_revision AS accountRevision, r.id AS referenceId, i.id AS instanceId,
+      r.ref_hash AS refHash, r.credential_keyset_commitment AS credentialKeysetCommitment
+    FROM wallet_samsung_fetch_refs r JOIN wallet_provider_instances i ON i.id = r.instance_id
+    JOIN wallet_provider_instance_operations o ON o.instance_id = i.id
+    WHERE r.ref_hash = ? AND i.provider = 'samsung' AND i.account_id IS NOT NULL
+      AND r.credential_keyset_commitment = i.credential_keyset_commitment
+      AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql} AND ${dead}
+    ORDER BY o.account_revision DESC LIMIT 33`,
+    [refHash, credentialKeysetCommitment, credentialKeysetCommitment],
+  );
+}
+
+/**
+ * The fence for a callback on an issued ref outside its live operation: the ref, its instance's
+ * account and the keyset are the ones the verified credential belongs to. Nothing else is decided.
+ */
+function issuedGate(ref: SamsungIssuedRef) {
+  return {
+    sql: `r.id = ? AND r.ref_hash = ? AND i.org_id = ? AND i.mode = ? AND i.account_id = ?
+      AND r.credential_keyset_commitment = i.credential_keyset_commitment
+      AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql} AND ${dead}`,
+    params: [
+      ref.referenceId,
+      ref.refHash,
+      ref.orgId,
+      ref.mode,
+      ref.accountId,
+      ref.credentialKeysetCommitment,
+      ref.credentialKeysetCommitment,
+    ],
+  };
+}
+
+/**
+ * Admit one authenticated delivery for an issued ref outside its live fences. A GET only reserves
+ * its token (the answer carries no card data); a POST also leaves its receipt and effects. A ref
+ * that never served card data is not promoted by an ADDED here.
+ */
+export async function claimSamsungIssuedDelivery(
+  db: D1Database,
+  ref: SamsungIssuedRef,
+  claim: SamsungReplayClaim,
+  receipt: SamsungReceipt | null,
+): Promise<boolean> {
+  if (!validClaim(claim) || (receipt && !/^[A-Za-z0-9_-]{1,64}$/.test(receipt.requestId)))
+    return false;
+  const gate = issuedGate(ref);
+  const statements = [
+    stmt(
+      db,
+      `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ? AND ${credentialRefKeysetSql}`,
+      [claim.now, ref.credentialKeysetCommitment],
+    ),
+    stmt(
+      db,
+      `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)
+      SELECT ?, ?, ? ${stateJoins} WHERE ${gate.sql} ON CONFLICT DO NOTHING`,
+      [claim.tokenHash, claim.claimId, claim.expiresAt, claim.now, ...gate.params],
+    ),
+  ];
+  // A pending transfer means the callback may speak for the next holder: it is answered, not recorded.
+  if (receipt)
+    statements.push(
+      ...receiptStatements(
+        db,
+        ref,
+        claim,
+        receipt,
+        {
+          sql: `${gate.sql} AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
+            WHERE transfer.pass_id = i.pass_id AND transfer.state = 'pending')`,
+          params: gate.params,
+        },
+        true,
+      ),
+    );
+  return (await batch(db, statements))[1]?.meta.changes === 1;
+}

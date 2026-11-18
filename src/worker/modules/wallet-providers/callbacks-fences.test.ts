@@ -91,6 +91,7 @@ describe('Samsung callback authority fences', () => {
             countryHint: 'GB',
             event: null,
             requestId: 'req-1',
+            queryBound: false,
           },
           raw,
         ),
@@ -271,7 +272,10 @@ describe('Samsung callback authority fences', () => {
       await whileDisabledForTest(ensureSamsungFetchRef, t.kit.ctx, { ...binding, mode: 'test' }),
     ).toBeNull();
     await run(t.kit.env.DB, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [t.pass.id]);
-    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    // Authentic but stale: answered with no card data, never served.
+    const stale = await t.call({ token: await t.token() });
+    expect(stale.status).toBe(204);
+    expect(await stale.text()).toBe('');
 
     const rotated = await setupSamsungCallbacks();
     const scope = {
@@ -367,7 +371,7 @@ describe('Samsung callback authority fences', () => {
         raw,
       ),
     ).toBe(false);
-    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    expect((await t.call({ token: await t.token() })).status).toBe(204);
   });
 
   it('atomically refuses a refresh if materialized pass data changes after capture', async () => {
@@ -446,6 +450,7 @@ describe('Samsung callback authority fences', () => {
       countryHint: 'GB',
       event: null,
       requestId: 'req-1',
+      queryBound: false,
     };
     expect(await claimSamsungReceipt(db, snapshot, postClaim, receipt, raw)).toBe(true);
     expect(

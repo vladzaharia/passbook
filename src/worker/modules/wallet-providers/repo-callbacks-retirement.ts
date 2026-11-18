@@ -15,10 +15,13 @@ const joins = `FROM wallet_provider_instances i JOIN wallet_provider_instance_op
   LEFT JOIN wallet_samsung_fetch_refs ref ON ref.instance_id = i.id AND ref.retired_at IS NULL
   CROSS JOIN (SELECT ? AS now) clock`;
 const disposition = `CASE WHEN ref.id IS NULL THEN 'no_external_card'
-  WHEN ref.promoted_at IS NOT NULL THEN 'needs_notification'
+  WHEN ref.promoted_at IS NOT NULL OR ref.served_at IS NOT NULL THEN 'needs_notification'
   WHEN ref.initial_expires_at <= ? THEN 'no_external_card' ELSE 'pending' END AS disposition`;
 
-/** This is a preflight only. An unpromoted ref still requires the claimed atomic retirement. */
+/**
+ * This is a preflight only. A ref that served card data (promoted or not) needs a notification:
+ * its card may be on a device. Only a ref that never served and whose window closed is absent.
+ */
 export async function inspectSamsungRetirement(
   db: D1Database,
   scope: SamsungOperationScope,
@@ -61,7 +64,7 @@ export async function retireSamsungUnpromotedRef(
       db,
       `UPDATE wallet_samsung_fetch_refs AS ref SET retired_at = ?
       WHERE ref.instance_id = ? AND ref.retired_at IS NULL AND ref.promoted_at IS NULL
-        AND ref.initial_expires_at <= ? AND EXISTS (
+        AND ref.served_at IS NULL AND ref.initial_expires_at <= ? AND EXISTS (
           SELECT 1 FROM wallet_provider_instances i JOIN wallet_provider_instance_operations op
             ON op.id = i.desired_operation_id AND op.instance_id = i.id AND op.version = i.desired_version
           CROSS JOIN (SELECT ? AS now) clock
