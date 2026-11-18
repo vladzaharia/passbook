@@ -3,11 +3,16 @@ import { HIDDEN_STOP_LABEL } from '../../../passkit/template/scan-display/privac
 import type { PassJson, PassStyle } from '../../../passkit/types.ts';
 import { PASS_STYLES } from '../../../passkit/types.ts';
 import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
-import type { ScanReason } from '../../../shared/contracts/scan.ts';
-import { type ResolvedScanManifest, scanOf } from '../../../shared/scan-defaults.ts';
+import type { ScanAccess, ScanOccupancy, ScanReason } from '../../../shared/contracts/scan.ts';
+import {
+  type ResolvedScanAction,
+  type ResolvedScanManifest,
+  scanOf,
+} from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound } from '../passes/builder.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import type { FoundAccess } from './access-types.ts';
 import { policyAction } from './admission.ts';
 import type { AdmissionPlan } from './admission-types.ts';
 import { visibleIdentity, visibleSource } from './card-semantics.ts';
@@ -15,6 +20,7 @@ import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
 import { scannerPassActive } from './member-photo.ts';
+import type { FoundOccupancy } from './occupancy/admission.ts';
 import {
   type Candidate,
   hasScanPolicy,
@@ -50,6 +56,10 @@ export interface Found extends ReleaseSnapshot, WalletSnapshot, CredentialTombst
   /** Internal event admission captured with action reads when no public check-in policy is set. */
   eventAdmission?: AdmissionPlan;
   eventAdmissionReason?: ScanReason | null;
+  /** An Access card at a door: the verdict and the gate's rules (AX 3.4). Never on an event scanner. */
+  access?: FoundAccess;
+  /** An Access card at a door with a tracked zone: where the scan counts and which way (SA §20.3). */
+  occupancy?: FoundOccupancy;
 }
 
 /** Everything a stop step knows: the pass and template only when a step got far enough to find them. */
@@ -64,6 +74,12 @@ export interface Stop
   ref: TemplateRef | null;
   /** The time the copy names: when it opens, ended, was removed or voided. */
   at: number | null;
+  /** An Access card's verdict, for the outcome and the scan row. */
+  access?: ScanAccess;
+  /** A held re-entry: how long until the next. */
+  cooldownRemainingMs?: number;
+  /** A held Auto flip: the place as read and the direction offered. */
+  occupancy?: ScanOccupancy;
   flags: string[];
   found: Found | null;
   /** Internal ledger linkage for an inactive pass; never an output identity. */
@@ -146,6 +162,10 @@ export function candidateInScope(actor: ScanActor, candidate: Candidate): boolea
   return matchesEvent(actor, candidate.pass);
 }
 
+/** An event checks an Access card in once, like any ticket (AX 5): the card's own `always` does not apply. */
+const eventOnce = (action: ResolvedScanAction, access: boolean): ResolvedScanAction =>
+  access && action.kind === 'check_in' ? { ...action, repeat: 'once' } : action;
+
 export async function foundOf(
   ctx: ServiceContext,
   c: Candidate,
@@ -214,10 +234,13 @@ export async function foundOf(
         ...scan,
         display: scanOf(activeTemplate.manifest).display,
         actions: currentActions(scan.actions, scanOf(activePolicy.manifest).actions).map((action) =>
-          policyAction(action, {
-            ...rules,
-            mode: rules.mode ?? actor?.settings.checkIn?.mode,
-          }),
+          eventOnce(
+            policyAction(action, {
+              ...rules,
+              mode: rules.mode ?? actor?.settings.checkIn?.mode,
+            }),
+            scan.access !== undefined && !!actor?.event,
+          ),
         ),
       },
       checkInRules: rules,

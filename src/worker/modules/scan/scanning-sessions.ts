@@ -1,9 +1,9 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import type {
-  CreateScanningSessionSchema,
-  UpdateScanningSessionSchema,
+import {
+  type CreateScanningSessionSchema,
+  ScanningSessionSettingsSchema,
+  type UpdateScanningSessionSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
 import { classifyD1Error } from '../../platform/db.ts';
@@ -42,6 +42,7 @@ import {
   type SessionReadAuthority,
   sessionDeviceViews,
   sessionDto,
+  storedCustomer,
 } from './scanning-session-dto.ts';
 import { scanningSessionActivity } from './session-activity.ts';
 import { assertNoZonesLeft, eventOfAccepts, sessionZoneChecks } from './session-zones.ts';
@@ -112,7 +113,7 @@ export async function createScanningSession(
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const accepts = input.accepts ? await checkAccepts(ctx, input.orgId, mode, input.accepts) : null;
-  const settings = ScannerSettingsSchema.parse({
+  const settings = ScanningSessionSettingsSchema.parse({
     ...DEFAULT_SETTINGS,
     lookup: true,
     ...input.settings,
@@ -200,7 +201,8 @@ export async function updateScanningSession(
       'SCANNING_SESSION_SETTINGS_INVALID',
     );
   const settings = settingsChanged
-    ? ScannerSettingsSchema.parse({
+    ? ScanningSessionSettingsSchema.parse({
+        ...storedCustomer(row.settings),
         ...previousSettings,
         ...input.settings,
         acceptAllTemplates:

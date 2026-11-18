@@ -1,7 +1,8 @@
-import type { ScanInput } from '../../../shared/contracts/scan.ts';
+import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
+import { accessStop, isGuestPass, joinReads, planAccessReads } from './access.ts';
 import { planAdmission } from './admission.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -11,6 +12,7 @@ import {
   snapshotCredentialEnv,
 } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
+import { occupancyAsRead, planOccupancy } from './occupancy/admission.ts';
 import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { type Candidate, hasScanPolicy } from './repo-lookup.ts';
 import { activeFlags, type Evaluated, type Found, foundOf } from './resolve.ts';
@@ -43,7 +45,7 @@ export interface EvaluationOptions {
 export async function evaluate(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: ScanInput,
+  input: ScanCodeInput,
   waive: Waive = {},
   observed?: CredentialTombstoneSnapshot,
   options: EvaluationOptions = {},
@@ -72,7 +74,7 @@ export async function evaluate(
 async function evaluateObserved(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: ScanInput,
+  input: ScanCodeInput,
   waive: Waive,
   refs: CredentialTombstoneSnapshot,
   options: EvaluationOptions,
@@ -145,7 +147,10 @@ async function evaluateObserved(
     if (validity.status === 'voided')
       return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
     if (validity.status === 'expired')
-      return stop('refused', 'expired', { ...audit, at: validity.validUntil });
+      return stop('refused', isGuestPass(one) ? 'guest_expired' : 'expired', {
+        ...audit,
+        at: validity.validUntil,
+      });
     return stop('refused', 'not_accepted');
   }
   const known = {
@@ -160,13 +165,16 @@ async function evaluateObserved(
       Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
       actor.settings.direction === 'out' ||
       actor.settings.direction === 'both');
-  const extraReads = await options.prepareReads?.(found);
+  const prepared = await options.prepareReads?.(found);
+  // An Access card's zones ride the same read as the pass fence: no trip of their own on an action.
+  const accessReads = planAccessReads(ctx, actor, found);
+  const extraReads = joinReads(prepared, accessReads);
   // Action callers also capture event-scoped admission in the same transaction.
   const eventAdmission =
     !configured &&
     options.admits?.(found) !== false &&
     actor.event != null &&
-    extraReads !== undefined;
+    prepared !== undefined;
   if (!configured && !eventAdmission && extraReads) {
     const results = extraReads.stmts.length ? await ctx.env.DB.batch(extraReads.stmts) : [];
     await extraReads.finish(results);
@@ -175,18 +183,44 @@ async function evaluateObserved(
     configured || eventAdmission
       ? await planAdmission(ctx, actor, found, configured ? waive.direction : 'in', extraReads)
       : null;
-  const admission = configured ? planned : null;
+  const now = ctx.clock.now();
+  // An Access card at a door with a tracked zone counts there (SA §20.3): that replaces admission.
+  const loaded =
+    prepared !== undefined && options.admits?.(found) !== false && accessReads?.loaded();
+  const placed = loaded
+    ? planOccupancy({
+        ...loaded.occupancy,
+        zoneIds: loaded.zoneIds,
+        setting: actor.settings.direction,
+        requested: waive.override ? 'in' : waive.direction,
+        now,
+      })
+    : null;
+  const admission = configured && !placed ? planned : null;
   // The pass's own event filter rejects it: a bare refusal, with no card, identity or grant.
   const selected = admission?.plan.event;
   if (selected && !eventAcceptsPass(actor, selected, found.pass))
     return stop('refused', 'wrong_event');
   found.admission = admission?.plan;
+  if (placed) found.occupancy = placed.found;
   if (eventAdmission && planned) {
     found.eventAdmission = planned.plan;
     found.eventAdmissionReason = planned.reason;
   }
-  const exiting = admission?.plan.state.direction === 'out';
-  const now = ctx.clock.now();
+  // Step 9a: an Auto flip under two minutes old is held, with the flip offered (not overridable).
+  if (placed?.turnaround)
+    return stop('heads_up', placed.found.inside ? 'still_inside' : 'not_inside', {
+      ...known,
+      at: placed.found.row?.changed_at ?? null,
+      hard: true,
+      occupancy: occupancyAsRead(placed.found, placed.turnaround),
+    });
+  // A tap-out skips steps 10-14 (OC4): leaving is never refused for who you are.
+  const zoneExit = placed?.found.direction === 'out';
+  const exiting = admission?.plan.state.direction === 'out' || zoneExit;
+  // Access refusals are authority: they come before the gate, the window and every heads-up.
+  const denied = exiting ? null : accessStop(ctx, actor, found, known, accessReads, now);
+  if (denied) return denied;
   if (admission?.reason)
     return stop(
       admission.reason === 'not_accepted' || admission.reason === 'wrong_event'
@@ -195,10 +229,11 @@ async function evaluateObserved(
       admission.reason,
       { ...known, at: admission.at, flags: admission.flags, hard: true },
     );
-  const held = exiting ? null : windowStop(actor, found, now, waive);
+  // An Access card has its own window (the plan and the pass's start and end): AX 3.4 skips 11-12.
+  const held = exiting || found.access ? null : windowStop(actor, found, now, waive);
   if (held) return held;
   const flagged = activeFlags(found).filter((flag) => flag.stop);
-  if (flagged.length > 0 && !waive.confirmed)
+  if (flagged.length > 0 && !waive.confirmed && !zoneExit)
     return stop('heads_up', 'check_required', {
       ...known,
       flags: activeFlags(found, actor)

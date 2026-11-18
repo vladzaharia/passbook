@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "b526f58b63effbabdbebe00d433c17f1bf307fb7";
+export const BAKED_BUILD_HASH = "50bce86b40ab6e76596569bca8fbdf626f683379";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "d57125efb6cb6de6",
+    "version": "7f7598441d1e66ed",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -322,6 +322,64 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       ],
       "messaging": {
         "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "check_in",
+            "label": "Check in",
+            "kind": "check_in",
+            "repeat": "daily",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "memberId"
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Membership",
+            "equals": [
+              "Suspended",
+              "Expired",
+              "Cancelled"
+            ],
+            "stop": true
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.memberName}}",
+          "panels": [
+            {
+              "id": "p_membership",
+              "preset": {
+                "id": "membership",
+                "v": 1
+              },
+              "title": "Membership",
+              "icon": "id-card",
+              "rows": [
+                {
+                  "id": "r_club",
+                  "type": "field",
+                  "label": "Home club",
+                  "value": "{{fields.homeClub}}"
+                }
+              ]
+            }
+          ],
+          "header": {
+            "chips": [
+              {
+                "id": "c_tier",
+                "text": "{{inputs.membership}}",
+                "tone": "gold"
+              }
+            ]
+          }
+        }
       }
     },
     "passJson": {
@@ -526,7 +584,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/artwork@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/artwork@2x.png"
         }
       },
       {
@@ -540,7 +598,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/artwork@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/artwork@3x.png"
         }
       },
       {
@@ -554,7 +612,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1010,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/background@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/background@2x.png"
         }
       },
       {
@@ -568,7 +626,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1515,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/background@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/background@3x.png"
         }
       },
       {
@@ -581,7 +639,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/en.lproj/pass.strings"
         }
       },
       {
@@ -595,7 +653,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/icon@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/icon@2x.png"
         }
       },
       {
@@ -609,7 +667,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/icon@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/icon@3x.png"
         }
       },
       {
@@ -623,7 +681,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/logo@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/logo@2x.png"
         }
       },
       {
@@ -637,7 +695,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/logo@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/logo@3x.png"
         }
       },
       {
@@ -651,7 +709,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/primaryLogo@2x.png"
         }
       },
       {
@@ -665,20 +723,27 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/primaryLogo@3x.png"
         }
       }
     ],
     "extras": [],
     "report": {
       "ok": true,
-      "issues": []
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "SCAN_DISPLAY_SHADOWED",
+          "message": "Input \"access\" is hidden by a display root. Use inputs.access.",
+          "path": "scan.display.holder"
+        }
+      ]
     }
   },
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "00369f900aeb0e31",
+    "version": "b95c69194c2acbf1",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -992,6 +1057,64 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       ],
       "messaging": {
         "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "check_in",
+            "label": "Check in",
+            "kind": "check_in",
+            "repeat": "daily",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "memberId"
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Membership",
+            "equals": [
+              "Suspended",
+              "Expired",
+              "Cancelled"
+            ],
+            "stop": true
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.memberName}}",
+          "panels": [
+            {
+              "id": "p_membership",
+              "preset": {
+                "id": "membership",
+                "v": 1
+              },
+              "title": "Membership",
+              "icon": "id-card",
+              "rows": [
+                {
+                  "id": "r_club",
+                  "type": "field",
+                  "label": "Home club",
+                  "value": "{{fields.homeClub}}"
+                }
+              ]
+            }
+          ],
+          "header": {
+            "chips": [
+              {
+                "id": "c_tier",
+                "text": "{{inputs.membership}}",
+                "tone": "gold"
+              }
+            ]
+          }
+        }
       }
     },
     "passJson": {
@@ -1196,7 +1319,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/artwork@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/artwork@2x.png"
         }
       },
       {
@@ -1210,7 +1333,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/artwork@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/artwork@3x.png"
         }
       },
       {
@@ -1224,7 +1347,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1010,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/background@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/background@2x.png"
         }
       },
       {
@@ -1238,7 +1361,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1515,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/background@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/background@3x.png"
         }
       },
       {
@@ -1251,7 +1374,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/en.lproj/pass.strings"
         }
       },
       {
@@ -1265,7 +1388,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/icon@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/icon@2x.png"
         }
       },
       {
@@ -1279,7 +1402,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/icon@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/icon@3x.png"
         }
       },
       {
@@ -1293,7 +1416,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/logo@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/logo@2x.png"
         }
       },
       {
@@ -1307,7 +1430,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/logo@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/logo@3x.png"
         }
       },
       {
@@ -1321,7 +1444,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/primaryLogo@2x.png"
         }
       },
       {
@@ -1335,7 +1458,696 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/primaryLogo@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "SCAN_DISPLAY_SHADOWED",
+          "message": "Input \"access\" is hidden by a display root. Use inputs.access.",
+          "path": "scan.display.holder"
+        }
+      ]
+    }
+  },
+  {
+    "id": "baked:starter-access-card",
+    "slug": "starter-access-card",
+    "version": "56edcb351146d9cd",
+    "name": "Access card",
+    "description": "Door access by plan and zone, with a photo for ID checks.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Access card",
+      "description": "Door access by plan and zone, with a photo for ID checks.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "memberName",
+          "memberId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "memberName": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Member",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "memberId": {
+            "type": "string",
+            "x-label": "Member ID",
+            "x-group": "Member",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Status",
+            "x-order": 30,
+            "enum": [
+              "Active",
+              "Suspended"
+            ],
+            "default": "Active",
+            "x-widget": "select"
+          },
+          "plan": {
+            "type": "string",
+            "x-label": "Plan",
+            "x-group": "Access",
+            "x-order": 40,
+            "enum": [
+              "member",
+              "off_peak",
+              "guest"
+            ],
+            "default": "member",
+            "x-widget": "select",
+            "x-enumLabels": {
+              "member": "24/7 Member",
+              "off_peak": "Off-peak",
+              "guest": "Guest"
+            }
+          },
+          "zones": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+            },
+            "x-label": "Extra zones",
+            "x-group": "Access",
+            "x-order": 50,
+            "x-widget": "list",
+            "x-itemLabel": "Zone",
+            "x-addLabel": "Add zone",
+            "x-help": "Zone keys from Scanning, like pool."
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Starts",
+            "x-group": "Access",
+            "x-order": 60,
+            "x-widget": "datetime",
+            "x-noneLabel": "Now"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Ends",
+            "x-group": "Access",
+            "x-order": 70,
+            "x-widget": "datetime",
+            "x-noneLabel": "No end"
+          },
+          "visits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999,
+            "x-label": "Visit limit",
+            "x-group": "Guest",
+            "x-order": 80,
+            "x-help": "Guest plan only."
+          },
+          "sponsor": {
+            "type": "string",
+            "x-label": "Guest of",
+            "x-group": "Guest",
+            "x-order": 90,
+            "maxLength": 80,
+            "x-scan": "desk"
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 100,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 110,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          }
+        }
+      },
+      "sample": {
+        "memberName": "Alex Morgan",
+        "memberId": "MEMBER-0001",
+        "plan": "member",
+        "status": "Active",
+        "validUntil": "2030-01-01T00:00:00Z"
+      },
+      "lookups": {
+        "plans": {
+          "member": {
+            "label": "24/7 Member",
+            "hours": "Any time, every day."
+          },
+          "off_peak": {
+            "label": "Off-peak",
+            "hours": "Mon–Fri 6 AM–4 PM, 8–11 PM. Sat–Sun 8 AM–8 PM."
+          },
+          "guest": {
+            "label": "Guest",
+            "hours": "Until your guest pass ends."
+          }
+        }
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{memberName}}"
+        },
+        {
+          "to": {
+            "field": "plan"
+          },
+          "value": "{{lookups.plans[plan].label}}"
+        },
+        {
+          "to": {
+            "field": "member"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "field": "hours"
+          },
+          "value": "{{lookups.plans[plan].hours}}"
+        },
+        {
+          "to": {
+            "field": "until"
+          },
+          "value": "{{validUntil}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{validUntil}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "guestOf"
+          },
+          "value": "{{sponsor}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{memberId}}"
+        }
+      ],
+      "display": {
+        "icon": "key",
+        "title": "{{memberName}}",
+        "subtitle": "{{lookups.plans[plan].label}} · {{memberId}}",
+        "status": "{{status}}",
+        "search": [
+          "memberName",
+          "memberId"
+        ]
+      },
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "enter",
+            "label": "Let in",
+            "kind": "check_in"
+          }
+        ],
+        "lookup": {
+          "input": "memberId"
+        },
+        "access": {
+          "input": {
+            "plan": "plan",
+            "zones": "zones",
+            "from": "validFrom",
+            "until": "validUntil",
+            "visits": "visits",
+            "sponsor": "sponsor"
+          },
+          "plans": [
+            {
+              "id": "member",
+              "label": "24/7 Member",
+              "kind": "always",
+              "zones": [
+                {
+                  "zone": "*"
+                }
+              ]
+            },
+            {
+              "id": "off_peak",
+              "label": "Off-peak",
+              "kind": "timed",
+              "hours": {
+                "mon": [
+                  "06:00-16:00",
+                  "20:00-23:00"
+                ],
+                "tue": [
+                  "06:00-16:00",
+                  "20:00-23:00"
+                ],
+                "wed": [
+                  "06:00-16:00",
+                  "20:00-23:00"
+                ],
+                "thu": [
+                  "06:00-16:00",
+                  "20:00-23:00"
+                ],
+                "fri": [
+                  "06:00-16:00",
+                  "20:00-23:00"
+                ],
+                "sat": [
+                  "08:00-20:00"
+                ],
+                "sun": [
+                  "08:00-20:00"
+                ]
+              },
+              "zones": [
+                {
+                  "zone": "*"
+                }
+              ]
+            },
+            {
+              "id": "guest",
+              "label": "Guest",
+              "kind": "guest",
+              "days": 1,
+              "zones": [
+                {
+                  "zone": "*"
+                }
+              ]
+            }
+          ],
+          "suspend": {
+            "input": "status",
+            "equals": [
+              "Suspended"
+            ]
+          },
+          "rules": {
+            "visitGapMinutes": 120,
+            "reentryMinutes": null
+          }
+        },
+        "display": {
+          "v": 1,
+          "holder": "{{memberName}}",
+          "photo": {
+            "minRole": "door"
+          },
+          "header": {
+            "chips": [
+              {
+                "id": "c_plan",
+                "text": "{{access.plan}}",
+                "tone": "violet",
+                "icon": "infinity"
+              }
+            ]
+          },
+          "variants": [
+            {
+              "id": "timed",
+              "name": "Timed",
+              "when": {
+                "path": "access.kind",
+                "eq": "timed"
+              },
+              "header": {
+                "chips": [
+                  {
+                    "id": "c_timed",
+                    "text": "{{access.plan}}",
+                    "tone": "teal",
+                    "icon": "clock"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "guest",
+              "name": "Guest",
+              "when": {
+                "path": "access.kind",
+                "eq": "guest"
+              },
+              "header": {
+                "chips": [
+                  {
+                    "id": "c_guest",
+                    "text": "{{access.plan}}",
+                    "tone": "gold",
+                    "icon": "ticket"
+                  }
+                ]
+              }
+            }
+          ],
+          "panels": [
+            {
+              "id": "p_visits",
+              "preset": {
+                "id": "membership",
+                "v": 1
+              },
+              "title": "Visits",
+              "icon": "door-open",
+              "on": [
+                "ready",
+                "ok"
+              ],
+              "rows": [
+                {
+                  "id": "r_member",
+                  "type": "columns",
+                  "when": {
+                    "not": {
+                      "path": "access.kind",
+                      "eq": "guest"
+                    }
+                  },
+                  "items": [
+                    {
+                      "id": "i_month",
+                      "label": "This month",
+                      "value": {
+                        "count": "{{history.visits.month}}",
+                        "one": "# visit",
+                        "other": "# visits",
+                        "zero": "First visit"
+                      }
+                    },
+                    {
+                      "id": "i_last",
+                      "label": "Last visit",
+                      "value": "{{history.lastVisit.at|ago}}"
+                    }
+                  ]
+                },
+                {
+                  "id": "r_guest",
+                  "type": "columns",
+                  "when": {
+                    "path": "access.kind",
+                    "eq": "guest"
+                  },
+                  "items": [
+                    {
+                      "id": "i_left",
+                      "label": "Visits left",
+                      "value": "{{access.visits.left}} of {{access.visits.limit}}"
+                    },
+                    {
+                      "id": "i_until",
+                      "label": "Until",
+                      "value": "{{access.until|time}}"
+                    }
+                  ]
+                },
+                {
+                  "id": "r_sponsor",
+                  "type": "field",
+                  "label": "Guest of",
+                  "value": "{{inputs.sponsor}}",
+                  "whenEmpty": "hide",
+                  "minRole": "desk"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Ask at the front desk."
+          },
+          "customer": {
+            "chips": [
+              "c_plan",
+              "c_timed",
+              "c_guest"
+            ],
+            "panel": null
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Access card",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(29,58,186)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(207,224,255)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "expirationDate": "2030-01-01T00:00:00Z",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "MEMBER-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "MEMBER-0001"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "plan",
+            "label": "Plan",
+            "value": "24/7 Member",
+            "changeMessage": "Your plan is now %@."
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Alex Morgan"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "until",
+            "label": "Valid until",
+            "value": "2030-01-01T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "timeStyle": "PKDateStyleNone",
+            "ignoresTimeZone": true
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "member",
+            "label": "Member",
+            "value": "MEMBER-0001"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "guestOf",
+            "label": "Guest of",
+            "value": ""
+          },
+          {
+            "key": "hours",
+            "label": "Hours",
+            "value": "Any time, every day."
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Show this card at the door. It's for you only."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 294,
+        "sha1": "2524bdaa8f07408169334fad07185f8a26bd5b50",
+        "crc32": 480473760,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-access-card/56edcb351146d9cd/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 962,
+        "sha1": "4cc5c57c0962e5004aa2c97db3418e7a4177cc9d",
+        "crc32": 1200429835,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-access-card/56edcb351146d9cd/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1427,
+        "sha1": "aa32cc94bf55f84453f60d2d8fefe06e0d7b5e2d",
+        "crc32": 3001490920,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-access-card/56edcb351146d9cd/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-access-card/56edcb351146d9cd/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-access-card/56edcb351146d9cd/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 9592,
+        "sha1": "f041eeef4284a251b381ae312ea51afbd11a59cf",
+        "crc32": 449455583,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-access-card/56edcb351146d9cd/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 14846,
+        "sha1": "daa4bcc8e83fd8f3eaef39d01484d968cdbe5ab9",
+        "crc32": 2030415217,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-access-card/56edcb351146d9cd/thumbnail@3x.png"
         }
       }
     ],

@@ -4,6 +4,7 @@ exports[`fidelity report > gives every template a status, none blocked 1`] = `
 {
   "henrys-blue": "loyalty: Ready with omissions (2)",
   "henrys-copper": "loyalty: Ready with omissions (2)",
+  "starter-access-card": "loyalty: Ready with omissions (3)",
   "starter-boarding-pass": "loyalty: Ready with omissions (2)",
   "starter-coupon": "coupon: Ready with omissions (1)",
   "starter-event-ticket": "ticket: Ready with omissions (3)",
@@ -133,6 +134,52 @@ Henry’s Gymnasium: https://henrysgymnasium.com/",
     "field.back | text | backFields.terms",
     "field.back | text | backFields.directions-capitol-hill-poster",
     "field.back | text | backFields.website-poster",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-access-card 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#1d3aba",
+      "endDate": "1893456000000",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Plan: 24/7 Member
+Valid until: 2030-01-01
+Member: MEMBER-0001
+Hours: Any time, every day.
+Terms: Show this card at the door. It's for you only.",
+      "providerName": "PassBook",
+      "title": "Alex Morgan",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.until",
+    "field.header | text | headerFields.plan",
+    "field.secondary | text | secondaryFields.until",
+    "field.auxiliary | text | auxiliaryFields.member",
+    "field.back | text | backFields.hours",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],

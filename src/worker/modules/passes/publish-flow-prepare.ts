@@ -2,6 +2,7 @@ import type { PassJson } from '../../../passkit/types.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { withoutPersonalizationFiles } from '../apple/personalize-files.ts';
+import { assertAccessInput } from './access-input.ts';
 import { type BuildRequest, buildArtifact } from './builder.ts';
 import type { PublishOptions } from './publish.ts';
 import { artifactCredentialRefs, type PublishAttempt } from './publish-service-artifact.ts';
@@ -126,6 +127,9 @@ export async function preparePublishAttempt(
   };
   const artifact = await buildArtifact(buildCtx, buildRequest);
   assertReleaseArtifact(release, artifact.template);
+  // Every publish that changes the input is held to the Access card's rules (AX 2.4), whoever asks.
+  if (JSON.stringify(next.personalization) !== JSON.stringify(current.personalization))
+    await assertAccessInput(ctx, current.orgId, artifact.template, next.personalization);
   const expectedPass = {
     ...expectedPassBase,
     credentialKeysetCommitment,

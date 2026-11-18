@@ -6,9 +6,8 @@ describe('CreateApiKeySchema', () => {
   it('accepts a key without the terminal scope', () => {
     expect(CreateApiKeySchema.safeParse(body).success).toBe(true);
   });
-  it('refuses scans:write until it is honoured', () => {
+  it('accepts scans:write', () => {
     const r = CreateApiKeySchema.safeParse({ ...body, scopes: ['scans:read', 'scans:write'] });
-    expect(r.success).toBe(false);
-    expect(r.error?.issues[0]?.message).toBe('The scan scope is not available yet.');
+    expect(r.success).toBe(true);
   });
 });

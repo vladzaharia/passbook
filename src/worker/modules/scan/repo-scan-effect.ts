@@ -143,6 +143,8 @@ export function claimEffect(
     scanId: string;
     now: number;
     admission?: AdmissionPlan;
+    /** An Access card's grant inside a visit leaves the count alone. */
+    accessVisit?: boolean;
   },
 ): ScanEffectSnapshot {
   const g = before.gateBefore;
@@ -156,7 +158,7 @@ export function claimEffect(
     templateId: g?.templateId ?? claim.templateId,
     kind: g?.kind ?? claim.kind,
     state: claim.state,
-    count: (g?.count ?? 0) + 1,
+    count: (g?.count ?? 0) + (claim.accessVisit === false ? 0 : 1),
     firstAt: g?.firstAt ?? claim.now,
     lastAt: claim.now,
     lastScanId: claim.scanId,

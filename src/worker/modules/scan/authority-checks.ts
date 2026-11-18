@@ -1,4 +1,10 @@
-import { type Check, exactlyOne, rawCheck, rowIs } from '../../platform/authority-checks.ts';
+import {
+  type Check,
+  exactlyOne,
+  orgRevision,
+  rawCheck,
+  rowIs,
+} from '../../platform/authority-checks.ts';
 import { gt } from '../../platform/authority-expr.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { capabilityChecks } from '../passes/repo-authority.ts';
@@ -8,6 +14,7 @@ export { captureScanEpochs } from './authority-capture.ts';
 
 import type { ScanActor } from './actor.ts';
 import {
+  apiKeyActsCheck,
   deviceAwakeCheck,
   noScannerTemplatesCheck,
   noStaffBindingCheck,
@@ -79,7 +86,15 @@ export interface ScanReadRelaxations {
 export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check[] {
   const epochs = scanEpochsOf(actor);
   if (!epochs) throw epochsMissing();
+  // A till's key acts through its terminal: the key must still be live, in this org and mode, at commit.
   const checks: Check[] = [];
+  if (actor.apiKeyId && actor.scanner) {
+    if (actor.apiKeyOrgRevision === undefined) throw epochsMissing();
+    checks.push(
+      apiKeyActsCheck(actor.apiKeyId, actor.scanner.id, input.now),
+      orgRevision(actor.apiKeyOrgRevision),
+    );
+  }
   const read = input.read ?? {};
   const { scanner, scanningSession: session } = actor;
   if (scanner) {

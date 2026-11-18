@@ -1,53 +1,10 @@
 import { type Grant, grant } from '../../platform/authority.ts';
-import type { AfterRead } from '../../platform/authority-after.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
-import type { ScanActor } from './actor.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
+import { ACCESS_GATE } from './repo-access.ts';
 import type { ScanRow } from './repo-scans.ts';
-import type { ScanEventRow } from './repo-scope.ts';
-
-export interface UndoGate {
-  scope: string;
-  template_id: string;
-  kind: string;
-  state: string;
-  count: number;
-  first_at: number;
-  last_at: number;
-  prev_state: string | null;
-  prev_last_at: number | null;
-  prev_scan_id: string | null;
-}
-
-export interface UndoPresence {
-  state: string;
-  tracking: number;
-  entered_at: number | null;
-  first_at: number;
-  last_entry_at: number;
-  prev_state: string | null;
-  prev_tracking: number | null;
-  prev_entered_at: number | null;
-  prev_first_at: number | null;
-  prev_last_entry_at: number | null;
-  prev_scan_id: string | null;
-}
-
-export interface UndoCommit {
-  ctx: ServiceContext;
-  actor: ScanActor;
-  target: ScanRow & { passId: string; actionId: string };
-  gate: UndoGate;
-  presence: UndoPresence | null;
-  event: ScanEventRow | null;
-  /** The manager whose PIN was verified: still enabled, still a manager, same `auth_epoch`. */
-  approver: { id: string; authEpoch: number } | null;
-  id: string;
-  key: string;
-  /** The answer's reads: they commit with the grant, so the undo needs no trip of its own for them. */
-  reads?: readonly AfterRead[];
-}
+import { undoAccessGate } from './repo-undo-access.ts';
+import type { UndoCommit } from './repo-undo-types.ts';
 
 /** A quarantined pass keeps its scans out of every ledger, undo included. */
 function notQuarantined(target: ScanRow): Check[] {
@@ -119,7 +76,7 @@ export function openUndoGrant(
   });
 }
 
-/** An add, take or set holds a gate only as a clock (`cooldown`): it goes back to the scan before. */
+/** An add, take or set holds a gate only as a clock: it goes back to the scan before. */
 const restoresGate = (kind: string | null) => kind === 'add' || kind === 'take' || kind === 'set';
 
 /** The undo's writes: the gate, the target, the undo scan, its ledger event and the audit row. */
@@ -128,46 +85,53 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
   const now = ctx.clock.now();
   const gateWhere = {
     pass_id: target.passId,
-    action_id: target.actionId,
+    action_id: gate.action_id,
     scope: gate.scope,
     last_scan_id: target.id,
-    // The gate's own `last_at`, not `target.at`: gate recovery moves it back to `prev_last_at`.
+    // The gate's own `last_at` (gate recovery moves it back to `prev_last_at`), not `target.at`.
     last_at: gate.last_at,
     count: gate.count,
     state: gate.state,
     prev_state: gate.prev_state,
   };
-  const gateWrite = restoresGate(target.actionKind)
-    ? gate.prev_state === null
-      ? g.delete('scan_gates', { where: gateWhere, require: 'one', returning: ['last_scan_id'] })
-      : g.update('scan_gates', {
-          set: {
-            state: gate.prev_state,
-            count: Math.max(0, gate.count - 1),
-            last_at: gate.prev_last_at,
-            last_scan_id: gate.prev_scan_id,
-            prev_state: null,
-            prev_last_at: null,
-            prev_scan_id: null,
-          },
-          where: gateWhere,
-          require: 'one',
-          returning: ['last_scan_id'],
-        })
-    : g.update('scan_gates', {
-        set: {
-          state: target.presenceScope != null ? (gate.prev_state ?? 'undone') : 'undone',
-          count: Math.max(0, gate.count - 1),
-          last_at: now,
-          last_scan_id: id,
-          prev_state: null,
-          prev_last_at: null,
-          prev_scan_id: null,
-        },
-        where: gateWhere,
-        require: 'one',
-        returning: ['last_scan_id'],
-      });
+  const gateWrite =
+    gate.action_id === ACCESS_GATE
+      ? undoAccessGate(g, gate, id, gateWhere)
+      : restoresGate(target.actionKind)
+        ? gate.prev_state === null
+          ? g.delete('scan_gates', {
+              where: gateWhere,
+              require: 'one',
+              returning: ['last_scan_id'],
+            })
+          : g.update('scan_gates', {
+              set: {
+                state: gate.prev_state,
+                count: Math.max(0, gate.count - 1),
+                last_at: gate.prev_last_at,
+                last_scan_id: gate.prev_scan_id,
+                prev_state: null,
+                prev_last_at: null,
+                prev_scan_id: null,
+              },
+              where: gateWhere,
+              require: 'one',
+              returning: ['last_scan_id'],
+            })
+        : g.update('scan_gates', {
+            set: {
+              state: target.presenceScope != null ? (gate.prev_state ?? 'undone') : 'undone',
+              count: Math.max(0, gate.count - 1),
+              last_at: now,
+              last_scan_id: id,
+              prev_state: null,
+              prev_last_at: null,
+              prev_scan_id: null,
+            },
+            where: gateWhere,
+            require: 'one',
+            returning: ['last_scan_id'],
+          });
   const writes = [
     gateWrite,
     g.update('scans', {
@@ -196,6 +160,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
         'actor_id',
         'actor_key',
         'staff_id',
+        'api_key_id',
         'idempotency_key',
         'request_hash',
         'method',
@@ -217,6 +182,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
         actor.actor.id,
         actor.actorKey,
         actor.staff?.id ?? null,
+        actor.apiKeyId ?? null,
         c.key,
         `undo:${target.id}`,
         'manual',
@@ -250,6 +216,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
           scannerId: actor.scanner?.id ?? null,
           staffId: actor.staff?.id ?? null,
           approvedBy: approver?.id ?? null,
+          ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
         }),
         now,
       ],
@@ -265,7 +232,10 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
       targetId: target.id,
       requestId: ctx.requestId,
       ipPrefix: null,
-      detail: JSON.stringify({ kind: target.actionKind ?? 'check_in' }),
+      detail: JSON.stringify({
+        kind: target.actionKind ?? 'check_in',
+        ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
+      }),
     }),
   ];
   if (presence) {
@@ -287,6 +257,8 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
               first_at: presence.prev_first_at,
               last_entry_at: presence.prev_last_entry_at,
               last_scan_id: presence.prev_scan_id,
+              seq: presence.prev_seq ?? 0,
+              prev_seq: null,
               prev_state: null,
               prev_tracking: null,
               prev_entered_at: null,

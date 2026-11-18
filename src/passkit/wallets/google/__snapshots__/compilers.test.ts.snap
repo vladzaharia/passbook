@@ -1214,6 +1214,258 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
 }
 `;
 
+exports[`Google compilers over every starter and baked template > starter-access-card: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.hours",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "MEMBER-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#1d3aba",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2030-01-01T00:00:00Z",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "24/7 Member",
+        "header": "Plan",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "MEMBER-0001",
+        "header": "Member",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "Any time, every day.",
+        "header": "Hours",
+        "id": "backFields.hours",
+      },
+      {
+        "body": "Show this card at the door. It's for you only.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-01-01T00:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-access-card: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.hours",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "MEMBER-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "hexBackgroundColor": "#1d3aba",
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2030-01-01T00:00:00Z",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "24/7 Member",
+        "header": "Plan",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "MEMBER-0001",
+        "header": "Member",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "Any time, every day.",
+        "header": "Hours",
+        "id": "backFields.hours",
+      },
+      {
+        "body": "Show this card at the door. It's for you only.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-01-01T00:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
 exports[`Google compilers over every starter and baked template > starter-boarding-pass: the default type and Generic, with Google art > generic 1`] = `
 {
   "classBody": {

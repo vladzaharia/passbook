@@ -116,6 +116,9 @@ export async function finishStop(
     overrideOf: s.overrideOf,
     approvedBy: null,
     ...(authority.event ? { eventId: authority.event.id } : {}),
+    ...(stop.access
+      ? { access: { zoneId: stop.access.zone?.id ?? null, plan: stop.access.plan.id, visit: null } }
+      : {}),
   });
   // Counted by the same batch, right after the statement that closes the scan.
   const miss = s.countMiss ? grantMiss(g, finalized, ctx, authority.actor, ctx.clock.now()) : null;
