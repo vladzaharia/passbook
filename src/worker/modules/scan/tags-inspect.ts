@@ -23,7 +23,7 @@ import {
 } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { bumpTagCap } from './repo-tags-bind.ts';
+import { bumpTagCap, passTemplate } from './repo-tags-bind.ts';
 import {
   accepts,
   candidateCredentialSnapshotValid,
@@ -110,18 +110,26 @@ export async function inspectTag(
   const base = { ...BLANK, hint: tag.hint, assurance: 'basic' as const };
   if (tag.status === 'retired') return { ...base, state: 'retired' };
   const binding = (await tagView(db, orgId, mode, tag.id))?.binding ?? null;
-  if (binding)
+  if (binding) {
+    // Names only for a pass this scanner takes: a found fob tells a desk nothing about other templates.
+    const templateId = await passTemplate(db, binding.passId);
+    const takes =
+      templateId !== null &&
+      (actor.templateIds.length === 0
+        ? actor.settings.acceptAllTemplates === true
+        : actor.templateIds.includes(templateId));
     return {
       ...base,
       state: 'bound',
       bound: {
         scope: binding.scope,
-        passTitle: binding.passTitle ?? '',
-        holderName: binding.holderName,
+        passTitle: takes ? (binding.passTitle ?? '') : '',
+        holderName: takes ? binding.holderName : null,
       },
       boundAt: binding.boundAt,
-      boundByName: binding.boundByName,
+      boundByName: takes ? binding.boundByName : null,
     };
+  }
   if (tag.lostAt !== null) return { ...base, state: 'lost', lostAt: tag.lostAt };
   return { ...base, state: 'new' };
 }
