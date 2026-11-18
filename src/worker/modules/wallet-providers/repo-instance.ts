@@ -194,13 +194,12 @@ export function listDirtyInstances(
     `SELECT i.id AS instanceId, i.pass_id AS passId, i.org_id AS orgId, i.mode, i.provider, d.generation,
       i.credential_keyset_commitment AS credentialKeysetCommitment
     FROM wallet_provider_instance_dirty d JOIN wallet_provider_instances i ON i.id = d.instance_id
-    WHERE d.next_attempt_at <= ? AND (? IS NULL OR i.id > ?)
+    WHERE d.next_attempt_at <= ? ${afterInstanceId === null ? '' : 'AND i.id > ?'}
       AND i.credential_keyset_commitment = ? AND ${validCommitmentSql('i.credential_keyset_commitment')}
       AND ${credentialRefKeysetSql} ORDER BY i.id LIMIT ?`,
     [
       now,
-      afterInstanceId,
-      afterInstanceId,
+      ...(afterInstanceId === null ? [] : [afterInstanceId]),
       credentialKeysetCommitment,
       credentialKeysetCommitment,
       limit,
