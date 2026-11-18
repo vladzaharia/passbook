@@ -46,6 +46,11 @@ const MANIFEST: Record<string, Rule> = {
   nfc: part('nfc', c(mapOf())),
   // stamps: the goal and `keepReady` move together.
   stamps: part('stamps', c(mapOf({ art: c(mapOf()) }, leaf, [['goal', 'keepReady']]))),
+  // counters: by id, each one's input, size and art move together.
+  counters: part(
+    'manifest.meta',
+    under('counters', c(mapOf({}, mapOf({ art: c(mapOf()) }, leaf, [['input', 'size']])))),
+  ),
   wallets: part(
     'wallets',
     c(mapOf({ roles: c(mapOf()), required: set, google: walletTarget, samsung: walletTarget })),

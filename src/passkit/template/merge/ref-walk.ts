@@ -115,6 +115,11 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
   for (const [i] of search.entries()) set(search, i, 'input', `display/search/${searchIds[i]}`);
 
   direct(man.stamps, 'stamps/input');
+  for (const [id, c] of Object.entries(obj(man.counters) ?? {})) {
+    direct(c, `counters/${id}/input`);
+    const art = obj(obj(c)?.art);
+    for (const k of Object.keys(art ?? {})) set(art, k, 'art', `counters/${id}/art/${k}`);
+  }
   direct(man.messaging, 'messaging/input');
   const stampArt = obj(obj(man.stamps)?.art);
   for (const k of Object.keys(stampArt ?? {})) set(stampArt, k, 'art', `stamps/art/${k}`);
