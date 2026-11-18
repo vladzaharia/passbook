@@ -29,6 +29,7 @@ CREATE TABLE connection_ref_versions (
   updated_at INTEGER NOT NULL,
   PRIMARY KEY (connection_id, ref)
 );
+CREATE INDEX connection_ref_versions_org ON connection_ref_versions (org_id);
 
 -- void_when joins the generation bump set (it decides what a record does to a pass); the previous-secret
 -- columns are volatile. Same trigger as 0044 plus void_when.
