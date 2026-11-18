@@ -1,6 +1,6 @@
 import { behaviorPlugins } from '../../../generated/behaviors.ts';
 import { createBehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
-import { buildPass, PassBuildError, planPass } from '../../../passkit/build.ts';
+import { buildPass, PassBuildError, type PlannedPass, planPass } from '../../../passkit/build.ts';
 import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
 import type {
   PassIdentity,
@@ -38,15 +38,15 @@ export interface PreviewResult {
   issues: ValidationIssue[];
 }
 
-/** Same pipeline as a real build (defaults, behaviors, normalize, shipped assets), without signing. */
-export function previewPass(
+/** The plan of a real build (defaults, behaviors, normalize, shipped assets), without signing. */
+export function previewPlan(
   env: AppEnv,
   template: ResolvedTemplate,
   input: Personalization,
   organizationName: string,
   now: Date,
-): PreviewResult {
-  const plan = planPass({
+): PlannedPass {
+  return planPass({
     template,
     registry: noRegistry,
     input,
@@ -62,6 +62,17 @@ export function previewPass(
     behaviors,
     now,
   });
+}
+
+/** Same pipeline as a real build, without signing. */
+export function previewPass(
+  env: AppEnv,
+  template: ResolvedTemplate,
+  input: Personalization,
+  organizationName: string,
+  now: Date,
+): PreviewResult {
+  const plan = previewPlan(env, template, input, organizationName, now);
   const { authenticationToken: _token, ...passJson } = plan.passJson;
   return { passJson, issues: plan.report.issues };
 }

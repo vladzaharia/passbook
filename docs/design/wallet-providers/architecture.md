@@ -206,7 +206,7 @@ Each compiler exports `CAPABILITIES: Record<CapabilityId, Support>` where `Suppo
 
 ### 4.3 Release binding (schema 2 projection)
 
-A Google or Samsung candidate stores `projection = { schema: 2, target, type, compilerRevision, wallets: <hash of manifest.wallets>, report: <hash>, approvedOmissions: [capability+path] }`, bound to the Apple source release as today (`sourceReleaseId/generation/hash`, `projection-source.ts`) and to account id and revision. Two-person approval stays. Any change to the Apple source, the `wallets` block, the compiler revision, the account, or the report re-opens review for that target only.
+A Google or Samsung candidate stores `projection = { schema: 2, provider, type, compilerRevision, wallets: <hash of manifest.wallets>, report: <hash>, approvedOmissions: [capability+path] }` (`provider` is the target; the stored column and every reader already use that name), bound to the Apple source release as today (`sourceReleaseId/generation/hash`, `projection-source.ts`) and to account id and revision. Two-person approval stays. Any change to the Apple source, the `wallets` block, the compiler revision, the account, or the report re-opens review for that target only.
 
 Compiler upgrades: CI snapshot tests make every fidelity change visible in the PR. On deploy, an active release whose report changes gets `Review needed`: if the change only removes omissions it carries forward (`source: 'system'`); if it adds one, new offers for that target pause until re-approval, while state changes (void, expiry, removal, barcode) keep flowing to existing instances.
 

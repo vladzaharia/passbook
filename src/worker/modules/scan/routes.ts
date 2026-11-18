@@ -28,9 +28,11 @@ import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
+import { withParentHint } from './occupancy/parent-hint.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
+import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
 import { capturingContext } from './scan-capture.ts';
@@ -70,12 +72,20 @@ scanRoutes.use(
   requireScanActor({ capability: 'scanning:manage', staffOptional: true, screens: true }),
 );
 scanRoutes.use('/role', manageSessionActor);
-scanRoutes.use('/staff', requireScanActor({ capability: 'scanning:manage', staffOptional: true }));
+scanRoutes.use(
+  '/staff',
+  requireScanActor({ capability: 'scanning:manage', staffOptional: true, screenActions: true }),
+);
 scanRoutes.use('/actions', (c, next) =>
   (c.req.method === 'POST' ? operateActor : manageActor)(c, next),
 );
-for (const path of ['/summary', '/stats', '/activity', '/passes/*'])
+// A Desk-actions monitor opens the photos Who's in lists.
+const photoActor = requireScanActor({ capability: 'scanning:read', screenActions: true });
+for (const path of ['/summary', '/stats', '/activity'])
   scanRoutes.use(path, (c, next) => (c.req.method === 'GET' ? readActor : manageActor)(c, next));
+scanRoutes.use('/passes/*', (c, next) =>
+  (c.req.method === 'GET' ? photoActor : manageActor)(c, next),
+);
 for (const path of ['/resolve', '/lookup'])
   scanRoutes.use(path, (c, next) => (c.req.method === 'POST' ? readActor : manageActor)(c, next));
 // Hono's /scans/* also matches /scans itself, so choose exactly one guard here.
@@ -114,6 +124,7 @@ register(
 );
 
 registerScanStaffRoutes(scanRoutes);
+registerScanOccupancyRoutes(scanRoutes);
 registerScanRoleRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 
@@ -203,7 +214,7 @@ register(
         false,
         'code' in req.input,
       );
-    return c.json(outcome);
+    return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
   },
 );
 

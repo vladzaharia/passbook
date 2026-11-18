@@ -54,7 +54,10 @@ async function staffSession(ctx: ServiceContext, actor: ScanActor): Promise<Scan
       throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
     if (scanner.mode !== actor.mode)
       throw new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');
-    if (scanner.deviceRole !== 'scan')
+    if (
+      scanner.deviceRole === 'customer' ||
+      (scanner.deviceRole === 'monitor' && !actor.settings.deskActions)
+    )
       throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
     if (!scanner.csrfSecret || !actor.scannerCsrfProof)
       throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');

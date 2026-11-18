@@ -57,6 +57,7 @@ export function claimOf(
     staffId: actor.staff?.id ?? null,
     apiKeyId: actor.apiKeyId ?? null,
     sessionId: actor.scanningSession?.id ?? null,
+    overrideOf: req.overrideOf ?? null,
     idempotencyKey: req.idempotencyKey,
     requestHash,
     method: req.input.method,

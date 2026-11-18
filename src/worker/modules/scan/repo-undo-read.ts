@@ -3,6 +3,7 @@ import { type Raw, type ScanRow, toScan } from './repo-scan-map.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import { type ScanStaffRow, type StaffRaw, staffStatement, toStaff } from './repo-staff.ts';
 import type { UndoGate, UndoPresence } from './repo-undo.ts';
+import { undoGroupStmt } from './repo-undo-occupancy.ts';
 
 const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, actor_key, staff_id, api_key_id, request_hash,
   state, outcome, reason, action_id, action_kind, override_of, approved_by, pass_version, method, at, undone_by, direction, presence_scope`;
@@ -18,6 +19,8 @@ export interface UndoRead {
   event: ScanEventRow | null;
   /** The manager row named by the request's approval, as it stood before the PIN was verified. */
   approver: ScanStaffRow | null;
+  /** The target and the scans that share its group, for an undo at a tracked zone. */
+  group: { id: string; at: number }[];
 }
 
 interface EventRaw {
@@ -63,7 +66,7 @@ export async function readUndo(
   scanId: string,
   approverId?: string,
 ): Promise<UndoRead> {
-  const [existing, target, gate, presence, event, approver] = await db.batch([
+  const [existing, target, gate, presence, event, approver, group] = await db.batch([
     exactStmt(db, `SELECT ${COLUMNS} FROM scans WHERE actor_key = ? AND idempotency_key = ?`, [
       actorKey,
       key,
@@ -98,6 +101,7 @@ export async function readUndo(
     ),
     // Without an approval this reads no row (`id` is never NULL).
     staffStatement(db, orgId, approverId ?? ''),
+    undoGroupStmt(db, orgId, scanId),
   ]);
   const row = <T>(r: D1Result | undefined) => (r?.results?.[0] ?? null) as T | null;
   const mapped = (r: D1Result | undefined) => {
@@ -111,5 +115,6 @@ export async function readUndo(
     presence: row<UndoPresence>(presence),
     event: ((e) => (e ? toEvent(e) : null))(row<EventRaw>(event)),
     approver: approverId ? ((a) => (a ? toStaff(a) : null))(row<StaffRaw>(approver)) : null,
+    group: (group?.results ?? []) as { id: string; at: number }[],
   };
 }

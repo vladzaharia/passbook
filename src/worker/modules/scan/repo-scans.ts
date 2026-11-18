@@ -22,6 +22,8 @@ export interface Claim {
   apiKeyId?: string | null;
   /** The scanning session the device belongs to, kept for passless replays. */
   sessionId?: string | null;
+  /** The scan this one lets in: set at claim, so two racing overrides meet at `scans_override_once`. */
+  overrideOf?: string | null;
   idempotencyKey: string;
   requestHash: string;
   method: string;
@@ -68,7 +70,7 @@ export async function scanById(db: Db, orgId: string, id: string): Promise<ScanR
   return row ? toScan(row) : null;
 }
 
-/** Evidence that a claim is not pristine, evaluated inside the write transaction. Grouped to bound D1's expression depth. */
+/** Evidence that a claim is not pristine, evaluated inside the write transaction. `override_of` is part of the claim itself (set at claim), so it is no evidence. Grouped to bound D1's expression depth. */
 const AMBIGUOUS_TERMS = [
   'pass_id IS NOT NULL',
   'template_id IS NOT NULL',
@@ -77,7 +79,6 @@ const AMBIGUOUS_TERMS = [
   'pass_version IS NOT NULL',
   'outcome IS NOT NULL',
   'reason IS NOT NULL',
-  'override_of IS NOT NULL',
   'approved_by IS NOT NULL',
   'direction IS NOT NULL',
   'presence_scope IS NOT NULL',

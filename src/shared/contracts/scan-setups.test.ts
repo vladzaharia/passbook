@@ -89,7 +89,7 @@ describe('managed scanner setup contracts', () => {
     };
     expect(ScanLiveRowSchema.parse(full)).toMatchObject({ places: [rev], overrideOf: 'scan0' });
     expect(ScanLiveRowSchema.safeParse({ ...full, outCause: 'bored' }).success).toBe(false);
-    expect(ScanLiveRowSchema.safeParse({ ...full, replaces: 'not-a-key' }).success).toBe(false);
+    expect(ScanLiveRowSchema.safeParse({ ...full, replaces: '' }).success).toBe(false);
     expect(ScanLiveSnapshotSchema.parse({ cursor: null, rows: [] })).toEqual({
       cursor: null,
       rows: [],
