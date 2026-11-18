@@ -24,7 +24,13 @@ import { decideBind, TAGS_PER_ORG_MODE, triggerRefusal } from '../nfc/tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { verifyApproval } from './approval.ts';
 import type { ScanActor } from './guard.ts';
-import { boundRow, bumpTagCap, cardFacts, ownerActiveCheck } from './repo-tags-bind.ts';
+import {
+  boundRow,
+  bumpTagCap,
+  cardFacts,
+  liveActorGuard,
+  ownerActiveCheck,
+} from './repo-tags-bind.ts';
 import { guardMiss } from './repo-undo-approval-guard.ts';
 import { ROLE_RANK } from './rules.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
