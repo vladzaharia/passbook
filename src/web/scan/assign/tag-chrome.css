@@ -1,0 +1,152 @@
+/* The request chip and strip, the tag flag, the Why not? rows, and the card's motion. */
+/* The request chip and strip. */
+.scan-chip[data-slot="request"] {
+  gap: 6px;
+}
+.scan-chip[data-slot="request"][data-warn] {
+  background: var(--sd-chip-gold-bg);
+  color: var(--sd-chip-gold-fg);
+}
+.scan-request-strip {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 8px;
+  margin-inline: auto;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(342px, calc(100% - 24px));
+  padding: 8px 8px 8px 14px;
+  border-radius: 20px;
+  background: var(--scan-glass-solid);
+  color: var(--sd-strong);
+  font: 500 14px / 18px var(--pk-font-sans);
+  box-shadow: inset 0 0 0 1px var(--sd-line);
+}
+.scan-request-strip span {
+  flex: 1;
+  min-width: 0;
+}
+.scan-request-strip button {
+  min-height: 36px;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  font: 600 13px / 1 var(--pk-font-sans);
+  cursor: pointer;
+}
+.scan-request-strip button[data-primary] {
+  background: var(--sd-accent);
+  color: var(--scan-accent-on);
+}
+
+/* The tag flag on a result, and the Why not? rows. */
+.scan-tag-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 28px;
+  padding-inline: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-body);
+  font: 600 13px / 16px var(--pk-font-sans);
+}
+button.scan-tag-flag {
+  cursor: pointer;
+}
+.scan-tag-none {
+  margin: 0;
+  font: 500 15px / 20px var(--pk-font-sans);
+  color: var(--sd-body);
+}
+.scan-tag-passes {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scan-tag-pass {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding-block: 8px;
+  border-block-end: 1px solid var(--sd-rule);
+}
+.scan-tag-pass-name {
+  flex: 1;
+  min-width: 0;
+  font: 500 15px / 20px var(--pk-font-sans);
+  color: var(--sd-strong);
+}
+.scan-tag-pass-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 13px / 16px var(--pk-font-sans);
+  color: var(--sd-muted);
+}
+.scan-tag-pass-state[data-state="lets_in"],
+.scan-tag-pass-state[data-state="used"] {
+  color: var(--sd-tone-teal);
+}
+.scan-tag-pass-used {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--sd-chip-teal-bg);
+  color: var(--sd-chip-teal-fg);
+  font-size: 12px;
+}
+
+/* Motion: transform and opacity only, once. Reduced motion gets the still drawing. */
+@media (prefers-reduced-motion: no-preference) {
+  .scan-assign[data-phase="rising"],
+  .scan-assign[data-step] {
+    animation: scan-assign-rise 280ms var(--wl-ease-out, ease-out) both;
+  }
+  .scan-assign[data-step="tag"] .scan-tag-arc,
+  .scan-assign[data-step="pass"] .scan-tag-arc {
+    stroke-dasharray: 40;
+    animation: scan-tag-arc 420ms var(--wl-ease-out, ease-out) both;
+  }
+  .scan-assign[data-step="tag"] .scan-tag-arc-2,
+  .scan-assign[data-step="pass"] .scan-tag-arc-2 {
+    animation-delay: 80ms;
+  }
+  .scan-assign-link::before {
+    transform-origin: left center;
+    animation: scan-assign-line 240ms var(--wl-ease-out, ease-out) both;
+  }
+  .scan-chip[data-slot="request"][data-new] {
+    animation: scan-assign-pulse 480ms var(--wl-ease-out, ease-out) 1;
+  }
+  @keyframes scan-assign-rise {
+    from {
+      opacity: 0;
+      transform: translateY(24px) scale(0.97);
+    }
+  }
+  @keyframes scan-tag-arc {
+    from {
+      stroke-dashoffset: 40;
+      opacity: 0;
+    }
+  }
+  @keyframes scan-assign-line {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes scan-assign-pulse {
+    40% {
+      transform: scale(1.12);
+    }
+  }
+}

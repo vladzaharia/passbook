@@ -66,22 +66,24 @@ export function useTagUi({
   session,
   api,
   state: s,
-  outcome,
-  lookUp,
+  result,
+  open: openLookup,
   dispatch,
-  announce,
 }: {
   runtime: ScanRuntime;
   session: ScanSession;
   api: ScanApi;
   state: ScanState;
   /** The result on screen, if any, and the scan that made it. */
-  outcome: { outcome: ScanOutcome; input: ScanInput } | null;
-  lookUp: () => void;
+  result: ScanOutcome | null;
+  /** Opens or closes the Look up sheet. */
+  open: (sheet: boolean) => void;
   dispatch: (event: MachineEvent) => void;
-  announce: (text: string, polite: boolean) => void;
 }): TagUi {
   const native = useNativeCapabilities();
+  const announce = runtime.announce;
+  const outcome =
+    result && 'input' in s.loop ? { outcome: result, input: s.loop.input as ScanInput } : null;
   const scanner = session.scanner;
   const [web, setWeb] = useState(runtime.webNfc.status());
   const [readerNote, setReaderNote] = useState<AssignCardContext['readerNote']>(null);
@@ -234,7 +236,7 @@ export function useTagUi({
           retry: () => dispatch({ type: 'assign.retry' }),
           readTag: tapRead,
           startNfc,
-          lookUp,
+          lookUp: () => openLookup(true),
         }}
       />
     ) : null,

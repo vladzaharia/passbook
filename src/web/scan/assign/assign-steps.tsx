@@ -1,4 +1,4 @@
-import { Check, Nfc, Ticket, User } from 'lucide-react';
+import { Check, Ticket, User } from 'lucide-react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import type { AssignState } from '../machine/assign-state.ts';
 import { fill } from '../ui/copy.ts';
@@ -102,5 +102,3 @@ export function OpensLine({ scope, name }: { scope: 'pass' | 'user'; name: strin
     </p>
   );
 }
-
-export const TagGlyph = Nfc;

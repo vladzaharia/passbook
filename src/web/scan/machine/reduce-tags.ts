@@ -1,23 +1,12 @@
 /** The tag events: the assign loop's and the admin request's. */
-import { type AssignEvent, isAssignEvent } from './assign-state.ts';
+
+import { applyAnswer } from './assign-answers.ts';
+import type { AssignEvent } from './assign-state.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { same } from './internal.ts';
-import {
-  again,
-  applyAnswer,
-  approve,
-  back,
-  bind,
-  cancel,
-  edit,
-  open,
-  pin,
-  retry,
-  undo,
-} from './reduce-assign.ts';
+import { again, back, cancel, open } from './reduce-assign.ts';
+import { approve, bind, edit, pin, retry, undo } from './reduce-bind.ts';
 import { arrive, cancelled, later, openRequest } from './reduce-enroll.ts';
-
-export { isAssignEvent };
 
 export function assignEvent(s: MachineState, ev: AssignEvent, env: Env): Out {
   const answered = applyAnswer(s, ev, env);

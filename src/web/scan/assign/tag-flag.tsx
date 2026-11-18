@@ -1,6 +1,7 @@
 import { ChevronRight, Nfc } from 'lucide-react';
 import { useState } from 'react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
+import './tag-chrome.css';
 import { flagText, noneLine } from './tag-lines.ts';
 import { TagPassesSheet } from './tag-passes-sheet.tsx';
 import type { TagView } from './types.ts';

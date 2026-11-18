@@ -2,7 +2,7 @@
 
 import { scanLine } from '../../../shared/copy/scan.ts';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
-import { ASSIGN_TIMING, type AssignEvent } from './assign-state.ts';
+import type { AssignEvent } from './assign-state.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { out, same } from './internal.ts';
 import { close, fresh, put } from './reduce-assign.ts';
@@ -79,5 +79,3 @@ export function expire(s: MachineState, env: Env): Out {
   if (r && !r.opened && r.request.expiresAt <= env.now) return out({ ...s, tagRequest: null });
   return same(s);
 }
-
-export const REQUEST_WARN_MS = ASSIGN_TIMING.WARN;

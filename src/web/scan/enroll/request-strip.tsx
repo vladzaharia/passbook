@@ -1,6 +1,7 @@
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import { fill } from '../ui/copy.ts';
 import '../assign/assign.css';
+import '../assign/tag-chrome.css';
 
 /** A request waits while a desk panel has a draft: Open takes over, Later keeps the chip. */
 export function RequestStrip({

@@ -11,6 +11,7 @@ import { TagArt } from './tag-art.tsx';
 import { TagChip } from './tag-chip.tsx';
 import type { TagReader } from './tag-reader.ts';
 import './assign.css';
+import './tag-chrome.css';
 
 export type AssignTone = 'ok' | 'heads_up' | 'refused' | 'system' | 'ready';
 

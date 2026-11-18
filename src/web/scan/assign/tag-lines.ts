@@ -13,10 +13,6 @@ export function tagReasonLine(o: ScanOutcome, tagRead: boolean): Line | null {
   return null;
 }
 
-/** An unknown tag at a Desk offers Assign tag. */
-export const isUnknownTag = (o: ScanOutcome | null, tagRead: boolean): boolean =>
-  o !== null && tagRead && o.kind === 'refused' && o.reason === 'not_found';
-
 export const firstName = (holder: string | null | undefined): string =>
   (holder ?? '').trim().split(/\s+/)[0] || 'them';
 

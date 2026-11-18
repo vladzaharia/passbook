@@ -5,6 +5,7 @@ import { ASSIGN_TIMING } from '../machine/assign-state.ts';
 import { countdown } from '../machine/assign-view.ts';
 import { fill } from '../ui/copy.ts';
 import '../assign/assign.css';
+import '../assign/tag-chrome.css';
 
 function useSecond(active: boolean): number {
   const [now, setNow] = useState(Date.now);

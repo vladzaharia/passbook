@@ -30,7 +30,7 @@ describe('the assign card', () => {
     expect(document.querySelector('[aria-current="step"]')?.textContent).toContain(
       SCAN_TAG_COPY.step.pass,
     );
-    expect(screen.getByTestId('scan-tag-chip').getAttribute('aria-label')).toMatch(/ends 7 F 3 A$/);
+    expect(screen.getByTestId('scan-tag-chip').textContent).toContain('Tag ends 7 F 3 A');
   });
   it('shows a banner and keeps the step', () => {
     show('assign-pass-banner');
@@ -230,10 +230,10 @@ describe('copy coverage', () => {
 
 describe('reduced motion', () => {
   it('every animation in the tag styles sits inside a no-preference block, so reduced motion gets the still drawing', () => {
-    const css = readFileSync(join(process.cwd(), 'src/web/scan/assign/assign.css'), 'utf8').replace(
-      /\/\*[\s\S]*?\*\//g,
-      '',
+    const files = ['assign.css', 'tag-chrome.css'].map((f) =>
+      readFileSync(join(process.cwd(), 'src/web/scan/assign', f), 'utf8'),
     );
+    const css = files.join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
     const outside = css.replace(
       /@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*\n\}\n?$/,
       '',

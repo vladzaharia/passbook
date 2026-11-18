@@ -14,16 +14,13 @@ export function TagChip({
 }) {
   const spoken = hint.split('').join(' ');
   return (
-    <span
-      className="scan-tag-chip"
-      data-testid="scan-tag-chip"
-      aria-label={`Tag ${name ?? ''} ends ${spoken}`.replace('  ', ' ')}
-    >
+    <span className="scan-tag-chip" data-testid="scan-tag-chip">
       <Nfc aria-hidden size={15} />
       {name ? <span className="scan-tag-chip-name">{name}</span> : null}
       <span className="scan-tag-chip-code" aria-hidden>
         •• {hint}
       </span>
+      <span className="sr-only">{`Tag ends ${spoken}`}</span>
       <span className="scan-tag-pill" data-assurance={assurance}>
         {assurance === 'secure' ? <ShieldCheck aria-hidden size={12} /> : null}
         {assurance === 'secure' ? 'Secure' : 'Basic'}

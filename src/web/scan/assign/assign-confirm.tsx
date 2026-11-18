@@ -1,5 +1,5 @@
 import { Info, TriangleAlert } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import { formatShortDate } from '../../lib/format.ts';
 import { RadioGroup } from '../../ui/radio-group.tsx';
@@ -66,6 +66,7 @@ export function ConfirmBody({
 }) {
   const p = a.preview;
   const [form, setForm] = useState<string | null>(null);
+  const fieldId = useId();
   if (!p) return null;
   const name = p.card.holderName ?? p.card.title;
   const info = infoLine(a);
@@ -101,9 +102,10 @@ export function ConfirmBody({
           ) : null}
         </p>
       )}
-      <label className="scan-assign-field">
+      <label className="scan-assign-field" htmlFor={fieldId}>
         <span>{SCAN_TAG_COPY.confirm.name}</span>
         <ScanTextField
+          id={fieldId}
           value={a.label}
           maxLength={24}
           placeholder={SCAN_TAG_COPY.confirm.namePlaceholder}
@@ -115,7 +117,8 @@ export function ConfirmBody({
           }}
         />
       </label>
-      <div className="scan-assign-forms" role="group" aria-label="Kind">
+      <fieldset className="scan-assign-forms">
+        <legend className="sr-only">Kind</legend>
         {SCAN_TAG_COPY.confirm.forms.map((f) => (
           <button
             key={f}
@@ -130,7 +133,7 @@ export function ConfirmBody({
             {f}
           </button>
         ))}
-      </div>
+      </fieldset>
       {info ? (
         <p className="scan-assign-info" data-tone={info.tone} data-testid="scan-assign-info">
           {info.tone === 'warn' ? (

@@ -5,7 +5,6 @@ import {
   cardReadEvent,
   enrollmentOf,
   run,
-  tagOf,
   tagReadEvent,
 } from './assign.test-support.ts';
 import { assignOf, requestOf, stripOfAssign } from './assign-view.ts';
@@ -206,5 +205,3 @@ describe('completing and ending a request', () => {
 import { fixtureOutcome } from './fixture-data.test-support.ts';
 
 const await0 = (_key: string) => fixtureOutcome('ok', null);
-
-export { tagOf };

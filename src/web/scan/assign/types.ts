@@ -29,11 +29,6 @@ export interface TagPass {
 /** `ScanTag` with T3's `count` and `passes`. Absent until the contract file takes them. */
 export type TagView = ScanTag & { count?: number; passes?: TagPass[] };
 
-/** What a request an admin sent this scanner looks like on the wire (T5, assumed). */
-export type DeviceMessage =
-  | { enroll: { id: string; expiresAt: number; cancelled?: false } }
-  | { enroll: { id: string; cancelled: true } };
-
 /** The calls the assign loop and the enrollment sheet make. A rejection is an `ApiError`. */
 export interface TagsPort {
   inspect(body: { tag: TagRead }, o: { signal: AbortSignal }): Promise<InspectResult>;

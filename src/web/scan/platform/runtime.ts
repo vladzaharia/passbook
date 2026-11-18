@@ -28,16 +28,11 @@ import {
 } from '../offline/wipe.ts';
 import { sound } from '../sound/player.ts';
 import type { Announcement } from '../ui/live-announcer.tsx';
+import { customerBrandingOf } from './customer-branding.ts';
+import { focusTarget } from './focus-target.ts';
 import { scanId } from './id.ts';
 import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
-
-function customerBrandingOf(session: ScanSession) {
-  return {
-    name: session.scanner?.orgName ?? session.admin?.orgs[0]?.name ?? 'PassBook',
-    accent: session.branding?.accent ?? null,
-    logoSha: session.branding?.logo?.sha ?? null,
-  };
-}
+import { createWakeLock } from './wake-lock.ts';
 
 export async function createRuntime(
   session: ScanSession,
@@ -118,7 +113,7 @@ export async function createRuntime(
   const notice = (text: string, polite = true) => announce({ text, polite, n: Date.now() });
   let native: ReturnType<typeof connectNativeReader> = null;
   let vasFallbackNoticeShown = false;
-  let wake: WakeLockSentinel | null = null;
+  const wakeLock = createWakeLock(notice);
   const camera = createCamera(
     video,
     () => (session.formats.length ? session.formats : ['qr']),
@@ -139,35 +134,9 @@ export async function createRuntime(
       base: () => ({}),
       audio: { unlock: sound.unlock },
       sound,
-      wake: {
-        request() {
-          if (navigator.wakeLock)
-            void navigator.wakeLock
-              .request('screen')
-              .then((lock) => {
-                wake = lock;
-              })
-              .catch(() => notice('Screen lock unavailable.'));
-        },
-        release() {
-          void wake?.release();
-          wake = null;
-        },
-      },
+      wake: wakeLock,
       announce: notice,
-      focus(target) {
-        requestAnimationFrame(() =>
-          document
-            .querySelector<HTMLElement>(
-              target === 'done'
-                ? '[data-testid="dock-primary"]'
-                : target === 'enter-code'
-                  ? '[data-scan-code]'
-                  : '#scan-result-heading',
-            )
-            ?.focus({ preventScroll: true }),
-        );
-      },
+      focus: focusTarget,
       chip: () => notice('Just scanned'),
       celebrate: () => undefined,
       wipe: () => {
@@ -254,8 +223,7 @@ export async function createRuntime(
       if (store.getSnapshot().state.camera !== 'disabled')
         store.dispatch({ type: 'camera', status: 'off' });
       native?.stop();
-      void wake?.release();
-      wake = null;
+      wakeLock.release();
     }
   };
   window.addEventListener('online', onOnline);
@@ -348,7 +316,7 @@ export async function createRuntime(
       stopWebNfc();
       native?.dispose();
       camera.stop();
-      void wake?.release();
+      wakeLock.release();
       store.dispose();
       pin.dispose();
       db?.close();

@@ -9,13 +9,12 @@ import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
 import { useTagUi } from './assign/use-tag-ui.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
-import { localOutcome } from './machine/outcome.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
-import { deskOf } from './result/desk.ts';
+import { deskOf, resultOf } from './result/desk.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
@@ -97,19 +96,7 @@ export function ScanLoop({
     (s.reader.kind === 'barcode' && nativeBarcode) ||
     (s.reader.kind === 'nfc' && nativeCapabilities?.vas.available === true);
   const last = s.recent[0];
-  const result: ScanOutcome | null =
-    l.s === 'verdict'
-      ? l.outcome
-      : l.s === 'member'
-        ? {
-            ...localOutcome('system', 'server', counts),
-            kind: 'ready',
-            reason: 'choose',
-            card: l.card,
-            display: l.card.display,
-            local: false,
-          }
-        : null;
+  const result: ScanOutcome | null = resultOf(l, counts);
   useEffect(() => {
     if (needsSessionRefetch(session, s) && requestedRev.current !== counts.configRev) {
       requestedRev.current = counts.configRev;
@@ -133,16 +120,7 @@ export function ScanLoop({
     overlay: s.overlay,
     dispatch,
   });
-  const tags = useTagUi({
-    runtime,
-    session,
-    api,
-    state: s,
-    outcome: result && 'input' in l ? { outcome: result, input: l.input } : null,
-    lookUp: () => open(true),
-    dispatch,
-    announce: runtime.announce,
-  });
+  const tags = useTagUi({ runtime, session, api, state: s, result, open, dispatch });
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
   const menu = (
     <ScanMenu
