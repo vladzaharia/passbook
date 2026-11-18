@@ -167,12 +167,27 @@ export async function passTagViews(
      WHERE b.user_id = ? AND b.scope = 'user' AND b.ended_at IS NULL`,
     [pass.orgId, pass.mode, pass.id, pass.orgId, pass.mode, pass.ownerUserId],
   );
+  return tagViewsByIds(
+    db,
+    pass.orgId,
+    pass.mode,
+    ids.map((r) => r.tag_id),
+  );
+}
+
+/** Active tags by id, newest binding first. */
+export async function tagViewsByIds(
+  db: Db,
+  orgId: string,
+  mode: Mode,
+  ids: string[],
+): Promise<Tag[]> {
   if (ids.length === 0) return [];
   const rows = await all<ViewRow>(
     db,
     `${VIEW} WHERE t.id IN (SELECT value FROM json_each(?)) AND t.org_id = ? AND t.mode = ? AND t.status = 'active'
      ORDER BY b.bound_at DESC, t.id DESC`,
-    [JSON.stringify(ids.map((r) => r.tag_id)), pass.orgId, pass.mode],
+    [JSON.stringify(ids), orgId, mode],
   );
   return rows.map(toTag);
 }

@@ -13,23 +13,26 @@ type Session = Extract<TenantPassWrite, { kind: 'session' }>;
 export type TagAuthority = Session & { capability: 'passes:operate' };
 
 const TAG_TABLES = ['nfc_tags', 'tag_bindings'] as const;
+/** What an enrollment grant writes: its own row, and the binding it creates. */
+export const ENROLL_TABLES = ['tag_enrollments', 'nfc_tags', 'tag_bindings'] as const;
 const TAG_CODES = { lineage: 'TAG_HOLDER_CHANGED', stale: 'TAG_HOLDER_CHANGED' } as const;
 
 export type TagPurpose =
-  `org_mode.nfc.tag.${'bind' | 'unbind' | 'retire' | 'restore' | 'lost' | 'update'}`;
+  `org_mode.nfc.tag.${'bind' | 'unbind' | 'retire' | 'restore' | 'lost' | 'update' | 'rebind' | 'enroll_request' | 'enroll_cancel'}`;
 
 export function tagGrant(
   ctx: ServiceContext,
   purpose: TagPurpose,
   authority: TagAuthority,
   checks: Check[] = [],
+  tables: readonly string[] = TAG_TABLES,
 ): Grant {
   return grant(ctx, {
     purpose,
     principal: tenantPrincipal(authority),
     checks: [...capabilityChecks(authority), ...checks],
     codes: TAG_CODES,
-    tables: TAG_TABLES,
+    tables: [...tables],
   });
 }
 
