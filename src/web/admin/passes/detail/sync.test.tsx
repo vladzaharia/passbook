@@ -88,7 +88,7 @@ describe('Devices tab', () => {
     expect(rows[1]).toHaveTextContent('Push failed v3: Device token no longer valid');
     expect(rows[1]).toHaveTextContent('Never fetched');
     expect(rows[2]).toHaveTextContent('Stopped updates');
-    expect(screen.getByText('1 of 2 devices up to date')).toBeInTheDocument();
+    expect(screen.getByText('1 of 2 devices up to date (limit 20)')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
