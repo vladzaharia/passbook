@@ -1282,3 +1282,68 @@ describe('0074_scan_occupancy migration', () => {
     ).toBeNull();
   });
 });
+
+describe('0086_nfc_tags migration', () => {
+  it('adds scans.tag_id and keeps a tag out of the credential tombstones', async () => {
+    const cols = await all<{ name: string }>(
+      env.DB,
+      "SELECT name FROM pragma_table_info('scans') WHERE name = 'tag_id'",
+    );
+    expect(cols).toHaveLength(1);
+    const tagColumns = await all<{ name: string }>(
+      env.DB,
+      "SELECT name FROM pragma_table_info('nfc_tags')",
+    );
+    expect(tagColumns.map((c) => c.name)).not.toEqual(
+      expect.arrayContaining(['pool', 'sun_ctr', 'keyset_id']),
+    );
+  });
+
+  it('cascades tags with the org and bindings with the tag, and holds one active binding per tag', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-${f.ids.token(4)}` }).resolved,
+    });
+    const ref = 'a'.repeat(64);
+    await run(
+      env.DB,
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('t-mig', ?, 'live', ?, 'uid', 'AAAA', 1)",
+      [org.id, ref],
+    );
+    await expect(
+      run(
+        env.DB,
+        "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('t-dup', ?, 'live', ?, 'uid', 'AAAA', 1)",
+        [org.id, ref],
+      ),
+    ).rejects.toThrow(/UNIQUE/);
+    await expect(
+      run(
+        env.DB,
+        "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('t-hint', ?, 'live', ?, 'uid', 'BBBB', 1)",
+        [org.id, 'c'.repeat(64)],
+      ),
+    ).rejects.toThrow(/CHECK/);
+    const bind = (id: string) =>
+      run(
+        env.DB,
+        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by)
+         VALUES (?, 't-mig', 'pass', ?, 'admin', 1, 'user', 'x')`,
+        [id, pass.id],
+      );
+    await bind('b1');
+    await expect(bind('b2')).rejects.toThrow(/UNIQUE/);
+    await run(env.DB, "DELETE FROM nfc_tags WHERE id = 't-mig'");
+    expect(await first(env.DB, "SELECT 1 AS x FROM tag_bindings WHERE id = 'b1'")).toBeNull();
+    const bare = await makeOrg(f);
+    await run(
+      env.DB,
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('t-bare', ?, 'test', ?, 'uid', 'DDDD', 1)",
+      [bare.id, 'd'.repeat(64)],
+    );
+    await run(env.DB, 'DELETE FROM orgs WHERE id = ?', [bare.id]);
+    expect(await first(env.DB, "SELECT 1 AS x FROM nfc_tags WHERE id = 't-bare'")).toBeNull();
+  });
+});
