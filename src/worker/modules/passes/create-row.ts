@@ -1,3 +1,4 @@
+import { stampInput } from '../../../passkit/behaviors/term/index.ts';
 import { strictEmail } from '../../../shared/email.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { issueToken } from '../../platform/capability-token.ts';
@@ -80,7 +81,14 @@ export async function createPassRowWithRelease(
   const scope = { orgId: p.orgId, mode: p.mode, templateId: template.id };
   if (uniqueExternalId && p.externalId) await assertExternalIdFree(db, scope, p.externalId);
   await assertCreateAuthority(ctx, p, connectionGeneration, release);
-  await assertAccessInput(ctx, p.orgId, template, p.input);
+  // A term that starts at issue is stamped once, here, so no rebuild moves it.
+  const issueInput = stampInput(template.manifest, 'issue');
+  const issued = issueInput ? p.input[issueInput] : undefined;
+  const input =
+    issueInput && (issued === undefined || issued === null || issued === '')
+      ? { ...p.input, [issueInput]: new Date(ctx.clock.now()).toISOString() }
+      : p.input;
+  await assertAccessInput(ctx, p.orgId, template, input);
   const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
   if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
 
@@ -108,7 +116,7 @@ export async function createPassRowWithRelease(
     identityId: identity.id,
     templateId: template.id,
     templateVersion: template.version,
-    personalization: p.input,
+    personalization: input,
     status: 'active',
   });
   // A public card's barcode is its scan code: a holder-typed value must never reach it.
@@ -121,7 +129,7 @@ export async function createPassRowWithRelease(
     barcodeHash: artifact.barcodeHash,
     barcodeMessage: primaryBarcodeMessage(artifact.passJson),
     lookupHash: artifact.lookupHash,
-    lookupValue: lookupInput ? lookupValueOf(p.input, lookupInput) : null,
+    lookupValue: lookupInput ? lookupValueOf(input, lookupInput) : null,
   });
   const credentialRefs = [...new Set(refs.map((entry) => entry.ref))];
   // Building may await external assets or signing. Recheck authoritative state before storing.
@@ -160,10 +168,10 @@ export async function createPassRowWithRelease(
       downloadToken: downloadToken.mac,
       tokenSeal: downloadToken.seal,
       webServiceUrl,
-      personalization: p.input,
+      personalization: input,
       // A bound pass takes its fields from the connection until an admin edits them.
       fieldSources: Object.fromEntries(
-        Object.keys(p.input).map((k) => [
+        Object.keys(input).map((k) => [
           k,
           p.connectionId ? 'connection' : (p.fieldSource ?? p.source),
         ]),

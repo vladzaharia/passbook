@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
 import { PassStampsSchema } from './pass-stamps.ts';
+import { PassTermSchema } from './pass-term.ts';
 import { ScanTargetSchema } from './scan.ts';
 import { PUSH_BUDGET_DEFAULT } from './settings.ts';
 import { ValidationIssueSchema } from './templates.ts';
@@ -128,6 +129,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
   assetNames: z.array(z.string()),
   /** A stamp card's count against its own template version; null for any other pass. */
   stamps: PassStampsSchema.nullable().optional(),
+  /** The term of a pass whose template has one; null for any other pass. */
+  term: PassTermSchema.nullable().optional(),
   /** Users removed this pass from their account; hook B skips them until cleared. */
   blockedUsers: z.array(z.object({ id: IdSchema, name: z.string().nullable() })),
   downloadUrl: z.string(),

@@ -183,7 +183,7 @@ A behavior is trusted code that edits a pass after bindings run (for example add
    export default plugin;
    ```
 
-2. Tests beside it. `venue-locations` is the model; the others are `expiry-from-input`, `relevance-window`, `upcoming-events` and `beacons`.
+2. Tests beside it. `venue-locations` is the model; the others are `expiry-from-input`, `term`, `relevance-window`, `upcoming-events` and `beacons`.
 3. `npm run gen`. Templates reference it with `behaviors: [{ "use": "my-behavior", … }]`.
 
 Bump `version` when `configSchema` changes in a way that breaks stored configs.
