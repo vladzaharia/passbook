@@ -140,12 +140,9 @@ export class ScanHub extends DurableObject<AppEnv> {
     if (captured.role === 'device') return { rows: [], cursor: null };
     const ring = await readRing(this.ctx.storage, ctx.clock.now());
     // A customer reconnect never replays a previous person's result.
+    const cursor = ring.at(-1)?.row.id ?? null;
     if (captured.role === 'customer')
-      return {
-        rows: [],
-        cursor: ring.at(-1)?.row.id ?? null,
-        ...(recipient.customer.welcome ? { welcome: recipient.customer.welcome } : {}),
-      };
+      return { rows: [], cursor, welcome: recipient.customer.welcome };
     const index = after ? ring.findIndex((r) => r.row.id === after) : -1;
     const unseen = ring.slice(index + 1);
     const rows = await liveRowsFor(ctx, recipient, unseen);
@@ -155,7 +152,7 @@ export class ScanHub extends DurableObject<AppEnv> {
       unseen.filter((entry) => watches(recipient, entry)),
       at,
     );
-    return { rows, cursor: ring.at(-1)?.row.id ?? null, ...(places.length ? { places } : {}) };
+    return { rows, cursor, ...(places.length ? { places } : {}) };
   }
 
   /** Server-side only: the retained, unexpired ring entry of a live event, for its photo. */
