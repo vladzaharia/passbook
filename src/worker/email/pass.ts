@@ -12,6 +12,7 @@ import {
   emailShell,
   escapeHtml,
   RADIUS,
+  scalable,
   supportFooter,
   testNoteHtml,
   titleHtml,
@@ -85,7 +86,7 @@ function logoHtml(input: PassEmailInput, fg: string): string {
   // Named beside it, the image adds nothing to read; alone, it is the org's name.
   const img = `<img src="${escapeHtml(url)}" alt="${text ? '' : escapeHtml(input.orgName)}" width="${w}" height="${h}" style="display:block;width:${w}px;height:${h}px;border:0">`;
   const name = text
-    ? `<td style="padding:0 0 0 10px;vertical-align:middle;font-size:16px;line-height:20px;font-weight:600;color:${fg}">${escapeHtml(text)}</td>`
+    ? `<td style="padding:0 0 0 10px;vertical-align:middle;${scalable(16, 20)};font-weight:600;color:${fg}">${escapeHtml(text)}</td>`
     : '';
   return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 14px;border-collapse:collapse"><tr><td style="vertical-align:middle">${img}</td>${name}</tr></table>`;
 }
@@ -98,12 +99,12 @@ function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string
   const fg = s?.colors.foreground ?? c.strong;
   const label = s?.colors.label ?? c.muted;
   const title = input.passTitle
-    ? `<p style="margin:0 0 ${fields.length ? 12 : 0}px;font-size:17px;line-height:22px;font-weight:600;color:${fg}">${escapeHtml(input.passTitle)}</p>`
+    ? `<p style="margin:0 0 ${fields.length ? 12 : 0}px;${scalable(17, 22)};font-weight:600;color:${fg}">${escapeHtml(input.passTitle)}</p>`
     : '';
   const rows = fields
     .map(
       (f) =>
-        `<tr><td style="padding:4px 12px 4px 0;font-size:12px;line-height:16px;color:${label};white-space:nowrap;vertical-align:top">${escapeHtml(f.label)}</td><td style="padding:4px 0;font-size:14px;line-height:18px;font-weight:500;color:${fg};vertical-align:top">${escapeHtml(f.value)}</td></tr>`,
+        `<tr><td style="padding:4px 12px 4px 0;${scalable(12, 16)};color:${label};white-space:nowrap;vertical-align:top">${escapeHtml(f.label)}</td><td style="padding:4px 0;${scalable(14, 18)};font-weight:500;color:${fg};vertical-align:top">${escapeHtml(f.value)}</td></tr>`,
     )
     .join('');
   const table = rows
@@ -177,6 +178,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     `${APPLE_BADGE_ALT}: ${input.downloadUrl}`,
     `${OPEN_LABEL}: ${input.manageUrl}`,
     ADD_LINE,
+    HOLDER_COPY.walletApple,
     ...(wallets?.offers.length
       ? [
           '',
@@ -196,7 +198,8 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('pass')) : ''}
 ${passBlock(input, fields)}
 ${actionsHtml(input)}
-${muted('0 0 24px', ADD_LINE)}
+${muted('0 0 8px', ADD_LINE)}
+${muted('0 0 24px', HOLDER_COPY.walletApple)}
 ${wallets ? walletActionsHtml(wallets.base, wallets.offers) : ''}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>

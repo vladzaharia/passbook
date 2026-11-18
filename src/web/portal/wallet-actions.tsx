@@ -14,7 +14,6 @@ import { addLine, showsAddQr } from '@/shared/device.ts';
 import { copyText } from '../lib/clipboard.ts';
 import { cn } from '../lib/cn.ts';
 import { lostPhoneConfirm } from '../lib/confirms.ts';
-import { errorMessage } from '../lib/errors.ts';
 import { sessionQuery } from '../lib/session.ts';
 import {
   Buddy,
@@ -122,7 +121,7 @@ function useHolderHelp(passId: string) {
   const resend = useMutation({
     mutationFn: () => resendPass(passId),
     onSuccess: () => toast.success(HOLDER_COPY.sendAgainSent),
-    onError: (error) => toast.error(errorMessage(error)),
+    onError: (error) => toast.error(error, 'Could not send'),
   });
   const lost = useMutation({
     mutationFn: () => lostPhone(passId),

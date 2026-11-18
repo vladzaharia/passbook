@@ -1,6 +1,7 @@
 import { type InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
+import { endedOn } from '@/shared/ended-on.ts';
 import type { PassView } from '@/shared/pass-view/index.ts';
 import { Upcoming } from '../pass-card/back.tsx';
 import { PassCardStage } from '../pass-card/index.tsx';
@@ -105,6 +106,15 @@ function Detail({
       }
       publicUrl={publicUrlOf(pass.downloadUrl)}
       support={pass.support}
+      endedOn={
+        state === 'voided' || state === 'expired'
+          ? endedOn(
+              state,
+              { modifiedAt: pass.modifiedAt, expirationDate: pass.passJson.expirationDate },
+              navigator.language,
+            )
+          : null
+      }
       inWallet={pass.inWallet}
       onAdd={() => setDip((n) => n + 1)}
       rise={dealt}

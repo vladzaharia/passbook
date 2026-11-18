@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { CircleAlert, Mail } from 'lucide-react';
 import { type FormEvent, type Ref, useId, useState } from 'react';
 import { MagicConsumeResultSchema } from '@/shared/contracts/session.ts';
+import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { WRONG_CODE } from '@/shared/copy/sign-in.ts';
 import { api } from '../lib/api.ts';
 import { isApiError } from '../lib/errors.ts';
@@ -83,7 +84,11 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
 
   const noteId = `${id}-note`;
   const resendLabel =
-    request.phase === 'checking' ? 'Checking…' : left > 0 ? `Resend in ${left}s` : 'Resend code';
+    request.phase === 'checking'
+      ? 'Checking…'
+      : left > 0
+        ? `${HOLDER_COPY.sendAgain} in ${left}s`
+        : HOLDER_COPY.sendAgain;
   return (
     <div className="flex flex-col gap-6">
       {error ? (

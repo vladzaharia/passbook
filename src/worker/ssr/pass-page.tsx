@@ -79,6 +79,10 @@ export interface PassPageProps {
   device: DeviceInfo;
   /** Org support contacts, already validated; omitted when the org has none. */
   support?: HolderSupport;
+  /** When a voided or expired pass stopped working, formatted for the visitor. */
+  endedOn?: string | null;
+  /** Send it again: set when the pass has a holder email. */
+  resend?: { action: string; again: 'sent' | 'wait' | null };
 }
 
 /** What the pass is, split at the org (the portal's header says the same). */
@@ -131,6 +135,8 @@ function PassBody(props: PassPageProps) {
           barcodeHref={props.barcodeHref}
           publicUrl={props.publicUrl}
           support={props.support}
+          endedOn={props.endedOn ?? null}
+          {...(props.resend ? { resend: props.resend } : {})}
           rise
         />
       </main>

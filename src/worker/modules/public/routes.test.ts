@@ -188,7 +188,7 @@ describe('GET /p/:token', () => {
     await voidPass(jobCtxOf(kit), actor, pass.id, null);
     const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
     const note = /<div role="status">[\s\S]*?<\/div><\/div><\/div>/.exec(html)?.[0] ?? '';
-    expect(note).toContain('This pass was voided.');
+    expect(note).toMatch(/This pass was voided on [A-Z][a-z]+ \d+, \d{4}\./);
     expect(note).toMatch(/href="mailto:help@gym.test"[^>]*>Contact /);
     expect(html.match(/mailto:help@gym.test/g)).toHaveLength(1);
     await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
@@ -492,5 +492,56 @@ describe('rate limit', () => {
       await app.request(`${ORIGIN}/p/${await linkToken(kit.env, pass)}/assets/icon.png`, {}, env);
     const res = await app.request(`${ORIGIN}/p/${await linkToken(kit.env, pass)}`, {}, env);
     expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /p/:token/resend', () => {
+  it('queues the pass for its own holder and redirects back to the page', async () => {
+    const sent: unknown[] = [];
+    const env = {
+      ...kit.env,
+      RL_REFRESH: fakeLimiter(1000) as unknown as RateLimit,
+      JOBS: { send: async (job: unknown) => void sent.push(job) } as unknown as Queue,
+    };
+    const pass = await kit.pass({ holderEmail: 'holder@example.test' });
+    const token = await linkToken(kit.env, pass);
+    const res = await app.request(
+      `${ORIGIN}/p/${token}/resend`,
+      { method: 'POST', headers: { origin: ORIGIN } },
+      env,
+    );
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toBe(`/p/${token}?again=sent`);
+    expect(sent).toEqual([
+      { kind: 'pass.holder_mail', passId: pass.id, userId: null, reason: 'resend' },
+    ]);
+    const cross = await app.request(
+      `${ORIGIN}/p/${token}/resend`,
+      { method: 'POST', headers: { origin: 'https://evil.test' } },
+      env,
+    );
+    expect(cross.status).toBe(403);
+    expect(sent).toHaveLength(1);
+    const page = await (await app.request(`${ORIGIN}/p/${token}?again=sent`, {}, env)).text();
+    expect(page).toContain('Send it again');
+    expect(page).toContain('Sent. Check your email.');
+  });
+
+  it('sends nothing for a pass without a holder email', async () => {
+    const sent: unknown[] = [];
+    const env = {
+      ...kit.env,
+      RL_REFRESH: fakeLimiter(1000) as unknown as RateLimit,
+      JOBS: { send: async (job: unknown) => void sent.push(job) } as unknown as Queue,
+    };
+    const pass = await kit.pass();
+    const token = await linkToken(kit.env, pass);
+    const res = await app.request(
+      `${ORIGIN}/p/${token}/resend`,
+      { method: 'POST', headers: { origin: ORIGIN } },
+      env,
+    );
+    expect(res.status).toBe(303);
+    expect(sent).toEqual([]);
   });
 });

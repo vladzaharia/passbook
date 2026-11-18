@@ -19,7 +19,7 @@ async function ownedActive(ctx: ServiceContext, userId: string, passId: string) 
 const HOUR = 3_600_000;
 
 /** The queued mail would be refused at the recipient cap: say so now, not silently later. */
-async function assertRecipientBudget(ctx: ServiceContext, mode: string, to: string) {
+export async function assertRecipientBudget(ctx: ServiceContext, mode: string, to: string) {
   const now = ctx.clock.now();
   const used = await read(
     ctx.env.DB,

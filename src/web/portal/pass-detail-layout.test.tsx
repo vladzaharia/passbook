@@ -105,7 +105,7 @@ describe('pass page add block', () => {
 
   it('expired: the note, the buddy sad on it, nothing to add', async () => {
     await open(MAC, { passJson: { ...passFixture().passJson, expirationDate: '2020-01-01' } });
-    expect(screen.getByText(HOLDER_COPY.expired)).toBeVisible();
+    expect(screen.getByText(/^This pass (has expired|expired on .+)\./)).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     const [buddy] = buddies();
     expect(buddy?.closest('.wl-add-seat')).not.toBeNull();

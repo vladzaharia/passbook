@@ -48,9 +48,15 @@ export const FONT = T.font.sans;
 export const RADIUS = T.radius;
 export const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace";
 
-/** `font-size` and `line-height` of a type step, in px. */
-export const type = (step: keyof typeof T.text) =>
-  `font-size:${T.text[step].size}px;line-height:${T.text[step].line}px`;
+/**
+ * Scalable text: a px size first for clients that drop rem (Word), then the rem one, so a reader's
+ * larger text setting grows it. The line height is a ratio, so it grows with it.
+ */
+export const scalable = (size: number, line: number) =>
+  `font-size:${size}px;font-size:${size / 16}rem;line-height:${Math.round((line / size) * 100) / 100}`;
+
+/** `font-size` and `line-height` of a type step. */
+export const type = (step: keyof typeof T.text) => scalable(T.text[step].size, T.text[step].line);
 
 /** Under the title on a test pass or bundle: the page's strip, as a block in the card. */
 export const testNoteHtml = (text: string) =>
@@ -144,7 +150,7 @@ export function emailShell(input: ShellInput): string {
   const r = T.radius.xl;
   const art = input.buddy ? { ...EMAIL_BUDDY[input.buddy.tier], ...input.buddy } : null;
   const lineHeight = T.text.xl.line;
-  const name = `${type('xl')};mso-line-height-rule:exactly;font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${c.strong}`;
+  const name = `font-size:${T.text.xl.size}px;line-height:${T.text.xl.line}px;mso-line-height-rule:exactly;font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${c.strong}`;
   // A long name wraps beside the mark, which stays on its first line, not under it.
   const wordmark = input.headerMark
     ? `<table role="presentation" cellspacing="0" cellpadding="0"><tr><td valign="top" style="padding:2px 10px 0 0;vertical-align:top;font-size:0;line-height:0"><img src="${escapeHtml(input.headerMark)}" alt="" width="24" height="24" style="display:block;width:24px;height:24px;border:0;border-radius:${T.radius.md}px"></td><td class="e-strong" style="${name}">${escapeHtml(input.header)}</td></tr></table>`

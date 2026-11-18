@@ -13,7 +13,13 @@ export async function handleHolderMail(
   ctx: ServiceContext,
 ): Promise<void> {
   const pass = await getPass(ctx.env.DB, job.passId);
-  if (!pass || pass.ownerUserId !== job.userId || !pass.holderEmail || pass.status === 'voided')
+  if (
+    !pass ||
+    (job.userId !== null && pass.ownerUserId !== job.userId) ||
+    !pass.holderEmail ||
+    pass.status === 'voided' ||
+    pass.removedAt !== null
+  )
     return;
   try {
     await enqueuePassEmail(ctx, {
@@ -23,7 +29,7 @@ export async function handleHolderMail(
       expected: pass,
       auditEntry: {
         orgId: pass.orgId,
-        actorType: 'user',
+        actorType: job.userId === null ? 'system' : 'user',
         actorId: job.userId,
         action: job.reason === 'resend' ? 'holder.resend' : 'holder.lost_phone_mail',
         targetType: 'pass',

@@ -9,7 +9,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('pass.holder_mail'),
     passId: z.string(),
-    userId: z.string(),
+    /** The signed-in owner; null when the holder used the pass link. */
+    userId: z.string().nullable(),
     reason: z.enum(['resend', 'lost_phone']),
   }),
   z.object({
