@@ -130,9 +130,9 @@ describe('pass imports migration', () => {
     // The rebuild is replayed on today's schema, so columns added by later migrations (0105) drop out:
     // every row survives with every column the rebuild knows.
     const after = await state();
-    const cols = Object.keys(after.runs[0] ?? {});
-    const known = (rows: Record<string, unknown>[]) =>
-      rows.map((r) => Object.fromEntries(cols.map((c) => [c, r[c]])));
+    const cols = Object.keys((after.runs[0] ?? {}) as Record<string, unknown>);
+    const known = (rows: unknown[]) =>
+      rows.map((r) => Object.fromEntries(cols.map((c) => [c, (r as Record<string, unknown>)[c]])));
     expect({ ...after, runs: known(after.runs) }).toEqual({ ...before, runs: known(before.runs) });
     await expect(
       run(
