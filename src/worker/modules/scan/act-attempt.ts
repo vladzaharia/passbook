@@ -254,7 +254,7 @@ export async function attempt(
       onFailureCommitted,
     );
   const action = picked;
-  const issue = valueRequestIssue(action, found.template.manifest, req);
+  const issue = valueRequestIssue(action, found.template.manifest, req, found.pass.personalization);
   if (issue)
     return invalid(
       ctx,
