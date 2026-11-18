@@ -40,6 +40,8 @@ export const JoinReadinessCodeSchema = z.enum([
 export const JoinReadinessIssueSchema = z.object({
   code: JoinReadinessCodeSchema,
   input: z.string().optional(),
+  /** The input's label, for the admin line. */
+  label: z.string().optional(),
 });
 export type JoinReadinessIssue = z.infer<typeof JoinReadinessIssueSchema>;
 
@@ -75,6 +77,8 @@ export const JoinLinkStateSchema = z.object({
 export type JoinLinkState = z.infer<typeof JoinLinkStateSchema>;
 
 export const JoinLinkParamsSchema = z.object({ templateId: IdSchema });
+/** The org of a platform template (an org template names its own). */
+export const JoinLinkQuerySchema = z.object({ orgId: IdSchema.optional() });
 
 /** `revision` 0 creates the link. */
 export const JoinLinkUpdateSchema = z.strictObject({

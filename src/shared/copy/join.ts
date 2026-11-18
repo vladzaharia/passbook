@@ -81,6 +81,6 @@ export function joinIssueLine(
   names: { label?: string; mode?: 'Live' | 'Test' } = {},
 ): string {
   return JOIN_COPY.readiness[issue.code]
-    .replace('{label}', names.label ?? issue.input ?? '')
+    .replace('{label}', names.label ?? issue.label ?? issue.input ?? '')
     .replace('{mode}', names.mode ?? 'Live');
 }
