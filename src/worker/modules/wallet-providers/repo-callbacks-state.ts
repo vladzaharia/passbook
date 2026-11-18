@@ -141,9 +141,11 @@ export function receiptStatements(
        event, cc2, query_bound, token_hash, request_id)
       SELECT ?, r.id, i.id, i.account_id, i.org_id, i.mode, op.version, 'state_callback',
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ${stateJoins}
-      WHERE changes() = 1 AND ${gate.sql}
+      WHERE ${gate.sql}
         AND EXISTS (SELECT 1 FROM wallet_samsung_auth_replays replay
-          WHERE replay.token_hash = ? AND replay.claim_id = ?)`,
+          WHERE replay.token_hash = ? AND replay.claim_id = ?)
+        AND NOT EXISTS (SELECT 1 FROM wallet_samsung_callback_receipts seen WHERE seen.token_hash = ?)
+      RETURNING id`,
       [
         receipt.id,
         receipt.signedAt,
@@ -161,28 +163,38 @@ export function receiptStatements(
         ...gate.params,
         claim.tokenHash,
         claim.claimId,
+        claim.tokenHash,
       ],
     ),
   ];
   if (receipt.countryHint) {
+    // Marked dirty only for a country this ref has not reported yet, so it runs before the hint insert.
     statements.push(
-      stmt(
-        db,
-        `INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at)
-      SELECT rc.ref_id, ?, ? FROM wallet_samsung_callback_receipts rc
-      JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
-      WHERE rc.id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
-      ON CONFLICT(ref_id, country_code) DO NOTHING`,
-        [receipt.countryHint, claim.now, receipt.id, ref.credentialKeysetCommitment],
-      ),
       stmt(
         db,
         `INSERT INTO wallet_provider_instance_dirty (instance_id, generation)
       SELECT rc.instance_id, 1 FROM wallet_samsung_callback_receipts rc
       JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
-      WHERE rc.id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
+      WHERE rc.id = ? AND rc.cc2 = ? AND ${credentialRefKeysetSql}
+        AND NOT EXISTS (SELECT 1 FROM wallet_samsung_country_hints known
+          WHERE known.ref_id = rc.ref_id AND known.country_code = ?)
       ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1`,
-        [receipt.id, ref.credentialKeysetCommitment],
+        [receipt.id, receipt.countryHint, ref.credentialKeysetCommitment, receipt.countryHint],
+      ),
+      stmt(
+        db,
+        `INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at)
+      SELECT rc.ref_id, ?, ? FROM wallet_samsung_callback_receipts rc
+      JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
+      WHERE rc.id = ? AND rc.cc2 = ? AND ${credentialRefKeysetSql}
+      ON CONFLICT(ref_id, country_code) DO NOTHING`,
+        [
+          receipt.countryHint,
+          claim.now,
+          receipt.id,
+          receipt.countryHint,
+          ref.credentialKeysetCommitment,
+        ],
       ),
     );
   }
@@ -277,7 +289,8 @@ export async function claimSamsungIssuedDelivery(
     stmt(
       db,
       `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)
-      SELECT ?, ?, ? ${stateJoins} WHERE ${gate.sql} ON CONFLICT DO NOTHING`,
+      SELECT ?, ?, ? ${stateJoins} WHERE ${gate.sql} ON CONFLICT DO NOTHING
+      RETURNING token_hash`,
       [claim.tokenHash, claim.claimId, claim.expiresAt, claim.now, ...gate.params],
     ),
   ];
@@ -297,5 +310,5 @@ export async function claimSamsungIssuedDelivery(
         true,
       ),
     );
-  return (await batch(db, statements))[1]?.meta.changes === 1;
+  return (await batch(db, statements))[1]?.results.length === 1;
 }
