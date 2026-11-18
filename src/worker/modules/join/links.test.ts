@@ -11,7 +11,7 @@ import { all, first, run } from '../../platform/db.ts';
 import { eventMember } from '../events/test-auth-fixtures.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { joinTemplate } from './join-test-fixtures.ts';
-import { adminApp, type Caller, call, extraTemplate, member } from './links-test-kit.ts';
+import { adminApp, type Caller, call, extraTemplate, member } from './links-test-fixtures.ts';
 
 let kit: Kit;
 let app: ReturnType<typeof adminApp>;

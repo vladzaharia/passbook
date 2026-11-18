@@ -11,7 +11,7 @@ import { TINY_PNG } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { handleJoinResend } from './jobs.ts';
 import { joinTemplate } from './join-test-fixtures.ts';
-import { type Jar, type PublicKit, publicKit, turnstile } from './public-test-kit.ts';
+import { type Jar, type PublicKit, publicKit, turnstile } from './public-test-fixtures.ts';
 
 let t: PublicKit;
 let n = 0;
@@ -66,7 +66,6 @@ const outboxOf = async (passId: string) =>
       [passId],
     )
   )?.id ?? '';
-const code = async (res: Response) => ((await res.json()) as { code?: string }).code;
 
 async function cardOf(res: Response) {
   expect(res.status).toBe(303);
@@ -134,7 +133,10 @@ describe('POST /j/:token: a new card', () => {
   it('refuses extra fields, repeated fields and fields the link does not ask for', async () => {
     const l = await t.link({ askEmail: false });
     const before = await passCount();
-    for (const extra of [{ role: 'admin' }, { sample: 'x' }, { 'pass.scanCode': '1' }]) {
+    for (const extra of [{ role: 'admin' }, { sample: 'x' }, { 'pass.scanCode': '1' }] as Record<
+      string,
+      string
+    >[]) {
       const res = await t.post(l, extra);
       expect(res.status).toBe(422);
       expect(await res.text()).toContain('Check the form');

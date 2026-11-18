@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
+import { getCookie, setCookie } from 'hono/cookie';
 import type { AppBindings } from '../../platform/context.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
 import { toBase64Url } from '../../platform/ids.ts';
@@ -25,10 +25,6 @@ export function setDeviceCookie(c: Context<AppBindings>, value: string): void {
     sameSite: 'Lax',
     maxAge: DEVICE_TTL_S,
   });
-}
-
-export function clearDeviceCookie(c: Context<AppBindings>): void {
-  deleteCookie(c, JOIN_COOKIE, { path: '/', secure: true });
 }
 
 /** A 256-bit keyed digest (base64url): the form the ledger stores. Each part is length-prefixed, so none can run into the next. */
