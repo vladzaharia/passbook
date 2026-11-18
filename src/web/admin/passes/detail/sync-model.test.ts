@@ -186,3 +186,12 @@ describe('repeats', () => {
     expect(rows[0]?.at).toBe(50);
   });
 });
+
+describe('tap-outs', () => {
+  it('titles a system tap-out Auto and a staff one Tapped out', () => {
+    const titles = (data: PassEventDto['data']) =>
+      groupEvents([ev('scan.checked_out', 1000, data)])[0]?.title;
+    expect(titles({ method: 'auto', outCause: 'stay' })).toBe('Auto tapped out');
+    expect(titles({ method: 'camera' })).toBe('Tapped out');
+  });
+});
