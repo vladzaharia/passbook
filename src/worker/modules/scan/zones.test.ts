@@ -179,6 +179,20 @@ describe('zones: archive and restore', () => {
     expect(live.find((z) => z.id === child.id)?.sessions).toBe(1);
   });
 
+  it('names the sessions that check a zone', async () => {
+    const z = await make();
+    const lone = await make();
+    const session = await fixture.parent('Lab door');
+    expect(
+      (await fixture.call('PATCH', `/scanning-sessions/${session.id}`, { zoneIds: [z.id] })).status,
+    ).toBe(200);
+    const live = await list();
+    expect(live.find((r) => r.id === z.id)?.checkedAt).toEqual([
+      { id: session.id, name: 'Lab door' },
+    ]);
+    expect(live.find((r) => r.id === lone.id)?.checkedAt).toEqual([]);
+  });
+
   it('refuses edits to an archived zone, and a restore into a taken name', async () => {
     const z = await make();
     await zones(`/${z.id}/archive`, 'POST');
