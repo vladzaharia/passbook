@@ -99,6 +99,14 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },
+  nfc_tags: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'tag_ref'] },
+  // Its triggers check that tag and pass share the tenant and that a user binding is anchored on a pass the
+  // user owns; written only through both parents. `pass` lets a holder grant end a binding on its own pass.
+  tag_bindings: {
+    org: null,
+    edges: [edge('tag_id', 'nfc_tags'), edge('pass_id', 'passes')],
+    pass: 'pass_id',
+  },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
   // The bundle counterpart (0087).

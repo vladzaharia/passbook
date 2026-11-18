@@ -1,0 +1,59 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "check_in",
+      "kind": "check_in",
+      "label": "Check in",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "once"
+    }
+  ],
+  "display": {
+    "header": {},
+    "holder": "{{inputs.attendee}}",
+    "notes": {
+      "refused": "Send them to the box office."
+    },
+    "panels": [
+      {
+        "icon": "ticket",
+        "id": "p_ticket",
+        "preset": {
+          "id": "ticket",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_seat",
+            "label": "Seat",
+            "slot": "seat",
+            "type": "big",
+            "value": "{{inputs.seat}}"
+          },
+          {
+            "id": "r_type",
+            "label": "Ticket",
+            "slot": "type",
+            "type": "field",
+            "value": "{{inputs.admission}}"
+          }
+        ],
+        "title": "Ticket"
+      }
+    ],
+    "v": 1
+  },
+  "lookup": {
+    "input": "ticketId"
+  },
+  "window": {
+    "earlyMinutes": 180,
+    "from": "startsAt",
+    "lateMinutes": 60,
+    "until": "endsAt"
+  }
+}
