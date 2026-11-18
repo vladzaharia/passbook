@@ -68,7 +68,7 @@ describe('watches by session, event and zone', () => {
     await publishWith(source.id, {});
     await publishWith(customer.id, { eventId: 'e1', zoneIds: ['z1'] });
     const entry = await publishWith(source.id, { eventId: 'e1', zoneIds: ['z1'] });
-    const rows = [await hub().ringRow(entry.row.id, kit.clock.now())];
+    const rows = [await hub().ringRow(entry.row.id)];
     expect(rows[0]).not.toBeNull();
     // A customer screen's reconnect never replays; its live delivery is checked in the next test.
     expect((await hub().snapshot(customer.attachment, undefined, kit.clock.now())).rows).toEqual(
