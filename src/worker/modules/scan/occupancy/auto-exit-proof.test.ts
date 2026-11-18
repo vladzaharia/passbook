@@ -243,6 +243,26 @@ describe('auto exit proof', () => {
     expect(await all(db(), 'SELECT 1 FROM pass_events WHERE pass_id = ?', [p.id])).toEqual([]);
   });
 
+  it('aborts the batch when the written row drifts from the facts the proof signs', async () => {
+    const now = fixture.kit.clock.now();
+    const z = await zone({ maxStayMinutes: 60 });
+    const p = await inside(z, now - 2 * HOUR, now - HOUR);
+    await run(
+      db(),
+      "CREATE TRIGGER auto_drift AFTER UPDATE ON scans WHEN NEW.actor_key = 'sys:occupancy' AND NEW.state = 'done' AND NEW.out_cause = 'stay' BEGIN UPDATE scans SET out_cause = 'zone' WHERE id = NEW.id; END",
+    );
+    try {
+      await expect(exitWith(p, z, 'stay', now)).rejects.toThrow();
+    } finally {
+      await run(db(), 'DROP TRIGGER auto_drift');
+    }
+    expect(await first(db(), 'SELECT state FROM scan_presence WHERE pass_id = ?', [p.id])).toEqual({
+      state: 'in',
+    });
+    expect(await all(db(), 'SELECT 1 FROM pass_events WHERE pass_id = ?', [p.id])).toEqual([]);
+    expect(await autoScan(p.id).catch(() => null)).toBeNull();
+  });
+
   it('is purged with its scan by the sweep and kept while the scan is', async () => {
     const clock = fixture.kit.clock;
     const present = clock.now();

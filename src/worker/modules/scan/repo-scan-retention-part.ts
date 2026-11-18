@@ -1,6 +1,9 @@
+import type { Grant } from '../../platform/authority.ts';
+import { type GrantCond, tenantSql } from '../../platform/authority-cond.ts';
 import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import { scanRetentionExcludedSql } from './repo-scan-retention.ts';
 import type { PreparedScanRetentionProof } from './scan-retention-proof.ts';
+import { proofKind } from './scan-retention-proof-data.ts';
 
 /**
  * The proof row, written in the grant's batch after the scan row and its ledger event. It is built from
@@ -11,6 +14,8 @@ import type { PreparedScanRetentionProof } from './scan-retention-proof.ts';
  */
 export function retentionProofPart(prepared: PreparedScanRetentionProof): GrantPart {
   const { proof, scan, event } = prepared;
+  // The kinds without a scanner action are bound to every fact that decides the kind or feeds the digest.
+  const system = proofKind(scan) !== null;
   const linked = (alias: string) =>
     `(CASE WHEN json_valid(${alias}.data) THEN json_extract(${alias}.data,'$.scanId') END)=s.id`;
   return writePart(
@@ -22,7 +27,12 @@ export function retentionProofPart(prepared: PreparedScanRetentionProof): GrantP
       AND s.pass_id=? AND e.data=? AND e.device IS ? AND e.actor_type IS ? AND e.actor_id IS ?
       AND s.actor_key=? AND s.scanner_id IS ? AND s.staff_id IS ? AND s.approved_by IS ?
       AND s.state='done' AND s.outcome=? AND s.reason IS ? AND s.at=? AND s.action_id IS ?
-      AND s.pass_version IS ? AND e.kind=? AND e.at=?
+      AND s.pass_version IS ? AND e.kind=? AND e.at=?${
+        system
+          ? ` AND json(json_object('t',s.actor_type,'i',s.actor_id,'u',s.undoes,'o',s.out_cause,'d',s.direction,
+        'm',s.method,'k',s.action_kind,'p',s.template_id,'e',s.event_id,'s',s.presence_scope))=json(?)`
+          : ''
+      }
       AND NOT ${scanRetentionExcludedSql('s')} AND ${linked('e')}
       AND (SELECT count(*) FROM pass_events duplicate WHERE duplicate.pass_id=e.pass_id
         AND duplicate.org_id={org} AND duplicate.mode={mode} AND ${linked('duplicate')})=1
@@ -52,6 +62,44 @@ export function retentionProofPart(prepared: PreparedScanRetentionProof): GrantP
       scan.passVersion,
       event.kind,
       event.at,
+      ...(system
+        ? [
+            JSON.stringify({
+              t: scan.actorType,
+              i: scan.actorId,
+              u: scan.undoes,
+              o: scan.outCause ?? null,
+              d: scan.direction,
+              m: scan.method,
+              k: scan.actionKind,
+              p: scan.templateId,
+              e: scan.eventId,
+              s: scan.presenceScope,
+            }),
+          ]
+        : []),
     ],
+  );
+}
+
+/**
+ * The proof of an auto exit, desk mark-out or undo. Once the scan is done (`when`) the proof must exist:
+ * a row the proof does not match aborts the batch instead of committing without evidence.
+ */
+export function includeSystemRetentionProof(
+  g: Grant,
+  prepared: PreparedScanRetentionProof,
+  when: GrantCond[] = [],
+): void {
+  g.include(retentionProofPart(prepared));
+  g.assert(
+    'retention',
+    [
+      tenantSql(
+        'EXISTS (SELECT 1 FROM scan_retention_proofs r WHERE r.scan_id = ? AND r.org_id = {org} AND r.mode = {mode})',
+        [prepared.scan.id],
+      ),
+    ],
+    { when },
   );
 }

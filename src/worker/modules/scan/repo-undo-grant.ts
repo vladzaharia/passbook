@@ -2,7 +2,7 @@ import { type Grant, grant } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
 import { ACCESS_GATE } from './repo-access.ts';
-import { retentionProofPart } from './repo-scan-retention-part.ts';
+import { includeSystemRetentionProof } from './repo-scan-retention-part.ts';
 import type { ScanRow } from './repo-scans.ts';
 import { undoAccessGate } from './repo-undo-access.ts';
 import { undoEventRow } from './repo-undo-retention.ts';
@@ -279,6 +279,6 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
           }),
     );
   }
-  if (c.retention) g.include(retentionProofPart(c.retention));
+  if (c.retention) includeSystemRetentionProof(g, c.retention);
   return g;
 }

@@ -48,7 +48,7 @@ describe('desk mark-out proof', () => {
     );
     expect(event?.kind).toBe('scan.checked_out');
     expect(JSON.parse(event?.data ?? '{}').authority).toEqual({
-      kind: 'console',
+      kind: 'device',
       purpose: 'org_mode.scan.check_in',
     });
     expect(
@@ -71,6 +71,15 @@ describe('desk mark-out proof', () => {
     });
     expect(res.status).toBe(204);
     const consoleScan = await scanOf(a.id);
+    const consoleEvent = await first<{ data: string }>(
+      db(),
+      "SELECT data FROM pass_events WHERE pass_id = ? AND kind = 'scan.checked_out'",
+      [a.id],
+    );
+    expect(JSON.parse(consoleEvent?.data ?? '{}').authority).toEqual({
+      kind: 'console',
+      purpose: 'org_mode.scan.mark_out',
+    });
     expect(await first(db(), 'SELECT actor_type FROM scans WHERE id = ?', [consoleScan])).toEqual({
       actor_type: 'user',
     });
@@ -139,6 +148,29 @@ describe('desk mark-out proof', () => {
       ]),
     ).toEqual([]);
     expect((await deskMarkOut(s.headers, p.id, place)).status).toBe(200);
+  });
+
+  it('aborts the batch when the written row drifts from the facts the proof signs', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const p = await personInside(tpl, 'Drift', [place]);
+    const s = await station([tpl], [pool.id]);
+    await run(
+      db(),
+      "CREATE TRIGGER mark_out_drift AFTER INSERT ON scans WHEN NEW.out_cause = 'desk' BEGIN UPDATE scans SET out_cause = 'forced' WHERE id = NEW.id; END",
+    );
+    try {
+      expect((await deskMarkOut(s.headers, p.id, place)).status).toBeGreaterThanOrEqual(400);
+    } finally {
+      await run(db(), 'DROP TRIGGER mark_out_drift');
+    }
+    expect((await presenceOf(p.id, place))[0]?.state).toBe('in');
+    expect(await all(db(), 'SELECT 1 FROM scans WHERE pass_id = ?', [p.id])).toEqual([]);
+    expect(
+      await all(db(), "SELECT 1 FROM pass_events WHERE pass_id = ? AND kind = 'scan.checked_out'", [
+        p.id,
+      ]),
+    ).toEqual([]);
   });
 
   it('fails when the scan or the proof is tampered, and is retained after the pass is deleted', async () => {

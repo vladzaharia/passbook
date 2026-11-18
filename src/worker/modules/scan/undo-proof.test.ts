@@ -131,6 +131,25 @@ describe('undo proof', () => {
     expect((await undoScan(s.headers, target.scanId)).status).toBe(200);
   });
 
+  it('aborts the batch when the written row drifts from the facts the proof signs', async () => {
+    const s = await desk([tpl]);
+    const pass = await kit.scanPass(tpl, {});
+    const target = await out(await act(s.headers, codeOf(pass), { actionId: 'check_in' }));
+    await run(
+      db(),
+      "CREATE TRIGGER undo_drift AFTER INSERT ON scans WHEN NEW.undoes IS NOT NULL BEGIN UPDATE scans SET method = 'camera' WHERE id = NEW.id; END",
+    );
+    try {
+      expect((await undoScan(s.headers, target.scanId)).status).toBeGreaterThanOrEqual(400);
+    } finally {
+      await run(db(), 'DROP TRIGGER undo_drift');
+    }
+    expect(await first(db(), 'SELECT undone_by FROM scans WHERE id = ?', [target.scanId])).toEqual({
+      undone_by: null,
+    });
+    expect(await all(db(), 'SELECT 1 FROM scans WHERE undoes = ?', [target.scanId])).toEqual([]);
+  });
+
   it('signs the undo of a value action, whose batch also publishes the pass', async () => {
     const t = await kit.scanTemplate('Undo proof add', {
       actions: [{ ...ADD, amount: 4 }],

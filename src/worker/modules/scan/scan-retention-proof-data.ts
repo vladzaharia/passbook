@@ -62,24 +62,31 @@ export function retainedOutCause(
   return outCause as ScanRetentionSnapshot['outCause'];
 }
 
-/** The plain authority a ledger row carries when no scanner, action or resolved pass decided it. */
+/**
+ * The plain authority a ledger row carries when no scanner action or resolved pass decided it. The
+ * purposes are labels of the grant that wrote the row, not rechecked against it.
+ */
 const authoritySchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('system'),
     job: z.literal('scan.occupancy'),
     cause: z.enum(['stay', 'clear', 'zone']),
   }),
-  z.object({ kind: z.literal('console'), purpose: z.literal('org_mode.scan.check_in') }),
+  // A scanner or signed-in desk staff member marking out on a device.
+  z.object({ kind: z.literal('device'), purpose: z.literal('org_mode.scan.check_in') }),
+  // An admin marking out in the console.
+  z.object({ kind: z.literal('console'), purpose: z.literal('org_mode.scan.mark_out') }),
   z.object({
     kind: z.literal('undo'),
     purpose: z.literal('org_mode.scan.undo'),
     undoes: scanId,
   }),
 ]);
-type ProofAuthority = z.infer<typeof authoritySchema>;
+export type ProofAuthority = z.infer<typeof authoritySchema>;
 
 export const KIND_OF_AUTHORITY: Record<ProofAuthority['kind'], ProofKind> = {
   system: 'auto_exit',
+  device: 'mark_out',
   console: 'mark_out',
   undo: 'undo',
 };

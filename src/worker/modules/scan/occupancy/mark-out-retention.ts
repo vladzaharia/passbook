@@ -3,19 +3,21 @@ import {
   type PreparedScanRetentionProof,
   prepareSystemScanRetentionProof,
 } from '../scan-retention-proof.ts';
+import type { ProofAuthority } from '../scan-retention-proof-data.ts';
 import type { MarkOutScan } from './repo-mark-out.ts';
 
-/** The desk's ledger row with its console authority, and the proof signed for it and the scan row `s`. */
+/** The desk's ledger row with the authority of the grant that writes it, and the proof signed for it and the scan row `s`. */
 export async function signMarkOut(
   env: object,
   ledger: EventRow,
   s: MarkOutScan,
+  authority: ProofAuthority,
 ): Promise<{ event: EventRow; retention: PreparedScanRetentionProof }> {
   const event = {
     ...ledger,
     data: JSON.stringify({
       ...JSON.parse(ledger.data),
-      authority: { kind: 'console', purpose: 'org_mode.scan.check_in' },
+      authority,
     }),
   };
   const retention = await prepareSystemScanRetentionProof(env, event, {

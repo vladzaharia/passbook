@@ -78,7 +78,7 @@ from being accepted again. Rotating only the public link does not create a crede
   the transition guard prevents an older occupancy state becoming authoritative after a later
   transition is changed or removed. Auto exits, desk mark-outs and undos written after this change
   carry the same proof (MAC v2, bound to the kind) in the batch that writes them, with a plain
-  authority on the ledger row (`system`, `console`, `undo`) and no gate or presence snapshot. Older
+  authority on the ledger row (`system`, `device`, `console`, `undo`) and no gate or presence snapshot; the batch aborts if the written row differs from what the proof signs. The 0041 comment that an undo has no proof is stale. Older
   rows have none, and none is minted later.
 - Use the application retention workflow for pass deletion, not direct SQL: it stages a scoped
   deletion intent and preserves eligible final gate and presence evidence in the guarded deletion

@@ -5,7 +5,7 @@ import { jobGrant } from '../../../platform/authority.ts';
 import { not } from '../../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import type { EventRow } from '../../events/repo.ts';
-import { retentionProofPart } from '../repo-scan-retention-part.ts';
+import { includeSystemRetentionProof } from '../repo-scan-retention-part.ts';
 import {
   prepareSystemScanRetentionProof,
   type ScanRetentionSnapshot,
@@ -156,7 +156,7 @@ export async function exitGrant(
     ],
     { when: [scanIs(scanId, { state: 'done', outcome: 'ok' })], returning: ['id'] },
   );
-  g.include(retentionProofPart(retention));
+  includeSystemRetentionProof(g, retention, [scanIs(scanId, { state: 'done' })]);
   // A tap got there first: nothing happened, so no record of it.
   g.delete('scans', { where: { id: scanId, state: 'pending', at: now }, when: [not(won)] });
   return g;

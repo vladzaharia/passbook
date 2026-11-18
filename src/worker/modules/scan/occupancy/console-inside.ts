@@ -11,7 +11,7 @@ import { getPass } from '../../passes/repo-read-pass.ts';
 import { ledgerRow } from '../ledger.ts';
 import { type AdminAuthority, adminPrincipal } from '../repo-admin-grant.ts';
 import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
-import { retentionProofPart } from '../repo-scan-retention-part.ts';
+import { includeSystemRetentionProof } from '../repo-scan-retention-part.ts';
 import { orgZoneRows } from '../repo-zones.ts';
 import { scanPassChecks } from '../scan-pass-checks.ts';
 import { SCAN_COMMIT_TABLES, scanIs } from '../scan-write-grant.ts';
@@ -170,7 +170,10 @@ export async function consoleMarkOut(
       direction: 'out',
     },
   );
-  const { event, retention } = await signMarkOut(ctx.env, ledger, scanRow);
+  const { event, retention } = await signMarkOut(ctx.env, ledger, scanRow, {
+    kind: 'console',
+    purpose: 'org_mode.scan.mark_out',
+  });
   const g = grant(ctx, {
     purpose: 'org_mode.scan.mark_out',
     principal: adminPrincipal(authority),
@@ -189,7 +192,7 @@ export async function consoleMarkOut(
   });
   const inserted = markOutScan(g, scanRow, [won]);
   ledgerEvent(g, event, scanId, 'ok', null);
-  g.include(retentionProofPart(retention));
+  includeSystemRetentionProof(g, retention, [scanIs(scanId, { state: 'done' })]);
   grantedAudit(
     g,
     ctx,

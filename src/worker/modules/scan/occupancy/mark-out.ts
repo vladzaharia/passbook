@@ -13,7 +13,7 @@ import type { ScanActor } from '../guard.ts';
 import { ledgerRow } from '../ledger.ts';
 import { blankOutcome } from '../outcome.ts';
 import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
-import { retentionProofPart } from '../repo-scan-retention-part.ts';
+import { includeSystemRetentionProof } from '../repo-scan-retention-part.ts';
 import { scanByKey } from '../repo-scans.ts';
 import { scanPolicy } from '../rules.ts';
 import { SCAN_COMMIT_TABLES, scanIs, scanWriteGrant } from '../scan-write-grant.ts';
@@ -144,7 +144,10 @@ export async function markOut(
     approvedBy: null,
     direction: 'out',
   });
-  const { event, retention } = await signMarkOut(ctx.env, ledger, scanRow);
+  const { event, retention } = await signMarkOut(ctx.env, ledger, scanRow, {
+    kind: 'device',
+    purpose: 'org_mode.scan.check_in',
+  });
   const g = scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.check_in',
     now,
@@ -162,7 +165,7 @@ export async function markOut(
   });
   const inserted = markOutScan(g, scanRow, [won]);
   ledgerEvent(g, event, scanId, 'ok', null);
-  g.include(retentionProofPart(retention));
+  includeSystemRetentionProof(g, retention, [scanIs(scanId, { state: 'done' })]);
   grantedAudit(
     g,
     ctx,
