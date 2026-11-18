@@ -49,7 +49,27 @@ Scripts in `ios/scripts/` (no fastlane): `build.sh` (xcodegen, archive, export),
 
 - Camera: WKWebView uses the existing `getUserMedia` scanner. Native code grants capture only to the trusted `https://passbook.mobile` main frame while foregrounded.
 - Reader: USB/Bluetooth HID keyboard wedges are handled by iOS and received by the web scanner. iOS does not expose generic HID presence; this app does not claim generic USB serial, Bluetooth SPP, or ExternalAccessory access.
+- Tags (bridge wire v2): the desk **Tap to read** button sends `tagRead`. The app opens one `NFCTagReaderSession` (ISO 14443) and reports UID, tech, `uidRandom` and the first NDEF text or URI record as an `nfc-tag` scan. One sheet per read, at most 60 s, no continuous reading: iPhone and iPad are desk readers, not door readers. MIFARE and ISO 7816 tags only. See `android/BRIDGE.md`.
 - NFC: Core NFC reads user-started NDEF text/URI tags, but the current scanner UI does not expose an NDEF action and this does not read Apple Wallet passes. Apple documents Wallet VAS reading through ProximityReader/Tap to Pay with the required entitlement and PSP token; server-side verification is also needed before accepting a pass.
 - iPhone Duo: UIKit preserves active and inactive reserved-region geometry. The inside keeps the camera and actionable Operator pane separate. The outside camera-capture accessory loads `/scan?customer-display=1` and shows the shared Buddy, generic status, and display-only org name/accent/logo hash. Only display branding and status cross the customer-display bridge; pass/person data and credentials do not. The logo uses the authenticated scan endpoint and falls back to the org initial if unavailable.
 
 See `PassBookScanner/PassBookScanner.entitlements` and `PassBookScanner/Info.plist` for the NDEF entitlement and privacy descriptions. Wallet VAS support remains blocked on Apple reader entitlement, PSP integration, and server-side verification.
+
+## Owner checklist: tag reading
+
+1. Certificates, Identifiers & Profiles: open App ID `mobile.passbook.scanner` and enable **NFC Tag Reading** (the TAG format).
+2. Regenerate the provisioning profile. TestFlight's cloud-managed signing does it on the next run; for a local device build, download the new profile.
+3. Install on a physical iPhone and run the device checks:
+   - UID-only tag (MIFARE Classic or Ultralight): Tap to read returns the UID.
+   - NDEF tag (NTAG21x, URL or text): returns the UID and the record.
+   - DESFire or NTAG 424 tag: confirm whether it reads as MIFARE or ISO 7816 (the AID `D2760000850101` is in Info.plist).
+   - Two tags together: the sheet says "Hold one tag".
+   - A card Core NFC cannot read (ISO 15693, FeliCa) is not detected; an unsupported ISO 14443 card shows "not supported".
+   - Cancel the sheet, let it time out, and background the app mid-read: the scanner page shows no stale pending read.
+   - Random-ID tag (first byte `08`): `uidRandom` is true and the server refuses it.
+4. Run `ios/scripts/check-archive.sh` on the signed archive; it checks the NDEF and TAG entitlements.
+
+Unit tests need no device:
+
+    xcodebuild test -project PassBookScanner.xcodeproj -scheme PassBookScanner \
+      -destination 'platform=iOS Simulator,name=iPhone 18 Pro' CODE_SIGNING_ALLOWED=NO

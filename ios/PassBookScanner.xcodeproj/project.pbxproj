@@ -8,26 +8,51 @@
 
 /* Begin PBXBuildFile section */
 		1DB96657192F74251BFA8EF2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EDABD69675BDED9E40571B1E /* Assets.xcassets */; };
+		2D145F51B13E1E5C35CA6DF3 /* TagRecordParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD9BB885B1111351D92D237B /* TagRecordParser.swift */; };
 		338DC984FDCC09E57453C68D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A7D089EF4D0754A8269636 /* AppDelegate.swift */; };
+		3F59A8AE7243B6794C853F9B /* TagReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1560A80AF89BA0258A60F99F /* TagReader.swift */; };
 		4C4130A6F3DF60424057FC44 /* CustomerDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */; };
 		6A46AFA4CD128F7FC2A59E31 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E69BD7514EEA2CC8BE4E1D /* ScannerViewController.swift */; };
 		6D1FCCB54701B4A2D4207DED /* NFCReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450A839D95D7FE6874A73D9A /* NFCReader.swift */; };
+		8655B9E3674B978481EBA576 /* TagRecordParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B5AD17B2D3148AFD62EE49 /* TagRecordParserTests.swift */; };
 		FC422B0D93C808F6A4200D61 /* ScannerHardware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3044A2068995C6D60B178E54 /* ScannerHardware.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		F8C15A4548E7F7AD906E2AEE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 266F407BA93638E747F51595 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E2C6C95FF3B3A7E62B518451;
+			remoteInfo = PassBookScanner;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		1560A80AF89BA0258A60F99F /* TagReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagReader.swift; sourceTree = "<group>"; };
 		3044A2068995C6D60B178E54 /* ScannerHardware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerHardware.swift; sourceTree = "<group>"; };
 		450A839D95D7FE6874A73D9A /* NFCReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCReader.swift; sourceTree = "<group>"; };
 		519E7915BE20BD1AFF130C2B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		64B5AD17B2D3148AFD62EE49 /* TagRecordParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagRecordParserTests.swift; sourceTree = "<group>"; };
 		74A7D089EF4D0754A8269636 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A0D62E735D9A4228E0EFACA2 /* PassBookScannerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PassBookScannerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A693F3E3C1C80DFE9E699407 /* PassBookScanner.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PassBookScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A95D31294A6AB9BF2B917503 /* PassBookScanner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PassBookScanner.entitlements; sourceTree = "<group>"; };
 		B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDisplay.swift; sourceTree = "<group>"; };
 		D0E69BD7514EEA2CC8BE4E1D /* ScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewController.swift; sourceTree = "<group>"; };
+		DD9BB885B1111351D92D237B /* TagRecordParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagRecordParser.swift; sourceTree = "<group>"; };
 		EDABD69675BDED9E40571B1E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		2D4E0376CA69F117DC005095 /* PassBookScannerTests */ = {
+			isa = PBXGroup;
+			children = (
+				64B5AD17B2D3148AFD62EE49 /* TagRecordParserTests.swift */,
+			);
+			path = PassBookScannerTests;
+			sourceTree = "<group>";
+		};
 		64856881D821CB1F49E19B01 /* PassBookScanner */ = {
 			isa = PBXGroup;
 			children = (
@@ -39,6 +64,8 @@
 				A95D31294A6AB9BF2B917503 /* PassBookScanner.entitlements */,
 				3044A2068995C6D60B178E54 /* ScannerHardware.swift */,
 				D0E69BD7514EEA2CC8BE4E1D /* ScannerViewController.swift */,
+				1560A80AF89BA0258A60F99F /* TagReader.swift */,
+				DD9BB885B1111351D92D237B /* TagRecordParser.swift */,
 			);
 			path = PassBookScanner;
 			sourceTree = "<group>";
@@ -47,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				64856881D821CB1F49E19B01 /* PassBookScanner */,
+				2D4E0376CA69F117DC005095 /* PassBookScannerTests */,
 				BB502BB44B7D9AA60A6BBC9B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -55,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				A693F3E3C1C80DFE9E699407 /* PassBookScanner.app */,
+				A0D62E735D9A4228E0EFACA2 /* PassBookScannerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -62,6 +91,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		A99A023FA0D7AF6DE7457AD2 /* PassBookScannerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 58CF3D681795485F1DF5D050 /* Build configuration list for PBXNativeTarget "PassBookScannerTests" */;
+			buildPhases = (
+				7B9275873D059B85460EE1BB /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				063DC7E8ACF0D4BD152689E9 /* PBXTargetDependency */,
+			);
+			name = PassBookScannerTests;
+			packageProductDependencies = (
+			);
+			productName = PassBookScannerTests;
+			productReference = A0D62E735D9A4228E0EFACA2 /* PassBookScannerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		E2C6C95FF3B3A7E62B518451 /* PassBookScanner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7EF85A542EA1863CD7E84641 /* Build configuration list for PBXNativeTarget "PassBookScanner" */;
@@ -109,6 +156,7 @@
 			projectRoot = "";
 			targets = (
 				E2C6C95FF3B3A7E62B518451 /* PassBookScanner */,
+				A99A023FA0D7AF6DE7457AD2 /* PassBookScannerTests */,
 			);
 		};
 /* End PBXProject section */
@@ -125,6 +173,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		7B9275873D059B85460EE1BB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8655B9E3674B978481EBA576 /* TagRecordParserTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CFDB5C438AC92FD65D9FC713 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -134,12 +190,39 @@
 				6D1FCCB54701B4A2D4207DED /* NFCReader.swift in Sources */,
 				FC422B0D93C808F6A4200D61 /* ScannerHardware.swift in Sources */,
 				6A46AFA4CD128F7FC2A59E31 /* ScannerViewController.swift in Sources */,
+				3F59A8AE7243B6794C853F9B /* TagReader.swift in Sources */,
+				2D145F51B13E1E5C35CA6DF3 /* TagRecordParser.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		063DC7E8ACF0D4BD152689E9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E2C6C95FF3B3A7E62B518451 /* PassBookScanner */;
+			targetProxy = F8C15A4548E7F7AD906E2AEE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		5F5411693E0A2AF27347CDC9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = mobile.passbook.scanner.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PassBookScanner.app/PassBookScanner";
+			};
+			name = Release;
+		};
 		9181DCB63CFE57A9311C3823 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -220,6 +303,23 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
+		};
+		9FFD3D5B052D06E460AEE462 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = mobile.passbook.scanner.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PassBookScanner.app/PassBookScanner";
+			};
+			name = Debug;
 		};
 		C2D3077D8F2A1C36D27D1FF2 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -317,6 +417,15 @@
 			buildConfigurations = (
 				D6F5C174BC21D12C22EF245B /* Debug */,
 				9181DCB63CFE57A9311C3823 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		58CF3D681795485F1DF5D050 /* Build configuration list for PBXNativeTarget "PassBookScannerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FFD3D5B052D06E460AEE462 /* Debug */,
+				5F5411693E0A2AF27347CDC9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

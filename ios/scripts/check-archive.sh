@@ -56,11 +56,14 @@ long="$(plist_value "$info" CFBundleVersion)"
 ok "$id $short ($long)"
 
 if codesign --verify --strict "$app" >/dev/null 2>&1; then
-    if codesign -d --entitlements - --xml "$app" 2>/dev/null | grep -q '<string>NDEF</string>'; then
-        ok "entitlement: NFC NDEF tag reading"
-    else
-        problem "the signed app lacks the NFC NDEF tag-reading entitlement. Enable NFC Tag Reading on the App ID."
-    fi
+    entitlements=$(codesign -d --entitlements - --xml "$app" 2>/dev/null || true)
+    for format in NDEF TAG; do
+        if grep -q "<string>$format</string>" <<<"$entitlements"; then
+            ok "entitlement: NFC $format tag reading"
+        else
+            problem "the signed app lacks the NFC $format tag-reading entitlement. Enable NFC Tag Reading on the App ID and regenerate the profile."
+        fi
+    done
 else
     echo "note: the app isn't signed; skipping the entitlement check"
 fi
