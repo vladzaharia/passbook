@@ -92,9 +92,16 @@ describe('verifyTurnstile', () => {
     const test = (async () =>
       Response.json({ success: true, hostname: 'example.com' })) as unknown as typeof fetch;
     const secret = '1x0000000000000000000000000000000AA';
-    expect(await verifyTurnstile({ ...env, TURNSTILE_SECRET: secret }, 't', null, log, test)).toBe(
-      true,
-    );
+    expect(
+      await verifyTurnstile(
+        { ...env, TURNSTILE_SECRET: secret },
+        't',
+        null,
+        log,
+        test,
+        TURNSTILE_ACTION,
+      ),
+    ).toBe(true);
     expect(await verifyTurnstile(env, 't', null, log, test, TURNSTILE_ACTION)).toBe(false);
   });
 });
