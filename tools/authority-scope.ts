@@ -107,6 +107,10 @@ const STAMP_ONLY =
   /^(?:\s*(?:last_seen_at|last_ip_prefix|staff_seen_at|idle_expires_at|last_used_at)\s*=\s*[^,]+,?)+\s*$/is;
 /** Files that name `mode` in a builder call on purpose. Each needs the reason. */
 const TENANT_KEY_ALLOWLIST: Record<string, string> = {
+  'src/worker/modules/retention/repo-floors.ts':
+    'a platform settings save (a retention maximum or default moved) names the org each floor belongs to; the org grant branch names none',
+  'src/worker/modules/retention/repo-holds.ts':
+    'a platform admin places a legal hold on an org: the platform grant names it; the org grant branch names none',
   'src/worker/modules/scan/repo-scanners.ts':
     'the scanner mode move is the one org-scope write that names its destination mode; the source mode is checked with exactlyOne in the same grant',
 };
@@ -119,8 +123,9 @@ const PART_TENANT_BIND =
   /\b(?:writePart|readPart)\(\s*(['"`])(?:(?!\1)[\s\S])*?\b(?:org_id|mode)\s*=\s*\?/;
 const UPDATED_AT_PREDICATE = /\bWHERE\b[^;`]*?\bupdated_at\s*=\s*\?/is;
 /** The number of reviewed raw-write files. Removing one lowers it; a new entry fails until a design decision raises it. */
-// 29: outbound webhooks add repo-delivery-state.ts and repo-retention.ts (design-webhooks.md section 11.3).
-export const RAW_WRITE_ALLOWLIST_LIMIT = 29;
+// 30: outbound webhooks add repo-delivery-state.ts and repo-retention.ts (design-webhooks.md section 11.3);
+// the trust pack adds retention/repo-receipts.ts.
+export const RAW_WRITE_ALLOWLIST_LIMIT = 30;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 
 const TENANT_TABLES = new Set([

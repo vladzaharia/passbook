@@ -3,6 +3,7 @@ import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts'
 import { handleJoinResend } from '../modules/join/jobs.ts';
 import { handleHolderMail } from '../modules/me/jobs.ts';
 import { handleMessageRuleCheck } from '../modules/message-rules/jobs.ts';
+import { handleRetentionNotice } from '../modules/retention/jobs.ts';
 import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
 import { handleWebhookDeliver } from '../modules/webhooks/jobs.ts';
 import type { ServiceContext } from '../platform/service-context.ts';
@@ -17,6 +18,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'join.resend': handleJoinResend,
   'message_rule.check': handleMessageRuleCheck,
   'pass.holder_mail': handleHolderMail,
+  'retention.notice': handleRetentionNotice,
   'pass.refresh': handlePassRefresh,
   'connection.webhook': handleConnectionWebhook,
   'webhook.deliver': handleWebhookDeliver,
@@ -35,6 +37,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'message_rule.check':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'pass.holder_mail':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'retention.notice':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'pass.refresh':
       return JOB_HANDLERS[job.kind](job, ctx);

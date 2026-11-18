@@ -250,7 +250,7 @@ describe('settings api', () => {
   });
 
   it('updates, audits the diff, and resets with null', async () => {
-    const put = await call('PUT', '', { values: { 'retention.auditDays': 90 } });
+    const put = await call('PUT', '', { values: { 'retention.auditDays': 400 } });
     expect(put.status).toBe(200);
     expect(((await put.json()) as List).oidc).toEqual({
       issuer: appEnv.OIDC_ISSUER,
@@ -258,14 +258,14 @@ describe('settings api', () => {
       userGroup: appEnv.OIDC_USER_GROUP || null,
     });
     const ctx = createServiceContext(appEnv);
-    expect((await getPlatformSettings(ctx))['retention.auditDays']).toBe(90);
+    expect((await getPlatformSettings(ctx))['retention.auditDays']).toBe(400);
 
     const rows = await all<{ action: string; detail: string }>(
       env.DB,
       "SELECT action, detail FROM audit_log WHERE action = 'settings.update'",
     );
     expect(JSON.parse(rows[0]?.detail ?? '{}')).toEqual({
-      changes: { 'retention.auditDays': { from: 365, to: 90 } },
+      changes: { 'retention.auditDays': { from: 365, to: 400 } },
     });
 
     await call('PUT', '', { values: { 'retention.auditDays': null } });
@@ -637,8 +637,8 @@ describe('organization settings authorization', () => {
       await expectProblem(await call('GET', path, undefined, tenantUser.headers), 403, 'FORBIDDEN');
     }
     for (const body of [
-      { values: { 'retention.auditDays': 90 } },
-      { scope: 'platform', values: { 'retention.auditDays': 90 } },
+      { values: { 'retention.auditDays': 400 } },
+      { scope: 'platform', values: { 'retention.auditDays': 400 } },
     ]) {
       await expectProblem(await call('PUT', '', body, tenantUser.headers), 403, 'FORBIDDEN');
     }

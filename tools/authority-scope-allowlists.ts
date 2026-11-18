@@ -254,6 +254,15 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'daily test-data retention purge (captured_emails, bundles); a platform job with no tenant principal',
     writes: ['bundles:f644c9a26cf2', 'captured_emails:54483bed5926'],
   },
+  'src/worker/modules/retention/repo-receipts.ts': {
+    reason:
+      'retention receipts and their anchors are append-only bookkeeping of platform jobs and the erasure finisher (no principal): a MAC-chained row per delete run, and the 6-year trim that moves the MACed anchor forward first; table triggers refuse update and early delete',
+    writes: [
+      'retention_receipt_anchors:be676f0b2666',
+      'retention_receipts:726f943d12d9',
+      'retention_receipts:e58c2afc7e26',
+    ],
+  },
   'src/worker/modules/keys/repo-rewrap.ts': {
     reason:
       'cron keys.rewrap moves an envelope to the newest KEK (kek_version and wrapped_dek only), a compare-and-set on the envelope it read; platform job with no tenant principal, and no authority column changes (docs/design/authority-epochs.md, 7.2)',
