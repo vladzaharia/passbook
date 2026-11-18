@@ -8,7 +8,7 @@ import { visibleSource } from './card-semantics.ts';
 import type { CountsRead } from './counts.ts';
 import { buildDisplay } from './display.ts';
 import { cardPrivacy } from './dto-projection.ts';
-import type { ValueEffect } from './effects-value.ts';
+import { currencyField, type ValueEffect } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import { recordResult } from './ledger.ts';
 import { blankOutcome, safeOutcomeDetails } from './outcome.ts';
@@ -54,6 +54,7 @@ export function scanValueOf(
           : prop?.type === 'string'
             ? 'text'
             : 'number',
+      ...currencyField(found.template.manifest, input, found.pass.personalization),
     };
   } catch (error) {
     // A policy that cannot be read shows no value; the scan itself stands.
