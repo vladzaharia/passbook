@@ -2,6 +2,7 @@
 
 import type { PassJson } from './schema/pass-types.ts';
 import type { ScanDisplayDoc } from './template/scan-display/schema.ts';
+import type { WalletsManifest } from './template/wallets/schema.ts';
 
 export type * from './schema/pass-types.ts';
 export type * from './schema/semantic-types.ts';
@@ -274,6 +275,8 @@ export interface TemplateManifest {
   nfc?: NfcManifest;
   /** Stamp card: the goal, the art and the count input. */
   stamps?: StampsManifest;
+  /** Cross-wallet extras (roles, types, art). Never read by the Apple build. */
+  wallets?: WalletsManifest;
 }
 
 export type Personalization = Record<string, Json>;

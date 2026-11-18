@@ -14,6 +14,7 @@ import {
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { walletProviderDisabledReason, walletProviderEnabled } from './provider-policy.ts';
+import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
 import { runWalletProviderOperation } from './sync-operation.ts';
 import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
@@ -37,6 +38,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
   const db = ctx.env.DB;
   const credentialKeysetCommitment = await requireCredentialRefKeyset(db, ctx.env);
   await purgeExpiredWalletOffers(db, ctx.clock.now(), BATCH_SIZE);
+  await purgeExpiredGoogleCallbackReplays(db, ctx.clock.now());
   await expireWalletClaims(db, ctx.clock.now(), BATCH_SIZE, credentialKeysetCommitment);
   const dirty = await listDirtyWalletInstances(
     db,

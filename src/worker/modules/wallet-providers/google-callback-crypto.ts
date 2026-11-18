@@ -93,9 +93,9 @@ function expiry(value: unknown): number {
     throw new GoogleCallbackInvalid();
   return Number(value);
 }
-function exactKeys(value: Record<string, unknown>, names: readonly string[]): void {
-  if (Object.keys(value).length !== names.length || names.some((name) => !(name in value)))
-    throw new GoogleCallbackInvalid();
+/** Unknown fields are ignored: Google may add envelope fields, and only signed content is trusted. */
+function requireKeys(value: Record<string, unknown>, names: readonly string[]): void {
+  if (names.some((name) => !Object.hasOwn(value, name))) throw new GoogleCallbackInvalid();
 }
 function base64(value: unknown, maxBytes: number): Buffer {
   const text = string(value);
@@ -142,11 +142,36 @@ function validSignature(key: KeyObject, signature: Buffer, data: Uint8Array): bo
   }
 }
 
-async function googleRootKeys(now: () => number): Promise<{ key: KeyObject; expiresAt: number }[]> {
+interface RootKey {
+  key: KeyObject;
+  expiresAt: number;
+}
+interface RootKeyCache {
+  keys: RootKey[];
+  fetchedAt: number;
+  /** Earliest `keyExpiration`, bounded by `ROOT_KEY_MAX_AGE_MS`. */
+  validUntil: number;
+}
+
+// Per isolate. Root keys are public, so caching them is safe; a stale entry only matters when
+// Google rotates early, which a failed chain check answers with a (rate limited) refetch.
+// Downloads are not shared between requests: a joined fetch belongs to the request that started
+// it, and one cancelled request must not stall every later callback.
+const ROOT_KEY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const ROOT_KEY_ATTEMPT_COOLDOWN_MS = 10_000;
+let rootKeyCache: RootKeyCache | undefined;
+let lastAttempt: { at: number; failed: boolean } | undefined;
+
+export function clearGoogleCallbackKeyCache(): void {
+  rootKeyCache = undefined;
+  lastAttempt = undefined;
+}
+
+async function fetchRootKeys(now: () => number): Promise<RootKeyCache> {
   let data: Record<string, unknown>;
   try {
-    // Always fetch the pinned URL so newly rotated keys are available immediately. Redirects are
-    // forbidden, and neither the request nor its headers can supply a verification key or URL.
+    // Always the pinned URL. Redirects are forbidden, and neither the request nor its headers
+    // can supply a verification key or URL.
     const response = await fetch(GOOGLE_CALLBACK_KEYS_URL, {
       method: 'GET',
       redirect: 'error',
@@ -162,20 +187,51 @@ async function googleRootKeys(now: () => number): Promise<{ key: KeyObject; expi
   } catch {
     throw new GoogleCallbackKeysUnavailable();
   }
-  const keys: { key: KeyObject; expiresAt: number }[] = [];
+  const fetchedAt = now();
+  const keys: RootKey[] = [];
   for (const item of data.keys as unknown[]) {
     try {
       const root = object(item);
       if (root.protocolVersion === PROTOCOL) {
         const expiresAt = expiry(root.keyExpiration);
-        if (expiresAt > now()) keys.push({ key: publicKey(root.keyValue), expiresAt });
+        if (expiresAt > fetchedAt) keys.push({ key: publicKey(root.keyValue), expiresAt });
       }
     } catch {
       // A malformed or expired rotated key must not prevent another current key from working.
     }
   }
   if (!keys.length) throw new GoogleCallbackKeysUnavailable();
-  return keys;
+  const earliest = Math.min(...keys.map((root) => root.expiresAt));
+  return { keys, fetchedAt, validUntil: Math.min(earliest, fetchedAt + ROOT_KEY_MAX_AGE_MS) };
+}
+
+/**
+ * `fresh` is true when this call downloaded (or the cooldown refused another download).
+ * Attempts are spaced by the cooldown whether they succeeded or failed, so an outage or a 429 from
+ * the keys endpoint is not amplified by forged callbacks: they get 503 without a download.
+ */
+async function googleRootKeys(
+  now: () => number,
+  refresh: boolean,
+): Promise<{ keys: RootKey[]; fresh: boolean }> {
+  const cached = rootKeyCache;
+  const valid = cached !== undefined && now() < cached.validUntil;
+  const cooling =
+    lastAttempt !== undefined && now() - lastAttempt.at < ROOT_KEY_ATTEMPT_COOLDOWN_MS;
+  if (valid && !refresh) return { keys: cached.keys, fresh: false };
+  if (cooling) {
+    if (lastAttempt?.failed) throw new GoogleCallbackKeysUnavailable();
+    if (valid) return { keys: cached.keys, fresh: true };
+  }
+  const at = now();
+  lastAttempt = { at, failed: false };
+  try {
+    rootKeyCache = await fetchRootKeys(now);
+  } catch (error) {
+    lastAttempt = { at, failed: true };
+    throw error;
+  }
+  return { keys: rootKeyCache.keys, fresh: true };
 }
 
 /** Verify the signed strings without reserializing them, as Tink's recipient implementation does. */
@@ -196,25 +252,37 @@ export async function verifyGoogleCallback(
   } catch {
     throw new GoogleCallbackInvalid();
   }
-  exactKeys(envelope, ['protocolVersion', 'intermediateSigningKey', 'signature', 'signedMessage']);
+  requireKeys(envelope, [
+    'protocolVersion',
+    'intermediateSigningKey',
+    'signature',
+    'signedMessage',
+  ]);
   if (envelope.protocolVersion !== PROTOCOL) throw new GoogleCallbackInvalid();
   const intermediate = object(envelope.intermediateSigningKey);
-  exactKeys(intermediate, ['signedKey', 'signatures']);
+  requireKeys(intermediate, ['signedKey', 'signatures']);
   const signedKey = string(intermediate.signedKey);
   const signedMessage = string(envelope.signedMessage);
   if (!Array.isArray(intermediate.signatures) || intermediate.signatures.length === 0)
     throw new GoogleCallbackInvalid();
   const intermediateSignatures = intermediate.signatures.map((value) => base64(value, 80));
   const signature = base64(envelope.signature, 80);
-  const keys = await googleRootKeys(now);
   const intermediateBytes = signedBytes(SENDER, PROTOCOL, signedKey);
-  const trustedUntil = keys.reduce(
-    (latest, root) =>
-      intermediateSignatures.some((sig) => validSignature(root.key, sig, intermediateBytes))
-        ? Math.max(latest, root.expiresAt)
-        : latest,
-    0,
-  );
+  const trustedUntilBy = (keys: RootKey[]) =>
+    keys.reduce(
+      (latest, root) =>
+        intermediateSignatures.some((sig) => validSignature(root.key, sig, intermediateBytes))
+          ? Math.max(latest, root.expiresAt)
+          : latest,
+      0,
+    );
+  let roots = await googleRootKeys(now, false);
+  let trustedUntil = trustedUntilBy(roots.keys);
+  if (trustedUntil <= now() && !roots.fresh) {
+    // Cached keys may predate a rotation: refetch once before rejecting.
+    roots = await googleRootKeys(now, true);
+    trustedUntil = trustedUntilBy(roots.keys);
+  }
   if (trustedUntil <= now()) throw new GoogleCallbackInvalid();
   const keyData = parse(signedKey);
   const intermediateUntil = expiry(keyData.keyExpiration);

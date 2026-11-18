@@ -1,3 +1,4 @@
+import { isWalletArtName } from '../../../passkit/template/wallets/schema.ts';
 import type { AssetEntry, PassJson, TemplateManifest } from '../../../passkit/types.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -151,6 +152,22 @@ export interface AssetDigest {
 }
 
 /**
+ * What the Apple candidate hash covers: the version minus the `wallets` block and `wallets/**` art,
+ * which only Google and Samsung read. A version that differs only there has the same Apple hash.
+ */
+export function appleCandidateContent<A extends { name: string }>(
+  manifest: TemplateManifest,
+  assets: readonly A[],
+): { manifest: TemplateManifest; assets: A[] } {
+  const isRecord = typeof manifest === 'object' && manifest !== null && !Array.isArray(manifest);
+  const { wallets: _wallets, ...rest } = isRecord ? manifest : ({} as TemplateManifest);
+  return {
+    manifest: isRecord && 'wallets' in manifest ? (rest as TemplateManifest) : manifest,
+    assets: assets.filter((asset) => !isWalletArtName(asset.name)),
+  };
+}
+
+/**
  * Bind the complete documents, metadata and SHA-256 of every actual asset and extra. With `stored`
  * (the per-asset digests saved at candidate creation) no asset or extra bytes are read: that is the
  * issuance check, which proves the saved rows still produce the released hash.
@@ -207,10 +224,15 @@ export async function templateContentDigest(
         throw new ReleaseContentError(`Template preview asset missing: ${String(name)}`);
     }
   }
+  const apple = appleCandidateContent(version.manifest, assets);
   if (extraContent.length === 0)
     return {
       hash: await sha256Hex(
-        canonicalJson({ manifest: version.manifest, passJson: version.passJson, assets }),
+        canonicalJson({
+          manifest: apple.manifest,
+          passJson: version.passJson,
+          assets: apple.assets,
+        }),
       ),
       assetHashes,
     };
@@ -218,9 +240,9 @@ export async function templateContentDigest(
   return {
     hash: await sha256Hex(
       canonicalJson({
-        manifest: version.manifest,
+        manifest: apple.manifest,
         passJson: version.passJson,
-        assets,
+        assets: apple.assets,
         extras: extraContent,
       }),
     ),
