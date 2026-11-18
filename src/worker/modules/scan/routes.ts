@@ -37,6 +37,7 @@ import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
 import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
+import { registerScanSessionHoursRoutes } from './routes-session-hours.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
 import { registerScanTagRoutes } from './routes-tags.ts';
 import { capturingContext } from './scan-capture.ts';
@@ -80,6 +81,7 @@ scanRoutes.use(
   requireScanActor({ capability: 'scanning:manage', staffOptional: true, screens: true }),
 );
 scanRoutes.use('/role', manageSessionActor);
+scanRoutes.use('/session/open-now', operateActor);
 scanRoutes.use(
   '/staff',
   requireScanActor({ capability: 'scanning:manage', staffOptional: true, screenActions: true }),
@@ -135,6 +137,7 @@ registerScanStaffRoutes(scanRoutes);
 registerScanOccupancyRoutes(scanRoutes);
 registerScanRoleRoutes(scanRoutes);
 registerScanTagRoutes(scanRoutes);
+registerScanSessionHoursRoutes(scanRoutes);
 registerScanEnrollmentRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 

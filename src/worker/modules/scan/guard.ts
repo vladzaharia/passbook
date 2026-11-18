@@ -48,6 +48,7 @@ import {
   restoreObservedScanningSession,
 } from './scanning-workspace-observation.ts';
 import { rawScopeOf, resolveAdminScope } from './scope.ts';
+import { assertSessionOpen } from './session-hours.ts';
 import { bindingExpired, boundStaff } from './staff-binding.ts';
 
 export type { ScanActor } from './actor.ts';
@@ -283,16 +284,20 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       throw new ForbiddenError('Sign in to act.', 'STAFF_REQUIRED');
     if (
       actor.scanningSession &&
-      actor.scanningSession.status !== 'active' &&
       c.req.method === 'POST' &&
-      !c.req.path.endsWith('/device') &&
-      !c.req.path.endsWith('/mark-out') &&
-      !c.req.path.endsWith('/unpair')
-    )
-      throw new ForbiddenError(
-        'This scanning session is paused. Resume it in Scanning.',
-        'SCANNING_SESSION_PAUSED',
-      );
+      !/\/(device|mark-out|unpair|open-now)$/.test(c.req.path)
+    ) {
+      if (actor.scanningSession.status !== 'active')
+        throw new ForbiddenError(
+          'This scanning session is paused. Resume it in Scanning.',
+          'SCANNING_SESSION_PAUSED',
+        );
+      // Decided now, from the row this request observed: a missed cron never admits a late scan.
+      const parent = captureObservedScanningSession(actor)?.parent;
+      if (!parent) throw unauthenticated();
+      // A manager signs in while closed, to open early.
+      if (!c.req.path.endsWith('/staff')) assertSessionOpen(parent, ctx.clock.now());
+    }
     await next();
   });
 }

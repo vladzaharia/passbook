@@ -251,6 +251,16 @@ export const SCAN_COPY = {
     wrong: 'Wrong code. {n} tries left.',
     locked: 'Too many tries. Try again in {wait}.',
   },
+  /** The session is active but outside its hours. */
+  closed: {
+    headline: 'Closed',
+    opens: 'Opens {when}.',
+    noOpening: 'No opening set.',
+    check: 'Check again',
+    openNow: 'Open now',
+    openNowTitle: 'Open early',
+    refused: 'Scanning is closed now.',
+  },
   undo: {
     undone: '{action} undone',
     tooLate: 'Too late to undo here. An admin can fix it.',
