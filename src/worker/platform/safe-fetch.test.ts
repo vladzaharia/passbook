@@ -34,6 +34,59 @@ describe('assertSafeUrl', () => {
   });
 });
 
+describe('trailing-dot hosts', () => {
+  const hosts = ['wallet.plrs.im', 'plrs.im'];
+  it.each([
+    'https://wallet.plrs.im./api',
+    'https://WALLET.PLRS.IM../api',
+    'https://sub.plrs.im./x',
+    'https://x.local./a',
+    'https://metadata.google.internal./computeMetadata/v1/',
+    'https://intranet./x',
+    'https://printer.localhost./x',
+  ])('refuses %s', (url) => {
+    expect(() => assertSafeUrl(url, hosts)).toThrow();
+  });
+
+  it('refuses a redirect hop to one, without fetching it', async () => {
+    for (const to of [
+      'https://wallet.plrs.im./x',
+      'https://x.local./a',
+      'https://metadata.google.internal./v1',
+    ]) {
+      const seen: string[] = [];
+      const fetchImpl = (async (url: string) => {
+        seen.push(url);
+        return new Response(null, { status: 302, headers: { location: to } });
+      }) as unknown as typeof fetch;
+      await expect(
+        createSafeFetch({
+          resolver: { resolve: async () => ['93.184.216.34'] },
+          fetchImpl,
+          maxRedirects: 3,
+          platformHosts: hosts,
+        })('https://a.example.com/'),
+      ).rejects.toMatchObject({ code: 'UNSAFE_URL' });
+      expect(seen).toEqual(['https://a.example.com/']);
+    }
+  });
+
+  it('answers a malformed Location as a blocked redirect', async () => {
+    const fetchImpl = (async () =>
+      new Response(null, {
+        status: 302,
+        headers: { location: 'https://[bad' },
+      })) as unknown as typeof fetch;
+    await expect(
+      createSafeFetch({
+        resolver: { resolve: async () => ['93.184.216.34'] },
+        fetchImpl,
+        maxRedirects: 3,
+      })('https://a.example.com/'),
+    ).rejects.toMatchObject({ code: 'REDIRECT_BLOCKED' });
+  });
+});
+
 describe('platformHostsOf', () => {
   const env = {
     PUBLIC_BASE_URL: 'https://passbook.mobile',

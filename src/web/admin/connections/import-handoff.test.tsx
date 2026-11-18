@@ -49,6 +49,7 @@ describe('import to connection handoff', () => {
     rememberImportLink('imp1', LINK);
     handOffToConnection(imp());
     expect(sessionStorage.getItem('wallet-import-handoff')).toContain('2PACX-secret');
+    expect(sessionStorage.getItem('wallet-import-link:imp1')).toBeNull();
     const prefill = takeConnectionPrefill();
     expect(prefill).toEqual({
       templateId: 'tpl1',
@@ -58,6 +59,7 @@ describe('import to connection handoff', () => {
       mapping: { name: { from: '/Member Name' } },
     });
     expect(takeConnectionPrefill()).toBeNull();
+    expect(sessionStorage.getItem('wallet-import-handoff')).toBeNull();
   });
 
   it('leaves the link empty when this tab did not start the import, and unescapes the column', () => {

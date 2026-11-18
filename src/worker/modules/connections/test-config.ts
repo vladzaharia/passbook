@@ -6,9 +6,8 @@ import type {
 } from '../../../shared/contracts/index.ts';
 import type { AnyConnector, ConnectorContext, UpstreamRecord } from '../../connectors/types.ts';
 import type { Actor } from '../../platform/context.ts';
-import { baseUrl } from '../../platform/env.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
-import { createSafeFetch } from '../../platform/safe-fetch.ts';
+import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import { getDeps } from './deps.ts';
@@ -94,7 +93,7 @@ export async function testConfig(
     secrets,
     now: () => sctx.clock.now(),
     fetch: createSafeFetch({
-      platformHosts: [new URL(baseUrl(sctx.env)).hostname, 'workers.dev'],
+      platformHosts: platformHostsOf(sctx.env),
       timeoutMs: def.defaults.timeoutMs,
       ...(def.defaults.maxResponseBytes ? { maxBytes: def.defaults.maxResponseBytes } : {}),
       ...(def.defaults.maxRedirects ? { maxRedirects: def.defaults.maxRedirects } : {}),

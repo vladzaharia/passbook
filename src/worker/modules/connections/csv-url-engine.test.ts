@@ -119,6 +119,29 @@ describe('csv-url through the engine', () => {
     expect((await testConfig()).json.ok).toBe(true);
   });
 
+  it("the connection test holds redirects to the runtime's deny list, trailing dot included", async () => {
+    const env = kit.env as unknown as { SSRF_DENY_HOSTS?: string };
+    const before = env.SSRF_DENY_HOSTS;
+    env.SSRF_DENY_HOSTS = 'plrs.im';
+    try {
+      for (const to of ['https://id.plrs.im/x', 'https://wallet.plrs.im./x']) {
+        const seen: string[] = [];
+        setDeps({
+          resolver: dns(),
+          fetchImpl: async (input) => {
+            seen.push(String(input));
+            return new Response(null, { status: 302, headers: { location: to } });
+          },
+        });
+        expect((await testConfig()).json.ok).toBe(false);
+        expect(seen).toEqual([PUB]);
+      }
+    } finally {
+      if (before === undefined) delete env.SSRF_DENY_HOSTS;
+      else env.SSRF_DENY_HOSTS = before;
+    }
+  });
+
   it('refuses an unsafe link when the connection is saved', async () => {
     for (const url of ['https://localhost/a.csv', 'https://10.0.0.1/a.csv']) {
       const res = await call('POST', '/api/v1/connections', {

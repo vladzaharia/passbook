@@ -45,6 +45,8 @@ export function handOffToConnection(imp: PassImportDto): void {
     mapping: plan.mapping,
   };
   store()?.setItem(HANDOFF, JSON.stringify(prefill));
+  // The link now travels in the handoff only, which the wizard clears on reading.
+  store()?.removeItem(LINK(imp.id));
 }
 
 /** Read once: a later visit to the wizard starts empty. */

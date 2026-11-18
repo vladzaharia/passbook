@@ -142,6 +142,8 @@ export function platformHostsOf(env: {
   ];
 }
 
+const bare = (host: string) => host.toLowerCase().replace(/\.+$/, '');
+
 /** Static URL rules (spec section 9). Throws ValidationError; performs no network I/O. */
 export function assertSafeUrl(raw: string, platformHosts: string[] = []): URL {
   let url: URL;
@@ -150,7 +152,8 @@ export function assertSafeUrl(raw: string, platformHosts: string[] = []): URL {
   } catch {
     throw new ValidationError('The URL is invalid.', [], 'UNSAFE_URL');
   }
-  const host = url.hostname.toLowerCase();
+  // A trailing dot is the same name (`wallet.plrs.im.` resolves publicly): every rule sees it without.
+  const host = bare(url.hostname);
   if (url.protocol !== 'https:')
     throw new ValidationError('Only https URLs are allowed.', [], 'UNSAFE_URL');
   if (url.port && url.port !== '443')
@@ -167,7 +170,7 @@ export function assertSafeUrl(raw: string, platformHosts: string[] = []): URL {
   ) {
     throw new ValidationError('The host is not allowed.', [], 'UNSAFE_URL');
   }
-  if (platformHosts.some((p) => host === p.toLowerCase() || host.endsWith(`.${p.toLowerCase()}`))) {
+  if (platformHosts.some((p) => host === bare(p) || host.endsWith(`.${bare(p)}`))) {
     throw new ValidationError('The host is not allowed.', [], 'UNSAFE_URL');
   }
   // URL parsing normalizes dot segments away, so check the raw input.
@@ -268,7 +271,13 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
       const location = response.headers.get('location');
       const method = (init.method ?? 'GET').toUpperCase();
       if (hop >= hops || !location || (method !== 'GET' && method !== 'HEAD')) throw blocked();
-      const next = assertSafeUrl(new URL(location, current).toString(), options.platformHosts);
+      let target: string;
+      try {
+        target = new URL(location, current).toString();
+      } catch {
+        throw blocked();
+      }
+      const next = assertSafeUrl(target, options.platformHosts);
       if (next.hostname !== current.hostname)
         headers = Object.fromEntries(
           [...new Headers(headers).entries()].filter(([k]) => CROSS_HOST_HEADERS.has(k)),
