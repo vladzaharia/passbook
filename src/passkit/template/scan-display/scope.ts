@@ -229,6 +229,18 @@ const HISTORY_KEYS = [
   'lastScan.where',
   'lastScan.action',
 ];
+const ACCESS_KEYS = [
+  'plan',
+  'kind',
+  'zone',
+  'closesAt',
+  'nextOpenAt',
+  'until',
+  'hours',
+  'visits.used',
+  'visits.limit',
+  'visits.left',
+];
 const EVENT_KEYS = ['name', 'opensAt', 'closesAt', 'arrived', 'expected', 'capacity'];
 
 /** The paths a role may bind, for the editor's picker. Secrets are not listed: no role reads them. */
@@ -246,6 +258,7 @@ export function scopeCatalog(manifest: TemplateManifest, role: ScanRole): string
         `history.ledger.${action.input}.last.at`,
         `history.ledger.${action.input}.last.amount`,
       );
+  if (manifest.scan?.access) paths.push(...ACCESS_KEYS.map((k) => `access.${k}`));
   paths.push(...EVENT_KEYS.map((k) => `event.${k}`), 'scanner.name', 'scanner.role', 'now');
   for (const table of Object.keys(manifest.lookups ?? {})) paths.push(`lookups.${table}`);
   return paths;

@@ -272,7 +272,16 @@ time never taps out early (it re-arms instead).
 Undo restores every row the scan changed (`last_scan_id = :undone`): rows it inserted are deleted, rows it changed take
 `prev_*` back; `due_at` is recomputed for rows restored to `in`; AX's visit decrement applies. An override's group (the
 grant and its forced-exit row, `group_id`) is undone together. A later change to any of the rows answers
-`UNDO_SUPERSEDED` (SA). Tested: forced re-entry, children out, undo returns all.
+`UNDO_SUPERSEDED` (SA). "Later" is commit order: each in/out write sets the pass's next `scan_presence.seq`
+inside the write. A row the scan only updated and whose history an earlier undo used up is never deleted (superseded),
+and a Track off, archive or move of a zone a restored in row depends on since the scan supersedes too. An undone exit
+is not re-checked against capacity: the person never left. Tested: forced re-entry, children out, undo returns all.
+
+**Entry fence (built).** ENTER re-checks, in its batch, the zone and every ancestor as the plan read them: tracking,
+parent and archive state. A Track off, archive or move that commits first makes the entry lose. Capacity, Max stay,
+Clear at and the time zone are not fenced: an edit racing one scan gives that scan the old value (plan C6, the R8
+class). The count stays exact against the capacity the scan read, and a due time from old settings is re-armed by
+the cron's re-read, so a stale value decides one scan and nothing after it.
 
 ### 2.6 Migration `0020_scan_access.sql` (AX's, extended; the reference is `MIGRATION_0020`)
 

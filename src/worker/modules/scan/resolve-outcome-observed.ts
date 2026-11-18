@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
+import type { ScanCodeInput, ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction, ResolvedScanManifest } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound } from '../passes/builder.ts';
@@ -46,7 +46,7 @@ export function unknown(): ObservedEvaluation {
 export async function resolveObserved(
   ctx: ServiceContext,
   actor: ScanActor,
-  req: z.infer<typeof ScanResolveRequestSchema>,
+  req: Omit<z.infer<typeof ScanResolveRequestSchema>, 'input'> & { input: ScanCodeInput },
   credentials: CredentialTombstoneSnapshot,
   candidateRead: { candidates: Candidate[] | null },
   counts: CountsPlan,

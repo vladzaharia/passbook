@@ -56,7 +56,7 @@ export const ApiScopeSchema = z.enum([
   'templates:read',
   'messages:write',
   'scans:read',
-  /** Acts as a named terminal. Honoured by nothing until the POS package. */
+  /** Acts as a named terminal of the key's own org (`x-passbook-device`), Desk at most. */
   'scans:write',
   'connections:read',
   'connections:write',

@@ -290,6 +290,38 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
 }
 `;
 
+exports[`fidelityReport over every starter and baked template > starter-access-card 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
 exports[`fidelityReport over every starter and baked template > starter-boarding-pass 1`] = `
 {
   "compilerRevision": 1,

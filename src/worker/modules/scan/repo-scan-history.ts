@@ -23,7 +23,10 @@ export interface HistoryPassScope {
   eventId: string | null;
 }
 
-/** The same pass-scoped ledger selection is used for discovery, counts and final checks. */
+/**
+ * The same pass-scoped ledger selection is used for discovery, counts and final checks. An Access
+ * card's visits are its grants that started one (`visit = 1`); every other scan has no `visit`.
+ */
 export function historyPassScopePredicate(
   scope: HistoryPassScope,
   until: number,
@@ -32,6 +35,7 @@ export function historyPassScopePredicate(
     sql: `s.org_id=? AND s.mode=? AND s.pass_id=?
       AND s.template_id=? AND s.at<=?
       AND s.state='done' AND s.outcome='ok' AND s.undone_by IS NULL AND s.action_kind IS NOT 'undo'
+      AND (s.visit IS NULL OR s.visit = 1)
       AND ${HISTORICAL_SCOPE_SQL}${scope.eventId !== null ? ' AND s.event_id=?' : ''}`,
     params: [
       scope.orgId,

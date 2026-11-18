@@ -124,6 +124,10 @@ export interface ScanActor {
   name: string;
   /** A bearer terminal: its role, no staff, no approvals. */
   terminal: boolean;
+  /** Set when an org-bound `scans:write` key acts as this terminal; its role is the terminal's own, never above Desk (`roleWithoutSignIn`). */
+  apiKeyId?: string;
+  /** The org's `access_revision` when the key was admitted; a change refuses the commit. */
+  apiKeyOrgRevision?: number;
   scanningSession?: { id: string; status: 'active' | 'paused' | 'ended'; updatedAt: number };
   platformSessionId?: string;
   /** Keyed proof of the scanner credential's original CSRF secret. */
