@@ -28,23 +28,40 @@ export interface MeDeps {
 }
 const defaultDeps: MeDeps = { requestRefresh, removePassFromUser };
 
+// A stuck pass is read on every list: the first log per pass is the error, repeats are warnings.
+const logged = new Set<string>();
+function logPassJson(ctx: ServiceContext, row: repo.MyPassRow, code: string, extra?: object) {
+  const key = `${code}:${row.id}`;
+  const repeat = logged.has(key);
+  if (!repeat) {
+    if (logged.size >= 1000) logged.clear();
+    logged.add(key);
+  }
+  const data = { passId: row.id, orgId: row.org_id, version: row.version, code, ...extra };
+  const event = code === 'MY_PASS_JSON_MISSING' ? 'me.pass_json_missing' : 'me.pass_json_invalid';
+  if (repeat) ctx.log.warn(event, data);
+  else ctx.log.error(event, data);
+}
+
 function parsePassJson(ctx: ServiceContext, row: repo.MyPassRow): Record<string, unknown> {
-  const at = { passId: row.id, orgId: row.org_id, version: row.version };
   if (!row.pass_json) {
-    ctx.log.error('me.pass_json_missing', { ...at, code: 'MY_PASS_JSON_MISSING' });
+    logPassJson(ctx, row, 'MY_PASS_JSON_MISSING');
     return {};
   }
   try {
     const parsed: unknown = JSON.parse(row.pass_json);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      ctx.log.error('me.pass_json_invalid', { ...at, code: 'MY_PASS_JSON_INVALID' });
+      logPassJson(ctx, row, 'MY_PASS_JSON_INVALID');
       return {};
     }
     // Server-owned: the Apple device token must never reach the client.
     const { authenticationToken: _token, ...safe } = parsed as Record<string, unknown>;
     return safe;
   } catch (error) {
-    ctx.log.error('me.pass_json_invalid', { ...at, code: 'MY_PASS_JSON_INVALID', error });
+    // The parse error message quotes the pass.json (holder data): name only.
+    logPassJson(ctx, row, 'MY_PASS_JSON_INVALID', {
+      errorName: error instanceof Error ? error.name : 'unknown',
+    });
     return {};
   }
 }

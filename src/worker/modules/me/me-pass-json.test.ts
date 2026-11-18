@@ -72,10 +72,43 @@ describe('holder pass json', () => {
   it('logs stored json that does not parse', async () => {
     const { pass, read } = await ownedPass();
     await withoutTrigger(h.env.DB, 'pass_versions_no_auth_token_update', () =>
-      run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', ['{nope', pass.id]),
+      run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
+        '{"holder":"Jane Doe-Secret" oops',
+        pass.id,
+      ]),
     );
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect((await read()).passJson).toEqual({});
-    expect(error.mock.calls.flat().join('\n')).toContain('MY_PASS_JSON_INVALID');
+    const logged = error.mock.calls.flat().join('\n');
+    expect(logged).toContain('MY_PASS_JSON_INVALID');
+    expect(logged).toContain('SyntaxError');
+    expect(logged).not.toContain('Jane Doe-Secret');
+  });
+
+  it('logs a stuck pass as an error once, then as warnings', async () => {
+    const { read } = await ownedPass();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await read();
+    await read();
+    await read();
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls.flat().join('\n')).toContain('MY_PASS_JSON_MISSING');
+  });
+
+  it('strips barcodes from a pass that cannot be presented on the fallback path too', async () => {
+    const { pass, read } = await ownedPass();
+    const barcode = { format: 'PKBarcodeFormatQR', message: 'secret', messageEncoding: 'utf-8' };
+    await run(h.env.DB, 'UPDATE pass_versions SET pass_json = ? WHERE pass_id = ?', [
+      JSON.stringify({ description: 'Old', barcode, barcodes: [barcode] }),
+      pass.id,
+    ]);
+    await run(h.env.DB, 'UPDATE passes SET version = version + 1 WHERE id = ?', [pass.id]);
+    expect((await read()).passJson).toMatchObject({ barcodes: [{ message: 'secret' }] });
+    await run(h.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]);
+    const body = (await read()).passJson;
+    expect(body).toMatchObject({ description: 'Old' });
+    expect(body).not.toHaveProperty('barcode');
+    expect(body).not.toHaveProperty('barcodes');
   });
 });
