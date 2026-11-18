@@ -76,7 +76,7 @@ const detailHandlers = (over: Record<string, unknown> = {}) => ({
 });
 
 describe('Blueprints', () => {
-  it('lists blueprints in gallery order, each with Use', async () => {
+  it('lists blueprints by group, each with Use', async () => {
     const seen: URL[] = [];
     const { container } = await renderApp('/admin/blueprints', {
       session: 'admin',
@@ -86,12 +86,13 @@ describe('Blueprints', () => {
           seen.push(url);
           return json({
             items: [
-              blueprint(),
+              blueprint({ group: 'save-spend' }),
               blueprint({
                 id: 'baked:starter-generic',
                 name: 'Membership card',
                 icon: 'id-card',
                 styles: ['generic'],
+                group: 'membership-id',
               }),
             ],
             nextCursor: null,
@@ -100,11 +101,9 @@ describe('Blueprints', () => {
         '/api/v1/templates/previews': previewsHandler,
       },
     });
-    const list = await screen.findByRole('list', { name: 'Blueprints' });
-    const names = within(list)
-      .getAllByRole('link')
-      .map((l) => l.textContent);
-    expect(names).toEqual(['Membership card', 'Balance card']);
+    await screen.findByRole('list', { name: 'Save and spend' });
+    const names = screen.getAllByRole('link', { name: /card$/ }).map((l) => l.textContent);
+    expect(names).toEqual(['Balance card', 'Membership card']);
     expect(target(screen.getByRole('link', { name: 'Balance card' }))).toBe(
       `/admin/blueprints/${ID}`,
     );
@@ -152,13 +151,13 @@ describe('Use blueprint', () => {
     return { ...rendered, dialog: await screen.findByRole('dialog', { name: 'Use blueprint' }) };
   }
 
-  it('asks for a name before Continue', async () => {
+  it('asks for a name before Open designer', async () => {
     const user = userEvent.setup();
     const { dialog } = await open(user);
     const name = within(dialog).getByRole('textbox', { name: /Name/ });
     expect(name).toHaveValue('Balance card');
     await user.clear(name);
-    await user.click(within(dialog).getByRole('button', { name: 'Continue' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Open designer' }));
     expect(await within(dialog).findByText('Enter a name.')).toBeInTheDocument();
   });
 
@@ -208,7 +207,7 @@ describe('Use blueprint', () => {
     const name = within(dialog).getByRole('textbox', { name: /Name/ });
     await user.clear(name);
     await user.type(name, 'Gym balance');
-    await user.click(within(dialog).getByRole('button', { name: 'Continue' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Open designer' }));
     // The designer route loads its own chunk, then the draft replaces the skeleton.
     expect(await screen.findByText('Not saved', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Design Gym balance' })).toBeInTheDocument();

@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
+import type { UseBlueprintRequest } from '@/shared/contracts/index.ts';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
@@ -7,13 +8,16 @@ import { markMinted } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { Button, Dialog, DialogContent, FormField, Input, Select } from '../../ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
-import { useUseBlueprint } from './api.ts';
+import { assetsPayload } from '../templates/designer/images.ts';
+import { useLoadBlueprintVersion, useUseBlueprint } from './api.ts';
+import { QuickFields, useQuickFields } from './quick-fields.tsx';
+import { brandDoc, docOfVersion } from './quick-setup.ts';
 
-type Blueprint = Pick<TemplateSummaryDto, 'id' | 'name'>;
+type Blueprint = Pick<TemplateSummaryDto, 'id' | 'name' | 'activeVersion'>;
 
 /**
- * Use blueprint: an organization and a name. Continue opens the designer on a draft; on a phone
- * the designer is out of reach, so the dialog makes the template as it is.
+ * Use blueprint: an organization, a name, and quick setup (a logo and its colour). Create template
+ * makes a tracked, branded template on any screen; Open designer starts a draft on a larger one.
  */
 export function UseBlueprintDialog({
   blueprint,
@@ -37,6 +41,8 @@ export function UseBlueprintDialog({
   const [name, setName] = useState(blueprint.name);
   const [error, setError] = useState<{ org?: string; name?: string; form?: string }>({});
   const create = useUseBlueprint(blueprint.id);
+  const load = useLoadBlueprintVersion();
+  const quick = useQuickFields();
   const orgId = chosen ?? fallback;
 
   function check(): { orgId: string; name: string } | null {
@@ -49,19 +55,39 @@ export function UseBlueprintDialog({
     return orgId && next ? { orgId, name: next } : null;
   }
 
+  function openDesigner() {
+    const input = check();
+    if (!input) return;
+    onOpenChange(false);
+    void navigate({
+      to: '/admin/templates/new',
+      search: { blueprint: blueprint.id, orgId: input.orgId, name: input.name },
+    });
+  }
+
+  /** The request: an exact copy, or the draft with the logo and colour put in. */
+  async function request(input: { orgId: string; name: string }): Promise<UseBlueprintRequest> {
+    if (!quick.touched || !blueprint.activeVersion) return input;
+    const doc = brandDoc(docOfVersion(await load(blueprint.id, blueprint.activeVersion)), {
+      name: input.name,
+      color: quick.color,
+      logo: quick.logo?.asset,
+    });
+    return {
+      ...input,
+      version: {
+        passJson: doc.passJson,
+        manifest: doc.manifest as never,
+        assets: assetsPayload(doc.assets),
+      },
+    };
+  }
+
   async function submit() {
     const input = check();
     if (!input) return;
-    if (!phone) {
-      onOpenChange(false);
-      void navigate({
-        to: '/admin/templates/new',
-        search: { blueprint: blueprint.id, orgId: input.orgId, name: input.name },
-      });
-      return;
-    }
     try {
-      const made = await create.mutateAsync(input);
+      const made = await create.mutateAsync(await request(input));
       markMinted(`template:${made.id}`);
       markCreated(`template:${made.id}`, 'fromBlueprint');
       onOpenChange(false);
@@ -78,7 +104,7 @@ export function UseBlueprintDialog({
   return (
     <Dialog
       open={open}
-      dirty={name !== blueprint.name || chosen !== undefined}
+      dirty={name !== blueprint.name || chosen !== undefined || quick.touched}
       onOpenChange={onOpenChange}
     >
       <DialogContent
@@ -89,8 +115,13 @@ export function UseBlueprintDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
+            {phone ? null : (
+              <Button variant="outline" disabled={quick.touched} onClick={openDesigner}>
+                Open designer
+              </Button>
+            )}
             <Button loading={create.isPending} onClick={() => void submit()}>
-              {phone ? 'Create template' : 'Continue'}
+              Create template
             </Button>
           </>
         }
@@ -124,6 +155,7 @@ export function UseBlueprintDialog({
               />
             )}
           </FormField>
+          <QuickFields state={quick} />
         </div>
       </DialogContent>
     </Dialog>

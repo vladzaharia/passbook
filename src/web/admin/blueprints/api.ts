@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   TemplateDetailSchema,
   TemplateListSchema,
+  TemplateVersionDetailSchema,
   type UseBlueprintRequest,
 } from '@/shared/contracts/index.ts';
 import { api } from '../../lib/api.ts';
@@ -56,4 +57,39 @@ export function useUseBlueprint(blueprintId: string) {
         qc.invalidateQueries({ queryKey: ['palette'] }),
       ]),
   });
+}
+
+/**
+ * The blueprint's active version as the designer's two documents: for the page's staff view and
+ * for quick setup. Same key as the designer's base version, so one request serves both.
+ */
+export function blueprintVersionQuery(
+  id: string,
+  version: string | null,
+  orgId: string | undefined,
+) {
+  return {
+    queryKey: [...templateKeys.detail(id, orgId), 'design', version],
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      api.get(`/api/v1/templates/${id}/versions/${version}`, TemplateVersionDetailSchema, {
+        query: { orgId },
+        signal,
+      }),
+    staleTime: Number.POSITIVE_INFINITY,
+  };
+}
+
+export function useBlueprintVersion(id: string, version: string | null) {
+  const { orgId, ready } = useBlueprintScope();
+  return useQuery({
+    ...blueprintVersionQuery(id, version, orgId),
+    enabled: ready && Boolean(version),
+  });
+}
+
+/** Loads the version when quick setup needs it, from the cache when the page already did. */
+export function useLoadBlueprintVersion() {
+  const qc = useQueryClient();
+  const { orgId } = useBlueprintScope();
+  return (id: string, version: string) => qc.fetchQuery(blueprintVersionQuery(id, version, orgId));
 }
