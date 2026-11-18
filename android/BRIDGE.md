@@ -90,6 +90,10 @@ sends every later message with that version.
   accepted until the authenticated API answers.
 - Capabilities: `nfc.formats` adds `tag-uid` and `tag-sun`. New `nfc.continuous`
   (boolean) is true when the app reads tags without `tagRead`.
+- Android: a tag read ends a pending `tagRead`; a `tagRead` that times out ends
+  with the `cancelled` event. VAS is tried first and a SELECT answer of `6A82`
+  falls through to the tag read. The same tag read again within two seconds is
+  dropped. A tag whose NDEF value is over 1024 bytes is sent with `uid` only.
 - Tag data stays out of logs, analytics and URLs. The server stores a keyed hash
   of the UID, never the UID.
 

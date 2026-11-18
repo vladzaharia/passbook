@@ -28,3 +28,12 @@ adb shell pm list features
 adb shell dumpsys nfc
 adb shell dumpsys webviewupdate
 ```
+
+NFC tags (wire v2). Use a build connected to a v2 verifier.
+
+- Tap an NTAG215 (Type 2): one scan with source `nfc-tag`, tech `a`, a 7-byte uid, and the URI or Text record if one is written.
+- Tap an NTAG424 (Type 4): tech `isodep`, uid, and the SUN URL as ndef.
+- Tap a blank tag: uid only. Hold a tag on the phone: one scan, not a stream. Tap it again after two seconds: a second scan.
+- Tap an Apple Wallet pass with VAS configured: unchanged, still `apple-vas`, no `nfc-tag` event. With a v1 verifier, a plain tag shows the same unsupported-card message as before.
+- Tap a phone using a random ID (4-byte uid starting 08): the scan has `uidRandom` true and the verifier refuses it.
+- `tagRead` arms for one tag and stops after the read, after the timeout, or on `tagCancel`. Continuous reading resumes only if `start` asked for it.
