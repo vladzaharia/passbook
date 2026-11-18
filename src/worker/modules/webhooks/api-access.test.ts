@@ -25,6 +25,7 @@ const create = (headers: Record<string, string>, extra: Record<string, unknown> 
 describe('sessions', () => {
   it('lets org admins and integration admins read and manage', async () => {
     for (const role of ['org_admin', 'integration_admin'] as const) {
+      api.resetLimits();
       const h = await api.member([role]);
       const made = await create(h);
       expect(made.status).toBe(201);
