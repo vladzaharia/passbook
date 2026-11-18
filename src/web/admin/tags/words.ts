@@ -16,9 +16,6 @@ export const tagName = (tag: Pick<Tag, 'label'>) => tag.label ?? 'Tag';
 /** The code as speech: "ends 7 F 3 A". */
 export const hintSpoken = (hint: string) => `ends ${hint.split('').join(' ')}`;
 
-/** "{Blue fob} •• 7F3A", for dialogs that must say which tag. */
-export const tagTitle = (tag: Pick<Tag, 'label' | 'hint'>) => `${tagName(tag)} •• ${tag.hint}`;
-
 export function worksWithLabel(binding: Pick<TagBinding, 'scope' | 'holderName'>): string {
   return binding.scope === 'user'
     ? fill(TAG_COPY.worksWith.person, { name: binding.holderName ?? 'the holder' })
