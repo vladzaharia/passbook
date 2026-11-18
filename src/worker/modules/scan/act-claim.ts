@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { ScanActRequestSchema } from '../../../shared/contracts/scan.ts';
+import type { ScanActRequestSchema, ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
@@ -8,7 +8,9 @@ import { failPendingActionClaimStmt } from './repo-act-claim.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { type Claim, pristineClaimFence } from './repo-scans.ts';
 
-export type ActRequest = z.infer<typeof ScanActRequestSchema>;
+export type ActRequest = Omit<z.infer<typeof ScanActRequestSchema>, 'input'> & {
+  input: ScanCodeInput;
+};
 
 /**
  * The body of a request, by what it asks for: the pass id or the hash of the code (never the code
