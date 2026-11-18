@@ -9,24 +9,36 @@ export async function openRunOf(
   startedAt: number;
   status: string | null;
   tipSeq: number;
+  trigger: 'schedule' | 'admin';
+  keyset: string | null;
 } | null> {
   const row = await first<{
     id: string;
     started_at: number;
     status: string | null;
     tip_seq: number | null;
+    trigger: 'schedule' | 'admin';
+    keyset: string | null;
   }>(
     db,
-    `SELECT r.id, r.started_at, w.status, w.tip_seq FROM connection_runs r
+    `SELECT r.id, r.started_at, w.status, w.tip_seq, r.trigger,
+       w.credential_keyset_commitment AS keyset FROM connection_runs r
      LEFT JOIN workflow_runs w ON w.instance_id = r.id AND w.kind = 'connection_sync'
        AND w.target_id = r.connection_id
      WHERE r.connection_id = ? AND r.id <> ? AND r.outcome = 'running'
-       AND r.trigger IN ('schedule', 'admin')
+       AND r.trigger IN ('schedule', 'admin') AND r.pass_id IS NULL
      ORDER BY r.started_at DESC LIMIT 1`,
     [p.connectionId, p.instanceId],
   );
   return row
-    ? { id: row.id, startedAt: row.started_at, status: row.status, tipSeq: row.tip_seq ?? 0 }
+    ? {
+        id: row.id,
+        startedAt: row.started_at,
+        status: row.status,
+        tipSeq: row.tip_seq ?? 0,
+        trigger: row.trigger,
+        keyset: row.keyset,
+      }
     : null;
 }
 

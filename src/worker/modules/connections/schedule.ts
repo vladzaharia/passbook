@@ -46,6 +46,36 @@ export async function adminInstanceId(
   return `sync-${scope.slice(0, 32)}-admin-${Math.floor(now / bucketMs)}`;
 }
 
+/** A queued run whose launch failed has no instance yet: start it, so adopting it is not a dead end. */
+async function ensureInstance(
+  sctx: ServiceContext,
+  conn: ConnectionRow,
+  open: NonNullable<Awaited<ReturnType<typeof openRunOf>>>,
+): Promise<void> {
+  if (open.status !== 'queued' || !open.keyset) return;
+  try {
+    await sctx.env.CONNECTION_SYNC.get(open.id);
+    return;
+  } catch {
+    // No such instance: create it below.
+  }
+  try {
+    await sctx.env.CONNECTION_SYNC.create({
+      id: open.id,
+      params: {
+        connectionId: conn.id,
+        orgId: conn.orgId,
+        generation: conn.generation,
+        credentialKeysetCommitment: open.keyset,
+        trigger: open.trigger,
+        runId: open.id,
+      },
+    });
+  } catch (error) {
+    if (!alreadyExists(error)) throw error;
+  }
+}
+
 /** Records the tracking rows, then creates the workflow instance (an existing id counts as started). */
 export async function startSync(
   sctx: ServiceContext,
@@ -66,7 +96,10 @@ export async function startSync(
         (open.status === 'queued' || open.status === 'running') &&
         (sctx.clock.now() - open.startedAt < STUCK_MS ||
           !(await instanceLost(sctx, open.id, open.tipSeq)));
-      if (alive) return { runId: open.id, workflowInstanceId: open.id };
+      if (alive) {
+        await ensureInstance(sctx, conn, open);
+        return { runId: open.id, workflowInstanceId: open.id };
+      }
       await closeLostRun(sctx, { orgId: conn.orgId, connectionId: conn.id, runId: open.id });
     }
   }

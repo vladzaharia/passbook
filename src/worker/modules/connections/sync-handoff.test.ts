@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import openMigration from '../../../../migrations/0105_connection_run_open.sql?raw';
 import { all, first, run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { ConnectionSync } from '../../workflows/connection-sync.ts';
@@ -452,5 +453,76 @@ describe('sync hand-off', () => {
       [attempts[0]?.instance_id ?? ''],
     );
     expect(closed).toEqual({ outcome: 'error', error_code: 'RUN_LOST' });
+  });
+
+  it('starts the instance of an adopted run whose launch failed', async () => {
+    const dto = await demo(5);
+    const conn = await getConnection(kit.env.DB, dto.id);
+    if (!conn) throw new Error('no connection');
+    const broken = withWorkflow(kit, async () => {
+      throw new Error('launch failed');
+    });
+    await expect(startSync(broken.sctx, conn, 'admin', 'sync-q-1')).rejects.toThrow(
+      'launch failed',
+    );
+    const ok = withWorkflow(kit);
+    const again = await startSync(ok.sctx, conn, 'admin', 'sync-q-2');
+    expect(again.runId).toBe('sync-q-1');
+    expect(ok.created.map((c) => c.id)).toEqual(['sync-q-1']);
+    expect(ok.created[0]?.params).toMatchObject({ runId: 'sync-q-1', trigger: 'admin' });
+  });
+
+  describe('pass refreshes are not sync runs', () => {
+    const insert = (id: string, connectionId: string, passId: string | null, at: number) =>
+      run(
+        kit.env.DB,
+        `INSERT INTO connection_runs (id, connection_id, trigger, pass_id, started_at, outcome)
+         VALUES (?, ?, 'admin', ?, ?, 'running')`,
+        [id, connectionId, passId, at],
+      );
+
+    it('lets refreshes open during a sync and alongside each other', async () => {
+      const dto = await demo(5);
+      await insert(`s-${RUN}`, dto.id, null, 1);
+      await insert(`r1-${RUN}`, dto.id, 'pass-1', 2);
+      await insert(`r2-${RUN}`, dto.id, 'pass-2', 3);
+      await expect(insert(`s2-${RUN}`, dto.id, null, 4)).rejects.toThrow();
+    });
+
+    it('starts and adopts around refreshes', async () => {
+      const dto = await demo(5);
+      const conn = await getConnection(kit.env.DB, dto.id);
+      if (!conn) throw new Error('no connection');
+      await insert(`r1-${RUN}`, dto.id, 'pass-1', kit.clock.now());
+      const wf = withWorkflow(kit, undefined, () => 'running');
+      await startSync(wf.sctx, conn, 'admin', 'sync-p-1');
+      expect(wf.created.map((c) => c.id)).toEqual(['sync-p-1']);
+      const refresh = await first<{ outcome: string }>(
+        kit.env.DB,
+        'SELECT outcome FROM connection_runs WHERE id = ?',
+        [`r1-${RUN}`],
+      );
+      expect(refresh?.outcome).toBe('running');
+    });
+
+    it('cleanup keeps the newest sync run and ignores refresh rows', async () => {
+      const dto = await demo(5);
+      await run(kit.env.DB, 'DROP INDEX connection_runs_open_sync');
+      await insert(`old-${RUN}`, dto.id, null, 1);
+      await insert(`new-${RUN}`, dto.id, null, 2);
+      await insert(`rf-${RUN}`, dto.id, 'pass-1', 3);
+      await run(
+        kit.env.DB,
+        openMigration.slice(openMigration.indexOf('UPDATE'), openMigration.indexOf(';') + 1),
+      );
+      const create = openMigration.indexOf('CREATE UNIQUE INDEX');
+      await run(kit.env.DB, openMigration.slice(create, openMigration.indexOf(';', create) + 1));
+      const rows = await all<{ id: string; outcome: string }>(
+        kit.env.DB,
+        'SELECT id, outcome FROM connection_runs WHERE connection_id = ? ORDER BY started_at',
+        [dto.id],
+      );
+      expect(rows.map((r) => r.outcome)).toEqual(['error', 'running', 'running']);
+    });
   });
 });
