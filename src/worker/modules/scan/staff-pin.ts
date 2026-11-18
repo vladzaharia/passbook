@@ -1,6 +1,6 @@
 import type { GrantPart } from '../../platform/authority-include.ts';
 import { derivedHmacKey, macPreviousVersion } from '../../platform/crypto.ts';
-import { AppError, RateLimitedError } from '../../platform/errors.ts';
+import { AppError } from '../../platform/errors.ts';
 import { safeEqual, toHex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
@@ -59,8 +59,12 @@ export const pinMatches: PinMatches = async (env, staffId, pin, stored) => {
 };
 
 export type PinReservationGuard = ScanPredicate;
+/** A 429 like any rate limit; the `pin` issue lets the desk say it is the PIN that is locked. */
 const lockedError = (millisecondsLeft: number) =>
-  new RateLimitedError(Math.ceil(millisecondsLeft / 1000), 'Too many wrong PINs. Try again later.');
+  new AppError('RATE_LIMITED', 429, 'Too many wrong PINs. Try again later.', {
+    headers: { 'retry-after': String(Math.ceil(millisecondsLeft / 1000)) },
+    issues: [{ path: 'pin', message: 'locked' }],
+  });
 const resultCount = (result: D1Result | undefined) =>
   (result?.results?.[0] as { count?: number } | undefined)?.count;
 /**
@@ -213,7 +217,8 @@ export function preparePinReservation(
     // the owner is told in the log, with no PIN in it.
     if (verdict === 'ambiguous')
       ctx.log.warn('scan.pin_ambiguous', { orgId, scannerId, code: 'PIN_AMBIGUOUS' });
-    const triesLeft = Math.max(0, personCap - person);
+    // The tighter counter: the lockout the next miss would hit, never a promise the hour cannot keep.
+    const triesLeft = Math.max(0, Math.min(personCap - person, scannerCap - scanner));
     throw new AppError(
       'PIN_INVALID',
       400,

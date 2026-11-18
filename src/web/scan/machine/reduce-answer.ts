@@ -108,6 +108,7 @@ export function fail(s: MachineState, ev: Fail, env: Env): Out {
     ]);
   const l = s.loop;
   if ((l.s !== 'checking' && l.s !== 'applying') || l.key !== ev.key) return same(s);
+  if (ev.error === 'pin_invalid' || ev.error === 'pin_locked') return pinRefused(s, l, ev, env);
   const act = l.s === 'applying' || s.posture === 'door' || s.armed !== null;
   let outcome: ScanOutcome;
   let state = s;
@@ -154,6 +155,28 @@ export function fail(s: MachineState, ev: Fail, env: Env): Out {
     env,
   );
   return out(v.state, [...cmds, ...v.cmds]);
+}
+
+/** The Manager's PIN was refused: the same `needs_approval` card, asking again with the tries left. */
+function pinRefused(s: MachineState, l: MachineState['loop'], ev: Fail, env: Env): Out {
+  if (l.s !== 'applying' || !l.retry) {
+    const { triesLeft: _left, ...rest } = ev;
+    return fail(s, { ...rest, error: 'server' }, env);
+  }
+  const v = enterVerdict(
+    s,
+    {
+      input: l.input,
+      card: l.card,
+      outcome: l.retry,
+      inPlace: true,
+      next: l.next,
+      draft: withoutApproval(l.draft),
+      pin: ev.error === 'pin_locked' ? { locked: true } : { triesLeft: ev.triesLeft ?? 0 },
+    },
+    env,
+  );
+  return out(v.state, v.cmds);
 }
 
 /** An answer to a request the screen has moved on from: an unsure retry that landed. */

@@ -144,6 +144,38 @@ describe('the desk picks a value action', () => {
     expect(JSON.stringify(done.state.loop)).not.toContain('123456');
   });
 
+  it('shows the same needs_approval card again with the tries left, then locked', () => {
+    const locked = ready({ available: false, lock: 'approval', amount: { fixed: 1 } });
+    const tried = step(locked, { type: 'pick', actionId: 'stamp' }, at(200));
+    const needs = step(
+      tried.state,
+      answerOf(requestKey(tried.cmds), 'heads_up', 'needs_approval', {
+        action: { id: 'stamp', label: 'Add stamp', kind: 'add' },
+      }),
+      at(300),
+    );
+    const sent = step(needs.state, { type: 'approve', pin: '482913' }, at(400));
+    const wrong = step(
+      sent.state,
+      { type: 'fail', key: requestKey(sent.cmds), error: 'pin_invalid', triesLeft: 2 },
+      at(500),
+    );
+    expect(wrong.state.loop).toMatchObject({
+      s: 'verdict',
+      outcome: { reason: 'needs_approval' },
+      draft: { actionId: 'stamp' },
+      pin: { triesLeft: 2 },
+    });
+    expect(JSON.stringify(wrong.state.loop)).not.toContain('482913');
+    const again = step(wrong.state, { type: 'approve', pin: '735261' }, at(600));
+    const shut = step(
+      again.state,
+      { type: 'fail', key: requestKey(again.cmds), error: 'pin_locked' },
+      at(700),
+    );
+    expect(shut.state.loop).toMatchObject({ s: 'verdict', pin: { locked: true } });
+  });
+
   it('ignores a PIN when the verdict is not needs_approval', () => {
     const state = step(
       step(ready({ amount: { fixed: 1 } }), { type: 'pick', actionId: 'stamp' }, at(200)).state,

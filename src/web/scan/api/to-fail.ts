@@ -28,9 +28,16 @@ export function toFail(error: unknown, principal: 'scanner' | 'admin' = 'scanner
       return error.code === 'SCAN_STAFF_CHANGED'
         ? { error: 'staff_required' }
         : { error: 'server' };
+    case 400: {
+      // A Manager's PIN that did not match: the count is the lockout's own.
+      if (error.code !== 'PIN_INVALID') return { error: 'server' };
+      const left = Number(error.fields.triesLeft);
+      return { error: 'pin_invalid', triesLeft: Number.isFinite(left) ? left : 0 };
+    }
     case 422:
       return { error: 'forbidden' };
     case 429: {
+      if (error.fields.pin === 'locked') return { error: 'pin_locked' };
       const wait = error instanceof ScanApiError ? error.retryAfterMs : undefined;
       return wait === undefined
         ? { error: 'rate_limited' }
