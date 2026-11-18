@@ -30,6 +30,8 @@ export function bannedForCustomer(path: string): boolean {
     return true;
   if (split.root === 'event') return HIDDEN_EVENT.has(split.rest[0] ?? '');
   if (split.root === 'pass') return split.rest[0] === 'externalId';
+  // A door and a plan's hours say where the member may go: the customer screen is in the room.
+  if (split.root === 'access') return split.rest[0] === 'zone' || split.rest[0] === 'hours';
   return false;
 }
 

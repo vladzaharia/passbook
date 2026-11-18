@@ -18,7 +18,8 @@ export function undoApprovalGuard(actor: ScanActor, plan: UndoPlan, now: number)
     sql: `EXISTS (WITH ${read.ctes} SELECT 1 FROM actor_ok ok
       JOIN scans q ON q.org_id = ok.org_id AND q.mode = ok.mode
       JOIN scan_gates g ON g.org_id = q.org_id AND g.mode = q.mode AND g.pass_id = q.pass_id
-        AND g.action_id = q.action_id AND g.last_scan_id = q.id
+        AND g.action_id = CASE WHEN q.access_plan IS NOT NULL THEN 'access' ELSE q.action_id END
+        AND g.last_scan_id = q.id
       WHERE q.id = ? AND q.undone_by IS NULL AND q.state = 'done' AND q.outcome = 'ok'
         AND q.action_kind IN ('check_in', 'add', 'take', 'set', 'use_up') AND g.last_at = ?)`,
     params: [...read.params, target.id, gate.last_at],
