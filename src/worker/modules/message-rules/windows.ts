@@ -23,11 +23,10 @@ export interface RuleTiming {
   timeZone: string;
 }
 
-/** Which anchor value makes a fire unique: the value as stored, the last scan's time, or a year. */
-export type Occurrence = 'anchor' | 'lastScan' | `y${number}`;
-
 /**
- * The passes a run targets, as absolute values. `[fromMs, toMs)` is half-open for days and
+ * The passes a run targets, as absolute values. `occurrence` is what makes a fire unique: the
+ * anchor value as stored, the last scan's time, or a year.
+ * `[fromMs, toMs)` is half-open for days and
  * `[fromMs, toMs]` for hours (`inclusiveEnd`).
  */
 export type RuleWindow =
