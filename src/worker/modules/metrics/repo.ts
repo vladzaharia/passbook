@@ -201,6 +201,8 @@ export interface SetupCounts {
   orgs: number;
   assignedTemplates: number;
   passes: number;
+  approvedTemplates: number;
+  walletPasses: number;
   passEmailsSent: number;
   latestPassId: string | null;
 }
@@ -229,10 +231,23 @@ export async function setupCounts(
          WHERE o.kind = 'email' AND o.state = 'sent' AND coalesce(p.mode, 'live') = ?
            AND (o.pass_id IS NULL OR p.id IS NOT NULL)
            ${orgId ? 'AND o.org_id = ?' : ''}${templateId ? ' AND p.template_id = ?' : ''})
-         AS passEmailsSent`,
+         AS passEmailsSent,
+       (SELECT count(DISTINCT r.template_id) FROM template_releases r
+         WHERE r.provider = 'apple' AND r.mode = ?
+           AND ${orgId ? 'r.org_id = ?' : 'r.org_id IS NOT NULL'}${templateId ? ' AND r.template_id = ?' : ''})
+         AS approvedTemplates,
+       (SELECT count(*) FROM passes p WHERE p.deleted_at IS NULL AND p.mode = ?
+         ${orgId ? 'AND p.org_id = ?' : ''}${templateId ? ' AND p.template_id = ?' : ''}
+         AND EXISTS (SELECT 1 FROM registrations g WHERE g.pass_id = p.id)) AS walletPasses`,
     [
       ...orgParams,
       ...(orgId ? [orgId] : []),
+      ...templateParams,
+      mode,
+      ...orgParams,
+      ...templateParams,
+      mode,
+      ...orgParams,
       ...templateParams,
       mode,
       ...orgParams,
@@ -255,6 +270,8 @@ export async function setupCounts(
     orgs: row?.orgs ?? 0,
     assignedTemplates: row?.assignedTemplates ?? 0,
     passes: row?.passes ?? 0,
+    approvedTemplates: row?.approvedTemplates ?? 0,
+    walletPasses: row?.walletPasses ?? 0,
     passEmailsSent: row?.passEmailsSent ?? 0,
     latestPassId: latest?.id ?? null,
   };

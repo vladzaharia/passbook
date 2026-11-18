@@ -13,6 +13,7 @@ import {
   sessionFixture,
 } from '@/web/lib/test-utils.tsx';
 import { toast } from '@/web/ui/index.ts';
+import { overview } from '../overview/overview-fixtures.ts';
 import { templateSummary } from '../passes/test-fixtures.ts';
 import { orgPatch, orgToDraft, validateOrg } from './org-form.tsx';
 import { slugify } from './orgs-page.tsx';
@@ -1005,18 +1006,57 @@ describe('org detail', () => {
     );
   });
 
-  it('shows the checklist for a new org, with the template step checked', async () => {
+  const orgSetup = (setup: Record<string, unknown>) => ({
+    '/api/v1/metrics/overview': () => json(overview({ setup: { ...overview().setup, ...setup } })),
+  });
+  const newOrg = { counts: { passes: 0, templates: 1, connections: 0, apiKeys: 0 } };
+
+  it('shows the first-run checklist for a new org, with the template step checked', async () => {
     await renderApp('/admin/orgs/o1', {
       session: 'admin',
       handlers: {
         ...handlers(),
-        '/api/v1/orgs/o1': () =>
-          json(summary({ counts: { passes: 0, templates: 1, connections: 0, apiKeys: 0 } })),
+        ...orgSetup({
+          assignedTemplates: 1,
+          approvedTemplates: 0,
+          passes: 0,
+          walletPasses: 0,
+          latestPassId: null,
+        }),
+        '/api/v1/orgs/o1': () => json(summary(newOrg)),
       },
     });
     const list = await screen.findByRole('region', { name: 'Get started' });
-    expect(within(list).getByText('(done)', { exact: false })).toBeInTheDocument();
-    expect(within(list).getByRole('link', { name: /New pass/ })).toBeInTheDocument();
+    expect(
+      within(list)
+        .getAllByRole('listitem')
+        .map((step) => step.textContent),
+    ).toEqual([
+      expect.stringContaining('Use a blueprint'),
+      expect.stringContaining('Approve it'),
+      expect.stringContaining('Issue a pass'),
+      expect.stringContaining('Add it to your phone'),
+    ]);
+    expect(within(list).getAllByText('(done)', { exact: false })).toHaveLength(1);
+    expect(within(list).getByRole('link', { name: 'Review' })).toBeInTheDocument();
+  });
+
+  it('drops the org checklist once a pass is in a Wallet', async () => {
+    let asked = false;
+    await renderApp('/admin/orgs/o1', {
+      session: 'admin',
+      handlers: {
+        ...handlers(),
+        '/api/v1/metrics/overview': () => {
+          asked = true;
+          return json(overview({ setup: { ...overview().setup, walletPasses: 3 } }));
+        },
+        '/api/v1/orgs/o1': () => json(summary(newOrg)),
+      },
+    });
+    await waitFor(() => expect(asked).toBe(true));
+    await screen.findByRole('heading', { name: 'In this organization' });
+    expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull();
   });
 
   it('lets a platform admin invite an initial org admin without fetching the workspace or people lists', async () => {
