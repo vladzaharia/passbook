@@ -30,6 +30,7 @@ import { allOf } from './scan-write-statements.ts';
 /** One reason a scan that did not move its place is held, and the condition that held it back. */
 interface OccupancyHold {
   reason: ScanReason;
+  outcome?: 'refused';
   /** True while this rule lets the entry through. */
   holds: GrantCond;
 }
@@ -63,6 +64,8 @@ export function planOccupancyCommit(
     access: FoundAccess | null;
     override: string | null;
     open: GrantCond[];
+    /** An exit's gate as the scan read it: the row moves only if the gate write will. */
+    gateAsRead: GrantCond | null;
   },
 ): OccupancyCommit | null {
   const { passId, scanId, now } = i;
@@ -71,7 +74,14 @@ export function planOccupancyCommit(
     const exit = exitPlan(o.zones, o.zone.id);
     if (!exit) return null;
     const holds = [{ reason: 'not_inside' as const, holds: insideOf(passId, exit.place, now) }];
-    return { ...base, entry: null, exit, waivers: {}, when: [], holds };
+    return {
+      ...base,
+      entry: null,
+      exit,
+      waivers: {},
+      when: [...i.open, ...(i.gateAsRead ? [i.gateAsRead] : [])],
+      holds,
+    };
   }
   const access = i.access;
   if (!access) return null;
@@ -98,7 +108,9 @@ export function planOccupancyCommit(
       ? [{ reason: 'still_inside' as const, holds: not(insideOf(passId, entry.place, now)) }]
       : []),
     ...(wait !== null ? [{ reason: 'cooldown' as const, holds: quiet }] : []),
-    ...(visit ? [{ reason: 'guest_visits_used' as const, holds: visit }] : []),
+    ...(visit
+      ? [{ reason: 'guest_visits_used' as const, outcome: 'refused' as const, holds: visit }]
+      : []),
     ...(room.length ? [{ reason: 'capacity_full' as const, holds: allOf(room) }] : []),
   ];
   const when = [quiet, ...(visit ? [visit] : []), ...i.open];
@@ -142,7 +154,7 @@ export function addOccupancy(g: Grant, c: OccupancyCommit): Moved {
   const { passId, scanId, now } = c;
   if (c.entry)
     return addEntry(g, { passId, scanId, now, plan: c.entry, waivers: c.waivers, when: c.when });
-  return addExit(g, { passId, scanId, now, plan: c.exit as ExitPlan });
+  return addExit(g, { passId, scanId, now, plan: c.exit as ExitPlan, when: c.when });
 }
 
 /** Read with the commit: a lost entry's rows and counts, and the place's In now with its revision. */

@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
+import { all } from '../../platform/db.ts';
 import { accessTemplate, gateRow } from './access-test-fixtures.ts';
 import { kit, MINUTE, setupActionFixture } from './act-test-fixtures.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
@@ -89,6 +90,13 @@ describe('occupancy races through the scan path (SA §20.15)', () => {
     expect(full).toHaveLength(5);
     for (const r of full) expect(r).toMatchObject({ kind: 'heads_up', reason: 'capacity_full' });
     expect(await inNow(pool)).toBe(25);
+    // Every loser was named by the batch (there is no pre-check): its row says so.
+    const named = await all<{ reason: string }>(
+      kit.env.DB,
+      `SELECT reason FROM scans WHERE id IN (${full.map(() => '?').join(', ')})`,
+      full.map((r) => String(r.scanId)),
+    );
+    expect(named.map((r) => r.reason)).toEqual(Array(5).fill('capacity_full'));
   });
 
   it('a parent exit and a child entry end consistent in either order', async () => {

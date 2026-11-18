@@ -2,6 +2,7 @@ import type { ScanReason } from '../../../shared/contracts/scan.ts';
 import type { Grant } from '../../platform/authority.ts';
 import type { GrantCond } from '../../platform/authority-cond.ts';
 import type { EventRow } from '../events/repo.ts';
+import type { Finalizer } from './act-check-in-finalize.ts';
 import { addOccupancy, type OccupancyCommit } from './act-check-in-occupancy.ts';
 import type { AdmissionPlan } from './admission-types.ts';
 import { type AccessGateWrite, startedVisit, writeAccessGate } from './repo-access.ts';
@@ -11,7 +12,6 @@ import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { PreparedScanRetentionProof } from './scan-retention-proof.ts';
 import { scanIs, wonGate } from './scan-write-grant.ts';
 import {
-  type Finalize,
   finalizeScan,
   holdsPresence,
   ledgerEvent,
@@ -29,6 +29,8 @@ interface CheckInVariant {
 /** A heads-up the scan closes with when its condition holds (the first that applies wins). */
 export interface HeldVariant {
   reason: ScanReason;
+  /** A used-up guest is red wherever it is answered (AX); every other hold is a heads-up. */
+  outcome?: 'heads_up' | 'refused';
   when: GrantCond[];
   /** Its own signed ledger row; null when it shares the `lost` reason's. */
   variant: CheckInVariant | null;
@@ -47,7 +49,7 @@ interface CheckInStatementsInput {
   /** What let the scan in (repeated in the gate write; another door wins). */
   admitted: { conds: GrantCond[] };
   lost: ScanReason;
-  finalized(outcome: 'ok' | 'heads_up', reason: ScanReason | null, visit?: boolean): Finalize;
+  finalized: Finalizer;
   /** An Access card: the gate counts visits instead of taking the first scan. */
   access: Omit<AccessGateWrite, 'passId' | 'scanId' | 'at'> | null;
   /** A check-in at a tracked zone: the in/out row decides, and the gate follows it. */
@@ -106,12 +108,12 @@ export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
   const finalOk = finalizeScan(g, finalized('ok', null, false), won);
   const held = i.variants.held.map((h) => ({
     ...h,
-    statement: finalizeScan(g, finalized('heads_up', h.reason), h.when),
+    statement: finalizeScan(g, finalized(h.outcome ?? 'heads_up', h.reason), h.when),
   }));
   finalizeScan(g, finalized('heads_up', lost));
   for (const [v, outcome, reason] of [
     [i.variants.ok, 'ok', null],
-    ...held.map((h) => [h.variant, 'heads_up', h.reason] as const),
+    ...held.map((h) => [h.variant, h.outcome ?? 'heads_up', h.reason] as const),
     [i.variants.lost, 'heads_up', lost],
   ] as const) {
     if (!v) continue;

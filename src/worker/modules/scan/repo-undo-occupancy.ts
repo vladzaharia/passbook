@@ -11,8 +11,9 @@ import type { OccupancyUndo, UndoCommit } from './repo-undo-types.ts';
 export const undoGroupStmt = (db: D1Database, orgId: string, scanId: string) =>
   stmt(
     db,
-    `SELECT m.id, m.at FROM scans q JOIN scans m ON m.org_id = q.org_id
-       AND (m.id = q.id OR (q.group_id IS NOT NULL AND m.group_id = q.group_id))
+    `SELECT m.id, m.at FROM scans q JOIN scans m ON m.org_id = q.org_id AND m.mode = q.mode
+       AND m.pass_id = q.pass_id
+       AND (m.id = q.id OR (q.group_id IS NOT NULL AND m.group_id = q.group_id AND m.outcome = 'ok'))
      WHERE q.id = ? AND q.org_id = ? ORDER BY m.at, m.id`,
     [scanId, orgId],
   );
@@ -48,7 +49,7 @@ export function addOccupancyUndo(g: Grant, c: UndoCommit, o: OccupancyUndo): voi
     if (id !== c.target.id)
       g.update('scans', {
         set: { undone_by: c.id, undone_at: now },
-        where: { id, undone_by: null, state: 'done' },
+        where: { id, pass_id: c.target.passId, undone_by: null, state: 'done', outcome: 'ok' },
         require: 'one',
         returning: ['id'],
       });

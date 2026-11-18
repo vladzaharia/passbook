@@ -86,6 +86,7 @@ export async function attempt(
       access: capturedOverride?.reason,
       confirmed: req.confirmed === true,
       direction: req.direction,
+      override: !!req.overrideOf,
     },
     credentials,
     {
@@ -285,8 +286,9 @@ export async function attempt(
   const preflight = reads.plan?.current();
   if (!preflight) throw raced();
   // An Access card's wait or visit limit answers from the gate row the preflight read, before any approval; an override waives only its own reason.
+  // At a tracked zone the batch answers instead, in step 15's order (the place's holds come first).
   const gated =
-    action.kind === 'check_in'
+    action.kind === 'check_in' && !found.occupancy
       ? accessGateStop(found, ctx.clock.now(), waiveOf(override?.reason))
       : null;
   if (gated)

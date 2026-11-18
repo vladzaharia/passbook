@@ -11,6 +11,8 @@ export interface Waive {
   direction?: 'in' | 'out';
   /** The access refusal a Manager let through; only this reason is skipped (hard ones never are). */
   access?: string | undefined;
+  /** An override lets a pass in: at a tracked zone it is never an exit. */
+  override?: boolean;
 }
 
 /** Retain pinned action semantics while applying the stricter current authority policy. */

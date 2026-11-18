@@ -70,9 +70,10 @@ export function addEntry(g: Grant, i: EntryInput): Moved {
       );
   const inside = repo.insideOf(passId, plan.place, now);
   const row = { passId, place: plan.place, scanId, now, dueAt: plan.dueAt };
-  // A track-only repeat keeps `since`; it runs first, so the fresh entry below sees it inside.
+  // A track-only repeat keeps `since`; it runs first, so the fresh entry below sees it inside. It
+  // still enters an implied ancestor it is not in (past due, or tracked since), so their room holds.
   if (!plan.enforce && !w.inside)
-    repo.enterRow(g, { ...row, keep: true, when: [...conds, inside] });
+    repo.enterRow(g, { ...row, keep: true, when: [...conds, inside, ...room] });
   const fresh = w.inside ? [] : [not(inside)];
   repo.enterRow(g, { ...row, when: [...conds, ...room, ...fresh] });
   const won = repo.wrote(passId, plan.place, scanId);
@@ -99,13 +100,27 @@ export function addEntry(g: Grant, i: EntryInput): Moved {
  */
 export function addExit(
   g: Grant,
-  i: { passId: string; scanId: string; now: number; plan: ExitPlan; lastScanId?: string },
+  i: {
+    passId: string;
+    scanId: string;
+    now: number;
+    plan: ExitPlan;
+    lastScanId?: string;
+    /** The caller's own conditions (its gate as read, an override still open). */
+    when?: GrantCond[];
+  },
 ): Moved {
   const { passId, scanId, now, plan } = i;
   const held = i.lastScanId
     ? repo.inRow(passId, plan.place, i.lastScanId)
     : repo.insideOf(passId, plan.place, now);
-  repo.exitRow(g, { passId, place: plan.place, scanId, now, when: [ofTenant(passId), held] });
+  repo.exitRow(g, {
+    passId,
+    place: plan.place,
+    scanId,
+    now,
+    when: [ofTenant(passId), held, ...(i.when ?? [])],
+  });
   const won = repo.wrote(passId, plan.place, scanId);
   for (const place of plan.below)
     repo.exitRow(g, { passId, place, scanId, now, when: [won, repo.inRow(passId, place)] });
