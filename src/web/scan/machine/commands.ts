@@ -4,6 +4,7 @@
  */
 import type { ScanInput } from '../input/types.ts';
 import { SCAN_TIMING } from '../timing.ts';
+import type { DirectionDraft, MachineEvent } from './access-events.ts';
 import type { ActBody, ResolveBody, ScanDeps, UnsureRow } from './ports.ts';
 import type { Cmd, Draft, ScanEvent, ScanOutcome, ScanState, Unsure } from './types.ts';
 
@@ -11,7 +12,7 @@ type Wire = Pick<ScanInput, 'code' | 'passId' | 'method'>;
 
 export interface Host {
   state(): ScanState;
-  dispatch(event: ScanEvent): void;
+  dispatch(event: MachineEvent): void;
   beat(beat: Extract<Cmd, { c: 'beat' }>['beat']): void;
 }
 
@@ -31,6 +32,17 @@ function withoutPin(draft: Draft | 'auto'): Draft {
   return rest;
 }
 
+/** An explicit direction beats the pin, which beats an Out start; Auto sends none. */
+function directionOf(
+  draft: DirectionDraft | null,
+  state: ScanState,
+  deps: ScanDeps,
+): { direction?: 'in' | 'out' } {
+  const direction =
+    draft?.direction ?? deps.pin?.get() ?? (state.scope.direction === 'out' ? 'out' : null);
+  return direction ? { direction } : {};
+}
+
 export function createRunner(deps: ScanDeps, host: Host) {
   /** Requests on the wire, by key. */
   const inflight = new Set<string>();
@@ -48,7 +60,7 @@ export function createRunner(deps: ScanDeps, host: Host) {
       ...deps.base(),
       actionId: d ? d.actionId : 'auto',
       ...(d && d.amount !== null ? { amount: d.amount } : {}),
-      ...(state.scope.direction === 'out' ? { direction: 'out' as const } : {}),
+      ...directionOf(d, state, deps),
       ...(d?.overrideOf ? { overrideOf: d.overrideOf } : {}),
       ...(d?.value !== undefined ? { value: d.value as ActBody['value'] } : {}),
       ...(d?.expectedVersion !== undefined ? { expectedVersion: d.expectedVersion } : {}),
@@ -130,6 +142,7 @@ export function createRunner(deps: ScanDeps, host: Host) {
         case 'act': {
           const wire = wireOf(cmd.input);
           const body = actBody(cmd.key, wire, cmd.draft);
+          deps.pin?.touch();
           // A PIN is never kept: strip it before the request can become an unsure retry.
           bodies.set(cmd.key, { wire, draft: withoutPin(cmd.draft) });
           send(cmd.key, (signal) => deps.api.act(body, { signal }), answerOf(cmd.key));
