@@ -24,6 +24,10 @@ export interface Finalize {
   eventId?: string;
   /** A value action's amount and the input's value before and after, JSON text. */
   value?: { amount: number | null; before: string; after: string };
+  /** A tap-out at a tracked zone of an Access card: never a visit (`visit = 0`). */
+  noVisit?: boolean;
+  /** Why the stay this scan ended was not ended by a tap-out (SA §20.7). */
+  outCause?: 'stay' | 'clear' | 'desk' | 'forced' | 'zone';
   /** An Access card's scan: the deciding zone, the plan then, and whether it started a visit (grants only). */
   access?: { zoneId: string | null; plan: string; visit: boolean | null };
 }
@@ -45,6 +49,8 @@ export function finalizeScan(g: Grant, f: Finalize, when: GrantCond[] = []): Gra
       direction: f.direction ?? null,
       presence_scope: f.presenceScope ?? null,
       ...(f.eventId ? { event_id: f.eventId } : {}),
+      ...(f.outCause ? { out_cause: f.outCause } : {}),
+      ...(f.noVisit ? { visit: 0 } : {}),
       ...(f.value
         ? { amount: f.value.amount, before_value: f.value.before, after_value: f.value.after }
         : {}),

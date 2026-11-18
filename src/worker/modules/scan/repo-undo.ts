@@ -1,6 +1,7 @@
 import type { Grant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import { addUndoWrites, openUndoGrant } from './repo-undo-grant.ts';
+import { addOccupancyUndo } from './repo-undo-occupancy.ts';
 import type { UndoCommit } from './repo-undo-types.ts';
 
 export { UNDO_CODES } from './repo-undo-grant.ts';
@@ -12,7 +13,9 @@ export type { UndoCommit, UndoGate, UndoPresence } from './repo-undo-types.ts';
  * `UNDO_SUPERSEDED` before any write. The actor is the request's own, checked by epochs.
  */
 export function undoGrant(c: UndoCommit): Grant {
-  return addUndoWrites(openUndoGrant(c), c);
+  const g = addUndoWrites(openUndoGrant(c), c);
+  if (c.occupancy) addOccupancyUndo(g, c, c.occupancy);
+  return g;
 }
 
 export async function commitUndo(c: UndoCommit): Promise<D1Result[]> {
