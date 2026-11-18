@@ -57,10 +57,9 @@ export async function countTagMiss(ctx: ServiceContext, actor: ScanActor, ref: s
     ctx.log.info('scan.tag_miss_uncounted', { orgId: actor.orgId, code: 'SCAN_MISS_UNCOUNTED' });
 }
 
-/** The tag rides only an answer about a pass; a customer screen never gets it. */
+/** The tag rides an answer about the chosen pass, never a masked one or a replay. Hub rows never carry it. */
 export function withTagView(result: ScanEvaluation, view: ScanTag | null): ScanEvaluation {
   const outcome = result.outcome;
-  if (!view || outcome.replay || (outcome.template === null && outcome.card === null))
-    return result;
+  if (!view || outcome.replay || outcome.reason === 'not_found') return result;
   return { ...result, outcome: { ...outcome, tag: view } };
 }
