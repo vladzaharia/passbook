@@ -11,6 +11,7 @@ export const stringsFile = (values: Record<string, string>) => {
   return { sha1: sha1Hex(bytes), bytes };
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: fixtures edit untyped JSON
 type Any = Record<string, any>;
 
 /** A small card with every part the merge knows. */

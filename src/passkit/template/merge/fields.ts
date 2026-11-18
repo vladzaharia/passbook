@@ -1,6 +1,6 @@
 import { type Json, PASS_STYLES } from '../../types.ts';
 import { byKey, listOf } from './list.ts';
-import { isObj, leaf, mapOf, part, type Rule, type V } from './map.ts';
+import { isObj, leaf, mapOf, part, type Rule } from './map.ts';
 import type { Cx } from './types.ts';
 
 const KNOWN = ['headerFields', 'primaryFields', 'secondaryFields', 'auxiliaryFields', 'backFields'];

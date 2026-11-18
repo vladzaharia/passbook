@@ -52,7 +52,7 @@ export function readHistory(): Record<string, HistoryVersion[]> {
       const key = JSON.stringify([v.passJson, v.manifest, v.files]);
       if (seen.has(key)) continue;
       seen.add(key);
-      (out[slug] ??= []).push(v);
+      out[slug] = [...(out[slug] ?? []), v];
     }
   }
   return out;

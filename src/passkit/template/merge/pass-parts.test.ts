@@ -127,7 +127,7 @@ describe('fields', () => {
   it('moves a field between groups and conflicts on both moving it differently', () => {
     const to = (g: string) => (d: any) => {
       const [f] = pass(d).generic.secondaryFields.splice(0, 1);
-      (pass(d).generic[g] ??= []).push(f);
+      pass(d).generic[g] = [...(pass(d).generic[g] ?? []), f];
     };
     const r = run(undefined, to('auxiliaryFields'));
     expect(style(r).auxiliaryFields.map((f: any) => f.key)).toEqual(['tier']);

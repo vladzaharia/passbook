@@ -32,11 +32,8 @@ function mutate(doc: PackageDoc, r: () => number, n: number): PackageDoc {
       () => ((pick(fields()) as any).label = tok()),
       () => {
         const g = pick(GROUPS);
-        (pass.generic[g] ??= []).splice(Math.floor(r() * 3), 0, {
-          key: tok(),
-          label: tok(),
-          value: '',
-        });
+        pass.generic[g] = pass.generic[g] ?? [];
+        pass.generic[g].splice(Math.floor(r() * 3), 0, { key: tok(), label: tok(), value: '' });
       },
       () => {
         const f = pick(fields()) as any;
