@@ -9,9 +9,9 @@ import { useOrgScope } from '../../lib/org-filter.tsx';
 import { Button, Dialog, DialogContent, FormField, Input, Select } from '../../ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
 import { assetsPayload } from '../templates/designer/images.ts';
-import { useLoadBlueprintVersion, useUseBlueprint } from './api.ts';
+import { useBlueprintVersion, useLoadBlueprintVersion, useUseBlueprint } from './api.ts';
 import { QuickFields, useQuickFields } from './quick-fields.tsx';
-import { brandDoc, docOfVersion } from './quick-setup.ts';
+import { brandDoc, choicesOf, docOfVersion } from './quick-setup.ts';
 
 type Blueprint = Pick<TemplateSummaryDto, 'id' | 'name' | 'activeVersion'>;
 
@@ -43,6 +43,11 @@ export function UseBlueprintDialog({
   const create = useUseBlueprint(blueprint.id);
   const load = useLoadBlueprintVersion();
   const quick = useQuickFields();
+  const version = useBlueprintVersion(blueprint.id, blueprint.activeVersion);
+  const choices = useMemo(
+    () => (version.data ? choicesOf(docOfVersion(version.data)) : {}),
+    [version.data],
+  );
   const orgId = chosen ?? fallback;
 
   function check(): { orgId: string; name: string } | null {
@@ -72,6 +77,8 @@ export function UseBlueprintDialog({
       name: input.name,
       color: quick.color,
       logo: quick.logo?.asset,
+      goal: quick.goal,
+      currency: quick.currency,
     });
     return {
       ...input,
@@ -155,7 +162,7 @@ export function UseBlueprintDialog({
               />
             )}
           </FormField>
-          <QuickFields state={quick} />
+          <QuickFields state={quick} choices={choices} />
         </div>
       </DialogContent>
     </Dialog>

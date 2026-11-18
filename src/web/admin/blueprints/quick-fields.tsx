@@ -1,18 +1,22 @@
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '../../lib/cn.ts';
-import { FileDrop, FormField, IconButton } from '../../ui/index.ts';
+import { FileDrop, FormField, IconButton, Select } from '../../ui/index.ts';
 import { MAX_ASSET_BYTES, TOO_BIG } from '../passes/png.ts';
 import { parseColor, type Rgb, toHex } from '../templates/designer/contrast.ts';
 import type { DraftAsset } from '../templates/designer/model.ts';
 import './blueprints.css';
-import { logoColors, placeLogo } from './quick-setup.ts';
+import { type Choices, logoColors, placeLogo } from './quick-setup.ts';
 
 /** A preview address for the chosen file; empty where the browser has none. */
 const objectUrl = (file: Blob) =>
   typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
 
 export interface QuickState {
+  goal: number | undefined;
+  currency: string | undefined;
+  setGoal: (goal: number | undefined) => void;
+  setCurrency: (code: string | undefined) => void;
   logo: { asset: DraftAsset; url: string; name: string } | null;
   color: Rgb | undefined;
   swatches: Rgb[];
@@ -29,6 +33,8 @@ export function useQuickFields(): QuickState {
   const [color, setColor] = useState<Rgb | undefined>(undefined);
   const [swatches, setSwatches] = useState<Rgb[]>([]);
   const [problem, setProblem] = useState<string>();
+  const [goal, setGoal] = useState<number>();
+  const [currency, setCurrency] = useState<string>();
   const url = logo?.url;
   useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
 
@@ -48,7 +54,11 @@ export function useQuickFields(): QuickState {
     color,
     swatches,
     problem,
-    touched: logo !== null || color !== undefined,
+    goal,
+    currency,
+    setGoal,
+    setCurrency,
+    touched: logo !== null || color !== undefined || goal !== undefined || currency !== undefined,
     takeLogo,
     clearLogo: () => {
       setLogo(null);
@@ -61,7 +71,7 @@ export function useQuickFields(): QuickState {
 
 const same = (a: Rgb | undefined, b: Rgb) => a?.r === b.r && a.g === b.g && a.b === b.b;
 
-export function QuickFields({ state }: { state: QuickState }) {
+export function QuickFields({ state, choices }: { state: QuickState; choices: Choices }) {
   const { logo, color, swatches } = state;
   return (
     <div className="flex flex-col gap-4">
@@ -129,6 +139,36 @@ export function QuickFields({ state }: { state: QuickState }) {
           </fieldset>
         )}
       </FormField>
+      {choices.goal ? (
+        <FormField label="Stamps for a reward">
+          {(c) => (
+            <Select
+              {...c}
+              value={String(state.goal ?? choices.goal?.value)}
+              onValueChange={(v) => state.setGoal(Number(v))}
+              options={Array.from(
+                { length: (choices.goal?.max ?? 0) - (choices.goal?.min ?? 0) + 1 },
+                (_, i) => {
+                  const n = (choices.goal?.min ?? 0) + i;
+                  return { value: String(n), label: String(n) };
+                },
+              )}
+            />
+          )}
+        </FormField>
+      ) : null}
+      {choices.currency ? (
+        <FormField label="Currency">
+          {(c) => (
+            <Select
+              {...c}
+              value={state.currency ?? choices.currency?.value}
+              onValueChange={state.setCurrency}
+              options={(choices.currency?.options ?? []).map((o) => ({ value: o, label: o }))}
+            />
+          )}
+        </FormField>
+      ) : null}
       <p className="text-xs text-fg-muted">Change anything later in the designer.</p>
     </div>
   );

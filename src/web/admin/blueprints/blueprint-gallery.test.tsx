@@ -207,6 +207,57 @@ describe('quick setup', () => {
     expect(await screen.findByText(/Template created · Version 1/)).toBeInTheDocument();
   });
 
+  it('offers the stamps goal and the currency, and sends the choices', async () => {
+    phone();
+    const user = userEvent.setup();
+    const doc = sampleDoc();
+    const inputs = doc.manifest.inputs as { properties: Record<string, unknown> };
+    inputs.properties.currency = { type: 'string', enum: ['USD', 'EUR'], default: 'USD' };
+    inputs.properties.stamps = { type: 'integer', maximum: 19 };
+    const manifest = { ...doc.manifest, stamps: { input: 'stamps', goal: 10, art: {} } };
+    const bodies: { version: { manifest: Record<string, unknown> } }[] = [];
+    await renderApp('/admin/blueprints', {
+      session: 'admin',
+      ...access,
+      handlers: {
+        ...catalog([bp('store-card', 'Balance card', { group: 'save-spend' })]),
+        [`/api/v1/templates/${ID}/versions/v1`]: () =>
+          json({
+            version: 'v1',
+            createdAt: 1,
+            createdBy: null,
+            assets: [],
+            report: { ok: true, issues: [] },
+            active: true,
+            displayOnly: false,
+            passCount: 0,
+            manifest,
+            passJson: doc.passJson,
+          }),
+        [`/api/v1/templates/${ID}/use`]: (_u: URL, init?: RequestInit) => {
+          bodies.push(JSON.parse(String(init?.body)));
+          return json(made, 201);
+        },
+        '/api/v1/templates/made1': () => json(made),
+        '/api/v1/templates/made1/preview': preview,
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Use Balance card' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Use blueprint' });
+    await user.click(await within(dialog).findByRole('combobox', { name: 'Stamps for a reward' }));
+    await user.click(await screen.findByRole('option', { name: '8' }));
+    await user.click(within(dialog).getByRole('combobox', { name: 'Currency' }));
+    await user.click(await screen.findByRole('option', { name: 'CAD' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    const sent = bodies[0]?.version.manifest as {
+      stamps: { goal: number };
+      sample: { currency: string };
+    };
+    expect(sent.stamps.goal).toBe(8);
+    expect(sent.sample.currency).toBe('CAD');
+  });
+
   it('refuses a logo that is not a PNG', async () => {
     phone();
     const user = userEvent.setup();

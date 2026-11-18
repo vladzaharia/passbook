@@ -1,8 +1,10 @@
 import type { z } from 'zod';
+import { GOAL_MAX, GOAL_MIN } from '@/passkit/stamps/layout.ts';
 import type { TemplateVersionDetailSchema } from '@/shared/contracts/index.ts';
 import { contrast, type Rgb, toRgbText } from '../templates/designer/contrast.ts';
 import { placeImage, setSlotImage } from '../templates/designer/images.ts';
-import type { DesignDoc, DraftAsset } from '../templates/designer/model.ts';
+import { type DesignDoc, type DraftAsset, isRecord } from '../templates/designer/model.ts';
+import { readStamps, setGoal } from '../templates/designer/stamps.ts';
 
 /** A saved version as the designer's documents (the designer's own `docOf`, without its page). */
 export function docOfVersion(v: z.infer<typeof TemplateVersionDetailSchema>): DesignDoc {
@@ -36,7 +38,53 @@ export function textColors(bg: Rgb): { foreground: Rgb; label: Rgb } {
   return { foreground, label: contrast(soft, bg) >= 3 ? soft : foreground };
 }
 
+/** Codes offered besides the blueprint's own. */
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK'];
+
+type Dict = Record<string, unknown>;
+const currencyNode = (doc: DesignDoc): Dict | null => {
+  const props = isRecord(doc.manifest.inputs) ? doc.manifest.inputs.properties : null;
+  const node = isRecord(props) ? props.currency : null;
+  return isRecord(node) && node.type === 'string' ? node : null;
+};
+/** A code the input accepts: three capitals, and its pattern when it has one. */
+const acceptable = (node: Dict, code: string) =>
+  /^[A-Z]{3}$/.test(code) &&
+  (typeof node.pattern !== 'string' || new RegExp(node.pattern).test(code));
+
+export interface Choices {
+  goal?: { value: number; min: number; max: number };
+  currency?: { value: string; options: string[] };
+}
+
+/** The two choices a blueprint can offer: stamps to fill, and the currency. */
+export function choicesOf(doc: DesignDoc): Choices {
+  const out: Choices = {};
+  const stamps = readStamps(doc);
+  if (stamps) out.goal = { value: stamps.goal, min: GOAL_MIN, max: GOAL_MAX };
+  const node = currencyNode(doc);
+  if (node) {
+    const own = typeof node.default === 'string' ? node.default : 'USD';
+    const options = [...new Set([own, ...CURRENCIES])].filter((c) => acceptable(node, c));
+    out.currency = { value: own, options };
+  }
+  return out;
+}
+
+function withCurrency(doc: DesignDoc, code: string): DesignDoc {
+  const next = structuredClone(doc);
+  const node = currencyNode(next);
+  if (!node || !acceptable(node, code)) return doc;
+  node.default = code;
+  if (Array.isArray(node.enum) && !node.enum.includes(code)) node.enum.push(code);
+  if (isRecord(node['x-enumLabels'])) node['x-enumLabels'][code] ??= code;
+  if (isRecord(next.manifest.sample)) next.manifest.sample.currency = code;
+  return next;
+}
+
 export interface QuickSetup {
+  goal?: number | undefined;
+  currency?: string | undefined;
   name: string;
   color?: Rgb | undefined;
   logo?: DraftAsset | undefined;
@@ -58,6 +106,8 @@ export function brandDoc(base: DesignDoc, setup: QuickSetup): DesignDoc {
       },
     };
   }
+  if (setup.goal !== undefined) doc = setGoal(doc, setup.goal);
+  if (setup.currency !== undefined) doc = withCurrency(doc, setup.currency);
   return setup.logo ? setSlotImage(doc, 'logo', setup.logo) : doc;
 }
 
