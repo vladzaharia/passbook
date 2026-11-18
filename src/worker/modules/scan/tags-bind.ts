@@ -37,6 +37,7 @@ import { guardMiss } from './repo-undo-approval-guard.ts';
 import { ROLE_RANK } from './rules.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
+import { candidateTakesTag } from './tag-assurance.ts';
 import { cardPass, tagRights, tagUid } from './tags-inspect.ts';
 
 type BindRequest = z.infer<typeof ScanTagBindRequestSchema>;
@@ -165,6 +166,11 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       : { code: req.card.code, method: req.card.method };
   const { candidate, refs } = await cardPass(ctx, actor, input);
   const { pass } = candidate;
+  if (!candidateTakesTag(candidate))
+    throw new ConflictError(
+      "This pass needs a secure tag. Basic tags can't be assigned to it.",
+      'TAG_ASSURANCE_LOW',
+    );
   const card = await cardFacts(db, pass.templateId, pass.ownerUserId);
   const ownerAccount = pass.ownerUserId !== null && card.ownerActive;
   if (req.binding === 'user' && !ownerAccount)

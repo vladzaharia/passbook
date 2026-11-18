@@ -20,6 +20,7 @@ import {
 } from './repo-tags-resolve.ts';
 import { accepts, matchesEvent } from './resolve-candidates.ts';
 import { evaluate } from './resolve-evaluate.ts';
+import { candidateTakesTag } from './tag-assurance.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
 /** At most this many of a user's passes are evaluated for one tag read (design §3.5). */
@@ -108,6 +109,9 @@ export async function planTagReads(
       // A pending transfer is not ownership yet (review-t1 I4); a pass binding keeps today's answer.
       if (binding.scope === 'user') candidates = candidates.filter((c) => !c.transferPending);
       if (!candidates.length) return { stop: 'not_found', tagId };
+      // A template that asks for a stronger tag than this one is never admitted on it.
+      candidates = candidates.filter((c) => candidateTakesTag(c));
+      if (!candidates.length) return { stop: 'tag_not_allowed', tagId };
       const overridden =
         overrideAt < 0 ? null : (passIdsOf(results[overrideAt]).values().next().value ?? null);
       return {

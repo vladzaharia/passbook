@@ -356,3 +356,18 @@ describe('scanIssues: money amounts', () => {
     expect(only(add(4.5), money('JPY'))).toContain('error:SCAN_AMOUNT_RANGE');
   });
 });
+
+describe('scan.tags', () => {
+  it('accepts basic and secure, and an absent min', () => {
+    expect(only({ ...act({}), tags: { min: 'secure' } })).toEqual([]);
+    expect(only({ ...act({}), tags: { min: 'basic' } })).toEqual([]);
+    expect(only({ ...act({}), tags: {} })).toEqual([]);
+    expect(only(act({}))).toEqual([]);
+  });
+
+  it('refuses another value or key', () => {
+    expect(only({ ...act({}), tags: { min: 'strong' } })).toEqual(['error:SCAN_TAGS']);
+    expect(only({ ...act({}), tags: { max: 'basic' } })).toEqual(['error:SCAN_TAGS']);
+    expect(only({ ...act({}), tags: 'secure' })).toEqual(['error:SCAN_TAGS']);
+  });
+});
