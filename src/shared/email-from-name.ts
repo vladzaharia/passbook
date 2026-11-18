@@ -72,6 +72,45 @@ export function skeleton(value: string): string {
   return mapped.replace(/[^\p{L}\p{N}]+/gu, '');
 }
 
+/** Scripts a name's letters are told apart by; any other letter counts as one more script. */
+const SCRIPTS = [
+  'Latin',
+  'Cyrillic',
+  'Greek',
+  'Armenian',
+  'Cherokee',
+  'Georgian',
+  'Hebrew',
+  'Arabic',
+  'Thai',
+  'Devanagari',
+  'Han',
+  'Hiragana',
+  'Katakana',
+  'Hangul',
+  'Bopomofo',
+] as const;
+const SCRIPT_TESTS = SCRIPTS.map(
+  (name) => [name, new RegExp(`^\\p{Script=${name}}$`, 'u')] as const,
+);
+/** UTS #39 allows these together: the scripts of Japanese, Korean and Chinese text. */
+const ALLOWED_MIXES: ReadonlySet<string>[] = [
+  new Set(['Han', 'Hiragana', 'Katakana']),
+  new Set(['Han', 'Hangul']),
+  new Set(['Han', 'Bopomofo']),
+];
+
+/** True when letters come from more than one script (Common and Inherited marks do not count). */
+export function mixesScripts(value: string): boolean {
+  const found = new Set<string>();
+  for (const ch of value) {
+    if (!/^\p{L}$/u.test(ch) || /^[\p{Script=Common}\p{Script=Inherited}]$/u.test(ch)) continue;
+    found.add(SCRIPT_TESTS.find(([, test]) => test.test(ch))?.[0] ?? `other:${ch}`);
+  }
+  if (found.size < 2) return false;
+  return !ALLOWED_MIXES.some((allowed) => [...found].every((script) => allowed.has(script)));
+}
+
 /**
  * Cleans a From name or refuses it. Strips control, format and filler characters, quotes and angle
  * brackets; refuses an empty result, one over 64 characters, anything that looks like an email
@@ -92,6 +131,7 @@ export function checkFromName(raw: unknown, platformName: string = PLATFORM_NAME
     return { ok: false, error: `Use ${FROM_NAME_MAX} characters or fewer.` };
   if (value.includes('@') || /[\p{L}\p{N}-]+\.\p{L}{2,}/u.test(value))
     return { ok: false, error: 'Use a name, not an email address or domain.' };
+  if (mixesScripts(value)) return { ok: false, error: 'Use one alphabet in the name.' };
   const folded = skeleton(value);
   for (const platform of new Set([PLATFORM_NAME, platformName])) {
     const needle = skeleton(platform);
@@ -102,7 +142,6 @@ export function checkFromName(raw: unknown, platformName: string = PLATFORM_NAME
 }
 
 /** What the recipient sees: the org's part, then the platform's attribution (never dropped). */
-export function displayFromName(orgPart: string, platformName: string | null | undefined): string {
-  const platform = platformName?.trim();
-  return platform ? `${orgPart} via ${platform}` : orgPart;
+export function displayFromName(orgPart: string, platformName?: string | null): string {
+  return `${orgPart} via ${platformName?.trim() || PLATFORM_NAME}`;
 }

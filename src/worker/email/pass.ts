@@ -218,6 +218,6 @@ ${footer.html}`;
     body,
   });
   const sender = input.senderName?.trim();
-  const fromName = sender ? displayFromName(input.fromName || input.orgName, sender) : null;
-  return { subject, html, text, ...(fromName ? { fromName } : {}) };
+  const fromName = displayFromName(input.fromName || input.orgName, sender);
+  return { subject, html, text, fromName };
 }

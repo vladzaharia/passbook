@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkFromName } from './email-from-name.ts';
+import { checkFromName, displayFromName } from './email-from-name.ts';
 
 type Expected = { ok: true; value: string } | { ok: false };
 const ok = (value: string): Expected => ({ ok: true, value });
@@ -54,6 +54,36 @@ describe('checkFromName', () => {
     ['invisible marks around a name', '\u200bHarbor\u2062 Gym\ufeff', 'PassBook', ok('Harbor Gym')],
     ['a renamed platform', 'Polaris Team', 'Polaris', refused],
     ['a renamed platform, old name too', 'PassBook Team', 'Polaris', refused],
+    ['Armenian lookalike mixed with Latin', 'Harb\u0585r Gym', 'PassBook', refused],
+    ['Armenian lookalikes for u and n', 'Harbor \u057d\u0578ion', 'PassBook', refused],
+    ['Cherokee lookalike mixed with Latin', 'Harbor G\u13a1m', 'PassBook', refused],
+    ['Cherokee A in a Latin word', '\u13aaCME Gym', 'PassBook', refused],
+    ['Cyrillic mixed with Latin, not the platform', 'Harbor \u0413ym', 'PassBook', refused],
+    ['Han mixed with Latin', '\u5317\u4eac Gym', 'PassBook', refused],
+    [
+      'one script: Armenian only',
+      '\u0540\u0561\u0575\u0561\u057d\u057f\u0561\u0576',
+      'PassBook',
+      ok('\u0540\u0561\u0575\u0561\u057d\u057f\u0561\u0576'),
+    ],
+    [
+      'one script: Cyrillic only',
+      '\u0413\u0430\u0432\u0430\u043d\u044c',
+      'PassBook',
+      ok('\u0413\u0430\u0432\u0430\u043d\u044c'),
+    ],
+    [
+      'Japanese scripts together',
+      '\u6771\u4eac\u3068\u30c8\u30fc\u30ad\u30e7\u30fc',
+      'PassBook',
+      ok('\u6771\u4eac\u3068\u30c8\u30fc\u30ad\u30e7\u30fc'),
+    ],
+    [
+      'Latin with digits and marks',
+      'Caf\u00e9 No. 5 & Co-op',
+      'PassBook',
+      ok('Caf\u00e9 No. 5 & Co-op'),
+    ],
     ['a renamed platform, lookalike', 'Po1aris Desk', 'Polaris', refused],
   ] as const)('%s', (_label, raw, platform, expected) => {
     const result = checkFromName(raw, platform);
@@ -61,4 +91,16 @@ describe('checkFromName', () => {
     if (expected.ok && result.ok) expect(result.value).toBe(expected.value);
     if (!result.ok) expect(result.error).not.toBe('');
   });
+});
+
+describe('displayFromName', () => {
+  it.each([['PassBook'], [''], ['   '], [null], [undefined]])(
+    'always ends in a platform name (sender %j)',
+    (sender) => {
+      const shown = displayFromName('Harbor Gym', sender);
+      expect(shown).toBe(
+        `Harbor Gym via ${typeof sender === 'string' && sender.trim() ? sender.trim() : 'PassBook'}`,
+      );
+    },
+  );
 });

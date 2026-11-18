@@ -1,12 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg, saveOrgSettings } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
+import { createPassRow } from '../passes/create.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { jobCtxOf } from './delivery-test-fixtures.ts';
 import { emailCaps, PLATFORM_RECIPIENT_HOURLY_CAP } from './email-limits.ts';
 import { enqueuePassEmail } from './issuance-intent.ts';
+import { issuanceEmailOutcome } from './issuance-outcome.ts';
 import {
   confirmReplyTo,
   replyToFor,
@@ -39,22 +41,45 @@ describe('recipient cap is per org, with a platform ceiling', () => {
     await expect(queue(other.id, to)).resolves.toHaveProperty('outboxId');
   });
 
-  it('the platform ceiling holds across orgs and answers generically', async () => {
+  it('over the platform ceiling the mail waits for the next hour, with no refusal', async () => {
     const orgs = [kit.org];
     for (let i = 0; i < 3; i++) orgs.push(await makeOrg(kit.fx, { name: `Org ${i}` }));
     for (const org of orgs) await save(org.id, { 'email.recipientCapPerHour': 20 });
     const to = 'popular@example.com';
+    const now = kit.clock.now();
+    const nextHour = now - (now % 3_600_000) + 3_600_000;
+    const dueAt = async (outboxId: string) =>
+      (
+        await kit.env.DB.prepare('SELECT available_at FROM outbox WHERE id = ?')
+          .bind(outboxId)
+          .first<{ available_at: number }>()
+      )?.available_at;
     for (let i = 0; i < PLATFORM_RECIPIENT_HOURLY_CAP; i++)
-      await queue((orgs[i % orgs.length] ?? kit.org).id, to);
-    const refusal = await queue((orgs[0] ?? kit.org).id, to).catch((e: unknown) => e);
-    expect(refusal).toMatchObject({
-      code: 'EMAIL_RATE_LIMITED',
-      status: 429,
-      message: 'Too many pass emails. Try again later.',
+      expect(await dueAt((await queue((orgs[i % orgs.length] ?? kit.org).id, to)).outboxId)).toBe(
+        0,
+      );
+    // The 11th and 12th, from different orgs, resolve (nothing for a tenant to read) and wait.
+    for (const org of [orgs[0], orgs[1]])
+      expect(await dueAt((await queue((org ?? kit.org).id, to)).outboxId)).toBe(nextHour);
+  });
+
+  it('reports a ceiling-deferred issuance email as deferred', async () => {
+    const to = 'deferred-outcome@example.com';
+    for (let i = 0; i < PLATFORM_RECIPIENT_HOURLY_CAP; i++) await queue(kit.org.id, to);
+    await save(kit.org.id, { 'email.recipientCapPerHour': 20 });
+    const pass = await createPassRow(jobCtxOf(kit), {
+      orgId: kit.org.id,
+      templateId: kit.template.id,
+      templateVersion: kit.template.version,
+      input: { memberName: 'Ceiling' },
+      holderEmail: to,
+      sendEmail: true,
+      source: 'manual',
+      mode: 'live',
+      actor: { type: 'system', id: null },
+      execution: { kind: 'system' },
     });
-    // Nothing that tells an org another org mailed this address.
-    expect((refusal as { issues?: unknown }).issues).toBeUndefined();
-    expect(JSON.stringify(refusal)).not.toMatch(/recipient|org/i);
+    expect(await issuanceEmailOutcome(kit.ctx, pass.id)).toEqual({ outcome: 'deferred' });
   });
 });
 

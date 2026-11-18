@@ -8,8 +8,9 @@ import { readCounter } from './repo-email-queue.ts';
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
 
-/** One address may get this many pass emails an hour across all orgs. Not a setting. */
+/** One address gets this many pass emails an hour across all orgs; more wait for the next hour. Not a setting. */
 export const PLATFORM_RECIPIENT_HOURLY_CAP = 10;
+const MAX_DEFER_HOURS = 24;
 
 /** The org's caps from its settings (3 per hour, 500 per day by default); the day cap is clamped to the platform's. */
 export async function emailCaps(ctx: ServiceContext, orgId: string) {
@@ -32,15 +33,26 @@ export async function emailRate(
 ) {
   const now = ctx.clock.now();
   const digest = await recipientKey(ctx.env, to);
+  // Over the platform ceiling the mail waits for the first hour with room, never a refusal.
+  const platformKey = `pass-email:${mode}:to:${digest}`;
+  let platformWindow = now - (now % HOUR);
+  for (
+    let i = 0;
+    i < MAX_DEFER_HOURS &&
+    (await readCounter(ctx.env.DB, platformKey, platformWindow)) >= PLATFORM_RECIPIENT_HOURLY_CAP;
+    i++
+  )
+    platformWindow += HOUR;
   return {
     recipientKey: `pass-email:${mode}:org:${orgId}:to:${digest}`,
     orgKey: `pass-email:${mode}:org:${orgId}`,
     recipientWindow: now - (now % HOUR),
     orgWindow: now - (now % DAY),
     ...(await emailCaps(ctx, orgId)),
-    platformKey: `pass-email:${mode}:to:${digest}`,
-    platformWindow: now - (now % HOUR),
+    platformKey,
+    platformWindow,
     platformCap: PLATFORM_RECIPIENT_HOURLY_CAP,
+    platformAvailableAt: platformWindow > now - (now % HOUR) ? platformWindow : 0,
   };
 }
 

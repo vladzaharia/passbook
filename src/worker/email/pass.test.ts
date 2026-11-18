@@ -322,7 +322,7 @@ describe('pass email', () => {
 
   it('sends from "<Org> via <sender>"', () => {
     expect(render().fromName).toBe('Harbor Lights Festival via PassBook');
-    expect(render({ senderName: '' }).fromName).toBeUndefined();
+    expect(render({ senderName: '' }).fromName).toBe('Harbor Lights Festival via PassBook');
   });
 
   it("leaves the buddy out by default: the org's pass, under the org's name on the page", () => {
@@ -485,5 +485,14 @@ describe('sign-in email', () => {
     expect(html).toMatch(/class="e-btn"[^>]*padding:11px 24px/);
     expect(html).not.toMatch(/@keyframes|\.gif/i);
     expect(text.split('\n\n')[0]).toBe('Sign in to PassBook');
+  });
+});
+
+describe('From name keeps the platform attribution', () => {
+  it.each([[''], ['   '], [null], [undefined]])('with sender name %j', (senderName) => {
+    expect(render({ senderName }).fromName).toBe('Harbor Lights Festival via PassBook');
+    expect(render({ senderName, fromName: 'Harbor Desk' }).fromName).toBe(
+      'Harbor Desk via PassBook',
+    );
   });
 });

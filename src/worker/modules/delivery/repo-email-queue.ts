@@ -3,7 +3,7 @@ import { type Grant, grant, grantedBatch } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { exists, type GrantCond } from '../../platform/authority-cond.ts';
 import { writePart } from '../../platform/authority-include.ts';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -29,6 +29,8 @@ export interface QueueRate {
   platformKey: string;
   platformWindow: number;
   platformCap: number;
+  /** When the outbox row becomes due: 0, or the window where this address still has room. */
+  platformAvailableAt: number;
 }
 
 /** Who queues the mail: callers holding live requests, or a durable actor captured earlier. */
@@ -46,7 +48,7 @@ export type QueueResult = 'queued' | 'limited' | 'stale' | 'org' | 'actor' | 'de
 const RATE_LIMITED = 'EMAIL_RATE_LIMITED';
 const CODES = { ...DELIVERY_CODES, stale: RATE_LIMITED };
 
-/** Both counters are under their cap when the batch runs (a concurrent queue can still lose). */
+/** The org's counters are under their cap when the batch runs (a concurrent queue can still lose). */
 export function rateChecks(r: QueueRate): Check[] {
   const under = (key: string, window: number, cap: number) =>
     rawCheck(
@@ -57,7 +59,6 @@ export function rateChecks(r: QueueRate): Check[] {
   return [
     under(r.recipientKey, r.recipientWindow, r.recipientCap),
     under(r.orgKey, r.orgWindow, r.orgCap),
-    under(r.platformKey, r.platformWindow, r.platformCap),
   ];
 }
 
@@ -130,7 +131,16 @@ export function addQueueWrites(g: Grant, ctx: ServiceContext, w: QueueWrite): vo
   g.insertSelect(
     'outbox',
     ['id', 'kind', 'pass_id', 'coalesce_key', 'payload', 'state', 'available_at', 'created_at'],
-    [w.id, 'email', w.passId, null, JSON.stringify(w.payload), 'pending', 0, w.now],
+    [
+      w.id,
+      'email',
+      w.passId,
+      null,
+      JSON.stringify(w.payload),
+      'pending',
+      w.rate.platformAvailableAt,
+      w.now,
+    ],
     { returning: ['id'] },
   );
   for (const [key, window] of [
@@ -240,3 +250,13 @@ export const bumpCounter = (db: D1Database, key: string, window: number) =>
      ON CONFLICT (key, window_start) DO UPDATE SET count = count + 1`,
     [key, window],
   );
+
+/** When an outbox row becomes due (0 for a row due at once). */
+export async function outboxAvailableAt(db: D1Database, id: string): Promise<number> {
+  const row = await first<{ available_at: number }>(
+    db,
+    'SELECT available_at FROM outbox WHERE id = ?',
+    [id],
+  );
+  return row?.available_at ?? 0;
+}
