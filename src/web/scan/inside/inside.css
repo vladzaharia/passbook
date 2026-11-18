@@ -1,0 +1,246 @@
+/* Who's in. Phone: a full-width sheet. From 600 px: a 440 px side sheet at the end. */
+.scan-inside-sheet {
+  width: 100%;
+  max-width: 100%;
+}
+@media (min-width: 600px) {
+  .scan-inside-sheet {
+    width: min(440px, 100%);
+  }
+}
+@media (min-width: 600px) and (max-width: 1023px) {
+  /* Tablet: a little wider, so the meta line keeps to one row. */
+  .scan-inside-sheet {
+    width: min(520px, 100%);
+  }
+}
+.scan-in {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100%;
+  padding: 12px 16px 16px;
+}
+.scan-in-places {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-block: 2px;
+  scrollbar-width: none;
+}
+.scan-in-place {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 96px;
+  padding: 10px 14px 12px;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms var(--wl-ease-spring, ease-out);
+}
+.scan-in-place:disabled {
+  cursor: default;
+}
+.scan-in-place[aria-pressed="true"] {
+  border-color: var(--sd-accent);
+  background: color-mix(in srgb, var(--sd-accent) 14%, var(--sd-fill-gray));
+}
+.scan-in-place:not(:disabled):active {
+  transform: scale(0.97);
+}
+.scan-in-place:focus-visible {
+  outline: 3px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+.scan-in-place-name {
+  font: 600 13px / 16px var(--pk-font-sans);
+  color: var(--sd-muted);
+}
+.scan-in-place-count {
+  font: 700 24px / 28px var(--pk-font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.scan-in-place-count span:not(.tabular-nums) {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sd-muted);
+}
+.scan-in-bar {
+  position: absolute;
+  inset-inline: 14px;
+  inset-block-end: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--sd-muted) 28%, transparent);
+  overflow: hidden;
+}
+.scan-in-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sd-accent);
+  transition: width 420ms var(--wl-ease-spring, ease-out);
+}
+.scan-in-place[data-full] .scan-in-bar i {
+  background: var(--scan-heads);
+}
+.scan-in-place[data-full] .scan-in-place-count {
+  color: var(--sd-chip-gold-fg);
+}
+.scan-in-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.scan-in-search > svg {
+  position: absolute;
+  inset-inline-start: 12px;
+  z-index: 1;
+  color: var(--sd-muted);
+  pointer-events: none;
+}
+.scan-in-search input {
+  padding-inline-start: 38px;
+}
+.scan-in-asof {
+  align-self: flex-start;
+  margin: 0;
+}
+.scan-in-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-stale] .scan-in-list {
+  opacity: 0.6;
+}
+.scan-in-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scan-in-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 72px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--sd-line);
+}
+.scan-in-row[data-flag="amber"] {
+  margin-inline: -8px;
+  padding-inline: 8px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--scan-heads) 14%, transparent);
+}
+.scan-in-open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.scan-in-open:focus-visible {
+  outline: 3px solid var(--sd-accent);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+.scan-in-photo {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.scan-in-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+.scan-in-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.scan-in-who {
+  font: 650 16px / 20px var(--pk-font-sans);
+  color: var(--sd-strong);
+  overflow-wrap: anywhere;
+}
+.scan-in-plan,
+.scan-in-flag {
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  font: 600 12px / 16px var(--pk-font-sans);
+}
+.scan-in-flag {
+  background: var(--sd-chip-gold-bg);
+  color: var(--sd-chip-gold-fg);
+}
+.scan-in-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--sd-muted);
+  font: 400 13px / 18px var(--pk-font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.scan-in-trailing {
+  flex: none;
+}
+.scan-in-more {
+  align-self: center;
+}
+@media (max-width: 420px) {
+  /* A narrow phone: the action drops under the person, full width. */
+  .scan-in-row {
+    flex-wrap: wrap;
+  }
+  .scan-in-open {
+    flex-basis: 100%;
+  }
+  .scan-in-trailing {
+    margin-inline-start: 52px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-in-row {
+    animation: scan-in-rise 280ms var(--wl-ease-spring, ease-out) backwards;
+    animation-delay: calc(min(var(--i, 0), 8) * 30ms);
+  }
+}
+@keyframes scan-in-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

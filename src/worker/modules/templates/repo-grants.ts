@@ -13,6 +13,8 @@ const TEMPLATE_TABLES = [
   'template_candidates',
   'template_approvals',
   'template_releases',
+  'template_forks',
+  'template_version_bases',
   'template_versions',
   'template_version_extras',
   'template_version_extra_sets',

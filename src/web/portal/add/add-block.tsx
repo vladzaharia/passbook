@@ -1,6 +1,7 @@
 import { Laptop } from 'lucide-react';
 import { useId, useState } from 'react';
 import { HOLDER_COPY } from '../../../shared/copy/holder.ts';
+import { isAndroid } from '../../../shared/device.ts';
 import { AddedLine, RevealButton } from './added.tsx';
 import type { AddAreaProps } from './area.ts';
 import { type RenderBuddy, Scan } from './scan.tsx';
@@ -13,11 +14,15 @@ const SURFACE =
  * The add block: the buddy holds the job. Off the phone the QR leads and the Apple badge remains
  * beside it on every device. On the iPhone the buddy sits on the badge's card. When Apple has
  * reported a registration, it stands happy over a quiet line; Show QR (on the iPhone, Add to this
- * iPhone) brings adding back without the buddy, which stays where it is.
+ * iPhone) brings adding back without the buddy, which stays where it is. An Android phone cannot
+ * add to Apple Wallet: no badge, no QR, one text line.
  */
 export function AddBlock(p: AddAreaProps & { buddy: RenderBuddy }) {
   const [open, setOpen] = useState(false);
   const id = useId();
+  if (isAndroid(p.device.device)) {
+    return <p className="wl-add-line text-sm text-fg-muted">{HOLDER_COPY.openOnApple}</p>;
+  }
   const added = p.mode === 'added';
   const url = p.device.device === 'iphone' ? null : p.publicUrl;
   const ask = url ? (

@@ -199,13 +199,21 @@ describe('field coverage', () => {
     for (const slug of Object.keys(STYLE_OF)) {
       const { barcodes } = (await build(slug, material)).passJson;
       expect(barcodes?.length, slug).toBeGreaterThan(0);
+      // A coupon's barcode is the scan code; its text is the typed code.
+      const message = (b: { message: string }) =>
+        slug === 'starter-coupon' ? 'SNAPSHOT-SCAN-CODE' : b.message;
       // The access card's code is the server's {{pass.scanCode}}; its alt text is the member ID.
       expect(
         barcodes?.every((b) =>
-          slug === 'starter-access-card' ? !!b.altText : b.altText === b.message,
+          slug === 'starter-access-card' ? !!b.altText : b.message === message(b) && !!b.altText,
         ),
         slug,
-      ).toBe(true);
+      ).toBeTruthy();
+      if (slug !== 'starter-coupon' && slug !== 'starter-access-card')
+        expect(
+          barcodes?.every((b) => b.altText === b.message),
+          slug,
+        ).toBe(true);
     }
   });
 });

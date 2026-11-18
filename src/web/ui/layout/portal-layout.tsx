@@ -38,7 +38,11 @@ function PortalNav({ platformAdmin }: { platformAdmin: boolean }) {
             to={to}
             search={
               item.admin
-                ? { orgId: isOrgScoped(to) ? entryOrgId(membership, memberships) : undefined }
+                ? {
+                    orgId: isOrgScoped(to, platformAdmin)
+                      ? entryOrgId(membership, memberships)
+                      : undefined,
+                  }
                 : undefined
             }
             activeOptions={{ exact: item.to === '/' }}

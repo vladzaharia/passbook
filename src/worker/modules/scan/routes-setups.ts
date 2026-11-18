@@ -36,8 +36,8 @@ register(
     const ctx = serviceContext(c);
     const mode = modeOf(c.var.auth);
     return c.json(
-      await readableScanningPage(ctx, authOf(c), c.req.valid('query'), (query) =>
-        listSetups(ctx, mode, query),
+      await readableScanningPage(ctx, authOf(c), c.req.valid('query'), (query, authority) =>
+        listSetups(ctx, mode, query, authority),
       ),
     );
   },

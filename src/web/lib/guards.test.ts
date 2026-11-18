@@ -3,7 +3,7 @@ import { isRedirect } from '@tanstack/react-router';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
+import type { OrgCapability, OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { ApiError } from './errors.ts';
 import {
   canAccessAdminPath,
@@ -380,13 +380,10 @@ describe('canAccessAdminPath', () => {
 
   it('keeps platform pages available to admins without memberships, but not to members', () => {
     for (const path of [
-      '/admin',
-      '/admin/',
       '/admin/users',
       '/admin/users/u1',
       '/admin/orgs',
       '/admin/status',
-      '/admin/audit',
       '/admin/identities/i1',
       '/admin/settings',
     ]) {
@@ -396,16 +393,31 @@ describe('canAccessAdminPath', () => {
     expect(canAccessAdminPath('/admin/account', false)).toBe(true);
   });
 
-  it('keeps API keys platform-only even for integration administrators', () => {
-    const integrationAdmin = membershipFixture('org-a', {
-      capabilities: ['integrations:read', 'integrations:manage'],
-    });
-    for (const path of ['/admin/api-keys', '/admin/api-keys/key-a']) {
-      expect(isTenantAdminPath(path)).toBe(false);
-      expect(canAccessAdminPath(path, true)).toBe(true);
-      expect(canAccessAdminPath(path, false, integrationAdmin)).toBe(false);
-      expect(canAccessAdminPath(path, false)).toBe(false);
+  it('gives admins the platform pages and members their organization overview, log and keys', () => {
+    for (const path of ['/admin', '/admin/', '/admin/audit', '/admin/api-keys/key-a']) {
+      expect(canAccessAdminPath(path, true), path).toBe(true);
+      expect(canAccessAdminPath(path, false, member), path).toBe(true);
+      expect(canAccessAdminPath(path, false), path).toBe(false);
+      expect(
+        canAccessAdminPath(path, false, membershipFixture('org-a', { revokedAt: 1 })),
+        path,
+      ).toBe(false);
+      expect(isTenantAdminPath(path), path).toBe(true);
     }
+  });
+
+  it('gates the overview, the audit log and API keys on their own capabilities', () => {
+    const only = (...capabilities: OrgCapability[]) => membershipFixture('org-a', { capabilities });
+    const allowed = (path: string, m: OrgMembership) => canAccessAdminPath(path, false, m);
+    expect(allowed('/admin', only('org:read', 'passes:read'))).toBe(true);
+    expect(allowed('/admin', only('org:read'))).toBe(false);
+    expect(allowed('/admin', only('passes:read'))).toBe(false);
+    expect(allowed('/admin/audit', only('audit:read'))).toBe(true);
+    expect(allowed('/admin/audit', only('org:read', 'passes:read', 'integrations:manage'))).toBe(
+      false,
+    );
+    expect(allowed('/admin/api-keys', only('integrations:read'))).toBe(true);
+    expect(allowed('/admin/api-keys', only('org:read', 'passes:read', 'audit:read'))).toBe(false);
   });
 
   it('does not give an admin tenant capabilities without an active membership', () => {

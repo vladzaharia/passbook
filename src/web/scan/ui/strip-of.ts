@@ -1,0 +1,28 @@
+import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
+import { formatTime } from '../../lib/format.ts';
+import type { ResolvedOutcome } from '../machine/access-events.ts';
+import type { Recent } from '../machine/types.ts';
+import type { StripEntry } from './last-scan-strip.tsx';
+
+/** The dock strip for the newest scan. A tracked place says which way and where: `In · Gym · 6:41 PM`. */
+export function stripOf(last: Recent | undefined, undoable: boolean): StripEntry | null {
+  if (!last) return null;
+  const o = last.outcome;
+  const time = formatTime(last.at);
+  const staff = (o as ResolvedOutcome).resolvedBy;
+  const where = o.occupancy && o.kind === 'ok' && o.action?.id !== 'undo' ? o.occupancy : null;
+  const meta = staff
+    ? scanLine(SCAN_COPY.verdict.letInByStrip, {
+        staff,
+        scanner: o.occupancy?.via ?? '',
+      }).replace(/ at $/, '')
+    : where
+      ? `${SCAN_COPY.direction[where.direction]} · ${where.place.name} · ${time}`
+      : time;
+  return {
+    kind: o.kind === 'ok' || o.kind === 'heads_up' || o.kind === 'refused' ? o.kind : 'system',
+    title: o.display?.identity.holder ?? o.action?.label ?? 'Scan',
+    meta,
+    undoable,
+  };
+}

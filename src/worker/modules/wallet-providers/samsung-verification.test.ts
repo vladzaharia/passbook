@@ -1050,7 +1050,7 @@ describe('authenticated Samsung card-state evidence', () => {
       const seam = interveneAtD1(
         db,
         {
-          method: 'run',
+          method: 'first',
           sql: /INSERT INTO wallet_provider_projection_evidence\s/,
           when: 'before',
         },

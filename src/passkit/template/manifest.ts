@@ -272,22 +272,27 @@ export function applyDefaults(manifest: TemplateManifest, input: Personalization
   return out;
 }
 
+/** One `Validator` for many inputs (a bulk import). Issues name the failed keyword; `x-pattern-message` words a failed pattern. */
+export function inputChecker(manifest: TemplateManifest) {
+  const validator = new Validator(manifest.inputs as never, '2020-12', false);
+  return (input: Personalization) =>
+    leafErrors(validator.validate(applyDefaults(manifest, input)).errors).map((e) => {
+      const path = e.instanceLocation.replace(/^#\/?/, '');
+      const own = (manifest.inputs.properties as Record<string, unknown> | undefined)?.[path];
+      const said = isRecord(own) && e.keyword === 'pattern' ? own['x-pattern-message'] : undefined;
+      return {
+        severity: 'error' as const,
+        code: 'INPUT',
+        message: typeof said === 'string' ? said : e.error,
+        path,
+        keyword: e.keyword,
+      };
+    });
+}
+
 /** Validates against the inputs schema after defaults. Returns the problems (empty when valid). */
 export function checkInput(manifest: TemplateManifest, input: Personalization): ValidationIssue[] {
-  const validator = new Validator(manifest.inputs as never, '2020-12', false);
-  const result = validator.validate(applyDefaults(manifest, input));
-  return leafErrors(result.errors).map((e) => {
-    const path = e.instanceLocation.replace(/^#\/?/, '');
-    const own = (manifest.inputs.properties as Record<string, unknown> | undefined)?.[path];
-    // A schema may say what a failed pattern means in plain words.
-    const said = isRecord(own) && e.keyword === 'pattern' ? own['x-pattern-message'] : undefined;
-    return {
-      severity: 'error' as const,
-      code: 'INPUT',
-      message: typeof said === 'string' ? said : e.error,
-      path,
-    };
-  });
+  return inputChecker(manifest)(input).map(({ keyword: _keyword, ...issue }) => issue);
 }
 
 export interface DisplayProjection {

@@ -11,6 +11,8 @@ import {
   type Selection,
   styleOf,
 } from './model.ts';
+import { actionIndexOf } from './scan/actions/issues.ts';
+import { readActions } from './scan/actions/model.ts';
 import { scanDisplayOf } from './scan/document.ts';
 import { scanIssueTarget } from './scan/scan-issue-target.ts';
 
@@ -32,6 +34,12 @@ export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection |
   if (/^scan\.display\b/.test(path)) {
     const display = scanDisplayOf(doc);
     return { section: 'scan-display', key: display ? scanIssueTarget(display, path) : 'header' };
+  }
+  if (/^scan\.(actions|window|flags)\b/.test(path)) {
+    const at = actionIndexOf(path);
+    const id = at === null ? undefined : readActions(doc)[at]?.id;
+    const part = /^scan\.(window|flags)\b/.exec(path)?.[1];
+    return { section: 'scan-actions', ...(id ? { key: id } : part ? { key: part } : {}) };
   }
   if (/^scan\.access\b/.test(path) || issue.code.startsWith('ACCESS_')) {
     const at = planIndexOf(path);

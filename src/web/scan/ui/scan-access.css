@@ -1,0 +1,45 @@
+/* Access and occupancy: the band's direction pill, the direction chip and sheet, the held dock. */
+.scan-dir-pill {
+  display: inline-block;
+  margin-inline-end: 8px;
+  padding: 1px 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--v-on) 16%, transparent);
+  color: var(--v-on);
+  font: 700 13px / 20px var(--pk-font-sans);
+  letter-spacing: 0.02em;
+  vertical-align: 1px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-result[data-phase="rising"] .scan-dir-pill {
+    animation: scan-pill-in 320ms var(--wl-ease-spring, ease-out) 120ms backwards;
+  }
+  .scan-dir-label {
+    display: inline-block;
+    animation: scan-pill-in 220ms var(--wl-ease-spring, ease-out) backwards;
+  }
+}
+@keyframes scan-pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+}
+
+.scan-dir-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+.scan-dir-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 650;
+}
+.scan-dir-lapse {
+  margin: 0;
+  color: var(--sd-muted);
+  font: 400 14px / 20px var(--pk-font-sans);
+}

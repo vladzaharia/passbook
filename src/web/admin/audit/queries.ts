@@ -32,3 +32,29 @@ export function usePlatformAuditLog(filters: AuditQuery, limit = 50, staleTime?:
     ...(staleTime === undefined ? {} : { staleTime }),
   });
 }
+
+/** One organization's log, for a member with `audit:read`. The org is part of the key. */
+export function useTenantAuditLog(
+  orgId: string | undefined,
+  filters: Omit<AuditQuery, 'filterOrgId'>,
+  limit = 50,
+  staleTime?: number,
+) {
+  const session = useSession();
+  const principal = session.authed?.user.id;
+  return useInfiniteQuery({
+    queryKey: ['audit', 'tenant', principal ?? null, orgId ?? null, filters, limit],
+    enabled: principal !== undefined && orgId !== undefined,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) =>
+      api.get('/api/v1/audit', AuditListSchema, {
+        query: { ...filters, orgId, cursor: pageParam, limit },
+        signal,
+      }),
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    // Keep rows during filter changes only within the same person and organization.
+    placeholderData: (previous, query) =>
+      query?.queryKey[2] === principal && query?.queryKey[3] === orgId ? previous : undefined,
+    ...(staleTime === undefined ? {} : { staleTime }),
+  });
+}
