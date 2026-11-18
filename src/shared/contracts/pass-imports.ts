@@ -173,3 +173,12 @@ export const PassImportRemoveResultSchema = z.object({
   skipped: z.array(z.object({ passId: IdSchema, code: z.string() })),
   nextCursor: z.string().nullable(),
 });
+
+/** Email the created passes that were not emailed at commit, 50 rows a call after `cursor`. */
+export const PassImportEmailRestSchema = PassImportRemoveSchema;
+export const PassImportEmailRestResultSchema = z.object({
+  sent: count,
+  /** Held back: the day's or the holder's hourly cap, or a pass that cannot be mailed now. */
+  skipped: count,
+  nextCursor: z.string().nullable(),
+});
