@@ -1,7 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { MetricsQuery, OrgActivity } from '../../../shared/contracts/metrics.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import * as repo from './repo.ts';
+import type * as repo from './repo.ts';
 import * as act from './repo-activity.ts';
 
 const HOUR = 3_600_000;
@@ -19,8 +19,32 @@ function fill(rows: repo.SeriesRow[], start: number, end: number, bucketMs: numb
   return points;
 }
 
-/** An organization's passes, wallet state and scans by template, in one mode. */
+const CACHE_TTL_MS = 60_000;
+const cache = new WeakMap<D1Database, Map<string, { at: number; value: OrgActivity }>>();
+
+/** Cached per org, mode and range. Callers check access first; the key never crosses orgs. */
 export async function getOrgActivity(
+  ctx: ServiceContext,
+  query: MetricsQuery & { orgId: string },
+  mode: Mode,
+): Promise<OrgActivity> {
+  const now = ctx.clock.now();
+  const byKey = cache.get(ctx.env.DB) ?? new Map();
+  cache.set(ctx.env.DB, byKey);
+  const key = JSON.stringify([query.orgId, mode, query.range]);
+  const hit = byKey.get(key);
+  if (hit && now >= hit.at && now - hit.at < CACHE_TTL_MS) return hit.value;
+  const value = await loadOrgActivity(ctx, query, mode);
+  byKey.set(key, { at: now, value });
+  return value;
+}
+
+export function clearActivityCache(db: D1Database): void {
+  cache.delete(db);
+}
+
+/** An organization's passes, wallet state and scans by template, in one mode. */
+async function loadOrgActivity(
   ctx: ServiceContext,
   query: MetricsQuery & { orgId: string },
   mode: Mode,
@@ -36,7 +60,7 @@ export async function getOrgActivity(
     act.walletRows(db, start, { ...scope, orgId: query.orgId }),
     act.issuedByTemplate(db, w, scope),
     act.scansByTemplate(db, w, scope),
-    repo.issuedRows(db, w, scope),
+    act.issuedSeries(db, w, scope),
     act.scanSeries(db, w, scope),
   ]);
   const issuedBy = new Map(issued.map((r) => [r.template_id, r.n]));

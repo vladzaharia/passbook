@@ -416,9 +416,8 @@ describe('canAccessAdminPath', () => {
     expect(allowed('/admin/audit', only('org:read', 'passes:read', 'integrations:manage'))).toBe(
       false,
     );
-    expect(allowed('/admin/api-keys', only('integrations:manage'))).toBe(true);
-    // Reading integrations is not managing keys.
-    expect(allowed('/admin/api-keys', only('integrations:read', 'audit:read'))).toBe(false);
+    expect(allowed('/admin/api-keys', only('integrations:read'))).toBe(true);
+    expect(allowed('/admin/api-keys', only('org:read', 'passes:read', 'audit:read'))).toBe(false);
   });
 
   it('does not give an admin tenant capabilities without an active membership', () => {

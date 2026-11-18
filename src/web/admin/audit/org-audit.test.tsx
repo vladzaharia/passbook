@@ -100,7 +100,15 @@ describe('organization audit log', () => {
   it('shows the log and API keys links to an organization administrator', async () => {
     await renderApp('/admin/audit', {
       session: 'user',
-      memberships: [member(['org:read', 'passes:read', 'audit:read', 'integrations:manage'])],
+      memberships: [
+        member([
+          'org:read',
+          'passes:read',
+          'audit:read',
+          'integrations:read',
+          'integrations:manage',
+        ]),
+      ],
       selectedOrg: 'o1',
       handlers,
     });

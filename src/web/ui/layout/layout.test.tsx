@@ -178,14 +178,14 @@ describe('route guards in the app', () => {
     expect(await screen.findByText('1 pass in Henrys')).toBeInTheDocument();
   });
 
-  it('denies API key pages and actions to a tenant member who cannot manage integrations', async () => {
+  it('denies API key pages and actions to a tenant member who cannot read integrations', async () => {
     const user = userEvent.setup();
     const { fetchMock } = await renderApp('/admin/api-keys?orgId=o1&new=1', {
       session: 'user',
       memberships: [
         membershipFixture('o1', {
           roles: ['read_only'],
-          capabilities: ['org:read', 'passes:read', 'integrations:read'],
+          capabilities: ['org:read', 'passes:read'],
         }),
       ],
       handlers: {

@@ -87,7 +87,7 @@ export function canAccessAdminPath(
   // The platform's audit log and keys are admin-wide; an organization's are its admins' own.
   if (within(path, '/admin/audit')) return platformAdmin || hasCapability(membership, 'audit:read');
   if (within(path, '/admin/api-keys')) {
-    return platformAdmin || hasCapability(membership, 'integrations:manage');
+    return platformAdmin || hasCapability(membership, 'integrations:read');
   }
   if (/^\/admin\/orgs\/[^/]+$/.test(path)) {
     const orgId = orgDetailId(path);

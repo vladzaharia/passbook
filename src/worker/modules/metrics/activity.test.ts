@@ -1,5 +1,5 @@
 import { env } from 'cloudflare:workers';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fakeAuth,
@@ -15,6 +15,7 @@ import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { clearActivityCache } from './activity.ts';
 
 const fake = fakeAuth();
 const app = createApp({ stores: fake.stores });
@@ -22,6 +23,7 @@ let base: AppEnv;
 beforeAll(async () => {
   base = await makeEnv();
 });
+beforeEach(() => clearActivityCache(env.DB));
 
 async function join(f: ReturnType<typeof fixtures>, orgId: string, userId: string, role: string) {
   const now = f.clock.now();
@@ -74,6 +76,9 @@ async function setup() {
     [device, clock.now(), added.id],
   );
   await run(env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [clock.now(), removed.id]);
+  // Deleted passes are not counted, as in the pass list.
+  const gone = await makePass(f, { orgId: org.id, template: tpl.resolved });
+  await run(env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [clock.now(), gone.id]);
   await scan(org.id, added.id, tpl.resolved.id, 'check_in', clock.now());
   await scan(org.id, added.id, tpl.resolved.id, 'use_up', clock.now());
   await scan(other.id, foreign.id, otherTemplate.resolved.id, 'use_up', clock.now());

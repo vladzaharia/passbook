@@ -53,18 +53,16 @@ describe('API key platform and membership authority', () => {
     expect(requests.every((orgId) => orgId === 'o1')).toBe(true);
   });
 
-  it('denies a member who can read integrations but not manage them', async () => {
-    const requests = vi.fn(() => page([]));
+  it('lets a reader list keys but not create or revoke them', async () => {
     await renderApp('/admin/api-keys?orgId=o1&new=1', {
       session: 'user',
       memberships: [reader],
-      handlers: { '/api/v1/api-keys': requests },
+      handlers: { '/api/v1/api-keys': () => page([key('k1', 'o1', 'Door feed')]) },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'You do not have access' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Door feed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'New API key' })).toBeNull();
-    expect(requests).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Actions for Door feed' })).toBeNull();
   });
 
   it('lets an admin without memberships list and revoke platform keys', async () => {
