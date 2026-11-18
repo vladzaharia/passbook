@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "50bce86b40ab6e76596569bca8fbdf626f683379";
+export const BAKED_BUILD_HASH = "a4a8031c89a3547f20367f36b2cc330fab95e079";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -1478,7 +1478,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-access-card",
     "slug": "starter-access-card",
-    "version": "56edcb351146d9cd",
+    "version": "8b2a190ac8f14bab",
     "name": "Access card",
     "description": "Door access by plan and zone, with a photo for ID checks.",
     "org": null,
@@ -1557,10 +1557,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-label": "Extra zones",
             "x-group": "Access",
             "x-order": 50,
-            "x-widget": "list",
-            "x-itemLabel": "Zone",
-            "x-addLabel": "Add zone",
-            "x-help": "Zone keys from Scanning, like pool."
+            "x-widget": "access-zones",
+            "x-help": "Pick from the zones in Scanning."
           },
           "validFrom": {
             "type": "string",
@@ -2063,7 +2061,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 480473760,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/56edcb351146d9cd/en.lproj/pass.strings"
+          "path": "/templates/starter-access-card/8b2a190ac8f14bab/en.lproj/pass.strings"
         }
       },
       {
@@ -2077,7 +2075,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/56edcb351146d9cd/icon@2x.png"
+          "path": "/templates/starter-access-card/8b2a190ac8f14bab/icon@2x.png"
         }
       },
       {
@@ -2091,7 +2089,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/56edcb351146d9cd/icon@3x.png"
+          "path": "/templates/starter-access-card/8b2a190ac8f14bab/icon@3x.png"
         }
       },
       {
@@ -2105,7 +2103,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/56edcb351146d9cd/logo@2x.png"
+          "path": "/templates/starter-access-card/8b2a190ac8f14bab/logo@2x.png"
         }
       },
       {
@@ -2119,7 +2117,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/56edcb351146d9cd/logo@3x.png"
+          "path": "/templates/starter-access-card/8b2a190ac8f14bab/logo@3x.png"
         }
       },
       {
@@ -2133,7 +2131,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/56edcb351146d9cd/thumbnail@2x.png"
+          "path": "/templates/starter-access-card/8b2a190ac8f14bab/thumbnail@2x.png"
         }
       },
       {
@@ -2147,7 +2145,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/56edcb351146d9cd/thumbnail@3x.png"
+          "path": "/templates/starter-access-card/8b2a190ac8f14bab/thumbnail@3x.png"
         }
       }
     ],

@@ -69,10 +69,8 @@
         "x-label": "Extra zones",
         "x-group": "Access",
         "x-order": 50,
-        "x-widget": "list",
-        "x-itemLabel": "Zone",
-        "x-addLabel": "Add zone",
-        "x-help": "Zone keys from Scanning, like pool."
+        "x-widget": "access-zones",
+        "x-help": "Pick from the zones in Scanning."
       },
       "validFrom": {
         "type": "string",
