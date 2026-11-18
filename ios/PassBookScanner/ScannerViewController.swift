@@ -181,7 +181,10 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
             guard ready, wireVersion == 2, UIApplication.shared.applicationState == .active, pendingID == nil,
                   let id = request["id"] as? String, (1...100).contains(id.count),
                   let prompt = request["prompt"] as? String, prompt.count <= 200,
-                  let timeoutMs = request["timeoutMs"] as? Int, (1...60000).contains(timeoutMs) else { return }
+                  let timeoutMs = request["timeoutMs"] as? Int, (1...60000).contains(timeoutMs) else {
+                if ready, wireVersion == 2 { send(["event": "cancelled"]) }
+                return
+            }
             hardware.readTag(id: id, prompt: prompt, timeoutMs: timeoutMs)
         case "tagCancel":
             guard wireVersion == 2, let id = request["id"] as? String else { return }

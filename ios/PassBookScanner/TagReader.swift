@@ -28,6 +28,7 @@ final class TagReader: NSObject, NFCTagReaderSessionDelegate {
 
     static func start(owner: ScannerHardware, id: String, prompt: String, timeoutMs: Int) {
         guard available else { owner.onCancelled?(); return }
+        NFCReader.stop()
         stop()
         let reader = TagReader(owner: owner, id: id)
         guard let session = NFCTagReaderSession(pollingOption: [.iso14443], delegate: reader, queue: nil) else {
@@ -77,7 +78,6 @@ final class TagReader: NSObject, NFCTagReaderSessionDelegate {
             guard Self.current === self else { return }
             self.finish()
             self.owner?.setNFCReading(false)
-            if let readerError = error as? NFCReaderError, readerError.code == .readerSessionInvalidationErrorUserCanceled { return }
             self.owner?.onCancelled?()
         }
     }

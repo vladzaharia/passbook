@@ -28,6 +28,9 @@ final class ScannerHardware {
 
     private var nfcFormats: [String] {
         guard NFCReader.available else { return [] }
+        // The TAG entitlement is not detectable at runtime (no public API; embedded.mobileprovision is absent
+        // from App Store builds), so check-archive.sh verifies it at build time. Without it begin() fails and the
+        // read answers cancelled.
         return tagsEnabled && TagReader.available ? ["ndef", "tag-uid"] : ["ndef"]
     }
 
