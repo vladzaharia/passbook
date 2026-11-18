@@ -148,7 +148,7 @@ describe('case-sensitive MAC guard', () => {
       { kind: 'system' },
     );
     await expect(
-      run(kit.env.DB, "UPDATE bundles SET token = 'H1:abc' WHERE id = ?", [bundle.id]),
+      run(kit.env.DB, "UPDATE bundles SET token = 'H1:abc', token_rotated_at = 1 WHERE id = ?", [bundle.id]),
     ).rejects.toThrow(/token must be a MAC/);
   });
 });

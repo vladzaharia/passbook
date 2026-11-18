@@ -391,10 +391,11 @@ describe('atomic test email capture', () => {
             passes[1]!.id,
           ]);
         else if (change === 'token')
-          await run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
-            kit.ctx.ids.token(),
-            bundleId,
-          ]);
+          await run(
+            kit.env.DB,
+            "UPDATE bundles SET token = 'h1:' || ?, token_rotated_at = COALESCE(token_rotated_at, 0) + 1 WHERE id = ?",
+            [kit.ctx.ids.token(), bundleId],
+          );
         else if (change === 'pending') await pendingTransfer(passes[1]!.id);
         else if (change === 'completed') {
           const expected = await getHolderPass(kit.env.DB, passes[1]!.id, null);
@@ -507,10 +508,11 @@ describe('existing capture exposure', () => {
           queued.passes[1]!.id,
         ]);
       else if (change === 'token')
-        await run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
-          kit.ctx.ids.token(),
-          queued.bundle.id,
-        ]);
+        await run(
+          kit.env.DB,
+          "UPDATE bundles SET token = 'h1:' || ?, token_rotated_at = COALESCE(token_rotated_at, 0) + 1 WHERE id = ?",
+          [kit.ctx.ids.token(), queued.bundle.id],
+        );
       else if (change === 'pending') await pendingTransfer(queued.passes[1]!.id);
       else {
         const expected = await getHolderPass(kit.env.DB, queued.passes[1]!.id, null);
