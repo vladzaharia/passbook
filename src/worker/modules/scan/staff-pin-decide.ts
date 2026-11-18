@@ -48,6 +48,7 @@ export function anyManagerDecision(
   managers: readonly PinStaffSnapshot[],
   pin: string,
   matches: PinMatches,
+  anyRole = false,
 ) {
   let found: PinStaffSnapshot | null = null;
   let count = 0;
@@ -55,7 +56,9 @@ export function anyManagerDecision(
     async decide(): Promise<'match' | 'miss' | 'ambiguous'> {
       for (const manager of managers) {
         const usable =
-          manager.orgId === orgId && manager.disabledAt === null && manager.role === 'manager';
+          manager.orgId === orgId &&
+          manager.disabledAt === null &&
+          (anyRole || manager.role === 'manager');
         if (usable && (await matches(pinEnv, manager.id, pin, manager.pinHash))) {
           found = manager;
           count++;

@@ -1,0 +1,483 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`fidelity report > gives every template a status, none blocked 1`] = `
+{
+  "henrys-blue": "loyalty: Ready with omissions (2)",
+  "henrys-copper": "loyalty: Ready with omissions (2)",
+  "starter-boarding-pass": "loyalty: Ready with omissions (2)",
+  "starter-coupon": "coupon: Ready with omissions (1)",
+  "starter-event-ticket": "ticket: Ready with omissions (3)",
+  "starter-generic": "loyalty: Ready with omissions (3)",
+  "starter-poster-generic": "loyalty: Ready with omissions (2)",
+  "starter-stamp-card": "loyalty: Ready with omissions (1)",
+  "starter-store-card": "loyalty: Ready with omissions (2)",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > henrys-blue 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "BARCODESERIAL",
+      "barcode.ptSubFormat": "CODE_39",
+      "barcode.serialType": "BARCODE",
+      "barcode.value": "DEMO0001",
+      "bgColor": "#060c1b",
+      "bgImage": "https://img.example/artwork@3x.png",
+      "csInfo.call": "+12066447797",
+      "csInfo.email": "epicexperience@henrysgymnasium.com",
+      "csInfo.webSite": "https://henrysgymnasium.thememberspot.com/",
+      "fontColor": "#fff9f2",
+      "locations": "[{"lat":47.615835,"lng":-122.323555,"name":"Capitol Hill club · 1617 Boylston Ave"}]",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Member: DEMO0001
+Alex Morgan
+Home club: Capitol Hill
+Membership: All-Inclusive Wellness
+All-Inclusive Wellness
+Membership status: Active
+From Henry’s: Welcome to Henry’s.
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.
+Capitol Hill: 1617 Boylston Ave, Seattle, WA 98122
+Henry’s Gymnasium: https://henrysgymnasium.com/",
+      "providerName": "Henry’s Gymnasium",
+      "title": "Alex Morgan",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.membership",
+    "field.header | text | headerFields.memberId-poster",
+    "field.secondary | text | secondaryFields.homeClub",
+    "field.back | text | backFields.status-poster",
+    "field.back | text | backFields.message-poster",
+    "field.back | text | backFields.terms-poster",
+    "field.header | text | headerFields.memberId",
+    "field.primary | text | primaryFields.memberName-poster",
+    "field.primary | text | primaryFields.homeClub-poster",
+    "field.secondary | text | secondaryFields.membership",
+    "field.footer | text | footerFields.membership-poster",
+    "field.back | text | backFields.status",
+    "field.back | text | backFields.message",
+    "field.back | text | backFields.terms",
+    "field.back | text | backFields.directions-capitol-hill-poster",
+    "field.back | text | backFields.website-poster",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > henrys-copper 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "BARCODESERIAL",
+      "barcode.ptSubFormat": "CODE_39",
+      "barcode.serialType": "BARCODE",
+      "barcode.value": "DEMO0001",
+      "bgColor": "#171315",
+      "bgImage": "https://img.example/artwork@3x.png",
+      "csInfo.call": "+12066447797",
+      "csInfo.email": "epicexperience@henrysgymnasium.com",
+      "csInfo.webSite": "https://henrysgymnasium.thememberspot.com/",
+      "fontColor": "#fff9f2",
+      "locations": "[{"lat":47.615835,"lng":-122.323555,"name":"Capitol Hill club · 1617 Boylston Ave"}]",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Member: DEMO0001
+Alex Morgan
+Home club: Capitol Hill
+Membership: All-Inclusive Wellness
+All-Inclusive Wellness
+Membership status: Active
+From Henry’s: Welcome to Henry’s.
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.
+Capitol Hill: 1617 Boylston Ave, Seattle, WA 98122
+Henry’s Gymnasium: https://henrysgymnasium.com/",
+      "providerName": "Henry’s Gymnasium",
+      "title": "Alex Morgan",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.membership",
+    "field.header | text | headerFields.memberId-poster",
+    "field.secondary | text | secondaryFields.homeClub",
+    "field.back | text | backFields.status-poster",
+    "field.back | text | backFields.message-poster",
+    "field.back | text | backFields.terms-poster",
+    "field.header | text | headerFields.memberId",
+    "field.primary | text | primaryFields.memberName-poster",
+    "field.primary | text | primaryFields.homeClub-poster",
+    "field.secondary | text | secondaryFields.membership",
+    "field.footer | text | footerFields.membership-poster",
+    "field.back | text | backFields.status",
+    "field.back | text | backFields.message",
+    "field.back | text | backFields.terms",
+    "field.back | text | backFields.directions-capitol-hill-poster",
+    "field.back | text | backFields.website-poster",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-boarding-pass 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "BARCODESERIAL",
+      "barcode.ptSubFormat": "PDF_417",
+      "barcode.serialType": "BARCODE",
+      "barcode.value": "BOARD-0001",
+      "bgColor": "#03528e",
+      "endDate": "1906576200000",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Seat: 14A
+Member: Alex Morgan
+Flight: WA100
+Gate: B12
+New York: JFK
+Passenger: Alex Morgan
+Departs: 2030-06-01 08:00 -07:00
+Boards: 07:15 -07:00
+Terms: Be at the gate 30 minutes before departure.",
+      "providerName": "PassBook",
+      "startDate": "1906550100000",
+      "title": "SFO",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.passenger",
+    "role.seat | text | ",
+    "role.memberName | text | ",
+    "field.auxiliary | text | auxiliaryFields.seat",
+    "role.seat | text | ",
+    "role.memberName | text | ",
+    "field.header | text | headerFields.flight",
+    "field.header | text | headerFields.gate",
+    "field.primary | text | primaryFields.destination",
+    "field.secondary | text | secondaryFields.passenger",
+    "field.secondary | text | secondaryFields.departs",
+    "field.auxiliary | text | auxiliaryFields.boardsAt",
+    "field.back | text | backFields.terms",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-coupon 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "BARCODESERIAL",
+      "barcode.ptSubFormat": "PDF_417",
+      "barcode.serialType": "BARCODE",
+      "barcode.value": "SAVE-0001",
+      "bgColor": "#b54000",
+      "deletableYn": "Y",
+      "displayRedeemButtonYn": "N",
+      "editableYn": "N",
+      "expiry": "1893456000000",
+      "fontColor": "#ffffff",
+      "issueDate": "1794909600000",
+      "mainImg": "https://img.example/strip@3x.png",
+      "noticeDesc": "Expires: 2030-01-01
+Valid for: One purchase
+Terms: One use per customer. Not combinable with other offers.",
+      "notificationYn": "Y",
+      "title": "20% off",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "coupon",
+  },
+  "items": [
+    "image.logo | omitted | logo",
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.terms",
+    "role.offerDetails | text | backFields.fine",
+    "field.header | text | headerFields.expires",
+    "field.secondary | text | secondaryFields.terms",
+    "field.back | text | backFields.fine",
+    "messaging.notify | difference | ",
+  ],
+  "type": "coupon",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-event-ticket 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "TICKET-0001",
+      "bgColor": "#5e0636",
+      "endDate": "1906606800000",
+      "fontColor": "#ffffff",
+      "issueDate": "1794909600000",
+      "locations": "[{"lat":37.3349,"lng":-122.009,"name":"Venue nearby"}]",
+      "logoImage": "https://img.example/logo@3x.png",
+      "mainImg": "https://img.example/artwork@3x.png",
+      "noticeDesc": "Venue: Sample Hall
+Address: Main hall, Cupertino, CA
+Ticket holder: Alex Morgan
+Member: Alex Morgan
+Date: 2030-06-01
+Starts: 19:00 -07:00
+Name: Alex Morgan
+Room: Main hall
+Doors: 18:00 -07:00
+Admission: General
+Terms: No re-entry. Ticket is non-transferable.",
+      "providerName": "PassBook",
+      "reservationNumber": "TICKET-0001",
+      "startDate": "1906596000000",
+      "title": "Sample Event",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "ticket",
+  },
+  "items": [
+    "colors.label | difference | ",
+    "upcoming.multi | difference | events",
+    "role.subtitle | text | secondaryFields.time",
+    "role.venueName | text | ",
+    "role.venueAddress | text | ",
+    "role.ticketHolder | text | ",
+    "role.memberName | text | ",
+    "field.secondary | text | secondaryFields.venue",
+    "role.venueName | text | ",
+    "role.venueAddress | text | ",
+    "role.ticketHolder | text | ",
+    "role.memberName | text | ",
+    "field.header | text | headerFields.date",
+    "field.secondary | text | secondaryFields.time",
+    "field.auxiliary | text | auxiliaryFields.attendee",
+    "field.auxiliary | text | auxiliaryFields.room",
+    "field.additionalInfo | text | additionalInfoFields.doors",
+    "field.additionalInfo | text | additionalInfoFields.admission",
+    "field.back | text | backFields.terms",
+    "image.background | omitted | background",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "ticket",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-generic 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "ID-0001",
+      "bgColor": "#141a2b",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Tier: Plus
+Points: 1200
+Since: 2026-01-01
+Terms: Present the barcode when asked.",
+      "providerName": "PassBook",
+      "title": "Alex Morgan",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.since",
+    "field.header | text | headerFields.tier",
+    "field.header | text | headerFields.points",
+    "field.secondary | text | secondaryFields.since",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-poster-generic 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "ID-0001",
+      "bgColor": "#361273",
+      "bgImage": "https://img.example/artwork@3x.png",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Tier: Plus
+Alex Morgan
+Since: 2026-01-01
+Plan: Annual
+Terms: Present the barcode when asked.",
+      "providerName": "PassBook",
+      "title": "Alex Morgan",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.since",
+    "field.header | text | headerFields.tier-poster",
+    "field.footer | text | footerFields.since-poster",
+    "field.back | text | backFields.terms-poster",
+    "field.header | text | headerFields.tier",
+    "field.primary | text | primaryFields.holder-poster",
+    "field.secondary | text | secondaryFields.since",
+    "field.additionalInfo | text | additionalInfoFields.plan-poster",
+    "field.back | text | backFields.terms",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-stamp-card 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "CARD-0001",
+      "bgColor": "#fcf4e6",
+      "bgImage": "https://img.example/strip@3x.png",
+      "fontColor": "#311c0f",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Stamps: 7 of 10
+Reward: Free coffee
+Name: Alex Morgan
+How it works: One stamp per visit. A full card earns the reward.
+Terms: One reward per full card. No cash value.",
+      "providerName": "PassBook",
+      "title": "PassBook",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.reward",
+    "role.memberId | text | ",
+    "field.header | text | headerFields.stamps",
+    "field.secondary | text | secondaryFields.reward",
+    "field.secondary | text | secondaryFields.holder",
+    "field.back | text | backFields.how",
+    "field.back | text | backFields.terms",
+    "sharing | omitted | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-store-card 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "balance": "25 USD",
+      "barcode.ptFormat": "QRCODESERIAL",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "CARD-0001",
+      "bgColor": "#004b41",
+      "bgImage": "https://img.example/strip@3x.png",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Tier: Gold
+Name: Alex Morgan
+Terms: Balance is not redeemable for cash.",
+      "providerName": "PassBook",
+      "title": "25",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "colors.label | difference | ",
+    "role.subtitle | text | secondaryFields.holder",
+    "role.memberId | text | ",
+    "field.header | text | headerFields.tier",
+    "field.secondary | text | secondaryFields.holder",
+    "field.back | text | backFields.terms",
+    "relevance.beacons | unsupported | beacons",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;

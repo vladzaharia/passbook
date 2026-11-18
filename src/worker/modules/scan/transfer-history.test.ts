@@ -125,8 +125,11 @@ describe('provider-backed transfer and scanner history', () => {
     const lookup = (q = 'Alex') => post('/lookup', { q });
     const page = () => consoleGet(`?orgId=${kit.org.id}`);
 
-    const signedRequest = await t.token();
-    expect((await t.call({ token: signedRequest })).status).toBe(401);
+    // A forged request gets nothing. (A genuine first fetch would now be served from the ref's
+    // initial window, which this test must not do: it needs the ref to stay unserved.)
+    const genuine = await t.token();
+    const forged = `${genuine.slice(0, genuine.lastIndexOf('.') + 1)}${'A'.repeat(342)}`;
+    expect((await t.call({ token: forged })).status).toBe(401);
     const original = await json<ScanOutcome>(await post('/actions', request));
     expect(original).toMatchObject({
       kind: 'ok',
@@ -405,7 +408,33 @@ describe('provider-backed transfer and scanner history', () => {
       ]),
     ).toBeNull();
     expect(await effects(db, pass.id)).toEqual(pendingEffects);
-    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    // An authentic fetch while the transfer is pending is answered with no card data and leaves
+    // no trace: nothing served, nothing recorded, nothing promoted.
+    const pendingFetch = await t.call({ token: await t.token() });
+    expect(pendingFetch.status).toBe(204);
+    expect(await pendingFetch.text()).toBe('');
+    const pendingPost = await t.call({
+      method: 'POST',
+      token: await t.token({ method: 'POST' }),
+      query: '?cc2=GB&event=ADDED',
+      body: '{"member":"new-holder-private"}',
+    });
+    expect(pendingPost.status).toBe(200);
+    expect(
+      await first(
+        db,
+        `SELECT served_at, promoted_at, market_cc2, retired_at FROM wallet_samsung_fetch_refs
+        WHERE id = ?`,
+        [t.referenceId],
+      ),
+    ).toEqual({ served_at: null, promoted_at: null, market_cc2: null, retired_at: null });
+    expect(
+      await first(
+        db,
+        'SELECT COUNT(*) AS n FROM wallet_samsung_callback_receipts WHERE instance_id = ?',
+        [t.operation.instanceId],
+      ),
+    ).toEqual({ n: 0 });
     expect(await finishCredentialTransfer(jobCtxOf(kit), transfer.transferId)).toMatchObject({
       state: 'pending',
     });

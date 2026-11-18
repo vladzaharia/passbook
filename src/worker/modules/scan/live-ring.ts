@@ -1,4 +1,5 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
+import type { ScanCustomerView } from '../../../shared/contracts/scan-customer.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import type { ScanActor } from './actor.ts';
 
@@ -33,6 +34,16 @@ export interface LiveRingRow {
   holderRoles: ScanRole[];
   /** Roles the source's policy shows a photo to; empty when the pass has none. */
   photoRoles: ScanRole[];
+  /** Where the scan happened, for watches by session, event and zone. Not identity. */
+  sessionId?: string | null;
+  eventId?: string | null;
+  /** The checked zones and their ancestors. */
+  zoneIds?: string[];
+  /**
+   * The doc-named part of a customer body (chips, panel, lines, milestone), rendered at publish.
+   * It names the holder's pass, so it is dropped with the identity.
+   */
+  customer?: Pick<ScanCustomerView, 'chips' | 'panel' | 'lines' | 'milestone'> | null;
 }
 
 /** The entry with every identity field removed: what is kept once its pass is no longer visible. */
@@ -49,6 +60,10 @@ export function scrubbedEntry(e: LiveRingRow): LiveRingRow {
     refPrefixes: [],
     holderRoles: [],
     photoRoles: [],
+    sessionId: e.sessionId ?? null,
+    eventId: e.eventId ?? null,
+    zoneIds: e.zoneIds ?? [],
+    customer: null,
   };
 }
 

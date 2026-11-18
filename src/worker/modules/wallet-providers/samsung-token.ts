@@ -6,9 +6,9 @@ import {
   type ValidatedSamsungCallbackCredentials,
   type ValidatedSamsungCredentials,
 } from './samsung-credentials.ts';
+import { SAMSUNG_CLOCK_SKEW_MS } from './samsung-limits.ts';
 import { SamsungTokenError } from './samsung-token-errors.ts';
 import {
-  SAMSUNG_CLOCK_SKEW_MS,
   type SamsungInboundRequestInput,
   type VerifiedSamsungRequest,
   verifySamsungInboundRequest,
@@ -19,16 +19,19 @@ export type { VerifiedSamsungRequest } from './samsung-token-inbound.ts';
 
 const encoder = new TextEncoder();
 
-export type SamsungCardState =
-  | 'ACTIVE'
-  | 'UPDATED'
-  | 'EXPIRED'
-  | 'REDEEMED'
-  | 'HELD'
-  | 'DELETED'
-  | 'CANCELED'
-  | 'PENDING'
-  | 'SUSPENDED';
+/** States Get Card Data may return. MIGRATED exists only in Update Notification (needs atwLink and oldRefId). */
+export const SAMSUNG_CARD_DATA_STATES = [
+  'ACTIVE',
+  'UPDATED',
+  'EXPIRED',
+  'REDEEMED',
+  'HELD',
+  'DELETED',
+  'CANCELED',
+  'PENDING',
+  'SUSPENDED',
+] as const;
+export type SamsungCardState = (typeof SAMSUNG_CARD_DATA_STATES)[number] | 'MIGRATED';
 
 interface SamsungCardItem {
   refId: string;
@@ -86,17 +89,7 @@ export async function createSamsungAuthorizationToken(
 
 function checkProjection(projection: SamsungCardProjection): void {
   const card = projection?.card;
-  const states: readonly string[] = [
-    'ACTIVE',
-    'UPDATED',
-    'EXPIRED',
-    'REDEEMED',
-    'HELD',
-    'DELETED',
-    'CANCELED',
-    'PENDING',
-    'SUSPENDED',
-  ];
+  const states: readonly string[] = SAMSUNG_CARD_DATA_STATES;
   if (
     !card ||
     typeof card.type !== 'string' ||

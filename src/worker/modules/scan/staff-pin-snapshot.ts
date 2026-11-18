@@ -95,6 +95,7 @@ export interface PinReservation {
     managers: readonly PinStaffSnapshot[],
     pin: string,
     failure?: PinFailure,
+    anyRole?: boolean,
   ): Promise<VerifiedPinSnapshot | null>;
   verifyLogin(results: readonly D1Result[], staff: PinCheck['staff'], pin: string): Promise<void>;
   refundStatements(): D1PreparedStatement[];
