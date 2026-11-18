@@ -13,6 +13,11 @@ export interface SafeFetchOptions {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   maxBytes?: number;
+  /**
+   * Cancel the body once the headers are in and return an empty one. For a caller that reads only the
+   * status, so a large 200 answer is not mistaken for a failure by the size cap.
+   */
+  discardBody?: boolean;
 }
 
 export interface SafeResponse {
@@ -254,17 +259,21 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
       throw new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
     }
     let body: Uint8Array;
-    try {
-      body = await readCapped(
-        response.body,
-        maxBytes,
-        () => new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE'),
-        Number(response.headers.get('content-length') ?? 0),
-        signal,
-      );
-    } catch (error) {
-      throw error instanceof UpstreamError ? error : failure();
-    }
+    if (options.discardBody) {
+      await response.body?.cancel().catch(() => undefined);
+      body = new Uint8Array();
+    } else
+      try {
+        body = await readCapped(
+          response.body,
+          maxBytes,
+          () => new UpstreamError('The upstream response is too large.', 'RESPONSE_TOO_LARGE'),
+          Number(response.headers.get('content-length') ?? 0),
+          signal,
+        );
+      } catch (error) {
+        throw error instanceof UpstreamError ? error : failure();
+      }
     const decode = () => new TextDecoder().decode(body);
     return {
       status: response.status,

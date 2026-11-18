@@ -177,6 +177,33 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'passes:a92c1702af5b',
     ],
   },
+  'src/worker/modules/webhooks/repo-delivery-state.ts': {
+    reason:
+      'lane claim, attempt, retry, finish and disable bookkeeping for deliveries created by the pass_events trigger (the trigger and composite FKs are the authority); no tenant principal at send time',
+    writes: [
+      'webhook_attempts:14e5061ed595',
+      'webhook_deliveries:32f816eb0de2',
+      'webhook_deliveries:7aad02cd36d1',
+      'webhook_deliveries:f3354348cdcf',
+      'webhook_deliveries:fca7ae3309c1',
+      'webhook_endpoints:15238020ed80',
+      'webhook_endpoints:42fc667a61e0',
+      'webhook_endpoints:8616faf30dd5',
+      'webhook_endpoints:a887b7fdf39d',
+      'webhook_endpoints:b05fc32c2c70',
+      'webhook_endpoints:ce93d6a8adaa',
+    ],
+  },
+  'src/worker/modules/webhooks/repo-retention.ts': {
+    reason: 'daily purge of event_feed, deliveries, attempts and expired secrets; platform job',
+    writes: [
+      'event_feed:64c24d3f1d97',
+      'webhook_attempts:5ff82e16f6e9',
+      'webhook_attempts:9017ace0b5c0',
+      'webhook_deliveries:160f2ac154d3',
+      'webhook_endpoint_secrets:3a87aa5ed8d1',
+    ],
+  },
   'src/worker/modules/delivery/repo-outbox-processing.ts': {
     reason:
       'outbox lease, retry and finish bookkeeping for a row already authorized at queue time, and the sent/failed outbox purge (deleteInBatches); the provider boundary is a grant (repo-provider-attempt.ts)',
