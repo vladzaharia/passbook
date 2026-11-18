@@ -1,9 +1,10 @@
 import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
-import { not } from '../../platform/authority-cond.ts';
+import { not, notExists } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { scanAccessOf, startsVisit, waiveOf } from './access.ts';
+import { scanAccessOf, waiveOf } from './access.ts';
 import { commitConditions, credentialFacts, lostReason } from './act-check-in-facts.ts';
+import { checkInFinalizer, planCheckInDisplay } from './act-check-in-finalize.ts';
 import { occupancyAfter, occupancyReads, planOccupancyCommit } from './act-check-in-occupancy.ts';
 import { finishCheckInResult } from './act-check-in-result.ts';
 import { addCheckInStatements, type HeldVariant } from './act-check-in-statements.ts';
@@ -14,10 +15,7 @@ import type { HeldHolder } from './act-held-holder.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight } from './act-preflight.ts';
 import type { ScanActor } from './actor.ts';
-import { historyPlan } from './card.ts';
 import { planCommitCounts } from './counts.ts';
-import { preparePlannedDisplayHistoryProof } from './display-history-pending.ts';
-import { appendPlannedDisplayHistory, rebindDisplayHistoryRead } from './display-history-plan.ts';
 import type { LedgerFacts } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import { ACCESS_GATE, accessCountStmt, accessInputPin, accessZoneChecks } from './repo-access.ts';
@@ -26,15 +24,9 @@ import type { Candidate } from './repo-lookup.ts';
 import { doneOkPredicate, effectiveReleaseCheck } from './repo-scan-checks.ts';
 import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
-import {
-  type DisplayHistoryPlan,
-  displayNeedsFor,
-  displayRequiresHistory,
-  prepareDisplayHistory,
-} from './scan-display-history.ts';
 import type { StopAuthority } from './scan-stop-authority.ts';
 import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
-import { allOf, type Finalize, overrideOpen } from './scan-write-statements.ts';
+import { allOf, overrideOpen } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';
 
 interface CheckInSuccessInput {
@@ -82,6 +74,14 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
         access,
         override: claim.authority.override?.reason ?? null,
         open: overrideOf ? [overrideOpen(overrideOf)] : [],
+        // A first exit inserts its gate (insert or nothing): no other gate row may appear first.
+        gateAsRead: effect.gateBefore
+          ? null
+          : notExists('scan_gates', {
+              pass_id: gate.passId,
+              action_id: gate.actionId,
+              scope: gate.scope,
+            }),
       })
     : null;
   if (occupancy && !occ) throw new StaleScanAuthority();
@@ -119,66 +119,28 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       ? [{ reason: admitted.reason, when: [not(allOf(admitted.conds))], admit: true }]
       : []),
     ...(capacity ? [{ reason: 'capacity_full' as const, when: [not(capacity)] }] : []),
-    ...(occ?.holds.map((h) => ({ reason: h.reason, when: [not(h.holds)] })) ?? []),
+    ...(occ?.holds.map(({ holds, ...h }) => ({ ...h, when: [not(holds)] })) ?? []),
   ];
   const { ok, lostVariant, held } = await signVariants(variant, lost, why);
 
-  const finalized = (
-    outcome: 'ok' | 'heads_up',
-    reason: ScanReason | null,
-    visit?: boolean,
-  ): Finalize => ({
-    id: scanId,
+  const finalized = checkInFinalizer({
+    scanId,
     claimAt,
-    outcome,
-    reason,
-    passId: found.pass.id,
-    templateId: found.pass.templateId,
-    actionId: action.id,
-    actionKind: action.kind,
-    passVersion: found.pass.version,
-    overrideOf: outcome === 'ok' ? (req.overrideOf ?? null) : null,
-    approvedBy: outcome === 'ok' ? approvedBy : null,
-    direction: occupancy?.direction ?? found.admission?.state.direction,
-    ...(outcome === 'ok' && (occupancy || presencePlan)
-      ? { presenceScope: occupancy?.place ?? presencePlan?.scope }
-      : {}),
-    ...(event ? { eventId: event.id } : {}),
-    ...(access
-      ? {
-          access: {
-            zoneId: access.zoneId,
-            plan: access.decision.access.plan.id,
-            visit: outcome === 'ok' ? (visit ?? false) : null,
-          },
-        }
-      : {}),
+    found,
+    action,
+    overrideOf,
+    approvedBy,
+    eventId: event?.id ?? null,
+    access,
+    presenceScope: occupancy?.place ?? presencePlan?.scope,
   });
-
-  // Planned before the grant exists: they only need values, never the grant row.
-  let displayPlan: DisplayHistoryPlan;
-  if (displayRequiresHistory(found)) {
-    if (!history || !rebindDisplayHistoryRead(history.preloaded, actor, found))
-      throw new StaleScanAuthority();
-    const planned = await preparePlannedDisplayHistoryProof(
-      history.source,
-      actor,
-      found,
-      ok.retention,
-      finalized('ok', null),
-    );
-    // A grant inside a visit is not a visit: the history will not count it.
-    const counted = !access || startsVisit(access, now);
-    if (!planned || (counted && !appendPlannedDisplayHistory(history.preloaded, planned)))
-      throw new StaleScanAuthority();
-    displayPlan = await prepareDisplayHistory(
-      ctx,
-      actor,
-      found,
-      displayNeedsFor(found),
-      history.preloaded,
-    );
-  } else displayPlan = await historyPlan(ctx, actor, found);
+  const displayPlan = await planCheckInDisplay(ctx, actor, found, {
+    history,
+    retention: ok.retention,
+    final: finalized('ok', null),
+    access,
+    now,
+  });
   const g = scanWriteGrant(ctx, authorityActor, {
     purpose: 'org_mode.scan.check_in',
     now: authorityNow,
@@ -282,7 +244,11 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       display: null,
       now: finishAt,
     });
-    const answer = place ? { ...heldAnswer, occupancy: place.view } : heldAnswer;
+    const answer = {
+      ...heldAnswer,
+      ...(closed?.outcome === 'refused' ? { kind: 'refused' as const, overridable: false } : {}),
+      ...(place ? { occupancy: place.view } : {}),
+    };
     return admitLost ? { ...answer, overridable: false } : answer;
   }
   return finishCheckInResult({

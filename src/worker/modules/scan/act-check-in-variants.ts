@@ -34,8 +34,8 @@ export function checkInVariants(i: VariantInput) {
   const { effect, claimAt } = claim;
   const named = <T extends { actionId: string }>(g: T | null) =>
     g && i.accessGate ? { ...g, actionId: action.id } : g;
-  return async (outcome: 'ok' | 'heads_up', reason: ScanReason | null) => {
-    const held = outcome === 'heads_up';
+  return async (outcome: 'ok' | 'heads_up' | 'refused', reason: ScanReason | null) => {
+    const held = outcome !== 'ok';
     const gateAfter = held ? effect.gateBefore : effect.gateAfter;
     const moved = {
       ...effect,
@@ -81,12 +81,16 @@ export async function signVariants(
   why: readonly Omit<HeldVariant, 'variant'>[],
 ) {
   const own = why.map(
-    (h, at) => h.reason !== lost && why.findIndex((x) => x.reason === h.reason) === at,
+    (h, at) =>
+      (h.reason !== lost || h.outcome === 'refused') &&
+      why.findIndex((x) => x.reason === h.reason && x.outcome === h.outcome) === at,
   );
   const [ok, lostVariant, ...signed] = await Promise.all([
     variant('ok', null),
     variant('heads_up', lost),
-    ...why.map((h, at) => (own[at] ? variant('heads_up', h.reason) : Promise.resolve(null))),
+    ...why.map((h, at) =>
+      own[at] ? variant(h.outcome ?? 'heads_up', h.reason) : Promise.resolve(null),
+    ),
   ]);
   const held: HeldVariant[] = why.map((h, at) => ({ ...h, variant: signed[at] ?? null }));
   return { ok, lostVariant, held };

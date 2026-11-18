@@ -192,7 +192,7 @@ async function evaluateObserved(
         ...loaded.occupancy,
         zoneIds: loaded.zoneIds,
         setting: actor.settings.direction,
-        requested: waive.direction,
+        requested: waive.override ? 'in' : waive.direction,
         now,
       })
     : null;

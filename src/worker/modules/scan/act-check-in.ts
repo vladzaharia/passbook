@@ -92,9 +92,11 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
   const rowGate: gates.GateKey = {
     passId: found.pass.id,
     actionId: action.id,
-    scope:
-      (found.admission || place) && (found.checkInRules?.mode || actor.settings.checkIn?.mode)
-        ? (found.admission?.scope ?? '')
+    // At a place, the action's gate is the one the preflight chose and read (an exit writes it).
+    scope: place
+      ? preflight.gate.scope
+      : found.admission && (found.checkInRules?.mode || actor.settings.checkIn?.mode)
+        ? found.admission.scope
         : gateScope(action, actor, now),
   };
   // The preflight read the action's own gate; an Access card's visit gate was read with its zones.
