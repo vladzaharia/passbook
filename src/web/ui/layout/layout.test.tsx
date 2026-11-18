@@ -2,6 +2,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { orgActivity } from '../../admin/overview/overview-fixtures.ts';
 import { ADMIN_NAV } from '../../lib/nav.ts';
 import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import { json, membershipFixture, renderApp, sessionFixture } from '../../lib/test-utils.tsx';
@@ -177,14 +178,14 @@ describe('route guards in the app', () => {
     expect(await screen.findByText('1 pass in Henrys')).toBeInTheDocument();
   });
 
-  it('denies API key pages and actions to a tenant integration administrator', async () => {
+  it('denies API key pages and actions to a tenant member who cannot manage integrations', async () => {
     const user = userEvent.setup();
     const { fetchMock } = await renderApp('/admin/api-keys?orgId=o1&new=1', {
       session: 'user',
       memberships: [
         membershipFixture('o1', {
-          roles: ['integration_admin'],
-          capabilities: ['org:read', 'integrations:read', 'integrations:manage'],
+          roles: ['read_only'],
+          capabilities: ['org:read', 'passes:read', 'integrations:read'],
         }),
       ],
       handlers: {
@@ -243,9 +244,9 @@ describe('route guards in the app', () => {
     ).toBeInTheDocument();
     // It names the organization and the section, and leads to one the role does open.
     expect(screen.getByText('o1: your role does not include Templates.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Go to Passes' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Go to Overview' })).toHaveAttribute(
       'href',
-      '/admin/passes?orgId=o1',
+      '/admin?orgId=o1',
     );
     expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/templates'))).toBe(
       false,
@@ -409,24 +410,24 @@ describe('route guards in the app', () => {
           capabilities: ['org:read', 'passes:read'],
         }),
       ],
-      handlers: { '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
+      handlers: { '/api/v1/metrics/activity': () => json(orgActivity()) },
     });
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     // The choice is the only one there is, and it stays explicit in the URL.
     expect(await within(nav).findByRole('link', { name: 'Admin' })).toHaveAttribute(
       'href',
-      '/admin/passes?orgId=o1',
+      '/admin?orgId=o1',
     );
     await user.click(screen.getByRole('button', { name: 'Account menu' }));
     const admin = await screen.findByRole('menuitem', { name: 'Admin' });
-    expect(admin).toHaveAttribute('href', '/admin/passes?orgId=o1');
+    expect(admin).toHaveAttribute('href', '/admin?orgId=o1');
     await user.click(admin);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));
     expect(router.state.location.search).toMatchObject({ orgId: 'o1' });
-    expect(await screen.findByRole('heading', { name: 'Passes', level: 1 })).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/passes'))).toBe(
-      true,
-    );
+    expect(await screen.findByRole('heading', { name: 'Overview', level: 1 })).toBeInTheDocument();
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/metrics/activity')),
+    ).toBe(true);
   });
 
   it('asks a member with several organizations to choose one', async () => {
@@ -437,20 +438,20 @@ describe('route guards in the app', () => {
         membershipFixture('o1', { capabilities: ['org:read', 'passes:read'] }),
         membershipFixture('o2', { capabilities: ['org:read', 'passes:read'] }),
       ],
-      handlers: { '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
+      handlers: { '/api/v1/metrics/activity': () => json(orgActivity()) },
     });
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     const admin = await within(nav).findByRole('link', { name: 'Admin' });
-    expect(admin).toHaveAttribute('href', '/admin/passes');
+    expect(admin).toHaveAttribute('href', '/admin');
     await user.click(admin);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));
     expect(
       await screen.findByRole('heading', { name: 'Choose an organization', level: 1 }),
     ).toBeInTheDocument();
     expect(router.state.location.search).not.toHaveProperty('orgId');
-    expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/passes'))).toBe(
-      false,
-    );
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/metrics/activity')),
+    ).toBe(false);
   });
 
   it("keeps Admin out of a plain user's account menu", async () => {

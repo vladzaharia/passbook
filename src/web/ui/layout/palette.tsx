@@ -93,7 +93,10 @@ export function AdminPalette({
   const go = (to: string, search?: Record<string, string>) => () =>
     void navigate({
       to,
-      search: { ...search, orgId: search?.orgId ?? (isOrgScoped(to) ? orgId : undefined) },
+      search: {
+        ...search,
+        orgId: search?.orgId ?? (isOrgScoped(to, platformReady) ? orgId : undefined),
+      },
     });
 
   useEffect(() => {

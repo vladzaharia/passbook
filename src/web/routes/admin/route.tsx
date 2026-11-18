@@ -88,12 +88,20 @@ function AdminRouteGate() {
     sameWizardScope,
   ]);
 
-  // A member has no overview: /admin opens the first section their role covers.
+  // A member opens the organization overview, or the first section their role covers.
   const atOverview = pathname.replace(/\/+$/, '') === '/admin';
   const leaving =
     atOverview && !isAdmin && !scope.isLoading && !scope.isError && scope.memberships.length > 0;
-  const entryTo = leaving ? adminEntryPath(false, scope.membership, scope.memberships) : undefined;
+  const overview = leaving && scope.memberships.some((m) => canAccessAdminPath('/admin', false, m));
   const entryOrg = leaving ? entryOrgId(scope.membership, scope.memberships) : undefined;
+  // The overview needs an organization: adopt the only one, else the switcher asks.
+  const entryTo = !leaving
+    ? undefined
+    : overview
+      ? scope.membership || !entryOrg
+        ? undefined
+        : '/admin'
+      : adminEntryPath(false, scope.membership, scope.memberships);
   const navigate = useNavigate();
   useEffect(() => {
     if (entryTo) void navigate({ to: entryTo, search: { orgId: entryOrg }, replace: true });

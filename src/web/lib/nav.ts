@@ -68,10 +68,17 @@ export const ADMIN_NAV_GROUPS: readonly (readonly NavItem[])[] = [
 
 export const ADMIN_NAV: readonly NavItem[] = ADMIN_NAV_GROUPS.flat();
 
+/** Pages that show the platform to an admin and the selected organization to a member. */
+const MEMBER_SCOPED = ['/admin', '/admin/audit', '/admin/api-keys'];
+
 /** The directory is platform-only; members manage only their selected organization. */
 export function adminNavGroups(platformAdmin: boolean, membership?: OrgMembership): NavItem[][] {
   return ADMIN_NAV_GROUPS.map((group) => {
-    const items = group.filter((item) => canAccessAdminPath(item.to, platformAdmin, membership));
+    const items = group
+      .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership))
+      .map((item) =>
+        !platformAdmin && MEMBER_SCOPED.includes(item.to) ? { ...item, orgScoped: true } : item,
+      );
     if (!platformAdmin && membership && group.some((item) => item.to === '/admin/orgs')) {
       const to = `/admin/orgs/${encodeURIComponent(membership.orgId)}`;
       if (canAccessAdminPath(to, false, membership, 'workspace')) {
@@ -95,6 +102,7 @@ export function adminEntryPath(
   const candidates = membership ? [membership] : memberships;
   return (
     [
+      '/admin',
       '/admin/passes',
       '/admin/templates',
       '/admin/connections',
@@ -108,6 +116,7 @@ export function adminEntryPath(
 
 /** The console section a path belongs to ("Templates"), for words about what it needs. */
 export function sectionLabel(pathname: string): string | undefined {
+  if (pathname.replace(/\/+$/, '') === '/admin') return 'Overview';
   return ADMIN_NAV.filter((item) => item.to !== '/admin' && isActivePath(pathname, item.to)).sort(
     (a, b) => b.to.length - a.to.length,
   )[0]?.label;
@@ -141,7 +150,8 @@ export function isActivePath(pathname: string, to: string): boolean {
 }
 
 /** Whether a page carries a tenant workspace selection in its URL. */
-export function isOrgScoped(pathname: string): boolean {
+export function isOrgScoped(pathname: string, platformAdmin = true): boolean {
+  if (!platformAdmin && MEMBER_SCOPED.some((to) => isActivePath(pathname, to))) return true;
   const item = [...ADMIN_NAV]
     .sort((x, y) => y.to.length - x.to.length)
     .find((i) => isActivePath(pathname, i.to));

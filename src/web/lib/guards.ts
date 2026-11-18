@@ -14,15 +14,10 @@ const TENANT_PATHS = [
   '/admin/scanning',
   '/admin/messages',
   '/admin/test-inbox',
-];
-const PLATFORM_PATHS = [
-  '/admin/users',
-  '/admin/status',
   '/admin/audit',
-  '/admin/identities',
-  '/admin/settings',
   '/admin/api-keys',
 ];
+const PLATFORM_PATHS = ['/admin/users', '/admin/status', '/admin/identities', '/admin/settings'];
 
 export function isAdminPath(pathname: string): boolean {
   return pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`);
@@ -46,6 +41,7 @@ function orgDetailId(pathname: string): string | undefined {
 export function isTenantAdminPath(pathname: string, view?: string): boolean {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
   return (
+    path === ADMIN_PREFIX ||
     (view === 'workspace' && /^\/admin\/orgs\/[^/]+$/.test(path)) ||
     TENANT_PATHS.some((prefix) => within(path, prefix))
   );
@@ -70,6 +66,11 @@ function hasCapability(membership: OrgMembership | undefined, capability: OrgCap
   return membership?.revokedAt === null && membership.capabilities.includes(capability);
 }
 
+/** The organization overview reads what the metrics endpoint does: the org and its passes. */
+export function canSeeOrgOverview(membership: OrgMembership | undefined): boolean {
+  return hasCapability(membership, 'org:read') && hasCapability(membership, 'passes:read');
+}
+
 /** Membership capabilities, never platform status or a selected ID alone, authorize tenant pages. */
 export function canAccessAdminPath(
   pathname: string,
@@ -79,12 +80,14 @@ export function canAccessAdminPath(
 ): boolean {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
   if (path === '/admin/account') return true;
-  if (
-    path === '/admin' ||
-    path === '/admin/orgs' ||
-    PLATFORM_PATHS.some((prefix) => within(path, prefix))
-  ) {
+  if (path === '/admin') return platformAdmin || canSeeOrgOverview(membership);
+  if (path === '/admin/orgs' || PLATFORM_PATHS.some((prefix) => within(path, prefix))) {
     return platformAdmin;
+  }
+  // The platform's audit log and keys are admin-wide; an organization's are its admins' own.
+  if (within(path, '/admin/audit')) return platformAdmin || hasCapability(membership, 'audit:read');
+  if (within(path, '/admin/api-keys')) {
+    return platformAdmin || hasCapability(membership, 'integrations:manage');
   }
   if (/^\/admin\/orgs\/[^/]+$/.test(path)) {
     const orgId = orgDetailId(path);
