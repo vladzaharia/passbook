@@ -3,12 +3,14 @@
  * calls (T5) are built against that contract and may still move.
  */
 import type { z } from 'zod';
-import type { ScanTagEnrollmentDoneSchema } from '../../../shared/contracts/nfc-tag-admin.ts';
+import type {
+  ScanTagEnrollmentDoneSchema,
+  ScanTagEnrollmentSchema,
+} from '../../../shared/contracts/nfc-tag-enrollments.ts';
 import type {
   ScanTag,
   ScanTagBindRequestSchema,
   ScanTagBindResultSchema,
-  ScanTagEnrollmentSchema,
   ScanTagInspectResponseSchema,
   TagRead,
 } from '../../../shared/contracts/nfc-tags.ts';

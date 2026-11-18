@@ -1,5 +1,6 @@
 /** The words of an assign error or banner, filled with what the card knows. */
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
+import { TAG_ERROR_COPY } from '../../../shared/copy/tags.ts';
 import { formatShortDate } from '../../lib/format.ts';
 import type { AssignBanner, AssignError } from '../machine/assign-state.ts';
 import { fill } from '../ui/copy.ts';
@@ -47,6 +48,8 @@ export function errorLine(e: AssignError, ctx: { org: string }): Line {
         headline: c.tooMany.headline,
         sub: fill(c.tooMany.sub, { seconds: e.seconds ?? 10 }),
       };
+    case 'holder_changed':
+      return { headline: c.notAssigned.headline, sub: TAG_ERROR_COPY.TAG_HOLDER_CHANGED };
     case 'needs_connection':
       return { headline: SCAN_TAG_COPY.needsConnection, sub: '' };
     case 'off':

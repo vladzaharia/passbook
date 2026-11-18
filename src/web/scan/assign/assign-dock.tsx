@@ -111,6 +111,12 @@ export function AssignDock({
       const kind = a.error?.kind;
       const retryable = kind === 'not_assigned' || kind === 'went_wrong';
       if (kind === 'too_many') return null;
+      if (kind === 'holder_changed')
+        return (
+          <DockButton primary variant="filled" onClick={on.done}>
+            {TAG_EXTRA_COPY.done}
+          </DockButton>
+        );
       return (
         <>
           {retryable ? (

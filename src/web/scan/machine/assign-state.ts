@@ -55,7 +55,8 @@ export type AssignErrorKind =
   | 'no_account'
   | 'limit'
   | 'off'
-  | 'already_here';
+  | 'already_here'
+  | 'holder_changed';
 
 export interface AssignError {
   kind: AssignErrorKind;

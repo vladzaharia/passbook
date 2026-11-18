@@ -267,6 +267,9 @@ export function failed(s: MachineState, ev: Of<'assign.failed'>, env: Env): Out 
     (busy === 'complete' && ev.status === 404)
   )
     return over('requestTimedOut');
+  // The pass changed hands inside the window: the request cannot finish, the admin sends a new one.
+  if (code === 'TAG_HOLDER_CHANGED' && busy === 'complete')
+    return error({ kind: 'holder_changed' });
   switch (code) {
     case 'TAG_LOST':
       return error({ kind: 'lost' });

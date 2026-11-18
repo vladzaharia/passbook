@@ -197,6 +197,17 @@ describe('completing and ending a request', () => {
     expect(stripOfAssign(f.state)?.kind).toBe(kind);
   });
 
+  it('a pass that changed hands ends the card with the copy deck line and only Done', () => {
+    const r = run(arrived(), [100, tagReadEvent()]);
+    const { key } = assignCmd(r.cmds, 'enroll.complete');
+    const f = step(
+      r.state,
+      { type: 'assign.failed', key, code: 'TAG_HOLDER_CHANGED', status: 409, network: false },
+      at(200),
+    );
+    expect(assignOf(f.state)).toMatchObject({ step: 'error', error: { kind: 'holder_changed' } });
+  });
+
   it('never opens on a blocked or offline scanner', () => {
     const blocked = step(
       { ...idle(), block: 'revoked' },

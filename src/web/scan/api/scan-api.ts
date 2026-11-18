@@ -6,10 +6,12 @@
  * 429 must surface its `Retry-After`.
  */
 import type { z } from 'zod';
-import { ScanTagEnrollmentDoneSchema } from '../../../shared/contracts/nfc-tag-admin.ts';
+import {
+  ScanTagEnrollmentDoneSchema,
+  ScanTagEnrollmentPendingSchema,
+} from '../../../shared/contracts/nfc-tag-enrollments.ts';
 import {
   ScanTagBindResultSchema,
-  ScanTagEnrollmentPendingSchema,
   ScanTagInspectResponseSchema,
 } from '../../../shared/contracts/nfc-tags.ts';
 import {

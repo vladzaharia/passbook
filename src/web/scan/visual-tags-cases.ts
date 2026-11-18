@@ -173,6 +173,15 @@ export const assigns: Record<string, Assign> = {
     a: base({ step: 'error', error: { kind: 'too_many', seconds: 20 } }),
     reader: ANDROID,
   },
+  'assign-holder-changed': {
+    a: base({
+      source: 'request',
+      step: 'error',
+      request: ENROLL,
+      error: { kind: 'holder_changed' },
+    }),
+    reader: ANDROID,
+  },
   'request-card': {
     a: base({ source: 'request', request: ENROLL, idleAt: ENROLL.expiresAt }),
     reader: ANDROID,

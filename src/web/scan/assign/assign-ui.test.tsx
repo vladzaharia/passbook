@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
+import { TAG_ERROR_COPY } from '../../../shared/copy/tags.ts';
 import '../../lib/test-utils.tsx';
 import { type TAG_SCENARIOS, TagVisual } from '../visual-tags.tsx';
 import { flagText, noneLine } from './tag-lines.ts';
@@ -67,6 +68,11 @@ describe('the assign card', () => {
   ] as const)('%s is %s', (scenario, headline) => {
     show(scenario);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(headline);
+  });
+  it('a pass that changed hands says so, in the copy deck words', () => {
+    show('assign-holder-changed');
+    expect(screen.getByText(TAG_ERROR_COPY.TAG_HOLDER_CHANGED)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: SCAN_TAG_COPY.dock.tryAnother })).toBeNull();
   });
   it('the web hint rides an unreadable tag', () => {
     show('assign-unreadable-web');
