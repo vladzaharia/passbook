@@ -2,7 +2,7 @@ import type { Personalization } from '../../../passkit/types.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ConnectionMode } from '../../../shared/contracts/connections.ts';
 import type { SealRow } from '../../platform/capability-token.ts';
-import type { PassIssuanceExecution } from './create-types.ts';
+import type { JoinKeys, PassIssuanceExecution } from './create-types.ts';
 import type { FieldSources } from './repo-map.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
 import type { RetainedIssuanceClaim } from './repo-write-retained.ts';
@@ -57,4 +57,5 @@ export interface NewPassRow {
   barcodeHash: string | null;
   lookupHash: string | null;
   execution: PassIssuanceExecution;
+  joinKeys?: JoinKeys;
 }

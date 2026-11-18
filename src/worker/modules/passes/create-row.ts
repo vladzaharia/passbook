@@ -186,6 +186,7 @@ export async function createPassRowWithRelease(
         : {}),
       sendEmail: Boolean(p.sendEmail && holderEmail),
       execution: p.execution,
+      ...(p.joinKeys ? { joinKeys: p.joinKeys } : {}),
       now: ctx.clock.now(),
     });
     if (!inserted) {

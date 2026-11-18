@@ -23,7 +23,29 @@ export async function assertTenantCreateAuthority(
   const execution = p.execution;
   if (
     !execution ||
-    (execution.kind !== 'tenant' && execution.kind !== 'connection' && execution.kind !== 'system')
+    (execution.kind !== 'tenant' &&
+      execution.kind !== 'connection' &&
+      execution.kind !== 'system' &&
+      execution.kind !== 'join')
+  )
+    throw new ForbiddenError();
+  if (p.joinKeys !== undefined && execution.kind !== 'join') throw new ForbiddenError();
+  if (
+    execution.kind === 'join' &&
+    (p.source !== 'manual' ||
+      p.connectionId ||
+      p.externalId ||
+      p.serial !== undefined ||
+      p.identityId !== undefined ||
+      p.reservedPassId !== undefined ||
+      p.retainedClaim !== undefined ||
+      p.actor.type !== 'system' ||
+      p.actor.id !== `join:${execution.linkId}` ||
+      typeof execution.generation !== 'number' ||
+      !Number.isSafeInteger(execution.generation) ||
+      execution.generation < 1 ||
+      !Number.isSafeInteger(execution.orgDailyCap) ||
+      execution.orgDailyCap < 1)
   )
     throw new ForbiddenError();
   if (

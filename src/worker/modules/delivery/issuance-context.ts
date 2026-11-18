@@ -48,6 +48,12 @@ const ContextSchema = z.object({
   execution: z.discriminatedUnion('kind', [
     z.object({ kind: z.literal('system') }),
     z.object({
+      kind: z.literal('join'),
+      linkId: z.string(),
+      generation: z.number().int().positive(),
+      orgDailyCap: z.number().int().positive(),
+    }),
+    z.object({
       kind: z.literal('connection'),
       connectionId: z.string(),
       generation: z.number().int().positive(),

@@ -29,12 +29,13 @@ export async function addCreateStatements(
 ): Promise<CreateStatements> {
   const insert = grantPassInsert(g, row, ownerUserId);
   g.assert('stale', [exists('passes', { id: row.id })]);
-  g.include(sealPart('pass', row.id, row.downloadToken, row.tokenSeal));
-  g.include(sealPart('apple-auth', row.id, row.authToken, row.authSeal));
+  g.include(sealPart('pass', row.id, row.downloadToken, row.tokenSeal, { holder: g.pinned }));
+  g.include(sealPart('apple-auth', row.id, row.authToken, row.authSeal, { holder: g.pinned }));
   if (row.sendEmail && row.holderEmail) {
     await grantIssuanceInsert(ctx.env.DB, g, row);
     g.assert('stale', [exists('pass_issuance_deliveries', { pass_id: row.id })]);
   }
+  const join = row.execution.kind === 'join' ? row.execution : null;
   const actor = { type: (row.actorType ?? 'system') as EventActorType, id: row.actorId };
   g.insertSelect(
     'pass_events',
@@ -45,12 +46,32 @@ export async function addCreateStatements(
       actor.type,
       actor.id,
       JSON.stringify(
-        sanitizeEventData({ version: 1, cause: 'create', source: null, notified: false }),
+        sanitizeEventData({
+          version: 1,
+          cause: 'create',
+          source: join ? 'join' : null,
+          notified: false,
+        }),
       ),
       row.now,
     ],
     { from: { table: 'passes', where: { id: row.id }, copy: { pass_id: 'id' } } },
   );
+  if (join)
+    g.insertSelect(
+      'join_issues',
+      ['id', 'link_id', 'link_generation', 'created_at', 'ip_key', 'device_key', 'fields_hash'],
+      [
+        ctx.ids.id(),
+        join.linkId,
+        join.generation,
+        row.now,
+        row.joinKeys?.ipKey ?? null,
+        row.joinKeys?.deviceKey ?? null,
+        row.joinKeys?.fieldsHash ?? null,
+      ],
+      { from: { table: 'passes', where: { id: row.id }, copy: { pass_id: 'id' } } },
+    );
   const entry = {
     at: row.now,
     orgId: row.orgId,
@@ -65,7 +86,11 @@ export async function addCreateStatements(
     targetType: 'pass',
     targetId: row.id,
     detail: JSON.stringify(
-      redactDetail({ templateId: row.templateId, connectionId: row.connectionId }),
+      redactDetail(
+        join
+          ? { templateId: row.templateId, joinLinkId: join.linkId }
+          : { templateId: row.templateId, connectionId: row.connectionId },
+      ),
     ),
   });
   if (ownerUserId !== null)

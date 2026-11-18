@@ -18,9 +18,13 @@ export async function insertPass(
   const execution = row.execution;
   if (
     !execution ||
-    (execution.kind !== 'tenant' && execution.kind !== 'connection' && execution.kind !== 'system')
+    (execution.kind !== 'tenant' &&
+      execution.kind !== 'connection' &&
+      execution.kind !== 'system' &&
+      execution.kind !== 'join')
   )
     return false;
+  if (row.joinKeys !== undefined && execution.kind !== 'join') return false;
   const authority = execution.kind === 'tenant' ? execution.authority : undefined;
   const additionalAuthority =
     execution.kind === 'tenant' ? execution.additionalAuthority : undefined;
@@ -146,9 +150,11 @@ export async function insertPass(
     } catch (error) {
       const reason = createRefusal(error);
       // A lost race is diagnosed by the caller. A lost org or actor on a request is a 403.
+      // A join create hands every refusal but a stale owner to the public submit, which answers each one.
       if (
         reason === null ||
-        (execution.kind === 'tenant' && (reason === 'org' || reason === 'actor'))
+        (execution.kind === 'tenant' && (reason === 'org' || reason === 'actor')) ||
+        (execution.kind === 'join' && reason !== 'stale')
       )
         throw error;
       if (reason !== 'stale' || attempt >= 2) return false;

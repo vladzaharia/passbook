@@ -3,6 +3,7 @@ import { type Check, releaseHead } from '../../platform/authority-checks.ts';
 import { AppError, type DenyReason } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
+import { JOIN_CODES, joinCreateGrant } from '../join/grant.ts';
 import { sampleScannerScopeCheck } from '../scan/sample-scope-fence.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import { notBlueprintCheck, releaseOrgCheck, releaseSnapshotCheck } from './repo-create-checks.ts';
@@ -22,7 +23,9 @@ export const CREATE_CODES = {
 } as const satisfies Record<DenyReason, string>;
 
 const REASON_OF = new Map<string, DenyReason>(
-  (Object.entries(CREATE_CODES) as [DenyReason, string][]).map(([reason, code]) => [code, reason]),
+  ([...Object.entries(CREATE_CODES), ...Object.entries(JOIN_CODES)] as [DenyReason, string][]).map(
+    ([reason, code]) => [code, reason],
+  ),
 );
 
 export const createRefusal = (error: unknown): DenyReason | null =>
@@ -71,6 +74,17 @@ export function createGrant(
       codes: CREATE_CODES,
       target: row.id,
       tables: CREATE_TABLES,
+    });
+  if (ex.kind === 'join')
+    return joinCreateGrant(ctx, {
+      linkId: ex.linkId,
+      generation: ex.generation,
+      orgDailyCap: ex.orgDailyCap,
+      templateId: row.templateId,
+      passId: row.id,
+      holderEmail: row.holderEmail,
+      now: row.now,
+      checks,
     });
   return grant(ctx, {
     purpose: 'org_mode.pass.create',
