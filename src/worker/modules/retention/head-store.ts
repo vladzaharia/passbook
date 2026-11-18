@@ -55,3 +55,22 @@ export async function headMatches(
   const stored = (await object.json()) as { mac?: unknown };
   return stored.mac === newest.mac;
 }
+
+/**
+ * Re-puts the head when D1's newest receipt has no object at or after it (an earlier put failed). A later
+ * object means D1 lost its tail: nothing is written, and verification keeps failing.
+ */
+export async function healHead(
+  ctx: ServiceContext,
+  orgId: string | null,
+  cls: string,
+  newest: { seq: number; mac: string } | null,
+): Promise<void> {
+  if (newest === null) return;
+  const at = await ctx.env.BUCKET.list({
+    prefix: prefix(orgId, cls),
+    startAfter: keyOf(orgId, cls, newest.seq - 1),
+    limit: 1,
+  });
+  if (at.objects.length === 0) await writeHead(ctx, { orgId, cls, ...newest });
+}

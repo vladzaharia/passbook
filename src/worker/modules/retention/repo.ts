@@ -32,8 +32,8 @@ export async function readPlatformRaw(db: D1Database): Promise<Map<string, Raw>>
 }
 
 /**
- * Every live org that has its own value, an unexpired floor or an org-wide hold for the class. Deleted
- * orgs are left out (an org delete purges them); suspended orgs stay in, so deletes run on time.
+ * Every org that has its own value, an unexpired floor or an org-wide hold for the class. Suspended and
+ * soft-deleted orgs stay in: their own values, floors and holds still bind until the rows are purged.
  */
 export async function readOrgRows(
   db: D1Database,
@@ -45,21 +45,21 @@ export async function readOrgRows(
     all<{ org_id: string; value: string }>(
       db,
       `SELECT substr(s.scope, 5) AS org_id, s.value FROM settings s
-       JOIN orgs o ON o.id = substr(s.scope, 5) AND o.status != 'deleted'
+       JOIN orgs o ON o.id = substr(s.scope, 5) 
        WHERE s.key = ? AND s.scope GLOB 'org:*'`,
       [key],
     ),
     all<{ org_id: string; days: number; until: number }>(
       db,
       `SELECT f.org_id, f.days, f.until FROM retention_floors f
-       JOIN orgs o ON o.id = f.org_id AND o.status != 'deleted'
+       JOIN orgs o ON o.id = f.org_id 
        WHERE f.class = ? AND f.until > ?`,
       [cls, now],
     ),
     all<{ org_id: string }>(
       db,
       `SELECT DISTINCT h.org_id FROM retention_holds h
-       JOIN orgs o ON o.id = h.org_id AND o.status != 'deleted'
+       JOIN orgs o ON o.id = h.org_id 
        WHERE h.pass_id IS NULL AND h.released_at IS NULL`,
     ),
   ]);

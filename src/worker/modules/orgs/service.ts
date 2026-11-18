@@ -17,6 +17,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
+import { orgIsHeld } from '../retention/holds.ts';
 import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import { markPassesStale } from './branding-stale.ts';
 import {
@@ -277,6 +278,11 @@ export async function deleteOrg(
   admin: OrgAdmin,
 ): Promise<void> {
   const row = await requireOrg(ctx, id);
+  if (await orgIsHeld(ctx, id))
+    throw new ConflictError(
+      'A legal hold is active. Release it before deleting the organization.',
+      'ORG_HELD',
+    );
   await moveOrgStatusAsAdmin(ctx, id, row.status, 'deleted', admin);
   await recordAudit(ctx, {
     ...auditActor(actor),

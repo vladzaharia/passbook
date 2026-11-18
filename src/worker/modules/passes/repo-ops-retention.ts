@@ -17,7 +17,7 @@ export interface DeletedPass {
 }
 
 /**
- * A deleted pass whose rows must stay for now: a pending credential transfer or an in-flight sandbox forward.
+ * A deleted pass whose rows must stay for now: a pending credential transfer, an in-flight sandbox forward or a legal hold (org-wide or on the pass).
  * Selection excludes these (so they cannot fill every batch) and the delete re-checks them.
  */
 const purgeBlockedSql = `(
@@ -28,6 +28,8 @@ const purgeBlockedSql = `(
     WHERE c.pass_id = passes.id AND f.state IN ('sending', 'unknown'))
   OR EXISTS (SELECT 1 FROM bundle_passes bp JOIN sandbox_forwards f ON f.bundle_id = bp.bundle_id
     WHERE bp.pass_id = passes.id AND f.state IN ('sending', 'unknown'))
+  OR EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL AND h.org_id = passes.org_id
+    AND (h.pass_id IS NULL OR h.pass_id = passes.id))
 )`;
 
 /** Return external cleanup targets only when the pass is deleted against its selection keyset. */

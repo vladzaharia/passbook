@@ -1,4 +1,3 @@
-import { deleteInBatches } from '../../platform/batched.ts';
 import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
 import { mapOutbox, type OutboxDbRow, type OutboxRow } from './repo-outbox-map.ts';
 
@@ -155,24 +154,4 @@ export async function touchEnqueued(db: D1Database, ids: string[], now: number):
       [now, ...part],
     );
   }
-}
-
-export async function deleteFinishedOutbox(
-  db: D1Database,
-  sentBefore: number,
-  failedBefore: number,
-): Promise<number> {
-  const sent = await deleteInBatches(
-    db,
-    'outbox',
-    `state IN ('sent', 'cancelled') AND finished_at < ?`,
-    [sentBefore],
-  );
-  const failed = await deleteInBatches(
-    db,
-    'outbox',
-    `state IN ('failed', 'partial') AND finished_at < ?`,
-    [failedBefore],
-  );
-  return sent + failed;
 }
