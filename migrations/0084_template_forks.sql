@@ -110,3 +110,5 @@ BEGIN SELECT RAISE(ABORT, 'a dismissal names its user'); END;
 CREATE TRIGGER template_fork_updates_no_delete BEFORE DELETE ON template_fork_updates
 WHEN EXISTS (SELECT 1 FROM template_forks f WHERE f.template_id = OLD.template_id)
 BEGIN SELECT RAISE(ABORT, 'template fork updates are kept'); END;
+CREATE INDEX template_version_bases_parent ON template_version_bases (template_id, parent_version)
+  WHERE parent_version IS NOT NULL;
