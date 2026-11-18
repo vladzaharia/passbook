@@ -2,6 +2,7 @@ import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
+import { accessTemplate } from './access-test-fixtures.ts';
 import {
   act,
   kit,
@@ -10,6 +11,7 @@ import {
   reviseReplayTemplate,
   setupActionFixture,
 } from './act-test-fixtures.ts';
+import { scanAt, trackedZone, zoneDoor } from './occupancy-scan-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
 const CHECK_IN = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
@@ -162,6 +164,64 @@ describe('term: first scan', () => {
     expect(res.status).toBe(200);
     await settle();
     expect((await stored(pass.id)).start).toBe(before.start);
+  });
+});
+
+describe('term: exits and older passes', () => {
+  it('an exit does not start the term; the next entry does', async () => {
+    const tpl = await accessTemplate();
+    await reviseReplayTemplate(tpl, (m) => {
+      (m.inputs.properties as Record<string, unknown>).startsAt = {
+        type: 'string',
+        format: 'date-time',
+      };
+      m.behaviors = term('first-scan');
+    });
+    const gym = await trackedZone({ occupancy: 'track' });
+    const way = await zoneDoor(tpl, [gym]);
+    const exit = await zoneDoor(tpl, [gym], 'out');
+    const pass = await kit.scanPass(tpl, { plan: 'gold' });
+    expect((await scanAt(way, pass, 'in')).occupancy?.direction).toBe('in');
+    await stamped(pass.id);
+    // Forget the start, as if the entry had not stamped it, then leave.
+    await run(
+      kit.env.DB,
+      `UPDATE passes SET personalization = json_remove(personalization, '$.startsAt'),
+         field_sources = json_remove(field_sources, '$.startsAt') WHERE id = ?`,
+      [pass.id],
+    );
+    kit.clock.advance(MINUTE);
+    const left = await scanAt(exit, pass);
+    expect(left.occupancy?.direction).toBe('out');
+    await settle();
+    expect((await stored(pass.id)).start).toBeUndefined();
+    kit.clock.advance(MINUTE);
+    expect((await scanAt(way, pass, 'in')).occupancy?.direction).toBe('in');
+    expect(typeof (await stamped(pass.id)).start).toBe('string');
+  });
+
+  it('stamps an older pass once at its first publish, then keeps it', async () => {
+    const s = await desk(issueTpl);
+    const pass = await kit.scanPass(issueTpl);
+    // An older pass: built before the term existed, so it has no start input.
+    await run(
+      kit.env.DB,
+      `UPDATE passes SET personalization = json_remove(personalization, '$.startsAt'),
+         field_sources = json_remove(field_sources, '$.startsAt') WHERE id = ?`,
+      [pass.id],
+    );
+    expect((await stored(pass.id)).start).toBeUndefined();
+    const stampedAt = kit.clock.now() + MINUTE;
+    kit.clock.advance(MINUTE);
+    expect((await out(await act(s.headers, codeOf(pass), { actionId: 'add' }))).kind).toBe('ok');
+    const first1 = await stored(pass.id);
+    expect(first1.start).toBe(new Date(stampedAt).toISOString());
+    expect(first1.expires).toBe(plusYear(stampedAt));
+    kit.clock.advance(5 * MINUTE);
+    expect((await out(await act(s.headers, codeOf(pass), { actionId: 'add' }))).kind).toBe('ok');
+    const second = await stored(pass.id);
+    expect(second.start).toBe(first1.start);
+    expect(second.expires).toBe(first1.expires);
   });
 });
 

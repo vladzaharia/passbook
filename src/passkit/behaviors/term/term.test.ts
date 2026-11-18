@@ -157,12 +157,14 @@ describe('term', () => {
   it('renews from the current end when early, and from the renewal when lapsed', () => {
     const c = months(12);
     const start = ms('2030-03-15T10:00:00Z');
-    expect(renewedStart(start, c, ms('2030-09-01T00:00:00Z'))).toBe(ms('2031-03-15T10:00:00Z'));
+    expect(renewedStart(start, c, ms('2030-09-01T00:00:00Z')).start).toBe(
+      ms('2031-03-15T10:00:00Z'),
+    );
     const lapsed = ms('2033-01-10T08:00:00Z');
-    expect(renewedStart(start, c, lapsed)).toBe(lapsed);
+    expect(renewedStart(start, c, lapsed)).toEqual({ start: lapsed, anchor: lapsed });
     expect(
       run(
-        { s: new Date(renewedStart(start, c, lapsed)).toISOString() },
+        { s: new Date(renewedStart(start, c, lapsed).start).toISOString() },
         c,
         '2033-01-10T08:00:00Z',
         {},
@@ -170,23 +172,60 @@ describe('term', () => {
     ).toBe('2034-01-10T08:00:00Z');
     expect(
       run(
-        { s: new Date(renewedStart(start, c, lapsed)).toISOString() },
+        { s: new Date(renewedStart(start, c, lapsed).start).toISOString() },
         { ...c, voidWhenPast: true },
         '2033-01-10T08:00:00Z',
       ).voided,
     ).toBeUndefined();
     // A day-end term starts the next one at the following midnight.
     const eom: TermConfig = { start: 's', unit: 'month-end', length: 1 };
-    expect(renewedStart(ms('2030-04-10T08:00:00Z'), eom, ms('2030-04-12T00:00:00Z'))).toBe(
+    expect(renewedStart(ms('2030-04-10T08:00:00Z'), eom, ms('2030-04-12T00:00:00Z')).start).toBe(
       ms('2030-05-01T00:00:00Z'),
     );
+  });
+
+  it('keeps the day of the month through consecutive renewals', () => {
+    const c: TermConfig = { start: 's', anchor: 'a', unit: 'months', length: 1 };
+    const endOf = (start: number, anchor?: number) =>
+      run(
+        {
+          s: new Date(start).toISOString(),
+          ...(anchor ? { a: new Date(anchor).toISOString() } : {}),
+        },
+        c,
+      ).expirationDate;
+    let state = { start: ms('2030-01-31T10:00:00Z'), anchor: undefined as number | undefined };
+    const ends = [endOf(state.start)];
+    for (let i = 0; i < 3; i++) {
+      // Each renewal arrives early, before the term ends.
+      const next = renewedStart(state.start, c, state.start + 1000, state.anchor);
+      state = next;
+      ends.push(endOf(state.start, state.anchor));
+    }
+    expect(ends).toEqual([
+      '2030-02-28T10:00:00Z',
+      '2030-03-31T10:00:00Z',
+      '2030-04-30T10:00:00Z',
+      '2030-05-31T10:00:00Z',
+    ]);
+  });
+
+  it('re-anchors on a lapsed renewal', () => {
+    const c: TermConfig = { start: 's', anchor: 'a', unit: 'months', length: 1 };
+    const lapsedAt = ms('2030-06-15T09:00:00Z');
+    const r = renewedStart(ms('2030-01-31T10:00:00Z'), c, lapsedAt, ms('2030-01-31T10:00:00Z'));
+    expect(r).toEqual({ start: lapsedAt, anchor: lapsedAt });
+    expect(
+      run({ s: new Date(r.start).toISOString(), a: new Date(r.anchor).toISOString() }, c)
+        .expirationDate,
+    ).toBe('2030-07-15T09:00:00Z');
   });
 
   it('caps one term at ten years, not the span of renewals', () => {
     const start = ms('2030-03-15T10:00:00Z');
     const yearly: TermConfig = { start: 's', unit: 'years', length: 1 };
     let at = start;
-    for (let i = 0; i < 12; i++) at = renewedStart(at, yearly, 0);
+    for (let i = 0; i < 12; i++) at = renewedStart(at, yearly, 0).start;
     expect(run({ s: new Date(at).toISOString() }, yearly).expirationDate).toBe(
       '2043-03-15T10:00:00Z',
     );

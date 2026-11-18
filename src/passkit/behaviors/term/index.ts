@@ -21,6 +21,12 @@ export interface TermConfig {
   start: string;
   startOn?: TermStartOn;
   /**
+   * Input holding the date whose day of the month the term keeps. A renewal that continues from
+   * the end sets it, so a 31st start keeps landing on month end instead of drifting to the 28th.
+   * Empty: the start's own day.
+   */
+  anchor?: string;
+  /**
    * The term. `months` and `years` are calendar months from the start day (31 Jan + 1 month is the
    * last day of February). `month-end` ends at the close of the start's month, then `length - 1`
    * more months. One term is at most ten years.
@@ -44,6 +50,7 @@ const configSchema: JsonSchemaObject = {
   properties: {
     start: { type: 'string', minLength: 1 },
     startOn: { enum: ['input', 'first-scan', 'issue'] },
+    anchor: { type: 'string', minLength: 1 },
     unit: { enum: ['days', 'months', 'years', 'month-end'] },
     length: { type: 'integer', minimum: 1, maximum: 3650 },
     timeZone: { type: 'string', minLength: 1 },
@@ -85,10 +92,11 @@ function parseStart(raw: string, key: string, tz: string): number {
   return ms;
 }
 
-/** The end of one term as an instant, grace included. */
-export function termEnd(startMs: number, config: TermConfig): number {
+/** The end of one term as an instant, grace included. `anchorMs` supplies the day of the month. */
+export function termEnd(startMs: number, config: TermConfig, anchorMs?: number): number {
   const tz = config.timeZone ?? 'UTC';
   const start = localOf(startMs, tz);
+  const base = anchorMs === undefined ? start : { ...start, d: localOf(anchorMs, tz).d };
   let local = start;
   if (config.unit === 'days') {
     local = addDays(start, config.length);
@@ -99,7 +107,7 @@ export function termEnd(startMs: number, config: TermConfig): number {
       local = addMonths({ ...start, d: 1 }, months - 1);
       local = { ...local, d: daysInMonth(local.y, local.mo) };
     } else {
-      local = addMonths(start, months);
+      local = addMonths(base, months);
     }
   }
   if (config.endOfDay === true || config.unit === 'month-end')
@@ -108,18 +116,21 @@ export function termEnd(startMs: number, config: TermConfig): number {
 }
 
 /**
- * Where the next term starts on a renewal: at the current end when renewed early, at the renewal
- * when the term had lapsed, so a late renewal never starts in the past. The caller writes it into
- * the start input. A day-end boundary starts the next term at the following midnight.
+ * The start and anchor to write on a renewal. Renewed on or before the end, the next term runs
+ * on from the current end and keeps the original day of the month (`anchorMs`, else the start's).
+ * Renewed after the end, it starts at the renewal and takes its day: a late renewal never starts
+ * in the past. A day-end boundary starts the next term at the following midnight.
  */
 export function renewedStart(
   startMs: number,
   config: Omit<TermConfig, 'graceDays'>,
   renewedAtMs: number,
-): number {
-  const end = termEnd(startMs, config);
-  const dayEnd = config.endOfDay === true || config.unit === 'month-end';
-  return Math.max(dayEnd ? end + 1000 : end, renewedAtMs);
+  anchorMs?: number,
+): { start: number; anchor: number } {
+  const end = termEnd(startMs, config, anchorMs);
+  const next = config.endOfDay === true || config.unit === 'month-end' ? end + 1000 : end;
+  if (renewedAtMs > next) return { start: renewedAtMs, anchor: renewedAtMs };
+  return { start: next, anchor: anchorMs ?? startMs };
 }
 
 /**
@@ -141,7 +152,12 @@ export const term: BehaviorPlugin<TermConfig> = {
       if (config.startOn === 'first-scan') delete pass.expirationDate;
       return;
     }
-    const end = termEnd(parseStart(raw, config.start, tz), config);
+    const anchorRaw = config.anchor ? input[config.anchor] : undefined;
+    const anchor =
+      typeof anchorRaw === 'string' && anchorRaw !== ''
+        ? parseStart(anchorRaw, config.anchor ?? '', tz)
+        : undefined;
+    const end = termEnd(parseStart(raw, config.start, tz), config, anchor);
     pass.expirationDate = iso(end);
     if (config.voidWhenPast && end <= ctx.now.getTime()) pass.voided = true;
   },
