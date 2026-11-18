@@ -13,6 +13,7 @@ import {
   claimRemoval,
   claimRestore,
   getPassLifecycle,
+  type RemovalFence,
   type RemovalState,
   reinstateRemoval,
   releaseRemoval,
@@ -54,9 +55,12 @@ export async function removePass(
   input: { message?: string | undefined },
   scope: ScopeArg,
   authority?: TenantPassWrite,
+  fence?: RemovalFence,
 ) {
   const db = ctx.env.DB;
   const pass = await getPassForWrite(db, passId, scope);
+  if (fence && pass.removedAt === null && pass.version !== fence.version)
+    throw new ConflictError('The pass was edited since the import.', 'IMPORT_PASS_CHANGED');
   const lifecycle = await getPassLifecycle(db, pass);
   if (!lifecycle) throw new ConflictError('The pass changed. Reload and retry.', 'PASS_CONFLICT');
   let claimed: {
@@ -99,6 +103,7 @@ export async function removePass(
       generation: lifecycle.generation,
       now: at,
       authority,
+      ...(fence ? { fence } : {}),
     });
     if (generation === null) {
       // A racing remove (or a lost-response retry) already claimed it: the requested state holds, so answer 200.

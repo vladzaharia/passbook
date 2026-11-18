@@ -1,8 +1,8 @@
 export const BOM = String.fromCharCode(0xfeff);
 
-/** A leading =, +, - or @ makes spreadsheets run the cell as a formula: prefix a quote. */
+/** A leading =, +, - or @ (after any spaces, tabs or line breaks) makes spreadsheets run the cell as a formula: prefix a quote. */
 export function guardCell(v: string): string {
-  return /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+  return /^[ \t\r\n]*[=+\-@]|^[\t\r]/.test(v) ? `'${v}` : v;
 }
 
 /** RFC 4180 CSV: quotes fields with delimiters, quotes or line breaks; CRLF rows. */

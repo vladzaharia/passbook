@@ -7,15 +7,18 @@ import {
   PassImportCommitSchema,
   PassImportListQuerySchema,
   PassImportPageSchema,
+  PassImportRemoveResultSchema,
+  PassImportRemoveSchema,
   PassImportRowsPageSchema,
   PassImportRowsQuerySchema,
   PassImportSchema,
 } from '../../../shared/contracts/pass-imports.ts';
 import { methodScope } from '../../platform/auth.ts';
 import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import {
+  actorFor,
   assertOrg,
   authOf,
   type C,
@@ -25,6 +28,8 @@ import {
 } from './http.ts';
 import { commitImport } from './import-commit.ts';
 import { errorsCsv, importDto, rowsPage } from './import-read.ts';
+import { removeCreated } from './import-remove.ts';
+import { resultsCsv } from './import-results.ts';
 import {
   checkImport,
   createImport,
@@ -194,6 +199,58 @@ register(
         'cache-control': 'no-store',
       },
     });
+  },
+);
+
+register(
+  passImportRoutes,
+  TAG,
+  {
+    method: 'get',
+    path: '/{id}/results.csv',
+    summary: 'What happened to each row, with the pass and its links',
+    params: IdParamSchema,
+    query: OrgQuerySchema,
+  },
+  async (c) => {
+    const ctx = svc(c);
+    const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
+    const row = await requireImport(ctx, authority, c.req.valid('param').id);
+    return new Response(await resultsCsv(ctx, row, authority), {
+      headers: {
+        'content-type': 'text/csv; charset=utf-8',
+        'content-disposition': 'attachment; filename="import-results.csv"',
+        'cache-control': 'no-store',
+      },
+    });
+  },
+);
+
+register(
+  passImportRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/{id}/remove-created',
+    summary: 'Remove the passes this import created, 50 a call; edited or scanned ones are skipped',
+    params: IdParamSchema,
+    query: OrgQuerySchema,
+    body: PassImportRemoveSchema,
+    response: PassImportRemoveResultSchema,
+  },
+  async (c) => {
+    if (authOf(c).kind !== 'session')
+      throw new ForbiddenError('Removing needs a signed-in user.', 'SESSION_REQUIRED');
+    const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
+    return c.json(
+      await removeCreated(
+        svc(c),
+        actorFor(c),
+        authority,
+        c.req.valid('param').id,
+        c.req.valid('json').cursor,
+      ),
+    );
   },
 );
 

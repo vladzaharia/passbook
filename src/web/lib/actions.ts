@@ -109,6 +109,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.void': a('Pass voided', I.void, 'warning'),
   'pass_import.commit': a('Import started', ENTITY.pass.icon, 'info'),
   'pass_import.finish': a('Import finished', CircleCheck, 'success'),
+  'pass_import.remove_created': a('Import passes removed', I.removeFromWallet, 'warning'),
+  'pass_import.results_export': a('Import results exported', ENTITY.pass.icon, 'info'),
   'scanning.session_create': a('Scanning session created', ENTITY.scanner.icon, 'success'),
   'scanning.session_update': a('Scanning session changed', Settings, 'info'),
   'scanning.device_update': a('Scanning device changed', Settings, 'info'),

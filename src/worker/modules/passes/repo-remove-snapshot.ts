@@ -18,8 +18,15 @@ export interface RemovalState extends RemovalInput {
   claimLinkGeneration: number | null;
 }
 
+/** A removal that must not claim a pass that moved on: its version is the one given and no scan names it. */
+export interface RemovalFence {
+  version: number;
+  noScans: boolean;
+}
+
 export interface RemovalGuard {
   pass: Pass;
+  fence?: RemovalFence;
   generation: number;
   now: number;
   authority?: TenantPassWrite;
