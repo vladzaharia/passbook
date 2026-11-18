@@ -1,8 +1,9 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
-import { COUNTS_KEPT_MS, dailyImports, PII_KEPT_MS } from './import-retention.ts';
+import { COUNTS_KEPT_MS, dailyImports, isSettled, PII_KEPT_MS } from './import-retention.ts';
 import { HEAD, type ImportHarness, setupImportHarness } from './import-test-fixtures.ts';
+import { deleteImport } from './repo-import-retention.ts';
 
 let h: ImportHarness;
 beforeAll(async () => {
@@ -109,6 +110,58 @@ describe('retention', () => {
       [running.id],
     );
     expect(left[0]?.n).toBe(1);
+  });
+
+  it('never touches the rows of a committed import that went stale', async () => {
+    const d = await h.draft([HEAD, 'St,1,,RS-1'].join('\n'));
+    await h.commit(d.id);
+    await h.runWorkflow(d.id);
+    await run(
+      h.kit.env.DB,
+      "UPDATE pass_imports SET state = 'stale', expires_at = ? WHERE id = ?",
+      [h.kit.clock.now() - 1, d.id],
+    );
+    await dailyImports(ctx());
+    expect((await stateOf(d.id))?.state).toBe('stale');
+    expect(await rowCount(d.id)).toBe(1);
+    const row = await first<{ result: string }>(
+      h.kit.env.DB,
+      'SELECT result FROM pass_import_rows WHERE import_id = ?',
+      [d.id],
+    );
+    expect(row?.result).toBe('created');
+  });
+
+  it('scrubs a suspended org at 30 days, refuses a deleted one, and treats a second delete as settled', async () => {
+    const d = await h.draft([HEAD, 'Sp,1,s@x.co,RU-1'].join('\n'));
+    await h.commit(d.id);
+    await h.runWorkflow(d.id);
+    await run(h.kit.env.DB, 'UPDATE pass_imports SET finished_at = ? WHERE id = ?', [
+      h.kit.clock.now() - PII_KEPT_MS - 1,
+      d.id,
+    ]);
+    const piiLeft = async () =>
+      (
+        await first<{ n: number }>(
+          h.kit.env.DB,
+          'SELECT count(*) AS n FROM pass_import_rows WHERE import_id = ? AND input IS NOT NULL',
+          [d.id],
+        )
+      )?.n;
+    try {
+      await run(h.kit.env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [h.kit.org.id]);
+      await dailyImports(ctx());
+      expect(await piiLeft()).toBe(1);
+      await run(h.kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [h.kit.org.id]);
+      await dailyImports(ctx());
+      expect(await piiLeft()).toBe(0);
+      const imp = { id: d.id, org_id: h.kit.org.id, mode: 'live' as const, object_key: null };
+      await deleteImport(ctx(), imp);
+      const again = await deleteImport(ctx(), imp).catch((e: unknown) => e);
+      expect(isSettled(again)).toBe(true);
+    } finally {
+      await run(h.kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [h.kit.org.id]);
+    }
   });
 
   it('logs a stable code and goes on when one import cannot be written', async () => {

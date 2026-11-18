@@ -3,9 +3,11 @@ import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { auditActor, recordAudit } from '../audit/service.ts';
 import { problemsOf } from './import-read.ts';
 import { passLinkRows, type ResultRow, resultRows } from './repo-import-results.ts';
 import type { ImportRow } from './repo-imports.ts';
+import type { Actor } from './service.ts';
 
 const PAGE = 500;
 const HEADER = [
@@ -30,7 +32,11 @@ const resultOf = (r: ResultRow): string => {
  * built here, per request: they are capabilities, so they are never stored or logged. Rows whose pass is
  * removed have no link. Fields the retention cleared are blank.
  */
-export async function resultsCsv(ctx: ServiceContext, imp: ImportRow): Promise<string> {
+export async function resultsCsv(
+  ctx: ServiceContext,
+  imp: ImportRow,
+  actor: Actor,
+): Promise<string> {
   if (imp.committed_at === null)
     throw new ConflictError('This import has not run yet.', 'IMPORT_STATE');
   const base = baseUrl(ctx.env);
@@ -76,5 +82,14 @@ export async function resultsCsv(ctx: ServiceContext, imp: ImportRow): Promise<s
     if (rows.length < PAGE || !last) break;
     after = last.row_no;
   }
+  // Every pass link and email of the import left in one file: no tokens or addresses in the entry.
+  await recordAudit(ctx, {
+    orgId: imp.org_id,
+    ...auditActor(actor),
+    action: 'pass_import.results_export',
+    targetType: 'pass_import',
+    targetId: imp.id,
+    detail: { importId: imp.id, rows: lines.length },
+  });
   return BOM + toCsv(HEADER, lines);
 }

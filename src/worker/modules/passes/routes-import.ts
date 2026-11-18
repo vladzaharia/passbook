@@ -216,7 +216,7 @@ register(
     const ctx = svc(c);
     const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
     const row = await requireImport(ctx, authority, c.req.valid('param').id);
-    return new Response(await resultsCsv(ctx, row), {
+    return new Response(await resultsCsv(ctx, row, actorFor(c)), {
       headers: {
         'content-type': 'text/csv; charset=utf-8',
         'content-disposition': 'attachment; filename="import-results.csv"',

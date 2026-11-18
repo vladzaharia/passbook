@@ -1,6 +1,6 @@
 import { jobGrant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
-import { inList, ne, orNull } from '../../platform/authority-expr.ts';
+import { inList } from '../../platform/authority-expr.ts';
 import { all } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 
@@ -23,7 +23,8 @@ export function expiredDrafts(db: D1Database, now: number, after: string, limit:
   return all<RetentionImport>(
     db,
     `SELECT ${COLUMNS} FROM pass_imports
-     WHERE state IN ('mapping', 'checking', 'ready', 'stale') AND expires_at <= ? AND id > ?
+     WHERE state IN ('mapping', 'checking', 'ready', 'stale') AND committed_at IS NULL
+       AND expires_at <= ? AND id > ?
      ORDER BY id LIMIT ?`,
     [now, after, limit],
   );
@@ -60,12 +61,14 @@ function retentionGrant(
   imp: RetentionImport,
   purpose: string,
   states: readonly string[],
+  inactiveOk = false,
 ) {
   return jobGrant(ctx, {
     purpose,
     job: 'pass-import',
     orgId: imp.org_id,
     mode: imp.mode,
+    ...(inactiveOk ? { inactiveOk: true as const } : {}),
     target: imp.id,
     tables: TABLES,
     codes: CODES,
@@ -75,19 +78,19 @@ function retentionGrant(
   });
 }
 
-/** The draft ends `expired`; rows an earlier commit created stay, as a re-check keeps them. */
+/** The draft ends `expired` and its unapplied rows go. An import that was ever committed is not a draft: its rows stay. */
 export async function expireDraft(ctx: ServiceContext, imp: RetentionImport): Promise<void> {
   const g = retentionGrant(ctx, imp, 'org_mode.job.pass_import.expire', OPEN);
   g.update('pass_imports', { where: { id: imp.id }, require: 'one', set: { state: 'expired' } });
   g.joined('pass_import_rows', {
-    where: { import_id: imp.id, result: orNull(ne('created')) },
+    where: { import_id: imp.id, result: null },
     delete: true,
   });
   await g.commit();
 }
 
 export async function clearPii(ctx: ServiceContext, imp: RetentionImport): Promise<void> {
-  const g = retentionGrant(ctx, imp, 'org_mode.job.pass_import.clear', ENDED);
+  const g = retentionGrant(ctx, imp, 'org_mode.job.pass_import.retention_clear', ENDED, true);
   g.joined('pass_import_rows', {
     where: { import_id: imp.id },
     set: { input: null, holder_email: null, external_id: null, before: null },
@@ -97,7 +100,13 @@ export async function clearPii(ctx: ServiceContext, imp: RetentionImport): Promi
 
 /** The import row goes; its rows follow by cascade. */
 export async function deleteImport(ctx: ServiceContext, imp: RetentionImport): Promise<void> {
-  const g = retentionGrant(ctx, imp, 'org_mode.job.pass_import.delete', [...ENDED, 'discarded']);
+  const g = retentionGrant(
+    ctx,
+    imp,
+    'org_mode.job.pass_import.retention_delete',
+    [...ENDED, 'discarded'],
+    true,
+  );
   g.delete('pass_imports', { where: { id: imp.id }, require: 'one' });
   await g.commit();
 }

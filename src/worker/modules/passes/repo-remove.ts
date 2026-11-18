@@ -1,5 +1,5 @@
 import { grant } from '../../platform/authority.ts';
-import { passRow, rowIs } from '../../platform/authority-checks.ts';
+import { passRow, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { first } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -18,7 +18,7 @@ import {
 import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
 
 export { reinstateRemoval, releaseRemoval } from './repo-remove-compensate.ts';
-export type { RemovalState } from './repo-remove-snapshot.ts';
+export type { RemovalFence, RemovalState } from './repo-remove-snapshot.ts';
 
 interface LifecycleRow {
   removed_at: number | null;
@@ -70,8 +70,23 @@ async function lifecycleGrant(
         },
         'lineage',
       ),
+      // The fence of an import's remove: an edit (version) or a scan since its read keeps the pass.
+      ...(guard.fence
+        ? [
+            rowIs('passes', pass.id, { version: guard.fence.version }, 'lineage'),
+            ...(guard.fence.noScans
+              ? [
+                  rawCheck('retention', 'NOT EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = ?)', [
+                    pass.id,
+                  ]),
+                ]
+              : []),
+          ]
+        : []),
     ],
-    codes: { stale: 'PASS_CONFLICT', lineage: 'PASS_CONFLICT' },
+    codes: guard.fence
+      ? { stale: 'PASS_CONFLICT', lineage: 'IMPORT_PASS_CHANGED', retention: 'IMPORT_PASS_SCANNED' }
+      : { stale: 'PASS_CONFLICT', lineage: 'PASS_CONFLICT' },
   });
   g.update('passes', {
     set,

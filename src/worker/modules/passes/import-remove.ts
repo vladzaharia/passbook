@@ -74,7 +74,12 @@ export async function removeCreated(
       continue;
     }
     try {
-      await removePass(ctx, actor, pass.id, {}, scope, authority);
+      // The fence re-proves "unchanged" inside the removal's own write: an edit or a scan that
+      // lands after the page read keeps the pass.
+      await removePass(ctx, actor, pass.id, {}, scope, authority, {
+        version: pass.version,
+        noScans: true,
+      });
       removed++;
     } catch (error) {
       // One refused pass (it changed between the read and the claim) must not hide the rest.
@@ -82,7 +87,7 @@ export async function removeCreated(
       skipped.push({ passId: pass.id, code: error.code });
     }
   }
-  if (removed > 0 || skipped.length > 0) {
+  if (removed > 0) {
     await recordRemoval(ctx, authority, imp.id, await removedCount(ctx.env.DB, imp.id), {
       removed,
       skipped: skipped.length,

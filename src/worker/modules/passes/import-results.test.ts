@@ -51,6 +51,22 @@ describe('results.csv', () => {
     expect(stored[0]?.n).toBe(0);
   });
 
+  it('audits each export without tokens or addresses', async () => {
+    const d = await h.draft([HEAD, 'Aud,1,aud@x.co,RX-1'].join('\n'));
+    await h.commit(d.id);
+    await h.runWorkflow(d.id);
+    await results(d.id);
+    await results(d.id);
+    const rows = await all<{ detail: string }>(
+      h.kit.env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'pass_import.results_export' AND target_id = ?",
+      [d.id],
+    );
+    expect(rows).toHaveLength(2);
+    expect(JSON.parse(rows[0]?.detail ?? '')).toEqual({ importId: d.id, rows: 1 });
+    expect(rows[0]?.detail).not.toMatch(/aud@x\.co|\/p\//);
+  });
+
   it('leaves the link blank for a removed pass, and is refused before the import ran', async () => {
     const d = await h.draft([HEAD, 'Gone,1,,RG-1'].join('\n'));
     const early = await results(d.id);

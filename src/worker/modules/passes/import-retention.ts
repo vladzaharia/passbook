@@ -1,3 +1,4 @@
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   clearPii,
@@ -17,6 +18,10 @@ export const COUNTS_KEPT_MS = 400 * DAY;
 const BATCH = 50;
 const MAX_ROUNDS = 10;
 
+/** A grant refused because the import is already gone or already past the state the phase needs. */
+export const isSettled = (error: unknown): boolean =>
+  error instanceof AppError && (error.code === 'IMPORT_STATE' || error.code === 'IMPORT_NOT_FOUND');
+
 type Page = (after: string) => Promise<RetentionImport[]>;
 
 /** Runs `each` over a phase in bounded batches. A failed import is logged and skipped, never retried in the run. */
@@ -35,6 +40,15 @@ async function phase(
         await each(imp);
         done++;
       } catch (error) {
+        if (isSettled(error)) {
+          // Another run (or a user) got there first: the work is done.
+          ctx.log.info('pass_import.retention_settled', {
+            orgId: imp.org_id,
+            importId: imp.id,
+            phase: name,
+          });
+          continue;
+        }
         ctx.log.error(`pass_import.retention_${name}_failed`, {
           orgId: imp.org_id,
           importId: imp.id,

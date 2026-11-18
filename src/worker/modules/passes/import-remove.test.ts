@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { HEAD, type ImportHarness, setupImportHarness } from './import-test-fixtures.ts';
+import { removePass } from './remove.ts';
 
 let h: ImportHarness;
 beforeAll(async () => {
@@ -115,6 +116,49 @@ describe('remove created', () => {
     expect(await removedAt(plain)).not.toBeNull();
     expect(await removedAt(edited)).toBeNull();
     expect(await removedAt(scanned)).toBeNull();
+  });
+
+  it('re-proves unchanged inside the removal: an edit or a scan after the page read keeps the pass', async () => {
+    await imported('F', 2);
+    const [edited, scanned] = [await passId('F0'), await passId('F1')];
+    const scope = { orgId: h.kit.org.id, mode: 'live' as const, principal: 'api_key' as const };
+    const actor = { type: 'api_key' as const, id: h.keyId };
+    const fenced = (pass: string) =>
+      removePass(h.kit.ctx, actor, pass, {}, scope, h.keyAuthority, { version: 1, noScans: true });
+    // The edit lands after the version was read (1) and before the claim.
+    await run(
+      h.kit.env.DB,
+      "UPDATE passes SET version = version + 1, object_key = object_key || 'a', pending_cause = 'admin' WHERE id = ?",
+      [edited],
+    );
+    await expect(fenced(edited)).rejects.toMatchObject({ code: 'IMPORT_PASS_CHANGED' });
+    await run(
+      h.kit.env.DB,
+      `INSERT INTO scans (id, org_id, mode, pass_id, actor_type, actor_id, actor_key, idempotency_key,
+         request_hash, method, at) VALUES ('scan-f1', ?, 'live', ?, 'system', 'x', 'x', 'k2', 'h', 'manual', 1)`,
+      [h.kit.org.id, scanned],
+    );
+    await expect(fenced(scanned)).rejects.toMatchObject({ code: 'IMPORT_PASS_SCANNED' });
+    expect(await removedAt(edited)).toBeNull();
+    expect(await removedAt(scanned)).toBeNull();
+  });
+
+  it('writes no audit row for a call that removed nothing', async () => {
+    const id = await imported('L', 1);
+    await run(
+      h.kit.env.DB,
+      "UPDATE passes SET version = version + 1, object_key = object_key || 'a', pending_cause = 'admin' WHERE id = ?",
+      [await passId('L0')],
+    );
+    const body = (await (await remove(id)).json()) as { removed: number; skipped: unknown[] };
+    expect(body).toMatchObject({ removed: 0 });
+    expect(body.skipped).toHaveLength(1);
+    const n = await first<{ n: number }>(
+      h.kit.env.DB,
+      "SELECT count(*) AS n FROM audit_log WHERE action = 'pass_import.remove_created' AND target_id = ?",
+      [id],
+    );
+    expect(n?.n).toBe(0);
   });
 
   it('needs a session: a key is refused, and a running import is busy', async () => {

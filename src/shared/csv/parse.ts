@@ -99,7 +99,7 @@ function detect(text: string): ParsedCsv['delimiter'] {
 }
 
 /** Inverse of the export guard: `'=x` was `=x`. */
-const unguard = (v: string) => (/^'[=+\-@\t\r]/.test(v) ? v.slice(1) : v);
+const unguard = (v: string) => (/^'(?:[ \t\r\n]*[=+\-@]|[\t\r])/.test(v) ? v.slice(1) : v);
 
 function records(text: string, delimiter: string): string[][] {
   const out: string[][] = [];

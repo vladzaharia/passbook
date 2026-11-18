@@ -55,6 +55,17 @@ describe('parseCsv', () => {
     expect(toCsv(['h'], [['=x']])).toBe("h\r\n'=x");
   });
 
+  it('guards a formula behind leading spaces, tabs or line breaks, and round-trips it', () => {
+    const cells = [' =x', '\n=1+1', '  -5', '\t@a', ' plain', 'a=b'];
+    const csv = toCsv(
+      cells.map((_, i) => `h${i}`),
+      [cells],
+    );
+    expect(toCsv(['h'], [[' =x']])).toBe("h\r\n' =x");
+    expect(toCsv(['h'], [[' plain']])).toBe('h\r\n plain');
+    expect(parseCsv(csv).rows[0]?.cells).toEqual(cells);
+  });
+
   it('refuses spreadsheets, binary data and bad encodings', () => {
     expect(code(() => parseCsv(new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0])))).toBe(
       'IMPORT_NOT_CSV',

@@ -74,6 +74,7 @@ export function createdRows(db: D1Database, importId: string, after: number, lim
 
 export interface CreatedPass {
   id: string;
+  version: number;
   changed: number;
   mode: string;
   removed_at: number | null;
@@ -91,7 +92,7 @@ export async function createdPasses(
     out.push(
       ...(await all<CreatedPass>(
         db,
-        `SELECT p.id, p.mode, p.removed_at,
+        `SELECT p.id, p.version, p.mode, p.removed_at,
                 EXISTS (SELECT 1 FROM pass_versions v WHERE v.pass_id = p.id AND v.version > 1
                         AND v.cause NOT IN ('template_upgrade', 'user_refresh', 'resign')) AS changed,
                 EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = p.id) AS scanned
