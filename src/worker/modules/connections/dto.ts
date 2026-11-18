@@ -45,6 +45,8 @@ export function toDto(env: AppEnv, c: ConnectionRow): ConnectionDto {
     autoCreate: c.autoCreate,
     autoEmail: c.autoEmail,
     onMissing: c.onMissing,
+    voidWhen: c.voidWhen,
+    webhookPrevUntil: c.webhookPrevCredentialId ? c.webhookPrevUntil : null,
     mode: c.mode,
     intervalSeconds: c.intervalSeconds,
     maxConcurrency: c.maxConcurrency,
@@ -86,6 +88,7 @@ export function connectorInfo(def: AnyConnector): z.infer<typeof ConnectorInfoSc
     secretSchema: def.secretSchema ? jsonSchemaOf(def.secretSchema) : null,
     outputFields: def.outputFields,
     defaults: def.defaults,
+    recipes: [],
   };
 }
 

@@ -25,6 +25,7 @@ export const FENCED = [
   'autoCreate',
   'autoEmail',
   'onMissing',
+  'voidWhen',
   'mode',
   'enabled',
 ] as const;

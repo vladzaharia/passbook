@@ -180,10 +180,13 @@ export const EPOCH_TABLES: EpochTable[] = [
         'auto_create',
         'auto_email',
         'on_missing',
+        'void_when',
       ],
     },
     volatile: [
       'name',
+      'webhook_prev_credential_id',
+      'webhook_prev_until',
       'interval_seconds',
       'max_concurrency',
       'requests_per_minute',

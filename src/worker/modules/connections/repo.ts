@@ -1,4 +1,5 @@
 import type { Json } from '../../../shared/contracts/common.ts';
+import type { VoidRule } from '../../../shared/contracts/connections.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -31,12 +32,16 @@ export interface ConnectionRow {
   config: Record<string, Json>;
   credentialId: string | null;
   webhookCredentialId: string | null;
+  /** The replaced webhook secret, accepted until `webhookPrevUntil`. */
+  webhookPrevCredentialId: string | null;
+  webhookPrevUntil: number | null;
   mapping: Record<string, MappingEntry> | null;
   defaultTemplateId: string | null;
   holderEmailField: string | null;
   autoCreate: boolean;
   autoEmail: boolean;
   onMissing: OnMissing;
+  voidWhen: VoidRule[];
   mode: Mode;
   intervalSeconds: number | null;
   maxConcurrency: number | null;
@@ -63,12 +68,15 @@ const COLUMNS = {
   connectorVersion: 'connector_version',
   credentialId: 'credential_id',
   webhookCredentialId: 'webhook_credential_id',
+  webhookPrevCredentialId: 'webhook_prev_credential_id',
+  webhookPrevUntil: 'webhook_prev_until',
   mapping: 'mapping',
   defaultTemplateId: 'default_template_id',
   holderEmailField: 'holder_email_field',
   autoCreate: 'auto_create',
   autoEmail: 'auto_email',
   onMissing: 'on_missing',
+  voidWhen: 'void_when',
   mode: 'mode',
   intervalSeconds: 'interval_seconds',
   maxConcurrency: 'max_concurrency',
@@ -105,12 +113,15 @@ const INSERT_COLUMNS = [
   'config',
   'credential_id',
   'webhook_credential_id',
+  'webhook_prev_credential_id',
+  'webhook_prev_until',
   'mapping',
   'default_template_id',
   'holder_email_field',
   'auto_create',
   'auto_email',
   'on_missing',
+  'void_when',
   'mode',
   'interval_seconds',
   'max_concurrency',
@@ -132,12 +143,15 @@ function insertValues(row: ConnectionRow): SqlValue[] {
     JSON.stringify(row.config),
     row.credentialId,
     row.webhookCredentialId,
+    row.webhookPrevCredentialId,
+    row.webhookPrevUntil,
     row.mapping ? JSON.stringify(row.mapping) : null,
     row.defaultTemplateId,
     row.holderEmailField,
     row.autoCreate ? 1 : 0,
     row.autoEmail ? 1 : 0,
     row.onMissing,
+    row.voidWhen.length > 0 ? JSON.stringify(row.voidWhen) : null,
     row.mode,
     row.intervalSeconds,
     row.maxConcurrency,
