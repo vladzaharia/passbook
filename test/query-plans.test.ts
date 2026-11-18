@@ -31,6 +31,7 @@ import {
   beginSamsungSyncTarget,
   finishSamsungSyncTarget,
 } from '../src/worker/modules/wallet-providers/repo-sync-targets.ts';
+import { listFeed } from '../src/worker/modules/webhooks/repo-feed.ts';
 import { createDetachedContext } from '../src/worker/platform/service-context.ts';
 
 /** Runs a repo function against a DB that records its statements, then explains each one. */
@@ -355,5 +356,98 @@ describe('keyset cursors seek the index', () => {
   ])('%s: the cursor is a range on the index', async (_name, run, range) => {
     const text = (await plans(run)).join('\n');
     expect(text).toContain(range);
+  });
+});
+
+describe('outbound webhook query plans', () => {
+  const fence = { orgId: 'o', mode: 'live' as const };
+
+  it.each([
+    ['feed', { after: 5, limit: 50 }, 'event_feed_org (org_id=? AND mode=? AND seq>?)'],
+    [
+      'feed by type',
+      { after: 5, types: ['pass.scanned', 'pass.issued'], limit: 50 },
+      'event_feed_org',
+    ],
+    ['feed by pass', { after: 5, passId: 'p', limit: 50 }, 'event_feed'],
+  ])('%s: an index search, no full scan of the journal', async (_name, query, index) => {
+    const lines = await plans((db) => listFeed(db, fence, query));
+    expect(fullScans(lines, 'event_feed')).toEqual([]);
+    expect(lines.join('\n')).toContain(index);
+  });
+
+  it('the journal trigger: both of its inserts search indexes, and the fan-out reads at most 10 endpoints', async () => {
+    const trigger = await env.DB.prepare(
+      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'pass_events_feed'",
+    ).first<{ sql: string }>();
+    const body = trigger?.sql.slice(
+      trigger.sql.indexOf('BEGIN') + 5,
+      trigger.sql.lastIndexOf('END'),
+    );
+    expect(body).toBeTruthy();
+    const literals: Record<string, string> = {
+      id: "'ev'",
+      org_id: "'o'",
+      pass_id: "'p'",
+      mode: "'live'",
+      kind: "'pass.issued'",
+      device: 'NULL',
+      actor_type: 'NULL',
+      data: "'{}'",
+      at: '1',
+    };
+    const inserts = (body ?? '')
+      .split(';')
+      .map((x) => x.trim())
+      .filter(Boolean)
+      .map((x) => x.replace(/NEW\.(\w+)/g, (_m, column: string) => literals[column] ?? 'NULL'));
+    expect(inserts).toHaveLength(2);
+    const lines: string[] = [];
+    for (const insert of inserts) {
+      const rows = await env.DB.prepare(`EXPLAIN QUERY PLAN ${insert}`).all<{ detail: string }>();
+      lines.push(...rows.results.map((r) => r.detail));
+    }
+    const text = lines.join('\n');
+    expect(text).toContain('webhook_endpoints_org (org_id=? AND mode=? AND status=?)');
+    expect(text).toContain('sqlite_autoindex_event_feed_1 (event_id=?)');
+    for (const table of ['webhook_endpoints', 'event_feed', 'passes', 'registrations', 'settings'])
+      expect(fullScans(lines, table), table).toEqual([]);
+  });
+
+  it('the fan-out select reads the new feed row by its unique event id', async () => {
+    const rows = await env.DB.prepare(
+      `EXPLAIN QUERY PLAN SELECT e.id, f.seq FROM event_feed f
+       JOIN webhook_endpoints e ON e.org_id = f.org_id AND e.mode = f.mode
+       WHERE f.event_id = ? AND e.status IN ('active', 'paused')`,
+    )
+      .bind('x')
+      .all<{ detail: string }>();
+    const text = rows.results.map((r) => r.detail).join('\n');
+    expect(text).toContain('sqlite_autoindex_event_feed_1 (event_id=?)');
+    expect(text).toContain('webhook_endpoints_org');
+  });
+
+  it('the due scan and the lane loop use the partial indexes', async () => {
+    const plan = async (sql: string, ...params: (string | number)[]) =>
+      (
+        await env.DB.prepare(`EXPLAIN QUERY PLAN ${sql}`)
+          .bind(...params)
+          .all<{ detail: string }>()
+      ).results
+        .map((r) => r.detail)
+        .join('\n');
+    expect(
+      await plan(
+        "SELECT endpoint_id FROM webhook_deliveries WHERE state = 'pending' AND next_at <= ? ORDER BY next_at LIMIT 100",
+        1,
+      ),
+    ).toContain('webhook_deliveries_due_all');
+    expect(
+      await plan(
+        "SELECT event_seq FROM webhook_deliveries WHERE state = 'pending' AND next_at <= ? AND endpoint_id = ? ORDER BY next_at, event_seq LIMIT 20",
+        1,
+        'e',
+      ),
+    ).toContain('webhook_deliveries_due');
   });
 });
