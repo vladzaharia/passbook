@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import sql from '../../../../migrations/0093_template_sole_approval.sql?raw';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
@@ -24,7 +25,7 @@ import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { basicPackage, passJson, zipOf } from './package/fixtures.ts';
-import { SOLE_COOLDOWN_MS } from './repo-sole-reviewer.ts';
+import { REVIEW_ROLES, SOLE_COOLDOWN_MS } from './repo-sole-reviewer.ts';
 import { fakeAssets, importZip, watchBatch } from './testing.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -268,6 +269,53 @@ describe('sole-reviewer approval', () => {
       403,
       'TEMPLATE_SELF_APPROVAL',
     );
+  });
+
+  it('refuses to publish a sole approval after another reviewer joined', async () => {
+    const { org, owner, t, c } = await soloOrg('Banked Approval');
+    const a = TemplateApprovalSchema.parse(
+      await (await approve(org, t.templateId, c, owner, { alone: true })).json(),
+    );
+    clock.advance(1000);
+    await member(org.id, ['template_reviewer']);
+    const released = await post(
+      `/${t.templateId}/releases`,
+      {
+        ...scope(org.id),
+        candidateId: c.id,
+        approvalId: a.id,
+        candidateHash: c.candidateHash,
+        expectedGeneration: 0,
+      },
+      owner,
+    );
+    expect(released.status).toBe(409);
+    expect(
+      await first(env.DB, 'SELECT id FROM template_releases WHERE template_id = ?', [t.templateId]),
+    ).toBeNull();
+  });
+
+  it('keeps the trigger role list equal to the roles that grant review', () => {
+    const lists = sql.match(/IN \('org_admin'[^)]*\)/g) ?? [];
+    expect(lists.length).toBeGreaterThan(0);
+    for (const list of lists) expect(list.slice(3)).toBe(REVIEW_ROLES);
+  });
+
+  it('requires an author with review rights for a test row, in the database', async () => {
+    const org = await makeOrg(f);
+    const author = await member(org.id, ['template_author']);
+    const t = await uploaded('Test Row', org, author);
+    const c = await candidateOf(org, t.templateId, t.version, author, 'test');
+    const stranger = await member(org.id, ['template_reviewer']);
+    const insert = (reviewer: string) =>
+      run(
+        env.DB,
+        `INSERT INTO template_approvals (id, candidate_id, candidate_hash, reviewer_id, kind, created_at)
+         VALUES (?, ?, ?, ?, 'test', ?)`,
+        [f.ids.id(), c.id, c.candidateHash, reviewer, clock.now()],
+      );
+    await expect(insert(stranger.userId)).rejects.toThrow(/invalid template approval/);
+    await expect(insert(author.userId)).rejects.toThrow(/invalid template approval/);
   });
 
   it('is enforced by the database, not only the service', async () => {

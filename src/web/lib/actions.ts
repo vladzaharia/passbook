@@ -145,6 +145,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'session.revoke': a('Session revoked', I.signOut, 'warning'),
   'settings.update': a('Settings updated', Settings, 'info'),
   'template.activate': a('Template activated', CircleCheck, 'success'),
+  'template.approved_alone': a('Template version self-approved', CircleCheck, 'warning'),
   'template.approve': a('Template version approved', CircleCheck, 'success'),
   'template.candidate': a('Template candidate created', ENTITY.version.icon, 'info'),
   'template.archive': a('Template archived', Archive, 'neutral'),

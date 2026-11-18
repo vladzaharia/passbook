@@ -38,7 +38,8 @@ export async function runSamsungWalletProviderOperation(
   if (
     !target ||
     target.countryCodes.length === 0 ||
-    binding.original.projection.provider !== 'samsung'
+    binding.original.projection.provider !== 'samsung' ||
+    binding.original.projection.schema !== 1
   ) {
     return (await complete(ctx, claim, op, {
       kind: 'failure',
