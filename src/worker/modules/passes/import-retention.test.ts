@@ -12,7 +12,7 @@ import {
   PII_KEPT_MS,
 } from './import-retention.ts';
 import { HEAD, type ImportHarness, setupImportHarness } from './import-test-fixtures.ts';
-import { clearPii, deleteImport } from './repo-import-retention.ts';
+import { clearPii, deleteImport, expireDraft } from './repo-import-retention.ts';
 
 let h: ImportHarness;
 beforeAll(async () => {
@@ -386,5 +386,28 @@ describe('retention plan', () => {
     } finally {
       IMPORT_LIMITS.orgs = saved;
     }
+  });
+
+  it('a hold keeps a draft past its expiry, at the page and at the commit', async () => {
+    const other = await makeOrg(h.kit.fx);
+    const id = await seed(other.id, 1);
+    await run(
+      h.kit.env.DB,
+      "UPDATE pass_imports SET state = 'ready', committed_at = NULL, finished_at = NULL, expires_at = ? WHERE id = ?",
+      [h.kit.clock.now() - 1, id],
+    );
+    await holdPass(other.id, null);
+    await dailyImports(ctx());
+    expect((await stateOf(id))?.state).toBe('ready');
+    const err = await expireDraft(ctx(), asImport(id, other.id)).catch((e: unknown) => e);
+    expect(isSettled(err)).toBe(true);
+    expect((await stateOf(id))?.state).toBe('ready');
+    await run(
+      h.kit.env.DB,
+      "UPDATE retention_holds SET released_at = 2, released_by = 'p' WHERE org_id = ? AND released_at IS NULL",
+      [other.id],
+    );
+    await dailyImports(ctx());
+    expect((await stateOf(id))?.state).toBe('expired');
   });
 });

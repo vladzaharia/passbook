@@ -59,6 +59,7 @@ export function expiredDrafts(db: D1Database, now: number, after: string, limit:
     `SELECT ${COLUMNS} FROM pass_imports
      WHERE state IN ('mapping', 'checking', 'ready', 'stale') AND committed_at IS NULL
        AND expires_at <= ? AND id > ?
+       AND NOT ${heldSql('pass_imports.id', 'pass_imports.org_id')}
      ORDER BY id LIMIT ?`,
     [now, after, limit],
   );
@@ -130,7 +131,9 @@ function retentionGrant(
 
 /** The draft ends `expired` and its unapplied rows go. An import that was ever committed is not a draft: its rows stay. */
 export async function expireDraft(ctx: ServiceContext, imp: RetentionImport): Promise<void> {
-  const g = retentionGrant(ctx, imp, 'org_mode.job.pass_import.expire', OPEN);
+  const g = retentionGrant(ctx, imp, 'org_mode.job.pass_import.expire', OPEN, false, [
+    notHeld(imp.id),
+  ]);
   g.update('pass_imports', { where: { id: imp.id }, require: 'one', set: { state: 'expired' } });
   g.joined('pass_import_rows', {
     where: { import_id: imp.id, result: null },
