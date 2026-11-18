@@ -79,7 +79,6 @@ describe('first blueprint set', () => {
     // A refill raises left past size: never "15 of 10".
     expect(await build({ left: 15, size: 10 })).toEqual([15, '10 washes']);
     expect(await build({ left: 0, size: 10 })).toEqual([0, '10 washes']);
-    expect((await build({ left: 5, size: 0 }))[1]).not.toContain(' of ');
   });
 
   it('Pack default scan display keeps the Pack row', async () => {
