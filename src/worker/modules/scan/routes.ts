@@ -32,6 +32,7 @@ import { resolveOutcome } from './resolve-outcome.ts';
 import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
+import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
 import { registerScanTagRoutes } from './routes-tags.ts';
@@ -122,6 +123,7 @@ register(
 registerScanStaffRoutes(scanRoutes);
 registerScanRoleRoutes(scanRoutes);
 registerScanTagRoutes(scanRoutes);
+registerScanEnrollmentRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 
 register(
