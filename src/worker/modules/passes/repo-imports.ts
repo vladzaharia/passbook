@@ -21,7 +21,10 @@ export interface ImportRow {
   plan: string | null;
   state: string;
   error_code: string | null;
+  check_id: string | null;
   email: number;
+  skip_invalid: number;
+  starter: string | null;
   email_budget: number | null;
   rows: number;
   to_create: number;

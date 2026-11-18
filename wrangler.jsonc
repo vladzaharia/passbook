@@ -107,6 +107,7 @@
     },
     { "name": "wallet-bulk-reissue", "binding": "BULK_REISSUE", "class_name": "BulkReissue" },
     { "name": "wallet-broadcast", "binding": "BROADCAST", "class_name": "Broadcast" },
+    { "name": "wallet-pass-import", "binding": "PASS_IMPORT", "class_name": "PassImport" },
     {
       "name": "wallet-connection-sync",
       "binding": "CONNECTION_SYNC",

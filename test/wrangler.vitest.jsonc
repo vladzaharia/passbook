@@ -66,6 +66,11 @@
     },
     { "name": "wallet-vitest-broadcast", "binding": "BROADCAST", "class_name": "Broadcast" },
     {
+      "name": "wallet-vitest-pass-import",
+      "binding": "PASS_IMPORT",
+      "class_name": "PassImport"
+    },
+    {
       "name": "wallet-vitest-connection-sync",
       "binding": "CONNECTION_SYNC",
       "class_name": "ConnectionSync"
