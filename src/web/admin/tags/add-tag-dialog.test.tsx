@@ -1,0 +1,175 @@
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { TAG_COPY, TAG_ERROR_COPY } from '@/shared/copy/tags.ts';
+import { json, problem } from '@/web/lib/test-utils.tsx';
+import { AddTagDialog } from './add-tag-dialog.tsx';
+import {
+  AXE_MATRIX,
+  axeAt,
+  calls,
+  enrollmentFixture,
+  page,
+  renderTags,
+  scannerFixture,
+  tagFixture,
+} from './test-fixtures.tsx';
+
+const target = { passId: 'p1', orgId: 'o1', holderName: 'Maya Okafor', hasAccount: true };
+const dialog = (onOpenChange = vi.fn()) => (
+  <AddTagDialog open onOpenChange={onOpenChange} target={target} />
+);
+
+afterEach(() => vi.restoreAllMocks());
+
+function handlers(poll: () => Response = () => json(enrollmentFixture())) {
+  return {
+    '/api/v1/nfc/scanners': () =>
+      page([
+        scannerFixture(),
+        scannerFixture({ id: 's2', name: 'Lobby kiosk', unavailable: 'offline', online: false }),
+        scannerFixture({ id: 's3', name: "Ana's iPhone", unavailable: 'no_tags' }),
+      ]),
+    '/api/v1/nfc/passes/p1/enrollments': () => json(enrollmentFixture(), 201),
+    '/api/v1/nfc/passes/p1/enrollments/e1': (_u: URL, init?: RequestInit) =>
+      init?.method === 'DELETE' ? json(enrollmentFixture({ state: 'cancelled' })) : poll(),
+    '/api/v1/nfc/tags/t1': () => json(tagFixture({ label: null })),
+    '/api/v1/nfc/bindings/b1': () => json(tagFixture({ binding: null, state: 'spare' })),
+    '/api/v1/nfc/tags/t1/x': () => json({}),
+  };
+}
+
+describe('Assign tag dialog', () => {
+  it('offers Works with, defaulting to the person, and lists scanners with reasons', async () => {
+    renderTags(dialog(), handlers());
+    expect(
+      await screen.findByRole('dialog', { name: TAG_COPY.dialog.title }),
+    ).toHaveAccessibleDescription('To Maya Okafor');
+    expect(screen.getByRole('radio', { name: /All of Maya Okafor's passes/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /This pass/ })).not.toBeChecked();
+    expect(await screen.findByRole('radio', { name: /Front desk iPad/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Lobby kiosk/ })).toBeDisabled();
+    expect(screen.getByText(TAG_COPY.dialog.rowDisabled.noTags)).toBeInTheDocument();
+  });
+
+  it('closes the person choice when the holder has no account', async () => {
+    renderTags(
+      <AddTagDialog open onOpenChange={vi.fn()} target={{ ...target, hasAccount: false }} />,
+      handlers(),
+    );
+    const person = await screen.findByRole('radio', { name: /All of Maya Okafor's passes/ });
+    expect(person).toBeDisabled();
+    expect(screen.getByText(TAG_COPY.noAccount)).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /This pass/ })).toBeChecked();
+  });
+
+  it('sends the request, waits for the tap, then shows the result with Undo', async () => {
+    const user = userEvent.setup();
+    let reads = 0;
+    const { fetchMock } = renderTags(dialog(), {
+      ...handlers(() =>
+        json(
+          ++reads < 2
+            ? enrollmentFixture()
+            : enrollmentFixture({
+                state: 'done',
+                binding: {
+                  id: 'b1',
+                  tagId: 't1',
+                  scope: 'user',
+                  passId: 'p1',
+                  passTitle: null,
+                  userId: 'u9',
+                  holderName: 'Maya Okafor',
+                  source: 'remote',
+                  lent: false,
+                  boundAt: 1,
+                  boundByName: null,
+                  scannerName: null,
+                  endedAt: null,
+                  endCause: null,
+                },
+              }),
+        ),
+      ),
+    });
+    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    expect(await screen.findByText('Tap the tag on Front desk iPad')).toBeInTheDocument();
+    expect(screen.getByText("Works with all of Maya Okafor's passes")).toBeInTheDocument();
+    const body = JSON.parse(String(calls(fetchMock, 'POST', '/enrollments')[0]?.[1]?.body));
+    expect(body).toEqual({ scannerId: 's1', scope: 'user' });
+    expect(
+      await screen.findByText(TAG_COPY.dialog.done, {}, { timeout: 4000 }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(calls(fetchMock, 'DELETE', '/bindings/b1')).toHaveLength(1));
+  }, 10_000);
+
+  it('cancels an open request when the dialog closes', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const { fetchMock } = renderTags(dialog(onOpenChange), handlers());
+    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await screen.findByText('Tap the tag on Front desk iPad');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled());
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(calls(fetchMock, 'DELETE', '/enrollments/e1')).toHaveLength(1));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('says why a request ended and offers Send again', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = renderTags(dialog(), {
+      ...handlers(() => json(enrollmentFixture({ state: 'expired' }))),
+    });
+    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    expect(await screen.findByText("Front desk iPad didn't read a tag.")).toBeInTheDocument();
+    expect(screen.getByText(TAG_COPY.dialog.timeout.sub)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: TAG_COPY.dialog.sendAgain }));
+    await waitFor(() => expect(calls(fetchMock, 'POST', '/enrollments')).toHaveLength(2));
+  });
+
+  it('shows the tag error and keeps waiting', async () => {
+    const user = userEvent.setup();
+    renderTags(dialog(), {
+      ...handlers(() => json(enrollmentFixture({ errorCode: 'TAG_LOST' }))),
+    });
+    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    expect(await screen.findByText(TAG_ERROR_COPY.TAG_LOST)).toBeInTheDocument();
+    expect(screen.getByText('Tap the tag on Front desk iPad')).toBeInTheDocument();
+  });
+
+  it('reports a voided pass', async () => {
+    const user = userEvent.setup();
+    renderTags(dialog(), {
+      ...handlers(() => problem(404, 'PASS_NOT_FOUND', 'Pass not found.')),
+    });
+    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    expect(await screen.findByText(TAG_COPY.dialog.voided)).toBeInTheDocument();
+  });
+
+  it('stops polling when it unmounts', async () => {
+    const user = userEvent.setup();
+    let reads = 0;
+    const { fetchMock, unmount } = renderTags(dialog(), {
+      ...handlers(() => {
+        reads++;
+        return json(enrollmentFixture());
+      }),
+    });
+    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await waitFor(() => expect(reads).toBeGreaterThan(0));
+    unmount();
+    const seen = reads;
+    await new Promise((r) => setTimeout(r, 1800));
+    expect(reads).toBe(seen);
+    expect(fetchMock).toBeDefined();
+  }, 10_000);
+
+  it.each(AXE_MATRIX)('has no axe violations at %i, %s', async (width, theme) => {
+    renderTags(dialog(), handlers());
+    const el = await screen.findByRole('dialog');
+    await screen.findByRole('radio', { name: /Front desk iPad/ });
+    expect(await axeAt(el, width, theme)).toEqual([]);
+  });
+});
