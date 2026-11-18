@@ -28,7 +28,7 @@ import { basicPackage, makePng, zipOf } from './package/fixtures.ts';
 import { buildKey, crc32, sha1Hex } from './package/hash.ts';
 import { slugify } from './persist.ts';
 import { createTemplateRegistry, r2Key } from './registry.ts';
-import { generatedSource, syncBakedTemplates } from './sync.ts';
+import { generatedSource, resetBakedSync, syncBakedTemplates } from './sync.ts';
 import { beforeBatch, fakeAssets, importZip } from './testing.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -263,6 +263,22 @@ describe('auth', () => {
     const noScope = await call('', {}, auth.apiKey({ scopes: ['passes:read'] }));
     expect(noScope.status).toBe(403);
     expect(await noScope.json()).toMatchObject({ code: 'MISSING_SCOPE' });
+  });
+
+  it('a templates:read key runs the baked sync, which records the adoption', async () => {
+    await run(
+      env.DB,
+      "DELETE FROM settings WHERE scope = 'system' AND key IN ('templates.baked_adoption', 'templates.baked_hash')",
+    );
+    resetBakedSync();
+    const res = await call('', {}, auth.apiKey({ scopes: ['templates:read'] }));
+    expect(res.status).toBe(200);
+    expect(
+      await first(
+        env.DB,
+        "SELECT key FROM settings WHERE scope = 'system' AND key = 'templates.baked_adoption'",
+      ),
+    ).toEqual({ key: 'templates.baked_adoption' });
   });
 
   it('never grants writes to API keys or to a user without membership', async () => {

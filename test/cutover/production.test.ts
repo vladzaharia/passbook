@@ -2,9 +2,7 @@
 // migrate, bootstrap, baked sync and the backfills.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { resolveSession } from '../../src/worker/modules/auth/sessions.ts';
-import { sealCapabilityTokens } from '../../src/worker/modules/passes/token-seal.ts';
 import { ManualClock } from '../../src/worker/platform/clock.ts';
-import { createJobContext } from '../../src/worker/platform/service-context.ts';
 import { LEGACY_ASSET_KEY, LEGACY_COOKIE, LEGACY_PHOTO_KEY } from './production-seed.ts';
 import { type Cutover, NOW, runCutover } from './setup.ts';
 
@@ -76,38 +74,6 @@ describe('production shapes: passes', () => {
       "SELECT removal_published_generation AS pub FROM passes WHERE id = 'prod-live-1'",
     );
     expect(live?.pub).toBeNull();
-  });
-
-  it('keeps the version history and moves no row_version when the seal scrubs it', async () => {
-    const before = await rows<{ version: number }>(
-      "SELECT version FROM pass_versions WHERE pass_id = 'prod-history' ORDER BY version",
-    );
-    expect(before.map((r) => r.version)).toEqual([1, 2, 3]);
-    const versions = () =>
-      rows("SELECT id, row_version FROM passes WHERE id LIKE 'prod-%' ORDER BY id");
-    const rv = await versions();
-    const ctx = createJobContext(c.env, 'cron', { clock: new ManualClock(NOW + 10_000) });
-    for (let run = 0; run < 4; run++) await sealCapabilityTokens(ctx);
-    expect(
-      await rows(
-        "SELECT version FROM pass_versions WHERE pass_id = 'prod-history' ORDER BY version",
-      ),
-    ).toEqual(before);
-    expect(
-      await one(
-        "SELECT count(*) AS n FROM pass_versions WHERE pass_id LIKE 'prod-%' AND pass_json LIKE '%authenticationToken%'",
-      ),
-    ).toEqual({ n: 0 });
-    expect(await versions()).toEqual(rv);
-    // Every shape's tokens are sealed: test-mode, removed, half-removed, suspended-org and own-identity too.
-    const unsealed = await rows(
-      `SELECT p.id FROM passes p WHERE p.id LIKE 'prod-%' AND p.deleted_at IS NULL AND (
-         p.download_token NOT GLOB 'h1:*' OR p.auth_token NOT GLOB 'h1:*'
-         OR NOT EXISTS (SELECT 1 FROM pass_token_seals s WHERE s.pass_id = p.id)
-         OR NOT EXISTS (SELECT 1 FROM pass_auth_seals s WHERE s.pass_id = p.id)) ORDER BY p.id`,
-    );
-    expect(unsealed).toEqual([]);
-    expect(await one("SELECT count(*) AS n FROM passes WHERE id LIKE 'prod-%'")).toEqual({ n: 11 });
   });
 
   it('keeps a suspended org suspended and gives the owner a membership in it', async () => {

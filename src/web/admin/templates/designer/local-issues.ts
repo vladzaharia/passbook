@@ -1,4 +1,5 @@
 import type { ValidationIssue } from '@/passkit/types.ts';
+import { accessLocalIssues } from './access/issues.ts';
 import type { DesignDoc } from './model.ts';
 import { readBarcode } from './ops-more.ts';
 
@@ -12,14 +13,17 @@ export function barcodeTextMissing(doc: DesignDoc): boolean {
 
 /** Problems the server's dry run cannot see: it only reads the pass the bindings leave behind. */
 export function localIssues(doc: DesignDoc): ValidationIssue[] {
-  return barcodeTextMissing(doc)
-    ? [
-        {
-          severity: 'error',
-          code: 'BARCODE_EMPTY',
-          message: BARCODE_TEXT_EMPTY,
-          path: 'barcodes.0.message',
-        },
-      ]
-    : [];
+  return [
+    ...(barcodeTextMissing(doc)
+      ? [
+          {
+            severity: 'error' as const,
+            code: 'BARCODE_EMPTY',
+            message: BARCODE_TEXT_EMPTY,
+            path: 'barcodes.0.message',
+          },
+        ]
+      : []),
+    ...accessLocalIssues(doc),
+  ];
 }

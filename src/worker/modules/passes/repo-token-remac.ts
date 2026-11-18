@@ -18,7 +18,7 @@ interface Raw extends Partial<SealRaw> {
 }
 
 const COLUMN = { pass: 'download_token', 'apple-auth': 'auth_token', bundle: 'token' } as const;
-/** The same text as the partial indexes of 0059 and 0065, without the NOT. */
+/** A stored MAC; case-sensitive, like the triggers of 0059 and 0065. */
 const MAC_GLOB = "GLOB 'h1:*'";
 
 const toRow = (r: Raw): MacRow => ({

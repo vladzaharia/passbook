@@ -234,8 +234,8 @@ describe('manual email carries its actor to the send', () => {
   });
 });
 
-describe('issuance queued by the pre-cutover Worker', () => {
-  /** A pending issuance whose captured authority carries `orgs.updated_at` in ms, as 0024-era rows do. */
+describe('issuance queued without the user epoch', () => {
+  /** A pending issuance row inserted directly, the way an older Worker wrote it. */
   async function legacyPending(withUserRevision = true) {
     const m = await member();
     const release = kit.liveRelease ?? (await approveAppleRelease(kit));
@@ -254,8 +254,8 @@ describe('issuance queued by the pre-cutover Worker', () => {
         execution: { kind: 'system' },
         actor: system,
       });
-    // Create now commits the intent with the pass, so the pre-cutover shape is inserted directly: a
-    // pending row for a pass created without mail, with the captured authority of a 0024-era row.
+    // Create now commits the intent with the pass, so the older shape is inserted directly: a
+    // pending row for a pass created without mail.
     const reference = await first<{ context: string }>(
       kit.env.DB,
       'SELECT context FROM pass_issuance_deliveries WHERE pass_id = ?',
@@ -271,10 +271,7 @@ describe('issuance queued by the pre-cutover Worker', () => {
       );
       context.userRevision = user?.access_revision;
     }
-    context.execution = {
-      kind: 'tenant',
-      authority: { ...m.authority, orgAccessRevision: 1_760_000_000_000 },
-    };
+    context.execution = { kind: 'tenant', authority: m.authority };
     await run(
       kit.env.DB,
       `INSERT INTO pass_issuance_deliveries
@@ -290,7 +287,7 @@ describe('issuance queued by the pre-cutover Worker', () => {
     return pass;
   }
 
-  it('sends after cutover while the org is active', async () => {
+  it('sends a pending row while the org is active', async () => {
     const pass = await legacyPending();
     expect(await scheduleIssuanceDelivery(job(), pass.id)).toBe('queued');
     const queued = await first<{ outbox_id: string }>(
