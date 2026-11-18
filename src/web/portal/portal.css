@@ -7,6 +7,11 @@
 .wl-list-buddy {
   --wl-drop: 18px;
 }
+/* The heading above ends 20 px over the grid: 56 px of margin leaves the buddy 16 px clear of it. The
+   skeleton grid takes the same margin, so the list does not jump when it loads. */
+.wl-passes :is(ul, [aria-busy="true"]).mt-8 {
+  margin-top: 3.5rem;
+}
 .wl-passes:has(li [data-awb]:hover) .wl-list-buddy [data-look],
 .wl-passes:has(li [data-awb]:focus-visible) .wl-list-buddy [data-look] {
   transform: translateY(1.6px);
