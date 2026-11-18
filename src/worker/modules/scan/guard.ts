@@ -100,6 +100,8 @@ export interface GuardOptions {
   staffOptional?: boolean;
   /** `GET /scan/session` and `POST /scan/unpair`: a customer or monitor screen may call them. */
   screens?: boolean;
+  /** Mark-out and staff sign-in: a monitor with Desk actions on is admitted; customer screens never are. */
+  screenActions?: boolean;
   /** Tenant capability required of user sessions; configuration management is the safe default. */
   capability?: 'scanning:read' | 'scanning:manage' | 'passes:operate';
 }
@@ -149,7 +151,8 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         auth.orgId,
         key ? `k:${key.keyId}:s:${auth.scannerId}` : `s:${auth.scannerId}`,
       );
-      if (auth.deviceRole !== 'scan' && !options.screens) {
+      const actsFromMonitor = !!options.screenActions && auth.deviceRole === 'monitor';
+      if (auth.deviceRole !== 'scan' && !options.screens && !actsFromMonitor) {
         reportDenied(c, 'FORBIDDEN', auth);
         throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
       }
@@ -236,6 +239,13 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
     const actor = scanActorOf(c);
     await bindScanningSession(ctx, actor);
     denyInvalidScannerScope(actor);
+    if (
+      options.screenActions &&
+      actor.scanner?.deviceRole === 'monitor' &&
+      !actor.settings.deskActions
+    ) {
+      throw new ForbiddenError('This screen cannot act.', 'SCREEN_ONLY');
+    }
     if (actor.principal === 'scanner') {
       const scanner = actor.scanner;
       if (scanner) {
@@ -268,6 +278,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       actor.scanningSession.status !== 'active' &&
       c.req.method === 'POST' &&
       !c.req.path.endsWith('/device') &&
+      !c.req.path.endsWith('/mark-out') &&
       !c.req.path.endsWith('/unpair')
     )
       throw new ForbiddenError(
