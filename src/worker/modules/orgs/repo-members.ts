@@ -166,3 +166,43 @@ export function mutationAudit(
     [ctx.clock.now(), orgId, userId, action, targetType, targetId, ctx.requestId],
   );
 }
+export function hasAccountEmail(db: D1Database, email: string) {
+  return first<{ ok: number }>(db, 'SELECT 1 AS ok FROM user_emails WHERE email = ?', [email]);
+}
+export function invitationOrgId(db: D1Database, id: string) {
+  return first<{ org_id: string }>(db, 'SELECT org_id FROM org_invitations WHERE id = ?', [id]);
+}
+export function pendingInvitationFor(db: D1Database, orgId: string, email: string, now: number) {
+  return first<{ found: number }>(
+    db,
+    `SELECT 1 AS found FROM org_invitations
+     WHERE org_id = ? AND email = ? AND revoked_at IS NULL AND accepted_at IS NULL AND expires_at > ?`,
+    [orgId, email, now],
+  );
+}
+/** As `acceptMembership`, keyed by invitation id: a sign-in link bound to the invitation proved the address. */
+export function acceptMembershipById(
+  db: D1Database,
+  id: string,
+  invitationId: string,
+  userId: string,
+  now: number,
+) {
+  return stmt(
+    db,
+    `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
+ SELECT ?, i.org_id, u.id, i.id, i.roles, ? FROM org_invitations i
+ JOIN orgs o ON o.id = i.org_id AND o.status = 'active'
+ JOIN users u ON u.id = ? AND u.status = 'active'
+ JOIN user_emails e ON e.user_id = u.id AND e.email = i.email
+ WHERE i.id = ? AND i.revoked_at IS NULL AND i.accepted_at IS NULL AND i.expires_at > ?
+ AND NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.org_id = i.org_id AND m.user_id = u.id AND m.revoked_at IS NULL)`,
+    [id, now, userId, invitationId, now],
+  );
+}
+export function consumeInvitationById(db: D1Database, invitationId: string, now: number) {
+  return stmt(db, 'UPDATE org_invitations SET accepted_at = ? WHERE id = ? AND changes() = 1', [
+    now,
+    invitationId,
+  ]);
+}

@@ -1,8 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { z } from 'zod';
+import { MetricsOverviewSchema } from '@/shared/contracts/metrics.ts';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
+import { api } from '@/web/lib/api.ts';
 import { ENTITY, type EntityKind } from '@/web/lib/entities.ts';
 import { formatCount, formatDateTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
@@ -19,6 +22,7 @@ import {
 } from '@/web/ui/index.ts';
 import { ApnsPill, ExpiryPill } from '../identities/expiry.tsx';
 import { useIdentityOptions } from '../identities/queries.ts';
+import { checklistSteps, setupDone } from '../overview/get-started.tsx';
 
 type Org = z.infer<typeof OrgSummarySchema>;
 
@@ -184,41 +188,23 @@ export function SigningCard({ org }: { org: Org }) {
   );
 }
 
-/** Next steps for an org without passes; each step checks itself from the counts. */
+/** The first-run path for an org until a pass is in a Wallet; each step checks itself from counts. */
 export function OrgChecklist({ org }: { org: Org }) {
-  const go = (to: string, label: string, scoped = true) => (
-    <Button asChild variant="ghost" size="sm" iconEnd={<ChevronRight aria-hidden />}>
-      <Link to={to} search={scoped ? { orgId: org.id } : {}}>
-        {label}
-      </Link>
-    </Button>
-  );
+  const mode = useMode();
+  const setup = useQuery({
+    queryKey: ['metrics', 'org-setup', org.id, mode],
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/metrics/overview', MetricsOverviewSchema, {
+        query: { range: '24h', orgId: org.id },
+        signal,
+      }),
+    staleTime: 0,
+  });
+  if (!setup.data || setupDone(setup.data.setup)) return null;
   return (
     <Card>
       <CardBody>
-        <Checklist
-          title="Get started"
-          steps={[
-            {
-              id: 'template',
-              label: 'Assign a template',
-              done: org.counts.templates > 0,
-              action: go('/admin/templates', 'Templates', false),
-            },
-            {
-              id: 'pass',
-              label: 'Issue a pass',
-              done: org.counts.passes > 0,
-              action: go('/admin/passes/new', 'New pass'),
-            },
-            {
-              id: 'source',
-              label: 'Connect a source',
-              done: org.counts.connections > 0,
-              action: go('/admin/connections/new', 'New connection'),
-            },
-          ]}
-        />
+        <Checklist title="Get started" steps={checklistSteps(setup.data.setup, org.id)} />
       </CardBody>
     </Card>
   );

@@ -40,16 +40,19 @@ export function invitationPage(nonce: string, theme?: PageTheme): Response {
       heading.textContent = 'Join ' + orgName;
       document.title = 'Join ' + orgName + ' \\u00b7 PassBook';
       message.textContent = 'Sign in with the email address this invitation was sent to.';
+      acceptNow(true);
     }).catch(() => {});
   }
-  button.addEventListener('click', async () => {
+  async function acceptNow(auto) {
+    if (button.disabled) return;
     button.disabled = true;
-    message.textContent = '';
+    if (!auto) message.textContent = '';
     try {
       const sessionResponse = await fetch('/api/v1/session', { credentials: 'same-origin' });
       if (!sessionResponse.ok) throw new Error('session unavailable');
       const session = await sessionResponse.json();
       if (!session.authenticated) {
+        if (auto) return;
         login.hidden = false;
         message.textContent = 'Sign in, then return to this tab and try again.';
         return;
@@ -70,7 +73,8 @@ export function invitationPage(nonce: string, theme?: PageTheme): Response {
     } finally {
       if (!button.hidden) button.disabled = false;
     }
-  });
+  }
+  button.addEventListener('click', () => acceptNow(false));
 </script>`;
   const html = hostedPage({
     nonce,

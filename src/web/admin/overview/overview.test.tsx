@@ -355,7 +355,7 @@ describe('overview page', () => {
           return json(
             overview({
               range: '30d',
-              setup: { ...overview().setup, orgs: 1, passEmailsSent: 0, latestPassId: null },
+              setup: { ...overview().setup, orgs: 1, walletPasses: 0, latestPassId: null },
             }),
           );
         },
@@ -533,6 +533,8 @@ describe('get started', () => {
     orgs: 0,
     assignedTemplates: 0,
     passes: 0,
+    approvedTemplates: 0,
+    walletPasses: 0,
     passEmailsSent: 0,
     latestPassId: null,
     scanners: 0,
@@ -575,14 +577,21 @@ describe('get started', () => {
   it('replaces the charts with four steps that check themselves', async () => {
     const { container } = await renderApp('/admin', {
       session: 'admin',
-      handlers: { ...ok, '/api/v1/metrics/platform/overview': () => json(zero({ orgs: 1 })) },
+      handlers: {
+        ...ok,
+        '/api/v1/metrics/platform/overview': () => json(zero({ assignedTemplates: 1 })),
+      },
     });
     const list = await screen.findByRole('region', { name: 'Get started' });
     const steps = within(list).getAllByRole('listitem');
-    expect(steps).toHaveLength(4);
+    expect(
+      steps.map((step) =>
+        step.textContent?.replace(/\(done\)|Blueprints|Review|New pass|Send email|^\d/g, '').trim(),
+      ),
+    ).toEqual(['Use a blueprint', 'Approve it', 'Issue a pass', 'Add it to your phone']);
     expect(steps[0]).toHaveTextContent('(done)');
     expect(steps[1]).not.toHaveTextContent('(done)');
-    expect(within(list).getByRole('link', { name: 'Templates' })).toHaveAttribute(
+    expect(within(list).getByRole('link', { name: 'Review' })).toHaveAttribute(
       'href',
       '/admin/templates',
     );
@@ -595,14 +604,14 @@ describe('get started', () => {
     expect(screen.queryByRole('combobox', { name: 'Range' })).not.toBeInTheDocument();
     expect(screen.queryByText('Push failures')).not.toBeInTheDocument();
     // One active art: the current step's; the done one holds still, the activity art is static.
-    expect(container.querySelector('[data-art="template"]')).not.toHaveAttribute('data-still');
-    expect(container.querySelector('[data-art="building"]')).toHaveAttribute('data-still');
+    expect(container.querySelector('[data-art="template"]')).toHaveAttribute('data-still');
+    expect(container.querySelector('[data-art="building"]')).not.toHaveAttribute('data-still');
     expect(container.querySelector('[data-art="passes"]')).toHaveAttribute('data-still');
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('sends step four to the newest pass holder tab, and goes once an email is sent', async () => {
-    let sent = 0;
+  it('sends step four to the newest pass holder tab, and goes once a pass is in a Wallet', async () => {
+    let inWallet = 0;
     const { queryClient } = await renderApp('/admin', {
       session: 'admin',
       handlers: {
@@ -610,11 +619,11 @@ describe('get started', () => {
         '/api/v1/metrics/platform/overview': () =>
           json(
             zero({
-              orgs: 1,
               assignedTemplates: 1,
+              approvedTemplates: 1,
               passes: 1,
               latestPassId: 'p7',
-              passEmailsSent: sent,
+              walletPasses: inWallet,
             }),
           ),
       },
@@ -626,10 +635,31 @@ describe('get started', () => {
     );
     // With a pass issued the charts are back, under the checklist.
     expect(screen.getByRole('img', { name: /Issued/ })).toBeInTheDocument();
-    sent = 1;
+    inWallet = 1;
     await queryClient.invalidateQueries({ queryKey: ['metrics'] });
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull());
     expect(screen.getByRole('img', { name: /Issued/ })).toBeInTheDocument();
+  });
+
+  it.each([
+    [{}, []],
+    [{ assignedTemplates: 1 }, ['Use a blueprint']],
+    [{ assignedTemplates: 1, approvedTemplates: 1 }, ['Use a blueprint', 'Approve it']],
+    [
+      { assignedTemplates: 1, approvedTemplates: 1, passes: 1 },
+      ['Use a blueprint', 'Approve it', 'Issue a pass'],
+    ],
+  ])('shows the first-run states for %j', async (counts, done) => {
+    await renderApp('/admin', {
+      session: 'admin',
+      handlers: { ...ok, '/api/v1/metrics/platform/overview': () => json(zero(counts)) },
+    });
+    const list = await screen.findByRole('region', { name: 'Get started' });
+    const marked = within(list)
+      .getAllByRole('listitem')
+      .filter((step) => step.textContent?.includes('(done)'))
+      .map((step) => step.textContent?.split('(done)')[0]?.trim());
+    expect(marked).toEqual(done);
   });
 
   it('stays dismissed for this viewer', async () => {

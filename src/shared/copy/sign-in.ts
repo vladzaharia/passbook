@@ -7,6 +7,10 @@ import { STATE_COPY, waitLine } from './states.ts';
 /** The lock line under the sign-in card. */
 export const SIGN_IN_FOOTER = HOLDER_COPY.signInFooter;
 
+/** After a sign-in request: the same for every address, known or not. */
+export const SIGN_IN_SENT =
+  'If this address has a pass or an invitation, a link is on its way. Nothing yet? Use the address your pass was sent to.';
+
 export const INVALID_EMAIL = EMAIL_INVALID_MESSAGE;
 export const WRONG_CODE = 'That code is wrong or expired.';
 const LINK_EXPIRED = 'Link expired';

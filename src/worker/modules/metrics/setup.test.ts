@@ -11,6 +11,8 @@ import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { setupKit } from '../passes/pass-test-fixtures.ts';
+import { setupCounts } from './repo.ts';
 import { clearMetricsCache, getOverview } from './service.ts';
 
 let base: AppEnv;
@@ -47,6 +49,8 @@ describe('first-run setup counts', () => {
       orgs: before.orgs + 1,
       assignedTemplates: before.assignedTemplates + 1,
       passes: before.passes + 2,
+      approvedTemplates: before.approvedTemplates,
+      walletPasses: before.walletPasses,
       passEmailsSent: before.passEmailsSent + 1,
       latestPassId: latest.id,
       scanners: 0,
@@ -61,6 +65,8 @@ describe('first-run setup counts', () => {
       orgs: 1,
       assignedTemplates: 0,
       passes: 0,
+      approvedTemplates: 0,
+      walletPasses: 0,
       passEmailsSent: 0,
       latestPassId: null,
       scanners: 0,
@@ -86,5 +92,21 @@ describe('first-run setup counts', () => {
     const settled = (await getOverview(ctx, { range: '24h' })).setup.orgs;
     await makeOrg(f);
     expect((await getOverview(ctx, { range: '24h' })).setup.orgs).toBe(settled);
+  });
+
+  it('counts a template as approved once released, and a pass as in a Wallet once a device holds it', async () => {
+    const kit = await setupKit();
+    const scope = { orgId: kit.org.id };
+    const none = await setupCounts(kit.env.DB, scope, 'live');
+    expect(none.approvedTemplates).toBeGreaterThan(0);
+    expect(none.walletPasses).toBe(0);
+    const pass = await kit.pass({});
+    expect((await setupCounts(kit.env.DB, scope, 'live')).walletPasses).toBe(0);
+    await kit.device(pass, 'device-1', 'token-1');
+    const after = await setupCounts(kit.env.DB, scope, 'live');
+    expect(after.walletPasses).toBe(1);
+    expect(after.passes).toBe(1);
+    // Test mode has its own releases and passes.
+    expect((await setupCounts(kit.env.DB, scope, 'test')).walletPasses).toBe(0);
   });
 });

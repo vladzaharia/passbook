@@ -207,7 +207,7 @@ export function OrgWorkspacePage({
           </Card>
         )}
         <WalletAccountsPanel orgId={selectedOrgId} />
-        {canUseChecklist && org.counts.passes === 0 ? <OrgChecklist org={org} /> : null}
+        {canUseChecklist ? <OrgChecklist org={org} /> : null}
         {canManage ? (
           <>
             <OrgForm key={org.id} org={org} canChooseIdentity={isAdmin} />

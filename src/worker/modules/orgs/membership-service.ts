@@ -19,6 +19,7 @@ import {
 } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { createInviteSignInLink } from '../auth/invite-link.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import {
   membershipCapability,
@@ -27,6 +28,7 @@ import {
 } from '../passes/repo-authority.ts';
 import { getOrgAccess, memberDto, parseRoles, requireOrgCapability } from './access.ts';
 import { invitationEmail } from './invitation-email.ts';
+import { checkInviteAllowed } from './invitation-limits.ts';
 import {
   insertInvitation,
   revokeActiveMembership,
@@ -118,6 +120,7 @@ export async function inviteOrgMember(
   const manager = await managerOf(ctx, auth, orgId);
   const parsed = InviteOrgMemberSchema.safeParse(input);
   if (!parsed.success) throw new ValidationError();
+  await checkInviteAllowed(ctx, { actorId: auth.userId, orgId, email: parsed.data.email });
   const now = ctx.clock.now();
   const token = ctx.ids.token(32);
   const row = {
@@ -137,12 +140,25 @@ export async function inviteOrgMember(
     targetType: 'org_invitation',
     targetId: row.id,
   });
-  const link = `${baseUrl(ctx.env)}/api/v1/orgs/invitations/accept#${token}`;
+  const accept = `/api/v1/orgs/invitations/accept#${token}`;
+  // An address with no account gets the sign-in link in this one mail; it joins the org when used.
+  const signIn = await createInviteSignInLink(ctx, {
+    email: row.email,
+    invitationId: row.id,
+    ttlMs: TTL,
+    usable: !(await repo.hasAccountEmail(ctx.env.DB, row.email)),
+  });
+  const acceptLink = `${baseUrl(ctx.env)}${accept}`;
   const org = await repo.orgName(ctx.env.DB, orgId);
   try {
     await createEmailBindingMailer(ctx.env).send({
       to: row.email,
-      ...invitationEmail({ orgName: org?.name ?? 'an organization', link, base: baseUrl(ctx.env) }),
+      ...invitationEmail({
+        orgName: org?.name ?? 'an organization',
+        link: signIn ?? acceptLink,
+        ...(signIn ? { acceptLink } : {}),
+        base: baseUrl(ctx.env),
+      }),
     });
   } catch {
     // Provider errors can contain message content, including the secret link, so none is logged.

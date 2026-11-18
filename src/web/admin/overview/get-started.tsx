@@ -31,8 +31,8 @@ export function useGetStartedDismissed(): [boolean, () => void] {
   return [dismissed, dismiss];
 }
 
-/** Done once a pass email went out: every step before it has to be done by then. */
-export const setupDone = (setup: MetricsOverview['setup']) => setup.passEmailsSent > 0;
+/** Done once a pass is in a Wallet: every step before it has to be done by then. */
+export const setupDone = (setup: MetricsOverview['setup']) => setup.walletPasses > 0;
 
 interface Step {
   id: string;
@@ -44,7 +44,78 @@ interface Step {
   /** Create verbs lead with their icon; navigation trails a chevron. */
   iconStart?: ReactNode;
   iconEnd?: ReactNode;
-  art?: ArtName;
+  art: ArtName;
+}
+
+/** The one first-run path, for the overview and for an organization. */
+function firstRunSteps(setup: MetricsOverview['setup'], orgId?: string): Step[] {
+  const scope = orgId ? { orgId } : undefined;
+  return [
+    {
+      id: 'blueprint',
+      label: 'Use a blueprint',
+      done: setup.assignedTemplates > 0,
+      to: '/admin/templates',
+      search: scope,
+      verb: 'Blueprints',
+      iconEnd: <ChevronRight aria-hidden />,
+      art: 'template',
+    },
+    {
+      id: 'approve',
+      label: 'Approve it',
+      done: setup.approvedTemplates > 0,
+      to: '/admin/templates',
+      search: scope,
+      verb: 'Review',
+      iconEnd: <ChevronRight aria-hidden />,
+      art: 'building',
+    },
+    {
+      id: 'pass',
+      label: 'Issue a pass',
+      done: setup.passes > 0,
+      to: '/admin/passes/new',
+      search: scope,
+      verb: 'New pass',
+      iconStart: <Plus aria-hidden />,
+      art: 'passes',
+    },
+    {
+      id: 'phone',
+      label: 'Add it to your phone',
+      done: setupDone(setup),
+      to: setup.latestPassId ? `/admin/passes/${setup.latestPassId}` : '/admin/passes',
+      search: setup.latestPassId ? { tab: 'holder' } : scope,
+      verb: 'Send email',
+      iconStart: <Mail aria-hidden />,
+      art: 'passes',
+    },
+  ];
+}
+
+/** Steps for a `Checklist`: the first open one is the primary action. */
+export function checklistSteps(setup: MetricsOverview['setup'], orgId?: string) {
+  const steps = firstRunSteps(setup, orgId);
+  const next = steps.findIndex((s) => !s.done);
+  return steps.map((s, i) => ({
+    id: s.id,
+    label: s.label,
+    done: s.done,
+    action: (
+      <Button
+        asChild
+        size="sm"
+        variant={i === next ? 'primary' : 'outline'}
+        iconStart={s.iconStart}
+        iconEnd={s.iconEnd}
+      >
+        <Link to={s.to} search={s.search}>
+          {s.verb}
+        </Link>
+      </Button>
+    ),
+  }));
 }
 
 /**
@@ -88,58 +159,8 @@ export function GetStarted({
   organization?: string | undefined;
   onDismiss: () => void;
 }) {
-  const steps: Step[] = [
-    {
-      id: 'org',
-      label: 'Create an organization',
-      done: setup.orgs > 0,
-      to: '/admin/orgs',
-      verb: 'New organization',
-      iconStart: <Plus aria-hidden />,
-      art: 'building',
-    },
-    {
-      id: 'template',
-      label: 'Choose a template',
-      done: setup.assignedTemplates > 0,
-      to: '/admin/templates',
-      verb: 'Templates',
-      iconEnd: <ChevronRight aria-hidden />,
-      art: 'template',
-    },
-    {
-      id: 'pass',
-      label: 'Issue your first pass',
-      done: setup.passes > 0,
-      to: '/admin/passes/new',
-      verb: 'New pass',
-      iconStart: <Plus aria-hidden />,
-      art: 'passes',
-    },
-    {
-      id: 'send',
-      label: 'Send it to a holder',
-      done: setupDone(setup),
-      to: setup.latestPassId ? `/admin/passes/${setup.latestPassId}` : '/admin/passes',
-      search: setup.latestPassId ? { tab: 'holder' } : undefined,
-      verb: 'Send email',
-      iconStart: <Mail aria-hidden />,
-    },
-  ];
+  const steps = firstRunSteps(setup);
   const next = steps.findIndex((s) => !s.done);
-  const trailing = (s: Step, i: number) => (
-    <Button
-      asChild
-      size="sm"
-      variant={i === next ? 'primary' : 'outline'}
-      iconStart={s.iconStart}
-      iconEnd={s.iconEnd}
-    >
-      <Link to={s.to} search={s.search}>
-        {s.verb}
-      </Link>
-    </Button>
-  );
   return (
     <Card>
       <CardBody>
@@ -153,25 +174,16 @@ export function GetStarted({
           onDismiss={onDismiss}
           aside={
             <ol aria-hidden className="flex items-center gap-3 max-sm:hidden">
-              {steps.flatMap((s, i) =>
-                s.art ? (
-                  <StepArt
-                    key={s.id}
-                    name={s.art}
-                    state={s.done ? 'done' : i === next ? 'next' : 'later'}
-                  />
-                ) : (
-                  []
-                ),
-              )}
+              {steps.map((s, i) => (
+                <StepArt
+                  key={s.id}
+                  name={s.art}
+                  state={s.done ? 'done' : i === next ? 'next' : 'later'}
+                />
+              ))}
             </ol>
           }
-          steps={steps.map((s, i) => ({
-            id: s.id,
-            label: s.label,
-            done: s.done,
-            action: trailing(s, i),
-          }))}
+          steps={checklistSteps(setup)}
         />
       </CardBody>
     </Card>

@@ -60,6 +60,10 @@ export const MetricsOverviewSchema = z.object({
     /** Templates assigned to an organization. */
     assignedTemplates: z.number().int(),
     passes: z.number().int(),
+    /** Templates with an approved release in this mode. */
+    approvedTemplates: z.number().int(),
+    /** Passes registered on at least one device: in a Wallet. */
+    walletPasses: z.number().int(),
     /** Pass emails the outbox delivered. */
     passEmailsSent: z.number().int(),
     /** The newest pass, for "Send it to a holder". */
