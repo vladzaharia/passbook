@@ -231,3 +231,13 @@ export function resolveWebhookConfirm(event: string): ConfirmCopy {
     typed: false,
   };
 }
+
+/** A holder reporting their tag lost: it stops opening doors, and only the org restores it. */
+export function reportTagLostConfirm(name: string, org: string, allPasses: boolean): ConfirmCopy {
+  return {
+    title: `Report ${name} lost?`,
+    confirmLabel: 'Report lost',
+    description: `It stops opening doors${allPasses ? ' on all your passes' : ''} now. Ask ${org} for a new one.`,
+    typed: false,
+  };
+}
