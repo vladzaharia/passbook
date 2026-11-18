@@ -60,6 +60,7 @@ export function isTenantResourceDetail(pathname: string, view?: string): boolean
     return id !== 'new' && (resource !== 'templates' || id !== 'upload');
   }
   return (
+    /^\/admin\/connections\/webhooks\/(?!new$)[^/]+$/.test(path) ||
     (view === 'workspace' && /^\/admin\/orgs\/[^/]+$/.test(path)) ||
     /^\/admin\/templates\/[^/]+\/design$/.test(path) ||
     /^\/admin\/scanning\/(?:events|scanners|sessions)\/[^/]+$/.test(path)
@@ -119,7 +120,9 @@ export function canAccessAdminPath(
   if (within(path, '/admin/connections')) {
     return hasCapability(
       membership,
-      path === '/admin/connections/new' ? 'integrations:manage' : 'integrations:read',
+      path === '/admin/connections/new' || path === '/admin/connections/webhooks/new'
+        ? 'integrations:manage'
+        : 'integrations:read',
     );
   }
   if (within(path, '/admin/scanning')) return hasCapability(membership, 'scanning:read');

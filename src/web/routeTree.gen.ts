@@ -43,6 +43,8 @@ import { Route as AdminTemplatesUploadRouteImport } from './routes/admin/templat
 import { Route as AdminTestInboxIndexRouteImport } from './routes/admin/test-inbox/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as AdminConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/connections/webhooks.$endpointId'
+import { Route as AdminConnectionsWebhooksNewRouteImport } from './routes/admin/connections/webhooks.new'
 import { Route as AdminScanningEventsEventIdRouteImport } from './routes/admin/scanning/events.$eventId'
 import { Route as AdminScanningScannersScannerIdRouteImport } from './routes/admin/scanning/scanners.$scannerId'
 import { Route as AdminScanningSessionsSessionIdRouteImport } from './routes/admin/scanning/sessions.$sessionId'
@@ -223,6 +225,18 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminConnectionsWebhooksEndpointIdRoute =
+  AdminConnectionsWebhooksEndpointIdRouteImport.update({
+    id: '/connections/webhooks/$endpointId',
+    path: '/connections/webhooks/$endpointId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminConnectionsWebhooksNewRoute =
+  AdminConnectionsWebhooksNewRouteImport.update({
+    id: '/connections/webhooks/new',
+    path: '/connections/webhooks/new',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminScanningEventsEventIdRoute =
   AdminScanningEventsEventIdRouteImport.update({
     id: '/scanning/events/$eventId',
@@ -283,6 +297,8 @@ export interface FileRoutesByFullPath {
   '/admin/templates/': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox/': typeof AdminTestInboxIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
+  '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
@@ -322,6 +338,8 @@ export interface FileRoutesByTo {
   '/admin/templates': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox': typeof AdminTestInboxIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
+  '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
+  '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
@@ -363,6 +381,8 @@ export interface FileRoutesById {
   '/admin/templates/': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox/': typeof AdminTestInboxIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
+  '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
@@ -405,6 +425,8 @@ export interface FileRouteTypes {
     | '/admin/templates/'
     | '/admin/test-inbox/'
     | '/admin/users/'
+    | '/admin/connections/webhooks/$endpointId'
+    | '/admin/connections/webhooks/new'
     | '/admin/scanning/events/$eventId'
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
@@ -444,6 +466,8 @@ export interface FileRouteTypes {
     | '/admin/templates'
     | '/admin/test-inbox'
     | '/admin/users'
+    | '/admin/connections/webhooks/$endpointId'
+    | '/admin/connections/webhooks/new'
     | '/admin/scanning/events/$eventId'
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
@@ -484,6 +508,8 @@ export interface FileRouteTypes {
     | '/admin/templates/'
     | '/admin/test-inbox/'
     | '/admin/users/'
+    | '/admin/connections/webhooks/$endpointId'
+    | '/admin/connections/webhooks/new'
     | '/admin/scanning/events/$eventId'
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
@@ -738,6 +764,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/connections/webhooks/$endpointId': {
+      id: '/admin/connections/webhooks/$endpointId'
+      path: '/connections/webhooks/$endpointId'
+      fullPath: '/admin/connections/webhooks/$endpointId'
+      preLoaderRoute: typeof AdminConnectionsWebhooksEndpointIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/connections/webhooks/new': {
+      id: '/admin/connections/webhooks/new'
+      path: '/connections/webhooks/new'
+      fullPath: '/admin/connections/webhooks/new'
+      preLoaderRoute: typeof AdminConnectionsWebhooksNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/scanning/events/$eventId': {
       id: '/admin/scanning/events/$eventId'
       path: '/scanning/events/$eventId'
@@ -799,6 +839,8 @@ interface AdminRouteRouteChildren {
   AdminTemplatesIndexRoute: typeof AdminTemplatesIndexRoute
   AdminTestInboxIndexRoute: typeof AdminTestInboxIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
+  AdminConnectionsWebhooksEndpointIdRoute: typeof AdminConnectionsWebhooksEndpointIdRoute
+  AdminConnectionsWebhooksNewRoute: typeof AdminConnectionsWebhooksNewRoute
   AdminScanningEventsEventIdRoute: typeof AdminScanningEventsEventIdRoute
   AdminScanningScannersScannerIdRoute: typeof AdminScanningScannersScannerIdRoute
   AdminScanningSessionsSessionIdRoute: typeof AdminScanningSessionsSessionIdRoute
@@ -835,6 +877,9 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminTemplatesIndexRoute: AdminTemplatesIndexRoute,
   AdminTestInboxIndexRoute: AdminTestInboxIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
+  AdminConnectionsWebhooksEndpointIdRoute:
+    AdminConnectionsWebhooksEndpointIdRoute,
+  AdminConnectionsWebhooksNewRoute: AdminConnectionsWebhooksNewRoute,
   AdminScanningEventsEventIdRoute: AdminScanningEventsEventIdRoute,
   AdminScanningScannersScannerIdRoute: AdminScanningScannersScannerIdRoute,
   AdminScanningSessionsSessionIdRoute: AdminScanningSessionsSessionIdRoute,

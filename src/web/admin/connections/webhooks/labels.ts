@@ -53,3 +53,36 @@ export function responseLabel(status: number | null, code: string | null): strin
   if (!code) return '';
   return ERROR_LABEL[code] ?? 'Failed';
 }
+
+export const DELIVERY_STATE_LABEL = {
+  pending: 'Pending',
+  delivered: 'Delivered',
+  failed: 'Failed',
+  cancelled: 'Cancelled',
+} as const;
+
+/** The kit status each delivery state wears. */
+export const DELIVERY_STATUS = {
+  pending: 'pending',
+  delivered: 'verified',
+  failed: 'failed',
+  cancelled: 'cancelled',
+} as const;
+
+export const TRIGGER_LABEL = {
+  event: 'First send',
+  retry: 'Retry',
+  replay: 'Replay',
+  test: 'Test',
+} as const;
+
+export const OVERLAP_OPTIONS = [
+  { value: '0', label: 'Now' },
+  { value: '24', label: '24 hours' },
+  { value: '72', label: '3 days' },
+] as const;
+
+/** A failed delivery always reads as something: an unknown code is a plain "Failed". */
+export function failureLabel(status: number | null, code: string | null): string {
+  return responseLabel(status, code) || 'Failed';
+}
