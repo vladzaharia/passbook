@@ -8,9 +8,11 @@ beforeAll(async () => {
   fixtures = await sessionLiveFixtures();
 });
 
+let n = 0;
 async function snapshotOf(role: 'customer' | 'desk', customer: Record<string, unknown>) {
+  n += 1;
   const { kit, parent, pairedAttachment } = fixtures;
-  const session = await parent(`${role} welcome`);
+  const session = await parent(`${role} welcome ${n}`);
   const stored = await first<{ settings: string }>(
     kit.env.DB,
     'SELECT settings FROM scanning_sessions WHERE id=?',
@@ -20,7 +22,7 @@ async function snapshotOf(role: 'customer' | 'desk', customer: Record<string, un
     JSON.stringify({ ...JSON.parse(stored?.settings ?? '{}'), customer }),
     session.id,
   ]);
-  const attachment = await pairedAttachment(session.id, `${role} screen`, role);
+  const attachment = await pairedAttachment(session.id, `${role} screen ${n}`, role);
   return clockedHub(kit.ctx, kit.clock, kit.org.id, 'live').snapshot(attachment);
 }
 
