@@ -49,16 +49,18 @@ describe('Google callback root key cache (G8)', () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it('serves concurrent callbacks from one download', async () => {
+  it('does not let a download that never settles stall later callbacks', async () => {
     const fetcher = vi.fn(async () => Response.json(await callbackKeyset(keys.root, now + 60_000)));
+    fetcher.mockImplementationOnce(() => new Promise<Response>(() => {}));
     vi.stubGlobal('fetch', fetcher);
     const raw = bytes(
       await signedGoogleEvent(keys, issuer, event, { keyExpiration: now + 30_000 }),
     );
-    await Promise.all(
-      Array.from({ length: 4 }, () => verifyGoogleCallback(raw, issuer, () => now)),
-    );
-    expect(fetcher).toHaveBeenCalledTimes(1);
+    void verifyGoogleCallback(raw, issuer, () => now).catch(() => {});
+    await expect(verifyGoogleCallback(raw, issuer, () => now)).resolves.toMatchObject({
+      nonce: event.nonce,
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it('keeps accepting callbacks from cached keys while Google keys endpoint is down', async () => {
@@ -146,6 +148,54 @@ describe('Google callback root key cache (G8)', () => {
     // The failed refetch keeps the usable cached keys.
     await expect(verifyGoogleCallback(valid, issuer, () => now + 20_001)).resolves.toBeDefined();
   });
+
+  it('does not download again inside the cooldown after a failed refetch', async () => {
+    const fetcher = vi.fn(async () =>
+      Response.json(await callbackKeyset(keys.root, now + 600_000)),
+    );
+    vi.stubGlobal('fetch', fetcher);
+    const valid = bytes(
+      await signedGoogleEvent(keys, issuer, event, { keyExpiration: now + 60_000 }),
+    );
+    await verifyGoogleCallback(valid, issuer, () => now);
+    fetcher.mockImplementation(async () => new Response('slow down', { status: 429 }));
+    const forged = bytes(
+      await signedGoogleEvent(keys, issuer, event, {
+        keyExpiration: now + 60_000,
+        rootSigner: keys.other,
+      }),
+    );
+    for (const offset of [20_000, 20_001, 22_000, 25_000, 29_999])
+      await expect(verifyGoogleCallback(forged, issuer, () => now + offset)).rejects.toBeInstanceOf(
+        GoogleCallbackKeysUnavailable,
+      );
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    fetcher.mockImplementation(async () =>
+      Response.json(await callbackKeyset(keys.root, now + 600_000)),
+    );
+    await expect(verifyGoogleCallback(forged, issuer, () => now + 30_000)).rejects.toBeInstanceOf(
+      GoogleCallbackInvalid,
+    );
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+
+  it('negative-caches a failed cold download for the cooldown', async () => {
+    const fetcher = vi.fn(async () => new Response('down', { status: 503 }));
+    vi.stubGlobal('fetch', fetcher);
+    const raw = bytes(
+      await signedGoogleEvent(keys, issuer, event, { keyExpiration: now + 30_000 }),
+    );
+    for (const offset of [0, 1, 5_000, 9_999])
+      await expect(verifyGoogleCallback(raw, issuer, () => now + offset)).rejects.toBeInstanceOf(
+        GoogleCallbackKeysUnavailable,
+      );
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    fetcher.mockImplementation(async () =>
+      Response.json(await callbackKeyset(keys.root, now + 60_000)),
+    );
+    await expect(verifyGoogleCallback(raw, issuer, () => now + 10_000)).resolves.toBeDefined();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('Google callback envelope tolerance (G10)', () => {
@@ -182,16 +232,28 @@ describe('Google callback envelope tolerance (G10)', () => {
     ).rejects.toBeInstanceOf(GoogleCallbackInvalid);
   });
 
-  it('does not let an unknown field substitute signed content', async () => {
+  it('does not let unknown fields override signed content or key expiry', async () => {
     vi.stubGlobal('fetch', async () =>
       Response.json(await callbackKeyset(keys.root, now + 60_000)),
     );
     const raw = JSON.parse(
       await signedGoogleEvent(keys, issuer, event, { keyExpiration: now + 30_000 }),
-    ) as Record<string, unknown>;
-    raw.classId = `${issuer}.c_${'z'.repeat(43)}`;
+    ) as Record<string, any>;
+    // Names the verifier reads from the signed key and message, planted where it must not look.
+    raw.keyExpiration = String(now + 9_000_000);
+    raw.intermediateSigningKey.keyExpiration = String(now + 9_000_000);
+    raw.intermediateSigningKey.keyValue = raw.signature;
+    raw.expTimeMillis = String(now + 9_000_000);
+    raw.nonce = 'attacker-nonce';
     const verified = await verifyGoogleCallback(bytes(JSON.stringify(raw)), issuer, () => now);
-    expect(verified.classId).toBe(event.classId);
+    expect(verified).toEqual({
+      classId: event.classId,
+      objectId: event.objectId,
+      eventType: 'save',
+      nonce: event.nonce,
+      expiresAt: now + 3_600_000,
+      validUntil: now + 30_000,
+    });
   });
 });
 

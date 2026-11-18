@@ -21,6 +21,8 @@ export interface GoogleWalletRestContext {
   fetcher?: typeof fetch;
   /** Injected clock for HTTP-date `Retry-After` values (`ctx.clock.now`). */
   now?: () => number;
+  /** The access token came from the cache, so a 401 may only mean it went stale. */
+  tokenCached?: boolean;
   /** Called on a 401 so the caller can drop the cached access token. */
   onUnauthorized?: () => void;
 }
@@ -69,7 +71,13 @@ async function request(
   );
   if (!response.ok) {
     if (response.status === 401) ctx.onUnauthorized?.();
-    throw googleHttpError(operation, response.status, response.headers, ctx.now?.());
+    throw googleHttpError(
+      operation,
+      response.status,
+      response.headers,
+      ctx.now?.(),
+      response.status === 401 && ctx.tokenCached === true,
+    );
   }
   return response;
 }

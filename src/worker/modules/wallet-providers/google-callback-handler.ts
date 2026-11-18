@@ -153,7 +153,11 @@ export async function handleGoogleCallback(
       // A changed or legacy binding proof is unavailable rather than an invalid signature.
       const current = await findGoogleCallbackBinding(ctx.env.DB, scope, classIdHash, objectIdHash);
       // Google redelivers on timeouts: the stored receipt already answers this exact message.
-      if (current && (await isGoogleCallbackRedelivery(ctx.env.DB, current, receipt))) {
+      if (
+        current?.instanceId === binding.instanceId &&
+        (await isGoogleCallbackRedelivery(ctx.env.DB, current, receipt))
+      ) {
+        await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
         ctx.log.info('wallet.google_callback_redelivered', {
           code: 'GOOGLE_CALLBACK_REDELIVERED',
           eventType: event.eventType,

@@ -148,6 +148,7 @@ async function withGoogleRest<T>(
         accessToken: token.accessToken,
         fetcher: call.fetcher,
         now: () => ctx.clock.now(),
+        tokenCached: token.cached === true,
         onUnauthorized: () => dropGoogleAccessToken(scope.accountId),
       },
       scope,

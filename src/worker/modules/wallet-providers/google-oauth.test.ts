@@ -64,7 +64,8 @@ describe('Google access token cache (G1)', () => {
       fetcher,
       cacheKey: key,
     });
-    expect(reused).toEqual(first);
+    expect(reused).toEqual({ ...first, cached: true });
+    expect(first.cached).toBeUndefined();
     expect(reused.expiresAt).toBe(now + 3600);
     expect(fetcher).toHaveBeenCalledTimes(1);
     const renewed = await getGoogleAccessToken(account, {

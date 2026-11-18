@@ -139,6 +139,7 @@ describe('Google ECv2SigningOnly callback signatures', () => {
     await expect(verifyGoogleCallback(bytes(valid), issuer, () => now)).rejects.toBeInstanceOf(
       GoogleCallbackKeysUnavailable,
     );
+    clearGoogleCallbackKeyCache();
     provideKeyset(await callbackKeyset(keys.root, now + 30_000));
     for (const raw of [
       await signedGoogleEvent(keys, issuer, event, { keyExpiration: now }),

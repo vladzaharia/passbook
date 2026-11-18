@@ -20,12 +20,15 @@ export class GoogleWalletError extends Error {
   readonly status: number | undefined;
   /** Provider `Retry-After`, already parsed to milliseconds and capped. */
   readonly retryAfterMs: number | undefined;
+  /** A 401 on a REST call that used a cached token: a fresh token may succeed. */
+  readonly staleToken: boolean;
 
   constructor(
     code: GoogleWalletErrorCode,
     operation: string,
     status?: number,
     retryAfterMs?: number,
+    staleToken = false,
   ) {
     super(`Google Wallet ${operation} failed (${code}).`);
     this.name = 'GoogleWalletError';
@@ -33,6 +36,7 @@ export class GoogleWalletError extends Error {
     this.operation = operation;
     this.status = status;
     this.retryAfterMs = retryAfterMs;
+    this.staleToken = staleToken;
   }
 }
 
@@ -56,6 +60,7 @@ export function googleHttpError(
   status: number,
   headers?: Headers,
   nowMs?: number,
+  staleToken = false,
 ): GoogleWalletError {
   const code: GoogleWalletErrorCode =
     status === 400
@@ -77,7 +82,7 @@ export function googleHttpError(
     status === 429 || status === 503
       ? parseRetryAfter(headers?.get('retry-after') ?? null, nowMs)
       : undefined;
-  return new GoogleWalletError(code, operation, status, retryAfterMs);
+  return new GoogleWalletError(code, operation, status, retryAfterMs, staleToken);
 }
 
 export async function googleFetch(

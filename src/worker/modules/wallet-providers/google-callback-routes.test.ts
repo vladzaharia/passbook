@@ -37,6 +37,10 @@ import { issueWalletOffer, listWalletOffers } from './offers.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { providerIdentityHash } from './projection-contract.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import {
+  isGoogleCallbackRedelivery,
+  purgeExpiredGoogleCallbackReplays,
+} from './repo-google-callback.ts';
 import { googleCallbackRoutes } from './routes-google-callbacks.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
 import { historicalGoogleRelease } from './runtime-integration-fixtures.ts';
@@ -1044,10 +1048,105 @@ describe('Google Wallet callbacks', () => {
     const send = async () =>
       (await app.request(f.callbackUrl, { method: 'POST', body }, f.f.kit.env)).status;
     expect(await send()).toBe(503);
+    // A failed download is not retried inside the cooldown, even by a valid callback.
+    expect(await send()).toBe(503);
+    f.f.kit.clock.advance(10_001);
     vi.stubGlobal('fetch', async () =>
       Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000)),
     );
     expect(await send()).toBe(204);
+  });
+
+  it('scopes a redelivery acknowledgement to the same instance, event and expiry', async () => {
+    const f = await fixture();
+    const db = f.f.kit.env.DB;
+    vi.stubGlobal('fetch', async () =>
+      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 600_000)),
+    );
+    const event = rawEvent(f, 'scoped-nonce');
+    const response = await callbackApp(f.f).request(
+      f.callbackUrl,
+      { method: 'POST', body: await eventBody(f, event) },
+      f.f.kit.env,
+    );
+    expect(response.status).toBe(204);
+    const stored = await first<{ nonce_hash: string }>(
+      db,
+      'SELECT nonce_hash FROM wallet_google_callback_receipts WHERE instance_id = ?',
+      [f.instance.id],
+    );
+    const binding = {
+      instanceId: f.instance.id,
+      passId: f.f.pass.id,
+      releaseId: f.releaseId,
+      credentialGeneration: f.credentialGeneration,
+      accountId: f.account.id,
+      orgId: f.f.pass.orgId,
+      mode: 'live' as const,
+      accountRevision: f.account.revision,
+      credentialKeysetCommitment: f.credentialKeysetCommitment,
+    };
+    const input = {
+      nonceHash: stored!.nonce_hash,
+      eventType: 'save' as const,
+      expiresAt: Number(event.expTimeMillis),
+    };
+    expect(await isGoogleCallbackRedelivery(db, binding, input)).toBe(true);
+    // Another instance of the account sharing the nonce is a different message, not a redelivery.
+    expect(await isGoogleCallbackRedelivery(db, { ...binding, instanceId: 'other' }, input)).toBe(
+      false,
+    );
+    expect(await isGoogleCallbackRedelivery(db, binding, { ...input, eventType: 'del' })).toBe(
+      false,
+    );
+    expect(await isGoogleCallbackRedelivery(db, binding, { ...input, expiresAt: 1 })).toBe(false);
+    expect(
+      await isGoogleCallbackRedelivery(db, binding, { ...input, nonceHash: 'f'.repeat(64) }),
+    ).toBe(false);
+  });
+
+  it('stops answering a network prefix that keeps sending rejected callbacks', async () => {
+    const f = await fixture();
+    const app = callbackApp(f.f);
+    vi.stubGlobal('fetch', async () =>
+      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000)),
+    );
+    const headers = { 'cf-connecting-ip': '203.0.113.77' };
+    const forged = await eventBody(f, rawEvent(f, 'forged'), { rootSigner: keys.other });
+    const send = async (body: string, ip = headers) =>
+      (await app.request(f.callbackUrl, { method: 'POST', headers: ip, body }, f.f.kit.env)).status;
+    for (let i = 0; i < 60; i++) expect(await send(forged)).toBe(401);
+    expect(await send(forged)).toBe(429);
+    // A valid callback from the same prefix is also held until the window turns over.
+    expect(await send(await eventBody(f, rawEvent(f, 'valid')))).toBe(429);
+    // Other prefixes, and the next window, are unaffected.
+    expect(
+      await send(await eventBody(f, rawEvent(f, 'valid')), { 'cf-connecting-ip': '198.51.100.1' }),
+    ).toBe(204);
+    f.f.kit.clock.advance(60_000);
+    expect(await send(await eventBody(f, rawEvent(f, 'valid-2')))).toBe(204);
+  });
+
+  it('purges replay reservations once the signed message has expired', async () => {
+    const f = await fixture();
+    const db = f.f.kit.env.DB;
+    vi.stubGlobal('fetch', async () =>
+      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 600_000)),
+    );
+    const event = rawEvent(f, 'purged-nonce');
+    const response = await callbackApp(f.f).request(
+      f.callbackUrl,
+      { method: 'POST', body: await eventBody(f, event) },
+      f.f.kit.env,
+    );
+    expect(response.status).toBe(204);
+    const expiresAt = Number(event.expTimeMillis);
+    const count = async () =>
+      (await all(db, 'SELECT 1 FROM wallet_google_callback_replays')).length;
+    expect(await purgeExpiredGoogleCallbackReplays(db, expiresAt - 1)).toBe(0);
+    expect(await count()).toBe(1);
+    expect(await purgeExpiredGoogleCallbackReplays(db, expiresAt)).toBe(1);
+    expect(await count()).toBe(0);
   });
 
   it('does not log or return provider failures containing private data', async () => {

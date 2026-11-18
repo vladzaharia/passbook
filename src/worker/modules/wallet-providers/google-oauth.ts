@@ -8,6 +8,8 @@ const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
 export interface GoogleAccessToken {
   accessToken: string;
   expiresAt: number;
+  /** Present only when the token came from the isolate cache. */
+  cached?: true;
 }
 
 /** Identifies the credentials a token was minted from; a new revision never reuses an old token. */
@@ -55,7 +57,7 @@ export async function getGoogleAccessToken(
     const cached = tokenCache.get(cacheKey.accountId);
     if (cached && cached.revision !== cacheKey.revision) tokenCache.delete(cacheKey.accountId);
     else if (cached && issuedAt < cached.reuseUntil)
-      return { accessToken: cached.accessToken, expiresAt: cached.expiresAt };
+      return { accessToken: cached.accessToken, expiresAt: cached.expiresAt, cached: true };
   }
   const assertion = await signGoogleJwt(account, {
     iss: account.serviceAccountEmail,

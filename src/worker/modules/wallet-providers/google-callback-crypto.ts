@@ -155,14 +155,16 @@ interface RootKeyCache {
 
 // Per isolate. Root keys are public, so caching them is safe; a stale entry only matters when
 // Google rotates early, which a failed chain check answers with a (rate limited) refetch.
+// Downloads are not shared between requests: a joined fetch belongs to the request that started
+// it, and one cancelled request must not stall every later callback.
 const ROOT_KEY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-const ROOT_KEY_REFETCH_COOLDOWN_MS = 10_000;
+const ROOT_KEY_ATTEMPT_COOLDOWN_MS = 10_000;
 let rootKeyCache: RootKeyCache | undefined;
-let rootKeyFetch: Promise<RootKeyCache> | undefined;
+let lastAttempt: { at: number; failed: boolean } | undefined;
 
 export function clearGoogleCallbackKeyCache(): void {
   rootKeyCache = undefined;
-  rootKeyFetch = undefined;
+  lastAttempt = undefined;
 }
 
 async function fetchRootKeys(now: () => number): Promise<RootKeyCache> {
@@ -203,24 +205,31 @@ async function fetchRootKeys(now: () => number): Promise<RootKeyCache> {
   return { keys, fetchedAt, validUntil: Math.min(earliest, fetchedAt + ROOT_KEY_MAX_AGE_MS) };
 }
 
-/** `fresh` is true when this call fetched (or a refetch was suppressed by the cooldown). */
+/**
+ * `fresh` is true when this call downloaded (or the cooldown refused another download).
+ * Attempts are spaced by the cooldown whether they succeeded or failed, so an outage or a 429 from
+ * the keys endpoint is not amplified by forged callbacks: they get 503 without a download.
+ */
 async function googleRootKeys(
   now: () => number,
   refresh: boolean,
 ): Promise<{ keys: RootKey[]; fresh: boolean }> {
   const cached = rootKeyCache;
-  if (cached && now() < cached.validUntil) {
-    if (!refresh) return { keys: cached.keys, fresh: false };
-    if (now() - cached.fetchedAt < ROOT_KEY_REFETCH_COOLDOWN_MS)
-      return { keys: cached.keys, fresh: true };
+  const valid = cached !== undefined && now() < cached.validUntil;
+  const cooling =
+    lastAttempt !== undefined && now() - lastAttempt.at < ROOT_KEY_ATTEMPT_COOLDOWN_MS;
+  if (valid && !refresh) return { keys: cached.keys, fresh: false };
+  if (cooling) {
+    if (lastAttempt?.failed) throw new GoogleCallbackKeysUnavailable();
+    if (valid) return { keys: cached.keys, fresh: true };
   }
-  // Concurrent callbacks share one download; a failed one is not remembered.
-  const pending = rootKeyFetch ?? fetchRootKeys(now);
-  rootKeyFetch = pending;
+  const at = now();
+  lastAttempt = { at, failed: false };
   try {
-    rootKeyCache = await pending;
-  } finally {
-    if (rootKeyFetch === pending) rootKeyFetch = undefined;
+    rootKeyCache = await fetchRootKeys(now);
+  } catch (error) {
+    lastAttempt = { at, failed: true };
+    throw error;
   }
   return { keys: rootKeyCache.keys, fresh: true };
 }
