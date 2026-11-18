@@ -1,3 +1,4 @@
+import { counterSizes } from '../../../passkit/template/counters.ts';
 import type { ScanActionInput, ScanCard } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import { armable, type ResolvedScanAction } from '../../../shared/scan-defaults.ts';
@@ -146,9 +147,8 @@ function cardValues(found: Found, actor: ScanActor, privacy: CardPrivacy): ScanV
       goal:
         found.template.manifest.stamps?.input === action.input
           ? found.template.manifest.stamps.goal
-          : action.kind === 'take' && typeof action.amount === 'number'
-            ? action.amount
-            : null,
+          : (counterSizes(found.template.manifest)[action.input] ??
+            (action.kind === 'take' && typeof action.amount === 'number' ? action.amount : null)),
       format:
         prop?.['x-format'] === 'currency'
           ? 'currency'

@@ -43,6 +43,7 @@ export function scopeOf(
   const goals = actionGoals({
     scan: { actions },
     ...(manifest.stamps ? { stamps: manifest.stamps } : {}),
+    ...(manifest.counters ? { counters: manifest.counters } : {}),
   });
   const access = safe(accessScopeOf(found, actor, input.access ?? null));
   return {

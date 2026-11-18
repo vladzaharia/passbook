@@ -44,3 +44,24 @@ describe('a stamp card on the scanner', () => {
     expect(actionGoals(manifest)).toEqual({ stamps: { goal: 14 } });
   });
 });
+
+describe('a counter on the scanner', () => {
+  const left = (n: number, goals: object) =>
+    renderDoc(
+      {
+        v: 1,
+        header: {},
+        panels: [{ id: 'p_a', rows: [{ id: 'r_p', type: 'progress', value: '{{inputs.left}}' }] }],
+      } as ScanDisplayDoc,
+      { ...scopeOf({ left: n }), goals },
+    ).panels[0]?.rows[0];
+  const goals = { left: { goal: 10, counter: true } };
+
+  it('shows what is left out of its size, with no reward', () => {
+    expect(left(7, goals)).toMatchObject({ value: 7, goal: 10, rewards: 0, caption: '7 left' });
+    expect(left(10, goals)).toMatchObject({ rewards: 0, caption: '10 left' });
+  });
+  it('says None left at zero', () => {
+    expect(left(0, goals)).toMatchObject({ value: 0, caption: 'None left' });
+  });
+});
