@@ -4,10 +4,16 @@ import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts'
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
+import { ACCESS_GATE } from './repo-access.ts';
 import type { ScanRow } from './repo-scans.ts';
 import type { ScanEventRow } from './repo-scope.ts';
+import { undoAccessGate } from './repo-undo-access.ts';
 
 export interface UndoGate {
+  /** An Access card's visit gate is `access`, whatever the action is called. */
+  action_id: string;
+  /** The target's `visit`: an undo of a visit takes one back. */
+  visit: number | null;
   scope: string;
   template_id: string;
   kind: string;
@@ -128,7 +134,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
   const now = ctx.clock.now();
   const gateWhere = {
     pass_id: target.passId,
-    action_id: target.actionId,
+    action_id: gate.action_id,
     scope: gate.scope,
     last_scan_id: target.id,
     // The gate's own `last_at`, not `target.at`: gate recovery moves it back to `prev_last_at`.
@@ -137,37 +143,44 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
     state: gate.state,
     prev_state: gate.prev_state,
   };
-  const gateWrite = restoresGate(target.actionKind)
-    ? gate.prev_state === null
-      ? g.delete('scan_gates', { where: gateWhere, require: 'one', returning: ['last_scan_id'] })
-      : g.update('scan_gates', {
-          set: {
-            state: gate.prev_state,
-            count: Math.max(0, gate.count - 1),
-            last_at: gate.prev_last_at,
-            last_scan_id: gate.prev_scan_id,
-            prev_state: null,
-            prev_last_at: null,
-            prev_scan_id: null,
-          },
-          where: gateWhere,
-          require: 'one',
-          returning: ['last_scan_id'],
-        })
-    : g.update('scan_gates', {
-        set: {
-          state: target.presenceScope != null ? (gate.prev_state ?? 'undone') : 'undone',
-          count: Math.max(0, gate.count - 1),
-          last_at: now,
-          last_scan_id: id,
-          prev_state: null,
-          prev_last_at: null,
-          prev_scan_id: null,
-        },
-        where: gateWhere,
-        require: 'one',
-        returning: ['last_scan_id'],
-      });
+  const gateWrite =
+    gate.action_id === ACCESS_GATE
+      ? undoAccessGate(g, gate, id, gateWhere)
+      : restoresGate(target.actionKind)
+        ? gate.prev_state === null
+          ? g.delete('scan_gates', {
+              where: gateWhere,
+              require: 'one',
+              returning: ['last_scan_id'],
+            })
+          : g.update('scan_gates', {
+              set: {
+                state: gate.prev_state,
+                count: Math.max(0, gate.count - 1),
+                last_at: gate.prev_last_at,
+                last_scan_id: gate.prev_scan_id,
+                prev_state: null,
+                prev_last_at: null,
+                prev_scan_id: null,
+              },
+              where: gateWhere,
+              require: 'one',
+              returning: ['last_scan_id'],
+            })
+        : g.update('scan_gates', {
+            set: {
+              state: target.presenceScope != null ? (gate.prev_state ?? 'undone') : 'undone',
+              count: Math.max(0, gate.count - 1),
+              last_at: now,
+              last_scan_id: id,
+              prev_state: null,
+              prev_last_at: null,
+              prev_scan_id: null,
+            },
+            where: gateWhere,
+            require: 'one',
+            returning: ['last_scan_id'],
+          });
   const writes = [
     gateWrite,
     g.update('scans', {

@@ -1,6 +1,7 @@
 import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { scanAccessOf, startsVisit } from './access.ts';
 import { commitConditions, credentialFacts, lostReason } from './act-check-in-facts.ts';
 import { finishCheckInResult } from './act-check-in-result.ts';
 import { addCheckInStatements } from './act-check-in-statements.ts';
@@ -17,6 +18,7 @@ import { preparePlannedDisplayHistoryProof } from './display-history-pending.ts'
 import { appendPlannedDisplayHistory, rebindDisplayHistoryRead } from './display-history-plan.ts';
 import { type LedgerFacts, ledgerRow } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
+import { ACCESS_GATE, accessCountStmt, accessZoneChecks } from './repo-access.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { doneOkPredicate, effectiveReleaseCheck } from './repo-scan-checks.ts';
@@ -69,11 +71,17 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const now = ctx.clock.now();
   const authorityNow = now;
 
+  const access = found.access && gate.actionId === ACCESS_GATE ? found.access : null;
+  // The visit gate is `access`; the ledger names the action that was scanned (its signed reference).
+  const named = <T extends { actionId: string }>(g: T | null) =>
+    g && access ? { ...g, actionId: action.id } : g;
+
   const variant = async (outcome: 'ok' | 'heads_up', reason: ScanReason | null) => {
     const held = outcome === 'heads_up';
-    const e = held
+    const moved = held
       ? { ...effect, gateAfter: effect.gateBefore, presenceAfter: effect.presenceBefore }
       : effect;
+    const e = { ...moved, gateBefore: named(moved.gateBefore), gateAfter: named(moved.gateAfter) };
     const row = await ledgerAuthoritySnapshot(
       ctx,
       ledgerRow(ctx, actor, {
@@ -126,7 +134,11 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       : Promise.resolve(null),
   ]);
 
-  const finalized = (outcome: 'ok' | 'heads_up', reason: ScanReason | null): Finalize => ({
+  const finalized = (
+    outcome: 'ok' | 'heads_up',
+    reason: ScanReason | null,
+    visit?: boolean,
+  ): Finalize => ({
     id: scanId,
     claimAt,
     outcome,
@@ -141,6 +153,15 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     direction: found.admission?.state.direction,
     ...(outcome === 'ok' && presencePlan ? { presenceScope: presencePlan.scope } : {}),
     ...(event ? { eventId: event.id } : {}),
+    ...(access
+      ? {
+          access: {
+            zoneId: access.zoneId,
+            plan: access.decision.access.plan.id,
+            visit: outcome === 'ok' ? (visit ?? false) : null,
+          },
+        }
+      : {}),
   });
 
   // Planned before the grant exists: they only need values, never the grant row.
@@ -155,7 +176,9 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       ok.retention,
       finalized('ok', null),
     );
-    if (!planned || !appendPlannedDisplayHistory(history.preloaded, planned))
+    // A grant inside a visit is not a visit: the history will not count it.
+    const counted = !access || startsVisit(access, effect.gateBefore, now);
+    if (!planned || (counted && !appendPlannedDisplayHistory(history.preloaded, planned)))
       throw new StaleScanAuthority();
     displayPlan = await prepareDisplayHistory(
       ctx,
@@ -181,7 +204,11 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     },
     approver,
     // The release the answer was evaluated under still stands (the pre-commit read cannot hold it).
-    checks: [effectiveReleaseCheck(found.pass.id, found.liveCandidate?.templateSnapshot?.raw)],
+    checks: [
+      effectiveReleaseCheck(found.pass.id, found.liveCandidate?.templateSnapshot?.raw),
+      // The zone that let the pass in is still live and still the session's (C6).
+      ...(access ? accessZoneChecks(access.zoneId, access.sessionId) : []),
+    ],
     // Another pass's transfer can retire the presented credential after resolve (shared hash).
     credentialRefs: claim.credentialTombstoneRefs,
     tables: SCAN_COMMIT_TABLES,
@@ -196,10 +223,19 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     admitted,
     lost,
     finalized,
+    access: access
+      ? {
+          templateId: found.pass.templateId,
+          gapMs: access.gapMs,
+          waitMs: access.waitMs,
+          limit: access.limit,
+          override: overrideOf !== null,
+        }
+      : null,
     variants: { ok, admit: admitVariant, cap: capVariant, lost: lostVariant },
   });
   if (!statements) throw new StaleScanAuthority();
-  const { finalOk, finalAdmit, finalCap, holder, presenceHolder } = statements;
+  const { finalOk, finalVisit, finalAdmit, finalCap, holder, presenceHolder } = statements;
 
   // The verified PIN's attempt comes back with the scan, in the same commit.
   if (reservation) g.include(...reservation.refundParts());
@@ -208,12 +244,19 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const finishAt = ctx.clock.now();
   const done = doneOkPredicate(scanId);
   const bound = displayPlan.bind(finishAt, done);
-  const committed = await g.commitWith(afterReads([...counts.stmts, ...bound.stmts]));
+  const committed = await g.commitWith(
+    afterReads([
+      ...counts.stmts,
+      ...bound.stmts,
+      ...(access ? [accessCountStmt(ctx.env.DB, found.pass.id)] : []),
+    ]),
+  );
   reservation?.markRefunded();
   const results = committed.writes;
   const at = (s: Parameters<typeof g.indexOf>[0]) => results[g.indexOf(s)] as D1Result;
   const rows = (s: Parameters<typeof g.indexOf>[0]) => (at(s).results ?? []).length;
-  const wonIt = rows(finalOk) > 0;
+  const startedVisit = !!finalVisit && rows(finalVisit) > 0;
+  const wonIt = startedVisit || rows(finalOk) > 0;
   const admitLost = !!finalAdmit && rows(finalAdmit) > 0;
   const reason: ScanReason = admitLost
     ? admitted.reason
@@ -256,5 +299,16 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     },
     photo,
     hasPresence: !!presencePlan,
+    access: access
+      ? scanAccessOf(access.decision, {
+          visits: {
+            used: Number(
+              (rest[bound.stmts.length]?.results?.[0] as { count?: number })?.count ?? 0,
+            ),
+            limit: access.limit,
+          },
+          visit: startedVisit,
+        })
+      : null,
   });
 }

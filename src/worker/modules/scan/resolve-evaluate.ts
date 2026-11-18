@@ -2,6 +2,7 @@ import type { ScanInput } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
+import { accessStop, isGuestPass, joinReads, planAccessReads } from './access.ts';
 import { planAdmission } from './admission.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -145,7 +146,10 @@ async function evaluateObserved(
     if (validity.status === 'voided')
       return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
     if (validity.status === 'expired')
-      return stop('refused', 'expired', { ...audit, at: validity.validUntil });
+      return stop('refused', isGuestPass(one) ? 'guest_expired' : 'expired', {
+        ...audit,
+        at: validity.validUntil,
+      });
     return stop('refused', 'not_accepted');
   }
   const known = {
@@ -160,13 +164,16 @@ async function evaluateObserved(
       Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
       actor.settings.direction === 'out' ||
       actor.settings.direction === 'both');
-  const extraReads = await options.prepareReads?.(found);
+  const prepared = await options.prepareReads?.(found);
+  // An Access card's zones ride the same read as the pass fence: no trip of their own on an action.
+  const accessReads = planAccessReads(ctx, actor, found);
+  const extraReads = joinReads(prepared, accessReads);
   // Action callers also capture event-scoped admission in the same transaction.
   const eventAdmission =
     !configured &&
     options.admits?.(found) !== false &&
     actor.event != null &&
-    extraReads !== undefined;
+    prepared !== undefined;
   if (!configured && !eventAdmission && extraReads) {
     const results = extraReads.stmts.length ? await ctx.env.DB.batch(extraReads.stmts) : [];
     await extraReads.finish(results);
@@ -187,6 +194,9 @@ async function evaluateObserved(
   }
   const exiting = admission?.plan.state.direction === 'out';
   const now = ctx.clock.now();
+  // Access refusals are authority: they come before the gate, the window and every heads-up.
+  const denied = exiting ? null : accessStop(ctx, actor, found, known, accessReads, now);
+  if (denied) return denied;
   if (admission?.reason)
     return stop(
       admission.reason === 'not_accepted' || admission.reason === 'wrong_event'

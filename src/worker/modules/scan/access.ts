@@ -1,0 +1,235 @@
+import {
+  type AccessDecision,
+  accessScope,
+  decide,
+  type ZoneNode,
+} from '../../../passkit/template/access/index.ts';
+import { applyDefaults } from '../../../passkit/template/manifest.ts';
+import type { AccessManifest, AccessPlan, Json } from '../../../passkit/types.ts';
+import type { ScanAccess } from '../../../shared/contracts/scan.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import type { FoundAccess } from './access-types.ts';
+import type { ScanActor } from './guard.ts';
+import { orgZonesStmt, sessionZonesStmt, zoneIdsOf, zoneNodes } from './repo-access.ts';
+import type { Candidate } from './repo-lookup.ts';
+import type { ScanGateSnapshot } from './repo-scan-effect.ts';
+import type { Found, Stop } from './resolve.ts';
+import type { EvaluationReadPlan } from './resolve-evaluate.ts';
+import { stop } from './resolve-policy.ts';
+import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
+
+const MINUTE = 60_000;
+const DEFAULT_GAP_MINUTES = 120;
+
+/** The plans of the template's current release (AX 2.1): null on every other template. */
+export const accessManifestOf = (found: Found): AccessManifest | null =>
+  found.activePolicy.manifest.scan?.access ?? null;
+
+/**
+ * A guest card past its end is `guest_expired`, not `expired` (AX 1.3): the end is also the pass's
+ * own expiration, so the pass check sees it first. True when the candidate's plan is a guest plan.
+ */
+export function isGuestPass(candidate: Candidate): boolean {
+  const templates = resolveCandidateReadTemplates(candidate);
+  const access = templates?.active.manifest.scan?.access;
+  if (!templates || !access) return false;
+  const inputs = applyDefaults(templates.active.manifest, candidate.pass.personalization);
+  return access.plans.find((p) => p.id === inputs[access.input.plan])?.kind === 'guest';
+}
+
+/** Zones for a scan at a door: read with the preflight, never cached (C5). */
+export interface AccessReads extends EvaluationReadPlan {
+  loaded(): { zones: ZoneNode[]; zoneIds: string[] } | null;
+}
+
+/** The reads an access decision needs. Event scanners need none: zones and hours do not apply there. */
+export function planAccessReads(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  found: Found,
+): AccessReads | null {
+  if (!accessManifestOf(found) || actor.event) return null;
+  const session = actor.scanningSession?.id ?? null;
+  const stmts = [
+    orgZonesStmt(ctx.env.DB, actor.orgId),
+    ...(session ? [sessionZonesStmt(ctx.env.DB, actor.orgId, session)] : []),
+  ];
+  let loaded: { zones: ZoneNode[]; zoneIds: string[] } | null = null;
+  return {
+    stmts,
+    async finish(results) {
+      if (results.length !== stmts.length) return;
+      loaded = { zones: zoneNodes(results[0]), zoneIds: session ? zoneIdsOf(results[1]) : [] };
+    },
+    loaded: () => loaded,
+  };
+}
+
+/** A read plan that runs another's statements and this one's, in one batch. */
+export function joinReads(
+  first: EvaluationReadPlan | undefined,
+  second: EvaluationReadPlan | null,
+): EvaluationReadPlan | undefined {
+  if (!first) return second ?? undefined;
+  if (!second) return first;
+  return {
+    stmts: [...first.stmts, ...second.stmts],
+    async finish(results) {
+      await first.finish(results.slice(0, first.stmts.length));
+      await second.finish(results.slice(first.stmts.length));
+    },
+  };
+}
+
+/** The wire shape of a decision; `visits` and `visit` come from the gate once it has spoken. */
+export function scanAccessOf(
+  d: AccessDecision,
+  gate: { visits: { used: number; limit: number | null } | null; visit: boolean } = {
+    visits: null,
+    visit: false,
+  },
+): ScanAccess {
+  return { ...d.access, ...gate };
+}
+
+/** An event scanner asks only whether the pass is on hold, not started or ended: no zone, no hours. */
+const anyZoneAnyHour = (p: AccessPlan): AccessPlan => ({
+  id: p.id,
+  label: p.label,
+  kind: p.kind,
+  zones: [{ zone: '*' }],
+  ...(p.visits === undefined ? {} : { visits: p.visits }),
+  ...(p.days === undefined ? {} : { days: p.days }),
+});
+
+const ON_HOLD = new Set<AccessDecision['reason']>(['suspended', 'not_yet_valid', 'guest_expired']);
+
+/**
+ * Steps 10a-10e for a pass whose template is an Access card (AX 3.4). A refusal here is red and
+ * final: it comes before the gate, so a suspended or ended pass never touches it. An event scanner
+ * runs 10a-10c only: the pass is checked in once, whatever its zones or hours.
+ */
+export function accessStop(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  found: Found,
+  known: Pick<Stop, 'pass' | 'ref' | 'found' | 'connectionGeneration'>,
+  reads: AccessReads | null,
+  now: number,
+): Stop | null {
+  const manifest = accessManifestOf(found);
+  if (!manifest) return null;
+  const event = actor.event !== null;
+  const loaded = event ? { zones: [], zoneIds: [] } : reads?.loaded();
+  // The read did not land: nothing is let in on a guess.
+  if (!loaded) return stop('refused', 'not_found', { stale: true });
+  const inputs = applyDefaults(found.activePolicy.manifest, found.pass.personalization);
+  const plans = event ? manifest.plans.map(anyZoneAnyHour) : manifest.plans;
+  const d = decide({
+    access: { ...manifest, plans },
+    inputs,
+    createdAt: found.pass.createdAt,
+    now,
+    zones: loaded.zones,
+    scannerZoneIds: loaded.zoneIds,
+    timeZone: actor.timeZone,
+  });
+  if (d.planUnknown && !event)
+    ctx.log.warn('scan.access.plan_unknown', {
+      code: 'ACCESS_PLAN_UNKNOWN',
+      orgId: actor.orgId,
+      passId: found.pass.id,
+      templateId: found.pass.templateId,
+    });
+  if (!event)
+    found.access = {
+      decision: d,
+      zoneId: d.access.zone?.id ?? null,
+      sessionId: actor.scanningSession?.id ?? null,
+      limit: d.visitLimit,
+      gapMs: (manifest.rules?.visitGapMinutes ?? DEFAULT_GAP_MINUTES) * MINUTE,
+      waitMs:
+        manifest.rules?.reentryMinutes == null ? null : manifest.rules.reentryMinutes * MINUTE,
+    } satisfies FoundAccess;
+  if (d.reason !== null && (!event || ON_HOLD.has(d.reason)))
+    return stop('refused', d.reason, { ...known, at: d.at, access: scanAccessOf(d) });
+  return null;
+}
+
+/**
+ * The gate's answer before the commit, from the row the preflight read: inside the wait is a
+ * heads-up `cooldown`; a new visit past the limit is a red `guest_visits_used`. A scan that loses
+ * the gate to a racing one at commit is told to scan again instead (the commit decides).
+ */
+export function accessGateStop(
+  found: Found,
+  before: ScanGateSnapshot | null,
+  now: number,
+): Stop | null {
+  const access = found.access;
+  if (!access || !before) return null;
+  const known = {
+    pass: found.pass,
+    ref: found.ref,
+    found,
+    connectionGeneration: found.connectionGeneration,
+  };
+  const since = now - before.lastAt;
+  if (access.waitMs !== null && since < access.waitMs)
+    return stop('heads_up', 'cooldown', {
+      ...known,
+      at: before.lastAt,
+      cooldownRemainingMs: access.waitMs - since,
+      access: scanAccessOf(access.decision),
+    });
+  const fresh = access.gapMs === 0 || since > access.gapMs;
+  if (access.limit !== null && fresh && before.count >= access.limit)
+    return stop('refused', 'guest_visits_used', {
+      ...known,
+      access: scanAccessOf(access.decision, {
+        visits: { used: before.count, limit: access.limit },
+        visit: false,
+      }),
+    });
+  return null;
+}
+
+/** Whether a grant at `now` starts a visit, as the gate's statement decides it. */
+export const startsVisit = (access: FoundAccess, before: ScanGateSnapshot | null, now: number) =>
+  before === null || access.gapMs === 0 || now - before.lastAt > access.gapMs;
+
+/**
+ * The `access` root of a result screen (DM 3.1): the plan, the deciding zone, when it closes or
+ * opens, the pass's end, the plan's hours text and the visits. Null on any other template.
+ */
+export function accessScopeOf(
+  found: Found,
+  actor: ScanActor,
+  view: ScanAccess | null,
+): Json | null {
+  const shown = view ?? (found.access ? scanAccessOf(found.access.decision) : null);
+  const manifest = shown ? accessManifestOf(found) : null;
+  if (!manifest || !shown) return null;
+  const inputs = applyDefaults(found.activePolicy.manifest, found.pass.personalization);
+  const base = accessScope(manifest, inputs, {
+    createdAt: found.pass.createdAt,
+    timeZone: shown.timeZone || actor.timeZone,
+  });
+  const visits = shown.visits;
+  return {
+    plan: shown.plan.label,
+    kind: shown.plan.kind,
+    zone: shown.zone?.name ?? null,
+    closesAt: shown.closesAt,
+    nextOpenAt: shown.nextOpenAt,
+    until: base?.until ?? null,
+    hours: base?.hours ?? '',
+    visits: visits
+      ? {
+          used: visits.used,
+          limit: visits.limit,
+          left: visits.limit === null ? null : Math.max(0, visits.limit - visits.used),
+        }
+      : null,
+  };
+}

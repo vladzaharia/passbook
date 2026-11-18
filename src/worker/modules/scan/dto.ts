@@ -5,6 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { replacedBy } from '../passes/assets.ts';
 import { readBranding } from '../passes/branding.ts';
+import { scanAccessOf } from './access.ts';
 import type { PreparedAssetGrant } from './asset-types.ts';
 import { assetBaseUrl, prepareGenericAssetGrant } from './assets.ts';
 import { passViewJson } from './card-pass-view.ts';
@@ -310,7 +311,7 @@ export async function buildCard(
     door: checkIn
       ? { state: doorGate?.state === 'in' || doorGate?.state === 'out' ? doorGate.state : null }
       : null,
-    access: null,
+    access: found.access ? scanAccessOf(found.access.decision) : null,
     passView: {
       passJson: passViewJson(found, actor, privacy),
       assetBaseUrl: assetBaseUrl(found.pass.id),
