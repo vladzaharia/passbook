@@ -44,6 +44,14 @@ export const PlatformSettingsSchema = z.object({
   'scan.lookupsPerHour': z.number().int().min(20).max(2000).default(200),
   /** Apple NFC (VAS). Off until Apple approves the pass type. */
   'nfc.enabled': z.boolean().default(false),
+  /** Join links: public self-issue. Off stops every link. */
+  'join.enabled': z.boolean().default(true),
+  /** Join cards one org may issue per rolling 24 hours across its live links. */
+  'join.orgDailyCap': z.number().int().min(1).max(50000).default(1000),
+  /** Join cards the platform issues per UTC day; over it every link answers closed. */
+  'join.platformDailyCap': z.number().int().min(1).max(1000000).default(20000),
+  /** Live join cards nobody used are deleted after this many days. */
+  'join.unusedDays': z.number().int().min(7).max(365).default(30),
 });
 export const OrgSettingsSchema = z.object({
   'branding.accent': z

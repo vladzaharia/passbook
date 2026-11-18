@@ -58,6 +58,11 @@ export type Principal =
     }
   | { kind: 'scanner'; scannerId: string; credentialEpoch: number }
   | { kind: 'holder'; passId: string; proof: HolderProof }
+  /**
+   * A public join link (join-links design J1). Its actor row is the link: org and mode are the link's, it
+   * acts while enabled, at this generation (a new link bumps it) and its org is active. It holds one purpose.
+   */
+  | { kind: 'join'; linkId: string; generation: number }
   | { kind: 'platform'; userId: string; sessionIdHash: string; orgId?: string; mode?: Mode }
   | {
       kind: 'system';
@@ -90,6 +95,8 @@ export function principalLabel(p: Principal): string {
       return `scanner:${p.scannerId}`;
     case 'holder':
       return p.proof.via === 'device' ? `device:${p.passId}` : `holder:${p.proof.userId}`;
+    case 'join':
+      return `join:${p.linkId}`;
     case 'platform':
       return `platform:${p.userId}`;
     case 'system':
@@ -181,6 +188,12 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       return `SELECT p.org_id AS org_id, p.mode AS mode, ${flag(live)} AS actor_ok,
         ${org} AS org_ok
         FROM passes p JOIN orgs o ON o.id = p.org_id WHERE p.id = ${b.bind(p.passId)}`;
+    }
+    case 'join': {
+      const live = `jl.enabled = 1 AND jl.generation = ${b.bind(p.generation)}`;
+      return `SELECT jl.org_id AS org_id, jl.mode AS mode, ${flag(live)} AS actor_ok,
+        ${flag(`o.status = 'active'`)} AS org_ok
+        FROM join_links jl JOIN orgs o ON o.id = jl.org_id WHERE jl.id = ${b.bind(p.linkId)}`;
     }
     case 'platform':
     case 'system': {

@@ -177,9 +177,7 @@ export async function finishTransferBatch(
     require: 'one',
     returning: ['id'],
   });
-  g.include(
-    sealPart('apple-auth', p.id, auth.mac, auth.seal, { holder: g.principal.kind === 'holder' }),
-  );
+  g.include(sealPart('apple-auth', p.id, auth.mac, auth.seal, { holder: g.pinned }));
   g.update('pass_credential_transfers', {
     set: { state: 'completed', completed_at: now },
     where: { id: t.id, pass_id: p.id, state: 'pending' },

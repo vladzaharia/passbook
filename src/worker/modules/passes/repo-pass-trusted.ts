@@ -128,6 +128,16 @@ export async function remacTrusted(
   from: string,
   to: string,
 ): Promise<boolean> {
+  if (purpose === 'join') {
+    const [updated] = await batch(db, [
+      stmt(db, 'UPDATE join_links SET token = ? WHERE id = ? AND token = ? RETURNING id', [
+        to,
+        id,
+        from,
+      ]),
+    ]);
+    return (updated?.results.length ?? 0) === 1;
+  }
   if (purpose === 'bundle') {
     const [, updated] = await batch(db, [
       stmt(
