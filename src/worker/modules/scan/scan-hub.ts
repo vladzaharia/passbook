@@ -140,7 +140,12 @@ export class ScanHub extends DurableObject<AppEnv> {
     if (captured.role === 'device') return { rows: [], cursor: null };
     const ring = await readRing(this.ctx.storage, ctx.clock.now());
     // A customer reconnect never replays a previous person's result.
-    if (captured.role === 'customer') return { rows: [], cursor: ring.at(-1)?.row.id ?? null };
+    if (captured.role === 'customer')
+      return {
+        rows: [],
+        cursor: ring.at(-1)?.row.id ?? null,
+        ...(recipient.customer.welcome ? { welcome: recipient.customer.welcome } : {}),
+      };
     const index = after ? ring.findIndex((r) => r.row.id === after) : -1;
     const unseen = ring.slice(index + 1);
     const rows = await liveRowsFor(ctx, recipient, unseen);

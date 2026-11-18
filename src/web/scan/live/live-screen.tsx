@@ -48,6 +48,7 @@ export function LiveScreen({
   refetch: () => Promise<void>;
 }) {
   const [rows, setRows] = useState<ScanLiveRow[]>([]);
+  const [welcome, setWelcome] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [buddyReplay, setBuddyReplay] = useState(0);
@@ -82,6 +83,7 @@ export function LiveScreen({
       if ('resolved' in parsed.data || 'enroll' in parsed.data) return;
       const snapshot = parsed.data;
       cursor = snapshot.cursor;
+      if (snapshot.welcome !== undefined) setWelcome(snapshot.welcome);
       setRows((previous) => {
         const merged = new Map([...previous, ...snapshot.rows].map((row) => [row.id, row]));
         return [...merged.values()]
@@ -205,7 +207,9 @@ export function LiveScreen({
         >
           <div className="scan-live-customer-copy">
             {view?.greet ? <p className="scan-live-eyebrow">{view.greet}</p> : null}
-            <h2>{view ? view.band.headline : (latest?.label ?? CUSTOMER_COPY.welcome)}</h2>
+            <h2>
+              {view ? view.band.headline : (latest?.label ?? welcome ?? CUSTOMER_COPY.welcome)}
+            </h2>
             {view?.band.sub ? <p className="scan-live-welcome-hint">{view.band.sub}</p> : null}
           </div>
           <div aria-hidden="true" className="scan-live-buddy">

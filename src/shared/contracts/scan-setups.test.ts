@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ScanCustomerViewSchema } from './scan-customer.ts';
 import {
   AdminScannerStartedSchema,
   CreateScannerSetupSchema,
@@ -102,5 +103,30 @@ describe('managed scanner setup contracts', () => {
       }).success,
     ).toBe(true);
     expect(ScanLiveResolvedSchema.safeParse({ of: 'scan', outcome: 'ok' }).success).toBe(false);
+  });
+});
+
+describe('customer welcome', () => {
+  const view = {
+    v: 1,
+    screen: 'ready',
+    ref: 'r1',
+    at: 1,
+    where: '',
+    band: { headline: 'Hi', sub: null },
+    greet: null,
+    chips: [],
+    panel: null,
+    lines: [],
+    milestone: null,
+    test: false,
+  };
+  it('parses with and without a welcome', () => {
+    expect(ScanCustomerViewSchema.parse(view).welcome).toBeUndefined();
+    expect(ScanCustomerViewSchema.parse({ ...view, welcome: 'Hi there' }).welcome).toBe('Hi there');
+    expect(ScanLiveSnapshotSchema.parse({ cursor: null, rows: [], welcome: 'Hi' }).welcome).toBe(
+      'Hi',
+    );
+    expect(ScanLiveSnapshotSchema.parse({ cursor: null, rows: [] }).welcome).toBeUndefined();
   });
 });
