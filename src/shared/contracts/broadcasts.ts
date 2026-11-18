@@ -10,6 +10,7 @@ import {
   TimestampSchema,
 } from './common.ts';
 import { ScanTargetSchema } from './scan.ts';
+import { TimeZoneSchema } from './scan-base.ts';
 
 export const BROADCAST_MAX_TEMPLATES = 20;
 export const BROADCAST_MESSAGE_MAX = 256;
@@ -30,6 +31,47 @@ export const BroadcastStateSchema = z.enum([
 ]);
 export type BroadcastState = z.infer<typeof BroadcastStateSchema>;
 
+const InputKey = z.string().min(1).max(64);
+/** `YYYY-MM-DD`, a real calendar date. */
+export const IsoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date as YYYY-MM-DD.')
+  .refine((v) => {
+    const d = new Date(`${v}T00:00:00Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(v);
+  }, 'Use a real date.');
+/** The scan-event match shape: the input equals any of the values. */
+const ValuesClause = z.object({
+  input: InputKey,
+  values: z.array(z.string().min(1).max(120)).min(1).max(20),
+});
+const NumberClause = z
+  .object({
+    input: InputKey,
+    min: z.number().finite().optional(),
+    max: z.number().finite().optional(),
+  })
+  .refine((c) => c.min !== undefined || c.max !== undefined, 'Set a lowest or highest value.')
+  .refine(
+    (c) => c.min === undefined || c.max === undefined || c.min <= c.max,
+    'Lowest is above highest.',
+  );
+const DateClause = z
+  .object({
+    input: InputKey,
+    from: IsoDateSchema.optional(),
+    to: IsoDateSchema.optional(),
+    timeZone: TimeZoneSchema,
+  })
+  .refine((c) => c.from || c.to, 'Pick a start or end date.')
+  .refine((c) => !c.from || !c.to || c.from <= c.to, 'Start is after end.');
+/** 1-3 clauses, ANDed. Ranges are inclusive at both ends. */
+export const InputMatchSchema = z
+  .array(z.union([ValuesClause, NumberClause, DateClause]))
+  .min(1)
+  .max(3);
+export type InputMatch = z.infer<typeof InputMatchSchema>;
+
 /** Active passes only: voided, removed and expired passes are never targeted. */
 export const BroadcastTargetSchema = z.object({
   templateIds: z.array(IdSchema).min(1).max(BROADCAST_MAX_TEMPLATES),
@@ -37,6 +79,7 @@ export const BroadcastTargetSchema = z.object({
   holderState: z.enum(['unassigned', 'waiting', 'owned']).optional(),
   q: z.string().trim().max(200).optional(),
   scan: ScanTargetSchema.optional(),
+  match: InputMatchSchema.optional(),
 });
 export type BroadcastTarget = z.infer<typeof BroadcastTargetSchema>;
 
@@ -82,7 +125,7 @@ export const BroadcastSchema = z.object({
 });
 export type BroadcastDto = z.infer<typeof BroadcastSchema>;
 
-const ClearAfterSchema = z
+export const ClearAfterSchema = z
   .number()
   .int()
   .min(60_000)
