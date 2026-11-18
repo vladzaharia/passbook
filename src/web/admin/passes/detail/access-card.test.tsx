@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import '../../../lib/test-utils.tsx';
@@ -11,8 +11,27 @@ vi.mock('../../scanning/zones-query.ts', () => ({
     isSuccess: true,
     data: {
       items: [
-        { key: 'gym', name: 'Gym floor', effectiveTimeZone: 'America/Chicago' },
-        { key: 'pool', name: 'Pool', effectiveTimeZone: 'America/Chicago' },
+        {
+          key: 'gym',
+          name: 'Gym floor',
+          effectiveTimeZone: 'America/Chicago',
+          checkedAt: [{ id: 's1', name: 'Lobby' }],
+        },
+        {
+          key: 'pool',
+          name: 'Pool',
+          effectiveTimeZone: 'America/Chicago',
+          checkedAt: [
+            { id: 's2', name: 'Lab' },
+            { id: 's1', name: 'Lobby' },
+          ],
+        },
+        {
+          key: 'roof',
+          name: 'Roof',
+          effectiveTimeZone: null,
+          checkedAt: [{ id: 's3', name: 'Roof door' }],
+        },
       ],
     },
   }),
@@ -60,6 +79,13 @@ describe('Access card', () => {
     expect(screen.getByText('Open now')).toBeInTheDocument();
   });
 
+  it('lists the sessions that check the pass’s zones', () => {
+    vi.setSystemTime(new Date('2026-11-16T16:00:00Z'));
+    view(pass({ plan: 'offpeak', zones: ['pool'] }));
+    expect(screen.getByText('Checked at')).toBeInTheDocument();
+    expect(screen.getByText('Lab, Lobby')).toBeInTheDocument();
+  });
+
   it('says when it opens next', () => {
     vi.setSystemTime(new Date('2026-11-17T16:00:00Z'));
     view(pass({ plan: 'offpeak' }));
@@ -79,6 +105,29 @@ describe('Access card', () => {
   it('has no accessibility violations', async () => {
     vi.setSystemTime(new Date('2026-11-16T16:00:00Z'));
     const { container } = view(pass({ plan: 'offpeak', zones: ['pool'] }));
+    expect((await axe(container)).violations).toEqual([]);
+  });
+});
+
+const COMBOS = [1440, 820, 390].flatMap((width) =>
+  (['light', 'dark'] as const).map((theme) => [width, theme] as const),
+);
+
+describe.each(COMBOS)('Access card with Checked at, axe at %i, %s theme', (width, theme) => {
+  afterEach(() => {
+    delete document.documentElement.dataset.theme;
+    vi.useRealTimers();
+  });
+  it('has no accessibility violations', async () => {
+    document.documentElement.dataset.theme = theme;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-16T16:00:00Z'));
+    const { container } = view(pass({ plan: 'offpeak', zones: ['pool'] }));
+    expect(screen.getByText('Lab, Lobby')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 });

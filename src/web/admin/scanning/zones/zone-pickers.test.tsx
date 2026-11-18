@@ -48,7 +48,7 @@ describe('session pickers', () => {
     );
     await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
     await user.click(await within(dialog).findByRole('button', { name: 'Choose zones' }));
-    const tree = await screen.findByRole('list', { name: 'Checks' });
+    const tree = await screen.findByRole('list', { name: 'Zones' });
     expect(
       within(tree)
         .getAllByRole('listitem')
@@ -79,7 +79,7 @@ describe('session pickers', () => {
     });
   });
 
-  it('removes a chip, stops at 8 and disables Checks on an event session', async () => {
+  it('removes a chip, stops at 8 and disables Zones on an event session', async () => {
     const { dialog, writes, user } = await openNew();
     await user.type(await within(dialog).findByRole('textbox', { name: 'Session name' }), 'Gate');
     await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
@@ -98,7 +98,7 @@ describe('session pickers', () => {
     expect(writes).toEqual([]);
   });
 
-  it('leaves Checks out when the server has no zones route', async () => {
+  it('leaves Zones out when the server has no zones route', async () => {
     const { dialog, user } = await openNew({
       '/api/v1/scan-zones': () =>
         json(

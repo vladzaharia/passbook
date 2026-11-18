@@ -3,6 +3,7 @@ import type { ScanZone } from '@/shared/contracts/scan-access.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { zoneLabel as clockLabel } from '@/web/lib/timezones.ts';
 import { Badge, ProgressBar, type RowAction, RowActions } from '@/web/ui/index.ts';
+import { checkedAtLine, checkedAtNames } from './checked-at.ts';
 import { MAX_DEPTH, type ZoneNode } from './zone-tree.ts';
 
 export interface ZoneActions {
@@ -148,6 +149,11 @@ export function ZoneTreeList({
                   </span>
                 )}
               </p>
+              {archived ? null : (
+                <p className="line-clamp-2 text-xs text-fg-muted">
+                  {checkedAtLine(checkedAtNames([zone]))}
+                </p>
+              )}
             </div>
             <div className="hidden shrink-0 items-center gap-4 @[40rem]:flex">
               <Occupancy zone={zone} />
