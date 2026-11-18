@@ -2,7 +2,10 @@
  * The pure display functions (C16). Everything under here is pure: no React, no worker imports,
  * no sizes or colours. `/scan` imports only the rendered contract and `icons.ts`, never this file.
  */
+
 export { condPaths, testCond } from './condition.ts';
+export { type CustomerViewOptions, customerScope, renderCustomerView } from './customer.ts';
+export { customerIssues } from './customer-issues.ts';
 export { defaultScanDisplay } from './defaults.ts';
 export {
   DENSITY,

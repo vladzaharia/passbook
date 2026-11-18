@@ -24,6 +24,7 @@ import {
   type SamsungPromotedRefreshProof,
   type WalletProviderRetirementProof,
 } from './repo-accounts.ts';
+import { findSamsungIssuedRefCredential } from './repo-accounts-issued.ts';
 
 /** Public verification material only, usable solely for a retired Samsung reference callback. */
 export interface SamsungTombstoneVerification {
@@ -237,6 +238,77 @@ export async function readSamsungTombstoneVerification(
     throw corrupt();
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
   return {
+    accountId: row.id,
+    accountRevision: row.revision,
+    partnerId: stored.credentials.partnerId,
+    certificateId: stored.credentials.certificateId,
+    cardId: stored.credentials.cardId,
+    samsungCertificatePem: stored.credentials.samsungCertificatePem,
+  };
+}
+
+export interface SamsungIssuedVerification extends SamsungTombstoneVerification {
+  /**
+   * True only when this credential is the account's current one (or equals it in partner,
+   * certificate id and Samsung certificate) and the account is not revoked. An older credential may
+   * authenticate a callback so it is answered; it may not write state.
+   */
+  writable: boolean;
+}
+
+/** Public verification material for a callback on an issued ref, from a revision it has operated under. */
+export async function readSamsungIssuedRefVerification(
+  ctx: ServiceContext,
+  input: {
+    orgId: string;
+    mode: WalletProviderScope['mode'];
+    accountId: string;
+    accountRevision: number;
+    refHash: string;
+    credentialKeysetCommitment: string;
+  },
+): Promise<SamsungIssuedVerification | null> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  const pinned = { ...input };
+  if (
+    !WalletProviderScopeSchema.safeParse({
+      orgId: pinned.orgId,
+      mode: pinned.mode,
+      provider: 'samsung',
+    }).success ||
+    !IdSchema.safeParse(pinned.accountId).success ||
+    !Number.isSafeInteger(pinned.accountRevision) ||
+    pinned.accountRevision <= 0 ||
+    !/^[0-9a-f]{64}$/.test(pinned.refHash) ||
+    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment)
+  )
+    throw new ValidationError();
+  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  const row = await findSamsungIssuedRefCredential(ctx.env.DB, { ...pinned, operated: true });
+  const stored = row ? await decryptAccount(ctx, row) : null;
+  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  if (!row || !stored) return null;
+  if (stored.provider !== 'samsung') throw corrupt();
+  let writable = false;
+  if (row.account_revoked_at === null) {
+    if (row.current_revision === row.revision) writable = true;
+    else {
+      const currentRow = await findSamsungIssuedRefCredential(ctx.env.DB, {
+        ...pinned,
+        accountRevision: row.current_revision,
+        operated: false,
+      });
+      const current = currentRow ? await decryptAccount(ctx, currentRow) : null;
+      writable =
+        current?.provider === 'samsung' &&
+        current.credentials.partnerId === stored.credentials.partnerId &&
+        current.credentials.certificateId === stored.credentials.certificateId &&
+        current.credentials.samsungCertificatePem === stored.credentials.samsungCertificatePem;
+      await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+    }
+  }
+  return {
+    writable,
     accountId: row.id,
     accountRevision: row.revision,
     partnerId: stored.credentials.partnerId,

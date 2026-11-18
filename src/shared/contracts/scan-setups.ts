@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
 import { ScannerSettingsSchema, TimeZoneSchema, UuidV7Schema } from './scan.ts';
 import { ZoneIdsSchema } from './scan-access.ts';
+import { ScanCustomerViewSchema } from './scan-customer.ts';
 import { ScanOccupancySchema, ScanOutCauseSchema, ScanPlaceRevSchema } from './scan-occupancy.ts';
 import {
   DeviceRoleSchema,
@@ -80,6 +81,8 @@ export const ScanLiveRowSchema = z.object({
   resolvedBy: z.object({ staff: z.string().nullable(), device: z.string() }).nullable().optional(),
   /** The request `ref` a customer body replaces. */
   replaces: UuidV7Schema.nullable().optional(),
+  /** What a customer screen draws. Only customer audiences get it. */
+  customer: ScanCustomerViewSchema.nullable().optional(),
 });
 export type ScanLiveRow = z.infer<typeof ScanLiveRowSchema>;
 export const ScanLiveSnapshotSchema = z.object({
@@ -87,7 +90,7 @@ export const ScanLiveSnapshotSchema = z.object({
   rows: z.array(ScanLiveRowSchema).max(100),
   places: z.array(ScanPlaceRevSchema).max(64).optional(),
 });
-/** Sent only to the device whose refusal was overridden, as its own socket event: not part of `ScanLiveMessageSchema` until the hub sends it. */
+/** Sent only to the device whose refusal was overridden, as its own socket message. */
 export const ScanLiveResolvedSchema = z.object({
   of: IdSchema,
   outcome: z.enum(['ok', 'heads_up', 'refused']),
@@ -95,5 +98,6 @@ export const ScanLiveResolvedSchema = z.object({
 });
 export const ScanLiveMessageSchema = z.union([
   ScanLiveSnapshotSchema,
+  z.object({ resolved: ScanLiveResolvedSchema }),
   z.object({ control: z.literal('reset') }),
 ]);
