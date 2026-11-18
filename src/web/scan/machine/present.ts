@@ -4,6 +4,7 @@
  * Layers and phases only: no geometry, no colour (that is stream UI's).
  */
 import { SCAN_TIMING } from '../timing.ts';
+import { accessBeatOf, accessLines } from './access-view.ts';
 import { headlineOf } from './outcome.ts';
 import type {
   BuddyBeat,
@@ -47,6 +48,8 @@ function beatFor(o: ScanOutcome): BuddyBeat | null {
   if (o.milestone) return 'fan';
   switch (o.kind) {
     case 'ok': {
+      const held = accessBeatOf(o);
+      if (held) return held;
       const a = o.action?.kind;
       const v = o.value;
       if (a === 'add')
@@ -60,7 +63,7 @@ function beatFor(o: ScanOutcome): BuddyBeat | null {
     case 'queued':
       return 'stash';
     case 'heads_up':
-      return o.reason === 'not_inside' ? 'tilt' : 'wrist';
+      return o.reason === 'not_inside' && o.occupancy?.turnaround !== 'in' ? 'tilt' : 'wrist';
     case 'refused':
       return 'shake';
     case 'system':
@@ -76,7 +79,10 @@ export function announcementFor(o: ScanOutcome): string | null {
   if (o.kind === 'ready') return o.card?.title ?? null;
   if (o.kind === 'ok' || o.kind === 'queued') {
     const who = o.card?.title ?? o.display?.identity.holder ?? null;
-    const what = o.kind === 'queued' ? 'Saved offline' : (o.action?.label ?? 'Done');
+    const what =
+      o.kind === 'queued'
+        ? 'Saved offline'
+        : (accessLines(o, o.at ?? 0)?.title ?? o.action?.label ?? 'Done');
     return who ? `${what}. ${who}` : what;
   }
   return headlineOf(o.reason);
