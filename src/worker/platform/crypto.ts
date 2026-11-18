@@ -1,6 +1,6 @@
 import { fromBase64, randomBytes, toHex } from './ids.ts';
 import { parseKekVersion } from './mac-key-config.ts';
-import { derivedMacKey, macRootVersions, secretVersions } from './mac-roots.ts';
+import { derivedMacKey, macRootVersions } from './mac-roots.ts';
 
 /**
  * Envelope encryption. Each secret gets a random 256-bit DEK (AES-256-GCM); the DEK is wrapped
@@ -154,9 +154,6 @@ export const isKeyEnvName = (name: string): boolean =>
   /^(KEK_V|MAC_ROOT_V)\d+$/.test(name) ||
   name === 'MAC_KEY_VERSION' ||
   name === 'MAC_KEY_VERSION_PREVIOUS';
-
-/** The KEK version numbers configured in `env`, ascending. */
-export const kekVersionsOf = (env: object): number[] => secretVersions(env, 'KEK');
 
 /**
  * The root version the MAC keys derive from: `MAC_KEY_VERSION` when set, else the oldest KEK or extracted

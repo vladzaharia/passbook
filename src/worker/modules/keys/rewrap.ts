@@ -2,17 +2,17 @@ import { type KekRing, loadKekRing, rewrapSecret } from '../../platform/crypto.t
 import { fromBase64, toBase64 } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
+import { recordMacRoots } from './mac-root-check.ts';
 import {
   type CaptureMove,
   type Move,
   moveCaptures,
   moveEnvelopes,
-  type Raw,
   type RawCapture,
   selectCaptures,
   selectEnvelopes,
 } from './repo-rewrap.ts';
-import { captureAad, PLACES } from './rewrap-tables.ts';
+import { captureAad, PLACES, type Raw, stampOf } from './rewrap-tables.ts';
 
 /** Per run: at most this many reads and write batches (the minute hooks share one invocation's queries). */
 export const READ_BUDGET = 4;
@@ -52,12 +52,6 @@ export interface Done {
 }
 
 const EMPTY = new Uint8Array(0);
-
-/** `1>2`, `1,2>3`: the versions below the current KEK, then the current one. */
-export function rewrapStamp(ring: KekRing): string {
-  const older = [...ring.keys.keys()].filter((v) => v < ring.current).sort((a, b) => a - b);
-  return `${older.join(',')}>${ring.current}`;
-}
 
 const num = (v: unknown, fallback = 0) => (typeof v === 'number' ? v : fallback);
 
@@ -174,9 +168,10 @@ async function planCaptures(ring: KekRing, rows: RawCapture[]): Promise<Plan<Cap
  */
 export async function rewrapEnvelopes(ctx: ServiceContext): Promise<void> {
   const ring = await loadKekRing(ctx.env);
+  await recordMacRoots(ctx);
   if (ring.keys.size < 2) return;
   const db = ctx.env.DB;
-  const stamp = rewrapStamp(ring);
+  const stamp = stampOf([...ring.keys.keys()]);
   const now = ctx.clock.now();
   const done = (await readSystemValue(db, DONE)) as Partial<Done> | null;
   if (done?.stamp === stamp) {

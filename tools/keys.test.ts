@@ -20,3 +20,12 @@ describe('keys mac-root', () => {
     expect(() => execFileSync('node', ['tools/keys.ts', 'nope'], { stdio: 'pipe' })).toThrow();
   });
 });
+
+describe('keys retire', () => {
+  it('refuses a missing or malformed version before it reads anything', () => {
+    for (const args of [['retire'], ['retire', 'x'], ['retire', '0'], ['retire', '1', '2']])
+      expect(() => execFileSync('node', ['tools/keys.ts', ...args], { stdio: 'pipe' })).toThrow(
+        /Usage/,
+      );
+  });
+});

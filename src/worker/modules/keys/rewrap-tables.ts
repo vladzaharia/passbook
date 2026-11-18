@@ -1,5 +1,31 @@
 import { credentialAad } from '../../platform/crypto.ts';
-import type { PlaceTable, Raw } from './repo-rewrap.ts';
+
+export type PlaceTable =
+  | 'credentials'
+  | 'pass_personalizations'
+  | 'apns_keys'
+  | 'connection_webhook_retention'
+  | 'connection_webhook_legacy_sources'
+  | 'wallet_provider_credentials'
+  | 'wallet_provider_instance_outcomes'
+  | 'wallet_samsung_fetch_refs'
+  | 'wallet_samsung_callback_receipts'
+  | 'wallet_google_callback_receipts'
+  | 'pass_credential_transfer_payloads'
+  | 'pass_token_seals'
+  | 'pass_auth_seals'
+  | 'bundle_token_seals';
+
+/** What a select returns: the key, the envelope's KEK and wrapped DEK, and up to four AAD inputs. */
+export interface Raw {
+  pk: string;
+  kek_version: number;
+  wrapped_dek: ArrayBuffer | number[];
+  x1: string | number | null;
+  x2: string | number | null;
+  x3: string | number | null;
+  x4: string | number | null;
+}
 
 /**
  * The envelope places cron keys.rewrap moves: a table with `kek_version, iv, wrapped_dek, ciphertext`,
@@ -75,3 +101,10 @@ export const captureAad = (id: string, orgId: string) => credentialAad(id, orgId
 
 /** Every table that holds an envelope the job moves, in the order it sweeps them. */
 export const ENVELOPE_TABLES: readonly string[] = [...PLACES.map((p) => p.table), CAPTURE_TABLE];
+
+/** `1>2`, `1,2>3`: the KEK versions below the current one, then the current one. The pair a sweep belongs to. */
+export function stampOf(versions: readonly number[]): string {
+  const sorted = [...versions].sort((a, b) => a - b);
+  const current = sorted.at(-1);
+  return `${sorted.slice(0, -1).join(',')}>${current ?? ''}`;
+}

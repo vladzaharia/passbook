@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { all } from '../../platform/db.ts';
-import { moveCaptures, moveEnvelopes, type PlaceTable, selectEnvelopes } from './repo-rewrap.ts';
+import { moveCaptures, moveEnvelopes, selectEnvelopes } from './repo-rewrap.ts';
 import { CAPTURE_TABLE, ENVELOPE_TABLES, PLACES } from './rewrap-tables.ts';
 
 const db = (env as unknown as { DB: D1Database }).DB;
@@ -27,7 +27,7 @@ describe('the envelope registry', () => {
   it('has statements that compile on every table (a trigger or column that changed fails here)', async () => {
     const wrapped = new Uint8Array(60);
     for (const { table } of PLACES) {
-      expect(await selectEnvelopes(db, table as PlaceTable, null, 2, 1), table).toEqual([]);
+      expect(await selectEnvelopes(db, table, null, 2, 1), table).toEqual([]);
       expect(
         await moveEnvelopes(db, table, [
           { pk: 'none', kek: 1, wrapped, nextKek: 2, nextWrapped: wrapped },

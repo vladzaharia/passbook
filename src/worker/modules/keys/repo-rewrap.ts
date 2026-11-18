@@ -1,37 +1,11 @@
 import { all, batch, type SqlValue, stmt } from '../../platform/db.ts';
+import type { PlaceTable, Raw } from './rewrap-tables.ts';
 
 // Raw writes of cron keys.rewrap: one literal statement per envelope place, pinned in
 // tools/authority-scope-allowlists.ts. Each moves an envelope to a newer KEK (kek_version and wrapped_dek
 // only) and matches only the exact envelope that was read, so a writer that replaced it in between wins
 // and nothing is lost. Every guard that could make a trigger abort is repeated in the WHERE clause: an
 // aborting statement would roll back its whole batch.
-
-export type PlaceTable =
-  | 'credentials'
-  | 'pass_personalizations'
-  | 'apns_keys'
-  | 'connection_webhook_retention'
-  | 'connection_webhook_legacy_sources'
-  | 'wallet_provider_credentials'
-  | 'wallet_provider_instance_outcomes'
-  | 'wallet_samsung_fetch_refs'
-  | 'wallet_samsung_callback_receipts'
-  | 'wallet_google_callback_receipts'
-  | 'pass_credential_transfer_payloads'
-  | 'pass_token_seals'
-  | 'pass_auth_seals'
-  | 'bundle_token_seals';
-
-/** What a select returns: the key, the envelope's KEK and wrapped DEK, and up to four AAD inputs. */
-export interface Raw {
-  pk: string;
-  kek_version: number;
-  wrapped_dek: ArrayBuffer | number[];
-  x1: string | number | null;
-  x2: string | number | null;
-  x3: string | number | null;
-  x4: string | number | null;
-}
 
 /** Rows after `after` (by key) whose envelope is under a KEK older than `current`. */
 const SELECT: Record<PlaceTable, string> = {

@@ -19,6 +19,7 @@ import {
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createLogger } from '../../platform/log.ts';
+import { extractMacRoot } from '../../platform/mac-roots.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { openBody, sealBody } from '../sandbox/captured-body.ts';
 import { readSystemValue } from '../settings/repo.ts';
@@ -397,5 +398,23 @@ describe('keys.rewrap', () => {
     // A swap back to the old pair starts over and finds nothing to move.
     const back = await untilDone(kit.v2, kit.f);
     expect(codes(back)).toContain('KEK_REWRAP_DONE');
+  });
+
+  it('records whether MAC_ROOT matches its KEK on every run, and nothing when none is set', async () => {
+    const kit = await setup();
+    const db = kit.f.env.DB;
+    await rewrapEnvelopes(jobOf(kit.v2, kit.f).ctx);
+    expect(await readSystemValue(db, 'keys.macRoots')).toBeNull();
+    const good = { ...kit.v2, MAC_ROOT_V1: await extractMacRoot(kek(1)) } as AppEnv;
+    await rewrapEnvelopes(jobOf(good, kit.f).ctx);
+    expect(await readSystemValue(db, 'keys.macRoots')).toEqual({
+      '1': 'match',
+      at: kit.f.clock.now(),
+    });
+    const bad = { ...kit.v2, MAC_ROOT_V1: await extractMacRoot(kek(9)) } as AppEnv;
+    const { ctx, lines } = jobOf(bad, kit.f);
+    await rewrapEnvelopes(ctx);
+    expect(await readSystemValue(db, 'keys.macRoots')).toMatchObject({ '1': 'mismatch' });
+    expect(codes(lines)).toContain('MAC_ROOT_MISMATCH');
   });
 });

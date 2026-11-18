@@ -105,3 +105,9 @@ export async function staffPinsOnRoot(
   );
   return row?.n ?? 0;
 }
+
+/** Whether the credential-reference keyset is initialized (a fresh install has none to check). */
+export async function keysetInitialized(db: D1Database): Promise<boolean> {
+  const row = await first<{ n: number }>(db, 'SELECT count(*) AS n FROM credential_ref_keyset');
+  return (row?.n ?? 0) > 0;
+}
