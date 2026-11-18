@@ -7,7 +7,7 @@ import { contentSecurityPolicy } from '../platform/security-headers.ts';
 import { type JoinPage, type Refusal, renderJoinPage, statusOf } from './join-page.tsx';
 
 // The server deletes the barcodes before it normalizes; so does the fixture.
-const { barcode: _b, barcodes: _bs, ...noCode } = fixtures.generic as Record<string, unknown>;
+const { barcode: _b, barcodes: _bs, ...noCode } = fixtures.generic;
 const card = normalize(noCode, {
   assets,
   now: new Date('2026-10-31T12:00:00Z'),

@@ -1,0 +1,29 @@
+/* The join card's link block (join-card.tsx): the QR and link settle in when the link opens. */
+@media (prefers-reduced-motion: no-preference) {
+  .jl-share {
+    animation: jl-reveal var(--wl-dur-enter, 240ms)
+      var(--wl-ease-out, cubic-bezier(0.05, 0.7, 0.1, 1)) backwards;
+  }
+  .jl-share[data-open="false"] {
+    opacity: 0.55;
+    filter: saturate(0.4);
+  }
+  .jl-qr img {
+    animation: jl-qr 420ms var(--wl-ease-spring, cubic-bezier(0.2, 0, 0, 1)) backwards 80ms;
+  }
+  @keyframes jl-reveal {
+    from {
+      opacity: 0;
+      translate: 0 6px;
+    }
+  }
+  @keyframes jl-qr {
+    from {
+      opacity: 0;
+      scale: 0.9;
+    }
+  }
+}
+.jl-share[data-open="false"] .jl-qr {
+  opacity: 0.5;
+}
