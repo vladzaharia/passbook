@@ -1,0 +1,22 @@
+[
+  {
+    "role": "anon",
+    "path": "/login",
+    "name": "portal-login"
+  },
+  {
+    "role": "holder",
+    "path": "/",
+    "name": "portal-my-passes"
+  },
+  {
+    "role": "holder",
+    "path": "/account",
+    "name": "portal-account"
+  },
+  {
+    "role": "holder",
+    "path": "/passes/{myPassId}",
+    "name": "portal-pass-detail"
+  }
+]
