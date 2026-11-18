@@ -1,5 +1,6 @@
 import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
 import { accessOf, type PlanChoice, plansOf } from './schema-access.ts';
+import type { FormValues } from './schema-values.ts';
 
 export type Widget =
   | 'text'
@@ -17,8 +18,6 @@ export type Widget =
   | 'access-plan'
   | 'access-zones'
   | 'list';
-
-export type FormValues = Record<string, unknown>;
 
 export interface FieldDef {
   key: string;
@@ -146,6 +145,7 @@ export function describeSchema(schema: unknown): FieldGroup[] {
   const fields: FieldDef[] = [];
   for (const [key, raw] of Object.entries(schema.properties)) {
     const def = isObject(raw) ? raw : {};
+    if (def['x-hidden'] === true) continue; // kept for stored passes
     const type = typeOf(def);
     fields.push({
       key,
@@ -274,38 +274,10 @@ export function validateValues(schema: unknown, values: FormValues): Record<stri
   return errors;
 }
 
-const sortKeys = (v: FormValues): FormValues =>
-  Object.fromEntries(Object.entries(v).sort(([x], [y]) => (x < y ? -1 : 1)));
-
-/** Drops empty values so optional fields are omitted from the request. */
-export function cleanValues(values: FormValues): FormValues {
-  const out: FormValues = {};
-  for (const [key, value] of Object.entries(values)) {
-    if (value === undefined || value === null || value === '') continue;
-    if (typeof value === 'number' && Number.isNaN(value)) continue;
-    if (Array.isArray(value)) {
-      const rows = value.map((row) => (isObject(row) ? sortKeys(cleanValues(row)) : row));
-      // Empty rows keep their place so a server error at `list/1/x` maps to form row 1.
-      if (rows.some((row) => !isObject(row) || Object.keys(row).length > 0)) out[key] = rows;
-      continue;
-    }
-    out[key] = value;
-  }
-  return out;
-}
-
 /** Only keys the schema declares; connection-sourced extras stay out of the draft. */
 export function pickDeclared(schema: unknown, values: FormValues): FormValues {
   const keys = new Set(flatFields(describeSchema(schema)).map((f) => f.key));
   return Object.fromEntries(Object.entries(values).filter(([k]) => keys.has(k)));
-}
-
-function sortedEntries(v: FormValues): [string, unknown][] {
-  return Object.entries(cleanValues(v)).sort(([x], [y]) => (x < y ? -1 : 1));
-}
-
-export function sameValues(a: FormValues, b: FormValues): boolean {
-  return JSON.stringify(sortedEntries(a)) === JSON.stringify(sortedEntries(b));
 }
 
 /** Schema defaults the server would apply, to seed a new-pass form. */
@@ -317,14 +289,5 @@ export function defaultValues(schema: unknown): FormValues {
   return out;
 }
 
-/** Input keys that feed `pointer` through a plain `{{key}}` binding. */
-export function keysBoundTo(manifest: unknown, pointer: string): Set<string> {
-  const out = new Set<string>();
-  const bindings = isObject(manifest) && Array.isArray(manifest.bindings) ? manifest.bindings : [];
-  for (const b of bindings) {
-    if (!isObject(b) || !isObject(b.to) || b.to.pointer !== pointer) continue;
-    const m = typeof b.value === 'string' ? /^\{\{\s*([\w.-]+)\s*\}\}$/.exec(b.value) : null;
-    if (m?.[1]) out.add(m[1]);
-  }
-  return out;
-}
+export type { FormValues } from './schema-values.ts';
+export { cleanValues, keysBoundTo, sameValues } from './schema-values.ts';

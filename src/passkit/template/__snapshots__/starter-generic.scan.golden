@@ -15,21 +15,71 @@
       "allowAgain": true,
       "allowOnConnected": false,
       "amount": {
-        "max": 100,
+        "max": 10,
         "presets": [
           1,
-          5,
-          10
+          2,
+          3
         ]
       },
-      "confirm": false,
-      "id": "points",
-      "input": "points",
-      "kind": "add",
-      "label": "Add points",
-      "minRole": "desk",
+      "confirm": true,
+      "id": "guest_in",
+      "input": "guests",
+      "kind": "take",
+      "label": "Guest in",
+      "minRole": "door",
       "notify": false,
       "repeat": "always"
+    }
+  ],
+  "display": {
+    "header": {},
+    "holder": "{{inputs.holder}}",
+    "notes": {
+      "refused": "Ask at the front desk."
+    },
+    "panels": [
+      {
+        "icon": "id-card",
+        "id": "p_member",
+        "preset": {
+          "id": "details",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_field1",
+            "label": "Tier",
+            "slot": "field1",
+            "type": "field",
+            "value": "{{inputs.tier}}"
+          },
+          {
+            "id": "r_field2",
+            "label": "Guests left",
+            "slot": "field2",
+            "type": "field",
+            "value": "{{inputs.guests}}"
+          }
+        ],
+        "title": "Member"
+      }
+    ],
+    "photo": {
+      "minRole": "door"
+    },
+    "v": 1
+  },
+  "flags": [
+    {
+      "equals": [
+        "Frozen",
+        "Past due",
+        "Cancelled"
+      ],
+      "input": "status",
+      "label": "Ask a manager",
+      "stop": true
     }
   ],
   "lookup": {

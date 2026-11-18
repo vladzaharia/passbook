@@ -866,6 +866,269 @@ exports[`starter-boarding-pass default display > matches its snapshot, and so do
 }
 `;
 
+exports[`starter-booking default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.name}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "When",
+          "type": "field",
+          "value": "{{fields.when}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "What",
+          "type": "field",
+          "value": "{{fields.what}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "With",
+          "type": "field",
+          "value": "{{fields.with}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Where",
+          "type": "field",
+          "value": "{{fields.where}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-booking default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "When",
+          "strong": false,
+          "type": "field",
+          "value": "Sample when",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "What",
+          "strong": false,
+          "type": "field",
+          "value": "Sample what",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "With",
+          "strong": false,
+          "type": "field",
+          "value": "Sample with",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-booking default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "When",
+          "strong": false,
+          "type": "field",
+          "value": "Sample when",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "What",
+          "strong": false,
+          "type": "field",
+          "value": "Sample what",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "With",
+          "strong": false,
+          "type": "field",
+          "value": "Sample with",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Where",
+          "strong": false,
+          "type": "field",
+          "value": "Sample where",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-booking default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "When",
+          "strong": false,
+          "type": "field",
+          "value": "Sample when",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "What",
+          "strong": false,
+          "type": "field",
+          "value": "Sample what",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "With",
+          "strong": false,
+          "type": "field",
+          "value": "Sample with",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Where",
+          "strong": false,
+          "type": "field",
+          "value": "Sample where",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-booking default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
 exports[`starter-coupon default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
 {
   "header": {},
@@ -1350,9 +1613,8 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
       "rows": [
         {
           "id": "r_main",
-          "type": "big",
-          "unit": "Points",
-          "value": "{{inputs.points}}",
+          "type": "progress",
+          "value": "{{inputs.guests}}",
         },
       ],
     },
@@ -1399,12 +1661,15 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
       "kind": "custom",
       "rows": [
         {
+          "before": null,
+          "caption": "4 of 10",
+          "goal": 10,
+          "icon": null,
           "id": "r_main",
-          "label": null,
-          "tone": null,
-          "type": "big",
-          "unit": "Points",
-          "value": "1200",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 4,
         },
       ],
       "title": null,
@@ -1443,12 +1708,15 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
       "kind": "custom",
       "rows": [
         {
+          "before": null,
+          "caption": "4 of 10",
+          "goal": 10,
+          "icon": null,
           "id": "r_main",
-          "label": null,
-          "tone": null,
-          "type": "big",
-          "unit": "Points",
-          "value": "1200",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 4,
         },
       ],
       "title": null,
@@ -1504,12 +1772,15 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
       "kind": "custom",
       "rows": [
         {
+          "before": null,
+          "caption": "4 of 10",
+          "goal": 10,
+          "icon": null,
           "id": "r_main",
-          "label": null,
-          "tone": null,
-          "type": "big",
-          "unit": "Points",
-          "value": "1200",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 4,
         },
       ],
       "title": null,
@@ -1552,6 +1823,977 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
   "identity": {
     "holder": "Alex Morgan",
     "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-id-card default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.name}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Year",
+          "type": "field",
+          "value": "{{fields.unit}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Valid until",
+          "type": "field",
+          "value": "{{fields.until}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-id-card default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Maya Chen",
+    "initials": "MC",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Year",
+          "strong": false,
+          "type": "field",
+          "value": "Sample unit",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-id-card default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Maya Chen",
+    "initials": "MC",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Year",
+          "strong": false,
+          "type": "field",
+          "value": "Sample unit",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-id-card default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Maya Chen",
+    "initials": "MC",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Year",
+          "strong": false,
+          "type": "field",
+          "value": "Sample unit",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-id-card default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Maya Chen",
+    "initials": "MC",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-pack default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.name}}",
+  "panels": [
+    {
+      "id": "p_main",
+      "rows": [
+        {
+          "id": "r_main",
+          "type": "progress",
+          "value": "{{inputs.left}}",
+        },
+      ],
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Pack",
+          "type": "field",
+          "value": "{{fields.pack}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-pack default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Dana Ortiz",
+    "initials": "DO",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": 6,
+          "caption": "2 rewards ready · 1 saved",
+          "goal": 3,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 2,
+          "style": "stamps",
+          "type": "progress",
+          "value": 7,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-pack default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Dana Ortiz",
+    "initials": "DO",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": 6,
+          "caption": "2 rewards ready · 1 saved",
+          "goal": 3,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 2,
+          "style": "stamps",
+          "type": "progress",
+          "value": 7,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Pack",
+          "strong": false,
+          "type": "field",
+          "value": "Sample pack",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-pack default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Dana Ortiz",
+    "initials": "DO",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": 6,
+          "caption": "2 rewards ready · 1 saved",
+          "goal": 3,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 2,
+          "style": "stamps",
+          "type": "progress",
+          "value": 7,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Pack",
+          "strong": false,
+          "type": "field",
+          "value": "Sample pack",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-pack default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Dana Ortiz",
+    "initials": "DO",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-permit default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.name}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Plate",
+          "type": "field",
+          "value": "{{fields.plate}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Valid to",
+          "type": "field",
+          "value": "{{fields.until}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Type",
+          "type": "field",
+          "value": "{{fields.type}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Bay",
+          "type": "field",
+          "value": "{{fields.bay}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-permit default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Lee Park",
+    "initials": "LP",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Plate",
+          "strong": false,
+          "type": "field",
+          "value": "Sample plate",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid to",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Type",
+          "strong": false,
+          "type": "field",
+          "value": "Sample type",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-permit default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Lee Park",
+    "initials": "LP",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Plate",
+          "strong": false,
+          "type": "field",
+          "value": "Sample plate",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid to",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Type",
+          "strong": false,
+          "type": "field",
+          "value": "Sample type",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Bay",
+          "strong": false,
+          "type": "field",
+          "value": "Sample bay",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-permit default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Lee Park",
+    "initials": "LP",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Plate",
+          "strong": false,
+          "type": "field",
+          "value": "Sample plate",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid to",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Type",
+          "strong": false,
+          "type": "field",
+          "value": "Sample type",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Bay",
+          "strong": false,
+          "type": "field",
+          "value": "Sample bay",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-permit default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Lee Park",
+    "initials": "LP",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-pickup default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.name}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Code",
+          "type": "field",
+          "value": "{{fields.code}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Order",
+          "type": "field",
+          "value": "{{fields.order}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Collect by",
+          "type": "field",
+          "value": "{{fields.collectBy}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Where",
+          "type": "field",
+          "value": "{{fields.bay}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-pickup default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Mia Kent",
+    "initials": "MK",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Code",
+          "strong": false,
+          "type": "field",
+          "value": "Sample code",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Order",
+          "strong": false,
+          "type": "field",
+          "value": "Sample order",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Collect by",
+          "strong": false,
+          "type": "field",
+          "value": "Sample collectBy",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-pickup default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Mia Kent",
+    "initials": "MK",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Code",
+          "strong": false,
+          "type": "field",
+          "value": "Sample code",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Order",
+          "strong": false,
+          "type": "field",
+          "value": "Sample order",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Collect by",
+          "strong": false,
+          "type": "field",
+          "value": "Sample collectBy",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Where",
+          "strong": false,
+          "type": "field",
+          "value": "Sample bay",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-pickup default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Mia Kent",
+    "initials": "MK",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Code",
+          "strong": false,
+          "type": "field",
+          "value": "Sample code",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Order",
+          "strong": false,
+          "type": "field",
+          "value": "Sample order",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Collect by",
+          "strong": false,
+          "type": "field",
+          "value": "Sample collectBy",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Where",
+          "strong": false,
+          "type": "field",
+          "value": "Sample bay",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-pickup default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Mia Kent",
+    "initials": "MK",
     "photo": null,
   },
   "notes": {
@@ -2206,6 +3448,532 @@ exports[`starter-store-card default display > matches its snapshot, and so does 
   "identity": {
     "holder": "Alex Morgan",
     "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-timed-ticket default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.name}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Visit",
+          "type": "field",
+          "value": "{{fields.event}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Venue",
+          "type": "field",
+          "value": "{{fields.venue}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Until",
+          "type": "field",
+          "value": "{{fields.until}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Party",
+          "type": "field",
+          "value": "{{fields.party}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-timed-ticket default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Visit",
+          "strong": false,
+          "type": "field",
+          "value": "Sample event",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Venue",
+          "strong": false,
+          "type": "field",
+          "value": "Sample venue",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-timed-ticket default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Visit",
+          "strong": false,
+          "type": "field",
+          "value": "Sample event",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Venue",
+          "strong": false,
+          "type": "field",
+          "value": "Sample venue",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Party",
+          "strong": false,
+          "type": "field",
+          "value": "Sample party",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-timed-ticket default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Visit",
+          "strong": false,
+          "type": "field",
+          "value": "Sample event",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Venue",
+          "strong": false,
+          "type": "field",
+          "value": "Sample venue",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Party",
+          "strong": false,
+          "type": "field",
+          "value": "Sample party",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-timed-ticket default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-transit-ticket default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.name}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "From",
+          "type": "field",
+          "value": "{{fields.origin}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "To",
+          "type": "field",
+          "value": "{{fields.destination}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Departs",
+          "type": "field",
+          "value": "{{fields.departs}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Board by",
+          "type": "field",
+          "value": "{{fields.boardBy}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-transit-ticket default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "From",
+          "strong": false,
+          "type": "field",
+          "value": "Sample origin",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "To",
+          "strong": false,
+          "type": "field",
+          "value": "Sample destination",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Departs",
+          "strong": false,
+          "type": "field",
+          "value": "Sample departs",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-transit-ticket default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "From",
+          "strong": false,
+          "type": "field",
+          "value": "Sample origin",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "To",
+          "strong": false,
+          "type": "field",
+          "value": "Sample destination",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Departs",
+          "strong": false,
+          "type": "field",
+          "value": "Sample departs",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Board by",
+          "strong": false,
+          "type": "field",
+          "value": "Sample boardBy",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-transit-ticket default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "From",
+          "strong": false,
+          "type": "field",
+          "value": "Sample origin",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "To",
+          "strong": false,
+          "type": "field",
+          "value": "Sample destination",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Departs",
+          "strong": false,
+          "type": "field",
+          "value": "Sample departs",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Board by",
+          "strong": false,
+          "type": "field",
+          "value": "Sample boardBy",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-transit-ticket default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
     "photo": null,
   },
   "notes": {

@@ -1,0 +1,56 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "check_in",
+      "kind": "check_in",
+      "label": "Check in",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "daily"
+    }
+  ],
+  "display": {
+    "header": {},
+    "holder": "{{inputs.name}}",
+    "notes": {
+      "refused": "Send them to the office."
+    },
+    "panels": [
+      {
+        "icon": "info",
+        "id": "p_details",
+        "preset": {
+          "id": "details",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_field1",
+            "label": "Role",
+            "slot": "field1",
+            "type": "field",
+            "value": "{{inputs.role}}"
+          },
+          {
+            "id": "r_field2",
+            "label": "Number",
+            "slot": "field2",
+            "type": "field",
+            "value": "{{inputs.idNumber}}"
+          }
+        ],
+        "title": "Details"
+      }
+    ],
+    "photo": {
+      "minRole": "door"
+    },
+    "v": 1
+  },
+  "lookup": {
+    "input": "idNumber"
+  }
+}

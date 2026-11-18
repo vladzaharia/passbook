@@ -1,6 +1,9 @@
 "Tier" = "Tier";
 "Your tier is now %@." = "Your tier is now %@.";
-"Points" = "Points";
+"Status" = "Status";
+"Your status is now %@." = "Your status is now %@.";
+"Guests left" = "Guests left";
+"Renew" = "Renew";
 "Name" = "Name";
 "Since" = "Since";
 "Message" = "Message";

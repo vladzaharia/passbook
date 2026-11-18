@@ -5,15 +5,22 @@
     {
       "altText": "ID-0001",
       "format": "PKBarcodeFormatQR",
-      "message": "ID-0001",
+      "message": "SNAPSHOT-SCAN-CODE",
       "messageEncoding": "iso-8859-1"
     }
   ],
-  "description": "Membership card",
+  "description": "Membership",
   "featuredActions": [],
   "foregroundColor": "rgb(255,255,255)",
   "formatVersion": 1,
   "generic": {
+    "auxiliaryFields": [
+      {
+        "key": "guests",
+        "label": "Guests left",
+        "value": 4
+      }
+    ],
     "backFields": [
       {
         "changeMessage": "%@",
@@ -45,10 +52,10 @@
         "value": "Plus"
       },
       {
-        "key": "points",
-        "label": "Points",
-        "numberStyle": "PKNumberStyleDecimal",
-        "value": 1200
+        "changeMessage": "Your status is now %@.",
+        "key": "status",
+        "label": "Status",
+        "value": "Active"
       }
     ],
     "primaryFields": [
@@ -84,5 +91,6 @@
   "serialNumber": "SNAPSHOT-SERIAL",
   "sharingProhibited": true,
   "teamIdentifier": "48H7CLBV8Y",
+  "voided": false,
   "webServiceURL": "https://wallet.example/wallet"
 }

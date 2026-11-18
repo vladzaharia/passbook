@@ -108,7 +108,7 @@ describe('useOrgTemplates organization scope', () => {
     const { router, requests } = setup('o1', [northwind, harbor], 'templates');
     expect(await screen.findByText(/Gala ticket/)).toBeInTheDocument();
     expect(screen.getByTestId('events')).toHaveTextContent('Shared ticket');
-    expect(screen.getByTestId('events')).toHaveTextContent('Membership card');
+    expect(screen.getByTestId('events')).toHaveTextContent('Membership');
     expect(screen.queryByText(/Foreign ticket/)).not.toBeInTheDocument();
     // Templates and blueprints: a scanner may hold either.
     expect(requests).toEqual(['o1', 'o1']);

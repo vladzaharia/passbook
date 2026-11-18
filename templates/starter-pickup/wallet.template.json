@@ -1,0 +1,302 @@
+{
+  "schema": 1,
+  "name": "Pickup",
+  "description": "An order code, buzzed when ready.",
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "orderNo",
+      "code",
+      "name"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Order",
+        "x-order": 5,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "orderNo": {
+        "type": "string",
+        "x-label": "Order number",
+        "x-group": "Order",
+        "x-order": 10,
+        "maxLength": 64,
+        "minLength": 1,
+        "x-search": true
+      },
+      "code": {
+        "type": "string",
+        "x-label": "Code",
+        "x-group": "Order",
+        "x-order": 20,
+        "maxLength": 12,
+        "minLength": 1
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Order",
+        "x-order": 30,
+        "enum": [
+          "Placed",
+          "Ready",
+          "Collected"
+        ],
+        "x-widget": "select",
+        "default": "Placed"
+      },
+      "collectBy": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Collect by",
+        "x-group": "Order",
+        "x-order": 40,
+        "x-widget": "datetime"
+      },
+      "bay": {
+        "type": "string",
+        "x-label": "Where",
+        "x-group": "Order",
+        "x-order": 50,
+        "maxLength": 40
+      },
+      "items": {
+        "type": "string",
+        "x-label": "Items",
+        "x-group": "Order",
+        "x-order": 60,
+        "maxLength": 200,
+        "x-widget": "textarea"
+      },
+      "idRequired": {
+        "type": "boolean",
+        "x-label": "ID required",
+        "x-group": "Order",
+        "x-order": 70,
+        "default": false
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 902,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      }
+    }
+  },
+  "sample": {
+    "name": "Mia Kent",
+    "orderNo": "1042",
+    "code": "4K7M",
+    "status": "Ready",
+    "collectBy": "2030-11-18T19:30:00-05:00",
+    "bay": "Bay 3",
+    "items": "2 mains, 1 side"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "status"
+      },
+      "value": "{{status}}"
+    },
+    {
+      "to": {
+        "field": "order"
+      },
+      "value": "{{orderNo}}"
+    },
+    {
+      "to": {
+        "field": "code"
+      },
+      "value": "{{code}}"
+    },
+    {
+      "to": {
+        "field": "collectBy"
+      },
+      "value": "{{collectBy}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "bay"
+      },
+      "value": "{{bay}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{name}}"
+    },
+    {
+      "to": {
+        "field": "items"
+      },
+      "value": "{{items}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{orderNo}}"
+    }
+  ],
+  "display": {
+    "icon": "gift",
+    "title": "{{name}}",
+    "subtitle": "Order {{orderNo}}",
+    "status": "{{status}}",
+    "search": [
+      "name",
+      "orderNo",
+      "code"
+    ]
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "ready",
+        "label": "Mark ready",
+        "kind": "set",
+        "input": "status",
+        "value": "Ready",
+        "repeat": "once",
+        "minRole": "door",
+        "notify": true
+      },
+      {
+        "id": "collected",
+        "label": "Collected",
+        "kind": "use_up",
+        "repeat": "once",
+        "minRole": "door",
+        "confirm": true
+      }
+    ],
+    "lookup": {
+      "input": "orderNo"
+    },
+    "flags": [
+      {
+        "input": "idRequired",
+        "label": "Check ID"
+      }
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.name}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Order",
+              "value": "{{inputs.orderNo}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Items",
+              "value": "{{inputs.items}}"
+            },
+            {
+              "id": "r_field3",
+              "slot": "field3",
+              "type": "field",
+              "label": "Where",
+              "value": "{{inputs.bay}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Ask at the counter."
+      }
+    }
+  }
+}

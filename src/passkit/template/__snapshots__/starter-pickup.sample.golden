@@ -1,0 +1,95 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(206,242,226)",
+  "barcodes": [
+    {
+      "altText": "1042",
+      "format": "PKBarcodeFormatQR",
+      "message": "SNAPSHOT-SCAN-CODE",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Pickup",
+  "foregroundColor": "rgb(12,52,38)",
+  "formatVersion": 1,
+  "generic": {
+    "auxiliaryFields": [
+      {
+        "key": "bay",
+        "label": "Where",
+        "value": "Bay 3"
+      },
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Mia Kent"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "items",
+        "label": "Items",
+        "value": "2 mains, 1 side"
+      },
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Show the code to collect. Bring ID if asked."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "changeMessage": "Order status: %@.",
+        "key": "status",
+        "label": "Status",
+        "value": "Ready"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "code",
+        "label": "Code",
+        "value": "4K7M"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "order",
+        "label": "Order",
+        "value": "1042"
+      },
+      {
+        "dateStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true,
+        "key": "collectBy",
+        "label": "Collect by",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-11-18T19:30:00-05:00"
+      }
+    ]
+  },
+  "labelColor": "rgb(10,106,70)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

@@ -1,0 +1,78 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(0,104,116)",
+  "barcodes": [
+    {
+      "altText": "PACK-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "SNAPSHOT-SCAN-CODE",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "coupon": {
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "fine",
+        "label": "Terms",
+        "value": "Show the code each time. Packs don't refund."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "left",
+        "label": "Left",
+        "value": 7
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "pack",
+        "label": "Pack",
+        "value": "10 washes"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Dana Ortiz"
+      },
+      {
+        "dateStyle": "PKDateStyleMedium",
+        "ignoresTimeZone": true,
+        "key": "expires",
+        "label": "Valid until",
+        "timeStyle": "PKDateStyleNone",
+        "value": "2030-11-18T00:00:00Z"
+      }
+    ]
+  },
+  "description": "Pack",
+  "expirationDate": "2030-11-18T00:00:00Z",
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "labelColor": "rgb(178,240,236)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

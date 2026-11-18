@@ -89,7 +89,7 @@ describe('Blueprints', () => {
               blueprint({ group: 'save-spend' }),
               blueprint({
                 id: 'baked:starter-generic',
-                name: 'Membership card',
+                name: 'Membership',
                 icon: 'id-card',
                 styles: ['generic'],
                 group: 'membership-id',
@@ -102,8 +102,10 @@ describe('Blueprints', () => {
       },
     });
     await screen.findByRole('list', { name: 'Save and spend' });
-    const names = screen.getAllByRole('link', { name: /card$/ }).map((l) => l.textContent);
-    expect(names).toEqual(['Balance card', 'Membership card']);
+    const names = screen
+      .getAllByRole('link', { name: /^(Balance card|Membership)$/ })
+      .map((l) => l.textContent);
+    expect(names).toEqual(['Balance card', 'Membership']);
     expect(target(screen.getByRole('link', { name: 'Balance card' }))).toBe(
       `/admin/blueprints/${ID}`,
     );

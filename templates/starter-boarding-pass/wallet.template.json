@@ -162,7 +162,8 @@
           "generic"
         ],
         "default": "air",
-        "x-widget": "select"
+        "x-widget": "select",
+        "x-hidden": true
       },
       "ticketId": {
         "type": "string",
