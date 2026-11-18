@@ -18,13 +18,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
-import {
-  inspect,
-  nameDefault,
-  type Scope,
-  scopeOf,
-  stateOf,
-} from './links-state.ts';
+import { inspect, nameDefault, type Scope, scopeOf, stateOf } from './links-state.ts';
 import type { JoinReadiness } from './readiness.ts';
 import {
   createLinkGrant,
