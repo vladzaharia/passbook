@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetModeForTests, setMode } from '../../../lib/mode.ts';
@@ -74,6 +74,20 @@ describe('import page', () => {
     await user.click(screen.getByRole('button', { name: 'Check file' }));
     await waitFor(() => expect(t.posts).toHaveLength(1));
     expect(t.posts[0]).toMatchObject({ source: { kind: 'file', name: 'pasted.csv', csv: 'A,B' } });
+  });
+
+  it('refuses pasted text over 2 MB and a file that is not UTF-8', async () => {
+    const user = userEvent.setup();
+    const t = setup();
+    const { container } = await t.render();
+    await screen.findByText('Spreadsheet');
+    const input = container.querySelector('input[type=file]') as HTMLInputElement;
+    await user.upload(input, new File([new Uint8Array([0x4e, 0xe9, 0x0a])], 'latin.csv'));
+    expect(await screen.findByText('The file is not UTF-8. Save it as CSV UTF-8.')).toBeTruthy();
+    await user.click(screen.getByRole('radio', { name: 'Paste' }));
+    fireEvent.change(screen.getByLabelText('Rows'), { target: { value: 'x'.repeat(2_000_001) } });
+    expect(await screen.findByText('The file is larger than 2 MB.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Check file' })).toHaveProperty('disabled', true);
   });
 
   it('posts a sheet link as a url source', async () => {

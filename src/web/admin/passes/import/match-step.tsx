@@ -101,9 +101,7 @@ function MatchForm({
 }
 
 const errorText = (code: string) =>
-  code === 'IMPORT_COLUMN_MISSING'
-    ? 'A saved column is not in this file. Choose it again.'
-    : 'The check did not finish. Try again.';
+  code === 'IMPORT_COLUMN_MISSING' ? C.savedColumns : C.checkUnfinished;
 
 /** Pick the column for each field, how passes are found, and run the check. */
 export function MatchStep({

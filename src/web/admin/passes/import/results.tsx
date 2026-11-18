@@ -4,7 +4,6 @@ import { Download, Mail, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
-import { errorMessage } from '../../../lib/errors.ts';
 import {
   Buddy,
   Button,
@@ -28,7 +27,8 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 function FailedRows({ imp, orgId }: { imp: PassImportDto; orgId: string }) {
-  const failed = useFailedRows(imp.id, orgId, (imp.progress?.failed ?? 0) > 0);
+  const total = imp.progress?.failed ?? 0;
+  const failed = useFailedRows(imp.id, orgId, total > 0);
   const items = failed.data?.items ?? [];
   if (items.length === 0) return null;
   return (
@@ -40,10 +40,10 @@ function FailedRows({ imp, orgId }: { imp: PassImportDto; orgId: string }) {
           <thead className="bg-surface-raised text-xs text-fg-muted">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">
-                Row
+                {C.results.row}
               </th>
               <th scope="col" className="px-3 py-2 font-medium">
-                Problem
+                {C.results.problem}
               </th>
             </tr>
           </thead>
@@ -57,6 +57,9 @@ function FailedRows({ imp, orgId }: { imp: PassImportDto; orgId: string }) {
           </tbody>
         </table>
       </div>
+      {total > items.length ? (
+        <p className="text-xs text-fg-muted">{C.check.truncated(items.length, total)}</p>
+      ) : null}
     </div>
   );
 }
@@ -66,10 +69,13 @@ export function ImportResults({
   imp,
   orgId,
   canSync,
+  canOperate,
 }: {
   imp: PassImportDto;
   orgId: string;
   canSync: boolean;
+  /** Results links, mail and removal need `passes:operate`; the error file needs only read. */
+  canOperate: boolean;
 }) {
   const qc = useQueryClient();
   const [removing, setRemoving] = useState(false);
@@ -80,16 +86,16 @@ export function ImportResults({
   const live = p.created - p.removed;
   const save = (file: 'errors.csv' | 'results.csv') =>
     downloadImportFile(imp.id, orgId, file).catch((e: unknown) =>
-      toast.error(e, 'Could not download'),
+      toast.error(e, C.results.couldNotDownload),
     );
 
   async function mail() {
     setMailing(true);
     try {
       const r = await emailTheRest(qc, imp.id, orgId);
-      toast.sent(`${r.sent} emailed`);
+      toast.sent(C.results.emailed(r.sent, r.skipped));
     } catch (e) {
-      toast.error(e, 'Could not email');
+      toast.error(e, C.results.couldNotEmail);
     } finally {
       setMailing(false);
     }
@@ -107,13 +113,9 @@ export function ImportResults({
             size="sm"
             className="shrink-0"
           />
-          <p className="text-base font-medium text-fg-strong">{clean ? C.results.clean : ''}</p>
+          {clean ? <p className="text-base font-medium text-fg-strong">{C.results.clean}</p> : null}
         </div>
-        {imp.state === 'failed' ? (
-          <Callout tone="danger">
-            The import stopped before the end. Check the counts, then import the rest.
-          </Callout>
-        ) : null}
+        {imp.state === 'failed' ? <Callout tone="danger">{C.results.stopped}</Callout> : null}
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           <Stat label={C.results.created} value={p.created} />
           <Stat label={C.results.updated} value={p.updated} />
@@ -124,13 +126,15 @@ export function ImportResults({
         </dl>
         <FailedRows imp={imp} orgId={orgId} />
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            iconStart={<Download aria-hidden />}
-            onClick={() => save('results.csv')}
-          >
-            {C.results.download}
-          </Button>
+          {canOperate ? (
+            <Button
+              variant="outline"
+              iconStart={<Download aria-hidden />}
+              onClick={() => save('results.csv')}
+            >
+              {C.results.download}
+            </Button>
+          ) : null}
           {imp.errorFile ? (
             <Button
               variant="outline"
@@ -140,7 +144,7 @@ export function ImportResults({
               {C.check.download}
             </Button>
           ) : null}
-          {p.notEmailed > 0 ? (
+          {canOperate && p.notEmailed > 0 ? (
             <Button
               variant="outline"
               iconStart={<Mail aria-hidden />}
@@ -150,7 +154,7 @@ export function ImportResults({
               {C.results.emailRest}
             </Button>
           ) : null}
-          {live > 0 ? (
+          {canOperate && live > 0 ? (
             <Button
               variant="outline"
               iconStart={<Trash2 aria-hidden />}
@@ -161,7 +165,9 @@ export function ImportResults({
           ) : null}
           {canSync && imp.source.kind === 'url' && imp.mode === 'live' ? (
             <Button asChild variant="outline" iconStart={<RefreshCw aria-hidden />}>
-              <Link to="/admin/connections/new">{C.results.sync}</Link>
+              <Link to="/admin/connections/new" search={{ orgId }}>
+                {C.results.sync}
+              </Link>
             </Button>
           ) : null}
           <Button asChild variant="ghost">
@@ -187,7 +193,7 @@ export function ImportResults({
               );
               setRemoving(false);
             } catch (e) {
-              toast.error(errorMessage(e), 'Could not remove');
+              toast.error(e, C.results.couldNotRemove);
             }
           }}
         />

@@ -324,9 +324,9 @@ describe('progress and results', () => {
     await waitFor(() => expect(seen).toEqual(['/api/v1/pass-imports/imp1/results.csv']));
   });
 
-  it('emails the passes that were not emailed, through the bulk action', async () => {
+  it('emails the rest through the server, page by page, and says how many were held back', async () => {
     const user = userEvent.setup();
-    const posts: unknown[] = [];
+    const cursors: unknown[] = [];
     await open(
       finished({
         progress: {
@@ -340,55 +340,85 @@ describe('progress and results', () => {
         },
       }),
       {
-        '/api/v1/pass-imports/imp1/rows': () =>
-          json({
-            items: [
-              {
-                row: 2,
-                action: 'create',
-                state: 'done',
-                result: 'created',
-                passId: 'p1',
-                externalId: null,
-                code: null,
-                message: null,
-                emailed: true,
-              },
-              {
-                row: 3,
-                action: 'create',
-                state: 'done',
-                result: 'created',
-                passId: 'p2',
-                externalId: null,
-                code: null,
-                message: null,
-                emailed: false,
-              },
-              {
-                row: 4,
-                action: 'create',
-                state: 'done',
-                result: 'created',
-                passId: 'p3',
-                externalId: null,
-                code: null,
-                message: null,
-                emailed: false,
-              },
-            ],
-            nextCursor: null,
-          }),
-        '/api/v1/passes/bulk': (_u, init) => {
-          posts.push(body(init));
-          return json({ done: 2, skipped: [] });
+        '/api/v1/pass-imports/imp1/email-rest': (_u, init) => {
+          const { cursor } = body(init);
+          cursors.push(cursor);
+          return json(
+            cursor === null
+              ? { sent: 50, skipped: 0, nextCursor: '51' }
+              : { sent: 10, skipped: 4, nextCursor: null },
+          );
         },
       },
     );
     await user.click(await screen.findByRole('button', { name: 'Email the rest' }));
-    await waitFor(() =>
-      expect(posts).toEqual([{ action: 'send_email', ids: ['p2', 'p3'], orgId: 'org1' }]),
+    await waitFor(() => expect(cursors).toEqual([null, '51']));
+    expect(await screen.findByText(/60 emailed\. 4 held back/)).toBeTruthy();
+  });
+
+  it('hides the mail and download actions from a member who cannot operate, but keeps the error file', async () => {
+    await open(
+      finished({
+        errorFile: true,
+        progress: {
+          done: 3,
+          created: 3,
+          updated: 0,
+          unchanged: 0,
+          failed: 0,
+          notEmailed: 2,
+          removed: 0,
+        },
+      }),
+      {},
+      ['passes:read'],
     );
+    await screen.findByText('Results');
+    for (const name of ['Download results', 'Email the rest', 'Remove created passes'])
+      expect(screen.queryByRole('button', { name })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Download rows with errors' })).toBeTruthy();
+  });
+
+  it('hides Create, Discard and Change columns from a member who cannot operate', async () => {
+    await open(checked(), {}, ['passes:read']);
+    await screen.findByText(/120 to create/);
+    for (const name of ['Create passes', 'Discard', 'Change columns'])
+      expect(screen.queryByRole('button', { name })).toBeNull();
+  });
+
+  it('says how many failed rows are listed when there are more', async () => {
+    await open(
+      finished({
+        state: 'failed',
+        progress: {
+          done: 160,
+          created: 100,
+          updated: 40,
+          unchanged: 12,
+          failed: 120,
+          notEmailed: 0,
+          removed: 0,
+        },
+      }),
+      {
+        '/api/v1/pass-imports/imp1/rows': () =>
+          json({
+            items: Array.from({ length: 100 }, (_, i) => ({
+              row: i + 2,
+              action: 'create',
+              state: 'failed',
+              result: null,
+              passId: null,
+              externalId: null,
+              code: 'X',
+              message: `Problem ${i}`,
+              emailed: false,
+            })),
+            nextCursor: '101',
+          }),
+      },
+    );
+    expect(await screen.findByText('Showing the first 100 of 120.')).toBeTruthy();
   });
 
   it('removes the created passes page by page after a confirm', async () => {

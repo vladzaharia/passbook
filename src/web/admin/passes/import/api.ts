@@ -6,12 +6,12 @@ import {
   type CreatePassImportSchema,
   type PassImportCommitSchema,
   type PassImportDto,
+  PassImportEmailRestResultSchema,
   PassImportPageSchema,
   PassImportRemoveResultSchema,
   PassImportRowsPageSchema,
   PassImportSchema,
 } from '@/shared/contracts/pass-imports.ts';
-import { BulkPassActionResponseSchema } from '@/shared/contracts/passes.ts';
 import { EligibleTemplateListSchema } from '@/shared/contracts/template-releases.ts';
 import { api, buildUrl } from '../../../lib/api.ts';
 import { problemToError } from '../../../lib/errors.ts';
@@ -20,7 +20,6 @@ import { modeHeaders, useMode } from '../../../lib/mode.ts';
 const BASE = '/api/v1/pass-imports';
 const POLL_MS = 2000;
 const RUNNING = new Set<string>(['checking', 'committing']);
-const BULK_IDS = 100;
 
 export const importKeys = {
   all: ['admin', 'pass-imports'] as const,
@@ -150,37 +149,27 @@ export async function removeCreated(
   return total;
 }
 
-/** Emails the passes created without a message (past the day's budget), 100 a call. */
+/** Emails the passes created without mail, 50 a call on the server's cursor; the server marks each row, so a repeat sends nothing. */
 export async function emailTheRest(
   qc: QueryClient,
   id: string,
   orgId: string,
 ): Promise<{ sent: number; skipped: number }> {
-  const ids: string[] = [];
-  let cursor: string | undefined;
+  const total = { sent: 0, skipped: 0 };
+  let cursor: string | null = null;
   do {
-    const page: z.infer<typeof PassImportRowsPageSchema> = await api.get(
-      `${BASE}/${id}/rows`,
-      PassImportRowsPageSchema,
-      { query: { orgId, state: 'done', cursor } },
+    const page: z.infer<typeof PassImportEmailRestResultSchema> = await api.post(
+      `${BASE}/${id}/email-rest`,
+      PassImportEmailRestResultSchema,
+      { cursor },
+      { query: { orgId } },
     );
-    for (const r of page.items)
-      if (r.result === 'created' && !r.emailed && r.passId) ids.push(r.passId);
-    cursor = page.nextCursor ?? undefined;
+    total.sent += page.sent;
+    total.skipped += page.skipped;
+    cursor = page.nextCursor;
   } while (cursor);
-  let sent = 0;
-  let skipped = 0;
-  for (let i = 0; i < ids.length; i += BULK_IDS) {
-    const r = await api.post('/api/v1/passes/bulk', BulkPassActionResponseSchema, {
-      action: 'send_email',
-      ids: ids.slice(i, i + BULK_IDS),
-      orgId,
-    });
-    sent += r.done;
-    skipped += r.skipped.length;
-  }
   await qc.invalidateQueries({ queryKey: importKeys.all });
-  return { sent, skipped };
+  return total;
 }
 
 /** Saves a CSV the server builds (the request carries the mode, which a plain link cannot). */
@@ -198,6 +187,9 @@ export async function downloadImportFile(
   const a = document.createElement('a');
   a.href = url;
   a.download = file === 'errors.csv' ? 'rows-with-errors.csv' : 'import-results.csv';
+  // In the document while it clicks (Safari), and the object URL outlives the save.
+  document.body.append(a);
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

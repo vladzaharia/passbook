@@ -14,11 +14,13 @@ import { ProblemsTable } from './problems.tsx';
 export function CheckStep({
   imp,
   orgId,
+  canOperate,
   onEditColumns,
   onDiscarded,
 }: {
   imp: PassImportDto;
   orgId: string;
+  canOperate: boolean;
   onEditColumns: () => void;
   onDiscarded: () => void;
 }) {
@@ -43,7 +45,7 @@ export function CheckStep({
           />
           <p className="text-base font-medium text-fg-strong">{C.countsLine(counts)}</p>
         </div>
-        {stale && imp.plan ? (
+        {stale && imp.plan && canOperate ? (
           <Callout
             tone="warning"
             actions={
@@ -64,32 +66,38 @@ export function CheckStep({
         <Previews imp={imp} orgId={orgId} principalId={session.authed?.user.id} />
         <ProblemsTable imp={imp} />
         <div className="flex flex-wrap gap-2">
-          <Button disabled={stale || nothing} onClick={() => setOpen(true)}>
-            {C.check.commit}
-          </Button>
-          <Button variant="outline" onClick={onEditColumns}>
-            {C.check.changeColumns}
-          </Button>
+          {canOperate ? (
+            <Button disabled={stale || nothing} onClick={() => setOpen(true)}>
+              {C.check.commit}
+            </Button>
+          ) : null}
+          {canOperate ? (
+            <Button variant="outline" onClick={onEditColumns}>
+              {C.check.changeColumns}
+            </Button>
+          ) : null}
           {imp.errorFile ? (
             <Button
               variant="outline"
               iconStart={<Download aria-hidden />}
               onClick={() =>
                 downloadImportFile(imp.id, orgId, 'errors.csv').catch((e: unknown) =>
-                  toast.error(e, 'Could not download'),
+                  toast.error(e, C.results.couldNotDownload),
                 )
               }
             >
               {C.check.download}
             </Button>
           ) : null}
-          <Button
-            variant="ghost"
-            loading={discard.isPending}
-            onClick={() => discard.mutate(undefined, { onSuccess: onDiscarded })}
-          >
-            {C.check.discard}
-          </Button>
+          {canOperate ? (
+            <Button
+              variant="ghost"
+              loading={discard.isPending}
+              onClick={() => discard.mutate(undefined, { onSuccess: onDiscarded })}
+            >
+              {C.check.discard}
+            </Button>
+          ) : null}
         </div>
         <CommitSheet imp={imp} orgId={orgId} open={open} onOpenChange={setOpen} />
       </CardBody>

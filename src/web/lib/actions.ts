@@ -108,6 +108,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.update': a('Pass updated', I.edit, 'info'),
   'pass.void': a('Pass voided', I.void, 'warning'),
   'pass_import.commit': a('Import started', ENTITY.pass.icon, 'info'),
+  'pass_import.email_rest': a('Import passes emailed', ENTITY.pass.icon, 'info'),
   'pass_import.finish': a('Import finished', CircleCheck, 'success'),
   'pass_import.remove_created': a('Import passes removed', I.removeFromWallet, 'warning'),
   'pass_import.results_export': a('Import results exported', ENTITY.pass.icon, 'info'),
