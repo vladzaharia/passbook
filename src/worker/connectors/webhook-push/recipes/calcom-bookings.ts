@@ -68,7 +68,9 @@ export const calcomBookings: Recipe = {
         status,
       }),
     };
-    // A reschedule opens a new booking uid and retires the old one.
+    // A reschedule opens a new booking uid (payload.uid) and carries the old one in payload.rescheduleUid:
+    // https://github.com/calcom/cal.com/blob/main/packages/features/bookings/lib/service/RegularBookingService.ts
+    // (webhookData, `rescheduleUid`), wrapped by packages/features/webhooks/lib/sendPayload.ts.
     const old = ref(payload.rescheduleUid);
     if (type === 'BOOKING_RESCHEDULED' && old && old !== uid) {
       refs.push(old);
