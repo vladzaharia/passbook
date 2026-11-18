@@ -5,10 +5,11 @@
 import type { ScanInput } from '../input/types.ts';
 import { SCAN_TIMING } from '../timing.ts';
 import type { DirectionDraft, MachineEvent } from './access-events.ts';
+import { type AssignCmd, isAssignCmd } from './assign-state.ts';
 import type { ActBody, ResolveBody, ScanDeps, UnsureRow } from './ports.ts';
 import type { Cmd, Draft, ScanEvent, ScanOutcome, ScanState, Unsure } from './types.ts';
 
-type Wire = Pick<ScanInput, 'code' | 'passId' | 'method'>;
+type Wire = Pick<ScanInput, 'code' | 'passId' | 'method' | 'tag'>;
 
 export interface Host {
   state(): ScanState;
@@ -18,12 +19,17 @@ export interface Host {
 
 const wireOf = (i: ScanInput | Wire): Wire => ({
   ...(i.code !== undefined ? { code: i.code } : {}),
+  ...(i.tag ? { tag: i.tag } : {}),
   ...(i.passId !== undefined ? { passId: i.passId } : {}),
   method: i.method,
 });
 
 const inputBody = (w: Wire): ResolveBody['input'] =>
-  w.passId ? { passId: w.passId, method: 'manual' } : { code: w.code ?? '', method: w.method };
+  w.tag
+    ? { tag: w.tag, method: 'nfc' }
+    : w.passId
+      ? { passId: w.passId, method: 'manual' }
+      : { code: w.code ?? '', method: w.method };
 
 /** The draft a retry resends: the same action, never the Manager's PIN. */
 function withoutPin(draft: Draft | 'auto'): Draft {
@@ -116,7 +122,8 @@ export function createRunner(deps: ScanDeps, host: Host) {
 
   function keep(entry: Unsure, wire: Wire) {
     const scannerId = deps.scannerId();
-    if (scannerId) {
+    // A tag read never goes to disk: tags need a connection, and the ID stays in memory.
+    if (scannerId && !wire.tag) {
       const row: UnsureRow = { entry, scannerId, input: wire };
       persisted = null;
       deps.unsure.put(row).catch((error: unknown) => {
@@ -126,8 +133,87 @@ export function createRunner(deps: ScanDeps, host: Host) {
     }
   }
 
+  /** A tag call: the answer or the failure comes back as an assign event, never as a loop `fail`. */
+  function sendTag(cmd: AssignCmd & { key?: string }): void {
+    const tags = deps.tags;
+    const key = cmd.c === 'enroll.decline' ? `decline-${cmd.id}` : cmd.key;
+    if (!tags || inflight.has(key)) return;
+    inflight.add(key);
+    const ac = new AbortController();
+    let settled = false;
+    const fail = (error: unknown) => {
+      const info = deps.toFail(error);
+      const api = error as {
+        status?: number;
+        code?: string;
+        requestId?: string;
+        fields?: Record<string, string>;
+      };
+      host.dispatch({
+        type: 'assign.failed',
+        key,
+        code: typeof api.code === 'string' ? api.code : null,
+        status: typeof api.status === 'number' ? api.status : 0,
+        network: info.error === 'network' || info.error === 'timeout',
+        ...(info.retryAfterMs !== undefined ? { retryAfterMs: info.retryAfterMs } : {}),
+        ...(info.requestId ? { requestId: info.requestId } : {}),
+        ...(info.triesLeft !== undefined ? { triesLeft: info.triesLeft } : {}),
+        ...(info.error === 'pin_locked' ? { locked: true } : {}),
+      });
+    };
+    const timer = deps.clock.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      inflight.delete(key);
+      ac.abort();
+      fail(new DOMException('timeout', 'AbortError'));
+    }, SCAN_TIMING.LOOKUP_TIMEOUT);
+    const o = { signal: ac.signal };
+    const call: Promise<unknown> =
+      cmd.c === 'assign.inspect'
+        ? tags
+            .inspect({ tag: cmd.tag }, o)
+            .then((result) => host.dispatch({ type: 'assign.inspected', key, result }))
+        : cmd.c === 'assign.bind'
+          ? tags
+              .bind({ idempotencyKey: cmd.key, ...cmd.body }, o)
+              .then((result) =>
+                host.dispatch(
+                  cmd.body.preview
+                    ? { type: 'assign.previewed', key, result }
+                    : { type: 'assign.bound', key, result },
+                ),
+              )
+          : cmd.c === 'assign.undo'
+            ? tags.undo(cmd.bindingId, o).then(() => host.dispatch({ type: 'assign.undone', key }))
+            : cmd.c === 'enroll.complete'
+              ? tags
+                  .complete(cmd.id, { tag: cmd.tag }, o)
+                  .then((result) => host.dispatch({ type: 'assign.bound', key, result }))
+              : tags.decline(cmd.id, o);
+    call.then(
+      () => {
+        settled = true;
+        inflight.delete(key);
+        deps.clock.clearTimeout(timer);
+      },
+      (error: unknown) => {
+        if (settled) return;
+        settled = true;
+        inflight.delete(key);
+        deps.clock.clearTimeout(timer);
+        // A decline nobody waits for: the server expires the request on its own.
+        if (cmd.c !== 'enroll.decline') fail(error);
+      },
+    );
+  }
+
   function run(cmds: Cmd[]): void {
     for (const cmd of cmds) {
+      if (isAssignCmd(cmd)) {
+        sendTag(cmd as AssignCmd & { key?: string });
+        continue;
+      }
       switch (cmd.c) {
         case 'resolve': {
           const body: ResolveBody = {

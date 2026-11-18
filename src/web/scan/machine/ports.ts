@@ -6,6 +6,7 @@ import type {
   ScanCounts,
   ScanResolveRequestSchema,
 } from '../../../shared/contracts/scan.ts';
+import type { TagsPort } from '../assign/types.ts';
 import type { FailCode, ScanInput, ScanOutcome, Tone, Unsure } from './types.ts';
 
 export type ActBody = z.infer<typeof ScanActRequestSchema>;
@@ -53,6 +54,8 @@ export interface FailInfo {
 
 export interface ScanDeps {
   api: ScanApiPort;
+  /** The tag calls (assign, an admin's request). Absent: the scanner has no tags. */
+  tags?: TagsPort;
   /** Maps a rejected call to the machine's `fail` event (api/to-fail.ts). */
   toFail(error: unknown): FailInfo;
   camera: { start(): void; pause(): void; resume(): void; stop(): void; slow(): void };

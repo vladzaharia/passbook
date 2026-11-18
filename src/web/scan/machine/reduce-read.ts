@@ -1,6 +1,7 @@
 /** The `read` table (AC 3.4 with SA 7.5): what a read does in each loop state. */
 import type { ScanInput } from '../input/types.ts';
 import { SCAN_TIMING } from '../timing.ts';
+import { TAG_OFFLINE } from './assign-state.ts';
 import { findIgnore, settleShown } from './ignore.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { same } from './internal.ts';
@@ -54,7 +55,10 @@ export function begin(s: MachineState, input: ScanInput, env: Env): Out {
     return { state: v.state, cmds: [...cmds, ...v.cmds] };
   }
   if (!s.online) {
-    const outcome = localOutcome('system', 'network', s.counts);
+    // Tags need a connection; a card can still wait for one.
+    const outcome = input.tag
+      ? localOutcome('system', TAG_OFFLINE, s.counts)
+      : localOutcome('system', 'network', s.counts);
     const v = enterVerdict(base, { input, card, outcome }, env);
     return { state: v.state, cmds: [...cmds, ...v.cmds] };
   }

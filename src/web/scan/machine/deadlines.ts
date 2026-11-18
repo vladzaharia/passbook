@@ -1,5 +1,6 @@
 /** Every timed transition of the machine, as data (AC 3.4). Pure. */
 import { SCAN_TIMING } from '../timing.ts';
+import { ASSIGN_TIMING } from './assign-state.ts';
 import type { MachineState } from './internal.ts';
 
 export type DeadlineKind =
@@ -14,7 +15,11 @@ export type DeadlineKind =
   | 'close'
   | 'open'
   | 'clear'
-  | 'unsure';
+  | 'unsure'
+  | 'assign'
+  | 'request'
+  | 'note'
+  | 'strip';
 
 export interface Deadline {
   kind: DeadlineKind;
@@ -36,10 +41,27 @@ export function deadlines(s: MachineState, now: number): Deadline[] {
   for (const u of s.unsure)
     if (u.state === 'retrying')
       out.push({ kind: 'unsure', at: u.at + SCAN_TIMING.UNSURE_RETRY_WINDOW, key: u.key });
+  const a = s.assign;
+  if (a) {
+    if (a.step !== 'done' && !a.busy) out.push({ kind: 'assign', at: a.idleAt });
+    if (a.note) out.push({ kind: 'note', at: a.note.until });
+  }
+  const strip = s.assignStrip;
+  if (strip)
+    out.push({
+      kind: 'strip',
+      at: Math.max(
+        strip.at + ASSIGN_TIMING.STRIP,
+        strip.kind === 'assigned' ? (strip.undoUntil ?? 0) : 0,
+      ),
+    });
+  if (s.tagRequest && !s.tagRequest.opened)
+    out.push({ kind: 'request', at: s.tagRequest.request.expiresAt });
   if (s.block) return out;
 
   switch (l.s) {
     case 'ready': {
+      if (a) break;
       const live = s.camera === 'live' && s.overlay === null;
       if (live && l.hint < 3) {
         const at = l.since + SCAN_TIMING.HINT_AFTER + SCAN_TIMING.HINT_STEP * l.hint;
