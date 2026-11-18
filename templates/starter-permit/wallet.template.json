@@ -1,0 +1,322 @@
+{
+  "schema": 1,
+  "name": "Permit",
+  "description": "Plate and zone, valid to a date.",
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "plate",
+      "zone",
+      "validTo",
+      "name"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Permit",
+        "x-order": 5,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "plate": {
+        "type": "string",
+        "x-label": "Plate",
+        "x-group": "Permit",
+        "x-order": 10,
+        "maxLength": 20,
+        "minLength": 1,
+        "x-search": true
+      },
+      "zone": {
+        "type": "string",
+        "x-label": "Zone",
+        "x-group": "Permit",
+        "x-order": 20,
+        "maxLength": 40,
+        "minLength": 1
+      },
+      "type": {
+        "type": "string",
+        "x-label": "Type",
+        "x-group": "Permit",
+        "x-order": 30,
+        "enum": [
+          "Monthly",
+          "Annual",
+          "Visitor"
+        ],
+        "x-widget": "select",
+        "default": "Monthly"
+      },
+      "validFrom": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid from",
+        "x-group": "Permit",
+        "x-order": 40,
+        "x-widget": "datetime"
+      },
+      "validTo": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid to",
+        "x-group": "Permit",
+        "x-order": 50,
+        "x-widget": "datetime"
+      },
+      "bay": {
+        "type": "string",
+        "x-label": "Bay",
+        "x-group": "Permit",
+        "x-order": 60,
+        "maxLength": 20
+      },
+      "vehicle": {
+        "type": "string",
+        "x-label": "Vehicle",
+        "x-group": "Permit",
+        "x-order": 70,
+        "maxLength": 60
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Permit",
+        "x-order": 80,
+        "enum": [
+          "Active",
+          "Suspended"
+        ],
+        "x-widget": "select",
+        "default": "Active"
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 902,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      }
+    }
+  },
+  "sample": {
+    "name": "Lee Park",
+    "plate": "AB12 CDE",
+    "zone": "Zone C",
+    "type": "Monthly",
+    "validTo": "2030-12-31T00:00:00Z",
+    "bay": "14",
+    "status": "Active"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "zone"
+      },
+      "value": "{{zone}}"
+    },
+    {
+      "to": {
+        "field": "plate"
+      },
+      "value": "{{plate}}"
+    },
+    {
+      "to": {
+        "field": "until"
+      },
+      "value": "{{validTo}}"
+    },
+    {
+      "to": {
+        "field": "type"
+      },
+      "value": "{{type}}"
+    },
+    {
+      "to": {
+        "field": "bay"
+      },
+      "value": "{{bay}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "vehicle"
+      },
+      "value": "{{vehicle}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{name}}"
+    },
+    {
+      "to": {
+        "field": "status"
+      },
+      "value": "{{status}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{plate}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{validTo}}"
+    }
+  ],
+  "display": {
+    "icon": "parking",
+    "title": "{{plate}}",
+    "subtitle": "{{zone}} - {{type}}",
+    "status": "{{status}}",
+    "search": [
+      "plate",
+      "name"
+    ]
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "verify",
+        "label": "Verify",
+        "kind": "check_in",
+        "repeat": "always",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "plate"
+    },
+    "window": {
+      "from": "validFrom",
+      "until": "validTo"
+    },
+    "flags": [
+      {
+        "input": "status",
+        "label": "Suspended",
+        "equals": [
+          "Suspended"
+        ],
+        "stop": true
+      }
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.plate}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Zone",
+              "value": "{{inputs.zone}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Type",
+              "value": "{{inputs.type}}"
+            },
+            {
+              "id": "r_field3",
+              "slot": "field3",
+              "type": "field",
+              "label": "Bay",
+              "value": "{{inputs.bay}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the parking office."
+      }
+    }
+  }
+}

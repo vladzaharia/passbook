@@ -15,21 +15,33 @@
       "allowAgain": true,
       "allowOnConnected": false,
       "amount": {
-        "max": 100,
+        "max": 10,
         "presets": [
           1,
-          5,
-          10
+          2,
+          3
         ]
       },
-      "confirm": false,
-      "id": "points",
-      "input": "points",
-      "kind": "add",
-      "label": "Add points",
-      "minRole": "desk",
+      "confirm": true,
+      "id": "guest_in",
+      "input": "guests",
+      "kind": "take",
+      "label": "Guest in",
+      "minRole": "door",
       "notify": false,
       "repeat": "always"
+    }
+  ],
+  "flags": [
+    {
+      "equals": [
+        "Frozen",
+        "Past due",
+        "Cancelled"
+      ],
+      "input": "status",
+      "label": "Ask a manager",
+      "stop": true
     }
   ],
   "lookup": {

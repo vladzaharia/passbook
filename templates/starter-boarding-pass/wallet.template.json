@@ -149,21 +149,6 @@
         "x-order": 150,
         "maxLength": 8
       },
-      "transitType": {
-        "type": "string",
-        "x-label": "Transit",
-        "x-group": "Flight",
-        "x-order": 35,
-        "enum": [
-          "air",
-          "train",
-          "bus",
-          "boat",
-          "generic"
-        ],
-        "default": "air",
-        "x-widget": "select"
-      },
       "ticketId": {
         "type": "string",
         "x-label": "Barcode",
@@ -237,37 +222,7 @@
     "seat": "14A",
     "ticketId": "BOARD-0001"
   },
-  "lookups": {
-    "transit": {
-      "air": {
-        "type": "PKTransitTypeAir",
-        "label": "Flight"
-      },
-      "train": {
-        "type": "PKTransitTypeTrain",
-        "label": "Train"
-      },
-      "bus": {
-        "type": "PKTransitTypeBus",
-        "label": "Bus"
-      },
-      "boat": {
-        "type": "PKTransitTypeBoat",
-        "label": "Service"
-      },
-      "generic": {
-        "type": "PKTransitTypeGeneric",
-        "label": "Service"
-      }
-    }
-  },
   "bindings": [
-    {
-      "to": {
-        "pointer": "/boardingPass/transitType"
-      },
-      "value": "{{lookups.transit[transitType].type}}"
-    },
     {
       "to": {
         "field": "flight"
@@ -366,37 +321,19 @@
       "to": {
         "pointer": "/semantics/airlineCode"
       },
-      "value": "{{airlineCode}}",
-      "remove": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
+      "value": "{{airlineCode}}"
     },
     {
       "to": {
         "pointer": "/semantics/flightNumber"
       },
-      "value": "{{flightNumber}}",
-      "remove": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
+      "value": "{{flightNumber}}"
     },
     {
       "to": {
         "pointer": "/semantics/departureAirportCode"
       },
-      "value": "{{origin}}",
-      "remove": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
+      "value": "{{origin}}"
     },
     {
       "to": {
@@ -414,13 +351,7 @@
       "to": {
         "pointer": "/semantics/destinationAirportCode"
       },
-      "value": "{{destination}}",
-      "remove": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
+      "value": "{{destination}}"
     },
     {
       "to": {
@@ -469,72 +400,6 @@
         "pointer": "/expirationDate"
       },
       "value": "{{arrivesAt}}"
-    },
-    {
-      "to": {
-        "pointer": "/preferredStyleSchemes"
-      },
-      "remove": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
-    },
-    {
-      "to": {
-        "field": "flight",
-        "prop": "label"
-      },
-      "value": "{{lookups.transit[transitType].label}}"
-    },
-    {
-      "to": {
-        "pointer": "/semantics/departureStationName"
-      },
-      "value": "{{originCity}}",
-      "when": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
-    },
-    {
-      "to": {
-        "pointer": "/semantics/destinationStationName"
-      },
-      "value": "{{destinationCity}}",
-      "when": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
-    },
-    {
-      "to": {
-        "pointer": "/semantics/transitProvider"
-      },
-      "value": "{{airlineCode}}",
-      "when": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
-    },
-    {
-      "to": {
-        "pointer": "/semantics/vehicleNumber"
-      },
-      "value": "{{airlineCode}}{{flightNumber}}",
-      "when": {
-        "not": {
-          "input": "transitType",
-          "eq": "air"
-        }
-      }
     },
     {
       "to": {

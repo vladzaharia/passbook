@@ -24,7 +24,26 @@ const STYLE_OF: Record<string, string> = {
   'starter-event-ticket': 'eventTicket',
   'starter-boarding-pass': 'boardingPass',
   'starter-access-card': 'generic',
+  'starter-pack': 'coupon',
+  'starter-timed-ticket': 'eventTicket',
+  'starter-transit-ticket': 'boardingPass',
+  'starter-booking': 'generic',
+  'starter-pickup': 'generic',
+  'starter-permit': 'generic',
+  'starter-id-card': 'generic',
 };
+
+const SCAN_CODED = new Set([
+  'starter-coupon',
+  'starter-access-card',
+  'starter-generic',
+  'starter-pack',
+  'starter-timed-ticket',
+  'starter-transit-ticket',
+  'starter-booking',
+  'starter-pickup',
+  'starter-permit',
+]);
 
 const groups = (pass: PassJson, style: string) =>
   Object.entries((pass[style] as Record<string, unknown>) ?? {})
@@ -130,6 +149,9 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
         'tier',
         'stamps',
         'plan',
+        'slot',
+        'lane',
+        'when',
       ]).toContain(key);
   });
 
@@ -199,17 +221,15 @@ describe('field coverage', () => {
     for (const slug of Object.keys(STYLE_OF)) {
       const { barcodes } = (await build(slug, material)).passJson;
       expect(barcodes?.length, slug).toBeGreaterThan(0);
-      // A coupon's barcode is the scan code; its text is the typed code.
-      const message = (b: { message: string }) =>
-        slug === 'starter-coupon' ? 'SNAPSHOT-SCAN-CODE' : b.message;
-      // The access card's code is the server's {{pass.scanCode}}; its alt text is the member ID.
+      // These carry the server's {{pass.scanCode}}; the alt text is the typed number.
+      const scanCoded = SCAN_CODED.has(slug);
       expect(
         barcodes?.every((b) =>
-          slug === 'starter-access-card' ? !!b.altText : b.message === message(b) && !!b.altText,
+          scanCoded ? b.message === 'SNAPSHOT-SCAN-CODE' && !!b.altText : !!b.altText,
         ),
         slug,
       ).toBeTruthy();
-      if (slug !== 'starter-coupon' && slug !== 'starter-access-card')
+      if (!scanCoded)
         expect(
           barcodes?.every((b) => b.altText === b.message),
           slug,
@@ -455,43 +475,6 @@ describe('starter-boarding-pass', () => {
     ])
       expect((pass.semantics as Record<string, unknown>)[key], key).toBeDefined();
     expect((pass.semantics as Record<string, unknown>).flightNumber).toBe(100);
-  });
-
-  it('drops the semantic scheme for non-air transit', async () => {
-    const { template } = await loadBaked('starter-boarding-pass');
-    const pass = (
-      await build('starter-boarding-pass', material, {
-        ...template.manifest.sample,
-        transitType: 'train',
-      })
-    ).passJson;
-    expect(pass.boardingPass?.transitType).toBe('PKTransitTypeTrain');
-    expect(pass.preferredStyleSchemes).toBeUndefined();
-  });
-
-  it('keeps airline semantics off other transit types', async () => {
-    const { template } = await loadBaked('starter-boarding-pass');
-    const sample = template.manifest.sample;
-    const train = (
-      await build('starter-boarding-pass', material, { ...sample, transitType: 'train' })
-    ).passJson;
-    const semantics = train.semantics as Record<string, unknown>;
-    for (const key of [
-      'airlineCode',
-      'flightNumber',
-      'departureAirportCode',
-      'destinationAirportCode',
-    ])
-      expect(semantics[key], key).toBeUndefined();
-    expect(semantics).toMatchObject({
-      departureStationName: 'San Francisco',
-      destinationStationName: 'New York',
-      vehicleNumber: 'WA100',
-    });
-    expect(train.boardingPass?.headerFields?.[0]?.label).toBe('Train');
-    const air = (await build('starter-boarding-pass', material, sample)).passJson;
-    expect((air.semantics as Record<string, unknown>).airlineCode).toBe('WA');
-    expect(air.logoText).toBe('Organization');
   });
 
   it('sets relevance, gate, seats and links from input', async () => {

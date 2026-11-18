@@ -1,0 +1,116 @@
+{
+  "formatVersion": 1,
+  "description": "Transit ticket",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(48,53,60)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(255,210,63)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-11-21T07:15:00-05:00",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "BK-0001"
+    }
+  ],
+  "boardingPass": {
+    "headerFields": [
+      {
+        "key": "status",
+        "label": "Status",
+        "value": "On time",
+        "changeMessage": "Status is now %@."
+      },
+      {
+        "key": "lane",
+        "label": "Lane",
+        "value": "4",
+        "changeMessage": "Lane is now %@."
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "origin",
+        "label": "From",
+        "value": "Newport"
+      },
+      {
+        "key": "destination",
+        "label": "To",
+        "value": "Harbor Point"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Sam Reed"
+      },
+      {
+        "key": "departs",
+        "label": "Departs",
+        "value": "2030-11-21T07:15:00-05:00",
+        "changeMessage": "Now departs %@.",
+        "dateStyle": "PKDateStyleShort",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "boardBy",
+        "label": "Board by",
+        "value": "2030-11-21T06:55:00-05:00",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      },
+      {
+        "key": "party",
+        "label": "Party",
+        "value": "2 adults, 1 children"
+      },
+      {
+        "key": "vehicle",
+        "label": "Vehicle",
+        "value": "AB12 CDE"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "site",
+        "label": "Website",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Be at the quay by the board-by time. Show the code to board."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

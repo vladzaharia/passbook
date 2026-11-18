@@ -1,0 +1,104 @@
+{
+  "formatVersion": 1,
+  "description": "Booking",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(250,230,228)",
+  "foregroundColor": "rgb(60,26,36)",
+  "labelColor": "rgb(168,58,84)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-11-24T14:30:00Z",
+  "featuredActions": [
+    {
+      "identifier": "reschedule",
+      "type": "bookAppointment",
+      "url": ""
+    }
+  ],
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "BOOK-0001"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "status",
+        "label": "Status",
+        "value": "Booked",
+        "changeMessage": "Your booking is now %@."
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "when",
+        "label": "When",
+        "value": "2030-11-24T09:30:00-05:00",
+        "changeMessage": "Your booking is now %@.",
+        "dateStyle": "PKDateStyleShort",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "what",
+        "label": "What",
+        "value": "Cut and colour"
+      },
+      {
+        "key": "with",
+        "label": "With",
+        "value": "Sam"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "where",
+        "label": "Where",
+        "value": "Soho"
+      },
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Ana Rivera"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "site",
+        "label": "Website",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Please arrive on time. Show the code at the desk."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

@@ -89,7 +89,7 @@ describe('Blueprints', () => {
               blueprint(),
               blueprint({
                 id: 'baked:starter-generic',
-                name: 'Membership card',
+                name: 'Membership',
                 icon: 'id-card',
                 styles: ['generic'],
               }),
@@ -104,7 +104,7 @@ describe('Blueprints', () => {
     const names = within(list)
       .getAllByRole('link')
       .map((l) => l.textContent);
-    expect(names).toEqual(['Membership card', 'Balance card']);
+    expect(names).toEqual(['Membership', 'Balance card']);
     expect(target(screen.getByRole('link', { name: 'Balance card' }))).toBe(
       `/admin/blueprints/${ID}`,
     );

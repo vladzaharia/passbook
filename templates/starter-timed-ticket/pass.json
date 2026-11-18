@@ -1,0 +1,99 @@
+{
+  "formatVersion": 1,
+  "description": "Timed ticket",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(38,70,36)",
+  "foregroundColor": "rgb(255,248,231)",
+  "labelColor": "rgb(196,226,124)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-11-21T14:30:00-05:00",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "ORD-0001"
+    }
+  ],
+  "eventTicket": {
+    "headerFields": [
+      {
+        "key": "slot",
+        "label": "Slot",
+        "value": "2030-11-21T14:00:00-05:00",
+        "changeMessage": "Your slot is now %@.",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "event",
+        "label": "Visit",
+        "value": "Ocean Light"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "venue",
+        "label": "Venue",
+        "value": "Northfield Museum"
+      },
+      {
+        "key": "until",
+        "label": "Until",
+        "value": "2030-11-21T14:30:00-05:00",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "party",
+        "label": "Party",
+        "value": "2 adults, 1 children"
+      },
+      {
+        "key": "entrance",
+        "label": "Entrance",
+        "value": "B"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "site",
+        "label": "Website",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Arrive within your slot. Show the code at the entrance."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

@@ -11,7 +11,7 @@
   "barcodes": [
     {
       "format": "PKBarcodeFormatQR",
-      "message": "ID-0001",
+      "message": "SCAN-0001",
       "messageEncoding": "iso-8859-1",
       "altText": "ID-0001"
     }
@@ -52,10 +52,10 @@
         "changeMessage": "Your tier is now %@."
       },
       {
-        "key": "points",
-        "label": "Points",
-        "value": 0,
-        "numberStyle": "PKNumberStyleDecimal"
+        "key": "status",
+        "label": "Status",
+        "value": "Active",
+        "changeMessage": "Your status is now %@."
       }
     ],
     "primaryFields": [
@@ -93,6 +93,11 @@
         "value": ""
       },
       {
+        "key": "renew",
+        "label": "Renew",
+        "value": ""
+      },
+      {
         "key": "phone",
         "label": "Phone",
         "value": "",
@@ -114,6 +119,13 @@
         "key": "pass-service",
         "label": "Pass service",
         "value": ""
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "guests",
+        "label": "Guests left",
+        "value": 4
       }
     ]
   }

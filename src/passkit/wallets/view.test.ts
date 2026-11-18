@@ -58,8 +58,8 @@ const summary = (view: WalletPassView) => ({
 });
 
 describe('resolveWalletView over every starter and baked template', () => {
-  it('covers all ten packages', () => {
-    expect(bakedSlugs()).toHaveLength(10);
+  it('covers all seventeen packages', () => {
+    expect(bakedSlugs()).toHaveLength(17);
   });
 
   it.each(bakedSlugs())('%s', async (slug) => {

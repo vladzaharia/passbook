@@ -1,0 +1,83 @@
+{
+  "formatVersion": 1,
+  "description": "Pack",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(0,104,116)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(178,240,236)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-11-18T00:00:00Z",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "PACK-0001"
+    }
+  ],
+  "coupon": {
+    "headerFields": [
+      {
+        "key": "left",
+        "label": "Left",
+        "value": 7
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "pack",
+        "label": "Pack",
+        "value": "10 washes"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Dana Ortiz"
+      },
+      {
+        "key": "expires",
+        "label": "Valid until",
+        "value": "2030-11-18T00:00:00Z",
+        "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "site",
+        "label": "Website",
+        "value": ""
+      },
+      {
+        "key": "fine",
+        "label": "Terms",
+        "value": "Show the code each time. Packs don't refund."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

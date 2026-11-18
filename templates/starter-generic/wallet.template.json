@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "name": "Membership card",
-  "description": "Name, tier and points with a QR code.",
+  "name": "Membership",
+  "description": "Tier, term and status, with a renew link.",
   "blueprint": true,
   "inputs": {
     "type": "object",
@@ -41,14 +41,6 @@
         ],
         "default": "Standard",
         "x-widget": "select"
-      },
-      "points": {
-        "type": "integer",
-        "minimum": 0,
-        "default": 0,
-        "x-label": "Points",
-        "x-group": "Holder",
-        "x-order": 40
       },
       "since": {
         "type": "string",
@@ -133,6 +125,39 @@
         "maxLength": 256,
         "x-widget": "textarea",
         "x-help": "Shown on the back."
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Membership",
+        "x-order": 25,
+        "enum": [
+          "Active",
+          "Frozen",
+          "Past due",
+          "Cancelled"
+        ],
+        "x-widget": "select",
+        "default": "Active"
+      },
+      "guests": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99,
+        "x-label": "Guests left",
+        "x-group": "Membership",
+        "x-order": 26
+      },
+      "renewURL": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Renew link",
+        "x-group": "Links",
+        "x-order": 35,
+        "x-widget": "url",
+        "x-placeholder": "https://"
       }
     },
     "dependentRequired": {
@@ -154,10 +179,11 @@
     "holder": "Alex Morgan",
     "memberId": "ID-0001",
     "tier": "Plus",
-    "points": 1200,
     "since": "2026-01-01T00:00:00Z",
     "wifiSsid": "Guest",
-    "wifiPassword": "change-me"
+    "wifiPassword": "change-me",
+    "status": "Active",
+    "guests": 4
   },
   "bindings": [
     {
@@ -174,9 +200,23 @@
     },
     {
       "to": {
-        "field": "points"
+        "field": "status"
       },
-      "value": "{{points}}"
+      "value": "{{status}}"
+    },
+    {
+      "to": {
+        "field": "guests"
+      },
+      "value": "{{guests}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "renew"
+      },
+      "value": "{{renewURL}}",
+      "omitIfEmpty": true
     },
     {
       "to": {
@@ -221,7 +261,7 @@
         "barcode": "*",
         "prop": "message"
       },
-      "value": "{{memberId}}"
+      "value": "{{pass.scanCode}}"
     },
     {
       "to": {
@@ -318,7 +358,7 @@
     "icon": "id-card",
     "title": "{{holder}}",
     "subtitle": "{{tier}}",
-    "status": "{{tier}}",
+    "status": "{{status}}",
     "search": [
       "holder",
       "memberId"
@@ -337,24 +377,36 @@
         "minRole": "door"
       },
       {
-        "id": "points",
-        "label": "Add points",
-        "kind": "add",
-        "input": "points",
+        "id": "guest_in",
+        "label": "Guest in",
+        "kind": "take",
+        "input": "guests",
         "amount": {
-          "max": 100,
+          "max": 10,
           "presets": [
             1,
-            5,
-            10
+            2,
+            3
           ]
         },
         "repeat": "always",
-        "minRole": "desk"
+        "minRole": "door"
       }
     ],
     "lookup": {
       "input": "memberId"
-    }
+    },
+    "flags": [
+      {
+        "input": "status",
+        "label": "Ask a manager",
+        "equals": [
+          "Frozen",
+          "Past due",
+          "Cancelled"
+        ],
+        "stop": true
+      }
+    ]
   }
 }

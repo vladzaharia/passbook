@@ -1,0 +1,68 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "arrived",
+      "kind": "check_in",
+      "label": "Arrived",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "once"
+    }
+  ],
+  "display": {
+    "header": {},
+    "holder": "{{inputs.name}}",
+    "notes": {
+      "refused": "Send them to the front desk."
+    },
+    "panels": [
+      {
+        "icon": "info",
+        "id": "p_details",
+        "preset": {
+          "id": "details",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_field1",
+            "label": "What",
+            "slot": "field1",
+            "type": "field",
+            "value": "{{inputs.what}}"
+          },
+          {
+            "id": "r_field2",
+            "label": "With",
+            "slot": "field2",
+            "type": "field",
+            "value": "{{inputs.with}}"
+          }
+        ],
+        "title": "Details"
+      }
+    ],
+    "v": 1
+  },
+  "flags": [
+    {
+      "equals": [
+        "Moved"
+      ],
+      "input": "status",
+      "label": "Moved"
+    }
+  ],
+  "lookup": {
+    "input": "bookingRef"
+  },
+  "window": {
+    "earlyMinutes": 60,
+    "from": "startsAt",
+    "lateMinutes": 30,
+    "until": "startsAt"
+  }
+}

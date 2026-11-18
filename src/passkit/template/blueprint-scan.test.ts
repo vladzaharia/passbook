@@ -12,6 +12,13 @@ const SLUGS = [
   'starter-poster-generic',
   'starter-stamp-card',
   'starter-access-card',
+  'starter-pack',
+  'starter-timed-ticket',
+  'starter-transit-ticket',
+  'starter-booking',
+  'starter-pickup',
+  'starter-permit',
+  'starter-id-card',
 ];
 
 describe.each(SLUGS)('%s scan block', (slug) => {

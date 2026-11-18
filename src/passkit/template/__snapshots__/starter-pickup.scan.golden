@@ -1,0 +1,79 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": true,
+      "id": "ready",
+      "input": "status",
+      "kind": "set",
+      "label": "Mark ready",
+      "minRole": "door",
+      "notify": true,
+      "repeat": "once",
+      "value": "Ready"
+    },
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": true,
+      "id": "collected",
+      "kind": "use_up",
+      "label": "Collected",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "once"
+    }
+  ],
+  "display": {
+    "header": {},
+    "holder": "{{inputs.name}}",
+    "notes": {
+      "refused": "Ask at the counter."
+    },
+    "panels": [
+      {
+        "icon": "info",
+        "id": "p_details",
+        "preset": {
+          "id": "details",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_field1",
+            "label": "Order",
+            "slot": "field1",
+            "type": "field",
+            "value": "{{inputs.orderNo}}"
+          },
+          {
+            "id": "r_field2",
+            "label": "Items",
+            "slot": "field2",
+            "type": "field",
+            "value": "{{inputs.items}}"
+          },
+          {
+            "id": "r_field3",
+            "label": "Where",
+            "slot": "field3",
+            "type": "field",
+            "value": "{{inputs.bay}}"
+          }
+        ],
+        "title": "Details"
+      }
+    ],
+    "v": 1
+  },
+  "flags": [
+    {
+      "input": "idRequired",
+      "label": "Check ID"
+    }
+  ],
+  "lookup": {
+    "input": "orderNo"
+  }
+}

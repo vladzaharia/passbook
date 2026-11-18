@@ -1,0 +1,79 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "board",
+      "kind": "check_in",
+      "label": "Board",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "once"
+    }
+  ],
+  "display": {
+    "header": {},
+    "holder": "{{inputs.name}}",
+    "notes": {
+      "refused": "Send them to the ticket desk."
+    },
+    "panels": [
+      {
+        "icon": "info",
+        "id": "p_details",
+        "preset": {
+          "id": "details",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_field1",
+            "label": "Party",
+            "slot": "field1",
+            "type": "field",
+            "value": "{{inputs.adults}} adults, {{inputs.children}} children"
+          },
+          {
+            "id": "r_field2",
+            "label": "Vehicle",
+            "slot": "field2",
+            "type": "field",
+            "value": "{{inputs.plate}}"
+          },
+          {
+            "id": "r_field3",
+            "label": "Lane",
+            "slot": "field3",
+            "type": "field",
+            "value": "{{inputs.lane}}"
+          }
+        ],
+        "title": "Details"
+      }
+    ],
+    "v": 1
+  },
+  "flags": [
+    {
+      "equals": [
+        "Cancelled"
+      ],
+      "input": "status",
+      "label": "Cancelled",
+      "stop": true
+    },
+    {
+      "input": "plate",
+      "label": "Vehicle"
+    }
+  ],
+  "lookup": {
+    "input": "bookingRef"
+  },
+  "window": {
+    "earlyMinutes": 120,
+    "from": "boardBy",
+    "until": "departsAt"
+  }
+}

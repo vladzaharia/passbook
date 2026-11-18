@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "name": "ID card",
+  "description": "Photo, name, number and a scannable code.",
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "name",
+      "idNumber"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Card",
+        "x-order": 10,
+        "maxLength": 80,
+        "minLength": 1,
+        "x-search": true
+      },
+      "idNumber": {
+        "type": "string",
+        "x-label": "Number",
+        "x-group": "Card",
+        "x-order": 20,
+        "maxLength": 64,
+        "minLength": 1,
+        "x-search": true,
+        "pattern": "^[0-9A-Z \\-.$/+%]+$",
+        "x-help": "Capitals, digits and - . $ / + % only. It is the code a library or campus reader scans."
+      },
+      "role": {
+        "type": "string",
+        "x-label": "Role",
+        "x-group": "Card",
+        "x-order": 30,
+        "enum": [
+          "Student",
+          "Staff",
+          "Borrower"
+        ],
+        "x-widget": "select",
+        "default": "Student"
+      },
+      "unit": {
+        "type": "string",
+        "x-label": "Year or department",
+        "x-group": "Card",
+        "x-order": 40,
+        "maxLength": 40
+      },
+      "validUntil": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid until",
+        "x-group": "Card",
+        "x-order": 50,
+        "x-widget": "datetime",
+        "x-noneLabel": "No end"
+      },
+      "emergency": {
+        "type": "string",
+        "x-label": "Emergency contact",
+        "x-group": "Card",
+        "x-order": 60,
+        "maxLength": 120,
+        "x-scan": "desk"
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      },
+      "website": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Website",
+        "x-group": "Links",
+        "x-order": 902,
+        "x-widget": "url",
+        "x-placeholder": "https://"
+      }
+    }
+  },
+  "sample": {
+    "name": "Maya Chen",
+    "idNumber": "290014",
+    "role": "Student",
+    "unit": "Year 9",
+    "validUntil": "2030-08-31T00:00:00Z"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "role"
+      },
+      "value": "{{role}}"
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{name}}"
+    },
+    {
+      "to": {
+        "field": "number"
+      },
+      "value": "{{idNumber}}"
+    },
+    {
+      "to": {
+        "field": "unit"
+      },
+      "value": "{{unit}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "until"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "site"
+      },
+      "value": "{{website}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "site",
+        "prop": "attributedValue"
+      },
+      "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{idNumber}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{idNumber}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    }
+  ],
+  "display": {
+    "icon": "id-card",
+    "title": "{{name}}",
+    "subtitle": "{{role}} - {{idNumber}}",
+    "status": "{{role}}",
+    "search": [
+      "name",
+      "idNumber"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "expiry-from-input",
+      "version": 1,
+      "config": {
+        "input": "validUntil"
+      }
+    }
+  ],
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "check_in",
+        "label": "Check in",
+        "kind": "check_in",
+        "repeat": "daily",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "idNumber"
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.name}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Role",
+              "value": "{{inputs.role}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Number",
+              "value": "{{inputs.idNumber}}"
+            },
+            {
+              "id": "r_field3",
+              "slot": "field3",
+              "type": "field",
+              "label": "Year",
+              "value": "{{inputs.unit}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the office."
+      }
+    }
+  }
+}

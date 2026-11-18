@@ -365,6 +365,87 @@ exports[`resolveWalletView over every starter and baked template > starter-board
 }
 `;
 
+exports[`resolveWalletView over every starter and baked template > starter-booking 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#fae6e4",
+    "foreground": "#3c1a24",
+    "label": "#a83a54",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.status",
+    "primaryFields.when",
+    "secondaryFields.what",
+    "secondaryFields.with",
+    "auxiliaryFields.where",
+    "auxiliaryFields.holder",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.status",
+      "primaryFields.when",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [
+      {
+        "end": "2030-11-24T16:00:00Z",
+        "start": "2030-11-24T13:30:00Z",
+      },
+    ],
+    "locations": 0,
+  },
+  "roles": {
+    "eventEnd": "style date: 2030-11-24T16:00:00Z",
+    "eventStart": "style date: 2030-11-24T13:30:00Z",
+    "subtitle": "style text: Cut and colour",
+    "title": "style text: 2030-11-24T09:30:00-05:00",
+    "validFrom": "style date: 2030-11-24T13:30:00Z",
+    "validUntil": "style date: 2030-11-24T09:30:00-05:00",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-11-24T09:30:00-05:00",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
 exports[`resolveWalletView over every starter and baked template > starter-coupon 1`] = `
 {
   "barcodes": [
@@ -559,7 +640,7 @@ exports[`resolveWalletView over every starter and baked template > starter-event
 exports[`resolveWalletView over every starter and baked template > starter-generic 1`] = `
 {
   "barcodes": [
-    "qr ID-0001",
+    "qr SNAPSHOT-SCAN-CODE",
   ],
   "colors": {
     "background": "#141a2b",
@@ -570,9 +651,10 @@ exports[`resolveWalletView over every starter and baked template > starter-gener
   "featured": [],
   "fields": [
     "headerFields.tier",
-    "headerFields.points",
+    "headerFields.status",
     "primaryFields.holder",
     "secondaryFields.since",
+    "auxiliaryFields.guests",
     "backFields.message",
     "backFields.terms",
     "backFields.contact",
@@ -600,6 +682,7 @@ exports[`resolveWalletView over every starter and baked template > starter-gener
   "messaging": {
     "fields": [
       "headerFields.tier",
+      "headerFields.status",
       "backFields.message",
     ],
     "input": "message",
@@ -613,6 +696,293 @@ exports[`resolveWalletView over every starter and baked template > starter-gener
   "roles": {
     "subtitle": "style text: 2026-01-01T00:00:00Z",
     "title": "style text: Alex Morgan",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-id-card 1`] = `
+{
+  "barcodes": [
+    "code39 290014",
+    "qr 290014",
+  ],
+  "colors": {
+    "background": "#f4f4f0",
+    "foreground": "#141416",
+    "label": "#c41e3a",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.role",
+    "primaryFields.holder",
+    "secondaryFields.number",
+    "secondaryFields.unit",
+    "auxiliaryFields.until",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "subtitle": "style text: 290014",
+    "title": "style text: Maya Chen",
+    "validUntil": "style date: 2030-08-31T00:00:00Z",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-08-31T00:00:00Z",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-pack 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#006874",
+    "foreground": "#ffffff",
+    "label": "#b2f0ec",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.left",
+    "primaryFields.pack",
+    "secondaryFields.holder",
+    "secondaryFields.expires",
+    "backFields.message",
+    "backFields.fine",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "strip": [
+      "strip@3x.png",
+      "strip@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "offerDetails": "style text: Show the code each time. Packs don't refund.",
+    "offerTitle": "style text: 10 washes",
+    "redemptionChannel": "style channel: both",
+    "subtitle": "style text: Dana Ortiz",
+    "title": "style text: 10 washes",
+    "validUntil": "style date: 2030-11-18T00:00:00Z",
+  },
+  "schemes": [],
+  "style": "coupon",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-11-18T00:00:00Z",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-permit 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#aa1c2c",
+    "foreground": "#ffffff",
+    "label": "#ffd2d4",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.zone",
+    "primaryFields.plate",
+    "secondaryFields.until",
+    "secondaryFields.type",
+    "auxiliaryFields.bay",
+    "auxiliaryFields.holder",
+    "backFields.status",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.status",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "subtitle": "style text: 2030-12-31T00:00:00Z",
+    "title": "style text: AB12 CDE",
+    "validUntil": "style date: 2030-12-31T00:00:00Z",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-12-31T00:00:00Z",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-pickup 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#cef2e2",
+    "foreground": "#0c3426",
+    "label": "#0a6a46",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.status",
+    "primaryFields.code",
+    "secondaryFields.order",
+    "secondaryFields.collectBy",
+    "auxiliaryFields.bay",
+    "auxiliaryFields.holder",
+    "backFields.items",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.status",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "subtitle": "style text: 1042",
+    "title": "style text: 4K7M",
   },
   "schemes": [],
   "style": "generic",
@@ -832,6 +1202,172 @@ exports[`resolveWalletView over every starter and baked template > starter-store
   "style": "storeCard",
   "urls": [],
   "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-timed-ticket 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#264624",
+    "foreground": "#fff8e7",
+    "label": "#c4e27c",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.slot",
+    "primaryFields.event",
+    "secondaryFields.venue",
+    "secondaryFields.until",
+    "auxiliaryFields.party",
+    "auxiliaryFields.entrance",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "strip": [
+      "strip@3x.png",
+      "strip@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.slot",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [
+      {
+        "end": "2030-11-21T19:30:00Z",
+        "start": "2030-11-21T18:00:00Z",
+      },
+    ],
+    "locations": 0,
+  },
+  "roles": {
+    "eventEnd": "style date: 2030-11-21T19:30:00Z",
+    "eventName": "style text: Ocean Light",
+    "eventStart": "style date: 2030-11-21T18:00:00Z",
+    "subtitle": "style text: Northfield Museum",
+    "title": "style text: Ocean Light",
+    "validFrom": "style date: 2030-11-21T18:00:00Z",
+    "validUntil": "style date: 2030-11-21T14:30:00-05:00",
+  },
+  "schemes": [],
+  "style": "eventTicket",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-11-21T14:30:00-05:00",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-transit-ticket 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#30353c",
+    "foreground": "#ffffff",
+    "label": "#ffd23f",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.status",
+    "headerFields.lane",
+    "primaryFields.origin",
+    "primaryFields.destination",
+    "secondaryFields.holder",
+    "secondaryFields.departs",
+    "auxiliaryFields.boardBy",
+    "auxiliaryFields.party",
+    "auxiliaryFields.vehicle",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "footer": [
+      "footer@3x.png",
+      "footer@2x.png",
+    ],
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.status",
+      "headerFields.lane",
+      "secondaryFields.departs",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [
+      {
+        "end": "2030-11-21T12:15:00Z",
+        "start": "2030-11-21T10:55:00Z",
+      },
+    ],
+    "locations": 0,
+  },
+  "roles": {
+    "eventEnd": "style date: 2030-11-21T12:15:00Z",
+    "eventStart": "style date: 2030-11-21T10:55:00Z",
+    "subtitle": "style text: Sam Reed",
+    "title": "style text: Newport",
+    "validFrom": "style date: 2030-11-21T10:55:00Z",
+    "validUntil": "style date: 2030-11-21T07:15:00-05:00",
+  },
+  "schemes": [],
+  "style": "boardingPass",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-11-21T07:15:00-05:00",
     "expired": false,
     "voided": false,
   },

@@ -20,6 +20,7 @@ export function exampleManifest(base: TemplateManifest, example: ScanExample): T
     ...base,
     inputs: { ...base.inputs, properties },
     sample: { ...base.sample, ...example.sample },
-    scan: { ...base.scan, actions: example.actions, display: example.display },
+    // An example is one screen; a blueprint's own flags would add chips it was not drawn with.
+    scan: { ...base.scan, flags: [], actions: example.actions, display: example.display },
   };
 }
