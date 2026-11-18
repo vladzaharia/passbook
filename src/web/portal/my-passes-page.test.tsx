@@ -49,7 +49,7 @@ describe('my passes', () => {
       'href',
       '/account',
     );
-    expect(screen.getByRole('heading', { name: 'From your organizations' })).toBeInTheDocument();
+    expect(screen.queryByText('From your organizations')).not.toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 

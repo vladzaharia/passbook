@@ -28,15 +28,23 @@ export interface MeDeps {
 }
 const defaultDeps: MeDeps = { requestRefresh, removePassFromUser };
 
-function parsePassJson(raw: string | null): Record<string, unknown> {
-  if (!raw) return {};
+function parsePassJson(ctx: ServiceContext, row: repo.MyPassRow): Record<string, unknown> {
+  const at = { passId: row.id, orgId: row.org_id, version: row.version };
+  if (!row.pass_json) {
+    ctx.log.error('me.pass_json_missing', { ...at, code: 'MY_PASS_JSON_MISSING' });
+    return {};
+  }
   try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const parsed: unknown = JSON.parse(row.pass_json);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      ctx.log.error('me.pass_json_invalid', { ...at, code: 'MY_PASS_JSON_INVALID' });
+      return {};
+    }
     // Server-owned: the Apple device token must never reach the client.
     const { authenticationToken: _token, ...safe } = parsed as Record<string, unknown>;
     return safe;
-  } catch {
+  } catch (error) {
+    ctx.log.error('me.pass_json_invalid', { ...at, code: 'MY_PASS_JSON_INVALID', error });
     return {};
   }
 }
@@ -54,7 +62,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow, tags: MyTag[]): 
     throw error;
   });
   const base = plainToken === null ? null : `${baseUrl(ctx.env)}/p/${plainToken}`;
-  const passJson = parsePassJson(row.pass_json);
+  const passJson = parsePassJson(ctx, row);
   const presentationEligible =
     row.org_status === 'active' &&
     canPresent(
