@@ -135,6 +135,7 @@ export async function create(
     webhookPrevCredentialId: null,
     webhookPrevUntil: null,
     webhookSecretFp: null,
+    webhookPrevSecretFp: null,
     mapping: input.mapping ?? null,
     defaultTemplateId: input.defaultTemplateId ?? null,
     holderEmailField: input.holderEmailField ?? null,

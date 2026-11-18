@@ -104,6 +104,8 @@ describe('0102 connections recipes', () => {
     await expect(seedConnection('webhook_secret_fp=', ['fp-2'])).resolves.toBeDefined();
     await seedConnection();
     await expect(seedConnection()).resolves.toBeDefined();
+    await seedConnection('webhook_prev_secret_fp=', ['pfp-1']);
+    await expect(seedConnection('webhook_prev_secret_fp=', ['pfp-1'])).rejects.toThrow(/UNIQUE/);
   });
 
   it('connection_ref_versions cascades with its connection and refuses long refs', async () => {

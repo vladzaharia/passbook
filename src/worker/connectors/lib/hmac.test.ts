@@ -492,6 +492,13 @@ describe('secrets and overlap', () => {
     }
   });
 
+  it('reports when only the previous secret matched', async () => {
+    const run = (secrets: string[]) =>
+      VERIFIERS.shopify.verify(post(SHOPIFY.body, header), secrets, 0);
+    expect((await run([SHOPIFY.secret, 'old-secret-value-001'])).usedPrevious).toBeUndefined();
+    expect((await run(['new-secret-value-1', SHOPIFY.secret])).usedPrevious).toBe(true);
+  });
+
   it('more than two secrets is a coded permanent CONFIG error, not a bare Error', async () => {
     const err = await VERIFIERS.shopify
       .verify(post(SHOPIFY.body, header), ['a'.repeat(20), 'b'.repeat(20), SHOPIFY.secret], 0)
