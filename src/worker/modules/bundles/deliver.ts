@@ -8,6 +8,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishSent } from '../delivery/email-finish.ts';
+import { orgFromName, replyToOf } from '../delivery/email-from.ts';
 import { recordEmailOutcome, uncertainEmail } from '../delivery/email-outcome.ts';
 import { hasDeliveryLease } from '../delivery/repo-binding.ts';
 import type { OutboxRow } from '../delivery/repo-outbox-map.ts';
@@ -124,6 +125,7 @@ export async function deliverBundleEmail(
     })),
     iconUrl,
     senderName: platform['email.senderName'],
+    fromName: orgFromName(ctx, settings['email.fromName'], platform['email.senderName']),
     mode: bundle.mode,
     buddyBase: settings['email.buddy'] ? base : null,
   });
@@ -174,6 +176,7 @@ export async function deliverBundleEmail(
     );
     return;
   }
+  const replyTo = replyToOf(settings['support.email']);
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({
@@ -182,6 +185,7 @@ export async function deliverBundleEmail(
       html: email.html,
       text: email.text,
       fromName: email.fromName ?? platform['email.senderName'],
+      ...(replyTo ? { replyTo } : {}),
     }));
   } catch {
     await uncertainEmail(ctx, claimed, target);

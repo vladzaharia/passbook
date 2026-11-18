@@ -162,6 +162,7 @@ describe('manifest rule coverage', () => {
     blueprint: 'dropped',
     previewOnlyAssets: 'rule',
     messaging: 'rule',
+    email: 'rule',
     scan: 'rule',
     nfc: 'rule',
     stamps: 'rule',

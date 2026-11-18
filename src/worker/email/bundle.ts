@@ -28,6 +28,8 @@ export interface BundleEmailInput {
   passes: { title: string; addUrl: string | null }[];
   iconUrl?: string | null;
   senderName?: string | null;
+  /** The org's own From name (already checked): used instead of "<Org> via <sender>". */
+  fromName?: string | null;
   /** A test bundle's email carries the amber strip. */
   mode?: 'live' | 'test';
   buddyBase?: string | null;
@@ -94,5 +96,6 @@ ${footer.html}`;
     body,
   });
   const sender = input.senderName?.trim();
-  return { subject, html, text, ...(sender ? { fromName: `${input.orgName} via ${sender}` } : {}) };
+  const fromName = input.fromName || (sender ? `${input.orgName} via ${sender}` : null);
+  return { subject, html, text, ...(fromName ? { fromName } : {}) };
 }

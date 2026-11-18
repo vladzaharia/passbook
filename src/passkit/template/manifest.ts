@@ -10,6 +10,7 @@ import type {
   TemplateManifest,
   ValidationIssue,
 } from '../types.ts';
+import { emailManifestIssues } from './email.ts';
 import { checkExpr, conditionInputs, evaluate, exprReferences, isEmpty } from './expr.ts';
 import { messagingIssues } from './messaging.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
@@ -238,6 +239,7 @@ export function validateManifest(
   }
 
   issues.push(...messagingIssues(manifest, options.passJson));
+  issues.push(...emailManifestIssues(manifest));
   issues.push(...scanManifestIssues(manifest, options));
   issues.push(...stampsIssues(manifest, options.passJson, options.assetNames));
   issues.push(...walletsManifestIssues(manifest, options));

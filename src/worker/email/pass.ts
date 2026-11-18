@@ -44,6 +44,10 @@ export interface PassEmailInput {
   logoText?: string | null;
   /** The platform sender name: the From name becomes "<Org> via <sender>". */
   senderName?: string | null;
+  /** The org's own From name (already checked): used instead of "<Org> via <sender>". */
+  fromName?: string | null;
+  /** The template's own subject line (already rendered): used instead of "Your <Org> pass". */
+  subject?: string | null;
   /** A test pass's email carries the amber strip. */
   mode?: 'live' | 'test';
   /**
@@ -164,7 +168,7 @@ function walletActionsHtml(base: string, offers: readonly EmailWalletOffer[]): s
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const footer = supportFooter(safeMail(input.supportEmail), safeUrl(input.supportUrl));
   const wallets = emailWalletOffers(input);
-  const subject = `Your ${input.orgName} pass`;
+  const subject = input.subject?.trim() || `Your ${input.orgName} pass`;
   const fields = (input.summary?.fields ?? [])
     .filter((f) => f.value !== input.passTitle)
     .slice(0, 3);
@@ -213,5 +217,6 @@ ${footer.html}`;
     body,
   });
   const sender = input.senderName?.trim();
-  return { subject, html, text, ...(sender ? { fromName: `${input.orgName} via ${sender}` } : {}) };
+  const fromName = input.fromName || (sender ? `${input.orgName} via ${sender}` : null);
+  return { subject, html, text, ...(fromName ? { fromName } : {}) };
 }

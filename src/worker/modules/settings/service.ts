@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { OrgSettingsSchema, PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
+import { checkFromName } from '../../../shared/email-from-name.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -138,6 +139,13 @@ export async function listSettings(ctx: ServiceContext, scope: string): Promise<
   });
 }
 
+/** The schema checks the name against "PassBook"; this also checks the platform's current sender name. */
+async function fromNameRefusal(ctx: ServiceContext, name: string): Promise<string | null> {
+  const platform = await getPlatformSettings(ctx);
+  const checked = checkFromName(name, platform['email.senderName']);
+  return checked.ok ? null : checked.error;
+}
+
 /** `null` resets a key to its default. Unknown keys and invalid values reject the whole request. */
 export async function updateSettings(
   ctx: ServiceContext,
@@ -170,7 +178,12 @@ export async function updateSettings(
       deletes.push(key);
     } else {
       const parsed = def.schema.safeParse(raw);
-      if (parsed.success) upserts[key] = parsed.data;
+      const refused =
+        parsed.success && key === 'email.fromName'
+          ? await fromNameRefusal(ctx, parsed.data as string)
+          : null;
+      if (refused) issues.push({ path: key, message: refused });
+      else if (parsed.success) upserts[key] = parsed.data;
       else issues.push({ path: key, message: parsed.error.issues[0]?.message ?? 'Invalid value.' });
     }
   }

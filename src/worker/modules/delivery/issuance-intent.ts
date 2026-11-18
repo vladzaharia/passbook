@@ -25,6 +25,7 @@ import {
   type DeliveryActor,
   systemActor,
 } from './delivery-actor.ts';
+import { emailCaps, emailLimitError } from './email-limits.ts';
 import { parseContext } from './issuance-context.ts';
 import { recipientKey } from './recipient-key.ts';
 import {
@@ -53,9 +54,11 @@ import {
 const SEND_BATCH = 100;
 const HOUR = 3_600_000;
 const DAY = 86_400_000;
-/** Pass emails per recipient per hour, and per org per day. */
-export const EMAIL_RECIPIENT_HOURLY_CAP = 3;
-export const EMAIL_ORG_DAILY_CAP = 500;
+
+export {
+  EMAIL_ORG_DAILY_CAP,
+  EMAIL_RECIPIENT_HOURLY_CAP,
+} from '../../../shared/contracts/settings.ts';
 
 function message(row: { id: string; kind: 'push' | 'email' }): MessageSendRequest<Job> {
   const kind = row.kind === 'push' ? ('push.deliver' as const) : ('email.send' as const);
@@ -290,8 +293,7 @@ export async function enqueuePassEmail(
       orgKey: `pass-email:${pass.mode}:org:${pass.orgId}`,
       recipientWindow: now - (now % HOUR),
       orgWindow: now - (now % DAY),
-      recipientCap: EMAIL_RECIPIENT_HOURLY_CAP,
-      orgCap: EMAIL_ORG_DAILY_CAP,
+      ...(await emailCaps(ctx, pass.orgId)),
     },
   });
   // A revoked membership or moved revision answers like every other principal's refusal.
@@ -302,10 +304,7 @@ export async function enqueuePassEmail(
       'The pass changed. Review the recipient and try again.',
       'DELIVERY_STALE',
     );
-  if (result === 'limited')
-    throw new AppError('EMAIL_RATE_LIMITED', 429, 'Too many pass emails. Try again later.', {
-      headers: { 'retry-after': '3600' },
-    });
+  if (result === 'limited') throw await emailLimitError(ctx, pass.mode, pass.orgId);
   if (input.schedule !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
   return { outboxId };
 }

@@ -1,6 +1,5 @@
 import type { Json, Mode } from '../../../shared/contracts/common.ts';
 import {
-  AppError,
   authorityDenied,
   ConflictError,
   ForbiddenError,
@@ -18,11 +17,8 @@ import {
   type DeliveryActor,
   systemActor,
 } from './delivery-actor.ts';
-import {
-  dispatchSafely,
-  EMAIL_ORG_DAILY_CAP,
-  EMAIL_RECIPIENT_HOURLY_CAP,
-} from './issuance-intent.ts';
+import { emailCaps, emailLimitError } from './email-limits.ts';
+import { dispatchSafely } from './issuance-intent.ts';
 import { recipientKey } from './recipient-key.ts';
 import { enqueueAuthorizedEmail, listAuthorizedOutboxForPass } from './repo.ts';
 import { queuedAudit } from './repo-email-queue.ts';
@@ -168,8 +164,7 @@ export async function queueEmail(
       orgKey: `pass-email:${input.mode}:org:${input.orgId}`,
       recipientWindow: now - (now % HOUR),
       orgWindow: now - (now % DAY),
-      recipientCap: EMAIL_RECIPIENT_HOURLY_CAP,
-      orgCap: EMAIL_ORG_DAILY_CAP,
+      ...(await emailCaps(ctx, input.orgId)),
     },
   });
   // A revoked membership or moved revision answers like every other principal's refusal.
@@ -180,10 +175,7 @@ export async function queueEmail(
       'The bundle changed. Review the recipient and try again.',
       'DELIVERY_STALE',
     );
-  if (result === 'limited')
-    throw new AppError('EMAIL_RATE_LIMITED', 429, 'Too many pass emails. Try again later.', {
-      headers: { 'retry-after': '3600' },
-    });
+  if (result === 'limited') throw await emailLimitError(ctx, input.mode, input.orgId);
   ctx.waitUntil(dispatchSafely(ctx, { passId: input.passId }));
   return { outboxId };
 }

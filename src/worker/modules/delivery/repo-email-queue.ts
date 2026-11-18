@@ -215,3 +215,12 @@ export async function recordQueuedEvent(
     });
   }
 }
+
+/** The current count of one rate counter; 0 when it has not been touched in its window. */
+export async function readCounter(db: D1Database, key: string, window: number): Promise<number> {
+  const row = await db
+    .prepare('SELECT count FROM counters WHERE key = ? AND window_start = ?')
+    .bind(key, window)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}

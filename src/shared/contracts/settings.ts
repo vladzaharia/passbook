@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { strictEmail } from '../email.ts';
+import { checkFromName } from '../email-from-name.ts';
 import { PlainLineSchema } from './common.ts';
 
 export {
@@ -19,6 +20,10 @@ function isHttpsUrl(value: string): boolean {
     return false;
   }
 }
+
+/** Defaults for the email caps: per recipient per hour, per org per day. */
+export const EMAIL_RECIPIENT_HOURLY_CAP = 3;
+export const EMAIL_ORG_DAILY_CAP = 500;
 
 /** Notifying updates one pass may get per rolling 24 hours, until the setting is changed. */
 export const PUSH_BUDGET_DEFAULT = 3;
@@ -60,6 +65,21 @@ export const OrgSettingsSchema = z.object({
     .max(500)
     .refine(isHttpsUrl, 'Use an https URL without credentials.')
     .optional(),
+  /** The From display name of this org's pass emails. Unset: "<Org> via <platform sender name>". */
+  'email.fromName': z
+    .string()
+    .max(200)
+    .transform((value, ctx) => {
+      const checked = checkFromName(value);
+      if (checked.ok) return checked.value;
+      ctx.addIssue({ code: 'custom', message: checked.error });
+      return z.NEVER;
+    })
+    .optional(),
+  /** Pass emails one recipient may get per hour from this org. */
+  'email.recipientCapPerHour': z.number().int().min(1).max(20).default(EMAIL_RECIPIENT_HOURLY_CAP),
+  /** Pass emails this org may send per day. */
+  'email.orgCapPerDay': z.number().int().min(10).max(5000).default(EMAIL_ORG_DAILY_CAP),
   /** Opt-in: the buddy sits on the pass email's card, as in the sign-in email. */
   'email.buddy': z.boolean().default(false),
   /** Third-party NFC tags. Off until an admin turns it on. */

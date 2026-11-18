@@ -105,11 +105,10 @@ describe('pass email', () => {
     expect(html.indexOf('Open your pass')).toBeGreaterThan(badge);
   });
 
-  it('says one thing to every phone: Apple adds on iPhone or Mac, anywhere else open the pass', () => {
+  it('says one device-neutral thing to every phone', () => {
     const { html, text } = render();
     for (const part of [html, text]) {
-      expect(part).toContain('adds on iPhone or Mac');
-      expect(part).toContain('On other phones, open your pass.');
+      expect(part).toContain('Open this email on your phone');
       expect(part).not.toContain('Open on iPhone');
     }
   });
@@ -397,7 +396,7 @@ describe('pass email', () => {
 
   it('keeps the plain-text part word for word', () => {
     expect(render().text).toBe(
-      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nThe Apple Wallet button adds on iPhone or Mac. On other phones, open your pass.\n\nKeep this email private. Its links open your pass.',
+      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nOpen this email on your phone to add the pass to your wallet.\n\nKeep this email private. Its links open your pass.',
     );
   });
 

@@ -138,7 +138,9 @@ describe('GET /p/:token', () => {
     expect(html.includes('Scan with the camera.')).toBe(qr);
     expect(html).toContain(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
-    expect(html.includes('Open on iPhone or Mac to add to Apple Wallet.')).toBe(guidance);
+    expect(html.includes('Open this page on your phone to add the pass to your wallet.')).toBe(
+      guidance,
+    );
   });
 
   it('asks in-app browsers to open Safari', async () => {

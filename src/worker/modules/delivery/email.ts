@@ -1,3 +1,4 @@
+import { renderEmailSubject } from '../../../passkit/template/email.ts';
 import { EMAIL_BADGE } from '../../../shared/email-art.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
@@ -16,10 +17,12 @@ import { getOrg } from '../passes/repo-read-issuance.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { passImages } from '../public/service.ts';
 import { captureEmail } from '../sandbox/capture.ts';
+import { loadManifests, manifestCacheKey } from '../scan/repo-template-manifests.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { matchesPass, PassEmailIntentSchema } from './binding.ts';
 import { finishSent } from './email-finish.ts';
+import { orgFromName, replyToOf } from './email-from.ts';
 import {
   failEmail,
   PermanentEmailError,
@@ -94,6 +97,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   };
   const org = await getOrg(db, pass.orgId);
   const base = baseUrl(ctx.env);
+  const manifests = new Map<string, string | null>();
   const [platform, orgSettings, branding, artifact, images, walletOffers] = await Promise.all([
     getPlatformSettings(ctx),
     getOrgSettings(ctx, pass.orgId),
@@ -129,9 +133,25 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     return;
   }
   const { iconUrl, logo } = passEmailImages(images, base);
+  const support = emailSupport(ctx.env, orgSettings, branding);
+  const fromName = orgFromName(ctx, orgSettings['email.fromName'], platform['email.senderName']);
+  const orgName = org?.name ?? 'PassBook';
+  const templateKey = {
+    orgId: pass.orgId,
+    templateId: pass.templateId,
+    version: pass.templateVersion,
+  };
+  await loadManifests(db, manifests, [templateKey]);
+  const manifestJson = manifests.get(manifestCacheKey(templateKey));
   const email = renderPassEmail({
-    orgName: org?.name ?? 'PassBook',
-    ...emailSupport(ctx.env, orgSettings, branding),
+    orgName,
+    ...support,
+    subject: renderEmailSubject(
+      manifestJson ? JSON.parse(manifestJson) : null,
+      pass.personalization,
+      `Your ${orgName} pass`,
+    ),
+    fromName,
     downloadUrl: `${base}/p/${plainToken}/pass.pkpass`,
     manageUrl: `${base}/p/${plainToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
@@ -216,6 +236,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     );
     return;
   }
+  const replyTo = replyToOf(orgSettings['support.email'] ?? branding.supportEmail);
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({
@@ -224,6 +245,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       html: email.html,
       text: email.text,
       fromName: email.fromName ?? platform['email.senderName'],
+      ...(replyTo ? { replyTo } : {}),
       ...(attachments ? { attachments } : {}),
     }));
   } catch {

@@ -1290,3 +1290,81 @@ describe('settings cache', () => {
     expect((await getPlatformSettings(ctx))['retention.auditDays']).toBe(365);
   });
 });
+
+describe('org email settings (PS-23)', () => {
+  const put = (scope: string, values: Record<string, unknown>) =>
+    call('PUT', '', { scope, values }, tenantUser.headers);
+  const orgScope = async () => {
+    const org = await makeOrg(fx);
+    await addMembership(org.id);
+    return { org, scope: `org:${org.id}` };
+  };
+
+  it('defaults the caps to 3 per hour and 500 per day, with no From name', async () => {
+    const { org } = await orgScope();
+    const s = await getOrgSettings(createServiceContext(appEnv), org.id);
+    expect([s['email.recipientCapPerHour'], s['email.orgCapPerDay']]).toEqual([3, 500]);
+    expect(s['email.fromName']).toBeUndefined();
+  });
+
+  it('stores a cleaned From name', async () => {
+    const { org, scope } = await orgScope();
+    expect((await put(scope, { 'email.fromName': '  "Harbor"\r\nGym ' })).status).toBe(200);
+    clearSettingsCache(env.DB);
+    expect((await getOrgSettings(createServiceContext(appEnv), org.id))['email.fromName']).toBe(
+      'Harbor Gym',
+    );
+  });
+
+  it.each([
+    ['header injection', 'Harbor\r\nBcc: evil@x.test'],
+    ['an address', 'ceo@harbor.test'],
+    ['the platform name', 'PassBook'],
+    ['too long', 'x'.repeat(65)],
+    ['only unsafe characters', '<>"'],
+  ])('refuses a From name with %s', async (_label, value) => {
+    const { scope } = await orgScope();
+    expect((await put(scope, { 'email.fromName': value })).status).toBe(422);
+  });
+
+  it("refuses the platform's renamed sender name", async () => {
+    const { scope } = await orgScope();
+    await call('PUT', '', { values: { 'email.senderName': 'Polaris' } });
+    expect((await put(scope, { 'email.fromName': 'Polaris Desk' })).status).toBe(422);
+    expect((await put(scope, { 'email.fromName': 'Harbor via Polaris' })).status).toBe(200);
+  });
+
+  it.each([
+    ['email.recipientCapPerHour', 0],
+    ['email.recipientCapPerHour', 21],
+    ['email.recipientCapPerHour', 1.5],
+    ['email.orgCapPerDay', 9],
+    ['email.orgCapPerDay', 5001],
+    ['email.orgCapPerDay', '500'],
+  ])('refuses %s = %s', async (key, value) => {
+    const { scope } = await orgScope();
+    expect((await put(scope, { [key]: value })).status).toBe(422);
+  });
+
+  it('accepts the bounds and resets to the defaults', async () => {
+    const { org, scope } = await orgScope();
+    const read = async () => {
+      clearSettingsCache(env.DB);
+      const s = await getOrgSettings(createServiceContext(appEnv), org.id);
+      return [s['email.recipientCapPerHour'], s['email.orgCapPerDay']];
+    };
+    expect(
+      (await put(scope, { 'email.recipientCapPerHour': 20, 'email.orgCapPerDay': 5000 })).status,
+    ).toBe(200);
+    expect(await read()).toEqual([20, 5000]);
+    expect(
+      (await put(scope, { 'email.recipientCapPerHour': null, 'email.orgCapPerDay': null })).status,
+    ).toBe(200);
+    expect(await read()).toEqual([3, 500]);
+  });
+
+  it('refuses a reply-to that is not a plain address', async () => {
+    const { scope } = await orgScope();
+    expect((await put(scope, { 'support.email': 'A <a@b.co>' })).status).toBe(422);
+  });
+});
