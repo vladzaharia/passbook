@@ -346,5 +346,55 @@
   ],
   "messaging": {
     "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "charge",
+        "label": "Charge",
+        "kind": "take",
+        "input": "balance",
+        "amount": {
+          "max": 500,
+          "presets": [
+            5,
+            10,
+            20
+          ]
+        },
+        "repeat": "always",
+        "minRole": "desk",
+        "confirm": true,
+        "confirmAbove": 100
+      },
+      {
+        "id": "top_up",
+        "label": "Top up",
+        "kind": "add",
+        "input": "balance",
+        "amount": {
+          "max": 500,
+          "presets": [
+            10,
+            25,
+            50
+          ]
+        },
+        "repeat": "always",
+        "minRole": "desk",
+        "confirm": true
+      },
+      {
+        "id": "set_balance",
+        "label": "Set balance",
+        "kind": "set",
+        "input": "balance",
+        "minRole": "manager",
+        "confirm": true
+      }
+    ],
+    "lookup": {
+      "input": "cardNumber"
+    }
   }
 }

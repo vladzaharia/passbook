@@ -334,5 +334,35 @@
   },
   "messaging": {
     "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "check_in",
+        "label": "Check in",
+        "kind": "check_in",
+        "repeat": "daily",
+        "minRole": "door"
+      },
+      {
+        "id": "points",
+        "label": "Add points",
+        "kind": "add",
+        "input": "points",
+        "amount": {
+          "max": 100,
+          "presets": [
+            1,
+            5,
+            10
+          ]
+        },
+        "repeat": "always",
+        "minRole": "desk"
+      }
+    ],
+    "lookup": {
+      "input": "memberId"
+    }
   }
 }

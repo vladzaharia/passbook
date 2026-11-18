@@ -159,7 +159,11 @@ export function SignedInUserMenu({
         {platformAdmin || memberships.length > 0 ? (
           <FaceItem
             to={consolePath}
-            orgId={isOrgScoped(consolePath) ? entryOrgId(membership, memberships) : undefined}
+            orgId={
+              isOrgScoped(consolePath, platformAdmin)
+                ? entryOrgId(membership, memberships)
+                : undefined
+            }
             icon={LayoutDashboard}
             label="Admin"
             current={face === 'admin'}

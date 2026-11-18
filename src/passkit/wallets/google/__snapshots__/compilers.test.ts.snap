@@ -1884,7 +1884,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
       "alternateText": "SAVE-0001",
       "renderEncoding": "UTF_8",
       "type": "PDF_417",
-      "value": "SAVE-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -2028,7 +2028,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
       "alternateText": "SAVE-0001",
       "renderEncoding": "UTF_8",
       "type": "PDF_417",
-      "value": "SAVE-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "state": "ACTIVE",
     "textModulesData": [
@@ -2131,7 +2131,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
       "alternateText": "SAVE-0001",
       "renderEncoding": "UTF_8",
       "type": "PDF_417",
-      "value": "SAVE-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "state": "ACTIVE",
     "textModulesData": [

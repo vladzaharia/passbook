@@ -24,7 +24,7 @@ import { targetTypeLabel } from './labels.ts';
 const ANY = '';
 
 /** Every known action by its label; the server matches the code as a prefix. */
-const ACTION_OPTIONS: ComboboxOption[] = [
+export const ACTION_OPTIONS: ComboboxOption[] = [
   { value: ANY, label: 'Any action' },
   ...Object.entries(ACTIONS)
     .map(([code, a]) => ({

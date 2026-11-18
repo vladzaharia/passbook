@@ -337,14 +337,16 @@
             3
           ],
           "default": 1
-        }
+        },
+        "repeat": "cooldown",
+        "cooldownMinutes": 2
       },
       {
         "id": "redeem",
         "label": "Redeem reward",
         "kind": "take",
         "input": "stamps",
-        "rewardLabel": "Free item",
+        "rewardLabel": "Reward",
         "amount": 10
       }
     ]

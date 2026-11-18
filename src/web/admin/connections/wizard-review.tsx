@@ -19,9 +19,9 @@ import {
   EntityArt,
   KeyValue,
 } from '../../ui/index.ts';
+import type { SourceField } from '../mapping/mapping.ts';
 import { MODE_LABEL } from './labels.ts';
 import { type Lifecycle, scheduled } from './lifecycle-fields.tsx';
-import type { SourceField } from './mapping.ts';
 
 type Connector = z.infer<typeof ConnectorInfoSchema>;
 

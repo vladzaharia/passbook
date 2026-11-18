@@ -32,15 +32,17 @@ const flat = (q: { data?: { pages: { items: ApiKey[] }[] } | undefined }) =>
 function KeyContextPicker({
   memberships,
   value,
+  platformAdmin,
   onChange,
 }: {
   memberships: readonly OrgMembership[];
   value: string | null | undefined;
+  platformAdmin: boolean;
   onChange: (orgId: string | undefined) => void;
 }) {
   const id = useId();
   const options = [
-    { value: 'platform', label: 'Platform-wide keys' },
+    ...(platformAdmin ? [{ value: 'platform', label: 'Platform-wide keys' }] : []),
     ...memberships.map((m) => ({ value: `org:${m.orgId}`, label: m.orgName })),
   ];
   if (options.length < 2 && value !== undefined) return null;
@@ -78,9 +80,10 @@ export function ApiKeysPage({
   const scope = useOrgScope();
   const session = useSession();
   const grants = useMemberships();
-  const principal = session.isAdmin && !session.isError ? session.authed?.user.id : undefined;
-  const platform = Boolean(principal && !scope.hasExplicitOrg);
-  const needsMembership = scope.hasExplicitOrg;
+  // A member manages their organization's keys; only a platform admin also sees the platform's.
+  const principal = session.isError ? undefined : session.authed?.user.id;
+  const platform = Boolean(session.isAdmin && principal && !scope.hasExplicitOrg);
+  const needsMembership = !platform;
   const loading =
     session.isLoading ||
     session.isFetching ||
@@ -105,6 +108,7 @@ export function ApiKeysPage({
     <KeyContextPicker
       memberships={memberships}
       value={canRead ? orgId : undefined}
+      platformAdmin={session.isAdmin}
       onChange={onOrgChange}
     />
   );

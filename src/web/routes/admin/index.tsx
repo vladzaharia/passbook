@@ -1,6 +1,8 @@
 import { createFileRoute, useRouterState } from '@tanstack/react-router';
+import { OrgOverviewPage } from '../../admin/overview/org-overview.tsx';
 import { OverviewPage } from '../../admin/overview/overview-page.tsx';
 import { parseOverviewSearch } from '../../admin/overview/overview-search.ts';
+import { useSession } from '../../lib/session.ts';
 
 export const Route = createFileRoute('/admin/')({
   validateSearch: parseOverviewSearch,
@@ -20,8 +22,11 @@ export const Route = createFileRoute('/admin/')({
       },
     });
     const navigate = Route.useNavigate();
+    const { isAdmin } = useSession();
+    // A platform admin sees the platform; a member sees their organization.
+    const Page = isAdmin ? OverviewPage : OrgOverviewPage;
     return (
-      <OverviewPage
+      <Page
         search={{ ...search, filterOrgId }}
         onSearch={(next) =>
           void navigate({

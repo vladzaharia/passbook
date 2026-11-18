@@ -10,6 +10,7 @@ import { activeBinding, lostBinding } from '../src/worker/modules/nfc/repo-tag-b
 import { listTags, passTagViews, tagByRef } from '../src/worker/modules/nfc/repo-tags.ts';
 import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
 import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
+import { livePassesBy } from '../src/worker/modules/passes/repo-import-lookup.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
 import { expiredTestPasses } from '../src/worker/modules/sandbox/repo.ts';
 import {
@@ -80,6 +81,13 @@ describe('list and search query plans', () => {
     expect(fullScans(lines, 'passes')).toEqual([]);
   });
 
+  it('imports: the match lookups use the external id and holder email indexes', async () => {
+    for (const column of ['external_id', 'holder_email'] as const) {
+      const lines = await plans((db) => livePassesBy(db, 'o', 'live', column, ['a', 'b']));
+      expect(fullScans(lines, 'passes'), column).toEqual([]);
+    }
+  });
+
   it('bundles: organization lists use bundles_org in each mode', async () => {
     for (const mode of ['live', 'test'] as const) {
       const org = await plans((db) => listBundleRows(db, { orgId: 'o', mode, limit: 50 }));
@@ -143,6 +151,21 @@ describe('list and search query plans', () => {
     expect(text).toContain('users_email_nc');
     expect(text).toContain('users_name_nc');
     expect(text).toContain('user_emails_nc');
+  });
+
+  it('pass imports: the expiry sweep and the committing guard use their partial indexes', async () => {
+    const sweep = await env.DB.prepare(
+      "EXPLAIN QUERY PLAN SELECT id FROM pass_imports WHERE expires_at < ? AND state IN ('mapping', 'checking', 'ready', 'stale')",
+    )
+      .bind(1)
+      .all<{ detail: string }>();
+    expect(sweep.results.map((r) => r.detail).join('\n')).toContain('pass_imports_expiry');
+    const running = await env.DB.prepare(
+      "EXPLAIN QUERY PLAN SELECT id FROM pass_imports WHERE org_id = ? AND mode = ? AND template_id = ? AND state = 'committing'",
+    )
+      .bind('o', 'live', 't')
+      .all<{ detail: string }>();
+    expect(running.results.map((r) => r.detail).join('\n')).toContain('pass_imports_one_running');
   });
 
   it('scans: the ok-only history reads use the partial index', async () => {

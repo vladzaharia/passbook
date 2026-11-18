@@ -82,6 +82,9 @@ register(
     }
     const holderEmail = q.holderEmail ? strictEmail(q.holderEmail) : undefined;
     if (q.holderEmail && !holderEmail) return c.json({ items: [], nextCursor: null });
+    // An event target is not scoped here: only "no scan in N days" is served.
+    if (q.scan && 'eventId' in q.scan)
+      throw new ValidationError('Use noScanDays.', [{ path: 'scan', message: 'Unsupported.' }]);
     return c.json(
       await listPassSummaries(ctx, {
         orgId,
@@ -92,6 +95,9 @@ register(
         ...(holderEmail ? { holderEmail } : {}),
         ...(q.holderState ? { holderState: q.holderState } : {}),
         ...(q.onDevice !== undefined ? { onDevice: q.onDevice } : {}),
+        ...(q.scan && 'noScanDays' in q.scan
+          ? { noScanSince: ctx.clock.now() - q.scan.noScanDays * 86_400_000 }
+          : {}),
         ...(q.q ? { q: q.q } : {}),
         ...(q.cursor ? { cursor: q.cursor } : {}),
         limit: q.limit,
