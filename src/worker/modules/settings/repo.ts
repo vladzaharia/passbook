@@ -4,6 +4,8 @@ import { all, first, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import type { FloorWrite } from '../retention/changes.ts';
+import { addFloorWrites } from '../retention/repo-floors.ts';
 import { orgIdOfScope } from './registry.ts';
 
 export type SettingsAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
@@ -59,7 +61,7 @@ const UPDATE = ['value', 'updated_by', 'updated_at'];
  * 409 `SETTINGS_CHANGED`, a revoked actor or suspended org a 403 (grant `org.settings.update`). A save
  * does not move `access_revision` or `updated_at`, so it never fails a pass create, bulk action or import.
  * The platform scope always needs the admin's session (`platform.settings.update`); an org scope without
- * an authority is refused.
+ * an authority is refused. `floors` ride the same batch: a shortened retention keeps its old days for a week.
  */
 export async function writeScope(
   ctx: ServiceContext,
@@ -70,6 +72,7 @@ export async function writeScope(
   revision: number | null,
   authority?: SettingsAuthority,
   admin?: SettingsAdmin,
+  floors: readonly FloorWrite[] = [],
 ): Promise<boolean> {
   const now = ctx.clock.now();
   const orgId = orgIdOfScope(scope);
@@ -96,6 +99,7 @@ export async function writeScope(
         update: UPDATE,
       });
     for (const key of deletes) g.delete('settings', { where: { scope, key } });
+    addFloorWrites(g, floors, true);
     await g.commit();
     return true;
   }
@@ -112,6 +116,7 @@ export async function writeScope(
     for (const [key, value] of entries)
       g.upsert('settings', COLUMNS, [key, value, by, now], { update: UPDATE });
     for (const key of deletes) g.delete('settings', { where: { key } });
+    addFloorWrites(g, floors, false);
     // Even an empty save verifies its authority in the grant.
     await g.commit();
     return true;

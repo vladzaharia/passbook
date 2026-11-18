@@ -5,6 +5,8 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/e
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
+import { planRetentionChange } from '../retention/changes.ts';
+import { sendShortenNotices } from '../retention/notify.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
 import {
   countEmailOnlyUsers,
@@ -175,6 +177,10 @@ export async function updateSettings(
     }
   }
   if (issues.length) throw new ValidationError('Invalid settings.', issues, 'INVALID_SETTING');
+  // Bounds against the platform maximum, and the floors that delay a shortening (retention keys only).
+  const retention = await planRetentionChange(ctx, scope, upserts, deletes);
+  const [first] = retention.issues;
+  if (first) throw new ValidationError('Invalid settings.', retention.issues, first.code);
 
   const current = orgId === null ? null : await readOrgConfigRevision(ctx.env.DB, orgId);
   if (orgId !== null && current === null)
@@ -191,6 +197,7 @@ export async function updateSettings(
     revision,
     authority,
     admin,
+    retention.floors,
   );
   if (!written) throw new ForbiddenError();
   clearSettingsCache(ctx.env.DB);
@@ -209,8 +216,20 @@ export async function updateSettings(
       action: 'settings.update',
       targetType: 'settings',
       targetId: scope,
-      detail: { changes },
+      detail: {
+        changes,
+        ...(retention.floors.length
+          ? {
+              retentionFloors: retention.floors.flatMap((f) =>
+                f.change.kind === 'set'
+                  ? [{ orgId: f.orgId, cls: f.cls, days: f.change.days, until: f.change.until }]
+                  : [],
+              ),
+            }
+          : {}),
+      },
     });
+  await sendShortenNotices(ctx, retention.notices);
   return after;
 }
 
