@@ -144,7 +144,7 @@ describe('a user-bound tag picks one pass', () => {
     expect(await actTag(scanner.headers, uid, {}, { passId: stranger.id })).toMatchObject({
       kind: 'refused',
       reason: 'not_found',
-      scanId: null,
+      card: null,
     });
 
     const idempotencyKey = key();
@@ -163,7 +163,8 @@ describe('a user-bound tag picks one pass', () => {
     expect(shown.card?.passId).toBe(a.id);
     await startScanCredentialTransfer(kit, a.id);
     const pinned = await actTag(scanner.headers, uid, {}, { passId: a.id });
-    expect(pinned).toMatchObject({ kind: 'refused', reason: 'not_found', scanId: null });
+    expect(pinned).toMatchObject({ kind: 'refused', reason: 'not_found', card: null });
+    expect(await passOf(pinned.scanId)).toBeNull();
   });
 
   it('refuses at commit when the tag is reported lost under the scan', async () => {

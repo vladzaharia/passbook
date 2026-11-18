@@ -125,17 +125,14 @@ export async function actTag(
   const tag: TagAct = {
     ref: plan.ref,
     stmts: plan.stmts,
-    async choose(results, replayed) {
-      if (replayed !== null) return { actor, input: { passId: replayed, method: 'nfc' } };
+    async choose(results) {
       const found = plan.read(results);
-      if (found.stop) {
-        if (found.unknown) await countTagMiss(ctx, actor, plan.ref);
-        return tagRefusal(found.stop);
-      }
+      if (found.stop)
+        return { reason: found.stop, tagId: found.tagId ?? null, miss: !!found.unknown };
       // An override acts on the pass of the scan it overrides: no re-selection.
       const pin = req.input.passId ?? (req.overrideOf ? (found.overridden ?? '') : null);
       view = await chooseTagPass(ctx, actor, found, { pin, actionId: req.actionId });
-      if (!view) return tagRefusal('not_found');
+      if (!view) return { reason: 'not_found', tagId: found.tag.id, miss: false };
       return { actor: view.actor, input: { passId: view.chosen.pass.id, method: 'nfc' } };
     },
   };

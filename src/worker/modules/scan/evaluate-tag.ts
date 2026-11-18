@@ -40,7 +40,7 @@ export interface TagPlan {
 }
 
 export type TagFound =
-  | { stop: ScanReason; unknown?: true }
+  | { stop: ScanReason; unknown?: true; tagId?: string }
   | {
       stop: null;
       tag: TagState & { binding: NonNullable<TagState['binding']> };
@@ -80,32 +80,34 @@ export async function planTagReads(
     ref: own.ref,
     stmts,
     read(results) {
-      if (!tagsOn(results[0])) return { stop: 'tag_not_allowed' };
       const tag = tagStateOf(results[1]);
+      if (!tagsOn(results[0]))
+        return tag ? { stop: 'tag_not_allowed', tagId: tag.id } : { stop: 'tag_not_allowed' };
       if (!tag) {
         if (results[2]?.results?.length)
           return { stop: actor.mode === 'live' ? 'test_pass' : 'live_pass' };
         return { stop: 'not_found', unknown: true };
       }
-      if (tag.kind !== 'uid') return { stop: 'tag_invalid' };
+      const tagId = tag.id;
+      if (tag.kind !== 'uid') return { stop: 'tag_invalid', tagId };
       if (tag.status !== 'active') {
         ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_RETIRED' });
-        return { stop: 'not_found' };
+        return { stop: 'not_found', tagId };
       }
-      if (tag.lostAt !== null) return { stop: 'tag_lost' };
+      if (tag.lostAt !== null) return { stop: 'tag_lost', tagId };
       const binding = tag.binding;
-      if (!binding) return { stop: 'not_found' };
+      if (!binding) return { stop: 'not_found', tagId };
       if (binding.scope === 'user' && !binding.userActive) {
         ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_USER_DISABLED' });
-        return { stop: 'not_found' };
+        return { stop: 'not_found', tagId };
       }
       let candidates = candidatesOf(results[3]);
       if (candidates.some((c) => c.credentialKeysetCommitment !== refs.credentialKeysetCommitment))
-        return { stop: 'not_found' };
+        return { stop: 'not_found', tagId };
       for (const c of candidates) Object.assign(c, refs);
       // A pending transfer is not ownership yet (review-t1 I4); a pass binding keeps today's answer.
       if (binding.scope === 'user') candidates = candidates.filter((c) => !c.transferPending);
-      if (!candidates.length) return { stop: 'not_found' };
+      if (!candidates.length) return { stop: 'not_found', tagId };
       const overridden =
         overrideAt < 0 ? null : (passIdsOf(results[overrideAt]).values().next().value ?? null);
       return {
@@ -238,7 +240,15 @@ export async function chooseTagPass(
     }),
     ...all
       .filter((c) => !tried.includes(c))
-      .map(() => ({ passId: null, templateName: null, state: 'not_here', reason: null }) as const),
+      .map(
+        (c) =>
+          ({
+            passId: null,
+            templateName: null,
+            state: 'not_here',
+            reason: taken.includes(c) ? 'wrong_event' : 'not_accepted',
+          }) as const,
+      ),
   ];
   return choice(pick, passes);
 }

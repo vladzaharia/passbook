@@ -84,7 +84,7 @@ describe('a tag read: step 3', () => {
       reason: 'tag_lost',
       card: null,
     });
-    expect(await actTag(scanner.headers, lost)).toMatchObject({ reason: 'tag_lost', scanId: null });
+    expect(await actTag(scanner.headers, lost)).toMatchObject({ reason: 'tag_lost', card: null });
 
     const live = nextUid();
     await bindTag(live, pass);
@@ -113,6 +113,95 @@ describe('a tag read: step 3', () => {
     });
     expect(outcome).toMatchObject({ kind: 'ready', card: { passId: pass.id } });
     expect(outcome.tag).toBeUndefined();
+  });
+});
+
+describe('a refused tag read at act', () => {
+  it('is recorded with its reason and tag, no pass, and shows in the scanner history', async () => {
+    const scanner = await kit.scanner({ templateIds: [tpl] });
+    const pass = await kit.scanPass(tpl);
+    const lost = nextUid();
+    const lostTag = await bindTag(lost, pass);
+    await run(
+      kit.env.DB,
+      `UPDATE tag_bindings SET ended_at = 1, ended_by_type = 'user', ended_by = 'a', end_cause = 'lost' WHERE id = ?`,
+      [lostTag.bindingId],
+    );
+    await run(kit.env.DB, "UPDATE nfc_tags SET lost_at = 1, lost_by = 'a' WHERE id = ?", [
+      lostTag.tagId,
+    ]);
+    const retired = nextUid();
+    const retiredTag = await bindTag(retired, pass);
+    await run(kit.env.DB, "UPDATE nfc_tags SET status = 'retired', status_at = 1 WHERE id = ?", [
+      retiredTag.tagId,
+    ]);
+    const unknown = nextUid();
+    const answers = [
+      await actTag(scanner.headers, lost),
+      await actTag(scanner.headers, retired),
+      await actTag(scanner.headers, unknown),
+    ];
+    expect(answers.map((a) => [a.kind, a.reason, a.card])).toEqual([
+      ['refused', 'tag_lost', null],
+      ['refused', 'not_found', null],
+      ['refused', 'not_found', null],
+    ]);
+    const rows = await Promise.all(
+      answers.map((a) =>
+        first<{
+          state: string;
+          outcome: string;
+          reason: string;
+          pass_id: null;
+          tag_id: string | null;
+          method: string;
+        }>(
+          kit.env.DB,
+          'SELECT state, outcome, reason, pass_id, tag_id, method FROM scans WHERE id = ?',
+          [a.scanId],
+        ),
+      ),
+    );
+    expect(rows).toEqual([
+      {
+        state: 'done',
+        outcome: 'refused',
+        reason: 'tag_lost',
+        pass_id: null,
+        tag_id: lostTag.tagId,
+        method: 'nfc',
+      },
+      {
+        state: 'done',
+        outcome: 'refused',
+        reason: 'not_found',
+        pass_id: null,
+        tag_id: retiredTag.tagId,
+        method: 'nfc',
+      },
+      {
+        state: 'done',
+        outcome: 'refused',
+        reason: 'not_found',
+        pass_id: null,
+        tag_id: null,
+        method: 'nfc',
+      },
+    ]);
+    const recent = (await (await kit.get(scanner.headers, '/scans?limit=20')).json()) as {
+      items: { scanId: string }[];
+    };
+    const listed = new Set(recent.items.map((item) => item.scanId));
+    expect(answers.every((a) => a.scanId && listed.has(a.scanId))).toBe(true);
+  });
+
+  it('replays a recorded refusal on the same key', async () => {
+    const scanner = await kit.scanner({ templateIds: [tpl] });
+    const uid = nextUid();
+    const idempotencyKey = key();
+    const once = await actTag(scanner.headers, uid, { idempotencyKey });
+    const again = await actTag(scanner.headers, uid, { idempotencyKey });
+    expect(again).toMatchObject({ replay: true, scanId: once.scanId, reason: 'not_found' });
   });
 });
 

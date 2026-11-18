@@ -16,6 +16,7 @@ import {
 } from './act-claim-lifecycle.ts';
 import { overrideEvidenceStmt, StaleScanAuthority } from './act-override.ts';
 import { passRaced, ScanAttemptRaced, staleActorRefusal } from './act-stale-refusal.ts';
+import { recordTagStop } from './act-tag-stop.ts';
 import {
   type CredentialTombstoneSnapshot,
   captureCredentialTombstoneSnapshot,
@@ -77,11 +78,13 @@ export async function act(
     let req: ActRequest;
     if ('tag' in request.input) {
       if (!tag) throw staleScanAuthority();
-      // A replayed scan answers with its stored pass, whatever the tag reads now.
-      const replayed = replayScanFromResult(initial[0])?.passId ?? null;
-      const chosen = await tag.choose(initial.slice(4), replayed);
+      // A replayed scan answers with its stored pass (none for a refused tag), whatever the tag reads now.
+      const replayed = replayScanFromResult(initial[0]);
+      const chosen = replayed
+        ? { actor, input: { passId: replayed.passId ?? '', method: 'nfc' as const } }
+        : await tag.choose(initial.slice(4));
       if (!('input' in chosen))
-        return { outcome: chosen, evaluatedSnapshot: null, credentialContext: captured };
+        return await recordTagStop(ctx, actor, request, hash, captured, chosen);
       actor = chosen.actor;
       req = { ...request, input: chosen.input };
     } else req = { ...request, input: request.input };

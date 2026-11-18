@@ -9,16 +9,22 @@ import { blankOutcome } from './outcome.ts';
 import { tagStateStmt, unknownTagWindow } from './repo-tags-resolve.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 
+/** A tag refused before any pass: recorded with its tag when known; an unknown tag is a miss. */
+export interface TagStop {
+  reason: ScanReason;
+  tagId: string | null;
+  miss: boolean;
+}
+
 /** What `act` needs from a tag read: its reads ride the first batch, then it names the pass. */
 export interface TagAct {
   /** The keyed ref of the tag: the request hash names it, never the UID. */
   ref: string;
   stmts: D1PreparedStatement[];
-  /** The tag's reads, and the pass a replayed key already acted on, to the pass to act on or the answer. */
+  /** The tag's reads to the pass to act on, or the refusal to record. */
   choose(
     results: readonly D1Result[],
-    replayed: string | null,
-  ): Promise<{ actor: ScanActor; input: ScanCodeInput } | ScanOutcome>;
+  ): Promise<{ actor: ScanActor; input: ScanCodeInput } | TagStop>;
 }
 
 const NO_COUNTS: CountsRead = {
