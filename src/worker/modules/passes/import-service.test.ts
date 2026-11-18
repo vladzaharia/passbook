@@ -73,6 +73,8 @@ const draft = async (res: Response) => {
   return PassImportSchema.parse(await res.json());
 };
 const HEAD = 'Name,Points,Email,Id';
+type Page = { items: { id: string; row: number }[]; nextCursor: string | null };
+const pageOf = async (res: Response) => (await res.json()) as Page;
 
 /** A live pass with an external id, bypassing the service for the columns it does not expose. */
 async function existing(
@@ -299,7 +301,7 @@ describe('draft lifecycle', () => {
     expect(checked.emailBudget).toBe(500);
     const again = await api(admin, 'POST', `/${d.id}/check`, { plan: plan({ match: 'none' }) });
     expect(again.status).toBe(200);
-    expect((await (await api(admin, 'GET', `/${d.id}/rows`)).json()).items).toHaveLength(2);
+    expect((await pageOf(await api(admin, 'GET', `/${d.id}/rows`))).items).toHaveLength(2);
   });
 
   it('falls back to mapping when a saved plan names a column the file lacks', async () => {
@@ -366,28 +368,28 @@ describe('draft lifecycle', () => {
     expect(rows?.n).toBe(0);
     const got = PassImportSchema.parse(await (await api(admin, 'GET', `/${d.id}`)).json());
     expect(got.state).toBe('discarded');
-    const list = await (await api(admin, 'GET', '', undefined, `${q}&limit=2`)).json();
+    const list = await pageOf(await api(admin, 'GET', '', undefined, `${q}&limit=2`));
     expect(list.items).toHaveLength(2);
     expect(list.nextCursor).toEqual(expect.any(String));
-    const next = await (
-      await api(admin, 'GET', '', undefined, `${q}&limit=2&cursor=${list.nextCursor}`)
-    ).json();
-    expect(next.items[0].id).not.toBe(list.items[0].id);
+    const next = await pageOf(
+      await api(admin, 'GET', '', undefined, `${q}&limit=2&cursor=${list.nextCursor}`),
+    );
+    expect(next.items[0]?.id).not.toBe(list.items[0]?.id);
   });
 
   it('pages rows 100 at a time and filters by state', async () => {
     const lines = Array.from({ length: 250 }, (_, i) => `N${i},1,,P${i}`);
     const d = await draft(await start([HEAD, ...lines].join('\n')));
-    const page = await (await api(admin, 'GET', `/${d.id}/rows`)).json();
+    const page = await pageOf(await api(admin, 'GET', `/${d.id}/rows`));
     expect(page.items).toHaveLength(100);
     expect(page.items[0]).toMatchObject({ row: 2, action: 'create', state: 'planned' });
-    const last = await (
-      await api(admin, 'GET', `/${d.id}/rows`, undefined, `${q}&cursor=${page.nextCursor}`)
-    ).json();
-    expect(last.items[0].row).toBe(102);
-    const none = await (
-      await api(admin, 'GET', `/${d.id}/rows`, undefined, `${q}&state=done`)
-    ).json();
+    const last = await pageOf(
+      await api(admin, 'GET', `/${d.id}/rows`, undefined, `${q}&cursor=${page.nextCursor}`),
+    );
+    expect(last.items[0]?.row).toBe(102);
+    const none = await pageOf(
+      await api(admin, 'GET', `/${d.id}/rows`, undefined, `${q}&state=done`),
+    );
     expect(none.items).toEqual([]);
   });
 });
@@ -411,7 +413,7 @@ describe('errors.csv', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
     const bytes = new Uint8Array(await res.arrayBuffer());
     expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
-    const lines = new TextDecoder('utf-8', { ignoreBOM: true })
+    const lines = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
       .decode(bytes)
       .slice(1)
       .split('\r\n');
@@ -464,10 +466,10 @@ describe('who may do what', () => {
       404,
       'IMPORT_NOT_FOUND',
     );
-    expect((await (await api(strangerKey, 'GET', '', undefined, '')).json()).items).toEqual([]);
+    expect((await pageOf(await api(strangerKey, 'GET', '', undefined, ''))).items).toEqual([]);
     const testMode = auth.admin({ mode: 'test' });
     await expectProblem(await api(testMode, 'GET', `/${d.id}`), 404, 'IMPORT_NOT_FOUND');
-    expect((await (await api(testMode, 'GET', '')).json()).items).toEqual([]);
+    expect((await pageOf(await api(testMode, 'GET', ''))).items).toEqual([]);
     expect((await api(admin, 'GET', `/${d.id}`)).status).toBe(200);
   });
 

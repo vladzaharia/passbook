@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createBehaviorRegistry } from '../behaviors/registry.ts';
 import venueLocations from '../behaviors/venue-locations/index.ts';
-import type { PassJson, TemplateManifest } from '../types.ts';
+import type { PassJson, Personalization, TemplateManifest } from '../types.ts';
 import {
   applyDefaults,
   checkInput,
@@ -178,7 +178,11 @@ describe('inputs and display', () => {
   it('inputChecker reuses one validator and adds the failed keyword to checkInput issues', () => {
     const check = inputChecker(base);
     expect(check({ name: 'A' })).toEqual([]);
-    for (const input of [{ name: '', tier: 'z' }, { name: 'B' }, { name: 'C', tier: 'q' }])
+    for (const input of [
+      { name: '', tier: 'z' },
+      { name: 'B' },
+      { name: 'C', tier: 'q' },
+    ] as Personalization[])
       expect(check(input).map(({ keyword: _k, ...issue }) => issue)).toEqual(
         checkInput(base, input),
       );
