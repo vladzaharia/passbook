@@ -188,3 +188,16 @@ export function deleteEndpoint(g: Grant, id: string): GrantedStatement {
   assertOrgModeGrant(g);
   return g.delete('webhook_endpoints', { where: { id }, require: 'one', returning: ['id'] });
 }
+
+/** The org and mode a stored endpoint belongs to, for by-id routes that authorize against it. */
+export async function locateEndpoint(
+  db: D1Database,
+  id: string,
+): Promise<{ orgId: string; mode: Mode } | null> {
+  const row = await first<{ org_id: string; mode: Mode }>(
+    db,
+    'SELECT org_id, mode FROM webhook_endpoints WHERE id = ?',
+    [id],
+  );
+  return row ? { orgId: row.org_id, mode: row.mode } : null;
+}
