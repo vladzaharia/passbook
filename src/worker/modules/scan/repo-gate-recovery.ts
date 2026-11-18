@@ -70,7 +70,7 @@ export function releaseObservedGateStmt(
   g: GateSnapshot,
   claimAt: number,
 ): D1PreparedStatement | null {
-  if (g.action_id === ACCESS_GATE) return null;
+  if (g.action_id === ACCESS_GATE && g.scope === ACCESS_GATE && g.kind === 'check_in') return null;
   const inserted =
     g.prev_state === null && g.prev_last_at === null && g.prev_scan_id === null && g.count === 1;
   const updated =
