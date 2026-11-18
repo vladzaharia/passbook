@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { TAG_COPY } from '@/shared/copy/tags.ts';
+import { TAG_COPY, TAG_ERROR_COPY } from '@/shared/copy/tags.ts';
+import { ApiError } from '@/web/lib/errors.ts';
 import { sortScanners } from './scanner-picker.tsx';
 import { bindingFixture, scannerFixture, tagFixture } from './test-fixtures.tsx';
-import { fill, hintSpoken, lastUsedLine, metaLine, worksWithLabel } from './words.ts';
+import { fill, hintSpoken, lastUsedLine, metaLine, tagErrorText, worksWithLabel } from './words.ts';
 
 describe('tag words', () => {
   it('fills marks and drops an optional clause whose value is missing', () => {
@@ -42,5 +43,18 @@ describe('tag words', () => {
     ] as never;
     expect(sortScanners(items, 'b').map((s) => s.id)).toEqual(['b', 'c', 'd', 'a']);
     expect(sortScanners(items, undefined).map((s) => s.id)).toEqual(['c', 'd', 'b', 'a']);
+  });
+
+  it.each(['TAG_UNDO_EXPIRED', 'TAG_PASS_VOIDED', 'TAG_PASS_REMOVED', 'TAG_PASS_EXPIRED'] as const)(
+    'shows the deck sentence for %s',
+    (code) => {
+      const cause = new ApiError({ status: 409, code, detail: 'server words' });
+      expect(tagErrorText(cause)).toBe(TAG_ERROR_COPY[code]);
+    },
+  );
+
+  it('keeps the server sentence for any other error', () => {
+    const cause = new ApiError({ status: 500, code: 'boom', detail: 'server words' });
+    expect(tagErrorText(cause)).toBe(cause);
   });
 });

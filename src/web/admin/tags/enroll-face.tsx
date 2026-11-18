@@ -10,6 +10,14 @@ const D = TAG_COPY.dialog;
 /** After this long without the scanner showing the request, say it may be busy. */
 const SLOW_MS = 5000;
 
+/** The request cannot go on: the pass changed hands or no longer works. */
+const CLOSING = new Set<string>([
+  'TAG_HOLDER_CHANGED',
+  'TAG_PASS_VOIDED',
+  'TAG_PASS_REMOVED',
+  'TAG_PASS_EXPIRED',
+]);
+
 export type EndKind = 'again' | 'back' | 'close';
 
 /** What an ended request says, and which footer follows: Send again, Back, or Close. */
@@ -35,8 +43,8 @@ export function endedOutcome(
     case 'failed':
       if (e.errorCode === 'SCANNER_OFFLINE')
         return { tone: 'warning', title: fill(D.offline, v), kind: 'back' };
-      if (e.errorCode === 'TAG_HOLDER_CHANGED')
-        return { tone: 'danger', title: TAG_ERROR_COPY.TAG_HOLDER_CHANGED, kind: 'close' };
+      if (e.errorCode && CLOSING.has(e.errorCode))
+        return { tone: 'danger', title: TAG_ERROR_COPY[e.errorCode], kind: 'close' };
       return { tone: 'danger', title: fill(D.gone, v), kind: 'back' };
   }
 }
