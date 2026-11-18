@@ -65,15 +65,14 @@ export function listBundleRows(db: D1Database, f: BundleListFilter) {
        AND ${noQuarantinedMembers('bundles.id')}
        AND (? IS NULL OR EXISTS (SELECT 1 FROM bundle_passes bp WHERE bp.bundle_id = bundles.id AND bp.pass_id = ?
          AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = bp.pass_id AND t.state = 'pending')))
-       AND (? IS NULL OR id < ?)
+       ${f.cursor === undefined ? '' : 'AND id < ?'}
      ORDER BY id DESC LIMIT ?`,
     [
       f.mode,
       f.orgId,
       f.passId ?? null,
       f.passId ?? null,
-      f.cursor ?? null,
-      f.cursor ?? null,
+      ...(f.cursor === undefined ? [] : [f.cursor]),
       f.limit,
     ],
   );
