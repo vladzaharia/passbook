@@ -1,0 +1,121 @@
+/* Access and occupancy: the band's direction pill, the direction chip and sheet, the held dock. */
+.scan-dir-pill {
+  display: inline-block;
+  margin-inline-end: 8px;
+  padding: 1px 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--v-on) 16%, transparent);
+  color: var(--v-on);
+  font: 700 13px / 20px var(--pk-font-sans);
+  letter-spacing: 0.02em;
+  vertical-align: 1px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-result[data-phase="rising"] .scan-dir-pill {
+    animation: scan-pill-in 320ms var(--wl-ease-spring, ease-out) 120ms backwards;
+  }
+  .scan-dir-label {
+    display: inline-block;
+    animation: scan-pill-in 220ms var(--wl-ease-spring, ease-out) backwards;
+  }
+  .scan-dir-row[data-checked="true"] .scan-dir-check {
+    animation: scan-check-pop 260ms var(--wl-ease-spring, ease-out) backwards;
+  }
+}
+@keyframes scan-pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+}
+@keyframes scan-check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+.scan-dir-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+.scan-dir-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scan-dir-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 10px 16px;
+  border: 1.5px solid transparent;
+  border-radius: 18px;
+  background: var(--sd-fill-gray);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+.scan-dir-row input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.scan-dir-row[data-checked="true"] {
+  border-color: var(--sd-accent);
+  background: color-mix(in srgb, var(--sd-accent) 12%, var(--sd-fill-gray));
+}
+.scan-dir-row:has(input:focus-visible) {
+  outline: 3px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+.scan-dir-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--scan-card);
+  color: var(--sd-strong);
+}
+.scan-dir-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.scan-dir-name {
+  font: 650 17px / 22px var(--pk-font-sans);
+  color: var(--sd-strong);
+}
+.scan-dir-hint {
+  font: 400 14px / 20px var(--pk-font-sans);
+  color: var(--sd-muted);
+}
+.scan-dir-check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--sd-accent);
+  color: var(--scan-accent-on);
+  opacity: 0;
+}
+.scan-dir-row[data-checked="true"] .scan-dir-check {
+  opacity: 1;
+}
+.scan-dir-lapse {
+  margin: 0;
+  color: var(--sd-muted);
+  font: 400 14px / 20px var(--pk-font-sans);
+}

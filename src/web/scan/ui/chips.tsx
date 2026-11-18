@@ -1,7 +1,9 @@
-import { CloudOff, Keyboard, X } from 'lucide-react';
+import { CloudOff, Keyboard, Users, X } from 'lucide-react';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CountUp } from '../../ui/count-up.tsx';
 import { ModeLabel as ModePill } from '../../ui/layout/mode-label.tsx';
+import { fill } from './copy.ts';
+import { ACCESS_COPY } from './copy-access.ts';
 
 /** Test marker: first in the capsule, on test scanners only; live shows nothing. */
 export function TestChip({ mode }: { mode: Mode | undefined }) {
@@ -44,6 +46,42 @@ export function CountChip({
             `/${capacity}`
           )
         ) : null}
+      </span>
+    </span>
+  );
+}
+
+/** A scanner that counts a place: `42/60` with the people icon. A full place turns amber. */
+export function PlaceChip({
+  name,
+  inNow,
+  capacity,
+  wide,
+}: {
+  name: string;
+  inNow: number;
+  capacity: number | null;
+  wide?: boolean;
+}) {
+  const label = fill(capacity === null ? ACCESS_COPY.place.chip : ACCESS_COPY.place.chipOf, {
+    place: name,
+    in: inNow,
+    capacity: capacity ?? 0,
+  });
+  return (
+    <span
+      className="scan-chip"
+      data-slot="count"
+      data-testid="scan-count"
+      data-place=""
+      data-tone={capacity !== null && inNow >= capacity ? 'amber' : undefined}
+      role="img"
+      aria-label={label}
+    >
+      <Users aria-hidden size={14} />
+      <span aria-hidden>
+        <CountUp value={inNow} />
+        {capacity !== null ? (wide ? ` of ${capacity} in` : `/${capacity}`) : null}
       </span>
     </span>
   );

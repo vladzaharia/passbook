@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
-import { accessBeat } from './access-events.ts';
+import { accessBeat, type ResolvedOutcome } from './access-events.ts';
 import { accessInfo, exit, full, grant, heldIn, heldOut } from './access-fixtures.test-support.ts';
 import {
   accessBeatOf,
@@ -51,7 +51,7 @@ describe('access lines', () => {
     expect(accessLines(fixtureOutcome('ok'), NOW)).toBeNull();
   });
   it('a desk turn says who let them in', () => {
-    const o = { ...grant(), resolvedBy: 'Sam K.' };
+    const o: ResolvedOutcome = { ...grant(), resolvedBy: 'Sam K.' };
     expect(accessLines(o, NOW)).toEqual({ title: 'Access granted', sub: 'Gym · Let in by Sam K.' });
   });
   it('holds use the occupancy copy', () => {
@@ -101,9 +101,10 @@ describe('direction pill, beat and holds', () => {
     expect(directionPill(fixtureOutcome('ok'))).toBeNull();
   });
   it('picks gate, bye and relent', () => {
+    const turned: ResolvedOutcome = { ...grant(), resolvedBy: 'Sam K.' };
     expect(accessBeatOf(grant())).toBe(accessBeat('gate'));
     expect(accessBeatOf(exit())).toBe(accessBeat('bye'));
-    expect(accessBeatOf({ ...grant(), resolvedBy: 'Sam K.' })).toBe(accessBeat('relent'));
+    expect(accessBeatOf(turned)).toBe(accessBeat('relent'));
     expect(accessBeatOf(fixtureOutcome('ok'))).toBeNull();
   });
   it('a turnaround hold offers Tap out or Tap in, never Let in', () => {
