@@ -1,4 +1,5 @@
-import type { PassStyle } from '@/passkit/types.ts';
+import { renameIn } from '@/passkit/template/merge/renames.ts';
+import type { Json, PassStyle, TemplateManifest } from '@/passkit/types.ts';
 import { type AccessOp, applyAccessOp } from './access/ops.ts';
 import type { Source } from './bindings.ts';
 import { setSlotImage } from './images.ts';
@@ -78,6 +79,23 @@ export type Op =
   | ActionsOp
   | AccessOp;
 
+/** Rewrites every reference left to a renamed input, with the merge engine's own walk. */
+function renameReferences(doc: DesignDoc, from: string, to: string): DesignDoc {
+  const renamed = renameIn(
+    {
+      passJson: doc.passJson as Json,
+      manifest: doc.manifest as unknown as TemplateManifest,
+      files: {},
+    },
+    { kind: 'input', from, to },
+  );
+  return {
+    ...doc,
+    passJson: renamed.passJson as DesignDoc['passJson'],
+    manifest: renamed.manifest as unknown as DesignDoc['manifest'],
+  };
+}
+
 export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
   switch (o.op) {
     case 'meta':
@@ -113,7 +131,7 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
     case 'input-set': {
       const next = updateInput(doc, o.name, o.patch);
       return o.patch.name && o.patch.name !== o.name && next !== doc
-        ? renameStampsInput(next, o.name, o.patch.name)
+        ? renameReferences(renameStampsInput(next, o.name, o.patch.name), o.name, o.patch.name)
         : next;
     }
     case 'input-remove':
