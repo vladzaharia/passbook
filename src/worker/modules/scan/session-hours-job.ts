@@ -56,17 +56,27 @@ export async function sweepSessionHours(ctx: ServiceContext): Promise<void> {
     try {
       if (!(await settle(ctx, row, now))) continue;
     } catch (error) {
-      if (!refusal(error)) throw error;
+      // One session the cron cannot write never holds back the rest of the batch.
       refused++;
       ctx.log.warn('scan.session_hours_skip', {
-        code: 'SCAN_SESSION_HOURS_REFUSED',
+        code: refusal(error) ? 'SCAN_SESSION_HOURS_REFUSED' : 'SCAN_SESSION_HOURS_FAILED',
         orgId: row.org_id,
+        sessionId: row.id,
+        ...(refusal(error) ? {} : { error }),
       });
       continue;
     }
     flips++;
-    const devices = await scanningDeviceRows(ctx.env.DB, row.org_id, row.id);
-    await Promise.all(devices.map((d) => kickScreen(ctx, row.org_id, row.mode, d.scanner_id)));
+    try {
+      const devices = await scanningDeviceRows(ctx.env.DB, row.org_id, row.id);
+      await Promise.all(devices.map((d) => kickScreen(ctx, row.org_id, row.mode, d.scanner_id)));
+    } catch (error) {
+      ctx.log.warn('scan.session_hours_kick', {
+        code: 'SCAN_SESSION_HOURS_KICK_FAILED',
+        sessionId: row.id,
+        error,
+      });
+    }
   }
   ctx.log.info('scan.session_hours', { due: rows.length, flips, refused });
 }

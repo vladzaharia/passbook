@@ -176,14 +176,15 @@ async function openNow(ctx: ServiceContext, actor: ScanActor, req: OpenNow) {
   g.add(
     grantedAudit(g, ctx, {
       orgId: row.org_id,
-      actorType: 'scanner',
-      actorId: actor.scanner.id,
+      actorType: actor.actor.type,
+      actorId: actor.actor.id,
       action: AUDIT_ACTION.open,
       targetType: 'scanning_session',
       targetId: row.id,
       detail: {
         by: 'user',
         via: 'scanner',
+        scannerId: actor.scanner.id,
         ...(approver
           ? { approvedBy: approver.id }
           : actor.staff

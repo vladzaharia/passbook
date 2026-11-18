@@ -48,7 +48,8 @@ import {
   restoreObservedScanningSession,
 } from './scanning-workspace-observation.ts';
 import { rawScopeOf, resolveAdminScope } from './scope.ts';
-import { assertSessionOpen } from './session-hours.ts';
+import { retriesCommitted } from './session-closed-retry.ts';
+import { assertSessionOpen, sessionWindow } from './session-hours.ts';
 import { bindingExpired, boundStaff } from './staff-binding.ts';
 
 export type { ScanActor } from './actor.ts';
@@ -296,7 +297,14 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       const parent = captureObservedScanningSession(actor)?.parent;
       if (!parent) throw unauthenticated();
       // A manager signs in while closed, to open early.
-      if (!c.req.path.endsWith('/staff')) assertSessionOpen(parent, ctx.clock.now());
+      if (
+        !c.req.path.endsWith('/staff') &&
+        !(
+          sessionWindow(parent, ctx.clock.now()).open ||
+          (await retriesCommitted(c, ctx.env.DB, actor))
+        )
+      )
+        assertSessionOpen(parent, ctx.clock.now());
     }
     await next();
   });

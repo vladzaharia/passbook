@@ -209,4 +209,31 @@ describe('the session hours cron', () => {
     await sweepSessionHours(ctx);
     expect(await audits(p.id, 'scanning.session_opened')).toHaveLength(0);
   });
+
+  it('skips a session it cannot write and settles the rest of the batch', async () => {
+    const { kit } = fixture;
+    const bad = await session();
+    const good = await session();
+    const { run } = await import('../../platform/db.ts');
+    await run(
+      kit.env.DB,
+      `CREATE TRIGGER zz_hours_boom BEFORE UPDATE OF hours_next_at ON scanning_sessions
+       WHEN OLD.id = '${bad.id}' BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+    );
+    try {
+      const ctx = createJobContext(kit.env, 'test', { clock: kit.clock });
+      const warn = vi.spyOn(ctx.log, 'warn');
+      kit.clock.set(at(3, 8, 1));
+      await sweepSessionHours(ctx);
+      expect(await audits(good.id, 'scanning.session_opened')).toHaveLength(1);
+      expect(await audits(bad.id, 'scanning.session_opened')).toHaveLength(0);
+      expect(
+        warn.mock.calls.some(
+          ([, data]) => (data as { code?: string }).code === 'SCAN_SESSION_HOURS_FAILED',
+        ),
+      ).toBe(true);
+    } finally {
+      await run(kit.env.DB, 'DROP TRIGGER zz_hours_boom');
+    }
+  });
 });

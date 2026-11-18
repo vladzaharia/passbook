@@ -4,7 +4,7 @@ import { all, first, run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
-import { key } from './test-kit.ts';
+import { codeOf, key } from './test-kit.ts';
 
 const WED = '{"wed":["08:00-22:00"]}';
 // June 2026, from the kit's clock: the 3rd is a Wednesday.
@@ -149,6 +149,74 @@ describe('admission by session hours', () => {
   });
 });
 
+describe('closed sessions, more doors', () => {
+  const doAct = (s: ScannerFixture, input: unknown, idempotencyKey = key()) =>
+    f.kit.post(s.headers, '/actions', {
+      idempotencyKey,
+      input,
+      clientTs: f.kit.clock.now(),
+      actionId: 'auto',
+    });
+
+  it('refuses an action while closed', async () => {
+    const { s } = await session(WED);
+    const { pass } = await f.pass();
+    f.kit.clock.set(at(3, 23));
+    const res = await doAct(s, codeOf(pass));
+    expect(res.status).toBe(403);
+    expect(await code(res)).toBe('SCANNING_SESSION_CLOSED');
+  });
+
+  it('lets staff sign in while closed, and still refuses their action', async () => {
+    const door = await f.kit.staff('door');
+    const s = await f.desk({ settings: { staffSignIn: true } });
+    const id = await f.workspace(
+      f.kit,
+      s,
+      { templateIds: [f.tpl] },
+      { ...DEFAULT_SETTINGS, staffSignIn: true },
+    );
+    await run(f.kit.env.DB, 'UPDATE scanning_sessions SET hours = ? WHERE id = ?', [WED, id]);
+    f.kit.clock.set(at(3, 23));
+    const res = await f.kit.post(s.headers, '/staff', { staffId: door.id, pin: door.pin });
+    expect(res.status).toBe(200);
+    const { pass } = await f.pass();
+    expect(await code(await doAct(s, codeOf(pass)))).toBe('SCANNING_SESSION_CLOSED');
+  });
+
+  it('answers a retry of a scan committed before close with its stored result', async () => {
+    const { s } = await session(WED);
+    const { pass } = await f.pass();
+    f.kit.clock.set(at(3, 21, 59));
+    const retryKey = key();
+    const first = await doAct(s, codeOf(pass), retryKey);
+    expect(first.status).toBe(200);
+    f.kit.clock.set(at(3, 22, 1));
+    const again = await doAct(s, codeOf(pass), retryKey);
+    expect(again.status).toBe(200);
+    expect(((await again.json()) as { replay?: boolean }).replay).toBe(true);
+    expect(await code(await doAct(s, codeOf(pass)))).toBe('SCANNING_SESSION_CLOSED');
+  });
+
+  it('fails a scan as stale when a Close now lands between the guard and the epoch capture', async () => {
+    const { s, id } = await session(WED);
+    f.kit.clock.set(at(3, 9));
+    const { result, fired } = await beforeBatch(
+      f.kit.env,
+      /FROM scanning_sessions\s+WHERE id=\? AND org_id=\? AND mode=\?/i,
+      (db) =>
+        run(db, 'UPDATE scanning_sessions SET hold = ?, updated_at = updated_at + 1 WHERE id = ?', [
+          JSON.stringify({ state: 'closed', until: at(10, 8) }),
+          id,
+        ]),
+      () => probe(s),
+    );
+    expect(fired).toBe(true);
+    expect(result.status).toBeGreaterThanOrEqual(400);
+    expect(result.status).not.toBe(200);
+  });
+});
+
 describe('Open now at the door', () => {
   async function closed() {
     const m = await f.manager();
@@ -207,6 +275,24 @@ describe('Open now at the door', () => {
     expect(ok.status).toBe(200);
     const row = (await audits(id))[0];
     expect(JSON.parse(row?.detail ?? '{}')).toMatchObject({ approvedBy: mgr.id });
+  });
+
+  it('does not take a Desk or Door code as the manager code', async () => {
+    const { s: desk, id } = await session(WED);
+    f.kit.clock.set(at(3, 6));
+    for (const role of ['desk', 'door'] as const) {
+      const staff = await f.kit.staff(role);
+      const res = await f.kit.post(desk.headers, '/session/open-now', {
+        approval: { staffId: staff.id, pin: staff.pin },
+      });
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    }
+    const held = await first(
+      f.kit.env.DB,
+      'SELECT hold FROM scanning_sessions WHERE id = ? AND hold IS NOT NULL',
+      [id],
+    );
+    expect(held).toBeNull();
   });
 
   it('refuses an open that runs past 24 hours, and one on an open session', async () => {
