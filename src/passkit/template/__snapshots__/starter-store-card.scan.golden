@@ -1,0 +1,60 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "amount": {
+        "max": 500,
+        "presets": [
+          5,
+          10,
+          20
+        ]
+      },
+      "confirm": true,
+      "confirmAbove": 100,
+      "id": "charge",
+      "input": "balance",
+      "kind": "take",
+      "label": "Charge",
+      "minRole": "desk",
+      "notify": false,
+      "repeat": "always"
+    },
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "amount": {
+        "max": 500,
+        "presets": [
+          10,
+          25,
+          50
+        ]
+      },
+      "confirm": true,
+      "id": "top_up",
+      "input": "balance",
+      "kind": "add",
+      "label": "Top up",
+      "minRole": "desk",
+      "notify": false,
+      "repeat": "always"
+    },
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": true,
+      "id": "set_balance",
+      "input": "balance",
+      "kind": "set",
+      "label": "Set balance",
+      "minRole": "manager",
+      "notify": false,
+      "repeat": "always"
+    }
+  ],
+  "lookup": {
+    "input": "cardNumber"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "board",
+      "kind": "check_in",
+      "label": "Board",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "once"
+    }
+  ],
+  "display": {
+    "header": {
+      "subtitle": "{{inputs.origin}} to {{inputs.destination}}"
+    },
+    "holder": "{{pass.title}}",
+    "panels": [
+      {
+        "icon": "plane",
+        "id": "p_ticket",
+        "preset": {
+          "id": "ticket",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_seat",
+            "items": [
+              {
+                "id": "i_seat",
+                "label": "Seat",
+                "value": "{{inputs.seat}}"
+              },
+              {
+                "id": "i_gate",
+                "label": "Gate",
+                "value": "{{inputs.gate}}"
+              }
+            ],
+            "size": "big",
+            "slot": "seat",
+            "type": "columns"
+          },
+          {
+            "id": "r_group",
+            "label": "Group",
+            "slot": "type",
+            "type": "field",
+            "value": "{{inputs.boardingGroup}}"
+          }
+        ],
+        "title": "Flight"
+      }
+    ],
+    "v": 1
+  },
+  "lookup": {
+    "input": "ticketId"
+  },
+  "window": {
+    "earlyMinutes": 30,
+    "from": "boardsAt",
+    "until": "departsAt"
+  }
+}

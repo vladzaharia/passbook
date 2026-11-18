@@ -1,4 +1,4 @@
-import { run } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletCredentialKeysetProof,
@@ -15,7 +15,7 @@ export async function ackCleanWalletPlaceholder(
   p: WalletScope & WalletCredentialKeysetProof & { instanceId: string; generation: number },
 ): Promise<boolean> {
   if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
-  const result = await run(
+  const row = await first(
     db,
     `DELETE FROM wallet_provider_instance_dirty AS d
     WHERE d.instance_id = ? AND d.generation = ?
@@ -26,7 +26,8 @@ export async function ackCleanWalletPlaceholder(
           AND i.lifecycle IN ('blocked', 'ready') AND i.retirement_requested_at IS NULL
           AND pass.deleted_at IS NULL AND pass.test_data_quarantined = 0
           AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
-          AND ${walletNoProviderArtifactsSql('i')})`,
+          AND ${walletNoProviderArtifactsSql('i')})
+    RETURNING instance_id`,
     [
       p.instanceId,
       p.generation,
@@ -37,7 +38,7 @@ export async function ackCleanWalletPlaceholder(
       p.credentialKeysetCommitment,
     ],
   );
-  return result.changes === 1;
+  return row !== null;
 }
 
 /** A missing Samsung region is not a provider attempt; rotate it without consuming retries. */
@@ -56,13 +57,14 @@ export async function deferWalletSyncOperation(
     delayMs > 300_000
   )
     return false;
-  const result = await run(
+  const row = await first(
     db,
     `UPDATE wallet_provider_instance_operations AS op SET next_attempt_at = ?
     WHERE op.instance_id = ? AND op.version = ? AND op.state IN ('pending', 'retry')
       AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = op.instance_id
         AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND ${walletInstanceOperationCurrentSql('i', 'op', '?')}
-        AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql})`,
+        AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql})
+    RETURNING id`,
     [
       now + delayMs,
       op.instanceId,
@@ -76,5 +78,5 @@ export async function deferWalletSyncOperation(
       op.credentialKeysetCommitment,
     ],
   );
-  return result.changes === 1;
+  return row !== null;
 }

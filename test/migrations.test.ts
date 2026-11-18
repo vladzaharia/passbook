@@ -48,6 +48,9 @@ const TABLES = [
   'idempotency_keys',
   'counters',
   'workflow_runs',
+  'pass_imports',
+  'pass_import_rows',
+  'pass_import_mappings',
 ];
 
 async function setup() {

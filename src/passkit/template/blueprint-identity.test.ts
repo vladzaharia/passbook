@@ -151,7 +151,10 @@ describe('upgrade impact', () => {
     const b = new Map(walk(after));
     const changed = [...new Set([...a.keys(), ...b.keys()])].filter((k) => a.get(k) !== b.get(k));
     // Serial, token and the organization name are server-supplied and fixed in the fixture.
-    const unexpected = changed.filter((k) => !IDENTITY_KEYS.includes(k.slice(1)));
+    // A coupon's barcode is now the server's scan code (PS-02).
+    const allowed =
+      slug === 'starter-coupon' ? [...IDENTITY_KEYS, 'barcodes/0/message'] : IDENTITY_KEYS;
+    const unexpected = changed.filter((k) => !allowed.includes(k.slice(1)));
     expect(unexpected).toEqual([]);
     expect(changed.length).toBeGreaterThan(0);
     // Wallet alerts only for a changed field value that carries a changeMessage: none changes.

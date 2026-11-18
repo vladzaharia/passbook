@@ -1,6 +1,8 @@
 import { createFileRoute, useRouterState } from '@tanstack/react-router';
 import { AuditPage } from '../../../admin/audit/audit-page.tsx';
 import { parseAuditSearch } from '../../../admin/audit/audit-search.ts';
+import { OrgAuditPage } from '../../../admin/audit/org-audit-page.tsx';
+import { useSession } from '../../../lib/session.ts';
 
 function urlId(search: string, key: string, parsed: unknown): string | undefined {
   const values = new URLSearchParams(search).getAll(key);
@@ -26,10 +28,15 @@ export const Route = createFileRoute('/admin/audit/')({
         urlId(state.location.searchStr, 'targetId', state.location.search.targetId),
     });
     const navigate = Route.useNavigate();
+    const { isAdmin } = useSession();
+    // A member's log is their organization's; the route keeps its orgId across filter changes.
+    const Page = isAdmin ? AuditPage : OrgAuditPage;
     return (
-      <AuditPage
+      <Page
         search={{ ...search, filterOrgId, targetId }}
-        onSearch={(next) => void navigate({ search: next })}
+        onSearch={(next) =>
+          void navigate({ search: isAdmin ? next : (prev) => ({ ...next, orgId: prev.orgId }) })
+        }
       />
     );
   },

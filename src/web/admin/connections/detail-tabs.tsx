@@ -15,6 +15,8 @@ import {
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '../../ui/index.ts';
+import { fromRows, type MappingRow, type SourceField, toRows } from '../mapping/mapping.ts';
+import { MappingEditor, targetsOf } from '../mapping/mapping-editor.tsx';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplate } from '../templates/api.ts';
 import { useConnectionActions, useConnector } from './api.ts';
@@ -24,8 +26,6 @@ import {
   lifecycleError,
   lifecycleToPatch,
 } from './lifecycle-fields.tsx';
-import { fromRows, type MappingRow, type SourceField, toRows } from './mapping.ts';
-import { MappingEditor, targetsOf } from './mapping-editor.tsx';
 import { TemplateSelect } from './template-select.tsx';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;

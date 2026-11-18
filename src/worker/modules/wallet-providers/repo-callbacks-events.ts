@@ -35,7 +35,8 @@ function claimStatement(
     db,
     `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)
     SELECT ?, ?, ? ${stateJoins} WHERE ${gate.sql}
-    ON CONFLICT DO NOTHING`,
+    ON CONFLICT DO NOTHING
+    RETURNING token_hash`,
     [claim.tokenHash, claim.claimId, claim.expiresAt, claim.now, ...gate.params],
   );
 }
@@ -67,7 +68,7 @@ export async function claimSamsungFetch(
       [claim.now, snapshot.referenceId, claim.tokenHash, claim.claimId],
     ),
   ]);
-  return results[1]?.meta.changes === 1;
+  return results[1]?.results.length === 1;
 }
 
 /** Store untrusted raw bytes encrypted only after authenticated replay-safe admission. */
@@ -85,21 +86,23 @@ export async function claimSamsungReceipt(
     (receipt.countryHint !== null && !/^[A-Z]{2}$/.test(receipt.countryHint))
   )
     return false;
+  const [receiptInsert, ...effects] = receiptStatements(
+    db,
+    snapshot,
+    claim,
+    receipt,
+    liveGate(snapshot, claim.now, rawPassJson),
+    false,
+  );
   const results = await batch(db, [
     stmt(
       db,
       `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ? AND ${credentialRefKeysetSql}`,
       [claim.now, snapshot.credentialKeysetCommitment],
     ),
+    receiptInsert as D1PreparedStatement,
     claimStatement(db, snapshot, claim, rawPassJson),
-    ...receiptStatements(
-      db,
-      snapshot,
-      claim,
-      receipt,
-      liveGate(snapshot, claim.now, rawPassJson),
-      false,
-    ),
+    ...effects,
   ]);
-  return results[1]?.meta.changes === 1 && results[2]?.meta.changes === 1;
+  return results[1]?.results.length === 1 && results[2]?.results.length === 1;
 }

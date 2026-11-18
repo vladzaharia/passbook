@@ -11,6 +11,8 @@ import {
   useUnsavedChangesGuard,
   Wizard,
 } from '../../ui/index.ts';
+import { fromRows, type MappingRow } from '../mapping/mapping.ts';
+import { MappingEditor, targetsOf } from '../mapping/mapping-editor.tsx';
 import { markCreated } from '../passes/created.tsx';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplate } from '../templates/api.ts';
@@ -18,8 +20,6 @@ import { useConnector, useConnectors } from './api.ts';
 import { prefixed } from './config-schema.ts';
 import { CreatedStep } from './created-step.tsx';
 import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fields.tsx';
-import { fromRows, type MappingRow } from './mapping.ts';
-import { MappingEditor, targetsOf } from './mapping-editor.tsx';
 import { TemplateSelect } from './template-select.tsx';
 import { TestModeNote } from './test-mode-note.tsx';
 import type { TestOutcome } from './test-result.tsx';

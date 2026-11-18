@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { createBehaviorRegistry } from '../behaviors/registry.ts';
 import venueLocations from '../behaviors/venue-locations/index.ts';
-import type { PassJson, TemplateManifest } from '../types.ts';
-import { applyDefaults, checkInput, projectDisplay, validateManifest } from './manifest.ts';
+import type { PassJson, Personalization, TemplateManifest } from '../types.ts';
+import {
+  applyDefaults,
+  checkInput,
+  inputChecker,
+  projectDisplay,
+  validateManifest,
+} from './manifest.ts';
 
 const base: TemplateManifest = {
   schema: 1,
@@ -167,6 +173,27 @@ describe('inputs and display', () => {
     expect(checkInput(base, { name: 'A' })).toEqual([]);
     const issues = checkInput(base, { name: '', tier: 'z' });
     expect(issues.map((i) => i.path).sort()).toEqual(['name', 'tier']);
+  });
+
+  it('inputChecker reuses one validator and adds the failed keyword to checkInput issues', () => {
+    const check = inputChecker(base);
+    expect(check({ name: 'A' })).toEqual([]);
+    for (const input of [
+      { name: '', tier: 'z' },
+      { name: 'B' },
+      { name: 'C', tier: 'q' },
+    ] as Personalization[])
+      expect(check(input).map(({ keyword: _k, ...issue }) => issue)).toEqual(
+        checkInput(base, input),
+      );
+    expect(
+      check({ name: '', tier: 'z' })
+        .map((i) => [i.path, i.keyword])
+        .sort(),
+    ).toEqual([
+      ['name', 'minLength'],
+      ['tier', 'enum'],
+    ]);
   });
 
   it('projects display fields and search text', () => {

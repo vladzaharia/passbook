@@ -368,7 +368,7 @@ exports[`resolveWalletView over every starter and baked template > starter-board
 exports[`resolveWalletView over every starter and baked template > starter-coupon 1`] = `
 {
   "barcodes": [
-    "pdf417 SAVE-0001",
+    "pdf417 SNAPSHOT-SCAN-CODE",
   ],
   "colors": {
     "background": "#b54000",
