@@ -47,13 +47,15 @@ export async function createSamsungRuntimeOffer(
   });
 }
 
-type SamsungRuntimeUpdateInput = Omit<SamsungUpdateInput, 'now'> & {
+type SamsungRuntimeUpdateInput = Omit<SamsungUpdateInput, 'now' | 'requestId'> & {
   /** Recheck the caller's claim, pass and approved projection before each provider request. */
   assertCurrent?: () => Promise<void>;
   /** Persist every raw provider response encrypted before resolving. */
   onProviderResponse: WalletRuntimeResponseSink;
   /** Required only for DELETED and bound to the claimed revoke and exact reference. */
   retirement?: WalletRetirementClaim;
+  /** Required for every other state: the current operation whose promoted reference is refreshed. */
+  refresh?: { instanceId: string; operationVersion: number };
 };
 
 /** Per-card update only; cancellation of an entire event has a different authority boundary. */
@@ -66,18 +68,39 @@ export async function sendSamsungRuntimeUpdate(
   const scope = copyRuntimeScope(inputScope);
   if (typeof input.onProviderResponse !== 'function')
     throw new WalletRuntimeError('provider_failure');
-  const { assertCurrent, onProviderResponse, retirement: inputClaim, ...update } = input;
+  const {
+    assertCurrent,
+    onProviderResponse,
+    retirement: inputClaim,
+    refresh: inputRefresh,
+    ...update
+  } = input;
   const claim = inputClaim ? { ...inputClaim } : undefined;
   if ((update.state === 'DELETED') !== (claim !== undefined)) throw runtimeAccountUnavailable();
   if (typeof update.refId !== 'string' || !/^[A-Za-z0-9_-]{32}$/.test(update.refId))
     throw runtimeAccountUnavailable();
+  const refHash = await sha256Hex(update.refId);
   const retirement = claim
-    ? await runtimeRetirementPurpose(claim, {
-        provider: 'samsung',
-        refHash: await sha256Hex(update.refId),
-      })
+    ? await runtimeRetirementPurpose(claim, { provider: 'samsung', refHash })
     : undefined;
-  const account = await runtimeSamsungAccount(ctx, scope, retirement);
+  let purpose: RuntimeRefreshPurpose | typeof retirement = retirement;
+  if (!claim) {
+    if (
+      !inputRefresh ||
+      typeof inputRefresh.instanceId !== 'string' ||
+      !inputRefresh.instanceId.trim() ||
+      !Number.isSafeInteger(inputRefresh.operationVersion) ||
+      inputRefresh.operationVersion < 1
+    )
+      throw runtimeAccountUnavailable();
+    purpose = {
+      kind: 'refresh',
+      instanceId: inputRefresh.instanceId,
+      refHash,
+      operationVersion: inputRefresh.operationVersion,
+    };
+  }
+  const account = await runtimeSamsungAccount(ctx, scope, purpose);
   const call = runtimeExecution(
     ctx,
     scope,
@@ -87,10 +110,14 @@ export async function sendSamsungRuntimeUpdate(
       stage: 'samsung-update',
       sink: onProviderResponse,
     },
-    retirement,
+    purpose,
   );
   await call.finish(() =>
-    sendSamsungUpdate(account, { ...update, now: ctx.clock.now() }, call.fetcher),
+    sendSamsungUpdate(
+      account,
+      { ...update, now: ctx.clock.now(), requestId: ctx.ids.id().replaceAll('-', '') },
+      call.fetcher,
+    ),
   );
 }
 

@@ -70,7 +70,9 @@ export async function runSamsungWalletProviderOperation(
         attempt,
         assertCurrent,
         onProviderResponse,
-        ...(op.kind === 'revoke' ? { retirement } : {}),
+        ...(op.kind === 'revoke'
+          ? { retirement }
+          : { refresh: { instanceId: op.instanceId, operationVersion: op.version } }),
       });
       if (
         !(await finishSamsungSyncTarget(ctx, claim, item.countryCode, {

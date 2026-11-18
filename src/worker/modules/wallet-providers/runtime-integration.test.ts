@@ -597,6 +597,60 @@ describe('existing provider instance runtime', () => {
     expect(calls).toHaveLength(1);
   }, 30_000);
 
+  it('sends UPDATED for a promoted reference under the refresh purpose, with a ctx-issued trace id', async () => {
+    const f = await runtimeSamsungLegacyFixture('refresh');
+    const calls: { url: string; requestId: string | null; body: unknown }[] = [];
+    vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({
+        url: String(url),
+        requestId: new Headers(init?.headers).get('x-request-id'),
+        body: JSON.parse(String(init?.body)),
+      });
+      return new Response('private provider response', { status: 200 });
+    });
+    const update = {
+      cc2: 'GB',
+      type: 'loyalty',
+      refId: f.refId,
+      state: 'UPDATED' as const,
+      attempt: 1,
+      onProviderResponse: f.onProviderResponse,
+    };
+    const refresh = { instanceId: f.instanceId, operationVersion: f.version };
+    // A refresh is bound to the exact instance, operation version and reference.
+    for (const input of [
+      { ...update },
+      { ...update, refresh: { ...refresh, instanceId: 'other-instance' } },
+      { ...update, refresh: { ...refresh, operationVersion: f.version + 1 } },
+      { ...update, refresh: { ...refresh, operationVersion: 0 } },
+      { ...update, refId: 'z'.repeat(32), refresh },
+    ])
+      await expect(sendSamsungRuntimeUpdate(f.kit.ctx, f.scope, input)).rejects.toMatchObject({
+        code: 'account_unavailable',
+      });
+    expect(calls).toHaveLength(0);
+    await expect(
+      sendSamsungRuntimeUpdate(f.kit.ctx, f.scope, { ...update, refresh }),
+    ).resolves.toBeUndefined();
+    expect(calls).toEqual([
+      {
+        url: `https://tsapi-card.walletsvc.samsung.com/GB/wltex/cards/${f.samsung.cardId}/updates`,
+        requestId: expect.stringMatching(/^[0-9a-f]{32}$/),
+        body: { card: { type: 'loyalty', data: [{ refId: f.refId, state: 'UPDATED' }] } },
+      },
+    ]);
+    // An unpromoted reference never refreshes.
+    const unpromoted = await runtimeSamsungLegacyFixture('refresh', false);
+    await expect(
+      sendSamsungRuntimeUpdate(unpromoted.kit.ctx, unpromoted.scope, {
+        ...update,
+        refId: unpromoted.refId,
+        refresh: { instanceId: unpromoted.instanceId, operationVersion: unpromoted.version },
+      }),
+    ).rejects.toMatchObject({ code: 'account_unavailable' });
+    expect(calls).toHaveLength(1);
+  }, 30_000);
+
   it('fails closed when the original singleton disappears before a retirement request', async () => {
     const f = await runtimeSamsungLegacyFixture('retirement');
     await run(f.kit.env.DB, 'DROP TRIGGER credential_ref_keyset_no_delete');
