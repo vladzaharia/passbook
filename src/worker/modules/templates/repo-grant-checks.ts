@@ -5,6 +5,8 @@ import {
   APPLE_ADAPTER_REVISION,
   AUDIENCE_POLICY_REVISION,
 } from './release-content.ts';
+import type { ApprovalKind } from './repo-releases.ts';
+import { reviews, soleReviewerSql } from './repo-sole-reviewer.ts';
 import { templateVisibleSql } from './repo-visibility.ts';
 
 const capabilities = JSON.stringify(APPLE_ADAPTER_CAPABILITIES);
@@ -41,14 +43,18 @@ export const candidateTemplate = (
   );
 
 /**
- * A candidate of the actor's org that this reviewer may approve: same hash, an independent reviewer
- * (not the candidate or version author), its version still the author's, and an active template.
+ * A candidate of the actor's org that this reviewer may approve: same hash, its version still the
+ * author's, and an active template. A `peer` approval needs a reviewer who is neither the candidate
+ * nor the version author; a `test` one a Test-mode candidate; a `sole` one the org's only eligible
+ * reviewer with no reviewer removed in the last 7 days (counted here, at commit).
  */
 export const approvable = (
   candidateId: string,
   candidateHash: string,
   reviewerId: string,
   membershipId: string,
+  kind: ApprovalKind,
+  now: number,
 ): Check =>
   check(
     'lineage',
@@ -57,8 +63,18 @@ export const approvable = (
       JOIN template_versions v ON v.template_id = c.template_id AND v.version = c.version
       WHERE c.id = ${p(candidateId)} AND c.candidate_hash = ${p(candidateHash)} AND c.org_id = a.org_id
         AND EXISTS (SELECT 1 FROM org_memberships m WHERE m.id = ${p(membershipId)} AND m.user_id = ${p(reviewerId)})
-        AND c.author_id != ${p(reviewerId)}
-        AND (c.version_author_id IS NULL OR c.version_author_id != ${p(reviewerId)})
+        AND ${
+          kind === 'peer'
+            ? `c.author_id != ${p(reviewerId)}
+          AND (c.version_author_id IS NULL OR c.version_author_id != ${p(reviewerId)})`
+            : kind === 'test'
+              ? `c.mode = 'test'`
+              : soleReviewerSql(
+                  'c.org_id',
+                  () => p(reviewerId),
+                  () => p(now),
+                )
+        }
         AND v.created_by IS c.version_author_id AND t.status = 'active')`,
   );
 
@@ -119,8 +135,14 @@ export const publishable = (f: PublishFacts): Check =>
         AND t.origin = 'uploaded' AND t.status = ${p(f.expectedStatus)}
         AND v.created_by IS c.version_author_id
         AND (t.status = 'active' OR (c.mode = 'live' AND t.org_id = c.org_id))
-        AND ap.reviewer_id != c.author_id
-        AND (c.version_author_id IS NULL OR ap.reviewer_id != c.version_author_id)
+        AND ${
+          f.action === 'release'
+            ? `(ap.kind != 'sole' OR NOT EXISTS (SELECT 1 FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.created_at > ap.created_at AND ${reviews('m')}))`
+            : '1'
+        }
+        AND (ap.kind != 'peer' OR (ap.reviewer_id != c.author_id
+          AND (c.version_author_id IS NULL OR ap.reviewer_id != c.version_author_id)))
         AND c.provider = 'apple' AND c.adapter_revision = ${p(APPLE_ADAPTER_REVISION)}
         AND c.adapter_capabilities = ${p(capabilities)}
         AND c.audience_policy_revision = ${p(AUDIENCE_POLICY_REVISION)}

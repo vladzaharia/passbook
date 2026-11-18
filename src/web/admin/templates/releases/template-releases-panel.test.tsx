@@ -220,9 +220,7 @@ describe('template release panel', () => {
   ] as const)('prevents self-review by the %s', async (_label, currentUserId) => {
     const server = releaseServer({ candidates: [candidate()] });
     mountPanel({ currentUserId });
-    expect(
-      await screen.findByText(/You cannot review a candidate or version you authored/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/You wrote this version/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Approve candidate for Version 2' })).toBeDisabled();
     expect(server.requests.filter((request) => request.method === 'POST')).toHaveLength(0);
   });
@@ -477,5 +475,68 @@ describe('template release panel', () => {
     });
     expect(approve).toBeEnabled();
     expect(server.requests.filter((request) => request.method === 'POST')).toHaveLength(0);
+  });
+});
+
+describe('self-approval and promote', () => {
+  it('approves alone only after a confirm, and badges the approval', async () => {
+    const user = userEvent.setup();
+    const server = releaseServer({ candidates: [candidate()] });
+    mountPanel({ currentUserId: 'candidate-author' });
+    await user.click(
+      await screen.findByRole('button', { name: 'Approve candidate for Version 2 alone' }),
+    );
+    expect(server.requests.filter((request) => request.method === 'POST')).toHaveLength(0);
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent('No one else can review in this organization.');
+    await user.click(within(dialog).getByRole('button', { name: 'Approve as sole reviewer' }));
+    await waitFor(() =>
+      expect(server.requests.find((request) => request.method === 'POST')?.body).toMatchObject({
+        alone: true,
+      }),
+    );
+    expect(await screen.findByText('Self-approved')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Publish candidate for Version 2' }),
+    ).not.toBeDisabled();
+  });
+
+  it('shows the chip on the release that used a self-approval', async () => {
+    releaseServer({
+      candidates: [
+        candidate({ approvals: [approval({ kind: 'sole', reviewerId: 'candidate-author' })] }),
+      ],
+      active: release({ approvalId: 'approval-1', candidateId: 'candidate-1' }),
+      history: [release({ approvalId: 'approval-1', candidateId: 'candidate-1' })],
+    });
+    mountPanel();
+    const history = await screen.findByRole('list', { name: 'Release history' });
+    expect(within(history).getByText('Self-approved')).toBeInTheDocument();
+  });
+
+  it('names the next step when someone else must review', async () => {
+    releaseServer({ candidates: [candidate()] });
+    mountPanel({
+      currentUserId: 'candidate-author',
+      capabilities: ['templates:read', 'templates:author'],
+    });
+    expect(await screen.findByText(/Invite one from Members/)).toBeInTheDocument();
+  });
+
+  it('promotes a version tried in Test, with the same version', async () => {
+    const user = userEvent.setup();
+    const server = releaseServer({ promotable: ['version-2'] });
+    mountPanel();
+    await user.click(await screen.findByRole('button', { name: 'Promote Version 2 to Live' }));
+    await waitFor(() =>
+      expect(
+        server.requests.find((request) => request.url.pathname.endsWith('/promote'))?.body,
+      ).toEqual({
+        orgId: 'org-1',
+        mode: 'live',
+        provider: 'apple',
+        version: 'version-2',
+      }),
+    );
   });
 });

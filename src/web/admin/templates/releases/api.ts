@@ -5,6 +5,8 @@ import {
   ApproveTemplateCandidateSchema,
   type CreateTemplateCandidate,
   CreateTemplateCandidateSchema,
+  type PromoteTemplate,
+  PromoteTemplateSchema,
   type PublishTemplateRelease,
   PublishTemplateReleaseSchema,
   type RollbackTemplateRelease,
@@ -86,6 +88,17 @@ export function useReleaseActions(templateId: string, scope: TemplateReleaseScop
     onSuccess: refresh,
     onError,
   });
+  const promote = useMutation({
+    mutationFn: (body: PromoteTemplate) =>
+      api.post(
+        `${base}/candidates/promote`,
+        TemplateCandidateSchema,
+        PromoteTemplateSchema.parse(body),
+        opts,
+      ),
+    onSuccess: refresh,
+    onError,
+  });
   const approve = useMutation({
     mutationFn: ({ candidateId, body }: { candidateId: string; body: ApproveTemplateCandidate }) =>
       api.post(
@@ -119,5 +132,5 @@ export function useReleaseActions(templateId: string, scope: TemplateReleaseScop
     onSuccess: refresh,
     onError,
   });
-  return { create, approve, publish, rollback };
+  return { create, promote, approve, publish, rollback };
 }

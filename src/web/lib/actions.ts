@@ -159,6 +159,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'tag.update': a('Tag renamed', I.edit, 'info'),
   'tag.unbind': a('Tag removed', I.delete, 'warning'),
   'template.activate': a('Template activated', CircleCheck, 'success'),
+  'template.approved_alone': a('Template version self-approved', CircleCheck, 'warning'),
   'template.approve': a('Template version approved', CircleCheck, 'success'),
   'template.candidate': a('Template candidate created', ENTITY.version.icon, 'info'),
   'template.archive': a('Template archived', Archive, 'neutral'),

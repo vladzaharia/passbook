@@ -7,7 +7,7 @@ import { errorMessage } from '../../../lib/errors.ts';
 import { Callout, Card, CardBody, ErrorState, Skeleton, toast } from '../../../ui/index.ts';
 import { useReleaseActions, useReleaseLists } from './api.ts';
 import { CandidateSection } from './candidates.tsx';
-import { eligibleApproval } from './eligibility.ts';
+import { eligibleApproval, selfApproved } from './eligibility.ts';
 import { ReleaseDialog, type ReleaseOperation } from './release-dialog.tsx';
 import { ReleaseHistory } from './release-history.tsx';
 import type { TemplateReleasesPanelProps } from './types.ts';
@@ -32,6 +32,7 @@ function ScopedPanel({
   const [error, setError] = useState<string>();
   const busy =
     actions.create.isPending ||
+    actions.promote.isPending ||
     actions.approve.isPending ||
     actions.publish.isPending ||
     actions.rollback.isPending;
@@ -53,12 +54,21 @@ function ScopedPanel({
       setError(errorMessage(cause));
     }
   }
-  async function approve(candidate: TemplateCandidate) {
+  async function promote(version: string) {
+    setError(undefined);
+    try {
+      await actions.promote.mutateAsync({ orgId, mode: 'live', provider: 'apple', version });
+      toast.success('Candidate created from Test');
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+  async function approve(candidate: TemplateCandidate, alone: boolean) {
     setError(undefined);
     try {
       await actions.approve.mutateAsync({
         candidateId: candidate.id,
-        body: { ...scope, candidateHash: candidate.candidateHash },
+        body: { ...scope, candidateHash: candidate.candidateHash, ...(alone ? { alone } : {}) },
       });
       toast.success('Candidate approved');
     } catch (cause) {
@@ -119,10 +129,13 @@ function ScopedPanel({
   const pending = candidates.data.items.filter(
     (candidate) => !releasedCandidates.has(candidate.id),
   );
+  const selfApprovals = new Set(
+    candidates.data.items.flatMap((c) => c.approvals.filter(selfApproved).map((a) => a.id)),
+  );
   const nextStep = pending.some(eligibleApproval)
     ? 'A publisher can release an approved candidate below.'
     : pending.length
-      ? 'A different reviewer must approve a candidate, then a publisher releases it.'
+      ? 'A different reviewer must approve a candidate, or the only reviewer approves their own. Then a publisher releases it.'
       : 'Create a candidate from a saved version, get it approved, then publish it.';
   const blocked =
     templateOrigin === 'baked'
@@ -144,6 +157,7 @@ function ScopedPanel({
         releases={releases.data.items}
         versions={versions}
         generation={generation}
+        selfApprovals={selfApprovals}
         blockedMessage={blocked}
         allowHeadRollback={templateStatus === 'archived' && releasable}
         canPublish={canPublish}
@@ -162,7 +176,9 @@ function ScopedPanel({
         editable={editable}
         releasable={releasable}
         busy={busy}
+        promotable={releases.data.promotable ?? []}
         onCreate={create}
+        onPromote={promote}
         onApprove={approve}
         onPublish={(candidate, approval) =>
           setOperation({ kind: 'publish', candidate, approval, generation })
