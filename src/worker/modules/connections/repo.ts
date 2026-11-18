@@ -35,6 +35,8 @@ export interface ConnectionRow {
   /** The replaced webhook secret, accepted until `webhookPrevUntil`. */
   webhookPrevCredentialId: string | null;
   webhookPrevUntil: number | null;
+  /** Keyed hash of a pasted recipe secret; unique platform-wide. */
+  webhookSecretFp: string | null;
   mapping: Record<string, MappingEntry> | null;
   defaultTemplateId: string | null;
   holderEmailField: string | null;
@@ -70,6 +72,7 @@ const COLUMNS = {
   webhookCredentialId: 'webhook_credential_id',
   webhookPrevCredentialId: 'webhook_prev_credential_id',
   webhookPrevUntil: 'webhook_prev_until',
+  webhookSecretFp: 'webhook_secret_fp',
   mapping: 'mapping',
   defaultTemplateId: 'default_template_id',
   holderEmailField: 'holder_email_field',
@@ -115,6 +118,7 @@ const INSERT_COLUMNS = [
   'webhook_credential_id',
   'webhook_prev_credential_id',
   'webhook_prev_until',
+  'webhook_secret_fp',
   'mapping',
   'default_template_id',
   'holder_email_field',
@@ -145,6 +149,7 @@ function insertValues(row: ConnectionRow): SqlValue[] {
     row.webhookCredentialId,
     row.webhookPrevCredentialId,
     row.webhookPrevUntil,
+    row.webhookSecretFp,
     row.mapping ? JSON.stringify(row.mapping) : null,
     row.defaultTemplateId,
     row.holderEmailField,
