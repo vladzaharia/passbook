@@ -74,7 +74,7 @@ describe('deliveries', () => {
       replays: 0,
     });
     // Opaque and per tenant: not the platform-wide sequence.
-    expect(p1.json.nextCursor).toMatch(/^[1-9]\d+$/);
+    expect(p1.json.nextCursor).toMatch(/^[A-Za-z0-9_-]{22}$/);
     expect(p1.json.nextCursor).not.toBe(String(seqs[1]));
     const p2 = await api.call(
       'GET',
