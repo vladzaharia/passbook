@@ -9,6 +9,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { assertPassTakesTag } from './pass-state.ts';
 import { tagsEnabled } from './policy.ts';
 import { activeBinding, bindingTarget, lostBinding, passFacts } from './repo-tag-bindings.ts';
 import { tagTarget, tagView } from './repo-tags.ts';
@@ -147,6 +148,7 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     pass.ownerUserId === last.holderOwner;
   if (!last || !pass || !holderBack)
     throw new ConflictError('The pass changed hands. Start again.', 'TAG_HOLDER_CHANGED');
+  await assertPassTakesTag(ctx, a.orgId, pass.id);
   const plan = {
     tagId: id,
     newTag: null,

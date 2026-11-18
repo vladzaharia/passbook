@@ -48,10 +48,29 @@ export async function tagScanFixture(options: { enabled?: boolean } = {}) {
     return { scanner, staff };
   }
 
+  const userById = async (id: string) => {
+    const row = await first<{ primary_email: string }>(
+      db,
+      'SELECT primary_email FROM users WHERE id = ?',
+      [id],
+    );
+    return { id, primaryEmail: row?.primary_email ?? '' };
+  };
+
   async function pass(
-    options: { owner?: boolean; template?: string; input?: Record<string, unknown> } = {},
+    options: {
+      owner?: boolean;
+      /** An existing owner, so one person can hold passes on several templates. */
+      ownerId?: string;
+      template?: string;
+      input?: Record<string, unknown>;
+    } = {},
   ) {
-    const user = options.owner ? await makeUser(kit.fx) : null;
+    const user = options.ownerId
+      ? await userById(options.ownerId)
+      : options.owner
+        ? await makeUser(kit.fx)
+        : null;
     const p = await kit.scanPass(
       options.template ?? tpl,
       options.input ?? {},

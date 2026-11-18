@@ -3,6 +3,7 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { assertPassTakesTag } from './pass-state.ts';
 import { tagsEnabled } from './policy.ts';
 import { activeBinding, type BindingRow, type PassFacts, passFacts } from './repo-tag-bindings.ts';
 import { orgTagCount, type TagRow, tagByRef, tagView } from './repo-tags.ts';
@@ -120,6 +121,7 @@ export async function bindTag(
         [],
         'TAG_NO_ACCOUNT',
       );
+    await assertPassTakesTag(ctx, orgId, pass.id);
     const tag = await tagByRef(ctx.env.DB, orgId, mode, ref);
     const active = tag ? await activeBinding(ctx.env.DB, tag.id) : null;
     const decision = decideBind(tag, active, pass, req);

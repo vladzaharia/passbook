@@ -28,6 +28,7 @@ import {
 } from './resolve-candidates.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
+import { candidateTakesTag } from './tag-assurance.ts';
 
 /** Additional request-local reads sharing the admission snapshot transaction. */
 export interface EvaluationReadPlan {
@@ -137,6 +138,8 @@ async function evaluateObserved(
   const one = matched[0];
   if (!one) return stop('refused', 'wrong_event');
   if (matched.length > 1) return stop('refused', 'ambiguous');
+  // The release read at commit may differ from the one the tag was chosen on.
+  if (actor.tag && !candidateTakesTag(ctx, one)) return stop('refused', 'tag_not_allowed');
   if (one.orgRevision == null || one.templateRevision == null || !hasScanPolicy(one))
     return stop('refused', 'not_found', { stale: true });
   const found = await foundOf(ctx, one, actor);

@@ -37,7 +37,7 @@ import { guardMiss } from './repo-undo-approval-guard.ts';
 import { ROLE_RANK } from './rules.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
-import { candidateTakesTag } from './tag-assurance.ts';
+import { candidateTakesTag, skippedTitles, TAG_ASSURANCE } from './tag-assurance.ts';
 import { cardPass, tagRights, tagUid } from './tags-inspect.ts';
 
 type BindRequest = z.infer<typeof ScanTagBindRequestSchema>;
@@ -166,11 +166,8 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       : { code: req.card.code, method: req.card.method };
   const { candidate, refs } = await cardPass(ctx, actor, input);
   const { pass } = candidate;
-  if (!candidateTakesTag(candidate))
-    throw new ConflictError(
-      "This pass needs a secure tag. Basic tags can't be assigned to it.",
-      'TAG_ASSURANCE_LOW',
-    );
+  if (!candidateTakesTag(ctx, candidate))
+    throw new ConflictError('This pass needs a secure tag.', 'TAG_ASSURANCE_LOW');
   const card = await cardFacts(db, pass.templateId, pass.ownerUserId);
   const ownerAccount = pass.ownerUserId !== null && card.ownerActive;
   if (req.binding === 'user' && !ownerAccount)
@@ -195,6 +192,10 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     holderName: card.holderName,
     photoUrl: null,
   };
+  const skipped =
+    req.binding === 'user' && pass.ownerUserId
+      ? await skippedTitles(ctx, orgId, mode, pass.ownerUserId)
+      : [];
   const staff = actor.staff;
   const by: TagActor = staff ? { type: 'staff', id: staff.id } : { type: 'scanner', id: scannerId };
 
@@ -221,12 +222,12 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     ) => ({
       status,
       hint: tag?.hint ?? hint,
-      assurance: 'basic' as const,
+      assurance: TAG_ASSURANCE,
       scope: req.binding,
       bindingId,
       card: summary,
       ownerAccount,
-      skipped: [],
+      skipped,
       warnings,
       lostAt: tag?.lostAt ?? null,
       undoUntil,
