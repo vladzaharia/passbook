@@ -37,6 +37,7 @@ export const eventSnapshot = z.strictObject({
   timeZone: z.string(),
   capacity: z.number().nullable(),
   reentry: z.boolean(),
+  hardLimit: z.boolean().optional(),
   note: z.string().nullable(),
   updatedAt: TimestampSchema,
   archivedAt: TimestampSchema.nullable(),

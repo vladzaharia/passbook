@@ -259,6 +259,13 @@
       "eventName",
       "name",
       "orderRef"
+    ],
+    "group": "get-in",
+    "aliases": [
+      "time slot",
+      "admission",
+      "timed entry",
+      "tour"
     ]
   },
   "behaviors": [

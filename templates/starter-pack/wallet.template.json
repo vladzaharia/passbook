@@ -183,6 +183,13 @@
     "search": [
       "name",
       "packId"
+    ],
+    "group": "save-spend",
+    "aliases": [
+      "punch card",
+      "class pack",
+      "multi-pass",
+      "prepaid"
     ]
   },
   "behaviors": [

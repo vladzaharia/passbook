@@ -79,7 +79,8 @@ it('takes few round trips: a read batch, settings and one commit that carries th
   const plain = counted();
   await undo(plain.ctx, s.actor, s.targetId, { idempotencyKey: key() });
   expect(plain.calls.filter((c) => c === 'batch')).toHaveLength(2);
-  expect(hops(plain.calls)).toBeLessThanOrEqual(2);
+  // Plus PS-18's deferred term check (waitUntil, after the answer): one pass read.
+  expect(hops(plain.calls)).toBeLessThanOrEqual(3);
 
   const approved = await full();
   kit.clock.advance(11 * 60_000);
@@ -89,7 +90,7 @@ it('takes few round trips: a read batch, settings and one commit that carries th
     approval: { staffId: approved.manager.id, pin: approved.manager.pin },
   });
   // Plus the PIN reservation and its refund.
-  expect(hops(withApproval.calls)).toBeLessThanOrEqual(4);
+  expect(hops(withApproval.calls)).toBeLessThanOrEqual(5);
 });
 
 async function full() {

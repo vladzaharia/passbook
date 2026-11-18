@@ -5,7 +5,7 @@
     {
       "altText": "CARD-0001",
       "format": "PKBarcodeFormatQR",
-      "message": "CARD-0001",
+      "message": "SNAPSHOT-SCAN-CODE",
       "messageEncoding": "iso-8859-1"
     }
   ],

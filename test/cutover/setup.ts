@@ -43,16 +43,20 @@ export const TABLES = [
   'pass_events',
 ];
 
+const effectiveSql = `SELECT (${effectiveReleaseIdSql({
+  templateIdSql: 'p.template_id',
+  orgIdSql: 'p.org_id',
+  modeSql: 'p.mode',
+  providerSql: "'apple'",
+})}) AS id FROM passes p WHERE p.id = ?`;
+
 export const effective = (db: D1Database, passId: string) =>
+  db.prepare(effectiveSql).bind(passId).first<{ id: string | null }>();
+
+/** The same read on the 0069 schema: approvals have no `kind` yet, and 0093 makes every one of them `peer`. */
+const effectiveBefore0093 = (db: D1Database, passId: string) =>
   db
-    .prepare(
-      `SELECT (${effectiveReleaseIdSql({
-        templateIdSql: 'p.template_id',
-        orgIdSql: 'p.org_id',
-        modeSql: 'p.mode',
-        providerSql: "'apple'",
-      })}) AS id FROM passes p WHERE p.id = ?`,
-    )
+    .prepare(effectiveSql.replaceAll("apr.kind != 'peer'", "'peer' != 'peer'"))
     .bind(passId)
     .first<{ id: string | null }>();
 
@@ -82,7 +86,8 @@ export async function runCutover(
   await migrateForward(db);
   const { plan, sql } = await runBootstrap(db, OWNER, NOW);
   const beforeSync: Record<string, string | null> = {};
-  for (const p of legacy.passes) beforeSync[p.id] = (await effective(db, p.id))?.id ?? null;
+  for (const p of legacy.passes)
+    beforeSync[p.id] = (await effectiveBefore0093(db, p.id))?.id ?? null;
   const env = {
     ...(await makeEnv({ DB: db, ASSETS: legacy.assets })),
     CF_VERSION: { id: 'cutover-worker', tag: '', timestamp: new Date(NOW - 1000).toISOString() },

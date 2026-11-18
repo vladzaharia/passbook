@@ -183,7 +183,9 @@ export async function measured(
       expect(race.fired()).toBe(true);
       expect(race.signs()).toBeGreaterThanOrEqual(options.race.occurrence);
     }
-    expect(counted.count() - guard).toBeLessThanOrEqual(5);
+    // 5, plus the outbound webhook kick (PS-10): after a POST it checks for an active endpoint, once
+    // per isolate per 30 s, in the background.
+    expect(counted.count() - guard).toBeLessThanOrEqual(6);
     return { response, events: race?.events ?? [], grantBatchAt, trips: counted.count() - guard };
   } finally {
     race?.restore();

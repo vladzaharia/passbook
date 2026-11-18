@@ -1556,7 +1556,7 @@ exports[`Google compilers over every starter and baked template > starter-boardi
       "alternateText": "BOARD-0001",
       "renderEncoding": "UTF_8",
       "type": "PDF_417",
-      "value": "BOARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -1758,7 +1758,7 @@ exports[`Google compilers over every starter and baked template > starter-boardi
       "alternateText": "BOARD-0001",
       "renderEncoding": "UTF_8",
       "type": "PDF_417",
-      "value": "BOARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -2597,7 +2597,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
       "alternateText": "TICKET-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "TICKET-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "locations": [
       {
@@ -2798,7 +2798,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
       "alternateText": "TICKET-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "TICKET-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -3073,7 +3073,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
       "alternateText": "TICKET-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "TICKET-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "locations": [
       {
@@ -4667,7 +4667,7 @@ exports[`Google compilers over every starter and baked template > starter-poster
       "alternateText": "ID-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "ID-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -4837,7 +4837,7 @@ exports[`Google compilers over every starter and baked template > starter-poster
       "alternateText": "ID-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "ID-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -4998,7 +4998,7 @@ exports[`Google compilers over every starter and baked template > starter-stamp-
       "alternateText": "CARD-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "CARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardNumber": "4111 0000 0000 0001",
     "pin": "4821",
@@ -5083,7 +5083,7 @@ exports[`Google compilers over every starter and baked template > starter-stamp-
       "alternateText": "CARD-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "CARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -5242,7 +5242,7 @@ exports[`Google compilers over every starter and baked template > starter-stamp-
       "alternateText": "CARD-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "CARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "state": "ACTIVE",
     "textModulesData": [
@@ -5343,7 +5343,7 @@ exports[`Google compilers over every starter and baked template > starter-stamp-
       "alternateText": "CARD-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "CARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -5489,7 +5489,7 @@ exports[`Google compilers over every starter and baked template > starter-store-
       "alternateText": "CARD-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "CARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardNumber": "4111 0000 0000 0001",
     "pin": "4821",
@@ -5564,7 +5564,7 @@ exports[`Google compilers over every starter and baked template > starter-store-
       "alternateText": "CARD-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "CARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {
@@ -5712,7 +5712,7 @@ exports[`Google compilers over every starter and baked template > starter-store-
       "alternateText": "CARD-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "CARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "secondaryLoyaltyPoints": {
       "balance": {
@@ -5812,7 +5812,7 @@ exports[`Google compilers over every starter and baked template > starter-store-
       "alternateText": "CARD-0001",
       "renderEncoding": "UTF_8",
       "type": "QR_CODE",
-      "value": "CARD-0001",
+      "value": "SNAPSHOT-SCAN-CODE",
     },
     "cardTitle": {
       "defaultValue": {

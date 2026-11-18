@@ -49,6 +49,8 @@ const SELECT: Record<PlaceTable, string> = {
     FROM bundle_token_seals t WHERE t.bundle_id > ? AND t.kek_version < ? ORDER BY t.bundle_id LIMIT ?`,
   join_link_seals: `SELECT t.link_id AS pk, t.kek_version, t.wrapped_dek, t.org_id AS x1, NULL AS x2, NULL AS x3, NULL AS x4
     FROM join_link_seals t WHERE t.link_id > ? AND t.kek_version < ? ORDER BY t.link_id LIMIT ?`,
+  webhook_endpoint_secrets: `SELECT t.id AS pk, t.kek_version, t.wrapped_dek, t.org_id AS x1, t.endpoint_id AS x2, t.mode AS x3, NULL AS x4
+    FROM webhook_endpoint_secrets t WHERE t.id > ? AND t.kek_version < ? ORDER BY t.id LIMIT ?`,
 };
 
 export function selectEnvelopes(
@@ -177,6 +179,13 @@ const CAS: Record<PlaceTable, (db: D1Database, m: Move) => D1PreparedStatement> 
       db,
       `UPDATE join_link_seals SET kek_version = ?, wrapped_dek = ?
        WHERE link_id = ? AND kek_version = ? AND wrapped_dek = ? RETURNING link_id`,
+      params(m),
+    ),
+  webhook_endpoint_secrets: (db, m) =>
+    stmt(
+      db,
+      `UPDATE webhook_endpoint_secrets SET kek_version = ?, wrapped_dek = ?
+       WHERE id = ? AND kek_version = ? AND wrapped_dek = ? RETURNING id`,
       params(m),
     ),
 };

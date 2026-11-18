@@ -43,6 +43,12 @@ const SCAN_CODED = new Set([
   'starter-booking',
   'starter-pickup',
   'starter-permit',
+  // PS-28: every blueprint's barcode is the scan code (the ID card keeps its number, PS-19).
+  'starter-event-ticket',
+  'starter-boarding-pass',
+  'starter-poster-generic',
+  'starter-stamp-card',
+  'starter-store-card',
 ]);
 
 const groups = (pass: PassJson, style: string) =>

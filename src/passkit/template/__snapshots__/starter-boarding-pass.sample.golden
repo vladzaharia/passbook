@@ -5,7 +5,7 @@
     {
       "altText": "BOARD-0001",
       "format": "PKBarcodeFormatPDF417",
-      "message": "BOARD-0001",
+      "message": "SNAPSHOT-SCAN-CODE",
       "messageEncoding": "iso-8859-1"
     }
   ],

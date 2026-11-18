@@ -221,6 +221,13 @@
       "name",
       "orderNo",
       "code"
+    ],
+    "group": "prove-collect",
+    "aliases": [
+      "order",
+      "collection",
+      "click and collect",
+      "ready"
     ]
   },
   "messaging": {

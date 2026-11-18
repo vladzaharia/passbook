@@ -285,6 +285,13 @@
     "search": [
       "name",
       "bookingRef"
+    ],
+    "group": "get-in",
+    "aliases": [
+      "appointment",
+      "reservation",
+      "table",
+      "time slot"
     ]
   },
   "behaviors": [

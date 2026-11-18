@@ -178,16 +178,19 @@ describe('schema 1 and the Google publish path', () => {
         candidateHash: candidate.candidateHash,
       }),
     ).rejects.toMatchObject({ code: 'TEMPLATE_SELF_APPROVAL' });
-    await expect(
-      run(
-        S.env.DB,
-        `INSERT INTO template_approvals (id, candidate_id, candidate_hash, reviewer_id, created_at,
-          credential_keyset_commitment)
-        SELECT ?, c.id, c.candidate_hash, c.author_id, ?, c.credential_keyset_commitment
-        FROM template_candidates c WHERE c.id = ?`,
-        [S.f.ids.id(), S.clock.now(), candidate.id],
-      ),
-    ).rejects.toThrow('stale provider projection source');
+    // Either approval trigger refuses it: 0093's (no sole or test approval outside Apple) or 0038's.
+    for (const kind of ['peer', 'sole', 'test'])
+      await expect(
+        run(
+          S.env.DB,
+          `INSERT INTO template_approvals (id, candidate_id, candidate_hash, reviewer_id, created_at,
+            credential_keyset_commitment, kind)
+          SELECT ?, c.id, c.candidate_hash, c.author_id, ?, c.credential_keyset_commitment, ?
+          FROM template_candidates c WHERE c.id = ?`,
+          [S.f.ids.id(), S.clock.now(), kind, candidate.id],
+        ),
+        kind,
+      ).rejects.toThrow(/invalid template approval|stale provider projection source/);
     expect(
       await approveProjectionCandidate(kit.ctx, kit.reviewer, kit.templateId, candidate.id, {
         ...kit.scope,
