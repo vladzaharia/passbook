@@ -3714,7 +3714,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     "header": {
       "defaultValue": {
         "language": "en",
-        "value": "7 of 10 washes",
+        "value": "10 washes",
       },
     },
     "heroImage": {
@@ -3795,7 +3795,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     "provider": "PassBook",
     "redemptionChannel": "BOTH",
     "reviewStatus": "UNDER_REVIEW",
-    "title": "7 of 10 washes",
+    "title": "10 washes",
     "titleImage": {
       "contentDescription": {
         "defaultValue": {
@@ -3908,7 +3908,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     "provider": "PassBook",
     "redemptionChannel": "BOTH",
     "reviewStatus": "UNDER_REVIEW",
-    "title": "7 of 10 washes",
+    "title": "10 washes",
   },
   "items": [
     {

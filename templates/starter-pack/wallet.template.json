@@ -120,7 +120,7 @@
       "to": {
         "field": "pack"
       },
-      "value": "{{pass.counters.uses.left}} of {{pass.counters.uses.size}} {{unit}}"
+      "value": "{{size}} {{unit}}"
     },
     {
       "to": {

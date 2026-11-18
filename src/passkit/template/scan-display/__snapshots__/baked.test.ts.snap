@@ -2069,9 +2069,9 @@ exports[`starter-pack default display > matches its snapshot, and so does each s
       "rows": [
         {
           "id": "r_field1",
-          "label": "Valid until",
+          "label": "Pack",
           "type": "field",
-          "value": "{{fields.expires}}",
+          "value": "{{fields.pack}}",
         },
       ],
       "title": "Details",
@@ -2175,10 +2175,10 @@ exports[`starter-pack default display > matches its snapshot, and so does each s
         {
           "icon": null,
           "id": "r_field1",
-          "label": "Valid until",
+          "label": "Pack",
           "strong": false,
           "type": "field",
-          "value": "Sample expires",
+          "value": "Sample pack",
         },
       ],
       "title": "Details",
@@ -2239,10 +2239,10 @@ exports[`starter-pack default display > matches its snapshot, and so does each s
         {
           "icon": null,
           "id": "r_field1",
-          "label": "Valid until",
+          "label": "Pack",
           "strong": false,
           "type": "field",
-          "value": "Sample expires",
+          "value": "Sample pack",
         },
       ],
       "title": "Details",

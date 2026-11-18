@@ -2,8 +2,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { scanOf } from '../../shared/scan-defaults.ts';
 import { CONTRAST_MIN, contrastRatio } from '../index.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
-import type { SigningMaterial } from '../types.ts';
+import type { PassJson, SigningMaterial } from '../types.ts';
 import { buildBaked, freezeNow, loadBaked } from './baked-fixtures.ts';
+import { defaultScanDisplay } from './scan-display/defaults.ts';
 
 let material: SigningMaterial;
 beforeAll(async () => {
@@ -68,14 +69,23 @@ describe('first blueprint set', () => {
     expect(refill).toMatchObject({ kind: 'add', input: 'left', minRole: 'desk', confirm: true });
   });
 
-  it('Pack text follows the uses counter', async () => {
+  it('Pack shows what is left from the counter and the pack size apart', async () => {
     const sample = await SAMPLE('starter-pack');
     const fields = (p: Awaited<ReturnType<typeof buildBaked>>['passJson']) =>
       [...(p.coupon?.headerFields ?? []), ...(p.coupon?.primaryFields ?? [])].map((f) => f.value);
-    const some = await buildBaked('starter-pack', material, { ...sample, left: 7, size: 10 });
-    expect(fields(some.passJson)).toEqual([7, '7 of 10 washes']);
-    const none = await buildBaked('starter-pack', material, { ...sample, left: 0, size: 12 });
-    expect(fields(none.passJson)).toEqual([0, '0 of 12 washes']);
+    const build = async (over: Record<string, unknown>) =>
+      fields((await buildBaked('starter-pack', material, { ...sample, ...over })).passJson);
+    expect(await build({ left: 7, size: 10 })).toEqual([7, '10 washes']);
+    // A refill raises left past size: never "15 of 10".
+    expect(await build({ left: 15, size: 10 })).toEqual([15, '10 washes']);
+    expect(await build({ left: 0, size: 10 })).toEqual([0, '10 washes']);
+    expect((await build({ left: 5, size: 0 }))[1]).not.toContain(' of ');
+  });
+
+  it('Pack default scan display keeps the Pack row', async () => {
+    const { template } = await loadBaked('starter-pack', { strips: false });
+    const display = defaultScanDisplay(template.manifest, template.passJson as PassJson);
+    expect(JSON.stringify(display)).toContain('"label":"Pack"');
   });
 
   it('flags a frozen or past-due Membership and takes guests from the count', async () => {

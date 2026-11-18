@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "b93a9ef00e2bdcf5b4e0c49b2493c43b33becee4";
+export const BAKED_BUILD_HASH = "19bcb1d0c6dc1e19675db60eceec6acfb15b0547";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -6561,7 +6561,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-pack",
     "slug": "starter-pack",
-    "version": "62c7f9746c07ba51",
+    "version": "a454f3c26d6c32f1",
     "name": "Pack",
     "description": "Ten washes, classes or trips. Use one.",
     "org": null,
@@ -6691,7 +6691,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "field": "pack"
           },
-          "value": "{{pass.counters.uses.left}} of {{pass.counters.uses.size}} {{unit}}"
+          "value": "{{size}} {{unit}}"
         },
         {
           "to": {
@@ -6955,7 +6955,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4168214438,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/62c7f9746c07ba51/en.lproj/pass.strings"
+          "path": "/templates/starter-pack/a454f3c26d6c32f1/en.lproj/pass.strings"
         }
       },
       {
@@ -6969,7 +6969,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/62c7f9746c07ba51/icon@2x.png"
+          "path": "/templates/starter-pack/a454f3c26d6c32f1/icon@2x.png"
         }
       },
       {
@@ -6983,7 +6983,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/62c7f9746c07ba51/icon@3x.png"
+          "path": "/templates/starter-pack/a454f3c26d6c32f1/icon@3x.png"
         }
       },
       {
@@ -6997,7 +6997,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/62c7f9746c07ba51/logo@2x.png"
+          "path": "/templates/starter-pack/a454f3c26d6c32f1/logo@2x.png"
         }
       },
       {
@@ -7011,7 +7011,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/62c7f9746c07ba51/logo@3x.png"
+          "path": "/templates/starter-pack/a454f3c26d6c32f1/logo@3x.png"
         }
       },
       {
@@ -7025,7 +7025,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/62c7f9746c07ba51/strip@2x.png"
+          "path": "/templates/starter-pack/a454f3c26d6c32f1/strip@2x.png"
         }
       },
       {
@@ -7039,7 +7039,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/62c7f9746c07ba51/strip@3x.png"
+          "path": "/templates/starter-pack/a454f3c26d6c32f1/strip@3x.png"
         }
       }
     ],

@@ -43,10 +43,9 @@
     ],
     "primaryFields": [
       {
-        "changeMessage": "%@ left.",
         "key": "pack",
         "label": "Pack",
-        "value": "7 of 10 washes"
+        "value": "10 washes"
       }
     ],
     "secondaryFields": [
