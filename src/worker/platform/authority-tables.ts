@@ -115,6 +115,14 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_import_mappings: { org: 'org_id', conflict: ['org_id', 'template_id'] },
   // The bundle counterpart (0087).
   bundle_remac_marks: { org: null, edges: [edge('bundle_id', 'bundles')] },
+  // Trust pack (0101). Floors ride the settings grant; holds are placed and released by org:manage or a
+  // platform admin; receipts and anchors are bookkeeping of platform jobs (raw-write allowlist).
+  retention_floors: { org: 'org_id', conflict: ['org_id', 'class'] },
+  retention_holds: { org: 'org_id' },
+  retention_receipts: { org: 'org_id' },
+  retention_receipt_anchors: { org: 'org_id' },
+  data_requests: { org: 'org_id' },
+  data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */
