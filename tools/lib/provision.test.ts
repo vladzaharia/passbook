@@ -41,6 +41,9 @@ describe('provision plan', () => {
     expect(commands).toContain(
       'r2 bucket lifecycle add wallet-passes expire-uploads uploads/ --expire-days 1',
     );
+    expect(commands).toContain(
+      'r2 bucket lock add wallet-passes retention-receipts retention/receipts/ --retention-days 2190 --force',
+    );
     for (const secret of LEGACY_SECRETS)
       expect(commands).toContain(`secret delete ${secret} --name wallet`);
   });
@@ -54,7 +57,7 @@ describe('provision plan', () => {
 });
 
 describe('provision run', () => {
-  function harness(existing: { d1: boolean; secrets: string[] }) {
+  function harness(existing: { d1: boolean; secrets: string[]; lockList?: string }) {
     const calls: string[] = [];
     let config = CONFIG;
     let d1 = existing.d1;
@@ -66,6 +69,7 @@ describe('provision run', () => {
       if (line === 'd1 create wallet-platform') d1 = true;
       if (line.startsWith('secret list'))
         return JSON.stringify(existing.secrets.map((name) => ({ name, type: 'secret_text' })));
+      if (line === 'r2 bucket lock list wallet-passes') return existing.lockList ?? '';
       return '';
     };
     const go = () =>
@@ -98,5 +102,19 @@ describe('provision run', () => {
     const h = harness({ d1: true, secrets: [] });
     h.go();
     expect(h.calls).not.toContain('d1 create wallet-platform');
+  });
+
+  it('adds the receipt lock once', () => {
+    const add = (calls: string[]) => calls.filter((c) => c.startsWith('r2 bucket lock add'));
+    const fresh = harness({ d1: true, secrets: [] });
+    fresh.go();
+    expect(add(fresh.calls)).toHaveLength(1);
+    const locked = harness({
+      d1: true,
+      secrets: [],
+      lockList: 'retention-receipts  retention/receipts/  2190 days',
+    });
+    locked.go();
+    expect(add(locked.calls)).toHaveLength(0);
   });
 });

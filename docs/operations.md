@@ -69,10 +69,15 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
 6. **Provision** (owner only): `node tools/provision.ts` prints the wrangler commands;
    `--apply` runs them. It creates the D1 database `wallet-platform` (id written to
    `wrangler.jsonc`), the queues and the R2 bucket, adds the R2 lifecycle rule (`uploads/` expires
-   after one day) and deletes the legacy secrets `ADMIN_TOKEN`, `SIGNER_HENRYS_CERTIFICATE` and
-   `SIGNER_HENRYS_PRIVATE_KEY` from the `wallet` Worker. Each step probes first; a rerun skips what
-   exists. `npm run deploy -- --apply` (step 9) then applies all migrations.
-7. **R2 lifecycle**: done by step 6.
+   after one day) and the receipt lock, and deletes the legacy secrets `ADMIN_TOKEN`,
+   `SIGNER_HENRYS_CERTIFICATE` and `SIGNER_HENRYS_PRIVATE_KEY` from the `wallet` Worker. Each step
+   probes first; a rerun skips what exists, so rerun it after a release that adds a queue.
+   `npm run deploy -- --apply` (step 9) then applies all migrations.
+7. **R2 lifecycle and receipt lock**: done by step 6. The lock rule `retention-receipts` keeps
+   every object under `retention/receipts/` for 2190 days (the D1 receipt retention): no delete or
+   overwrite, the Worker's included. Retention verification relies on it. Anyone allowed to edit R2
+   bucket settings can remove it (`npx wrangler r2 bucket lock remove wallet-passes --name retention-receipts`); while it
+   exists the bucket cannot be emptied.
 8. **Analytics Engine**: needs the Workers Analytics Engine entitlement on the account. The
    `EVENTS` dataset `wallet_events` is created by the first write. Charts query it through the
    `ANALYTICS_SQL` binding (no API token); if the query fails they fall back to D1 and the
