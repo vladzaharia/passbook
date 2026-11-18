@@ -146,6 +146,7 @@ export function targetFilter(
     ...(target.holderState ? { holderState: target.holderState } : {}),
     ...(target.q ? { q: target.q } : {}),
     ...(target.scan ? { scan: target.scan } : {}),
+    ...(target.match ? { match: target.match } : {}),
     ...(cursor ? { cursor } : {}),
     limit,
   };

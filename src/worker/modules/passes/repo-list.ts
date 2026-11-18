@@ -1,5 +1,7 @@
+import type { InputMatch } from '../../../shared/contracts/broadcasts.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, prefixMatch } from '../../platform/db.ts';
+import { inputMatchSql } from './repo-input-match.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow, type PassStatus } from './repo-map.ts';
 
 export interface PassListFilter {
@@ -17,6 +19,8 @@ export interface PassListFilter {
   onDevice?: boolean;
   /** Only passes with no completed scan since this time (ms). */
   noScanSince?: number;
+  /** Only passes whose inputs satisfy every clause. */
+  match?: InputMatch;
   /** Skips passes removed from Wallet. */
   excludeRemoved?: boolean;
   q?: string;
@@ -64,6 +68,10 @@ export function passFilterSql(filter: PassListFilter): {
         AND s.org_id = passes.org_id AND s.mode = passes.mode AND s.state = 'done' AND s.at >= ?)`,
       filter.noScanSince,
     );
+  if (filter.match) {
+    const m = inputMatchSql(filter.match, 'passes');
+    add(m.sql, ...m.params);
+  }
   if (filter.excludeRemoved) where.push('removed_at IS NULL');
   if (filter.cursor) add('id < ?', filter.cursor);
   const q = filter.q?.trim();

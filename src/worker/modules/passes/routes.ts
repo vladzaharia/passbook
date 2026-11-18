@@ -98,6 +98,7 @@ register(
         ...(q.scan && 'noScanDays' in q.scan
           ? { noScanSince: ctx.clock.now() - q.scan.noScanDays * 86_400_000 }
           : {}),
+        ...(q.match ? { match: q.match } : {}),
         ...(q.q ? { q: q.q } : {}),
         ...(q.cursor ? { cursor: q.cursor } : {}),
         limit: q.limit,
