@@ -1,7 +1,6 @@
 /**
- * The tag API as the client assumes it (T3 and T4 on their branches, T5 not built). Request and
- * response shapes come from `contracts/nfc-tags.ts`; the extras below are what T3 adds to
- * `ScanTagSchema` and what the device socket carries, which the contract file does not have yet.
+ * The tag API as the client uses it: shapes come from `contracts/nfc-tags.ts`. The enrollment
+ * calls (T5) are built against that contract and may still move.
  */
 import type { z } from 'zod';
 import type {
@@ -13,21 +12,12 @@ import type {
   TagRead,
 } from '../../../shared/contracts/nfc-tags.ts';
 
-export type { TagRead };
+export type { ScanTag, TagRead };
+export type TagPass = NonNullable<ScanTag['passes']>[number];
 export type InspectResult = z.infer<typeof ScanTagInspectResponseSchema>;
 export type BindResult = z.infer<typeof ScanTagBindResultSchema>;
 export type BindBody = z.input<typeof ScanTagBindRequestSchema>;
 export type TagEnrollment = z.infer<typeof ScanTagEnrollmentSchema>;
-
-/** One of a person's passes a user-bound tag tried (T3): the rows of **Why not?**. */
-export interface TagPass {
-  passId: string | null;
-  templateName: string | null;
-  state: 'used' | 'lets_in' | 'refused' | 'unchecked' | 'not_here';
-  reason: string | null;
-}
-/** `ScanTag` with T3's `count` and `passes`. Absent until the contract file takes them. */
-export type TagView = ScanTag & { count?: number; passes?: TagPass[] };
 
 /** The calls the assign loop and the enrollment sheet make. A rejection is an `ApiError`. */
 export interface TagsPort {

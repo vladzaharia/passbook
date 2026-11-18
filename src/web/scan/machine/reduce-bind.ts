@@ -37,7 +37,7 @@ function bindBody(
     tag: a.tag.read,
     card: a.card,
     preview: false,
-    scope: a.scope,
+    binding: a.scope,
     ...(move ? { move: true } : {}),
     ...(label ? { label } : {}),
     ...(approval ? { approval } : {}),

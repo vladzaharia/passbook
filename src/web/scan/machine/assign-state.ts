@@ -179,7 +179,7 @@ export interface BindBodyIn {
   tag: TagRead;
   card: CardRef;
   preview: boolean;
-  scope: 'pass' | 'user';
+  binding: 'pass' | 'user';
   move?: boolean;
   label?: string;
   approval?: { staffId?: string; pin: string };

@@ -3,7 +3,7 @@ import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import { TAG_OFFLINE } from '../machine/assign-state.ts';
 import type { ScanOutcome } from '../machine/types.ts';
 import type { Line } from './assign-lines.ts';
-import type { TagView } from './types.ts';
+import type { ScanTag } from './types.ts';
 
 /** `tagRead`: the scan that made this outcome was a tag. */
 export function tagReasonLine(o: ScanOutcome, tagRead: boolean): Line | null {
@@ -17,7 +17,7 @@ export const firstName = (holder: string | null | undefined): string =>
   (holder ?? '').trim().split(/\s+/)[0] || 'them';
 
 /** `Tag` or `Tag · 1 of Maya's 3 passes`. */
-export function flagText(tag: TagView, holder: string | null | undefined): string {
+export function flagText(tag: ScanTag, holder: string | null | undefined): string {
   const n = tag.count ?? 0;
   return tag.scope === 'user' && n > 1
     ? SCAN_TAG_COPY.door.flagOfMany.replace('{name}', firstName(holder)).replace('{n}', String(n))
@@ -25,7 +25,7 @@ export function flagText(tag: TagView, holder: string | null | undefined): strin
 }
 
 /** None of a person's several passes let them in: the line under the refusal. */
-export function noneLine(tag: TagView, holder: string | null | undefined): string | null {
+export function noneLine(tag: ScanTag, holder: string | null | undefined): string | null {
   const n = tag.count ?? 0;
   return tag.scope === 'user' && n > 1
     ? SCAN_TAG_COPY.door.noneLetsIn.replace('{name}', firstName(holder)).replace('{n}', String(n))

@@ -6,7 +6,6 @@ import { formatDateTime, formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { TagFlag } from '../assign/tag-flag.tsx';
 import { tagReasonLine } from '../assign/tag-lines.ts';
-import type { TagView } from '../assign/types.ts';
 import { DisplayPanels } from '../display/display-panels.tsx';
 import { scanIcon } from '../display/icons.ts';
 import { accessLines, accessValues, directionPill } from '../machine/access-view.ts';
@@ -219,7 +218,7 @@ export function ResultCard({
           />
           {o.tag ? (
             <TagFlag
-              tag={o.tag as TagView}
+              tag={o.tag}
               holder={d?.identity.holder ?? o.card?.title}
               refused={o.kind === 'refused'}
             />

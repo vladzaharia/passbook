@@ -4,7 +4,7 @@ import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import './tag-chrome.css';
 import { flagText, noneLine } from './tag-lines.ts';
 import { TagPassesSheet } from './tag-passes-sheet.tsx';
-import type { TagView } from './types.ts';
+import type { ScanTag } from './types.ts';
 
 /**
  * The system flag on a result read from a tag: `Tag`, or `Tag · 1 of Maya's 3 passes` with a
@@ -15,7 +15,7 @@ export function TagFlag({
   holder,
   refused,
 }: {
-  tag: TagView;
+  tag: ScanTag;
   holder: string | null | undefined;
   refused: boolean;
 }) {

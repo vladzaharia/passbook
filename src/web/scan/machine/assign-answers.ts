@@ -63,7 +63,7 @@ export function inspected(s: MachineState, ev: Of<'assign.inspected'>, env: Env)
 function previewOf(s: MachineState, a: AssignState, env: Env): Out {
   const key = env.id();
   if (!a.tag || !a.card) return commit(s, a, env);
-  const body = { tag: a.tag.read, card: a.card, preview: true, scope: 'pass' as const };
+  const body = { tag: a.tag.read, card: a.card, preview: true, binding: 'pass' as const };
   const cmd = { c: 'assign.bind' as const, key, body };
   return commit(s, { ...a, key, busy: 'preview', retry: cmd }, env, [asCmd(cmd)]);
 }

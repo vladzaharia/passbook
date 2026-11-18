@@ -1,6 +1,6 @@
 /** The scenarios of the tag gallery: assign states, door results and their readers. */
 import type { TagReader } from './assign/tag-reader.ts';
-import type { BindResult, TagEnrollment, TagView } from './assign/types.ts';
+import type { BindResult, ScanTag, TagEnrollment } from './assign/types.ts';
 import { grant } from './machine/access-fixtures.test-support.ts';
 import { type AssignState, TAG_OFFLINE } from './machine/assign-state.ts';
 import { fixtureDisplay } from './machine/fixtures.test-support.ts';
@@ -196,18 +196,18 @@ export const assigns: Record<string, Assign> = {
   },
 };
 
-const tag = (over: Partial<TagView> = {}): TagView => ({
+const tag = (over: Partial<ScanTag> = {}): ScanTag => ({
   hint: '7F3A',
   assurance: 'basic',
   scope: 'pass',
   ...over,
 });
-const manyPasses: TagView['passes'] = [
+const manyPasses: ScanTag['passes'] = [
   { passId: '1', templateName: 'HQ access', state: 'used', reason: null },
   { passId: '2', templateName: 'Gym', state: 'lets_in', reason: null },
   { passId: '3', templateName: 'Parking', state: 'not_here', reason: null },
 ];
-const nonePasses: TagView['passes'] = [
+const nonePasses: ScanTag['passes'] = [
   { passId: '1', templateName: 'HQ access', state: 'refused', reason: 'outside_hours' },
   { passId: '2', templateName: 'Gym', state: 'refused', reason: 'expired' },
   { passId: '3', templateName: 'Parking', state: 'not_here', reason: null },

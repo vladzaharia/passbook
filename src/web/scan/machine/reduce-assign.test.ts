@@ -87,7 +87,7 @@ describe('tag, card, preview, scope, bind, undo', () => {
     const c = confirming();
     expect(c.preview.body).toMatchObject({
       preview: true,
-      scope: 'pass',
+      binding: 'pass',
       card: { code: 'CARD-0001', method: 'camera' },
     });
     expect(assignOf(c.state)).toMatchObject({ step: 'confirm', scope: 'pass', busy: null });
@@ -97,7 +97,7 @@ describe('tag, card, preview, scope, bind, undo', () => {
     const labelled = step(user.state, { type: 'assign.label', label: 'Blue fob' }, at(510));
     const bound = step(labelled.state, { type: 'assign.bind' }, at(520));
     const cmd = assignCmd(bound.cmds, 'assign.bind');
-    expect(cmd.body).toMatchObject({ preview: false, scope: 'user', label: 'Blue fob' });
+    expect(cmd.body).toMatchObject({ preview: false, binding: 'user', label: 'Blue fob' });
     expect(cmd.key).not.toBe(c.preview.key);
     expect(assignOf(bound.state)?.busy).toBe('bind');
 

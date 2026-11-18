@@ -107,7 +107,7 @@ export function open(s: MachineState, ev: Of<'assign.open'>, env: Env): Out {
 export function preview(s: MachineState, a: AssignState, card: CardRef, env: Env): Out {
   if (!a.tag) return same(s);
   const key = env.id();
-  const body: BindBodyIn = { tag: a.tag.read, card, preview: true, scope: 'pass' };
+  const body: BindBodyIn = { tag: a.tag.read, card, preview: true, binding: 'pass' };
   const cmd: AssignCmd = { c: 'assign.bind', key, body };
   return put(s, { ...a, card, key, busy: 'preview', banner: null, retry: cmd }, env, [send(cmd)]);
 }

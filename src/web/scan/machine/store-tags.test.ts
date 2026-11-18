@@ -90,7 +90,7 @@ describe('assign over the ports', () => {
     expect(assignOf(store.getSnapshot().state)?.step).toBe('pass');
     store.dispatch(cardReadEvent());
     await flush();
-    expect(tags.bind.mock.calls[0]?.[0]).toMatchObject({ preview: true, scope: 'pass' });
+    expect(tags.bind.mock.calls[0]?.[0]).toMatchObject({ preview: true, binding: 'pass' });
     expect(assignOf(store.getSnapshot().state)?.step).toBe('confirm');
     store.dispatch({ type: 'assign.bind' });
     await flush();

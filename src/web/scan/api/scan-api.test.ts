@@ -293,7 +293,7 @@ describe('createScanApi', () => {
       tag,
       card: { code: 'CARD-1', method: 'camera' as const },
       preview: true,
-      scope: 'user' as const,
+      binding: 'user' as const,
     };
 
     it('posts each call to its route with the csrf token', async () => {
@@ -330,7 +330,7 @@ describe('createScanApi', () => {
         scope: () => ({ orgId: 'o1', timeZone: 'UTC' }),
       });
       await api.tagBind(bindBody).catch(() => undefined);
-      expect(JSON.parse(calls[0]?.init.body as string).scope).toBe('user');
+      expect(JSON.parse(calls[0]?.init.body as string).binding).toBe('user');
     });
 
     it('reads the pending request and a null one', async () => {
