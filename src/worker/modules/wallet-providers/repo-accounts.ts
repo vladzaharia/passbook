@@ -2,6 +2,7 @@ import type { WalletProviderScope } from '../../../shared/contracts/wallet-provi
 import { first } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { accountCredentialLineageSql } from './repo-account-lineage.ts';
+import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 
 export { saveAccountConfiguration, transitionAccount } from './repo-account-writes.ts';
@@ -37,6 +38,8 @@ export interface SamsungPromotedRefreshProof {
   instanceId: string;
   refHash: string;
   operationVersion: number;
+  /** Inbound callbacks may use a ref in its initial window; outbound sync needs a promoted ref. */
+  window?: boolean;
 }
 
 export interface AccountRow {
@@ -151,7 +154,11 @@ export function findRetirementAccount(
   );
 }
 
-/** Existing promoted references can refresh only against the current pass and projection proof. */
+/**
+ * A promoted reference can use the account only against the current pass and projection proof.
+ * With `window`, so can one still inside its initial window: the first Get Card Data and the ADDED
+ * that promotes it, which are inbound only. Outbound notifications never use the window.
+ */
 export function findSamsungPromotedRefreshAccount(
   db: D1Database,
   proof: SamsungPromotedRefreshProof,
@@ -168,9 +175,9 @@ export function findSamsungPromotedRefreshAccount(
     JOIN wallet_provider_instances i ON i.account_id = a.id AND i.org_id = a.org_id
       AND i.mode = a.mode AND i.provider = a.provider
     JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id AND op.instance_id = i.id
-    JOIN wallet_samsung_fetch_refs ref ON ref.instance_id = i.id AND ref.ref_hash = ?
-      AND ref.promoted_at IS NOT NULL AND ref.retired_at IS NULL
-      AND ref.credential_keyset_commitment = i.credential_keyset_commitment
+    JOIN wallet_samsung_fetch_refs r ON r.instance_id = i.id AND r.ref_hash = ?
+      AND ${proof.window ? samsungInitialWindowSql : 'r.promoted_at IS NOT NULL'} AND r.retired_at IS NULL
+      AND r.credential_keyset_commitment = i.credential_keyset_commitment
     CROSS JOIN clock
     WHERE a.org_id = ? AND a.mode = ? AND a.provider = 'samsung' AND a.id = ? AND a.revision = ?
       AND a.credential_id IS NOT NULL AND a.revoked_at IS NULL AND i.id = ? AND i.lifecycle = 'active'
@@ -181,6 +188,7 @@ export function findSamsungPromotedRefreshAccount(
     [
       now,
       proof.refHash,
+      ...(proof.window ? [now, now] : []),
       proof.orgId,
       proof.mode,
       proof.accountId,

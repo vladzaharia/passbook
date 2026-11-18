@@ -3,7 +3,12 @@ import {
   assertSamsungCredentialsCurrent,
   type ValidatedSamsungCredentials,
 } from './samsung-credentials.ts';
-import { createSamsungAuthorizationToken, type SamsungCardState } from './samsung-token.ts';
+import { SAMSUNG_REQUEST_TIMEOUT_MS } from './samsung-limits.ts';
+import {
+  createSamsungAuthorizationToken,
+  SAMSUNG_CARD_DATA_STATES,
+  type SamsungCardState,
+} from './samsung-token.ts';
 
 export {
   SamsungCredentialError,
@@ -139,8 +144,13 @@ export interface SamsungUpdateInput {
   type: string;
   refId: string;
   state: SamsungCardState;
+  /** Both only for MIGRATED: the link that adds the card under its new ref, and the ref it replaces. */
+  atwLink?: string;
+  oldRefId?: string;
   attempt: number;
   now: number;
+  /** Trace id from the caller's `ctx.ids`, up to 32 characters. */
+  requestId: string;
 }
 
 export interface SamsungCancelInput {
@@ -149,6 +159,7 @@ export interface SamsungCancelInput {
   eventId: string;
   attempt: number;
   now: number;
+  requestId: string;
 }
 
 function invalidRequest(): SamsungNotificationError {
@@ -168,6 +179,7 @@ async function sendNotification(
     retirement: boolean;
     attempt: number;
     now: number;
+    requestId: string;
   },
   fetcher: typeof fetch,
 ): Promise<void> {
@@ -178,7 +190,9 @@ async function sendNotification(
     !/^[A-Za-z]{2}$/.test(input.cc2) ||
     !Number.isInteger(input.attempt) ||
     input.attempt < 1 ||
-    input.attempt > MAX_ATTEMPTS
+    input.attempt > MAX_ATTEMPTS ||
+    typeof input.requestId !== 'string' ||
+    !/^[A-Za-z0-9_-]{1,32}$/.test(input.requestId)
   )
     throw invalidRequest();
   const path = `/${input.cc2}/wltex/cards/${account.cardId}/${input.action}`;
@@ -192,12 +206,12 @@ async function sendNotification(
     response = await fetcher(`${PUBLIC_ORIGIN}${path}`, {
       method: 'POST',
       redirect: 'manual',
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(SAMSUNG_REQUEST_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${authorization}`,
         'Content-Type': 'application/json',
         'x-smcs-partner-id': account.partnerId,
-        'x-request-id': crypto.randomUUID().replaceAll('-', ''),
+        'x-request-id': input.requestId,
       },
       body: JSON.stringify(input.body),
     });
@@ -226,17 +240,8 @@ export async function sendSamsungUpdate(
   input: SamsungUpdateInput,
   fetcher: typeof fetch = fetch,
 ): Promise<void> {
-  const states: readonly string[] = [
-    'ACTIVE',
-    'UPDATED',
-    'EXPIRED',
-    'REDEEMED',
-    'HELD',
-    'DELETED',
-    'CANCELED',
-    'PENDING',
-    'SUSPENDED',
-  ];
+  const states: readonly string[] = [...SAMSUNG_CARD_DATA_STATES, 'MIGRATED'];
+  const migrated = input.state === 'MIGRATED';
   // Samsung's overview excludes Generic and Gift Card updates, despite conflicting generic examples.
   // https://developer.samsung.com/wallet/addtosamsungwallet/overview.html#Update-Wallet-Cards
   if (
@@ -247,10 +252,22 @@ export async function sendSamsungUpdate(
     typeof input.refId !== 'string' ||
     !/^[A-Za-z0-9_-]{1,32}$/.test(input.refId) ||
     !states.includes(input.state) ||
-    ('fields' in input && input.fields !== undefined)
+    ('fields' in input && input.fields !== undefined) ||
+    (migrated
+      ? typeof input.atwLink !== 'string' ||
+        !/^https:\/\/\S{1,1000}$/.test(input.atwLink) ||
+        hasControlCharacters(input.atwLink) ||
+        typeof input.oldRefId !== 'string' ||
+        !/^[A-Za-z0-9_-]{1,32}$/.test(input.oldRefId) ||
+        input.oldRefId === input.refId
+      : input.atwLink !== undefined || input.oldRefId !== undefined)
   )
     throw invalidRequest();
-  const item = { refId: input.refId, state: input.state };
+  const item = {
+    refId: input.refId,
+    state: input.state,
+    ...(migrated ? { atwLink: input.atwLink, oldRefId: input.oldRefId } : {}),
+  };
   await sendNotification(
     account,
     {
@@ -260,6 +277,7 @@ export async function sendSamsungUpdate(
       retirement: input.state === 'DELETED',
       attempt: input.attempt,
       now: input.now,
+      requestId: input.requestId,
     },
     fetcher,
   );
@@ -296,6 +314,7 @@ export async function sendSamsungCancel(
       retirement: true,
       attempt: input.attempt,
       now: input.now,
+      requestId: input.requestId,
     },
     fetcher,
   );
