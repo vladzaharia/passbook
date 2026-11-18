@@ -488,3 +488,14 @@ describe('sign-in email', () => {
     expect(text.split('\n\n')[0]).toBe('Sign in to PassBook');
   });
 });
+
+describe('pass email: join line', () => {
+  it('says why a joined card was sent, in both parts, and not on any other pass email', () => {
+    const line = "You asked for this card at Harbor Lights Festival. Didn't? Ignore this email.";
+    const joined = render({ joined: true });
+    expect(joined.text).toContain(line);
+    expect(joined.html).toContain(line.replace("Didn't", 'Didn&#39;t'));
+    expect(render().text).not.toContain('You asked for this card');
+    expect(render().html).not.toContain('You asked for this card');
+  });
+});

@@ -125,19 +125,26 @@ export interface Ids {
   code(digits?: number): string;
 }
 
+function decimalChunk(digits: number): string {
+  const max = 10 ** digits;
+  const limit = Math.floor(0x1_0000_0000 / max) * max;
+  let n: number;
+  do {
+    n = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
+  } while (n >= limit);
+  return String(n % max).padStart(digits, '0');
+}
+
 export function createIds(clock: Clock): Ids {
   return {
     id: () => uuidv7(clock.now()),
     ordered: (at = clock.now()) => orderedUuid(at),
     token: (bytes = 32) => toBase64Url(randomBytes(bytes)),
     code: (digits = 6) => {
-      const max = 10 ** digits;
-      const limit = Math.floor(0x1_0000_0000 / max) * max;
-      let n: number;
-      do {
-        n = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
-      } while (n >= limit);
-      return String(n % max).padStart(digits, '0');
+      // One 32-bit draw covers at most 9 digits without bias; longer codes join chunks.
+      let out = '';
+      for (let left = digits; left > 0; left -= 9) out += decimalChunk(Math.min(left, 9));
+      return out;
     },
   };
 }

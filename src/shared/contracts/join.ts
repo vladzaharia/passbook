@@ -13,8 +13,8 @@ export const JOIN_FORM_MAX_BYTES = 4096;
 export const JOIN_NAME_MESSAGE = 'Enter your first name.';
 
 const REFUSED = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\u2028\u2029]/u;
-/** Tested on the NFKC form, so full-width `ｗｗｗ．` and `＠` count. */
-const LINKISH = /:\/\/|www\.|@/i;
+/** Tested on the NFKC form, so full-width `ｗｗｗ．` and `＠` count. A slash, or a dot with a TLD-shaped tail and no space (`x.com`), is a link; `St. John` and `J.R.` pass. */
+const LINKISH = /:\/\/|www\.|@|[/\\]|\.[a-z]{2,}(?![a-z])/i;
 
 /** One first name: NFC, trimmed, spaces collapsed; no controls, bidi or zero-width marks, no URL or address. */
 export const JoinNameSchema = z
@@ -40,6 +40,8 @@ export const JoinReadinessCodeSchema = z.enum([
 export const JoinReadinessIssueSchema = z.object({
   code: JoinReadinessCodeSchema,
   input: z.string().optional(),
+  /** The input's label, for the admin line. */
+  label: z.string().optional(),
 });
 export type JoinReadinessIssue = z.infer<typeof JoinReadinessIssueSchema>;
 
@@ -75,6 +77,8 @@ export const JoinLinkStateSchema = z.object({
 export type JoinLinkState = z.infer<typeof JoinLinkStateSchema>;
 
 export const JoinLinkParamsSchema = z.object({ templateId: IdSchema });
+/** The org of a platform template (an org template names its own). */
+export const JoinLinkQuerySchema = z.object({ orgId: IdSchema.optional() });
 
 /** `revision` 0 creates the link. */
 export const JoinLinkUpdateSchema = z.strictObject({

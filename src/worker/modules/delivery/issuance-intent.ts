@@ -238,6 +238,8 @@ export async function enqueuePassEmail(
     /** Reserved for the durable issuance scheduler. */
     issuanceIntentId?: string;
     schedule?: boolean;
+    /** The mail answers a join link: it carries the "You asked for this card" line. */
+    joined?: boolean;
     /** Recorded in the queueing batch, as one transaction with the mail. */
     auditEntry?: AuditEntry;
   },
@@ -277,6 +279,7 @@ export async function enqueuePassEmail(
     actor,
     ...(also ? { also } : {}),
     ...(input.issuanceIntentId ? { issuanceId: input.issuanceIntentId } : {}),
+    ...(input.joined ? { joined: true } : {}),
   };
   const recipient = await recipientKey(ctx.env, to);
   const outboxId = ctx.ids.id();

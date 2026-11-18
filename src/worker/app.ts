@@ -12,6 +12,8 @@ import { connectionsRoutes, connectorsRoutes, hooksRoutes } from './modules/conn
 import { deliveryRoutes } from './modules/delivery/routes.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
+import { joinLinksRoutes } from './modules/join/routes-admin.ts';
+import { joinPublicRoutes } from './modules/join/routes-public.ts';
 import { meRoutes } from './modules/me/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
@@ -62,7 +64,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|w|hooks|assets|health)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|assets|health)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -126,6 +128,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/passes', passesRoutes);
   app.route('/api/v1/pass-imports', passImportRoutes);
   app.route('/api/v1/bundles', bundlesRoutes);
+  app.route('/api/v1/join-links', joinLinksRoutes);
   app.route('/api/v1/test-inbox', sandboxRoutes);
   app.route('/api/v1/broadcasts', broadcastsRoutes);
   app.route('/api/v1/holders', holdersRoutes);
@@ -162,6 +165,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/w/i', walletImageRoutes);
   app.route('/p', publicRoutes);
   app.route('/b', bundlePublicRoutes);
+  app.route('/j', joinPublicRoutes);
   app.route('/hooks', hooksRoutes);
 
   app.doc31('/api/v1/openapi.json', {
