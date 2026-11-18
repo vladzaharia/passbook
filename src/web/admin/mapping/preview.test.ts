@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyMapping } from '../../../worker/modules/connections/mapping.ts';
+import { applyMapping } from '@/shared/mapping/transform.ts';
 import { autoMap, blankRow, fromRows, previewValue, withPinned } from './mapping.ts';
 
 const SAMPLES = [
