@@ -1,4 +1,5 @@
 import type {
+  ScanAccess,
   ScanCard,
   ScanOutcome,
   ScanOutcomeKind,
@@ -88,7 +89,12 @@ export function safeDisplay(
   actor: ScanActor,
   pass: { id: string; displayTitle: string | null } | null,
   screen: ScanDisplayScreen,
-  more: { found?: Found; history?: unknown; photoUrl?: string | null } = {},
+  more: {
+    found?: Found;
+    history?: unknown;
+    photoUrl?: string | null;
+    access?: ScanAccess | null;
+  } = {},
 ): ScanDisplay | null {
   if (!pass) return null;
   try {
@@ -99,6 +105,7 @@ export function safeDisplay(
       template: more.found,
       history: more.history,
       photoUrl: more.photoUrl,
+      access: more.access ?? null,
     });
   } catch {
     ctx.log.error('scan.display_failed', { code: 'SCAN_DISPLAY_FAILED', screen });
@@ -196,6 +203,9 @@ export function stopOutcome(
     card: showPass ? (options.card ?? null) : null,
     template: details.template,
     at: stop.at,
+    cooldownRemainingMs: stop.cooldownRemainingMs ?? null,
+    access: stop.access ?? null,
+    ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),
     flags: details.flags,
     checkIn: stop.found?.admission?.state,
     overridable:
@@ -208,6 +218,7 @@ export function stopOutcome(
           found: stop.found ?? undefined,
           history: options.history,
           photoUrl: options.photoUrl,
+          access: stop.access ?? null,
         })
       : null,
   };

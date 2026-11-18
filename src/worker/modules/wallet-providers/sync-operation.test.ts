@@ -530,7 +530,7 @@ describe('wallet provider operation fences', () => {
       policyRevision: 1,
       credentialKeysetCommitment: samsung.credentialKeysetCommitment,
       providerIdentityHash: 'a'.repeat(64),
-      projection: { provider: 'samsung', cardType: 'loyalty' },
+      projection: { schema: 1, provider: 'samsung', cardType: 'loyalty' },
     });
     mocks.listTargets.mockResolvedValue([{ countryCode: 'US', state: 'pending', attempts: 0 }]);
     mocks.beginTarget.mockResolvedValue(1);
@@ -577,7 +577,7 @@ describe('wallet provider operation fences', () => {
       policyRevision: 1,
       credentialKeysetCommitment: samsung.credentialKeysetCommitment,
       providerIdentityHash: 'a'.repeat(64),
-      projection: { provider: 'samsung' },
+      projection: { schema: 1, provider: 'samsung' },
     });
     // Inside the wait a served ref is not closed.
     mocks.inspectRef.mockResolvedValue('needs_notification');
@@ -618,7 +618,7 @@ describe('wallet provider operation fences', () => {
       policyRevision: 1,
       credentialKeysetCommitment: samsung.credentialKeysetCommitment,
       providerIdentityHash: 'a'.repeat(64),
-      projection: { provider: 'samsung' },
+      projection: { schema: 1, provider: 'samsung' },
     });
     expect(await runWalletProviderOperation(ctx, samsung)).toBe('completed');
     expect(mocks.inspectRef).toHaveBeenCalledOnce();

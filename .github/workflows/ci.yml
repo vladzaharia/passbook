@@ -3,16 +3,20 @@ on:
   push:
     branches: [main, platform, release]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Every main commit gets a full verdict (deploys pick a green one); PR pushes still cancel stale runs.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   check:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -34,8 +38,10 @@ jobs:
         run: git diff --exit-code -- src/generated docs/design/wallet-providers/capabilities.md test/setup/schema-snapshot.generated.json worker-configuration.d.ts src/web/routeTree.gen.ts
 
   e2e:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -43,7 +49,17 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-chromium
+      - name: Install browsers
+        timeout-minutes: 22
+        run: |
+          for i in 1 2 3; do
+            timeout 420 npx playwright install --with-deps chromium && exit 0
+            echo "retry $i"; sudo pkill -9 -f 'apt-get|dpkg' || true; sleep 3; sudo dpkg --configure -a || true
+          done; exit 1
       - run: npm run test:e2e
         env:
           WALLET_E2E_PREVIEW: '1'
@@ -56,8 +72,10 @@ jobs:
             test-results
 
   camera:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -65,7 +83,17 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-chromium-firefox-webkit
+      - name: Install browsers
+        timeout-minutes: 22
+        run: |
+          for i in 1 2 3; do
+            timeout 420 npx playwright install --with-deps chromium firefox webkit && exit 0
+            echo "retry $i"; sudo pkill -9 -f 'apt-get|dpkg' || true; sleep 3; sudo dpkg --configure -a || true
+          done; exit 1
       - run: npm run test:e2e:camera
         env:
           WALLET_E2E_PREVIEW: '1'
@@ -78,6 +106,8 @@ jobs:
             test-results
 
   coverage-node:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -92,6 +122,8 @@ jobs:
 
   # The worker suite runs once, here, under istanbul; the merge job applies the thresholds.
   coverage-worker:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:

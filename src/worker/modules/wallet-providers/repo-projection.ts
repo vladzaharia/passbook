@@ -5,6 +5,7 @@ import { candidateHash } from '../templates/release-content.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
+  GOOGLE_PROJECTION_POLICY,
   type NativeProjection,
   type NativeProvider,
   SAMSUNG_PROJECTION_POLICY,
@@ -36,6 +37,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
     "'",
     "''",
   );
+  const google = JSON.stringify(GOOGLE_PROJECTION_POLICY.adapterCapabilities).replaceAll("'", "''");
   const source = effectiveReleaseIdSql({
     templateIdSql: 'pc.template_id',
     orgIdSql: 'pc.org_id',
@@ -94,9 +96,14 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
   INTERSECT
   SELECT pb.id FROM projection_binding_release pb
     JOIN template_candidates pc ON pc.id = pb.candidate_id
-    WHERE pc.provider = 'samsung' AND pc.adapter_revision = ${SAMSUNG_PROJECTION_POLICY.adapterRevision}
-      AND pc.adapter_capabilities = '${samsung}' AND pc.audience_policy_revision = ${SAMSUNG_PROJECTION_POLICY.audiencePolicyRevision}
-      AND (${samsungProjectionEvidencePredicateSql('pc', nowSql, scope.credentialKeysetCommitmentSql)}))`;
+    WHERE (pc.provider = 'google' AND json_extract(pc.projection_json, '$.schema') = 2
+        AND pc.adapter_revision = ${GOOGLE_PROJECTION_POLICY.adapterRevision}
+        AND pc.adapter_capabilities = '${google}'
+        AND pc.audience_policy_revision = ${GOOGLE_PROJECTION_POLICY.audiencePolicyRevision})
+      OR (pc.provider = 'samsung' AND json_extract(pc.projection_json, '$.schema') = 1
+        AND pc.adapter_revision = ${SAMSUNG_PROJECTION_POLICY.adapterRevision}
+        AND pc.adapter_capabilities = '${samsung}' AND pc.audience_policy_revision = ${SAMSUNG_PROJECTION_POLICY.audiencePolicyRevision}
+        AND (${samsungProjectionEvidencePredicateSql('pc', nowSql, scope.credentialKeysetCommitmentSql)})))`;
 }
 
 /** Reads the effective scoped Apple head without accepting it as native approval. */

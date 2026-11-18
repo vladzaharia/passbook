@@ -59,6 +59,36 @@ The handshake must run on each full page navigation. Web messaging requires Andr
 
 The app also emits `{version:1, event:'cancelled'}` when opening native settings or pausing. The adapter clears pending requests on cancellation/timeout. `reader.result` returns `false` for an unknown, completed or cancelled scan; discard that decision in your web UI. Invalid outcome values throw. Subscribe to `timeout` and `cancelled` to clear the web result display.
 
+## Wire format v2 (NFC tags)
+
+v2 adds third-party NFC tags (`nfc-tag`). Everything in v1 stays. A v1 app keeps
+v1: no tags, today's behaviour.
+
+Handshake: the web sends `{version:2, op:'hello', versions:[1,2]}`. The app
+answers `ready` with `version` set to the highest version it speaks. The web
+sends every later message with that version.
+
+| Direction | Message |
+|-----------|---------|
+| Web → app | `{version:2, op:'tagRead', id:string, prompt:string, timeoutMs:number}` |
+| Web → app | `{version:2, op:'tagCancel', id:string}` |
+| Web → app | `{version:2, op:'start'}` / `{version:2, op:'stop'}` with `formats:('wallet-vas'\|'tag')[]` |
+| App → web | `{version:2, event:'scan', id:string, readAt:number, source:'nfc-tag', tag:{uid?:string, uidRandom:boolean, tech:'a'\|'b'\|'isodep'\|'unknown', ndef?:{type:'U'\|'T', value:string}}}` |
+
+- `tagRead` is one read, at most 60000 ms. iOS opens the system sheet with
+  `prompt`. Android arms reader mode for one tag. `tagCancel` ends it.
+- `start` and `stop` take `formats` for continuous reading (Android). Without
+  `formats` they mean `['wallet-vas']`, as in v1.
+- `uid` is hex, 4, 7 or 10 bytes. `uidRandom` is true when the tag shows a random
+  ID (4 bytes, first byte `0x08`); the server refuses it. `ndef.value` is at most
+  1024 bytes. A read carries `uid` or `ndef`, never neither.
+- The `scan` event is acknowledged with `result` as in v1. A tag scan is not
+  accepted until the authenticated API answers.
+- Capabilities: `nfc.formats` adds `tag-uid` and `tag-sun`. New `nfc.continuous`
+  (boolean) is true when the app reads tags without `tagRead`.
+- Tag data stays out of logs, analytics and URLs. The server stores a keyed hash
+  of the UID, never the UID.
+
 ## Backend obligations
 
 For Apple VAS, use the matching pass encryption private key to decrypt the cryptogram using the VAS ECDH/KDF/AES-GCM scheme. Validate the authenticated payload and timestamp, and map its opaque credential to the expected tenant and pass. Reject replayed cryptograms according to your policy; perform redemption/check-in changes atomically. Neither the Android `source` field, its request nonce, nor the reader timestamp authenticates a genuine reader or proves a fresh tap to the server.

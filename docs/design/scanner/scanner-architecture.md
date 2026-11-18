@@ -121,7 +121,7 @@ verify on a device.
 | # | Decision |
 | --- | --- |
 | 1 | **A scanner is one credential for one org and one mode.** Kind `device` (a browser on `/scan`, cookie) or `terminal` (a till, bearer token). Its name is its place ("Front door"), shown as *where* on every heads-up. Many phones at one door are many scanners (**Duplicate** in the console). |
-| 2 | **Two principals scan:** a scanner credential, or an authorized user session. Both become a `ScanActor` in the guard; session capabilities and scanner device/staff rights are checked separately. API keys never act on passes through the scanner; they get `scans:read` (feed only). |
+| 2 | **Two principals scan:** a scanner credential, or an authorized user session. Both become a `ScanActor` in the guard; session capabilities and scanner device/staff rights are checked separately. API keys act only as a named terminal (`scans:write`, `x-passbook-device`, org-bound, Desk at most, no approvals; 2026-11-17, addenda WP-P); otherwise they get `scans:read` (feed only). |
 | 3 | **Tenant console access.** User sessions are authorized against the org and the capability required by the specific route; platform administrators use their authorized session. Scanner credentials remain scoped to their own org and mode. |
 | 4 | **Staff are org people who scan, with a name, a role and a 6-digit PIN.** No platform account, no console access, no mode. Roles form a ladder **Door ⊂ Desk ⊂ Manager**. A scanner runs as its **role without sign-in** (Door or Desk, never Manager) or asks staff to sign in. A Manager's PIN approves one risky action in place. This replaces AA's staff codes (they need org membership) and UK's separate manager codes. |
 | 5 | **Rights = role ≥ the template action's `minRole`.** Over the action's `max`, `set`, cooldown overrides and undo past the own window need a Manager. The server decides; the client mirrors with visible locks. |
@@ -260,7 +260,7 @@ verify on a device.
 | --- | --- | --- | --- | --- | --- |
 | `session` (admin) | `__Host-wallet_sid` | Console: every org. `/scan`: one org it picks per request | `x-passbook-mode` (n6) | `x-csrf-token` | as today; `RL_SCAN` on scan routes |
 | `session` (user) | same | own passes | — | same | refused on every scan route (403) |
-| `api_key` | `Bearer wlt_…` | its org or all | key row | none | `RL_API_KEY`; scan feed only (`scans:read`) |
+| `api_key` | `Bearer wlt_…` | its org or all | key row | none | `RL_API_KEY`; scan feed (`scans:read`), or with `scans:write` and `x-passbook-device` one of the terminals it was minted for (`api_key_terminals`, fixed): `resolve`, `actions`, own `undo`, Desk at most, no approvals |
 | **`scanner`** (new) | cookie `__Host-wallet_scan` (device) or `Bearer wls_…` (terminal) | one org; `/api/v1/scan/*` only | scanner row | cookie: `x-csrf-token` = scanner secret; bearer: none | `RL_SCAN`, `RL_SCAN_LOOKUP`, `RL_SCAN_ORG` |
 | Apple device | `ApplePass` | one pass | — | — | unchanged |
 
@@ -2047,7 +2047,7 @@ holds and cannot fail it.
 
 The display adds **no round trips** to any path: `fields` and history statements (≤ 4) join the existing card or
 counts batch, and only when the compiled doc's `needs` lists them. Rendering is CPU only, targeted under 1 ms; a test
-asserts the worst-case doc under 5 ms. Compiled docs are cached per isolate (64 entries); rendered displays never are.
+asserts the worst-case doc under 5 ms. Parsed text templates are cached per isolate (500 entries, cleared when full); rendered displays never are.
 
 - Every answer carries `counts`, so a busy scanner never polls; idle scanners poll `stats` every 15 s.
 - Event `expected` is cached for 60 s in the row.
@@ -2062,7 +2062,7 @@ asserts the worst-case doc under 5 ms. Compiled docs are cached per isolate (64 
 
 | Chunk | Loads | Budget (gzip) |
 | --- | --- | --- |
-| SPA initial (unchanged entry) | every page | 232,500 B today. The scanner adds only the nav label and three entities. Measure; if over, raise in one step of ≤ 1 kB with a comment in `check-bundle.ts` (as n6 and n7 did). No scanner code enters it |
+| SPA initial (unchanged entry) | every page | `BUDGET_BYTES` in `check-bundle.ts` (240,000 B; the console entry measures about 221 kB). Scanning pages stay lazy. If over, raise in one step of ≤ 1 kB with a comment there. No scanner code enters it |
 | `/scan` initial (`scan.html` + modulepreloads) | `/scan` | **150,000 B** (`SCAN_BUDGET_BYTES`, a second run of `check-bundle.ts`; forbids `routeTree`, `__passbookScan`, the SPA's markers, and two string sentinels that survive minification: `scan-display:render` (a constant the renderer uses in its own error) and `SCAN_DISPLAY_DENSITY` (a validator code); function names are minified, so they can't be markers). The B shell (capsule, tint layers, dock) is about 1 kB of CSS, offset by dropping the old flood layout. Split the `tanstack` chunk group into query and router first if needed |
 | `decoder` | prefetched on the Start panel | 16 kB JS + `zxing_reader.wasm` 408 kB (immutable cache) |
 | `result` (card layer and FLIP ≈ 0.4 kB, band and glyphs, identity row, notes, the display painter ≈ 3.5 kB, 40 icons ≈ 5 kB) | idle after boot | 25 kB. The renderer never ships here: the scanner only paints `ScanDisplay` |
@@ -2898,7 +2898,7 @@ Stored as `scan_zones.occupancy` (`off` \| `track` \| `enforce`), `capacity`, `m
 - **Tracking alone refuses nothing except Full.** A track-only zone answers a second entry with **Access granted**;
   the row keeps its `since`, and the visit gap decides the count.
 - Service rules: Require tap out, capacity, max stay and clear need Track (a CHECK); Clear at needs a time zone on the
-  root or the org (`ZONE_CLEAR_NEEDS_TZ` 422); **Require tap out needs Max stay or Clear at** (`ZONE_ENFORCE_NEEDS_END`
+  root or the org (`ZONE_CLEAR_NEEDS_TIME_ZONE` 422); **Require tap out needs Max stay or Clear at** (`ZONE_ENFORCE_NEEDS_END`
   422, **Set a Max stay or a Clear at time so a forgotten tap-out ends.**), so every hold ends by itself.
 - **Changes that break the tree's invariant clear it.** Turning Track off, archiving a zone, or changing its parent
   taps everyone inside it and below out: the save sets `due_at = now` on those rows (bounded batches) and the cron
@@ -3037,6 +3037,8 @@ batches; the job re-reads the zone before acting, so a stale due time re-arms in
 - The hub stays a router: no D1, no timers. A test-pass purge cascades its gate rows without a rev bump; the next
   change or snapshot carries the true count. Undo bumps the revision of every place it restores (`REV_UNDO`) and
   publishes counts, like any change.
+- An undone exit is not re-checked against capacity: it puts back someone who never left, so the count may read
+  26 / 25.
 
 ### 20.9 Desk overrides
 
@@ -3182,7 +3184,7 @@ ScanCounts.place: z.object({ name, inNow, capacity }).nullable().default(null);
 `POST /scan/actions` keeps `overrideOf` for a scanner overriding its own answer; `/scan/overrides` is the path for a
 monitor or another device (one service underneath). Errors: `SCAN_OVERRIDE_INVALID` 422, `SCAN_OVERRIDE_TAKEN` 409,
 `SCAN_TOO_MANY_OVERRIDES` 429, `NOT_INSIDE` 409 (Mark as out on someone already out), `SCANNER_DIRECTION_NO_PLACE`
-422, `ZONE_CLEAR_NEEDS_TZ` 422, `ZONE_ENFORCE_NEEDS_END` 422, `STAFF_REQUIRED` 403 (a monitor acting with nobody signed in), `SCREEN_ONLY` 403 (a
+422, `ZONE_CLEAR_NEEDS_TIME_ZONE` 422, `ZONE_ENFORCE_NEEDS_END` 422, `STAFF_REQUIRED` 403 (a monitor acting with nobody signed in), `SCREEN_ONLY` 403 (a
 Customer screen, or a monitor with Desk actions off).
 
 ### 20.13 Data and migrations

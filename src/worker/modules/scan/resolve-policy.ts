@@ -9,6 +9,8 @@ export interface Waive {
   window?: boolean;
   confirmed?: boolean;
   direction?: 'in' | 'out';
+  /** An override lets a pass in: at a tracked zone it is never an exit. */
+  override?: boolean;
 }
 
 /** Retain pinned action semantics while applying the stricter current authority policy. */

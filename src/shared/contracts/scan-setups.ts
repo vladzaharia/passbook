@@ -96,8 +96,14 @@ export const ScanLiveResolvedSchema = z.object({
   outcome: z.enum(['ok', 'heads_up', 'refused']),
   by: z.object({ staff: z.string().nullable(), device: z.string() }),
 });
+/** A tag request an admin sent to this device, or its cancellation. Sent to the device's socket only. */
+export const ScanLiveEnrollSchema = z.union([
+  z.object({ id: IdSchema, expiresAt: TimestampSchema }),
+  z.object({ id: IdSchema, cancelled: z.literal(true) }),
+]);
 export const ScanLiveMessageSchema = z.union([
   ScanLiveSnapshotSchema,
   z.object({ resolved: ScanLiveResolvedSchema }),
   z.object({ control: z.literal('reset') }),
+  z.object({ enroll: ScanLiveEnrollSchema }),
 ]);

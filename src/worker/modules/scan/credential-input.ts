@@ -1,7 +1,7 @@
-import type { ScanInput } from '../../../shared/contracts/scan.ts';
+import type { ScanCodeInput, ScanInput } from '../../../shared/contracts/scan.ts';
 import { isKeyEnvName } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { UnavailableError } from '../../platform/errors.ts';
+import { UnavailableError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
@@ -17,6 +17,15 @@ import {
 } from './repo-credential-tombstones.ts';
 
 type Mode = 'live' | 'test';
+
+/** Until tag reads resolve, a tag input is refused before it reaches the code and pass-id paths. */
+export function withCodeInput<T extends { input: ScanInput }>(
+  req: T,
+): Omit<T, 'input'> & { input: ScanCodeInput } {
+  if ('tag' in req.input)
+    throw new ValidationError('Tag reads are not available yet.', [], 'TAG_READS_UNAVAILABLE');
+  return { ...req, input: req.input };
+}
 
 /** Keyed refs are transient input authority, never ledger or response fields. */
 export interface CredentialTombstoneSnapshot {
@@ -122,7 +131,7 @@ export async function credentialTombstoneRefsForInput(
   ctx: ServiceContext,
   orgId: string,
   mode: Mode,
-  input: ScanInput,
+  input: ScanCodeInput,
   includeOtherMode = true,
   keysetPolicy: 'require' | 'defer' = 'defer',
 ): Promise<CredentialTombstoneSnapshot> {
@@ -151,7 +160,7 @@ export async function credentialTombstoneRefsForInput(
 
 /** A code must carry both mode-specific ref sets; only an explicit passId uses empty sets. */
 export function credentialInputValid(
-  input: ScanInput,
+  input: ScanCodeInput,
   observed: CredentialTombstoneSnapshot,
 ): boolean {
   if (!observed || typeof observed !== 'object') return false;

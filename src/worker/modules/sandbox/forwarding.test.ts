@@ -427,10 +427,11 @@ describe('durable test inbox forwarding', () => {
               member.id,
             ]);
           else if (fixture.kind === 'bundle')
-            await run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
-              kit.ctx.ids.token(),
-              fixture.bundle.id,
-            ]);
+            await run(
+              kit.env.DB,
+              "UPDATE bundles SET token = 'h1:' || ?, token_rotated_at = COALESCE(token_rotated_at, 0) + 1 WHERE id = ?",
+              [kit.ctx.ids.token(), fixture.bundle.id],
+            );
           else
             await run(
               kit.env.DB,
@@ -469,10 +470,11 @@ describe('durable test inbox forwarding', () => {
       const race = raceForward(async () => {
         const mutation =
           fixture.kind === 'bundle'
-            ? run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
-                kit.ctx.ids.token(),
-                fixture.bundle.id,
-              ])
+            ? run(
+                kit.env.DB,
+                "UPDATE bundles SET token = 'h1:' || ?, token_rotated_at = COALESCE(token_rotated_at, 0) + 1 WHERE id = ?",
+                [kit.ctx.ids.token(), fixture.bundle.id],
+              )
             : withoutTrigger(kit.env.DB, 'passes_token_change_moves_link', () =>
                 run(kit.env.DB, `UPDATE passes SET download_token = 'h1:' || ? WHERE id = ?`, [
                   kit.ctx.ids.token(),
@@ -602,10 +604,11 @@ describe('durable test inbox forwarding', () => {
               member.id,
             ]);
           if (fixture.kind === 'bundle')
-            return run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
-              kit.ctx.ids.token(),
-              fixture.bundle.id,
-            ]);
+            return run(
+              kit.env.DB,
+              "UPDATE bundles SET token = 'h1:' || ?, token_rotated_at = COALESCE(token_rotated_at, 0) + 1 WHERE id = ?",
+              [kit.ctx.ids.token(), fixture.bundle.id],
+            );
           return run(kit.env.DB, `UPDATE passes SET download_token = 'h1:' || ? WHERE id = ?`, [
             kit.ctx.ids.token(),
             member.id,
@@ -665,10 +668,11 @@ describe('durable test inbox forwarding', () => {
       await waitForProvider(provider.entered.promise, request);
       const mutations = [
         () =>
-          run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
-            kit.ctx.ids.token(),
-            fixture.bundle.id,
-          ]),
+          run(
+            kit.env.DB,
+            "UPDATE bundles SET token = 'h1:' || ?, token_rotated_at = COALESCE(token_rotated_at, 0) + 1 WHERE id = ?",
+            [kit.ctx.ids.token(), fixture.bundle.id],
+          ),
         () =>
           run(
             kit.env.DB,

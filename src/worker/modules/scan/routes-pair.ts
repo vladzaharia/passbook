@@ -10,7 +10,7 @@ import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { sameOriginOnly } from '../../platform/csrf.ts';
 import { ipPrefix } from '../../platform/ip.ts';
-import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
 import { clientRatePrefix, rateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { completePairing, previewPairing, unpair } from './pairing.ts';
@@ -33,7 +33,12 @@ const ipOf = (c: Context<AppBindings>) => ipPrefix(c.req.header('cf-connecting-i
 
 /** Pairing, public: /api/v1/scan/pair*, and /unpair. Same-origin, rate limited per IP. */
 export const scanPairRoutes = createRouter();
-guard(scanPairRoutes, sameOriginOnly);
+// This router is mounted over the whole scan API. A terminal's or a till's bearer is no ambient
+// credential (a cross-site page cannot set it), so only those requests skip the origin check.
+const BEARER = /^Bearer\s+(?:wls|wlt)_\S+$/i;
+scanPairRoutes.use('*', (c, next) =>
+  BEARER.test(c.req.header('authorization') ?? '') ? next() : sameOriginOnly(c, next),
+);
 // A pairing code is a guess target: key on the /24 or /64, not the full address.
 scanPairRoutes.use('/pair/*', rateLimit('RL_SCAN_PAIR', clientRatePrefix));
 scanPairRoutes.use('/pair', rateLimit('RL_SCAN_PAIR', clientRatePrefix));

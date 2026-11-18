@@ -70,9 +70,15 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     org: null,
     edges: [edge('retention_id', 'connection_webhook_retention')],
   },
+  // Written once with its key (`createKey`); the migration's triggers refuse any later change.
+  api_key_terminals: {
+    org: null,
+    edges: [edge('key_id', 'api_keys'), edge('scanner_id', 'scanners')],
+  },
   scans: { org: 'org_id', mode: 'mode', conflict: ['actor_key', 'idempotency_key'] },
   scan_gates: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'action_id', 'scope'] },
-  scan_presence: { org: 'org_id', conflict: ['pass_id', 'scope'] },
+  // `mode` from 0074: the pass decides it (insert triggers). No holder writes, so no `pass` pin.
+  scan_presence: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'scope'] },
   scan_staff: { org: 'org_id' },
   scan_events: { org: 'org_id', mode: 'mode' },
   scan_event_templates: { org: null, edges: [edge('event_id', 'scan_events')] },
@@ -88,11 +94,15 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     edges: [edge('session_id', 'scanning_sessions'), edge('zone_id', 'scan_zones')],
   },
   scanning_devices: { org: 'org_id', mode: 'mode' },
+  // In now ordering: only raised (`inc`), in the batch that changes the place.
+  scan_place_revs: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'place'] },
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
+  // The bundle counterpart (0087).
+  bundle_remac_marks: { org: null, edges: [edge('bundle_id', 'bundles')] },
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */

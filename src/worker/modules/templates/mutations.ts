@@ -4,6 +4,7 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { purgeWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import {
   assertTemplateAuthority,
   authorizeTemplateWrite,
@@ -196,7 +197,9 @@ export async function removeTemplate(
       if (await hasPasses(ctx.env.DB, id)) return archive();
       return templateChanged(ctx, auth, row, authority);
     }
-    return finishDelete();
+    const result = await finishDelete();
+    await purgeWalletArt(ctx, { templateId: id });
+    return result;
   };
   if (await hasPasses(ctx.env.DB, id)) return archive();
   // Lineage stays readable: a template that others were copied from is archived, never deleted.
@@ -217,5 +220,6 @@ export async function removeTemplate(
   }
   const result = await finishDelete();
   await deletePrefix(ctx, prefix, authority);
+  await purgeWalletArt(ctx, { templateId: id });
   return result;
 }

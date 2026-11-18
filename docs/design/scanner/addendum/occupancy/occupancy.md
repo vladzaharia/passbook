@@ -272,7 +272,16 @@ time never taps out early (it re-arms instead).
 Undo restores every row the scan changed (`last_scan_id = :undone`): rows it inserted are deleted, rows it changed take
 `prev_*` back; `due_at` is recomputed for rows restored to `in`; AX's visit decrement applies. An override's group (the
 grant and its forced-exit row, `group_id`) is undone together. A later change to any of the rows answers
-`UNDO_SUPERSEDED` (SA). Tested: forced re-entry, children out, undo returns all.
+`UNDO_SUPERSEDED` (SA). "Later" is commit order: each in/out write sets the pass's next `scan_presence.seq`
+inside the write. A row the scan only updated and whose history an earlier undo used up is never deleted (superseded),
+and a Track off, archive or move of a zone a restored in row depends on since the scan supersedes too. An undone exit
+is not re-checked against capacity: the person never left. Tested: forced re-entry, children out, undo returns all.
+
+**Entry fence (built).** ENTER re-checks, in its batch, the zone and every ancestor as the plan read them: tracking,
+parent and archive state. A Track off, archive or move that commits first makes the entry lose. Capacity, Max stay,
+Clear at and the time zone are not fenced: an edit racing one scan gives that scan the old value (plan C6, the R8
+class). The count stays exact against the capacity the scan read, and a due time from old settings is re-armed by
+the cron's re-read, so a stale value decides one scan and nothing after it.
 
 ### 2.6 Migration `0020_scan_access.sql` (AX's, extended; the reference is `MIGRATION_0020`)
 
@@ -314,7 +323,7 @@ CREATE TABLE scan_place_revs (
 - Touches `scans` and `scan_gates` (SV's tables, 0014): additive columns and indexes only; reported to SV and
   integration. `scans_override_once` also closes SA's "not already overridden" race for scanner overrides.
 - Service rules: Require tap out, capacity, max stay and clear need Track (the CHECK); Clear at needs a time zone on the
-  root or the org (`ZONE_CLEAR_NEEDS_TZ`, 422); a scanner's Out or Both needs a tracked zone or a re-entry event
+  root or the org (`ZONE_CLEAR_NEEDS_TIME_ZONE`, 422); a scanner's Out or Both needs a tracked zone or a re-entry event
   (`SCANNER_DIRECTION_NO_PLACE`, 422); a terminal can't be Both.
 - `test/migrations.test.ts` `describe('0020_scan_access')` gains: the occupancy CHECKs (capacity without track, `24:00`,
   `7:00`, max stay 5), `out_cause` and `override_note` CHECKs, the unique override index (an undone override frees
@@ -475,7 +484,7 @@ Later, additive (stream OC unless noted):
 
 | File | Names |
 | --- | --- |
-| `contracts/access.ts` (AX) | `ScanZoneSchema` + `occupancy`, `capacity`, `maxStayMinutes`, `clearAt`, `inNow`; `Update/CreateScanZoneSchema` the same; `ZONE_CLEAR_NEEDS_TZ` |
+| `contracts/access.ts` (AX) | `ScanZoneSchema` + `occupancy`, `capacity`, `maxStayMinutes`, `clearAt`, `inNow`; `Update/CreateScanZoneSchema` the same; `ZONE_CLEAR_NEEDS_TIME_ZONE` |
 | `contracts/scan-occupancy.ts` (new) | `OccupancySettingsSchema`, `ScanInsideRowSchema` (`{ passId, holder, photoUrl, plan, place, since, via, flags: ('long_stay' \| 'pass_ended')[] }`), `ScanInsideListSchema` (≤ 100, `total`, cursor), `ScanOverrideRequestSchema` (`{ idempotencyKey, overrideOf, approval?, note? }`), `ScanOverrideNoteSchema`, `ScanMarkOutRequestSchema` (`{ idempotencyKey, passId, place, approval? }`), `OVERRIDE_NOTES` |
 | `contracts/scan-live.ts` (ST) | `ScanMonitorRow` + `occupancy`, `places[]`, `outCause`, `overrideOf`, `resolvedBy`; `ScanCustomerView.replaces: UuidV7 \| null`; `LiveEvent` + `resolved { of, outcome, by }` (to `dev:<scanner>`); `ScreenSettingsSchema.actions: boolean` (default false); `ScanLiveSnapshot.counts.places[]` |
 | `contracts/scanners.ts` (SC) | `ScanRecord.outCause`, `.overrideNote`, `.occupancy`; `ScanListQuery.outCause` |
@@ -497,7 +506,7 @@ Later, additive (stream OC unless noted):
 
 Errors: `SCAN_OVERRIDE_INVALID` 422 (widened, 6.4), `SCAN_OVERRIDE_TAKEN` 409 (the unique index: someone else was
 first; copy **Ana R. already let them in.**), `SCAN_TOO_MANY_OVERRIDES` 429, `NOT_INSIDE` 409 (Mark as out on someone
-already out), `SCANNER_DIRECTION_NO_PLACE` 422, `ZONE_CLEAR_NEEDS_TZ` 422.
+already out), `SCANNER_DIRECTION_NO_PLACE` 422, `ZONE_CLEAR_NEEDS_TIME_ZONE` 422.
 
 ### 5.5 Ledger, events, audit
 
