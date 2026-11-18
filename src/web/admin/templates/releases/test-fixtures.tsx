@@ -147,6 +147,7 @@ export function releaseServer(
     candidates?: TemplateCandidate[];
     active?: TemplateRelease | null;
     history?: TemplateRelease[];
+    promotable?: string[];
     impact?: () => Response;
     publishError?: () => Response;
     rollbackError?: () => Response;
@@ -156,6 +157,7 @@ export function releaseServer(
     candidates: options.candidates ?? [],
     active: options.active ?? null,
     history: options.history ?? [],
+    promotable: options.promotable ?? [],
     requests: [] as SeenRequest[],
   };
   const headId = () =>
@@ -186,9 +188,19 @@ export function releaseServer(
       state.candidates = [...state.candidates, created];
       return json(created, 201);
     },
+    [`${base}/candidates/promote`]: (url, init) => {
+      const request = record(url, init);
+      const created = candidate({ id: 'candidate-live', version: String(request.body.version) });
+      state.candidates = [...state.candidates, created];
+      return json(created, 201);
+    },
     [`${base}/candidates/candidate-1/approve`]: (url, init) => {
-      record(url, init);
-      const created = approval();
+      const request = record(url, init);
+      const created = approval(
+        request.body.alone === true
+          ? { reviewerId: 'candidate-author', reviewerName: 'Ada Author', kind: 'sole' }
+          : {},
+      );
       state.candidates = state.candidates.map((item) =>
         item.id === created.candidateId
           ? { ...item, approvals: [...item.approvals, created] }
@@ -202,7 +214,12 @@ export function releaseServer(
     },
     [`${base}/releases`]: (url, init) => {
       const request = record(url, init);
-      if (request.method === 'GET') return json({ active: state.active, items: state.history });
+      if (request.method === 'GET')
+        return json({
+          active: state.active,
+          items: state.history,
+          promotable: state.promotable,
+        });
       if (options.publishError) return options.publishError();
       const selected = state.candidates.find((item) => item.id === request.body.candidateId);
       if (!selected) throw new Error('Unknown candidate in publish request');

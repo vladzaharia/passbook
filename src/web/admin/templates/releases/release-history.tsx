@@ -1,6 +1,7 @@
 import type { TemplateRelease } from '@/shared/contracts/template-releases.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import {
+  Badge,
   Button,
   Card,
   CardBody,
@@ -29,6 +30,7 @@ export function ReleaseHistory({
   releases,
   versions,
   generation,
+  selfApprovals,
   blockedMessage,
   allowHeadRollback,
   canPublish,
@@ -39,6 +41,8 @@ export function ReleaseHistory({
   releases: readonly TemplateRelease[];
   versions: readonly ReleaseVersion[];
   generation: number;
+  /** Approval ids recorded as the author's own (sole reviewer or Test). */
+  selfApprovals: ReadonlySet<string>;
   blockedMessage: string;
   allowHeadRollback: boolean;
   canPublish: boolean;
@@ -61,6 +65,9 @@ export function ReleaseHistory({
                   value: providerModeLabel(active.provider, active.mode),
                 },
                 { label: 'Source', value: SOURCE_LABEL[active.source] },
+                ...(active.approvalId && selfApprovals.has(active.approvalId)
+                  ? [{ label: 'Approval', value: <Badge tone="warning">Self-approved</Badge> }]
+                  : []),
               ]}
             />
             <TechnicalDetails items={technical(active)} />
@@ -90,6 +97,11 @@ export function ReleaseHistory({
                           Generation {release.generation} ·{' '}
                           {versionLabel(versions, release.version)}
                           {release.id === active?.id ? ' · Active' : ''}
+                          {release.approvalId && selfApprovals.has(release.approvalId) ? (
+                            <Badge tone="warning" className="ml-2">
+                              Self-approved
+                            </Badge>
+                          ) : null}
                         </p>
                         <p className="text-fg-muted">
                           {ACTION_LABEL[release.action]} by {who(release)} ·{' '}
