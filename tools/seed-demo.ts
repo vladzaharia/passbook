@@ -28,8 +28,19 @@ const DAY = 86_400_000;
 
 const admin = new Session(base);
 await admin.breakglass(token);
-// Listing templates syncs the baked ones and Henry's org into a fresh database.
-await admin.get('/api/v1/templates');
+// Listing templates syncs the baked ones and Henry's org into a fresh database; the sync is lazy and
+// skips for a while after a contended attempt, so poll before using blueprints.
+async function waitForBlueprints(): Promise<void> {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const list = await admin.all('/api/v1/templates?blueprint=true');
+    if (list.some((t) => t.id === 'baked:starter-store-card')) return;
+    await new Promise((done) => setTimeout(done, 2000));
+  }
+  throw new Error(
+    'Baked blueprints never appeared. Check the dev server log for templates.baked_synced, or run the cron: curl "<url>/cdn-cgi/handler/scheduled?cron=*+*+*+*+*".',
+  );
+}
+await waitForBlueprints();
 
 // Orgs
 const ORGS = [
@@ -46,13 +57,31 @@ const henrys = orgId('henrys');
 const northwind = orgId('northwind');
 const harbor = orgId('harbor-lights');
 
+// A platform admin without membership is treated as a non-member (404), so the demo owner makes the
+// org templates: sign in once, then become org_admin in every org (re-run after uploads below).
+const owner = new Session(base);
+// Magic links go only to known addresses, so a first run invites the owner to an org.
+if (!(await admin.all('/api/v1/users')).some((u) => u.primaryEmail === DEMO_OWNER))
+  await admin.send('POST', `/api/v1/orgs/${northwind}/invitations`, {
+    email: DEMO_OWNER,
+    roles: ['org_admin'],
+  });
+await owner.magicLink(DEMO_OWNER, mailDir);
+const tenancy = tenancyCommand(DEMO_OWNER);
+const applyTenancy = () =>
+  execFileSync(tenancy.file, tenancy.args, { cwd: root, stdio: 'inherit' });
+applyTenancy();
+
 // Templates: made from blueprints (passes come from templates), an upload in flight and one failed import.
-let templates = await admin.all('/api/v1/templates');
+// A platform admin's list shows platform templates only; org templates come per org.
+const listTemplates = async () =>
+  (await Promise.all(orgs.map((o) => owner.all(`/api/v1/templates?orgId=${o.id}`)))).flat();
+let templates = await listTemplates();
 const byName = (name: string) => templates.find((t) => t.name === name);
 async function fromBlueprint(slug: string, orgId: string, name: string): Promise<string> {
   const found = byName(name);
   if (found) return found.id as string;
-  const made = await admin.send('POST', `/api/v1/templates/baked:starter-${slug}/use`, {
+  const made = await owner.send('POST', `/api/v1/templates/baked:starter-${slug}/use`, {
     orgId,
     name,
   });
@@ -89,7 +118,7 @@ function variantZip(name: string): Uint8Array {
   return zipSync(files);
 }
 const upload = (query: string, zip: Uint8Array) =>
-  admin.send('POST', `/api/v1/templates/uploads?${query}`, zip, {
+  owner.send('POST', `/api/v1/templates/uploads?${query}`, zip, {
     'content-type': 'application/zip',
   });
 if (!byName('Harbor Crew Badge')) {
@@ -99,31 +128,47 @@ if (!byName('Harbor Crew Badge')) {
     zipSync({ 'wallet.template.json': Buffer.from('{') }),
   );
 }
-templates = await admin.all('/api/v1/templates');
+templates = await listTemplates();
 const member = byName('Northwind Member')?.id as string;
 
 // Tenancy: a demo owner becomes org_admin everywhere and uploaded templates get a legacy release,
 // without which passes cannot be issued. Writes the local D1 (.wrangler/state); safe to re-run.
-if (!(await admin.all('/api/v1/users')).some((u) => u.primaryEmail === DEMO_OWNER))
-  await new Session(base).magicLink(DEMO_OWNER, mailDir);
-const tenancy = tenancyCommand(DEMO_OWNER);
-execFileSync(tenancy.file, tenancy.args, { cwd: root, stdio: 'inherit' });
+applyTenancy();
 
 // Passes
 const plans = demoPlans({ henrys, northwind, harbor, member, store, ticket, coupon, crew });
 
 const existing = new Set(
-  (await admin.all('/api/v1/passes')).map((p) => p.externalId).filter(Boolean),
+  (await Promise.all(orgs.map((o) => owner.all(`/api/v1/passes?orgId=${o.id}`))))
+    .flat()
+    .map((p) => p.externalId)
+    .filter(Boolean),
 );
 const IMAGE_SIZES: Record<string, [number, number]> = {
   'thumbnail@2x.png': [180, 180],
   'strip@2x.png': [750, 288],
 };
 let created = 0;
+// A session issues passes only after a reviewed release; an API key issues from the scope's approved
+// release, so each org gets a short-lived key for the run.
+const api = new Session(base);
+const issuers = new Map<string, { secret: string; id: string }>();
+async function issuer(org: string) {
+  if (!issuers.has(org)) {
+    const key = await owner.send('POST', '/api/v1/api-keys', {
+      name: `Seed ${org.slice(-8)}`,
+      orgId: org,
+      scopes: ['passes:read', 'passes:write'],
+    });
+    issuers.set(org, { secret: key.secret, id: key.id });
+  }
+  return { authorization: `Bearer ${issuers.get(org)?.secret}` };
+}
 for (const [i, plan] of plans.entries()) {
   const externalId = `demo-${String(i + 1).padStart(3, '0')}`;
   if (existing.has(externalId)) continue;
-  const pass = await admin.send(
+  const auth = await issuer(plan.org);
+  const pass = await api.send(
     'POST',
     '/api/v1/passes',
     {
@@ -133,29 +178,36 @@ for (const [i, plan] of plans.entries()) {
       externalId,
       ...(plan.holder ? { holderEmail: plan.holder } : {}),
     },
-    { 'idempotency-key': `seed-demo-${externalId}` },
+    { ...auth, 'idempotency-key': `seed-demo-${externalId}` },
   );
   created++;
   if (plan.image) {
     const [w, h] = IMAGE_SIZES[plan.image] ?? [180, 180];
     const png = discPng(w, h, [15, 118, 110], [240, 253, 250 - (i % 5) * 30]);
-    await admin.send('PUT', `/api/v1/passes/${pass.id}/assets/${plan.image}`, png, {
+    await api.send('PUT', `/api/v1/passes/${pass.id}/assets/${plan.image}`, png, {
+      ...auth,
       'content-type': 'image/png',
     });
   }
   if (i % 7 === 1) {
     // A second version for the history and diff views.
-    await admin.send('PATCH', `/api/v1/passes/${pass.id}`, {
-      input: {
-        ...plan.input,
-        ...('memberName' in plan.input
-          ? { message: 'Pool closed Monday.' }
-          : { note: 'Updated by staff.' }),
+    await api.send(
+      'PATCH',
+      `/api/v1/passes/${pass.id}`,
+      {
+        input: {
+          ...plan.input,
+          ...('memberName' in plan.input
+            ? { message: 'Pool closed Monday.' }
+            : { note: 'Updated by staff.' }),
+        },
       },
-    });
+      auth,
+    );
   }
-  if (plan.void) await admin.send('POST', `/api/v1/passes/${pass.id}/void`);
+  if (plan.void) await api.send('POST', `/api/v1/passes/${pass.id}/void`, undefined, auth);
 }
+for (const { id } of issuers.values()) await owner.send('DELETE', `/api/v1/api-keys/${id}`);
 
 // Portal users: a magic-link sign-in creates the user and attaches their waiting passes.
 const users = await admin.all('/api/v1/users');
@@ -177,7 +229,9 @@ if (theo && theo.status === 'active')
   await admin.send('PATCH', `/api/v1/users/${theo.id}`, { status: 'disabled' });
 
 // Connections: one healthy demo sync, one failing upstream, one webhook that never ran.
-const connections = await admin.all('/api/v1/connections');
+const connections = (
+  await Promise.all(orgs.map((o) => owner.all(`/api/v1/connections?orgId=${o.id}`)))
+).flat();
 const CONNECTIONS = [
   {
     orgId: northwind,
@@ -216,10 +270,10 @@ const CONNECTIONS = [
 ];
 for (const spec of CONNECTIONS) {
   if (connections.some((c) => c.name === spec.name && c.orgId === spec.orgId)) continue;
-  const conn = await admin.send('POST', '/api/v1/connections', spec);
+  const conn = await owner.send('POST', '/api/v1/connections', spec);
   if (spec.connectorType === 'demo') {
-    await admin.send('POST', `/api/v1/connections/${conn.id}/test`);
-    await admin.send('POST', `/api/v1/connections/${conn.id}/sync`);
+    await owner.send('POST', `/api/v1/connections/${conn.id}/test`);
+    await owner.send('POST', `/api/v1/connections/${conn.id}/sync`);
   }
 }
 
@@ -238,8 +292,8 @@ for (const { revoke, ...key } of KEYS) {
 }
 
 // One pass email for the delivery log (and a rendered email under the local mail directory).
-const waiting = (await admin.all(`/api/v1/passes?orgId=${henrys}&holderState=waiting`))[0];
-if (waiting) await admin.send('POST', `/api/v1/passes/${waiting.id}/resend-email`, {});
+const waiting = (await owner.all(`/api/v1/passes?orgId=${henrys}&holderState=waiting`))[0];
+if (waiting) await owner.send('POST', `/api/v1/passes/${waiting.id}/resend-email`, {});
 
 console.log(
   `Seeded ${base}: ${orgs.length} orgs, ${created} new passes, ${signedIn} portal users signed in.`,
