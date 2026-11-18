@@ -64,7 +64,7 @@ const plan = (over: Partial<ImportPlan> = {}): ImportPlan => ({
   holderEmail: entry('Email'),
   externalId: entry('Id'),
   match: 'externalId',
-  overwriteManual: false,
+  keepManual: false,
   save: true,
   ...over,
 });

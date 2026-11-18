@@ -20,6 +20,7 @@ export const IMPORT_TEXT = {
   otherTemplate: 'This pass uses another template. Import it with that template.',
   connected: (name: string | null) => `Synced by ${name ?? 'a connection'}. Change it there.`,
   manualKept: (label: string) => `${label} was edited in PassBook; left as is.`,
+  manualReplaced: (label: string) => `${label} was edited in PassBook; the file replaces it.`,
   emailKept: 'The holder email differs; the pass keeps its own.',
   columnMissing: (column: string) => `The file has no "${column}" column.`,
 } as const;

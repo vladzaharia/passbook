@@ -33,7 +33,7 @@ export const PassImportPlanSchema = z
     holderEmail: MappingEntrySchema.nullable(),
     externalId: MappingEntrySchema.nullable(),
     match: PassImportMatchSchema,
-    overwriteManual: z.boolean().default(false),
+    keepManual: z.boolean().default(false),
     save: z.boolean().default(true),
   })
   .refine((p) => p.match !== 'externalId' || p.externalId !== null, {

@@ -61,7 +61,7 @@ const plan = (over: Record<string, unknown> = {}) => ({
   holderEmail: { from: '/Email' },
   externalId: { from: '/Id' },
   match: 'externalId',
-  overwriteManual: false,
+  keepManual: false,
   save: false,
   ...over,
 });
@@ -226,22 +226,27 @@ describe('check: create, update, unchanged', () => {
     ]);
   });
 
-  it('keeps fields edited by hand unless the plan overwrites them', async () => {
+  it('replaces fields edited by hand and says which, unless the plan keeps them', async () => {
     const pass = await existing('MAN', null, { memberName: 'Alex', points: 5 });
     await run(kit.env.DB, 'UPDATE passes SET field_sources = ? WHERE id = ?', [
       JSON.stringify({ points: 'manual' }),
       pass.id,
     ]);
     const csv = `${HEAD}\nAlex,9,,MAN`;
-    const kept = await draft(await start(csv));
+    const replaced = await draft(await start(csv));
+    expect(replaced.counts).toMatchObject({ update: 1, unchanged: 0, warnings: 1 });
+    expect(replaced.problems[0]).toMatchObject({
+      code: 'IMPORT_MANUAL_REPLACED',
+      severity: 'warning',
+      field: 'points',
+      message: 'Points was edited in PassBook; the file replaces it.',
+    });
+    const kept = await draft(await start(csv, plan({ keepManual: true })));
     expect(kept.counts).toMatchObject({ update: 0, unchanged: 1, warnings: 1 });
     expect(kept.problems[0]).toMatchObject({
       code: 'IMPORT_MANUAL_KEPT',
-      severity: 'warning',
       message: 'Points was edited in PassBook; left as is.',
     });
-    const over = await draft(await start(csv, plan({ overwriteManual: true })));
-    expect(over.counts).toMatchObject({ update: 1, unchanged: 0, warnings: 0 });
   });
 });
 

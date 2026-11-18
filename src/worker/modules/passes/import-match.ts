@@ -89,9 +89,13 @@ export async function planRows(
     let changed = false;
     for (const [k, v] of Object.entries(r.input)) {
       if (same(current[k] ?? defaults[k], v)) continue;
-      if (sources[k] === 'manual' && !plan.overwriteManual)
+      const manual = sources[k] === 'manual';
+      if (manual && plan.keepManual) {
         warn('IMPORT_MANUAL_KEPT', k, IMPORT_TEXT.manualKept(label(k)));
-      else changed = true;
+        continue;
+      }
+      if (manual) warn('IMPORT_MANUAL_REPLACED', k, IMPORT_TEXT.manualReplaced(label(k)));
+      changed = true;
     }
     if (r.holderEmail !== null && r.holderEmail !== p.holder_email)
       warn('IMPORT_EMAIL_KEPT', 'holderEmail', IMPORT_TEXT.emailKept);
