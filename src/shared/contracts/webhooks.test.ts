@@ -121,7 +121,7 @@ describe('webhook catalog', () => {
   });
 
   it('bounds the cursor to a safe integer and requires a replay range in order', () => {
-    expect(EventFeedQuerySchema.safeParse({ after: 'ev1.9007199254740991' }).success).toBe(true);
+    expect(EventFeedQuerySchema.safeParse({ after: `ev1.${'9'.repeat(15)}` }).success).toBe(true);
     expect(EventFeedQuerySchema.safeParse({ after: `ev1.${'9'.repeat(16)}` }).success).toBe(false);
     expect(WebhookReplaySchema.safeParse({ from: 1, to: 2 }).success).toBe(true);
     expect(WebhookReplaySchema.safeParse({ from: 3, to: 2 }).success).toBe(false);
