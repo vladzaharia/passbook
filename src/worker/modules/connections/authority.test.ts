@@ -1048,7 +1048,7 @@ describe('ambiguous D1 writes and credential cleanup', () => {
         throw new Error('uncertain rotation');
       });
       await expect(
-        actions.rotateWebhookSecret(seam.sctx, kit.actor, connection.id, authority),
+        actions.rotateWebhookSecret(seam.sctx, kit.actor, connection.id, authority, 0),
       ).rejects.toThrow('uncertain rotation');
       expect(seam.hits()).toBe(1);
       const after = await state();

@@ -226,9 +226,9 @@ export const UpdateConnectionSchema = CreateConnectionSchema.omit({
     maxConcurrency: z.number().int().min(1).max(20).nullable().optional(),
     requestsPerMinute: z.number().int().min(1).max(6000).nullable().optional(),
   });
-/** Body of the generate-secret call. */
-export const RotateWebhookSecretSchema = z.object({
-  overlapSeconds: SecretOverlapSchema.default(86_400),
+/** Query of the generate-secret call: how long the replaced secret stays valid (default one day). */
+export const RotateWebhookSecretQuerySchema = z.object({
+  overlapSeconds: z.coerce.number().pipe(SecretOverlapSchema).default(86_400),
 });
 
 /** The first record the source returned, as JSON pointers and short previews. */

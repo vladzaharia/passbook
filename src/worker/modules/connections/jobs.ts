@@ -10,8 +10,10 @@ import { quarantineLegacyWebhookEvents } from './legacy-quarantine.ts';
 import { getConnection } from './repo.ts';
 import { type RefreshSnapshot, refreshSnapshotCurrent } from './repo-pass-refresh.ts';
 import { getPassById } from './repo-passes.ts';
+import { deleteIdleRefVersions } from './repo-ref-versions.ts';
 import { deleteOldRuns, deleteOldWebhookEvents, deleteOldWorkflowRuns } from './repo-sync.ts';
 import { reconcileConnections as schedule } from './schedule.ts';
+import { dropExpiredPreviousSecrets } from './secret-sweep.ts';
 import { processWebhook } from './webhook-process.ts';
 import { sweepStalledReplays, sweepUndispatchedWebhooks } from './webhook-redispatch.ts';
 
@@ -19,6 +21,8 @@ const DAY_MS = 86_400_000;
 export const RUN_RETENTION_MS = 30 * DAY_MS;
 export const RUNS_KEPT_PER_CONNECTION = 1000;
 export const WEBHOOK_RETENTION_MS = 7 * DAY_MS;
+/** A ref's source version is kept this long after its last write. */
+export const REF_VERSION_IDLE_MS = 30 * DAY_MS;
 /** Failed, blocked and ignored retained payloads expire after this, unless an item is unresolved. */
 export const FAILED_WEBHOOK_TTL_MS = 30 * DAY_MS;
 
@@ -137,7 +141,11 @@ export async function dailyConnections(ctx: ServiceContext): Promise<void> {
   const workflows = await step(ctx, 'workflows', () =>
     deleteOldWorkflowRuns(ctx.env.DB, now - RUN_RETENTION_MS),
   );
-  ctx.log.info('connections.retention', { runs, events, workflows });
+  const versions = await step(ctx, 'ref_versions', () =>
+    deleteIdleRefVersions(ctx, now - REF_VERSION_IDLE_MS),
+  );
+  const secrets = await step(ctx, 'previous_secrets', () => dropExpiredPreviousSecrets(ctx, now));
+  ctx.log.info('connections.retention', { runs, events, workflows, versions, secrets });
 }
 
 /**

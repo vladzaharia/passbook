@@ -9,7 +9,7 @@ import { assertMayIssue, updateIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
 import { type ConnectionPatch, type ConnectionRow, patchConnection } from './repo.ts';
 import { pastesSecret, rethrowSecretReuse, secretFingerprint } from './secret-fingerprint.ts';
-import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
+import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from './secrets.ts';
 import {
   auditActor,
   type Created,
@@ -141,7 +141,11 @@ export async function update(
   if (input.webhookSecret !== undefined || needsSecret) {
     const secret = input.webhookSecret ?? newWebhookSecret(sctx);
     webhookCredential = secret;
-    staleCredentials.push(conn.webhookCredentialId);
+    // The replaced secret stays valid for the overlap; the one before it is dropped now.
+    const overlap = input.overlapSeconds ?? 86_400;
+    Object.assign(patch, overlapPatch(conn, overlap, now));
+    staleCredentials.push(conn.webhookPrevCredentialId);
+    if (overlap === 0) staleCredentials.push(conn.webhookCredentialId);
     if (input.webhookSecret === undefined) generated = secret;
     // A pasted recipe secret is fingerprinted (unique platform-wide); a generated one needs no check.
     patch.webhookSecretFp =

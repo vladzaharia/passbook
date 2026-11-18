@@ -344,7 +344,7 @@ describe('update', () => {
       kit.actor,
       demoInput(kit, { connectorType: 'webhook-push', config: {}, mode: 'webhook' }),
     );
-    const rotated = await actions.rotateWebhookSecret(kit.sctx, kit.actor, dto.id);
+    const rotated = await actions.rotateWebhookSecret(kit.sctx, kit.actor, dto.id, undefined, 0);
     expect(rotated.webhookSecret).not.toBe(dto.webhookSecret);
     const conn = await getConnection(kit.env.DB, dto.id);
     expect(conn && (await readWebhookSecret(kit.sctx, conn))).toBe(rotated.webhookSecret);

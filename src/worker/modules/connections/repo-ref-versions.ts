@@ -1,4 +1,5 @@
-import { lte } from '../../platform/authority-expr.ts';
+import { jobGrant } from '../../platform/authority.ts';
+import { lt, lte } from '../../platform/authority-expr.ts';
 import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
@@ -49,4 +50,14 @@ export async function advanceRefVersion(
   const results = await commitOrNull(g, actor);
   if (results === null) return 'fenced';
   return rowCount(results.at(-1)) === 1 ? 'applied' : 'stale';
+}
+
+/** Drops source versions of refs not written for a while, under a platform job grant. */
+export async function deleteIdleRefVersions(ctx: ServiceContext, before: number): Promise<number> {
+  const g = jobGrant(ctx, {
+    purpose: 'platform.job.connections_retention',
+    job: 'connection-retention',
+  });
+  g.delete('connection_ref_versions', { where: { updated_at: lt(before) }, returning: ['ref'] });
+  return (await g.commit())[0]?.results.length ?? 0;
 }

@@ -7,7 +7,7 @@ import {
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ConnectionWriter } from './access.ts';
-import type { ConnectionRow } from './repo.ts';
+import type { ConnectionPatch, ConnectionRow } from './repo.ts';
 import {
   deleteCredentials,
   discardCredential,
@@ -101,4 +101,18 @@ export function readPreviousWebhookSecret(
 
 export function newWebhookSecret(ctx: ServiceContext): string {
   return `whsec_${ctx.ids.token(32)}`;
+}
+
+/** Where the replaced secret goes: kept as the previous one while it overlaps, else forgotten. */
+export function overlapPatch(
+  conn: Pick<ConnectionRow, 'webhookCredentialId'>,
+  overlapSeconds: number,
+  now: number,
+): Pick<ConnectionPatch, 'webhookPrevCredentialId' | 'webhookPrevUntil'> {
+  return conn.webhookCredentialId && overlapSeconds > 0
+    ? {
+        webhookPrevCredentialId: conn.webhookCredentialId,
+        webhookPrevUntil: now + overlapSeconds * 1000,
+      }
+    : { webhookPrevCredentialId: null, webhookPrevUntil: null };
 }

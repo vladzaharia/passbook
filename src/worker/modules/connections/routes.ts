@@ -4,9 +4,11 @@ import {
   ConnectionDetailSchema,
   ConnectionRunListSchema,
   ConnectionRunsQuerySchema,
+  ConnectionSchema,
   CreateConnectionSchema,
   IdParamSchema,
   OkSchema,
+  RotateWebhookSecretQuerySchema,
   SyncNowResponseSchema,
   TestConfigResponseSchema,
   TestConfigSchema,
@@ -237,6 +239,7 @@ register(
     path: '/{id}/webhook-secret',
     summary: 'Generate a new webhook secret (shown once)',
     params: IdParamSchema,
+    query: RotateWebhookSecretQuerySchema,
     response: ConnectionCreatedSchema,
   },
   async (c) => {
@@ -249,8 +252,27 @@ register(
       actor(c),
       id,
       authority,
+      c.req.valid('query').overlapSeconds,
     );
     return c.json({ ...connection, webhookSecret });
+  },
+);
+register(
+  connectionsRoutes,
+  'connections',
+  {
+    method: 'delete',
+    path: '/{id}/webhook-secret/previous',
+    summary: 'Stop accepting the previous webhook secret now',
+    params: IdParamSchema,
+    response: ConnectionSchema,
+  },
+  async (c) => {
+    assertLive(c);
+    const ctx = sctx(c);
+    const id = c.req.valid('param').id;
+    const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
+    return c.json(await actions.revokePreviousWebhookSecret(ctx, actor(c), id, authority));
   },
 );
 
