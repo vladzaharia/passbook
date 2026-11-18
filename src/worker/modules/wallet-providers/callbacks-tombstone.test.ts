@@ -215,6 +215,18 @@ describe('Samsung tombstone retention', () => {
       expectedRevision: changed.revision,
     });
     expect((await t.call({ token: await t.token() })).status).toBe(204);
+    // Send Card State for the same dead ref documents only 200: it is answered, not rejected.
+    const state = await t.token({ method: 'POST' });
+    const answered = await t.call({
+      method: 'POST',
+      token: state,
+      query: '?cc2=US&event=DELETED',
+    });
+    expect(answered.status).toBe(200);
+    expect(await answered.text()).toBe('');
+    expect(
+      (await t.call({ method: 'POST', token: state, query: '?cc2=US&event=DELETED' })).status,
+    ).toBe(401);
     const refHash = await sha256Hex(t.refId);
     const tombstones = await findSamsungTombstones(db, refHash, t.credentialKeysetCommitment);
     const tombstone = tombstones[0];

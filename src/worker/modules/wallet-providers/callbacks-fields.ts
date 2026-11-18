@@ -1,4 +1,5 @@
 import { BadRequestError } from '../../platform/errors.ts';
+import type { SamsungCardEvent } from './repo-callbacks-events.ts';
 import type { SamsungCardProjection } from './samsung.ts';
 
 const invalid = () =>
@@ -48,4 +49,13 @@ export function samsungCountryHint(url: URL): string | null {
   const values = url.searchParams.getAll('cc2');
   const value = values.length === 1 ? values[0] : undefined;
   return value && /^[A-Za-z]{2}$/.test(value) ? value.toUpperCase() : null;
+}
+
+/** The event is unsigned too: it selects what to record, and only a verified ADDED can promote. */
+export function samsungCardEvent(url: URL): SamsungCardEvent | null {
+  const values = url.searchParams.getAll('event');
+  const value = values.length === 1 ? values[0] : undefined;
+  return value === 'ADDED' || value === 'DELETED' || value === 'UPDATED' || value === 'PROVISIONED'
+    ? value
+    : null;
 }

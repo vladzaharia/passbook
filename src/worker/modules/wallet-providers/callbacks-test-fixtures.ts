@@ -149,6 +149,7 @@ export async function setupSamsungCallbacks(
       path?: string;
       query?: string;
       body?: string;
+      requestId?: string;
     } = {},
   ) {
     return app.request(
@@ -156,7 +157,7 @@ export async function setupSamsungCallbacks(
       {
         method: input.method ?? 'GET',
         headers: {
-          'x-request-id': 'fixture-request',
+          'x-request-id': input.requestId ?? 'fixture-request',
           ...(input.token ? { authorization: `Bearer ${input.token}` } : {}),
         },
         ...(input.body === undefined ? {} : { body: input.body }),

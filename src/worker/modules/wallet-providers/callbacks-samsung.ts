@@ -7,6 +7,7 @@ import { canPresent } from '../public/presentation.ts';
 import { readSamsungCallbackBody } from './callbacks-body.ts';
 import {
   filterSamsungCardFields,
+  samsungCardEvent,
   samsungCountryHint,
   samsungRequestedFields,
 } from './callbacks-fields.ts';
@@ -17,7 +18,11 @@ import { getApprovedProjection } from './projection-service.ts';
 import { walletProviderDisabledReason } from './provider-policy.ts';
 import { renderSamsungProjection } from './render-projection.ts';
 import { findSamsungFetchSnapshot, samsungFetchSnapshotCurrent } from './repo-callbacks.ts';
-import { claimSamsungFetch, claimSamsungReceipt } from './repo-callbacks-events.ts';
+import {
+  claimSamsungFetch,
+  claimSamsungReceipt,
+  samsungDeliveryRecorded,
+} from './repo-callbacks-events.ts';
 import {
   samsungRuntimeCardDataResponse,
   type VerifiedSamsungRuntimeRequest,
@@ -30,6 +35,9 @@ export type SamsungCallbackResult =
   | { kind: 'card'; cdata: string }
   | { kind: 'accepted' }
   | { kind: 'missing' };
+
+const unauthenticated = () =>
+  new UnauthenticatedError('Samsung Wallet authorization is invalid.', 'SAMSUNG_UNAUTHENTICATED');
 
 /** Only the exact configured partner endpoint is admitted, with no path normalization aliases. */
 export async function handleSamsungCallback(
@@ -67,18 +75,16 @@ export async function handleSamsungCallback(
     refHash,
     ctx.clock.now(),
     credentialKeysetCommitment,
-    true,
+    false,
   );
   if (!snapshot) {
+    // An authenticated request for a ref we no longer serve is answered, not rejected: Get Card
+    // Data documents 204 for it, Send Card State only 200.
     if (
-      method === 'GET' &&
-      (await authenticateSamsungTombstone(ctx, request, refId, refHash, credentialKeysetCommitment))
+      await authenticateSamsungTombstone(ctx, request, refId, refHash, credentialKeysetCommitment)
     )
-      return { kind: 'missing' };
-    throw new UnauthenticatedError(
-      'Samsung Wallet authorization is invalid.',
-      'SAMSUNG_UNAUTHENTICATED',
-    );
+      return method === 'GET' ? { kind: 'missing' } : { kind: 'accepted' };
+    throw unauthenticated();
   }
   const approved = await getApprovedProjection(
     ctx,
@@ -98,10 +104,7 @@ export async function handleSamsungCallback(
     approved.release.accountId !== snapshot.accountId ||
     approved.release.accountRevision !== snapshot.accountRevision
   ) {
-    throw new UnauthenticatedError(
-      'Samsung Wallet authorization is invalid.',
-      'SAMSUNG_UNAUTHENTICATED',
-    );
+    throw unauthenticated();
   }
   const scope = {
     orgId: snapshot.orgId,
@@ -130,10 +133,7 @@ export async function handleSamsungCallback(
     materialized.pass.templateId !== snapshot.templateId ||
     materialized.pass.templateVersion !== snapshot.templateVersion
   ) {
-    throw new UnauthenticatedError(
-      'Samsung Wallet authorization is invalid.',
-      'SAMSUNG_UNAUTHENTICATED',
-    );
+    throw unauthenticated();
   }
   const projection =
     method === 'GET'
@@ -142,14 +142,10 @@ export async function handleSamsungCallback(
           materialized.passJson,
           refId,
           snapshot.instanceCreatedAt,
-          ctx.clock.now(),
+          materialized.pass.modifiedAt,
         )
       : null;
-  if (method === 'GET' && !projection)
-    throw new UnauthenticatedError(
-      'Samsung Wallet authorization is invalid.',
-      'SAMSUNG_UNAUTHENTICATED',
-    );
+  if (method === 'GET' && !projection) throw unauthenticated();
   const receiptId = method === 'POST' ? ctx.ids.id() : null;
   const receiptEnvelope =
     receiptId && body
@@ -163,6 +159,9 @@ export async function handleSamsungCallback(
           ),
         )
       : null;
+  const requestId = request.headers.get('x-request-id') ?? '';
+  const event = method === 'POST' ? samsungCardEvent(url) : null;
+  const delivery = { duplicate: false };
   let verified: VerifiedSamsungRuntimeRequest;
   try {
     verified = await verifySamsungRuntimeRequest(ctx, scope, {
@@ -174,49 +173,46 @@ export async function handleSamsungCallback(
         refHash,
         operationVersion: snapshot.operationVersion,
       },
-      claimReplay: (tokenHash, expiresAt, signedAt) => {
+      claimReplay: async (tokenHash, expiresAt, signedAt) => {
         const claim = { tokenHash, expiresAt, claimId: ctx.ids.id(), now: ctx.clock.now() };
-        if (!canPresent(materialized.pass, materialized.passJson, claim.now))
-          return Promise.resolve(false);
+        if (!canPresent(materialized.pass, materialized.passJson, claim.now)) return false;
         if (method === 'GET')
           return claimSamsungFetch(ctx.env.DB, snapshot, claim, materialized.rawPassJson);
-        if (!receiptId || !receiptEnvelope) return Promise.resolve(false);
-        return claimSamsungReceipt(
-          ctx.env.DB,
-          snapshot,
-          claim,
-          {
-            id: receiptId,
-            signedAt,
-            envelope: receiptEnvelope,
-            countryHint,
-          },
-          materialized.rawPassJson,
-        );
+        if (!receiptId || !receiptEnvelope) return false;
+        const receipt = {
+          id: receiptId,
+          signedAt,
+          envelope: receiptEnvelope,
+          countryHint,
+          event,
+          requestId,
+        };
+        if (
+          await claimSamsungReceipt(ctx.env.DB, snapshot, claim, receipt, materialized.rawPassJson)
+        )
+          return true;
+        // The same token and request id again is a redelivery of a receipt we already hold: it
+        // changes nothing and is answered like the first. Any other reuse of a token is a replay.
+        delivery.duplicate = await samsungDeliveryRecorded(ctx.env.DB, tokenHash, requestId);
+        return delivery.duplicate;
       },
     });
   } catch (error) {
-    if (error instanceof SamsungTokenError)
-      throw new UnauthenticatedError(
-        'Samsung Wallet authorization is invalid.',
-        'SAMSUNG_UNAUTHENTICATED',
-      );
+    if (error instanceof SamsungTokenError) throw unauthenticated();
     if (error instanceof SamsungReplayStoreError || error instanceof WalletRuntimeError)
       throw new UnavailableError('Samsung Wallet service is unavailable.', 'SAMSUNG_UNAVAILABLE');
     throw error;
   }
   await requireSamsungCredentialKeyset(ctx, snapshot.credentialKeysetCommitment);
   if (method === 'POST') {
-    if (
-      !(await samsungFetchSnapshotCurrent(
-        ctx.env.DB,
-        snapshot,
-        materialized.rawPassJson,
-        ctx.clock.now(),
-      ))
-    )
-      return { kind: 'missing' };
+    // Send Card State documents only 200/401/500/503: a receipt that lost a race is still accepted.
     await requireSamsungCredentialKeyset(ctx, snapshot.credentialKeysetCommitment);
+    ctx.log.info('wallet.callback_state', {
+      code: delivery.duplicate ? 'WALLET_CALLBACK_DUPLICATE' : 'WALLET_CALLBACK_RECORDED',
+      provider: 'samsung',
+      orgId: snapshot.orgId,
+      event: event ?? 'unknown',
+    });
     return { kind: 'accepted' };
   }
   if (!projection) return { kind: 'missing' };

@@ -1,5 +1,5 @@
 import type { Envelope } from '../../platform/crypto.ts';
-import { batch, stmt } from '../../platform/db.ts';
+import { batch, first, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import {
   type SamsungFetchSnapshot,
@@ -7,6 +7,9 @@ import {
   samsungSnapshotParams,
   samsungSnapshotPredicate,
 } from './repo-callbacks.ts';
+import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
+
+export type SamsungCardEvent = 'ADDED' | 'DELETED' | 'UPDATED' | 'PROVISIONED';
 
 export interface SamsungReplayClaim {
   tokenHash: string;
@@ -31,7 +34,7 @@ function claimStatement(
     db,
     `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)
     SELECT ?, ?, ? ${joins} WHERE ${samsungSnapshotPredicate()}
-      AND r.promoted_at IS NOT NULL AND ${samsungPassJsonCurrentSql}
+      AND ${samsungInitialWindowSql} AND ${samsungPassJsonCurrentSql}
     ON CONFLICT DO NOTHING`,
     [
       claim.tokenHash,
@@ -39,6 +42,8 @@ function claimStatement(
       claim.expiresAt,
       claim.now,
       ...samsungSnapshotParams(snapshot),
+      claim.now,
+      claim.now,
       rawPassJson,
     ],
   );
@@ -54,7 +59,10 @@ function validClaim(c: SamsungReplayClaim): boolean {
   );
 }
 
-/** Replay reservation never promotes a ref without independently verified market eligibility. */
+/**
+ * Replay reservation never promotes a ref: only a verified ADDED receipt does. A ref may answer
+ * inside its initial window (a delivered wrapper) or once promoted.
+ */
 export async function claimSamsungFetch(
   db: D1Database,
   snapshot: SamsungFetchSnapshot,
@@ -77,8 +85,69 @@ export interface SamsungReceipt {
   id: string;
   signedAt: number;
   envelope: Envelope;
-  /** An unsigned routing hint, never an installation observation. */
+  /** From the query, which the token does not sign: a routing hint until a verified ADDED. */
   countryHint: string | null;
+  event: SamsungCardEvent | null;
+  /** The validated `x-request-id`; with the token hash it is the delivery's idempotency key. */
+  requestId: string;
+}
+
+/** True when this exact delivery (token and request id) already left a receipt. */
+export async function samsungDeliveryRecorded(
+  db: D1Database,
+  tokenHash: string,
+  requestId: string,
+): Promise<boolean> {
+  const row = await first(
+    db,
+    'SELECT 1 FROM wallet_samsung_callback_receipts WHERE token_hash = ? AND request_id = ?',
+    [tokenHash, requestId],
+  );
+  return row !== null;
+}
+
+/**
+ * The effect of a receipt, applied in the receipt's own batch and only if it was inserted (so the
+ * fences of the receipt held): ADDED promotes the ref once, keeps its market and marks the
+ * instance saved; DELETED records the holder's removal. Nothing here erases or revokes.
+ */
+function effectStatements(
+  db: D1Database,
+  snapshot: SamsungFetchSnapshot,
+  claim: SamsungReplayClaim,
+  receipt: SamsungReceipt,
+): D1PreparedStatement[] {
+  const inserted = `EXISTS (SELECT 1 FROM wallet_samsung_callback_receipts rc
+    WHERE rc.id = ? AND rc.event = ?)`;
+  if (receipt.event === 'DELETED')
+    return [
+      stmt(
+        db,
+        `UPDATE wallet_provider_instances SET holder_removed_at = MAX(COALESCE(holder_removed_at, 0), ?)
+        WHERE id = ? AND ${inserted}`,
+        [claim.now, snapshot.instanceId, receipt.id, 'DELETED'],
+      ),
+    ];
+  if (receipt.event !== 'ADDED') return [];
+  const statements = [
+    stmt(
+      db,
+      `UPDATE wallet_provider_instances SET saved_at = MAX(COALESCE(saved_at, 0), ?)
+      WHERE id = ? AND ${inserted}`,
+      [claim.now, snapshot.instanceId, receipt.id, 'ADDED'],
+    ),
+  ];
+  // The market is the ADDED event's own cc2, never a hint from an earlier or other callback.
+  if (receipt.countryHint)
+    statements.unshift(
+      stmt(
+        db,
+        `UPDATE wallet_samsung_fetch_refs SET promoted_at = ?, market_cc2 = ?
+        WHERE id = ? AND promoted_at IS NULL AND retired_at IS NULL AND ${inserted}`,
+        [claim.now, receipt.countryHint, snapshot.referenceId, receipt.id, 'ADDED'],
+      ),
+    );
+  return statements;
 }
 
 /** Store untrusted raw bytes encrypted only after authenticated replay-safe admission. */
@@ -92,6 +161,7 @@ export async function claimSamsungReceipt(
   if (
     !validClaim(claim) ||
     !Number.isSafeInteger(receipt.signedAt) ||
+    !/^[A-Za-z0-9_-]{1,64}$/.test(receipt.requestId) ||
     (receipt.countryHint !== null && !/^[A-Z]{2}$/.test(receipt.countryHint))
   )
     return false;
@@ -107,10 +177,11 @@ export async function claimSamsungReceipt(
       db,
       `INSERT INTO wallet_samsung_callback_receipts
       (id, ref_id, instance_id, account_id, org_id, mode, operation_version, kind,
-       signed_at, received_at, kek_version, iv, wrapped_dek, ciphertext)
+       signed_at, received_at, kek_version, iv, wrapped_dek, ciphertext,
+       event, cc2, token_hash, request_id)
       SELECT ?, r.id, i.id, i.account_id, i.org_id, i.mode, op.version, 'state_callback',
-        ?, ?, ?, ?, ?, ? ${joins}
-      WHERE changes() = 1 AND ${samsungSnapshotPredicate()} AND r.promoted_at IS NOT NULL
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ${joins}
+      WHERE changes() = 1 AND ${samsungSnapshotPredicate()} AND ${samsungInitialWindowSql}
         AND ${samsungPassJsonCurrentSql}
         AND EXISTS (SELECT 1 FROM wallet_samsung_auth_replays replay
           WHERE replay.token_hash = ? AND replay.claim_id = ?)`,
@@ -122,8 +193,14 @@ export async function claimSamsungReceipt(
         envelope.iv,
         envelope.wrappedDek,
         envelope.ciphertext,
+        receipt.event,
+        receipt.countryHint,
+        claim.tokenHash,
+        receipt.requestId,
         claim.now,
         ...samsungSnapshotParams(snapshot),
+        claim.now,
+        claim.now,
         rawPassJson,
         claim.tokenHash,
         claim.claimId,
@@ -152,6 +229,7 @@ export async function claimSamsungReceipt(
       ),
     );
   }
+  statements.push(...effectStatements(db, snapshot, claim, receipt));
   const results = await batch(db, statements);
   return results[1]?.meta.changes === 1 && results[2]?.meta.changes === 1;
 }

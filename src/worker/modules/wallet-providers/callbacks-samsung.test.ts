@@ -28,6 +28,7 @@ import { findSamsungFetchSnapshot, samsungFetchSnapshotCurrent } from './repo-ca
 import { claimSamsungFetch, claimSamsungReceipt } from './repo-callbacks-events.ts';
 import { readOffer } from './repo-instance-offers.ts';
 import { seedHistoricalOfferRef } from './runtime-historical-fixtures.ts';
+import { SAMSUNG_CLOCK_SKEW_MS, SAMSUNG_TOKEN_WINDOW_MS } from './samsung-limits.ts';
 
 // These cases cover historical provider instances, which exist only while a provider is enabled.
 beforeAll(() => {
@@ -86,10 +87,18 @@ describe('Samsung authenticated callback route', () => {
       401,
     );
     expect(
-      (await t.call({ token: await t.token({ utc: t.kit.clock.now() - 30_001 }) })).status,
+      (
+        await t.call({
+          token: await t.token({ utc: t.kit.clock.now() - SAMSUNG_TOKEN_WINDOW_MS - 1 }),
+        })
+      ).status,
     ).toBe(401);
     expect(
-      (await t.call({ token: await t.token({ utc: t.kit.clock.now() + 5_001 }) })).status,
+      (
+        await t.call({
+          token: await t.token({ utc: t.kit.clock.now() + SAMSUNG_CLOCK_SKEW_MS + 1 }),
+        })
+      ).status,
     ).toBe(401);
     const signedQuery = await t.token({ signedPath: `${t.path}?fields=title` });
     expect((await t.call({ token: signedQuery, query: '?fields=providerName' })).status).toBe(401);
@@ -133,19 +142,31 @@ describe('Samsung authenticated callback route', () => {
     expect((await t.call({ token: await t.token() })).status).toBe(200);
   });
 
-  it('denies new offers and does not promote an unpromoted ref without market proof', async () => {
+  it('denies new offers, and the first Get Card Data answers from the initial window without promoting', async () => {
     const t = await setupSamsungCallbacks({ promoted: false });
     await expect(
       issueWalletOffer(t.kit.ctx, t.pass.downloadToken, 'samsung'),
     ).rejects.toMatchObject({ status: 404 });
-    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    const refRow = () =>
+      first<{ promoted_at: number | null; market_cc2: string | null }>(
+        t.kit.env.DB,
+        'SELECT promoted_at, market_cc2 FROM wallet_samsung_fetch_refs WHERE id = ?',
+        [t.referenceId],
+      );
+    const auth = await t.token();
+    expect((await t.call({ token: auth })).status).toBe(200);
+    // A GET never promotes: only a verified ADDED carries the market evidence.
+    expect(await refRow()).toEqual({ promoted_at: null, market_cc2: null });
+    expect((await t.call({ token: auth })).status).toBe(401);
     const snapshot = await findSamsungFetchSnapshot(
       t.kit.env.DB,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
       t.credentialKeysetCommitment,
+      false,
     );
     if (!snapshot) throw new Error('Missing unpromoted fixture');
+    expect(snapshot.promotedAt).toBeNull();
     const raw = await passJsonAtVersion(t.kit.env.DB, snapshot.passId, snapshot.passVersion);
     if (!raw) throw new Error('Missing materialized pass');
     const now = t.kit.clock.now();
@@ -161,13 +182,22 @@ describe('Samsung authenticated callback route', () => {
         },
         raw,
       ),
-    ).toBe(false);
-    const row = await first<{ promoted_at: number | null }>(
-      t.kit.env.DB,
-      'SELECT promoted_at FROM wallet_samsung_fetch_refs WHERE id = ?',
-      [t.referenceId],
-    );
-    expect(row?.promoted_at).toBeNull();
+    ).toBe(true);
+    expect(await refRow()).toEqual({ promoted_at: null, market_cc2: null });
+    // The promoted-only lookup still refuses it, and so does the window once it closes.
+    expect(
+      await findSamsungFetchSnapshot(
+        t.kit.env.DB,
+        await sha256Hex(t.refId),
+        t.kit.clock.now(),
+        t.credentialKeysetCommitment,
+        true,
+      ),
+    ).toBeNull();
+    t.kit.clock.advance(300_001);
+    await t.renewEvidence();
+    expect((await t.call({ token: await t.token() })).status).toBe(401);
+    expect(await refRow()).toEqual({ promoted_at: null, market_cc2: null });
   });
 
   it('encrypts untrusted callback bodies, deduplicates replay, and never infers installation', async () => {
@@ -179,8 +209,21 @@ describe('Samsung authenticated callback route', () => {
     expect(
       (await t.call({ method: 'POST', token: post, query: '?cc2=gb&event=ADDED', body })).status,
     ).toBe(200);
+    // The same token and request id again is a redelivery: accepted, recorded once.
     expect(
       (await t.call({ method: 'POST', token: post, query: '?cc2=us&event=DELETED', body })).status,
+    ).toBe(200);
+    // The same token under another request id is a replay.
+    expect(
+      (
+        await t.call({
+          method: 'POST',
+          token: post,
+          query: '?cc2=us&event=DELETED',
+          body,
+          requestId: 'other-request',
+        })
+      ).status,
     ).toBe(401);
     const deletion = await t.token({ method: 'POST' });
     expect(
@@ -492,7 +535,14 @@ describe('Samsung authenticated callback route', () => {
     ).toBe(false);
     const envelope = await encryptSecret(await loadKekRing(t.kit.env), 'untrusted', 'test');
     const postClaim = { ...claim, tokenHash: 'C'.repeat(43), claimId: t.kit.ctx.ids.id() };
-    const receipt = { id: t.kit.ctx.ids.id(), signedAt: now, envelope, countryHint: 'GB' };
+    const receipt = {
+      id: t.kit.ctx.ids.id(),
+      signedAt: now,
+      envelope,
+      countryHint: 'GB',
+      event: null,
+      requestId: 'req-1',
+    };
     expect(await claimSamsungReceipt(db, snapshot, postClaim, receipt, raw)).toBe(true);
     expect(
       await claimSamsungReceipt(db, snapshot, postClaim, { ...receipt, countryHint: 'US' }, raw),

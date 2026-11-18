@@ -84,7 +84,14 @@ describe('Samsung callback authority fences', () => {
           db,
           snapshot,
           receiptClaim,
-          { id: t.kit.ctx.ids.id(), signedAt: now, envelope, countryHint: 'GB' },
+          {
+            id: t.kit.ctx.ids.id(),
+            signedAt: now,
+            envelope,
+            countryHint: 'GB',
+            event: null,
+            requestId: 'req-1',
+          },
           raw,
         ),
       ).toBe(false);
@@ -432,7 +439,14 @@ describe('Samsung callback authority fences', () => {
     ).toBe(false);
     const envelope = await encryptSecret(await loadKekRing(t.kit.env), 'untrusted', 'test');
     const postClaim = { ...claim, tokenHash: 'C'.repeat(43), claimId: t.kit.ctx.ids.id() };
-    const receipt = { id: t.kit.ctx.ids.id(), signedAt: now, envelope, countryHint: 'GB' };
+    const receipt = {
+      id: t.kit.ctx.ids.id(),
+      signedAt: now,
+      envelope,
+      countryHint: 'GB',
+      event: null,
+      requestId: 'req-1',
+    };
     expect(await claimSamsungReceipt(db, snapshot, postClaim, receipt, raw)).toBe(true);
     expect(
       await claimSamsungReceipt(db, snapshot, postClaim, { ...receipt, countryHint: 'US' }, raw),

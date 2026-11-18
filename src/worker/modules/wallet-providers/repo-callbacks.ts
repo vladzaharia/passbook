@@ -3,6 +3,7 @@ import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
+import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 
 export interface SamsungOperationScope {
@@ -57,15 +58,6 @@ const join = `JOIN wallet_provider_instances i ON i.id = r.instance_id
   JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
     AND op.instance_id = i.id AND op.version = i.desired_version
   CROSS JOIN (SELECT ? AS now) clock`;
-
-/** Before promotion, only a delivered wrapper in the current pass-authority epoch opens a window. */
-export const samsungInitialWindowSql = `(r.promoted_at IS NOT NULL OR
-  (r.initial_expires_at > ? AND EXISTS (
-    SELECT 1 FROM wallet_provider_offer_refs offer
-    WHERE offer.instance_id = i.id AND offer.operation_version = op.version
-      AND offer.consumed_at IS NOT NULL AND offer.delivered_at IS NOT NULL AND offer.expires_at > ?
-      AND offer.pass_authority_generation = COALESCE(
-        (SELECT generation FROM wallet_provider_pass_authority authority WHERE authority.pass_id = i.pass_id), 0))))`;
 
 /** Create or reopen the same pre-promotion ref only under the exact current operation. */
 export async function putSamsungFetchRef(
@@ -233,9 +225,9 @@ export async function samsungFetchSnapshotCurrent(
     db,
     `SELECT 1 AS ok FROM wallet_samsung_fetch_refs r ${join}
     JOIN passes p ON p.id = i.pass_id
-    WHERE ${samsungSnapshotPredicate()} AND r.promoted_at IS NOT NULL
+    WHERE ${samsungSnapshotPredicate()} AND ${samsungInitialWindowSql}
       AND ${samsungPassJsonCurrentSql}`,
-    [now, ...samsungSnapshotParams(snapshot), rawPassJson],
+    [now, ...samsungSnapshotParams(snapshot), now, now, rawPassJson],
   );
   return row !== null;
 }
