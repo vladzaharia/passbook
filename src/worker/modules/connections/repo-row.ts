@@ -1,4 +1,5 @@
 import type { Json } from '../../../shared/contracts/common.ts';
+import type { VoidRule } from '../../../shared/contracts/connections.ts';
 import type { ConnectionRow, Health, MappingEntry, Mode, OnMissing } from './repo.ts';
 
 export interface ConnectionSql {
@@ -10,6 +11,11 @@ export interface ConnectionSql {
   config: string;
   credential_id: string | null;
   webhook_credential_id: string | null;
+  webhook_prev_credential_id: string | null;
+  webhook_prev_until: number | null;
+  webhook_secret_fp: string | null;
+  webhook_prev_secret_fp: string | null;
+  void_when: string | null;
   mapping: string | null;
   default_template_id: string | null;
   holder_email_field: string | null;
@@ -45,6 +51,11 @@ export function toRow(r: ConnectionSql): ConnectionRow {
     config: JSON.parse(r.config) as Record<string, Json>,
     credentialId: r.credential_id,
     webhookCredentialId: r.webhook_credential_id,
+    webhookPrevCredentialId: r.webhook_prev_credential_id,
+    webhookPrevUntil: r.webhook_prev_until,
+    webhookSecretFp: r.webhook_secret_fp,
+    webhookPrevSecretFp: r.webhook_prev_secret_fp,
+    voidWhen: r.void_when ? (JSON.parse(r.void_when) as VoidRule[]) : [],
     mapping: r.mapping ? (JSON.parse(r.mapping) as Record<string, MappingEntry>) : null,
     defaultTemplateId: r.default_template_id,
     holderEmailField: r.holder_email_field,

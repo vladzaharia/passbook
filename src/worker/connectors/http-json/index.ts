@@ -6,6 +6,7 @@ import {
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   verifySignedRequest,
+  webhookSecretsOf,
 } from '../lib/hmac.ts';
 import { assertSafeRef, isAllowedHeaderName, parseJson, request } from '../lib/http.ts';
 import { getPointer, isPointer } from '../lib/pointer.ts';
@@ -286,7 +287,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
   async verifyWebhook(ctx, req) {
     const { webhook } = ctx.connection.config;
     const { body, signature } = await verifySignedRequest(req, {
-      secret: ctx.webhookSecret,
+      secrets: webhookSecretsOf(ctx),
       now: ctx.now(),
       signatureHeader: webhook.signatureHeader,
       timestampHeader: webhook.timestampHeader,

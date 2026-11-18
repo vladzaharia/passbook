@@ -67,6 +67,7 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   sandbox_forwards: { org: 'org_id' },
   connections: { org: 'org_id' },
   connection_runs: { org: null, edges: [edge('connection_id', 'connections')] },
+  connection_ref_versions: { org: 'org_id', conflict: ['connection_id', 'ref'] },
   connection_webhook_retention: { org: 'org_id' },
   connection_webhook_items: {
     org: null,
