@@ -48,12 +48,20 @@ export function accessInputIssues(
       code: 'ACCESS_WINDOW',
     });
   const limit = names.visits === undefined ? undefined : inputs[names.visits];
-  if (plan && plan.kind !== 'guest' && limit !== undefined && limit !== null && limit !== '')
-    issues.push({
-      path: names.visits ?? '',
-      message: 'Only a guest plan has a visit limit.',
-      code: 'ACCESS_VISITS',
-    });
+  if (limit !== undefined && limit !== null && limit !== '') {
+    if (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 999)
+      issues.push({
+        path: names.visits ?? '',
+        message: 'A visit limit is a whole number from 1 to 999.',
+        code: 'ACCESS_GUEST_RANGE',
+      });
+    else if (plan && plan.kind !== 'guest')
+      issues.push({
+        path: names.visits ?? '',
+        message: 'Only a guest plan has a visit limit.',
+        code: 'ACCESS_VISITS',
+      });
+  }
   return issues;
 }
 

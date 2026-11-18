@@ -4,6 +4,7 @@ import { run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { type ScanKit, setupScanKit } from '../scan/test-kit.ts';
 import { accessInputIssues } from './access-input.ts';
+import { publishPass } from './publish.ts';
 import { updatePass } from './service.ts';
 
 const ACCESS: AccessManifest = {
@@ -29,6 +30,14 @@ describe('accessInputIssues', () => {
       }),
     ).toEqual([]);
   });
+
+  it.each([0, -1, 2.5, '3', 1000, true])(
+    'refuses a visit limit of %j with ACCESS_GUEST_RANGE',
+    (v) => {
+      expect(codes({ plan: 'guest', visits: v })).toEqual([['visits', 'ACCESS_GUEST_RANGE']]);
+      expect(codes({ plan: 'gold', visits: v })).toEqual([['visits', 'ACCESS_GUEST_RANGE']]);
+    },
+  );
 
   it('names each broken input and its code', () => {
     expect(codes({ plan: 'platinum' })).toEqual([['plan', 'ACCESS_PLAN_UNKNOWN']]);
@@ -122,6 +131,38 @@ describe('access input on create and update', () => {
       await refused(
         updatePass(jobCtxOf(kit), admin, other.id, { input: { plan: 'x' } }, { scope: kit.org.id }),
       ),
+    ).toBeNull();
+  });
+
+  it('holds every publish that changes the input, not only an edit', async () => {
+    const pass = await kit.scanPass(tpl, { plan: 'gold' });
+    const publish = (
+      cause: 'connection' | 'admin',
+      source: 'broadcast' | undefined,
+      values: Record<string, unknown>,
+    ) =>
+      publishPass(jobCtxOf(kit), {
+        passId: pass.id,
+        orgScope: kit.org.id,
+        cause,
+        actor: { type: cause === 'connection' ? 'connection' : 'user', id: 'x' },
+        ...(source ? { source } : {}),
+        dispatch: false,
+        mutate: (current) => ({
+          personalization: { ...current.personalization, ...values } as never,
+        }),
+      });
+    expect(await refused(publish('connection', undefined, { plan: 'platinum' }))).toMatchObject({
+      status: 422,
+      code: 'ACCESS_PLAN_UNKNOWN',
+    });
+    expect(await refused(publish('admin', 'broadcast', { visits: 0 }))).toMatchObject({
+      status: 422,
+      code: 'ACCESS_GUEST_RANGE',
+    });
+    // The pass is unchanged by either refusal, and a valid change goes through.
+    expect(
+      await refused(publish('connection', undefined, { plan: 'guest', visits: 2 })),
     ).toBeNull();
   });
 });

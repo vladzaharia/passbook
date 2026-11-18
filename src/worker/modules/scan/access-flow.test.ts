@@ -49,7 +49,7 @@ describe('access: zones', () => {
     expect(refused).toMatchObject({ kind: 'refused', reason: 'outside_hours' });
     expect(refused.access?.zone?.id).toBe(pool);
     kit.clock.set(TEST_NOW - 4 * HOUR);
-    const early = await grantOf(both.headers, pass);
+    const early = await grantOf(both.headers, await kit.scanPass(tpl, { plan: 'swim' }));
     expect(early.access?.zone?.id).toBe(pool);
   });
 

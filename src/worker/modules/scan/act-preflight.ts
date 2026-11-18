@@ -3,7 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { type HeldGateSnapshot, heldGateReads } from './act-gate-preflight.ts';
 import type { PendingDisplayHistorySource } from './display-history-pending.ts';
 import type { PreloadedDisplayHistory } from './display-history-plan.ts';
-import { accessGateOf, gateScope } from './gate.ts';
+import { gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
 import {
   type ActionPassFence,
@@ -71,7 +71,7 @@ export function prepareCheckInReads(
       actor.settings.direction === 'both');
   const scoped =
     action.repeat === 'once' && eventId ? admissionScope : gateScope(action, actor, now);
-  const gate = accessGateOf(found, actor, action) ?? {
+  const gate = {
     passId: found.pass.id,
     actionId: action.id,
     scope:

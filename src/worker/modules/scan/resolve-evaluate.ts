@@ -205,7 +205,8 @@ async function evaluateObserved(
       admission.reason,
       { ...known, at: admission.at, flags: admission.flags, hard: true },
     );
-  const held = exiting ? null : windowStop(actor, found, now, waive);
+  // An Access card has its own window (the plan and the pass's start and end): AX 3.4 skips 11-12.
+  const held = exiting || found.access ? null : windowStop(actor, found, now, waive);
   if (held) return held;
   const flagged = activeFlags(found).filter((flag) => flag.stop);
   if (flagged.length > 0 && !waive.confirmed)

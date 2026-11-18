@@ -1,7 +1,7 @@
 import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { scanAccessOf, startsVisit } from './access.ts';
+import { scanAccessOf, startsVisit, waiveOf } from './access.ts';
 import { commitConditions, credentialFacts, lostReason } from './act-check-in-facts.ts';
 import { finishCheckInResult } from './act-check-in-result.ts';
 import { addCheckInStatements } from './act-check-in-statements.ts';
@@ -18,7 +18,7 @@ import { preparePlannedDisplayHistoryProof } from './display-history-pending.ts'
 import { appendPlannedDisplayHistory, rebindDisplayHistoryRead } from './display-history-plan.ts';
 import { type LedgerFacts, ledgerRow } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
-import { ACCESS_GATE, accessCountStmt, accessZoneChecks } from './repo-access.ts';
+import { ACCESS_GATE, accessCountStmt, accessInputPin, accessZoneChecks } from './repo-access.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { doneOkPredicate, effectiveReleaseCheck } from './repo-scan-checks.ts';
@@ -177,7 +177,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       finalized('ok', null),
     );
     // A grant inside a visit is not a visit: the history will not count it.
-    const counted = !access || startsVisit(access, effect.gateBefore, now);
+    const counted = !access || startsVisit(access, now);
     if (!planned || (counted && !appendPlannedDisplayHistory(history.preloaded, planned)))
       throw new StaleScanAuthority();
     displayPlan = await prepareDisplayHistory(
@@ -207,7 +207,12 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     checks: [
       effectiveReleaseCheck(found.pass.id, found.liveCandidate?.templateSnapshot?.raw),
       // The zone that let the pass in is still live and still the session's (C6).
-      ...(access ? accessZoneChecks(access.zoneId, access.sessionId) : []),
+      ...(access
+        ? [
+            ...accessZoneChecks(access.chain, access.sessionId),
+            accessInputPin(found.pass.id, found.pass.version),
+          ]
+        : []),
     ],
     // Another pass's transfer can retire the presented credential after resolve (shared hash).
     credentialRefs: claim.credentialTombstoneRefs,
@@ -229,7 +234,8 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
           gapMs: access.gapMs,
           waitMs: access.waitMs,
           limit: access.limit,
-          override: overrideOf !== null,
+          waiveWait: waiveOf(claim.authority.override?.reason).wait,
+          waiveLimit: waiveOf(claim.authority.override?.reason).limit,
         }
       : null,
     variants: { ok, admit: admitVariant, cap: capVariant, lost: lostVariant },

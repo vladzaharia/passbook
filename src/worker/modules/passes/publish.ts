@@ -1,4 +1,3 @@
-import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { Personalization } from '../../../passkit/types.ts';
 import type { PassSource } from '../../../shared/contracts/passes.ts';
 import type { Check } from '../../platform/authority-checks.ts';
@@ -64,12 +63,6 @@ export interface PublishOptions {
   dispatch?: boolean;
   /** Derives the desired state from the freshly read row; re-run on every retry. */
   mutate?: (current: Pass) => Mutation;
-  /** Refuses the personalization the build is about to use, once the template is known. */
-  inputCheck?: (
-    template: ResolvedTemplate,
-    personalization: Personalization,
-    orgId: string,
-  ) => Promise<void>;
   /**
    * An editor's save: true messages holders about the fields it changes, false strips every
    * changeMessage. Omit for syncs and upgrades (the template's messages stay).

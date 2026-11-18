@@ -1004,3 +1004,19 @@ describe('0073_scan_zones migration', () => {
     expect(index?.sql).toContain('WHERE zone_id IS NOT NULL');
   });
 });
+
+describe('0083_access_visit_start migration', () => {
+  it('adds nullable visit start columns to scan_gates and keeps its key', async () => {
+    const cols = await all<{ name: string; notnull: number }>(
+      env.DB,
+      "SELECT name, \"notnull\" FROM pragma_table_info('scan_gates') WHERE name IN ('visit_at', 'prev_visit_at')",
+    );
+    expect(cols.map((c) => c.name).sort()).toEqual(['prev_visit_at', 'visit_at']);
+    expect(cols.every((c) => c.notnull === 0)).toBe(true);
+    const key = await all<{ name: string }>(
+      env.DB,
+      "SELECT name FROM pragma_table_info('scan_gates') WHERE pk > 0 ORDER BY pk",
+    );
+    expect(key.map((c) => c.name)).toEqual(['pass_id', 'action_id', 'scope']);
+  });
+});

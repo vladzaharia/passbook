@@ -86,7 +86,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     throw new StaleScanAuthority();
   // Step 15 and the effect: gate, finalize and ledger in one batch, counts behind them.
   const accessGate = settledAccessGate(found, action);
-  const gate: gates.GateKey = accessGate ?? {
+  const rowGate: gates.GateKey = {
     passId: found.pass.id,
     actionId: action.id,
     scope:
@@ -94,20 +94,26 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
         ? found.admission.scope
         : gateScope(action, actor, now),
   };
+  // The preflight read the action's own gate; an Access card's visit gate was read with its zones.
+  const gate: gates.GateKey = accessGate ?? rowGate;
   if (!found.admission && event && (!found.eventAdmission || found.eventAdmissionReason))
     throw new StaleScanAuthority();
   const presencePlan = found.admission ?? found.eventAdmission;
-  const presenceScope = presencePlan?.scope ?? gate.scope;
+  const presenceScope = presencePlan?.scope ?? rowGate.scope;
   // The preflight read no longer matches what was evaluated: another scan or edit moved the pass.
   if (
-    preflight.gate.passId !== gate.passId ||
-    preflight.gate.actionId !== gate.actionId ||
-    preflight.gate.scope !== gate.scope ||
+    preflight.gate.passId !== rowGate.passId ||
+    preflight.gate.actionId !== rowGate.actionId ||
+    preflight.gate.scope !== rowGate.scope ||
     preflight.presenceScope !== presenceScope ||
     !(await preflight.prepared.keysetCurrent)
   )
     throw new ScanAttemptRaced();
-  const { passFence, observed } = preflight;
+  const { passFence } = preflight;
+  const observed =
+    accessGate && found.access
+      ? { ...preflight.observed, gateBefore: found.access.gateBefore }
+      : preflight.observed;
   const previousGate = observed.gateBefore;
   if (
     (previousGate &&
@@ -137,9 +143,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
         ? (found.admission?.state.direction ?? ('in' as const))
         : ('used' as const),
     admission: presencePlan,
-    ...(accessGate && found.access
-      ? { accessVisit: startsVisit(found.access, observed.gateBefore, now) }
-      : {}),
+    ...(accessGate && found.access ? { accessVisit: startsVisit(found.access, now) } : {}),
     method: req.input.method,
     claimEventId: authorityActor.event?.id ?? null,
     idempotencyKey: req.idempotencyKey,

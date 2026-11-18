@@ -95,9 +95,15 @@ export const grantOf = async (
   out(await act(headers, { code: pass.scanCode ?? '', method: 'camera' as const }));
 
 export const gateRow = (passId: string) =>
-  first<{ count: number; last_scan_id: string; last_at: number; prev_last_at: number | null }>(
+  first<{
+    count: number;
+    last_scan_id: string;
+    last_at: number;
+    prev_last_at: number | null;
+    visit_at: number | null;
+  }>(
     kit.env.DB,
-    "SELECT count, last_scan_id, last_at, prev_last_at FROM scan_gates WHERE pass_id = ? AND action_id = 'access' AND scope = 'access'",
+    "SELECT count, last_scan_id, last_at, prev_last_at, visit_at FROM scan_gates WHERE pass_id = ? AND action_id = 'access' AND scope = 'access'",
     [passId],
   );
 

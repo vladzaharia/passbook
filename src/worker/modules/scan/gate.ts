@@ -22,20 +22,9 @@ export function gateRule(action: ResolvedScanAction): GateRule {
 
 /**
  * An Access card's check-in at a door counts visits on its own gate row, whatever the action is
- * called (AX 3.5). Known before the zones are read: the preflight needs the key first.
+ * called (AX 3.5). Known once the decision is made; an exit never has one (it uses the presence key).
  */
-export function accessGateOf(
-  found: Found,
-  actor: ScanActor,
-  action: ResolvedScanAction,
-): GateKey | null {
-  return found.activePolicy.manifest.scan?.access && !actor.event && action.kind === 'check_in'
-    ? { passId: found.pass.id, actionId: ACCESS_GATE, scope: ACCESS_GATE }
-    : null;
-}
-
-/** The same key once the decision is made: an event the pass's own policy named does not change it. */
 export const settledAccessGate = (found: Found, action: ResolvedScanAction): GateKey | null =>
-  found.access && action.kind === 'check_in'
+  found.access && action.kind === 'check_in' && found.admission?.state.direction !== 'out'
     ? { passId: found.pass.id, actionId: ACCESS_GATE, scope: ACCESS_GATE }
     : null;

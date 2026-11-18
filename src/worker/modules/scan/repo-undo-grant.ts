@@ -8,12 +8,12 @@ import { ACCESS_GATE } from './repo-access.ts';
 import type { ScanRow } from './repo-scans.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import { undoAccessGate } from './repo-undo-access.ts';
-
 export interface UndoGate {
-  /** An Access card's visit gate is `access`, whatever the action is called. */
+  /** An Access card's visit gate is `access` (`visit`, `visit_at`: its visit counting). */
   action_id: string;
-  /** The target's `visit`: an undo of a visit takes one back. */
   visit: number | null;
+  visit_at: number | null;
+  prev_visit_at: number | null;
   scope: string;
   template_id: string;
   kind: string;
@@ -125,7 +125,7 @@ export function openUndoGrant(
   });
 }
 
-/** An add, take or set holds a gate only as a clock (`cooldown`): it goes back to the scan before. */
+/** An add, take or set holds a gate only as a clock: it goes back to the scan before. */
 const restoresGate = (kind: string | null) => kind === 'add' || kind === 'take' || kind === 'set';
 
 /** The undo's writes: the gate, the target, the undo scan, its ledger event and the audit row. */
@@ -137,7 +137,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
     action_id: gate.action_id,
     scope: gate.scope,
     last_scan_id: target.id,
-    // The gate's own `last_at`, not `target.at`: gate recovery moves it back to `prev_last_at`.
+    // The gate's own `last_at` (gate recovery moves it back to `prev_last_at`), not `target.at`.
     last_at: gate.last_at,
     count: gate.count,
     state: gate.state,

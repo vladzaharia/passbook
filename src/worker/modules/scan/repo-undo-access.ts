@@ -20,6 +20,8 @@ export function undoAccessGate(
       state: gate.prev_state,
       count: Math.max(0, gate.count - (gate.visit === 1 ? 1 : 0)),
       last_at: gate.prev_last_at,
+      visit_at: gate.prev_visit_at,
+      prev_visit_at: null,
       last_scan_id: undoId,
       prev_state: null,
       prev_last_at: null,

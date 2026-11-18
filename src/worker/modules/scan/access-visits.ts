@@ -32,6 +32,7 @@ export async function resetVisits(
     [exactlyOne('passes', { id: passId }, undefined, 'config')],
     CODES,
     passId,
+    ['scan_gates'],
   );
   g.delete('scan_gates', {
     where: { pass_id: passId, action_id: ACCESS_GATE, scope: ACCESS_GATE },
