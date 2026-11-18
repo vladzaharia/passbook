@@ -24,6 +24,12 @@ import {
 export const MAX_PASSES_PER_RUN = 500;
 export const MAX_PAGES_PER_RUN = 200;
 
+/**
+ * Passes one workflow instance may create before handing the run to a fresh instance. A first sync
+ * costs about 55 subrequests per created pass, and an instance is limited to 500k.
+ */
+export const CREATE_BUDGET_PER_INSTANCE = 2000;
+
 /** Records applied per workflow step or webhook job; bounds D1 queries and CPU per invocation. */
 export const MAX_RECORDS_PER_STEP = 20;
 

@@ -4,12 +4,12 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { closeRun } from './health.ts';
 import { emptyTotals, type ReleaseBlockCode, type Totals } from './records.ts';
 import { getConnection } from './repo.ts';
-import { finishRun } from './repo-runs.ts';
 import { setWorkflowStatus } from './repo-sync.ts';
 import { type Failure, paceMs } from './runtime.ts';
 import {
   advanceCursor,
   applySlice,
+  CREATE_BUDGET_PER_INSTANCE,
   dueRefs,
   fetchListPage,
   MAX_PAGES_PER_RUN,
@@ -17,7 +17,9 @@ import {
   startRun,
 } from './sync.ts';
 import { type Change, runRefs } from './sync-apply.ts';
+import { assertSyncChain, handOff, MAX_HANDOFFS, type SyncChain } from './sync-chain.ts';
 import type { StepResult } from './sync-context.ts';
+import { recordAbort } from './sync-runner-abort.ts';
 import { assertSyncAuthority, assertSyncStart } from './sync-runner-validation.ts';
 
 /** The subset of WorkflowStep the runner needs; tests pass an inline implementation. */
@@ -32,8 +34,13 @@ export interface SyncRunParams {
   generation: number;
   credentialKeysetCommitment: string;
   trigger: 'schedule' | 'webhook' | 'admin';
+  /** Connection_runs id and tracking row; continuation instances share the first instance's. */
   runId: string;
   instanceId: string;
+  /** Set on a continuation instance: what the previous instance handed over. */
+  chain?: SyncChain;
+  /** Creates per instance before a hand-off; defaults to the production budget. */
+  createBudget?: number;
 }
 
 function add(into: Totals, from: Totals): void {
@@ -68,51 +75,22 @@ export async function executeSync(
     )
       throw error;
     sctx.log.error('connection.sync_aborted', { connectionId: p.connectionId, code: 'INTERNAL' });
-    try {
-      await step.do('abort-record', async () => {
-        await assertSyncAuthority(sctx, p);
-        const now = sctx.clock.now();
-        await finishRun(
-          sctx,
-          {
-            id: p.runId,
-            connectionId: p.connectionId,
-            finishedAt: now,
-            outcome: 'error',
-            recordsSeen: 0,
-            passesChanged: 0,
-            errorCode: 'INTERNAL',
-            errorDetail: null,
-            httpStatus: null,
-            credentialKeysetCommitment: p.credentialKeysetCommitment,
-            workflowInstanceId: p.instanceId,
-          },
-          { orgId: p.orgId },
-        );
-        await setWorkflowStatus(
-          sctx.env.DB,
-          p.instanceId,
-          'errored',
-          now,
-          'INTERNAL',
-          undefined,
-          p.credentialKeysetCommitment,
-          p,
-        );
-      });
-    } catch {
-      sctx.log.error('connection.sync_abort_record_failed', { code: 'INTERNAL' });
-    }
+    await recordAbort(sctx, step, p);
     throw error;
   }
 }
 
 async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): Promise<void> {
+  assertSyncChain(p.chain);
+  const seq = p.chain?.seq ?? 0;
+  const budget = p.createBudget ?? CREATE_BUDGET_PER_INSTANCE;
   const start = await step.do('start', () => startRun(sctx, p));
   assertSyncStart(start, p);
+  if (p.chain) start.startedAt = p.chain.startedAt;
 
-  const totals = emptyTotals();
-  const samples: string[] = [];
+  const totals = p.chain ? { ...p.chain.totals } : emptyTotals();
+  const createdBefore = totals.created;
+  const samples: string[] = p.chain ? [...p.chain.samples] : [];
   let failure: Failure | null = null;
   let stale = false;
   let releaseBlocked: ReleaseBlockCode | undefined;
@@ -249,6 +227,23 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
           cursor = fetched.cursor;
           // The next listChanges call is a request too.
           await step.sleep(`page-${page}-list-pace`, paceMs(1, limits.rpm));
+          // The cursor is saved; a fresh instance carries on from it with a new subrequest budget.
+          if (!releaseBlocked && seq < MAX_HANDOFFS && totals.created - createdBefore >= budget) {
+            const next: SyncChain = {
+              seq: seq + 1,
+              startedAt: start.startedAt,
+              totals: { ...totals },
+              samples: [...samples],
+            };
+            const handed = await step.do(`handoff-${next.seq}`, () =>
+              handOff(sctx, { ...p, mode: start.mode }, next),
+            );
+            if (handed.started) return;
+            stale = true;
+            staleCode =
+              handed.staleCode === 'STALE_GENERATION' ? 'STALE_GENERATION' : 'STALE_CONTEXT';
+            break;
+          }
         }
       } else {
         const due = await step.do('due', () =>

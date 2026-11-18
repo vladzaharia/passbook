@@ -20,6 +20,7 @@ import {
   syncEnqueueExists,
   workflowSyncTracking,
 } from './repo-sync.ts';
+import { continuationId, MAX_HANDOFFS } from './sync-chain.ts';
 
 const DUE_BATCH = 100;
 /** A scheduled instance still unfinished after this long is treated as lost. */
@@ -105,7 +106,18 @@ export async function startSync(
 /** True when the Workflow instance is gone or ended without closing its run. */
 async function instanceLost(sctx: ServiceContext, instanceId: string): Promise<boolean> {
   try {
-    const { status } = await (await sctx.env.CONNECTION_SYNC.get(instanceId)).status();
+    const statusOf = async (id: string) =>
+      (await (await sctx.env.CONNECTION_SYNC.get(id)).status()).status;
+    let status = await statusOf(instanceId);
+    // A finished first instance with an open run handed off: the last continuation is what counts.
+    for (let seq = 1; status === 'complete' && seq <= MAX_HANDOFFS; seq++) {
+      try {
+        status = await statusOf(continuationId(instanceId, seq));
+      } catch {
+        // No such continuation: the previous status is the last instance's.
+        break;
+      }
+    }
     return status === 'errored' || status === 'terminated' || status === 'unknown';
   } catch (error) {
     // A Workflows API failure is treated like a vanished instance; keep the cause visible.
