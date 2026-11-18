@@ -49,7 +49,9 @@ export function lineValues(o: ScanOutcome, now: number): Values {
     flag: o.flags[0] ?? 'Check required',
     action: o.action?.label ?? 'This action',
     done:
-      o.action?.kind === 'check_in' ? SCAN_COPY.verdict.already.checkIn : SCAN_COPY.verdict.already.other,
+      o.action?.kind === 'check_in'
+        ? SCAN_COPY.verdict.already.checkIn
+        : SCAN_COPY.verdict.already.other,
     place: place ?? '',
     in: o.counts.event?.arrived ?? 0,
     capacity: o.counts.event?.capacity ?? 0,

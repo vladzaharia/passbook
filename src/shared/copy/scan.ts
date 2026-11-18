@@ -22,7 +22,10 @@ export interface ScanLine {
 export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> = {
   not_found: { headline: 'Not found', sub: "This code isn't a pass here. Look it up by name." },
   ambiguous: { headline: 'More than one match', sub: 'Look it up by name instead.' },
-  test_pass: { headline: 'Test pass', sub: "Live scanners don't take test passes. Use a test scanner." },
+  test_pass: {
+    headline: 'Test pass',
+    sub: "Live scanners don't take test passes. Use a test scanner.",
+  },
   live_pass: { headline: 'Live pass', sub: 'This is a test scanner. Use a live scanner.' },
   not_accepted: {
     headline: 'Not accepted here',
@@ -103,8 +106,8 @@ export const SCAN_DISPLAY_COPY = {
 
 /** Refusal sub-lines for a reason whose plan has nothing to say. They never ride a grant. */
 export const SCAN_REASON_VARIANTS = {
-  outside_hours: { noHours: '{plan} has no hours this week.' },
-  zone_not_included: { noZone: '{plan} opens no zone here.' },
+  outside_hours: { noHours: '{plan} has no hours this week. Ask a manager.' },
+  zone_not_included: { noZone: '{plan} opens no zone here. Ask a manager.' },
   already_done: { noPrevious: 'Scanned earlier. Check ID.' },
   wrong_event: { noEvent: 'This scanner is for a different event.' },
   not_yet_valid: { noWhen: 'Not open yet. Try again later.' },

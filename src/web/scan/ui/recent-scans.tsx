@@ -51,8 +51,7 @@ export function RecentScans({ open, onClose }: { open: boolean; onClose: () => v
                           'Unknown code'}
                       </p>
                       <p className="text-sm text-fg-muted">
-                        {rowLabel(row.outcome, now)}{' '}
-                        · {formatTime(row.at)}
+                        {rowLabel(row.outcome, now)} · {formatTime(row.at)}
                       </p>
                     </div>
                     {row.undoable && row.scanId && (row.outcome.undoUntil ?? 0) > now ? (

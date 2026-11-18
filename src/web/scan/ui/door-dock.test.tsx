@@ -36,6 +36,15 @@ function dock(
   return dispatch;
 }
 
+function DockProbe({ outcome }: { outcome: ReturnType<typeof grant> }) {
+  const store = createScanStore(fakeDeps().deps, states.ready());
+  return (
+    <ScanStoreContext.Provider value={store}>
+      <DoorDock outcome={outcome} runtime={runtime} open={vi.fn()} onError={vi.fn()} />
+    </ScanStoreContext.Provider>
+  );
+}
+
 describe('the dock under a verdict', () => {
   it('a turnaround hold offers Tap out and Done', () => {
     const dispatch = dock(heldIn());
@@ -61,6 +70,36 @@ describe('the dock under a verdict', () => {
       }),
     );
     expect(screen.getByRole('button', { name: 'Let in again' })).toBeVisible();
+  });
+  it('says Let in anyway for a first entry and Let in again only for a repeat', () => {
+    const cases = [
+      ['capacity_full', 'Let in anyway'],
+      ['not_yet_valid', 'Let in anyway'],
+      ['ended', 'Let in anyway'],
+      ['cooldown', 'Let in anyway'],
+      ['already_done', 'Let in again'],
+      ['still_inside', 'Let in again'],
+    ] as const;
+    for (const [reason, label] of cases) {
+      const { unmount } = render(
+        <DockProbe
+          outcome={fixtureOutcome('heads_up', reason, {
+            action: { id: 'check_in', label: 'Check in', kind: 'check_in' },
+          })}
+        />,
+      );
+      expect(screen.getByTestId('dock-let-in'), reason).toHaveTextContent(label);
+      unmount();
+    }
+  });
+  it('names the action on a check hold, not a check-in', () => {
+    dock(
+      fixtureOutcome('heads_up', 'check_required', {
+        action: { id: 'add_stamp', label: 'Add stamp', kind: 'add' },
+      }),
+    );
+    expect(screen.getByRole('button', { name: 'Add stamp' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Check in' })).toBeNull();
   });
   it('a grant and an exit show Look up (the strip carries Undo), not a hold verb', () => {
     for (const o of [grant(), exit()]) {

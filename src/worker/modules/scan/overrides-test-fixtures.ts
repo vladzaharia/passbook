@@ -23,7 +23,7 @@ export async function doorAndMonitor(
   zoneIds: string[],
   o: {
     deskActions?: boolean;
-    role?: 'door' | 'desk';
+    role?: 'door' | 'desk' | 'manager';
     letInAgain?: 'anyone' | 'manager' | 'never';
     hardLimit?: boolean;
     unattended?: boolean;

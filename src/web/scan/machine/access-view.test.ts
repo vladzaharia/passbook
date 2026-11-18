@@ -115,9 +115,18 @@ describe('direction pill, beat and holds', () => {
       { kind: 'turn', direction: 'in', label: SCAN_COPY.actions.tapIn },
     ]);
   });
-  it('a zone hold that a door may override says Let in anyway; an event says Let in again', () => {
+  it('a repeat says Let in again; a first entry says Let in anyway', () => {
     const zone = heldIn({ occupancy: { ...heldIn().occupancy!, turnaround: null } });
-    expect(holdVerbs(zone)).toEqual([{ kind: 'letIn', label: 'Let in anyway' }]);
+    expect(holdVerbs(zone)).toEqual([{ kind: 'letIn', label: 'Let in again' }]);
+    expect(holdVerbs(full())).toEqual([{ kind: 'letIn', label: 'Let in anyway' }]);
+    for (const reason of ['cooldown', 'not_yet_valid', 'ended', 'capacity_full'] as const)
+      expect(
+        holdVerbs(
+          fixtureOutcome('heads_up', reason, {
+            action: { id: 'check_in', label: 'Check in', kind: 'check_in' },
+          }),
+        ),
+      ).toEqual([{ kind: 'letIn', label: 'Let in anyway' }]);
     expect(
       holdVerbs(
         fixtureOutcome('heads_up', 'already_done', {

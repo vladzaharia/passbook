@@ -230,9 +230,7 @@ export async function updateZone(
     capacity: input.capacity === undefined ? row.capacity : input.capacity,
     maxStayMinutes: input.maxStayMinutes === undefined ? row.maxStayMinutes : input.maxStayMinutes,
     clearAt: input.clearAt === undefined ? row.clearAt : input.clearAt,
-    hardLimit:
-      input.hardLimit ??
-      (input.capacity === null ? false : row.hardLimit),
+    hardLimit: input.hardLimit ?? (input.capacity === null ? false : row.hardLimit),
   };
   if (input.parentId !== undefined) assertPlacement(indexZones(rows), id, parentId);
   if (next.parentId !== null && next.timeZone !== null)

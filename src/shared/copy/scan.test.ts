@@ -28,7 +28,7 @@ describe('SCAN_COPY', () => {
   });
 
   it('the access reasons name only plan, zone, when, time and limit', () => {
-    const allowed = new Set(['plan', 'zone', 'when', 'time', 'limit']);
+    const allowed = new Set(['plan', 'zone', 'when', 'time', 'limit', 'used']);
     const lines = [
       ...(
         [
@@ -55,9 +55,9 @@ describe('SCAN_COPY', () => {
     });
     expect(SCAN_REASON_COPY.not_inside).toEqual({
       headline: 'Not tapped in',
-      sub: 'No entry recorded.',
+      sub: 'No entry recorded. Tap them in first.',
     });
-    expect(SCAN_REASON_COPY.capacity_full.headline).toBe('Event full');
+    expect(SCAN_REASON_COPY.capacity_full.headline).toBe('{place} full');
   });
 
   it('says what a screen is when it calls a scan route', () => {
@@ -76,7 +76,9 @@ describe('SCAN_COPY', () => {
 
   it('fills markers and leaves a missing one visible', () => {
     expect(scanLine(SCAN_REASON_COPY.rate_limited.sub, { seconds: 20 })).toBe('Try again in 20 s.');
-    expect(scanLine(SCAN_REASON_COPY.wrong_event.sub)).toBe('For {event}.');
+    expect(scanLine(SCAN_REASON_COPY.wrong_event.sub, { event: 'Gala', day: 'Sat' })).toBe(
+      'This scanner is for Gala, Sat.',
+    );
   });
 
   it('has the occupancy words, terse and without a trailing filler', () => {
