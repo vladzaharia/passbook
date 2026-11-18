@@ -170,7 +170,7 @@
         "barcode": "*",
         "prop": "message"
       },
-      "value": "{{code}}"
+      "value": "{{pass.scanCode}}"
     },
     {
       "to": {
@@ -234,5 +234,65 @@
   },
   "messaging": {
     "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "redeem",
+        "label": "Redeem",
+        "kind": "use_up",
+        "repeat": "once",
+        "minRole": "door",
+        "confirm": false
+      }
+    ],
+    "lookup": {
+      "input": "code"
+    },
+    "display": {
+      "v": 1,
+      "header": {
+        "subtitle": "{{inputs.offer}}"
+      },
+      "panels": [
+        {
+          "id": "p_offer",
+          "preset": {
+            "id": "offer",
+            "v": 1
+          },
+          "title": "Offer",
+          "icon": "percent",
+          "rows": [
+            {
+              "id": "r_offer",
+              "slot": "offer",
+              "type": "big",
+              "value": "{{inputs.offer}}"
+            },
+            {
+              "id": "r_terms",
+              "slot": "terms",
+              "type": "columns",
+              "items": [
+                {
+                  "id": "i_when",
+                  "label": "When",
+                  "value": "{{inputs.validFor}}"
+                },
+                {
+                  "id": "i_by",
+                  "label": "Use by",
+                  "value": "{{pass.validUntil|day}}"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "One per customer."
+      }
+    }
   }
 }

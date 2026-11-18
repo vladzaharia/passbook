@@ -1346,6 +1346,17 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
   "holder": "{{inputs.holder}}",
   "panels": [
     {
+      "id": "p_main",
+      "rows": [
+        {
+          "id": "r_main",
+          "type": "big",
+          "unit": "Points",
+          "value": "{{inputs.points}}",
+        },
+      ],
+    },
+    {
       "icon": "info",
       "id": "p_details",
       "rows": [
@@ -1383,20 +1394,20 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
   },
   "panels": [
     {
-      "icon": "info",
-      "id": "p_details",
+      "icon": null,
+      "id": "p_main",
       "kind": "custom",
       "rows": [
         {
-          "icon": null,
-          "id": "r_field1",
-          "label": "Since",
-          "strong": false,
-          "type": "field",
-          "value": "Sample since",
+          "id": "r_main",
+          "label": null,
+          "tone": null,
+          "type": "big",
+          "unit": "Points",
+          "value": "1200",
         },
       ],
-      "title": "Details",
+      "title": null,
       "tone": null,
     },
   ],
@@ -1426,6 +1437,23 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
     "staff": null,
   },
   "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "id": "r_main",
+          "label": null,
+          "tone": null,
+          "type": "big",
+          "unit": "Points",
+          "value": "1200",
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
     {
       "icon": "info",
       "id": "p_details",
@@ -1470,6 +1498,23 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
     "staff": null,
   },
   "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "id": "r_main",
+          "label": null,
+          "tone": null,
+          "type": "big",
+          "unit": "Points",
+          "value": "1200",
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
     {
       "icon": "info",
       "id": "p_details",
@@ -1712,7 +1757,7 @@ exports[`starter-stamp-card default display > matches its snapshot, and so does 
       "rows": [
         {
           "id": "r_main",
-          "reward": "Free item",
+          "reward": "Reward",
           "type": "progress",
           "value": "{{inputs.stamps}}",
         },
@@ -1762,7 +1807,7 @@ exports[`starter-stamp-card default display > matches its snapshot, and so does 
       "rows": [
         {
           "before": 6,
-          "caption": "3 more for Free item",
+          "caption": "3 more for Reward",
           "goal": 10,
           "icon": null,
           "id": "r_main",
@@ -1809,7 +1854,7 @@ exports[`starter-stamp-card default display > matches its snapshot, and so does 
       "rows": [
         {
           "before": 6,
-          "caption": "3 more for Free item",
+          "caption": "3 more for Reward",
           "goal": 10,
           "icon": null,
           "id": "r_main",
@@ -1873,7 +1918,7 @@ exports[`starter-stamp-card default display > matches its snapshot, and so does 
       "rows": [
         {
           "before": 6,
-          "caption": "3 more for Free item",
+          "caption": "3 more for Reward",
           "goal": 10,
           "icon": null,
           "id": "r_main",
@@ -1943,6 +1988,17 @@ exports[`starter-store-card default display > matches its snapshot, and so does 
   "holder": "{{inputs.holder}}",
   "panels": [
     {
+      "id": "p_main",
+      "rows": [
+        {
+          "amount": "{{inputs.balance}}",
+          "currency": "{{inputs.currency}}",
+          "id": "r_main",
+          "type": "money",
+        },
+      ],
+    },
+    {
       "icon": "info",
       "id": "p_details",
       "rows": [
@@ -1980,20 +2036,24 @@ exports[`starter-store-card default display > matches its snapshot, and so does 
   },
   "panels": [
     {
-      "icon": "info",
-      "id": "p_details",
+      "icon": null,
+      "id": "p_main",
       "kind": "custom",
       "rows": [
         {
-          "icon": null,
-          "id": "r_field1",
-          "label": "Balance",
-          "strong": false,
-          "type": "field",
-          "value": "Sample balance",
+          "amount": 25,
+          "before": 24,
+          "change": 1,
+          "currency": "USD",
+          "id": "r_main",
+          "label": null,
+          "low": false,
+          "pending": [],
+          "text": "$25.00",
+          "type": "money",
         },
       ],
-      "title": "Details",
+      "title": null,
       "tone": null,
     },
   ],
@@ -2023,6 +2083,27 @@ exports[`starter-store-card default display > matches its snapshot, and so does 
     "staff": null,
   },
   "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "amount": 25,
+          "before": 24,
+          "change": 1,
+          "currency": "USD",
+          "id": "r_main",
+          "label": null,
+          "low": false,
+          "pending": [],
+          "text": "$25.00",
+          "type": "money",
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
     {
       "icon": "info",
       "id": "p_details",
@@ -2067,6 +2148,27 @@ exports[`starter-store-card default display > matches its snapshot, and so does 
     "staff": null,
   },
   "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "amount": 25,
+          "before": 24,
+          "change": 1,
+          "currency": "USD",
+          "id": "r_main",
+          "label": null,
+          "low": false,
+          "pending": [],
+          "text": "$25.00",
+          "type": "money",
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
     {
       "icon": "info",
       "id": "p_details",
