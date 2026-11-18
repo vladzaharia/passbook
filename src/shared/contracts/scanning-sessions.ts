@@ -8,6 +8,7 @@ import {
   TimestampSchema,
 } from './common.ts';
 import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
+import { ZoneIdsSchema } from './scan-access.ts';
 import { ScannerAcceptsSchema } from './scanners.ts';
 
 /** Layout and sign-in method are independent: an admin is another device in the session. */
@@ -87,6 +88,18 @@ export const ScanDeviceOverridesSchema = ScannerSettingsSchema.pick({
   .partial()
   .strict();
 export type ScanDeviceOverrides = z.infer<typeof ScanDeviceOverridesSchema>;
+/** What a customer screen says. Each field is optional; the defaults are in `copy/scan-customer.ts`. */
+export const SessionCustomerSettingsSchema = z.strictObject({
+  welcome: PlainLineSchema(40).optional(),
+  refusedLine: PlainLineSchema(40).optional(),
+  greet: z.boolean().optional(),
+  showReady: z.boolean().optional(),
+  showDraft: z.boolean().optional(),
+});
+export type SessionCustomerSettings = z.infer<typeof SessionCustomerSettingsSchema>;
+export const ScanningSessionSettingsSchema = ScannerSettingsSchema.extend({
+  customer: SessionCustomerSettingsSchema.optional(),
+});
 export const ScanningSessionStatusSchema = z.enum(['active', 'paused', 'ended']);
 export const ScanningSessionSchema = z.object({
   id: IdSchema,
@@ -96,7 +109,9 @@ export const ScanningSessionSchema = z.object({
   name: PlainLineSchema(80),
   status: ScanningSessionStatusSchema,
   accepts: ScannerAcceptsSchema.nullable(),
-  settings: ScannerSettingsSchema,
+  settings: ScanningSessionSettingsSchema,
+  /** Access zones this session checks. Absent from servers that predate zones. */
+  zoneIds: ZoneIdsSchema.optional(),
   timeZone: TimeZoneSchema,
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
@@ -112,14 +127,16 @@ export const CreateScanningSessionSchema = z.strictObject({
   name: PlainLineSchema(80),
   timeZone: TimeZoneSchema,
   accepts: ScannerAcceptsSchema.nullable().default(null),
-  settings: ScannerSettingsSchema.partial().optional(),
+  settings: ScanningSessionSettingsSchema.partial().optional(),
+  zoneIds: ZoneIdsSchema.optional(),
 });
 /** No defaults: a field that is absent is left as it is (a name-only edit keeps scope and settings). */
 export const UpdateScanningSessionSchema = z.strictObject({
   name: PlainLineSchema(80).optional(),
   timeZone: TimeZoneSchema.optional(),
   accepts: ScannerAcceptsSchema.nullable().optional(),
-  settings: ScannerSettingsSchema.partial().optional(),
+  settings: ScanningSessionSettingsSchema.partial().optional(),
+  zoneIds: ZoneIdsSchema.optional(),
   status: ScanningSessionStatusSchema.optional(),
   revision: TimestampSchema.optional(),
 });

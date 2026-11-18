@@ -21,6 +21,7 @@ import { classify } from './names.ts';
 import { stylesOf, usedSlots } from './slots.ts';
 import { type StampOptions, stampOutput, stampsReserved } from './stamps.ts';
 import { decodeStrings, parseStrings } from './strings.ts';
+import { walletArtAssets } from './wallet-art.ts';
 
 export const MAX_PASS_JSON_BYTES = 64 * 1024;
 const STRIPPED_KEYS = ['serialNumber', 'authenticationToken', 'webServiceURL'] as const;
@@ -82,6 +83,7 @@ export async function analyzePackage(
   let manifestBytes: Uint8Array | undefined;
   let tooling: Uint8Array | null = null;
   const stampArt = new Map<string, Uint8Array>();
+  const walletArt = new Map<string, Uint8Array>();
 
   for (const [path, bytes] of [...input].sort(([a], [b]) => (a < b ? -1 : 1))) {
     const kind = classify(path);
@@ -100,6 +102,7 @@ export async function analyzePackage(
     else if (kind.kind === 'personalization') files.set(path, bytes);
     else if (kind.kind === 'stampArt') stampArt.set(path, bytes);
     else if (kind.kind === 'stampStrip') push(stampsReserved(path));
+    else if (kind.kind === 'walletArt') walletArt.set(path, bytes);
     else if (kind.kind === 'strings') {
       try {
         strings.set(kind.locale, parseStrings(decodeStrings(bytes)));
@@ -177,7 +180,7 @@ export async function analyzePackage(
     for (const i of validateManifest(manifest, passJson, {
       uploaded: options.uploaded,
       behaviors: options.behaviors,
-      assetNames: images.map((image) => image.path),
+      assetNames: [...images.map((image) => image.path), ...walletArt.keys()],
     }))
       push(i);
 
@@ -262,11 +265,12 @@ export async function analyzePackage(
   const stampOptions = report(issues).ok ? options.stamps : { counts: [] };
   const stamps = await stampOutput(manifest, stampArt, strips, stampOptions);
   for (const issue of stamps.issues) push(issue);
+  const walletAssets = await walletArtAssets(walletArt, files, push);
   if (!report(issues).ok || !manifest) return { report: report(issues) };
   // Retain preview images without treating their unused slots as shipped during validation.
   for (const image of unusedPreview) kept.push(image);
 
-  const assets: AnalyzedAsset[] = [...stamps.assets];
+  const assets: AnalyzedAsset[] = [...stamps.assets, ...walletAssets];
   for (const [path, bytes] of stamps.files) files.set(path, bytes);
   for (const image of kept) {
     files.set(image.path, image.bytes);

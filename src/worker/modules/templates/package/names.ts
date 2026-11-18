@@ -1,3 +1,4 @@
+import { WALLET_ART } from '../../../../passkit/template/wallets/schema.ts';
 import { SLOT_NAMES, type SlotName } from './slots.ts';
 
 export type FileKind =
@@ -9,6 +10,8 @@ export type FileKind =
   | { kind: 'stampArt' }
   /** `stamps/strips/**` is generated at save; an upload may not carry it. */
   | { kind: 'stampStrip' }
+  /** `wallets/<google|samsung>/<name>.png`: art for another wallet. Kept in the version, never shipped. */
+  | { kind: 'walletArt' }
   | { kind: 'strings'; locale: string }
   | { kind: 'image'; slot: SlotName; scale: 1 | 2 | 3; locale?: string };
 
@@ -76,6 +79,7 @@ export function classify(path: string): FileKind | null {
     if (rest.startsWith('strips/')) return { kind: 'stampStrip' };
     return /^[a-z][a-z0-9-]*\.png$/.test(rest) ? { kind: 'stampArt' } : null;
   }
+  if (dir === 'wallets') return WALLET_ART.test(path) ? { kind: 'walletArt' } : null;
   if (!dir.endsWith('.lproj') || rest.includes('/')) return null;
   const locale = dir.slice(0, -'.lproj'.length);
   if (!LOCALE.test(locale)) return null;
