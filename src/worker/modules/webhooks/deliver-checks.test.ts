@@ -9,7 +9,7 @@ import {
   reset,
   setupRig,
   stubNet,
-} from './deliver-test-kit.ts';
+} from './deliver-test-fixtures.ts';
 import { ALL_TYPES, seedEndpoint } from './webhooks-test-fixtures.ts';
 
 let rig: Rig;

@@ -1,8 +1,8 @@
 import { createMiddleware } from 'hono/factory';
 import type { AppBindings } from '../../platform/context.ts';
-import { first } from '../../platform/db.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { dispatchDue } from './dispatch.ts';
+import { anyActiveEndpoint as readAnyActive } from './repo-delivery-state.ts';
 
 const MEMO_MS = 30_000;
 export const KICK_LANES = 10;
@@ -18,11 +18,7 @@ export function resetKickMemo(): void {
 async function anyActiveEndpoint(ctx: ServiceContext): Promise<boolean> {
   const now = ctx.clock.now();
   if (memo && now - memo.at < MEMO_MS) return memo.any;
-  const row = await first(
-    ctx.env.DB,
-    "SELECT 1 FROM webhook_endpoints WHERE status = 'active' LIMIT 1",
-  );
-  memo = { at: now, any: row !== null };
+  memo = { at: now, any: await readAnyActive(ctx.env.DB) };
   return memo.any;
 }
 

@@ -7,7 +7,7 @@ import {
   reset,
   setupRig,
   stubNet,
-} from './deliver-test-kit.ts';
+} from './deliver-test-fixtures.ts';
 import { kick } from './kick.ts';
 
 let rig: Rig;

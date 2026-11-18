@@ -12,7 +12,7 @@ import {
   seedSecret,
   setupRig,
   stubNet,
-} from './deliver-test-kit.ts';
+} from './deliver-test-fixtures.ts';
 import { ALL_TYPES } from './webhooks-test-fixtures.ts';
 
 let rig: Rig;

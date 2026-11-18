@@ -8,7 +8,7 @@ import {
   reset,
   seedSecret,
   setupRig,
-} from './deliver-test-kit.ts';
+} from './deliver-test-fixtures.ts';
 import { dailyWebhooks } from './jobs.ts';
 import { ALL_TYPES, countOf } from './webhooks-test-fixtures.ts';
 

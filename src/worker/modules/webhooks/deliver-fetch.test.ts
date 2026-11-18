@@ -12,7 +12,7 @@ import {
   reset,
   setupRig,
   stubNet,
-} from './deliver-test-kit.ts';
+} from './deliver-test-fixtures.ts';
 import { nextDue } from './repo-delivery-state.ts';
 import { getEndpoint } from './repo-endpoints.ts';
 

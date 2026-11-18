@@ -14,7 +14,7 @@ import {
   setupRig,
   statesOf,
   stubNet,
-} from './deliver-test-kit.ts';
+} from './deliver-test-fixtures.ts';
 import { dispatchLane } from './dispatch.ts';
 import { sweepWebhooks } from './jobs.ts';
 import { claimAttempt, claimLane, nextDue } from './repo-delivery-state.ts';

@@ -319,3 +319,10 @@ export function cancelPendingStmt(
     [now, reason, lane.endpointId, lane.orgId, lane.mode],
   );
 }
+
+/** Whether any endpoint could be sending: the kick's cheap gate. */
+export async function anyActiveEndpoint(db: D1Database): Promise<boolean> {
+  return (
+    (await first(db, "SELECT 1 FROM webhook_endpoints WHERE status = 'active' LIMIT 1")) !== null
+  );
+}

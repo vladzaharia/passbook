@@ -10,7 +10,7 @@ import {
   type Rig,
   setupRig,
   stubNet,
-} from './deliver-test-kit.ts';
+} from './deliver-test-fixtures.ts';
 import { dispatchDue } from './dispatch.ts';
 
 let rig: Rig;
