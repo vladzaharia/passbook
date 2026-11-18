@@ -6,12 +6,13 @@ import {
   Check,
   Hand,
   LogOut,
+  MonitorSmartphone,
   Timer,
   Unplug,
   UserRoundCog,
   Volume2,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import {
   DropdownMenu,
@@ -23,6 +24,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu.tsx';
+import type { ScanApi } from '../api/scan-api.ts';
+import { FlipSheet } from '../role/flip-sheet.tsx';
 import { MenuTrigger } from './capsule.tsx';
 
 export type CameraChoice = 'back' | 'back-wide' | 'front';
@@ -81,6 +84,8 @@ export interface ScanMenuProps {
   /** Staff sign-in is on. */
   canSwitchStaff?: boolean;
   onSwitchStaff?: () => void;
+  /** A paired phone can face a customer; absent for terminals and admin sessions. */
+  flip?: { api: ScanApi; refetch: () => Promise<void> };
   onShift: () => void;
   onEndShift: () => void;
   /** The last item: a paired device unpairs, an admin stops scanning as admin. */
@@ -92,73 +97,86 @@ export interface ScanMenuProps {
 
 /** One list: an action sheet on a phone, a dropdown from 640 px (the kit's menu does both). */
 export function ScanMenu(p: ScanMenuProps) {
+  const [flipOpen, setFlipOpen] = useState(false);
   return (
-    <DropdownMenu {...(p.open === undefined ? {} : { open: p.open })} onOpenChange={p.onOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <MenuTrigger />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="z-[60] min-w-64">
-        <DropdownMenuItem onSelect={p.onShift}>
-          <Activity aria-hidden />
-          This shift
-        </DropdownMenuItem>
-        <CheckItem icon={<Volume2 aria-hidden />} checked={p.sound} onCheckedChange={p.onSound}>
-          Sound
-        </CheckItem>
-        <CheckItem
-          icon={<Hand aria-hidden />}
-          checked={p.holdResults}
-          onCheckedChange={p.onHoldResults}
-        >
-          Keep results until tapped
-        </CheckItem>
-        <DropdownMenuSeparator />
-        {p.cameraAvailable !== false ? (
-          <>
-            <DropdownMenuLabel>Camera</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={p.camera}
-              onValueChange={(v) => p.onCamera(v as CameraChoice)}
-            >
-              <DropdownMenuRadioItem value="back">Back</DropdownMenuRadioItem>
-              {p.hasWide !== false ? (
-                <DropdownMenuRadioItem value="back-wide">Back wide</DropdownMenuRadioItem>
-              ) : null}
-              <DropdownMenuRadioItem value="front">Front</DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-          </>
-        ) : null}
-        {p.hasReader && p.cameraAvailable !== false ? (
-          <>
-            <CheckItem
-              icon={<CameraOff aria-hidden />}
-              checked={p.cameraOff ?? false}
-              onCheckedChange={(v) => p.onCameraOff?.(v)}
-            >
-              Camera off
-            </CheckItem>
-            <DropdownMenuItem onSelect={p.onReaderTips}>
-              <BookOpen aria-hidden />
-              Reader tips
-            </DropdownMenuItem>
-          </>
-        ) : null}
-        <DropdownMenuSeparator />
-        {p.canSwitchStaff ? (
-          <DropdownMenuItem onSelect={p.onSwitchStaff}>
-            <UserRoundCog aria-hidden />
-            Switch staff
+    <>
+      <DropdownMenu
+        {...(p.open === undefined ? {} : { open: p.open })}
+        onOpenChange={p.onOpenChange}
+      >
+        <DropdownMenuTrigger asChild>
+          <MenuTrigger />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="z-[60] min-w-64">
+          <DropdownMenuItem onSelect={p.onShift}>
+            <Activity aria-hidden />
+            This shift
           </DropdownMenuItem>
-        ) : null}
-        <DropdownMenuItem onSelect={p.onEndShift}>
-          <Timer aria-hidden />
-          {SCAN_COPY.actions.endShift}
-        </DropdownMenuItem>
-        <DropdownMenuItem destructive onSelect={p.onLeave}>
-          {p.leave === 'unpair' ? <Unplug aria-hidden /> : <LogOut aria-hidden />}
-          {p.leave === 'unpair' ? 'Unpair this device' : 'Stop scanning as admin'}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <CheckItem icon={<Volume2 aria-hidden />} checked={p.sound} onCheckedChange={p.onSound}>
+            Sound
+          </CheckItem>
+          <CheckItem
+            icon={<Hand aria-hidden />}
+            checked={p.holdResults}
+            onCheckedChange={p.onHoldResults}
+          >
+            Keep results until tapped
+          </CheckItem>
+          <DropdownMenuSeparator />
+          {p.cameraAvailable !== false ? (
+            <>
+              <DropdownMenuLabel>Camera</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={p.camera}
+                onValueChange={(v) => p.onCamera(v as CameraChoice)}
+              >
+                <DropdownMenuRadioItem value="back">Back</DropdownMenuRadioItem>
+                {p.hasWide !== false ? (
+                  <DropdownMenuRadioItem value="back-wide">Back wide</DropdownMenuRadioItem>
+                ) : null}
+                <DropdownMenuRadioItem value="front">Front</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </>
+          ) : null}
+          {p.hasReader && p.cameraAvailable !== false ? (
+            <>
+              <CheckItem
+                icon={<CameraOff aria-hidden />}
+                checked={p.cameraOff ?? false}
+                onCheckedChange={(v) => p.onCameraOff?.(v)}
+              >
+                Camera off
+              </CheckItem>
+              <DropdownMenuItem onSelect={p.onReaderTips}>
+                <BookOpen aria-hidden />
+                Reader tips
+              </DropdownMenuItem>
+            </>
+          ) : null}
+          <DropdownMenuSeparator />
+          {p.canSwitchStaff ? (
+            <DropdownMenuItem onSelect={p.onSwitchStaff}>
+              <UserRoundCog aria-hidden />
+              Switch staff
+            </DropdownMenuItem>
+          ) : null}
+          {p.flip ? (
+            <DropdownMenuItem onSelect={() => setFlipOpen(true)}>
+              <MonitorSmartphone aria-hidden />
+              Show to customer
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuItem onSelect={p.onEndShift}>
+            <Timer aria-hidden />
+            {SCAN_COPY.actions.endShift}
+          </DropdownMenuItem>
+          <DropdownMenuItem destructive onSelect={p.onLeave}>
+            {p.leave === 'unpair' ? <Unplug aria-hidden /> : <LogOut aria-hidden />}
+            {p.leave === 'unpair' ? 'Unpair this device' : 'Stop scanning as admin'}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {p.flip ? <FlipSheet open={flipOpen} {...p.flip} onClose={() => setFlipOpen(false)} /> : null}
+    </>
   );
 }

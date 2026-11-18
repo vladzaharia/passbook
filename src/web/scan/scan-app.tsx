@@ -10,6 +10,7 @@ import { usePlatformSession } from './boot/use-platform-session.ts';
 import { useScanManageAccess } from './boot/use-scan-manage-access.ts';
 import { createCsrfHolder, useScanSession } from './boot/use-scan-session.ts';
 import type { ScanState } from './machine/types.ts';
+import { RoleUnlock } from './role/unlock-sheet.tsx';
 import { BootCard } from './ui/boot-card.tsx';
 import { ScanShell } from './ui/scan-shell.tsx';
 
@@ -128,7 +129,15 @@ function ScanBoot() {
         />
       );
     if (session.session.scanner?.deviceRole !== 'scan' && session.session.scanner !== null)
-      return <LiveScreen session={session.session} refetch={session.refetch} />;
+      return (
+        <>
+          <LiveScreen session={session.session} refetch={session.refetch} />
+          {session.session.scanner?.kind === 'device' &&
+          session.session.scanner.deviceRole === 'customer' ? (
+            <RoleUnlock api={api} refetch={session.refetch} />
+          ) : null}
+        </>
+      );
     if (session.session.state === 'staff_required')
       return (
         <ScanShell
