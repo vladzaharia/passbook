@@ -93,6 +93,7 @@ export function LiveScreen({
     };
     const connect = () => {
       if (disposed) return;
+      setWelcome(null);
       socket = new WebSocket(
         `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/v1/scan/live${scope ? `?${scope}` : ''}`,
       );

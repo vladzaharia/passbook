@@ -143,6 +143,7 @@ describe('customer live screen Buddy', () => {
   });
 
   it('shows the session welcome when idle, the fixed copy otherwise', () => {
+    vi.useFakeTimers();
     const base = sessionFixture();
     const session = {
       ...base,
@@ -152,6 +153,11 @@ describe('customer live screen Buddy', () => {
     expect(container.querySelector('h2')).toHaveTextContent('Hold up your pass');
     act(() => LiveSocket.instances.at(-1)?.snapshot('Scan to enter'));
     expect(container.querySelector('h2')).toHaveTextContent('Scan to enter');
+    act(() => LiveSocket.instances.at(-1)?.close());
+    act(() => vi.advanceTimersByTime(2000));
+    act(() => LiveSocket.instances.at(-1)?.snapshot());
+    expect(container.querySelector('h2')).toHaveTextContent('Hold up your pass');
+    vi.useRealTimers();
   });
 
   it('shows the server view, not the scanner name or "Customer display"', () => {
