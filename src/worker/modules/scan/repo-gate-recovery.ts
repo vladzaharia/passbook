@@ -1,4 +1,5 @@
 import { stmt } from '../../platform/db.ts';
+import { ACCESS_GATE } from './repo-access.ts';
 
 type Db = D1Database;
 
@@ -59,12 +60,17 @@ export function quarantinePreviousClaimStmt(db: Db, g: GateSnapshot): D1Prepared
 /**
  * Undo an observed, uncommitted gate only while the entire snapshot and the original pending
  * claim still match. An inconsistent previous snapshot is not safe to undo.
+ *
+ * An Access card's visit gate is never released: it is written in the same batch that closes its
+ * scan, so it cannot point at a pending claim, and its count moves by visits (not scans) with a
+ * visit start this snapshot does not carry. One that does is left as it is; the claim still fails.
  */
 export function releaseObservedGateStmt(
   db: Db,
   g: GateSnapshot,
   claimAt: number,
 ): D1PreparedStatement | null {
+  if (g.action_id === ACCESS_GATE) return null;
   const inserted =
     g.prev_state === null && g.prev_last_at === null && g.prev_scan_id === null && g.count === 1;
   const updated =
