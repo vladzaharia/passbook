@@ -113,9 +113,12 @@ the build key and the Apple release hash ignore it, so editing it never reissues
 - `roles`: a role is `{ "field": key }`, `{ "value": expression }` (the manifest expression
   language) or `false` (absent on purpose). Names: `title`, `eventStart`, `memberId`, `tier`,
   `points`, `balance`, `validUntil` and the rest of the table in the design (2.2).
-- `required`: capability ids that must be native on a wallet, else it is blocked. `<wallet>.omit`: field
-  keys or capability ids left out on purpose. `<wallet>.type`: a type, or `off` to skip that wallet.
-- `<wallet>.images`: slot name to `wallets/<google|samsung>/<name>.png`. The files are kept in the
+- `required`: capability ids that must be native on a wallet, else it is blocked (`type`,
+  `barcode.format`, `role.points`, `image.strip`; the full list is `CAPABILITY_IDS` in
+  `src/passkit/wallets/vocab.ts`). `<wallet>.omit`: field paths (`backFields.terms`), field keys or
+  capability ids left out on purpose. `<wallet>.type`: a type, or `off` to skip that wallet.
+- `<wallet>.images`: slot to `wallets/<google|samsung>/<name>.png`. Slots: Google `logo`, `hero`,
+  `thumbnail`; Samsung `logo`, `main`, `background`. The files are kept in the
   version and never signed into a pass. Other names under `wallets/` are refused.
 - Unknown keys are errors. Issues are `WALLETS_*`, plus `WALLET_ART_PNG` for a file that is not a
   PNG (`src/passkit/template/wallets/`).
