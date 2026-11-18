@@ -18,13 +18,11 @@ type RemoveResult = z.infer<typeof PassImportRemoveResultSchema>;
 
 /** Passes per call; the client loops on `nextCursor`. */
 export const REMOVE_PAGE = 50;
-/** A pass an import created is at version 1 until someone edits it. */
-const CREATED_VERSION = 1;
 const ENDED = ['done', 'failed', 'stale', 'expired'];
 
 /** Why a pass is no longer the one the import made, or null when it still is. */
 function changeOf(pass: CreatedPass, mode: string): string | null {
-  if (pass.mode !== mode || pass.version !== CREATED_VERSION) return 'IMPORT_PASS_CHANGED';
+  if (pass.mode !== mode || pass.changed === 1) return 'IMPORT_PASS_CHANGED';
   return pass.scanned === 1 ? 'IMPORT_PASS_SCANNED' : null;
 }
 

@@ -86,7 +86,17 @@ describe('remove created', () => {
   it('skips a pass that was edited or scanned since, and lists it', async () => {
     const id = await imported('S', 3);
     const [edited, scanned, plain] = [await passId('S0'), await passId('S1'), await passId('S2')];
-    await run(h.kit.env.DB, 'UPDATE passes SET version = version + 1 WHERE id = ?', [edited]);
+    // An automatic rebuild (template upgrade) is not an edit; an operator's publish is.
+    await run(
+      h.kit.env.DB,
+      "UPDATE passes SET version = version + 1, object_key = object_key || 'a', pending_cause = 'template_upgrade' WHERE id = ?",
+      [plain],
+    );
+    await run(
+      h.kit.env.DB,
+      "UPDATE passes SET version = version + 1, object_key = object_key || 'a', pending_cause = 'admin' WHERE id = ?",
+      [edited],
+    );
     await run(
       h.kit.env.DB,
       `INSERT INTO scans (id, org_id, mode, pass_id, actor_type, actor_id, actor_key, idempotency_key,

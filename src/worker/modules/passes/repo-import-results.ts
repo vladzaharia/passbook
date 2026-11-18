@@ -74,13 +74,13 @@ export function createdRows(db: D1Database, importId: string, after: number, lim
 
 export interface CreatedPass {
   id: string;
-  version: number;
+  changed: number;
   mode: string;
   removed_at: number | null;
   scanned: number;
 }
 
-/** The current state of created passes of one org; a hard-deleted pass is absent. */
+/** The current state of created passes of one org; a hard-deleted pass is absent. `changed`: a version other than an automatic rebuild. */
 export async function createdPasses(
   db: D1Database,
   orgId: string,
@@ -91,7 +91,9 @@ export async function createdPasses(
     out.push(
       ...(await all<CreatedPass>(
         db,
-        `SELECT p.id, p.version, p.mode, p.removed_at,
+        `SELECT p.id, p.mode, p.removed_at,
+                EXISTS (SELECT 1 FROM pass_versions v WHERE v.pass_id = p.id AND v.version > 1
+                        AND v.cause NOT IN ('template_upgrade', 'user_refresh', 'resign')) AS changed,
                 EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = p.id) AS scanned
          FROM passes p WHERE p.org_id = ? AND p.id IN (${part.map(() => '?').join(',')})`,
         [orgId, ...part],
