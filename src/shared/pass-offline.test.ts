@@ -209,8 +209,19 @@ async function loadPage(
     return b;
   };
   const parts = { save: el(false), drop: el(true), state: el(true), fail: el(true) };
+  let shown: () => void = () => {};
+  const revealed = new Promise<void>((r) => {
+    shown = r;
+  });
   const box = {
-    hidden: true,
+    get hidden() {
+      return !this.on;
+    },
+    set hidden(v: boolean) {
+      this.on = !v;
+      if (!v) shown();
+    },
+    on: false,
     querySelector: (sel: string) => parts[/data-(\w+)/.exec(sel)?.[1] as keyof typeof parts],
   };
   const reg = { unregister: vi.fn(async () => true) };
@@ -227,6 +238,8 @@ async function loadPage(
     { pathname: PATH, origin: ORIGIN },
     fetchImpl,
   );
+  // The script hashes the token with real WebCrypto first; wait for it to reveal the box.
+  await revealed;
   await tick();
   return { box, parts, sw, reg };
 }
