@@ -2,6 +2,7 @@ import { Check, CircleAlert, Monitor, ScanLine, TriangleAlert, Undo2 } from 'luc
 import { useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
+import { CUSTOMER_COPY } from '../../../shared/copy/scan-customer.ts';
 import { formatTime } from '../../lib/format.ts';
 import { Buddy } from '../../ui/art/index.ts';
 import { CustomerBuddy, type CustomerBuddyStatus } from './customer-buddy.tsx';
@@ -150,6 +151,7 @@ export function LiveScreen({
     (row) => now - row.at < (customer ? CUSTOMER_HOLD_MS[row.kind] : 15 * 60_000),
   );
   const latest = recent[0];
+  const view = latest?.customer ?? null;
   const latestId = latest?.id;
   const latestAt = latest?.at;
   const latestKind = latest?.kind;
@@ -186,9 +188,9 @@ export function LiveScreen({
             />
           </span>
           <div className="scan-live-brand-text">
-            <p className="scan-live-eyebrow">{customer ? 'Customer display' : 'Desk monitor'}</p>
-            <h1>{session.scanner?.name}</h1>
-            <p className="scan-live-org">{session.scanner?.orgName}</p>
+            {customer ? null : <p className="scan-live-eyebrow">Desk monitor</p>}
+            <h1>{customer ? orgName : session.scanner?.name}</h1>
+            {customer ? null : <p className="scan-live-org">{session.scanner?.orgName}</p>}
           </div>
         </div>
         <span role="status" className="scan-live-status" data-connected={connected}>
@@ -202,11 +204,9 @@ export function LiveScreen({
           data-kind={latest?.kind ?? 'ready'}
         >
           <div className="scan-live-customer-copy">
-            <p className="scan-live-eyebrow">{latest ? 'Pass scanned' : 'Ready to scan'}</p>
-            <h2>{latest?.label ?? 'Ready'}</h2>
-            {!latest ? (
-              <p className="scan-live-welcome-hint">Present your pass to the scanner.</p>
-            ) : null}
+            {view?.greet ? <p className="scan-live-eyebrow">{view.greet}</p> : null}
+            <h2>{view ? view.band.headline : (latest?.label ?? CUSTOMER_COPY.welcome)}</h2>
+            {view?.band.sub ? <p className="scan-live-welcome-hint">{view.band.sub}</p> : null}
           </div>
           <div aria-hidden="true" className="scan-live-buddy">
             <CustomerBuddy
