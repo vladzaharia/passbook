@@ -1,4 +1,6 @@
 import type { Grant } from '../../platform/authority.ts';
+import type { Check } from '../../platform/authority-checks.ts';
+import { rawCheck } from '../../platform/authority-checks.ts';
 import type { FloorWrite } from './changes.ts';
 
 /**
@@ -23,3 +25,9 @@ export function addFloorWrites(g: Grant, floors: readonly FloorWrite[], platform
     }
   }
 }
+
+/** Fails the grant (SETTINGS_CHANGED) when a platform retention setting changed after the save was planned. */
+export const platformRevCheck = (rev: number): Check =>
+  rawCheck('config', 'EXISTS (SELECT 1 FROM retention_platform_rev WHERE id = 1 AND rev = ?)', [
+    rev,
+  ]);

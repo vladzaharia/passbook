@@ -198,6 +198,7 @@ export async function updateSettings(
     authority,
     admin,
     retention.floors,
+    retention.platformRev,
   );
   if (!written) throw new ForbiddenError();
   clearSettingsCache(ctx.env.DB);

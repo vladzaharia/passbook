@@ -15,7 +15,13 @@ import {
   type Raw,
   resolveOrg,
 } from './policy.ts';
-import { readActiveOrgIds, readOneOrg, readOrgRows, readPlatformRaw } from './repo.ts';
+import {
+  readActiveOrgIds,
+  readOneOrg,
+  readOrgRows,
+  readPlatformRaw,
+  readPlatformRev,
+} from './repo.ts';
 
 export interface FloorWrite {
   orgId: string;
@@ -34,6 +40,8 @@ export interface RetentionIssue {
   code: string;
 }
 export interface RetentionChange {
+  /** Revision of the platform retention settings this plan read; the save commits only while it holds. */
+  platformRev?: number;
   issues: RetentionIssue[];
   floors: FloorWrite[];
   notices: ShortenNotice[];
@@ -201,9 +209,24 @@ export async function planRetentionChange(
   );
   const touches = (k: string) => keys.includes(k);
   if (![...Object.keys(upserts), ...deletes].some(touches)) return EMPTY();
+  const platformRev = await readPlatformRev(ctx.env.DB);
   const platformRaw = await readPlatformRaw(ctx.env.DB);
-  if (scope === 'platform') return platformChange(ctx, upserts, deletes, platformRaw);
+  if (scope === 'platform')
+    return { ...(await platformChange(ctx, upserts, deletes, platformRaw)), platformRev };
   const orgId = scope.slice(4);
+  return {
+    ...(await orgChangeFor(ctx, orgId, upserts, deletes, platformRaw)),
+    platformRev,
+  };
+}
+
+async function orgChangeFor(
+  ctx: ServiceContext,
+  orgId: string,
+  upserts: Record<string, unknown>,
+  deletes: string[],
+  platformRaw: ReadonlyMap<string, Raw>,
+): Promise<RetentionChange> {
   return orgChange(
     ctx,
     orgId,
