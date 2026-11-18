@@ -1,0 +1,64 @@
+import type { ScanReason } from '../contracts/scan.ts';
+
+/** Customer screens show no reason, staff, count or other holder. Every verdict line is here. */
+export const CUSTOMER_COPY = {
+  welcome: 'Hold up your pass',
+  refusedLine: 'Please see the desk',
+  reading: 'Checking…',
+  notSetUp: 'Not set up',
+  reconnecting: 'Reconnecting',
+  hello: 'Hello',
+  greet: 'Hi, {name}',
+  bye: 'Bye, {name}',
+  checkedIn: 'Checked in',
+  youreIn: "You're in",
+  accessGranted: 'Access granted',
+  tappedOut: 'Tapped out',
+  stayed: 'Stayed {stay}',
+  added: 'Added {amount}',
+  paid: 'Paid {amount}',
+  reward: 'Enjoy your reward',
+  redeemed: 'Redeemed',
+  updated: 'Updated',
+  rewardReady: 'Reward ready',
+  toPay: 'To pay {amount}',
+  balanceAfter: 'Balance after: {balance}',
+  adding: { one: 'Adding {n} stamp', other: 'Adding {n} stamps' },
+} as const;
+
+/**
+ * The sub under the refusal line, per wire reason. `null`: the line stands alone.
+ * Never the zone, the plan's other hours or a suspension.
+ */
+export const CUSTOMER_REASON_SUB: Record<ScanReason, string | null> = {
+  not_found: null,
+  ambiguous: null,
+  test_pass: null,
+  live_pass: null,
+  not_accepted: null,
+  wrong_event: null,
+  removed: null,
+  voided: null,
+  expired: null,
+  no_balance: null,
+  card_full: null,
+  managed_elsewhere: null,
+  limit_reached: null,
+  zone_not_included: null,
+  outside_hours: 'Your plan opens {when}.',
+  guest_expired: 'Your guest pass has ended.',
+  guest_visits_used: 'Your guest pass has ended.',
+  suspended: null,
+  already_done: null,
+  cooldown: null,
+  not_yet_valid: null,
+  ended: null,
+  capacity_full: "We're full right now.",
+  check_required: null,
+  needs_approval: null,
+  stale: null,
+  in_progress: null,
+  still_inside: "Your last exit wasn't recorded.",
+  not_inside: null,
+  choose: null,
+};

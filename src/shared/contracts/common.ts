@@ -56,6 +56,8 @@ export const ApiScopeSchema = z.enum([
   'templates:read',
   'messages:write',
   'scans:read',
+  /** Acts as a named terminal. Honoured by nothing until the POS package. */
+  'scans:write',
   'connections:read',
   'connections:write',
 ]);

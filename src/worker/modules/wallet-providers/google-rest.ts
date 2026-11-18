@@ -19,6 +19,31 @@ export interface GoogleWalletRestContext {
   objectIdHmacKey: Uint8Array;
   accessToken: string;
   fetcher?: typeof fetch;
+  /** Injected clock for HTTP-date `Retry-After` values (`ctx.clock.now`). */
+  now?: () => number;
+  /** The access token came from the cache, so a 401 may only mean it went stale. */
+  tokenCached?: boolean;
+  /** Called on a 401 so the caller can drop the cached access token. */
+  onUnauthorized?: () => void;
+}
+
+// Resources this isolate has already created or identity-checked. Later updates PATCH directly
+// (one request instead of POST, GET, PATCH); a 404 forgets the entry and takes the create path.
+const MAX_KNOWN_RESOURCES = 4096;
+const knownResources = new Set<string>();
+
+function remember(resource: Resource, id: string): void {
+  const key = `${resource}/${id}`;
+  knownResources.delete(key);
+  if (knownResources.size >= MAX_KNOWN_RESOURCES) {
+    const oldest = knownResources.keys().next().value;
+    if (oldest !== undefined) knownResources.delete(oldest);
+  }
+  knownResources.add(key);
+}
+
+export function clearGoogleRestMemo(): void {
+  knownResources.clear();
 }
 
 async function request(
@@ -44,7 +69,16 @@ async function request(
     },
     operation,
   );
-  if (!response.ok) throw googleHttpError(operation, response.status);
+  if (!response.ok) {
+    if (response.status === 401) ctx.onUnauthorized?.();
+    throw googleHttpError(
+      operation,
+      response.status,
+      response.headers,
+      ctx.now?.(),
+      response.status === 401 && ctx.tokenCached === true,
+    );
+  }
   return response;
 }
 
@@ -81,18 +115,29 @@ async function upsert(
   projection: Record<string, unknown>,
   classId?: string,
 ): Promise<GoogleUpsertResult> {
+  if (knownResources.has(`${resource}/${id}`)) {
+    try {
+      await request(ctx, resource, 'PATCH', id, projection);
+      return 'updated';
+    } catch (error) {
+      if (!(error instanceof GoogleWalletError) || error.code !== 'not_found') throw error;
+      knownResources.delete(`${resource}/${id}`);
+    }
+  }
   try {
     await request(ctx, resource, 'POST', undefined, {
       ...projection,
       id,
       ...(classId ? { classId } : {}),
     });
+    remember(resource, id);
     return 'created';
   } catch (error) {
     if (!(error instanceof GoogleWalletError) || error.code !== 'conflict') throw error;
   }
   await verifyIdentity(ctx, resource, id, classId);
   await request(ctx, resource, 'PATCH', id, projection);
+  remember(resource, id);
   return 'updated';
 }
 
@@ -143,8 +188,19 @@ export async function patchGoogleGenericObject(
     ctx.objectIdHmacKey,
     scope,
   );
+  if (knownResources.has(`genericObject/${objectId}`)) {
+    try {
+      await request(ctx, 'genericObject', 'PATCH', objectId, body);
+      return;
+    } catch (error) {
+      if (error instanceof GoogleWalletError && error.code === 'not_found')
+        knownResources.delete(`genericObject/${objectId}`);
+      throw error;
+    }
+  }
   await verifyIdentity(ctx, 'genericObject', objectId, classId);
   await request(ctx, 'genericObject', 'PATCH', objectId, body);
+  remember('genericObject', objectId);
 }
 
 export async function inactivateGoogleGenericObject(

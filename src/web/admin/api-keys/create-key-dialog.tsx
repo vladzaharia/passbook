@@ -19,7 +19,8 @@ import {
 import { KeyDisclosure } from './key-disclosure.tsx';
 import { type ApiKey, SCOPE_LABEL, useCreateKey } from './queries.ts';
 
-const SCOPES = ApiScopeSchema.options;
+// Hidden until the POS package honours `scans:write`; the contract refuses it too.
+const SCOPES = ApiScopeSchema.options.filter((s) => s !== 'scans:write');
 const DAY = 86_400_000;
 const EXPIRY = [
   { value: '30', label: '30 days' },
