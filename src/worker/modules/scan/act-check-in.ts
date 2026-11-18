@@ -2,6 +2,7 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { startsVisit } from './access.ts';
+import { occupancyEffect } from './act-check-in-occupancy.ts';
 import { commitCheckInSuccess } from './act-check-in-success.ts';
 import type { ActRequest } from './act-claim.ts';
 import { gateWasHeld, type HeldGateSnapshot } from './act-gate-preflight.ts';
@@ -86,12 +87,14 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     throw new StaleScanAuthority();
   // Step 15 and the effect: gate, finalize and ledger in one batch, counts behind them.
   const accessGate = settledAccessGate(found, action);
+  // A tracked zone replaces admission: its in/out row decides, not the presence snapshot (SA §20.4).
+  const place = found.occupancy ?? null;
   const rowGate: gates.GateKey = {
     passId: found.pass.id,
     actionId: action.id,
     scope:
-      found.admission && (found.checkInRules?.mode || actor.settings.checkIn?.mode)
-        ? found.admission.scope
+      (found.admission || place) && (found.checkInRules?.mode || actor.settings.checkIn?.mode)
+        ? (found.admission?.scope ?? '')
         : gateScope(action, actor, now),
   };
   // The preflight read the action's own gate; an Access card's visit gate was read with its zones.
@@ -99,7 +102,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
   if (!found.admission && event && (!found.eventAdmission || found.eventAdmissionReason))
     throw new StaleScanAuthority();
   const presencePlan = found.admission ?? found.eventAdmission;
-  const presenceScope = presencePlan?.scope ?? rowGate.scope;
+  const presenceScope = place ? preflight.presenceScope : (presencePlan?.scope ?? rowGate.scope);
   // The preflight read no longer matches what was evaluated: another scan or edit moved the pass.
   if (
     preflight.gate.passId !== rowGate.passId ||
@@ -110,10 +113,22 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
   )
     throw new ScanAttemptRaced();
   const { passFence } = preflight;
-  const observed =
+  const read =
     accessGate && found.access
       ? { ...preflight.observed, gateBefore: found.access.gateBefore }
       : preflight.observed;
+  // At a tracked zone the signed effect is the place's row (read with the zones), not a snapshot scope.
+  const placed = place
+    ? occupancyEffect(place, {
+        orgId: actor.orgId,
+        passId: found.pass.id,
+        scanId,
+        now,
+        keep:
+          place.inside && place.zone.occupancy === 'track' && override?.reason !== 'still_inside',
+      })
+    : null;
+  const observed = placed ? { ...read, presenceBefore: placed.presenceBefore } : read;
   const previousGate = observed.gateBefore;
   if (
     (previousGate &&
@@ -140,7 +155,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     kind: action.kind,
     state:
       action.kind === 'check_in'
-        ? (found.admission?.state.direction ?? ('in' as const))
+        ? (place?.direction ?? found.admission?.state.direction ?? ('in' as const))
         : ('used' as const),
     admission: presencePlan,
     ...(accessGate && found.access ? { accessVisit: startsVisit(found.access, now) } : {}),
@@ -154,7 +169,8 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     claimAt,
     now,
   };
-  const effect = snapshots.claimEffect(observed, seed);
+  const claimed = snapshots.claimEffect(observed, seed);
+  const effect = placed ? { ...claimed, presenceAfter: placed.presenceAfter } : claimed;
   const claim: gates.GateClaim = {
     ...seed,
     presenceScope,
@@ -170,6 +186,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     },
     gate:
       accessGate ||
+      place ||
       (override && (override.reason === 'already_done' || override.reason === 'cooldown'))
         ? { rule: 'always' }
         : action.kind === 'check_in' && (found.checkInRules?.mode || actor.settings.checkIn?.mode)
@@ -183,7 +200,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     method: req.input.method,
     override: override !== null,
     approvedBy,
-    direction: found.admission?.state.direction,
+    direction: place?.direction ?? found.admission?.state.direction,
   };
   const stopAuthority = {
     actor: authorityActor,

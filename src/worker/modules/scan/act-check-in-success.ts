@@ -1,28 +1,29 @@
 import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
+import { not } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { scanAccessOf, startsVisit, waiveOf } from './access.ts';
 import { commitConditions, credentialFacts, lostReason } from './act-check-in-facts.ts';
+import { occupancyAfter, occupancyReads, planOccupancyCommit } from './act-check-in-occupancy.ts';
 import { finishCheckInResult } from './act-check-in-result.ts';
-import { addCheckInStatements } from './act-check-in-statements.ts';
+import { addCheckInStatements, type HeldVariant } from './act-check-in-statements.ts';
+import { checkInVariants, signVariants } from './act-check-in-variants.ts';
 import type { ActRequest } from './act-claim.ts';
 import { heldOutcome } from './act-held.ts';
 import type { HeldHolder } from './act-held-holder.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight } from './act-preflight.ts';
-import { ledgerAuthoritySnapshot } from './act-result-authority.ts';
 import type { ScanActor } from './actor.ts';
 import { historyPlan } from './card.ts';
 import { planCommitCounts } from './counts.ts';
 import { preparePlannedDisplayHistoryProof } from './display-history-pending.ts';
 import { appendPlannedDisplayHistory, rebindDisplayHistoryRead } from './display-history-plan.ts';
-import { type LedgerFacts, ledgerRow } from './ledger.ts';
+import type { LedgerFacts } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import { ACCESS_GATE, accessCountStmt, accessInputPin, accessZoneChecks } from './repo-access.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { doneOkPredicate, effectiveReleaseCheck } from './repo-scan-checks.ts';
-import * as snapshots from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
 import {
@@ -31,10 +32,9 @@ import {
   displayRequiresHistory,
   prepareDisplayHistory,
 } from './scan-display-history.ts';
-import { prepareScanRetentionProof } from './scan-retention-proof.ts';
 import type { StopAuthority } from './scan-stop-authority.ts';
 import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
-import type { Finalize } from './scan-write-statements.ts';
+import { allOf, type Finalize, overrideOpen } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';
 
 interface CheckInSuccessInput {
@@ -72,43 +72,31 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const authorityNow = now;
 
   const access = found.access && gate.actionId === ACCESS_GATE ? found.access : null;
-  // The visit gate is `access`; the ledger names the action that was scanned (its signed reference).
-  const named = <T extends { actionId: string }>(g: T | null) =>
-    g && access ? { ...g, actionId: action.id } : g;
-
-  const variant = async (outcome: 'ok' | 'heads_up', reason: ScanReason | null) => {
-    const held = outcome === 'heads_up';
-    const moved = held
-      ? { ...effect, gateAfter: effect.gateBefore, presenceAfter: effect.presenceBefore }
-      : effect;
-    const e = { ...moved, gateBefore: named(moved.gateBefore), gateAfter: named(moved.gateAfter) };
-    const row = await ledgerAuthoritySnapshot(
-      ctx,
-      ledgerRow(ctx, actor, {
-        ...facts,
-        outcome,
-        reason,
-        ...(held ? { override: false, approvedBy: null } : {}),
-      }),
-      found.pass,
-      stopAuthority,
-      {
-        claimAt,
-        credentialKeysetCommitment: claim.credentialKeysetCommitment,
-        direction: found.admission?.state.direction ?? null,
-        presenceScope: held ? null : (presencePlan?.scope ?? null),
-        found,
-        action,
-        gate: snapshots.effectGate(gate.scope, held ? effect.gateBefore : effect.gateAfter),
-        effect: e,
-        gateScope: gate.scope,
-      },
-    );
-    const retention = await prepareScanRetentionProof(ctx.env, row, actor.actorKey, {
-      actionId: action.id,
-    });
-    return { row, retention };
-  };
+  const overrideOf = req.overrideOf ?? null;
+  const occupancy = found.occupancy ?? null;
+  const occ = occupancy
+    ? planOccupancyCommit(occupancy, {
+        passId: found.pass.id,
+        scanId,
+        now: authorityNow,
+        access,
+        override: claim.authority.override?.reason ?? null,
+        open: overrideOf ? [overrideOpen(overrideOf)] : [],
+      })
+    : null;
+  if (occupancy && !occ) throw new StaleScanAuthority();
+  const variant = checkInVariants({
+    ctx,
+    actor,
+    found,
+    action,
+    facts,
+    gate,
+    claim,
+    stopAuthority,
+    presenceScope: occupancy?.place ?? presencePlan?.scope ?? null,
+    accessGate: !!access,
+  });
   const lost = lostReason(claim.gate);
   const capacity = claim.capacity
     ? capacityOpen(
@@ -123,16 +111,17 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       )
     : null;
   // The admission or override that let this scan in, repeated in the gate write (another door wins).
-  const overrideOf = req.overrideOf ?? null;
   const admitted = commitConditions(gate.passId, presencePlan, effect.presenceBefore, overrideOf);
-  const [ok, lostVariant, capVariant, admitVariant] = await Promise.all([
-    variant('ok', null),
-    variant('heads_up', lost),
-    capacity ? variant('heads_up', 'capacity_full') : Promise.resolve(null),
-    admitted.conds.length && admitted.reason !== lost
-      ? variant('heads_up', admitted.reason)
-      : Promise.resolve(null),
-  ]);
+  // Each way a scan that did not get in closes, the first that applies: another scan admitted the
+  // pass, the event is full, or a rule of its place failed (step 15's order). One ledger row per reason.
+  const why: Omit<HeldVariant, 'variant'>[] = [
+    ...(admitted.conds.length
+      ? [{ reason: admitted.reason, when: [not(allOf(admitted.conds))], admit: true }]
+      : []),
+    ...(capacity ? [{ reason: 'capacity_full' as const, when: [not(capacity)] }] : []),
+    ...(occ?.holds.map((h) => ({ reason: h.reason, when: [not(h.holds)] })) ?? []),
+  ];
+  const { ok, lostVariant, held } = await signVariants(variant, lost, why);
 
   const finalized = (
     outcome: 'ok' | 'heads_up',
@@ -150,8 +139,10 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     passVersion: found.pass.version,
     overrideOf: outcome === 'ok' ? (req.overrideOf ?? null) : null,
     approvedBy: outcome === 'ok' ? approvedBy : null,
-    direction: found.admission?.state.direction,
-    ...(outcome === 'ok' && presencePlan ? { presenceScope: presencePlan.scope } : {}),
+    direction: occupancy?.direction ?? found.admission?.state.direction,
+    ...(outcome === 'ok' && (occupancy || presencePlan)
+      ? { presenceScope: occupancy?.place ?? presencePlan?.scope }
+      : {}),
     ...(event ? { eventId: event.id } : {}),
     ...(access
       ? {
@@ -228,6 +219,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     admitted,
     lost,
     finalized,
+    occupancy: occ,
     access: access
       ? {
           templateId: found.pass.templateId,
@@ -238,10 +230,10 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
           waiveLimit: waiveOf(claim.authority.override?.reason).limit,
         }
       : null,
-    variants: { ok, admit: admitVariant, cap: capVariant, lost: lostVariant },
+    variants: { ok, held, lost: lostVariant },
   });
   if (!statements) throw new StaleScanAuthority();
-  const { finalOk, finalVisit, finalAdmit, finalCap, holder, presenceHolder } = statements;
+  const { finalOk, finalVisit, holder, presenceHolder } = statements;
 
   // The verified PIN's attempt comes back with the scan, in the same commit.
   if (reservation) g.include(...reservation.refundParts());
@@ -250,32 +242,35 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const finishAt = ctx.clock.now();
   const done = doneOkPredicate(scanId);
   const bound = displayPlan.bind(finishAt, done);
-  const committed = await g.commitWith(
-    afterReads([
+  const places = occ ? occupancyReads(actor.orgId, found.pass.mode, occ) : null;
+  const committed = await g.commitWith([
+    ...afterReads([
       ...counts.stmts,
       ...bound.stmts,
       ...(access ? [accessCountStmt(ctx.env.DB, found.pass.id)] : []),
     ]),
-  );
+    ...(places?.reads ?? []),
+  ]);
   reservation?.markRefunded();
   const results = committed.writes;
   const at = (s: Parameters<typeof g.indexOf>[0]) => results[g.indexOf(s)] as D1Result;
   const rows = (s: Parameters<typeof g.indexOf>[0]) => (at(s).results ?? []).length;
   const startedVisit = !!finalVisit && rows(finalVisit) > 0;
   const wonIt = startedVisit || rows(finalOk) > 0;
-  const admitLost = !!finalAdmit && rows(finalAdmit) > 0;
-  const reason: ScanReason = admitLost
-    ? admitted.reason
-    : finalCap && rows(finalCap)
-      ? 'capacity_full'
-      : lost;
+  const closed = statements.held.find((h) => rows(h.statement) > 0);
+  const admitLost = !!closed?.admit;
   if (!wonIt) onFailureCommitted();
   const read = await counts.read(committed.after);
   const rest = committed.after.slice(counts.stmts.length);
+  const place =
+    occ && places
+      ? occupancyAfter(occ, rest.slice(bound.stmts.length + (access ? 1 : 0)), places.loss, wonIt)
+      : null;
+  const reason: ScanReason = closed?.reason ?? place?.lost ?? lost;
   if (!wonIt) {
     const holderOf = (s: unknown) => at(s as never).results?.[0] as HeldHolder | undefined;
     // Another scan admitted the pass first: name it, and offer no override (as a fresh read would).
-    const held = heldOutcome({
+    const heldAnswer = heldOutcome({
       ctx,
       actor,
       found,
@@ -287,7 +282,8 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       display: null,
       now: finishAt,
     });
-    return admitLost ? { ...held, overridable: false } : held;
+    const answer = place ? { ...heldAnswer, occupancy: place.view } : heldAnswer;
+    return admitLost ? { ...answer, overridable: false } : answer;
   }
   return finishCheckInResult({
     ctx,
@@ -305,6 +301,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     },
     photo,
     hasPresence: !!presencePlan,
+    occupancy: place?.view ?? null,
     access: access
       ? scanAccessOf(access.decision, {
           visits: {

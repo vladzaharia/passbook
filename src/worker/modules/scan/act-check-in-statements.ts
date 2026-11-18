@@ -1,7 +1,8 @@
 import type { ScanReason } from '../../../shared/contracts/scan.ts';
 import type { Grant } from '../../platform/authority.ts';
-import { type GrantCond, not } from '../../platform/authority-cond.ts';
+import type { GrantCond } from '../../platform/authority-cond.ts';
 import type { EventRow } from '../events/repo.ts';
+import { addOccupancy, type OccupancyCommit } from './act-check-in-occupancy.ts';
 import type { AdmissionPlan } from './admission-types.ts';
 import { type AccessGateWrite, startedVisit, writeAccessGate } from './repo-access.ts';
 import type * as gates from './repo-gates.ts';
@@ -10,7 +11,6 @@ import { retentionProofPart } from './repo-scan-retention-part.ts';
 import type { PreparedScanRetentionProof } from './scan-retention-proof.ts';
 import { scanIs, wonGate } from './scan-write-grant.ts';
 import {
-  allOf,
   type Finalize,
   finalizeScan,
   holdsPresence,
@@ -26,6 +26,16 @@ interface CheckInVariant {
   retention: PreparedScanRetentionProof;
 }
 
+/** A heads-up the scan closes with when its condition holds (the first that applies wins). */
+export interface HeldVariant {
+  reason: ScanReason;
+  when: GrantCond[];
+  /** Its own signed ledger row; null when it shares the `lost` reason's. */
+  variant: CheckInVariant | null;
+  /** Another scan admitted the pass first: the answer names that scan's holder. */
+  admit?: boolean;
+}
+
 interface CheckInStatementsInput {
   gate: gates.GateKey;
   claim: gates.GateClaim;
@@ -34,31 +44,32 @@ interface CheckInStatementsInput {
   presencePlan: AdmissionPlan | undefined;
   overrideOf: string | null;
   capacity: GrantCond | null;
-  /** What let the scan in, and the heads-up when another scan took it first. */
-  admitted: { conds: GrantCond[]; reason: ScanReason };
+  /** What let the scan in (repeated in the gate write; another door wins). */
+  admitted: { conds: GrantCond[] };
   lost: ScanReason;
   finalized(outcome: 'ok' | 'heads_up', reason: ScanReason | null, visit?: boolean): Finalize;
   /** An Access card: the gate counts visits instead of taking the first scan. */
   access: Omit<AccessGateWrite, 'passId' | 'scanId' | 'at'> | null;
-  variants: {
-    ok: CheckInVariant;
-    admit: CheckInVariant | null;
-    cap: CheckInVariant | null;
-    lost: CheckInVariant;
-  };
+  /** A check-in at a tracked zone: the in/out row decides, and the gate follows it. */
+  occupancy: OccupancyCommit | null;
+  variants: { ok: CheckInVariant; held: HeldVariant[]; lost: CheckInVariant };
 }
 
 /**
- * The commit grant's writes: the gate (only while the admission and override still hold), presence,
- * one finalize per way the scan can close (the first that applies wins), their ledger rows and proofs,
- * and the holders a heads-up names.
+ * The commit grant's writes: the place (a tracked zone's entry or exit), the gate (only while the
+ * admission, override and place still hold), presence, one finalize per way the scan can close (the
+ * first that applies wins), their ledger rows and proofs, and the holders a heads-up names.
  */
 export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
   const { gate, claim, presencePlan, overrideOf, capacity, admitted, lost, finalized } = i;
   const { scanId, effect } = claim;
   const gateAfter = effect.gateAfter;
+  const occ = i.occupancy;
   if (!gateAfter) return null;
-  const guards = [...(capacity ? [capacity] : []), ...admitted.conds];
+  // At a tracked zone the in/out row decides first; the gate follows only if it moved. An exit
+  // takes the action's own gate, never the visit gate: no visit, no wait (OC4).
+  const moved = occ ? addOccupancy(g, occ) : null;
+  const guards = moved ? [moved.won] : [...(capacity ? [capacity] : []), ...admitted.conds];
   if (i.access) writeAccessGate(g, { ...i.access, passId: gate.passId, scanId, at: i.at }, guards);
   else
     writeGate(
@@ -77,9 +88,10 @@ export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
       },
       guards,
     );
-  const presence = presencePlan && effect.presenceAfter;
+  const presence = !occ && presencePlan && effect.presenceAfter;
   if (presence) writePresence(g, gate, scanId, effect.presenceBefore, presence);
   const won = [
+    ...(moved ? [moved.won] : []),
     wonGate(gate, scanId),
     ...(presence ? [holdsPresence(gate.passId, presence.scope, scanId)] : []),
     ...(overrideOf ? [overrideOpen(overrideOf)] : []),
@@ -92,18 +104,14 @@ export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
       ])
     : null;
   const finalOk = finalizeScan(g, finalized('ok', null, false), won);
-  const finalAdmit = admitted.conds.length
-    ? finalizeScan(g, finalized('heads_up', admitted.reason), [not(allOf(admitted.conds))])
-    : null;
-  const finalCap =
-    i.variants.cap && capacity
-      ? finalizeScan(g, finalized('heads_up', 'capacity_full'), [not(capacity)])
-      : null;
+  const held = i.variants.held.map((h) => ({
+    ...h,
+    statement: finalizeScan(g, finalized('heads_up', h.reason), h.when),
+  }));
   finalizeScan(g, finalized('heads_up', lost));
   for (const [v, outcome, reason] of [
     [i.variants.ok, 'ok', null],
-    [i.variants.admit, 'heads_up', admitted.reason],
-    [i.variants.cap, 'heads_up', 'capacity_full'],
+    ...held.map((h) => [h.variant, 'heads_up', h.reason] as const),
     [i.variants.lost, 'heads_up', lost],
   ] as const) {
     if (!v) continue;
@@ -115,5 +123,5 @@ export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
     ? g.include(presenceHolderPart(gate.passId, presence.scope))
     : [];
   g.assert('stale', [scanIs(scanId, { state: 'done' })]);
-  return { finalOk, finalVisit, finalAdmit, finalCap, holder, presenceHolder };
+  return { finalOk, finalVisit, held, holder, presenceHolder };
 }

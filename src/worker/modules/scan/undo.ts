@@ -13,6 +13,7 @@ import { undoWindowMinutes } from './outcome.ts';
 import { scanByKey } from './repo-scans.ts';
 import { commitUndo, UNDO_CODES } from './repo-undo.ts';
 import { guardMiss, undoApprovalGuard } from './repo-undo-approval-guard.ts';
+import { readOccupancyUndo } from './repo-undo-occupancy.ts';
 import { readUndo } from './repo-undo-read.ts';
 import { scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
@@ -131,6 +132,9 @@ async function run(
       throw new AppError('SCAN_STAFF_CHANGED', 409, 'Staff access changed. Retry the approval.');
     approver = { id: staff.id, authEpoch: staff.authEpoch };
   }
+  const occupancy = plan.zone
+    ? await readOccupancyUndo(ctx.env.DB, actor.orgId, target.passId, read.group)
+    : null;
   const id = ctx.ids.ordered();
   const answer = planUndoAnswer(ctx, actor, target.passId);
   let after: D1Result[];
@@ -139,6 +143,7 @@ async function run(
       ctx,
       actor,
       ...plan,
+      occupancy,
       approver,
       id,
       key: req.idempotencyKey,
