@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyResolutions } from './apply.ts';
-import { baseDoc, edit, ids, kinds, man, run, sha, style } from './merge-fixtures.ts';
 import { mergePackages } from './index.ts';
+import { baseDoc, edit, ids, kinds, man, run, sha, style } from './merge-fixtures.ts';
 
 const m = (d: any) => d.manifest;
 const renameField = (from: string, to: string) => (d: any) => {

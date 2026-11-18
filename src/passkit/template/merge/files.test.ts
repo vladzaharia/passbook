@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readStrings } from './strings.ts';
 import { ids, kinds, run, sha, stringsFile } from './merge-fixtures.ts';
+import { readStrings } from './strings.ts';
 
 const set = (name: string, value: string) => (d: any) => (d.files[name] = { sha1: sha(value) });
 const files = (r: ReturnType<typeof run>) => r.merged.files;

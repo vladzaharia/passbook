@@ -1,4 +1,4 @@
-import type { Json } from '../../types.ts';
+import { type Json, PASS_STYLES } from '../../types.ts';
 import { conditionInputs, exprReferences } from '../expr.ts';
 import { isObj } from './map.ts';
 import type { PackageDoc, RenameKind } from './types.ts';
@@ -10,14 +10,6 @@ const each = <T>(list: T[], fn: (item: T, i: number) => void) => {
 };
 const arr = (v: unknown): Json[] => (Array.isArray(v) ? v : []);
 
-const FIELD_GROUPS = [
-  'headerFields',
-  'primaryFields',
-  'secondaryFields',
-  'auxiliaryFields',
-  'backFields',
-];
-const STYLES = ['generic', 'storeCard', 'coupon', 'eventTicket', 'boardingPass'];
 const STAMP_ART = /^stamps\/(?!strips\/).+\.png$/;
 
 /** An entity's value without its identity: what a rename leaves unchanged. */
@@ -39,12 +31,12 @@ export function entityMaps(doc: PackageDoc): EntityMaps {
     art: new Map(),
   };
   const pass = obj(doc.passJson);
-  const style = obj(STYLES.map((k) => pass?.[k]).find((v) => obj(v)));
-  for (const g of FIELD_GROUPS)
-    for (const f of arr(style?.[g])) {
-      const o = obj(f);
-      if (o && typeof o.key === 'string') m.field.set(o.key, { ...rest(o, 'key'), group: g });
-    }
+  for (const style of PASS_STYLES.map((k) => obj(pass?.[k])))
+    for (const g of Object.keys(style ?? {}).filter((k) => k.endsWith('Fields')))
+      for (const f of arr(style?.[g])) {
+        const o = obj(f);
+        if (o && typeof o.key === 'string') m.field.set(o.key, { ...rest(o, 'key'), group: g });
+      }
   const man = doc.manifest as unknown as Obj;
   for (const [k, v] of Object.entries(obj(obj(man.inputs)?.properties) ?? {})) m.input.set(k, v);
   const scan = obj(man.scan);

@@ -1,7 +1,7 @@
 import type { Json, TemplateManifest } from '../../types.ts';
 import { mergeFiles } from './files.ts';
-import { conflictId, eq } from './map.ts';
 import { mergeManifest } from './manifest.ts';
+import { conflictId, eq } from './map.ts';
 import { alignTo, normalize, VERSION_SITES, versionOf } from './normalize.ts';
 import { mergePassJson } from './pass-json.ts';
 import { danglingRefs, entityMaps } from './references.ts';

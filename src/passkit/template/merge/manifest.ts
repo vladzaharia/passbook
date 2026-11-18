@@ -1,6 +1,6 @@
 import type { Json } from '../../types.ts';
-import { canon, isObj, leaf, mapOf, part, type Rule, spliceOrder } from './map.ts';
 import { listOf, orderedMapOf } from './list.ts';
+import { canon, isObj, leaf, mapOf, part, type Rule, spliceOrder } from './map.ts';
 import { scanRule } from './scan.ts';
 import { setOf } from './set.ts';
 import type { Cx } from './types.ts';

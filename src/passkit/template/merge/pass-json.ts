@@ -1,7 +1,7 @@
 import type { Json } from '../../types.ts';
+import { mergeStyles, type Styles, stylesOf } from './fields.ts';
 import { listOf } from './list.ts';
 import { leaf, mapOf, part, type Rule, type V } from './map.ts';
-import { mergeStyle, styleOf } from './fields.ts';
 import { setOf } from './set.ts';
 import type { Cx } from './types.ts';
 
@@ -26,7 +26,7 @@ const barcodeList: Rule = (cx, path, b, o, t) => {
 };
 
 interface Split {
-  style?: ReturnType<typeof styleOf>;
+  styles: Styles;
   meta: Record<string, Json>;
   relevance: Record<string, Json>;
   barcodes: Record<string, Json>;
@@ -36,10 +36,10 @@ interface Split {
 
 function split(pass: Json | undefined): Split | undefined {
   if (!pass || typeof pass !== 'object' || Array.isArray(pass)) return undefined;
-  const style = styleOf(pass);
-  const s: Split = { style, meta: {}, relevance: {}, barcodes: {} };
+  const styles = stylesOf(pass);
+  const s: Split = { styles, meta: {}, relevance: {}, barcodes: {} };
   for (const [k, v] of Object.entries(pass)) {
-    if (k === style?.key) continue;
+    if (k in styles) continue;
     if (RELEVANCE.includes(k)) s.relevance[k] = v;
     else if (k === 'barcodes' || k === 'barcode') s.barcodes[k] = v;
     else if (k === 'featuredActions') s.featured = v;
@@ -75,8 +75,7 @@ export function mergePassJson(cx: Cx, b: Json | undefined, o: Json, t: Json): Js
   if (featured !== undefined) out.featuredActions = featured;
   const nfc = rules.nfc(cx, [], sb?.nfc, so.nfc, st.nfc);
   if (nfc !== undefined) out.nfc = nfc;
-  const style = mergeStyle(cx, sb?.style, so.style, st.style);
-  if (style) out[style.key] = style.dict;
+  Object.assign(out, mergeStyles(cx, sb?.styles, so.styles, st.styles));
   const order = Object.keys(o as object);
   return Object.fromEntries(
     Object.entries(out).sort(([x], [y]) => {

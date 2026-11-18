@@ -62,7 +62,24 @@ function ordered(
       [primary, secondary, moved] = [secondary, primary, true];
     }
     if (moved) cx.changes.push({ part: cx.part, path, op: 'move' });
-    const order = spliceOrder(primary, secondary, new Set(merged.keys()));
+    // A field that changed group on one side takes its place from that side's order.
+    const shifted = new Set(
+      [...merged.keys()].filter((id) => mb.has(id) && mo.has(id) && mt.has(id) && !sameGroup(id)),
+    );
+    const fromTheirs = (id: string) =>
+      eq(groupOf?.(mt.get(id) as Json), groupOf?.(merged.get(id) as Json)) &&
+      !eq(groupOf?.(mt.get(id) as Json), groupOf?.(mo.get(id) as Json));
+    const keep = new Set(merged.keys());
+    let order = spliceOrder(
+      primary.filter((id) => !shifted.has(id)),
+      secondary.filter((id) => !shifted.has(id)),
+      new Set([...keep].filter((id) => !shifted.has(id))),
+    );
+    for (const [ids, src] of [
+      [[...shifted].filter(fromTheirs), idsOf(et)],
+      [[...shifted].filter((id) => !fromTheirs(id)), idsOf(eo)],
+    ] as const)
+      order = spliceOrder(order, [...src], new Set([...order, ...ids]));
     return build(order.map((id) => [id, merged.get(id) as Json]));
   };
 }
