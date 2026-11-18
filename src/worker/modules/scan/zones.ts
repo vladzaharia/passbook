@@ -128,7 +128,7 @@ function assertClocks(rows: readonly ZoneRow[], id: string): void {
   const byId = new Map(rows.map((r) => [r.id, r]));
   for (const node of subtree(index, id))
     if (byId.get(node.id)?.clearAt && effectiveTimeZone(index, node.id) === null)
-      throw invalid('Set a time zone on the top zone first.', 'ZONE_CLEAR_NEEDS_TZ');
+      throw invalid('Clear at needs a time zone on the top zone.', 'ZONE_CLEAR_NEEDS_TIME_ZONE');
 }
 
 export async function createZone(
