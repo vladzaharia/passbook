@@ -13,6 +13,8 @@ export interface SafeFetchOptions {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   maxBytes?: number;
+  /** GET redirects to follow, each hop checked like the first request. Default 0: a redirect is refused. */
+  maxRedirects?: number;
 }
 
 export interface SafeResponse {
@@ -28,6 +30,9 @@ export type SafeRequestInit = Omit<RequestInit, 'redirect' | 'signal'> & { signa
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_BYTES = 256 * 1024;
+const MAX_REDIRECTS = 5;
+/** Headers that may follow a redirect to another host: nothing that carries a credential. */
+const CROSS_HOST_HEADERS = new Set(['accept', 'accept-language', 'user-agent']);
 
 function ipv4ToInt(ip: string): number[] | null {
   const parts = ip.split('.');
@@ -222,7 +227,11 @@ function untilAborted<T>(work: Promise<T>, signal: AbortSignal, onAbort: () => E
   });
 }
 
-/** Outbound fetch for tenant-configured URLs: https/443 only, public hosts only, no redirects, capped. */
+/**
+ * Outbound fetch for tenant-configured URLs: https/443 only, public hosts only, capped. Redirects are refused
+ * unless `maxRedirects` allows a few GET hops; every hop must pass the same URL and DNS checks inside the one
+ * deadline, a hop to another host drops every header but the plain ones, and `Location` is never echoed.
+ */
 export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
   const fetchImpl = options.fetchImpl ?? fetch;
   const resolver = options.resolver ?? dohResolver(fetchImpl);
@@ -237,20 +246,34 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
       timeout.aborted
         ? new UpstreamError('The upstream request timed out.', 'TIMEOUT')
         : new UpstreamError('The upstream request failed.', 'UPSTREAM');
-    await untilAborted(assertPublicHost(url.hostname, resolver, signal), signal, failure);
+    const hops = Math.min(Math.max(options.maxRedirects ?? 0, 0), MAX_REDIRECTS);
+    const blocked = () =>
+      new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
+    let current = url;
+    let headers = init.headers;
     let response: Response;
-    try {
-      response = await untilAborted(
-        fetchImpl(url.toString(), { ...init, redirect: 'manual', signal }),
-        signal,
-        failure,
-      );
-    } catch {
-      throw failure();
-    }
-    if (response.status >= 300 && response.status < 400) {
+    for (let hop = 0; ; hop++) {
+      await untilAborted(assertPublicHost(current.hostname, resolver, signal), signal, failure);
+      try {
+        response = await untilAborted(
+          fetchImpl(current.toString(), { ...init, headers, redirect: 'manual', signal }),
+          signal,
+          failure,
+        );
+      } catch {
+        throw failure();
+      }
+      if (response.status < 300 || response.status >= 400) break;
       await response.body?.cancel().catch(() => undefined);
-      throw new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
+      const location = response.headers.get('location');
+      const method = (init.method ?? 'GET').toUpperCase();
+      if (hop >= hops || !location || (method !== 'GET' && method !== 'HEAD')) throw blocked();
+      const next = assertSafeUrl(new URL(location, current).toString(), options.platformHosts);
+      if (next.hostname !== current.hostname)
+        headers = Object.fromEntries(
+          [...new Headers(headers).entries()].filter(([k]) => CROSS_HOST_HEADERS.has(k)),
+        );
+      current = next;
     }
     let body: Uint8Array;
     try {
