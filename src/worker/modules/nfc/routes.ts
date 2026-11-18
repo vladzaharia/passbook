@@ -8,7 +8,7 @@ import {
 } from '../../../shared/contracts/nfc-tags.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
-import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
@@ -31,7 +31,9 @@ import {
 
 /** Tags bound to passes and people: /api/v1/nfc. Console sessions only; API keys have no tag routes. */
 export const nfcRoutes = createRouter();
-guard(nfcRoutes, requireTenantSession);
+// Unknown paths stay a 404 problem; every tag route needs a console session.
+for (const path of ['/passes/*', '/tags', '/tags/*', '/bindings/*'])
+  nfcRoutes.use(path, requireTenantSession);
 nfcRoutes.use('*', limitBody(8 * 1024));
 
 const TAG = 'nfc-tags';
