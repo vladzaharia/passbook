@@ -311,11 +311,8 @@ export function projectDisplay(
   input: Personalization,
 ): DisplayProjection {
   const full = applyDefaults(manifest, input);
-  const scope = {
-    input: full,
-    lookups: manifest.lookups ?? {},
-    pass: derivedPassScope(manifest, full),
-  };
+  const pass = derivedPassScope(manifest, full);
+  const scope = { input: full, lookups: manifest.lookups ?? {}, pass };
   const ev = (expr: Expr | undefined) => (expr === undefined ? null : text(evaluate(expr, scope)));
   const search = (manifest.display.search ?? [])
     .map((name) => text(full[name]))
