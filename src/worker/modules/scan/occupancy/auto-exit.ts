@@ -4,6 +4,12 @@ import type { Grant } from '../../../platform/authority.ts';
 import { jobGrant } from '../../../platform/authority.ts';
 import { not } from '../../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
+import type { EventRow } from '../../events/repo.ts';
+import { retentionProofPart } from '../repo-scan-retention-part.ts';
+import {
+  prepareSystemScanRetentionProof,
+  type ScanRetentionSnapshot,
+} from '../scan-retention-proof.ts';
 import { scanIs } from '../scan-write-grant.ts';
 import type { DueRow } from './repo-reads.ts';
 import type { ExitPlan } from './rules.ts';
@@ -11,7 +17,13 @@ import { addExit } from './service.ts';
 
 export const OCCUPANCY_JOB = 'scan.occupancy';
 export const OCCUPANCY_ACTOR_KEY = 'sys:occupancy';
-const TABLES = ['scans', 'pass_events', 'scan_presence', 'scan_place_revs'];
+const TABLES = [
+  'scans',
+  'pass_events',
+  'scan_presence',
+  'scan_place_revs',
+  'scan_retention_proofs',
+];
 
 export type OutCause = 'stay' | 'clear' | 'zone';
 
@@ -27,16 +39,67 @@ const grantFor = (ctx: ServiceContext, row: DueRow): Grant =>
 /** The idempotency key: one auto exit per in row (its last entry), however often the cron retries. */
 export const autoKey = (row: DueRow) => `auto:${row.pass_id}:${row.scope}:${row.last_entry_at}`;
 
-export function exitGrant(
+export async function exitGrant(
   ctx: ServiceContext,
   row: DueRow,
   plan: ExitPlan,
   cause: OutCause,
   now: number,
-): Grant {
+): Promise<Grant> {
   const g = grantFor(ctx, row);
   const scanId = ctx.ids.id();
   const key = autoKey(row);
+  const event: EventRow = {
+    id: ctx.ids.ordered(now),
+    org_id: row.org_id,
+    pass_id: row.pass_id,
+    mode: row.mode,
+    kind: 'scan.checked_out',
+    device: null,
+    actor_type: 'system',
+    actor_id: 'occupancy',
+    data: JSON.stringify({
+      scanId,
+      actionKind: 'check_in',
+      outcome: 'ok',
+      method: 'auto',
+      direction: 'out',
+      outCause: cause,
+      place: row.scope,
+      eventId: null,
+      scannerId: null,
+      staffId: null,
+      authority: { kind: 'system', job: OCCUPANCY_JOB, cause },
+    }),
+    at: now,
+  };
+  const facts: ScanRetentionSnapshot = {
+    id: scanId,
+    orgId: row.org_id,
+    mode: row.mode,
+    templateId: row.template_id,
+    scannerId: null,
+    eventId: null,
+    actorType: 'system',
+    actorId: 'occupancy',
+    actorKey: OCCUPANCY_ACTOR_KEY,
+    staffId: null,
+    approvedBy: null,
+    method: 'auto',
+    state: 'done',
+    outcome: 'ok',
+    reason: null,
+    actionId: null,
+    actionKind: 'check_in',
+    direction: 'out',
+    passVersion: null,
+    presenceScope: row.scope,
+    at: now,
+    undoes: null,
+    override: false,
+    outCause: cause,
+  };
+  const retention = await prepareSystemScanRetentionProof(ctx.env, event, facts);
   g.upsert(
     'scans',
     [
@@ -77,33 +140,23 @@ export function exitGrant(
     when: [won],
     returning: ['id'],
   });
-  // The ledger row of a normal tap-out, without a signed proof: no scanner or action was involved.
+  // The ledger row of a normal tap-out and its proof, which names the job as the authority.
   g.insertSelect(
     'pass_events',
     ['id', 'pass_id', 'kind', 'device', 'actor_type', 'actor_id', 'data', 'at'],
     [
-      ctx.ids.ordered(now),
-      row.pass_id,
-      'scan.checked_out',
-      null,
-      'system',
-      'occupancy',
-      JSON.stringify({
-        scanId,
-        actionKind: 'check_in',
-        outcome: 'ok',
-        method: 'auto',
-        direction: 'out',
-        outCause: cause,
-        place: row.scope,
-        eventId: null,
-        scannerId: null,
-        staffId: null,
-      }),
-      now,
+      event.id,
+      event.pass_id,
+      event.kind,
+      event.device,
+      event.actor_type,
+      event.actor_id,
+      event.data,
+      event.at,
     ],
     { when: [scanIs(scanId, { state: 'done', outcome: 'ok' })], returning: ['id'] },
   );
+  g.include(retentionProofPart(retention));
   // A tap got there first: nothing happened, so no record of it.
   g.delete('scans', { where: { id: scanId, state: 'pending', at: now }, when: [not(won)] });
   return g;

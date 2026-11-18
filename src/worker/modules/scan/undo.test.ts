@@ -63,7 +63,7 @@ describe('undo commit authority', () => {
     ).toEqual({ undone_by: result.scanId, undoes: null });
   });
 
-  it('writes a plain undo event: no actor snapshot, proof or secret', async () => {
+  it('writes a plain undo event: its authority names only the grant, no actor snapshot or secret', async () => {
     const s = await scenario();
     await undo(kit.ctx, s.actor, s.targetId, { idempotencyKey: key() });
     const event = await first<{ data: string }>(
@@ -73,7 +73,11 @@ describe('undo commit authority', () => {
     );
     const data = JSON.parse(event?.data ?? 'null');
     expect(data).toMatchObject({ undoes: s.targetId, actionKind: 'undo', outcome: 'ok' });
-    expect(data).not.toHaveProperty('authority');
+    expect(data.authority).toEqual({
+      kind: 'undo',
+      purpose: 'org_mode.scan.undo',
+      undoes: s.targetId,
+    });
     expect(event?.data).not.toMatch(/csrf|proof|keyset|mac/i);
   });
 

@@ -1,6 +1,6 @@
 // Minute cron `scan.occupancy` (SA §20.8): taps out passes whose Max stay or Clear at has passed, and
 // those inside a zone that stopped tracking, was archived or moved. 200 rows a run, 25 grants a batch.
-import { grantedBatch } from '../../../platform/authority.ts';
+import { type Grant, grantedBatch } from '../../../platform/authority.ts';
 import { AppError } from '../../../platform/errors.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { effectiveTimeZone, indexZones } from '../zones-tree.ts';
@@ -51,7 +51,7 @@ export async function autoTapOut(ctx: ServiceContext): Promise<void> {
   const rows = await dueRows(db, now, DUE_BATCH);
   if (rows.length === 0) return;
   const zones = new Map<string, OccZone[]>();
-  const made: { row: DueRow; make: () => ReturnType<typeof exitGrant> }[] = [];
+  const made: { row: DueRow; make: () => Promise<Grant> }[] = [];
   let exits = 0;
   let rearms = 0;
   for (const row of rows) {
@@ -68,24 +68,21 @@ export async function autoTapOut(ctx: ServiceContext): Promise<void> {
       });
     } else {
       rearms++;
-      made.push({ row, make: () => rearmGrant(ctx, row, v.rearm) });
+      made.push({ row, make: async () => rearmGrant(ctx, row, v.rearm) });
     }
   }
   let refused = 0;
   for (let at = 0; at < made.length; at += CHUNK) {
     const chunk = made.slice(at, at + CHUNK);
     try {
-      await grantedBatch(
-        db,
-        chunk.map((c) => c.make()),
-      );
+      await grantedBatch(db, await Promise.all(chunk.map((c) => c.make())));
       continue;
     } catch (error) {
       if (!refusal(error)) throw error;
     }
     for (const c of chunk)
       try {
-        await c.make().commit();
+        await (await c.make()).commit();
       } catch (error) {
         if (!refusal(error)) throw error;
         refused++;

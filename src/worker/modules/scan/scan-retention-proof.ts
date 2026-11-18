@@ -4,12 +4,16 @@ import type { EventRow } from '../events/repo.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { type ScanEventReference, verifyScanEventProvenance } from './scan-event-proof.ts';
 import {
+  KIND_OF_AUTHORITY,
+  type ProofKind,
+  proofKind,
   proofSchema,
   retainedEffect,
   type ScanRetentionProofRow,
   type ScanRetentionSnapshot,
   snapshotSchema,
   sourceSchema,
+  systemSourceSchema,
 } from './scan-retention-proof-data.ts';
 
 export type { ScanRetentionProofRow, ScanRetentionSnapshot };
@@ -78,11 +82,17 @@ async function matches(
   return crypto.subtle.verify('HMAC', key, signature, encoder.encode(canonicalJson(value)));
 }
 
-function signedProof(proof: Omit<ScanRetentionProofRow, 'mac' | 'excluded' | 'invalidated'>) {
-  return { v: 1, ...proof, nonQuarantined: true };
+/** Scan proofs are v1; the rows of a system, desk or undo path are v2 and bound to their kind. */
+function signedProof(
+  proof: Omit<ScanRetentionProofRow, 'mac' | 'excluded' | 'invalidated'>,
+  kind: ProofKind | null = null,
+) {
+  return kind === null
+    ? { v: 1, ...proof, nonQuarantined: true }
+    : { v: 2, kind, ...proof, nonQuarantined: true };
 }
 
-/** Verify the original signed action before creating its detached evidence. Undo rows carry no proof. */
+/** Verify the original signed action before creating its detached evidence. */
 export async function prepareScanRetentionProof(
   env: object,
   event: EventRow,
@@ -192,6 +202,83 @@ export async function prepareScanRetentionProof(
   });
 }
 
+/**
+ * A proof for an exit or undo no scanner action decided: auto exit, desk mark-out, undo. Its source is the
+ * ledger row's plain authority, cross-checked against the scan facts both rows are written with; there is
+ * no event-time authority to verify, so no gate or presence effect is retained.
+ */
+export async function prepareSystemScanRetentionProof(
+  env: object,
+  event: EventRow,
+  scanFacts: ScanRetentionSnapshot,
+): Promise<PreparedScanRetentionProof> {
+  event = structuredClone(event);
+  env = retentionKeyEnv(env);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(event.data);
+  } catch {
+    throw new InvalidScanRetentionProof();
+  }
+  const parsed = systemSourceSchema.safeParse(raw);
+  const scan = snapshotSchema.safeParse(scanFacts);
+  if (
+    JSON.stringify(raw) !== event.data ||
+    !parsed.success ||
+    !scan.success ||
+    !event.id ||
+    !event.pass_id ||
+    event.org_id !== scan.data.orgId ||
+    event.mode !== scan.data.mode ||
+    event.actor_type !== scan.data.actorType ||
+    event.actor_id !== scan.data.actorId
+  )
+    throw new InvalidScanRetentionProof();
+  const { data } = parsed;
+  const snapshot: ScanRetentionSnapshot = scan.data;
+  const kind = proofKind(snapshot);
+  const exit = kind === 'auto_exit' || kind === 'mark_out';
+  if (
+    kind === null ||
+    KIND_OF_AUTHORITY[data.authority.kind] !== kind ||
+    data.scanId !== snapshot.id ||
+    data.method !== snapshot.method ||
+    data.eventId !== snapshot.eventId ||
+    data.scannerId !== snapshot.scannerId ||
+    data.staffId !== snapshot.staffId ||
+    (data.approvedBy ?? null) !== snapshot.approvedBy ||
+    event.kind !== (exit ? 'scan.checked_out' : 'scan.undone') ||
+    (exit && (snapshot.direction !== 'out' || snapshot.actionKind === 'undo')) ||
+    (data.authority.kind === 'system' &&
+      (data.authority.cause !== snapshot.outCause || data.outCause !== snapshot.outCause)) ||
+    (data.authority.kind === 'undo' &&
+      (data.authority.undoes !== snapshot.undoes || data.undoes !== snapshot.undoes))
+  )
+    throw new InvalidScanRetentionProof();
+  const [passRef, eventDigest, scanDigest] = await Promise.all([
+    sign(env, 'scan-retention-pass-ref.v1', [event.org_id, event.mode, event.pass_id]),
+    sign(env, 'scan-retention-event-digest.v1', event),
+    sign(env, 'scan-retention-snapshot.v1', snapshot),
+  ]);
+  const fields = {
+    scanId: snapshot.id,
+    orgId: snapshot.orgId,
+    mode: snapshot.mode,
+    ledgerEventId: event.id,
+    passRef,
+    eventDigest,
+    scanDigest,
+    gateSnapshot: null,
+    presenceSnapshot: null,
+  };
+  const mac = await sign(env, 'scan-retention-proof.v1', signedProof(fields, kind));
+  return Object.freeze({
+    proof: Object.freeze({ ...fields, mac, excluded: 0, invalidated: 0 }),
+    scan: Object.freeze(snapshot),
+    event: Object.freeze(event),
+  });
+}
+
 /** Authenticate only detached data; it never recovers or returns a deleted pass identity. */
 export async function verifyScanRetentionProof(
   env: object,
@@ -210,7 +297,7 @@ export async function verifyScanRetentionProof(
     return false;
   const { mac, excluded: _excluded, invalidated: _invalidated, ...fields } = proof.data;
   const [validMac, validSnapshot] = await Promise.all([
-    matches(env, 'scan-retention-proof.v1', signedProof(fields), mac),
+    matches(env, 'scan-retention-proof.v1', signedProof(fields, proofKind(scan.data)), mac),
     matches(env, 'scan-retention-snapshot.v1', scan.data, proof.data.scanDigest),
   ]);
   return validMac && validSnapshot;

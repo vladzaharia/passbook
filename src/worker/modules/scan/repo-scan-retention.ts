@@ -7,6 +7,7 @@ import {
   type ScanRetentionSnapshot,
   verifyScanRetentionProof,
 } from './scan-retention-proof.ts';
+import { retainedOutCause } from './scan-retention-proof-data.ts';
 
 /** Trusted aliases only: a passless retained row must have an intact same-scope index. */
 export function scanRetentionCandidateSql(scanAlias: string): string {
@@ -183,7 +184,7 @@ interface Raw {
   templateId: string;
   scannerId: string | null;
   eventId: string | null;
-  actorType: 'scanner' | 'user';
+  actorType: 'scanner' | 'user' | 'system';
   actorId: string;
   actorKey: string;
   staffId: string | null;
@@ -200,6 +201,7 @@ interface Raw {
   at: number;
   undoes: string | null;
   override: number;
+  outCause: string | null;
 }
 
 /**
@@ -226,7 +228,7 @@ export async function readVerifiedScanRetentionProofs(
       s.actor_type AS actorType,s.actor_id AS actorId,s.actor_key AS actorKey,s.staff_id AS staffId,
       s.approved_by AS approvedBy,s.method,s.state,s.outcome,s.reason,s.action_id AS actionId,
       s.action_kind AS actionKind,s.direction,s.pass_version AS passVersion,s.presence_scope AS presenceScope,
-      s.at,s.undoes,(s.override_of IS NOT NULL) AS override
+      s.at,s.undoes,(s.override_of IS NOT NULL) AS override,s.out_cause AS outCause
       FROM scans s JOIN scan_retention_proofs r ON r.scan_id=s.id
       WHERE s.id IN (${placeholders(ids.length)}) AND s.mode=?
         ${orgId === undefined ? '' : 'AND s.org_id=?'} AND ${scanRetentionCandidateSql('s')}`,
@@ -272,6 +274,7 @@ export async function readVerifiedScanRetentionProofs(
           at: row.at,
           undoes: row.undoes,
           override: row.override === 1,
+          outCause: retainedOutCause(row.actorType, row.outCause),
         };
         return (await verifyScanRetentionProof(env, proof, scan))
           ? { id: row.id, passRef: row.passRef }

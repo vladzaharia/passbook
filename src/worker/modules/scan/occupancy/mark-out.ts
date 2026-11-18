@@ -13,14 +13,16 @@ import type { ScanActor } from '../guard.ts';
 import { ledgerRow } from '../ledger.ts';
 import { blankOutcome } from '../outcome.ts';
 import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
+import { retentionProofPart } from '../repo-scan-retention-part.ts';
 import { scanByKey } from '../repo-scans.ts';
 import { scanPolicy } from '../rules.ts';
 import { SCAN_COMMIT_TABLES, scanIs, scanWriteGrant } from '../scan-write-grant.ts';
 import { ledgerEvent } from '../scan-write-statements.ts';
 import { scannerRefusal } from '../scanner-credential-lost.ts';
 import { sessionInsideScope, zoneScope } from './inside-scope.ts';
+import { signMarkOut } from './mark-out-retention.ts';
 import { presenceRead } from './repo-inside.ts';
-import { markOutScan } from './repo-mark-out.ts';
+import { type MarkOutScan, markOutScan } from './repo-mark-out.ts';
 import { countsRead, runReads } from './repo-reads.ts';
 import { exitAsGiven, liveIn } from './rules.ts';
 import { addExit, occupancyZones } from './service.ts';
@@ -113,6 +115,36 @@ export async function markOut(
 
   await assertUnderOverrideCap(ctx, actor);
   const scanId = ctx.ids.ordered(now);
+  const scanRow: MarkOutScan = {
+    id: scanId,
+    now,
+    passId: pass.id,
+    templateId: pass.templateId,
+    passVersion: pass.version,
+    place: req.place,
+    actorType: actor.actor.type,
+    actorId: actor.actor.id,
+    actorKey: actor.actorKey,
+    scannerId: actor.scanner?.id ?? null,
+    staffId: actor.staff?.id ?? null,
+    sessionId: actor.scanningSession?.id ?? null,
+    apiKeyId: actor.apiKeyId ?? null,
+    eventId: actor.event?.id ?? null,
+    idempotencyKey: req.idempotencyKey,
+    requestHash,
+  };
+  const ledger = ledgerRow(ctx, actor, {
+    pass,
+    scanId,
+    action: null,
+    outcome: 'ok',
+    reason: null,
+    method: 'manual',
+    override: false,
+    approvedBy: null,
+    direction: 'out',
+  });
+  const { event, retention } = await signMarkOut(ctx.env, ledger, scanRow);
   const g = scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.check_in',
     now,
@@ -128,45 +160,9 @@ export async function markOut(
     // The row the desk read: a tap-out and tap-in since is a new stay and is left alone.
     lastScanId: held.lastScanId,
   });
-  const inserted = markOutScan(
-    g,
-    {
-      id: scanId,
-      now,
-      passId: pass.id,
-      templateId: pass.templateId,
-      passVersion: pass.version,
-      place: req.place,
-      actorType: actor.actor.type,
-      actorId: actor.actor.id,
-      actorKey: actor.actorKey,
-      scannerId: actor.scanner?.id ?? null,
-      staffId: actor.staff?.id ?? null,
-      sessionId: actor.scanningSession?.id ?? null,
-      apiKeyId: actor.apiKeyId ?? null,
-      eventId: actor.event?.id ?? null,
-      idempotencyKey: req.idempotencyKey,
-      requestHash,
-    },
-    [won],
-  );
-  ledgerEvent(
-    g,
-    ledgerRow(ctx, actor, {
-      pass,
-      scanId,
-      action: null,
-      outcome: 'ok',
-      reason: null,
-      method: 'manual',
-      override: false,
-      approvedBy: null,
-      direction: 'out',
-    }),
-    scanId,
-    'ok',
-    null,
-  );
+  const inserted = markOutScan(g, scanRow, [won]);
+  ledgerEvent(g, event, scanId, 'ok', null);
+  g.include(retentionProofPart(retention));
   grantedAudit(
     g,
     ctx,

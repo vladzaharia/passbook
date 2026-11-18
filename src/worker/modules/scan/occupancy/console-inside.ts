@@ -11,6 +11,7 @@ import { getPass } from '../../passes/repo-read-pass.ts';
 import { ledgerRow } from '../ledger.ts';
 import { type AdminAuthority, adminPrincipal } from '../repo-admin-grant.ts';
 import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
+import { retentionProofPart } from '../repo-scan-retention-part.ts';
 import { orgZoneRows } from '../repo-zones.ts';
 import { scanPassChecks } from '../scan-pass-checks.ts';
 import { SCAN_COMMIT_TABLES, scanIs } from '../scan-write-grant.ts';
@@ -18,8 +19,9 @@ import { ledgerEvent } from '../scan-write-statements.ts';
 import type { Identify } from './inside-list.ts';
 import { whosInList } from './inside-list.ts';
 import { type InsideScope, zoneScope } from './inside-scope.ts';
+import { signMarkOut } from './mark-out-retention.ts';
 import { eventPlaceRead, passTitlesRead, presenceRead } from './repo-inside.ts';
-import { markOutScan } from './repo-mark-out.ts';
+import { type MarkOutScan, markOutScan } from './repo-mark-out.ts';
 import { runReads } from './repo-reads.ts';
 import { exitAsGiven, liveIn } from './rules.ts';
 import { addExit } from './service.ts';
@@ -130,6 +132,45 @@ export async function consoleMarkOut(
   const scanId = ctx.ids.ordered(now);
   // Desk work, so `passes:operate` suffices: the same right the device API gives an admin.
   if (authority.userId !== userId || authority.orgId !== orgId) throw new ForbiddenError();
+  const scanRow: MarkOutScan = {
+    id: scanId,
+    now,
+    passId: pass.id,
+    templateId: pass.templateId,
+    passVersion: pass.version,
+    place: input.place,
+    actorType: 'user',
+    actorId: userId,
+    actorKey: `u:${userId}`,
+    scannerId: null,
+    staffId: null,
+    sessionId: null,
+    apiKeyId: null,
+    eventId: t.kind === 'event' ? t.id : null,
+    idempotencyKey: ctx.ids.id(),
+    requestHash: 'console',
+  };
+  const ledger = ledgerRow(
+    ctx,
+    {
+      actor: { type: 'user', id: userId },
+      event: scanRow.eventId ? { id: scanRow.eventId } : null,
+      scanner: null,
+      staff: null,
+    } as never,
+    {
+      pass,
+      scanId,
+      action: null,
+      outcome: 'ok',
+      reason: null,
+      method: 'manual',
+      override: false,
+      approvedBy: null,
+      direction: 'out',
+    },
+  );
+  const { event, retention } = await signMarkOut(ctx.env, ledger, scanRow);
   const g = grant(ctx, {
     purpose: 'org_mode.scan.mark_out',
     principal: adminPrincipal(authority),
@@ -146,49 +187,9 @@ export async function consoleMarkOut(
     plan: exitAsGiven(zones, input.place),
     lastScanId: held.lastScanId,
   });
-  const inserted = markOutScan(
-    g,
-    {
-      id: scanId,
-      now,
-      passId: pass.id,
-      templateId: pass.templateId,
-      passVersion: pass.version,
-      place: input.place,
-      actorType: 'user',
-      actorId: userId,
-      actorKey: `u:${userId}`,
-      scannerId: null,
-      staffId: null,
-      sessionId: null,
-      apiKeyId: null,
-      eventId: t.kind === 'event' ? t.id : null,
-      idempotencyKey: ctx.ids.id(),
-      requestHash: 'console',
-    },
-    [won],
-  );
-  ledgerEvent(
-    g,
-    ledgerRow(
-      ctx,
-      { actor: { type: 'user', id: userId }, event: null, scanner: null, staff: null } as never,
-      {
-        pass,
-        scanId,
-        action: null,
-        outcome: 'ok',
-        reason: null,
-        method: 'manual',
-        override: false,
-        approvedBy: null,
-        direction: 'out',
-      },
-    ),
-    scanId,
-    'ok',
-    null,
-  );
+  const inserted = markOutScan(g, scanRow, [won]);
+  ledgerEvent(g, event, scanId, 'ok', null);
+  g.include(retentionProofPart(retention));
   grantedAudit(
     g,
     ctx,
