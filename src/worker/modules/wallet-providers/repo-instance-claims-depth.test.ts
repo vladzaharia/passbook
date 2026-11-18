@@ -288,7 +288,7 @@ describe('wallet operation claim SQL and atomicity', () => {
       throw new Error('Claim UPDATE was not captured');
     expect(
       [settlement, finalization, notIssued, revoke].map(({ params }) => params.length),
-    ).toEqual([20, 32, 33, 14]);
+    ).toEqual([20, 32, 34, 14]);
     for (const { sql } of [settlement, finalization, notIssued]) {
       expect(sql.match(/FROM current_operation proven/g)).toHaveLength(1);
     }
