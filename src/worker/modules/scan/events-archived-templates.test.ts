@@ -10,6 +10,7 @@ import {
   makeTemplate,
   makeUser,
   persistTemplate,
+  TEST_NOW,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -34,7 +35,7 @@ let orgId: string;
 let userId: string;
 
 beforeEach(async () => {
-  clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+  clock = new ManualClock(TEST_NOW);
   env = await makeEnv();
   await ensureCredentialRefKeyset(env.DB, env);
   f = fixtures(env, clock);

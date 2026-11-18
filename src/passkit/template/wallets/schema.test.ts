@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PassJson, TemplateManifest } from '../../types.ts';
+import { CAPABILITY_IDS, WALLET_ROLES } from '../../wallets/vocab.ts';
 import { WalletsManifestSchema } from './schema.ts';
 import { walletsManifestIssues } from './validate.ts';
 
@@ -50,6 +51,70 @@ const codes = (wallets: unknown, options = {}) =>
   walletsManifestIssues(manifest(wallets), { passJson, ...options }).map(
     (i) => `${i.severity}:${i.code}:${i.path}`,
   );
+
+describe('wallets block vocabularies', () => {
+  it('lists every role as a capability and keeps ids unique', () => {
+    expect(new Set(CAPABILITY_IDS).size).toBe(CAPABILITY_IDS.length);
+    for (const role of WALLET_ROLES) expect(CAPABILITY_IDS).toContain(`role.${role}`);
+  });
+
+  it('accepts capability ids, field paths and bare field keys in omit', () => {
+    const omit = [
+      'role.points',
+      'barcode.format.pdf417',
+      'backFields.terms',
+      'additionalInfoFields.x',
+      'terms',
+    ];
+    expect(codes({ schema: 1, google: { omit } })).toEqual([]);
+    expect(codes({ schema: 1, samsung: { omit } })).toEqual([]);
+  });
+
+  it.each([
+    [
+      'an unknown capability id',
+      { schema: 1, google: { omit: ['role.mood'] } },
+      'wallets.google.omit.0',
+    ],
+    [
+      'a field path in no group',
+      { schema: 1, google: { omit: ['frontFields.x'] } },
+      'wallets.google.omit.0',
+    ],
+    ['an unknown required id', { schema: 1, required: ['barcode.formt'] }, 'wallets.required.0'],
+    ['a repeated required id', { schema: 1, required: ['type', 'type'] }, 'wallets.required'],
+  ])('rejects %s', (_name, wallets, path) => {
+    expect(codes(wallets)).toContain(`error:WALLETS_SHAPE:${path}`);
+  });
+
+  it('keeps every capability id valid as required', () => {
+    for (const id of CAPABILITY_IDS) expect(codes({ schema: 1, required: [id] })).toEqual([]);
+  });
+
+  it.each([
+    ['google', 'logo'],
+    ['google', 'hero'],
+    ['google', 'thumbnail'],
+    ['samsung', 'logo'],
+    ['samsung', 'main'],
+    ['samsung', 'background'],
+  ])('accepts the %s image slot %s', (name, slot) => {
+    const block = { schema: 1, [name]: { images: { [slot]: `wallets/${name}/art.png` } } };
+    expect(codes(block)).toEqual([]);
+  });
+
+  it.each([
+    ['google', 'main'],
+    ['samsung', 'hero'],
+    ['google', 'Logo'],
+    ['samsung', 'wide'],
+  ])('rejects the %s image slot %s', (name, slot) => {
+    const block = { schema: 1, [name]: { images: { [slot]: `wallets/${name}/art.png` } } };
+    expect(codes(block).some((c) => c.startsWith('error:WALLETS_') && c.includes('images'))).toBe(
+      true,
+    );
+  });
+});
 
 describe('wallets block schema', () => {
   it('accepts the architecture example and the minimal block', () => {

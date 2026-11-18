@@ -16,6 +16,7 @@ import {
   makeUser,
   persistTemplate,
   type ScannerFixture,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
@@ -78,7 +79,7 @@ export async function recordVersion(id: string) {
 }
 
 beforeEach(async () => {
-  clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+  clock = new ManualClock(TEST_NOW);
   env = await makeEnv();
   // Service-made passes initialize the keyset; these fixtures insert pass rows directly.
   await ensureCredentialRefKeyset(env.DB, env);

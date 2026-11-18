@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
-import { formatDateTime, formatRelative } from '../../../lib/format.ts';
+import { formatDateTime, formatRelative } from '../lib/format.ts';
 
-/** Re-renders every `ms` so relative times stay true while a tab is open. */
-export function useNow(ms = 30_000): number {
+/**
+ * Re-renders every `ms` so relative times and countdowns stay true while a tab is open. While
+ * `active` is false it stops ticking and keeps its last reading.
+ */
+export function useNow(ms = 30_000, active = true): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), ms);
     return () => clearInterval(t);
-  }, [ms]);
+  }, [ms, active]);
   return now;
 }
 

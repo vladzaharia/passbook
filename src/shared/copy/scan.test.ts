@@ -106,6 +106,7 @@ describe('SCAN_COPY', () => {
       expect(
         scanLine(line, {
           n: 4,
+          wait: '5 min',
           zone: 'Pool',
           staff: 'Ana',
           stay: '1 h',

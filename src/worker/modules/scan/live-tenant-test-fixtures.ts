@@ -19,7 +19,8 @@ import {
 } from './actor.ts';
 import { managedAdminActor } from './admin-setup.ts';
 import { createScannerStore } from './auth-store.ts';
-import { liveAttachment, liveRingRow, scanHub } from './live.ts';
+import { clockedHub } from './clocked-hub-test-fixtures.ts';
+import { liveAttachment, liveRingRow } from './live.ts';
 import { sealLiveAttachment } from './live-attachment.ts';
 import { type LiveAttachment, liveRecipient } from './live-auth.ts';
 import type { LiveRingRow } from './live-ring.ts';
@@ -67,8 +68,7 @@ export function liveTenantFixture() {
   let app: OpenAPIHono<AppBindings>;
   let credentialKeysetCommitment: string;
   async function setup() {
-    // Real clock: the live hub's ring is windowed by wall time.
-    kit = await setupScanKit({ clockStart: Date.now() });
+    kit = await setupScanKit();
     credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
     app = createApp({
       stores: {
@@ -211,7 +211,7 @@ export function liveTenantFixture() {
   }
 
   function hub() {
-    return scanHub(kit.ctx, kit.org.id, 'live');
+    return clockedHub(kit.ctx, kit.clock, kit.org.id, 'live');
   }
 
   async function upgrade(attachment: LiveAttachment) {

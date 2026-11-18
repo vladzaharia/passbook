@@ -10,6 +10,7 @@ import {
   makeTemplate,
   makeUser,
   persistTemplate,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
@@ -63,7 +64,7 @@ export async function persistApprovedTemplate(
 
 export const setupScannerFixture = () =>
   beforeEach(async () => {
-    clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+    clock = new ManualClock(TEST_NOW);
     env = await makeEnv({ RL_SCAN_PAIR: fakeRateLimiter({ limit: 1000 }) } as never);
     f = fixtures(env, clock);
     fake = fakeAuth(ORIGIN);
