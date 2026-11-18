@@ -144,6 +144,12 @@ export function isPublicPath(pathname: string): boolean {
   return pathname === '/login';
 }
 
+/** Holder pages that exist; any other URL is a 404 the signed-out visitor may see. */
+export function isKnownPortalPath(pathname: string): boolean {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  return path === '/' || path === '/account' || /^\/passes\/[^/]+$/.test(path);
+}
+
 export async function requireSession(
   queryClient: QueryClient,
   next: string,

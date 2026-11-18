@@ -12,7 +12,6 @@ import {
   CardHeader,
   detailError,
   KeyValue,
-  PassSideToggle,
   Skeleton,
   StatusPill,
 } from '../ui/index.ts';
@@ -37,7 +36,8 @@ function fromList(client: ReturnType<typeof useQueryClient>, id: string): MyPass
 
 /** The pass's fields, then its upcoming events. The header's pill carries the state. */
 function DetailsCard({ pass, view, state }: { pass: MyPass; view: PassView; state: HolderState }) {
-  const rows = fieldRows(pass.passJson);
+  // The card already says what the pass is called.
+  const rows = fieldRows(pass.passJson).filter((r) => r.value !== passName(pass));
   return (
     <Card>
       <CardHeader title="Details" />
@@ -70,7 +70,6 @@ function Detail({
   state: HolderState;
   dealt: boolean;
 }) {
-  const [face, setFace] = useState<'front' | 'back'>('front');
   const [dip, setDip] = useState(0);
   const [device] = useState(browserDevice);
   const stale = state === 'voided' || state === 'removed';
@@ -79,8 +78,6 @@ function Detail({
       pass={
         <PassCardStage
           view={view}
-          face={face}
-          flippable
           enter={dealt}
           dim={state !== 'active'}
           removed={state === 'removed'}
@@ -91,7 +88,6 @@ function Detail({
           transitionName={`pass-${pass.id}`}
         />
       }
-      toggle={<PassSideToggle value={face} onChange={setFace} />}
       passTitle={passName(pass)}
       orgName={pass.orgName}
       state={state}

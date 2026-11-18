@@ -51,7 +51,14 @@ export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
     <HolderHeading
       heading={heading}
       icon={view?.images.icon}
-      crumbs={<Breadcrumbs items={[{ label: 'My passes', to: '/' }, { label: heading.title }]} />}
+      crumbs={
+        <Breadcrumbs
+          items={[
+            { label: 'My passes', to: '/' },
+            { label: pass ? passName(pass) : heading.title },
+          ]}
+        />
+      }
       meta={pass ? <Meta pass={pass} state={state} /> : undefined}
       actions={
         pass ? (

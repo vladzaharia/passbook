@@ -64,7 +64,7 @@ describe('magic link', () => {
       `sam@example.com${SIGN_IN_SENT}`,
     );
     expect(container.querySelector('[data-side="email"]')).toHaveAttribute('inert');
-    expect(screen.queryByRole('link', { name: 'Sign in with Polaris ID' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Sign in with your account' })).toBeNull();
     const code = screen.getByLabelText('Code');
     expect(code).toHaveAttribute('autocomplete', 'one-time-code');
     await waitFor(() => expect(document.activeElement).toBe(code));
@@ -274,7 +274,7 @@ describe('magic link', () => {
     await user.click(screen.getByRole('button', { name: 'Use a different email' }));
     const email = await screen.findByLabelText('Email');
     await waitFor(() => expect(document.activeElement).toBe(email));
-    expect(screen.getByRole('link', { name: 'Sign in with Polaris ID' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Sign in with your account' })).toBeVisible();
     // The posted card comes back to the pocket.
     expect(document.querySelector('.wl-login-scene')).toHaveAttribute('data-beat', 'back');
   });
