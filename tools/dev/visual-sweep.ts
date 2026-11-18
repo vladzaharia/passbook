@@ -2,7 +2,7 @@
 // node tools/dev/visual-sweep.ts --url http://localhost:5273 --routes tools/dev/visual-routes/admin.json
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { APIRequestContext } from 'playwright';
+import type { APIRequestContext } from '@playwright/test';
 import { assertLocal } from '../lib/demo-client.ts';
 import { contextFor } from './lib/auth.ts';
 import { capture } from './lib/capture.ts';

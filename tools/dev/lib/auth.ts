@@ -1,7 +1,7 @@
 // Per-role sign-in for the visual sweep. Saves Playwright storage state and reuses it while valid.
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { type APIRequestContext, request } from 'playwright';
+import { type APIRequestContext, request } from '@playwright/test';
 import { mailFiles, nextMagicToken } from '../../lib/demo-client.ts';
 import { emailOf, PORTAL } from '../../lib/demo-data.ts';
 import type { Role } from './routes.ts';

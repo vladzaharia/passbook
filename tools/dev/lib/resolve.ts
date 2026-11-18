@@ -1,5 +1,5 @@
 // Resolves route placeholders ({passId}, {passToken}, ...) from the admin API, once per run.
-import type { APIRequestContext } from 'playwright';
+import type { APIRequestContext } from '@playwright/test';
 
 type Json = Record<string, unknown>;
 type Ctx = {

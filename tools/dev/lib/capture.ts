@@ -1,7 +1,7 @@
 // Screenshots every (route, viewport, theme) and records console errors, failed requests, status.
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { type Browser, chromium } from 'playwright';
+import { type Browser, chromium } from '@playwright/test';
 import { statePath } from './auth.ts';
 import {
   fillPath,

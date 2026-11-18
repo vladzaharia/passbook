@@ -2,7 +2,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { chromium } from 'playwright';
+import { chromium } from '@playwright/test';
 import type { Shot } from './capture.ts';
 import { shotName, type Theme, VIEWPORTS, type ViewportName } from './routes.ts';
 
