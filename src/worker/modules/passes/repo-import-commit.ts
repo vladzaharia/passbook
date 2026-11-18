@@ -1,8 +1,10 @@
 import { jobGrant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
+import { writePart } from '../../platform/authority-include.ts';
 import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
+import { type EmailHold, holdRelease } from './import-email.ts';
 import type { DeferredStarter } from './repo-bulk-principal.ts';
 import type { ImportRowRecord } from './repo-import-rows.ts';
 import { importGrant } from './repo-imports.ts';
@@ -10,7 +12,7 @@ import { importGrant } from './repo-imports.ts';
 const TABLES = ['pass_imports', 'pass_import_rows'] as const;
 const CODES = { stale: 'IMPORT_STATE', lineage: 'IMPORT_NOT_FOUND' };
 
-/** Rows a workflow step takes. A create costs about 55 D1 queries, so 5 rows stay under 400 a step (D1 allows 1,000 an invocation). */
+/** Rows a workflow step takes. A create costs about 55 D1 calls, each a Workflows subrequest (limit raised in wrangler.jsonc), so 5 rows keep a step near 300. */
 export const CHUNK_ROWS = 5;
 
 export interface CommitStart {
@@ -93,15 +95,17 @@ function runGrant(
   mode: 'live' | 'test',
   id: string,
   inactiveOk = false,
+  purpose = 'org_mode.job.pass_import.progress',
+  tables: readonly string[] = TABLES,
 ) {
   return jobGrant(ctx, {
-    purpose: 'org_mode.job.pass_import.progress',
+    purpose,
     job: 'pass-import',
     orgId,
     mode,
     ...(inactiveOk ? { inactiveOk: true as const } : {}),
     target: id,
-    tables: TABLES,
+    tables,
     codes: CODES,
     checks: [exactlyOne('pass_imports', { id, state: 'committing' }, undefined, 'stale')],
   });
@@ -241,10 +245,25 @@ export async function finishImport(
   ctx: ServiceContext,
   s: Scope,
   end: { state: 'done' | 'failed' | 'stale'; code: string | null; progress: Progress },
+  /** The import's email reservation: given back in the same batch as the state change. */
+  hold?: EmailHold,
 ): Promise<void> {
   const now = ctx.clock.now();
   // The terminal write holds while the org is suspended: a stuck import must always be freeable.
-  const g = runGrant(ctx, s.orgId, s.mode, s.importId, true);
+  const g = runGrant(ctx, s.orgId, s.mode, s.importId, true, 'org_mode.job.pass_import.finish', [
+    'pass_imports',
+    'counters',
+  ]);
+  const release = hold ? holdRelease(hold) : null;
+  if (release)
+    g.include(
+      writePart(
+        `INSERT INTO counters (key, window_start, count)
+          SELECT ?, ?, ? WHERE {grant}
+          ON CONFLICT (key, window_start) DO UPDATE SET count = count + excluded.count`,
+        [release.key, release.window, -release.by],
+      ),
+    );
   const p = end.progress;
   g.update('pass_imports', {
     where: { id: s.importId },
@@ -286,16 +305,18 @@ export interface StuckImport {
   committed_at: number;
 }
 
-/** Imports that have been `committing` since before `before`: their workflow may have died. */
+/** Imports `committing` since before `before`, oldest first, after the cursor: live ones never hide a dead one. */
 export function stuckImports(
   db: D1Database,
   before: number,
   limit: number,
+  after: { at: number; id: string } = { at: -1, id: '' },
 ): Promise<StuckImport[]> {
   return all<StuckImport>(
     db,
     `SELECT id, org_id, mode, check_id, email, email_budget, committed_at FROM pass_imports
-     WHERE state = 'committing' AND committed_at < ? ORDER BY committed_at LIMIT ?`,
-    [before, limit],
+     WHERE state = 'committing' AND committed_at < ? AND (committed_at, id) > (?, ?)
+     ORDER BY committed_at, id LIMIT ?`,
+    [before, after.at, after.id, limit],
   );
 }

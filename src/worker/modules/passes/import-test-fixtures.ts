@@ -49,6 +49,8 @@ export async function setupImportHarness() {
   const created: { id: string; params: unknown }[] = [];
   /** What the fake instance reports as its status; unset means `running`. */
   const statuses: Record<string, string> = {};
+  /** Instances whose lookup fails with something other than not-found. */
+  const broken = new Set<string>();
   const workflow = {
     async create(o: { id: string; params: unknown }) {
       if (created.some((c) => c.id === o.id)) throw new Error('instance exists');
@@ -56,6 +58,7 @@ export async function setupImportHarness() {
       return { id: o.id };
     },
     async get(id: string) {
+      if (broken.has(id)) throw new Error('internal error');
       if (!created.some((c) => c.id === id)) throw new Error('instance.not_found');
       return { status: async () => ({ status: statuses[id] ?? 'running' }) };
     },
@@ -173,6 +176,7 @@ export async function setupImportHarness() {
     existing,
     created,
     statuses,
+    broken,
     instanceOf,
     q,
   };

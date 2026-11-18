@@ -4,6 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { runPassImport } from '../../workflows/pass-import.ts';
 import { applyChunk } from './import-apply.ts';
+import { importInstanceId } from './import-commit.ts';
 import { reserveImportEmail } from './import-email.ts';
 import { sweepStuckImports } from './import-sweep.ts';
 import {
@@ -78,6 +79,37 @@ describe('a run that dies', () => {
     }
   });
 
+  it('frees only dead runs: not-found and errored; live, unknown-status and 20 live ahead of a dead one stay', async () => {
+    const mk = async (n: string, at: number, status: string | null) => {
+      const id = `sw-${n}`;
+      await run(
+        h.kit.env.DB,
+        `INSERT INTO pass_imports (id, org_id, mode, template_id, source_kind, source_name, state,
+           created_by, created_at, expires_at, committed_at, check_id)
+         VALUES (?, ?, 'live', ?, 'file', 'f.csv', 'committing', 'u', 0, 9e15, ?, ?)`,
+        [id, h.kit.org.id, `tpl-${n}`, at, `c-${n}`],
+      );
+      const instance = importInstanceId(id, `c-${n}`);
+      if (status !== null) {
+        h.created.push({ id: instance, params: {} });
+        h.statuses[instance] = status;
+      }
+      return { id, instance };
+    };
+    for (let i = 0; i < 21; i++) await mk(`live${i}`, i, 'running');
+    const dead = await mk('dead', 100, 'errored');
+    const gone = await mk('gone', 101, null);
+    const odd = await mk('odd', 102, 'running');
+    h.broken.add(odd.instance);
+    await sweepStuckImports(createJobContext(h.kit.env, 'test'));
+    expect((await stateOf(dead.id))?.state).toBe('failed');
+    expect((await stateOf(gone.id))?.state).toBe('failed');
+    expect((await stateOf(odd.id))?.state).toBe('committing');
+    expect((await stateOf('sw-live0'))?.state).toBe('committing');
+    h.broken.delete(odd.instance);
+    await run(h.kit.env.DB, "DELETE FROM pass_imports WHERE id LIKE 'sw-%'");
+  });
+
   it('a missing instance is freed too', async () => {
     const d = await h.draft(rows(1, 'MI'));
     await h.commit(d.id);
@@ -146,6 +178,22 @@ describe('re-commit', () => {
 });
 
 describe('email reservation', () => {
+  it('is given back with the finish', async () => {
+    const d = await h.draft([HEAD, 'A,1,a@x.co,RL1'].join('\n'));
+    await h.commit(d.id, { email: true });
+    const now = h.kit.clock.now();
+    const key = `pass-import-email:live:org:${h.kit.org.id}`;
+    const held = () =>
+      first<{ count: number }>(
+        h.kit.env.DB,
+        'SELECT count FROM counters WHERE key = ? AND window_start = ?',
+        [key, now - (now % 86_400_000)],
+      );
+    expect((await held())?.count).toBe(1);
+    await h.runWorkflow(d.id);
+    expect((await held())?.count).toBe(0);
+  });
+
   it('concurrent imports share the day budget', async () => {
     const now = h.kit.clock.now();
     const grants = await Promise.all([
@@ -200,5 +248,9 @@ describe('limits', () => {
     const ctx = createJobContext(counter.env, 'test');
     await applyChunk(ctx, { importId: d.id, orgId: h.kit.org.id, mode: 'live' });
     expect(counter.count()).toBeLessThanOrEqual(400);
+    // Workflows counts each D1 call as a subrequest; wrangler.jsonc raises the limit to 500,000. A full
+    // 2,000-create run, extrapolated, stays under half of it.
+    const SUBREQUESTS = 500_000;
+    expect((counter.count() / 5) * 2000 + 402 * 15).toBeLessThan(SUBREQUESTS / 2);
   }, 120_000);
 });

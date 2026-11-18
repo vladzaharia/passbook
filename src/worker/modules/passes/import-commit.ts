@@ -14,13 +14,22 @@ import { emailableCount } from './repo-import-rows.ts';
 /** One instance per commit: a re-commit after `stale` is a new run, and Workflows never reuse an id. */
 export const importInstanceId = (id: string, checkId: string) => `pass-import-${id}-${checkId}`;
 
-async function instanceExists(ctx: ServiceContext, instanceId: string): Promise<boolean> {
+/**
+ * The Workflow instance's status, `missing` when Workflows has no such id, `unknown` for any other failure
+ * (logged under `code`): callers treat `unknown` as a live run.
+ */
+export async function instanceStatus(
+  ctx: ServiceContext,
+  instanceId: string,
+  code: string,
+): Promise<string> {
   try {
-    await ctx.env.PASS_IMPORT.get(instanceId);
-    return true;
-  } catch {
-    // Workflows rejects for an id it does not know.
-    return false;
+    return (await (await ctx.env.PASS_IMPORT.get(instanceId)).status()).status;
+  } catch (error) {
+    if (/not[_ ]found/i.test(error instanceof Error ? error.message : String(error)))
+      return 'missing';
+    ctx.log.warn('pass_import.instance_status_failed', { code, instanceId, error });
+    return 'unknown';
   }
 }
 
@@ -105,7 +114,7 @@ export async function commitImport(
       error,
     });
     // An ambiguous failure may have created the instance: it then owns the commit.
-    if (await instanceExists(ctx, instanceId))
+    if ((await instanceStatus(ctx, instanceId, 'IMPORT_START_STATUS')) !== 'missing')
       return importDto(ctx, await requireImport(ctx, a, id));
     await revertCommit(ctx, a, id);
     await releaseImportEmail(ctx.env.DB, reservation);

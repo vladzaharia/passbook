@@ -65,7 +65,7 @@ export type Principal =
       orgId?: string;
       mode?: Mode;
       orgAccessRevision?: number;
-      /** Terminal bookkeeping of a dead run (a stuck import): holds while the org is suspended. */
+      /** Terminal bookkeeping of a dead run (a stuck import): holds while the org is suspended. `jobGrant` allowlists the purposes. */
       inactiveOk?: true;
     };
 
@@ -192,7 +192,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
         return `SELECT NULL AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, 1 AS org_ok`;
       const org =
         p.kind === 'system' && p.inactiveOk
-          ? '1 = 1'
+          ? `o.status IN ('active', 'suspended')${p.orgAccessRevision === undefined ? '' : ` AND o.access_revision = ${b.bind(p.orgAccessRevision)}`}`
           : orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
       return `SELECT o.id AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, ${flag(org)} AS org_ok
         FROM orgs o WHERE o.id = ${b.bind(p.orgId)}`;

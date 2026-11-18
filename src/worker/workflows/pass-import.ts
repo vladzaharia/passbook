@@ -4,7 +4,6 @@ import {
   type ChunkResult,
   type ImportRunParams,
 } from '../modules/passes/import-apply.ts';
-import { releaseImportEmail } from '../modules/passes/import-email.ts';
 import { setWorkflowStatus } from '../modules/passes/repo.ts';
 import {
   finishImport,
@@ -58,8 +57,7 @@ export async function runPassImport(
     await step.do('finish', async () => {
       const imp = await getImport(env.DB, params.orgId, params.mode, params.importId);
       const progress = await progressOf(env.DB, params.importId);
-      await finishImport(ctx, s, { ...end, progress });
-      if (imp) await releaseImportEmail(env.DB, imp);
+      await finishImport(ctx, s, { ...end, progress }, imp ?? undefined);
       await setWorkflowStatus(
         env.DB,
         instanceId,
@@ -77,12 +75,16 @@ export async function runPassImport(
     await step.do('fail', async () => {
       try {
         const imp = await getImport(env.DB, params.orgId, params.mode, params.importId);
-        await finishImport(ctx, s, {
-          state: 'failed',
-          code: 'IMPORT_FAILED',
-          progress: await progressOf(env.DB, params.importId),
-        });
-        if (imp) await releaseImportEmail(env.DB, imp);
+        await finishImport(
+          ctx,
+          s,
+          {
+            state: 'failed',
+            code: 'IMPORT_FAILED',
+            progress: await progressOf(env.DB, params.importId),
+          },
+          imp ?? undefined,
+        );
       } catch (inner) {
         // The import may already be finished; any other failure is left to the sweeper.
         if (!(inner instanceof AppError)) throw inner;
