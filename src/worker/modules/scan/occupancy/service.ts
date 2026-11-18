@@ -96,13 +96,27 @@ export function addEntry(g: Grant, i: EntryInput): Moved {
  */
 export function addExit(
   g: Grant,
-  i: { passId: string; scanId: string; now: number; plan: ExitPlan; lastScanId?: string },
+  i: {
+    passId: string;
+    scanId: string;
+    now: number;
+    plan: ExitPlan;
+    lastScanId?: string;
+    /** Further conditions of the exit itself (the cron's pending claim). */
+    when?: GrantCond[];
+  },
 ): Moved {
   const { passId, scanId, now, plan } = i;
   const held = i.lastScanId
     ? repo.inRow(passId, plan.place, i.lastScanId)
     : repo.insideOf(passId, plan.place, now);
-  repo.exitRow(g, { passId, place: plan.place, scanId, now, when: [ofTenant(passId), held] });
+  repo.exitRow(g, {
+    passId,
+    place: plan.place,
+    scanId,
+    now,
+    when: [ofTenant(passId), held, ...(i.when ?? [])],
+  });
   const won = repo.wrote(passId, plan.place, scanId);
   for (const place of plan.below)
     repo.exitRow(g, { passId, place, scanId, now, when: [won, repo.inRow(passId, place)] });

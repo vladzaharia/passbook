@@ -16,6 +16,7 @@ import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
 import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
+import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
@@ -41,6 +42,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
     { name: 'scan.reconcile', run: reconcileScans },
     { name: 'scan.backfill', run: backfillScanLookups },
+    { name: 'scan.occupancy', run: autoTapOut },
     { name: 'tokens.remac', run: remacCapabilityTokens },
     { name: 'keys.rewrap', run: rewrapEnvelopes },
     { name: 'wallet.sync', run: drainWalletProviderSync },
