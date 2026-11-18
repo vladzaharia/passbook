@@ -1,9 +1,9 @@
 /** SA-14: one short pulse for ok, two for a heads-up, three for a refusal. Milliseconds on, off, on... */
-export const HAPTIC_PATTERNS: Record<string, readonly number[]> = {
+export const HAPTIC_PATTERNS = {
   ok: [40],
   heads_up: [40, 70, 40],
   refused: [40, 70, 40, 70, 40],
-};
+} as const;
 
 interface Bridge {
   postMessage(message: string): void;
@@ -20,7 +20,7 @@ export function buzz(
     ? undefined
     : navigator,
 ): boolean {
-  const base = HAPTIC_PATTERNS[kind];
+  const base = (HAPTIC_PATTERNS as Record<string, readonly number[] | undefined>)[kind];
   if (!base) return false;
   const pattern = [...base];
   if (bridge) {
