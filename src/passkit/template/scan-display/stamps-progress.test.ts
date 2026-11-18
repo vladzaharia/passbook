@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SCAN_STAMPS_MAX } from '../../stamps/layout.ts';
-import type { TemplateManifest } from '../../types.ts';
+import type { Json, TemplateManifest } from '../../types.ts';
 import type { ScanDisplayDoc } from './schema.ts';
 import { actionGoals } from './scope.ts';
 import { renderDoc, scopeOf } from './test-kit.ts';
@@ -46,7 +46,7 @@ describe('a stamp card on the scanner', () => {
 });
 
 describe('a counter on the scanner', () => {
-  const left = (n: number, goals: object) =>
+  const left = (n: number, goals: Record<string, Json>) =>
     renderDoc(
       {
         v: 1,
