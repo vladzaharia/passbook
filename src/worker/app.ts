@@ -42,6 +42,8 @@ import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-c
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
 import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-status.ts';
 import { webhookKick } from './modules/webhooks/kick.ts';
+import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
+import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
 import { type AuthStores, denyAllStores } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
 import { type AppBindings, requestContext } from './platform/context.ts';
@@ -130,6 +132,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/delivery', deliveryRoutes);
   app.route('/api/v1/connections', connectionsRoutes);
   app.route('/api/v1/connectors', connectorsRoutes);
+  app.route('/api/v1/webhook-endpoints', webhookEndpointsRoutes);
+  app.route('/api/v1/events', eventFeedRoutes);
   app.route('/api/v1/identities', identitiesRoutes);
   app.route('/api/v1/wallet-providers/accounts', walletProviderAccountRoutes);
   app.route('/api/v1/wallet-providers/passes', walletProviderStatusRoutes);

@@ -19,7 +19,7 @@ import {
 import { epochColumns, ownedColumns, type TableScope } from './authority-tables.ts';
 import type { SqlValue } from './db.ts';
 
-export interface UpsertOptions extends Omit<InsertOptions, 'from'> {
+export interface UpsertOptions extends InsertOptions {
   /** col = excluded.col. Each must be an inserted column. */
   update?: string[];
   /** target = <table>.<source>: the existing row's value before this update. */
@@ -83,7 +83,8 @@ export function buildUpsert(
   o: UpsertOptions,
   pin?: string,
 ): BuiltStatement {
-  if ((o as InsertOptions).from) throw bad('upsert takes its values from the caller.');
+  // Rows copied from a tenant source can only be skipped on conflict, never merged into the existing row.
+  if (o.from && !o.doNothing) throw bad('upsert takes its values from the caller.');
   const t = tableScope(table);
   const target = t.conflict;
   if (!target) throw bad(`${table} has no declared upsert target.`);
@@ -93,14 +94,14 @@ export function buildUpsert(
     table,
     columns,
     values,
-    { ...(o.when ? { when: o.when } : {}) },
+    { ...(o.when ? { when: o.when } : {}), ...(o.from ? { from: o.from } : {}) },
     pin,
   );
   const lead =
     scope === 'platform' || !t.org
       ? []
       : [t.org, ...(scope === 'org_mode' && t.mode ? ['mode'] : [])];
-  const named = new Set([...lead, ...columns]);
+  const named = new Set([...lead, ...columns, ...Object.keys(o.from?.copy ?? {})]);
   for (const c of target) if (!named.has(c)) throw bad(`upsert must set ${c}.`);
   const key = `ON CONFLICT (${target.join(', ')})`;
   if (o.doNothing) {

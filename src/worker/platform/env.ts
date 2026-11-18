@@ -60,6 +60,9 @@ export const RATE_LIMITS = [
   'RL_SCAN_ORG',
   'RL_GOOGLE_CALLBACK',
   'RL_WEBHOOK_HOST',
+  'RL_WEBHOOK_HOST_ORG',
+  'RL_WEBHOOK_OUT',
+  'RL_WEBHOOK_REPLAY',
 ] as const satisfies readonly RateLimitName[];
 
 /**

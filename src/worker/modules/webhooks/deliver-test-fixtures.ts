@@ -80,6 +80,7 @@ export async function setupRig(): Promise<Rig> {
   Object.assign(kit.env, {
     WEBHOOK_JOBS: hooks,
     RL_WEBHOOK_HOST: fakeRateLimiter({ limit: 100_000 }),
+    RL_WEBHOOK_HOST_ORG: fakeRateLimiter({ limit: 100_000 }),
   });
   return { kit, hooks, ctx: jobCtxOf(kit), db: kit.env.DB, orgId: kit.org.id };
 }

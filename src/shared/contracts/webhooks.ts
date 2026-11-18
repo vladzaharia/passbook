@@ -204,6 +204,7 @@ export const UpdateWebhookEndpointSchema = z.object({
 });
 
 export const WebhookSecretSchema = z.object({ secret: z.string() });
+export const WebhookEndpointListSchema = z.object({ items: z.array(WebhookEndpointSchema) });
 export const WebhookEndpointCreatedSchema = z.object({
   endpoint: WebhookEndpointSchema,
   secret: z.string(),
@@ -265,8 +266,8 @@ export const WebhookReplaySchema = z
   .refine((r) => r.from <= r.to, { message: 'from must not be after to', path: ['from'] });
 export const WebhookReplayResultSchema = z.object({ queued: z.number().int().nonnegative() });
 
-/** `ev1.<seq>`, or `now` for the head of the feed. */
-export const EVENT_FEED_CURSOR = /^(?:now|ev1\.[1-9]\d{0,14})$/;
+/** `ev2.<22 chars>` (opaque), the older `ev1.<n>` (accepted for one more release), or `now` for the head. */
+export const EVENT_FEED_CURSOR = /^(?:now|ev1\.(?:0|[1-9]\d{0,14})|ev2\.[A-Za-z0-9_-]{22})$/;
 
 export const EventFeedQuerySchema = z.object({
   orgId: IdSchema.optional(),

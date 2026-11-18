@@ -113,6 +113,8 @@ export async function tenantAuthorityOf(
         (scope === 'passes:write' || scope === 'holders:write')) ||
       (capability === 'integrations:read' && scope === 'connections:read') ||
       (capability === 'integrations:manage' && scope === 'connections:write') ||
+      ((capability === 'integrations:read' || capability === 'integrations:manage') &&
+        scope === 'webhooks:manage') ||
       (capability === 'templates:read' && scope === 'templates:read') ||
       (capability === 'scanning:read' && scope === 'scans:read') ||
       ((capability === 'messages:read' || capability === 'messages:manage') &&

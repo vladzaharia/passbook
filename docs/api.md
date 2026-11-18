@@ -25,6 +25,7 @@ curl "https://passbook.mobile/api/v1/passes?orgId=$ORG_ID" \
 | `scans:write` | scan from a till as one named terminal (see Scan from a till); org-bound keys only |
 | `connections:read` | scoped connection reads |
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
+| `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 
 Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
 and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly
@@ -450,6 +451,122 @@ as `ignored`; this state is terminal and cannot be replayed. Replay also refuses
 changed context, uncertain effects, and incompatible release changes. Proven items blocked before
 effects can be explicitly rebound to the current approved release by replay. See
 [Connection webhook recovery](operations.md#connection-webhook-recovery) for operational guidance.
+
+## Outbound webhooks
+
+An endpoint receives signed `POST`s for the events it subscribes to. Delivery is at least once with no
+ordering promise: dedupe on the event `id`, and order by `createdAt` or `pass.version` when it matters.
+
+**Access.** A session needs `integrations:read` (view) or `integrations:manage` (change) in the org. An
+API key needs `webhooks:manage`. Delivery detail and the feed carry event payloads, so `integrations:read` and `webhooks:manage` can read
+them without `passes:read`; payloads hold no personal data. Readers get `url: null` and `urlMasked` (host plus the last four path
+characters): the URL is a capability, shown in full only to managers. Both modes work. The mode is fixed at
+creation from the key's mode or the session's `x-passbook-mode`, never from the body; an endpoint receives
+events of its own mode only. Other orgs' and the other mode's endpoints answer `404`. Lists and creates take
+`orgId` as elsewhere (an org-bound key may omit it).
+
+| Route | Needs | Notes |
+|---|---|---|
+| `GET /webhook-endpoints?orgId=` | read | `{ items }`, at most 10 per org and mode |
+| `POST /webhook-endpoints` | manage | `{ orgId?, url, description?, eventTypes, templateIds? }`. `201` `{ endpoint, secret }`. `?validate=1` checks everything, writes nothing, answers `200 { ok: true }` |
+| `GET`, `PATCH`, `DELETE /webhook-endpoints/{id}` | read, manage, manage | `PATCH` takes any create field plus `status` (`active`, `paused`) and `apiVersion`. A resume clears the failure counters |
+| `POST /webhook-endpoints/{id}/secret` | manage | `{ overlapHours: 0 \| 24 \| 72 }` (default 24). `{ secret }`, shown once |
+| `POST /webhook-endpoints/{id}/test` | manage | sends one `webhook.test` to this endpoint: `{ ok, status, durationMs, errorCode }`. 10 a minute per org and mode, then `429`; the destination host's shared send budget is charged too |
+| `GET /webhook-endpoints/{id}/deliveries` | read | `state`, `type`, `limit`, `cursor`; newest first |
+| `GET /webhook-endpoints/{id}/deliveries/{eventId}` | read | adds `attemptLog` and the `payload` |
+| `POST /webhook-endpoints/{id}/deliveries/{eventId}/replay` | manage | one delivery again; `409 DELIVERY_PENDING` while it waits |
+| `POST /webhook-endpoints/{id}/replay` | manage | `{ from, to, include?, missing? }`, below |
+
+`eventTypes` is an explicit list of 1 to 32 types, with no wildcard. `templateIds` (up to 20 of the org's
+own templates) narrows it; `null` means all. The URL must be `https` on port 443 with a public host (no
+credentials, IP literal or platform host): `422 UNSAFE_URL`. It is re-checked on every attempt. The 11th
+endpoint in a mode is `409 WEBHOOK_ENDPOINT_LIMIT`, and an org may create 20 endpoints an hour (`429`). Create, update, delete, rotate and replay are audited
+(`webhook.endpoint.*`, `webhook.secret.rotate`, `webhook.replay`) with the host only, never the path or a secret.
+
+**Replay.** A replayed delivery is sent with the same event `id` and body. `from` and `to` are event times
+in ms. `include` is `failed` (default), `failed_and_cancelled` or `all` (also delivered). It resets at most
+10,000 deliveries (`422 REPLAY_TOO_LARGE`: narrow the range). With `missing: true` it also creates deliveries
+for subscribed events in the window that the endpoint never had, but only from the last 7 days: older
+delivered rows are already purged, so a wider window would send events again. `{ queued }` counts both.
+One bulk replay per org and mode per minute; a single-delivery replay is limited to 10 a minute per org and
+mode, and its audit row is written once a minute per endpoint.
+
+**Retries.** Up to 9 attempts over about 3 days; a non-2xx answer, a timeout (10 s) or a refused connection
+retries, and a `Retry-After` on `429` or `503` is honored (capped). After 72 hours of failures with at least
+10 failed attempts in a row the endpoint is disabled and its pending deliveries are cancelled; patch
+`status: "active"` to resume. Redirects are not followed. The response body is ignored. Sends to one host are paced per org
+(120 a minute) and across all orgs (600 a minute); a delivery over its share waits, uncounted.
+
+### Receive and verify
+
+Each request is JSON with these headers:
+
+```
+x-passbook-event-id: <event id>
+x-passbook-event-type: pass.scanned
+x-passbook-timestamp: <unix seconds, this attempt>
+x-passbook-signature: v1=<hex>[, v1=<hex>]
+```
+
+The signature is `HMAC-SHA256(secret, "<timestamp>.<raw body>")` in hex, with the secret's UTF-8 bytes as
+the key. During a rotation overlap the header carries one `v1=` per live secret; accept the request if any
+matches. Every retry is signed again with a new timestamp. Compare in constant time, reject timestamps more
+than 5 minutes off, and verify the raw bytes before parsing.
+
+```js
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+function verify(rawBody, headers, secret) {
+  const ts = Number(headers['x-passbook-timestamp']);
+  const header = headers['x-passbook-signature'];
+  if (!Number.isFinite(ts) || !header || Math.abs(Date.now() / 1000 - ts) > 300) return false;
+  const want = createHmac('sha256', secret).update(`${ts}.${rawBody}`).digest('hex');
+  return header.split(',').some((part) => {
+    const p = part.trim();
+    if (!p.startsWith('v1=')) return false;
+    const got = p.slice(3);
+    return got.length === want.length && timingSafeEqual(Buffer.from(got), Buffer.from(want));
+  });
+}
+```
+
+Test vector: secret `whsec_test_vector`, timestamp `1764000000`, body
+`{"id":"0193a1b2-0000-7000-8000-000000000001","type":"webhook.test"}` gives
+`v1=2e47be5b02039b59b046e18c0a95a355bc374db0c467ffd40bac4de9bd480ca1`.
+
+### Events
+
+The body is `{ id, type, apiVersion, createdAt, orgId, mode, pass, data }`. `id` is the ledger id and the
+dedupe key; `createdAt` is when the event happened (an offline scan synced late keeps its scan time);
+`pass` is `{ id, externalId, templateId }`, and `null` only for `webhook.test`. Types: `pass.issued`,
+`pass.updated`, `pass.voided`, `pass.unvoided`, `pass.removed`, `pass.restored`, `pass.installed`,
+`pass.uninstalled`, `pass.scanned`, `pass.scan_refused`, `pass.scan_undone`, `push.failed`, `email.failed`
+and `webhook.test` (sent on request only). `data` is a fixed allowlist per type. No holder name, email,
+personalization value, device id, push token or capability URL appears in any payload.
+
+### Event feed
+
+`GET /events` (and `GET /events/{id}`) returns the same events as the webhooks, for a poller or a
+catch-up. It needs `passes:read` (a key scope, or the session capability), not `webhooks:manage`, and
+follows the key's or session's mode. Take `orgId` as above.
+
+- Cursors (`ev2.` and 22 characters) are opaque and per org and mode: store and echo them, never compute with them; another org's or mode's cursor is `422`. Cursors from the previous release (`ev1.<n>`) are still accepted for one more release, then dropped: switch to the `nextCursor` you get back. Query: `after` (a cursor or `now`), `types` (comma list), `passId`, `limit` (1 to 200, default 50),
+  `apiVersion`.
+- Response: `{ items, nextCursor, hasMore }`, ascending. `nextCursor` is never null: the last item's cursor,
+  or the cursor you sent when the page is empty. Store it and call again. With no `after` the feed starts at
+  the oldest retained event; `after=now` returns no items and the current head.
+- An event written late (an offline scan) gets a new cursor, so a poller sees it on its next call.
+
+### Retention and versions
+
+The feed keeps events for `min(30 days, the platform events retention)`. A cursor older than that resumes at
+the oldest event without a notice. Delivered deliveries are kept 7 days; failed and cancelled ones as long as
+their event; attempts 30 days (test sends 7). Secrets are removed a day after they expire.
+
+`apiVersion` is a date, currently `2026-12-01`, and is pinned per endpoint until a manager patches it. A new
+type or a new optional `data` field is not a new version, so ignore unknown types and fields. A rename, a
+removal or a change of meaning gets a new version, and each version is supported for at least 12 months. The
+feed takes `?apiVersion=` and defaults to the newest.
 
 ## Scanner console
 
