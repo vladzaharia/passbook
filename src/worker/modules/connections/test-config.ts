@@ -96,6 +96,8 @@ export async function testConfig(
     fetch: createSafeFetch({
       platformHosts: [new URL(baseUrl(sctx.env)).hostname, 'workers.dev'],
       timeoutMs: def.defaults.timeoutMs,
+      ...(def.defaults.maxResponseBytes ? { maxBytes: def.defaults.maxResponseBytes } : {}),
+      ...(def.defaults.maxRedirects ? { maxRedirects: def.defaults.maxRedirects } : {}),
       ...(deps.resolver ? { resolver: deps.resolver } : {}),
       ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
     }),

@@ -11,7 +11,7 @@ import {
   useUnsavedChangesGuard,
   Wizard,
 } from '../../ui/index.ts';
-import { fromRows, type MappingRow } from '../mapping/mapping.ts';
+import { fromRows, type MappingRow, toRows } from '../mapping/mapping.ts';
 import { MappingEditor, targetsOf } from '../mapping/mapping-editor.tsx';
 import { markCreated } from '../passes/created.tsx';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
@@ -19,6 +19,7 @@ import { useTemplate } from '../templates/api.ts';
 import { useConnector, useConnectors } from './api.ts';
 import { prefixed } from './config-schema.ts';
 import { CreatedStep } from './created-step.tsx';
+import { takeConnectionPrefill, wizardStart } from './import-handoff.ts';
 import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fields.tsx';
 import { TemplateSelect } from './template-select.tsx';
 import { TestModeNote } from './test-mode-note.tsx';
@@ -56,9 +57,11 @@ export function CreateConnectionWizard() {
   currentScope.current = scopeToken;
   const orgs = useOrgOptions();
   const connectors = useConnectors(orgId);
-  const [step, setStep] = useState(0);
-  const [type, setType] = useState<string>();
-  const [draft, setDraft] = useState<ConfigDraft>({ name: '', config: {}, secrets: {} });
+  // From an import's "Keep this sheet in sync": the sheet connector, its link and the import's mapping.
+  const [start] = useState(() => wizardStart(takeConnectionPrefill(), DEFAULT_LIFE));
+  const [step, setStep] = useState(start.step);
+  const [type, setType] = useState<string | undefined>(start.type);
+  const [draft, setDraft] = useState<ConfigDraft>(start.draft);
   const [tested, setTested] = useState<{
     outcome: TestOutcome;
     orgId: string;
@@ -76,8 +79,8 @@ export function CreateConnectionWizard() {
     tested.secrets === draft.secrets
       ? tested.outcome
       : undefined;
-  const [rows, setRows] = useState<MappingRow[]>([]);
-  const [life, setLife] = useState<Lifecycle>(DEFAULT_LIFE);
+  const [rows, setRows] = useState<MappingRow[]>(start.rows);
+  const [life, setLife] = useState<Lifecycle>(start.life);
   const [showErrors, setShowErrors] = useState(false);
   const [createdResult, setCreated] = useState<{
     id: string;

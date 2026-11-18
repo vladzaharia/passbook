@@ -18,6 +18,7 @@ import {
   Skeleton,
   Textarea,
 } from '../../../ui/index.ts';
+import { rememberImportLink } from '../../connections/import-handoff.ts';
 import { useCreateImport, useImportTemplates } from './api.ts';
 
 type Kind = 'file' | 'paste' | 'link';
@@ -82,12 +83,14 @@ export function SourceStep({ orgId }: { orgId: string }) {
     create.mutate(
       { templateId: chosen, source },
       {
-        onSuccess: (imp) =>
+        onSuccess: (imp) => {
+          if (source.kind === 'url') rememberImportLink(imp.id, source.url);
           void navigate({
             to: '/admin/passes/import/$importId',
             params: { importId: imp.id },
             search: { orgId },
-          }),
+          });
+        },
       },
     );
   }
