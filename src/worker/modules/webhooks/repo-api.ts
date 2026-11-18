@@ -256,3 +256,19 @@ export async function hasRecentReplayAudit(
     )) !== null
   );
 }
+
+/** A bulk replay (its audit row carries `from`) of this org and mode since `since`. */
+export async function hasRecentBulkReplay(
+  db: D1Database,
+  orgId: string,
+  mode: string,
+  since: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      "SELECT 1 FROM audit_log WHERE org_id = ? AND action = 'webhook.replay' AND at > ? AND json_extract(detail, '$.from') IS NOT NULL AND json_extract(detail, '$.mode') = ? LIMIT 1",
+      [orgId, since, mode],
+    )) !== null
+  );
+}

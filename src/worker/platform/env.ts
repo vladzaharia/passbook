@@ -62,7 +62,6 @@ export const RATE_LIMITS = [
   'RL_WEBHOOK_HOST',
   'RL_WEBHOOK_HOST_ORG',
   'RL_WEBHOOK_OUT',
-  'RL_WEBHOOK_REPLAY',
 ] as const satisfies readonly RateLimitName[];
 
 /**

@@ -86,14 +86,44 @@ describe('creates', () => {
 describe('replay limits', () => {
   it('bulk replay is one a minute per tenant, across its endpoints', async () => {
     const o = await org();
+    // A pass from before the endpoints: a backfill has something to queue, so the replay commits.
+    await api.rig.kit.pass({ orgId: o.orgId });
     const a = await o.create('https://hooks.example.com/a');
     const b = await o.create('https://hooks.example.com/b');
-    const body = { from: 0, to: 4e12 };
+    const body = { from: 0, to: 4e12, missing: true };
     expect((await api.call('POST', `${BASE}/${a}/replay`, body, o.admin)).status).toBe(200);
     expect((await api.call('POST', `${BASE}/${b}/replay`, body, o.admin)).status).toBe(429);
     const other = await org();
+    await api.rig.kit.pass({ orgId: other.orgId });
     const c = await other.create();
     expect((await api.call('POST', `${BASE}/${c}/replay`, body, other.admin)).status).toBe(200);
+    // A replay that found nothing to queue committed nothing and spent nothing.
+    const none = await org();
+    const d = await none.create();
+    expect(
+      (await api.call('POST', `${BASE}/${d}/replay`, { from: 0, to: 4e12 }, none.admin)).status,
+    ).toBe(200);
+    expect(
+      (await api.call('POST', `${BASE}/${d}/replay`, { from: 0, to: 4e12 }, none.admin)).status,
+    ).toBe(200);
+  });
+
+  it('two concurrent bulk replays: exactly one queues, the other is a 429 that wrote nothing', async () => {
+    const o = await org();
+    for (let i = 0; i < 3; i++) await api.rig.kit.pass({ orgId: o.orgId });
+    const a = await o.create('https://hooks.example.com/a');
+    const b = await o.create('https://hooks.example.com/b');
+    const body = { from: 0, to: 4e12, missing: true };
+    const [x, y] = await Promise.all([
+      api.call('POST', `${BASE}/${a}/replay`, body, o.admin),
+      api.call('POST', `${BASE}/${b}/replay`, body, o.admin),
+    ]);
+    expect([x.status, y.status].sort()).toEqual([200, 429]);
+    const winner = x.status === 200 ? a : b;
+    const loser = winner === a ? b : a;
+    expect(await rowCount(api.rig.db, 'webhook_deliveries', 'endpoint_id = ?', [loser])).toBe(0);
+    expect(await rowCount(api.rig.db, 'webhook_deliveries', 'endpoint_id = ?', [winner])).toBe(3);
+    expect(await auditOf(api.rig.db, 'webhook.replay')).toHaveLength(1);
   });
 
   it('single replays are limited per tenant and audited once a minute', async () => {

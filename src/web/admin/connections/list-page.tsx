@@ -19,12 +19,17 @@ import {
   LoadMore,
   PageHeader,
   RowLink,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '../../ui/index.ts';
 import { useConnectionPages, useConnectorNames } from './api.ts';
 import { HealthPill } from './health.tsx';
 import { healthLine } from './health-text.ts';
 import { HEALTH_FILTERS, modeLabel } from './labels.ts';
 import { showLive, TestModeNote } from './test-mode-note.tsx';
+import { AddEndpointButton, WebhooksTab } from './webhooks/webhooks-tab.tsx';
 
 type Connection = z.infer<typeof ConnectionSummarySchema>;
 const ALL = 'all';
@@ -32,6 +37,7 @@ const ALL = 'all';
 export interface ConnectionListSearch {
   q?: string | undefined;
   health?: string | undefined;
+  tab?: 'webhooks' | undefined;
 }
 
 export function ConnectionsListPage({
@@ -153,61 +159,84 @@ export function ConnectionsListPage({
     </Button>
   );
 
+  const hooks = search.tab === 'webhooks';
   return (
     <>
       <PageHeader
         title="Connections"
-        actions={canManage ? create(empty ? 'outline' : 'primary') : undefined}
+        actions={
+          canManage ? (
+            hooks ? (
+              <AddEndpointButton />
+            ) : (
+              create(empty ? 'outline' : 'primary')
+            )
+          ) : undefined
+        }
       />
-      <TestModeNote className="mb-4" />
-      {list.isError && rows.length === 0 ? (
-        <ErrorState error={list.error} onRetry={() => void list.refetch()} />
-      ) : (
-        <DataTable
-          caption="Connections"
-          columns={columns}
-          data={rows}
-          getRowId={(r) => r.id}
-          loading={list.isPending}
-          fetching={list.isFetching && !list.isFetchingNextPage}
-          filtered={filtered}
-          toolbar={
-            <FilterBar
-              search={{ value: text, onChange: setText, placeholder: 'Search connections' }}
-              filters={[
-                {
-                  id: 'health',
-                  label: 'Health',
-                  value: search.health ?? ALL,
-                  defaultValue: ALL,
-                  options: [
-                    { value: ALL, label: 'All' },
-                    ...HEALTH_FILTERS.map(([value, label]) => ({ value, label })),
-                  ],
-                  onChange: (v) => onSearch({ health: v === ALL ? undefined : v }),
-                },
-              ]}
-              onClear={clear}
+      <Tabs
+        value={hooks ? 'webhooks' : 'sources'}
+        onValueChange={(v) => onSearch({ tab: v === 'webhooks' ? 'webhooks' : undefined })}
+      >
+        <TabsList aria-label="Connections">
+          <TabsTrigger value="sources">Sources</TabsTrigger>
+          <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+        </TabsList>
+        <TabsContent value="webhooks">
+          <WebhooksTab />
+        </TabsContent>
+        <TabsContent value="sources">
+          <TestModeNote className="mb-4" />
+          {list.isError && rows.length === 0 ? (
+            <ErrorState error={list.error} onRetry={() => void list.refetch()} />
+          ) : (
+            <DataTable
+              caption="Connections"
+              columns={columns}
+              data={rows}
+              getRowId={(r) => r.id}
+              loading={list.isPending}
+              fetching={list.isFetching && !list.isFetchingNextPage}
+              filtered={filtered}
+              toolbar={
+                <FilterBar
+                  search={{ value: text, onChange: setText, placeholder: 'Search connections' }}
+                  filters={[
+                    {
+                      id: 'health',
+                      label: 'Health',
+                      value: search.health ?? ALL,
+                      defaultValue: ALL,
+                      options: [
+                        { value: ALL, label: 'All' },
+                        ...HEALTH_FILTERS.map(([value, label]) => ({ value, label })),
+                      ],
+                      onChange: (v) => onSearch({ health: v === ALL ? undefined : v }),
+                    },
+                  ]}
+                  onClear={clear}
+                />
+              }
+              emptyFiltered={<FilteredEmpty entity="connection" onClear={clear} />}
+              empty={
+                <EmptyState
+                  art="plugs"
+                  title="No connections"
+                  action={canManage ? create('primary') : undefined}
+                />
+              }
+              footer={
+                <LoadMore
+                  query={list}
+                  shown={rows.length || undefined}
+                  noun={['connection', 'connections']}
+                  scoped
+                />
+              }
             />
-          }
-          emptyFiltered={<FilteredEmpty entity="connection" onClear={clear} />}
-          empty={
-            <EmptyState
-              art="plugs"
-              title="No connections"
-              action={canManage ? create('primary') : undefined}
-            />
-          }
-          footer={
-            <LoadMore
-              query={list}
-              shown={rows.length || undefined}
-              noun={['connection', 'connections']}
-              scoped
-            />
-          }
-        />
-      )}
+          )}
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

@@ -20,9 +20,8 @@ export function hostOf(url: string): string {
   return new URL(url).hostname.toLowerCase();
 }
 
-/** What a reader sees: the host and the last four characters of the path. */
+/** What a reader sees: the host, then `/…` when there is a path (it may hold a token). */
 export function maskUrl(url: string): string {
   const { hostname, pathname } = new URL(url);
-  const path = pathname === '/' ? '' : pathname.slice(-4);
-  return path ? `${hostname}/…${path}` : hostname;
+  return pathname === '/' ? hostname : `${hostname}/…`;
 }

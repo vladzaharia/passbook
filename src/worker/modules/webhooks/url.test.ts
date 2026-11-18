@@ -37,10 +37,10 @@ describe('endpoint url', () => {
       expect(() => normalizeEndpointUrl(`https://${host}/x`, ['wallet.example.org'])).toThrow();
   });
 
-  it('shows only the host in logs and audit, and the host plus four path characters to readers', () => {
+  it('shows only the host in logs and audit, and the host plus `/…` to readers', () => {
     const url = 'https://hooks.zapier.com/hooks/catch/123/secretabcd?token=s3cret';
     expect(hostOf(url)).toBe('hooks.zapier.com');
-    expect(maskUrl(url)).toBe('hooks.zapier.com/…abcd');
+    expect(maskUrl(url)).toBe('hooks.zapier.com/…');
     expect(maskUrl(url)).not.toContain('s3cret');
     expect(maskUrl('https://hooks.example.com/')).toBe('hooks.example.com');
   });

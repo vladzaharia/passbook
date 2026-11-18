@@ -117,6 +117,7 @@ export function toDto(e: EndpointRow, canManage: boolean): WebhookEndpointDto {
     disabledAt: e.disabledAt,
     lastSuccessAt: e.lastSuccessAt,
     lastFailureAt: e.lastFailureAt,
+    lastStatus: e.lastStatus,
     createdAt: e.createdAt,
   };
 }

@@ -233,7 +233,8 @@ describe('bulk replay', () => {
         )
       ).json,
     ).toEqual({ queued: 1 });
-    api.resetLimits();
+    // A committed replay spends the minute (counted from its audit row).
+    api.rig.kit.clock.advance(MIN + 1);
     expect(
       (await api.call('POST', `${s.base}/replay`, { ...window, include: 'all' }, s.admin)).json,
     ).toEqual({ queued: 1 });
@@ -332,7 +333,7 @@ describe('bulk replay', () => {
     expect(await statesOf(api.rig.db, id)).toEqual([{ state: 'pending', n: 3 }]);
     expect(pass).toBeDefined();
     // A second run adds nothing: they exist now, and pending ones are not reset.
-    api.resetLimits();
+    api.rig.kit.clock.advance(MIN + 1);
     expect(
       (await api.call('POST', `${BASE}/${id}/replay`, { from: 0, to: 4e12, missing: true }, admin))
         .json,

@@ -142,3 +142,21 @@ describe('partial backfill', () => {
     expect(await auditOf(api.rig.db, 'webhook.replay')).toEqual([]);
   });
 });
+
+describe('REPLAY_NOT_QUEUED', () => {
+  it('answers 503 with a stable code when the first chunk fails, and keeps the minute free', async () => {
+    const s = await scene(2);
+    // The database refuses the first chunk's batch with a plain error (not a denial).
+    const fail = vi.spyOn(api.rig.db, 'batch').mockRejectedValueOnce(new Error('D1_ERROR: down'));
+    await expectProblem(
+      await s.replay({ from: 0, to: 4e12, missing: true }),
+      503,
+      'REPLAY_NOT_QUEUED',
+    );
+    expect(await auditOf(api.rig.db, 'webhook.replay')).toEqual([]);
+    fail.mockRestore();
+    expect((await s.replay({ from: 0, to: 4e12, missing: true })).status).toBe(200);
+    // The committed first chunk now spends the minute.
+    await expectProblem(await s.replay({ from: 0, to: 4e12 }), 429, 'RATE_LIMITED');
+  });
+});
