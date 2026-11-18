@@ -1,4 +1,7 @@
+import { connection } from './connection-test-fixtures.ts';
 import { passDeliveries, passVersions } from './pass-history-test-fixtures.ts';
+
+export { connection };
 
 /** Contract-shaped fixtures for page tests. */
 export const ORG = {
@@ -218,42 +221,6 @@ export function passDetail(over: Record<string, unknown> = {}) {
     voided: null,
     warnings: [],
     templateWarnings: [],
-    ...over,
-  };
-}
-
-export function connection(over: Record<string, unknown> = {}) {
-  return {
-    id: 'c1',
-    orgId: 'org1',
-    connectorType: 'http-json',
-    connectorVersion: 1,
-    name: 'MemberSpot sync',
-    config: {},
-    hasCredential: true,
-    hasWebhookSecret: false,
-    mapping: { name: { from: '/member/name', transform: { kind: 'trim' } } },
-    defaultTemplateId: 'tpl1',
-    holderEmailField: '/member/email',
-    autoCreate: false,
-    autoEmail: false,
-    onMissing: 'flag',
-    mode: 'poll',
-    intervalSeconds: 3600,
-    maxConcurrency: null,
-    requestsPerMinute: null,
-    enabled: true,
-    health: 'degraded',
-    consecutiveFailures: 2,
-    breakerOpenUntil: null,
-    nextRunAt: null,
-    lastRunAt: 1_700_000_000_000,
-    lastSuccessAt: 1_699_000_000_000,
-    lastErrorCode: 'UPSTREAM_5XX',
-    lastErrorAt: 1_700_000_000_000,
-    webhookUrl: 'https://wallet.example/hooks/connections/c1',
-    createdAt: 1,
-    updatedAt: 1,
     ...over,
   };
 }

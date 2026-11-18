@@ -7,7 +7,7 @@ import {
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ConnectionWriter } from './access.ts';
-import type { ConnectionRow } from './repo.ts';
+import type { ConnectionPatch, ConnectionRow } from './repo.ts';
 import {
   deleteCredentials,
   discardCredential,
@@ -88,6 +88,35 @@ export function readWebhookSecret(
   return read(ctx, conn.orgId, conn.webhookCredentialId, 'webhook');
 }
 
+/** The replaced secret, only while its overlap lasts. */
+export function readPreviousWebhookSecret(
+  ctx: ServiceContext,
+  conn: ConnectionRow,
+): Promise<string | undefined> {
+  if (conn.webhookPrevUntil === null || ctx.clock.now() >= conn.webhookPrevUntil) {
+    return Promise.resolve(undefined);
+  }
+  return read(ctx, conn.orgId, conn.webhookPrevCredentialId, 'webhook');
+}
+
 export function newWebhookSecret(ctx: ServiceContext): string {
   return `whsec_${ctx.ids.token(32)}`;
+}
+
+/**
+ * Where the replaced secret goes: kept as the previous one (with its fingerprint, so it stays unique
+ * until the overlap ends) or forgotten.
+ */
+export function overlapPatch(
+  conn: Pick<ConnectionRow, 'webhookCredentialId' | 'webhookSecretFp'>,
+  overlapSeconds: number,
+  now: number,
+): Pick<ConnectionPatch, 'webhookPrevCredentialId' | 'webhookPrevUntil' | 'webhookPrevSecretFp'> {
+  return conn.webhookCredentialId && overlapSeconds > 0
+    ? {
+        webhookPrevCredentialId: conn.webhookCredentialId,
+        webhookPrevUntil: now + overlapSeconds * 1000,
+        webhookPrevSecretFp: conn.webhookSecretFp,
+      }
+    : { webhookPrevCredentialId: null, webhookPrevUntil: null, webhookPrevSecretFp: null };
 }

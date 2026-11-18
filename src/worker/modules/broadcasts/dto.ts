@@ -1,7 +1,7 @@
-import type {
-  BroadcastCounts,
-  BroadcastDto,
-  BroadcastTarget,
+import {
+  type BroadcastCounts,
+  type BroadcastDto,
+  BroadcastTargetSchema,
 } from '../../../shared/contracts/broadcasts.ts';
 import type { BroadcastRow, CountRow } from './repo.ts';
 
@@ -34,12 +34,14 @@ export function toDto(
     kind: row.kind,
     name: row.name,
     state: row.state,
-    target: JSON.parse(row.target) as BroadcastTarget,
+    // The public schema drops what only the server sets (window, sentBy).
+    target: BroadcastTargetSchema.parse(JSON.parse(row.target)),
     patch: JSON.parse(row.patch) as BroadcastDto['patch'],
     notify: row.notify === 1,
     at: row.at,
     clearAfter: row.clear_after,
     parentId: row.parent_id,
+    ruleId: row.rule_id,
     followUp: followUp ? { id: followUp.id, at: followUp.at } : null,
     counts: countsOf(row, items),
     errorCode: row.error_code,

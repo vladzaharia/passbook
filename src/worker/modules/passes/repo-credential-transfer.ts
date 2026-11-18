@@ -183,7 +183,10 @@ function writes(g: Grant, ctx: ServiceContext, i: StartTransferInput): void {
       ),
     );
   g.include(deviceRows(g, p.id, 'registrations'), deviceRows(g, p.id, 'pass_personalizations'));
-  g.joined('bundle_passes', { via: 'pass_id', where: { pass_id: p.id }, delete: true });
+  // The same holder keeps the pass in their bundles: a bundle carries no credential of its own and
+  // serves the pass's current artifact.
+  if (a.kind !== 'self-rotate')
+    g.joined('bundle_passes', { via: 'pass_id', where: { pass_id: p.id }, delete: true });
   // A new holder does not inherit the old holder's tags. An attach (same holder, now owned) keeps them.
   if (
     target.holderEmail !== p.holderEmail ||

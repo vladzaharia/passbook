@@ -1,10 +1,25 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanTarget } from '../../../shared/contracts/scan.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, stmt } from '../../platform/db.ts';
+import { ruleWindowWhere } from '../message-rules/repo-window.ts';
+import type { RuleWindow } from '../message-rules/windows.ts';
 import { notifiedWhere } from '../passes/repo-budget.ts';
 import { type PassListFilter, passFilterSql } from '../passes/repo-list.ts';
 
-type TargetFilter = PassListFilter & { orgId: string; mode: Mode; scan?: ScanTarget };
+type TargetFilter = PassListFilter & {
+  orgId: string;
+  mode: Mode;
+  scan?: ScanTarget;
+  /** An automatic message's due window, and the rule whose fires it skips. */
+  window?: RuleWindow;
+  ruleId?: string;
+  /** The run itself: its own fire rows do not exclude a pass. */
+  broadcastId?: string;
+  /** One pass only: a test send. */
+  passId?: string;
+  /** Only passes this broadcast updated: a follow-up that clears its message. */
+  sentBy?: string;
+};
 
 /** Active, unremoved passes whose current version has not expired. SQLite reads ISO offsets. */
 function targetWhere(filter: TargetFilter, now: number) {
@@ -26,6 +41,20 @@ function targetWhere(filter: TargetFilter, now: number) {
           AND s.state = 'done' AND s.at >= ?)`);
       params.push(now - filter.scan.noScanDays * 86_400_000);
     }
+  }
+  if (filter.window) {
+    const w = ruleWindowWhere(filter.window, filter.ruleId ?? '', filter.broadcastId);
+    where.push(w.sql);
+    params.push(...(w.params as (string | number)[]));
+  }
+  if (filter.passId) {
+    where.push('passes.id = ?');
+    params.push(filter.passId);
+  }
+  if (filter.sentBy) {
+    where.push(`EXISTS (SELECT 1 FROM broadcast_items bi WHERE bi.broadcast_id = ?
+      AND bi.pass_id = passes.id AND bi.outcome = 'updated')`);
+    params.push(filter.sentBy);
   }
   where.push(`NOT COALESCE((SELECT unixepoch(json_extract(v.pass_json, '$.expirationDate')) * 1000 <= ?
       FROM pass_versions v WHERE v.pass_id = passes.id ORDER BY v.version DESC LIMIT 1), 0)`);
@@ -75,6 +104,12 @@ export async function countTarget(
     [since, limit, ...params],
   );
   return row ?? { targeted: 0, onDevice: 0, overBudget: 0 };
+}
+
+/** The count as a statement, so many windows run in one batch. */
+export function countTargetedStmt(db: D1Database, filter: TargetFilter, now: number) {
+  const { where, params } = targetWhere(filter, now);
+  return stmt(db, `SELECT COUNT(*) AS n FROM passes WHERE ${where.join(' AND ')}`, params);
 }
 
 export async function countTargeted(

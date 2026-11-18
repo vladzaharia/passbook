@@ -1,4 +1,5 @@
 import type { Json } from '../../../shared/contracts/common.ts';
+import type { VoidRule } from '../../../shared/contracts/connections.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -31,12 +32,20 @@ export interface ConnectionRow {
   config: Record<string, Json>;
   credentialId: string | null;
   webhookCredentialId: string | null;
+  /** The replaced webhook secret, accepted until `webhookPrevUntil`. */
+  webhookPrevCredentialId: string | null;
+  webhookPrevUntil: number | null;
+  /** Keyed hash of a pasted recipe secret; unique platform-wide. */
+  webhookSecretFp: string | null;
+  /** Fingerprint of the previous secret until its overlap ends. */
+  webhookPrevSecretFp: string | null;
   mapping: Record<string, MappingEntry> | null;
   defaultTemplateId: string | null;
   holderEmailField: string | null;
   autoCreate: boolean;
   autoEmail: boolean;
   onMissing: OnMissing;
+  voidWhen: VoidRule[];
   mode: Mode;
   intervalSeconds: number | null;
   maxConcurrency: number | null;
@@ -63,12 +72,17 @@ const COLUMNS = {
   connectorVersion: 'connector_version',
   credentialId: 'credential_id',
   webhookCredentialId: 'webhook_credential_id',
+  webhookPrevCredentialId: 'webhook_prev_credential_id',
+  webhookPrevUntil: 'webhook_prev_until',
+  webhookSecretFp: 'webhook_secret_fp',
+  webhookPrevSecretFp: 'webhook_prev_secret_fp',
   mapping: 'mapping',
   defaultTemplateId: 'default_template_id',
   holderEmailField: 'holder_email_field',
   autoCreate: 'auto_create',
   autoEmail: 'auto_email',
   onMissing: 'on_missing',
+  voidWhen: 'void_when',
   mode: 'mode',
   intervalSeconds: 'interval_seconds',
   maxConcurrency: 'max_concurrency',
@@ -105,12 +119,17 @@ const INSERT_COLUMNS = [
   'config',
   'credential_id',
   'webhook_credential_id',
+  'webhook_prev_credential_id',
+  'webhook_prev_until',
+  'webhook_secret_fp',
+  'webhook_prev_secret_fp',
   'mapping',
   'default_template_id',
   'holder_email_field',
   'auto_create',
   'auto_email',
   'on_missing',
+  'void_when',
   'mode',
   'interval_seconds',
   'max_concurrency',
@@ -132,12 +151,17 @@ function insertValues(row: ConnectionRow): SqlValue[] {
     JSON.stringify(row.config),
     row.credentialId,
     row.webhookCredentialId,
+    row.webhookPrevCredentialId,
+    row.webhookPrevUntil,
+    row.webhookSecretFp,
+    row.webhookPrevSecretFp,
     row.mapping ? JSON.stringify(row.mapping) : null,
     row.defaultTemplateId,
     row.holderEmailField,
     row.autoCreate ? 1 : 0,
     row.autoEmail ? 1 : 0,
     row.onMissing,
+    row.voidWhen.length > 0 ? JSON.stringify(row.voidWhen) : null,
     row.mode,
     row.intervalSeconds,
     row.maxConcurrency,
@@ -174,6 +198,8 @@ export interface PatchGuard {
   syncMode?: Mode;
   /** Refuse unless the connection is enabled. */
   enabled?: boolean;
+  /** Refuse unless the previous webhook credential is still this one. */
+  prevCredentialId?: string;
   /** The sync workflow that pinned this credential keyset must still be tracked. */
   keyset?: { commitment: string; instanceId: string } | { commitment: string; source: 'webhook' };
 }
@@ -197,6 +223,7 @@ export async function patchConnection(
       ...(guard.generation === undefined ? {} : { generation: guard.generation }),
       ...(guard.syncMode === undefined ? {} : { syncMode: guard.syncMode }),
       ...(guard.enabled ? { enabled: true } : {}),
+      ...(guard.prevCredentialId === undefined ? {} : { prevCredentialId: guard.prevCredentialId }),
     }),
   ];
   const keyset = guard.keyset;

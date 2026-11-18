@@ -548,7 +548,7 @@ describe('scoped API keys', () => {
     expect(originalWebhookSecret).toBeTruthy();
     const rotated = await call(
       'POST',
-      `/api/v1/connections/${webhook.json.id}/webhook-secret`,
+      `/api/v1/connections/${webhook.json.id}/webhook-secret?overlapSeconds=0`,
       undefined,
       key.headers,
     );
@@ -898,7 +898,7 @@ describe('connectors', () => {
     const res = await call('GET', '/api/v1/connectors');
     expect(res.status).toBe(200);
     const types = res.json.items.map((c: { type: string }) => c.type).sort();
-    expect(types).toEqual(['demo', 'http-json', 'webhook-push']);
+    expect(types).toEqual(['csv-url', 'demo', 'http-json', 'webhook-push']);
     const http = res.json.items.find((c: { type: string }) => c.type === 'http-json');
     expect(http.configSchema.properties.baseUrl).toBeDefined();
     expect(http.secretSchema.properties.token).toBeDefined();
@@ -931,6 +931,7 @@ describe('connector registry authorization', () => {
       );
       expect(list.status).toBe(200);
       expect(list.json.items.map((connector: { type: string }) => connector.type).sort()).toEqual([
+        'csv-url',
         'demo',
         'http-json',
         'webhook-push',
@@ -1168,6 +1169,30 @@ describe('connections', () => {
     const rotated = await call('POST', `/api/v1/connections/${created.json.id}/webhook-secret`);
     expect(rotated.json.webhookSecret).toMatch(/^whsec_/);
     expect(rotated.json.webhookSecret).not.toBe(created.json.webhookSecret);
+  });
+
+  it('keeps the replaced webhook secret for the overlap and revokes it on request', async () => {
+    const created = await create({
+      connectorType: 'webhook-push',
+      config: {},
+      secrets: undefined,
+      mode: 'webhook',
+    });
+    const id = created.json.id as string;
+    const bad = await call('POST', `/api/v1/connections/${id}/webhook-secret?overlapSeconds=90`);
+    expect(bad.status).toBe(422);
+    const rotated = await call(
+      'POST',
+      `/api/v1/connections/${id}/webhook-secret?overlapSeconds=3600`,
+    );
+    expect(rotated.status).toBe(200);
+    expect(rotated.json.webhookPrevUntil).toBe(kit.clock.now() + 3_600_000);
+    const stored = await getConnection(kit.env.DB, id);
+    expect(stored?.webhookPrevCredentialId).toBeTruthy();
+    const revoked = await call('DELETE', `/api/v1/connections/${id}/webhook-secret/previous`);
+    expect(revoked.status).toBe(200);
+    expect(revoked.json.webhookPrevUntil).toBeNull();
+    expect((await getConnection(kit.env.DB, id))?.webhookPrevCredentialId).toBeNull();
   });
 
   it('answers validation problems with field issues', async () => {

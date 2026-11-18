@@ -1,9 +1,12 @@
-import type { BroadcastState } from '../../../shared/contracts/broadcasts.ts';
+import {
+  type BroadcastState,
+  BroadcastTargetSchema,
+} from '../../../shared/contracts/broadcasts.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishRun } from '../../platform/workflow-runs.ts';
-import { actorOf, targetFilter } from './apply.ts';
+import { actorOf, failInvalidTarget, safeTargetFilter } from './apply.ts';
 import { countsOf } from './dto.ts';
 import {
   type BroadcastRow,
@@ -35,10 +38,18 @@ export async function startedBroadcast(
     await finishRun(ctx.env.DB, instanceId, 'complete', ctx.clock.now());
     return false;
   }
+  const filter = safeTargetFilter(row, null, 1);
+  if (!filter) {
+    await failInvalidTarget(ctx, row);
+    await finishRun(ctx.env.DB, instanceId, 'errored', ctx.clock.now(), {
+      errorCode: 'BROADCAST_TARGET_INVALID',
+    });
+    return false;
+  }
   await setTargeted(
     ctx.env.DB,
     broadcastId,
-    await countTargeted(ctx.env.DB, targetFilter(row, null, 1), ctx.clock.now()),
+    await countTargeted(ctx.env.DB, filter, ctx.clock.now()),
   );
   await finishRun(ctx.env.DB, instanceId, 'running', ctx.clock.now());
   return true;
@@ -61,13 +72,20 @@ async function scheduleClear(ctx: ServiceContext, row: BroadcastRow): Promise<vo
     kind: 'message',
     name: `Clear: ${row.name}`.slice(0, 80),
     state: 'scheduled',
-    target: JSON.parse(row.target),
+    // A rule run clears only the passes it updated, not the window it targeted.
+    target: row.rule_id
+      ? {
+          templateIds: BroadcastTargetSchema.parse(JSON.parse(row.target)).templateIds,
+          sentBy: row.id,
+        }
+      : JSON.parse(row.target),
     patch: { message: '' },
     notify: false,
     at,
     clearAfter: null,
     expect: { message: patch.message ?? '' },
     parentId: row.id,
+    ruleId: row.rule_id,
     actor: actorOf(row),
     now: ctx.clock.now(),
   }).run();

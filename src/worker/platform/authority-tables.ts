@@ -67,6 +67,7 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   sandbox_forwards: { org: 'org_id' },
   connections: { org: 'org_id' },
   connection_runs: { org: null, edges: [edge('connection_id', 'connections')] },
+  connection_ref_versions: { org: 'org_id', conflict: ['connection_id', 'ref'] },
   connection_webhook_retention: { org: 'org_id' },
   connection_webhook_items: {
     org: null,
@@ -130,6 +131,14 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_import_mappings: { org: 'org_id', conflict: ['org_id', 'template_id'] },
   // The bundle counterpart (0087).
   bundle_remac_marks: { org: null, edges: [edge('bundle_id', 'bundles')] },
+  // Trust pack (0101). Floors ride the settings grant; holds are placed and released by org:manage or a
+  // platform admin; receipts and anchors are bookkeeping of platform jobs (raw-write allowlist).
+  retention_floors: { org: 'org_id', conflict: ['org_id', 'class'] },
+  retention_holds: { org: 'org_id' },
+  retention_receipts: { org: 'org_id' },
+  retention_receipt_anchors: { org: 'org_id' },
+  data_requests: { org: 'org_id' },
+  data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */
@@ -182,6 +191,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'template_imports',
   'workflow_runs',
   'broadcasts',
+  'message_rules',
+  'message_rule_fires',
   'vas_keys',
   'pass_check_in',
   'scanner_setups',
@@ -211,6 +222,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
+  'message_rules',
+  'message_rule_fires',
   'scanner_setups',
   'template_release_reissues',
   'workflow_release_snapshots',
@@ -245,6 +258,7 @@ export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
   'revisions',
   'pass_personalizations',
   'broadcast_items',
+  'message_rule_fires',
   'pass_check_in',
   'sandbox_forward_passes',
   'wallet_provider_instances',

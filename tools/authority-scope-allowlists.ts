@@ -108,7 +108,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/events/repo.ts': {
     reason:
       'pass_events is an append-only ledger written by recordPassEvent; WP5b owns the grant conversion',
-    writes: ['pass_events:223e2022931b', 'pass_events:4550bbd6e863'],
+    writes: ['pass_events:223e2022931b', 'pass_events:7ac7f822118d'],
   },
   'src/worker/modules/apple/repo-events.ts': {
     reason:
@@ -172,7 +172,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-ops-retention.ts': {
     reason:
       'retention purge of a soft-deleted pass past its grace period: server-selected ids behind a keyset commitment and scan retention proof, no principal',
-    writes: ['passes:79ebe91dcb1b'],
+    writes: ['passes:81fead64601a'],
   },
   'src/worker/modules/passes/repo-transfer-asset-gc.ts': {
     reason:
@@ -214,14 +214,12 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/delivery/repo-outbox-processing.ts': {
     reason:
-      'outbox lease, retry and finish bookkeeping for a row already authorized at queue time, and the sent/failed outbox purge (deleteInBatches); the provider boundary is a grant (repo-provider-attempt.ts)',
+      'outbox lease, retry and finish bookkeeping for a row already authorized at queue time, (the outbox retention purge moved to retention/repo-sweep.ts); the provider boundary is a grant (repo-provider-attempt.ts)',
     writes: [
-      'outbox:24e2ab649be5',
       'outbox:25f751c88a47',
       'outbox:2765ae869719',
       'outbox:7ad4bf487573',
       'outbox:85016337fdf1',
-      'outbox:9c338dc13ae7',
       'outbox:9de783f49135',
       'outbox:a99e262e1616',
       'outbox:b57a00ed96d9',
@@ -253,6 +251,20 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     reason:
       'daily test-data retention purge (captured_emails, bundles); a platform job with no tenant principal',
     writes: ['bundles:f644c9a26cf2', 'captured_emails:54483bed5926'],
+  },
+  'src/worker/modules/retention/repo-sweep.ts': {
+    reason:
+      'the daily retention sweep (platform job, no principal) deletes server-selected rowids of live scans, live pass events and finished outbox rows; each delete repeats the class condition, scope and hold check, and runs only while the receipt that records it exists in the same batch',
+    writes: ['outbox:90161c5a75f9', 'pass_events:4a717a8505a1', 'scans:06e74b44b9ac'],
+  },
+  'src/worker/modules/retention/repo-receipts.ts': {
+    reason:
+      'retention receipts and their anchors are append-only bookkeeping of platform jobs and the erasure finisher (no principal): a MAC-chained row per delete run, and the 6-year trim that moves the MACed anchor forward first; table triggers refuse update and early delete',
+    writes: [
+      'retention_receipt_anchors:be676f0b2666',
+      'retention_receipts:726f943d12d9',
+      'retention_receipts:dc272aa87a05',
+    ],
   },
   'src/worker/modules/keys/repo-rewrap.ts': {
     reason:

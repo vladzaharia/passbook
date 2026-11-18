@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
@@ -160,9 +160,14 @@ export function PassesListPage({
   }
 
   const create = (variant: 'primary' | 'outline') => (
-    <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
-      <Link to="/admin/passes/new">New pass</Link>
-    </Button>
+    <>
+      <Button asChild variant="outline" iconStart={<Upload aria-hidden />}>
+        <Link to="/admin/passes/import">Import</Link>
+      </Button>
+      <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
+        <Link to="/admin/passes/new">New pass</Link>
+      </Button>
+    </>
   );
 
   return (

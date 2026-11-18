@@ -1,5 +1,6 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
 import { passDevice } from '../../../shared/device.ts';
+import { endedOn } from '../../../shared/ended-on.ts';
 import { PASS_SW_SOURCE } from '../../../shared/pass-offline.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { writeEvent } from '../../platform/analytics.ts';
@@ -21,11 +22,13 @@ import {
   renderPresentationPage,
 } from '../../ssr/presentation-page.tsx';
 import { recordPassEvent } from '../events/record.ts';
+import { voidedAt } from '../events/repo-voided.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { canPresent, presentationForPass } from './presentation.ts';
+import { resendRoutes } from './routes-resend.ts';
 import {
   isTokenShape,
   openPublicAsset,
@@ -65,6 +68,30 @@ publicRoutes.use(
 publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/barcode', rateLimit('RL_PUBLIC'));
+
+publicRoutes.route('/', resendRoutes);
+
+const againOf = (v: string | undefined) => (v === 'sent' || v === 'wait' ? v : null);
+
+function endedFor(
+  view: { voided: boolean; expired: boolean },
+  pass: { status: string; modifiedAt: number },
+  voidedAt: number | null,
+  passJson: { expirationDate?: unknown },
+  lang: string,
+  zone: string | undefined,
+): string | null {
+  const state =
+    pass.status === 'voided' || view.voided ? 'voided' : view.expired ? 'expired' : null;
+  return state
+    ? endedOn(
+        state,
+        { modifiedAt: pass.modifiedAt, voidedAt, expirationDate: passJson.expirationDate },
+        lang,
+        zone,
+      )
+    : null;
+}
 
 export const EMAILED = /^(icon|logo)(@[23]x)?\.png$/;
 
@@ -143,6 +170,17 @@ register(
         mode: pass.mode,
         device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(svcCtx, pass.orgId),
+        endedOn: endedFor(
+          view,
+          pass,
+          pass.status === 'voided' ? await voidedAt(svcCtx.env.DB, pass.orgId, pass.id) : null,
+          model.passJson,
+          lang,
+          zoneOf(c),
+        ),
+        ...(pass.holderEmail && !model.removal
+          ? { resend: { action: `${page}/resend`, again: againOf(c.req.query('again')) } }
+          : {}),
       });
       await assertPassSnapshot(svcCtx, snapshot);
       svcCtx.waitUntil(

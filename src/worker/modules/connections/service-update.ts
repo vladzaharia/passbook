@@ -7,8 +7,14 @@ import { toDto } from './dto.ts';
 import { schedules } from './health.ts';
 import { assertMayIssue, updateIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
-import { type ConnectionPatch, patchConnection } from './repo.ts';
-import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
+import { type ConnectionPatch, type ConnectionRow, patchConnection } from './repo.ts';
+import {
+  assertSecretFree,
+  pastesSecret,
+  rethrowSecretReuse,
+  secretFingerprint,
+} from './secret-fingerprint.ts';
+import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from './secrets.ts';
 import {
   auditActor,
   type Created,
@@ -25,6 +31,28 @@ import {
   parseWith,
   requireConnector,
 } from './validate.ts';
+import { validateVoidWhen } from './void-when.ts';
+
+/** Keys the connector fixes at creation (the webhook recipe) cannot change: bound passes hold its refs. */
+function assertFixedConfig(
+  def: ReturnType<typeof requireConnector>,
+  conn: ConnectionRow,
+  next: Record<string, unknown>,
+): void {
+  if (!def.fixedConfig?.length) return;
+  const stored = def.configSchema.parse(
+    conn.connectorVersion !== def.version && def.migrate
+      ? def.migrate(conn.connectorVersion, conn.config)
+      : conn.config,
+  ) as Record<string, unknown>;
+  for (const key of def.fixedConfig) {
+    if (JSON.stringify(stored[key]) !== JSON.stringify(next[key])) {
+      throw new ValidationError('This setting cannot be changed. Create a new connection.', [
+        { path: `config.${key}`, message: 'Fixed after creation.' },
+      ]);
+    }
+  }
+}
 
 export async function update(
   sctx: ServiceContext,
@@ -54,6 +82,7 @@ export async function update(
   if (input.name !== undefined) set('name', input.name);
   if (input.config !== undefined) {
     const config = parseWith(def.configSchema, input.config, 'config');
+    assertFixedConfig(def, conn, config);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);
     patch.config = config;
     patch.connectorVersion = def.version;
@@ -93,6 +122,10 @@ export async function update(
   if (input.autoCreate !== undefined) set('autoCreate', input.autoCreate);
   if (input.autoEmail !== undefined) set('autoEmail', input.autoEmail);
   if (input.onMissing !== undefined) set('onMissing', input.onMissing);
+  if (input.voidWhen !== undefined) {
+    validateVoidWhen(input.voidWhen);
+    set('voidWhen', input.voidWhen);
+  }
   for (const key of ['intervalSeconds', 'maxConcurrency', 'requestsPerMinute'] as const) {
     if (input[key] !== undefined) set(key, input[key]);
   }
@@ -113,8 +146,18 @@ export async function update(
   if (input.webhookSecret !== undefined || needsSecret) {
     const secret = input.webhookSecret ?? newWebhookSecret(sctx);
     webhookCredential = secret;
-    staleCredentials.push(conn.webhookCredentialId);
+    // The replaced secret stays valid for the overlap; the one before it is dropped now.
+    const overlap = input.overlapSeconds ?? 86_400;
+    Object.assign(patch, overlapPatch(conn, overlap, now));
+    staleCredentials.push(conn.webhookPrevCredentialId);
+    if (overlap === 0) staleCredentials.push(conn.webhookCredentialId);
     if (input.webhookSecret === undefined) generated = secret;
+    // A pasted recipe secret is fingerprinted (unique platform-wide); a generated one needs no check.
+    patch.webhookSecretFp =
+      input.webhookSecret !== undefined && pastesSecret(def, conn.config)
+        ? await secretFingerprint(sctx, input.webhookSecret)
+        : null;
+    if (patch.webhookSecretFp) await assertSecretFree(sctx, patch.webhookSecretFp, conn.id);
     changed.add('webhookSecret');
   }
 
@@ -176,7 +219,7 @@ export async function update(
   } catch (error) {
     // A reported failure can still follow a committed update; preserve any linked credentials.
     await dropCredentials(sctx, [...newCredentials, ...staleCredentials]);
-    throw error;
+    return rethrowSecretReuse(sctx, error);
   }
   await dropCredentials(sctx, staleCredentials);
   await recordAudit(sctx, {

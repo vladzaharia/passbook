@@ -95,7 +95,8 @@ export async function startCredentialTransfer(
   )
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   assertWritableMode(scope, source.pass.mode);
-  if (authority.kind !== 'self-remove') await getPassForWrite(ctx.env.DB, passId, scope);
+  if (authority.kind !== 'self-remove' && authority.kind !== 'self-rotate')
+    await getPassForWrite(ctx.env.DB, passId, scope);
   if (
     authority.kind !== 'session' &&
     authority.kind !== 'api_key' &&

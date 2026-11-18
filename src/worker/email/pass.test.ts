@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { APPLE_BADGE_ALT as ADD_BADGE_ALT } from '../../shared/apple-badge.ts';
 import { EMAIL_BADGE, EMAIL_BUDDY, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { contrast, parseColor } from '../../shared/pass-view/color.ts';
 import { ADD_LINE, renderPassEmail } from './pass.ts';
 import { passSummary } from './pass-summary.ts';
 import { EMAIL_LIGHT, RADIUS } from './shell.ts';
@@ -396,7 +398,7 @@ describe('pass email', () => {
 
   it('keeps the plain-text part word for word', () => {
     expect(render().text).toBe(
-      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nOpen this email on your phone to add the pass to your wallet.\n\nKeep this email private. Its links open your pass.',
+      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nOpen this email on your phone to add the pass to your wallet.\nApple Wallet is the app on your iPhone that keeps cards and tickets.\n\nKeep this email private. Its links open your pass.',
     );
   });
 
@@ -505,5 +507,36 @@ describe('From name keeps the platform attribution', () => {
     expect(render({ senderName, fromName: 'Harbor Desk' }).fromName).toBe(
       'Harbor Desk via PassBook',
     );
+  });
+});
+
+describe('pass email accessibility and help', () => {
+  const { html, text } = render();
+
+  it('sizes body text in rem after a px fallback, with unitless line heights', () => {
+    const sizes = [...html.matchAll(/font-size:(\d+(?:\.\d+)?)(px|rem)/g)];
+    // The 0 px spacer cells and the geometry-bound button and header text stay in px.
+    const body = html.slice(html.indexOf('<body'));
+    expect(body).toMatch(/font-size:14px;font-size:0\.875rem;line-height:1\.43/);
+    expect(sizes.some((m) => m[2] === 'rem')).toBe(true);
+    expect(html).toContain('-webkit-text-size-adjust:100%');
+  });
+
+  it('says what Apple Wallet is once, in the page and the text part', () => {
+    const line = 'Apple Wallet is the app on your iPhone that keeps cards and tickets.';
+    expect(html.split(line)).toHaveLength(2);
+    expect(text.split(line)).toHaveLength(2);
+  });
+
+  it('keeps the muted text at 4.5:1 on the card', () => {
+    const muted = parseColor(EMAIL_LIGHT.muted);
+    const card = parseColor(EMAIL_LIGHT.card);
+    if (!muted || !card) throw new Error('Tokens must parse');
+    expect(contrast(muted, card)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('names the badge and the page link for a screen reader', () => {
+    expect(html).toContain(`alt="${ADD_BADGE_ALT}"`);
+    expect(html).toContain('lang="en"');
   });
 });

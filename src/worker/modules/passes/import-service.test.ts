@@ -646,7 +646,42 @@ describe('a sheet link', () => {
     );
   });
 
-  it('refuses a redirect and a response over 2 MB', async () => {
+  it("follows the publish link's redirect to its export host and still keeps only the first host", async () => {
+    publicHost();
+    const seen: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        seen.push(new URL(url).host);
+        return seen.length === 1
+          ? new Response(null, {
+              status: 307,
+              headers: { location: 'https://doc-0k-sheets.googleusercontent.com/pub/x/export' },
+            })
+          : new Response(`${HEAD}\nA,1,,R1`, { status: 200 });
+      }),
+    );
+    const d = await draft(await api(admin, 'POST', '', { ...make(), plan: plan() }));
+    expect(seen).toEqual(['docs.google.com', 'doc-0k-sheets.googleusercontent.com']);
+    expect(d.source).toEqual({ kind: 'url', name: 'docs.google.com' });
+    expect(d.counts).toMatchObject({ create: 1 });
+  });
+
+  it('refuses a redirect to a private host without fetching it', async () => {
+    importFetchSeam.resolver = {
+      resolve: async (host: string) =>
+        host === 'docs.google.com' ? ['93.184.216.34'] : ['10.0.0.8'],
+    };
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(null, { status: 302, headers: { location: 'https://inner.example.net/x' } }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await api(admin, 'POST', '', make())).status).toBe(422);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a redirect loop and a response over 2 MB', async () => {
     publicHost();
     vi.stubGlobal(
       'fetch',

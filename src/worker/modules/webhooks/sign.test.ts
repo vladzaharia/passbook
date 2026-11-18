@@ -33,7 +33,7 @@ describe('signing', () => {
         headers: { 'x-wallet-signature': values[i] ?? '', 'x-wallet-timestamp': '1764000000' },
       });
       await expect(
-        verifySignedRequest(req, { secret, now: 1_764_000_001_000 }),
+        verifySignedRequest(req, { secrets: [secret], now: 1_764_000_001_000 }),
       ).resolves.toMatchObject({ body: BODY });
     }
   });

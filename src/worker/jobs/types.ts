@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ModeSchema } from '../../shared/contracts/common.ts';
 import { ConnectionModeSchema } from '../../shared/contracts/connections.ts';
+import { RETENTION_CLASSES } from '../../shared/privacy/data-classes.ts';
 
 /** Every queue message. Add a kind here, to JOB_HANDLERS in registry.ts, and implement it in the owning module. */
 export const JobSchema = z.discriminatedUnion('kind', [
@@ -13,6 +14,23 @@ export const JobSchema = z.discriminatedUnion('kind', [
     orgId: z.string(),
     mode: ModeSchema,
     lane: z.string(),
+  }),
+  z.object({ kind: z.literal('message_rule.check'), ruleId: z.string(), at: z.number() }),
+  /** A holder asked for their own pass by email (Send it again, I lost my phone). */
+  z.object({
+    kind: z.literal('pass.holder_mail'),
+    passId: z.string(),
+    /** The signed-in owner; null when the holder used the pass link. */
+    userId: z.string().nullable(),
+    reason: z.enum(['resend', 'lost_phone']),
+  }),
+  /** Tells an org's admins that a retention class shortens. One job per org and class. */
+  z.object({
+    kind: z.literal('retention.notice'),
+    orgId: z.string(),
+    cls: z.enum(RETENTION_CLASSES),
+    days: z.number().int().positive(),
+    from: z.number().int().nonnegative(),
   }),
   z.object({
     kind: z.literal('pass.refresh'),

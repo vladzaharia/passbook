@@ -7,6 +7,7 @@ import {
   CalendarCheck,
   DraftingCompass,
   FileBadge,
+  FileSpreadsheet,
   History,
   IdCard,
   Image,
@@ -86,6 +87,7 @@ export const CONNECTOR_ICON: Record<string, LucideIcon> = {
   demo: Sparkles,
   'http-json': Braces,
   'webhook-push': Webhook,
+  'csv-url': FileSpreadsheet,
 };
 export const connectorIcon = (id: string): LucideIcon => CONNECTOR_ICON[id] ?? Cable;
 

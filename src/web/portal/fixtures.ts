@@ -11,6 +11,7 @@ export function passFixture(over: Partial<MyPass> = {}): MyPass {
     presentationEligible: true,
     mode: 'live',
     modifiedAt: 1_700_000_000_000,
+    voidedAt: null,
     removedAt: null,
     removalMessage: null,
     lastRefreshedAt: null,

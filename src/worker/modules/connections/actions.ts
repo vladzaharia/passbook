@@ -19,7 +19,7 @@ import { listRuns } from './repo-runs.ts';
 import { summary } from './repo-stats.ts';
 import { classify, prepare } from './runtime.ts';
 import { adminBucketMs, adminInstanceId, startSync } from './schedule.ts';
-import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
+import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from './secrets.ts';
 import { auditActor, requireConnection } from './service.ts';
 import { firstRecord, sampleFields } from './test-config.ts';
 import { assertModeSupported, requireConnector } from './validate.ts';
@@ -115,12 +115,17 @@ export async function syncNow(
   return started;
 }
 
-/** Replaces the webhook secret and returns the new value once. */
+/**
+ * Replaces the webhook secret and returns the new value once. The replaced secret stays valid for
+ * `overlapSeconds` (0 drops it at once) because a sender can take up to an hour to switch; the one it
+ * replaces in turn is dropped now.
+ */
 export async function rotateWebhookSecret(
   sctx: ServiceContext,
   actor: Actor,
   id: string,
   authority?: ConnectionAuthority,
+  overlapSeconds = 86_400,
 ): Promise<{ webhookSecret: string; connection: ReturnType<typeof toDto> }> {
   const conn = await requireConnection(sctx, id);
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
@@ -145,23 +150,37 @@ export async function rotateWebhookSecret(
     updated = await patchConnection(
       sctx,
       id,
-      { webhookCredentialId: credentialId, updatedAt: sctx.clock.now() },
+      {
+        webhookCredentialId: credentialId,
+        webhookSecretFp: null,
+        ...overlapPatch(conn, overlapSeconds, sctx.clock.now()),
+        updatedAt: sctx.clock.now(),
+      },
       { actor: { orgId: conn.orgId, authority, issuing: armed }, generation: conn.generation },
     );
     if (!updated) {
       throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
     }
   } catch (error) {
-    await dropCredentials(sctx, [credentialId, conn.webhookCredentialId]);
+    await dropCredentials(sctx, [
+      credentialId,
+      conn.webhookCredentialId,
+      conn.webhookPrevCredentialId,
+    ]);
     throw error;
   }
-  await dropCredentials(sctx, [conn.webhookCredentialId]);
+  // The old current secret is now the previous one (when it overlaps); the previous one is gone.
+  await dropCredentials(sctx, [
+    conn.webhookPrevCredentialId,
+    ...(overlapSeconds > 0 ? [] : [conn.webhookCredentialId]),
+  ]);
   await recordAudit(sctx, {
     orgId: conn.orgId,
     ...auditActor(actor),
     action: 'connection.webhook_secret',
     targetType: 'connection',
     targetId: id,
+    detail: { overlapSeconds },
   });
   const current = await requireConnection(sctx, id);
   if (authority && current.orgId !== conn.orgId) throw new ForbiddenError();
@@ -196,4 +215,43 @@ export async function healthSummary(
       lastErrorAt: a.last_error_at,
     })),
   };
+}
+
+/** Stops accepting the previous secret now (a leaked secret, or the sender has switched). */
+export async function revokePreviousWebhookSecret(
+  sctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  authority?: ConnectionAuthority,
+): Promise<ReturnType<typeof toDto>> {
+  const conn = await requireConnection(sctx, id);
+  if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
+  if (conn.webhookPrevCredentialId) {
+    const updated = await patchConnection(
+      sctx,
+      id,
+      {
+        webhookPrevCredentialId: null,
+        webhookPrevUntil: null,
+        webhookPrevSecretFp: null,
+        updatedAt: sctx.clock.now(),
+      },
+      {
+        actor: { orgId: conn.orgId, authority },
+        prevCredentialId: conn.webhookPrevCredentialId,
+      },
+    );
+    if (!updated) {
+      throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
+    }
+    await dropCredentials(sctx, [conn.webhookPrevCredentialId]);
+    await recordAudit(sctx, {
+      orgId: conn.orgId,
+      ...auditActor(actor),
+      action: 'connection.webhook_secret_revoke_previous',
+      targetType: 'connection',
+      targetId: id,
+    });
+  }
+  return toDto(sctx.env, await requireConnection(sctx, id));
 }

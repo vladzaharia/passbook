@@ -125,7 +125,7 @@ describe('pass detail', () => {
           json(passFixture({ status: 'voided', walletOffers: nativeOffers })),
       },
     });
-    await screen.findByText(/^This pass was voided\./);
+    await screen.findByText(/^This pass was voided( on .+)?\./);
     expect(screen.queryByRole('link', { name: 'Add to Google Wallet' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Add to Samsung Wallet' })).toBeNull();
   });
@@ -190,7 +190,13 @@ describe('pass detail', () => {
       .getAllByRole('menuitem')
       .map((i) => i.textContent?.trim());
     // The page shows its QR itself; Show QR is the tiles' item.
-    expect(items).toEqual(['Copy link', 'Open public page', 'Remove from My passes']);
+    expect(items).toEqual([
+      'Copy link',
+      'Open public page',
+      'Send it again',
+      'I lost my phone',
+      'Remove from My passes',
+    ]);
     const open = within(menu).getByRole('menuitem', { name: 'Open public page' });
     expect(open).toHaveAttribute('href', expect.stringMatching(/\/p\/abcdefghijklmnopqrst$/));
     expect(open).toHaveAttribute('target', '_blank');
@@ -250,7 +256,7 @@ describe('pass detail', () => {
           json(passFixture({ status: 'voided', support: { email: 'help@gym.test', url: null } })),
       },
     });
-    expect(await screen.findByText('This pass was voided.')).toBeInTheDocument();
+    expect(await screen.findByText(/^This pass was voided( on .+)?\./)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Contact Henrys' })).toHaveAttribute(
       'href',
       'mailto:help@gym.test',
@@ -301,7 +307,7 @@ describe('pass detail', () => {
       await screen.findByText(/Removed from Wallet\. It stays in Expired passes/),
     ).toBeInTheDocument();
     expect(screen.getByText('The season ended.')).toBeInTheDocument();
-    expect(screen.queryByText('This pass was voided.')).toBeNull();
+    expect(screen.queryByText(/^This pass was voided/)).toBeNull();
     expect(screen.getAllByText('Removed').length).toBeGreaterThan(0);
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Show barcode' })).toBeNull();

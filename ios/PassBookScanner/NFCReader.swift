@@ -52,25 +52,6 @@ final class NFCReader: NSObject, NFCNDEFReaderSessionDelegate {
     }
 
     private nonisolated static func decode(_ record: NFCNDEFPayload) -> String? {
-        let bytes = record.payload
-        guard record.typeNameFormat == .nfcWellKnown, bytes.count > 1 else { return nil }
-        let value: Data
-        if record.type == Data([0x54]) {
-            let languageLength = Int(bytes[0] & 0x3f)
-            guard bytes.count > 1 + languageLength else { return nil }
-            value = bytes.subdata(in: (1 + languageLength)..<bytes.count)
-        } else if record.type == Data([0x55]) {
-            let prefix = Int(bytes[0])
-            guard prefix < uriPrefixes.count else { return nil }
-            let suffix = bytes.dropFirst().map { String(UnicodeScalar($0)) }.joined()
-            guard let data = (uriPrefixes[prefix] + suffix).data(using: .utf8) else { return nil }
-            value = data
-        } else { return nil }
-        guard let text = String(data: value, encoding: .utf8), !text.isEmpty,
-              text.utf8.count <= 2048,
-              !text.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { return nil }
-        return text
+        TagRecordParser.record(wellKnown: record.typeNameFormat == .nfcWellKnown, type: record.type, payload: record.payload, maxBytes: 2048)?.value
     }
-
-    private nonisolated static let uriPrefixes = ["", "http://www.", "https://www.", "http://", "https://", "tel:", "mailto:"]
 }

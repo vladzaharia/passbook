@@ -82,6 +82,20 @@ describe('list and search query plans', () => {
     expect(fullScans(lines, 'passes')).toEqual([]);
   });
 
+  it('passes: an input match stays on the template index', async () => {
+    const lines = await plans((db) =>
+      listPasses(db, {
+        orgId: 'o',
+        mode: 'live',
+        templateId: 't',
+        match: [{ input: 'gate', values: ['A'] }],
+        limit: 50,
+      }),
+    );
+    expect(fullScans(lines, 'passes')).toEqual([]);
+    expect(lines.join('\n')).toMatch(/SEARCH passes USING INDEX/);
+  });
+
   it('imports: the match lookups use the external id and holder email indexes', async () => {
     for (const column of ['external_id', 'holder_email'] as const) {
       const lines = await plans((db) => livePassesBy(db, 'o', 'live', column, ['a', 'b']));

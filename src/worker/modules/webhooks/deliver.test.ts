@@ -59,7 +59,7 @@ describe('a successful delivery', () => {
       },
     });
     await expect(
-      verifySignedRequest(req, { secret: 'whsec_test', now: rig.kit.clock.now() }),
+      verifySignedRequest(req, { secrets: ['whsec_test'], now: rig.kit.clock.now() }),
     ).resolves.toBeDefined();
     expect(await deliveryOf(rig.db, ep)).toMatchObject({
       state: 'delivered',

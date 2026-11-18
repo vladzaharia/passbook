@@ -51,7 +51,7 @@ describe('webhook-push', () => {
         ],
       }),
     );
-    expect(res).toEqual({
+    expect(res).toMatchObject({
       eventId: 'evt-9',
       refs: ['a', 'b'],
       records: { a: { memberName: 'A' } },
@@ -87,5 +87,61 @@ describe('webhook-push', () => {
   it('test() needs a webhook secret', async () => {
     expect((await connector.test?.(ctx()))?.ok).toBe(true);
     await expect(connector.test?.(ctx(''))).rejects.toMatchObject({ code: 'CONFIG' });
+  });
+});
+
+describe('webhook-push recipes', () => {
+  it('is version 2: a stored v1 config becomes the custom recipe', () => {
+    expect(connector.version).toBe(2);
+    const migrated = connector.migrate?.(1, { recordsPointer: '/items', refPointer: '/id' });
+    expect(migrated).toMatchObject({
+      recipe: 'custom',
+      recordsPointer: '/items',
+      acceptTestEvents: false,
+    });
+    expect(connector.configSchema.parse({}).recipe).toBe('custom');
+  });
+
+  it('the recipe is fixed after creation and the console gets the five senders', () => {
+    expect(connector.fixedConfig).toEqual(['recipe']);
+    expect(connector.recipes?.map((r) => r.id)).toHaveLength(5);
+  });
+
+  it('a recipe connection verifies with the sender scheme, not the custom one', async () => {
+    const cfg = connector.configSchema.parse({ recipe: 'calcom-bookings' });
+    const text = JSON.stringify({
+      triggerEvent: 'BOOKING_CREATED',
+      createdAt: new Date(NOW - 1000).toISOString(),
+      payload: { uid: 'bk_1' },
+    });
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+    const mac = new Uint8Array(
+      await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(text)),
+    );
+    const sig = [...mac].map((b) => b.toString(16).padStart(2, '0')).join('');
+    const req = new Request('https://x.test/h', {
+      method: 'POST',
+      body: text,
+      headers: { 'x-cal-signature-256': sig },
+    });
+    const res = await connector.verifyWebhook?.(
+      { ...ctx(), connection: { ...ctx().connection, config: cfg } },
+      req,
+    );
+    expect(res?.refs).toEqual(['bk_1']);
+    expect(res?.createRefs).toEqual(['bk_1']);
+    // The custom scheme's headers do not pass on a recipe connection.
+    await expect(
+      connector.verifyWebhook?.(
+        { ...ctx(), connection: { ...ctx().connection, config: cfg } },
+        await signed({ records: [] }),
+      ),
+    ).rejects.toMatchObject({ code: 'AUTH' });
   });
 });

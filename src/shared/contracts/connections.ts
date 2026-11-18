@@ -23,6 +23,62 @@ export const MappingEntrySchema = z.object({
 });
 export const MappingSchema = z.record(z.string(), MappingEntrySchema);
 
+/** The sender recipes of the webhook-push connector; fixed once a connection exists. */
+export const RecipeIdSchema = z.enum([
+  'custom',
+  'shopify-orders',
+  'shopify-customers',
+  'stripe-subscriptions',
+  'stripe-payments',
+  'calcom-bookings',
+]);
+export type RecipeId = z.infer<typeof RecipeIdSchema>;
+
+/** Voids the bound pass when the upstream record matches. `in` is strict equality, no case folding. */
+export const VoidRuleSchema = z
+  .object({
+    from: z.string().min(1).max(500),
+    op: z.enum(['in', 'present']),
+    values: z
+      .array(z.union([z.string().max(200), z.number(), z.boolean()]))
+      .min(1)
+      .max(20)
+      .optional(),
+  })
+  .refine((r) => (r.op === 'in') === (r.values !== undefined), {
+    path: ['values'],
+    message: 'Only "is one of" takes values.',
+  });
+export type VoidRule = z.infer<typeof VoidRuleSchema>;
+export const VoidWhenSchema = z.array(VoidRuleSchema).max(8);
+
+/** Seconds the previous webhook secret stays valid after a replacement. 0 drops it at once. */
+export const SecretOverlapSchema = z.union([
+  z.literal(0),
+  z.literal(3600),
+  z.literal(86_400),
+  z.literal(604_800),
+]);
+
+/** A sender recipe as the console lists it: the starting point of a webhook connection. */
+export const RecipeInfoSchema = z.object({
+  id: RecipeIdSchema,
+  label: z.string(),
+  /** True when the sender generates the secret and the admin pastes it. */
+  pasteSecret: z.boolean(),
+  outputFields: z.record(
+    z.string(),
+    z.object({
+      type: z.enum(['string', 'number', 'boolean', 'date']),
+      description: z.string().optional(),
+    }),
+  ),
+  mapping: MappingSchema,
+  holderEmailField: z.string(),
+  voidWhen: VoidWhenSchema,
+});
+export type RecipeInfo = z.infer<typeof RecipeInfoSchema>;
+
 export const ConnectorInfoSchema = z.object({
   type: z.string(),
   version: z.number().int(),
@@ -53,6 +109,8 @@ export const ConnectorInfoSchema = z.object({
     requestsPerMinute: z.number().int(),
     timeoutMs: z.number().int(),
   }),
+  /** Sender recipes; empty for connectors without any. */
+  recipes: z.array(RecipeInfoSchema).default([]),
 });
 export const ConnectorListSchema = z.object({ items: z.array(ConnectorInfoSchema) });
 
@@ -71,6 +129,9 @@ export const ConnectionSchema = z.object({
   autoCreate: z.boolean(),
   autoEmail: z.boolean(),
   onMissing: z.enum(['keep', 'flag', 'void']),
+  voidWhen: VoidWhenSchema,
+  /** Until when the previous webhook secret is still accepted. */
+  webhookPrevUntil: TimestampSchema.nullable(),
   mode: ConnectionModeSchema,
   intervalSeconds: z.number().int().nullable(),
   maxConcurrency: z.number().int().nullable(),
@@ -146,6 +207,7 @@ export const CreateConnectionSchema = z.object({
   autoCreate: z.boolean().optional(),
   autoEmail: z.boolean().optional(),
   onMissing: z.enum(['keep', 'flag', 'void']).optional(),
+  voidWhen: VoidWhenSchema.optional(),
   mode: ConnectionModeSchema.optional(),
   intervalSeconds: z.number().int().min(60).optional(),
   maxConcurrency: z.number().int().min(1).max(20).optional(),
@@ -158,10 +220,17 @@ export const UpdateConnectionSchema = CreateConnectionSchema.omit({
   .partial()
   .extend({
     enabled: z.boolean().optional(),
+    /** With `webhookSecret`: how long the replaced secret stays valid. Default one day. */
+    overlapSeconds: SecretOverlapSchema.optional(),
     /** null restores the connector default. */
     maxConcurrency: z.number().int().min(1).max(20).nullable().optional(),
     requestsPerMinute: z.number().int().min(1).max(6000).nullable().optional(),
   });
+/** Query of the generate-secret call: how long the replaced secret stays valid (default one day). */
+export const RotateWebhookSecretQuerySchema = z.object({
+  overlapSeconds: z.coerce.number().pipe(SecretOverlapSchema).default(86_400),
+});
+
 /** The first record the source returned, as JSON pointers and short previews. */
 export const SampleFieldSchema = z.object({ pointer: z.string(), preview: z.string() });
 export const TestConnectionResponseSchema = z.object({

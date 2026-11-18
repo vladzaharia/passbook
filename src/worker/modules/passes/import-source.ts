@@ -9,6 +9,8 @@ export type ImportSource =
   | { kind: 'url'; url: string };
 
 const MAX_HEADER = 200;
+/** A published Google sheet answers with a redirect to its export host. */
+const SHEET_REDIRECTS = 3;
 
 const hex = (bytes: ArrayBuffer) =>
   [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -19,12 +21,13 @@ export const importFetchSeam: { resolver?: DnsResolver; fetchImpl?: typeof fetch
 export const objectKeyOf = (orgId: string, id: string): string =>
   `uploads/pass-imports/${orgId}/${id}.csv`;
 
-/** The file bytes: the uploaded text, or one fetch of the sheet link. Redirects are refused (safe-fetch). */
+/** The file bytes: the uploaded text, or one fetch of the sheet link. Up to three redirect hops, each checked by safe-fetch. */
 export async function sourceBytes(ctx: ServiceContext, source: ImportSource): Promise<Uint8Array> {
   if (source.kind === 'file') return new TextEncoder().encode(source.csv);
   const fetchSafe = createSafeFetch({
     platformHosts: platformHostsOf(ctx.env),
     maxBytes: PASS_IMPORT_MAX_BYTES,
+    maxRedirects: SHEET_REDIRECTS,
     ...(importFetchSeam.resolver ? { resolver: importFetchSeam.resolver } : {}),
     ...(importFetchSeam.fetchImpl ? { fetchImpl: importFetchSeam.fetchImpl } : {}),
   });

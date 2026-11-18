@@ -19,6 +19,7 @@ export function Notice({
   support,
   message,
   many,
+  endedOn,
 }: {
   state: 'active' | 'voided' | 'expired' | 'removed';
   orgName: string;
@@ -27,6 +28,8 @@ export function Notice({
   message?: string | null | undefined;
   /** A bundle: every pass in it. */
   many?: boolean;
+  /** When it stopped working, already formatted. */
+  endedOn?: string | null | undefined;
 }) {
   if (state === 'active') return null;
   const voided = state === 'voided';
@@ -39,11 +42,15 @@ export function Notice({
         {voided
           ? many
             ? HOLDER_COPY.voidedMany
-            : HOLDER_COPY.voided
+            : endedOn
+              ? HOLDER_COPY.voidedOn(endedOn)
+              : HOLDER_COPY.voided
           : state === 'removed'
             ? HOLDER_COPY.removed
-            : HOLDER_COPY.expired}
-        {voided ? (
+            : endedOn
+              ? HOLDER_COPY.expiredOn(endedOn)
+              : HOLDER_COPY.expired}
+        {voided || state === 'expired' ? (
           <>
             {' '}
             {href ? (
@@ -60,6 +67,39 @@ export function Notice({
         ) : null}
       </Callout>
     </div>
+  );
+}
+
+/** Pass page: mail the pass to its holder again. A plain form, so it works without script. */
+export function SendAgain({
+  action,
+  again,
+}: {
+  action: string;
+  again: 'sent' | 'wait' | null | undefined;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <form method="post" action={action}>
+        <button type="submit" className={`${LINK} inline-flex min-h-11 items-center text-sm`}>
+          {HOLDER_COPY.sendAgain}
+        </button>
+      </form>
+      {again ? (
+        <p role="status" className="text-sm text-fg-muted">
+          {again === 'sent' ? HOLDER_COPY.sendAgainSent : HOLDER_COPY.sendAgainWait}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** What a wallet is, once on the page: Apple's name on Apple devices, none where it is not theirs. */
+export function WalletExplain({ android }: { android: boolean }) {
+  return (
+    <p className="text-sm text-fg-muted">
+      {android ? HOLDER_COPY.walletGeneric : HOLDER_COPY.walletApple}
+    </p>
   );
 }
 

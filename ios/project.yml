@@ -27,4 +27,16 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     scheme:
-      testTargets: []
+      testTargets:
+        - PassBookScannerTests
+  PassBookScannerTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - PassBookScannerTests
+    dependencies:
+      - target: PassBookScanner
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: mobile.passbook.scanner.tests

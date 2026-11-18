@@ -1,5 +1,6 @@
 import type { ZodType } from 'zod';
 import type { Json } from '../../shared/contracts/common.ts';
+import type { RecipeInfo } from '../../shared/contracts/connections.ts';
 import type { SafeFetch } from '../platform/safe-fetch.ts';
 
 export type UpstreamRecord = Record<string, Json>;
@@ -21,14 +22,48 @@ export interface ConnectorContext<C, S> {
   connection: { id: string; orgId: string; generation: number; config: C };
   /** Decrypted per run; never the Worker env. */
   secrets: S;
-  /** Decrypted shared secret for inbound webhooks; absent when none is set. */
+  /** Decrypted shared secret for inbound webhooks; absent when none is set. Equals `webhookSecrets[0]`. */
   webhookSecret?: string;
+  /** Current secret first, then the previous one while its overlap lasts. At most two. */
+  webhookSecrets?: readonly string[];
   now(): number;
   /** HTTPS-only, public hosts, no redirects, timeout and size caps. */
   fetch: SafeFetch;
   signal: AbortSignal;
   /** Redacted; goes to connection_runs and Analytics Engine. */
   log(event: string, data?: Record<string, string | number>): void;
+}
+
+/** Why a verified webhook was accepted but not applied. A closed list: sender text never reaches a log. */
+export type WebhookIgnoreKind =
+  | 'unknown_type'
+  | 'thin_event'
+  | 'test_mode'
+  | 'unrecognized_shape'
+  | 'no_ref';
+
+/**
+ * What a verified webhook hands to ingress. `eventId` is required and always derived from signed
+ * content (sender event id or body digest): ingress dedupes on it, so a recipe cannot skip dedupe.
+ */
+export interface WebhookDelivery {
+  eventId: string;
+  refs: string[];
+  records?: Record<string, UpstreamRecord>;
+  deleted?: string[];
+  /** Refs allowed to create a pass; others only update. Absent: every ref may create. */
+  createRefs?: string[];
+  /** Source order per ref (ms); an older record than the last applied one is skipped. */
+  versions?: Record<string, number>;
+  /**
+   * The signed time (ms) that passed the replay window: a signed header, or the signed body's own time.
+   * Ingress refuses a recipe delivery without one.
+   */
+  signedAt?: number;
+  /** True when only the previous webhook secret verified this delivery (the sender has not switched). */
+  usedPreviousSecret?: true;
+  /** Set: refs is empty, the delivery is acknowledged and logged, nothing is applied. */
+  ignored?: WebhookIgnoreKind;
 }
 
 export type RecordResult =
@@ -59,7 +94,15 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
     maxConcurrency: number;
     requestsPerMinute: number;
     timeoutMs: number;
+    /** Largest response body; the default is safe-fetch's 256 KB. */
+    maxResponseBytes?: number;
+    /** GET redirect hops to follow (each re-checked); the default is none. */
+    maxRedirects?: number;
   };
+  /** Config keys that cannot change once the connection exists. */
+  fixedConfig?: readonly string[];
+  /** Sender recipes offered to the console; empty or absent for most connectors. */
+  recipes?: readonly RecipeInfo[];
   migrate?(oldVersion: number, config: unknown): C;
   /** Every URL the connector will fetch; checked against the SSRF rules at save time. */
   urls?(config: C): string[];
@@ -77,15 +120,7 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
     hasMore: boolean;
   }>;
   /** Throws ConnectorError('AUTH') when the signature is invalid. */
-  verifyWebhook?(
-    ctx: ConnectorContext<C, S>,
-    req: Request,
-  ): Promise<{
-    eventId: string;
-    refs: string[];
-    records?: Record<string, UpstreamRecord>;
-    deleted?: string[];
-  }>;
+  verifyWebhook?(ctx: ConnectorContext<C, S>, req: Request): Promise<WebhookDelivery>;
   importRecords?(
     ctx: ConnectorContext<C, S>,
     cursor: string | null,

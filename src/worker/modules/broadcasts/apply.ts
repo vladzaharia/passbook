@@ -1,16 +1,19 @@
-import { BroadcastTargetSchema } from '../../../shared/contracts/broadcasts.ts';
+import { ZodError } from 'zod';
 import type { Json } from '../../../shared/contracts/common.ts';
 import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { recordPassEvent } from '../events/record.ts';
+import { addRuleCounts, claimFire, releaseFire } from '../message-rules/repo-window.ts';
 import { resolveTemplate } from '../passes/builder.ts';
+import { pushBudgetOf } from '../passes/change-messages.ts';
 import { publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import {
   type BroadcastRow,
+  casState,
   getBroadcast,
   handledPassIds,
   type ItemRow,
@@ -18,6 +21,7 @@ import {
 } from './repo.ts';
 import { hasVersionFrom } from './repo-items.ts';
 import { targetPage } from './repo-target.ts';
+import { StoredBroadcastTargetSchema } from './stored-target.ts';
 
 /**
  * Passes per workflow step. A pass costs up to ~30 D1 queries (read, build, publish, events,
@@ -48,14 +52,25 @@ async function messagingInput(
   return input;
 }
 
+/** Notifying updates a pass may get a day from all automatic messages, plus one slot kept free. */
+export const RULE_BUDGET_CAP = 3;
+
+/** The rule and window of an automatic message's own run; its clearing follow-up has neither. */
+function ruleRun(row: BroadcastRow) {
+  if (!row.rule_id || row.parent_id !== null) return null;
+  const { window } = StoredBroadcastTargetSchema.parse(JSON.parse(row.target));
+  return window ? { ruleId: row.rule_id, window } : null;
+}
+
 /** Applies the broadcast to one pass. Never throws for a pass-level problem. */
 async function applyOne(
   ctx: ServiceContext,
   row: BroadcastRow,
   cache: MessagingInputs,
   passId: string,
-): Promise<ItemRow | null> {
+): Promise<ItemRow | 'deferred' | null> {
   const base = { passId, silent: false };
+  const rule = ruleRun(row);
   const pass = await getPass(ctx.env.DB, passId, row.org_id);
   if (
     !pass ||
@@ -65,6 +80,7 @@ async function applyOne(
     pass.removedAt !== null
   )
     return null;
+  let claimed = false;
   try {
     const patch = JSON.parse(row.patch) as Record<string, Json>;
     const values: Record<string, Json> = {};
@@ -83,6 +99,26 @@ async function applyOne(
       if (expected && pass.personalization[input] !== expected.message)
         return { ...base, outcome: 'unchanged' };
     } else Object.assign(values, patch);
+    if (rule) {
+      // One notifying slot a day stays free for operational updates; a pass at the rule limit waits
+      // for a later check inside the window and is never sent silently.
+      const budget = await pushBudgetOf(ctx, passId);
+      const slots = Math.min(budget.limit, RULE_BUDGET_CAP) - 1;
+      if (budget.used >= slots) return 'deferred';
+      const claim = await claimFire(ctx.env.DB, {
+        ruleId: rule.ruleId,
+        broadcastId: row.id,
+        passId,
+        orgId: row.org_id,
+        mode: row.mode,
+        window: rule.window,
+        now: ctx.clock.now(),
+        slots,
+      });
+      if (claim === 'full') return 'deferred';
+      claimed = claim === 'claimed';
+      if (!claimed) return { ...base, outcome: 'unchanged' };
+    }
     const clearing = row.kind === 'message' && String(patch.message ?? '').trim() === '';
     const notify = row.notify === 1 && !clearing;
     const result = await publishPass(ctx, {
@@ -126,18 +162,28 @@ async function applyOne(
     });
     return { ...base, outcome: 'updated', silent: !!result.silenced };
   } catch (error) {
+    // A crash after the claim loses one reminder and never doubles it: only an AppError releases it.
     if (!(error instanceof AppError)) throw error;
+    if (claimed && rule) await releaseFire(ctx.env.DB, rule.ruleId, passId, row.id);
     ctx.log.warn('broadcast.pass_failed', { broadcastId: row.id, passId, code: error.code });
     return { ...base, outcome: 'failed' };
   }
 }
 
+export async function failInvalidTarget(ctx: ServiceContext, row: BroadcastRow): Promise<void> {
+  ctx.log.warn('broadcast.blocked', { broadcastId: row.id, code: 'BROADCAST_TARGET_INVALID' });
+  await casState(ctx.env.DB, row.id, ['sending'], 'failed', {
+    finishedAt: ctx.clock.now(),
+    errorCode: 'BROADCAST_TARGET_INVALID',
+  });
+}
+
 export function targetFilter(
-  row: Pick<BroadcastRow, 'org_id' | 'mode' | 'target'>,
+  row: Pick<BroadcastRow, 'org_id' | 'mode' | 'target'> & { id?: string; rule_id?: string | null },
   cursor: string | null,
   limit: number,
 ) {
-  const target = BroadcastTargetSchema.parse(JSON.parse(row.target));
+  const target = StoredBroadcastTargetSchema.parse(JSON.parse(row.target));
   return {
     orgId: row.org_id,
     mode: row.mode,
@@ -146,9 +192,31 @@ export function targetFilter(
     ...(target.holderState ? { holderState: target.holderState } : {}),
     ...(target.q ? { q: target.q } : {}),
     ...(target.scan ? { scan: target.scan } : {}),
+    ...(target.match ? { match: target.match } : {}),
+    ...(target.window ? { window: target.window, ruleId: row.rule_id ?? '' } : {}),
+    ...(target.sentBy ? { sentBy: target.sentBy } : {}),
+    ...(target.passIds?.[0] ? { passId: target.passIds[0] } : {}),
+    ...(row.id ? { broadcastId: row.id } : {}),
     ...(cursor ? { cursor } : {}),
     limit,
   };
+}
+
+/**
+ * `targetFilter`, or null when the stored target no longer parses (a time zone that left the tz
+ * database): the caller ends the run with `BROADCAST_TARGET_INVALID` instead of throwing forever.
+ */
+export function safeTargetFilter(
+  row: Parameters<typeof targetFilter>[0],
+  cursor: string | null,
+  limit: number,
+): ReturnType<typeof targetFilter> | null {
+  try {
+    return targetFilter(row, cursor, limit);
+  } catch (error) {
+    if (error instanceof ZodError || error instanceof RangeError) return null;
+    throw error;
+  }
 }
 
 /** One chunk of up to `CHUNK` passes. A pass that already has an outcome is skipped on retry. */
@@ -160,16 +228,31 @@ export async function applyChunk(
 ): Promise<{ nextCursor: string | null }> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
   if (row?.state !== 'sending') return { nextCursor: null };
-  const page = await targetPage(ctx.env.DB, targetFilter(row, cursor, chunk), ctx.clock.now());
+  const filter = safeTargetFilter(row, cursor, chunk);
+  if (!filter) {
+    await failInvalidTarget(ctx, row);
+    return { nextCursor: null };
+  }
+  const page = await targetPage(ctx.env.DB, filter, ctx.clock.now());
   const done = await handledPassIds(ctx.env.DB, broadcastId, page.ids);
   const cache: MessagingInputs = new Map();
   let updated = 0;
+  let deferred = 0;
   for (const passId of page.ids) {
     if (done.has(passId)) continue;
     const item = await applyOne(ctx, row, cache, passId);
+    if (item === 'deferred') {
+      deferred++;
+      continue;
+    }
     if (!item) continue;
     await insertItems(ctx.env.DB, broadcastId, [item]);
     if (item.outcome === 'updated') updated++;
+  }
+  if (row.rule_id && (updated > 0 || deferred > 0)) {
+    await addRuleCounts(ctx.env.DB, row.rule_id, updated, deferred);
+    if (deferred > 0)
+      ctx.log.info('message_rule.deferred', { ruleId: row.rule_id, orgId: row.org_id, deferred });
   }
   if (updated > 0) await dispatchSafely(ctx);
   return { nextCursor: page.nextCursor };
