@@ -3,6 +3,7 @@ on:
   push:
     branches: [main, platform, release]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
@@ -14,6 +15,8 @@ concurrency:
 
 jobs:
   check:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -35,6 +38,8 @@ jobs:
         run: git diff --exit-code -- src/generated docs/design/wallet-providers/capabilities.md test/setup/schema-snapshot.generated.json worker-configuration.d.ts src/web/routeTree.gen.ts
 
   e2e:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -67,6 +72,8 @@ jobs:
             test-results
 
   camera:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -99,6 +106,8 @@ jobs:
             test-results
 
   coverage-node:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -113,6 +122,8 @@ jobs:
 
   # The worker suite runs once, here, under istanbul; the merge job applies the thresholds.
   coverage-worker:
+    # Draft PRs skip CI; marking a PR ready runs it.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
