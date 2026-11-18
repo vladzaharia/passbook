@@ -45,6 +45,18 @@ describe('session customer settings', () => {
     ).toBe('Please see the desk');
   });
 
+  it('carries the session welcome on the customer view', async () => {
+    const { kit } = fixtures;
+    const custom = await customerIn('Custom welcome', { welcome: 'Hi, scan in' });
+    const ready = await custom.entry({ kind: 'ready' });
+    expect((await liveRowFor(kit.ctx, custom.recipient, ready))?.customer?.welcome).toBe(
+      'Hi, scan in',
+    );
+    const plain = await customerIn('Plain welcome', {});
+    const row = await liveRowFor(kit.ctx, plain.recipient, await plain.entry({ kind: 'ready' }));
+    expect(row?.customer?.welcome).toBeUndefined();
+  });
+
   it('drops the desk card when the session hides it', async () => {
     const { kit } = fixtures;
     const hidden = await customerIn('No ready', { showReady: false });

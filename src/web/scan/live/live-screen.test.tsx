@@ -22,6 +22,9 @@ class LiveSocket {
     this.readyState = 3;
     this.onclose?.({ code: 1000 });
   }
+  snapshot(welcome?: string) {
+    this.onmessage?.({ data: JSON.stringify({ cursor: null, rows: [], welcome }) });
+  }
   publish(row: ScanLiveRow) {
     this.onmessage?.({ data: JSON.stringify({ cursor: row.id, rows: [row] }) });
   }
@@ -137,6 +140,24 @@ describe('customer live screen Buddy', () => {
     if (!logo) throw new Error('Expected the configured organization logo.');
     fireEvent.error(logo);
     expect(container.querySelector('.scan-live-brand-icon svg')).toBeInTheDocument();
+  });
+
+  it('shows the session welcome when idle, the fixed copy otherwise', () => {
+    vi.useFakeTimers();
+    const base = sessionFixture();
+    const session = {
+      ...base,
+      scanner: base.scanner ? { ...base.scanner, deviceRole: 'customer' as const } : null,
+    };
+    const { container } = render(<LiveScreen session={session} refetch={vi.fn(async () => {})} />);
+    expect(container.querySelector('h2')).toHaveTextContent('Hold up your pass');
+    act(() => LiveSocket.instances.at(-1)?.snapshot('Scan to enter'));
+    expect(container.querySelector('h2')).toHaveTextContent('Scan to enter');
+    act(() => LiveSocket.instances.at(-1)?.close());
+    act(() => vi.advanceTimersByTime(2000));
+    act(() => LiveSocket.instances.at(-1)?.snapshot());
+    expect(container.querySelector('h2')).toHaveTextContent('Hold up your pass');
+    vi.useRealTimers();
   });
 
   it('shows the server view, not the scanner name or "Customer display"', () => {

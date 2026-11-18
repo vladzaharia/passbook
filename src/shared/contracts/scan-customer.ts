@@ -22,5 +22,7 @@ export const ScanCustomerViewSchema = z.strictObject({
   lines: z.array(z.strictObject({ icon: ScanIconSchema, text: z.string().max(40) })).max(2),
   milestone: z.enum(['count', 'all_in', 'reward']).nullable(),
   test: z.boolean(),
+  /** The session's own welcome line. Absent: the fixed copy. */
+  welcome: z.string().max(40).optional(),
 });
 export type ScanCustomerView = z.infer<typeof ScanCustomerViewSchema>;

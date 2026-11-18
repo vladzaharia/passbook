@@ -79,7 +79,11 @@ function customerRow(
     },
   );
   const extras = visible && entry.customer && screen !== 'see_desk' ? entry.customer : null;
-  const checked = ScanCustomerViewSchema.safeParse({ ...view, ...extras });
+  const checked = ScanCustomerViewSchema.safeParse({
+    ...view,
+    ...extras,
+    ...(settings.welcome ? { welcome: settings.welcome } : {}),
+  });
   return {
     ...base,
     ...(row.replaces ? { replaces: row.replaces } : {}),
