@@ -40,10 +40,11 @@ function useScopeLocation() {
   const fromUrl =
     values.length === 1 ? orgScopeSearchSchema.parse({ orgId: candidate }).orgId : undefined;
   const detailId = orgDetailId(pathname);
+  const platformAdmin = useSession().isAdmin;
   const workspace = Boolean(detailId && search.view === 'workspace');
   return {
     pathname,
-    scoped: detailId ? workspace : isOrgScoped(pathname),
+    scoped: detailId ? workspace : isOrgScoped(pathname, platformAdmin),
     fromUrl,
     hasExplicitOrg: values.length > 0,
     detailId,
