@@ -1,10 +1,11 @@
 import type { JobOf } from '../../jobs/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { getPlatformSettings } from '../settings/service.ts';
+import { retentionTargets } from '../retention/targets.ts';
 import { finalizeDisabled, runLane } from './deliver.ts';
 import { dispatchDue } from './dispatch.ts';
+import { daysOf, PURGE_LIMITS, purgeScope } from './purge-run.ts';
 import { overdueEndpoints } from './repo-delivery-read.ts';
-import { purge } from './repo-retention.ts';
+import { type PurgeKind, purgeSecrets } from './repo-retention.ts';
 
 const DAY = 86_400_000;
 export const SWEEP_LANES = 100;
@@ -23,16 +24,48 @@ export async function sweepWebhooks(ctx: ServiceContext): Promise<void> {
   if (enqueued > 0) ctx.log.info('webhooks.sweep', { enqueued });
 }
 
-/** Feed `min(30, eventsDays)` days; delivered rows 7; attempts 30 (test sends 7); secrets 1 day past expiry. */
+/**
+ * Daily, under the `webhooks` and `events` retention plans (`daysOf`). Every chunk commits with its receipt,
+ * with the days that drove it. A held org or pass keeps its rows. Secrets go 1 day past expiry. Work per run is
+ * bounded (`PURGE_LIMITS`); the rest waits for the next run.
+ */
 export async function dailyWebhooks(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
-  const { 'retention.eventsDays': eventsDays } = await getPlatformSettings(ctx);
-  const purged = await purge(ctx.env.DB, {
-    feedBefore: now - Math.min(30, eventsDays) * DAY,
-    deliveredBefore: now - 7 * DAY,
-    attemptsBefore: now - 30 * DAY,
-    testAttemptsBefore: now - 7 * DAY,
-    secretsBefore: now - DAY,
-  });
-  ctx.log.info('webhooks.retention', { ...purged });
+  const targets = await retentionTargets(ctx, ['webhooks', 'events']);
+  const total = { feed: 0, delivered: 0, attempts: 0, testAttempts: 0 };
+  const add = (n: Record<PurgeKind, number>) => {
+    for (const k of Object.keys(total) as PurgeKind[]) total[k] += n[k];
+  };
+  if (targets) {
+    add(
+      await purgeScope(
+        ctx,
+        null,
+        { kind: 'platform', exclude: targets.exclude },
+        daysOf(targets.platform),
+        { chunks: PURGE_LIMITS.platformChunks },
+      ),
+    );
+    const budget = { chunks: PURGE_LIMITS.orgChunks };
+    let visited = 0;
+    for (const o of targets.orgs) {
+      if (budget.chunks <= 0) break;
+      try {
+        add(
+          await purgeScope(ctx, o.orgId, { kind: 'org', orgId: o.orgId }, daysOf(o.days), budget),
+        );
+      } catch (error) {
+        // One failing org must not stop the rotation: it runs again at its next visit.
+        ctx.log.error('webhooks.retention_org_failed', {
+          orgId: o.orgId,
+          code: 'WEBHOOK_RETENTION',
+          error,
+        });
+      }
+      visited++;
+    }
+    await targets.finish(visited);
+  }
+  const secrets = await purgeSecrets(ctx.env.DB, now - DAY);
+  ctx.log.info('webhooks.retention', { ...total, secrets });
 }

@@ -33,7 +33,7 @@ export function tooLong(rel: string, text: string): string | null {
 export function testOnlyImports(rel: string, text: string): string[] {
   if (TEST_FILE.test(rel) || TEST_ONLY.test(rel) || !/\.tsx?$/.test(rel)) return [];
   const found: string[] = [];
-  for (const m of text.matchAll(/(?:from|import)\s+'(\.{1,2}\/[^']+)'/g)) {
+  for (const m of text.matchAll(/(?:from\s+|import\s+|import\(\s*)'(\.{1,2}\/[^']+)'/g)) {
     const target = relative(root, resolve(dirname(join(root, rel)), m[1] ?? ''));
     if (TEST_ONLY.test(target)) found.push(`${rel} imports test-only module ${m[1]}`);
   }
@@ -48,13 +48,17 @@ export function testOnlyImports(rel: string, text: string): string[] {
 const W = 'src/worker/modules/webhooks/';
 export const IMPORT_BOUNDARIES: Record<string, string[]> = {
   [`${W}repo-delivery-state.ts`]: ['deliver', 'dispatch', 'jobs', 'kick'].map((n) => `${W}${n}.ts`),
-  [`${W}repo-retention.ts`]: [`${W}jobs.ts`],
+  'src/worker/platform/authority-receipt.ts': [
+    'src/worker/modules/retention/receipt-service.ts',
+    'src/worker/platform/authority.ts',
+  ],
+  [`${W}repo-retention.ts`]: [`${W}jobs.ts`, `${W}purge-run.ts`],
 };
 
 export function boundaryImports(rel: string, text: string): string[] {
   if (TEST_FILE.test(rel) || /^tools\//.test(rel) || !/\.tsx?$/.test(rel)) return [];
   const found: string[] = [];
-  for (const m of text.matchAll(/(?:from|import)\s+'(\.{1,2}\/[^']+)'/g)) {
+  for (const m of text.matchAll(/(?:from\s+|import\s+|import\(\s*)'(\.{1,2}\/[^']+)'/g)) {
     const target = relative(root, resolve(dirname(join(root, rel)), m[1] ?? ''));
     const allowed = IMPORT_BOUNDARIES[target];
     if (allowed && !allowed.includes(rel)) found.push(`${rel} may not import ${target}`);

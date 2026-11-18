@@ -34,4 +34,11 @@ describe('check-sizes', () => {
       boundaryImports(`${dir}/jobs.ts`, "import { purge } from './repo-retention.ts';"),
     ).toEqual([]);
   });
+
+  it('sees a dynamic import of the receipt statement module', () => {
+    const rel = 'src/worker/modules/passes/x.ts';
+    expect(
+      boundaryImports(rel, "const m = await import('../../platform/authority-receipt.ts');"),
+    ).toEqual([`${rel} may not import src/worker/platform/authority-receipt.ts`]);
+  });
 });

@@ -26,6 +26,7 @@ import {
 } from './authority-joined.ts';
 import { joinLedgerRow, joinOnlyInserts, pinOf } from './authority-pin.ts';
 import type { GrantScope, Principal } from './authority-principal.ts';
+import { isReceiptStatement, type ReceiptStatement } from './authority-receipt.ts';
 import {
   assertBudget,
   type BuiltStatement,
@@ -278,6 +279,16 @@ export class Grant {
   /** Runs the grant and its writes as one D1 batch. Results are for the writes, in order. */
   async commit(): Promise<D1Result[]> {
     return (await grantedBatch(this.#db, [this]))[0] ?? [];
+  }
+
+  /** `commit()` with a retention receipt first in the same transaction: a refusal undoes it, and its absence refuses. */
+  async commitAfter(receipt: ReceiptStatement): Promise<D1Result[]> {
+    if (!isReceiptStatement(receipt))
+      throw new AuthorityError(
+        'GRANT_FOREIGN_STATEMENT',
+        'Only a retention receipt may run first in a grant batch.',
+      );
+    return (await grantedBatchWith(this.#db, [this], [], [receipt])).grants[0] ?? [];
   }
 
   /** `commit()` plus reads (`afterRead`) after the release, in the same transaction: they see its writes. */
