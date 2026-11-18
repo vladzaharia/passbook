@@ -16,15 +16,18 @@ export const TAG_COPY = {
   used: 'Last used {when} · {place}',
   neverUsed: 'Never used',
   usedVia: 'Last used {when} · {pass} · {place}',
-  opens: { pass: 'This pass', person: "All of {name}'s passes" },
+  worksWith: { pass: 'This pass', person: "All of {name}'s passes" },
   noAccount: 'No holder account',
   removePerson: {
     title: 'Remove {tag} from {name}?',
-    body: 'It stops opening all {n} of her passes.',
+    body: 'It stops working with all {n} of her passes.',
     confirm: 'Remove',
-    passOnly: 'Open this pass only',
+    passOnly: 'Works with this pass only',
   },
-  changed: { person: "{tag} now opens all of {name}'s passes", pass: '{tag} now opens this pass' },
+  changed: {
+    person: "{tag} now works with all of {name}'s passes",
+    pass: '{tag} now works with this pass',
+  },
   userGroup: 'On one pass',
   lostMeta: '•• {hint} · Reported lost {date} by {who}',
   menu: {
@@ -41,7 +44,7 @@ export const TAG_COPY = {
   lostToast: '{tag} reported lost',
   restoreConfirm: {
     title: 'Restore {tag}?',
-    body: 'It opens {target} again. Only do this if the tag is back in hand.',
+    body: 'It works with {target} again. Only do this if the tag is back in hand.',
   },
   restored: '{tag} restored',
   dialog: {
@@ -158,7 +161,7 @@ export const TAG_COPY = {
   portal: {
     access: 'Access',
     tags: 'Tags',
-    tagMeta: '{opens} · •• {hint} · Added {date}',
+    tagMeta: '{worksWith} · •• {hint} · Added {date}',
     lost: { label: 'Lost', meta: '•• {hint} · Reported {date}' },
     reportLost: 'Report lost',
     reportConfirm: {
@@ -187,6 +190,6 @@ export const TAG_ERROR_COPY: Record<(typeof TAG_ERROR_CODES)[number], string> = 
   TAG_UID_RANDOM: "This tag changes its ID and can't be assigned. Try another tag.",
   TAG_BINDING_LIMIT: 'This pass or person has the most tags allowed. Remove one first.',
   TAG_LIMIT: 'This organization has the most tags allowed.',
-  TAG_ASSURANCE_LOW: "Basic tags can't open this pass. Use a secure tag.",
+  TAG_ASSURANCE_LOW: "Basic tags can't work with this pass. Use a secure tag.",
   TAG_HOLDER_CHANGED: 'The pass changed hands. Start again.',
 };
