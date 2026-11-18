@@ -1,4 +1,8 @@
-import { EMAIL_LIMIT_COPY } from '@/shared/copy/email.ts';
+import {
+  EMAIL_LIMIT_COPY,
+  ISSUANCE_OUTCOME_COPY,
+  type IssuanceOutcome,
+} from '@/shared/copy/email.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { toast } from '../../ui/index.ts';
 
@@ -34,4 +38,12 @@ export function reportEmailError(error: unknown, prefix = ''): void {
     toast.info(`${prefix}${action}`);
   else if (state === 'retrying') toast.info(`${prefix}Email service is busy. ${action}`);
   else toast.info(`${prefix}Email status unknown. ${action}`);
+}
+
+/** The toast for a create that asked to send an email: success, info or warning by outcome. */
+export function reportIssuanceOutcome(outcome: IssuanceOutcome): void {
+  const line = ISSUANCE_OUTCOME_COPY[outcome];
+  if (outcome === 'queued') toast.success(line);
+  else if (outcome === 'limited_org' || outcome === 'limited_recipient') toast.warning(line);
+  else toast.info(line);
 }

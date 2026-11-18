@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EMAIL_LIMIT_COPY, ISSUANCE_OUTCOME_COPY } from '@/shared/copy/email.ts';
 import { ApiError } from '../../lib/errors.ts';
-import { classifyEmailError } from './email-outcome.ts';
+import { toast } from '../../ui/index.ts';
+import { classifyEmailError, reportIssuanceOutcome } from './email-outcome.ts';
 
 const limited = (limit: string) =>
   new ApiError({ status: 429, code: 'EMAIL_RATE_LIMITED', fields: { limit } });
@@ -31,4 +32,24 @@ describe('issuance outcome copy', () => {
       expect(line).toMatch(/^[A-Z].*\.$/);
     },
   );
+});
+
+const kit = vi.hoisted(() => ({ calls: [] as string[] }));
+
+describe('issuance toast per outcome', () => {
+  it.each([
+    ['queued', 'success'],
+    ['deferred', 'info'],
+    ['none', 'info'],
+    ['cancelled', 'info'],
+    ['limited_org', 'warning'],
+    ['limited_recipient', 'warning'],
+  ] as const)('%s uses toast.%s with its sentence', (outcome, kind) => {
+    kit.calls.length = 0;
+    for (const k of ['success', 'info', 'warning'] as const)
+      vi.spyOn(toast, k).mockImplementation(((m: string) => kit.calls.push(`${k}:${m}`)) as never);
+    reportIssuanceOutcome(outcome);
+    expect(kit.calls).toEqual([`${kind}:${ISSUANCE_OUTCOME_COPY[outcome]}`]);
+    vi.restoreAllMocks();
+  });
 });

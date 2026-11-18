@@ -10,13 +10,15 @@ export const EMAIL_LIMIT_COPY = {
  * What issuing a pass with an email came to: `scheduleIssuanceDelivery`'s outcomes
  * (`queued`, `deferred`, `cancelled`, `none`), with `deferred` split by the cap that held it.
  */
-export type IssuanceOutcome =
-  | 'queued'
-  | 'deferred'
-  | 'limited_org'
-  | 'limited_recipient'
-  | 'cancelled'
-  | 'none';
+export const ISSUANCE_OUTCOMES = [
+  'queued',
+  'deferred',
+  'limited_org',
+  'limited_recipient',
+  'cancelled',
+  'none',
+] as const;
+export type IssuanceOutcome = (typeof ISSUANCE_OUTCOMES)[number];
 
 export const ISSUANCE_OUTCOME_COPY: Record<IssuanceOutcome, string> = {
   queued: 'Email queued.',

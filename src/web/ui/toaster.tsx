@@ -65,6 +65,7 @@ export const toast = {
   sent: (message: string) =>
     sonner.success(message, { duration: 4000, icon: <SuccessMark scene="post" /> }),
   info: (message: string) => sonner.info(message, { duration: 4000 }),
+  warning: (message: string) => sonner.warning(message, { duration: 6000 }),
   /**
    * Errors stay until dismissed. `title` names what failed, "Could not {verb}" ("Could not save");
    * the line under it is the error's own sentence (errorMessage). A string is that sentence.
