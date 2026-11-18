@@ -1,7 +1,5 @@
-import type { Context } from 'hono';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type AuthContext, assertOrgAccess, modeOf } from '../../platform/auth.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import {
   ForbiddenError,
   NotFoundError,
@@ -90,8 +88,6 @@ export const fenceOf = (a: WebhookAccess): { orgId: string; mode: Mode } => ({
   orgId: a.authority.orgId,
   mode: a.authority.mode,
 });
-
-export type C = Context<AppBindings>;
 
 /** The feed reads what `passes:read` already reads per pass: that capability or key scope, either mode. */
 export async function authorizeFeed(
