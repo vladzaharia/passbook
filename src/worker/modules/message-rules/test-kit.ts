@@ -79,7 +79,7 @@ export async function ruleKit(): Promise<RuleKit> {
   });
   await persistTemplate(kit.fx, resolved, { registry: kit.registry });
   const dated = { id: resolved.id };
-  const api = (path: string, init: RequestInit = {}) =>
+  const api = async (path: string, init: RequestInit = {}) =>
     app.request(`${ORIGIN}/api/v1${path}`, init, kit.env);
   const stepRun = {
     do: async (_n: string, a: unknown, b?: unknown) =>

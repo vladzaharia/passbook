@@ -242,7 +242,7 @@ describe('lifecycle and back-pressure', () => {
 
 describe('tick', () => {
   it('claims at most 50 due rules, leases them, and re-claims after 5 minutes', async () => {
-    const send = vi.spyOn(kit.env.JOBS, 'sendBatch').mockResolvedValue(undefined);
+    const send = vi.spyOn(kit.env.JOBS, 'sendBatch').mockResolvedValue({} as never);
     for (let i = 0; i < 53; i++) await created({ name: `R${i}`, on: i < 10 });
     await run(kit.env.DB, 'DELETE FROM message_rules');
     for (let i = 0; i < 53; i++)

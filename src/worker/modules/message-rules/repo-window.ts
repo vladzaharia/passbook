@@ -1,4 +1,4 @@
-import { all, run, type SqlValue } from '../../platform/db.ts';
+import { run, type SqlValue } from '../../platform/db.ts';
 import type { RuleWindow } from './windows.ts';
 
 type Sql = { sql: string; params: SqlValue[] };
@@ -112,11 +112,3 @@ export const addRuleCounts = (db: D1Database, ruleId: string, sent: number, skip
     skipped,
     ruleId,
   ]);
-
-/** Fires the claim wrote for one broadcast, for tests and the run detail. */
-export const firesOf = (db: D1Database, broadcastId: string) =>
-  all<{ pass_id: string; occurrence: string }>(
-    db,
-    'SELECT pass_id, occurrence FROM message_rule_fires WHERE broadcast_id = ?',
-    [broadcastId],
-  );
