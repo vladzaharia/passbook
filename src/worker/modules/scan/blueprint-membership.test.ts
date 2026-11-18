@@ -43,14 +43,12 @@ describe('Membership at the scanner', () => {
     expect(await checkIn(s.headers, pass, { confirmed: true })).toMatchObject({ kind: 'ok' });
   });
 
-  // The pass JSON is voided for Wallet, but the scanner's pass record is not: a Cancelled member is held
-  // like a Frozen one, never silently admitted. Refusing outright needs the pass itself voided.
-  it('holds a Cancelled member for a check, never admits without a confirm', async () => {
-    const { t, s } = await desk();
+  // Membership and Booking bind /voided to Cancelled (the passkit tests build it), so the built pass.json
+  // carries voided: true. The scanner refuses such a pass like one whose record is voided, whatever the template.
+  it('refuses a pass whose built JSON is voided, as a Cancelled member', async () => {
+    const t = await kit.scanTemplate('Membership', membership(), { passStyle: { voided: true } });
+    const s = await kit.scanner({ templateIds: [t], settings: { roleWithoutSignIn: 'desk' } });
     const pass = await kit.scanPass(t, { status: 'Cancelled', guests: 2 });
-    expect(await checkIn(s.headers, pass)).toMatchObject({
-      kind: 'heads_up',
-      reason: 'check_required',
-    });
+    expect(await checkIn(s.headers, pass)).toMatchObject({ kind: 'refused', reason: 'voided' });
   });
 });
