@@ -1,4 +1,7 @@
+import { type ChoiceOption, seedOptions } from './choice-model.ts';
 import { type Dict, isRecord } from './model.ts';
+
+export type { ChoiceOption } from './choice-model.ts';
 
 export const INPUT_TYPES = [
   { value: 'text', label: 'Text' },
@@ -8,6 +11,7 @@ export const INPUT_TYPES = [
   { value: 'datetime', label: 'Date and time' },
   { value: 'email', label: 'Email' },
   { value: 'url', label: 'Link' },
+  { value: 'choice', label: 'Choice' },
 ] as const;
 export type PickType = (typeof INPUT_TYPES)[number]['value'];
 /** `list`: an array or object input (upcoming events, beacons). Its schema and sample are kept as is. */
@@ -28,6 +32,8 @@ export interface InputSpec {
   /** Text as typed; parsed by type when written. */
   default: string;
   sample: string;
+  /** Choice only: the allowed values, in order. */
+  options?: ChoiceOption[];
 }
 
 /** Names the expression engine refuses to read, plus `pass`, which is the server's scope. */
@@ -51,7 +57,20 @@ function typeOf(schema: Dict): InputType {
   if (schema.format === 'email') return 'email';
   if (schema.format === 'uri') return 'url';
   if (schema['x-widget'] === 'textarea') return 'textarea';
+  if (readOptions(schema)) return 'choice';
   return 'text';
+}
+
+/** The options of a text enum, or null when the node is not one. */
+function readOptions(schema: Dict): ChoiceOption[] | null {
+  const values = schema.enum;
+  if (!Array.isArray(values) || values.length === 0 || !values.every((v) => typeof v === 'string'))
+    return null;
+  const labels = isRecord(schema['x-enumLabels']) ? schema['x-enumLabels'] : {};
+  return (values as string[]).map((value) => ({
+    value,
+    label: typeof labels[value] === 'string' ? labels[value] : value,
+  }));
 }
 
 const show = (v: unknown): string => (v === undefined || v === null ? '' : String(v));
@@ -80,6 +99,7 @@ export function readInputs(manifest: Dict): InputSpec[] {
           required: required.includes(name),
           default: type === 'list' ? '' : show(s.default),
           sample: type === 'list' ? '' : show(sample[name]),
+          ...(type === 'choice' ? { options: readOptions(s) ?? [] } : {}),
         },
         order,
       };
@@ -106,6 +126,8 @@ export function schemaOf(spec: InputSpec, existing: Dict = {}, order = 10): Dict
     minLength: _n,
     type: _t,
     default: _d,
+    enum: _e,
+    'x-enumLabels': _l,
     ...kept
   } = existing;
   const node: Dict = { ...kept, 'x-label': spec.label, 'x-order': order };
@@ -120,13 +142,26 @@ export function schemaOf(spec: InputSpec, existing: Dict = {}, order = 10): Dict
       Object.assign(node, { format: 'email', 'x-widget': 'email', maxLength: 254 });
     else if (spec.type === 'url')
       Object.assign(node, { format: 'uri', 'x-widget': 'url', maxLength: 300 });
+    else if (spec.type === 'choice') Object.assign(node, optionNodes(spec.options ?? []));
     else node.maxLength = 200;
     if (spec.required) node.minLength = 1;
   }
   const dflt = spec.default === '' ? undefined : parse(spec.type, spec.default);
-  if (dflt !== undefined) node.default = dflt;
+  if (dflt !== undefined && allowed(spec, dflt)) node.default = dflt;
   return node;
 }
+
+function optionNodes(options: readonly ChoiceOption[]): Dict {
+  return {
+    type: 'string',
+    enum: options.map((o) => o.value),
+    'x-enumLabels': Object.fromEntries(options.map((o) => [o.value, o.label])),
+  };
+}
+
+/** A choice holds only its own values; anything else is left out of the schema. */
+const allowed = (spec: InputSpec, value: unknown): boolean =>
+  spec.type !== 'choice' || (spec.options ?? []).some((o) => o.value === value);
 
 /**
  * The node after an edit. A node whose type did not change keeps every keyword it has
@@ -141,6 +176,11 @@ function nodeFor(spec: InputSpec, existing: Dict, wasRequired: boolean): Dict {
     const dflt = spec.default === '' ? undefined : parse(spec.type, spec.default);
     if (dflt === undefined) delete node.default;
     else node.default = dflt;
+  }
+  if (spec.type === 'choice') {
+    const was = JSON.stringify(before.options);
+    if (was !== JSON.stringify(spec.options)) Object.assign(node, optionNodes(spec.options ?? []));
+    if (node.default !== undefined && !allowed(spec, node.default)) delete node.default;
   }
   if (wasRequired !== spec.required && node.type === 'string') {
     if (spec.required) node.minLength = Math.max(1, Number(node.minLength) || 0);
@@ -197,12 +237,15 @@ export function writeInputs(
       : schemaOf(spec, {}, order[i]);
     node['x-order'] = order[i];
     properties[spec.name] = node;
+    const typed = spec.type === 'choice' && !allowed(spec, spec.sample);
     const value =
       spec.type === 'list'
         ? oldSample[was(spec.name)]
-        : spec.sample === ''
-          ? undefined
-          : parse(spec.type, spec.sample);
+        : typed
+          ? spec.options?.[0]?.value
+          : spec.sample === ''
+            ? undefined
+            : parse(spec.type, spec.sample);
     if (value !== undefined) sample[spec.name] = value;
   });
   const prev = isRecord(manifest.inputs) ? manifest.inputs : {};
@@ -229,6 +272,7 @@ const SAMPLES: Record<PickType, string> = {
   datetime: '2030-06-01T19:00:00-07:00',
   email: 'alex@example.com',
   url: 'https://example.com',
+  choice: 'option_1',
 };
 
 export function newInput(existing: readonly InputSpec[], type: PickType = 'text'): InputSpec {
@@ -242,6 +286,7 @@ export function newInput(existing: readonly InputSpec[], type: PickType = 'text'
     required: false,
     default: '',
     sample: SAMPLES[type],
+    ...(type === 'choice' ? { options: seedOptions() } : {}),
   };
 }
 
