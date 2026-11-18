@@ -5,6 +5,7 @@ import {
   Copy,
   ListChecks,
   MonitorSmartphone,
+  Play,
   Radio,
   ScanLine,
 } from 'lucide-react';
@@ -21,9 +22,10 @@ import {
   MoreMenu,
   Skeleton,
   StatusPill,
+  toast,
 } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
-import { useScanningSessions } from './api.ts';
+import { useScanningSessions, useUpdateSession } from './api.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
 
 export function SessionsTab({
@@ -114,6 +116,7 @@ export function SessionsTab({
               </div>
               {canManage ? (
                 <MoreMenu>
+                  {s.status !== 'active' ? <ResumeItem session={s} /> : null}
                   <DropdownMenuItem onSelect={() => onDuplicate(s)}>
                     <Copy aria-hidden />
                     Duplicate session
@@ -170,6 +173,22 @@ export function SessionsTab({
     </div>
   );
 }
+function ResumeItem({ session: s }: { session: ScanningSession }) {
+  const update = useUpdateSession(s.id);
+  return (
+    <DropdownMenuItem
+      onSelect={() => {
+        update
+          .mutateAsync({ status: 'active', revision: s.updatedAt })
+          .catch((error: unknown) => toast.error(error, 'Could not change session'));
+      }}
+    >
+      <Play aria-hidden />
+      Resume session
+    </DropdownMenuItem>
+  );
+}
+
 export function Metric({ value, label }: { value: number; label: string }) {
   return (
     <div>
