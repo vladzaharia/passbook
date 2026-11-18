@@ -120,3 +120,13 @@ export interface Cx {
   /** `${part}\0${identity}` of entities a reference pick brings back. */
   restore: Set<string>;
 }
+
+/** An engine invariant broke: a bug, never bad input. The update job records `code`. */
+export class MergeEngineError extends Error {
+  readonly code: 'MERGE_CONFLICT_ID_CLASH';
+  constructor(code: MergeEngineError['code'], message: string) {
+    super(message);
+    this.name = 'MergeEngineError';
+    this.code = code;
+  }
+}

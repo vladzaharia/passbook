@@ -4,8 +4,16 @@ import { isObj } from './map.ts';
 import type { RefKind } from './types.ts';
 
 type Obj = Record<string, Json>;
-/** Visits a reference; a returned string replaces it in place. */
-export type RefVisit = (kind: RefKind, id: string, site: string) => string | undefined;
+/**
+ * Visits a reference; a returned string replaces it in place. `unit` is the value holding it,
+ * so the reference check can tell one side's copy of a site from another's.
+ */
+export type RefVisit = (kind: RefKind, id: string, site: string, unit?: Json) => string | undefined;
+/** `visit` with every reference it sees attributed to `unit`. */
+export const inUnit =
+  (visit: RefVisit, unit: Json): RefVisit =>
+  (kind, id, site) =>
+    visit(kind, id, site, structuredClone(unit));
 
 const ROOTS = new Set<string>(SCOPE_ROOTS);
 const bracket = (t: string) => t.startsWith('[');
@@ -76,20 +84,20 @@ const step = (v: Json, i: number) => (isObj(v) && typeof v.id === 'string' ? v.i
 function walkTree(v: Json, at: string, visit: RefVisit): void {
   if (Array.isArray(v)) {
     for (const [i, x] of v.entries()) {
-      if (typeof x === 'string') v[i] = x.includes('{{') ? scanText(x, visit, at) : x;
+      if (typeof x === 'string') v[i] = x.includes('{{') ? scanText(x, inUnit(visit, x), at) : x;
       else walkTree(x, `${at}/${step(x, i)}`, visit);
     }
     return;
   }
   if (!isObj(v)) return;
-  if (v.type === 'money') ids(v.pending, 'action', visit, at);
+  if (v.type === 'money') ids(v.pending, 'action', inUnit(visit, v), at);
   if (v.type === 'history' && typeof v.input === 'string')
-    v.input = visit('input', v.input, at) ?? v.input;
+    v.input = visit('input', v.input, at, structuredClone(v)) ?? v.input;
   if (v.type === 'image' && typeof v.source === 'string')
-    v.source = visit('imageSlot', v.source, at) ?? v.source;
+    v.source = visit('imageSlot', v.source, at, structuredClone(v)) ?? v.source;
   for (const [k, x] of Object.entries(v)) {
-    if (k === 'when') scanCond(x, visit, at);
-    else if (typeof x === 'string') v[k] = x.includes('{{') ? scanText(x, visit, at) : x;
+    if (k === 'when') scanCond(x, inUnit(visit, x as Json), at);
+    else if (typeof x === 'string') v[k] = x.includes('{{') ? scanText(x, inUnit(visit, x), at) : x;
     else walkTree(x, `${at}/${k}`, visit);
   }
 }
@@ -97,12 +105,19 @@ function walkTree(v: Json, at: string, visit: RefVisit): void {
 /** Every reference in `scan.display`. Mutates when `visit` answers. */
 export function walkScanDisplay(display: Obj, visit: RefVisit): void {
   for (const p of Array.isArray(display.panels) ? display.panels : [])
-    if (isObj(p)) ids(p.actions, 'action', visit, `scan/display/panels/${String(p.id)}/actions`);
+    if (isObj(p))
+      ids(
+        p.actions,
+        'action',
+        inUnit(visit, p.actions as Json),
+        `scan/display/panels/${String(p.id)}/actions`,
+      );
   const customer = isObj(display.customer) ? display.customer : undefined;
   if (customer) {
     if (typeof customer.panel === 'string')
-      customer.panel = visit('panel', customer.panel, 'scan/customer/panel') ?? customer.panel;
-    ids(customer.chips, 'chip', visit, 'scan/customer/chips');
+      customer.panel =
+        visit('panel', customer.panel, 'scan/customer/panel', customer.panel) ?? customer.panel;
+    ids(customer.chips, 'chip', inUnit(visit, customer.chips as Json), 'scan/customer/chips');
   }
   walkTree(display, 'scan/display', visit);
 }

@@ -1,11 +1,22 @@
 import type { Json } from '../../types.ts';
 import { mergeStyles, type Styles, stylesOf } from './fields.ts';
 import { byIdentifier, listOf } from './list.ts';
-import { container, leaf, mapOf, part, type Rule, spliceOrder, type V } from './map.ts';
+import { container, isObj, leaf, mapOf, part, type Rule, spliceOrder, type V } from './map.ts';
 import { setOf } from './set.ts';
 import type { Cx } from './types.ts';
 
 const RELEVANCE = ['locations', 'beacons', 'relevantDates', 'maxDistance', 'relevantDate'];
+
+const formatOf = (v: V) => (isObj(v) ? v.format : undefined);
+/**
+ * One index. Its properties merge by key while it holds the same barcode; when a side put another
+ * format there (a swap, a replacement or a shift), the index is one value, so properties of two
+ * different barcodes never mix.
+ */
+const barcodeAt: Rule = (cx, path, b, o, t) =>
+  [o, t].every((x) => x === undefined || b === undefined || formatOf(x) === formatOf(b))
+    ? mapOf()(cx, path, b, o, t)
+    : leaf(cx, path, b, o, t);
 
 /** Barcodes by index, because bindings target `{barcode: n}`. */
 const barcodeList: Rule = (cx, path, b, o, t) => {
@@ -15,7 +26,7 @@ const barcodeList: Rule = (cx, path, b, o, t) => {
   // Indexes shift when a side adds or removes one: a count change on both sides is one conflict.
   if (cx.twoWay ? lo !== lt : lo !== lb && lt !== lb) return leaf(cx, path, b, o, t);
   const obj = (v: V) => (Array.isArray(v) ? { ...v.map((x) => x) } : undefined);
-  const merged = mapOf({}, mapOf())(cx, path, obj(b), obj(o), obj(t)) as Record<string, Json>;
+  const merged = mapOf({}, barcodeAt)(cx, path, obj(b), obj(o), obj(t)) as Record<string, Json>;
   return Object.keys(merged)
     .sort((x, y) => Number(x) - Number(y))
     .map((k) => merged[k] as Json);

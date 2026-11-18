@@ -7,7 +7,16 @@ import { mergePassJson } from './pass-json.ts';
 import { brokenRefs, entityMaps, type Ref } from './references.ts';
 import { detectRenames, PART_OF, renameIn } from './renames.ts';
 import { restorable, restoreFiles, restoreKeys } from './restore.ts';
-import type { Change, Conflict, Cx, MergeResult, PackageDoc, Rename, Resolution } from './types.ts';
+import {
+  type Change,
+  type Conflict,
+  type Cx,
+  MergeEngineError,
+  type MergeResult,
+  type PackageDoc,
+  type Rename,
+  type Resolution,
+} from './types.ts';
 import {
   alignTo,
   type SchemaGap,
@@ -66,12 +75,28 @@ function run(
   const renames: Rename[] = [];
   for (const { step, clean, taken } of plan) {
     const part = PART_OF[step.kind];
-    // Ours deleted it and theirs only renamed it, or ours took the new name: no rename.
-    if (taken || !mo[step.kind].has(step.from)) {
+    const id = conflictId(part, [step.from]);
+    // Ours took the new name: no rename, and upstream's references to it now read ours' entity.
+    // That is always shown; only `ours` (keep the result as it is) settles it.
+    if (taken) {
+      if (picks[id] !== 'ours' && !cx.conflicts.some((c) => c.id === id))
+        cx.conflicts.push({
+          id,
+          part,
+          path: [step.from],
+          kind: 'rename-modify',
+          base: step.from,
+          ours: step.to,
+          theirs: step.to,
+        });
       renames.push({ ...step, applied: false });
       continue;
     }
-    const id = conflictId(part, [step.from]);
+    // Ours deleted it and theirs only renamed it: the deletion stands.
+    if (!mo[step.kind].has(step.from)) {
+      renames.push({ ...step, applied: false });
+      continue;
+    }
     const applied = clean || picks[id] === 'theirs';
     if (!applied && picks[id] !== 'ours')
       cx.conflicts.push({
@@ -99,7 +124,7 @@ function sortConflicts(list: Conflict[]): Conflict[] {
   for (const c of list) {
     const seen = byId.get(c.id);
     if (seen && canon(seen as never) !== canon(c as never))
-      throw new Error(`merge: two conflicts share the id ${c.id}`);
+      throw new MergeEngineError('MERGE_CONFLICT_ID_CLASH', `Two conflicts share the id ${c.id}.`);
     byId.set(c.id, c);
   }
   return [...byId.values()].sort((x, y) => cmp(x.id, y.id));

@@ -1,5 +1,6 @@
 import type { Json } from '../../types.ts';
-import { conditionInputs, exprReferences } from '../expr.ts';
+import { conditionInputs } from '../expr.ts';
+import { pathTokens } from '../scan-display/text.ts';
 import { canon, isObj } from './map.ts';
 import { type RefVisit, walkScanDisplay } from './ref-scan.ts';
 import type { PackageDoc, RefKind } from './types.ts';
@@ -20,11 +21,28 @@ const BEHAVIOR_EXPRS: Record<string, string[]> = {
   'venue-locations': ['key', 'value', 'label', 'url', 'linkText'],
 };
 
-const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const nameInExpr = (expr: string, from: string, to: string) =>
-  expr.replace(/\{\{[^}]*\}\}/g, (seg) =>
-    seg.replace(new RegExp(`(?<![\\w.$])${escapeRe(from)}(?![\\w$])`, 'g'), to),
-  );
+const bracket = (t: string) => t.startsWith('[');
+const join = (tokens: string[]) =>
+  tokens.reduce((acc, t, i) => (i === 0 ? t : bracket(t) ? `${acc}${t}` : `${acc}.${t}`), '');
+
+/**
+ * Every input an expression path reads, visited: the root unless it is `lookups` or `pass`, and
+ * any `[x]`. Filters and literal text are never touched. Returns the rewritten path.
+ */
+function exprPath(path: string, visit: (name: string) => string | undefined): string {
+  const tokens = pathTokens(path);
+  if (!tokens?.[0]) return path;
+  let changed = false;
+  for (const [i, t] of tokens.entries()) {
+    const root = i === 0 && t !== 'lookups' && t !== 'pass' && !bracket(t);
+    if (!root && !bracket(t)) continue;
+    const name = bracket(t) ? t.slice(1, -1).trim() : t;
+    const next = visit(name);
+    if (next !== undefined && next !== name)
+      [tokens[i], changed] = [bracket(t) ? `[${next}]` : next, true];
+  }
+  return changed ? join(tokens) : path;
+}
 
 /** Identities of a list, as `listOf` names them: `id#n`, the n-th item with that id. */
 const nth = (items: Json[], idOf: (x: Json) => string) => {
@@ -47,7 +65,7 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
   const set = (o: Obj | Json[] | undefined, key: string | number, kind: RefKind, site: string) => {
     const cur = (o as Obj | undefined)?.[key as string];
     if (typeof cur !== 'string') return;
-    const next = visit(kind, cur, site);
+    const next = visit(kind, cur, site, structuredClone(o as Json));
     if (next !== undefined) (o as Obj)[key as string] = next;
   };
   const list = (o: Obj | undefined, key: string, kind: RefKind, site: string) => {
@@ -56,13 +74,12 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
   const expr = (o: Obj | undefined, key: string, site: string, skip: string[] = []) => {
     const e = o?.[key];
     if (typeof e !== 'string' || !o) return;
-    let out = e;
-    for (const name of exprReferences(e).inputs) {
-      if (skip.includes(name)) continue;
-      const next = visit('input', name, site);
-      if (next !== undefined) out = nameInExpr(out, name, next);
-    }
-    o[key] = out;
+    const at = (name: string) => (skip.includes(name) ? undefined : visit('input', name, site, e));
+    o[key] = e.replace(/\{\{([^}]*)\}\}/g, (seg, body: string) => {
+      const path = (body.split('|')[0] ?? '').trim();
+      const next = exprPath(path, at);
+      return next === path ? seg : `{{${body.replace(path, next)}}}`;
+    });
   };
   const cond = (c: unknown, site: string) => {
     const o = obj(c);
@@ -84,7 +101,7 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
     if (typeof to?.field === 'string') set(to, 'field', 'field', site);
     else if (Array.isArray(to?.field)) list(to, 'field', 'field', site);
     if (typeof to?.action === 'string') set(to, 'action', 'featuredAction', site);
-    if (typeof to?.barcode === 'number') visit('barcode', String(to.barcode), site);
+    if (typeof to?.barcode === 'number') visit('barcode', String(to.barcode), site, o);
     if (typeof to?.image === 'string') set(to, 'image', 'imageSlot', site);
     expr(o, 'value', site);
     cond(o.when, site);
@@ -93,10 +110,12 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
 
   const display = obj(man.display);
   for (const k of ['title', 'subtitle', 'status']) expr(display, k, `display/${k}`);
-  list(display, 'search', 'input', 'display/search');
+  const search = arr(display?.search);
+  const searchIds = nth(search, String);
+  for (const [i] of search.entries()) set(search, i, 'input', `display/search/${searchIds[i]}`);
 
-  direct(man.stamps, 'stamps');
-  direct(man.messaging, 'messaging');
+  direct(man.stamps, 'stamps/input');
+  direct(man.messaging, 'messaging/input');
   const stampArt = obj(obj(man.stamps)?.art);
   for (const k of Object.keys(stampArt ?? {})) set(stampArt, k, 'art', `stamps/art/${k}`);
 
@@ -112,7 +131,9 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
 
   const scan = obj(man.scan);
   direct(scan?.lookup, 'scan/lookup');
-  for (const f of arr(scan?.flags)) direct(f, 'scan/flags');
+  const flags = arr(scan?.flags);
+  const flagIds = nth(flags, (f) => String(obj(f)?.input));
+  for (const [i, f] of flags.entries()) direct(f, `scan/flags/${flagIds[i]}`);
   for (const a of arr(scan?.actions)) direct(a, `scan/actions/${String(obj(a)?.id)}`);
   const access = obj(scan?.access);
   const accessInput = obj(access?.input);

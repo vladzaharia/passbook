@@ -1,4 +1,4 @@
-import type { Json } from '../../types.ts';
+import { type Json, PASS_STYLES } from '../../types.ts';
 import type { Conflict, ConflictKind, Cx, PartId, Resolution } from './types.ts';
 
 /** A value on one side; `undefined` is absent. */
@@ -43,14 +43,16 @@ const SCALES = new Set(['1', '2', '3']);
 const IMAGE_NAME = /^((?:[\w-]+\.lproj\/)?)([A-Za-z]+)(?:@([23])x)?\.png$/;
 
 /**
- * The value a pick stands for at `path`, or `undefined` when the pick does not fit the part: a
- * file pick only fits a file part, and an image unit takes `{scale: sha1}` or one file of the unit.
+ * The value a pick stands for at `path`, or `undefined` when the pick does not fit. A file pick
+ * fits only a whole file or image unit (one path segment in a file part); an image unit takes
+ * `{scale: sha1}` or one file of the unit; a `.strings` key takes a string; the main style takes
+ * a non-poster style name.
  */
 function picked(cx: Cx, path: string[], pick: Resolution): { v: V } | undefined {
   if (pick === 'ours' || pick === 'theirs') return undefined;
-  const files = cx.part.startsWith('files.') || cx.part === 'strings';
-  const name = path.at(-1) ?? '';
-  if (cx.part === 'files.image') {
+  const whole = (cx.part.startsWith('files.') || cx.part === 'strings') && path.length === 1;
+  const name = path[0] ?? '';
+  if (whole && cx.part === 'files.image') {
     if ('value' in pick) {
       const v = pick.value;
       const ok =
@@ -63,9 +65,16 @@ function picked(cx: Cx, path: string[], pick: Resolution): { v: V } | undefined 
     if (!m || `${m[1]}${m[2]}` !== name) return undefined;
     return { v: { [m[3] ?? '1']: pick.file.sha1 } };
   }
-  if ('file' in pick) return files ? { v: { name, sha1: pick.file.sha1 } } : undefined;
-  if (files && !(isObj(pick.value) && typeof pick.value.sha1 === 'string')) return undefined;
-  return { v: files && isObj(pick.value) ? { name, sha1: pick.value.sha1 as string } : pick.value };
+  if ('file' in pick) return whole ? { v: { name, sha1: pick.file.sha1 } } : undefined;
+  const v = pick.value;
+  if (whole)
+    return isObj(v) && typeof v.sha1 === 'string' ? { v: { name, sha1: v.sha1 } } : undefined;
+  if (cx.part === 'strings' && typeof v !== 'string') return undefined;
+  if (cx.part === 'pass.style' && path.length === 0)
+    return typeof v === 'string' && !v.startsWith('poster') && PASS_STYLES.includes(v as never)
+      ? { v }
+      : undefined;
+  return { v };
 }
 
 /** Records a conflict unless a fitting resolution was picked; returns the value to use. */

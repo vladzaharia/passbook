@@ -5696,6 +5696,7 @@ exports[`goldens over templates/ history > starter-event-ticket: every pair of v
     },
     "conflicts": [
       "inputs:properties/upcomingEvents delete-modify",
+      "references:input/upcomingEvents/behaviors/upcoming-events#0 reference",
     ],
     "kept": [
       "files/artwork@2x.png = 462a69922c6ad8886dcf7619d5cc12d1b95851de",
@@ -5773,6 +5774,7 @@ exports[`goldens over templates/ history > starter-event-ticket: every pair of v
     },
     "conflicts": [
       "inputs:properties/upcomingEvents delete-modify",
+      "references:input/upcomingEvents/behaviors/upcoming-events#0 reference",
     ],
     "kept": [
       "files/artwork@2x.png = 462a69922c6ad8886dcf7619d5cc12d1b95851de",
@@ -5855,6 +5857,7 @@ exports[`goldens over templates/ history > starter-event-ticket: every pair of v
       "files.image:artwork binary",
       "inputs:properties/upcomingEvents delete-modify",
       "manifest.meta:description both-changed",
+      "references:input/upcomingEvents/behaviors/upcoming-events#0 reference",
     ],
     "kept": [
       "files/artwork@2x.png = 462a69922c6ad8886dcf7619d5cc12d1b95851de",
@@ -5928,6 +5931,7 @@ exports[`goldens over templates/ history > starter-event-ticket: every pair of v
     },
     "conflicts": [
       "inputs:properties/upcomingEvents delete-modify",
+      "references:input/upcomingEvents/behaviors/upcoming-events#0 reference",
     ],
     "kept": [
       "files/artwork@2x.png = 462a69922c6ad8886dcf7619d5cc12d1b95851de",
@@ -6077,7 +6081,9 @@ exports[`goldens over templates/ history > starter-event-ticket: every pair of v
       "manifest.meta": 1,
       "strings": 1,
     },
-    "conflicts": [],
+    "conflicts": [
+      "references:input/upcomingEvents/behaviors/upcoming-events#0 reference",
+    ],
     "kept": [
       "files/artwork@2x.png = 462a69922c6ad8886dcf7619d5cc12d1b95851de",
       "manifest/bindings/{"field":"event","prop":"changeMessage"}#0/to/field = "event"",
@@ -6141,7 +6147,7 @@ exports[`goldens over templates/ history > starter-event-ticket: every pair of v
       "pass/style/fields/event#0/label = "Forked"",
     ],
     "renames": [],
-    "status": "clean",
+    "status": "conflicted",
   },
   "e6d13cb70e..d6f7e50a8c": {
     "changes": {
@@ -6158,6 +6164,7 @@ exports[`goldens over templates/ history > starter-event-ticket: every pair of v
     "conflicts": [
       "files.image:artwork binary",
       "manifest.meta:description both-changed",
+      "references:input/upcomingEvents/behaviors/upcoming-events#0 reference",
     ],
     "kept": [
       "files/artwork@2x.png = 462a69922c6ad8886dcf7619d5cc12d1b95851de",

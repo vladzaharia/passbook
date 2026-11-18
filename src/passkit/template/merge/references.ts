@@ -1,5 +1,5 @@
 import { type Json, PASS_STYLES } from '../../types.ts';
-import { isObj } from './map.ts';
+import { canon, isObj } from './map.ts';
 import { walkRefs } from './ref-walk.ts';
 import type { PackageDoc, RefKind } from './types.ts';
 
@@ -81,24 +81,27 @@ export interface Ref {
 }
 
 /** Every reference in `doc`, and whether its target is there. */
-export function refsOf(doc: PackageDoc): (Ref & { dangling: boolean })[] {
+export function refsOf(doc: PackageDoc): (Ref & { dangling: boolean; unit: string })[] {
   const maps = entityMaps(doc);
-  const out: (Ref & { dangling: boolean })[] = [];
-  walkRefs(structuredClone(doc), (kind, id, site) => {
-    out.push({ kind, id, site, dangling: !maps[kind].has(id) });
+  const out: (Ref & { dangling: boolean; unit: string })[] = [];
+  walkRefs(structuredClone(doc), (kind, id, site, unit) => {
+    out.push({ kind, id, site, dangling: !maps[kind].has(id), unit: canon(unit) });
     return undefined;
   });
   return out;
 }
 
 const keyOf = (r: Ref) => `${r.kind}\0${r.id}\0${r.site}`;
-const barcodeCount = (d: PackageDoc) => arr(obj(d.passJson)?.barcodes).length;
+/** A reference with the value holding it: two sides' copies match only when equal. */
+const unitKey = (r: Ref & { unit: string }) => `${keyOf(r)}\0${r.unit}`;
+const barcodes = (d: PackageDoc) => arr(obj(d.passJson)?.barcodes);
+const formatAt = (d: PackageDoc, i: number) => obj(barcodes(d)[i])?.format;
 
 /**
  * References the merge broke. A dangling reference in `merged` counts unless some side has the
- * same reference dangling too (that side made it so). A barcode index also breaks when a side
- * changed the barcode count and does not have that binding itself: its index now means another
- * barcode.
+ * same reference, in an equal holding value, dangling too (that side made it so). A barcode index also breaks when a side
+ * that does not have that binding changed the barcode count, or the format at that index (a
+ * swap or a replacement): its index now means another barcode.
  */
 export function brokenRefs(
   merged: PackageDoc,
@@ -107,22 +110,30 @@ export function brokenRefs(
   theirs: PackageDoc[],
 ): Ref[] {
   const sides = [ours, ...theirs].map(refsOf);
-  const owned = new Set(sides.flatMap((refs) => refs.filter((r) => r.dangling).map(keyOf)));
+  const owned = new Set(sides.flatMap((refs) => refs.filter((r) => r.dangling).map(unitKey)));
   const out = new Map<string, Ref>();
   const refs = refsOf(merged);
   for (const r of refs)
-    if (r.dangling && !owned.has(keyOf(r)))
+    if (r.dangling && !owned.has(unitKey(r)))
       out.set(keyOf(r), { kind: r.kind, id: r.id, site: r.site });
-  const [lo, lt] = [ours, theirs[0] as PackageDoc].map(barcodeCount) as [number, number];
-  const lb = base ? barcodeCount(base) : undefined;
-  const moved = [
-    { refs: sides[0], changed: lb === undefined ? lo !== lt : lo !== lb },
-    { refs: sides.slice(1).flat(), changed: lb === undefined ? lo !== lt : lt !== lb },
+  const t = theirs[0] as PackageDoc;
+  const [lo, lt] = [ours, t].map((d) => barcodes(d).length) as [number, number];
+  const lb = base ? barcodes(base).length : undefined;
+  const moved = (doc: PackageDoc, count: number, i: number) =>
+    lb === undefined
+      ? lo !== lt
+      : count !== lb || formatAt(doc, i) !== formatAt(base as PackageDoc, i);
+  const sideOf = [
+    { doc: ours, count: lo, refs: sides[0] ?? [] },
+    { doc: t, count: lt, refs: sides.slice(1).flat() },
   ];
   for (const r of refs) {
     if (r.kind !== 'barcode') continue;
-    for (const side of moved)
-      if (side.changed && !side.refs?.some((x) => x.kind === 'barcode' && x.site === r.site))
+    for (const side of sideOf)
+      if (
+        moved(side.doc, side.count, Number(r.id)) &&
+        !side.refs.some((x) => x.kind === 'barcode' && x.site === r.site)
+      )
         out.set(keyOf(r), { kind: r.kind, id: r.id, site: r.site });
   }
   return [...out.values()];

@@ -12,5 +12,5 @@ export type {
   RenameKind,
   Resolution,
 } from './types.ts';
-export { MERGE_ENGINE_REVISION } from './types.ts';
+export { MERGE_ENGINE_REVISION, MergeEngineError } from './types.ts';
 export { type Step, type StepDoc, UPGRADERS, type Upgraders, upgrade } from './versions.ts';
