@@ -1,9 +1,13 @@
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { JOIN_FORM_MAX_BYTES } from '../../../shared/contracts/join.ts';
-import { PublicTokenParamSchema } from '../../../shared/contracts/public.ts';
+import {
+  PublicAssetParamSchema,
+  PublicTokenParamSchema,
+} from '../../../shared/contracts/public.ts';
+import { passDevice } from '../../../shared/device.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { AppError, ForbiddenError } from '../../platform/errors.ts';
+import { AppError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import {
   ASSET_MISSES_PER_MINUTE,
@@ -13,14 +17,16 @@ import {
   gateMisses,
   rateLimit,
 } from '../../platform/rate-limit.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
 import { requestTheme } from '../../ssr/head.ts';
+import { type JoinPage, renderJoinPage, statusOf } from '../../ssr/join-page.tsx';
 import { type C, svc } from '../passes/http.ts';
-import { PAGE_HEADERS } from '../public/routes.ts';
+import { langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { platformLimits } from './caps.ts';
 import { readDeviceCookie, setDeviceCookie } from './cookie.ts';
-import { openRelease } from './issue.ts';
+import { type OpenRelease, openRelease } from './issue.ts';
+import { joinPreview, previewImage } from './preview.ts';
 import type { PublicLink } from './repo-issues.ts';
-import { type JoinPage, renderJoinPage, statusOf } from './stub-page.ts';
 import { closedReason, type JoinOutcome, lookupLink, refuse, submitJoin } from './submit.ts';
 
 /** /j: a public join link's page and form. No sign-in; every write is the link's own grant. */
@@ -29,6 +35,9 @@ export const joinPublicRoutes = createRouter();
 joinPublicRoutes.use('/:token', gateMisses(ASSET_MISSES_PER_MINUTE));
 joinPublicRoutes.use('/:token', limitBody(JOIN_FORM_MAX_BYTES));
 joinPublicRoutes.on('GET', '/:token', rateLimit('RL_PUBLIC'));
+// The card's images: a page loads a few per view.
+joinPublicRoutes.use('/:token/card/*', gateMisses(ASSET_MISSES_PER_MINUTE));
+joinPublicRoutes.use('/:token/card/*', rateLimit('RL_PUBLIC_ASSET'));
 
 const html = (c: C, page: JoinPage, status?: ContentfulStatusCode) =>
   c.html(
@@ -37,20 +46,55 @@ const html = (c: C, page: JoinPage, status?: ContentfulStatusCode) =>
     PAGE_HEADERS,
   );
 
-const formPage = (
-  link: PublicLink,
-  askName: boolean,
-  extra: Partial<Extract<JoinPage, { kind: 'form' }>> = {},
-): JoinPage => ({
-  kind: 'form',
-  orgName: link.orgName,
-  askName,
-  askEmail: link.askEmail,
-  test: link.mode === 'test',
-  ...extra,
-});
+/** The open release of a link, or null when it cannot take cards (a refusal the caller already knows how to say). */
+async function openOf(ctx: ServiceContext, link: PublicLink): Promise<OpenRelease | null> {
+  try {
+    return await openRelease(ctx, link);
+  } catch (error) {
+    if (!(error instanceof AppError) || error.status >= 500) throw error;
+    return null;
+  }
+}
 
-function respond(c: C, outcome: JoinOutcome) {
+/** The form page; the card is the open release's with defaults only. A card that will not draw leaves the form working. */
+async function formPage(
+  c: C,
+  link: PublicLink,
+  open: OpenRelease | null,
+  extra: Partial<Extract<JoinPage, { kind: 'form' }>> = {},
+): Promise<JoinPage> {
+  const ctx = svc(c);
+  let card: Awaited<ReturnType<typeof joinPreview>> | null = null;
+  if (open) {
+    try {
+      card = await joinPreview(ctx, link, open, c.req.param('token') ?? '', {
+        locale: langOf(c.req.header('accept-language')),
+        timeZone: zoneOf(c) ?? 'UTC',
+      });
+    } catch (error) {
+      if (error instanceof AppError && error.status < 500) {
+        ctx.log.warn('join.preview_failed', {
+          code: error.code,
+          linkId: link.id,
+          orgId: link.orgId,
+        });
+      } else throw error;
+    }
+  }
+  return {
+    kind: 'form',
+    orgName: link.orgName,
+    askName: open ? open.readiness.nameInput !== null : link.nameInput !== null,
+    askEmail: link.askEmail,
+    test: link.mode === 'test',
+    card,
+    siteKey: c.env.TURNSTILE_SITE_KEY,
+    device: passDevice(c.req.header('user-agent')),
+    ...extra,
+  };
+}
+
+async function respond(c: C, outcome: JoinOutcome) {
   switch (outcome.kind) {
     case 'card':
       setDeviceCookie(c, outcome.device);
@@ -62,7 +106,11 @@ function respond(c: C, outcome: JoinOutcome) {
     case 'form':
       return html(
         c,
-        formPage(outcome.link, outcome.askName, { values: outcome.values, error: outcome.error }),
+        await formPage(c, outcome.link, await openOf(svc(c), outcome.link), {
+          askName: outcome.askName,
+          values: outcome.values,
+          error: outcome.error,
+        }),
         outcome.status ?? 422,
       );
     case 'refused':
@@ -87,17 +135,12 @@ register(
       refuse(ctx, link, 'JOIN_LINK_CLOSED');
       return html(c, { kind: 'refused', reason: 'closed' });
     }
-    let open: Awaited<ReturnType<typeof openRelease>> = null;
-    try {
-      open = await openRelease(ctx, link);
-    } catch (error) {
-      if (!(error instanceof AppError) || error.status >= 500) throw error;
-    }
+    const open = await openOf(ctx, link);
     if (!open) {
       refuse(ctx, link, 'JOIN_NOT_READY', 'error');
       return html(c, { kind: 'refused', reason: 'closed' });
     }
-    return html(c, formPage(link, open.readiness.nameInput !== null));
+    return html(c, await formPage(c, link, open));
   },
 );
 
@@ -135,5 +178,39 @@ register(
       device: readDeviceCookie(c),
     });
     return respond(c, outcome);
+  },
+);
+
+const IMAGE_HEADERS = {
+  'content-type': 'image/png',
+  'cache-control': 'private, max-age=300',
+  'x-content-type-options': 'nosniff',
+};
+
+register(
+  joinPublicRoutes,
+  'join',
+  {
+    method: 'get',
+    path: '/{token}/card/{name}',
+    summary: 'Join page card image',
+    params: PublicAssetParamSchema,
+  },
+  async (c) => {
+    const ctx = svc(c);
+    const p = c.req.valid('param');
+    const link = await lookupLink(ctx, p.token);
+    const open =
+      link && !closedReason(link, await platformLimits(ctx, link.mode))
+        ? await openOf(ctx, link)
+        : null;
+    if (!link || !open) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
+    const image = await previewImage(ctx, link, open, p.name);
+    const headers = { ...IMAGE_HEADERS, etag: image.etag };
+    if (c.req.header('if-none-match') === image.etag) {
+      await image.body.cancel();
+      return new Response(null, { status: 304, headers });
+    }
+    return new Response(image.body, { headers });
   },
 );

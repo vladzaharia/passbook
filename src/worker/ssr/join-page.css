@@ -1,0 +1,203 @@
+/* The join page (join-page.tsx). The org leads: its bar, a headline, the card the visitor will get
+   with the buddy on its top edge, then the form. One column on a phone; card beside form from 56rem.
+   Colours and type come from the kit's tokens; motion is CSS, with one small script (public/join.js)
+   that adds the submit moment. */
+body {
+  padding: 0;
+}
+.jn {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  --wl-gutter: 1rem;
+}
+.jn-main {
+  width: 100%;
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 1.5rem max(var(--wl-gutter), env(safe-area-inset-right))
+    max(2rem, env(safe-area-inset-bottom)) max(var(--wl-gutter), env(safe-area-inset-left));
+}
+.jn h1 {
+  margin: 0;
+  font-size: var(--pk-font-size-2xl);
+  line-height: var(--pk-line-height-2xl);
+  font-weight: var(--pk-font-weight-semibold);
+  letter-spacing: var(--pk-tracking-tight);
+  color: var(--pk-text-strong);
+  overflow-wrap: anywhere;
+}
+.jn-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+/* 11/12 of the buddy's height stays free above the card's edge (art-wallet.css). */
+.jn-host {
+  position: relative;
+  margin-top: 4.125rem;
+  --wl-buddy-inset: 1.5rem;
+  --wl-seat-border: 1px;
+}
+.jn-host > .wl-buddy {
+  z-index: 3;
+}
+.jn-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  overflow: hidden;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-xl);
+  background: var(--pk-surface-sunken);
+}
+.jn-stage .pc-stage {
+  max-width: 17rem;
+}
+.jn-blank {
+  width: 100%;
+  max-width: 17rem;
+  aspect-ratio: 320 / 200;
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+  border: 1px dashed var(--pk-border-strong);
+}
+.jn-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 26rem;
+}
+.jn-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+}
+.jn-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.jn-field label {
+  margin: 0;
+}
+.jn-help {
+  margin: 0;
+  font-size: var(--pk-font-size-xs);
+  line-height: var(--pk-line-height-xs);
+  color: var(--pk-text-muted);
+  overflow-wrap: anywhere;
+}
+.jn-field .jn-help {
+  margin-top: -0.25rem;
+}
+.jn-keeps {
+  text-align: center;
+}
+.jn-ts:empty {
+  display: none;
+}
+.jn .callout {
+  margin: 0;
+}
+.jn-inapp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--pk-info-border, var(--pk-border-strong));
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-info-subtle, var(--pk-surface-raised));
+  font-size: var(--pk-font-size-sm);
+  line-height: var(--pk-line-height-sm);
+  color: var(--pk-text-default);
+}
+.jn-inapp .btn {
+  width: auto;
+  align-self: flex-start;
+}
+.jn-inapp .btn[data-done] {
+  border-color: var(--pk-success, currentColor);
+}
+@media (min-width: 56rem) {
+  .jn-main {
+    padding-top: 2.5rem;
+  }
+  .jn-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+    gap: 3rem;
+    margin-top: 2rem;
+  }
+  .jn-host {
+    margin-top: 4.125rem;
+  }
+  .jn-stage {
+    padding: 2.5rem 2rem;
+  }
+  .jn-stage .pc-stage {
+    max-width: 20rem;
+  }
+  .jn-side {
+    margin-top: 4.125rem;
+  }
+}
+@media (min-width: 40rem) and (max-width: 55.99rem) {
+  .jn-side {
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+  .jn-host {
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+}
+
+/* The submit moment (join.js sets data-sending on .jn): the middle pass rises out of the buddy,
+   the card takes the light and the button waits. transform-free for the pass (`translate`), so the
+   art's own part animation underneath keeps its transform. Reduced motion skips all of it. */
+@media (prefers-reduced-motion: no-preference) {
+  .jn[data-sending] .jn-host [data-part="c2"] {
+    animation: jn-rise 620ms var(--wl-ease-out, cubic-bezier(0.05, 0.7, 0.1, 1)) forwards;
+  }
+  .jn[data-sending] .jn-stage {
+    animation: jn-take 620ms var(--wl-ease-out, cubic-bezier(0.05, 0.7, 0.1, 1)) 180ms both;
+  }
+  .jn[data-sending] .jn-host [data-look] {
+    transform: translateY(-1.5px);
+  }
+  @keyframes jn-rise {
+    0% {
+      translate: 0 0;
+      opacity: 1;
+    }
+    55% {
+      translate: 0 -22px;
+      opacity: 1;
+    }
+    100% {
+      translate: 0 -30px;
+      scale: 0.92;
+      opacity: 0;
+    }
+  }
+  @keyframes jn-take {
+    0% {
+      translate: 0 0;
+      box-shadow: 0 0 0 0 transparent;
+    }
+    45% {
+      translate: 0 -3px;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--pk-accent) 38%, transparent);
+    }
+    100% {
+      translate: 0 0;
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+}
