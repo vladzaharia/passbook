@@ -2,7 +2,7 @@ import { constants, privateDecrypt } from 'node:crypto';
 import * as asn1 from 'asn1js';
 import { CompactSign, compactVerify, importX509 } from 'jose';
 import * as pki from 'pkijs';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { fromBase64Url } from '../../platform/ids.ts';
 import {
@@ -24,6 +24,11 @@ import {
   verifySamsungRequest,
   verifySamsungTombstoneRequest,
 } from './samsung.ts';
+import {
+  SAMSUNG_CLOCK_SKEW_MS,
+  SAMSUNG_REQUEST_TIMEOUT_MS,
+  SAMSUNG_TOKEN_WINDOW_MS,
+} from './samsung-limits.ts';
 
 const NOW = Date.UTC(2026, 0, 1);
 const utf8 = new TextEncoder();
@@ -126,6 +131,7 @@ async function signedAuth(
     path?: string;
     utc?: number;
     refId?: string;
+    omitRefId?: boolean;
     key?: CryptoKey;
     partnerId?: string;
     certificateId?: string;
@@ -137,7 +143,7 @@ async function signedAuth(
     utf8.encode(
       JSON.stringify({
         API: { method: input.method ?? 'GET', path },
-        refId: input.refId ?? refId,
+        refId: input.omitRefId ? undefined : (input.refId ?? refId),
       }),
     ),
   )
@@ -154,12 +160,18 @@ async function signedAuth(
 
 function inbound(
   token: string,
-  options: { method?: string; suffix?: string; requestId?: string } = {},
+  options: { method?: string; suffix?: string; requestId?: string; prefix?: string } = {},
 ): Request {
-  return new Request(`https://example.test/cards/card123/${refId}${options.suffix ?? ''}`, {
-    method: options.method ?? 'GET',
-    headers: { Authorization: `Bearer ${token}`, 'x-request-id': options.requestId ?? 'request-1' },
-  });
+  return new Request(
+    `https://example.test${options.prefix ?? ''}/cards/card123/${refId}${options.suffix ?? ''}`,
+    {
+      method: options.method ?? 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'x-request-id': options.requestId ?? 'request-1',
+      },
+    },
+  );
 }
 
 function replayStore(): (key: string, expiresAt: number) => Promise<boolean> {
@@ -388,7 +400,7 @@ describe('Samsung authenticated requests', () => {
       refId,
       now: NOW,
       claimReplay: async (_key, expiresAt, signedAt, queryBound) => {
-        expect(expiresAt).toBe(NOW + 35_000);
+        expect(expiresAt).toBe(NOW + SAMSUNG_TOKEN_WINDOW_MS + SAMSUNG_CLOCK_SKEW_MS);
         expect(signedAt).toBe(NOW);
         expect(queryBound).toBe(true);
         return true;
@@ -404,6 +416,116 @@ describe('Samsung authenticated requests', () => {
         now: NOW,
       }),
     ).rejects.toBeInstanceOf(SamsungTokenError);
+  });
+
+  it('accepts the full signed pathname or the /cards suffix, never another path', async () => {
+    const prefix = '/wallet/v1/samsung';
+    const suffix = `/cards/card123/${refId}`;
+    for (const path of [`${prefix}${suffix}`, suffix])
+      await expect(
+        verifySamsungRequest(account, {
+          request: inbound(await signedAuth({ path }), { prefix }),
+          method: 'GET',
+          refId,
+          claimReplay: replayStore(),
+          now: NOW,
+        }),
+      ).resolves.toMatchObject({ refId, queryBound: false });
+    for (const path of [
+      `/other${suffix}`,
+      `${prefix}/cards/other123/${refId}`,
+      `${suffix}/`,
+      `${prefix}${suffix}x`,
+      '/',
+    ])
+      await expect(
+        verifySamsungRequest(account, {
+          request: inbound(await signedAuth({ path }), { prefix }),
+          method: 'GET',
+          refId,
+          claimReplay: replayStore(),
+          now: NOW,
+        }),
+      ).rejects.toBeInstanceOf(SamsungTokenError);
+    // A path naming another ref is refused even when the payload carries no refId to contradict it.
+    for (const path of [
+      `/cards/card123/${'Z'.repeat(32)}`,
+      `${prefix}/cards/card123/${'Z'.repeat(32)}`,
+    ])
+      await expect(
+        verifySamsungRequest(account, {
+          request: inbound(await signedAuth({ path, omitRefId: true }), { prefix }),
+          method: 'GET',
+          refId,
+          claimReplay: replayStore(),
+          now: NOW,
+        }),
+      ).rejects.toBeInstanceOf(SamsungTokenError);
+    // Method, card id and ref id stay bound whichever form is signed.
+    for (const signed of [
+      { path: suffix, method: 'POST' },
+      { path: suffix, refId: 'another' },
+    ])
+      await expect(
+        verifySamsungRequest(account, {
+          request: inbound(await signedAuth(signed), { prefix }),
+          method: 'GET',
+          refId,
+          claimReplay: replayStore(),
+          now: NOW,
+        }),
+      ).rejects.toBeInstanceOf(SamsungTokenError);
+    const query = '?cc2=US&event=ADDED';
+    const bound = await verifySamsungRequest(account, {
+      request: inbound(await signedAuth({ method: 'POST', path: `${suffix}${query}` }), {
+        method: 'POST',
+        prefix,
+        suffix: query,
+      }),
+      method: 'POST',
+      refId,
+      claimReplay: replayStore(),
+      now: NOW,
+    });
+    expect(bound.queryBound).toBe(true);
+  });
+
+  it('accepts a token up to the five-minute window and keeps its replay key for the window', async () => {
+    const seen: number[] = [];
+    const claimReplay = async (_key: string, expiresAt: number) => {
+      seen.push(expiresAt);
+      return true;
+    };
+    // The certificate is valid from NOW, so the token is signed at NOW and checked late.
+    const late = NOW + SAMSUNG_TOKEN_WINDOW_MS;
+    await verifySamsungRequest(account, {
+      request: inbound(await signedAuth({ utc: NOW })),
+      method: 'GET',
+      refId,
+      claimReplay,
+      now: late,
+    });
+    // The key outlives the last instant the token itself is accepted.
+    expect(seen).toEqual([NOW + SAMSUNG_TOKEN_WINDOW_MS + SAMSUNG_CLOCK_SKEW_MS]);
+    expect(seen[0]).toBeGreaterThan(late);
+    await expect(
+      verifySamsungRequest(account, {
+        request: inbound(await signedAuth({ utc: NOW })),
+        method: 'GET',
+        refId,
+        claimReplay,
+        now: late + 1,
+      }),
+    ).rejects.toBeInstanceOf(SamsungTokenError);
+    await expect(
+      verifySamsungRequest(account, {
+        request: inbound(await signedAuth({ utc: late + SAMSUNG_CLOCK_SKEW_MS })),
+        method: 'GET',
+        refId,
+        claimReplay,
+        now: late,
+      }),
+    ).resolves.toMatchObject({ refId });
   });
 
   it('rejects replay even when unsigned request-id changes', async () => {
@@ -448,8 +570,8 @@ describe('Samsung authenticated requests', () => {
   it('rejects forged, stale, future, misbound or wrong-account credentials', async () => {
     const tokens = await Promise.all([
       signedAuth({ key: partner.key }),
-      signedAuth({ utc: NOW - 30_001 }),
-      signedAuth({ utc: NOW + 5001 }),
+      signedAuth({ utc: NOW - SAMSUNG_TOKEN_WINDOW_MS - 1 }),
+      signedAuth({ utc: NOW + SAMSUNG_CLOCK_SKEW_MS + 1 }),
       signedAuth({ partnerId: 'wrong' }),
       signedAuth({ certificateId: 'ABCD' }),
       signedAuth({ method: 'POST' }),
@@ -471,6 +593,77 @@ describe('Samsung authenticated requests', () => {
 });
 
 describe('Samsung notifications', () => {
+  it('bounds every request by the shared timeout and reports a timeout as an ambiguous network failure', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    try {
+      let signal: AbortSignal | null | undefined;
+      const fetcher = (async (_url: unknown, init?: RequestInit) => {
+        signal = init?.signal;
+        throw new DOMException('The operation timed out.', 'TimeoutError');
+      }) as typeof fetch;
+      await expect(
+        sendSamsungUpdate(
+          account,
+          {
+            cc2: 'US',
+            requestId: 'req-1',
+            type: 'loyalty',
+            refId,
+            state: 'UPDATED',
+            attempt: 1,
+            now: NOW,
+          },
+          fetcher,
+        ),
+      ).rejects.toMatchObject({ kind: 'network', retryable: true, ambiguous: true });
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(timeout).toHaveBeenCalledWith(SAMSUNG_REQUEST_TIMEOUT_MS);
+    } finally {
+      timeout.mockRestore();
+    }
+  });
+
+  it('sends MIGRATED only with the new link and the old ref, and validates the trace id', async () => {
+    const calls: { init: RequestInit }[] = [];
+    const fetcher = (async (_url: unknown, init?: RequestInit) => {
+      calls.push({ init: init as RequestInit });
+      return new Response(null, { status: 200 });
+    }) as typeof fetch;
+    const base = {
+      cc2: 'US',
+      requestId: 'req-1',
+      type: 'loyalty',
+      refId,
+      attempt: 1,
+      now: NOW,
+    };
+    const atwLink = `https://a.swallet.link/atw/v3/YMtt/card123#Clip?pdata=${'B'.repeat(32)}`;
+    await sendSamsungUpdate(
+      account,
+      { ...base, state: 'MIGRATED', atwLink, oldRefId: 'C'.repeat(32) },
+      fetcher,
+    );
+    expect(JSON.parse(String(calls[0]?.init.body))).toEqual({
+      card: {
+        type: 'loyalty',
+        data: [{ refId, state: 'MIGRATED', atwLink, oldRefId: 'C'.repeat(32) }],
+      },
+    });
+    for (const input of [
+      { ...base, state: 'MIGRATED' as const },
+      { ...base, state: 'MIGRATED' as const, atwLink },
+      { ...base, state: 'MIGRATED' as const, atwLink: 'http://a.test/x', oldRefId: 'C'.repeat(32) },
+      { ...base, state: 'MIGRATED' as const, atwLink, oldRefId: refId },
+      { ...base, state: 'UPDATED' as const, atwLink, oldRefId: 'C'.repeat(32) },
+      { ...base, state: 'UPDATED' as const, requestId: '' },
+      { ...base, state: 'UPDATED' as const, requestId: 'x'.repeat(33) },
+    ])
+      await expect(sendSamsungUpdate(account, input, fetcher)).rejects.toMatchObject({
+        kind: 'invalid_request',
+      });
+    expect(calls).toHaveLength(1);
+  });
+
   it('sends signed per-ref updates and event-wide cancels to the fixed public origin', async () => {
     const calls: { url: string; init: RequestInit }[] = [];
     const fetcher = (async (url: string | URL | Request, init?: RequestInit) => {
@@ -482,6 +675,7 @@ describe('Samsung notifications', () => {
       account,
       {
         cc2: 'US',
+        requestId: 'req-1',
         type: 'loyalty',
         refId,
         state: 'UPDATED',
@@ -492,7 +686,7 @@ describe('Samsung notifications', () => {
     );
     await sendSamsungCancel(
       account,
-      { cc2: 'US', type: 'ticket', eventId: 'event-123', attempt: 1, now: NOW },
+      { cc2: 'US', requestId: 'req-1', type: 'ticket', eventId: 'event-123', attempt: 1, now: NOW },
       fetcher,
     );
     for (const type of ['generic', 'giftcard']) {
@@ -501,6 +695,7 @@ describe('Samsung notifications', () => {
           account,
           {
             cc2: 'US',
+            requestId: 'req-1',
             type,
             refId,
             state: 'UPDATED',
@@ -513,6 +708,7 @@ describe('Samsung notifications', () => {
     }
     const unsupportedFields = {
       cc2: 'US',
+      requestId: 'req-1',
       type: 'loyalty',
       refId,
       state: 'UPDATED' as const,
@@ -540,7 +736,7 @@ describe('Samsung notifications', () => {
       expect(call.init.redirect).toBe('manual');
       const headers = new Headers(call.init.headers);
       expect(headers.get('x-smcs-partner-id')).toBe(credentials.partnerId);
-      expect(headers.get('x-request-id')).toMatch(/^[a-f0-9]{32}$/);
+      expect(headers.get('x-request-id')).toBe('req-1');
       const jwt = headers.get('Authorization')?.replace(/^Bearer /, '') ?? '';
       const publicKey = await importX509(partner.certificate, 'RS256');
       const signed = await compactVerify(jwt, publicKey, { algorithms: ['RS256'] });
@@ -562,6 +758,7 @@ describe('Samsung notifications', () => {
         account,
         {
           cc2: 'US',
+          requestId: 'req-1',
           type: 'loyalty',
           refId,
           state: 'DELETED',
@@ -576,6 +773,7 @@ describe('Samsung notifications', () => {
         account,
         {
           cc2: 'US',
+          requestId: 'req-1',
           type: 'ticket',
           eventId: 'event-123',
           attempt: 1,
@@ -589,6 +787,7 @@ describe('Samsung notifications', () => {
         account,
         {
           cc2: 'US',
+          requestId: 'req-1',
           type: 'loyalty',
           refId,
           state: 'DELETED',
@@ -603,6 +802,7 @@ describe('Samsung notifications', () => {
         account,
         {
           cc2: 'US',
+          requestId: 'req-1',
           type: 'loyalty',
           refId,
           state: 'UPDATED',
@@ -645,6 +845,7 @@ describe('Samsung notifications', () => {
         account,
         {
           cc2: 'US',
+          requestId: 'req-1',
           type: 'loyalty',
           refId,
           state: 'UPDATED',
@@ -659,7 +860,15 @@ describe('Samsung notifications', () => {
     try {
       await sendSamsungUpdate(
         account,
-        { cc2: 'US', type: 'loyalty', refId, state: 'DELETED', attempt: 1, now: NOW },
+        {
+          cc2: 'US',
+          requestId: 'req-1',
+          type: 'loyalty',
+          refId,
+          state: 'DELETED',
+          attempt: 1,
+          now: NOW,
+        },
         fetcher,
       );
       throw new Error('expected rejection');
@@ -673,6 +882,7 @@ describe('Samsung notifications', () => {
         account,
         {
           cc2: 'US',
+          requestId: 'req-1',
           type: 'loyalty',
           refId,
           state: 'DELETED',

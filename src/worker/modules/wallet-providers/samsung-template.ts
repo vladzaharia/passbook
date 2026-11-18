@@ -2,6 +2,7 @@ import {
   assertSamsungCredentialsCurrent,
   type ValidatedSamsungCredentials,
 } from './samsung-credentials.ts';
+import { SAMSUNG_REQUEST_TIMEOUT_MS } from './samsung-limits.ts';
 import { createSamsungAuthorizationToken } from './samsung-token.ts';
 
 const ORIGIN = 'https://tsapi-card.walletsvc.samsung.com';
@@ -14,16 +15,22 @@ interface SamsungTemplateProbeInput {
   countryCode: string;
   mode: 'live' | 'test';
   now: number;
+  /** Trace id from the caller's `ctx.ids`, up to 32 characters. */
+  requestId: string;
 }
 
-/** Current provider-reported template state, not independent approval of the issuer program. */
+/**
+ * Current provider-reported template state, not independent approval of the issuer program.
+ * Live needs an ACTIVE card with testing mode off. Test mode also accepts a card still in
+ * testing mode (`N`), which Samsung keeps until launch, unless it is BLOCKED.
+ */
 interface SamsungTemplateEvidence {
   cardId: string;
   cardType: string;
   subType: string;
   countryCode: string;
-  state: 'ACTIVE';
-  testingModeOff: 'Y';
+  state: string;
+  testingModeOff: 'Y' | 'N';
   verifiedAt: number;
 }
 
@@ -142,7 +149,9 @@ export async function probeSamsungActiveTemplate(
     !/^[a-z]{1,16}$/.test(input.subType) ||
     typeof input.countryCode !== 'string' ||
     !/^[A-Z]{2}$/.test(input.countryCode) ||
-    (input.mode !== 'live' && input.mode !== 'test')
+    (input.mode !== 'live' && input.mode !== 'test') ||
+    typeof input.requestId !== 'string' ||
+    !/^[A-Za-z0-9_-]{1,32}$/.test(input.requestId)
   )
     throw new SamsungTemplateError('invalid_input');
   const now = input.now;
@@ -158,11 +167,11 @@ export async function probeSamsungActiveTemplate(
     response = await fetcher(`${ORIGIN}${path}`, {
       method: 'GET',
       redirect: 'manual',
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(SAMSUNG_REQUEST_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${authorization}`,
         'x-smcs-partner-id': account.partnerId,
-        'x-request-id': crypto.randomUUID().replaceAll('-', ''),
+        'x-request-id': input.requestId,
       },
     });
   } catch {
@@ -177,13 +186,15 @@ export async function probeSamsungActiveTemplate(
     throw new SamsungTemplateError('invalid_response');
   const template = object(hasTemplate ? page.template : page.templates);
   if (!template) throw new SamsungTemplateError('invalid_response');
+  const { state, testingModeOff } = template;
+  const launched = state === 'ACTIVE' && testingModeOff === 'Y';
+  const sandboxCard = typeof state === 'string' && state !== 'BLOCKED' && testingModeOff === 'N';
   if (
     template.cardId !== account.cardId ||
     template.cardType !== input.cardType ||
     template.subType !== input.subType ||
     template.countryCode !== input.countryCode ||
-    template.state !== 'ACTIVE' ||
-    template.testingModeOff !== 'Y'
+    !(launched || (input.mode === 'test' && sandboxCard))
   )
     throw new SamsungTemplateError('not_eligible');
   return {
@@ -191,8 +202,8 @@ export async function probeSamsungActiveTemplate(
     cardType: input.cardType,
     subType: input.subType,
     countryCode: input.countryCode,
-    state: 'ACTIVE',
-    testingModeOff: 'Y',
+    state: launched ? 'ACTIVE' : String(state),
+    testingModeOff: launched ? 'Y' : 'N',
     verifiedAt: input.now,
   };
 }
