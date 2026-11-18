@@ -12,6 +12,10 @@ ALTER TABLE connections ADD COLUMN webhook_prev_until INTEGER
 ALTER TABLE connections ADD COLUMN webhook_secret_fp TEXT;
 CREATE UNIQUE INDEX connections_webhook_secret_fp ON connections (webhook_secret_fp)
   WHERE webhook_secret_fp IS NOT NULL;
+-- The fingerprint of the previous secret, kept until the overlap ends so a demoted secret stays unique.
+ALTER TABLE connections ADD COLUMN webhook_prev_secret_fp TEXT;
+CREATE UNIQUE INDEX connections_webhook_prev_secret_fp ON connections (webhook_prev_secret_fp)
+  WHERE webhook_prev_secret_fp IS NOT NULL;
 CREATE INDEX connections_webhook_prev_credential ON connections (webhook_prev_credential_id)
   WHERE webhook_prev_credential_id IS NOT NULL;
 

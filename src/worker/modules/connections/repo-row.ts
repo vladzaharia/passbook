@@ -14,6 +14,7 @@ export interface ConnectionSql {
   webhook_prev_credential_id: string | null;
   webhook_prev_until: number | null;
   webhook_secret_fp: string | null;
+  webhook_prev_secret_fp: string | null;
   void_when: string | null;
   mapping: string | null;
   default_template_id: string | null;
@@ -53,6 +54,7 @@ export function toRow(r: ConnectionSql): ConnectionRow {
     webhookPrevCredentialId: r.webhook_prev_credential_id,
     webhookPrevUntil: r.webhook_prev_until,
     webhookSecretFp: r.webhook_secret_fp,
+    webhookPrevSecretFp: r.webhook_prev_secret_fp,
     voidWhen: r.void_when ? (JSON.parse(r.void_when) as VoidRule[]) : [],
     mapping: r.mapping ? (JSON.parse(r.mapping) as Record<string, MappingEntry>) : null,
     defaultTemplateId: r.default_template_id,

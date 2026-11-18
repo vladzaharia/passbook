@@ -120,19 +120,19 @@ async function sha256Hex(bytes: Bytes): Promise<string> {
   return toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
 }
 
-/** Any (secret, signature) pair matching passes; at most MAX_SECRETS x MAX_STRIPE_V1 compares. */
+/** The index of the first secret with a matching signature, else -1; at most MAX_SECRETS x MAX_STRIPE_V1 compares. */
 async function matchesAny(
   secrets: readonly string[],
   signatures: readonly Bytes[],
   message: Bytes,
-): Promise<boolean> {
-  let ok = false;
-  for (const secret of secrets) {
+): Promise<number> {
+  let matched = -1;
+  for (const [index, secret] of secrets.entries()) {
     for (const signature of signatures) {
-      if (await hmacVerify(secret, signature, message)) ok = true;
+      if ((await hmacVerify(secret, signature, message)) && matched < 0) matched = index;
     }
   }
-  return ok;
+  return matched;
 }
 
 /** `signedAt` is not older than `pastMs` and not further ahead than `futureMs`. */
@@ -150,6 +150,8 @@ export interface SignedBody {
   digest: string;
   /** ms; only when the scheme signs a timestamp (custom, stripe). */
   signedAt?: number;
+  /** True when only the previous secret (not the current one) matched. */
+  usedPrevious?: true;
   /** Hex of the matched MAC (custom scheme only). */
   signature?: string;
 }
@@ -162,11 +164,7 @@ export interface CustomHeaders {
 export interface WebhookVerifier {
   id: 'custom' | 'shopify' | 'stripe' | 'calcom';
   maxBytes: number;
-  /**
-   * Where the replay bound comes from. `header-window`: a signed timestamp header, checked here and
-   * returned as `signedAt`. `body-window`: no signed timestamp header; the recipe must bound a signed
-   * time inside the body, and ingress refuses a delivery whose time did not pass `withinWindow`.
-   */
+  /** Where the replay bound comes from: a signed header, or a signed time in the body that the recipe must bound. */
   replay: 'header-window' | 'body-window';
   /** Throws ConnectorError('AUTH') on any mismatch and 'INVALID_PAYLOAD' on size. `secrets`: current first. */
   verify(
@@ -197,14 +195,19 @@ async function signed(
   secrets: readonly string[],
   maxBytes: number,
   parsed: ParsedSignature | null,
-): Promise<{ bytes: Bytes; digest: string }> {
+): Promise<{ bytes: Bytes; digest: string; usedPrevious?: true }> {
   checkSecrets(secrets);
   // A missing or malformed header costs no body read.
   if (!parsed) throw auth();
   const bytes = await readSignedBytes(req, maxBytes);
   const message = parsed.prefix ? withPrefix(parsed.prefix, bytes) : bytes;
-  if (!(await matchesAny(secrets, parsed.signatures, message))) throw auth();
-  return { bytes, digest: await sha256Hex(bytes) };
+  const hit = await matchesAny(secrets, parsed.signatures, message);
+  if (hit < 0) throw auth();
+  return {
+    bytes,
+    digest: await sha256Hex(bytes),
+    ...(hit > 0 ? { usedPrevious: true as const } : {}),
+  };
 }
 
 const orNull = (sig: Bytes | null): ParsedSignature | null =>
@@ -248,7 +251,7 @@ const stripe: WebhookVerifier = {
   verify: async (req, secrets, now) => {
     const header = req.headers.get('stripe-signature');
     const parsed = header === null ? null : parseStripeSignature(header);
-    const { bytes, digest } = await signed(
+    const body = await signed(
       req,
       secrets,
       MAX_WEBHOOK_BYTES,
@@ -257,7 +260,7 @@ const stripe: WebhookVerifier = {
     // A matching MAC proves `t` is authentic; the window then bounds replays.
     const signedAt = (parsed?.t ?? 0) * 1000;
     if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
-    return { bytes, digest, signedAt };
+    return { ...body, signedAt };
   },
 };
 
@@ -272,10 +275,10 @@ const custom: WebhookVerifier = {
     const sig = match?.[1] ? decodeHex32(match[1]) : null;
     const parsed =
       sig && ts !== null && /^\d{9,12}$/.test(ts) ? { signatures: [sig], prefix: `${ts}.` } : null;
-    const { bytes, digest } = await signed(req, secrets, MAX_WEBHOOK_BYTES, parsed);
+    const body = await signed(req, secrets, MAX_WEBHOOK_BYTES, parsed);
     const signedAt = Number(ts) * 1000;
     if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
-    return { bytes, digest, signedAt, signature: match?.[1] ?? '' };
+    return { ...body, signedAt, signature: match?.[1] ?? '' };
   },
 };
 
