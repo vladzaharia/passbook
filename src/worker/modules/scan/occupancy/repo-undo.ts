@@ -6,10 +6,18 @@ import type { OccZone } from './rules.ts';
 
 /** The scan inserted this row (no row was there before it): an entry insert sets both times to its clock. */
 export const insertedBy = (row: OccupancyRow) =>
-  row.prev_state === null && row.prev_seq === null && row.first_at === row.last_entry_at;
+  row.prev_state === null &&
+  row.prev_seq === null &&
+  row.state === 'in' &&
+  row.entered_at === row.first_at &&
+  row.first_at === row.last_entry_at;
+
+/** `prev_seq` of a restored row: its history is used up, so a further undo of it is superseded. */
+export const RESTORED = -1;
 
 /**
- * Undo one row: delete what the scan inserted, else put the previous values back (its sequence too).
+ * Undo one row: delete what the scan inserted (an entry with nothing before it), else put the previous
+ * values back (its sequence too) and mark its history used up (`RESTORED`).
  * Every value read is in the where, and `require: 'one'` refuses the batch if any changed.
  */
 export function undoRow(g: Grant, row: OccupancyRow, dueAt: number | null): GrantedStatement {
@@ -24,8 +32,10 @@ export function undoRow(g: Grant, row: OccupancyRow, dueAt: number | null): Gran
     return g.delete('scan_presence', {
       where: {
         ...key,
+        state: 'in',
         prev_state: null,
         prev_seq: null,
+        entered_at: row.first_at,
         first_at: row.first_at,
         last_entry_at: row.last_entry_at,
       },
@@ -48,7 +58,7 @@ export function undoRow(g: Grant, row: OccupancyRow, dueAt: number | null): Gran
       prev_first_at: null,
       prev_last_entry_at: null,
       prev_scan_id: null,
-      prev_seq: null,
+      prev_seq: RESTORED,
     },
     where: {
       ...key,

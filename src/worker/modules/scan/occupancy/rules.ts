@@ -49,7 +49,12 @@ export interface EntryPlan extends PlaceStep {
   implied: PlaceStep[];
   /** Tracked places below it, left when it is re-entered over an in row. */
   below: string[];
-  /** The zone and every ancestor as read: a racing Track off, archive or move makes the entry lose. */
+  /**
+   * The zone and every ancestor as read: a racing Track off, archive or move makes the entry lose.
+   * Capacity, Max stay, Clear at and the time zone are not fenced: a racing edit of those gives this
+   * one entry the old value (plan C6, the R8 class). The count is still exact against the capacity it
+   * read, and a due time from old settings is re-armed by the cron's re-read, so nothing lasts.
+   */
   zones: ZoneFence[];
 }
 

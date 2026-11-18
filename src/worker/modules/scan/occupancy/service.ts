@@ -111,6 +111,12 @@ export function addExit(
   return { won, places };
 }
 
+/**
+ * A zone saved this close before the scan counts as saved after it: the scan's time is its claim, and
+ * the claim and the zone save are not ordered. A false supersede is safe; a missed one is not.
+ */
+export const ZONE_SKEW_MS = 60_000;
+
 export interface UndoInput {
   passId: string;
   /** The scans undone together (an override's forced exit and grant share a group). */
@@ -141,7 +147,7 @@ export function addUndo(g: Grant, i: UndoInput): { places: string[] } {
     const zone = i.zones.find((z) => zonePlace(z.id) === row.scope);
     if (!zone || zone.occupancy === 'off' || zone.archivedAt !== null) throw superseded();
     for (const z of zoneChain(i.zones, zone.id)) {
-      if (z.updatedAt > i.scannedAt) throw superseded();
+      if (z.updatedAt > i.scannedAt - ZONE_SKEW_MS) throw superseded();
       fences.set(z.id, zoneUnchanged(z));
     }
     const clock = effectiveTimeZone(indexZones(i.zones), zone.id) ?? i.orgTimeZone;

@@ -1,7 +1,7 @@
 -- Occupancy on scan_presence: mode, due times, a commit-ordered sequence, ordered In now counts, tap-out
 -- causes and one live override per scan.
 
--- The pass's mode, so In now counts without reading passes. Old writers name no mode: the insert trigger fills it.
+-- The pass's mode, so In now counts without reading passes. The insert triggers take it from the pass.
 ALTER TABLE scan_presence ADD COLUMN mode TEXT CHECK (mode IS NULL OR mode IN ('live', 'test'));
 UPDATE scan_presence SET mode = (SELECT p.mode FROM passes p WHERE p.id = scan_presence.pass_id);
 -- When the system taps a pass out of a zone (max stay, the daily clear, a zone change). Null when out or no limit.
@@ -11,10 +11,16 @@ ALTER TABLE scan_presence ADD COLUMN due_at INTEGER;
 ALTER TABLE scan_presence ADD COLUMN seq INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE scan_presence ADD COLUMN prev_seq INTEGER;
 
+-- The pass decides the mode: a writer that names another one is refused.
+CREATE TRIGGER scan_presence_mode_check BEFORE INSERT ON scan_presence
+WHEN NEW.mode IS NOT NULL AND NEW.mode IS NOT (SELECT p.mode FROM passes p WHERE p.id = NEW.pass_id)
+BEGIN
+  SELECT RAISE(ABORT, 'scan_presence mode differs from its pass');
+END;
 CREATE TRIGGER scan_presence_seq_insert AFTER INSERT ON scan_presence
 BEGIN
   UPDATE scan_presence SET
-    mode = COALESCE(NEW.mode, (SELECT p.mode FROM passes p WHERE p.id = NEW.pass_id)),
+    mode = (SELECT p.mode FROM passes p WHERE p.id = NEW.pass_id),
     seq = (SELECT COALESCE(MAX(x.seq), 0) + 1 FROM scan_presence x WHERE x.pass_id = NEW.pass_id)
   WHERE pass_id = NEW.pass_id AND scope = NEW.scope;
 END;

@@ -1090,6 +1090,17 @@ describe('0074_scan_occupancy migration', () => {
     expect(
       await first(env.DB, "SELECT 1 AS x FROM sqlite_master WHERE name = 'scan_presence_org'"),
     ).toBeNull();
+    // The pass decides the mode: a writer that names another one is refused, the same one is kept.
+    const named = (scope: string, mode: string) =>
+      run(
+        env.DB,
+        `INSERT INTO scan_presence (pass_id, org_id, scope, state, first_at, last_entry_at, last_scan_id, mode)
+         VALUES (?, ?, ?, 'in', 1, 1, 's9', ?)`,
+        [pass.id, org.id, scope, mode],
+      );
+    await expect(named('zone:c', 'live')).rejects.toThrow(/mode differs from its pass/);
+    await named('zone:d', 'test');
+    expect((await rows()).find((r) => r.scope === 'zone:d')?.mode).toBe('test');
   });
 
   it('adds due_at with a partial index and per-place revisions that cascade with the org', async () => {

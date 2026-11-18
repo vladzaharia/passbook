@@ -103,6 +103,38 @@ describe('undo is ordered by commit, not by claim time', () => {
     expect((await k.row(p, 'lounge'))?.state).toBe('in');
   });
 
+  it('enter, exit, enter: undo the entry, then the exit is refused and its row stays', async () => {
+    const k = await gym('chain-exit');
+    const p = await k.pass();
+    await k.enter(p, 'gym');
+    k.clock.advance(MIN);
+    const out = await k.exit(p, 'gym');
+    k.clock.advance(MIN);
+    const back = await k.enter(p, 'gym');
+    expect(await k.undo(p, [back.scanId])).toBe('ok');
+    expect(await k.row(p, 'gym')).toMatchObject({ state: 'out', last_scan_id: out.scanId });
+    expect(await k.undo(p, [out.scanId])).toBe('UNDO_SUPERSEDED');
+    expect(await k.row(p, 'gym')).toMatchObject({ state: 'out', last_scan_id: out.scanId });
+    // The next forward write takes over the used-up history.
+    k.clock.advance(MIN);
+    expect((await k.enter(p, 'gym')).ok).toBe(true);
+  });
+
+  it('a zone saved up to a minute before the scan counts as saved after it', async () => {
+    const k = await gym('zone-skew');
+    const p = await k.pass();
+    await k.enter(p, 'gym');
+    await edit(k, 'gym', "name = 'Gym A'");
+    k.clock.advance(30_000);
+    const near = await k.exit(p, 'gym');
+    k.clock.advance(MIN);
+    expect(await k.undo(p, [near.scanId])).toBe('UNDO_SUPERSEDED');
+    await k.enter(p, 'gym');
+    k.clock.advance(2 * MIN);
+    const far = await k.exit(p, 'gym');
+    expect(await k.undo(p, [far.scanId])).toBe('ok');
+  });
+
   it('an undone exit puts back someone who never left, even past capacity', async () => {
     const k = await occupancyKit('undo-cap');
     await k.zone('pool', { capacity: 1 });
