@@ -1,0 +1,189 @@
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import { TAG_COPY } from '@/shared/copy/tags.ts';
+import { useInsertHighlight } from '@/web/lib/motion.ts';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Dialog,
+  DialogContent,
+  EmptyState,
+  ErrorState,
+  FormField,
+  ListRows,
+  Select,
+  SkeletonRows,
+} from '@/web/ui/index.ts';
+import { usePass } from '../passes/api.ts';
+import { AddTagDialog } from './add-tag-dialog.tsx';
+import { useUserTags } from './api.ts';
+import { useTagActions } from './tag-actions.tsx';
+import { TagRow } from './tag-row.tsx';
+
+interface UserPass {
+  id: string;
+  title: string;
+  orgName: string;
+  status: string;
+}
+
+/** Tags are read through this many of the user's passes. */
+const READ_PASSES = 10;
+
+/**
+ * Tags on the user page: the ones that work with all of the person's passes, then the ones on a
+ * single pass. Platform-wide, so each row says which organization it belongs to.
+ */
+export function UserTagsCard({
+  userId,
+  name,
+  passes,
+  passCount,
+}: {
+  userId: string;
+  name: string;
+  passes: readonly UserPass[];
+  passCount: number;
+}) {
+  const live = passes.filter((p) => p.status !== 'voided');
+  const read = live.slice(0, READ_PASSES);
+  const { tags, isPending, isError, error } = useUserTags(read.map((p) => p.id));
+  const actions = useTagActions({ passes: passCount });
+  const [assigning, setAssigning] = useState(0);
+  const [open, setOpen] = useState(false);
+  const fresh = useInsertHighlight(tags.map((t) => t.tag.id));
+  const orgOf = (passId: string) => passes.find((p) => p.id === passId)?.orgName;
+  const person = tags.filter((t) => t.tag.binding?.scope === 'user');
+  const single = tags.filter((t) => t.tag.binding?.scope !== 'user');
+  const row = ({ tag, passId }: (typeof tags)[number]) => (
+    <TagRow
+      key={tag.id}
+      tag={tag}
+      actions={actions}
+      readOnly={false}
+      isNew={fresh.has(tag.id)}
+      worksWith={tag.binding?.scope === 'user' ? 'none' : 'chip'}
+      extra={<span className="block">{orgOf(passId)}</span>}
+    />
+  );
+  return (
+    <Card>
+      <CardHeader
+        title={TAG_COPY.card}
+        actions={
+          live.length > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              iconStart={<Plus aria-hidden />}
+              onClick={() => {
+                setAssigning((n) => n + 1);
+                setOpen(true);
+              }}
+            >
+              {TAG_COPY.assign}
+            </Button>
+          ) : null
+        }
+      />
+      <CardBody className="flex flex-col gap-4">
+        {isPending ? (
+          <SkeletonRows rows={2} label="Loading tags" />
+        ) : isError ? (
+          <ErrorState inline error={error} />
+        ) : tags.length === 0 ? (
+          <EmptyState inline art="badge" title={TAG_COPY.empty} />
+        ) : (
+          <>
+            {person.length > 0 ? (
+              <ListRows label={TAG_COPY.card}>{person.map(row)}</ListRows>
+            ) : null}
+            {single.length > 0 ? (
+              <div className="flex flex-col gap-2 border-t border-border pt-4">
+                <h3 className="text-xs font-medium text-fg-muted">{TAG_COPY.userGroup}</h3>
+                <ListRows label={TAG_COPY.userGroup}>{single.map(row)}</ListRows>
+              </div>
+            ) : null}
+          </>
+        )}
+      </CardBody>
+      {actions.dialog}
+      {open ? (
+        <AssignToPerson
+          key={assigning}
+          userId={userId}
+          name={name}
+          passes={live}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
+    </Card>
+  );
+}
+
+/** Pick an organization when the person has passes in several, then assign person-wide. */
+function AssignToPerson({
+  name,
+  passes,
+  onClose,
+}: {
+  userId: string;
+  name: string;
+  passes: readonly UserPass[];
+  onClose: () => void;
+}) {
+  const orgs = [...new Set(passes.map((p) => p.orgName))];
+  const [org, setOrg] = useState<string | undefined>(orgs.length === 1 ? orgs[0] : undefined);
+  const first = passes.find((p) => p.orgName === org);
+  const pass = usePass(first?.id ?? '');
+  if (!org || !first) {
+    return (
+      <Dialog open onOpenChange={(o) => !o && onClose()}>
+        <DialogContent
+          title={TAG_COPY.dialog.title}
+          description={`To ${name}`}
+          footer={
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          }
+        >
+          <FormField label="Organization">
+            {(p) => (
+              <Select
+                {...p}
+                value={org}
+                onValueChange={setOrg}
+                placeholder="Choose"
+                options={orgs.map((o) => ({ value: o, label: o }))}
+              />
+            )}
+          </FormField>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  if (!pass.data) {
+    return (
+      <Dialog open onOpenChange={(o) => !o && onClose()}>
+        <DialogContent title={TAG_COPY.dialog.title} description={`To ${name}`}>
+          {pass.isError ? (
+            <ErrorState inline error={pass.error} onRetry={() => void pass.refetch()} />
+          ) : (
+            <SkeletonRows rows={2} label="Loading" />
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  return (
+    <AddTagDialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      fixed="person"
+      target={{ passId: pass.data.id, orgId: pass.data.orgId, holderName: name, hasAccount: true }}
+    />
+  );
+}
