@@ -1,0 +1,120 @@
+import type { Context } from 'hono';
+import type { ScannerAuth } from '../../platform/auth.ts';
+import type { AppBindings } from '../../platform/context.ts';
+import { reportDenied } from '../../platform/denied.ts';
+import {
+  type AppError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthenticatedError,
+  ValidationError,
+} from '../../platform/errors.ts';
+import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
+import type { ScanActor } from './actor.ts';
+import { scannerExpired } from './auth-store.ts';
+import { apiKeyActs, keyBoundTo, orgAccessRevisionOf } from './repo-api-key.ts';
+import { getScanner, type ScannerRow } from './repo-device.ts';
+
+export const DEVICE_HEADER = 'x-passbook-device';
+export const API_KEY_TOKEN = /^wlt_/;
+
+/** A key opens only these calls: read a code, act on it, undo its own scan. */
+const KEY_ROUTE = /^\/api\/v1\/scan\/(?:resolve|actions|scans\/[^/]+\/undo)$/;
+
+/** A till's key acting as one named terminal of its own org and mode. */
+export interface KeyTerminal {
+  keyId: string;
+  auth: ScannerAuth;
+  row: ScannerRow;
+  /** The org's `access_revision` as the key was admitted. */
+  orgRevision: number;
+}
+
+/**
+ * `Bearer wlt_` plus `x-passbook-device`: the key names the terminal it acts as. Org-bound keys
+ * only, listing `scans:write`; the terminal must be in the key's own org and mode (anything else
+ * is "not found", so the header cannot probe another tenant), live, and a terminal.
+ */
+export async function keyTerminalOf(c: Context<AppBindings>, token: string): Promise<KeyTerminal> {
+  const key = await c.var.stores.apiKeys.resolve(token);
+  if (!key) throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+  if (!key.scopes.includes('scans:write')) {
+    reportDenied(c, 'MISSING_SCOPE', key);
+    throw new ForbiddenError('The API key lacks the scans:write scope.', 'MISSING_SCOPE');
+  }
+  if (key.orgId === null) {
+    reportDenied(c, 'FORBIDDEN', key);
+    throw new ForbiddenError('A platform key cannot scan.', 'API_KEY_ORG_REQUIRED');
+  }
+  if (c.req.method !== 'POST' || !KEY_ROUTE.test(c.req.path)) {
+    reportDenied(c, 'FORBIDDEN', key);
+    throw new ForbiddenError('An API key cannot call this route.', 'API_KEY_ROUTE');
+  }
+  const scannerId = c.req.header(DEVICE_HEADER)?.trim();
+  if (!scannerId) {
+    reportDenied(c, 'FORBIDDEN', key);
+    throw new ValidationError(`Name the terminal in ${DEVICE_HEADER}.`, [], 'DEVICE_REQUIRED');
+  }
+  const db = c.env.DB;
+  const row = await getScanner(db, scannerId);
+  // One answer for every way the header can be wrong: unknown, another org or mode, removed, expired
+  // or not one of this key's terminals.
+  if (
+    !row ||
+    row.orgId !== key.orgId ||
+    row.mode !== key.mode ||
+    row.revokedAt !== null ||
+    scannerExpired(row, serviceContext(c).clock.now()) ||
+    !(await keyBoundTo(db, key.keyId, row.id))
+  ) {
+    reportDenied(c, 'FORBIDDEN', key);
+    throw new NotFoundError('Terminal not found.', 'TERMINAL_NOT_FOUND');
+  }
+  if (row.kind !== 'terminal' || row.deviceRole !== 'scan') {
+    reportDenied(c, 'FORBIDDEN', key);
+    throw new ForbiddenError('A key acts only as a terminal.', 'TERMINAL_ONLY');
+  }
+  const orgRevision = await orgAccessRevisionOf(db, key.orgId);
+  if (orgRevision === null) throw new NotFoundError('Terminal not found.', 'TERMINAL_NOT_FOUND');
+  const auth: ScannerAuth = {
+    kind: 'scanner',
+    scannerId: row.id,
+    orgId: row.orgId,
+    mode: row.mode,
+    transport: 'bearer',
+    csrfSecret: null,
+    scannerKind: 'terminal',
+    deviceRole: 'scan',
+  };
+  return { keyId: key.keyId, auth, row, orgRevision };
+}
+
+/** A key never approves and never overrides, whatever the terminal's own settings say. */
+export function refuseKeyApproval(
+  actor: ScanActor,
+  req: { approval?: unknown; overrideOf?: unknown },
+): void {
+  if (actor.apiKeyId && (req.approval !== undefined || req.overrideOf !== undefined))
+    throw new ForbiddenError('An API key cannot approve or override.', 'API_KEY_NO_APPROVAL');
+}
+
+/** The key lost its authority since the guard read it: revoked, expired, or `scans:write` removed. */
+export async function apiKeyRefusal(
+  ctx: ServiceContext,
+  actor: ScanActor,
+): Promise<AppError | null> {
+  if (!actor.apiKeyId) return null;
+  const acts = await apiKeyActs(
+    ctx.env.DB,
+    {
+      id: actor.apiKeyId,
+      orgId: actor.orgId,
+      mode: actor.mode,
+      scannerId: actor.scanner?.id ?? '',
+    },
+    ctx.clock.now(),
+  );
+  return acts
+    ? null
+    : new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+}

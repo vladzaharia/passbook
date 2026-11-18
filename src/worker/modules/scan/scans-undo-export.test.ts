@@ -159,7 +159,7 @@ describe('GET /scans/export', () => {
     const text = await res.text();
     const lines = text.replace(/^﻿/, '').trimEnd().split('\r\n');
     expect(lines[0]).toBe(
-      'Time (UTC),Result,Reason,Action,Pass,Template,Event,Scanner,Staff,Approved by,Method,Amount,Override,Offline,Undone',
+      'Time (UTC),Result,Reason,Action,Pass,Template,Event,Scanner,Staff,API key,Approved by,Method,Amount,Override,Offline,Undone',
     );
     expect(lines).toHaveLength(3);
     expect(lines[2]).toContain(new Date(a.at).toISOString());

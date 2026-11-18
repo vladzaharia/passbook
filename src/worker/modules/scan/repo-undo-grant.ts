@@ -196,6 +196,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
         'actor_id',
         'actor_key',
         'staff_id',
+        'api_key_id',
         'idempotency_key',
         'request_hash',
         'method',
@@ -217,6 +218,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
         actor.actor.id,
         actor.actorKey,
         actor.staff?.id ?? null,
+        actor.apiKeyId ?? null,
         c.key,
         `undo:${target.id}`,
         'manual',
@@ -250,6 +252,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
           scannerId: actor.scanner?.id ?? null,
           staffId: actor.staff?.id ?? null,
           approvedBy: approver?.id ?? null,
+          ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
         }),
         now,
       ],
@@ -265,7 +268,10 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
       targetId: target.id,
       requestId: ctx.requestId,
       ipPrefix: null,
-      detail: JSON.stringify({ kind: target.actionKind ?? 'check_in' }),
+      detail: JSON.stringify({
+        kind: target.actionKind ?? 'check_in',
+        ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
+      }),
     }),
   ];
   if (presence) {

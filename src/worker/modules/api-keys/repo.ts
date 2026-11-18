@@ -47,6 +47,7 @@ export async function createKey(
   key: ApiKeyRow,
   authority: ApiKeyAuthority,
   audit: AuditEntry,
+  terminalIds: readonly string[] = [],
 ): Promise<void> {
   // The grant supplies org_id and mode of a tenant key: the creator's org and request mode.
   const columns = [
@@ -68,7 +69,7 @@ export async function createKey(
     key.expires_at,
   ];
   if (authority.kind === 'platform') {
-    if (key.org_id !== null) throw new ForbiddenError();
+    if (key.org_id !== null || terminalIds.length > 0) throw new ForbiddenError();
     const g = grant(ctx, {
       purpose: 'platform.api_key.create',
       principal: { kind: 'platform', userId: authority.userId, sessionIdHash: authority.sessionId },
@@ -104,9 +105,20 @@ export async function createKey(
       ...wanted.map((scope) =>
         membershipCapability(authority.membershipId, scopeCapability[scope as ApiScope]),
       ),
+      // A terminal of the grant's org and mode, still in service; the binding is written with the key.
+      ...terminalIds.map((id) =>
+        exactlyOne('scanners', { id, kind: 'terminal', revoked_at: null }),
+      ),
     ],
+    codes: { lineage: 'API_KEY_TERMINAL_UNKNOWN' },
   });
   g.insertSelect('api_keys', ['id', ...columns], [key.id, ...values]);
+  for (const scannerId of terminalIds)
+    g.insertJoined('api_key_terminals', {
+      parents: { key_id: key.id, scanner_id: scannerId },
+      columns: [],
+      values: [],
+    });
   g.add(grantedAudit(g, ctx, audit));
   await g.commit();
 }

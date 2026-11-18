@@ -22,6 +22,7 @@ curl "https://passbook.mobile/api/v1/passes?orgId=$ORG_ID" \
 | `templates:read` | GET templates |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
 | `scans:read` | scoped scanner event and scan-log reads |
+| `scans:write` | scan from a till as one named terminal (see Scan from a till); org-bound keys only |
 | `connections:read` | scoped connection reads |
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 
@@ -460,6 +461,25 @@ The paired scanner (or an admin session joining a scanning session) calls `/api/
 - Codes not found are counted per scanner (or admin actor) in 10-minute windows: after 30, 429 `SCAN_TOO_MANY_MISSES` with `Retry-After`. The first crossing of the cap is audited (`scan.misses_capped`).
 - 409 `SCAN_UNCONFIRMED`: the action committed but the answer could not be confirmed (its template changed meanwhile). Scan again; the key replays the result.
 - Photo and asset links in answers are short-lived grants (`docs/security.md`); an expired or voided one is 404 `ASSET_NOT_FOUND`.
+
+## Scan from a till
+
+A `scans:write` key scans as one of the terminals it was minted for, in its own organization and mode. Create the terminals in Scanning, then pick them in the key dialog (`terminalIds` on `POST /api-keys`: at least one with this scope, none without; org-bound keys only). The binding never changes: other terminals mean a new key. Send the key and the terminal's id:
+
+```bash
+curl -X POST https://passbook.mobile/api/v1/scan/actions \
+  -H "Authorization: Bearer $WALLET_API_KEY" \
+  -H "x-passbook-device: $TERMINAL_ID" \
+  -H "Content-Type: application/json" -d '{ ... }'
+```
+
+- Only `POST /scan/resolve`, `/scan/actions` and `/scan/scans/{id}/undo` accept a key; any other scan route is 403 `API_KEY_ROUTE`. No Origin header is needed.
+- A platform key is 403 `API_KEY_ORG_REQUIRED`; a key without the scope is 403 `MISSING_SCOPE`; a missing header is 422 `DEVICE_REQUIRED`.
+- Every other terminal id (unknown, another org or mode, not bound to this key, removed or expired) is the same 404 `TERMINAL_NOT_FOUND`.
+- The actor is the terminal: scans are its own (`s:<terminalId>`), at its role (Desk at most) and scope, with its session rules. A key never approves or overrides: `approval` or `overrideOf` is 403 `API_KEY_NO_APPROVAL`, and a Manager-only action is refused like on any terminal.
+- A key undoes only its own scans, inside the undo window. The terminal's own token and the key cannot undo each other's scans.
+- A key revoked or expired, or an org whose access changed, while a scan is in flight is checked again when the scan commits: 401 `INVALID_API_KEY` or 403 `ORG_ACCESS_CHANGED`, nothing written.
+- Each scan records the key (`api_key_id`); history, the scans CSV (**API key**) and the ledger carry it. Rate limits and miss counts are the key's own (`k:<keyId>:s:<terminalId>`), so a key cannot lock out the physical till.
 
 ## Scanner history
 

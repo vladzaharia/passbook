@@ -16,6 +16,17 @@ export const deviceAwakeCheck = (scannerId: string, now: number): Check =>
     [scannerId, now, DEVICE_IDLE_MS, now],
   );
 
+/** The API key a till scans with is live, bound to this terminal, in the grant's tenant and lists `scans:write`. */
+export const apiKeyActsCheck = (keyId: string, scannerId: string, now: number): Check =>
+  tenantCheck(
+    'actor',
+    `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND k.org_id = {org} AND k.mode = {mode}
+       AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
+       AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = 'scans:write')
+       AND EXISTS (SELECT 1 FROM api_key_terminals t WHERE t.key_id = k.id AND t.scanner_id = ?))`,
+    [keyId, now, scannerId],
+  );
+
 /** No staff was derived: the device must still have no valid binding (none, expired or disabled). */
 export const noStaffBindingCheck = (scannerId: string, now: number): Check =>
   rawCheck(

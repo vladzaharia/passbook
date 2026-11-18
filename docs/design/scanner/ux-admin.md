@@ -1498,6 +1498,6 @@ Only these need the owner. Everything else above is decided.
 
 Not asked, but flagged:
 - the "Event" / "entries" rename touches n1 and h0;
-- POS / API key scanning (a `scans:write` scope acting as Desk) is deferred to after v1;
+- POS / API key scanning shipped after v1 (WP-P): a `scans:write` key acts only as a named terminal, Desk at most, no approvals (`docs/api.md` Scan from a till);
 - offline queueing is `/scan`'s call. The admin side already reads `client_ts` and shows late-synced scans in place by
   time.
