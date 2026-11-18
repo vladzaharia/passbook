@@ -1,5 +1,6 @@
 import { stmt } from '../../platform/db.ts';
 import type { ScanActor } from './guard.ts';
+import { overrideScopeSql } from './override-scope.ts';
 import { recordedScanProvenanceSql, uniqueScanEventIdSql } from './repo-history-provenance.ts';
 
 const recordedProof = recordedScanProvenanceSql({
@@ -17,11 +18,13 @@ export function overrideEvidenceForTargetStmt(
   targetId: string,
   since: number,
 ): D1PreparedStatement {
+  const scope = overrideScopeSql(actor);
   return stmt(
     db,
     `SELECT q.*,
-    EXISTS (SELECT 1 FROM scans o WHERE o.actor_key=?
-      AND o.at>=? AND o.override_of=? AND o.outcome='ok') AS taken,
+    EXISTS (SELECT 1 FROM scans o WHERE o.at>=? AND o.override_of=? AND o.outcome='ok') AS taken,
+    json_extract(COALESCE((SELECT s.settings FROM scanning_sessions s WHERE s.id=q.session_id),
+      (SELECT d.settings FROM scanners d WHERE d.id=q.scanner_id)),'$.letInAgain') AS door_let_in_again,
     l.id AS evidence_id,l.org_id AS evidence_org_id,l.pass_id AS evidence_pass_id,l.mode AS evidence_mode,
     l.kind AS evidence_kind,l.device AS evidence_device,l.actor_type AS evidence_actor_type,
     l.actor_id AS evidence_actor_id,l.data AS evidence_data,l.at AS evidence_at,
@@ -35,8 +38,8 @@ export function overrideEvidenceForTargetStmt(
       AND recorded.version=(SELECT v.version FROM pass_versions v
         WHERE v.pass_id=q.pass_id AND v.version<=q.pass_version ORDER BY v.version DESC LIMIT 1)
     WHERE q.id=? AND q.org_id=? AND q.mode=?
-      AND q.actor_key=? AND q.state='done' AND q.outcome='heads_up'
+      AND ${scope.sql} AND q.state='done' AND q.outcome IN ('heads_up','refused')
       AND q.at>=? AND q.actor_type=l.actor_type AND q.actor_id=l.actor_id`,
-    [actor.actorKey, since, targetId, targetId, actor.orgId, actor.mode, actor.actorKey, since],
+    [since, targetId, targetId, actor.orgId, actor.mode, ...scope.params, since],
   );
 }

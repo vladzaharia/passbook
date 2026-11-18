@@ -103,7 +103,7 @@ describe('override event provenance', () => {
 
   it('rejects an expired heads-up before claiming a gate', async () => {
     const s = await scenario();
-    kit.clock.advance(11 * 60_000);
+    kit.clock.advance(16 * 60_000);
     await expectInvalid(s);
   });
 

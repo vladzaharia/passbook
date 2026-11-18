@@ -19,6 +19,7 @@ import {
 import type { ScanActor } from './guard.ts';
 import { refuseKeyApproval } from './guard-api-key.ts';
 import { notAcceptedOutcome, unknownOutcome } from './outcome.ts';
+import { isOverrideOnceViolation } from './override-scope.ts';
 import { replayScanByKeyStmt, replayScanFromResult } from './repo-act-authority.ts';
 import { credentialTombstonesClearStmt } from './repo-credential-tombstones.ts';
 import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
@@ -155,6 +156,9 @@ export async function act(
     }
     if (error instanceof UnavailableError && error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE')
       return accepts ? unknownOutcome(credentials) : notAcceptedOutcome(credentials);
+    // Another override holds this heads-up (pending or won): `scans_override_once` at the claim.
+    if (isOverrideOnceViolation(error))
+      throw new ValidationError('That scan cannot be let through.', [], 'SCAN_OVERRIDE_INVALID');
     throw await scannerRefusal(ctx, actor, error);
   }
 }

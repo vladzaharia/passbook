@@ -60,12 +60,29 @@ export type PolicyVerdict =
   | { allow: true; view?: 'summary' }
   | { allow: false; why: 'needs_approval' | 'forbidden' };
 
-/** Which policy lets an override through. A full event always needs a manager, whatever `letInAgain` says. */
+const ACCESS_REASONS = new Set([
+  'zone_not_included',
+  'outside_hours',
+  'guest_expired',
+  'guest_visits_used',
+]);
+
+/**
+ * Which policy lets an override through. A full place always needs a manager, whatever `letInAgain`
+ * says, and so does every access refusal: a `not_yet_valid` that was refused (not held) is an access one.
+ */
 export function overridePolicyKind(
   reason: string | null,
-): 'let_in_again' | 'cooldown_override' | 'capacity_override' {
+  outcome: string | null = null,
+): 'let_in_again' | 'cooldown_override' | 'capacity_override' | 'access_override' {
   if (reason === 'capacity_full') return 'capacity_override';
-  return reason === 'cooldown' ? 'cooldown_override' : 'let_in_again';
+  if (reason === 'cooldown') return 'cooldown_override';
+  if (
+    (reason !== null && ACCESS_REASONS.has(reason)) ||
+    (reason === 'not_yet_valid' && outcome === 'refused')
+  )
+    return 'access_override';
+  return 'let_in_again';
 }
 
 const ALLOW: PolicyVerdict = { allow: true };

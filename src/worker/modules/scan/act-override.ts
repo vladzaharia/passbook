@@ -6,6 +6,7 @@ import type { EventRow } from '../events/repo.ts';
 import { type ActRequest, failActionClaimStmt } from './act-claim.ts';
 import type { ScanActor } from './guard.ts';
 import { isOverridable } from './outcome.ts';
+import { OVERRIDE_WINDOW_MS } from './override-scope.ts';
 import { overrideEvidenceForTargetStmt } from './repo-act-override.ts';
 import { type Raw as RawScan, toScan } from './repo-scan-map.ts';
 import {
@@ -19,8 +20,6 @@ import type { Found, Stop } from './resolve.ts';
 import { defaultAction } from './resolve-outcome.ts';
 import { verifyScanEventProvenance } from './scan-event-proof.ts';
 import { releaseClass } from './scan-event-proof-envelope.ts';
-
-const OVERRIDE_WINDOW_MS = 10 * 60_000;
 
 /** Internal control flow only; never exposed as a problem response. */
 export class StaleScanAuthority extends Error {}
@@ -60,6 +59,8 @@ export interface Override {
   actionId: string;
   actionIdRef: string;
   event: EventRow;
+  /** The refusing door's own `letInAgain`: the door's policy follows the scan to whoever overrides it. */
+  doorLetInAgain: 'anyone' | 'manager' | 'never' | null;
 }
 
 /** Capture a target and its original signed event with the initial claim and candidate reads. */
@@ -75,6 +76,7 @@ export function overrideEvidenceStmt(
 
 type OverrideEvidenceRow = RawScan & {
   taken: number;
+  door_let_in_again: string | null;
   evidence_id: string;
   evidence_org_id: string;
   evidence_pass_id: string;
@@ -143,7 +145,15 @@ export async function overrideFromResult(
     (data.authority && releaseClass(data.authority) === 'approved' && row.approved_proof !== 1)
   )
     return null;
-  return { reason, scan, actionId, actionIdRef: data.actionIdRef, event };
+  const door = row.door_let_in_again;
+  return {
+    reason,
+    scan,
+    actionId,
+    actionIdRef: data.actionIdRef,
+    event,
+    doorLetInAgain: door === 'anyone' || door === 'manager' || door === 'never' ? door : null,
+  };
 }
 
 /** SA 2.6: an invalid captured override may not release the original claim without authority. */

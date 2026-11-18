@@ -92,7 +92,7 @@ export function registerOverrides() {
     expect(o).toMatchObject({ kind: 'heads_up', reason: 'needs_approval' });
   });
 
-  it("rejects an override of another scanner's scan, another pass, an ok row, or an 11-minute-old heads-up", async () => {
+  it("rejects an override of another scanner's scan, another pass, an ok row, or a 16-minute-old heads-up", async () => {
     const a = await kit.scanner({ templateIds: [tpl] });
     const b = await kit.scanner({ templateIds: [tpl] });
     const [p, q] = [await kit.scanPass(tpl), await kit.scanPass(tpl)];
@@ -123,7 +123,7 @@ export function registerOverrides() {
       status: 422,
       code: 'SCAN_OVERRIDE_INVALID',
     });
-    kit.clock.advance(11 * MINUTE);
+    kit.clock.advance(16 * MINUTE);
     expect(await bad(a.headers, p, headsA.scanId)).toEqual({
       status: 422,
       code: 'SCAN_OVERRIDE_INVALID',
