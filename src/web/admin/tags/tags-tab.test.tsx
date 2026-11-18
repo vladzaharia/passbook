@@ -19,6 +19,25 @@ function open(extra: Record<string, () => Response> = {}, query = '') {
       '/api/v1/scan-setups': empty,
       '/api/v1/nfc/tags': () => page([tagFixture(), personTag(), lost]),
       '/api/v1/nfc/tags/t3': () => json(lost),
+      '/api/v1/nfc/tags/t3/history': () =>
+        page([
+          {
+            id: 'b9',
+            tagId: 't3',
+            scope: 'pass',
+            passId: 'p1',
+            passTitle: 'Gym pass',
+            userId: null,
+            holderName: null,
+            source: 'scanner',
+            lent: false,
+            boundAt: 1_800_000_000_000,
+            boundByName: 'Ana R.',
+            scannerName: null,
+            endedAt: 1_800_000_100_000,
+            endCause: 'lost',
+          },
+        ]),
       '/api/v1/nfc/tags/t3/restore': () => json(tagFixture({ id: 't3', label: 'Old fob' })),
       ...extra,
     },
@@ -63,6 +82,8 @@ describe('Tags tab', () => {
     const { fetchMock } = await open();
     await user.click(await screen.findByRole('button', { name: /Old fob/ }));
     const sheet = await screen.findByRole('dialog', { name: 'Old fob' });
+    expect(await within(sheet).findByText('Reported lost', { exact: false })).toBeInTheDocument();
+    expect(within(sheet).getByRole('list', { name: 'History' })).toBeInTheDocument();
     await user.click(within(sheet).getByRole('button', { name: TAG_COPY.menu.restore }));
     const confirm = await screen.findByRole('alertdialog');
     expect(confirm).toHaveTextContent('Restore Old fob?');

@@ -28,8 +28,10 @@ const pass = (over: Record<string, unknown> = {}) =>
   }) as unknown as PassDetailDto;
 
 const base = (items: unknown[] = [tagFixture(), personTag()]) => ({
-  '/api/v1/nfc/passes/p1/tags': () => page(items),
+  '/api/v1/nfc/passes/p1/tags': (_u: URL, init?: RequestInit) =>
+    init?.method === 'POST' ? json(tagFixture()) : page(items),
   '/api/v1/nfc/bindings/b1': () => json(tagFixture({ binding: null, state: 'spare' })),
+  '/api/v1/nfc/bindings/b2': () => json(personTag()),
   '/api/v1/nfc/tags/t1/lost': () => json(tagFixture({ binding: null, state: 'lost' })),
   '/api/v1/nfc/tags/t1': () => json(tagFixture({ label: 'Gate fob' })),
 });
@@ -88,11 +90,43 @@ describe('Tags card', () => {
     const { fetchMock } = renderTags(<TagsCard pass={pass()} readOnly={false} />, base());
     await user.click(await screen.findByRole('button', { name: 'Actions for Blue fob' }));
     await user.click(await screen.findByRole('menuitem', { name: TAG_COPY.menu.remove }));
-    const confirm = await screen.findByRole('alertdialog');
-    expect(confirm).toHaveTextContent('Remove Blue fob from this pass?');
-    await user.click(within(confirm).getByRole('button', { name: 'Remove' }));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     await waitFor(() => expect(calls(fetchMock, 'DELETE', '/bindings/b1')).toHaveLength(1));
     expect(await screen.findByText('Blue fob removed')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(calls(fetchMock, 'POST', '/passes/p1/tags')).toHaveLength(1));
+    expect(JSON.parse(String(calls(fetchMock, 'POST', '/passes/p1/tags')[0]?.[1]?.body))).toEqual({
+      tagId: 't1',
+      binding: 'pass',
+    });
+  });
+
+  it('changes what a tag works with, with Undo', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = renderTags(<TagsCard pass={pass()} readOnly={false} />, base());
+    await user.click(await screen.findByRole('button', { name: 'Actions for Blue fob' }));
+    await user.click(
+      await screen.findByRole('menuitem', { name: "Works with all of Maya Okafor's passes" }),
+    );
+    await waitFor(() => expect(calls(fetchMock, 'PATCH', '/bindings/b1')).toHaveLength(1));
+    expect(JSON.parse(String(calls(fetchMock, 'PATCH', '/bindings/b1')[0]?.[1]?.body))).toEqual({
+      binding: 'user',
+    });
+    expect(
+      await screen.findByText("Blue fob now works with all of Maya Okafor's passes"),
+    ).toBeInTheDocument();
+  });
+
+  it('narrows a person-wide tag to this pass', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = renderTags(<TagsCard pass={pass()} readOnly={false} />, base());
+    await user.click(await screen.findByRole('button', { name: 'Actions for Key card' }));
+    await user.click(await screen.findByRole('menuitem', { name: TAG_COPY.removePerson.passOnly }));
+    await waitFor(() => expect(calls(fetchMock, 'PATCH', '/bindings/b2')).toHaveLength(1));
+    expect(JSON.parse(String(calls(fetchMock, 'PATCH', '/bindings/b2')[0]?.[1]?.body))).toEqual({
+      binding: 'pass',
+      passId: 'p1',
+    });
   });
 
   it('asks before removing a person-wide tag, with the shared title', async () => {

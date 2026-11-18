@@ -23,9 +23,13 @@ const passes = [
 const card = (list = passes) => (
   <UserTagsCard userId="u9" name="Maya Okafor" passes={list} passCount={3} />
 );
+const northwind = { orgId: 'o1', orgName: 'Northwind' };
 const handlers = {
-  '/api/v1/nfc/passes/p1/tags': () => page([personTag(), tagFixture()]),
-  '/api/v1/nfc/passes/p2/tags': () => page([personTag()]),
+  '/api/v1/nfc/users/u9/tags': () =>
+    page([
+      { ...personTag(), ...northwind },
+      { ...tagFixture(), ...northwind },
+    ]),
   '/api/v1/nfc/scanners': () => page([scannerFixture()]),
 };
 
@@ -41,8 +45,7 @@ describe('User tags card', () => {
     const single = screen.getByRole('list', { name: TAG_COPY.userGroup });
     expect(within(single).getByText('Blue fob')).toBeInTheDocument();
     expect(within(single).getByText('Northwind')).toBeInTheDocument();
-    // The voided pass is not read.
-    expect(calls(fetchMock, 'GET', '/passes/p3/tags')).toHaveLength(0);
+    expect(calls(fetchMock, 'GET', '/users/u9/tags')).toHaveLength(1);
   });
 
   it('assigns person-wide through the pass of the only organization', async () => {
@@ -73,7 +76,7 @@ describe('User tags card', () => {
 
   it('shows the empty state', async () => {
     renderTags(card([passes[0] as (typeof passes)[number]]), {
-      '/api/v1/nfc/passes/p1/tags': () => page([]),
+      '/api/v1/nfc/users/u9/tags': () => page([]),
     });
     expect(await screen.findByText(TAG_COPY.empty)).toBeInTheDocument();
     await waitFor(() =>

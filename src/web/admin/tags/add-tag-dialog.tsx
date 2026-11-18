@@ -87,7 +87,7 @@ export function AddTagDialog({
     try {
       const made = await create.mutateAsync({
         scannerId: chosen,
-        scope: scope === 'person' ? 'user' : 'pass',
+        binding: scope === 'person' ? 'user' : 'pass',
       });
       rememberScanner(target.orgId, chosen);
       setPhase({ at: 'wait', id: made.id, scannerId: chosen, scannerName: label, scope });

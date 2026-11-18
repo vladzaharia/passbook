@@ -82,6 +82,11 @@ export function TagsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly: bo
                 actions={actions}
                 readOnly={readOnly}
                 isNew={fresh.has(tag.id)}
+                holder={{
+                  name: holderName,
+                  hasAccount: pass.ownerUserId !== null,
+                  passId: pass.id,
+                }}
               />
             ))}
           </ListRows>

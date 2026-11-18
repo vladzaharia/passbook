@@ -1,4 +1,4 @@
-import { Nfc, Pencil, ShieldX, Ticket, Trash2, Undo2 } from 'lucide-react';
+import { ArrowRightLeft, Nfc, Pencil, ShieldX, Ticket, Trash2, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import type { Tag } from '@/shared/contracts/nfc-tags.ts';
 import { TAG_COPY } from '@/shared/copy/tags.ts';
@@ -6,7 +6,7 @@ import { Badge, EntityChip, Input, ListRow, type RowAction, RowActions } from '@
 import { KindPill } from './enroll-result.tsx';
 import type { TagActions } from './tag-actions.tsx';
 import { WithCode } from './tag-code.tsx';
-import { fill, lastUsedLine, metaLine, tagName } from './words.ts';
+import { fill, lastUsedLine, lcFirst, metaLine, tagName } from './words.ts';
 
 /** "This pass" or a link to the person: what the tag works with. */
 export function WorksWithChip({ tag, pass }: { tag: Tag; pass?: boolean }) {
@@ -42,6 +42,7 @@ export function TagRow({
   onOpen,
   worksWith = 'chip',
   extra,
+  holder,
 }: {
   tag: Tag;
   actions: TagActions;
@@ -50,6 +51,8 @@ export function TagRow({
   onOpen?: () => void;
   worksWith?: 'chip' | 'none';
   extra?: React.ReactNode;
+  /** The holder, for the Works with change: the person-wide choice needs an account. */
+  holder?: { name: string; hasAccount: boolean; passId?: string };
 }) {
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState('');
@@ -72,6 +75,27 @@ export function TagRow({
               setRenaming(true);
             },
           },
+          ...(tag.binding && (tag.binding.scope === 'user' || holder?.hasAccount)
+            ? [
+                tag.binding.scope === 'user'
+                  ? {
+                      label: TAG_COPY.removePerson.passOnly,
+                      icon: ArrowRightLeft,
+                      onSelect: () =>
+                        void actions.changeTo(
+                          tag,
+                          'pass',
+                          tag.binding?.holderName ?? '',
+                          holder?.passId,
+                        ),
+                    }
+                  : {
+                      label: `Works with ${lcFirst(fill(TAG_COPY.worksWith.person, { name: holder?.name }))}`,
+                      icon: ArrowRightLeft,
+                      onSelect: () => void actions.changeTo(tag, 'user', holder?.name ?? ''),
+                    },
+              ]
+            : []),
           { label: TAG_COPY.menu.reportLost, icon: ShieldX, onSelect: () => actions.lost(tag) },
           {
             label:

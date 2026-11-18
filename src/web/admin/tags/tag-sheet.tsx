@@ -14,14 +14,14 @@ import { useTag } from './api.ts';
 import { KindPill } from './enroll-result.tsx';
 import { useTagActions } from './tag-actions.tsx';
 import { TagCode } from './tag-code.tsx';
+import { TagHistory } from './tag-history.tsx';
 import { WorksWithChip } from './tag-row.tsx';
 import { StateBadge } from './tags-state.tsx';
 import { lastUsedLine, metaLine, tagName } from './words.ts';
 
 /**
  * One tag: what it works with, who assigned it and when, last use. Report lost, Restore and Remove
- * confirm like they do in the pass card. The tag keeps only its current binding, so that is the
- * history shown.
+ * confirm like they do in the pass card. History comes from its own route.
  */
 export function TagSheet({
   id,
@@ -90,6 +90,7 @@ export function TagSheet({
                     { label: 'Added', value: formatDateTime(tag.createdAt) },
                   ]}
                 />
+                <TagHistory tagId={tag.id} />
                 {readOnly ? null : (
                   <div className="flex flex-wrap gap-2">
                     {tag.state === 'lost' ? (

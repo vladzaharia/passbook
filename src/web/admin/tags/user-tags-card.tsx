@@ -18,9 +18,9 @@ import {
 } from '@/web/ui/index.ts';
 import { usePass } from '../passes/api.ts';
 import { AddTagDialog } from './add-tag-dialog.tsx';
-import { useUserTags } from './api.ts';
 import { useTagActions } from './tag-actions.tsx';
 import { TagRow } from './tag-row.tsx';
+import { useUserTagList } from './tags-extra-api.ts';
 
 interface UserPass {
   id: string;
@@ -28,9 +28,6 @@ interface UserPass {
   orgName: string;
   status: string;
 }
-
-/** Tags are read through this many of the user's passes. */
-const READ_PASSES = 10;
 
 /**
  * Tags on the user page: the ones that work with all of the person's passes, then the ones on a
@@ -48,16 +45,16 @@ export function UserTagsCard({
   passCount: number;
 }) {
   const live = passes.filter((p) => p.status !== 'voided');
-  const read = live.slice(0, READ_PASSES);
-  const { tags, isPending, isError, error } = useUserTags(read.map((p) => p.id));
+  const query = useUserTagList(userId);
+  const { isPending, isError, error } = query;
+  const tags = query.data?.items ?? [];
   const actions = useTagActions({ passes: passCount });
   const [assigning, setAssigning] = useState(0);
   const [open, setOpen] = useState(false);
-  const fresh = useInsertHighlight(tags.map((t) => t.tag.id));
-  const orgOf = (passId: string) => passes.find((p) => p.id === passId)?.orgName;
-  const person = tags.filter((t) => t.tag.binding?.scope === 'user');
-  const single = tags.filter((t) => t.tag.binding?.scope !== 'user');
-  const row = ({ tag, passId }: (typeof tags)[number]) => (
+  const fresh = useInsertHighlight(tags.map((t) => t.id));
+  const person = tags.filter((t) => t.binding?.scope === 'user');
+  const single = tags.filter((t) => t.binding?.scope !== 'user');
+  const row = (tag: (typeof tags)[number]) => (
     <TagRow
       key={tag.id}
       tag={tag}
@@ -65,7 +62,7 @@ export function UserTagsCard({
       readOnly={false}
       isNew={fresh.has(tag.id)}
       worksWith={tag.binding?.scope === 'user' ? 'none' : 'chip'}
-      extra={<span className="block">{orgOf(passId)}</span>}
+      extra={<span className="block">{tag.orgName}</span>}
     />
   );
   return (

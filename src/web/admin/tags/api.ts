@@ -1,12 +1,6 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueries,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
-import { type Tag, TagListSchema, TagSchema } from '@/shared/contracts/nfc-tags.ts';
+import { TagListSchema, TagSchema } from '@/shared/contracts/nfc-tags.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { removeWithTransition } from '@/web/lib/motion.ts';
@@ -58,34 +52,6 @@ export function usePassTags(passId: string, enabled = true) {
     queryFn: ({ signal }) =>
       api.get(`${NFC}/passes/${encodeURIComponent(passId)}/tags`, TagListSchema, { signal }),
   });
-}
-
-/**
- * A user's tags, read through a few of their passes: person-wide tags show on each, pass tags on
- * their own. There is no per-user route yet; a pass in the other mode answers 404 and is skipped.
- */
-export function useUserTags(passIds: readonly string[]) {
-  const mode = useMode();
-  const results = useQueries({
-    queries: passIds.map((passId) => ({
-      queryKey: tagKeys.pass(passId, mode),
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        api.get(`${NFC}/passes/${encodeURIComponent(passId)}/tags`, TagListSchema, { signal }),
-      retry: false,
-    })),
-  });
-  const settled = results.every((r) => !r.isPending);
-  const failed = results.length > 0 && results.every((r) => r.isError);
-  const data = results.map((r) => r.data);
-  const byId = new Map<string, { tag: Tag; passId: string }>();
-  data.forEach((page, i) => {
-    for (const tag of page?.items ?? []) {
-      const passId = passIds[i];
-      if (passId && !byId.has(tag.id)) byId.set(tag.id, { tag, passId });
-    }
-  });
-  const tags = [...byId.values()];
-  return { tags, isPending: !settled, isError: failed, error: results.find((r) => r.error)?.error };
 }
 
 /** Writes on a tag or its binding. Every one refreshes all tag reads. */

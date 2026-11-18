@@ -14,7 +14,7 @@ import { tagKeys } from './api.ts';
  * Remote enrollment, "Assign with a scanner" (T5). T5 is not built; these are the routes the
  * design names (access-nfc-design 8.2), typed by the contract so a change there fails here:
  *   GET    /api/v1/nfc/scanners?orgId              NFC-capable scanners in this org and mode
- *   POST   /api/v1/nfc/passes/{passId}/enrollments { scannerId, scope }
+ *   POST   /api/v1/nfc/passes/{passId}/enrollments { scannerId, binding }
  *   GET    /api/v1/nfc/passes/{passId}/enrollments/{id}
  *   DELETE /api/v1/nfc/passes/{passId}/enrollments/{id}
  */

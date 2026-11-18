@@ -97,7 +97,7 @@ describe('Assign tag dialog', () => {
     expect(await screen.findByText('Tap the tag on Front desk iPad')).toBeInTheDocument();
     expect(screen.getByText("Works with all of Maya Okafor's passes")).toBeInTheDocument();
     const body = JSON.parse(String(calls(fetchMock, 'POST', '/enrollments')[0]?.[1]?.body));
-    expect(body).toEqual({ scannerId: 's1', scope: 'user' });
+    expect(body).toEqual({ scannerId: 's1', binding: 'user' });
     expect(
       await screen.findByText(TAG_COPY.dialog.done, {}, { timeout: 4000 }),
     ).toBeInTheDocument();
