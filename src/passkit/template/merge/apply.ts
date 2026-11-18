@@ -63,14 +63,12 @@ export function mergePackages(
   // Upstream renames merge as edits under the old identity; the rename is applied afterwards.
   const [mo, mt0] = [entityMaps(o), entityMaps(t0)];
   const mb = b && entityMaps(b);
-  const plan = (b ? detectRenames(b, t) : [])
-    .filter((s) => mo[s.kind].has(s.from))
-    .map((step) => ({
-      step,
-      clean:
-        eq(mo[step.kind].get(step.from), mb?.[step.kind].get(step.from)) &&
-        !mo[step.kind].has(step.to),
-    }));
+  const plan = (b ? detectRenames(b, t) : []).map((step) => ({
+    step,
+    clean:
+      eq(mo[step.kind].get(step.from), mb?.[step.kind].get(step.from)) &&
+      !mo[step.kind].has(step.to),
+  }));
   for (const { step } of plan) t = renameIn(t, { kind: step.kind, from: step.to, to: step.from });
 
   let merged: PackageDoc = {
@@ -87,6 +85,11 @@ export function mergePackages(
   const renames: Rename[] = [];
   for (const { step, clean } of plan) {
     const part = PART_OF[step.kind];
+    if (!mo[step.kind].has(step.from)) {
+      // Ours deleted it and theirs only renamed it: the deletion stands.
+      renames.push({ ...step, applied: false });
+      continue;
+    }
     const id = conflictId(part, [step.from]);
     let applied = clean;
     if (!clean && picks[id] === 'theirs') applied = true;
