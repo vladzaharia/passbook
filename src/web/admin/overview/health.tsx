@@ -54,7 +54,7 @@ export function Health() {
           ) : status.isError || !status.data ? (
             <ErrorState inline error={status.error} onRetry={() => status.refetch()} />
           ) : (
-            <>
+            <div className={cn('flex flex-col gap-4', attention && 'border-t border-border pt-4')}>
               <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
                 <tone.icon aria-hidden className={cn('mt-0.5 size-7 shrink-0', tone.text)} />
                 <div className="min-w-0 flex-1 basis-56">
@@ -103,7 +103,7 @@ export function Health() {
                   })}
                 </ListRows>
               ) : null}
-            </>
+            </div>
           )}
         </section>
       </CardBody>
