@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { GOAL_MAX, GOAL_MIN } from '@/passkit/stamps/layout.ts';
 import type { TemplateVersionDetailSchema } from '@/shared/contracts/index.ts';
+import { supportedCurrencies } from '../../lib/format.ts';
 import { contrast, type Rgb, toRgbText } from '../templates/designer/contrast.ts';
 import { placeImage, setSlotImage } from '../templates/designer/images.ts';
 import { type DesignDoc, type DraftAsset, isRecord } from '../templates/designer/model.ts';
@@ -41,9 +42,7 @@ export function textColors(bg: Rgb): { foreground: Rgb; label: Rgb } {
 /** The common codes lead; the rest are the ISO codes the browser's money formatting knows. */
 const COMMON = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK'];
 const currencies = (): string[] => {
-  const known =
-    typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('currency') : [];
-  return [...COMMON, ...known];
+  return [...COMMON, ...supportedCurrencies()];
 };
 
 type Dict = Record<string, unknown>;

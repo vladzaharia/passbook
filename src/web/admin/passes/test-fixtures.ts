@@ -201,10 +201,16 @@ export function passDetail(over: Record<string, unknown> = {}) {
     devices: [
       {
         shortId: 'a1b2c3',
+        device: 'a1b2c3d4e5f6',
         createdAt: 1_700_000_000_000,
         lastPush: { state: 'sent', at: 1_700_000_100_000 },
       },
-      { shortId: 'd4e5f6', createdAt: 1_700_000_000_000, lastPush: null },
+      {
+        shortId: 'd4e5f6',
+        device: 'f6e5d4c3b2a1',
+        createdAt: 1_700_000_000_000,
+        lastPush: null,
+      },
     ],
     lastRefreshedAt: null,
     versions: passVersions(),

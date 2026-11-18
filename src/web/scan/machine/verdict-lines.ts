@@ -7,24 +7,18 @@ import {
   scanLine,
 } from '../../../shared/copy/scan.ts';
 import { headlineValues } from '../../../shared/copy/scan-headline.ts';
-import { formatCount, formatDateTime, formatMoney, formatTime } from '../../lib/format.ts';
+import {
+  formatCount,
+  formatDateTime,
+  formatMoney,
+  formatTime,
+  formatWeekday,
+} from '../../lib/format.ts';
 import { accessValues, agoText } from './access-view.ts';
 import type { ScanOutcome } from './types.ts';
 
 type Values = Record<string, string | number>;
 type Value = NonNullable<ScanOutcome['value']>;
-
-const WEEKDAY = new Map<string, Intl.DateTimeFormat>();
-/** Sat, in the event's zone when it has one. */
-function weekday(ms: number, timeZone?: string): string {
-  const key = timeZone ?? '';
-  let f = WEEKDAY.get(key);
-  if (!f) {
-    f = new Intl.DateTimeFormat('en-US', { weekday: 'short', ...(timeZone ? { timeZone } : {}) });
-    WEEKDAY.set(key, f);
-  }
-  return f.format(ms);
-}
 
 /** A value as staff read it: money with its currency, a count with separators, text as is. */
 function shown(value: Value, n: unknown): string {
@@ -44,11 +38,11 @@ export function lineValues(o: ScanOutcome, now: number): Values {
     // `not_yet_valid` opens at `at` (the pass's own start); only a wrong event names the event's day.
     day:
       o.reason !== 'wrong_event' && o.at
-        ? weekday(o.at)
+        ? formatWeekday(o.at)
         : o.event
-          ? weekday(o.event.startsAt)
+          ? formatWeekday(o.event.startsAt)
           : o.at
-            ? weekday(o.at)
+            ? formatWeekday(o.at)
             : '',
     date: formatDateTime(o.at),
     time: o.at ? formatTime(o.at) : '',

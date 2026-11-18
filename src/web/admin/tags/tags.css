@@ -138,6 +138,7 @@
 @media (prefers-reduced-motion: reduce) {
   .wl-enroll-dot {
     display: none;
+    animation: none;
   }
   .wl-enroll-arc {
     animation: wl-enroll-fade 240ms ease-out 1 both;

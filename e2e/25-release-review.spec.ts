@@ -82,7 +82,7 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
 
     // The author cannot approve their own candidate.
     await expect(
-      card.getByText('You cannot review a candidate or version you authored.'),
+      card.getByText(/^You wrote this version\. Another reviewer approves it/),
     ).toBeVisible();
     const selfApprove = card.getByRole('button', { name: 'Approve candidate for Version 1' });
     if (await selfApprove.count()) await expect(selfApprove).toBeDisabled();

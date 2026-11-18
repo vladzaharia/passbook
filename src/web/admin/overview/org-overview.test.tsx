@@ -16,6 +16,8 @@ const emptySetup = {
   orgs: 1,
   assignedTemplates: 0,
   passes: 0,
+  approvedTemplates: 0,
+  walletPasses: 0,
   passEmailsSent: 0,
   latestPassId: null,
   scanners: 0,
