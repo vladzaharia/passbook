@@ -7,6 +7,11 @@ ALTER TABLE connections ADD COLUMN webhook_prev_credential_id TEXT
 -- A previous credential always has an expiry. The reverse is allowed: deleting the credential nulls only the id.
 ALTER TABLE connections ADD COLUMN webhook_prev_until INTEGER
   CHECK (webhook_prev_credential_id IS NULL OR webhook_prev_until IS NOT NULL);
+-- Keyed hash of a pasted recipe secret. Unique platform-wide: a Shopify store key signs every delivery of
+-- that store, so two connections sharing one could replay each other's captured deliveries.
+ALTER TABLE connections ADD COLUMN webhook_secret_fp TEXT;
+CREATE UNIQUE INDEX connections_webhook_secret_fp ON connections (webhook_secret_fp)
+  WHERE webhook_secret_fp IS NOT NULL;
 CREATE INDEX connections_webhook_prev_credential ON connections (webhook_prev_credential_id)
   WHERE webhook_prev_credential_id IS NOT NULL;
 
@@ -15,6 +20,8 @@ CREATE TABLE connection_ref_versions (
   connection_id TEXT NOT NULL REFERENCES connections (id) ON DELETE CASCADE,
   ref TEXT NOT NULL CHECK (length(ref) <= 200),
   source_version INTEGER NOT NULL,
+  -- Breaks a tie between records of the same version: the larger event id wins.
+  source_event TEXT NOT NULL DEFAULT '',
   updated_at INTEGER NOT NULL,
   PRIMARY KEY (connection_id, ref)
 );

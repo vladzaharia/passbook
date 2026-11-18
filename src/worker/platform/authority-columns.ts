@@ -187,6 +187,7 @@ export const EPOCH_TABLES: EpochTable[] = [
       'name',
       'webhook_prev_credential_id',
       'webhook_prev_until',
+      'webhook_secret_fp',
       'interval_seconds',
       'max_concurrency',
       'requests_per_minute',

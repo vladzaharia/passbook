@@ -98,6 +98,14 @@ describe('0102 connections recipes', () => {
     ).rejects.toThrow(/CHECK/);
   });
 
+  it('a webhook secret fingerprint is unique platform-wide', async () => {
+    await seedConnection('webhook_secret_fp=', ['fp-1']);
+    await expect(seedConnection('webhook_secret_fp=', ['fp-1'])).rejects.toThrow(/UNIQUE/);
+    await expect(seedConnection('webhook_secret_fp=', ['fp-2'])).resolves.toBeDefined();
+    await seedConnection();
+    await expect(seedConnection()).resolves.toBeDefined();
+  });
+
   it('connection_ref_versions cascades with its connection and refuses long refs', async () => {
     const { id, orgId } = await seedConnection();
     await run(
