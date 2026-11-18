@@ -6,6 +6,7 @@ import { BadRequestError, ForbiddenError, UnavailableError } from '../../platfor
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createEmailBindingMailer, type Mailer } from '../delivery/mailer.ts';
+import { joinByInvitation } from '../orgs/invitation-join.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { withinCaps, withinDailyCap, withinIpCap } from './magic-caps.ts';
 import * as repo from './repo-magic.ts';
@@ -241,6 +242,10 @@ async function finish(
     return { kind: 'linked', next: link.redirect_path };
   }
   const result = await signInMagicLink(ctx, link.email, sign);
+  if (link.invitation_id) {
+    const joined = await joinByInvitation(ctx, result.userId, link.invitation_id);
+    if (!joined) ctx.log.warn('org_invitation.join_skipped', { code: 'INVITATION_JOIN_SKIPPED' });
+  }
   return { kind: 'signed_in', result, next: link.redirect_path };
 }
 

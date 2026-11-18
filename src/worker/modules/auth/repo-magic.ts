@@ -15,10 +15,22 @@ export interface MagicLinkRow {
   attempt_count: number;
   browser_binding_hash: string | null;
   pending_identity: string | null;
+  invitation_id: string | null;
 }
 
 const COLUMNS = `token_hash, email, purpose, user_id, code_hash, redirect_path, attempt_count,
-  browser_binding_hash, pending_identity`;
+  browser_binding_hash, pending_identity, invitation_id`;
+
+/**
+ * An invitation link lives while its invitation is pending in an active org, and only until the
+ * address has an account: after that the person signs in normally and accepts in the app.
+ * `?` binds the current time.
+ */
+const INVITE_LIVE = `(invitation_id IS NULL OR (
+  NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = magic_links.email)
+  AND EXISTS (SELECT 1 FROM org_invitations i JOIN orgs o ON o.id = i.org_id AND o.status = 'active'
+    WHERE i.id = magic_links.invitation_id AND i.revoked_at IS NULL AND i.accepted_at IS NULL
+      AND i.expires_at > ?)))`;
 
 /** An account, a pass, or a pending invitation: the only addresses that may receive a sign-in mail. */
 export async function isKnownAddress(db: Db, email: string, now: number): Promise<boolean> {
@@ -48,6 +60,7 @@ export async function insertLink(
     bindingHash: string | null;
     redirectPath: string | null;
     pendingIdentity: string | null;
+    invitationId?: string | null;
     now: number;
     expiresAt: number;
   },
@@ -63,7 +76,8 @@ export async function insertLink(
   await run(
     db,
     `INSERT INTO magic_links (token_hash, email, purpose, user_id, code_hash, browser_binding_hash,
-       redirect_path, pending_identity, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       redirect_path, pending_identity, invitation_id, created_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       link.tokenHash,
       link.email,
@@ -73,6 +87,7 @@ export async function insertLink(
       link.bindingHash,
       link.redirectPath,
       link.pendingIdentity,
+      link.invitationId ?? null,
       link.now,
       link.expiresAt,
     ],
@@ -83,8 +98,9 @@ export async function insertLink(
 export const peekLink = (db: Db, tokenHash: string, now: number) =>
   first<MagicLinkRow>(
     db,
-    `SELECT ${COLUMNS} FROM magic_links WHERE token_hash = ? AND consumed_at IS NULL AND expires_at > ?`,
-    [tokenHash, now],
+    `SELECT ${COLUMNS} FROM magic_links WHERE token_hash = ? AND consumed_at IS NULL AND expires_at > ?
+       AND ${INVITE_LIVE}`,
+    [tokenHash, now, now],
   );
 
 /** The stored next of any link, live, used or expired. */
@@ -100,8 +116,9 @@ export const consumeLink = (db: Db, tokenHash: string, now: number) =>
   first<MagicLinkRow>(
     db,
     `UPDATE magic_links SET consumed_at = ? WHERE token_hash = ? AND consumed_at IS NULL AND expires_at > ?
+       AND ${INVITE_LIVE}
      RETURNING ${COLUMNS}`,
-    [now, tokenHash, now],
+    [now, tokenHash, now, now],
   );
 
 export const findLinkForCode = (db: Db, email: string, bindingHash: string, now: number) =>

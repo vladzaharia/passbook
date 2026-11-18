@@ -131,22 +131,13 @@ async function join(
 }
 
 describe('organization memberships', () => {
-  it('sends one mail to an invitee with no account; its sign-in link joins the org', async () => {
-    const { org } = await setup();
-    const email = `new-invitee-${crypto.randomUUID()}@example.test`;
-    const count = mail.length;
-    const response = await call('POST', `/${org.id}/invitations`, { email, roles: ['read_only'] });
-    expect(response.status).toBe(201);
-    expect(mail).toHaveLength(count + 1);
-    const text = mail[count]?.text ?? '';
-    expect(text).not.toContain('/api/v1/orgs/invitations/accept');
-    const signIn = text.match(/https:\/\/wallet\.test\/auth\/magic\?t=([\w-]+)/);
-    expect(signIn).toBeTruthy();
-    const consumed = await app.request(
+  const consumeSignIn = (mailIndex: number) => {
+    const t = mail[mailIndex]?.text.match(/\/auth\/magic\?t=([\w-]+)/)?.[1] ?? '';
+    return app.request(
       '/auth/magic/consume',
       {
         method: 'POST',
-        body: new URLSearchParams({ token: signIn?.[1] ?? '' }),
+        body: new URLSearchParams({ token: t }),
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
           'sec-fetch-site': 'same-origin',
@@ -154,19 +145,113 @@ describe('organization memberships', () => {
       },
       env,
     );
-    expect(consumed.status).toBe(303);
-    const next = consumed.headers.get('location') ?? '';
-    expect(next).toMatch(/^\/api\/v1\/orgs\/invitations\/accept#[\w-]{43}$/);
-    const created = await all<{ id: string }>(
+  };
+  const inviteNew = async (orgId: string, email: string) => {
+    const count = mail.length;
+    const response = await call('POST', `/${orgId}/invitations`, { email, roles: ['read_only'] });
+    expect(response.status).toBe(201);
+    expect(mail).toHaveLength(count + 1);
+    return count;
+  };
+  const memberships = (email: string) =>
+    all<{ org_id: string }>(
       env.DB,
-      'SELECT user_id AS id FROM user_emails WHERE email = ?',
+      `SELECT m.org_id FROM org_memberships m JOIN user_emails e ON e.user_id = m.user_id
+       WHERE e.email = ? AND m.revoked_at IS NULL`,
       [email],
     );
-    expect(created).toHaveLength(1);
-    const joined = await accept(next.split('#')[1] ?? '', created[0]?.id ?? '');
-    expect(joined.status).toBe(200);
-    expect(OrgMembershipSchema.parse(await joined.json()).orgId).toBe(org.id);
-    expect(mail).toHaveLength(count + 1);
+  const freshEmail = () => `new-invitee-${crypto.randomUUID()}@example.test`;
+
+  it('sends one mail to an invitee with no account; its sign-in link joins the org', async () => {
+    const { org } = await setup();
+    const email = freshEmail();
+    const at = await inviteNew(org.id, email);
+    const text = mail[at]?.text ?? '';
+    expect(text).toMatch(/Accept invitation: https:\/\/wallet\.test\/auth\/magic\?t=/);
+    const consumed = await consumeSignIn(at);
+    expect(consumed.status).toBe(303);
+    // The invitation secret is never stored with the link or sent back in the redirect.
+    expect(consumed.headers.get('location')).toBe('/account');
+    expect((await memberships(email)).map((m) => m.org_id)).toEqual([org.id]);
+    const stored = await all<{ redirect_path: string }>(
+      env.DB,
+      'SELECT redirect_path FROM magic_links WHERE email = ?',
+      [email],
+    );
+    expect(stored.every((row) => row.redirect_path === '/account')).toBe(true);
+    expect(mail).toHaveLength(at + 1);
+  });
+
+  it('refuses the sign-in link of a revoked invitation', async () => {
+    const { org } = await setup();
+    const email = freshEmail();
+    const at = await inviteNew(org.id, email);
+    const [row] = await all<{ id: string }>(
+      env.DB,
+      'SELECT id FROM org_invitations WHERE org_id = ? AND email = ?',
+      [org.id, email],
+    );
+    expect((await call('DELETE', `/${org.id}/invitations/${row?.id}`)).status).toBe(200);
+    expect((await consumeSignIn(at)).status).toBe(400);
+    expect(await all(env.DB, 'SELECT 1 FROM user_emails WHERE email = ?', [email])).toHaveLength(0);
+  });
+
+  it('refuses a second invitation link once the first created the account', async () => {
+    const { org } = await setup();
+    const other = await makeOrg(fixtures(env, clock));
+    const email = freshEmail();
+    const first = await inviteNew(org.id, email);
+    const second = await inviteNew(other.id, email);
+    expect((await consumeSignIn(first)).status).toBe(303);
+    expect((await consumeSignIn(second)).status).toBe(400);
+    expect((await memberships(email)).map((m) => m.org_id)).toEqual([org.id]);
+  });
+
+  it('refuses the sign-in link of a suspended org', async () => {
+    const { org } = await setup();
+    const email = freshEmail();
+    const at = await inviteNew(org.id, email);
+    await run(env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
+    expect((await consumeSignIn(at)).status).toBe(400);
+  });
+
+  it('does the same work whether or not the address has an account', async () => {
+    const { org, person } = await setup();
+    const rows = (email: string) =>
+      all<{ expires_at: number; created_at: number }>(
+        env.DB,
+        'SELECT expires_at, created_at FROM magic_links WHERE email = ?',
+        [email],
+      );
+    await inviteNew(org.id, person.primaryEmail);
+    const known = await rows(person.primaryEmail);
+    expect(known).toHaveLength(1);
+    // Unusable for an account holder: born expired, and the mail carries the plain accept link.
+    expect(known[0]?.expires_at).toBe(known[0]?.created_at);
+  });
+
+  it('allows one pending invitation per address per org', async () => {
+    const { org } = await setup();
+    const email = freshEmail();
+    await inviteNew(org.id, email);
+    const again = await call('POST', `/${org.id}/invitations`, { email, roles: ['read_only'] });
+    await expectProblem(again, 409, 'INVITATION_PENDING');
+  });
+
+  it('limits how many invitations an org starts in a day', async () => {
+    const { org } = await setup();
+    await run(env.DB, "DELETE FROM counters WHERE key LIKE 'invite:%'");
+    const day = clock.now() - (clock.now() % 86_400_000);
+    await run(env.DB, 'INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)', [
+      `invite:org:${org.id}`,
+      day,
+      100,
+    ]);
+    const response = await call('POST', `/${org.id}/invitations`, {
+      email: freshEmail(),
+      roles: ['read_only'],
+    });
+    expect(response.status).toBe(429);
   });
 
   it('sends the plain accept link when the invitee already has an account', async () => {
