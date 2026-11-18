@@ -84,7 +84,7 @@ export function retentionProofPart(prepared: PreparedScanRetentionProof): GrantP
 
 /**
  * The proof of an auto exit, desk mark-out or undo. Once the scan is done (`when`) the proof must exist:
- * a row the proof does not match aborts the batch instead of committing without evidence.
+ * a row the proof does not match aborts the batch (`SCAN_PROOF_MISMATCH`, 500) instead of committing without evidence.
  */
 export function includeSystemRetentionProof(
   g: Grant,
@@ -93,7 +93,7 @@ export function includeSystemRetentionProof(
 ): void {
   g.include(retentionProofPart(prepared));
   g.assert(
-    'retention',
+    'proof',
     [
       tenantSql(
         'EXISTS (SELECT 1 FROM scan_retention_proofs r WHERE r.scan_id = ? AND r.org_id = {org} AND r.mode = {mode})',

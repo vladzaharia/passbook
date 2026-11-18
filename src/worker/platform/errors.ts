@@ -106,6 +106,7 @@ export const DENY_REASONS = [
   'release',
   'retention',
   'stale',
+  'proof',
 ] as const;
 export type DenyReason = (typeof DENY_REASONS)[number];
 
@@ -156,6 +157,13 @@ export function authorityDenied(
       );
     case 'stale':
       return new ConflictError('The resource changed. Reload and retry.', code ?? 'STALE');
+    // A written row and its retention proof disagree: a server fault, never a retained or quarantined record.
+    case 'proof':
+      return new AppError(
+        code ?? 'SCAN_PROOF_MISMATCH',
+        500,
+        'The record could not be signed. Try again.',
+      );
     default:
       return new ForbiddenError('You do not have access.', code ?? 'AUTHORITY_DENIED');
   }

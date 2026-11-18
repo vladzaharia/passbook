@@ -6,7 +6,7 @@ import type { ServiceContext } from '../../../platform/service-context.ts';
 import { InvalidScanRetentionProof } from '../scan-retention-proof.ts';
 import { effectiveTimeZone, indexZones } from '../zones-tree.ts';
 import { exitGrant, type OutCause, rearmGrant } from './auto-exit.ts';
-import { type DueRow, dueRows } from './repo-reads.ts';
+import { type DueRow, dueRows, stayKey } from './repo-reads.ts';
 import {
   dueAt,
   exitAsGiven,
@@ -17,6 +17,7 @@ import {
   zonePlace,
 } from './rules.ts';
 import { occupancyZones } from './service.ts';
+import { failed, readUnsigned, waiting, writeUnsigned } from './unsigned.ts';
 
 export const DUE_BATCH = 200;
 const CHUNK = 25;
@@ -43,62 +44,97 @@ export function verdict(zones: readonly OccZone[], row: DueRow, now: number): Ve
   return { rearm: due };
 }
 
-/** A grant refusal (stale row, suspended org) or an unsignable row is a skip; anything else is a bug. */
-const refusal = (error: unknown) =>
-  (error instanceof AppError && error.status < 500) || error instanceof InvalidScanRetentionProof;
+/** A grant refusal (stale row, suspended org) is a skip; anything else is a bug. */
+const refusal = (error: unknown) => error instanceof AppError && error.status < 500;
 
-export async function autoTapOut(ctx: ServiceContext): Promise<void> {
+/** A row that cannot be signed (or whose proof disagrees with it): skipped with a growing delay. */
+const unsignable = (error: unknown) =>
+  error instanceof InvalidScanRetentionProof ||
+  (error instanceof AppError && error.code === 'SCAN_PROOF_MISMATCH');
+
+/** A fetch full of failures is followed by another, so unsignable rows cannot starve the rest. */
+const ROUNDS = 5;
+
+export async function autoTapOut(ctx: ServiceContext, makeExit = exitGrant): Promise<void> {
   const db = ctx.env.DB;
   const now = ctx.clock.now();
-  const rows = await dueRows(db, now, DUE_BATCH);
-  if (rows.length === 0) return;
+  const memory = await readUnsigned(db);
+  const skip = new Set(waiting(memory, now));
   const zones = new Map<string, OccZone[]>();
-  const made: { row: DueRow; make: () => Promise<Grant> }[] = [];
-  let exits = 0;
-  let rearms = 0;
-  for (const row of rows) {
-    const org = zones.get(row.org_id) ?? (await occupancyZones(db, row.org_id));
-    zones.set(row.org_id, org);
-    const v = verdict(org, row, now);
-    if (!v) continue;
-    const list = org;
-    if ('exit' in v) {
-      exits++;
-      made.push({
-        row,
-        make: () => exitGrant(ctx, row, exitAsGiven(list, row.scope), v.exit, now),
-      });
-    } else {
-      rearms++;
-      made.push({ row, make: async () => rearmGrant(ctx, row, v.rearm) });
-    }
-  }
-  let refused = 0;
-  for (let at = 0; at < made.length; at += CHUNK) {
-    const chunk = made.slice(at, at + CHUNK);
-    try {
-      await grantedBatch(db, await Promise.all(chunk.map((c) => c.make())));
-      continue;
-    } catch (error) {
-      if (!refusal(error)) throw error;
-    }
-    for (const c of chunk)
-      try {
-        await (await c.make()).commit();
-      } catch (error) {
-        if (!refusal(error)) throw error;
-        refused++;
-        if (error instanceof InvalidScanRetentionProof)
-          ctx.log.error('scan.occupancy_proof', {
-            code: 'SCAN_OCCUPANCY_PROOF',
-            orgId: c.row.org_id,
-          });
-        else
-          ctx.log.warn('scan.occupancy_skip', {
-            code: 'SCAN_OCCUPANCY_REFUSED',
-            orgId: c.row.org_id,
-          });
+  const seen = new Set<string>();
+  const tally = { due: 0, exits: 0, rearms: 0, refused: 0, unsigned: 0 };
+  let dirty = false;
+  for (let round = 0; round < ROUNDS; round++) {
+    const rows = await dueRows(db, now, DUE_BATCH, [...skip]);
+    if (rows.length === 0) break;
+    tally.due += rows.length;
+    const made: { row: DueRow; exit: boolean; make: () => Promise<Grant> }[] = [];
+    for (const row of rows) {
+      seen.add(stayKey(row));
+      const org = zones.get(row.org_id) ?? (await occupancyZones(db, row.org_id));
+      zones.set(row.org_id, org);
+      const v = verdict(org, row, now);
+      if (!v) continue;
+      const list = org;
+      if ('exit' in v) {
+        tally.exits++;
+        made.push({
+          row,
+          exit: true,
+          make: () => makeExit(ctx, row, exitAsGiven(list, row.scope), v.exit, now),
+        });
+      } else {
+        tally.rearms++;
+        made.push({ row, exit: false, make: async () => rearmGrant(ctx, row, v.rearm) });
       }
+    }
+    let failures = 0;
+    const done = (c: (typeof made)[number]) => {
+      if (c.exit && memory.delete(stayKey(c.row))) dirty = true;
+    };
+    for (let at = 0; at < made.length; at += CHUNK) {
+      const chunk = made.slice(at, at + CHUNK);
+      try {
+        await grantedBatch(db, await Promise.all(chunk.map((c) => c.make())));
+        for (const c of chunk) done(c);
+        continue;
+      } catch (error) {
+        if (!refusal(error) && !unsignable(error)) throw error;
+      }
+      for (const c of chunk)
+        try {
+          await (await c.make()).commit();
+          done(c);
+        } catch (error) {
+          if (unsignable(error)) {
+            const key = stayKey(c.row);
+            const count = failed(memory, key, now);
+            skip.add(key);
+            dirty = true;
+            failures++;
+            tally.unsigned++;
+            ctx.log.error('scan.occupancy_proof', {
+              code: 'SCAN_OCCUPANCY_PROOF',
+              orgId: c.row.org_id,
+              failures: count,
+            });
+          } else if (refusal(error)) {
+            tally.refused++;
+            ctx.log.warn('scan.occupancy_skip', {
+              code: 'SCAN_OCCUPANCY_REFUSED',
+              orgId: c.row.org_id,
+            });
+          } else throw error;
+        }
+    }
+    if (failures === 0 || rows.length < DUE_BATCH) break;
   }
-  ctx.log.info('scan.occupancy', { due: rows.length, exits, rearms, refused });
+  // A stay that is no longer due (tapped out, moved) leaves the memory once its delay has passed.
+  for (const [key, u] of memory)
+    if (u.retryAt <= now && !seen.has(key)) {
+      memory.delete(key);
+      dirty = true;
+    }
+  if (dirty) await writeUnsigned(db, memory, now);
+  if (tally.due > 0) ctx.log.info('scan.occupancy', tally);
 }

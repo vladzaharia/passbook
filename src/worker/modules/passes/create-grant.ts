@@ -28,7 +28,7 @@ export const CREATE_CODES = {
   release: 'CREATE_RELEASE',
   retention: 'CREATE_RETENTION',
   stale: 'CREATE_STALE',
-} as const satisfies Record<DenyReason, string>;
+} as const satisfies Record<Exclude<DenyReason, 'proof'>, string>;
 
 const REASON_OF = new Map<string, DenyReason>(
   ([...Object.entries(CREATE_CODES), ...Object.entries(JOIN_CODES)] as [DenyReason, string][]).map(

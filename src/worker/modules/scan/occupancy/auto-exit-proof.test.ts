@@ -16,9 +16,10 @@ import {
 } from '../scan-retention-system-test-fixtures.ts';
 import { scanningSessionsFixture } from '../scanning-sessions-test-fixtures.ts';
 import { exitGrant, type OutCause } from './auto-exit.ts';
-import { autoTapOut } from './jobs.ts';
+import { autoTapOut, DUE_BATCH } from './jobs.ts';
 import type { DueRow } from './repo-reads.ts';
 import { exitAsGiven } from './rules.ts';
+import { readUnsigned } from './unsigned.ts';
 
 const fixture = scanningSessionsFixture();
 beforeAll(fixture.setup);
@@ -252,7 +253,10 @@ describe('auto exit proof', () => {
       "CREATE TRIGGER auto_drift AFTER UPDATE ON scans WHEN NEW.actor_key = 'sys:occupancy' AND NEW.state = 'done' AND NEW.out_cause = 'stay' BEGIN UPDATE scans SET out_cause = 'zone' WHERE id = NEW.id; END",
     );
     try {
-      await expect(exitWith(p, z, 'stay', now)).rejects.toThrow();
+      await expect(exitWith(p, z, 'stay', now)).rejects.toMatchObject({
+        code: 'SCAN_PROOF_MISMATCH',
+        status: 500,
+      });
     } finally {
       await run(db(), 'DROP TRIGGER auto_drift');
     }
@@ -283,6 +287,64 @@ describe('auto exit proof', () => {
     expect(await proofCount(db(), recentId)).toBe(1);
     expect(await verifyStored(db(), fixture.kit.env, recentId)).toBe(true);
   });
+});
+
+describe('unsignable rows in the cron', () => {
+  const unsigned = async () => [...(await readUnsigned(db())).values()];
+
+  it('backs off 200+ unsignable stays so a signable exit and a recovered row still go', async () => {
+    const clock = fixture.kit.clock;
+    const now = clock.now();
+    const z = await zone({ maxStayMinutes: 60 });
+    const bad = new Set<string>();
+    for (let i = 0; i < DUE_BATCH + 5; i++) {
+      const p = await inside(z, now - 5 * HOUR, now - 4 * HOUR - i);
+      bad.add(p.id);
+    }
+    const good = await inside(z, now - 2 * HOUR, now - HOUR);
+    const calls: string[] = [];
+    const tried = () => new Set(calls).size;
+    const flaky: typeof exitGrant = (c, row, plan, cause, at) => {
+      if (bad.has(row.pass_id)) {
+        calls.push(row.pass_id);
+        throw new InvalidScanRetentionProof();
+      }
+      return exitGrant(c, row, plan, cause, at);
+    };
+    const state = async (id: string) =>
+      (
+        await first<{ state: string }>(db(), 'SELECT state FROM scan_presence WHERE pass_id = ?', [
+          id,
+        ])
+      )?.state;
+
+    await autoTapOut(ctx(), flaky);
+    expect(await state(good.id)).toBe('out');
+    expect(tried()).toBe(bad.size);
+    expect((await unsigned()).length).toBe(bad.size);
+    expect(await unsigned()).toEqual(
+      expect.arrayContaining([{ failures: 1, retryAt: now + 5 * 60_000 }]),
+    );
+
+    // Within the delay nobody is retried; a retry after it fails again with a longer delay.
+    calls.length = 0;
+    await autoTapOut(ctx(), flaky);
+    expect(calls).toEqual([]);
+    clock.set(now + 6 * 60_000);
+    await autoTapOut(ctx(), flaky);
+    expect(tried()).toBe(bad.size);
+    expect((await unsigned())[0]).toMatchObject({ failures: 2 });
+
+    // One row recovers: it exits and leaves the memory; the rest stay inside.
+    const [fixed] = [...bad];
+    bad.delete(fixed as string);
+    clock.set(now + 6 * 60_000 + 11 * 60_000);
+    await autoTapOut(ctx(), flaky);
+    expect(await state(fixed as string)).toBe('out');
+    expect((await unsigned()).length).toBe(bad.size);
+    expect(await state([...bad][0] as string)).toBe('in');
+    clock.set(now);
+  }, 180_000);
 });
 
 describe('prepareSystemScanRetentionProof', () => {

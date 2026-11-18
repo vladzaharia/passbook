@@ -160,7 +160,9 @@ describe('desk mark-out proof', () => {
       "CREATE TRIGGER mark_out_drift AFTER INSERT ON scans WHEN NEW.out_cause = 'desk' BEGIN UPDATE scans SET out_cause = 'forced' WHERE id = NEW.id; END",
     );
     try {
-      expect((await deskMarkOut(s.headers, p.id, place)).status).toBeGreaterThanOrEqual(400);
+      const res = await deskMarkOut(s.headers, p.id, place);
+      expect(res.status).toBe(500);
+      expect(await res.text()).toContain('SCAN_PROOF_MISMATCH');
     } finally {
       await run(db(), 'DROP TRIGGER mark_out_drift');
     }

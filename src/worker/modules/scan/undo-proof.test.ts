@@ -140,7 +140,9 @@ describe('undo proof', () => {
       "CREATE TRIGGER undo_drift AFTER INSERT ON scans WHEN NEW.undoes IS NOT NULL BEGIN UPDATE scans SET method = 'camera' WHERE id = NEW.id; END",
     );
     try {
-      expect((await undoScan(s.headers, target.scanId)).status).toBeGreaterThanOrEqual(400);
+      const res = await undoScan(s.headers, target.scanId);
+      expect(res.status).toBe(500);
+      expect(await res.text()).toContain('SCAN_PROOF_MISMATCH');
     } finally {
       await run(db(), 'DROP TRIGGER undo_drift');
     }
