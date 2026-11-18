@@ -8,6 +8,16 @@ import {
   plainWrite,
 } from './repo-grants.ts';
 import { validCredentialKeysetCommitment } from './repo-passes.ts';
+import { openRunOf } from './repo-sync-open.ts';
+
+/** Another schedule or admin run of the connection is open (one open run per connection). */
+export class SyncRunOpenError extends Error {
+  readonly runId: string;
+  constructor(runId: string) {
+    super('A sync is already running.');
+    this.runId = runId;
+  }
+}
 
 /**
  * Insert both tracking rows and commit the enqueue decision in one grant batch: the connection's
@@ -73,6 +83,8 @@ export async function commitSyncEnqueue(
   } catch (error) {
     // A concurrent request inserted the same run first: keep its row and fill any gap.
     if (exists || classifyD1Error(error)?.kind !== 'unique') throw error;
+    const open = await openRunOf(db, expected);
+    if (open) throw new SyncRunOpenError(open.id);
     await enqueue(false);
   }
   // A refusal above leaves the proof to decide: an existing pair is a retry and must still match.

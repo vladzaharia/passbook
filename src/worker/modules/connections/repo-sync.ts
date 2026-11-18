@@ -101,14 +101,16 @@ export async function workflowSyncTracking(
   startedAt: number;
   status: string;
   credentialKeysetCommitment: string | null;
+  tipSeq: number;
 } | null> {
   const row = await first<{
     started_at: number;
     status: string;
     credential_keyset_commitment: string | null;
+    tip_seq: number;
   }>(
     db,
-    `SELECT started_at, status, credential_keyset_commitment FROM workflow_runs
+    `SELECT started_at, status, credential_keyset_commitment, tip_seq FROM workflow_runs
      WHERE instance_id = ? AND kind = 'connection_sync' AND org_id = ? AND target_id = ?`,
     [p.instanceId, p.orgId, p.connectionId],
   );
@@ -117,6 +119,7 @@ export async function workflowSyncTracking(
         startedAt: row.started_at,
         status: row.status,
         credentialKeysetCommitment: row.credential_keyset_commitment,
+        tipSeq: row.tip_seq,
       }
     : null;
 }
@@ -245,31 +248,33 @@ export async function slotAttemptInFlight(
   db: D1Database,
   connectionId: string,
   slot: string,
-): Promise<boolean> {
-  return (
-    (await first(
-      db,
-      `SELECT 1 FROM workflow_runs WHERE kind = 'connection_sync' AND target_id = ?
-         AND substr(instance_id, 1, ?) = ? AND status IN ('queued', 'running') LIMIT 1`,
-      [connectionId, slot.length + 1, `${slot}-`],
-    )) !== null
-  );
-}
-
-/** A run of the connection other than `instanceId` that is open and whose tracking row is live. */
-export async function openRunOf(
-  db: D1Database,
-  p: { connectionId: string; instanceId: string },
-): Promise<{ id: string; startedAt: number } | null> {
-  const row = await first<{ id: string; started_at: number }>(
+): Promise<{
+  id: string;
+  startedAt: number;
+  credentialKeysetCommitment: string | null;
+  tipSeq: number;
+  orgId: string;
+} | null> {
+  const row = await first<{
+    instance_id: string;
+    started_at: number;
+    credential_keyset_commitment: string | null;
+    tip_seq: number;
+    org_id: string;
+  }>(
     db,
-    `SELECT r.id, r.started_at FROM connection_runs r
-     JOIN workflow_runs w ON w.instance_id = r.id AND w.kind = 'connection_sync'
-       AND w.target_id = r.connection_id
-     WHERE r.connection_id = ? AND r.id <> ? AND r.outcome = 'running'
-       AND w.status IN ('queued', 'running')
-     ORDER BY r.started_at LIMIT 1`,
-    [p.connectionId, p.instanceId],
+    `SELECT instance_id, started_at, credential_keyset_commitment, tip_seq, org_id FROM workflow_runs
+       WHERE kind = 'connection_sync' AND target_id = ?
+         AND substr(instance_id, 1, ?) = ? AND status IN ('queued', 'running') LIMIT 1`,
+    [connectionId, slot.length + 1, `${slot}-`],
   );
-  return row ? { id: row.id, startedAt: row.started_at } : null;
+  return row
+    ? {
+        id: row.instance_id,
+        startedAt: row.started_at,
+        credentialKeysetCommitment: row.credential_keyset_commitment,
+        tipSeq: row.tip_seq,
+        orgId: row.org_id,
+      }
+    : null;
 }

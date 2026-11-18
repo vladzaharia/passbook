@@ -1,6 +1,6 @@
 import { connectors } from '../../connectors/registry.ts';
 import { envString } from '../../platform/env.ts';
-import { AppError, ConflictError, ForbiddenError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
@@ -14,28 +14,22 @@ import { listDueConnections } from './repo-list.ts';
 import { validCredentialKeysetCommitment } from './repo-passes.ts';
 import {
   commitSyncEnqueue,
-  markLegacyWorkflowLost,
-  openRunOf,
-  setWorkflowStatus,
   slotAttemptInFlight,
   syncEnqueueExists,
   workflowSyncTracking,
 } from './repo-sync.ts';
-import { continuationId, MAX_HANDOFFS } from './sync-chain.ts';
+import { SyncRunOpenError } from './repo-sync-enqueue.ts';
+import { openRunOf } from './repo-sync-open.ts';
+import { closeLostRun, instanceLost, STUCK_MS } from './run-lost.ts';
+import { alreadyExists } from './sync-chain.ts';
 
 const DUE_BATCH = 100;
-/** A scheduled instance still unfinished after this long is treated as lost. */
-const STUCK_MS = 30 * 60_000;
 const ADMIN_BUCKET_MS = 30_000;
 
 /** `ADMIN_SYNC_BUCKET_MS` shortens the window for e2e runs; unset or invalid keeps 30 s. */
 export function adminBucketMs(env: object): number {
   const n = Number(envString(env, 'ADMIN_SYNC_BUCKET_MS'));
   return Number.isInteger(n) && n >= 100 ? n : ADMIN_BUCKET_MS;
-}
-
-function alreadyExists(error: unknown): boolean {
-  return error instanceof Error && /already.?exist|instance.*exists/i.test(error.message);
 }
 
 export function scheduledInstanceId(conn: Pick<ConnectionRow, 'id' | 'nextRunAt'>): string {
@@ -65,32 +59,43 @@ export async function startSync(
   await assertConnectionAuthority(sctx, authority);
   const retry = await syncEnqueueExists(sctx.env.DB, instanceId);
   if (!retry) {
-    // Two runs would page the same cursor: adopt the one in flight while it is alive.
+    // Two runs would page the same cursor: adopt the open one while its instance is alive.
     const open = await openRunOf(sctx.env.DB, { connectionId: conn.id, instanceId });
-    if (
-      open &&
-      (sctx.clock.now() - open.startedAt < STUCK_MS || !(await instanceLost(sctx, open.id)))
-    )
-      return { runId: open.id, workflowInstanceId: open.id };
+    if (open) {
+      const alive =
+        (open.status === 'queued' || open.status === 'running') &&
+        (sctx.clock.now() - open.startedAt < STUCK_MS ||
+          !(await instanceLost(sctx, open.id, open.tipSeq)));
+      if (alive) return { runId: open.id, workflowInstanceId: open.id };
+      await closeLostRun(sctx, { orgId: conn.orgId, connectionId: conn.id, runId: open.id });
+    }
   }
   const credentialKeysetCommitment = retry
     ? await requireCredentialRefKeyset(sctx.env.DB, sctx.env)
     : await ensureCredentialRefKeyset(sctx.env.DB, sctx.env);
   const now = sctx.clock.now();
-  const committed = await commitSyncEnqueue(
-    sctx,
-    {
-      instanceId,
-      orgId: conn.orgId,
-      connectionId: conn.id,
-      generation: conn.generation,
-      credentialKeysetCommitment,
-      trigger,
-      actorId,
-      startedAt: now,
-    },
-    { orgId: conn.orgId, authority },
-  );
+  let committed: boolean;
+  try {
+    committed = await commitSyncEnqueue(
+      sctx,
+      {
+        instanceId,
+        orgId: conn.orgId,
+        connectionId: conn.id,
+        generation: conn.generation,
+        credentialKeysetCommitment,
+        trigger,
+        actorId,
+        startedAt: now,
+      },
+      { orgId: conn.orgId, authority },
+    );
+  } catch (error) {
+    // A racing request opened the connection's run first.
+    if (error instanceof SyncRunOpenError)
+      return { runId: error.runId, workflowInstanceId: error.runId };
+    throw error;
+  }
   if (!committed) {
     throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
   }
@@ -113,31 +118,6 @@ export async function startSync(
   return { runId: instanceId, workflowInstanceId: instanceId };
 }
 
-/** True when the Workflow instance is gone or ended without closing its run. */
-async function instanceLost(sctx: ServiceContext, instanceId: string): Promise<boolean> {
-  try {
-    const statusOf = async (id: string) =>
-      (await (await sctx.env.CONNECTION_SYNC.get(id)).status()).status;
-    let status = await statusOf(instanceId);
-    // A finished first instance with an open run handed off: the last continuation is what counts.
-    for (let seq = 1; status === 'complete' && seq <= MAX_HANDOFFS; seq++) {
-      try {
-        status = await statusOf(continuationId(instanceId, seq));
-      } catch {
-        // No such continuation: the previous status is the last instance's.
-        break;
-      }
-    }
-    return status === 'errored' || status === 'terminated' || status === 'unknown';
-  } catch (error) {
-    // A Workflows API failure is treated like a vanished instance; keep the cause visible.
-    sctx.log.warn('connection.instance_status_failed', {
-      code: error instanceof AppError ? error.code : 'INSTANCE_STATUS_FAILED',
-    });
-    return true;
-  }
-}
-
 /** Org- and connection-scoped, with no credential guard: the stuck row never held a keyset. */
 async function resumeLegacyRun(
   sctx: ServiceContext,
@@ -157,12 +137,7 @@ async function resumeLegacyRun(
     },
   );
   if (!updated) return;
-  await markLegacyWorkflowLost(sctx.env.DB, {
-    instanceId,
-    orgId: conn.orgId,
-    connectionId: conn.id,
-    now,
-  });
+  await closeLostRun(sctx, { orgId: conn.orgId, connectionId: conn.id, runId: instanceId });
   sctx.log.warn('connection.run_lost', { code: 'RUN_LOST', connectionId: conn.id, legacy: true });
 }
 
@@ -182,7 +157,20 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
       // The previous instance for this slot finished without moving the schedule (a stale close, for
       // example during a suspension): it cannot run again, so the next attempt gets its own id.
       if (tracking && (tracking.status === 'complete' || tracking.status === 'errored')) {
-        if (await slotAttemptInFlight(sctx.env.DB, conn.id, instanceId)) continue;
+        const attempt = await slotAttemptInFlight(sctx.env.DB, conn.id, instanceId);
+        if (attempt) {
+          // A dead retry attempt would otherwise hold the slot forever; the next tick retries.
+          if (
+            now - attempt.startedAt > STUCK_MS &&
+            (await instanceLost(sctx, attempt.id, attempt.tipSeq))
+          )
+            await closeLostRun(sctx, {
+              orgId: conn.orgId,
+              connectionId: conn.id,
+              runId: attempt.id,
+            });
+          continue;
+        }
         instanceId = `${instanceId}-${now}`;
         await startSync(sctx, conn, 'schedule', instanceId);
         continue;
@@ -192,7 +180,7 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
         if (credentialKeysetCommitment === null) {
           // In flight at cutover: its instance cannot run under the new authority checks. Once it
           // is dead, the connection is due again at once under a fresh instance.
-          if (await instanceLost(sctx, instanceId))
+          if (await instanceLost(sctx, instanceId, tracking.tipSeq))
             await resumeLegacyRun(sctx, conn, instanceId, now);
           continue;
         }
@@ -202,7 +190,7 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
         )
           continue;
         // Long runs are legitimate; only a dead instance is replaced.
-        if (!(await instanceLost(sctx, instanceId))) continue;
+        if (!(await instanceLost(sctx, instanceId, tracking.tipSeq))) continue;
         const seconds =
           conn.intervalSeconds ??
           connectors.get(conn.connectorType)?.defaults.intervalSeconds ??
@@ -225,20 +213,7 @@ export async function reconcileConnections(sctx: ServiceContext): Promise<void> 
           },
         );
         if (!updated) continue;
-        await setWorkflowStatus(
-          sctx.env.DB,
-          instanceId,
-          'errored',
-          now,
-          'RUN_LOST',
-          undefined,
-          credentialKeysetCommitment,
-          {
-            orgId: conn.orgId,
-            connectionId: conn.id,
-            runnable: { generation: conn.generation, mode: conn.mode },
-          },
-        );
+        await closeLostRun(sctx, { orgId: conn.orgId, connectionId: conn.id, runId: instanceId });
         sctx.log.warn('connection.run_lost', { code: 'RUN_LOST', connectionId: conn.id });
         continue;
       }

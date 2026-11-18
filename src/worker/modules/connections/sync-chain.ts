@@ -4,6 +4,7 @@ import type { Totals } from './records.ts';
 import type { ConnectionRow } from './repo.ts';
 import { syncRunCurrent } from './repo-runs.ts';
 import { workflowSyncTracking } from './repo-sync.ts';
+import { setChainTip } from './repo-sync-open.ts';
 import { type StaleCode, syncContext, syncKeysetCurrent } from './sync-context.ts';
 import { assertSyncAuthority } from './sync-runner-validation.ts';
 
@@ -21,8 +22,12 @@ export interface SyncChain {
 /** Deterministic id: a retried hand-off step can only ever name the same instance. */
 export const continuationId = (runId: string, seq: number): string => `${runId}-c${seq}`;
 
+/** Workflows reports a taken id as `instance.already_exists` (error 10405). */
 export function alreadyExists(error: unknown): boolean {
-  return error instanceof Error && /already.?exist|instance.*exists/i.test(error.message);
+  return (
+    error instanceof Error &&
+    /instance\.already_exists|already exists|\b10405\b/i.test(error.message)
+  );
 }
 
 /** Records written so far; what the per-instance budget counts. */
@@ -47,6 +52,8 @@ export function assertSyncChain(chain: SyncChain | undefined): void {
     chain.seq > MAX_HANDOFFS ||
     !Number.isFinite(chain.startedAt) ||
     !Array.isArray(chain.samples) ||
+    chain.samples.length > 5 ||
+    !chain.samples.every((x) => typeof x === 'string') ||
     !t ||
     ![t.seen, t.changed, t.created, t.missing, t.errors].every(count)
   )
@@ -73,11 +80,16 @@ export async function handOff(
 ): Promise<{ started: true } | { started: false; staleCode: StaleCode }> {
   // A replay finds the child it already started, whatever state the run has reached since.
   const child = continuationId(p.runId, chain.seq);
+  const tip = { instanceId: p.runId, connectionId: p.connectionId, seq: chain.seq };
+  let exists = true;
   try {
     await sctx.env.CONNECTION_SYNC.get(child);
-    return { started: true };
   } catch {
-    // Not created yet: carry on and create it.
+    exists = false; // Not created yet: carry on and create it.
+  }
+  if (exists) {
+    await setChainTip(sctx.env.DB, tip);
+    return { started: true };
   }
   await assertSyncAuthority(sctx, p);
   if (!(await syncKeysetCurrent(sctx, p.credentialKeysetCommitment)))
@@ -104,6 +116,7 @@ export async function handOff(
   } catch (error) {
     if (!alreadyExists(error)) throw error;
   }
+  await setChainTip(sctx.env.DB, tip);
   sctx.log.info('connection.sync_handoff', { connectionId: p.connectionId, seq: chain.seq });
   return { started: true };
 }

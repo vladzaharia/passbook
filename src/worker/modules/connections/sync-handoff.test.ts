@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { ConnectionSync } from '../../workflows/connection-sync.ts';
 import { emptyTotals } from './records.ts';
@@ -242,9 +242,24 @@ describe('sync hand-off', () => {
     };
     const sctx = { ...kit.sctx, env: { ...kit.env, CONNECTION_SYNC: binding } } as never;
     await reconcileConnections(sctx);
+    await run(kit.env.DB, 'UPDATE workflow_runs SET tip_seq = 2 WHERE target_id = ?', [dto.id]);
     kit.clock.advance(45 * 60_000);
     await reconcileConnections({ ...(sctx as object), clock: kit.clock } as never);
     expect((await getConnection(kit.env.DB, dto.id))?.lastErrorCode ?? null).toBe(lost);
+    const row = await first<{
+      outcome: string;
+      error_code: string | null;
+      finished_at: number | null;
+    }>(
+      kit.env.DB,
+      'SELECT outcome, error_code, finished_at FROM connection_runs WHERE connection_id = ?',
+      [dto.id],
+    );
+    expect(row).toMatchObject(
+      lost
+        ? { outcome: 'error', error_code: 'RUN_LOST', finished_at: kit.clock.now() }
+        : { outcome: 'running', finished_at: null },
+    );
   });
 
   it('stops at the budget when the chain cap is reached, with a visible outcome', async () => {
@@ -366,5 +381,76 @@ describe('sync hand-off', () => {
       await expect(call).rejects.toThrow();
       expect(await runRow()).toMatchObject({ outcome: 'running' });
     }
+  });
+
+  it('opens one run when two enqueues race', async () => {
+    const dto = await demo(5);
+    const conn = await getConnection(kit.env.DB, dto.id);
+    if (!conn) throw new Error('no connection');
+    const { sctx, created } = withWorkflow(kit, undefined, () => 'running');
+    const [a, b] = await Promise.all([
+      startSync(sctx, conn, 'admin', 'sync-r-admin-1'),
+      startSync(sctx, conn, 'admin', 'sync-r-admin-2'),
+    ]);
+    expect(a.runId).toBe(b.runId);
+    expect(created).toHaveLength(1);
+    const rows = await all(
+      kit.env.DB,
+      "SELECT 1 FROM connection_runs WHERE connection_id = ? AND outcome = 'running'",
+      [dto.id],
+    );
+    const tracked = await all(kit.env.DB, 'SELECT 1 FROM workflow_runs WHERE target_id = ?', [
+      dto.id,
+    ]);
+    expect([rows.length, tracked.length]).toEqual([1, 1]);
+  });
+
+  it('closes a dead admin run when a new one starts', async () => {
+    const dto = await demo(5);
+    const conn = await getConnection(kit.env.DB, dto.id);
+    if (!conn) throw new Error('no connection');
+    await startSync(withWorkflow(kit, undefined, () => 'running').sctx, conn, 'admin', 'sync-d-1');
+    kit.clock.advance(45 * 60_000);
+    const dead = withWorkflow(kit, undefined, () => 'errored');
+    await startSync({ ...dead.sctx, clock: kit.clock }, conn, 'admin', 'sync-d-2');
+    const old = await first<{ outcome: string; error_code: string }>(
+      kit.env.DB,
+      "SELECT outcome, error_code FROM connection_runs WHERE id = 'sync-d-1'",
+    );
+    expect(old).toEqual({ outcome: 'error', error_code: 'RUN_LOST' });
+    expect(dead.created.map((c) => c.id)).toEqual(['sync-d-2']);
+  });
+
+  it('recovers a retry attempt that died', async () => {
+    const dto = await createDemo(kit);
+    const states = { current: 'running' };
+    const binding = {
+      create: async () => undefined,
+      get: async () => ({ status: async () => ({ status: states.current }) }),
+    };
+    const sctx = {
+      ...kit.sctx,
+      env: { ...kit.env, CONNECTION_SYNC: binding },
+    } as unknown as ServiceContext;
+    await reconcileConnections(sctx);
+    await run(kit.env.DB, "UPDATE workflow_runs SET status = 'complete' WHERE target_id = ?", [
+      dto.id,
+    ]);
+    await reconcileConnections(sctx);
+    const attempts = await all<{ instance_id: string }>(
+      kit.env.DB,
+      "SELECT instance_id FROM workflow_runs WHERE target_id = ? AND status = 'queued'",
+      [dto.id],
+    );
+    expect(attempts).toHaveLength(1);
+    states.current = 'errored';
+    kit.clock.advance(45 * 60_000);
+    await reconcileConnections({ ...sctx, clock: kit.clock });
+    const closed = await first<{ outcome: string; error_code: string }>(
+      kit.env.DB,
+      'SELECT outcome, error_code FROM connection_runs WHERE id = ?',
+      [attempts[0]?.instance_id ?? ''],
+    );
+    expect(closed).toEqual({ outcome: 'error', error_code: 'RUN_LOST' });
   });
 });
