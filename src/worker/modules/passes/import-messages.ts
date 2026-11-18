@@ -1,5 +1,4 @@
 import type { z } from 'zod';
-import type { InputIssue } from '../../../passkit/template/manifest.ts';
 import {
   PASS_IMPORT_MAX_CELL,
   type PassImportProblemSchema,
@@ -36,7 +35,7 @@ const TYPE_WORDS: Record<string, string> = {
 
 /** Rewrites a JSON Schema failure as one sentence about the input, by keyword. */
 export function inputMessage(
-  issue: Pick<InputIssue, 'keyword' | 'message'>,
+  issue: { keyword: string; message: string },
   label: string,
   schema: Record<string, unknown> | undefined,
 ): string {
