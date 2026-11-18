@@ -303,6 +303,7 @@ export function ScanLoop({
       {access.layer}
       <ScanOverlays
         allowPeople={scanner?.settings.lookup ?? true}
+        sessionTotals={session.staff?.role === 'manager' && Boolean(session.workspace)}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
         timeZone={session.event?.timeZone}
         sheet={sheet}

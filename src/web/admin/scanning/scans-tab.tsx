@@ -114,7 +114,7 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
   const rows = query.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <>
-      <ScanFilters search={search} orgId={orgId} />
+      <ScanFilters search={search} orgId={orgId} from={filters.from} />
       <DataTable
         caption="Scans"
         data={rows}

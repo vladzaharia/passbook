@@ -24,8 +24,10 @@ import {
   readSummary,
   SUMMARY_CONTRIBUTORS,
 } from './repo-scan-history.ts';
+import { readSummaryExtras } from './repo-summary-extras.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { staleScanRead } from './stale-read.ts';
+import { sessionSummaryFor, summaryExtrasOf } from './summary-session.ts';
 
 const DAY = 86_400_000;
 const MINUTE = 60_000;
@@ -130,7 +132,9 @@ export async function summaryFor(
   ctx: ServiceContext,
   source: ScanActor,
   since?: number,
+  scope: 'device' | 'session' = 'device',
 ): Promise<z.infer<typeof ScanSummarySchema>> {
+  if (scope === 'session') return sessionSummaryFor(ctx, source, since);
   const actor = cloneObservedScanActor(source);
   const now = ctx.clock.now();
   const from = Math.max(since ?? now - DAY, now - DAY);
@@ -145,6 +149,13 @@ export async function summaryFor(
     byAction: [],
     firstAt: null,
     lastAt: null,
+    scope: 'device' as const,
+    timeZone: actor.timeZone,
+    byHour: [],
+    byValue: [],
+    byReason: [],
+    byStaff: [],
+    overrides: { count: 0, latest: [] },
   };
   if (!historyReadable(actor)) return empty;
   const auth = scanReadAuthority(actor, { now, read: HISTORY_READ });
@@ -152,6 +163,14 @@ export async function summaryFor(
   if (!read.authorized) throw await staleScanRead(ctx, actor);
   const { totals, rows } = read;
   if (!totals) throw new Error('Unable to read scan summary.');
+  const own = ownScansWhere(actor);
+  const extras = await readSummaryExtras(
+    ctx.env.DB,
+    auth,
+    { where: own.sql, params: own.params },
+    { from, to: now },
+  );
+  if (!extras.authorized) throw await staleScanRead(ctx, actor);
   const projectable = historyProjectable(actor);
   const groups = new Map<string | null, { seen: number; blocked: boolean; label: string | null }>();
   for (const row of rows) {
@@ -200,5 +219,8 @@ export async function summaryFor(
     byAction,
     firstAt: totals.first_at,
     lastAt: totals.last_at,
+    scope: 'device',
+    ...summaryExtrasOf(extras, actor.timeZone),
+    byStaff: [],
   };
 }

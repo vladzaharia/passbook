@@ -256,8 +256,8 @@ export function createScanApi(deps: ScanApiDeps) {
         undefined,
         o.signal ? { signal: o.signal } : {},
       ),
-    summary: (since: number, call?: Call) =>
-      request('GET', `/summary?since=${since}`, ScanSummarySchema, undefined, call),
+    summary: (since: number, call?: Call, scope: 'device' | 'session' = 'device') =>
+      request('GET', `/summary?since=${since}&scope=${scope}`, ScanSummarySchema, undefined, call),
     signOut: () => request('POST', '/unpair', null),
     staffSignIn: (body: z.infer<typeof ScanStaffSignInSchema>) =>
       request('POST', '/staff', ScanSessionSchema, body),
