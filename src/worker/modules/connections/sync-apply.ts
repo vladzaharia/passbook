@@ -34,7 +34,15 @@ import type { RetainedWebhookCandidate } from './webhook-retention-items.ts';
 
 export { runRefs } from './sync-refs.ts';
 
-export type Change = { ref: string; record?: UpstreamRecord | undefined; deleted?: boolean };
+export type Change = {
+  ref: string;
+  record?: UpstreamRecord | undefined;
+  deleted?: boolean;
+  /** False: only an update; a missing pass is not created. Absent: may create. */
+  create?: boolean;
+  /** Source order (ms) for out-of-order protection. */
+  version?: number;
+};
 export type ChangeItemOutcome = 'success' | 'blocked' | 'retry' | 'failed' | 'uncertain';
 
 /** Durable per-item claims use the original changes-array ordinal, including duplicate refs. */
@@ -212,7 +220,12 @@ export async function applyChanges(
         markStale(extra, staleFetchRefs.get(change.ref));
         return;
       }
-      const itemOptions = { ...options, ...retained };
+      const itemOptions = {
+        ...options,
+        ...retained,
+        ...(change.create === false ? { createAllowed: false } : {}),
+        ...(change.version === undefined ? {} : { sourceVersion: change.version }),
+      };
       let result: ChangeItemResult;
       try {
         if (change.deleted) {

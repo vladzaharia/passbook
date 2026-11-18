@@ -25,6 +25,7 @@ import {
   parseWith,
   requireConnector,
 } from './validate.ts';
+import { validateVoidWhen } from './void-when.ts';
 
 /** Keys the connector fixes at creation (the webhook recipe) cannot change: bound passes hold its refs. */
 function assertFixedConfig(
@@ -115,7 +116,10 @@ export async function update(
   if (input.autoCreate !== undefined) set('autoCreate', input.autoCreate);
   if (input.autoEmail !== undefined) set('autoEmail', input.autoEmail);
   if (input.onMissing !== undefined) set('onMissing', input.onMissing);
-  if (input.voidWhen !== undefined) set('voidWhen', input.voidWhen);
+  if (input.voidWhen !== undefined) {
+    validateVoidWhen(input.voidWhen);
+    set('voidWhen', input.voidWhen);
+  }
   for (const key of ['intervalSeconds', 'maxConcurrency', 'requestsPerMinute'] as const) {
     if (input[key] !== undefined) set(key, input[key]);
   }

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { Json } from '../../../shared/contracts/common.ts';
 import { strictEmail } from '../../../shared/email.ts';
+import { parseJsonBody } from '../lib/decode.ts';
 import {
-  parseJsonBody,
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   verifySignedRequest,

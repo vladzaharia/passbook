@@ -1,4 +1,5 @@
-import type { UpstreamRecord } from '../../connectors/types.ts';
+import { BODY_FUTURE_SKEW_MS, MAX_REPLAY_AGE_MS, withinWindow } from '../../connectors/lib/hmac.ts';
+import type { WebhookDelivery } from '../../connectors/types.ts';
 import type { NewConnectionWebhookJob } from '../../jobs/types.ts';
 import { mintVerifiedWebhook, withVerifiedWebhook } from '../../jobs/webhook-ingress.ts';
 import { classifyD1Error } from '../../platform/db.ts';
@@ -41,18 +42,15 @@ export async function receiveWebhook(
     throw new NotFoundError('Not found.');
   }
   if (!(await isOrgActive(sctx, conn.orgId))) throw new NotFoundError('Not found.');
-  let verified: {
-    eventId: string;
-    refs: string[];
-    records?: Record<string, UpstreamRecord>;
-    deleted?: string[];
-  };
+  let verified: WebhookDelivery;
   let rawRequest: Request;
+  let boundsReplay = false;
   try {
     rawRequest = req.clone();
     const prep = await prepare(sctx, conn);
     if (!prep.def.verifyWebhook) throw new NotFoundError('Not found.');
     verified = await prep.def.verifyWebhook(prep.cc, req);
+    boundsReplay = (prep.def.recipes?.length ?? 0) > 0;
   } catch (error) {
     if (error instanceof NotFoundError) throw error;
     const { code } = classify(error);
@@ -63,6 +61,24 @@ export async function receiveWebhook(
       throw new BadRequestError('The webhook body is invalid.', 'WEBHOOK_PAYLOAD');
     sctx.log.warn('connection.webhook_unavailable', { connectionId, code });
     throw new NotFoundError('Not found.');
+  }
+
+  if (verified.ignored) {
+    // Acknowledged so the sender does not retry or disable the endpoint; nothing is stored or applied.
+    sctx.log.info('connection.webhook_ignored', {
+      connectionId,
+      code: 'WEBHOOK_EVENT_IGNORED',
+      kind: verified.ignored,
+    });
+    return;
+  }
+  // Dedupe alone expires after the retention window, so a recipe delivery also needs a signed time in it.
+  if (
+    boundsReplay &&
+    (verified.signedAt === undefined ||
+      !withinWindow(sctx.clock.now(), verified.signedAt, MAX_REPLAY_AGE_MS, BODY_FUTURE_SKEW_MS))
+  ) {
+    throw new UnauthenticatedError('The webhook signature is invalid.', 'WEBHOOK_SIGNATURE');
   }
 
   // The signature is verified: from here the connection stages its own work.

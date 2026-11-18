@@ -16,7 +16,7 @@ async function seedConnection(extra = '', args: (string | number)[] = []) {
      VALUES (?, ?, 'x', 'C', 1, 1${extra ? ', ?' : ''})`,
     [id, org.id, ...args],
   );
-  return { id, f };
+  return { id, f, orgId: org.id };
 }
 
 describe('0102 connections recipes', () => {
@@ -99,17 +99,17 @@ describe('0102 connections recipes', () => {
   });
 
   it('connection_ref_versions cascades with its connection and refuses long refs', async () => {
-    const { id } = await seedConnection();
+    const { id, orgId } = await seedConnection();
     await run(
       db,
-      'INSERT INTO connection_ref_versions (connection_id, ref, source_version, updated_at) VALUES (?, ?, 5, 1)',
-      [id, 'sub_1'],
+      'INSERT INTO connection_ref_versions (org_id, connection_id, ref, source_version, updated_at) VALUES (?, ?, ?, 5, 1)',
+      [orgId, id, 'sub_1'],
     );
     await expect(
       run(
         db,
-        'INSERT INTO connection_ref_versions (connection_id, ref, source_version, updated_at) VALUES (?, ?, 5, 1)',
-        [id, 'x'.repeat(201)],
+        'INSERT INTO connection_ref_versions (org_id, connection_id, ref, source_version, updated_at) VALUES (?, ?, ?, 5, 1)',
+        [orgId, id, 'x'.repeat(201)],
       ),
     ).rejects.toThrow(/CHECK/);
     await run(db, 'DELETE FROM connections WHERE id = ?', [id]);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_REPLAY_AGE_MS } from '../../lib/hmac.ts';
 import { ConnectorError } from '../../types.ts';
-import { MAX_REPLAY_AGE_MS, RECIPE_INFOS, RECIPES, verifyRecipe } from './index.ts';
+import { RECIPE_INFOS, RECIPES, verifyRecipe } from './index.ts';
 import type { Recipe, RecipeInput } from './shared.ts';
 
 const enc = new TextEncoder();
@@ -81,8 +82,10 @@ describe('registry', () => {
     }
   });
 
-  it('the body-window bound stays well below the 7-day dedupe retention', () => {
+  it('every body window fits the ingress bound, which stays below the 7-day dedupe retention', () => {
     expect(MAX_REPLAY_AGE_MS).toBeLessThan(7 * 24 * 3_600_000);
+    for (const r of Object.values(RECIPES))
+      expect(r.windowMs).toBeLessThanOrEqual(MAX_REPLAY_AGE_MS);
   });
 });
 

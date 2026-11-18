@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { RecipeIdSchema } from '../../../shared/contracts/connections.ts';
+import { parseJsonBody } from '../lib/decode.ts';
 import {
-  parseJsonBody,
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   verifySignedRequest,

@@ -192,6 +192,8 @@ export async function processWebhook(
     ref: item.ref,
     deleted: item.deleted,
     record: (item.record ?? undefined) as UpstreamRecord | undefined,
+    ...(item.create === undefined ? {} : { create: item.create }),
+    ...(item.version === undefined ? {} : { version: item.version }),
   }));
   const applied = await applyChanges(
     sctx,

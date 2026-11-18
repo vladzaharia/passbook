@@ -1,5 +1,6 @@
 import type { RecipeId, RecipeInfo } from '../../../../shared/contracts/connections.ts';
-import { decodeJsonStrict, VERIFIERS, webhookSecretsOf, withinWindow } from '../../lib/hmac.ts';
+import { decodeJsonStrict } from '../../lib/decode.ts';
+import { BODY_FUTURE_SKEW_MS, VERIFIERS, webhookSecretsOf, withinWindow } from '../../lib/hmac.ts';
 import { type ConnectorContext, ConnectorError, type WebhookDelivery } from '../../types.ts';
 import { calcomBookings } from './calcom-bookings.ts';
 import type { Recipe, RecipeConfig } from './shared.ts';
@@ -8,8 +9,6 @@ import { shopifyOrders } from './shopify-orders.ts';
 import { stripePayments } from './stripe-payments.ts';
 import { stripeSubscriptions } from './stripe-subscriptions.ts';
 
-const FUTURE_MS = 5 * 60_000;
-
 export const RECIPES: Readonly<Record<Exclude<RecipeId, 'custom'>, Recipe>> = {
   'shopify-orders': shopifyOrders,
   'shopify-customers': shopifyCustomers,
@@ -17,12 +16,6 @@ export const RECIPES: Readonly<Record<Exclude<RecipeId, 'custom'>, Recipe>> = {
   'stripe-payments': stripePayments,
   'calcom-bookings': calcomBookings,
 };
-
-/** The oldest signed time ingress accepts from any recipe; it stays below the 7-day dedupe retention. */
-export const MAX_REPLAY_AGE_MS = Math.max(
-  ...Object.values(RECIPES).map((r) => r.windowMs),
-  5 * 60_000,
-);
 
 /** What the console lists: everything but the executable parts. */
 export const RECIPE_INFOS: readonly RecipeInfo[] = Object.values(RECIPES).map(
@@ -60,7 +53,7 @@ export async function verifyRecipe(
   if (signedAt === undefined) throw new ConnectorError('AUTH');
   if (
     verifier.replay === 'body-window' &&
-    !withinWindow(now, signedAt, recipe.windowMs, FUTURE_MS)
+    !withinWindow(now, signedAt, recipe.windowMs, BODY_FUTURE_SKEW_MS)
   ) {
     throw new ConnectorError('AUTH');
   }

@@ -34,6 +34,7 @@ import {
   parseWith,
   requireConnector,
 } from './validate.ts';
+import { validateVoidWhen } from './void-when.ts';
 
 export async function listAll(
   sctx: ServiceContext,
@@ -97,6 +98,7 @@ export async function create(
     (def.capabilities.poll ? 'poll' : def.capabilities.webhook ? 'webhook' : 'manual');
   assertModeSupported(def, mode);
   validateMapping(input.mapping);
+  if (input.voidWhen) validateVoidWhen(input.voidWhen);
   assertPointer(input.holderEmailField, 'holderEmailField');
   if (input.defaultTemplateId)
     await assertTemplateUsable(sctx, input.orgId, input.defaultTemplateId);

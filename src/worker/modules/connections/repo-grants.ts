@@ -49,6 +49,7 @@ export interface ConnectionActor {
 const CONNECTION_TABLES = [
   'connections',
   'connection_runs',
+  'connection_ref_versions',
   'connection_webhook_items',
   'connection_webhook_retention',
   'connection_webhook_legacy_sources',
