@@ -251,7 +251,10 @@ describe('overview page', () => {
       },
     });
     expect(await screen.findByText('No status checks reported')).toBeInTheDocument();
-    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View status' })).toHaveAttribute(
+      'href',
+      '/admin/status',
+    );
     expect(screen.queryByText('All good')).not.toBeInTheDocument();
     expect(await screen.findByText('No activity yet')).toBeInTheDocument();
     expect(container.querySelector('[data-art="activity"]')).not.toBeNull();
