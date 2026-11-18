@@ -19,7 +19,6 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import {
-  type Inspection,
   inspect,
   nameDefault,
   type Scope,
