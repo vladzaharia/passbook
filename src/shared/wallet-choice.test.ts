@@ -42,4 +42,36 @@ describe('walletChoices', () => {
   it('offers nothing when the pass cannot be added', () => {
     expect(ids({ device: iphone, apple: false })).toEqual([]);
   });
+
+  describe('Android', () => {
+    const pixel = { device: 'android', inApp: false } as const;
+    const galaxy = { device: 'galaxy', inApp: false } as const;
+    const offers = [
+      { provider: 'google', href: '/g' },
+      { provider: 'samsung', href: '/s' },
+    ] as const;
+
+    it('leads with the browser barcode while the native wallets are dark, Apple last', () => {
+      for (const device of [pixel, galaxy]) {
+        expect(ids({ device, apple: true, browserHref: '/barcode' })).toEqual(['browser', 'apple']);
+      }
+    });
+
+    it('prefers Google on Android and Samsung then Google on a Galaxy', () => {
+      const input = { apple: true, browserHref: '/barcode', offers };
+      expect(ids({ device: pixel, ...input })).toEqual(['google', 'browser', 'samsung', 'apple']);
+      expect(ids({ device: galaxy, ...input })).toEqual(['samsung', 'browser', 'google', 'apple']);
+    });
+
+    it('shows a Galaxy holder Google and no Samsung trace while Samsung is disabled', () => {
+      const choices = ids({
+        device: galaxy,
+        apple: true,
+        browserHref: '/barcode',
+        offers,
+        issuance: { samsung: { state: 'disabled', reason: 'not_released' } },
+      });
+      expect(choices).toEqual(['google', 'browser', 'apple']);
+    });
+  });
 });

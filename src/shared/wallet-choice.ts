@@ -1,5 +1,5 @@
 import type { WalletProvider, WalletProviderIssuance } from './contracts/wallet-providers.ts';
-import { canAddToWallet, type DeviceInfo } from './device.ts';
+import { type DeviceInfo, isAndroid, type PassDevice } from './device.ts';
 
 /** Every way to get a pass into a wallet or onto a screen. */
 export type WalletChoiceId = 'apple' | 'browser' | WalletProvider;
@@ -43,10 +43,20 @@ export const NATIVE_WALLET_BADGES: Record<
   },
 };
 
+/** What leads per device: the wallet that adds here, else the browser barcode. */
+const LEAD: Record<PassDevice, readonly WalletChoiceId[]> = {
+  iphone: ['apple'],
+  mac: ['apple'],
+  galaxy: ['samsung', 'google', 'browser'],
+  android: ['google', 'browser'],
+  other: ['browser'],
+};
+
 /**
  * Which ways a holder has, best first. Device detection only orders: Apple leads on an iPhone or
- * Mac, the browser barcode leads elsewhere with Apple still listed. A provider's offer is dropped
- * only when its issuance is disabled. A later track adds Android's preference here.
+ * Mac, Samsung then Google on a Galaxy, Google on other Android, the browser barcode elsewhere,
+ * the rest after. A provider's offer is dropped only when its issuance is disabled, so a Galaxy
+ * holder never sees Samsung while it is dark.
  */
 export function walletChoices(input: WalletChoiceInput): WalletChoice[] {
   const native = (input.offers ?? []).filter(
@@ -57,7 +67,11 @@ export function walletChoices(input: WalletChoiceInput): WalletChoice[] {
     ...(input.browserHref ? [{ id: 'browser' as const, href: input.browserHref }] : []),
     ...native.map((offer) => ({ id: offer.provider, href: offer.href })),
   ];
-  const lead: WalletChoiceId = canAddToWallet(input.device.device) ? 'apple' : 'browser';
-  const ordered = [...all.filter((c) => c.id === lead), ...all.filter((c) => c.id !== lead)];
+  const lead = LEAD[input.device.device].find((id) => all.some((c) => c.id === id));
+  // Apple cannot add on Android: it stays reachable as the last, text-only way.
+  const last = (c: { id: WalletChoiceId }) =>
+    isAndroid(input.device.device) && c.id === 'apple' ? 1 : 0;
+  const rest = all.filter((c) => c.id !== lead).sort((a, b) => last(a) - last(b));
+  const ordered = [...all.filter((c) => c.id === lead), ...rest];
   return ordered.map((choice, index) => ({ ...choice, recommended: index === 0 }));
 }
