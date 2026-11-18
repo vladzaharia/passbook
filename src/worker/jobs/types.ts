@@ -5,6 +5,7 @@ import { ConnectionModeSchema } from '../../shared/contracts/connections.ts';
 export const JobSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('push.deliver'), outboxId: z.string() }),
   z.object({ kind: z.literal('email.send'), outboxId: z.string() }),
+  z.object({ kind: z.literal('message_rule.check'), ruleId: z.string(), at: z.number() }),
   z.object({
     kind: z.literal('pass.refresh'),
     passId: z.string(),

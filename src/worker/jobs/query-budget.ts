@@ -17,6 +17,8 @@ export function estimateQueries(job: Job): number {
       return 40 + (QUERIES_PER_RECORD + 8) * job.refs.length;
     case 'pass.refresh':
       return 40;
+    case 'message_rule.check':
+      return 14;
     default:
       return 15;
   }

@@ -1,4 +1,7 @@
-import type { BroadcastState } from '../../../shared/contracts/broadcasts.ts';
+import {
+  type BroadcastState,
+  BroadcastTargetSchema,
+} from '../../../shared/contracts/broadcasts.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -61,13 +64,20 @@ async function scheduleClear(ctx: ServiceContext, row: BroadcastRow): Promise<vo
     kind: 'message',
     name: `Clear: ${row.name}`.slice(0, 80),
     state: 'scheduled',
-    target: JSON.parse(row.target),
+    // A rule run clears only the passes it updated, not the window it targeted.
+    target: row.rule_id
+      ? {
+          templateIds: BroadcastTargetSchema.parse(JSON.parse(row.target)).templateIds,
+          sentBy: row.id,
+        }
+      : JSON.parse(row.target),
     patch: { message: '' },
     notify: false,
     at,
     clearAfter: null,
     expect: { message: patch.message ?? '' },
     parentId: row.id,
+    ruleId: row.rule_id,
     actor: actorOf(row),
     now: ctx.clock.now(),
   }).run();
