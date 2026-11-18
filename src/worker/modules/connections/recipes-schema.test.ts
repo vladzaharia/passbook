@@ -78,6 +78,26 @@ describe('0102 connections recipes', () => {
     expect((await getConnection(db, id))?.webhookPrevCredentialId).toBeNull();
   });
 
+  it('a previous credential needs its expiry', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const cred = f.ids.id();
+    await run(
+      db,
+      `INSERT INTO credentials (id, org_id, kind, kek_version, iv, wrapped_dek, ciphertext, created_at)
+       VALUES (?, ?, 'webhook', 1, x'00', x'00', x'00', 1)`,
+      [cred, org.id],
+    );
+    await expect(
+      run(
+        db,
+        `INSERT INTO connections (id, org_id, connector_type, name, webhook_prev_credential_id, created_at, updated_at)
+         VALUES (?, ?, 'x', 'C', ?, 1, 1)`,
+        [f.ids.id(), org.id, cred],
+      ),
+    ).rejects.toThrow(/CHECK/);
+  });
+
   it('connection_ref_versions cascades with its connection and refuses long refs', async () => {
     const { id } = await seedConnection();
     await run(

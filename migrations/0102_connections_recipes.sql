@@ -4,7 +4,9 @@ ALTER TABLE connections ADD COLUMN void_when TEXT
     AND json_array_length(void_when) <= 8));
 ALTER TABLE connections ADD COLUMN webhook_prev_credential_id TEXT
   REFERENCES credentials (id) ON DELETE SET NULL;
-ALTER TABLE connections ADD COLUMN webhook_prev_until INTEGER;
+-- A previous credential always has an expiry. The reverse is allowed: deleting the credential nulls only the id.
+ALTER TABLE connections ADD COLUMN webhook_prev_until INTEGER
+  CHECK (webhook_prev_credential_id IS NULL OR webhook_prev_until IS NOT NULL);
 CREATE INDEX connections_webhook_prev_credential ON connections (webhook_prev_credential_id)
   WHERE webhook_prev_credential_id IS NOT NULL;
 

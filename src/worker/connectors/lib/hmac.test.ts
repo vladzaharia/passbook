@@ -215,9 +215,8 @@ describe('calcom', () => {
       CALCOM.secret,
     ]);
 
-  it('accepts plain hex and the sha256= prefix', async () => {
+  it('accepts the documented plain hex form', async () => {
     expect(await ok(CALCOM.sig)).toBe('ok');
-    expect(await ok(`sha256=${CALCOM.sig}`)).toBe('ok');
   });
 
   it('matches the fixture computed here', async () => {
@@ -228,6 +227,7 @@ describe('calcom', () => {
     ['uppercase hex', CALCOM.sig.toUpperCase()],
     ['no-secret-provided', 'no-secret-provided'],
     ['empty', ''],
+    ['sha256= prefix', `sha256=${CALCOM.sig}`],
     ['other prefix', `sha1=${CALCOM.sig}`],
     ['double prefix', `sha256=sha256=${CALCOM.sig}`],
     ['63 chars', CALCOM.sig.slice(1)],
@@ -351,6 +351,58 @@ describe('stripe', () => {
   });
 });
 
+describe('verifier contract', () => {
+  it.each(Object.values(VERIFIERS))('$id declares where its replay bound comes from', (v) => {
+    expect(['header-window', 'body-window']).toContain(v.replay);
+  });
+
+  it('the schemes without a signed timestamp header are body-window', () => {
+    expect(VERIFIERS.shopify.replay).toBe('body-window');
+    expect(VERIFIERS.calcom.replay).toBe('body-window');
+    expect(VERIFIERS.stripe.replay).toBe('header-window');
+    expect(VERIFIERS.custom.replay).toBe('header-window');
+  });
+
+  it('header-window verifiers return the signed time', async () => {
+    const t = STRIPE.t;
+    const res = await VERIFIERS.stripe.verify(
+      post(STRIPE.body, { 'stripe-signature': stripeHeader(t, `v1=${STRIPE.v1}`) }),
+      [STRIPE.secret],
+      t * 1000,
+    );
+    expect(res.signedAt).toBe(t * 1000);
+  });
+
+  it.each([
+    ['shopify', {}, SHOPIFY.secret],
+    ['shopify', { 'x-shopify-hmac-sha256': 'bad' }, SHOPIFY.secret],
+    ['calcom', {}, CALCOM.secret],
+    ['stripe', {}, STRIPE.secret],
+    ['stripe', { 'stripe-signature': 'v1=zz' }, STRIPE.secret],
+    ['custom', {}, 'whsec_custom_value_01'],
+  ] as const)(
+    '%s: a missing or malformed header is AUTH before any body byte is read',
+    async (id, headers, secret) => {
+      let pulled = 0;
+      const stream = new ReadableStream<Uint8Array>({
+        pull(c) {
+          pulled += 1;
+          c.enqueue(new Uint8Array(1024));
+        },
+      });
+      const req = new Request('https://x.test', {
+        method: 'POST',
+        body: stream,
+        headers,
+        duplex: 'half',
+      } as RequestInit);
+      expect(await outcome(id, req, [secret])).toBe('AUTH');
+      // The stream's own priming pull is the only one: the verifier reads nothing.
+    expect(pulled).toBeLessThanOrEqual(1);
+    },
+  );
+});
+
 describe('raw bytes', () => {
   const invalid = new Uint8Array([0x7b, 0x22, 0xff, 0xfe, 0x22, 0x7d]);
 
@@ -443,8 +495,13 @@ describe('secrets and overlap', () => {
     }
   });
 
-  it('more than two secrets is a programming error', async () => {
-    expect(await verify(['a'.repeat(20), 'b'.repeat(20), SHOPIFY.secret])).toBe('THROWN');
+  it('more than two secrets is a coded permanent CONFIG error, not a bare Error', async () => {
+    const err = await VERIFIERS.shopify
+      .verify(post(SHOPIFY.body, header), ['a'.repeat(20), 'b'.repeat(20), SHOPIFY.secret], 0)
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ConnectorError);
+    expect((err as ConnectorError).code).toBe('CONFIG');
+    expect((err as ConnectorError).permanent).toBe(true);
   });
 
   it('webhookSecretsOf prefers the list and falls back to the single secret', () => {

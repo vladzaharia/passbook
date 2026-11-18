@@ -162,6 +162,12 @@ export interface CustomHeaders {
 export interface WebhookVerifier {
   id: 'custom' | 'shopify' | 'stripe' | 'calcom';
   maxBytes: number;
+  /**
+   * Where the replay bound comes from. `header-window`: a signed timestamp header, checked here and
+   * returned as `signedAt`. `body-window`: no signed timestamp header; the recipe must bound a signed
+   * time inside the body, and ingress refuses a delivery whose time did not pass `withinWindow`.
+   */
+  replay: 'header-window' | 'body-window';
   /** Throws ConnectorError('AUTH') on any mismatch and 'INVALID_PAYLOAD' on size. `secrets`: current first. */
   verify(
     req: Request,
@@ -172,7 +178,7 @@ export interface WebhookVerifier {
 }
 
 function checkSecrets(secrets: readonly string[]): void {
-  if (secrets.length > MAX_SECRETS) throw new Error('At most two webhook secrets.');
+  if (secrets.length > MAX_SECRETS) throw new ConnectorError('CONFIG', { permanent: true });
   if (secrets.length === 0 || secrets.some((s) => s.length === 0)) {
     throw new ConnectorError('AUTH', { permanent: true });
   }
@@ -180,54 +186,63 @@ function checkSecrets(secrets: readonly string[]): void {
 
 const auth = () => new ConnectorError('AUTH');
 
+/** What the headers say, parsed before the body is read: candidate MACs and the text signed before the body. */
+interface ParsedSignature {
+  signatures: Bytes[];
+  prefix: string;
+}
+
 async function signed(
   req: Request,
   secrets: readonly string[],
   maxBytes: number,
-  scheme: (bytes: Bytes) => { signatures: Bytes[]; message: Bytes } | null,
-): Promise<{ bytes: Bytes; digest: string; signatures: Bytes[] }> {
+  parsed: ParsedSignature | null,
+): Promise<{ bytes: Bytes; digest: string }> {
   checkSecrets(secrets);
+  // A missing or malformed header costs no body read.
+  if (!parsed) throw auth();
   const bytes = await readSignedBytes(req, maxBytes);
-  const parsed = scheme(bytes);
-  if (!parsed || !(await matchesAny(secrets, parsed.signatures, parsed.message))) throw auth();
-  return { bytes, digest: await sha256Hex(bytes), signatures: parsed.signatures };
+  const message = parsed.prefix ? withPrefix(parsed.prefix, bytes) : bytes;
+  if (!(await matchesAny(secrets, parsed.signatures, message))) throw auth();
+  return { bytes, digest: await sha256Hex(bytes) };
 }
+
+const orNull = (sig: Bytes | null): ParsedSignature | null =>
+  sig && { signatures: [sig], prefix: '' };
 
 const shopify: WebhookVerifier = {
   id: 'shopify',
   maxBytes: SHOPIFY_MAX_BYTES,
-  async verify(req, secrets) {
+  replay: 'body-window',
+  verify: async (req, secrets) => {
     const header = req.headers.get('x-shopify-hmac-sha256');
-    const { bytes, digest } = await signed(req, secrets, SHOPIFY_MAX_BYTES, (b) => {
-      const sig = header === null ? null : decodeBase64_32(header);
-      return sig && { signatures: [sig], message: b };
-    });
-    return { bytes, digest };
+    return signed(req, secrets, SHOPIFY_MAX_BYTES, orNull(header && decodeBase64_32(header)));
   },
 };
 
+/** Cal.com sends the lowercase hex digest alone (calcom/cal.com sendPayload.ts). */
 const calcom: WebhookVerifier = {
   id: 'calcom',
   maxBytes: MAX_WEBHOOK_BYTES,
-  async verify(req, secrets) {
+  replay: 'body-window',
+  verify: async (req, secrets) => {
     const header = req.headers.get('x-cal-signature-256');
-    const hex = header?.startsWith('sha256=') ? header.slice(7) : header;
-    const { bytes, digest } = await signed(req, secrets, MAX_WEBHOOK_BYTES, (b) => {
-      const sig = hex == null ? null : decodeHex32(hex);
-      return sig && { signatures: [sig], message: b };
-    });
-    return { bytes, digest };
+    return signed(req, secrets, MAX_WEBHOOK_BYTES, orNull(header && decodeHex32(header)));
   },
 };
 
 const stripe: WebhookVerifier = {
   id: 'stripe',
   maxBytes: MAX_WEBHOOK_BYTES,
-  async verify(req, secrets, now) {
+  replay: 'header-window',
+  verify: async (req, secrets, now) => {
     const header = req.headers.get('stripe-signature');
     const parsed = header === null ? null : parseStripeSignature(header);
-    const { bytes, digest } = await signed(req, secrets, MAX_WEBHOOK_BYTES, (b) =>
-      parsed ? { signatures: parsed.v1, message: withPrefix(`${parsed.t}.`, b) } : null,
+    const { bytes, digest } = await signed(
+      req,
+      secrets,
+      MAX_WEBHOOK_BYTES,
+      parsed && { signatures: parsed.v1, prefix: `${parsed.t}.` },
     );
     // A matching MAC proves `t` is authentic; the window then bounds replays.
     const signedAt = (parsed?.t ?? 0) * 1000;
@@ -239,15 +254,15 @@ const stripe: WebhookVerifier = {
 const custom: WebhookVerifier = {
   id: 'custom',
   maxBytes: MAX_WEBHOOK_BYTES,
-  async verify(req, secrets, now, opts = {}) {
+  replay: 'header-window',
+  verify: async (req, secrets, now, opts = {}) => {
     const header = req.headers.get(opts.signatureHeader ?? SIGNATURE_HEADER);
     const ts = req.headers.get(opts.timestampHeader ?? TIMESTAMP_HEADER);
     const match = header === null ? null : /^v1=([0-9a-f]{64})$/.exec(header);
     const sig = match?.[1] ? decodeHex32(match[1]) : null;
-    const valid = sig !== null && ts !== null && /^\d{9,12}$/.test(ts);
-    const { bytes, digest } = await signed(req, secrets, MAX_WEBHOOK_BYTES, (b) =>
-      valid ? { signatures: [sig], message: withPrefix(`${ts}.`, b) } : null,
-    );
+    const parsed =
+      sig && ts !== null && /^\d{9,12}$/.test(ts) ? { signatures: [sig], prefix: `${ts}.` } : null;
+    const { bytes, digest } = await signed(req, secrets, MAX_WEBHOOK_BYTES, parsed);
     const signedAt = Number(ts) * 1000;
     if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
     return { bytes, digest, signedAt, signature: match?.[1] ?? '' };
