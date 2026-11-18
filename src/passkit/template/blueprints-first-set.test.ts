@@ -86,11 +86,58 @@ describe('stored passes keep rebuilding', () => {
     expect(gone.voided).toBe(true);
   });
 
-  it('a boarding pass with transitType still builds as air', async () => {
+  it('a boarding pass honours a stored transitType and defaults new ones to air', async () => {
     const sample = await SAMPLE('starter-boarding-pass');
-    const pass = (
+    const train = (
       await buildBaked('starter-boarding-pass', material, { ...sample, transitType: 'train' })
     ).passJson;
-    expect(pass.boardingPass?.transitType).toBe('PKTransitTypeAir');
+    expect(train.boardingPass?.transitType).toBe('PKTransitTypeTrain');
+    const fresh = (await buildBaked('starter-boarding-pass', material, sample)).passJson;
+    expect(fresh.boardingPass?.transitType).toBe('PKTransitTypeAir');
+  });
+
+  it('a Membership with no guests or status builds: no free guests, active', async () => {
+    const rest = { ...(await SAMPLE('starter-generic')) };
+    for (const key of ['points', 'status', 'guests']) delete rest[key];
+    const pass = (await buildBaked('starter-generic', material, rest)).passJson;
+    expect(pass.voided).toBe(false);
+    const fields = Object.values(pass.generic ?? {}).flat() as { key: string; value: unknown }[];
+    expect(fields.find((f) => f.key === 'guests')?.value).toBe(0);
+    expect(fields.find((f) => f.key === 'status')?.value).toBe('Active');
+  });
+
+  it('a cancelled Booking voids and stops at the door', async () => {
+    const sample = await SAMPLE('starter-booking');
+    const pass = (await buildBaked('starter-booking', material, { ...sample, status: 'Cancelled' }))
+      .passJson;
+    expect(pass.voided).toBe(true);
+    const { template } = await loadBaked('starter-booking', { strips: false });
+    expect(template.manifest.scan?.flags).toContainEqual(
+      expect.objectContaining({ label: 'Cancelled', stop: true }),
+    );
+  });
+
+  it('shows the photo to the door on the ID card and Membership', async () => {
+    for (const slug of ['starter-id-card', 'starter-generic'])
+      expect(
+        (await loadBaked(slug, { strips: false })).template.manifest.scan?.display?.photo,
+      ).toEqual({ minRole: 'door' });
+  });
+
+  it('shows Admits on timed and transit tickets and keeps the event match keys as text inputs', async () => {
+    for (const [slug, key] of [
+      ['starter-timed-ticket', 'slotKey'],
+      ['starter-transit-ticket', 'serviceKey'],
+    ] as const) {
+      const pass = (await buildBaked(slug, material)).passJson;
+      const fields = Object.values(pass.eventTicket ?? pass.boardingPass ?? {}).flat() as {
+        key: string;
+        value: unknown;
+      }[];
+      expect(fields.find((f) => f.key === 'party')?.value, slug).toBe('Admits 3');
+      const { template } = await loadBaked(slug, { strips: false });
+      const props = template.manifest.inputs.properties as Record<string, { type?: string }>;
+      expect(props[key]?.type).toBe('string');
+    }
   });
 });

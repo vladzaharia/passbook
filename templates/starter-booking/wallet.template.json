@@ -269,6 +269,12 @@
       },
       "value": "{{startsAt}}",
       "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/voided"
+      },
+      "value": "{{lookups.void[status].void}}"
     }
   ],
   "display": {
@@ -321,6 +327,14 @@
         "equals": [
           "Moved"
         ]
+      },
+      {
+        "input": "status",
+        "label": "Cancelled",
+        "equals": [
+          "Cancelled"
+        ],
+        "stop": true
       }
     ],
     "display": {
@@ -356,6 +370,19 @@
       ],
       "notes": {
         "refused": "Send them to the front desk."
+      }
+    }
+  },
+  "lookups": {
+    "void": {
+      "Booked": {
+        "void": false
+      },
+      "Moved": {
+        "void": false
+      },
+      "Cancelled": {
+        "void": true
       }
     }
   }

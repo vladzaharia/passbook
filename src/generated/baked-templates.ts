@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "db293715e80fb58f14625ee62b7a0281ce43fcca";
+export const BAKED_BUILD_HASH = "6f1e3d99d108c5842784aa71cb8c26b911ca10cc";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -2160,7 +2160,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-boarding-pass",
     "slug": "starter-boarding-pass",
-    "version": "e377ac881b207f05",
+    "version": "7adf2e450dc44289",
     "name": "Boarding pass",
     "description": "Flight, gate and seat, with a route footer.",
     "org": null,
@@ -2319,6 +2319,22 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 150,
             "maxLength": 8
           },
+          "transitType": {
+            "type": "string",
+            "x-label": "Transit",
+            "x-group": "Flight",
+            "x-order": 35,
+            "enum": [
+              "air",
+              "train",
+              "bus",
+              "boat",
+              "generic"
+            ],
+            "default": "air",
+            "x-widget": "select",
+            "x-hidden": true
+          },
           "ticketId": {
             "type": "string",
             "x-label": "Barcode",
@@ -2371,22 +2387,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maxLength": 256,
             "x-widget": "textarea",
             "x-help": "Shown on the back."
-          },
-          "transitType": {
-            "type": "string",
-            "enum": [
-              "air",
-              "train",
-              "bus",
-              "boat",
-              "generic"
-            ],
-            "default": "air",
-            "x-label": "Transit",
-            "x-group": "Flight",
-            "x-order": 35,
-            "x-widget": "select",
-            "x-hidden": true
           }
         }
       },
@@ -2408,7 +2408,37 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "seat": "14A",
         "ticketId": "BOARD-0001"
       },
+      "lookups": {
+        "transit": {
+          "air": {
+            "type": "PKTransitTypeAir",
+            "label": "Flight"
+          },
+          "train": {
+            "type": "PKTransitTypeTrain",
+            "label": "Train"
+          },
+          "bus": {
+            "type": "PKTransitTypeBus",
+            "label": "Bus"
+          },
+          "boat": {
+            "type": "PKTransitTypeBoat",
+            "label": "Service"
+          },
+          "generic": {
+            "type": "PKTransitTypeGeneric",
+            "label": "Service"
+          }
+        }
+      },
       "bindings": [
+        {
+          "to": {
+            "pointer": "/boardingPass/transitType"
+          },
+          "value": "{{lookups.transit[transitType].type}}"
+        },
         {
           "to": {
             "field": "flight"
@@ -2507,19 +2537,37 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "pointer": "/semantics/airlineCode"
           },
-          "value": "{{airlineCode}}"
+          "value": "{{airlineCode}}",
+          "remove": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
         },
         {
           "to": {
             "pointer": "/semantics/flightNumber"
           },
-          "value": "{{flightNumber}}"
+          "value": "{{flightNumber}}",
+          "remove": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
         },
         {
           "to": {
             "pointer": "/semantics/departureAirportCode"
           },
-          "value": "{{origin}}"
+          "value": "{{origin}}",
+          "remove": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
         },
         {
           "to": {
@@ -2537,7 +2585,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "pointer": "/semantics/destinationAirportCode"
           },
-          "value": "{{destination}}"
+          "value": "{{destination}}",
+          "remove": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
         },
         {
           "to": {
@@ -2586,6 +2640,72 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "pointer": "/expirationDate"
           },
           "value": "{{arrivesAt}}"
+        },
+        {
+          "to": {
+            "pointer": "/preferredStyleSchemes"
+          },
+          "remove": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
+        },
+        {
+          "to": {
+            "field": "flight",
+            "prop": "label"
+          },
+          "value": "{{lookups.transit[transitType].label}}"
+        },
+        {
+          "to": {
+            "pointer": "/semantics/departureStationName"
+          },
+          "value": "{{originCity}}",
+          "when": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
+        },
+        {
+          "to": {
+            "pointer": "/semantics/destinationStationName"
+          },
+          "value": "{{destinationCity}}",
+          "when": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
+        },
+        {
+          "to": {
+            "pointer": "/semantics/transitProvider"
+          },
+          "value": "{{airlineCode}}",
+          "when": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
+        },
+        {
+          "to": {
+            "pointer": "/semantics/vehicleNumber"
+          },
+          "value": "{{airlineCode}}{{flightNumber}}",
+          "when": {
+            "not": {
+              "input": "transitType",
+              "eq": "air"
+            }
+          }
         },
         {
           "to": {
@@ -2871,7 +2991,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2152989108,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/en.lproj/pass.strings"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/en.lproj/pass.strings"
         }
       },
       {
@@ -2885,7 +3005,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/footer@2x.png"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/footer@2x.png"
         }
       },
       {
@@ -2899,7 +3019,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/footer@3x.png"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/footer@3x.png"
         }
       },
       {
@@ -2913,7 +3033,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/icon@2x.png"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/icon@2x.png"
         }
       },
       {
@@ -2927,7 +3047,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/icon@3x.png"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/icon@3x.png"
         }
       },
       {
@@ -2941,7 +3061,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/logo@2x.png"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/logo@2x.png"
         }
       },
       {
@@ -2955,7 +3075,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/logo@3x.png"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/logo@3x.png"
         }
       },
       {
@@ -2969,7 +3089,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/primaryLogo@2x.png"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/primaryLogo@2x.png"
         }
       },
       {
@@ -2983,7 +3103,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/e377ac881b207f05/primaryLogo@3x.png"
+          "path": "/templates/starter-boarding-pass/7adf2e450dc44289/primaryLogo@3x.png"
         }
       }
     ],
@@ -2996,7 +3116,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-booking",
     "slug": "starter-booking",
-    "version": "90f93a62e7b0c647",
+    "version": "2d8a306b096698ec",
     "name": "Booking",
     "description": "An appointment or table at a set time.",
     "org": null,
@@ -3275,6 +3395,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "value": "{{startsAt}}",
           "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/voided"
+          },
+          "value": "{{lookups.void[status].void}}"
         }
       ],
       "display": {
@@ -3327,6 +3453,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "equals": [
               "Moved"
             ]
+          },
+          {
+            "input": "status",
+            "label": "Cancelled",
+            "equals": [
+              "Cancelled"
+            ],
+            "stop": true
           }
         ],
         "display": {
@@ -3362,6 +3496,19 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           ],
           "notes": {
             "refused": "Send them to the front desk."
+          }
+        }
+      },
+      "lookups": {
+        "void": {
+          "Booked": {
+            "void": false
+          },
+          "Moved": {
+            "void": false
+          },
+          "Cancelled": {
+            "void": true
           }
         }
       }
@@ -3481,7 +3628,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 115174263,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/90f93a62e7b0c647/en.lproj/pass.strings"
+          "path": "/templates/starter-booking/2d8a306b096698ec/en.lproj/pass.strings"
         }
       },
       {
@@ -3495,7 +3642,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/90f93a62e7b0c647/icon@2x.png"
+          "path": "/templates/starter-booking/2d8a306b096698ec/icon@2x.png"
         }
       },
       {
@@ -3509,7 +3656,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/90f93a62e7b0c647/icon@3x.png"
+          "path": "/templates/starter-booking/2d8a306b096698ec/icon@3x.png"
         }
       },
       {
@@ -3523,7 +3670,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/90f93a62e7b0c647/logo@2x.png"
+          "path": "/templates/starter-booking/2d8a306b096698ec/logo@2x.png"
         }
       },
       {
@@ -3537,7 +3684,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/90f93a62e7b0c647/logo@3x.png"
+          "path": "/templates/starter-booking/2d8a306b096698ec/logo@3x.png"
         }
       },
       {
@@ -3551,7 +3698,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/90f93a62e7b0c647/thumbnail@2x.png"
+          "path": "/templates/starter-booking/2d8a306b096698ec/thumbnail@2x.png"
         }
       },
       {
@@ -3565,7 +3712,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/90f93a62e7b0c647/thumbnail@3x.png"
+          "path": "/templates/starter-booking/2d8a306b096698ec/thumbnail@3x.png"
         }
       }
     ],
@@ -5106,7 +5253,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-generic",
     "slug": "starter-generic",
-    "version": "7f1678d511927fac",
+    "version": "70fba73c5fe28f73",
     "name": "Membership",
     "description": "Tier, term and status, with a renew link.",
     "org": null,
@@ -5262,7 +5409,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maximum": 99,
             "x-label": "Guests left",
             "x-group": "Membership",
-            "x-order": 26
+            "x-order": 26,
+            "default": 0
           },
           "renewURL": {
             "type": "string",
@@ -5598,7 +5746,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Membership card",
+      "description": "Membership",
       "organizationName": "Organization",
       "backgroundColor": "rgb(20,26,43)",
       "foregroundColor": "rgb(255,255,255)",
@@ -5739,7 +5887,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3062501488,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/7f1678d511927fac/en.lproj/pass.strings"
+          "path": "/templates/starter-generic/70fba73c5fe28f73/en.lproj/pass.strings"
         }
       },
       {
@@ -5753,7 +5901,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/7f1678d511927fac/icon@2x.png"
+          "path": "/templates/starter-generic/70fba73c5fe28f73/icon@2x.png"
         }
       },
       {
@@ -5767,7 +5915,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/7f1678d511927fac/icon@3x.png"
+          "path": "/templates/starter-generic/70fba73c5fe28f73/icon@3x.png"
         }
       },
       {
@@ -5781,7 +5929,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/7f1678d511927fac/logo@2x.png"
+          "path": "/templates/starter-generic/70fba73c5fe28f73/logo@2x.png"
         }
       },
       {
@@ -5795,7 +5943,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/7f1678d511927fac/logo@3x.png"
+          "path": "/templates/starter-generic/70fba73c5fe28f73/logo@3x.png"
         }
       },
       {
@@ -5809,7 +5957,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/7f1678d511927fac/thumbnail@2x.png"
+          "path": "/templates/starter-generic/70fba73c5fe28f73/thumbnail@2x.png"
         }
       },
       {
@@ -5823,7 +5971,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/7f1678d511927fac/thumbnail@3x.png"
+          "path": "/templates/starter-generic/70fba73c5fe28f73/thumbnail@3x.png"
         }
       }
     ],
@@ -5843,7 +5991,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-id-card",
     "slug": "starter-id-card",
-    "version": "7ca666cd9a8c9145",
+    "version": "b474693bd74f4828",
     "name": "ID card",
     "description": "Photo, name, number and a scannable code.",
     "org": null,
@@ -6082,6 +6230,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "display": {
           "v": 1,
           "holder": "{{inputs.name}}",
+          "photo": {
+            "minRole": "door"
+          },
           "header": {},
           "panels": [
             {
@@ -6106,13 +6257,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
                   "type": "field",
                   "label": "Number",
                   "value": "{{inputs.idNumber}}"
-                },
-                {
-                  "id": "r_field3",
-                  "slot": "field3",
-                  "type": "field",
-                  "label": "Year",
-                  "value": "{{inputs.unit}}"
                 }
               ]
             }
@@ -6230,7 +6374,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 1406535994,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/7ca666cd9a8c9145/en.lproj/pass.strings"
+          "path": "/templates/starter-id-card/b474693bd74f4828/en.lproj/pass.strings"
         }
       },
       {
@@ -6244,7 +6388,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/7ca666cd9a8c9145/icon@2x.png"
+          "path": "/templates/starter-id-card/b474693bd74f4828/icon@2x.png"
         }
       },
       {
@@ -6258,7 +6402,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/7ca666cd9a8c9145/icon@3x.png"
+          "path": "/templates/starter-id-card/b474693bd74f4828/icon@3x.png"
         }
       },
       {
@@ -6272,7 +6416,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/7ca666cd9a8c9145/logo@2x.png"
+          "path": "/templates/starter-id-card/b474693bd74f4828/logo@2x.png"
         }
       },
       {
@@ -6286,7 +6430,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/7ca666cd9a8c9145/logo@3x.png"
+          "path": "/templates/starter-id-card/b474693bd74f4828/logo@3x.png"
         }
       },
       {
@@ -6300,7 +6444,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/7ca666cd9a8c9145/thumbnail@2x.png"
+          "path": "/templates/starter-id-card/b474693bd74f4828/thumbnail@2x.png"
         }
       },
       {
@@ -6314,7 +6458,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/7ca666cd9a8c9145/thumbnail@3x.png"
+          "path": "/templates/starter-id-card/b474693bd74f4828/thumbnail@3x.png"
         }
       }
     ],
@@ -10025,7 +10169,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-timed-ticket",
     "slug": "starter-timed-ticket",
-    "version": "f789ba2f6b761a2f",
+    "version": "d1d9bb06011b6073",
     "name": "Timed ticket",
     "description": "A time slot for a party, no seat.",
     "org": null,
@@ -10140,7 +10284,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-group": "Visit",
             "x-order": 100,
             "maxLength": 64,
-            "x-help": "Same value on every ticket for one slot."
+            "x-help": "Same value on every ticket for one slot. Scanning events match on it."
           },
           "message": {
             "type": "string",
@@ -10169,6 +10313,15 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 902,
             "x-widget": "url",
             "x-placeholder": "https://"
+          },
+          "admits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99,
+            "x-label": "Admits",
+            "x-group": "Party",
+            "x-order": 55,
+            "default": 1
           }
         }
       },
@@ -10183,7 +10336,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "children": 1,
         "entrance": "B",
         "orderRef": "ORD-0001",
-        "slotKey": "ocean-light-2030-11-21-1400"
+        "slotKey": "ocean-light-2030-11-21-1400",
+        "admits": 3
       },
       "bindings": [
         {
@@ -10214,7 +10368,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "field": "party"
           },
-          "value": "{{adults}} adults, {{children}} children"
+          "value": "Admits {{admits}}"
         },
         {
           "to": {
@@ -10419,7 +10573,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "party",
             "label": "Party",
-            "value": "2 adults, 1 children"
+            "value": "Admits 3"
           },
           {
             "key": "entrance",
@@ -10473,7 +10627,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2918919439,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/f789ba2f6b761a2f/en.lproj/pass.strings"
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/en.lproj/pass.strings"
         }
       },
       {
@@ -10487,7 +10641,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/f789ba2f6b761a2f/icon@2x.png"
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/icon@2x.png"
         }
       },
       {
@@ -10501,7 +10655,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/f789ba2f6b761a2f/icon@3x.png"
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/icon@3x.png"
         }
       },
       {
@@ -10515,7 +10669,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/f789ba2f6b761a2f/logo@2x.png"
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/logo@2x.png"
         }
       },
       {
@@ -10529,7 +10683,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/f789ba2f6b761a2f/logo@3x.png"
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/logo@3x.png"
         }
       },
       {
@@ -10543,7 +10697,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/f789ba2f6b761a2f/strip@2x.png"
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/strip@2x.png"
         }
       },
       {
@@ -10557,7 +10711,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/f789ba2f6b761a2f/strip@3x.png"
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/strip@3x.png"
         }
       }
     ],
@@ -10570,7 +10724,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-transit-ticket",
     "slug": "starter-transit-ticket",
-    "version": "ea0aef957240588b",
+    "version": "a104361162ed2c85",
     "name": "Transit ticket",
     "description": "Boat, bus or train, with party and vehicle.",
     "org": null,
@@ -10664,7 +10818,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 60,
             "maxLength": 64,
             "minLength": 1,
-            "x-help": "Same value on every ticket for one sailing or run."
+            "x-help": "Same value on every ticket for one sailing or run. Scanning events match on it."
           },
           "status": {
             "type": "string",
@@ -10770,6 +10924,15 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 902,
             "x-widget": "url",
             "x-placeholder": "https://"
+          },
+          "admits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99,
+            "x-label": "Admits",
+            "x-group": "Party",
+            "x-order": 55,
+            "default": 1
           }
         }
       },
@@ -10789,7 +10952,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "name": "Sam Reed",
         "bookingRef": "BK-0001",
         "adults": 2,
-        "children": 1
+        "children": 1,
+        "admits": 3
       },
       "lookups": {
         "transit": {
@@ -10859,7 +11023,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "field": "party"
           },
-          "value": "{{adults}} adults, {{children}} children"
+          "value": "Admits {{admits}}"
         },
         {
           "to": {
@@ -10996,7 +11160,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
                   "slot": "field1",
                   "type": "field",
                   "label": "Party",
-                  "value": "{{inputs.adults}} adults, {{inputs.children}} children"
+                  "value": "Admits {{inputs.admits}}"
                 },
                 {
                   "id": "r_field2",
@@ -11094,7 +11258,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "party",
             "label": "Party",
-            "value": "2 adults, 1 children"
+            "value": "Admits 3"
           },
           {
             "key": "vehicle",
@@ -11148,7 +11312,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 291132420,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/ea0aef957240588b/en.lproj/pass.strings"
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/en.lproj/pass.strings"
         }
       },
       {
@@ -11162,7 +11326,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/ea0aef957240588b/footer@2x.png"
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/footer@2x.png"
         }
       },
       {
@@ -11176,7 +11340,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/ea0aef957240588b/footer@3x.png"
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/footer@3x.png"
         }
       },
       {
@@ -11190,7 +11354,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/ea0aef957240588b/icon@2x.png"
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/icon@2x.png"
         }
       },
       {
@@ -11204,7 +11368,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/ea0aef957240588b/icon@3x.png"
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/icon@3x.png"
         }
       },
       {
@@ -11218,7 +11382,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/ea0aef957240588b/logo@2x.png"
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/logo@2x.png"
         }
       },
       {
@@ -11232,7 +11396,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/ea0aef957240588b/logo@3x.png"
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/logo@3x.png"
         }
       }
     ],

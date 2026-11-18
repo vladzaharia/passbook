@@ -39,6 +39,14 @@ describe.each(SLUGS)('%s scan block', (slug) => {
   });
 });
 
+describe.each(SLUGS)('%s scan screen', (slug) => {
+  it('fits the density budget beside its own flags', async () => {
+    const { template } = await loadBaked(slug, { strips: false });
+    const issues = scanManifestIssues(template.manifest, { passJson: template.passJson });
+    expect(issues.filter((i) => i.code === 'SCAN_DISPLAY_DENSITY')).toEqual([]);
+  });
+});
+
 describe('blueprint scan blocks, by design', () => {
   const actions = async (slug: string) =>
     scanOf((await loadBaked(slug, { strips: false })).template.manifest).actions;

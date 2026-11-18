@@ -6001,7 +6001,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
         "id": "secondaryFields.until",
       },
       {
-        "body": "2 adults, 1 children",
+        "body": "Admits 3",
         "header": "Party",
         "id": "auxiliaryFields.party",
       },
@@ -6157,7 +6157,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
         "id": "secondaryFields.until",
       },
       {
-        "body": "2 adults, 1 children",
+        "body": "Admits 3",
         "header": "Party",
         "id": "auxiliaryFields.party",
       },
@@ -6319,7 +6319,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
         "id": "secondaryFields.until",
       },
       {
-        "body": "2 adults, 1 children",
+        "body": "Admits 3",
         "header": "Party",
         "id": "auxiliaryFields.party",
       },
@@ -6508,7 +6508,7 @@ exports[`Google compilers over every starter and baked template > starter-transi
         "id": "auxiliaryFields.boardBy",
       },
       {
-        "body": "2 adults, 1 children",
+        "body": "Admits 3",
         "header": "Party",
         "id": "auxiliaryFields.party",
       },
@@ -6687,7 +6687,7 @@ exports[`Google compilers over every starter and baked template > starter-transi
         "id": "auxiliaryFields.boardBy",
       },
       {
-        "body": "2 adults, 1 children",
+        "body": "Admits 3",
         "header": "Party",
         "id": "auxiliaryFields.party",
       },

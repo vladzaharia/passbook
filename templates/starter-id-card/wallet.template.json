@@ -229,6 +229,9 @@
     "display": {
       "v": 1,
       "holder": "{{inputs.name}}",
+      "photo": {
+        "minRole": "door"
+      },
       "header": {},
       "panels": [
         {
@@ -253,13 +256,6 @@
               "type": "field",
               "label": "Number",
               "value": "{{inputs.idNumber}}"
-            },
-            {
-              "id": "r_field3",
-              "slot": "field3",
-              "type": "field",
-              "label": "Year",
-              "value": "{{inputs.unit}}"
             }
           ]
         }

@@ -477,6 +477,43 @@ describe('starter-boarding-pass', () => {
     expect((pass.semantics as Record<string, unknown>).flightNumber).toBe(100);
   });
 
+  it('drops the semantic scheme for non-air transit', async () => {
+    const { template } = await loadBaked('starter-boarding-pass');
+    const pass = (
+      await build('starter-boarding-pass', material, {
+        ...template.manifest.sample,
+        transitType: 'train',
+      })
+    ).passJson;
+    expect(pass.boardingPass?.transitType).toBe('PKTransitTypeTrain');
+    expect(pass.preferredStyleSchemes).toBeUndefined();
+  });
+
+  it('keeps airline semantics off other transit types', async () => {
+    const { template } = await loadBaked('starter-boarding-pass');
+    const sample = template.manifest.sample;
+    const train = (
+      await build('starter-boarding-pass', material, { ...sample, transitType: 'train' })
+    ).passJson;
+    const semantics = train.semantics as Record<string, unknown>;
+    for (const key of [
+      'airlineCode',
+      'flightNumber',
+      'departureAirportCode',
+      'destinationAirportCode',
+    ])
+      expect(semantics[key], key).toBeUndefined();
+    expect(semantics).toMatchObject({
+      departureStationName: 'San Francisco',
+      destinationStationName: 'New York',
+      vehicleNumber: 'WA100',
+    });
+    expect(train.boardingPass?.headerFields?.[0]?.label).toBe('Train');
+    const air = (await build('starter-boarding-pass', material, sample)).passJson;
+    expect((air.semantics as Record<string, unknown>).airlineCode).toBe('WA');
+    expect(air.logoText).toBe('Organization');
+  });
+
   it('sets relevance, gate, seats and links from input', async () => {
     const { template } = await loadBaked('starter-boarding-pass');
     const pass = (

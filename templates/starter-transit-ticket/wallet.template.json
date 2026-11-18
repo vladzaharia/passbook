@@ -84,7 +84,7 @@
         "x-order": 60,
         "maxLength": 64,
         "minLength": 1,
-        "x-help": "Same value on every ticket for one sailing or run."
+        "x-help": "Same value on every ticket for one sailing or run. Scanning events match on it."
       },
       "status": {
         "type": "string",
@@ -190,6 +190,15 @@
         "x-order": 902,
         "x-widget": "url",
         "x-placeholder": "https://"
+      },
+      "admits": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 99,
+        "x-label": "Admits",
+        "x-group": "Party",
+        "x-order": 55,
+        "default": 1
       }
     }
   },
@@ -209,7 +218,8 @@
     "name": "Sam Reed",
     "bookingRef": "BK-0001",
     "adults": 2,
-    "children": 1
+    "children": 1,
+    "admits": 3
   },
   "lookups": {
     "transit": {
@@ -279,7 +289,7 @@
       "to": {
         "field": "party"
       },
-      "value": "{{adults}} adults, {{children}} children"
+      "value": "Admits {{admits}}"
     },
     {
       "to": {
@@ -416,7 +426,7 @@
               "slot": "field1",
               "type": "field",
               "label": "Party",
-              "value": "{{inputs.adults}} adults, {{inputs.children}} children"
+              "value": "Admits {{inputs.admits}}"
             },
             {
               "id": "r_field2",

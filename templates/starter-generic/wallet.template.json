@@ -146,7 +146,8 @@
         "maximum": 99,
         "x-label": "Guests left",
         "x-group": "Membership",
-        "x-order": 26
+        "x-order": 26,
+        "default": 0
       },
       "renewURL": {
         "type": "string",

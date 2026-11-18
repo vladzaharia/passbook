@@ -54,6 +54,14 @@
       ],
       "input": "status",
       "label": "Moved"
+    },
+    {
+      "equals": [
+        "Cancelled"
+      ],
+      "input": "status",
+      "label": "Cancelled",
+      "stop": true
     }
   ],
   "lookup": {

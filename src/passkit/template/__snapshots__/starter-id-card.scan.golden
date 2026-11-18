@@ -40,18 +40,14 @@
             "slot": "field2",
             "type": "field",
             "value": "{{inputs.idNumber}}"
-          },
-          {
-            "id": "r_field3",
-            "label": "Year",
-            "slot": "field3",
-            "type": "field",
-            "value": "{{inputs.unit}}"
           }
         ],
         "title": "Details"
       }
     ],
+    "photo": {
+      "minRole": "door"
+    },
     "v": 1
   },
   "lookup": {

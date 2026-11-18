@@ -801,7 +801,7 @@ exports[`samsung compiler over every starter and baked template > starter-timed-
       "noticeDesc": "Slot: 14:00 -05:00
 Venue: Northfield Museum
 Until: 14:30 -05:00
-Party: 2 adults, 1 children
+Party: Admits 3
 Entrance: B
 Terms: Arrive within your slot. Show the code at the entrance.",
       "providerName": "PassBook",
@@ -852,7 +852,7 @@ To: Harbor Point
 Name: Sam Reed
 Departs: 2030-11-21 07:15 -05:00
 Board by: 06:55 -05:00
-Party: 2 adults, 1 children
+Party: Admits 3
 Vehicle: AB12 CDE
 Terms: Be at the quay by the board-by time. Show the code to board.",
       "providerName": "PassBook",
