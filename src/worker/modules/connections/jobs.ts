@@ -150,8 +150,10 @@ export async function reconcileConnections(ctx: ServiceContext): Promise<void> {
   await step(ctx, 'replay_sweep', () => sweepStalledReplays(ctx));
   try {
     await quarantineLegacyWebhookEvents(ctx, ctx.clock.now() - WEBHOOK_RETENTION_MS);
-  } catch {
-    ctx.log.error('connection.legacy_quarantine_failed', { code: 'LEGACY_QUARANTINE_FAILED' });
+  } catch (error) {
+    ctx.log.error('connection.legacy_quarantine_failed', {
+      code: error instanceof AppError ? error.code : 'LEGACY_QUARANTINE_FAILED',
+    });
   }
   const day = Math.floor(ctx.clock.now() / DAY_MS) * DAY_MS;
   if (await claim(ctx.env.DB, 'retention:connections', day)) await dailyConnections(ctx);

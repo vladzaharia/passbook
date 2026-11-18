@@ -46,7 +46,7 @@ export async function getPassByDownloadToken(
 ): Promise<Pass | null> {
   const row = await first<PassDbRow>(
     env.DB,
-    `${PASS_SELECT} WHERE download_token IN (?, ?, ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
+    `${PASS_SELECT} WHERE download_token IN (?, ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
     await tokenKeys(env, 'pass', token),
   );
   return row ? mapPass(row) : null;

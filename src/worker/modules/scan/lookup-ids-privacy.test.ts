@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { asLegacyAuthTokens, makePass } from '../../../../test/helpers/index.ts';
+import { makePass, withoutAuthTokenGuards } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { run } from '../../platform/db.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -143,7 +143,7 @@ describe('lookup privacy', () => {
           setPass(kit, pass.id, `${column} = ?`, [entry.name]),
         );
       if (column === 'auth_token')
-        await asLegacyAuthTokens(kit.env.DB, () =>
+        await withoutAuthTokenGuards(kit.env.DB, () =>
           setPass(kit, pass.id, 'auth_token = ?', [entry.name]),
         );
       const scanner = await kit.scanner({ templateIds: [restricted] });

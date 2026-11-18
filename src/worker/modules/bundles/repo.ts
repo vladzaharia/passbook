@@ -43,7 +43,7 @@ export function getBundle(db: D1Database, id: string, scope: ScopeArg) {
 export async function getBundleByToken(env: { DB: D1Database }, token: string) {
   return first<BundleRow>(
     env.DB,
-    `SELECT * FROM bundles WHERE token IN (?, ?, ?) AND ${noQuarantinedMembers('bundles.id')}`,
+    `SELECT * FROM bundles WHERE token IN (?, ?) AND ${noQuarantinedMembers('bundles.id')}`,
     await tokenKeys(env, 'bundle', token),
   );
 }

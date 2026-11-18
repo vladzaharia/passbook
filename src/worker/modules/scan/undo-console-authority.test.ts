@@ -52,8 +52,7 @@ describe('console undo authority', () => {
     ).rejects.toMatchObject({ status: 409, code: 'SCAN_CONFIG_CHANGED' });
   });
 
-  it('undoes a console scan whose captured org revision is a pre-cutover updated_at, until the org is suspended', async () => {
-    const preCutover = 1_700_000_000_000;
+  it('undoes a console scan while the org is active and refuses it once suspended', async () => {
     const operator = async () => {
       const s = await scenario();
       const user = await makeUser(kit.fx);
@@ -72,10 +71,7 @@ describe('console undo authority', () => {
         }),
         role: tenantScanRole(authority),
         platformSessionId: session.sessionId,
-        tenantAuthority: {
-          ...(await captureScanTenantAuthority(kit.ctx, session, authority)),
-          orgAccessRevision: preCutover,
-        },
+        tenantAuthority: await captureScanTenantAuthority(kit.ctx, session, authority),
       };
       await captureScanEpochs(kit.env.DB, actor);
       return { s, actor };

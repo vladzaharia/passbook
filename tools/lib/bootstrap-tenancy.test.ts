@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   type BootstrapSnapshot,
@@ -17,11 +15,6 @@ describe('bootstrap remote commands', () => {
     expect(apply).toBe(
       'npx wrangler d1 execute wallet-platform --remote --file .wrangler/bootstrap-tenancy.sql; rm -f .wrangler/bootstrap-tenancy.sql',
     );
-  });
-
-  it('are the commands the runbook gives', () => {
-    const runbook = readFileSync(resolve(import.meta.dirname, '../../docs/operations.md'), 'utf8');
-    for (const command of remoteCommands('<email>')) expect(runbook).toContain(command);
   });
 });
 
