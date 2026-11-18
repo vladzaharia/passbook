@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { NO_RELEASE_COPY } from '@/shared/copy/new-pass.ts';
 import {
   Button,
   Callout,
@@ -21,7 +22,7 @@ const FORM_ID = 'new-pass-step';
 
 const reviewTemplates = (
   <Button asChild size="sm" variant="outline">
-    <Link to="/admin/templates">Review templates</Link>
+    <Link to="/admin/templates">{NO_RELEASE_COPY.action}</Link>
   </Button>
 );
 
@@ -200,8 +201,7 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
                 !eligible.hasNextPage &&
                 eligible.isSuccess ? (
                   <Callout tone="warning" actions={reviewTemplates}>
-                    No active approved Apple Wallet release is available for this template and
-                    organization.
+                    {NO_RELEASE_COPY.template}
                   </Callout>
                 ) : null}
               </>
@@ -224,7 +224,7 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
               />
             ) : !scope.isLoading && !release && !eligible.isFetching ? (
               <Callout tone="warning" actions={reviewTemplates}>
-                No active approved Apple Wallet release is available for this organization and mode.
+                {NO_RELEASE_COPY.org}
               </Callout>
             ) : !scope.isLoading &&
               release &&
