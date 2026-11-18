@@ -1,23 +1,19 @@
 import type { Json } from '../../types.ts';
 import { mergeStyles, type Styles, stylesOf } from './fields.ts';
-import { listOf } from './list.ts';
-import { leaf, mapOf, part, type Rule, type V } from './map.ts';
+import { byIdentifier, listOf } from './list.ts';
+import { container, leaf, mapOf, part, type Rule, spliceOrder, type V } from './map.ts';
 import { setOf } from './set.ts';
 import type { Cx } from './types.ts';
 
 const RELEVANCE = ['locations', 'beacons', 'relevantDates', 'maxDistance', 'relevantDate'];
-
-const byIdentifier = (item: Json) =>
-  typeof item === 'object' && item && !Array.isArray(item) && typeof item.identifier === 'string'
-    ? item.identifier
-    : JSON.stringify(item);
 
 /** Barcodes by index, because bindings target `{barcode: n}`. */
 const barcodeList: Rule = (cx, path, b, o, t) => {
   if (!(Array.isArray(o) && Array.isArray(t) && (Array.isArray(b) || cx.twoWay)))
     return leaf(cx, path, b, o, t);
   const [lb, lo, lt] = [Array.isArray(b) ? b.length : 0, o.length, t.length];
-  if (lo !== lb && lt !== lb && lo !== lt) return leaf(cx, path, b, o, t);
+  // Indexes shift when a side adds or removes one: a count change on both sides is one conflict.
+  if (cx.twoWay ? lo !== lt : lo !== lb && lt !== lb) return leaf(cx, path, b, o, t);
   const obj = (v: V) => (Array.isArray(v) ? { ...v.map((x) => x) } : undefined);
   const merged = mapOf({}, mapOf())(cx, path, obj(b), obj(o), obj(t)) as Record<string, Json>;
   return Object.keys(merged)
@@ -49,14 +45,18 @@ function split(pass: Json | undefined): Split | undefined {
   return s;
 }
 
+const set = container(setOf, []);
 const rules = {
-  meta: part('pass.meta', mapOf({ semantics: mapOf() })),
+  meta: part('pass.meta', container(mapOf({ semantics: container(mapOf()) }))),
   relevance: part(
     'pass.relevance',
-    mapOf({ locations: setOf, beacons: setOf, relevantDates: setOf }),
+    container(mapOf({ locations: set, beacons: set, relevantDates: set })),
   ),
-  barcodes: part('barcodes', mapOf({ barcodes: barcodeList, barcode: mapOf() })),
-  featured: part('pass.featuredActions', listOf(byIdentifier, mapOf())),
+  barcodes: part(
+    'barcodes',
+    container(mapOf({ barcodes: container(barcodeList, []), barcode: container(mapOf()) })),
+  ),
+  featured: part('pass.featuredActions', container(listOf(byIdentifier, mapOf()), [])),
   nfc: part('pass.nfc', leaf),
 };
 
@@ -76,11 +76,10 @@ export function mergePassJson(cx: Cx, b: Json | undefined, o: Json, t: Json): Js
   const nfc = rules.nfc(cx, [], sb?.nfc, so.nfc, st.nfc);
   if (nfc !== undefined) out.nfc = nfc;
   Object.assign(out, mergeStyles(cx, sb?.styles, so.styles, st.styles));
-  const order = Object.keys(o as object);
-  return Object.fromEntries(
-    Object.entries(out).sort(([x], [y]) => {
-      const [ix, iy] = [order.indexOf(x), order.indexOf(y)];
-      return (ix < 0 ? order.length : ix) - (iy < 0 ? order.length : iy);
-    }),
+  const order = spliceOrder(
+    Object.keys(o as object),
+    Object.keys(t as object),
+    new Set(Object.keys(out)),
   );
+  return Object.fromEntries(order.map((k) => [k, out[k] as Json]));
 }

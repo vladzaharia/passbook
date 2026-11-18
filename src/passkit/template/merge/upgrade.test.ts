@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TemplateManifest } from '../../types.ts';
 import { applyResolutions, mergePackages } from './apply.ts';
 import { RULED_KEYS } from './manifest.ts';
-import { baseDoc, edit } from './merge-fixtures.ts';
+import { baseDoc, edit } from './merge-test-fixtures.ts';
 import { UPGRADERS, type Upgraders, upgrade } from './versions.ts';
 
 const m = (d: any) => d.manifest;
@@ -12,27 +12,47 @@ const rename = (manifest: Record<string, any>) => {
   const { title, ...rest } = manifest.display;
   return { ...manifest, display: { heading: title, ...rest } };
 };
-const upgraders: Upgraders = { schema: { 1: rename } };
+const step = (fn: (m: Record<string, any>) => Record<string, any>) => (d: any) => ({
+  ...d,
+  manifest: fn(d.manifest),
+});
+const upgraders: Upgraders = { schema: { 1: step(rename) } };
 const v2 = (d: any) => {
   Object.assign(d.manifest, rename(d.manifest), { schema: 2 });
 };
 
 describe('upgrade', () => {
   it('is the identity for the current schema and does not change its input', () => {
-    const manifest = baseDoc().manifest;
-    expect(upgrade(manifest, 1, 1)).toBe(manifest);
+    const doc = baseDoc();
+    expect(upgrade(doc, 1, 1)).toBe(doc);
     expect(UPGRADERS).toEqual({});
-    const lifted = upgrade(manifest, 1, 2, upgraders.schema) as any;
+    const lifted = m(upgrade(doc, 1, 2, upgraders.schema));
     expect(lifted.schema).toBe(2);
     expect(lifted.display.heading).toBe('{{name}}');
     expect(lifted.display.title).toBeUndefined();
-    expect((manifest as any).display.title).toBe('{{name}}');
+    expect(m(doc).display.title).toBe('{{name}}');
   });
   it('chains steps and reports a missing one', () => {
-    const steps = { 1: (x: any) => ({ ...x, a: 1 }), 2: (x: any) => ({ ...x, b: 2 }) };
-    expect(upgrade(baseDoc().manifest, 1, 3, steps)).toMatchObject({ schema: 3, a: 1, b: 2 });
-    expect(upgrade(baseDoc().manifest, 1, 3, { 1: steps[1] })).toBeUndefined();
-    expect(upgrade(baseDoc().manifest, 1, 2, undefined)).toBeUndefined();
+    const steps = { 1: step((x) => ({ ...x, a: 1 })), 2: step((x) => ({ ...x, b: 2 })) };
+    expect(m(upgrade(baseDoc(), 1, 3, steps))).toMatchObject({ schema: 3, a: 1, b: 2 });
+    expect(upgrade(baseDoc(), 1, 3, { 1: steps[1] })).toBeUndefined();
+    expect(upgrade(baseDoc(), 1, 2, undefined)).toBeUndefined();
+  });
+  it('a step can move pass.json and files with the manifest', () => {
+    const moveLogo = (d: any) => {
+      const { 'logo.png': logo, ...files } = d.files;
+      return {
+        ...d,
+        passJson: { ...d.passJson, logoText: 'v2' },
+        files: { ...files, 'brand.png': logo },
+      };
+    };
+    const doc = edit(baseDoc(), (d) => (d.files['logo.png'] = { sha1: 'x' }));
+    const lifted = upgrade(doc, 1, 2, { 1: moveLogo }) as any;
+    expect(lifted.passJson.logoText).toBe('v2');
+    expect(Object.keys(lifted.files)).toContain('brand.png');
+    expect(Object.keys(lifted.files)).not.toContain('logo.png');
+    expect(Object.keys(doc.files)).toContain('logo.png');
   });
 });
 
@@ -101,10 +121,10 @@ describe('merge across a schema gap', () => {
     const t = edit(base, wallets2);
     const reg: Upgraders = {
       wallets: {
-        1: (x: any) => ({
+        1: step((x) => ({
           ...x,
           wallets: { ...x.wallets, google: { ...x.wallets.google, images: {} } },
-        }),
+        })),
       },
     };
     const r = mergePackages(base, o, t, { upgraders: reg });
@@ -117,7 +137,7 @@ describe('merge across a schema gap', () => {
     expect(m(missing.merged).wallets.schema).toBe(1);
   });
   it('scan.display.v bumps with their upgrader', () => {
-    const reg: Upgraders = { 'scan.display': { 1: (x: any) => x } };
+    const reg: Upgraders = { 'scan.display': { 1: (x) => x } };
     const t = edit(base, (d) => (m(d).scan.display.v = 2));
     const r = mergePackages(base, base, t, { upgraders: reg });
     expect(r.status).toBe('clean');

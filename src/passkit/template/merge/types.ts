@@ -80,6 +80,12 @@ export interface Change {
 
 export type RenameKind = 'field' | 'input' | 'action' | 'plan' | 'panel' | 'row' | 'chip' | 'art';
 
+/**
+ * What a reference can point at: a renameable entity, a featured action by identifier, a barcode
+ * by index, an image slot (`logo`), or a wallet art file.
+ */
+export type RefKind = RenameKind | 'featuredAction' | 'barcode' | 'imageSlot' | 'walletArt';
+
 export interface Rename {
   kind: RenameKind;
   from: string;
@@ -111,4 +117,6 @@ export interface Cx {
   conflicts: Conflict[];
   changes: Change[];
   part: PartId;
+  /** `${part}\0${identity}` of entities a reference pick brings back. */
+  restore: Set<string>;
 }

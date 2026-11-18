@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyResolutions } from './apply.ts';
 import { mergePackages } from './index.ts';
-import { baseDoc, edit, ids, kinds, man, run, sha, style } from './merge-fixtures.ts';
+import { baseDoc, edit, ids, kinds, man, run, sha, style } from './merge-test-fixtures.ts';
 
 const m = (d: any) => d.manifest;
 const renameField = (from: string, to: string) => (d: any) => {
@@ -158,15 +158,15 @@ describe('renames', () => {
   });
 });
 
+const SINCE_REF = 'references:field/since/bindings/{"field":"since"}#0';
+
 describe('reference check', () => {
   it('flags a reference the merge broke: theirs refers to what ours deleted', () => {
     const r = run(
       (d) => d.passJson.generic.secondaryFields.pop(),
       (d) => m(d).bindings.push({ to: { field: 'since' }, value: 'x' }),
     );
-    expect(r.conflicts.map((c) => [c.id, c.kind])).toEqual([
-      ['references:field/since/bindings/3', 'reference'],
-    ]);
+    expect(r.conflicts.map((c) => [c.id, c.kind])).toEqual([[SINCE_REF, 'reference']]);
   });
   it('flags ours refs when theirs deletes what ours kept and theirs is taken', () => {
     const base = baseDoc();
@@ -178,7 +178,7 @@ describe('reference check', () => {
     const r = mergePackages(base, o, t);
     expect(r.conflicts.map((c) => c.kind)).toEqual(['modify-delete']);
     const picked = mergePackages(base, o, t, { picks: { 'fields:since': 'theirs' } });
-    expect(picked.conflicts.map((c) => c.id)).toEqual(['references:field/since/bindings/3']);
+    expect(picked.conflicts.map((c) => c.id)).toEqual([SINCE_REF]);
   });
   it('ignores references that were already broken and unresolved in both', () => {
     const r = run(

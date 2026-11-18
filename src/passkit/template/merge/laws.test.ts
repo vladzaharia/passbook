@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyResolutions, mergePackages } from './apply.ts';
-import { baseDoc, edit, sha, stringsFile } from './merge-fixtures.ts';
+import { baseDoc, edit, sha, stringsFile } from './merge-test-fixtures.ts';
 import { normalize } from './normalize.ts';
 import type { PackageDoc } from './types.ts';
 

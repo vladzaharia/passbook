@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ids, kinds, run, sha, stringsFile } from './merge-fixtures.ts';
+import { mergePackages } from './apply.ts';
+import { baseDoc, edit, ids, kinds, run, sha, stringsFile } from './merge-test-fixtures.ts';
 import { readStrings } from './strings.ts';
 
 const set = (name: string, value: string) => (d: any) => (d.files[name] = { sha1: sha(value) });
@@ -121,6 +122,14 @@ describe('strings', () => {
     expect(kinds(run(bad, put({ Name: 'T' })))).toEqual({
       'strings:en.lproj/pass.strings': 'invalid',
     });
+    // An invalid file takes a side when picked, and the part filed after it is not mislabelled.
+    const base = baseDoc();
+    const [o, t] = [edit(base, bad), edit(base, put({ Name: 'T' }))];
+    const picked = mergePackages(base, o, t, {
+      picks: { 'strings:en.lproj/pass.strings': 'theirs' },
+    });
+    expect(picked.status).toBe('clean');
+    expect(picked.merged.files['en.lproj/pass.strings']).toEqual(t.files['en.lproj/pass.strings']);
   });
   it('a new locale from theirs is added', () => {
     const r = run(

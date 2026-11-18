@@ -1,6 +1,6 @@
 import { type Json, PASS_STYLES } from '../../types.ts';
 import { byKey, listOf } from './list.ts';
-import { isObj, leaf, mapOf, part, type Rule } from './map.ts';
+import { isObj, leaf, mapOf, part, type Rule, spliceOrder } from './map.ts';
 import type { Cx } from './types.ts';
 
 const KNOWN = ['headerFields', 'primaryFields', 'secondaryFields', 'auxiliaryFields', 'backFields'];
@@ -31,11 +31,12 @@ const flatten = (dict: Record<string, Json> | undefined, groups: string[]): Json
 const without = (dict: Record<string, Json> | undefined) =>
   dict && Object.fromEntries(Object.entries(dict).filter(([k]) => !isGroup(k)));
 
-function regroup(rest: Record<string, Json>, fields: Json[], groups: string[], seen: Set<string>) {
-  const out: Record<string, Json> = { ...rest };
+/** The groups the result keeps: any with fields, and an empty one by K3 on its presence. */
+function regroup(rest: Dict, fields: Json[], groups: string[], keep: (g: string) => boolean) {
+  const out: Dict = { ...rest };
   for (const group of groups) {
     const items = fields.filter((f) => isObj(f) && f.group === group);
-    if (items.length || seen.has(group))
+    if (items.length || keep(group))
       out[group] = items.map((f) =>
         Object.fromEntries(Object.entries(f as object).filter(([k]) => k !== 'group')),
       );
@@ -48,47 +49,58 @@ const fieldRule: Rule = part(
   listOf(byKey, mapOf(), false, (f) => (isObj(f) ? f.group : undefined)),
 );
 const restRule: Rule = part('pass.style', mapOf());
-
 const styleLeaf: Rule = part('pass.style', leaf);
 
-/** One style dict: fields merge by key across groups, the rest by key. */
-function mergeDict(
-  cx: Cx,
-  key: string,
-  path: string[],
-  b: Dict | undefined,
-  o: Dict,
-  t: Dict,
-): Dict {
+const isPoster = (k: string) => k.startsWith('poster');
+
+/** One style dict: fields merge by key across groups, the rest by key; keys keep ours' order. */
+function mergeDict(cx: Cx, key: string, b: Dict | undefined, o: Dict, t: Dict): Dict {
   const groups = groupsOf(b, o, t);
-  const seen = new Set(groups.filter((g) => g in o && g in t));
-  const rest = restRule(cx, [key], without(b), without(o), without(t));
+  const rest = restRule(cx, [key], without(b ?? {}), without(o), without(t));
+  // The main style's field ids carry no prefix, so they survive a style switch.
   const fields = fieldRule(
     cx,
-    path.slice(0, 0),
-    flatten(b, groups),
+    isPoster(key) ? [key] : [],
+    flatten(b ?? (cx.twoWay ? undefined : {}), groups),
     flatten(o, groups),
     flatten(t, groups),
   );
-  return regroup(rest as Dict, fields as Json[], groups, seen);
+  const keep = (g: string) => {
+    const [inB, inO, inT] = [b !== undefined && g in b, g in o, g in t];
+    if (cx.twoWay) return inO || inT;
+    return inO === inT ? inO : inO !== inB ? inO : inT;
+  };
+  const out = regroup(rest as Dict, fields as Json[], groups, keep);
+  const order = spliceOrder(Object.keys(o), Object.keys(t), new Set(Object.keys(out)));
+  return Object.fromEntries(order.map((k) => [k, out[k] as Json]));
 }
 
+const mainOf = (s?: Styles) => Object.keys(s ?? {}).find((k) => !isPoster(k));
+const rekey = (s: Styles | undefined, from: string | undefined, to: string | undefined) =>
+  s && from && to && from !== to
+    ? Object.fromEntries(Object.entries(s).map(([k, v]) => [k === from ? to : k, v]))
+    : s;
+
 /**
- * Every style dict. Ours and theirs switching to different sets of styles is one `pass.style`
- * conflict; otherwise each style merges on its own, and a style only one side has is atomic.
+ * Every style dict. The main style key (`generic`, `storeCard`, …) is one `pass.style` leaf; when
+ * a side switches it, the other sides' main dict moves to the new key first, so fields and the
+ * rest still merge by key. A poster style merges on its own key.
  */
 export function mergeStyles(cx: Cx, b: Styles | undefined, o: Styles, t: Styles): Styles {
-  const keys = (s?: Styles) => Object.keys(s ?? {}).join('|');
-  if (b && keys(o) !== keys(t) && keys(o) !== keys(b) && keys(t) !== keys(b)) {
-    const r = styleLeaf(cx, [], b, o, t);
-    return isObj(r) ? (r as Styles) : o;
-  }
+  const [kb, ko, kt] = [mainOf(b), mainOf(o), mainOf(t)];
+  let main = styleLeaf(cx, [], kb, ko, kt);
+  if (typeof main !== 'string' || isPoster(main) || !PASS_STYLES.includes(main as never))
+    main = ko ?? kt;
+  const [sb, so, st] = [rekey(b, kb, main), rekey(o, ko, main), rekey(t, kt, main)] as [
+    Styles | undefined,
+    Styles,
+    Styles,
+  ];
   const out: Styles = {};
-  const all = [...new Set([...Object.keys(o), ...Object.keys(t), ...Object.keys(b ?? {})])];
-  for (const [i, key] of all.entries()) {
-    const [sb, so, st] = [b?.[key], o[key], t[key]];
-    const path = i === 0 ? [] : [key];
-    const r = so && st ? mergeDict(cx, key, path, sb, so, st) : styleLeaf(cx, [key], sb, so, st);
+  const all = [...new Set([...Object.keys(so), ...Object.keys(st), ...Object.keys(sb ?? {})])];
+  for (const key of all) {
+    const [db, dO, dt] = [sb?.[key], so[key], st[key]];
+    const r = dO && dt ? mergeDict(cx, key, db, dO, dt) : styleLeaf(cx, [key], db, dO, dt);
     if (isObj(r)) out[key] = r as Dict;
   }
   return out;

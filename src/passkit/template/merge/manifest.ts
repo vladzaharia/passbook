@@ -1,6 +1,6 @@
 import type { Json } from '../../types.ts';
 import { listOf, orderedMapOf } from './list.ts';
-import { canon, isObj, leaf, mapOf, part, type Rule, spliceOrder } from './map.ts';
+import { canon, container, isObj, leaf, mapOf, part, type Rule, spliceOrder } from './map.ts';
 import { scanRule } from './scan.ts';
 import { setOf } from './set.ts';
 import type { Cx } from './types.ts';
@@ -15,36 +15,40 @@ const under =
   (cx, path, b, o, t) =>
     rule(cx, [...path, key], b, o, t);
 
-const walletTarget = mapOf({ omit: setOf, images: mapOf() });
+const c = container;
+const set = c(setOf, []);
+const walletTarget = c(mapOf({ omit: set, images: c(mapOf()) }));
 
 /** The §2.3 manifest rows: top-level key, its part, and its rule. */
 const MANIFEST: Record<string, Rule> = {
   // manifest.meta
   description: part('manifest.meta', under('description', leaf)),
-  requires: part('manifest.meta', under('requires', mapOf({ styles: setOf }))),
+  requires: part('manifest.meta', under('requires', c(mapOf({ styles: set })))),
   messaging: part('manifest.meta', under('messaging', leaf)),
   // inputs: by name in form order; `enum` and `x-enumLabels` are one unit; `required` is a set.
   inputs: part(
     'inputs',
-    mapOf({
-      properties: orderedMapOf(mapOf({}, leaf, [['enum', 'x-enumLabels']])),
-      required: setOf,
-    }),
+    c(
+      mapOf({
+        properties: c(orderedMapOf(mapOf({}, leaf, [['enum', 'x-enumLabels']]))),
+        required: set,
+      }),
+    ),
   ),
-  sample: part('sample', mapOf()),
-  lookups: part('lookups', mapOf({}, mapOf({}, mapOf()))),
+  sample: part('sample', c(mapOf())),
+  lookups: part('lookups', c(mapOf({}, mapOf({}, mapOf())))),
   // bindings: by target and n-th with that target; order matters because later bindings win.
-  bindings: part('bindings', listOf(bindingTarget, mapOf(), true)),
-  display: part('display', mapOf({ search: setOf })),
-  behaviors: part('behaviors', listOf(behaviorUse, mapOf({ config: mapOf() }), true)),
-  previewOnlyAssets: part('previewOnlyAssets', setOf),
+  bindings: part('bindings', c(listOf(bindingTarget, mapOf(), true), [])),
+  display: part('display', c(mapOf({ search: set }))),
+  behaviors: part('behaviors', c(listOf(behaviorUse, mapOf({ config: mapOf() }), true), [])),
+  previewOnlyAssets: part('previewOnlyAssets', set),
   scan: scanRule,
-  nfc: part('nfc', mapOf()),
+  nfc: part('nfc', c(mapOf())),
   // stamps: the goal and `keepReady` move together.
-  stamps: part('stamps', mapOf({ art: mapOf() }, leaf, [['goal', 'keepReady']])),
+  stamps: part('stamps', c(mapOf({ art: c(mapOf()) }, leaf, [['goal', 'keepReady']]))),
   wallets: part(
     'wallets',
-    mapOf({ roles: mapOf(), required: setOf, google: walletTarget, samsung: walletTarget }),
+    c(mapOf({ roles: c(mapOf()), required: set, google: walletTarget, samsung: walletTarget })),
   ),
 };
 

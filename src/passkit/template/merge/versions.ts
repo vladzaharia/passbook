@@ -2,8 +2,18 @@ import type { Json, TemplateManifest } from '../../types.ts';
 import { isObj } from './map.ts';
 import type { PackageDoc, PartId } from './types.ts';
 
-/** One step lifts a manifest from version `n` to `n + 1`. The engine writes the new number. */
-export type Step = (manifest: Record<string, Json>) => Record<string, Json>;
+/** A side as a step sees it: the manifest as plain JSON, plus pass.json and the files. */
+export interface StepDoc {
+  passJson: Json;
+  manifest: Record<string, Json>;
+  files: PackageDoc['files'];
+}
+
+/**
+ * One step lifts a document from version `n` to `n + 1`: the manifest, and pass.json or file
+ * names when the bump moves them. The engine writes the new number.
+ */
+export type Step = (doc: StepDoc) => StepDoc;
 
 /** Upgraders by version site, keyed by the version they start from. */
 export interface Upgraders {
@@ -49,34 +59,38 @@ function setVersion(manifest: Record<string, Json>, site: VersionSite, v: number
 }
 
 /**
- * The manifest at version `to`, or `undefined` when a step on the way is not registered. Pure:
- * the input is not changed. Equal versions return the manifest as it is.
+ * The document at version `to`, or `undefined` when a step on the way is not registered. Pure:
+ * the input is not changed. Equal versions return the document as it is.
  */
 export function upgrade(
-  manifest: TemplateManifest,
+  doc: PackageDoc,
   from: number,
   to: number,
   steps: Record<number, Step> | undefined = UPGRADERS.schema,
-): TemplateManifest | undefined {
-  return upgradeSite(manifest, VERSION_SITES[0], from, to, steps);
+): PackageDoc | undefined {
+  return upgradeSite(doc, VERSION_SITES[0], from, to, steps);
 }
 
 function upgradeSite(
-  manifest: TemplateManifest,
+  doc: PackageDoc,
   site: VersionSite,
   from: number,
   to: number,
   steps: Record<number, Step> | undefined,
-): TemplateManifest | undefined {
-  if (from === to) return manifest;
-  let m = structuredClone(asRecord(manifest));
+): PackageDoc | undefined {
+  if (from === to) return doc;
+  let d: StepDoc = {
+    passJson: structuredClone(doc.passJson),
+    manifest: structuredClone(asRecord(doc.manifest)),
+    files: { ...doc.files },
+  };
   for (let v = from; v < to; v++) {
     const step = steps?.[v];
     if (!step) return undefined;
-    m = step(m);
-    setVersion(m, site, v + 1);
+    d = step(d);
+    setVersion(d.manifest, site, v + 1);
   }
-  return m as unknown as TemplateManifest;
+  return { ...d, manifest: d.manifest as unknown as TemplateManifest };
 }
 
 export interface SchemaGap {
@@ -99,13 +113,11 @@ export function upgradeSides(sides: (PackageDoc | null)[], registry: Upgraders):
     if (known.every((v) => v === target)) continue;
     const lifted = docs.map((d, i) => {
       const from = versions[i];
-      return from === undefined
-        ? d.manifest
-        : upgradeSite(d.manifest, site, from, target, registry[site.steps]);
+      return from === undefined ? d : upgradeSite(d, site, from, target, registry[site.steps]);
     });
     if (lifted.every((m) => m !== undefined)) {
       docs.forEach((d, i) => {
-        d.manifest = lifted[i] as TemplateManifest;
+        Object.assign(d, lifted[i]);
       });
     } else
       gaps.push({

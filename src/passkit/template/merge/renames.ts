@@ -1,6 +1,7 @@
 import type { Json } from '../../types.ts';
 import { eq, isObj } from './map.ts';
-import { entityMaps, walkRefs } from './references.ts';
+import { walkRefs } from './ref-walk.ts';
+import { entityMaps } from './references.ts';
 import type { PackageDoc, PartId, RenameKind } from './types.ts';
 
 export interface RenameStep {

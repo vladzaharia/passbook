@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ids, kinds, man, run } from './merge-fixtures.ts';
+import { ids, kinds, man, run } from './merge-test-fixtures.ts';
 
 const m = (d: any) => d.manifest;
 

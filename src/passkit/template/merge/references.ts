@@ -1,19 +1,17 @@
 import { type Json, PASS_STYLES } from '../../types.ts';
-import { conditionInputs, exprReferences } from '../expr.ts';
 import { isObj } from './map.ts';
-import type { PackageDoc, RenameKind } from './types.ts';
+import { walkRefs } from './ref-walk.ts';
+import type { PackageDoc, RefKind } from './types.ts';
 
 type Obj = Record<string, Json>;
 const obj = (v: unknown): Obj | undefined => (isObj(v as Json) ? (v as Obj) : undefined);
-const each = <T>(list: T[], fn: (item: T, i: number) => void) => {
-  for (const [i, item] of list.entries()) fn(item, i);
-};
 const arr = (v: unknown): Json[] => (Array.isArray(v) ? v : []);
 
 const STAMP_ART = /^stamps\/(?!strips\/).+\.png$/;
+const IMAGE_SLOT = /^(?:[\w-]+\.lproj\/)?([A-Za-z]+)(?:@[23]x)?\.png$/;
 
-/** An entity's value without its identity: what a rename leaves unchanged. */
-export type EntityMaps = Record<RenameKind, Map<string, Json>>;
+/** Every reference target by identity; for a renameable one, its value without its identity. */
+export type EntityMaps = Record<RefKind, Map<string, Json>>;
 
 const rest = (o: Obj, drop: string) =>
   Object.fromEntries(Object.entries(o).filter(([k]) => k !== drop));
@@ -29,6 +27,10 @@ export function entityMaps(doc: PackageDoc): EntityMaps {
     row: new Map(),
     chip: new Map(),
     art: new Map(),
+    featuredAction: new Map(),
+    barcode: new Map(),
+    imageSlot: new Map(),
+    walletArt: new Map(),
   };
   const pass = obj(doc.passJson);
   for (const style of PASS_STYLES.map((k) => obj(pass?.[k])))
@@ -57,107 +59,71 @@ export function entityMaps(doc: PackageDoc): EntityMaps {
       ids(m.row, [r]);
       ids(m.chip, obj(r)?.type === 'chips' ? obj(r)?.items : []);
     }
-  for (const [name, e] of Object.entries(doc.files))
+  for (const a of arr(pass?.featuredActions)) {
+    const o = obj(a);
+    if (o && typeof o.identifier === 'string')
+      m.featuredAction.set(o.identifier, rest(o, 'identifier'));
+  }
+  for (const [i, b] of arr(pass?.barcodes).entries()) m.barcode.set(String(i), b);
+  for (const [name, e] of Object.entries(doc.files)) {
     if (STAMP_ART.test(name)) m.art.set(name, e.sha1);
+    if (name.startsWith('wallets/')) m.walletArt.set(name, e.sha1);
+    const slot = IMAGE_SLOT.exec(name)?.[1];
+    if (slot) m.imageSlot.set(slot, true);
+  }
   return m;
 }
 
-/** Visits a reference; a returned string replaces it in place. */
-export type RefVisit = (kind: RenameKind, id: string, site: string) => string | undefined;
-
-const nameInExpr = (expr: string, from: string, to: string) =>
-  expr.replace(/\{\{[^}]*\}\}/g, (seg) =>
-    seg.replace(
-      new RegExp(`(?<![\\w.$])${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w$])`, 'g'),
-      to,
-    ),
-  );
-
-/** Walks every cross-reference in the manifest, plus art names. Mutates when `visit` answers. */
-export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
-  const man = doc.manifest as unknown as Obj;
-  const set = (o: Obj | Json[], key: string | number, kind: RenameKind, site: string) => {
-    const cur = (o as Obj)[key as string];
-    if (typeof cur !== 'string') return;
-    const next = visit(kind, cur, site);
-    if (next !== undefined) (o as Obj)[key as string] = next;
-  };
-  const expr = (o: Obj, key: string, site: string) => {
-    const e = o[key];
-    if (typeof e !== 'string') return;
-    let out = e;
-    for (const name of exprReferences(e).inputs) {
-      const next = visit('input', name, site);
-      if (next !== undefined) out = nameInExpr(out, name, next);
-    }
-    o[key] = out;
-  };
-  const cond = (c: unknown, site: string) => {
-    const o = obj(c);
-    if (!o) return;
-    if (typeof o.input === 'string' && conditionInputs(o as never).length)
-      set(o, 'input', 'input', site);
-    for (const k of ['all', 'any']) each(arr(o[k]), (x) => cond(x, site));
-    cond(o.not, site);
-  };
-  each(arr(man.bindings), (b, i) => {
-    const o = obj(b);
-    const to = obj(o?.to);
-    if (!o) return;
-    const site = `bindings/${i}`;
-    if (typeof to?.field === 'string') set(to, 'field', 'field', site);
-    else if (Array.isArray(to?.field))
-      each(to.field, (_, n) => set(to.field as Json[], n, 'field', site));
-    expr(o, 'value', site);
-    cond(o.when, site);
-    cond(o.remove, site);
-  });
-  const display = obj(man.display);
-  if (display) {
-    for (const k of ['title', 'subtitle', 'status']) expr(display, k, `display/${k}`);
-    each(arr(display.search), (_, i) =>
-      set(display.search as Json[], i, 'input', 'display/search'),
-    );
-  }
-  const direct = (o: unknown, site: string) => obj(o) && set(obj(o) as Obj, 'input', 'input', site);
-  direct(man.stamps, 'stamps');
-  direct(man.messaging, 'messaging');
-  const stampArt = obj(obj(man.stamps)?.art);
-  for (const k of Object.keys(stampArt ?? {})) set(stampArt as Obj, k, 'art', `stamps/art/${k}`);
-  const scan = obj(man.scan);
-  direct(scan?.lookup, 'scan/lookup');
-  each(arr(scan?.flags), (f, i) => direct(f, `scan/flags/${i}`));
-  each(arr(scan?.actions), (a, i) => direct(a, `scan/actions/${i}`));
-  const access = obj(scan?.access);
-  const accessInput = obj(access?.input);
-  for (const k of Object.keys(accessInput ?? {}))
-    set(accessInput as Obj, k, 'input', `scan/access/input/${k}`);
-  direct(access?.suspend, 'scan/access/suspend');
-  const d = obj(scan?.display);
-  for (const p of arr(d?.panels)) {
-    const o = obj(p);
-    each(arr(o?.actions), (_, i) =>
-      set(o?.actions as Json[], i, 'action', `panel/${o?.id}/actions`),
-    );
-  }
-  const customer = obj(d?.customer);
-  if (customer) {
-    set(customer, 'panel', 'panel', 'scan/customer/panel');
-    each(arr(customer.chips), (_, i) =>
-      set(customer.chips as Json[], i, 'chip', 'scan/customer/chips'),
-    );
-  }
-  for (const [role, src] of Object.entries(obj(obj(man.wallets)?.roles) ?? {}))
-    if (obj(src)) set(obj(src) as Obj, 'field', 'field', `wallets/roles/${role}`);
+export interface Ref {
+  kind: RefKind;
+  id: string;
+  site: string;
 }
 
-/** References that point at nothing in `doc`. */
-export function danglingRefs(doc: PackageDoc): { kind: RenameKind; id: string; site: string }[] {
+/** Every reference in `doc`, and whether its target is there. */
+export function refsOf(doc: PackageDoc): (Ref & { dangling: boolean })[] {
   const maps = entityMaps(doc);
-  const out: { kind: RenameKind; id: string; site: string }[] = [];
-  walkRefs(doc, (kind, id, site) => {
-    if (!maps[kind].has(id)) out.push({ kind, id, site });
+  const out: (Ref & { dangling: boolean })[] = [];
+  walkRefs(structuredClone(doc), (kind, id, site) => {
+    out.push({ kind, id, site, dangling: !maps[kind].has(id) });
     return undefined;
   });
   return out;
+}
+
+const keyOf = (r: Ref) => `${r.kind}\0${r.id}\0${r.site}`;
+const barcodeCount = (d: PackageDoc) => arr(obj(d.passJson)?.barcodes).length;
+
+/**
+ * References the merge broke. A dangling reference in `merged` counts unless some side has the
+ * same reference dangling too (that side made it so). A barcode index also breaks when a side
+ * changed the barcode count and does not have that binding itself: its index now means another
+ * barcode.
+ */
+export function brokenRefs(
+  merged: PackageDoc,
+  base: PackageDoc | null,
+  ours: PackageDoc,
+  theirs: PackageDoc[],
+): Ref[] {
+  const sides = [ours, ...theirs].map(refsOf);
+  const owned = new Set(sides.flatMap((refs) => refs.filter((r) => r.dangling).map(keyOf)));
+  const out = new Map<string, Ref>();
+  const refs = refsOf(merged);
+  for (const r of refs)
+    if (r.dangling && !owned.has(keyOf(r)))
+      out.set(keyOf(r), { kind: r.kind, id: r.id, site: r.site });
+  const [lo, lt] = [ours, theirs[0] as PackageDoc].map(barcodeCount) as [number, number];
+  const lb = base ? barcodeCount(base) : undefined;
+  const moved = [
+    { refs: sides[0], changed: lb === undefined ? lo !== lt : lo !== lb },
+    { refs: sides.slice(1).flat(), changed: lb === undefined ? lo !== lt : lt !== lb },
+  ];
+  for (const r of refs) {
+    if (r.kind !== 'barcode') continue;
+    for (const side of moved)
+      if (side.changed && !side.refs?.some((x) => x.kind === 'barcode' && x.site === r.site))
+        out.set(keyOf(r), { kind: r.kind, id: r.id, site: r.site });
+  }
+  return [...out.values()];
 }

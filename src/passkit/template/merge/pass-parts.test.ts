@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyResolutions } from './apply.ts';
-import { baseDoc, ids, kinds, man, run, style } from './merge-fixtures.ts';
+import { baseDoc, ids, kinds, man, run, style } from './merge-test-fixtures.ts';
 
 const pass = (d: any) => d.passJson;
 
@@ -117,10 +117,8 @@ describe('fields', () => {
   it('delete against modify', () => {
     const del = (d: any) => d.passJson.generic.secondaryFields.shift();
     const mod = (d: any) => (d.passJson.generic.secondaryFields[0].label = 'T');
-    expect(kinds(run(del, mod))).toEqual({
-      'fields:tier': 'delete-modify',
-      'references:field/tier/bindings/1': 'reference',
-    });
+    // Ours deleted the field and kept its binding: that reference is ours' own, not the merge's.
+    expect(kinds(run(del, mod))).toEqual({ 'fields:tier': 'delete-modify' });
     expect(kinds(run(mod, del))).toEqual({ 'fields:tier': 'modify-delete' });
     expect(run(del, del).status).toBe('clean');
   });

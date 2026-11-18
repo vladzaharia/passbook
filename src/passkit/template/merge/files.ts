@@ -1,6 +1,6 @@
 import type { Json } from '../../types.ts';
 import { STAMP_STRIP } from '../package.ts';
-import { decide, isObj, leaf, mapOf, part, type V } from './map.ts';
+import { decide, isObj, leaf, mapOf, part, type Rule, type V } from './map.ts';
 import { sha1Hex } from './sha1.ts';
 import { readStrings, writeStrings } from './strings.ts';
 import type { Cx, PackageDoc, PartId } from './types.ts';
@@ -62,28 +62,21 @@ function mergeBytes(
   write: (v: Record<string, Json>) => Uint8Array,
 ): Entry | undefined {
   const ref = (e?: Entry): V => e && { name, sha1: e.sha1 };
-  const atomic = () => {
-    const v = part(id, leaf)(cx, [name], ref(b), ref(o), ref(t)) as { sha1: string } | undefined;
+  const atomic = (rule: Rule) => {
+    const v = part(id, rule)(cx, [name], ref(b), ref(o), ref(t)) as { sha1: string } | undefined;
     return v && (v.sha1 === o?.sha1 ? o : v.sha1 === t?.sha1 ? t : { sha1: v.sha1 });
   };
   const decided =
     o?.sha1 === t?.sha1 || (!cx.twoWay && (b?.sha1 === o?.sha1 || b?.sha1 === t?.sha1));
-  if (decided || !o?.bytes || !t?.bytes || (!cx.twoWay && !b?.bytes)) return atomic();
-  let merged: V;
+  if (decided || !o?.bytes || !t?.bytes || (!cx.twoWay && !b?.bytes)) return atomic(leaf);
+  let sides: [Record<string, Json> | undefined, Record<string, Json>, Record<string, Json>];
   try {
-    const rule = part(id, mapOf());
-    merged = rule(
-      cx,
-      [name],
-      b?.bytes && !cx.twoWay ? read(b.bytes) : undefined,
-      read(o.bytes),
-      read(t.bytes),
-    );
+    sides = [b?.bytes && !cx.twoWay ? read(b.bytes) : undefined, read(o.bytes), read(t.bytes)];
   } catch {
-    cx.part = id;
-    decide(cx, [name], 'invalid', ref(b), ref(o), ref(t));
-    return o;
+    // Only parsing is in the try: a file that does not parse is invalid until a side is picked.
+    return atomic((c, p, ...v) => decide(c, p, 'invalid', ...v));
   }
+  const merged = part(id, mapOf())(cx, [name], ...sides);
   const bytes = write(merged as Record<string, Json>);
   return { sha1: sha1Hex(bytes), bytes };
 }

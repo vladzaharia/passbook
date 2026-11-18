@@ -1,6 +1,6 @@
 import type { Json } from '../../types.ts';
 import { byId, listOf } from './list.ts';
-import { canon, isObj, leaf, mapOf, part, type Rule, type V } from './map.ts';
+import { canon, container, isObj, leaf, mapOf, part, type Rule, type V } from './map.ts';
 import { setOf } from './set.ts';
 
 const hasId = (v: Json) => isObj(v) && typeof v.id === 'string';
@@ -8,7 +8,7 @@ const isNode = (v: V) => isObj(v) && (typeof v.id === 'string' || typeof v.type 
 const byInput = (f: Json) => (isObj(f) && typeof f.input === 'string' ? f.input : canon(f));
 
 /** A header: icon, title and subtitle are atomic; chips are items with ids. */
-const header: Rule = mapOf({ chips: (...a) => tree(...a) });
+const header: Rule = part('scan.display.header', mapOf({ chips: (...a) => tree(...a) }));
 const node: Rule = mapOf({ header }, (...a) => tree(...a));
 const nodes = listOf(byId, (...a) => tree(...a));
 
@@ -25,36 +25,43 @@ const tree: Rule = (cx, path, b, o, t) => {
   return leaf(cx, path, b, o, t);
 };
 
+const c = container;
 const display: Rule = part(
   'scan.display',
-  mapOf({
-    photo: mapOf(),
-    notes: mapOf(),
-    header: part('scan.display.header', header),
-    variants: part('scan.display.variants', tree),
-    panels: part('scan.display.panels', tree),
-    customer: part('scan.display.customer', mapOf({ chips: setOf })),
-  }),
+  c(
+    mapOf({
+      photo: c(mapOf()),
+      notes: c(mapOf()),
+      header: c(header),
+      variants: part('scan.display.variants', c(tree, [])),
+      panels: part('scan.display.panels', c(tree, [])),
+      customer: part('scan.display.customer', c(mapOf({ chips: c(setOf, []) }))),
+    }),
+  ),
 );
 
 const access: Rule = part(
   'scan.access',
-  mapOf({
-    input: mapOf(),
-    rules: mapOf(),
-    plans: listOf(byId, mapOf({ zones: listOf(canon) })),
-  }),
+  c(
+    mapOf({
+      input: c(mapOf()),
+      rules: c(mapOf()),
+      plans: c(listOf(byId, mapOf({ zones: listOf(canon) })), []),
+    }),
+  ),
 );
 
-const scan: Rule = mapOf(
-  {
-    actions: part('scan.actions', listOf(byId, mapOf())),
-    window: part('scan.meta', mapOf()),
-    flags: part('scan.meta', listOf(byInput, mapOf(), true)),
-    display,
-    access,
-  },
-  part('scan.meta', leaf),
+const scan: Rule = c(
+  mapOf(
+    {
+      actions: part('scan.actions', c(listOf(byId, mapOf()), [])),
+      window: part('scan.meta', c(mapOf())),
+      flags: part('scan.meta', c(listOf(byInput, mapOf(), true), [])),
+      display,
+      access,
+    },
+    part('scan.meta', leaf),
+  ),
 );
 
 export const scanRule: Rule = part('scan.meta', scan);

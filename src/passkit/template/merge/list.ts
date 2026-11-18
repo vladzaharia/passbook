@@ -29,24 +29,26 @@ function ordered(
 ): Rule {
   return (cx, path, b, o, t) => {
     const [eo, et] = [entries(o), entries(t)];
-    const eb = entries(b);
-    if (!(eo && et && (eb || cx.twoWay))) return leaf(cx, path, b, o, t);
-    const maps = [eb ?? [], eo, et].map((e) => new Map(e));
+    const eb = cx.twoWay ? [] : entries(b);
+    if (!(eo && et && eb)) return leaf(cx, path, b, o, t);
+    const maps = [eb, eo, et].map((e) => new Map(e));
     const [mb, mo, mt] = maps as [Map<string, Json>, Map<string, Json>, Map<string, Json>];
     const ids = new Set([...mb.keys(), ...mo.keys(), ...mt.keys()]);
     const merged = new Map<string, Json>();
     for (const id of ids) {
-      const v = item(cx, [...path, id], mb.get(id), mo.get(id), mt.get(id));
+      let v = item(cx, [...path, id], mb.get(id), mo.get(id), mt.get(id));
+      // A reference pick restores a target the merge removed.
+      if (v === undefined && cx.restore.has(`${cx.part}\0${id}`)) v = mo.get(id) ?? mt.get(id);
       if (v !== undefined) merged.set(id, v);
     }
     const idsOf = (e: Entry[]) => e.map(([id]) => id);
+    const g = (m: Map<string, Json>, id: string) => groupOf?.(m.get(id) as Json);
     const sameGroup = (id: string) =>
-      !groupOf ||
-      (eq(groupOf(mb.get(id) as Json), groupOf(mo.get(id) as Json)) &&
-        eq(groupOf(mo.get(id) as Json), groupOf(mt.get(id) as Json)));
-    const common = (e: Entry[]) =>
-      idsOf(e).filter((id) => mb.has(id) && mo.has(id) && mt.has(id) && sameGroup(id));
-    const [cb, co, ct] = [common(eb ?? []), common(eo), common(et)];
+      !groupOf || ((cx.twoWay || eq(g(mb, id), g(mo, id))) && eq(g(mo, id), g(mt, id)));
+    // Two-way has no base: the common items are those both sides have.
+    const inAll = (id: string) => (cx.twoWay || mb.has(id)) && mo.has(id) && mt.has(id);
+    const common = (e: Entry[]) => idsOf(e).filter((id) => inAll(id) && sameGroup(id));
+    const [cb, co, ct] = [common(eb), common(eo), common(et)];
     const [oMoved, tMoved] = [!same(co, cb), !same(ct, cb)];
     let primary = idsOf(eo);
     let secondary = idsOf(et);
@@ -63,9 +65,7 @@ function ordered(
     }
     if (moved) cx.changes.push({ part: cx.part, path, op: 'move' });
     // A field that changed group on one side takes its place from that side's order.
-    const shifted = new Set(
-      [...merged.keys()].filter((id) => mb.has(id) && mo.has(id) && mt.has(id) && !sameGroup(id)),
-    );
+    const shifted = new Set([...merged.keys()].filter((id) => inAll(id) && !sameGroup(id)));
     const fromTheirs = (id: string) =>
       eq(groupOf?.(mt.get(id) as Json), groupOf?.(merged.get(id) as Json)) &&
       !eq(groupOf?.(mt.get(id) as Json), groupOf?.(mo.get(id) as Json));
@@ -103,5 +103,7 @@ export function orderedMapOf(item: Rule = leaf): Rule {
 
 export const byId = (item: Json): string =>
   isObj(item) && typeof item.id === 'string' ? item.id : canon(item);
+export const byIdentifier = (item: Json): string =>
+  isObj(item) && typeof item.identifier === 'string' ? item.identifier : canon(item);
 export const byKey = (item: Json): string =>
   isObj(item) && typeof item.key === 'string' ? item.key : canon(item);
