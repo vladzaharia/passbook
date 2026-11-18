@@ -166,3 +166,6 @@ export function mutationAudit(
     [ctx.clock.now(), orgId, userId, action, targetType, targetId, ctx.requestId],
   );
 }
+export function hasAccountEmail(db: D1Database, email: string) {
+  return first<{ ok: number }>(db, 'SELECT 1 AS ok FROM user_emails WHERE email = ?', [email]);
+}

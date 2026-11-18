@@ -19,6 +19,7 @@ import {
 } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { createInviteSignInLink } from '../auth/invite-link.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import {
   membershipCapability,
@@ -137,7 +138,12 @@ export async function inviteOrgMember(
     targetType: 'org_invitation',
     targetId: row.id,
   });
-  const link = `${baseUrl(ctx.env)}/api/v1/orgs/invitations/accept#${token}`;
+  const accept = `/api/v1/orgs/invitations/accept#${token}`;
+  // An address with no account gets the sign-in link in this one mail; the accept page then joins it.
+  const signIn = (await repo.hasAccountEmail(ctx.env.DB, row.email))
+    ? null
+    : await createInviteSignInLink(ctx, { email: row.email, next: accept, ttlMs: TTL });
+  const link = signIn ?? `${baseUrl(ctx.env)}${accept}`;
   const org = await repo.orgName(ctx.env.DB, orgId);
   try {
     await createEmailBindingMailer(ctx.env).send({

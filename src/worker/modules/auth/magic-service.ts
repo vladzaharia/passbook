@@ -98,7 +98,7 @@ export async function processSignInRequest(
 ): Promise<void> {
   try {
     // Unknown addresses are dropped first so they never spend a victim's or the global budget.
-    if (!(await repo.isKnownAddress(ctx.env.DB, input.email))) return;
+    if (!(await repo.isKnownAddress(ctx.env.DB, input.email, ctx.clock.now()))) return;
     if (!(await withinIpCap(ctx, input.ipPrefix ?? null))) {
       ctx.log.warn('auth.magic_ip_cap', { code: 'MAGIC_IP_CAP' });
       return;

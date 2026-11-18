@@ -103,6 +103,66 @@ describe('request', () => {
     expect(h.mail).toHaveLength(1);
   });
 
+  describe('invitees', () => {
+    async function invitation(email: string, over: Partial<Record<string, number | null>> = {}) {
+      const org = await makeOrg(f());
+      const now = h.clock.now();
+      await run(
+        h.env.DB,
+        `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, revoked_at)
+         VALUES (?, ?, ?, '["read_only"]', ?, ?, ?, ?)`,
+        [
+          `inv-${uniq()}`,
+          org.id,
+          email,
+          await sha256Hex(uniq()),
+          now,
+          over.expiresAt ?? now + 86_400_000,
+          over.revokedAt ?? null,
+        ],
+      );
+      return org;
+    }
+
+    it('mails an address with a pending invitation and no account or pass', async () => {
+      const email = addr();
+      await invitation(email);
+      const res = await requestLink(email);
+      expect(res.status).toBe(202);
+      expect(h.mail).toHaveLength(1);
+      expect(h.mail[0]?.to).toBe(email);
+    });
+
+    it('sends nothing for a revoked or expired invitation, with the same answer', async () => {
+      const revoked = addr();
+      const expired = addr();
+      await invitation(revoked, { revokedAt: h.clock.now() });
+      await invitation(expired, { expiresAt: h.clock.now() - 1 });
+      const baseline = await requestLink(addr());
+      for (const email of [revoked, expired]) {
+        const res = await requestLink(email);
+        expect(res.status).toBe(baseline.status);
+        expect(await res.text()).toBe(await baseline.clone().text());
+      }
+      expect(h.mail).toHaveLength(0);
+    });
+
+    it('holds the per-address cap for an invitee', async () => {
+      const email = addr();
+      await invitation(email);
+      for (let i = 0; i < 7; i++) expect((await requestLink(email)).status).toBe(202);
+      expect(h.mail).toHaveLength(5);
+    });
+
+    it('does not mail an invitation to a suspended org', async () => {
+      const email = addr();
+      const org = await invitation(email);
+      await run(h.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
+      await requestLink(email);
+      expect(h.mail).toHaveLength(0);
+    });
+  });
+
   it('answers unknown addresses identically and sends nothing', async () => {
     const known = await requestLink(await knownEmail(), new Map());
     const unknownJar: Jar = new Map();

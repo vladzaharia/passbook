@@ -24,6 +24,7 @@ import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { getOrgAccess, requireOrgCapability } from './access.ts';
 
@@ -91,9 +92,19 @@ async function invite(
   expect(mail).toHaveLength(count + 1);
   const message = mail[count];
   expect(message?.to.toLowerCase()).toBe(email.trim().toLowerCase());
-  const link = message?.text.match(
+  let link = message?.text.match(
     /https:\/\/wallet\.test\/api\/v1\/orgs\/invitations\/accept#[^\s<>"']+/,
   )?.[0];
+  if (!link) {
+    // An address with no account gets a sign-in link whose landing is the accept page.
+    const signIn = message?.text.match(/\/auth\/magic\?t=([\w-]+)/)?.[1] ?? '';
+    const row = await all<{ redirect_path: string }>(
+      env.DB,
+      'SELECT redirect_path FROM magic_links WHERE token_hash = ?',
+      [await sha256Hex(signIn)],
+    );
+    link = `https://wallet.test${row[0]?.redirect_path ?? ''}`;
+  }
   expect(link).toBeTruthy();
   const token = new URL(link as string).hash.slice(1);
   expect(token).toBeTruthy();
@@ -120,6 +131,51 @@ async function join(
 }
 
 describe('organization memberships', () => {
+  it('sends one mail to an invitee with no account; its sign-in link joins the org', async () => {
+    const { org } = await setup();
+    const email = `new-invitee-${crypto.randomUUID()}@example.test`;
+    const count = mail.length;
+    const response = await call('POST', `/${org.id}/invitations`, { email, roles: ['read_only'] });
+    expect(response.status).toBe(201);
+    expect(mail).toHaveLength(count + 1);
+    const text = mail[count]?.text ?? '';
+    expect(text).not.toContain('/api/v1/orgs/invitations/accept');
+    const signIn = text.match(/https:\/\/wallet\.test\/auth\/magic\?t=([\w-]+)/);
+    expect(signIn).toBeTruthy();
+    const consumed = await app.request(
+      '/auth/magic/consume',
+      {
+        method: 'POST',
+        body: new URLSearchParams({ token: signIn?.[1] ?? '' }),
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'sec-fetch-site': 'same-origin',
+        },
+      },
+      env,
+    );
+    expect(consumed.status).toBe(303);
+    const next = consumed.headers.get('location') ?? '';
+    expect(next).toMatch(/^\/api\/v1\/orgs\/invitations\/accept#[\w-]{43}$/);
+    const created = await all<{ id: string }>(
+      env.DB,
+      'SELECT user_id AS id FROM user_emails WHERE email = ?',
+      [email],
+    );
+    expect(created).toHaveLength(1);
+    const joined = await accept(next.split('#')[1] ?? '', created[0]?.id ?? '');
+    expect(joined.status).toBe(200);
+    expect(OrgMembershipSchema.parse(await joined.json()).orgId).toBe(org.id);
+    expect(mail).toHaveLength(count + 1);
+  });
+
+  it('sends the plain accept link when the invitee already has an account', async () => {
+    const { org, person } = await setup();
+    const count = mail.length;
+    await invite(org.id, person.primaryEmail);
+    expect(mail[count]?.text).not.toContain('/auth/magic');
+  });
+
   it('does not infer membership from a platform role or pass ownership', async () => {
     const { f, org, person } = await setup();
     await makePass(f, {

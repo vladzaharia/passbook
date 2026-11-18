@@ -20,12 +20,15 @@ export interface MagicLinkRow {
 const COLUMNS = `token_hash, email, purpose, user_id, code_hash, redirect_path, attempt_count,
   browser_binding_hash, pending_identity`;
 
-export async function isKnownAddress(db: Db, email: string): Promise<boolean> {
+/** An account, a pass, or a pending invitation: the only addresses that may receive a sign-in mail. */
+export async function isKnownAddress(db: Db, email: string, now: number): Promise<boolean> {
   const row = await first<{ found: number }>(
     db,
     `SELECT 1 AS found WHERE EXISTS (SELECT 1 FROM user_emails WHERE email = ?)
-       OR EXISTS (SELECT 1 FROM passes WHERE holder_email = ? AND deleted_at IS NULL)`,
-    [email, email],
+       OR EXISTS (SELECT 1 FROM passes WHERE holder_email = ? AND deleted_at IS NULL)
+       OR EXISTS (SELECT 1 FROM org_invitations i JOIN orgs o ON o.id = i.org_id AND o.status = 'active'
+         WHERE i.email = ? AND i.revoked_at IS NULL AND i.accepted_at IS NULL AND i.expires_at > ?)`,
+    [email, email, email, now],
   );
   return row !== null;
 }
