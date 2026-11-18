@@ -39,6 +39,8 @@ export interface EntryInput {
   waitMs?: number | null;
   /** AX's visit limit: holds when another visit is allowed (read in the same statement). */
   limit?: GrantCond | null;
+  /** The caller's own conditions on the entry (the visit gate's wait, an override still open). */
+  when?: GrantCond[];
 }
 
 export interface Moved {
@@ -60,6 +62,7 @@ export function addEntry(g: Grant, i: EntryInput): Moved {
   if (plan.parent) conds.push(repo.insideOf(passId, plan.parent, now));
   if (i.waitMs && !w.wait) conds.push(repo.waitedSince(passId, plan.place, now - i.waitMs));
   if (i.limit && !w.limit) conds.push(i.limit);
+  conds.push(...(i.when ?? []));
   const room = w.cap
     ? []
     : [plan, ...plan.implied].flatMap((p) =>
