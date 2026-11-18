@@ -18,6 +18,7 @@ import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
+import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
@@ -38,6 +39,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'sandbox.forwards', run: sweepSandboxForwards },
     { name: 'connections.schedule', run: reconcileConnections },
     { name: 'templates.sync', run: syncBakedOnDeploy },
+    { name: 'templates.fork_updates', run: (ctx) => planForkUpdates(ctx) },
     { name: 'passes.stale_reissue', run: reissueStalePasses },
     { name: 'broadcasts.start', run: startDueBroadcasts },
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },

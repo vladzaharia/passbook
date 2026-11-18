@@ -6,7 +6,7 @@ import { first } from '../../platform/db.ts';
 export interface ForkBase {
   upstreamVersion: string;
   contentHash: string | null;
-  via: 'fork' | 'edit';
+  via: 'fork' | 'edit' | 'merge' | 'resolve' | 'noop' | 'backfill';
   parentVersion: string | null;
   /** The base was a default (the source's version at save time), not what the designer showed. */
   inferred?: boolean;

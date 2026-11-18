@@ -14,7 +14,7 @@ import { type Analysis, analyzePackage } from './package/analyze.ts';
 import type { ImageTools } from './package/images.ts';
 import { getOrgName } from './repo.ts';
 import { stampsForSave } from './stamps-save.ts';
-import { resolveVersionFiles } from './version-files.ts';
+import { type ForkFiles, resolveVersionFiles } from './version-files.ts';
 
 type Body = Pick<z.infer<typeof SaveVersionSchema>, 'passJson' | 'manifest' | 'assets'>;
 export type VersionResponse = z.infer<typeof SaveVersionResponseSchema>;
@@ -38,7 +38,8 @@ const encoder = new TextEncoder();
  * Validates a version written from JSON (the designer) with the upload pipeline's own steps:
  * package analysis with image checks, then the dry-run build for `orgId`. `source` is the template
  * whose stored files the body may name by hash. `stamps.carry` off draws every strip (a new
- * template cannot carry another's).
+ * template cannot carry another's). `lineage` (server-derived, from the fork row) also lets the body
+ * name files of the fork's upstream by hash.
  */
 export async function checkVersion(
   ctx: ServiceContext,
@@ -47,9 +48,10 @@ export async function checkVersion(
   body: Body,
   images: ImageTools,
   stamps: { dryRun: boolean; carry?: boolean },
+  lineage?: ForkFiles,
 ): Promise<CheckedVersion | { refused: RefusedVersion }> {
   // tooling.json of an uploaded version is not carried into designer versions; it only serves the import pipeline.
-  const { files, carried } = await resolveVersionFiles(ctx, source.id, body.assets);
+  const { files, carried } = await resolveVersionFiles(ctx, source.id, body.assets, lineage);
   const manifest = body.manifest as unknown as TemplateManifest;
   const input = new Map(files);
   input.set('pass.json', encoder.encode(JSON.stringify(body.passJson)));
