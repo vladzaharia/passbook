@@ -43,7 +43,7 @@ function TargetLink({
   );
 }
 
-interface Kpi extends Target {
+export interface Kpi extends Target {
   id: string;
   label: string;
   value: number;
@@ -78,7 +78,7 @@ function Sparkline({ points, warn }: { points: readonly Point[]; warn: boolean }
   );
 }
 
-function Tile({
+export function Tile({
   kpi,
   index,
   range,
