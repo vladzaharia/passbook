@@ -82,6 +82,10 @@ export function selfApproveConfirm(mode: 'live' | 'test'): ConfirmCopy {
     description: test
       ? 'Test passes reach only the test inbox. Your approval is recorded.'
       : 'No one else can review in this organization. Your approval is recorded.',
+    typed: false,
+  };
+}
+
 /** A new scan code: a copy of the old barcode stops working at every scanner. */
 export function newCodeConfirm(): ConfirmCopy {
   return {
