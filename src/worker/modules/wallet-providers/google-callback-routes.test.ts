@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
 import type { GoogleWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
 import { denyAllStores, type SessionAuth } from '../../platform/auth.ts';
@@ -24,6 +24,7 @@ import {
   readGoogleCallbackVerification,
 } from './account-service.ts';
 import { googleCallbackClassProjection, googleCallbackUrl } from './google-callback-binding.ts';
+import { clearGoogleCallbackKeyCache } from './google-callback-crypto.ts';
 import { handleGoogleCallback } from './google-callback-handler.ts';
 import {
   type CallbackSigningKeys,
@@ -51,6 +52,7 @@ beforeAll(async () => {
   vi.setConfig({ testTimeout: 60_000 });
   keys = await makeCallbackSigningKeys();
 });
+beforeEach(() => clearGoogleCallbackKeyCache());
 afterEach(() => vi.unstubAllGlobals());
 
 interface OfferKit {
@@ -304,7 +306,7 @@ async function expectNoCallbackWrites(f: CallbackFixture): Promise<void> {
 }
 
 describe('Google Wallet callbacks', () => {
-  it('encrypts signed historical receipts, rejects duplicate delivery, and leaves installation unknown', async () => {
+  it('encrypts signed historical receipts, acknowledges a duplicate delivery once, and leaves installation unknown', async () => {
     const f = await fixture();
     const logs: string[] = [];
     const app = callbackApp(f.f, logs);
@@ -331,10 +333,8 @@ describe('Google Wallet callbacks', () => {
         f.f.kit.env,
       );
     const responses = await Promise.all([send(body), send(body)]);
-    expect(responses.map((response) => response.status).sort()).toEqual([204, 401].sort());
-    expect(
-      responses.find((response) => response.status === 204)?.headers.get('cache-control'),
-    ).toContain('no-store');
+    expect(responses.map((response) => response.status)).toEqual([204, 204]);
+    expect(responses[1]?.headers.get('cache-control')).toContain('no-store');
     const receipt = await first<{
       id: string;
       instance_id: string;
@@ -969,7 +969,7 @@ describe('Google Wallet callbacks', () => {
   it('rate-limits Google callbacks by IP before fetching the provider keyset', async () => {
     const f = await fixture();
     const limit = vi.fn(async () => ({ success: false }));
-    f.f.kit.env.RL_APPLE_IP = { limit } as unknown as RateLimit;
+    f.f.kit.env.RL_GOOGLE_CALLBACK = { limit } as unknown as RateLimit;
     const fetcher = vi.fn();
     vi.stubGlobal('fetch', fetcher);
     const response = await callbackApp(f.f).request(
@@ -982,8 +982,72 @@ describe('Google Wallet callbacks', () => {
       f.f.kit.env,
     );
     expect(response.status).toBe(429);
-    expect(limit).toHaveBeenCalledWith({ key: 'RL_APPLE_IP:google:198.51.100.9' });
+    expect(limit).toHaveBeenCalledWith({ key: 'RL_GOOGLE_CALLBACK:198.51.100.9' });
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('uses the separate callback limit and still allows the next callback once it passes', async () => {
+    const f = await fixture();
+    const limit = vi.fn(async () => ({ success: true }));
+    f.f.kit.env.RL_GOOGLE_CALLBACK = { limit } as unknown as RateLimit;
+    vi.stubGlobal('fetch', async () =>
+      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000)),
+    );
+    const response = await callbackApp(f.f).request(
+      f.callbackUrl,
+      {
+        method: 'POST',
+        headers: { 'cf-connecting-ip': '198.51.100.9' },
+        body: await eventBody(f, rawEvent(f, 'limit-nonce')),
+      },
+      f.f.kit.env,
+    );
+    expect(response.status).toBe(204);
+    expect(limit).toHaveBeenCalledOnce();
+  });
+
+  it('acknowledges the same signed message again but not a reused nonce for another event', async () => {
+    const f = await fixture();
+    const logs: string[] = [];
+    const app = callbackApp(f.f, logs);
+    const fetcher = vi.fn(async () =>
+      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000)),
+    );
+    vi.stubGlobal('fetch', fetcher);
+    const send = async (value: string) =>
+      (await app.request(f.callbackUrl, { method: 'POST', body: value }, f.f.kit.env)).status;
+    const body = await eventBody(f, rawEvent(f, 'redelivered-nonce'));
+    expect(await send(body)).toBe(204);
+    expect(await send(body)).toBe(204);
+    expect(await send(body)).toBe(204);
+    expect(
+      await all(
+        f.f.kit.env.DB,
+        'SELECT event_type FROM wallet_google_callback_receipts WHERE instance_id = ?',
+        [f.instance.id],
+      ),
+    ).toEqual([{ event_type: 'save' }]);
+    expect(logs.filter((line) => line.includes('wallet.google_callback_redelivered'))).toHaveLength(
+      2,
+    );
+    expect(logs.join('\n')).not.toContain('redelivered-nonce');
+    expect(await send(await eventBody(f, rawEvent(f, 'redelivered-nonce', 'del')))).toBe(401);
+    // Keys are downloaded once for the whole sequence.
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it('answers 503 when the keys cannot be downloaded and nothing is cached, then recovers', async () => {
+    const f = await fixture();
+    const app = callbackApp(f.f);
+    const body = await eventBody(f, rawEvent(f, 'recovery-nonce'));
+    vi.stubGlobal('fetch', async () => new Response('down', { status: 503 }));
+    const send = async () =>
+      (await app.request(f.callbackUrl, { method: 'POST', body }, f.f.kit.env)).status;
+    expect(await send()).toBe(503);
+    vi.stubGlobal('fetch', async () =>
+      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000)),
+    );
+    expect(await send()).toBe(204);
   });
 
   it('does not log or return provider failures containing private data', async () => {

@@ -10,9 +10,33 @@ export interface GoogleAccessToken {
   expiresAt: number;
 }
 
+/** Identifies the credentials a token was minted from; a new revision never reuses an old token. */
+export interface GoogleTokenCacheKey {
+  accountId: string;
+  revision: number;
+}
+
 export interface GoogleTokenOptions {
   issuedAt: number;
   fetcher?: typeof fetch;
+  /** Reuse tokens per isolate for this account revision. Omit to always mint. */
+  cacheKey?: GoogleTokenCacheKey;
+}
+
+interface CachedToken extends GoogleAccessToken {
+  revision: number;
+  reuseUntil: number;
+}
+
+// Per isolate and in memory only: a token is never persisted, logged or shared across isolates.
+const REUSE_FRACTION = 0.8;
+const MAX_CACHED_ACCOUNTS = 256;
+const tokenCache = new Map<string, CachedToken>();
+
+/** Forget the token after a 401 or when a test needs a cold isolate. */
+export function dropGoogleAccessToken(accountId?: string): void {
+  if (accountId === undefined) tokenCache.clear();
+  else tokenCache.delete(accountId);
 }
 
 export function isGoogleBearerToken(value: unknown): value is string {
@@ -26,6 +50,13 @@ export async function getGoogleAccessToken(
 ): Promise<GoogleAccessToken> {
   if (!options) throw new GoogleWalletError('invalid_input', 'oauth');
   const issuedAt = googleIssuedAt(options.issuedAt);
+  const cacheKey = options.cacheKey;
+  if (cacheKey) {
+    const cached = tokenCache.get(cacheKey.accountId);
+    if (cached && cached.revision !== cacheKey.revision) tokenCache.delete(cacheKey.accountId);
+    else if (cached && issuedAt < cached.reuseUntil)
+      return { accessToken: cached.accessToken, expiresAt: cached.expiresAt };
+  }
   const assertion = await signGoogleJwt(account, {
     iss: account.serviceAccountEmail,
     scope: GOOGLE_WALLET_SCOPE,
@@ -47,7 +78,8 @@ export async function getGoogleAccessToken(
     },
     'oauth',
   );
-  if (!response.ok) throw googleHttpError('oauth', response.status);
+  if (!response.ok)
+    throw googleHttpError('oauth', response.status, response.headers, issuedAt * 1000);
   let json: unknown;
   try {
     json = await response.json();
@@ -68,5 +100,18 @@ export async function getGoogleAccessToken(
   ) {
     throw new GoogleWalletError('invalid_response', 'oauth');
   }
-  return { accessToken: token.access_token, expiresAt: issuedAt + token.expires_in };
+  const minted = { accessToken: token.access_token, expiresAt: issuedAt + token.expires_in };
+  if (cacheKey) {
+    tokenCache.delete(cacheKey.accountId);
+    if (tokenCache.size >= MAX_CACHED_ACCOUNTS) {
+      const oldest = tokenCache.keys().next().value;
+      if (oldest !== undefined) tokenCache.delete(oldest);
+    }
+    tokenCache.set(cacheKey.accountId, {
+      ...minted,
+      revision: cacheKey.revision,
+      reuseUntil: issuedAt + Math.floor(token.expires_in * REUSE_FRACTION),
+    });
+  }
+  return minted;
 }

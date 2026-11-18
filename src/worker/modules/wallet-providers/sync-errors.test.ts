@@ -87,4 +87,36 @@ describe('wallet sync failure policy', () => {
       retryAfterMs: null,
     });
   });
+  it('honours a provider Retry-After on 429, bounded by the retry ceiling', () => {
+    const limited = new GoogleWalletError('rate_limited', 'runtime', 429, 7_000);
+    expect(classifyWalletSyncFailure('google', 2, limited)).toEqual({
+      reason: 'rate_limited',
+      disposition: 'retry',
+      status: 429,
+      retryAfterMs: 7_000,
+    });
+    const huge = new GoogleWalletError('rate_limited', 'runtime', 429, 3_600_000);
+    expect(classifyWalletSyncFailure('google', 2, huge).retryAfterMs).toBe(300_000);
+    expect(classifyWalletSyncFailure('google', 8, limited)).toMatchObject({
+      disposition: 'failed',
+      retryAfterMs: null,
+    });
+  });
+
+  it('treats a Google timeout as ambiguous and a 401 as retryable once the token is dropped', () => {
+    expect(
+      classifyWalletSyncFailure('google', 1, new GoogleWalletError('timeout', 'runtime')),
+    ).toEqual({ reason: 'timeout', disposition: 'uncertain', status: null, retryAfterMs: null });
+    const stale = new GoogleWalletError('unauthorized', 'runtime', 401);
+    expect(classifyWalletSyncFailure('google', 1, stale)).toEqual({
+      reason: 'unauthorized',
+      disposition: 'retry',
+      status: 401,
+      retryAfterMs: 1_000,
+    });
+    expect(classifyWalletSyncFailure('google', 8, stale)).toMatchObject({ disposition: 'failed' });
+    expect(
+      classifyWalletSyncFailure('google', 1, new GoogleWalletError('forbidden', 'runtime', 403)),
+    ).toMatchObject({ reason: 'unauthorized', disposition: 'failed' });
+  });
 });

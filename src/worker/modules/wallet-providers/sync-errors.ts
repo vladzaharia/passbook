@@ -60,12 +60,13 @@ export function classifyWalletSyncFailure(
     const status = statusOf(error.status);
     if (
       error.code === 'network' ||
+      error.code === 'timeout' ||
       error.code === 'server_error' ||
       status === 408 ||
       (status !== null && status >= 500)
     ) {
       return {
-        reason: status === 408 ? 'timeout' : 'unavailable',
+        reason: status === 408 || error.code === 'timeout' ? 'timeout' : 'unavailable',
         disposition: 'uncertain',
         status,
         retryAfterMs: null,
@@ -74,6 +75,15 @@ export function classifyWalletSyncFailure(
     if (error.code === 'rate_limited') {
       return {
         reason: 'rate_limited',
+        disposition: canRetry ? 'retry' : 'failed',
+        status,
+        retryAfterMs: canRetry ? retryDelay(attempt, error.retryAfterMs) : null,
+      };
+    }
+    if (error.code === 'unauthorized' && status === 401) {
+      // The rejected bearer was dropped from the token cache; the next attempt mints a new one.
+      return {
+        reason: 'unauthorized',
         disposition: canRetry ? 'retry' : 'failed',
         status,
         retryAfterMs: canRetry ? retryDelay(attempt) : null,

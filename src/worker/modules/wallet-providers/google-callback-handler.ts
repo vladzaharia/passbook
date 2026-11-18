@@ -22,6 +22,7 @@ import {
   findGoogleCallbackAccount,
   findGoogleCallbackBinding,
   isGoogleCallbackReceiptCurrent,
+  isGoogleCallbackRedelivery,
   putGoogleCallbackReceipt,
 } from './repo-google-callback.ts';
 
@@ -150,7 +151,15 @@ export async function handleGoogleCallback(
     if (!(await putGoogleCallbackReceipt(ctx.env.DB, binding, receipt))) {
       await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
       // A changed or legacy binding proof is unavailable rather than an invalid signature.
-      await findGoogleCallbackBinding(ctx.env.DB, scope, classIdHash, objectIdHash);
+      const current = await findGoogleCallbackBinding(ctx.env.DB, scope, classIdHash, objectIdHash);
+      // Google redelivers on timeouts: the stored receipt already answers this exact message.
+      if (current && (await isGoogleCallbackRedelivery(ctx.env.DB, current, receipt))) {
+        ctx.log.info('wallet.google_callback_redelivered', {
+          code: 'GOOGLE_CALLBACK_REDELIVERED',
+          eventType: event.eventType,
+        });
+        return;
+      }
       throw rejected();
     }
     await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);

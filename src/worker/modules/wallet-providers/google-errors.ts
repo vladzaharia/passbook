@@ -2,6 +2,7 @@ export type GoogleWalletErrorCode =
   | 'invalid_credentials'
   | 'invalid_input'
   | 'network'
+  | 'timeout'
   | 'bad_request'
   | 'unauthorized'
   | 'forbidden'
@@ -17,17 +18,45 @@ export class GoogleWalletError extends Error {
   readonly code: GoogleWalletErrorCode;
   readonly operation: string;
   readonly status: number | undefined;
+  /** Provider `Retry-After`, already parsed to milliseconds and capped. */
+  readonly retryAfterMs: number | undefined;
 
-  constructor(code: GoogleWalletErrorCode, operation: string, status?: number) {
+  constructor(
+    code: GoogleWalletErrorCode,
+    operation: string,
+    status?: number,
+    retryAfterMs?: number,
+  ) {
     super(`Google Wallet ${operation} failed (${code}).`);
     this.name = 'GoogleWalletError';
     this.code = code;
     this.operation = operation;
     this.status = status;
+    this.retryAfterMs = retryAfterMs;
   }
 }
 
-export function googleHttpError(operation: string, status: number): GoogleWalletError {
+/** Every Google request is bounded; a timeout leaves the outcome unknown. */
+export const GOOGLE_FETCH_TIMEOUT_MS = 10_000;
+const MAX_RETRY_AFTER_MS = 3_600_000;
+
+/** `Retry-After` is delta-seconds or an HTTP date (the latter needs `nowMs`). */
+export function parseRetryAfter(value: string | null, nowMs?: number): number | undefined {
+  const text = value?.trim();
+  if (!text) return undefined;
+  if (/^\d{1,7}$/.test(text)) return Math.min(Number(text) * 1000, MAX_RETRY_AFTER_MS);
+  const at = nowMs === undefined || !/[A-Za-z]/.test(text) ? Number.NaN : Date.parse(text);
+  return Number.isFinite(at)
+    ? Math.min(Math.max(0, at - (nowMs ?? 0)), MAX_RETRY_AFTER_MS)
+    : undefined;
+}
+
+export function googleHttpError(
+  operation: string,
+  status: number,
+  headers?: Headers,
+  nowMs?: number,
+): GoogleWalletError {
   const code: GoogleWalletErrorCode =
     status === 400
       ? 'bad_request'
@@ -44,7 +73,11 @@ export function googleHttpError(operation: string, status: number): GoogleWallet
                 : status >= 500
                   ? 'server_error'
                   : 'provider_error';
-  return new GoogleWalletError(code, operation, status);
+  const retryAfterMs =
+    status === 429 || status === 503
+      ? parseRetryAfter(headers?.get('retry-after') ?? null, nowMs)
+      : undefined;
+  return new GoogleWalletError(code, operation, status, retryAfterMs);
 }
 
 export async function googleFetch(
@@ -52,10 +85,18 @@ export async function googleFetch(
   url: string,
   init: RequestInit,
   operation: string,
+  timeoutMs = GOOGLE_FETCH_TIMEOUT_MS,
 ): Promise<Response> {
+  const timeout = AbortSignal.timeout(timeoutMs);
+  const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
   try {
-    return await fetcher(url, { ...init, redirect: 'error' });
-  } catch {
-    throw new GoogleWalletError('network', operation);
+    return await fetcher(url, { ...init, redirect: 'error', signal });
+  } catch (error) {
+    throw new GoogleWalletError(
+      timeout.aborted && error instanceof Error && error.name === 'TimeoutError'
+        ? 'timeout'
+        : 'network',
+      operation,
+    );
   }
 }

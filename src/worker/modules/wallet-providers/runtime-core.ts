@@ -77,7 +77,7 @@ export async function runtimeRetirementPurpose(
 function safeProviderError(error: unknown, ambiguous: boolean): Error {
   // Reconstruct errors rather than forwarding arbitrary properties or provider response bodies.
   if (error instanceof GoogleWalletError)
-    return new GoogleWalletError(error.code, 'runtime', error.status);
+    return new GoogleWalletError(error.code, 'runtime', error.status, error.retryAfterMs);
   if (error instanceof SamsungNotificationError) {
     return new SamsungNotificationError({
       kind: error.kind,

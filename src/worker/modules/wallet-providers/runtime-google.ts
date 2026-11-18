@@ -2,7 +2,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { snapshotWalletCredentialContext } from './account-service.ts';
 import { googleObjectIds } from './google-ids.ts';
-import { getGoogleAccessToken } from './google-oauth.ts';
+import { dropGoogleAccessToken, getGoogleAccessToken } from './google-oauth.ts';
 import { createGoogleSaveOffer, type GoogleSaveOffer } from './google-offer.ts';
 import type { GoogleGenericProjection } from './google-projection.ts';
 import {
@@ -139,9 +139,17 @@ async function withGoogleRest<T>(
     const token = await getGoogleAccessToken(account, {
       issuedAt: Math.floor(ctx.clock.now() / 1000),
       fetcher: call.fetcher,
+      cacheKey: { accountId: scope.accountId, revision: scope.accountRevision },
     });
     return operation(
-      { account, objectIdHmacKey: hmacKey, accessToken: token.accessToken, fetcher: call.fetcher },
+      {
+        account,
+        objectIdHmacKey: hmacKey,
+        accessToken: token.accessToken,
+        fetcher: call.fetcher,
+        now: () => ctx.clock.now(),
+        onUnauthorized: () => dropGoogleAccessToken(scope.accountId),
+      },
       scope,
     );
   });

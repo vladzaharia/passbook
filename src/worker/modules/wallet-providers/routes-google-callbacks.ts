@@ -1,15 +1,14 @@
 import { z } from 'zod';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
+import { rateLimit } from '../../platform/rate-limit.ts';
 import { type C, svc } from '../passes/http.ts';
 import { handleGoogleCallback } from './google-callback-handler.ts';
 
 /** Mount at /wallet/v1/google; the canonical class URL ends in /{accountId}. */
 export const googleCallbackRoutes = createRouter({ bodyLimit: false });
-googleCallbackRoutes.use(
-  '*',
-  rateLimit('RL_APPLE_IP', (c) => `google:${clientIp(c)}`),
-);
+// Google calls from a small crawler pool, so callbacks get their own high limit rather than
+// sharing the per-IP Apple budget.
+googleCallbackRoutes.use('*', rateLimit('RL_GOOGLE_CALLBACK'));
 
 async function googleCallback(c: C): Promise<Response> {
   await handleGoogleCallback(svc(c), c.req.raw, c.req.param('accountId') ?? '');

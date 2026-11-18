@@ -265,6 +265,32 @@ export async function putGoogleCallbackReceipt(
   return results[0]?.meta.changes === 1 && results[1]?.meta.changes === 1;
 }
 
+/** True when this exact signed message (account, nonce, instance, event) already has a receipt. */
+export async function isGoogleCallbackRedelivery(
+  db: D1Database,
+  binding: GoogleCallbackBinding,
+  input: { nonceHash: string; eventType: 'save' | 'del' },
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS ok FROM wallet_google_callback_receipts receipt
+      JOIN wallet_google_callback_replays replay ON replay.account_id = receipt.account_id
+        AND replay.nonce_hash = receipt.nonce_hash AND replay.claim_id = receipt.id
+      WHERE receipt.account_id = ? AND receipt.nonce_hash = ? AND receipt.instance_id = ?
+        AND receipt.org_id = ? AND receipt.mode = ? AND receipt.event_type = ?`,
+      [
+        binding.accountId,
+        input.nonceHash,
+        binding.instanceId,
+        binding.orgId,
+        binding.mode,
+        input.eventType,
+      ],
+    )) !== null
+  );
+}
+
 /** Bind the acknowledgement to the committed receipt, replay reservation and current proof. */
 export async function isGoogleCallbackReceiptCurrent(
   db: D1Database,
