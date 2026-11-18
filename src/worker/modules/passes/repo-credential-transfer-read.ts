@@ -50,6 +50,14 @@ export type CredentialTransferAuthority =
       audit?: AuditEntry | undefined;
     }
   | {
+      /** A holder who lost a device: the same owner and email, new credentials. */
+      kind: 'self-rotate';
+      expected: CredentialTransferSource;
+      userId: string;
+      sessionId: string;
+      audit?: AuditEntry | undefined;
+    }
+  | {
       kind: 'connection';
       expected: CredentialTransferSource;
       connection: ConnectionPassContext;

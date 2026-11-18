@@ -196,13 +196,13 @@ describe('hosted card metrics', () => {
   it('uses the SPA tokens: 18 px card, 24/600 title, 20 px wordmark, 14/500 buttons at 6 px', () => {
     expect(html).toContain('border-radius:18px;border-collapse:separate');
     expect(html).toMatch(
-      /font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0\.015em;[^"]*">Sign in to PassBook/,
+      /font-size:24px;font-size:1\.5rem;line-height:1\.33;font-weight:600;letter-spacing:-0\.015em;[^"]*">Sign in to PassBook/,
     );
     expect(html).toMatch(
       /font-size:20px;line-height:28px;mso-line-height-rule:exactly;font-weight:600;[^"]*">.*PassBook<\/td>/,
     );
     expect(html).toMatch(
-      /class="e-btn"[^>]*font-size:14px;line-height:20px;font-weight:500;padding:11px 24px;border-radius:6px/,
+      /class="e-btn"[^>]*font-size:14px;font-size:0\.875rem;line-height:1\.43;font-weight:500;padding:11px 24px;border-radius:6px/,
     );
   });
 

@@ -120,7 +120,7 @@ export async function transferGrant(
       passId: pass.id,
       proof: { via: 'verified_email', userId: authority.userId },
     });
-  if (authority?.kind === 'self-remove')
+  if (authority?.kind === 'self-remove' || authority?.kind === 'self-rotate')
     return holder('org_mode.pass.holder_remove', {
       kind: 'holder',
       passId: pass.id,

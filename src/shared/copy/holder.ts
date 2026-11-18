@@ -52,6 +52,21 @@ export const HOLDER_COPY = {
   emailAddLine: 'Open this email on your phone to add the pass to your wallet.',
   /** The pass page's link preview when native wallets are offered too. */
   previewWallets: 'Add it to your wallet.',
+  /** What a wallet is, said once on the pass page and in the pass email. */
+  walletApple: 'Apple Wallet is the app on your iPhone that keeps cards and tickets.',
+  /** Android holders: no brand they do not use. */
+  walletGeneric: 'A wallet is the app on your phone that keeps cards and tickets.',
+  /** Mail the pass again: the pass page, My passes and the sign-in code. */
+  sendAgain: 'Send it again',
+  sendAgainSent: 'Sent. Check your email.',
+  sendAgainWait: 'Sent a few already. Try again in an hour.',
+  /** My passes: new code and link; old copies stop at the door. */
+  lostPhone: 'I lost my phone',
+  lostPhoneDone:
+    'Done. The old copies stop working and your other devices are signed out. Check your email for the new pass.',
+  /** A voided or expired pass: when, then who to ask. */
+  voidedOn: (date: string) => `This pass was voided on ${date}.`,
+  expiredOn: (date: string) => `This pass expired on ${date}.`,
   /** My passes. */
   fromOrgs: 'From your organizations',
   noPasses: 'Passes sent to your verified emails show up here.',

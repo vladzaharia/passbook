@@ -47,6 +47,15 @@ export function assertCredentialTransferActor(
   )
     throw new ForbiddenError();
   if (
+    authority.kind === 'self-rotate' &&
+    (actor.type !== 'user' ||
+      actor.id !== authority.userId ||
+      authority.expected.ownerUserId !== authority.userId ||
+      target.ownerUserId !== authority.userId ||
+      target.holderEmail !== authority.expected.holderEmail)
+  )
+    throw new ForbiddenError();
+  if (
     authority.kind === 'connection' &&
     (actor.type !== 'connection' || actor.id !== authority.connection.connectionId)
   )

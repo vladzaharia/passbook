@@ -61,6 +61,16 @@ export function voidConfirm(count = 1): ConfirmCopy {
   };
 }
 
+/** A holder who lost a phone: the pass is replaced and mailed to the email it was sent to. */
+export function lostPhoneConfirm(passTitle: string): ConfirmCopy {
+  return {
+    title: 'Replace this pass?',
+    confirmLabel: 'Replace pass',
+    description: `${passTitle} gets a new code and link, and we email it to you. Copies on your old phone stop working at the door.`,
+    typed: false,
+  };
+}
+
 /** Taking a pass from its holder; `owner` names who loses it from their account. */
 export function clearHolderConfirm(owner: string | null): ConfirmCopy {
   return {

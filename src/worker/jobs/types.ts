@@ -15,6 +15,14 @@ export const JobSchema = z.discriminatedUnion('kind', [
     lane: z.string(),
   }),
   z.object({ kind: z.literal('message_rule.check'), ruleId: z.string(), at: z.number() }),
+  /** A holder asked for their own pass by email (Send it again, I lost my phone). */
+  z.object({
+    kind: z.literal('pass.holder_mail'),
+    passId: z.string(),
+    /** The signed-in owner; null when the holder used the pass link. */
+    userId: z.string().nullable(),
+    reason: z.enum(['resend', 'lost_phone']),
+  }),
   z.object({
     kind: z.literal('pass.refresh'),
     passId: z.string(),

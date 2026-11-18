@@ -294,13 +294,13 @@ describe('magic link', () => {
       },
     });
     await requestLink(user);
-    expect(screen.getByRole('button', { name: 'Resend in 30s' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send it again in 30s' })).toBeDisabled();
     spy.mockReturnValue(now + 31_000);
-    const resend = await screen.findByRole('button', { name: 'Resend code' }, { timeout: 2500 });
+    const resend = await screen.findByRole('button', { name: 'Send it again' }, { timeout: 2500 });
     token('tok-2');
     await user.click(resend);
     // Button done: the envelope flies once and the countdown starts over.
-    const again = await screen.findByRole('button', { name: 'Resend in 30s' });
+    const again = await screen.findByRole('button', { name: 'Send it again in 30s' });
     await waitFor(() => expect(again).toHaveAttribute('data-verb-done'));
     expect(requests).toHaveLength(2);
     spy.mockRestore();
