@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
-import { ScannerSettingsSchema, TimeZoneSchema, UuidV7Schema } from './scan.ts';
+import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
 import { ZoneIdsSchema } from './scan-access.ts';
 import { ScanCustomerViewSchema } from './scan-customer.ts';
 import { ScanOccupancySchema, ScanOutCauseSchema, ScanPlaceRevSchema } from './scan-occupancy.ts';
