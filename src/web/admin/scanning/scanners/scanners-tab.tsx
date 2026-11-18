@@ -4,7 +4,7 @@ import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.
 import { cn } from '@/web/lib/cn.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, DataTable, EmptyState, ErrorState, LoadMore } from '@/web/ui/index.ts';
-import { useNow } from '../../passes/detail/rel-time.tsx';
+import { useNow } from '../../../ui/rel-time.tsx';
 import { useScannerPages } from '../queries.ts';
 import { useScanEvents } from '../scanner-api.ts';
 import { scannerColumns } from './scanner-columns.tsx';

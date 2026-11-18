@@ -7,7 +7,8 @@ import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { liveAttachment, liveRingRow, scanHub } from './live.ts';
+import { clockedHub } from './clocked-hub-test-fixtures.ts';
+import { liveAttachment, liveRingRow } from './live.ts';
 import type { LiveRingRow } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
@@ -21,8 +22,7 @@ import { proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
 export let kit: ScanKit;
 export let template: string;
 beforeAll(async () => {
-  // Real clock: the live hub's ring and photo streams are windowed by wall time.
-  kit = await setupScanKit({ clockStart: Date.now() });
+  kit = await setupScanKit();
   await ensureCredentialRefKeyset(kit.env.DB, kit.env);
   template = await kit.scanTemplate('Live membership', {
     actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
@@ -101,7 +101,7 @@ export async function screen(
   const attachment = liveAttachment(kit.ctx, await proofedScanActor(kit.ctx, actor));
   return { ...device, attachment };
 }
-export const hub = () => scanHub(kit.ctx, kit.org.id, 'live');
+export const hub = () => clockedHub(kit.ctx, kit.clock, kit.org.id, 'live');
 export const row = (id: string, more: Partial<ScanLiveRow> = {}): ScanLiveRow => ({
   id: kit.ctx.ids.token(16),
   at: kit.clock.now(),
