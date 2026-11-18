@@ -2,7 +2,7 @@ import { deleteInBatches } from './batched.ts';
 import type { ServiceContext } from './service-context.ts';
 
 const DAY = 86_400_000;
-/** Longer than any session, scanner or API key could still present a retired id. Mirrored in migration 0087. */
+/** Longer than any session, scanner or API key could still present a retired id. Mirrored in migration 0086. */
 export const RETIRED_ID_RETENTION_MS = 400 * DAY;
 
 /** Deletes retired ids older than the retention window; the delete triggers refuse younger rows. */

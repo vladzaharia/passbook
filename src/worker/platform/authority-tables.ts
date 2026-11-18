@@ -87,7 +87,7 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   member_photos: { org: 'org_id', pass: 'pass_id' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
-  // The bundle counterpart (0088).
+  // The bundle counterpart (0087).
   bundle_remac_marks: { org: null, edges: [edge('bundle_id', 'bundles')] },
 };
 

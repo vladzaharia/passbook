@@ -118,7 +118,7 @@ const REMAC_SQL = {
 
 /**
  * Replaces a stored MAC with the same token's MAC under the new root (cron tokens.remac), only while the
- * column still holds `from`. A pass or bundle writes the 0069 / 0088 mark first so the triggers let a MAC replace a MAC, and
+ * column still holds `from`. A pass or bundle writes the 0069 / 0087 mark first so the triggers let a MAC replace a MAC, and
  * removes it in the same batch. A pending transfer or a forwarding reservation refuses the row (false).
  */
 export async function remacTrusted(
