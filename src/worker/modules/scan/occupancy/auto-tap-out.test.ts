@@ -192,7 +192,7 @@ describe('auto tap-out', () => {
     const { kit } = fixture;
     const now = kit.clock.now();
     const p = await newPass();
-    await run(kit.env.DB, "DELETE FROM scan_presence");
+    await run(kit.env.DB, 'DELETE FROM scan_presence');
     const total = DUE_BATCH + 5;
     for (let at = 0; at < total; at += 20) {
       const zs = await Promise.all(
