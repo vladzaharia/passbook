@@ -118,6 +118,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   webhook_deliveries: { org: 'org_id', mode: 'mode', conflict: ['endpoint_id', 'event_seq'] },
   webhook_attempts: { org: 'org_id', mode: 'mode' },
   event_feed: { org: 'org_id', mode: 'mode' },
+  // A remote tag request: its triggers check scanner and pass share the tenant and that a user scope names the pass's owner.
+  tag_enrollments: { org: 'org_id', mode: 'mode' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
   pass_imports: { org: 'org_id', mode: 'mode' },

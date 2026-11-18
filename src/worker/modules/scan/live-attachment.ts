@@ -47,7 +47,7 @@ const attachmentSchema = z
     orgId: IdSchema,
     mode: ModeSchema,
     scannerId: IdSchema,
-    role: z.enum(['customer', 'monitor']),
+    role: z.enum(['customer', 'monitor', 'device']),
     tokenHash: z.union([z.literal(''), hex]),
     scannerCsrfProof: proof.nullable(),
     credentialKeysetCommitment: hex,

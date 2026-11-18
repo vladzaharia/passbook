@@ -7,13 +7,14 @@ import {
   UpdateTagSchema,
 } from '../../../shared/contracts/nfc-tags.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { getOrgAccess } from '../orgs/access.ts';
-import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { requireTenantSession } from '../passes/http.ts';
 import { bindingTarget, passFacts } from './repo-tag-bindings.ts';
-import { listTags, passTagViews, tagTarget, tagView } from './repo-tags.ts';
+import { listTags, passTagViews, tagView } from './repo-tags.ts';
+import { actingIn, orgNotFound, passNotFound, tagNotFound, tagOrg } from './route-access.ts';
+import { registerEnrollmentRoutes } from './routes-enrollments.ts';
+import { registerTagMoreRoutes } from './routes-more.ts';
 import {
   reportTagLost,
   restoreTag,
@@ -26,7 +27,7 @@ import {
 /** Tags bound to passes and people: /api/v1/nfc. Console sessions only; API keys have no tag routes. */
 export const nfcRoutes = createRouter();
 // Unknown paths stay a 404 problem; every tag route needs a console session.
-for (const path of ['/passes/*', '/tags', '/tags/*', '/bindings/*'])
+for (const path of ['/passes/*', '/tags', '/tags/*', '/bindings/*', '/scanners', '/users/*'])
   nfcRoutes.use(path, requireTenantSession);
 nfcRoutes.use('*', limitBody(8 * 1024));
 
@@ -34,30 +35,6 @@ const TAG = 'nfc-tags';
 const IdParam = z.object({ id: IdSchema });
 const PassParam = z.object({ passId: IdSchema });
 const BindingParam = z.object({ bindingId: IdSchema });
-
-const tagNotFound = () => new NotFoundError('Tag not found.', 'TAG_NOT_FOUND');
-const passNotFound = () => new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-const orgNotFound = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-
-/** A tenant session with this capability in the org; an org the user is not in is a 404. */
-async function actingIn(
-  c: C,
-  orgId: string,
-  capability: 'passes:read' | 'passes:operate',
-  notFound: () => Error,
-) {
-  const ctx = serviceContext(c);
-  const auth = c.var.auth;
-  if (auth?.kind !== 'session') throw new UnauthenticatedError();
-  if (!(await getOrgAccess(ctx, auth.userId, orgId))) throw notFound();
-  return { ctx, authority: await tenantAuthorityOf(ctx, auth, orgId, capability) };
-}
-
-async function tagOrg(c: C, id: string): Promise<string> {
-  const tag = await tagTarget(serviceContext(c).env.DB, id);
-  if (!tag) throw tagNotFound();
-  return tag.orgId;
-}
 
 register(
   nfcRoutes,
@@ -178,3 +155,6 @@ for (const [action, summary, act] of [
       return c.json(await act(ctx, tagAuthorityOf(authority), id));
     },
   );
+
+registerEnrollmentRoutes(nfcRoutes);
+registerTagMoreRoutes(nfcRoutes);

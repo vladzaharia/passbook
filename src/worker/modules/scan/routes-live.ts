@@ -30,7 +30,11 @@ register(
     method: 'get',
     path: '/',
     summary: 'Live screen connection or catch-up',
-    query: z.object({ after: z.string().max(64).optional() }),
+    query: z.object({
+      after: z.string().max(64).optional(),
+      /** `device`: a scan-role device's control socket (tag requests, overrides); no rows. */
+      as: z.enum(['screen', 'device']).optional(),
+    }),
     response: ScanLiveSnapshotSchema,
   },
   async (c) => {
@@ -44,7 +48,8 @@ register(
     )
       throw new ForbiddenError('The scanner credential changed.', 'SCAN_CREDENTIAL_CHANGED');
     actor.credentialKeysetCommitment = keyset;
-    const attachment = liveAttachment(ctx, actor);
+    const { after, as } = c.req.valid('query');
+    const attachment = liveAttachment(ctx, actor, as ?? 'screen');
     const hub = scanHub(ctx, actor.orgId, actor.mode);
     if (c.req.header('upgrade')?.toLowerCase() === 'websocket') {
       if (c.req.header('origin') !== new URL(c.req.url).origin)
@@ -55,7 +60,7 @@ register(
       return hub.fetch(request);
     }
     c.header('cache-control', 'no-store');
-    return c.json(await hub.snapshot(attachment, c.req.valid('query').after, ctx.clock.now()));
+    return c.json(await hub.snapshot(attachment, after, ctx.clock.now()));
   },
 );
 register(
