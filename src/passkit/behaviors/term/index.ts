@@ -66,6 +66,12 @@ const DATE_PART = /^(\d{4})-(\d{2})-(\d{2})(?:T|$)/;
 const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
 
 /** The input a term waits on for the scanner (`first-scan`) or the publish (`issue`) to stamp. */
+/** The first `term` behavior's config, or null for a template without a term. */
+export function termConfigOf(manifest: Pick<TemplateManifest, 'behaviors'>): TermConfig | null {
+  const use = (manifest.behaviors ?? []).find((b) => b.use === 'term');
+  return use ? (use.config as unknown as TermConfig) : null;
+}
+
 export function stampInput(
   manifest: Pick<TemplateManifest, 'behaviors'>,
   on: 'first-scan' | 'issue',
@@ -77,7 +83,8 @@ export function stampInput(
   return null;
 }
 
-function parseStart(raw: string, key: string, tz: string): number {
+/** A start or anchor value as an instant; throws on a date that does not exist. */
+export function parseTermDate(raw: string, key: string, tz: string): number {
   const parts = DATE_PART.exec(raw);
   if (parts && !isRealDate(Number(parts[1]), Number(parts[2]), Number(parts[3])))
     throw new Error(`${key} is not a date.`);
@@ -155,9 +162,9 @@ export const term: BehaviorPlugin<TermConfig> = {
     const anchorRaw = config.anchor ? input[config.anchor] : undefined;
     const anchor =
       typeof anchorRaw === 'string' && anchorRaw !== ''
-        ? parseStart(anchorRaw, config.anchor ?? '', tz)
+        ? parseTermDate(anchorRaw, config.anchor ?? '', tz)
         : undefined;
-    const end = termEnd(parseStart(raw, config.start, tz), config, anchor);
+    const end = termEnd(parseTermDate(raw, config.start, tz), config, anchor);
     pass.expirationDate = iso(end);
     if (config.voidWhenPast && end <= ctx.now.getTime()) pass.voided = true;
   },

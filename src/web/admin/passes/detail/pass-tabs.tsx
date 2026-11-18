@@ -16,6 +16,7 @@ import { ActivityTab } from './info-tabs.tsx';
 import { MemberPhotoCard } from './member-photo-card.tsx';
 import { StampsCard } from './stamps-card.tsx';
 import { SyncTab } from './sync-tab.tsx';
+import { TermCard } from './term-card.tsx';
 import { VersionsTab } from './versions-tab.tsx';
 
 type Template = UseQueryResult<import('zod').infer<typeof TemplateDetailSchema>>;
@@ -49,6 +50,7 @@ export function PassTabs({
         className="flex flex-col gap-4"
       >
         {pass.stamps ? <StampsCard pass={pass} stamps={pass.stamps} readOnly={readOnly} /> : null}
+        {pass.term ? <TermCard pass={pass} term={pass.term} readOnly={readOnly} /> : null}
         {template.data ? <AccessCard pass={pass} manifest={template.data.manifest} /> : null}
         {template.isError ? (
           <ErrorState inline error={template.error} onRetry={() => void template.refetch()} />

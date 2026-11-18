@@ -19,6 +19,7 @@ import { memberPhotoAsset } from './repo-member-photo.ts';
 import { currentPassJson, getOwnerLabel, getPass, listBlockedUsers } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
 import { stampsOf } from './stamps-view.ts';
+import { termOf } from './term-view.ts';
 
 export function holderStateOf(pass: Pass): 'unassigned' | 'waiting' | 'owned' {
   if (pass.ownerUserId) return 'owned';
@@ -187,6 +188,7 @@ export async function detailOf(
     ...(await linksOf(ctx, pass)),
     assetNames: await assetNamesOf(ctx, pass),
     stamps: await stampsOf(ctx, pass),
+    term: await termOf(ctx, pass, passJson),
     blockedUsers,
     registrations: devices.length,
     devices,
