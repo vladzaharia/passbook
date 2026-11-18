@@ -177,6 +177,7 @@ function ResumeItem({ session: s }: { session: ScanningSession }) {
   const update = useUpdateSession(s.id);
   return (
     <DropdownMenuItem
+      disabled={update.isPending}
       onSelect={() => {
         update
           .mutateAsync({ status: 'active', revision: s.updatedAt })

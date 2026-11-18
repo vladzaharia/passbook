@@ -158,6 +158,12 @@ describe('status components', () => {
     expect(find(t, 'queue')?.detail).toContain('Dead-letter depth unavailable');
   });
 
+  it('surfaces a required part that is not configured in overall', async () => {
+    const s = await status({ OIDC_ISSUER: '' });
+    expect(find(s, 'oidc')?.state).toBe('not_configured');
+    expect(['failing', 'degraded', 'not_configured']).toContain(s.overall);
+  });
+
   it('flags email and the issuer honestly', async () => {
     const s = await status({ EMAIL: undefined } as unknown as Partial<AppEnv>, badFetch);
     expect(find(s, 'email')?.state).toBe('not_configured');

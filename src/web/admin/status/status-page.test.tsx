@@ -59,8 +59,8 @@ describe('status helpers', () => {
     expect(headline([...connection, ...typed(comp('q', 'Q', 'failing', null, 'queue'))])).toBe(
       '2 components failing',
     );
-    expect(headline(typed(comp('x', 'X', 'configured')))).toBe('All systems working');
-    expect(headline(typed(comp('x', 'X', 'not_in_use')))).toBe('All systems working');
+    expect(headline(typed(comp('x', 'X', 'configured')))).toBe('Set up, not checked automatically');
+    expect(headline(typed(comp('x', 'X', 'not_in_use')))).toBe('Set up, not checked automatically');
     expect(headline(typed(comp('x', 'X', 'not_configured')))).toBe(
       'Some services are not configured',
     );

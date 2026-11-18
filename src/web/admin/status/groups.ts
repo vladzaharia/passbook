@@ -69,9 +69,9 @@ export function assessmentState(
   for (const state of ['failing', 'degraded'] as const) {
     if (components.some((component) => component.state === state)) return state;
   }
-  // Set up (not checked automatically) and not in use are fine: only a missing service is a gap.
   if (components.some((component) => component.state === 'not_configured')) return 'not_configured';
-  return 'verified';
+  // Green needs at least one part actually verified; all set up is neutral.
+  return components.some((component) => component.state === 'verified') ? 'verified' : 'configured';
 }
 
 export function countStates(components: readonly Pick<Component, 'state'>[]) {
@@ -110,6 +110,8 @@ export function headline(components: readonly Pick<Component, 'id' | 'kind' | 's
         return 'No status checks reported';
       case 'not_configured':
         return 'Some services are not configured';
+      case 'configured':
+        return 'Set up, not checked automatically';
       default:
         return 'All systems working';
     }
