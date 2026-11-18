@@ -24,7 +24,7 @@ import {
   type InsertJoinedOptions,
   type JoinedOptions,
 } from './authority-joined.ts';
-import type { GrantScope, Mode, Principal } from './authority-principal.ts';
+import type { GrantScope, Principal } from './authority-principal.ts';
 import {
   assertBudget,
   type BuiltStatement,
