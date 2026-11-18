@@ -116,6 +116,7 @@ export async function createScanningSession(
   const settings = ScanningSessionSettingsSchema.parse({
     ...DEFAULT_SETTINGS,
     lookup: true,
+    showPhoto: true,
     ...input.settings,
     acceptAllTemplates: input.accepts === null,
   });

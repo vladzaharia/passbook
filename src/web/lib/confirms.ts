@@ -72,6 +72,16 @@ export function clearHolderConfirm(owner: string | null): ConfirmCopy {
   };
 }
 
+/** A new scan code: a copy of the old barcode stops working at every scanner. */
+export function newCodeConfirm(): ConfirmCopy {
+  return {
+    title: 'Make a new code?',
+    confirmLabel: 'New code',
+    description: 'The old code stops working at every scanner. The holder gets the pass again.',
+    typed: false,
+  };
+}
+
 /** Archiving a template: new passes cannot use it; the ones it has keep working. */
 export function archiveConfirm(name: string, passCount: number): ConfirmCopy {
   const kept =

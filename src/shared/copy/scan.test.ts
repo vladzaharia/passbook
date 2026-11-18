@@ -51,7 +51,7 @@ describe('SCAN_COPY', () => {
   it('has occupancy reasons with one default line each', () => {
     expect(SCAN_REASON_COPY.still_inside).toEqual({
       headline: 'Already in',
-      sub: 'Since {time} · {scanner}',
+      sub: 'Since {time} · {scanner}. Check ID.',
     });
     expect(SCAN_REASON_COPY.not_inside).toEqual({
       headline: 'Not tapped in',

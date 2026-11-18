@@ -371,7 +371,10 @@ Filters: `email`, `state`.
 POST /api/v1/holders/assign        { "passId": "…", "email": "alex@example.com" }
 POST /api/v1/holders/assign-bulk   { "items": [ { "passId": "…", "email": "…" } ] }   (max 100)
 POST /api/v1/holders/unassign      { "passId": "…" }
+POST /api/v1/holders/new-code      { "passId": "…" }
 ```
+
+`new-code` mints a new scan code for the pass and sends it to the holder; the old code stops scanning. Three per pass per hour.
 
 `assign` works on an unowned pass. An owned pass changes hands through `reassign`.
 

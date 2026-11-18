@@ -47,7 +47,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   tag_lost: { headline: 'Tag reported lost', sub: 'Keep it and call security.' },
   tag_not_allowed: { headline: 'Tag not accepted', sub: "This tag isn't accepted here." },
   tag_invalid: { headline: "Tag couldn't be checked", sub: 'Try again or use the card.' },
-  already_done: { headline: 'Already checked in', sub: '{ago} · {scanner}' },
+  already_done: { headline: 'Already checked in', sub: '{ago} · {scanner}. Check ID.' },
   cooldown: { headline: '{verb} {ago}', sub: 'Next {noun} in {wait}.' },
   not_yet_valid: { headline: 'Not open yet', sub: 'Opens {time}.' },
   ended: { headline: 'Event ended', sub: 'Ended {time}.' },
@@ -59,7 +59,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
     headline: 'Being scanned',
     sub: 'Another scanner has this pass. Scan again in a moment.',
   },
-  still_inside: { headline: 'Already in', sub: 'Since {time} · {scanner}' },
+  still_inside: { headline: 'Already in', sub: 'Since {time} · {scanner}. Check ID.' },
   not_inside: { headline: 'Not tapped in', sub: 'No entry recorded.' },
   choose: { headline: 'Choose an action', sub: 'Pick what to do with this pass.' },
   network: { headline: 'No connection', sub: "Scan again. It won't count twice." },
@@ -104,8 +104,8 @@ export const SCAN_REASON_VARIANTS = {
 /** In/out lines that replace a reason's default when the place is a zone or the state is known. */
 export const SCAN_OCCUPANCY_COPY: Record<string, ScanLine> = {
   zoneFull: { headline: '{zone} full', sub: '{in} of {capacity} in.' },
-  eventStillIn: { headline: 'Already checked in', sub: 'Since {time} · {scanner}' },
-  stillInRecent: { headline: 'Already in', sub: '{ago} · {scanner}' },
+  eventStillIn: { headline: 'Already checked in', sub: 'Since {time} · {scanner}. Check ID.' },
+  stillInRecent: { headline: 'Already in', sub: '{ago} · {scanner}. Check ID.' },
   eventNotIn: { headline: 'Not checked in', sub: 'Check them in instead?' },
   parentNotIn: { headline: 'Not tapped in', sub: 'Tap in at {zone} first.' },
   alreadyOut: { headline: 'Already out', sub: '{ago} · {scanner}' },

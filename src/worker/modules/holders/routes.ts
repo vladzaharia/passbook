@@ -6,6 +6,7 @@ import {
   HolderListSchema,
   HolderSchema,
   IdParamSchema,
+  NewCodeSchema,
   OkSchema,
   ReassignHolderSchema,
   UnassignHolderSchema,
@@ -24,6 +25,7 @@ import {
 } from '../passes/http.ts';
 import { tenantPassForRead } from '../passes/pass-access.ts';
 import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
+import { newPassCode } from './new-code.ts';
 import {
   assignHolder,
   assignHoldersBulk,
@@ -160,6 +162,28 @@ register(
   async (c) =>
     c.json(
       await reassignHolder(
+        svc(c),
+        actorFor(c),
+        c.req.valid('json'),
+        passScopeOf(c),
+        holderAuthority(c),
+      ),
+    ),
+);
+
+register(
+  holdersRoutes,
+  'holders',
+  {
+    method: 'post',
+    path: '/new-code',
+    summary: 'Mint a new scan code for a pass',
+    body: NewCodeSchema,
+    response: HolderSchema,
+  },
+  async (c) =>
+    c.json(
+      await newPassCode(
         svc(c),
         actorFor(c),
         c.req.valid('json'),

@@ -41,6 +41,8 @@ export const AssignHolderSchema = z.object({ passId: IdSchema, email: EmailSchem
 /** Stage an explicit change of holder, including removal when email is null. */
 export const ReassignHolderSchema = z.object({ passId: IdSchema, email: EmailSchema.nullable() });
 export const UnassignHolderSchema = z.object({ passId: IdSchema });
+/** Mint a new scan code for a pass; the old code stops working. */
+export const NewCodeSchema = z.object({ passId: IdSchema });
 export const AssignHoldersBulkSchema = z.object({
   items: z.array(AssignHolderSchema).min(1).max(100),
 });

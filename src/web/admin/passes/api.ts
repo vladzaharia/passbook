@@ -278,6 +278,11 @@ export function usePassActions(id: string) {
       onMutate: currentUser,
       onSuccess: refresh,
     }),
+    newCode: useMutation({
+      mutationFn: () => api.post('/api/v1/holders/new-code', HolderSchema, { passId: id }),
+      onMutate: currentUser,
+      onSuccess: refresh,
+    }),
     unassign: useMutation({
       mutationFn: () => api.post('/api/v1/holders/unassign', HolderSchema, { passId: id }),
       onMutate: currentUser,

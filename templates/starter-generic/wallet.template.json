@@ -221,7 +221,7 @@
         "barcode": "*",
         "prop": "message"
       },
-      "value": "{{memberId}}"
+      "value": "{{pass.scanCode}}"
     },
     {
       "to": {
