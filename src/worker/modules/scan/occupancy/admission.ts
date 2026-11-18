@@ -19,7 +19,7 @@ export interface FoundOccupancy {
 const tracks = (z: OccZone) => z.occupancy !== 'off' && z.archivedAt === null;
 
 /** The session's place: its first zone, in its order, that tracks. Null: the scan counts nowhere. */
-export function scanPlace(zones: readonly OccZone[], zoneIds: readonly string[]): OccZone | null {
+function scanPlace(zones: readonly OccZone[], zoneIds: readonly string[]): OccZone | null {
   for (const id of zoneIds) {
     const zone = zones.find((z) => z.id === id);
     if (zone && tracks(zone)) return zone;

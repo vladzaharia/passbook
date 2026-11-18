@@ -28,7 +28,7 @@ import { presenceSnapshot } from './repo-scan-effect-snapshots.ts';
 import { allOf } from './scan-write-statements.ts';
 
 /** One reason a scan that did not move its place is held, and the condition that held it back. */
-export interface OccupancyHold {
+interface OccupancyHold {
   reason: ScanReason;
   /** True while this rule lets the entry through. */
   holds: GrantCond;
