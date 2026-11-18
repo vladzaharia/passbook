@@ -65,20 +65,23 @@ const MISS_WINDOW_MS = 60_000;
 export const ASSET_MISSES_PER_MINUTE = 300;
 
 /**
- * Middleware for token-probing surfaces. Only 404s are charged, per network prefix (/24, /64), so
+ * Middleware for token-probing surfaces. Only responses with `status` (404 by default) are charged, per network prefix (/24, /64), so
  * valid traffic never spends it. Once a prefix passes `threshold` misses in a minute, its requests
  * get 429 before any lookup runs, until the window turns over.
  */
-export function gateMisses(threshold: number): MiddlewareHandler<AppBindings> {
+export function gateMisses(
+  threshold: number,
+  { status = 404, name = 'asset.miss' }: { status?: number; name?: string } = {},
+): MiddlewareHandler<AppBindings> {
   return createMiddleware(async (c, next) => {
     const prefix = clientRatePrefix(c);
     const window = Math.floor(c.var.clock.now() / MISS_WINDOW_MS) * MISS_WINDOW_MS;
-    const key = `asset.miss:${prefix}`;
+    const key = `${name}:${prefix}`;
     if ((await readCounter(c.env.DB, key, window)) >= threshold) {
       const retry = Math.ceil((window + MISS_WINDOW_MS - c.var.clock.now()) / 1000);
       throw new RateLimitedError(Math.max(retry, 1));
     }
     await next();
-    if (c.res.status === 404) await bump(c.env.DB, key, window);
+    if (c.res.status === status) await bump(c.env.DB, key, window);
   });
 }

@@ -19,6 +19,7 @@ import {
   revokeWalletProviderAccount,
 } from './account-service.ts';
 import { googleObjectIds } from './google-ids.ts';
+import { dropGoogleAccessToken } from './google-oauth.ts';
 import { readWalletPassSnapshot, walletClaimHash } from './instance.ts';
 import { setupWalletOfferKit as setupOfferFixture } from './offers-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
@@ -466,6 +467,55 @@ describe('existing provider instance runtime', () => {
       code: 'account_unavailable',
     });
     expect(calls).toHaveLength(3);
+  }, 30_000);
+
+  it('reuses the cached OAuth token across operations and drops it after a 401', async () => {
+    dropGoogleAccessToken();
+    const f = await runtimeGoogleLegacyFixture();
+    const old = await googleObjectIds(f.verification.issuerId, f.verification.objectIdHmacKey, {
+      tenantId: f.pass.orgId,
+      mode: f.pass.mode,
+      passId: f.pass.id,
+      releaseId: f.releaseId,
+      credentialGeneration: f.credentialGeneration,
+    });
+    let tokens = 0;
+    let patchStatus = 200;
+    vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url) === 'https://oauth2.googleapis.com/token')
+        return Response.json({
+          access_token: `ya29.fixture-${++tokens}`,
+          token_type: 'Bearer',
+          expires_in: 3600,
+        });
+      if ((init?.method ?? 'GET') === 'GET')
+        return Response.json({ id: old.objectId, classId: old.classId });
+      return new Response('{}', { status: patchStatus });
+    });
+    const input = {
+      releaseId: f.releaseId,
+      passId: f.pass.id,
+      credentialGeneration: f.credentialGeneration,
+      retirement: {
+        instanceId: f.instanceId,
+        operationId: f.operationId,
+        version: 1,
+        claimHandle: f.claimHandle,
+      },
+      onProviderResponse: f.onProviderResponse,
+    };
+    await inactivateGoogleRuntimeObject(f.kit.ctx, f.scope, input);
+    await inactivateGoogleRuntimeObject(f.kit.ctx, f.scope, input);
+    expect(tokens).toBe(1);
+    patchStatus = 401;
+    await expect(inactivateGoogleRuntimeObject(f.kit.ctx, f.scope, input)).rejects.toMatchObject({
+      code: 'unauthorized',
+      status: 401,
+    });
+    expect(tokens).toBe(1);
+    patchStatus = 200;
+    await inactivateGoogleRuntimeObject(f.kit.ctx, f.scope, input);
+    expect(tokens).toBe(2);
   }, 30_000);
 
   it('marks a changed keyset after a Google OAuth request as ambiguous and stops before object access', async () => {

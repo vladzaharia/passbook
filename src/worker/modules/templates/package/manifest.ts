@@ -4,6 +4,7 @@ import { messagingIssues } from '../../../../passkit/template/messaging.ts';
 import { reservedInputIssues } from '../../../../passkit/template/reserved.ts';
 import { scanManifestIssues } from '../../../../passkit/template/scan.ts';
 import { stampsIssues } from '../../../../passkit/template/stamps.ts';
+import { walletsManifestIssues } from '../../../../passkit/template/wallets/validate.ts';
 import type {
   Json,
   PassField,
@@ -266,6 +267,10 @@ export function validateManifest(
       ...(options.assetNames ? { assetNames: options.assetNames } : {}),
     }),
     ...stampsIssues(manifest, pass, options.assetNames),
+    ...walletsManifestIssues(manifest, {
+      passJson: pass,
+      ...(options.assetNames ? { assetNames: options.assetNames } : {}),
+    }),
   );
 
   for (const [i, use] of (manifest.behaviors ?? []).entries()) {
