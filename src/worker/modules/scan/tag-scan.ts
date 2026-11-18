@@ -6,8 +6,7 @@ import type { ScanActor } from './actor.ts';
 import type { CountsRead } from './counts.ts';
 import { grantReadMiss } from './misses.ts';
 import { blankOutcome } from './outcome.ts';
-import { missWindow } from './repo-miss-authority.ts';
-import { tagStateStmt } from './repo-tags-resolve.ts';
+import { tagStateStmt, unknownTagWindow } from './repo-tags-resolve.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 
 /** What `act` needs from a tag read: its reads ride the first batch, then it names the pass. */
@@ -49,10 +48,7 @@ export async function tagUnknown(ctx: ServiceContext, actor: ScanActor, uid: str
 
 /** An unknown tag is a miss on the actor's counter, while the tag is still unknown. */
 export async function countTagMiss(ctx: ServiceContext, actor: ScanActor, ref: string) {
-  const unchanged = missWindow(
-    'NOT EXISTS (SELECT 1 FROM nfc_tags t WHERE t.org_id = {org} AND t.mode = {mode} AND t.tag_ref = ?)',
-    [ref],
-  );
+  const unchanged = unknownTagWindow(ref);
   if ((await grantReadMiss(ctx, actor, { refs: [], unchanged })) !== 'counted')
     ctx.log.info('scan.tag_miss_uncounted', { orgId: actor.orgId, code: 'SCAN_MISS_UNCOUNTED' });
 }

@@ -4,9 +4,10 @@ import { tenantMatch } from '../../platform/authority-checks.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ScanTagAuthority } from './actor.ts';
 import { byIdsInStmt } from './repo-lookup.ts';
+import { missWindow } from './repo-miss-authority.ts';
 
 /** At most this many of a user's passes are read for one tag (design §3.5). */
-export const TAG_CANDIDATES_READ = 8;
+const TAG_CANDIDATES_READ = 8;
 
 /** The tag row and its active binding, in the actor's org and mode. */
 export interface TagState {
@@ -176,3 +177,10 @@ export function tagBindingCheck(tag: ScanTagAuthority): Check {
               AND EXISTS (SELECT 1 FROM users tu WHERE tu.id = tb.user_id AND tu.status = 'active')))`,
   };
 }
+
+/** A miss counts while the tag is still unknown in the actor's org and mode. */
+export const unknownTagWindow = (ref: string) =>
+  missWindow(
+    'NOT EXISTS (SELECT 1 FROM nfc_tags t WHERE t.org_id = {org} AND t.mode = {mode} AND t.tag_ref = ?)',
+    [ref],
+  );
