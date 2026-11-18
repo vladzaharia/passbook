@@ -47,6 +47,7 @@ export * from './pass-toggles.tsx';
 export * from './popover.tsx';
 export * from './progress-bar.tsx';
 export * from './radio-group.tsx';
+export * from './rel-time.tsx';
 export * from './row-link.tsx';
 export * from './save-bar.tsx';
 export * from './save-bar-group.tsx';
