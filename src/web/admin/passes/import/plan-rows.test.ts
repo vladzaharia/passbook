@@ -23,6 +23,20 @@ describe('plan rows', () => {
     ]);
   });
 
+  it('takes Ref over Member ID for the External ID, so Member ID still fills the ID input', () => {
+    const col = (name: string) => ({ pointer: `/${name}`, label: name, samples: [] });
+    const rows = rowsOfImport(imp({ columns: ['Name', 'MemberId', 'Email', 'Ref'].map(col) }), [
+      ...targets,
+      { key: 'memberId', label: 'ID', required: true },
+    ]);
+    expect(rows.map((r) => [r.input, r.from])).toEqual([
+      ['$holderEmail', '/Email'],
+      ['$externalId', '/Ref'],
+      ['name', '/Name'],
+      ['memberId', '/MemberId'],
+    ]);
+  });
+
   it('opens a saved plan as it was saved', () => {
     const rows = rowsOfImport(imp({ plan: PLAN }), targets);
     expect(rows.map((r) => [r.input, r.from])).toEqual([

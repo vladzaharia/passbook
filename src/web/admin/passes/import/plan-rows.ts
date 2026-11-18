@@ -23,7 +23,8 @@ export const PINNED: readonly TargetField[] = [
 ];
 
 const EMAIL_COLUMN = /^e-?mail( address)?$/i;
-const ID_COLUMN = /^(external[ _-]?id|id|member[ _-]?id|reference|ref)$/i;
+/** External ID columns, most explicit first: a Member ID column also feeds the template's own ID input. */
+const ID_COLUMNS = [/^external[ _-]?id$/i, /^(reference|ref)$/i, /^id$/i, /^member[ _-]?id$/i];
 
 export const sourcesOf = (imp: PassImportDto): SourceField[] =>
   imp.columns.map((c) => ({
@@ -43,13 +44,15 @@ export function rowsOfImport(imp: PassImportDto, targets: readonly TargetField[]
   };
   const rows = withPinned(toRows(mapping), PINNED);
   if (plan) return rows;
-  const fill = (rs: MappingRow[], key: string, pattern: RegExp) => {
-    const source = sources.find((x) => pattern.test(x.label ?? x.pointer));
+  const fill = (rs: MappingRow[], key: string, patterns: readonly RegExp[]) => {
+    const source = patterns
+      .map((p) => sources.find((x) => p.test(x.label ?? x.pointer)))
+      .find((x) => x !== undefined);
     return source
       ? rs.map((r) => (r.input === key && !r.from ? { ...r, from: source.pointer } : r))
       : rs;
   };
-  return autoMap(fill(fill(rows, PIN_ID, ID_COLUMN), PIN_EMAIL, EMAIL_COLUMN), targets, sources);
+  return autoMap(fill(fill(rows, PIN_ID, ID_COLUMNS), PIN_EMAIL, [EMAIL_COLUMN]), targets, sources);
 }
 
 export interface PlanResult {

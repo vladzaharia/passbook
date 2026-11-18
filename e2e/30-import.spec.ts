@@ -68,7 +68,7 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
 
   // 5. Results of the first run: download, then remove what it created.
   await page.goto(first);
-  await expect(page.getByText('Results')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
   const [results] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download results' }).click(),
@@ -78,7 +78,7 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
   );
   await page.getByRole('button', { name: 'Remove created passes' }).click();
   await page
-    .getByRole('dialog', { name: 'Remove created passes?' })
+    .getByRole('alertdialog', { name: 'Remove created passes?' })
     .getByRole('button', { name: 'Remove' })
     .click();
   await expect(page.getByText('3 passes removed')).toBeVisible();
