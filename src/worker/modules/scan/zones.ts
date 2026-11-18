@@ -1,20 +1,13 @@
 import type { z } from 'zod';
 import type {
   CreateScanZoneSchema,
-  ScanZone,
   ScanZoneListQuerySchema,
   UpdateScanZoneSchema,
 } from '../../../shared/contracts/scan-access.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import type { TenantPassWrite } from '../passes/http.ts';
 import { addDueRecompute } from './occupancy/recompute.ts';
 import { addZoneTapOut } from './occupancy/service.ts';
 import { accessTemplates } from './repo-access.ts';
@@ -30,66 +23,22 @@ import {
   zoneSubtreeIs,
   zonesOpen,
 } from './repo-zones.ts';
+import { type Authority, assertAuthority, committed, notFound, toDto } from './zones-dto.ts';
 import { plansByZone } from './zones-plans.ts';
 import {
   assertPlacement,
-  depthOf,
   effectiveTimeZone,
   indexZones,
   subtree,
   treeOrder,
 } from './zones-tree.ts';
 
-type Authority = Extract<TenantPassWrite, { kind: 'session' }>;
 type Query = z.infer<typeof ScanZoneListQuerySchema>;
 type Create = z.infer<typeof CreateScanZoneSchema>;
 type Update = z.infer<typeof UpdateScanZoneSchema>;
 
 const ZONE_CODES = { config: 'SCAN_ZONE_CHANGED', lineage: 'SCAN_ZONE_CHANGED' } as const;
-const notFound = () => new NotFoundError('Zone not found.', 'ZONE_NOT_FOUND');
 const invalid = (message: string, code: string) => new ValidationError(message, [], code);
-
-function assertAuthority(
-  authority: Authority,
-  orgId: string,
-  capability: 'scanning:read' | 'scanning:manage',
-): void {
-  if (
-    authority.kind !== 'session' ||
-    authority.orgId !== orgId ||
-    authority.capability !== capability
-  )
-    throw new ForbiddenError();
-}
-
-function toDto(
-  row: ZoneRow,
-  rows: readonly ZoneRow[],
-  plans: ScanZone['plans'],
-  checkedAt: ScanZone['checkedAt'],
-): ScanZone {
-  const index = indexZones(rows);
-  return {
-    id: row.id,
-    orgId: row.orgId,
-    key: row.key,
-    name: row.name,
-    parentId: row.parentId,
-    timeZone: row.timeZone,
-    effectiveTimeZone: effectiveTimeZone(index, row.id),
-    sort: row.sort,
-    depth: depthOf(index, row.id),
-    occupancy: row.occupancy,
-    capacity: row.capacity,
-    maxStayMinutes: row.maxStayMinutes,
-    clearAt: row.clearAt,
-    sessions: row.sessions,
-    checkedAt,
-    plans,
-    inNow: null, // set by the occupancy package
-    archivedAt: row.archivedAt,
-  };
-}
 
 export async function listZones(ctx: ServiceContext, authority: Authority, query: Query) {
   assertAuthority(authority, query.orgId, 'scanning:read');
@@ -108,17 +57,6 @@ export async function listZones(ctx: ServiceContext, authority: Authority, query
     items: page.map((r) => toDto(r, rows, plans.get(r.id) ?? [], checked.get(r.id) ?? [])),
     nextCursor: start + query.limit < shown.length ? (page.at(-1)?.id ?? null) : null,
   };
-}
-
-async function committed(ctx: ServiceContext, orgId: string, id: string): Promise<ScanZone> {
-  const [rows, templates, checked] = await Promise.all([
-    orgZoneRows(ctx.env.DB, orgId),
-    accessTemplates(ctx.env.DB, orgId),
-    checkedAtByZone(ctx.env.DB, orgId),
-  ]);
-  const row = rows.find((r) => r.id === id);
-  if (!row) throw notFound();
-  return toDto(row, rows, plansByZone(rows, templates).get(id) ?? [], checked.get(id) ?? []);
 }
 
 function mutationError(error: unknown): never {
