@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "6de9cb640a90ce9164979011015394cf648bef6b";
+export const BAKED_BUILD_HASH = "50bce86b40ab6e76596569bca8fbdf626f683379";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "d57125efb6cb6de6",
+    "version": "7f7598441d1e66ed",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -322,6 +322,64 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       ],
       "messaging": {
         "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "check_in",
+            "label": "Check in",
+            "kind": "check_in",
+            "repeat": "daily",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "memberId"
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Membership",
+            "equals": [
+              "Suspended",
+              "Expired",
+              "Cancelled"
+            ],
+            "stop": true
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.memberName}}",
+          "panels": [
+            {
+              "id": "p_membership",
+              "preset": {
+                "id": "membership",
+                "v": 1
+              },
+              "title": "Membership",
+              "icon": "id-card",
+              "rows": [
+                {
+                  "id": "r_club",
+                  "type": "field",
+                  "label": "Home club",
+                  "value": "{{fields.homeClub}}"
+                }
+              ]
+            }
+          ],
+          "header": {
+            "chips": [
+              {
+                "id": "c_tier",
+                "text": "{{inputs.membership}}",
+                "tone": "gold"
+              }
+            ]
+          }
+        }
       }
     },
     "passJson": {
@@ -526,7 +584,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/artwork@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/artwork@2x.png"
         }
       },
       {
@@ -540,7 +598,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/artwork@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/artwork@3x.png"
         }
       },
       {
@@ -554,7 +612,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1010,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/background@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/background@2x.png"
         }
       },
       {
@@ -568,7 +626,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1515,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/background@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/background@3x.png"
         }
       },
       {
@@ -581,7 +639,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/en.lproj/pass.strings"
         }
       },
       {
@@ -595,7 +653,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/icon@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/icon@2x.png"
         }
       },
       {
@@ -609,7 +667,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/icon@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/icon@3x.png"
         }
       },
       {
@@ -623,7 +681,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/logo@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/logo@2x.png"
         }
       },
       {
@@ -637,7 +695,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/logo@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/logo@3x.png"
         }
       },
       {
@@ -651,7 +709,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/primaryLogo@2x.png"
         }
       },
       {
@@ -665,20 +723,27 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/d57125efb6cb6de6/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/7f7598441d1e66ed/primaryLogo@3x.png"
         }
       }
     ],
     "extras": [],
     "report": {
       "ok": true,
-      "issues": []
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "SCAN_DISPLAY_SHADOWED",
+          "message": "Input \"access\" is hidden by a display root. Use inputs.access.",
+          "path": "scan.display.holder"
+        }
+      ]
     }
   },
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "00369f900aeb0e31",
+    "version": "b95c69194c2acbf1",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -992,6 +1057,64 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       ],
       "messaging": {
         "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "check_in",
+            "label": "Check in",
+            "kind": "check_in",
+            "repeat": "daily",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "memberId"
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Membership",
+            "equals": [
+              "Suspended",
+              "Expired",
+              "Cancelled"
+            ],
+            "stop": true
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.memberName}}",
+          "panels": [
+            {
+              "id": "p_membership",
+              "preset": {
+                "id": "membership",
+                "v": 1
+              },
+              "title": "Membership",
+              "icon": "id-card",
+              "rows": [
+                {
+                  "id": "r_club",
+                  "type": "field",
+                  "label": "Home club",
+                  "value": "{{fields.homeClub}}"
+                }
+              ]
+            }
+          ],
+          "header": {
+            "chips": [
+              {
+                "id": "c_tier",
+                "text": "{{inputs.membership}}",
+                "tone": "gold"
+              }
+            ]
+          }
+        }
       }
     },
     "passJson": {
@@ -1196,7 +1319,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/artwork@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/artwork@2x.png"
         }
       },
       {
@@ -1210,7 +1333,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/artwork@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/artwork@3x.png"
         }
       },
       {
@@ -1224,7 +1347,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1010,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/background@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/background@2x.png"
         }
       },
       {
@@ -1238,7 +1361,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1515,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/background@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/background@3x.png"
         }
       },
       {
@@ -1251,7 +1374,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/en.lproj/pass.strings"
         }
       },
       {
@@ -1265,7 +1388,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/icon@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/icon@2x.png"
         }
       },
       {
@@ -1279,7 +1402,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/icon@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/icon@3x.png"
         }
       },
       {
@@ -1293,7 +1416,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/logo@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/logo@2x.png"
         }
       },
       {
@@ -1307,7 +1430,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/logo@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/logo@3x.png"
         }
       },
       {
@@ -1321,7 +1444,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/primaryLogo@2x.png"
         }
       },
       {
@@ -1335,14 +1458,21 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/00369f900aeb0e31/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/b95c69194c2acbf1/primaryLogo@3x.png"
         }
       }
     ],
     "extras": [],
     "report": {
       "ok": true,
-      "issues": []
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "SCAN_DISPLAY_SHADOWED",
+          "message": "Input \"access\" is hidden by a display root. Use inputs.access.",
+          "path": "scan.display.holder"
+        }
+      ]
     }
   },
   {

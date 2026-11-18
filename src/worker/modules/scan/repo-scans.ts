@@ -25,6 +25,8 @@ export interface Claim {
   idempotencyKey: string;
   requestHash: string;
   method: string;
+  /** The tag the scan was read from. */
+  tagId?: string | null;
   clientTs: number;
   now: number;
 }
