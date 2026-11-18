@@ -12,7 +12,7 @@ import {
   type CreateApiKeySchema,
   CreatedApiKeySchema,
 } from '@/shared/contracts/api-keys.ts';
-import { pageOf } from '@/shared/contracts/common.ts';
+import { MODE_HEADER, pageOf } from '@/shared/contracts/common.ts';
 import { ScannerKindSchema, ScannerSchema } from '@/shared/contracts/scanners.ts';
 import { api } from '@/web/lib/api.ts';
 
@@ -77,7 +77,10 @@ export function useCreateKey(principal: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (body: z.input<typeof CreateApiKeySchema> & { orgId: string | null }) =>
-      api.post('/api/v1/api-keys', CreatedApiKeySchema, body),
+      api.post('/api/v1/api-keys', CreatedApiKeySchema, body, {
+        // The server mints the key in the request's mode, so send the one chosen in the dialog.
+        headers: { [MODE_HEADER]: body.mode ?? 'live' },
+      }),
     onSuccess: () => client.invalidateQueries({ queryKey: [...KEYS, principal] }),
   });
 }

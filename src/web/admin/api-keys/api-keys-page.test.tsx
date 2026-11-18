@@ -318,12 +318,14 @@ describe('api keys page', () => {
     setMode('test');
     try {
       let body: Record<string, unknown> = {};
+      let sentMode: string | null = null;
       await renderApp('/admin/api-keys', {
         session: 'admin',
         handlers: {
           '/api/v1/api-keys': (_u, init) => {
             if (init?.method === 'POST') {
               body = JSON.parse(String(init.body));
+              sentMode = new Headers(init.headers).get('x-passbook-mode');
               return json({ ...key({ mode: 'test' }), secret: 'wlt_abc123_S' }, 201);
             }
             return page([]);
@@ -343,6 +345,7 @@ describe('api keys page', () => {
         ).getByRole('button', { name: 'Create key' }),
       );
       await waitFor(() => expect(body.mode).toBe('test'));
+      expect(sentMode).toBe('test');
     } finally {
       resetModeForTests();
       vi.unstubAllGlobals();

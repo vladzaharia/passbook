@@ -10,8 +10,12 @@ export function classifyEmailError(error: unknown): {
 } {
   if (!isApiError(error) || error.status === 0 || error.status === 504 || error.status === 408)
     return { state: 'unknown', action: 'Check the Delivery tab before sending again.' };
-  if (error.status === 429 || error.status === 503)
-    return { state: 'retrying', action: 'Wait a minute, then send again.' };
+  if (error.status === 429)
+    return {
+      state: 'retrying',
+      action: 'Limit is 3 emails per recipient an hour and 500 per org a day. Send again later.',
+    };
+  if (error.status === 503) return { state: 'retrying', action: 'Wait a minute, then send again.' };
   if (error.status >= 500)
     return { state: 'unknown', action: 'Check the Delivery tab before sending again.' };
   return { state: 'failed', action: 'Fix the cause and send again.' };
@@ -21,6 +25,8 @@ export function classifyEmailError(error: unknown): {
 export function reportEmailError(error: unknown, prefix = ''): void {
   const { state, action } = classifyEmailError(error);
   if (state === 'failed') toast.error(error, `${prefix}Could not send the email`);
-  else if (state === 'retrying') toast.info(`${prefix}Email service is busy. ${action}`);
-  else toast.info(`${prefix}Email status unknown. ${action}`);
+  else if (state === 'retrying') {
+    const limited = isApiError(error) && error.status === 429;
+    toast.info(`${prefix}${limited ? 'Email limit reached' : 'Email service is busy'}. ${action}`);
+  } else toast.info(`${prefix}Email status unknown. ${action}`);
 }

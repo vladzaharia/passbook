@@ -77,13 +77,16 @@ function Meta({ d, now, version }: { d: PassSyncDeviceDto; now: number; version:
   );
 }
 
+/** The `registrations_cap` trigger refuses a 21st device. */
+const DEVICE_CAP = 20;
+
 function summary(data: PassDevicesDto): string | null {
   // During a removal the page's callout carries the one count.
   if (data.removal) return null;
   const live = data.devices.filter((d) => d.registeredAt !== null);
-  if (live.length === 0) return 'No device has the pass';
+  if (live.length === 0) return `No device has the pass (limit ${DEVICE_CAP})`;
   const current = live.filter((d) => d.status === 'current').length;
-  return `${current} of ${live.length} ${live.length === 1 ? 'device' : 'devices'} up to date`;
+  return `${current} of ${live.length} ${live.length === 1 ? 'device' : 'devices'} up to date (limit ${DEVICE_CAP})`;
 }
 
 /** One row per device: did it get the current version, and if not, why. */

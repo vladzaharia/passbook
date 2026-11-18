@@ -42,7 +42,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   zone_not_included: { headline: 'Not in plan', sub: "{plan} doesn't include {zone}." },
   outside_hours: { headline: 'Outside hours', sub: '{plan} opens {when}.' },
   guest_expired: { headline: 'Guest pass ended', sub: 'Ended {time}.' },
-  guest_visits_used: { headline: 'No visits left', sub: 'Used {limit} of {limit}.' },
+  guest_visits_used: { headline: 'No visits left', sub: 'All {limit} visits used.' },
   suspended: { headline: 'Suspended', sub: 'Ask them to see the front desk.' },
   tag_lost: { headline: 'Tag reported lost', sub: 'Keep it and call security.' },
   tag_not_allowed: { headline: 'Tag not accepted', sub: "This tag isn't accepted here." },
