@@ -9,6 +9,8 @@ import { resumeVerifiedHolderAttachments } from '../modules/holders/transfer-job
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { dailyJoin } from '../modules/join/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
+import { dailyMessageRules } from '../modules/message-rules/jobs.ts';
+import { tickMessageRules } from '../modules/message-rules/tick.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
@@ -49,6 +51,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'passes.stale_reissue', run: reissueStalePasses },
     { name: 'broadcasts.start', run: startDueBroadcasts },
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
+    { name: 'message_rules.tick', run: tickMessageRules },
     { name: 'scan.reconcile', run: reconcileScans },
     { name: 'scan.backfill', run: backfillScanLookups },
     { name: 'scan.occupancy', run: autoTapOut },
@@ -83,6 +86,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'orgs.branding_gc', run: sweepBrandingGc },
     { name: 'webhooks.retention', run: dailyWebhooks },
     { name: 'templates.fork_orphans', run: sweepForkOrphans },
+    { name: 'message_rules.retention', run: dailyMessageRules },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
   ],

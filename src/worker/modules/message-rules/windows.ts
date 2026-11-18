@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { RuleAnchor, RuleOffset } from '../../../shared/contracts/message-rules.ts';
 import {
   addDays,
@@ -23,24 +24,41 @@ export interface RuleTiming {
   timeZone: string;
 }
 
+const Key = z.string().min(1).max(64);
 /**
- * The passes a run targets, as absolute values. `occurrence` is what makes a fire unique: the
- * anchor value as stored, the last scan's time, or a year.
- * `[fromMs, toMs)` is half-open for days and
- * `[fromMs, toMs]` for hours (`inclusiveEnd`).
+ * The passes a run targets, as absolute values, stored on the broadcast. `occurrence` is what
+ * makes a fire unique: the anchor value as stored, the last scan's time, or a year. `[fromMs, toMs)`
+ * is half-open for days and `[fromMs, toMs]` for hours (`inclusiveEnd`).
  */
-export type RuleWindow =
-  | { kind: 'date'; input: string; date: string; occurrence: 'anchor' }
-  | {
-      kind: 'dateTime';
-      input: string;
-      fromMs: number;
-      toMs: number;
-      inclusiveEnd: boolean;
-      occurrence: 'anchor';
-    }
-  | { kind: 'yearly'; input: string; monthDays: string[]; occurrence: `y${number}` }
-  | { kind: 'lastScan'; fromMs: number; toMs: number; occurrence: 'lastScan' };
+export const RuleWindowSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('date'),
+    input: Key,
+    date: z.string().length(10),
+    occurrence: z.literal('anchor'),
+  }),
+  z.object({
+    kind: z.literal('dateTime'),
+    input: Key,
+    fromMs: z.number(),
+    toMs: z.number(),
+    inclusiveEnd: z.boolean(),
+    occurrence: z.literal('anchor'),
+  }),
+  z.object({
+    kind: z.literal('yearly'),
+    input: Key,
+    monthDays: z.array(z.string().length(5)).min(1).max(2),
+    occurrence: z.string().regex(/^y\d{4}$/),
+  }),
+  z.object({
+    kind: z.literal('lastScan'),
+    fromMs: z.number(),
+    toMs: z.number(),
+    occurrence: z.literal('lastScan'),
+  }),
+]);
+export type RuleWindow = z.infer<typeof RuleWindowSchema>;
 
 /** What the anchor input holds: `date` is `YYYY-MM-DD`, `date-time` an ISO instant. */
 export type AnchorInputKind = 'date' | 'date-time';
@@ -106,4 +124,16 @@ export function nextCheckAt(
   const retry = now + DAY_RECHECK_MS;
   if (retry < zonedInstant(today, SEND_DAY_END, rule.timeZone)) return retry;
   return zonedInstant(addDays(today, 1), rule.sendAt, rule.timeZone);
+}
+
+/** First check after a save: at `sendAt` today if ahead, else a minute from now (today still counts). */
+export function firstCheckAt(
+  rule: Pick<RuleTiming, 'offset' | 'sendAt' | 'timeZone'>,
+  now: number,
+): number {
+  if (rule.offset.unit === 'day') {
+    const send = zonedInstant(localDate(now, rule.timeZone), rule.sendAt, rule.timeZone);
+    if (now < send) return send;
+  }
+  return now + 60_000;
 }

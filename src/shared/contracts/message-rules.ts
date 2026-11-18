@@ -5,7 +5,15 @@ import {
   ClearAfterSchema,
   InputMatchSchema,
 } from './broadcasts.ts';
-import { IdSchema, ModeSchema, OrgIdSchema, PlainLineSchema, TimestampSchema } from './common.ts';
+import {
+  IdSchema,
+  ModeSchema,
+  OrgIdSchema,
+  PageQuerySchema,
+  PlainLineSchema,
+  pageOf,
+  TimestampSchema,
+} from './common.ts';
 import { TimeZoneSchema } from './scan-base.ts';
 
 const InputKey = z.string().min(1).max(64);
@@ -81,6 +89,7 @@ export const RuleStateSchema = z.enum(['on', 'paused']);
 export const RulePausedCodeSchema = z.enum([
   'RULE_CREATOR_REVOKED',
   'RULE_INPUT_MISSING',
+  'RULE_TARGET_INVALID',
   'ORG_INACTIVE',
 ]);
 export type RulePausedCode = z.infer<typeof RulePausedCodeSchema>;
@@ -103,3 +112,30 @@ export const MessageRuleSchema = z.object({
   version: z.number().int().positive(),
 });
 export type MessageRuleDto = z.infer<typeof MessageRuleSchema>;
+
+/** Saving over a rule: the version the editor read. A stale version is a conflict. */
+export const UpdateMessageRuleSchema = z
+  .object({ orgId: OrgIdSchema, ...ruleFields, version: z.number().int().positive() })
+  .superRefine(refineRule);
+export type UpdateMessageRuleBody = z.infer<typeof UpdateMessageRuleSchema>;
+
+export const MessageRuleListQuerySchema = PageQuerySchema.extend({
+  orgId: OrgIdSchema.optional(),
+  state: RuleStateSchema.optional(),
+});
+export const MessageRuleListSchema = pageOf(MessageRuleSchema);
+
+/** The unsaved body; `ruleId` of a saved rule leaves out passes it already sent this occurrence. */
+export const RulePreviewBodySchema = z
+  .object({ orgId: OrgIdSchema, ...ruleFields, ruleId: IdSchema.optional() })
+  .superRefine(refineRule);
+export const RulePreviewSchema = z.object({
+  /** The next 14 local days, with the passes due each day. */
+  days: z.array(z.object({ date: z.string(), count: z.number().int().nonnegative() })),
+  total: z.number().int().nonnegative(),
+  /** Of today's passes: those at the rule's daily notification limit now, which may send later. */
+  atLimit: z.number().int().nonnegative(),
+});
+
+/** Sends the rule's text now to one of its passes. */
+export const RuleTestBodySchema = z.object({ passId: IdSchema });

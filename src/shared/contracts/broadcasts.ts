@@ -115,6 +115,8 @@ export const BroadcastSchema = z.object({
   clearAfter: z.number().int().positive().nullable(),
   /** Set on the follow-up that clears another broadcast's message. */
   parentId: IdSchema.nullable(),
+  /** The automatic message that made this one. */
+  ruleId: IdSchema.nullable(),
   /** The follow-up that clears this message, once the send has finished. */
   followUp: z.object({ id: IdSchema, at: TimestampSchema.nullable() }).nullable(),
   counts: BroadcastCountsSchema,
@@ -190,6 +192,8 @@ export const SendBroadcastSchema = z.object({ at: TimestampSchema.optional() });
 export const BroadcastListQuerySchema = PageQuerySchema.extend({
   orgId: OrgIdSchema.optional(),
   state: BroadcastStateSchema.optional(),
+  /** `manual` (default) leaves out the runs of automatic messages; `rule` is those alone. */
+  origin: z.enum(['manual', 'rule']).default('manual'),
 });
 export const BroadcastListSchema = pageOf(BroadcastSchema);
 

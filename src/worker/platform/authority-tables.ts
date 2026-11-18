@@ -183,6 +183,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'template_imports',
   'workflow_runs',
   'broadcasts',
+  'message_rules',
+  'message_rule_fires',
   'vas_keys',
   'pass_check_in',
   'scanner_setups',
@@ -212,6 +214,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
+  'message_rules',
+  'message_rule_fires',
   'scanner_setups',
   'template_release_reissues',
   'workflow_release_snapshots',
@@ -246,6 +250,7 @@ export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
   'revisions',
   'pass_personalizations',
   'broadcast_items',
+  'message_rule_fires',
   'pass_check_in',
   'sandbox_forward_passes',
   'wallet_provider_instances',

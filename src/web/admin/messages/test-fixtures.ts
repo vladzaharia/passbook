@@ -14,6 +14,7 @@ export const broadcast = (over: Partial<BroadcastDto> = {}): BroadcastDto => ({
   at: null,
   clearAfter: null,
   parentId: null,
+  ruleId: null,
   followUp: null,
   counts: { targeted: 2, updated: 2, unchanged: 0, overBudget: 0, failed: 0 },
   errorCode: null,

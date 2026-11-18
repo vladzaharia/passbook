@@ -14,6 +14,7 @@ export const JobSchema = z.discriminatedUnion('kind', [
     mode: ModeSchema,
     lane: z.string(),
   }),
+  z.object({ kind: z.literal('message_rule.check'), ruleId: z.string(), at: z.number() }),
   z.object({
     kind: z.literal('pass.refresh'),
     passId: z.string(),
