@@ -28,15 +28,40 @@ export interface MeDeps {
 }
 const defaultDeps: MeDeps = { requestRefresh, removePassFromUser };
 
-function parsePassJson(raw: string | null): Record<string, unknown> {
-  if (!raw) return {};
+// A stuck pass is read on every list: the first log per pass is the error, repeats are warnings.
+const logged = new Set<string>();
+function logPassJson(ctx: ServiceContext, row: repo.MyPassRow, code: string, extra?: object) {
+  const key = `${code}:${row.id}`;
+  const repeat = logged.has(key);
+  if (!repeat) {
+    if (logged.size >= 1000) logged.clear();
+    logged.add(key);
+  }
+  const data = { passId: row.id, orgId: row.org_id, version: row.version, code, ...extra };
+  const event = code === 'MY_PASS_JSON_MISSING' ? 'me.pass_json_missing' : 'me.pass_json_invalid';
+  if (repeat) ctx.log.warn(event, data);
+  else ctx.log.error(event, data);
+}
+
+function parsePassJson(ctx: ServiceContext, row: repo.MyPassRow): Record<string, unknown> {
+  if (!row.pass_json) {
+    logPassJson(ctx, row, 'MY_PASS_JSON_MISSING');
+    return {};
+  }
   try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const parsed: unknown = JSON.parse(row.pass_json);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      logPassJson(ctx, row, 'MY_PASS_JSON_INVALID');
+      return {};
+    }
     // Server-owned: the Apple device token must never reach the client.
     const { authenticationToken: _token, ...safe } = parsed as Record<string, unknown>;
     return safe;
-  } catch {
+  } catch (error) {
+    // The parse error message quotes the pass.json (holder data): name only.
+    logPassJson(ctx, row, 'MY_PASS_JSON_INVALID', {
+      errorName: error instanceof Error ? error.name : 'unknown',
+    });
     return {};
   }
 }
@@ -54,7 +79,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow, tags: MyTag[]): 
     throw error;
   });
   const base = plainToken === null ? null : `${baseUrl(ctx.env)}/p/${plainToken}`;
-  const passJson = parsePassJson(row.pass_json);
+  const passJson = parsePassJson(ctx, row);
   const presentationEligible =
     row.org_status === 'active' &&
     canPresent(

@@ -203,6 +203,18 @@ describe('backfillScanKeys', () => {
     expect(await backfillScanKeys(jobCtxOf(kit), 1000, mint)).toBe(0);
   });
 
+  it('reads the newest stored pass.json when a metadata write raised the version past it', async () => {
+    const pass = await legacy('Gap 4');
+    await run(kit.env.DB, 'UPDATE passes SET version = version + 1 WHERE id = ?', [pass.id]);
+    await backfillScanKeys(jobCtxOf(kit), 1000, () => 'G'.repeat(26));
+    const row = await first<{ b: string | null }>(
+      kit.env.DB,
+      'SELECT barcode_hash b FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    expect(row?.b).toBe(await sha256Hex(`legacy-${pass.id}`));
+  });
+
   it('leaves a removed pass without a barcode hash', async () => {
     const pass = await legacy('Gone 1');
     await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [

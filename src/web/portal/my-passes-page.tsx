@@ -236,9 +236,6 @@ export function MyPassesPage() {
           </section>
         ) : null}
         <div>
-          <div className="mb-5">
-            <h2 className="text-lg font-semibold text-fg-strong">{HOLDER_COPY.fromOrgs}</h2>
-          </div>
           <ul className={GRID}>
             {passes.map((pass, i) => (
               <li
