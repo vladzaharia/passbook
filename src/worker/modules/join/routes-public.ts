@@ -1,7 +1,6 @@
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { JOIN_FORM_MAX_BYTES } from '../../../shared/contracts/join.ts';
 import { PublicTokenParamSchema } from '../../../shared/contracts/public.ts';
-import { JOIN_COPY } from '../../../shared/copy/join.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ForbiddenError } from '../../platform/errors.ts';
@@ -63,24 +62,11 @@ function respond(c: C, outcome: JoinOutcome) {
     case 'form':
       return html(
         c,
-        formPage(outcome.link, outcome.link.nameInput !== null, {
-          values: outcome.values,
-          error: outcome.error,
-        }),
+        formPage(outcome.link, outcome.askName, { values: outcome.values, error: outcome.error }),
+        outcome.status ?? 422,
       );
     case 'refused':
-      if (outcome.reason === 'turnstile' && outcome.link)
-        return html(
-          c,
-          formPage(outcome.link, outcome.link.nameInput !== null, {
-            error: JOIN_COPY.refusal.turnstile,
-          }),
-          403,
-        );
-      return html(c, {
-        kind: 'refused',
-        reason: outcome.reason === 'turnstile' ? 'closed' : outcome.reason,
-      });
+      return html(c, { kind: 'refused', reason: outcome.reason });
   }
 }
 

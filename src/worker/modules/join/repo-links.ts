@@ -17,6 +17,32 @@ import {
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/** How a platform template reaches an org: shared with every org (or baked), or released by this org. */
+export type PlatformOffer = false | 'open' | 'worked';
+
+const TEMPLATE_OWNER = {
+  false: 't.org_id = {org}',
+  open: "t.org_id IS NULL AND (t.origin = 'baked' OR t.shared = 1)",
+  worked:
+    't.org_id IS NULL AND EXISTS (SELECT 1 FROM template_releases vr WHERE vr.template_id = t.id AND vr.org_id = {org})',
+} as const;
+
+/** The offer of a platform template to this org, or null when the org may not see it. */
+export async function platformOffer(
+  db: D1Database,
+  templateId: string,
+  orgId: string,
+): Promise<'open' | 'worked' | null> {
+  const t = await first<{ open: number; worked: number }>(
+    db,
+    `SELECT (t.origin = 'baked' OR t.shared = 1) AS open,
+        EXISTS (SELECT 1 FROM template_releases vr WHERE vr.template_id = t.id AND vr.org_id = ?) AS worked
+      FROM templates t WHERE t.id = ? AND t.org_id IS NULL`,
+    [orgId, templateId],
+  );
+  return t?.open ? 'open' : t?.worked ? 'worked' : null;
+}
+
 export type SessionAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
 
 export interface JoinLinkRow {
@@ -114,7 +140,7 @@ interface WriteInput {
   /** Turning on or changing what the link asks needs `templates:publish` beside `passes:operate`. */
   publish: boolean;
   /** The template is the platform's (no org of its own); else it is the link's org's. */
-  platform: boolean;
+  platform: PlatformOffer;
   /** The release head the link opens on (turning on or creating enabled). */
   releaseId?: string;
   detail: Record<string, unknown>;
@@ -136,7 +162,7 @@ function manageGrant(ctx: ServiceContext, o: WriteInput): Grant {
         'lineage',
         `EXISTS (SELECT 1 FROM templates t WHERE t.id = ? AND t.blueprint = 0
           AND t.status ${o.releaseId ? "= 'active'" : "!= 'deleted'"}
-          AND ${o.platform ? 't.org_id IS NULL' : 't.org_id = {org}'})`,
+          AND ${TEMPLATE_OWNER[String(o.platform) as 'false' | 'open' | 'worked']})`,
         [o.templateId],
       ),
       ...(o.releaseId ? [releaseHead(o.templateId, o.mode, 'apple', o.releaseId)] : []),
@@ -178,7 +204,7 @@ export function createLinkGrant(
   mode: Mode,
   l: NewLink,
   releaseId: string | undefined,
-  platform: boolean,
+  platform: PlatformOffer,
 ): Grant {
   const o: WriteInput = {
     authority,
@@ -242,7 +268,7 @@ export function updateLinkGrant(
   change: LinkChange,
   publish: boolean,
   releaseId: string | undefined,
-  platform: boolean,
+  platform: PlatformOffer,
 ): Grant {
   const turnedOn = change.enabled === true && !link.enabled;
   const turnedOff = change.enabled === false && link.enabled;
@@ -282,7 +308,7 @@ export function rotateLinkGrant(
   authority: SessionAuthority,
   link: JoinLinkRow,
   token: { mac: string; seal: SealRow },
-  platform: boolean,
+  platform: PlatformOffer,
 ): Grant {
   const o: WriteInput = {
     authority,

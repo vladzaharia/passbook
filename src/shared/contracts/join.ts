@@ -13,8 +13,8 @@ export const JOIN_FORM_MAX_BYTES = 4096;
 export const JOIN_NAME_MESSAGE = 'Enter your first name.';
 
 const REFUSED = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\u2028\u2029]/u;
-/** Tested on the NFKC form, so full-width `ｗｗｗ．` and `＠` count. */
-const LINKISH = /:\/\/|www\.|@/i;
+/** Tested on the NFKC form, so full-width `ｗｗｗ．` and `＠` count. A slash, or a dot with a TLD-shaped tail and no space (`x.com`), is a link; `St. John` and `J.R.` pass. */
+const LINKISH = /:\/\/|www\.|@|[/\\]|\.[a-z]{2,}(?![a-z])/i;
 
 /** One first name: NFC, trimmed, spaces collapsed; no controls, bidi or zero-width marks, no URL or address. */
 export const JoinNameSchema = z

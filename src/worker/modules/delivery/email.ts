@@ -148,7 +148,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       branding.logoHasName || typeof passJson.logoText !== 'string' ? null : passJson.logoText,
     senderName: platform['email.senderName'],
     mode: pass.mode,
-    joined: await isJoinCard(db, pass.id),
+    joined: intent.joined === true || (await isJoinCard(db, pass.id)),
     buddyBase: orgSettings['email.buddy'] ? base : null,
   });
   if (pass.mode === 'test') {

@@ -147,4 +147,37 @@ describe('join readiness', () => {
     });
     expect(joinReadiness(m, null).nameInputs.map((i) => i.key)).toEqual(['name']);
   });
+
+  it('a pattern a leading zero fails is not generated', () => {
+    const m = simple((x) => {
+      x.inputs.required = ['name', 'code'];
+      (x.inputs.properties as Record<string, unknown>).code = {
+        type: 'string',
+        pattern: '^[1-9][0-9]{9}$',
+      };
+    });
+    expect(joinReadiness(m, 'name').issues.map((i) => i.code)).toEqual(['input_needed']);
+  });
+
+  it('allows the name only in a plain field value', () => {
+    const base = (b: TemplateManifest['bindings'][number]) =>
+      simple((x) => {
+        x.bindings.push(b);
+      });
+    const refused = [
+      { to: { pointer: '/nfc/message' }, value: '{{name}}' },
+      { to: { action: 'go', prop: 'url' }, value: '{{name}}' },
+      { to: { field: 'tier' }, value: 'Gold', when: { input: 'name', eq: 'gold' } },
+      { to: { field: 'tier' }, value: 'x', remove: { input: 'name', eq: 'a' } },
+      { to: { field: 'tier', prop: 'changeMessage' }, value: '{{name}}' },
+      { to: { image: 'strip' }, value: '{{name}}' },
+    ] as TemplateManifest['bindings'];
+    for (const b of refused)
+      expect(
+        joinReadiness(base(b), null).nameInputs.map((i) => i.key),
+        JSON.stringify(b),
+      ).toEqual([]);
+    const ok = { to: { field: 'tier' }, value: '{{name}}' } as TemplateManifest['bindings'][number];
+    expect(joinReadiness(base(ok), null).nameInputs.map((i) => i.key)).toEqual(['name']);
+  });
 });

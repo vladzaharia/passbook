@@ -22,7 +22,13 @@ export async function handleJoinResend(
     return;
   }
   try {
-    await enqueuePassEmail(ctx, { passId: pass.id, to, attach: false, expected: pass });
+    await enqueuePassEmail(ctx, {
+      passId: pass.id,
+      to,
+      attach: false,
+      expected: pass,
+      joined: true,
+    });
   } catch (error) {
     if (!(error instanceof AppError) || error.status >= 500) throw error;
     const code = error.code === 'EMAIL_RATE_LIMITED' ? 'JOIN_EMAIL_CAPPED' : 'JOIN_RESEND_REFUSED';

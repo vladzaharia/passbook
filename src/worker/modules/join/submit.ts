@@ -4,6 +4,7 @@ import {
   type JoinCode,
   JoinSubmitSchema,
 } from '../../../shared/contracts/join.ts';
+import { JOIN_COPY } from '../../../shared/copy/join.ts';
 import { EMAIL_INVALID_MESSAGE } from '../../../shared/email.ts';
 import { TURNSTILE_JOIN_ACTION } from '../../../shared/turnstile.ts';
 import { writeEvent } from '../../platform/analytics.ts';
@@ -13,10 +14,11 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import {
+  countPlatformCard,
   mailWithinBudget,
   type PlatformLimits,
   platformLimits,
-  platformWithinCap,
+  platformOpen,
   prefixWithinCap,
   withinCaps,
 } from './caps.ts';
@@ -29,6 +31,8 @@ import type { Refusal } from './stub-page.ts';
 const MINUTE = 60 * 1000;
 /** A double tap or the back button: the same device with the same fields gets its card again. */
 const REPLAY_MS = 10 * MINUTE;
+/** Cloudflare's documented maximum for a Turnstile response. */
+const TURNSTILE_TOKEN_MAX = 2048;
 const TOKEN_SHAPE = /^[A-Za-z0-9_-]{22}$/;
 
 export type JoinOutcome =
@@ -37,10 +41,14 @@ export type JoinOutcome =
   | {
       kind: 'form';
       link: PublicLink;
+      /** Whether the form asks for a name: decided from the release, as the page is. */
+      askName: boolean;
       error: string;
       values: { name: string; email: string };
+      /** 403 for a failed Turnstile check; else 422. */
+      status?: 403;
     }
-  | { kind: 'refused'; reason: Refusal | 'turnstile'; link: PublicLink | null };
+  | { kind: 'refused'; reason: Refusal; link: PublicLink | null };
 
 export interface SubmitRequest {
   token: string;
@@ -98,6 +106,7 @@ interface Parsed {
 /** The strict form of the link: only the fields it asks for, each once. An error is one sentence for the form. */
 function parseForm(
   link: PublicLink,
+  askName: boolean,
   fields: URLSearchParams,
 ): Parsed | { error: string; raw: Parsed['raw'] } {
   const seen = new Map<string, string>();
@@ -109,6 +118,7 @@ function parseForm(
   const raw = { name: seen.get('name') ?? '', email: seen.get('email') ?? '' };
   const turnstile = seen.get('cf-turnstile-response');
   seen.delete('cf-turnstile-response');
+  // Cloudflare's tokens stay within 2048 characters; anything longer is no token.
   const parsed = JoinSubmitSchema.omit({ 'cf-turnstile-response': true }).safeParse(
     Object.fromEntries(seen),
   );
@@ -124,14 +134,14 @@ function parseForm(
   const { name, email } = parsed.data;
   // The link takes what it asks for and nothing else.
   if (email !== undefined && !link.askEmail) return { error: 'Check the form and try again.', raw };
-  if (link.nameInput === null ? name !== undefined : name === undefined)
-    return { error: JOIN_NAME_MESSAGE, raw };
+  if (askName ? name === undefined : name !== undefined) return { error: JOIN_NAME_MESSAGE, raw };
   return { name, email, turnstile, raw };
 }
 
 async function cardOf(ctx: ServiceContext, passId: string): Promise<string | null> {
   const pass = await getPass(ctx.env.DB, passId);
-  if (!pass) return null;
+  // A card staff voided or removed since it was made is not handed back.
+  if (pass?.status !== 'active' || pass.removedAt !== null) return null;
   try {
     return await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
   } catch (error) {
@@ -180,8 +190,20 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
     refuse(ctx, link, 'JOIN_LINK_CLOSED');
     return { kind: 'refused', reason: 'closed', link };
   }
-  const form = parseForm(link, req.fields);
-  if ('error' in form) return { kind: 'form', link, error: form.error, values: form.raw };
+  let open: OpenRelease | null;
+  try {
+    open = await openRelease(ctx, link);
+  } catch (error) {
+    if (!(error instanceof AppError) || error.status >= 500) throw error;
+    open = null;
+  }
+  if (!open) {
+    refuse(ctx, link, 'JOIN_NOT_READY', 'error');
+    return { kind: 'refused', reason: 'closed', link };
+  }
+  const askName = open.readiness.nameInput !== null;
+  const form = parseForm(link, askName, req.fields);
+  if ('error' in form) return { kind: 'form', link, askName, error: form.error, values: form.raw };
   const { name, email } = form;
   const env = ctx.env;
   const now = ctx.clock.now();
@@ -207,17 +229,25 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
   }
   if (
     !form.turnstile ||
+    form.turnstile.length > TURNSTILE_TOKEN_MAX ||
     !(await verifyTurnstile(env, form.turnstile, req.ip, ctx.log, fetch, TURNSTILE_JOIN_ACTION))
   ) {
     refuse(ctx, link, 'JOIN_TURNSTILE_FAILED');
-    return { kind: 'refused', reason: 'turnstile', link };
+    return {
+      kind: 'form',
+      link,
+      askName,
+      error: JOIN_COPY.refusal.turnstile,
+      values: form.raw,
+      status: 403,
+    };
   }
   const ipKey = await ipKeyOf(env, link.id, req.prefix);
   if (!(await prefixWithinCap(ctx, link.id, ipKey))) {
     refuse(ctx, link, 'JOIN_IP_LIMIT');
     return { kind: 'refused', reason: 'too_many', link };
   }
-  if (!(await platformWithinCap(ctx, limits.platformDailyCap))) {
+  if (!(await platformOpen(ctx, limits.platformDailyCap))) {
     refuse(ctx, link, 'JOIN_PLATFORM_CAP', 'error');
     return { kind: 'refused', reason: 'closed', link };
   }
@@ -230,17 +260,6 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
       return { kind: 'check_email', link, email };
     }
   }
-  let open: OpenRelease | null;
-  try {
-    open = await openRelease(ctx, link);
-  } catch (error) {
-    if (!(error instanceof AppError) || error.status >= 500) throw error;
-    open = null;
-  }
-  if (!open) {
-    refuse(ctx, link, 'JOIN_NOT_READY', 'error');
-    return { kind: 'refused', reason: 'closed', link };
-  }
   // Both caps are read before the card is built; the grant's checks stay the exact fence.
   if (!(await withinCaps(ctx, link, limits.orgDailyCap))) {
     refuse(ctx, link, 'JOIN_LIMIT');
@@ -251,7 +270,7 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
     input = assembleInput(open, name, ctx.ids);
   } catch (error) {
     if (error instanceof PassBuildError && error.code === 'INVALID_INPUT')
-      return { kind: 'form', link, error: JOIN_NAME_MESSAGE, values: form.raw };
+      return { kind: 'form', link, askName, error: JOIN_NAME_MESSAGE, values: form.raw };
     throw error;
   }
   const device = req.device ?? ctx.ids.token(32);
@@ -262,10 +281,11 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
       orgDailyCap: limits.orgDailyCap,
       keys: { ipKey, deviceKey: deviceKey ?? (await deviceKeyOf(env, device)), fieldsHash },
     });
+    await countPlatformCard(ctx);
     return { kind: 'card', token: card.token, device };
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
-    return afterRefusal(ctx, link, email, mail, error);
+    return afterRefusal(ctx, link, req.token, email, mail, error);
   }
 }
 
@@ -273,15 +293,20 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
 async function afterRefusal(
   ctx: ServiceContext,
   link: PublicLink,
+  token: string,
   email: string | undefined,
   mail: boolean,
   error: AppError,
 ): Promise<JoinOutcome> {
   switch (error.code) {
     case 'JOIN_LINK_CLOSED':
-      // Rotated, switched off or deleted since the lookup: the link is gone.
+      // Switched off since the lookup: closed. Rotated or deleted: the token no longer finds a link.
       refuse(ctx, link, 'JOIN_LINK_CLOSED');
-      return { kind: 'refused', reason: 'expired', link };
+      return {
+        kind: 'refused',
+        reason: (await lookupLink(ctx, token)) ? 'closed' : 'expired',
+        link,
+      };
     case 'JOIN_LIMIT':
       refuse(ctx, link, 'JOIN_LIMIT');
       return { kind: 'refused', reason: 'daily_limit', link };

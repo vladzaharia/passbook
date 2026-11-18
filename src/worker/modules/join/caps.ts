@@ -1,4 +1,5 @@
 import { bump } from '../../platform/counters.ts';
+import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recipientKey } from '../delivery/recipient-key.ts';
 import { getPlatformSettings } from '../settings/service.ts';
@@ -47,10 +48,30 @@ export async function prefixWithinCap(
   );
 }
 
-/** One more attempt on the platform today (UTC day); true while it is within the platform breaker. */
-export async function platformWithinCap(ctx: ServiceContext, cap: number): Promise<boolean> {
+/** A rolling 24 hours of an hourly-bucketed counter. */
+async function rolling(ctx: ServiceContext, key: string): Promise<number> {
   const now = ctx.clock.now();
-  return (await bump(ctx.env.DB, 'join:platform', windowOf(now, DAY))) <= cap;
+  const r = await first<{ n: number | null }>(
+    ctx.env.DB,
+    'SELECT SUM(count) AS n FROM counters WHERE key = ? AND window_start > ?',
+    [key, now - DAY],
+  );
+  return r?.n ?? 0;
+}
+
+const spend = (ctx: ServiceContext, key: string) =>
+  bump(ctx.env.DB, key, windowOf(ctx.clock.now(), HOUR));
+
+const PLATFORM_KEY = 'join:platform';
+
+/** The platform breaker is open while the rolling 24 hours hold fewer cards than the cap. */
+export async function platformOpen(ctx: ServiceContext, cap: number): Promise<boolean> {
+  return (await rolling(ctx, PLATFORM_KEY)) < cap;
+}
+
+/** A card was made: only cards count against the breaker, never refusals or duplicates. */
+export async function countPlatformCard(ctx: ServiceContext): Promise<void> {
+  await spend(ctx, PLATFORM_KEY);
 }
 
 /**
@@ -72,10 +93,13 @@ export async function withinCaps(
 }
 
 /**
- * One join mail to this address (a new card's or a re-sent one): true while the address is within its
- * three a day. Spent once per request; the card is made and shown either way.
+ * One join mail to this mailbox (a new card's or a re-sent one): true while it is within its three per
+ * rolling 24 hours. The key is the canonical mailbox, so `+tag` and Gmail dot variants share it.
+ * Spent once per request; the card is made and shown either way.
  */
 export async function mailWithinBudget(ctx: ServiceContext, email: string): Promise<boolean> {
   const key = `join-email:${await recipientKey(ctx.env, email)}`;
-  return (await bump(ctx.env.DB, key, windowOf(ctx.clock.now(), DAY))) <= MAIL_DAILY_CAP;
+  if ((await rolling(ctx, key)) >= MAIL_DAILY_CAP) return false;
+  await spend(ctx, key);
+  return true;
 }

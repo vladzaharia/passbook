@@ -30,7 +30,7 @@ export async function openRelease(
   return readiness.issues.length > 0 ? null : { version: release.version, readiness, template };
 }
 
-/** `ids.code` samples below 2^32, so a ten-digit code is two five-digit halves (it never ends at ten). */
+/** Ten random digits, zero padded. */
 const tenDigits = (ids: Ids) => ids.code(10);
 
 /**

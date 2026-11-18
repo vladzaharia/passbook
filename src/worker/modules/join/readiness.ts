@@ -23,7 +23,8 @@ const isRecord = (v: unknown): v is Rec => typeof v === 'object' && v !== null &
 /** A name input holds at least this many characters (the form caps a name at 40). */
 const NAME_MIN_LENGTH = 20;
 const GENERATED_DIGITS = 10;
-const SAMPLE_CODE = '1234567890';
+/** A generated value is any ten digits, so a pattern must accept the ends of the range too. */
+const SAMPLE_CODES = ['1234567890', '0123456789', '0000000000', '9999999999'];
 /** The only barcode a public card may carry: the server's scan code. */
 const SCAN_CODE_EXPR = '{{pass.scanCode}}';
 
@@ -41,9 +42,12 @@ export function reservedInputs(manifest: TemplateManifest): Set<string> {
   const add = (value: unknown) => {
     if (typeof value === 'string' && value !== '') names.add(value);
   };
+  // An allowlist: the name may only fill the value of a field. Every other target (barcode, pointer,
+  // action URL, image, a field's other properties) and every condition makes its inputs operator-owned.
   for (const binding of manifest.bindings ?? []) {
-    if (!('barcode' in binding.to)) continue;
-    for (const name of exprReferences(binding.value ?? '').inputs) names.add(name);
+    const to = binding.to as { field?: unknown; prop?: unknown };
+    const plainField = 'field' in to && (to.prop === undefined || to.prop === 'value');
+    if (!plainField) for (const name of exprReferences(binding.value ?? '').inputs) names.add(name);
     for (const condition of [binding.when, binding.remove])
       if (condition) for (const name of conditionInputs(condition)) names.add(name);
   }
@@ -77,7 +81,9 @@ function generatable(schema: Rec): boolean {
     return false;
   if (pattern === undefined) return true;
   try {
-    return typeof pattern === 'string' && new RegExp(pattern, 'u').test(SAMPLE_CODE);
+    if (typeof pattern !== 'string') return false;
+    const re = new RegExp(pattern, 'u');
+    return SAMPLE_CODES.every((code) => re.test(code));
   } catch {
     return false;
   }

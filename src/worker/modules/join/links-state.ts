@@ -15,9 +15,14 @@ import { resolveTemplate } from '../passes/builder.ts';
 import { getCreateTemplate } from '../passes/repo-read-issuance.ts';
 import { assertNotBlueprint } from '../templates/blueprint-guard.ts';
 import { activeRelease, type TemplateRelease } from '../templates/releases.ts';
-import { templateVisibleToOrg } from '../templates/repo-list.ts';
 import { defaultNameInput, type JoinReadiness, joinReadiness } from './readiness.ts';
-import { getLink, issuedToday, type JoinLinkRow } from './repo-links.ts';
+import {
+  getLink,
+  issuedToday,
+  type JoinLinkRow,
+  type PlatformOffer,
+  platformOffer,
+} from './repo-links.ts';
 
 const notFound = () => new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
 
@@ -28,8 +33,8 @@ export interface Scope {
   mode: Mode;
   templateId: string;
   archived: boolean;
-  /** The template belongs to the platform, not to the org. */
-  platform: boolean;
+  /** An org template is false; a platform one is offered to every org (`open`) or only to orgs that released it. */
+  platform: PlatformOffer;
   capabilities: ReadonlySet<OrgCapability>;
 }
 
@@ -54,15 +59,16 @@ export async function scopeOf(
   if (template.orgId !== null && template.orgId !== orgId) throw notFound();
   const access = await getOrgAccess(ctx, auth.userId, orgId);
   if (!access?.capabilities.includes('passes:read')) throw notFound();
-  if (template.orgId === null && !(await templateVisibleToOrg(db, templateId, orgId)))
-    throw notFound();
+  // The grant repeats this in SQL (the same offer, so an un-offer racing a create is refused too).
+  const offer = template.orgId === null ? await platformOffer(db, templateId, orgId) : false;
+  if (offer === null) throw notFound();
   await assertNotBlueprint(db, templateId);
   return {
     orgId,
     mode: auth.mode,
     templateId,
     archived: template.status === 'archived',
-    platform: template.orgId === null,
+    platform: offer,
     capabilities: new Set(access.capabilities),
   };
 }
