@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -8,7 +8,7 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { getHolderPass } from '../holders/repo.ts';
 import { brandingKey } from '../orgs/branding-files.ts';
 import { finishCredentialTransfer, startCredentialTransfer } from './credential-transfer.ts';
-import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
+import { ICON_PNG, type Kit, setupKit as setupPassKit } from './pass-test-fixtures.ts';
 import {
   acknowledgeRetiredPassAssetKey,
   claimRetiredPassAssetKey,
@@ -27,7 +27,6 @@ import {
   TRANSFER_ASSET_UPLOAD_LEASE_MS,
 } from './transfer-asset-gc.ts';
 
-const WALL = Date.now();
 const system = { type: 'system', id: null } as const;
 const target = { holderEmail: 'new-holder@example.test', ownerUserId: null } as const;
 const deferred = Promise as PromiseConstructor & {
@@ -61,10 +60,27 @@ async function photo(kit: Kit, passId: string, orgId: string, key: string) {
   );
 }
 
-// Stage candidates are stamped by SQL triggers from the wall clock, not kit.clock, so every kit in
-// this file starts on wall time; a slow run can leave them newer than a fixed advance past the lease.
-// Tried TEST_NOW (kitclock follow-up): the file's kits share D1, so tombstones left due by earlier tests
-// fill the 20-key sweep batch and the two crashed-stage recovery tests no longer reach their key.
+// Every kit in this file shares one D1, and a sweep takes at most 20 due tombstones, oldest first. A
+// test that leaves tombstones due would push a later test's key out of its sweep, so each test drains
+// what it created through the real sweep, a day at a time until its rechecks settle.
+const kits: Kit[] = [];
+const setupKit = async (...args: Parameters<typeof setupPassKit>) => {
+  const kit = await setupPassKit(...args);
+  kits.push(kit);
+  return kit;
+};
+
+afterEach(async () => {
+  for (const kit of kits.splice(0)) {
+    for (let day = 0; day <= TRANSFER_ASSET_GC_MAX_RECHECKS + 1; day++) {
+      for (let pass = 0; pass < 5; pass++) await sweepTransferAssetGc(jobCtxOf(kit));
+      kit.clock.advance(TRANSFER_ASSET_GC_RECHECK_MS + 1);
+    }
+  }
+});
+
+// Stage candidates are stamped by SQL triggers from the wall clock, not kit.clock, so a stage is
+// expired against the later of the two; a slow run can leave them newer than a fixed advance.
 function expireStages(kit: Kit) {
   kit.clock.set(Math.max(kit.clock.now(), Date.now()) + TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
 }
@@ -100,7 +116,7 @@ function failTransferCompletionAudit(db: D1Database, passId: string): D1Database
 
 describe('transfer asset garbage collection', () => {
   it('retires only the transferred rows, fences both tables and preserves shared references', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const old = await kit.pass();
     const other = await kit.pass();
     const shared = `pass-assets/${old.id}/logo.png/shared.png`;
@@ -174,7 +190,7 @@ describe('transfer asset garbage collection', () => {
   });
 
   it('rolls back retirement when a later statement in the final transfer transaction fails', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const key = `pass-assets/${pass.id}/logo.png/rollback.png`;
     await kit.env.BUCKET.put(key, ICON_PNG);
@@ -251,7 +267,7 @@ describe('transfer asset garbage collection', () => {
   });
 
   it('leaves all assets live on a lost source snapshot and retires the new snapshot only on retry', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const key = `pass-assets/${pass.id}/logo.png/source.png`;
     await kit.env.BUCKET.put(key, ICON_PNG);
@@ -298,7 +314,7 @@ describe('transfer asset garbage collection', () => {
   });
 
   it('blocks references racing the R2 deletion and collects a late stale PUT on a later sweep', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const old = await kit.pass();
     const other = await kit.pass();
     const key = `pass-assets/${old.id}/logo.png/late.png`;
@@ -435,7 +451,7 @@ describe('transfer asset garbage collection', () => {
   });
 
   it('never deletes unknown namespaces and caps a sweep even with a larger due backlog', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const branding = brandingKey(pass.orgId, 'logo', 3);
     await kit.env.BUCKET.put(branding, ICON_PNG);
@@ -481,7 +497,7 @@ describe('transfer asset garbage collection', () => {
 
 describe('retired asset reference and lease fences', () => {
   it('retires ordinary cleanup keys only after all asset and photo owners release them', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const one = await kit.pass();
     const two = await kit.pass();
     const key = `pass-assets/${one.id}/logo.png/shared-cleanup.png`;
@@ -526,7 +542,7 @@ describe('retired asset reference and lease fences', () => {
   });
 
   it('preserves an asset namespace key already referenced by a template version', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const key = `pass-assets/${pass.id}/logo.png/template-shared.png`;
     await kit.env.BUCKET.put(key, ICON_PNG);
@@ -551,7 +567,7 @@ describe('retired asset reference and lease fences', () => {
   });
 
   it('does not let an expired claimant acknowledge or release a newer claim', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const key = `pass-assets/${kit.ctx.ids.id()}/logo.png/lease.png`;
     await kit.env.BUCKET.put(key, ICON_PNG);
     const now = kit.clock.now();
@@ -605,7 +621,7 @@ describe('retired asset reference and lease fences', () => {
 });
 
 it('does not retire anything when START loses its source snapshot', async () => {
-  const kit = await setupKit({ clockStart: WALL });
+  const kit = await setupKit();
   const pass = await kit.pass();
   const expected = await getHolderPass(kit.env.DB, pass.id, null);
   if (!expected) throw new Error('Missing source pass');
@@ -639,7 +655,7 @@ it('does not retire anything when START loses its source snapshot', async () => 
 });
 
 it('retries after a crash between an R2 delete and its D1 acknowledgement', async () => {
-  const kit = await setupKit({ clockStart: WALL });
+  const kit = await setupKit();
   const key = `member-photos/${kit.org.id}/${kit.ctx.ids.id()}/ack.png`;
   await kit.env.BUCKET.put(key, ICON_PNG);
   await retireUnusedPassAssetKey(kit.env.DB, { key, now: kit.clock.now() });
@@ -693,7 +709,7 @@ describe('upload and operation-specific rollback holds', () => {
   }
 
   it('rejects a reservation for a referenced key or a stale pass generation', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const live = `pass-assets/${pass.id}/logo.png/live.png`;
     await asset(kit, pass.id, live);
@@ -738,7 +754,7 @@ describe('upload and operation-specific rollback holds', () => {
   });
 
   it('retires both a crashed staged replacement and a pre-PUT reservation on transfer', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const old = `pass-assets/${pass.id}/logo.png/prior.png`;
     const staged = `pass-assets/${pass.id}/logo.png/staged.png`;
@@ -800,7 +816,7 @@ describe('upload and operation-specific rollback holds', () => {
   });
 
   it('reclaims a crashed upload reservation and keeps its late PUT permanently unreferenceable', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const key = `pass-assets/${pass.id}/logo.png/abandoned.png`;
     await reserve(kit, pass.id, key);
@@ -822,7 +838,7 @@ describe('upload and operation-specific rollback holds', () => {
   });
 
   it('settles a tombstone after a bounded number of re-checks and keeps it as the key guard', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const key = `pass-assets/${pass.id}/logo.png/settling.png`;
     await reserve(kit, pass.id, key);
@@ -855,7 +871,7 @@ describe('upload and operation-specific rollback holds', () => {
   });
 
   it('does not let one completed operation release a sibling rollback hold for the same key', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const key = `pass-assets/${pass.id}/shared.png`;
     await kit.env.BUCKET.put(key, ICON_PNG);
@@ -916,7 +932,7 @@ describe('upload and operation-specific rollback holds', () => {
   });
 
   it('allows the original pass to roll back a shared retired key only while its hold exists', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const transferred = await kit.pass();
     const other = await kit.pass();
     const key = `pass-assets/${transferred.id}/logo.png/shared-rollback.png`;
@@ -960,7 +976,7 @@ describe('upload and operation-specific rollback holds', () => {
   });
 
   it('increments the image epoch on direct A to B to A mutations', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const a = `pass-assets/${pass.id}/logo.png/a.png`;
     const b = `pass-assets/${pass.id}/logo.png/b.png`;
@@ -981,7 +997,7 @@ describe('upload and operation-specific rollback holds', () => {
 
 describe('transfer image epoch and cascade fences', () => {
   it('rejects START after the exact same image rows undergo A to B to A', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const a = `pass-assets/${pass.id}/logo.png/start-a.png`;
     const b = `pass-assets/${pass.id}/logo.png/start-b.png`;
@@ -1023,7 +1039,7 @@ describe('transfer image epoch and cascade fences', () => {
   });
 
   it('rejects FINISH after the exact same image rows undergo A to B to A', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const a = `pass-assets/${pass.id}/logo.png/finish-a.png`;
     const b = `pass-assets/${pass.id}/logo.png/finish-b.png`;
@@ -1070,7 +1086,7 @@ describe('transfer image epoch and cascade fences', () => {
   });
 
   it('physically deletes a pass and cascades its image rows without aborting or resurrecting it', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const assetKey = `pass-assets/${pass.id}/logo.png/cascade.png`;
     const photoKey = `member-photos/${pass.orgId}/${pass.id}/cascade.png`;
@@ -1107,7 +1123,7 @@ describe('transfer image epoch and cascade fences', () => {
 
 describe('crashed image-stage recovery', () => {
   it('restores an abandoned staged asset and durably deletes the displaced upload', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const old = `pass-assets/${pass.id}/logo.png/recover-old.png`;
     const staged = `pass-assets/${pass.id}/logo.png/recover-new.png`;
@@ -1159,7 +1175,7 @@ describe('crashed image-stage recovery', () => {
   });
 
   it('restores a deleted image and an unacknowledged scanner-only photo', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const assetPass = await kit.pass();
     const photoPass = await kit.pass();
     const deleted = `pass-assets/${assetPass.id}/logo.png/deleted.png`;
@@ -1190,7 +1206,7 @@ describe('crashed image-stage recovery', () => {
   });
 
   it('recovers multi-slot stages in reverse order without deleting a still-needed rollback key', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const oldLogo = `pass-assets/${pass.id}/logo.png/old.png`;
     const newLogo = `pass-assets/${pass.id}/logo.png/new.png`;
@@ -1239,7 +1255,7 @@ describe('crashed image-stage recovery', () => {
   });
 
   it('does not restore a prior key after a newer pass version committed', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const old = `pass-assets/${pass.id}/logo.png/published-old.png`;
     const next = `pass-assets/${pass.id}/logo.png/published-next.png`;
@@ -1258,7 +1274,7 @@ describe('crashed image-stage recovery', () => {
   });
 
   it('does not release or restore image holds while holder transfer is pending', async () => {
-    const kit = await setupKit({ clockStart: WALL });
+    const kit = await setupKit();
     const pass = await kit.pass();
     const old = `pass-assets/${pass.id}/logo.png/pending-old.png`;
     const next = `pass-assets/${pass.id}/logo.png/pending-next.png`;
@@ -1343,7 +1359,7 @@ describe('crashed image-stage recovery', () => {
 });
 
 it('rechecks newest operation ownership when a candidate races recovery', async () => {
-  const kit = await setupKit({ clockStart: WALL });
+  const kit = await setupKit();
   const pass = await kit.pass();
   const a = `pass-assets/${pass.id}/logo.png/recovery-race-a.png`;
   const b = `pass-assets/${pass.id}/logo.png/recovery-race-b.png`;
@@ -1380,7 +1396,7 @@ it('rechecks newest operation ownership when a candidate races recovery', async 
 });
 
 it('keeps a shared template key queued until its last independent reference disappears', async () => {
-  const kit = await setupKit({ clockStart: WALL });
+  const kit = await setupKit();
   const pass = await kit.pass();
   const old = `pass-assets/${pass.id}/logo.png/shared-template-old.png`;
   const next = `pass-assets/${pass.id}/logo.png/shared-template-next.png`;
@@ -1424,7 +1440,7 @@ it('keeps a shared template key queued until its last independent reference disa
 });
 
 it('does not retire the live key for a successful metadata-only photo update', async () => {
-  const kit = await setupKit({ clockStart: WALL });
+  const kit = await setupKit();
   const pass = await kit.pass();
   const key = `member-photos/${pass.orgId}/${pass.id}/metadata.png`;
   await kit.env.BUCKET.put(key, ICON_PNG);
@@ -1458,7 +1474,7 @@ it('does not retire the live key for a successful metadata-only photo update', a
 });
 
 it('rolls back recovery if displaced-key retirement cannot commit', async () => {
-  const kit = await setupKit({ clockStart: WALL });
+  const kit = await setupKit();
   const pass = await kit.pass();
   const old = `pass-assets/${pass.id}/logo.png/rollback-recovery-old.png`;
   const next = `pass-assets/${pass.id}/logo.png/rollback-recovery-next.png`;

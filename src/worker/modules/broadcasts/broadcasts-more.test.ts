@@ -31,7 +31,7 @@ let app: ReturnType<typeof createApp>;
 beforeAll(async () => {
   kit = await broadcastKit();
   auth = await broadcastAuth(kit, ORIGIN);
-  app = createApp({ stores: auth.stores });
+  app = createApp({ stores: auth.stores, clock: kit.clock });
 });
 
 type Headers = Record<string, string>;
@@ -221,7 +221,14 @@ describe('items', () => {
     const b = await kit.makePass({ message: 'Same' });
     await isolate([a.id, b.id]);
     const made = await dto(await send('POST', '/broadcasts', auth.admin(), body('Same')));
-    await runBroadcast(kit.env, `broadcast-${made.id}`, { broadcastId: made.id }, stepRun);
+    await runBroadcast(
+      kit.env,
+      `broadcast-${made.id}`,
+      { broadcastId: made.id },
+      stepRun,
+      undefined,
+      kit.clock,
+    );
     await kit.settle();
     const all_ = BroadcastItemListSchema.parse(
       await (await api(`/broadcasts/${made.id}/items`, { headers: auth.admin() })).json(),
@@ -254,7 +261,14 @@ describe('items', () => {
       invalid.id,
     ]);
     const made = await dto(await send('POST', '/broadcasts', auth.admin(), body('Partial')));
-    await runBroadcast(kit.env, `broadcast-${made.id}`, { broadcastId: made.id }, stepRun);
+    await runBroadcast(
+      kit.env,
+      `broadcast-${made.id}`,
+      { broadcastId: made.id },
+      stepRun,
+      undefined,
+      kit.clock,
+    );
     await kit.settle();
     expect(await get(made.id)).toMatchObject({
       state: 'partial',
@@ -358,6 +372,8 @@ describe('start races', () => {
       `broadcast-${made.id}`,
       { broadcastId: made.id },
       stepRun,
+      undefined,
+      kit.clock,
     );
     expect(done.state).toBe('sent');
     expect((await get(made.id)).counts.updated).toBe(1);
@@ -378,6 +394,8 @@ describe('start races', () => {
           `broadcast-${cancelled.id}`,
           { broadcastId: cancelled.id },
           stepRun,
+          undefined,
+          kit.clock,
         )
       ).state,
     ).toBe('skipped');
