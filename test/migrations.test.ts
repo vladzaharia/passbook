@@ -13,6 +13,7 @@ import {
   makeTemplate,
   makeUser,
   persistTemplate,
+  withoutTrigger,
 } from './helpers/index.ts';
 
 const TABLES = [
@@ -862,5 +863,119 @@ describe('0052 scanning_devices REPLACE guard', () => {
       `INSERT INTO scanning_devices (scanner_id, session_id, org_id, mode) VALUES (?, ?, ?, 'live')`,
       [b.id, session, org.id],
     );
+  });
+});
+
+describe('0070 post-cutover', () => {
+  async function onePass() {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-0070-${f.ids.id()}` }).resolved,
+    });
+    return pass;
+  }
+  const names = async (type: string) =>
+    (
+      await all<{ name: string }>(env.DB, 'SELECT name FROM sqlite_master WHERE type = ?', [type])
+    ).map((row) => row.name);
+
+  it('drops scanning_config_revisions and the seal sweep indexes', async () => {
+    expect(await names('table')).not.toContain('scanning_config_revisions');
+    const indexes = await names('index');
+    for (const name of [
+      'passes_token_plain',
+      'passes_auth_plain',
+      'bundles_token_plain',
+      'pass_versions_auth_plain',
+    ])
+      expect(indexes, name).not.toContain(name);
+  });
+
+  it('refuses a plain token on update, whatever else the write moves', async () => {
+    const pass = await onePass();
+    const refused =
+      /must be a MAC|must move link_generation|credential transfer required|credential generation bump/;
+    for (const set of [
+      "download_token = 'plain'",
+      "download_token = 'plain', link_generation = link_generation + 1",
+      "auth_token = 'plain'",
+      "auth_token = 'plain', credential_generation = credential_generation + 1",
+    ])
+      await expect(
+        run(env.DB, `UPDATE passes SET ${set} WHERE id = ?`, [pass.id]),
+        set,
+      ).rejects.toThrow(refused);
+    await expect(
+      run(
+        env.DB,
+        "UPDATE passes SET download_token = 'plain', link_generation = link_generation + 1 WHERE id = ?",
+        [pass.id],
+      ),
+    ).rejects.toThrow(/download_token must be a MAC/);
+    const stored = await first<{ download_token: string; auth_token: string }>(
+      env.DB,
+      'SELECT download_token, auth_token FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    expect(stored?.download_token.startsWith('h1:')).toBe(true);
+    expect(stored?.auth_token.startsWith('h1:')).toBe(true);
+  });
+
+  it('no longer lets a MAC replace a plain value without moving the link', async () => {
+    const pass = await onePass();
+    // A row as it was before the seal sweep: only reachable by dropping the plain-value guard.
+    await withoutTrigger(env.DB, 'passes_token_is_mac_update', () =>
+      run(
+        env.DB,
+        `UPDATE passes SET download_token = 'plain-download', download_token_rotated_at = 1,
+         link_generation = link_generation + 1 WHERE id = ?`,
+        [pass.id],
+      ),
+    );
+    await expect(
+      run(env.DB, "UPDATE passes SET download_token = 'h1:sealed' WHERE id = ?", [pass.id]),
+    ).rejects.toThrow(/a token change must move link_generation/);
+    await run(
+      env.DB,
+      "UPDATE passes SET download_token = 'h1:restored', link_generation = link_generation + 1 WHERE id = ?",
+      [pass.id],
+    );
+  });
+
+  it('keeps no plain-to-MAC branch in any trigger', async () => {
+    const triggers = await all<{ name: string; sql: string }>(
+      env.DB,
+      "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND sql LIKE '%h1:%'",
+    );
+    expect(triggers.length).toBeGreaterThan(0);
+    for (const trigger of triggers)
+      expect(trigger.sql, trigger.name).not.toMatch(/OLD\.\w+ NOT GLOB 'h1:\*' AND NEW\.\w+ GLOB/);
+  });
+
+  it('still lets a mark name the MAC that replaces a MAC, without a pass change', async () => {
+    const pass = await onePass();
+    const before = await first<{ row_version: number; link_generation: number }>(
+      env.DB,
+      'SELECT row_version, link_generation FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    await env.DB.batch([
+      env.DB.prepare(
+        "INSERT INTO token_remac_marks (pass_id, kind, mac) VALUES (?, 'download', 'h1:next')",
+      ).bind(pass.id),
+      env.DB.prepare("UPDATE passes SET download_token = 'h1:next' WHERE id = ?").bind(pass.id),
+      env.DB.prepare("DELETE FROM token_remac_marks WHERE pass_id = ? AND kind = 'download'").bind(
+        pass.id,
+      ),
+    ]);
+    expect(
+      await first(
+        env.DB,
+        'SELECT row_version, link_generation, download_token FROM passes WHERE id = ?',
+        [pass.id],
+      ),
+    ).toEqual({ ...before, download_token: 'h1:next' });
   });
 });

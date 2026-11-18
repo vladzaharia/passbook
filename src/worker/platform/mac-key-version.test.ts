@@ -93,7 +93,7 @@ describe('token MACs across a rotation', () => {
     const moved = await tokenMac(after, 'pass', 'link-token');
     expect(moved).not.toBe(old);
     expect(await tokenMacs(during, 'pass', 'link-token')).toEqual([moved, old]);
-    expect(await tokenKeys(during, 'pass', 'link-token')).toEqual([moved, 'link-token', old]);
+    expect(await tokenKeys(during, 'pass', 'link-token')).toEqual([moved, old]);
     expect(await tokenMatches(during, 'pass', old, 'link-token')).toBe(true);
     expect(await tokenMatches(during, 'pass', moved, 'link-token')).toBe(true);
     expect(await tokenMatches(after, 'pass', moved, 'link-token')).toBe(true);

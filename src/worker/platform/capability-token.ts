@@ -22,10 +22,9 @@ export type { SealRaw, SealRow, TokenPurpose };
 
 /**
  * Capability tokens (pass download links, bundle links, the Apple web-service token) at rest. The token
- * column stores a lookup MAC (`h1:` + HMAC-SHA-256 under a derived key), never the token. The token is
- * shown or built again from a sealed copy (AES-GCM envelope, AAD = id|org|purpose). Rows not yet
- * backfilled still hold the plain token: a lookup tries the MAC and the plain value (`tokenKeys`,
- * `tokenMatches`), and `revealToken` returns it as is.
+ * column stores a lookup MAC (`h1:` + HMAC-SHA-256 under a derived key), never the token: a plain value is
+ * refused by the database. The token is shown or built again from a sealed copy (AES-GCM envelope,
+ * AAD = id|org|purpose); a token just made, not yet stored, is used as it is (`revealToken`).
  */
 export const MAC_PREFIX = 'h1:';
 const encoder = new TextEncoder();
@@ -67,17 +66,17 @@ export async function tokenMacs(
 }
 
 /**
- * The three column values a presented token can match: its MAC, the plain value of a row not yet
- * backfilled, and its MAC under the previous root (the MAC again when no rotation is running). A
- * presented value shaped like a MAC never matches itself, so a leaked MAC is no link.
+ * The column values a presented token can match: its MAC, and its MAC under the previous root (the MAC
+ * again when no rotation is running). A presented value shaped like a MAC never matches itself, so a
+ * leaked MAC is no link.
  */
 export async function tokenKeys(
   env: object,
   purpose: TokenPurpose,
   token: string,
-): Promise<[string, string, string]> {
+): Promise<[string, string]> {
   const [mac, previous = mac] = await tokenMacs(env, purpose, token);
-  return [mac, isTokenMac(token) ? mac : token, previous];
+  return [mac, previous];
 }
 
 /** A new token as it is stored: the MAC for the token column and the sealed copy. */
@@ -113,8 +112,8 @@ export async function issueToken(
 }
 
 /**
- * Whether `presented` is the token a column holds, in constant time. A sealed row compares the MAC of the
- * presented value, so a MAC read from the database is no token; a row not yet backfilled holds the plain one.
+ * Whether `presented` is the token a column holds, in constant time: the column holds the MAC of the
+ * presented value, so a MAC read from the database is no token.
  */
 export async function tokenMatches(
   env: object,
@@ -122,16 +121,15 @@ export async function tokenMatches(
   stored: string,
   presented: string,
 ): Promise<boolean> {
-  // The MAC is computed for every row, so a sealed, an unsealed and an unknown row cost the same.
+  // The MAC is computed for every row, so a known and an unknown row cost the same.
   const macs = await tokenMacs(env, purpose, presented);
-  if (!isTokenMac(stored)) return safeEqual(presented, stored);
   const matches = await Promise.all(macs.map((mac) => safeEqual(mac, stored)));
   return matches.includes(true);
 }
 
 const bytes = (v: number[] | ArrayBuffer) => new Uint8Array(v);
 
-/** The plain token of a stored column value: a row not yet backfilled holds it, others are unsealed. */
+/** The plain token of a stored column value, unsealed; a token just made (not a MAC) is returned as it is. */
 export async function revealToken(
   env: { DB: D1Database },
   purpose: TokenPurpose,

@@ -1,4 +1,3 @@
-import { writeSystemValue } from '../../src/worker/modules/settings/repo.ts';
 import {
   type IssuedToken,
   issueToken,
@@ -46,13 +45,6 @@ export async function fixtureToken(
   };
 }
 
-/**
- * Starts the token-seal sweep at the first row. Under a fixed test clock, uuidv7 ids sort randomly, so a
- * cursor left by an earlier sweep can sit past a new row; production ids carry time and the cron wraps.
- */
-export const resetSealCursor = (db: D1Database, now: number) =>
-  writeSystemValue(db, 'tokens.sealCursor', { pass: null, auth: null, bundle: null }, now);
-
 const plainAuth = new Map<string, string>();
 
 /** Keeps the plain device token of a row so a test can build Wallet's header without a read. */
@@ -76,24 +68,11 @@ export async function authTokenOf(
   return revealToken(env, 'apple-auth', row.id, row.orgId, row.authToken);
 }
 
-/** Runs `fn` with the guards that keep a plain device token out of `passes.auth_token` dropped: a pre-0065 row. */
-export function asLegacyAuthTokens<T>(db: D1Database, fn: () => Promise<T>): Promise<T> {
-  return withoutTrigger(db, 'passes_auth_token_is_mac_update', () =>
-    withoutTrigger(db, 'passes_auth_token_change_follows_generation', () =>
-      withoutTrigger(db, 'pass_credential_transfer_required', () =>
-        withoutTrigger(db, 'pass_credential_transfer_pending_pass_guard', fn),
-      ),
-    ),
-  );
-}
-
-/** Runs `fn` with the guards that keep a plain token out of the token columns dropped: a pre-0059 row. */
-export function asLegacyTokens<T>(db: D1Database, fn: () => Promise<T>): Promise<T> {
-  return withoutTrigger(db, 'passes_token_is_mac_update', () =>
-    withoutTrigger(db, 'passes_token_change_moves_link', () =>
-      withoutTrigger(db, 'bundles_token_is_mac_update', () =>
-        withoutTrigger(db, 'pass_credential_transfer_pending_pass_guard', fn),
-      ),
+/** Runs `fn` with the guards on `passes.auth_token` dropped: a test that writes a MAC outside a transfer. */
+export function withoutAuthTokenGuards<T>(db: D1Database, fn: () => Promise<T>): Promise<T> {
+  return withoutTrigger(db, 'passes_auth_token_change_follows_generation', () =>
+    withoutTrigger(db, 'pass_credential_transfer_required', () =>
+      withoutTrigger(db, 'pass_credential_transfer_pending_pass_guard', fn),
     ),
   );
 }
