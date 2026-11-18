@@ -105,6 +105,15 @@ describe('pass email', () => {
     expect(html.indexOf('Open your pass')).toBeGreaterThan(badge);
   });
 
+  it('says one thing to every phone: Apple adds on iPhone or Mac, anywhere else open the pass', () => {
+    const { html, text } = render();
+    for (const part of [html, text]) {
+      expect(part).toContain('adds on iPhone or Mac');
+      expect(part).toContain('On other phones, open your pass.');
+      expect(part).not.toContain('Open on iPhone');
+    }
+  });
+
   it('pairs the unmodified badge with a button of its box and corner', () => {
     const { html } = render();
     const { width, height } = EMAIL_BADGE;
@@ -388,7 +397,7 @@ describe('pass email', () => {
 
   it('keeps the plain-text part word for word', () => {
     expect(render().text).toBe(
-      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nOpen on iPhone or Mac to add to Apple Wallet.\n\nKeep this email private. Its links open your pass.',
+      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nThe Apple Wallet button adds on iPhone or Mac. On other phones, open your pass.\n\nKeep this email private. Its links open your pass.',
     );
   });
 

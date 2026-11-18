@@ -4,7 +4,7 @@ export const HOLDER_COPY = {
   signInFooter: 'Signing in shows the passes sent to your email.',
   /** The pass email's title (and its preview in the console). */
   passReady: 'Your pass is ready',
-  /** Where this device cannot add to Wallet. */
+  /** Where this device cannot add to Apple Wallet. */
   openOnApple: 'Open on iPhone or Mac to add to Apple Wallet.',
   /** In an in-app web view, which cannot add to Wallet. */
   openInSafari: 'Open in Safari to add to Apple Wallet.',
@@ -41,6 +41,14 @@ export const HOLDER_COPY = {
   browserTitle: 'Show a barcode in your browser',
   browserLine: 'For readers that scan a screen.',
   showBarcode: 'Show barcode',
+  /** The barcode page's offline copy (saved by the browser, this device only). */
+  saveOffline: 'Save for offline',
+  savedOffline: 'Saved on this device',
+  removeSaved: 'Remove from this device',
+  saveOfflineLine: 'Shows this barcode without signal. The door still checks the pass.',
+  saveOfflineFailed: 'Could not save. Try again.',
+  /** The pass email, under the Apple badge: it reads the same on any phone. */
+  emailAddLine: 'The Apple Wallet button adds on iPhone or Mac. On other phones, open your pass.',
   /** The pass page's link preview when native wallets are offered too. */
   previewWallets: 'Add it to your wallet.',
   /** My passes. */
@@ -61,7 +69,7 @@ export const HOLDER_COPY = {
   /** "3 passes": a bundle's size, on its page and in its email. */
   count: (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'}`,
   /** /p link previews. */
-  previewActive: 'Add it to Apple Wallet.',
+  previewActive: 'Open your pass.',
   previewRemoved: 'This pass was removed from Wallet.',
   /** An unknown, rotated or expired /p link; its way on is My passes (STATE_COPY.goToMyPasses). */
   deadLinkTitle: 'Link expired',
