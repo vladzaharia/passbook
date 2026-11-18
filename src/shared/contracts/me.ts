@@ -14,7 +14,7 @@ export type WalletOffer = z.infer<typeof WalletOfferSchema>;
 export const MyTagSchema = z.object({
   id: IdSchema,
   label: z.string().nullable(),
-  /** The last two UID bytes: the tag's name when it has no label. */
+  /** Four characters that tell the holder's tags apart; not part of the UID. */
   hint: z.string().regex(/^[0-9A-F]{4}$/),
   /** `pass` opens this pass; `user` opens every pass of the holder in this org. */
   scope: z.enum(['pass', 'user']),

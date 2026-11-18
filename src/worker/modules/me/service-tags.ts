@@ -1,6 +1,7 @@
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { NotFoundError } from '../../platform/errors.ts';
+import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { activeBinding, type BindingRow, lostBinding } from '../nfc/repo-tag-bindings.ts';
@@ -24,13 +25,15 @@ export async function reportMyTagLost(
   sessionId: string,
   tagId: string,
 ): Promise<{ ok: true }> {
+  await enforceRateLimit(ctx.env, 'RL_REFRESH', `tag-lost:${userId}`);
   const tag = await tagTarget(ctx.env.DB, tagId);
   if (!tag) throw notFound();
   const binding = await activeBinding(ctx.env.DB, tagId);
   if (!binding) {
     const last = tag.lostAt === null ? null : await lostBinding(ctx.env.DB, tagId);
     // A retry after the report went through.
-    if (last && ownedBy(last, userId)) return { ok: true };
+    if (last && ownedBy(last, userId) && (last.scope === 'user' || last.holderOwner === userId))
+      return { ok: true };
     throw notFound();
   }
   if (!ownedBy(binding, userId) || tag.status !== 'active') throw notFound();

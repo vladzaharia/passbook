@@ -73,7 +73,7 @@ describe('Tags card', () => {
     expect(within(dialog).getByText('Report Blue fob lost?')).toBeVisible();
     expect(
       within(dialog).getByText(
-        'It stops opening doors on all your passes now. Ask Henrys for a new one.',
+        'It stops opening doors on all your passes now. Ask Henrys to restore it or replace it.',
       ),
     ).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: 'Report lost' }));
@@ -94,7 +94,9 @@ describe('Tags card', () => {
     await user.click(await screen.findByRole('button', { name: 'Report lost' }));
     const dialog = await screen.findByRole('alertdialog');
     expect(
-      within(dialog).getByText('It stops opening doors now. Ask Henrys for a new one.'),
+      within(dialog).getByText(
+        'It stops opening doors now. Ask Henrys to restore it or replace it.',
+      ),
     ).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: 'Report lost' }));
     expect(await within(dialog).findByText(/changed/i)).toBeVisible();

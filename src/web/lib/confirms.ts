@@ -237,7 +237,7 @@ export function reportTagLostConfirm(name: string, org: string, allPasses: boole
   return {
     title: `Report ${name} lost?`,
     confirmLabel: 'Report lost',
-    description: `It stops opening doors${allPasses ? ' on all your passes' : ''} now. Ask ${org} for a new one.`,
+    description: `It stops opening doors${allPasses ? ' on all your passes' : ''} now. Ask ${org} to restore it or replace it.`,
     typed: false,
   };
 }

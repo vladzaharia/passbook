@@ -1,5 +1,6 @@
 -- A holder reports their own tag lost under a holder grant, which lists one more purpose.
 -- authority_grants is empty between batches, so the table is rebuilt for its CHECK.
+-- This is now the canonical authority_grants definition: a later change to its CHECKs rebuilds it from here.
 DROP TABLE authority_grants;
 CREATE TABLE authority_grants (
   id TEXT PRIMARY KEY,
@@ -37,7 +38,10 @@ BEGIN SELECT RAISE(ABORT, 'authority grant is immutable'); END;
 
 -- Ending a binding as lost marks the tag, whoever ends it: a holder grant cannot write nfc_tags itself.
 CREATE TRIGGER tag_bindings_lost_marks AFTER UPDATE OF end_cause ON tag_bindings
-WHEN NEW.end_cause = 'lost' AND NEW.ended_by IS NOT NULL
+WHEN NEW.end_cause = 'lost'
 BEGIN
   UPDATE nfc_tags SET lost_at = NEW.ended_at, lost_by = NEW.ended_by WHERE id = NEW.tag_id AND lost_at IS NULL;
 END;
+CREATE TRIGGER tag_bindings_lost_needs_actor BEFORE UPDATE OF end_cause ON tag_bindings
+WHEN NEW.end_cause = 'lost' AND NEW.ended_by IS NULL
+BEGIN SELECT RAISE(ABORT, 'tag_lost_needs_actor'); END;

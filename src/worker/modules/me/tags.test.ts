@@ -6,9 +6,13 @@ import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { fakeLimiter } from '../auth/test-support.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { getHolderPass } from '../holders/repo.ts';
 import { bindTag } from '../nfc/tags.ts';
 import { restoreTag } from '../nfc/tags-admin.ts';
 import { tagFixture } from '../nfc/tags-test-fixtures.ts';
+import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 
 let f: Awaited<ReturnType<typeof tagFixture>>;
 let app: ReturnType<typeof createApp>;
@@ -162,5 +166,61 @@ describe('report lost', () => {
       'TAG_NOT_FOUND',
     );
     expect((await call(`/tags/${pass.id}/lost`, {}, 'POST')).status).toBe(401);
+  });
+
+  it('does not answer a new owner’s retry for a tag the old holder lost', async () => {
+    const s = await setup();
+    const tag = await bind(s, s.pass.id, 'pass');
+    expect((await call(`/tags/${tag.id}/lost`, s.headers, 'POST')).status).toBe(200);
+    const next = await f.user();
+    const nextSession = await makeSession(f.kit.fx, { userId: next.id });
+    const expected = await getHolderPass(f.kit.env.DB, s.pass.id, null);
+    if (!expected) throw new Error('Missing pass');
+    const moved = await startCredentialTransfer(
+      jobCtxOf(f.kit),
+      { type: 'system', id: null },
+      s.pass.id,
+      { holderEmail: next.primaryEmail, ownerUserId: next.id },
+      null,
+      { kind: 'tenant-holder', expected },
+    );
+    expect(moved.state).toBe('completed');
+    await expectProblem(
+      await call(`/tags/${tag.id}/lost`, nextSession.headers, 'POST'),
+      404,
+      'TAG_NOT_FOUND',
+    );
+  });
+
+  it('is rate limited per holder', async () => {
+    const s = await setup();
+    const tag = await bind(s, s.pass.id, 'pass');
+    const limited = createApp({
+      clock: f.kit.clock,
+      stores: { ...denyAllStores, sessions: createSessionStore(f.kit.env, f.kit.clock) },
+    });
+    const env = { ...f.kit.env, RL_REFRESH: fakeLimiter(1) as unknown as RateLimit };
+    const post = () =>
+      limited.request(
+        `https://wallet.test/api/v1/me/tags/${tag.id}/lost`,
+        { method: 'POST', headers: s.headers },
+        env,
+      );
+    expect((await post()).status).toBe(200);
+    expect((await post()).status).toBe(429);
+  });
+});
+
+describe('a lost end without an actor', () => {
+  it('is refused, so a tag is never left unmarked', async () => {
+    const s = await setup();
+    const tag = await bind(s, s.pass.id, 'pass');
+    await expect(
+      run(
+        f.kit.env.DB,
+        "UPDATE tag_bindings SET ended_at = 1, end_cause = 'lost' WHERE tag_id = ? AND ended_at IS NULL",
+        [tag.id],
+      ),
+    ).rejects.toThrow(/tag_lost_needs_actor/);
   });
 });
