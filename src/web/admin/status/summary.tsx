@@ -1,29 +1,13 @@
 import { Link } from '@tanstack/react-router';
-import { AlertTriangle, CheckCircle2, CircleDashed, RefreshCw, XCircle } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { cn } from '@/web/lib/cn.ts';
 import { useChangeCount } from '@/web/lib/motion.ts';
 import { statusOf } from '@/web/lib/status.ts';
 import { Button, StatusPill } from '@/web/ui/index.ts';
 import { formatDateTime } from '../../lib/format.ts';
-import { assessmentState, type Component, countStates, headline, type State } from './groups.ts';
+import { type Component, countStates, headline } from './groups.ts';
+import { OVERALL_TONE, overallTone, STATE_ORDER } from './overall.ts';
 import './status.css';
-
-const ORDER: State[] = ['failing', 'degraded', 'not_configured', 'configured', 'verified'];
-
-const TONE = {
-  danger: { box: 'border-danger-border bg-danger-subtle', icon: XCircle, text: 'text-danger' },
-  warning: {
-    box: 'border-warning-border bg-warning-subtle',
-    icon: AlertTriangle,
-    text: 'text-warning',
-  },
-  success: {
-    box: 'border-success-border bg-success-subtle',
-    icon: CheckCircle2,
-    text: 'text-success',
-  },
-  neutral: { box: 'border-border bg-surface-raised', icon: CircleDashed, text: 'text-fg-muted' },
-} as const;
 
 /** The assessment uses only reported checks; configuration alone does not establish health. */
 export function Summary({
@@ -40,16 +24,8 @@ export function Summary({
   rechecking: boolean;
   onRecheck: () => void;
 }) {
-  const state = assessmentState(components);
-  const tone =
-    state === 'failing'
-      ? 'danger'
-      : state === 'degraded'
-        ? 'warning'
-        : state === 'verified'
-          ? 'success'
-          : 'neutral';
-  const t = TONE[tone];
+  const tone = overallTone(components);
+  const t = OVERALL_TONE[tone];
   const popped = useChangeCount(tone);
   const counts = countStates(
     components.filter(
@@ -105,8 +81,8 @@ export function Summary({
         </Button>
       </div>
       <ul aria-label="Component counts" className="flex basis-full flex-wrap gap-2">
-        {ORDER.filter((s) => counts[s] > 0).map((s) => (
-          <li key={s}>
+        {STATE_ORDER.filter((s) => counts[s] > 0).map((s) => (
+          <li key={s} title={statusOf(s)?.hint}>
             <StatusPill status={s}>
               {counts[s]} {statusOf(s)?.label.toLowerCase()}
             </StatusPill>

@@ -72,9 +72,9 @@ async function identityComponents(ctx: ServiceContext) {
   return items;
 }
 
-/** Overall ignores not_configured parts unless nothing else is configured. */
+/** Overall ignores not_configured and not_in_use parts unless nothing else is configured. */
 function overall(components: Component[]): Component['state'] {
-  const active = components.filter((c) => c.state !== 'not_configured');
+  const active = components.filter((c) => c.state !== 'not_configured' && c.state !== 'not_in_use');
   return active.length ? worst(active.map((c) => c.state)) : 'not_configured';
 }
 

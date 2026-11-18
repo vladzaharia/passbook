@@ -7,6 +7,8 @@ export const ComponentStateSchema = z.enum([
   'degraded',
   'not_configured',
   'configured',
+  /** An optional feature with nothing using it. Neutral, not a problem. */
+  'not_in_use',
   'verified',
 ]);
 

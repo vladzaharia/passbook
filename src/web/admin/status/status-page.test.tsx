@@ -59,12 +59,13 @@ describe('status helpers', () => {
     expect(headline([...connection, ...typed(comp('q', 'Q', 'failing', null, 'queue'))])).toBe(
       '2 components failing',
     );
-    expect(headline(typed(comp('x', 'X', 'configured')))).toBe('Some checks are not verified');
+    expect(headline(typed(comp('x', 'X', 'configured')))).toBe('All systems working');
+    expect(headline(typed(comp('x', 'X', 'not_in_use')))).toBe('All systems working');
     expect(headline(typed(comp('x', 'X', 'not_configured')))).toBe(
       'Some services are not configured',
     );
     expect(headline([])).toBe('No status checks reported');
-    expect(headline(typed(comp('x', 'X', 'verified')))).toBe('All reported components verified');
+    expect(headline(typed(comp('x', 'X', 'verified')))).toBe('All systems working');
     expect(headline(typed(comp('connections', 'Connections', 'failing', null, 'connection')))).toBe(
       '1 connection failing',
     );
@@ -140,7 +141,7 @@ describe('status page', () => {
       },
     });
     const banner = await screen.findByRole('region', { name: 'Overall status' });
-    expect(within(banner).getByText('All reported components verified')).toBeInTheDocument();
+    expect(within(banner).getByText('All systems working')).toBeInTheDocument();
     expect(banner.className).toContain('bg-success-subtle');
     expect(banner.querySelector('.wl-face')).toBeNull();
     expect(banner.firstElementChild).toHaveAttribute('aria-hidden', 'true');
@@ -150,7 +151,7 @@ describe('status page', () => {
     );
   });
 
-  it('does not treat configured or missing checks as verified', async () => {
+  it('reads as working when only set-up and unused checks are not verified', async () => {
     await renderApp('/admin/status', {
       session: 'admin',
       handlers: {
@@ -160,19 +161,39 @@ describe('status page', () => {
             overall: 'configured',
             components: [
               comp('a', 'Alpha', 'verified'),
-              comp('connections', 'Connections', 'configured', null, 'connection'),
-              comp('c', 'Cosmos', 'not_configured'),
+              comp('e', 'Email Sending', 'configured', null, 'email'),
+              comp('connections', 'Connections', 'not_in_use', 'No connections.', 'connection'),
             ],
           }),
         '/api/v1/status/workflows': noRuns,
       },
     });
     const banner = await screen.findByRole('region', { name: 'Overall status' });
-    expect(within(banner).getByText('Some checks are not verified')).toBeInTheDocument();
-    expect(within(banner).getByText('1 configured')).toBeInTheDocument();
-    expect(within(banner).getByText('1 not configured')).toBeInTheDocument();
-    expect(banner.className).not.toContain('bg-success-subtle');
+    expect(within(banner).getByText('All systems working')).toBeInTheDocument();
+    expect(within(banner).getByText('1 set up')).toBeInTheDocument();
+    expect(within(banner).getByText('1 not in use')).toBeInTheDocument();
+    expect(within(banner).getByText('1 verified')).toBeInTheDocument();
+    expect(banner.className).toContain('bg-success-subtle');
+    expect(screen.getByText('No connections.')).toBeInTheDocument();
     expect(screen.getByText('Platform-wide · Not filtered by mode')).toBeInTheDocument();
+  });
+
+  it('does not call a missing service working', async () => {
+    await renderApp('/admin/status', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/status': () =>
+          json({
+            ...status,
+            overall: 'verified',
+            components: [comp('a', 'Alpha', 'verified'), comp('c', 'Cosmos', 'not_configured')],
+          }),
+        '/api/v1/status/workflows': noRuns,
+      },
+    });
+    const banner = await screen.findByRole('region', { name: 'Overall status' });
+    expect(within(banner).getByText('Some services are not configured')).toBeInTheDocument();
+    expect(banner.className).not.toContain('bg-success-subtle');
   });
 
   it('opens a connection, shows Polaris ID and keeps details behind a disclosure', async () => {

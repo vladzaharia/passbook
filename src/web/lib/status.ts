@@ -55,7 +55,13 @@ export interface StatusEntry {
 /** Health vocabulary shared by connections, identities and the status page. */
 export const HEALTH_STATUS = {
   verified: { label: 'Verified', tone: 'success', icon: CheckCircle2 },
-  configured: { label: 'Configured', tone: 'info', icon: CheckCircle2 },
+  configured: {
+    label: 'Set up',
+    tone: 'info',
+    icon: CheckCircle2,
+    hint: 'Set up, but not checked automatically.',
+  },
+  not_in_use: { label: 'Not in use', tone: 'neutral', icon: CircleDashed },
   degraded: { label: 'Degraded', tone: 'warning', icon: AlertTriangle },
   failing: { label: 'Failing', tone: 'danger', icon: XCircle },
   not_configured: { label: 'Not configured', tone: 'neutral', icon: CircleDashed },
