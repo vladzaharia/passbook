@@ -35,7 +35,6 @@ function shown(value: Value, n: unknown): string {
 
 /** Every marker the copy names, from `value`, `access`, `previous`, `event` and the counts. */
 export function lineValues(o: ScanOutcome, now: number): Values {
-  const at = o.at ?? now;
   const v = o.value;
   const place = o.occupancy?.place.name ?? o.event?.name;
   return {
