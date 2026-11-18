@@ -57,10 +57,13 @@ export function Identity({
   name,
   meta,
   tile,
+  heading,
 }: {
   name: string;
   meta?: string | null;
   tile?: 'person' | 'pass';
+  /** The card's heading: focus lands here when the step has no band. */
+  heading?: boolean;
 }) {
   return (
     <div className="scan-identity scan-assign-identity">
@@ -72,9 +75,15 @@ export function Identity({
         <Initials name={name} />
       )}
       <div className="scan-identity-text">
-        <p className="scan-result-holder" dir="auto">
-          {name}
-        </p>
+        {heading ? (
+          <h1 id="scan-result-heading" tabIndex={-1} className="scan-result-holder" dir="auto">
+            {name}
+          </h1>
+        ) : (
+          <p className="scan-result-holder" dir="auto">
+            {name}
+          </p>
+        )}
         {meta ? <p className="scan-identity-meta">{meta}</p> : null}
       </div>
     </div>
