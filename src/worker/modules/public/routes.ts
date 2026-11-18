@@ -37,10 +37,8 @@ import { assertPassSnapshot, capturePassSnapshot } from './snapshot.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
-// Mail proxies fetch every emailed pass's images from a few IPs, so valid assets are limited per
-// token and network prefix only. Random tokens each get a fresh per-token bucket, so a prefix's
-// misses are counted and, past a threshold, refused before any lookup.
-// The barcode page's offline worker: scope-limited by its registration to one token's page.
+// The barcode page's offline worker, scope-limited by its registration to one token's page. It is
+// registered first, so the /:token limits below never see it.
 publicRoutes.get(
   '/sw.js',
   () =>
@@ -52,6 +50,9 @@ publicRoutes.get(
       },
     }),
 );
+// Mail proxies fetch every emailed pass's images from a few IPs, so valid assets are limited per
+// token and network prefix only. Random tokens each get a fresh per-token bucket, so a prefix's
+// misses are counted and, past a threshold, refused before any lookup.
 publicRoutes.use('/:token/assets/*', gateMisses(ASSET_MISSES_PER_MINUTE));
 publicRoutes.use(
   '/:token/assets/*',

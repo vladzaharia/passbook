@@ -14,7 +14,7 @@ export interface DeviceInfo {
  * The shared device rule for guidance and QR placement. iPadOS can report a Mac user agent:
  * the browser passes its touch points and a touch Mac is treated as an iPad (`other`); the Worker
  * cannot distinguish it and says `mac`. Old iPad agents and Windows are `other`. Android phones
- * are `android`, Samsung's own (SM-, Samsung) `galaxy`: no Apple add path, so the pages drop the
+ * are `android`, Samsung's own (an SM- model or a Samsung device name, not just SamsungBrowser) `galaxy`: no Apple add path, so the pages drop the
  * Apple badge and QR for them.
  */
 export function passDevice(ua: string | undefined, touchPoints?: number): DeviceInfo {
@@ -24,7 +24,7 @@ export function passDevice(ua: string | undefined, touchPoints?: number): Device
     : /Macintosh/.test(text) && (touchPoints ?? 0) < 2
       ? 'mac'
       : /Android/.test(text)
-        ? /SAMSUNG|SM-[A-Z]\d/i.test(text)
+        ? /\bSM-[A-Z]\d|\bSAMSUNG(?!Browser)/i.test(text)
           ? 'galaxy'
           : 'android'
         : 'other';

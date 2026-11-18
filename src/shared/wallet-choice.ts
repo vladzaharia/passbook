@@ -67,11 +67,14 @@ export function walletChoices(input: WalletChoiceInput): WalletChoice[] {
     ...(input.browserHref ? [{ id: 'browser' as const, href: input.browserHref }] : []),
     ...native.map((offer) => ({ id: offer.provider, href: offer.href })),
   ];
-  const lead = LEAD[input.device.device].find((id) => all.some((c) => c.id === id));
   // Apple cannot add on Android: it stays reachable as the last, text-only way.
-  const last = (c: { id: WalletChoiceId }) =>
-    isAndroid(input.device.device) && c.id === 'apple' ? 1 : 0;
-  const rest = all.filter((c) => c.id !== lead).sort((a, b) => last(a) - last(b));
-  const ordered = [...all.filter((c) => c.id === lead), ...rest];
+  const lead = LEAD[input.device.device];
+  const rank = (c: { id: WalletChoiceId }) =>
+    isAndroid(input.device.device) && c.id === 'apple'
+      ? 2000
+      : lead.includes(c.id)
+        ? lead.indexOf(c.id)
+        : 1000;
+  const ordered = [...all].sort((a, b) => rank(a) - rank(b));
   return ordered.map((choice, index) => ({ ...choice, recommended: index === 0 }));
 }

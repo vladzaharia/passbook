@@ -37,6 +37,7 @@ describe('passDevice', () => {
       'galaxy',
       false,
     ],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 8) SamsungBrowser/25.0 Mobile', 5, 'android', false],
     [undefined, undefined, 'other', false],
   ])('%s (%s touch points)', (ua, touch, device, inApp) => {
     expect(passDevice(ua, touch)).toEqual({ device, inApp });

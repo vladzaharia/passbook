@@ -46,6 +46,7 @@ export const HOLDER_COPY = {
   savedOffline: 'Saved on this device',
   removeSaved: 'Remove from this device',
   saveOfflineLine: 'Shows this barcode without signal. The door still checks the pass.',
+  connectToRefresh: 'Connect to refresh this pass.',
   saveOfflineFailed: 'Could not save. Try again.',
   /** The pass email, under the Apple badge: it reads the same on any phone. */
   emailAddLine: 'The Apple Wallet button adds on iPhone or Mac. On other phones, open your pass.',

@@ -60,7 +60,7 @@ describe('walletChoices', () => {
     it('prefers Google on Android and Samsung then Google on a Galaxy', () => {
       const input = { apple: true, browserHref: '/barcode', offers };
       expect(ids({ device: pixel, ...input })).toEqual(['google', 'browser', 'samsung', 'apple']);
-      expect(ids({ device: galaxy, ...input })).toEqual(['samsung', 'browser', 'google', 'apple']);
+      expect(ids({ device: galaxy, ...input })).toEqual(['samsung', 'google', 'browser', 'apple']);
     });
 
     it('shows a Galaxy holder Google and no Samsung trace while Samsung is disabled', () => {

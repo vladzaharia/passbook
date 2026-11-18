@@ -156,8 +156,9 @@ async function presentationHtml(res: Response, secrets: string[]): Promise<strin
   expect(res.headers.get('cache-control')).toContain('no-store');
   const html = await res.text();
   expect(html).toMatch(/<!doctype html>/i);
-  // The only script is the nonced offline-save control; it carries no credential.
-  expect(html.match(/<script\b/gi)?.length ?? 0).toBeLessThanOrEqual(1);
+  // A script only comes with the offline-save control, once and nonced; it carries no credential.
+  expect(html.match(/<script\b/gi)?.length ?? 0).toBe(html.includes('data-offline') ? 1 : 0);
+  if (html.includes('data-offline')) expect(html).toMatch(/<script nonce="[^"]+">/);
   const body = bodyOf(html);
   for (const secret of secrets) expect(body).not.toContain(secret);
   return html;
@@ -224,6 +225,7 @@ describe('presentation barcode', () => {
       orgName: 'Cedar Gate',
       passTitle: 'Guest admission',
       mode: 'live',
+      expiresAt: null,
       barcode: {
         format: 'PKBarcodeFormatCode128',
         bcid: 'code128',
@@ -568,6 +570,7 @@ describe('presentation barcode', () => {
     for (const path of ['/p/short/barcode', `/p/${'z'.repeat(43)}/barcode`, oldPath]) {
       const res = await publicGet(path);
       expect(res.status).toBe(404);
+      expect(await res.clone().text()).not.toMatch(/<script\b/i);
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     }
     const html = await presentationHtml(
@@ -619,6 +622,17 @@ describe('presentation barcode', () => {
     const owner = await (await ownerGet(ownerPath(pass))).text();
     expect(owner).not.toContain('data-offline');
     expect(owner).not.toMatch(/<script\b/);
+  });
+
+  it("hands the saved copy the pass's own expiry", async () => {
+    const pass = await passWith({
+      json: { ...primaryJson, expirationDate: '2099-01-01T00:00:00Z' },
+    });
+    expect((await presentationForPass(ctx, pass)).expiresAt).toBe(
+      Date.parse('2099-01-01T00:00:00Z'),
+    );
+    const html = await (await publicGet(await publicPath(pass))).text();
+    expect(html).toContain(`data-expires="${Date.parse('2099-01-01T00:00:00Z')}"`);
   });
 
   it('serves the barcode page worker from /p/sw.js, which no token can reach', async () => {

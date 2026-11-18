@@ -43,6 +43,8 @@ export interface PresentationPageProps {
   backHref: string;
   /** A pass page's own barcode may be saved on this device; a bundle's member's may not. */
   offline?: boolean;
+  /** The pass's expiry (ms); the saved copy keeps it. */
+  expiresAt?: number | null;
   nonce: string;
   theme?: PageTheme;
 }
@@ -61,7 +63,12 @@ export function renderPresentationPage(props: PresentationPageProps): string {
         <p>This barcode is separate from the QR code that opens your pass page.</p>
         <p>Browser pages do not provide NFC.</p>
         {props.offline && props.barcode ? (
-          <div className="presentation-offline" data-offline hidden>
+          <div
+            className="presentation-offline"
+            data-offline
+            {...(props.expiresAt ? { 'data-expires': props.expiresAt } : {})}
+            hidden
+          >
             <button type="button" className="btn outline" data-save>
               {HOLDER_COPY.saveOffline}
             </button>
