@@ -192,4 +192,16 @@ describe('what the lines say', () => {
     );
     expect(v).toMatchObject({ zone: 'Gym', in: 42, capacity: 60 });
   });
+
+  it('takes the day and the time of Not open yet from the same instant', () => {
+    // The event opens Saturday; this pass is valid from Sunday 10:00.
+    const sunday = Date.UTC(2026, 10, 15, 10, 0);
+    const l = line('not_yet_valid', { at: sunday, event: EVENT });
+    expect(l?.sub).toMatch(/^Opens Sun /);
+  });
+
+  it('does not read 0 in when a zone count is unknown', () => {
+    const l = line('capacity_full', { occupancy: occupancyInfo({ inNow: null }), event: null });
+    expect(l?.sub).toBe('At capacity.');
+  });
 });

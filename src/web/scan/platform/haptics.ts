@@ -1,3 +1,5 @@
+import { getNativeCapabilities } from './native-capabilities.ts';
+
 /** SA-14: one short pulse for ok, two for a heads-up, three for a refusal. Milliseconds on, off, on... */
 export const HAPTIC_PATTERNS = {
   ok: [40],
@@ -19,11 +21,12 @@ export function buzz(
   nav: Pick<Navigator, 'vibrate'> | undefined = typeof navigator === 'undefined'
     ? undefined
     : navigator,
+  native: boolean = getNativeCapabilities()?.haptics === true,
 ): boolean {
-  const base = (HAPTIC_PATTERNS as Record<string, readonly number[] | undefined>)[kind];
-  if (!base) return false;
-  const pattern = [...base];
-  if (bridge) {
+  if (!Object.hasOwn(HAPTIC_PATTERNS, kind)) return false;
+  const pattern = [...HAPTIC_PATTERNS[kind as keyof typeof HAPTIC_PATTERNS]];
+  // Only a shell that says it plays the op gets it; every other shell would drop it.
+  if (bridge && native) {
     bridge.postMessage(JSON.stringify({ version: 1, op: 'haptic', pattern }));
     return true;
   }

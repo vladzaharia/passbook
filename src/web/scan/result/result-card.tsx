@@ -44,6 +44,8 @@ export function ResultCard({
     managers: { id: string; name: string }[];
     /** Staff sign-in is off: the PIN is a manager code, no name picked. */
     code?: boolean;
+    /** Whose PIN approves here; Desk staff too changes the words. */
+    approvals?: 'managers' | 'desk';
     /** The last PIN was refused. */
     note?: PinNote | undefined;
     onApprove: (staffId: string | undefined, pin: string) => void;
@@ -64,7 +66,7 @@ export function ResultCard({
   const noReentry =
     o.reason === 'already_done' && o.checkIn?.mode === 'in_out' && !o.checkIn.inside;
   const now = o.at ?? 0;
-  const line = verdictLine(o, clock ?? Date.now());
+  const line = verdictLine(o, clock ?? Date.now(), { desk: desk?.approvals === 'desk' });
   const held = accessLines(o, now);
   const pill = directionPill(o);
   const systemTitle =
@@ -230,6 +232,7 @@ export function ResultCard({
               <ApprovalSheet
                 managers={desk.managers}
                 code={desk.code ?? false}
+                desk={desk.approvals === 'desk'}
                 action={o.action?.label}
                 note={desk.note}
                 onApprove={desk.onApprove}

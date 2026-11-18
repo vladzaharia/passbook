@@ -17,12 +17,20 @@ const doorSettings = `COALESCE(
   (SELECT s.settings FROM scanning_sessions s WHERE s.id=q.session_id),
   (SELECT d.settings FROM scanners d WHERE d.id=q.scanner_id))`;
 
-/** The door's own switch, the scan's event, or its zone or any zone above it: Full is final. */
+/**
+ * The door's own switch, the scan's event, or the place it counts at (the session's first tracked
+ * zone, as `scanPlace` picks it) or any zone above it. `hardLimited` in occupancy/rules.ts is the
+ * same rule for the verdict and the commit.
+ */
 const hardLimitSql = `MAX(
   COALESCE(CASE WHEN json_valid(${doorSettings}) THEN json_extract(${doorSettings},'$.hardLimit') END, 0),
   COALESCE((SELECT e.hard_limit FROM scan_events e WHERE e.id=q.event_id AND e.org_id=q.org_id), 0),
-  COALESCE((WITH RECURSIVE up(id, parent_id, hard_limit) AS (
-      SELECT z.id, z.parent_id, z.hard_limit FROM scan_zones z WHERE z.id=q.zone_id AND z.org_id=q.org_id
+  COALESCE((WITH RECURSIVE place(id) AS (
+      SELECT z.id FROM scanning_session_zones l JOIN scan_zones z ON z.id=l.zone_id AND z.org_id=q.org_id
+        AND z.occupancy<>'off' AND z.archived_at IS NULL
+      WHERE l.session_id=q.session_id ORDER BY l.sort, l.zone_id LIMIT 1),
+    up(id, parent_id, hard_limit) AS (
+      SELECT z.id, z.parent_id, z.hard_limit FROM scan_zones z JOIN place ON z.id=place.id
       UNION ALL SELECT z.id, z.parent_id, z.hard_limit FROM scan_zones z JOIN up ON z.id=up.parent_id AND z.org_id=q.org_id)
     SELECT MAX(hard_limit) FROM up), 0))`;
 

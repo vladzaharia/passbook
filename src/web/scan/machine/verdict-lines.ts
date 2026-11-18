@@ -40,7 +40,15 @@ export function lineValues(o: ScanOutcome, now: number): Values {
   return {
     template: o.template?.name ?? 'This pass',
     event: o.event?.name ?? '',
-    day: o.event ? weekday(o.event.startsAt) : o.at ? weekday(o.at) : '',
+    // `not_yet_valid` opens at `at` (the pass's own start); only a wrong event names the event's day.
+    day:
+      o.reason !== 'wrong_event' && o.at
+        ? weekday(o.at)
+        : o.event
+          ? weekday(o.event.startsAt)
+          : o.at
+            ? weekday(o.at)
+            : '',
     date: formatDateTime(o.at),
     time: o.at ? formatTime(o.at) : '',
     ago: o.previous ? agoText(Math.max(0, now - o.previous.at)) : '',
@@ -52,8 +60,8 @@ export function lineValues(o: ScanOutcome, now: number): Values {
         ? SCAN_COPY.verdict.already.checkIn
         : SCAN_COPY.verdict.already.other,
     place: place ?? '',
-    in: o.counts.event?.arrived ?? 0,
-    capacity: o.counts.event?.capacity ?? 0,
+    in: o.occupancy ? (o.occupancy.inNow ?? 0) : (o.counts.event?.arrived ?? 0),
+    capacity: o.occupancy?.capacity ?? o.counts.event?.capacity ?? 0,
     seconds: Math.ceil((o.retryAfterMs ?? 1000) / 1000),
     wait: `${Math.max(1, Math.ceil((o.cooldownRemainingMs ?? 0) / 60000))} min`,
     input: v?.label ?? 'This value',
@@ -70,11 +78,12 @@ export function lineValues(o: ScanOutcome, now: number): Values {
 }
 
 /** The reason's copy, or the variant for a reason whose outcome lacks what the main line names. */
-function pick(o: ScanOutcome): ScanLine | null {
+function pick(o: ScanOutcome, desk: boolean): ScanLine | null {
   const reason = o.reason;
   if (!reason) return null;
   const line = SCAN_REASON_COPY[reason];
   const v = SCAN_REASON_VARIANTS;
+  if (reason === 'needs_approval' && desk) return v.needs_approval;
   if (reason === 'already_done' && !o.previous) return { ...line, sub: v.already_done.noPrevious };
   if (reason === 'wrong_event' && !o.event) return { ...line, sub: v.wrong_event.noEvent };
   if (reason === 'not_yet_valid' && !o.at && !o.event)
@@ -82,10 +91,16 @@ function pick(o: ScanOutcome): ScanLine | null {
   if (reason === 'ended' && !o.event) return { headline: v.ended.noPlace, sub: line.sub };
   if (reason === 'capacity_full') {
     const place = o.occupancy?.place.name ?? o.event?.name;
-    const known = o.counts.event?.capacity != null || o.occupancy?.capacity != null;
+    const known = o.occupancy
+      ? o.occupancy.inNow != null && o.occupancy.capacity != null
+      : o.counts.event?.capacity != null;
     return {
       headline: place ? line.headline : v.capacity_full.noPlace,
-      sub: known ? line.sub : v.capacity_full.noCapacity,
+      sub: known
+        ? line.sub
+        : o.occupancy && o.occupancy.inNow == null
+          ? v.capacity_full.noCount
+          : v.capacity_full.noCapacity,
     };
   }
   if (reason === 'outside_hours' && !o.access?.nextOpenAt)
@@ -96,8 +111,12 @@ function pick(o: ScanOutcome): ScanLine | null {
 }
 
 /** The headline and sub of a reason for this outcome. Null when it has none. */
-export function verdictLine(o: ScanOutcome, now: number): ScanLine | null {
-  const line = pick(o);
+export function verdictLine(
+  o: ScanOutcome,
+  now: number,
+  opts: { desk?: boolean } = {},
+): ScanLine | null {
+  const line = pick(o, opts.desk === true);
   if (!line) return null;
   const values = lineValues(o, now);
   return { headline: scanLine(line.headline, values), sub: scanLine(line.sub, values) };

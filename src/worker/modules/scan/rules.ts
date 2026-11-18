@@ -71,8 +71,8 @@ const ACCESS_REASONS = new Set([
 ]);
 
 /**
- * Which policy lets an override through. A full place always needs a manager, whatever `letInAgain`
- * says, and so does every access refusal: a `not_yet_valid` that was refused (not held) is an access one.
+ * Which policy lets an override through. A full place follows `letInAgain` (and a Hard limit closes it
+ * for everyone); every access refusal needs a manager: a `not_yet_valid` that was refused (not held) is an access one.
  */
 export function overridePolicyKind(
   reason: string | null,

@@ -7,6 +7,7 @@ import {
   instantOf,
   nextClear,
   type OccZone,
+  hardLimited,
   scanDirection,
   zonePlace,
 } from './rules.ts';
@@ -126,5 +127,18 @@ describe('a lost entry names one reason, in step 15 order', () => {
     expect(why([inGym], full, { waivers: { cap: true } })).toBeNull();
     const gym = entryPlan(tree, 'gym', 0, null) as EntryPlan;
     expect(entryReason(gym, { rows: [inGym], counts: new Map() }, 0)?.reason).toBe('still_inside');
+  });
+});
+
+describe('hardLimited', () => {
+  const zones = [
+    zone('site', { hardLimit: true }),
+    zone('room', { parentId: 'site' }),
+    zone('annex'),
+  ];
+  it('is true for the zone and for every zone under one that has a Hard limit', () => {
+    expect(hardLimited(zones, 'site')).toBe(true);
+    expect(hardLimited(zones, 'room')).toBe(true);
+    expect(hardLimited(zones, 'annex')).toBe(false);
   });
 });

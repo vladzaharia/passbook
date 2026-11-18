@@ -84,6 +84,14 @@ export function zoneChain(zones: readonly OccZone[], id: string): OccZone[] {
   return out;
 }
 
+/**
+ * Whether Full is final where an entry at `zoneId` counts: the zone or any zone above it has a Hard
+ * limit. The one rule for the verdict, the override check and the commit (the SQL in
+ * `repo-act-override.ts` mirrors it for the console's early answer).
+ */
+export const hardLimited = (zones: readonly OccZone[], zoneId: string): boolean =>
+  zoneChain(zones, zoneId).some((z) => z.hardLimit === true);
+
 function belowOf(zones: readonly OccZone[], id: string): string[] {
   const byId = new Map(zones.map((z) => [z.id, z]));
   return subtree(indexZones(zones), id)

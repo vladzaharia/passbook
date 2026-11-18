@@ -23,6 +23,7 @@ import { passAnswerFence, underAuthorityCtes } from './repo-read-fences.ts';
 import { ObservedScanAmbiguity } from './repo-scan-effect.ts';
 import { pristineClaimFence, releaseClaimStmt } from './repo-scans.ts';
 import type { Found } from './resolve.ts';
+import { hardLimited } from './occupancy/rules.ts';
 import { deskMayApprove, overridePolicyKind, scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { ANY_MANAGER, type PinStaffSnapshot, preparePinReservation } from './staff-pin.ts';
@@ -111,7 +112,12 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
               ...pa,
               settings: {
                 ...pa.settings,
-                hardLimit: override.doorHardLimit,
+                hardLimit:
+                  override.doorHardLimit ||
+                  (found.occupancy
+                    ? hardLimited(found.occupancy.zones, found.occupancy.zone.id)
+                    : false) ||
+                  found.admission?.event?.hardLimit === true,
                 ...(override.doorLetInAgain ? { letInAgain: override.doorLetInAgain } : {}),
               },
             },
@@ -193,12 +199,14 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       failureStatements: [failActionClaimStmt(ctx.env.DB, ownedClaim, claimAt)],
       onFailureCommitted: recordFailure,
     };
+    // No one approves their own request.
+    const others = approver.filter((a) => a.id !== (authorityActor.staff?.id ?? null));
     const results = reservation ? await ctx.env.DB.batch(reservation.stmts) : [];
     const verified =
       reservation && approval
         ? await (approval.staffId
-            ? reservation.verify(results, approver[0] ?? null, approval.pin, true, failure, deskOk)
-            : reservation.verifyAny(results, approver, approval.pin, failure, false, deskOk))
+            ? reservation.verify(results, others[0] ?? null, approval.pin, true, failure, deskOk)
+            : reservation.verifyAny(results, others, approval.pin, failure, false, deskOk))
         : null;
     if (reservation && !verified) throw new StaleScanAuthority();
     const commit = () =>
@@ -214,6 +222,7 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
         action,
         override,
         approvedBy: verified?.id ?? null,
+        approvedRole: verified?.role ?? null,
         approvedAuthEpoch: verified?.authEpoch ?? null,
         reservation,
         credentialTombstoneRefs: credentials.credentialTombstoneRefs,

@@ -108,10 +108,14 @@ export const SCAN_DISPLAY_COPY = {
 export const SCAN_REASON_VARIANTS = {
   outside_hours: { noHours: '{plan} has no hours this week. Ask a manager.' },
   zone_not_included: { noZone: '{plan} opens no zone here. Ask a manager.' },
+  needs_approval: {
+    headline: 'Needs a manager or desk lead',
+    sub: '{action} needs approval.',
+  },
   already_done: { noPrevious: 'Scanned earlier. Check ID.' },
   wrong_event: { noEvent: 'This scanner is for a different event.' },
   not_yet_valid: { noWhen: 'Not open yet. Try again later.' },
-  capacity_full: { noPlace: 'Full', noCapacity: '{in} in.' },
+  capacity_full: { noPlace: 'Full', noCapacity: '{in} in.', noCount: 'At capacity.' },
   ended: { noPlace: 'Ended' },
 } as const;
 
@@ -231,6 +235,10 @@ export const SCAN_COPY = {
     action: 'Use manager code',
     title: 'Manager code',
     verb: '{action} needs a manager.',
+    /** Under Approvals: Desk staff too. */
+    titleDesk: 'Approval code',
+    verbDesk: '{action} needs a manager or desk lead.',
+    approver: 'Approver',
     field: '6-digit code',
     continue: 'Continue',
     wrong: 'Wrong code. {n} tries left.',

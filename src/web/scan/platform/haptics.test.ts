@@ -14,7 +14,7 @@ describe('buzz', () => {
   it('goes through the native bridge when there is one, and not the Vibration API', () => {
     const bridge = { postMessage: vi.fn() };
     const vibrate = vi.fn(() => true);
-    expect(buzz('refused', bridge, { vibrate })).toBe(true);
+    expect(buzz('refused', bridge, { vibrate }, true)).toBe(true);
     expect(bridge.postMessage).toHaveBeenCalledTimes(1);
     expect(JSON.parse(bridge.postMessage.mock.calls[0]?.[0] as string)).toEqual({
       version: 1,
@@ -22,6 +22,19 @@ describe('buzz', () => {
       pattern: [...HAPTIC_PATTERNS.refused],
     });
     expect(vibrate).not.toHaveBeenCalled();
+  });
+
+  it('a shell that does not report haptics gets the Vibration API, not the op', () => {
+    const bridge = { postMessage: vi.fn() };
+    const vibrate = vi.fn(() => true);
+    expect(buzz('ok', bridge, { vibrate }, false)).toBe(true);
+    expect(bridge.postMessage).not.toHaveBeenCalled();
+    expect(vibrate).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a kind that is not its own', () => {
+    expect(buzz('constructor', undefined, { vibrate: vi.fn() })).toBe(false);
+    expect(buzz('toString', undefined, { vibrate: vi.fn() })).toBe(false);
   });
 
   it('falls back to the Vibration API on the web', () => {
@@ -32,7 +45,7 @@ describe('buzz', () => {
 
   it('does nothing where neither exists (iOS Safari), or for a kind with no pattern', () => {
     expect(buzz('ok', undefined, {} as Navigator)).toBe(false);
-    expect(buzz('ready', { postMessage: vi.fn() }, { vibrate: vi.fn() })).toBe(false);
+    expect(buzz('ready', { postMessage: vi.fn() }, { vibrate: vi.fn() }, true)).toBe(false);
     expect(buzz('system', undefined, { vibrate: vi.fn() })).toBe(false);
   });
 });

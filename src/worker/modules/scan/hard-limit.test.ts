@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
-import { accessTemplate } from './access-test-fixtures.ts';
+import { ACCESS, accessTemplate, makeZone, uid } from './access-test-fixtures.ts';
 import { kit, setupActionFixture } from './act-test-fixtures.ts';
 import { scanAt, trackedZone } from './occupancy-scan-test-fixtures.ts';
 import { bodyOf, doorAndMonitor, overrideAs } from './overrides-test-fixtures.ts';
@@ -60,6 +60,45 @@ describe('a zone Hard limit', () => {
     const r = await fullZone(false, { hardLimit: true });
     expect(r.held.overridable).toBe(false);
     expect((await overrideAs(r.monitor.headers, r.held.scanId)).status).toBe(403);
+  });
+});
+
+describe('a session with an access zone and a different place', () => {
+  it('closes Full at the place the entry counts at, not the zone that granted it', async () => {
+    const lobbyKey = `lobby-${uid()}`;
+    const lobby = await makeZone(lobbyKey);
+    const tpl = await accessTemplate({
+      ...ACCESS,
+      plans: [
+        { id: 'lobby_only', label: 'Lobby only', kind: 'always', zones: [{ zone: lobbyKey }] },
+      ],
+    });
+    // Pool counts people (it is the session's first tracked zone); the plan opens only the Lobby.
+    const pool = await trackedZone({ occupancy: 'track', capacity: 1 });
+    await run(kit.env.DB, 'UPDATE scan_zones SET hard_limit = 1 WHERE id = ?', [pool]);
+    const rig = await doorAndMonitor(tpl, [pool, lobby], {});
+    await scanAt(rig.door, await kit.scanPass(tpl, { plan: 'lobby_only' }));
+    const held = await scanAt(rig.door, await kit.scanPass(tpl, { plan: 'lobby_only' }));
+    expect(held).toMatchObject({ kind: 'heads_up', reason: 'capacity_full', overridable: false });
+    expect((await overrideAs(rig.monitor.headers, held.scanId)).status).toBe(403);
+  });
+});
+
+describe('a parent Hard limit and a full child', () => {
+  it('is final on the verdict and on the override alike, and says why', async () => {
+    const tpl = await accessTemplate();
+    const site = await trackedZone({ occupancy: 'track' });
+    await run(kit.env.DB, 'UPDATE scan_zones SET hard_limit = 1, capacity = 50 WHERE id = ?', [
+      site,
+    ]);
+    const room = await trackedZone({ occupancy: 'track', capacity: 1, parentId: site });
+    const rig = await doorAndMonitor(tpl, [room], {});
+    await scanAt(rig.door, await kit.scanPass(tpl, { plan: 'gold' }));
+    const held = await scanAt(rig.door, await kit.scanPass(tpl, { plan: 'gold' }));
+    expect(held).toMatchObject({ reason: 'capacity_full', overridable: false });
+    const res = await overrideAs(rig.monitor.headers, held.scanId);
+    expect(res.status).toBe(403);
+    expect(await res.text()).toContain('Full. No one can let them in.');
   });
 });
 

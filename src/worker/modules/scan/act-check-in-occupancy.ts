@@ -11,8 +11,8 @@ import {
   type ExitPlan,
   entryPlan,
   exitPlan,
+  hardLimited,
   type Waivers,
-  zonePlace,
 } from './occupancy/rules.ts';
 import {
   addEntry,
@@ -86,7 +86,10 @@ export function planOccupancyCommit(
   }
   const access = i.access;
   if (!access) return null;
-  const waivers = occupancyWaivers(i.override);
+  const waived = occupancyWaivers(i.override);
+  // A Hard limit is never waived, whatever the override and its approver said.
+  const waivers =
+    waived.cap && hardLimited(o.zones, o.zone.id) ? { ...waived, cap: false } : waived;
   const entry = entryPlan(o.zones, o.zone.id, now, null, waivers);
   if (!entry) return null;
   const waive = waiveOf(i.override);
@@ -199,10 +202,9 @@ export function occupancyAfter(
     !won && c.entry
       ? lostEntry(c.entry, results.slice(0, loss), c.now, { waivers: c.waivers })
       : null;
-  const fullZone = why?.fullAt ? o.zones.find((z) => zonePlace(z.id) === why.fullAt) : undefined;
   return {
     view: occupancyView(o, { state, since, stayMs, inNow }),
     lost: why?.reason ?? null,
-    hard: fullZone?.hardLimit === true,
+    hard: hardLimited(o.zones, o.zone.id),
   };
 }

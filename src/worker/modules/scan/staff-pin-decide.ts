@@ -55,6 +55,7 @@ export function anyManagerDecision(
 ) {
   let found: PinStaffSnapshot | null = null;
   let count = 0;
+  const matched: PinStaffSnapshot[] = [];
   return {
     async decide(): Promise<'match' | 'miss' | 'ambiguous'> {
       for (const manager of managers) {
@@ -62,12 +63,15 @@ export function anyManagerDecision(
           manager.orgId === orgId &&
           manager.disabledAt === null &&
           (anyRole || manager.role === 'manager' || (deskOk && manager.role === 'desk'));
-        if (usable && (await matches(pinEnv, manager.id, pin, manager.pinHash))) {
-          found = manager;
-          count++;
-        }
+        if (usable && (await matches(pinEnv, manager.id, pin, manager.pinHash)))
+          matched.push(manager);
       }
       await matches(pinEnv, staffId, pin, DUMMY_PIN_HASH);
+      // A code shared by a Manager and a Desk member is the Manager's.
+      const managersOnly = matched.filter((m) => m.role === 'manager');
+      const pool = managersOnly.length > 0 ? managersOnly : matched;
+      count = pool.length;
+      found = pool.length === 1 ? (pool[0] ?? null) : null;
       return count === 1 ? 'match' : count > 1 ? 'ambiguous' : 'miss';
     },
     found: () => found,

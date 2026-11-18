@@ -222,6 +222,14 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                 Vibrator vibrator = getSystemService(Vibrator.class);
                 if (vibrator != null && vibrator.hasVibrator()) vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
                 break;
+            case "haptic":
+                JSONArray pattern = json.optJSONArray("pattern");
+                int[] values = pattern == null ? null : new int[pattern.length()];
+                for (int i = 0; values != null && i < values.length; i++) values[i] = pattern.optInt(i, -1);
+                long[] timings = Haptics.timings(values);
+                Vibrator buzz = getSystemService(Vibrator.class);
+                if (timings != null && buzz != null && buzz.hasVibrator()) buzz.vibrate(VibrationEffect.createWaveform(timings, -1));
+                break;
             default: notice("Verifier requested an unsupported reader operation.");
         }
     }
@@ -358,6 +366,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         JSONObject customerDisplay = new JSONObject();
         put(customerDisplay, "supported", false); put(customerDisplay, "available", false);
         put(customerDisplay, "active", false); put(capabilities, "customerDisplay", customerDisplay);
+        put(capabilities, "haptics", true);
         return capabilities;
     }
 

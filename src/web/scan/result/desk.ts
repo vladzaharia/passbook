@@ -6,6 +6,8 @@ export function deskOf(
   loop: ScanState['loop'],
   staffList: ScanSession['staffList'],
   dispatch: (event: ScanEvent) => void,
+  approvals?: 'managers' | 'desk',
+  selfId?: string | null,
 ) {
   return {
     picker: loop.s === 'member' ? loop.picker : null,
@@ -15,7 +17,12 @@ export function deskOf(
     onCancel: () => dispatch({ type: 'cancel' }),
     note: loop.s === 'verdict' ? loop.pin : undefined,
     code: staffList === null,
-    managers: (staffList ?? []).filter((m) => m.role === 'manager'),
+    approvals: approvals ?? 'managers',
+    // Whoever may approve here, never the signed-in person asking.
+    managers: (staffList ?? []).filter(
+      (m) =>
+        m.id !== selfId && (m.role === 'manager' || (approvals === 'desk' && m.role === 'desk')),
+    ),
     onApprove: (staffId: string | undefined, pin: string) =>
       dispatch({ type: 'approve', ...(staffId ? { staffId } : {}), pin }),
   };

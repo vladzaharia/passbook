@@ -203,7 +203,7 @@ function SessionStaff({
       />
       <FormField
         label="Approvals"
-        help="Whose PIN approves a risky action. Setting a value and hard refusals always need a Manager."
+        help="Whose PIN approves a risky action. Setting a value, an amount over its max, undo and hard refusals always need a Manager."
       >
         {(p) => (
           <Select
