@@ -78,7 +78,7 @@ export function LiveScreen({
         void refetch();
         return;
       }
-      if ('resolved' in parsed.data) return;
+      if ('resolved' in parsed.data || 'enroll' in parsed.data) return;
       const snapshot = parsed.data;
       cursor = snapshot.cursor;
       setRows((previous) => {
