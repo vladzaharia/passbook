@@ -15,6 +15,7 @@ import {
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { walletProviderDisabledReason, walletProviderEnabled } from './provider-policy.ts';
+import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
 import { walletSyncHasWork } from './repo-sync-work.ts';
 import { runWalletProviderOperation } from './sync-operation.ts';
@@ -38,6 +39,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
   ctx = snapshotWalletCredentialContext(ctx);
   const db = ctx.env.DB;
   await purgeExpiredWalletOffers(db, ctx.clock.now(), BATCH_SIZE);
+  await purgeExpiredGoogleCallbackReplays(db, ctx.clock.now());
   // Nothing queued means nothing to pin: a fresh deployment has no keyset until its first pass.
   if (!(await walletSyncHasWork(db, ctx.clock.now()))) return;
   let credentialKeysetCommitment: string;

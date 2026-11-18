@@ -1,8 +1,9 @@
 // What production holds that the base seed (legacy-seed.ts) lacks, as the old Worker (c25b9c09) wrote it.
 import { sha256Hex } from '../../src/worker/platform/ids.ts';
+import { TEST_NOW } from '../helpers/index.ts';
 import { AT, type Legacy, q } from './legacy-seed.ts';
 
-const RECENT = Date.now() - 60_000;
+const RECENT = TEST_NOW - 60_000;
 /** The cookie of the legacy session; its id_hash is the SHA-256 of this value. */
 export const LEGACY_COOKIE = 'legacy-session-cookie-0123456789abcdef';
 export const LEGACY_PHOTO_KEY = 'photos/org-a/prod-live-1.jpg';

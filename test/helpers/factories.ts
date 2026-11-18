@@ -364,6 +364,8 @@ export async function makeSession(
     userId: string;
     roles?: ('admin' | 'user')[];
     amr?: 'oidc' | 'magic_link' | 'breakglass';
+    /** Idle and absolute lifetime, for suites that advance their clock past the defaults. */
+    lifetimeMs?: number;
   },
 ): Promise<SessionFixture> {
   const cookieValue = f.ids.token();
@@ -382,8 +384,8 @@ export async function makeSession(
       csrf,
       now,
       now,
-      now + 3600_000,
-      now + 12 * 3600_000,
+      now + (options.lifetimeMs ?? 3600_000),
+      now + (options.lifetimeMs ?? 12 * 3600_000),
     ],
   );
   // A sign-in records the roles it granted (`recordLogin`); deferred platform work re-reads them.

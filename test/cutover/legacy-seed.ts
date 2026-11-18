@@ -10,12 +10,13 @@ import {
   fakeAssets,
 } from '../../src/worker/modules/templates/testing.ts';
 import { sha256Hex } from '../../src/worker/platform/ids.ts';
+import { TEST_NOW } from '../helpers/index.ts';
 import { sealSeed } from './seal-seed.ts';
 
 /** Three days before the test run, so scanner expiry and session windows behave like production. */
-export const AT = Date.now() - 3 * 86_400_000;
+export const AT = TEST_NOW - 3 * 86_400_000;
 /** A scan from a minute before the cutover, inside the undo window. */
-const RECENT = Date.now() - 60_000;
+const RECENT = TEST_NOW - 60_000;
 export const OWNER = 'owner@example.com';
 export const SHAPES = [
   'baked-unassigned',

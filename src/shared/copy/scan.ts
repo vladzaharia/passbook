@@ -180,7 +180,7 @@ export const SCAN_COPY = {
     whoIsScanning: "Who's scanning?",
     enterPin: 'Enter your PIN',
     wrongPin: 'Wrong PIN. {n} tries left.',
-    pinLocked: 'Too many tries. Try again in 5 min.',
+    pinLocked: 'Too many tries. Try again in {wait}.',
     screenOnlyTitle: 'This device is a screen.',
     screenOnlyLine: 'Ask an admin to change it.',
   },
@@ -211,7 +211,7 @@ export const SCAN_COPY = {
     field: '6-digit code',
     continue: 'Continue',
     wrong: 'Wrong code. {n} tries left.',
-    locked: 'Too many tries. Try again in 5 min.',
+    locked: 'Too many tries. Try again in {wait}.',
   },
   undo: {
     undone: '{action} undone',

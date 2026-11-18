@@ -310,8 +310,8 @@ describe('send-email', () => {
       "SELECT id FROM outbox WHERE kind = 'email' AND pass_id = ?",
       [a.id],
     );
-    await run(kit.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [Date.now(), a.id]);
-    await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [Date.now(), b.id]);
+    await run(kit.env.DB, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [kit.clock.now(), a.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [kit.clock.now(), b.id]);
     const got = await bundleOf(await api(`/bundles/${bundle.id}`, { headers: fake.admin() }));
     expect(got.passes).toEqual([expect.objectContaining({ id: b.id, status: 'voided' })]);
     const before = kit.mailer.sent.length;

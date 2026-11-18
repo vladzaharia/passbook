@@ -8,6 +8,7 @@ import {
   makeOrg,
   makeUser,
   persistTemplate,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -72,7 +73,7 @@ export function createGuardHarness() {
   }
 
   async function build(over: Record<string, unknown> = {}, fakeStore = false) {
-    clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+    clock = new ManualClock(TEST_NOW);
     const env = await makeEnv({
       RL_SCAN: fakeRateLimiter({ limit: 1000 }),
       RL_SCAN_ORG: fakeRateLimiter({ limit: 1000 }),

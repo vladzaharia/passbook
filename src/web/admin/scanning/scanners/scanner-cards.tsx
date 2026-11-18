@@ -14,7 +14,7 @@ import {
   toast,
   useFormErrors,
 } from '@/web/ui/index.ts';
-import { RelTime } from '../../passes/detail/rel-time.tsx';
+import { RelTime } from '../../../ui/rel-time.tsx';
 import { useUpdateScanner } from '../scanner-api.ts';
 import { acceptsOf, draftErrors, draftOf, type ScannerDraft, settingsOf } from './scanner-draft.ts';
 import { ScannerFields } from './scanner-fields.tsx';

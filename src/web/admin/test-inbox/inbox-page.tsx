@@ -2,7 +2,6 @@ import { Link } from '@tanstack/react-router';
 import { FlaskConical, Package, Plus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { ENTITY } from '../../lib/entities.ts';
-import { formatRelative } from '../../lib/format.ts';
 import { setMode, useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useMemberships, useSession } from '../../lib/session.ts';
@@ -16,8 +15,10 @@ import {
   ListRows,
   LoadMore,
   PageHeader,
+  RelTime,
   RowLink,
   SkeletonRows,
+  useNow,
 } from '../../ui/index.ts';
 import { useSettings } from '../settings/queries.ts';
 import { EmailPreview } from './preview.tsx';
@@ -76,7 +77,7 @@ export function InboxPage({
     scope.membership && id === scope.membership.orgId ? scope.membership.orgName : id;
   const list = useCapturedEmails(orgId);
   const rows = canRead && mode === 'test' ? (list.data?.pages.flatMap((p) => p.items) ?? []) : [];
-  const now = Date.now();
+  const now = useNow();
 
   return (
     <>
@@ -158,7 +159,11 @@ export function InboxPage({
                         {m.subject}
                       </RowLink>
                     }
-                    meta={`To ${m.to} · ${orgName(m.orgId)} · ${formatRelative(m.createdAt, now)}`}
+                    meta={
+                      <>
+                        To {m.to} · {orgName(m.orgId)} · <RelTime at={m.createdAt} now={now} />
+                      </>
+                    }
                   />
                 ))}
               </ListRows>

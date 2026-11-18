@@ -99,7 +99,12 @@ describe('wallet route isolation', () => {
       return { success: true };
     };
     const limits = { limit };
-    const appEnv = { ...env, RL_APPLE_IP: limits, RL_APPLE: limits } as unknown as AppEnv;
+    const appEnv = {
+      ...env,
+      RL_APPLE_IP: limits,
+      RL_APPLE: limits,
+      RL_GOOGLE_CALLBACK: limits,
+    } as unknown as AppEnv;
     const headers = { 'cf-connecting-ip': '203.0.113.25', 'content-type': 'application/json' };
 
     const google = await app.request(
@@ -112,7 +117,7 @@ describe('wallet route isolation', () => {
       appEnv,
     );
     expect(google.status).toBe(413);
-    expect(keys).toEqual(['RL_APPLE_IP:google:203.0.113.25']);
+    expect(keys).toEqual(['RL_GOOGLE_CALLBACK:203.0.113.25']);
 
     keys.length = 0;
     const samsung = await app.request(
