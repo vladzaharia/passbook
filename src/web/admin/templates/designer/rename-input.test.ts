@@ -55,4 +55,17 @@ describe('renaming an input', () => {
     });
     expect(sampleDoc().manifest.scan).toBeUndefined();
   });
+
+  it('follows a window input and leaves a similarly named input alone', () => {
+    let doc = docWithInputs();
+    for (const o of [
+      { op: 'scan-enable' },
+      { op: 'scan-window', patch: { from: 'starts', until: 'ends' } },
+    ] as Op[])
+      doc = applyOp(doc, o);
+    const next = applyOp(doc, { op: 'input-set', name: 'starts', patch: { name: 'opens' } });
+    expect(next.manifest.scan).toMatchObject({ window: { from: 'opens', until: 'ends' } });
+    const sibling = applyOp(next, { op: 'input-set', name: 'ends', patch: { name: 'closes' } });
+    expect(sibling.manifest.scan).toMatchObject({ window: { from: 'opens', until: 'closes' } });
+  });
 });
