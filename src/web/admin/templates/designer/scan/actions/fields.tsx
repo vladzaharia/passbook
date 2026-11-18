@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ValidationIssue } from '@/passkit/types.ts';
+import { digitsMessage, fromMinor, parseMoney } from '@/shared/money.ts';
 import { FormField, Input, NumberField } from '../../../../../ui/index.ts';
 import type { Op } from '../../apply.ts';
 import { useDesigner } from '../../context.tsx';
@@ -110,5 +111,69 @@ export function IssueList({
         </li>
       ))}
     </ul>
+  );
+}
+
+/** The text of an amount in the currency's own decimals. */
+export const moneyText = (value: number | undefined, digits: number): string =>
+  value === undefined ? '' : value.toFixed(digits);
+
+/** One amount in minor units: "4.50" in, a whole number of cents out; extra decimals are refused. */
+export function parseAmount(text: string, digits: number): { value: number } | { error: string } {
+  const parsed = parseMoney(text, digits);
+  if ('error' in parsed)
+    return { error: parsed.error === 'digits' ? digitsMessage(digits) : 'Enter an amount.' };
+  return { value: fromMinor(parsed.minor, digits) };
+}
+
+/** A money amount typed as decimal text; applied when the field is left, empty removes it. */
+export function MoneyEdit({
+  label,
+  value,
+  digits,
+  onCommit,
+  help,
+  error,
+}: {
+  label: string;
+  value: number | undefined;
+  digits: number;
+  onCommit: (value: number | null) => void;
+  help?: string;
+  error?: string | undefined;
+}) {
+  const [text, setText] = useState(moneyText(value, digits));
+  const [own, setOwn] = useState<string | undefined>();
+  const commit = () => {
+    if (text.trim() === '') {
+      setOwn(undefined);
+      onCommit(null);
+      return;
+    }
+    const r = parseAmount(text, digits);
+    if ('error' in r) return setOwn(r.error);
+    setOwn(undefined);
+    setText(moneyText(r.value, digits));
+    onCommit(r.value);
+  };
+  return (
+    <FormField label={label} help={help} error={own ?? error}>
+      {(control) => (
+        <Input
+          {...control}
+          inputMode="decimal"
+          className="w-36 tabular-nums"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit();
+            }
+          }}
+        />
+      )}
+    </FormField>
   );
 }

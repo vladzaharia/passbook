@@ -1,3 +1,4 @@
+import { currencyOf, isCurrencyInput } from '@/passkit/template/scan-actions.ts';
 import type {
   ScanAction,
   ScanActionKind,
@@ -5,6 +6,7 @@ import type {
   ScanRepeat,
   ScanRole,
 } from '@/passkit/types.ts';
+import { minorDigits } from '@/shared/money.ts';
 import { DEFAULT_SCAN_ACTION, type ResolvedScanAction, scanOf } from '@/shared/scan-defaults.ts';
 import { readInputs } from '../../inputs.ts';
 import { type DesignDoc, type Dict, isRecord } from '../../model.ts';
@@ -143,3 +145,12 @@ export function actionSummary(a: ResolvedScanAction): string {
 }
 
 export const defaultAction = (): ScanAction => ({ ...DEFAULT_SCAN_ACTION });
+
+/** The currency's minor digits when the action moves a money input, else null. */
+export function moneyDigits(doc: DesignDoc, action: ScanAction): number | null {
+  if ((action.kind !== 'add' && action.kind !== 'take') || !action.input) return null;
+  const props = isRecord(doc.manifest.inputs) ? doc.manifest.inputs.properties : undefined;
+  const schema = isRecord(props) ? props[action.input] : undefined;
+  if (!isCurrencyInput(schema)) return null;
+  return minorDigits(currencyOf(doc.manifest as never, action.input));
+}

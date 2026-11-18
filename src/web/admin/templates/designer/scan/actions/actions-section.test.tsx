@@ -155,4 +155,66 @@ describe('actions section', () => {
       unmount();
     }
   });
+
+  describe('money', () => {
+    const moneyDoc = (currency: string, ...ops: Op[]) => {
+      let doc = scanDoc(
+        { op: 'scan-action-add', kind: 'take' },
+        { op: 'scan-action-set', id: 'take', patch: { input: 'balance' } },
+        ...ops,
+      );
+      const props = (doc.manifest.inputs as { properties: Record<string, Record<string, unknown>> })
+        .properties;
+      props.balance = { ...props.balance, 'x-format': 'currency', 'x-currency': currency };
+      doc = { ...doc, manifest: { ...doc.manifest } };
+      return doc;
+    };
+
+    it('takes a decimal amount in the currency digits, as exact major units', async () => {
+      const user = userEvent.setup();
+      render(<Harness doc={moneyDoc('USD')} open="take" />);
+      const field = screen.getByRole('textbox', { name: 'Amount' });
+      await user.clear(field);
+      await user.type(field, '4,5{Enter}');
+      expect(actions()[1]?.amount).toBe(4.5);
+      const again = screen.getByRole('textbox', { name: 'Amount' });
+      expect(again).toHaveValue('4.50');
+      await user.clear(again);
+      await user.type(again, '4.505{Enter}');
+      expect(screen.getByText('Use at most 2 decimals.')).toBeInTheDocument();
+      expect(actions()[1]?.amount).toBe(4.5);
+    });
+
+    it('refuses decimals for a whole-unit currency and accepts three for BHD', async () => {
+      const user = userEvent.setup();
+      const { unmount } = render(<Harness doc={moneyDoc('JPY')} open="take" />);
+      const jpy = screen.getByRole('textbox', { name: 'Amount' });
+      await user.clear(jpy);
+      await user.type(jpy, '1.5{Enter}');
+      expect(screen.getByText('Use a whole amount.')).toBeInTheDocument();
+      unmount();
+      render(<Harness doc={moneyDoc('BHD')} open="take" />);
+      const bhd = screen.getByRole('textbox', { name: 'Amount' });
+      await user.clear(bhd);
+      await user.type(bhd, '0.125{Enter}');
+      expect(actions()[1]?.amount).toBe(0.125);
+    });
+
+    it('presets and the staff maximum follow the currency', async () => {
+      const user = userEvent.setup();
+      render(<Harness doc={moneyDoc('USD')} open="take" />);
+      await user.click(screen.getByRole('radio', { name: 'Staff enter' }));
+      await user.type(screen.getByRole('textbox', { name: 'Quick amounts' }), '2.5, 10{Enter}');
+      expect(actions()[1]?.amount).toEqual({ max: 10, presets: [2.5, 10] });
+      const most = screen.getByRole('textbox', { name: 'Most' });
+      await user.clear(most);
+      await user.type(most, '99.99{Enter}');
+      expect(actions()[1]?.amount).toMatchObject({ max: 99.99 });
+    });
+
+    it('a plain number input keeps the number field', () => {
+      render(<Harness doc={scanDoc({ op: 'scan-action-add', kind: 'take' })} open="take" />);
+      expect(screen.getByRole('spinbutton', { name: 'Amount' })).toBeInTheDocument();
+    });
+  });
 });

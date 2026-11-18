@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import type { ScanAction } from '@/passkit/types.ts';
+import { digitsMessage } from '@/shared/money.ts';
 import { SegmentedControl } from '../../../../../ui/index.ts';
 import { useDesigner } from '../../context.tsx';
-import { ListEdit, NumEdit } from './fields.tsx';
+import { ListEdit, MoneyEdit, NumEdit, parseAmount } from './fields.tsx';
 import type { ActionPatch } from './ops.ts';
 
 type Staff = { max: number; presets?: number[]; default?: number };
@@ -12,7 +14,10 @@ export function AmountFields({
   action,
   amount,
   errors,
+  digits,
 }: {
+  /** Minor digits of the currency when the input is money; null for plain numbers. */
+  digits: number | null;
   action: ScanAction;
   /** The amount in effect, defaults applied. */
   amount: ScanAction['amount'];
@@ -24,11 +29,52 @@ export function AmountFields({
   const staff = typeof amount === 'object' && amount !== null;
   const detail = staff ? (amount as Staff) : null;
   const merge = (k: string) => `act-${k}:${action.id}`;
-  const patchStaff = (next: Partial<Staff>) => {
+  const patchStaff = (next: Partial<Staff>) => set(withStaff(next), merge('amount'));
+  const [presetError, setPresetError] = useState<string | undefined>();
+  const money = digits !== null;
+  /** A number, or money typed as decimal text in the currency's digits. */
+  const amountField = (
+    label: string,
+    value: number | undefined,
+    key: string,
+    write: (v: number | null) => ActionPatch,
+    opts: { error?: string | undefined; help?: string; min: number },
+  ) =>
+    money ? (
+      <MoneyEdit
+        key={`${key}:${value}`}
+        label={label}
+        value={value}
+        digits={digits}
+        help={opts.help}
+        error={opts.error}
+        onCommit={(v) => set(write(v))}
+      />
+    ) : (
+      <NumEdit
+        label={label}
+        value={value}
+        merge={merge(key)}
+        min={opts.min}
+        help={opts.help}
+        error={opts.error}
+        op={(v) => ({ op: 'scan-action-set', id: action.id, patch: write(v) })}
+      />
+    );
+  const withStaff = (next: { [K in keyof Staff]?: Staff[K] | null }): ActionPatch => {
     const out: Record<string, unknown> = { ...detail, ...next };
     for (const k of Object.keys(out)) if (out[k] === undefined || out[k] === null) delete out[k];
-    if (Array.isArray(out.presets) && out.presets.length === 0) delete out.presets;
-    set({ amount: out as unknown as Staff }, merge('amount'));
+    return { amount: out as unknown as Staff };
+  };
+  const presets = (list: string[]) => {
+    const values: number[] = [];
+    for (const text of list) {
+      const r = money ? parseAmount(text, digits) : { value: Number(text) };
+      if ('error' in r) return setPresetError(r.error);
+      if (Number.isFinite(r.value)) values.push(r.value);
+    }
+    setPresetError(undefined);
+    patchStaff({ presets: values });
   };
   return (
     <div className="grid gap-4">
@@ -44,60 +90,42 @@ export function AmountFields({
       />
       {detail ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          <NumEdit
-            label="Most"
-            value={detail.max}
-            merge={merge('max')}
-            min={1}
-            error={errors.amount}
-            op={(v) => ({
-              op: 'scan-action-set',
-              id: action.id,
-              patch: { amount: { ...detail, max: v ?? DEFAULT_MAX } },
-            })}
-          />
-          <NumEdit
-            label="Starts at"
-            value={detail.default}
-            merge={merge('start')}
-            min={1}
-            op={(v) => {
-              const { default: _d, ...rest } = detail;
-              return {
-                op: 'scan-action-set',
-                id: action.id,
-                patch: { amount: v === null ? rest : { ...rest, default: v } },
-              };
-            }}
-          />
+          {amountField('Most', detail.max, 'max', (v) => withStaff({ max: v ?? DEFAULT_MAX }), {
+            error: errors.amount,
+            min: 1,
+          })}
+          {amountField('Starts at', detail.default, 'start', (v) => withStaff({ default: v }), {
+            min: 1,
+          })}
           <ListEdit
+            key={(detail.presets ?? []).join(',')}
             label="Quick amounts"
-            help="Up to six, separated by commas."
-            value={(detail.presets ?? []).map(String)}
-            onCommit={(list) =>
-              patchStaff({ presets: list.map(Number).filter((n) => Number.isFinite(n)) })
+            help={
+              money
+                ? `Up to six, separated by commas. ${digitsMessage(digits)}`
+                : 'Up to six, separated by commas.'
             }
+            error={presetError}
+            value={(detail.presets ?? []).map((p) => (money ? p.toFixed(digits) : String(p)))}
+            onCommit={presets}
           />
         </div>
       ) : (
-        <NumEdit
-          label="Amount"
-          value={typeof amount === 'number' ? amount : undefined}
-          merge={merge('fixed')}
-          min={1}
-          error={errors.amount}
-          op={(v) => ({ op: 'scan-action-set', id: action.id, patch: { amount: v ?? 1 } })}
-        />
+        amountField(
+          'Amount',
+          typeof amount === 'number' ? amount : undefined,
+          'fixed',
+          (v) => ({ amount: v ?? 1 }),
+          { error: errors.amount, min: 1 },
+        )
       )}
-      <NumEdit
-        label="Ask to confirm above"
-        value={action.confirmAbove}
-        merge={merge('above')}
-        min={0}
-        help="Larger amounts need a second tap."
-        error={errors.confirmAbove}
-        op={(v) => ({ op: 'scan-action-set', id: action.id, patch: { confirmAbove: v } })}
-      />
+      {amountField(
+        'Ask to confirm above',
+        action.confirmAbove,
+        'above',
+        (v) => ({ confirmAbove: v }),
+        { error: errors.confirmAbove, help: 'Larger amounts need a second tap.', min: 0 },
+      )}
     </div>
   );
 }

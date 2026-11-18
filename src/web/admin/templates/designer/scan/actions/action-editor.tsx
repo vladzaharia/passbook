@@ -5,7 +5,7 @@ import { useDesigner } from '../../context.tsx';
 import { PickEdit, TextEdit } from '../../controls.tsx';
 import { AmountFields } from './amount-fields.tsx';
 import { IssueList, NumEdit } from './fields.tsx';
-import { actionSummary, inputsFor, KINDS, REPEATS, ROLES } from './model.ts';
+import { actionSummary, inputsFor, KINDS, moneyDigits, REPEATS, ROLES } from './model.ts';
 import { SetValue } from './set-value.tsx';
 
 const NONE = '__none';
@@ -37,6 +37,7 @@ export function ActionEditor({
   const set = (patch: Partial<Record<keyof ScanAction, unknown>>) =>
     edit({ op: 'scan-action-set', id: action.id, patch: patch as never });
   const inputs = inputsFor(doc, action.kind);
+  const digits = moneyDigits(doc, action);
   const kind = KINDS.find((k) => k.value === action.kind);
   const merge = (k: string) => `act-${k}:${action.id}`;
   const loose = issues.filter((i) => !FIELDS.has(keyOf(i)));
@@ -81,6 +82,7 @@ export function ActionEditor({
       {action.kind === 'add' || action.kind === 'take' ? (
         <AmountFields
           action={action}
+          digits={digits}
           amount={resolved.amount}
           errors={{ amount: at(issues, 'amount'), confirmAbove: at(issues, 'confirmAbove') }}
         />
