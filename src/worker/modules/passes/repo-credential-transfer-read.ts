@@ -297,7 +297,7 @@ export function listPendingCredentialTransfers(
   return all<{ id: string }>(
     db,
     `SELECT id FROM pass_credential_transfers
-    WHERE state = 'pending' AND (? IS NULL OR id > ?) AND id <= ? ORDER BY id LIMIT ?`,
-    [cursor.after, cursor.after, cursor.upper, limit],
+    WHERE state = 'pending' ${cursor.after === null ? '' : 'AND id > ?'} AND id <= ? ORDER BY id LIMIT ?`,
+    [...(cursor.after === null ? [] : [cursor.after]), cursor.upper, limit],
   );
 }

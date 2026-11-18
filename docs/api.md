@@ -189,10 +189,20 @@ the candidate response exposes those bindings and the normalized projection for 
 independent reviewer must approve that candidate. A source release or account change makes the
 projection ineligible until a new candidate is reviewed and published.
 
-Samsung publication requires fresh, candidate-specific provider verification. Google candidates
-can be authored and reviewed, but publication and offers remain blocked until external issuer
-approval and replay-safe Save behavior can be verified; configuration or an admin assertion alone
-does not establish provider readiness.
+A Google candidate sends `projection: {schema: 2, provider: "google", approvedOmissions}`. The
+server compiles the version and stores the pins: compiler revision, a hash of the version's
+`wallets` block, a hash of the fidelity report and the omissions. `approvedOmissions` must name
+exactly the omissions the report has (`capability` or `capability@path`), else the candidate is
+refused with `WALLET_PROJECTION_CONFLICT`; a target that is off or blocked gets
+`WALLET_PROJECTION_BLOCKED`. Approval and publication need the pins as they are then; a compiler
+update re-opens review. A published Google release whose compiler later adds an omission pauses new
+offers until a new candidate is approved; updates to passes already on the wallet continue. Schema 1
+Google candidates cannot be published (`WALLET_PROJECTION_SCHEMA`). Publication does not enable
+issuance: the provider gate and offers stay closed.
+
+Samsung publication requires fresh, candidate-specific provider verification and a schema 1
+projection until its runtime moves to the compiler. Configuration or an admin assertion alone does
+not establish provider readiness.
 
 Rollback is `POST /templates/{id}/releases/rollback` with `{orgId, mode, provider, releaseId,
 candidateHash, expectedGeneration, reason}`; `reason` is a nonblank string of at most 500

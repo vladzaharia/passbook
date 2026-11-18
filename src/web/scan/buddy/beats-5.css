@@ -1,0 +1,158 @@
+/* Access and occupancy beats (buddy-motion.md; access.md 4.6; occupancy.md 7.5).
+   gate: Access granted. The gold pass (c3) tips down like a barrier arm, lifts, and waves you through.
+   bye: every exit. The teal pass (c1) is the hand and waves twice.
+   relent: a desk let them in. Eyes pop for 150 ms, then the gate. The store starts it at once, so its
+   own delay is the 150 ms the other beats wait. Cut-safe: snap at cut is at most 2 units. */
+@keyframes wl-b-gate-arm {
+  0% {
+    rotate: 0deg;
+  }
+  14% {
+    rotate: 34deg;
+    translate: 0 2px;
+  }
+  42% {
+    rotate: -30deg;
+    translate: 0 -3px;
+    animation-timing-function: ease-in-out;
+  }
+  70% {
+    rotate: -6deg;
+  }
+  82% {
+    rotate: -24deg;
+  }
+  100% {
+    rotate: 0deg;
+    translate: 0 0;
+  }
+}
+@keyframes wl-b-gate-body {
+  0% {
+    scale: 1;
+  }
+  14% {
+    scale: 1.04 0.96;
+  }
+  32%,
+  100% {
+    scale: 1;
+  }
+}
+@keyframes wl-b-gate-lean {
+  25%,
+  75% {
+    rotate: 3deg;
+  }
+}
+@keyframes wl-b-gate-look {
+  25%,
+  75% {
+    translate: -1.2px -1.2px;
+  }
+}
+@keyframes wl-b-gate-joy {
+  45%,
+  70% {
+    scale: 1.15 1.25;
+  }
+}
+@keyframes wl-b-bye-hand {
+  0% {
+    rotate: 0deg;
+  }
+  20%,
+  50%,
+  80% {
+    rotate: -34deg;
+  }
+  35%,
+  65% {
+    rotate: -22deg;
+  }
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-b-bye-lean {
+  20%,
+  80% {
+    rotate: -3deg;
+  }
+}
+@keyframes wl-b-bye-look {
+  20%,
+  80% {
+    translate: 1.2px -1.2px;
+  }
+}
+@keyframes wl-b-relent-eyes {
+  0%,
+  100% {
+    scale: 1;
+  }
+  20%,
+  70% {
+    scale: 1.06 1.22;
+    translate: 0 -0.6px;
+  }
+}
+@keyframes wl-b-relent-brow {
+  20%,
+  70% {
+    translate: 0 -1px;
+  }
+}
+@keyframes wl-b-relent-body {
+  20%,
+  70% {
+    scale: 0.99 1.02;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy:is([data-beat="gate"], [data-beat="relent"])[data-run] [data-part="c3"] {
+    animation: wl-b-gate-arm 550ms var(--art-sp) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="gate"][data-run] [data-body] {
+    animation: wl-b-gate-body 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy:is([data-beat="gate"], [data-beat="relent"])[data-run] [data-trunk] {
+    animation: wl-b-gate-lean 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy:is([data-beat="gate"], [data-beat="relent"])[data-run] [data-look] {
+    animation: wl-b-gate-look 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy:is([data-beat="gate"], [data-beat="relent"])[data-run] [data-part="joy"] {
+    animation: wl-b-gate-joy 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="bye"][data-run] [data-part="c1"] {
+    animation: wl-b-bye-hand 550ms var(--art-sp) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="bye"][data-run] [data-trunk] {
+    animation: wl-b-bye-lean 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="bye"][data-run] [data-look] {
+    animation: wl-b-bye-look 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="bye"][data-run] [data-part="joy"] {
+    animation: wl-s-cheer-joy 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="relent"][data-run] [data-part="eyes"] {
+    animation: wl-b-relent-eyes 150ms var(--art-mv) backwards;
+  }
+  .wl-buddy[data-beat="relent"][data-run] [data-part="br"] {
+    animation: wl-b-relent-brow 150ms var(--art-mv) backwards;
+  }
+  .wl-buddy[data-beat="relent"][data-run] [data-body] {
+    animation: wl-b-relent-body 150ms var(--art-mv) backwards;
+  }
+}
+/* Reduced motion: the end pose at once. Gate: the arm up. Bye: the hand up. */
+@media (prefers-reduced-motion: reduce) {
+  .wl-buddy:is([data-beat="gate"], [data-beat="relent"]) [data-part="c3"] {
+    rotate: -8deg;
+  }
+  .wl-buddy[data-beat="bye"] [data-part="c1"] {
+    rotate: -34deg;
+  }
+}

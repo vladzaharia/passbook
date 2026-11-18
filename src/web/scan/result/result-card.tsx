@@ -6,6 +6,7 @@ import { formatDateTime, formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { DisplayPanels } from '../display/display-panels.tsx';
 import { scanIcon } from '../display/icons.ts';
+import { accessLines, accessValues, directionPill } from '../machine/access-view.ts';
 import type { Draft, PinNote, ScanOutcome } from '../machine/types.ts';
 import { ApprovalSheet } from './approval-sheet.tsx';
 import { IdentityRow } from './identity-row.tsx';
@@ -60,6 +61,9 @@ export function ResultCard({
   const noReentry =
     o.reason === 'already_done' && o.checkIn?.mode === 'in_out' && !o.checkIn.inside;
   const line = o.reason ? SCAN_REASON_COPY[o.reason] : null;
+  const now = o.at ?? 0;
+  const held = accessLines(o, now);
+  const pill = directionPill(o);
   const values = {
     template: o.template?.name ?? 'This pass',
     event: 'this event',
@@ -81,21 +85,28 @@ export function ResultCard({
     verb: 'Checked in',
     noun: 'check-in',
     wait: `${Math.ceil((o.cooldownRemainingMs ?? 0) / 60000)} min`,
+    ...accessValues(o, now),
   };
   const systemTitle =
     o.action?.id === 'undo'
       ? 'Undone'
-      : ok
-        ? o.action?.kind === 'check_in'
-          ? o.checkIn?.direction === 'out'
-            ? 'Checked out'
-            : SCAN_COPY.verdict.checkedIn
-          : (o.action?.label ?? 'Done')
-        : line
-          ? scanLine(line.headline, values)
-          : 'Choose an action';
+      : held
+        ? held.title
+        : ok
+          ? o.action?.kind === 'check_in'
+            ? o.checkIn?.direction === 'out'
+              ? 'Checked out'
+              : SCAN_COPY.verdict.checkedIn
+            : (o.action?.label ?? 'Done')
+          : line
+            ? scanLine(line.headline, values)
+            : 'Choose an action';
   const custom =
-    ok && Boolean(d?.header.title) && o.action?.id !== 'undo' && o.checkIn?.direction !== 'out';
+    ok &&
+    Boolean(d?.header.title) &&
+    o.action?.id !== 'undo' &&
+    o.checkIn?.direction !== 'out' &&
+    pill !== 'out';
   const title = noExit
     ? 'Check-out not allowed'
     : noReentry
@@ -166,8 +177,15 @@ export function ResultCard({
               <p>This pass only allows check-ins.</p>
             ) : noReentry ? (
               <p>This event allows one entry.</p>
-            ) : line?.sub ? (
-              <p>{scanLine(line.sub, values)}</p>
+            ) : pill || held?.sub || line?.sub ? (
+              <p>
+                {pill ? (
+                  <span className="scan-dir-pill" data-dir={pill} data-testid="scan-dir-pill">
+                    {SCAN_COPY.direction[pill]}
+                  </span>
+                ) : null}
+                {held ? held.sub : line?.sub ? scanLine(line.sub, values) : null}
+              </p>
             ) : null}
           </div>
           {holdMs ? (

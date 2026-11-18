@@ -3,6 +3,7 @@ import { IdSchema, JsonSchema } from './common.ts';
 import { AssetEntrySchema, TemplateDetailSchema, ValidationReportSchema } from './templates.ts';
 
 const NameSchema = z.string().min(1).max(200);
+const VersionNameSchema = z.string().min(1).max(64);
 
 /** A file of the new version: an existing one by content hash, or a PNG sent as base64. */
 export const VersionAssetInputSchema = z.union([
@@ -16,6 +17,8 @@ export const SaveVersionSchema = z.object({
   assets: z.array(VersionAssetInputSchema).max(60).default([]),
   /** Validate and build only; nothing is stored. */
   dryRun: z.boolean().default(false),
+  /** The version of this template the designer opened; a fork's new version keeps its upstream base. */
+  parentVersion: VersionNameSchema.optional(),
 });
 
 export const SaveVersionResponseSchema = z.object({
@@ -26,6 +29,8 @@ export const SaveVersionResponseSchema = z.object({
   created: z.boolean(),
   /** The saved or previewed version has the same known pass build key as the active version. */
   displayOnly: z.boolean(),
+  /** The save was made from a version older than the template's newest. */
+  behindTip: z.boolean().optional(),
   report: ValidationReportSchema,
   /** Files of the version, derived scales included. */
   assets: z.array(AssetEntrySchema),
@@ -41,6 +46,8 @@ export const UseBlueprintSchema = z.object({
   orgId: IdSchema,
   name: z.string().trim().min(1).max(120),
   version: SaveVersionSchema.pick({ passJson: true, manifest: true, assets: true }).optional(),
+  /** The blueprint version the draft opened from; defaults to its current one. */
+  baseVersion: VersionNameSchema.optional(),
 });
 export type UseBlueprintRequest = z.infer<typeof UseBlueprintSchema>;
 

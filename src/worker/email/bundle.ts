@@ -68,7 +68,7 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
     '',
     `Add all to Apple Wallet: ${input.addAllUrl}`,
     `${OPEN_LABEL}: ${input.pageUrl}`,
-    HOLDER_COPY.openOnApple,
+    HOLDER_COPY.emailAddLine,
     '',
     PRIVATE_LINE,
     ...footer.text,
@@ -80,7 +80,7 @@ ${muted('0 0 16px', `${escapeHtml(input.bundleName)} · ${HOLDER_COPY.count(inpu
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('bundle')) : ''}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border-collapse:collapse">${rows}</table>
 ${actions}
-${muted('0 0 24px', escapeHtml(HOLDER_COPY.openOnApple))}
+${muted('0 0 24px', escapeHtml(HOLDER_COPY.emailAddLine))}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
 ${footer.html}`;
   const buddyBase = safeUrl(input.buddyBase);

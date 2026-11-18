@@ -2,9 +2,11 @@
  * The scan machine: one pure reducer for both postures (AC 3, SA 7.5).
  * `reduce(state, event, { now, id }) -> { state, cmds }`. Time and ids come in; nothing is read here.
  */
+import { isAccessEvent, type MachineEvent } from './access-events.ts';
 import { pruneIgnore } from './ignore.ts';
 import type { Env, MachineState } from './internal.ts';
 import { same } from './internal.ts';
+import { resolved, turn } from './reduce-access.ts';
 import { pick } from './reduce-action.ts';
 import { answer, fail } from './reduce-answer.ts';
 import { amount, approve, cancel, confirm, value } from './reduce-desk.ts';
@@ -21,12 +23,14 @@ import {
 import { camera, resume, setter, start, visible } from './reduce-env.ts';
 import { read } from './reduce-read.ts';
 import { tick } from './reduce-tick.ts';
-import type { ReduceResult, ScanEvent, ScanMachineDeps, ScanState } from './types.ts';
+import type { ReduceResult, ScanMachineDeps, ScanState } from './types.ts';
 
-export function reduce(state: ScanState, event: ScanEvent, deps: ScanMachineDeps): ReduceResult {
+export function reduce(state: ScanState, event: MachineEvent, deps: ScanMachineDeps): ReduceResult {
   const env: Env = deps;
   const ignore = pruneIgnore(state.ignore, deps.now);
   const s: MachineState = ignore === state.ignore ? state : { ...state, ignore };
+  if (isAccessEvent(event))
+    return event.type === 'turn' ? turn(s, event, env) : resolved(s, event, env);
   switch (event.type) {
     case 'start':
       return start(s, env);

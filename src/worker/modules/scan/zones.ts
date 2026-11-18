@@ -15,6 +15,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { addDueRecompute } from './occupancy/recompute.ts';
 import { addZoneTapOut } from './occupancy/service.ts';
 import { accessTemplates } from './repo-access.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
@@ -127,7 +128,7 @@ function assertClocks(rows: readonly ZoneRow[], id: string): void {
   const byId = new Map(rows.map((r) => [r.id, r]));
   for (const node of subtree(index, id))
     if (byId.get(node.id)?.clearAt && effectiveTimeZone(index, node.id) === null)
-      throw invalid('Set a time zone on the top zone first.', 'ZONE_CLEAR_NEEDS_TZ');
+      throw invalid('Clear at needs a time zone on the top zone.', 'ZONE_CLEAR_NEEDS_TIME_ZONE');
 }
 
 export async function createZone(
@@ -279,6 +280,19 @@ export async function updateZone(
   const moved = input.parentId !== undefined && input.parentId !== row.parentId;
   if (archive || moved || (row.occupancy !== 'off' && next.occupancy === 'off'))
     addZoneTapOut(g, tree, now);
+  else if (next.occupancy !== 'off') {
+    // Max stay, Clear at or the clock moved: the passes inside get their new due time.
+    const clock = input.timeZone !== undefined && input.timeZone !== row.timeZone;
+    if (clock || next.maxStayMinutes !== row.maxStayMinutes || next.clearAt !== row.clearAt)
+      await addDueRecompute(
+        g,
+        ctx.env.DB,
+        orgId,
+        rows.map((r) => (r.id === id ? next : r)),
+        clock ? tree : [id],
+        now,
+      );
+  }
   g.add(
     audited(g, ctx, {
       orgId,

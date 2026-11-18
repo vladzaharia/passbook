@@ -53,8 +53,8 @@ export async function macRows(
 ): Promise<MacRow[]> {
   const rows = await all<Raw>(
     db,
-    selectMacs(purpose, '(? IS NULL OR t.id > ?)', 'ORDER BY t.id LIMIT ?'),
-    [after, after, limit],
+    selectMacs(purpose, after === null ? '1' : 't.id > ?', 'ORDER BY t.id LIMIT ?'),
+    [...(after === null ? [] : [after]), limit],
   );
   return rows.map(toRow);
 }

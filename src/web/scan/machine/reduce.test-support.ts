@@ -1,5 +1,6 @@
 /** Helpers for reducer tests: a fake id counter, a step function and input builders. */
 import type { ScanInput } from '../input/types.ts';
+import type { MachineEvent } from './access-events.ts';
 import { FIXTURE_NOW, fixtureInput, fixtureOutcome } from './fixture-data.test-support.ts';
 import { reduce } from './reduce.ts';
 import type { Cmd, ReduceResult, ScanEvent, ScanOutcome, ScanState } from './types.ts';
@@ -15,7 +16,7 @@ export const nextId = () => `01900000-0000-7000-8000-${(++counter).toString(16).
 
 export const at = (ms: number) => FIXTURE_NOW + ms;
 
-export function step(state: ScanState, event: ScanEvent, now = FIXTURE_NOW): ReduceResult {
+export function step(state: ScanState, event: MachineEvent, now = FIXTURE_NOW): ReduceResult {
   return reduce(state, event, { now, id: nextId });
 }
 

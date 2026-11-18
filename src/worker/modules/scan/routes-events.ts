@@ -16,6 +16,7 @@ import { getOrgAccess } from '../orgs/access.ts';
 import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { captureEventAuthority, eventTarget, eventView, listEvents } from './events.ts';
 import { archiveEvent, assignScanners, createEvent, updateEvent } from './events-mutations.ts';
+import { registerConsoleInsideRoutes } from './routes-occupancy-console.ts';
 
 /** Console events: /api/v1/scan-events. Mode comes from the console's header, never the body. */
 export const scanEventsRoutes = createRouter();
@@ -23,6 +24,7 @@ guard(scanEventsRoutes, requireTenantSession);
 scanEventsRoutes.use('*', limitBody(64 * 1024));
 
 const TAG = 'scan-events';
+registerConsoleInsideRoutes(scanEventsRoutes, TAG, 'event');
 
 async function eventAuthority(c: C, id: string, capability: 'scanning:read' | 'scanning:manage') {
   const ctx = serviceContext(c);
