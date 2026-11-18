@@ -47,6 +47,26 @@ describe('pass imports migration', () => {
     await insert('i4', 'done');
   });
 
+  it('keeps the id of the check run on the draft', async () => {
+    await run(env.DB, "UPDATE pass_imports SET check_id = 'run-1' WHERE id = 'i3'");
+    expect(
+      (
+        await first<{ check_id: string }>(
+          env.DB,
+          "SELECT check_id FROM pass_imports WHERE id = 'i3'",
+        )
+      )?.check_id,
+    ).toBe('run-1');
+    expect(
+      (
+        await first<{ check_id: string | null }>(
+          env.DB,
+          "SELECT check_id FROM pass_imports WHERE id = 'i4'",
+        )
+      )?.check_id,
+    ).toBeNull();
+  });
+
   it('keeps workflow runs, snapshot sets, snapshots and the key-commitment lock across the rebuild', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
