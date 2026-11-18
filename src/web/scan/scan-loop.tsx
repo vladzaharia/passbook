@@ -19,11 +19,13 @@ import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
 import { CameraLayer } from './ui/camera-layer.tsx';
-import { CountChip, ReaderChip, SyncChip, TestChip } from './ui/chips.tsx';
+import { ReaderChip, SyncChip, TestChip } from './ui/chips.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import type { Announcement } from './ui/live-announcer.tsx';
 import { type CameraChoice, ScanMenu } from './ui/scan-menu.tsx';
 import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
+import { stripOf } from './ui/strip-of.ts';
+import { useAccessUi } from './ui/use-access-ui.tsx';
 import './buddy/beats.css';
 
 const OperatorPanel = lazy(() =>
@@ -121,6 +123,15 @@ export function ScanLoop({
     dispatch({ type: 'overlay', open: next ? 'lookup' : null });
     setSheet(next);
   };
+  const access = useAccessUi({
+    runtime,
+    session,
+    api,
+    counts,
+    online: s.online,
+    overlay: s.overlay,
+    dispatch,
+  });
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
   const menu = (
     <ScanMenu
@@ -208,11 +219,7 @@ export function ScanLoop({
               <TestChip mode={scanner?.mode ?? getMode()} />
               {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
               {!s.online ? <SyncChip state={{ kind: 'offline', queued: 0 }} /> : null}
-              <CountChip
-                count={counts.event?.arrived ?? counts.today}
-                capacity={counts.event?.expected}
-                today={!counts.event}
-              />
+              {access.chips}
             </>
           ),
         }}
@@ -272,26 +279,15 @@ export function ScanLoop({
           />
         }
         dockRow={
-          <DoorDock outcome={result} runtime={runtime} open={open} onError={setCameraError} />
+          <DoorDock
+            outcome={result}
+            runtime={runtime}
+            open={open}
+            onError={setCameraError}
+            inside={access.inside}
+          />
         }
-        strip={
-          last
-            ? {
-                kind:
-                  last.outcome.kind === 'ok'
-                    ? 'ok'
-                    : last.outcome.kind === 'heads_up'
-                      ? 'heads_up'
-                      : last.outcome.kind === 'refused'
-                        ? 'refused'
-                        : 'system',
-                title:
-                  last.outcome.display?.identity.holder ?? last.outcome.action?.label ?? 'Scan',
-                meta: formatTime(last.at),
-                undoable: Boolean(lastUndo),
-              }
-            : null
-        }
+        strip={stripOf(last, Boolean(lastUndo))}
         announcement={announcement}
         on={{
           start: () => {
@@ -304,6 +300,7 @@ export function ScanLoop({
           },
         }}
       />
+      {access.layer}
       <ScanOverlays
         allowPeople={scanner?.settings.lookup ?? true}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}

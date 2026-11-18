@@ -34,6 +34,12 @@ import {
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { modeHeaders } from '../../lib/mode.ts';
+import {
+  InsideListSchema,
+  type InsideQuery,
+  type MarkOutRequest,
+  MarkOutResultSchema,
+} from '../inside/inside-types.ts';
 import { ScanApiError } from './errors.ts';
 
 export { ScanApiError } from './errors.ts';
@@ -269,6 +275,21 @@ export function createScanApi(deps: ScanApiDeps) {
       ),
     batch: (body: z.infer<typeof ScanBatchRequestSchema>, call?: Call) =>
       request('POST', '/batch', ScanBatchResultSchema, body, call),
+    inside: (query: InsideQuery, call?: Call) => {
+      const q = new URLSearchParams();
+      for (const [key, value] of Object.entries(query))
+        if (value !== undefined) q.set(key, String(value));
+      const qs = q.toString();
+      return request(
+        'GET',
+        qs ? `/live/inside?${qs}` : '/live/inside',
+        InsideListSchema,
+        undefined,
+        call,
+      );
+    },
+    markOut: (body: MarkOutRequest, call?: Call) =>
+      request('POST', '/mark-out', MarkOutResultSchema, body, call),
   };
 }
 
