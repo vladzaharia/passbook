@@ -61,7 +61,7 @@ export interface RenderedEmail {
   fromName?: string;
 }
 
-export const ADD_LINE = HOLDER_COPY.openOnApple;
+export const ADD_LINE = HOLDER_COPY.emailAddLine;
 const PRIVATE_LINE = 'Keep this email private. Its links open your pass.';
 const OPEN_LABEL = 'Open your pass';
 

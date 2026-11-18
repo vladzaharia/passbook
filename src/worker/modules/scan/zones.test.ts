@@ -88,7 +88,7 @@ describe('zones: create and read', () => {
         clearAt: '03:00',
       }),
       422,
-      'ZONE_CLEAR_NEEDS_TZ',
+      'ZONE_CLEAR_NEEDS_TIME_ZONE',
     );
     const gym = await make({
       occupancy: 'enforce',
@@ -109,7 +109,7 @@ describe('zones: create and read', () => {
     await expectProblem(
       await zones(`/${tz.id}`, 'PATCH', { timeZone: null }),
       422,
-      'ZONE_CLEAR_NEEDS_TZ',
+      'ZONE_CLEAR_NEEDS_TIME_ZONE',
     );
   });
 });

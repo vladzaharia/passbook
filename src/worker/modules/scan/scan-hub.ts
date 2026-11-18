@@ -98,7 +98,7 @@ export class ScanHub extends DurableObject<AppEnv> {
       !source ||
       source.orgId !== orgId ||
       source.mode !== mode ||
-      source.deviceRole !== 'scan' ||
+      (source.deviceRole !== 'scan' && source.deviceRole !== 'monitor') ||
       source.revokedAt !== null
     )
       return false;

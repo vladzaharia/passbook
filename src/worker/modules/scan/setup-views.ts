@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScannerListQuerySchema } from '../../../shared/contracts/scanners.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import { setupMeta, setupMetas, watchOf } from './repo-setups.ts';
 import { listScanners, scannerView } from './scanner-views.ts';
 
@@ -9,8 +10,9 @@ export async function listSetups(
   ctx: ServiceContext,
   mode: Mode,
   query: z.infer<typeof ScannerListQuerySchema>,
+  authority: TenantPassWrite,
 ) {
-  const page = await listScanners(ctx, mode, query);
+  const page = await listScanners(ctx, mode, query, authority);
   const metadata = await setupMetas(
     ctx.env.DB,
     query.orgId ?? null,

@@ -14,6 +14,7 @@ import {
   type NativeProvider,
   NativeProviderSchema,
   projectionPolicy,
+  publishableSchema,
 } from './projection-contract.ts';
 import {
   type ApprovedProjection,
@@ -87,8 +88,9 @@ export async function getApprovedProjection(
     !(await verifiedCandidate(ctx, candidate, pinnedProof))
   )
     return null;
+  if (!publishableSchema(candidate.provider, candidate.projection.schema)) return null;
   if (
-    candidate.provider !== 'samsung' ||
+    candidate.provider === 'samsung' &&
     !(await ensureSamsungProjectionEvidence(
       ctx,
       candidate.id,

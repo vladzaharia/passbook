@@ -10,8 +10,11 @@ import type { ScanAccess } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { FoundAccess } from './access-types.ts';
 import type { ScanActor } from './guard.ts';
+import { type PlaceRow, zoneRowsStmt } from './occupancy/repo-reads.ts';
+import type { OccZone } from './occupancy/rules.ts';
 import {
   accessGateReads,
+  occZonesOf,
   orgZonesStmt,
   sessionZonesStmt,
   visitAtOf,
@@ -51,6 +54,8 @@ interface LoadedAccess {
   zoneIds: string[];
   gate: ScanGateSnapshot | null;
   visitAt: number | null;
+  /** The same zones with their occupancy settings, and the pass's rows at them. */
+  occupancy: { zones: OccZone[]; rows: PlaceRow[] };
 }
 export interface AccessReads extends EvaluationReadPlan {
   loaded(): LoadedAccess | null;
@@ -68,6 +73,7 @@ export function planAccessReads(
     orgZonesStmt(ctx.env.DB, actor.orgId),
     ...(session ? [sessionZonesStmt(ctx.env.DB, actor.orgId, session)] : []),
     ...accessGateReads(ctx.env.DB, found.pass.id),
+    zoneRowsStmt(ctx.env.DB, actor.orgId, found.pass.id),
   ];
   let loaded: LoadedAccess | null = null;
   return {
@@ -80,6 +86,10 @@ export function planAccessReads(
         zoneIds: session ? zoneIdsOf(results[1]) : [],
         gate: scanEffectFromResult(results[at]).gateBefore,
         visitAt: visitAtOf(results[at + 1]),
+        occupancy: {
+          zones: occZonesOf(results[0]),
+          rows: (results[at + 2]?.results ?? []) as unknown as PlaceRow[],
+        },
       };
     },
     loaded: () => loaded,
@@ -134,6 +144,13 @@ function chainOf(zoneId: string | null, zones: readonly ZoneNode[]): ZoneLink[] 
   return out;
 }
 
+/** Refusals a Manager may let through. Suspended, voided, removed and expired stay final. */
+const ACCESS_WAIVABLE = new Set<string>([
+  'zone_not_included',
+  'outside_hours',
+  'guest_expired',
+  'not_yet_valid',
+]);
 const ON_HOLD = new Set<AccessDecision['reason']>(['suspended', 'not_yet_valid', 'guest_expired']);
 
 /**
@@ -148,11 +165,14 @@ export function accessStop(
   known: Pick<Stop, 'pass' | 'ref' | 'found' | 'connectionGeneration'>,
   reads: AccessReads | null,
   now: number,
+  waived?: string,
 ): Stop | null {
   const manifest = accessManifestOf(found);
   if (!manifest) return null;
   const event = actor.event !== null;
-  const loaded = event ? { zones: [], zoneIds: [], gate: null, visitAt: null } : reads?.loaded();
+  const loaded = event
+    ? { zones: [], zoneIds: [], gate: null, visitAt: null, occupancy: { zones: [], rows: [] } }
+    : reads?.loaded();
   // The read did not land: nothing is let in on a guess.
   if (!loaded) return stop('refused', 'not_found', { stale: true });
   const inputs = applyDefaults(found.activePolicy.manifest, found.pass.personalization);
@@ -186,7 +206,11 @@ export function accessStop(
       waitMs:
         manifest.rules?.reentryMinutes == null ? null : manifest.rules.reentryMinutes * MINUTE,
     } satisfies FoundAccess;
-  if (d.reason !== null && (!event || ON_HOLD.has(d.reason)))
+  if (
+    d.reason !== null &&
+    !(waived === d.reason && ACCESS_WAIVABLE.has(d.reason)) &&
+    (!event || ON_HOLD.has(d.reason))
+  )
     return stop('refused', d.reason, { ...known, at: d.at, access: scanAccessOf(d) });
   return null;
 }
