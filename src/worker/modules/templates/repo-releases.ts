@@ -23,11 +23,13 @@ export interface CandidateRow extends ReleaseScope {
   versionAuthorId: string | null;
   createdAt: number;
 }
+export type ApprovalKind = 'peer' | 'sole' | 'test';
 export interface ApprovalRow {
   id: string;
   candidateId: string;
   candidateHash: string;
   reviewerId: string;
+  kind: ApprovalKind;
   createdAt: number;
 }
 export interface ReleaseRow extends ReleaseScope {
@@ -54,7 +56,7 @@ const candidateColumns = `id, template_id AS templateId, org_id AS orgId, mode, 
   adapter_capabilities AS adapterCapabilities, audience_policy_revision AS audiencePolicyRevision,
   author_id AS authorId, version_author_id AS versionAuthorId, created_at AS createdAt`;
 const approvalColumns = `id, candidate_id AS candidateId, candidate_hash AS candidateHash,
-  reviewer_id AS reviewerId, created_at AS createdAt`;
+  reviewer_id AS reviewerId, kind, created_at AS createdAt`;
 const releaseColumns = `id, template_id AS templateId, org_id AS orgId, mode, provider, generation,
   version, candidate_hash AS candidateHash, content_hash AS contentHash,
   adapter_revision AS adapterRevision, adapter_capabilities AS adapterCapabilities,
@@ -173,8 +175,8 @@ export function issuedReleasePredicateSql(
                   AND candidate.adapter_capabilities = issued.adapter_capabilities))
               AND ((candidate.audience_policy_revision = issued.audience_policy_revision
                   AND version.created_by IS candidate.version_author_id)
-                AND (approval.reviewer_id != candidate.author_id
-                  AND (candidate.version_author_id IS NULL OR approval.reviewer_id != candidate.version_author_id))))
+                AND (approval.kind != 'peer' OR (approval.reviewer_id != candidate.author_id
+                  AND (candidate.version_author_id IS NULL OR approval.reviewer_id != candidate.version_author_id)))))
           ))
         OR
         (issued.source = 'legacy' AND issued.action = 'legacy' AND owner.origin = 'uploaded'
