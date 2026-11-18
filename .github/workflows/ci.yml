@@ -36,7 +36,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -49,8 +49,12 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-chromium
       - name: Install browsers
-        timeout-minutes: 12
-        run: for i in 1 2; do timeout 300 npx playwright install --with-deps chromium && exit 0; echo "retry $i"; done; exit 1
+        timeout-minutes: 22
+        run: |
+          for i in 1 2 3; do
+            timeout 420 npx playwright install --with-deps chromium && exit 0
+            echo "retry $i"; sudo pkill -9 -f 'apt-get|dpkg' || true; sleep 3; sudo dpkg --configure -a || true
+          done; exit 1
       - run: npm run test:e2e
         env:
           WALLET_E2E_PREVIEW: '1'
@@ -64,7 +68,7 @@ jobs:
 
   camera:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -77,8 +81,12 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-chromium-firefox-webkit
       - name: Install browsers
-        timeout-minutes: 12
-        run: for i in 1 2; do timeout 300 npx playwright install --with-deps chromium firefox webkit && exit 0; echo "retry $i"; done; exit 1
+        timeout-minutes: 22
+        run: |
+          for i in 1 2 3; do
+            timeout 420 npx playwright install --with-deps chromium firefox webkit && exit 0
+            echo "retry $i"; sudo pkill -9 -f 'apt-get|dpkg' || true; sleep 3; sudo dpkg --configure -a || true
+          done; exit 1
       - run: npm run test:e2e:camera
         env:
           WALLET_E2E_PREVIEW: '1'

@@ -1,6 +1,7 @@
 import type { ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { accessGateStop, waiveOf } from './access.ts';
 import { executeApprovedAction } from './act-approval.ts';
 import { stoppedAuditPass } from './act-attempt-audit.ts';
 import { chooseAction } from './act-choose.ts';
@@ -282,6 +283,22 @@ export async function attempt(
 
   const preflight = reads.plan?.current();
   if (!preflight) throw raced();
+  // An Access card's wait or visit limit answers from the gate row the preflight read, before any approval; an override waives only its own reason.
+  const gated =
+    action.kind === 'check_in'
+      ? accessGateStop(found, ctx.clock.now(), waiveOf(override?.reason))
+      : null;
+  if (gated)
+    return {
+      outcome: await finishStop(stopFor(action), gated, {
+        actor: authorityActor,
+        event: found.admission?.event ?? null,
+        templateId: found.pass.templateId,
+        passFence: preflight.passFence,
+      }),
+      evaluatedSnapshot: found.liveCandidate ?? null,
+      credentialContext: credentials,
+    };
   return executeApprovedAction({
     ctx,
     actor,

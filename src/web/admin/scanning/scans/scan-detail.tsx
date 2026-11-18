@@ -78,6 +78,7 @@ export function ScanDetail({
                 { label: 'Event', value: row.eventName },
                 { label: 'Scanner', value: row.scannerName ?? 'Admin console' },
                 { label: 'Staff', value: row.staffName },
+                { label: 'API key', value: row.apiKeyId },
                 { label: 'Approved by', value: row.approvedBy },
                 { label: 'How', value: row.method },
                 { label: 'Amount', value: row.amount },

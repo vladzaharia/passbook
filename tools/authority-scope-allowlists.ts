@@ -219,6 +219,11 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'daily test-data retention purge (captured_emails, bundles); a platform job with no tenant principal',
     writes: ['bundles:f644c9a26cf2', 'captured_emails:54483bed5926'],
   },
+  'src/worker/modules/keys/repo-rewrap.ts': {
+    reason:
+      'cron keys.rewrap moves an envelope to the newest KEK (kek_version and wrapped_dek only), a compare-and-set on the envelope it read; platform job with no tenant principal, and no authority column changes (docs/design/authority-epochs.md, 7.2)',
+    writes: ['captured_emails:511fe05ea909', 'connection_webhook_retention:84821c1d359b'],
+  },
 };
 
 /** Files that build a write whose table is interpolated or concatenated. Each says what fixes the table. */

@@ -54,6 +54,7 @@ export function projectScanRecord(
     scannerName,
     staffId: row.policyAvailable ? row.staffId : null,
     staffName: verified ? row.staffName : null,
+    apiKeyId: verified ? row.apiKeyId : null,
     approvedBy: verified ? row.approvedBy : null,
     method: row.method === 'auto' ? 'manual' : row.method,
     amount: action ? row.amount : null,

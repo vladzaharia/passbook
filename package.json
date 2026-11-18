@@ -31,6 +31,7 @@
     "test:e2e:camera": "playwright test --config playwright.camera.config.ts",
     "db:local": "wrangler d1 migrations apply wallet-platform --local",
     "breakglass": "node tools/breakglass.ts",
+    "keys:retire": "node tools/keys.ts retire",
     "credentials": "node tools/credentials.ts",
     "identity:add": "node tools/identity-add.ts",
     "deploy:check": "node tools/deploy.ts --check",

@@ -5,6 +5,7 @@ import {
 } from '../../../passkit/template/scan-display/index.ts';
 import type { ScanCond, ScanDisplayDoc } from '../../../passkit/template/scan-display/schema.ts';
 import type { Json } from '../../../passkit/types.ts';
+import type { ScanAccess } from '../../../shared/contracts/scan.ts';
 import type { ScanDisplay, ScanDisplayScreen } from '../../../shared/contracts/scan-display.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { scopeOf } from './card-projection.ts';
@@ -26,6 +27,8 @@ export interface BuildDisplayInput {
   history?: unknown;
   /** A capability URL materialized only after its grant insert was confirmed. */
   photoUrl?: string | null;
+  /** An Access card's answer, with the visits the gate has counted. */
+  access?: ScanAccess | null;
 }
 
 function identity(input: BuildDisplayInput, privacy?: CardPrivacy): ScanDisplay | null {

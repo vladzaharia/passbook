@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
+import { localSecrets } from './tools/lib/dev-secrets.ts';
 import { publicBaseUrl, withOrigin } from './tools/lib/site-origin.ts';
 
 /** sonner injects an inline <style> at import time, which the strict CSP blocks. Its CSS ships in app.css. */
@@ -245,6 +246,8 @@ export default defineConfig(({ command }) => ({
       ...(e2e ? { persistState: { path: '.wrangler/e2e-state' } } : {}),
       // Merged into wrangler.jsonc (arrays append). The build keeps the file's config as is.
       config: (c: { vars?: Record<string, unknown>; ratelimits?: RateLimitConfig[] }) => ({
+        // Local runs only see the .dev.vars secrets that `secrets.required` names (tools/lib/dev-secrets.ts).
+        ...(command === 'serve' || e2e ? localSecrets() : {}),
         ...(command === 'serve' ? { assets: { run_worker_first: VITE_DEV_PATHS } } : {}),
         ...(e2e
           ? {

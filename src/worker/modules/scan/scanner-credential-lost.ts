@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
 import { type ScanActor, scanScannerCsrfProof } from './actor.ts';
 import { scannerExpired } from './auth-store.ts';
+import { apiKeyRefusal } from './guard-api-key.ts';
 import { getScanner } from './repo-device.ts';
 
 /**
@@ -48,7 +49,8 @@ const configChanged = () =>
 
 /**
  * A scanner grant refused as `actor` (the grant maps it to 401 `SCANNER_REPAIR`) unpairs only when
- * the credential is lost; any other credential-epoch move is configuration drift (409).
+ * the credential is lost; any other credential-epoch move is configuration drift (409). A till's
+ * key that stopped acting is 401 `INVALID_API_KEY`.
  */
 export async function scannerRefusal(
   ctx: ServiceContext,
@@ -59,9 +61,11 @@ export async function scannerRefusal(
   if (
     error instanceof AppError &&
     error.code === 'SCANNER_REPAIR' &&
-    actor.principal === 'scanner' &&
-    !(await scannerCredentialLost(ctx, actor))
-  )
-    return drift();
+    actor.principal === 'scanner'
+  ) {
+    const keyLost = await apiKeyRefusal(ctx, actor);
+    if (keyLost) return keyLost;
+    if (!(await scannerCredentialLost(ctx, actor))) return drift();
+  }
   return error;
 }

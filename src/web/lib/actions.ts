@@ -83,6 +83,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'org_invitation.create': a('Member invited', MailPlus, 'success'),
   'org_invitation.revoke': a('Invitation revoked', MailX, 'warning'),
   'org_membership.revoke': a('Member removed', UserMinus, 'warning'),
+  'pass.access_visits_reset': a('Visits reset', I.restore, 'info'),
   'pass.asset.delete': a('Pass image removed', ImageMinus, 'neutral'),
   'pass.asset.put': a('Pass image added', ImagePlus, 'success'),
   'pass.bulk_reissue': a('Passes reissued', I.updateDevices, 'info'),
