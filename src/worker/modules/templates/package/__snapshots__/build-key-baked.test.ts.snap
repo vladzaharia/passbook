@@ -1,0 +1,15 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`build keys of the baked templates > are unchanged by the wallets extension (snapshot taken before it existed) 1`] = `
+{
+  "henrys-blue": "fb09f92b5dc2f3b75f2fd2888a6617194a8abc50c4ae0490582e2b6e13ef23c1",
+  "henrys-copper": "fc75f3e453d385e0b164dc2adbcc97100b46ba62382f8ea7565553c8bb230572",
+  "starter-boarding-pass": "81d666541b94a3f413a5ba83dcba43c876a568396e42ab52f1433592e3932a48",
+  "starter-coupon": "30498306edc1c4e6ab7e2f190ea3fa58d3aa3c0000276ee52dbe0293b966c20b",
+  "starter-event-ticket": "a0618082b2002128806ecfcb21374869af61ca0ec63eee0bd24873bf39e3a2dc",
+  "starter-generic": "b9c813ee3ee2209a07485510c6920be2bbc67f475703f23b0f2e5b16c6b4aa4d",
+  "starter-poster-generic": "e834d6af4763f7769ac4f3be5d3126e0bfad0a971faabd99beb744743c94deee",
+  "starter-stamp-card": "b1f3f75af5612c41e7b58debfa0dbcf03025a8fe86fa419fde7878a0351a901a",
+  "starter-store-card": "d898fccd62a981a266a3b32e15c82905063eba7648eae0c55935fe85a1fb8d2b",
+}
+`;
