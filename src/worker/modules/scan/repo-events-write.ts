@@ -21,6 +21,7 @@ export interface EventValues {
   timeZone: string;
   capacity: number | null;
   reentry: boolean;
+  hardLimit: boolean;
   note: string | null;
 }
 
@@ -43,6 +44,7 @@ export const addEventInsert = (
       'time_zone',
       'capacity',
       'reentry',
+      'hard_limit',
       'note',
       'created_by',
       'created_at',
@@ -58,6 +60,7 @@ export const addEventInsert = (
       e.timeZone,
       e.capacity,
       e.reentry ? 1 : 0,
+      e.hardLimit ? 1 : 0,
       e.note,
       createdBy,
       now,
@@ -74,6 +77,7 @@ interface EventPatch {
   timeZone?: string;
   capacity?: number | null;
   reentry?: boolean;
+  hardLimit?: boolean;
   note?: string | null;
 }
 
@@ -94,6 +98,7 @@ export function addEventUpdate(g: Grant, id: string, p: EventPatch, now: number)
   if (p.timeZone !== undefined) set.time_zone = p.timeZone;
   if (p.capacity !== undefined) set.capacity = p.capacity;
   if (p.reentry !== undefined) set.reentry = p.reentry ? 1 : 0;
+  if (p.hardLimit !== undefined) set.hard_limit = p.hardLimit ? 1 : 0;
   if (p.note !== undefined) set.note = p.note;
   return g.update('scan_events', { set, where: { id }, require: 'one' });
 }

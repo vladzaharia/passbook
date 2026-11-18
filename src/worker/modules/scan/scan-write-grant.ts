@@ -59,7 +59,12 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
             rowIs(
               'scan_staff',
               i.approver.id,
-              { role: 'manager', disabled_at: null, auth_epoch: i.approver.authEpoch },
+              {
+                // A Desk approver is allowed by the session; a role change bumps `auth_epoch`.
+                ...(actor.settings.approvals === 'desk' ? {} : { role: 'manager' }),
+                disabled_at: null,
+                auth_epoch: i.approver.authEpoch,
+              },
               'staff',
             ),
           ]

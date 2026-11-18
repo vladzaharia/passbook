@@ -17,6 +17,15 @@ const doorSettings = `COALESCE(
   (SELECT s.settings FROM scanning_sessions s WHERE s.id=q.session_id),
   (SELECT d.settings FROM scanners d WHERE d.id=q.scanner_id))`;
 
+/** The door's own switch, the scan's event, or its zone or any zone above it: Full is final. */
+const hardLimitSql = `MAX(
+  COALESCE(CASE WHEN json_valid(${doorSettings}) THEN json_extract(${doorSettings},'$.hardLimit') END, 0),
+  COALESCE((SELECT e.hard_limit FROM scan_events e WHERE e.id=q.event_id AND e.org_id=q.org_id), 0),
+  COALESCE((WITH RECURSIVE up(id, parent_id, hard_limit) AS (
+      SELECT z.id, z.parent_id, z.hard_limit FROM scan_zones z WHERE z.id=q.zone_id AND z.org_id=q.org_id
+      UNION ALL SELECT z.id, z.parent_id, z.hard_limit FROM scan_zones z JOIN up ON z.id=up.parent_id AND z.org_id=q.org_id)
+    SELECT MAX(hard_limit) FROM up), 0))`;
+
 /** Capture the target together with its original signed event and wallet version. */
 export function overrideEvidenceForTargetStmt(
   db: D1Database,
@@ -31,7 +40,7 @@ export function overrideEvidenceForTargetStmt(
     EXISTS (SELECT 1 FROM scans o WHERE o.at>=? AND o.override_of=? AND o.outcome='ok'
       AND o.state='done' AND o.undone_at IS NULL) AS taken,
     COALESCE(CASE WHEN json_valid(${doorSettings}) THEN json_extract(${doorSettings},'$.letInAgain') END,'manager') AS door_let_in_again,
-    CASE WHEN json_valid(${doorSettings}) THEN json_extract(${doorSettings},'$.hardLimit') END AS door_hard_limit,
+    ${hardLimitSql} AS door_hard_limit,
     l.id AS evidence_id,l.org_id AS evidence_org_id,l.pass_id AS evidence_pass_id,l.mode AS evidence_mode,
     l.kind AS evidence_kind,l.device AS evidence_device,l.actor_type AS evidence_actor_type,
     l.actor_id AS evidence_actor_id,l.data AS evidence_data,l.at AS evidence_at,

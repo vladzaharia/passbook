@@ -30,7 +30,10 @@ export interface PolicyActor {
   staffId: string | null;
   /** The API key acting as this terminal; its scans and the terminal's own are not each other's. */
   apiKeyId?: string | null;
-  settings: Pick<ScannerSettings, 'lookup' | 'letInAgain'> & { hardLimit?: boolean | undefined };
+  settings: Pick<ScannerSettings, 'lookup' | 'letInAgain'> & {
+    hardLimit?: boolean | undefined;
+    approvals?: 'managers' | 'desk' | undefined;
+  };
 }
 
 export interface UndoTarget {
@@ -84,6 +87,16 @@ export function overridePolicyKind(
     return 'access_override';
   return 'let_in_again';
 }
+
+/**
+ * Whether a Desk member's PIN approves, where a Manager's would. Only a session that opts in
+ * (`approvals: 'desk'`) allows it, and a `set` or an amount over its max always needs a Manager.
+ */
+export const deskMayApprove = (
+  settings: { approvals?: 'managers' | 'desk' | undefined },
+  action: { kind: string },
+  overMax: boolean,
+): boolean => settings.approvals === 'desk' && action.kind !== 'set' && !overMax;
 
 const ALLOW: PolicyVerdict = { allow: true };
 const FORBIDDEN: PolicyVerdict = { allow: false, why: 'forbidden' };

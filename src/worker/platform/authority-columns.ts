@@ -153,7 +153,7 @@ export const EPOCH_TABLES: EpochTable[] = [
         'mode',
       ],
     },
-    volatile: ['name', 'note', 'expected', 'expected_at', 'updated_at'],
+    volatile: ['name', 'note', 'hard_limit', 'expected', 'expected_at', 'updated_at'],
     fixed: ['id', 'created_at', 'created_by'],
   },
   {

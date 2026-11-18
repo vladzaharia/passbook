@@ -93,7 +93,12 @@ export async function act(
         ...plan.stmts,
         ...(plan.capacityStmt ? [plan.capacityStmt] : []),
         ...(overrideQuery ? [overrideQuery] : []),
-        ...(req.approval ? [approverStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
+        ...(req.approval ? [approverStatement(
+                ctx.env.DB,
+                actor.orgId,
+                req.approval.staffId,
+                actor.settings.approvals === 'desk',
+              )] : []),
         replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
         credentialTombstonesClearStmt(
           ctx.env.DB,

@@ -17,7 +17,8 @@ export type OccZone = Pick<
   | 'clearAt'
   | 'archivedAt'
   | 'updatedAt'
->;
+> &
+  Partial<Pick<ZoneRow, 'hardLimit'>>;
 
 /** A zone as the plan read it; the statement re-checks it in the batch. */
 export type ZoneFence = Pick<OccZone, 'id' | 'occupancy' | 'parentId' | 'archivedAt'>;

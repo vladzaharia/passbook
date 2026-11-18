@@ -26,6 +26,7 @@ interface ZoneRaw {
   capacity: number | null;
   max_stay_minutes: number | null;
   clear_at: string | null;
+  hard_limit: number;
   archived_at: number | null;
   updated_at: number;
 }
@@ -34,7 +35,7 @@ interface ZoneRaw {
 export const orgZonesStmt = (db: D1Database, orgId: string): D1PreparedStatement =>
   stmt(
     db,
-    `SELECT id, key, name, parent_id, time_zone, sort, occupancy, capacity, max_stay_minutes, clear_at,
+    `SELECT id, key, name, parent_id, time_zone, sort, occupancy, capacity, max_stay_minutes, clear_at, hard_limit,
        archived_at, updated_at FROM scan_zones
      WHERE org_id = ? ORDER BY sort, id LIMIT ${ACCESS_ZONE_LIMIT}`,
     [orgId],
@@ -75,6 +76,7 @@ export const occZonesOf = (result: D1Result | undefined): OccZone[] =>
     capacity: r.capacity,
     maxStayMinutes: r.max_stay_minutes,
     clearAt: r.clear_at,
+    hardLimit: r.hard_limit === 1,
     archivedAt: r.archived_at,
     updatedAt: r.updated_at,
   }));

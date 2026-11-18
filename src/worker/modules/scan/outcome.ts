@@ -127,10 +127,12 @@ export function canOverride(
   action: ResolvedScanAction | null,
   approvals: boolean,
   kind: string | null = null,
+  hardLimit = false,
 ): boolean {
   if (!isOverridable(reason)) return false;
   if (action?.kind === 'check_in' && action.allowAgain === false) return false;
-  const verdict = scanPolicy(policyActor(actor), {
+  const pa = policyActor(actor);
+  const verdict = scanPolicy(hardLimit ? { ...pa, settings: { ...pa.settings, hardLimit } } : pa, {
     kind: overridePolicyKind(reason, kind),
   });
   return verdict.allow || (verdict.why === 'needs_approval' && approvals);

@@ -60,6 +60,8 @@ interface HeldOutcomeInput {
   read: CountsRead;
   display: ScanDisplay | null;
   now: number;
+  /** The full place's Hard limit (an event or a zone): no one may override. */
+  hardLimit?: boolean;
 }
 
 /** The truthful heads-up for a gate that someone else holds (or an event that is full). */
@@ -99,7 +101,14 @@ export function heldOutcome(i: HeldOutcomeInput): ScanOutcome {
           override: holder.override_of !== null,
         }
       : null,
-    overridable: canOverride(actor, reason, action, read.approvals),
+    overridable: canOverride(
+      actor,
+      reason,
+      action,
+      read.approvals,
+      null,
+      i.hardLimit === true && reason === 'capacity_full',
+    ),
     display: i.display,
   };
 }
@@ -242,5 +251,6 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
     read,
     display: bound.finish(committed.after.slice(counts.stmts.length)),
     now: finishAt,
+    ...(event?.hardLimit ? { hardLimit: true } : {}),
   });
 }

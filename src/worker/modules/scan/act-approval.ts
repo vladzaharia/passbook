@@ -23,7 +23,7 @@ import { passAnswerFence, underAuthorityCtes } from './repo-read-fences.ts';
 import { ObservedScanAmbiguity } from './repo-scan-effect.ts';
 import { pristineClaimFence, releaseClaimStmt } from './repo-scans.ts';
 import type { Found } from './resolve.ts';
-import { overridePolicyKind, scanPolicy } from './rules.ts';
+import { deskMayApprove, overridePolicyKind, scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { ANY_MANAGER, type PinStaffSnapshot, preparePinReservation } from './staff-pin.ts';
 
@@ -86,6 +86,12 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       req,
     );
   const sized = action.kind === 'add' || action.kind === 'take';
+  const max = typeof action.amount === 'object' ? action.amount.max : null;
+  const deskOk = deskMayApprove(
+    pa.settings,
+    action,
+    sized && max !== null && amountOf(action, req.amount) > max,
+  );
   const checks = [
     scanPolicy(pa, {
       kind: 'act',
@@ -93,7 +99,7 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       ...(sized
         ? {
             amount: amountOf(action, req.amount),
-            max: typeof action.amount === 'object' ? action.amount.max : null,
+            max,
           }
         : {}),
     }),
@@ -191,8 +197,8 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
     const verified =
       reservation && approval
         ? await (approval.staffId
-            ? reservation.verify(results, approver[0] ?? null, approval.pin, true, failure)
-            : reservation.verifyAny(results, approver, approval.pin, failure))
+            ? reservation.verify(results, approver[0] ?? null, approval.pin, true, failure, deskOk)
+            : reservation.verifyAny(results, approver, approval.pin, failure, false, deskOk))
         : null;
     if (reservation && !verified) throw new StaleScanAuthority();
     const commit = () =>

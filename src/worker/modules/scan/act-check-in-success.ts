@@ -243,6 +243,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       read,
       display: null,
       now: finishAt,
+      ...((closed?.reason === 'capacity_full' ? event?.hardLimit : place?.hard) ? { hardLimit: true } : {}),
     });
     const answer = {
       ...heldAnswer,

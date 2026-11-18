@@ -112,6 +112,8 @@ export const ScannerSettingsSchema = z.object({
   deskActions: z.boolean().optional(),
   /** A full place refuses every role: `capacity_full` is never overridable at this door. */
   hardLimit: z.boolean().optional(),
+  /** Whose PIN approves a risky action. Managers when absent; `set` and hard refusals never relax. */
+  approvals: z.enum(['managers', 'desk']).optional(),
   /** Who may assign tags here. Absent: desk for a pass, manager for a person. */
   tags: ScannerTagsSettingsSchema.optional(),
 });

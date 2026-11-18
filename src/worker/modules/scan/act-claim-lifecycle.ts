@@ -158,7 +158,12 @@ export async function replayOrReopenClaim(
         ...plan.stmts,
         ...(plan.capacityStmt ? [plan.capacityStmt] : []),
         ...(overrideQuery ? [overrideQuery] : []),
-        ...(req.approval ? [approverStatement(ctx.env.DB, actor.orgId, req.approval.staffId)] : []),
+        ...(req.approval ? [approverStatement(
+                ctx.env.DB,
+                actor.orgId,
+                req.approval.staffId,
+                actor.settings.approvals === 'desk',
+              )] : []),
       ]),
     );
     const results = done.after;

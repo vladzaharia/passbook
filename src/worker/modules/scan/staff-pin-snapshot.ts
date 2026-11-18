@@ -88,6 +88,7 @@ export interface PinReservation {
     pin: string,
     managerOnly: boolean,
     failure?: PinFailure,
+    deskOk?: boolean,
   ): Promise<VerifiedPinSnapshot | null>;
   /** The PIN of whichever manager has it: none, one, or several (a miss). */
   verifyAny(
@@ -96,6 +97,7 @@ export interface PinReservation {
     pin: string,
     failure?: PinFailure,
     anyRole?: boolean,
+    deskOk?: boolean,
   ): Promise<VerifiedPinSnapshot | null>;
   verifyLogin(results: readonly D1Result[], staff: PinCheck['staff'], pin: string): Promise<void>;
   refundStatements(): D1PreparedStatement[];

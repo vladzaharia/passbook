@@ -12,6 +12,7 @@ import {
   entryPlan,
   exitPlan,
   type Waivers,
+  zonePlace,
 } from './occupancy/rules.ts';
 import {
   addEntry,
@@ -179,7 +180,7 @@ export function occupancyAfter(
   results: readonly D1Result[],
   loss: number,
   won: boolean,
-): { view: ScanOccupancy; lost: ScanReason | null } {
+): { view: ScanOccupancy; lost: ScanReason | null; hard: boolean } {
   const o = c.found;
   const [count] = placeCounts([o.place], results.slice(loss));
   const inNow = count?.inNow ?? null;
@@ -198,5 +199,10 @@ export function occupancyAfter(
     !won && c.entry
       ? lostEntry(c.entry, results.slice(0, loss), c.now, { waivers: c.waivers })
       : null;
-  return { view: occupancyView(o, { state, since, stayMs, inNow }), lost: why?.reason ?? null };
+  const fullZone = why?.fullAt ? o.zones.find((z) => zonePlace(z.id) === why.fullAt) : undefined;
+  return {
+    view: occupancyView(o, { state, since, stayMs, inNow }),
+    lost: why?.reason ?? null,
+    hard: fullZone?.hardLimit === true,
+  };
 }
