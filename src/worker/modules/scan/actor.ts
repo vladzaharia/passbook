@@ -136,6 +136,17 @@ export interface ScanActor {
   credentialKeysetCommitment?: string;
   /** Exact tenant membership and session captured before a user-backed scan operation. */
   tenantAuthority?: ScanTenantAuthority;
+  /** A tag read chose the pass: every write of the scan re-checks the tag, its binding and the pass. */
+  tag?: ScanTagAuthority;
+}
+
+/** The tag a scan was read from, its active binding and the pass the scan acts on. */
+export interface ScanTagAuthority {
+  tagId: string;
+  bindingId: string;
+  scope: 'pass' | 'user';
+  userId: string | null;
+  passId: string;
 }
 
 const scanningReadRoles = rolesGranting('scanning:read');

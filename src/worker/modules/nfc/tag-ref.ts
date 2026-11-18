@@ -19,6 +19,18 @@ export async function tagRef(
   return { ref, hint: ref.slice(0, 4).toUpperCase() };
 }
 
+/**
+ * The UID of a read that names one physical tag, lower-case hex; null for a random ID. A reader's
+ * `uidRandom` is trusted to refuse, never to accept; a 4-byte UID starting `08` is random per session
+ * (ISO 14443-3), so it is refused whatever the reader says.
+ */
+export function readableUid(read: { uid?: string; uidRandom?: boolean }): string | null {
+  if (!read.uid || read.uidRandom === true) return null;
+  const uid = read.uid.toLowerCase();
+  if (uid.length === 8 && uid.startsWith('08')) return null;
+  return UID.test(uid) ? uid : null;
+}
+
 const UID = /^(?:[0-9a-f]{8}|[0-9a-f]{14}|[0-9a-f]{20})$/;
 
 /** Lower-case hex of a 4, 7 or 10 byte UID. Anything else is not a tag ID. */

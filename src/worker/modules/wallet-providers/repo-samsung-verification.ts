@@ -74,7 +74,8 @@ const currentEvidenceCandidate = `EXISTS (SELECT 1 FROM template_candidates c
     AND c.credential_keyset_commitment = ev.credential_keyset_commitment)`;
 
 function candidateParams(c: ProjectionCandidate, proof: WalletCredentialKeysetProof) {
-  if (c.projection.provider !== 'samsung') throw new Error('Samsung candidate required.');
+  if (c.projection.provider !== 'samsung' || c.projection.schema !== 1)
+    throw new Error('Samsung candidate required.');
   return [
     c.id,
     c.orgId,

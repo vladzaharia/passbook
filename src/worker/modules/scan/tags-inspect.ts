@@ -15,7 +15,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tagsEnabled } from '../nfc/policy.ts';
 import { tagByRef, tagView } from '../nfc/repo-tags.ts';
-import { canonicalUid, tagRef } from '../nfc/tag-ref.ts';
+import { readableUid, tagRef } from '../nfc/tag-ref.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -61,20 +61,11 @@ export function tagRights(actor: ScanActor): TagRights & { scannerId: string } {
   };
 }
 
-/** A random UID changes at every read, so it names nothing. */
-const randomUid = (uid: string) => uid.length === 8 && uid.startsWith('08');
-
-/** The canonical UID of a read, or null when it has none or changes each time. */
-function readableUid(read: TagRead): string | null {
-  if (!read.uid || read.uidRandom || randomUid(read.uid.toLowerCase())) return null;
-  return canonicalUid(read.uid);
-}
-
 /** The UID a bind needs. */
 export function tagUid(read: TagRead): string {
   const uid = readableUid(read);
   if (uid) return uid;
-  if (read.uidRandom || (read.uid && randomUid(read.uid.toLowerCase())))
+  if (read.uidRandom || (read.uid && readableUid({ uid: read.uid }) === null))
     throw new ValidationError('This tag changes its ID. Try another tag.', [], 'TAG_UID_RANDOM');
   throw new ValidationError("Can't read this tag. Try another tag.", [], 'TAG_UNREADABLE');
 }

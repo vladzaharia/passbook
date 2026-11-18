@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeEnv } from '../../../../test/helpers/index.ts';
-import { canonicalUid, normalizeTagId, tagRef } from './tag-ref.ts';
+import { canonicalUid, normalizeTagId, readableUid, tagRef } from './tag-ref.ts';
 
 const UID = '04a1b2c3d4e5f6';
 
@@ -58,5 +58,17 @@ describe('normalizeTagId', () => {
     expect(normalizeTagId('04a1')).toBeNull();
     expect(normalizeTagId('99999999999', 'decimal')).toBeNull();
     expect(normalizeTagId('5000000000', 'decimal')).toBeNull();
+  });
+});
+
+describe('readableUid', () => {
+  it('names a fixed tag and refuses a random ID', () => {
+    expect(readableUid({ uid: '04A1B2C3D4E5F6' })).toBe('04a1b2c3d4e5f6');
+    expect(readableUid({ uid: '04a1b2c3' })).toBe('04a1b2c3');
+    expect(readableUid({ uid: '04a1b2c3', uidRandom: true })).toBeNull();
+    expect(readableUid({ uid: '08a1b2c3' })).toBeNull();
+    expect(readableUid({ uid: '08a1b2c3d4e5f6' })).toBe('08a1b2c3d4e5f6');
+    expect(readableUid({})).toBeNull();
+    expect(readableUid({ uid: '04a1' })).toBeNull();
   });
 });

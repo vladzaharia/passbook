@@ -183,6 +183,24 @@ describe('approved native projection rendering', () => {
     ],
     ['two barcodes', { ...pass, barcodes: [...pass.barcodes, ...pass.barcodes] }],
     ['markup', { ...pass, description: '<b>Unreviewed</b>' }],
+    ['a trailing carriage return', { ...pass, organizationName: 'Ada\r' }],
+    ['a leading tab', { ...pass, organizationName: '\tAda' }],
+    ['a newline in a title', { ...pass, description: 'Ada\nLovelace' }],
+    [
+      'a trailing carriage return in a field',
+      {
+        ...pass,
+        generic: {
+          ...pass.generic,
+          primaryFields: [{ key: 'name', value: 'Ada\r', label: 'Member' }],
+        },
+      },
+    ],
+    ['a line separator', { ...pass, organizationName: 'Ada\u2028Label: forged' }],
+    ['a paragraph separator', { ...pass, description: 'Ada\u2029Lovelace' }],
+    ['a right-to-left override', { ...pass, organizationName: 'Ada\u202eLovelace' }],
+    ['a bidirectional isolate', { ...pass, description: 'Ada\u2066Lovelace\u2069' }],
+    ['a C1 control', { ...pass, description: 'Ada\u0085' }],
     [
       'empty value',
       {

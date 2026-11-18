@@ -1,5 +1,5 @@
 import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
-import { chunk, stmt } from '../../platform/db.ts';
+import { chunk, type SqlValue, stmt } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
@@ -191,6 +191,20 @@ export const byLookupHashStmt = (db: Db, orgId: string, hash: string, mode: 'liv
 export const bySerialStmt = (db: Db, orgId: string, value: string, mode: 'live' | 'test') =>
   lookup(db, orgId, 'serial', value, 5, mode);
 export const byIdStmt = (db: Db, orgId: string, id: string) => lookup(db, orgId, 'id', id, 1);
+/** Candidates in one mode whose id is in `ids` (a subquery), in `order`, at most `limit`. */
+export const byIdsInStmt = (
+  db: Db,
+  orgId: string,
+  mode: 'live' | 'test',
+  ids: { sql: string; params: readonly SqlValue[] },
+  order: string,
+  limit: number,
+) =>
+  stmt(db, `${SELECT} AND p.mode = ? AND p.id IN (${ids.sql}) ORDER BY ${order} LIMIT ${limit}`, [
+    orgId,
+    mode,
+    ...ids.params,
+  ]);
 
 export const candidatesOf = (result: D1Result | undefined): Candidate[] =>
   ((result?.results ?? []) as Raw[])

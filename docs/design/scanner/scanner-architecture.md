@@ -2898,7 +2898,7 @@ Stored as `scan_zones.occupancy` (`off` \| `track` \| `enforce`), `capacity`, `m
 - **Tracking alone refuses nothing except Full.** A track-only zone answers a second entry with **Access granted**;
   the row keeps its `since`, and the visit gap decides the count.
 - Service rules: Require tap out, capacity, max stay and clear need Track (a CHECK); Clear at needs a time zone on the
-  root or the org (`ZONE_CLEAR_NEEDS_TZ` 422); **Require tap out needs Max stay or Clear at** (`ZONE_ENFORCE_NEEDS_END`
+  root or the org (`ZONE_CLEAR_NEEDS_TIME_ZONE` 422); **Require tap out needs Max stay or Clear at** (`ZONE_ENFORCE_NEEDS_END`
   422, **Set a Max stay or a Clear at time so a forgotten tap-out ends.**), so every hold ends by itself.
 - **Changes that break the tree's invariant clear it.** Turning Track off, archiving a zone, or changing its parent
   taps everyone inside it and below out: the save sets `due_at = now` on those rows (bounded batches) and the cron
@@ -3184,7 +3184,7 @@ ScanCounts.place: z.object({ name, inNow, capacity }).nullable().default(null);
 `POST /scan/actions` keeps `overrideOf` for a scanner overriding its own answer; `/scan/overrides` is the path for a
 monitor or another device (one service underneath). Errors: `SCAN_OVERRIDE_INVALID` 422, `SCAN_OVERRIDE_TAKEN` 409,
 `SCAN_TOO_MANY_OVERRIDES` 429, `NOT_INSIDE` 409 (Mark as out on someone already out), `SCANNER_DIRECTION_NO_PLACE`
-422, `ZONE_CLEAR_NEEDS_TZ` 422, `ZONE_ENFORCE_NEEDS_END` 422, `STAFF_REQUIRED` 403 (a monitor acting with nobody signed in), `SCREEN_ONLY` 403 (a
+422, `ZONE_CLEAR_NEEDS_TIME_ZONE` 422, `ZONE_ENFORCE_NEEDS_END` 422, `STAFF_REQUIRED` 403 (a monitor acting with nobody signed in), `SCREEN_ONLY` 403 (a
 Customer screen, or a monitor with Desk actions off).
 
 ### 20.13 Data and migrations

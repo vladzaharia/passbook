@@ -63,7 +63,7 @@ export interface ExitPlan {
   below: string[];
 }
 
-const tracked = (z: OccZone) => z.occupancy !== 'off' && z.archivedAt === null;
+export const tracked = (z: OccZone) => z.occupancy !== 'off' && z.archivedAt === null;
 
 /** The zone and its ancestors, nearest first. */
 export function zoneChain(zones: readonly OccZone[], id: string): OccZone[] {
