@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "8d127c8906651b75fcbf01a7e9282374c5369d9c";
+export const BAKED_BUILD_HASH = "186f48d54e571d4d0723cde682066fac59ae4b88";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -1478,7 +1478,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-access-card",
     "slug": "starter-access-card",
-    "version": "21c7b3e6ee71a960",
+    "version": "65fdc8948f915b54",
     "name": "Access card",
     "description": "Door access by plan and zone, with a photo for ID checks.",
     "org": null,
@@ -1557,10 +1557,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-label": "Extra zones",
             "x-group": "Access",
             "x-order": 50,
-            "x-widget": "list",
-            "x-itemLabel": "Zone",
-            "x-addLabel": "Add zone",
-            "x-help": "Zone keys from Scanning, like pool."
+            "x-widget": "access-zones",
+            "x-help": "Pick from the zones in Scanning."
           },
           "validFrom": {
             "type": "string",
@@ -2073,7 +2071,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 480473760,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/21c7b3e6ee71a960/en.lproj/pass.strings"
+          "path": "/templates/starter-access-card/65fdc8948f915b54/en.lproj/pass.strings"
         }
       },
       {
@@ -2087,7 +2085,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/21c7b3e6ee71a960/icon@2x.png"
+          "path": "/templates/starter-access-card/65fdc8948f915b54/icon@2x.png"
         }
       },
       {
@@ -2101,7 +2099,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/21c7b3e6ee71a960/icon@3x.png"
+          "path": "/templates/starter-access-card/65fdc8948f915b54/icon@3x.png"
         }
       },
       {
@@ -2115,7 +2113,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/21c7b3e6ee71a960/logo@2x.png"
+          "path": "/templates/starter-access-card/65fdc8948f915b54/logo@2x.png"
         }
       },
       {
@@ -2129,7 +2127,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/21c7b3e6ee71a960/logo@3x.png"
+          "path": "/templates/starter-access-card/65fdc8948f915b54/logo@3x.png"
         }
       },
       {
@@ -2143,7 +2141,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/21c7b3e6ee71a960/thumbnail@2x.png"
+          "path": "/templates/starter-access-card/65fdc8948f915b54/thumbnail@2x.png"
         }
       },
       {
@@ -2157,7 +2155,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/21c7b3e6ee71a960/thumbnail@3x.png"
+          "path": "/templates/starter-access-card/65fdc8948f915b54/thumbnail@3x.png"
         }
       }
     ],
@@ -2170,7 +2168,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-boarding-pass",
     "slug": "starter-boarding-pass",
-    "version": "77a73d2383dac6bd",
+    "version": "4b94cd1a97dc7a1b",
     "name": "Boarding pass",
     "description": "Flight, gate and seat, with a route footer.",
     "org": null,
@@ -2342,7 +2340,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
               "generic"
             ],
             "default": "air",
-            "x-widget": "select"
+            "x-widget": "select",
+            "x-hidden": true
           },
           "ticketId": {
             "type": "string",
@@ -2533,7 +2532,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "barcode": "*",
             "prop": "message"
           },
-          "value": "{{ticketId}}"
+          "value": "{{pass.scanCode}}"
         },
         {
           "to": {
@@ -3009,7 +3008,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2152989108,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/en.lproj/pass.strings"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/en.lproj/pass.strings"
         }
       },
       {
@@ -3023,7 +3022,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/footer@2x.png"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/footer@2x.png"
         }
       },
       {
@@ -3037,7 +3036,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/footer@3x.png"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/footer@3x.png"
         }
       },
       {
@@ -3051,7 +3050,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/icon@2x.png"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/icon@2x.png"
         }
       },
       {
@@ -3065,7 +3064,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/icon@3x.png"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/icon@3x.png"
         }
       },
       {
@@ -3079,7 +3078,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/logo@2x.png"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/logo@2x.png"
         }
       },
       {
@@ -3093,7 +3092,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/logo@3x.png"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/logo@3x.png"
         }
       },
       {
@@ -3107,7 +3106,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/primaryLogo@2x.png"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/primaryLogo@2x.png"
         }
       },
       {
@@ -3121,7 +3120,616 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/77a73d2383dac6bd/primaryLogo@3x.png"
+          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/primaryLogo@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-booking",
+    "slug": "starter-booking",
+    "version": "2d8a306b096698ec",
+    "name": "Booking",
+    "description": "An appointment or table at a set time.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Booking",
+      "description": "An appointment or table at a set time.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "startsAt",
+          "what",
+          "where",
+          "name",
+          "bookingRef"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "When",
+            "x-group": "Booking",
+            "x-order": 10,
+            "x-widget": "datetime"
+          },
+          "what": {
+            "type": "string",
+            "x-label": "What",
+            "x-group": "Booking",
+            "x-order": 20,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "where": {
+            "type": "string",
+            "x-label": "Where",
+            "x-group": "Booking",
+            "x-order": 30,
+            "maxLength": 80,
+            "minLength": 1
+          },
+          "with": {
+            "type": "string",
+            "x-label": "With",
+            "x-group": "Booking",
+            "x-order": 40,
+            "maxLength": 80
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Booking",
+            "x-order": 50,
+            "enum": [
+              "Booked",
+              "Moved",
+              "Cancelled"
+            ],
+            "x-widget": "select",
+            "default": "Booked"
+          },
+          "name": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Guest",
+            "x-order": 60,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "bookingRef": {
+            "type": "string",
+            "x-label": "Booking reference",
+            "x-group": "Guest",
+            "x-order": 70,
+            "maxLength": 64,
+            "minLength": 1,
+            "x-search": true
+          },
+          "rescheduleURL": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Reschedule link",
+            "x-group": "Links",
+            "x-order": 80,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          },
+          "directionsURL": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Directions link",
+            "x-group": "Links",
+            "x-order": 85,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          },
+          "discreet": {
+            "type": "boolean",
+            "x-label": "Discreet",
+            "x-group": "Booking",
+            "x-order": 90,
+            "default": false,
+            "x-help": "Shows Appointment in place of what and who."
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 900,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 901,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 902,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          }
+        }
+      },
+      "sample": {
+        "startsAt": "2030-11-24T09:30:00-05:00",
+        "what": "Cut and colour",
+        "where": "Soho",
+        "with": "Sam",
+        "status": "Booked",
+        "name": "Ana Rivera",
+        "bookingRef": "BOOK-0001"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "when"
+          },
+          "value": "{{startsAt}}"
+        },
+        {
+          "to": {
+            "field": "what"
+          },
+          "value": "{{what}}"
+        },
+        {
+          "to": {
+            "field": "what"
+          },
+          "value": "Appointment",
+          "when": {
+            "input": "discreet",
+            "eq": true
+          }
+        },
+        {
+          "to": {
+            "field": "where"
+          },
+          "value": "{{where}}"
+        },
+        {
+          "to": {
+            "field": "with"
+          },
+          "value": "{{with}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "with"
+          },
+          "remove": {
+            "input": "discreet",
+            "eq": true
+          }
+        },
+        {
+          "to": {
+            "field": "status"
+          },
+          "value": "{{status}}"
+        },
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{name}}"
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{bookingRef}}"
+        },
+        {
+          "to": {
+            "action": "reschedule",
+            "prop": "url"
+          },
+          "value": "{{rescheduleURL}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/directionsInformationURL"
+          },
+          "value": "{{directionsURL}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{startsAt}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/voided"
+          },
+          "value": "{{lookups.void[status].void}}"
+        }
+      ],
+      "display": {
+        "icon": "tag",
+        "title": "{{name}}",
+        "subtitle": "{{what}}",
+        "status": "{{status}}",
+        "search": [
+          "name",
+          "bookingRef"
+        ]
+      },
+      "behaviors": [
+        {
+          "use": "relevance-window",
+          "version": 1,
+          "config": {
+            "start": "startsAt",
+            "leadMinutes": 60,
+            "fallbackMinutes": 90
+          }
+        }
+      ],
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "arrived",
+            "label": "Arrived",
+            "kind": "check_in",
+            "repeat": "once",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "bookingRef"
+        },
+        "window": {
+          "from": "startsAt",
+          "until": "startsAt",
+          "earlyMinutes": 60,
+          "lateMinutes": 30
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Moved",
+            "equals": [
+              "Moved"
+            ]
+          },
+          {
+            "input": "status",
+            "label": "Cancelled",
+            "equals": [
+              "Cancelled"
+            ],
+            "stop": true
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.name}}",
+          "header": {},
+          "panels": [
+            {
+              "id": "p_details",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Details",
+              "icon": "info",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "What",
+                  "value": "{{inputs.what}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "With",
+                  "value": "{{inputs.with}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Send them to the front desk."
+          }
+        }
+      },
+      "lookups": {
+        "void": {
+          "Booked": {
+            "void": false
+          },
+          "Moved": {
+            "void": false
+          },
+          "Cancelled": {
+            "void": true
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Booking",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(250,230,228)",
+      "foregroundColor": "rgb(60,26,36)",
+      "labelColor": "rgb(168,58,84)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "expirationDate": "2030-11-24T14:30:00Z",
+      "featuredActions": [
+        {
+          "identifier": "reschedule",
+          "type": "bookAppointment",
+          "url": ""
+        }
+      ],
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "SCAN-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "BOOK-0001"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "status",
+            "label": "Status",
+            "value": "Booked",
+            "changeMessage": "Your booking is now %@."
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "when",
+            "label": "When",
+            "value": "2030-11-24T09:30:00-05:00",
+            "changeMessage": "Your booking is now %@.",
+            "dateStyle": "PKDateStyleShort",
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "what",
+            "label": "What",
+            "value": "Cut and colour"
+          },
+          {
+            "key": "with",
+            "label": "With",
+            "value": "Sam"
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "where",
+            "label": "Where",
+            "value": "Soho"
+          },
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Ana Rivera"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Please arrive on time. Show the code at the desk."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 301,
+        "sha1": "9e3f73e90c4080303276e522ce926c9b80cb7f01",
+        "crc32": 115174263,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-booking/2d8a306b096698ec/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 924,
+        "sha1": "cb83931498b8f1b157c2b37f4d5c1bde3b8b1d10",
+        "crc32": 3998851720,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-booking/2d8a306b096698ec/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1438,
+        "sha1": "824aad96d474be828f3877ef3514a086604f28f6",
+        "crc32": 1969972865,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-booking/2d8a306b096698ec/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1079,
+        "sha1": "0da601ce090c930ff7d5fbc9b9ddc5df7a208c5c",
+        "crc32": 2287438264,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-booking/2d8a306b096698ec/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1729,
+        "sha1": "343456af177b7ee7751ba7048e64561f7974c9db",
+        "crc32": 2960890932,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-booking/2d8a306b096698ec/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 5570,
+        "sha1": "9243710cd1ad4b9145af88cd38e34e1260772cf5",
+        "crc32": 1804136777,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-booking/2d8a306b096698ec/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 8575,
+        "sha1": "0ed96ebfc681c65be3dea2aa7f1728882a926734",
+        "crc32": 754481661,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-booking/2d8a306b096698ec/thumbnail@3x.png"
         }
       }
     ],
@@ -3646,7 +4254,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
-    "version": "e1c115d81d565729",
+    "version": "a9fa0e97af73688b",
     "name": "Event ticket",
     "description": "Seat, doors and venue, with a poster layout.",
     "org": null,
@@ -4040,7 +4648,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "barcode": "*",
             "prop": "message"
           },
-          "value": "{{ticketId}}"
+          "value": "{{pass.scanCode}}"
         },
         {
           "to": {
@@ -4470,7 +5078,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/artwork@2x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/artwork@2x.png"
         }
       },
       {
@@ -4484,7 +5092,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/artwork@3x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/artwork@3x.png"
         }
       },
       {
@@ -4498,7 +5106,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1006,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/background@2x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/background@2x.png"
         }
       },
       {
@@ -4512,7 +5120,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1509,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/background@3x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/background@3x.png"
         }
       },
       {
@@ -4525,7 +5133,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3221089066,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/en.lproj/pass.strings"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/en.lproj/pass.strings"
         }
       },
       {
@@ -4539,7 +5147,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/icon@2x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/icon@2x.png"
         }
       },
       {
@@ -4553,7 +5161,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/icon@3x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/icon@3x.png"
         }
       },
       {
@@ -4567,7 +5175,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/logo@2x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/logo@2x.png"
         }
       },
       {
@@ -4581,7 +5189,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/logo@3x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/logo@3x.png"
         }
       },
       {
@@ -4595,7 +5203,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/primaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/primaryLogo@2x.png"
         }
       },
       {
@@ -4609,7 +5217,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/primaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/primaryLogo@3x.png"
         }
       },
       {
@@ -4623,7 +5231,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 24,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/secondaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/secondaryLogo@2x.png"
         }
       },
       {
@@ -4637,7 +5245,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 36,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/secondaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/secondaryLogo@3x.png"
         }
       },
       {
@@ -4651,7 +5259,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/thumbnail@2x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/thumbnail@2x.png"
         }
       },
       {
@@ -4665,7 +5273,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/e1c115d81d565729/thumbnail@3x.png"
+          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/thumbnail@3x.png"
         }
       }
     ],
@@ -4678,9 +5286,9 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-generic",
     "slug": "starter-generic",
-    "version": "8c28360ce4da7ef6",
-    "name": "Membership card",
-    "description": "Name, tier and points with a QR code.",
+    "version": "9bb14c7652f8ffb6",
+    "name": "Membership",
+    "description": "Tier, term and status, with a renew link.",
     "org": null,
     "blueprint": true,
     "styles": [
@@ -4688,8 +5296,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     ],
     "manifest": {
       "schema": 1,
-      "name": "Membership card",
-      "description": "Name, tier and points with a QR code.",
+      "name": "Membership",
+      "description": "Tier, term and status, with a renew link.",
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -4729,14 +5337,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             ],
             "default": "Standard",
             "x-widget": "select"
-          },
-          "points": {
-            "type": "integer",
-            "minimum": 0,
-            "default": 0,
-            "x-label": "Points",
-            "x-group": "Holder",
-            "x-order": 40
           },
           "since": {
             "type": "string",
@@ -4821,6 +5421,49 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maxLength": 256,
             "x-widget": "textarea",
             "x-help": "Shown on the back."
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Membership",
+            "x-order": 25,
+            "enum": [
+              "Active",
+              "Frozen",
+              "Past due",
+              "Cancelled"
+            ],
+            "x-widget": "select",
+            "default": "Active"
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "x-label": "Guests left",
+            "x-group": "Membership",
+            "x-order": 26,
+            "default": 0
+          },
+          "renewURL": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Renew link",
+            "x-group": "Links",
+            "x-order": 35,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "x-label": "Points",
+            "x-group": "Holder",
+            "x-order": 40,
+            "x-hidden": true
           }
         },
         "dependentRequired": {
@@ -4842,10 +5485,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "holder": "Alex Morgan",
         "memberId": "ID-0001",
         "tier": "Plus",
-        "points": 1200,
         "since": "2026-01-01T00:00:00Z",
         "wifiSsid": "Guest",
-        "wifiPassword": "change-me"
+        "wifiPassword": "change-me",
+        "status": "Active",
+        "guests": 4,
+        "points": 0
       },
       "bindings": [
         {
@@ -4862,9 +5507,23 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         },
         {
           "to": {
-            "field": "points"
+            "field": "status"
           },
-          "value": "{{points}}"
+          "value": "{{status}}"
+        },
+        {
+          "to": {
+            "field": "guests"
+          },
+          "value": "{{guests}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "renew"
+          },
+          "value": "{{renewURL}}",
+          "omitIfEmpty": true
         },
         {
           "to": {
@@ -4909,7 +5568,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "barcode": "*",
             "prop": "message"
           },
-          "value": "{{memberId}}"
+          "value": "{{pass.scanCode}}"
         },
         {
           "to": {
@@ -5000,6 +5659,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "value": "{{phone}}",
           "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/voided"
+          },
+          "value": "{{lookups.void[status].void}}"
         }
       ],
       "display": {
@@ -5014,7 +5679,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         ],
         "title": "{{holder}}",
         "subtitle": "{{tier}}",
-        "status": "{{tier}}",
+        "status": "{{status}}",
         "search": [
           "holder",
           "memberId"
@@ -5033,30 +5698,96 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "minRole": "door"
           },
           {
-            "id": "points",
-            "label": "Add points",
-            "kind": "add",
-            "input": "points",
+            "id": "guest_in",
+            "label": "Guest in",
+            "kind": "take",
+            "input": "guests",
             "amount": {
-              "max": 100,
+              "max": 10,
               "presets": [
                 1,
-                5,
-                10
+                2,
+                3
               ]
             },
             "repeat": "always",
-            "minRole": "desk"
+            "minRole": "door"
           }
         ],
         "lookup": {
           "input": "memberId"
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Ask a manager",
+            "equals": [
+              "Frozen",
+              "Past due",
+              "Cancelled"
+            ],
+            "stop": true
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.holder}}",
+          "photo": {
+            "minRole": "door"
+          },
+          "header": {},
+          "panels": [
+            {
+              "id": "p_member",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Member",
+              "icon": "id-card",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "Tier",
+                  "value": "{{inputs.tier}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "Guests left",
+                  "value": "{{inputs.guests}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Ask at the front desk."
+          }
+        }
+      },
+      "lookups": {
+        "void": {
+          "Active": {
+            "void": false
+          },
+          "Frozen": {
+            "void": false
+          },
+          "Past due": {
+            "void": false
+          },
+          "Cancelled": {
+            "void": true
+          }
         }
       }
     },
     "passJson": {
       "formatVersion": 1,
-      "description": "Membership card",
+      "description": "Membership",
       "organizationName": "Organization",
       "backgroundColor": "rgb(20,26,43)",
       "foregroundColor": "rgb(255,255,255)",
@@ -5067,7 +5798,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "barcodes": [
         {
           "format": "PKBarcodeFormatQR",
-          "message": "ID-0001",
+          "message": "SCAN-0001",
           "messageEncoding": "iso-8859-1",
           "altText": "ID-0001"
         }
@@ -5108,10 +5839,10 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "changeMessage": "Your tier is now %@."
           },
           {
-            "key": "points",
-            "label": "Points",
-            "value": 0,
-            "numberStyle": "PKNumberStyleDecimal"
+            "key": "status",
+            "label": "Status",
+            "value": "Active",
+            "changeMessage": "Your status is now %@."
           }
         ],
         "primaryFields": [
@@ -5149,6 +5880,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "value": ""
           },
           {
+            "key": "renew",
+            "label": "Renew",
+            "value": ""
+          },
+          {
             "key": "phone",
             "label": "Phone",
             "value": "",
@@ -5171,6 +5907,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "label": "Pass service",
             "value": ""
           }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "guests",
+            "label": "Guests left",
+            "value": 4
+          }
         ]
       }
     },
@@ -5180,12 +5923,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "slot": "strings",
         "scale": 1,
         "locale": "en",
-        "size": 280,
-        "sha1": "2f3c8b62288dfbcb616af551a094cab604f7eaf6",
-        "crc32": 3132866019,
+        "size": 383,
+        "sha1": "9979e380b62997b457d91bede45557e308f20a35",
+        "crc32": 3062501488,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/8c28360ce4da7ef6/en.lproj/pass.strings"
+          "path": "/templates/starter-generic/9bb14c7652f8ffb6/en.lproj/pass.strings"
         }
       },
       {
@@ -5199,7 +5942,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/8c28360ce4da7ef6/icon@2x.png"
+          "path": "/templates/starter-generic/9bb14c7652f8ffb6/icon@2x.png"
         }
       },
       {
@@ -5213,7 +5956,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/8c28360ce4da7ef6/icon@3x.png"
+          "path": "/templates/starter-generic/9bb14c7652f8ffb6/icon@3x.png"
         }
       },
       {
@@ -5227,7 +5970,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/8c28360ce4da7ef6/logo@2x.png"
+          "path": "/templates/starter-generic/9bb14c7652f8ffb6/logo@2x.png"
         }
       },
       {
@@ -5241,7 +5984,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/8c28360ce4da7ef6/logo@3x.png"
+          "path": "/templates/starter-generic/9bb14c7652f8ffb6/logo@3x.png"
         }
       },
       {
@@ -5255,7 +5998,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/8c28360ce4da7ef6/thumbnail@2x.png"
+          "path": "/templates/starter-generic/9bb14c7652f8ffb6/thumbnail@2x.png"
         }
       },
       {
@@ -5269,7 +6012,2032 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/8c28360ce4da7ef6/thumbnail@3x.png"
+          "path": "/templates/starter-generic/9bb14c7652f8ffb6/thumbnail@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "SCAN_DISPLAY_SHADOWED",
+          "message": "Input \"holder\" is hidden by a display root. Use inputs.holder.",
+          "path": "scan.display.holder"
+        }
+      ]
+    }
+  },
+  {
+    "id": "baked:starter-id-card",
+    "slug": "starter-id-card",
+    "version": "b474693bd74f4828",
+    "name": "ID card",
+    "description": "Photo, name, number and a scannable code.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "ID card",
+      "description": "Photo, name, number and a scannable code.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "name",
+          "idNumber"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Card",
+            "x-order": 10,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "idNumber": {
+            "type": "string",
+            "x-label": "Number",
+            "x-group": "Card",
+            "x-order": 20,
+            "maxLength": 64,
+            "minLength": 1,
+            "x-search": true,
+            "pattern": "^[0-9A-Z \\-.$/+%]+$",
+            "x-help": "Capitals, digits and - . $ / + % only. It is the code a library or campus reader scans."
+          },
+          "role": {
+            "type": "string",
+            "x-label": "Role",
+            "x-group": "Card",
+            "x-order": 30,
+            "enum": [
+              "Student",
+              "Staff",
+              "Borrower"
+            ],
+            "x-widget": "select",
+            "default": "Student"
+          },
+          "unit": {
+            "type": "string",
+            "x-label": "Year or department",
+            "x-group": "Card",
+            "x-order": 40,
+            "maxLength": 40
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Valid until",
+            "x-group": "Card",
+            "x-order": 50,
+            "x-widget": "datetime",
+            "x-noneLabel": "No end"
+          },
+          "emergency": {
+            "type": "string",
+            "x-label": "Emergency contact",
+            "x-group": "Card",
+            "x-order": 60,
+            "maxLength": 120,
+            "x-scan": "desk"
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 900,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 901,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 902,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          }
+        }
+      },
+      "sample": {
+        "name": "Maya Chen",
+        "idNumber": "290014",
+        "role": "Student",
+        "unit": "Year 9",
+        "validUntil": "2030-08-31T00:00:00Z"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "role"
+          },
+          "value": "{{role}}"
+        },
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{name}}"
+        },
+        {
+          "to": {
+            "field": "number"
+          },
+          "value": "{{idNumber}}"
+        },
+        {
+          "to": {
+            "field": "unit"
+          },
+          "value": "{{unit}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "until"
+          },
+          "value": "{{validUntil}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{idNumber}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{idNumber}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{validUntil}}",
+          "omitIfEmpty": true
+        }
+      ],
+      "display": {
+        "icon": "id-card",
+        "title": "{{name}}",
+        "subtitle": "{{role}} - {{idNumber}}",
+        "status": "{{role}}",
+        "search": [
+          "name",
+          "idNumber"
+        ]
+      },
+      "behaviors": [
+        {
+          "use": "expiry-from-input",
+          "version": 1,
+          "config": {
+            "input": "validUntil"
+          }
+        }
+      ],
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "check_in",
+            "label": "Check in",
+            "kind": "check_in",
+            "repeat": "daily",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "idNumber"
+        },
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.name}}",
+          "photo": {
+            "minRole": "door"
+          },
+          "header": {},
+          "panels": [
+            {
+              "id": "p_details",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Details",
+              "icon": "info",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "Role",
+                  "value": "{{inputs.role}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "Number",
+                  "value": "{{inputs.idNumber}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Send them to the office."
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "ID card",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(244,244,240)",
+      "foregroundColor": "rgb(20,20,22)",
+      "labelColor": "rgb(196,30,58)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "expirationDate": "2030-08-31T00:00:00Z",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatCode39",
+          "message": "290014",
+          "messageEncoding": "iso-8859-1",
+          "altText": "290014"
+        },
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "290014",
+          "messageEncoding": "iso-8859-1",
+          "altText": "290014"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "role",
+            "label": "Role",
+            "value": "Student"
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Maya Chen"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "number",
+            "label": "Number",
+            "value": "290014"
+          },
+          {
+            "key": "unit",
+            "label": "Year",
+            "value": "Year 9"
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "until",
+            "label": "Valid until",
+            "value": "2030-08-31T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "timeStyle": "PKDateStyleNone",
+            "ignoresTimeZone": true
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Carry this card. It is yours only."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 241,
+        "sha1": "8a89f3834571073ac49dcd716a59b3e41b18e2e0",
+        "crc32": 1406535994,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-id-card/b474693bd74f4828/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 936,
+        "sha1": "357828b93623bc3c7fe18a1edc10ddb8e2635a8f",
+        "crc32": 1652751847,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-id-card/b474693bd74f4828/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1427,
+        "sha1": "c50649e5b1e3f05c3f2fa20b9b0f16346600289c",
+        "crc32": 1378523909,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-id-card/b474693bd74f4828/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1080,
+        "sha1": "848082b025c5debeb411727ebf17aea96b13b9e3",
+        "crc32": 905304569,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-id-card/b474693bd74f4828/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1740,
+        "sha1": "dda74c17afd70ca557aafb810e32fb8b2b65fac6",
+        "crc32": 2649499324,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-id-card/b474693bd74f4828/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 3597,
+        "sha1": "b5948f87b98e9a9ea0cdfd6fb22268a7697d6417",
+        "crc32": 1918108758,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-id-card/b474693bd74f4828/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 5592,
+        "sha1": "1e5bebab7d2cce9794b02d8cfc280fdb5f2be3dd",
+        "crc32": 3054107020,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-id-card/b474693bd74f4828/thumbnail@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-pack",
+    "slug": "starter-pack",
+    "version": "5e44c1263879949a",
+    "name": "Pack",
+    "description": "Ten washes, classes or trips. Use one.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "coupon"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Pack",
+      "description": "Ten washes, classes or trips. Use one.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "name",
+          "packId",
+          "left"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Pack",
+            "x-order": 10,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "packId": {
+            "type": "string",
+            "x-label": "Pack number",
+            "x-group": "Pack",
+            "x-order": 20,
+            "maxLength": 64,
+            "minLength": 1,
+            "x-search": true
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999,
+            "x-label": "Pack size",
+            "x-group": "Pack",
+            "x-order": 30,
+            "default": 10
+          },
+          "left": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999,
+            "x-label": "Uses left",
+            "x-group": "Pack",
+            "x-order": 40
+          },
+          "unit": {
+            "type": "string",
+            "x-label": "What it buys",
+            "x-group": "Pack",
+            "x-order": 50,
+            "maxLength": 20,
+            "default": "uses",
+            "x-help": "Plural, like washes or classes."
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Valid until",
+            "x-group": "Pack",
+            "x-order": 60,
+            "x-widget": "datetime",
+            "x-noneLabel": "One year from sale"
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 900,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 901,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 902,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          }
+        }
+      },
+      "sample": {
+        "name": "Dana Ortiz",
+        "packId": "PACK-0001",
+        "size": 10,
+        "left": 7,
+        "unit": "washes",
+        "validUntil": "2030-11-18T00:00:00Z"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{name}}"
+        },
+        {
+          "to": {
+            "field": "left"
+          },
+          "value": "{{left}}"
+        },
+        {
+          "to": {
+            "field": "pack"
+          },
+          "value": "{{size}} {{unit}}"
+        },
+        {
+          "to": {
+            "field": "expires"
+          },
+          "value": "{{validUntil}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{packId}}"
+        }
+      ],
+      "display": {
+        "icon": "ticket",
+        "title": "{{name}}",
+        "subtitle": "{{left}} left",
+        "status": "{{left}} left",
+        "search": [
+          "name",
+          "packId"
+        ]
+      },
+      "behaviors": [
+        {
+          "use": "expiry-from-input",
+          "version": 1,
+          "config": {
+            "input": "validUntil",
+            "fallbackDays": 365
+          }
+        }
+      ],
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "use",
+            "label": "Use",
+            "kind": "take",
+            "input": "left",
+            "amount": {
+              "max": 3,
+              "presets": [
+                1,
+                2,
+                3
+              ]
+            },
+            "repeat": "cooldown",
+            "cooldownMinutes": 5,
+            "minRole": "door"
+          },
+          {
+            "id": "refill",
+            "label": "Refill",
+            "kind": "add",
+            "input": "left",
+            "amount": {
+              "max": 50,
+              "presets": [
+                5,
+                10,
+                20
+              ]
+            },
+            "repeat": "always",
+            "minRole": "desk",
+            "confirm": true
+          }
+        ],
+        "lookup": {
+          "input": "packId"
+        },
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.name}}",
+          "header": {},
+          "panels": [
+            {
+              "id": "p_details",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Details",
+              "icon": "info",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "Left",
+                  "value": "{{inputs.left}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "Pack",
+                  "value": "{{inputs.size}} {{inputs.unit}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Send them to the desk."
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Pack",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(0,104,116)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(178,240,236)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "expirationDate": "2030-11-18T00:00:00Z",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "SCAN-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "PACK-0001"
+        }
+      ],
+      "coupon": {
+        "headerFields": [
+          {
+            "key": "left",
+            "label": "Left",
+            "value": 7
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "pack",
+            "label": "Pack",
+            "value": "10 washes"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Dana Ortiz"
+          },
+          {
+            "key": "expires",
+            "label": "Valid until",
+            "value": "2030-11-18T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "timeStyle": "PKDateStyleNone",
+            "ignoresTimeZone": true
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
+          },
+          {
+            "key": "fine",
+            "label": "Terms",
+            "value": "Show the code each time. Packs don't refund."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 220,
+        "sha1": "72489a914aae33751b525d5c0f13fa888037376e",
+        "crc32": 4168214438,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pack/5e44c1263879949a/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 979,
+        "sha1": "128045d7b919a7d6358ae1faef4e21117fded111",
+        "crc32": 3899242455,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pack/5e44c1263879949a/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1447,
+        "sha1": "93147b9fe0195deabf35545f0b94e14c79d3eec4",
+        "crc32": 236721879,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pack/5e44c1263879949a/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pack/5e44c1263879949a/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pack/5e44c1263879949a/logo@3x.png"
+        }
+      },
+      {
+        "name": "strip@2x.png",
+        "slot": "strip",
+        "scale": 2,
+        "size": 20649,
+        "sha1": "3508c3297f043c43d305e46b569bafd54518d00a",
+        "crc32": 1168237311,
+        "width": 750,
+        "height": 288,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pack/5e44c1263879949a/strip@2x.png"
+        }
+      },
+      {
+        "name": "strip@3x.png",
+        "slot": "strip",
+        "scale": 3,
+        "size": 33983,
+        "sha1": "3f49c639d3197d9b38056f56ac7175940bd9cff1",
+        "crc32": 2814364994,
+        "width": 1125,
+        "height": 432,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pack/5e44c1263879949a/strip@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-permit",
+    "slug": "starter-permit",
+    "version": "235fc30bf3e3bae9",
+    "name": "Permit",
+    "description": "Plate and zone, valid to a date.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Permit",
+      "description": "Plate and zone, valid to a date.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "plate",
+          "zone",
+          "validTo",
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Permit",
+            "x-order": 5,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "plate": {
+            "type": "string",
+            "x-label": "Plate",
+            "x-group": "Permit",
+            "x-order": 10,
+            "maxLength": 20,
+            "minLength": 1,
+            "x-search": true
+          },
+          "zone": {
+            "type": "string",
+            "x-label": "Zone",
+            "x-group": "Permit",
+            "x-order": 20,
+            "maxLength": 40,
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "x-label": "Type",
+            "x-group": "Permit",
+            "x-order": 30,
+            "enum": [
+              "Monthly",
+              "Annual",
+              "Visitor"
+            ],
+            "x-widget": "select",
+            "default": "Monthly"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Valid from",
+            "x-group": "Permit",
+            "x-order": 40,
+            "x-widget": "datetime"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Valid to",
+            "x-group": "Permit",
+            "x-order": 50,
+            "x-widget": "datetime"
+          },
+          "bay": {
+            "type": "string",
+            "x-label": "Bay",
+            "x-group": "Permit",
+            "x-order": 60,
+            "maxLength": 20
+          },
+          "vehicle": {
+            "type": "string",
+            "x-label": "Vehicle",
+            "x-group": "Permit",
+            "x-order": 70,
+            "maxLength": 60
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Permit",
+            "x-order": 80,
+            "enum": [
+              "Active",
+              "Suspended"
+            ],
+            "x-widget": "select",
+            "default": "Active"
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 900,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 901,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 902,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          }
+        }
+      },
+      "sample": {
+        "name": "Lee Park",
+        "plate": "AB12 CDE",
+        "zone": "Zone C",
+        "type": "Monthly",
+        "validTo": "2030-12-31T00:00:00Z",
+        "bay": "14",
+        "status": "Active"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "zone"
+          },
+          "value": "{{zone}}"
+        },
+        {
+          "to": {
+            "field": "plate"
+          },
+          "value": "{{plate}}"
+        },
+        {
+          "to": {
+            "field": "until"
+          },
+          "value": "{{validTo}}"
+        },
+        {
+          "to": {
+            "field": "type"
+          },
+          "value": "{{type}}"
+        },
+        {
+          "to": {
+            "field": "bay"
+          },
+          "value": "{{bay}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "vehicle"
+          },
+          "value": "{{vehicle}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{name}}"
+        },
+        {
+          "to": {
+            "field": "status"
+          },
+          "value": "{{status}}"
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{plate}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{validTo}}"
+        }
+      ],
+      "display": {
+        "icon": "parking",
+        "title": "{{plate}}",
+        "subtitle": "{{zone}} - {{type}}",
+        "status": "{{status}}",
+        "search": [
+          "plate",
+          "name"
+        ]
+      },
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "verify",
+            "label": "Verify",
+            "kind": "check_in",
+            "repeat": "always",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "plate"
+        },
+        "window": {
+          "from": "validFrom",
+          "until": "validTo"
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Suspended",
+            "equals": [
+              "Suspended"
+            ],
+            "stop": true
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.plate}}",
+          "header": {},
+          "panels": [
+            {
+              "id": "p_details",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Details",
+              "icon": "info",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "Zone",
+                  "value": "{{inputs.zone}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "Type",
+                  "value": "{{inputs.type}}"
+                },
+                {
+                  "id": "r_field3",
+                  "slot": "field3",
+                  "type": "field",
+                  "label": "Bay",
+                  "value": "{{inputs.bay}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Send them to the parking office."
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Permit",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(170,28,44)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(255,210,212)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "expirationDate": "2030-12-31T00:00:00Z",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "SCAN-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "AB12 CDE"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "zone",
+            "label": "Zone",
+            "value": "Zone C"
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "plate",
+            "label": "Plate",
+            "value": "AB12 CDE"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "until",
+            "label": "Valid to",
+            "value": "2030-12-31T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "timeStyle": "PKDateStyleNone",
+            "ignoresTimeZone": true
+          },
+          {
+            "key": "type",
+            "label": "Type",
+            "value": "Monthly"
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "bay",
+            "label": "Bay",
+            "value": "14"
+          },
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Lee Park"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "status",
+            "label": "Status",
+            "value": "Active",
+            "changeMessage": "Your permit is now %@."
+          },
+          {
+            "key": "vehicle",
+            "label": "Vehicle",
+            "value": ""
+          },
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Display as the operator requires. Cameras read plates, not this code."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 345,
+        "sha1": "8ea2cfab8e6cf91cfe2ba2a2057a03c77c94aa0e",
+        "crc32": 3114249546,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-permit/235fc30bf3e3bae9/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 955,
+        "sha1": "e9e8bce427ec3a03e8b76ccb8aa1b613f2af9acc",
+        "crc32": 3548728240,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-permit/235fc30bf3e3bae9/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1437,
+        "sha1": "5465ecd640c170a6dcc1ec1878dd138f00648860",
+        "crc32": 2199435489,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-permit/235fc30bf3e3bae9/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-permit/235fc30bf3e3bae9/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-permit/235fc30bf3e3bae9/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 5268,
+        "sha1": "3d041d24d5981d8184cfd9bb3d04864b908c8c30",
+        "crc32": 2554339411,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-permit/235fc30bf3e3bae9/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 7802,
+        "sha1": "eaaac6399f7f65564d634603fa321412dfe5a6fd",
+        "crc32": 2431116725,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-permit/235fc30bf3e3bae9/thumbnail@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-pickup",
+    "slug": "starter-pickup",
+    "version": "3399be79255e3b52",
+    "name": "Pickup",
+    "description": "An order code, buzzed when ready.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Pickup",
+      "description": "An order code, buzzed when ready.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "orderNo",
+          "code",
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Order",
+            "x-order": 5,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "orderNo": {
+            "type": "string",
+            "x-label": "Order number",
+            "x-group": "Order",
+            "x-order": 10,
+            "maxLength": 64,
+            "minLength": 1,
+            "x-search": true
+          },
+          "code": {
+            "type": "string",
+            "x-label": "Code",
+            "x-group": "Order",
+            "x-order": 20,
+            "maxLength": 12,
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Order",
+            "x-order": 30,
+            "enum": [
+              "Placed",
+              "Ready",
+              "Collected"
+            ],
+            "x-widget": "select",
+            "default": "Placed"
+          },
+          "collectBy": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Collect by",
+            "x-group": "Order",
+            "x-order": 40,
+            "x-widget": "datetime"
+          },
+          "bay": {
+            "type": "string",
+            "x-label": "Where",
+            "x-group": "Order",
+            "x-order": 50,
+            "maxLength": 40
+          },
+          "items": {
+            "type": "string",
+            "x-label": "Items",
+            "x-group": "Order",
+            "x-order": 60,
+            "maxLength": 200,
+            "x-widget": "textarea"
+          },
+          "idRequired": {
+            "type": "boolean",
+            "x-label": "ID required",
+            "x-group": "Order",
+            "x-order": 70,
+            "default": false
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 900,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 901,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 902,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          }
+        }
+      },
+      "sample": {
+        "name": "Mia Kent",
+        "orderNo": "1042",
+        "code": "4K7M",
+        "status": "Ready",
+        "collectBy": "2030-11-18T19:30:00-05:00",
+        "bay": "Bay 3",
+        "items": "2 mains, 1 side"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "status"
+          },
+          "value": "{{status}}"
+        },
+        {
+          "to": {
+            "field": "order"
+          },
+          "value": "{{orderNo}}"
+        },
+        {
+          "to": {
+            "field": "code"
+          },
+          "value": "{{code}}"
+        },
+        {
+          "to": {
+            "field": "collectBy"
+          },
+          "value": "{{collectBy}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "bay"
+          },
+          "value": "{{bay}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{name}}"
+        },
+        {
+          "to": {
+            "field": "items"
+          },
+          "value": "{{items}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{orderNo}}"
+        }
+      ],
+      "display": {
+        "icon": "gift",
+        "title": "{{name}}",
+        "subtitle": "Order {{orderNo}}",
+        "status": "{{status}}",
+        "search": [
+          "name",
+          "orderNo",
+          "code"
+        ]
+      },
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "ready",
+            "label": "Mark ready",
+            "kind": "set",
+            "input": "status",
+            "value": "Ready",
+            "repeat": "once",
+            "minRole": "door",
+            "notify": true
+          },
+          {
+            "id": "collected",
+            "label": "Collected",
+            "kind": "use_up",
+            "repeat": "once",
+            "minRole": "door",
+            "confirm": true
+          }
+        ],
+        "lookup": {
+          "input": "orderNo"
+        },
+        "flags": [
+          {
+            "input": "idRequired",
+            "label": "Check ID"
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.name}}",
+          "header": {},
+          "panels": [
+            {
+              "id": "p_details",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Details",
+              "icon": "info",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "Order",
+                  "value": "{{inputs.orderNo}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "Items",
+                  "value": "{{inputs.items}}"
+                },
+                {
+                  "id": "r_field3",
+                  "slot": "field3",
+                  "type": "field",
+                  "label": "Where",
+                  "value": "{{inputs.bay}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Ask at the counter."
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Pickup",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(206,242,226)",
+      "foregroundColor": "rgb(12,52,38)",
+      "labelColor": "rgb(10,106,70)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "SCAN-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "1042"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "status",
+            "label": "Status",
+            "value": "Ready",
+            "changeMessage": "Order status: %@."
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "code",
+            "label": "Code",
+            "value": "4K7M"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "order",
+            "label": "Order",
+            "value": "1042"
+          },
+          {
+            "key": "collectBy",
+            "label": "Collect by",
+            "value": "2030-11-18T19:30:00-05:00",
+            "dateStyle": "PKDateStyleNone",
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "bay",
+            "label": "Where",
+            "value": "Bay 3"
+          },
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Mia Kent"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "items",
+            "label": "Items",
+            "value": ""
+          },
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Show the code to collect. Bring ID if asked."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 322,
+        "sha1": "8198f150d5127508628849dec748b4b17ac45f4e",
+        "crc32": 1674255800,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pickup/3399be79255e3b52/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 925,
+        "sha1": "f1d3bc777c84ea59edc9804828c9a851ff1db4c6",
+        "crc32": 4253185388,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pickup/3399be79255e3b52/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1441,
+        "sha1": "56f2cd240a576f82be71f351221240a053630304",
+        "crc32": 3154708570,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pickup/3399be79255e3b52/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1061,
+        "sha1": "1f2da0b0acfd9688bfd2a2430232576fd809bf2d",
+        "crc32": 2008632219,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pickup/3399be79255e3b52/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1732,
+        "sha1": "5dfdc5841b6ca07db938ee739b8dfa4bcb43eb71",
+        "crc32": 2799856859,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pickup/3399be79255e3b52/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 4499,
+        "sha1": "edc2579789764fe6f56af6385e010c941c968b5f",
+        "crc32": 2427908982,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pickup/3399be79255e3b52/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 6625,
+        "sha1": "22766c6ccb17f87c04355a36e4e8c27435a2babb",
+        "crc32": 2604496245,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-pickup/3399be79255e3b52/thumbnail@3x.png"
         }
       }
     ],
@@ -5282,7 +8050,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-poster-generic",
     "slug": "starter-poster-generic",
-    "version": "230d73f903803c94",
+    "version": "436ff08e83b9639f",
     "name": "Poster card",
     "description": "Full-bleed artwork on iOS 27, a classic card before it.",
     "org": null,
@@ -5512,7 +8280,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "barcode": "*",
             "prop": "message"
           },
-          "value": "{{memberId}}"
+          "value": "{{pass.scanCode}}"
         },
         {
           "to": {
@@ -5773,7 +8541,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/artwork@2x.png"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/artwork@2x.png"
         }
       },
       {
@@ -5787,7 +8555,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/artwork@3x.png"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/artwork@3x.png"
         }
       },
       {
@@ -5800,7 +8568,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2978387323,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/en.lproj/pass.strings"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/en.lproj/pass.strings"
         }
       },
       {
@@ -5814,7 +8582,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/icon@2x.png"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/icon@2x.png"
         }
       },
       {
@@ -5828,7 +8596,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/icon@3x.png"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/icon@3x.png"
         }
       },
       {
@@ -5842,7 +8610,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/logo@2x.png"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/logo@2x.png"
         }
       },
       {
@@ -5856,7 +8624,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/logo@3x.png"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/logo@3x.png"
         }
       },
       {
@@ -5870,7 +8638,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/primaryLogo@2x.png"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/primaryLogo@2x.png"
         }
       },
       {
@@ -5884,7 +8652,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/230d73f903803c94/primaryLogo@3x.png"
+          "path": "/templates/starter-poster-generic/436ff08e83b9639f/primaryLogo@3x.png"
         }
       }
     ],
@@ -5897,7 +8665,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-stamp-card",
     "slug": "starter-stamp-card",
-    "version": "7b9f65acc12822e6",
+    "version": "598a6743aec87c11",
     "name": "Stamp card",
     "description": "Stamps fill the strip; a full card earns a reward.",
     "org": null,
@@ -6150,7 +8918,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "barcode": "*",
             "prop": "message"
           },
-          "value": "{{cardNumber}}"
+          "value": "{{pass.scanCode}}"
         },
         {
           "to": {
@@ -6362,7 +9130,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4183522916,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/en.lproj/pass.strings"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/en.lproj/pass.strings"
         }
       },
       {
@@ -6376,7 +9144,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/icon@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/icon@2x.png"
         }
       },
       {
@@ -6390,7 +9158,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/icon@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/icon@3x.png"
         }
       },
       {
@@ -6404,7 +9172,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/logo@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/logo@2x.png"
         }
       },
       {
@@ -6418,7 +9186,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/logo@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/logo@3x.png"
         }
       },
       {
@@ -6432,7 +9200,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/empty.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/empty.png"
         }
       },
       {
@@ -6446,7 +9214,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/filled.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/filled.png"
         }
       },
       {
@@ -6460,7 +9228,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/reward-earned.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/reward-earned.png"
         }
       },
       {
@@ -6474,7 +9242,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/reward.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/reward.png"
         }
       },
       {
@@ -6489,7 +9257,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 0,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/0/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/0/strip@2x.png"
         }
       },
       {
@@ -6504,7 +9272,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 0,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/0/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/0/strip@3x.png"
         }
       },
       {
@@ -6519,7 +9287,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/1/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/1/strip@2x.png"
         }
       },
       {
@@ -6534,7 +9302,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/1/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/1/strip@3x.png"
         }
       },
       {
@@ -6549,7 +9317,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 10,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/10/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/10/strip@2x.png"
         }
       },
       {
@@ -6564,7 +9332,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 10,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/10/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/10/strip@3x.png"
         }
       },
       {
@@ -6579,7 +9347,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 2,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/2/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/2/strip@2x.png"
         }
       },
       {
@@ -6594,7 +9362,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 2,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/2/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/2/strip@3x.png"
         }
       },
       {
@@ -6609,7 +9377,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 3,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/3/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/3/strip@2x.png"
         }
       },
       {
@@ -6624,7 +9392,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 3,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/3/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/3/strip@3x.png"
         }
       },
       {
@@ -6639,7 +9407,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 4,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/4/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/4/strip@2x.png"
         }
       },
       {
@@ -6654,7 +9422,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 4,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/4/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/4/strip@3x.png"
         }
       },
       {
@@ -6669,7 +9437,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 5,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/5/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/5/strip@2x.png"
         }
       },
       {
@@ -6684,7 +9452,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 5,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/5/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/5/strip@3x.png"
         }
       },
       {
@@ -6699,7 +9467,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 6,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/6/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/6/strip@2x.png"
         }
       },
       {
@@ -6714,7 +9482,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 6,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/6/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/6/strip@3x.png"
         }
       },
       {
@@ -6729,7 +9497,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 7,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/7/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/7/strip@2x.png"
         }
       },
       {
@@ -6744,7 +9512,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 7,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/7/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/7/strip@3x.png"
         }
       },
       {
@@ -6759,7 +9527,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 8,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/8/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/8/strip@2x.png"
         }
       },
       {
@@ -6774,7 +9542,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 8,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/8/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/8/strip@3x.png"
         }
       },
       {
@@ -6789,7 +9557,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 9,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/9/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/9/strip@2x.png"
         }
       },
       {
@@ -6804,7 +9572,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 9,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/stamps/strips/9/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/9/strip@3x.png"
         }
       },
       {
@@ -6818,7 +9586,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/strip@2x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/strip@2x.png"
         }
       },
       {
@@ -6832,7 +9600,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/7b9f65acc12822e6/strip@3x.png"
+          "path": "/templates/starter-stamp-card/598a6743aec87c11/strip@3x.png"
         }
       }
     ],
@@ -6845,7 +9613,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-store-card",
     "slug": "starter-store-card",
-    "version": "3c19c4d61eb8a962",
+    "version": "a44348591b0e2cde",
     "name": "Balance card",
     "description": "A big balance up front, on a coin strip.",
     "org": null,
@@ -7105,7 +9873,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "barcode": "*",
             "prop": "message"
           },
-          "value": "{{cardNumber}}"
+          "value": "{{pass.scanCode}}"
         },
         {
           "to": {
@@ -7366,7 +10134,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 581305781,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3c19c4d61eb8a962/en.lproj/pass.strings"
+          "path": "/templates/starter-store-card/a44348591b0e2cde/en.lproj/pass.strings"
         }
       },
       {
@@ -7380,7 +10148,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3c19c4d61eb8a962/icon@2x.png"
+          "path": "/templates/starter-store-card/a44348591b0e2cde/icon@2x.png"
         }
       },
       {
@@ -7394,7 +10162,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3c19c4d61eb8a962/icon@3x.png"
+          "path": "/templates/starter-store-card/a44348591b0e2cde/icon@3x.png"
         }
       },
       {
@@ -7408,7 +10176,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3c19c4d61eb8a962/logo@2x.png"
+          "path": "/templates/starter-store-card/a44348591b0e2cde/logo@2x.png"
         }
       },
       {
@@ -7422,7 +10190,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3c19c4d61eb8a962/logo@3x.png"
+          "path": "/templates/starter-store-card/a44348591b0e2cde/logo@3x.png"
         }
       },
       {
@@ -7436,7 +10204,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3c19c4d61eb8a962/strip@2x.png"
+          "path": "/templates/starter-store-card/a44348591b0e2cde/strip@2x.png"
         }
       },
       {
@@ -7450,7 +10218,1247 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3c19c4d61eb8a962/strip@3x.png"
+          "path": "/templates/starter-store-card/a44348591b0e2cde/strip@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-timed-ticket",
+    "slug": "starter-timed-ticket",
+    "version": "d1d9bb06011b6073",
+    "name": "Timed ticket",
+    "description": "A time slot for a party, no seat.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "eventTicket"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Timed ticket",
+      "description": "A time slot for a party, no seat.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "startsAt",
+          "endsAt",
+          "name",
+          "orderRef"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "x-label": "What",
+            "x-group": "Visit",
+            "x-order": 10,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "venueName": {
+            "type": "string",
+            "x-label": "Venue",
+            "x-group": "Visit",
+            "x-order": 20,
+            "maxLength": 80,
+            "minLength": 1
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Slot starts",
+            "x-group": "Visit",
+            "x-order": 30,
+            "x-widget": "datetime"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Slot ends",
+            "x-group": "Visit",
+            "x-order": 40,
+            "x-widget": "datetime"
+          },
+          "venueTimeZone": {
+            "type": "string",
+            "x-label": "Time zone",
+            "x-group": "Visit",
+            "x-order": 45,
+            "maxLength": 64,
+            "x-timeZone": true
+          },
+          "name": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Party",
+            "x-order": 50,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "adults": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "x-label": "Adults",
+            "x-group": "Party",
+            "x-order": 60,
+            "default": 1
+          },
+          "children": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "x-label": "Children",
+            "x-group": "Party",
+            "x-order": 70,
+            "default": 0
+          },
+          "entrance": {
+            "type": "string",
+            "x-label": "Entrance",
+            "x-group": "Visit",
+            "x-order": 80,
+            "maxLength": 40
+          },
+          "orderRef": {
+            "type": "string",
+            "x-label": "Order reference",
+            "x-group": "Party",
+            "x-order": 90,
+            "maxLength": 64,
+            "minLength": 1,
+            "x-search": true
+          },
+          "slotKey": {
+            "type": "string",
+            "x-label": "Slot key",
+            "x-group": "Visit",
+            "x-order": 100,
+            "maxLength": 64,
+            "x-help": "Same value on every ticket for one slot. Scanning events match on it."
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 900,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 901,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 902,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          },
+          "admits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99,
+            "x-label": "Admits",
+            "x-group": "Party",
+            "x-order": 55,
+            "default": 1
+          }
+        }
+      },
+      "sample": {
+        "eventName": "Ocean Light",
+        "venueName": "Northfield Museum",
+        "venueTimeZone": "America/New_York",
+        "startsAt": "2030-11-21T14:00:00-05:00",
+        "endsAt": "2030-11-21T14:30:00-05:00",
+        "name": "Sam Reed",
+        "adults": 2,
+        "children": 1,
+        "entrance": "B",
+        "orderRef": "ORD-0001",
+        "slotKey": "ocean-light-2030-11-21-1400",
+        "admits": 3
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "event"
+          },
+          "value": "{{eventName}}"
+        },
+        {
+          "to": {
+            "field": "venue"
+          },
+          "value": "{{venueName}}"
+        },
+        {
+          "to": {
+            "field": "slot"
+          },
+          "value": "{{startsAt}}"
+        },
+        {
+          "to": {
+            "field": "until"
+          },
+          "value": "{{endsAt}}"
+        },
+        {
+          "to": {
+            "field": "party"
+          },
+          "value": "Admits {{admits}}"
+        },
+        {
+          "to": {
+            "field": "entrance"
+          },
+          "value": "{{entrance}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{orderRef}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{endsAt}}"
+        }
+      ],
+      "display": {
+        "icon": "ticket",
+        "title": "{{eventName}}",
+        "subtitle": "{{name}}",
+        "status": "{{venueName}}",
+        "search": [
+          "eventName",
+          "name",
+          "orderRef"
+        ]
+      },
+      "behaviors": [
+        {
+          "use": "relevance-window",
+          "version": 1,
+          "config": {
+            "start": "startsAt",
+            "end": "endsAt",
+            "leadMinutes": 60
+          }
+        }
+      ],
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "admit",
+            "label": "Admit",
+            "kind": "check_in",
+            "repeat": "once",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "orderRef"
+        },
+        "window": {
+          "from": "startsAt",
+          "until": "endsAt",
+          "earlyMinutes": 15,
+          "lateMinutes": 30
+        },
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.name}}",
+          "header": {},
+          "panels": [
+            {
+              "id": "p_details",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Details",
+              "icon": "info",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "Adults",
+                  "value": "{{inputs.adults}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "Children",
+                  "value": "{{inputs.children}}"
+                },
+                {
+                  "id": "r_field3",
+                  "slot": "field3",
+                  "type": "field",
+                  "label": "Entrance",
+                  "value": "{{inputs.entrance}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Send them to the desk for the next slot."
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Timed ticket",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(38,70,36)",
+      "foregroundColor": "rgb(255,248,231)",
+      "labelColor": "rgb(196,226,124)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "expirationDate": "2030-11-21T14:30:00-05:00",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "SCAN-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "ORD-0001"
+        }
+      ],
+      "eventTicket": {
+        "headerFields": [
+          {
+            "key": "slot",
+            "label": "Slot",
+            "value": "2030-11-21T14:00:00-05:00",
+            "changeMessage": "Your slot is now %@.",
+            "dateStyle": "PKDateStyleNone",
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "event",
+            "label": "Visit",
+            "value": "Ocean Light"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "venue",
+            "label": "Venue",
+            "value": "Northfield Museum"
+          },
+          {
+            "key": "until",
+            "label": "Until",
+            "value": "2030-11-21T14:30:00-05:00",
+            "dateStyle": "PKDateStyleNone",
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "party",
+            "label": "Party",
+            "value": "Admits 3"
+          },
+          {
+            "key": "entrance",
+            "label": "Entrance",
+            "value": "B"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Arrive within your slot. Show the code at the entrance."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 305,
+        "sha1": "b6f69bb600b3fefd9a46025d2be274940eb3fef7",
+        "crc32": 2918919439,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 961,
+        "sha1": "feccd69076382965b4d41a00d72bced57ff90d4a",
+        "crc32": 3729386881,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1447,
+        "sha1": "f710f7054df232ff5ba461fec02a160d6059dd51",
+        "crc32": 685926013,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1039,
+        "sha1": "dc0d83a9c574d25a3c884214b465bed788712267",
+        "crc32": 4061096767,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1696,
+        "sha1": "a0ca8597a59aac506a3d6d7305fc0342f24524f0",
+        "crc32": 1553773133,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/logo@3x.png"
+        }
+      },
+      {
+        "name": "strip@2x.png",
+        "slot": "strip",
+        "scale": 2,
+        "size": 8344,
+        "sha1": "50b225df330d5b29a4451190fafb1643d3df2999",
+        "crc32": 447303331,
+        "width": 750,
+        "height": 288,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/strip@2x.png"
+        }
+      },
+      {
+        "name": "strip@3x.png",
+        "slot": "strip",
+        "scale": 3,
+        "size": 14444,
+        "sha1": "b0ec080a451e630f7caec0cac26a42b4d7a30bef",
+        "crc32": 2715896296,
+        "width": 1125,
+        "height": 432,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-timed-ticket/d1d9bb06011b6073/strip@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-transit-ticket",
+    "slug": "starter-transit-ticket",
+    "version": "a104361162ed2c85",
+    "name": "Transit ticket",
+    "description": "Boat, bus or train, with party and vehicle.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "boardingPass"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Transit ticket",
+      "description": "Boat, bus or train, with party and vehicle.",
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "mode",
+          "origin",
+          "destination",
+          "departsAt",
+          "originTimeZone",
+          "serviceKey",
+          "bookingRef",
+          "name",
+          "status"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "x-label": "Mode",
+            "x-group": "Trip",
+            "x-order": 10,
+            "enum": [
+              "boat",
+              "bus",
+              "train"
+            ],
+            "x-widget": "select",
+            "default": "boat",
+            "x-enumLabels": {
+              "boat": "Boat",
+              "bus": "Bus",
+              "train": "Train"
+            }
+          },
+          "origin": {
+            "type": "string",
+            "x-label": "From",
+            "x-group": "Trip",
+            "x-order": 20,
+            "maxLength": 80,
+            "minLength": 1
+          },
+          "destination": {
+            "type": "string",
+            "x-label": "To",
+            "x-group": "Trip",
+            "x-order": 30,
+            "maxLength": 80,
+            "minLength": 1
+          },
+          "departsAt": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Departs",
+            "x-group": "Trip",
+            "x-order": 40,
+            "x-widget": "datetime"
+          },
+          "boardBy": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Board by",
+            "x-group": "Trip",
+            "x-order": 45,
+            "x-widget": "datetime"
+          },
+          "originTimeZone": {
+            "type": "string",
+            "x-label": "Time zone",
+            "x-group": "Trip",
+            "x-order": 50,
+            "maxLength": 64,
+            "minLength": 1,
+            "x-timeZone": true
+          },
+          "serviceKey": {
+            "type": "string",
+            "x-label": "Service key",
+            "x-group": "Trip",
+            "x-order": 60,
+            "maxLength": 64,
+            "minLength": 1,
+            "x-help": "Same value on every ticket for one sailing or run. Scanning events match on it."
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Trip",
+            "x-order": 70,
+            "enum": [
+              "On time",
+              "Delayed",
+              "Cancelled"
+            ],
+            "x-widget": "select",
+            "default": "On time"
+          },
+          "vessel": {
+            "type": "string",
+            "x-label": "Vessel or vehicle",
+            "x-group": "Trip",
+            "x-order": 80,
+            "maxLength": 40
+          },
+          "lane": {
+            "type": "string",
+            "x-label": "Lane",
+            "x-group": "Trip",
+            "x-order": 90,
+            "maxLength": 20
+          },
+          "vehicleType": {
+            "type": "string",
+            "x-label": "Vehicle type",
+            "x-group": "Vehicle",
+            "x-order": 100,
+            "maxLength": 40
+          },
+          "plate": {
+            "type": "string",
+            "x-label": "Plate",
+            "x-group": "Vehicle",
+            "x-order": 110,
+            "maxLength": 20
+          },
+          "name": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Party",
+            "x-order": 120,
+            "maxLength": 80,
+            "minLength": 1,
+            "x-search": true
+          },
+          "bookingRef": {
+            "type": "string",
+            "x-label": "Booking reference",
+            "x-group": "Party",
+            "x-order": 130,
+            "maxLength": 64,
+            "minLength": 1,
+            "x-search": true
+          },
+          "adults": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "x-label": "Adults",
+            "x-group": "Party",
+            "x-order": 140,
+            "default": 1
+          },
+          "children": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "x-label": "Children",
+            "x-group": "Party",
+            "x-order": 150,
+            "default": 0
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 900,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 901,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 300,
+            "x-label": "Website",
+            "x-group": "Links",
+            "x-order": 902,
+            "x-widget": "url",
+            "x-placeholder": "https://"
+          },
+          "admits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99,
+            "x-label": "Admits",
+            "x-group": "Party",
+            "x-order": 55,
+            "default": 1
+          }
+        }
+      },
+      "sample": {
+        "mode": "boat",
+        "origin": "Newport",
+        "destination": "Harbor Point",
+        "departsAt": "2030-11-21T07:15:00-05:00",
+        "boardBy": "2030-11-21T06:55:00-05:00",
+        "originTimeZone": "America/New_York",
+        "serviceKey": "newport-harbor-point-2030-11-21-0715",
+        "status": "On time",
+        "vessel": "Red Falcon",
+        "lane": "4",
+        "vehicleType": "Car",
+        "plate": "AB12 CDE",
+        "name": "Sam Reed",
+        "bookingRef": "BK-0001",
+        "adults": 2,
+        "children": 1,
+        "admits": 3
+      },
+      "lookups": {
+        "transit": {
+          "boat": {
+            "type": "PKTransitTypeBoat"
+          },
+          "bus": {
+            "type": "PKTransitTypeBus"
+          },
+          "train": {
+            "type": "PKTransitTypeTrain"
+          }
+        }
+      },
+      "bindings": [
+        {
+          "to": {
+            "pointer": "/boardingPass/transitType"
+          },
+          "value": "{{lookups.transit[mode].type}}"
+        },
+        {
+          "to": {
+            "field": "status"
+          },
+          "value": "{{status}}"
+        },
+        {
+          "to": {
+            "field": "lane"
+          },
+          "value": "{{lane}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "origin"
+          },
+          "value": "{{origin}}"
+        },
+        {
+          "to": {
+            "field": "destination"
+          },
+          "value": "{{destination}}"
+        },
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{name}}"
+        },
+        {
+          "to": {
+            "field": "departs"
+          },
+          "value": "{{departsAt}}"
+        },
+        {
+          "to": {
+            "field": "boardBy"
+          },
+          "value": "{{boardBy}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "party"
+          },
+          "value": "Admits {{admits}}"
+        },
+        {
+          "to": {
+            "field": "vehicle"
+          },
+          "value": "{{plate}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "field": "site"
+          },
+          "value": "{{website}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "site",
+            "prop": "attributedValue"
+          },
+          "value": "<a href=\"{{website|html}}\">{{website|html}}</a>",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{bookingRef}}"
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{departsAt}}"
+        }
+      ],
+      "display": {
+        "icon": "ticket",
+        "title": "{{name}}",
+        "subtitle": "{{origin}} to {{destination}}",
+        "status": "{{status}}",
+        "search": [
+          "name",
+          "bookingRef"
+        ]
+      },
+      "behaviors": [
+        {
+          "use": "relevance-window",
+          "version": 1,
+          "config": {
+            "start": "boardBy",
+            "end": "departsAt",
+            "leadMinutes": 60,
+            "fallbackMinutes": 120
+          }
+        }
+      ],
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "board",
+            "label": "Board",
+            "kind": "check_in",
+            "repeat": "once",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "bookingRef"
+        },
+        "window": {
+          "from": "boardBy",
+          "until": "departsAt",
+          "earlyMinutes": 120
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Cancelled",
+            "equals": [
+              "Cancelled"
+            ],
+            "stop": true
+          },
+          {
+            "input": "plate",
+            "label": "Vehicle"
+          }
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.name}}",
+          "header": {},
+          "panels": [
+            {
+              "id": "p_details",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Details",
+              "icon": "info",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "Party",
+                  "value": "Admits {{inputs.admits}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "Vehicle",
+                  "value": "{{inputs.plate}}"
+                },
+                {
+                  "id": "r_field3",
+                  "slot": "field3",
+                  "type": "field",
+                  "label": "Lane",
+                  "value": "{{inputs.lane}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Send them to the ticket desk."
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Transit ticket",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(48,53,60)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(255,210,63)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "expirationDate": "2030-11-21T07:15:00-05:00",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "SCAN-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "BK-0001"
+        }
+      ],
+      "boardingPass": {
+        "headerFields": [
+          {
+            "key": "status",
+            "label": "Status",
+            "value": "On time",
+            "changeMessage": "Status is now %@."
+          },
+          {
+            "key": "lane",
+            "label": "Lane",
+            "value": "4",
+            "changeMessage": "Lane is now %@."
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "origin",
+            "label": "From",
+            "value": "Newport"
+          },
+          {
+            "key": "destination",
+            "label": "To",
+            "value": "Harbor Point"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Sam Reed"
+          },
+          {
+            "key": "departs",
+            "label": "Departs",
+            "value": "2030-11-21T07:15:00-05:00",
+            "changeMessage": "Now departs %@.",
+            "dateStyle": "PKDateStyleShort",
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "boardBy",
+            "label": "Board by",
+            "value": "2030-11-21T06:55:00-05:00",
+            "dateStyle": "PKDateStyleNone",
+            "timeStyle": "PKDateStyleShort",
+            "ignoresTimeZone": true
+          },
+          {
+            "key": "party",
+            "label": "Party",
+            "value": "Admits 3"
+          },
+          {
+            "key": "vehicle",
+            "label": "Vehicle",
+            "value": "AB12 CDE"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "site",
+            "label": "Website",
+            "value": ""
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Be at the quay by the board-by time. Show the code to board."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 434,
+        "sha1": "ceec6170c9544b654a4e7c5dbb27ad5c6552e018",
+        "crc32": 291132420,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "footer@2x.png",
+        "slot": "footer",
+        "scale": 2,
+        "size": 897,
+        "sha1": "fd4b86b29b9a73315fe685490867ac86f9691e23",
+        "crc32": 2775825442,
+        "width": 536,
+        "height": 30,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/footer@2x.png"
+        }
+      },
+      {
+        "name": "footer@3x.png",
+        "slot": "footer",
+        "scale": 3,
+        "size": 1384,
+        "sha1": "58b88e3184aba1fa9b9edb6202e81ea9c81a50e5",
+        "crc32": 2658302312,
+        "width": 804,
+        "height": 45,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/footer@3x.png"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 952,
+        "sha1": "d9a1a93e49b865b9c09c060a19d3d789d53d2987",
+        "crc32": 1571155393,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1441,
+        "sha1": "c62e7adf6b9a88035a7f8072e8e0e57071aa10e4",
+        "crc32": 1770588155,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-transit-ticket/a104361162ed2c85/logo@3x.png"
         }
       }
     ],
