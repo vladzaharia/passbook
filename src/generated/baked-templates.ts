@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "5ef6e604a68368cd9eac8fdfa6065a623c1b65c6";
+export const BAKED_BUILD_HASH = "0638c01960d7f4e17f52af863308aec1c595f85b";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -2303,7 +2303,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-coupon",
     "slug": "starter-coupon",
-    "version": "842ab05b2639e355",
+    "version": "3cb9ff6729152d01",
     "name": "Coupon",
     "description": "A single-use offer with an expiry.",
     "org": null,
@@ -2621,7 +2621,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "barcodes": [
         {
           "format": "PKBarcodeFormatPDF417",
-          "message": "SAVE-0001",
+          "message": "SCAN-0001",
           "messageEncoding": "iso-8859-1",
           "altText": "SAVE-0001"
         }
@@ -2711,7 +2711,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3965588232,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/842ab05b2639e355/en.lproj/pass.strings"
+          "path": "/templates/starter-coupon/3cb9ff6729152d01/en.lproj/pass.strings"
         }
       },
       {
@@ -2725,7 +2725,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/842ab05b2639e355/icon@2x.png"
+          "path": "/templates/starter-coupon/3cb9ff6729152d01/icon@2x.png"
         }
       },
       {
@@ -2739,7 +2739,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/842ab05b2639e355/icon@3x.png"
+          "path": "/templates/starter-coupon/3cb9ff6729152d01/icon@3x.png"
         }
       },
       {
@@ -2753,7 +2753,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/842ab05b2639e355/logo@2x.png"
+          "path": "/templates/starter-coupon/3cb9ff6729152d01/logo@2x.png"
         }
       },
       {
@@ -2767,7 +2767,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/842ab05b2639e355/logo@3x.png"
+          "path": "/templates/starter-coupon/3cb9ff6729152d01/logo@3x.png"
         }
       },
       {
@@ -2781,7 +2781,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/842ab05b2639e355/strip@2x.png"
+          "path": "/templates/starter-coupon/3cb9ff6729152d01/strip@2x.png"
         }
       },
       {
@@ -2795,7 +2795,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/842ab05b2639e355/strip@3x.png"
+          "path": "/templates/starter-coupon/3cb9ff6729152d01/strip@3x.png"
         }
       }
     ],
