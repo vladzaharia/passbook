@@ -79,7 +79,8 @@ const authoritySchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('undo'),
     purpose: z.literal('org_mode.scan.undo'),
-    undoes: scanId,
+    // Any recorded id: a check-in from before ids were UUIDs can still be undone.
+    undoes: id,
   }),
 ]);
 export type ProofAuthority = z.infer<typeof authoritySchema>;
@@ -99,7 +100,7 @@ export const systemSourceSchema = z.object({
   scannerId: nullableId,
   staffId: nullableId,
   approvedBy: nullableId.optional(),
-  undoes: scanId.optional(),
+  undoes: id.optional(),
   outCause: z.enum(['stay', 'clear', 'zone']).optional(),
   authority: authoritySchema,
 });
