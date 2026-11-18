@@ -35,6 +35,7 @@
     ],
     "headerFields": [
       {
+        "changeMessage": "%@ left.",
         "key": "left",
         "label": "Left",
         "value": 7

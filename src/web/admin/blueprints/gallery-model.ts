@@ -18,11 +18,18 @@ const ORDER = [
   'boarding-pass',
   'access-card',
   'staff-badge',
+  'timed-ticket',
+  'transit-ticket',
+  'booking',
   'stamp-card',
   'store-card',
   'coupon',
+  'pack',
   'generic',
+  'id-card',
   'poster-generic',
+  'pickup',
+  'permit',
 ];
 const slugOf = (b: Summary) => b.id.replace(/^.*starter-/, '');
 const rank = (b: Summary) => {

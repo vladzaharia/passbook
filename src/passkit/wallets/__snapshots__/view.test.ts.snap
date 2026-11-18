@@ -643,9 +643,9 @@ exports[`resolveWalletView over every starter and baked template > starter-gener
     "qr SNAPSHOT-SCAN-CODE",
   ],
   "colors": {
-    "background": "#141a2b",
+    "background": "#17346e",
     "foreground": "#ffffff",
-    "label": "#5eead4",
+    "label": "#93c5fd",
   },
   "events": [],
   "featured": [],
@@ -821,6 +821,7 @@ exports[`resolveWalletView over every starter and baked template > starter-pack 
   },
   "messaging": {
     "fields": [
+      "headerFields.left",
       "backFields.message",
     ],
     "input": "message",
