@@ -5,8 +5,7 @@ import type { ScanApi } from '../api/scan-api.ts';
 import { FlipSheet } from './flip-sheet.tsx';
 import { RoleUnlock } from './unlock-sheet.tsx';
 
-const apiWith = (setRole: ReturnType<typeof vi.fn>) =>
-  ({ setRole, roleStaff: vi.fn().mockResolvedValue({ items: [] }) }) as unknown as ScanApi;
+const apiWith = (setRole: ReturnType<typeof vi.fn>) => ({ setRole }) as unknown as ScanApi;
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());

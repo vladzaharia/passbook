@@ -252,12 +252,18 @@ export function preparePinReservation(
       if (!captured) throw new Error('Verified PIN has no staff snapshot');
       return captured;
     },
-    async verifyAny(results, managers, pin, failure) {
+    async verifyAny(results, managers, pin, failure, anyRole) {
       if (resultCount(results[0]) === undefined) {
         await verifyCandidate(results, async () => 'miss', failure);
         return null;
       }
-      const any = anyManagerDecision({ pinEnv, orgId, staffId }, managers, pin, pinMatches);
+      const any = anyManagerDecision(
+        { pinEnv, orgId, staffId },
+        managers,
+        pin,
+        pinMatches,
+        anyRole,
+      );
       return (await verifyCandidate(results, () => any.decide(), failure)) ? any.found() : null;
     },
     async verifyLogin(results, staff, pin) {

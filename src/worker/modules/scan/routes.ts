@@ -69,7 +69,6 @@ scanRoutes.use(
   requireScanActor({ capability: 'scanning:manage', staffOptional: true, screens: true }),
 );
 scanRoutes.use('/role', manageSessionActor);
-scanRoutes.use('/role/staff', manageSessionActor);
 scanRoutes.use('/staff', requireScanActor({ capability: 'scanning:manage', staffOptional: true }));
 scanRoutes.use('/actions', (c, next) =>
   (c.req.method === 'POST' ? operateActor : manageActor)(c, next),

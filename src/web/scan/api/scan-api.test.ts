@@ -264,7 +264,6 @@ describe('createScanApi', () => {
         'pairPreview',
         'recent',
         'resolve',
-        'roleStaff',
         'roster',
         'session',
         'setRole',

@@ -2,7 +2,7 @@ import type { ScanSurface } from '../../../shared/contracts/scanning-sessions.ts
 import { grant } from '../../platform/authority.ts';
 import { epochIs, exactlyOne } from '../../platform/authority-checks.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
-import { all, containsMatch, first } from '../../platform/db.ts';
+import { first, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { audited } from './repo-admin-grant.ts';
 import { addScanningDeviceUpdate, type ScanningDeviceRow } from './repo-scanning-devices.ts';
@@ -19,16 +19,14 @@ export const hasActiveStaff = async (db: D1Database, orgId: string): Promise<boo
     )
   )?.has === 1;
 
-/** People whose name contains `q`: names only, a few, for the unlock sheet. */
-export const searchActiveStaff = async (db: D1Database, orgId: string, q: string) => {
-  const match = containsMatch('name', q);
-  return all<{ id: string; name: string }>(
+/** Every active staff member, for a PIN that names no one. Bounded: each is hashed per attempt. */
+export const unlockRosterStatement = (db: D1Database, orgId: string) =>
+  stmt(
     db,
-    `SELECT id, name FROM scan_staff WHERE org_id = ? AND disabled_at IS NULL AND ${match.sql}
-     ORDER BY name COLLATE NOCASE, id LIMIT 8`,
-    [orgId, ...match.params],
+    `SELECT id, org_id, name, role, pin_hash, disabled_at, updated_at, auth_epoch FROM scan_staff
+     WHERE org_id = ? AND disabled_at IS NULL ORDER BY id LIMIT 200`,
+    [orgId],
   );
-};
 
 export interface RoleFlip {
   scannerId: string;

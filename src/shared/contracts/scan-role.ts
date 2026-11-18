@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { IdSchema } from './common.ts';
-import { ScanStaffSignInSchema } from './scan-session.ts';
 
 /**
  * `POST /scan/role`: a paired phone flips between Scanner and Customer screen (stations S9).
@@ -8,12 +6,10 @@ import { ScanStaffSignInSchema } from './scan-session.ts';
  */
 export const ScanRoleChangeSchema = z.discriminatedUnion('role', [
   z.strictObject({ role: z.literal('customer') }),
-  /** `unlock` is a staff PIN, required when the org has active staff. */
-  z.strictObject({ role: z.literal('scan'), unlock: ScanStaffSignInSchema.optional() }),
+  /** `unlock` is a staff PIN with no name, required when the org has active staff. */
+  z.strictObject({
+    role: z.literal('scan'),
+    unlock: z.strictObject({ pin: z.string().regex(/^\d{6}$/) }).optional(),
+  }),
 ]);
 export type ScanRoleChange = z.infer<typeof ScanRoleChangeSchema>;
-
-/** `GET /scan/role/staff?q=`: names only, to pick who is unlocking. */
-export const ScanRoleStaffSchema = z.object({
-  items: z.array(z.object({ id: IdSchema, name: z.string() })).max(8),
-});
