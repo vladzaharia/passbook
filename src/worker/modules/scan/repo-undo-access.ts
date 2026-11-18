@@ -1,6 +1,6 @@
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { SqlValue } from '../../platform/db.ts';
-import type { UndoGate } from './repo-undo-grant.ts';
+import type { UndoGate } from './repo-undo-types.ts';
 
 /**
  * An Access card's gate goes back one step (AX 3.5), only while it still points at the grant: the

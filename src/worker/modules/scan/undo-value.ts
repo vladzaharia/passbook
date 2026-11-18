@@ -7,7 +7,8 @@ import { type PublishCommit, publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { schemaOf } from './effects-value.ts';
 import { holderMoved } from './repo-scan-transfer.ts';
-import { addUndoWrites, openUndoGrant, UNDO_CODES, type UndoCommit } from './repo-undo-grant.ts';
+import { addUndoWrites, openUndoGrant, UNDO_CODES } from './repo-undo-grant.ts';
+import type { UndoCommit } from './repo-undo-types.ts';
 import { readScanValue } from './repo-undo-value.ts';
 import { notFound, superseded } from './undo-authority.ts';
 
