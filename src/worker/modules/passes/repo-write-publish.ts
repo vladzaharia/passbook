@@ -44,8 +44,8 @@ export interface PublishWrite {
   lookupHash: string | null;
   /** Written only while the pass has none (lazy backfill). */
   scanCode: string;
-  /** Replaces the stored scan code instead of filling it once (a new code). */
-  rotateScanCode?: boolean | undefined;
+  /** Replaces the stored scan code instead of filling it once (a new code), with its mark. */
+  rotation?: { oldCodeHash: string } | undefined;
   /** Owner/credentials and lifecycle observed when this publish began. */
   expectedPass: PublishPassSnapshot;
   /** Set only for an explicitly staged removal represented by this artifact. */
@@ -121,7 +121,7 @@ export async function casPublish(ctx: ServiceContext, w: PublishWrite): Promise<
       pending_source: w.source,
       barcode_hash: w.barcodeHash,
       lookup_hash: w.lookupHash,
-      scan_code: w.rotateScanCode ? w.scanCode : coalesceTo(w.scanCode),
+      scan_code: w.rotation ? w.scanCode : coalesceTo(w.scanCode),
       removal_published_generation:
         w.publishedRemovalGeneration ??
         (w.expectedPass.removedAt !== null &&
@@ -137,6 +137,14 @@ export async function casPublish(ctx: ServiceContext, w: PublishWrite): Promise<
       requireNoReleaseHistory: w.requireNoReleaseHistory ?? false,
       set,
       removalClaim: w.publishedRemovalGeneration !== undefined,
+      rotation: w.rotation
+        ? {
+            oldCodeHash: w.rotation.oldCodeHash,
+            rotatedAt: w.now,
+            actorType: w.actorType ?? 'system',
+            actorId: w.actorId,
+          }
+        : undefined,
       extraChecks: w.extraChecks,
     };
     // A tenant publish is one grant. A connector (or legacy no-principal) publish is a connection job grant.

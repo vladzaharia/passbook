@@ -1,10 +1,10 @@
 import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
+import { fakeAuth, makeOrg } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { RateLimitedError } from '../../platform/errors.ts';
 import { seedBundlePrincipal } from '../bundles/test-auth-fixtures.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -47,9 +47,10 @@ describe('New code', () => {
     expect((await pushes(pass.id)).length).toBe(pushed + 1);
     expect(await out(await act(s.headers, before))).toMatchObject({
       kind: 'refused',
-      reason: 'not_found',
+      reason: 'code_replaced',
       card: null,
       action: null,
+      display: null,
     });
     const admitted = await out(await act(s.headers, codeOf(after as never)));
     expect(admitted.kind).not.toBe('refused');
@@ -59,6 +60,64 @@ describe('New code', () => {
       [pass.id],
     );
     expect(row?.barcode_hash).toHaveLength(64);
+  });
+
+  it('reads a rotated-out code as not found in another org', async () => {
+    const pass = await kit.scanPass(tpl);
+    const before = codeOf(pass);
+    await rotate(pass.id);
+    const foreign = await makeOrg(kit.fx);
+    const s = await kit.scanner({ orgId: foreign.id, settings: { acceptAllTemplates: true } });
+    expect(await out(await act(s.headers, before))).toMatchObject({
+      kind: 'refused',
+      reason: 'not_found',
+    });
+  });
+
+  it('refuses a scan code change without its mark and allows it with one', async () => {
+    const pass = await kit.scanPass(tpl);
+    const change = (code: string) =>
+      run(kit.env.DB, 'UPDATE passes SET scan_code = ?, version = version + 1 WHERE id = ?', [
+        code,
+        pass.id,
+      ]);
+    await expect(change('A'.repeat(26))).rejects.toThrow(/credential transfer required/);
+    const mark = kit.env.DB.prepare(
+      `INSERT INTO scan_code_rotations
+       (pass_id, org_id, mode, old_code_hash, new_version, rotated_at, actor_type)
+       VALUES (?, ?, ?, ?, ?, 0, 'system')`,
+    );
+    // The mark must name the version the write creates.
+    await expect(
+      kit.env.DB.batch([
+        mark.bind(pass.id, pass.orgId, pass.mode, 'a'.repeat(64), pass.version + 2),
+      ]),
+    ).rejects.toThrow(/invalid scan code rotation/);
+    await kit.env.DB.batch([
+      mark.bind(pass.id, pass.orgId, pass.mode, 'a'.repeat(64), pass.version + 1),
+      kit.env.DB.prepare(
+        'UPDATE passes SET scan_code = ?, version = version + 1 WHERE id = ?',
+      ).bind('B'.repeat(26), pass.id),
+    ]);
+    expect((await getPass(kit.env.DB, pass.id))?.scanCode).toBe('B'.repeat(26));
+  });
+
+  it('keeps marks append-only and drops them with the pass', async () => {
+    const pass = await kit.scanPass(tpl);
+    await rotate(pass.id);
+    const marks = () =>
+      all(kit.env.DB, 'SELECT 1 FROM scan_code_rotations WHERE pass_id = ?', [pass.id]);
+    expect(await marks()).toHaveLength(1);
+    await expect(
+      run(kit.env.DB, 'DELETE FROM scan_code_rotations WHERE pass_id = ?', [pass.id]),
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      run(kit.env.DB, "UPDATE scan_code_rotations SET actor_type = 'x' WHERE pass_id = ?", [
+        pass.id,
+      ]),
+    ).rejects.toThrow(/immutable/);
+    await run(kit.env.DB, 'DELETE FROM passes WHERE id = ?', [pass.id]);
+    expect(await marks()).toHaveLength(0);
   });
 
   it('writes an audit row without the code', async () => {

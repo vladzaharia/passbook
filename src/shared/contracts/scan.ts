@@ -53,6 +53,7 @@ export const ScanRecordKindSchema = z.enum([...ScanActionKindSchema.options, 'un
 /** Wire reasons. The client-only ones (network, timeout, ...) live in `src/web/scan/machine/types.ts`. */
 export const SCAN_REFUSED_REASONS = [
   'not_found',
+  'code_replaced',
   'ambiguous',
   'test_pass',
   'live_pass',

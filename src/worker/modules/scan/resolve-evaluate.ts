@@ -15,6 +15,7 @@ import type { ScanActor } from './guard.ts';
 import { occupancyAsRead, planOccupancy } from './occupancy/admission.ts';
 import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { type Candidate, hasScanPolicy } from './repo-lookup.ts';
+import { codeRotatedOut } from './repo-rotations.ts';
 import { activeFlags, type Evaluated, type Found, foundOf } from './resolve.ts';
 import {
   accepts,
@@ -108,7 +109,11 @@ async function evaluateObserved(
   )
     return stop('refused', 'not_found', { stale: true });
   const first = all[0];
-  if (!first) return stop('refused', 'not_found');
+  if (!first)
+    return 'passId' in input ||
+      !(await codeRotatedOut(ctx.env.DB, actor.orgId, actor.mode, refs.credentialTombstoneRefs))
+      ? stop('refused', 'not_found')
+      : stop('refused', 'not_found', { replaced: true });
   if (all.some((candidate) => !candidateCredentialSnapshotValid(candidate)))
     return stop('refused', 'not_found', { stale: true });
   const inMode = all.filter((candidate) => candidate.pass.mode === actor.mode);

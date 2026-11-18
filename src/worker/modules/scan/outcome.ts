@@ -206,7 +206,7 @@ export function stopOutcome(
   return {
     ...out,
     scanId: options.scanId ?? null,
-    reason: stop.reason,
+    reason: stop.replaced ? 'code_replaced' : stop.reason,
     action: details.action,
     card: showPass ? (options.card ?? null) : null,
     template: details.template,

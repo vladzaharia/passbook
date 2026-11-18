@@ -15,6 +15,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
+import { addRotationMark, type ScanCodeRotation } from './repo-write-publish-rotation.ts';
 import type { PublishPassSnapshot } from './repo-write-publish-snapshot.ts';
 
 /**
@@ -53,6 +54,8 @@ export interface GrantedPublish {
   /** A staged removal also pins the claim it made. */
   removalClaim?: boolean;
   extraChecks?: readonly Check[] | undefined;
+  /** A new scan code: its mark is written before the update, in the same batch. */
+  rotation?: ScanCodeRotation | undefined;
 }
 
 /**
@@ -102,6 +105,7 @@ export async function casGranted(ctx: ServiceContext, w: GrantedPublish): Promis
       checks,
       codes: { stale: PUBLISH_STALE, release: 'TEMPLATE_RELEASE_CONFLICT' },
     });
+  if (w.rotation) addRotationMark(g, w.id, w.expectedVersion, w.rotation);
   const update = g.update('passes', {
     set: w.set,
     inc: ['version'],
@@ -134,7 +138,7 @@ export async function casGranted(ctx: ServiceContext, w: GrantedPublish): Promis
       if (!written) throw new PublishDeclined();
       return written.version;
     }
-    const [result] = await g.commit();
+    const result = (await g.commit())[g.indexOf(update)];
     const row = (result?.results as { version: number }[] | undefined)?.[0];
     return row?.version ?? null;
   } catch (error) {

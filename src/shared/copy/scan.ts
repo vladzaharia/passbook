@@ -21,6 +21,7 @@ export interface ScanLine {
 /** Every verdict line of the scanner. `/scan`, the admin pages and the CSV read this one file. */
 export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> = {
   not_found: { headline: 'Not found', sub: "This code isn't a pass here." },
+  code_replaced: { headline: 'Replaced code', sub: 'Check ID.' },
   ambiguous: { headline: 'More than one match', sub: 'Look it up by name instead.' },
   test_pass: { headline: 'Test pass', sub: "Live scanners don't take test passes." },
   live_pass: { headline: 'Live pass', sub: 'This is a test scanner.' },
