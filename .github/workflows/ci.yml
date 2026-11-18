@@ -44,7 +44,13 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-chromium
+      - name: Install browsers
+        timeout-minutes: 12
+        run: for i in 1 2; do timeout 300 npx playwright install --with-deps chromium && exit 0; echo "retry $i"; done; exit 1
       - run: npm run test:e2e
         env:
           WALLET_E2E_PREVIEW: '1'
@@ -66,7 +72,13 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-chromium-firefox-webkit
+      - name: Install browsers
+        timeout-minutes: 12
+        run: for i in 1 2; do timeout 300 npx playwright install --with-deps chromium firefox webkit && exit 0; echo "retry $i"; done; exit 1
       - run: npm run test:e2e:camera
         env:
           WALLET_E2E_PREVIEW: '1'
