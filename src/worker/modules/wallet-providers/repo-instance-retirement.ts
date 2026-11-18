@@ -1,4 +1,4 @@
-import { all, first, run } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { WalletCredentialKeysetProof, WalletOperationRef } from './instance-types.ts';
 import { isCredentialKeysetCommitment } from './instance-types.ts';
@@ -48,7 +48,7 @@ export async function retireInstance(
   p: WalletOperationRef & WalletCredentialKeysetProof & { now: number },
 ): Promise<boolean> {
   if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
-  const result = await run(
+  const row = await first(
     db,
     `UPDATE wallet_provider_instances AS i SET lifecycle = 'retired', retired_at = ?, updated_at = ?
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.desired_version = ?
@@ -62,7 +62,8 @@ export async function retireInstance(
         WHERE busy.instance_id = i.id AND busy.state IN ('pending', 'retry', 'claimed', 'uncertain'))
       AND NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs r WHERE r.instance_id = i.id
         AND NOT EXISTS (SELECT 1 FROM wallet_samsung_tombstones t
-          WHERE ${samsungTombstoneBindingSql('i', 'r', 't')}))`,
+          WHERE ${samsungTombstoneBindingSql('i', 'r', 't')}))
+    RETURNING id`,
     [
       p.now,
       p.now,
@@ -76,7 +77,7 @@ export async function retireInstance(
       p.credentialKeysetCommitment,
     ],
   );
-  return result.changes === 1;
+  return row !== null;
 }
 
 /** Fence idempotent retirement acknowledgements, including the no-reference case. */
@@ -169,7 +170,7 @@ export async function deferRetirement(
   p: WalletOperationRef & WalletCredentialKeysetProof & { nextAttemptAt: number },
 ): Promise<boolean> {
   if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
-  const result = await run(
+  const row = await first(
     db,
     `UPDATE wallet_provider_instances SET retirement_next_attempt_at = ?
     WHERE id = ? AND org_id = ? AND mode = ? AND provider = ? AND desired_version = ?
@@ -179,7 +180,8 @@ export async function deferRetirement(
       AND (provider != 'samsung' OR ${samsungRetirementProjectionSql('wallet_provider_instances')})
       AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
         WHERE op.id = wallet_provider_instances.desired_operation_id AND op.version = wallet_provider_instances.desired_version
-          AND op.credential_keyset_commitment = ?)`,
+          AND op.credential_keyset_commitment = ?)
+    RETURNING id`,
     [
       p.nextAttemptAt,
       p.instanceId,
@@ -192,5 +194,5 @@ export async function deferRetirement(
       p.credentialKeysetCommitment,
     ],
   );
-  return result.changes === 1;
+  return row !== null;
 }
