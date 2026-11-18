@@ -4,6 +4,8 @@ import { api } from '@/web/lib/api.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 
 export const zoneKeys = {
+  /** Every zone query; the console's full lists (zones/zones-api.ts) sit under it. */
+  all: ['admin', 'scanning', 'zones'] as const,
   list: (orgId: string | undefined) => ['admin', 'scanning', 'zones', orgId ?? null] as const,
 };
 

@@ -10,12 +10,11 @@ import {
 import { api } from '@/web/lib/api.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import { zoneKeys } from '../zones-query.ts';
 
-export const zoneKeys = {
-  all: ['admin', 'scanning', 'zones'] as const,
-  list: (orgId: string | undefined, archived: boolean) =>
-    ['admin', 'scanning', 'zones', 'list', orgId ?? null, archived] as const,
-};
+/** The console's full lists (all pages, archived or not) share the picker query's prefix. */
+const listKey = (orgId: string | undefined, archived: boolean) =>
+  [...zoneKeys.all, 'all', orgId ?? null, archived] as const;
 
 const PAGES = 10;
 
@@ -31,7 +30,7 @@ export function useZones(orgId: string | undefined, archived = false, enabled = 
       scope.membership?.capabilities.includes('scanning:read'),
   );
   return useQuery({
-    queryKey: [...zoneKeys.list(allowed ? orgId : undefined, archived), allowed],
+    queryKey: [...listKey(allowed ? orgId : undefined, archived), allowed],
     enabled: allowed,
     queryFn: async ({ signal }): Promise<ScanZone[]> => {
       if (!orgId) throw new Error('Choose an authorized organization.');
