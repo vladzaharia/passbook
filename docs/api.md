@@ -268,6 +268,9 @@ pass pages and pass email can link to it alongside the existing Apple action. Th
 provider bearer material. The Samsung wrapper `GET /p/wallet/samsung/{offer}` uses a short-lived,
 single-use reference. Neither a link nor provider acceptance establishes installation.
 
+`GET /w/i/{sha256}.png` is public and rate limited. It serves only derived template art (never a
+personal image) as an immutable PNG; the hash is the only address. Unknown hashes are 404.
+
 Each provider identity is bound to a positive credential generation. At holder-transfer start, the
 pass generation advances to reserve the target, the old holder link is revoked, a pending transfer
 is recorded and retirement of old provider identities is staged. The reserved generation remains

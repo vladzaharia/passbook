@@ -52,7 +52,7 @@ The classification test (`authority-columns.test.ts`) reads `PRAGMA table_info` 
 | `scanners.config_epoch` (`0052`) | `device_role`, `event_id`, `settings`, `time_zone`; changes to `scanning_devices` other than `capabilities` and `reported_at` (a re-keyed `scanner_id` bumps both scanners) | `name`, `last_seen_at`, `last_ip_prefix`, `paired_label`, `pair_expires_at`, `pair_created_by`, `staff_id`, `staff_since`, `staff_seen_at`, `updated_at` | | 409 `SCAN_CONFIG_CHANGED` |
 | `scan_staff.auth_epoch` (`0052`) | `role`, `pin_hash`, `pin_set_at`, `disabled_at`, `org_id` | `name`, `updated_at` | `id`, `created_at`, `created_by` | 409 `SCAN_STAFF_CHANGED` |
 | `scan_events.config_epoch` (`0052`) | `match_input`, `match_values`, `opens_at`, `closes_at`, `time_zone`, `capacity`, `reentry`, `archived_at`, `org_id`, `mode`; insert, update (both events) and delete of `scan_event_templates` | `name`, `note`, `expected`, `expected_at`, `updated_at` | `id`, `created_at`, `created_by` | 409 `SCAN_CONFIG_CHANGED` |
-| `scanning_sessions.config_epoch` (`0052`) | `status`, `accepts`, `settings`, `time_zone`, `org_id`, `mode` | `name`, `updated_at` | `id`, `created_at`, `created_by` | 409 `SCAN_CONFIG_CHANGED` |
+| `scanning_sessions.config_epoch` (`0052`) | `status`, `accepts`, `settings`, `time_zone`, `org_id`, `mode`; insert, update and delete of `scanning_session_zones` (`0073`) | `name`, `updated_at` | `id`, `created_at`, `created_by` | 409 `SCAN_CONFIG_CHANGED` |
 | `connections.generation`, bumped by `connections_generation_bump` (`0044`); `0052` adds the monotonic, fixed-column and no-replace guards. | `enabled`, `mode`, `org_id`, `connector_type`, `connector_version`, `config`, `credential_id`, `webhook_credential_id`, `mapping`, `default_template_id`, `holder_email_field`, `auto_create`, `auto_email`, `on_missing` | all other columns | `id`, `created_at` | `STALE_GENERATION` |
 | `users.access_revision` (`0052`) | `status` | | | Deferred work captures it; a disable then enable cannot revive work queued before. 403 `ACTOR_CHANGED` |
 | `template_release_heads` (`0052`): a **view** of the newest `template_releases` row per `(template_id, org_scope, mode, provider)`; `org_scope` is `''` for the platform | none: it is derived, so it cannot be written, replaced or drift. A table would add a trigger change to every release insert, and D1 counts those in `meta.changes` | | | 409 `TEMPLATE_RELEASE_CHANGED` (create and publish only) |
@@ -580,7 +580,7 @@ Raw writes to these tables are banned outside `platform/authority.ts`:
 - **Passes and templates:** `passes`, `pass_assets`, `pass_credential_transfers`, `pass_credential_tombstones`, `pass_issuance_deliveries`, `templates`, `template_candidates`, `template_approvals`, `template_releases`.
 - **Delivery:** `outbox`, `bundles`, `bundle_passes`, `captured_emails`, `sandbox_forwards`.
 - **Connections:** `connections`, `connection_runs`, `connection_webhook_retention`, `connection_webhook_items`.
-- **Scan:** `scans`, `scan_gates`, `scan_presence`, `scan_staff`, `scan_events`, `scan_event_templates`, `scanners`, `scanning_sessions`, `scanning_devices`.
+- **Scan:** `scans`, `scan_gates`, `scan_presence`, `scan_staff`, `scan_events`, `scan_event_templates`, `scanners`, `scanning_sessions`, `scanning_devices`, `scan_zones`, `scanning_session_zones`.
 - **Ledger:** `pass_events`.
 
 **Allowlist:**

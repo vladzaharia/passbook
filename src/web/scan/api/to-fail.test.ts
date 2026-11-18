@@ -24,6 +24,26 @@ describe('toFail (SA 2.8)', () => {
     expect(toFail(err(401, 'WHATEVER'))).toEqual({ error: 'revoked' });
   });
 
+  it('maps a refused Manager PIN to the lockout count, and a PIN lockout apart from a rate limit', () => {
+    const pin = (status: number, code: string, fields: Record<string, string>) =>
+      new ScanApiError({ status, code, fields });
+    expect(toFail(pin(400, 'PIN_INVALID', { triesLeft: '3' }))).toEqual({
+      error: 'pin_invalid',
+      triesLeft: 3,
+    });
+    expect(toFail(pin(400, 'PIN_INVALID', {}))).toEqual({ error: 'pin_invalid', triesLeft: 0 });
+    expect(toFail(pin(429, 'RATE_LIMITED', { pin: 'locked' }))).toEqual({ error: 'pin_locked' });
+    const withWait = new ScanApiError(
+      { status: 429, code: 'RATE_LIMITED', fields: { pin: 'locked' } },
+      180_000,
+    );
+    expect(toFail(withWait)).toEqual({ error: 'pin_locked', retryAfterMs: 180_000 });
+    expect(toFail(err(429, 'RATE_LIMITED', { retryAfterMs: 1000 }))).toEqual({
+      error: 'rate_limited',
+      retryAfterMs: 1000,
+    });
+  });
+
   it('maps the 403s', () => {
     expect(toFail(err(403, 'ORG_INACTIVE'))).toEqual({ error: 'suspended' });
     expect(toFail(err(403, 'STAFF_REQUIRED'))).toEqual({ error: 'staff_required' });

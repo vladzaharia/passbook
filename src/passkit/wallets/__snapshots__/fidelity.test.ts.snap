@@ -1,0 +1,551 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`fidelityReport over every starter and baked template > henrys-blue 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "3ea4796aafca928ae8f1b0ffd178b4ca144185e7cfacb03bc1c940b14a6e341c",
+  "items": [
+    {
+      "capability": "barcode.format.code128",
+      "chosen": false,
+      "message": "barcode.format.code128 omitted",
+      "path": "barcodes.1",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "barcode.format.code39",
+      "chosen": false,
+      "message": "barcode.format.code39 omitted",
+      "path": "barcodes.0",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "directions-capitol-hill-poster does not fit.",
+      "path": "backFields.directions-capitol-hill-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "message-poster does not fit.",
+      "path": "backFields.message-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "pass-service does not fit.",
+      "path": "backFields.pass-service",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "pass-service-poster does not fit.",
+      "path": "backFields.pass-service-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "phone-poster does not fit.",
+      "path": "backFields.phone-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "portal-poster does not fit.",
+      "path": "backFields.portal-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "status-poster does not fit.",
+      "path": "backFields.status-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "support-poster does not fit.",
+      "path": "backFields.support-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "terms does not fit.",
+      "path": "backFields.terms",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "terms-poster does not fit.",
+      "path": "backFields.terms-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "website does not fit.",
+      "path": "backFields.website",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "website-poster does not fit.",
+      "path": "backFields.website-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready with omissions (14)",
+  "schema": 1,
+  "status": {
+    "count": 14,
+    "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > henrys-copper 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "3ea4796aafca928ae8f1b0ffd178b4ca144185e7cfacb03bc1c940b14a6e341c",
+  "items": [
+    {
+      "capability": "barcode.format.code128",
+      "chosen": false,
+      "message": "barcode.format.code128 omitted",
+      "path": "barcodes.1",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "barcode.format.code39",
+      "chosen": false,
+      "message": "barcode.format.code39 omitted",
+      "path": "barcodes.0",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "directions-capitol-hill-poster does not fit.",
+      "path": "backFields.directions-capitol-hill-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "message-poster does not fit.",
+      "path": "backFields.message-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "pass-service does not fit.",
+      "path": "backFields.pass-service",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "pass-service-poster does not fit.",
+      "path": "backFields.pass-service-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "phone-poster does not fit.",
+      "path": "backFields.phone-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "portal-poster does not fit.",
+      "path": "backFields.portal-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "status-poster does not fit.",
+      "path": "backFields.status-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "support-poster does not fit.",
+      "path": "backFields.support-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "terms does not fit.",
+      "path": "backFields.terms",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "terms-poster does not fit.",
+      "path": "backFields.terms-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "website does not fit.",
+      "path": "backFields.website",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "website-poster does not fit.",
+      "path": "backFields.website-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready with omissions (14)",
+  "schema": 1,
+  "status": {
+    "count": 14,
+    "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-boarding-pass 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "006f56e3a870b077bd65a834f6c46366f4caf792e0e0c9d347dd1b6a0265e241",
+  "items": [
+    {
+      "capability": "barcode.format.pdf417",
+      "chosen": false,
+      "message": "barcode.format.pdf417 omitted",
+      "path": "barcodes.0",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "May be shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready with omissions (1)",
+  "schema": 1,
+  "status": {
+    "count": 1,
+    "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-coupon 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "3670f709b08c33f8dc7466bcb7c95ede3c98ad1bca0279fabc45171265aa58c2",
+  "items": [
+    {
+      "capability": "barcode.format.pdf417",
+      "chosen": false,
+      "message": "barcode.format.pdf417 omitted",
+      "path": "barcodes.0",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready with omissions (1)",
+  "schema": 1,
+  "status": {
+    "count": 1,
+    "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-event-ticket 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "14691e269d706cb4a804990d983cd752993bc9e6ffddee124e5168c318d60a78",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "upcoming.multi",
+      "chosen": false,
+      "message": "Only the next event.",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "ticket",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-generic 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-poster-generic 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "0f6a9499810e0c2d70a6ce12f67405abc677ef1543e96c16557968a9bf282d4b",
+  "items": [
+    {
+      "capability": "field.back",
+      "chosen": false,
+      "message": "pass-service-poster does not fit.",
+      "path": "backFields.pass-service-poster",
+      "severity": "omission",
+      "support": "omitted",
+    },
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready with omissions (1)",
+  "schema": 1,
+  "status": {
+    "count": 1,
+    "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-stamp-card 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-store-card 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "7dfe63eb766db02a857444e2ad16b7d21792f6a8cafaa4dbcfea1f64c10642c1",
+  "items": [
+    {
+      "capability": "relevance.beacons",
+      "chosen": false,
+      "message": "relevance.beacons unsupported",
+      "path": "beacons",
+      "severity": "omission",
+      "support": "unsupported",
+    },
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "May be shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready with omissions (1)",
+  "schema": 1,
+  "status": {
+    "count": 1,
+    "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;

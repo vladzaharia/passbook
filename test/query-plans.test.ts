@@ -15,6 +15,7 @@ import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
 import { eventTotalsStmt } from '../src/worker/modules/scan/repo-event-attendance.ts';
 import { capacityFullPredicate } from '../src/worker/modules/scan/repo-gates.ts';
 import { backfillCandidates } from '../src/worker/modules/scan/repo-lookup-backfill.ts';
+import { orgZoneRows, sessionZoneIds } from '../src/worker/modules/scan/repo-zones.ts';
 import {
   olderLivePasses,
   quietUnqueuedTemplates,
@@ -297,6 +298,23 @@ describe('sweep and retention plans', () => {
       'connection_webhook_retention_expiry (state=? AND updated_at<?)',
     );
     expect(fullScans(lines, 'connection_webhook_retention')).toEqual([]);
+  });
+});
+
+describe('zone query plans', () => {
+  it('zones read by org, links by session, and the scans zone index serves the log filter', async () => {
+    const zones = await plans((db) => orgZoneRows(db, 'o'));
+    expect(zones.join('\n')).toContain('USING INDEX scan_zones_org_key');
+    expect(fullScans(zones, 'scan_zones')).toEqual([]);
+    const links = await plans((db) => sessionZoneIds(db, 'o', 's'));
+    expect(fullScans(links, 'scanning_session_zones')).toEqual([]);
+    const log = await plans(async (db) => {
+      await db
+        .prepare('SELECT id FROM scans WHERE zone_id = ? ORDER BY at DESC LIMIT 50')
+        .bind('z')
+        .all();
+    });
+    expect(log.join('\n')).toContain('USING INDEX scans_zone');
   });
 });
 

@@ -14,6 +14,7 @@ import {
   persistTemplate,
   type ScannerFixture,
   type SessionFixture,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
@@ -48,7 +49,7 @@ export function createEventTenantRace() {
     createEventTenantRaceQueries(() => env);
 
   beforeEach(async () => {
-    clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+    clock = new ManualClock(TEST_NOW);
     env = await makeEnv();
     Object.assign(env, {
       RL_SCAN: fakeRateLimiter({ limit: 100_000 }),

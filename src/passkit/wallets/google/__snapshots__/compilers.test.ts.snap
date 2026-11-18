@@ -1,0 +1,4094 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Google compilers over every starter and baked template > henrys-blue: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "relevance.locations",
+      "message": "Google shows no text at a location.",
+      "path": "locations",
+      "support": "difference",
+    },
+    {
+      "capability": "barcode.format.code39",
+      "message": "Code39 is not offered by Google Wallet.",
+      "path": "barcodes.0",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.memberId",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.memberId-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.memberName-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.homeClub-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.homeClub",
+      "support": "text",
+    },
+    {
+      "capability": "field.footer",
+      "message": "Carried as a text module.",
+      "path": "footerFields.membership-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.status",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.message",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.portal",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.directions-capitol-hill",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.phone",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.support",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.website",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.terms",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.status-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.message-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.portal-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.directions-capitol-hill-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.phone-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.support-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.website-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.terms-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "DEMO0001",
+      "renderEncoding": "UTF_8",
+      "type": "CODE_128",
+      "value": "DEMO0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Henry’s Gymnasium",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Henry’s Gymnasium",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#060c1b",
+    "linksModuleData": {
+      "uris": [
+        {
+          "description": "Member portal",
+          "id": "link.0",
+          "uri": "https://henrysgymnasium.thememberspot.com/",
+        },
+        {
+          "description": "Directions to Capitol Hill",
+          "id": "link.1",
+          "uri": "https://maps.apple.com/?daddr=47.615835,-122.323555",
+        },
+        {
+          "description": "(206) 644-7797",
+          "id": "link.2",
+          "uri": "tel:+12066447797",
+        },
+        {
+          "description": "epicexperience@henrysgymnasium.com",
+          "id": "link.3",
+          "uri": "mailto:epicexperience@henrysgymnasium.com",
+        },
+        {
+          "description": "henrysgymnasium.com",
+          "id": "link.4",
+          "uri": "https://henrysgymnasium.com/",
+        },
+      ],
+    },
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Henry’s Gymnasium",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "merchantLocations": [
+      {
+        "latitude": 47.615835,
+        "longitude": -122.323555,
+      },
+    ],
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "All-Inclusive Wellness",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "DEMO0001",
+        "header": "Member",
+        "id": "headerFields.memberId",
+      },
+      {
+        "body": "DEMO0001",
+        "header": "Member",
+        "id": "headerFields.memberId-poster",
+      },
+      {
+        "body": "Alex Morgan",
+        "id": "primaryFields.memberName-poster",
+      },
+      {
+        "body": "Capitol Hill",
+        "header": "Home club",
+        "id": "primaryFields.homeClub-poster",
+      },
+      {
+        "body": "Capitol Hill",
+        "header": "Home club",
+        "id": "secondaryFields.homeClub",
+      },
+      {
+        "body": "All-Inclusive Wellness",
+        "id": "footerFields.membership-poster",
+      },
+      {
+        "body": "Active",
+        "header": "Membership status",
+        "id": "backFields.status",
+      },
+      {
+        "body": "Welcome to Henry’s.",
+        "header": "From Henry’s",
+        "id": "backFields.message",
+      },
+      {
+        "body": "https://henrysgymnasium.thememberspot.com/",
+        "header": "Manage your membership",
+        "id": "backFields.portal",
+      },
+      {
+        "body": "1617 Boylston Ave, Seattle, WA 98122",
+        "header": "Capitol Hill",
+        "id": "backFields.directions-capitol-hill",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > henrys-blue: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 324 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.locations",
+      "message": "Google shows no text at a location.",
+      "path": "locations",
+      "support": "difference",
+    },
+    {
+      "capability": "barcode.format.code39",
+      "message": "Code39 is not offered by Google Wallet.",
+      "path": "barcodes.0",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.memberId",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.memberId-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.memberName-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.homeClub-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.homeClub",
+      "support": "text",
+    },
+    {
+      "capability": "field.footer",
+      "message": "Carried as a text module.",
+      "path": "footerFields.membership-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.status",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.message",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.portal",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.directions-capitol-hill",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.phone",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.support",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.website",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.terms",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.status-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.message-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.portal-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.directions-capitol-hill-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.phone-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.support-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.website-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.terms-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "DEMO0001",
+      "renderEncoding": "UTF_8",
+      "type": "CODE_128",
+      "value": "DEMO0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Henry’s Gymnasium",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Henry’s Gymnasium",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/artwork-3x-png",
+      },
+    },
+    "hexBackgroundColor": "#060c1b",
+    "linksModuleData": {
+      "uris": [
+        {
+          "description": "Member portal",
+          "id": "link.0",
+          "uri": "https://henrysgymnasium.thememberspot.com/",
+        },
+        {
+          "description": "Directions to Capitol Hill",
+          "id": "link.1",
+          "uri": "https://maps.apple.com/?daddr=47.615835,-122.323555",
+        },
+        {
+          "description": "(206) 644-7797",
+          "id": "link.2",
+          "uri": "tel:+12066447797",
+        },
+        {
+          "description": "epicexperience@henrysgymnasium.com",
+          "id": "link.3",
+          "uri": "mailto:epicexperience@henrysgymnasium.com",
+        },
+        {
+          "description": "henrysgymnasium.com",
+          "id": "link.4",
+          "uri": "https://henrysgymnasium.com/",
+        },
+      ],
+    },
+    "merchantLocations": [
+      {
+        "latitude": 47.615835,
+        "longitude": -122.323555,
+      },
+    ],
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "All-Inclusive Wellness",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "DEMO0001",
+        "header": "Member",
+        "id": "headerFields.memberId",
+      },
+      {
+        "body": "DEMO0001",
+        "header": "Member",
+        "id": "headerFields.memberId-poster",
+      },
+      {
+        "body": "Alex Morgan",
+        "id": "primaryFields.memberName-poster",
+      },
+      {
+        "body": "Capitol Hill",
+        "header": "Home club",
+        "id": "primaryFields.homeClub-poster",
+      },
+      {
+        "body": "Capitol Hill",
+        "header": "Home club",
+        "id": "secondaryFields.homeClub",
+      },
+      {
+        "body": "All-Inclusive Wellness",
+        "id": "footerFields.membership-poster",
+      },
+      {
+        "body": "Active",
+        "header": "Membership status",
+        "id": "backFields.status",
+      },
+      {
+        "body": "Welcome to Henry’s.",
+        "header": "From Henry’s",
+        "id": "backFields.message",
+      },
+      {
+        "body": "https://henrysgymnasium.thememberspot.com/",
+        "header": "Manage your membership",
+        "id": "backFields.portal",
+      },
+      {
+        "body": "1617 Boylston Ave, Seattle, WA 98122",
+        "header": "Capitol Hill",
+        "id": "backFields.directions-capitol-hill",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > henrys-copper: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "relevance.locations",
+      "message": "Google shows no text at a location.",
+      "path": "locations",
+      "support": "difference",
+    },
+    {
+      "capability": "barcode.format.code39",
+      "message": "Code39 is not offered by Google Wallet.",
+      "path": "barcodes.0",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.memberId",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.memberId-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.memberName-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.homeClub-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.homeClub",
+      "support": "text",
+    },
+    {
+      "capability": "field.footer",
+      "message": "Carried as a text module.",
+      "path": "footerFields.membership-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.status",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.message",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.portal",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.directions-capitol-hill",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.phone",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.support",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.website",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.terms",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.status-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.message-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.portal-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.directions-capitol-hill-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.phone-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.support-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.website-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.terms-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "DEMO0001",
+      "renderEncoding": "UTF_8",
+      "type": "CODE_128",
+      "value": "DEMO0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Henry’s Gymnasium",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Henry’s Gymnasium",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#171315",
+    "linksModuleData": {
+      "uris": [
+        {
+          "description": "Member portal",
+          "id": "link.0",
+          "uri": "https://henrysgymnasium.thememberspot.com/",
+        },
+        {
+          "description": "Directions to Capitol Hill",
+          "id": "link.1",
+          "uri": "https://maps.apple.com/?daddr=47.615835,-122.323555",
+        },
+        {
+          "description": "(206) 644-7797",
+          "id": "link.2",
+          "uri": "tel:+12066447797",
+        },
+        {
+          "description": "epicexperience@henrysgymnasium.com",
+          "id": "link.3",
+          "uri": "mailto:epicexperience@henrysgymnasium.com",
+        },
+        {
+          "description": "henrysgymnasium.com",
+          "id": "link.4",
+          "uri": "https://henrysgymnasium.com/",
+        },
+      ],
+    },
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Henry’s Gymnasium",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "merchantLocations": [
+      {
+        "latitude": 47.615835,
+        "longitude": -122.323555,
+      },
+    ],
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "All-Inclusive Wellness",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "DEMO0001",
+        "header": "Member",
+        "id": "headerFields.memberId",
+      },
+      {
+        "body": "DEMO0001",
+        "header": "Member",
+        "id": "headerFields.memberId-poster",
+      },
+      {
+        "body": "Alex Morgan",
+        "id": "primaryFields.memberName-poster",
+      },
+      {
+        "body": "Capitol Hill",
+        "header": "Home club",
+        "id": "primaryFields.homeClub-poster",
+      },
+      {
+        "body": "Capitol Hill",
+        "header": "Home club",
+        "id": "secondaryFields.homeClub",
+      },
+      {
+        "body": "All-Inclusive Wellness",
+        "id": "footerFields.membership-poster",
+      },
+      {
+        "body": "Active",
+        "header": "Membership status",
+        "id": "backFields.status",
+      },
+      {
+        "body": "Welcome to Henry’s.",
+        "header": "From Henry’s",
+        "id": "backFields.message",
+      },
+      {
+        "body": "https://henrysgymnasium.thememberspot.com/",
+        "header": "Manage your membership",
+        "id": "backFields.portal",
+      },
+      {
+        "body": "1617 Boylston Ave, Seattle, WA 98122",
+        "header": "Capitol Hill",
+        "id": "backFields.directions-capitol-hill",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > henrys-copper: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 324 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.locations",
+      "message": "Google shows no text at a location.",
+      "path": "locations",
+      "support": "difference",
+    },
+    {
+      "capability": "barcode.format.code39",
+      "message": "Code39 is not offered by Google Wallet.",
+      "path": "barcodes.0",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.memberId",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.memberId-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.memberName-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.homeClub-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.homeClub",
+      "support": "text",
+    },
+    {
+      "capability": "field.footer",
+      "message": "Carried as a text module.",
+      "path": "footerFields.membership-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.status",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.message",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.portal",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.directions-capitol-hill",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.phone",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.support",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.website",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.terms",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.status-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.message-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.portal-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.directions-capitol-hill-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.phone-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.support-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.website-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.back",
+      "message": "Google shows 10 text modules.",
+      "path": "backFields.terms-poster",
+      "support": "omitted",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "DEMO0001",
+      "renderEncoding": "UTF_8",
+      "type": "CODE_128",
+      "value": "DEMO0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Henry’s Gymnasium",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Henry’s Gymnasium",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/artwork-3x-png",
+      },
+    },
+    "hexBackgroundColor": "#171315",
+    "linksModuleData": {
+      "uris": [
+        {
+          "description": "Member portal",
+          "id": "link.0",
+          "uri": "https://henrysgymnasium.thememberspot.com/",
+        },
+        {
+          "description": "Directions to Capitol Hill",
+          "id": "link.1",
+          "uri": "https://maps.apple.com/?daddr=47.615835,-122.323555",
+        },
+        {
+          "description": "(206) 644-7797",
+          "id": "link.2",
+          "uri": "tel:+12066447797",
+        },
+        {
+          "description": "epicexperience@henrysgymnasium.com",
+          "id": "link.3",
+          "uri": "mailto:epicexperience@henrysgymnasium.com",
+        },
+        {
+          "description": "henrysgymnasium.com",
+          "id": "link.4",
+          "uri": "https://henrysgymnasium.com/",
+        },
+      ],
+    },
+    "merchantLocations": [
+      {
+        "latitude": 47.615835,
+        "longitude": -122.323555,
+      },
+    ],
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "All-Inclusive Wellness",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "DEMO0001",
+        "header": "Member",
+        "id": "headerFields.memberId",
+      },
+      {
+        "body": "DEMO0001",
+        "header": "Member",
+        "id": "headerFields.memberId-poster",
+      },
+      {
+        "body": "Alex Morgan",
+        "id": "primaryFields.memberName-poster",
+      },
+      {
+        "body": "Capitol Hill",
+        "header": "Home club",
+        "id": "primaryFields.homeClub-poster",
+      },
+      {
+        "body": "Capitol Hill",
+        "header": "Home club",
+        "id": "secondaryFields.homeClub",
+      },
+      {
+        "body": "All-Inclusive Wellness",
+        "id": "footerFields.membership-poster",
+      },
+      {
+        "body": "Active",
+        "header": "Membership status",
+        "id": "backFields.status",
+      },
+      {
+        "body": "Welcome to Henry’s.",
+        "header": "From Henry’s",
+        "id": "backFields.message",
+      },
+      {
+        "body": "https://henrysgymnasium.thememberspot.com/",
+        "header": "Manage your membership",
+        "id": "backFields.portal",
+      },
+      {
+        "body": "1617 Boylston Ave, Seattle, WA 98122",
+        "header": "Capitol Hill",
+        "id": "backFields.directions-capitol-hill",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-boarding-pass: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.flight",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.gate",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.destination",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.departs",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "secondaryFields.departs",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.boardsAt",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "auxiliaryFields.boardsAt",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.seat",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.seat",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.memberName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "BOARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "PDF_417",
+      "value": "BOARD-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "SFO",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#03528e",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "notifications": {
+      "upcomingNotification": {
+        "enableNotification": true,
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "WA100",
+        "header": "Flight",
+        "id": "headerFields.flight",
+      },
+      {
+        "body": "B12",
+        "header": "Gate",
+        "id": "headerFields.gate",
+      },
+      {
+        "body": "JFK",
+        "header": "New York",
+        "id": "primaryFields.destination",
+      },
+      {
+        "body": "2030-06-01T08:00:00-07:00",
+        "header": "Departs",
+        "id": "secondaryFields.departs",
+      },
+      {
+        "body": "2030-06-01T07:15:00-07:00",
+        "header": "Boards",
+        "id": "auxiliaryFields.boardsAt",
+      },
+      {
+        "body": "14A",
+        "header": "Seat",
+        "id": "auxiliaryFields.seat",
+      },
+      {
+        "body": "Be at the gate 30 minutes before departure.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-06-01T20:30:00Z",
+      },
+      "start": {
+        "date": "2030-06-01T13:15:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-boarding-pass: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.flight",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.gate",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.destination",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.departs",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "secondaryFields.departs",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.boardsAt",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "auxiliaryFields.boardsAt",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.seat",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.seat",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.memberName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "BOARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "PDF_417",
+      "value": "BOARD-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "SFO",
+      },
+    },
+    "hexBackgroundColor": "#03528e",
+    "notifications": {
+      "upcomingNotification": {
+        "enableNotification": true,
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "WA100",
+        "header": "Flight",
+        "id": "headerFields.flight",
+      },
+      {
+        "body": "B12",
+        "header": "Gate",
+        "id": "headerFields.gate",
+      },
+      {
+        "body": "JFK",
+        "header": "New York",
+        "id": "primaryFields.destination",
+      },
+      {
+        "body": "2030-06-01T08:00:00-07:00",
+        "header": "Departs",
+        "id": "secondaryFields.departs",
+      },
+      {
+        "body": "2030-06-01T07:15:00-07:00",
+        "header": "Boards",
+        "id": "auxiliaryFields.boardsAt",
+      },
+      {
+        "body": "14A",
+        "header": "Seat",
+        "id": "auxiliaryFields.seat",
+      },
+      {
+        "body": "Be at the gate 30 minutes before departure.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-06-01T20:30:00Z",
+      },
+      "start": {
+        "date": "2030-06-01T13:15:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-coupon: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.expires",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "headerFields.expires",
+      "support": "difference",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.fine",
+      "support": "text",
+    },
+    {
+      "capability": "role.offerDetails",
+      "message": "Carried as a text module.",
+      "path": "backFields.fine",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "SAVE-0001",
+      "renderEncoding": "UTF_8",
+      "type": "PDF_417",
+      "value": "SAVE-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "20% off",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#b54000",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "One purchase",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "2030-01-01T00:00:00Z",
+        "header": "Expires",
+        "id": "headerFields.expires",
+      },
+      {
+        "body": "One use per customer. Not combinable with other offers.",
+        "header": "Terms",
+        "id": "backFields.fine",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-01-01T00:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-coupon: the default type and Generic, with Google art > offer 1`] = `
+{
+  "classBody": {
+    "details": "One use per customer. Not combinable with other offers.",
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#b54000",
+    "issuerName": "PassBook",
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "provider": "PassBook",
+    "redemptionChannel": "BOTH",
+    "reviewStatus": "UNDER_REVIEW",
+    "title": "20% off",
+    "titleImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.expires",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "headerFields.expires",
+      "support": "difference",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.subtitle",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "SAVE-0001",
+      "renderEncoding": "UTF_8",
+      "type": "PDF_417",
+      "value": "SAVE-0001",
+    },
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "2030-01-01T00:00:00Z",
+        "header": "Expires",
+        "id": "headerFields.expires",
+      },
+      {
+        "body": "One purchase",
+        "header": "Valid for",
+        "id": "secondaryFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-01-01T00:00:00Z",
+      },
+    },
+  },
+  "type": "offer",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-coupon: with no Google art 1`] = `
+{
+  "classBody": {
+    "details": "One use per customer. Not combinable with other offers.",
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/strip-3x-png",
+      },
+    },
+    "hexBackgroundColor": "#b54000",
+    "issuerName": "PassBook",
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "provider": "PassBook",
+    "redemptionChannel": "BOTH",
+    "reviewStatus": "UNDER_REVIEW",
+    "title": "20% off",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the provider name.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the provider name.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.expires",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "headerFields.expires",
+      "support": "difference",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.subtitle",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "SAVE-0001",
+      "renderEncoding": "UTF_8",
+      "type": "PDF_417",
+      "value": "SAVE-0001",
+    },
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "2030-01-01T00:00:00Z",
+        "header": "Expires",
+        "id": "headerFields.expires",
+      },
+      {
+        "body": "One purchase",
+        "header": "Valid for",
+        "id": "secondaryFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-01-01T00:00:00Z",
+      },
+    },
+  },
+  "type": "offer",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-event-ticket: the default type and Generic, with Google art > event 1`] = `
+{
+  "classBody": {
+    "dateTime": {
+      "end": "2030-06-01T22:00:00-07:00",
+      "start": "2030-06-01T19:00:00-07:00",
+    },
+    "eventName": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Sample Event",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#5e0636",
+    "issuerName": "PassBook",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "reviewStatus": "UNDER_REVIEW",
+    "venue": {
+      "address": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Main hall, Cupertino, CA",
+        },
+      },
+      "name": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Sample Hall",
+        },
+      },
+    },
+  },
+  "items": [
+    {
+      "capability": "relevance.locations",
+      "message": "Google shows no text at a location.",
+      "path": "locations",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.dates",
+      "message": "Google carries the first start time only.",
+      "path": "relevantDates",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.time",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "secondaryFields.time",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.room",
+      "support": "text",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Carried as a text module.",
+      "path": "additionalInfoFields.doors",
+      "support": "text",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "additionalInfoFields.doors",
+      "support": "difference",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Carried as a text module.",
+      "path": "additionalInfoFields.admission",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.subtitle",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.time",
+      "support": "text",
+    },
+    {
+      "capability": "role.memberName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "upcoming.multi",
+      "message": "The events are listed as text.",
+      "path": "events",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "TICKET-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "TICKET-0001",
+    },
+    "locations": [
+      {
+        "latitude": 37.3349,
+        "longitude": -122.009,
+      },
+    ],
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "2030-06-01T19:00:00-07:00",
+        "header": "Starts",
+        "id": "secondaryFields.time",
+      },
+      {
+        "body": "Main hall",
+        "header": "Room",
+        "id": "auxiliaryFields.room",
+      },
+      {
+        "body": "2030-06-01T18:00:00-07:00",
+        "header": "Doors",
+        "id": "additionalInfoFields.doors",
+      },
+      {
+        "body": "General",
+        "header": "Admission",
+        "id": "additionalInfoFields.admission",
+      },
+      {
+        "body": "No re-entry. Ticket is non-transferable.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "Sample Event: 2030-06-01T19:00:00-07:00
+Sample Event: Encore: 2030-06-08T19:00:00-07:00
+Sample Event: Finale: 2030-06-15T19:00:00-07:00",
+        "header": "Upcoming",
+        "id": "upcoming",
+      },
+    ],
+    "ticketHolderName": "Alex Morgan",
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-06-16T05:00:00Z",
+      },
+      "start": {
+        "date": "2030-06-02T00:00:00Z",
+      },
+    },
+  },
+  "type": "event",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-event-ticket: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "relevance.locations",
+      "message": "Google shows no text at a location.",
+      "path": "locations",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.dates",
+      "message": "Google carries the first start time only.",
+      "path": "relevantDates",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.date",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "headerFields.date",
+      "support": "difference",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.venue",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.attendee",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.room",
+      "support": "text",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Carried as a text module.",
+      "path": "additionalInfoFields.doors",
+      "support": "text",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "additionalInfoFields.doors",
+      "support": "difference",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Carried as a text module.",
+      "path": "additionalInfoFields.admission",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.eventName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.eventStart",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.eventEnd",
+      "message": "Carried as a text module.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.venueName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.venueAddress",
+      "message": "Carried as a text module.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.ticketHolder",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.memberName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "upcoming.multi",
+      "message": "The events are listed as text.",
+      "path": "events",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "TICKET-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "TICKET-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Sample Event",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#5e0636",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "merchantLocations": [
+      {
+        "latitude": 37.3349,
+        "longitude": -122.009,
+      },
+    ],
+    "notifications": {
+      "upcomingNotification": {
+        "enableNotification": true,
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2030-06-01T19:00:00-07:00",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "2030-06-01T19:00:00-07:00",
+        "header": "Date",
+        "id": "headerFields.date",
+      },
+      {
+        "body": "Sample Hall",
+        "header": "Venue",
+        "id": "secondaryFields.venue",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Name",
+        "id": "auxiliaryFields.attendee",
+      },
+      {
+        "body": "Main hall",
+        "header": "Room",
+        "id": "auxiliaryFields.room",
+      },
+      {
+        "body": "2030-06-01T18:00:00-07:00",
+        "header": "Doors",
+        "id": "additionalInfoFields.doors",
+      },
+      {
+        "body": "General",
+        "header": "Admission",
+        "id": "additionalInfoFields.admission",
+      },
+      {
+        "body": "No re-entry. Ticket is non-transferable.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "2030-06-01T22:00:00-07:00",
+        "header": "Ends",
+        "id": "role.eventEnd",
+      },
+      {
+        "body": "Main hall, Cupertino, CA",
+        "header": "Address",
+        "id": "role.venueAddress",
+      },
+      {
+        "body": "Sample Event: 2030-06-01T19:00:00-07:00
+Sample Event: Encore: 2030-06-08T19:00:00-07:00
+Sample Event: Finale: 2030-06-15T19:00:00-07:00",
+        "header": "Upcoming",
+        "id": "upcoming",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-06-16T05:00:00Z",
+      },
+      "start": {
+        "date": "2030-06-02T02:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-event-ticket: with no Google art 1`] = `
+{
+  "classBody": {
+    "dateTime": {
+      "end": "2030-06-01T22:00:00-07:00",
+      "start": "2030-06-01T19:00:00-07:00",
+    },
+    "eventName": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Sample Event",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/artwork-3x-png",
+      },
+    },
+    "hexBackgroundColor": "#5e0636",
+    "issuerName": "PassBook",
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "reviewStatus": "UNDER_REVIEW",
+    "venue": {
+      "address": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Main hall, Cupertino, CA",
+        },
+      },
+      "name": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Sample Hall",
+        },
+      },
+    },
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660.",
+      "path": "images.icon",
+      "support": "omitted",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660.",
+      "path": "images.logo",
+      "support": "omitted",
+    },
+    {
+      "capability": "relevance.locations",
+      "message": "Google shows no text at a location.",
+      "path": "locations",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.dates",
+      "message": "Google carries the first start time only.",
+      "path": "relevantDates",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.time",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "secondaryFields.time",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.room",
+      "support": "text",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Carried as a text module.",
+      "path": "additionalInfoFields.doors",
+      "support": "text",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "additionalInfoFields.doors",
+      "support": "difference",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Carried as a text module.",
+      "path": "additionalInfoFields.admission",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.subtitle",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.time",
+      "support": "text",
+    },
+    {
+      "capability": "role.memberName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "upcoming.multi",
+      "message": "The events are listed as text.",
+      "path": "events",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "TICKET-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "TICKET-0001",
+    },
+    "locations": [
+      {
+        "latitude": 37.3349,
+        "longitude": -122.009,
+      },
+    ],
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "2030-06-01T19:00:00-07:00",
+        "header": "Starts",
+        "id": "secondaryFields.time",
+      },
+      {
+        "body": "Main hall",
+        "header": "Room",
+        "id": "auxiliaryFields.room",
+      },
+      {
+        "body": "2030-06-01T18:00:00-07:00",
+        "header": "Doors",
+        "id": "additionalInfoFields.doors",
+      },
+      {
+        "body": "General",
+        "header": "Admission",
+        "id": "additionalInfoFields.admission",
+      },
+      {
+        "body": "No re-entry. Ticket is non-transferable.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "Sample Event: 2030-06-01T19:00:00-07:00
+Sample Event: Encore: 2030-06-08T19:00:00-07:00
+Sample Event: Finale: 2030-06-15T19:00:00-07:00",
+        "header": "Upcoming",
+        "id": "upcoming",
+      },
+    ],
+    "ticketHolderName": "Alex Morgan",
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-06-16T05:00:00Z",
+      },
+      "start": {
+        "date": "2030-06-02T00:00:00Z",
+      },
+    },
+  },
+  "type": "event",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-generic: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.points",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "headerFields.points",
+      "support": "difference",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "ID-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "ID-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#141a2b",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2026-01-01T00:00:00Z",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Plus",
+        "header": "Tier",
+        "id": "headerFields.tier",
+      },
+      {
+        "body": "1200",
+        "header": "Points",
+        "id": "headerFields.points",
+      },
+      {
+        "body": "Present the barcode when asked.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-generic: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.points",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "headerFields.points",
+      "support": "difference",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "ID-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "ID-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "hexBackgroundColor": "#141a2b",
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2026-01-01T00:00:00Z",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Plus",
+        "header": "Tier",
+        "id": "headerFields.tier",
+      },
+      {
+        "body": "1200",
+        "header": "Points",
+        "id": "headerFields.points",
+      },
+      {
+        "body": "Present the barcode when asked.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-poster-generic: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.holder-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Carried as a text module.",
+      "path": "additionalInfoFields.plan-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.footer",
+      "message": "Carried as a text module.",
+      "path": "footerFields.since-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.footer",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "footerFields.since-poster",
+      "support": "difference",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms-poster",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "ID-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "ID-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#361273",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2026-01-01T00:00:00Z",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Plus",
+        "header": "Tier",
+        "id": "headerFields.tier",
+      },
+      {
+        "body": "Plus",
+        "header": "Tier",
+        "id": "headerFields.tier-poster",
+      },
+      {
+        "body": "Alex Morgan",
+        "id": "primaryFields.holder-poster",
+      },
+      {
+        "body": "Annual",
+        "header": "Plan",
+        "id": "additionalInfoFields.plan-poster",
+      },
+      {
+        "body": "2026-01-01T00:00:00Z",
+        "header": "Since",
+        "id": "footerFields.since-poster",
+      },
+      {
+        "body": "Present the barcode when asked.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "Present the barcode when asked.",
+        "header": "Terms",
+        "id": "backFields.terms-poster",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-poster-generic: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.primary",
+      "message": "Carried as a text module.",
+      "path": "primaryFields.holder-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.additionalInfo",
+      "message": "Carried as a text module.",
+      "path": "additionalInfoFields.plan-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.footer",
+      "message": "Carried as a text module.",
+      "path": "footerFields.since-poster",
+      "support": "text",
+    },
+    {
+      "capability": "field.footer",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "footerFields.since-poster",
+      "support": "difference",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms-poster",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "ID-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "ID-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/artwork-3x-png",
+      },
+    },
+    "hexBackgroundColor": "#361273",
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2026-01-01T00:00:00Z",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Plus",
+        "header": "Tier",
+        "id": "headerFields.tier",
+      },
+      {
+        "body": "Plus",
+        "header": "Tier",
+        "id": "headerFields.tier-poster",
+      },
+      {
+        "body": "Alex Morgan",
+        "id": "primaryFields.holder-poster",
+      },
+      {
+        "body": "Annual",
+        "header": "Plan",
+        "id": "additionalInfoFields.plan-poster",
+      },
+      {
+        "body": "2026-01-01T00:00:00Z",
+        "header": "Since",
+        "id": "footerFields.since-poster",
+      },
+      {
+        "body": "Present the barcode when asked.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "Present the barcode when asked.",
+        "header": "Terms",
+        "id": "backFields.terms-poster",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-stamp-card: a gift card when it has a card number and no member 1`] = `
+{
+  "classBody": {
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#fcf4e6",
+    "issuerName": "PassBook",
+    "merchantName": "PassBook",
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "programLogo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "reviewStatus": "UNDER_REVIEW",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.stamps",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.reward",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.holder",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.how",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.subtitle",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.reward",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "CARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "CARD-0001",
+    },
+    "cardNumber": "4111 0000 0000 0001",
+    "pin": "4821",
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "7 of 10",
+        "header": "Stamps",
+        "id": "headerFields.stamps",
+      },
+      {
+        "body": "Free coffee",
+        "header": "Reward",
+        "id": "secondaryFields.reward",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Name",
+        "id": "secondaryFields.holder",
+      },
+      {
+        "body": "One stamp per visit. A full card earns the reward.",
+        "header": "How it works",
+        "id": "backFields.how",
+      },
+      {
+        "body": "One reward per full card. No cash value.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "gift",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-stamp-card: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.stamps",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.holder",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.how",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "CARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "CARD-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#fcf4e6",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Free coffee",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "7 of 10",
+        "header": "Stamps",
+        "id": "headerFields.stamps",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Name",
+        "id": "secondaryFields.holder",
+      },
+      {
+        "body": "One stamp per visit. A full card earns the reward.",
+        "header": "How it works",
+        "id": "backFields.how",
+      },
+      {
+        "body": "One reward per full card. No cash value.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-stamp-card: the default type and Generic, with Google art > loyalty 1`] = `
+{
+  "classBody": {
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#fcf4e6",
+    "issuerName": "PassBook",
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "programLogo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "programName": "PassBook",
+    "reviewStatus": "UNDER_REVIEW",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.stamps",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.reward",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.holder",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.how",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.subtitle",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.reward",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "accountId": "CARD-0001",
+    "barcode": {
+      "alternateText": "CARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "CARD-0001",
+    },
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "7 of 10",
+        "header": "Stamps",
+        "id": "headerFields.stamps",
+      },
+      {
+        "body": "Free coffee",
+        "header": "Reward",
+        "id": "secondaryFields.reward",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Name",
+        "id": "secondaryFields.holder",
+      },
+      {
+        "body": "One stamp per visit. A full card earns the reward.",
+        "header": "How it works",
+        "id": "backFields.how",
+      },
+      {
+        "body": "One reward per full card. No cash value.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "loyalty",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-stamp-card: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.stamps",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.holder",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.how",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "type",
+      "message": "Loyalty not used: Needs a logo of at least 660 x 660 px.",
+      "path": "",
+      "support": "omitted",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "CARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "CARD-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/strip-3x-png",
+      },
+    },
+    "hexBackgroundColor": "#fcf4e6",
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Free coffee",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "7 of 10",
+        "header": "Stamps",
+        "id": "headerFields.stamps",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Name",
+        "id": "secondaryFields.holder",
+      },
+      {
+        "body": "One stamp per visit. A full card earns the reward.",
+        "header": "How it works",
+        "id": "backFields.how",
+      },
+      {
+        "body": "One reward per full card. No cash value.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-store-card: a gift card when it has a card number and no member 1`] = `
+{
+  "classBody": {
+    "balanceLabel": "Balance",
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#004b41",
+    "issuerName": "PassBook",
+    "merchantName": "PassBook",
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "programLogo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "reviewStatus": "UNDER_REVIEW",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.holder",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.subtitle",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.holder",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.beacons",
+      "message": "Google Wallet has no beacons.",
+      "path": "beacons",
+      "support": "unsupported",
+    },
+  ],
+  "objectBody": {
+    "balance": {
+      "currencyCode": "USD",
+      "micros": "25000000",
+    },
+    "barcode": {
+      "alternateText": "CARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "CARD-0001",
+    },
+    "cardNumber": "4111 0000 0000 0001",
+    "pin": "4821",
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "Gold",
+        "header": "Tier",
+        "id": "headerFields.tier",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Name",
+        "id": "secondaryFields.holder",
+      },
+      {
+        "body": "Balance is not redeemable for cash.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "gift",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-store-card: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.balance",
+      "message": "Carried as a text module.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.beacons",
+      "message": "Google Wallet has no beacons.",
+      "path": "beacons",
+      "support": "unsupported",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "CARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "CARD-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "25",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#004b41",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Gold",
+        "header": "Tier",
+        "id": "headerFields.tier",
+      },
+      {
+        "body": "Balance is not redeemable for cash.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "25 USD",
+        "header": "Balance",
+        "id": "role.balance",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-store-card: the default type and Generic, with Google art > loyalty 1`] = `
+{
+  "classBody": {
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#004b41",
+    "issuerName": "PassBook",
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "programLogo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "programName": "PassBook",
+    "reviewStatus": "UNDER_REVIEW",
+  },
+  "items": [
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.holder",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.subtitle",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.holder",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.beacons",
+      "message": "Google Wallet has no beacons.",
+      "path": "beacons",
+      "support": "unsupported",
+    },
+  ],
+  "objectBody": {
+    "accountId": "CARD-0001",
+    "barcode": {
+      "alternateText": "CARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "CARD-0001",
+    },
+    "secondaryLoyaltyPoints": {
+      "balance": {
+        "money": {
+          "currencyCode": "USD",
+          "micros": "25000000",
+        },
+      },
+      "label": "Balance",
+    },
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "Gold",
+        "header": "Tier",
+        "id": "headerFields.tier",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Name",
+        "id": "secondaryFields.holder",
+      },
+      {
+        "body": "Balance is not redeemable for cash.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "loyalty",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-store-card: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.tier",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.balance",
+      "message": "Carried as a text module.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google picks the text colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google picks the label colour.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "relevance.beacons",
+      "message": "Google Wallet has no beacons.",
+      "path": "beacons",
+      "support": "unsupported",
+    },
+    {
+      "capability": "type",
+      "message": "Loyalty not used: Needs a logo of at least 660 x 660 px.",
+      "path": "",
+      "support": "omitted",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "CARD-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "CARD-0001",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "25",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/strip-3x-png",
+      },
+    },
+    "hexBackgroundColor": "#004b41",
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Gold",
+        "header": "Tier",
+        "id": "headerFields.tier",
+      },
+      {
+        "body": "Balance is not redeemable for cash.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "25 USD",
+        "header": "Balance",
+        "id": "role.balance",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;

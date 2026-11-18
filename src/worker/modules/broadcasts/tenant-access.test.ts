@@ -892,7 +892,16 @@ it('executes a committed schedule after its originating session is revoked', asy
     do: async (_name: string, a: unknown, b?: unknown) =>
       await ((typeof a === 'function' ? a : b) as () => Promise<unknown>)(),
   } as unknown as Step;
-  expect(await runBroadcast(kit.env, instanceId, { broadcastId: scheduled.id }, step)).toEqual({
+  expect(
+    await runBroadcast(
+      kit.env,
+      instanceId,
+      { broadcastId: scheduled.id },
+      step,
+      undefined,
+      kit.clock,
+    ),
+  ).toEqual({
     state: 'sent',
   });
   expect((await getPass(kit.env.DB, pass.id, null))?.personalization.message).toBe(
