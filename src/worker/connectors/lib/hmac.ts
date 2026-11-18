@@ -216,7 +216,12 @@ const shopify: WebhookVerifier = {
   replay: 'body-window',
   verify: async (req, secrets) => {
     const header = req.headers.get('x-shopify-hmac-sha256');
-    return signed(req, secrets, SHOPIFY_MAX_BYTES, orNull(header && decodeBase64_32(header)));
+    return signed(
+      req,
+      secrets,
+      SHOPIFY_MAX_BYTES,
+      orNull(header === null ? null : decodeBase64_32(header)),
+    );
   },
 };
 
@@ -227,7 +232,12 @@ const calcom: WebhookVerifier = {
   replay: 'body-window',
   verify: async (req, secrets) => {
     const header = req.headers.get('x-cal-signature-256');
-    return signed(req, secrets, MAX_WEBHOOK_BYTES, orNull(header && decodeHex32(header)));
+    return signed(
+      req,
+      secrets,
+      MAX_WEBHOOK_BYTES,
+      orNull(header === null ? null : decodeHex32(header)),
+    );
   },
 };
 

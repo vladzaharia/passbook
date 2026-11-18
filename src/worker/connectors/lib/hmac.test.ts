@@ -398,7 +398,7 @@ describe('verifier contract', () => {
       } as RequestInit);
       expect(await outcome(id, req, [secret])).toBe('AUTH');
       // The stream's own priming pull is the only one: the verifier reads nothing.
-    expect(pulled).toBeLessThanOrEqual(1);
+      expect(pulled).toBeLessThanOrEqual(1);
     },
   );
 });
