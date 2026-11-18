@@ -10,6 +10,7 @@ import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
+import { dailyImports } from '../modules/passes/import-retention.ts';
 import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
@@ -62,6 +63,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
     { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
+    { name: 'passes.import_retention', run: dailyImports },
     { name: 'connections.retention', run: dailyConnections },
     { name: 'delivery.retention', run: dailyDelivery },
     { name: 'auth.retention', run: dailyAuth },

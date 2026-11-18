@@ -23,7 +23,11 @@ import type { ImportRow } from './repo-imports.ts';
 
 const EDITING = ['mapping', 'checking', 'ready', 'stale'];
 
-function problemsOf(ctx: ServiceContext, importId: string, json: string | null): ImportProblem[] {
+export function problemsOf(
+  ctx: ServiceContext,
+  importId: string,
+  json: string | null,
+): ImportProblem[] {
   if (json === null) return [];
   const parsed = PassImportProblemSchema.array().safeParse(safeJson(json));
   if (parsed.success) return parsed.data;
