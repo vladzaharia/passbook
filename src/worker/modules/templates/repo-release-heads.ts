@@ -53,8 +53,9 @@ export function effectiveReleaseIdSql(scope: ReleaseScopeSql): string {
               AND (apr.candidate_hash = c.candidate_hash AND c.content_hash = er.content_hash
                 AND c.adapter_revision = er.adapter_revision AND c.adapter_capabilities = er.adapter_capabilities)
               AND (c.audience_policy_revision = er.audience_policy_revision
-                AND ev.created_by IS c.version_author_id AND apr.reviewer_id != c.author_id
-                AND (c.version_author_id IS NULL OR apr.reviewer_id != c.version_author_id)))))
+                AND ev.created_by IS c.version_author_id
+                AND (apr.kind != 'peer' OR (apr.reviewer_id != c.author_id
+                  AND (c.version_author_id IS NULL OR apr.reviewer_id != c.version_author_id)))))))
       AND (er.source = 'legacy' OR NOT EXISTS (SELECT 1 FROM template_version_hashes vh
         WHERE vh.template_id = er.template_id AND vh.version = er.version AND vh.content_hash != er.content_hash))
     LIMIT 1`;

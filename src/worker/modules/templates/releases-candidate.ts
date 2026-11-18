@@ -150,8 +150,9 @@ export function approvalMatches(approval: ApprovalRow, candidate: CandidateRow):
   return (
     approval.candidateId === candidate.id &&
     approval.candidateHash === candidate.candidateHash &&
-    approval.reviewerId !== candidate.authorId &&
-    approval.reviewerId !== candidate.versionAuthorId
+    (approval.kind !== 'peer' ||
+      (approval.reviewerId !== candidate.authorId &&
+        approval.reviewerId !== candidate.versionAuthorId))
   );
 }
 

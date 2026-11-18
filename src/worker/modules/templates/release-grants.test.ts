@@ -445,6 +445,7 @@ describe('grant-level refusals', () => {
     candidateId: c.id,
     candidateHash: c.candidateHash,
     reviewerId,
+    kind: 'peer' as const,
     createdAt: clock.now(),
   });
   const approvals = (candidateId: string) =>

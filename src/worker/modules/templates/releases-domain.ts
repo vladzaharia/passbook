@@ -67,6 +67,7 @@ export function toApproval(row: ApprovalRow, names?: Names): TemplateApproval {
     candidateId: row.candidateId,
     candidateHash: row.candidateHash,
     reviewerId: row.reviewerId,
+    kind: row.kind,
     ...(reviewerName === undefined ? {} : { reviewerName }),
     createdAt: row.createdAt,
   };
