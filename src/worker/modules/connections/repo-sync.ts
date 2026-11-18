@@ -63,6 +63,7 @@ export async function setWorkflowStatus(
     db,
     `UPDATE workflow_runs SET status = ?, finished_at = ?, error_code = ?
      WHERE instance_id = ? AND kind = 'connection_sync'
+     ${status === 'running' ? "AND status IN ('queued', 'running')" : ''}
      AND org_id = ? AND target_id = ? AND credential_keyset_commitment = ?
      ${
        runnable
@@ -253,4 +254,22 @@ export async function slotAttemptInFlight(
       [connectionId, slot.length + 1, `${slot}-`],
     )) !== null
   );
+}
+
+/** A run of the connection other than `instanceId` that is open and whose tracking row is live. */
+export async function openRunOf(
+  db: D1Database,
+  p: { connectionId: string; instanceId: string },
+): Promise<{ id: string; startedAt: number } | null> {
+  const row = await first<{ id: string; started_at: number }>(
+    db,
+    `SELECT r.id, r.started_at FROM connection_runs r
+     JOIN workflow_runs w ON w.instance_id = r.id AND w.kind = 'connection_sync'
+       AND w.target_id = r.connection_id
+     WHERE r.connection_id = ? AND r.id <> ? AND r.outcome = 'running'
+       AND w.status IN ('queued', 'running')
+     ORDER BY r.started_at LIMIT 1`,
+    [p.connectionId, p.instanceId],
+  );
+  return row ? { id: row.id, startedAt: row.started_at } : null;
 }

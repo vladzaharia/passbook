@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { ConnectionSync } from '../../workflows/connection-sync.ts';
+import { emptyTotals } from './records.ts';
 import { getConnection } from './repo.ts';
+import { setWorkflowStatus } from './repo-sync.ts';
 import { inlineStep, seedConnectionWorkflow } from './runtime-fixtures.ts';
-import { reconcileConnections } from './schedule.ts';
-import { continuationId, type SyncChain } from './sync-chain.ts';
+import { reconcileConnections, startSync } from './schedule.ts';
+import { continuationId, handOff, MAX_HANDOFFS, type SyncChain } from './sync-chain.ts';
 import { executeSync, type StepLike, type SyncRunParams } from './sync-runner.ts';
-import { createDemo, type Kit, makeKit, withWorkflow } from './test-kit.ts';
+import { createDemo, type Kit, linkedPass, makeKit, withWorkflow } from './test-kit.ts';
 
 let kit: Kit;
 let RUN = '';
@@ -36,7 +40,7 @@ async function base(connectionId: string): Promise<SyncRunParams> {
     trigger: 'schedule',
     runId: RUN,
     instanceId: RUN,
-    createBudget: 15,
+    writeBudget: 15,
   };
   await seedConnectionWorkflow(kit.sctx, params);
   return params;
@@ -45,11 +49,25 @@ async function base(connectionId: string): Promise<SyncRunParams> {
 /** Creates fail on a repeated id, like Workflows; the harness then runs each created instance. */
 function platform(onStep?: (name: string) => Promise<void>) {
   const ids = new Set<string>();
-  const wf = withWorkflow(kit, async (o) => {
-    const { id } = o as Created;
-    if (ids.has(id)) throw new Error('instance.already_exists');
-    ids.add(id);
-  });
+  const created: Created[] = [];
+  const binding = {
+    get: async (id: string) => {
+      if (!ids.has(id)) throw new Error('instance.not_found');
+      return { status: async () => ({ status: 'running' }) };
+    },
+    create: async (o: Created) => {
+      if (ids.has(o.id)) throw new Error('instance.already_exists');
+      ids.add(o.id);
+      created.push(o);
+    },
+  };
+  const wf = {
+    sctx: {
+      ...kit.sctx,
+      env: { ...kit.env, CONNECTION_SYNC: binding },
+    } as unknown as ServiceContext,
+    created,
+  };
   const names: string[] = [];
   const inner = inlineStep();
   const step: StepLike = {
@@ -137,7 +155,7 @@ describe('sync hand-off', () => {
     const dto = await demo(25);
     const p = await base(dto.id);
     const { wf, drain } = platform();
-    await drain({ ...p, createBudget: 100 });
+    await drain({ ...p, writeBudget: 100 });
     expect(wf.created).toEqual([]);
     expect(await runRow()).toMatchObject({ outcome: 'changed', records_seen: 25 });
   });
@@ -213,8 +231,8 @@ describe('sync hand-off', () => {
     const states: Record<string, string> = { '-c1': 'complete', '-c2': tip };
     let root = '';
     const binding = {
-      create: async (o: { id: string }) => {
-        root ||= o.id;
+      create: async (o: { id: string; params: { connectionId: string } }) => {
+        if (o.params.connectionId === dto.id) root ||= o.id;
       },
       get: async (id: string) => {
         const state = id === root ? 'complete' : states[id.slice(root.length)];
@@ -227,5 +245,126 @@ describe('sync hand-off', () => {
     kit.clock.advance(45 * 60_000);
     await reconcileConnections({ ...(sctx as object), clock: kit.clock } as never);
     expect((await getConnection(kit.env.DB, dto.id))?.lastErrorCode ?? null).toBe(lost);
+  });
+
+  it('stops at the budget when the chain cap is reached, with a visible outcome', async () => {
+    const dto = await demo(50);
+    const p = await base(dto.id);
+    const { wf, step } = platform();
+    const chain = {
+      seq: MAX_HANDOFFS,
+      startedAt: kit.clock.now(),
+      totals: emptyTotals(),
+      samples: [],
+    };
+    await executeSync(wf.sctx, step, { ...p, chain });
+    expect(wf.created).toEqual([]);
+    expect(kit.seams.created).toHaveLength(20);
+    expect((await getConnection(kit.env.DB, dto.id))?.cursor).toBe('0:20');
+    const row = await first<{ outcome: string; error_detail: string }>(
+      kit.env.DB,
+      'SELECT outcome, error_detail FROM connection_runs WHERE id = ?',
+      [RUN],
+    );
+    expect(row?.outcome).toBe('changed');
+    expect(row?.error_detail).toContain('SYNC_CAPPED');
+    expect(await workflowRow()).toEqual({ status: 'complete' });
+  });
+
+  it('counts updates toward the budget', async () => {
+    const dto = await createDemo(kit, { config: { count: 50 } });
+    for (let i = 1; i <= 20; i++) await linkedPass(kit, dto.id, `m-${String(i).padStart(3, '0')}`);
+    const p = await base(dto.id);
+    const { wf, step } = platform();
+    await executeSync(wf.sctx, step, p);
+    expect(kit.seams.created).toEqual([]);
+    expect(wf.created.map((c) => (c.params.chain as SyncChain).totals)).toEqual([
+      expect.objectContaining({ created: 0, changed: 20 }),
+    ]);
+  });
+
+  it('a replayed hand-off step finds a child that has already finished the run', async () => {
+    const dto = await demo(50);
+    const p = await base(dto.id);
+    const harness = platform();
+    await harness.drain(p);
+    expect(await runRow()).toMatchObject({ outcome: 'changed' });
+    const chain = harness.wf.created[0]?.params.chain as SyncChain;
+    const again = await handOff(harness.wf.sctx, { ...p, mode: 'poll' }, chain);
+    expect(again).toEqual({ started: true });
+    expect(harness.wf.created).toHaveLength(2);
+  });
+
+  it('a run marked lost cannot go back to running', async () => {
+    const dto = await demo(5);
+    const p = await base(dto.id);
+    const scope = { orgId: kit.org.id, connectionId: dto.id };
+    const set = (status: 'running' | 'errored') =>
+      setWorkflowStatus(
+        kit.env.DB,
+        RUN,
+        status,
+        kit.clock.now(),
+        null,
+        undefined,
+        kit.credentialKeysetCommitment,
+        scope,
+      );
+    expect(await set('running')).toBe(true);
+    expect(await set('errored')).toBe(true);
+    expect(await set('running')).toBe(false);
+    const { wf, step } = platform();
+    await executeSync(wf.sctx, step, p);
+    expect(kit.seams.created).toEqual([]);
+    expect(await runRow()).toMatchObject({ outcome: 'skipped', error_code: 'STALE_CONTEXT' });
+  });
+
+  it('adopts a run in flight instead of starting a second one', async () => {
+    const dto = await demo(5);
+    const conn = await getConnection(kit.env.DB, dto.id);
+    if (!conn) throw new Error('no connection');
+    const { sctx, created } = withWorkflow(kit, undefined, () => 'running');
+    const first = await startSync(sctx, conn, 'admin', 'sync-a-admin-1');
+    const second = await startSync(sctx, conn, 'admin', 'sync-a-admin-2');
+    expect(second).toEqual(first);
+    expect(created.map((c) => c.id)).toEqual(['sync-a-admin-1']);
+    kit.clock.advance(45 * 60_000);
+    const dead = withWorkflow(kit, undefined, () => 'errored');
+    await startSync({ ...dead.sctx, clock: kit.clock }, conn, 'admin', 'sync-a-admin-3');
+    expect(dead.created.map((c) => c.id)).toEqual(['sync-a-admin-3']);
+  });
+
+  it.each([
+    ['maps a continuation id to its run', (id: string) => `${id}-c1`, 1, true],
+    ['refuses a continuation id with the wrong seq', (id: string) => `${id}-c2`, 1, false],
+    ['refuses a foreign id without a chain', (id: string) => `${id}-c1`, 0, false],
+  ])('workflow entrypoint %s', async (_name, instanceOf, seq, ok) => {
+    const dto = await demo(5);
+    await base(dto.id);
+    const wf = Object.assign(Object.create(ConnectionSync.prototype), {
+      env: kit.env,
+    }) as ConnectionSync;
+    const payload = {
+      connectionId: dto.id,
+      orgId: kit.org.id,
+      generation: 1,
+      trigger: 'schedule' as const,
+      credentialKeysetCommitment: kit.credentialKeysetCommitment,
+      runId: RUN,
+      ...(seq
+        ? { chain: { seq, startedAt: kit.clock.now(), totals: emptyTotals(), samples: [] } }
+        : {}),
+    };
+    const call = wf.run(
+      { payload, instanceId: instanceOf(RUN), timestamp: new Date() } as never,
+      inlineStep() as never,
+    );
+    if (ok) {
+      await call;
+      expect(await runRow()).toMatchObject({ outcome: 'changed' });
+    } else {
+      await expect(call).rejects.toThrow();
+      expect(await runRow()).toMatchObject({ outcome: 'running' });
+    }
   });
 });

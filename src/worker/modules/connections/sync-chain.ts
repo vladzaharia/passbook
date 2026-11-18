@@ -25,6 +25,16 @@ export function alreadyExists(error: unknown): boolean {
   return error instanceof Error && /already.?exist|instance.*exists/i.test(error.message);
 }
 
+/** Records written so far; what the per-instance budget counts. */
+export const spent = (t: Totals): number => t.created + t.changed + t.missing + t.errors;
+
+/** The run stops at the per-instance budget with no hand-off left; the next run resumes. */
+export function noteCapped(sctx: ServiceContext, connectionId: string, samples: string[]): void {
+  sctx.log.warn('connection.sync_capped', { connectionId, code: 'SYNC_CAPPED' });
+  samples.length = Math.min(samples.length, 4);
+  samples.push('SYNC_CAPPED: stopped at the run limit; the next run continues');
+}
+
 const count = (n: unknown): boolean => Number.isSafeInteger(n) && (n as number) >= 0;
 
 export function assertSyncChain(chain: SyncChain | undefined): void {
@@ -61,6 +71,14 @@ export async function handOff(
   },
   chain: SyncChain,
 ): Promise<{ started: true } | { started: false; staleCode: StaleCode }> {
+  // A replay finds the child it already started, whatever state the run has reached since.
+  const child = continuationId(p.runId, chain.seq);
+  try {
+    await sctx.env.CONNECTION_SYNC.get(child);
+    return { started: true };
+  } catch {
+    // Not created yet: carry on and create it.
+  }
   await assertSyncAuthority(sctx, p);
   if (!(await syncKeysetCurrent(sctx, p.credentialKeysetCommitment)))
     return { started: false, staleCode: 'STALE_CONTEXT' };
@@ -72,7 +90,7 @@ export async function handOff(
   if (tracked?.status !== 'running') return { started: false, staleCode: 'STALE_CONTEXT' };
   try {
     await sctx.env.CONNECTION_SYNC.create({
-      id: continuationId(p.runId, chain.seq),
+      id: child,
       params: {
         connectionId: p.connectionId,
         orgId: p.orgId,

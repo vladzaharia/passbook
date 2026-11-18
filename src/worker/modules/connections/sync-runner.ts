@@ -9,15 +9,22 @@ import { type Failure, paceMs } from './runtime.ts';
 import {
   advanceCursor,
   applySlice,
-  CREATE_BUDGET_PER_INSTANCE,
   dueRefs,
   fetchListPage,
   MAX_PAGES_PER_RUN,
   MAX_RECORDS_PER_STEP,
   startRun,
+  WRITE_BUDGET_PER_INSTANCE,
 } from './sync.ts';
 import { type Change, runRefs } from './sync-apply.ts';
-import { assertSyncChain, handOff, MAX_HANDOFFS, type SyncChain } from './sync-chain.ts';
+import {
+  assertSyncChain,
+  handOff,
+  MAX_HANDOFFS,
+  noteCapped,
+  type SyncChain,
+  spent,
+} from './sync-chain.ts';
 import type { StepResult } from './sync-context.ts';
 import { recordAbort } from './sync-runner-abort.ts';
 import { assertSyncAuthority, assertSyncStart } from './sync-runner-validation.ts';
@@ -39,8 +46,8 @@ export interface SyncRunParams {
   instanceId: string;
   /** Set on a continuation instance: what the previous instance handed over. */
   chain?: SyncChain;
-  /** Creates per instance before a hand-off; defaults to the production budget. */
-  createBudget?: number;
+  /** Pass writes per instance before a hand-off; defaults to the production budget. */
+  writeBudget?: number;
 }
 
 function add(into: Totals, from: Totals): void {
@@ -83,13 +90,13 @@ export async function executeSync(
 async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): Promise<void> {
   assertSyncChain(p.chain);
   const seq = p.chain?.seq ?? 0;
-  const budget = p.createBudget ?? CREATE_BUDGET_PER_INSTANCE;
+  const budget = p.writeBudget ?? WRITE_BUDGET_PER_INSTANCE;
   const start = await step.do('start', () => startRun(sctx, p));
   assertSyncStart(start, p);
-  if (p.chain) start.startedAt = p.chain.startedAt;
+  const startedAt = p.chain?.startedAt ?? start.startedAt;
 
   const totals = p.chain ? { ...p.chain.totals } : emptyTotals();
-  const createdBefore = totals.created;
+  const spentBefore = spent(totals);
   const samples: string[] = p.chain ? [...p.chain.samples] : [];
   let failure: Failure | null = null;
   let stale = false;
@@ -225,13 +232,19 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
           }
           if (!fetched.hasMore) break;
           cursor = fetched.cursor;
+          const overBudget = spent(totals) - spentBefore >= budget;
+          // No hand-off while issuance is blocked (the cursor did not move) or past the chain cap.
+          if (overBudget && (releaseBlocked || seq >= MAX_HANDOFFS)) {
+            noteCapped(sctx, p.connectionId, samples);
+            break;
+          }
           // The next listChanges call is a request too.
           await step.sleep(`page-${page}-list-pace`, paceMs(1, limits.rpm));
           // The cursor is saved; a fresh instance carries on from it with a new subrequest budget.
-          if (!releaseBlocked && seq < MAX_HANDOFFS && totals.created - createdBefore >= budget) {
+          if (overBudget) {
             const next: SyncChain = {
               seq: seq + 1,
-              startedAt: start.startedAt,
+              startedAt,
               totals: { ...totals },
               samples: [...samples],
             };
@@ -304,7 +317,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
         stale,
         staleCode,
         ...(releaseBlocked ? { releaseBlocked } : {}),
-        startedAt: start.startedAt,
+        startedAt,
         errorDetail: samples.length ? samples.join('\n') : null,
       },
       { countsForBreaker: true },

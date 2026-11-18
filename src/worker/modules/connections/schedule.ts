@@ -15,6 +15,7 @@ import { validCredentialKeysetCommitment } from './repo-passes.ts';
 import {
   commitSyncEnqueue,
   markLegacyWorkflowLost,
+  openRunOf,
   setWorkflowStatus,
   slotAttemptInFlight,
   syncEnqueueExists,
@@ -63,6 +64,15 @@ export async function startSync(
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
   await assertConnectionAuthority(sctx, authority);
   const retry = await syncEnqueueExists(sctx.env.DB, instanceId);
+  if (!retry) {
+    // Two runs would page the same cursor: adopt the one in flight while it is alive.
+    const open = await openRunOf(sctx.env.DB, { connectionId: conn.id, instanceId });
+    if (
+      open &&
+      (sctx.clock.now() - open.startedAt < STUCK_MS || !(await instanceLost(sctx, open.id)))
+    )
+      return { runId: open.id, workflowInstanceId: open.id };
+  }
   const credentialKeysetCommitment = retry
     ? await requireCredentialRefKeyset(sctx.env.DB, sctx.env)
     : await ensureCredentialRefKeyset(sctx.env.DB, sctx.env);
