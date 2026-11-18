@@ -1,13 +1,10 @@
 import type { Grant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
-import { addUndoWrites, openUndoGrant, type UndoCommit } from './repo-undo-grant.ts';
+import { addUndoWrites, openUndoGrant } from './repo-undo-grant.ts';
+import type { UndoCommit } from './repo-undo-types.ts';
 
-export {
-  UNDO_CODES,
-  type UndoCommit,
-  type UndoGate,
-  type UndoPresence,
-} from './repo-undo-grant.ts';
+export { UNDO_CODES } from './repo-undo-grant.ts';
+export type { UndoCommit, UndoGate, UndoPresence } from './repo-undo-types.ts';
 
 /**
  * One batch. The gate, presence and target compare-and-swaps are the grant's lineage checks
