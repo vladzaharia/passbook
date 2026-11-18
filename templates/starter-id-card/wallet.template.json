@@ -199,6 +199,13 @@
     "search": [
       "name",
       "idNumber"
+    ],
+    "group": "membership-id",
+    "aliases": [
+      "badge",
+      "staff ID",
+      "student card",
+      "photo ID"
     ]
   },
   "behaviors": [

@@ -173,7 +173,8 @@ export function requireTenantSessionOrApiKey(
       c.set('auth', scoped);
       await next();
     });
-    return declareKeyAccess(guard, { read: scope });
+    // The guard takes a key with one of the scopes for every method, so the document says so too.
+    return declareKeyAccess(guard, { read: scope, write: scope });
   }
   const selector = scope as ScopeSelector;
   const keyGuard = requireApiKeyOrAdmin(selector);

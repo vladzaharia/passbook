@@ -97,6 +97,13 @@
       "namespace_id": "2014",
       "simple": { "limit": 6000, "period": 60 }
     },
+    { "name": "RL_WEBHOOK_HOST", "namespace_id": "2016", "simple": { "limit": 600, "period": 60 } },
+    {
+      "name": "RL_WEBHOOK_HOST_ORG",
+      "namespace_id": "2017",
+      "simple": { "limit": 120, "period": 60 }
+    },
+    { "name": "RL_WEBHOOK_OUT", "namespace_id": "2018", "simple": { "limit": 10, "period": 60 } },
     { "name": "RL_JOIN", "namespace_id": "2015", "simple": { "limit": 10, "period": 60 } }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_vitest_events" }],

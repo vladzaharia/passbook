@@ -95,7 +95,8 @@ export async function recordPassEvents(
       );
       for (const [index, result] of results.entries()) {
         const row = part[index];
-        if (result.meta.changes === 1 || !row) continue;
+        // The event feed trigger (0090) adds its own row to `changes`: only 0 means refused.
+        if (result.meta.changes > 0 || !row) continue;
         const missing = !(await passExists(ctx.env.DB, row.pass_id));
         ctx.log.error(missing ? 'events.pass_missing' : 'events.org_mismatch', {
           code: missing ? 'EVENT_PASS_MISSING' : 'EVENT_ORG_MISMATCH',

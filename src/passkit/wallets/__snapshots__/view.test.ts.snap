@@ -276,7 +276,7 @@ exports[`resolveWalletView over every starter and baked template > starter-acces
 exports[`resolveWalletView over every starter and baked template > starter-boarding-pass 1`] = `
 {
   "barcodes": [
-    "pdf417 BOARD-0001",
+    "pdf417 SNAPSHOT-SCAN-CODE",
   ],
   "colors": {
     "background": "#03528e",
@@ -520,7 +520,7 @@ exports[`resolveWalletView over every starter and baked template > starter-coupo
 exports[`resolveWalletView over every starter and baked template > starter-event-ticket 1`] = `
 {
   "barcodes": [
-    "qr TICKET-0001",
+    "qr SNAPSHOT-SCAN-CODE",
   ],
   "colors": {
     "background": "#5e0636",
@@ -997,7 +997,7 @@ exports[`resolveWalletView over every starter and baked template > starter-picku
 exports[`resolveWalletView over every starter and baked template > starter-poster-generic 1`] = `
 {
   "barcodes": [
-    "qr ID-0001",
+    "qr SNAPSHOT-SCAN-CODE",
   ],
   "colors": {
     "background": "#361273",
@@ -1076,7 +1076,7 @@ exports[`resolveWalletView over every starter and baked template > starter-poste
 exports[`resolveWalletView over every starter and baked template > starter-stamp-card 1`] = `
 {
   "barcodes": [
-    "qr CARD-0001",
+    "qr SNAPSHOT-SCAN-CODE",
   ],
   "colors": {
     "background": "#fcf4e6",
@@ -1141,7 +1141,7 @@ exports[`resolveWalletView over every starter and baked template > starter-stamp
 exports[`resolveWalletView over every starter and baked template > starter-store-card 1`] = `
 {
   "barcodes": [
-    "qr CARD-0001",
+    "qr SNAPSHOT-SCAN-CODE",
   ],
   "colors": {
     "background": "#004b41",

@@ -31,6 +31,7 @@ const zone = {
   sort: 0,
   depth: 0,
   sessions: 1,
+  checkedAt: [],
   plans: [],
   occupancy: 'track',
   capacity: 25,

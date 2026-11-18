@@ -211,9 +211,8 @@ describe('upgrade impact', () => {
     const b = new Map(walk(after));
     const changed = [...new Set([...a.keys(), ...b.keys()])].filter((k) => a.get(k) !== b.get(k));
     // Serial, token and the organization name are server-supplied and fixed in the fixture.
-    // A coupon's barcode is now the server's scan code (PS-02).
-    const allowed =
-      slug === 'starter-coupon' ? [...IDENTITY_KEYS, 'barcodes/0/message'] : IDENTITY_KEYS;
+    // Every blueprint's barcode is now the server's scan code (PS-02 for the coupon, PS-28 the rest).
+    const allowed = [...IDENTITY_KEYS, 'barcodes/0/message'];
     const unexpected = changed.filter((k) => !allowed.includes(k.slice(1)));
     expect(unexpected).toEqual([]);
     expect(changed.length).toBeGreaterThan(0);

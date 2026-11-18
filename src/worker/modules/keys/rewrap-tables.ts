@@ -15,7 +15,8 @@ export type PlaceTable =
   | 'pass_token_seals'
   | 'pass_auth_seals'
   | 'bundle_token_seals'
-  | 'join_link_seals';
+  | 'join_link_seals'
+  | 'webhook_endpoint_secrets';
 
 /** What a select returns: the key, the envelope's KEK and wrapped DEK, and up to four AAD inputs. */
 export interface Raw {
@@ -95,6 +96,11 @@ export const PLACES: readonly Place[] = [
   { table: 'pass_auth_seals', aad: (r) => credentialAad(r.pk, text(r.x1), 'apple-auth') },
   { table: 'bundle_token_seals', aad: (r) => credentialAad(r.pk, text(r.x1), 'bundle-link') },
   { table: 'join_link_seals', aad: (r) => credentialAad(r.pk, text(r.x1), 'join-link') },
+  {
+    // x1 org, x2 endpoint, x3 mode: webhooks/secrets.ts secretAad.
+    table: 'webhook_endpoint_secrets',
+    aad: (r) => credentialAad(r.pk, text(r.x1), `webhook_endpoint:${r.x2}:${r.x3}`),
+  },
 ];
 
 /** Captured test emails keep their envelope packed in the body (sandbox/captured-body.ts). */

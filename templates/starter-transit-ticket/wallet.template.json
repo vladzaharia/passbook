@@ -358,6 +358,13 @@
     "search": [
       "name",
       "bookingRef"
+    ],
+    "group": "get-in",
+    "aliases": [
+      "bus",
+      "ferry",
+      "train",
+      "trip"
     ]
   },
   "behaviors": [

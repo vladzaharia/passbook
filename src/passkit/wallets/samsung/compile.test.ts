@@ -145,7 +145,8 @@ describe('type selection', () => {
 describe('ticket details', () => {
   it('uses the barcode message as the reservation number when no role gives one', async () => {
     const r = compile(await view('starter-event-ticket'));
-    expect(attributes(r).reservationNumber).toBe('TICKET-0001');
+    // The barcode is the scan code (PS-28).
+    expect(attributes(r).reservationNumber).toBe('SNAPSHOT-SCAN-CODE');
   });
 
   it('prefers a confirmation code and keeps the ticket number as a notice line', async () => {

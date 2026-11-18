@@ -244,6 +244,13 @@
     "search": [
       "plate",
       "name"
+    ],
+    "group": "prove-collect",
+    "aliases": [
+      "parking",
+      "license",
+      "zone",
+      "authorization"
     ]
   },
   "messaging": {

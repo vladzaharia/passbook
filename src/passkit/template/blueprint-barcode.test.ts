@@ -1,7 +1,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const slugs = readdirSync('templates').filter((d) => d.startsWith('starter-'));
+// The ID card carries the holder's real number (PS-19): a copy is handled at the desk, not by a new code.
+const slugs = readdirSync('templates').filter(
+  (d) => d.startsWith('starter-') && d !== 'starter-id-card',
+);
 
 describe('blueprint barcodes', () => {
   it('finds the blueprints', () => expect(slugs.length).toBeGreaterThanOrEqual(8));

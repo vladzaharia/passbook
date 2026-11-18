@@ -160,18 +160,15 @@ export async function summaryFor(
   };
   if (!historyReadable(actor)) return empty;
   const auth = scanReadAuthority(actor, { now, read: HISTORY_READ });
-  const read = await readSummary(ctx.env.DB, auth, actor, { from, to: now }, now);
-  if (!read.authorized) throw await staleScanRead(ctx, actor);
+  const own = ownScansWhere(actor);
+  // One trip: the page batch and the extra tallies go out together.
+  const [read, extras] = await Promise.all([
+    readSummary(ctx.env.DB, auth, actor, { from, to: now }, now),
+    readSummaryExtras(ctx.env.DB, auth, { where: own.sql, params: own.params }, { from, to: now }),
+  ]);
+  if (!read.authorized || !extras.authorized) throw await staleScanRead(ctx, actor);
   const { totals, rows } = read;
   if (!totals) throw new Error('Unable to read scan summary.');
-  const own = ownScansWhere(actor);
-  const extras = await readSummaryExtras(
-    ctx.env.DB,
-    auth,
-    { where: own.sql, params: own.params },
-    { from, to: now },
-  );
-  if (!extras.authorized) throw await staleScanRead(ctx, actor);
   const projectable = historyProjectable(actor);
   const groups = new Map<string | null, { seen: number; blocked: boolean; label: string | null }>();
   for (const row of rows) {

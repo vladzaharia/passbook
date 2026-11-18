@@ -104,10 +104,10 @@ describe('webhook catalog', () => {
     expect(EventFeedQuerySchema.safeParse({ types: 'pass.issued,nope' }).success).toBe(false);
   });
 
-  it('feed cursors are ev1.<seq> or now', () => {
-    for (const after of ['now', 'ev1.42'])
+  it('feed cursors are ev2.<opaque>, the older ev1.<seq>, or now', () => {
+    for (const after of ['now', 'ev1.42', 'ev1.0', `ev2.${'A'.repeat(22)}`])
       expect(EventFeedQuerySchema.safeParse({ after }).success).toBe(true);
-    for (const after of ['42', 'ev1.0', 'ev1.-1', 'ev2.1'])
+    for (const after of ['42', 'ev1.-1', 'ev1.01', 'ev2.1', `ev2.${'A'.repeat(23)}`])
       expect(EventFeedQuerySchema.safeParse({ after }).success).toBe(false);
   });
 
