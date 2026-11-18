@@ -17,6 +17,10 @@ CREATE INDEX template_forks_org ON template_forks (org_id);
 CREATE INDEX template_forks_tracking_by ON template_forks (tracking_by) WHERE tracking_by IS NOT NULL;
 CREATE TRIGGER template_forks_fixed BEFORE UPDATE OF template_id, org_id, upstream_id ON template_forks
 BEGIN SELECT RAISE(ABORT, 'template fork lineage is immutable'); END;
+-- Only the template's deletion removes a fork row (the cascade runs after the template row is gone).
+CREATE TRIGGER template_forks_no_delete BEFORE DELETE ON template_forks
+WHEN EXISTS (SELECT 1 FROM templates t WHERE t.id = OLD.template_id)
+BEGIN SELECT RAISE(ABORT, 'template fork lineage is immutable'); END;
 CREATE TRIGGER template_forks_insert BEFORE INSERT ON template_forks
 WHEN NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = NEW.template_id
   AND t.org_id = NEW.org_id AND t.origin = 'uploaded')
@@ -36,6 +40,7 @@ CREATE TABLE template_version_bases (
   created_at INTEGER NOT NULL,
   PRIMARY KEY (template_id, version, upstream_version),
   FOREIGN KEY (template_id) REFERENCES template_forks (template_id) ON DELETE CASCADE,
+  FOREIGN KEY (template_id, parent_version) REFERENCES template_versions (template_id, version),
   FOREIGN KEY (template_id, version) REFERENCES template_versions (template_id, version),
   FOREIGN KEY (upstream_id, upstream_version) REFERENCES template_versions (template_id, version)
 ) WITHOUT ROWID;
@@ -49,6 +54,12 @@ CREATE TRIGGER template_version_bases_insert BEFORE INSERT ON template_version_b
 WHEN NOT EXISTS (SELECT 1 FROM template_forks f WHERE f.template_id = NEW.template_id
   AND f.upstream_id = NEW.upstream_id)
 BEGIN SELECT RAISE(ABORT, 'invalid template version base'); END;
+-- A recorded hash is the upstream version's own.
+CREATE TRIGGER template_version_bases_hash BEFORE INSERT ON template_version_bases
+WHEN NEW.upstream_content_hash IS NOT NULL AND NOT EXISTS (SELECT 1 FROM template_version_hashes h
+  WHERE h.template_id = NEW.upstream_id AND h.version = NEW.upstream_version
+    AND h.content_hash = NEW.upstream_content_hash)
+BEGIN SELECT RAISE(ABORT, 'invalid template version base hash'); END;
 
 -- One update offer per (fork, ours, upstream). Status is the job's or a dismissal's; accepted and
 -- superseded are derived on read.
@@ -75,6 +86,11 @@ CREATE INDEX template_fork_updates_open ON template_fork_updates (org_id, status
   WHERE status IN ('clean', 'conflicted', 'invalid');
 CREATE INDEX template_fork_updates_dismissed_by ON template_fork_updates (dismissed_by)
   WHERE dismissed_by IS NOT NULL;
+-- The offer belongs to the fork's org and names the fork's upstream.
+CREATE TRIGGER template_fork_updates_insert BEFORE INSERT ON template_fork_updates
+WHEN NOT EXISTS (SELECT 1 FROM template_forks f WHERE f.template_id = NEW.template_id
+  AND f.org_id = NEW.org_id AND f.upstream_id = NEW.upstream_id)
+BEGIN SELECT RAISE(ABORT, 'invalid template fork update'); END;
 CREATE TRIGGER template_fork_updates_fixed BEFORE UPDATE OF id, template_id, org_id, upstream_id,
   upstream_version, base_version, ours_version, created_at ON template_fork_updates
 BEGIN SELECT RAISE(ABORT, 'template fork update identity is immutable'); END;
@@ -83,3 +99,14 @@ CREATE TRIGGER template_fork_updates_status BEFORE UPDATE OF status ON template_
 WHEN NOT (OLD.status IN ('pending', 'failed')
   OR (OLD.status IN ('clean', 'conflicted', 'invalid') AND NEW.status = 'dismissed'))
 BEGIN SELECT RAISE(ABORT, 'template fork update is settled'); END;
+-- A settled offer keeps its result; only a dismissal changes it, and it names who dismissed.
+CREATE TRIGGER template_fork_updates_result BEFORE UPDATE OF merged_version, conflicts, summary,
+  engine_revision, attempts ON template_fork_updates
+WHEN OLD.status NOT IN ('pending', 'failed')
+BEGIN SELECT RAISE(ABORT, 'template fork update is settled'); END;
+CREATE TRIGGER template_fork_updates_dismissal BEFORE UPDATE OF status ON template_fork_updates
+WHEN NEW.status = 'dismissed' AND NEW.dismissed_by IS NULL
+BEGIN SELECT RAISE(ABORT, 'a dismissal names its user'); END;
+CREATE TRIGGER template_fork_updates_no_delete BEFORE DELETE ON template_fork_updates
+WHEN EXISTS (SELECT 1 FROM template_forks f WHERE f.template_id = OLD.template_id)
+BEGIN SELECT RAISE(ABORT, 'template fork updates are kept'); END;

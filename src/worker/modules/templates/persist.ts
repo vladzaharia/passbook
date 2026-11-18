@@ -5,6 +5,7 @@ import type {
   TemplateManifest,
   ValidationReport,
 } from '../../../passkit/types.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TemplateAuthority } from './access.ts';
@@ -123,6 +124,9 @@ export async function commitVersion(
         'A template with this name was created meanwhile. Retry.',
         'TEMPLATE_SLUG_CONFLICT',
       );
+    // The version was retired after the check: its base row has nothing to refer to.
+    if (args.lineage && classifyD1Error(error)?.kind === 'foreign_key')
+      throw new ConflictError('This template version is retired.', 'TEMPLATE_VERSION_CONFLICT');
     throw error;
   }
   const { created: versionCreated, stored } = written;

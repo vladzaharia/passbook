@@ -81,6 +81,7 @@ async function lineageOf(
   ctx: ServiceContext,
   source: { id: string },
   baseVersion: string | null,
+  inferred = false,
 ): Promise<ForkLineage> {
   const bases = [];
   if (baseVersion) {
@@ -90,13 +91,14 @@ async function lineageOf(
       contentHash: hashes?.contentHash ?? null,
       via: 'fork' as const,
       parentVersion: null,
+      inferred,
     });
   }
   return { upstreamId: source.id, create: true, bases };
 }
 
 const sourceChanged = () =>
-  new ConflictError('The source template changed. Retry the copy.', 'TEMPLATE_VERSION_CONFLICT');
+  new ConflictError('The source template changed. Retry the clone.', 'TEMPLATE_VERSION_CONFLICT');
 
 async function forkExact(
   ctx: ServiceContext,
@@ -161,6 +163,7 @@ async function forkDraft(
   body: ForkTemplateRequest & { version: Draft },
   target: Target,
   images: ImageTools,
+  blueprintOnly: boolean,
 ) {
   const { source, sourceAuthority, authority, org, name, slug, plan, createdBy } = target;
   const baseVersion =
@@ -182,35 +185,46 @@ async function forkDraft(
     await putVersionAsset(ctx, key, bytes);
     assets.push({ ...a, source: { kind: 'r2' as const, key } });
   }
-  await commitVersion(ctx, {
-    plan,
-    orgId: org.id,
-    slug,
-    name: analysis.manifest.name,
-    description: analysis.manifest.description ?? null,
-    createdBy,
-    authorities: [authority],
-    ...(baseVersion
-      ? {
-          source: {
-            id,
-            orgId: source.orgId,
-            version: baseVersion,
-            ...(sourceAuthority ? { authority: sourceAuthority } : {}),
-          },
-        }
-      : {}),
-    ...(source.blueprint ? { sourceBlueprint: id } : {}),
-    lineage: await lineageOf(ctx, source, baseVersion),
-    body: {
-      version: analysis.version,
-      manifest: analysis.manifest as TemplateManifest,
-      passJson: analysis.passJson,
-      assets,
-      report,
-      styles: analysis.styles,
-    },
-  });
+  const lineage = await lineageOf(ctx, source, baseVersion, body.baseVersion === undefined);
+  try {
+    await commitVersion(ctx, {
+      plan,
+      orgId: org.id,
+      slug,
+      name: analysis.manifest.name,
+      description: analysis.manifest.description ?? null,
+      createdBy,
+      authorities: [authority],
+      ...(baseVersion
+        ? {
+            source: {
+              id,
+              orgId: source.orgId,
+              version: baseVersion,
+              ...(sourceAuthority ? { authority: sourceAuthority } : {}),
+            },
+          }
+        : {}),
+      ...(source.blueprint ? { sourceBlueprint: id } : {}),
+      lineage,
+      body: {
+        version: analysis.version,
+        manifest: analysis.manifest as TemplateManifest,
+        passJson: analysis.passJson,
+        assets,
+        report,
+        styles: analysis.styles,
+      },
+    });
+  } catch (error) {
+    // The source fence refused: say why (a blueprint withdrawn mid-save) before a bare 403.
+    if (
+      error instanceof ForbiddenError ||
+      (error instanceof ConflictError && error.code === 'TEMPLATE_VERSION_CONFLICT')
+    )
+      await prepareFork(ctx, auth, id, body, blueprintOnly);
+    throw error;
+  }
   await audit(
     ctx,
     auth,
@@ -243,6 +257,7 @@ export async function forkTemplate(
     { ...body, version: body.version },
     target,
     options.images ?? imagesFromBinding(ctx.env.IMAGES, ctx.log),
+    options.blueprintOnly === true,
   );
 }
 

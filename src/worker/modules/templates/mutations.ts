@@ -18,6 +18,7 @@ import {
   r2Prefix,
 } from './registry.ts';
 import { hasPasses, latestVersionName, listVersions, type TemplateRow } from './repo.ts';
+import { hasForks } from './repo-forks.ts';
 import {
   archiveUploadedTemplate,
   deleteUploadedTemplate,
@@ -198,6 +199,8 @@ export async function removeTemplate(
     return finishDelete();
   };
   if (await hasPasses(ctx.env.DB, id)) return archive();
+  // Lineage stays readable: a template that others were copied from is archived, never deleted.
+  if (await hasForks(ctx.env.DB, id)) return archive();
   if (await hasTemplateHistory(ctx.env.DB, id)) return softDelete();
   const prefix = r2Prefix(await storageOrg(ctx, row), id);
   try {

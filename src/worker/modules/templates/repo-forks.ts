@@ -8,6 +8,8 @@ export interface ForkBase {
   contentHash: string | null;
   via: 'fork' | 'edit';
   parentVersion: string | null;
+  /** The base was a default (the source's version at save time), not what the designer showed. */
+  inferred?: boolean;
 }
 
 /** What a version commit records about the fork it belongs to. `create` writes the fork row too. */
@@ -23,8 +25,6 @@ export function writeLineage(
   o: {
     templateId: string;
     version: string;
-    orgId: string | null;
-    platform: boolean;
     lineage: ForkLineage;
     now: number;
   },
@@ -33,8 +33,8 @@ export function writeLineage(
   if (lineage.create)
     writer.insertSelect(
       'template_forks',
-      [...(o.platform ? ['org_id'] : []), 'template_id', 'upstream_id', 'created_at', 'updated_at'],
-      [...(o.platform ? [o.orgId] : []), o.templateId, lineage.upstreamId, o.now, o.now],
+      ['template_id', 'upstream_id', 'created_at', 'updated_at'],
+      [o.templateId, lineage.upstreamId, o.now, o.now],
     );
   for (const base of lineage.bases)
     writer.insertJoined('template_version_bases', {
@@ -46,6 +46,7 @@ export function writeLineage(
         'upstream_content_hash',
         'via',
         'parent_version',
+        'inferred',
         'created_at',
       ],
       values: [
@@ -55,6 +56,7 @@ export function writeLineage(
         base.contentHash,
         base.via,
         base.parentVersion,
+        base.inferred ? 1 : 0,
         o.now,
       ],
       when: [
@@ -93,4 +95,13 @@ export async function effectiveBase(
      ORDER BY u.created_at DESC, u.version DESC LIMIT 1`,
     [templateId, version],
   );
+}
+
+/** Another template was made from this one: deleting it would break their lineage. */
+export async function hasForks(db: D1Database, templateId: string): Promise<boolean> {
+  return !!(await first<{ found: number }>(
+    db,
+    'SELECT 1 AS found FROM template_forks WHERE upstream_id = ? LIMIT 1',
+    [templateId],
+  ));
 }

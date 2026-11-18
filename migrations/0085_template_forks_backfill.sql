@@ -23,6 +23,7 @@ WHERE t.origin = 'uploaded' AND t.org_id IS NOT NULL
   AND EXISTS (SELECT 1 FROM templates u WHERE u.id = json_extract(a.detail, '$.sourceId'));
 
 -- Their first version incorporates the recorded source version, when that version still exists.
+-- An exact Use blueprint audited it too; a draft copy records no source version and stays estimated.
 INSERT INTO template_version_bases
   (template_id, version, upstream_id, upstream_version, upstream_content_hash, via, parent_version, inferred, created_at)
 SELECT f.template_id, v.version, f.upstream_id, json_extract(a.detail, '$.sourceVersion'),
@@ -32,9 +33,10 @@ SELECT f.template_id, v.version, f.upstream_id, json_extract(a.detail, '$.source
 FROM template_forks f
 JOIN audit_log a ON a.id = (
   SELECT MIN(c.id) FROM audit_log c
-  WHERE c.action = 'template.clone' AND c.target_type = 'template' AND c.target_id = f.template_id
-    AND c.org_id = f.org_id AND json_valid(c.detail)
-    AND json_extract(c.detail, '$.sourceId') = f.upstream_id)
+  WHERE c.action IN ('template.clone', 'template.use_blueprint') AND c.target_type = 'template'
+    AND c.target_id = f.template_id AND c.org_id = f.org_id AND json_valid(c.detail)
+    AND json_extract(c.detail, '$.sourceId') = f.upstream_id
+    AND json_extract(c.detail, '$.sourceVersion') IS NOT NULL)
 JOIN template_versions v ON v.template_id = f.template_id AND v.version = (
   SELECT v1.version FROM template_versions v1 WHERE v1.template_id = f.template_id
   ORDER BY v1.created_at, v1.version LIMIT 1)
