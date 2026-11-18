@@ -48,6 +48,9 @@ const MANIFEST: Record<string, Rule> = {
   ),
 };
 
+/** The manifest keys with a row of their own; the rest merge as one atomic value per key. */
+export const RULED_KEYS = Object.keys(MANIFEST);
+
 const other: Rule = part('manifest.meta', leaf);
 const ours: Rule = (_cx, _path, _b, o) => o;
 

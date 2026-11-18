@@ -2,16 +2,28 @@ import type { Json, TemplateManifest } from '../../types.ts';
 import { mergeFiles } from './files.ts';
 import { mergeManifest } from './manifest.ts';
 import { conflictId, eq } from './map.ts';
-import { alignTo, normalize, VERSION_SITES, versionOf } from './normalize.ts';
+import { normalize } from './normalize.ts';
 import { mergePassJson } from './pass-json.ts';
 import { danglingRefs, entityMaps } from './references.ts';
 import { detectRenames, PART_OF, renameIn } from './renames.ts';
 import type { Change, Conflict, Cx, MergeResult, PackageDoc, Rename, Resolution } from './types.ts';
+import {
+  alignTo,
+  type SchemaGap,
+  UPGRADERS,
+  type Upgraders,
+  upgradeSides,
+  VERSION_SITES,
+  type VersionSite,
+} from './versions.ts';
+
+export interface MergeOptions {
+  picks?: Record<string, Resolution>;
+  /** Version upgraders; defaults to the shipped registry. */
+  upgraders?: Upgraders;
+}
 
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
-
-const differ = (values: (Json | undefined)[]) =>
-  new Set(values.filter((v) => v !== undefined).map(String)).size > 1;
 
 function invalid(o: PackageDoc, conflicts: Conflict[]): MergeResult {
   return { status: 'conflicted', merged: o, conflicts, theirs: [], renames: [] };
@@ -26,11 +38,11 @@ export function mergePackages(
   base: PackageDoc | null,
   ours: PackageDoc,
   theirs: PackageDoc,
-  picks: Record<string, Resolution> = {},
+  options: MergeOptions = {},
 ): MergeResult {
   const cx: Cx = {
     twoWay: base === null,
-    picks,
+    picks: options.picks ?? {},
     conflicts: [],
     changes: [],
     part: 'manifest.meta',
@@ -39,26 +51,25 @@ export function mergePackages(
   const o = normalize(ours);
   const t0 = normalize(theirs);
   let t = t0;
-  const docs = [b, o, t].filter((d): d is PackageDoc => d !== null);
-  if (differ(docs.map((d) => d.manifest.schema))) {
-    const id = conflictId('manifest.meta', ['schema']);
-    return invalid(o, [{ id, part: 'manifest.meta', path: ['schema'], kind: 'invalid' }]);
+  const gaps = upgradeSides([b, o, t], options.upgraders ?? UPGRADERS);
+  const [ver, ...sites] = VERSION_SITES;
+  const gapOf = (g: SchemaGap) => ({
+    id: conflictId(g.part, g.path),
+    part: g.part,
+    path: g.path,
+    kind: 'schema_upgrade_missing' as const,
+    base: b ? g.versions[0] : undefined,
+    ours: g.versions[1],
+    theirs: g.versions[2],
+  });
+  // A schema gap with no upgrader merges nothing; a part's gap keeps ours for that part.
+  if (gaps.some((g) => g.part === ver.part)) return invalid(o, gaps.map(gapOf));
+  for (const g of gaps) {
+    const site = sites.find((s) => s.part === g.part) as VersionSite;
+    cx.conflicts.push(gapOf(g));
+    if (b) alignTo(b, o, site);
+    alignTo(t, o, site);
   }
-  for (const site of VERSION_SITES)
-    if (differ(docs.map((d) => versionOf(d, site)))) {
-      const path = [site.version];
-      cx.conflicts.push({
-        id: conflictId(site.part, path),
-        part: site.part,
-        path,
-        kind: 'invalid',
-        base: b ? versionOf(b, site) : undefined,
-        ours: versionOf(o, site),
-        theirs: versionOf(t, site),
-      });
-      if (b) alignTo(b, o, site);
-      alignTo(t, o, site);
-    }
 
   // Upstream renames merge as edits under the old identity; the rename is applied afterwards.
   const [mo, mt0] = [entityMaps(o), entityMaps(t0)];
@@ -85,6 +96,7 @@ export function mergePackages(
   const renames: Rename[] = [];
   for (const { step, clean } of plan) {
     const part = PART_OF[step.kind];
+    const picks = cx.picks;
     if (!mo[step.kind].has(step.from)) {
       // Ours deleted it and theirs only renamed it: the deletion stands.
       renames.push({ ...step, applied: false });
@@ -146,6 +158,7 @@ export function applyResolutions(
   ours: PackageDoc,
   theirs: PackageDoc,
   picks: Record<string, Resolution>,
+  upgraders?: Upgraders,
 ): PackageDoc {
-  return mergePackages(base, ours, theirs, picks).merged;
+  return mergePackages(base, ours, theirs, { picks, upgraders }).merged;
 }

@@ -177,7 +177,7 @@ describe('reference check', () => {
     const t = edit(base, (d) => d.passJson.generic.secondaryFields.pop());
     const r = mergePackages(base, o, t);
     expect(r.conflicts.map((c) => c.kind)).toEqual(['modify-delete']);
-    const picked = mergePackages(base, o, t, { 'fields:since': 'theirs' });
+    const picked = mergePackages(base, o, t, { picks: { 'fields:since': 'theirs' } });
     expect(picked.conflicts.map((c) => c.id)).toEqual(['references:field/since/bindings/3']);
   });
   it('ignores references that were already broken and unresolved in both', () => {
@@ -190,12 +190,14 @@ describe('reference check', () => {
 });
 
 describe('invalid, noop and two-way', () => {
-  it('a different schema is one invalid conflict', () => {
+  it('a schema gap with no upgrader is one typed conflict and merges nothing', () => {
     const r = run(undefined, (d) => (m(d).schema = 2));
-    expect(r.conflicts).toMatchObject([{ id: 'manifest.meta:schema', kind: 'invalid' }]);
+    expect(r.conflicts).toMatchObject([
+      { id: 'manifest.meta:schema', kind: 'schema_upgrade_missing' },
+    ]);
     expect(r.merged.manifest.schema).toBe(1);
   });
-  it('different scan.display.v or wallets.schema is invalid for that part only', () => {
+  it('a scan.display.v or wallets.schema gap with no upgrader freezes that part only', () => {
     const r = run(
       (d) => (m(d).description = 'O'),
       (d) => {
@@ -205,7 +207,10 @@ describe('invalid, noop and two-way', () => {
         m(d).display.title = 'T';
       },
     );
-    expect(kinds(r)).toEqual({ 'scan.display:v': 'invalid', 'wallets:schema': 'invalid' });
+    expect(kinds(r)).toEqual({
+      'scan.display:v': 'schema_upgrade_missing',
+      'wallets:schema': 'schema_upgrade_missing',
+    });
     expect(man(r).scan.display).toEqual(man(run()).scan.display);
     expect(man(r)).toMatchObject({ description: 'O', display: { title: 'T' } });
   });
@@ -259,6 +264,6 @@ describe('invalid, noop and two-way', () => {
       (applyResolutions(base, o, t, { [id]: { value: 'X' } }).manifest as any).description,
     ).toBe('X');
     expect((applyResolutions(base, o, t, { [id]: 'ours' }).manifest as any).description).toBe('O');
-    expect(mergePackages(base, o, t, { [id]: 'theirs' }).conflicts).toEqual([]);
+    expect(mergePackages(base, o, t, { picks: { [id]: 'theirs' } }).conflicts).toEqual([]);
   });
 });

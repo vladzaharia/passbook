@@ -17,7 +17,8 @@ export type ConflictKind =
   | 'binary'
   | 'rename-modify'
   | 'reference'
-  | 'invalid';
+  | 'invalid'
+  | 'schema_upgrade_missing';
 
 /** The §2.3 parts. A conflict and a change name the part they belong to. */
 export type PartId =

@@ -1,4 +1,4 @@
-export { applyResolutions, mergePackages } from './apply.ts';
+export { applyResolutions, type MergeOptions, mergePackages } from './apply.ts';
 export type {
   Change,
   Conflict,
@@ -12,3 +12,4 @@ export type {
   Resolution,
 } from './types.ts';
 export { MERGE_ENGINE_REVISION } from './types.ts';
+export { type Step, UPGRADERS, type Upgraders, upgrade } from './versions.ts';

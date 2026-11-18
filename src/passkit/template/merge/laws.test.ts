@@ -126,7 +126,7 @@ describe('merge laws', () => {
     each((o, t) => {
       const m = mergePackages(base, o, t);
       const picks = Object.fromEntries(m.conflicts.map((c) => [c.id, 'theirs' as const]));
-      const left = mergePackages(base, o, t, picks).conflicts;
+      const left = mergePackages(base, o, t, { picks }).conflicts;
       expect(left.every((c) => c.kind === 'reference' || c.kind === 'invalid')).toBe(true);
     });
   });
