@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { renderScanDisplay } from '@/passkit/template/scan-display/render.ts';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
 import type { ScanDisplay, ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
-import { SCAN_COPY, SCAN_REASON_COPY } from '@/shared/copy/scan.ts';
+import { SCAN_COPY, SCAN_REASON_COPY, scanLine } from '@/shared/copy/scan.ts';
 import { cn } from '../../lib/cn.ts';
 import { DisplayChip } from '../../scan/display/chip.tsx';
 import { DisplayPanels } from '../../scan/display/display-panels.tsx';
@@ -54,7 +54,12 @@ function useStaffResult(
       });
       const title =
         screen === 'heads_up'
-          ? SCAN_REASON_COPY.already_done.headline
+          ? scanLine(SCAN_REASON_COPY.already_done.headline, {
+              done:
+                action?.kind === 'check_in' || !action
+                  ? SCAN_COPY.verdict.already.checkIn
+                  : SCAN_COPY.verdict.already.other,
+            })
           : action?.kind === 'check_in' || !action
             ? SCAN_COPY.verdict.checkedIn
             : action.label;

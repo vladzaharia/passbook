@@ -130,7 +130,7 @@ describe('SCAN_COUNTER_COPY', () => {
     expect(`${SCAN_COUNTER_COPY.card_full?.headline}. ${SCAN_COUNTER_COPY.card_full?.sub}`).toBe(
       'Already full. Use some first.',
     );
-    expect(SCAN_REASON_COPY.no_balance.headline).toBe('Not enough {unit}');
+    expect(SCAN_REASON_COPY.no_balance.headline).toBe('Not enough balance');
     expect(SCAN_REASON_COPY.card_full.headline).toBe('Card is full');
   });
   it('has a headline and a sub for each reason it words', () => {
