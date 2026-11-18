@@ -8,6 +8,7 @@ import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
 import { portfolioSnapshot } from '../src/worker/modules/me/repo.ts';
 import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
 import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
+import { livePassesBy } from '../src/worker/modules/passes/repo-import-lookup.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
 import { expiredTestPasses } from '../src/worker/modules/sandbox/repo.ts';
 import {
@@ -76,6 +77,13 @@ describe('list and search query plans', () => {
   it('passes: an org and mode list uses an index', async () => {
     const lines = await plans((db) => listPasses(db, { orgId: 'o', mode: 'live', limit: 50 }));
     expect(fullScans(lines, 'passes')).toEqual([]);
+  });
+
+  it('imports: the match lookups use the external id and holder email indexes', async () => {
+    for (const column of ['external_id', 'holder_email'] as const) {
+      const lines = await plans((db) => livePassesBy(db, 'o', 'live', column, ['a', 'b']));
+      expect(fullScans(lines, 'passes'), column).toEqual([]);
+    }
   });
 
   it('bundles: organization lists use bundles_org in each mode', async () => {
