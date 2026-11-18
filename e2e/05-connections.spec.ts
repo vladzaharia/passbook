@@ -33,7 +33,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   const mappings: [string, string][] = [
     ['Name *', '/memberName'],
     ['ID *', '/memberId'],
-    ['Points', '/points'],
+    ['Guests left', '/guests'],
   ];
   for (const [i, [field, from]] of mappings.entries()) {
     await page.getByRole('button', { name: 'Add mapping' }).click();

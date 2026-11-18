@@ -124,7 +124,8 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       .getByRole('textbox', { name: 'Name, email, code or ID', exact: true })
       .press('Enter');
     await expect(phone.getByTestId('scan-result')).toContainText('Checked out');
-    await expect(customer.getByRole('heading', { name: 'Checked out', exact: true })).toBeVisible();
+    // The customer screen shows the server's band (PS-30 #8): an exit reads Tapped out.
+    await expect(customer.getByRole('heading', { name: 'Tapped out', exact: true })).toBeVisible();
     await expect.poll(async () => (await ledger()).length).toBe(2);
     await phone.getByRole('button', { name: 'Done', exact: true }).click();
     await expect(page.getByTestId('session-device').filter({ hasText: deviceName })).toContainText(

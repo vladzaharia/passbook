@@ -5,9 +5,9 @@ import { Capsule } from './capsule.tsx';
 describe('Capsule', () => {
   it('says offline only in the offline state', () => {
     const { rerender } = render(<Capsule name="Front" state="scanning" />);
-    expect(screen.queryByText('Scanning offline')).toBeNull();
+    expect(screen.queryByText('Offline')).toBeNull();
     expect(screen.getByText('Scanning')).toBeInTheDocument();
     rerender(<Capsule name="Front" state="offline" />);
-    expect(screen.getByText('Scanning offline')).toBeInTheDocument();
+    expect(screen.getByText('Offline')).toBeInTheDocument();
   });
 });

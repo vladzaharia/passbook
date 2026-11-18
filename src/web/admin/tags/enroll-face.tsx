@@ -61,7 +61,7 @@ function Steps({ current }: { current: 0 | 1 | 2 }) {
           <span
             aria-hidden
             className={cn(
-              'size-2 rounded-full border transition-colors duration-200',
+              'size-2 rounded-full border transition-[background-color,border-color] duration-(--wl-dur-hover)',
               i < current || (i === current && current === 2)
                 ? 'border-accent bg-accent'
                 : i === current

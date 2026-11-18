@@ -2,6 +2,7 @@ import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { problemToError } from '@/web/lib/errors.ts';
 import { modeHeaders } from '@/web/lib/mode.ts';
+import { localZone } from '@/web/lib/timezones.ts';
 import { Button, toast } from '@/web/ui/index.ts';
 import type { ScanningSearch } from '../search.ts';
 
@@ -54,7 +55,7 @@ export function ExportButton({
       onClick={async () => {
         setBusy(true);
         try {
-          const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const timeZone = localZone();
           await download(exportQuery(orgId, from, Date.now(), search, timeZone));
         } catch (error) {
           toast.error(error, 'Could not export');

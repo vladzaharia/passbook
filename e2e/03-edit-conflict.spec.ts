@@ -25,30 +25,30 @@ test('second editor gets 412, keeps the draft, and can merge', async ({ browser 
   await expect(b.getByText('Fields saved', { exact: true })).toBeVisible();
 
   // A edits another field from the stale baseline; its save is rejected, draft kept.
-  await a.getByLabel('Points').fill('77');
+  await a.getByLabel('Guests left').fill('77');
   const rejected = a.waitForResponse(
     (r) => r.url().includes(`/api/v1/passes/${pass.id}`) && r.request().method() === 'PATCH',
   );
   await a.getByRole('button', { name: 'Save', exact: true }).click();
   expect((await rejected).status()).toBe(412);
   await expect(a.getByText('This pass changed since you opened it')).toBeVisible();
-  await expect(a.getByLabel('Points')).toHaveValue('77');
+  await expect(a.getByLabel('Guests left')).toHaveValue('77');
 
   // Merge keeps A's edit on top of B's saved change, and the save then succeeds.
   await a.getByRole('button', { name: 'Merge my edits' }).click();
   await expect(a.getByLabel('Name')).toHaveValue('Saved by B');
-  await expect(a.getByLabel('Points')).toHaveValue('77');
+  await expect(a.getByLabel('Guests left')).toHaveValue('77');
   await a.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(a.getByRole('button', { name: 'Save', exact: true })).toBeHidden();
 
   const final = await api.get(`/api/v1/passes/${pass.id}`);
-  expect(final.personalization).toMatchObject({ holder: 'Saved by B', points: 77 });
+  expect(final.personalization).toMatchObject({ holder: 'Saved by B', guests: 77 });
 
   // Reload path: C edits, B saves again, A's reload drops its draft for the server state.
-  await a.getByLabel('Points').fill('5');
+  await a.getByLabel('Guests left').fill('5');
   await b.reload();
   // Typing before the reloaded form has its data loses the edit when the data lands.
-  await expect(b.getByLabel('Points')).toHaveValue('77');
+  await expect(b.getByLabel('Guests left')).toHaveValue('77');
   await b.getByLabel('Name').fill('Saved by B again');
   await b.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(b.getByText('Fields saved', { exact: true })).toBeVisible();
@@ -56,7 +56,7 @@ test('second editor gets 412, keeps the draft, and can merge', async ({ browser 
   await expect(a.getByRole('button', { name: 'Reload' })).toBeVisible();
   await a.getByRole('button', { name: 'Reload' }).click();
   await expect(a.getByLabel('Name')).toHaveValue('Saved by B again');
-  await expect(a.getByLabel('Points')).toHaveValue('77');
+  await expect(a.getByLabel('Guests left')).toHaveValue('77');
 
   await ctxA.close();
   await ctxB.close();

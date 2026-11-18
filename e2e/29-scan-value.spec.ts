@@ -43,6 +43,13 @@ test('a desk stamps a card by the amount it picks, then redeems the reward', asy
       },
       { 'Idempotency-Key': uid('idem'), 'x-passbook-mode': 'live' },
     );
+    // The card's barcode is its scan code (PS-28), not the card number.
+    const shown = (
+      await api.get<{ passJson: { barcodes?: { message?: string }[] } }>(
+        `/api/v1/passes/${pass.id}?orgId=${orgId}`,
+      )
+    ).passJson.barcodes?.[0]?.message;
+    if (!shown) throw new Error(`Pass ${pass.id} has no barcode message`);
     const scanner = await api.send('POST', '/api/v1/scanners', {
       orgId,
       name: uid('Desk'),
@@ -72,7 +79,7 @@ test('a desk stamps a card by the amount it picks, then redeems the reward', asy
             }),
           });
         },
-        [cardNumber, id],
+        [shown, id],
       );
     const stampsOf = async () =>
       (await api.get<{ stamps: { count: number } }>(`/api/v1/passes/${pass.id}`)).stamps.count;

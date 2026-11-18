@@ -78,6 +78,8 @@ function build(c: Config, ref: string): { record: UpstreamRecord; holderEmail: s
       status: h % 7 === 0 ? 'inactive' : 'active',
       tier: TIERS[h % TIERS.length] ?? 'Bronze',
       points: (h % 1000) + c.revision * 10,
+      // Guests left (0 to 9) also moves with the revision: a visible input a resync changes.
+      guests: (h + c.revision) % 10,
       email: `${ref}@${c.holderDomain}`,
     },
     holderEmail: `${ref}@${c.holderDomain}`,
@@ -115,6 +117,7 @@ const definition: ConnectorDefinition<Config, undefined> = {
     status: { type: 'string' },
     tier: { type: 'string' },
     points: { type: 'number' },
+    guests: { type: 'number' },
     email: { type: 'string' },
   },
   defaults: { intervalSeconds: 60, maxConcurrency: 4, requestsPerMinute: 600, timeoutMs: 5_000 },
