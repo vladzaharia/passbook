@@ -24,8 +24,6 @@ export async function rawScopeOf(c: Context<AppBindings>): Promise<unknown> {
     };
   }
   if (!c.req.header('content-type')?.includes('json')) return undefined;
-  // The tag assign body's own `scope` (pass or user) is not an admin scope.
-  if (c.req.path.includes('/scan/tags/')) return undefined;
   const text = await c.req.text();
   if (text === '') return undefined;
   let body: unknown;

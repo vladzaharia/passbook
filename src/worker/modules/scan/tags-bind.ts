@@ -100,7 +100,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
 
   // A Manager PIN stands in for a role below the setting, and is the only way to look a card up by id.
   const manager = rights.role === 'manager';
-  const needRole = req.scope === 'user' && !req.preview ? rights.assignAll : rights.assign;
+  const needRole = req.binding === 'user' && !req.preview ? rights.assignAll : rights.assign;
   if (needRole === 'never')
     throw new ForbiddenError(
       'Assigning to a person is off on this scanner.',
@@ -119,7 +119,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
   const { pass } = candidate;
   const card = await cardFacts(db, pass.templateId, pass.ownerUserId);
   const ownerAccount = pass.ownerUserId !== null && card.ownerActive;
-  if (req.scope === 'user' && !ownerAccount)
+  if (req.binding === 'user' && !ownerAccount)
     throw new ValidationError(
       'This person has no account yet. Assign the tag to the pass instead.',
       [],
@@ -152,7 +152,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     const warnings: Warning[] = [];
     let decision: ReturnType<typeof decideBind> | null = null;
     try {
-      decision = decideBind(tag, active, facts, { scope: req.scope, move: req.move });
+      decision = decideBind(tag, active, facts, { scope: req.binding, move: req.move });
     } catch (error) {
       if (!req.preview || !(error instanceof AppError)) throw error;
       if (error.code === 'TAG_LOST') warnings.push('lost');
@@ -170,7 +170,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       status,
       hint: tag?.hint ?? hint,
       assurance: 'basic' as const,
-      scope: req.scope,
+      scope: req.binding,
       bindingId,
       card: summary,
       ownerAccount,
@@ -201,8 +201,8 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       newTag: tag ? null : { ref, hint, label: req.label ?? null },
       bindingId: ctx.ids.id(),
       passId: pass.id,
-      scope: req.scope,
-      userId: req.scope === 'user' ? pass.ownerUserId : null,
+      scope: req.binding,
+      userId: req.binding === 'user' ? pass.ownerUserId : null,
       end: decision.end,
       holderGeneration: pass.credentialGeneration,
       holderOwner: pass.ownerUserId,
@@ -242,7 +242,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     try {
       const results = await g.commit();
       if ((results[g.indexOf(insert)]?.results?.length ?? 0) === 1) {
-        ctx.log.info('scan.tag.bound', { orgId, tagId: plan.tagId, scope: req.scope });
+        ctx.log.info('scan.tag.bound', { orgId, tagId: plan.tagId, scope: req.binding });
         return result(
           decision.status === 'moved' ? 'moved' : 'bound',
           plan.bindingId,

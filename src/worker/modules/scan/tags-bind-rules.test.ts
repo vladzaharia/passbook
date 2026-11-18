@@ -19,7 +19,7 @@ describe('user scope', () => {
   it('needs an owner account', async () => {
     const s = await f.desk({ tags: { assign: 'desk', assignAll: 'desk' } });
     const { card } = await f.pass();
-    const res = await f.bind(s, { card, scope: 'user' });
+    const res = await f.bind(s, { card, binding: 'user' });
     expect(res.status).toBe(422);
     expect(await json(res)).toMatchObject({ code: 'TAG_NO_ACCOUNT' });
   });
@@ -28,12 +28,12 @@ describe('user scope', () => {
     const mgr = await f.kit.staff('manager');
     const s = await f.desk();
     const { card, ownerId } = await f.pass({ owner: true });
-    const bare = await f.bind(s, { card, scope: 'user' });
+    const bare = await f.bind(s, { card, binding: 'user' });
     expect(bare.status).toBe(403);
     expect(await json(bare)).toMatchObject({ code: 'TAG_APPROVAL_REQUIRED' });
     const ok = await f.bind(s, {
       card,
-      scope: 'user',
+      binding: 'user',
       approval: { staffId: mgr.id, pin: mgr.pin },
     });
     expect(ok.status).toBe(200);
@@ -42,13 +42,13 @@ describe('user scope', () => {
 
     const m = await f.manager();
     const second = await f.pass({ owner: true });
-    expect((await f.bind(m.scanner, { card: second.card, scope: 'user' })).status).toBe(200);
+    expect((await f.bind(m.scanner, { card: second.card, binding: 'user' })).status).toBe(200);
     const lax = await f.desk({ tags: { assign: 'desk', assignAll: 'desk' } });
     const third = await f.pass({ owner: true });
-    expect((await f.bind(lax, { card: third.card, scope: 'user' })).status).toBe(200);
+    expect((await f.bind(lax, { card: third.card, binding: 'user' })).status).toBe(200);
     const never = await f.desk({ tags: { assign: 'desk', assignAll: 'never' } });
     const fourth = await f.pass({ owner: true });
-    expect(await json(await f.bind(never, { card: fourth.card, scope: 'user' }))).toMatchObject({
+    expect(await json(await f.bind(never, { card: fourth.card, binding: 'user' }))).toMatchObject({
       code: 'TAG_ASSIGN_FORBIDDEN',
     });
   });
@@ -61,7 +61,7 @@ describe('user scope', () => {
       /INSERT INTO tag_bindings/i,
       (real) =>
         run(real, "UPDATE users SET status = 'disabled' WHERE id = ?", [disabled.ownerId ?? '']),
-      () => f.bind(lax, { card: disabled.card, scope: 'user' }),
+      () => f.bind(lax, { card: disabled.card, binding: 'user' }),
     );
     expect(raced.fired).toBe(true);
     expect(raced.result.status).toBe(409);
@@ -70,7 +70,7 @@ describe('user scope', () => {
       f.kit.env,
       /INSERT INTO tag_bindings/i,
       (real) => run(real, 'UPDATE passes SET deleted_at = 1 WHERE id = ?', [moved.pass.id]),
-      () => f.bind(lax, { card: moved.card, scope: 'user' }),
+      () => f.bind(lax, { card: moved.card, binding: 'user' }),
     );
     expect(changed.result.status).toBe(409);
     expect(await json(changed.result)).toMatchObject({ code: 'TAG_HOLDER_CHANGED' });
@@ -100,7 +100,7 @@ describe('one tag, one binding', () => {
     const a = await f.pass({ owner: true });
     const tag = f.read();
     await f.bind(s, { card: a.card, tag });
-    const res = await json(await f.bind(s, { card: a.card, tag, scope: 'user' }));
+    const res = await json(await f.bind(s, { card: a.card, tag, binding: 'user' }));
     expect(res).toMatchObject({ status: 'bound', scope: 'user' });
     expect(await ended('replaced')).toBeGreaterThanOrEqual(1);
     const preview = await json(await f.bind(s, { card: a.card, tag, preview: true }));

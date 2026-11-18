@@ -169,7 +169,7 @@ export const TagEnrollmentSchema = z.object({
 export type TagEnrollment = z.infer<typeof TagEnrollmentSchema>;
 export const CreateTagEnrollmentSchema = z.strictObject({
   scannerId: IdSchema,
-  scope: TagScopeSchema.default('pass'),
+  binding: TagScopeSchema.default('pass'),
 });
 /** A scanner an admin can send a request to. */
 export const TagScannerSchema = z.object({
@@ -220,7 +220,7 @@ export const ScanTagBindRequestSchema = z.strictObject({
   card: TagCardInputSchema,
   /** True: check and describe, write nothing. */
   preview: z.boolean().default(false),
-  scope: TagScopeSchema.default('pass'),
+  binding: TagScopeSchema.default('pass'),
   /** Move the tag from another holder. Needs a Manager PIN. */
   move: z.boolean().optional(),
   /** A loaner on a visitor pass; pass scope only. */
