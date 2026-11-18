@@ -1,26 +1,35 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
+import { makeOrg, makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
 import { makeJoinLink } from '../../../../test/helpers/join.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { scheduleIssuanceDelivery } from '../delivery/issuance-intent.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
-import { createPassRow } from '../passes/create.ts';
+import { createPassIdempotent, createPassRow } from '../passes/create.ts';
 import type { CreateParams } from '../passes/create-types.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { joinCreateGrant } from './grant.ts';
+import { joinTemplate } from './join-test-fixtures.ts';
 
 let kit: Kit;
 const DAY = 86_400_000;
+const D1 = 'a'.repeat(43);
+const D2 = 'b'.repeat(43);
+const D3 = 'c'.repeat(43);
 
 beforeAll(async () => {
-  kit = await setupKit();
+  kit = await setupKit({ template: (id) => joinTemplate(id) });
 });
 
 type Link = Awaited<ReturnType<typeof makeJoinLink>>;
 
 async function link(
-  options: { mode?: 'live' | 'test'; dailyLimit?: number; templateId?: string } = {},
+  options: {
+    mode?: 'live' | 'test';
+    dailyLimit?: number;
+    templateId?: string;
+    askEmail?: boolean;
+  } = {},
 ) {
   const templateId = options.templateId ?? kit.template.id;
   const mode = options.mode ?? 'live';
@@ -30,12 +39,17 @@ async function link(
     'DELETE FROM join_links WHERE org_id = ? AND mode = ? AND template_id = ?',
     [kit.org.id, mode, templateId],
   );
-  return makeJoinLink(kit.fx, {
+  const made = await makeJoinLink(kit.fx, {
     orgId: kit.org.id,
     templateId: options.templateId ?? kit.template.id,
     ...(options.mode ? { mode: options.mode } : {}),
     ...(options.dailyLimit ? { dailyLimit: options.dailyLimit } : {}),
   });
+  await run(kit.env.DB, 'UPDATE join_links SET ask_email = ? WHERE id = ?', [
+    options.askEmail === false ? 0 : 1,
+    made.id,
+  ]);
+  return made;
 }
 
 function params(
@@ -97,12 +111,12 @@ describe('join create', () => {
       [pass.id],
     );
     expect(event).toMatchObject({ actor_type: 'system', actor_id: `join:${l.id}` });
-    expect(JSON.parse(event?.data ?? '{}')).toMatchObject({ cause: 'create', source: 'join' });
+    expect(JSON.parse(event?.data ?? '{}')).toMatchObject({ cause: 'join', source: null });
   });
 
   it('stores the ledger digests it is given', async () => {
     const l = await link();
-    const joinKeys = { ipKey: 'ip-digest', deviceKey: 'dev-digest', fieldsHash: 'fields-digest' };
+    const joinKeys = { ipKey: D1, deviceKey: D2, fieldsHash: D3 };
     const pass = await createPassRow(kit.ctx, params(l, { joinKeys }));
     expect(
       await first(
@@ -110,7 +124,7 @@ describe('join create', () => {
         'SELECT ip_key, device_key, fields_hash FROM join_issues WHERE pass_id = ?',
         [pass.id],
       ),
-    ).toEqual({ ip_key: 'ip-digest', device_key: 'dev-digest', fields_hash: 'fields-digest' });
+    ).toEqual({ ip_key: D1, device_key: D2, fields_hash: D3 });
   });
 
   it('never sets an owner, even for an address that belongs to an account', async () => {
@@ -310,6 +324,7 @@ describe('join create', () => {
         linkId: l.id,
         generation: l.generation,
         orgDailyCap: 100,
+        orgId: kit.org.id,
         templateId: kit.template.id,
         passId: kit.fx.ids.id(),
         holderEmail: null,
@@ -345,5 +360,85 @@ describe('join create', () => {
     );
     expect(await scheduleIssuanceDelivery(kit.ctx, pass.id, false)).toBe('deferred');
     expect(await scheduleIssuanceDelivery(jobCtxOf(kit), pass.id, false)).toBe('queued');
+  });
+
+  it('refuses a ledger digest that is not a 43-character base64url value', async () => {
+    const l = await link();
+    for (const bad of ['203.0.113.7', `${D1}=`, 'x'.repeat(44)])
+      expect(
+        await code(
+          createPassRow(
+            kit.ctx,
+            params(l, { joinKeys: { ipKey: bad, deviceKey: null, fieldsHash: null } }),
+          ),
+        ),
+      ).toBe('FORBIDDEN');
+    expect(await issues(l.id)).toEqual([]);
+  });
+
+  it('refuses a chosen pass id', async () => {
+    const l = await link();
+    expect(await code(createPassRow(kit.ctx, params(l, { passId: kit.fx.ids.id() })))).toBe(
+      'FORBIDDEN',
+    );
+  });
+
+  it('takes an address only when the link asks for one', async () => {
+    const l = await link({ askEmail: false });
+    const before = await passCount();
+    expect(
+      await code(createPassRow(kit.ctx, params(l, { holderEmail: 'quiet@example.com' }))),
+    ).toBe('JOIN_LIMIT');
+    expect(await passCount()).toBe(before);
+    expect(await code(createPassRow(kit.ctx, params(l)))).toBeNull();
+  });
+
+  it('never replays an idempotency key for a join link', async () => {
+    const l = await link();
+    expect(await code(createPassIdempotent(kit.ctx, params(l), 'key-1'))).toBe('FORBIDDEN');
+  });
+
+  it('a link of one org makes nothing for another org, and leaves no stored object', async () => {
+    const other = await makeOrg(kit.fx, { name: 'Other Org' });
+    await approveAppleRelease(kit, { orgId: other.id, mode: 'live' });
+    const l = await link();
+    const objects = async () => (await kit.env.BUCKET.list({ prefix: 'passes/' })).objects.length;
+    const before = [await passCount(), await objects()];
+    const refused = await code(createPassRow(kit.ctx, params(l, { orgId: other.id })));
+    expect(refused).not.toBeNull();
+    expect([await passCount(), await objects()]).toEqual(before);
+    expect(await issues(l.id)).toEqual([]);
+  });
+
+  it('refuses a template whose barcode is not the scan code, before storing anything', async () => {
+    const icon = new Uint8Array(
+      await new Response(await kit.registry.openAsset(kit.template, 'icon.png')).arrayBuffer(),
+    );
+    const typed = joinTemplate(`tpl-typed-${kit.fx.ids.token(4)}`, '{{memberName}}').resolved;
+    const added = kit.registry.add({
+      id: typed.id,
+      orgId: typed.orgId,
+      version: typed.version,
+      manifest: typed.manifest,
+      passJson: typed.passJson,
+      assets: { 'icon.png': icon },
+    });
+    await persistTemplate(kit.fx, added, { registry: kit.registry });
+    const release = await approveAppleRelease(kit, {
+      templateId: added.id,
+      version: added.version,
+    });
+    const l = await link({ templateId: added.id });
+    const objects = async () => (await kit.env.BUCKET.list({ prefix: 'passes/' })).objects.length;
+    const before = [await passCount(), await objects()];
+    const refused = await code(
+      createPassRow(kit.ctx, {
+        ...params(l),
+        templateId: added.id,
+        templateVersion: release.version,
+      }),
+    );
+    expect(refused).toBe('JOIN_NOT_READY');
+    expect([await passCount(), await objects()]).toEqual(before);
   });
 });

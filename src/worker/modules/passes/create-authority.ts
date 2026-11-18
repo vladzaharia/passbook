@@ -6,6 +6,12 @@ import type { TenantPassWrite } from './http.ts';
 import { tenantOrgAccessRevision, tenantPassAuthorityValid } from './repo-authority.ts';
 import { connectionForPass } from './repo-read-connection.ts';
 
+const DIGEST = /^[A-Za-z0-9_-]{43}$/;
+/** The ledger digests are keyed 256-bit digests (base64url) or absent, never a raw address, cookie or field. */
+const validJoinKeys = (keys: CreateParams['joinKeys']): boolean =>
+  keys === undefined ||
+  [keys.ipKey, keys.deviceKey, keys.fieldsHash].every((k) => k === null || DIGEST.test(k));
+
 /** A suspended (or suspended and reactivated) org is a distinct refusal from a lost membership or key. */
 async function assertOrgUnchanged(ctx: ServiceContext, authority: TenantPassWrite): Promise<void> {
   const current = await tenantOrgAccessRevision(ctx.env.DB, authority.orgId);
@@ -38,6 +44,8 @@ export async function assertTenantCreateAuthority(
       p.serial !== undefined ||
       p.identityId !== undefined ||
       p.reservedPassId !== undefined ||
+      p.passId !== undefined ||
+      !validJoinKeys(p.joinKeys) ||
       p.retainedClaim !== undefined ||
       p.actor.type !== 'system' ||
       p.actor.id !== `join:${execution.linkId}` ||

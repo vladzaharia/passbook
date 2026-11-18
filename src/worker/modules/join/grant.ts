@@ -20,6 +20,7 @@ export interface JoinCreateInput {
   generation: number;
   /** The platform's per-org daily cap for the link's mode, read at request time. */
   orgDailyCap: number;
+  orgId: string;
   templateId: string;
   passId: string;
   holderEmail: string | null;

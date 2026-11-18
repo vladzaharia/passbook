@@ -48,8 +48,8 @@ export async function addCreateStatements(
       JSON.stringify(
         sanitizeEventData({
           version: 1,
-          cause: 'create',
-          source: join ? 'join' : null,
+          cause: join ? 'join' : 'create',
+          source: null,
           notified: false,
         }),
       ),
@@ -72,6 +72,8 @@ export async function addCreateStatements(
       ],
       { from: { table: 'passes', where: { id: row.id }, copy: { pass_id: 'id' } } },
     );
+  // The caps count this row: a pass without it would escape them.
+  if (join) g.assert('stale', [exists('join_issues', { pass_id: row.id })]);
   const entry = {
     at: row.now,
     orgId: row.orgId,

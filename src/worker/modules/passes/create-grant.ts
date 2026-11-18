@@ -80,6 +80,7 @@ export function createGrant(
       linkId: ex.linkId,
       generation: ex.generation,
       orgDailyCap: ex.orgDailyCap,
+      orgId: row.orgId,
       templateId: row.templateId,
       passId: row.id,
       holderEmail: row.holderEmail,

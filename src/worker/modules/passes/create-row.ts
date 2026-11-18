@@ -106,6 +106,9 @@ export async function createPassRowWithRelease(
     personalization: p.input,
     status: 'active',
   });
+  // A public card's barcode is its scan code: a holder-typed value must never reach it.
+  if (p.execution.kind === 'join' && primaryBarcodeMessage(artifact.passJson) !== scanCode)
+    throw new ConflictError('This card is not ready for public sign-up.', 'JOIN_NOT_READY');
   const lookupInput = artifact.template.manifest.scan?.lookup?.input;
   const refs = await credentialReferences(credentialEnv, p.orgId, mode, {
     scanCode,

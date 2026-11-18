@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TemplateRelease } from '../templates/releases.ts';
@@ -115,6 +115,8 @@ export async function createPassIdempotent(
   key: string | undefined,
   options: { serverResolvedRelease?: boolean } = {},
 ) {
+  // A replay returns the pass behind a key; a public join link never gets another visitor's card.
+  if (input.execution?.kind === 'join') throw new ForbiddenError();
   const p = structuredClone(input);
   const credentialCtx = snapshotCredentialContext(ctx);
   if (!key) return issuanceDetail(ctx, p, await createPassFromSnapshot(ctx, p, credentialCtx));
