@@ -49,6 +49,8 @@ export function addEnrollment(
         accepts: input.accepts ? JSON.stringify(input.accepts) : null,
         settings: JSON.stringify(settings),
         time_zone: input.timeZone,
+        hours: null,
+        hours_next_at: null,
         created_at: now,
         updated_at: now,
       },

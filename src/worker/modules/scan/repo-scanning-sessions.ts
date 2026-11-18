@@ -18,6 +18,12 @@ export interface ScanningSessionRow {
   accepts: string | null;
   settings: string;
   time_zone: string;
+  /** Weekly schedule JSON; null: always open. */
+  hours: string | null;
+  /** Manual hold JSON. */
+  hold: string | null;
+  /** The cron's bookmark: the next instant the open state may change. Moves no epoch. */
+  hours_next_at: number | null;
   created_at: number;
   updated_at: number;
   /** Trigger-owned; an edit derived from this row is checked against it at commit. */
@@ -39,6 +45,14 @@ export const scanningSessionForDevice = (db: D1Database, orgId: string, scannerI
     WHERE d.scanner_id=? AND s.org_id=?`,
     [scannerId, orgId],
   );
+/** Active sessions whose open state may have changed, by id after the cursor. */
+export const dueHoursRows = (db: D1Database, now: number, limit: number, after: string | null) =>
+  all<ScanningSessionRow>(
+    db,
+    `${SELECT} WHERE s.status='active' AND s.hours_next_at IS NOT NULL AND s.hours_next_at<=?
+    ${after === null ? '' : 'AND s.id>?'} ORDER BY s.id LIMIT ?`,
+    [now, ...(after === null ? [] : [after]), limit],
+  );
 export const listScanningSessionRows = (
   db: D1Database,
   mode: Mode,
@@ -59,7 +73,7 @@ export const listScanningSessionRows = (
 /** org_id and mode come from the grant row. */
 export const addScanningSessionInsert = (
   g: Grant,
-  row: Omit<ScanningSessionRow, 'org_name' | 'org_id' | 'mode' | 'config_epoch'>,
+  row: Omit<ScanningSessionRow, 'org_name' | 'org_id' | 'mode' | 'config_epoch' | 'hold'>,
   userId: string,
 ): GrantedStatement =>
   g.insertSelect(
@@ -71,6 +85,8 @@ export const addScanningSessionInsert = (
       'accepts',
       'settings',
       'time_zone',
+      'hours',
+      'hours_next_at',
       'created_at',
       'updated_at',
       'created_by',
@@ -82,6 +98,8 @@ export const addScanningSessionInsert = (
       row.accepts,
       row.settings,
       row.time_zone,
+      row.hours,
+      row.hours_next_at,
       row.created_at,
       row.updated_at,
       userId,
@@ -93,7 +111,10 @@ export function addScanningSessionUpdate(
   g: Grant,
   id: string,
   patch: Partial<
-    Pick<ScanningSessionRow, 'name' | 'status' | 'accepts' | 'settings' | 'time_zone'>
+    Pick<
+      ScanningSessionRow,
+      'name' | 'status' | 'accepts' | 'settings' | 'time_zone' | 'hours' | 'hold' | 'hours_next_at'
+    >
   >,
   now: number,
 ): GrantedStatement {

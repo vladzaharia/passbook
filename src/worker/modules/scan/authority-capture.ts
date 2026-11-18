@@ -70,6 +70,8 @@ export async function captureScanEpochs(
     accepts: string | null;
     settings: string;
     time_zone: string;
+    hours: string | null;
+    hold: string | null;
     config_epoch: number;
   }>('session');
   if (session) {
@@ -80,7 +82,9 @@ export async function captureScanEpochs(
       ss.status !== session.status ||
       ss.accepts !== parent.accepts ||
       ss.settings !== parent.settings ||
-      ss.time_zone !== parent.time_zone
+      ss.time_zone !== parent.time_zone ||
+      ss.hours !== parent.hours ||
+      ss.hold !== parent.hold
     )
       throw configChanged();
     epochs.session = { id: session.id, config: ss.config_epoch };

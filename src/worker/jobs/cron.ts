@@ -23,6 +23,7 @@ import { dailyReceipts } from '../modules/retention/jobs.ts';
 import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
+import { sweepSessionHours } from '../modules/scan/session-hours-job.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
@@ -56,6 +57,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'scan.reconcile', run: reconcileScans },
     { name: 'scan.backfill', run: backfillScanLookups },
     { name: 'scan.occupancy', run: autoTapOut },
+    { name: 'scan.session_hours', run: sweepSessionHours },
     { name: 'tokens.remac', run: remacCapabilityTokens },
     { name: 'keys.rewrap', run: rewrapEnvelopes },
     { name: 'wallet.sync', run: drainWalletProviderSync },

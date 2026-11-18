@@ -8,8 +8,8 @@ import {
   TimestampSchema,
 } from './common.ts';
 import { ScannerTagsSettingsSchema, TagLevelSchema } from './nfc-tags.ts';
-import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
-import { ZoneIdsSchema } from './scan-access.ts';
+import { ScanApprovalSchema, ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
+import { WeeklyHoursSchema, ZoneIdsSchema } from './scan-access.ts';
 import { ScannerAcceptsSchema } from './scanners.ts';
 
 /** Layout and sign-in method are independent: an admin is another device in the session. */
@@ -108,6 +108,26 @@ export const ScanningSessionSettingsSchema = ScannerSettingsSchema.extend({
   tags: ScannerTagsSettingsSchema.extend({ level: TagLevelSchema.optional() }).optional(),
 });
 export const ScanningSessionStatusSchema = z.enum(['active', 'paused', 'ended']);
+/** When an active session scans, by the session's own clock. At least one span, none empty. */
+export const SessionHoursSchema = WeeklyHoursSchema.refine((hours) => {
+  const spans = Object.values(hours).flat();
+  return spans.length > 0 && spans.every((s) => s.slice(0, 5) !== s.slice(6));
+}, 'Add at least one span; start and end differ.');
+export type SessionHours = z.infer<typeof SessionHoursSchema>;
+/** A manual override of the hours until `until` (an instant). */
+export const SessionHoldSchema = z.strictObject({
+  state: z.enum(['open', 'closed']),
+  until: TimestampSchema,
+});
+export type SessionHold = z.infer<typeof SessionHoldSchema>;
+/** Computed by the server at read time; ignores `status`, which stays the master switch. */
+export const SessionWindowSchema = z.object({
+  open: z.boolean(),
+  by: z.enum(['always', 'hours', 'hold']),
+  opensAt: TimestampSchema.nullable(),
+  closesAt: TimestampSchema.nullable(),
+});
+export type SessionWindow = z.infer<typeof SessionWindowSchema>;
 export const ScanningSessionSchema = z.object({
   id: IdSchema,
   orgId: IdSchema,
@@ -120,6 +140,11 @@ export const ScanningSessionSchema = z.object({
   /** Access zones this session checks. Absent from servers that predate zones. */
   zoneIds: ZoneIdsSchema.optional(),
   timeZone: TimeZoneSchema,
+  /** Absent from servers that predate session hours; null: always open. */
+  hours: SessionHoursSchema.nullable().optional(),
+  /** The hold in force, if any. */
+  hold: SessionHoldSchema.nullable().optional(),
+  window: SessionWindowSchema.optional(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   deviceCount: z.number().int(),
@@ -136,6 +161,7 @@ export const CreateScanningSessionSchema = z.strictObject({
   accepts: ScannerAcceptsSchema.nullable().default(null),
   settings: ScanningSessionSettingsSchema.partial().optional(),
   zoneIds: ZoneIdsSchema.optional(),
+  hours: SessionHoursSchema.nullable().optional(),
 });
 /** No defaults: a field that is absent is left as it is (a name-only edit keeps scope and settings). */
 export const UpdateScanningSessionSchema = z.strictObject({
@@ -144,9 +170,26 @@ export const UpdateScanningSessionSchema = z.strictObject({
   accepts: ScannerAcceptsSchema.nullable().optional(),
   settings: ScanningSessionSettingsSchema.partial().optional(),
   zoneIds: ZoneIdsSchema.optional(),
+  hours: SessionHoursSchema.nullable().optional(),
   status: ScanningSessionStatusSchema.optional(),
   revision: TimestampSchema.optional(),
 });
+/** Close now, Open now (until at most 24 h ahead; default by the schedule) or Back to hours. */
+export const SessionHoldRequestSchema = z.discriminatedUnion('action', [
+  z.strictObject({ action: z.literal('close'), revision: TimestampSchema.optional() }),
+  z.strictObject({
+    action: z.literal('open'),
+    until: TimestampSchema.optional(),
+    revision: TimestampSchema.optional(),
+  }),
+  z.strictObject({ action: z.literal('clear'), revision: TimestampSchema.optional() }),
+]);
+/** A Manager opens the session early from the scanner: signed in as one, or with a manager code. */
+export const ScanSessionOpenNowSchema = z.strictObject({
+  until: TimestampSchema.optional(),
+  approval: ScanApprovalSchema.optional(),
+});
+export const ScanSessionOpenedSchema = z.object({ window: SessionWindowSchema });
 export const ScanningDeviceSchema = z.object({
   id: IdSchema,
   sessionId: IdSchema,
