@@ -17,6 +17,7 @@ import {
   toast,
 } from '@/web/ui/index.ts';
 import { personLabel } from '../../lib/format.ts';
+import { UserTagsCard } from '../tags/user-tags-card.tsx';
 import { useUser, useUserMutations } from './queries.ts';
 import { AccountCard, EmailsCard, IdentitiesCard, SessionsCard } from './user-sections.tsx';
 
@@ -119,6 +120,12 @@ export function UserDetailPage({ userId }: { userId: string }) {
             This is you. Manage your own sign-in and sessions in Account.
           </Callout>
         ) : null}
+        <UserTagsCard
+          userId={user.id}
+          name={name}
+          passes={user.passes}
+          passCount={user.passCount}
+        />
         <EmailsCard user={user} self={self} />
         <SessionsCard user={user} self={self} now={Date.now()} />
         <IdentitiesCard user={user} />

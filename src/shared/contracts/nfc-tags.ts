@@ -105,6 +105,10 @@ export const TAG_ERROR_CODES = [
   'TAG_ASSURANCE_LOW',
   'TAG_HOLDER_CHANGED',
   'SCANNER_OFFLINE',
+  'TAG_UNDO_EXPIRED',
+  'TAG_PASS_VOIDED',
+  'TAG_PASS_REMOVED',
+  'TAG_PASS_EXPIRED',
 ] as const;
 export const TagErrorCodeSchema = z.enum(TAG_ERROR_CODES);
 

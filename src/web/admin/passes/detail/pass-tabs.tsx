@@ -16,6 +16,7 @@ import { ActivityTab } from './info-tabs.tsx';
 import { MemberPhotoCard } from './member-photo-card.tsx';
 import { StampsCard } from './stamps-card.tsx';
 import { SyncTab } from './sync-tab.tsx';
+import { TagsCard } from './tags-card.tsx';
 import { VersionsTab } from './versions-tab.tsx';
 
 type Template = UseQueryResult<import('zod').infer<typeof TemplateDetailSchema>>;
@@ -69,6 +70,7 @@ export function PassTabs({
       <TabsContent value="holder" className="flex flex-col gap-4">
         <HolderTab pass={pass} readOnly={readOnly} />
         <MemberPhotoCard pass={pass} readOnly={readOnly} />
+        <TagsCard pass={pass} readOnly={readOnly} />
         <CheckInCard pass={pass} readOnly={readOnly} />
       </TabsContent>
       <TabsContent value="devices" className="min-w-0">

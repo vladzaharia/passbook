@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
-export const SCANNING_TABS = ['sessions', 'scanners', 'events', 'zones', 'staff', 'scans'] as const;
+export const SCANNING_TABS = [
+  'sessions',
+  'scanners',
+  'events',
+  'zones',
+  'staff',
+  'scans',
+  'tags',
+] as const;
 export type ScanningTab = (typeof SCANNING_TABS)[number];
 export const DEFAULT_TAB: ScanningTab = 'sessions';
 
@@ -24,11 +32,15 @@ export const scanningSearchSchema = z.object({
   outcome: z.enum(['ok', 'heads_up', 'refused', 'undone']).optional().catch(undefined),
   reason: z.string().min(1).max(40).optional().catch(undefined),
   range: z.enum(['today', '7d', '30d']).optional().catch(undefined),
+  // The Tags tab: its own filters, and the tag open in the side sheet.
+  tagState: z.enum(['assigned', 'spare', 'lost', 'retired']).optional().catch(undefined),
+  tagQ: z.string().trim().max(80).optional().catch(undefined),
+  tag: id,
 });
 export type ScanningSearch = z.infer<typeof scanningSearchSchema>;
 
 /** Search for another tab: filters stay, the default tab and the create flag drop out. */
 export function withTab(prev: ScanningSearch, tab: ScanningTab): ScanningSearch {
-  const { new: _new, ...rest } = prev;
+  const { new: _new, tag: _tag, ...rest } = prev;
   return { ...rest, tab: tab === DEFAULT_TAB ? undefined : tab };
 }

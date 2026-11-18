@@ -29,6 +29,7 @@ import { StaffTab } from './staff-tab.tsx';
 
 const EventsTab = lazy(() => import('./events-tab.tsx').then((m) => ({ default: m.EventsTab })));
 const ZonesTab = lazy(() => import('./zones/zones-tab.tsx').then((m) => ({ default: m.ZonesTab })));
+const TagsTab = lazy(() => import('../tags/tags-tab.tsx').then((m) => ({ default: m.TagsTab })));
 const ScansTab = lazy(() => import('./scans-tab.tsx').then((m) => ({ default: m.ScansTab })));
 
 const LABEL: Record<ScanningTab, string> = {
@@ -38,6 +39,7 @@ const LABEL: Record<ScanningTab, string> = {
   zones: 'Zones',
   staff: 'Staff',
   scans: 'Activity',
+  tags: 'Tags',
 };
 
 /**
@@ -168,6 +170,11 @@ function ScopedScanningPage({
         </TabsContent>
         <TabsContent value="staff">
           <StaffTab />
+        </TabsContent>
+        <TabsContent value="tags">
+          <Suspense fallback={<p role="status">Loading tags…</p>}>
+            <TagsTab key={mode} search={search} />
+          </Suspense>
         </TabsContent>
         <TabsContent value="scans">
           <Suspense fallback={<p role="status">Loading scans…</p>}>

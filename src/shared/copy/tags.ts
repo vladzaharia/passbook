@@ -192,4 +192,8 @@ export const TAG_ERROR_COPY: Record<(typeof TAG_ERROR_CODES)[number], string> = 
   TAG_LIMIT: 'This organization has the most tags allowed.',
   TAG_ASSURANCE_LOW: "Basic tags can't work with this pass. Use a secure tag.",
   TAG_HOLDER_CHANGED: 'The pass changed hands. Start again.',
+  TAG_UNDO_EXPIRED: 'Too late to undo. Add the tag again.',
+  TAG_PASS_VOIDED: 'This pass is void. Use an active pass.',
+  TAG_PASS_REMOVED: 'This pass was removed. Use another pass.',
+  TAG_PASS_EXPIRED: 'This pass has expired. Use another pass.',
 };
