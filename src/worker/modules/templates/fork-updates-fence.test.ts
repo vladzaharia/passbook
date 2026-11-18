@@ -8,6 +8,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { type ForkKit, forkKit, upload } from './fork-updates-test-fixtures.ts';
 import { basicPackage, makePng, passJson, zipOf } from './package/fixtures.ts';
+import { upstreamReadable } from './repo-fork-updates.ts';
 import { importZip, sourceOf } from './testing.ts';
 import { resolveVersionFiles } from './version-files.ts';
 
@@ -333,5 +334,86 @@ describe('files of an upstream', () => {
     );
     expect((await k.updates(id))[0]).toMatchObject({ status: 'failed', merged_version: null });
     expect(reads.filter((key) => key.includes(`/${k.kit.other.id}/${theirs}/`))).toEqual([]);
+  });
+});
+
+describe('a refusal that a re-plan would not change', () => {
+  it('leaves the offer pending, and the retry lane finishes it', async () => {
+    const { s, id } = await started();
+    await k.publish(s, { tier: 'Level' });
+    const { watchBatch } = await import('./testing.ts');
+    const watched = watchBatch(k.kit.env, /INSERT INTO template_versions/, () =>
+      run(k.kit.env.DB, "UPDATE template_forks SET tracking = 'paused' WHERE template_id = ?", [
+        id,
+      ]),
+    );
+    await k.tick(watched.env);
+    expect(watched.fired()).toBe(1);
+    expect((await k.updates(id))[0]).toMatchObject({ status: 'pending' });
+    await run(k.kit.env.DB, "UPDATE template_forks SET tracking = 'on' WHERE template_id = ?", [
+      id,
+    ]);
+    k.kit.clock.advance(11 * 60_000);
+    await k.tick();
+    expect((await k.updates(id))[0]).toMatchObject({ status: 'clean', attempts: 1 });
+  });
+});
+
+describe('a suspended org', () => {
+  it('keeps its offers out of the retry lane until it is active again', async () => {
+    const { s, id } = await started();
+    await k.publish(s, { tier: 'Level' });
+    expect(await k.plan()).toHaveLength(1);
+    await run(k.kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [k.kit.org.id]);
+    k.kit.clock.advance(11 * 60_000);
+    expect((await k.tick()).filter((m) => (m as { templateId: string }).templateId === id)).toEqual(
+      [],
+    );
+    expect((await k.updates(id))[0]).toMatchObject({ status: 'pending', attempts: 0 });
+    await run(k.kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [k.kit.org.id]);
+    k.kit.clock.advance(11 * 60_000);
+    await k.tick();
+    expect((await k.updates(id))[0]).toMatchObject({ status: 'clean' });
+  });
+});
+
+describe('logoText', () => {
+  const branded = (json: string) =>
+    run(k.kit.env.DB, 'UPDATE orgs SET branding = ? WHERE id = ?', [json, k.kit.org.id]);
+  const clash = async () => {
+    const { s, id } = await started({ logoText: 'Base' });
+    await k.edit(id, (d) => ({ ...d, passJson: { ...d.passJson, logoText: 'Mine' } }));
+    await k.publish(s, { logoText: 'Theirs' });
+    await k.tick();
+    return (await k.updates(id))[0];
+  };
+
+  it('is kept as the fork’s when the org branding drops it', async () => {
+    await branded('{"logoHasName":true}');
+    const row = await clash();
+    expect(row?.status).toBe('noop');
+    expect(JSON.parse(row?.summary ?? '{}').keptYours).toEqual([
+      expect.objectContaining({ path: ['logoText'] }),
+    ]);
+  });
+
+  it('is a clash like any other when the org branding does not', async () => {
+    await branded('{}');
+    expect((await clash())?.status).toBe('conflicted');
+  });
+});
+
+describe('who may supply files', () => {
+  it('is a platform-wide template for any org, and an org’s built-in only for that org', async () => {
+    const { id } = await started();
+    const db = k.kit.env.DB;
+    expect(await upstreamReadable(db, 'baked:starter-store-card', id)).toBe(true);
+    expect(await upstreamReadable(db, 'baked:henrys-blue', id)).toBe(false);
+    const res = await k.kit.post('/baked:henrys-blue/clone', {
+      orgId: k.kit.henrys.id,
+      name: 'Henry copy',
+    });
+    const henrys = ((await res.json()) as { id: string }).id;
+    expect(await upstreamReadable(db, 'baked:henrys-blue', henrys)).toBe(true);
   });
 });

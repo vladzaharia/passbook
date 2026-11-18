@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 
 import { beforeAll, describe, expect, it } from 'vitest';
-import { all, first } from '../../platform/db.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { type ForkKit, forkKit } from './fork-updates-test-fixtures.ts';
 
 let k: ForkKit;
@@ -236,7 +237,12 @@ describe('reruns', () => {
     const { createJobContext } = await import('../../platform/service-context.ts');
     const { planForkUpdates } = await import('./fork-updates-plan.ts');
     const sent: unknown[] = [];
-    const env = { ...k.kit.env, JOBS: { send: async (m: unknown) => void sent.push(m) } } as never;
+    const env = {
+      ...k.kit.env,
+      JOBS: {
+        sendBatch: async (ms: { body: unknown }[]) => void sent.push(...ms.map((m) => m.body)),
+      },
+    } as never;
     const ctx = createJobContext(env, 'twice', { clock: k.kit.clock });
     await planForkUpdates(ctx, k.source);
     const job = sent[0] as never;
@@ -244,5 +250,58 @@ describe('reruns', () => {
     const [row] = await k.updates(id);
     expect(row?.status).toBe('clean');
     expect(await candidatesOf(id, row?.merged_version ?? '')).toHaveLength(1);
+  });
+});
+
+describe('what counts as review', () => {
+  const merged = async (id: string) => {
+    const [row] = await k.updates(id);
+    expect(row?.status).toBe('clean');
+    return first<{ created_by: string | null }>(
+      k.kit.env.DB,
+      'SELECT created_by FROM template_versions WHERE template_id = ? AND version = ?',
+      [id, row?.merged_version],
+    );
+  };
+
+  it('does not take the author’s own Test approval for review', async () => {
+    const { s, id } = await started();
+    const [v1] = await k.versions(id);
+    const alone = { orgId: k.kit.org.id, mode: 'test', provider: 'apple' };
+    const hdr = { ...k.kit.admin, 'x-passbook-mode': 'test' };
+    const made = await k.kit.post(`/${id}/candidates`, { ...alone, version: v1?.version }, hdr);
+    const c = (await made.json()) as { id: string; candidateHash: string };
+    const approved = await k.kit.post(
+      `/${id}/candidates/${c.id}/approve`,
+      { ...alone, candidateHash: c.candidateHash, alone: true },
+      hdr,
+    );
+    expect(approved.status, await approved.clone().text()).toBe(201);
+    await k.publish(s, { tier: 'Level' });
+    await k.tick();
+    expect((await merged(id))?.created_by).toBe(v1?.created_by);
+  });
+
+  it('does not take a sole approval for review', async () => {
+    const { s, id } = await started();
+    const [v1] = await k.versions(id);
+    const made = await k.kit.post(
+      `/${id}/candidates`,
+      { orgId: k.kit.org.id, mode: 'live', provider: 'apple', version: v1?.version },
+      k.kit.admin,
+    );
+    const c = (await made.json()) as { id: string; candidateHash: string };
+    // The release triggers decide who may sole-approve; here only the recorded kind matters.
+    await withoutTrigger(k.kit.env.DB, 'template_approvals_insert', () =>
+      run(
+        k.kit.env.DB,
+        `INSERT INTO template_approvals (id, candidate_id, candidate_hash, reviewer_id, created_at, kind)
+         VALUES ('sole-1', ?, ?, ?, 1, 'sole')`,
+        [c.id, c.candidateHash, v1?.created_by ?? ''],
+      ),
+    );
+    await k.publish(s, { tier: 'Level' });
+    await k.tick();
+    expect((await merged(id))?.created_by).toBe(v1?.created_by);
   });
 });

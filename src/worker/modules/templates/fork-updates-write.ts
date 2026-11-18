@@ -5,7 +5,7 @@ import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.t
 import { exists, notExists } from '../../platform/authority-cond.ts';
 import type { SetValue } from '../../platform/authority-expr.ts';
 import { writePart } from '../../platform/authority-include.ts';
-import { ConflictError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { ResolvedBase } from './fork-base.ts';
@@ -44,17 +44,17 @@ export interface UpdateKey {
   oursVersion: string;
 }
 
+/** A refused fence, or an org that is no longer active (the grant's own check): the job read a world that moved. */
 export const isStale = (error: unknown) =>
-  error instanceof ConflictError && error.code === FORK_STALE;
+  (error instanceof ConflictError && error.code === FORK_STALE) || error instanceof ForbiddenError;
 
-/** A stale or malformed-content refusal is a moved fork; anything else is not ours to swallow. */
+/** A refusal is a moved fork or org; anything else is not ours to swallow. */
 async function commit(g: Grant): Promise<'ok' | 'stale'> {
   try {
     await g.commit();
     return 'ok';
   } catch (error) {
     if (isStale(error)) return 'stale';
-    if (error instanceof Error && /malformed json/i.test(error.message)) return 'stale';
     throw error;
   }
 }

@@ -61,7 +61,15 @@ export async function checkVersion(
     fallbackName: source.name,
     images,
     behaviors,
-    stamps: stampsForSave(ctx, source.id, manifest, stamps.dryRun, carried, stamps.carry),
+    stamps: stampsForSave(
+      ctx,
+      source.id,
+      manifest,
+      stamps.dryRun,
+      carried,
+      stamps.carry,
+      lineage?.upstreamId,
+    ),
   });
   if (!('version' in analysis)) return { refused: { report: analysis.report, analysis: null } };
 

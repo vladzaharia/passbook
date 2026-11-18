@@ -17,8 +17,10 @@ export function estimateQueries(job: Job): number {
       return 40 + (QUERIES_PER_RECORD + 8) * job.refs.length;
     case 'pass.refresh':
       return 40;
+    // CPU, not queries, is the cost (image checks, stamp strips): it runs alone in its invocation,
+    // so a CPU kill cannot retry pushes and emails with it.
     case 'template.fork_update':
-      return 60;
+      return QUEUE_QUERY_BUDGET;
     default:
       return 15;
   }

@@ -19,6 +19,7 @@ export interface Variant {
   background?: string;
   logoWidth?: number;
   blueprint?: boolean;
+  logoText?: string;
   /** Extra keyword on the tier input: baked templates may use any, uploaded ones refuse some. */
   keyword?: Record<string, unknown>;
 }
@@ -83,6 +84,7 @@ function files(slug: string, v: Variant) {
   const pass = passJson({
     description: v.description ?? 'Fork demo',
     backgroundColor: v.background ?? 'rgb(10, 20, 30)',
+    ...(v.logoText ? { logoText: v.logoText } : {}),
     generic: {
       primaryFields: [{ key: 'name', label: 'Name', value: 'Alex' }],
       secondaryFields: [{ key: 'tier', label: v.tier ?? 'Tier', value: 'Gold' }],
@@ -157,14 +159,24 @@ export async function forkKit(): Promise<ForkKit> {
     },
     async plan(env = kit.env, source = self.source) {
       const sent: unknown[] = [];
-      const queued = { ...env, JOBS: { send: async (m: unknown) => void sent.push(m) } };
+      const queued = {
+        ...env,
+        JOBS: {
+          sendBatch: async (ms: { body: unknown }[]) => void sent.push(...ms.map((m) => m.body)),
+        },
+      };
       kit.clock.advance(1000);
       await planForkUpdates(jobContext(queued as unknown as AppEnv), source);
       return sent;
     },
     async tick(env = kit.env, source = self.source) {
       const sent: unknown[] = [];
-      const queued = { ...env, JOBS: { send: async (m: unknown) => void sent.push(m) } };
+      const queued = {
+        ...env,
+        JOBS: {
+          sendBatch: async (ms: { body: unknown }[]) => void sent.push(...ms.map((m) => m.body)),
+        },
+      };
       const ctx = jobContext(queued as unknown as AppEnv);
       kit.clock.advance(1000);
       await planForkUpdates(ctx, source);

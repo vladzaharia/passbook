@@ -16,12 +16,12 @@ import {
 } from './fork-merge-doc.ts';
 import { commitMerge, failOffer, type Outcome, settleOffer } from './fork-updates-write.ts';
 import { imagesFromBinding } from './images-binding.ts';
-import { buildKey } from './package/hash.ts';
-import { r2Key } from './registry.ts';
-import { templateContentDigest } from './release-content.ts';
+import { buildKey, canonicalJson } from './package/hash.ts';
+import { r2Key, r2Prefix } from './registry.ts';
+import { readReleaseAsset, templateContentDigest } from './release-content.ts';
 import { getTemplate, getVersion } from './repo.ts';
 import { FORK_STALE, readForkState } from './repo-fork-update-checks.ts';
-import { getForkRow, getOffer, type Offer } from './repo-fork-updates.ts';
+import { type ForkRow, getForkRow, getOffer, type Offer, orgActive } from './repo-fork-updates.ts';
 import { getVersionHashes } from './repo-version-hashes.ts';
 import { checkVersion } from './version-check.ts';
 
@@ -39,29 +39,20 @@ const refused = (issues: readonly ValidationIssue[]): FieldIssue[] =>
  */
 async function merge(ctx: ServiceContext, u: Offer): Promise<void> {
   const db = ctx.env.DB;
+  // The fence state is read before the tip: a save in between makes the write refuse, never pass.
+  const state = await readForkState(db, u.templateId);
   const fork = await getForkRow(db, u.templateId);
-  // A paused fork keeps its offer pending: resuming plans it again.
-  if (fork?.tracking === 'paused') return;
-  const [template, upstream, tip] = await Promise.all([
-    getTemplate(db, u.templateId),
-    getTemplate(db, u.upstreamId),
-    forkTip(db, u.templateId),
-  ]);
-  const stale =
-    !fork ||
-    fork.upstream !== u.upstreamId ||
-    fork.org !== u.orgId ||
-    template?.status !== 'active' ||
-    template.orgId !== u.orgId ||
-    upstream?.origin !== 'baked' ||
-    upstream.status !== 'active' ||
-    upstream.activeVersion !== u.upstreamVersion ||
-    tip?.version !== u.oursVersion;
-  if (stale || !fork || !template || !upstream) {
+  // A paused fork, an archived template or a suspended org keeps its offer pending: the retry lane
+  // (which skips them while they last) queues it again when they are back.
+  if (fork?.tracking === 'paused' || !(await orgActive(db, u.orgId))) return;
+  const template = await getTemplate(db, u.templateId);
+  if (template?.status === 'archived') return;
+  if (!fork || !template || (await moved(db, u, fork))) {
     await failOffer(ctx, u, FORK_STALE);
     return;
   }
-  if (!(await upstreamReadable(db, u.upstreamId))) {
+  const upstream = await getTemplate(db, u.upstreamId);
+  if (!upstream || !(await upstreamReadable(db, u.upstreamId, u.templateId))) {
     ctx.log.warn('templates.fork_update_detached', {
       code: 'TEMPLATE_FORK_UPSTREAM_UNREADABLE',
       templateId: u.templateId,
@@ -69,7 +60,6 @@ async function merge(ctx: ServiceContext, u: Offer): Promise<void> {
     await failOffer(ctx, u, 'TEMPLATE_FORK_UPSTREAM_UNREADABLE');
     return;
   }
-  const state = await readForkState(db, u.templateId);
   const [ours, theirs] = await Promise.all([
     getVersion(db, u.templateId, u.oursVersion),
     getVersion(db, u.upstreamId, u.upstreamVersion),
@@ -142,15 +132,24 @@ async function merge(ctx: ServiceContext, u: Offer): Promise<void> {
   if (analysis.version === ours.version)
     return finish(ctx, u, await done({ status: 'noop', summary }));
 
+  // The fork is where the batch will expect it: no object is put for a merge that is already stale.
+  // (An object of a merge that loses the fence afterwards is an orphan under the fork's own prefix.)
+  if (JSON.stringify(await readForkState(db, u.templateId)) !== JSON.stringify(state)) return;
   // Files not already the fork's own are copied under the fork: a version never points at the upstream's objects.
   const assets: AssetEntry[] = [];
+  const prefix = r2Prefix(u.orgId, u.templateId);
   for (const a of analysis.assets) {
-    const own = carried.get(a.name);
-    if (own && own.sha1 === a.sha1) {
-      assets.push({ ...a, source: own.source });
+    const carry = carried.get(a.name);
+    const own =
+      carry?.sha1 === a.sha1 && carry.source.kind === 'r2' && carry.source.key.startsWith(prefix);
+    if (carry && own) {
+      assets.push({ ...a, source: carry.source });
       continue;
     }
-    const bytes = analysis.files.get(a.name);
+    // A strip carried from the upstream has no bytes in the analysis: read it, verified, to copy it.
+    const bytes =
+      analysis.files.get(a.name) ??
+      (carry?.sha1 === a.sha1 ? await readReleaseAsset(ctx, { ...a, source: carry.source }) : null);
     if (!bytes) throw new Error(`Missing file ${a.name}`);
     const key = r2Key(u.orgId, u.templateId, analysis.version, a.name);
     await putVersionAsset(ctx, key, bytes);
@@ -168,8 +167,16 @@ async function merge(ctx: ServiceContext, u: Offer): Promise<void> {
       'The merged version already has different content.',
       'TEMPLATE_CONTENT_CHANGED',
     );
-  // Unreviewed edits ride in this version: their author must not be able to approve it.
-  const createdBy = (await hasApproval(db, u.templateId, ours.version)) ? null : ours.createdBy;
+  // Unreviewed edits ride in this version: their author must not be able to approve it. Only a peer
+  // approval counts as review; a Test or sole approval is the author's own. A version that already
+  // exists keeps its author (a candidate must name it), so a reused id never changes the rule's answer.
+  // Parity with a human save: one author is named, even when several wrote the unreviewed edits.
+  const existing = await getVersion(db, u.templateId, analysis.version);
+  const createdBy = existing
+    ? existing.createdBy
+    : (await hasApproval(db, u.templateId, ours.version))
+      ? null
+      : ours.createdBy;
   const outcome = await commitMerge(ctx, u, state, {
     version: {
       templateId: u.templateId,
@@ -187,14 +194,59 @@ async function merge(ctx: ServiceContext, u: Offer): Promise<void> {
     summary,
     inferred,
   });
+  if (outcome === 'ok') {
+    const stored = await getVersion(db, u.templateId, analysis.version);
+    const shape = (v: { manifest: unknown; passJson: unknown; assets: unknown; report: unknown }) =>
+      canonicalJson({
+        m: v.manifest,
+        p: v.passJson,
+        a: (v.assets as AssetEntry[]).map(({ source: _s, ...rest }) => rest),
+        r: v.report,
+      });
+    if (
+      !stored ||
+      shape(stored) !==
+        shape({ manifest: analysis.manifest, passJson: analysis.passJson, assets, report })
+    )
+      throw new ConflictError(
+        'The merged version has different content than stored.',
+        'TEMPLATE_CONTENT_CHANGED',
+      );
+  }
   await finish(ctx, u, outcome);
 }
 
-/** A write refused because the fork moved: the offer is failed, and the planner opens a fresh one. */
+/** The offer can never be answered: its fork, tip or upstream version is not the one it was made for. */
+async function moved(db: D1Database, u: Offer, known?: ForkRow | null): Promise<boolean> {
+  const fork = known ?? (await getForkRow(db, u.templateId));
+  const [template, upstream, tip] = await Promise.all([
+    getTemplate(db, u.templateId),
+    getTemplate(db, u.upstreamId),
+    forkTip(db, u.templateId),
+  ]);
+  return (
+    !fork ||
+    fork.upstream !== u.upstreamId ||
+    fork.org !== u.orgId ||
+    !template ||
+    template.status === 'deleted' ||
+    template.orgId !== u.orgId ||
+    upstream?.origin !== 'baked' ||
+    upstream.status !== 'active' ||
+    upstream.activeVersion !== u.upstreamVersion ||
+    tip?.version !== u.oursVersion
+  );
+}
+
+/**
+ * A write refused. If the fork, tip and upstream are still the ones the offer was made for, only
+ * something a re-plan ignores moved (an approval elsewhere, a pause mid-job): the offer stays pending
+ * and the retry lane tries again. Otherwise it is failed for good and the planner opens a fresh one.
+ */
 async function finish(ctx: ServiceContext, u: Offer, outcome: 'ok' | 'stale'): Promise<void> {
   if (outcome === 'ok') return;
   ctx.log.info('templates.fork_update_stale', { code: FORK_STALE, templateId: u.templateId });
-  await failOffer(ctx, u, FORK_STALE);
+  if (await moved(ctx.env.DB, u)) await failOffer(ctx, u, FORK_STALE);
 }
 
 export async function handleForkUpdate(

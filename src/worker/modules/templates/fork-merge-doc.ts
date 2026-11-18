@@ -37,8 +37,9 @@ export async function docOf(ctx: ServiceContext, v: VersionRow): Promise<Package
 
 /** What the org's branding replaces on every pass, so a clash there changes nothing for holders. */
 function overriddenKeys(brandingJson: string | null): Set<string> {
-  const { colors } = readBranding(brandingJson ? JSON.parse(brandingJson) : {});
-  const keys = new Set(['logoText', 'eventLogoText']);
+  const { colors, logoHasName } = readBranding(brandingJson ? JSON.parse(brandingJson) : {});
+  // The org name replaces logoText on a pass either way; the org decides it only by dropping it.
+  const keys = new Set<string>(logoHasName ? ['logoText', 'eventLogoText'] : []);
   if (colors?.background) keys.add('backgroundColor');
   if (colors?.foreground) keys.add('foregroundColor');
   if (colors?.label) keys.add('labelColor');

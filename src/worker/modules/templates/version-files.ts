@@ -72,7 +72,7 @@ export async function resolveVersionFiles(
         known.set(`${a.name}|${a.sha1}`, a);
         versionOf.set(a, v.version);
       }
-    if (lineage && (await upstreamReadable(ctx.env.DB, lineage.upstreamId)))
+    if (lineage && (await upstreamReadable(ctx.env.DB, lineage.upstreamId, templateId)))
       for (const v of await listVersions(ctx.env.DB, lineage.upstreamId))
         for (const a of v.assets) {
           const key = `${a.name}|${a.sha1}`;

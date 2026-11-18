@@ -4,15 +4,21 @@ import type { UpdateKey } from './fork-updates-write.ts';
 import { FORK_STALE } from './repo-fork-update-checks.ts';
 
 /**
- * Only baked templates and platform-wide ones may supply files to a fork's merge or save. A copy of
- * another org's uploaded template has lineage but is detached for file content.
+ * Only platform-wide templates (blueprints, starters) and the fork's own org's baked templates may
+ * supply files to a fork's merge or save. A copy of another org's template has lineage but is
+ * detached for file content, and so is a fork of another org's built-in.
  */
-export async function upstreamReadable(db: D1Database, id: string): Promise<boolean> {
+export async function upstreamReadable(
+  db: D1Database,
+  upstreamId: string,
+  forkId: string,
+): Promise<boolean> {
   return !!(await first(
     db,
-    `SELECT 1 FROM templates WHERE id = ? AND status != 'deleted'
-       AND (origin = 'baked' OR org_id IS NULL)`,
-    [id],
+    `SELECT 1 FROM templates u JOIN templates f ON f.id = ?
+     WHERE u.id = ? AND u.status != 'deleted'
+       AND (u.org_id IS NULL OR (u.origin = 'baked' AND u.org_id = f.org_id))`,
+    [forkId, upstreamId],
   ));
 }
 
@@ -22,13 +28,13 @@ export interface Tip {
   createdBy: string | null;
 }
 
-/** `v` is not a merge version nobody has accepted: no approval on any candidate and no human save built on it. */
+/** `v` is not a merge version nobody has accepted: no peer or sole approval (a Test approval is not acceptance) and no human save built on it. */
 export const TIP_FILTER = `NOT (
   EXISTS (SELECT 1 FROM template_version_bases m
     WHERE m.template_id = v.template_id AND m.version = v.version AND m.via = 'merge')
   AND NOT EXISTS (SELECT 1 FROM template_candidates c
     JOIN template_approvals a ON a.candidate_id = c.id
-    WHERE c.template_id = v.template_id AND c.version = v.version)
+    WHERE c.template_id = v.template_id AND c.version = v.version AND a.kind != 'test')
   AND NOT EXISTS (SELECT 1 FROM template_version_bases e
     WHERE e.template_id = v.template_id AND e.parent_version = v.version
       AND e.via IN ('edit', 'resolve'))
@@ -46,7 +52,10 @@ export async function forkTip(db: D1Database, templateId: string): Promise<Tip |
   return row ?? null;
 }
 
-/** Whether any candidate of the version has an approval: its content was reviewed by someone. */
+/**
+ * Whether someone other than the author reviewed the version: a peer approval on any candidate. A
+ * Test or sole approval is the author's own, so it does not make their edits reviewed.
+ */
 export async function hasApproval(
   db: D1Database,
   templateId: string,
@@ -55,7 +64,7 @@ export async function hasApproval(
   return !!(await first(
     db,
     `SELECT 1 FROM template_candidates c JOIN template_approvals a ON a.candidate_id = c.id
-     WHERE c.template_id = ? AND c.version = ? LIMIT 1`,
+     WHERE c.template_id = ? AND c.version = ? AND a.kind = 'peer' LIMIT 1`,
     [templateId, version],
   ));
 }
@@ -93,7 +102,7 @@ export async function getForkRow(db: D1Database, templateId: string): Promise<Fo
 }
 
 /** Forks planned per tick: the rest wait for the next minute. */
-const BATCH = 50;
+const BATCH = 20;
 
 export interface Due {
   templateId: string;
@@ -138,6 +147,7 @@ const RETRY_SQL = `
     x.upstream_version AS upstreamVersion, x.ours_version AS oursVersion
   FROM template_fork_updates x
   JOIN template_forks f ON f.template_id = x.template_id AND f.tracking = 'on'
+  JOIN orgs o ON o.id = x.org_id AND o.status = 'active'
   WHERE x.status IN ('pending', 'failed') AND x.attempts < ? AND x.updated_at < ?
     AND COALESCE(json_extract(x.summary, '$.code'), '') != ?
   ORDER BY x.updated_at LIMIT ${BATCH}`;
@@ -157,4 +167,37 @@ export async function getOffer(db: D1Database, id: string): Promise<Offer | null
      FROM template_fork_updates WHERE id = ?`,
     [id],
   );
+}
+
+/** Offers still waiting for their job: new enough that the queue may simply be behind. */
+export async function pendingOffers(db: D1Database, since: number): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    "SELECT count(*) AS n FROM template_fork_updates WHERE status = 'pending' AND updated_at >= ?",
+    [since],
+  );
+  return row?.n ?? 0;
+}
+
+/**
+ * A cheap, sound pre-check for `dueForks`: some tracked fork has no offer for its upstream's active
+ * version at its newest version. The newest version is the tip unless an unaccepted merge sits on
+ * top, which only makes this say yes more often, never no when a fork is due.
+ */
+export async function anyDue(db: D1Database): Promise<boolean> {
+  return !!(await first(
+    db,
+    `SELECT 1 FROM template_forks f
+     JOIN templates u ON u.id = f.upstream_id AND u.origin = 'baked' AND u.status = 'active'
+       AND u.active_version IS NOT NULL
+     WHERE f.tracking = 'on' AND NOT EXISTS (SELECT 1 FROM template_fork_updates x
+       WHERE x.template_id = f.template_id AND x.upstream_version = u.active_version
+         AND x.ours_version = (SELECT v.version FROM template_versions v
+           WHERE v.template_id = f.template_id ORDER BY v.created_at DESC, v.version DESC LIMIT 1))
+     LIMIT 1`,
+  ));
+}
+
+export async function orgActive(db: D1Database, orgId: string): Promise<boolean> {
+  return !!(await first(db, "SELECT 1 FROM orgs WHERE id = ? AND status = 'active'", [orgId]));
 }
