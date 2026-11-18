@@ -9,7 +9,7 @@ import { ValidationIssueSchema } from './templates.ts';
 export const PassStatusSchema = z.enum(['active', 'voided']);
 /** List filter: the two statuses, plus passes removed from Wallet (which also read as voided). */
 export const PassListStatusSchema = z.enum(['active', 'voided', 'removed']);
-export const FieldSourceSchema = z.enum(['manual', 'connection']);
+export const FieldSourceSchema = z.enum(['manual', 'connection', 'import']);
 /** Why a version was published, beside its cause. Free text in the database, closed here. */
 export const PassSourceSchema = z.enum([
   'scan',
