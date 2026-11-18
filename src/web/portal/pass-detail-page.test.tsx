@@ -50,8 +50,6 @@ describe('pass detail', () => {
     ],
     ['Mac', MAC],
     ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1'],
-    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile'],
-    ['Samsung', 'Mozilla/5.0 (Linux; Android 14; SM-S928B) SamsungBrowser/25.0 Mobile'],
     ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36'],
   ])('shows every available wallet on %s', async (_name, ua) => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(ua);
@@ -78,6 +76,22 @@ describe('pass detail', () => {
       );
     }
     expect(screen.queryByText(/(?:Google|Samsung) Wallet (?:installed|removed)/i)).toBeNull();
+  });
+
+  it.each([
+    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile'],
+    ['Samsung', 'Mozilla/5.0 (Linux; Android 14; SM-S928B) SamsungBrowser/25.0 Mobile'],
+  ])('shows %s the native wallets and no Apple badge', async (_name, ua) => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(ua);
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () => json(passFixture({ walletOffers: nativeOffers })),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Add to Google Wallet' })).toBeVisible();
+    expect(screen.getByText('Open on iPhone or Mac to add to Apple Wallet.')).toBeVisible();
   });
 
   it('does not mistake an Apple registration for a native-wallet installation', async () => {

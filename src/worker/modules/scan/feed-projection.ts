@@ -76,7 +76,7 @@ export function toFeed(row: HistoryRow, door: HistoryPolicy | null): Feed {
     amount: detail ? row.amount : null,
     before: detail && door ? effectValue(row.before, door) : null,
     after: detail && door ? effectValue(row.after, door) : null,
-    method: row.method === 'auto' ? 'manual' : row.method,
+    method: row.method,
     scannerId: noPolicy ? null : row.scannerId,
     scannerName: null,
     undoneAt: row.undoneAt,

@@ -112,6 +112,11 @@ describe('tokens.remac', () => {
     expect(
       await first(kit.env.DB, 'SELECT 1 AS x FROM token_remac_marks WHERE pass_id = ?', [pass.id]),
     ).toBeNull();
+    expect(
+      await first(kit.env.DB, 'SELECT 1 AS x FROM bundle_remac_marks WHERE bundle_id = ?', [
+        bundle.id,
+      ]),
+    ).toBeNull();
 
     // With the previous root unset, only the rewritten MACs resolve.
     delete env().MAC_KEY_VERSION_PREVIOUS;
@@ -135,6 +140,31 @@ describe('tokens.remac', () => {
       rows?.n,
     );
     expect(await readSystemValue(kit.env.DB, 'tokens.remacDone')).toBe('1>2');
+  });
+
+  it('refuses a bundle MAC swap without a rotation or a mark naming it', async () => {
+    const pass = await kit.pass();
+    const bundle = await createBundle(
+      job(),
+      actor,
+      'live',
+      { orgId: kit.org.id, passIds: [pass.id], name: 'Guarded' },
+      { kind: 'system' },
+    );
+    const swap = (token: string) =>
+      run(kit.env.DB, 'UPDATE bundles SET token = ? WHERE id = ?', [token, bundle.id]);
+    await expect(swap('h1:other')).rejects.toThrow(
+      'a bundle token change must move token_rotated_at',
+    );
+    await run(kit.env.DB, 'INSERT INTO bundle_remac_marks (bundle_id, mac) VALUES (?, ?)', [
+      bundle.id,
+      'h1:named',
+    ]);
+    await expect(swap('h1:other')).rejects.toThrow(
+      'a bundle token change must move token_rotated_at',
+    );
+    await swap('h1:named');
+    await run(kit.env.DB, 'DELETE FROM bundle_remac_marks WHERE bundle_id = ?', [bundle.id]);
   });
 
   it('counts a row with no sealed copy and leaves it on the previous root', async () => {

@@ -48,6 +48,12 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   template_candidates: { org: 'org_id', mode: 'mode' },
   template_approvals: { org: null, edges: [edge('candidate_id', 'template_candidates')] },
   template_releases: { org: 'org_id', mode: 'mode' },
+  template_forks: { org: 'org_id' },
+  template_fork_updates: { org: 'org_id' },
+  template_version_bases: {
+    org: null,
+    edges: [edge('template_id', 'template_forks', 'template_id')],
+  },
   outbox: { org: 'org_id', pass: 'pass_id' },
   bundles: { org: 'org_id', mode: 'mode' },
   bundle_passes: {
@@ -95,6 +101,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   member_photos: { org: 'org_id', pass: 'pass_id' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
+  // The bundle counterpart (0087).
+  bundle_remac_marks: { org: null, edges: [edge('bundle_id', 'bundles')] },
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */

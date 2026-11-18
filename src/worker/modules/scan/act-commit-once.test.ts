@@ -47,32 +47,30 @@ describe('one heads-up is let through once', () => {
       heads.scanId ?? '',
     ]);
 
-  it('two overrides with different keys: the one that commits second is a heads-up', async () => {
+  it('two overrides with different keys: the one that claims second is refused at its claim', async () => {
     const { s, p, heads } = await headsUp();
-    let rival: ScanOutcome | undefined;
+    let rival: Response | undefined;
     const { result, fired } = await beforeBatch(
       kit.env,
       COMMIT,
       async () => {
-        rival = await outcome(await scan(s.headers, codeOf(p), { overrideOf: heads.scanId }));
+        rival = await scan(s.headers, codeOf(p), { overrideOf: heads.scanId });
       },
       () => scan(s.headers, codeOf(p), { overrideOf: heads.scanId }),
     );
     expect(fired).toBe(true);
-    expect(rival?.kind).toBe('ok');
-    expect(await outcome(result)).toMatchObject({
-      kind: 'heads_up',
-      reason: 'already_done',
-      overridable: false,
-      previous: { scanId: rival?.scanId },
-    });
-    expect((await overrides(heads)).map((o) => o.id)).toEqual([rival?.scanId]);
+    // `scans_override_once` holds the pending claim: the rival never reaches the gate.
+    expect(rival?.status).toBe(409);
+    expect(await rival?.json()).toMatchObject({ code: 'SCAN_OVERRIDE_TAKEN' });
+    const won = await outcome(result);
+    expect(won.kind).toBe('ok');
+    expect((await overrides(heads)).map((o) => o.id)).toEqual([won.scanId]);
     const gate = await all<{ last_scan_id: string }>(
       kit.env.DB,
       'SELECT last_scan_id FROM scan_gates WHERE pass_id=?',
       [p.id],
     );
-    expect(gate).toEqual([{ last_scan_id: rival?.scanId }]);
+    expect(gate).toEqual([{ last_scan_id: won.scanId }]);
   });
 
   it('control: one override commits', async () => {

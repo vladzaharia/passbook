@@ -77,6 +77,7 @@ export async function devicesForPass(
        AND other.credential_generation = shared.credential_generation
      WHERE r.pass_id = ? AND r.identity_id = ? AND r.credential_generation = ?
        AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
+       AND other.org_id = p.org_id
        AND other.deleted_at IS NULL AND other.test_data_quarantined = 0
        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
          WHERE t.pass_id = p.id AND t.state = 'pending')
@@ -194,6 +195,7 @@ export function pushEventStmt(
 /**
  * Remove only registrations that held the dead token in the original snapshot. A shared device
  * may have acquired another pass, or a pass may have transferred, while APNs was responding.
+ * Only this pass's org is touched: another org's registrations on the same token drop on their own push.
  */
 export async function dropRegistrations(
   db: D1Database,
@@ -217,6 +219,7 @@ export async function dropRegistrations(
            WHERE current_pass.id = registrations.pass_id
              AND current_pass.identity_id = registrations.identity_id
              AND current_pass.credential_generation = registrations.credential_generation
+             AND current_pass.org_id = ?
              AND current_pass.deleted_at IS NULL AND current_pass.test_data_quarantined = 0
              AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
                WHERE t.pass_id = current_pass.id AND t.state = 'pending'))`,
@@ -227,6 +230,7 @@ export async function dropRegistrations(
             registration.credentialGeneration,
             d.pushToken,
             ...pushFenceParams(fence),
+            fence.orgId,
           ],
         ),
       ),

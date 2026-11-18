@@ -67,7 +67,6 @@ export async function recoverScans(
           row.passVersion !== null ||
           row.outcome !== null ||
           row.reason !== null ||
-          row.overrideOf !== null ||
           row.approvedBy !== null ||
           row.undoneBy !== null ||
           row.direction != null ||

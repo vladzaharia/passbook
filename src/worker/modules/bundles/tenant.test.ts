@@ -432,10 +432,11 @@ describe('bundle tenant authorization', () => {
         () =>
           change === 'deleted'
             ? run(kit.env.DB, 'DELETE FROM bundles WHERE id = ?', [bundle.id])
-            : run(kit.env.DB, "UPDATE bundles SET token = 'h1:' || ? WHERE id = ?", [
-                kit.ctx.ids.token(),
-                bundle.id,
-              ]),
+            : run(
+                kit.env.DB,
+                "UPDATE bundles SET token = 'h1:' || ?, token_rotated_at = ? WHERE id = ?",
+                [kit.ctx.ids.token(), kit.clock.now(), bundle.id],
+              ),
         () => call('POST', `/${bundle.id}/send-email`, operator.session.headers, {}),
       );
       expect(response.status).toBe(409);

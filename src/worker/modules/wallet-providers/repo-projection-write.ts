@@ -193,8 +193,9 @@ export function insertProjectionReleaseStmt(
       AND c.credential_keyset_commitment = ? AND a.credential_keyset_commitment = c.credential_keyset_commitment
       AND a.reviewer_id != c.author_id AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)
       AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
-      AND c.provider = 'samsung' AND (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms', '?')})
-      AND ? = ? AND (${currentSourceAndAccount('c')}) AND (${auth.sql})
+      AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms', '?')}))
+      AND json_extract(c.projection_json, '$.schema') = CASE c.provider WHEN 'google' THEN 2 ELSE 1 END
+      AND (${currentSourceAndAccount('c')}) AND (${auth.sql})
       AND COALESCE((SELECT MAX(r.generation) FROM template_releases r WHERE ${same}), 0) = ?
       AND (SELECT r.id FROM template_releases r WHERE ${same} ORDER BY r.generation DESC LIMIT 1) IS ?
       AND ((? = 'release' AND ? IS NULL AND NOT EXISTS (SELECT 1 FROM template_releases r WHERE r.candidate_id = c.id))
@@ -221,8 +222,6 @@ export function insertProjectionReleaseStmt(
       JSON.stringify(policy.adapterCapabilities),
       policy.audiencePolicyRevision,
       input.credentialKeysetCommitment,
-      authority.userId,
-      authority.userId,
       ...auth.params,
       input.expectedGeneration,
       input.expectedReleaseId,

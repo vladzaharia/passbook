@@ -8,6 +8,7 @@ import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertTemplateAuthority, authorizeTemplateWrite } from './access.ts';
 import { putVersionAsset } from './asset-storage.ts';
+import { editLineage } from './fork-edit.ts';
 import { imagesFromBinding } from './images-binding.ts';
 import { audit, storageOrg } from './mutations.ts';
 import { buildKey } from './package/hash.ts';
@@ -66,6 +67,7 @@ export async function saveVersion(
       template: null,
     };
 
+  const { lineage, behindTip } = await editLineage(ctx, id, body.parentVersion);
   const owner = await storageOrg(ctx, row);
   const assets = [];
   for (const a of analysis.assets) {
@@ -94,6 +96,7 @@ export async function saveVersion(
     guardActive: true,
     buildKey: key,
     authorities: [author],
+    ...(lineage ? { lineage } : {}),
     body: {
       version: analysis.version,
       manifest: analysis.manifest,
@@ -135,6 +138,7 @@ export async function saveVersion(
     saved: true,
     created: committed.versionCreated,
     displayOnly: actualDisplayOnly,
+    ...(behindTip ? { behindTip } : {}),
     template: await detail(ctx, auth, id),
   };
 }

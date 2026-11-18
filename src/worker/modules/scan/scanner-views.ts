@@ -3,6 +3,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScannerListQuerySchema } from '../../../shared/contracts/scanners.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import { dayStartMs, scannerDto } from './dto-console.ts';
 import {
   type ConsoleScannerRow,
@@ -80,11 +81,19 @@ export async function listScanners(
   ctx: ServiceContext,
   mode: Mode,
   query: z.infer<typeof ScannerListQuerySchema>,
+  authority: TenantPassWrite,
 ) {
-  if (!query.orgId) throw new ForbiddenError();
+  if (
+    authority.kind !== 'session' ||
+    authority.capability !== 'scanning:read' ||
+    authority.mode !== mode ||
+    !query.orgId ||
+    query.orgId !== authority.orgId
+  )
+    throw new ForbiddenError();
   const rows = await listConsoleScanners(ctx.env.DB, {
     ...query,
-    orgId: query.orgId,
+    orgId: authority.orgId,
     mode,
     limit: query.limit + 1,
   });

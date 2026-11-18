@@ -28,6 +28,13 @@ const OVERRIDABLE = new Set<ScanReason>([
   'not_yet_valid',
   'ended',
   'capacity_full',
+  'still_inside',
+  'not_inside',
+  // Access refusals: the desk lets them in with a Manager (SA §20.6).
+  'zone_not_included',
+  'outside_hours',
+  'guest_expired',
+  'guest_visits_used',
 ]);
 
 export const isOverridable = (reason: ScanReason | null): boolean =>
@@ -119,11 +126,12 @@ export function canOverride(
   reason: ScanReason | null,
   action: ResolvedScanAction | null,
   approvals: boolean,
+  kind: string | null = null,
 ): boolean {
   if (!isOverridable(reason)) return false;
   if (action?.kind === 'check_in' && action.allowAgain === false) return false;
   const verdict = scanPolicy(policyActor(actor), {
-    kind: overridePolicyKind(reason),
+    kind: overridePolicyKind(reason, kind),
   });
   return verdict.allow || (verdict.why === 'needs_approval' && approvals);
 }
@@ -205,13 +213,14 @@ export function stopOutcome(
     at: stop.at,
     cooldownRemainingMs: stop.cooldownRemainingMs ?? null,
     access: stop.access ?? null,
+    ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),
     flags: details.flags,
     checkIn: stop.found?.admission?.state,
     overridable:
       stop.hard !== true &&
       stop.kind === 'heads_up' &&
       details.action !== null &&
-      canOverride(actor, stop.reason, options.action, read.approvals),
+      canOverride(actor, stop.reason, options.action, read.approvals, stop.kind),
     display: showPass
       ? safeDisplay(ctx, actor, stop.pass, stop.kind, {
           found: stop.found ?? undefined,

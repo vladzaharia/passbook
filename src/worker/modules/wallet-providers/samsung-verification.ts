@@ -91,7 +91,11 @@ async function probe(
   authority: Authority | null,
   proof: WalletCredentialKeysetProof,
 ): Promise<SamsungVerificationResult> {
-  if (candidate.projection.provider !== 'samsung' || !walletProviderEnabled('samsung'))
+  if (
+    candidate.projection.provider !== 'samsung' ||
+    candidate.projection.schema !== 1 ||
+    !walletProviderEnabled('samsung')
+  )
     return unverified();
   const probeId = ctx.ids.id();
   if (!(await beginSamsungProjectionProbe(ctx, authority, candidate, probeId, proof)))
