@@ -29,6 +29,7 @@ import {
 import type { FeedFence } from './repo-feed.ts';
 import {
   backfillDeliveries,
+  claimReplayMinute,
   countReplayable,
   missingSeqs,
   replayOne,
@@ -229,6 +230,9 @@ export async function replayRange(
   let queued = 0;
   for (const [n, plan] of plans.entries()) {
     const g = webhookGrant(ctx, access, 'replay');
+    // The minute is claimed in the first chunk's own batch: of two concurrent replays the batch that
+    // runs second finds the first one's audit row and aborts before writing anything.
+    if (n === 0) claimReplayMinute(g, ctx.clock.now() - MIN);
     const statements = plan(g);
     if (n === 0)
       auditEndpoint(ctx, g, actor, access, 'webhook.replay', endpointId, {
@@ -244,6 +248,7 @@ export async function replayRange(
     } catch (error) {
       // An earlier chunk is committed and audited: report it instead of failing the whole call.
       if (n === 0) {
+        if (error instanceof AppError && error.code === 'STALE') throw new RateLimitedError();
         if (error instanceof AppError) throw error;
         ctx.log.error('webhooks.replay_not_queued', {
           orgId: access.authority.orgId,

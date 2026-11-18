@@ -108,6 +108,24 @@ describe('replay limits', () => {
     ).toBe(200);
   });
 
+  it('two concurrent bulk replays: exactly one queues, the other is a 429 that wrote nothing', async () => {
+    const o = await org();
+    for (let i = 0; i < 3; i++) await api.rig.kit.pass({ orgId: o.orgId });
+    const a = await o.create('https://hooks.example.com/a');
+    const b = await o.create('https://hooks.example.com/b');
+    const body = { from: 0, to: 4e12, missing: true };
+    const [x, y] = await Promise.all([
+      api.call('POST', `${BASE}/${a}/replay`, body, o.admin),
+      api.call('POST', `${BASE}/${b}/replay`, body, o.admin),
+    ]);
+    expect([x.status, y.status].sort()).toEqual([200, 429]);
+    const winner = x.status === 200 ? a : b;
+    const loser = winner === a ? b : a;
+    expect(await rowCount(api.rig.db, 'webhook_deliveries', 'endpoint_id = ?', [loser])).toBe(0);
+    expect(await rowCount(api.rig.db, 'webhook_deliveries', 'endpoint_id = ?', [winner])).toBe(3);
+    expect(await auditOf(api.rig.db, 'webhook.replay')).toHaveLength(1);
+  });
+
   it('single replays are limited per tenant and audited once a minute', async () => {
     const o = await org();
     const id = await o.create();

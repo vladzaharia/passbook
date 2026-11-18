@@ -107,3 +107,19 @@ export function backfillDeliveries(g: Grant, endpointId: string, seqs: number[])
     returning: ['event_seq'],
   });
 }
+
+/**
+ * Aborts the batch (`stale`) when this org and mode already committed a bulk replay since `since`.
+ * Put first in the first chunk's grant: concurrent replays serialize on the batch, so only one writes.
+ */
+export function claimReplayMinute(g: Grant, since: number): void {
+  assertOrgModeGrant(g);
+  g.assert('stale', [
+    tenantSql(
+      `NOT EXISTS (SELECT 1 FROM audit_log prior WHERE prior.org_id = {org} AND prior.action = 'webhook.replay'
+         AND prior.at > ? AND json_extract(prior.detail, '$.from') IS NOT NULL
+         AND json_extract(prior.detail, '$.mode') = {mode})`,
+      [since],
+    ),
+  ]);
+}
