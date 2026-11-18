@@ -1,0 +1,63 @@
+/*
+ * Organization overview motion: the wallet bars grow from the left once on arrival (480 ms,
+ * staggered by row), and the Not added card breathes a soft accent glow. Transform and opacity
+ * only. Under reduced motion both hold their final frame.
+ */
+@keyframes wl-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes wl-glow {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.wl-wallet-bar {
+  display: flex;
+  height: 0.5rem;
+  min-width: 6rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--pk-surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--pk-border);
+}
+.wl-wallet-bar > span {
+  display: block;
+  height: 100%;
+  transform-origin: left center;
+}
+.wl-wallet-bar > [data-part="in"] {
+  background: var(--pk-accent-fg);
+}
+.wl-wallet-bar > [data-part="out"] {
+  background: color-mix(in srgb, var(--pk-accent-fg) 32%, var(--pk-surface-sunken));
+}
+
+.wl-notadded {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.wl-notadded::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse at 100% 0%,
+    color-mix(in srgb, var(--pk-accent) 16%, transparent),
+    transparent 60%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-wallet-bar > span {
+    animation: wl-bar-grow 480ms var(--wl-ease-out) backwards;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+  .wl-notadded::before {
+    animation: wl-glow 4.8s ease-in-out infinite;
+  }
+}

@@ -117,3 +117,47 @@ export function memoryStorage() {
     clear: () => map.clear(),
   };
 }
+
+const day = 86_400_000;
+const orgSeries = (vals: number[]) => vals.map((v, i) => ({ t: 1_700_000_000_000 + i * day, v }));
+
+/** An organization's activity by template, as GET /api/v1/metrics/activity returns it. */
+export const orgActivity = (over: Record<string, unknown> = {}) => ({
+  range: '7d',
+  bucketMs: day,
+  totals: {
+    issued: 40,
+    added: 30,
+    removed: 2,
+    scans: 25,
+    redemptions: 9,
+    inWallet: 120,
+    notAdded: 18,
+  },
+  series: { issued: orgSeries([1, 4, 2, 6]), scans: orgSeries([0, 3, 9, 13]) },
+  templates: [
+    {
+      templateId: 't1',
+      name: 'Member card',
+      issued: 30,
+      added: 24,
+      removed: 1,
+      scans: 20,
+      redemptions: 9,
+      inWallet: 90,
+      notAdded: 10,
+    },
+    {
+      templateId: 't2',
+      name: 'Day pass',
+      issued: 10,
+      added: 6,
+      removed: 1,
+      scans: 5,
+      redemptions: 0,
+      inWallet: 30,
+      notAdded: 8,
+    },
+  ],
+  ...over,
+});
