@@ -62,6 +62,7 @@ export function approve(s: MachineState, ev: Of<'approve'>, env: Env): Out {
         since: env.now,
         slow: false,
         next: null,
+        retry: l.outcome,
       },
       lastActivity: env.now,
     },

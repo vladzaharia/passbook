@@ -44,3 +44,7 @@
   gap: 12px;
   padding-top: 6px;
 }
+.scan-approval-verb {
+  margin: 0;
+  color: var(--sd-muted, inherit);
+}

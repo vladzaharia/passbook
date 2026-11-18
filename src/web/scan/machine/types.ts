@@ -10,8 +10,9 @@ import type {
 } from '../../../shared/contracts/scan.ts';
 import type { ScanDisplay } from '../../../shared/contracts/scan-display.ts';
 import type { ScanInput } from '../input/types.ts';
+import type { FailCode, PinNote } from './fail.ts';
 
-export type { ScanInput };
+export type { FailCode, PinNote, ScanInput };
 
 /** The member card's data: what a `ready` outcome carries. */
 export type Card = ScanCard;
@@ -67,6 +68,8 @@ export type Loop =
       since: number;
       slow: boolean;
       next: ScanInput | null;
+      /** The `needs_approval` verdict a PIN was sent from, shown again when the PIN is refused. */
+      retry?: ScanOutcome;
     }
   | {
       s: 'verdict';
@@ -83,6 +86,8 @@ export type Loop =
       next: ScanInput | null;
       /** What was sent, so a Manager's PIN can re-send the same draft (`needs_approval`). */
       draft?: Draft;
+      /** The last PIN was refused: the tries the lockout leaves, or locked. */
+      pin?: PinNote;
     }
   | { s: 'paused'; reason: 'idle' | 'hidden' | 'camera_lost' };
 
@@ -156,24 +161,20 @@ export interface ScanState {
   lastActivity: number;
 }
 
-export type FailCode =
-  | 'network'
-  | 'timeout'
-  | 'server'
-  | 'rate_limited'
-  | 'revoked'
-  | 'suspended'
-  | 'signed_out'
-  | 'forbidden'
-  | 'staff_required';
-
 export type ScanEvent =
   | { type: 'start' }
   | { type: 'scope'; scope: Partial<ScanState['scope']> }
   | { type: 'camera'; status: CameraStatus }
   | { type: 'read'; input: ScanInput }
   | { type: 'answer'; key: string; outcome: ScanOutcome; replay?: boolean }
-  | { type: 'fail'; key: string; error: FailCode; retryAfterMs?: number; requestId?: string }
+  | {
+      type: 'fail';
+      key: string;
+      error: FailCode;
+      retryAfterMs?: number;
+      requestId?: string;
+      triesLeft?: number;
+    }
   | { type: 'offline'; key: string; outcome: ScanOutcome }
   | { type: 'pick'; actionId: string }
   | { type: 'amount'; value: number | null }
