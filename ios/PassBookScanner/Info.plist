@@ -14,7 +14,8 @@
 	<key>LSRequiresIPhoneOS</key><true/>
 	<key>ITSAppUsesNonExemptEncryption</key><false/>
 	<key>NSCameraUsageDescription</key><string>Scan pass barcodes with the camera.</string>
-	<key>NFCReaderUsageDescription</key><string>Read a supported NFC tag when you choose NFC scan.</string>
+	<key>NFCReaderUsageDescription</key><string>Read an NFC tag when you tap to read.</string>
+	<key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key><array><string>D2760000850101</string></array>
 	<key>UIApplicationSceneManifest</key>
 	<dict><key>UIApplicationSupportsMultipleScenes</key><true/><key>UISceneConfigurations</key><dict><key>UIWindowSceneSessionRoleApplication</key><array><dict><key>UISceneConfigurationName</key><string>Default Configuration</string><key>UISceneDelegateClassName</key><string>$(PRODUCT_MODULE_NAME).SceneDelegate</string></dict></array></dict></dict>
 	<key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationPortraitUpsideDown</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
