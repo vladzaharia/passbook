@@ -496,6 +496,9 @@ describe('pass email: join line', () => {
     expect(joined.html).toContain(line.replace("Didn't", 'Didn&#39;t'));
     expect(render().text).not.toContain('You asked for this card');
     expect(render().html).not.toContain('You asked for this card');
+  });
+});
+
 describe('From name keeps the platform attribution', () => {
   it.each([[''], ['   '], [null], [undefined]])('with sender name %j', (senderName) => {
     expect(render({ senderName }).fromName).toBe('Harbor Lights Festival via PassBook');

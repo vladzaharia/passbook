@@ -407,6 +407,9 @@ describe('tag lookups', () => {
     expect(fullScans(pass, 'nfc_tags')).toEqual([]);
     expect(pass.join('\n')).toMatch(/tag_bindings_pass/);
     expect(pass.join('\n')).toMatch(/tag_bindings_user/);
+  });
+});
+
 describe('outbound webhook query plans', () => {
   const fence = { orgId: 'o', mode: 'live' as const };
 

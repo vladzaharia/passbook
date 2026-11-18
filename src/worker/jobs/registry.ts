@@ -33,6 +33,7 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'connection.webhook':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'webhook.deliver':
+      return JOB_HANDLERS[job.kind](job, ctx);
     case 'template.fork_update':
       return JOB_HANDLERS[job.kind](job, ctx);
   }

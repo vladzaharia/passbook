@@ -1348,6 +1348,9 @@ describe('0086_nfc_tags migration', () => {
     );
     await run(env.DB, 'DELETE FROM orgs WHERE id = ?', [bare.id]);
     expect(await first(env.DB, "SELECT 1 AS x FROM nfc_tags WHERE id = 't-bare'")).toBeNull();
+  });
+});
+
 describe('0090 webhooks migration', () => {
   it('creates the tables, the journal trigger and the tenant triggers', async () => {
     const rows = await all<{ type: string; name: string }>(

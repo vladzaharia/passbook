@@ -18,6 +18,7 @@ import {
   scopeOf,
 } from './authority-granted.ts';
 import { buildPart, type GrantPart } from './authority-include.ts';
+import { assertJobGrantInput, type JobGrantInput } from './authority-job-input.ts';
 import {
   buildInsertJoined,
   buildJoined,
@@ -25,7 +26,7 @@ import {
   type JoinedOptions,
 } from './authority-joined.ts';
 import { joinLedgerRow, joinOnlyInserts, pinOf } from './authority-pin.ts';
-import type { GrantScope, Mode, Principal } from './authority-principal.ts';
+import type { GrantScope, Principal } from './authority-principal.ts';
 import {
   assertBudget,
   type BuiltStatement,
@@ -47,8 +48,8 @@ export type { AuditRow } from './authority-audit.ts';
 export { grantedBatch } from './authority-batch.ts';
 export type { GrantedStatement, GrantInput } from './authority-granted.ts';
 export { authorityDenial, sweepLeakedGrants } from './authority-granted.ts';
+export type { JobGrantInput } from './authority-job-input.ts';
 
-const JOB_PURPOSE = /\.job\./;
 type StatementSize = { params: number; bytes: number };
 
 export class Grant {
@@ -306,35 +307,11 @@ export function grant(ctx: ServiceContext, input: GrantInput): Grant {
   return new Grant(ctx.env.DB, ctx.ids.token(), scope, full, ctx.clock.now());
 }
 
-export interface JobGrantInput extends Omit<GrantInput, 'principal'> {
-  job: string;
-  orgId?: string;
-  mode?: Mode;
-  orgAccessRevision?: number;
-  inactiveOk?: true;
-}
-
-/** The purposes that may act while the org is suspended, with the tables each may write. */
-const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
-  'org_mode.job.pass_import.finish': ['pass_imports', 'counters'],
-  'org_mode.job.pass_import.retention_clear': ['pass_imports', 'pass_import_rows'],
-  'org_mode.job.pass_import.retention_delete': ['pass_imports', 'pass_import_rows'],
-};
-
 /** Only a context built by `createJobContext` (queue, cron, workflow) can mint a `system:` grant. */
 export function jobGrant(ctx: ServiceContext, input: JobGrantInput): Grant {
   if (!hasJobAuthority(ctx))
     throw new AuthorityError('GRANT_NOT_JOB', 'jobGrant needs a queue, cron or workflow context.');
-  if (!JOB_PURPOSE.test(input.purpose))
-    throw new AuthorityError(
-      'GRANT_BAD_PURPOSE',
-      'A job grant purpose names a job: <scope>.job.<name>.',
-    );
-  if (input.inactiveOk) {
-    const allowed = INACTIVE_OK_PURPOSES[input.purpose];
-    if (!allowed || !input.tables?.every((t) => allowed.includes(t)))
-      throw new AuthorityError('GRANT_BAD_PURPOSE', 'inactiveOk is for allowlisted purposes.');
-  }
+  assertJobGrantInput(input);
   const { job, orgId, mode, orgAccessRevision, inactiveOk, ...rest } = input;
   const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision, inactiveOk });
   const full = { ...rest, principal };

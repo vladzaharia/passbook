@@ -17,7 +17,8 @@ import {
 import { useMode } from '../../lib/mode.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import { ConfirmDialog, confirmWord, TypedConfirmDialog, toast } from '../../ui/index.ts';
-import { usePassActions, usePassRemoval } from './api.ts';
+import { usePassActions } from './api.ts';
+import { usePassRemoval } from './api-removal.ts';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
 import { absoluteUrl } from './format.ts';
 import { RotateLink } from './rotated-link-dialog.tsx';

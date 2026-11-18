@@ -12,6 +12,7 @@ import {
 } from './scan-base.ts';
 import { ScanDisplayReadSchema } from './scan-display.ts';
 import { ScanOccupancySchema, ScanPlaceCountSchema } from './scan-occupancy.ts';
+import { ScanValueSchema } from './scan-value.ts';
 
 // Moved to leaf files so the access and occupancy contracts can use them without a cycle.
 export { type ScanAccess, ScanAccessSchema } from './scan-access.ts';
@@ -25,6 +26,7 @@ export {
   UuidV7Schema,
 } from './scan-base.ts';
 export { type ScanOccupancy, ScanOccupancySchema } from './scan-occupancy.ts';
+export { ScanValueSchema } from './scan-value.ts';
 
 export const ScanMethodSchema = z.enum(['camera', 'wedge', 'nfc', 'manual']);
 export type ScanMethod = z.infer<typeof ScanMethodSchema>;
@@ -172,19 +174,6 @@ export const ScanPreviousSchema = z.object({
   staffName: z.string().nullable(),
   actionLabel: z.string(),
   override: z.boolean(),
-});
-export const ScanValueSchema = z.object({
-  input: z.string(),
-  label: z.string(),
-  before: JsonSchema.nullable(),
-  after: JsonSchema.nullable(),
-  goal: z.number().nullable(),
-  format: z.enum(['number', 'currency', 'text']),
-  currency: z.string().optional(),
-  /** The input is a counter: a refusal uses the counter's wording. */
-  counter: z.boolean().optional(),
-  /** A refused `take`: what it asked for. */
-  need: z.number().nullable().optional(),
 });
 export const ScanCardActionSchema = z.object({
   id: z.string(),
