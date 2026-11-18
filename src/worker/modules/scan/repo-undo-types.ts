@@ -5,6 +5,7 @@ import type { OccupancyRow } from './occupancy/repo.ts';
 import type { OccZone } from './occupancy/rules.ts';
 import type { ScanRow } from './repo-scans.ts';
 import type { ScanEventRow } from './repo-scope.ts';
+import type { PreparedScanRetentionProof } from './scan-retention-proof.ts';
 
 export interface UndoGate {
   /** An Access card's visit gate is `access` (`visit`, `visit_at`: its visit counting). */
@@ -53,6 +54,8 @@ export interface UndoCommit {
   approver: { id: string; authEpoch: number } | null;
   id: string;
   key: string;
+  /** The undo's signed proof, made at the clock its rows use (`prepareUndoRetention`). */
+  retention?: PreparedScanRetentionProof | null;
   /** The answer's reads: they commit with the grant, so the undo needs no trip of its own for them. */
   reads?: readonly AfterRead[];
 }

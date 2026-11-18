@@ -18,7 +18,7 @@ export const snapshotSchema = z
     templateId: id,
     scannerId: nullableId,
     eventId: nullableId,
-    actorType: z.enum(['scanner', 'user']),
+    actorType: z.enum(['scanner', 'user', 'system']),
     actorId: id,
     actorKey: id,
     staffId: nullableId,
@@ -35,9 +35,74 @@ export const snapshotSchema = z
     at: integer,
     undoes: nullableId,
     override: z.boolean(),
+    // Only in the snapshots of system and desk exits: older proofs were signed without it.
+    outCause: z.enum(['stay', 'clear', 'desk', 'forced', 'zone']).optional(),
   })
   .strict();
 export type ScanRetentionSnapshot = z.infer<typeof snapshotSchema>;
+
+/** What a proof attests beyond a normal scan; the MAC input is versioned by it. */
+export type ProofKind = 'auto_exit' | 'mark_out' | 'undo';
+
+/** The kind follows from the signed scan facts, so a proof cannot be checked as another kind. */
+export function proofKind(
+  s: Pick<ScanRetentionSnapshot, 'actorType' | 'undoes' | 'outCause'>,
+): ProofKind | null {
+  if (s.actorType === 'system') return 'auto_exit';
+  if (s.undoes !== null) return 'undo';
+  return s.outCause === 'desk' ? 'mark_out' : null;
+}
+
+/** A stored row's cause belongs in the snapshot only for these kinds. */
+export function retainedOutCause(
+  actorType: string,
+  outCause: string | null,
+): ScanRetentionSnapshot['outCause'] {
+  if (outCause === null || (actorType !== 'system' && outCause !== 'desk')) return undefined;
+  return outCause as ScanRetentionSnapshot['outCause'];
+}
+
+/**
+ * The plain authority a ledger row carries when no scanner action or resolved pass decided it. The
+ * purposes are labels of the grant that wrote the row, not rechecked against it.
+ */
+const authoritySchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('system'),
+    job: z.literal('scan.occupancy'),
+    cause: z.enum(['stay', 'clear', 'zone']),
+  }),
+  // A scanner or signed-in desk staff member marking out on a device.
+  z.object({ kind: z.literal('device'), purpose: z.literal('org_mode.scan.check_in') }),
+  // An admin marking out in the console.
+  z.object({ kind: z.literal('console'), purpose: z.literal('org_mode.scan.mark_out') }),
+  z.object({
+    kind: z.literal('undo'),
+    purpose: z.literal('org_mode.scan.undo'),
+    undoes: scanId,
+  }),
+]);
+export type ProofAuthority = z.infer<typeof authoritySchema>;
+
+export const KIND_OF_AUTHORITY: Record<ProofAuthority['kind'], ProofKind> = {
+  system: 'auto_exit',
+  device: 'mark_out',
+  console: 'mark_out',
+  undo: 'undo',
+};
+
+export const systemSourceSchema = z.object({
+  scanId: id,
+  outcome: z.literal('ok'),
+  method: z.string(),
+  eventId: nullableId,
+  scannerId: nullableId,
+  staffId: nullableId,
+  approvedBy: nullableId.optional(),
+  undoes: scanId.optional(),
+  outCause: z.enum(['stay', 'clear', 'zone']).optional(),
+  authority: authoritySchema,
+});
 
 export const sourceSchema = z.object({
   scanId: id,

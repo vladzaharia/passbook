@@ -2,9 +2,12 @@ import { type Grant, grant } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
 import { ACCESS_GATE } from './repo-access.ts';
+import { includeSystemRetentionProof } from './repo-scan-retention-part.ts';
 import type { ScanRow } from './repo-scans.ts';
 import { undoAccessGate } from './repo-undo-access.ts';
+import { undoEventRow } from './repo-undo-retention.ts';
 import type { UndoCommit } from './repo-undo-types.ts';
+import { SCAN_COMMIT_TABLES } from './scan-write-grant.ts';
 
 /** A quarantined pass keeps its scans out of every ledger, undo included. */
 function notQuarantined(target: ScanRow): Check[] {
@@ -56,6 +59,7 @@ export function openUndoGrant(
     purpose: 'org_mode.scan.undo',
     principal: scanPrincipal(actor),
     target: target.id,
+    tables: [...SCAN_COMMIT_TABLES, 'passes'],
     codes: (extra.codes ?? UNDO_CODES) as typeof UNDO_CODES,
     checks: [
       ...scanActorChecks(actor, { now, event, templateId: target.templateId ?? undefined }),
@@ -82,7 +86,8 @@ const restoresGate = (kind: string | null) => kind === 'add' || kind === 'take' 
 /** The undo's writes: the gate, the target, the undo scan, its ledger event and the audit row. */
 export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
   const { ctx, actor, target, gate, presence, approver, id } = c;
-  const now = ctx.clock.now();
+  const now = c.retention?.scan.at ?? ctx.clock.now();
+  const event = c.retention?.event ?? undoEventRow(c, now);
   const gateWhere = {
     pass_id: target.passId,
     action_id: gate.action_id,
@@ -200,25 +205,14 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
       'pass_events',
       ['id', 'pass_id', 'kind', 'device', 'actor_type', 'actor_id', 'data', 'at'],
       [
-        ctx.ids.ordered(now),
-        target.passId,
-        'scan.undone',
-        null,
-        actor.actor.type,
-        actor.actor.id,
-        JSON.stringify({
-          scanId: id,
-          undoes: target.id,
-          actionKind: 'undo',
-          outcome: 'ok',
-          method: 'manual',
-          eventId: target.eventId,
-          scannerId: actor.scanner?.id ?? null,
-          staffId: actor.staff?.id ?? null,
-          approvedBy: approver?.id ?? null,
-          ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
-        }),
-        now,
+        event.id,
+        event.pass_id,
+        event.kind,
+        event.device,
+        event.actor_type,
+        event.actor_id,
+        event.data,
+        event.at,
       ],
       { returning: ['id'] },
     ),
@@ -285,5 +279,6 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
           }),
     );
   }
+  if (c.retention) includeSystemRetentionProof(g, c.retention);
   return g;
 }
