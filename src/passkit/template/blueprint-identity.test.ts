@@ -75,6 +75,13 @@ const IDENTITY: Record<string, { bg: Rgb; fg: Rgb; label: Rgb; text: number; lab
     text: 8.1,
     labels: 6.0,
   },
+  'starter-access-card': {
+    bg: [29, 58, 186],
+    fg: [255, 255, 255],
+    label: [207, 224, 255],
+    text: 8.9,
+    labels: 6.7,
+  },
 };
 
 describe.each(Object.entries(IDENTITY))('%s identity', (slug, want) => {
@@ -108,6 +115,7 @@ it('names each blueprint and gives it a curated glyph', async () => {
     'starter-event-ticket': ['Event ticket', 'music'],
     'starter-boarding-pass': ['Boarding pass', 'plane'],
     'starter-stamp-card': ['Stamp card', 'stamp'],
+    'starter-access-card': ['Access card', 'key'],
   };
   for (const [slug, [name, icon]] of Object.entries(names)) {
     const { template } = await loadBaked(slug, { strips: false });
@@ -125,8 +133,10 @@ it('names the store card a Balance card and leads with the balance', async () =>
 });
 
 const PRE = join(import.meta.dirname, '__fixtures__/pre-blueprint');
-// The Stamp card is new with blueprints: no earlier build to compare.
-const UPGRADED = Object.keys(IDENTITY).filter((slug) => slug !== 'starter-stamp-card');
+// The Stamp and Access cards are new: no earlier build to compare.
+const UPGRADED = Object.keys(IDENTITY).filter(
+  (slug) => slug !== 'starter-stamp-card' && slug !== 'starter-access-card',
+);
 const IDENTITY_KEYS = ['backgroundColor', 'foregroundColor', 'labelColor', 'description'];
 const walk = (v: unknown, path = ''): [string, unknown][] =>
   v && typeof v === 'object'
