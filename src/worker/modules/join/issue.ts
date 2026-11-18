@@ -31,7 +31,7 @@ export async function openRelease(
 }
 
 /** `ids.code` samples below 2^32, so a ten-digit code is two five-digit halves (it never ends at ten). */
-const tenDigits = (ids: Ids) => ids.code(5) + ids.code(5);
+const tenDigits = (ids: Ids) => ids.code(10);
 
 /**
  * The only inputs a public card has: each top-level schema default, the name in the one input the link
