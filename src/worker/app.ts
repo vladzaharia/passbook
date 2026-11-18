@@ -17,6 +17,7 @@ import { metricsRoutes } from './modules/metrics/routes.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
 import { orgsRoutes } from './modules/orgs/routes.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
+import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
 import { sandboxRoutes } from './modules/sandbox/routes.ts';
 import { scanRoutes } from './modules/scan/routes.ts';
@@ -119,6 +120,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/orgs', orgsRoutes);
   app.route('/api/v1/templates', templatesRoutes);
   app.route('/api/v1/passes', passesRoutes);
+  app.route('/api/v1/pass-imports', passImportRoutes);
   app.route('/api/v1/bundles', bundlesRoutes);
   app.route('/api/v1/test-inbox', sandboxRoutes);
   app.route('/api/v1/broadcasts', broadcastsRoutes);
