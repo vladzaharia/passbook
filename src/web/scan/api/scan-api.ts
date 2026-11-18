@@ -14,6 +14,7 @@ import {
   type ScanResolveRequestSchema,
   type ScanUndoRequestSchema,
 } from '../../../shared/contracts/scan.ts';
+import type { ScanRoleChange } from '../../../shared/contracts/scan-role.ts';
 import {
   type ScanBatchRequestSchema,
   ScanBatchResultSchema,
@@ -255,6 +256,7 @@ export function createScanApi(deps: ScanApiDeps) {
     staffSignIn: (body: z.infer<typeof ScanStaffSignInSchema>) =>
       request('POST', '/staff', ScanSessionSchema, body),
     staffSignOut: () => request('DELETE', '/staff', ScanSessionSchema),
+    setRole: (body: ScanRoleChange) => request('POST', '/role', ScanSessionSchema, body),
     staffSearch: (q: string, call?: Call) =>
       request('GET', `/staff?q=${encodeURIComponent(q)}`, ScanStaffSearchSchema, undefined, call),
     roster: (cursor?: string, call?: Call) =>
