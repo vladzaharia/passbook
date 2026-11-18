@@ -12,6 +12,7 @@ export const passListSearchSchema = z.object({
   status: opt(PassListStatusSchema),
   holderState: opt(z.enum(['unassigned', 'waiting', 'owned'])),
   onDevice: opt(z.enum(['true', 'false'])),
+  noScanDays: opt(z.union([z.literal(30), z.literal(90)])),
 });
 
 export const newPassSearchSchema = z.object({
