@@ -13,6 +13,7 @@ import {
   ScanRecentSchema,
   ScanSessionSchema,
   ScanSummarySchema,
+  ScanSummaryScopeSchema,
 } from '../../../shared/contracts/scan-session.ts';
 import {
   ReportScanDeviceSchema,
@@ -228,11 +229,16 @@ register(
     method: 'get',
     path: '/summary',
     summary: "This scanner's tally",
-    query: z.object({ since: z.coerce.number().int().nonnegative().optional() }),
+    query: z.object({
+      since: z.coerce.number().int().nonnegative().optional(),
+      scope: ScanSummaryScopeSchema.default('device'),
+    }),
     response: ScanSummarySchema,
   },
-  async (c) =>
-    c.json(await summaryFor(serviceContext(c), scanActorOf(c), c.req.valid('query').since)),
+  async (c) => {
+    const { since, scope } = c.req.valid('query');
+    return c.json(await summaryFor(serviceContext(c), scanActorOf(c), since, scope));
+  },
 );
 
 register(

@@ -150,7 +150,59 @@ export const ScanSummarySchema = z.object({
   ),
   firstAt: TimestampSchema.nullable(),
   lastAt: TimestampSchema.nullable(),
+  scope: z.enum(['device', 'session']).default('device'),
+  timeZone: z.string().nullable().default(null),
+  /** Local hours with scans, oldest first; the repeated hour of a clock change is two buckets. */
+  byHour: z
+    .array(
+      z.object({
+        start: TimestampSchema,
+        label: z.string(),
+        count: z.number().int(),
+        refused: z.number().int(),
+      }),
+    )
+    .default([]),
+  /** Money and stock moved by value actions that ran and were not undone. */
+  byValue: z
+    .array(
+      z.object({
+        kind: z.enum(['add', 'take', 'set', 'use_up']),
+        count: z.number().int(),
+        amount: z.number(),
+      }),
+    )
+    .default([]),
+  byReason: z.array(z.object({ reason: z.string(), count: z.number().int() })).default([]),
+  /** Session scope only. */
+  byStaff: z
+    .array(
+      z.object({
+        staffId: z.string().nullable(),
+        name: z.string().nullable(),
+        count: z.number().int(),
+        overrides: z.number().int(),
+        refused: z.number().int(),
+      }),
+    )
+    .default([]),
+  /** The count and the 20 latest, for the next person to read at handover. */
+  overrides: z
+    .object({
+      count: z.number().int(),
+      latest: z.array(
+        z.object({
+          scanId: z.string(),
+          at: TimestampSchema,
+          staffName: z.string().nullable(),
+          approvedBy: z.string().nullable(),
+          reason: z.string().nullable(),
+        }),
+      ),
+    })
+    .default({ count: 0, latest: [] }),
 });
+export const ScanSummaryScopeSchema = z.enum(['device', 'session']);
 
 // v2: offline roster and batch sync.
 export const ScanRosterSchema = z.object({

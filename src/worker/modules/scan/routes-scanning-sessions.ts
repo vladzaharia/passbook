@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdParamSchema } from '../../../shared/contracts/common.ts';
+import { ScanSummarySchema } from '../../../shared/contracts/scan-session.ts';
 import { AdminScannerStartedSchema } from '../../../shared/contracts/scan-setups.ts';
 import {
   CreatedScanningDeviceSchema,
@@ -32,6 +33,7 @@ import {
   updateScanningSession,
 } from './scanning-sessions.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
+import { consoleSessionSummary } from './summary-session.ts';
 import { sessionAuthority } from './target-authority.ts';
 
 export const scanningSessionsRoutes = createRouter();
@@ -153,6 +155,27 @@ register(
         row.org_id,
       ),
     );
+  },
+);
+register(
+  scanningSessionsRoutes,
+  'scanners',
+  {
+    method: 'get',
+    path: '/{id}/summary',
+    summary: 'Tonight: the whole session’s totals (Managers)',
+    params: IdParamSchema,
+    response: ScanSummarySchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const auth = authOf(c);
+    if (auth.kind !== 'session') throw new UnauthenticatedError();
+    const mode = modeOf(auth);
+    const row = await loadScanningSession(ctx, c.req.valid('param').id, mode);
+    const authority = await sessionAuthority(ctx, auth, row.org_id, 'scanning:read');
+    const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, authority);
+    return c.json(await consoleSessionSummary(ctx, row.id, mode, authority, countAuthority));
   },
 );
 register(
