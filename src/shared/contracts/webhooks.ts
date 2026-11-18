@@ -165,7 +165,7 @@ export const WebhookEndpointSchema = z.object({
   mode: ModeSchema,
   /** The full URL is a capability: null for a reader (`integrations:read`). */
   url: z.string().nullable(),
-  /** Host and the last four characters of the path. */
+  /** The host, then `/…` when there is a path: the path is a bearer secret. */
   urlMasked: z.string(),
   description: z.string(),
   eventTypes: z.array(SubscribableEventTypeSchema),
@@ -176,6 +176,8 @@ export const WebhookEndpointSchema = z.object({
   disabledAt: TimestampSchema.nullable(),
   lastSuccessAt: TimestampSchema.nullable(),
   lastFailureAt: TimestampSchema.nullable(),
+  /** HTTP status of the newest attempted delivery; null when none yet or no response. */
+  lastStatus: z.number().int().nullable(),
   createdAt: TimestampSchema,
 });
 export type WebhookEndpointDto = z.infer<typeof WebhookEndpointSchema>;

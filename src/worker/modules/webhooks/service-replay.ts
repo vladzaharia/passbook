@@ -5,7 +5,13 @@ import type {
 } from '../../../shared/contracts/webhooks.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Actor } from '../../platform/context.ts';
-import { ConflictError, RateLimitedError, ValidationError } from '../../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  RateLimitedError,
+  UnavailableError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
@@ -15,6 +21,7 @@ import {
   type DeliveryRow,
   type DeliveryState,
   getDelivery,
+  hasRecentBulkReplay,
   hasRecentReplayAudit,
   listAttempts,
   listDeliveries,
@@ -196,12 +203,15 @@ export async function replayRange(
       'REPLAY_TOO_LARGE',
     );
 
+  // One a minute per org and mode, counted from the committed audit row of the first chunk: a first
+  // chunk that fails writes none, so it does not spend the minute.
   if (
-    !(await checkRateLimit(
-      ctx.env,
-      'RL_WEBHOOK_REPLAY',
-      `replay:${access.authority.orgId}:${access.authority.mode}`,
-    ))
+    await hasRecentBulkReplay(
+      ctx.env.DB,
+      access.authority.orgId,
+      access.authority.mode,
+      ctx.clock.now() - MIN,
+    )
   )
     throw new RateLimitedError();
 
@@ -233,7 +243,16 @@ export async function replayRange(
       results = await commitEndpoint(g);
     } catch (error) {
       // An earlier chunk is committed and audited: report it instead of failing the whole call.
-      if (queued === 0) throw error;
+      if (n === 0) {
+        if (error instanceof AppError) throw error;
+        ctx.log.error('webhooks.replay_not_queued', {
+          orgId: access.authority.orgId,
+          endpointId,
+          code: 'REPLAY_NOT_QUEUED',
+          error,
+        });
+        throw new UnavailableError('Nothing was queued. Try again.', 'REPLAY_NOT_QUEUED');
+      }
       ctx.log.warn('webhooks.replay_partial', {
         orgId: access.authority.orgId,
         endpointId,

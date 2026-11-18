@@ -23,6 +23,8 @@ export interface EndpointRow {
   consecutiveFailures: number;
   lastSuccessAt: number | null;
   lastFailureAt: number | null;
+  /** HTTP status of the newest attempted delivery; null for none or no response. */
+  lastStatus: number | null;
   createdBy: string | null;
   createdAt: number;
   updatedAt: number;
@@ -43,6 +45,7 @@ interface Raw {
   consecutive_failures: number;
   last_success_at: number | null;
   last_failure_at: number | null;
+  last_status?: number | null;
   created_by: string | null;
   created_at: number;
   updated_at: number;
@@ -51,6 +54,11 @@ interface Raw {
 const COLUMNS = `id, org_id, mode, url, description, event_types, template_ids, api_version, status,
   disabled_at, failing_since, consecutive_failures, last_success_at, last_failure_at, created_by,
   created_at, updated_at`;
+
+/** Newest attempted delivery by the primary key (endpoint_id, event_seq): no scan of the backlog. */
+const WITH_STATUS = `${COLUMNS}, (SELECT d.last_status FROM webhook_deliveries d
+  WHERE d.endpoint_id = webhook_endpoints.id AND d.last_attempt_at IS NOT NULL
+  ORDER BY d.event_seq DESC LIMIT 1) AS last_status`;
 
 function endpointOf(r: Raw): EndpointRow {
   return {
@@ -68,6 +76,7 @@ function endpointOf(r: Raw): EndpointRow {
     consecutiveFailures: r.consecutive_failures,
     lastSuccessAt: r.last_success_at,
     lastFailureAt: r.last_failure_at,
+    lastStatus: r.last_status ?? null,
     createdBy: r.created_by,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -82,7 +91,7 @@ export async function getEndpoint(
 ): Promise<EndpointRow | null> {
   const row = await first<Raw>(
     db,
-    `SELECT ${COLUMNS} FROM webhook_endpoints WHERE id = ? AND org_id = ? AND mode = ?`,
+    `SELECT ${WITH_STATUS} FROM webhook_endpoints WHERE id = ? AND org_id = ? AND mode = ?`,
     [id, fence.orgId, fence.mode],
   );
   return row ? endpointOf(row) : null;
@@ -92,7 +101,7 @@ export async function getEndpoint(
 export async function listEndpoints(db: D1Database, fence: FeedFence): Promise<EndpointRow[]> {
   const rows = await all<Raw>(
     db,
-    `SELECT ${COLUMNS} FROM webhook_endpoints WHERE org_id = ? AND mode = ?
+    `SELECT ${WITH_STATUS} FROM webhook_endpoints WHERE org_id = ? AND mode = ?
      ORDER BY created_at, id LIMIT 10`,
     [fence.orgId, fence.mode],
   );

@@ -52,10 +52,10 @@ describe('sessions', () => {
     expect(list.json.items[0]).toMatchObject({
       id,
       url: null,
-      urlMasked: 'hooks.example.com/…c123',
+      urlMasked: 'hooks.example.com/…',
     });
     const one = await api.call('GET', `${BASE}/${id}`, undefined, reader);
-    expect(one.json).toMatchObject({ url: null, urlMasked: 'hooks.example.com/…c123' });
+    expect(one.json).toMatchObject({ url: null, urlMasked: 'hooks.example.com/…' });
     expect(one.text).not.toContain('catch/abc123');
     expect((await api.call('GET', `${BASE}/${id}`, undefined, admin)).json.url).toBe(GOOD.url);
   });

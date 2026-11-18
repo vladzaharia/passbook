@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
-import { first } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import {
   type Api,
   auditOf,
@@ -314,5 +314,27 @@ describe('secrets', () => {
     expect(await rowCount(api.rig.db, 'webhook_endpoint_secrets')).toBe(before);
     expect(await auditOf(api.rig.db, 'webhook.secret.rotate')).toEqual([]);
     expect(await first(api.rig.db, 'SELECT 1 FROM authority_grants LIMIT 1')).toBeNull();
+  });
+});
+
+describe('lastStatus', () => {
+  it('is the HTTP status of the newest attempted delivery, in the list and on the endpoint', async () => {
+    const made = await create();
+    const id = made.json.endpoint.id as string;
+    expect(made.json.endpoint.lastStatus).toBeNull();
+    await api.rig.kit.pass({ orgId });
+    await api.rig.kit.pass({ orgId });
+    await run(
+      api.rig.db,
+      `UPDATE webhook_deliveries SET last_status = CASE event_seq WHEN (SELECT min(event_seq) FROM webhook_deliveries WHERE endpoint_id = ?1) THEN 200 ELSE 503 END,
+         last_attempt_at = 1 WHERE endpoint_id = ?1`,
+      [id],
+    );
+    expect(
+      ((await api.call('GET', `${BASE}/${id}`, undefined, admin)).json as { lastStatus: number })
+        .lastStatus,
+    ).toBe(503);
+    const list = await api.call('GET', `${BASE}?orgId=${orgId}`, undefined, admin);
+    expect(list.json.items[0].lastStatus).toBe(503);
   });
 });

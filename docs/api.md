@@ -449,8 +449,8 @@ ordering promise: dedupe on the event `id`, and order by `createdAt` or `pass.ve
 
 **Access.** A session needs `integrations:read` (view) or `integrations:manage` (change) in the org. An
 API key needs `webhooks:manage`. Delivery detail and the feed carry event payloads, so `integrations:read` and `webhooks:manage` can read
-them without `passes:read`; payloads hold no personal data. Readers get `url: null` and `urlMasked` (host plus the last four path
-characters): the URL is a capability, shown in full only to managers. Both modes work. The mode is fixed at
+them without `passes:read`; payloads hold no personal data. Readers get `url: null` and `urlMasked` (host, then `/…` for any path):
+the URL is a capability, shown in full only to managers. Both modes work. The mode is fixed at
 creation from the key's mode or the session's `x-passbook-mode`, never from the body; an endpoint receives
 events of its own mode only. Other orgs' and the other mode's endpoints answer `404`. Lists and creates take
 `orgId` as elsewhere (an org-bound key may omit it).
@@ -478,7 +478,7 @@ in ms. `include` is `failed` (default), `failed_and_cancelled` or `all` (also de
 10,000 deliveries (`422 REPLAY_TOO_LARGE`: narrow the range). With `missing: true` it also creates deliveries
 for subscribed events in the window that the endpoint never had, but only from the last 7 days: older
 delivered rows are already purged, so a wider window would send events again. `{ queued }` counts both.
-One bulk replay per org and mode per minute; a single-delivery replay is limited to 10 a minute per org and
+One bulk replay per org and mode per minute, counted from the committed first chunk (a replay that queued nothing does not count). A first chunk that fails answers `503 REPLAY_NOT_QUEUED` with nothing queued and the minute unspent; a single-delivery replay is limited to 10 a minute per org and
 mode, and its audit row is written once a minute per endpoint.
 
 **Retries.** Up to 9 attempts over about 3 days; a non-2xx answer, a timeout (10 s) or a refused connection
