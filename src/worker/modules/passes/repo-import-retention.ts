@@ -31,7 +31,11 @@ const heldSql = (id: string, org: string) =>
      AND (h.pass_id IS NULL OR h.pass_id IN (SELECT r.pass_id FROM pass_import_rows r
        WHERE r.import_id = ${id} AND r.pass_id IS NOT NULL)))`;
 
-/** Refuses the commit when a hold landed after the page was read. */
+/**
+ * Hand-built checks: `rawCheck` rejects any `org_id` other than `a.org_id`, and the hold query needs `h.org_id`.
+ * Values go through `b.bind`.
+ *
+ * Refuses the commit when a hold landed after the page was read. */
 const notHeld = (importId: string): Check => ({
   reason: 'retention',
   ok: (b) => `NOT ${heldSql(b.bind(importId), 'a.org_id')}`,
@@ -156,7 +160,7 @@ export async function clearPii(
     where: { import_id: imp.id },
     set: { input: null, holder_email: null, external_id: null, before: null },
   });
-  await g.commitAfter([receipt.stmt]);
+  await g.commitAfter(receipt.stmt);
 }
 
 /** The import row goes; its rows follow by cascade. Same batch and refusals as `clearPii`. */
@@ -174,5 +178,5 @@ export async function deleteImport(
     [notHeld(imp.id), receiptExists(receipt.receipt.id)],
   );
   g.delete('pass_imports', { where: { id: imp.id }, require: 'one' });
-  await g.commitAfter([receipt.stmt]);
+  await g.commitAfter(receipt.stmt);
 }

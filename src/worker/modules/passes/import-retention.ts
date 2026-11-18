@@ -23,7 +23,7 @@ export const COUNTS_KEPT_MS = 400 * DAY;
 const COUNTS_DAYS = 400;
 const BATCH = 50;
 /** Imports one run touches: the platform pass, then all org passes together. A backlog drains over several days. */
-export const IMPORT_LIMITS = { platform: 150, orgs: 150 };
+export const IMPORT_LIMITS = { drafts: 500, platform: 150, orgs: 150 };
 
 /** A grant refused because the import is already gone or already past the state the phase needs. */
 export const isSettled = (error: unknown): boolean =>
@@ -98,7 +98,7 @@ async function dropFile(ctx: ServiceContext, imp: RetentionImport): Promise<void
  * Daily: drafts past their 23 hours end `expired` and lose their file. Then, under the `imports` retention plan
  * (the org's days, floors, holds and the platform maximum), rows of imports that ended that many days ago lose
  * their cell values, emails and earlier values. Imports `COUNTS_KEPT_MS` old go with their counts; an org under
- * a hold keeps both. Each phase takes at most 500 imports per target a run, so a backlog drains over several days.
+ * a hold keeps both. Work per run is bounded (`IMPORT_LIMITS`), so a backlog drains over several days.
  */
 export async function dailyImports(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
@@ -110,6 +110,7 @@ export async function dailyImports(ctx: ServiceContext): Promise<void> {
       await expireDraft(ctx, imp);
       await dropFile(ctx, imp);
     },
+    { left: IMPORT_LIMITS.drafts },
   );
   const targets = await retentionTargets(ctx, ['imports']);
   let cleared = 0;
@@ -165,7 +166,16 @@ export async function dailyImports(ctx: ServiceContext): Promise<void> {
     let visited = 0;
     for (const o of targets.orgs) {
       if (budget.left <= 0) break;
-      await target(o.orgId, o.days.imports, { kind: 'org', orgId: o.orgId }, budget);
+      try {
+        await target(o.orgId, o.days.imports, { kind: 'org', orgId: o.orgId }, budget);
+      } catch (error) {
+        // One failing org must not stop the rotation: it runs again at its next visit.
+        ctx.log.error('pass_import.retention_org_failed', {
+          orgId: o.orgId,
+          code: 'IMPORT_RETENTION',
+          error,
+        });
+      }
       visited++;
     }
     await targets.finish(visited);

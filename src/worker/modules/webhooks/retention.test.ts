@@ -1,7 +1,8 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { all, run } from '../../platform/db.ts';
 import { recordPassEvent } from '../events/record.ts';
+import * as heads from '../retention/head-store.ts';
 import { prepareReceipt, readReceipts } from '../retention/receipt-service.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import {
@@ -246,5 +247,34 @@ describe('retention plan', () => {
     }
     await dailyWebhooks(rig.ctx);
     expect(await there(a.seq)).toBe(false);
+  });
+
+  it('an org on the default plan under an org hold keeps rows past 30 days', async () => {
+    const a = await seed(40);
+    await hold(a.orgId, null);
+    await dailyWebhooks(rig.ctx);
+    expect(await there(a.seq)).toBe(true);
+    await unhold(a.orgId);
+    await dailyWebhooks(rig.ctx);
+    expect(await there(a.seq)).toBe(false);
+  });
+
+  it('one failing org is logged and the next org still runs', async () => {
+    const bad = await seed(15);
+    const good = await seed(15);
+    await set(bad.orgId, 'retention.webhooksDays', 10);
+    await set(good.orgId, 'retention.webhooksDays', 10);
+    const real = heads.healHead;
+    const spy = vi.spyOn(heads, 'healHead').mockImplementation((ctx, orgId, cls, head) => {
+      if (orgId === bad.orgId) throw new Error('boom');
+      return real(ctx, orgId, cls, head);
+    });
+    try {
+      await dailyWebhooks(rig.ctx);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await there(bad.seq)).toBe(true);
+    expect(await there(good.seq)).toBe(false);
   });
 });

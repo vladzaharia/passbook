@@ -1,3 +1,4 @@
+import { type ReceiptStatement, receiptStatement } from '../../platform/authority-receipt.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { headMatches, healHead, writeHead } from './head-store.ts';
@@ -62,7 +63,7 @@ export async function writeReceipt(ctx: ServiceContext, input: ReceiptInput): Pr
 
 export interface PreparedReceipt {
   /** Runs first in a batch; the delete it records is gated on this row existing. */
-  stmt: D1PreparedStatement;
+  stmt: ReceiptStatement;
   receipt: Receipt;
 }
 
@@ -74,7 +75,10 @@ export async function prepareReceipt(
   gate?: { sql: string; params: readonly (string | number)[] },
 ): Promise<PreparedReceipt> {
   const { body, head, mac } = await bodyFor(ctx, input);
-  return { stmt: receiptInsertStmt(ctx.env.DB, body, mac, head, gate), receipt: { ...body, mac } };
+  return {
+    stmt: receiptStatement(receiptInsertStmt(ctx.env.DB, body, mac, head, gate)),
+    receipt: { ...body, mac },
+  };
 }
 
 /** After the batch that carried a prepared receipt committed: records its head outside D1. */

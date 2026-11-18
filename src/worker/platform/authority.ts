@@ -26,6 +26,7 @@ import {
 } from './authority-joined.ts';
 import { joinLedgerRow, joinOnlyInserts, pinOf } from './authority-pin.ts';
 import type { GrantScope, Principal } from './authority-principal.ts';
+import { isReceiptStatement, type ReceiptStatement } from './authority-receipt.ts';
 import {
   assertBudget,
   type BuiltStatement,
@@ -280,9 +281,14 @@ export class Grant {
     return (await grantedBatch(this.#db, [this]))[0] ?? [];
   }
 
-  /** `commit()` with caller statements (a retention receipt) first in the same transaction: a refusal undoes them. */
-  async commitAfter(before: readonly D1PreparedStatement[]): Promise<D1Result[]> {
-    return (await grantedBatchWith(this.#db, [this], [], before)).grants[0] ?? [];
+  /** `commit()` with a retention receipt first in the same transaction: a refusal undoes it, and its absence refuses. */
+  async commitAfter(receipt: ReceiptStatement): Promise<D1Result[]> {
+    if (!isReceiptStatement(receipt))
+      throw new AuthorityError(
+        'GRANT_FOREIGN_STATEMENT',
+        'Only a retention receipt may run first in a grant batch.',
+      );
+    return (await grantedBatchWith(this.#db, [this], [], [receipt])).grants[0] ?? [];
   }
 
   /** `commit()` plus reads (`afterRead`) after the release, in the same transaction: they see its writes. */

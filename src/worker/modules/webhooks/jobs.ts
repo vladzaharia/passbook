@@ -50,7 +50,18 @@ export async function dailyWebhooks(ctx: ServiceContext): Promise<void> {
     let visited = 0;
     for (const o of targets.orgs) {
       if (budget.chunks <= 0) break;
-      add(await purgeScope(ctx, o.orgId, { kind: 'org', orgId: o.orgId }, daysOf(o.days), budget));
+      try {
+        add(
+          await purgeScope(ctx, o.orgId, { kind: 'org', orgId: o.orgId }, daysOf(o.days), budget),
+        );
+      } catch (error) {
+        // One failing org must not stop the rotation: it runs again at its next visit.
+        ctx.log.error('webhooks.retention_org_failed', {
+          orgId: o.orgId,
+          code: 'WEBHOOK_RETENTION',
+          error,
+        });
+      }
       visited++;
     }
     await targets.finish(visited);

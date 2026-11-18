@@ -1,7 +1,9 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
+import { receiptStatement } from '../../platform/authority-receipt.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
+import * as heads from '../retention/head-store.ts';
 import { prepareReceipt, readReceipts } from '../retention/receipt-service.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import {
@@ -344,7 +346,7 @@ describe('retention plan', () => {
     const other = await makeOrg(h.kit.fx);
     const id = await seed(other.id, 40);
     const r = await receiptFor(other.id);
-    const broken = { ...r, stmt: h.kit.env.DB.prepare('SELECT 1') };
+    const broken = { ...r, stmt: receiptStatement(h.kit.env.DB.prepare('SELECT 1')) };
     await expect(clearPii(ctx(), asImport(id, other.id), broken)).rejects.toMatchObject({
       code: 'IMPORT_RECEIPT',
     });
@@ -409,5 +411,34 @@ describe('retention plan', () => {
     );
     await dailyImports(ctx());
     expect((await stateOf(id))?.state).toBe('expired');
+  });
+
+  it('an org on the default plan under an org hold keeps its imports', async () => {
+    const other = await makeOrg(h.kit.fx);
+    const id = await seed(other.id, 40);
+    await holdPass(other.id, null);
+    await dailyImports(ctx());
+    expect(await emailLeft(id)).toBe(true);
+  });
+
+  it('one failing org is logged and the next org still runs', async () => {
+    const bad = await makeOrg(h.kit.fx);
+    const good = await makeOrg(h.kit.fx);
+    const badId = await seed(bad.id, 15);
+    const goodId = await seed(good.id, 15);
+    await setDays(bad.id, 10);
+    await setDays(good.id, 10);
+    const real = heads.healHead;
+    const spy = vi.spyOn(heads, 'healHead').mockImplementation((c, orgId, cls, head) => {
+      if (orgId === bad.id) throw new Error('boom');
+      return real(c, orgId, cls, head);
+    });
+    try {
+      await dailyImports(ctx());
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await emailLeft(badId)).toBe(true);
+    expect(await emailLeft(goodId)).toBe(false);
   });
 });
