@@ -197,7 +197,8 @@ describe('budget and fire claims', () => {
       now: T0,
     };
     expect(await claimFire(kit.env.DB, claim)).toBe(true);
-    expect(await claimFire(kit.env.DB, claim)).toBe(false);
+    expect(await claimFire(kit.env.DB, { ...claim, broadcastId: 'b2' })).toBe(false);
+    expect(await claimFire(kit.env.DB, claim)).toBe(true);
     await check(id);
     expect((await runs(id)).length).toBe(0);
     await releaseFire(kit.env.DB, id, pass.id, 'b1');
