@@ -80,8 +80,6 @@ export interface Stop
   cooldownRemainingMs?: number;
   /** A held Auto flip: the place as read and the direction offered. */
   occupancy?: ScanOccupancy;
-  /** The wire says `code_replaced`: the code was rotated out by a New code. The row stays `not_found`. */
-  replaced?: boolean;
   flags: string[];
   found: Found | null;
   /** Internal ledger linkage for an inactive pass; never an output identity. */

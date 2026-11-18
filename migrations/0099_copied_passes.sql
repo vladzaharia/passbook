@@ -43,6 +43,6 @@ WHEN NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = OLD
       AND NOT ((EXISTS (SELECT 1 FROM token_remac_marks m WHERE m.pass_id = OLD.id AND m.kind = 'auth' AND m.mac = NEW.auth_token))
         AND NEW.credential_generation IS OLD.credential_generation))
     OR NEW.identity_id IS NOT OLD.identity_id OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
-    OR (OLD.scan_code IS NOT NULL AND NEW.scan_code IS NOT OLD.scan_code AND NOT EXISTS (SELECT 1 FROM scan_code_rotations r WHERE r.pass_id = OLD.id
-      AND r.new_version = NEW.version AND NEW.version = OLD.version + 1)))
+    OR (OLD.scan_code IS NOT NULL AND NEW.scan_code IS NOT OLD.scan_code AND (NEW.scan_code IS NULL OR NOT EXISTS (SELECT 1 FROM scan_code_rotations r WHERE r.pass_id = OLD.id
+      AND r.new_version = NEW.version AND NEW.version = OLD.version + 1))))
 BEGIN SELECT RAISE(ABORT, 'credential transfer required'); END;

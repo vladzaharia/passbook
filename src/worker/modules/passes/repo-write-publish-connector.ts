@@ -137,7 +137,7 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
           orgId: p.orgId,
           mode: p.mode,
         });
-  if (w.rotation) addRotationMark(g, w.id, w.expectedVersion, w.rotation);
+  if (w.rotation) addRotationMark(g, ctx.requestId ?? null, w.id, w.expectedVersion, w.rotation);
   const update = g.update('passes', {
     set: w.set,
     ...(w.bumpVersion ? { inc: ['version'] } : {}),

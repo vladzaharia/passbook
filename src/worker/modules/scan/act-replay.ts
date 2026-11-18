@@ -39,7 +39,7 @@ export function minimalReceipt(row: ScanRow): ScanOutcome {
       row.passId === null &&
       row.templateId === null &&
       row.actionId === null &&
-      (row.reason === 'not_found' || row.reason === 'ambiguous')
+      (row.reason === 'not_found' || row.reason === 'code_replaced' || row.reason === 'ambiguous')
         ? row.reason
         : null,
     at: row.at,

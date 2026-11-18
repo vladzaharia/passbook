@@ -105,7 +105,7 @@ export async function casGranted(ctx: ServiceContext, w: GrantedPublish): Promis
       checks,
       codes: { stale: PUBLISH_STALE, release: 'TEMPLATE_RELEASE_CONFLICT' },
     });
-  if (w.rotation) addRotationMark(g, w.id, w.expectedVersion, w.rotation);
+  if (w.rotation) addRotationMark(g, ctx.requestId ?? null, w.id, w.expectedVersion, w.rotation);
   const update = g.update('passes', {
     set: w.set,
     inc: ['version'],

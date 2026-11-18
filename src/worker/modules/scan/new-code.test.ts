@@ -10,8 +10,9 @@ import { seedBundlePrincipal } from '../bundles/test-auth-fixtures.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { NEW_CODES_PER_HOUR, newPassCode } from '../passes/new-code.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
+import { setWalletProvidersEnabledForTest } from '../wallet-providers/provider-policy.ts';
 import { act, kit, out, setupActionFixture, tpl } from './act-test-fixtures.ts';
-import { codeOf } from './test-kit.ts';
+import { codeOf, key as idempotencyKey, startScanCredentialTransfer } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
 
@@ -118,6 +119,80 @@ describe('New code', () => {
     ).rejects.toThrow(/immutable/);
     await run(kit.env.DB, 'DELETE FROM passes WHERE id = ?', [pass.id]);
     expect(await marks()).toHaveLength(0);
+  });
+
+  it('stores code_replaced as the scan reason, so replay and history agree', async () => {
+    const s = await kit.scanner({ templateIds: [tpl] });
+    const pass = await kit.scanPass(tpl);
+    await rotate(pass.id);
+    const key = idempotencyKey();
+    const res = await act(s.headers, codeOf(pass), { idempotencyKey: key });
+    const first = await out(res);
+    expect(first.reason).toBe('code_replaced');
+    const row = await all<{ reason: string; pass_id: string | null }>(
+      kit.env.DB,
+      'SELECT reason, pass_id FROM scans WHERE id = ?',
+      [first.scanId ?? ''],
+    );
+    expect(row).toEqual([{ reason: 'code_replaced', pass_id: null }]);
+    const again = await out(await act(s.headers, codeOf(pass), { idempotencyKey: key }));
+    expect(again).toMatchObject({ reason: 'code_replaced', replay: true });
+  });
+
+  it('refuses a marked change to no code at all', async () => {
+    const pass = await kit.scanPass(tpl);
+    await expect(
+      kit.env.DB.batch([
+        kit.env.DB.prepare(
+          `INSERT INTO scan_code_rotations
+           (pass_id, org_id, mode, old_code_hash, new_version, rotated_at, actor_type)
+           VALUES (?, ?, ?, ?, ?, 0, 'system')`,
+        ).bind(pass.id, pass.orgId, pass.mode, 'c'.repeat(64), pass.version + 1),
+        kit.env.DB.prepare(
+          'UPDATE passes SET scan_code = NULL, version = version + 1 WHERE id = ?',
+        ).bind(pass.id),
+      ]),
+    ).rejects.toThrow(/credential transfer required/);
+  });
+
+  it('does not spend the hourly quota on a refused attempt', async () => {
+    const pass = await kit.pass();
+    for (let i = 0; i <= NEW_CODES_PER_HOUR; i++)
+      await expect(rotate(pass.id)).rejects.toMatchObject({ code: 'NEW_CODE_UNSUPPORTED' });
+    const counted = await all(kit.env.DB, 'SELECT 1 FROM counters WHERE key = ?', [
+      `passes:newcode:${pass.id}`,
+    ]);
+    expect(counted).toEqual([]);
+  });
+
+  it('marks provider wallet objects dirty so they sync the new barcode', async () => {
+    setWalletProvidersEnabledForTest(true);
+    try {
+      const pass = await kit.scanPass(tpl, {}, { holderEmail: 'wallet@example.com' });
+      await startScanCredentialTransfer(kit, pass.id, {
+        target: { holderEmail: 'wallet@example.com', ownerUserId: null },
+      });
+      const instances = await all<{ id: string }>(
+        kit.env.DB,
+        'SELECT id FROM wallet_provider_instances WHERE pass_id = ?',
+        [pass.id],
+      );
+      expect(instances.length).toBeGreaterThan(0);
+      await run(
+        kit.env.DB,
+        'DELETE FROM wallet_provider_instance_dirty WHERE instance_id IN (SELECT id FROM wallet_provider_instances WHERE pass_id = ?)',
+        [pass.id],
+      );
+      await rotate(pass.id);
+      const dirty = await all<{ instance_id: string }>(
+        kit.env.DB,
+        'SELECT instance_id FROM wallet_provider_instance_dirty WHERE instance_id IN (SELECT id FROM wallet_provider_instances WHERE pass_id = ?)',
+        [pass.id],
+      );
+      expect(dirty.map((d) => d.instance_id).sort()).toEqual(instances.map((i) => i.id).sort());
+    } finally {
+      setWalletProvidersEnabledForTest(false);
+    }
   });
 
   it('writes an audit row without the code', async () => {

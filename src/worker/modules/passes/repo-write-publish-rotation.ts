@@ -15,6 +15,7 @@ export interface ScanCodeRotation {
  */
 export function addRotationMark(
   g: Grant,
+  requestId: string | null,
   passId: string,
   expectedVersion: number,
   r: ScanCodeRotation,
@@ -24,5 +25,21 @@ export function addRotationMark(
     ['pass_id', 'old_code_hash', 'new_version', 'rotated_at', 'actor_type', 'actor_id'],
     [passId, r.oldCodeHash, expectedVersion + 1, r.rotatedAt, r.actorType, r.actorId],
     { when: [exists('passes', { id: passId, version: expectedVersion })] },
+  );
+  // The audit row commits with the mark and only if it landed; it never carries a code.
+  g.audit(
+    {
+      at: r.rotatedAt,
+      orgId: null,
+      actorType: r.actorType,
+      actorId: r.actorId,
+      action: 'pass.new_code',
+      targetType: 'pass',
+      targetId: passId,
+      requestId,
+      ipPrefix: null,
+      detail: null,
+    },
+    [exists('scan_code_rotations', { pass_id: passId, new_version: expectedVersion + 1 })],
   );
 }

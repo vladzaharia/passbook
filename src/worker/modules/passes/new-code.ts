@@ -1,7 +1,6 @@
-import { bump } from '../../platform/counters.ts';
+import { bump, read } from '../../platform/counters.ts';
 import { ConflictError, RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
 import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
 import { publishPass } from './publish.ts';
@@ -29,9 +28,10 @@ export async function newPassCode(
     throw new ConflictError('Only an active pass can get a new code.', 'PASS_NOT_ACTIVE');
   const now = ctx.clock.now();
   const window = now - (now % HOUR);
-  if ((await bump(ctx.env.DB, `passes:newcode:${pass.id}`, window)) > NEW_CODES_PER_HOUR)
+  const key = `passes:newcode:${pass.id}`;
+  if ((await read(ctx.env.DB, key, window)) >= NEW_CODES_PER_HOUR)
     throw new RateLimitedError(Math.ceil((window + HOUR - now) / 1000));
-  const result = await publishPass(ctx, {
+  await publishPass(ctx, {
     passId,
     orgScope: scope,
     cause: causeOf(actor),
@@ -45,12 +45,5 @@ export async function newPassCode(
         'PASS_CONFLICT',
       ),
   });
-  await recordAudit(ctx, {
-    orgId: result.pass.orgId,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: 'pass.new_code',
-    targetType: 'pass',
-    targetId: passId,
-  });
+  await bump(ctx.env.DB, key, window);
 }

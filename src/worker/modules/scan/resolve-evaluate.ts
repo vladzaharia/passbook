@@ -113,7 +113,7 @@ async function evaluateObserved(
     return 'passId' in input ||
       !(await codeRotatedOut(ctx.env.DB, actor.orgId, actor.mode, refs.credentialTombstoneRefs))
       ? stop('refused', 'not_found')
-      : stop('refused', 'not_found', { replaced: true });
+      : stop('refused', 'code_replaced');
   if (all.some((candidate) => !candidateCredentialSnapshotValid(candidate)))
     return stop('refused', 'not_found', { stale: true });
   const inMode = all.filter((candidate) => candidate.pass.mode === actor.mode);
