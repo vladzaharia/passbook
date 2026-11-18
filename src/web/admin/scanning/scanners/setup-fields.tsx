@@ -1,6 +1,7 @@
-import { Badge, Button, CheckboxField, FormField } from '@/web/ui/index.ts';
+import { Badge, Button, Callout, CheckboxField, FormField, SwitchRow } from '@/web/ui/index.ts';
 import { useScannerPages } from '../queries.ts';
-import type { ScannerDraft } from './scanner-draft.ts';
+import { type ScannerDraft, watchKind } from './scanner-draft.ts';
+import { WatchFields } from './watch-fields.tsx';
 
 export interface SetupFieldsProps {
   draft: ScannerDraft;
@@ -26,7 +27,7 @@ export function SetupFields({ draft, onChange, errors }: SetupFieldsProps) {
         label="Legacy device role"
         help={
           draft.deviceRole === 'monitor'
-            ? 'This standalone monitor remains read-only. Create a session device for the action-capable Operator view.'
+            ? 'This standalone monitor is read-only unless Desk actions is on.'
             : 'New devices use session layouts: Scanner, Operator or Customer display.'
         }
       >
@@ -43,6 +44,24 @@ export function SetupFields({ draft, onChange, errors }: SetupFieldsProps) {
         )}
       </FormField>
       {draft.deviceRole !== 'scan' ? (
+        <WatchFields draft={draft} onChange={onChange} error={errors.watch} />
+      ) : null}
+      {draft.deviceRole === 'monitor' ? (
+        <>
+          <SwitchRow
+            label="Desk actions"
+            help="Staff sign in here to let people in and mark them out. Full and guest limits ask for a Manager."
+            checked={draft.deskActions}
+            onCheckedChange={(deskActions) => onChange({ deskActions })}
+          />
+          {draft.deskActions ? (
+            <Callout tone="info">
+              Every action is signed by the staff member and shows in the pass’s activity.
+            </Callout>
+          ) : null}
+        </>
+      ) : null}
+      {draft.deviceRole !== 'scan' && watchKind(draft.watch) === 'scanners' ? (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm font-medium">Follow scanners</legend>
           <p className="text-xs text-fg-muted">
