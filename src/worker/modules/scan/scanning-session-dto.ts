@@ -1,11 +1,13 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type ScannerSettings, ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
 import { ScannerAcceptsSchema } from '../../../shared/contracts/scanners.ts';
+import type { SessionCustomerSettings as SessionCustomer } from '../../../shared/contracts/scanning-sessions.ts';
 import {
   ScanDeviceCapabilitiesSchema,
   ScanDeviceOverridesSchema,
   ScanningDeviceSchema,
   ScanningSessionSchema,
+  SessionCustomerSettingsSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
@@ -136,6 +138,16 @@ export async function conflictsWithAllScope(
   );
 }
 
+/** The session's customer-screen lines, kept beside the scanner settings (which strip them). */
+export function storedCustomer(raw: string): { customer?: SessionCustomer } {
+  try {
+    const parsed = SessionCustomerSettingsSchema.safeParse(JSON.parse(raw).customer);
+    return parsed.success ? { customer: parsed.data } : {};
+  } catch {
+    return {};
+  }
+}
+
 export function effectiveSessionSettings(
   session: ScanningSessionRow,
   device?: ScanningDeviceRow | null,
@@ -216,7 +228,11 @@ export async function sessionDto(
     status: row.status,
     accepts: settings ? scope.accepts : null,
     settings: settings
-      ? { ...settings, ...(scope.restricted ? { acceptAllTemplates: false } : {}) }
+      ? {
+          ...settings,
+          ...storedCustomer(row.settings),
+          ...(scope.restricted ? { acceptAllTemplates: false } : {}),
+        }
       : { ...parseSettings(row.settings), acceptAllTemplates: false, lookup: false },
     timeZone: row.time_zone,
     createdAt: row.created_at,
