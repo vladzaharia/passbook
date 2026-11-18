@@ -1,0 +1,137 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
+import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
+import { type Check, exactlyOne } from '../../platform/authority-checks.ts';
+import { exists } from '../../platform/authority-cond.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { grantedAudit } from '../audit/repo-granted.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+
+type Session = Extract<TenantPassWrite, { kind: 'session' }>;
+
+/** A tag edit is a console action: the captured session holds passes:operate. */
+export type TagAuthority = Session & { capability: 'passes:operate' };
+
+const TAG_TABLES = ['nfc_tags', 'tag_bindings'] as const;
+const TAG_CODES = { lineage: 'TAG_HOLDER_CHANGED', stale: 'TAG_HOLDER_CHANGED' } as const;
+
+export type TagPurpose =
+  `org_mode.nfc.tag.${'bind' | 'unbind' | 'retire' | 'restore' | 'lost' | 'update'}`;
+
+export function tagGrant(
+  ctx: ServiceContext,
+  purpose: TagPurpose,
+  authority: TagAuthority,
+  checks: Check[] = [],
+): Grant {
+  return grant(ctx, {
+    purpose,
+    principal: tenantPrincipal(authority),
+    checks: [...capabilityChecks(authority), ...checks],
+    codes: TAG_CODES,
+    tables: TAG_TABLES,
+  });
+}
+
+export interface TagActor {
+  type: 'user' | 'staff' | 'scanner';
+  id: string;
+}
+
+/** The causes an admin or a staff member ends a binding with. */
+export type EndCause = 'admin' | 'staff' | 'undo' | 'lost' | 'replaced' | 'moved' | 'tag_retired';
+
+/** Ends one active binding. The batch is refused if it already ended. */
+export function endBinding(
+  g: Grant,
+  binding: { id: string },
+  cause: EndCause,
+  actor: TagActor,
+  now: number,
+): GrantedStatement {
+  return g.joined('tag_bindings', {
+    via: 'tag_id',
+    where: { id: binding.id, ended_at: null },
+    set: { ended_at: now, ended_by_type: actor.type, ended_by: actor.id, end_cause: cause },
+    require: 'one',
+    returning: ['id'],
+  });
+}
+
+export interface BindPlan {
+  tagId: string;
+  /** Set when the tag has not been seen: its row is created in the same batch. */
+  newTag: { ref: string; hint: string; label: string | null } | null;
+  bindingId: string;
+  passId: string;
+  scope: 'pass' | 'user';
+  userId: string | null;
+  /** The active binding this one replaces or takes over. */
+  end: { id: string; cause: 'replaced' | 'moved' } | null;
+  source: 'scanner' | 'remote' | 'admin';
+  actor: TagActor;
+  scannerId: string | null;
+  orgId: string;
+  mode: Mode;
+}
+
+/** The checks a bind makes: the pass is live in the tenant, and a user binding's owner still owns it. */
+export const bindChecks = (p: Pick<BindPlan, 'passId' | 'scope' | 'userId'>): Check[] => [
+  exactlyOne('passes', {
+    id: p.passId,
+    deleted_at: null,
+    ...(p.scope === 'user' ? { owner_user_id: p.userId } : {}),
+  }),
+];
+
+/**
+ * Adds a bind to a grant: the tag row if new, the end of the binding it takes over, the new binding and
+ * its audit row. The insert returns its id, so a lost race on the tag row reads as no row.
+ */
+export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStatement {
+  const now = ctx.clock.now();
+  if (p.newTag)
+    g.upsert(
+      'nfc_tags',
+      ['id', 'tag_ref', 'kind', 'hint', 'label', 'created_at'],
+      [p.tagId, p.newTag.ref, 'uid', p.newTag.hint, p.newTag.label, now],
+      { doNothing: true },
+    );
+  if (p.end) endBinding(g, p.end, p.end.cause, p.actor, now);
+  const insert = g.insertJoined('tag_bindings', {
+    parents: { tag_id: p.tagId, pass_id: p.passId },
+    columns: [
+      'id',
+      'scope',
+      'user_id',
+      'source',
+      'bound_at',
+      'bound_by_type',
+      'bound_by',
+      'scanner_id',
+    ],
+    values: [p.bindingId, p.scope, p.userId, p.source, now, p.actor.type, p.actor.id, p.scannerId],
+    returning: ['id'],
+  });
+  grantedAudit(
+    g,
+    ctx,
+    {
+      orgId: p.orgId,
+      actorType: p.actor.type === 'staff' ? 'user' : p.actor.type,
+      actorId: p.actor.id,
+      action: p.end?.cause === 'moved' ? 'tag.move' : 'tag.bind',
+      targetType: 'tag',
+      targetId: p.tagId,
+      detail: {
+        scope: p.scope,
+        source: p.source,
+        passId: p.passId,
+        ...(p.end ? { replaced: p.end.cause } : {}),
+        ...(p.scannerId ? { scannerId: p.scannerId } : {}),
+      },
+    },
+    [exists('tag_bindings', { id: p.bindingId })],
+  );
+  return insert;
+}

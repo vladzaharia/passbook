@@ -1,0 +1,178 @@
+import type { Tag } from '../../../shared/contracts/nfc-tags.ts';
+import { classifyD1Error } from '../../platform/db.ts';
+import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { tagsEnabled } from './policy.ts';
+import {
+  activeBinding,
+  type BindingRow,
+  lastEndedBinding,
+  orgTagCount,
+  type PassFacts,
+  passFacts,
+  type TagRow,
+  tagByRef,
+  tagView,
+} from './repo-tags.ts';
+import {
+  addBind,
+  type BindPlan,
+  bindChecks,
+  type TagActor,
+  type TagAuthority,
+  tagGrant,
+} from './repo-tags-write.ts';
+import { canonicalUid, tagRef } from './tag-ref.ts';
+
+export const TAGS_PER_ORG_MODE = 50_000;
+const ATTEMPTS = 3;
+
+export interface BindRequest {
+  /** The tag's UID as hex. The caller normalizes a reader's text first (`normalizeTagId`). */
+  uid: string;
+  passId: string;
+  scope: 'pass' | 'user';
+  label?: string | null | undefined;
+  /** Take the tag from another holder, or from a lost report. */
+  move?: boolean | undefined;
+}
+
+export type BindStatus = 'bound' | 'already_bound' | 'replaced' | 'moved';
+
+const notFound = () => new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+const conflict = (message: string, code: string) => new ConflictError(message, code);
+
+const sameTarget = (b: BindingRow, p: PassFacts, scope: 'pass' | 'user') =>
+  b.scope === scope && (scope === 'pass' ? b.passId === p.id : b.userId === p.ownerUserId);
+
+/** The same person: the same pass, or two passes of one owner. */
+const sameHolder = (b: BindingRow, p: PassFacts) =>
+  b.passId === p.id || (p.ownerUserId !== null && (b.userId ?? b.passOwnerId) === p.ownerUserId);
+
+type Decision =
+  | { status: 'already_bound'; tagId: string }
+  | { status: Exclude<BindStatus, 'already_bound'>; end: BindPlan['end'] };
+
+/** What a bind does given the tag's state: nothing, a plain bind, or an end-and-bind. */
+export function decideBind(
+  tag: TagRow | null,
+  active: BindingRow | null,
+  last: BindingRow | null,
+  pass: PassFacts,
+  req: Pick<BindRequest, 'scope' | 'move'>,
+): Decision {
+  if (tag?.status === 'retired')
+    throw conflict('This tag was retired. An admin can restore it.', 'TAG_RETIRED');
+  if (active) {
+    if (sameTarget(active, pass, req.scope))
+      return { status: 'already_bound', tagId: active.tagId };
+    if (sameHolder(active, pass))
+      return { status: 'replaced', end: { id: active.id, cause: 'replaced' } };
+    if (!req.move)
+      throw conflict(
+        'The tag belongs to someone else. A manager can move it.',
+        'TAG_HELD_BY_OTHER',
+      );
+    return { status: 'moved', end: { id: active.id, cause: 'moved' } };
+  }
+  if (last?.endCause === 'lost' && !req.move)
+    throw conflict('This tag was reported lost.', 'TAG_LOST');
+  return { status: 'bound', end: null };
+}
+
+/** The refusals the tag triggers raise inside a batch (migration 0086). */
+function triggerRefusal(error: unknown): AppError | null {
+  const text = error instanceof Error ? error.message : '';
+  if (text.includes('tag_binding_limit'))
+    return conflict('This pass or person has the most tags allowed.', 'TAG_BINDING_LIMIT');
+  if (text.includes('tag_retired'))
+    return conflict('This tag was retired. An admin can restore it.', 'TAG_RETIRED');
+  if (text.includes('tag_binding_owner'))
+    return conflict('The pass changed hands. Start again.', 'TAG_HOLDER_CHANGED');
+  if (text.includes('tag_binding_tenant')) return notFound();
+  return null;
+}
+
+/** Commits a tag grant, answering a trigger refusal with its stable code. */
+export async function commitTag(g: { commit(): Promise<unknown> }): Promise<void> {
+  try {
+    await g.commit();
+  } catch (error) {
+    throw triggerRefusal(error) ?? error;
+  }
+}
+
+/**
+ * Binds a tag to a pass, or to the pass's owner as a person, for a console admin. A tag has one active
+ * binding: a second bind of the same holder replaces it, another holder's needs `move`. Concurrent binds of
+ * one tag commit one and refuse the rest from the unique index. Scanner and remote enrollment build the
+ * same plan under their own grants (`addBind`).
+ */
+export async function bindTag(
+  ctx: ServiceContext,
+  authority: TagAuthority,
+  req: BindRequest,
+): Promise<{ status: BindStatus; tag: Tag }> {
+  const { orgId, mode } = authority;
+  if (!(await tagsEnabled(ctx, orgId)))
+    throw conflict('Turn on tags in settings first.', 'TAGS_OFF');
+  const uid = canonicalUid(req.uid);
+  const { ref, hint } = await tagRef(ctx.env, orgId, mode, uid);
+  for (let attempt = 1; ; attempt++) {
+    const pass = await passFacts(ctx.env.DB, req.passId);
+    if (!pass || pass.orgId !== orgId || pass.mode !== mode || pass.deletedAt !== null)
+      throw notFound();
+    if (req.scope === 'user' && !pass.ownerUserId)
+      throw new ValidationError(
+        'This person has no account yet. Assign the tag to the pass instead.',
+        [],
+        'TAG_NO_ACCOUNT',
+      );
+    const tag = await tagByRef(ctx.env.DB, orgId, mode, ref);
+    const [active, last] = tag
+      ? await Promise.all([activeBinding(ctx.env.DB, tag.id), lastEndedBinding(ctx.env.DB, tag.id)])
+      : [null, null];
+    const decision = decideBind(tag, active, last, pass, req);
+    if (decision.status === 'already_bound')
+      return { status: 'already_bound', tag: await shown(ctx, orgId, mode, decision.tagId) };
+    if (!tag && (await orgTagCount(ctx.env.DB, orgId, mode)) >= TAGS_PER_ORG_MODE)
+      throw conflict('This organization has the most tags allowed.', 'TAG_LIMIT');
+    const plan: BindPlan = {
+      tagId: tag?.id ?? ctx.ids.id(),
+      newTag: tag ? null : { ref, hint, label: req.label ?? null },
+      bindingId: ctx.ids.id(),
+      passId: pass.id,
+      scope: req.scope,
+      userId: req.scope === 'user' ? pass.ownerUserId : null,
+      end: decision.end,
+      source: 'admin',
+      actor: { type: 'user', id: authority.userId } satisfies TagActor,
+      scannerId: null,
+      orgId,
+      mode,
+    };
+    const g = tagGrant(ctx, 'org_mode.nfc.tag.bind', authority, bindChecks(plan));
+    const insert = addBind(g, ctx, plan);
+    try {
+      const results = await g.commit();
+      if ((results[g.indexOf(insert)]?.results?.length ?? 0) === 1)
+        return { status: decision.status, tag: await shown(ctx, orgId, mode, plan.tagId) };
+    } catch (error) {
+      const refusal = triggerRefusal(error);
+      if (refusal) throw refusal;
+      const lost =
+        classifyD1Error(error)?.kind === 'unique' ||
+        (error instanceof AppError && error.code === 'TAG_HOLDER_CHANGED');
+      if (!lost || attempt >= ATTEMPTS) throw error;
+      continue;
+    }
+    // The tag row came from a concurrent bind under another id: read again.
+    if (attempt >= ATTEMPTS) throw conflict('The tag changed. Try again.', 'TAG_HOLDER_CHANGED');
+  }
+}
+
+async function shown(ctx: ServiceContext, orgId: string, mode: 'live' | 'test', id: string) {
+  const tag = await tagView(ctx.env.DB, orgId, mode, id);
+  if (!tag) throw new NotFoundError('Tag not found.', 'TAG_NOT_FOUND');
+  return tag;
+}
