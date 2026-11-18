@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { removeWithTransition } from '../../../lib/motion.ts';
 import { Button, IconButton, SwitchRow, toast } from '../../../ui/index.ts';
 import { inputUses } from './bindings.ts';
+import { ChoiceOptions } from './choice-options.tsx';
 import { useDesigner } from './context.tsx';
 import { NameEdit, PickEdit, TextEdit } from './controls.tsx';
 import {
@@ -14,10 +15,16 @@ import {
   readInputs,
   sampleFor,
   scalarInputs,
+  seedOptions,
   typeLabel,
 } from './inputs.ts';
 import { isRecord } from './model.ts';
 import { rowId } from './row-id.ts';
+
+const choices = (spec: InputSpec) =>
+  (spec.options ?? [])
+    .filter((o) => o.value !== '')
+    .map((o) => ({ value: o.value, label: o.label }));
 
 function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
   const { edit } = useDesigner();
@@ -40,16 +47,38 @@ function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
           value={spec.type}
           options={INPUT_TYPES}
           onPick={(v) =>
-            set({ type: v as PickType, sample: sampleFor(v as PickType), default: '' })
+            set({
+              type: v as PickType,
+              sample: sampleFor(v as PickType),
+              default: '',
+              ...(v === 'choice' ? { options: seedOptions() } : {}),
+            })
           }
         />
       )}
+      {spec.type === 'choice' ? <ChoiceOptions spec={spec} /> : null}
       <SwitchRow
         label="Required"
         checked={spec.required}
         onCheckedChange={(required) => set({ required })}
       />
-      {spec.type === 'list' ? null : (
+      {spec.type === 'choice' ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <PickEdit
+            label="Default"
+            value={spec.default || '__none'}
+            options={[{ value: '__none', label: 'None' }, ...choices(spec)]}
+            onPick={(v) => set({ default: v === '__none' ? '' : v })}
+          />
+          <PickEdit
+            label="Sample"
+            value={spec.sample}
+            options={choices(spec)}
+            help="Shown in the preview."
+            onPick={(v) => set({ sample: v })}
+          />
+        </div>
+      ) : spec.type === 'list' ? null : (
         <div className="grid gap-4 sm:grid-cols-2">
           <TextEdit
             label="Default"
