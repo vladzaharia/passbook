@@ -29,6 +29,7 @@ import { SessionActivity } from './session-activity.tsx';
 import { SessionPairDialog, SessionRevokeDialog } from './session-device-dialogs.tsx';
 import { SessionRulesDialog } from './session-dialog.tsx';
 import { SessionSummary } from './session-summary.tsx';
+import { SessionTonight } from './session-tonight.tsx';
 
 export function SessionDetail({
   session: s,
@@ -203,6 +204,7 @@ export function SessionDetail({
             />
           )}
         </section>
+        {canManage ? <SessionTonight sessionId={s.id} /> : null}
         <SessionActivity items={s.activity} />
       </TwoPane>
       {canManage && dialog === 'rules' ? (
