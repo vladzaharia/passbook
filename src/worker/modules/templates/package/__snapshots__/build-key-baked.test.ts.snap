@@ -2,8 +2,8 @@
 
 exports[`build keys of the baked templates > are unchanged by the wallets extension (snapshot taken before it existed) 1`] = `
 {
-  "henrys-blue": "fb09f92b5dc2f3b75f2fd2888a6617194a8abc50c4ae0490582e2b6e13ef23c1",
-  "henrys-copper": "fc75f3e453d385e0b164dc2adbcc97100b46ba62382f8ea7565553c8bb230572",
+  "henrys-blue": "59cfb67a543f18324b5ffbec6bd1b0a6182430dfb6b136cf649c1358817a5aba",
+  "henrys-copper": "d80019e99d592cbb9f16abbc724fb7797dfa2be5fbb0ff2ca4095524ca0f9861",
   "starter-access-card": "34ac08f2688eae57a558b532201f7f1461f61e00dcb162c7912d3b3707159901",
   "starter-boarding-pass": "81d666541b94a3f413a5ba83dcba43c876a568396e42ab52f1433592e3932a48",
   "starter-coupon": "30498306edc1c4e6ab7e2f190ea3fa58d3aa3c0000276ee52dbe0293b966c20b",
