@@ -14,7 +14,8 @@ export type EventName =
   | 'sync.run'
   | 'refresh.requested'
   | 'auth.sign_in'
-  | 'scan.result';
+  | 'scan.result'
+  | 'join.refused';
 
 export interface AnalyticsEvent {
   event: EventName;

@@ -1,5 +1,6 @@
 import { handleConnectionWebhook, handlePassRefresh } from '../modules/connections/jobs.ts';
 import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts';
+import { handleJoinResend } from '../modules/join/jobs.ts';
 import type { ServiceContext } from '../platform/service-context.ts';
 import type { Job, JobKind, JobOf } from './types.ts';
 
@@ -9,6 +10,7 @@ export type JobHandler<K extends JobKind> = (job: JobOf<K>, ctx: ServiceContext)
 export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'push.deliver': handlePushDeliver,
   'email.send': handleEmailSend,
+  'join.resend': handleJoinResend,
   'pass.refresh': handlePassRefresh,
   'connection.webhook': handleConnectionWebhook,
 };
@@ -19,6 +21,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'push.deliver':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'email.send':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'join.resend':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'pass.refresh':
       return JOB_HANDLERS[job.kind](job, ctx);

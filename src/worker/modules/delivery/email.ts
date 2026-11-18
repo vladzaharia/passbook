@@ -9,6 +9,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
+import { isJoinCard } from '../join/repo-issues.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -147,6 +148,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       branding.logoHasName || typeof passJson.logoText !== 'string' ? null : passJson.logoText,
     senderName: platform['email.senderName'],
     mode: pass.mode,
+    joined: await isJoinCard(db, pass.id),
     buddyBase: orgSettings['email.buddy'] ? base : null,
   });
   if (pass.mode === 'test') {
