@@ -14,6 +14,7 @@ const BEHAVIOR_INPUTS: Record<string, string[]> = {
   beacons: ['input'],
   'expiry-from-input': ['input'],
   'relevance-window': ['start', 'end'],
+  term: ['start', 'renewals'],
   'upcoming-events': ['input', 'timeZoneInput'],
   'venue-locations': ['homeInput', 'accessInput'],
 };
