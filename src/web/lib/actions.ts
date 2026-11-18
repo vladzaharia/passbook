@@ -145,6 +145,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'session.revoke': a('Session revoked', I.signOut, 'warning'),
   'settings.update': a('Settings updated', Settings, 'info'),
   'tag.bind': a('Tag assigned', Link2, 'success'),
+  'tag.approve': a('Tag assignment approved', BadgeCheck, 'info'),
   'tag.rebind': a('Tag works with changed', ArrowRightLeft, 'info'),
   'tag.enroll.request': a('Tag requested from a scanner', Link2, 'info'),
   'tag.enroll.complete': a('Tag read on a scanner', Link2, 'success'),
